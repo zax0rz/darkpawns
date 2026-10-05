@@ -50,7 +50,7 @@ func mobCharge(w *World, me *MobInstance, vict combat.Combatant) {
 // success branch; the strict comparison and target-level range are retained
 // for high-level and focused cases.
 func mobDisarm(w *World, me *MobInstance, vict combat.Combatant) {
-	if me.GetFighting() != vict.GetName() || vict.GetFighting() != me.GetName() {
+	if me.GetFightingBody() != vict || vict.GetFightingBody() != me {
 		return
 	}
 

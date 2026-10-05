@@ -132,7 +132,7 @@ func TestAmbushAwareForcesFailureAndStartsCombat(t *testing.T) {
 func TestAmbushEventStopsWhenActorIsFighting(t *testing.T) {
 	w, ch, target := newAmbushDepthWorld(t)
 	startHP := target.GetHP()
-	ch.SetFighting("another target")
+	ch.SetFightingBody(NewPlayer(99999, "another target", 1001))
 
 	w.resolveAmbush(ch, target, target.GetRoom())
 	if target.GetHP() != startHP {

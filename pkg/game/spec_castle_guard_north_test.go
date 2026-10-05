@@ -16,9 +16,9 @@ func (e *castleGuardNorthCombatEngine) StartCombat(attacker, defender combat.Com
 	return nil
 }
 
-func (e *castleGuardNorthCombatEngine) IsFighting(string) bool { return false }
+func (e *castleGuardNorthCombatEngine) IsFighting(combat.Combatant) bool { return false }
 
-func (e *castleGuardNorthCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *castleGuardNorthCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 
@@ -132,7 +132,7 @@ func TestSpecCastleGuardNorth_AutonomousSecondGuardTarget(t *testing.T) {
 	other := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	guard.VNum = 19510
 	other.VNum = 19510
-	other.SetFighting(player.GetName())
+	other.SetFightingBody(player)
 	lastMsg()
 
 	engine := &castleGuardNorthCombatEngine{}
@@ -167,7 +167,7 @@ func TestSpecCastleGuardNorth_AutonomousSecondGuardTargetsMob(t *testing.T) {
 		p.ShortDesc = "an elven north target mob"
 		target.SetProto(&p)
 	}
-	other.SetFighting(target.GetName())
+	other.SetFightingBody(target)
 	lastMsg()
 
 	engine := &castleGuardNorthCombatEngine{}
@@ -184,7 +184,7 @@ func TestSpecCastleGuardNorth_DoesNotTreatUnregisteredMobAsPeer(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	other := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
-	other.SetFighting(player.GetName())
+	other.SetFightingBody(player)
 	lastMsg()
 
 	engine := &castleGuardNorthCombatEngine{}

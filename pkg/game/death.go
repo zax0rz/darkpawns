@@ -444,12 +444,12 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	}
 	// extract_char stops everyone fighting the victim (src/handler.c:1145-1150).
 	for _, player := range w.GetAllPlayers() {
-		if player.GetFighting() == victim.GetName() {
+		if player.GetFightingBody() == victim {
 			player.StopFighting()
 		}
 	}
 	for _, mob := range w.GetAllMobs() {
-		if mob.GetFighting() == victim.GetName() {
+		if mob.GetFightingBody() == victim {
 			mob.StopFighting()
 		}
 	}

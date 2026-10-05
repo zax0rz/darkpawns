@@ -241,7 +241,7 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		}
 
 		// Stop fighting
-		p.Fighting = ""
+		p.fightingBody = nil
 
 		// Move to nowhere
 		p.RoomVNum = roomNowhere

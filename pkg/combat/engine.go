@@ -13,8 +13,8 @@ import (
 
 // CombatPairKey uniquely identifies a combat pair by both participants.
 type CombatPairKey struct {
-	Attacker string
-	Target   string
+	Attacker Combatant
+	Target   Combatant
 }
 
 // CombatPair represents two entities fighting each other
@@ -39,7 +39,7 @@ type CombatEngine struct {
 	// Active combat pairs
 	combatPairs map[CombatPairKey]*CombatPair // key: (attacker, target)
 	combatOrder []Combatant                   // C combat_list order: most recently engaged first
-	parried     map[string]string             // C IS_PARRIED flag, keyed by fighter whose next turn is reduced
+	parried     map[Combatant]string          // C IS_PARRIED flag, keyed by fighter whose next turn is reduced
 
 	// Background-loop lifecycle. Stop closes stopChan exactly once and waits
 	// for every started loop to exit, including an in-flight combat round.
@@ -94,7 +94,7 @@ type CombatEngine struct {
 func NewCombatEngine() *CombatEngine {
 	return &CombatEngine{
 		combatPairs: make(map[CombatPairKey]*CombatPair),
-		parried:     make(map[string]string),
+		parried:     make(map[Combatant]string),
 		stopChan:    make(chan struct{}),
 		tickEvery:   2 * time.Second,
 	}
@@ -238,16 +238,19 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 // damage()'s !AWAKE victim stop (src/fight.c:1443-1445, 1630-1632).
 // The ordinary opener must still defer its position check until its hit.
 func (ce *CombatEngine) StartCombatAfterDamage(attacker, defender Combatant) error {
-	if attacker.GetName() == defender.GetName() || defender.GetPosition() == PosDead {
+	if !ValidBody(attacker) || !ValidBody(defender) {
+		return fmt.Errorf("combat requires concrete bodies")
+	}
+	if attacker == defender || defender.GetPosition() == PosDead {
 		return nil
 	}
-	if attacker.GetPosition() <= PosStunned || attacker.GetFighting() != defender.GetName() {
-		if defender.GetFighting() == attacker.GetName() && defender.GetPosition() > PosSleeping {
+	if attacker.GetPosition() <= PosStunned || attacker.GetFightingBody() != defender {
+		if defender.GetFightingBody() == attacker && defender.GetPosition() > PosSleeping {
 			return ce.startCombat(defender, attacker, attacker.GetPosition() <= PosSleeping, true)
 		}
 		return nil
 	}
-	return ce.startCombat(attacker, defender, defender.GetPosition() <= PosSleeping || defender.GetFighting() != attacker.GetName(), true)
+	return ce.startCombat(attacker, defender, defender.GetPosition() <= PosSleeping || defender.GetFightingBody() != attacker, true)
 }
 
 // EnrollAfterDamage bridges command/world engines to the post-damage entry.
@@ -261,7 +264,7 @@ func EnrollAfterDamage(engine interface {
 	}); ok {
 		return starter.StartCombatAfterDamage(attacker, defender)
 	}
-	if defender.GetPosition() <= PosSleeping || attacker.GetPosition() <= PosStunned || attacker.GetName() == defender.GetName() {
+	if defender.GetPosition() <= PosSleeping || attacker.GetPosition() <= PosStunned || attacker == defender {
 		return nil
 	}
 	return engine.StartCombat(attacker, defender)
@@ -285,16 +288,18 @@ func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bo
 }
 
 func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment, afterDamage bool) error {
+	if !ValidBody(attacker) || !ValidBody(defender) {
+		return fmt.Errorf("combat requires concrete bodies")
+	}
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
 	attackerName := attacker.GetName()
-	defenderName := defender.GetName()
 
 	// Build composite key
 	key := CombatPairKey{
-		Attacker: attackerName,
-		Target:   defenderName,
+		Attacker: attacker,
+		Target:   defender,
 	}
 
 	// Check if already fighting
@@ -304,7 +309,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 
 	// Also check same attacker attacking different target (prevent silent overwrite)
 	for k := range ce.combatPairs {
-		if k.Attacker == attackerName {
+		if k.Attacker == attacker {
 			return fmt.Errorf("%s is already fighting", attackerName)
 		}
 	}
@@ -316,7 +321,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 	// leave the defender's FIGHTING pointing at the new attacker while its
 	// original combat pair still exists — an inconsistent state. Mobile
 	// specials defer this write until the damage-side C path.
-	attacker.SetFighting(defenderName)
+	attacker.SetFightingBody(defender)
 	// The attacker is stood to POS_FIGHTING at entry: it is always standing when
 	// it initiates (do_hit gates on position), so this is observably equal to
 	// C's set_fighting(ch)-in-damage() and keeps do_hit's swing-branch check
@@ -333,9 +338,9 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 	// point (performOneHit), gated on > POS_STUNNED like C. Only the fighting
 	// flag/target is set at entry so the round loop enrolls it. Mobile-special
 	// entry defers both operations until the damage-side path below.
-	defenderNeedsStand := !deferDefenderEnrollment && defender.GetFighting() == ""
+	defenderNeedsStand := !deferDefenderEnrollment && defender.GetFightingBody() == nil
 	if defenderNeedsStand {
-		defender.SetFighting(attackerName)
+		defender.SetFightingBody(attacker)
 	}
 	// The defender must be in combatOrder (C's combat_list) whenever it is
 	// fighting this attacker — even when its FIGHTING field was set before
@@ -343,7 +348,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 	// (damage_stubs.go) without enrolling it, so gating the prepend on an
 	// empty field left positive-damage skill victims out of combatOrder and
 	// they never got a turn (DP-1213). prependFighterLocked is idempotent.
-	if !deferDefenderEnrollment && defender.GetFighting() == attackerName {
+	if !deferDefenderEnrollment && defender.GetFightingBody() == attacker {
 		ce.prependFighterLocked(defender)
 	}
 
@@ -364,13 +369,16 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 // parry/dodge, wait-state, redirect, and fight-trigger work. Subsequent attacks
 // continue through PerformRound on the normal combat pulse.
 func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error {
-	key := CombatPairKey{Attacker: attacker.GetName(), Target: defender.GetName()}
+	if !ValidBody(attacker) || !ValidBody(defender) {
+		return fmt.Errorf("combat requires concrete bodies")
+	}
+	key := CombatPairKey{Attacker: attacker, Target: defender}
 
 	ce.mu.RLock()
 	pair, ok := ce.combatPairs[key]
 	ce.mu.RUnlock()
 	if !ok {
-		return fmt.Errorf("combat pair %s -> %s is not active", key.Attacker, key.Target)
+		return fmt.Errorf("combat pair %s -> %s is not active", key.Attacker.GetName(), key.Target.GetName())
 	}
 
 	ce.performOneHit(pair)
@@ -384,9 +392,12 @@ func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error
 // hit is not added as a new engine pair. The mob therefore does not receive a
 // later perform_violence turn from this one-off retaliation.
 func (ce *CombatEngine) PerformUnenrolledInitialAttack(attacker, defender Combatant) error {
+	if !ValidBody(attacker) || !ValidBody(defender) {
+		return fmt.Errorf("combat requires concrete bodies")
+	}
 	ce.performOneHit(&CombatPair{Attacker: attacker, Defender: defender})
-	if defender.GetPosition() != PosDead && attacker.GetFighting() == "" {
-		attacker.SetFighting(defender.GetName())
+	if defender.GetPosition() != PosDead && attacker.GetFightingBody() == nil {
+		attacker.SetFightingBody(defender)
 		if attacker.GetPosition() > PosStunned {
 			attacker.SetPosition(PosFighting)
 		}
@@ -395,24 +406,27 @@ func (ce *CombatEngine) PerformUnenrolledInitialAttack(attacker, defender Combat
 }
 
 // StopCombat ends combat for a character
-func (ce *CombatEngine) StopCombat(charName string) {
+func (ce *CombatEngine) StopCombat(body Combatant) {
+	if !ValidBody(body) {
+		return
+	}
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
 
 	// Find and stop combat — iterate all pairs to find matches by attacker or defender
 	for key, pair := range ce.combatPairs {
-		if key.Attacker == charName || pair.Defender.GetName() == charName {
+		if key.Attacker == body || pair.Defender == body {
 			pair.Attacker.StopFighting()
-			if pair.Defender.GetFighting() == key.Attacker {
+			if pair.Defender.GetFightingBody() == key.Attacker {
 				pair.Defender.StopFighting()
 			}
-			delete(ce.parried, pair.Attacker.GetName())
-			delete(ce.parried, pair.Defender.GetName())
+			delete(ce.parried, pair.Attacker)
+			delete(ce.parried, pair.Defender)
 			delete(ce.combatPairs, key)
 		}
 	}
-	delete(ce.parried, charName)
-	ce.removeFighterLocked(charName)
+	delete(ce.parried, body)
+	ce.removeFighterLocked(body)
 	ce.pruneCombatOrderLocked()
 }
 
@@ -423,9 +437,8 @@ func (ce *CombatEngine) prependFighterLocked(fighter Combatant) {
 	if fighter == nil {
 		return
 	}
-	name := fighter.GetName()
 	for _, existing := range ce.combatOrder {
-		if existing != nil && existing.GetName() == name {
+		if existing != nil && existing == fighter {
 			return
 		}
 	}
@@ -436,9 +449,9 @@ func (ce *CombatEngine) prependFighterLocked(fighter Combatant) {
 
 // removeFighterLocked removes one character from the combat_list analogue.
 // ce.mu must be held for writing.
-func (ce *CombatEngine) removeFighterLocked(name string) {
+func (ce *CombatEngine) removeFighterLocked(body Combatant) {
 	for i, fighter := range ce.combatOrder {
-		if fighter != nil && fighter.GetName() == name {
+		if fighter != nil && fighter == body {
 			copy(ce.combatOrder[i:], ce.combatOrder[i+1:])
 			ce.combatOrder[len(ce.combatOrder)-1] = nil
 			ce.combatOrder = ce.combatOrder[:len(ce.combatOrder)-1]
@@ -452,7 +465,7 @@ func (ce *CombatEngine) removeFighterLocked(name string) {
 func (ce *CombatEngine) pruneCombatOrderLocked() {
 	active := ce.combatOrder[:0]
 	for _, fighter := range ce.combatOrder {
-		if fighter != nil && fighter.GetFighting() != "" {
+		if fighter != nil && fighter.GetFightingBody() != nil {
 			active = append(active, fighter)
 		}
 	}
@@ -461,13 +474,16 @@ func (ce *CombatEngine) pruneCombatOrderLocked() {
 }
 
 // IsFighting checks if a character is in combat
-func (ce *CombatEngine) IsFighting(charName string) bool {
+func (ce *CombatEngine) IsFighting(body Combatant) bool {
+	if !ValidBody(body) {
+		return false
+	}
 	ce.mu.RLock()
 	defer ce.mu.RUnlock()
 
 	// Check if attacking or being attacked — must iterate with composite keys
 	for key, pair := range ce.combatPairs {
-		if key.Attacker == charName || pair.Defender.GetName() == charName {
+		if key.Attacker == body || pair.Defender == body {
 			return true
 		}
 	}
@@ -486,21 +502,20 @@ func (ce *CombatEngine) PerformRound() {
 	fighters := append([]Combatant(nil), ce.combatOrder...)
 	ce.mu.RUnlock()
 
-	seen := make(map[string]bool, len(fighters))
+	seen := make(map[Combatant]bool, len(fighters))
 	for _, fighter := range fighters {
-		if fighter == nil || fighter.GetPosition() == PosDead || fighter.GetFighting() == "" {
+		if fighter == nil || fighter.GetPosition() == PosDead || fighter.GetFightingBody() == nil {
 			continue
 		}
-		name := fighter.GetName()
-		if seen[name] {
+		if seen[fighter] {
 			continue
 		}
-		seen[name] = true
+		seen[fighter] = true
 
 		// Combat can mutate while a round is executing (death, flee, redirect),
 		// so resolve the fighter's live target immediately before its turn.
 		ce.mu.RLock()
-		target := ce.findFightingTarget(name, fighter)
+		target := ce.findFightingTarget(fighter)
 		ce.mu.RUnlock()
 		if target == nil {
 			continue
@@ -515,24 +530,11 @@ func (ce *CombatEngine) PerformRound() {
 }
 
 // findFightingTarget resolves the Combatant that `fighter` is currently
-// attacking. Returns nil if the fighter has no FIGHTING target, or if that
-// target cannot be located among the active combat pairs.
+// attacking. Returns nil if the fighter has no stored body reference.
 //
 // Must be called with ce.mu held (at least RLock).
-func (ce *CombatEngine) findFightingTarget(fighterName string, fighter Combatant) Combatant {
-	targetName := fighter.GetFighting()
-	if targetName == "" {
-		return nil
-	}
-	for _, pair := range ce.combatPairs {
-		if pair.Attacker.GetName() == targetName {
-			return pair.Attacker
-		}
-		if pair.Defender.GetName() == targetName {
-			return pair.Defender
-		}
-	}
-	return nil
+func (ce *CombatEngine) findFightingTarget(fighter Combatant) Combatant {
+	return fighter.GetFightingBody()
 }
 
 // processCombatPair handles a single combat exchange
@@ -587,7 +589,7 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	}
 
 	// 5. IS_PARRIED adjustment (fight.c:1999-2007).
-	defenseAction := ce.consumeParried(attacker.GetName())
+	defenseAction := ce.consumeParried(attacker)
 	if defenseAction != "" {
 		defenderDexDefense := dexApp[dexIndex(defender)].Defensive
 		if defenderDexDefense < 0 {
@@ -604,14 +606,14 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	// POS_SLEEPING) and same-room — a sitting/resting attacker (downed but
 	// awake) still swings. NOT awake or different room → stop_fighting.
 	if attacker.GetPosition() <= PosSleeping {
-		ce.StopCombat(attacker.GetName())
+		ce.StopCombat(attacker)
 		return
 	}
 	if defender.GetPosition() == PosDead {
 		return // defender extracted; nothing to hit
 	}
 	if attacker.GetRoom() != defender.GetRoom() {
-		ce.StopCombat(attacker.GetName())
+		ce.StopCombat(attacker)
 		return
 	}
 
@@ -681,7 +683,7 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 		)
 	}
 	if defenseAction != "" {
-		ce.setParried(opponent.GetName(), defenseAction)
+		ce.setParried(opponent, defenseAction)
 	}
 }
 
@@ -700,24 +702,27 @@ func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, 
 	}
 }
 
-func (ce *CombatEngine) setParried(name, defenseAction string) {
+func (ce *CombatEngine) setParried(body Combatant, defenseAction string) {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
-	ce.parried[name] = defenseAction
+	ce.parried[body] = defenseAction
 }
 
-// MarkParried records a C IS_PARRIED result for the named fighter. Native
+// MarkParried records a C IS_PARRIED result for the actual fighter. Native
 // mob specials use this same one-round defense state as perform_violence's
 // built-in parry/dodge path.
-func (ce *CombatEngine) MarkParried(name, defenseAction string) {
-	ce.setParried(name, defenseAction)
+func (ce *CombatEngine) MarkParried(body Combatant, defenseAction string) {
+	if !ValidBody(body) {
+		return
+	}
+	ce.setParried(body, defenseAction)
 }
 
-func (ce *CombatEngine) consumeParried(name string) string {
+func (ce *CombatEngine) consumeParried(body Combatant) string {
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
-	defenseAction := ce.parried[name]
-	delete(ce.parried, name)
+	defenseAction := ce.parried[body]
+	delete(ce.parried, body)
 	return defenseAction
 }
 
@@ -760,8 +765,8 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// swings (and refuses) again on the next attack.
 	if cbDamageRefused(attacker, defender) {
 		if cbIsShopkeeper(defender.GetName()) {
-			ce.StopCombat(attacker.GetName())
-			ce.StopCombat(defender.GetName())
+			ce.StopCombat(attacker)
+			ce.StopCombat(defender)
 			return true
 		}
 		return false
@@ -776,8 +781,8 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// C damage() enrolls the victim after the NPC switcheroo scan.  Do this
 	// before the remaining damage-side effects, including stop_follower and
 	// the hit/miss message path.
-	if pair.DeferDefenderEnrollment && defender.GetFighting() == "" && defender.GetPosition() > PosStunned {
-		defender.SetFighting(attacker.GetName())
+	if pair.DeferDefenderEnrollment && defender.GetFightingBody() == nil && defender.GetPosition() > PosStunned {
+		defender.SetFightingBody(attacker)
 		ce.mu.Lock()
 		ce.prependFighterLocked(defender)
 		ce.mu.Unlock()
@@ -796,7 +801,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// a dying victim stays prone, and an existing fighter keeps its posture.
 	// DefenderNeedsStand is the pending posture half of initial Go enrollment.
 	standVictim := func() {
-		if defender.GetPosition() > PosStunned && (pair.DefenderNeedsStand || defender.GetFighting() == "") {
+		if defender.GetPosition() > PosStunned && (pair.DefenderNeedsStand || defender.GetFightingBody() == nil) {
 			defender.SetPosition(PosFighting)
 			pair.DefenderNeedsStand = false
 		}
@@ -840,7 +845,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	EmitDeathPositionMessage(defender, ce.BroadcastFunc)
 	// The death callback owns XP/autogold before raw_kill's cry/corpse.
 	ce.handleDeath(defender, attacker)
-	ce.StopCombat(attacker.GetName())
+	ce.StopCombat(attacker)
 	return true
 }
 
@@ -865,14 +870,14 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 
 	if defender.GetHP() < defender.GetMaxHP()/4 {
 		defender.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")
-		if cbHasMobFlag(defender.GetName(), "MOB_WIMPY") && attacker.GetName() != defender.GetName() {
+		if cbHasMobFlag(defender.GetName(), "MOB_WIMPY") && attacker != defender {
 			cbDoFlee(defender.GetName())
 		}
 	}
 
 	wimpLevel := cbGetWimpyLev(defender.GetName())
 	if !defender.IsNPC() && wimpLevel > 0 &&
-		attacker.GetName() != defender.GetName() &&
+		attacker != defender &&
 		newPos >= PosFighting && defender.GetHP() < wimpLevel {
 		defender.SendMessage("You wimp out, and attempt to flee!\r\n")
 		if cbGetSkill(defender.GetName(), SKILL_RETREAT) > 0 ||
@@ -883,7 +888,7 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 		}
 	}
 
-	return defender.GetRoom() != attacker.GetRoom() || defender.GetFighting() == ""
+	return defender.GetRoom() != attacker.GetRoom() || defender.GetFightingBody() == nil
 }
 
 // applyMobCombatRedirects ports the mob-initiated damage() redirects from
@@ -906,8 +911,8 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 		!cbHasAffectStr(defenderName, AFF_STR_VAMPIRE) &&
 		!cbHasAffectStr(defenderName, AFF_STR_WEREWOLF) {
 		if cbJailGuardSubdue(attackerName, defenderName) {
-			ce.StopCombat(defenderName)
-			ce.StopCombat(attackerName)
+			ce.StopCombat(defender)
+			ce.StopCombat(attacker)
 			return true
 		}
 	}
@@ -934,7 +939,7 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 			if vict == nil {
 				continue
 			}
-			if vict.GetFighting() == attackerName && GetRoller().Number(0, 80) == 0 {
+			if vict.GetFightingBody() == attacker && GetRoller().Number(0, 80) == 0 {
 				if ce.redirectAttacker(attacker, vict) {
 					return true
 				}
@@ -955,7 +960,7 @@ func findRoomCombatantByName(roomVNum int, name string) Combatant {
 }
 
 func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) bool {
-	ce.StopCombat(attacker.GetName())
+	ce.StopCombat(attacker)
 	if err := ce.StartCombat(attacker, target); err != nil {
 		// Only reachable via a concurrent re-engagement race: another
 		// goroutine started this attacker between StopCombat and StartCombat.
@@ -1061,7 +1066,7 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 		attackType := -1 // TYPE_UNDEFINED
 		ce.mu.RLock()
 		for key, pair := range ce.combatPairs {
-			if key.Attacker == killerName {
+			if key.Attacker == killer {
 				attackType = pair.LastAttackType
 				break
 			}
@@ -1072,36 +1077,18 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 }
 
 // GetCombatTarget returns who a character is fighting
-func (ce *CombatEngine) GetCombatTarget(charName string) (Combatant, bool) {
-	ce.mu.RLock()
-	defer ce.mu.RUnlock()
-
-	// Check if attacking someone or being attacked — must iterate with composite keys
-	for key, pair := range ce.combatPairs {
-		if key.Attacker == charName {
-			return pair.Defender, true
-		}
-		if pair.Defender.GetName() == charName {
-			return pair.Attacker, true
-		}
+func (ce *CombatEngine) GetCombatTarget(body Combatant) (Combatant, bool) {
+	if !ValidBody(body) {
+		return nil, false
 	}
-
-	return nil, false
+	target := body.GetFightingBody()
+	return target, target != nil
 }
 
-// GetCombatStatus returns combat status for a character
-func (ce *CombatEngine) GetCombatStatus(charName string) string {
-	ce.mu.RLock()
-	defer ce.mu.RUnlock()
-
-	for key, pair := range ce.combatPairs {
-		if key.Attacker == charName {
-			return fmt.Sprintf("You are fighting %s", pair.Defender.GetName())
-		}
-		if pair.Defender.GetName() == charName {
-			return fmt.Sprintf("You are being attacked by %s", key.Attacker)
-		}
+// GetCombatStatus returns display text for the actual body.
+func (ce *CombatEngine) GetCombatStatus(body Combatant) string {
+	if target, ok := ce.GetCombatTarget(body); ok {
+		return fmt.Sprintf("You are fighting %s", target.GetName())
 	}
-
 	return "You are not in combat"
 }

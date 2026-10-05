@@ -39,9 +39,9 @@ func prepareClericTestCombat(t *testing.T, w *World, player *Player, level int) 
 	mob.SetMaxHP(100)
 	mob.SetHealth(100)
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.GetName())
+	mob.SetFightingBody(player)
 	player.SetPosition(combat.PosFighting)
-	player.SetFighting(mob.GetName())
+	player.SetFightingBody(mob)
 	return mob
 }
 

@@ -151,16 +151,16 @@ func (t *testCombatEngine) StartCombat(attacker, defender combat.Combatant) erro
 	return nil
 }
 
-func (t *testCombatEngine) IsFighting(name string) bool {
+func (t *testCombatEngine) IsFighting(body combat.Combatant) bool {
 	for _, p := range t.starts {
-		if p.attacker == name || p.defender == name {
+		if p.attacker == body.GetName() || p.defender == body.GetName() {
 			return true
 		}
 	}
 	return false
 }
 
-func (t *testCombatEngine) GetCombatTarget(charName string) (combat.Combatant, bool) {
+func (t *testCombatEngine) GetCombatTarget(body combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 

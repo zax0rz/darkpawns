@@ -184,7 +184,7 @@ func cmdParry(s *Session, _ []string) error {
 		return nil
 	}
 
-	if s.player.GetFighting() == "" {
+	if s.player.GetFightingBody() == nil {
 		s.Send("But you aren't fighting anyone!\r\n")
 		return nil
 	}
@@ -195,7 +195,7 @@ func cmdParry(s *Session, _ []string) error {
 		return nil
 	}
 	victim := combatTargetActor(target)
-	if victim == nil || target.Combatant.GetFighting() != s.player.GetName() {
+	if victim == nil || target.Combatant.GetFightingBody() != s.player {
 		s.Send("But noone's attacking you!\r\n")
 		return nil
 	}
@@ -223,7 +223,7 @@ func cmdParry(s *Session, _ []string) error {
 		"$n displays a dazzling show of swordplay, fending off $N's every blow!", "", game.ToRoom)
 	game.Act(nil, true, s.player, victim, nil, nil,
 		"$n displays a dazzling show of swordplay, fending off your every blow!", "", game.ToVict)
-	s.manager.combatEngine.MarkParried(victim.GetName(), "parry")
+	s.manager.combatEngine.MarkParried(target.Combatant, "parry")
 	s.player.SetWaitState(2) // C: WAIT_STATE(ch, PULSE_VIOLENCE * 2)
 	return nil
 }
@@ -258,7 +258,7 @@ func cmdFlee(s *Session) error {
 
 	// Capture opponent info for XP penalty before any move changes state.
 	var xpLoss int
-	if opponent, ok := s.manager.combatEngine.GetCombatTarget(s.player.Name); ok {
+	if opponent, ok := s.manager.combatEngine.GetCombatTarget(s.player); ok {
 		loss := opponent.GetMaxHP() - opponent.GetHP()
 		if loss < 0 {
 			loss = 0
@@ -316,7 +316,7 @@ func cmdFlee(s *Session) error {
 		return nil
 	}
 
-	s.manager.combatEngine.StopCombat(s.player.Name)
+	s.manager.combatEngine.StopCombat(s.player)
 
 	// Apply XP loss to all levels; level > 10 already included extra above.
 	// LoseExp caps at max_exp_loss and returns the actual amount subtracted.
@@ -349,7 +349,7 @@ func cmdRetreat(s *Session) error {
 		s.Send("Huh?\r\n")
 		return nil
 	}
-	if s.player.GetFighting() == "" {
+	if s.player.GetFightingBody() == nil {
 		s.Send(fmt.Sprintf("%s from what? You aren't fighting!\n\r", capmsg))
 		return nil
 	}

@@ -190,7 +190,7 @@ func TestZoneResetMobileRemovalSkipsFightingAndMarked(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fighting.SetFighting("opponent")
+	fighting.SetFightingBody(NewPlayer(99999, "opponent", 1001))
 	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "R", Arg1: 100, Arg2: 0, Arg3: 300}}}); err != nil {
 		t.Fatal(err)
 	}

@@ -27,10 +27,10 @@ func TestSpellDamagePreservesWoundedVictimStop(t *testing.T) {
 				t.Fatal("C damage() did not enroll caster")
 			}
 			if wounded {
-				if victim.fighting != "" || victim.pos != combat.PosMortally {
+				if victim.GetFighting() != "" || victim.pos != combat.PosMortally {
 					t.Fatal("spell re-enrolled unconscious victim")
 				}
-			} else if victim.fighting != ch.name {
+			} else if victim.GetFighting() != ch.name {
 				t.Fatal("spell did not enroll fresh victim")
 			}
 		})

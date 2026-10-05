@@ -22,9 +22,9 @@ func (e *cityguardTestCombatEngine) PerformInitialAttack(attacker, defender comb
 	return nil
 }
 
-func (e *cityguardTestCombatEngine) IsFighting(string) bool { return false }
+func (e *cityguardTestCombatEngine) IsFighting(combat.Combatant) bool { return false }
 
-func (e *cityguardTestCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *cityguardTestCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 
@@ -83,7 +83,7 @@ func TestSpecCityguard_ProtectionSelectionAndHitBoundary(t *testing.T) {
 		p.ShortDesc = "a less evil mob"
 		lessEvil.SetProto(&p)
 	}
-	lessEvil.SetFighting(protected.GetName())
+	lessEvil.SetFightingBody(protected)
 	mostEvil := newSpecProcTestMob(t, w, 1001, 10)
 	{
 		p := *mostEvil.Proto()
@@ -95,7 +95,7 @@ func TestSpecCityguard_ProtectionSelectionAndHitBoundary(t *testing.T) {
 		p.ShortDesc = "the most evil mob"
 		mostEvil.SetProto(&p)
 	}
-	mostEvil.SetFighting(protected.GetName())
+	mostEvil.SetFightingBody(protected)
 
 	engine := &cityguardTestCombatEngine{}
 	w.SetCombatEngine(engine)

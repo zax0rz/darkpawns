@@ -91,7 +91,7 @@ func TestSpecDragonBreath_CombatRollAndSharedReturn(t *testing.T) {
 	mob.VNum = 4209     // C's frost-breath arm.
 	player.SetLevel(10) // no low-level damage protection
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.GetName())
+	mob.SetFightingBody(player)
 	lastMsg()
 
 	old := combat.GetCallbacks()
@@ -171,8 +171,8 @@ func TestSpecDragonBreath_StandingRecovery(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	mob.SetPosition(combat.PosSitting)
-	mob.SetFighting(player.GetName())
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	lastMsg()
 
 	if !specDragonBreath(w, nil, mob, "", "") {

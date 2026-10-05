@@ -110,7 +110,7 @@ func TestSpecWallGuardNS_EntryGates(t *testing.T) {
 		{
 			name: "fighting",
 			setup: func(guard *MobInstance, player *Player) {
-				guard.SetFighting(player.GetName())
+				guard.SetFightingBody(player)
 			},
 		},
 	}

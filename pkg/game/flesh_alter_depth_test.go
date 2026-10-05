@@ -51,7 +51,7 @@ func TestDoFleshAlterToggleAndUnequip(t *testing.T) {
 	ch := NewPlayer(1, "Flesh", 1001)
 	ch.Level = 1
 	ch.Position = combat.PosFighting
-	ch.SetFighting("target")
+	ch.SetFightingBody(NewPlayer(99999, "target", 1001))
 	ch.SetSkill(SkillFleshAlter, 100)
 	ch.SetHitroll(4)
 	ch.SetDamroll(6)
@@ -124,7 +124,7 @@ func TestDoFleshAlterFailureWaitAndImprovement(t *testing.T) {
 
 	ch := NewPlayer(1, "Flesh", 1001)
 	ch.Position = combat.PosFighting
-	ch.SetFighting("target")
+	ch.SetFightingBody(NewPlayer(99999, "target", 1001))
 	ch.SetSkill(SkillFleshAlter, 1)
 	dprng.ResetStream(seed)
 	result := DoFleshAlter(ch)

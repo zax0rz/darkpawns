@@ -3,6 +3,8 @@ package game
 import (
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 
@@ -71,18 +73,25 @@ func (p *Player) SetPosition(pos int) {
 	p.Position = pos
 }
 
-// GetFighting returns who the player is fighting.
+// GetFighting returns the opponent's display name, never an identity key.
 func (p *Player) GetFighting() string {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.Fighting
+	target := p.GetFightingBody()
+	if target == nil {
+		return ""
+	}
+	return target.GetName()
 }
 
-// SetFighting sets who the player is fighting.
-func (p *Player) SetFighting(target string) {
+func (p *Player) GetFightingBody() combat.Combatant {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.fightingBody
+}
+
+func (p *Player) SetFightingBody(target combat.Combatant) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.Fighting = target
+	p.fightingBody = target
 }
 
 // GetWaitState returns the current wait state in pulses (game-loop heartbeats).

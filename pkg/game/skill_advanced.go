@@ -148,7 +148,7 @@ func DoCutthroat(ch *Player, target combat.Combatant, world *World) SkillResult 
 		return SkillResult{MessageToCh: "Their throat is already slit!"}
 	}
 
-	if ch.GetFighting() != "" || target.GetFighting() != "" {
+	if ch.GetFightingBody() != nil || target.GetFightingBody() != nil {
 		return SkillResult{MessageToCh: "You can't get close enough!"}
 	}
 
@@ -473,7 +473,7 @@ func DoSharpen(ch *Player, objName string) SkillResult {
 
 	// do_sharpen checks FIGHTING(ch) after resolving and validating the object,
 	// rather than using the command table position gate as a substitute.
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return SkillResult{MessageToCh: "You're too busy to be sharpening anything!"}
 	}
 

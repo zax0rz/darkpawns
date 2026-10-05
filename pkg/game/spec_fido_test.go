@@ -13,7 +13,7 @@ func TestSpecFido_EntryGates(t *testing.T) {
 		setup func(*MobInstance)
 	}{
 		{name: "command", setup: func(*MobInstance) {}},
-		{name: "fighting", setup: func(mob *MobInstance) { mob.SetFighting("Tester") }},
+		{name: "fighting", setup: func(mob *MobInstance) { mob.SetFightingBody(NewPlayer(99999, "Tester", 1001)) }},
 		{name: "sleeping", setup: func(mob *MobInstance) { mob.SetPosition(combat.PosSleeping) }},
 		{name: "dead", setup: func(mob *MobInstance) { mob.CurrentHP = -1 }},
 	}

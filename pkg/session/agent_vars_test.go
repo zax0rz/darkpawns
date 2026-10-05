@@ -590,7 +590,7 @@ func TestBuildRoomMobs(t *testing.T) {
 	goblin := registerMob(t, m, 2001, 1001) // "goblin guard", "A goblin guard"
 	_ = registerMob(t, m, 2004, 1001)       // "rat", "A rat"
 
-	goblin.Fighting = true
+	goblin.SetFightingBody(game.NewPlayer(99999, "Opponent", 1001))
 
 	mobs := s.buildRoomMobs()
 	if len(mobs) != 2 {
@@ -655,7 +655,7 @@ func TestBuildRoomMobs_KeywordDisambiguation(t *testing.T) {
 	_ = registerMob(t, m, 2002, 1001)        // "goblin guard" (same keywords!)
 
 	// Make them distinguishable
-	goblin1.Fighting = true
+	goblin1.SetFightingBody(game.NewPlayer(99999, "Opponent", 1001))
 
 	mobs := s.buildRoomMobs()
 	if len(mobs) != 2 {

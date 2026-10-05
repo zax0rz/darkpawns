@@ -43,7 +43,7 @@ func TestDoRideDirectGates(t *testing.T) {
 	t.Run("fighting", func(t *testing.T) {
 		w, rider, _ := newRideDepthWorld(t)
 		output := captureMovementOutput(w)
-		rider.SetFighting("an enemy")
+		rider.SetFightingBody(NewPlayer(99999, "an enemy", 1001))
 
 		w.doRide(rider, nil, "mount", "horse")
 

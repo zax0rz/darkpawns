@@ -30,7 +30,7 @@ func TestUpdatePositionAfterDamage_WoundedBand(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := &msgMockCombatant{
-				mockCombatant: mockCombatant{name: "Victim", hp: tt.hp, position: PosFighting, fighting: "Attacker"},
+				mockCombatant: mockCombatant{name: "Victim", hp: tt.hp, position: PosFighting, fighting: &mockCombatant{name: "Attacker"}},
 			}
 			var broadcasts []string
 			got := UpdatePositionAfterDamage(v, func(_ int, msg, _ string) {
@@ -75,7 +75,7 @@ func TestUpdatePositionAfterDamage_WoundedBand(t *testing.T) {
 // room-facing message reads "and will slowly die". R1 — player-facing bytes are law.
 func TestUpdatePositionAfterDamage_IncapExactStrings(t *testing.T) {
 	v := &msgMockCombatant{
-		mockCombatant: mockCombatant{name: "Victim", hp: -4, position: PosFighting, fighting: "Attacker"},
+		mockCombatant: mockCombatant{name: "Victim", hp: -4, position: PosFighting, fighting: &mockCombatant{name: "Attacker"}},
 	}
 	var broadcasts []string
 	UpdatePositionAfterDamage(v, func(_ int, msg, _ string) {

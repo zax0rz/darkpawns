@@ -43,7 +43,7 @@ func TestCmdKickTargetGates(t *testing.T) {
 			p.SetPosition(combat.PosFighting)
 			p.SetSkill(game.SkillKick, 1)
 			if tt.fighting {
-				p.SetFighting(ktw.mob.GetName())
+				p.SetFightingBody(ktw.mob)
 			}
 			sess := &killPayoutSession{player: p, world: ktw.world}
 

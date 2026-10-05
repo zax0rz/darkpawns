@@ -312,11 +312,11 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		// The breath bridge also registers those fields with the engine; the
 		// common entry above preserves C's gates before damage absorption.
 		if isBreathSpell(attackType) && chCombat.GetName() != victCombat.GetName() && chCombat.GetPosition() > combat.PosStunned {
-			if chCombat.GetFighting() == "" {
-				chCombat.SetFighting(victCombat.GetName())
+			if chCombat.GetFightingBody() == nil {
+				chCombat.SetFightingBody(victCombat)
 			}
-			if victCombat.GetPosition() > combat.PosStunned && victCombat.GetFighting() == "" {
-				victCombat.SetFighting(chCombat.GetName())
+			if victCombat.GetPosition() > combat.PosStunned && victCombat.GetFightingBody() == nil {
+				victCombat.SetFightingBody(chCombat)
 			}
 			// The C damage(0) call updates FIGHTING fields, and the main
 			// combat list is the engine's corresponding runtime state. Start

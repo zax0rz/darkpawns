@@ -353,7 +353,7 @@ func TestQuitFightingRefusesWithCMessage(t *testing.T) {
 		t.Run(cmd, func(t *testing.T) {
 			m := makeQuitTestManager(t, nil)
 			s := makeQuitSession(t, m, 1, "Brawler", 10, 8004)
-			s.player.Fighting = "Target"
+			s.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 			s.player.SetPosition(combat.PosFighting)
 
 			if err := ExecuteCommand(s, cmd, nil); err != nil {

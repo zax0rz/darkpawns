@@ -38,7 +38,7 @@ func (w *World) PlanAmbush(ch *Player, target combat.Combatant) {
 
 func (w *World) resolveAmbush(ch *Player, target combat.Combatant, wasIn int) {
 	// EVENTFUNC(ambush_event): clear GET_ACTION first, then refuse a fighter.
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return
 	}
 	nowIn := ch.GetRoom()
@@ -90,7 +90,7 @@ func (w *World) applyAmbushDamage(ch *Player, target combat.Combatant, dam int) 
 
 	// damage() gates victim enrollment and stops an unconscious victim. The callback has
 	// already removed a lethal mob, so only surviving targets enter combat.
-	if target.GetPosition() != combat.PosDead && w.combatEngine != nil && ch.GetFighting() == target.GetName() {
+	if target.GetPosition() != combat.PosDead && w.combatEngine != nil && ch.GetFightingBody() == target {
 		if err := combat.EnrollAfterDamage(w.combatEngine, ch, target); err != nil {
 			return
 		}

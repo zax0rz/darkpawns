@@ -215,7 +215,7 @@ func TestResolveCastTargetOrderAndEmptyDefaults(t *testing.T) {
 	}
 
 	worldTarget.SetRoom(1001)
-	caster.player.SetFighting(worldTarget.GetName())
+	caster.player.SetFightingBody(worldTarget)
 	fightVictim := &spells.SpellInfo{Routines: spells.SpellRoutines{
 		Targets: spells.TarFightVict,
 		Violent: true,

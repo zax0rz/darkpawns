@@ -655,7 +655,7 @@ func CheckParry(fighter, opponent Combatant) ParryResult {
 		return ParryFail
 	}
 
-	if opponent == nil || fighter.GetFighting() != opponent.GetName() || opponent.GetFighting() != fighter.GetName() {
+	if opponent == nil || fighter.GetFightingBody() != opponent || opponent.GetFightingBody() != fighter {
 		return ParryFail
 	}
 
@@ -689,7 +689,7 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 		return DodgeFail
 	}
 
-	if attacker == nil || defender.GetFighting() != attacker.GetName() || attacker.GetFighting() != defender.GetName() {
+	if attacker == nil || defender.GetFightingBody() != attacker || attacker.GetFightingBody() != defender {
 		return DodgeFail
 	}
 

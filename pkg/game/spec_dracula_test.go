@@ -55,8 +55,8 @@ func TestSpecDracula_EntryGatesAndDelegation(t *testing.T) {
 	player.SetPlrFlag(PrfNohassle, false)
 
 	mob.SetPosition(posFighting)
-	mob.SetFighting(player.GetName())
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	if !specDracula(w, nil, mob, "", "") {
 		t.Fatal("fighting commandless Dracula should delegate to magic_user")
 	}

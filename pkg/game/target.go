@@ -211,7 +211,7 @@ func (w *World) ResolveCharWorld(ch *Player, name string) (CharTarget, bool) {
 // a mob's short description rather than its command keyword list, so routing
 // this through ResolveCharInRoom would lose valid mob opponents.
 func (w *World) ResolveFightingTarget(ch *Player) (CharTarget, bool) {
-	if ch == nil || ch.GetFighting() == "" {
+	if ch == nil || ch.GetFightingBody() == nil {
 		return CharTarget{}, false
 	}
 	fightingName := ch.GetFighting()

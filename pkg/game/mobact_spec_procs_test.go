@@ -82,7 +82,7 @@ func TestSpecNormalChecker_EntryGates(t *testing.T) {
 		},
 		{
 			name:  "already fighting",
-			setup: func(player *Player, mob *MobInstance) { mob.SetFighting(player.Name) },
+			setup: func(player *Player, mob *MobInstance) { mob.SetFightingBody(player) },
 		},
 		{
 			name:  "immortal target",
@@ -123,9 +123,9 @@ func (e *normalCheckerCombatEngine) PerformInitialAttack(attacker, defender comb
 	return nil
 }
 
-func (e *normalCheckerCombatEngine) IsFighting(string) bool { return false }
+func (e *normalCheckerCombatEngine) IsFighting(combat.Combatant) bool { return false }
 
-func (e *normalCheckerCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *normalCheckerCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 
@@ -153,7 +153,7 @@ func TestSpecNormalChecker_SkipsWhenMobAlreadyFighting(t *testing.T) {
 	player.Level = 10
 	mob := spawnTargetMob(t, w)
 	mob.SetPosition(combat.PosStanding)
-	mob.SetFighting(player.Name)
+	mob.SetFightingBody(player)
 
 	if specNormalChecker(w, nil, mob, "", "") {
 		t.Error("expected specNormalChecker to skip a mob already fighting")
@@ -179,8 +179,8 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	}
 	rescuer.SetPosition(combat.PosStanding)
 	ally.SetPosition(combat.PosStanding)
-	ally.SetFighting(player.Name) // player is attacking the ally mob
-	player.SetFighting(ally.GetName())
+	ally.SetFightingBody(player) // player is attacking the ally mob
+	player.SetFightingBody(ally)
 	startHP := 200
 	player.SetHP(startHP)
 	previousNumber := rescuerNumber
@@ -219,8 +219,8 @@ func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob ally: %v", err)
 	}
-	ally.SetFighting(player.GetName())
-	player.SetFighting(ally.GetName())
+	ally.SetFightingBody(player)
+	player.SetFightingBody(ally)
 
 	var hit [2]string
 	ce := combat.NewCombatEngine()
@@ -395,10 +395,10 @@ func TestSpecRescuer_SkipsWhenRescuerAlreadyFighting(t *testing.T) {
 		t.Fatalf("SpawnMob ally: %v", err)
 	}
 	rescuer.SetPosition(combat.PosStanding)
-	rescuer.SetFighting(player.Name)
-	player.SetFighting(rescuer.GetName())
+	rescuer.SetFightingBody(player)
+	player.SetFightingBody(rescuer)
 	ally.SetPosition(combat.PosStanding)
-	ally.SetFighting(player.Name)
+	ally.SetFightingBody(player)
 
 	if specRescuer(w, nil, rescuer, "", "") {
 		t.Error("expected specRescuer to skip when it's already fighting")

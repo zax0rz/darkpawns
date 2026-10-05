@@ -111,7 +111,7 @@ func getMobVNumSpec(vnum int) SpecFunc {
 // C macros translated:
 //
 //	IS_MOB(mob)   → mob.Proto() != nil
-//	FIGHTING(mob) → mob.GetFighting() != ""
+//	FIGHTING(mob) → mob.GetFightingBody() != nil
 //	AWAKE(mob)    → mob.GetPosition() >= combat.PosSitting
 //	MOB_FLAGGED   → hasMobFlag()
 //	hit()         → w.combatEngine.StartCombat()
@@ -160,16 +160,16 @@ func (w *World) MobileActivityForMob(mob *MobInstance) {
 // getter methods to avoid re-entrant lock deadlock.
 func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// C: if (!IS_MOB(ch) || FIGHTING(ch) || !AWAKE(ch)) continue;
-	if ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+	if ch.GetFightingBody() != nil || ch.GetPosition() <= combat.PosSleeping {
 		return
 	}
 
 	// Hunter mobs chase their targets two steps at a time. C performs both
 	// calls before special procedures and every other per-tick activity.
-	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
+	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFightingBody() == nil {
 		w.huntVictim(ch)
 	}
-	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFighting() == "" {
+	if ch.GetPosition() == combat.PosStanding && hasMobFlag(ch, "hunter") && ch.GetFightingBody() == nil {
 		w.huntVictim(ch)
 	}
 

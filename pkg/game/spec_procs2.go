@@ -150,7 +150,7 @@ func specNormalChecker(w *World, ch *Player, me *MobInstance, cmd string, arg st
 	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	if me.GetFighting() != "" {
+	if me.GetFightingBody() != nil {
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
@@ -191,7 +191,7 @@ func specNinelives(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 		return false
 	}
-	if ch.GetFighting() == "" || ch.GetHP() > 0 {
+	if ch.GetFightingBody() == nil || ch.GetHP() > 0 {
 		return false
 	}
 	lives := ch.GetMaxMove()
@@ -427,7 +427,7 @@ func specTipster(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	if cmd != "" || ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
 		return false
 	}
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return false
 	}
 
@@ -474,7 +474,7 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	allies := w.GetMobsInRoom(me.GetRoomVNum())
 	sort.Slice(allies, func(i, j int) bool { return allies[i].GetID() < allies[j].GetID() })
 	for _, ally := range allies {
-		if ally == nil || ally.GetID() == me.GetID() || ally.GetFighting() == "" {
+		if ally == nil || ally.GetID() == me.GetID() || ally.GetFightingBody() == nil {
 			continue
 		}
 		// C's GET_MOB_SPEC(i) != rescuer gate is on the ally, not on the
@@ -505,12 +505,12 @@ func mobRescuerIsReciprocallyFighting(w *World, me *MobInstance) bool {
 		return false
 	}
 	for _, player := range w.GetAllPlayers() {
-		if player.GetName() == targetName && player.GetFighting() == me.GetName() {
+		if player.GetName() == targetName && player.GetFightingBody() == me {
 			return true
 		}
 	}
 	for _, mob := range w.GetAllMobs() {
-		if mob.GetName() == targetName && mob.GetFighting() == me.GetName() {
+		if mob.GetName() == targetName && mob.GetFightingBody() == me {
 			return true
 		}
 	}
@@ -557,20 +557,20 @@ func mobRescueVictim(w *World, me *MobInstance, shortDesc string) combat.Combata
 // calls hit(vict, tmp_ch) after interposing the combat state.
 func mobDoRescue(w *World, me, ally *MobInstance) {
 	victim := mobRescueVictim(w, me, ally.GetName())
-	if victim == nil || victim.GetName() == me.GetName() || me.GetFighting() == victim.GetName() {
+	if victim == nil || victim.GetName() == me.GetName() || me.GetFightingBody() == victim {
 		return
 	}
 
 	var tmp combat.Combatant
 	for _, player := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if player.GetFighting() == victim.GetName() {
+		if player.GetFightingBody() == victim {
 			tmp = player
 			break
 		}
 	}
 	if tmp == nil {
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob.GetFighting() == victim.GetName() {
+			if mob.GetFightingBody() == victim {
 				tmp = mob
 				break
 			}
@@ -594,20 +594,20 @@ func mobDoRescue(w *World, me, ally *MobInstance) {
 	// stop_fighting() mutates the three characters even if a combat pair was
 	// not registered (the C list is pointer-based, while Go's engine is pair-
 	// based). Stop the engine's pairs first, then clear each pointer directly.
-	if stopper, ok := w.combatEngine.(interface{ StopCombat(string) }); ok {
-		stopper.StopCombat(victim.GetName())
-		stopper.StopCombat(tmp.GetName())
-		stopper.StopCombat(me.GetName())
+	if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+		stopper.StopCombat(victim)
+		stopper.StopCombat(tmp)
+		stopper.StopCombat(me)
 	}
 	victim.StopFighting()
 	tmp.StopFighting()
 	me.StopFighting()
 
-	me.SetFighting(tmp.GetName())
-	tmp.SetFighting(me.GetName())
+	me.SetFightingBody(tmp)
+	tmp.SetFightingBody(me)
 	// hit(vict, tmp_ch) calls damage(), which starts the NPC victim's side
 	// because stop_fighting(vict) just cleared it; the player already faces me.
-	victim.SetFighting(tmp.GetName())
+	victim.SetFightingBody(tmp)
 
 	if w.combatEngine != nil {
 		if err := w.combatEngine.StartCombat(me, tmp); err != nil {
@@ -631,7 +631,7 @@ func specPissedalchemist(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	if !ch.IsNPC() {
 		return false
 	}
-	if ch.GetFighting() == "" || randRange(1, 4) != 1 {
+	if ch.GetFightingBody() == nil || randRange(1, 4) != 1 {
 		return false
 	}
 	if ch.GetHP() > ch.GetMaxHP()/4 {
@@ -1530,11 +1530,11 @@ func specIra(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 	if ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
 		return false
 	}
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if pl.IsNPC() || pl == ch || pl.GetFighting() != "" {
+		if pl.IsNPC() || pl == ch || pl.GetFightingBody() != nil {
 			continue
 		}
 		if number(0, 5) != 0 {
@@ -1590,7 +1590,7 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			return true
 		}
 		tch, ok := candidate.(cityguardAlignedCombatant)
-		if !ok || !canSee(me, tch) || tch.GetFighting() == "" {
+		if !ok || !canSee(me, tch) || tch.GetFightingBody() == nil {
 			continue
 		}
 		target := cityguardCombatantByName(w, me.GetRoomVNum(), tch.GetFighting())
@@ -1825,7 +1825,7 @@ func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	if me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
-	if me.GetFighting() != "" {
+	if me.GetFightingBody() != nil {
 		return false
 	}
 
@@ -2047,7 +2047,7 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 		}
 	}
 
-	if cmd == "" && me.GetFighting() == "" {
+	if cmd == "" && me.GetFightingBody() == nil {
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
 			if mob == me || !mob.IsFighting() || mob.GetFightingTarget() == "" {
 				continue
@@ -2075,7 +2075,7 @@ func specMindflayer(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	// invokes this after the mob's ordinary turn with ch=nil and me as the
 	// registered mob. The native entry gates are exactly commandless, awake,
 	// and currently fighting; there is no extra hit-point gate here.
-	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFighting() == "" {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFightingBody() == nil {
 		return false
 	}
 	vict := mobFightingTarget(w, me)
@@ -2111,7 +2111,7 @@ func specMindflayer(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // specBackstabber — Backstabs unsuspecting players
 // ================================================================
 func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetFighting() != "" || me.GetPosition() <= combat.PosSleeping {
+	if cmd != "" || me.GetFightingBody() != nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
@@ -2126,7 +2126,7 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 				// so this failed weapon gate is player-silent and draw-free.
 				return true
 			}
-			if me.IsAffected(affMounted) || pl.GetFighting() != "" {
+			if me.IsAffected(affMounted) || pl.GetFightingBody() != nil {
 				return true
 			}
 			w.mobBackstab(me, pl)
@@ -2143,7 +2143,7 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 // specTeleporter — Teleports the wounded procedure mob
 // ================================================================
 func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetFighting() == "" || me.GetPosition() <= combat.PosSleeping {
+	if cmd != "" || me.GetFightingBody() == nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	if me.GetHP() < me.GetMaxHP()/2 {
@@ -2277,7 +2277,7 @@ func specCastleGuard(w *World, ch *Player, me *MobInstance, cmd string, spec cas
 	// C's !cmd arm scans world[mobile->in_room].people, not just players. A
 	// second guard that is already fighting another character is handed to the
 	// canonical hit() seam, even when that target is a mob.
-	if me.GetFighting() == "" {
+	if me.GetFightingBody() == nil {
 		for _, other := range w.GetMobsInRoom(me.GetRoomVNum()) {
 			if MobSpecAssign[other.GetVNum()] != spec.assignedName || !other.IsFighting() {
 				continue
@@ -2368,7 +2368,7 @@ var (
 )
 
 func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFighting() != "" {
+	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFightingBody() != nil {
 		return false
 	}
 

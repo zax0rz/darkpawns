@@ -16,8 +16,8 @@ func prepareTeleporter(t *testing.T) (*World, *Player, *MobInstance, func() stri
 	mob.SetMaxHP(100)
 	mob.SetHealth(1)
 	mob.SetPosition(combat.PosStanding)
-	mob.SetFighting(player.GetName())
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	return w, player, mob, lastMsg
 }
 

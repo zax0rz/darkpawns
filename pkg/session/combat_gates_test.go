@@ -129,7 +129,7 @@ func TestPeacefulRoom_BlocksAttackOnMob(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if m.combatEngine.IsFighting("Hero") {
+	if m.combatEngine.IsFighting(s.player) {
 		t.Error("combat should not start in a peaceful room")
 	}
 	if got, want := readSendText(t, s), "This room just has such a peaceful, easy feeling...\r\n"; got != want {
@@ -151,7 +151,7 @@ func TestPeacefulRoom_BlocksAttackOnPlayer(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if m.combatEngine.IsFighting("Attacker") {
+	if m.combatEngine.IsFighting(attacker.player) {
 		t.Error("combat should not start in a peaceful room (PC target)")
 	}
 	if !drainSendContains(attacker, "peaceful") {
@@ -166,7 +166,7 @@ func TestPeacefulRoom_AllowsRetaliation(t *testing.T) {
 	attacker := makeGateSession(t, m, 1, "Hero", 20)
 	victim := game.NewPlayer(2, "Bully", 1001)
 	victim.SetLevel(20)
-	victim.SetFighting("Hero") // victim is already fighting the attacker
+	victim.SetFightingBody(attacker.player) // victim is already fighting the attacker
 	if err := m.world.AddPlayer(victim); err != nil {
 		t.Fatalf("AddPlayer victim failed: %v", err)
 	}
@@ -175,7 +175,7 @@ func TestPeacefulRoom_AllowsRetaliation(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if !m.combatEngine.IsFighting("Hero") {
+	if !m.combatEngine.IsFighting(attacker.player) {
 		t.Error("retaliation should be allowed even in a peaceful room")
 	}
 }
@@ -195,7 +195,7 @@ func TestPeacefulRoom_AllowsOutlawTarget(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if !m.combatEngine.IsFighting("Hero") {
+	if !m.combatEngine.IsFighting(attacker.player) {
 		t.Error("attacking an outlaw should be allowed even in a peaceful room")
 	}
 }
@@ -218,7 +218,7 @@ func TestLowLevelGate_AttackerTooLow(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if m.combatEngine.IsFighting("Rookie") {
+	if m.combatEngine.IsFighting(attacker.player) {
 		t.Error("level 5 attacker should be blocked from attacking a player")
 	}
 	if got, want := readSendText(t, attacker), "You are not experienced enough to attack Highlevel!\r\n"; got != want {
@@ -240,7 +240,7 @@ func TestLowLevelGate_VictimTooLow(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if m.combatEngine.IsFighting("Bully") {
+	if m.combatEngine.IsFighting(attacker.player) {
 		t.Error("attacking a level 5 player should be blocked")
 	}
 	if got, want := readSendText(t, attacker), "Ancient forces protect Newbie from your wrath!\r\n"; got != want {
@@ -281,7 +281,7 @@ func TestLowLevelGate_VictimLowButOutlaw(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if !m.combatEngine.IsFighting("Hero") {
+	if !m.combatEngine.IsFighting(attacker.player) {
 		t.Error("attacking a level 5 outlaw should be allowed (protection waived)")
 	}
 }
@@ -300,7 +300,7 @@ func TestLowLevelGate_DoesNotApplyToMobs(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if !m.combatEngine.IsFighting("Rookie") {
+	if !m.combatEngine.IsFighting(s.player) {
 		t.Error("level 5 player should be able to attack a mob (low-level gate is PC-vs-PC only)")
 	}
 }
@@ -320,7 +320,7 @@ func TestPositiveControl_NormalAttackProceeds(t *testing.T) {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
 
-	if !m.combatEngine.IsFighting("Veteran") {
+	if !m.combatEngine.IsFighting(s.player) {
 		t.Error("level 20 attacking a mob in a normal room should start combat")
 	}
 }

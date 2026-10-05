@@ -216,7 +216,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// C's command is POS_FIGHTING, and do_disarm also insists the target is
 	// the actor's current opponent. Keep the handler-level check here for
 	// direct callers and for the shared special-procedure seam.
-	if ch.GetFighting() == "" || ch.GetFighting() != target.GetName() {
+	if ch.GetFightingBody() == nil || ch.GetFightingBody() != target {
 		return SkillResult{Success: false, MessageToCh: "You can't disarm them if you aren't fighting them!\r\n"}
 	}
 
@@ -224,7 +224,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 	// #nosec G404
 	percent := dprng.Number(1, 101+target.GetLevel())
 	prob := ch.GetSkill(SkillDisarm)
-	retaliate := target.GetFighting() == ""
+	retaliate := target.GetFightingBody() == nil
 
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
 	victPronouns := GetPronouns(target.GetName(), target.GetSex())
@@ -295,7 +295,7 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
-	if ch.IsFighting() || target.GetFighting() != "" {
+	if ch.IsFighting() || target.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "There's too much going on to establish a mind link.\r\n"}
 	}
 

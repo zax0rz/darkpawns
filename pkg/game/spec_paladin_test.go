@@ -15,9 +15,9 @@ func preparePaladinCombat(t *testing.T, w *World, player *Player) *MobInstance {
 
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 32)
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.GetName())
+	mob.SetFightingBody(player)
 	player.SetPosition(combat.PosFighting)
-	player.SetFighting(mob.GetName())
+	player.SetFightingBody(mob)
 	return mob
 }
 
@@ -36,8 +36,8 @@ func TestSpecPaladin_Golden(t *testing.T) {
 		t.Error("specPaladin should return false without FIGHTING(ch)")
 	}
 
-	mob.SetFighting(player.GetName())
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	mob.SetWaitState(1)
 	if specPaladin(w, nil, mob, "", "") {
 		t.Error("specPaladin should return false while GET_MOB_WAIT is nonzero")

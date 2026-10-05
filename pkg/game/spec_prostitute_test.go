@@ -69,7 +69,7 @@ func TestSpecProstitute_EntryGatesAndFallthrough(t *testing.T) {
 		t.Fatal("sleeping actor should not reach prostitute")
 	}
 	actor.SetPosition(combat.PosStanding)
-	actor.SetFighting("another character")
+	actor.SetFightingBody(NewPlayer(99999, "another character", 1001))
 	if specProstitute(w, actor, mob, "buy", "") {
 		t.Fatal("fighting actor should not reach prostitute")
 	}

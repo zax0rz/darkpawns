@@ -269,7 +269,7 @@ func TestNinthTickVoidsMortalAndStopsCombat(t *testing.T) {
 	// C stop_fighting calls update_pos after leaving combat. Exercise a
 	// wounded band rather than only the healthy -> standing case.
 	idler.player.Health = -4
-	if !m.combatEngine.IsFighting("Idler") {
+	if !m.combatEngine.IsFighting(idler.player) {
 		t.Fatal("precondition: combat pair was not enrolled")
 	}
 
@@ -283,7 +283,7 @@ func TestNinthTickVoidsMortalAndStopsCombat(t *testing.T) {
 	if got := opponent.player.GetFighting(); got != "" {
 		t.Errorf("opponent fighting = %q, want empty", got)
 	}
-	if m.combatEngine.IsFighting("Idler") || m.combatEngine.IsFighting("Opponent") {
+	if m.combatEngine.IsFighting(idler.player) || m.combatEngine.IsFighting(opponent.player) {
 		t.Error("combat-engine pair remains after void transition")
 	}
 	if got := idler.player.GetPosition(); got != combat.PosIncap {

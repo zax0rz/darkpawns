@@ -54,10 +54,9 @@ type MobInstance struct {
 	Equipment map[int]*ObjectInstance // C WEAR_* index, never a player EquipmentSlot
 
 	// Combat state
-	Target         *MobInstance // or Player
-	Fighting       bool
-	FightingTarget string // Name of the target being fought
-	WaitState      int    // PULSE_VIOLENCE ticks remaining (C GET_MOB_WAIT)
+	Target       *MobInstance     // or Player
+	fightingBody combat.Combatant // C FIGHTING: actual runtime opponent
+	WaitState    int              // PULSE_VIOLENCE ticks remaining (C GET_MOB_WAIT)
 
 	// Memory: names of players this mob remembers attacking it
 	// Source: mobact.c:262-285, remember()/forget() in mobact.c:346-407
@@ -186,22 +185,21 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		// invisibility, ...), and mag_affects' mob-affection gate
 		// (magic.c:1387-1394) refuses spells whose bitvector the mob holds
 		// innately.
-		Affects:        affectFlagBits(proto.AffectFlags),
-		Inventory:      make([]*ObjectInstance, 0),
-		Equipment:      make(map[int]*ObjectInstance),
-		Fighting:       false,
-		FightingTarget: "",
-		Memory:         make([]string, 0),
-		CustomData:     make(map[string]interface{}),
-		Runtime:        MobRuntimeState{},
-		Str:            str,
-		Intel:          intel,
-		Wis:            wis,
-		Dex:            dex,
-		Con:            con,
-		Cha:            cha,
-		Gold:           gold,
-		Weight:         proto.Weight, Height: proto.Height,
+		Affects:      affectFlagBits(proto.AffectFlags),
+		Inventory:    make([]*ObjectInstance, 0),
+		Equipment:    make(map[int]*ObjectInstance),
+		fightingBody: nil,
+		Memory:       make([]string, 0),
+		CustomData:   make(map[string]interface{}),
+		Runtime:      MobRuntimeState{},
+		Str:          str,
+		Intel:        intel,
+		Wis:          wis,
+		Dex:          dex,
+		Con:          con,
+		Cha:          cha,
+		Gold:         gold,
+		Weight:       proto.Weight, Height: proto.Height,
 		BirthTime: time.Unix(nowFunc(), 0),
 	}
 	mob.SetProto(proto)
@@ -936,27 +934,25 @@ func (m *MobInstance) DecrementWaitState() {
 	}
 }
 
-// SetFighting sets who the mob is fighting.
-func (m *MobInstance) SetFighting(target string) {
+// SetFightingBody sets the actual opponent without changing posture.
+// C damage stands the victim after the opener has read its sleeping posture.
+func (m *MobInstance) SetFightingBody(target combat.Combatant) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	// C set_fighting sets FIGHTING(ch) here but POS_FIGHTING only inside
-	// damage() (fight.c), which runs AFTER the to-hit decision. Setting the
-	// position here would make a sleeping victim "awake" for the opener's
-	// to-hit and let it be missed, where C auto-hits a non-awake victim. So set
-	// only the fighting flag/target; the combat engine transitions the position
-	// to POS_FIGHTING at the damage point (performOneHit). GetFighting() reads
-	// the flag, so enrollment still works.
-	m.Fighting = true
-	m.FightingTarget = target
+	m.fightingBody = target
+}
+
+func (m *MobInstance) GetFightingBody() combat.Combatant {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.fightingBody
 }
 
 // StopFighting clears the fighting state.
 func (m *MobInstance) StopFighting() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.Fighting = false
-	m.FightingTarget = ""
+	m.fightingBody = nil
 	// Re-derive position from HP rather than forcing "standing": a mob beaten
 	// into the wounded band must stay downed when it stops fighting. Mirrors
 	// Merc stop_fighting (reset to default_pos, then update_pos). DP-1021.
@@ -983,12 +979,11 @@ func mobStatusFromHP(hp int) string {
 
 // GetFighting returns who the mob is fighting (empty string if not fighting).
 func (m *MobInstance) GetFighting() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	if m.Fighting || m.Status == "fighting" {
-		return m.FightingTarget
+	target := m.GetFightingBody()
+	if target == nil {
+		return ""
 	}
-	return ""
+	return target.GetName()
 }
 
 // GetClass returns the mob's class
@@ -1312,18 +1307,10 @@ func (m *MobInstance) ClearMobFlag(bit int) {
 }
 
 // IsFighting returns whether the mob is currently in combat.
-func (m *MobInstance) IsFighting() bool {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.Fighting
-}
+func (m *MobInstance) IsFighting() bool { return m.GetFightingBody() != nil }
 
 // GetFightingTarget returns the name of the target being fought.
-func (m *MobInstance) GetFightingTarget() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.FightingTarget
-}
+func (m *MobInstance) GetFightingTarget() string { return m.GetFighting() }
 
 // GetAlignment returns the mob's alignment from its prototype.
 func (m *MobInstance) GetAlignment() int {

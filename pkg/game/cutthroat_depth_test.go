@@ -87,7 +87,7 @@ func TestDoCutthroatGateOrder(t *testing.T) {
 		ch.SetSkill(SkillCutthroat, 100)
 		mob := spawnTargetMob(t, w)
 		cutthroatWeapon(t, ch, true)
-		ch.SetFighting("someone else")
+		ch.SetFightingBody(NewPlayer(99999, "someone else", 1001))
 
 		result := DoCutthroat(ch, mob, w)
 		if result.MessageToCh != "You can't get close enough!" {
@@ -125,7 +125,7 @@ func TestDoCutthroatSuccessAndFailureContracts(t *testing.T) {
 		t.Fatalf("cutthroat affect = %#v", affect)
 	}
 
-	ch.SetFighting("")
+	ch.SetFightingBody(nil)
 	victim.SetAffect(affCutthroat, false)
 	victim.ActiveAffects = nil
 	ch.Level = 20

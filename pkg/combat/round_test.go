@@ -326,16 +326,16 @@ func TestStartCombat(t *testing.T) {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
 
-	if !engine.IsFighting("Hero") {
+	if !engine.IsFighting(attacker) {
 		t.Error("expected Hero to be fighting")
 	}
-	if !engine.IsFighting("Orc") {
+	if !engine.IsFighting(defender) {
 		t.Error("expected Orc to be fighting")
 	}
-	if attacker.fighting != "Orc" {
+	if attacker.GetFighting() != "Orc" {
 		t.Errorf("expected attacker fighting Orc, got %q", attacker.fighting)
 	}
-	if defender.fighting != "Hero" {
+	if defender.GetFighting() != "Hero" {
 		t.Errorf("expected defender fighting Hero, got %q", defender.fighting)
 	}
 }
@@ -378,14 +378,14 @@ func TestStartCombat_DefenderKeepsExistingTarget(t *testing.T) {
 	}
 
 	// Hero must still be fighting its original target, not retargeted to Goblin.
-	if hero.fighting != "Orc" {
+	if hero.GetFighting() != "Orc" {
 		t.Errorf("expected Hero to keep fighting Orc, got %q", hero.fighting)
 	}
 	// Goblin is engaged with Hero either way.
-	if goblin.fighting != "Hero" {
+	if goblin.GetFighting() != "Hero" {
 		t.Errorf("expected Goblin fighting Hero, got %q", goblin.fighting)
 	}
-	if !engine.IsFighting("Goblin") {
+	if !engine.IsFighting(goblin) {
 		t.Error("expected Goblin to be registered as fighting")
 	}
 }
@@ -416,12 +416,12 @@ func TestCombatOrderPrependsNewFightersAndRemovesStoppedFighters(t *testing.T) {
 		t.Fatalf("combat order = %s, want %s", got, want)
 	}
 
-	engine.StopCombat("Goblin")
+	engine.StopCombat(goblin)
 	if got, want := order(), "Hero,Orc"; got != want {
 		t.Fatalf("combat order after stopping Goblin = %s, want %s", got, want)
 	}
 
-	engine.StopCombat("Hero")
+	engine.StopCombat(hero)
 	if got := order(); got != "" {
 		t.Fatalf("combat order after stopping Hero = %s, want empty", got)
 	}
@@ -436,9 +436,9 @@ func TestStopCombat(t *testing.T) {
 	defender := &mockCombatant{name: "Orc", room: 100}
 
 	_ = engine.StartCombat(attacker, defender)
-	engine.StopCombat("Hero")
+	engine.StopCombat(attacker)
 
-	if engine.IsFighting("Hero") {
+	if engine.IsFighting(attacker) {
 		t.Error("expected Hero to not be fighting after StopCombat")
 	}
 }
@@ -453,7 +453,7 @@ func TestGetCombatTarget(t *testing.T) {
 
 	_ = engine.StartCombat(attacker, defender)
 
-	target, ok := engine.GetCombatTarget("Hero")
+	target, ok := engine.GetCombatTarget(attacker)
 	if !ok {
 		t.Fatal("expected Hero to have a combat target")
 	}
@@ -462,7 +462,7 @@ func TestGetCombatTarget(t *testing.T) {
 	}
 
 	// Reverse lookup
-	target, ok = engine.GetCombatTarget("Orc")
+	target, ok = engine.GetCombatTarget(defender)
 	if !ok {
 		t.Fatal("expected Orc to have a combat target")
 	}
@@ -471,7 +471,7 @@ func TestGetCombatTarget(t *testing.T) {
 	}
 
 	// Non-combatant
-	_, ok = engine.GetCombatTarget("Nobody")
+	_, ok = engine.GetCombatTarget(nil)
 	if ok {
 		t.Error("expected no target for non-combatant")
 	}
@@ -486,12 +486,12 @@ func TestGetCombatStatus(t *testing.T) {
 	defender := &mockCombatant{name: "Orc", room: 100}
 	_ = engine.StartCombat(attacker, defender)
 
-	status := engine.GetCombatStatus("Hero")
+	status := engine.GetCombatStatus(attacker)
 	if !strings.Contains(status, "fighting") {
 		t.Errorf("expected 'fighting' in status for attacker, got %q", status)
 	}
 
-	status = engine.GetCombatStatus("Nobody")
+	status = engine.GetCombatStatus(nil)
 	if !strings.Contains(status, "not in combat") {
 		t.Errorf("expected 'not in combat' for non-combatant, got %q", status)
 	}
@@ -639,7 +639,7 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 
 	// Run multiple rounds to ensure death with a weak defender
 	for round := 0; round < 5; round++ {
-		if engine.IsFighting("Hero") && engine.IsFighting("Goblin") {
+		if engine.IsFighting(attacker) && engine.IsFighting(defender) {
 			engine.processCombatPair(&CombatPair{
 				Attacker: attacker,
 				Defender: defender,
@@ -669,7 +669,7 @@ func TestProcessCombatPair_DifferentRoom(t *testing.T) {
 	_ = engine.StartCombat(attacker, defender)
 	engine.processCombatPair(&CombatPair{Attacker: attacker, Defender: defender})
 
-	if engine.IsFighting("Hero") {
+	if engine.IsFighting(attacker) {
 		t.Error("expected combat to stop when rooms differ")
 	}
 }

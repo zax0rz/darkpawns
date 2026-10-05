@@ -28,36 +28,42 @@ type spellCombatant struct {
 	maxHP    int
 	room     int
 	pos      int
-	fighting string
+	fighting combat.Combatant
 	messages []string
 }
 
-func (c *spellCombatant) GetName() string                { return c.name }
-func (c *spellCombatant) IsNPC() bool                    { return c.npc }
-func (c *spellCombatant) GetFlags() uint64               { return c.flags }
-func (c *spellCombatant) GetRoom() int                   { return c.room }
-func (c *spellCombatant) GetLevel() int                  { return c.level }
-func (c *spellCombatant) GetHP() int                     { return c.hp }
-func (c *spellCombatant) GetMaxHP() int                  { return c.maxHP }
-func (c *spellCombatant) GetAC() int                     { return 0 }
-func (c *spellCombatant) GetTHAC0() int                  { return 20 }
-func (c *spellCombatant) GetDamageRoll() combat.DiceRoll { return combat.DiceRoll{} }
-func (c *spellCombatant) GetPosition() int               { return c.pos }
-func (c *spellCombatant) SetPosition(p int)              { c.pos = p }
-func (c *spellCombatant) GetClass() int                  { return 0 }
-func (c *spellCombatant) GetStr() int                    { return 13 }
-func (c *spellCombatant) GetStrAdd() int                 { return 0 }
-func (c *spellCombatant) GetDex() int                    { return 13 }
-func (c *spellCombatant) GetInt() int                    { return 13 }
-func (c *spellCombatant) GetWis() int                    { return 13 }
-func (c *spellCombatant) GetHitroll() int                { return 0 }
-func (c *spellCombatant) GetDamroll() int                { return 0 }
-func (c *spellCombatant) GetSex() int                    { return 0 }
-func (c *spellCombatant) Heal(amount int)                { c.hp += amount }
-func (c *spellCombatant) SetFighting(target string)      { c.fighting = target }
-func (c *spellCombatant) StopFighting()                  { c.fighting = "" }
-func (c *spellCombatant) GetFighting() string            { return c.fighting }
-func (c *spellCombatant) SendMessage(msg string)         { c.messages = append(c.messages, msg) }
+func (c *spellCombatant) GetName() string                         { return c.name }
+func (c *spellCombatant) IsNPC() bool                             { return c.npc }
+func (c *spellCombatant) GetFlags() uint64                        { return c.flags }
+func (c *spellCombatant) GetRoom() int                            { return c.room }
+func (c *spellCombatant) GetLevel() int                           { return c.level }
+func (c *spellCombatant) GetHP() int                              { return c.hp }
+func (c *spellCombatant) GetMaxHP() int                           { return c.maxHP }
+func (c *spellCombatant) GetAC() int                              { return 0 }
+func (c *spellCombatant) GetTHAC0() int                           { return 20 }
+func (c *spellCombatant) GetDamageRoll() combat.DiceRoll          { return combat.DiceRoll{} }
+func (c *spellCombatant) GetPosition() int                        { return c.pos }
+func (c *spellCombatant) SetPosition(p int)                       { c.pos = p }
+func (c *spellCombatant) GetClass() int                           { return 0 }
+func (c *spellCombatant) GetStr() int                             { return 13 }
+func (c *spellCombatant) GetStrAdd() int                          { return 0 }
+func (c *spellCombatant) GetDex() int                             { return 13 }
+func (c *spellCombatant) GetInt() int                             { return 13 }
+func (c *spellCombatant) GetWis() int                             { return 13 }
+func (c *spellCombatant) GetHitroll() int                         { return 0 }
+func (c *spellCombatant) GetDamroll() int                         { return 0 }
+func (c *spellCombatant) GetSex() int                             { return 0 }
+func (c *spellCombatant) Heal(amount int)                         { c.hp += amount }
+func (c *spellCombatant) SetFightingBody(target combat.Combatant) { c.fighting = target }
+func (c *spellCombatant) GetFightingBody() combat.Combatant       { return c.fighting }
+func (c *spellCombatant) StopFighting()                           { c.fighting = nil }
+func (c *spellCombatant) GetFighting() string {
+	if c.fighting == nil {
+		return ""
+	}
+	return c.fighting.GetName()
+}
+func (c *spellCombatant) SendMessage(msg string) { c.messages = append(c.messages, msg) }
 
 // TakeDamage mirrors *Player/*MobInstance: HP into the wounded band, floored at
 // -11 (POS_DEAD threshold, DP-1021).

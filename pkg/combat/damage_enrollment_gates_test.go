@@ -8,8 +8,10 @@ func TestDamageStopsSleepingVictim(t *testing.T) {
 			old := GetCallbacks()
 			t.Cleanup(func() { SetCallbacks(old) })
 			SetCallbacks(&GameCallbacks{})
-			attacker := &mockCombatant{name: "Attacker", hp: 100, maxHP: 100, position: PosFighting, fighting: "Victim", level: 10}
-			victim := &mockCombatant{name: "Victim", hp: 500, maxHP: 500, position: PosSleeping, fighting: "Attacker", level: 10, npc: true}
+			attacker := &mockCombatant{name: "Attacker", hp: 100, maxHP: 100, position: PosFighting, fighting: &mockCombatant{name: "Victim"}, level: 10}
+			victim := &mockCombatant{name: "Victim", hp: 500, maxHP: 500, position: PosSleeping, fighting: &mockCombatant{name: "Attacker"}, level: 10, npc: true}
+			attacker.SetFightingBody(victim)
+			victim.SetFightingBody(attacker)
 			if seam == "plain" {
 				UpdatePositionAfterDamage(victim, nil)
 			} else {

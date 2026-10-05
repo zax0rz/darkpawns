@@ -146,7 +146,7 @@ func TestSpecBrainEater_EntryGates(t *testing.T) {
 		setup func(*Player, *MobInstance)
 	}{
 		{name: "command", setup: func(_ *Player, _ *MobInstance) {}},
-		{name: "fighting", setup: func(player *Player, mob *MobInstance) { mob.SetFighting(player.GetName()) }},
+		{name: "fighting", setup: func(player *Player, mob *MobInstance) { mob.SetFightingBody(player) }},
 		{name: "sleeping", setup: func(_ *Player, mob *MobInstance) { mob.SetPosition(combat.PosSleeping) }},
 		{name: "negative hp", setup: func(_ *Player, mob *MobInstance) { mob.SetHealth(-1) }},
 	}

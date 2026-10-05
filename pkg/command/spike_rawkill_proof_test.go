@@ -22,7 +22,7 @@ func TestCmdSpike_PlayerRawKillContract(t *testing.T) {
 	victim.SetAffect(game.AffWerewolf, true)
 	victim.SetPlrFlag(game.PlrWerewolf, true)
 	victim.SetPlrFlag(game.PlrVampire, true)
-	victim.SetFighting(s.player.Name)
+	victim.SetFightingBody(s.player)
 	if err := s.world.AddPlayer(victim); err != nil {
 		t.Fatal(err)
 	}

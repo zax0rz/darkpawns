@@ -176,7 +176,7 @@ func TestDoKujiKiri_Fighting(t *testing.T) {
 	p.Class = ClassNinja
 	p.Level = 20
 	p.SetSkill(SkillKkRin, 75)
-	p.Fighting = "a training dummy"
+	p.SetFightingBody(NewPlayer(99999, "a training dummy", 1001))
 
 	result := DoKujiKiri(p, SkillKkRin, nil)
 	if result.Success {

@@ -18,9 +18,9 @@ func newDisarmDepthPair(t *testing.T, targetFighting bool) (*Player, *Player, *O
 	target := NewPlayer(2, "Victim", 1001)
 	target.Level = 11
 	target.SetPosition(combat.PosFighting)
-	ch.SetFighting(target.GetName())
+	ch.SetFightingBody(target)
 	if targetFighting {
-		target.SetFighting(ch.GetName())
+		target.SetFightingBody(ch)
 	}
 
 	weapon := NewObjectInstance(&parser.Obj{
@@ -78,7 +78,7 @@ func TestDoDisarmDepthPlayerSuccess(t *testing.T) {
 func TestDoDisarmDepthWeaponGatePrecedesCombatGate(t *testing.T) {
 	ch := NewPlayer(1, "Hero", 1001)
 	ch.SetSkill(SkillDisarm, 100)
-	ch.SetFighting("Victim")
+	ch.SetFightingBody(NewPlayer(99999, "Victim", 1001))
 	target := NewPlayer(2, "Victim", 1001)
 
 	result := DoDisarm(ch, target, nil)

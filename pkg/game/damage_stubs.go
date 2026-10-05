@@ -317,7 +317,7 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 	switch v := vict.(type) {
 	case *Player:
 		v.TakeDamage(dam)
-		v.SetFighting(attackerName)
+		v.SetFightingBody(killer)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
@@ -326,7 +326,7 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 		return true
 	case *MobInstance:
 		v.TakeDamage(dam)
-		v.SetFighting(attackerName)
+		v.SetFightingBody(killer)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {

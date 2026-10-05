@@ -10,8 +10,8 @@ import (
 // CombatEngine interface for AI to initiate combat
 type CombatEngine interface {
 	StartCombat(attacker, defender combat.Combatant) error
-	IsFighting(name string) bool
-	GetCombatTarget(charName string) (combat.Combatant, bool)
+	IsFighting(body combat.Combatant) bool
+	GetCombatTarget(body combat.Combatant) (combat.Combatant, bool)
 }
 
 // AIBehavior defines mob AI behavior
@@ -61,7 +61,7 @@ func (w *World) runMobAI(mob *MobInstance) {
 	}
 
 	// Don't act if already fighting
-	if w.combatEngine != nil && w.combatEngine.IsFighting(mob.GetName()) {
+	if w.combatEngine != nil && w.combatEngine.IsFighting(mob) {
 		return
 	}
 

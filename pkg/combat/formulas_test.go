@@ -26,36 +26,42 @@ type mockCombatant struct {
 	hitroll    int
 	damroll    int
 	sex        int
-	fighting   string
+	fighting   Combatant
 	messages   []string
 }
 
-func (m *mockCombatant) GetName() string           { return m.name }
-func (m *mockCombatant) IsNPC() bool               { return m.npc }
-func (m *mockCombatant) GetRoom() int              { return m.room }
-func (m *mockCombatant) GetLevel() int             { return m.level }
-func (m *mockCombatant) GetHP() int                { return m.hp }
-func (m *mockCombatant) GetMaxHP() int             { return m.maxHP }
-func (m *mockCombatant) GetAC() int                { return m.ac }
-func (m *mockCombatant) GetTHAC0() int             { return m.thac0 }
-func (m *mockCombatant) GetDamageRoll() DiceRoll   { return m.damageRoll }
-func (m *mockCombatant) GetPosition() int          { return m.position }
-func (m *mockCombatant) SetPosition(pos int)       { m.position = pos }
-func (m *mockCombatant) GetClass() int             { return m.class }
-func (m *mockCombatant) GetStr() int               { return m.str }
-func (m *mockCombatant) GetStrAdd() int            { return m.strAdd }
-func (m *mockCombatant) GetDex() int               { return m.dex }
-func (m *mockCombatant) GetInt() int               { return m.intVal }
-func (m *mockCombatant) GetWis() int               { return m.wis }
-func (m *mockCombatant) GetHitroll() int           { return m.hitroll }
-func (m *mockCombatant) GetDamroll() int           { return m.damroll }
-func (m *mockCombatant) GetSex() int               { return m.sex }
-func (m *mockCombatant) TakeDamage(amount int)     { m.hp -= amount }
-func (m *mockCombatant) Heal(amount int)           { m.hp += amount }
-func (m *mockCombatant) SetFighting(target string) { m.fighting = target }
-func (m *mockCombatant) StopFighting()             { m.fighting = "" }
-func (m *mockCombatant) GetFighting() string       { return m.fighting }
-func (m *mockCombatant) SendMessage(msg string)    { m.messages = append(m.messages, msg) }
+func (m *mockCombatant) GetName() string                  { return m.name }
+func (m *mockCombatant) IsNPC() bool                      { return m.npc }
+func (m *mockCombatant) GetRoom() int                     { return m.room }
+func (m *mockCombatant) GetLevel() int                    { return m.level }
+func (m *mockCombatant) GetHP() int                       { return m.hp }
+func (m *mockCombatant) GetMaxHP() int                    { return m.maxHP }
+func (m *mockCombatant) GetAC() int                       { return m.ac }
+func (m *mockCombatant) GetTHAC0() int                    { return m.thac0 }
+func (m *mockCombatant) GetDamageRoll() DiceRoll          { return m.damageRoll }
+func (m *mockCombatant) GetPosition() int                 { return m.position }
+func (m *mockCombatant) SetPosition(pos int)              { m.position = pos }
+func (m *mockCombatant) GetClass() int                    { return m.class }
+func (m *mockCombatant) GetStr() int                      { return m.str }
+func (m *mockCombatant) GetStrAdd() int                   { return m.strAdd }
+func (m *mockCombatant) GetDex() int                      { return m.dex }
+func (m *mockCombatant) GetInt() int                      { return m.intVal }
+func (m *mockCombatant) GetWis() int                      { return m.wis }
+func (m *mockCombatant) GetHitroll() int                  { return m.hitroll }
+func (m *mockCombatant) GetDamroll() int                  { return m.damroll }
+func (m *mockCombatant) GetSex() int                      { return m.sex }
+func (m *mockCombatant) TakeDamage(amount int)            { m.hp -= amount }
+func (m *mockCombatant) Heal(amount int)                  { m.hp += amount }
+func (m *mockCombatant) SetFightingBody(target Combatant) { m.fighting = target }
+func (m *mockCombatant) GetFightingBody() Combatant       { return m.fighting }
+func (m *mockCombatant) StopFighting()                    { m.fighting = nil }
+func (m *mockCombatant) GetFighting() string {
+	if m.fighting == nil {
+		return ""
+	}
+	return m.fighting.GetName()
+}
+func (m *mockCombatant) SendMessage(msg string) { m.messages = append(m.messages, msg) }
 
 // ---------------------------------------------------------------------------
 // TestMain — sets global function pointers for tests that need them
@@ -454,8 +460,10 @@ func TestCheckParry_NPCDefender(t *testing.T) {
 }
 
 func TestCheckParry_NoSkillStillConsumesCProbe(t *testing.T) {
-	fighter := &mockCombatant{npc: false, name: "nobody", position: PosStanding, fighting: "orc"}
-	opponent := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "nobody"}
+	fighter := &mockCombatant{npc: false, name: "nobody", position: PosStanding, fighting: &mockCombatant{name: "orc"}}
+	opponent := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: &mockCombatant{name: "nobody"}}
+	fighter.SetFightingBody(opponent)
+	opponent.SetFightingBody(fighter)
 	roller := NewScriptedRoller([]int{7000, 7001})
 	old := GetRoller()
 	SetRoller(roller)
@@ -470,8 +478,9 @@ func TestCheckParry_NoSkillStillConsumesCProbe(t *testing.T) {
 }
 
 func TestCheckParry_NotMutualFighting(t *testing.T) {
-	fighter := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "someone_else"}
-	opponent := &mockCombatant{name: "hero", position: PosStanding, fighting: "parry_warrior"}
+	fighter := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: &mockCombatant{name: "someone_else"}}
+	opponent := &mockCombatant{name: "hero", position: PosStanding, fighting: &mockCombatant{name: "parry_warrior"}}
+	opponent.SetFightingBody(fighter)
 	old := GetRoller()
 	SetRoller(NewScriptedRoller([]int{80}))
 	defer SetRoller(old)
@@ -483,8 +492,10 @@ func TestCheckParry_NotMutualFighting(t *testing.T) {
 }
 
 func TestCheckParry_CDoesNotGateSleepingFighter(t *testing.T) {
-	fighter := &mockCombatant{npc: false, name: "parry_warrior", position: PosSleeping, fighting: "orc"}
-	opponent := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "parry_warrior"}
+	fighter := &mockCombatant{npc: false, name: "parry_warrior", position: PosSleeping, fighting: &mockCombatant{name: "orc"}}
+	opponent := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: &mockCombatant{name: "parry_warrior"}}
+	fighter.SetFightingBody(opponent)
+	opponent.SetFightingBody(fighter)
 	old := GetRoller()
 	SetRoller(NewScriptedRoller([]int{80}))
 	defer SetRoller(old)
@@ -495,8 +506,10 @@ func TestCheckParry_CDoesNotGateSleepingFighter(t *testing.T) {
 }
 
 func TestCheckParry_ArmedSkilled(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "orc"}
-	attacker := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "parry_warrior"}
+	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: &mockCombatant{name: "orc"}}
+	attacker := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: &mockCombatant{name: "parry_warrior"}}
+	defender.SetFightingBody(attacker)
+	attacker.SetFightingBody(defender)
 
 	old := GetRoller()
 	SetRoller(NewScriptedRoller([]int{80, 81}))
@@ -511,8 +524,10 @@ func TestCheckParry_ArmedSkilled(t *testing.T) {
 }
 
 func TestCheckParry_CUsesTenThousandRange(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: "orc"}
-	attacker := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: "parry_warrior"}
+	defender := &mockCombatant{npc: false, name: "parry_warrior", position: PosStanding, fighting: &mockCombatant{name: "orc"}}
+	attacker := &mockCombatant{npc: true, name: "orc", position: PosStanding, fighting: &mockCombatant{name: "parry_warrior"}}
+	defender.SetFightingBody(attacker)
+	attacker.SetFightingBody(defender)
 
 	old := GetRoller()
 	SetRoller(NewScriptedRoller([]int{100}))
@@ -528,8 +543,10 @@ func TestCheckParry_CUsesTenThousandRange(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCheckDodge_PlayerCannotDodge(t *testing.T) {
-	defender := &mockCombatant{npc: false, name: "dodge_rogue", position: PosStanding, fighting: "hero"}
-	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "dodge_rogue"}
+	defender := &mockCombatant{npc: false, name: "dodge_rogue", position: PosStanding, fighting: &mockCombatant{name: "hero"}}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: &mockCombatant{name: "dodge_rogue"}}
+	defender.SetFightingBody(attacker)
+	attacker.SetFightingBody(defender)
 
 	result := CheckDodge(defender, attacker)
 	if result != DodgeIncapable {
@@ -538,8 +555,10 @@ func TestCheckDodge_PlayerCannotDodge(t *testing.T) {
 }
 
 func TestCheckDodge_NoAffect(t *testing.T) {
-	defender := &mockCombatant{npc: true, name: "plain_mob", position: PosStanding, fighting: "hero", level: 50}
-	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "plain_mob"}
+	defender := &mockCombatant{npc: true, name: "plain_mob", position: PosStanding, fighting: &mockCombatant{name: "hero"}, level: 50}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: &mockCombatant{name: "plain_mob"}}
+	defender.SetFightingBody(attacker)
+	attacker.SetFightingBody(defender)
 
 	result := CheckDodge(defender, attacker)
 	if result != DodgeFail {
@@ -548,8 +567,10 @@ func TestCheckDodge_NoAffect(t *testing.T) {
 }
 
 func TestCheckDodge_NPCAffDodge(t *testing.T) {
-	defender := &mockCombatant{npc: true, name: "dodging_mob", position: PosStanding, fighting: "hero", level: 50}
-	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "dodging_mob"}
+	defender := &mockCombatant{npc: true, name: "dodging_mob", position: PosStanding, fighting: &mockCombatant{name: "hero"}, level: 50}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: &mockCombatant{name: "dodging_mob"}}
+	defender.SetFightingBody(attacker)
+	attacker.SetFightingBody(defender)
 
 	old := GetRoller()
 	SetRoller(NewScriptedRoller([]int{49, 50}))
@@ -565,8 +586,9 @@ func TestCheckDodge_NPCAffDodge(t *testing.T) {
 
 func TestCheckDodge_DrawConsumedEvenIfNotMutualFighting(t *testing.T) {
 	// Defender has AFF_DODGE and roll < level, but defender is fighting someone else
-	defender := &mockCombatant{npc: true, name: "dodging_mob", position: PosStanding, fighting: "someone_else", level: 50}
-	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: "dodging_mob"}
+	defender := &mockCombatant{npc: true, name: "dodging_mob", position: PosStanding, fighting: &mockCombatant{name: "someone_else"}, level: 50}
+	attacker := &mockCombatant{name: "hero", position: PosStanding, fighting: &mockCombatant{name: "dodging_mob"}}
+	attacker.SetFightingBody(defender)
 
 	roller := NewScriptedRoller([]int{10, 11})
 	old := GetRoller()

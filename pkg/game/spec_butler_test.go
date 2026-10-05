@@ -142,7 +142,7 @@ func TestSpecButler_EntryAndContainerGates(t *testing.T) {
 	t.Run("fighting", func(t *testing.T) {
 		w, actor, _, mob, messages := newButlerTestWorld(t)
 		setupButlerContainers(t, w)
-		mob.SetFighting(actor.Name)
+		mob.SetFightingBody(actor)
 		if got := specButler(w, actor, mob, "", ""); got {
 			t.Fatal("fighting butler invocation was handled")
 		}

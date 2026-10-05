@@ -70,7 +70,7 @@ func TestDoDiagnoseUsesFightingFallbackAndPrivateOutput(t *testing.T) {
 		t.Fatalf("SpawnMobQuiet: %v", err)
 	}
 	mob.SetHealth(mob.GetMaxHP())
-	actor.SetFighting(mob.GetName())
+	actor.SetFightingBody(mob)
 
 	result := world.DoDiagnose(actor, "")
 	if len(result.Messages) != 1 {

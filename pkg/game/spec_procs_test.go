@@ -476,8 +476,8 @@ func TestSpecMagicUser_Golden(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.Name)
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	if got := specMagicUser(w, nil, mob, "", ""); !got {
 		t.Error("specMagicUser should return true when fighting with a target")
 	}
@@ -511,8 +511,8 @@ func TestSpecMagicUser_SelfTargetAndDispelGate(t *testing.T) {
 		mob.Intel, mob.Wis = 10, 10
 		mob.CopyBaseAttributes()
 		mob.SetPosition(combat.PosFighting)
-		mob.SetFighting(player.Name)
-		player.SetFighting(mob.GetName())
+		mob.SetFightingBody(player)
+		player.SetFightingBody(mob)
 
 		seed := magicUserSeed(t, 34, 34)
 		dprng.ResetStream(seed)
@@ -533,8 +533,8 @@ func TestSpecMagicUser_SelfTargetAndDispelGate(t *testing.T) {
 		mob.Intel, mob.Wis = 10, 10
 		mob.CopyBaseAttributes()
 		mob.SetPosition(combat.PosFighting)
-		mob.SetFighting(player.Name)
-		player.SetFighting(mob.GetName())
+		mob.SetFightingBody(player)
+		player.SetFightingBody(mob)
 		player.SetAlignment(0)
 		_ = lastMsg() // discard setup output before the direct special call
 
@@ -557,8 +557,8 @@ func TestSpecMagicUser_OutsideGate(t *testing.T) {
 	mob.Intel, mob.Wis = 10, 10
 	mob.CopyBaseAttributes()
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.Name)
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 
 	room := w.GetRoomInWorld(1001)
 	room.Flags = []string{"8"}
@@ -601,8 +601,8 @@ func TestSpecFighter_Golden(t *testing.T) {
 	if got := specFighter(w, nil, mob, "", ""); got {
 		t.Error("specFighter should return false without a FIGHTING target")
 	}
-	mob.SetFighting(player.Name)
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	mob.SetWaitState(1)
 	if got := specFighter(w, nil, mob, "", ""); got {
 		t.Error("specFighter should return false while GET_MOB_WAIT is set")
@@ -628,14 +628,14 @@ func (e *specParryCombatEngine) StartCombat(combat.Combatant, combat.Combatant) 
 	return nil
 }
 
-func (e *specParryCombatEngine) IsFighting(string) bool { return true }
+func (e *specParryCombatEngine) IsFighting(combat.Combatant) bool { return true }
 
-func (e *specParryCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *specParryCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 
-func (e *specParryCombatEngine) MarkParried(name, action string) {
-	e.markedName = name
+func (e *specParryCombatEngine) MarkParried(body combat.Combatant, action string) {
+	e.markedName = body.GetName()
 	e.markedAction = action
 }
 
@@ -659,8 +659,8 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, 1001, 10)
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.Name)
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	player.SetPosition(combat.PosFighting)
 	player.SetHP(100)
 
@@ -687,8 +687,8 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	// victim succeeds after movement is spent and receives a two-round wait.
 	player.SetHP(100)
 	player.SetPosition(combat.PosFighting)
-	player.SetFighting(mob.GetName())
-	mob.SetFighting(player.Name)
+	player.SetFightingBody(mob)
+	mob.SetFightingBody(player)
 	mob.SetPosition(combat.PosFighting)
 	mob.SetMove(20)
 	dprng.ResetStream(1)
@@ -764,8 +764,8 @@ func TestSpecCleric_Golden(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.Name)
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	assertNotPanic(t, func() {
 		_ = specCleric(w, nil, mob, "", "")
 	})
@@ -809,8 +809,8 @@ func TestSpecCityguard_Golden(t *testing.T) {
 		p.Alignment = 100
 		victim.SetProto(&p)
 	}
-	evildoer.SetFighting(victim.GetName())
-	victim.SetFighting(evildoer.Name)
+	evildoer.SetFightingBody(victim)
+	victim.SetFightingBody(evildoer)
 	beforeHP = evildoer.GetHP()
 	_ = lastMsg()
 	specCityguard(w, nil, guard, "", "")

@@ -19,7 +19,12 @@ func TestVictimStandRequiresNewCombatOnHitAndMiss(t *testing.T) {
 		for _, fighting := range []string{"", "Hero", "SomeoneElse"} {
 			t.Run(name+"/fighting="+fighting, func(t *testing.T) {
 				attacker := &mockCombatant{name: "Hero", room: 1, position: PosStanding, hp: 1000, maxHP: 1000, level: 10, thac0: 10}
-				defender := &mockCombatant{name: "Victim", npc: true, room: 1, position: PosSitting, fighting: fighting, hp: 1000, maxHP: 1000, level: 10}
+				defender := &mockCombatant{name: "Victim", npc: true, room: 1, position: PosSitting, hp: 1000, maxHP: 1000, level: 10}
+				if fighting == "Hero" {
+					defender.SetFightingBody(attacker)
+				} else if fighting != "" {
+					defender.SetFightingBody(&mockCombatant{name: fighting})
+				}
 				ce := NewCombatEngine()
 				if err := ce.StartCombat(attacker, defender); err != nil {
 					t.Fatal(err)

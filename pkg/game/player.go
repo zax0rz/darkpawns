@@ -149,7 +149,7 @@ type Player struct {
 	LastLogon        int64
 	playAccountingAt time.Time
 
-	Fighting string // Name of character being fought
+	fightingBody combat.Combatant // C FIGHTING: actual runtime opponent
 
 	// Conditions: hunger/thirst/drunk — from limits.c
 	// Range: -1 (gone) to 24 (full); clamped 0-48 in original gain_condition
@@ -318,7 +318,7 @@ func NewPlayer(id int, name string, roomVNum int) *Player {
 		playAccountingAt: RealNow(),
 		LastActive:       now,
 		Birth:            now.Unix(), // character creation timestamp
-		Fighting:         "",         // Not fighting anyone
+		fightingBody:     nil,        // Not fighting anyone
 		AFK:              false,
 		AFKMessage:       "",
 		AutoGold:         false, // Autogold off by default

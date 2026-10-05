@@ -35,7 +35,7 @@ func TestDoSmackheads_ResultContract(t *testing.T) {
 	for seed := uint32(1); seed < 100 && !hit.Success; seed++ {
 		first.SetPosition(combat.PosStanding)
 		second.SetPosition(combat.PosStanding)
-		ch.SetFighting("")
+		ch.SetFightingBody(nil)
 		dprng.ResetStream(seed)
 		hit = DoSmackheads(ch, "training", "second", w)
 	}
@@ -60,7 +60,7 @@ func TestDoSmackheads_ResultContract(t *testing.T) {
 
 	first.SetPosition(combat.PosStanding)
 	second.SetPosition(combat.PosStanding)
-	ch.SetFighting("")
+	ch.SetFightingBody(nil)
 	ch.SetSkill(SkillSmackheads, 1)
 	dprng.ResetStream(1)
 	miss := DoSmackheads(ch, "training", "second", w)
@@ -126,9 +126,9 @@ func TestDoSmackheads_GateOrderAndMessages(t *testing.T) {
 			case "mounted":
 				ch.SetAffect(affMounted, true)
 			case "actor fighting":
-				ch.SetFighting("another target")
+				ch.SetFightingBody(NewPlayer(99999, "another target", 1001))
 			case "target fighting":
-				first.SetFighting("another target")
+				first.SetFightingBody(NewPlayer(99999, "another target", 1001))
 			case "peaceful":
 				room := w.GetRoomInWorld(ch.GetRoomVNum())
 				room.Flags = []string{"peaceful"}

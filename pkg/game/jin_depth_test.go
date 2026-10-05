@@ -112,7 +112,7 @@ func TestDoKujiKiri_JinGuardMessages(t *testing.T) {
 				p.Class = ClassNinja
 				p.Level = 20
 				p.SetSkill(SkillKkJin, 100)
-				p.Fighting = "a training dummy"
+				p.SetFightingBody(NewPlayer(99999, "a training dummy", 1001))
 			},
 			want: "You are too busy fighting to practice kuji-kiri!",
 		},

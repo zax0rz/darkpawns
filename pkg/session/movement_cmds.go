@@ -46,7 +46,7 @@ func cmdWake(s *Session, args []string) error {
 // Source: act.offensive.c do_flee() lines 360–420
 func cmdFleeMovement(s *Session) error {
 	// Must be fighting
-	if !s.manager.combatEngine.IsFighting(s.player.Name) {
+	if !s.manager.combatEngine.IsFighting(s.player) {
 		s.Send("You're not fighting anyone!")
 		return nil
 	}
@@ -72,7 +72,7 @@ func cmdFleeMovement(s *Session) error {
 	// Calculate XP loss before stopping combat
 	// Source: act.offensive.c do_flee() lines 367–371
 	var xpLoss int
-	if opponent, ok := s.manager.combatEngine.GetCombatTarget(s.player.Name); ok {
+	if opponent, ok := s.manager.combatEngine.GetCombatTarget(s.player); ok {
 		loss := opponent.GetMaxHP() - opponent.GetHP()
 		loss *= opponent.GetLevel()
 		xpLoss = loss
@@ -122,7 +122,7 @@ func cmdFleeMovement(s *Session) error {
 			s.Send(fmt.Sprintf("You lose %d experience points for fleeing.", actualLoss))
 		}
 
-		s.manager.combatEngine.StopCombat(s.player.Name)
+		s.manager.combatEngine.StopCombat(s.player)
 
 		// Notify old room
 		leaveMsg, _ := json.Marshal(ServerMessage{

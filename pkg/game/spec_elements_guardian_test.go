@@ -22,9 +22,9 @@ func (e *elementsGuardianCombatEngine) PerformInitialAttack(attacker, defender c
 	return nil
 }
 
-func (e *elementsGuardianCombatEngine) IsFighting(string) bool { return false }
+func (e *elementsGuardianCombatEngine) IsFighting(combat.Combatant) bool { return false }
 
-func (e *elementsGuardianCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *elementsGuardianCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 

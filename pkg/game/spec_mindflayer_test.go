@@ -16,9 +16,9 @@ func (e *mindflayerCombatEngine) StartCombat(combat.Combatant, combat.Combatant)
 	return nil
 }
 
-func (e *mindflayerCombatEngine) IsFighting(string) bool { return false }
+func (e *mindflayerCombatEngine) IsFighting(combat.Combatant) bool { return false }
 
-func (e *mindflayerCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *mindflayerCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	if e.target == nil {
 		return nil, false
 	}
@@ -56,9 +56,9 @@ func prepareMindflayerCombat(t *testing.T) (*World, *Player, *MobInstance, *mind
 	}
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 32)
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.GetName())
+	mob.SetFightingBody(player)
 	player.SetPosition(combat.PosFighting)
-	player.SetFighting(mob.GetName())
+	player.SetFightingBody(mob)
 	engine := &mindflayerCombatEngine{target: player}
 	w.SetCombatEngine(engine)
 
@@ -81,11 +81,11 @@ func TestSpecMindflayer_EntryGatesAndFallthrough(t *testing.T) {
 	if specMindflayer(w, nil, mob, "look", "") {
 		t.Fatal("mindflayer should reject non-empty commands")
 	}
-	mob.SetFighting("")
+	mob.SetFightingBody(nil)
 	if specMindflayer(w, nil, mob, "", "") {
 		t.Fatal("mindflayer should reject a mob without a fighting target")
 	}
-	mob.SetFighting(player.GetName())
+	mob.SetFightingBody(player)
 	mob.SetPosition(combat.PosSleeping)
 	if specMindflayer(w, nil, mob, "", "") {
 		t.Fatal("mindflayer should reject a sleeping mob")

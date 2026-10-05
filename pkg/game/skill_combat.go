@@ -53,7 +53,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// 5. Target must not be fighting — act.offensive.c:209
-	if target.GetFighting() != "" {
+	if target.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You can't backstab a fighting person -- they're too alert!"}
 	}
 
@@ -498,7 +498,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 // Interposes between attacker and target.
 func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine interface {
 	StartCombat(combat.Combatant, combat.Combatant) error
-	StopCombat(string)
+	StopCombat(combat.Combatant)
 },
 ) SkillResult {
 	if ch.GetSkill(SkillRescue) == 0 {
@@ -511,7 +511,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	}
 
 	// Can't rescue someone you're fighting
-	if ch.GetFighting() == target.GetName() {
+	if ch.GetFightingBody() == target {
 		return SkillResult{Success: false, MessageToCh: "How can you rescue someone you are trying to kill?"}
 	}
 
@@ -530,7 +530,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	// Check players
 	players := world.GetPlayersInRoom(ch.GetRoom())
 	for _, p := range players {
-		if p.GetFighting() == target.GetName() && p.Name != ch.Name {
+		if p.GetFightingBody() == target && p.Name != ch.Name {
 			attacker = p
 			break
 		}
@@ -539,7 +539,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	if attacker == nil {
 		mobs := world.GetMobsInRoom(ch.GetRoom())
 		for _, m := range mobs {
-			if m.GetFighting() == target.GetName() {
+			if m.GetFightingBody() == target {
 				attacker = m
 				break
 			}
@@ -574,9 +574,9 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	// act.offensive.c:569-579.
 	improveSkill(ch, SkillRescue)
 
-	combatEngine.StopCombat(target.GetName())
-	combatEngine.StopCombat(attacker.GetName())
-	combatEngine.StopCombat(ch.Name)
+	combatEngine.StopCombat(target)
+	combatEngine.StopCombat(attacker)
+	combatEngine.StopCombat(ch)
 	// Errors here mean one side is already paired (shouldn't happen right
 	// after the StopCombat calls above); nothing more we can do but proceed.
 	_ = combatEngine.StartCombat(ch, attacker)
@@ -610,7 +610,7 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 		weaponName = "stake"
 	}
 
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return SkillResult{
 			Success:     false,
 			MessageToCh: fmt.Sprintf("You can't %s someone while fighting!\r\n", weaponName),
@@ -724,7 +724,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Already fighting someone who is fighting you back — too busy.
-	if ch.GetFighting() != "" && ch.GetFighting() == target.GetName() && target.GetFighting() == ch.Name {
+	if ch.GetFightingBody() != nil && ch.GetFightingBody() == target && target.GetFightingBody() == ch {
 		return SkillResult{Success: false, MessageToCh: "You're a little too busy right now!\r\n"}
 	}
 
@@ -752,7 +752,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 			MessageToCh:   ActMessage("$e notices you lunging at $m!", victPronouns, &chPronouns, ""),
 			MessageToVict: ActMessage("You notice $N lunging at you!", victPronouns, &chPronouns, ""),
 			MessageToRoom: ActMessage("$n notices $N lunging at $m!", victPronouns, &chPronouns, ""),
-			RetaliateHit:  target.GetFighting() == "",
+			RetaliateHit:  target.GetFightingBody() == nil,
 		}
 	}
 
@@ -769,7 +769,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		// Miss. C: new_cmds.c:2457 — if the target is fighting, stop_fighting
 		// + hit(vict, ch) runs first. Then damage(ch, vict, 0, SKILL_CIRCLE)
 		// emits set 173 and starts combat for the circler.
-		retaliate := target.GetFighting() != ""
+		retaliate := target.GetFightingBody() != nil
 		if retaliate {
 			target.StopFighting()
 		}
