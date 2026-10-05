@@ -1,0 +1,84 @@
+# C-first do_gen_comm color vehicle (DP-1384). Both clients sit at COLOR_LEV
+# C_CMP (3), so the speaker's own echo (gated on C_CMP, src/act.comm.c:1264)
+# and every listener line (gated on C_NRM, src/act.comm.c:1290-1295) carry the
+# per-channel color pulled from com_msgs[subcmd][3] (src/act.comm.c:1185-1259):
+# holler/shout/gossip/newbie KYEL, auction KMAG, grats KGRN. keep-ansi compares
+# the raw bytes, so a missing or misplaced reset diverges.
+
+# depth-case: channels.color-complete-echo
+# depth-case: channels.color-complete-listener
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Colgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Colgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Colwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Colwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Colwatch 8162
+color complete
+force Colwatch color complete
+
+[probe]
+newbie color probe one
+holler color probe two
+gossip color probe three
+grats color probe four
+auction color probe five
+shout color probe six
