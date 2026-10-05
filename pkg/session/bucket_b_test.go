@@ -495,15 +495,28 @@ func TestCmdCreditsMissingFileFailsGracefully(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
 
-	// go test's working directory is the package directory, not the repo
-	// root, so lib/text/credits won't resolve here — exercises the
-	// graceful-failure branch of sendTextFile.
+	// Run where lib/text/credits cannot resolve, and drop the package-global
+	// boot-text cache: a prior test (or an earlier -count iteration) may have
+	// cached the real file, which would otherwise mask the graceful-failure
+	// branch of sendTextFile.
+	t.Chdir(t.TempDir())
+	clearCachedText("credits")
+
 	if err := cmdCredits(s, nil); err != nil {
 		t.Fatalf("cmdCredits: %v", err)
 	}
 	if msg := readSessionText(t, s); !strings.Contains(msg, "not available") {
 		t.Errorf("missing-file credits message: got %q", msg)
 	}
+}
+
+// clearCachedText drops a lazily-loaded boot text so a test can exercise its
+// load path again. cachedText is package-global, so it survives -count
+// iterations and leaks between tests that share a filename.
+func clearCachedText(name string) {
+	cacheMu.Lock()
+	delete(cachedText, name)
+	cacheMu.Unlock()
 }
 
 func TestCmdCreditsReadsRealFile(t *testing.T) {
