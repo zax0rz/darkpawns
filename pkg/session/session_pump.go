@@ -18,21 +18,30 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
-// preAuthIdleTimeout mirrors the telnet listener's DP-912 login idle timeout
-// on the WebSocket path: an unauthenticated socket that stops sending data is
-// dropped, because writePump's pings would otherwise keep it alive forever
-// (browsers answer pings automatically). Data frames refresh it; pong control
-// frames do not — a live socket is not a live login attempt. The
-// LOGIN_IDLE_TIMEOUT override (seconds) governs both transports.
-var preAuthIdleTimeout = 120 * time.Second
+// preAuthIdleTimeoutNanos is the DP-912 login idle timeout for an
+// unauthenticated WebSocket socket, in nanoseconds. It mirrors the telnet
+// listener's loginIdleTimeout on the WebSocket path: an unauthenticated socket
+// that stops sending data is dropped, because writePump's pings would otherwise
+// keep it alive forever (browsers answer pings automatically). Data frames
+// refresh it; pong control frames do not — a live socket is not a live login
+// attempt. The LOGIN_IDLE_TIMEOUT override (seconds) governs both transports.
+// It is atomic because readPump loads it from its own goroutine while tests
+// store a shorter value, mirroring authReadDeadlineNanos.
+var preAuthIdleTimeoutNanos atomic.Int64
+
+// preAuthIdleTimeout returns the current pre-auth (DP-912) login idle timeout.
+func preAuthIdleTimeout() time.Duration {
+	return time.Duration(preAuthIdleTimeoutNanos.Load())
+}
 
 func init() {
+	preAuthIdleTimeoutNanos.Store(int64(120 * time.Second))
 	authReadDeadlineNanos.Store(int64(defaultAuthReadDeadline))
 	if v := os.Getenv("LOGIN_IDLE_TIMEOUT"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
-			preAuthIdleTimeout = time.Duration(n) * time.Second
+			preAuthIdleTimeoutNanos.Store(int64(time.Duration(n) * time.Second))
 		} else {
-			slog.Warn("LOGIN_IDLE_TIMEOUT invalid, using default", "value", v, "default", preAuthIdleTimeout.String())
+			slog.Warn("LOGIN_IDLE_TIMEOUT invalid, using default", "value", v, "default", preAuthIdleTimeout().String())
 		}
 	}
 }
@@ -63,7 +72,7 @@ func (s *Session) readDeadline() time.Duration {
 	if s.authenticated {
 		return authReadDeadline()
 	}
-	return preAuthIdleTimeout
+	return preAuthIdleTimeout()
 }
 
 func (s *Session) readPump() {

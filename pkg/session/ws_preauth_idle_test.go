@@ -12,9 +12,8 @@ import (
 
 func setPreAuthIdleTimeout(t *testing.T, d time.Duration) {
 	t.Helper()
-	old := preAuthIdleTimeout
-	preAuthIdleTimeout = d
-	t.Cleanup(func() { preAuthIdleTimeout = old })
+	old := preAuthIdleTimeoutNanos.Swap(int64(d))
+	t.Cleanup(func() { preAuthIdleTimeoutNanos.Store(old) })
 }
 
 func dialTestWebSocket(t *testing.T, m *Manager) *websocket.Conn {
