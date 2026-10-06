@@ -473,10 +473,11 @@ func cmdWizutil(s *Session, args []string) error {
 
 // wizutilDispatch performs one wizutil sub-action against a named target.
 // Faithful port of do_wizutil (act.wizard.c:2077). The mortal-affecting cases
-// (pardon/notitle/squelch/freeze/thaw) now mirror C byte-for-byte: the right
+// (pardon/notitle/squelch/freeze/thaw) mirror C byte-for-byte: the right
 // pre-state guards, the actual PLR flag toggles, the victim (TO_VICT) and room
-// (TO_ROOM) messages, and the "(GC) ... by <god>." acknowledgements. The
-// mudlog() calls are not player-facing and are intentionally not reproduced.
+// (TO_ROOM) messages, the "(GC) ... by <god>." acknowledgements, and each
+// sub-command's mudlog() producer at its C position and type
+// (act.wizard.c:2121,2127,2135,2154,2168).
 func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error {
 	targetName, _ = game.OneArgument(targetName)
 	resolved, ok := s.manager.world.ResolveCharWorld(s.player, targetName)
@@ -528,15 +529,25 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		target.player.SetPlrFlag(game.PlrOutlaw, false)
 		s.Send("Pardoned.\r\n")
 		target.Send("You have been pardoned by the Gods!\r\n")
+		// act.wizard.c:2121: mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)),
+		// TRUE). C's string has deliberately no final period.
+		game.MudLog(fmt.Sprintf("(GC) %s pardoned by %s", target.player.Name, s.player.Name),
+			game.MudlogBrief, wizutilMudlogLevel(s.player), true)
 	case wizutilNotitle:
 		// PLR_TOG_CHK toggles and returns the NEW state; ch sees the (GC) ack.
 		newState := target.player.GetFlags()&(1<<game.PlrNotitle) == 0
 		target.player.SetPlrFlag(game.PlrNotitle, newState)
+		// act.wizard.c:2127: mudlog before the acknowledgement, at NRM.
+		game.MudLog(fmt.Sprintf("(GC) Notitle %s for %s by %s.", onOff(newState), target.player.Name, s.player.Name),
+			game.MudlogNormal, wizutilMudlogLevel(s.player), true)
 		s.Send(fmt.Sprintf("(GC) Notitle %s for %s by %s.\r\n", onOff(newState), target.player.Name, s.player.Name))
 	case wizutilSquelch:
 		// SCMD_SQUELCH toggles PLR_NOSHOUT; the command name is "mute".
 		newState := target.player.GetFlags()&(1<<game.PlrNoshout) == 0
 		target.player.SetPlrFlag(game.PlrNoshout, newState)
+		// act.wizard.c:2135: mudlog before the acknowledgement, at BRF.
+		game.MudLog(fmt.Sprintf("(GC) Squelch %s for %s by %s.", onOff(newState), target.player.Name, s.player.Name),
+			game.MudlogBrief, wizutilMudlogLevel(s.player), true)
 		s.Send(fmt.Sprintf("(GC) Squelch %s for %s by %s.\r\n", onOff(newState), target.player.Name, s.player.Name))
 	case wizutilFreeze:
 		if target == s {
@@ -554,6 +565,9 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		// act("A sudden cold wind conjured from nowhere freezes $n!", vict, TO_ROOM)
 		broadcastToRoomExcept(s, target.player.GetRoom(), target.player.Name,
 			fmt.Sprintf("A sudden cold wind conjured from nowhere freezes %s!\r\n", target.player.Name))
+		// act.wizard.c:2154: the room act precedes the log.
+		game.MudLog(fmt.Sprintf("(GC) %s frozen by %s.", target.player.Name, s.player.Name),
+			game.MudlogBrief, wizutilMudlogLevel(s.player), true)
 	case wizutilThaw:
 		if target.player.GetFlags()&(1<<game.PlrFrozen) == 0 {
 			s.Send("Sorry, your victim is not morbidly encased in ice at the moment.\r\n")
@@ -564,6 +578,9 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 				target.player.FreezeLevel, target.player.Name, hmhr(target.player)))
 			return nil
 		}
+		// act.wizard.c:2168: the log precedes flag removal and every message.
+		game.MudLog(fmt.Sprintf("(GC) %s un-frozen by %s.", target.player.Name, s.player.Name),
+			game.MudlogBrief, wizutilMudlogLevel(s.player), true)
 		target.player.SetPlrFlag(game.PlrFrozen, false)
 		target.Send("A fireball suddenly explodes in front of you, melting the ice!\r\nYou feel thawed.\r\n")
 		s.Send("Thawed.\r\n")
@@ -589,6 +606,13 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		s.manager.SaveCharSite(target.player, "wizutil")
 	}
 	return nil
+}
+
+// wizutilMudlogLevel is C's minimum recipient level for the five do_wizutil
+// producers: MAX(LVL_GOD, GET_INVIS_LEV(actor)) (act.wizard.c:2121-2168). The
+// actor's invisibility raises the bar; the actor's level does not.
+func wizutilMudlogLevel(actor *game.Player) int {
+	return max(game.LVL_GOD, actor.GetInvisLevel())
 }
 
 // broadcastToRoomExcept sends msg to every player in roomVNum except the named
