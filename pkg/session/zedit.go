@@ -114,6 +114,7 @@ func cmdZedit(s *Session, args []string) error {
 			return nil
 		}
 		s.zeditSend("Saving all zone information.\r\n")
+		game.MudLog(fmt.Sprintf("OLC: %s saves zone info for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveZeditZone(s.manager.world, zone); err != nil {
 			slog.Error("zedit disk save failed", "player", s.playerName, "zone", zone.Number, "error", err)
 		}
