@@ -1,0 +1,116 @@
+# do_wizutil's five mortal-affecting mudlog producers (DP-1371 D7).
+# C act.wizard.c:2112-2173 emits each at BRF (notitle at NRM) with
+# MAX(LVL_GOD, GET_INVIS_LEV(actor)) and file=TRUE; the shared consumer is
+# utils.c:212-242. An independent immortal observer (level 34, syslog normal)
+# is the only qualified descriptor, so every bracket line below is that
+# producer's own bytes, in C's position relative to the command's messages.
+
+# depth-case: mudlog.wizutil-pardon
+# depth-case: mudlog.wizutil-notitle
+# depth-case: mudlog.wizutil-squelch
+# depth-case: mudlog.wizutil-freeze
+# depth-case: mudlog.wizutil-thaw
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Wizwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Wizwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Wizvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Wizvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Wizactor 40
+advance Wizwatch 34
+force Wizwatch syslog normal
+transfer Wizvictim
+set Wizvictim outlaw on
+
+[probe]
+pardon Wizvictim
+notitle Wizvictim
+notitle Wizvictim
+mute Wizvictim
+mute Wizvictim
+freeze Wizvictim
+thaw Wizvictim
