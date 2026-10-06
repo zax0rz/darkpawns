@@ -188,7 +188,7 @@ func cmdForceText(s *Session, argument string) error {
 	s.Send("Okay.\r\n")
 	// src/act.wizard.c:1875-1880: notify, log, then interpret.
 	if s.player.GetLevel() < LVL_IMPL {
-		target.Send(fmt.Sprintf("%s has forced you to '%s'.\r\n", s.player.Name, forceCmd))
+		game.Act(s.manager.world, true, s.player, target.player, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict)
 	}
 	game.MudLog(fmt.Sprintf("(GC) %s forced %s to %s", s.player.Name, target.player.GetName(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
 	forceSessionCommand(s, target, forceCmd, false)
@@ -237,7 +237,7 @@ func forceTargets(s *Session, sameRoom bool) []*Session {
 // helper is called directly, so the victim's aliases are not expanded.
 func forceSessionCommand(caster, target *Session, command string, notifyVictim bool) {
 	if notifyVictim {
-		target.Send(fmt.Sprintf("%s has forced you to '%s'.\r\n", caster.player.Name, command))
+		game.Act(caster.manager.world, true, caster.player, target.player, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", command), "", game.ToVict)
 	}
 	cmd, args := splitCommandInput(command)
 	if cmd == "" {
