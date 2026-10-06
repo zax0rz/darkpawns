@@ -13,6 +13,7 @@ func TestWhodMudlogProducers(t *testing.T) {
 		initial, atLog, after int
 	}{
 		{"on", "on", "WHOD turned on by Logactor.", game.WhodShowOff, game.WhodShowOn, game.WhodShowOn},
+		{"off", "off", "WHOD turned off by Logactor.", game.WhodShowOn, game.WhodShowOff, game.WhodShowOff},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			m, a, _, watch := wizardLogFixture(t)

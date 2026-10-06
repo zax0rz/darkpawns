@@ -163,7 +163,7 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 		if w.Mode&WhodShowOn != 0 {
 			w.Mode &^= WhodShowOn
 			w.Mode |= WhodShowOff
-			return "WHOD turned off.\n\r"
+			return ackLog("WHOD turned off.\n\r", fmt.Sprintf("WHOD turned off by %s.", playerName))
 		}
 		return "WHOD is not turned on.\n\r"
 	}
