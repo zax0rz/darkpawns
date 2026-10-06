@@ -226,6 +226,11 @@ func cmdPurge(s *Session, args []string) error {
 					return nil
 				}
 
+				// src/act.wizard.c:1437-1441: the room act precedes the
+				// player-only producer, which precedes close and extraction.
+				game.Act(s.manager.world, false, s.player, victim, nil, nil, "$n disintegrates $N.", "", game.ToNotVict)
+				game.MudLog(fmt.Sprintf("(GC) %s has purged %s.", s.player.Name, victim.GetName()), game.MudlogBrief, game.LVL_GOD, true)
+
 				// close_socket() announces the lost link before do_purge()
 				// extracts the lower-level player. Suppress the generic Go
 				// "has left" cleanup broadcast so only C's line is visible.
