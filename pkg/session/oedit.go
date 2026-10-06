@@ -202,8 +202,7 @@ func cmdOedit(s *Session, args []string) error {
 			return nil
 		}
 		s.oeditSend("Saving all objects in zone.\r\n")
-		slog.Info("OLC: oedit zone save",
-			"player", s.playerName, "zone", zone.Number)
+		game.MudLog(fmt.Sprintf("OLC: %s saves objects for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveOeditZone(s.manager.world, zone); err != nil {
 			slog.Error("oedit disk save failed",
 				"player", s.playerName, "zone", zone.Number, "error", err)
