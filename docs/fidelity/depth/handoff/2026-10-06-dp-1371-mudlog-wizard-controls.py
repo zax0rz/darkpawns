@@ -45,3 +45,49 @@ for name, filename, prefix in controls:
     if run('restore').returncode:
         sys.exit('restore failed: '+name)
     print(name+': 1 -> 0 -> 1', flush=True)
+
+# Boundaries discovered by the producer reader audit, beyond call presence.
+extras = [
+ ('force-single-wrong-type', 'pkg/session/wiz_communication.go',
+  'target.player.GetName(), forceCmd), game.MudlogNormal,',
+  'target.player.GetName(), forceCmd), game.MudlogBrief,',
+  '^TestWizardMudlogProducers$/^force-single$'),
+ ('load-mob-wrong-threshold', 'pkg/session/wiz_object.go',
+  'mob.GetName(), s.manager.world.GetRoomInWorld(roomVNum).Name),\n\t\t\tgame.MudlogBrief, s.player.GetLevel()+1, true)',
+  'mob.GetName(), s.manager.world.GetRoomInWorld(roomVNum).Name),\n\t\t\tgame.MudlogBrief, s.player.GetLevel(), true)',
+  '^TestWizardMudlogProducers$/^load-mob$'),
+ ('force-raw-routing', 'pkg/session/commands.go',
+  '\tif cmd == "force" && rawArgs != "" {\n\t\treturn cmdForceText(s, rawArgs)\n\t}\n', '',
+  '^TestWizardMudlogForceRawRemainder$'),
+ ('force-nested-routing', 'pkg/session/wiz_communication.go',
+  '\t_, rawArgs := wiznetHalfChop(command)\n\tif err := executeCommandRaw(target, cmd, args, false, rawArgs); err != nil {',
+  '\tif err := executeCommand(target, cmd, args, false); err != nil {',
+  '^TestWizardMudlogNestedForceRemainder$'),
+ ('purge-room-act', 'pkg/session/wiz_object.go',
+  '\t\t\t\tgame.Act(s.manager.world, false, s.player, victim, nil, nil, "$n disintegrates $N.", "", game.ToNotVict)\n', '',
+  '^TestWizardMudlogThresholdAndOrder$/^purge_act_then_log_before_teardown$'),
+]
+for name, filename, before, after, test in extras:
+    if len(sys.argv) > 2 and name != sys.argv[2]:
+        continue
+    p = pathlib.Path(filename)
+    original = p.read_text()
+    if before not in original:
+        sys.exit('missing mutation: '+name)
+    cmd = ['go', 'test', './pkg/session', '-run', test, '-count=1']
+    def run_extra(label):
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        (root / (name+'-'+label+'.txt')).write_text(r.stdout+r.stderr)
+        return r
+    if run_extra('green').returncode:
+        sys.exit('initial green failed: '+name)
+    try:
+        p.write_text(original.replace(before, after, 1))
+        r = run_extra('revert')
+        if not r.returncode or '--- FAIL: '+test.split('$/')[0].strip('^$') not in r.stdout or '[build failed]' in r.stdout+r.stderr:
+            sys.exit('invalid red: '+name)
+    finally:
+        p.write_text(original)
+    if run_extra('restore').returncode:
+        sys.exit('restore failed: '+name)
+    print(name+': 1 -> 0 -> 1', flush=True)

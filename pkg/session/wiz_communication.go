@@ -137,7 +137,7 @@ func cmdForce(s *Session, args []string) error {
 }
 
 // cmdForceText retains half_chop's command remainder for the producer and
-// interpreter (src/act.wizard.c:1863-1880), including internal/trailing spaces.
+// nested producer paths (src/act.wizard.c:1863-1880), including internal/trailing spaces.
 func cmdForceText(s *Session, argument string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
@@ -243,7 +243,8 @@ func forceSessionCommand(caster, target *Session, command string, notifyVictim b
 	if cmd == "" {
 		return
 	}
-	if err := executeCommand(target, cmd, args, false); err != nil {
+	_, rawArgs := wiznetHalfChop(command)
+	if err := executeCommandRaw(target, cmd, args, false, rawArgs); err != nil {
 		// command_interpreter is void in C; errors are diagnostic only and must
 		// not create a second player-facing error response.
 		slog.Error("forced command failed", "target", target.player.Name, "command", command, "error", err)

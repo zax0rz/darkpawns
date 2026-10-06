@@ -58,12 +58,24 @@ func TestWizardMudlogProducers(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, actor, _, watch := wizardLogFixture(t)
+			m, actor, _, watch := wizardLogFixture(t)
 			file := captureMudlogFile(t)
+			minimum := 39 // load, force and newbie: actor level + 1.
+			if tc.command == "purge" {
+				minimum = 34
+			}
+			if tc.command == "zreset" {
+				minimum = 38
+			}
+			watch.player.SetLevel(minimum)
+			below := addObserver(t, m, "BelowProducer", minimum-1, false, true)
+			brief := addObserver(t, m, "BriefProducer", minimum, true, false)
 			// Raise invis above watcher for non-MAX producers: it must not affect load,
 			// purge or newbie's distinct C thresholds.
 			if tc.command == "load" || tc.command == "purge" || tc.command == "wnewbie" {
-				actor.player.SetInvisLevel(41)
+				actor.player.SetInvisLevel(40)
+				watch.player.SetPlrFlag(game.PrfLog2, false)
+				watch.player.SetPlrFlag(game.PrfLog1, true)
 			}
 			if err := executeCommand(actor, tc.command, tc.args, false); err != nil {
 				t.Fatal(err)
@@ -72,6 +84,14 @@ func TestWizardMudlogProducers(t *testing.T) {
 			want := "[ " + tc.payload + " ]\r\n"
 			if !strings.Contains(got, want) {
 				t.Fatalf("observer = %q, missing %q", got, want)
+			}
+			if low := strings.Join(drainSessionText(t, below), ""); strings.Contains(low, want) {
+				t.Fatalf("below-minimum observer received producer: %q", low)
+			}
+			briefText := strings.Join(drainSessionText(t, brief), "")
+			wantBrief := tc.command == "load" || tc.command == "purge" || tc.command == "wnewbie"
+			if strings.Contains(briefText, want) != wantBrief {
+				t.Fatalf("brief observer = %q, eligible=%v", briefText, wantBrief)
 			}
 			if !strings.Contains(file.String(), tc.payload+"\n") {
 				t.Fatalf("file = %q", file.String())
@@ -114,7 +134,8 @@ func TestWizardMudlogThresholdAndOrder(t *testing.T) {
 	})
 	t.Run("force invis threshold and normal type", func(t *testing.T) {
 		_, a, _, w := wizardLogFixture(t)
-		a.player.SetInvisLevel(41)
+		a.player.SetInvisLevel(40)
+		w.player.SetLevel(39)
 		if err := cmdForce(a, []string{"room", "say", "one"}); err != nil {
 			t.Fatal(err)
 		}
@@ -228,5 +249,41 @@ func TestWizardMudlogRefusals(t *testing.T) {
 	}
 	if file.Len() != 0 {
 		t.Fatalf("staged refusal logged: %q", file.String())
+	}
+}
+
+func TestWizardMudlogNewbieMobileName(t *testing.T) {
+	m, a, _, w := wizardLogFixture(t)
+	mob, err := m.world.SpawnMobQuiet(3001, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := captureMudlogFile(t)
+	itemsAtLog := 0
+	game.SetLogWriter(&flagProbe{buf: file, when: func() { itemsAtLog = len(mob.Inventory) }})
+	if err := cmdNewbie(a, []string{"trainee"}); err != nil {
+		t.Fatal(err)
+	}
+	if itemsAtLog != 4 {
+		t.Fatalf("mobile gifts at log = %d, want 4", itemsAtLog)
+	}
+	got := strings.Join(drainSessionText(t, w), "")
+	if !strings.Contains(got, "[ (GC) Logactor newbied a guard trainee. ]\r\n") {
+		t.Fatalf("mobile target log = %q", got)
+	}
+}
+
+func TestWizardMudlogNestedForceRemainder(t *testing.T) {
+	m, a, v, w := wizardLogFixture(t)
+	v.player.SetLevel(36)
+	second := makeTestSession(t, m, "Logsecond", 1001, true)
+	second.player.SetPosition(combat.PosStanding)
+	registerTestSession(t, m, second, second.player.Name)
+	if err := cmdForceText(a, "Logvictim force Logsecond say  nested  "); err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(drainSessionText(t, w), "")
+	if !strings.Contains(got, "[ (GC) Logvictim forced Logsecond to say  nested   ]\r\n") {
+		t.Fatalf("nested raw log = %q", got)
 	}
 }

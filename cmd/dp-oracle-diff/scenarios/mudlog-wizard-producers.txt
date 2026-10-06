@@ -1,0 +1,121 @@
+# D7 wizard producers; qualified observer is above the actor.
+# depth-case: mudlog.wizard-load-object
+# depth-case: mudlog.wizard-force-single
+# depth-case: mudlog.wizard-force-room
+# depth-case: mudlog.wizard-force-all
+# depth-case: mudlog.wizard-reset-zone
+# depth-case: mudlog.wizard-reset-world
+# depth-case: mudlog.wizard-newbie
+# depth-case: mudlog.wizard-purge-player
+
+[fixture]
+empty-players
+quiet-mobs
+# Quiet mobiles remove carriers of two P-command containers. Supply those
+# containers in both disposable worlds so world reset exercises the command
+# producer without also invoking the separately unported db.c error family.
+force-load 9102
+force-load 19735
+spawn-obj 9102 1 21226 212
+spawn-obj 19735 1 21226 212
+
+[setup:oracle]
+Mudwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mudwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Mudwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Mudwizard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Mudvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Mudvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog normal
+goto 21226
+advance Mudwizard 38
+force Mudwizard goto 21226
+teleport Mudvictim 21226
+
+[probe:actor]
+load obj 8010
+force Mudvictim say single
+force room say room
+force all say all
+wnewbie Mudvictim
+zreset 12
+zreset *
+purge Mudvictim
