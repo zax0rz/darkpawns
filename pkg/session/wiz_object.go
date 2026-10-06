@@ -80,7 +80,10 @@ func cmdLoad(s *Session, args []string) error {
 			s.Send("There is no monster with that number.\r\n")
 			return nil
 		}
-		slog.Info("(GC) load mob", "who", s.player.Name, "mob", mob.GetShortDesc(), "room", roomVNum)
+		// src/act.wizard.c:1314-1316: after placement, before narration;
+		// no invisibility term, and the mobile payload ends in a period.
+		game.MudLog(fmt.Sprintf("(GC) %s loaded %s at %s.", s.player.Name, mob.GetName(), s.manager.world.GetRoomInWorld(roomVNum).Name),
+			game.MudlogBrief, s.player.GetLevel()+1, true)
 		sendLoadNarration(s, roomVNum, fmt.Sprintf("%s has created %s!", s.player.Name, mob.GetShortDesc()), fmt.Sprintf("You create %s.", mob.GetShortDesc()))
 	} else if loadIsAbbrev(kind, "obj") {
 		obj, err := s.manager.world.SpawnObject(vnum, -1)
