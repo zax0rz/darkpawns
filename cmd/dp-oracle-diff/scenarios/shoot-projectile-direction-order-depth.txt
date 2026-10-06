@@ -1,0 +1,48 @@
+# C src/act.offensive.c:794-814: projectile gates precede direction validation.
+# depth-case: shoot.projectile-missing
+# depth-case: shoot.non-projectile
+# depth-case: shoot.invalid-direction
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+replace-room-exits 8162 none
+
+[setup:oracle]
+Shootgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootgate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+shoot rock sideways nobody
+get hoopak
+shoot hoopak sideways nobody
+get arrow
+shoot arrow sideways nobody

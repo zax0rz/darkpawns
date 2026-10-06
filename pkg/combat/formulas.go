@@ -217,6 +217,13 @@ var dexApp = []dexAppType{
 	{5, 5, -6},  // 25
 }
 
+// RangedDexAdjustments exposes the existing C dex_app missile/reaction fields.
+// Source: src/constants.c:1092-1119; src/act.offensive.c:917-918.
+func RangedDexAdjustments(dex int) (missile, reaction int) {
+	a := dexApp[max(0, min(dex, len(dexApp)-1))]
+	return a.MissAtt, a.Reaction
+}
+
 // strIndex returns the str_app index for a combatant.
 // Implements STRENGTH_APPLY_INDEX macro from utils.h line 440
 // Source: utils.h: STRENGTH_APPLY_INDEX(ch) macro

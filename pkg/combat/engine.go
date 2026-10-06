@@ -19,10 +19,12 @@ type CombatPairKey struct {
 
 // CombatPair represents two entities fighting each other
 type CombatPair struct {
-	Attacker       Combatant
-	Defender       Combatant
-	Started        time.Time
-	LastAttackType int // Track what type of attack killed the victim (spell number, skill number, or TYPE_ constant)
+	// RangedRetaliation delays attacker enrollment until damage protections pass.
+	RangedRetaliation bool
+	Attacker          Combatant
+	Defender          Combatant
+	Started           time.Time
+	LastAttackType    int // Track what type of attack killed the victim (spell number, skill number, or TYPE_ constant)
 	// DeferDefenderEnrollment preserves hit()'s NPC-special ordering.  C's
 	// damage() sets the victim's FIGHTING field after the NPC switcheroo scan;
 	// ordinary command entry keeps the historical eager enrollment.
@@ -385,6 +387,18 @@ func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error
 	}
 
 	ce.performOneHit(pair)
+	return nil
+}
+
+// PerformRangedRetaliation executes shoot's synchronous hit(), without eager
+// enrollment. C damage enrolls the attacker after protections and the victim
+// after redirects (src/act.offensive.c:955; src/fight.c:1314-1458).
+// Existing initial attack paths retain their behavior.
+func (ce *CombatEngine) PerformRangedRetaliation(attacker, defender Combatant) error {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
+		return fmt.Errorf("combat requires concrete live bodies")
+	}
+	ce.performOneHit(&CombatPair{Attacker: attacker, Defender: defender, RangedRetaliation: true, DeferDefenderEnrollment: true})
 	return nil
 }
 
@@ -795,9 +809,28 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return false
 	}
 
-	// fight.c reaches mob redirects from damage(), after hit() has consumed
-	// its to-hit and damage-roll draws but before damage messages/state land.
-	if ce.applyMobCombatRedirects(attacker, defender) {
+	// Only ranged entry delays attacker enrollment past the jail redirect.
+	var afterJail func() bool
+	ranged := pair.RangedRetaliation
+	if ranged {
+		afterJail = func() bool {
+			if attacker.GetPosition() > PosStunned && attacker.GetFightingBody() == nil {
+				if err := ce.startCombat(attacker, defender, true, true); err != nil {
+					return false
+				}
+				attacker.SetPosition(PosFighting)
+				key := CombatPairKey{Attacker: attacker, Target: defender}
+				ce.mu.RLock()
+				pair = ce.combatPairs[key]
+				ce.mu.RUnlock()
+				if pair == nil {
+					return false
+				}
+			}
+			return true
+		}
+	}
+	if ce.applyMobCombatRedirectsAfterJail(attacker, defender, afterJail) {
 		return true
 	}
 
@@ -814,8 +847,18 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		ce.prependFighterLocked(defender)
 		pair.DeferDefenderEnrollment = false
 		pair.DefenderNeedsStand = true
+		if ranged && attacker.GetFightingBody() == nil {
+			// C enrolls the awake victim even when the attacking mob is wounded.
+			ce.combatPairs[CombatPairKey{Attacker: defender, Target: attacker}] = &CombatPair{Attacker: defender, Defender: attacker}
+		}
 	}
 	ce.mu.Unlock()
+
+	if ranged && attacker.IsNPC() && !defender.IsNPC() && defender.GetLevel() < LVL_IMMORT {
+		if cb := GetCallbacks(); cb != nil && cb.RangedHunt != nil {
+			cb.RangedHunt(attacker, defender)
+		}
+	}
 
 	// C set_fighting(victim) — which sets POS_FIGHTING — runs INSIDE damage(),
 	// after the to-hit decision AND after one_hit has finished computing damage
@@ -929,6 +972,11 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 // src/fight.c:1370-1440. These run before damage lands and may move the victim
 // or retarget the attacker, causing this combat exchange to abort.
 func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bool {
+	return ce.applyMobCombatRedirectsAfterJail(attacker, defender, nil)
+}
+
+// afterJail is exclusive to direct ranged hit entry; ordinary readers pass nil.
+func (ce *CombatEngine) applyMobCombatRedirectsAfterJail(attacker, defender Combatant, afterJail func() bool) bool {
 	if !attacker.IsNPC() {
 		return false
 	}
@@ -946,6 +994,10 @@ func (ce *CombatEngine) applyMobCombatRedirects(attacker, defender Combatant) bo
 			ce.StopCombat(attacker)
 			return true
 		}
+	}
+
+	if afterJail != nil && !afterJail() {
+		return true
 	}
 
 	// Charmed-pet retarget: an NPC about to damage a charmed NPC follower may

@@ -5,11 +5,3 @@ accuse-depth	accuse.tsv	accuse.target-success	blocked
 accuse-noarg-depth	accuse.tsv	accuse.no-argument	blocked	run-varying
 force-mob	force.tsv	force.npc-command-interpreter	blocked	
 force-mob	force.tsv	force.visible-npc-target	blocked	
-shoot-target-depth	shoot.tsv	shoot.mob-hit-miss	blocked	
-shoot-target-depth	shoot.tsv	shoot.pc-level-window	blocked	
-shoot-target-depth	shoot.tsv	shoot.player-hit-miss	blocked	
-shoot-target-depth	shoot.tsv	shoot.target-fallback	blocked	
-shoot-target-depth	shoot.tsv	shoot.target-fighting	blocked	
-shoot-target-depth	shoot.tsv	shoot.targeted-shot	blocked	
-shoot-target-depth	shoot.tsv	shoot.targeted-shot-audience	blocked	
-shoot-target-depth	shoot.tsv	shoot.wait-and-object-consumption	blocked	

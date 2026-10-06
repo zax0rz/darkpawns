@@ -1,0 +1,148 @@
+# C shoot outcomes: src/act.offensive.c:904-987; src/fight.c:625-631.
+# depth-case: shoot.targeted-shot
+# depth-case: shoot.targeted-shot-audience
+# depth-case: shoot.player-hit-miss
+# depth-case: shoot.wait-and-object-consumption
+# depth-case: shoot.no-skill-message-path
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootwindow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootwindow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Shootvictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Shootvictim
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:origin]
+Shootorigin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Shootdest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:origin]
+Shootorigin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:destination]
+Shootdest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shootorigin 8162
+teleport Shootdest 8163
+teleport Shootvictim 8163
+set player Shootvictim level 20
+set player Shootvictim maxhit 30000
+set player Shootvictim hit 1
+get hoopak
+get arrow
+wield hoopak
+skillset Shootwindow 'shoot' 100
+set player Shootwindow dex 18
+set player Shootvictim dex 0
+set player Shootwindow damroll 100
+
+[probe]
+shoot arrow north Shootvictim
+inventory
