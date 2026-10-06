@@ -303,6 +303,7 @@ func (s *Session) finishReditLocked(save bool) {
 			},
 		})
 		saveMu.Unlock()
+		game.MudLog(fmt.Sprintf("OLC: %s edits room %d", s.player.GetName(), state.number), game.MudlogComplete, LVL_IMMORT, true)
 	}
 	// Both the save and abort exits of REDIT_CONFIRM_SAVESTRING end the
 	// editor; the duplicate-editor reservation must not outlive either.

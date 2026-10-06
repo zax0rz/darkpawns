@@ -1061,8 +1061,8 @@ func (s *Session) parseOeditLocked(arg string) {
 		case 'y', 'Y':
 			s.oeditSendLocked("Saving object to memory.\r\n")
 			s.saveOeditInternallyLocked()
-			slog.Info("OLC: oedit edit",
-				"player", s.playerName, "obj", state.number)
+			s.flushOeditOutputLocked()
+			game.MudLog(fmt.Sprintf("OLC: %s edits obj %d", s.player.GetName(), state.number), game.MudlogComplete, LVL_IMMORT, true)
 			s.finishOeditLocked()
 			return
 		case 'n', 'N':

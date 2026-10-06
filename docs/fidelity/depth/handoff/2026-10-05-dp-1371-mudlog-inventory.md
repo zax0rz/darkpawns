@@ -70,7 +70,7 @@ The consumer is `unit-green` (`syslog.consumer-filter`,
 | **skillset diagnostic** | `modify.c:334` | **ported, this train** (file-only) | `mudlog.skillset-file-only` |
 | connection lifecycle | `comm.c`, `interpreter.c`, `act.other.c` quit, `db.c` | ported earlier | existing rows (`mudlog.quit-line`, `mudlog.losteq-line`, …) |
 | `do_wizutil` reroll | `act.wizard.c:2109` | **not mudlog** — uses `log()`; must not broadcast. No row needed. | inventory only |
-| OLC editors | `zedit.c`, `redit.c`, `medit.c`, `oedit.c`, `sedit.c`, `olc.c`, `file-edit.c`, `improved-edit.c` | partial: five do_olc disk-save producers ported (2026-10-06); interactive/error/saveall sites remain | next family (largest single group) |
+| OLC editors | `zedit.c`, `redit.c`, `medit.c`, `oedit.c`, `sedit.c`, `olc.c`, `file-edit.c`, `improved-edit.c` | partial: five do_olc disk-save producers ported (2026-10-06); error/new-zone/saveall sites remain; five interactive commit producers ported (2026-10-06) | next family (largest single group) |
 | act.wizard misc | `act.wizard.c` (nine sites) | ported in the 2026-10-06 wizard producer train; NPC-force producer reachability remains C1 | `mudlog.wizard-*` |
 | object saves | `objsave.c:489-539,1186` | unported | objsave batch |
 | special procedures | `spec_procs2.c:371,456,634,833-913` | unported | spec-proc batch |
@@ -176,3 +176,12 @@ handoff. This does not reconcile the remaining OLC raw sites or saveall.
 The shutdown continuation also reaches the existing force-all producer via
 `src/act.wizard.c:1113`; its registered-command proof is unit-only to avoid
 racing a terminated C process. The overall inventory remains partial.
+
+## Bounded OLC memory-commit reconciliation (2026-10-06)
+
+Five interactive confirmation producers: `src/redit.c:686`, `src/zedit.c:878`,
+`src/oedit.c:1034`, `src/medit.c:741`, `src/sedit.c:838`. CMP/LVL_BUILDER/TRUE
+after internal save and before cleanup, with no invis term. Ported in the
+memory-commit train; exact contracts, lock paths and proofs in
+`2026-10-06-dp-1371-mudlog-olc-memory.md`. Error, invalid-mode, new-zone,
+file-editor and saveall producers remain unreconciled; aggregate stays blocked.
