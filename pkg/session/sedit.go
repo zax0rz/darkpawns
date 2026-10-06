@@ -580,6 +580,7 @@ func (s *Session) parseSeditLocked(arg string) {
 		}
 	default:
 		s.finishSeditLocked(false)
+		game.MudLog("SYSERR: OLC: sedit_parse(): Reached default case!", game.MudlogBrief, game.LVL_IMMORT, true)
 		return
 	}
 
