@@ -18,5 +18,7 @@ func zeditLogNewZoneOpenFailure(err error) {
 	switch filepath.Ext(failure.Path) {
 	case ".zon":
 		game.MudLog("SYSERR: OLC: Can't write new zone file", game.MudlogBrief, game.LVL_IMPL, true)
+	case ".wld":
+		game.MudLog("SYSERR: OLC: Can't write new world file", game.MudlogBrief, game.LVL_IMPL, true)
 	}
 }
