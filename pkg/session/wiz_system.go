@@ -86,7 +86,7 @@ func (m *Manager) forceAllSave(caster *Session) {
 	m.mu.RUnlock()
 
 	for _, target := range targets {
-		target.Send(fmt.Sprintf("%s has forced you to 'all save'.\r\n", caster.player.Name))
+		game.Act(m.world, true, caster.player, target.player, nil, nil, "$n has forced you to 'all save'.", "", game.ToVict)
 		m.world.ExecSave(target.player)
 	}
 }

@@ -2,12 +2,8 @@
 // Source: src/whod.c — do_whod(), whod_loop(), old_search_block()
 // Port: Wave 13, 2026-04-25
 //
-// The original whod.c implemented a separate TCP port daemon that external
-// clients could connect to and see who was online. In our Go rewrite, the
-// "who daemon" concept is replaced by the WebSocket API — any client that
-// connects can issue "who". The whod_mode flag system and do_whod() command
-// are ported faithfully as an admin display filter, even though the raw TCP
-// socket listening part is not ported (superseded by the WS protocol).
+// The command mode flags are ported. The separate C TCP daemon is not
+// implemented; its socket lifecycle and producers remain an explicit frontier.
 package game
 
 import (
@@ -109,8 +105,21 @@ func WhodSearchBlock(argument string, list []string, mode int) int {
 //
 // With no argument: show current mode.
 // With argument: toggle the named mode bit.
-func (w *Whod) DoWhod(playerName, argument string) string {
-	argument = strings.TrimSpace(strings.ToLower(argument))
+// Live callers supply output so acknowledgement precedes the producer.
+// src/whod.c:39,184-188,202-206,214-219,224-228.
+func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
+	// The live caller supplies synchronous output: C acknowledges before LOG.
+	ackLog := func(message, payload string) string {
+		output(message)
+		MudLog(payload, MudlogBrief, LVL_GOD, true)
+		return ""
+	}
+	// src/whod.c:150: half_chop ignores the remaining operands.
+	tokens := strings.Fields(argument)
+	argument = ""
+	if len(tokens) > 0 {
+		argument = strings.ToLower(tokens[0])
+	}
 
 	if argument == "" {
 		// No argument: show current mode
@@ -145,7 +154,7 @@ func (w *Whod) DoWhod(playerName, argument string) string {
 		if w.Mode&WhodShowOff != 0 {
 			w.Mode &^= WhodShowOff
 			w.Mode |= WhodShowOn
-			return "WHOD turned on.\n\r"
+			return ackLog("WHOD turned on.\n\r", fmt.Sprintf("WHOD turned on by %s.", playerName))
 		}
 		return "WHOD is not turned off.\n\r"
 	}
@@ -159,7 +168,7 @@ func (w *Whod) DoWhod(playerName, argument string) string {
 		if w.Mode&WhodShowOn != 0 {
 			w.Mode &^= WhodShowOn
 			w.Mode |= WhodShowOff
-			return "WHOD turned off.\n\r"
+			return ackLog("WHOD turned off.\n\r", fmt.Sprintf("WHOD turned off by %s.", playerName))
 		}
 		return "WHOD is not turned on.\n\r"
 	}
@@ -167,11 +176,13 @@ func (w *Whod) DoWhod(playerName, argument string) string {
 	// Toggle other mode bits
 	// Source: whod.c lines 212–230
 	if w.Mode&bitMask != 0 {
+		message := ackLog(fmt.Sprintf("%s will not be shown on WHOD.\n\r", WhodModeNames[bit]), fmt.Sprintf("%s removed from WHOD by %s.", WhodModeNames[bit], playerName))
 		w.Mode &^= bitMask
-		return fmt.Sprintf("%s will not be shown on WHOD.\n\r", WhodModeNames[bit])
+		return message
 	}
+	message := ackLog(fmt.Sprintf("%s will now be shown on WHOD.\n\r", WhodModeNames[bit]), fmt.Sprintf("%s added to WHOD by %s.", WhodModeNames[bit], playerName))
 	w.Mode |= bitMask
-	return fmt.Sprintf("%s will now be shown on WHOD.\n\r", WhodModeNames[bit])
+	return message
 }
 
 // activeModesString returns a space-separated list of currently active mode names.
@@ -298,24 +309,5 @@ func classAbbrev(class int) string {
 	return "???"
 }
 
-// Go Improvements Over C
-// ======================
-// 1. TCP SOCKET DAEMON REPLACED: The original whod.c opened a second TCP port and
-//    served raw text to telnet connections. The Go port replaces this with a method
-//    on World that returns a string — clients get it through the WebSocket API.
-//    The raw TCP socket code (init_whod, close_whod, whod_loop) is intentionally
-//    not ported — it's superseded by the WS protocol.
-//
-// 2. GLOBAL STATE ELIMINATED: C kept whod_mode, state, s (socket) as static
-//    module-level variables. Go encapsulates them in Whod struct.
-//
-// 3. old_search_block() GENERALIZED: The C function had fixed-length char** list.
-//    Go uses []string with range — no off-by-one risk from '\n' sentinel comparison.
-//
-// 4. NO STRING BUFFER OVERFLOW: C used fixed char buf[MAX_STRING_LENGTH] with
-//    manual strcat() calls. Go uses strings.Builder which grows dynamically.
-//
-// 5. POTENTIAL MODERNIZATION (do not implement now):
-//    - Expose BuildWhoList() via a JSON API endpoint for web clients.
-//    - Make WhodDefaultMode configurable from a server config file.
-//    - Add filtering by zone/area (C had no such feature).
+// The network-service lifecycle remains unported. BuildWhoList has no live
+// transport caller; a WebSocket who command is not proof of WHOD parity.

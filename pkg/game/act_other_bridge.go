@@ -124,9 +124,9 @@ func (w *World) ExecUnban(ch *Player, arg string) string {
 
 // ExecWhod handles the "whod" admin command (ported from whod.c do_whod).
 // Returns the message to send to the player.
-func (w *World) ExecWhod(ch *Player, arg string) string {
+func (w *World) ExecWhod(ch *Player, arg string, output func(string)) string {
 	if w.WhodDisplay == nil {
 		return "WHOD not initialized.\r\n"
 	}
-	return w.WhodDisplay.DoWhod(ch.Name, arg)
+	return w.WhodDisplay.DoWhod(ch.Name, arg, output)
 }

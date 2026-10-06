@@ -1,0 +1,104 @@
+# depth-case: force.notification-sleep
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mudwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mudwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Mudwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Mudwizard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Mudvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Mudvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog brief
+goto 21226
+advance Mudwizard 38
+force Mudwizard goto 21226
+teleport Mudvictim 21226
+force Mudvictim sleep
+
+[probe:actor]
+force Mudvictim wake
+force Mudvictim sleep
+force room wake
+force Mudvictim sleep
+force all wake
