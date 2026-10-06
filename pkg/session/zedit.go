@@ -996,6 +996,7 @@ func zeditNewZone(s *Session, number int) error {
 	}
 
 	if err := olc.WriteNewZoneFiles(world.WorldPath, number); err != nil {
+		zeditLogNewZoneOpenFailure(err)
 		slog.Error("zedit new-zone file creation failed", "zone", number, "error", err)
 		return nil
 	}
@@ -1011,8 +1012,8 @@ func zeditNewZone(s *Session, number int) error {
 			slog.Error("zedit index update failed", "zone", number, "type", ext, "error", err)
 		}
 	}
+	game.MudLog(fmt.Sprintf("OLC: %s creates new zone #%d", s.player.GetName(), number), game.MudlogBrief, LVL_IMMORT, true)
 	s.zeditSend("Zone created.\r\n")
-	slog.Info("OLC: new zone created", "player", s.playerName, "zone", number)
 	return nil
 }
 

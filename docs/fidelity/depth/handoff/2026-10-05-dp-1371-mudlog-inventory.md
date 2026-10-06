@@ -185,3 +185,14 @@ after internal save and before cleanup, with no invis term. Ported in the
 memory-commit train; exact contracts, lock paths and proofs in
 `2026-10-06-dp-1371-mudlog-olc-memory.md`. Error, invalid-mode, new-zone,
 file-editor and saveall producers remain unreconciled; aggregate stays blocked.
+
+## Bounded new-zone producer reconciliation (2026-10-06)
+
+`src/zedit.c:226` success and `:133,150,169,178,187` file-open failures are
+ported by the new-zone train. Success BRF/LVL_BUILDER/TRUE; failures
+BRF/LVL_IMPL/TRUE. These are descriptor-command producers, not logs in the
+shared web file writer. The producer proofs do not certify the full creation
+path. Index diagnostics at `:264,270` remain blocked by self-overlapping
+formatting; their diagnosis/repair and memory/index ordering must be reviewed
+separately. Saveall, disk-error, invalid-mode and file-edit/improved-edit remain
+outstanding. Full contracts and evidence: `2026-10-06-dp-1371-mudlog-new-zone.md`.
