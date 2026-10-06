@@ -429,30 +429,10 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	}
 	w.mu.Unlock()
 
-	// HIGH-015: Stop combat for the dead mob so the engine doesn't keep
-	// processing stale pairs until next PerformRound tick.
-	// Note: World.combatEngine is the local CombatEngine interface (ai.go)
-	// which doesn't expose StopCombat. StopFighting on the mob itself is
-	// the best we can do from this layer; the combat engine will detect
-	// the dead mob on next PerformRound tick.
-	if deadMob != nil {
-		deadMob.StopFighting()
-	}
-
 	if deadMob == nil {
 		return
 	}
-	// extract_char stops everyone fighting the victim (src/handler.c:1145-1150).
-	for _, player := range w.GetAllPlayers() {
-		if player.GetFightingBody() == victim {
-			player.StopFighting()
-		}
-	}
-	for _, mob := range w.GetAllMobs() {
-		if mob.GetFightingBody() == victim {
-			mob.StopFighting()
-		}
-	}
+	w.retireCombatBody(deadMob)
 
 	// Cancel all pending events for this mob.
 	// Source: events.c event_cancel() — in original, extract_char would

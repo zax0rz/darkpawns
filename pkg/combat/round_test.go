@@ -428,8 +428,8 @@ func TestCombatOrderPrependsNewFightersAndRemovesStoppedFighters(t *testing.T) {
 	}
 
 	engine.StopCombat(hero)
-	if got := order(); got != "" {
-		t.Fatalf("combat order after stopping Hero = %s, want empty", got)
+	if got := order(); got != "Orc" {
+		t.Fatalf("combat order after stopping Hero = %s, want the one-way Orc fight", got)
 	}
 }
 
@@ -673,6 +673,7 @@ func TestProcessCombatPair_DifferentRoom(t *testing.T) {
 	defender := &mockCombatant{name: "Orc", room: 200, hp: 50, position: PosStanding}
 
 	_ = engine.StartCombat(attacker, defender)
+	defender.StopFighting() // no eligible reciprocal retarget: fight.c:230-254
 	engine.processCombatPair(&CombatPair{Attacker: attacker, Defender: defender})
 
 	if engine.IsFighting(attacker) {

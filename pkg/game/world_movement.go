@@ -2,6 +2,8 @@ package game
 
 import (
 	"fmt"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // mobHasLight returns true if the mob has a lit light source equipped.
@@ -24,124 +26,71 @@ func (w *World) CharTransfer(charName string, isMob bool, toRoomVNum int) error 
 // charTransfer permits callers of bare char_from_room/char_to_room to leave
 // mounts behind; command-level transfers retain their existing mount behavior.
 func (w *World) charTransfer(charName string, isMob bool, toRoomVNum int, moveMount bool) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	if _, ok := w.rooms[toRoomVNum]; !ok {
-		return fmt.Errorf("char_transfer: target room %d does not exist", toRoomVNum)
-	}
-
-	// Find current room
-	var fromRoomVNum int
+	var body combat.Combatant
 	if isMob {
-		for _, m := range w.activeMobs {
-			if m.GetName() == charName {
-				fromRoomVNum = m.GetRoom()
+		for _, mob := range w.GetAllMobs() {
+			if mob.GetName() == charName {
+				body = mob
 				break
 			}
 		}
 	} else {
-		if p, ok := w.players[charName]; ok {
-			fromRoomVNum = p.RoomVNum
+		if p, ok := w.GetPlayer(charName); ok {
+			body = p
 		}
 	}
-
-	if fromRoomVNum == toRoomVNum {
-		// C's transfer commands still pass through char_from_room/char_to_room
-		// when the destination is the current room. The relink prepends the
-		// character again, which is visible in subsequent room looks.
-		w.nextRoomEntrySequence++
-		if isMob {
-			for _, m := range w.activeMobs {
-				if m.GetName() == charName {
-					m.mu.Lock()
-					m.RoomEntrySequence = w.nextRoomEntrySequence
-					m.mu.Unlock()
-					break
-				}
-			}
-		} else if p, ok := w.players[charName]; ok {
-			p.mu.Lock()
-			p.RoomEntrySequence = w.nextRoomEntrySequence
-			p.mu.Unlock()
-		}
+	if body == nil {
 		return nil
 	}
+	return w.transferBody(body, toRoomVNum, moveMount)
+}
 
-	// Stop fighting for everyone who was fighting the transferee in the old room
-	// Source: char_from_room iterates world[room].people to stop mutual fights
-	if fromRoomVNum >= 0 {
-		// Stop the transferee from fighting
-		if isMob {
-			for _, m := range w.activeMobs {
-				if m.GetName() == charName {
-					m.StopFighting()
-					break
-				}
-			}
-		} else {
-			if p, ok := w.players[charName]; ok {
-				p.StopFighting()
-			}
+// transferBody retains the supplied object; only name-taking entry selects once.
+func (w *World) transferBody(body combat.Combatant, toRoomVNum int, moveMount bool) error {
+	w.mu.RLock()
+	_, exists := w.rooms[toRoomVNum]
+	w.mu.RUnlock()
+	if !exists {
+		return fmt.Errorf("char_transfer: target room %d does not exist", toRoomVNum)
+	}
+	var mount *MobInstance
+	if p, ok := body.(*Player); ok && moveMount {
+		mount = w.riddenMount(p)
+	}
+	w.stopRoomFights(body)
+	if mount != nil {
+		w.stopRoomFights(mount)
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	from := body.GetRoom()
+	w.nextRoomEntrySequence++
+	switch body := body.(type) {
+	case *MobInstance:
+		body.moveRoomLocked(w, toRoomVNum)
+		body.mu.Lock()
+		body.RoomEntrySequence = w.nextRoomEntrySequence
+		body.mu.Unlock()
+	case *Player:
+		lit := body.HasLight()
+		if lit && from >= 0 {
+			w.adjustRoomLight(from, -1)
 		}
-
-		// Stop anyone in the old room from fighting the transferee
-		for _, p := range w.players {
-			if p.RoomVNum == fromRoomVNum && p.IsFighting() && p.GetFighting() == charName {
-				p.StopFighting()
-			}
-		}
-		for _, m := range w.activeMobs {
-			if m.GetRoom() == fromRoomVNum && m.GetFighting() == charName {
-				m.StopFighting()
-			}
+		body.mu.Lock()
+		body.RoomVNum = toRoomVNum
+		body.RoomEntrySequence = w.nextRoomEntrySequence
+		body.mu.Unlock()
+		if lit {
+			w.adjustRoomLight(toRoomVNum, 1)
 		}
 	}
-
-	// Move the character, adjusting room light counters — handler.c:520-521,541-543 (DP-368)
-	if isMob {
-		for _, m := range w.activeMobs {
-			if m.GetName() == charName {
-				m.moveRoomLocked(w, toRoomVNum)
-				m.mu.Lock()
-				w.nextRoomEntrySequence++
-				m.RoomEntrySequence = w.nextRoomEntrySequence
-				m.mu.Unlock()
-				break
-			}
-		}
-	} else {
-		if p, ok := w.players[charName]; ok {
-			hasLight := p.HasLight()
-			if hasLight && fromRoomVNum >= 0 {
-				w.adjustRoomLight(fromRoomVNum, -1)
-			}
-			p.SetRoom(toRoomVNum)
-			w.nextRoomEntrySequence++
-			p.mu.Lock()
-			p.RoomEntrySequence = w.nextRoomEntrySequence
-			p.mu.Unlock()
-			if hasLight {
-				w.adjustRoomLight(toRoomVNum, 1)
-			}
-
-			// Move mount with rider (recall/teleport take mounts)
-			// Source: act.wizard.c do_recall moves get_mount(ch) with the player
-			if moveMount && p.MountName != "" {
-				for _, m := range w.activeMobs {
-					if m.GetName() == p.MountName && m.GetRoom() == fromRoomVNum {
-						m.moveRoomLocked(w, toRoomVNum)
-						m.mu.Lock()
-						w.nextRoomEntrySequence++
-						m.RoomEntrySequence = w.nextRoomEntrySequence
-						m.mu.Unlock()
-						break
-					}
-				}
-			}
-		}
+	if mount != nil {
+		mount.moveRoomLocked(w, toRoomVNum)
+		w.nextRoomEntrySequence++
+		mount.mu.Lock()
+		mount.RoomEntrySequence = w.nextRoomEntrySequence
+		mount.mu.Unlock()
 	}
-
 	return nil
 }
 
@@ -167,12 +116,12 @@ func (w *World) GetAllCharsInRoom(roomVNum int) []interface{} {
 
 // PlayerTransfer moves a player to a new room, stopping fights and moving mounts.
 func (w *World) PlayerTransfer(p *Player, toRoomVNum int) error {
-	return w.CharTransfer(p.GetName(), false, toRoomVNum)
+	return w.transferBody(p, toRoomVNum, true)
 }
 
 // MobTransfer moves a mob to a new room, stopping fights.
 func (w *World) MobTransfer(m *MobInstance, toRoomVNum int) error {
-	return w.CharTransfer(m.GetName(), true, toRoomVNum)
+	return w.transferBody(m, toRoomVNum, true)
 }
 
 // GetItemsInRoom returns all items in a given room.
@@ -245,4 +194,9 @@ func (w *World) NumFollowers(leaderName string) int {
 		}
 	}
 	return count
+}
+
+// TransferCombatant is the cycle-free spell bridge for an already selected body.
+func (w *World) TransferCombatant(body combat.Combatant, room int) error {
+	return w.transferBody(body, room, true)
 }

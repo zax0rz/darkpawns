@@ -49,3 +49,11 @@ type Combatant interface {
 	// Messaging
 	SendMessage(msg string)
 }
+
+// BodyRetired reads the body's transient retirement marker, without a registry.
+func BodyRetired(body Combatant) bool {
+	if retired, ok := body.(interface{ CombatRetired() bool }); ok {
+		return retired.CombatRetired()
+	}
+	return false
+}

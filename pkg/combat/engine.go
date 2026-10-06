@@ -238,7 +238,7 @@ func (ce *CombatEngine) StartCombat(attacker, defender Combatant) error {
 // damage()'s !AWAKE victim stop (src/fight.c:1443-1445, 1630-1632).
 // The ordinary opener must still defer its position check until its hit.
 func (ce *CombatEngine) StartCombatAfterDamage(attacker, defender Combatant) error {
-	if !ValidBody(attacker) || !ValidBody(defender) {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
 		return fmt.Errorf("combat requires concrete bodies")
 	}
 	if attacker == defender || defender.GetPosition() == PosDead {
@@ -288,11 +288,14 @@ func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bo
 }
 
 func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment, afterDamage bool) error {
-	if !ValidBody(attacker) || !ValidBody(defender) {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
 		return fmt.Errorf("combat requires concrete bodies")
 	}
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
+	if BodyRetired(attacker) || BodyRetired(defender) {
+		return fmt.Errorf("combat requires live bodies")
+	}
 
 	attackerName := attacker.GetName()
 
@@ -369,7 +372,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 // parry/dodge, wait-state, redirect, and fight-trigger work. Subsequent attacks
 // continue through PerformRound on the normal combat pulse.
 func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error {
-	if !ValidBody(attacker) || !ValidBody(defender) {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
 		return fmt.Errorf("combat requires concrete bodies")
 	}
 	key := CombatPairKey{Attacker: attacker, Target: defender}
@@ -392,11 +395,13 @@ func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error
 // hit is not added as a new engine pair. The mob therefore does not receive a
 // later perform_violence turn from this one-off retaliation.
 func (ce *CombatEngine) PerformUnenrolledInitialAttack(attacker, defender Combatant) error {
-	if !ValidBody(attacker) || !ValidBody(defender) {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
 		return fmt.Errorf("combat requires concrete bodies")
 	}
 	ce.performOneHit(&CombatPair{Attacker: attacker, Defender: defender})
-	if defender.GetPosition() != PosDead && attacker.GetFightingBody() == nil {
+	ce.mu.Lock()
+	defer ce.mu.Unlock()
+	if !BodyRetired(attacker) && !BodyRetired(defender) && defender.GetPosition() != PosDead && attacker.GetFightingBody() == nil {
 		attacker.SetFightingBody(defender)
 		if attacker.GetPosition() > PosStunned {
 			attacker.SetPosition(PosFighting)
@@ -405,29 +410,67 @@ func (ce *CombatEngine) PerformUnenrolledInitialAttack(attacker, defender Combat
 	return nil
 }
 
-// StopCombat ends combat for a character
+// StopCombat ports stop_fighting for one body, including C's ordered retarget.
 func (ce *CombatEngine) StopCombat(body Combatant) {
 	if !ValidBody(body) {
 		return
 	}
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
+	ce.stopCombatLocked(body, false)
+}
 
-	// Find and stop combat — iterate all pairs to find matches by attacker or defender
-	for key, pair := range ce.combatPairs {
-		if key.Attacker == body || pair.Defender == body {
-			pair.Attacker.StopFighting()
-			if pair.Defender.GetFightingBody() == key.Attacker {
-				pair.Defender.StopFighting()
+// stopCombatLocked never calls world/session hooks. Engine -> one body lock.
+func (ce *CombatEngine) stopCombatLocked(body Combatant, force bool) {
+	target := body.GetFightingBody()
+	if !force && target != nil && (target.GetPosition() == PosDead || target.GetRoom() != body.GetRoom()) {
+		for _, candidate := range ce.combatOrder {
+			if candidate != body && candidate.GetFightingBody() == body && candidate.GetPosition() > PosDead && !BodyRetired(candidate) {
+				body.SetFightingBody(candidate)
+				for key, pair := range ce.combatPairs {
+					if key.Attacker == body {
+						delete(ce.combatPairs, key)
+						ce.combatPairs[CombatPairKey{Attacker: body, Target: candidate}] = &CombatPair{Attacker: body, Defender: candidate, Started: pair.Started}
+					}
+				}
+				return
 			}
-			delete(ce.parried, pair.Attacker)
-			delete(ce.parried, pair.Defender)
+		}
+	}
+	body.StopFighting()
+	body.SetPosition(GetPositionFromHP(body.GetHP(), PosStanding))
+	for key := range ce.combatPairs {
+		if key.Attacker == body {
 			delete(ce.combatPairs, key)
 		}
 	}
 	delete(ce.parried, body)
 	ce.removeFighterLocked(body)
-	ce.pruneCombatOrderLocked()
+}
+
+// RetireCombatant removes the retired body and only references to that body.
+// Survivors may retarget through C's ordinary dead-target stop path.
+func (ce *CombatEngine) RetireCombatant(body Combatant) {
+	if !ValidBody(body) {
+		return
+	}
+	ce.mu.Lock()
+	defer ce.mu.Unlock()
+	if marker, ok := body.(interface{ SetCombatRetired(bool) }); ok {
+		marker.SetCombatRetired(true)
+	}
+	ce.stopCombatLocked(body, true)
+	fighters := append([]Combatant(nil), ce.combatOrder...)
+	for _, fighter := range fighters {
+		if fighter.GetFightingBody() == body {
+			ce.stopCombatLocked(fighter, false)
+		}
+	}
+	for key := range ce.combatPairs {
+		if key.Attacker == body || key.Target == body {
+			delete(ce.combatPairs, key)
+		}
+	}
 }
 
 // prependFighterLocked mirrors C's set_fighting(), which inserts a newly
@@ -460,35 +503,12 @@ func (ce *CombatEngine) removeFighterLocked(body Combatant) {
 	}
 }
 
-// pruneCombatOrderLocked drops characters whose FIGHTING state was cleared
-// while StopCombat removed a related pair. ce.mu must be held for writing.
-func (ce *CombatEngine) pruneCombatOrderLocked() {
-	active := ce.combatOrder[:0]
-	for _, fighter := range ce.combatOrder {
-		if fighter != nil && fighter.GetFightingBody() != nil {
-			active = append(active, fighter)
-		}
-	}
-	clear(ce.combatOrder[len(active):])
-	ce.combatOrder = active
-}
-
 // IsFighting checks if a character is in combat
 func (ce *CombatEngine) IsFighting(body Combatant) bool {
 	if !ValidBody(body) {
 		return false
 	}
-	ce.mu.RLock()
-	defer ce.mu.RUnlock()
-
-	// Check if attacking or being attacked — must iterate with composite keys
-	for key, pair := range ce.combatPairs {
-		if key.Attacker == body || pair.Defender == body {
-			return true
-		}
-	}
-
-	return false
+	return !BodyRetired(body) && body.GetFightingBody() != nil
 }
 
 // PerformRound executes one round of combat for all active fighters.
@@ -504,7 +524,7 @@ func (ce *CombatEngine) PerformRound() {
 
 	seen := make(map[Combatant]bool, len(fighters))
 	for _, fighter := range fighters {
-		if fighter == nil || fighter.GetPosition() == PosDead || fighter.GetFightingBody() == nil {
+		if fighter == nil || BodyRetired(fighter) || fighter.GetPosition() == PosDead || fighter.GetFightingBody() == nil {
 			continue
 		}
 		if seen[fighter] {
@@ -732,6 +752,9 @@ func (ce *CombatEngine) consumeParried(body Combatant) string {
 func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	attacker := pair.Attacker
 	defender := pair.Defender
+	if BodyRetired(attacker) || BodyRetired(defender) {
+		return true
+	}
 
 	// fight.c:1792-1806 one_hit w_type derivation: the message attack-type is
 	// derived from the wielded weapon (offset val3), NOT from the damage type.
@@ -781,14 +804,18 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// C damage() enrolls the victim after the NPC switcheroo scan.  Do this
 	// before the remaining damage-side effects, including stop_follower and
 	// the hit/miss message path.
-	if pair.DeferDefenderEnrollment && defender.GetFightingBody() == nil && defender.GetPosition() > PosStunned {
-		defender.SetFightingBody(attacker)
-		ce.mu.Lock()
-		ce.prependFighterLocked(defender)
+	ce.mu.Lock()
+	if BodyRetired(attacker) || BodyRetired(defender) {
 		ce.mu.Unlock()
+		return true
+	}
+	if defender.GetFightingBody() == nil && defender.GetPosition() > PosStunned {
+		defender.SetFightingBody(attacker)
+		ce.prependFighterLocked(defender)
 		pair.DeferDefenderEnrollment = false
 		pair.DefenderNeedsStand = true
 	}
+	ce.mu.Unlock()
 
 	// C set_fighting(victim) — which sets POS_FIGHTING — runs INSIDE damage(),
 	// after the to-hit decision AND after one_hit has finished computing damage
@@ -821,7 +848,9 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return false
 	}
 
+	ce.mu.Lock()
 	pair.LastAttackType = int(AttackNormal)
+	ce.mu.Unlock()
 	damage = ApplyDamageModifiers(attacker, defender, damage)
 
 	// Stand the victim only now — after the prone-victim damage multiplier has
@@ -833,7 +862,13 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		ce.DamageFunc(defender)
 	}
 
+	if BodyRetired(attacker) || BodyRetired(defender) {
+		return true
+	}
 	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
+	if BodyRetired(attacker) || BodyRetired(defender) {
+		return true
+	}
 
 	newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc)
 	if newPos != PosDead {
@@ -845,7 +880,6 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	EmitDeathPositionMessage(defender, ce.BroadcastFunc)
 	// The death callback owns XP/autogold before raw_kill's cry/corpse.
 	ce.handleDeath(defender, attacker)
-	ce.StopCombat(attacker)
 	return true
 }
 
@@ -1014,19 +1048,9 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType
 
 // handleDeath processes character death.
 //
-// Lock ordering contract (MUST be maintained to prevent deadlocks):
-//  1. CombatEngine.mu (ce.mu) — guards combat pair map
-//  2. World.mu — guards player/mob maps (AddPlayer, RemovePlayer)
-//  3. Player.mu — guards individual player fields
-//
-// Acquisition order in this function:
-//   - ce.mu.RLock (to read LastAttackType from combat pair)
-//   - DeathFunc callback acquires World.mu → Player.mu (via HandleDeath)
-//   - StopCombat acquires ce.mu.Lock (after DeathFunc returns)
-//
-// Why this order: combat engine state must be read before any game-layer
-// mutations (corpse creation, respawn). World/player locks are never held
-// when acquiring ce.mu, preventing ABBA deadlocks with PerformRound.
+// Attack-type lookup takes engine RLock alone. Retirement takes engine Lock
+// then one body mutex at a time. Both release before DeathFunc acquires World
+// or session locks; no world/session callback runs under the engine lock.
 //
 // Faithful to Dark Pawns die()/raw_kill() in fight.c:
 //   - Player: lose EXP/3, create corpse with inventory+equipment+gold, send to room 8004
@@ -1040,18 +1064,18 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 		ce.ScriptDeathFunc(victim, killer, roomVNum)
 	}
 
-	// Delegate to game layer for corpse creation + deferred extraction
-	if ce.DeathFunc != nil {
-		// Get attack type from combat pair if available
-		attackType := -1 // TYPE_UNDEFINED
-		ce.mu.RLock()
-		for key, pair := range ce.combatPairs {
-			if key.Attacker == killer {
-				attackType = pair.LastAttackType
-				break
-			}
+	// Snapshot attack type before retiring related pairs; callbacks run unlocked.
+	attackType := -1
+	ce.mu.RLock()
+	for key, pair := range ce.combatPairs {
+		if key.Attacker == killer {
+			attackType = pair.LastAttackType
+			break
 		}
-		ce.mu.RUnlock()
+	}
+	ce.mu.RUnlock()
+	ce.RetireCombatant(victim)
+	if ce.DeathFunc != nil {
 		ce.DeathFunc(victim, killer, attackType)
 	}
 }

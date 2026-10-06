@@ -127,7 +127,7 @@ func TestCmdFlee_CanonicalCombatStateAndSilentXPLoss(t *testing.T) {
 	}
 }
 
-func TestCmdRetreat_PreservesCombatStateAfterSuccess(t *testing.T) {
+func TestCmdRetreat_CharFromRoomStopsCombatAfterSuccess(t *testing.T) {
 	m := makeFleeTestManager(t)
 	room, ok := m.world.GetRoom(1001)
 	if !ok {
@@ -159,8 +159,8 @@ func TestCmdRetreat_PreservesCombatStateAfterSuccess(t *testing.T) {
 	if s.player.GetRoom() != 1002 {
 		t.Fatalf("room = %d, want 1002", s.player.GetRoom())
 	}
-	if !m.combatEngine.IsFighting(s.player) {
-		t.Fatal("retreat incorrectly stopped combat")
+	if m.combatEngine.IsFighting(s.player) || mob.GetFightingBody() != nil {
+		t.Fatal("C do_simple_move/char_from_room must stop both sides after retreat")
 	}
 }
 

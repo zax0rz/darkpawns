@@ -149,7 +149,8 @@ type Player struct {
 	LastLogon        int64
 	playAccountingAt time.Time
 
-	fightingBody combat.Combatant // C FIGHTING: actual runtime opponent
+	fightingBody  combat.Combatant // C FIGHTING: actual runtime opponent
+	combatRetired bool
 
 	// Conditions: hunger/thirst/drunk — from limits.c
 	// Range: -1 (gone) to 24 (full); clamped 0-48 in original gain_condition
@@ -574,4 +575,11 @@ func (p *Player) HitModifiers() combat.HitModifiers {
 		WeaponBlessed: blessed,
 		DrunkLevel:    p.GetCondition(CondDrunk),
 	}
+}
+
+func (b *Player) CombatRetired() bool { b.mu.RLock(); defer b.mu.RUnlock(); return b.combatRetired }
+func (b *Player) SetCombatRetired(retired bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.combatRetired = retired
 }

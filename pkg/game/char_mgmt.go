@@ -6,6 +6,8 @@ package game
 
 import (
 	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // CircleMUD constants used for character management.
@@ -151,7 +153,17 @@ func (w *World) HasPendingExtractions() bool {
 // reproduce extract_char_final()'s descriptor-to-CON_MENU transition.
 func (w *World) ExtractPendingPlayers() []*Player {
 	w.mu.Lock()
-	defer w.mu.Unlock()
+	var retired []combat.Combatant
+	var nowhere []*Player
+	defer func() {
+		w.mu.Unlock()
+		for _, body := range retired {
+			w.retireCombatBody(body)
+		}
+		for _, p := range nowhere {
+			p.SetRoom(roomNowhere)
+		}
+	}()
 
 	extractMask := uint64(1 << uint(plrExtractBit))
 	extracted := make([]*Player, 0)
@@ -241,10 +253,10 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		}
 
 		// Stop fighting
-		p.fightingBody = nil
+		retired = append(retired, p)
 
 		// Move to nowhere
-		p.RoomVNum = roomNowhere
+		nowhere = append(nowhere, p)
 
 		// Remove from world
 		delete(w.players, name)
@@ -268,12 +280,14 @@ func (w *World) ExtractPendingPlayers() []*Player {
 			continue
 		}
 		m.mu.Unlock()
+		retired = append(retired, m)
 		w.dropMobilePossessionsLocked(m)
 
 		slog.Debug("mob extracted", "id", id)
 		delete(w.activeMobs, id)
 	}
 	for m := range w.pendingMobileExtractions {
+		retired = append(retired, m)
 		w.dropMobilePossessionsLocked(m)
 		delete(w.pendingMobileExtractions, m)
 	}

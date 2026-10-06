@@ -44,8 +44,10 @@ func (w *World) CheckIdling(p *Player) {
 			// who has already moved to room 1.
 			if fighting != nil {
 				if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+					stopper.StopCombat(fighting)
 					stopper.StopCombat(p)
 				} else {
+					fighting.StopFighting()
 					p.StopFighting()
 				}
 			}

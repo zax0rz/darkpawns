@@ -220,15 +220,15 @@ func (w *World) DieFollower(ch *Player) {
 	}
 
 	// Find all followers of ch and make them stop following.
-	for _, p := range w.players {
-		if p.GetFollowing() == ch.Name {
+	for _, p := range w.GetAllPlayers() {
+		if w.combatFollowingBody(p) == ch {
 			StopFollower(w, p)
 		}
 	}
 
 	// Also check mob followers (charmed pets following this player).
-	for _, mob := range w.activeMobs {
-		if mob.GetFollowing() == ch.Name {
+	for _, mob := range w.GetAllMobs() {
+		if w.combatFollowingBody(mob) == ch {
 			StopFollowerMob(w, mob)
 		}
 	}
@@ -251,9 +251,17 @@ func (w *World) DieFollowerMob(mob *MobInstance) {
 		mob.SetMountRider("")
 	}
 
-	// Players following this mob (via MountName) need cleanup too.
-	// Mobs don't have players following them in the Following sense,
-	// but players can be riding this mob.
+	// Retained leader references distinguish same-description NPC leaders.
+	for _, p := range w.GetAllPlayers() {
+		if w.combatFollowingBody(p) == mob {
+			StopFollower(w, p)
+		}
+	}
+	for _, follower := range w.GetAllMobs() {
+		if w.combatFollowingBody(follower) == mob {
+			StopFollowerMob(w, follower)
+		}
+	}
 }
 
 // --------------------------------------------------------------------------

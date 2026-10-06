@@ -54,9 +54,10 @@ type MobInstance struct {
 	Equipment map[int]*ObjectInstance // C WEAR_* index, never a player EquipmentSlot
 
 	// Combat state
-	Target       *MobInstance     // or Player
-	fightingBody combat.Combatant // C FIGHTING: actual runtime opponent
-	WaitState    int              // PULSE_VIOLENCE ticks remaining (C GET_MOB_WAIT)
+	Target        *MobInstance     // or Player
+	fightingBody  combat.Combatant // C FIGHTING: actual runtime opponent
+	combatRetired bool
+	WaitState     int // PULSE_VIOLENCE ticks remaining (C GET_MOB_WAIT)
 
 	// Memory: names of players this mob remembers attacking it
 	// Source: mobact.c:262-285, remember()/forget() in mobact.c:346-407
@@ -274,6 +275,7 @@ func (m *MobInstance) GetRoom() int {
 // SetRoom sets the mob's current room.
 func (m *MobInstance) SetRoom(vnum int) {
 	if m.world != nil {
+		m.world.stopRoomFights(m)
 		m.world.mu.Lock()
 		m.moveRoomLocked(m.world, vnum)
 		m.world.mu.Unlock()
@@ -1512,4 +1514,16 @@ func (m *MobInstance) SetFollowingBody(body combat.Combatant) {
 	} else {
 		m.followingSequence = nextFollowerSequence()
 	}
+}
+
+func (b *MobInstance) CombatRetired() bool {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.combatRetired
+}
+
+func (b *MobInstance) SetCombatRetired(retired bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.combatRetired = retired
 }
