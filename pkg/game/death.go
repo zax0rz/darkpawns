@@ -321,13 +321,13 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		}
 		// damage() awards XP/autogold before raw_kill's cry and corpse
 		// (src/fight.c:1644-1667, 1691, 573-578).
-		w.recordKill(killerName)
+		w.recordKill(killer)
 		w.handleMobDeath(victim, killer, attackType)
 	} else {
-		w.recordKill(killerName)
-		w.handlePlayerDeath(victim, true, attackType, killerName) // combat death with killer
+		w.recordKill(killer)
+		w.handlePlayerDeath(victim, true, attackType, killerName, killer) // combat death with killer
 		if mobKiller, ok := killer.(*MobInstance); ok &&
-			killerName != victim.GetName() &&
+			killer != victim &&
 			(mobKiller.HasMobFlag(MobFlagAggr24) ||
 				mobKiller.HasMobFlag(MobFlagLoots) ||
 				mobKiller.GetVNum() == 19650) {
@@ -351,13 +351,13 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 
 // recordKill preserves damage()'s bookkeeping before die_with_killer
 // (src/fight.c:1689-1691), without changing counter_procs reward logic.
-func (w *World) recordKill(killerName string) {
+func (w *World) recordKill(killer combat.Combatant) {
 	// Increment kill counter and check milestone blessings — fight.c:1689-1690.
 	// C fires GET_KILLS(ch)++ and counter_procs(ch) for ALL kills, including PK.
 	// DP-963: guard Kills++ with player.mu to prevent data race under concurrent
 	// HandleDeath calls (same killer, multiple mob kills). Extract kills before
 	// calling counter_procs to avoid reentrant lock (counter_procs calls ch.Lock()).
-	if kp, ok := w.GetPlayer(killerName); ok {
+	if kp, ok := killer.(*Player); ok && kp != nil {
 		kp.mu.Lock()
 		kp.Kills++
 		kills := kp.Kills
@@ -561,7 +561,7 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 // Extraction is deferred to the next heartbeat, matching extract_char() /
 // extract_pending_chars() in handler.c. The session layer then returns the
 // descriptor to the login menu.
-func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string) {
+func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string, killerBodies ...combat.Combatant) {
 	// Player half of deaths_total; the mob half is handleMobDeath
 	// below. The two split by species and never call each other, so a death is
 	// counted exactly once no matter which of the raw_kill paths reached it.
@@ -605,7 +605,16 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 			roomName = room.Name
 		}
 		line := fmt.Sprintf("%s killed by %s at %s", player.GetName(), killerName, roomName)
-		if killer, ok := w.GetPlayer(killerName); ok && killerName != player.GetName() {
+		var killer *Player
+		if len(killerBodies) != 0 {
+			// Live combat supplies the actual body; an NPC name must never
+			// select an unrelated player's credit or outlaw flags.
+			killer, _ = killerBodies[0].(*Player)
+		} else {
+			// Legacy direct death adapters designate a unique player name.
+			killer, _ = w.GetPlayer(killerName)
+		}
+		if killer != nil && killer != player {
 			line = "(PK) " + line
 			// Flag killer as outlaw if the victim wasn't already an outlaw.
 			if player.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {

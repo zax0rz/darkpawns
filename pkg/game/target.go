@@ -61,9 +61,8 @@ func charKeywords(c combat.Combatant) string {
 //     this is what made consider vs. kick disagree.
 //   - canSee (CAN_SEE) gates every candidate; the ordinal counts only visible
 //     matches.
-//   - Mobs and players are scanned together in room order. To preserve the
-//     existing player-then-mob precedence observed by callers, players are
-//     checked first unless the ordinal forces a single pool.
+//   - Mobs and players are scanned together in descending room-arrival
+//     order: C char_to_room prepends every actual body, regardless of kind.
 //
 // The returned CharTarget carries both the combat.Combatant and the concrete
 // *Player / *MobInstance so callers needing typed access (consider, look,
@@ -103,12 +102,8 @@ func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (Char
 		return CharTarget{Combatant: ch, Player: ch}, true
 	}
 
-	// Build the visible candidate list in a STABLE order. Players first
-	// (existing Go convention), then mobs — unless the caller only wants a
-	// player via the "0." prefix. Mobs come from a map (w.activeMobs), whose
-	// iteration order is randomized, so we sort by a stable key (mob VNum,
-	// then instance ID) to make ordinals like "2.guard" reproducible across
-	// calls — matching C's stable people-list ordering. (DP-907)
+	// Construct a deterministic fallback for old fixtures with no arrival
+	// sequence, then order the live pool by C room-list body arrival below.
 	players := w.GetPlayersInRoom(roomVNum)
 	sort.Slice(players, func(i, j int) bool { return players[i].Name < players[j].Name })
 
@@ -131,6 +126,9 @@ func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (Char
 		candidates = append(candidates, m)
 	}
 
+	// src/handler.c:1276-1300,535-550: char_to_room prepends the body.
+	sort.SliceStable(candidates, func(i, j int) bool { return combatRoomSequence(candidates[i]) > combatRoomSequence(candidates[j]) })
+
 	// C iterates people in the room and counts only visible matches; the Nth
 	// visible match wins. We replicate that over our ordered candidate list.
 	matched := 0
@@ -152,10 +150,11 @@ func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (Char
 	return CharTarget{}, false
 }
 
-// ResolveCharWorld is the canonical world-scope character resolver, faithful
-// to C get_char_vis. It checks the caster's room first, then the global
-// character list. Global matches use complete keywords (C isname), while the
+// ResolveCharWorld is the canonical world-scope character resolver. It checks
+// the caster's room first, then the global character list. Global matches use complete keywords (C isname), while the
 // room pass retains get_char_room_vis abbreviation semantics.
+// The global fallback retains legacy ordering; C character_list insertion order
+// (handler.c:1303-1325) remains outside the room-identity repair.
 func (w *World) ResolveCharWorld(ch *Player, name string) (CharTarget, bool) {
 	if target, ok := w.ResolveCharInRoom(ch, name); ok {
 		return target, true
