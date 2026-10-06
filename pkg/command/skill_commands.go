@@ -1991,6 +1991,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		s.GetWorld().RawKillCombatant(target, combat.TYPE_UNDEFINED)
 	}
 
+	if result.StealCaughtPlayer && target != nil && !target.IsNPC() {
+		game.MudLog(fmt.Sprintf("(PS) %s unsuccessfuly tried to steal from %s.", ch.GetName(), target.GetName()), game.MudlogComplete, game.LVL_IMMORT, true)
+	}
+
 	// Apply WAIT_STATE (C-10: cooldown in PULSE_VIOLENCE ticks)
 	if result.WaitChPulses > 0 {
 		ch.SetWaitStatePulses(result.WaitChPulses)

@@ -264,6 +264,9 @@ func stealInventoryItem(ch *Player, target combat.Combatant, item *ObjectInstanc
 	}
 	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
+	if !target.IsNPC() {
+		MudLog(fmt.Sprintf("(PS) %s stole %s from %s.", ch.GetName(), item.GetShortDesc(), target.GetName()), MudlogComplete, LVL_IMMORT, true)
+	}
 	applyRobbedAffect(target)
 	message := appendImprovementMessage("Got it!", improveSkillMessage(ch, SkillSteal))
 	return SkillResult{Success: true, MessageToCh: message, WaitCh: 1}
@@ -298,6 +301,9 @@ func stealEquippedItem(ch *Player, target combat.Combatant, item *ObjectInstance
 	// sets PLR_CRASH.
 	ch.MarkCrashNeeded()
 	item.Location = LocInventoryPlayer(ch.Name)
+	if !target.IsNPC() {
+		MudLog(fmt.Sprintf("(PS) %s stole %s from %s.", ch.GetName(), item.GetShortDesc(), target.GetName()), MudlogComplete, LVL_IMMORT, true)
+	}
 	applyRobbedAffect(target)
 	message := appendImprovementMessage(
 		stealthActMessage("You unequip $p and steal it.", chPronouns, &victPronouns, item.GetShortDesc()),
@@ -468,6 +474,7 @@ func applyStealFailure(ch *Player, target combat.Combatant, result *SkillResult)
 		return
 	}
 	ch.SetPlrFlag(PlrOutlaw, true)
+	result.StealCaughtPlayer = true
 }
 
 func applyRobbedAffect(target combat.Combatant) {

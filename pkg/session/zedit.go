@@ -601,6 +601,9 @@ func (s *Session) parseZeditLocked(line string) {
 			state.dirtyHeader = true
 		}
 		s.zeditShowMenuLocked()
+	default:
+		s.finishZeditLocked(false)
+		game.MudLog("SYSERR: OLC: zedit_parse(): Reached default case!", game.MudlogBrief, game.LVL_IMMORT, true)
 	}
 }
 
@@ -914,6 +917,9 @@ func (s *Session) parseZeditArg3Locked(line string) {
 		updated.Arg3 = number
 		applyOLC(olc.Operation{Kind: olc.OpModifyZoneCommand, Zone: &state.zone, Index: state.position, Command: &updated})
 		s.zeditShowMenuLocked()
+	default:
+		s.finishZeditLocked(false)
+		game.MudLog("SYSERR: OLC: zedit_parse(): case ARG3: Ack!", game.MudlogBrief, game.LVL_IMMORT, true)
 	}
 }
 

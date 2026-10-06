@@ -1,0 +1,116 @@
+# depth-case: mudlog.steal-inventory
+# depth-case: mudlog.steal-equipment
+# Independent CMP immortal observer. C do_steal: transfer before success
+# log before AFF_ROBBED/ack; caught audiences before failure log before wait.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+force-load 8007
+force-load 8010
+
+[setup:oracle]
+Stealactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stealactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Stealmark
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Stealmark
+y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Stealwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Stealwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Stealwatch 38
+force Stealwatch syslog complete
+goto 8162
+teleport Stealmark 8162
+set Stealactor str 25
+set Stealactor dex 25
+set Stealactor outlaw on
+load obj 8010
+give bread Stealmark
+load obj 8007
+give ring Stealmark
+force Stealmark wear ring
+force Stealmark sleep
+skillset Stealactor 'steal' 100
+
+[probe]
+steal bread Stealmark
+~dpclock pulse 20
+steal ring Stealmark
