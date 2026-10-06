@@ -54,6 +54,7 @@ func TestWizardMudlogProducers(t *testing.T) {
 		{"force-all", "force", "(GC) Logactor forced all to say forced", []string{"all", "say", "forced"}},
 		{"reset-zone", "zreset", "(GC) Logactor reset zone 0 (Producer zone)", []string{"80"}},
 		{"reset-world", "zreset", "(GC) Logactor reset entire world.", []string{"*"}},
+		{"newbie", "wnewbie", "(GC) Logactor newbied Logvictim.", []string{"Logvictim"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -87,5 +88,145 @@ func TestWizardMudlogProducers(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestWizardMudlogThresholdAndOrder(t *testing.T) {
+	t.Run("load exact threshold and before narration", func(t *testing.T) {
+		_, a, _, w := wizardLogFixture(t)
+		w.player.SetLevel(39)
+		w.player.SetPlrFlag(game.PrfLog2, false)
+		w.player.SetPlrFlag(game.PrfLog1, true)
+		if err := cmdLoad(a, []string{"obj", "3001"}); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.Join(drainSessionText(t, w), "")
+		if !strings.HasPrefix(got, "[ (GC) Logactor loaded object 3001 at Producer room ]\r\n") {
+			t.Fatalf("load log must precede gesture: %q", got)
+		}
+		w.player.SetLevel(38)
+		if err := cmdLoad(a, []string{"obj", "3001"}); err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Join(drainSessionText(t, w), ""); strings.Contains(got, "[ (GC)") {
+			t.Fatalf("actor-level observer received load log: %q", got)
+		}
+	})
+	t.Run("force invis threshold and normal type", func(t *testing.T) {
+		_, a, _, w := wizardLogFixture(t)
+		a.player.SetInvisLevel(41)
+		if err := cmdForce(a, []string{"room", "say", "one"}); err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Join(drainSessionText(t, w), ""); strings.Contains(got, "[ (GC)") {
+			t.Fatalf("invis threshold ignored: %q", got)
+		}
+		a.player.SetInvisLevel(0)
+		w.player.SetPlrFlag(game.PrfLog2, false)
+		w.player.SetPlrFlag(game.PrfLog1, true)
+		if err := cmdForce(a, []string{"all", "say", "two"}); err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Join(drainSessionText(t, w), ""); strings.Contains(got, "[ (GC)") {
+			t.Fatalf("brief observer received normal force log: %q", got)
+		}
+	})
+	t.Run("reset ack precedes log", func(t *testing.T) {
+		_, a, _, _ := wizardLogFixture(t)
+		a.player.SetPlrFlag(game.PrfLog2, true)
+		if err := cmdZreset(a, []string{"80"}); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.Join(drainSessionText(t, a), "")
+		if got != "Reset zone 0 (#80): Producer zone.\r\n[ (GC) Logactor reset zone 0 (Producer zone) ]\r\n" {
+			t.Fatalf("reset output = %q", got)
+		}
+	})
+	t.Run("newbie after equipment and messages", func(t *testing.T) {
+		_, a, v, _ := wizardLogFixture(t)
+		file := captureMudlogFile(t)
+		ready := false
+		game.SetLogWriter(&flagProbe{buf: file, when: func() { ready = len(v.player.Inventory.Items) == 4 && len(a.send) > 0 && len(v.send) > 0 }})
+		if err := cmdNewbie(a, []string{"Logvictim"}); err != nil {
+			t.Fatal(err)
+		}
+		if !ready {
+			t.Fatal("newbie log preceded equipment or messages")
+		}
+	})
+	t.Run("purge act then log before teardown", func(t *testing.T) {
+		m, a, v, w := wizardLogFixture(t)
+		file := captureMudlogFile(t)
+		live := false
+		game.SetLogWriter(&flagProbe{buf: file, when: func() {
+			if strings.Contains(file.String(), "has purged") {
+				return
+			}
+			_, live = m.GetSession(v.player.Name)
+		}})
+		if err := cmdPurge(a, []string{"Logvictim"}); err != nil {
+			t.Fatal(err)
+		}
+		got := strings.Join(drainSessionText(t, w), "")
+		if !strings.HasPrefix(got, "Logactor disintegrates Logvictim.\r\n[ (GC) Logactor has purged Logvictim. ]\r\n") || !live {
+			t.Fatalf("purge ordering/live=%v: %q", live, got)
+		}
+	})
+}
+
+func TestWizardMudlogForceRawRemainder(t *testing.T) {
+	_, a, _, w := wizardLogFixture(t)
+	if err := executeCommandRaw(a, "force", []string{"Logvictim", "say", "raw"}, false, "Logvictim   say  raw  "); err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Join(drainSessionText(t, w), "")
+	if !strings.Contains(got, "[ (GC) Logactor forced Logvictim to say  raw   ]\r\n") {
+		t.Fatalf("raw force log = %q", got)
+	}
+}
+
+func TestWizardMudlogForceBeforeInterpretation(t *testing.T) {
+	for _, kind := range []string{"Logvictim", "room", "all"} {
+		t.Run(kind, func(t *testing.T) {
+			_, a, v, _ := wizardLogFixture(t)
+			file := captureMudlogFile(t)
+			atLog := -1
+			notification := -1
+			game.SetLogWriter(&flagProbe{buf: file, when: func() { atLog = v.player.GetPosition(); notification = len(v.send) }})
+			if err := cmdForce(a, []string{kind, "sit"}); err != nil {
+				t.Fatal(err)
+			}
+			wantNotification := 0
+			if kind == "Logvictim" {
+				wantNotification = 1
+			}
+			if atLog != combat.PosStanding || notification != wantNotification || v.player.GetPosition() != combat.PosSitting {
+				t.Fatalf("position at log=%d, notifications=%d, final=%d", atLog, notification, v.player.GetPosition())
+			}
+		})
+	}
+}
+
+func TestWizardMudlogRefusals(t *testing.T) {
+	_, a, _, _ := wizardLogFixture(t)
+	file := captureMudlogFile(t)
+	for _, tc := range []struct {
+		command string
+		args    []string
+	}{
+		{"load", []string{"obj", "999999"}},
+		{"load", []string{"mob", "999999"}},
+		{"force", []string{"Logwatch", "sit"}},
+		{"force", []string{"Nobody", "sit"}},
+		{"zreset", []string{"999999"}},
+		{"wnewbie", []string{"Nobody"}},
+		{"purge", []string{"Logwatch"}},
+	} {
+		if err := executeCommand(a, tc.command, tc.args, false); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if file.Len() != 0 {
+		t.Fatalf("staged refusal logged: %q", file.String())
 	}
 }
