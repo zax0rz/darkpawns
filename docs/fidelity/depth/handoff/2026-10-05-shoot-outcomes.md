@@ -170,3 +170,19 @@ expected rows or infrastructure rechecks. C transcripts were inspected for
 actor, origin, destination and PC victim outputs, including lethal death cry.
 The final combined run supplies five-seed proof and full/claims verdicts; its
 exact committed tip and result are reported in the PR, not inferred here.
+
+## Review follow-up
+
+The review found pre-existing direction-before-projectile validation in CmdShoot.
+C `src/act.offensive.c:794-814` requires the inventory and missile-type gates
+first. The blocks are reordered; a missing projectile and a carried nonmissile
+combined with an invalid direction fail before the fix, while a valid missile
+still reaches the direction refusal. No RNG/wait/object mutation on refusals.
+The added scenario proves all three branches at seeds 1,2,3,5,8. A targeted
+census covers the new ordering and existing entry/item/no-target vehicles; the
+prior combined run remains evidence for the unchanged outcome/death train.
+
+Combat frontier: defender-side NPC memory/hunting at set_fighting(victim,ch)
+(`src/fight.c:1443-1451`) lacks a shared engine callback on main. It is a separate
+combat follow-up; shoot's retaliation defender is a PC, so this NPC-only effect
+is not required by this ranged seam. Attacker-side hunter behavior is proven.

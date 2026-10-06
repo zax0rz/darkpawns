@@ -954,6 +954,14 @@ func CmdShoot(s SessionInterface, args []string) error {
 	projectileName := args[0]
 	directionName := strings.ToLower(args[1])
 	targetName := strings.Join(args[2:], " ")
+	projectile, found := world.ResolveObjectInInventory(ch, projectileName)
+	if !found {
+		return s.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", projectileName))
+	}
+	if projectile.GetTypeFlag() != int(game.ItemMissile) {
+		return s.SendMessage(game.CapitalizeSentence(projectile.GetShortDesc()+" is not a projectile!") + "\r\n")
+	}
+
 	directions := map[string]string{
 		"north": "north", "n": "north",
 		"east": "east", "e": "east",
@@ -965,14 +973,6 @@ func CmdShoot(s SessionInterface, args []string) error {
 	direction, validDirection := directions[directionName]
 	if !validDirection {
 		return s.SendMessage("Interesting direction.\r\n")
-	}
-
-	projectile, found := world.ResolveObjectInInventory(ch, projectileName)
-	if !found {
-		return s.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", projectileName))
-	}
-	if projectile.GetTypeFlag() != int(game.ItemMissile) {
-		return s.SendMessage(game.CapitalizeSentence(projectile.GetShortDesc()+" is not a projectile!") + "\r\n")
 	}
 
 	room := world.GetRoomInWorld(ch.GetRoom())
