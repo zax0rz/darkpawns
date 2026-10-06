@@ -153,6 +153,8 @@ func cmdForceText(s *Session, argument string) error {
 	// Below that level they fall through to ordinary get_char_vis lookup.
 	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "room") {
 		s.Send("Okay.\r\n")
+		// src/act.wizard.c:1884-1885: before visiting any room target.
+		game.MudLog(fmt.Sprintf("(GC) %s forced room %d to %s", s.player.Name, s.player.GetRoom(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
 		for _, target := range forceTargets(s, true) {
 			forceSessionCommand(s, target, forceCmd, true)
 		}
