@@ -343,9 +343,9 @@ func parseAdvanceLevel(args []string) (int, bool) {
 // at %18s, skipping entries whose name starts with '!', breaking on the RAW
 // table index modulo 4 (i%4==3) — exactly as C's loop, so !-entries that
 // increment i but are skipped still determine column alignment. The mudlog
-// (step 9) is server-side only and is intentionally NOT emitted (same policy
-// as do_help's usage-file write). SET_SKILL maps to Player.SetSkill keyed by the
-// canonical lowercased spells[] display name.
+// (step 9) is C's file-only diagnostic: BRF with level -1 and file=TRUE, so it
+// writes the log line and never broadcasts (modify.c:334). SET_SKILL maps to
+// Player.SetSkill keyed by the canonical lowercased spells[] display name.
 func cmdSkillset(s *Session, args []string) error {
 	if !checkLevel(s, LVL_GRGOD) {
 		s.Send("Huh!?!")
@@ -439,7 +439,12 @@ func cmdSkillset(s *Session, args []string) error {
 		return nil
 	}
 
-	// Step 9: mudlog — server-side only, NOT player-facing: skipped (see header).
+	// Step 9: modify.c:334 — mudlog(buf2, BRF, -1, TRUE): file only, no
+	// broadcast, before SET_SKILL and before the actor confirmation. The payload
+	// carries C's spells[skill] name and has no CRLF (the consumer adds its
+	// bracket line).
+	game.MudLog(fmt.Sprintf("%s changed %s's %s to %d.", s.player.Name, vict.Name, game.SkillCatalogName(skillNum), value),
+		game.MudlogBrief, -1, true)
 
 	// Step 10: SET_SKILL(vict, skill, value). Go stores skills by name string;
 	// use the canonical spells[] display name (lowercased, matching how callers
