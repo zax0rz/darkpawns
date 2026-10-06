@@ -429,6 +429,10 @@ type SkillResult struct {
 	// damage(ch, vict, 0, SKILL) on a miss, which starts combat via set_fighting.
 	// The caller (sendSkillResult) routes this through the combat engine.
 	StartCombat bool
+	// StealCaughtPlayer identifies only ordinary steal's caught PC arm. Its
+	// CMP producer follows all caught messages and precedes WAIT_STATE
+	// (src/act.other.c:531-539); it is not a generic deferred log callback.
+	StealCaughtPlayer bool
 	// InitialAttack requests the synchronous ordinary hit() path used by C
 	// skills whose failure arm calls hit(ch, victim, skill). The caller starts
 	// the pair and resolves exactly one weapon attack before applying the

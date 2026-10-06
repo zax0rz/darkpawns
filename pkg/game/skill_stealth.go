@@ -474,6 +474,7 @@ func applyStealFailure(ch *Player, target combat.Combatant, result *SkillResult)
 		return
 	}
 	ch.SetPlrFlag(PlrOutlaw, true)
+	result.StealCaughtPlayer = true
 }
 
 func applyRobbedAffect(target combat.Combatant) {
