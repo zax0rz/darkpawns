@@ -17,6 +17,7 @@ func TestOLCDiskMudlogProducers(t *testing.T) {
 		{"zedit", "zone info", "Saving all zone information.", "zon", "zon"},
 		{"oedit", "objects", "Saving all objects in zone.", "obj", "obj"},
 		{"medit", "mobs", "Saving all mobiles in zone.", "mob", "mob"},
+		{"sedit", "shops", "Saving all shops in zone.", "shp", "shp"},
 	} {
 		for _, failedWrite := range []bool{false, true} {
 			t.Run(tc.command+fmt.Sprint(failedWrite), func(t *testing.T) {

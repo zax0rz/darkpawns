@@ -123,6 +123,7 @@ func cmdSedit(s *Session, args []string) error {
 			return nil
 		}
 		s.seditSend("Saving all shops in zone.\r\n")
+		game.MudLog(fmt.Sprintf("OLC: %s saves shops for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveSeditZone(s.manager.world, zone); err != nil {
 			slog.Error("sedit disk save failed", "player", s.playerName, "zone", zone.Number, "error", err)
 		}
