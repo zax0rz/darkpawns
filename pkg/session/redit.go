@@ -105,6 +105,7 @@ func cmdRedit(s *Session, args []string) error {
 			return nil
 		}
 		s.reditSend("Saving all rooms in zone.\r\n")
+		game.MudLog(fmt.Sprintf("OLC: %s saves rooms for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveReditZone(s.manager.world, zone); err != nil {
 			slog.Error("redit disk save failed", "player", s.playerName, "zone", zone.Number, "error", err)
 		}
