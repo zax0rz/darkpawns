@@ -725,6 +725,7 @@ func remortPlayer(ch *Player) {
 	// C advance_level() raises maxima but does not heal the current pools;
 	// the remorter set them immediately before this call.
 	ch.AffectTotal() // src/spec_procs2.c:942
+	MudLog("Due to remorting:", MudlogBrief, LVL_IMMORT, true)
 	ch.AdvanceLevel()
 }
 
