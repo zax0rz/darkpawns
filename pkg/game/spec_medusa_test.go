@@ -62,8 +62,8 @@ func TestSpecMedusa_EntryGatesAndFightingDelegation(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.GetName())
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	dprng.ResetStream(1)
 	if !specMedusa(w, nil, mob, "", "") {
 		t.Fatal("fighting commandless medusa did not delegate to magic_user")

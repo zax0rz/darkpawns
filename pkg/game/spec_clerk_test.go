@@ -71,7 +71,7 @@ func TestSpecClerk_EntryGates(t *testing.T) {
 		t.Fatal("sleeping actor should not reach clerk")
 	}
 	actor.SetPosition(combat.PosStanding)
-	actor.SetFighting("another character")
+	actor.SetFightingBody(NewPlayer(99999, "another character", 1001))
 	if specClerk(w, actor, mob, "list", "") {
 		t.Fatal("fighting actor should not reach clerk")
 	}

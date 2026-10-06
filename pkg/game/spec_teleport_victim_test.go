@@ -14,8 +14,8 @@ func prepareTeleportVictim(t *testing.T) (*World, *Player, *MobInstance, func() 
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	mob.SetPosition(combat.PosStanding)
-	mob.SetFighting(player.GetName())
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	lastMsg() // discard the mob-arrival act
 	return w, player, mob, lastMsg
 }
@@ -136,9 +136,9 @@ func TestSpecTeleportVictim_NonIntelligentMobSkipsSpeech(t *testing.T) {
 func TestSpecTeleportVictim_ResolvesMobCombatTarget(t *testing.T) {
 	w, _, mob, lastMsg := prepareTeleportVictim(t)
 	target := newSpecProcTestMob(t, w, mob.GetRoomVNum(), 10)
-	target.SetFighting(mob.GetName())
+	target.SetFightingBody(mob)
 	mob.SetTarget(target)
-	mob.SetFighting(target.GetName())
+	mob.SetFightingBody(target)
 	lastMsg()
 
 	resolved := mobFightingTarget(w, mob)

@@ -13,7 +13,7 @@ func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine)
 		// Check if mob is aggressive
 		if hasMobFlag(mob, "aggressive") && !player.IsFighting() {
 			// Check if mob is already fighting
-			if !ce.IsFighting(mob.GetName()) {
+			if !ce.IsFighting(mob) {
 				go func(m *MobInstance) {
 					if err := ce.StartCombat(m, player); err != nil {
 						slog.Debug("aggro combat start failed", "mob", m.GetName(), "target", player.Name, "error", err)

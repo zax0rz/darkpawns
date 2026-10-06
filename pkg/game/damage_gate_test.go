@@ -93,7 +93,7 @@ func TestDamageRefusedPeacefulRetaliation(t *testing.T) {
 	w, ch := newCombatTestWorld(t)
 	mob := spawnTargetMob(t, w)
 	w.GetRoomInWorld(ch.GetRoom()).Flags = []string{"peaceful"}
-	mob.SetFighting(ch.Name)
+	mob.SetFightingBody(ch)
 	if w.DamageRefused(ch, mob) {
 		t.Fatal("peaceful room refused a victim already fighting the attacker")
 	}

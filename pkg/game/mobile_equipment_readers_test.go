@@ -53,7 +53,7 @@ func TestMobileEquipmentReaderHitModifiers(t *testing.T) {
 
 func TestMobileEquipmentReaderFighterParry(t *testing.T) {
 	w, m, p := zoneArmedMob(t)
-	p.SetFighting(m.GetName())
+	p.SetFightingBody(m)
 	var out strings.Builder
 	w.MessageSink = func(_ string, b []byte) { out.Write(b) }
 	for seed := uint32(1); seed < 100; seed++ {
@@ -82,8 +82,8 @@ func TestMobileEquipmentReaderPaladinCharge(t *testing.T) {
 func TestMobileEquipmentReaderDisarm(t *testing.T) {
 	w, m, p := zoneArmedMob(t)
 	p.SetSkill(SkillDisarm, 200)
-	p.SetFighting(m.GetName())
-	m.SetFighting(p.GetName())
+	p.SetFightingBody(m)
+	m.SetFightingBody(p)
 	dprng.ResetStream(1)
 	if !DoDisarm(p, m, w).Success {
 		t.Fatal("disarm missed C WEAR_WIELD weapon")
@@ -289,8 +289,8 @@ func TestMobileEquipmentReaderPaladinDisarm(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	target.SetFighting(attacker.GetName())
-	attacker.SetFighting(target.GetName())
+	target.SetFightingBody(attacker)
+	attacker.SetFightingBody(target)
 	weapon := target.Equipped(mobWearWield)
 	dprng.ResetStream(1)
 	mobDisarm(w, attacker, target)

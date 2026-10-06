@@ -281,9 +281,8 @@ func TestMobDisarmSetsVictimFlag(t *testing.T) {
 		t.Fatalf("wield: %v", err)
 	}
 	victim.SetPlrFlag(PlrCrash, false)
-	me.Fighting = true
-	me.FightingTarget = victim.Name
-	victim.Fighting = me.GetName()
+	me.SetFightingBody(victim)
+	victim.SetFightingBody(me)
 
 	// Each attempt must assert the flag BEFORE any re-wield: the re-wield
 	// itself passes through the inventory detach arm, which would set the

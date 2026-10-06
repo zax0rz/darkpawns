@@ -134,7 +134,7 @@ func TestCmdHeadbuttFallsBackToFightingTarget(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosFighting)
 	session.player.SetSkill(game.SkillHeadbutt, 75)
-	session.player.SetFighting("Target")
+	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 	// Both players above level 10, so damage()'s level protections
 	// (fight.c:1344-1357) let the headbutt land.
 	session.player.Level = 20
@@ -190,7 +190,7 @@ func newBashCommandSession(t *testing.T) *rescueCommandSession {
 
 func TestCmdBash_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
-	session.player.SetFighting("Target")
+	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 
 	if err := CmdBash(session, nil); err != nil {
 		t.Fatalf("CmdBash returned error: %v", err)
@@ -206,7 +206,7 @@ func TestCmdBash_FightingTargetFallback(t *testing.T) {
 func TestCmdCharge_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
 	session.player.SetSkill(game.SkillCharge, 100)
-	session.player.SetFighting("Target")
+	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 
 	if err := CmdCharge(session, nil); err != nil {
 		t.Fatalf("CmdCharge returned error: %v", err)
@@ -224,7 +224,7 @@ func TestCmdCharge_FightingTargetFallback(t *testing.T) {
 func TestCmdCircle_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
 	session.player.SetSkill(game.SkillCircle, 100)
-	session.player.SetFighting("Target")
+	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 
 	if err := CmdCircle(session, nil); err != nil {
 		t.Fatalf("CmdCircle returned error: %v", err)
@@ -261,7 +261,7 @@ func TestCmdBash_NoFightingNoArgs(t *testing.T) {
 func TestCmdBearhug_FightingTargetFallback(t *testing.T) {
 	session := newBashCommandSession(t)
 	session.player.SetSkill(game.SkillBearhug, 100)
-	session.player.SetFighting("Target")
+	session.player.SetFightingBody(game.NewPlayer(99999, "Target", 1001))
 
 	if err := CmdBearhug(session, nil); err != nil {
 		t.Fatalf("CmdBearhug returned error: %v", err)
@@ -952,7 +952,7 @@ func TestCmdCompare_NoPlayer(t *testing.T) {
 func TestCmdCompare_Fighting(t *testing.T) {
 	session := newSkillCommandSession(t)
 	// C do_compare checks FIGHTING(ch) (the actual fight target), not position.
-	session.player.Fighting = "goblin"
+	session.player.SetFightingBody(game.NewPlayer(99999, "goblin", 1001))
 	if err := CmdCompare(session, []string{"sword"}); err != nil {
 		t.Fatalf("CmdCompare: %v", err)
 	}
@@ -1006,7 +1006,7 @@ func TestCmdSharpen_NoArgs(t *testing.T) {
 func TestCmdSharpen_Fighting(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosFighting)
-	session.player.SetFighting("opponent")
+	session.player.SetFightingBody(game.NewPlayer(99999, "opponent", 1001))
 	session.player.Inventory.Items = append(session.player.Inventory.Items, game.NewObjectInstance(&parser.Obj{
 		VNum:      9001,
 		Keywords:  "sword",
@@ -1438,7 +1438,7 @@ func TestCmdBite_NoFightingNoArgs(t *testing.T) {
 func TestCmdBite_FightingNoArgsIsSilent(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosFighting)
-	session.player.SetFighting("target")
+	session.player.SetFightingBody(game.NewPlayer(99999, "target", 1001))
 	if err := CmdBite(session, nil); err != nil {
 		t.Fatalf("CmdBite: %v", err)
 	}

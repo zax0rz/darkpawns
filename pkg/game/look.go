@@ -1273,7 +1273,7 @@ func mobPresenceLine(mob *MobInstance, viewer *Player) string {
 	// The general branch (act.informative.c:546-611): CAP(short_descr).
 	buf := capitalize(mob.GetShortDesc()) + presenceTags(mob)
 	if mob.GetPosition() == posFighting {
-		buf += fightingPresence(mob.FightingTarget, viewer)
+		buf += fightingPresence(mob.GetFighting(), viewer)
 	} else {
 		buf += positionPresence(mob.GetPosition())
 	}

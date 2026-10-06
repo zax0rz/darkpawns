@@ -178,24 +178,30 @@ func TestMagAreas_SkipsCharmedNPC(t *testing.T) {
 // enrolls an ordinary awake target even though the damage amount is zero.
 type breathCombatant struct {
 	mockSpellsChar
-	fighting string
+	fighting combat.Combatant
 }
 
-func (m *breathCombatant) GetRoom() int                   { return m.roomVNum }
-func (m *breathCombatant) GetAC() int                     { return 0 }
-func (m *breathCombatant) GetTHAC0() int                  { return 20 }
-func (m *breathCombatant) GetDamageRoll() combat.DiceRoll { return combat.DiceRoll{} }
-func (m *breathCombatant) GetStr() int                    { return 18 }
-func (m *breathCombatant) GetStrAdd() int                 { return 0 }
-func (m *breathCombatant) GetInt() int                    { return 10 }
-func (m *breathCombatant) GetWis() int                    { return 10 }
-func (m *breathCombatant) GetHitroll() int                { return 0 }
-func (m *breathCombatant) GetDamroll() int                { return 0 }
-func (m *breathCombatant) TakeDamage(amount int)          { m.hp -= amount }
-func (m *breathCombatant) Heal(amount int)                { m.hp += amount }
-func (m *breathCombatant) SetFighting(name string)        { m.fighting = name }
-func (m *breathCombatant) StopFighting()                  { m.fighting = "" }
-func (m *breathCombatant) GetFighting() string            { return m.fighting }
+func (m *breathCombatant) GetRoom() int                            { return m.roomVNum }
+func (m *breathCombatant) GetAC() int                              { return 0 }
+func (m *breathCombatant) GetTHAC0() int                           { return 20 }
+func (m *breathCombatant) GetDamageRoll() combat.DiceRoll          { return combat.DiceRoll{} }
+func (m *breathCombatant) GetStr() int                             { return 18 }
+func (m *breathCombatant) GetStrAdd() int                          { return 0 }
+func (m *breathCombatant) GetInt() int                             { return 10 }
+func (m *breathCombatant) GetWis() int                             { return 10 }
+func (m *breathCombatant) GetHitroll() int                         { return 0 }
+func (m *breathCombatant) GetDamroll() int                         { return 0 }
+func (m *breathCombatant) TakeDamage(amount int)                   { m.hp -= amount }
+func (m *breathCombatant) Heal(amount int)                         { m.hp += amount }
+func (m *breathCombatant) SetFightingBody(target combat.Combatant) { m.fighting = target }
+func (m *breathCombatant) GetFightingBody() combat.Combatant       { return m.fighting }
+func (m *breathCombatant) StopFighting()                           { m.fighting = nil }
+func (m *breathCombatant) GetFighting() string {
+	if m.fighting == nil {
+		return ""
+	}
+	return m.fighting.GetName()
+}
 
 func TestMagAreas_BreathUsesCImmortalGateAndZeroDamageTail(t *testing.T) {
 	caster := &breathCombatant{mockSpellsChar: mockSpellsChar{

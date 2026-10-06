@@ -66,9 +66,9 @@ func TestSendSkillResult_TripSuccess_EnrollsBothCombatants(t *testing.T) {
 	if ktw.mob.GetFighting() != p.Name {
 		t.Errorf("victim should be fighting the attacker, got %q", ktw.mob.GetFighting())
 	}
-	if !rig.engine.IsFighting(p.Name) || !rig.engine.IsFighting(ktw.mob.GetName()) {
+	if !rig.engine.IsFighting(p) || !rig.engine.IsFighting(ktw.mob) {
 		t.Errorf("both combatants should be enrolled: IsFighting(%s)=%v IsFighting(%s)=%v",
-			p.Name, rig.engine.IsFighting(p.Name), ktw.mob.GetName(), rig.engine.IsFighting(ktw.mob.GetName()))
+			p.Name, rig.engine.IsFighting(p), ktw.mob.GetName(), rig.engine.IsFighting(ktw.mob))
 	}
 
 	// The mob must be in combatOrder, not just the pair map: a PerformRound
@@ -135,7 +135,7 @@ func TestSendSkillResult_KillHit_DoesNotEnrollCorpse(t *testing.T) {
 	if p.GetFighting() != "" {
 		t.Errorf("killing hit must not enroll the attacker (C enrolls no corpse), fighting=%q", p.GetFighting())
 	}
-	if rig.engine.IsFighting(p.Name) || rig.engine.IsFighting(ktw.mob.GetName()) {
+	if rig.engine.IsFighting(p) || rig.engine.IsFighting(ktw.mob) {
 		t.Error("killing hit must not enroll either combatant in engine combat")
 	}
 }

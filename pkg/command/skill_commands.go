@@ -16,7 +16,7 @@ import (
 type rescueCombatEngine interface {
 	StartCombat(combat.Combatant, combat.Combatant) error
 	PerformInitialAttack(combat.Combatant, combat.Combatant) error
-	StopCombat(string)
+	StopCombat(combat.Combatant)
 	// SkillMessage routes a combat message through the skill_message path
 	// (fight.c:1023-1092), drawing Dice(1,N) and emitting the set's text.
 	SkillMessage(dam int, ch, vict string, attackType int, roomVNum int) bool
@@ -655,7 +655,7 @@ func CmdBash(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Bash who?\r\n")
 		}
-	} else if ch.GetFighting() != "" {
+	} else if ch.GetFightingBody() != nil {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Bash who?\r\n")
@@ -692,7 +692,7 @@ func CmdKick(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Kick who?\r\n")
 		}
-	} else if ch.GetFighting() != "" {
+	} else if ch.GetFightingBody() != nil {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			// C uses FIGHTING(ch) as a direct pointer after an empty
@@ -734,7 +734,7 @@ func CmdTrip(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Trip who?\r\n")
 		}
-	} else if ch.GetFighting() != "" {
+	} else if ch.GetFightingBody() != nil {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Trip who?\r\n")
@@ -775,7 +775,7 @@ func CmdHeadbutt(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Headbutt who?\r\n")
 		}
-	} else if ch.GetFighting() != "" {
+	} else if ch.GetFightingBody() != nil {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Headbutt who?\r\n")
@@ -846,7 +846,7 @@ func CmdDisembowel(s SessionInterface, args []string) error {
 			target = resolved.Combatant
 		}
 	}
-	if target == nil && ch.GetFighting() != "" {
+	if target == nil && ch.GetFightingBody() != nil {
 		resolved, found := world.ResolveFightingTarget(ch)
 		if found {
 			target = resolved.Combatant
@@ -916,7 +916,7 @@ func martialArtsVictim(s SessionInterface, ch *game.Player, args []string) (comb
 			return target, true
 		}
 	}
-	if ch.GetFighting() == "" {
+	if ch.GetFightingBody() == nil {
 		return nil, false
 	}
 	if target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch); found {
@@ -1021,7 +1021,7 @@ func CmdShoot(s SessionInterface, args []string) error {
 	}
 	// Target combat state is checked before MOB_SENTINEL, after the PC
 	// level window (src/act.offensive.c:881-900).
-	if target.GetFighting() != "" {
+	if target.GetFightingBody() != nil {
 		return s.SendMessage("It looks like they are fighting, you can't aim properly.\r\n")
 	}
 	if mob, ok := target.(*game.MobInstance); ok && mob.HasFlag(game.MobSentinel) {
@@ -1146,7 +1146,7 @@ func CmdAmbush(s SessionInterface, args []string) error {
 		room.Sector != game.SECT_MOUNTAIN && room.Sector != game.SECT_CITY) {
 		return s.SendMessage("Ambush someone here? Impossible!\r\n")
 	}
-	if target.GetFighting() != "" {
+	if target.GetFightingBody() != nil {
 		return s.SendMessage("They're too alert for that, currently.\r\n")
 	}
 	gameWorld := s.GetWorld()
@@ -1320,7 +1320,7 @@ func CmdStrike(s SessionInterface, args []string) error {
 	world := s.GetWorld()
 	var target combat.Combatant
 	if len(args) == 0 {
-		if ch.GetFighting() == "" {
+		if ch.GetFightingBody() == nil {
 			return s.SendMessage("Strike who?\r\n")
 		}
 		target, _, _ = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
@@ -1473,7 +1473,7 @@ func CmdDisarm(s SessionInterface, args []string) error {
 	var target combat.Combatant
 	world := s.GetWorld()
 
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		resolved, found := world.ResolveFightingTarget(ch)
 		if !found {
 			// A live C FIGHTING pointer cannot be absent from the room. Keep the
@@ -1859,7 +1859,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				// Preserve their existing entry rather than requiring its fields.
 				err = engine.StartCombat(ch, target)
 			}
-			if err != nil && ch.GetFighting() != target.GetName() {
+			if err != nil && ch.GetFightingBody() != target {
 				slog.Error("skill combat start failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
 			}
 		}
@@ -2086,7 +2086,7 @@ func CmdBearhug(s SessionInterface, args []string) error {
 	if targetName != "" {
 		target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoomVNum())
 	}
-	if !found && ch.GetFighting() != "" {
+	if !found && ch.GetFightingBody() != nil {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
 	}
 	if !found {
@@ -2117,7 +2117,7 @@ func CmdSlug(s SessionInterface, args []string) error {
 	// pointer-style helper because a mob's short description is not its keyword
 	// list.
 	target, found = oneArgumentSkillTarget(world, ch, args, ch.GetRoomVNum())
-	if !found && ch.GetFighting() != "" {
+	if !found && ch.GetFightingBody() != nil {
 		target, found = game.FindFightingTargetInRoom(world, ch.GetRoomVNum(), ch.GetFighting(), ch)
 	}
 	if !found {
@@ -2392,7 +2392,7 @@ func CmdCircle(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Circle who?\r\n")
 		}
-	} else if ch.GetFighting() != "" {
+	} else if ch.GetFightingBody() != nil {
 		// Default to current fighting target.
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
@@ -2430,7 +2430,7 @@ func CmdCharge(s SessionInterface, args []string) error {
 		if !found {
 			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")
 		}
-	} else if ch.GetFighting() != "" {
+	} else if ch.GetFightingBody() != nil {
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), ch.GetFighting(), ch)
 		if !found {
 			return s.SendMessage("Great! Fine! Charge who?!?!\r\n")

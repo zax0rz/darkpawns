@@ -64,8 +64,8 @@ func newWerewolfTestActors(t *testing.T) werewolfTestActors {
 	mob.SetMaxHP(1000)
 	mob.SetHealth(1000)
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(victim.GetName())
-	victim.SetFighting(mob.GetName())
+	mob.SetFightingBody(victim)
+	victim.SetFightingBody(mob)
 	victim.SetHealth(1000)
 	victim.SetMaxHP(1000)
 	victim.SetMove(20)
@@ -104,14 +104,14 @@ func setWerewolfNumber(t *testing.T, values ...int) {
 func TestSpecWerewolf_EntryGates(t *testing.T) {
 	a := newWerewolfTestActors(t)
 	setWerewolfNumber(t, 0, 0)
-	a.mob.SetFighting("")
+	a.mob.SetFightingBody(nil)
 	if specWerewolf(a.w, a.victim, a.mob, "look", "werewolf") {
 		t.Fatal("non-empty command should fall through")
 	}
 	if specWerewolf(a.w, nil, a.mob, "", "") {
 		t.Fatal("non-fighting werewolf should fall through")
 	}
-	a.mob.SetFighting(a.victim.GetName())
+	a.mob.SetFightingBody(a.victim)
 	a.mob.SetHealth(0)
 	if specWerewolf(a.w, nil, a.mob, "", "") {
 		t.Fatal("non-positive HP werewolf should fall through")

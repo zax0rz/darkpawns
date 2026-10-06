@@ -43,7 +43,7 @@ func (w *World) DamageRefused(ch, victim combat.Combatant) bool {
 	}
 
 	// C IS_OUTLAW is !IS_NPC && PLR_OUTLAW; the room is the attacker's.
-	if !victimOutlaw && victim.GetFighting() != ch.GetName() && !self &&
+	if !victimOutlaw && victim.GetFightingBody() != ch && !self &&
 		w.RoomHasFlag(ch.GetRoom(), "peaceful") {
 		ch.SendMessage("This room just has such a peaceful, easy feeling...\r\n")
 		return true
@@ -86,11 +86,11 @@ func (w *World) damageGateAct(ch, victim combat.Combatant, format string) {
 
 // damageGateStopFighting is C's `if (FIGHTING(x)) stop_fighting(x)`.
 func (w *World) damageGateStopFighting(c combat.Combatant) {
-	if c.GetFighting() == "" {
+	if c.GetFightingBody() == nil {
 		return
 	}
-	if stopper, ok := w.combatEngine.(interface{ StopCombat(string) }); ok {
-		stopper.StopCombat(c.GetName())
+	if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+		stopper.StopCombat(c)
 		return
 	}
 	c.StopFighting()

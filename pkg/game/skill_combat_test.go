@@ -342,7 +342,7 @@ func TestDoCircle_MobAware(t *testing.T) {
 
 	// The same early branch still emits the notice when the mob is already
 	// fighting, but C skips hit(vict, ch) in that case.
-	mob.SetFighting("TheTank")
+	mob.SetFightingBody(NewPlayer(99999, "TheTank", 1001))
 	busyResult := DoCircle(ch, mob)
 	if busyResult.RetaliateHit || busyResult.StartCombat {
 		t.Errorf("already-fighting aware result = retaliate %v, start %v; want false, false", busyResult.RetaliateHit, busyResult.StartCombat)
@@ -385,14 +385,14 @@ func TestDoCircle_MissPullsAggro(t *testing.T) {
 	equipWeapon(t, ch, weapon)
 
 	// Mob is tanked on someone else; circler is assisting (not the mob's target).
-	mob.SetFighting("TheTank")
+	mob.SetFightingBody(NewPlayer(99999, "TheTank", 1001))
 	// Low skill so a miss is near-certain; awake mob so the AWAKE gate applies.
 	ch.SetSkill(SkillCircle, 1)
 	mob.SetPosition(combat.PosStanding)
 
 	var missed bool
 	for i := 0; i < 50; i++ {
-		mob.SetFighting("TheTank") // reset each attempt
+		mob.SetFightingBody(NewPlayer(99999, "TheTank", 1001)) // reset each attempt
 		result := DoCircle(ch, mob)
 		if !result.Success && result.Damage == 0 {
 			// Miss: C stops the old engagement before the synchronous retaliation;
@@ -545,7 +545,7 @@ func TestDoBackstab_TargetFighting_Gate(t *testing.T) {
 	equipWeapon(t, ch, weapon)
 
 	// Target is already fighting someone else — too alert.
-	mob.SetFighting("SomeoneElse")
+	mob.SetFightingBody(NewPlayer(99999, "SomeoneElse", 1001))
 
 	result := DoBackstab(ch, mob, w)
 	if result.Success {

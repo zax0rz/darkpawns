@@ -335,10 +335,10 @@ func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) Ski
 	if ch.IsMounted() {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You're a little busy right now!"}
 	}
-	if vill.GetFighting() != "" || vil2.GetFighting() != "" {
+	if vill.GetFightingBody() != nil || vil2.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "They are too busy fighting at the moment!"}
 	}
 	if world != nil && world.roomHasFlag(ch.GetRoomVNum(), "peaceful") {
@@ -793,7 +793,7 @@ func DoFleshAlter(ch *Player) SkillResult {
 
 	// C: number(0, 101 + (FIGHTING(ch) ? 10 : 0)).
 	rollMax := 101
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		rollMax += 10
 	}
 	// #nosec G404 — game RNG, not cryptographic

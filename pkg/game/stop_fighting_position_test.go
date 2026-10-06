@@ -35,15 +35,15 @@ func TestStopFightingPositionBands(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := NewPlayer(1, "Bandtest", 1001)
-			p.Fighting = "wharf rat"
+			p.SetFightingBody(NewPlayer(99999, "wharf rat", 1001))
 			p.Position = combat.PosFighting
 			p.SetHealth(tc.hp)
 			p.MaxHealth = 100
 
 			p.StopFighting()
 
-			if p.Fighting != "" {
-				t.Fatalf("Fighting = %q, want cleared", p.Fighting)
+			if p.GetFighting() != "" {
+				t.Fatalf("Fighting = %q, want cleared", p.GetFighting())
 			}
 			if p.GetPosition() != tc.want {
 				t.Fatalf("position after StopFighting at HP %d = %d, want %d", tc.hp, p.GetPosition(), tc.want)

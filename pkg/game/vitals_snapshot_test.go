@@ -64,7 +64,7 @@ func TestPlayerCombatStateConcurrent(t *testing.T) {
 				p.TakeDamage(1)
 				p.Heal(1)
 				p.SetPosition(positions[(i+j)%len(positions)])
-				p.SetFighting("a training dummy")
+				p.SetFightingBody(NewPlayer(99999, "a training dummy", 1001))
 				_ = p.GetFighting()
 				p.StopFighting()
 				p.RestoreVitals()

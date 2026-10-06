@@ -81,7 +81,7 @@ func TestSpecBackstabber_EntryGatesAndTargetSelection(t *testing.T) {
 		{
 			name: "fighting mob gate",
 			call: func(w *World, player *Player, mob *MobInstance) bool {
-				mob.SetFighting(player.GetName())
+				mob.SetFightingBody(player)
 				return specBackstabber(w, nil, mob, "", "")
 			},
 			want: false,
@@ -121,7 +121,7 @@ func TestSpecBackstabber_EntryGatesAndTargetSelection(t *testing.T) {
 			name: "fighting target is handled before rolls",
 			call: func(w *World, player *Player, mob *MobInstance) bool {
 				mob.EquipItem(backstabberWeapon(), mobWearWield)
-				player.SetFighting("another attacker")
+				player.SetFightingBody(NewPlayer(99999, "another attacker", 1001))
 				return specBackstabber(w, nil, mob, "", "")
 			},
 			want: true,

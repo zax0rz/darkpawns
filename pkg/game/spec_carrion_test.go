@@ -28,9 +28,9 @@ func (e *carrionTestCombatEngine) PerformInitialAttack(attacker, defender combat
 	return nil
 }
 
-func (e *carrionTestCombatEngine) IsFighting(string) bool { return false }
+func (e *carrionTestCombatEngine) IsFighting(combat.Combatant) bool { return false }
 
-func (e *carrionTestCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *carrionTestCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 

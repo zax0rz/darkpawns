@@ -43,7 +43,7 @@ func TestDoSleeperDepthGateOrder(t *testing.T) {
 		{
 			name: "actor fighting",
 			setup: func(_ *World, ch *Player, _ combat.Combatant) {
-				ch.SetFighting("someone")
+				ch.SetFightingBody(NewPlayer(99999, "someone", 1001))
 			},
 			want: "You can't do this while fighting!",
 		},
@@ -87,7 +87,7 @@ func TestDoSleeperDepthGateOrder(t *testing.T) {
 			name: "target fighting",
 			setup: func(_ *World, ch *Player, target combat.Combatant) {
 				ch.SetPlrFlag(PlrOutlaw, true)
-				target.SetFighting("someone")
+				target.SetFightingBody(NewPlayer(99999, "someone", 1001))
 			},
 			want: "You can't get a good grip on them while they're fighting!",
 		},

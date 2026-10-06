@@ -21,7 +21,7 @@ func TestCmdSlug_FallsBackToFightingTarget(t *testing.T) {
 	if err := session.world.AddPlayer(target); err != nil {
 		t.Fatalf("AddPlayer target: %v", err)
 	}
-	session.player.SetFighting(target.GetName())
+	session.player.SetFightingBody(target)
 
 	if err := CmdSlug(session, []string{"nobody"}); err != nil {
 		t.Fatalf("CmdSlug: %v", err)

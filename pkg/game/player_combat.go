@@ -5,10 +5,10 @@ import "github.com/zax0rz/darkpawns/pkg/combat"
 func (p *Player) StopFighting() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.Fighting == "" {
+	if p.fightingBody == nil {
 		return
 	}
-	p.Fighting = ""
+	p.fightingBody = nil
 	// C's stop_fighting resets POS_FIGHTING to standing, then update_pos
 	// re-derives the wounded band from hit points (fight.c). MobInstance does
 	// the same; players must not remain command-gated as fighting after their
@@ -30,7 +30,7 @@ func (p *Player) StopFighting() {
 func (p *Player) IsFighting() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Fighting != ""
+	return p.fightingBody != nil
 }
 
 // GetClass returns the player's class (Phase 2c addition)

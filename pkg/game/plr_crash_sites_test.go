@@ -77,7 +77,7 @@ func TestDisarmVictimFlagDirect(t *testing.T) {
 		t.Fatalf("wield: %v", err)
 	}
 	attacker.SetSkill(SkillDisarm, 100)
-	attacker.Fighting = victim.Name
+	attacker.SetFightingBody(victim)
 
 	flagged := false
 	for i := 0; i < 200 && !flagged; i++ {

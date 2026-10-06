@@ -14,7 +14,7 @@ func TestCmdHitUsesCOneArgumentBoundary(t *testing.T) {
 	if err := cmdHit(s, []string{"the", "target", "ignored"}); err != nil {
 		t.Fatalf("cmdHit returned error: %v", err)
 	}
-	if !m.combatEngine.IsFighting("Hero") {
+	if !m.combatEngine.IsFighting(s.player) {
 		t.Fatal("hit should resolve the first non-fill token and start combat")
 	}
 }

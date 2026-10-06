@@ -370,14 +370,14 @@ func cmdDark(s *Session, args []string) error {
 		if !p.IsFighting() {
 			continue
 		}
-		s.manager.combatEngine.StopCombat(p.GetName())
+		s.manager.combatEngine.StopCombat(p)
 		// C uses the mixed \n\r terminator here. Send a lone LF so the
 		// telnet transport's canonicalizer produces one line terminator rather
 		// than appending a second CRLF to C's already-terminated text.
 		p.SendMessage("The peace of the ancients fills your soul.\n")
 	}
 	for _, mob := range fightingMobs {
-		s.manager.combatEngine.StopCombat(mob.GetName())
+		s.manager.combatEngine.StopCombat(mob)
 		if len(mob.GetMemory()) > 0 {
 			mob.ClearMemory()
 		}

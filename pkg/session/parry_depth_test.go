@@ -48,7 +48,7 @@ func TestCmdParryEntryMessages(t *testing.T) {
 			name: "opponent not attacking",
 			setup: func(s *Session, mob *game.MobInstance) {
 				s.player.SetSkill(game.SkillParry, 100)
-				s.player.SetFighting(mob.GetName())
+				s.player.SetFightingBody(mob)
 			},
 			want: "But noone's attacking you!\r\n",
 		},
@@ -56,8 +56,8 @@ func TestCmdParryEntryMessages(t *testing.T) {
 			name: "unarmed",
 			setup: func(s *Session, mob *game.MobInstance) {
 				s.player.SetSkill(game.SkillParry, 100)
-				s.player.SetFighting(mob.GetName())
-				mob.SetFighting(s.player.GetName())
+				s.player.SetFightingBody(mob)
+				mob.SetFightingBody(s.player)
 			},
 			want: "Parry with what? You're unarmed!\r\n",
 		},
@@ -126,8 +126,8 @@ func TestCmdParrySuccessUsesCActAudiencesAndWait(t *testing.T) {
 		t.Fatalf("EquipItem: %v", err)
 	}
 	actor.player.SetSkill(game.SkillParry, 100)
-	actor.player.SetFighting(mob.GetName())
-	mob.SetFighting(actor.player.GetName())
+	actor.player.SetFightingBody(mob)
+	mob.SetFightingBody(actor.player)
 
 	if err := cmdParry(actor, []string{"ignored", "argument"}); err != nil {
 		t.Fatalf("cmdParry: %v", err)

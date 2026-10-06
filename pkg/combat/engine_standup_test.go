@@ -62,10 +62,11 @@ func TestProcessCombatPair_MobStandupRoundDrawsFirst(t *testing.T) {
 	SetCallbacks(defaultCombatCallbacks())
 
 	attacker := &waitStateMockCombatant{
-		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
+		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
 		waitState:     2, // has wait — previously caused the draw skip
 	}
 	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+	attacker.SetFightingBody(defender)
 
 	ce := NewCombatEngine()
 	ce.BroadcastFunc = func(int, string, string) {}
@@ -76,7 +77,7 @@ func TestProcessCombatPair_MobStandupRoundDrawsFirst(t *testing.T) {
 	// re-down the attacker to model a mid-fight bash.
 	attacker.SetPosition(PosSitting)
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 	// The mob's Number(0,900) draw MUST be present (fight.c:1917). It was
 	// previously skipped when the mob had wait.
@@ -99,10 +100,11 @@ func TestProcessCombatPair_MobAttacksOnStandupRound(t *testing.T) {
 	SetCallbacks(defaultCombatCallbacks())
 
 	attacker := &waitStateMockCombatant{
-		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
+		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
 		waitState:     2,
 	}
 	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+	attacker.SetFightingBody(defender)
 
 	ce := NewCombatEngine()
 	var broadcasts []string
@@ -114,7 +116,7 @@ func TestProcessCombatPair_MobAttacksOnStandupRound(t *testing.T) {
 	// re-down the attacker to model a mid-fight bash.
 	attacker.SetPosition(PosSitting)
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 	// Stood up.
 	if attacker.GetPosition() != PosFighting {
@@ -145,8 +147,9 @@ func TestProcessCombatPair_ScrambleCapitalized(t *testing.T) {
 	t.Cleanup(func() { SetCallbacks(origCB) })
 	SetCallbacks(defaultCombatCallbacks())
 
-	attacker := &mockCombatant{name: "a guard trainee", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10, sex: 0}
+	attacker := &mockCombatant{name: "a guard trainee", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10, sex: 0}
 	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+	attacker.SetFightingBody(defender)
 
 	ce := NewCombatEngine()
 	var broadcasts []string
@@ -158,7 +161,7 @@ func TestProcessCombatPair_ScrambleCapitalized(t *testing.T) {
 	// re-down the attacker to model a mid-fight bash.
 	attacker.SetPosition(PosSitting)
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "a guard trainee", Target: "Hero"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 	if len(broadcasts) == 0 {
 		t.Fatal("expected scramble broadcast")
@@ -179,10 +182,11 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		SetCallbacks(defaultCombatCallbacks())
 
 		attacker := &waitStateMockCombatant{
-			mockCombatant: mockCombatant{name: "Hero", npc: false, room: 1, position: PosSitting, fighting: "Orc", hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
+			mockCombatant: mockCombatant{name: "Hero", npc: false, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Orc"}, hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
 			waitState:     0,
 		}
 		defender := &mockCombatant{name: "Orc", npc: true, room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+		attacker.SetFightingBody(defender)
 
 		ce := NewCombatEngine()
 		var msgs []string
@@ -195,7 +199,7 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		// re-down the attacker to model a mid-fight bash.
 		attacker.SetPosition(PosSitting)
 
-		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Hero", Target: "Orc"}])
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 		if attacker.GetPosition() != PosFighting {
 			t.Errorf("downed PC wait 0 should stand: pos %d", attacker.GetPosition())
@@ -223,10 +227,12 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		SetCallbacks(defaultCombatCallbacks())
 
 		attacker := &waitStateMockCombatant{
-			mockCombatant: mockCombatant{name: "Hero", npc: false, room: 1, position: PosSitting, fighting: "Orc", hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
+			mockCombatant: mockCombatant{name: "Hero", npc: false, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Orc"}, hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10},
 			waitState:     2, // CHECK_WAIT: wait > 1 → no stand-up
 		}
 		defender := &mockCombatant{name: "Orc", npc: true, room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+
+		attacker.SetFightingBody(defender)
 
 		ce := NewCombatEngine()
 		ce.BroadcastFunc = func(int, string, string) {}
@@ -237,7 +243,7 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		// re-down the attacker to model a mid-fight bash.
 		attacker.SetPosition(PosSitting)
 
-		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Hero", Target: "Orc"}])
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 		// Still sitting (CHECK_WAIT blocks stand-up).
 		if attacker.GetPosition() != PosSitting {
@@ -264,8 +270,9 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		SetCallbacks(defaultCombatCallbacks())
 
 		// A sitting (non-waited) PC attacker — NOT an NPC (no wait-state holder).
-		attacker := &mockCombatant{name: "Hero", npc: false, room: 1, position: PosSitting, fighting: "Orc", hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10}
+		attacker := &mockCombatant{name: "Hero", npc: false, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Orc"}, hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10}
 		defender := &mockCombatant{name: "Orc", npc: true, room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+		attacker.SetFightingBody(defender)
 
 		ce := NewCombatEngine()
 		ce.BroadcastFunc = func(int, string, string) {}
@@ -281,7 +288,7 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		// but pre-set PosSitting. Actually mockCombatant isn't a waitStateHolder,
 		// so waitOK defaults true → it stands. That's fine: assert it stands AND
 		// attacks (the gate lets a PosFighting attacker through trivially).
-		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Hero", Target: "Orc"}])
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 		if !rec.hasNumber(1, 20) {
 			t.Errorf("sitting attacker should swing (AWAKE gate): no Number(1,20). Draws: %+v", rec.logged)
 		}
@@ -298,10 +305,12 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		// 2019). A sleeping-but-wait-0 PC would be stood up by the stand-up
 		// branch and thus pass the AWAKE gate — that's C's actual behavior.
 		attacker := &waitStateMockCombatant{
-			mockCombatant: mockCombatant{name: "Hero", npc: false, room: 1, position: PosSleeping, fighting: "Orc", hp: 100, maxHP: 100, level: 10},
+			mockCombatant: mockCombatant{name: "Hero", npc: false, room: 1, position: PosSleeping, fighting: &mockCombatant{name: "Orc"}, hp: 100, maxHP: 100, level: 10},
 			waitState:     2, // CHECK_WAIT blocks stand-up
 		}
 		defender := &mockCombatant{name: "Orc", npc: true, room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+
+		attacker.SetFightingBody(defender)
 
 		ce := NewCombatEngine()
 		ce.BroadcastFunc = func(int, string, string) {}
@@ -311,10 +320,10 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		// StartCombat stands combatants at entry (C set_fighting, fight.c:223);
 		// re-apply the sleeping position to model a slept mid-fight combatant.
 		attacker.SetPosition(PosSleeping)
-		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Hero", Target: "Orc"}])
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 		// Sleeping attacker (couldn't stand due to CHECK_WAIT): C stops combat.
-		if ce.IsFighting("Hero") {
+		if ce.IsFighting(attacker) {
 			t.Error("sleeping+waited attacker should stop combat (not AWAKE, couldn't stand)")
 		}
 		if attacker.GetPosition() != PosSleeping {

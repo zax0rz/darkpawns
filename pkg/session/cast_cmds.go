@@ -410,7 +410,7 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 			s.player.SetMana(max(0, s.player.GetMana()-(cost>>1)))
 		}
 		if info.IsViolent() {
-			if mob, ok := target.character.(*game.MobInstance); ok && mob.GetFighting() == "" && s.manager.combatEngine != nil {
+			if mob, ok := target.character.(*game.MobInstance); ok && mob.GetFightingBody() == nil && s.manager.combatEngine != nil {
 				if err := s.manager.combatEngine.StartCombat(mob, s.player); err != nil {
 					slog.Warn("cast-failure retaliation failed", "mob", mob.GetName(), "caster", s.player.Name, "error", err)
 				}

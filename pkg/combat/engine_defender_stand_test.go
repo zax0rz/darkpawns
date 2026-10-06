@@ -11,7 +11,7 @@ import "testing"
 // is always standing when it initiates, does stand at entry.
 func TestStartCombat_DoesNotStandDefenderAtEntry(t *testing.T) {
 	for _, pos := range []int{PosSleeping, PosResting, PosSitting, PosStanding} {
-		attacker := &mockCombatant{name: "Hero", npc: false, room: 1, position: PosStanding, fighting: "", hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10}
+		attacker := &mockCombatant{name: "Hero", npc: false, room: 1, position: PosStanding, fighting: nil, hp: 100, maxHP: 100, level: 10, ac: 10, thac0: 10}
 		defender := &mockCombatant{name: "Orc", npc: true, room: 1, position: pos, hp: 100, maxHP: 100, ac: 10}
 
 		ce := NewCombatEngine()

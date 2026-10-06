@@ -129,8 +129,8 @@ func TestSpecGuildGuard_BlindAndNonMoveDelegateToFighter(t *testing.T) {
 	player.SetPosition(combat.PosFighting)
 	mob := newSpecProcTestMob(t, w, 1001, 10)
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(player.Name)
-	player.SetFighting(mob.GetName())
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 	mob.SetAffected(affBlind)
 
 	var seed uint32

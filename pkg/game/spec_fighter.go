@@ -34,8 +34,8 @@ func (w *World) mobSkillDamageAfterGate(ch *MobInstance, vict combat.Combatant, 
 	// damage() enrolls both sides before applying its modifier block. The
 	// victim's position is only raised from a downed state at this point when
 	// the C position gate allows it; fighter's live target is already fighting.
-	if ch.GetPosition() > combat.PosStunned && vict.GetPosition() > combat.PosStunned && vict.GetFighting() == "" {
-		vict.SetFighting(ch.GetName())
+	if ch.GetPosition() > combat.PosStunned && vict.GetPosition() > combat.PosStunned && vict.GetFightingBody() == nil {
+		vict.SetFightingBody(ch)
 	}
 	dam = combat.ApplyDamageModifiers(ch, vict, dam)
 	if dam > 0 {
@@ -71,7 +71,7 @@ func (w *World) mobBackstabDamage(me *MobInstance, vict combat.Combatant, dam in
 		return false
 	}
 
-	if me.GetFighting() == "" && me.GetPosition() > combat.PosStunned {
+	if me.GetFightingBody() == nil && me.GetPosition() > combat.PosStunned {
 		if w.combatEngine != nil {
 			if err := w.combatEngine.StartCombat(me, vict); err != nil {
 				// C has no fallible combat-engine boundary. Preserve the native
@@ -81,13 +81,13 @@ func (w *World) mobBackstabDamage(me *MobInstance, vict combat.Combatant, dam in
 		}
 		// Focused spec vehicles may intentionally omit a full combat engine;
 		// retain C's observable fighting state in that test seam as well.
-		if me.GetFighting() == "" {
-			me.SetFighting(vict.GetName())
+		if me.GetFightingBody() == nil {
+			me.SetFightingBody(vict)
 			me.SetPosition(combat.PosFighting)
 		}
 	}
-	if vict.GetFighting() == "" && vict.GetPosition() > combat.PosStunned {
-		vict.SetFighting(me.GetName())
+	if vict.GetFightingBody() == nil && vict.GetPosition() > combat.PosStunned {
+		vict.SetFightingBody(me)
 	}
 
 	return w.mobSkillDamageAfterGate(me, vict, dam, SkillBackstabNum)
@@ -159,7 +159,7 @@ func (w *World) emitMobSkillSurvival(ch combat.Combatant, vict combat.Combatant,
 		}
 	}
 
-	if pos < combat.PosSleeping && vict.GetFighting() != "" {
+	if pos < combat.PosSleeping && vict.GetFightingBody() != nil {
 		vict.StopFighting()
 	}
 }
@@ -232,7 +232,7 @@ func mobBash(w *World, me *MobInstance, vict combat.Combatant) {
 // act() calls use TO_ROOM and TO_VICT separately, so the victim receives both
 // C messages when it is the only player in the room.
 func mobParry(w *World, me *MobInstance, vict combat.Combatant) {
-	if vict.GetFighting() != me.GetName() {
+	if vict.GetFightingBody() != me {
 		return
 	}
 	if me.Equipped(mobWearWield) == nil {
@@ -246,8 +246,10 @@ func mobParry(w *World, me *MobInstance, vict combat.Combatant) {
 		"$n displays a dazzling show of swordplay, fending off $N's every blow!", "", ToRoom)
 	Act(w, true, me, vict, nil, nil,
 		"$n displays a dazzling show of swordplay, fending off your every blow!", "", ToVict)
-	if marker, ok := w.combatEngine.(interface{ MarkParried(name, action string) }); ok {
-		marker.MarkParried(vict.GetName(), "parry")
+	if marker, ok := w.combatEngine.(interface {
+		MarkParried(body combat.Combatant, action string)
+	}); ok {
+		marker.MarkParried(vict, "parry")
 	}
 }
 

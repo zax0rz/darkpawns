@@ -316,7 +316,7 @@ func TestPerformInitialAttackSkipsDeadDefenderAfterHitDraws(t *testing.T) {
 	if err := ce.StartCombatFromMob(attacker, defender); err != nil {
 		t.Fatalf("StartCombatFromMob() error = %v", err)
 	}
-	defer ce.StopCombat(attacker.GetName())
+	defer ce.StopCombat(attacker)
 
 	roller := NewScriptedRoller([]int{20, 1, 1})
 	WithRoller(roller, func() {
@@ -342,12 +342,14 @@ func TestHandleSurvivingVictimState_AutoWimpyFleesAfterBleedingMessage(t *testin
 
 	attacker := &msgMockCombatant{mockCombatant: mockCombatant{
 		name: "a guard trainee", npc: true, room: 8105, hp: 20, maxHP: 20,
-		position: PosFighting, fighting: "Cfighter",
+		position: PosFighting, fighting: &mockCombatant{name: "Cfighter"},
 	}}
 	defender := &msgMockCombatant{mockCombatant: mockCombatant{
 		name: "Cfighter", room: 8105, hp: 4, maxHP: 20,
-		position: PosFighting, fighting: "a guard trainee",
+		position: PosFighting, fighting: &mockCombatant{name: "a guard trainee"},
 	}}
+	attacker.SetFightingBody(defender)
+	defender.SetFightingBody(attacker)
 	fled := false
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
@@ -412,12 +414,12 @@ func TestShopkeeperProtection_RemovesCombatPair(t *testing.T) {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Attacker", Target: "Shopkeeper"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
-	if ce.IsFighting("Attacker") {
+	if ce.IsFighting(attacker) {
 		t.Error("expected Attacker to be removed from combat after shopkeeper protection")
 	}
-	if ce.IsFighting("Shopkeeper") {
+	if ce.IsFighting(defender) {
 		t.Error("expected Shopkeeper to be removed from combat after shopkeeper protection")
 	}
 	if attacker.GetFighting() != "" {
@@ -486,7 +488,7 @@ func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "jail guard", Target: "Thief"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: guard, Target: victim}])
 
 	if !subdued {
 		t.Fatal("expected jail guard subdue callback")
@@ -494,7 +496,7 @@ func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 	if victim.GetHP() != 50 {
 		t.Errorf("expected no live-path melee damage after subdue, hp=%d", victim.GetHP())
 	}
-	if ce.IsFighting("jail guard") || ce.IsFighting("Thief") {
+	if ce.IsFighting(guard) || ce.IsFighting(victim) {
 		t.Fatal("expected jail guard intercept to clear combat")
 	}
 }
@@ -538,12 +540,12 @@ func TestMobRedirect_NonJailMobDoesNotSubdue(t *testing.T) {
 		t.Fatalf("StartCombat failed: %v", err)
 	}
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "angry mob", Target: "Thief"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: victim}])
 
 	if subdued {
 		t.Fatal("expected JailGuardSubdue not to fire for non-jail mob")
 	}
-	if !ce.IsFighting("angry mob") || !ce.IsFighting("Thief") {
+	if !ce.IsFighting(attacker) || !ce.IsFighting(victim) {
 		t.Fatal("expected combat to continue normally")
 	}
 }
@@ -576,13 +578,13 @@ func TestMobRedirect_CharmedPetRetargetsToMaster(t *testing.T) {
 	}
 
 	WithRoller(fixedRoller{number: 0}, func() {
-		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "angry mob", Target: "charmed pet"}])
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: pet}])
 	})
 
 	if attacker.GetFighting() != "Master" {
 		t.Fatalf("expected attacker retargeted to Master, got %q", attacker.GetFighting())
 	}
-	if _, ok := ce.combatPairs[CombatPairKey{Attacker: "angry mob", Target: "Master"}]; !ok {
+	if _, ok := ce.combatPairs[CombatPairKey{Attacker: attacker, Target: master}]; !ok {
 		t.Fatal("expected combat pair redirected to Master")
 	}
 	if pet.GetHP() != 50 {
@@ -596,7 +598,8 @@ func TestMobRedirect_HighLevelSwitcheroo(t *testing.T) {
 
 	dragon := &mockCombatant{name: "dragon", npc: true, room: 20, level: 30, hp: 200, maxHP: 200, position: PosFighting}
 	tank := &mockCombatant{name: "Tank", room: 20, level: 20, hp: 100, maxHP: 100, position: PosFighting}
-	rogue := &mockCombatant{name: "Rogue", room: 20, level: 20, hp: 100, maxHP: 100, position: PosFighting, fighting: "dragon"}
+	rogue := &mockCombatant{name: "Rogue", room: 20, level: 20, hp: 100, maxHP: 100, position: PosFighting, fighting: &mockCombatant{name: "dragon"}}
+	rogue.SetFightingBody(dragon)
 
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
@@ -613,13 +616,13 @@ func TestMobRedirect_HighLevelSwitcheroo(t *testing.T) {
 
 	roller := &zeroTwiceThenOneRoller{}
 	WithRoller(roller, func() {
-		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Tank"}])
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: dragon, Target: tank}])
 	})
 
 	if dragon.GetFighting() != "Rogue" {
 		t.Fatalf("expected high-level mob retargeted to Rogue, got %q (roller calls=%d)", dragon.GetFighting(), roller.calls)
 	}
-	if _, ok := ce.combatPairs[CombatPairKey{Attacker: "dragon", Target: "Rogue"}]; !ok {
+	if _, ok := ce.combatPairs[CombatPairKey{Attacker: dragon, Target: rogue}]; !ok {
 		t.Fatal("expected combat pair redirected to Rogue")
 	}
 	if tank.GetHP() != 100 {
@@ -664,7 +667,7 @@ func TestHandleDeath_PassesAttackType(t *testing.T) {
 		receivedAttackType = attackType
 	}
 
-	pairKey := CombatPairKey{Attacker: "Attacker", Target: "Defender"}
+	pairKey := CombatPairKey{Attacker: attacker, Target: defender}
 	pair := ce.combatPairs[pairKey]
 
 	// Run processCombatPair until a blow lands. Reset the defender to just
@@ -865,7 +868,7 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 		hitroll:    50,
 		damageRoll: DiceRoll{Num: 1, Sides: 1},
 		position:   PosStanding,
-		fighting:   "parry_warrior",
+		fighting:   &mockCombatant{name: "parry_warrior"},
 	}
 	player := &mockCombatant{
 		name:     "parry_warrior",
@@ -879,8 +882,10 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 		hitroll:  50,
 		dex:      10,
 		position: PosStanding,
-		fighting: "orc",
+		fighting: &mockCombatant{name: "orc"},
 	}
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
 
 	ce := NewCombatEngine()
 	hits := 0
@@ -932,7 +937,7 @@ func TestPerformRound_IgnoresNonFightingCombatant(t *testing.T) {
 	}
 
 	// Defender "flees" — clears its own FIGHTING but the pair still exists.
-	defender.SetFighting("")
+	defender.SetFightingBody(nil)
 
 	startHP := attacker.GetHP()
 	ce.PerformRound()
@@ -968,10 +973,11 @@ func (m *waitStateMockCombatant) DecrementWaitState() {
 // incorrectly zeroed attacks from the generic wait field.)
 func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	attacker := &waitStateMockCombatant{
-		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10},
+		mockCombatant: mockCombatant{name: "Orc", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10},
 		waitState:     2,
 	}
 	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+	attacker.SetFightingBody(defender)
 
 	ce := NewCombatEngine()
 	if err := ce.StartCombat(attacker, defender); err != nil {
@@ -989,7 +995,7 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	t.Cleanup(func() { SetCallbacks(origCB) })
 	SetCallbacks(defaultCombatCallbacks())
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 	// The mob stands (scramble broadcast) — wait does NOT block stand-up.
 	if attacker.GetPosition() != PosFighting {
@@ -1010,10 +1016,11 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 // scramble broadcast is emitted (capitalized). Matches C fight.c:1982-1986.
 func TestProcessCombatPair_MobStandsWhenDowned(t *testing.T) {
 	attacker := &waitStateMockCombatant{
-		mockCombatant: mockCombatant{name: "a guard trainee", npc: true, room: 1, position: PosSitting, fighting: "Hero", hp: 100, maxHP: 100, level: 10, ac: 10, sex: 0},
+		mockCombatant: mockCombatant{name: "a guard trainee", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"}, hp: 100, maxHP: 100, level: 10, ac: 10, sex: 0},
 		waitState:     0,
 	}
 	defender := &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+	attacker.SetFightingBody(defender)
 
 	ce := NewCombatEngine()
 	if err := ce.StartCombat(attacker, defender); err != nil {
@@ -1031,7 +1038,7 @@ func TestProcessCombatPair_MobStandsWhenDowned(t *testing.T) {
 	t.Cleanup(func() { SetCallbacks(origCB) })
 	SetCallbacks(defaultCombatCallbacks())
 
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "a guard trainee", Target: "Hero"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 	if attacker.GetPosition() != PosFighting {
 		t.Errorf("downed mob should stand: pos %d, want %d", attacker.GetPosition(), PosFighting)
@@ -1059,7 +1066,7 @@ func TestProcessCombatPair_MobStandsWhenDowned(t *testing.T) {
 func TestStartCombat_EnrollsDefenderWhoseFightingWasPreSet(t *testing.T) {
 	attacker := &mockCombatant{name: "Rogue", room: 1, position: PosFighting, hp: 100, maxHP: 100}
 	defender := &mockCombatant{name: "Guard", npc: true, room: 1, position: PosFighting, hp: 100, maxHP: 100}
-	defender.SetFighting("Rogue") // exactly what DoSpellDamage does before enrollment
+	defender.SetFightingBody(attacker) // exactly what DoSpellDamage does before enrollment
 
 	ce := NewCombatEngine()
 	if err := ce.StartCombat(attacker, defender); err != nil {
@@ -1123,7 +1130,7 @@ func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T)
 	setup := func() {
 		attacker = &waitStateMockCombatant{
 			mockCombatant: mockCombatant{
-				name: "Orc", npc: true, room: 1, position: PosSitting, fighting: "Hero",
+				name: "Orc", npc: true, room: 1, position: PosSitting, fighting: &mockCombatant{name: "Hero"},
 				hp: 100, maxHP: 100, level: 10, thac0: 1, ac: 10, hitroll: 50,
 				intVal: 25, wis: 25, str: 18, damroll: 5,
 				damageRoll: DiceRoll{Num: 1, Sides: 4},
@@ -1131,6 +1138,7 @@ func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T)
 			waitState: 0, // downed with NO wait — the DP-1213 case
 		}
 		defender = &mockCombatant{name: "Hero", room: 1, position: PosFighting, hp: 100, maxHP: 100, ac: 10}
+		attacker.SetFightingBody(defender)
 		ce = NewCombatEngine()
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
@@ -1146,7 +1154,7 @@ func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T)
 	// — they must not depend on whether the attack connects (fixed seed).
 	setup()
 	dprng.ResetStream(1)
-	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+	ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 
 	if attacker.GetPosition() != PosFighting {
 		t.Errorf("downed wait-0 mob should stand up (C: POS_FIGHTING), got position %d", attacker.GetPosition())
@@ -1165,7 +1173,7 @@ func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T)
 	for s := uint32(1); s < 50 && !hit; s++ {
 		setup()
 		dprng.ResetStream(s)
-		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: "Orc", Target: "Hero"}])
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: attacker, Target: defender}])
 		hit = defender.hp < 100
 	}
 	if !hit {

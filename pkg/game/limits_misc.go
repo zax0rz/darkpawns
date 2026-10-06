@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 func (w *World) CheckIdling(p *Player) {
@@ -27,7 +29,7 @@ func (w *World) CheckIdling(p *Player) {
 		p.mu.Lock()
 		wasIn := p.WasInRoom
 		roomVNum := p.RoomVNum
-		fighting := p.Fighting
+		fighting := p.fightingBody
 		p.mu.Unlock()
 
 		if wasIn == 0 && roomVNum > 0 {
@@ -40,9 +42,9 @@ func (w *World) CheckIdling(p *Player) {
 			// idler (limits.c:428-431). Stop the engine pair as well as the
 			// character fields; otherwise the round list can retain a combatant
 			// who has already moved to room 1.
-			if fighting != "" {
-				if stopper, ok := w.combatEngine.(interface{ StopCombat(string) }); ok {
-					stopper.StopCombat(p.Name)
+			if fighting != nil {
+				if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+					stopper.StopCombat(p)
 				} else {
 					p.StopFighting()
 				}
@@ -141,5 +143,5 @@ func (p *Player) sumEquipAffect(location int, requireSleeping bool) int {
 func isFighting(p *Player) bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Fighting != ""
+	return p.fightingBody != nil
 }

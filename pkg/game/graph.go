@@ -362,8 +362,8 @@ func (w *World) mobPerformMove(m *MobInstance, dir int) {
 
 // mobAttackPlayer makes a mob attack a player.
 func (w *World) mobAttackPlayer(m *MobInstance, target *Player) {
-	m.SetFighting(target.GetName())
-	target.SetFighting(m.GetName())
+	m.SetFightingBody(target)
+	target.SetFightingBody(m)
 	if err := m.Attack(target, w); err != nil {
 		slog.Warn("Attack failed in mobAttackPlayer", "mob", m.GetName(), "target", target.Name, "error", err)
 	}

@@ -867,7 +867,7 @@ func (m *Manager) SetDamageFunc() {
 		m.mu.RUnlock()
 
 		for _, s := range sessions {
-			if target, fighting := m.combatEngine.GetCombatTarget(s.playerName); fighting && target.GetName() == victimName {
+			if target, fighting := m.combatEngine.GetCombatTarget(s.player); fighting && target.GetName() == victimName {
 				s.markDirty(VarFighting)
 				s.flushDirtyVars()
 			}
@@ -1311,7 +1311,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 	s.cancelRoomEdit()
 
 	// 1. Stop combat
-	m.combatEngine.StopCombat(playerName)
+	m.combatEngine.StopCombat(s.player)
 
 	// 2. Broadcast leave message
 	if s.player != nil && !s.menuActive && !s.charCreating && !s.leaveBroadcastHandled {

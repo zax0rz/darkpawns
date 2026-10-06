@@ -318,7 +318,7 @@ func TestRawKillNPCUsesFullTeardown(t *testing.T) {
 // the cry/body/extraction. C: src/fight.c:541-580.
 func TestRawKillTeardownOrder(t *testing.T) {
 	w, p := rawKillWorld(t)
-	p.SetFighting("opponent")
+	p.SetFightingBody(NewPlayer(99999, "opponent", 1001))
 	p.AddAffect(engine.NewAffectDirect(10, engine.ApplyStr, 5, 2, 0, "buff"))
 	p.Tattoo = TattooDragon
 	TattooAf(p, true)

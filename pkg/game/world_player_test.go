@@ -25,9 +25,11 @@ func (m *mockCombatEngine) StartCombat(attacker, _ combat.Combatant) error {
 	return m.startErr
 }
 
-func (m *mockCombatEngine) IsFighting(name string) bool { return m.fighting[name] }
+func (m *mockCombatEngine) IsFighting(body combat.Combatant) bool { return m.fighting[body.GetName()] }
 
-func (m *mockCombatEngine) GetCombatTarget(name string) (combat.Combatant, bool) { return nil, false }
+func (m *mockCombatEngine) GetCombatTarget(body combat.Combatant) (combat.Combatant, bool) {
+	return nil, false
+}
 
 // newStartingItemsWorld builds a world that includes all starting item vnums
 // so GiveStartingItems can fully execute for any class.

@@ -71,8 +71,8 @@ func (m *mockFidelityCombatEngine) StartCombat(ch combat.Combatant, target comba
 	return nil
 }
 
-func (m *mockFidelityCombatEngine) StopCombat(name string) {
-	m.stoppedTarget = name
+func (m *mockFidelityCombatEngine) StopCombat(body combat.Combatant) {
+	m.stoppedTarget = body.GetName()
 }
 
 // TestSkillFormulas_Statistical runs 10,000 statistical iterations for all 10 offensive skills
@@ -221,7 +221,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 		for i := 0; i < iterations; i++ {
 			ch.SetSkill(SkillBackstab, 50)
 			victim.Position = 8 // POS_STANDING
-			victim.SetFighting("")
+			victim.SetFightingBody(nil)
 
 			res := DoBackstab(ch, victim, w)
 			if res.Success {
@@ -246,8 +246,8 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 		for i := 0; i < iterations; i++ {
 			ch.SetSkill(SkillCircle, 50)
 			victim.Position = 8 // POS_STANDING
-			victim.SetFighting("")
-			ch.SetFighting("")
+			victim.SetFightingBody(nil)
+			ch.SetFightingBody(nil)
 
 			res := DoCircle(ch, victim)
 			if res.Success {
@@ -277,7 +277,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 
 		for i := 0; i < iterations; i++ {
 			ch.SetSkill(SkillRescue, 50)
-			attacker.SetFighting(victim.GetName())
+			attacker.SetFightingBody(victim)
 
 			res := DoRescue(ch, victim, w, mockEngine)
 			if res.Success {

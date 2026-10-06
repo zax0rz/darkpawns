@@ -16,9 +16,9 @@ func (e *castleGuardDownCombatEngine) StartCombat(attacker, defender combat.Comb
 	return nil
 }
 
-func (e *castleGuardDownCombatEngine) IsFighting(string) bool { return false }
+func (e *castleGuardDownCombatEngine) IsFighting(combat.Combatant) bool { return false }
 
-func (e *castleGuardDownCombatEngine) GetCombatTarget(string) (combat.Combatant, bool) {
+func (e *castleGuardDownCombatEngine) GetCombatTarget(combat.Combatant) (combat.Combatant, bool) {
 	return nil, false
 }
 
@@ -132,7 +132,7 @@ func TestSpecCastleGuardDown_AutonomousSecondGuardTarget(t *testing.T) {
 	other := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	guard.VNum = 19627
 	other.VNum = 19627
-	other.SetFighting(player.GetName())
+	other.SetFightingBody(player)
 	lastMsg()
 
 	engine := &castleGuardDownCombatEngine{}
@@ -167,7 +167,7 @@ func TestSpecCastleGuardDown_AutonomousSecondGuardTargetsMob(t *testing.T) {
 		p.ShortDesc = "a target mob"
 		target.SetProto(&p)
 	}
-	other.SetFighting(target.GetName())
+	other.SetFightingBody(target)
 	lastMsg()
 
 	engine := &castleGuardDownCombatEngine{}
@@ -184,7 +184,7 @@ func TestSpecCastleGuardDown_DoesNotTreatUnregisteredMobAsPeer(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	other := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
-	other.SetFighting(player.GetName())
+	other.SetFightingBody(player)
 	lastMsg()
 
 	engine := &castleGuardDownCombatEngine{}

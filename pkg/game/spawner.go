@@ -654,7 +654,7 @@ func (s *Spawner) forgetObjectInstance(roomVNum int, obj *ObjectInstance) {
 func (s *Spawner) removeMobFromRoom(roomVNum, mobVNum int) *MobInstance {
 	for _, mob := range s.world.COrderedRoomMobs(roomVNum) {
 		mob.mu.RLock()
-		eligible := mob.VNum == mobVNum && mob.Flags&(1<<uint(MobFlagExtract)) == 0 && mob.FightingTarget == ""
+		eligible := mob.VNum == mobVNum && mob.Flags&(1<<uint(MobFlagExtract)) == 0 && mob.fightingBody == nil
 		mob.mu.RUnlock()
 		if !eligible {
 			continue

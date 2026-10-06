@@ -129,7 +129,7 @@ func TestShootTargetFightingRefusalAndOrder(t *testing.T) {
 				target = mob
 				name = "guard"
 			}
-			target.SetFighting("Other")
+			target.SetFightingBody(game.NewPlayer(99999, "Other", 1001))
 			want := "It looks like they are fighting, you can't aim properly.\r\n"
 			if kind == "level-before-fighting" {
 				want = "Maybe that isn't such a great idea...\r\n"

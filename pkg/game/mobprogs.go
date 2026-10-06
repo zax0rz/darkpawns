@@ -306,7 +306,7 @@ func (w *World) NpcRescue(chHero *MobInstance, chVictim *Player) bool {
 	roomMobs := w.GetMobsInRoom(chHero.GetRoom())
 	var chBadGuy *MobInstance
 	for _, m := range roomMobs {
-		if m.GetFighting() == chVictim.GetName() {
+		if m.GetFightingBody() == chVictim {
 			chBadGuy = m
 			break
 		}
@@ -318,14 +318,14 @@ func (w *World) NpcRescue(chHero *MobInstance, chVictim *Player) bool {
 	chVictim.SendMessage("You are rescued by $N, your loyal friend!\r\n")
 	w.roomMessage(chHero.GetRoom(), "$n heroically rescues $N.")
 
-	if chBadGuy.GetFighting() != "" {
+	if chBadGuy.GetFightingBody() != nil {
 		chBadGuy.StopFighting()
 	}
-	if chHero.GetFighting() != "" {
+	if chHero.GetFightingBody() != nil {
 		chHero.StopFighting()
 	}
-	chHero.SetFighting(chBadGuy.GetName())
-	chBadGuy.SetFighting(chHero.GetName())
+	chHero.SetFightingBody(chBadGuy)
+	chBadGuy.SetFightingBody(chHero)
 	return true
 }
 

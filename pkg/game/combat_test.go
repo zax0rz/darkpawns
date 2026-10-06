@@ -92,7 +92,7 @@ func TestDoBackstab_InCombat(t *testing.T) {
 	target := spawnTargetMob(t, w)
 
 	// Set player as already fighting
-	player.SetFighting("SomeOtherGuy")
+	player.SetFightingBody(NewPlayer(99999, "SomeOtherGuy", 1001))
 
 	result := DoBackstab(player, target, w)
 	if result.Success {
@@ -122,7 +122,7 @@ func TestDoBackstab_TargetFighting(t *testing.T) {
 
 	// Spawn target that is fighting
 	target := spawnTargetMob(t, w)
-	target.SetFighting("SomeoneElse")
+	target.SetFightingBody(NewPlayer(99999, "SomeoneElse", 1001))
 
 	result := DoBackstab(player, target, w)
 	if result.Success {

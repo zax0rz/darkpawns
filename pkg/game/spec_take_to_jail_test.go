@@ -69,7 +69,7 @@ func TestSpecTakeToJail_ReturnContractAndProtectionDelegation(t *testing.T) {
 		p.Alignment = -500
 		attacker.SetProto(&p)
 	}
-	attacker.SetFighting(protected.GetName())
+	attacker.SetFightingBody(protected)
 	engine := &cityguardTestCombatEngine{}
 	w.SetCombatEngine(engine)
 	specTakeToJail(w, nil, guard, "", "")
@@ -114,8 +114,8 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	if err != nil {
 		t.Fatalf("spawn guard: %v", err)
 	}
-	victim.SetFighting(guard.GetName())
-	guard.SetFighting(victim.GetName())
+	victim.SetFightingBody(guard)
+	guard.SetFightingBody(victim)
 	guard.SetHunting(victim.GetName())
 
 	callbacks := w.WireCombatCallbacks()

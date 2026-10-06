@@ -10,7 +10,7 @@ import (
 
 func cmdAssist(s *Session, args []string) error {
 	// 1. Player must not already be fighting
-	if s.manager.combatEngine.IsFighting(s.player.Name) {
+	if s.manager.combatEngine.IsFighting(s.player) {
 		s.Send("You're already fighting!  How can you assist someone else?\r\n")
 		return nil
 	}
@@ -66,7 +66,7 @@ func cmdAssist(s *Session, args []string) error {
 	}
 
 	// Find who is fighting the helpee
-	opponent, fighting := s.manager.combatEngine.GetCombatTarget(helpeeName)
+	opponent, fighting := s.manager.combatEngine.GetCombatTarget(helpee)
 	if !fighting {
 		// C uses $M (objective pronoun): "But nobody is fighting him!"
 		if helpeeActor, ok := helpee.(game.Actor); ok {

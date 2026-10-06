@@ -135,7 +135,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	// If not fighting and below max HP-10, heal self
-	if me.GetFighting() == "" && me.GetHP() < me.GetMaxHP()-10 {
+	if me.GetFightingBody() == nil && me.GetHP() < me.GetMaxHP()-10 {
 		switch {
 		case me.GetLevel() >= 20:
 			castMobSpell(w, me, me, spells.SpellHeal)
@@ -316,7 +316,7 @@ func specNoMoveDown(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 
 // specClerk sells citizenship.
 func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil || ch == nil || cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+	if me == nil || ch == nil || cmd == "" || ch.GetFightingBody() != nil || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 
@@ -442,7 +442,7 @@ func (w *World) butlerPerformPut(me *MobInstance, obj, container *ObjectInstance
 
 // specButler tidies up the room, picking up loose items and storing them.
 func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFighting() != "" {
+	if me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetFightingBody() != nil {
 		return false
 	}
 	items := append([]*ObjectInstance(nil), w.GetItemsInRoom(me.GetRoomVNum())...)
@@ -505,7 +505,7 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 // (mobile_activity.c calls func(ch, ch, 0, "")); ch is nil in the Go
 // autonomous path, so the mob's own state must be read via me.
 func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || me == nil || me.GetFighting() != "" || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+	if w == nil || me == nil || me.GetFightingBody() != nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
 		return false
 	}
 	items := w.GetItemsInRoom(me.GetRoomVNum())
@@ -574,7 +574,7 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // (mobile_activity.c / fight.c call func(ch, ch, 0, "")); ch is nil in the
 // Go autonomous path, so the mob's own state and identity come from me.
 func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || me == nil || cmd != "" || me.GetFighting() == "" || me.GetPosition() <= combat.PosSleeping {
+	if w == nil || me == nil || cmd != "" || me.GetFightingBody() == nil || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 
@@ -604,7 +604,7 @@ func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg s
 
 // specConSeller sells constitution points.
 func specConSeller(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || ch == nil || me == nil || cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+	if w == nil || ch == nil || me == nil || cmd == "" || ch.GetFightingBody() != nil || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 
@@ -741,7 +741,7 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() <= 0 {
 		return false
 	}
-	if me.GetFighting() == "" && me.GetHP() != me.GetMaxHP() {
+	if me.GetFightingBody() == nil && me.GetHP() != me.GetMaxHP() {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
 		if trollNumber(0, 20) == 0 {
@@ -753,7 +753,7 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 			me.SetHealth(newHP)
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s's wounds glow brightly for a moment, then disappear!", mobName(me)))
 		}
-	} else if me.GetFighting() != "" {
+	} else if me.GetFightingBody() != nil {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
 		if trollNumber(0, 10) == 0 {
@@ -855,7 +855,7 @@ func (w *World) mobSendToZone(me *MobInstance, message string) {
 // specWerewolf howls and bites when fighting.
 // C source: SPECIAL(werewolf) src/spec_procs3.c:427-448
 func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil || cmd != "" || me.GetFighting() == "" || me.GetHP() <= 0 {
+	if me == nil || cmd != "" || me.GetFightingBody() == nil || me.GetHP() <= 0 {
 		return false
 	}
 	vict := mobFightingTarget(w, me)
@@ -1106,7 +1106,7 @@ func prostituteCanSee(w *World, mobile *MobInstance, ch *Player) bool {
 // exact BUY/LIST commands after its entry gates; unrelated commands fall
 // through to the ordinary interpreter.
 func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch == nil || me == nil || cmd == "" || ch.GetFighting() != "" || ch.GetPosition() <= combat.PosSleeping {
+	if ch == nil || me == nil || cmd == "" || ch.GetFightingBody() != nil || ch.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 
@@ -1795,7 +1795,7 @@ func specElementsGuardian(w *World, ch *Player, me *MobInstance, cmd string, arg
 	people := elementsGuardianRoomPeople(w, ch.GetRoomVNum())
 	for i, person := range people {
 		ppl, ok := person.(*Player)
-		if !ok || ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFighting() != "" {
+		if !ok || ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFightingBody() != nil {
 			continue
 		}
 
@@ -1804,7 +1804,7 @@ func specElementsGuardian(w *World, ch *Player, me *MobInstance, cmd string, arg
 			next = people[i+1]
 		}
 		nextPlayer, nextIsPlayer := next.(*Player)
-		if !nextIsPlayer || nextPlayer.GetLevel() > LVL_IMMORT || nextPlayer.GetFighting() != "" {
+		if !nextIsPlayer || nextPlayer.GetLevel() > LVL_IMMORT || nextPlayer.GetFightingBody() != nil {
 			dam := randRange(10, 50)
 			elementsGuardianSelfDamage(w, ppl, dam)
 			Act(w, true, me, ppl, nil, nil,

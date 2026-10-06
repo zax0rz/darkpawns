@@ -136,7 +136,7 @@ func mobMeleeTarget(me *MobInstance) *MobInstance {
 // the combat pair is the authoritative source for player opponents.
 func mobFightingTarget(w *World, me *MobInstance) combat.Combatant {
 	if w != nil && w.combatEngine != nil {
-		if target, ok := w.combatEngine.GetCombatTarget(me.GetName()); ok && target != nil {
+		if target, ok := w.combatEngine.GetCombatTarget(me); ok && target != nil {
 			return target
 		}
 	}
@@ -311,7 +311,7 @@ func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if vict != nil && number(0, 4) == 0 {
 		spells.Cast(me, vict, spells.SpellTeleport, me.GetLevel(), w)
 		if me.RoomVNum == vict.GetRoomVNum() {
-			me.SetFighting(vict.Name)
+			me.SetFightingBody(vict)
 		}
 		return true
 	}
@@ -372,7 +372,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 	var vict *Player
 	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if p.GetFighting() == me.GetName() && number(0, 4) == 0 {
+		if p.GetFightingBody() == me && number(0, 4) == 0 {
 			vict = p
 			break
 		}
@@ -440,7 +440,7 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 // fighter — mob spec: uses martial skills in combat
 func mobCombatSpecialTarget(w *World, me *MobInstance, cmd string) (combat.Combatant, bool) {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFighting() == "" {
+	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFightingBody() == nil {
 		return nil, false
 	}
 	if me.GetWaitState() > 0 {
@@ -756,7 +756,7 @@ func specCityguard(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		if !ok {
 			continue
 		}
-		if !canSee(me, tch) || tch.GetFighting() == "" {
+		if !canSee(me, tch) || tch.GetFightingBody() == nil {
 			continue
 		}
 		align := tch.GetAlignment()
@@ -1063,7 +1063,7 @@ func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		return false
 	}
 
-	if me.GetFighting() != "" {
+	if me.GetFightingBody() != nil {
 		switch me.GetPosition() {
 		case combat.PosSitting:
 			Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
@@ -1172,7 +1172,7 @@ func specUndeadKnight(w *World, me *MobInstance, cmd string, hatedVNum int, taun
 		if m.VNum == hatedVNum && m != me && number(0, 3) == 0 {
 			w.roomMessage(me.GetRoom(), me.GetName()+" sees "+m.GetName()+" and gives a battle cry!")
 			me.SetTarget(m)
-			me.SetFighting(m.GetName())
+			me.SetFightingBody(m)
 			return true
 		}
 	}

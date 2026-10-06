@@ -74,7 +74,7 @@ func TestSpecTroll_InjuredIdleGlowUsesCNumberArm(t *testing.T) {
 	clearTrollMessages(messages)
 	mob.SetHealth(10)
 	mob.SetMaxHP(100)
-	mob.SetFighting("")
+	mob.SetFightingBody(nil)
 
 	previous := trollNumber
 	trollNumber = func(from, to int) int {
@@ -105,9 +105,9 @@ func TestSpecTroll_FightingUsesCombatNumberArm(t *testing.T) {
 	mob.SetHealth(50)
 	mob.SetMaxHP(100)
 	mob.SetPosition(combat.PosFighting)
-	mob.SetFighting(actor.Name)
+	mob.SetFightingBody(actor)
 	actor.SetPosition(combat.PosFighting)
-	actor.SetFighting(mob.GetName())
+	actor.SetFightingBody(mob)
 
 	previous := trollNumber
 	trollNumber = func(from, to int) int {

@@ -130,7 +130,7 @@ func TestCmdHitShopkeeperGate(t *testing.T) {
 	if got, want := readSendText(t, s), "Ha ha... Don't think so.\r\n"; got != want {
 		t.Errorf("shopkeeper gate message = %q, want %q", got, want)
 	}
-	if m.combatEngine.IsFighting(s.player.GetName()) {
+	if m.combatEngine.IsFighting(s.player) {
 		t.Error("shopkeeper gate should not leave the attacker fighting")
 	}
 }
@@ -308,7 +308,7 @@ func TestCmdAssistMobHelpeeUsesPersAndHitGates(t *testing.T) {
 			t.Errorf("room output = %q, want %q", got, want)
 		}
 	}
-	if m.combatEngine.IsFighting(helper.player.Name) {
+	if m.combatEngine.IsFighting(helper.player) {
 		t.Error("low-level helper should not be enrolled after hit() gate")
 	}
 }

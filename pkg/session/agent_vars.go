@@ -204,7 +204,7 @@ func (s *Session) buildVarValue(varName string) interface{} {
 	case VarRoomItems:
 		return s.buildRoomItems()
 	case VarFighting:
-		target, fighting := s.manager.combatEngine.GetCombatTarget(s.player.Name)
+		target, fighting := s.manager.combatEngine.GetCombatTarget(s.player)
 		if !fighting {
 			return false
 		}

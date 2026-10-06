@@ -190,7 +190,7 @@ func DoShoot(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillShoot) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
 	}
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "But you are already engaged in close-range combat!"}
 	}
 	// #nosec G404
@@ -220,10 +220,10 @@ func DoSubdue(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillSubdue) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how!"}
 	}
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You're too busy right now!"}
 	}
-	if target.GetFighting() != "" {
+	if target.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You can't get close enough!"}
 	}
 	chPronouns := GetPronouns(ch.Name, ch.GetSex())
@@ -260,7 +260,7 @@ func DoSleeper(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if ch.GetSkill(SkillSleeper) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
 	}
-	if ch.GetFighting() != "" {
+	if ch.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You can't do this while fighting!"}
 	}
 	if ch.IsMounted() {
@@ -285,7 +285,7 @@ func DoSleeper(ch *Player, target combat.Combatant, world *World) SkillResult {
 			MessageToVict: fmt.Sprintf("%s failed to sleeper you because %s is not an Outlaw.", ch.GetName(), ch.GetName()),
 		}
 	}
-	if target.GetFighting() != "" {
+	if target.GetFightingBody() != nil {
 		return SkillResult{Success: false, MessageToCh: "You can't get a good grip on them while they're fighting!"}
 	}
 	if isShopKeeperInWorld(world, target) {
@@ -390,10 +390,10 @@ func DoNeckbreak(ch *Player, target combat.Combatant, world *World) SkillResult 
 func CheckNPCDodge(mob interface {
 	GetLevel() int
 	IsAffected(int) bool
-	GetFighting() string
+	GetFightingBody() combat.Combatant
 },
 ) bool {
-	if mob.GetFighting() == "" || !mob.IsAffected(affDodge) {
+	if mob.GetFightingBody() == nil || !mob.IsAffected(affDodge) {
 		return false
 	}
 	// #nosec G404

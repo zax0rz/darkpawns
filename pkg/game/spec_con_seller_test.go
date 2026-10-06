@@ -85,7 +85,7 @@ func TestSpecConSeller_EntryGatesAndCommandSurface(t *testing.T) {
 		t.Fatal("sleeping actor should not reach seller")
 	}
 	actor.SetPosition(combat.PosStanding)
-	actor.SetFighting("another character")
+	actor.SetFightingBody(NewPlayer(99999, "another character", 1001))
 	if specConSeller(w, actor, mob, "list", "") {
 		t.Fatal("fighting actor should not reach seller")
 	}

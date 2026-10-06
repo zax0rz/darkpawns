@@ -150,7 +150,7 @@ func TestDoSharpenFailureMutatesEvenWithZeroSkill(t *testing.T) {
 func TestDoSharpenFightingGateFollowsObjectGates(t *testing.T) {
 	ch := NewPlayer(1, "Sharpener", 1001)
 	ch.SetPosition(combat.PosFighting)
-	ch.SetFighting("opponent")
+	ch.SetFightingBody(NewPlayer(99999, "opponent", 1001))
 	weapon := sharpenTestObject(30, "sword", ITEM_WEAPON, [4]int{0, 0, 0, 3})
 	ch.Inventory.Items = append(ch.Inventory.Items, weapon)
 

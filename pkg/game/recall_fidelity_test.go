@@ -149,7 +149,7 @@ func TestRecallGates(t *testing.T) {
 	t.Run("fighting", func(t *testing.T) {
 		w, outputs := newRecallTestWorld(t)
 		p := addRecallPlayer(t, w, outputs, 1, "Recaller", 8162)
-		p.SetFighting("Target")
+		p.SetFightingBody(NewPlayer(99999, "Target", 1001))
 
 		w.ExecRecall(p, "")
 

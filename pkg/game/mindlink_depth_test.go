@@ -31,7 +31,7 @@ func TestDoMindlinkDepthGates(t *testing.T) {
 
 	t.Run("actor fighting", func(t *testing.T) {
 		ch, mob := newMindlinkGateFixture()
-		ch.SetFighting(mob.GetName())
+		ch.SetFightingBody(mob)
 		if got := DoMindlink(ch, mob).MessageToCh; got != "There's too much going on to establish a mind link.\r\n" {
 			t.Fatalf("message = %q, want actor-fighting gate", got)
 		}
@@ -39,7 +39,7 @@ func TestDoMindlinkDepthGates(t *testing.T) {
 
 	t.Run("target fighting", func(t *testing.T) {
 		ch, mob := newMindlinkGateFixture()
-		mob.SetFighting(ch.Name)
+		mob.SetFightingBody(ch)
 		if got := DoMindlink(ch, mob).MessageToCh; got != "There's too much going on to establish a mind link.\r\n" {
 			t.Fatalf("message = %q, want target-fighting gate", got)
 		}

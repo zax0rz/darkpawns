@@ -62,7 +62,7 @@ func TestSpecCitizen_StandingRecovery(t *testing.T) {
 			w, _, lastMsg := newSpecProcTestWorld(t)
 			mob := newSpecProcTestMob(t, w, 1001, 10)
 			mob.SetPosition(tt.pos)
-			mob.SetFighting("Tester")
+			mob.SetFightingBody(NewPlayer(99999, "Tester", 1001))
 			lastMsg()
 
 			previous := citizenNumber

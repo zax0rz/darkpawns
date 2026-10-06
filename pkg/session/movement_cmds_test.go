@@ -119,7 +119,7 @@ func TestCmdFlee_CanonicalCombatStateAndSilentXPLoss(t *testing.T) {
 	if s.player.GetRoom() != 1002 {
 		t.Fatalf("room = %d, want 1002", s.player.GetRoom())
 	}
-	if m.combatEngine.IsFighting(s.player.Name) {
+	if m.combatEngine.IsFighting(s.player) {
 		t.Fatal("combat still active after successful flee")
 	}
 	if output := drainSendChannel(t, s); strings.Contains(output, "experience points for fleeing") {
@@ -159,7 +159,7 @@ func TestCmdRetreat_PreservesCombatStateAfterSuccess(t *testing.T) {
 	if s.player.GetRoom() != 1002 {
 		t.Fatalf("room = %d, want 1002", s.player.GetRoom())
 	}
-	if !m.combatEngine.IsFighting(s.player.Name) {
+	if !m.combatEngine.IsFighting(s.player) {
 		t.Fatal("retreat incorrectly stopped combat")
 	}
 }
@@ -205,7 +205,7 @@ func TestSetFleeHooks_RetreatUsesRetreatHandler(t *testing.T) {
 	}
 	s := makeFleeSession(t, m, "HookRetreater", 5)
 	s.player.SetSkill(game.SkillRetreat, 100)
-	s.player.SetFighting("target")
+	s.player.SetFightingBody(game.NewPlayer(99999, "target", 1001))
 	m.mu.Lock()
 	m.sessions[s.player.Name] = s
 	m.mu.Unlock()
