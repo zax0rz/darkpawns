@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -62,6 +63,7 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		ch.SetGold(ch.GetGold() + amount)
 		c.Treasure -= int64(amount)
 		ch.SendMessage("You withdraw from the clan's treasure.\r\n")
+		MudLog(fmt.Sprintf("%s withdraws %d coins from %s clan account.", ch.GetName(), amount, hshr(ch)), MudlogBrief, LVL_IMMORT, true)
 	case CBDeposit:
 		if !immcom && ch.GetGold() < amount {
 			ch.SendMessage("You do not have that kind of money!\r\n")
