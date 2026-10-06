@@ -1675,6 +1675,7 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// SPECIAL(medusa) explicitly accounts the death and applies a level-cubed
 	// loss before raw_kill(); this is not die_with_killer()'s combat penalty.
+	MudLog(fmt.Sprintf("%s killed by Medusa special at %s", ch.GetName(), w.GetRoomInWorld(ch.GetRoom()).Name), MudlogBrief, LVL_IMMORT, true)
 	ch.Deaths++
 	level := ch.GetLevel()
 	w.GainExp(ch, -(level * level * level))
