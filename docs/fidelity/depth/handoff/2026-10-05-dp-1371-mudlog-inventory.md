@@ -142,18 +142,19 @@ invocations:
 
 | C site | Enclosing fn | Payload | Type | Min level | File | Go caller | Status |
 |---|---|---|---|---|---|---|---|
-| `src/whod.c:188` | `do_whod` | `WHOD turned on by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` (`pkg/game/whod.go:112`) | **missing** |
-| `src/whod.c:206` | `do_whod` | `WHOD turned off by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **missing** |
-| `src/whod.c:218` | `do_whod` | `%s removed from WHOD by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **missing** |
-| `src/whod.c:227` | `do_whod` | `%s added to WHOD by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **missing** |
+| `src/whod.c:188` | `do_whod` | `WHOD turned on by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` (`pkg/game/whod.go:112`) | **ported** (2026-10-06; unit-only, daemon receipt gap) |
+| `src/whod.c:206` | `do_whod` | `WHOD turned off by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **ported** (2026-10-06; unit-only on/off; oracle add/remove) |
+| `src/whod.c:218` | `do_whod` | `%s removed from WHOD by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **ported** (2026-10-06; unit-only on/off; oracle add/remove) |
+| `src/whod.c:227` | `do_whod` | `%s added to WHOD by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **ported** (2026-10-06; unit-only on/off; oracle add/remove) |
 | `src/whod.c:250` | `init_whod` | `WHOD port opened.` | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
 | `src/whod.c:267` | `close_whod` | `WHOD port closed.` | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
 | `src/whod.c:296` | `whod_loop` | `WHOD port opened.` | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
 | `src/whod.c:335` | `whod_loop` | `WHO request from %s served.` (or the failure line above it) | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
 
-`pkg/game/whod.go` has no `MudLog` call: its `DoWhod` returns a string to the
-caller instead of emitting the log, so the `do_whod` four are a real producer
-gap, not a different-but-equivalent shape. The port lifecycle (`init_whod`,
+The 2026-10-06 force/WHOD train restores the four command producers with
+synchronous acknowledgement-before-log. On/off have unit proofs only because
+their live transcript also contains daemon transitions; add/remove have
+focused oracle proofs. The port lifecycle (`init_whod`,
 `close_whod`, `whod_loop`) has no Go analogue at all, so its four are gated on
 that decision, not on this train.
 

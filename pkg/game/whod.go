@@ -114,7 +114,12 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 		MudLog(payload, MudlogBrief, LVL_GOD, true)
 		return ""
 	}
-	argument = strings.TrimSpace(strings.ToLower(argument))
+	// src/whod.c:150: half_chop ignores the remaining operands.
+	tokens := strings.Fields(argument)
+	argument = ""
+	if len(tokens) > 0 {
+		argument = strings.ToLower(tokens[0])
+	}
 
 	if argument == "" {
 		// No argument: show current mode

@@ -67,3 +67,17 @@ func TestWhodMudlogRefusals(t *testing.T) {
 		t.Fatal("WHOD refusal/display must not log")
 	}
 }
+
+func TestWhodMudlogIgnoresRemainder(t *testing.T) {
+	m, a, _, watch := wizardLogFixture(t)
+	file := captureMudlogFile(t)
+	if err := cmdWhod(a, []string{"name", "ignored"}); err != nil {
+		t.Fatal(err)
+	}
+	if m.world.WhodDisplay.Mode&game.WhodShowName != 0 || !strings.Contains(file.String(), "name removed from WHOD by Logactor.") {
+		t.Fatal("WHOD must use half_chop's first mode token")
+	}
+	if got := strings.Join(drainSessionText(t, watch), ""); got != "[ name removed from WHOD by Logactor. ]\r\n" {
+		t.Fatalf("observer = %q", got)
+	}
+}
