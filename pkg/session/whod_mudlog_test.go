@@ -14,6 +14,7 @@ func TestWhodMudlogProducers(t *testing.T) {
 	}{
 		{"on", "on", "WHOD turned on by Logactor.", game.WhodShowOff, game.WhodShowOn, game.WhodShowOn},
 		{"off", "off", "WHOD turned off by Logactor.", game.WhodShowOn, game.WhodShowOff, game.WhodShowOff},
+		{"remove", "name", "name removed from WHOD by Logactor.", game.WhodShowName, game.WhodShowName, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			m, a, _, watch := wizardLogFixture(t)

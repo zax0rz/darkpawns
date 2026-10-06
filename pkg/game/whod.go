@@ -171,8 +171,9 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 	// Toggle other mode bits
 	// Source: whod.c lines 212–230
 	if w.Mode&bitMask != 0 {
+		message := ackLog(fmt.Sprintf("%s will not be shown on WHOD.\n\r", WhodModeNames[bit]), fmt.Sprintf("%s removed from WHOD by %s.", WhodModeNames[bit], playerName))
 		w.Mode &^= bitMask
-		return fmt.Sprintf("%s will not be shown on WHOD.\n\r", WhodModeNames[bit])
+		return message
 	}
 	w.Mode |= bitMask
 	return fmt.Sprintf("%s will now be shown on WHOD.\n\r", WhodModeNames[bit])
