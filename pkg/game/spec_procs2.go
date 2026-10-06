@@ -959,7 +959,7 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 		if player, ok := assassin.(*Player); ok {
 			sendToChar(player, "GET THE HELL OUT OF THAT ROOM, NOW !!!")
-			slog.Info("player found in assassin store room", "player", player.GetName())
+			MudLog(fmt.Sprintf("%s is in the assassin store room.", player.GetName()), MudlogBrief, LVL_IMMORT, true)
 			sendToChar(ch, "You can't hire players.")
 			return true
 		}
