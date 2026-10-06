@@ -50,6 +50,13 @@ controls = [
   '\t\tgame.MudlogBrief, game.LVL_GOD, true)',
   '^TestSkillsetMudlogIsFileOnly$',
   '--- FAIL: TestSkillsetMudlogIsFileOnly'),
+ # Ordering: C logs at modify.c:334, before SET_SKILL at :336. Moving the call
+ # after the mutation must fail the log-time state probe.
+ ('skillset-after-mutation', WP,
+  '\tgame.MudLog(fmt.Sprintf("%s changed %s\'s %s to %d.", s.player.Name, vict.Name, game.SkillCatalogName(skillNum), value),\n\t\tgame.MudlogBrief, -1, true)\n\n\t// Step 10: SET_SKILL(vict, skill, value). Go stores skills by name string;\n\t// use the canonical spells[] display name (lowercased, matching how callers\n\t// key GetSkill/SetSkill — see spec_procs.go practice).\n\t// SkillStorageName carries C\'s catalog-to-key translations (DP-1342).\n\tcanonicalName := game.SkillStorageName(skillNum)\n\tvict.SetSkill(canonicalName, value)',
+  '\t// Step 10: SET_SKILL(vict, skill, value). Go stores skills by name string;\n\t// use the canonical spells[] display name (lowercased, matching how callers\n\t// key GetSkill/SetSkill — see spec_procs.go practice).\n\t// SkillStorageName carries C\'s catalog-to-key translations (DP-1342).\n\tcanonicalName := game.SkillStorageName(skillNum)\n\tvict.SetSkill(canonicalName, value)\n\tgame.MudLog(fmt.Sprintf("%s changed %s\'s %s to %d.", s.player.Name, vict.Name, game.SkillCatalogName(skillNum), value),\n\t\tgame.MudlogBrief, -1, true)',
+  '^TestSkillsetMudlogIsFileOnly$',
+  '--- FAIL: TestSkillsetMudlogIsFileOnly'),
 ]
 for name, path, before, after, testrun, marker in controls:
     p = pathlib.Path(path); original = p.read_text()

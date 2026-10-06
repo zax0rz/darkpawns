@@ -306,9 +306,11 @@ func TestWizutilMudlogRecipientFilter(t *testing.T) {
 		}
 	})
 
-	t.Run("rejected branches emit no producer log", func(t *testing.T) {
+	t.Run("staged refusals emit no producer log", func(t *testing.T) {
 		_, actor, victim, file := mudlogFixture(t)
-		// pardon non-outlaw, thaw not-frozen, freeze self, freeze already frozen.
+		// Four staged refusals: pardon non-outlaw, thaw not-frozen, freeze self,
+		// freeze already-frozen. NOT staged here: thaw at a higher freeze level,
+		// and the shared authorization / missing-target / NPC-target failures.
 		if err := cmdPardon(actor, []string{"Victim"}); err != nil {
 			t.Fatal(err)
 		}
@@ -335,12 +337,34 @@ func TestWizutilMudlogRecipientFilter(t *testing.T) {
 // -1 and file=TRUE, emitted before SET_SKILL and never broadcast, even to a
 // fully qualified observer.
 func TestSkillsetMudlogIsFileOnly(t *testing.T) {
-	m, actor, _, file := mudlogFixture(t)
+	m, actor, victim, file := mudlogFixture(t)
 	qualified := addObserver(t, m, "QualifiedGod", 60, true, true)
+	skillNum := game.FindSkillNum("kick")
+	name := game.SkillCatalogName(skillNum)
+	stored := game.SkillStorageName(skillNum)
+
+	// C emits this at modify.c:334, before SET_SKILL at :336. Record the
+	// victim's stored skill at the instant the file side is written: it must
+	// still be unset. A mutation that moves the call after the mutation fails
+	// here (the controls script exercises exactly that).
+	skillAtLog := -1
+	probe := &flagProbe{buf: file, when: func() {
+		skillAtLog = victim.player.GetSkill(stored)
+	}}
+	game.SetLogWriter(probe)
+
 	if err := cmdSkillset(actor, []string{"Victim", "'kick'", "50"}); err != nil {
 		t.Fatal(err)
 	}
-	name := game.SkillCatalogName(game.FindSkillNum("kick"))
+	if !probe.saw {
+		t.Fatalf("skillset produced no file log: %q", file.String())
+	}
+	if skillAtLog != 0 {
+		t.Fatalf("log-time skill = %d, want 0 (unset): C logs before SET_SKILL", skillAtLog)
+	}
+	if got := victim.player.GetSkill(stored); got != 50 {
+		t.Fatalf("post-command skill = %d, want 50", got)
+	}
 	if !strings.Contains(file.String(), "Godactor changed Victim's "+name+" to 50.\n") {
 		t.Fatalf("file = %q", file.String())
 	}

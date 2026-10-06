@@ -3,10 +3,19 @@
 **Train:** DP-1371 Phase 4 D7, first producer family (`do_wizutil` + `skillset`).
 **Base:** `6be961c6f` (merge of #1806). **Tier:** stop (session command handlers).
 
-This is a **survey and a remaining-work map, not a completed audit** and not
-permission to port the class. It exists so `mudlog.unported-sites` stops hiding
-partial completion: the family implemented by this train has its own named rows,
-and every other family is listed here with its owning C file and current status.
+**Status: partial per-producer reconciliation — explicitly unfinished.** The
+contract mapping (C site, enclosing function, payload, type, minimum level, file
+flag, Go caller, current status) is complete for this train's family and for
+`act.wizard.c` and `whod.c` (the next candidates). It is **not** complete for
+the remaining raw sites (OLC editors, objsave, spec_procs2, scripts/Lua,
+clan/house, ban/ident, magic/class, new_cmds/act.informative/limits), which are
+listed at family level only: a per-producer pass over them is still owed, and
+the family table is not a substitute for it. This is a remaining-work map, not a
+completed audit, and not permission to port the class. `mudlog.unported-sites`
+stops hiding partial completion by naming this train's producers individually.
+
+Reachability is asserted per site only where this document says so; the family
+table alone is not a reachability verdict for the families not reconciled here.
 
 ## Method
 
@@ -72,9 +81,7 @@ The consumer is `unit-green` (`syslog.consumer-filter`,
 | combat milestones | `fight.c` (5) | unported | combat batch |
 | new_cmds / act.informative / limits | `new_cmds.c`, `act.informative.c`, `limits.c` | unported | triage per site |
 
-`mudlog.unported-sites` stays **blocked** and points here. Every family above is
-reachable; none is classified `excluded` merely because it is awkward to
-exercise.
+`mudlog.unported-sites` stays **blocked** and points here.
 
 ## This train's cases
 
@@ -103,3 +110,58 @@ player/body lock held:
 calls `p.SendMessage`, which takes the player's `mu` (R) and the world's `mu`
 (R). None of the insertion points holds any of those. The consumer's own row
 documents that no world lock may be held across it; no new path violates that.
+
+## Per-producer reconciliation — `act.wizard.c` (next family, complete)
+
+All nine sites in one file, in four already-ported handlers, so they are one
+batch: the contracts and Go counterparts are recorded here; only the calls are
+missing. Payloads carry no CRLF (the consumer adds its bracket line).
+
+| C site | Enclosing fn | Payload | Type | Min level | File | Go caller | Status |
+|---|---|---|---|---|---|---|---|
+| `src/act.wizard.c:1316` | `do_load` | `(GC) %s loaded %s at %s.` | BRF | `GET_LEVEL(ch)+1` | TRUE | `cmdLoad` (`pkg/session/commands.go:236`) | **missing** |
+| `src/act.wizard.c:1371` | `do_load` | `(GC) %s loaded %s at %s` (object) | BRF | `GET_LEVEL(ch)+1` | TRUE | `cmdLoad` | **missing** |
+| `src/act.wizard.c:1441` | `do_purge` | `(GC) %s has purged %s.` | BRF | `LVL_GOD` | TRUE | `cmdPurge` (`:237`) | **missing** |
+| `src/act.wizard.c:1879` | `do_force` | `(GC) %s forced %s to %s` | NRM | `MAX(GET_LEVEL(ch)+1, GET_INVIS_LEV(ch))` | TRUE | `cmdForce` (`:248`) | **missing** |
+| `src/act.wizard.c:1885` | `do_force` | `(GC) %s forced room %d to %s` | NRM | `MAX(GET_LEVEL(ch)+1, invis)` | TRUE | `cmdForce` | **missing** |
+| `src/act.wizard.c:1897` | `do_force` | `(GC) %s forced all to %s` | NRM | `MAX(GET_LEVEL(ch)+1, invis)` | TRUE | `cmdForce` | **missing** |
+| `src/act.wizard.c:2051` | `do_zreset` | `(GC) %s reset entire world.` | NRM | `MAX(LVL_GRGOD, GET_INVIS_LEV(ch))` | TRUE | `cmdZreset` (`:284`) | **missing** |
+| `src/act.wizard.c:2067` | `do_zreset` | `(GC) %s reset zone %d (%s)` | NRM | `MAX(LVL_GRGOD, invis)` | TRUE | `cmdZreset` | **missing** |
+| `src/act.wizard.c:3540` | `do_newbie` | `(GC) %s newbied %s.` | BRF | `GET_LEVEL(ch)+1` | TRUE | wizard `newbie` — *not* the player channel `cmdNewbieChannel` (`:430`) | **missing** |
+
+Note the level asymmetry this family carries: `do_load`/`do_purge`/`do_newbie`
+use `GET_LEVEL(ch)+1` or `LVL_GOD` (no invis term), while `do_force`/`do_zreset`
+use `MAX(..., GET_INVIS_LEV(ch))`. A single shared helper would be wrong; each
+site keeps its own expression (R1/R5e).
+
+## Per-producer reconciliation — `whod.c` `LOG` macro (next family, complete)
+
+`src/whod.c:39` defines `#define LOG(msg) mudlog(msg, BRF, LVL_GOD, TRUE)` — a
+producer wrapper a naive `mudlog(` grep under-counts by eight. Its eight
+invocations:
+
+| C site | Enclosing fn | Payload | Type | Min level | File | Go caller | Status |
+|---|---|---|---|---|---|---|---|
+| `src/whod.c:188` | `do_whod` | `WHOD turned on by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` (`pkg/game/whod.go:112`) | **missing** |
+| `src/whod.c:206` | `do_whod` | `WHOD turned off by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **missing** |
+| `src/whod.c:218` | `do_whod` | `%s removed from WHOD by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **missing** |
+| `src/whod.c:227` | `do_whod` | `%s added to WHOD by %s.` | BRF | `LVL_GOD` | TRUE | `Whod.DoWhod` | **missing** |
+| `src/whod.c:250` | `init_whod` | `WHOD port opened.` | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
+| `src/whod.c:267` | `close_whod` | `WHOD port closed.` | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
+| `src/whod.c:296` | `whod_loop` | `WHOD port opened.` | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
+| `src/whod.c:335` | `whod_loop` | `WHO request from %s served.` (or the failure line above it) | BRF | `LVL_GOD` | TRUE | no Go port listener | **missing** |
+
+`pkg/game/whod.go` has no `MudLog` call: its `DoWhod` returns a string to the
+caller instead of emitting the log, so the `do_whod` four are a real producer
+gap, not a different-but-equivalent shape. The port lifecycle (`init_whod`,
+`close_whod`, `whod_loop`) has no Go analogue at all, so its four are gated on
+that decision, not on this train.
+
+## Still owed
+
+A per-producer pass over the remaining families — OLC editors, `objsave.c`,
+`spec_procs2.c`, `scripts.c`/Lua, clan/house, ban/ident, magic/class,
+`new_cmds.c`/`act.informative.c`/`limits.c` — including any other `#define`
+wrappers like `whod.c`'s `LOG`. Until that lands, this document's family table
+is a work map, not a reconciliation, and no reachability claim attaches to
+those families.
