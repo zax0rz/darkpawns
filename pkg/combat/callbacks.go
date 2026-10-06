@@ -7,6 +7,8 @@ package combat
 //
 // This struct is owned by CombatEngine and validated at construction time.
 type GameCallbacks struct {
+	// RangedHunt supplies shoot retaliation's damage-side hunter assignment.
+	RangedHunt func(attacker, defender Combatant)
 	// Messaging
 	Broadcast  func(roomVNum int, msg string, exclude []Combatant)
 	SendToChar func(name Combatant, msg string)

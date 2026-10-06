@@ -931,6 +931,12 @@ func CmdShoot(s SessionInterface, args []string) error {
 	if ch == nil {
 		return nil
 	}
+	// Preserve do_shoot's own guard before parsing even when called directly.
+	// The descriptor position gate normally rejects combat first (R2/R5e).
+	if ch.GetFightingBody() != nil {
+		return s.SendMessage("But you are already engaged in close-range combat!\r\n")
+	}
+
 	// C half_chop() consumes three fields before any object or direction
 	// lookup (act.offensive.c:782-799). Keep those parser gates ahead of every
 	// later branch; the old Go handler invented a same-room target form.
@@ -1025,20 +1031,7 @@ func CmdShoot(s SessionInterface, args []string) error {
 		return s.SendMessage("You cannot see well enough to aim...\r\n")
 	}
 
-	result := game.DoShoot(ch, target)
-	err = sendSkillResult(s, ch, target, result)
-	if err != nil {
-		return err
-	}
-
-	// On hit, drag target into shooter's room (C: char_from_room + char_to_room)
-	if result.Success && target != nil {
-		if mover, ok := target.(interface{ SetRoom(int) }); ok {
-			world.MovePlayerToRoom(mover, ch.GetRoom())
-		}
-	}
-
-	return nil
+	return executeShoot(s, ch, target, projectile, bow, projectileName, direction)
 }
 
 // CmdSubdue handles the subdue command (C-10).

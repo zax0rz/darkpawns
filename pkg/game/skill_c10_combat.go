@@ -172,48 +172,6 @@ func DoTigerPunch(ch *Player, target combat.Combatant) SkillResult {
 	}
 }
 
-// DoShoot implements do_shoot() from act.offensive.c lines 746-980.
-// Cannot shoot while fighting. Simplified for same-room targets.
-//
-// TODO(port): C's do_shoot never calls damage()/skill_message — it hand-rolls
-// its own literal actor/room bytes ("You hear a roar of pain!", "Some kind of
-// %s streaks in from %s ...") and lib/misc/messages has no M record for
-// SKILL_SHOOT (148) in either tree. The literal strings below are therefore
-// NOT from the messages file, and they are not now C's bytes either: the actor
-// pre-roll pair ("$n fires <arg1> with <bow>." + "Twang... your projectile
-// flies into the distance."), the dex-adjusted prob, the projectile/bow dice,
-// the direct GET_HIT update, the target relocation and the synchronous
-// retaliation are all missing. See docs/fidelity/depth/shoot.tsv
-// (shoot.no-skill-message-path and the blocked target-path rows) before
-// touching this function; a partial rewrite would drop bytes C emits.
-func DoShoot(ch *Player, target combat.Combatant) SkillResult {
-	if ch.GetSkill(SkillShoot) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
-	}
-	if ch.GetFightingBody() != nil {
-		return SkillResult{Success: false, MessageToCh: "But you are already engaged in close-range combat!"}
-	}
-	// #nosec G404
-	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillShoot)
-	if percent >= prob {
-		return SkillResult{
-			Success: false, WaitCh: 1,
-			MessageToCh:   "Twang... you miss!",
-			MessageToVict: "Something streaks toward you but narrowly misses!",
-			MessageToRoom: "A projectile narrowly misses its target!",
-		}
-	}
-	dam := ch.GetDamroll() + dprng.Number(1, 6) + dprng.Number(1, 4)
-	improveSkill(ch, SkillShoot)
-	return SkillResult{
-		Success: true, Damage: dam, WaitCh: 1, NoDamageCall: true,
-		MessageToCh:   "You hear a roar of pain! Your shot hits!",
-		MessageToVict: "A projectile pierces you!",
-		MessageToRoom: fmt.Sprintf("%s fires a projectile that strikes %s!", ch.Name, target.GetName()),
-	}
-}
-
 // DoSubdue implements do_subdue() from act.offensive.c lines 1084-1160.
 // Non-lethal stun. Cannot be fighting.
 func DoSubdue(ch *Player, target combat.Combatant) SkillResult {

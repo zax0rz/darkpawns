@@ -330,6 +330,9 @@ func findAllDots(arg string) int {
 	return findIndiv
 }
 
+// IndefiniteArticle exposes C AN for command-authored object text.
+func IndefiniteArticle(s string) string { return an(s) }
+
 func an(s string) string {
 	if s == "" {
 		return "a"
