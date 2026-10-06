@@ -124,8 +124,7 @@ func cmdMedit(s *Session, args []string) error {
 			return nil
 		}
 		s.meditSend("Saving all mobiles in zone.\r\n")
-		slog.Info("OLC: medit zone save",
-			"player", s.playerName, "zone", zone.Number)
+		game.MudLog(fmt.Sprintf("OLC: %s saves mobs for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveMeditZone(s.manager.world, zone); err != nil {
 			slog.Error("medit disk save failed",
 				"player", s.playerName, "zone", zone.Number, "error", err)

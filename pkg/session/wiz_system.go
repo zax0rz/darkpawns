@@ -71,6 +71,7 @@ func (m *Manager) forceAllSave(caster *Session) {
 		return
 	}
 	caster.Send("Okay.\r\n")
+	game.MudLog(fmt.Sprintf("(GC) %s forced all to save", caster.player.GetName()), game.MudlogNormal, max(caster.player.GetLevel()+1, caster.player.GetInvisLevel()), true)
 
 	m.mu.RLock()
 	targets := make([]*Session, 0, len(m.sessions))
@@ -86,7 +87,7 @@ func (m *Manager) forceAllSave(caster *Session) {
 	m.mu.RUnlock()
 
 	for _, target := range targets {
-		game.Act(m.world, true, caster.player, target.player, nil, nil, "$n has forced you to 'all save'.", "", game.ToVict)
+		game.Act(m.world, true, caster.player, target.player, nil, nil, "$n has forced you to 'save'.", "", game.ToVict)
 		m.world.ExecSave(target.player)
 	}
 }

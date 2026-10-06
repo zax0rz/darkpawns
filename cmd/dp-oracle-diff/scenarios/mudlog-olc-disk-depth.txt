@@ -1,0 +1,104 @@
+# depth-case: mudlog.olc-disk-redit
+# depth-case: mudlog.olc-disk-zedit
+# depth-case: mudlog.olc-disk-oedit
+# depth-case: mudlog.olc-disk-medit
+# depth-case: mudlog.olc-disk-sedit
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mudwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mudwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Mudwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Mudwizard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Mudvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Mudvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog complete
+advance Mudwizard 38
+
+[probe:actor]
+redit save 31
+zedit save 31
+oedit save 31
+medit save 31
+sedit save 31
