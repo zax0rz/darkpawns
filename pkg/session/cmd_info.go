@@ -1119,7 +1119,13 @@ func cmdHelpText(s *Session, argument string) error {
 		// C: "There is no help on: %s\r\n" + mudlog + append to misc/help file.
 		// The usage-file append remains a separate unported site.
 		s.sendText(fmt.Sprintf("There is no help on: %s\r\n", argument))
-		game.MudLog(fmt.Sprintf("HELP: %s attempted to get help on %s", s.playerName, argument), game.MudlogNormal, game.LVL_IMMORT, true)
+		s.manager.mu.RLock()
+		name := s.player.GetName()
+		if s.isSwitched && s.switchedMob != nil {
+			name = s.switchedMob.GetName()
+		}
+		s.manager.mu.RUnlock()
+		game.MudLog(fmt.Sprintf("HELP: %s attempted to get help on %s", name, argument), game.MudlogNormal, game.LVL_IMMORT, true)
 		return nil
 	}
 
