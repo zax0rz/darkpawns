@@ -162,6 +162,8 @@ func cmdForceText(s *Session, argument string) error {
 	}
 	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "all") {
 		s.Send("Okay.\r\n")
+		// src/act.wizard.c:1896-1897: before visiting any descriptor.
+		game.MudLog(fmt.Sprintf("(GC) %s forced all to %s", s.player.Name, forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
 		for _, target := range forceTargets(s, false) {
 			forceSessionCommand(s, target, forceCmd, true)
 		}

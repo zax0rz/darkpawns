@@ -51,6 +51,7 @@ func TestWizardMudlogProducers(t *testing.T) {
 		{"purge-player", "purge", "(GC) Logactor has purged Logvictim.", []string{"Logvictim"}},
 		{"force-single", "force", "(GC) Logactor forced Logvictim to say forced", []string{"Logvictim", "say", "forced"}},
 		{"force-room", "force", "(GC) Logactor forced room 1001 to say forced", []string{"room", "say", "forced"}},
+		{"force-all", "force", "(GC) Logactor forced all to say forced", []string{"all", "say", "forced"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
