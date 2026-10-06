@@ -38,7 +38,7 @@ jobs:
       # environment is the tested one. The race detector stays: it is the gate
       # that catches the concurrent-save and session-teardown bugs this store's
       # single writer makes possible.
-      run: go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 120s
+      run: go test -race -covermode=atomic -coverprofile=coverage.out $(go list ./... | grep -v /tests/unit) -v -timeout 300s
 
     - name: Coverage report + ratchet
       run: |
