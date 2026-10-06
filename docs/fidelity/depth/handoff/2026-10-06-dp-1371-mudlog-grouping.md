@@ -73,7 +73,7 @@ Do not equate a site count with the number of assertions or branches.
 | Order / group | Sites | Planned work / prerequisite | Tier |
 |---|---:|---|---|
 | 1 `local-01` | 8 | file-edit delete/save success; OEDIT/SEDIT defaults; help miss; bug/idea/typo/todo shared report producer; clan withdraw/deposit | Local (mudlog-only), **only after** per-call lock audit |
-| 2 `game-milestones` | 8 | level advance; stable collect failure; kender steal; remort; assassin refusal/hire; Medusa; attitude loot | Local candidates; level/persistence and combat-lock callers must be audited; any seam change makes train stop |
+| 2 `game-milestones` | 8 | level advance; stable collect failure; kender steal; remort; assassin refusal/hire; Medusa; attitude loot | Local candidates except PC kender arm: Go has no player-target path, so split it into a stop/design train. Level/persistence and combat-lock callers must be audited; any seam change makes train stop |
 | 3 `steal` + `olc-zone-tail` | 5 | steal equipment/inventory/failure; zone ARG3/default diagnostics | Local candidates; C cleanup order and every live caller first |
 | 4 `olc-error-seams` | 8 | room/object/mob/shop open/write diagnostics and file-editor delete/write failures | Stop if classified I/O seam or error handling is needed; never equate all AtomicWrite failures to fopen |
 | 5 `olc-control-seams` | 8 | saveall; internal room-reset unknown command; room description/default; mob description/default; text-editor invalid action | Stop: missing routing, cleanup/return order and state topology need separate proofs |
@@ -119,3 +119,10 @@ retains direct source contexts, extraction/reconciliation field notes, the
 read-only checker control and separate gates. No census needed for this
 inventory: it changes docs and the aggregate's note only, not scenarios,
 proof selections, production or harness. No production access or deployment.
+
+Source-audit follow-up while preparing group 2: C `act.informative.c:488-489`
+calls kender_steal for PC targets too. Go KenderSteal takes only MobInstance;
+its comment claiming a C player-target return is contradicted by the actual
+source. Site `spec_procs2.c:634` is a PC-success producer, not an NPC-success
+producer. The table now maps the missing PC arm explicitly; its routing repair
+is a separate stop/design train, not a MudLog addition to the NPC arm.
