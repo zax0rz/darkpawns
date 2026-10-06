@@ -80,7 +80,10 @@ func cmdLoad(s *Session, args []string) error {
 			s.Send("There is no monster with that number.\r\n")
 			return nil
 		}
-		slog.Info("(GC) load mob", "who", s.player.Name, "mob", mob.GetShortDesc(), "room", roomVNum)
+		// src/act.wizard.c:1314-1316: after placement, before narration;
+		// no invisibility term, and the mobile payload ends in a period.
+		game.MudLog(fmt.Sprintf("(GC) %s loaded %s at %s.", s.player.Name, mob.GetName(), s.manager.world.GetRoomInWorld(roomVNum).Name),
+			game.MudlogBrief, s.player.GetLevel()+1, true)
 		sendLoadNarration(s, roomVNum, fmt.Sprintf("%s has created %s!", s.player.Name, mob.GetShortDesc()), fmt.Sprintf("You create %s.", mob.GetShortDesc()))
 	} else if loadIsAbbrev(kind, "obj") {
 		obj, err := s.manager.world.SpawnObject(vnum, -1)
@@ -104,7 +107,9 @@ func cmdLoad(s *Session, args []string) error {
 			s.Send("You can't carry that right now.\r\n")
 			return nil
 		}
-		slog.Info("(GC) load obj", "who", s.player.Name, "obj", obj.GetShortDesc(), "room", roomVNum)
+		// src/act.wizard.c:1369-1371: object payload has no final period.
+		game.MudLog(fmt.Sprintf("(GC) %s loaded %s at %s", s.player.Name, obj.GetShortDesc(), s.manager.world.GetRoomInWorld(roomVNum).Name),
+			game.MudlogBrief, s.player.GetLevel()+1, true)
 		sendLoadNarration(s, roomVNum, fmt.Sprintf("%s has created %s!", s.player.Name, obj.GetShortDesc()), fmt.Sprintf("You create %s.", obj.GetShortDesc()))
 	} else {
 		s.Send("That'll have to be either 'obj' or 'mob'.\r\n")
@@ -220,6 +225,11 @@ func cmdPurge(s *Session, args []string) error {
 					s.Send("Fuuuuuuuuu!\r\n")
 					return nil
 				}
+
+				// src/act.wizard.c:1437-1441: the room act precedes the
+				// player-only producer, which precedes close and extraction.
+				game.Act(s.manager.world, false, s.player, victim, nil, nil, "$n disintegrates $N.", "", game.ToNotVict)
+				game.MudLog(fmt.Sprintf("(GC) %s has purged %s.", s.player.Name, victim.GetName()), game.MudlogBrief, game.LVL_GOD, true)
 
 				// close_socket() announces the lost link before do_purge()
 				// extracts the lower-level player. Suppress the generic Go

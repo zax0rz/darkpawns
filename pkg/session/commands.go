@@ -734,6 +734,9 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 		// it verbatim), so the transport's untouched text is required.
 		return cmdStringText(s, args, rawArgs)
 	}
+	if cmd == "force" && rawArgs != "" {
+		return cmdForceText(s, rawArgs)
+	}
 	if (cmd == "wiznet" || cmd == ";") && rawArgs != "" {
 		return cmdWiznetText(s, rawArgs)
 	}

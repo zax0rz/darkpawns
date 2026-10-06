@@ -133,22 +133,28 @@ func splitSendArgs(args []string, rawArgs string) (target, msg string, ok bool) 
 // command denylist or cooldown; its command surface is part of the game (R2).
 // ---------------------------------------------------------------------------
 func cmdForce(s *Session, args []string) error {
+	return cmdForceText(s, strings.Join(args, " "))
+}
+
+// cmdForceText retains half_chop's command remainder for the producer and
+// nested producer paths (src/act.wizard.c:1863-1880), including internal/trailing spaces.
+func cmdForceText(s *Session, argument string) error {
 	if !checkLevel(s, LVL_GOD) {
 		s.Send("Huh?!?")
 		return nil
 	}
-	if len(args) < 2 || strings.TrimSpace(strings.Join(args[1:], " ")) == "" {
+	targetName, forceCmd := wiznetHalfChop(argument)
+	if targetName == "" || forceCmd == "" {
 		s.Send("Whom do you wish to force do what?\r\n")
 		return nil
 	}
-
-	forceCmd := strings.Join(args[1:], " ")
-	targetName := args[0]
 
 	// C treats "room" and "all" specially only for LVL_GRGOD and above.
 	// Below that level they fall through to ordinary get_char_vis lookup.
 	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "room") {
 		s.Send("Okay.\r\n")
+		// src/act.wizard.c:1884-1885: before visiting any room target.
+		game.MudLog(fmt.Sprintf("(GC) %s forced room %d to %s", s.player.Name, s.player.GetRoom(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
 		for _, target := range forceTargets(s, true) {
 			forceSessionCommand(s, target, forceCmd, true)
 		}
@@ -156,6 +162,8 @@ func cmdForce(s *Session, args []string) error {
 	}
 	if s.player.GetLevel() >= LVL_GRGOD && strings.EqualFold(targetName, "all") {
 		s.Send("Okay.\r\n")
+		// src/act.wizard.c:1896-1897: before visiting any descriptor.
+		game.MudLog(fmt.Sprintf("(GC) %s forced all to %s", s.player.Name, forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
 		for _, target := range forceTargets(s, false) {
 			forceSessionCommand(s, target, forceCmd, true)
 		}
@@ -178,7 +186,12 @@ func cmdForce(s *Session, args []string) error {
 	}
 
 	s.Send("Okay.\r\n")
-	forceSessionCommand(s, target, forceCmd, s.player.GetLevel() < LVL_IMPL)
+	// src/act.wizard.c:1875-1880: notify, log, then interpret.
+	if s.player.GetLevel() < LVL_IMPL {
+		target.Send(fmt.Sprintf("%s has forced you to '%s'.\r\n", s.player.Name, forceCmd))
+	}
+	game.MudLog(fmt.Sprintf("(GC) %s forced %s to %s", s.player.Name, target.player.GetName(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
+	forceSessionCommand(s, target, forceCmd, false)
 	return nil
 }
 
@@ -230,7 +243,8 @@ func forceSessionCommand(caster, target *Session, command string, notifyVictim b
 	if cmd == "" {
 		return
 	}
-	if err := executeCommand(target, cmd, args, false); err != nil {
+	_, rawArgs := wiznetHalfChop(command)
+	if err := executeCommandRaw(target, cmd, args, false, rawArgs); err != nil {
 		// command_interpreter is void in C; errors are diagnostic only and must
 		// not create a second player-facing error response.
 		slog.Error("forced command failed", "target", target.player.Name, "command", command, "error", err)

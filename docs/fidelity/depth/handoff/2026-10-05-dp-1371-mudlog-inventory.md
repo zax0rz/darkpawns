@@ -71,7 +71,7 @@ The consumer is `unit-green` (`syslog.consumer-filter`,
 | connection lifecycle | `comm.c`, `interpreter.c`, `act.other.c` quit, `db.c` | ported earlier | existing rows (`mudlog.quit-line`, `mudlog.losteq-line`, …) |
 | `do_wizutil` reroll | `act.wizard.c:2109` | **not mudlog** — uses `log()`; must not broadcast. No row needed. | inventory only |
 | OLC editors | `zedit.c`, `redit.c`, `medit.c`, `oedit.c`, `sedit.c`, `olc.c`, `file-edit.c`, `improved-edit.c` | unported | next family (largest single group) |
-| act.wizard misc | `act.wizard.c` (remaining ~10) | unported | second wizard batch |
+| act.wizard misc | `act.wizard.c` (nine sites) | ported in the 2026-10-06 wizard producer train; NPC-force producer reachability remains C1 | `mudlog.wizard-*` |
 | object saves | `objsave.c:489-539,1186` | unported | objsave batch |
 | special procedures | `spec_procs2.c:371,456,634,833-913` | unported | spec-proc batch |
 | Lua/script diagnostics | `scripts.c` (72 raw) | unported | Lua batch |
@@ -113,21 +113,21 @@ documents that no world lock may be held across it; no new path violates that.
 
 ## Per-producer reconciliation — `act.wizard.c` (next family, complete)
 
-All nine sites in one file, in four already-ported handlers, so they are one
-batch: the contracts and Go counterparts are recorded here; only the calls are
-missing. Payloads carry no CRLF (the consumer adds its bracket line).
+All nine sites in one file, in five handlers. The 2026-10-06 train restores
+the producers and records their bounded proofs in its handoff; this table
+does not claim completion of those handlers or their retained A1/C1 gaps. Payloads carry no CRLF (the consumer adds its bracket line).
 
 | C site | Enclosing fn | Payload | Type | Min level | File | Go caller | Status |
 |---|---|---|---|---|---|---|---|
-| `src/act.wizard.c:1316` | `do_load` | `(GC) %s loaded %s at %s.` | BRF | `GET_LEVEL(ch)+1` | TRUE | `cmdLoad` (`pkg/session/commands.go:236`) | **missing** |
-| `src/act.wizard.c:1371` | `do_load` | `(GC) %s loaded %s at %s` (object) | BRF | `GET_LEVEL(ch)+1` | TRUE | `cmdLoad` | **missing** |
-| `src/act.wizard.c:1441` | `do_purge` | `(GC) %s has purged %s.` | BRF | `LVL_GOD` | TRUE | `cmdPurge` (`:237`) | **missing** |
-| `src/act.wizard.c:1879` | `do_force` | `(GC) %s forced %s to %s` | NRM | `MAX(GET_LEVEL(ch)+1, GET_INVIS_LEV(ch))` | TRUE | `cmdForce` (`:248`) | **missing** |
-| `src/act.wizard.c:1885` | `do_force` | `(GC) %s forced room %d to %s` | NRM | `MAX(GET_LEVEL(ch)+1, invis)` | TRUE | `cmdForce` | **missing** |
-| `src/act.wizard.c:1897` | `do_force` | `(GC) %s forced all to %s` | NRM | `MAX(GET_LEVEL(ch)+1, invis)` | TRUE | `cmdForce` | **missing** |
-| `src/act.wizard.c:2051` | `do_zreset` | `(GC) %s reset entire world.` | NRM | `MAX(LVL_GRGOD, GET_INVIS_LEV(ch))` | TRUE | `cmdZreset` (`:284`) | **missing** |
-| `src/act.wizard.c:2067` | `do_zreset` | `(GC) %s reset zone %d (%s)` | NRM | `MAX(LVL_GRGOD, invis)` | TRUE | `cmdZreset` | **missing** |
-| `src/act.wizard.c:3540` | `do_newbie` | `(GC) %s newbied %s.` | BRF | `GET_LEVEL(ch)+1` | TRUE | wizard `newbie` — *not* the player channel `cmdNewbieChannel` (`:430`) | **missing** |
+| `src/act.wizard.c:1316` | `do_load` | `(GC) %s loaded %s at %s.` | BRF | `GET_LEVEL(ch)+1` | TRUE | `cmdLoad` (`pkg/session/wiz_object.go`) | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:1371` | `do_load` | `(GC) %s loaded %s at %s` (object) | BRF | `GET_LEVEL(ch)+1` | TRUE | `cmdLoad` | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:1441` | `do_purge` | `(GC) %s has purged %s.` | BRF | `LVL_GOD` | TRUE | `cmdPurge` (`pkg/session/wiz_object.go`) | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:1879` | `do_force` | `(GC) %s forced %s to %s` | NRM | `MAX(GET_LEVEL(ch)+1, GET_INVIS_LEV(ch))` | TRUE | `cmdForce` (`pkg/session/wiz_communication.go`) | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:1885` | `do_force` | `(GC) %s forced room %d to %s` | NRM | `MAX(GET_LEVEL(ch)+1, invis)` | TRUE | `cmdForce` | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:1897` | `do_force` | `(GC) %s forced all to %s` | NRM | `MAX(GET_LEVEL(ch)+1, invis)` | TRUE | `cmdForce` | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:2051` | `do_zreset` | `(GC) %s reset entire world.` | NRM | `MAX(LVL_GRGOD, GET_INVIS_LEV(ch))` | TRUE | `cmdZreset` (`pkg/session/wiz_zone.go`) | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:2067` | `do_zreset` | `(GC) %s reset zone %d (%s)` | NRM | `MAX(LVL_GRGOD, invis)` | TRUE | `cmdZreset` | **ported** (2026-10-06; producer only) |
+| `src/act.wizard.c:3540` | `do_newbie` | `(GC) %s newbied %s.` | BRF | `GET_LEVEL(ch)+1` | TRUE | `cmdNewbie` (`pkg/session/wiz_system.go`), registered as `wnewbie` | **ported** (2026-10-06; producer only) |
 
 Note the level asymmetry this family carries: `do_load`/`do_purge`/`do_newbie`
 use `GET_LEVEL(ch)+1` or `LVL_GOD` (no invis term), while `do_force`/`do_zreset`

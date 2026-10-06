@@ -873,9 +873,10 @@ func cmdNewbie(s *Session, args []string) error {
 		}
 	}
 
-	slog.Warn("wizard newbie", "by", s.playerName, "target", targetName)
 	s.Send("Newbied.\r\n")
 	game.Act(nil, true, targetActor, s.player, nil, nil,
 		"$N makes a magickal gesture, creating a bunch of equipment, and hands it to you!", "", game.ToChar)
+	// src/act.wizard.c:3539-3540: after gifts and both messages, no invis term.
+	game.MudLog(fmt.Sprintf("(GC) %s newbied %s.", s.player.Name, targetActor.GetName()), game.MudlogBrief, s.player.GetLevel()+1, true)
 	return nil
 }

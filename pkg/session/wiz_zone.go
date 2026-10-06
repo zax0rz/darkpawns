@@ -45,7 +45,8 @@ func cmdZreset(s *Session, args []string) error {
 			resetZone(i)
 		}
 		s.Send("Reset world.\r\n")
-		slog.Warn("wizard zreset all", "by", s.playerName)
+		// src/act.wizard.c:2050-2051: all resets and acknowledgement precede log.
+		game.MudLog(fmt.Sprintf("(GC) %s reset entire world.", s.player.Name), game.MudlogNormal, max(game.LVL_GRGOD, s.player.GetInvisLevel()), true)
 		return nil
 	}
 
@@ -65,8 +66,9 @@ func cmdZreset(s *Session, args []string) error {
 
 	zone := zones[zoneIndex]
 	resetZone(zoneIndex)
-	slog.Warn("wizard zreset", "by", s.playerName, "zone", zone.Number, "name", zone.Name)
 	s.Send(fmt.Sprintf("Reset zone %d (#%d): %s.\r\n", zoneIndex, zone.Number, zone.Name))
+	// src/act.wizard.c:2066-2067: the payload uses the table index, not VNUM.
+	game.MudLog(fmt.Sprintf("(GC) %s reset zone %d (%s)", s.player.Name, zoneIndex, zone.Name), game.MudlogNormal, max(game.LVL_GRGOD, s.player.GetInvisLevel()), true)
 	return nil
 }
 
