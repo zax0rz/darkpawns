@@ -107,7 +107,9 @@ func cmdLoad(s *Session, args []string) error {
 			s.Send("You can't carry that right now.\r\n")
 			return nil
 		}
-		slog.Info("(GC) load obj", "who", s.player.Name, "obj", obj.GetShortDesc(), "room", roomVNum)
+		// src/act.wizard.c:1369-1371: object payload has no final period.
+		game.MudLog(fmt.Sprintf("(GC) %s loaded %s at %s", s.player.Name, obj.GetShortDesc(), s.manager.world.GetRoomInWorld(roomVNum).Name),
+			game.MudlogBrief, s.player.GetLevel()+1, true)
 		sendLoadNarration(s, roomVNum, fmt.Sprintf("%s has created %s!", s.player.Name, obj.GetShortDesc()), fmt.Sprintf("You create %s.", obj.GetShortDesc()))
 	} else {
 		s.Send("That'll have to be either 'obj' or 'mob'.\r\n")

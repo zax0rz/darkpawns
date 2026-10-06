@@ -47,6 +47,7 @@ func TestWizardMudlogProducers(t *testing.T) {
 		args                   []string
 	}{
 		{"load-mob", "load", "(GC) Logactor loaded a guard trainee at Producer room.", []string{"mob", "3001"}},
+		{"load-object", "load", "(GC) Logactor loaded object 3001 at Producer room", []string{"obj", "3001"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
