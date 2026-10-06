@@ -657,8 +657,7 @@ func (s *Session) parseMeditLocked(arg string) {
 		case 'y', 'Y':
 			s.meditSendLocked("Saving mobile to memory.\r\n")
 			s.saveMeditInternallyLocked()
-			slog.Info("OLC: medit edit",
-				"player", s.playerName, "mob", state.number)
+			game.MudLog(fmt.Sprintf("OLC: %s edits mob %d", s.player.GetName(), state.number), game.MudlogComplete, LVL_IMMORT, true)
 			s.finishMeditLocked(cleanupMeditAll)
 			return
 		case 'n', 'N':
