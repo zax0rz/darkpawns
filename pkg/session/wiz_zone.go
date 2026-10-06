@@ -45,7 +45,8 @@ func cmdZreset(s *Session, args []string) error {
 			resetZone(i)
 		}
 		s.Send("Reset world.\r\n")
-		slog.Warn("wizard zreset all", "by", s.playerName)
+		// src/act.wizard.c:2050-2051: all resets and acknowledgement precede log.
+		game.MudLog(fmt.Sprintf("(GC) %s reset entire world.", s.player.Name), game.MudlogNormal, max(game.LVL_GRGOD, s.player.GetInvisLevel()), true)
 		return nil
 	}
 

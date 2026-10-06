@@ -53,6 +53,7 @@ func TestWizardMudlogProducers(t *testing.T) {
 		{"force-room", "force", "(GC) Logactor forced room 1001 to say forced", []string{"room", "say", "forced"}},
 		{"force-all", "force", "(GC) Logactor forced all to say forced", []string{"all", "say", "forced"}},
 		{"reset-zone", "zreset", "(GC) Logactor reset zone 0 (Producer zone)", []string{"80"}},
+		{"reset-world", "zreset", "(GC) Logactor reset entire world.", []string{"*"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
