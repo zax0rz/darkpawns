@@ -75,11 +75,7 @@ func testLocalMudlog(t *testing.T, kind string) {
 		w.HelpTable = []game.HelpEntry{{Keyword: "known", Entry: "known help\r\n"}}
 		payload = "HELP: Logactor attempted to get help on no  entry"
 		ack = "There is no help on: no  entry\r\n"
-		invoke = func() {
-			if err := cmdHelpText(a, "no  entry"); err != nil {
-				t.Fatal(err)
-			}
-		}
+		invoke = func() { run("help", "no", "", "entry") }
 		atLog = func() {
 			if got := strings.Join(drainSessionText(t, a), ""); got != ack {
 				t.Errorf("help miss must precede log: %q", got)
