@@ -1117,9 +1117,9 @@ func cmdHelpText(s *Session, argument string) error {
 	entry := game.SearchHelp(table, argument)
 	if entry == nil {
 		// C: "There is no help on: %s\r\n" + mudlog + append to misc/help file.
-		// The mudlog and the misc/help usage file are server-side only (not
-		// player-facing); the file write is intentionally skipped here.
+		// The usage-file append remains a separate unported site.
 		s.sendText(fmt.Sprintf("There is no help on: %s\r\n", argument))
+		game.MudLog(fmt.Sprintf("HELP: %s attempted to get help on %s", s.playerName, argument), game.MudlogNormal, game.LVL_IMMORT, true)
 		return nil
 	}
 
