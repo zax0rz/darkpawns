@@ -259,6 +259,8 @@ func (s *Session) finishSeditLocked(save bool) {
 			markOLCDirty(olcKindShop, state.zoneNumber)
 		}
 		saveMu.Unlock()
+		s.flushSeditOutputLocked()
+		game.MudLog(fmt.Sprintf("OLC: %s edits shop %d", s.player.GetName(), state.number), game.MudlogComplete, LVL_IMMORT, true)
 	}
 	s.flushSeditOutputLocked()
 	s.setPlayerWritingLocked(false)
