@@ -1313,7 +1313,7 @@ func (s *Session) parseOeditLocked(arg string) {
 			return
 		}
 	default:
-		slog.Error("oedit reached default case", "player", s.playerName)
+		game.MudLog("SYSERR: OLC: Reached default case in oedit_parse()!", game.MudlogBrief, game.LVL_IMMORT, true)
 	}
 
 	// C: "If we get here, we have changed something."
