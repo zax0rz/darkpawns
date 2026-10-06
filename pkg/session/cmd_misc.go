@@ -197,7 +197,9 @@ func cmdUnban(s *Session, args []string) error {
 
 // cmdWhod handles the "whod" admin command (ported from whod.c do_whod).
 func cmdWhod(s *Session, args []string) error {
-	msg := s.manager.world.ExecWhod(s.player, strings.Join(args, " "))
-	s.sendText(msg)
+	msg := s.manager.world.ExecWhod(s.player, strings.Join(args, " "), s.sendText)
+	if msg != "" {
+		s.sendText(msg)
+	}
 	return nil
 }
