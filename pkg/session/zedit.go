@@ -996,6 +996,7 @@ func zeditNewZone(s *Session, number int) error {
 	}
 
 	if err := olc.WriteNewZoneFiles(world.WorldPath, number); err != nil {
+		zeditLogNewZoneOpenFailure(err)
 		slog.Error("zedit new-zone file creation failed", "zone", number, "error", err)
 		return nil
 	}
