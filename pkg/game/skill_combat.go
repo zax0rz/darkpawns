@@ -34,7 +34,7 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// 2. Self-check — act.offensive.c:185
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "How can you sneak up on yourself?"}
 	}
 
@@ -164,7 +164,7 @@ func DoBash(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// Self-target — act.offensive.c:450-454
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
 	}
 
@@ -248,7 +248,7 @@ func DoKick(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Self-target — act.offensive.c:610-614
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
 	}
 
@@ -320,7 +320,7 @@ func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// Self-target — new_cmds.c:771-775
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "You trip over your shoe laces...\r\n"}
 	}
 
@@ -410,7 +410,7 @@ func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	// Self-target — new_cmds.c:405-408
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "You bang your head into the nearest wall...\r\n"}
 	}
 
@@ -506,7 +506,7 @@ func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine in
 	}
 
 	// Can't rescue yourself
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "What about fleeing instead?"}
 	}
 
@@ -638,7 +638,7 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 		return SkillResult{Success: false, MessageToCh: "You can't commit murder in this holy place!\r\n"}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "The monster in you won't let you suicide!\r\n"}
 	}
 
@@ -719,7 +719,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Circle who?\r\n"}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "How can you stab yourself in the back?\r\n"}
 	}
 
@@ -834,7 +834,7 @@ func DoCharge(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You couldn't charge if you wanted to!\r\n"}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "You charge headlong into the ground, impressing everyone..\r\n"}
 	}
 

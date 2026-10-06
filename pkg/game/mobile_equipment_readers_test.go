@@ -38,7 +38,7 @@ func zoneArmedMob(t *testing.T) (*World, *MobInstance, *Player) {
 
 func TestMobileEquipmentReaderCombatWeapon(t *testing.T) {
 	w, m, _ := zoneArmedMob(t)
-	typ, _, _, bless := w.WireCombatCallbacks().GetWeaponInfo(m.GetName())
+	typ, _, _, bless := w.WireCombatCallbacks().GetWeaponInfo(m)
 	if typ != 3 || !bless {
 		t.Fatalf("zone weapon combat info=%d/%v, want slash/blessed", typ, bless)
 	}
@@ -455,7 +455,7 @@ func TestMobileEquipmentReaderLiveWeaponValues(t *testing.T) {
 	w, m, p := zoneArmedMob(t)
 	weapon := m.Equipped(mobWearWield)
 	weapon.SetValue(3, 12)
-	typ, _, _, _ := w.WireCombatCallbacks().GetWeaponInfo(m.GetName())
+	typ, _, _, _ := w.WireCombatCallbacks().GetWeaponInfo(m)
 	if typ != 12 {
 		t.Fatalf("combat reader ignored live weapon type: %d", typ)
 	}

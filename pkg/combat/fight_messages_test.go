@@ -113,20 +113,24 @@ func TestFightMessageSelectionConsumesOneDrawAndUsesActTokens(t *testing.T) {
 
 	var attackerMessage string
 	cb := &GameCallbacks{
-		Broadcast: func(int, string, string) {},
-		SendToChar: func(name, message string) {
+		Broadcast: func(int, string, []Combatant) {},
+		SendToChar: func(bodyname Combatant, message string) {
+			name := bodyname.GetName()
+
 			if name == "Attacker" {
 				attackerMessage = message
 			}
 		},
-		GetSex: func(name string) int {
+		GetSex: func(bodyname Combatant) int {
+			name := bodyname.GetName()
+
 			if name == "Victim" {
 				return 1
 			}
 			return 0
 		},
-		GetHP:    func(string) int { return 10 },
-		GetLevel: func(string) int { return 1 },
+		GetHP:    func(Combatant) int { return 10 },
+		GetLevel: func(Combatant) int { return 1 },
 	}
 	SetCallbacks(cb)
 	InitFightMessages(cb, FightMessages{
@@ -138,7 +142,7 @@ func TestFightMessageSelectionConsumesOneDrawAndUsesActTokens(t *testing.T) {
 
 	roller := NewScriptedRoller([]int{2, 99})
 	WithRoller(roller, func() {
-		if handled := cb.SkillMessage(0, "Attacker", "Victim", TYPE_HIT, 100); !handled {
+		if handled := cb.SkillMessage(0, testCombatBody("Attacker"), testCombatBody("Victim"), TYPE_HIT, 100); !handled {
 			t.Fatal("TYPE_HIT miss was not handled")
 		}
 	})
@@ -157,7 +161,9 @@ func TestDamMessageSeverityBoundariesConsumeNoDraws(t *testing.T) {
 
 	var attackerMessage string
 	cb := defaultCombatCallbacks()
-	cb.SendToChar = func(name, message string) {
+	cb.SendToChar = func(bodyname Combatant, message string) {
+		name := bodyname.GetName()
+
 		if name == "Attacker" {
 			attackerMessage = message
 		}
@@ -214,7 +220,9 @@ func TestDamMessage_OutOfBoundsAttackType(t *testing.T) {
 
 	var attackerMessage string
 	cb := defaultCombatCallbacks()
-	cb.SendToChar = func(name, message string) {
+	cb.SendToChar = func(bodyname Combatant, message string) {
+		name := bodyname.GetName()
+
 		if name == "Attacker" {
 			attackerMessage = message
 		}

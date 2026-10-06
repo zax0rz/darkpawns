@@ -165,7 +165,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string, world *World)
 	if target == nil {
 		return SkillResult{Success: false, MessageToCh: "Steal what from who?"}
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Come on now, that's rather stupid!"}
 	}
 	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {

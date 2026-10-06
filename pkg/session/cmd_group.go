@@ -238,7 +238,7 @@ func cmdUngroup(s *Session, args []string) error {
 				continue
 			}
 			m.InGroup = false
-			m.Following = "" // stop_follower — act.other.c line 764
+			m.SetFollowing("") // stop_follower — act.other.c line 764
 			m.SendMessage(disbandMsg)
 		}
 		s.player.InGroup = false

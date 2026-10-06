@@ -83,7 +83,7 @@ func TestCombatMessages_HaveNewlines(t *testing.T) {
 
 	ce := NewCombatEngine()
 	var broadcasts []string
-	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
+	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
 		broadcasts = append(broadcasts, message)
 	}
 
@@ -223,10 +223,10 @@ func TestPerformInitialAttack_ModifiersApplied(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)
 	ce.SetCallbacks(&GameCallbacks{
-		GetWeaponInfo: func(chName string) (wType, damDice, damSize int, blessed bool) {
+		GetWeaponInfo: func(chName Combatant) (wType, damDice, damSize int, blessed bool) {
 			return 0, 0, 0, isBlessed
 		},
-		GetDrunk: func(chName string) int {
+		GetDrunk: func(chName Combatant) int {
 			return drunkVal
 		},
 	})
@@ -353,9 +353,11 @@ func TestHandleSurvivingVictimState_AutoWimpyFleesAfterBleedingMessage(t *testin
 	fled := false
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
-		GetWimpyLev: func(name string) int { return 5 },
-		GetSkill:    func(name string, skill int) int { return 0 },
-		DoFlee: func(name string) {
+		GetWimpyLev: func(bodyname Combatant) int { return 5 },
+		GetSkill:    func(bodyname Combatant, skill int) int { return 0 },
+		DoFlee: func(bodyname Combatant) {
+			name := bodyname.GetName()
+
 			fled = name == "Cfighter"
 			defender.StopFighting()
 		},
@@ -408,7 +410,10 @@ func TestShopkeeperProtection_RemovesCombatPair(t *testing.T) {
 
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
-		IsShopkeeper: func(name string) bool { return name == "Shopkeeper" },
+		IsShopkeeper: func(bodyname Combatant) bool {
+			name := bodyname.GetName()
+			return name == "Shopkeeper"
+		},
 	})
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat failed: %v", err)
@@ -477,9 +482,15 @@ func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 	subdued := false
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
-		MobHasJailGuardSpec: func(name string) bool { return name == "jail guard" },
-		HasAffect:           func(name string, aff int) bool { return false },
-		JailGuardSubdue: func(guardName, victimName string) bool {
+		MobHasJailGuardSpec: func(bodyname Combatant) bool {
+			name := bodyname.GetName()
+			return name == "jail guard"
+		},
+		HasAffect: func(bodyname Combatant, aff int) bool { return false },
+		JailGuardSubdue: func(bodyguardName Combatant, bodyvictimName Combatant) bool {
+			guardName := bodyguardName.GetName()
+			victimName := bodyvictimName.GetName()
+
 			subdued = guardName == "jail guard" && victimName == "Thief"
 			return subdued
 		},
@@ -529,9 +540,9 @@ func TestMobRedirect_NonJailMobDoesNotSubdue(t *testing.T) {
 	subdued := false
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
-		MobHasJailGuardSpec: func(name string) bool { return false },
-		HasAffect:           func(name string, aff int) bool { return false },
-		JailGuardSubdue: func(guardName, victimName string) bool {
+		MobHasJailGuardSpec: func(bodyname Combatant) bool { return false },
+		HasAffect:           func(bodyname Combatant, aff int) bool { return false },
+		JailGuardSubdue: func(bodyguardName Combatant, bodyvictimName Combatant) bool {
 			subdued = true
 			return true
 		},
@@ -560,14 +571,18 @@ func TestMobRedirect_CharmedPetRetargetsToMaster(t *testing.T) {
 
 	ce := NewCombatEngine()
 	ce.SetCallbacks(&GameCallbacks{
-		HasAffect: func(name string, aff int) bool {
+		HasAffect: func(bodyname Combatant, aff int) bool {
+			name := bodyname.GetName()
+
 			return name == "charmed pet" && aff == AFF_CHARM
 		},
-		GetFollowing: func(name string) string {
+		GetFollowing: func(bodyname Combatant) Combatant {
+			name := bodyname.GetName()
+
 			if name == "charmed pet" {
-				return "Master"
+				return master
 			}
-			return ""
+			return nil
 		},
 		GetRoomCombatants: func(roomVNum int) []Combatant {
 			return []Combatant{attacker, pet, master}
@@ -891,7 +906,9 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 	hits := 0
 	// DamageFunc runs once for every landed hit, on the same path that
 	// applies the damage.
-	ce.DamageFunc = func(victimName string) {
+	ce.DamageFunc = func(bodyvictimName Combatant) {
+		victimName := bodyvictimName.GetName()
+
 		if victimName == "parry_warrior" {
 			hits++
 		}
@@ -988,7 +1005,7 @@ func TestProcessCombatPair_MobWithWaitStillAttacks(t *testing.T) {
 	attacker.SetPosition(PosSitting)
 
 	var broadcasts []string
-	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
+	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
 		broadcasts = append(broadcasts, message)
 	}
 	origCB := GetCallbacks()
@@ -1031,7 +1048,7 @@ func TestProcessCombatPair_MobStandsWhenDowned(t *testing.T) {
 	attacker.SetPosition(PosSitting)
 
 	var broadcasts []string
-	ce.BroadcastFunc = func(roomVNum int, message string, exclude string) {
+	ce.BroadcastFunc = func(roomVNum int, message string, excludedBodies []Combatant) {
 		broadcasts = append(broadcasts, message)
 	}
 	origCB := GetCallbacks()
@@ -1147,7 +1164,7 @@ func TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks(t *testing.T)
 		// re-down the attacker to model a mid-fight bash.
 		attacker.SetPosition(PosSitting)
 		broadcasts = nil
-		ce.BroadcastFunc = func(_ int, msg, _ string) { broadcasts = append(broadcasts, msg) }
+		ce.BroadcastFunc = func(_ int, msg string, _ []Combatant) { broadcasts = append(broadcasts, msg) }
 	}
 
 	// Standing up, staying in the fight, and the broadcast are unconditional

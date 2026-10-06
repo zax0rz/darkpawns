@@ -357,15 +357,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 	}
 
 	world.MobileMessageSink = func(body *game.MobInstance, msg []byte) {
-		m.mu.RLock()
-		var attached *Session
-		for _, s := range m.sessions {
-			if s.isSwitched && s.switchedMob == body && s.hasTransport() && !s.SendClosed() {
-				attached = s
-				break
-			}
-		}
-		m.mu.RUnlock()
+		attached := m.combatSession(body)
 		if attached != nil {
 			attached.notePlayerOutput()
 			attached.forwardSnoopOutput(string(msg))
@@ -457,7 +449,7 @@ func (m *Manager) allocateConnectionNumber() int {
 // SetCombatBroadcastFunc sets the broadcast function for combat messages.
 // Must be called after the manager is created and before combat starts.
 func (m *Manager) SetCombatBroadcastFunc() {
-	m.combatEngine.SetBroadcastFunc(func(roomVNum int, message string, exclude string) {
+	m.combatEngine.SetBroadcastFunc(func(roomVNum int, message string, exclude []combat.Combatant) {
 		msg, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
 			Data: EventData{
@@ -469,7 +461,9 @@ func (m *Manager) SetCombatBroadcastFunc() {
 			slog.Error("json.Marshal error", "error", err)
 			return
 		}
-		m.BroadcastToRoom(roomVNum, msg, exclude)
+		for _, s := range m.combatAudience(roomVNum, exclude) {
+			s.sendGuarded(msg)
+		}
 	})
 }
 
@@ -522,34 +516,18 @@ func (m *Manager) SetCombatMessageFunc() {
 		}
 	}
 
-	broadcast := func(roomVNum int, message string, exclude string) {
-		excluded := make(map[string]bool)
-		for _, name := range strings.Fields(exclude) {
-			excluded[name] = true
-		}
-		m.mu.RLock()
-		defer m.mu.RUnlock()
-		for name, s := range m.sessions {
-			if excluded[name] {
-				continue
-			}
-			if s.player != nil && s.player.GetRoom() == roomVNum {
-				enqueueCombatMessage(s, message)
-			}
-		}
-	}
-
-	sendToChar := func(name string, message string) {
-		if s, ok := m.bodySessionByName(name); ok {
+	broadcast := func(room int, message string, exclude []combat.Combatant) {
+		for _, s := range m.combatAudience(room, exclude) {
 			enqueueCombatMessage(s, message)
 		}
 	}
-
-	// sendRaw carries C's bare color writes (CCYEL/CCRED/CCNRM around a
-	// skill_message line) with no line ending appended, so the escape bytes a
-	// keep-ansi oracle sees match C's send_to_char stream exactly.
-	sendRaw := func(name string, message string) {
-		if s, ok := m.bodySessionByName(name); ok && s != nil {
+	sendToChar := func(body combat.Combatant, message string) {
+		if s := m.combatSession(body); s != nil {
+			enqueueCombatMessage(s, message)
+		}
+	}
+	sendRaw := func(body combat.Combatant, message string) {
+		if s := m.combatSession(body); s != nil {
 			s.sendRawEvent(message)
 		}
 	}
@@ -562,6 +540,13 @@ func (m *Manager) SetCombatMessageFunc() {
 	}
 	cb.Broadcast = broadcast
 	cb.SendToChar = sendToChar
+	cb.SendText = func(body combat.Combatant, message string) {
+		if s := m.combatSession(body); s != nil {
+			if err := s.SendMessage(message); err != nil {
+				slog.Error("combat text delivery failed", "error", err)
+			}
+		}
+	}
 	cb.SendRaw = sendRaw
 	if err := combat.InitEmbeddedFightMessages(cb); err != nil {
 		slog.Error("loading combat messages", "error", err)
@@ -809,7 +794,7 @@ func (m *Manager) SetDeathFunc() {
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
 			isGuest := false
-			if s, ok := m.bodySessionByName(victim.GetName()); ok {
+			if s := m.combatSession(victim); s != nil {
 				isGuest = s.isGuest
 				if err := cmdLook(s, nil); err != nil {
 					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
@@ -827,7 +812,7 @@ func (m *Manager) SetDeathFunc() {
 
 		// Auto-loot: if killer has autoloot enabled, loot the corpse
 		if killer != nil && !killer.IsNPC() {
-			if player, ok := m.world.GetPlayer(killer.GetName()); ok && IsAutoLootEnabled(player) {
+			if player, ok := killer.(*game.Player); ok && IsAutoLootEnabled(player) {
 				// Use doGet to transfer items from corpse to player inventory
 				items := m.world.GetItemsInRoom(victim.GetRoom())
 				for _, item := range items {
@@ -837,7 +822,7 @@ func (m *Manager) SetDeathFunc() {
 					}
 				}
 				// Refresh killer's UI
-				if s, ok := m.bodySessionByName(killer.GetName()); ok {
+				if s := m.combatSession(killer); s != nil {
 					s.markDirty(VarInventory, VarRoomItems)
 				}
 			}
@@ -849,8 +834,8 @@ func (m *Manager) SetDeathFunc() {
 // When a player takes damage in combat, their HEALTH and MAX_HEALTH vars are
 // marked dirty so the next flushDirtyVars call will push the update.
 func (m *Manager) SetDamageFunc() {
-	m.combatEngine.DamageFunc = func(victimName string) {
-		if s, ok := m.bodySessionByName(victimName); ok {
+	m.combatEngine.DamageFunc = func(victim combat.Combatant) {
+		if s := m.combatSession(victim); s != nil && !victim.IsNPC() {
 			s.markDirty(VarHealth, VarMaxHealth)
 			s.flushDirtyVars()
 			s.gmcpVitals()
@@ -867,7 +852,7 @@ func (m *Manager) SetDamageFunc() {
 		m.mu.RUnlock()
 
 		for _, s := range sessions {
-			if target, fighting := m.combatEngine.GetCombatTarget(s.player); fighting && target.GetName() == victimName {
+			if target, fighting := m.combatEngine.GetCombatTarget(s.player); fighting && target == victim {
 				s.markDirty(VarFighting)
 				s.flushDirtyVars()
 			}
@@ -878,8 +863,8 @@ func (m *Manager) SetDamageFunc() {
 // SetScriptFightFunc wires the fight trigger into the combat engine.
 // After each combat round, if the mob has a fight script, it fires.
 func (m *Manager) SetScriptFightFunc() {
-	m.combatEngine.ScriptFightFunc = func(mobName string, targetName string, roomVNum int) {
-		m.world.FireMobFightScript(mobName, targetName, roomVNum)
+	m.combatEngine.ScriptFightFunc = func(mob, target combat.Combatant, roomVNum int) {
+		m.world.FireMobFightScript(mob, target, roomVNum)
 	}
 }
 
@@ -904,8 +889,8 @@ func (m *Manager) SetMobSpecialFunc() {
 // SetScriptDeathFunc wires the death trigger into the combat engine.
 // When a mob dies, if it has a death script, it fires.
 func (m *Manager) SetScriptDeathFunc() {
-	m.combatEngine.ScriptDeathFunc = func(victimName string, killerName string, roomVNum int) {
-		m.world.FireMobDeathScript(victimName, killerName, roomVNum)
+	m.combatEngine.ScriptDeathFunc = func(victim, killer combat.Combatant, roomVNum int) {
+		m.world.FireMobDeathScript(victim, killer, roomVNum)
 	}
 }
 
@@ -1123,22 +1108,28 @@ func (m *Manager) SetFleeHooks() {
 		cb = &combat.GameCallbacks{}
 		m.combatEngine.SetCallbacks(cb)
 	}
-	cb.DoFlee = func(name string) {
-		s, ok := m.bodySessionByName(name)
-		if !ok || s == nil {
+	cb.DoFlee = func(body combat.Combatant) {
+		if body.IsNPC() {
+			return // NPC command dispatch remains the C1 frontier.
+		}
+		s := m.combatSession(body)
+		if s == nil {
 			return
 		}
 		if err := cmdFlee(s); err != nil {
-			slog.Error("DoFlee failed", "player", name, "error", err)
+			slog.Error("DoFlee failed", "player", body.GetName(), "error", err)
 		}
 	}
-	cb.DoRetreat = func(name string) {
-		s, ok := m.bodySessionByName(name)
-		if !ok || s == nil {
+	cb.DoRetreat = func(body combat.Combatant) {
+		if body.IsNPC() {
+			return // NPC command dispatch remains the C1 frontier.
+		}
+		s := m.combatSession(body)
+		if s == nil {
 			return
 		}
 		if err := cmdRetreat(s); err != nil {
-			slog.Error("DoRetreat failed", "player", name, "error", err)
+			slog.Error("DoRetreat failed", "player", body.GetName(), "error", err)
 		}
 	}
 }

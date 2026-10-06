@@ -3,6 +3,8 @@ package game
 import (
 	"log/slog"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
+
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
@@ -115,4 +117,10 @@ func rawKillRace(victim interface{}) int {
 		}
 	}
 	return 0
+}
+
+func (w *World) forgetRawKillBody(body combat.Combatant) {
+	if body != nil {
+		w.forgetRawKillVictim(body.GetName())
+	}
 }

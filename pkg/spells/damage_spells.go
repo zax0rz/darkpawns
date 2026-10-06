@@ -266,7 +266,7 @@ func consumeReagent(ch interface{}, spellNum, level int, reagentName, casterMsg,
 // woundBroadcast). Kept as a narrow interface so the spells package needn't
 // import game.
 type woundBroadcaster interface {
-	WoundBroadcast(roomVNum int, message, exclude string)
+	WoundBroadcast(roomVNum int, message string, exclude []combat.Combatant)
 }
 
 // spellDeathPipeline is the melee DeathFunc path (game.World.HandleDeath). Spell
@@ -340,7 +340,7 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		// zero.  Immortal victims receive the god_msg branch, and ordinary
 		// zero-damage spells receive the miss branch; both consume the message
 		// selector draw and remain player-visible (fight.c:1480, 296-327).
-		combat.EmitSkillMessage(dam, chCombat.GetName(), victCombat.GetName(), attackType, chCombat.GetRoom())
+		combat.EmitSkillMessage(dam, chCombat, victCombat, attackType, chCombat.GetRoom())
 		if dam <= 0 {
 			// Fully absorbed (immortal victim, or a clamped protection result):
 			// no state damage/death — matches damage() after the message path.
@@ -351,7 +351,7 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		var wb func(roomVNum int, message, exclude string)
+		var wb func(roomVNum int, message string, exclude []combat.Combatant)
 		if b, ok := world.(woundBroadcaster); ok {
 			wb = b.WoundBroadcast
 		}

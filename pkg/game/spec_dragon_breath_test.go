@@ -106,14 +106,17 @@ func TestSpecDragonBreath_CombatRollAndSharedReturn(t *testing.T) {
 	}
 	message := cb.SkillMessage
 	breaths := 0
-	cb.SkillMessage = func(dam int, attacker, victim string, attackType, room int) bool {
+	cb.SkillMessage = func(dam int, bodyattacker combat.Combatant, bodyvictim combat.Combatant, attackType, room int) bool {
+		attacker := bodyattacker.GetName()
+		victim := bodyvictim.GetName()
+
 		if attackType == spells.SpellFrostBreath {
 			breaths++
 			if dam != 0 || attacker != mob.GetName() || victim != player.Name || room != 1001 {
 				t.Errorf("breath boundary: %d %q %q %d", dam, attacker, victim, room)
 			}
 		}
-		return message(dam, attacker, victim, attackType, room)
+		return message(dam, bodyattacker, bodyvictim, attackType, room)
 	}
 	// A failed breath roll consumes only number(0,3).
 	failSeed := uint32(1)

@@ -483,7 +483,7 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		if MobSpecAssign[ally.GetVNum()] == "rescuer" {
 			continue
 		}
-		if mobRescuerPlayer(w, ally.GetFighting(), me.GetRoomVNum()) == nil {
+		if opponent, ok := combatPlayer(ally.GetFightingBody()); !ok || opponent.GetRoom() != me.GetRoomVNum() {
 			continue
 		}
 		// SPECIAL(rescuer) unconditionally returns TRUE after calling
@@ -500,30 +500,8 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 // current opponent points back at it; a one-way/stale FIGHTING pointer still
 // reaches do_rescue and is then cleared by that procedure.
 func mobRescuerIsReciprocallyFighting(w *World, me *MobInstance) bool {
-	targetName := me.GetFighting()
-	if targetName == "" {
-		return false
-	}
-	for _, player := range w.GetAllPlayers() {
-		if player.GetName() == targetName && player.GetFightingBody() == me {
-			return true
-		}
-	}
-	for _, mob := range w.GetAllMobs() {
-		if mob.GetName() == targetName && mob.GetFightingBody() == me {
-			return true
-		}
-	}
-	return false
-}
-
-func mobRescuerPlayer(w *World, name string, roomVNum int) *Player {
-	for _, player := range w.GetPlayersInRoom(roomVNum) {
-		if player.GetName() == name {
-			return player
-		}
-	}
-	return nil
+	target := me.GetFightingBody()
+	return target != nil && target.GetFightingBody() == me
 }
 
 // mobRescueVictim resolves the first word of an NPC's short description with
@@ -557,7 +535,7 @@ func mobRescueVictim(w *World, me *MobInstance, shortDesc string) combat.Combata
 // calls hit(vict, tmp_ch) after interposing the combat state.
 func mobDoRescue(w *World, me, ally *MobInstance) {
 	victim := mobRescueVictim(w, me, ally.GetName())
-	if victim == nil || victim.GetName() == me.GetName() || me.GetFightingBody() == victim {
+	if victim == nil || victim == me || me.GetFightingBody() == victim {
 		return
 	}
 
@@ -1593,7 +1571,7 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		if !ok || !canSee(me, tch) || tch.GetFightingBody() == nil {
 			continue
 		}
-		target := cityguardCombatantByName(w, me.GetRoomVNum(), tch.GetFighting())
+		target := tch.GetFightingBody()
 		targetAligned, ok := target.(cityguardAlignedCombatant)
 		if !ok || targetAligned == nil || tch.GetAlignment() >= maxEvil ||
 			(!tch.IsNPC() && !target.IsNPC()) {
@@ -2049,11 +2027,11 @@ func specCastleGuardEast(w *World, ch *Player, me *MobInstance, cmd string, arg 
 
 	if cmd == "" && me.GetFightingBody() == nil {
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if mob == me || !mob.IsFighting() || mob.GetFightingTarget() == "" {
+			if mob == me || !mob.IsFighting() || mob.GetFightingBody() == nil {
 				continue
 			}
 			for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-				if pl.GetName() == mob.GetFightingTarget() && !pl.IsNPC() {
+				if pl == mob.GetFightingBody() && !pl.IsNPC() {
 					if err := me.Attack(pl, w); err != nil {
 						slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 					}
@@ -2282,18 +2260,8 @@ func specCastleGuard(w *World, ch *Player, me *MobInstance, cmd string, spec cas
 			if MobSpecAssign[other.GetVNum()] != spec.assignedName || !other.IsFighting() {
 				continue
 			}
-			targetName := other.GetFightingTarget()
-			if targetName == "" || targetName == me.GetName() {
-				continue
-			}
-
-			var target combat.Combatant
-			if player, ok := w.GetPlayer(targetName); ok {
-				target = player
-			} else if mob := w.GetMobByName(targetName); mob != nil {
-				target = mob
-			}
-			if target == nil {
+			target := other.GetFightingBody()
+			if target == nil || target == me {
 				continue
 			}
 			if err := w.mobHit(me, target); err != nil {

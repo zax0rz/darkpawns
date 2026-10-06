@@ -650,7 +650,7 @@ func CheckParry(fighter, opponent Combatant) ParryResult {
 	}
 
 	roll := GetRoller().Number(0, 10000)
-	skill := cbGetSkill(fighter.GetName(), SKILL_PARRY)
+	skill := cbGetSkill(fighter, SKILL_PARRY)
 	if roll > skill {
 		return ParryFail
 	}
@@ -681,7 +681,7 @@ func CheckDodge(defender, attacker Combatant) DodgeResult {
 		return DodgeIncapable
 	}
 
-	if !cbHasAffect(defender.GetName(), AFF_DODGE) {
+	if !cbHasAffect(defender, AFF_DODGE) {
 		return DodgeFail
 	}
 

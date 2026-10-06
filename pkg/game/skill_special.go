@@ -210,7 +210,7 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "The gods reject your impunity.\r\n"}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
 	}
 
@@ -266,7 +266,7 @@ func DoSlug(ch *Player, target combat.Combatant) SkillResult {
 	// C resolves the target before checking the self, weapon, and mounted
 	// gates (new_cmds.c:837-848). Keep those checks here as a second boundary
 	// for direct callers; CmdSlug owns the visible-room lookup and fallback.
-	if target != nil && target.GetName() == ch.GetName() {
+	if target != nil && target == ch {
 		return SkillResult{Success: false, MessageToCh: "You curl up your fist and slug yourself in the nose! Ouch!"}
 	}
 
@@ -390,7 +390,7 @@ func DoBite(ch *Player, target combat.Combatant) SkillResult {
 	if target == nil {
 		return SkillResult{Success: false, MessageToCh: "Bite who?!"}
 	}
-	if target.GetName() == ch.GetName() {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "You bite your tongue and say nothing."}
 	}
 
@@ -507,7 +507,7 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 	}
 
 	// Self-tag starts the game
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: true, MessageToCh: "Let the game begin!\r\n"}
 	}
 
@@ -615,7 +615,7 @@ func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "No masochism allowed!"}
 	}
 

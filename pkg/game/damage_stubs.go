@@ -340,8 +340,19 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 
 // woundBroadcast adapts World's room messaging to the signature that
 // combat.UpdatePositionAfterDamage expects (roomVNum, message, exclude).
-func (w *World) woundBroadcast(roomVNum int, message, exclude string) {
-	w.roomMessageExcludeTwo(roomVNum, message, exclude, "")
+func (w *World) woundBroadcast(roomVNum int, message string, exclude []combat.Combatant) {
+	for _, p := range w.GetPlayersInRoom(roomVNum) {
+		excluded := false
+		for _, body := range exclude {
+			if body == p {
+				excluded = true
+				break
+			}
+		}
+		if !excluded {
+			p.SendMessage(message + "\r\n")
+		}
+	}
 }
 
 // WoundBroadcast exposes woundBroadcast across the package boundary so the
@@ -349,7 +360,7 @@ func (w *World) woundBroadcast(roomVNum int, message, exclude string) {
 // exact same room broadcaster melee and skills use (DP-1022). It is the
 // exported wrapper the spells package asserts via its woundBroadcaster
 // interface; keep its signature aligned with woundBroadcast.
-func (w *World) WoundBroadcast(roomVNum int, message, exclude string) {
+func (w *World) WoundBroadcast(roomVNum int, message string, exclude []combat.Combatant) {
 	w.woundBroadcast(roomVNum, message, exclude)
 }
 

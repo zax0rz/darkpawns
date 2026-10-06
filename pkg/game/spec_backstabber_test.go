@@ -158,7 +158,10 @@ func TestSpecBackstabber_RngArmsAndCombatState(t *testing.T) {
 		var skillMessage string
 		previous := combat.GetCallbacks()
 		combat.SetCallbacks(&combat.GameCallbacks{
-			SkillMessage: func(dam int, ch, vict string, attackType, room int) bool {
+			SkillMessage: func(dam int, bodych combat.Combatant, bodyvict combat.Combatant, attackType, room int) bool {
+				ch := bodych.GetName()
+				vict := bodyvict.GetName()
+
 				skillMessage = ch + "|" + vict + "|" + strconv.Itoa(dam) + "|" + strconv.Itoa(attackType) + "|" + strconv.Itoa(room)
 				return true
 			},
@@ -198,7 +201,10 @@ func TestSpecBackstabber_RngArmsAndCombatState(t *testing.T) {
 		var skillMessage string
 		previous := combat.GetCallbacks()
 		combat.SetCallbacks(&combat.GameCallbacks{
-			SkillMessage: func(dam int, ch, vict string, attackType, room int) bool {
+			SkillMessage: func(dam int, bodych combat.Combatant, bodyvict combat.Combatant, attackType, room int) bool {
+				ch := bodych.GetName()
+				vict := bodyvict.GetName()
+
 				skillMessage = ch + "|" + vict + "|" + strconv.Itoa(dam) + "|" + strconv.Itoa(attackType) + "|" + strconv.Itoa(room)
 				return true
 			},
@@ -261,7 +267,7 @@ func TestMobBackstab_PositionMultiplier(t *testing.T) {
 			dprng.ResetStream(backstabberSeed(t, true))
 			var got int
 			previous := combat.GetCallbacks()
-			combat.SetCallbacks(&combat.GameCallbacks{SkillMessage: func(dam int, _ string, _ string, _ int, _ int) bool { got = dam; return true }})
+			combat.SetCallbacks(&combat.GameCallbacks{SkillMessage: func(dam int, _ combat.Combatant, _ combat.Combatant, _ int, _ int) bool { got = dam; return true }})
 			t.Cleanup(func() { combat.SetCallbacks(previous) })
 			w.mobBackstab(mob, player)
 			if scaled := combat.ApplyPositionDamageMultiplier(12, tc.position); scaled != tc.want {

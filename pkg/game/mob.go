@@ -106,6 +106,7 @@ type MobInstance struct {
 
 	// Following — name of player this mob follows (for charmed pets, etc.)
 	Following         string
+	followingBody     combat.Combatant
 	followingSequence uint64
 }
 
@@ -359,6 +360,7 @@ func (m *MobInstance) SetFollowing(leader string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Following = leader
+	m.followingBody = nil
 	if leader == "" {
 		m.followingSequence = 0
 	} else {
@@ -1493,4 +1495,21 @@ func (m *MobInstance) damrollPointLocked() int {
 		base = *m.Runtime.DamrollOverride
 	}
 	return mobileSignedPoint(base+m.Runtime.DamrollBonus, 8)
+}
+
+// SetFollowingBody preserves the selected leader across duplicate descriptions.
+func (m *MobInstance) SetFollowingBody(body combat.Combatant) {
+	name := ""
+	if body != nil {
+		name = body.GetName()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Following = name
+	m.followingBody = body
+	if body == nil {
+		m.followingSequence = 0
+	} else {
+		m.followingSequence = nextFollowerSequence()
+	}
 }

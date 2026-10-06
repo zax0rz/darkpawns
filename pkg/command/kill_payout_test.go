@@ -374,7 +374,7 @@ func TestKillPayout_Kick_AwardsXP(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Warrior", 30, game.ClassWarrior, false)
 	p.SetSkill(game.SkillKick, 100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
@@ -404,7 +404,7 @@ func TestKillPayout_Bash_AwardsXP(t *testing.T) {
 	p.SetSkill(game.SkillBash, 100)
 	p.SetMove(100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
@@ -432,7 +432,7 @@ func TestKillPayout_Bash_RemovesMobFromWorld(t *testing.T) {
 	p.SetSkill(game.SkillBash, 100)
 	p.SetMove(100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
@@ -456,7 +456,7 @@ func TestKillPayout_AutoGold_AwardsGoldToPlayer(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Greedy", 30, game.ClassWarrior, true) // AutoGold = true
 	p.SetSkill(game.SkillKick, 100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
@@ -479,7 +479,7 @@ func TestKillPayout_NoAutoGold_GoldStaysInCorpse(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Honest", 30, game.ClassWarrior, false) // AutoGold = false
 	p.SetSkill(game.SkillKick, 100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
@@ -831,7 +831,7 @@ func TestKillPayout_Trip_AwardsXP(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Tripper", 30, game.ClassThief, false)
 	p.SetSkill(game.SkillTrip, 100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
@@ -862,7 +862,7 @@ func TestKillPayout_Headbutt_AwardsXP(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Headbutter", 30, game.ClassWarrior, false)
 	p.SetSkill(game.SkillHeadbutt, 100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}
 
@@ -893,7 +893,7 @@ func TestKillPayout_Circle_AwardsXP(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Circler", 30, game.ClassThief, false)
 	p.SetSkill(game.SkillCircle, 100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 	equipPiercingWeapon(t, p)
 	ktw.mob.SetPosition(combat.PosSleeping)
 
@@ -926,7 +926,7 @@ func TestKillPayout_Charge_AwardsXP(t *testing.T) {
 	p := ktw.addPlayer(t, 1, "Charger", 10, game.ClassWarrior, false)
 	p.SetSkill(game.SkillCharge, 100)
 	p.SetPosition(combat.PosFighting)
-	p.SetFightingBody(game.NewPlayer(99999, "a test mob", 1001))
+	p.SetFightingBody(ktw.mob)
 	equipSwordWeapon(t, p)
 
 	sess := &killPayoutSession{player: p, world: ktw.world}

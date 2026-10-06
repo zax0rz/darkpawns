@@ -33,7 +33,7 @@ func TestUpdatePositionAfterDamage_WoundedBand(t *testing.T) {
 				mockCombatant: mockCombatant{name: "Victim", hp: tt.hp, position: PosFighting, fighting: &mockCombatant{name: "Attacker"}},
 			}
 			var broadcasts []string
-			got := UpdatePositionAfterDamage(v, func(_ int, msg, _ string) {
+			got := UpdatePositionAfterDamage(v, func(_ int, msg string, _ []Combatant) {
 				broadcasts = append(broadcasts, msg)
 			})
 
@@ -78,7 +78,7 @@ func TestUpdatePositionAfterDamage_IncapExactStrings(t *testing.T) {
 		mockCombatant: mockCombatant{name: "Victim", hp: -4, position: PosFighting, fighting: &mockCombatant{name: "Attacker"}},
 	}
 	var broadcasts []string
-	UpdatePositionAfterDamage(v, func(_ int, msg, _ string) {
+	UpdatePositionAfterDamage(v, func(_ int, msg string, _ []Combatant) {
 		broadcasts = append(broadcasts, msg)
 	})
 	if len(v.messages) != 1 {
@@ -131,8 +131,8 @@ func TestWoundedBandBroadcastsCapitalizeAndExcludeVictim(t *testing.T) {
 				mockCombatant: mockCombatant{name: "a guard trainee", hp: tc.hp, position: PosFighting},
 			}
 			var roomMsg, exclude string
-			if got := UpdatePositionAfterDamage(v, func(_ int, msg, ex string) {
-				roomMsg, exclude = msg, ex
+			if got := UpdatePositionAfterDamage(v, func(_ int, msg string, ex []Combatant) {
+				roomMsg, exclude = msg, testBodyNames(ex)
 			}); got != tc.wantPos {
 				t.Fatalf("pos = %d, want %d", got, tc.wantPos)
 			}

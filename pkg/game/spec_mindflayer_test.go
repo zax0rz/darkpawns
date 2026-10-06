@@ -65,7 +65,10 @@ func prepareMindflayerCombat(t *testing.T) (*World, *Player, *MobInstance, *mind
 	var skillMessage string
 	originalCallbacks := combat.GetCallbacks()
 	combat.SetCallbacks(&combat.GameCallbacks{
-		SkillMessage: func(dam int, ch, vict string, attackType, roomVNum int) bool {
+		SkillMessage: func(dam int, bodych combat.Combatant, bodyvict combat.Combatant, attackType, roomVNum int) bool {
+			ch := bodych.GetName()
+			vict := bodyvict.GetName()
+
 			skillMessage = ch + "|" + vict + "|" + strconv.Itoa(dam) + "|" + strconv.Itoa(attackType) + "|" + strconv.Itoa(roomVNum)
 			return true
 		},

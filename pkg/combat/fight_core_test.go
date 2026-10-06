@@ -75,10 +75,14 @@ func TestIsInGroup(t *testing.T) {
 
 	// HasAffectStr true + GetMasterInRoom true → true
 	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(name string, aff string) bool {
+		HasAffectStr: func(bodyname Combatant, aff string) bool {
+			name := bodyname.GetName()
+
 			return name == "Alice" && aff == AFF_STR_GROUP
 		},
-		GetMasterInRoom: func(name string, room int) bool {
+		GetMasterInRoom: func(bodyname Combatant, room int) bool {
+			name := bodyname.GetName()
+
 			return name == "Alice" && room == 100
 		},
 	})
@@ -88,11 +92,16 @@ func TestIsInGroup(t *testing.T) {
 
 	// HasAffectStr true + GetFellowFollowers true → true
 	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(name string, aff string) bool {
+		HasAffectStr: func(bodyname Combatant, aff string) bool {
+			name := bodyname.GetName()
+
 			return name == "Alice" && aff == AFF_STR_GROUP
 		},
-		GetMasterInRoom:          func(name string, room int) bool { return false },
-		GetFellowFollowersInRoom: func(name string, room int) bool { return name == "Alice" && room == 100 },
+		GetMasterInRoom: func(bodyname Combatant, room int) bool { return false },
+		GetFellowFollowersInRoom: func(bodyname Combatant, room int) bool {
+			name := bodyname.GetName()
+			return name == "Alice" && room == 100
+		},
 	})
 	if !IsInGroup(ch) {
 		t.Error("IsInGroup(Alice) should return true with fellow followers")
@@ -100,7 +109,7 @@ func TestIsInGroup(t *testing.T) {
 
 	// HasAffectStr false → false
 	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(name string, aff string) bool { return false },
+		HasAffectStr: func(bodyname Combatant, aff string) bool { return false },
 	})
 	if IsInGroup(ch) {
 		t.Error("IsInGroup(Alice) should return false without group affect")
@@ -117,7 +126,7 @@ func TestCalcLevelDiff(t *testing.T) {
 
 	// Wire IsInGroup to return false for solo
 	SetCallbacks(&GameCallbacks{
-		HasAffectStr: func(name string, aff string) bool { return false },
+		HasAffectStr: func(bodyname Combatant, aff string) bool { return false },
 	})
 
 	ch := &mockCombatant{name: "ch", level: 10}
@@ -253,17 +262,21 @@ func TestGroupGain_NoHooks(t *testing.T) {
 	victim := &mockCombatant{name: "Orc", npc: true, level: 8}
 
 	SetCallbacks(&GameCallbacks{
-		CountGroupMembers:   func(leaderName string, roomVNum int) int { return 1 },
-		ApplyToGroupMembers: func(leaderName string, roomVNum int, fn func(string)) { fn(leaderName) },
-		GainExp:             func(name string, amount int) {},
-		GetExp: func(name string) int {
+		CountGroupMembers: func(bodyleaderName Combatant, roomVNum int) int { return 1 },
+		ApplyToGroupMembers: func(bodyleaderName Combatant, roomVNum int, fn func(Combatant)) {
+			fn(bodyleaderName)
+		},
+		GainExp: func(bodyname Combatant, amount int) {},
+		GetExp: func(bodyname Combatant) int {
+			name := bodyname.GetName()
+
 			if name == "Orc" {
 				return 200
 			}
 			return 0
 		},
-		GetAlignment: func(name string) int { return 0 },
-		SetAlignment: func(name string, val int) {},
+		GetAlignment: func(bodyname Combatant) int { return 0 },
+		SetAlignment: func(bodyname Combatant, val int) {},
 	})
 
 	GroupGain(ch, victim) // should not panic
@@ -278,13 +291,15 @@ func TestChangeAlignment(t *testing.T) {
 	defer SetCallbacks(orig)
 
 	SetCallbacks(&GameCallbacks{
-		GetAlignment: func(name string) int {
+		GetAlignment: func(bodyname Combatant) int {
+			name := bodyname.GetName()
+
 			if name == "paladin" {
 				return 1000
 			}
 			return 0
 		},
-		SetAlignment: func(name string, val int) {},
+		SetAlignment: func(bodyname Combatant, val int) {},
 	})
 
 	paladin := &mockCombatant{name: "paladin", npc: false}
@@ -313,10 +328,10 @@ func TestTakeDamage_NilGetRace(t *testing.T) {
 	defer SetCallbacks(orig)
 
 	SetCallbacks(&GameCallbacks{
-		GetRaceHate:  func(name string, index int) int { return 1 },
-		HasAffect:    func(name string, aff int) bool { return false },
-		IsShopkeeper: func(name string) bool { return false },
-		HasPlrFlag:   func(name string, flag string) bool { return false },
+		GetRaceHate:  func(bodyname Combatant, index int) int { return 1 },
+		HasAffect:    func(bodyname Combatant, aff int) bool { return false },
+		IsShopkeeper: func(bodyname Combatant) bool { return false },
+		HasPlrFlag:   func(bodyname Combatant, flag string) bool { return false },
 		HasRoomFlag:  func(room int, flag string) bool { return false },
 	})
 
@@ -335,7 +350,9 @@ func TestRawKill_NilGetRace(t *testing.T) {
 
 	madeCorpse := false
 	SetCallbacks(&GameCallbacks{
-		MakeCorpse: func(victim string, attackType int) {
+		MakeCorpse: func(bodyvictim Combatant, attackType int) {
+			victim := bodyvictim.GetName()
+
 			if victim == "Victim" {
 				madeCorpse = true
 			}
@@ -356,9 +373,9 @@ func TestGetExpNilGuard_GroupGain(t *testing.T) {
 	defer SetCallbacks(orig)
 
 	SetCallbacks(&GameCallbacks{
-		CountGroupMembers: func(leaderName string, roomVNum int) int { return 1 },
-		ApplyToGroupMembers: func(leaderName string, roomVNum int, fn func(string)) {
-			fn(leaderName)
+		CountGroupMembers: func(bodyleaderName Combatant, roomVNum int) int { return 1 },
+		ApplyToGroupMembers: func(bodyleaderName Combatant, roomVNum int, fn func(Combatant)) {
+			fn(bodyleaderName)
 		},
 	})
 
@@ -376,10 +393,10 @@ func TestGetExpNilGuard_DieWithKiller(t *testing.T) {
 	defer SetCallbacks(orig)
 
 	SetCallbacks(&GameCallbacks{
-		GainExp:          func(name string, amount int) {},
-		RemoveAllAffects: func(name string) {},
-		MakeCorpse:       func(name string, attackType int) {},
-		ExtractChar:      func(name string) {},
+		GainExp:          func(bodyname Combatant, amount int) {},
+		RemoveAllAffects: func(bodyname Combatant) {},
+		MakeCorpse:       func(bodyname Combatant, attackType int) {},
+		ExtractChar:      func(bodyname Combatant) {},
 	})
 
 	victim := &mockCombatant{name: "Victim", room: 100, level: 10}
@@ -398,7 +415,9 @@ func TestTakeDamageDeathBroadcastExcludesVictim(t *testing.T) {
 
 	var excluded []string
 	SetCallbacks(&GameCallbacks{
-		Broadcast: func(roomVNum int, msg string, exclude string) {
+		Broadcast: func(roomVNum int, msg string, excludedBodies []Combatant) {
+			exclude := testBodyNames(excludedBodies)
+
 			if strings.Contains(msg, "R.I.P.") {
 				excluded = append(excluded, exclude)
 			}

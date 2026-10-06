@@ -190,7 +190,7 @@ func TestRawKillRaceDust(t *testing.T) {
 func TestRawKillDeathCryPrecedesCorpse(t *testing.T) {
 	w, p := rawKillWorld(t)
 	cries := 0
-	combat.GetCallbacks().Broadcast = func(room int, msg, exclude string) {
+	combat.GetCallbacks().Broadcast = func(room int, msg string, excludedBodies []combat.Combatant) {
 		if strings.Contains(msg, "death cry") {
 			cries++
 			if len(w.GetItemsInRoom(room)) != 0 || p.HasPLRFlag(PlrExtract) {
@@ -327,22 +327,22 @@ func TestRawKillTeardownOrder(t *testing.T) {
 	p.SetMana(90)
 	var steps []string
 	cb := combat.GetCallbacks()
-	wrap := func(name string, original func(string)) func(string) {
-		return func(victim string) { steps = append(steps, name); original(victim) }
+	wrap := func(name string, original func(combat.Combatant)) func(combat.Combatant) {
+		return func(victim combat.Combatant) { steps = append(steps, name); original(victim) }
 	}
 	remove := cb.RemoveAllAffects
-	cb.RemoveAllAffects = func(name string) {
+	cb.RemoveAllAffects = func(bodyname combat.Combatant) {
 		if p.GetFighting() != "" {
 			t.Error("affect removal preceded stop_fighting")
 		}
 		steps = append(steps, "affects")
-		remove(name)
+		remove(bodyname)
 	}
 	cb.RemoveTattoo = wrap("tattoo", cb.RemoveTattoo)
 	cb.ClearNightbreed = wrap("nightbreed", cb.ClearNightbreed)
 	cb.Unmount = wrap("unmount", cb.Unmount)
 	cb.ForgetVictim = wrap("forget", cb.ForgetVictim)
-	cb.Broadcast = func(_ int, msg, _ string) {
+	cb.Broadcast = func(_ int, msg string, _ []combat.Combatant) {
 		if strings.Contains(msg, "death cry") {
 			steps = append(steps, "cry")
 			if len(p.ActiveAffects) != 0 || p.Tattoo != TattooNone || p.IsAffected(affVampire) || p.GetMana() != 30 {
@@ -351,9 +351,15 @@ func TestRawKillTeardownOrder(t *testing.T) {
 		}
 	}
 	body := cb.MakeCorpse
-	cb.MakeCorpse = func(name string, attack int) { steps = append(steps, "corpse"); body(name, attack) }
+	cb.MakeCorpse = func(bodyname combat.Combatant, attack int) {
+		steps = append(steps, "corpse")
+		body(bodyname, attack)
+	}
 	extract := cb.ExtractChar
-	cb.ExtractChar = func(name string) { steps = append(steps, "extract"); extract(name) }
+	cb.ExtractChar = func(bodyname combat.Combatant) {
+		steps = append(steps, "extract")
+		extract(bodyname)
+	}
 	w.RawKillCombatant(p, combat.TYPE_UNDEFINED)
 	if got, want := strings.Join(steps, ","), "affects,tattoo,nightbreed,unmount,forget,cry,corpse,extract"; got != want {
 		t.Fatalf("teardown order=%q want %q", got, want)

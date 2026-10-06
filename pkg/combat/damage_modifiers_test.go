@@ -18,12 +18,22 @@ func TestApplyDamageModifiers(t *testing.T) {
 		races map[string]int, hates map[string][]int,
 	) *GameCallbacks {
 		return &GameCallbacks{
-			HasAffect: func(name string, aff int) bool {
+			HasAffect: func(bodyname Combatant, aff int) bool {
+				name := bodyname.GetName()
+
 				return affects[name] != nil && affects[name][aff]
 			},
-			GetAlignment: func(name string) int { return aligns[name] },
-			GetRace:      func(name string) int { return races[name] },
-			GetRaceHate: func(name string, index int) int {
+			GetAlignment: func(bodyname Combatant) int {
+				name := bodyname.GetName()
+				return aligns[name]
+			},
+			GetRace: func(bodyname Combatant) int {
+				name := bodyname.GetName()
+				return races[name]
+			},
+			GetRaceHate: func(bodyname Combatant, index int) int {
+				name := bodyname.GetName()
+
 				h := hates[name]
 				if index < len(h) {
 					return h[index]

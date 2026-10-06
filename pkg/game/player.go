@@ -172,6 +172,7 @@ type Player struct {
 
 	// Group/follow state
 	// Source: act.movement.c (ch->master), structs.h AFF_GROUP flag
+	followingBody     combat.Combatant
 	Following         string // Name of player being followed (ch->master in original)
 	InGroup           bool   // Whether in a group (AFF_GROUP flag in original)
 	followingSequence uint64

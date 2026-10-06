@@ -16,16 +16,18 @@ func wireTripMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, at
 	messages := loadMessagesFile(t)
 	var attMsg, roomOut string
 	c := &combat.GameCallbacks{
-		Broadcast: func(_ int, msg, _ string) { roomOut = msg },
-		SendToChar: func(name, msg string) {
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
 			if name == chName {
 				attMsg = msg
 			}
 		},
-		GetSex:   func(string) int { return 0 },
-		GetHP:    func(string) int { return 10 },
-		GetLevel: func(string) int { return 1 },
-		IsNPC:    func(name string) bool { return false },
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
 	}
 	combat.SetCallbacks(c)
 	combat.InitFightMessages(c, messages)
@@ -143,7 +145,7 @@ func TestDoTrip_MissDrawCountAndOrder(t *testing.T) {
 	if result.SkillMsgType != SkillTripNum {
 		t.Fatalf("miss SkillMsgType = %d, want %d", result.SkillMsgType, SkillTripNum)
 	}
-	handled := cb.SkillMessage(0, ch.Name, mob.GetName(), SkillTripNum, ch.GetRoom())
+	handled := cb.SkillMessage(0, ch, mob, SkillTripNum, ch.GetRoom())
 	if !handled {
 		t.Fatal("SkillMessage(0, ..., 144) did not handle set 144")
 	}
@@ -156,7 +158,7 @@ func TestDoTrip_MissDrawCountAndOrder(t *testing.T) {
 
 	dprng.ResetStream(seed)
 	DoTrip(ch, mob, w)
-	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillTripNum, ch.GetRoom())
+	cb.SkillMessage(0, ch, mob, SkillTripNum, ch.GetRoom())
 	if got := dprng.Number(0, 999); got != wantNext {
 		t.Fatalf("trip miss draw count/order wrong: next=%d want=%d (number(1,121) then dice(1,%d))", got, wantNext, n)
 	}
@@ -177,7 +179,7 @@ func TestDoTrip_MissMessageFromSkillMessages(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		result := DoTrip(ch, mob, w)
 		if !result.Success && result.Damage == 0 && result.SkillMsgType == SkillTripNum {
-			cb.SkillMessage(0, ch.Name, mob.GetName(), SkillTripNum, ch.GetRoom())
+			cb.SkillMessage(0, ch, mob, SkillTripNum, ch.GetRoom())
 			missed = true
 			break
 		}

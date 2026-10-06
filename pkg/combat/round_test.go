@@ -18,68 +18,68 @@ import (
 // no-ops. Tests can override specific fields before calling SetCallbacks.
 func defaultCombatCallbacks() *GameCallbacks {
 	return &GameCallbacks{
-		Broadcast:                func(roomVNum int, msg string, exclude string) {},
-		SendToChar:               func(name string, msg string) {},
-		SkillMessage:             func(dam int, ch, vict string, attackType int, roomVNum int) bool { return false },
-		BroadChat:                func(chName string, msg string) {},
+		Broadcast:                func(roomVNum int, msg string, excludedBodies []Combatant) {},
+		SendToChar:               func(bodyname Combatant, msg string) {},
+		SkillMessage:             func(dam int, bodych Combatant, bodyvict Combatant, attackType int, roomVNum int) bool { return false },
+		BroadChat:                func(bodychName Combatant, msg string) {},
 		Log:                      func(msg string, level string, minLevel int, toLog bool) {},
-		GetRace:                  func(name string) int { return 0 },
-		GetRaceHate:              func(name string, index int) int { return 0 },
-		GetAlignment:             func(name string) int { return 0 },
-		SetAlignment:             func(name string, val int) {},
-		GetSex:                   func(name string) int { return 0 },
-		GetHP:                    func(name string) int { return 1 },
-		GetLevel:                 func(name string) int { return 1 },
-		IsNPC:                    func(name string) bool { return false },
-		GetSkill:                 func(name string, skillNum int) int { return 0 },
-		HasAffect:                func(name string, aff int) bool { return false },
-		HasAffectStr:             func(name string, aff string) bool { return false },
-		RemoveAffect:             func(name string, skillNum int) {},
-		RemoveAllAffects:         func(name string) {},
-		HasPlrFlag:               func(name string, flag string) bool { return false },
-		SetPlrFlag:               func(name string) bool { return false },
-		HasPrfFlag:               func(name string, flag string) bool { return false },
-		HasMobFlag:               func(name string, flag string) bool { return false },
-		HasMobVNum:               func(name string, vnum int) bool { return false },
+		GetRace:                  func(bodyname Combatant) int { return 0 },
+		GetRaceHate:              func(bodyname Combatant, index int) int { return 0 },
+		GetAlignment:             func(bodyname Combatant) int { return 0 },
+		SetAlignment:             func(bodyname Combatant, val int) {},
+		GetSex:                   func(bodyname Combatant) int { return 0 },
+		GetHP:                    func(bodyname Combatant) int { return 1 },
+		GetLevel:                 func(bodyname Combatant) int { return 1 },
+		IsNPC:                    func(bodyname Combatant) bool { return false },
+		GetSkill:                 func(bodyname Combatant, skillNum int) int { return 0 },
+		HasAffect:                func(bodyname Combatant, aff int) bool { return false },
+		HasAffectStr:             func(bodyname Combatant, aff string) bool { return false },
+		RemoveAffect:             func(bodyname Combatant, skillNum int) {},
+		RemoveAllAffects:         func(bodyname Combatant) {},
+		HasPlrFlag:               func(bodyname Combatant, flag string) bool { return false },
+		SetPlrFlag:               func(bodyname Combatant) bool { return false },
+		HasPrfFlag:               func(bodyname Combatant, flag string) bool { return false },
+		HasMobFlag:               func(bodyname Combatant, flag string) bool { return false },
+		HasMobVNum:               func(bodyname Combatant, vnum int) bool { return false },
 		HasRoomFlag:              func(roomVNum int, flag string) bool { return false },
-		HasScriptFlag:            func(name string, flag string) bool { return false },
-		IsShopkeeper:             func(name string) bool { return false },
+		HasScriptFlag:            func(bodyname Combatant, flag string) bool { return false },
+		IsShopkeeper:             func(bodyname Combatant) bool { return false },
 		GetRoomCombatants:        func(roomVNum int) []Combatant { return nil },
-		GetFollowing:             func(name string) string { return "" },
-		JailGuardSubdue:          func(guardName, victimName string) bool { return false },
-		IsMounted:                func(name string) bool { return false },
-		Dismount:                 func(name string) {},
-		Unmount:                  func(name string) {},
-		GetWeaponInfo:            func(chName string) (wType, damDice, damSize int, isBlessed bool) { return 0, 0, 0, false }, // offset 0 = "hit"
+		GetFollowing:             func(bodyname Combatant) Combatant { return nil },
+		JailGuardSubdue:          func(bodyguardName Combatant, bodyvictimName Combatant) bool { return false },
+		IsMounted:                func(bodyname Combatant) bool { return false },
+		Dismount:                 func(bodyname Combatant) {},
+		Unmount:                  func(bodyname Combatant) {},
+		GetWeaponInfo:            func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) { return 0, 0, 0, false }, // offset 0 = "hit"
 		GetAdjacentRoom:          func(roomVNum, door int) int { return -1 },
-		GainExp:                  func(name string, amount int) {},
-		GetExp:                   func(name string) int { return 0 },
-		GetKills:                 func(name string) int64 { return 0 },
-		SetKills:                 func(name string, kills int64) {},
-		GetDeaths:                func(name string) int64 { return 0 },
-		SetDeaths:                func(name string, deaths int64) {},
-		SetLastDeath:             func(name string, t int64) {},
-		GetPks:                   func(name string) int64 { return 0 },
-		SetPks:                   func(name string, pks int64) {},
-		GetConstitution:          func(name string) int { return 0 },
-		SetConstitution:          func(name string, val int) {},
-		MakeCorpse:               func(victim string, attackType int) {},
-		MakeDust:                 func(victim string, attackType int) {},
-		ExtractChar:              func(name string) {},
-		RunDeathScript:           func(killer, victim string, roomVNum int) {},
-		GetFollowersInRoom:       func(name string, roomVNum int) int { return 0 },
-		GetMasterInRoom:          func(name string, roomVNum int) bool { return false },
-		GetFellowFollowersInRoom: func(name string, roomVNum int) bool { return false },
-		CountGroupMembers:        func(leaderName string, roomVNum int) int { return 1 },
-		ApplyToGroupMembers:      func(leaderName string, roomVNum int, fn func(name string)) {},
-		GetGold:                  func(name string) int { return 0 },
-		SetGold:                  func(name string, gold int) {},
-		JunkInventoryItems:       func(chName string) {},
-		PerformCommand:           func(chName, cmd string) {},
-		GetWimpyLev:              func(name string) int { return 0 },
-		DoFlee:                   func(name string) {},
-		DoRetreat:                func(name string) {},
-		IncreaseMaxStat:          func(name string, stat string) {},
+		GainExp:                  func(bodyname Combatant, amount int) {},
+		GetExp:                   func(bodyname Combatant) int { return 0 },
+		GetKills:                 func(bodyname Combatant) int64 { return 0 },
+		SetKills:                 func(bodyname Combatant, kills int64) {},
+		GetDeaths:                func(bodyname Combatant) int64 { return 0 },
+		SetDeaths:                func(bodyname Combatant, deaths int64) {},
+		SetLastDeath:             func(bodyname Combatant, t int64) {},
+		GetPks:                   func(bodyname Combatant) int64 { return 0 },
+		SetPks:                   func(bodyname Combatant, pks int64) {},
+		GetConstitution:          func(bodyname Combatant) int { return 0 },
+		SetConstitution:          func(bodyname Combatant, val int) {},
+		MakeCorpse:               func(bodyvictim Combatant, attackType int) {},
+		MakeDust:                 func(bodyvictim Combatant, attackType int) {},
+		ExtractChar:              func(bodyname Combatant) {},
+		RunDeathScript:           func(bodykiller Combatant, bodyvictim Combatant, roomVNum int) {},
+		GetFollowersInRoom:       func(bodyname Combatant, roomVNum int) int { return 0 },
+		GetMasterInRoom:          func(bodyname Combatant, roomVNum int) bool { return false },
+		GetFellowFollowersInRoom: func(bodyname Combatant, roomVNum int) bool { return false },
+		CountGroupMembers:        func(bodyleaderName Combatant, roomVNum int) int { return 1 },
+		ApplyToGroupMembers:      func(bodyleaderName Combatant, roomVNum int, fn func(name Combatant)) {},
+		GetGold:                  func(bodyname Combatant) int { return 0 },
+		SetGold:                  func(bodyname Combatant, gold int) {},
+		JunkInventoryItems:       func(bodychName Combatant) {},
+		PerformCommand:           func(bodychName Combatant, cmd string) {},
+		GetWimpyLev:              func(bodyname Combatant) int { return 0 },
+		DoFlee:                   func(bodyname Combatant) {},
+		DoRetreat:                func(bodyname Combatant) {},
+		IncreaseMaxStat:          func(bodyname Combatant, stat string) {},
 		HealAllPlayers:           func() {},
 	}
 }
@@ -94,11 +94,13 @@ func TestDamMessage_TierSelection(t *testing.T) {
 	var sendToCalls []string
 
 	cb := defaultCombatCallbacks()
-	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
+	cb.Broadcast = func(roomVNum int, msg string, excludedBodies []Combatant) {
 		broadcastRoom = roomVNum
 		broadcastMsg = msg
 	}
-	cb.SendToChar = func(name string, msg string) {
+	cb.SendToChar = func(bodyname Combatant, msg string) {
+		name := bodyname.GetName()
+
 		sendToCalls = append(sendToCalls, name+":"+msg)
 	}
 	SetCallbacks(cb)
@@ -124,7 +126,7 @@ func TestDamMessage_HighDamageTier(t *testing.T) {
 	var broadcastMessages []string
 
 	cb := defaultCombatCallbacks()
-	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
+	cb.Broadcast = func(roomVNum int, msg string, excludedBodies []Combatant) {
 		broadcastMessages = append(broadcastMessages, msg)
 	}
 	SetCallbacks(cb)
@@ -152,7 +154,7 @@ func TestDamMessage_ZeroDamage(t *testing.T) {
 	var broadcastCalled bool
 
 	cb := defaultCombatCallbacks()
-	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
+	cb.Broadcast = func(roomVNum int, msg string, excludedBodies []Combatant) {
 		broadcastCalled = true
 	}
 	SetCallbacks(cb)
@@ -175,7 +177,7 @@ func TestDeathCry_Basic(t *testing.T) {
 	var broadcastMessages []string
 
 	cb := defaultCombatCallbacks()
-	cb.Broadcast = func(roomVNum int, msg string, exclude string) {
+	cb.Broadcast = func(roomVNum int, msg string, excludedBodies []Combatant) {
 		broadcastMessages = append(broadcastMessages, fmt.Sprintf("room=%d msg=%q", roomVNum, msg))
 	}
 	cb.GetAdjacentRoom = func(roomVNum, door int) int {
@@ -211,7 +213,7 @@ func TestCounterProcs_KillCountTracking(t *testing.T) {
 	var loggedMsg string
 
 	cb := defaultCombatCallbacks()
-	cb.GetKills = func(name string) int64 {
+	cb.GetKills = func(bodyname Combatant) int64 {
 		return 5000 // minor milestone
 	}
 	cb.Log = func(msg string, level string, minLevel int, toLog bool) {
@@ -232,13 +234,13 @@ func TestCounterProcs_MajorMilestone(t *testing.T) {
 	var logged bool
 
 	cb := defaultCombatCallbacks()
-	cb.GetKills = func(name string) int64 {
+	cb.GetKills = func(bodyname Combatant) int64 {
 		return 2000 // major milestone
 	}
 	cb.Log = func(msg string, level string, minLevel int, toLog bool) {
 		logged = true
 	}
-	cb.IncreaseMaxStat = func(name string, stat string) {
+	cb.IncreaseMaxStat = func(bodyname Combatant, stat string) {
 		statCalls = append(statCalls, stat)
 	}
 	SetCallbacks(cb)
@@ -265,17 +267,21 @@ func TestPerformGroupGain_Basic(t *testing.T) {
 	var alignSet bool
 
 	cb := defaultCombatCallbacks()
-	cb.GainExp = func(name string, amount int) {
+	cb.GainExp = func(bodyname Combatant, amount int) {
+		name := bodyname.GetName()
+
 		gainedName = name
 		gainedExp = amount
 	}
-	cb.GetAlignment = func(name string) int {
+	cb.GetAlignment = func(bodyname Combatant) int {
+		name := bodyname.GetName()
+
 		if name == "Orc" {
 			return 900 // good-aligned victim triggers alignment shift
 		}
 		return 0
 	}
-	cb.SetAlignment = func(name string, val int) { alignSet = true }
+	cb.SetAlignment = func(bodyname Combatant, val int) { alignSet = true }
 	SetCallbacks(cb)
 
 	ch := &mockCombatant{name: "Fighter", level: 10, room: 100, npc: false}
@@ -296,9 +302,9 @@ func TestPerformGroupGain_Basic(t *testing.T) {
 
 func TestPerformGroupGain_OneExpPoint(t *testing.T) {
 	cb := defaultCombatCallbacks()
-	cb.GainExp = func(name string, amount int) {}
-	cb.GetAlignment = func(name string) int { return 0 }
-	cb.SetAlignment = func(name string, val int) {}
+	cb.GainExp = func(bodyname Combatant, amount int) {}
+	cb.GetAlignment = func(bodyname Combatant) int { return 0 }
+	cb.SetAlignment = func(bodyname Combatant, val int) {}
 	SetCallbacks(cb)
 
 	ch := &mockCombatant{name: "Fighter", level: 99, room: 100, npc: false}
@@ -507,8 +513,8 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 	defer engine.Stop()
 
 	cb := defaultCombatCallbacks()
-	cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
-		if chName == "Hero" {
+	cb.GetWeaponInfo = func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) {
+		if chName.GetName() == "Hero" {
 			// wType is the 0-based OFFSET (val3), not a TYPE_* constant:
 			// SendWeaponMessage adds TYPE_HIT itself. Slash offset = 3.
 			return 3, 1, 8, false
@@ -518,7 +524,7 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 	SetCallbacks(cb)
 
 	// Wire engine callbacks
-	engine.BroadcastFunc = func(room int, msg string, exclude string) {}
+	engine.BroadcastFunc = func(room int, msg string, excludedBodies []Combatant) {}
 	engine.ScriptFightFunc = nil
 
 	attacker := &mockCombatant{
@@ -581,8 +587,8 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 	defer engine.Stop()
 
 	cb := defaultCombatCallbacks()
-	cb.GetWeaponInfo = func(chName string) (wType, damDice, damSize int, isBlessed bool) {
-		if chName == "Hero" {
+	cb.GetWeaponInfo = func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) {
+		if chName.GetName() == "Hero" {
 			// wType is the 0-based OFFSET (val3), not a TYPE_* constant:
 			// SendWeaponMessage adds TYPE_HIT itself. Slash offset = 3.
 			return 3, 1, 8, false
@@ -592,7 +598,7 @@ func TestProcessCombatPair_PlayerDeath(t *testing.T) {
 	SetCallbacks(cb)
 
 	var deathCalled bool
-	engine.BroadcastFunc = func(room int, msg string, exclude string) {}
+	engine.BroadcastFunc = func(room int, msg string, excludedBodies []Combatant) {}
 	engine.DeathFunc = func(victim, killer Combatant, attackType int) {
 		deathCalled = true
 	}
@@ -689,7 +695,7 @@ func TestHandleDeath_Basic(t *testing.T) {
 	attacker := &mockCombatant{name: "Hero", room: 100, hp: 100}
 	defender := &mockCombatant{name: "Orc", room: 100, hp: 0}
 
-	engine.BroadcastFunc = func(room int, msg string, exclude string) {}
+	engine.BroadcastFunc = func(room int, msg string, excludedBodies []Combatant) {}
 	engine.DeathFunc = func(victim, killer Combatant, attackType int) {
 		deathFuncCalled = true
 	}
@@ -710,7 +716,7 @@ func TestSendHitMessage(t *testing.T) {
 	defer engine.Stop()
 
 	var attackerMsg, defenderMsg, roomMsg string
-	engine.BroadcastFunc = func(room int, msg string, exclude string) {
+	engine.BroadcastFunc = func(room int, msg string, excludedBodies []Combatant) {
 		roomMsg = msg
 	}
 
@@ -779,7 +785,9 @@ func TestChangeAlignment_NPCKiller(t *testing.T) {
 	var alignResult int
 
 	cb := defaultCombatCallbacks()
-	cb.GetAlignment = func(name string) int {
+	cb.GetAlignment = func(bodyname Combatant) int {
+		name := bodyname.GetName()
+
 		if name == "good_victim" {
 			return 900
 		}
@@ -788,7 +796,7 @@ func TestChangeAlignment_NPCKiller(t *testing.T) {
 		}
 		return 0
 	}
-	cb.SetAlignment = func(name string, val int) {
+	cb.SetAlignment = func(bodyname Combatant, val int) {
 		alignResult = val
 	}
 	SetCallbacks(cb)
@@ -806,8 +814,8 @@ func TestChangeAlignment_NPCKillerNPC(t *testing.T) {
 	var alignCalled bool
 
 	cb := defaultCombatCallbacks()
-	cb.GetAlignment = func(name string) int { return 0 }
-	cb.SetAlignment = func(name string, val int) { alignCalled = true }
+	cb.GetAlignment = func(bodyname Combatant) int { return 0 }
+	cb.SetAlignment = func(bodyname Combatant, val int) { alignCalled = true }
 	SetCallbacks(cb)
 
 	killer := &mockCombatant{name: "Orc", npc: true}

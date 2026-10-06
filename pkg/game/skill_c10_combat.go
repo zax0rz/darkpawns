@@ -16,7 +16,7 @@ func DoDisembowel(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillDisembowel) == 0 {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Nah. Hari Kari is for wimps."}
 	}
 	wielded, _ := ch.Equipment.GetItemInSlot(SlotWield)
@@ -87,7 +87,7 @@ func DoDragonKick(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Self-target — act.offensive.c:659-663
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Aren't we funny today...\r\n"}
 	}
 
@@ -275,7 +275,7 @@ func DoSleeper(ch *Player, target combat.Combatant, world *World) SkillResult {
 	if target == nil {
 		return SkillResult{Success: false, MessageToCh: "Sleeper who?"}
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Can't get to sleep fast enough, huh?"}
 	}
 	if !target.IsNPC() && ch.GetFlags()&(1<<uint(PlrOutlaw)) == 0 {
@@ -342,7 +342,7 @@ func DoNeckbreak(ch *Player, target combat.Combatant, world *World) SkillResult 
 	if isShopKeeperInWorld(world, target) {
 		return SkillResult{Success: false, MessageToCh: "Haha.. Don't think so."}
 	}
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Aren't we funny today..."}
 	}
 	if world != nil && world.roomHasFlag(ch.GetRoom(), "peaceful") {

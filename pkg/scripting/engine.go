@@ -1075,6 +1075,11 @@ func (e *Engine) mobToTableLocked(mob ScriptableMob, globalName string) {
 
 	// Store pointer to struct for write-back
 	tbl.RawSetString("struct", lua.LNumber(mob.GetVNum()))
+	// Retain the actual body for combat reads; other legacy bindings keep their
+	// separately owned numeric struct contract until their C1 port.
+	combatBody := L.NewUserData()
+	combatBody.Value = mob
+	tbl.RawSetString("__combat_body", combatBody)
 
 	L.SetGlobal(globalName, tbl)
 }
@@ -1903,26 +1908,25 @@ func (e *Engine) luaIsFighting(L *lua.LState) int {
 		L.Push(lua.LNil)
 		return 1
 	}
-	// Get the mob's vnum from the table to look it up in world
-	L.GetField(mobTbl, "vnum")
-	vnum := int(L.ToNumber(-1))
-	L.Pop(1)
-
-	if e.world != nil && vnum > 0 {
-		// Look up the mob's fighting target via ScriptableWorld
-		// GetMobByVNumAndRoom is approximate — use vnum to find the mob
-		L.GetField(mobTbl, "room")
-		roomVNum := int(L.ToNumber(-1))
-		L.Pop(1)
-
-		mob := e.world.GetMobByVNumAndRoom(vnum, roomVNum)
-		if mob != nil {
-			targetName := mob.GetFighting()
-			if targetName != "" {
-				// Return a minimal table with .name so scripts can do fighting.name
+	tbl := mobTbl.(*lua.LTable)
+	if ref, ok := charRefOf(tbl); ok {
+		if bridge, ok := e.world.(interface{ CombatTargetName(CharRef) (string, bool) }); ok {
+			if name, found := bridge.CombatTargetName(ref); found {
 				tgt := L.NewTable()
-				tgt.RawSetString("name", lua.LString(targetName))
-				tgt.RawSetString("level", lua.LNumber(1)) // Unknown — fighting target level
+				tgt.RawSetString("name", lua.LString(name))
+				tgt.RawSetString("level", lua.LNumber(1))
+				L.Push(tgt)
+				return 1
+			}
+		}
+	}
+
+	if handle, ok := tbl.RawGetString("__combat_body").(*lua.LUserData); ok {
+		if body, ok := handle.Value.(interface{ GetFightingBody() combat.Combatant }); ok {
+			if target := body.GetFightingBody(); target != nil {
+				tgt := L.NewTable()
+				tgt.RawSetString("name", lua.LString(target.GetName()))
+				tgt.RawSetString("level", lua.LNumber(1)) // Preserve the existing unsupported target-table shape.
 				L.Push(tgt)
 				return 1
 			}

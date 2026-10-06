@@ -289,7 +289,7 @@ func (w *World) DoFollow(ch *Player, argument string, quiet bool) {
 			))
 			ch.SetAffect(affDodge, true)
 			Act(nil, false, ch, leader, nil, nil, "You now follow $N.", "", ToChar)
-			ch.SetFollowing(leader.GetName())
+			ch.SetFollowingBody(combatantFromInterface(leader))
 			return
 		}
 		// C's failed quiet roll falls through to add_follower, including its
@@ -300,7 +300,7 @@ func (w *World) DoFollow(ch *Player, argument string, quiet bool) {
 		return
 	}
 
-	ch.SetFollowing(leader.GetName())
+	ch.SetFollowingBody(combatantFromInterface(leader))
 	Act(nil, false, ch, leader, nil, nil, "You now follow $N.", "", ToChar)
 	if canSee(leader, ch) && leader.GetPosition() > combat.PosSleeping {
 		Act(nil, true, ch, leader, nil, nil, "$n starts following you.", "", ToVict)

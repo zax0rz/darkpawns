@@ -57,21 +57,21 @@ func CircleFollow(w *World, ch *Player, victim *Player) bool {
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:463-475
 func AddFollowerQuiet(ch *Player, leader *Player) {
-	ch.SetFollowing(leader.Name)
+	ch.SetFollowingBody(leader)
 }
 
 // AddFollowerQuietMob adds a mob as a follower of a player (charmed pet, etc.)
 // without sending messages.
 // C: src/utils.c:463-475
 func AddFollowerQuietMob(mob *MobInstance, leader *Player) {
-	mob.SetFollowing(leader.Name)
+	mob.SetFollowingBody(leader)
 }
 
 // AddFollowerMob adds a mob as a follower with C's visible follower notices.
 // C add_follower sends TO_VICT and TO_NOTVICT act() messages; its TO_CHAR
 // message targets the NPC itself and is not player-visible.
 func AddFollowerMob(w *World, mob *MobInstance, leader *Player) {
-	mob.SetFollowing(leader.Name)
+	mob.SetFollowingBody(leader)
 	Act(w, true, mob, leader, nil, nil, "$n starts following you.", "", ToVict)
 	Act(w, true, mob, leader, nil, nil, "$n starts to follow $N.", "", ToNotVict)
 }
@@ -80,7 +80,7 @@ func AddFollowerMob(w *World, mob *MobInstance, leader *Player) {
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:480-498
 func AddFollower(w *World, ch *Player, leader *Player) {
-	ch.SetFollowing(leader.Name)
+	ch.SetFollowingBody(leader)
 
 	Act(w, false, ch, leader, nil, nil,
 		"You now follow $N.", "", ToChar)
@@ -104,8 +104,7 @@ func StopFollower(w *World, ch *Player) {
 	}
 
 	// Look up the leader for act messages that need $N.
-	leaderName := ch.GetFollowing()
-	leader := w.followingActor(leaderName)
+	leader := asActor(w.combatFollowingBody(ch))
 
 	// C computes IS_SHADOWING from AFF_DODGE, removes the SKILL_SHADOW
 	// affect/bit before choosing the stop message, and suppresses leader/room
@@ -166,7 +165,7 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 		return
 	}
 
-	leader := w.followingActor(mob.GetFollowing())
+	leader := asActor(w.combatFollowingBody(mob))
 
 	if mob.IsAffected(affCharm) {
 		Act(w, false, mob, leader, nil, nil,
@@ -323,5 +322,23 @@ func removeCharmAffect(ch *Player) {
 			removed = true
 			return
 		}
+	}
+}
+
+// SetFollowingBody retains a command-selected leader, including duplicate NPCs.
+// The string remains the existing social display; combat never resolves an NPC by it.
+func (p *Player) SetFollowingBody(body combat.Combatant) {
+	name := ""
+	if body != nil {
+		name = body.GetName()
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Following = name
+	p.followingBody = body
+	if body == nil {
+		p.followingSequence = 0
+	} else {
+		p.followingSequence = nextFollowerSequence()
 	}
 }

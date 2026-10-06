@@ -69,7 +69,7 @@ func TestProcessCombatPair_MobStandupRoundDrawsFirst(t *testing.T) {
 	attacker.SetFightingBody(defender)
 
 	ce := NewCombatEngine()
-	ce.BroadcastFunc = func(int, string, string) {}
+	ce.BroadcastFunc = func(int, string, []Combatant) {}
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestProcessCombatPair_MobAttacksOnStandupRound(t *testing.T) {
 
 	ce := NewCombatEngine()
 	var broadcasts []string
-	ce.BroadcastFunc = func(_ int, msg, _ string) { broadcasts = append(broadcasts, msg) }
+	ce.BroadcastFunc = func(_ int, msg string, _ []Combatant) { broadcasts = append(broadcasts, msg) }
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestProcessCombatPair_ScrambleCapitalized(t *testing.T) {
 
 	ce := NewCombatEngine()
 	var broadcasts []string
-	ce.BroadcastFunc = func(_ int, msg, _ string) { broadcasts = append(broadcasts, msg) }
+	ce.BroadcastFunc = func(_ int, msg string, _ []Combatant) { broadcasts = append(broadcasts, msg) }
 	if err := ce.StartCombat(attacker, defender); err != nil {
 		t.Fatalf("StartCombat: %v", err)
 	}
@@ -190,7 +190,7 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 
 		ce := NewCombatEngine()
 		var msgs []string
-		ce.BroadcastFunc = func(_ int, msg, _ string) { msgs = append(msgs, msg) }
+		ce.BroadcastFunc = func(_ int, msg string, _ []Combatant) { msgs = append(msgs, msg) }
 		attacker.messages = nil // SendMessage appends here
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
@@ -235,7 +235,7 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		attacker.SetFightingBody(defender)
 
 		ce := NewCombatEngine()
-		ce.BroadcastFunc = func(int, string, string) {}
+		ce.BroadcastFunc = func(int, string, []Combatant) {}
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
@@ -275,7 +275,7 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		attacker.SetFightingBody(defender)
 
 		ce := NewCombatEngine()
-		ce.BroadcastFunc = func(int, string, string) {}
+		ce.BroadcastFunc = func(int, string, []Combatant) {}
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}
@@ -313,7 +313,7 @@ func TestProcessCombatPair_PositionGateAWAKE(t *testing.T) {
 		attacker.SetFightingBody(defender)
 
 		ce := NewCombatEngine()
-		ce.BroadcastFunc = func(int, string, string) {}
+		ce.BroadcastFunc = func(int, string, []Combatant) {}
 		if err := ce.StartCombat(attacker, defender); err != nil {
 			t.Fatalf("StartCombat: %v", err)
 		}

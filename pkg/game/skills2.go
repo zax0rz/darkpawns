@@ -127,7 +127,7 @@ func DoFirstAid(ch *Player, target combat.Combatant) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You have no idea how!\r\n"}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "You wish you could.\r\n"}
 	}
 
@@ -193,7 +193,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 		}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "Just try removing your weapon instead.\r\n"}
 	}
 
@@ -275,7 +275,7 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 // Check target is in room, check skill, drain HP, share mana.
 // ---------------------------------------------------------------------------
 func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{Success: false, MessageToCh: "You wish you could.\r\n"}
 	}
 
@@ -425,7 +425,7 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 		}
 	}
 
-	if target.GetName() == ch.Name {
+	if target == ch {
 		return SkillResult{
 			Success:     false,
 			MessageToCh: "Aren't we funny today...\r\n",

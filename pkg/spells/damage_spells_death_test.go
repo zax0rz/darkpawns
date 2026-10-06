@@ -95,7 +95,7 @@ func (w *spellDeathWorld) HandleDeath(victim, killer combat.Combatant, attackTyp
 // can prove inflictDamage no longer routes through it.
 func (w *spellDeathWorld) HandleSpellDeath(victim interface{}) { w.spellDeathCalls++ }
 
-func (w *spellDeathWorld) WoundBroadcast(roomVNum int, message, exclude string) {
+func (w *spellDeathWorld) WoundBroadcast(roomVNum int, message string, exclude []combat.Combatant) {
 	w.woundMsgs = append(w.woundMsgs, message)
 }
 

@@ -161,8 +161,8 @@ func TestDoSpike_KillsWerewolf(t *testing.T) {
 	orig := combat.GetCallbacks()
 	defer combat.SetCallbacks(orig)
 	combat.SetCallbacks(&combat.GameCallbacks{
-		ExtractChar: func(name string) {},
-		MakeCorpse:  func(name string, attackType int) {},
+		ExtractChar: func(bodyname combat.Combatant) {},
+		MakeCorpse:  func(bodyname combat.Combatant, attackType int) {},
 	})
 
 	result := DoSpike(ch, victim, 0, w)
@@ -192,8 +192,8 @@ func TestDoStake_KillsVampire(t *testing.T) {
 	orig := combat.GetCallbacks()
 	defer combat.SetCallbacks(orig)
 	combat.SetCallbacks(&combat.GameCallbacks{
-		ExtractChar: func(name string) {},
-		MakeCorpse:  func(name string, attackType int) {},
+		ExtractChar: func(bodyname combat.Combatant) {},
+		MakeCorpse:  func(bodyname combat.Combatant, attackType int) {},
 	})
 
 	result := DoSpike(ch, victim, 1, w)
@@ -1734,7 +1734,7 @@ func TestDoDragonKick_MissDrawOrder(t *testing.T) {
 	if result.Success || result.SkillMsgType != SkillDragonKickNum {
 		t.Fatalf("seed %d did not produce the expected dragon-kick miss: %+v", seed, result)
 	}
-	if !cb.SkillMessage(0, ch.Name, mob.GetName(), SkillDragonKickNum, ch.GetRoom()) {
+	if !cb.SkillMessage(0, ch, mob, SkillDragonKickNum, ch.GetRoom()) {
 		t.Fatal("SkillMessage did not handle the Dragon Kick set")
 	}
 
@@ -1745,7 +1745,7 @@ func TestDoDragonKick_MissDrawOrder(t *testing.T) {
 
 	dprng.ResetStream(seed)
 	DoDragonKick(ch, mob)
-	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillDragonKickNum, ch.GetRoom())
+	cb.SkillMessage(0, ch, mob, SkillDragonKickNum, ch.GetRoom())
 	if got := dprng.Number(0, 999); got != wantNext {
 		t.Fatalf("dragon-kick miss draw order wrong: next=%d want=%d; expected percent then set-%d dice", got, wantNext, SkillDragonKickNum)
 	}

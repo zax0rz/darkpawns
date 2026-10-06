@@ -26,7 +26,7 @@ func TestCombatMessageDoesNotCarryStalePulsePrefix(t *testing.T) {
 	m.WireCombatCallbacks()
 	m.SetCombatMessageFunc()
 
-	m.combatEngine.Callbacks.Broadcast(1001, "A combat line.", "")
+	m.combatEngine.Callbacks.Broadcast(1001, "A combat line.", nil)
 	if got, want := readSendText(t, s), "A combat line."; got != want {
 		t.Fatalf("combat message framing = %q, want %q", got, want)
 	}

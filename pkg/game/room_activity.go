@@ -247,7 +247,7 @@ func (w *World) roomActivitySelfDamage(vict combat.Combatant, dam int, attackTyp
 
 	// fight.c:1534-1545 — a spell attacktype is never IS_WEAPON, so C always
 	// takes skill_message here, before the position bytes.
-	combat.EmitSkillMessage(dam, vict.GetName(), vict.GetName(), attackType, vict.GetRoom())
+	combat.EmitSkillMessage(dam, vict, vict, attackType, vict.GetRoom())
 	w.emitMobSkillSurvival(vict, vict, dam, newPos)
 
 	if newPos == combat.PosDead {

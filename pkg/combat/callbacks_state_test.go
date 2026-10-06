@@ -10,26 +10,28 @@ func TestCbGetRace_PrefersCallbacks(t *testing.T) {
 
 	// Callback path.
 	callbacks = &GameCallbacks{
-		GetRace: func(name string) int {
+		GetRace: func(bodyname Combatant) int {
+			name := bodyname.GetName()
+
 			if name == "Alice" {
 				return 7
 			}
 			return 0
 		},
 	}
-	if got := cbGetRace("Alice"); got != 7 {
+	if got := cbGetRace(testCombatBody("Alice")); got != 7 {
 		t.Errorf("cbGetRace(callbacks) = %d, want 7", got)
 	}
 
 	// Default path: callback nil.
 	callbacks = &GameCallbacks{}
-	if got := cbGetRace("Bob"); got != 0 {
+	if got := cbGetRace(testCombatBody("Bob")); got != 0 {
 		t.Errorf("cbGetRace(default) = %d, want 0", got)
 	}
 
 	// Default path: no callbacks instance.
 	callbacks = nil
-	if got := cbGetRace("Carol"); got != 0 {
+	if got := cbGetRace(testCombatBody("Carol")); got != 0 {
 		t.Errorf("cbGetRace(default) = %d, want 0", got)
 	}
 }

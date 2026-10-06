@@ -224,6 +224,7 @@ func (p *Player) SetFollowing(name string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.Following = name
+	p.followingBody = nil
 	if name == "" {
 		p.followingSequence = 0
 	} else {

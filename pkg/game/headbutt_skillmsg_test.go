@@ -16,16 +16,18 @@ func wireHeadbuttMessages(t *testing.T, chName string) (cb *combat.GameCallbacks
 	messages := loadMessagesFile(t)
 	var attMsg, roomOut string
 	c := &combat.GameCallbacks{
-		Broadcast: func(_ int, msg, _ string) { roomOut = msg },
-		SendToChar: func(name, msg string) {
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
 			if name == chName {
 				attMsg = msg
 			}
 		},
-		GetSex:   func(string) int { return 0 },
-		GetHP:    func(string) int { return 10 },
-		GetLevel: func(string) int { return 1 },
-		IsNPC:    func(name string) bool { return false },
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
 	}
 	combat.SetCallbacks(c)
 	combat.InitFightMessages(c, messages)
@@ -171,7 +173,7 @@ func TestDoHeadbutt_MissDrawCountAndOrder(t *testing.T) {
 	if result.Success || result.Damage != 0 {
 		t.Skipf("seed %d did not produce a miss on re-run (non-deterministic?)", missSeed)
 	}
-	handled := cb.SkillMessage(0, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom())
+	handled := cb.SkillMessage(0, ch, mob, SkillHeadbuttNum, ch.GetRoom())
 	if !handled {
 		t.Fatal("SkillMessage(0, ..., 141) did not handle set 141")
 	}
@@ -186,7 +188,7 @@ func TestDoHeadbutt_MissDrawCountAndOrder(t *testing.T) {
 	ch.SetHealth(200)
 	mob.SetPosition(combat.PosFighting)
 	DoHeadbutt(ch, mob, w)
-	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom())
+	cb.SkillMessage(0, ch, mob, SkillHeadbuttNum, ch.GetRoom())
 	if got := dprng.Number(0, 999); got != wantNext {
 		t.Fatalf("headbutt miss draw count/order wrong: next=%d want=%d (number(1,121) then dice(1,%d))", got, wantNext, n)
 	}
@@ -246,7 +248,7 @@ func TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill(t *testing.T) {
 		t.Fatalf("hit DeferredImprove = %v, want [%s %s] (C improves twice)",
 			result.DeferredImprove, SkillHeadbutt, SkillHeadbutt)
 	}
-	cb.SkillMessage(result.Damage, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom())
+	cb.SkillMessage(result.Damage, ch, mob, SkillHeadbuttNum, ch.GetRoom())
 	for _, skill := range result.DeferredImprove {
 		improveSkill(ch, skill)
 	}
@@ -262,7 +264,7 @@ func TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill(t *testing.T) {
 
 	dprng.ResetStream(hitSeed)
 	result = DoHeadbutt(ch, mob, w) // consumes number(1,121) only
-	cb.SkillMessage(result.Damage, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom())
+	cb.SkillMessage(result.Damage, ch, mob, SkillHeadbuttNum, ch.GetRoom())
 	for _, skill := range result.DeferredImprove {
 		improveSkill(ch, skill)
 	}
@@ -290,7 +292,7 @@ func TestDoHeadbutt_MissMessageFromSkillMessages(t *testing.T) {
 		mob.SetPosition(combat.PosFighting)
 		result := DoHeadbutt(ch, mob, w)
 		if !result.Success && result.Damage == 0 && result.SkillMsgType == SkillHeadbuttNum {
-			cb.SkillMessage(0, ch.Name, mob.GetName(), SkillHeadbuttNum, ch.GetRoom())
+			cb.SkillMessage(0, ch, mob, SkillHeadbuttNum, ch.GetRoom())
 			missed = true
 			break
 		}

@@ -132,7 +132,7 @@ func TestDoSlug_SkillMessageDrawOrder(t *testing.T) {
 	if result.Success || result.SkillMsgType != SkillSlugNum {
 		t.Fatalf("seed %d did not produce the expected slug miss: %#v", seed, result)
 	}
-	if !cb.SkillMessage(0, ch.Name, mob.GetName(), SkillSlugNum, ch.GetRoom()) {
+	if !cb.SkillMessage(0, ch, mob, SkillSlugNum, ch.GetRoom()) {
 		t.Fatal("SkillMessage(0, ..., 146) did not handle set 146")
 	}
 	if *attackerMsg != "You miss your swing at a training dummy." {
@@ -149,7 +149,7 @@ func TestDoSlug_SkillMessageDrawOrder(t *testing.T) {
 
 	dprng.ResetStream(seed)
 	DoSlug(ch, mob)
-	cb.SkillMessage(0, ch.Name, mob.GetName(), SkillSlugNum, ch.GetRoom())
+	cb.SkillMessage(0, ch, mob, SkillSlugNum, ch.GetRoom())
 	if got := dprng.Number(0, 999); got != wantNext {
 		t.Fatalf("slug draw order wrong: next=%d want=%d", got, wantNext)
 	}

@@ -67,18 +67,17 @@ func charRefFor(c interface{}) *scripting.CharRef {
 	return nil
 }
 
-// masterRef resolves ch->master by the follow name, nil for none or self.
+// masterRef retains an already selected master; names are display fields only.
 func (a *WorldScriptableAdapter) masterRef(self Actor, following string) *scripting.CharRef {
-	if following == "" || following == self.GetName() {
+	body, ok := self.(combat.Combatant)
+	if !ok {
 		return nil
 	}
-	if p, ok := a.world.GetPlayer(following); ok {
-		return charRefFor(p)
+	master := a.world.combatFollowingBody(body)
+	if master == nil || master == body {
+		return nil
 	}
-	if m := a.world.GetMobByName(following); m != nil {
-		return charRefFor(m)
-	}
-	return nil
+	return charRefFor(master)
 }
 
 // CharFields is char_to_table's view of a character (scripts.c:1823-1891).
@@ -1164,4 +1163,19 @@ func (a *WorldScriptableAdapter) Mount(rider scripting.CharRef, mount *scripting
 			a.world.clearMountedPair(p, m)
 		}
 	}
+}
+
+// CombatTargetName is the existing isfighting table's display projection of
+// the canonical kind/ID body handle. Its incomplete table shape stays on C1.
+func (a *WorldScriptableAdapter) CombatTargetName(ref scripting.CharRef) (string, bool) {
+	actor, _, _ := a.resolveChar(ref)
+	body, ok := actor.(combat.Combatant)
+	if !ok {
+		return "", false
+	}
+	target := body.GetFightingBody()
+	if target == nil {
+		return "", false
+	}
+	return target.GetName(), true
 }

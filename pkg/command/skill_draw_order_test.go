@@ -52,16 +52,18 @@ func newDrawOrderRig(t *testing.T, chName string) *drawOrderRig {
 	}
 	var attMsg string
 	cb := &combat.GameCallbacks{
-		Broadcast: func(_ int, _, _ string) {},
-		SendToChar: func(name, msg string) {
+		Broadcast: func(_ int, _ string, _ []combat.Combatant) {},
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
 			if name == chName {
 				attMsg = msg
 			}
 		},
-		GetSex:   func(string) int { return 0 },
-		GetHP:    func(string) int { return 100 }, // > -11 → never the Die action
-		GetLevel: func(string) int { return 1 },   // < LVL_IMMORT → never the God action
-		IsNPC:    func(string) bool { return false },
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 100 }, // > -11 → never the Die action
+		GetLevel: func(combat.Combatant) int { return 1 },   // < LVL_IMMORT → never the God action
+		IsNPC:    func(combat.Combatant) bool { return false },
 	}
 	combat.InitFightMessages(cb, messages)
 	engine := combat.NewCombatEngine()
@@ -136,7 +138,7 @@ func assertPipelineDrawOrder(t *testing.T, rig *drawOrderRig, sess *killPayoutSe
 		dprng.ResetStream(s)
 		rollReplay()
 		*rig.attMsg = ""
-		rig.engine.SkillMessage(res.Damage, p.Name, mob.GetName(), msgType, p.GetRoom())
+		rig.engine.SkillMessage(res.Damage, p, mob, msgType, p.GetRoom())
 		cMsg := *rig.attMsg
 		for i := 0; i < numImproves; i++ {
 			game.ImproveSkill(refCh, skillName)
@@ -153,7 +155,7 @@ func assertPipelineDrawOrder(t *testing.T, rig *drawOrderRig, sess *killPayoutSe
 		}
 		bGain := refChB.GetSkill(skillName) - 50
 		*rig.attMsg = ""
-		rig.engine.SkillMessage(res.Damage, p.Name, mob.GetName(), msgType, p.GetRoom())
+		rig.engine.SkillMessage(res.Damage, p, mob, msgType, p.GetRoom())
 		bMsg := *rig.attMsg
 
 		if cMsg == bMsg && cGain == bGain {

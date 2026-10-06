@@ -146,7 +146,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 	killerRoom := killer.GetRoom()
 
 	// Look up the killer as a Player for preference flags
-	kp, isPlayer := w.GetPlayer(killerName)
+	kp, isPlayer := combatPlayer(killer)
 
 	awardGroupGold := func() {
 		// --- Gold handling (fight.c group_gain() lines 747+) ---
@@ -162,7 +162,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 					goldLooted, killerName))
 
 				// Get group members in the room
-				members := w.GetGroupMembers(killerName)
+				members := w.combatGroupMembers(killer)
 				var inRoom []*Player
 				for _, m := range members {
 					if m.GetRoom() == killerRoom {
@@ -228,11 +228,11 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 	}
 
 	// --- Experience handling ---
-	members := w.GetGroupMembers(killerName)
+	members := w.combatGroupMembers(killer)
 
 	// Solo kill (not in any group) — fight.c group_gain() totMembers==1 path
 	if len(members) == 0 {
-		p, ok := w.GetPlayer(killerName)
+		p, ok := combatPlayer(killer)
 		if !ok {
 			return
 		}

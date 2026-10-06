@@ -46,7 +46,7 @@ func (w *World) mobSkillDamageAfterGate(ch *MobInstance, vict combat.Combatant, 
 	// C's damage() emits skill_message before the wounded/death follow-up
 	// (fight.c:1534-1545, 1560-1613). Keep that ordering even for a
 	// protection-reduced zero-damage result.
-	combat.EmitSkillMessage(dam, ch.GetName(), vict.GetName(), skillNum, ch.GetRoom())
+	combat.EmitSkillMessage(dam, ch, vict, skillNum, ch.GetRoom())
 	w.emitMobSkillSurvival(ch, vict, dam, newPos)
 	if newPos == combat.PosDead {
 		w.HandleDeath(vict, ch, skillNum)

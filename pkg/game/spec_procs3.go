@@ -41,22 +41,6 @@ func castClericSpell(w *World, me *MobInstance, target interface{}, spellNum int
 // game roller in production while letting the branch tests pin C's draw order.
 var clericNumber = dprng.Number
 
-// findTargetInRoom finds a mob or player by name in a room. Returns the target
-// as an interface{} suitable for passing to spells.Cast (which accepts interface{}).
-func findTargetInRoom(w *World, roomVNum int, name string) interface{} {
-	for _, m := range w.GetMobsInRoom(roomVNum) {
-		if m.GetName() == name {
-			return m
-		}
-	}
-	for _, p := range w.GetPlayersInRoom(roomVNum) {
-		if p.GetName() == name {
-			return p
-		}
-	}
-	return nil
-}
-
 func init() {
 	RegisterSpec("clerk", specClerk)
 	RegisterSpec("butler", specButler)
@@ -147,13 +131,9 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 
 	// Find a dude to do evil things upon
-	victName := me.GetFighting()
-	if victName == "" {
-		return specSummoner(w, ch, me, "", "")
-	}
-	vict := findTargetInRoom(w, me.GetRoomVNum(), victName)
+	vict := me.GetFightingBody()
 	if vict == nil {
-		return false
+		return specSummoner(w, ch, me, "", "")
 	}
 
 	// lspell = number(0, GET_LEVEL(ch)) + GET_LEVEL(ch)/5, capped at GET_LEVEL, min 1
@@ -173,7 +153,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		casterAlign := me.GetAlignment()
 		// Check mobs in room for target
 		for _, m := range w.GetMobsInRoom(me.GetRoomVNum()) {
-			if m.GetName() == victName {
+			if m == vict {
 				if (casterAlign <= -350 && m.GetAlignment() <= -350) ||
 					(casterAlign >= 350 && m.GetAlignment() >= 350) {
 					lspell = 4
@@ -183,7 +163,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		}
 		// Also check players in room for target
 		for _, p := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-			if p.GetName() == victName {
+			if p == vict {
 				if (casterAlign <= -350 && p.IsEvil()) ||
 					(casterAlign >= 350 && p.IsGood()) {
 					lspell = 4

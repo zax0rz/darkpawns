@@ -9,17 +9,26 @@ import (
 func mockCallbacks() (*GameCallbacks, *callbackLog) {
 	log := &callbackLog{}
 	cb := &GameCallbacks{
-		Broadcast: func(roomVNum int, msg string, exclude string) {
+		Broadcast: func(roomVNum int, msg string, excludedBodies []Combatant) {
+			exclude := testBodyNames(excludedBodies)
+
 			log.broadcasts = append(log.broadcasts, callbackCall{room: roomVNum, msg: msg, exclude: exclude})
 		},
-		SendToChar: func(name string, msg string) {
+		SendToChar: func(bodyname Combatant, msg string) {
+			name := bodyname.GetName()
+
 			log.sendToChar = append(log.sendToChar, callbackCall{target: name, msg: msg})
 		},
-		SkillMessage: func(dam int, ch, vict string, attackType int, roomVNum int) bool {
+		SkillMessage: func(dam int, bodych Combatant, bodyvict Combatant, attackType int, roomVNum int) bool {
+			ch := bodych.GetName()
+			vict := bodyvict.GetName()
+
 			log.skillMessages = append(log.skillMessages, skillCall{dam: dam, ch: ch, vict: vict, attackType: attackType, room: roomVNum})
 			return false
 		},
-		BroadChat: func(chName string, msg string) {
+		BroadChat: func(bodychName Combatant, msg string) {
+			chName := bodychName.GetName()
+
 			log.broadChats = append(log.broadChats, callbackCall{target: chName, msg: msg})
 		},
 		Log: func(msg string, level string, minLevel int, toLog bool) {
@@ -102,7 +111,7 @@ func TestGameCallbacks_InitSkillMessages(t *testing.T) {
 	}
 
 	// Use a known skill from the table (BACKSTAB = 131).
-	sent := cb.SkillMessage(50, "Alice", "Bob", 131, 200)
+	sent := cb.SkillMessage(50, testCombatBody("Alice"), testCombatBody("Bob"), 131, 200)
 	if !sent {
 		t.Fatal("expected SkillMessage to return true for a known skill")
 	}
@@ -129,7 +138,7 @@ func TestGameCallbacks_LogAndBroadChatHelpers(t *testing.T) {
 	defer SetCallbacks(origCallbacks)
 
 	cbLog("test log", "BRF", LVL_IMMORT, true)
-	cbBroadChat("Alice", "brag message")
+	cbBroadChat(testCombatBody("Alice"), "brag message")
 
 	if len(log.logs) != 1 {
 		t.Fatalf("expected 1 log call, got %d", len(log.logs))
