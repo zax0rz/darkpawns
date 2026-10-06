@@ -175,8 +175,9 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 		w.Mode &^= bitMask
 		return message
 	}
+	message := ackLog(fmt.Sprintf("%s will now be shown on WHOD.\n\r", WhodModeNames[bit]), fmt.Sprintf("%s added to WHOD by %s.", WhodModeNames[bit], playerName))
 	w.Mode |= bitMask
-	return fmt.Sprintf("%s will now be shown on WHOD.\n\r", WhodModeNames[bit])
+	return message
 }
 
 // activeModesString returns a space-separated list of currently active mode names.
