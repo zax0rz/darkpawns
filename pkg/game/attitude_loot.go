@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 
@@ -60,6 +61,9 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 				w.performMobileWear(killer, item, where)
 			}
 		}
+	}
+	if !victim.IsNPC() {
+		MudLog(fmt.Sprintf("(LOOT) %s attitude looted %s.", killer.GetName(), victim.GetName()), MudlogComplete, LVL_IMMORT, true)
 	}
 }
 

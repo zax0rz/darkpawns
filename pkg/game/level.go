@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -476,7 +477,7 @@ func (p *Player) AdvanceLevel() {
 		p.worldRef.SavePlayerRecord(p, "advance level", LoadRoomNowhere, SaveCharOnly)
 	}
 
-	slog.Info("advanced to level", "name", name, "level", level)
+	MudLog(fmt.Sprintf("%s advanced to level %d", name, level), MudlogBrief, max(LVL_IMMORT, p.GetInvisLevel()), true)
 
 	// Publish level-up event to the event bus
 	if p.worldRef != nil {

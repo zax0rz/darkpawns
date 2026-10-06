@@ -404,6 +404,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		horse, err := w.spawnMobQuiet(ch.MountVNum, ch.GetRoom())
 		if err != nil {
 			tellFromMob(me, ch, "Sorry, we are unable to gather your mount, try back later.")
+			MudLog("Mount not loaded in stable", MudlogBrief, LVL_GRGOD, true)
 			return true
 		}
 		ch.MountVNum = 0
@@ -724,6 +725,7 @@ func remortPlayer(ch *Player) {
 	// C advance_level() raises maxima but does not heal the current pools;
 	// the remorter set them immediately before this call.
 	ch.AffectTotal() // src/spec_procs2.c:942
+	MudLog("Due to remorting:", MudlogBrief, LVL_IMMORT, true)
 	ch.AdvanceLevel()
 }
 
@@ -957,7 +959,7 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 		if player, ok := assassin.(*Player); ok {
 			sendToChar(player, "GET THE HELL OUT OF THAT ROOM, NOW !!!")
-			slog.Info("player found in assassin store room", "player", player.GetName())
+			MudLog(fmt.Sprintf("%s is in the assassin store room.", player.GetName()), MudlogBrief, LVL_IMMORT, true)
 			sendToChar(ch, "You can't hire players.")
 			return true
 		}
@@ -996,6 +998,7 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		hired.SetHunting(victim.GetName())
 		sendToChar(ch, "We cannot contact you if the job succeeds or not...security, you know.")
 		Act(w, false, ch, hired, nil, nil, "$n hires $N for a job.", "", ToRoom)
+		MudLog(fmt.Sprintf("%s hires %s to kill %s.\r\n", ch.GetName(), hired.GetName(), victim.GetName()), MudlogBrief, LVL_IMMORT, true)
 		return true
 	default:
 		return false
@@ -1672,6 +1675,7 @@ func specMedusa(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// SPECIAL(medusa) explicitly accounts the death and applies a level-cubed
 	// loss before raw_kill(); this is not die_with_killer()'s combat penalty.
+	MudLog(fmt.Sprintf("%s killed by Medusa special at %s", ch.GetName(), w.GetRoomInWorld(ch.GetRoom()).Name), MudlogBrief, LVL_IMMORT, true)
 	ch.Deaths++
 	level := ch.GetLevel()
 	w.GainExp(ch, -(level * level * level))
