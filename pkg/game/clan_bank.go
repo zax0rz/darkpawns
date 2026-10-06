@@ -74,6 +74,7 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 		}
 		c.Treasure += int64(amount)
 		ch.SendMessage("You add to the clan's treasure.\r\n")
+		MudLog(fmt.Sprintf("%s adds %d coins to %s clan account.", ch.GetName(), amount, hshr(ch)), MudlogBrief, LVL_IMMORT, true)
 	}
 
 	// C saves the banker after the subcmd block (clan.c:983).
