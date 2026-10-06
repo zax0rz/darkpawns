@@ -47,7 +47,7 @@ func TestForceShutdownNotificationAct(t *testing.T) {
 			if asleep && strings.Contains(got, "has forced you") {
 				t.Fatalf("sleeping shutdown notice: %q", got)
 			}
-			if !asleep && !strings.Contains(got, "Someone has forced you to 'all save'.\r\n") {
+			if !asleep && !strings.Contains(got, "Someone has forced you to 'save'.\r\n") {
 				t.Fatalf("shutdown notice: %q", got)
 			}
 		})
