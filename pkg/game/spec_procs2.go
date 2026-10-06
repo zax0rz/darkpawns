@@ -998,6 +998,7 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		hired.SetHunting(victim.GetName())
 		sendToChar(ch, "We cannot contact you if the job succeeds or not...security, you know.")
 		Act(w, false, ch, hired, nil, nil, "$n hires $N for a job.", "", ToRoom)
+		MudLog(fmt.Sprintf("%s hires %s to kill %s.\r\n", ch.GetName(), hired.GetName(), victim.GetName()), MudlogBrief, LVL_IMMORT, true)
 		return true
 	default:
 		return false
