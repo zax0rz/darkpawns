@@ -1,0 +1,124 @@
+# depth-case: mudlog.olc-memory-redit
+# depth-case: mudlog.olc-memory-zedit
+# depth-case: mudlog.olc-memory-oedit
+# depth-case: mudlog.olc-memory-medit
+# depth-case: mudlog.olc-memory-sedit
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Mudwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mudwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Mudwizard
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Mudwizard
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Mudvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Mudvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog complete
+advance Mudwizard 38
+
+[probe:actor]
+redit 3100
+1
+Memory room
+q
+y
+zedit 3100
+z
+Memory zone
+q
+y
+oedit 3100
+1
+memory object
+q
+y
+medit 3100
+2
+memory mob
+q
+y
+sedit 3100
+7
+memory shop
+q
+y
