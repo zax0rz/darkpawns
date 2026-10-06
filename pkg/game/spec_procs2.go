@@ -404,6 +404,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		horse, err := w.spawnMobQuiet(ch.MountVNum, ch.GetRoom())
 		if err != nil {
 			tellFromMob(me, ch, "Sorry, we are unable to gather your mount, try back later.")
+			MudLog("Mount not loaded in stable", MudlogBrief, LVL_GRGOD, true)
 			return true
 		}
 		ch.MountVNum = 0
