@@ -201,6 +201,8 @@ func (s *Session) finishZeditLocked(save bool) {
 			markOLCDirty(olcKindZone, state.zoneNumber)
 		}
 		saveMu.Unlock()
+		s.flushZeditOutputLocked()
+		game.MudLog(fmt.Sprintf("OLC: %s edits zone info for room %d", s.player.GetName(), state.roomVNum), game.MudlogComplete, LVL_IMMORT, true)
 	}
 	s.flushZeditOutputLocked()
 	s.setPlayerWritingLocked(false)
