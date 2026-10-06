@@ -24,5 +24,7 @@ func zeditLogNewZoneOpenFailure(err error) {
 		game.MudLog("SYSERR: OLC: Can't write new mob file", game.MudlogBrief, game.LVL_IMPL, true)
 	case ".obj":
 		game.MudLog("SYSERR: OLC: Can't write new obj file", game.MudlogBrief, game.LVL_IMPL, true)
+	case ".shp":
+		game.MudLog("SYSERR: OLC: Can't write new shop file", game.MudlogBrief, game.LVL_IMPL, true)
 	}
 }
