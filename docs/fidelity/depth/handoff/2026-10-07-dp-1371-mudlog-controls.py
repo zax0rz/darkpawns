@@ -3,7 +3,7 @@
 import json, os, pathlib, subprocess, sys, tempfile
 root = pathlib.Path(sys.argv[1]).expanduser()
 root.mkdir(parents=True, exist_ok=True)
-files = ['pkg/game/other_settings.go', 'pkg/session/commands.go', 'pkg/session/cmd_misc.go', 'pkg/session/redit.go', 'pkg/game/world_redit.go']
+files = ['pkg/game/other_settings.go', 'pkg/session/commands.go', 'pkg/session/cmd_misc.go', 'pkg/session/redit.go', 'pkg/game/world_redit.go', 'pkg/session/olc_control_reachability_test.go']
 original = {name:pathlib.Path(name).read_text() for name in files}
 producer = 'MudLog(fmt.Sprintf("%s %s: %s", ch.GetName(), cmd, arg), MudlogComplete, LVL_IMMORT, false)'
 raw = '''\tif (cmd == "bug" || cmd == "typo" || cmd == "idea" || cmd == "todo") && rawArgs != "" {
@@ -25,7 +25,8 @@ controls += [
  ('room-loop-omission','pkg/game/world_redit.go','case "M", "O", "D", "R", "G", "P", "E", "*":','case "M", "O", "D", "R", "G", "P", "E", "*", "L":','TestReditInsertionMudlogBoundary'),
  ('room-replacement-gate','pkg/game/world_redit.go','if existed {','if false && existed {','TestReditInsertionMudlogBoundary'),
 ]
-cmd=['go','test','-p','2','./pkg/session','-run','^Test(ReportMudlog.*|ReditInsertionMudlogBoundary)$','-count=1']
+controls += [('parse-action-audit','pkg/session/olc_control_reachability_test.go','if !covered[argument] {','if false && !covered[argument] {','TestCImprovedEditorDefaultUnreachable')]
+cmd=['go','test','-p','2','./pkg/session','-run','^Test(ReportMudlog.*|ReditInsertionMudlogBoundary|CImprovedEditorDefaultUnreachable)$','-count=1']
 def run(path, overlay=None):
  args=cmd[:2]+(['-overlay='+str(overlay)] if overlay else [])+cmd[2:]
  result=subprocess.run(args, env=dict(os.environ,GOMAXPROCS='2'),text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
