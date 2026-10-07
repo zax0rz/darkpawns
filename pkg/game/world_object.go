@@ -4,19 +4,22 @@ import (
 	"strings"
 )
 
+// GetItemsInRoom returns a snapshot copy: callers previously iterated the
+// live slice while writers mutated it under w.mu — a fatal concurrent map
+// read (VULN-019) and a torn iteration (VULN-055).
 func (w *World) GetItemsInRoom(roomVNum int) []*ObjectInstance {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	return w.roomItems[roomVNum]
+	return append([]*ObjectInstance(nil), w.roomItems[roomVNum]...)
 }
 
 // GetItemsInRoomI returns room items as []interface{} for spell layer access.
 func (w *World) GetItemsInRoomI(roomVNum int) []interface{} {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	items := w.roomItems[roomVNum]
-	result := make([]interface{}, len(items))
-	for i, item := range items {
+	snapshot := append([]*ObjectInstance(nil), w.roomItems[roomVNum]...)
+	result := make([]interface{}, len(snapshot))
+	for i, item := range snapshot {
 		result[i] = item
 	}
 	return result

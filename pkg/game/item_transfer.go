@@ -155,7 +155,7 @@ func (w *World) getFromRoom(ch *Player, arg string) {
 		return
 	}
 	dotmode := findAllDots(arg)
-	items := append([]*ObjectInstance(nil), w.roomItems[ch.GetRoom()]...)
+	items := w.GetItemsInRoom(ch.GetRoom()) // snapshot copy under w.mu (VULN-019)
 	if dotmode == findIndiv {
 		for _, obj := range items {
 			if isnameWithAbbrevs(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
@@ -232,7 +232,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		}
 		found := false
 		containers := append([]*ObjectInstance(nil), ch.Inventory.Items...)
-		containers = append(containers, w.roomItems[ch.GetRoom()]...)
+		containers = append(containers, w.GetItemsInRoom(ch.GetRoom())...) // snapshot (VULN-019)
 		for _, cont := range containers {
 			if !canSeeObject(ch, cont) || (contDotmode == findAlldot && !isnameWithAbbrevs(keyword, cont.GetKeywords())) {
 				continue
@@ -273,7 +273,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if cont == nil {
 		room := w.GetRoomInWorld(ch.GetRoomVNum())
 		if room != nil {
-			for _, obj := range w.roomItems[ch.GetRoom()] {
+			for _, obj := range w.GetItemsInRoom(ch.GetRoom()) { // snapshot (VULN-019)
 				if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 					cont = obj
 					break
@@ -320,7 +320,7 @@ func (w *World) performDropGold(ch *Player, amount int) {
 		ch.SendMessage("Heh heh heh.. we are jolly funny today, eh?\r\n")
 		return
 	}
-	if ch.GetGold() < amount {
+	if !ch.SpendGold(amount) {
 		ch.SendMessage("You don't have that many coins!\r\n")
 		return
 	}
@@ -329,11 +329,11 @@ func (w *World) performDropGold(ch *Player, amount int) {
 	// C perform_drop_gold's drop arm is obj_to_room (act.item.c:461).
 	if err := w.MoveObjectToRoomFront(money, ch.GetRoomVNum()); err != nil {
 		slog.Error("drop gold failed", "player", ch.Name, "amount", amount, "error", err)
+		ch.AddGold(amount) // the deduction must not survive a failed drop
 		ch.SendMessage("You can't drop that right now.\r\n")
 		return
 	}
 	ch.SetWaitState(1)
-	ch.SetGold(ch.GetGold() - amount)
 	ch.SendMessage("You drop some gold.\r\n")
 	w.actToRoom(ch, fmt.Sprintf("$n drops %s.", createMoneyDesc(amount)), nil, nil)
 }
@@ -502,24 +502,22 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 		return
 	}
 
-	// The gold accessors (GetGold/SetGold/GetLevel) take the player mutex
-	// themselves, so this function must NOT hold it — an earlier manual
-	// lock-ordering guard deadlocked every gold give against those accessors.
-	if ch.GetGold() < amount && ch.GetLevel() < lvlGod {
-		ch.SendMessage("You don't have that many coins!\r\n")
-		return
+	// Transfer atomically (SpendGold/AddGold), then report: concurrent gives
+	// against one balance were a double-spend (VULN-020), and the historical
+	// dual-lock attempt deadlocked against the locking accessors.
+	if ch.GetLevel() < lvlGod {
+		if !ch.SpendGold(amount) {
+			ch.SendMessage("You don't have that many coins!\r\n")
+			return
+		}
 	}
+	vict.AddGold(amount)
 
 	ch.SendMessage("Okay.\r\n")
 	// C sprintf()s the amount/money_desc into the string before act(); the act
 	// helpers only substitute $n/$N, so pre-format here.
 	actToVictim(ch, vict, fmt.Sprintf("$n gives you %d gold coins.", amount), nil, nil)
 	w.actToRoomExclude(ch, vict, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), nil, vict)
-
-	if ch.GetLevel() < lvlGod {
-		ch.SetGold(ch.GetGold() - amount)
-	}
-	vict.SetGold(vict.GetGold() + amount)
 }
 
 // doGive handles the give command

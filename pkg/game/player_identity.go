@@ -59,6 +59,27 @@ func (p *Player) SetGold(gold int) {
 	p.Gold = gold
 }
 
+// SpendGold atomically checks and deducts gold. Concurrent transfers were a
+// double-spend: two check-then-deduct interleavings both passed GetGold()
+// (VULN-020). Follows the raw-field-under-p.mu convention (DP-347, mail.go's
+// stamp path) — the locking accessors must never be nested under p.mu.
+func (p *Player) SpendGold(amount int) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if amount > 0 && p.Gold < amount {
+		return false
+	}
+	p.Gold -= amount
+	return true
+}
+
+// AddGold atomically credits gold.
+func (p *Player) AddGold(amount int) {
+	p.mu.Lock()
+	p.Gold += amount
+	p.mu.Unlock()
+}
+
 // GetBankGold returns the player's banked gold (GET_BANK_GOLD in the C source).
 func (p *Player) GetBankGold() int {
 	p.mu.RLock()
