@@ -150,6 +150,9 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 		return true
 	}
 
+	// act.other.c:1119-1120: CMP, no invis term, broadcast only, before fopen.
+	MudLog(fmt.Sprintf("%s %s: %s", ch.GetName(), cmd, arg), MudlogComplete, LVL_IMMORT, false)
+
 	if err := os.MkdirAll("misc", 0o755); err != nil {
 		slog.Error("failed to create report directory", "type", cmd, "error", err)
 		ch.SendMessage("Could not open the file.  Sorry.\r\n")

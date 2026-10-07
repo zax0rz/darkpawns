@@ -126,27 +126,30 @@ func cmdAuto(s *Session, args []string) error {
 	return nil
 }
 
+// Report dispatch mirrors process_input dollar escaping (comm.c:1975-1977)
+// before do_gen_write undoubles it (act.other.c:1111). Direct handler callers
+// still use its C argument contract.
 // cmdBug reports a bug.
 func cmdBug(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "bug", strings.Join(args, " "))
+	s.manager.world.ExecGenWrite(s.player, "bug", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
 // cmdTypo reports a typo.
 func cmdTypo(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "typo", strings.Join(args, " "))
+	s.manager.world.ExecGenWrite(s.player, "typo", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
 // cmdIdea submits an idea.
 func cmdIdea(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "idea", strings.Join(args, " "))
+	s.manager.world.ExecGenWrite(s.player, "idea", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
 // cmdTodo submits a todo suggestion.
 func cmdTodo(s *Session, args []string) error {
-	s.manager.world.ExecGenWrite(s.player, "todo", strings.Join(args, " "))
+	s.manager.world.ExecGenWrite(s.player, "todo", strings.ReplaceAll(strings.Join(args, " "), "$", "$$"))
 	return nil
 }
 
