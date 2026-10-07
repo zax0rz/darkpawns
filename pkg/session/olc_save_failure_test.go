@@ -132,3 +132,35 @@ func TestOLCSaveAllBoundedFailure(t *testing.T) {
 		})
 	}
 }
+
+// The retry divergence covers a failed writer, but does not pretend that a
+// later atomic rename error is C's fopen error. Existing diagnostic boundaries
+// remain narrow (R5f), and later dirty entries remain untouched in either case.
+func TestOLCSaveAllAtomicFailure(t *testing.T) {
+	w, m, s := olcSaveAllFixture(t)
+	watch := makeCommandTestSession(t, m, "Atomicwatch", 40, 3001)
+	watch.player.SetPlrFlag(game.PrfLog1, true)
+	watch.player.SetPlrFlag(game.PrfLog2, true)
+	registerTestSession(t, m, watch, watch.player.Name)
+	olcSaveList.Mark(olc.KindObject, 30)
+	olcSaveList.Mark(olc.KindRoom, 30)
+	if err := os.Mkdir(filepath.Join(w.WorldPath, "wld", "30.wld"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	file := captureMudlogFile(t)
+	if err := ExecuteCommand(s, "olc", []string{"save"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(drainSessionText(t, s), ""); got != "Rooms saved for zone 30.\r\n" {
+		t.Fatalf("atomic failure output = %q", got)
+	}
+	if file.Len() != 0 || len(watch.send) != 0 {
+		t.Fatal("atomic rename failure invented C open diagnostic or success")
+	}
+	if len(olcSaveList.Ordered()) != 2 || !olcSaveList.Dirty(olc.KindRoom, 30) {
+		t.Fatal("atomic failure lost markers")
+	}
+	if _, err := os.Stat(filepath.Join(w.WorldPath, "obj", "30.obj")); !os.IsNotExist(err) {
+		t.Fatal("atomic failure saved a later entry")
+	}
+}

@@ -6,9 +6,8 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/parser"
-
 	"github.com/zax0rz/darkpawns/pkg/olc"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // cmdOlc is do_olc's SCMD_OLC_SAVEINFO route (src/interpreter.c:590;
@@ -127,7 +126,7 @@ func logOLCSaveAllFailure(world *game.World, entry olc.DirtyEntry, err error) {
 		extension, payload = "wld", "SYSERR: OLC: Cannot open room file!"
 	case olc.KindObject: // src/oedit.c:347-350
 		extension, payload = "obj", "SYSERR: OLC: Cannot open objects file!"
-	case olc.KindZone: // src/zedit.c:368-372
+	case olc.KindZone: // src/zedit.c:366-370
 		extension, payload = "zon", fmt.Sprintf("SYSERR: OLC: zedit_save_to_disk:  Can't write zone %d.", entry.Zone)
 	case olc.KindMob: // src/medit.c:349-352
 		extension, payload = "mob", "SYSERR: OLC: Cannot open mob file!"

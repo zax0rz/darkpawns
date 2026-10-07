@@ -54,6 +54,21 @@ func TestOLCDispatchAndSaveInfo(t *testing.T) {
 	if len(olcSaveList.Ordered()) != 5 || file.Len() != 0 {
 		t.Fatal("save-info wrote or logged")
 	}
+	// POS_DEAD is an actual dispatch gate, not merely registration metadata.
+	s.player.SetPosition(combat.PosDead)
+	if err := ExecuteCommand(s, "olc", nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(drainSessionText(t, s), ""); got != want {
+		t.Fatalf("dead-position info = %q", got)
+	}
+	mortal := makeCommandTestSession(t, m, "Savenotbuilder", 30, 3000)
+	if err := ExecuteCommand(mortal, "olc", nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(drainSessionText(t, mortal), ""); got != "Huh?!?\r\n" {
+		t.Fatalf("below-builder gate = %q", got)
+	}
 	// do_olc returns before parsing for an NPC, including a switched descriptor.
 	s.isSwitched = true
 	s.switchedMob = &game.MobInstance{}
