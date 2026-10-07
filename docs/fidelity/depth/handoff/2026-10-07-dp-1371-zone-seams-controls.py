@@ -12,6 +12,7 @@ controls += [
  ('zone-open-order','pkg/session/zone_save.go','tmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-*")','data := render()\n\ttmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-*")','TestZeditUnknownCommandMudlogBoundary'),
 ]
 controls += [('argument-display1','pkg/session/zedit_argument_reachability_test.go','if !seen[string(command)] {','if false && !seen[string(command)] {','TestCZeditArg1DisplayDefaultUnreachable')]
+controls += [('argument-display2','pkg/session/zedit_argument_reachability_test.go','if !seen[string(command)] {','if false && !seen[string(command)] {','TestCZeditArg2DisplayDefaultUnreachable')]
 for name,file,before,after,test in controls:
  if a.case and a.case!=name:continue
  source=pathlib.Path(file).read_text();assert source.count(before)==1,(name,source.count(before))
