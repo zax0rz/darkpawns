@@ -414,7 +414,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 				if obj.GetTimer() == 0 {
 					if fo.WornOffObjNum > 0 {
 						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
-							spawned := NewObjectInstance(proto, roomVNum)
+							spawned := w.NewObjectFromProto(proto, roomVNum)
 							spawned.SetTimer(2)
 							// C's field wear-off spawn is obj_to_room (limits.c:674).
 							if err := w.MoveObjectToRoomFront(spawned, roomVNum); err != nil {

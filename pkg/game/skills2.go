@@ -85,7 +85,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 		if !ok {
 			return SkillResult{MessageToRoom: roomMessage}
 		}
-		obj := NewObjectInstance(proto, ch.GetRoom())
+		obj := world.NewObjectFromProto(proto, ch.GetRoom())
 		if obj == nil {
 			return SkillResult{MessageToRoom: roomMessage}
 		}

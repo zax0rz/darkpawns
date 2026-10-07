@@ -82,6 +82,13 @@ func (w *World) houseLoad(vnum int) bool {
 			}
 			return nil, false
 		})
+		// Register with the world (C read_object links every object into
+		// object_list): house objects must carry registry identities like any
+		// other live object. Done post-construction because ObjFromStore is
+		// world-free by design.
+		if obj != nil && obj.ID == 0 {
+			obj = w.registerExistingObject(obj)
+		}
 		if obj == nil {
 			slog.Warn("houseLoad: missing prototype", "vnum", item.VNum)
 			continue

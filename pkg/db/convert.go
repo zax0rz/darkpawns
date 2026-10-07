@@ -117,7 +117,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 			if err := json.Unmarshal(r.Inventory, &invVnums); err == nil {
 				for _, vnum := range invVnums {
 					if proto, ok := world.GetObjPrototype(vnum); ok {
-						obj := game.NewObjectInstance(proto, -1)
+						obj := world.NewObjectFromProto(proto, -1)
 						if p.Inventory.RestoreItem(obj) {
 							slog.Warn("restored item over inventory capacity",
 								"player", p.Name, "vnum", obj.VNum)
@@ -143,7 +143,7 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 						continue
 					}
 					if proto, ok := world.GetObjPrototype(vnum); ok {
-						obj := game.NewObjectInstance(proto, -1)
+						obj := world.NewObjectFromProto(proto, -1)
 						obj.Location = game.LocEquippedPlayer(p.Name, slot)
 						if err := p.Equipment.SetSlot(slot, obj); err != nil {
 							slog.Warn("restore equipment slot", "player", p.Name, "error", err)

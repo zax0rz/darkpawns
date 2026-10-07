@@ -483,7 +483,7 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 	if !ok {
 		return nil
 	}
-	obj := NewObjectInstance(proto, roomVNum)
+	obj := w.NewObjectFromProto(proto, roomVNum)
 	// Every caller ports a C obj_to_room site (mobprog.c:643 dog puddle,
 	// new_cmds.c:334/347 drink puddle, gate.c:378 red gate), which prepends.
 	if err := w.MoveObjectToRoomFront(obj, roomVNum); err != nil {

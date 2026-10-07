@@ -49,7 +49,7 @@ func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum
 		if !ok {
 			return fmt.Errorf("AddItemToRoom: prototype vnum %d not found", obj.GetVNum())
 		}
-		item = NewObjectInstance(proto, roomVNum)
+		item = w.NewObjectFromProto(proto, roomVNum)
 	}
 	// C lua_oload's "room" arm is obj_to_room (scripts.c:1144-1147).
 	return w.MoveObjectToRoomFront(item, roomVNum)
