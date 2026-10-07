@@ -934,28 +934,46 @@ func saveZeditZone(world *game.World, zone *parser.Zone) error {
 	saveMu := zoneSaveLock(zone.Number)
 	saveMu.Lock()
 	defer saveMu.Unlock()
-	return saveZeditZoneLocked(world, zone)
+	return saveZeditZoneLockedWithDiagnostics(world, zone)
 }
 
 func saveZeditZoneLocked(world *game.World, zone *parser.Zone) error {
+	return saveZeditZoneLockedMode(world, zone, false)
+}
+
+func saveZeditZoneLockedWithDiagnostics(world *game.World, zone *parser.Zone) error {
+	return saveZeditZoneLockedMode(world, zone, true)
+}
+
+func saveZeditZoneLockedMode(world *game.World, zone *parser.Zone, diagnostics bool) error {
 	snapshot, ok := world.SnapshotZone(zone.Number)
 	if !ok {
 		return fmt.Errorf("zone %d not found", zone.Number)
 	}
-	var out strings.Builder
-	fmt.Fprintf(&out, "#%d\n%s~\n%d %d %d\n", snapshot.Number,
-		zeditZoneName(snapshot.Name), snapshot.TopRoom, snapshot.Lifespan, snapshot.ResetMode)
-	for _, cmd := range snapshot.Commands {
-		arg1, arg2, arg3, ok := zeditDiskArgs(cmd)
-		if !ok {
-			continue
-		}
-		fmt.Fprintf(&out, "%s %d %d %d %d\n", cmd.Command, cmd.IfFlag, arg1, arg2, arg3)
-	}
-	out.WriteString("S\n$\n")
-
 	path := filepath.Join(world.WorldPath, "zon", fmt.Sprintf("%d.zon", snapshot.Number))
-	if err := atomicWriteFile(path, []byte(out.String()), 0o666); err != nil {
+	render := func() []byte {
+		var out strings.Builder
+		fmt.Fprintf(&out, "#%d\n%s~\n%d %d %d\n", snapshot.Number,
+			zeditZoneName(snapshot.Name), snapshot.TopRoom, snapshot.Lifespan, snapshot.ResetMode)
+		for _, cmd := range snapshot.Commands {
+			if cmd.Command == "S" {
+				break
+			}
+			arg1, arg2, arg3, ok := zeditDiskArgs(cmd)
+			if !ok {
+				// src/zedit.c:431-437: '*' is silent; other unknown
+				// commands are logged after open, then omitted from disk.
+				if diagnostics && cmd.Command != "*" {
+					game.MudLog(fmt.Sprintf("SYSERR: OLC: z_save_to_disk(): Unknown cmd '%c' - NOT saving", firstByte(cmd.Command)), game.MudlogBrief, LVL_IMMORT, true)
+				}
+				continue
+			}
+			fmt.Fprintf(&out, "%s %d %d %d %d\n", cmd.Command, cmd.IfFlag, arg1, arg2, arg3)
+		}
+		out.WriteString("S\n$\n")
+		return []byte(out.String())
+	}
+	if err := atomicWriteFileRendered(path, render, 0o666); err != nil {
 		return err
 	}
 	zeditRemoveSaveZone(snapshot.Number)
