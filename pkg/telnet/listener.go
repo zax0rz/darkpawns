@@ -3,6 +3,7 @@ package telnet
 
 import (
 	"bufio"
+	"bytes"
 	"compress/zlib"
 	"errors"
 	"fmt"
@@ -345,7 +346,7 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHos
 	}
 
 	// Welcome + name prompt
-	tc.write([]byte(session.TerminalGreeting()))
+	tc.write(escapeIAC([]byte(session.TerminalGreeting())))
 
 	// Start the output writer before the name prompt is answered. Login output
 	// must reach the client as it is generated (DP-591), and so must what a
@@ -434,7 +435,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		f = s.TrackPrompt(f)
 		switch f.Kind {
 		case session.FrameText:
-			tc.write([]byte(f.Text))
+			tc.write(escapeIAC([]byte(f.Text)))
 		case session.FramePrompt:
 			tc.writePrompt(f.Text)
 		case session.FrameEntryPrompt:
@@ -444,7 +445,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 				tc.write([]byte{IAC, WONT, OPT_ECHO})
 			}
 			if f.Text != "" {
-				tc.write(tc.markPrompt([]byte(f.Text)))
+				tc.write(tc.markPrompt(escapeIAC([]byte(f.Text))))
 			}
 		case session.FrameGMCP:
 			if tc.hasGMCP.Load() {
@@ -726,7 +727,7 @@ func (tc *telnetConn) writeLocked(data []byte) {
 // than the last. Canonicalizing to "\r\n" here fixes every text source at the
 // transport boundary. Idempotent: existing "\r\n" is preserved, not doubled.
 func (tc *telnetConn) writeLine(s string) {
-	tc.write([]byte(session.NormalizeCRLF(s)))
+	tc.write(escapeIAC([]byte(session.NormalizeCRLF(s))))
 }
 
 // enableCompression starts MCCP2 compression. It sends the COMPRESS_START
@@ -886,7 +887,28 @@ func (tc *telnetConn) enableGMCP() {
 func (tc *telnetConn) writePrompt(prompt string) {
 	// RenderTerminalFrame has already normalized ordinary prompts. A pager
 	// prompt intentionally carries C's lone leading carriage return.
-	tc.write(tc.markPrompt([]byte(prompt)))
+	tc.write(tc.markPrompt(escapeIAC([]byte(prompt))))
+}
+
+// escapeIAC doubles every 0xFF byte in game text, as telnet requires for a
+// data byte equal to IAC (RFC 854). Unescaped, a stored 0xFF made the client
+// parse the following game bytes as a telnet command (REF-1). Only text is
+// escaped: negotiation sequences and GMCP frames (already escaped by
+// buildGMCPFrameRaw) are written as-is. Shipped world and help text contain
+// no 0xFF, and since #1828 player input cannot introduce one.
+func escapeIAC(data []byte) []byte {
+	n := bytes.Count(data, []byte{IAC})
+	if n == 0 {
+		return data
+	}
+	out := make([]byte, 0, len(data)+n)
+	for _, b := range data {
+		out = append(out, b)
+		if b == IAC {
+			out = append(out, IAC)
+		}
+	}
+	return out
 }
 
 // markPrompt appends IAC EOR to prompt bytes when the client negotiated EOR.
