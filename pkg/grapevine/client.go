@@ -122,9 +122,9 @@ func (c *Client) connectLoop(url, clientID, clientSecret string) {
 		}
 
 		// Wire local gossip callback
-		c.world.OnGossip = func(senderName string, msg string) {
+		c.world.SetOnGossip(func(senderName string, msg string) {
 			c.sendGossip(senderName, msg)
-		}
+		})
 
 		// Start heartbeat ticker
 		heartbeatDone := make(chan struct{})
@@ -140,7 +140,7 @@ func (c *Client) connectLoop(url, clientID, clientSecret string) {
 			_ = c.conn.Close()
 			c.conn = nil
 		}
-		c.world.OnGossip = nil
+		c.world.SetOnGossip(nil)
 		c.mu.Unlock()
 
 		slog.Info("Grapevine: disconnected, reconnecting in background...")

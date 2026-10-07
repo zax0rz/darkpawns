@@ -222,8 +222,13 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 
 	if spec.verb == "gossip" {
 		w.updateGossipHistory(ch.Name, argument, 0)
-		if w.OnGossip != nil {
-			w.OnGossip(ch.Name, argument)
+		// The grapevine client swaps/clears this callback on its reconnect
+		// goroutine; read it under the gossip lock, call it outside (VULN-040).
+		w.gossipMu.RLock()
+		onGossip := w.OnGossip
+		w.gossipMu.RUnlock()
+		if onGossip != nil {
+			onGossip(ch.Name, argument)
 		}
 	}
 }

@@ -196,6 +196,14 @@ type World struct {
 	OutOfBand OutOfBandObserver
 }
 
+// SetOnGossip installs the gossip relay callback under the gossip lock; the
+// grapevine client rewrites it from its reconnect goroutine (VULN-040).
+func (w *World) SetOnGossip(fn func(playerName, message string)) {
+	w.gossipMu.Lock()
+	w.OnGossip = fn
+	w.gossipMu.Unlock()
+}
+
 // SetCombatEngine sets the combat engine for AI to use.
 // CRIT-006: replaces global SetAICombatEngine.
 func (w *World) SetCombatEngine(ce CombatEngine) {

@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -52,6 +53,8 @@ type BanEntry struct {
 type BanManager struct {
 	bans         []BanEntry
 	invalidNames []string // loaded by ReadInvalidList()
+
+	mu sync.RWMutex // guards bans/invalidNames across accept-loop readers and admin writers (VULN-026)
 }
 
 // NewBanManager creates an empty BanManager.
@@ -86,6 +89,8 @@ func banTypeName(t int) string {
 //
 //	<ban_type> <site_name> <unix_timestamp> <banned_by_name>
 func (bm *BanManager) LoadBanned(path string) {
+	bm.mu.Lock()
+	defer bm.mu.Unlock()
 	bm.bans = nil
 
 	f, err := os.Open(filepath.Clean(path))
@@ -132,6 +137,8 @@ func (bm *BanManager) LoadBanned(path string) {
 // insertion order. We replicate that: write bans in reverse slice order so the
 // most recently added entry ends up last in the file (head-insertion order).
 func (bm *BanManager) WriteBanList(path string) error {
+	bm.mu.RLock()
+	defer bm.mu.RUnlock()
 	if err := os.MkdirAll(pathDir(path), 0o750); err != nil {
 		return fmt.Errorf("WriteBanList: mkdir: %w", err)
 	}
@@ -164,6 +171,8 @@ func (bm *BanManager) WriteBanList(path string) error {
 // is a substring of the hostname. Return the maximum ban level found.
 // Returns 0 (BanNot) if hostname is empty or no match is found.
 func (bm *BanManager) IsBanned(hostname string) int {
+	bm.mu.RLock()
+	defer bm.mu.RUnlock()
 	if hostname == "" {
 		return BanNot
 	}
@@ -184,6 +193,8 @@ func (bm *BanManager) IsBanned(hostname string) int {
 // AddBan adds a new site ban entry (does not write to disk).
 // Source: ban.c do_ban() lines 188–209
 func (bm *BanManager) AddBan(site string, banType int, bannedBy string) error {
+	bm.mu.Lock()
+	defer bm.mu.Unlock()
 	site = strings.ToLower(site)
 	// Check for duplicate — Source: ban.c do_ban() lines 182–187
 	for _, entry := range bm.bans {
@@ -203,6 +214,8 @@ func (bm *BanManager) AddBan(site string, banType int, bannedBy string) error {
 // RemoveBan removes a site ban entry. Returns an error if the site is not banned.
 // Source: ban.c do_unban() lines 213–243
 func (bm *BanManager) RemoveBan(site string) (*BanEntry, error) {
+	bm.mu.Lock()
+	defer bm.mu.Unlock()
 	site = strings.ToLower(site)
 	for i, entry := range bm.bans {
 		if entry.Site == site {
@@ -217,6 +230,8 @@ func (bm *BanManager) RemoveBan(site string) (*BanEntry, error) {
 // ListBans returns a formatted string listing all active bans.
 // Source: ban.c do_ban() (no-argument path) lines 142–171
 func (bm *BanManager) ListBans() string {
+	bm.mu.RLock()
+	defer bm.mu.RUnlock()
 	if len(bm.bans) == 0 {
 		return "No sites are banned.\r\n"
 	}
@@ -245,6 +260,8 @@ func (bm *BanManager) ListBans() string {
 // The C original truncates each name to MAX_NAME_LENGTH (20 chars) by reading
 // with fgets(invalid_list[i], MAX_NAME_LENGTH, fp).
 func (bm *BanManager) ReadInvalidList(path string) {
+	bm.mu.Lock()
+	defer bm.mu.Unlock()
 	bm.invalidNames = nil
 
 	f, err := os.Open(filepath.Clean(path))
@@ -283,6 +300,8 @@ func (bm *BanManager) ReadInvalidList(path string) {
 // appears as a substring of the name. Returns false if a match is found.
 // The online-player duplicate check is handled at the session layer.
 func (bm *BanManager) ValidName(name string) bool {
+	bm.mu.RLock()
+	defer bm.mu.RUnlock()
 	if len(bm.invalidNames) == 0 {
 		return true
 	}

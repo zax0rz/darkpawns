@@ -341,8 +341,9 @@ func cmdBuy(s *Session, args []string) error {
 			break
 		}
 
-		// Check gold before creating item
-		if s.player.Gold < pricePerItem {
+		// Check gold before creating item (atomically: concurrent drains were
+		// a double-spend, VULN-053)
+		if !s.player.SpendGold(pricePerItem) {
 			if bought == 0 {
 				s.Send("You can't afford it!")
 				return nil
@@ -358,7 +359,6 @@ func cmdBuy(s *Session, args []string) error {
 		// C shopping_buy hands the object over with obj_to_char
 		// (shop.c:545): PLR_CRASH is set (handler.c:569-571).
 		s.player.MarkCrashNeeded()
-		s.player.Gold -= pricePerItem
 		bought++
 	}
 
@@ -419,7 +419,7 @@ func cmdSell(s *Session, args []string) error {
 		// C shopping_sell takes the object with obj_from_char (shop.c:776):
 		// PLR_CRASH is set (handler.c:596-598).
 		s.player.MarkCrashNeeded()
-		s.player.Gold += price
+		s.player.AddGold(price)
 		s.Send(fmt.Sprintf("You sell %s for %d gold pieces.", item.GetShortDesc(), price))
 		s.markDirty(VarInventory)
 	} else {
@@ -450,7 +450,7 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string) error {
 		if s.player.Inventory.RemoveItem(item) {
 			// C shopping_sell's obj_from_char per sold object (shop.c:776).
 			s.player.MarkCrashNeeded()
-			s.player.Gold += price
+			s.player.AddGold(price)
 			totalGold += price
 			sold++
 			soldNames = append(soldNames, item.GetShortDesc())
