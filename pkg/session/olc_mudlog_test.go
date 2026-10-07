@@ -12,6 +12,9 @@ import (
 )
 
 func TestOLCDiskMudlogProducers(t *testing.T) {
+	openErrors := map[string]string{
+		"redit": "SYSERR: OLC: Cannot open room file!",
+	}
 	for _, tc := range []struct{ command, kind, ack, dir, ext string }{
 		{"redit", "rooms", "Saving all rooms in zone.", "wld", "wld"},
 		{"zedit", "zone info", "Saving all zone information.", "zon", "zon"},
@@ -59,24 +62,28 @@ func TestOLCDiskMudlogProducers(t *testing.T) {
 				path := filepath.Join(w.GetParsedWorld().SourceDir, tc.dir, "30."+tc.ext)
 				file := captureMudlogFile(t)
 				ready := false
-				game.SetLogWriter(&flagProbe{buf: file, when: func() { _, err := os.Stat(path); ready = len(a.send) > 0 && err != nil }})
+				payload := fmt.Sprintf("OLC: Olcactor saves %s for zone 30", tc.kind)
+				game.SetLogWriter(&olcOpenLogProbe{buffer: file, payload: payload, onError: func() { _, err := os.Stat(path); ready = len(a.send) > 0 && err != nil }})
 				if err := executeCommand(a, tc.command, []string{"save", "30"}, false); err != nil {
 					t.Fatal(err)
 				}
-				payload := fmt.Sprintf("OLC: Olcactor saves %s for zone 30", tc.kind)
 				if !ready {
 					t.Fatal("OLC must acknowledge and log before disk write")
 				}
 				if !strings.Contains(file.String(), payload) {
 					t.Fatalf("missing file producer: %q", file.String())
 				}
-				if got := strings.Join(drainSessionText(t, watch), ""); got != "[ "+payload+" ]\r\n" {
+				errorLine := ""
+				if failedWrite && openErrors[tc.command] != "" {
+					errorLine = "[ " + openErrors[tc.command] + " ]\r\n"
+				}
+				if got := strings.Join(drainSessionText(t, watch), ""); got != "[ "+payload+" ]\r\n"+errorLine {
 					t.Fatalf("observer=%q", got)
 				}
 				if got := strings.Join(drainSessionText(t, a), ""); got != tc.ack+"\r\n" {
 					t.Fatalf("ack=%q", got)
 				}
-				if len(below.send) != 0 || len(normal.send) != 0 {
+				if len(below.send) != 0 || strings.Join(drainSessionText(t, normal), "") != errorLine {
 					t.Fatal("OLC threshold/type leak")
 				}
 				if _, err := os.Stat(path); (err == nil) == failedWrite {
