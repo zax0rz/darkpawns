@@ -151,3 +151,66 @@ func proveCEditorModeClosure(t *testing.T, prefix string) {
 }
 
 func TestCReditDefaultUnreachable(t *testing.T) { proveCEditorModeClosure(t, "REDIT") }
+
+// The audit follows installation, input precedence and synchronous save/abort
+// cleanup. It deliberately rejects changed source shapes instead of treating
+// arbitrary injected descriptor states as reachable C gameplay.
+func auditCDescriptionRoute(editor, comm, modify, mode, menu string) error {
+	prefix := strings.Split(mode, "_")[0]
+	lower := strings.ToLower(prefix)
+	assignment := "OLC_MODE(d) = " + mode + ";"
+	if strings.Count(editor, assignment) != 1 {
+		return fmt.Errorf("changed description entry set")
+	}
+	start := strings.Index(editor, assignment)
+	end := strings.Index(editor[start:], "\n    case ")
+	if end < 0 || !strings.Contains(editor[start:start+end], "string_write(d,") {
+		return fmt.Errorf("description mode entered without string editor")
+	}
+	priority := regexp.MustCompile(`if \(d->str\)[\s\S]*?string_add\(d, comm\);\s*else if \(d->showstr_count\)[\s\S]*?else if \(d->connected != CON_PLAYING\)[\s\S]*?nanny\(d, comm\);`)
+	if !priority.MatchString(comm) {
+		return fmt.Errorf("string input no longer preempts nanny")
+	}
+	if !strings.Contains(modify, "if (action == STRINGADD_SAVE || action == STRINGADD_ABORT)") ||
+		!strings.Contains(modify, "{ CON_"+prefix+"  , "+lower+"_string_cleanup }") ||
+		!strings.Contains(modify, "(*cleanup_modes[i].func)(d, action);") {
+		return fmt.Errorf("save/abort no longer invokes editor cleanup synchronously")
+	}
+	cleanupStart := regexp.MustCompile(`void ` + lower + `_string_cleanup\([^;{}]*\)\s*\{`).FindStringIndex(editor)
+	if cleanupStart == nil {
+		return fmt.Errorf("missing cleanup definition")
+	}
+	cleanup := editor[cleanupStart[0]:]
+	if prefix == "REDIT" {
+		if !regexp.MustCompile(`case ` + mode + `:\s*` + menu + `\(d\);\s*break;`).MatchString(cleanup) {
+			return fmt.Errorf("cleanup no longer restores menu for description mode")
+		}
+	} else if !strings.Contains(cleanup, menu+"(d);") {
+		return fmt.Errorf("cleanup no longer restores mob menu")
+	}
+	return nil
+}
+
+func proveCDescriptionRoute(t *testing.T, mode, menu string) {
+	t.Helper()
+	prefix := strings.ToLower(strings.Split(mode, "_")[0])
+	editor, comm, modify := controlCSource(t, prefix+".c"), controlCSource(t, "comm.c"), controlCSource(t, "modify.c")
+	audit := func(e, c, m string) error { return auditCDescriptionRoute(e, c, m, mode, menu) }
+	if err := audit(editor, comm, modify); err != nil {
+		t.Fatal(err)
+	}
+	for name, inputs := range map[string][3]string{
+		"installation": {strings.ReplaceAll(editor, "string_write(d,", "removed_install(d,"), comm, modify},
+		"precedence":   {editor, strings.ReplaceAll(comm, "if (d->str)", "if (0)"), modify},
+		"abort":        {editor, comm, strings.ReplaceAll(modify, "action == STRINGADD_SAVE || action == STRINGADD_ABORT", "action == STRINGADD_SAVE")},
+		"cleanup":      {strings.ReplaceAll(editor, menu+"(d);", "removed_menu(d);"), comm, modify},
+	} {
+		if err := audit(inputs[0], inputs[1], inputs[2]); err == nil {
+			t.Fatalf("description audit accepted broken %s", name)
+		}
+	}
+}
+
+func TestCReditDescriptionUnreachable(t *testing.T) {
+	proveCDescriptionRoute(t, "REDIT_DESC", "redit_disp_menu")
+}
