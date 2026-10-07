@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/grapevine"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/session"
 )
@@ -766,11 +767,23 @@ func (tc *telnetConn) sendMSSP() {
 	}
 
 	writeField("NAME", "Dark Pawns")
-	writeField("PLAYERS", fmt.Sprintf("%d", tc.manager.SessionCount()))
+	// PLAYERS counts playing characters, not raw sessions: SessionCount
+	// is len(manager.sessions), which includes pre-auth connections (a
+	// crawler would count its own login screen). The count uses the
+	// same mortal-visibility rule as the Grapevine heartbeat
+	// (World.VisiblePlayersForMortal), so a wizinvis immortal is not
+	// revealed to crawlers either.
+	playerCount := tc.manager.SessionCount()
+	if world := tc.manager.World(); world != nil {
+		playerCount = len(world.VisiblePlayersForMortal())
+	}
+	writeField("PLAYERS", fmt.Sprintf("%d", playerCount))
 	writeField("UPTIME", fmt.Sprintf("%d", startTime.Unix()))
 	writeField("CODEBASE", "CircleMUD 3.0 (Go port)")
 	writeField("FAMILY", "DikuMUD")
-	writeField("CREATED", "1997")
+	// CREATED: website/data/history.toml is the source of truth
+	// (founded_year = 1994).
+	writeField("CREATED", "1994")
 	writeField("WEBSITE", "darkpawns.org")
 	writeField("PORT", "7777")
 	// TLS (with the certificate's HOSTNAME) is what Mudlet reads to offer a
@@ -786,6 +799,36 @@ func (tc *telnetConn) sendMSSP() {
 	writeField("MCCP", "1")
 	writeField("LANGUAGE", "English")
 	writeField("LOCATION", "US")
+	writeField("GENRE", "Fantasy")
+	writeField("GAMEPLAY", "Hack and Slash")
+	writeField("STATUS", "Live")
+	// INTERMUD is advertised only when the Grapevine integration can
+	// actually come up (credentials present and mode not off).
+	if grapevine.ModeFromEnv() != grapevine.ModeOff {
+		writeField("INTERMUD", "Grapevine")
+	}
+	// World-shape counts are computed from the loaded world, never
+	// hard-coded: zones/rooms/prototypes from the parser output held by
+	// game.World, help entries from World.HelpTable.
+	if world := tc.manager.World(); world != nil {
+		writeField("AREAS", strconv.Itoa(world.GetZoneCount()))
+		writeField("ROOMS", strconv.Itoa(world.GetRoomCount()))
+		writeField("MOBILES", strconv.Itoa(world.GetMobPrototypeCount()))
+		writeField("OBJECTS", strconv.Itoa(world.GetObjPrototypeCount()))
+		writeField("HELPFILES", strconv.Itoa(world.GetHelpFileCount()))
+	}
+	// LEVELS is the implementor level cap (game.LVL_IMPL); CLASSES and
+	// RACES count the definition tables in pkg/game/character.go.
+	writeField("LEVELS", strconv.Itoa(game.LVL_IMPL))
+	writeField("CLASSES", strconv.Itoa(len(game.ClassNames)))
+	writeField("RACES", strconv.Itoa(len(game.RaceNames)))
+	// UTF-8 is "0": local input is ASCII-filtered (#1828), faithful to C.
+	writeField("UTF-8", "0")
+	writeField("MSDP", "0")
+	writeField("MXP", "0")
+	writeField("MSP", "0")
+	writeField("PAY TO PLAY", "0")
+	writeField("PAY FOR PERKS", "0")
 
 	payload = append(payload, IAC, SE)
 
