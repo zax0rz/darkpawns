@@ -132,6 +132,28 @@ func proveCZeditArgumentBranch(t *testing.T, branch string) {
 	if branch == "display3" {
 		command = "E"
 	}
+	// Change only the target arm, leaving its incoming call graph intact.
+	// This distinguishes branch coverage from the separate caller guards.
+	start := strings.Index(source, "case ZEDIT_ARG"+strings.TrimPrefix(branch, "parse")+":")
+	if strings.HasPrefix(branch, "display") {
+		match := regexp.MustCompile(`void zedit_disp_arg` + strings.TrimPrefix(branch, "display") + `\([^;{}]*\)\s*\{`).FindStringIndex(source)
+		if match == nil {
+			t.Fatal("missing display definition")
+		}
+		start = match[0]
+	}
+	if start < 0 {
+		t.Fatal("missing branch")
+	}
+	pos := strings.Index(source[start:], "case '"+command+"':")
+	if pos < 0 {
+		t.Fatal("missing reachable case")
+	}
+	pos += start
+	local := source[:pos] + strings.Replace(source[pos:], "case '"+command+"':", "case 'X':", 1)
+	if err := auditCZeditArgumentBranch(local, branch); err == nil {
+		t.Fatal("argument audit accepted a missing local handler with intact caller graph")
+	}
 	changed := strings.ReplaceAll(source, "case '"+command+"':", "case 'X':")
 	if err := auditCZeditArgumentBranch(changed, branch); err == nil {
 		t.Fatal("argument audit accepted a missing reachable command handler")
@@ -147,3 +169,5 @@ func TestCZeditArg1DisplayDefaultUnreachable(t *testing.T) {
 }
 
 func TestCZeditArg2DisplayDefaultUnreachable(t *testing.T) { proveCZeditArgumentBranch(t, "display2") }
+
+func TestCZeditArg3DisplayDefaultUnreachable(t *testing.T) { proveCZeditArgumentBranch(t, "display3") }
