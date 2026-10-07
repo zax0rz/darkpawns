@@ -98,24 +98,26 @@ func (w *World) ShopBuysType(mobVNum int, itemType int) bool {
 	return false
 }
 
-// GetAllMobPrototypes returns all mob prototypes from the parsed world data.
-func (w *World) GetAllMobPrototypes() []*parser.Mob {
+// GetAllMobPrototypes returns copies of all mob prototypes. Callers build
+// responses after the world lock is released, so live pointers raced admin
+// PUTs mutating the same prototypes (VULN-030).
+func (w *World) GetAllMobPrototypes() []parser.Mob {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	result := make([]*parser.Mob, 0, len(w.mobs))
+	result := make([]parser.Mob, 0, len(w.mobs))
 	for _, m := range w.mobs {
-		result = append(result, m)
+		result = append(result, *m)
 	}
 	return result
 }
 
 // GetAllObjPrototypes returns all object prototypes from the parsed world data.
-func (w *World) GetAllObjPrototypes() []*parser.Obj {
+func (w *World) GetAllObjPrototypes() []parser.Obj {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
-	result := make([]*parser.Obj, 0, len(w.objs))
+	result := make([]parser.Obj, 0, len(w.objs))
 	for _, o := range w.objs {
-		result = append(result, o)
+		result = append(result, *o)
 	}
 	return result
 }

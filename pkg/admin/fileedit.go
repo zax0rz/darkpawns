@@ -415,12 +415,16 @@ func findScriptUsage(world *game.World, path string) []scriptUsage {
 			result = append(result, scriptUsage{Kind: "room", VNum: room.VNum, Name: room.Name, ScriptName: room.ScriptName})
 		}
 	}
-	for _, mob := range world.GetAllMobPrototypes() {
+	mobs := world.GetAllMobPrototypes()
+	for index := range mobs {
+		mob := &mobs[index]
 		if matches(mob.ScriptName) {
 			result = append(result, scriptUsage{Kind: "mob", VNum: mob.VNum, Name: mob.ShortDesc, ScriptName: mob.ScriptName})
 		}
 	}
-	for _, obj := range world.GetAllObjPrototypes() {
+	objs := world.GetAllObjPrototypes()
+	for index := range objs {
+		obj := &objs[index]
 		if matches(obj.ScriptName) {
 			result = append(result, scriptUsage{Kind: "obj", VNum: obj.VNum, Name: obj.ShortDesc, ScriptName: obj.ScriptName})
 		}

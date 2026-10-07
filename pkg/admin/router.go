@@ -77,6 +77,14 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Rate limiter for admin endpoints
 	rateLimiter := auth.NewIPRateLimiter()
+	// adminMaxBodyBytes bounds request-body allocation on every admin route
+	// (VULN-027: no limit existed, so an unauthenticated multi-GB body to
+	// /admin/login could OOM the whole process). Sized an order of magnitude
+	// above the largest legitimate payload — the biggest shipped zone is
+	// ~578 KB of room text, and a webOLC zone save JSON carrying its rooms,
+	// mobs and objects stays in the low MBs. Includes the huma OLC routes,
+	// which bind bodies inside the framework.
+	const adminMaxBodyBytes = 16 << 20
 	wrap := func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			ip := auth.GetIPFromRequest(r)
@@ -84,6 +92,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 				http.Error(w, `{"error":"rate limit exceeded"}`, http.StatusTooManyRequests)
 				return
 			}
+			r.Body = http.MaxBytesReader(w, r.Body, adminMaxBodyBytes)
 			next(w, r)
 		}
 	}
