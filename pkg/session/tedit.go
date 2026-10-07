@@ -68,8 +68,10 @@ const textEditHelp = "Editor command formats: /<letter>\r\n\r\n" +
 	"/s         -  saves text\r\n"
 
 type textEditState struct {
-	field    textEditField
-	path     string
+	field textEditField
+	path  string
+	// storage is C OLC_STORAGE, independent of host paths and cache keys.
+	storage  string
 	original string
 	buffer   string
 	// cacheKey is non-empty for tedit's process-global static text buffers.
@@ -189,6 +191,7 @@ func (s *Session) startTextEdit(field textEditField) error {
 	state := &textEditState{
 		field:    field,
 		path:     filepath.Join(s.manager.world.LibTextDir, field.filename),
+		storage:  "text/" + field.filename,
 		original: text,
 		buffer:   text,
 		cacheKey: field.filename,
