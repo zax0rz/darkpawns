@@ -66,6 +66,39 @@ func (w *World) CommitEditedRoom(room parser.Room) bool {
 	return w.commitEditedRoomLocked(room)
 }
 
+// CommitEditedRoomWithResetDiagnostics captures C redit_save_internally's
+// new-room-only diagnostic boundary (redit.c:238-258) atomically with room
+// publication. Go retains VNUM references; the diagnostic still applies to L,
+// which C accepts at boot but omits from that insertion switch. No delivery is
+// performed under w.mu: the descriptor caller emits the returned count.
+// The ordinary admin CommitEditedRoom path deliberately remains silent.
+func (w *World) CommitEditedRoomWithResetDiagnostics(room parser.Room) (bool, int) {
+	room = CloneRoom(room)
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	_, existed := w.rooms[room.VNum]
+	if !w.commitEditedRoomLocked(room) {
+		return false, 0
+	}
+	if existed {
+		return true, 0
+	}
+	count := 0
+	for _, zone := range w.zones {
+		for _, command := range zone.Commands {
+			if command.Command == "S" {
+				break
+			}
+			switch command.Command {
+			case "M", "O", "D", "R", "G", "P", "E", "*":
+			default:
+				count++
+			}
+		}
+	}
+	return true, count
+}
+
 // mutateRoom applies one routine runtime mutation to an existing room. This
 // is the C shape for state do_open/do_close/lock and zone resets change
 // directly on world[] in place: one room, one exit flag word, no topology

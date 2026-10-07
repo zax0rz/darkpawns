@@ -3,7 +3,7 @@
 import json, os, pathlib, subprocess, sys, tempfile
 root = pathlib.Path(sys.argv[1]).expanduser()
 root.mkdir(parents=True, exist_ok=True)
-files = ['pkg/game/other_settings.go', 'pkg/session/commands.go', 'pkg/session/cmd_misc.go']
+files = ['pkg/game/other_settings.go', 'pkg/session/commands.go', 'pkg/session/cmd_misc.go', 'pkg/session/redit.go', 'pkg/game/world_redit.go']
 original = {name:pathlib.Path(name).read_text() for name in files}
 producer = 'MudLog(fmt.Sprintf("%s %s: %s", ch.GetName(), cmd, arg), MudlogComplete, LVL_IMMORT, false)'
 raw = '''\tif (cmd == "bug" || cmd == "typo" || cmd == "idea" || cmd == "todo") && rawArgs != "" {
@@ -20,13 +20,19 @@ controls = [
  ('raw-dollar','pkg/session/commands.go','strings.ReplaceAll(rawArgs, "$", "$$")','rawArgs', 'TestReportMudlogRawBytesAndOrder'),
  ('tokenized-dollar','pkg/session/cmd_misc.go','strings.ReplaceAll(strings.Join(args, " "), "$", "$$")','strings.Join(args, " ")','TestReportMudlogTokenizedDollars'),
 ]
-cmd=['go','test','-p','2','./pkg/session','-run','^TestReportMudlog','-count=1']
+controls += [
+ ('room-producer','pkg/session/redit.go','game.MudLog("SYSERR: OLC: redit_save_internally: Unknown comand", game.MudlogBrief, LVL_IMMORT, true)','', 'TestReditInsertionMudlogBoundary'),
+ ('room-loop-omission','pkg/game/world_redit.go','case "M", "O", "D", "R", "G", "P", "E", "*":','case "M", "O", "D", "R", "G", "P", "E", "*", "L":','TestReditInsertionMudlogBoundary'),
+ ('room-replacement-gate','pkg/game/world_redit.go','if existed {','if false && existed {','TestReditInsertionMudlogBoundary'),
+]
+cmd=['go','test','-p','2','./pkg/session','-run','^Test(ReportMudlog.*|ReditInsertionMudlogBoundary)$','-count=1']
 def run(path, overlay=None):
  args=cmd[:2]+(['-overlay='+str(overlay)] if overlay else [])+cmd[2:]
  result=subprocess.run(args, env=dict(os.environ,GOMAXPROCS='2'),text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
  path.write_text(result.stdout)
  return result
 for name, file, before, after, test in controls:
+ if len(sys.argv) > 2 and not name.startswith(sys.argv[2]): continue
  folder=root/name;folder.mkdir(exist_ok=True)
  assert run(folder/'green.txt').returncode == 0
  assert before in original[file], name

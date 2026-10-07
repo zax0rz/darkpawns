@@ -1,0 +1,125 @@
+# D7 local producer train; independent complete-syslog observer.
+# depth-case: mudlog.redit-room-insertion-unknown-command
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Logactor
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+Logwatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Logactor
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+Logwatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Logwatch 31
+force Logwatch syslog complete
+goto 8004
+
+[probe]
+zedit
+n
+0
+L
+0
+1
+n
+1
+L
+n
+1
+q
+y
+redit 8091
+1
+New diagnostic room
+q
+y
+redit 8091
+1
+Replaced diagnostic room
+q
+y
+redit 8092
+1
+Aborted diagnostic room
+q
+n
