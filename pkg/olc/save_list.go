@@ -1,6 +1,7 @@
 package olc
 
 import (
+	"slices"
 	"sort"
 	"sync"
 )
@@ -17,6 +18,7 @@ type DirtyEntry struct {
 type SaveList struct {
 	mu    sync.Mutex
 	dirty map[DirtyEntry]struct{}
+	order []DirtyEntry
 }
 
 // NewSaveList creates an empty dirty-zone save list.
@@ -28,14 +30,24 @@ func NewSaveList() *SaveList {
 func (s *SaveList) Mark(kind Kind, zone int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.dirty[DirtyEntry{Kind: kind, Zone: zone}] = struct{}{}
+	entry := DirtyEntry{Kind: kind, Zone: zone}
+	if _, exists := s.dirty[entry]; exists {
+		return
+	}
+	s.dirty[entry] = struct{}{}
+	// src/olc.c:385-394: repeated marks stay put; new entries are prepended.
+	s.order = append([]DirtyEntry{entry}, s.order...)
 }
 
 // Remove clears the dirty marker after a successful zone save.
 func (s *SaveList) Remove(kind Kind, zone int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.dirty, DirtyEntry{Kind: kind, Zone: zone})
+	entry := DirtyEntry{Kind: kind, Zone: zone}
+	delete(s.dirty, entry)
+	if index := slices.Index(s.order, entry); index >= 0 {
+		s.order = slices.Delete(s.order, index, index+1)
+	}
 }
 
 // Dirty reports whether kind has an unsaved change in zone.
@@ -62,4 +74,12 @@ func (s *SaveList) List() []DirtyEntry {
 		return entries[i].Zone < entries[j].Zone
 	})
 	return entries
+}
+
+// Ordered returns a newest-first value snapshot for C olc_saveinfo/saveall
+// (src/olc.c:332-339,358-361). List retains the admin API's sorted contract.
+func (s *SaveList) Ordered() []DirtyEntry {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return slices.Clone(s.order)
 }
