@@ -1,10 +1,8 @@
 package session
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -349,11 +347,14 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		// passed to fputs. That means both the disk file and the live global
 		// become LF-delimited until a later boot/reload reconstructs CRLF.
 		if state.killOnEmpty && state.buffer == "" {
-			err := os.Remove(state.path)
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
+			err := killEditorFile(state.path)
+			if err != nil {
 				slog.Error("luaedit delete failed", "player", s.playerName, "file", state.path, "error", err)
 			} else {
-				slog.Info(fmt.Sprintf("OLC: %s deletes '%s'.", s.playerName, state.path))
+				// src/file-edit.c:44: after kill_file, before ack/cleanup.
+				if state.storage != "" {
+					game.MudLog(fmt.Sprintf("OLC: %s deletes '%s'.", s.fileEditorActorName(), state.storage), game.MudlogComplete, game.LVL_GOD, true)
+				}
 				s.sendTextEditor("Deleted.\r\n")
 				s.forgetScriptFailures(state.path)
 			}

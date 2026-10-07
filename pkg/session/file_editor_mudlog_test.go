@@ -123,3 +123,58 @@ func TestFileEditorSaveMudlog(t *testing.T) {
 		})
 	}
 }
+
+func TestFileEditorDeleteMudlog(t *testing.T) {
+	for _, kind := range []string{"readable", "absent", "unreadable", "dangling"} {
+		t.Run(kind, func(t *testing.T) {
+			m, a, watch, below, normal, file := fileEditorLogFixture(t)
+			watch.player.SetLevel(34)
+			path := filepath.Join(m.world.ScriptsDir, "probe.lua")
+			if kind == "dangling" {
+				if err := os.Symlink(filepath.Join(m.world.ScriptsDir, "missing.lua"), path); err != nil {
+					t.Fatal(err)
+				}
+			} else if kind != "absent" {
+				if err := os.WriteFile(path, []byte("old\n"), 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := cmdLuaEdit(a, []string{"probe"}); err != nil {
+				t.Fatal(err)
+			}
+			drainSessionText(t, a)
+			a.handleTextEditInput("/c")
+			drainSessionText(t, a)
+			if kind == "unreadable" {
+				if os.Getuid() == 0 {
+					t.Skip("readability boundary requires non-root uid")
+				}
+				if err := os.Chmod(path, 0); err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() { _ = os.Chmod(path, 0o600) })
+			}
+			payload := "OLC: Fileactor deletes 'scripts/probe.lua'."
+			calls := 0
+			game.SetLogWriter(&olcOpenLogProbe{buffer: file, payload: payload, onError: func() {
+				calls++
+				if a.textEdit == nil || a.player.GetFlags()&(1<<game.PlrWriting) == 0 || len(a.send) != 0 {
+					t.Error("delete log must precede ack/cleanup")
+				}
+			}})
+			a.handleTextEditInput("/s")
+			fileEditorExpectLog(t, a, watch, below, normal, file, payload, "Deleted.\r\n")
+			if calls != 1 {
+				t.Fatalf("log-time probe calls=%d", calls)
+			}
+			_, err := os.Lstat(path)
+			if kind == "readable" || kind == "absent" {
+				if !os.IsNotExist(err) {
+					t.Fatalf("delete failed: %v", err)
+				}
+			} else if err != nil {
+				t.Fatalf("access failure must leave target: %v", err)
+			}
+		})
+	}
+}
