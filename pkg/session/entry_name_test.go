@@ -1,6 +1,7 @@
 package session
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,7 +33,9 @@ func TestEntryNameGateMatrix(t *testing.T) {
 		{"a_b", "", false, false},
 		{"12345", "", false, false},
 		{"Ai-ko", "", false, false},
-		{"Åiko", "", false, false},
+		// process_input drops the non-ASCII bytes before the name gate
+		// (src/comm.c:1974), so C parses "iko".
+		{"Åiko", "Iko", true, false},
 	}
 	for _, word := range []string{"in", "from", "with", "the", "on", "at", "to", "a", "an", "self", "me", "all", "room", "someone", "something"} {
 		names = append(names, struct {
@@ -46,7 +49,9 @@ func TestEntryNameGateMatrix(t *testing.T) {
 				s := makeCharSession(t, makeTestManager(t))
 				switch route {
 				case "json":
-					err := s.handleLogin(loginMsg(tc.raw, ""))
+					// Through the transport boundary, as a WebSocket frame arrives.
+					frame, _ := json.Marshal(ClientMessage{Type: MsgLogin, Data: loginMsg(tc.raw, "")})
+					err := s.handleMessage(frame)
 					if err != nil && !tc.closed {
 						t.Fatal(err)
 					}

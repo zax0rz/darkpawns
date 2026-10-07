@@ -272,6 +272,9 @@ func (s *Session) TerminalNamed() bool {
 // state that owns it, as C's nanny and command interpreter do. It reports
 // false when the connection should close.
 func (s *Session) TerminalLine(rawLine string) bool {
+	// Telnet and the browser terminal both arrive here: apply C's
+	// process_input character pass before any consumer sees the line.
+	rawLine = cInputLine(rawLine)
 	line := strings.TrimSpace(rawLine)
 	if !s.terminalNamed {
 		return s.terminalName(rawLine)
