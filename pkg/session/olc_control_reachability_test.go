@@ -220,3 +220,7 @@ func TestCReditExitDescriptionUnreachable(t *testing.T) {
 }
 
 func TestCMeditDefaultUnreachable(t *testing.T) { proveCEditorModeClosure(t, "MEDIT") }
+
+func TestCMeditDescriptionUnreachable(t *testing.T) {
+	proveCDescriptionRoute(t, "MEDIT_D_DESC", "medit_disp_menu")
+}
