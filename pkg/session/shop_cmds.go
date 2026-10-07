@@ -351,9 +351,11 @@ func cmdBuy(s *Session, args []string) error {
 			break
 		}
 
-		// Create item
+		// Create item. The atomic spend precedes the hand-over, so a failed
+		// add must refund — otherwise a full inventory eats the gold.
 		item := game.NewObjectInstance(matchedProto, -1)
 		if err := s.player.Inventory.AddItem(item); err != nil {
+			s.player.AddGold(pricePerItem)
 			break
 		}
 		// C shopping_buy hands the object over with obj_to_char
