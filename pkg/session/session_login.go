@@ -18,10 +18,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// timingDecoyHash is a valid bcrypt hash of a value no caller can produce. It
-// gives the locked-account path the same cost as a real comparison (DP-1281).
-const timingDecoyHash = `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` // #nosec G101 -- not a credential; a fixed decoy hash for constant-time behaviour
-
 // guestSeq is a monotonic counter for generated guest names so two guests
 // never share a "Guest_NNNN" name (DP-912). The previous scheme derived the
 // suffix from time.Now().UnixNano()%10000, which collided for sequential
@@ -184,21 +180,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				return nil
 			}
 			login.PlayerName = rec.Name // Identity lookup and all subsequent accounting use the stored name.
-			// DP-592: Account-level lockout check for returning players.
-			if s.manager.accountLockouts != nil {
-				if locked, remaining := s.manager.accountLockouts.IsLocked(login.PlayerName); locked {
-					if login.Password != "" {
-						// Mask timing difference against password check (DP-1281)
-						_ = bcrypt.CompareHashAndPassword([]byte(timingDecoyHash), []byte(login.Password))
-					}
-					mins := int(remaining.Minutes()) + 1
-					s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
-					s.CloseSend()
-					audit.LogSecurityEvent("account_locked", "Account locked due to repeated failures", login.PlayerName, ip)
-					return nil
-				}
-			}
-
 			// C CON_GET_NAME selects the password state. Legacy structured clients
 			// may supply a password with login; interactive transports send only a name.
 			if login.Password == "" && s.charStage != "login_password" {
@@ -232,21 +213,12 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 					audit.LogSecurityEvent("login_failed", "no stored password hash - counted as wrong password", rec.Name, ip)
 				}
 				s.manager.loginAttempts.RecordFailure(ip)
-				if s.manager.accountLockouts != nil {
-					if newlyLocked := s.manager.accountLockouts.RecordFailure(rec.Name); newlyLocked {
-						_, remaining := s.manager.accountLockouts.IsLocked(rec.Name)
-						mins := int(remaining.Minutes()) + 1
-						s.sendError(fmt.Sprintf("Account locked due to too many failed login attempts. Try again in %d minutes.", mins))
-						s.CloseSend()
-						audit.LogSecurityEvent("account_locked", "Account locked after threshold failures", rec.Name, ip)
-						return nil
-					}
-				}
-				if s.manager.accountLockouts == nil {
-					// Count C bad_pws even when the Go security overlay is disabled.
-					if _, err := s.manager.db.RecordLoginFailure(rec.Name, int(^uint(0)>>1), 0); err != nil {
-						return s.abortEntry(fmt.Errorf("record wrong password: %w", err))
-					}
+				// Count C bad_pws (GET_BAD_PWS, persisted; feeds the
+				// LOGIN FAILURES warning at menu entry, interpreter.c:1929-1937).
+				// Threshold is max-int with zero duration: pure counting, never
+				// a lockout — C's nanny has no account lockout.
+				if _, err := s.manager.db.RecordLoginFailure(rec.Name, int(^uint(0)>>1), 0); err != nil {
+					return s.abortEntry(fmt.Errorf("record wrong password: %w", err))
 				}
 				if s.loginFailures.Add(1) >= 3 { // C config.c max_bad_pws.
 					s.sendCharCreatePrompt("closing", "Wrong password... disconnecting.\r\n", nil)
@@ -318,13 +290,11 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// room entry happen only after option 1 is selected.
 	if s.authenticated && s.player != nil {
 		s.manager.loginAttempts.RecordSuccess(ip)
-		if s.manager.accountLockouts != nil {
-			s.manager.accountLockouts.RecordSuccess(login.PlayerName)
-		}
-		if s.manager.accountLockouts == nil {
-			if err := s.manager.db.RecordLoginSuccess(login.PlayerName); err != nil {
-				return s.abortEntry(fmt.Errorf("clear wrong passwords: %w", err))
-			}
+		// Reset C bad_pws on successful login (GET_BAD_PWS = 0,
+		// interpreter.c:1933-1935): the LOGIN FAILURES warning counts only
+		// failures since the last success.
+		if err := s.manager.db.RecordLoginSuccess(login.PlayerName); err != nil {
+			return s.abortEntry(fmt.Errorf("clear wrong passwords: %w", err))
 		}
 		// C checks for another copy of the character before the MOTD
 		// (interpreter.c:1914-1916). The reconnect branch ports

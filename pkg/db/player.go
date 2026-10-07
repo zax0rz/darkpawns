@@ -427,25 +427,6 @@ func (db *DB) DeletePlayer(playerID int) error {
 	return err
 }
 
-// GetAccountLockout returns the current failed-login attempt count and any
-// active lockout deadline for the named account.
-func (db *DB) GetAccountLockout(name string) (int, *time.Time, error) {
-	query := `SELECT COALESCE(failed_login_attempts, 0), locked_until FROM players WHERE lower(name) = lower(?)`
-	var attempts int
-	var lockedUntil sql.NullTime
-	err := db.queryRow(query, name).Scan(&attempts, &lockedUntil)
-	if err == sql.ErrNoRows {
-		return 0, nil, nil
-	}
-	if err != nil {
-		return 0, nil, err
-	}
-	if lockedUntil.Valid {
-		return attempts, &lockedUntil.Time, nil
-	}
-	return attempts, nil, nil
-}
-
 // RecordLoginFailure increments the failed-login counter for a player and,
 // if the threshold is reached, sets locked_until to lockoutDuration from now.
 // It returns true when this failure caused the account to become locked.

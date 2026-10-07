@@ -62,7 +62,6 @@ func TestEntryWizlockReturningThreshold(t *testing.T) {
 						}
 					}
 					s := entrySession(t, database)
-					s.manager.accountLockouts = nil
 					if terminal {
 						s.TerminalLine("aiko")
 					} else if err := s.handleLogin(loginMsg("aiko", "")); err != nil {

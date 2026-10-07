@@ -260,55 +260,40 @@ func TestGameStorePlayerRoundTrip(t *testing.T) {
 	}
 }
 
-// TestGameStoreAccountLockout exercises the rewritten RecordLoginFailure: the
-// lockout deadline is computed in Go and passed as a parameter, which is what
-// makes the statement portable across dialects.
-func TestGameStoreAccountLockout(t *testing.T) {
+// TestGameStoreLoginFailureCounting proves the C bad_pws accounting that
+// remains after the DP-592 lockout removal: RecordLoginFailure with a
+// max-int threshold and zero duration increments failed_login_attempts and
+// never reports a lockout; RecordLoginSuccess clears it. The column is read
+// back through the same raw-query helper the store tests use.
+func TestGameStoreLoginFailureCounting(t *testing.T) {
 	for _, be := range gameStoreBackends(t) {
 		t.Run(be.name, func(t *testing.T) {
 			database := openGameStore(t, be.dsn)
-			name := uniqueName("lockout")
+			name := uniqueName("badpw")
 			p := &PlayerRecord{Name: name, Inventory: []byte("[]"), Equipment: []byte("{}")}
 			if err := database.CreatePlayer(p); err != nil {
 				t.Fatalf("CreatePlayer: %v", err)
 			}
 
-			const threshold = 3
-			var locked bool
-			var err error
-			for i := 0; i < threshold; i++ {
-				locked, err = database.RecordLoginFailure(name, threshold, 15*time.Minute)
+			for i := 0; i < 3; i++ {
+				locked, err := database.RecordLoginFailure(name, int(^uint(0)>>1), 0)
 				if err != nil {
 					t.Fatalf("RecordLoginFailure: %v", err)
 				}
-			}
-			if !locked {
-				t.Error("account not locked at threshold")
-			}
-
-			attempts, until, err := database.GetAccountLockout(name)
-			if err != nil {
-				t.Fatalf("GetAccountLockout: %v", err)
-			}
-			if attempts != threshold {
-				t.Errorf("attempts = %d, want %d", attempts, threshold)
-			}
-			if until == nil {
-				t.Fatal("locked_until is nil after threshold")
-			}
-			if time.Until(*until) < 10*time.Minute {
-				t.Errorf("locked_until too soon: %v", until)
+				if locked {
+					t.Fatal("pure counting reported a lockout; max-int threshold must never lock")
+				}
 			}
 
 			if err := database.RecordLoginSuccess(name); err != nil {
 				t.Fatalf("RecordLoginSuccess: %v", err)
 			}
-			attempts, until, err = database.GetAccountLockout(name)
+			locked, err := database.RecordLoginFailure(name, int(^uint(0)>>1), 0)
 			if err != nil {
-				t.Fatalf("GetAccountLockout after success: %v", err)
+				t.Fatalf("post-success RecordLoginFailure: %v", err)
 			}
-			if attempts != 0 || until != nil {
-				t.Errorf("lockout not cleared: attempts=%d until=%v", attempts, until)
+			if locked {
+				t.Fatal("counting locked after reset")
 			}
 		})
 	}
