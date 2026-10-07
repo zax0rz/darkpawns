@@ -23,6 +23,29 @@ func (w *World) GetObjPrototype(vnum int) (*parser.Obj, bool) {
 	return obj, ok
 }
 
+// GetZoneCount returns the total number of zones in the world.
+func (w *World) GetZoneCount() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return len(w.zones)
+}
+
+// GetMobPrototypeCount returns the total number of mobile prototypes
+// loaded in the world (C's top_of_mobt equivalent).
+func (w *World) GetMobPrototypeCount() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return len(w.mobs)
+}
+
+// GetObjPrototypeCount returns the total number of object prototypes
+// loaded in the world (C's top_of_objt equivalent).
+func (w *World) GetObjPrototypeCount() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return len(w.objs)
+}
+
 // GetZone returns a zone by number.
 func (w *World) GetZone(number int) (*parser.Zone, bool) {
 	w.mu.RLock()

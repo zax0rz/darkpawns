@@ -728,6 +728,38 @@ func (w *World) GetAllPlayers() []*Player {
 	return result
 }
 
+// GetHelpFileCount returns the number of loaded help entries.
+func (w *World) GetHelpFileCount() int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return len(w.HelpTable)
+}
+
+// VisiblePlayersForMortal returns the in-game, non-NPC characters that a
+// level-1 mortal would see in `who`. It applies the same visibility
+// boundary cmdWho uses — whoTargetVisible in pkg/session/cmd_info.go
+// gates on game.CanSee(viewer, target); here the viewer is a bare
+// level-1 mortal, so wizinvis immortals, invisible and hidden characters
+// are excluded. External presence surfaces (Grapevine heartbeat, MSSP
+// PLAYERS) share this rule so a hidden immortal is never revealed to an
+// outside network or crawler. Guests are ordinary in-world characters
+// and are included.
+func (w *World) VisiblePlayersForMortal() []*Player {
+	viewer := &Player{Level: 1}
+	players := w.GetAllPlayers()
+	visible := make([]*Player, 0, len(players))
+	for _, p := range players {
+		if p.IsNPC() || p.Name == "" {
+			continue
+		}
+		if !CanSee(viewer, p) {
+			continue
+		}
+		visible = append(visible, p)
+	}
+	return visible
+}
+
 func (w *World) Rooms() []parser.Room {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
