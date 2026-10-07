@@ -365,7 +365,10 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 				if state.cacheKey != "" {
 					setTextEditCache(s, state.cacheKey, savedText)
 				}
-				slog.Info(fmt.Sprintf("OLC: %s saves '%s'.", s.playerName, state.path))
+				// src/file-edit.c:57: storage and acting body, before ack/cleanup.
+				if state.storage != "" {
+					game.MudLog(fmt.Sprintf("OLC: %s saves '%s'.", s.fileEditorActorName(), state.storage), game.MudlogComplete, game.LVL_GOD, true)
+				}
 				s.sendTextEditor("Saved.\r\n")
 				s.forgetScriptFailures(state.path)
 			}

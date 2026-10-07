@@ -4,10 +4,13 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/fileedit"
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 func TestFileEditorStorageIdentity(t *testing.T) {
@@ -41,6 +44,63 @@ func TestFileEditorStorageIdentity(t *testing.T) {
 		}
 		a.cancelTextEdit()
 		drainSessionText(t, a)
+	}
+}
+
+func TestFileEditorActingBody(t *testing.T) {
+	for _, kind := range []string{"player", "mob"} {
+		t.Run(kind, func(t *testing.T) {
+			w, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}, {VNum: 1002}, {VNum: 1003}}, Mobs: []parser.Mob{{VNum: 90, Keywords: "guard", ShortDesc: "a retained guard", Level: 40}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(w.StopAITicker)
+			m := newTestManager(t, w, nil)
+			w.ScriptsDir = t.TempDir()
+			a := makeCommandTestSession(t, m, "Wizard", 40, 1001)
+			a.transportDone = make(chan struct{})
+			registerTestSession(t, m, a, "Wizard")
+			watch := makeCommandTestSession(t, m, "Watch", 40, 1003)
+			watch.player.SetPlrFlag(game.PrfLog1, true)
+			watch.player.SetPlrFlag(game.PrfLog2, true)
+			registerTestSession(t, m, watch, "Watch")
+			name := "a retained guard"
+			target := "guard"
+			if kind == "mob" {
+				if _, err := w.SpawnMobQuiet(90, 1001); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				h := makeCommandTestSession(t, m, "Borrowed", 40, 1002)
+				h.player = game.NewPlayer(2, "Borrowed", 1002)
+				h.player.SetLevel(40)
+				h.transportDone = make(chan struct{})
+				h.DetachTransport()
+				h.player.SetLinkless(true)
+				registerTestSession(t, m, h, "Borrowed")
+				name = "Borrowed"
+				target = name
+			}
+			if err := cmdSwitch(a, []string{target}); err != nil {
+				t.Fatal(err)
+			}
+			drainSessionText(t, a)
+			drainSessionText(t, watch)
+			file := captureMudlogFile(t)
+			if err := cmdLuaEdit(a, []string{"probe"}); err != nil {
+				t.Fatal(err)
+			}
+			drainSessionText(t, a)
+			a.handleTextEditInput("bytes")
+			a.handleTextEditInput("/s")
+			payload := "OLC: " + name + " saves 'scripts/probe.lua'."
+			if !strings.Contains(file.String(), payload) {
+				t.Fatalf("body name log=%q", file.String())
+			}
+			if got := strings.Join(drainSessionText(t, watch), ""); got != "[ "+payload+" ]\r\n" {
+				t.Fatalf("observer=%q", got)
+			}
+		})
 	}
 }
 

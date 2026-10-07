@@ -12,6 +12,14 @@ import (
 
 // The caller holds textEditMu and liveTextEditMu. Snapshot attached-body
 // identity under the manager lock, then release it before MudLog delivery.
+func (s *Session) fileEditorActorName() string {
+	s.manager.mu.RLock()
+	defer s.manager.mu.RUnlock()
+	if s.isSwitched && s.switchedMob != nil {
+		return s.switchedMob.GetName()
+	}
+	return s.player.GetName()
+}
 
 // os.OpenRoot returns a non-errno "not a directory" error for a regular
 // root on Linux. Recognize this exact root-open stage by its path, plus

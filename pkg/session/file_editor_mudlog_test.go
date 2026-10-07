@@ -2,6 +2,10 @@ package session
 
 import (
 	"bytes"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -34,4 +38,88 @@ func fileEditorLogFixture(t *testing.T) (*Manager, *Session, *Session, *Session,
 		}
 	}})
 	return m, a, watch, below, normal, file
+}
+
+func fileEditorExpectLog(t *testing.T, a, watch, below, normal *Session, file *bytes.Buffer, payload, ack string) {
+	t.Helper()
+	if !strings.Contains(file.String(), payload+"\n") {
+		t.Fatalf("missing file producer: %q actor=%q", file.String(), strings.Join(drainSessionText(t, a), ""))
+	}
+	if got := strings.Join(drainSessionText(t, watch), ""); got != "[ "+payload+" ]\r\n" {
+		t.Fatalf("CMP observer=%q", got)
+	}
+	if got := strings.Join(drainSessionText(t, a), ""); got != ack {
+		t.Fatalf("ack=%q want %q", got, ack)
+	}
+	if len(below.send) != 0 || len(normal.send) != 0 {
+		t.Fatal("producer level/type leak")
+	}
+	if a.IsTextEditing() || (a.player.GetFlags()&(1<<game.PlrWriting) != 0) {
+		t.Fatal("completion did not clean editor/writing")
+	}
+}
+
+func TestFileEditorSaveMudlog(t *testing.T) {
+	for _, kind := range []string{"root", "subdir", "help", "symlink"} {
+		t.Run(kind, func(t *testing.T) {
+			m, a, watch, below, normal, file := fileEditorLogFixture(t)
+			watch.player.SetLevel(34)
+			var path, logical string
+			switch kind {
+			case "help":
+				if err := os.Mkdir(filepath.Join(m.world.LibTextDir, "help"), 0o700); err != nil {
+					t.Fatal(err)
+				}
+				path = filepath.Join(m.world.LibTextDir, "help/screen")
+				logical = "text/help/screen"
+				if err := cmdTedit(a, []string{"help"}); err != nil {
+					t.Fatal(err)
+				}
+			case "subdir":
+				if err := os.Mkdir(filepath.Join(m.world.ScriptsDir, "mob"), 0o700); err != nil {
+					t.Fatal(err)
+				}
+				path = filepath.Join(m.world.ScriptsDir, "mob/probe.lua")
+				logical = "scripts/mob/probe.lua"
+				if err := cmdLuaEdit(a, []string{"mob", "probe"}); err != nil {
+					t.Fatal(err)
+				}
+			default:
+				path = filepath.Join(m.world.ScriptsDir, "probe.lua")
+				logical = "scripts/probe.lua"
+				if kind == "symlink" {
+					target := filepath.Join(m.world.ScriptsDir, "physical.lua")
+					if err := os.WriteFile(target, []byte("old\n"), 0o600); err != nil {
+						t.Fatal(err)
+					}
+					if err := os.Symlink(target, path); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if err := cmdLuaEdit(a, []string{"probe"}); err != nil {
+					t.Fatal(err)
+				}
+			}
+			drainSessionText(t, a)
+			a.handleTextEditInput("/c")
+			drainSessionText(t, a)
+			a.handleTextEditInput("new line")
+			payload := fmt.Sprintf("OLC: Fileactor saves '%s'.", logical)
+			calls := 0
+			game.SetLogWriter(&olcOpenLogProbe{buffer: file, payload: payload, onError: func() {
+				calls++
+				if a.textEdit == nil || a.player.GetFlags()&(1<<game.PlrWriting) == 0 || len(a.send) != 0 {
+					t.Error("save log must precede ack/cleanup")
+				}
+				if b, err := os.ReadFile(path); err != nil || string(b) != "new line\n" {
+					t.Errorf("log precedes disk save: %q %v", b, err)
+				}
+			}})
+			a.handleTextEditInput("/s")
+			fileEditorExpectLog(t, a, watch, below, normal, file, payload, "Saved.\r\n")
+			if calls != 1 {
+				t.Fatalf("log-time probe calls=%d", calls)
+			}
+		})
+	}
 }
