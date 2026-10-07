@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Variable name constants for the agent subscription system.
@@ -46,18 +47,16 @@ var AllVariables = []string{
 // multiple mobs share the same first keyword ("goblin", "2.goblin", ...).
 type RoomMobVar struct {
 	Name         string `json:"name"`
-	InstanceID   string `json:"instance_id"`   // "mob_<vnum>_<idx>"
+	InstanceID   string `json:"instance_id"`   // "mob_<runtimeID>"
 	TargetString string `json:"target_string"` // exact string to pass to "hit"
-	VNum         int    `json:"vnum"`
 	Fighting     bool   `json:"fighting"`
 }
 
 // RoomItemVar describes an item on the floor of the current room.
 type RoomItemVar struct {
 	Name         string `json:"name"`
-	InstanceID   string `json:"instance_id"`   // "obj_<vnum>_<idx>"
+	InstanceID   string `json:"instance_id"`   // "obj_<runtimeID>"
 	TargetString string `json:"target_string"` // exact string to pass to "get"
-	VNum         int    `json:"vnum"`
 }
 
 // handleSubscribe processes a subscribe message from an agent.
@@ -188,17 +187,23 @@ func (s *Session) buildVarValue(varName string) interface{} {
 	case VarRoomVnum:
 		return s.player.GetRoom()
 	case VarRoomName:
+		if !s.agentCanSeeRoom() {
+			return ""
+		}
 		room, ok := s.manager.world.GetRoom(s.player.GetRoom())
 		if !ok {
 			return ""
 		}
 		return room.Name
 	case VarRoomExits:
+		if !s.agentCanSeeRoom() {
+			return []string{}
+		}
 		room, ok := s.manager.world.GetRoom(s.player.GetRoom())
 		if !ok {
 			return []string{}
 		}
-		return getExitNames(room.Exits)
+		return s.visibleExitNames(room)
 	case VarRoomMobs:
 		return s.buildRoomMobs()
 	case VarRoomItems:
@@ -208,11 +213,14 @@ func (s *Session) buildVarValue(varName string) interface{} {
 		if !fighting {
 			return false
 		}
+		// R4: a mortal never sees integer enemy HP — do_diagnose renders
+		// eight qualitative bands (diag_char_to_char, act.informative.c:363-
+		// 382). Emit exactly those bytes plus the bucket index; nothing finer.
 		return map[string]interface{}{
-			"fighting": true,
-			"target":   target.GetName(),
-			"hp":       target.GetHP(),
-			"max_hp":   target.GetMaxHP(),
+			"fighting":      true,
+			"target":        target.GetName(),
+			"condition":     game.DiagCondition(target.GetHP(), target.GetMaxHP()),
+			"health_bucket": diagBucket(target.GetHP(), target.GetMaxHP()),
 		}
 	case VarInventory:
 		return s.buildInventory()
@@ -263,10 +271,91 @@ func disambiguatedTargetStrings(keywords []string) []string {
 	return result
 }
 
+// agentCanSeeRoom is the mortal's own sight gate (look_at_room's darkness
+// branch, look.go:216-227): blind, or a dark room without infravision /
+// holy-light, suppresses the room exactly as "Darkness" does on screen
+// (R4; docs/gmcp.md 17-25 states the same rule for Room.Info).
+func (s *Session) agentCanSeeRoom() bool {
+	if s.player == nil {
+		return false
+	}
+	if s.player.IsAffected(game.AffBlind) {
+		return false
+	}
+	if s.manager.world.IsRoomDark(s.player.GetRoom()) && !game.ChCanSeeInDark(s.player) {
+		return false
+	}
+	return true
+}
+
+// visibleExitNames mirrors do_auto_exits (act.informative.c): closed doors
+// are omitted for mortals; immortals see them marked (R4; gmcpVisibleExits
+// applies the identical rule to GMCP Room.Info).
+func (s *Session) visibleExitNames(room *parser.Room) []string {
+	immortal := s.player.GetLevel() >= game.LVL_IMMORT
+	names := make([]string, 0, len(room.Exits))
+	for _, direction := range game.DirList() {
+		exit, ok := room.Exits[direction]
+		if !ok || exit.ToRoom <= 0 {
+			continue
+		}
+		if exit.ExitInfo&parser.ExitClosed != 0 {
+			if immortal {
+				names = append(names, "("+direction+")")
+			}
+			continue
+		}
+		names = append(names, direction)
+	}
+	return names
+}
+
+// diagBucket maps HP to diag_char_to_char's eight bands
+// (act.informative.c:363-382): 0 excellent, 1 few scratches, 2 small wounds,
+// 3 quite a few wounds, 4 big nasty wounds, 5 pretty hurt, 6 awful, 7 the
+// degenerate max<=0 "bleeding awfully" arm. Index only — never a finer value
+// (R4).
+func diagBucket(hp, maxHP int) int {
+	percent := -1
+	if maxHP > 0 {
+		percent = (100 * hp) / maxHP
+	}
+	switch {
+	case percent >= 100:
+		return 0
+	case percent >= 90:
+		return 1
+	case percent >= 75:
+		return 2
+	case percent >= 50:
+		return 3
+	case percent >= 30:
+		return 4
+	case percent >= 15:
+		return 5
+	case percent >= 0:
+		return 6
+	default:
+		return 7
+	}
+}
+
 // buildRoomMobs returns a []RoomMobVar for every mob in the player's room,
 // with TargetStrings disambiguated when multiple mobs share a keyword.
 func (s *Session) buildRoomMobs() []RoomMobVar {
+	if !s.agentCanSeeRoom() {
+		return []RoomMobVar{}
+	}
 	mobs := s.manager.world.GetMobsInRoom(s.player.GetRoom())
+	// R4: the agent sees the occupants a mortal sees — CAN_SEE-filtered
+	// (invisible mobs hidden unless the viewer sees invisible; look.go:418).
+	visible := mobs[:0:0]
+	for _, mob := range mobs {
+		if game.ChCanSee(s.player, mob) {
+			visible = append(visible, mob)
+		}
+	}
+	mobs = visible
 	if len(mobs) == 0 {
 		return []RoomMobVar{}
 	}
@@ -289,9 +378,8 @@ func (s *Session) buildRoomMobs() []RoomMobVar {
 	for i, mob := range mobs {
 		result[i] = RoomMobVar{
 			Name:         mob.GetShortDesc(),
-			InstanceID:   fmt.Sprintf("mob_%d_%d", mob.VNum, i),
+			InstanceID:   fmt.Sprintf("mob_%d", mob.GetID()),
 			TargetString: targetStrings[i],
-			VNum:         mob.VNum,
 			Fighting:     mob.IsFighting(),
 		}
 	}
@@ -301,7 +389,19 @@ func (s *Session) buildRoomMobs() []RoomMobVar {
 // buildRoomItems returns a []RoomItemVar for every item on the room floor,
 // with TargetStrings disambiguated when multiple items share a keyword.
 func (s *Session) buildRoomItems() []RoomItemVar {
+	if !s.agentCanSeeRoom() {
+		return []RoomItemVar{}
+	}
 	items := s.manager.world.GetItemsInRoom(s.player.GetRoom())
+	// R4: CAN_SEE_OBJ-filtered — invisible items hidden from mortal viewers
+	// (act_informative.c chCanSeeObj).
+	visible := items[:0:0]
+	for _, item := range items {
+		if game.ChCanSeeObj(s.player, item) {
+			visible = append(visible, item)
+		}
+	}
+	items = visible
 	if len(items) == 0 {
 		return []RoomItemVar{}
 	}
@@ -323,9 +423,8 @@ func (s *Session) buildRoomItems() []RoomItemVar {
 	for i, item := range items {
 		result[i] = RoomItemVar{
 			Name:         item.GetShortDesc(),
-			InstanceID:   fmt.Sprintf("obj_%d_%d", item.VNum, i),
+			InstanceID:   fmt.Sprintf("obj_%d", item.GetInstanceID()),
 			TargetString: targetStrings[i],
-			VNum:         item.VNum,
 		}
 	}
 	return result
@@ -335,11 +434,10 @@ func (s *Session) buildRoomItems() []RoomItemVar {
 func (s *Session) buildInventory() []map[string]interface{} {
 	items := s.player.Inventory.FindItems("")
 	result := make([]map[string]interface{}, 0, len(items))
-	for i, item := range items {
+	for _, item := range items {
 		result = append(result, map[string]interface{}{
 			"name":        item.GetShortDesc(),
-			"vnum":        item.VNum,
-			"instance_id": fmt.Sprintf("obj_%d_%d", item.VNum, i),
+			"instance_id": fmt.Sprintf("obj_%d", item.GetInstanceID()),
 		})
 	}
 	return result

@@ -2,6 +2,8 @@
 package game
 
 import (
+	"sync/atomic"
+
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -63,8 +65,14 @@ type ObjectInstance struct {
 }
 
 // NewObjectInstance creates a new object instance from a prototype.
+// objectIDSeq assigns every instance a globally unique ID at construction,
+// so GetInstanceID is stable and distinct even before the world registers the
+// object in its own table (raw-constructed instances previously all read 0).
+var objectIDSeq atomic.Int64
+
 func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 	obj := &ObjectInstance{
+		ID:         int(objectIDSeq.Add(1)),
 		Prototype:  proto,
 		VNum:       proto.VNum,
 		RoomVNum:   roomVNum,

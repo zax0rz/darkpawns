@@ -202,6 +202,9 @@ func CanSee(observer, subject Actor) bool {
 // CanSeeObject reports whether observer can see obj using the canonical
 // CAN_SEE_OBJ rules. Session-owned commands use this viewer-aware boundary
 // instead of duplicating object visibility policy.
+// ChCanSeeObj is the player-typed CAN_SEE_OBJ wrapper for session feeds.
+func ChCanSeeObj(ch *Player, obj *ObjectInstance) bool { return chCanSeeObj(ch, obj) }
+
 func CanSeeObject(observer Actor, obj *ObjectInstance) bool {
 	return canSeeObject(observer, obj)
 }

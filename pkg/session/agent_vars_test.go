@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -597,11 +598,12 @@ func TestBuildRoomMobs(t *testing.T) {
 		t.Fatalf("buildRoomMobs returned %d mobs, want 2", len(mobs))
 	}
 
-	// Should be sorted in iteration order; find goblin by vnum
+	// Should be sorted in iteration order; find goblin by short description
+	// (prototype VNums are no longer exposed — R4)
 	var foundGoblin, foundRat bool
 	for _, m := range mobs {
-		switch m.VNum {
-		case 2001:
+		switch {
+		case strings.Contains(m.Name, "goblin"):
 			foundGoblin = true
 			if m.Name != "A goblin guard" {
 				t.Errorf("goblin name = %q, want %q", m.Name, "A goblin guard")
@@ -615,7 +617,7 @@ func TestBuildRoomMobs(t *testing.T) {
 			if m.TargetString == "" {
 				t.Error("goblin target_string should not be empty")
 			}
-		case 2004:
+		case strings.Contains(m.Name, "rat"):
 			foundRat = true
 			if m.Name != "A rat" {
 				t.Errorf("rat name = %q, want %q", m.Name, "A rat")
@@ -699,14 +701,14 @@ func TestBuildRoomMobs_DifferentKeywords(t *testing.T) {
 	}
 
 	for _, m := range mobs {
-		switch m.VNum {
-		case 2003:
-			if m.TargetString != "ancient" {
-				t.Errorf("dragon target_string = %q, want %q", m.TargetString, "ancient")
+		switch m.TargetString {
+		case "ancient":
+			if !strings.Contains(m.Name, "dragon") {
+				t.Errorf("ancient target is %q, want the dragon", m.Name)
 			}
-		case 2001:
-			if m.TargetString != "goblin" {
-				t.Errorf("goblin target_string = %q, want %q", m.TargetString, "goblin")
+		case "goblin":
+			if !strings.Contains(m.Name, "goblin") {
+				t.Errorf("goblin target is %q", m.Name)
 			}
 		}
 	}
@@ -721,9 +723,10 @@ func TestBuildRoomItems(t *testing.T) {
 	s := makeTestSession(t, m, "Alice", 1001, true)
 	s.wantsStructuredData = true
 
-	// Add items to the room floor
+	// Add items to the room floor; prototype VNums are no longer exposed
+	// (R4), so items are identified by their stable runtime instance IDs.
 	sword := registerObject(t, m, 3001, 1001)
-	_ = registerObject(t, m, 3004, 1001)
+	coin := registerObject(t, m, 3004, 1001)
 
 	// Override the sword's prototype keywords for meaningful testing
 	if sword.Prototype != nil {
@@ -735,27 +738,29 @@ func TestBuildRoomItems(t *testing.T) {
 		t.Fatalf("buildRoomItems returned %d items, want 2", len(items))
 	}
 
+	wantSword := fmt.Sprintf("obj_%d", sword.GetInstanceID())
+	wantCoin := fmt.Sprintf("obj_%d", coin.GetInstanceID())
 	var foundSword, foundCoin bool
 	for _, item := range items {
-		switch item.VNum {
-		case 3001:
+		switch item.InstanceID {
+		case wantSword:
 			foundSword = true
-			if item.Name == "" {
-				t.Error("sword name should not be empty")
-			}
-		case 3004:
+		case wantCoin:
 			foundCoin = true
-			if item.Name == "" {
-				t.Error("coin name should not be empty")
-			}
+		}
+		if item.InstanceID == "" {
+			t.Error("instance_id should not be empty")
+		}
+		if item.TargetString == "" {
+			t.Error("target_string should not be empty")
 		}
 	}
 
 	if !foundSword {
-		t.Error("sword (vnum 3001) not found in room items")
+		t.Error("sword not found in room items")
 	}
 	if !foundCoin {
-		t.Error("coin (vnum 3004) not found in room items")
+		t.Error("coin not found in room items")
 	}
 }
 
@@ -790,9 +795,10 @@ func TestBuildRoomItems_KeywordDisambiguation(t *testing.T) {
 
 	var foundFirst, foundSecond bool
 	for _, item := range items {
-		if item.TargetString == "coin" || item.TargetString == "gold" {
+		switch item.TargetString {
+		case "coin", "gold":
 			foundFirst = true
-		} else if item.VNum == 3004 && (item.TargetString == "2.coin" || item.TargetString == "2.gold" || item.TargetString == "silver") {
+		case "2.coin", "2.gold", "silver":
 			foundSecond = true
 		}
 	}
@@ -863,8 +869,8 @@ func TestBuildInventory_ItemFields(t *testing.T) {
 	if item["name"] != "An iron longsword" {
 		t.Errorf("item name = %v, want %q", item["name"], "An iron longsword")
 	}
-	if item["vnum"] != 3001 {
-		t.Errorf("item vnum = %v, want %v", item["vnum"], 3001)
+	if _, hasVnum := item["vnum"]; hasVnum {
+		t.Error("inventory payload still carries vnum (R4)")
 	}
 	instanceID, ok := item["instance_id"].(string)
 	if !ok || instanceID == "" {
@@ -1095,8 +1101,8 @@ func TestBuildInventory_MultipleItems(t *testing.T) {
 		if _, ok := itemMap["name"]; !ok {
 			t.Errorf("item %d missing 'name'", i)
 		}
-		if _, ok := itemMap["vnum"]; !ok {
-			t.Errorf("item %d missing 'vnum'", i)
+		if _, ok := itemMap["vnum"]; ok {
+			t.Errorf("item %d still carries 'vnum' (R4)", i)
 		}
 		if _, ok := itemMap["instance_id"]; !ok {
 			t.Errorf("item %d missing 'instance_id'", i)
