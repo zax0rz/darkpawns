@@ -107,6 +107,8 @@ func cmdRedit(s *Session, args []string) error {
 		s.reditSend("Saving all rooms in zone.\r\n")
 		game.MudLog(fmt.Sprintf("OLC: %s saves rooms for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveReditZone(s.manager.world, zone); err != nil {
+			// src/redit.c:291-294: only the proven common parent-obstruction fopen arm.
+			logOLCOpenParentFailure(s.manager.world, "wld", "SYSERR: OLC: Cannot open room file!", err)
 			slog.Error("redit disk save failed", "player", s.playerName, "zone", zone.Number, "error", err)
 		}
 		return nil
