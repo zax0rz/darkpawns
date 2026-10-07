@@ -204,6 +204,8 @@ func cmdOedit(s *Session, args []string) error {
 		s.oeditSend("Saving all objects in zone.\r\n")
 		game.MudLog(fmt.Sprintf("OLC: %s saves objects for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveOeditZone(s.manager.world, zone); err != nil {
+			// src/oedit.c:347-350: only the proven common parent-obstruction fopen arm.
+			logOLCOpenParentFailure(s.manager.world, "obj", "SYSERR: OLC: Cannot open objects file!", err)
 			slog.Error("oedit disk save failed",
 				"player", s.playerName, "zone", zone.Number, "error", err)
 		}

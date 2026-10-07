@@ -14,6 +14,7 @@ import (
 func TestOLCDiskMudlogProducers(t *testing.T) {
 	openErrors := map[string]string{
 		"redit": "SYSERR: OLC: Cannot open room file!",
+		"oedit": "SYSERR: OLC: Cannot open objects file!",
 	}
 	for _, tc := range []struct{ command, kind, ack, dir, ext string }{
 		{"redit", "rooms", "Saving all rooms in zone.", "wld", "wld"},
