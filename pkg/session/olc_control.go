@@ -76,6 +76,7 @@ func (s *Session) olcSaveAll() {
 		// is held during delivery; each writer owns the existing zone lock.
 		s.reditSendDirect(fmt.Sprintf("%s saved for zone %d.\r\n", olcSaveLabel(entry.Kind), entry.Zone))
 		if err := saveOLCEntry(s.manager.world, entry); err != nil {
+			logOLCSaveAllFailure(s.manager.world, entry, err)
 			slog.Error("olc disk save failed", "player", s.playerName, "kind", entry.Kind, "zone", entry.Zone, "error", err)
 			return
 		}
@@ -114,4 +115,26 @@ func saveOLCEntry(world *game.World, entry olc.DirtyEntry) error {
 		return fmt.Errorf("unknown OLC kind %q", entry.Kind)
 	}
 	return writer(world, &zone)
+}
+
+// Reuse only the already-proven common fopen/atomic-open parent-obstruction
+// boundary. The approved retry divergence does not widen error classification.
+// No writer, zone, world or save-list lock survives into MudLog delivery.
+func logOLCSaveAllFailure(world *game.World, entry olc.DirtyEntry, err error) {
+	var extension, payload string
+	switch entry.Kind {
+	case olc.KindRoom: // src/redit.c:291-294
+		extension, payload = "wld", "SYSERR: OLC: Cannot open room file!"
+	case olc.KindObject: // src/oedit.c:347-350
+		extension, payload = "obj", "SYSERR: OLC: Cannot open objects file!"
+	case olc.KindZone: // src/zedit.c:368-372
+		extension, payload = "zon", fmt.Sprintf("SYSERR: OLC: zedit_save_to_disk:  Can't write zone %d.", entry.Zone)
+	case olc.KindMob: // src/medit.c:349-352
+		extension, payload = "mob", "SYSERR: OLC: Cannot open mob file!"
+	case olc.KindShop: // src/sedit.c:481-483
+		extension, payload = "shp", "SYSERR: OLC: Cannot open shop file!"
+	default:
+		return
+	}
+	logOLCOpenParentFailure(world, extension, payload, err)
 }
