@@ -31,6 +31,13 @@ import (
 // never leave a truncated file at path. The delivered bytes are identical
 // to a direct write; only the delivery mechanism changes.
 func atomicWriteFile(path string, data []byte, perm os.FileMode) error {
+	return atomicWriteFileRendered(path, func() []byte { return data }, perm)
+}
+
+// atomicWriteFileRendered keeps C's open-before-render boundary for writers
+// whose record scan can emit diagnostics. Other callers use the unchanged
+// byte-buffer wrapper. The renderer runs only after a successful temp open.
+func atomicWriteFileRendered(path string, render func() []byte, perm os.FileMode) error {
 	path = filepath.Clean(path)
 	tmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-*")
 	if err != nil {
@@ -41,7 +48,7 @@ func atomicWriteFile(path string, data []byte, perm os.FileMode) error {
 	// this only fires on the error paths below.
 	defer func() { _ = os.Remove(tmpName) }()
 
-	if _, err := tmp.Write(data); err != nil {
+	if _, err := tmp.Write(render()); err != nil {
 		_ = tmp.Close()
 		return err
 	}

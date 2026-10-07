@@ -37,7 +37,7 @@ func logOLCOpenParentFailure(world *game.World, extension, payload string, err e
 		return
 	}
 	root := world.WorldPath
-	if extension != "wld" {
+	if extension != "wld" && extension != "zon" {
 		parsed := world.GetParsedWorld()
 		if parsed == nil || parsed.SourceDir == "" {
 			return

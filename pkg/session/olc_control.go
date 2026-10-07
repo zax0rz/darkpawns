@@ -105,7 +105,7 @@ func saveOLCEntry(world *game.World, entry olc.DirtyEntry) error {
 	case olc.KindObject:
 		writer = saveOeditZoneLocked
 	case olc.KindZone:
-		writer = saveZeditZoneLocked
+		writer = saveZeditZoneLockedWithDiagnostics
 	case olc.KindMob:
 		writer = saveMeditZoneLocked
 	case olc.KindShop:

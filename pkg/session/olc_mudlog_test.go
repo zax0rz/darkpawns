@@ -17,6 +17,7 @@ func TestOLCDiskMudlogProducers(t *testing.T) {
 		"oedit": "SYSERR: OLC: Cannot open objects file!",
 		"medit": "SYSERR: OLC: Cannot open mob file!",
 		"sedit": "SYSERR: OLC: Cannot open shop file!",
+		"zedit": "SYSERR: OLC: zedit_save_to_disk:  Can't write zone 30.",
 	}
 	for _, tc := range []struct{ command, kind, ack, dir, ext string }{
 		{"redit", "rooms", "Saving all rooms in zone.", "wld", "wld"},
