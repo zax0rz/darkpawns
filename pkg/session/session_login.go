@@ -106,15 +106,18 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		game.GiveStartingSkills(s.player)
 		grantClassSpells(s.player)
 
+		// Publish the guest's identity together, under the manager lock that
+		// session lookups and broadcasts synchronize on (VULN-010).
 		s.manager.mu.Lock()
-
 		s.authenticated = true
-
-		s.manager.mu.Unlock()
 		s.isGuest = true
 		s.playerName = guestName
+		s.manager.mu.Unlock()
 
-		s.manager.loginAttempts.RecordSuccess(ip)
+		// A guest login proves no credential, so it must not clear this IP's
+		// failed-password count (H-15). Recording success here let one free
+		// guest entry after every few wrong passwords keep the lockout from
+		// ever engaging (VULN-006).
 		if err := s.manager.enterWorld(guestName, s); err != nil {
 			return err
 		}
