@@ -29,7 +29,8 @@ controls += [('parse-action-audit','pkg/session/olc_control_reachability_test.go
 controls += [('redit-mode-audit','pkg/session/olc_control_reachability_test.go','if !covered[mode] {','if false && !covered[mode] {','TestCReditDefaultUnreachable')]
 controls += [('redit-description-audit','pkg/session/olc_control_reachability_test.go','if !priority.MatchString(comm) {','if false && !priority.MatchString(comm) {','TestCReditDescriptionUnreachable')]
 controls += [('redit-exit-description-audit','pkg/session/olc_control_reachability_test.go','if !priority.MatchString(comm) {','if false && !priority.MatchString(comm) {','TestCReditExitDescriptionUnreachable')]
-cmd=['go','test','-p','2','./pkg/session','-run','^Test(ReportMudlog.*|ReditInsertionMudlogBoundary|CImprovedEditorDefaultUnreachable|CReditDefaultUnreachable|CReditDescriptionUnreachable|CReditExitDescriptionUnreachable)$','-count=1']
+controls += [('medit-mode-audit','pkg/session/olc_control_reachability_test.go','if !covered[mode] {','if false && !covered[mode] {','TestCMeditDefaultUnreachable')]
+cmd=['go','test','-p','2','./pkg/session','-run','^Test(ReportMudlog.*|ReditInsertionMudlogBoundary|CImprovedEditorDefaultUnreachable|CReditDefaultUnreachable|CReditDescriptionUnreachable|CReditExitDescriptionUnreachable|CMeditDefaultUnreachable)$','-count=1']
 def run(path, overlay=None):
  args=cmd[:2]+(['-overlay='+str(overlay)] if overlay else [])+cmd[2:]
  result=subprocess.run(args, env=dict(os.environ,GOMAXPROCS='2'),text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)

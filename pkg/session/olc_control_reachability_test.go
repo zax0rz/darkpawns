@@ -218,3 +218,5 @@ func TestCReditDescriptionUnreachable(t *testing.T) {
 func TestCReditExitDescriptionUnreachable(t *testing.T) {
 	proveCDescriptionRoute(t, "REDIT_EXIT_DESCRIPTION", "redit_disp_exit_menu")
 }
+
+func TestCMeditDefaultUnreachable(t *testing.T) { proveCEditorModeClosure(t, "MEDIT") }
