@@ -2,6 +2,7 @@ package admin
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -59,7 +60,16 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 		}
 
 		var req loginRequest
+		// The unauthenticated login body is a name and a password: cap it far
+		// below the general admin limit (VULN-027) so this pre-auth surface
+		// cannot be used for oversized allocation at all.
+		r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			var maxErr *http.MaxBytesError
+			if errors.As(err, &maxErr) {
+				http.Error(w, `{"error":"request body too large"}`, http.StatusRequestEntityTooLarge)
+				return
+			}
 			http.Error(w, `{"error":"invalid json"}`, http.StatusBadRequest)
 			return
 		}

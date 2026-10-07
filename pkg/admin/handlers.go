@@ -612,10 +612,11 @@ func playerDetailToResponse(p *game.Player) playerDetailResponse {
 		"cha": p.Stats.Cha,
 	}
 
-	// Build inventory items
+	// Build inventory items (Snapshot: iterating the live Items slice races
+	// gameplay mutations — a fatal concurrent map/slice read, VULN-028)
 	invItems := make([]playerItemResponse, 0)
 	if p.Inventory != nil {
-		for _, item := range p.Inventory.Items {
+		for _, item := range p.Inventory.Snapshot() {
 			name := ""
 			if item.Prototype != nil {
 				name = item.Prototype.ShortDesc
@@ -628,10 +629,10 @@ func playerDetailToResponse(p *game.Player) playerDetailResponse {
 		}
 	}
 
-	// Build equipment items
+	// Build equipment items (Snapshot under eq.mu — same race class, VULN-028)
 	equipItems := make([]playerItemResponse, 0)
 	if p.Equipment != nil {
-		for slot, item := range p.Equipment.Slots {
+		for slot, item := range p.Equipment.Snapshot() {
 			name := ""
 			if item.Prototype != nil {
 				name = item.Prototype.ShortDesc

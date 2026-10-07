@@ -76,10 +76,14 @@ func searchWorld(world *game.World, rawQuery string) worldSearchResponse {
 		room := &rooms[index]
 		add("room", room.VNum, room.Name, room.Zone, room.Description, room.ScriptName)
 	}
-	for _, mob := range world.GetAllMobPrototypes() {
+	mobs := world.GetAllMobPrototypes()
+	for index := range mobs {
+		mob := &mobs[index]
 		add("mob", mob.VNum, mob.ShortDesc, 0, mob.Keywords, mob.LongDesc, mob.DetailedDesc, mob.ScriptName)
 	}
-	for _, object := range world.GetAllObjPrototypes() {
+	objs := world.GetAllObjPrototypes()
+	for index := range objs {
+		object := &objs[index]
 		add("object", object.VNum, object.ShortDesc, 0, object.Keywords, object.LongDesc, object.ActionDesc, object.ScriptName)
 	}
 	for _, shop := range world.GetAllShops() {

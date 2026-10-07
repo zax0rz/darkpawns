@@ -156,9 +156,12 @@ func (s *AgentStore) GetAgents() []*AgentStatus {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	// Value copies: callers encode these after the lock is released, so a
+	// live pointer would race concurrent updates (VULN-031).
 	result := make([]*AgentStatus, 0, len(s.agents))
 	for _, a := range s.agents {
-		result = append(result, a)
+		copyA := *a
+		result = append(result, &copyA)
 	}
 	return result
 }
@@ -176,7 +179,8 @@ func (s *AgentStore) UpdateAgentStatus(agentID, status string) (*AgentStatus, bo
 	}
 	agent.Status = status
 	agent.LastRun = time.Now()
-	return agent, true, s.save()
+	updated := *agent // copy: the caller serializes after unlock (VULN-031)
+	return &updated, true, s.save()
 }
 
 // GetFindings returns findings, optionally filtered.
@@ -234,7 +238,8 @@ func (s *AgentStore) UpdateFindingStatus(id int, status string) (*Finding, bool,
 		if s.findings[i].ID == id {
 			s.findings[i].Status = status
 			s.findings[i].UpdatedAt = time.Now()
-			return &s.findings[i], true, s.save()
+			updated := s.findings[i] // copy: caller serializes after unlock (VULN-031)
+			return &updated, true, s.save()
 		}
 	}
 	return nil, false, nil
@@ -254,7 +259,8 @@ func (s *AgentStore) UpdateFinding(id int, status, linearIssueID string) (*Findi
 				s.findings[i].LinearIssueID = linearIssueID
 			}
 			s.findings[i].UpdatedAt = time.Now()
-			return &s.findings[i], true, s.save()
+			updated := s.findings[i] // copy: caller serializes after unlock (VULN-031)
+			return &updated, true, s.save()
 		}
 	}
 	return nil, false, nil

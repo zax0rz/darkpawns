@@ -234,8 +234,8 @@ func mobView(m *parser.Mob) mobResponse {
 func mobList(world *game.World) []mobResponse {
 	mobs := world.GetAllMobPrototypes()
 	result := make([]mobResponse, 0, len(mobs))
-	for _, m := range mobs {
-		result = append(result, mobView(m))
+	for i := range mobs {
+		result = append(result, mobView(&mobs[i]))
 	}
 	return result
 }
@@ -304,8 +304,8 @@ func objView(o *parser.Obj) objResponse {
 func objList(world *game.World) []objResponse {
 	objs := world.GetAllObjPrototypes()
 	result := make([]objResponse, 0, len(objs))
-	for _, o := range objs {
-		result = append(result, objView(o))
+	for i := range objs {
+		result = append(result, objView(&objs[i]))
 	}
 	return result
 }
