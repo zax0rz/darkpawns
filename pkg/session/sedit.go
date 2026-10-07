@@ -125,6 +125,8 @@ func cmdSedit(s *Session, args []string) error {
 		s.seditSend("Saving all shops in zone.\r\n")
 		game.MudLog(fmt.Sprintf("OLC: %s saves shops for zone %d", s.player.GetName(), zone.Number), game.MudlogComplete, LVL_IMMORT, true)
 		if err := saveSeditZone(s.manager.world, zone); err != nil {
+			// src/sedit.c:481-483: only the proven common parent-obstruction fopen arm.
+			logOLCOpenParentFailure(s.manager.world, "shp", "SYSERR: OLC: Cannot open shop file!", err)
 			slog.Error("sedit disk save failed", "player", s.playerName, "zone", zone.Number, "error", err)
 		}
 		return nil
