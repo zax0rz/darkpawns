@@ -214,3 +214,7 @@ func proveCDescriptionRoute(t *testing.T, mode, menu string) {
 func TestCReditDescriptionUnreachable(t *testing.T) {
 	proveCDescriptionRoute(t, "REDIT_DESC", "redit_disp_menu")
 }
+
+func TestCReditExitDescriptionUnreachable(t *testing.T) {
+	proveCDescriptionRoute(t, "REDIT_EXIT_DESCRIPTION", "redit_disp_exit_menu")
+}
