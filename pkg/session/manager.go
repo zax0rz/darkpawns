@@ -1833,6 +1833,12 @@ func (m *Manager) SessionCount() int {
 	return len(m.sessions)
 }
 
+// World returns the game world this manager serves. The world pointer is
+// set once at construction and never reassigned, so no lock is needed.
+func (m *Manager) World() *game.World {
+	return m.world
+}
+
 // BroadcastToRoom sends a message to all players in a room.
 func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer string) {
 	// Some callers hand over a raw text line instead of a marshaled
