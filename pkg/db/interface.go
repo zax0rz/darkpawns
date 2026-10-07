@@ -20,7 +20,6 @@ type GameStore interface {
 	UpdatePassword(playerID int, hash string) error
 	UpdateDescription(playerID int, description string) error
 	DeletePlayer(playerID int) error
-	GetAccountLockout(name string) (failedAttempts int, lockedUntil *time.Time, err error)
 	RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error)
 	RecordLoginSuccess(name string) error
 	Exec(query string, args ...interface{}) (sql.Result, error)

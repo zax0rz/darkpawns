@@ -169,17 +169,6 @@ func (m *MockDatabase) SavePlayer(p *db.PlayerRecord) error {
 	return nil
 }
 
-// GetAccountLockout satisfies db.GameStore.
-func (m *MockDatabase) GetAccountLockout(name string) (int, *time.Time, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	p, ok := m.players[name]
-	if !ok {
-		return 0, nil, nil
-	}
-	return p.FailedLoginAttempts, p.LockedUntil, nil
-}
-
 // UpdatePassword satisfies db.GameStore.
 func (m *MockDatabase) UpdatePassword(playerID int, hash string) error {
 	m.mu.Lock()

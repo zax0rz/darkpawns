@@ -92,9 +92,6 @@ func TestEntryPasswordAccounting(t *testing.T) {
 			entrySeed(t, database, "Aiko")
 			for attempt := 1; attempt <= 2; attempt++ {
 				s := entrySession(t, database)
-				if !overlay {
-					s.manager.accountLockouts = nil
-				}
 				if err := s.handleLogin(loginMsg("aiko", "")); err != nil {
 					t.Fatal(err)
 				}
@@ -108,9 +105,6 @@ func TestEntryPasswordAccounting(t *testing.T) {
 				}
 				s.CloseSend()
 				good := entrySession(t, database)
-				if !overlay {
-					good.manager.accountLockouts = nil
-				}
 				if attempt == 1 {
 					if err := good.handleLogin(loginMsg("aiko", "  oraclepass")); err != nil {
 						t.Fatal(err)
@@ -216,7 +210,6 @@ func TestEntryPasswordCounterByteView(t *testing.T) {
 				t.Fatal(err)
 			}
 			s := entrySession(t, database)
-			s.manager.accountLockouts = nil
 			if err := s.handleLogin(loginMsg("Aiko", "oraclepass")); err != nil {
 				t.Fatal(err)
 			}
