@@ -271,6 +271,29 @@ func disambiguatedTargetStrings(keywords []string) []string {
 	return result
 }
 
+// objectFeedID returns a stable feed identifier for an object. World-
+// registered objects use their registry ID; raw-constructed objects (rent
+// restore, houses, shops — anything not yet seen by the world's counter)
+// get a per-session sequence number assigned on first sight, stable for the
+// object's life in this session. Never the raw obj.ID when it is 0: every
+// unregistered object shares 0, which would collide in the feed.
+func (s *Session) objectFeedID(item *game.ObjectInstance) string {
+	if id := item.GetInstanceID(); id != 0 {
+		return fmt.Sprintf("obj_%d", id)
+	}
+	s.agentMu.Lock()
+	defer s.agentMu.Unlock()
+	if s.seenObjectIDs == nil {
+		s.seenObjectIDs = make(map[*game.ObjectInstance]int)
+	}
+	if n, ok := s.seenObjectIDs[item]; ok {
+		return fmt.Sprintf("obj_local_%d", n)
+	}
+	s.localObjectSeq++
+	s.seenObjectIDs[item] = s.localObjectSeq
+	return fmt.Sprintf("obj_local_%d", s.localObjectSeq)
+}
+
 // agentCanSeeRoom is the mortal's own sight gate (look_at_room's darkness
 // branch, look.go:216-227): blind, or a dark room without infravision /
 // holy-light, suppresses the room exactly as "Darkness" does on screen
@@ -423,7 +446,7 @@ func (s *Session) buildRoomItems() []RoomItemVar {
 	for i, item := range items {
 		result[i] = RoomItemVar{
 			Name:         item.GetShortDesc(),
-			InstanceID:   fmt.Sprintf("obj_%d", item.GetInstanceID()),
+			InstanceID:   s.objectFeedID(item),
 			TargetString: targetStrings[i],
 		}
 	}
@@ -437,7 +460,7 @@ func (s *Session) buildInventory() []map[string]interface{} {
 	for _, item := range items {
 		result = append(result, map[string]interface{}{
 			"name":        item.GetShortDesc(),
-			"instance_id": fmt.Sprintf("obj_%d", item.GetInstanceID()),
+			"instance_id": s.objectFeedID(item),
 		})
 	}
 	return result

@@ -738,8 +738,8 @@ func TestBuildRoomItems(t *testing.T) {
 		t.Fatalf("buildRoomItems returned %d items, want 2", len(items))
 	}
 
-	wantSword := fmt.Sprintf("obj_%d", sword.GetInstanceID())
-	wantCoin := fmt.Sprintf("obj_%d", coin.GetInstanceID())
+	wantSword := s.objectFeedID(sword)
+	wantCoin := s.objectFeedID(coin)
 	var foundSword, foundCoin bool
 	for _, item := range items {
 		switch item.InstanceID {

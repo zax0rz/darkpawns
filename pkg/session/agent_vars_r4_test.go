@@ -158,6 +158,41 @@ func TestRoomVarsCarryNoVNums(t *testing.T) {
 	}
 }
 
+// Bug 4 (objects): raw-constructed objects share registry ID 0 — the feed
+// must still hand out distinct, stable identifiers (session-local when the
+// world has not registered the object). Two dropped-but-unregistered objects
+// and a rebuilt list must show two different, unchanged IDs.
+func TestUnregisteredObjectFeedIDsDistinctAndStable(t *testing.T) {
+	w, _ := r4World(t)
+	m := newTestManager(t, w, nil)
+	s := makeTestSession(t, m, "Dropper", 1001, true)
+
+	a := game.NewObjectInstance(&parser.Obj{VNum: 6001, Keywords: "sword", ShortDesc: "a sword", LongDesc: "A sword."}, -1)
+	b := game.NewObjectInstance(&parser.Obj{VNum: 6001, Keywords: "sword", ShortDesc: "a sword", LongDesc: "A sword."}, -1)
+	if err := w.MoveObjectToRoom(a, 1001); err != nil {
+		t.Fatalf("drop a: %v", err)
+	}
+	if err := w.MoveObjectToRoom(b, 1001); err != nil {
+		t.Fatalf("drop b: %v", err)
+	}
+
+	first := s.buildRoomItems()
+	if len(first) != 2 {
+		t.Fatalf("precondition: 2 items, got %d", len(first))
+	}
+	if first[0].InstanceID == first[1].InstanceID {
+		t.Fatalf("unregistered objects share feed ID %q", first[0].InstanceID)
+	}
+	if !strings.HasPrefix(first[0].InstanceID, "obj_") && !strings.HasPrefix(first[0].InstanceID, "obj_local_") {
+		t.Fatalf("feed ID %q has unexpected shape", first[0].InstanceID)
+	}
+
+	second := s.buildRoomItems()
+	if second[0].InstanceID != first[0].InstanceID || second[1].InstanceID != first[1].InstanceID {
+		t.Fatalf("feed IDs unstable across rebuilds: %q/%q -> %q/%q", first[0].InstanceID, first[1].InstanceID, second[0].InstanceID, second[1].InstanceID)
+	}
+}
+
 // Bug 4: InstanceIDs derive from world-assigned runtime IDs — killing one mob
 // must not shift any survivor's identifier.
 func TestInstanceIDsStableAcrossDeaths(t *testing.T) {

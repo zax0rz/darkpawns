@@ -1911,9 +1911,13 @@ type Session struct {
 	// agentMu protects all agent-related state from concurrent access.
 	// readPump goroutine and combat ticker goroutine (via DamageFunc) both
 	// call markDirty/flushDirtyVars which touch the maps below.
-	agentMu             sync.Mutex
-	subscribedVars      map[string]bool // vars this session subscribed to
-	dirtyVars           map[string]bool // vars changed since last flush
+	agentMu        sync.Mutex
+	subscribedVars map[string]bool // vars this session subscribed to
+	dirtyVars      map[string]bool // vars changed since last flush
+	// seenObjectIDs gives feed-stable local IDs to objects constructed
+	// outside the world's registry (raw constructors all carry ID 0).
+	seenObjectIDs       map[*game.ObjectInstance]int
+	localObjectSeq      int
 	wantsStructuredData bool
 	// gmcp is the telnet GMCP negotiation and change-tracking state; see
 	// gmcp.go. It is independent of wantsStructuredData, which also changes
