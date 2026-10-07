@@ -13,6 +13,8 @@
 [fixture]
 empty-players
 quiet-mobs
+set-room-flag 8162 4 off
+force-load 8010
 spawn-mob 16303 1 8162 163
 
 [setup:oracle]
@@ -45,15 +47,18 @@ Y
 
 [warmup]
 goto 8162
+set Stealactor str 25
 load obj 8010
 give bread trainee
 skillset Stealactor 'steal' 100
+set mob trainee gold 0
 
 [probe]
 steal
 steal bread
 steal bread nobody
 steal bread the trainee trailing words
+~dpclock pulse 20
 steal bread trainee
 steal bread trainee
 steal coins trainee
