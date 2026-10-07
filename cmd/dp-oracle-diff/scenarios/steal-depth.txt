@@ -57,6 +57,7 @@ steal
 steal bread
 steal bread nobody
 steal bread the trainee trailing words
+~dpclock pulse 20
 steal bread trainee
 steal bread trainee
 steal coins trainee
