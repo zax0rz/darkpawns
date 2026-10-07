@@ -272,6 +272,17 @@ func (s *Session) handleMessage(data []byte) error {
 	}
 
 	switch msg.Type {
+	case MsgLine, MsgLogin, MsgCommand, MsgCharInput, MsgPagerInput:
+		// Structured clients get the same process_input character pass as a
+		// terminal line (src/comm.c:1965-1982).
+		filtered, err := cInputJSON(msg.Data)
+		if err != nil {
+			return err
+		}
+		msg.Data = filtered
+	}
+
+	switch msg.Type {
 	case MsgTerminal:
 		s.startBrowserTerminal()
 		return nil
