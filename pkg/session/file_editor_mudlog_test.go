@@ -178,3 +178,37 @@ func TestFileEditorDeleteMudlog(t *testing.T) {
 		})
 	}
 }
+
+func TestFileEditorDeleteErrorMudlog(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("permission boundary requires non-root uid")
+	}
+	m, a, watch, _, normal, file := fileEditorLogFixture(t)
+	parent := filepath.Join(m.world.ScriptsDir, "mob")
+	if err := os.Mkdir(parent, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(parent, "probe.lua")
+	if err := os.WriteFile(path, []byte("old\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	below := makeCommandTestSession(t, m, "Errorbelow", 39, 1002)
+	below.player.SetPlrFlag(game.PrfLog1, true)
+	below.player.SetPlrFlag(game.PrfLog2, true)
+	registerTestSession(t, m, below, "Errorbelow")
+	if err := cmdLuaEdit(a, []string{"mob", "probe"}); err != nil {
+		t.Fatal(err)
+	}
+	drainSessionText(t, a)
+	a.handleTextEditInput("/c")
+	drainSessionText(t, a)
+	if err := os.Chmod(parent, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(parent, 0o700) })
+	a.handleTextEditInput("/s")
+	fileEditorExpectLog(t, a, watch, below, normal, file, "SYSERR: Can't delete file 'scripts/mob/probe.lua'.", "")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal("failed removal lost file", err)
+	}
+}

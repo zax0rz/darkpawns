@@ -349,6 +349,11 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		if state.killOnEmpty && state.buffer == "" {
 			err := killEditorFile(state.path)
 			if err != nil {
+
+				// src/file-edit.c:38-41: readable target, failed removal.
+				if state.storage != "" {
+					game.MudLog(fmt.Sprintf("SYSERR: Can't delete file '%s'.", state.storage), game.MudlogComplete, game.LVL_IMPL, true)
+				}
 				slog.Error("luaedit delete failed", "player", s.playerName, "file", state.path, "error", err)
 			} else {
 				// src/file-edit.c:44: after kill_file, before ack/cleanup.
