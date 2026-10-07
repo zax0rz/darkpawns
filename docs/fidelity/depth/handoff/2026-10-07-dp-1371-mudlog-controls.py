@@ -26,7 +26,8 @@ controls += [
  ('room-replacement-gate','pkg/game/world_redit.go','if existed {','if false && existed {','TestReditInsertionMudlogBoundary'),
 ]
 controls += [('parse-action-audit','pkg/session/olc_control_reachability_test.go','if !covered[argument] {','if false && !covered[argument] {','TestCImprovedEditorDefaultUnreachable')]
-cmd=['go','test','-p','2','./pkg/session','-run','^Test(ReportMudlog.*|ReditInsertionMudlogBoundary|CImprovedEditorDefaultUnreachable)$','-count=1']
+controls += [('redit-mode-audit','pkg/session/olc_control_reachability_test.go','if !covered[mode] {','if false && !covered[mode] {','TestCReditDefaultUnreachable')]
+cmd=['go','test','-p','2','./pkg/session','-run','^Test(ReportMudlog.*|ReditInsertionMudlogBoundary|CImprovedEditorDefaultUnreachable|CReditDefaultUnreachable)$','-count=1']
 def run(path, overlay=None):
  args=cmd[:2]+(['-overlay='+str(overlay)] if overlay else [])+cmd[2:]
  result=subprocess.run(args, env=dict(os.environ,GOMAXPROCS='2'),text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)

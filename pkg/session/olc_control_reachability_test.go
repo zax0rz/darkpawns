@@ -84,3 +84,70 @@ func TestCImprovedEditorDefaultUnreachable(t *testing.T) {
 		t.Fatal("audit accepted an unhandled real caller")
 	}
 }
+
+func auditCEditorModeClosure(source, prefix string) error {
+	lower := strings.ToLower(prefix)
+	definition := regexp.MustCompile(`\b` + lower + `_parse\s*\([^;{}]*\)\s*\{`).FindStringIndex(source)
+	cleanup := regexp.MustCompile(`\b` + lower + `_string_cleanup\s*\([^;{}]*\)\s*\{`).FindStringIndex(source)
+	if definition == nil || cleanup == nil || definition[0] >= cleanup[0] {
+		return fmt.Errorf("changed %s parser/cleanup shape", prefix)
+	}
+	parser := source[definition[0]:cleanup[0]]
+	covered := map[string]bool{}
+	for _, m := range regexp.MustCompile(`\bcase\s+(`+prefix+`_[A-Z_]+)\s*:`).FindAllStringSubmatch(parser, -1) {
+		covered[m[1]] = true
+	}
+	// This mode has no parser arm: input goes to string_add until its
+	// synchronous cleanup restores the extra-description menu.
+	if prefix == "REDIT" {
+		setup := regexp.MustCompile(`OLC_MODE\s*\(d\)\s*=\s*REDIT_EXTRADESC_DESCRIPTION;[\s\S]*?return;`).FindString(source)
+		cleanupBody := source[cleanup[0]:]
+		if !strings.Contains(setup, "string_write(d,") ||
+			!strings.Contains(cleanupBody, "case REDIT_EXTRADESC_DESCRIPTION:") ||
+			!strings.Contains(cleanupBody, "redit_disp_extradesc_menu(d);") {
+			return fmt.Errorf("changed extra-description string routing")
+		}
+		covered["REDIT_EXTRADESC_DESCRIPTION"] = true
+	}
+	writes := regexp.MustCompile(`OLC_MODE\s*\(d\)\s*=\s*([^;]+);`).FindAllStringSubmatch(source, -1)
+	if len(writes) == 0 {
+		return fmt.Errorf("no mode writers")
+	}
+	if regexp.MustCompile(`OLC_MODE\s*\(d\)\s*(\+\+|--|\+=|-=)`).MatchString(source) {
+		return fmt.Errorf("dynamic mode writer")
+	}
+	for _, m := range writes {
+		mode := strings.TrimSpace(m[1])
+		if !covered[mode] {
+			return fmt.Errorf("unhandled/dynamic mode %q", mode)
+		}
+	}
+	return nil
+}
+
+func proveCEditorModeClosure(t *testing.T, prefix string) {
+	t.Helper()
+	source := controlCSource(t, strings.ToLower(prefix)+".c")
+	if err := auditCEditorModeClosure(source, prefix); err != nil {
+		t.Fatal(err)
+	}
+	changed := strings.Replace(source, "OLC_MODE(d) = "+prefix+"_MAIN_MENU;", "OLC_MODE(d) = 999;", 1)
+	if changed == source {
+		t.Fatal("missing main-menu assignment")
+	}
+	if err := auditCEditorModeClosure(changed, prefix); err == nil {
+		t.Fatal("mode audit accepted an unknown mode")
+	}
+	changed = strings.ReplaceAll(source, "case "+prefix+"_ALIAS:", "case 999:")
+	if prefix == "REDIT" {
+		changed = strings.ReplaceAll(source, "case REDIT_NAME:", "case 999:")
+	}
+	if changed == source {
+		t.Fatal("missing parser case")
+	}
+	if err := auditCEditorModeClosure(changed, prefix); err == nil {
+		t.Fatal("mode audit accepted an unhandled assigned mode")
+	}
+}
+
+func TestCReditDefaultUnreachable(t *testing.T) { proveCEditorModeClosure(t, "REDIT") }
