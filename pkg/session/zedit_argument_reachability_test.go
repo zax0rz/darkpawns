@@ -173,3 +173,5 @@ func TestCZeditArg2DisplayDefaultUnreachable(t *testing.T) { proveCZeditArgument
 func TestCZeditArg3DisplayDefaultUnreachable(t *testing.T) { proveCZeditArgumentBranch(t, "display3") }
 
 func TestCZeditArg1ParseDefaultUnreachable(t *testing.T) { proveCZeditArgumentBranch(t, "parse1") }
+
+func TestCZeditArg2ParseDefaultUnreachable(t *testing.T) { proveCZeditArgumentBranch(t, "parse2") }

@@ -15,6 +15,7 @@ controls += [('argument-display1','pkg/session/zedit_argument_reachability_test.
 controls += [('argument-display2','pkg/session/zedit_argument_reachability_test.go','if !seen[string(command)] {','if false && !seen[string(command)] {','TestCZeditArg2DisplayDefaultUnreachable')]
 controls += [('argument-display3','pkg/session/zedit_argument_reachability_test.go','if !seen[string(command)] {','if false && !seen[string(command)] {','TestCZeditArg3DisplayDefaultUnreachable')]
 controls += [('argument-parse1','pkg/session/zedit_argument_reachability_test.go','if !seen[string(command)] {','if false && !seen[string(command)] {','TestCZeditArg1ParseDefaultUnreachable')]
+controls += [('argument-parse2','pkg/session/zedit_argument_reachability_test.go','if !seen[string(command)] {','if false && !seen[string(command)] {','TestCZeditArg2ParseDefaultUnreachable')]
 for name,file,before,after,test in controls:
  if a.case and a.case!=name:continue
  source=pathlib.Path(file).read_text();assert source.count(before)==1,(name,source.count(before))
