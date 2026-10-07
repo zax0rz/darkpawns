@@ -63,6 +63,11 @@ type ObjectInstance struct {
 }
 
 // NewObjectInstance creates a new object instance from a prototype.
+// NewObjectInstance constructs an object WITHOUT registering it with the
+// world: ID stays 0 and container moves by ID will reject it. Only ephemeral
+// display/comparison probes (vstat, shop-produced checks) and tests may use
+// this; every live game object must come from World.NewObjectFromProto or
+// World.SpawnObject so it carries a registry identity.
 func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 	obj := &ObjectInstance{
 		Prototype:  proto,

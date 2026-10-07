@@ -351,10 +351,15 @@ func cmdBuy(s *Session, args []string) error {
 			break
 		}
 
-		// Create item. The atomic spend precedes the hand-over, so a failed
-		// add must refund — otherwise a full inventory eats the gold.
-		item := game.NewObjectInstance(matchedProto, -1)
+		// Create item — registered with the world so it carries a container-
+		// capable identity (C's read_object links every object; a bare
+		// instance kept ID 0 and put-into-container failed). The atomic spend
+		// precedes the hand-over, so a failed add must refund — otherwise a
+		// full inventory eats the gold.
+		item := s.manager.world.NewObjectFromProto(matchedProto, -1)
 		if err := s.player.Inventory.AddItem(item); err != nil {
+			// The registered item never reached the buyer: unregister it.
+			s.manager.world.ExtractObject(item, -1)
 			s.player.AddGold(pricePerItem)
 			break
 		}

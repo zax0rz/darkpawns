@@ -2,8 +2,6 @@ package game
 
 import (
 	"encoding/json"
-	"fmt"
-	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -36,30 +34,6 @@ func SerializeInventory(inv *Inventory, worldObjs map[int]*parser.Obj) ([]byte, 
 	return json.Marshal(data)
 }
 
-// DeserializeInventory creates inventory from JSON bytes.
-func DeserializeInventory(data []byte, worldObjs map[int]*parser.Obj) (*Inventory, error) {
-	var invData InventoryData
-	if err := json.Unmarshal(data, &invData); err != nil {
-		return nil, fmt.Errorf("unmarshal inventory: %w", err)
-	}
-
-	inv := NewInventory()
-	inv.Capacity = invData.Capacity
-
-	// Restore items from VNums - create ObjectInstances
-	for _, vnum := range invData.ItemVnums {
-		if obj, ok := worldObjs[vnum]; ok {
-			objInst := NewObjectInstance(obj, -1) // -1 for inventory
-			inv.Items = append(inv.Items, objInst)
-		} else {
-			// Log warning but continue
-			slog.Warn("object not found in world", "vnum", vnum)
-		}
-	}
-
-	return inv, nil
-}
-
 // SerializeEquipment converts equipment to JSON bytes.
 func SerializeEquipment(eq *Equipment, worldObjs map[int]*parser.Obj) ([]byte, error) {
 	eq.mu.RLock()
@@ -75,33 +49,4 @@ func SerializeEquipment(eq *Equipment, worldObjs map[int]*parser.Obj) ([]byte, e
 	}
 
 	return json.Marshal(data)
-}
-
-// DeserializeEquipment creates equipment from JSON bytes.
-func DeserializeEquipment(data []byte, worldObjs map[int]*parser.Obj, playerName string) (*Equipment, error) {
-	var eqData EquipmentData
-	if err := json.Unmarshal(data, &eqData); err != nil {
-		return nil, fmt.Errorf("unmarshal equipment: %w", err)
-	}
-
-	eq := NewEquipment()
-
-	// Restore slots from VNums - create ObjectInstances
-	for slotName, vnum := range eqData.Slots {
-		slot, ok := ParseEquipmentSlot(slotName)
-		if !ok {
-			slog.Warn("unknown equipment slot", "slot", slotName)
-			continue
-		}
-
-		if obj, ok := worldObjs[vnum]; ok {
-			objInst := NewObjectInstance(obj, -1)
-			objInst.Location = LocEquippedPlayer(playerName, slot)
-			eq.Slots[slot] = objInst
-		} else {
-			slog.Warn("object not found for equipment slot", "vnum", vnum, "slot", slotName)
-		}
-	}
-
-	return eq, nil
 }

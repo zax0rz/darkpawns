@@ -10,8 +10,6 @@ package game
 
 import (
 	"log/slog"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // --------------------------------------------------------------------------
@@ -212,45 +210,3 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 }
 
 // ==========================================================================
-// RestoreItemsFromSave — new function to create ObjectInstances from saved
-// saveItemData, using prototype lookups. This closes the gap between
-// saveDataToPlayer (which creates bare Inventory/Equipment) and the actual
-// item restoration needed after load.
-// ==========================================================================
-func RestoreItemsFromSave(inv []SaveItemData, eq []SaveItemData, getProto func(vnum int) (*parser.Obj, bool)) ([]*ObjectInstance, map[int]*ObjectInstance) {
-	invItems := make([]*ObjectInstance, 0, len(inv))
-	for _, s := range inv {
-		proto, ok := getProto(s.VNum)
-		if !ok {
-			slog.Warn("RestoreItemsFromSave: missing proto", "vnum", s.VNum)
-			continue
-		}
-		obj := NewObjectInstance(proto, -1)
-		if s.State != nil {
-			for k, v := range s.State {
-				obj.CustomData[k] = v
-			}
-			obj.MigrateCustomData()
-		}
-		invItems = append(invItems, obj)
-	}
-
-	eqItems := make(map[int]*ObjectInstance)
-	for _, s := range eq {
-		proto, ok := getProto(s.VNum)
-		if !ok {
-			slog.Warn("RestoreItemsFromSave: missing eq proto", "vnum", s.VNum)
-			continue
-		}
-		obj := NewObjectInstance(proto, -1)
-		if s.State != nil {
-			for k, v := range s.State {
-				obj.CustomData[k] = v
-			}
-			obj.MigrateCustomData()
-		}
-		eqItems[0] = obj // slot mapping handled by AutoEquip
-	}
-
-	return invItems, eqItems
-}

@@ -1361,6 +1361,36 @@ func (w *World) mobileObjectOwnerLocked(id int) *MobInstance {
 	return nil
 }
 
+// registerExistingObject adopts an already-constructed object into the
+// registry, assigning it the next object ID. For restore paths that build
+// via world-free helpers (house loads) and need the registry identity
+// after the fact. Caller must hold no other locks.
+func (w *World) registerExistingObject(obj *ObjectInstance) *ObjectInstance {
+	if obj == nil {
+		return nil
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	obj.ID = w.nextObjID
+	w.nextObjID++
+	w.objectInstances[obj.ID] = obj
+	return obj
+}
+
+// NewObjectFromProto creates a REGISTERED object from a prototype: it enters
+// the world's objectInstances registry with a nextObjID identity, so
+// container moves, world-wide scans, and extraction see it. This is the
+// constructor for every live game object; use SpawnObject when only a vnum
+// is at hand. NewObjectInstance (unregistered, ID 0) is for ephemeral
+// display/comparison probes and tests only — C's read_object links every
+// object into object_list (R1), and the port matches that here.
+func (w *World) NewObjectFromProto(proto *parser.Obj, roomVNum int) *ObjectInstance {
+	if proto == nil {
+		return nil
+	}
+	return w.newObjectInstance(proto, roomVNum)
+}
+
 // SpawnObject spawns an object in the specified room.
 func (w *World) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	w.mu.Lock()

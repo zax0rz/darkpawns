@@ -43,16 +43,24 @@ func (w *World) GetObjPrototypeScriptable(vnum int) scripting.ScriptableObject {
 // otherwise a new instance is created from the object prototype.
 func (w *World) AddItemToRoomScriptable(obj scripting.ScriptableObject, roomVNum int) error {
 	item := objectInstanceFromScriptable(obj)
+	created := false
 	if item == nil {
 		// Fallback: create a new instance from prototype
 		proto, ok := w.GetObjPrototype(obj.GetVNum())
 		if !ok {
 			return fmt.Errorf("AddItemToRoom: prototype vnum %d not found", obj.GetVNum())
 		}
-		item = NewObjectInstance(proto, roomVNum)
+		item = w.NewObjectFromProto(proto, roomVNum)
+		created = true
 	}
 	// C lua_oload's "room" arm is obj_to_room (scripts.c:1144-1147).
-	return w.MoveObjectToRoomFront(item, roomVNum)
+	if err := w.MoveObjectToRoomFront(item, roomVNum); err != nil {
+		if created {
+			w.ExtractObject(item, roomVNum)
+		}
+		return err
+	}
+	return nil
 }
 
 // HandleNonCombatDeathScriptable handles player death from non-combat damage.
