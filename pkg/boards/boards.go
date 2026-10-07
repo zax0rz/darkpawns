@@ -76,8 +76,13 @@ type BoardSystem struct {
 	msgStorage      [NumBoards*MaxBoardMessages + 5]string
 	msgStorageTaken [NumBoards*MaxBoardMessages + 5]bool
 	writingSlots    map[int]bool
-	loaded          bool
-	BasePath        string // directory for board save files
+	// writerSlots binds each in-progress post to the writer who opened it —
+	// C's desc->str pointer (boards.c:268). Keyed by name: the port's
+	// WriteMagic token identifies only the board, so append/revise/finalize
+	// must not resolve "newest message on the board" (VULN-012).
+	writerSlots map[string]int
+	loaded      bool
+	BasePath    string // directory for board save files
 
 	// world is the minimal world surface required for room-level echoes.
 	// Set via SetWorld() after BoardSystem construction.
@@ -126,6 +131,7 @@ func InitBoards(basePath string) *BoardSystem {
 		boards:       make([]BoardInfo, NumBoards),
 		BasePath:     basePath,
 		writingSlots: make(map[int]bool),
+		writerSlots:  make(map[string]int),
 	}
 	copy(bs.boards, defaultBoardInfo)
 	bs.load()
@@ -373,6 +379,7 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 
 	arg = strings.TrimLeft(arg, " \t\r\n")
 	arg = strings.ReplaceAll(arg, "$$", "$")
+	arg = stripTerminalControls(arg)
 	if len(arg) > 81 {
 		arg = arg[:81]
 	}
@@ -386,6 +393,11 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 	// bytes, whose day-of-month field is space-padded ("Sun Sep  6").
 	tmStr := now.Format("Mon Jan _2 15:04:05 2006")
 	heading := fmt.Sprintf("%6.10s %-12s :: %s", tmStr, "("+ch.GetName()+")", arg)
+
+	// Bind this post to its writer (C desc->str, boards.c:268): appends,
+	// revisions and finalize resolve the writer's own slot, never "newest"
+	// (VULN-012).
+	bs.writerSlots[ch.GetName()] = slot
 
 	idx := bs.numOfMsgs[boardType]
 	bs.msgIndex[boardType][idx] = BoardMsgInfo{
@@ -603,39 +615,78 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 	return true
 }
 
-// AppendBoardLine adds a line of text to the in-progress board message.
-// magic is boardType + BoardMagic, as returned by WriteMessage.
-func (bs *BoardSystem) AppendBoardLine(magic int, line string) {
+// stripTerminalControls removes bytes < 0x20 and 0x7f from board text: the
+// same terminal-safety rule every live speech path applies (session
+// sanitize.go); the board editor was the one stored-text path without it
+// (VULN-013).
+func stripTerminalControls(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r >= 0x20 && r != 0x7f {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// AppendBoardLine adds a line of text to the writer's in-progress board
+// message. magic is boardType + BoardMagic, as returned by WriteMessage; the
+// slot is the writer's own (C desc->str, boards.c:268). The accumulated post
+// is capped at MaxMessageLength exactly as C's string editor does
+// (modify.c:131-148): a first line over the cap is truncated with C's
+// "String too long - Truncated." reply, a later line that would cross it is
+// skipped with C's "String too long.  Last line skipped." reply (VULN-011 —
+// the port previously grew the buffer without bound and the intercept runs
+// ahead of the command rate limiter).
+func (bs *BoardSystem) AppendBoardLine(magic int, ch BoardPlayer, line string) {
 	boardType := magic - BoardMagic
 	if boardType < 0 || boardType >= NumBoards {
 		return
 	}
+	line = stripTerminalControls(line)
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	if bs.numOfMsgs[boardType] == 0 {
+	slot, ok := bs.writerSlots[ch.GetName()]
+	if !ok {
 		return
 	}
-	slot := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1].SlotNum
 	if bs.msgStorage[slot] == "" {
+		if len(line)+3 > MaxMessageLength {
+			// modify.c:132-137 — truncate the first line to the cap and say so.
+			ch.SendMessage("String too long - Truncated.\r\n")
+			line = line[:MaxMessageLength-3] + "\r\n"
+		}
 		bs.msgStorage[slot] = line
 	} else {
+		// +2 for the "\r\n" separator this stored text has not grown yet:
+		// C appends the line break as each line is accepted, so its
+		// accumulated string is already 2 bytes longer at check time
+		// (#1832 review — the check was 2 bytes short, accepting a line C
+		// skips at the edge).
+		if len(bs.msgStorage[slot])+2+len(line)+3 > MaxMessageLength {
+			// modify.c:145-147 — improved editor: skip the line and keep editing.
+			ch.SendMessage("String too long.  Last line skipped.\r\n")
+			return
+		}
 		bs.msgStorage[slot] += "\r\n" + line
 	}
 }
 
 // ReviseBoardLine replaces one line in the in-progress post. This is the
 // improved-editor /e action used by C's parse_action(PARSE_EDIT).
-func (bs *BoardSystem) ReviseBoardLine(magic, lineNumber int, line string) bool {
+func (bs *BoardSystem) ReviseBoardLine(magic int, ch BoardPlayer, lineNumber int, line string) bool {
 	boardType := magic - BoardMagic
 	if boardType < 0 || boardType >= NumBoards || lineNumber < 1 {
 		return false
 	}
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	if bs.numOfMsgs[boardType] == 0 {
+	slot, ok := bs.writerSlots[ch.GetName()]
+	if !ok {
 		return false
 	}
-	msg := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1]
+	msg := BoardMsgInfo{SlotNum: slot}
 	if !bs.writingSlots[msg.SlotNum] {
 		return false
 	}
@@ -654,18 +705,17 @@ func (bs *BoardSystem) ReviseBoardLine(magic, lineNumber int, line string) bool 
 
 // AbortBoardWrite ends an improved-editor session without deleting the post.
 // C saves the still-visible post and asks the author to remove it manually.
-func (bs *BoardSystem) AbortBoardWrite(magic int) {
+func (bs *BoardSystem) AbortBoardWrite(magic int, ch BoardPlayer) {
 	boardType := magic - BoardMagic
 	if boardType < 0 || boardType >= NumBoards {
 		return
 	}
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	if bs.numOfMsgs[boardType] == 0 {
-		return
+	if slot, ok := bs.writerSlots[ch.GetName()]; ok {
+		delete(bs.writingSlots, slot)
+		delete(bs.writerSlots, ch.GetName())
 	}
-	slot := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1].SlotNum
-	delete(bs.writingSlots, slot)
 	if err := bs.saveBoard(boardType); err != nil {
 		slog.Error("board save failed after abort", "board", boardType, "error", err)
 	}
@@ -680,9 +730,9 @@ func (bs *BoardSystem) FinalizeBoardWrite(magic int, ch BoardPlayer) {
 	}
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	if bs.numOfMsgs[boardType] > 0 {
-		slot := bs.msgIndex[boardType][bs.numOfMsgs[boardType]-1].SlotNum
+	if slot, ok := bs.writerSlots[ch.GetName()]; ok {
 		delete(bs.writingSlots, slot)
+		delete(bs.writerSlots, ch.GetName())
 	}
 	if err := bs.saveBoard(boardType); err != nil {
 		slog.Error("board save failed", "board", boardType, "error", err)

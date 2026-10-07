@@ -475,7 +475,7 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 		case "/a":
 			// C's playing_string_cleanup deliberately keeps the post and
 			// tells the author to remove it from the board.
-			s.manager.world.Boards.AbortBoardWrite(s.player.WriteMagic)
+			s.manager.world.Boards.AbortBoardWrite(s.player.WriteMagic, s.player)
 			s.player.WriteMagic = 0
 			s.player.SetPlrFlag(game.PlrWriting, false)
 			s.player.SendMessage("Post not aborted, use REMOVE <post #>.\r\n")
@@ -486,13 +486,13 @@ func (s *Session) handleCommand(data json.RawMessage) error {
 				if len(fields) >= 2 {
 					lineNumber, err := strconv.Atoi(fields[0])
 					text := strings.TrimSpace(rest[len(fields[0]):])
-					if err == nil && s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, lineNumber, text) {
+					if err == nil && s.manager.world.Boards.ReviseBoardLine(s.player.WriteMagic, s.player, lineNumber, text) {
 						s.player.SendMessage("Line changed.\r\n")
 					}
 					return nil
 				}
 			}
-			s.manager.world.Boards.AppendBoardLine(s.player.WriteMagic, line)
+			s.manager.world.Boards.AppendBoardLine(s.player.WriteMagic, s.player, line)
 		}
 		return nil
 	}

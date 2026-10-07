@@ -96,8 +96,8 @@ func TestBoardSystem_InitAndWrite(t *testing.T) {
 		t.Fatalf("WriteMessage magic = %d, want %d", magic, BoardMagic)
 	}
 
-	bs.AppendBoardLine(magic, "first line")
-	bs.AppendBoardLine(magic, "second line")
+	bs.AppendBoardLine(magic, ch, "first line")
+	bs.AppendBoardLine(magic, ch, "second line")
 
 	bs.FinalizeBoardWrite(magic, ch)
 
@@ -136,7 +136,7 @@ func TestBoardSystem_RemoveMsg_LevelCheck(t *testing.T) {
 	remover := newMockBoardPlayer("Eve", 1, 4001)
 
 	magic := bs.WriteMessage(0, poster, "important news")
-	bs.AppendBoardLine(magic, "body text")
+	bs.AppendBoardLine(magic, poster, "body text")
 	bs.FinalizeBoardWrite(magic, poster)
 
 	// Low-level remover cannot remove a high-level poster's message.
@@ -181,7 +181,7 @@ func TestBoardSystem_RemoveMsg_AuthorLevelBoundary(t *testing.T) {
 			if magic != BoardMagic+6 {
 				t.Fatalf("WriteMessage magic = %d, want %d", magic, BoardMagic+6)
 			}
-			bs.AppendBoardLine(magic, "boundary body")
+			bs.AppendBoardLine(magic, author, "boundary body")
 			bs.FinalizeBoardWrite(magic, author)
 
 			boardFile := filepath.Join(dir, info.Filename)
@@ -244,7 +244,7 @@ func TestBoardSystem_RemoveMsg_PreservesAdjacentMessages(t *testing.T) {
 		{heading: "third adjacent", body: "third body"},
 	} {
 		magic := bs.WriteMessage(6, author, post.heading)
-		bs.AppendBoardLine(magic, post.body)
+		bs.AppendBoardLine(magic, author, post.body)
 		bs.FinalizeBoardWrite(magic, author)
 	}
 
@@ -297,7 +297,7 @@ func TestBoardSystem_RemoveMsg_ReadLvl(t *testing.T) {
 	reader := newMockBoardPlayer("Eve", 1, 4001)
 
 	magic := bs.WriteMessage(3, poster, "secret news")
-	bs.AppendBoardLine(magic, "body text")
+	bs.AppendBoardLine(magic, poster, "body text")
 	bs.FinalizeBoardWrite(magic, poster)
 
 	// A player below ReadLvl must be rejected on permission grounds, never
@@ -328,7 +328,7 @@ func TestBoardSystem_RemoveMsg_RoomEcho(t *testing.T) {
 	remover := newMockBoardPlayer("Frank", 60, 7001)
 
 	magic := bs.WriteMessage(0, poster, "removable")
-	bs.AppendBoardLine(magic, "body")
+	bs.AppendBoardLine(magic, poster, "body")
 	bs.FinalizeBoardWrite(magic, poster)
 	world.mu.Lock()
 	world.echoes = nil
@@ -361,7 +361,7 @@ func TestBoardSystem_RemoveMsg_ActivePost(t *testing.T) {
 		t.Fatalf("expected active-post rejection, got %q", remover.lastMessage())
 	}
 
-	bs.AppendBoardLine(magic, "body")
+	bs.AppendBoardLine(magic, poster, "body")
 	bs.FinalizeBoardWrite(magic, poster)
 	if !bs.RemoveMsg(0, remover, "1") {
 		t.Fatal("RemoveMsg(after finalize) = false, want true")
@@ -570,7 +570,7 @@ func TestBoardSystem_SaveFailureNotifiesPlayer(t *testing.T) {
 	if magic != BoardMagic {
 		t.Fatalf("WriteMessage magic = %d, want %d", magic, BoardMagic)
 	}
-	bs.AppendBoardLine(magic, "body")
+	bs.AppendBoardLine(magic, ch, "body")
 	bs.FinalizeBoardWrite(magic, ch)
 
 	if strings.Contains(ch.lastMessage(), "Message written.") {
