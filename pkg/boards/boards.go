@@ -659,7 +659,12 @@ func (bs *BoardSystem) AppendBoardLine(magic int, ch BoardPlayer, line string) {
 		}
 		bs.msgStorage[slot] = line
 	} else {
-		if len(bs.msgStorage[slot])+len(line)+3 > MaxMessageLength {
+		// +2 for the "\r\n" separator this stored text has not grown yet:
+		// C appends the line break as each line is accepted, so its
+		// accumulated string is already 2 bytes longer at check time
+		// (#1832 review — the check was 2 bytes short, accepting a line C
+		// skips at the edge).
+		if len(bs.msgStorage[slot])+2+len(line)+3 > MaxMessageLength {
 			// modify.c:145-147 — improved editor: skip the line and keep editing.
 			ch.SendMessage("String too long.  Last line skipped.\r\n")
 			return

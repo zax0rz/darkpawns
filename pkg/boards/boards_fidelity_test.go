@@ -69,6 +69,49 @@ func TestBoardEditorBoundToWriterSlot(t *testing.T) {
 	}
 }
 
+// The edge of the cap, exactly (#1832 review): a line that fits only if the
+// deferred "\r\n" separator is ignored must be skipped, because C's stored
+// string already carries its line break at check time. One byte smaller is
+// accepted. No scenario writes 4,096 bytes, so only this test can catch it.
+func TestBoardCapEdgeExactlyTwoBytes(t *testing.T) {
+	bs := InitBoards(t.TempDir())
+	magic, ch := writeStart(t, bs, "Edge", 0)
+
+	first := strings.Repeat("a", 100)
+	bs.AppendBoardLine(magic, ch, first)
+
+	// Sizes the second line so len(first)+len(second)+3 == Max exactly — the
+	// old check accepted it; C (stored text already ends in a break) skips it.
+	edgeLen := MaxMessageLength - 3 - len(first)
+	bs.AppendBoardLine(magic, ch, strings.Repeat("b", edgeLen))
+	if !strings.Contains(ch.lastMessage(), "String too long.  Last line skipped.") {
+		t.Fatalf("edge line (old-check-exact) appended: last reply = %q, want C's skip reply", ch.lastMessage())
+	}
+	if strings.Contains(bs.msgStorage[bs.writerSlots["Edge"]], "bbb") {
+		t.Fatal("2-byte-window line was stored")
+	}
+
+	// Two bytes smaller (the separator allowance) must still be accepted —
+	// and an accepted line sends no reply, so assert the message count is
+	// unchanged rather than re-reading the stale skip reply.
+	ch.mu.Lock()
+	before := len(ch.messages)
+	ch.mu.Unlock()
+	bs.AppendBoardLine(magic, ch, strings.Repeat("c", edgeLen-2))
+	ch.mu.Lock()
+	after := len(ch.messages)
+	ch.mu.Unlock()
+	if after != before {
+		t.Fatalf("under-edge line produced a reply (%d -> %d): %q", before, after, ch.lastMessage())
+	}
+	if got := len(bs.msgStorage[bs.writerSlots["Edge"]]); got > MaxMessageLength {
+		t.Fatalf("stored %d bytes, want <= %d", got, MaxMessageLength)
+	}
+	if !strings.Contains(bs.msgStorage[bs.writerSlots["Edge"]], "ccc") {
+		t.Fatal("under-edge line was not stored")
+	}
+}
+
 // Every live speech path strips terminal control characters; the board
 // editor was the one stored-text path without the rule, giving every board
 // reader persistent terminal-escape injection (VULN-013).
