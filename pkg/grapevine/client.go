@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +13,71 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
+
+// gameName is the name this game registers under on the Grapevine
+// network. Player presence entries are formatted "Name@GameName".
+const gameName = "Dark Pawns"
+
+// Mode selects how much of the Grapevine network the game takes part
+// in, via the GRAPEVINE_MODE environment variable.
+type Mode int
+
+const (
+	// ModeOff disables the integration entirely: no dial, no presence,
+	// nothing player-visible.
+	ModeOff Mode = iota
+	// ModePresence authenticates and answers heartbeats with the player
+	// list, but subscribes to no channels and never writes to players.
+	// Player-visible bytes are identical to ModeOff.
+	ModePresence
+	// ModeFull additionally subscribes to the gossip channel and bridges
+	// it in both directions.
+	ModeFull
+)
+
+func (m Mode) String() string {
+	switch m {
+	case ModePresence:
+		return "presence"
+	case ModeFull:
+		return "full"
+	default:
+		return "off"
+	}
+}
+
+// resolveMode applies the GRAPEVINE_MODE decision table:
+//
+//   - credentials missing            -> off, regardless of mode
+//   - mode unset (credentials given) -> presence (safe for classic)
+//   - "off" / "presence" / "full"    -> that mode
+//   - anything else                  -> presence; the second return
+//     value carries the invalid raw value so the caller can warn once.
+//
+// ModeFromEnv exposes the resolved mode to other packages (MSSP's
+// INTERMUD field) without the warning path.
+func resolveMode() (Mode, string) {
+	if os.Getenv("GRAPEVINE_CLIENT_ID") == "" || os.Getenv("GRAPEVINE_CLIENT_SECRET") == "" {
+		return ModeOff, ""
+	}
+	switch raw := os.Getenv("GRAPEVINE_MODE"); raw {
+	case "", "presence":
+		return ModePresence, ""
+	case "off":
+		return ModeOff, ""
+	case "full":
+		return ModeFull, ""
+	default:
+		return ModePresence, raw
+	}
+}
+
+// ModeFromEnv returns the Grapevine mode the current environment
+// resolves to.
+func ModeFromEnv() Mode {
+	mode, _ := resolveMode()
+	return mode
+}
 
 type Client struct {
 	world    *game.World
@@ -21,6 +87,12 @@ type Client struct {
 	done     chan struct{}
 	send     chan grapevineMessage
 	stopOnce sync.Once
+
+	mode Mode
+	// reconnectBackoff is the initial delay before reconnecting after a
+	// failed attempt; it doubles per consecutive failure up to a cap.
+	// Tests shrink it to keep the auth-failure case fast.
+	reconnectBackoff time.Duration
 }
 
 // maxMessageSize caps inbound relay frames (C4 parity with the session
@@ -45,9 +117,10 @@ func stripControlChars(s string) string {
 
 func NewClient(world *game.World) *Client {
 	return &Client{
-		world: world,
-		done:  make(chan struct{}),
-		send:  make(chan grapevineMessage, 256),
+		world:            world,
+		done:             make(chan struct{}),
+		send:             make(chan grapevineMessage, 256),
+		reconnectBackoff: 10 * time.Second,
 	}
 }
 
@@ -65,21 +138,32 @@ func (c *Client) Start() {
 		return
 	}
 
+	mode, invalid := resolveMode()
+	if invalid != "" {
+		slog.Warn("Grapevine: invalid GRAPEVINE_MODE, falling back to presence", "value", invalid)
+	}
+	if mode == ModeOff {
+		slog.Info("Grapevine: disabled by GRAPEVINE_MODE=off")
+		return
+	}
+	c.mode = mode
+	slog.Info("Grapevine: starting", "mode", mode.String())
+
 	go c.writeLoop()
 	go c.connectLoop(url, clientID, clientSecret)
 }
 
 func (c *Client) connectLoop(url, clientID, clientSecret string) {
-	backoff := 10 * time.Second
-	maxBackoff := 5 * time.Minute
+	const maxBackoff = 5 * time.Minute
+	backoff := c.reconnectBackoff
 
 	for {
 		c.mu.Lock()
-		if c.closed {
-			c.mu.Unlock()
+		closed := c.closed
+		c.mu.Unlock()
+		if closed {
 			return
 		}
-		c.mu.Unlock()
 
 		slog.Info("Grapevine: attempting to connect to socket", "url", url)
 		dialer := websocket.Dialer{
@@ -88,11 +172,10 @@ func (c *Client) connectLoop(url, clientID, clientSecret string) {
 		conn, _, err := dialer.Dial(url, nil)
 		if err != nil {
 			slog.Error("Grapevine: connection dial failed", "error", err, "retry_in", backoff.String())
-			time.Sleep(backoff)
-			backoff *= 2
-			if backoff > maxBackoff {
-				backoff = maxBackoff
+			if !c.sleepBackoff(backoff) {
+				return
 			}
+			backoff = min(backoff*2, maxBackoff)
 			continue
 		}
 		// The relay is a third-party network: an oversized or malicious frame
@@ -105,58 +188,79 @@ func (c *Client) connectLoop(url, clientID, clientSecret string) {
 		c.conn = conn
 		c.mu.Unlock()
 
-		// Reset backoff on successful connection
-		backoff = 10 * time.Second
+		authed, _ := c.runConnection(conn, clientID, clientSecret)
 
-		if err := c.authenticate(clientID, clientSecret); err != nil {
-			slog.Error("Grapevine: authentication handshake failed", "error", err)
-			_ = conn.Close()
-			continue
-		}
-
-		// Subscribe to gossip channel
-		if err := c.subscribe("gossip"); err != nil {
-			slog.Error("Grapevine: channel subscription failed", "error", err)
-			_ = conn.Close()
-			continue
-		}
-
-		// Wire local gossip callback
-		c.world.SetOnGossip(func(senderName string, msg string) {
-			c.sendGossip(senderName, msg)
-		})
-
-		// Start heartbeat ticker
-		heartbeatDone := make(chan struct{})
-		go c.presenceTicker(heartbeatDone)
-
-		// Run read loop
-		c.readLoop()
-
-		// Cleanup on disconnect
-		close(heartbeatDone)
+		// Cleanup on disconnect: drop the connection and clear the gossip
+		// bridge so local gossip never enqueues into a dead socket.
 		c.mu.Lock()
-		if c.conn != nil {
-			_ = c.conn.Close()
+		if c.conn == conn {
 			c.conn = nil
 		}
-		c.world.SetOnGossip(nil)
 		c.mu.Unlock()
+		_ = conn.Close()
+		c.world.SetOnGossip(nil)
 
 		slog.Info("Grapevine: disconnected, reconnecting in background...")
-		time.Sleep(backoff)
+		// A session that authenticated earns a prompt reconnect; a failed
+		// one backs off on the doubling schedule so a rejected credential
+		// never hot-loops against the relay.
+		if authed {
+			backoff = c.reconnectBackoff
+		}
+		if !c.sleepBackoff(backoff) {
+			return
+		}
+		if !authed {
+			backoff = min(backoff*2, maxBackoff)
+		}
 	}
+}
+
+// sleepBackoff waits out a reconnect delay, returning false if the
+// client was stopped meanwhile.
+func (c *Client) sleepBackoff(d time.Duration) bool {
+	select {
+	case <-time.After(d):
+		return true
+	case <-c.done:
+		return false
+	}
+}
+
+// runConnection authenticates on a fresh socket and serves it until it
+// drops. It reports whether authentication succeeded and whether the
+// failure was an authentication rejection (bad status or close 4000).
+func (c *Client) runConnection(conn *websocket.Conn, clientID, clientSecret string) (authed, authFailed bool) {
+	if err := c.authenticate(clientID, clientSecret); err != nil {
+		slog.Error("Grapevine: authentication handshake failed", "error", err)
+		return false, true
+	}
+	return c.readLoop(conn)
 }
 
 type grapevineMessage struct {
 	Event   string          `json:"event"`
+	Status  string          `json:"status,omitempty"`
 	Payload json.RawMessage `json:"payload"`
 }
 
 func (c *Client) authenticate(clientID, clientSecret string) error {
+	// Protocol (grapevine.haus/docs): "supports" is required and must
+	// contain "channels" — unknown support options get the socket
+	// disconnected. Channel subscriptions ride the auth payload; there
+	// is no separate subscribe step. Presence mode subscribes to
+	// nothing, full mode to gossip.
+	channels := []string{}
+	if c.mode == ModeFull {
+		channels = []string{"gossip"}
+	}
 	payload := map[string]interface{}{
 		"client_id":     clientID,
 		"client_secret": clientSecret,
+		"supports":      []string{"channels"},
+		"channels":      channels,
+		"version":       "1.0.0",
+		"user_agent":    gameName,
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -164,27 +268,6 @@ func (c *Client) authenticate(clientID, clientSecret string) error {
 	}
 	msg := grapevineMessage{
 		Event:   "authenticate",
-		Payload: data,
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.conn == nil {
-		return fmt.Errorf("no connection")
-	}
-	_ = c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-	return c.conn.WriteJSON(msg)
-}
-
-func (c *Client) subscribe(channel string) error {
-	payload := map[string]interface{}{
-		"channel": channel,
-	}
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-	msg := grapevineMessage{
-		Event:   "channels/subscribe",
 		Payload: data,
 	}
 	c.mu.Lock()
@@ -213,42 +296,29 @@ func (c *Client) sendGossip(senderName, message string) {
 	})
 }
 
-func (c *Client) presenceTicker(done chan struct{}) {
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	// Initial presence ping
-	c.sendPresence()
-
-	for {
-		select {
-		case <-ticker.C:
-			c.sendPresence()
-		case <-done:
-			return
-		}
-	}
-}
-
-func (c *Client) sendPresence() {
-	players := c.world.GetAllPlayers()
-	names := make([]string, 0)
+// sendHeartbeat answers a relay heartbeat with the current player list.
+// Presence on Grapevine is heartbeat-driven: three missed replies close
+// the socket (4001). The list holds only the characters a level-1 mortal
+// could see in `who` (World.VisiblePlayersForMortal) — a wizinvis
+// immortal must never be revealed to an external network.
+func (c *Client) sendHeartbeat() {
+	players := c.world.VisiblePlayersForMortal()
+	names := make([]string, 0, len(players))
 	for _, p := range players {
-		if !p.IsNPC() {
-			names = append(names, p.Name)
-		}
+		names = append(names, p.Name+"@"+gameName)
 	}
+	sort.Strings(names)
 
 	payload := map[string]interface{}{
 		"players": names,
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
-		slog.Error("Grapevine: failed to marshal presence", "error", err)
+		slog.Error("Grapevine: failed to marshal heartbeat", "error", err)
 		return
 	}
 	c.enqueue(grapevineMessage{
-		Event:   "players/sign-in",
+		Event:   "heartbeat",
 		Payload: data,
 	})
 }
@@ -295,19 +365,22 @@ type grapevineBroadcast struct {
 	Message string `json:"message"`
 }
 
-func (c *Client) readLoop() {
+// readLoop serves one connected socket until it drops. The relay puts
+// the auth verdict in a top-level "status" field (a sibling of
+// "payload", not inside it). The gossip bridge is installed only after
+// a successful auth in full mode, and heartbeat replies are the only
+// unsolicited traffic presence mode ever sends.
+func (c *Client) readLoop(conn *websocket.Conn) (authed, authFailed bool) {
 	for {
-		c.mu.Lock()
-		conn := c.conn
-		c.mu.Unlock()
-		if conn == nil {
-			return
-		}
-
 		_, message, err := conn.ReadMessage()
 		if err != nil {
+			if closeErr, ok := err.(*websocket.CloseError); ok && closeErr.Code == 4000 {
+				// 4000 = authentication failed at the relay.
+				slog.Error("Grapevine: relay closed the socket: authentication failed (close code 4000)")
+				return authed, true
+			}
 			slog.Warn("Grapevine: read loop connection closed", "error", err)
-			return
+			return authed, false
 		}
 
 		var msg grapevineMessage
@@ -318,13 +391,27 @@ func (c *Client) readLoop() {
 
 		switch msg.Event {
 		case "authenticate":
-			var status struct {
-				Status string `json:"status"`
+			if msg.Status != "success" {
+				slog.Error("Grapevine: authentication rejected by relay", "status", msg.Status)
+				return authed, true
 			}
-			if err := json.Unmarshal(msg.Payload, &status); err == nil {
-				slog.Info("Grapevine: handshake status", "status", status.Status)
+			authed = true
+			slog.Info("Grapevine: authenticated with relay", "mode", c.mode.String())
+			if c.mode == ModeFull {
+				// Wire the local gossip callback only now: before a
+				// successful auth there is no bridge.
+				c.world.SetOnGossip(func(senderName string, msg string) {
+					c.sendGossip(senderName, msg)
+				})
 			}
+		case "heartbeat":
+			c.sendHeartbeat()
 		case "channels/broadcast":
+			// Presence mode never subscribes, so it should never see a
+			// broadcast; if one arrives anyway it reaches no player.
+			if c.mode != ModeFull || !authed {
+				continue
+			}
 			var bc grapevineBroadcast
 			if err := json.Unmarshal(msg.Payload, &bc); err != nil {
 				slog.Error("Grapevine: failed to unmarshal broadcast payload", "error", err)
@@ -355,6 +442,18 @@ func (c *Client) readLoop() {
 					p.SendMessage(formatted)
 				}
 			}
+		case "restart":
+			// The relay announces a restart with an expected downtime;
+			// the socket may drop at any point after this. Log it and let
+			// the reconnect loop handle the drop.
+			var rp struct {
+				Downtime int `json:"downtime"`
+			}
+			if err := json.Unmarshal(msg.Payload, &rp); err == nil {
+				slog.Warn("Grapevine: relay restart announced", "downtime_seconds", rp.Downtime)
+			} else {
+				slog.Warn("Grapevine: relay restart announced")
+			}
 		}
 	}
 }
@@ -367,6 +466,7 @@ func (c *Client) Stop() {
 			_ = c.conn.Close()
 		}
 		c.mu.Unlock()
+		c.world.SetOnGossip(nil)
 		close(c.done)
 	})
 }
