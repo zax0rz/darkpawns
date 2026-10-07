@@ -3,8 +3,6 @@ package session
 
 import (
 	"log/slog"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // logAttrs returns standard structured logging attributes for the session.
@@ -32,14 +30,6 @@ func (s *Session) logAttrs(extra ...slog.Attr) []interface{} {
 		res = append(res, e)
 	}
 	return res
-}
-
-func getExitNames(exits map[string]parser.Exit) []string {
-	var names []string
-	for dir := range exits {
-		names = append(names, dir)
-	}
-	return names
 }
 
 // GetPlayer returns the player associated with this session

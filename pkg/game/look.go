@@ -988,6 +988,16 @@ func (w *World) autoExitsText(ch *Player, room *parser.Room) string {
 	return fmt.Sprintf("%s[ Exits: %s ]%s", cyan, strings.Join(exits, " "), normal)
 }
 
+// DiagCondition is the exported diag_char_to_char condition sentence
+// (act.informative.c:363-382) for agent-facing feeds: the exact bytes a
+// mortal sees, never integer HP (R4).
+func DiagCondition(hp, maxHP int) string { return diagCondition(hp, maxHP) }
+
+// AsActor adapts a combat.Combatant to the Actor interface; nil when the
+// combatant is neither player nor mob. Exported for session-layer visibility
+// checks on combat targets.
+func AsActor(c combat.Combatant) Actor { return asActor(c) }
+
 func diagCondition(hp, maxHP int) string {
 	percent := -1
 	if maxHP > 0 {

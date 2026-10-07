@@ -18,6 +18,9 @@ import (
 // dirList is the canonical direction order.
 var dirList = []string{"north", "east", "south", "west", "up", "down"}
 
+// DirList exposes the C direction order for session-layer exit feeds.
+func DirList() []string { return dirList }
+
 // ---------------------------------------------------------------------------
 // doLook — ACMD(do_look) — room, target, direction, or "read"
 // ---------------------------------------------------------------------------
@@ -33,6 +36,10 @@ func splitArg(arg string) (string, string) {
 	}
 	return parts[0], strings.TrimSpace(parts[1])
 }
+
+// ChCanSee is the exported CAN_SEE char check for session-layer feeds
+// (agents must see the room exactly as the mortal sees it, R4).
+func ChCanSee(ch *Player, target interface{}) bool { return chCanSee(ch, target) }
 
 func chCanSee(ch *Player, target interface{}) bool {
 	return !ch.IsAffected(affBlind)
@@ -51,6 +58,9 @@ func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
 	}
 	return chCanSee(ch, nil)
 }
+
+// ChCanSeeInDark is the exported dark-vision check (infravision/immortal).
+func ChCanSeeInDark(ch *Player) bool { return chCanSeeInDark(ch) }
 
 func chCanSeeInDark(ch *Player) bool {
 	// CAN_SEE_IN_DARK(ch) is exactly AFF_INFRAVISION or PRF_HOLYLIGHT
