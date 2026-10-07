@@ -11,7 +11,6 @@ import (
 // unportedCCommands are C cmd_info rows with no port yet. Each entry cites
 // the issue that tracks it; remove the entry when the command lands.
 var unportedCCommands = map[string]string{
-	"olc":   "DP-1361",
 	"track": "DP-1361",
 }
 
