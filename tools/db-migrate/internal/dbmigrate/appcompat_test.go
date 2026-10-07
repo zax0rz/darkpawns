@@ -2,6 +2,7 @@ package dbmigrate
 
 import (
 	"context"
+	"database/sql"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -158,16 +159,21 @@ func TestApplicationOpensAndMutatesMigratedDatabase(t *testing.T) {
 		t.Errorf("new player id = %d, want above the migrated maximum 42", newcomer.ID)
 	}
 
-	// Lockout state migrated and still behaves.
-	attempts, lockedUntil, err := database.GetAccountLockout("Zax")
-	if err != nil {
-		t.Fatalf("lockout read: %v", err)
+	// Bad-password accounting migrated and still behaves. The per-account
+	// lockout reader is gone (VULN-024 Option D); failed_login_attempts is
+	// C's GET_BAD_PWS count, and locked_until is migrated but no longer read.
+	var attempts int
+	var lockedUntil sql.NullTime
+	if err := database.SQLDB().QueryRow(
+		`SELECT COALESCE(failed_login_attempts, 0), locked_until FROM players WHERE lower(name) = lower(?)`, "Zax",
+	).Scan(&attempts, &lockedUntil); err != nil {
+		t.Fatalf("bad-password state read: %v", err)
 	}
 	if attempts != 3 {
 		t.Errorf("failed_login_attempts = %d, want 3", attempts)
 	}
-	if lockedUntil == nil || !lockedUntil.After(time.Now()) {
-		t.Errorf("locked_until = %v, want a lockout still in force", lockedUntil)
+	if !lockedUntil.Valid || !lockedUntil.Time.After(time.Now()) {
+		t.Errorf("locked_until = %v, want the migrated future timestamp", lockedUntil)
 	}
 	if _, err := database.RecordLoginFailure("newcomer", 3, time.Hour); err != nil {
 		t.Fatalf("record login failure: %v", err)
