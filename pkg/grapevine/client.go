@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +21,26 @@ type Client struct {
 	done     chan struct{}
 	send     chan grapevineMessage
 	stopOnce sync.Once
+}
+
+// maxMessageSize caps inbound relay frames (C4 parity with the session
+// pump's /ws read limit).
+const maxMessageSize = 16384
+
+// stripControlChars removes terminal control characters from relay text
+// before it reaches player terminals. Peer-MUD players author broadcast
+// content; the shared relay authenticates connections, not content. The
+// session package applies the identical rule to every local speech path
+// (sanitize.go) — this brings the one inbound remote path to parity.
+func stripControlChars(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r >= 0x20 && r != 0x7f {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 func NewClient(world *game.World) *Client {
@@ -74,6 +95,10 @@ func (c *Client) connectLoop(url, clientID, clientSecret string) {
 			}
 			continue
 		}
+		// The relay is a third-party network: an oversized or malicious frame
+		// must not translate into unbounded local allocation. Same cap the
+		// session pump applies to /ws (C4).
+		conn.SetReadLimit(maxMessageSize)
 
 		slog.Info("Grapevine: socket connected, starting handshake")
 		c.mu.Lock()
@@ -306,8 +331,12 @@ func (c *Client) readLoop() {
 				continue
 			}
 			if bc.Channel == "gossip" {
+				// Sanitize peer-authored fields: control characters must not
+				// reach player terminals (terminal injection, CWE-150).
+				name, game_ := stripControlChars(bc.Name), stripControlChars(bc.Game)
+				message := stripControlChars(bc.Message)
 				// Format message with premium deep-purple ANSI styling
-				formatted := fmt.Sprintf("\x1B[1;35m[Grapevine] %s@%s gossips, '%s'\033[0m\r\n", bc.Name, bc.Game, bc.Message)
+				formatted := fmt.Sprintf("\x1B[1;35m[Grapevine] %s@%s gossips, '%s'\033[0m\r\n", name, game_, message)
 
 				// Broadcast to all active MUD players who can hear gossip
 				players := c.world.AllPlayers()
