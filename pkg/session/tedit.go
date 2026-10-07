@@ -366,6 +366,11 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		} else {
 			savedText := strings.ReplaceAll(state.buffer, "\r", "")
 			if err := fileedit.AtomicWrite(state.path, []byte(savedText), 0o666); err != nil {
+
+				// src/file-edit.c:47-49: only the proven common fopen boundary.
+				if state.storage != "" && fileEditorOpenParentFailure(err, state.path) {
+					game.MudLog(fmt.Sprintf("SYSERR: Can't write file '%s'.", state.storage), game.MudlogComplete, game.LVL_IMPL, true)
+				}
 				slog.Error("file edit save failed", "player", s.playerName, "file", state.path, "error", err)
 			} else {
 				if state.cacheKey != "" {

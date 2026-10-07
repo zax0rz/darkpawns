@@ -212,3 +212,28 @@ func TestFileEditorDeleteErrorMudlog(t *testing.T) {
 		t.Fatal("failed removal lost file", err)
 	}
 }
+
+func TestFileEditorOpenParentMudlog(t *testing.T) {
+	m, a, watch, _, normal, file := fileEditorLogFixture(t)
+	below := makeCommandTestSession(t, m, "Errorbelow", 39, 1002)
+	below.player.SetPlrFlag(game.PrfLog1, true)
+	below.player.SetPlrFlag(game.PrfLog2, true)
+	registerTestSession(t, m, below, "Errorbelow")
+	parent := filepath.Join(m.world.ScriptsDir, "mob")
+	if err := os.Mkdir(parent, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmdLuaEdit(a, []string{"mob", "probe"}); err != nil {
+		t.Fatal(err)
+	}
+	drainSessionText(t, a)
+	a.handleTextEditInput("data")
+	if err := os.Remove(parent); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(parent, []byte("obstruction"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	a.handleTextEditInput("/s")
+	fileEditorExpectLog(t, a, watch, below, normal, file, "SYSERR: Can't write file 'scripts/mob/probe.lua'.", "")
+}
