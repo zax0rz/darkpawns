@@ -722,6 +722,10 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if runSpecials(s, cmd, args, rawArgs) {
 		return nil
 	}
+	if (cmd == "bug" || cmd == "typo" || cmd == "idea" || cmd == "todo") && rawArgs != "" {
+		s.manager.world.ExecGenWrite(s.player, cmd, strings.ReplaceAll(rawArgs, "$", "$$"))
+		return nil
+	}
 	if cmd == "send" {
 		return cmdSendText(s, args, rawArgs)
 	}

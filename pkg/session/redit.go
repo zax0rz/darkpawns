@@ -291,7 +291,15 @@ func (s *Session) finishReditLocked(save bool) {
 			},
 			Actor:     s.playerName,
 			IPAddress: s.RemoteIP(),
-			Commit:    s.manager.world.CommitEditedRoom,
+			Commit: func(room parser.Room) bool {
+				committed, diagnostics := s.manager.world.CommitEditedRoomWithResetDiagnostics(room)
+				// World lock is released; textEditMu and this zone's save lock
+				// remain held. MudLog delivery never acquires either save lock.
+				for i := 0; i < diagnostics; i++ {
+					game.MudLog("SYSERR: OLC: redit_save_internally: Unknown comand", game.MudlogBrief, LVL_IMMORT, true)
+				}
+				return committed
+			},
 			MarkDirty: func() { reditAddSaveRoom(state.zoneNumber) },
 			Audit: func(event olc.AuditEvent) {
 				audit.LogEvent(audit.AuditEvent{
