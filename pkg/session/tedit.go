@@ -1,10 +1,8 @@
 package session
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -68,8 +66,10 @@ const textEditHelp = "Editor command formats: /<letter>\r\n\r\n" +
 	"/s         -  saves text\r\n"
 
 type textEditState struct {
-	field    textEditField
-	path     string
+	field textEditField
+	path  string
+	// storage is C OLC_STORAGE, independent of host paths and cache keys.
+	storage  string
 	original string
 	buffer   string
 	// cacheKey is non-empty for tedit's process-global static text buffers.
@@ -189,6 +189,7 @@ func (s *Session) startTextEdit(field textEditField) error {
 	state := &textEditState{
 		field:    field,
 		path:     filepath.Join(s.manager.world.LibTextDir, field.filename),
+		storage:  "text/" + field.filename,
 		original: text,
 		buffer:   text,
 		cacheKey: field.filename,
@@ -346,23 +347,37 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		// passed to fputs. That means both the disk file and the live global
 		// become LF-delimited until a later boot/reload reconstructs CRLF.
 		if state.killOnEmpty && state.buffer == "" {
-			err := os.Remove(state.path)
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
+			err := killEditorFile(state.path)
+			if err != nil {
+				// src/file-edit.c:38-41: readable target, failed removal.
+				if state.storage != "" {
+					game.MudLog(fmt.Sprintf("SYSERR: Can't delete file '%s'.", state.storage), game.MudlogComplete, game.LVL_IMPL, true)
+				}
 				slog.Error("luaedit delete failed", "player", s.playerName, "file", state.path, "error", err)
 			} else {
-				slog.Info(fmt.Sprintf("OLC: %s deletes '%s'.", s.playerName, state.path))
+				// src/file-edit.c:44: after kill_file, before ack/cleanup.
+				if state.storage != "" {
+					game.MudLog(fmt.Sprintf("OLC: %s deletes '%s'.", s.fileEditorActorName(), state.storage), game.MudlogComplete, game.LVL_GOD, true)
+				}
 				s.sendTextEditor("Deleted.\r\n")
 				s.forgetScriptFailures(state.path)
 			}
 		} else {
 			savedText := strings.ReplaceAll(state.buffer, "\r", "")
 			if err := fileedit.AtomicWrite(state.path, []byte(savedText), 0o666); err != nil {
+				// src/file-edit.c:47-49: only the proven common fopen boundary.
+				if state.storage != "" && fileEditorOpenParentFailure(err, state.path) {
+					game.MudLog(fmt.Sprintf("SYSERR: Can't write file '%s'.", state.storage), game.MudlogComplete, game.LVL_IMPL, true)
+				}
 				slog.Error("file edit save failed", "player", s.playerName, "file", state.path, "error", err)
 			} else {
 				if state.cacheKey != "" {
 					setTextEditCache(s, state.cacheKey, savedText)
 				}
-				slog.Info(fmt.Sprintf("OLC: %s saves '%s'.", s.playerName, state.path))
+				// src/file-edit.c:57: storage and acting body, before ack/cleanup.
+				if state.storage != "" {
+					game.MudLog(fmt.Sprintf("OLC: %s saves '%s'.", s.fileEditorActorName(), state.storage), game.MudlogComplete, game.LVL_GOD, true)
+				}
 				s.sendTextEditor("Saved.\r\n")
 				s.forgetScriptFailures(state.path)
 			}

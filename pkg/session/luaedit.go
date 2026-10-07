@@ -39,6 +39,7 @@ func do_luaedit(s *Session, args []string) error {
 	arg1, arg2 := luaEditTwoArguments(args)
 	root := luaScriptsDir(s.manager.world)
 	dir := root
+	storageDir := "scripts"
 	if arg1 == "" {
 		// root already selected
 	} else if is_scripts_root(arg1) {
@@ -47,6 +48,7 @@ func do_luaedit(s *Session, args []string) error {
 		// Keep the raw .. components visible to valid_directory and the
 		// traversal guard. filepath.Join would clean them before validation.
 		dir = root + "/" + arg1
+		storageDir += "/" + arg1
 	}
 
 	if arg2 == "" {
@@ -66,7 +68,7 @@ func do_luaedit(s *Session, args []string) error {
 	if s.player.GetLevel() < LVL_HIGOD {
 		err = view_file(s, dir, arg2)
 	} else {
-		err = edit_file(s, dir, arg2, true)
+		err = edit_file(s, dir, storageDir, arg2, true)
 	}
 	if err != nil {
 		s.sendTextEditor(luaEditError)
@@ -231,7 +233,7 @@ func view_file(s *Session, dir, filename string) error {
 // edit_file ports file-edit.c:176-198 and enters the shared improved editor.
 // A file without simultaneous read/write access intentionally starts as an
 // empty buffer, allowing a new file to be created on save.
-func edit_file(s *Session, dir, filename string, killOnEmpty bool) error {
+func edit_file(s *Session, dir, storageDir, filename string, killOnEmpty bool) error {
 	if !valid_filename(filename) {
 		return fmt.Errorf("invalid script filename")
 	}
@@ -269,6 +271,7 @@ func edit_file(s *Session, dir, filename string, killOnEmpty bool) error {
 	return s.startFileEdit(textEditState{
 		field:       textEditField{name: "luaedit", maxBytes: cMaxStringLength},
 		path:        path,
+		storage:     storageDir + "/" + filename,
 		original:    text,
 		buffer:      text,
 		killOnEmpty: killOnEmpty,
