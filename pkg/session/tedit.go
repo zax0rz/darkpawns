@@ -349,7 +349,6 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		if state.killOnEmpty && state.buffer == "" {
 			err := killEditorFile(state.path)
 			if err != nil {
-
 				// src/file-edit.c:38-41: readable target, failed removal.
 				if state.storage != "" {
 					game.MudLog(fmt.Sprintf("SYSERR: Can't delete file '%s'.", state.storage), game.MudlogComplete, game.LVL_IMPL, true)
@@ -366,7 +365,6 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 		} else {
 			savedText := strings.ReplaceAll(state.buffer, "\r", "")
 			if err := fileedit.AtomicWrite(state.path, []byte(savedText), 0o666); err != nil {
-
 				// src/file-edit.c:47-49: only the proven common fopen boundary.
 				if state.storage != "" && fileEditorOpenParentFailure(err, state.path) {
 					game.MudLog(fmt.Sprintf("SYSERR: Can't write file '%s'.", state.storage), game.MudlogComplete, game.LVL_IMPL, true)
