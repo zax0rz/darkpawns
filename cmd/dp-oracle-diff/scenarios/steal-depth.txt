@@ -51,6 +51,7 @@ set Stealactor str 25
 load obj 8010
 give bread trainee
 skillset Stealactor 'steal' 100
+set mob trainee gold 0
 
 [probe]
 steal
