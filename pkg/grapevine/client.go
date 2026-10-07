@@ -15,7 +15,9 @@ import (
 )
 
 // gameName is the name this game registers under on the Grapevine
-// network. Player presence entries are formatted "Name@GameName".
+// network. Heartbeat presence entries are bare player names — the
+// relay already knows which game the connection belongs to. The
+// "Name@Game" form is only for displaying remote players in-game.
 const gameName = "Dark Pawns"
 
 // Mode selects how much of the Grapevine network the game takes part
@@ -305,7 +307,7 @@ func (c *Client) sendHeartbeat() {
 	players := c.world.VisiblePlayersForMortal()
 	names := make([]string, 0, len(players))
 	for _, p := range players {
-		names = append(names, p.Name+"@"+gameName)
+		names = append(names, p.Name)
 	}
 	sort.Strings(names)
 

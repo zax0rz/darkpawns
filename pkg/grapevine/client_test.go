@@ -291,7 +291,9 @@ func TestGrapevineOutboundGossip(t *testing.T) {
 
 // Check 2: heartbeats are answered with the mortal-visible player list.
 // A wizinvis immortal is absent; a visible mortal and a guest are
-// present, formatted Name@Game.
+// present. Names are bare — the relay knows which game this connection
+// belongs to; the Name@Game form is only for displaying remote players
+// in-game.
 func TestGrapevineHeartbeatPresence(t *testing.T) {
 	relay := newFakeRelay(t, "success")
 	relay.setScript(3, nil)
@@ -314,14 +316,17 @@ func TestGrapevineHeartbeatPresence(t *testing.T) {
 			t.Fatalf("heartbeat %d payload: %v", i, err)
 		}
 		joined := strings.Join(payload.Players, ",")
-		if !strings.Contains(joined, "Mortal@Dark Pawns") {
+		if !strings.Contains(joined, "Mortal") {
 			t.Errorf("heartbeat %d players = %v, want Mortal present", i, payload.Players)
 		}
-		if !strings.Contains(joined, "Guest@Dark Pawns") {
+		if !strings.Contains(joined, "Guest") {
 			t.Errorf("heartbeat %d players = %v, want Guest present", i, payload.Players)
 		}
-		if strings.Contains(joined, "Hidden@") {
+		if strings.Contains(joined, "Hidden") {
 			t.Errorf("heartbeat %d players = %v, wizinvis immortal leaked", i, payload.Players)
+		}
+		if strings.Contains(joined, "@") {
+			t.Errorf("heartbeat %d players = %v, want bare names without a game suffix", i, payload.Players)
 		}
 	}
 }
