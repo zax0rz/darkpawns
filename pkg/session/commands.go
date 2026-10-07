@@ -613,9 +613,7 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 			if len(expanded) > 1 {
 				for i, command := range expanded {
 					if i > 0 && s.player.GetWaitState() > 0 {
-						s.inputMu.Lock()
 						s.prependAliasedInputs(expanded[i:])
-						s.inputMu.Unlock()
 						return nil
 					}
 					if i > 0 {
