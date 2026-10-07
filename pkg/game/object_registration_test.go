@@ -1,6 +1,7 @@
 package game
 
 import (
+	"os"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -184,9 +185,54 @@ func TestProbeObjectsStayUnregistered(t *testing.T) {
 	}
 }
 
-// House loads register their objects (via registerExistingObject); nested
-// items are still LOST across save/load — documented, DP-1401, format is
-// Zach's decision.
-func TestHouseLoadRegistersObjects_DocumentsNestingLoss(t *testing.T) {
-	t.Skip("DP-1401: house container save stores runtime ContainerIDs that never match freshly built loads; fixing it changes the save format — Zach's decision. Registration itself is covered by TestBoughtContainerAcceptsPut and the house_load code path.")
+// House loads register what they place, but match saved container IDs on the
+// still-unregistered objects. Saved ContainerIDs are runtime IDs from an
+// earlier process (DP-1401); registering first would hand out fresh IDs in
+// the same small range, and a stored item could be nested inside an
+// unrelated object (here, a sword). Until DP-1401 changes the format, such an
+// item is dropped exactly as before registration existed.
+func TestHouseLoadNestsNothingIntoWrongObject(t *testing.T) {
+	t.Chdir(t.TempDir())
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "House", Zone: 1}},
+		Objs: []parser.Obj{
+			{VNum: 9001, Keywords: "ring", ShortDesc: "a ring", LongDesc: "A ring."},
+			{VNum: 9002, Keywords: "sword", ShortDesc: "a sword", LongDesc: "A sword.", TypeFlag: 5},
+			{VNum: 9003, Keywords: "chest", ShortDesc: "a chest", LongDesc: "A chest.", TypeFlag: 15},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	// The ring's saved ContainerID (2) is a stale runtime ID. Registering in
+	// file order would give the sword ID 2.
+	save := `{"room_vnum":1001,"items":[` +
+		`{"vnum":9001,"container_id":2},` +
+		`{"vnum":9002,"container_id":-1},` +
+		`{"vnum":9003,"container_id":-1}]}`
+	if err := os.MkdirAll("house", 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(HouseGetFilename(1001), []byte(save), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if !w.houseLoad(1001) {
+		t.Fatal("houseLoad returned false")
+	}
+
+	seen := map[int]bool{}
+	for _, obj := range w.GetItemsInRoom(1001) {
+		if obj.ID == 0 || seen[obj.ID] {
+			t.Fatalf("placed object %q has ID %d (unregistered or duplicate)", obj.GetShortDesc(), obj.ID)
+		}
+		seen[obj.ID] = true
+		if !obj.IsContainer() && len(obj.Contains) > 0 {
+			t.Fatalf("%q (not a container) now contains %d object(s): a stale saved ContainerID matched a fresh registry ID", obj.GetShortDesc(), len(obj.Contains))
+		}
+	}
+	if len(seen) != 2 {
+		t.Fatalf("room holds %d objects, want the sword and the chest", len(seen))
+	}
 }

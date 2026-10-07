@@ -82,13 +82,6 @@ func (w *World) houseLoad(vnum int) bool {
 			}
 			return nil, false
 		})
-		// Register with the world (C read_object links every object into
-		// object_list): house objects must carry registry identities like any
-		// other live object. Done post-construction because ObjFromStore is
-		// world-free by design.
-		if obj != nil && obj.ID == 0 {
-			obj = w.registerExistingObject(obj)
-		}
 		if obj == nil {
 			slog.Warn("houseLoad: missing prototype", "vnum", item.VNum)
 			continue
@@ -100,6 +93,11 @@ func (w *World) houseLoad(vnum int) bool {
 	}
 
 	// Place objects in room. Items with container_id >= 0 go into containers.
+	// Matching runs on the still-unregistered objects (ID 0), exactly as
+	// before registration existed: saved ContainerIDs are runtime IDs from a
+	// previous process (DP-1401), and fresh registry IDs could collide with
+	// them and nest an item inside the wrong object.
+	placed := make([]*ObjectInstance, 0, len(objMap))
 	for i, obj := range objMap {
 		item := &saveData.Items[i]
 		if item.ContainerID >= 0 {
@@ -107,14 +105,25 @@ func (w *World) houseLoad(vnum int) bool {
 			for _, candidate := range objMap {
 				if candidate.ID == item.ContainerID {
 					candidate.Contains = append(candidate.Contains, obj)
+					placed = append(placed, obj)
 					break
 				}
 			}
 			continue
 		}
-		// C's house load places objects with obj_to_room (house.c:100),
-		// which prepends.
-		w.AddItemToRoomFront(obj, vnum)
+		placed = append(placed, obj)
+	}
+
+	// Register what was placed (C read_object links every object into
+	// object_list), then put the top-level objects in the room. C's house load
+	// places objects with obj_to_room (house.c:100), which prepends.
+	for _, obj := range placed {
+		w.registerExistingObject(obj)
+	}
+	for i, obj := range objMap {
+		if saveData.Items[i].ContainerID < 0 {
+			w.AddItemToRoomFront(obj, vnum)
+		}
 	}
 
 	return true

@@ -90,6 +90,7 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 			return SkillResult{MessageToRoom: roomMessage}
 		}
 		if err := ch.Inventory.AddItem(obj); err != nil {
+			world.ExtractObject(obj, ch.GetRoom())
 			return SkillResult{MessageToRoom: roomMessage}
 		}
 		// C's do_scrounge hands the found object over with obj_to_char

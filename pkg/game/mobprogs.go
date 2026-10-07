@@ -488,6 +488,8 @@ func (w *World) CreateObject(vnum int, roomVNum int) *ObjectInstance {
 	// new_cmds.c:334/347 drink puddle, gate.c:378 red gate), which prepends.
 	if err := w.MoveObjectToRoomFront(obj, roomVNum); err != nil {
 		slog.Warn("MoveObjectToRoom failed in CreateObject", "obj_vnum", obj.GetVNum(), "room", roomVNum, "error", err)
+		w.ExtractObject(obj, roomVNum)
+		return nil
 	}
 	return obj
 }

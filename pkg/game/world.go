@@ -1361,7 +1361,6 @@ func (w *World) mobileObjectOwnerLocked(id int) *MobInstance {
 	return nil
 }
 
-// SpawnObject spawns an object in the specified room.
 // registerExistingObject adopts an already-constructed object into the
 // registry, assigning it the next object ID. For restore paths that build
 // via world-free helpers (house loads) and need the registry identity
@@ -1392,6 +1391,7 @@ func (w *World) NewObjectFromProto(proto *parser.Obj, roomVNum int) *ObjectInsta
 	return w.newObjectInstance(proto, roomVNum)
 }
 
+// SpawnObject spawns an object in the specified room.
 func (w *World) SpawnObject(objVNum, roomVNum int) (*ObjectInstance, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()

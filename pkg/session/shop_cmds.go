@@ -358,6 +358,8 @@ func cmdBuy(s *Session, args []string) error {
 		// full inventory eats the gold.
 		item := s.manager.world.NewObjectFromProto(matchedProto, -1)
 		if err := s.player.Inventory.AddItem(item); err != nil {
+			// The registered item never reached the buyer: unregister it.
+			s.manager.world.ExtractObject(item, -1)
 			s.player.AddGold(pricePerItem)
 			break
 		}

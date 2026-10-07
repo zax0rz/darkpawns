@@ -419,6 +419,7 @@ func (w *World) decayObjectsInRoom(roomVNum int) {
 							// C's field wear-off spawn is obj_to_room (limits.c:674).
 							if err := w.MoveObjectToRoomFront(spawned, roomVNum); err != nil {
 								slog.Warn("MoveObjectToRoomFront failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
+								w.ExtractObject(spawned, roomVNum)
 							}
 						}
 					}
