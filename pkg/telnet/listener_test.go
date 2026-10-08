@@ -273,17 +273,73 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	}
 }
 
-// mudlogCapture is a complete-syslog immortal observer: level 34 with both
-// syslog bits, so every producer reaches it and it filters nothing. Delivery
-// still passes through game.MudLog's own level/type/writing filters.
-type mudlogCapture struct{ messages []string }
+// mudlogCapture is an immortal observer set: a complete-syslog level-34
+// immortal (who must receive every producer), a level-30 immortal with complete
+// syslog (below the CMP LVL_GOD gate), and a level-34 immortal whose syslog is
+// brief only (below the CMP type gate). Delivery still passes through
+// game.MudLog's own level/type/writing filters.
+type mudlogCapture struct {
+	mu            sync.Mutex
+	messages      []string
+	belowMessages []string
+	briefMessages []string
+}
+
+func newMudlogObserver(name string, level int, flags ...int) *game.Player {
+	p := game.NewCharacter(1, name, game.ClassWarrior, game.RaceHuman)
+	p.Level = level
+	for _, flag := range flags {
+		p.SetPlrFlag(flag, true)
+	}
+	return p
+}
 
 func (c *mudlogCapture) EachSession(fn func(player interface{}, send func(msg string))) {
-	p := game.NewCharacter(1, "Observer", game.ClassWarrior, game.RaceHuman)
-	p.Level = 34
-	p.SetPlrFlag(game.PrfLog1, true)
-	p.SetPlrFlag(game.PrfLog2, true)
-	fn(p, func(msg string) { c.messages = append(c.messages, msg) })
+	fn(newMudlogObserver("Observer", 34, game.PrfLog1, game.PrfLog2), func(msg string) {
+		c.mu.Lock()
+		c.messages = append(c.messages, msg)
+		c.mu.Unlock()
+	})
+	fn(newMudlogObserver("Below", 30, game.PrfLog1, game.PrfLog2), func(msg string) {
+		c.mu.Lock()
+		c.belowMessages = append(c.belowMessages, msg)
+		c.mu.Unlock()
+	})
+	fn(newMudlogObserver("Brief", 34, game.PrfLog1), func(msg string) {
+		c.mu.Lock()
+		c.briefMessages = append(c.briefMessages, msg)
+		c.mu.Unlock()
+	})
+}
+
+// snapshot copies the captured deliveries to the qualified observer.
+func (c *mudlogCapture) snapshot() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]string(nil), c.messages...)
+}
+
+// filtered returns what reached the below-level and brief-syslog observers;
+// both must stay empty for a CMP / LVL_GOD producer.
+func (c *mudlogCapture) filtered() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append(append([]string(nil), c.belowMessages...), c.briefMessages...)
+}
+
+// waitForMessages polls until n deliveries have arrived. The refusal producers
+// run on the accept goroutine after the socket is closed, so the reader cannot
+// simply read the capture once it sees EOF.
+func waitForMessages(t *testing.T, capture *mudlogCapture, n int) []string {
+	t.Helper()
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		got := capture.snapshot()
+		if len(got) >= n || time.Now().After(deadline) {
+			return got
+		}
+		time.Sleep(time.Millisecond)
+	}
 }
 
 // captureMudlog registers the observer for the duration of the test. The
@@ -383,8 +439,8 @@ func TestIdentifyConnectionSlowPerformsNoLookup(t *testing.T) {
 	if identity.Host != "192.000.002.010" || identity.HostResolved {
 		t.Fatalf("identity = %+v, want the padded quad unresolved", identity)
 	}
-	if len(provider.messages) != 0 {
-		t.Fatalf("producer fired in slow mode: %q", provider.messages)
+	if len(provider.snapshot()) != 0 {
+		t.Fatalf("producer fired in slow mode: %q", provider.snapshot())
 	}
 }
 
@@ -404,8 +460,8 @@ func TestIdentifyConnectionFailedLookupLogs(t *testing.T) {
 	if identity.Host != "192.000.002.010" || identity.HostResolved {
 		t.Fatalf("identity = %+v, want the padded quad unresolved", identity)
 	}
-	if len(provider.messages) != 1 || provider.messages[0] != "[ DNS lookup failed on 192.000.002.010. ]\r\n" {
-		t.Fatalf("producer bytes = %q", provider.messages)
+	if got := waitForMessages(t, provider, 1); len(got) != 1 || got[0] != "[ DNS lookup failed on 192.000.002.010. ]\r\n" {
+		t.Fatalf("producer bytes = %q", got)
 	}
 }
 
@@ -430,8 +486,8 @@ func TestIdentifyConnectionResolvedNameIsHost(t *testing.T) {
 	if identity.Host != "client.example.com" || !identity.HostResolved {
 		t.Fatalf("identity = %+v, want the resolved name", identity)
 	}
-	if len(provider.messages) != 0 {
-		t.Fatalf("producer fired on a successful lookup: %q", provider.messages)
+	if len(provider.snapshot()) != 0 {
+		t.Fatalf("producer fired on a successful lookup: %q", provider.snapshot())
 	}
 
 	// In resolved mode C compares the name only: wildhost and double_wild are

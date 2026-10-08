@@ -181,7 +181,7 @@ func serve(ln net.Listener, manager *session.Manager) {
 				identity = identifyConnection(remoteIP, banManager)
 				if identity.Level == game.BanAll {
 					releaseConnectionSlot(remoteIP)
-					_ = conn.Close() //nolint:errcheck // best-effort cleanup
+					refuseBannedConnection(conn, identity.Host)
 					continue
 				}
 			}
@@ -191,12 +191,14 @@ func serve(ln net.Listener, manager *session.Manager) {
 					precomputed = identifyConnection(ip, banManager)
 				}
 				reject := precomputed.Level == game.BanAll
-				if !reject && !completeTLSHandshake(conn) {
+				if reject {
+					releaseConnectionSlot(ip)
+					refuseBannedConnection(conn, precomputed.Host)
+					return
+				}
+				if !completeTLSHandshake(conn) {
 					// A banned address is dropped before any TLS work; everyone
 					// else must finish the handshake before the banner is sent.
-					reject = true
-				}
-				if reject {
 					_ = conn.Close() //nolint:errcheck // best-effort cleanup
 					releaseConnectionSlot(ip)
 					return
@@ -219,6 +221,22 @@ func releaseConnectionSlot(ip string) {
 		delete(connPerIP, ip)
 	}
 	connMu.Unlock()
+}
+
+// refuseBannedConnection ports comm.c:1571-1575: C writes
+// "Sorry, your site is banned.\r\n" to the descriptor, closes it, and only then
+// logs "Connection attempt denied from [%s]" at CMP / LVL_GOD / file TRUE.
+//
+// The refusal bytes go to plain telnet only. The TLS port shares this accept
+// loop and drops a banned address before the handshake, so plaintext written
+// there would be garbage: TLS keeps its bare close and still logs. Callers must
+// not hold connMu — MudLog delivers to sessions and takes their locks.
+func refuseBannedConnection(conn net.Conn, host string) {
+	if !isTLSConn(conn) {
+		_, _ = conn.Write([]byte("Sorry, your site is banned.\r\n"))
+	}
+	_ = conn.Close()
+	game.MudLog(fmt.Sprintf("Connection attempt denied from [%s]", host), game.MudlogComplete, game.LVL_GOD, true)
 }
 
 func ipFromAddr(addr string) string {

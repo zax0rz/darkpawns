@@ -64,6 +64,14 @@ func ListenTLS(port int, manager *session.Manager, certFile, keyFile string) err
 	return nil
 }
 
+// isTLSConn reports whether conn is a TLS-wrapped connection. A banned address
+// is dropped before the handshake, so writing C's plaintext refusal into it
+// would be garbage; the TLS transport keeps its bare close.
+func isTLSConn(conn net.Conn) bool {
+	_, ok := conn.(*tls.Conn)
+	return ok
+}
+
 // completeTLSHandshake finishes the handshake of a TLS connection within
 // tlsHandshakeTimeout and reports whether the connection is usable. Plain
 // connections have no handshake and are always usable.

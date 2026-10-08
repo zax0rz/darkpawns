@@ -1213,7 +1213,10 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	if ipBanLevel == game.BanAll {
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "your site has been banned"))
 		_ = conn.Close()
-		slog.Warn("WebSocket: BanAll connection rejected", "host", mudHost)
+		// comm.c:1573-1574. The transport keeps its own close frame — a
+		// Go-only transport with no C bytes — and logs C's producer with the
+		// host d->host would hold.
+		game.MudLog(fmt.Sprintf("Connection attempt denied from [%s]", mudHost), game.MudlogComplete, game.LVL_GOD, true)
 		return
 	}
 
