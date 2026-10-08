@@ -193,16 +193,34 @@ func (m *Manager) checkOrigin(r *http.Request) bool {
 		}
 	}
 
-	// Allow any origin from localhost/127.0.0.1 regardless of port or scheme.
+	// Allow a localhost/127.0.0.1 origin only when the site being requested
+	// is also local: that is same-host development (a dev server's page
+	// connecting to a local game port). A localhost Origin against the
+	// production Host is a page on the victim's own machine — a malicious
+	// local server or extension page — driving their session (VULN-007).
 	if u, err := url.Parse(origin); err == nil {
-		h := strings.ToLower(u.Hostname())
-		if h == "localhost" || h == "127.0.0.1" {
-			return true
+		originHost := strings.ToLower(u.Hostname())
+		if originHost == "localhost" || originHost == "127.0.0.1" {
+			if isLocalHostHeader(r.Host) {
+				return true
+			}
 		}
 	}
 
 	slog.Warn("rejected WebSocket connection from unauthorized origin", "origin", origin) // #nosec G706
 	return false
+}
+
+// isLocalHostHeader reports whether the request's Host names this machine:
+// localhost or 127.0.0.1 on any port. The Host of a same-host development
+// page's WebSocket handshake matches the origin's; production Host is the
+// public name.
+func isLocalHostHeader(host string) bool {
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	host = strings.ToLower(strings.TrimSpace(host))
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
 // ModerationChecker defines the moderation interface the session layer needs.
