@@ -30,10 +30,10 @@ const (
 	adminTokenMaxAge = 24 * 60 * 60
 )
 
-// adminTokenCookieAttrs is the attribute suffix shared by the login and the
+// adminCookieAttrs is the attribute suffix shared by the login and the
 // clear variant. Path is /admin so the cookie never rides on game or site
 // requests.
-const adminTokenCookieAttrs = "; Path=/admin; Max-Age="
+const adminCookieAttrs = "; Path=/admin; Max-Age="
 
 // adminTokenCookieString renders the login Set-Cookie header value.
 func adminTokenCookieString(token string) string {
@@ -41,7 +41,7 @@ func adminTokenCookieString(token string) string {
 	b.WriteString(adminTokenCookie)
 	b.WriteByte('=')
 	b.WriteString(token)
-	b.WriteString(adminTokenCookieAttrs)
+	b.WriteString(adminCookieAttrs)
 	b.WriteString(strconv.Itoa(adminTokenMaxAge))
 	b.WriteString("; Secure; HttpOnly; SameSite=Strict")
 	return b.String()
@@ -50,7 +50,7 @@ func adminTokenCookieString(token string) string {
 // clearedAdminTokenCookieString renders the logout Set-Cookie header value:
 // an empty value with Max-Age=0 expires the cookie in every browser.
 func clearedAdminTokenCookieString() string {
-	return adminTokenCookie + "=" + adminTokenCookieAttrs + "0; Secure; HttpOnly; SameSite=Strict"
+	return adminTokenCookie + "=" + adminCookieAttrs + "0; Secure; HttpOnly; SameSite=Strict"
 }
 
 // setAdminTokenCookie issues the login cookie on an http.ResponseWriter.
