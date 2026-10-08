@@ -473,6 +473,20 @@ func (a *WorldScriptableAdapter) Log(msg string) {
 	MudLog(msg, MudlogBrief, lvlImmort, false)
 }
 
+// MudLog is the script-level producer's file-TRUE sink: mudlog(msg, typ, level,
+// TRUE). C's run_script and open_lua_file producers (src/scripts.c:1694, 1765,
+// 1779, 1800) write the file as well as broadcasting, and the Bridge's Log is
+// fixed at BRF/LVL_IMMORT/file FALSE.
+//
+// It is a stateless one-line forward to the package producer, mirroring
+// (*World).MudLog in logging.go and the assertion pattern in
+// pkg/spells/affect_spells.go:3516-3521. Adding this method changes no
+// existing signature and adds nothing to the scripting Bridge interface, so no
+// other Bridge implementation moves.
+func (a *WorldScriptableAdapter) MudLog(msg string, typ, level int, toFile bool) {
+	MudLog(msg, typ, level, toFile)
+}
+
 // CanSee is CAN_SEE(me, vict).
 func (a *WorldScriptableAdapter) CanSee(me, vict scripting.CharRef) bool {
 	observer, subject := a.actorFor(&me), a.actorFor(&vict)
