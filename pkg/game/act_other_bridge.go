@@ -105,21 +105,26 @@ func (w *World) ExecDream(ch *Player) { DoDream(w, ch) }
 func (w *World) ExecMobCommand(mobVNum int, cmdStr string) { w.executeMobCommand(mobVNum, cmdStr) }
 
 // ExecBan handles the "ban" admin command (ported from ban.c do_ban).
-// Returns the message to send to the player.
-func (w *World) ExecBan(ch *Player, arg string) string {
+// actorName and invis are the acting body's (R4). DoBan logs inside itself, in
+// C's order (producer, acknowledgement, ban file); ack delivers the
+// acknowledgement bytes.
+func (w *World) ExecBan(actorName string, invis int, arg string, ack func(string)) {
 	if w.Bans == nil {
-		return "Ban system not initialized.\r\n"
+		ack("Ban system not initialized.\r\n")
+		return
 	}
-	return w.Bans.DoBan("./data/badsites", ch.Name, arg)
+	w.Bans.DoBan("./data/badsites", actorName, invis, arg, ack)
 }
 
 // ExecUnban handles the "unban" admin command (ported from ban.c do_unban).
-// Returns the message to send to the player.
-func (w *World) ExecUnban(ch *Player, arg string) string {
+// C's order here is the reverse: the acknowledgement reaches the actor before
+// the producer, so ack must write to the descriptor.
+func (w *World) ExecUnban(actorName string, invis int, arg string, ack func(string)) {
 	if w.Bans == nil {
-		return "Ban system not initialized.\r\n"
+		ack("Ban system not initialized.\r\n")
+		return
 	}
-	return w.Bans.DoUnban("./data/badsites", ch.Name, arg)
+	w.Bans.DoUnban("./data/badsites", actorName, invis, arg, ack)
 }
 
 // ExecWhod handles the "whod" admin command (ported from whod.c do_whod).
