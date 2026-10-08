@@ -2690,7 +2690,10 @@ func (e *Engine) luaCanGet(L *lua.LState) int {
 	if e.world.CanCarryObject(charName, objVNum) {
 		L.Push(lua.LNumber(1))
 	} else {
-		L.Push(lua.LNumber(0))
+		// scripts.c:211-212: CAN_GET_OBJ failing pushes nil, not a number.
+		// Lua treats 0 as true, so the port's 0 made a script's
+		// "if canget(obj) then" take the wrong branch.
+		L.Push(lua.LNil)
 	}
 	return 1
 }
