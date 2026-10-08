@@ -1,0 +1,75 @@
+# Shared C act -> do_broadcast, src/comm.c:2529-2556.
+# Shipped arena, remote recipient, actual nobroadcast toggle, sleeping audience.
+# depth-case: act.arena-broadcast-remote
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Arenaadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Arenaadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Arenapeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Arenapeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8152
+teleport Arenapeer 8004
+
+[probe]
+emote waves at the arena.
+force Arenapeer nobroadcast
+emote bows to the arena.
+force Arenapeer nobroadcast
+force Arenapeer sleep
+emote salutes the sleeping audience.

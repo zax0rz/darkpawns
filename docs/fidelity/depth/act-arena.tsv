@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+act	act	act.arena-broadcast-remote	D3	audience	unit-green	TestArenaActRemoteAndLocal	src/comm.c:2529-2535; src/comm.c:2539-2556	Remote audience, actor exclusion, victim included in broadcast, local room act afterward; TO_ROOM and TO_NOTVICT. Oracle scenario pending. R1/R5h.
+act	act	act.arena-nobroadcast-toggle	D3	audience	unit-green	TestArenaActNoBroadcastToggle	src/comm.c:2549-2550; src/act.other.c:1266-1267	Live toggle writes PrfNoBroad; flag off receives even with legacy NoBroadcast bool true. Positive off control makes path removal fail. R1/R5h.
+act	act	act.arena-invisible-actor	D3	audience	unit-green	TestArenaActInvisibleActor	src/comm.c:2551-2552	Invisible actor hidden from remote mortal, detect-invisible audience receives; positive visibility control makes path removal fail. R1/R5h.
+act	act	act.arena-room-gate	D1	shared	unit-green	TestArenaActNonArenaGate	src/comm.c:2529-2530	Non-arena preserves local act without remote broadcast; enabling arena supplies positive control. R1/R5h.
+act	act	act.arena-sleep-full-text	D3	audience	unit-green	TestArenaActSleepWritingAndFullText	src/comm.c:2543-2554	Sleepers receive, writers do not, full text beyond 128 bytes preserved, TO_CHAR excluded. C buffer overflow is UB (R1a). R1/R5h.
