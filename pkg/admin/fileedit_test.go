@@ -73,6 +73,7 @@ func (f *fileEditFixture) do(method, target string, headers map[string]string, c
 	}
 	req := httptest.NewRequest(method, target, body)
 	req.Header.Set("Authorization", "Bearer "+f.token)
+	req.Header.Set(adminCSRFHeader, "test")
 	req.Header.Set("Content-Type", "application/json")
 	for k, v := range headers {
 		req.Header.Set(k, v)

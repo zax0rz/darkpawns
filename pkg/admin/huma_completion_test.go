@@ -29,6 +29,7 @@ func TestHumaCompletionRoutesPreserveGatesAndSpecificity(t *testing.T) {
 		req := httptest.NewRequest(method, path, strings.NewReader(body))
 		if role != "" {
 			req.Header.Set("Authorization", "Bearer "+generateTestToken(t, role))
+			req.Header.Set(adminCSRFHeader, "test")
 		}
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
@@ -87,11 +88,20 @@ func TestHumaLoginRoundTrip(t *testing.T) {
 	if err := json.Unmarshal(got.Body.Bytes(), &response); err != nil {
 		t.Fatal(err)
 	}
-	if response.PlayerName != "Aidan" || response.Role != "admin" || response.Token == "" {
+	if response.PlayerName != "Aidan" || response.Role != "admin" {
 		t.Fatalf("unexpected login response: %+v", response)
 	}
-	if _, err := auth.ValidateJWT(response.Token); err != nil {
-		t.Fatalf("issued token does not validate: %v", err)
+	if strings.Contains(got.Body.String(), "token") {
+		t.Fatalf("login body must not carry the token (VULN-043): %s", got.Body.String())
+	}
+	// The Huma operation must forward the legacy handler's HttpOnly cookie.
+	setCookie := got.Header().Get("Set-Cookie")
+	if setCookie == "" {
+		t.Fatal("login did not set the admin cookie")
+	}
+	value, _, _ := strings.Cut(strings.TrimPrefix(setCookie, adminTokenCookie+"="), ";")
+	if _, err := auth.ValidateJWT(value); err != nil {
+		t.Fatalf("cookie token does not validate: %v", err)
 	}
 	for range 10 {
 		post("wrong")

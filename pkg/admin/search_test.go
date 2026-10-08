@@ -36,6 +36,7 @@ func TestSearchWorldAcrossEditorKinds(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/admin/search?q=dragon", nil)
 		if token != "" {
 			req.Header.Set("Authorization", "Bearer "+token)
+			req.Header.Set(adminCSRFHeader, "test")
 		}
 		rec := httptest.NewRecorder()
 		router.ServeHTTP(rec, req)

@@ -19,17 +19,21 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
 }
 
 export async function requestResponse(path: string, options?: RequestInit): Promise<Response> {
-  const token = localStorage.getItem('admin_token');
+  // The credential is the HttpOnly /admin cookie (VULN-043); it rides the
+  // same-origin request automatically. X-Requested-With accompanies every
+  // authenticated admin request — the server rejects its absence, and a
+  // cross-site page cannot add a custom header without a preflight the admin
+  // router never approves.
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
+    credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      'X-Requested-With': 'darkpawns-admin',
       ...options?.headers,
     },
   });
   if (res.status === 401) {
-    localStorage.removeItem('admin_token');
     window.location.href = '/login';
     throw new Error('Unauthorized');
   }

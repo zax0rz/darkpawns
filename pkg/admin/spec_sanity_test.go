@@ -37,6 +37,8 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 	wantPaths := map[string][]string{
 		"/health":                               {"get"},
 		"/admin/login":                          {"post"},
+		"/admin/logout":                         {"post"},
+		"/admin/session":                        {"get"},
 		"/admin/zones":                          {"get"},
 		"/admin/server":                         {"get"},
 		"/admin/logs":                           {"get"},

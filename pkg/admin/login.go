@@ -20,9 +20,10 @@ type loginRequest struct {
 	Password   string `json:"password"`
 }
 
-// loginResponse is the JSON shape returned on successful login.
+// loginResponse is the JSON shape returned on successful login. The JWT
+// itself is not in the body: it travels only in the HttpOnly cookie set on
+// this response (VULN-043), so no script can read it back out of the console.
 type loginResponse struct {
-	Token      string `json:"token"`
 	PlayerName string `json:"player_name"`
 	Role       string `json:"role"`
 }
@@ -138,9 +139,12 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 			return
 		}
 
+		// The token's only transport is the HttpOnly cookie; the body carries
+		// just the display identity (VULN-043).
+		setAdminTokenCookie(w, token)
+
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(loginResponse{
-			Token:      token,
 			PlayerName: req.PlayerName,
 			Role:       role,
 		}); err != nil {

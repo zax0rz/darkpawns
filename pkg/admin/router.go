@@ -164,6 +164,14 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Public route: rate-limited exactly like the legacy login, but deliberately
 	// outside the JWT/role middleware used by every authenticated operation.
 	track("/admin/login", wrap(withClientIP(humaMux.ServeHTTP)))
+	// Logout is public like login: clearing one's own cookie is safe without
+	// a credential, and an expired token must not trap the cookie.
+	registerLogoutOperation(ri.api)
+	track("/admin/logout", wrap(requireMethod(http.MethodPost, withClientIP(humaMux.ServeHTTP))))
+	registerSessionOperation(ri.api)
+	// The console's boot-time whoami: any valid credential answers it, so the
+	// gate is the lowest role rather than builder.
+	track("/admin/session", wrap(corsMiddleware(requireRole("player", requireMethod(http.MethodGet, withClientIP(humaMux.ServeHTTP))))))
 	registerZones(ri.api, world)
 	registerServerInfo(ri.api, world, auditLogger)
 	registerLogs(ri.api, logBuffer)
@@ -396,21 +404,29 @@ including <code>ADMIN_UI_DIR</code> if the console lives somewhere else.</p>
 `
 
 // requireRole wraps a handler, rejecting requests that lack the required role.
-// It first ensures a valid JWT is present (parsing the Authorization header if
-// claims aren't already on the context), then enforces the role. This makes
-// the router self-protecting: even if an outer wrapper forgets to install
-// web.AuthMiddleware, protected routes still require a valid bearer token
-// (DP-855). The double validation is harmless — already-set claims skip the
-// parse — and matches what pkg/admin/handlers_test.go's authMiddlewareForTest
-// has always simulated.
+// It first demands the custom CSRF header (VULN-043), then ensures a valid JWT
+// is present — from the HttpOnly admin cookie, from the Authorization Bearer
+// header, or already on the context — and finally enforces the role. This
+// makes the router self-protecting: even if an outer wrapper forgets to
+// install web.AuthMiddleware, protected routes still require a valid
+// credential (DP-855). The double validation is harmless — already-set claims
+// skip the parse — and matches what pkg/admin/handlers_test.go's
+// authMiddlewareForTest has always simulated.
 func requireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Every authenticated request carries a custom header no cross-site
+		// page can attach without a preflight this router never approves —
+		// cookie authentication's CSRF defence in depth.
+		if !hasAdminCSRFHeader(r.Header.Get) {
+			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+			return
+		}
 		claims, ok := auth.GetClaimsFromContext(r.Context())
 		if !ok {
-			// No outer middleware injected claims — parse the bearer token
-			// ourselves. This is the production path today; outer wrapping
-			// is still welcomed as defense-in-depth.
-			parsed, err := claimsFromAuthorization(r)
+			// No outer middleware injected claims — resolve the ambient
+			// credential ourselves. This is the production path today; outer
+			// wrapping is still welcomed as defense-in-depth.
+			parsed, err := claimsFromAmbient(r.Header.Get)
 			if err != nil {
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
@@ -428,13 +444,9 @@ func requireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// claimsFromAuthorization extracts and validates a Bearer JWT from the
-// Authorization header. Returns an error on any failure (missing header,
-// wrong scheme, invalid/expired/wrong-issuer token).
-func claimsFromAuthorization(r *http.Request) (*auth.Claims, error) {
-	return claimsFromBearerHeader(r.Header.Get("Authorization"))
-}
-
+// claimsFromBearerHeader extracts and validates a Bearer JWT from the
+// Authorization header value. Returns an error on any failure (missing
+// header, wrong scheme, invalid/expired/wrong-issuer token).
 func claimsFromBearerHeader(authHeader string) (*auth.Claims, error) {
 	if authHeader == "" {
 		return nil, errNoBearerToken
@@ -446,8 +458,8 @@ func claimsFromBearerHeader(authHeader string) (*auth.Claims, error) {
 	return auth.ValidateJWT(token)
 }
 
-// errNoBearerToken is returned by claimsFromAuthorization when the request
-// has no usable Bearer token. Callers map this to a 401.
+// errNoBearerToken is returned by claimsFromAmbient when the request has no
+// usable Bearer token (and no valid admin cookie). Callers map this to a 401.
 var errNoBearerToken = errors.New("missing or malformed Authorization header")
 
 // corsMiddleware adds CORS headers for allowed origins.
@@ -474,7 +486,9 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		if allowed {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			// X-Requested-With accompanies every authenticated console
+			// request (VULN-043), so the preflight must let it through.
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 		if r.Method == http.MethodOptions {
