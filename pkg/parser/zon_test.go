@@ -529,8 +529,8 @@ func TestParseZonUnknownCommandKeepsConditionalFlag(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(zone.Commands) != 1 || zone.Commands[0] != (ZoneCommand{Command: "Q", IfFlag: 1, Arg1: 30, Arg2: 40}) {
-		t.Fatalf("unknown command fields=%+v, want C three-integer form", zone.Commands)
+	if len(zone.Commands) != 1 || zone.Commands[0] != (ZoneCommand{Command: "Q", IfFlag: 1, Arg1: 30, Arg2: 40, Line: 4}) {
+		t.Fatalf("unknown command fields=%+v, want C three-integer form on zone-file line 4", zone.Commands)
 	}
 }
 
