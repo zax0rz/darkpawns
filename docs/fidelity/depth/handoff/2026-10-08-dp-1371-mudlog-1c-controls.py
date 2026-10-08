@@ -15,24 +15,18 @@ import subprocess
 # comm.c:773-787. The producer is the file's only fmt use, so the revert drops
 # the import too, and the whole repair body goes with it.
 WEIGHT_BLOCK = "\n".join([
-    "\tif obj.GetWeight() == obj.Prototype.Weight {",
-    "\t\treturn",
-    "\t}",
-    "\tif len(obj.Contains) != 0 {",
-    "\t\treturn",
-    "\t}",
-    '\tlocation := "unknown"',
-    "\tswitch obj.Location.Kind {",
-    "\tcase ObjInInventory:",
+    '\tlocation := "in room"',
+    '\tswitch obj.Location.Kind {',
+    '\tcase ObjInInventory, ObjInShop:',
     '\t\tlocation = "carried"',
-    "\tcase ObjInRoom:",
-    '\t\tlocation = "in room"',
-    "\tcase ObjEquipped:",
-    '\t\tlocation = "worn by"',
-    "\t}",
+    '\tcase ObjInRoom:',
+    '\t\tif obj.Location.RoomVNum == 0 {',
+    '\t\t\tlocation = "unknown"',
+    '\t\t}',
+    '\t}',
     '\tMudLog(fmt.Sprintf("SYSERR: Object \'%s\' weight incorrect, location \'%s\'",',
-    "\t\tobj.GetShortDesc(), location), MudlogBrief, LVL_IMMORT, true)",
-    "\tobj.SetWeight(obj.Prototype.Weight)",
+    '\t\tobj.GetShortDesc(), location), MudlogBrief, LVL_IMMORT, true)',
+    '\tobj.SetWeight(obj.Prototype.Weight)',
 ]) + "\n"
 
 CANGET_NIL = "\n".join([
@@ -70,6 +64,43 @@ CASES = [
         }],
     },
 ]
+
+
+WEIGHT_MAPPING_NEW = "\n".join([
+    '\tlocation := "in room"',
+    '\tswitch obj.Location.Kind {',
+    '\tcase ObjInInventory, ObjInShop:',
+    '\t\tlocation = "carried"',
+    '\tcase ObjInRoom:',
+    '\t\tif obj.Location.RoomVNum == 0 {',
+    '\t\t\tlocation = "unknown"',
+    '\t\t}',
+    '\t}',
+]) + "\n"
+
+WEIGHT_MAPPING_OLD = "\n".join([
+    '\tlocation := "unknown"',
+    '\tswitch obj.Location.Kind {',
+    '\tcase ObjInInventory:',
+    '\t\tlocation = "carried"',
+    '\tcase ObjInRoom:',
+    '\t\tlocation = "in room"',
+    '\tcase ObjEquipped:',
+    '\t\tlocation = "worn by"',
+    '\t}',
+]) + "\n"
+
+CASES.append({
+    "case": "object-weight-wording",
+    "test": "TestObjectActivityWeightMudlog",
+    "package": "./pkg/game",
+    "assertion": "file payload count=0 want 1",
+    "patches": [{
+        "path": "pkg/game/room_obj_scripts.go",
+        "new": WEIGHT_MAPPING_NEW,
+        "old": WEIGHT_MAPPING_OLD,
+    }],
+})
 
 
 def run(case, stage, root):

@@ -35,9 +35,11 @@ func weightProbe(t *testing.T) (*milestoneProvider, *bytes.Buffer, *Player, *Pla
 	return provider, file, watch, below, off
 }
 
-// TestObjectActivityWeightMudlog proves comm.c:773-787 at its four location
-// wordings and its three exemptions (src/comm.c:770-771 and :774). A repaired
-// object must also come back to its prototype's weight.
+// TestObjectActivityWeightMudlog proves comm.c:773-787 at every location
+// wording C can reach and at its three exemptions (src/comm.c:770-771 and
+// :774). The wordings are C's truthiness reading of carried_by/in_room/worn_by,
+// not a one-to-one map of the port's location union: see repairObjectWeight. A
+// repaired object must also come back to its prototype's weight.
 func TestObjectActivityWeightMudlog(t *testing.T) {
 	run := func(t *testing.T, prepare func(t *testing.T, w *World) *ObjectInstance, wantLog bool, wantLocation string) {
 		t.Helper()
@@ -101,7 +103,9 @@ func TestObjectActivityWeightMudlog(t *testing.T) {
 			return weighted(obj)
 		}, true, "carried")
 	})
-	t.Run("worn by", func(t *testing.T) {
+	t.Run("worn object prints in room", func(t *testing.T) {
+		// C's "worn by" arm is dead code: equip_char leaves in_room at NOWHERE
+		// (src/handler.c:565,731) and -1 is truthy (src/structs.h:34).
 		run(t, func(t *testing.T, w *World) *ObjectInstance {
 			p := NewPlayer(705, "Wtwearer", 100)
 			if err := w.AddPlayer(p); err != nil {
@@ -110,7 +114,18 @@ func TestObjectActivityWeightMudlog(t *testing.T) {
 			obj := spawn(t, w, 200, 100)
 			obj.Location = LocEquippedPlayer(p.GetName(), EquipmentSlot(0))
 			return weighted(obj)
-		}, true, "worn by")
+		}, true, "in room")
+	})
+	t.Run("object inside a container prints in room", func(t *testing.T) {
+		run(t, func(t *testing.T, w *World) *ObjectInstance {
+			container := spawn(t, w, 204, 100)
+			container.Prototype.TypeFlag = ITEM_CONTAINER
+			inner := spawn(t, w, 200, 100)
+			if err := w.MoveObjectToContainer(inner, container); err != nil {
+				t.Fatalf("move to container: %v", err)
+			}
+			return weighted(inner)
+		}, true, "in room")
 	})
 	t.Run("drink container is exempt", func(t *testing.T) {
 		run(t, func(t *testing.T, w *World) *ObjectInstance {
@@ -141,5 +156,22 @@ func TestObjectActivityWeightMudlog(t *testing.T) {
 			}
 			return weighted(container)
 		}, false, "")
+	})
+	t.Run("object on room 0's floor prints unknown", func(t *testing.T) {
+		// Only a real room 0 takes C's fallback wording (src/comm.c:775-782);
+		// NOWHERE (-1) is truthy and prints "in room".
+		run(t, func(t *testing.T, w *World) *ObjectInstance {
+			obj := spawn(t, w, 200, 100)
+			obj.Location = LocRoom(0)
+			return weighted(obj)
+		}, true, "unknown")
+	})
+	t.Run("shop stock prints carried", func(t *testing.T) {
+		// A shop's stock sits in the keeper's inventory in C.
+		run(t, func(t *testing.T, w *World) *ObjectInstance {
+			obj := spawn(t, w, 200, 100)
+			obj.Location = LocShop(1)
+			return weighted(obj)
+		}, true, "carried")
 	})
 }

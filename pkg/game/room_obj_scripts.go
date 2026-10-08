@@ -186,9 +186,19 @@ func (w *World) ObjectActivity() {
 // containers, fountains and corpses never reach here: the caller's skip at
 // comm.c:770-771 continues past both this block and the script block.
 //
-// C reads carried_by, then in_room, then worn_by, and calls anything else
-// "unknown". The port's location union is exclusive, so the three states map
-// one to one and a contained, shop or NOWHERE object is "unknown".
+// The location wordings are C's, which are not the obvious mapping.
+// C tests obj->carried_by for truth, then obj->in_room, then obj->worn_by, and
+// falls back to "unknown" (comm.c:775-782). NOWHERE is -1 (src/structs.h:34),
+// which is *truthy*, so only real room 0 takes the fallback:
+//
+//   - obj_to_char sets in_room = NOWHERE (src/handler.c:565) and equip_char
+//     never resets it (src/handler.c:731), so a worn object reaches the
+//     in_room test as -1 and prints "in room": C's "worn by" arm is dead code.
+//   - an object inside a container, or one not yet placed, is also at -1 and
+//     prints "in room".
+//   - "unknown" prints only for an uncarried object whose in_room is real room
+//     0, the first room loaded ("The Void", lib/world/wld/0.wld).
+//   - a shop's stock is in the keeper's inventory in C, so it prints "carried".
 //
 // Held locks: none. liveObjectsByID snapshots under World.mu and releases it
 // before the loop, and each field read is the same lock-free instance access
@@ -203,14 +213,14 @@ func (w *World) repairObjectWeight(obj *ObjectInstance) {
 	if len(obj.Contains) != 0 {
 		return
 	}
-	location := "unknown"
+	location := "in room"
 	switch obj.Location.Kind {
-	case ObjInInventory:
+	case ObjInInventory, ObjInShop:
 		location = "carried"
 	case ObjInRoom:
-		location = "in room"
-	case ObjEquipped:
-		location = "worn by"
+		if obj.Location.RoomVNum == 0 {
+			location = "unknown"
+		}
 	}
 	MudLog(fmt.Sprintf("SYSERR: Object '%s' weight incorrect, location '%s'",
 		obj.GetShortDesc(), location), MudlogBrief, LVL_IMMORT, true)
