@@ -2,7 +2,6 @@ package game
 
 import (
 	"bytes"
-	"log/slog"
 	"strings"
 	"sync"
 	"testing"
@@ -12,9 +11,9 @@ import (
 
 func TestZoneResetUnknownCommandDisabledOnce(t *testing.T) {
 	var logs bytes.Buffer
-	previous := slog.Default()
-	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
-	t.Cleanup(func() { slog.SetDefault(previous) })
+	oldWriter := getLogWriter()
+	SetLogWriter(&logs)
+	t.Cleanup(func() { SetLogWriter(oldWriter) })
 	zone := parser.Zone{Number: 1, TopRoom: 199, Commands: []parser.ZoneCommand{
 		{Command: "L", Arg1: 100, Arg3: 2},
 		{Command: "Q", IfFlag: 1, Arg1: 3, Arg2: 4},
@@ -44,7 +43,7 @@ func TestZoneResetUnknownCommandDisabledOnce(t *testing.T) {
 	if w.countObjectInstances(200) != 4 {
 		t.Fatal("conditional unknown command cleared prior last_cmd")
 	}
-	if got := strings.Count(logs.String(), "unknown cmd in reset table; cmd disabled"); got != 1 {
+	if got := strings.Count(logs.String(), "SYSERR: error in zone file: unknown cmd in reset table; cmd disabled"); got != 1 {
 		t.Fatalf("unknown command logs=%d want 1", got)
 	}
 }

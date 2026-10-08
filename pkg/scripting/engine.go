@@ -48,8 +48,13 @@ type Engine struct {
 	// rejections are intentionally NOT cached — those should keep logging.
 	// Accessed only under e.mu.
 	failedScripts map[string]struct{}
-	done          chan struct{}
-	closeOnce     sync.Once
+	// failedScriptKinds keeps C's open_lua_file kind for each cached load
+	// failure that has a C counterpart (timeouts are absent). C retries and
+	// logs on every run_script call; the cache skips the retry but still
+	// emits the producers (src/scripts.c:1674-1694, 1777-1779).
+	failedScriptKinds map[string]string
+	done              chan struct{}
+	closeOnce         sync.Once
 
 	// Script execution budget. Scripting is single-threaded (e.mu is held for
 	// the whole of RunScript) to match the C game loop, so one script blocks all
@@ -209,6 +214,7 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 		scriptsDir:          scriptsDir,
 		transitItems:        make(map[int]*transitEntry),
 		failedScripts:       make(map[string]struct{}),
+		failedScriptKinds:   make(map[string]string),
 		world:               world,
 		done:                make(chan struct{}),
 		scriptTimeout:       defaultScriptTimeout,
@@ -239,6 +245,7 @@ func (e *Engine) ForgetFailures() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.failedScripts = make(map[string]struct{})
+	e.failedScriptKinds = make(map[string]string)
 }
 
 func (e *Engine) SetScriptBudget(timeout, slowThreshold time.Duration) {
@@ -366,6 +373,70 @@ func ResolveOwnerScriptPath(scriptsDir, ownerType, cleanName string) string {
 // triggerName is the function to call (e.g. "oncmd", "sound", "fight").
 // Returns true if the script handled the event (returned TRUE), false otherwise.
 // Based on run_script() in scripts.c lines 1718-1810.
+// mudlog types and the immortal level for the script producers (utils.h:114-117
+// for BRF 1 / NRM 2 / CMP 3, structs.h:620 for LVL_IMMORT 31).
+const (
+	scriptMudlogBrief    = 1
+	scriptMudlogComplete = 3
+	scriptMudlogImmortal = 31
+)
+
+// scriptMudLogFile emits a C script producer that also writes the file. The
+// adapter's MudLog is a one-line forward to game.MudLog
+// (pkg/game/world_bridge.go); the engine reaches it by inline assertion, so the
+// Bridge interface and every other implementation are unchanged. Engine-only
+// runs (no adapter) emit nothing, as the legacy path does today.
+//
+// Called from RunScript while it holds the engine mutex (e.mu) and no world,
+// player, manager or lifecycle lock: the producers run before any bridge
+// write-back, and the emit itself is a stateless forward.
+func scriptMudLogFile(bridge Bridge, msg string, typ int) {
+	logger, ok := bridge.(interface{ MudLog(string, int, int, bool) })
+	if !ok {
+		return
+	}
+	logger.MudLog(msg, typ, scriptMudlogImmortal, true)
+}
+
+// luaLoadErrorKind maps a gopher-lua load error onto the semantic kinds C's
+// open_lua_file names (src/scripts.c:1674-1692). C's numbers are Lua 4's
+// lua_dofile codes; the port maps kinds, not numbers. It returns "" for a
+// Go-only failure or one C has no message for, so no payload is invented.
+func luaLoadErrorKind(err error) string {
+	var apiErr *lua.ApiError
+	if !errors.As(err, &apiErr) {
+		return ""
+	}
+	switch apiErr.Type {
+	case lua.ApiErrorFile:
+		return "No such file."
+	case lua.ApiErrorSyntax:
+		return "Syntax error."
+	case lua.ApiErrorRun:
+		return "Execution failed."
+	case lua.ApiErrorError:
+		return "Generic Error."
+	default:
+		return ""
+	}
+}
+
+// scriptMudLogLoadFailure emits C's two load-failure producers in C's order:
+// open_lua_file's classified line (src/scripts.c:1674-1694, CMP/31/file TRUE),
+// then run_script's own line (src/scripts.c:1777-1779, BRF/31/file TRUE).
+func scriptMudLogLoadFailure(bridge Bridge, name, kind string) {
+	if kind != "" {
+		scriptMudLogFile(bridge, fmt.Sprintf("[Lua] Could not call script %s: %s", name, kind), scriptMudlogComplete)
+	}
+	scriptMudLogFile(bridge, fmt.Sprintf("SYSERR: Error opening lua script %s.", name), scriptMudlogBrief)
+}
+
+// scriptMudLogCallFailure emits run_script's failed-call producer
+// (src/scripts.c:1798-1800, BRF/31/file TRUE).
+func scriptMudLogCallFailure(bridge Bridge, name, triggerName string) {
+	scriptMudLogFile(bridge, fmt.Sprintf("[Lua] Script %s being called with an error, function '%s'.", name, triggerName), scriptMudlogBrief)
+}
+
 func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string) (handled bool, err error) {
 	// C's run_script nests: a script's action(), raw_kill() or give can reach
 	// another script (ongive, death) while the first is still running, on the
@@ -563,12 +634,19 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// failure was already logged when it was added to failedScripts. Per-pulse
 	// retries on a missing script would otherwise flood the log (DP-903).
 	if _, failed := e.failedScripts[cacheKey]; failed {
+		if kind, logged := e.failedScriptKinds[cacheKey]; logged {
+			scriptMudLogLoadFailure(bridge, fname, kind)
+		}
 		return false, fmt.Errorf("script %s previously failed to load", fname)
 	}
 
 	if scriptPath == "" {
 		e.failedScripts[cacheKey] = struct{}{}
 		slog.Error("error loading script", "file", fname, "error", "script not found")
+		// C reaches the same case inside lua_dofile (src/scripts.c:1677-1678
+		// "No such file.") and logs both producers before returning.
+		e.failedScriptKinds[cacheKey] = "No such file."
+		scriptMudLogLoadFailure(bridge, fname, "No such file.")
 		return false, fmt.Errorf("script not found: %s", fname)
 	}
 
@@ -610,11 +688,17 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		// and the error log. Both timeout and file-not-found/parse errors are
 		// stable per file — they won't fix themselves between pulses (DP-903).
 		e.failedScripts[cacheKey] = struct{}{}
-		if errors.Is(err, context.DeadlineExceeded) {
+		timeout := errors.Is(err, context.DeadlineExceeded)
+		if timeout {
 			slog.Error("script timed out during load", "file", fname, "error", err)
 			needsRecreate = true
 		} else {
 			slog.Error("error loading script", "file", fname, "error", err)
+			// scripts.c:1674-1694 then 1777-1779. A Go-only timeout has no C
+			// kind, so it emits neither line rather than an invented one.
+			kind := luaLoadErrorKind(err)
+			e.failedScriptKinds[cacheKey] = kind
+			scriptMudLogLoadFailure(bridge, fname, kind)
 		}
 		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		releaseContext()
@@ -630,6 +714,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	if fn.Type() == lua.LTNil {
 		// Function doesn't exist
 		L.Pop(1)
+		// scripts.c:1791-1800: C calls the global, the call fails, and the
+		// producer fires before the write-back below.
+		scriptMudLogCallFailure(bridge, fname, triggerName)
 		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		releaseContext()
 		slog.Debug("function not found in script", "trigger", triggerName, "file", fname)
@@ -637,6 +724,11 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	}
 
 	if err := L.PCall(0, 1, nil); err != nil {
+		// scripts.c:1798-1800 logs the failed call; C writes back afterwards.
+		// A Go-only timeout is not a C call failure and emits no C payload.
+		if !errors.Is(err, context.DeadlineExceeded) {
+			scriptMudLogCallFailure(bridge, fname, triggerName)
+		}
 		if bridge != nil {
 			// C logs the failed call and still writes back (scripts.c:1788-1816).
 			e.bridgeWriteBack(bridge, ctx)
@@ -2422,7 +2514,16 @@ func (e *Engine) luaSetHunt(L *lua.LState) int {
 
 func (e *Engine) luaSkipSpaces(L *lua.LState) int {
 	// skip_spaces(s) - trim leading spaces from a string.
-	// Source: merchant_inn.lua — strips leading space from say argument.
+	// Source: scripts.c lua_skip_spaces() lines 1385-1397.
+	//
+	// C's else arm logs "[Lua] Invalid argument passed to lua_skip_spaces."
+	// (BRF/LVL_IMMORT/file FALSE, src/scripts.c:1393-1394) and still returns 1.
+	// The port returns 1 on both arms; only the producer is missing.
+	if L.Get(1).Type() != lua.LTString {
+		if b := e.activeBridge; b != nil {
+			b.Log("[Lua] Invalid argument passed to lua_skip_spaces.")
+		}
+	}
 	s := L.ToString(1)
 	L.Push(lua.LString(strings.TrimLeft(s, " ")))
 	return 1
