@@ -1239,7 +1239,11 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 		castMeteorSwarm(level, ch, world)
 	case SpellHellfire:
 		castHellfire(level, ch, world)
-	case SpellCharm:
+	case SpellCharm, SpellDominate:
+		// src/spell_parser.c:505-507: C routes SPELL_DOMINATE through to
+		// MANUAL_SPELL(spell_charm) alongside SPELL_CHARM. spell_charm takes
+		// no spellnum (src/spells.c:407, ASPELL) and applies SPELL_CHARM as
+		// its affect type, so dominate carries the same effect (DP-1405).
 		castCharm(level, ch, cvict, world)
 	case SpellSummon:
 		castSummon(level, ch, cvict, world)
@@ -1256,7 +1260,11 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellMirrorImage:
 		castMirrorImage(level, ch, world)
 	default:
-		sendToCaster(ch, "Spell not yet implemented.\r\n")
+		// C's manual switch has no default clause at all (src/spell_parser.c:
+		// 502-536): every MAG_MANUAL spell in the spell table has a case, so
+		// this arm is unreachable and C emits nothing here. The port used to
+		// send "Spell not yet implemented.\r\n", a string that appears in no
+		// C file, which a live dominate hit (R4, DP-1405).
 	}
 
 	_ = world
