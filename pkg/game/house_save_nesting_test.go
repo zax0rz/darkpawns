@@ -1,13 +1,7 @@
 package game
 
-// DP-1401, Option A: house saves record container nesting by file index
-// (the C obj_file_elem "locate" idiom), and loading floors whatever cannot
-// be nested — which is what C's own House_load does with contained items
-// (house.c:70 obj_to_room's every record). Before this change the save wrote
-// a runtime registry ID as container_id, which can never match the fresh
-// objects a later boot builds, so contained items were silently dropped
-// instead of landing on the floor. The round-trip and legacy tests fail with
-// the fix reverted.
+// DP-1401 follow-up: retain container_index on save, but C House_load
+// (src/house.c:87-101) floors every surviving record without re-nesting.
 
 import (
 	"encoding/json"
@@ -55,7 +49,7 @@ func countObjectsInWorld(w *World) int {
 	return len(w.GetAllObjects())
 }
 
-func TestHouseSaveLoadRoundTripsContainerNesting(t *testing.T) {
+func TestHouseSaveLoadFloorsContainerContents(t *testing.T) {
 	t.Chdir(t.TempDir()) // house/4100.house is written relative to cwd
 	w := newHouseNestingWorld(t)
 
@@ -117,22 +111,22 @@ func TestHouseSaveLoadRoundTripsContainerNesting(t *testing.T) {
 		t.Fatal("bag not restored to the room")
 	}
 	sword2 := findInRoomByVNum(w, 4100, 3001)
-	if sword2 != nil {
-		t.Fatal("sword restored to the room floor; it should be inside the bag")
+	if sword2 == nil || len(bag2.Contains) != 0 {
+		t.Fatal("saved contents must reload on the floor beside an empty container")
 	}
-	if len(bag2.Contains) != 1 || bag2.Contains[0].VNum != 3001 {
-		t.Fatalf("bag contains = %v, want the sword", bag2.Contains)
+	if sword2.Location.Kind != ObjInRoom || sword2.Location.RoomVNum != 4100 {
+		t.Errorf("sword location = %+v, want room 4100", sword2.Location)
 	}
-	restored := bag2.Contains[0]
-	if restored.Location.Kind != ObjInContainer || restored.Location.ContainerObjID != bag2.ID {
-		t.Errorf("sword location = %+v, want container %d", restored.Location, bag2.ID)
+	items := w.GetItemsInRoom(4100)
+	if len(items) != 2 || items[0] != bag2 || items[1] != sword2 || sword2.ID >= bag2.ID {
+		t.Fatalf("floor order or file-order registration wrong: %v", items)
 	}
 	if got := countObjectsInWorld(w); got != live {
 		t.Errorf("registry count after load = %d, want %d", got, live)
 	}
 }
 
-func TestHouseSaveLoadRoundTripsDepthTwo(t *testing.T) {
+func TestHouseSaveLoadFloorsDepthTwo(t *testing.T) {
 	t.Chdir(t.TempDir())
 	w := newHouseNestingWorld(t)
 
@@ -157,16 +151,15 @@ func TestHouseSaveLoadRoundTripsDepthTwo(t *testing.T) {
 		t.Fatal("houseLoad failed")
 	}
 
-	chest2 := findInRoomByVNum(w, 4100, 3003)
-	if chest2 == nil || len(chest2.Contains) != 1 || chest2.Contains[0].VNum != 3002 {
-		t.Fatalf("chest nesting lost: chest=%v contains=%v", chest2, chest2.Contains)
+	items := w.GetItemsInRoom(4100)
+	if len(items) != 3 {
+		t.Fatalf("floor has %d items, want empty chest, empty bag, sword", len(items))
 	}
-	bag2 := chest2.Contains[0]
-	if len(bag2.Contains) != 1 || bag2.Contains[0].VNum != 3001 {
-		t.Fatalf("bag nesting lost: %v", bag2.Contains)
-	}
-	if findInRoomByVNum(w, 4100, 3001) != nil || findInRoomByVNum(w, 4100, 3002) != nil {
-		t.Error("nested items leaked to the room floor")
+	for i, vnum := range []int{3003, 3002, 3001} {
+		obj := items[i]
+		if obj.VNum != vnum || len(obj.Contains) != 0 || obj.Location.Kind != ObjInRoom || obj.Location.RoomVNum != 4100 {
+			t.Fatalf("floor item %d = %+v, want vnum %d with no contents in room", i, obj, vnum)
+		}
 	}
 }
 
@@ -260,3 +253,24 @@ func TestHouseLoadLegacyRuntimeIDFilesFloorEverything(t *testing.T) {
 }
 
 func intPtr(n int) *int { return &n }
+
+// C Obj_from_store registers first; Crash_is_unrentable then extracts it.
+func TestHouseLoadExtractsUnrentable(t *testing.T) {
+	writeHouseFile(t, houseSaveData{RoomVNum: 4100, Items: []houseSaveItem{{VNum: 3003}, {VNum: 3001, ContainerIndex: intPtr(0)}, {VNum: 3002}}})
+	w := newHouseNestingWorld(t)
+	w.GetParsedWorld().Objs[0].ExtraFlags[0] |= FlagNoRent
+	firstID := w.nextObjID
+	if !w.houseLoad(4100) {
+		t.Fatal("houseLoad failed")
+	}
+	items := w.GetItemsInRoom(4100)
+	if len(items) != 2 || items[0].VNum != 3002 || items[1].VNum != 3003 {
+		t.Fatalf("unrentable item survived or floor order wrong: %v", items)
+	}
+	if len(w.GetAllObjects()) != 2 || findInRoomByVNum(w, 4100, 3001) != nil {
+		t.Fatal("unrentable record must be extracted from the registry and floor")
+	}
+	if items[1].ID != firstID || items[0].ID != firstID+2 || w.nextObjID != firstID+3 {
+		t.Fatal("all records must register in file order, including the extracted record")
+	}
+}

@@ -1,0 +1,17 @@
+---
+// Renders world-file prose (room, mob and extra descriptions) as reflowed
+// paragraphs; see src/lib/world-text.mjs.
+import { reflowWorldText } from '../lib/world-text.mjs';
+
+interface Props { text: string | undefined | null }
+const { drawing, paragraphs } = reflowWorldText(Astro.props.text);
+---
+{drawing
+  ? <pre class="record-description world-drawing">{paragraphs[0]}</pre>
+  : <div class="record-description">{paragraphs.map((paragraph) => <p>{paragraph}</p>)}</div>}
+
+<style>
+  .record-description p { margin: 0; }
+  .record-description p + p { text-indent: 1.5em; }
+  .world-drawing { font-family: var(--font-mono); font-size: .9rem; line-height: 1.3; overflow-x: auto; margin: 0; }
+</style>

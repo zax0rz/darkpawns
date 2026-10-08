@@ -1,5 +1,6 @@
 ---
 import DatabaseRecord from '../../components/DatabaseRecord.astro';
+import WorldText from '../../components/WorldText.astro';
 import { alignmentName, descriptionFor, mobs, sexName, zoneNames, type Mob } from '../../lib/database';
 
 export function getStaticPaths() {
@@ -62,7 +63,7 @@ const jsonLd = {
   </div>
 
   <div>
-    {mob.d && <section class="record-panel"><h2>Description</h2><p class="record-description">{mob.d}</p></section>}
+    {mob.d && <section class="record-panel"><h2>Description</h2><WorldText text={mob.d} /></section>}
 
     <section class="record-panel">
       <h2>Spawn locations</h2>
