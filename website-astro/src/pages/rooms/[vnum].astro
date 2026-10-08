@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { rooms, roomById, type RoomRecord } from '../../lib/rooms';
 import { sectorName } from '../../lib/zones';
+import WorldText from '../../components/WorldText.astro';
 
 export function getStaticPaths() {
   return rooms.map((room) => ({ params: { vnum: String(room.id) }, props: { room } }));
@@ -55,8 +56,8 @@ const targetName = (vnum: number) => roomById.get(vnum)?.name ?? null;
       <p class="eyebrow">Room record / VNUM {room.id}</p>
       <h1>{room.name}</h1>
       <p class="record-lede">
-        {room.zoneName} / {sectorName(room.sector)} / {exitCount} {exitCount === 1 ? 'exit' : 'exits'}.
-        <a href={`/map/?room=${room.id}`}>Show on the interactive map</a>
+        {room.zoneName} / {sectorName(room.sector)} / {exitCount} {exitCount === 1 ? 'exit' : 'exits'}.{' '}
+        <a href={`/map/?room=${room.id}`}>Show on the interactive map</a>{' '}
         (<a href={jsonUrl}>JSON record</a>)
       </p>
     </header>
@@ -65,7 +66,7 @@ const targetName = (vnum: number) => roomById.get(vnum)?.name ?? null;
         <section class="record-panel">
           <h2>Description</h2>
           {room.description.trim() ? (
-            <p class="record-description">{room.description}</p>
+            <WorldText text={room.description} />
           ) : <p class="record-empty">No description recorded in the world files.</p>}
         </section>
 
@@ -151,5 +152,4 @@ const targetName = (vnum: number) => roomById.get(vnum)?.name ?? null;
   .record-list li { border-top: 1px solid var(--rule); padding-block: .45rem; }
   .record-list small { color: var(--ink-muted); display: block; font-family: var(--font-mono); font-size: .68rem; }
   .record-empty { color: var(--ink-muted); font-style: italic; }
-  .record-description { white-space: pre-line; }
 </style>

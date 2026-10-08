@@ -1,5 +1,6 @@
 ---
 import DatabaseRecord from '../../components/DatabaseRecord.astro';
+import WorldText from '../../components/WorldText.astro';
 import { descriptionFor, items, mobByVnum, signed, zoneNames, type Item } from '../../lib/database';
 
 export function getStaticPaths() {
@@ -65,7 +66,7 @@ const jsonLd = {
     {item.edesc.length > 0 && (
       <section class="record-panel">
         <h2>Detailed descriptions</h2>
-        {item.edesc.map((entry) => <div><h3>{entry.keywords}</h3><p class="record-description">{entry.desc}</p></div>)}
+        {item.edesc.map((entry) => <div><h3>{entry.keywords}</h3><WorldText text={entry.desc} /></div>)}
       </section>
     )}
 
