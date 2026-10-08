@@ -1290,7 +1290,6 @@ func (w *World) counter_procs(ch *Player, kills int) {
 		}
 	}
 
-	// Log milestone to mudlog
-	// Source: fight.c:1308
-	slog.Info("kill milestone", "player", ch.Name, "kills", kills)
+	// src/fight.c:1308-1309: after rewards and the global blessing.
+	MudLog(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), MudlogNormal, LVL_IMMORT, false)
 }
