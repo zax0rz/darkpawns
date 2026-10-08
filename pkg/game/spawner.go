@@ -2,6 +2,7 @@
 package game
 
 import (
+	"fmt"
 	"log/slog"
 	"strconv"
 	"sync"
@@ -194,6 +195,21 @@ var (
 	zoneRoomNumber        = dprng.Number
 )
 
+// zoneError is C's ZONE_ERROR(message) macro (src/db.c:2059-2060), which
+// calls log_zone_error(). Its first producer is
+// "SYSERR: error in zone file: %s" at NRM, LVL_GOD, file TRUE
+// (src/db.c:2052-2053). The second, ordered line (src/db.c:2056-2057:
+// "...offending cmd: '%c' cmd in zone #%d, line %d") is the inventory's
+// separate row and needs the parser's source line; it is not emitted here.
+//
+// C calls this at six reset branches, all of which are fault arms, and the
+// message text is the C macro argument verbatim, including its typos.
+// Held lock at every caller: World.zoneResetMu only (executeZoneResetLocked
+// never takes World.mu), which no MudLog delivery path acquires.
+func zoneError(message string) {
+	MudLog(fmt.Sprintf("SYSERR: error in zone file: %s", message), MudlogNormal, LVL_GOD, true)
+}
+
 // ExecuteZoneReset executes all reset commands for a zone.
 // Matches C's reset_zone() semantics including if_flag, loop, percent_load,
 // MOB_RANDZON, zone79, door-state, and remove commands.
@@ -317,7 +333,9 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 
 		case "G": // Give object to last loaded mob
 			if lastMob == nil {
-				slog.Warn("G command: no lastMob available")
+				// src/db.c:2185-2189: ZONE_ERROR("attempt to give obj to
+				// non-existant mob"). C's misspelling is part of the payload.
+				zoneError("attempt to give obj to non-existant mob")
 				continue
 			}
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
@@ -343,7 +361,9 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 
 		case "E": // Equip object on last loaded mob
 			if lastMob == nil {
-				slog.Warn("E command: no lastMob available")
+				// src/db.c:2200-2204: ZONE_ERROR("trying to equip
+				// non-existant mob").
+				zoneError("trying to equip non-existant mob")
 				continue
 			}
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
@@ -352,7 +372,9 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			}
 
 			if cmd.Arg3 < 0 || cmd.Arg3 >= numWears {
-				slog.Warn("invalid equipment position", "pos", cmd.Arg3)
+				// src/db.c:2205-2208: ZONE_ERROR("invalid equipment pos
+				// number"), before the read_object the else branch would do.
+				zoneError("invalid equipment pos number")
 				continue
 			}
 
@@ -386,7 +408,8 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			if container == nil {
 				// C leaves the newly read object floating and counted when the
 				// target container is missing, without calling percent_load.
-				slog.Warn("P command: container object not found", "container_vnum", cmd.Arg3)
+				// src/db.c:2172-2176: ZONE_ERROR("target obj not found").
+				zoneError("target obj not found")
 				continue
 			}
 			if !zoneObjectPercentLoad(obj.Prototype) {
@@ -401,11 +424,18 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 
 		case "D": // Door state: arg2=direction, arg3=state (0=open, 1=closed, 2=locked)
 			if cmd.Arg2 < 0 || cmd.Arg2 >= len(roomDirNames) {
-				slog.Warn("Invalid door direction", "dir", cmd.Arg2, "room", cmd.Arg1)
+				// src/db.c:2247-2251: C's one guard is "arg2 out of range OR
+				// the exit does not exist" -> ZONE_ERROR("door does not
+				// exist"). The port splits it across two arms; each fires at
+				// most once per command, so the producer still matches C's
+				// condition.
+				zoneError("door does not exist")
 				continue
 			}
 			if !s.world.resetDoor(cmd.Arg1, roomDirNames[cmd.Arg2], cmd.Arg3) {
-				slog.Warn("Door command: room or exit not found", "room", cmd.Arg1, "dir", roomDirNames[cmd.Arg2])
+				// Second half of src/db.c:2247-2251's guard: the door exists
+				// in neither direction.
+				zoneError("door does not exist")
 				continue
 			}
 			lastCmd = 1
@@ -425,7 +455,8 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				lastCmd = 1
 			}
 		default:
-			slog.Warn("unknown cmd in reset table; cmd disabled", "zone", zone.Number, "command", cmdIdx, "cmd", cmd.Command)
+			// src/db.c:2278-2281: ZONE_ERROR before C sets ZCMD.command = '*'.
+			zoneError("unknown cmd in reset table; cmd disabled")
 			s.world.disableResetCommand(zone.Number, cmdIdx, cmd)
 			zone.Commands[cmdIdx].Command = "*"
 		}
