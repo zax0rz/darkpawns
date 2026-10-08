@@ -14,6 +14,9 @@ interface Props {
    *  it reproduces, so the two do not compete as duplicates. */
   canonicalPath?: string;
   ogType?: 'website' | 'article';
+  /** A page-specific 1200x630 share card and its alt text. */
+  ogImage?: string;
+  ogImageAlt?: string;
 }
 const {
   title = 'Dark Pawns',
@@ -22,6 +25,8 @@ const {
   noindex = false,
   canonicalPath,
   ogType = 'website',
+  ogImage = '/og-image.png',
+  ogImageAlt = 'Dark Pawns - A Multi-User Dungeon',
 } = Astro.props;
 const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site);
 const websiteJsonLd = JSON.stringify({
@@ -40,7 +45,7 @@ const websiteJsonLd = JSON.stringify({
     'query-input': 'required name=search_term_string',
   },
 });
-const socialImage = new URL('/og-image.png', Astro.site);
+const socialImage = new URL(ogImage, Astro.site);
 ---
 <!doctype html>
 <html lang="en">
@@ -58,7 +63,7 @@ const socialImage = new URL('/og-image.png', Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={socialImage} />
-    <meta property="og:image:alt" content="Dark Pawns - A Multi-User Dungeon" />
+    <meta property="og:image:alt" content={ogImageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />

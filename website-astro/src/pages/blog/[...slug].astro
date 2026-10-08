@@ -13,7 +13,7 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 ---
-<Base title={`${post.data.title} | Dark Pawns`} description={post.data.description}>
+<Base title={`${post.data.title} | Dark Pawns`} description={post.data.description} ogType="article" ogImage={post.data.ogImage} ogImageAlt={post.data.ogImageAlt}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/blog/${post.id}.md`} title={`${post.data.title} as Markdown`} />
   <article class="container post">
     <p class="post-meta"><a href="/blog/">Blog</a> » <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time></p>
