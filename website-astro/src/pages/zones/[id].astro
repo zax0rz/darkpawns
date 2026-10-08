@@ -54,8 +54,8 @@ const roomChunks = zone.rooms;
       <p class="eyebrow">Zone record / {zone.id}</p>
       <h1>{zone.name}</h1>
       <p class="record-lede">
-        {zone.roomCount} rooms / {zone.mobs.length} mobs / {zone.items.length} items.
-        <a href={`/map/?zone=${zone.id}`}>Open this zone on the interactive map</a>
+        {zone.roomCount} rooms / {zone.mobs.length} mobs / {zone.items.length} items.{' '}
+        <a href={`/map/?zone=${zone.id}`}>Open this zone on the interactive map</a>{' '}
         (<a href={jsonUrl}>JSON record</a>)
       </p>
     </header>

@@ -13,7 +13,7 @@
     "voice-lint": "python3 scripts/voice_lint.py",
     "test:voice-lint": "python3 -m unittest scripts/test_voice_lint.py",
     "test:search": "python3 -m unittest scripts/test_gen_search_index.py",
-    "test:markdown": "node --test src/lib/no-literal-autolinks.test.mjs"
+    "test:markdown": "node --test src/lib/no-literal-autolinks.test.mjs src/lib/world-text.test.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "0.3.5",
