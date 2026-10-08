@@ -147,6 +147,7 @@ func doOLCTestRequest(t *testing.T, handler http.Handler, path string, authentic
 	req := httptest.NewRequest(http.MethodGet, path, nil)
 	if authenticated {
 		req.Header.Set("Authorization", "Bearer "+generateTestToken(t, "builder"))
+		req.Header.Set(adminCSRFHeader, "test")
 	}
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -157,6 +158,7 @@ func doOLCJSONRequest(t *testing.T, handler http.Handler, method, path string, b
 	t.Helper()
 	req := httptest.NewRequest(method, path, bytes.NewReader(body))
 	req.Header.Set("Authorization", "Bearer "+generateTestToken(t, "builder"))
+	req.Header.Set(adminCSRFHeader, "test")
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)

@@ -304,10 +304,16 @@ func olcVocabularyGate(world *game.World, database *db.DB) func(huma.Context, fu
 
 func olcGateWithZone(world *game.World, database *db.DB, zoneScoped bool) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
+		// Same authenticated-request contract as requireRole: the custom CSRF
+		// header, then the cookie/Bearer credential (VULN-043).
+		if !hasAdminCSRFHeader(ctx.Header) {
+			writeOLCError(ctx, http.StatusUnauthorized, olcMiddlewareError{Error: "unauthorized"})
+			return
+		}
 		claims, ok := auth.GetClaimsFromContext(ctx.Context())
 		if !ok {
 			var err error
-			claims, err = claimsFromBearerHeader(ctx.Header("Authorization"))
+			claims, err = claimsFromAmbient(ctx.Header)
 			if err != nil {
 				writeOLCError(ctx, http.StatusUnauthorized, olcMiddlewareError{Error: "unauthorized"})
 				return

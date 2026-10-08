@@ -6,9 +6,10 @@ Runs at build time (make build-site / deploy-site) so the homepage Plates band
 can show live-ish world state without exposing admin credentials to browsers.
 
 Auth contract (pkg/admin):
-  POST /admin/login {"player_name","password"} -> {"token","role"}
-  GET  /admin/players   (Bearer) -> [{"name","level","room"}, ...]
-  GET  /admin/narrative (Bearer) -> recent narrative events
+  POST /admin/login {"player_name","password"} -> {"player_name","role"}
+      and an HttpOnly admin_token cookie (VULN-043: no token in the body)
+  GET  /admin/players   (cookie + X-Requested-With) -> [{"name","level","room"}, ...]
+  GET  /admin/narrative (cookie + X-Requested-With) -> recent narrative events
 
 Env:
   DP_ADMIN_USER      builder-role player name  (required; absent = skip quietly)
@@ -59,19 +60,37 @@ _load_dotenv(REPO_ROOT / ".env")
 API_BASE = os.environ.get("DP_API_BASE", "https://darkpawns.org")
 
 
-def _post_json(url, payload):
+CSRF_HEADER = {"X-Requested-With": "gen-signal"}  # required of every authenticated admin request
+
+
+def _login(url, user, password):
+    """Log in and return the admin_token cookie value.
+
+    The token is no longer in the JSON body: /admin/login sets it as an
+    HttpOnly cookie, and the API demands the X-Requested-With header on every
+    authenticated call (VULN-043).
+    """
     req = urllib.request.Request(
         url,
-        data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json", "User-Agent": UA},
+        data=json.dumps({"player_name": user, "password": password}).encode(),
+        headers={"Content-Type": "application/json", "User-Agent": UA, **CSRF_HEADER},
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
-        return json.loads(resp.read())
+        json.loads(resp.read())
+        set_cookie = resp.headers.get("Set-Cookie", "")
+    for part in set_cookie.split(";"):
+        name, _, value = part.strip().partition("=")
+        if name == "admin_token" and value:
+            return value
+    raise RuntimeError("login response carried no admin_token cookie")
 
 
-def _get_json(url, token):
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}", "User-Agent": UA})
+def _get_json(url, cookie):
+    req = urllib.request.Request(
+        url,
+        headers={"Cookie": f"admin_token={cookie}", "User-Agent": UA, **CSRF_HEADER},
+    )
     with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
         return json.loads(resp.read())
 
@@ -111,11 +130,10 @@ def main():
         return 0
 
     try:
-        login = _post_json(f"{API_BASE}/admin/login", {"player_name": user, "password": password})
-        token = login["token"]
-        players = _get_json(f"{API_BASE}/admin/players", token)
+        cookie = _login(f"{API_BASE}/admin/login", user, password)
+        players = _get_json(f"{API_BASE}/admin/players", cookie)
         try:
-            narrative = _get_json(f"{API_BASE}/admin/narrative?limit={MAX_EVENTS * 3}", token)
+            narrative = _get_json(f"{API_BASE}/admin/narrative?limit={MAX_EVENTS * 3}", cookie)
         except Exception as exc:  # narrative feed is a bonus, never fatal
             print(f"gen_signal: narrative fetch failed ({exc}); continuing without events")
             narrative = []

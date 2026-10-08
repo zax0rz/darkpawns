@@ -1109,9 +1109,15 @@ func TestHandleTriageSummaries_GET(t *testing.T) {
 }
 
 // authMiddlewareForTest validates a Bearer JWT and sets claims on context.
-// This simulates what web.AuthMiddleware does in production.
+// This simulates what web.AuthMiddleware does in production. It also stamps
+// the CSRF header every authenticated admin request must carry (VULN-043) —
+// the real console sends it on every fetch, so tests exercising authed paths
+// through this helper match the production request shape.
 func authMiddlewareForTest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get(adminCSRFHeader) == "" {
+			r.Header.Set(adminCSRFHeader, "test")
+		}
 		tokenStr := r.Header.Get("Authorization")
 		if tokenStr == "" || !strings.HasPrefix(tokenStr, "Bearer ") {
 			http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
@@ -1469,6 +1475,7 @@ func TestNewRouter_SelfProtects_WithoutOuterAuthMiddleware(t *testing.T) {
 		token := generateTestToken(t, "builder")
 		req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set(adminCSRFHeader, "test")
 		rec := httptest.NewRecorder()
 		router.ServeHTTP(rec, req)
 		if rec.Code != http.StatusOK {
@@ -1672,6 +1679,7 @@ func TestPrometheusEndpoint_RequiresAuth(t *testing.T) {
 	// And with a valid immortal token it serves the exposition format.
 	req = httptest.NewRequest(http.MethodGet, "/admin/prometheus", nil)
 	req.Header.Set("Authorization", "Bearer "+generateTestToken(t, "builder"))
+	req.Header.Set(adminCSRFHeader, "test")
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
@@ -1704,6 +1712,7 @@ func TestWorldWritePUTs_AreGone(t *testing.T) {
 	for _, path := range []string{"/admin/rooms/3001", "/admin/mobs/3001", "/admin/objects/3001", "/admin/zones/30", "/admin/shops/2002"} {
 		req := httptest.NewRequest(http.MethodPut, path, strings.NewReader(`{"name":"x"}`))
 		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set(adminCSRFHeader, "test")
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 		if rec.Code != http.StatusMethodNotAllowed {
@@ -1713,6 +1722,7 @@ func TestWorldWritePUTs_AreGone(t *testing.T) {
 		// The read path on the same route must still work.
 		req = httptest.NewRequest(http.MethodGet, path, nil)
 		req.Header.Set("Authorization", "Bearer "+token)
+		req.Header.Set(adminCSRFHeader, "test")
 		rec = httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 		if rec.Code == http.StatusMethodNotAllowed {

@@ -1,85 +1,37 @@
-import { useState, useCallback } from 'react';
+import { createContext, useContext } from 'react';
 
 export interface LoginError extends Error {
   status?: number;
 }
 
-interface AuthState {
-  token: string | null;
+// The admin credential lives in an HttpOnly cookie set by /admin/login, so
+// JavaScript never sees the token (VULN-043). The hook therefore asks the
+// server who is signed in instead of reading storage, and it lives in a
+// context: ProtectedRoute, LoginPage and Layout each used to hold their own
+// copy of the old localStorage-booted state, which cannot stay consistent
+// once identity arrives asynchronously.
+export interface AuthState {
+  /** False until the boot-time /admin/session check has answered. */
+  ready: boolean;
+  authenticated: boolean;
   role: string | null;
   playerName: string | null;
 }
 
+export interface AuthContextValue extends AuthState {
+  login: (playerName: string, password: string) => Promise<{ player_name: string; role: string }>;
+  logout: () => Promise<void>;
+  hasRole: (required: string) => boolean;
+  /** Kept as the derived name the existing consumers gate on. */
+  isAuthenticated: boolean;
+}
+
+export const AuthContext = createContext<AuthContextValue | null>(null);
+
 export function useAuth() {
-  const [auth, setAuth] = useState<AuthState>(() => {
-    const token = localStorage.getItem('admin_token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return {
-          token,
-          role: payload.role || 'player',
-          playerName: payload.player_name,
-        };
-      } catch {
-        /* fall through */
-      }
-    }
-    return { token: null, role: null, playerName: null };
-  });
-
-  const login = useCallback(async (playerName: string, password: string) => {
-    const res = await fetch('/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player_name: playerName, password }),
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: 'Login failed' }));
-      // The caller decides the wording. Relaying the server's text verbatim is
-      // what leaked "invalid password" versus "invalid credentials" to the
-      // screen, which tells a stranger whether a character name exists.
-      const err = new Error(body.error || `Login failed (${res.status})`) as LoginError;
-      err.status = res.status;
-      throw err;
-    }
-
-    const data = await res.json();
-    localStorage.setItem('admin_token', data.token);
-    setAuth({
-      token: data.token,
-      role: data.role,
-      playerName: data.player_name,
-    });
-    return data;
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('admin_token');
-    setAuth({ token: null, role: null, playerName: null });
-  }, []);
-
-  const hasRole = useCallback(
-    (required: string) => {
-      const hierarchy: Record<string, number> = {
-        player: 0,
-        research: 1,
-        builder: 2,
-        admin: 3,
-      };
-      return (
-        (hierarchy[auth.role || 'player'] || 0) >= (hierarchy[required] || 0)
-      );
-    },
-    [auth.role]
-  );
-
-  return {
-    ...auth,
-    login,
-    logout,
-    hasRole,
-    isAuthenticated: !!auth.token,
-  };
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuth must be used inside AuthProvider');
+  }
+  return ctx;
 }

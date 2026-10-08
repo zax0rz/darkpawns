@@ -268,7 +268,13 @@ func formatLuaParseError(err error, content string) string {
 
 func fileEditGate(database *db.DB, write bool) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
-		claims, err := claimsFromBearerHeader(ctx.Header("Authorization"))
+		// Same authenticated-request contract as requireRole: the custom CSRF
+		// header, then the cookie/Bearer credential (VULN-043).
+		if !hasAdminCSRFHeader(ctx.Header) {
+			writeOLCError(ctx, http.StatusUnauthorized, olcMiddlewareError{Error: "unauthorized"})
+			return
+		}
+		claims, err := claimsFromAmbient(ctx.Header)
 		if err != nil {
 			writeOLCError(ctx, http.StatusUnauthorized, olcMiddlewareError{Error: "unauthorized"})
 			return

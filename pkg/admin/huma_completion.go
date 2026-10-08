@@ -20,7 +20,14 @@ import (
 
 func registerLoginOperation(api huma.API, database loginPlayerDB, attempts *auth.LoginAttemptTracker) {
 	type input struct{ Body loginRequest }
-	type output struct{ Body loginResponse }
+	type output struct {
+		// The legacy handler sets the HttpOnly cookie on the recorder; the
+		// Huma layer re-emits it as a response header (VULN-043). The token
+		// itself never appears in the JSON body. Huma reads header fields
+		// straight off the output struct, tagged per field.
+		SetCookie string `header:"Set-Cookie"`
+		Body      loginResponse
+	}
 	huma.Register(api, huma.Operation{OperationID: "admin-login", Method: http.MethodPost, Path: "/admin/login", Summary: "Authenticate to the admin console"},
 		func(ctx context.Context, in *input) (*output, error) {
 			body, err := json.Marshal(in.Body)
@@ -35,7 +42,48 @@ func registerLoginOperation(api huma.API, database loginPlayerDB, attempts *auth
 			if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 				return nil, err
 			}
-			return &output{Body: response}, nil
+			out := &output{Body: response}
+			out.SetCookie = rec.Header().Get("Set-Cookie")
+			return out, nil
+		})
+}
+
+// sessionResponse is the whoami shape the console reads at boot: the cookie
+// is HttpOnly, so the SPA asks the server who it is signed in as.
+type sessionResponse struct {
+	PlayerName string `json:"player_name"`
+	Role       string `json:"role"`
+}
+
+func registerSessionOperation(api huma.API) {
+	type output struct{ Body sessionResponse }
+	huma.Register(api, huma.Operation{OperationID: "admin-session", Method: http.MethodGet, Path: "/admin/session", Summary: "Report the signed-in admin identity"},
+		func(ctx context.Context, in *struct{}) (*output, error) {
+			claims, ok := auth.GetClaimsFromContext(ctx)
+			if !ok {
+				return nil, apidoc.NewPlainError(http.StatusUnauthorized, `{"error":"unauthorized"}`)
+			}
+			role := claims.Role
+			if role == "" {
+				role = "player"
+			}
+			return &output{Body: sessionResponse{PlayerName: claims.PlayerName, Role: role}}, nil
+		})
+}
+
+func registerLogoutOperation(api huma.API) {
+	type output struct {
+		SetCookie string `header:"Set-Cookie"`
+		Body      struct {
+			Status string `json:"status"`
+		}
+	}
+	huma.Register(api, huma.Operation{OperationID: "admin-logout", Method: http.MethodPost, Path: "/admin/logout", Summary: "Clear the admin session cookie"},
+		func(ctx context.Context, in *struct{}) (*output, error) {
+			out := &output{}
+			out.SetCookie = clearedAdminTokenCookieString()
+			out.Body.Status = "logged out"
+			return out, nil
 		})
 }
 
