@@ -1,0 +1,70 @@
+# C-first diagnostic vehicle. Unit proof also checks file/order/filters.
+# depth-case: mudlog.game-death-trap-player
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8008 1 on
+
+[setup:oracle]
+Logwarden
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Logwarden
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Logsubject
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Logsubject
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog normal
+teleport Logsubject 8004
+[probe]
+force Logsubject south
+~dpclock pulse 20

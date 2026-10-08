@@ -1,0 +1,73 @@
+# C-first diagnostic vehicle. Unit proof also checks file/order/filters.
+# depth-case: mudlog.game-protection-evil-death
+
+[fixture]
+empty-players
+quiet-mobs
+force-load 4903
+spawn-obj 4903 1 8162 80
+
+[setup:oracle]
+Logwarden
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Logwarden
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Logsubject
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Logsubject
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog normal
+teleport Logsubject 8162
+set Logsubject align -1000
+force Logsubject get daemon
+[probe]
+force Logsubject quaff daemon
+~dpclock pulse 20
