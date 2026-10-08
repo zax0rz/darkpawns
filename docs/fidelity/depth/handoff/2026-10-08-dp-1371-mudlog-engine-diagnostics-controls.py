@@ -59,6 +59,47 @@ CASES = [
             "old": "",
         }],
     },
+    {
+        "case": "lua-skip-spaces",
+        "test": "TestLuaSkipSpacesInvalidArgumentProducer",
+        "package": "./pkg/scripting",
+        "assertion": "producer calls=0 want 1",
+        "patches": [{
+            "path": "pkg/scripting/engine.go",
+            "new": "\tif L.Get(1).Type() != lua.LTString {\n\t\tif b := e.activeBridge; b != nil {\n\t\t\tb.Log(\"[Lua] Invalid argument passed to lua_skip_spaces.\")\n\t\t}\n\t}\n",
+            "old": "",
+        }],
+    },
+    {
+        "case": "lua-load-failure",
+        "test": "TestLuaRunScriptLoadFailureProducers",
+        "package": "./pkg/scripting",
+        "assertion": "producers=[] want",
+        "patches": [{
+            "path": "pkg/scripting/engine.go",
+            "new": "\t\tscriptMudLogLoadFailure(bridge, fname, \"No such file.\")\n",
+            "old": "",
+        }, {
+            "path": "pkg/scripting/engine.go",
+            "new": "\t\t\tscriptMudLogLoadFailure(bridge, fname, luaLoadErrorKind(err))\n",
+            "old": "",
+        }],
+    },
+    {
+        "case": "lua-call-failure",
+        "test": "TestLuaRunScriptCallFailureProducer",
+        "package": "./pkg/scripting",
+        "assertion": "producers=[] want",
+        "patches": [{
+            "path": "pkg/scripting/engine.go",
+            "new": "\t\t\tscriptMudLogCallFailure(bridge, fname, triggerName)\n",
+            "old": "",
+        }, {
+            "path": "pkg/scripting/engine.go",
+            "new": "\t\tscriptMudLogCallFailure(bridge, fname, triggerName)\n",
+            "old": "",
+        }],
+    },
 ]
 
 
