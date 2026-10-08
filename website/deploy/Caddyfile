@@ -1,8 +1,8 @@
 {
-	auto_https off
+
 }
 
-:80 {
+darkpawns.org, www.darkpawns.org {
 	encode zstd gzip
 	import redirects.caddy
 
@@ -18,45 +18,59 @@
 	@fingerprinted path /_astro/*
 	header @fingerprinted Cache-Control "public, max-age=31536000, immutable"
 
-	# Route soviet to The Soviet
-	@soviet {
-		host soviet.labz0rz.com
-	}
-	handle @soviet {
-		reverse_proxy localhost:4000
-	}
-
 	# Dark Pawns game (served by Go server)
 	handle /game {
 		redir /game/ permanent
 	}
 	handle /game/* {
 		uri strip_prefix /game
-		reverse_proxy localhost:4350
+		reverse_proxy 127.0.0.1:4350
 	}
 
 	# Go game server routes
 	handle /ws {
-		reverse_proxy localhost:4350
+		reverse_proxy 127.0.0.1:4350
 	}
 	handle /api/* {
-		reverse_proxy localhost:4350
+		reverse_proxy 127.0.0.1:4350
 	}
 	handle /openapi.json {
-		reverse_proxy localhost:4350
+		reverse_proxy 127.0.0.1:4350
+	}
+	handle /admin {
+		reverse_proxy 127.0.0.1:4350
+	}
+	# The admin console's Vite bundle is emitted at /assets/* and served by Go
+	# from admin-ui-dist. Without this the console's HTML loads and the page
+	# stays blank, because the bundle 404s at the Astro root. Astro emits its
+	# own assets under /_astro/, so there is no collision.
+	handle /assets/* {
+		reverse_proxy 127.0.0.1:4350
 	}
 	handle /admin/* {
-		reverse_proxy localhost:4350
+		reverse_proxy 127.0.0.1:4350
 	}
 	handle /health {
-		reverse_proxy localhost:4350
-	}
-	handle /metrics {
-		reverse_proxy localhost:4350
+		reverse_proxy 127.0.0.1:4350
 	}
 
-	# Serve Markdown siblings for trailing-slash canonical URLs such as
-	# /docs/server/architecture/ -> /docs/server/architecture.md.
+	# Mudlet client package — deployed with the game, same commit as the binary
+	# (server announces mudlet/VERSION via GMCP Client.GUI; keep file in lockstep).
+	# 404s harmlessly until the first game deploy ships the file.
+	handle /darkpawns.xml {
+		root * /opt/darkpawns/mudlet
+		header Cache-Control "no-cache"
+		file_server
+	}
+
+	# World map for the Mudlet package — served by the Go server (offered over GMCP).
+	handle /darkpawns-map.xml {
+		reverse_proxy 127.0.0.1:4350
+	}
+
+	# Serve the Markdown representation generated alongside each page. Handle
+	# trailing-slash canonical URLs separately because Astro emits siblings
+	# such as /docs/agents/protocol.md.
 	@markdownTrailing {
 		header Accept *text/markdown*
 		path_regexp trailing ^(.+)/$
@@ -78,7 +92,7 @@
 		file_server
 	}
 
-	# Astro static files (catch-all; the document-root name is historical).
+	# Static files (catch-all)
 	handle {
 		root * /srv/darkpawns/
 		# Discovery headers for agents and crawlers.
