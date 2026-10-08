@@ -314,6 +314,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	case SpellProtFromGood:
 		if isGood(victim) {
 			sendToCaster(ch, "The forces of Light destroy you for your betrayal!\r\n")
+			logProtectionKill(world, ch, "Good")
 			// C source: magic.c:1162-1168 — raw_kill(ch, TYPE_BLAST) on alignment violation
 			if c, ok := ch.(combat.Combatant); ok {
 				combat.RawKill(c, combat.TYPE_BLAST)

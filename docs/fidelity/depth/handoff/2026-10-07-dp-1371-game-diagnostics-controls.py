@@ -7,6 +7,7 @@ root=pathlib.Path(a.output).expanduser();root.mkdir(parents=True,exist_ok=True)
 controls=[('milestone','pkg/game/death.go','MudLog(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), MudlogNormal, LVL_IMMORT, false)','', 'TestGameDiagnosticKillMilestone')]
 controls += [('cross-room','pkg/game/damage_gate.go','MudLog("Attempt to assign damage when ch and vict are in different rooms.", MudlogNormal, LVL_IMMORT, false)','','TestGameDiagnosticCrossRoomDamage')]
 controls += [('protection-evil','pkg/spells/affect_spells.go','logProtectionKill(world, ch, "Evil")','','TestGameDiagnosticProtectionEvil')]
+controls += [('protection-good','pkg/spells/affect_spells.go','logProtectionKill(world, ch, "Good")','','TestGameDiagnosticProtectionGood')]
 for name,file,before,after,test in controls:
  if a.case and a.case!=name:continue
  source=pathlib.Path(file).read_text();assert source.count(before)==1,(name,source.count(before))

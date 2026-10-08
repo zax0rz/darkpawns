@@ -58,3 +58,7 @@ func protectionDiagnosticProof(t *testing.T, spell, align int, protection string
 func TestGameDiagnosticProtectionEvil(t *testing.T) {
 	protectionDiagnosticProof(t, spells.SpellProtFromEvil, -1000, "Evil")
 }
+
+func TestGameDiagnosticProtectionGood(t *testing.T) {
+	protectionDiagnosticProof(t, spells.SpellProtFromGood, 1000, "Good")
+}
