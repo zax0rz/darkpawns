@@ -2,6 +2,7 @@ package game
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -68,6 +69,11 @@ func TestZoneErrorMudlogBranches(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w, s := newZoneResetTestSpawner(t)
+			// C records the 1-based zone-file line in ZCMD.line (src/db.c:1597)
+			// and prints it in the second ordered diagnostic.
+			for i := range tc.commands {
+				tc.commands[i].Line = 5 + i
+			}
 			zone := parser.Zone{Number: 1, TopRoom: 199, Commands: tc.commands}
 			w.parsedData = nil
 			w.zones[1] = &zone
@@ -90,6 +96,16 @@ func TestZoneErrorMudlogBranches(t *testing.T) {
 			want := "[ " + payload + " ]\r\n"
 			if !strings.Contains(provider.lines[watch.Name], want) {
 				t.Fatalf("observer bytes=%q want %q", provider.lines[watch.Name], want)
+			}
+			// The second ordered line, C's "offending cmd" diagnostic, carrying
+			// the command character, the zone number and ZCMD.line.
+			second := fmt.Sprintf("SYSERR: ...offending cmd: '%c' cmd in zone #1, line %d",
+				tc.commands[len(tc.commands)-1].Command[0], 5+len(tc.commands)-1)
+			if got := strings.Count(file2.String(), second); got != 1 {
+				t.Fatalf("second line count=%d want 1; log=%q", got, file2.String())
+			}
+			if wantSecond := "[ " + second + " ]\r\n"; !strings.Contains(provider.lines[watch.Name], wantSecond) {
+				t.Fatalf("observer bytes=%q want %q", provider.lines[watch.Name], wantSecond)
 			}
 			if !strings.Contains(provider.lines[complete.Name], want) {
 				t.Fatal("complete-syslog observer missed the NRM line")

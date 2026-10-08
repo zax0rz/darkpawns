@@ -29,6 +29,11 @@ type ZoneCommand struct {
 	Arg1    int    // vnum (mob/obj/room)
 	Arg2    int    // max in world / equip position / door state
 	Arg3    int    // room vnum / container vnum / probability
+	// Line is the 1-based line number of this command in its zone file, which
+	// C records in ZCMD.line (src/db.c:1597) and uses only for the
+	// "offending cmd" diagnostic (src/db.c:2056-2057). It is parse-time
+	// evidence and is never serialized.
+	Line int
 }
 
 // ParseZonFile parses a single .zon file and returns the zone.
@@ -78,8 +83,12 @@ func ParseZonFile(path string) (*Zone, error) {
 		zone.ResetMode, _ = strconv.Atoi(consts[2])
 	}
 
-	// Parse commands until 'S'
+	// Parse commands until 'S'. C counts every physical line from 1 and
+	// stores it in ZCMD.line (src/db.c:1597); the three header lines above are
+	// lines 1-3.
+	lineNum := 3
 	for scanner.Scan() {
+		lineNum++
 		line := strings.TrimSpace(scanner.Text())
 
 		// Skip empty lines and comments
@@ -95,6 +104,7 @@ func ParseZonFile(path string) (*Zone, error) {
 		if err != nil {
 			return nil, fmt.Errorf("parse command: %w", err)
 		}
+		cmd.Line = lineNum
 		zone.Commands = append(zone.Commands, cmd)
 	}
 
