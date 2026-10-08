@@ -57,7 +57,7 @@ func TestLuaRawKillMudlogProducer(t *testing.T) {
 			SetLogWriter(file)
 			t.Cleanup(func() { SetLogWriter(oldWriter) })
 
-			payload := victim.GetName()
+			var payload string
 			if tc.withKiller {
 				payload = fmt.Sprintf(tc.payload, victim.GetName(), killer.GetName())
 			} else {
