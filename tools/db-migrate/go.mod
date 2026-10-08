@@ -9,7 +9,7 @@
 // sees it.
 module github.com/zax0rz/darkpawns/tools/db-migrate
 
-go 1.26.6
+go 1.26.9
 
 require (
 	github.com/lib/pq v1.12.3
