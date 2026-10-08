@@ -300,6 +300,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	case SpellProtFromEvil:
 		if isEvil(victim) {
 			sendToCaster(ch, "You cannot protect yourself from the Evil inside you!\r\n")
+			logProtectionKill(world, ch, "Evil")
 			// C source: magic.c:1142-1148 — raw_kill(ch, TYPE_BLAST) on alignment violation
 			if c, ok := ch.(combat.Combatant); ok {
 				combat.RawKill(c, combat.TYPE_BLAST)
@@ -3506,5 +3507,15 @@ func castMirrorImage(level int, ch, world interface{}) {
 
 		sendToCaster(ch, "You divide yourself in two!\r\n")
 		sendToRoom("$n divides $mself in two!\r\n", ch, nil, nil, "", "", world)
+	}
+}
+
+// src/magic.c:1146-1148,1166-1168: name the caster, after its warning,
+// before raw_kill; BRF/31/file TRUE. Live World supplies the existing consumer.
+func logProtectionKill(world, ch interface{}, protection string) {
+	logger, ok := world.(interface{ MudLog(string, int, int, bool) })
+	caster, named := ch.(interface{ GetName() string })
+	if ok && named {
+		logger.MudLog(fmt.Sprintf("%s killed by Protection from %s.", caster.GetName(), protection), 1, lvlImmort, true)
 	}
 }

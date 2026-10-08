@@ -368,3 +368,7 @@ func CoreDump(who string, line int) {
 	// Write to stderr directly to ensure it's seen
 	_, _ = os.Stderr.WriteString(msg + "\n")
 }
+
+// MudLog exposes the existing consumer to cycle-free spell-world adapters.
+// It retains the same filters, file flag and delivery path as package MudLog.
+func (*World) MudLog(msg string, typ, level int, toFile bool) { MudLog(msg, typ, level, toFile) }
