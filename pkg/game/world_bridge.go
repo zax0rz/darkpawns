@@ -487,6 +487,17 @@ func (a *WorldScriptableAdapter) MudLog(msg string, typ, level int, toFile bool)
 	MudLog(msg, typ, level, toFile)
 }
 
+// IsShopKeeper reports whether a mob VNum is a shop keeper's. C's
+// lua_item_check scans the shop table for SHOP_KEEPER(shop_nr) == me->nr
+// (src/scripts.c:734-736) and logs "Unable to determine shop" when no shop
+// matches; the port's ShopBuysType bool cannot separate that from a shop that
+// does not buy the type, so the engine asks this instead. It is another
+// stateless forward, reached by inline assertion like MudLog above.
+func (a *WorldScriptableAdapter) IsShopKeeper(vnum int) bool {
+	_, ok := a.world.GetShopByKeeper(vnum)
+	return ok
+}
+
 // CanSee is CAN_SEE(me, vict).
 func (a *WorldScriptableAdapter) CanSee(me, vict scripting.CharRef) bool {
 	observer, subject := a.actorFor(&me), a.actorFor(&vict)

@@ -381,6 +381,16 @@ const (
 	scriptMudlogImmortal = 31
 )
 
+// scriptMudLogBrief emits a C script diagnostic at BRF/LVL_IMMORT/file FALSE
+// through the active bridge, which is Bridge.Log's contract
+// (pkg/game/world_bridge.go:470-473). A run without a bridge (engine-only
+// tests) emits nothing, as the legacy path does.
+func (e *Engine) scriptMudLogBrief(msg string) {
+	if b := e.activeBridge; b != nil {
+		b.Log(msg)
+	}
+}
+
 // scriptMudLogFile emits a C script producer that also writes the file. The
 // adapter's MudLog is a one-line forward to game.MudLog
 // (pkg/game/world_bridge.go); the engine reaches it by inline assertion, so the
@@ -1997,8 +2007,10 @@ func (e *Engine) luaIsFighting(L *lua.LState) int {
 	// Based on lua_isfighting() in scripts.c — checks mob's fighting pointer
 	mobTbl := L.Get(1)
 	if mobTbl.Type() != lua.LTTable {
-		L.Push(lua.LNil)
-		return 1
+		// scripts.c:670-673: a non-table argument logs at BRF/LVL_IMMORT/file
+		// FALSE and returns no values; the port returned 1 with a nil.
+		e.scriptMudLogBrief("[Lua] Invalid argument passed to lua_isfighting.")
+		return 0
 	}
 	tbl := mobTbl.(*lua.LTable)
 	if ref, ok := charRefOf(tbl); ok {
@@ -2465,15 +2477,26 @@ func (e *Engine) luaMount(L *lua.LState) int {
 }
 
 func (e *Engine) luaDirection(L *lua.LState) int {
-	// direction(from_vnum, to_vnum) - returns direction (0-5) from one room to another.
+	// direction(from_vnum, to_vnum) - returns direction (0-5) from one room to
+	// another.
 	// Source: scripts.c lua_direction() lines 317-340.
-	// Returns -1 on error, -2 if already there, -3 if no path found.
-	if e.world == nil {
-		L.Push(lua.LNumber(-1))
-		return 1
+	// find_first_step returns -1 on error, -2 if already there and -3 if no
+	// path was found; invalid arguments and unknown rooms return no values.
+	//
+	// C gates the two failure arms (src/scripts.c:326-331 and :336-339) and
+	// returns 0 from both: the invalid-room arm pushes a nil first, which Lua
+	// callers cannot observe because the function declares no results, so the
+	// port logs and returns 0 without touching the stack.
+	if L.Get(1).Type() != lua.LTNumber || L.Get(2).Type() != lua.LTNumber {
+		e.scriptMudLogBrief("[Lua] Invalid arguments passed to lua_direction.")
+		return 0
 	}
 	fromVNum := L.ToInt(1)
 	toVNum := L.ToInt(2)
+	if e.world == nil || e.world.GetRoomInWorld(fromVNum) == nil || e.world.GetRoomInWorld(toVNum) == nil {
+		e.scriptMudLogBrief("[Lua] Invalid room specified in lua_direction.")
+		return 0
+	}
 	if fromVNum == toVNum {
 		L.Push(lua.LNumber(-2))
 		return 1
@@ -2614,6 +2637,11 @@ func (e *Engine) luaIsCorpse(L *lua.LState) int {
 			L.Push(lua.LNumber(1))
 			return 1
 		}
+	} else {
+		// scripts.c:650-653: a non-table argument logs at BRF/LVL_IMMORT/file
+		// FALSE and returns no values; only a table reaches the corpse test.
+		e.scriptMudLogBrief("[Lua] Invalid argument passed to lua_iscorpse.")
+		return 0
 	}
 	L.Push(lua.LNil)
 	return 1
@@ -2629,8 +2657,11 @@ func (e *Engine) luaCanGet(L *lua.LState) int {
 	}
 	tbl, ok := L.Get(1).(*lua.LTable)
 	if !ok {
-		L.Push(lua.LNumber(1))
-		return 1
+		// scripts.c:215-217: a non-table argument logs at BRF/LVL_IMMORT/file
+		// FALSE and returns no values (C pushes nothing and returns 0). The
+		// port returned 1 with a truthy value.
+		e.scriptMudLogBrief("[Lua] Invalid argument to lua_canget.")
+		return 0
 	}
 	// Get object vnum
 	vnumVal := tbl.RawGetString("vnum")
@@ -2681,9 +2712,10 @@ func (e *Engine) luaItemCheck(L *lua.LState) int {
 	// then calls World.ShopBuysType(mobVNum, objType).
 
 	if L.GetTop() < 1 || L.Get(1).Type() != lua.LTTable {
-		slog.Warn("[Lua] Invalid argument to item_check", "arg_type", L.Get(1).Type())
-		L.Push(lua.LNil)
-		return 1
+		// scripts.c:752-755: a non-table argument logs at BRF/LVL_IMMORT/file
+		// FALSE and returns no values.
+		e.scriptMudLogBrief("[Lua] Invalid argument to lua_item_check.")
+		return 0
 	}
 
 	// Get the item table (arg 1)
@@ -2709,6 +2741,17 @@ func (e *Engine) luaItemCheck(L *lua.LState) int {
 		return 1
 	}
 	mobVNum := int(mobVNumVal.(lua.LNumber))
+
+	// scripts.c:734-742: C scans the shop table for a keeper whose nr matches
+	// this mob; no match logs "Unable to determine shop" and returns a nil,
+	// which is also what a shop that does not buy the type returns. The port's
+	// ShopBuysType bool collapses those two cases, so the keeper lookup is
+	// asked separately through the adapter.
+	if keeper, ok := e.activeBridge.(interface{ IsShopKeeper(int) bool }); ok && !keeper.IsShopKeeper(mobVNum) {
+		e.scriptMudLogBrief("[Lua] Unable to determine shop in lua_item_check.")
+		L.Push(lua.LNil)
+		return 1
+	}
 
 	if e.world == nil {
 		L.Push(lua.LNil)
