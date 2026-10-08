@@ -9,6 +9,7 @@ controls += [('cross-room','pkg/game/damage_gate.go','MudLog("Attempt to assign 
 controls += [('protection-evil','pkg/spells/affect_spells.go','logProtectionKill(world, ch, "Evil")','','TestGameDiagnosticProtectionEvil')]
 controls += [('protection-good','pkg/spells/affect_spells.go','logProtectionKill(world, ch, "Good")','','TestGameDiagnosticProtectionGood')]
 controls += [('death-trap','pkg/game/death.go','LogDeathTrap(player.GetName(), room.VNum, room.Name)','','TestGameDiagnosticDeathTrapMovement')]
+controls += [('spike-stake','pkg/command/skill_commands.go','game.MudLog(fmt.Sprintf("%s %sd %s at %s.", ch.GetName(), result.RawKillVerb, target.GetName(), room.Name), game.MudlogBrief, game.LVL_IMMORT, true)','','TestGameDiagnosticSpikeStake')]
 for name,file,before,after,test in controls:
  if a.case and a.case!=name:continue
  source=pathlib.Path(file).read_text();assert source.count(before)==1,(name,source.count(before))
@@ -16,11 +17,11 @@ for name,file,before,after,test in controls:
  with tempfile.TemporaryDirectory() as tmp:
   replacement=pathlib.Path(tmp)/pathlib.Path(file).name
   changed = source.replace(before,after)
-  if name == 'zone-open-order':changed=changed.replace('tmp.Write(render())','tmp.Write(data)')
+  if name == 'spike-stake':changed=changed.replace('if room, ok := s.GetWorld().GetRoom(target.GetRoom()); ok {','if _, ok := s.GetWorld().GetRoom(target.GetRoom()); ok {')
   replacement.write_text(changed)
   overlay=pathlib.Path(tmp)/'overlay.json';overlay.write_text(json.dumps({'Replace':{str(pathlib.Path(file).resolve()):str(replacement)}}))
   for stage in ['green','revert','restore']:
-   cmd=['go','test','-p','2']+(['-overlay='+str(overlay)] if stage=='revert' else [])+['./pkg/game','-run','^'+test+'$','-count=1']
+   cmd=['go','test','-p','2']+(['-overlay='+str(overlay)] if stage=='revert' else [])+['./pkg/command' if file.startswith('pkg/command/') else './pkg/game','-run','^'+test+'$','-count=1']
    r=subprocess.run(cmd,env=dict(os.environ,GOMAXPROCS='2'),text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
    (folder/(stage+'.txt')).write_text(r.stdout+'\nEXIT='+str(r.returncode)+'\n')
    if stage=='revert':assert r.returncode!=0 and '[build failed]' not in r.stdout and '--- FAIL: '+test in r.stdout,r.stdout
