@@ -539,7 +539,10 @@ func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *
 
 	// TO_ROOM or TO_NOTVICT: iterate room occupants
 	if world == nil {
-		log.Println("SYSERR: no valid target to act()!")
+		// Go-defensive arm. C's world is a global array (comm.c:2400) and
+		// cannot be nil, so this arm has no C counterpart; the message and
+		// its type/level/file contract are still C's (comm.c:2525).
+		MudLog("SYSERR: no valid target to act()!", MudlogComplete, LVL_IMMORT, true)
 		return
 	}
 
@@ -551,7 +554,10 @@ func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *
 		roomVNum = obj.RoomVNum
 	}
 	if roomVNum < 0 {
-		log.Println("SYSERR: no valid target to act()!")
+		// comm.c:2523-2526: neither ch nor obj has a valid room, so act()
+		// has no audience. C logs this before returning; the file side comes
+		// from the same MudLog call (toFile TRUE).
+		MudLog("SYSERR: no valid target to act()!", MudlogComplete, LVL_IMMORT, true)
 		return
 	}
 
