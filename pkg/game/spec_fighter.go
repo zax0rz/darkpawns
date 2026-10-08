@@ -41,8 +41,10 @@ func (w *World) mobSkillDamageAfterGate(ch *MobInstance, vict combat.Combatant, 
 	if dam > 0 {
 		vict.TakeDamage(dam)
 	}
-	newPos := combat.GetPositionFromHP(vict.GetHP(), vict.GetPosition())
-	vict.SetPosition(newPos)
+	if w.DamageBeforeMessage(ch, vict, dam) {
+		return false
+	}
+	newPos := vict.GetPosition()
 	// C's damage() emits skill_message before the wounded/death follow-up
 	// (fight.c:1534-1545, 1560-1613). Keep that ordering even for a
 	// protection-reduced zero-damage result.

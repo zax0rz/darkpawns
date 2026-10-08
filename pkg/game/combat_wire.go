@@ -13,6 +13,10 @@ import (
 // package-level variables they replace.
 func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	cb := &combat.GameCallbacks{}
+	pre := w.damageBeforeMessageCallbacks()
+	cb.DamageNewbieExp = pre.DamageNewbieExp
+	cb.StopFighting = pre.StopFighting
+	cb.NeutralRescue = pre.NeutralRescue
 	cb.RangedHunt = func(attacker, defender combat.Combatant) {
 		if mob, ok := attacker.(*MobInstance); ok && mob.HasMobFlag(MobFlagHunter) {
 			mob.SetHunting(defender.GetName())
