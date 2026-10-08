@@ -14,7 +14,11 @@ const blog = defineCollection({
     textKind: z.enum(['original', 'summary', 'reconstruction', 'transcription', 'verbatim', 'edited-excerpt']),
     source: z.string(),
     voiceLayer: z.enum(['engine', 'mythic-admin', 'frontline']),
-  }),
+    // A 1200x630 share card under /images/blog/, with its alt text. Posts
+    // without one share the site-wide /og-image.png.
+    ogImage: z.string().startsWith('/images/blog/').optional(),
+    ogImageAlt: z.string().optional(),
+  }).refine((data) => !data.ogImage || data.ogImageAlt, { message: 'ogImage needs ogImageAlt', path: ['ogImageAlt'] }),
 });
 
 // The world handbook: classes, races, skills, systems, lore. Same schema

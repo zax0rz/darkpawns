@@ -215,14 +215,16 @@ and `content-inventory.csv`. The build also rewrites
 committing unrelated churn.
 
 Voice-lint warnings are editorial, not failures. Read each one. Known false
-positives: a banned word inside a verbatim quote, and `trailer-rhythm` on
-lines of a fenced code block.
+positives: a banned word inside a verbatim quote, `trailer-rhythm` on
+lines of a fenced code block, and `trailer-rhythm` on a paragraph with a
+linked hostname (the lint splits sentences on the dots in `darkpawns.net`).
 
 Frontmatter contract for `website-astro/src/content/blog/<slug>.md` (enforced
 by `src/content.config.ts`): `title`, `date`, `description`, `draft`,
 `textKind` (original posts use `original`), `source`, `voiceLayer`
 (`mythic-admin` for new posts). New posts start as `draft: true`; flipping it
-to false is Zach's call.
+to false is Zach's call. Optional: `ogImage` and `ogImageAlt` (see Stage 7);
+the schema rejects an `ogImage` without alt text or outside `/images/blog/`.
 
 ### Stage 7: Social blurb
 
@@ -236,6 +238,28 @@ than estimating:
 ```bash
 printf '%s' 'the blurb text' | wc -m
 ```
+
+**Share card.** When the post has header art, give it its own link-preview
+image; otherwise it shares the site-wide `/og-image.png`. The card is a
+1200x630 PNG at `website/static/images/blog/og-<slug>.png`, set in the
+frontmatter:
+
+```yaml
+ogImage: "/images/blog/og-<slug>.png"
+ogImageAlt: "<post title>: <what the art shows>"
+```
+
+Match the site card's look (`website/static/og-image.png`): Paper ground,
+the double Ink frame, a small Oxblood label line (`DARK PAWNS · THE BLOG`),
+the title in DM Serif Display, `darkpawns.org` in Ink-Muted under a hairline
+rule, and the art on the opposite side (use the tall crop if there is one).
+No tagline: the title carries it, and invented copy on the card skips every
+voice gate. Pillow can draw it; DM Serif Display ships as woff2 in the repo
+(`web/public/static/fonts/`) and fontTools converts it to TTF. Verify on the
+built or dev page that `og:image` and `twitter:image` point at the card and
+that the file returns 200. Header art itself goes in the same folder and is
+placed with a `<figure class="frontispiece">`, using `<picture>` with a
+`max-width: 640px` source when there is a tall mobile crop.
 
 ### Technical articles mode
 
