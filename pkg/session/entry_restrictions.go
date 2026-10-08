@@ -13,7 +13,7 @@ func (s *Session) refuseNewWizlock() bool {
 		return false
 	}
 	s.refuseEntry("Sorry, new players can't be created at the moment.\r\n",
-		fmt.Sprintf("Request for new char %s denied from [%s] (wizlock)", s.charName, s.RemoteIP()))
+		fmt.Sprintf("Request for new char %s denied from [%s] (wizlock)", s.charName, s.MudHost()))
 	return true
 }
 
@@ -25,7 +25,7 @@ func (s *Session) refuseReturningWizlock(name string, level int) bool {
 	}
 	s.sendRawEvent("\r\n") // echo_on(), src/interpreter.c:1871; src/comm.c:954-967.
 	s.refuseEntry("The game is temporarily restricted.. try again later.\r\n",
-		fmt.Sprintf("Request for login denied for %s [%s] (wizlock)", name, s.RemoteIP()))
+		fmt.Sprintf("Request for login denied for %s [%s] (wizlock)", name, s.MudHost()))
 	return true
 }
 
@@ -57,7 +57,7 @@ func (s *Session) refuseNewSiteBan() bool {
 		return false
 	}
 	s.refuseEntry("Sorry, new characters are not allowed from your site!\r\n",
-		fmt.Sprintf("Request for new char %s denied from [%s] (siteban)", s.charName, s.RemoteIP()))
+		fmt.Sprintf("Request for new char %s denied from [%s] (siteban)", s.charName, s.MudHost()))
 	return true
 }
 
@@ -68,6 +68,6 @@ func (s *Session) refuseReturningSiteBan(name string, raw []byte) bool {
 	}
 	s.sendRawEvent("\r\n")
 	s.refuseEntry("Sorry, this char has not been cleared for login from your site!\r\n",
-		fmt.Sprintf("Connection attempt for %s denied from %s", name, s.RemoteIP()))
+		fmt.Sprintf("Connection attempt for %s denied from %s", name, s.MudHost()))
 	return true
 }

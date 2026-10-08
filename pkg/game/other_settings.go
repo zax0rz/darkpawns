@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -193,7 +194,32 @@ func (w *World) doGenWrite(ch *Player, me *MobInstance, cmd string, arg string) 
 var (
 	nameserverIsSlow = true
 	identEnabled     bool
+	// settingsMu guards the two process-wide C config toggles below. They are
+	// read by connection goroutines (pkg/telnet) while do_gen_tog writes them
+	// from the game loop, so the accessors must not race.
+	settingsMu sync.RWMutex
 )
+
+// NameserverIsSlow reports C's nameserver_is_slow (src/config.c:206). C ships
+// it YES, and with it C never resolves a connection's hostname
+// (src/comm.c:1527-1529), so d->host is the zero-padded dotted quad.
+//
+// It takes settingsMu for reading. Nothing on the MudLog delivery path takes
+// that lock, so a producer may hold no lock and call this freely.
+func NameserverIsSlow() bool {
+	settingsMu.RLock()
+	defer settingsMu.RUnlock()
+	return nameserverIsSlow
+}
+
+// SetNameserverIsSlow sets the flag. It is the programmatic form of the
+// `slowns` toggle (do_gen_tog) and exists for tests and tooling; the in-game
+// toggle still goes through doGenTog.
+func SetNameserverIsSlow(slow bool) {
+	settingsMu.Lock()
+	defer settingsMu.Unlock()
+	nameserverIsSlow = slow
+}
 
 func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if isPlayerNPC(ch, me) {
@@ -274,8 +300,8 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		identEnabled = !identEnabled
 		result = identEnabled
 	case "slowns":
-		nameserverIsSlow = !nameserverIsSlow
-		result = nameserverIsSlow
+		SetNameserverIsSlow(!NameserverIsSlow())
+		result = NameserverIsSlow()
 	default:
 		flag, ok := toggleFlags[cmd]
 		if !ok {

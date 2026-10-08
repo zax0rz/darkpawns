@@ -1203,15 +1203,17 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	ip := auth.GetIPFromRequest(r)
 
-	// Ban check: BanAll → reject before creating a session (DP-418)
-	ipBanLevel := 0
-	if bm := m.GetBanManager(); bm != nil {
-		ipBanLevel = bm.IsBanned(ip)
-	}
+	// Ban check: BanAll → reject before creating a session (DP-418).
+	// C's accept-time check is isbanned() over d->host and the two wildcard
+	// strings derived from it (src/comm.c:1567-1569). This transport has no
+	// reverse-DNS worker, so d->host is always the zero-padded quad (see
+	// identification in pkg/telnet for the resolving transport).
+	mudHost := CConnectionHost(ip)
+	ipBanLevel := AcceptBanLevel(m.GetBanManager(), mudHost, false)
 	if ipBanLevel == game.BanAll {
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "your site has been banned"))
 		_ = conn.Close()
-		slog.Warn("WebSocket: BanAll connection rejected", "ip", ip)
+		slog.Warn("WebSocket: BanAll connection rejected", "host", mudHost)
 		return
 	}
 
@@ -1229,7 +1231,8 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	session := &Session{
 		banLevel:            ipBanLevel, // BanNew/BanSelect enforced at entry
-		banHosts:            []string{ip},
+		banHosts:            []string{mudHost},
+		mudHost:             mudHost,
 		conn:                conn,
 		request:             r, // Store the HTTP request for IP extraction
 		manager:             m,
@@ -1950,8 +1953,21 @@ type Session struct {
 	authenticated        bool
 	isGuest              bool
 	connCountDecremented bool     // C5: prevents double-decrement of IP connection count
-	banHosts             []string // connection IP and resolved PTR names; checked again at entry
+	banHosts             []string // C's d->host string(s); checked again at entry (interpreter.c:1822,1896)
 	banLevel             int      // ban level from IsBanned (BanNew or BanSelect); 0 = no ban
+	// mudHost is C's d->host: the zero-padded dotted quad, or the resolved
+	// name when a lookup ran and succeeded (src/comm.c:1534-1563). Set once at
+	// accept; see MudHost().
+	mudHost string
+	// descriptorBound mirrors C's `d->character != NULL`: C creates the
+	// character on the first input at the name prompt before it even checks
+	// for an empty line (src/interpreter.c:1743-1752), so close_socket's
+	// "Losing descriptor without char." arm only fires before that input.
+	descriptorBound bool
+	// descriptorLossOnce makes close_socket's non-playing producer fire once
+	// per descriptor, as C's single close_socket does, even though Go closes a
+	// descriptor from both its transport and the manager.
+	descriptorLossOnce sync.Once
 
 	// outputSincePrompt counts player-bound messages enqueued since the last
 	// prompt. C's process_output appends "\r\n" + make_prompt to every output

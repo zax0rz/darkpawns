@@ -153,7 +153,7 @@ func (s *Session) finishDupeCheck(p *game.Player, name string, olcZone int, unsw
 	case unswitch:
 		// No line ending in C (interpreter.c:1650); the prompt follows.
 		s.sendRawEvent("Reconnecting to unswitched char.")
-		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.RemoteIP()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
+		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.MudHost()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
 	case usurp:
 		s.Send("You take over your own body, already in use!\r\n")
 		game.Act(w, true, p, nil, nil, nil,
@@ -166,7 +166,7 @@ func (s *Session) finishDupeCheck(p *game.Player, name string, olcZone int, unsw
 			s.Send("You have mail waiting.\r\n")
 		}
 		game.Act(w, true, p, nil, nil, nil, "$n has reconnected.", "", game.ToRoom)
-		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.RemoteIP()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
+		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.MudHost()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
 	}
 
 	// A GMCP client learns who it is again; the text bytes above are C's.
