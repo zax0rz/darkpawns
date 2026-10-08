@@ -7,3 +7,7 @@ package game
 var _ interface {
 	MudLog(string, int, int, bool)
 } = (*WorldScriptableAdapter)(nil)
+
+// Same for the shop-keeper lookup the engine asks by inline assertion to place
+// lua_item_check's "Unable to determine shop" producer.
+var _ interface{ IsShopKeeper(int) bool } = (*WorldScriptableAdapter)(nil)

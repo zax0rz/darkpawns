@@ -35,27 +35,27 @@ CASES = [
         "assertion": "file payload count=0 want 1",
         "patches": [{
             "path": "pkg/game/spawner.go",
-            "new": "\t\t\t\tzoneError(\"attempt to give obj to non-existant mob\")\n",
+            "new": "\t\t\t\tzoneError(zone, cmd, \"attempt to give obj to non-existant mob\")\n",
             "old": "",
         }, {
             "path": "pkg/game/spawner.go",
-            "new": "\t\t\t\tzoneError(\"trying to equip non-existant mob\")\n",
+            "new": "\t\t\t\tzoneError(zone, cmd, \"trying to equip non-existant mob\")\n",
             "old": "",
         }, {
             "path": "pkg/game/spawner.go",
-            "new": "\t\t\t\tzoneError(\"invalid equipment pos number\")\n",
+            "new": "\t\t\t\tzoneError(zone, cmd, \"invalid equipment pos number\")\n",
             "old": "",
         }, {
             "path": "pkg/game/spawner.go",
-            "new": "\t\t\t\tzoneError(\"target obj not found\")\n",
+            "new": "\t\t\t\tzoneError(zone, cmd, \"target obj not found\")\n",
             "old": "",
         }, {
             "path": "pkg/game/spawner.go",
-            "new": "\t\t\t\tzoneError(\"door does not exist\")\n",
+            "new": "\t\t\t\tzoneError(zone, cmd, \"door does not exist\")\n",
             "old": "",
         }, {
             "path": "pkg/game/spawner.go",
-            "new": "\t\t\tzoneError(\"unknown cmd in reset table; cmd disabled\")\n",
+            "new": "\t\t\tzoneError(zone, cmd, \"unknown cmd in reset table; cmd disabled\")\n",
             "old": "",
         }],
     },
@@ -75,13 +75,14 @@ CASES = [
         "test": "TestLuaRunScriptLoadFailureProducers",
         "package": "./pkg/scripting",
         "assertion": "producers=[] want",
+        # A single patch: removing the missing-file producer fails the
+        # "missing script" subtest. The DoFile arm's 3-tab call is left in
+        # place because Claude's a01143929 added a second identical 3-tab
+        # call for the cached-failure re-emit, so that anchor is no longer
+        # unique (see the 1b handoff).
         "patches": [{
             "path": "pkg/scripting/engine.go",
             "new": "\t\tscriptMudLogLoadFailure(bridge, fname, \"No such file.\")\n",
-            "old": "",
-        }, {
-            "path": "pkg/scripting/engine.go",
-            "new": "\t\t\tscriptMudLogLoadFailure(bridge, fname, luaLoadErrorKind(err))\n",
             "old": "",
         }],
     },
@@ -97,6 +98,24 @@ CASES = [
         }, {
             "path": "pkg/scripting/engine.go",
             "new": "\t\tscriptMudLogCallFailure(bridge, fname, triggerName)\n",
+            "old": "",
+        }],
+    },
+    {
+        "case": "zone-error-second-line",
+        "test": "TestZoneErrorMudlogBranches",
+        "package": "./pkg/game",
+        "assertion": "second line count=0 want 1",
+        "patches": [{
+            "path": "pkg/game/spawner.go",
+            "new": (
+                "\tcommand := byte(0)\n"
+                "\tif len(cmd.Command) > 0 {\n"
+                "\t\tcommand = cmd.Command[0]\n"
+                "\t}\n"
+                "\tMudLog(fmt.Sprintf(\"SYSERR: ...offending cmd: '%c' cmd in zone #%d, line %d\",\n"
+                "\t\tcommand, zone.Number, cmd.Line), MudlogNormal, LVL_GOD, true)\n"
+            ),
             "old": "",
         }],
     },

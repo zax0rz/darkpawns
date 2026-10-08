@@ -196,18 +196,26 @@ var (
 )
 
 // zoneError is C's ZONE_ERROR(message) macro (src/db.c:2059-2060), which
-// calls log_zone_error(). Its first producer is
-// "SYSERR: error in zone file: %s" at NRM, LVL_GOD, file TRUE
-// (src/db.c:2052-2053). The second, ordered line (src/db.c:2056-2057:
-// "...offending cmd: '%c' cmd in zone #%d, line %d") is the inventory's
-// separate row and needs the parser's source line; it is not emitted here.
+// calls log_zone_error(). C emits two ordered lines from one call, both at
+// NRM, LVL_GOD, file TRUE:
 //
-// C calls this at six reset branches, all of which are fault arms, and the
-// message text is the C macro argument verbatim, including its typos.
+//  1. "SYSERR: error in zone file: %s" (src/db.c:2052-2053), the macro
+//     argument verbatim, including its typos;
+//  2. "SYSERR: ...offending cmd: '%c' cmd in zone #%d, line %d"
+//     (src/db.c:2056-2057) — note C's literal "..." — using the offending
+//     command character, the zone number and the command's zone-file line.
+//
+// C calls this at six reset branches, all of which are fault arms.
 // Held lock at every caller: World.zoneResetMu only (executeZoneResetLocked
 // never takes World.mu), which no MudLog delivery path acquires.
-func zoneError(message string) {
+func zoneError(zone *parser.Zone, cmd parser.ZoneCommand, message string) {
 	MudLog(fmt.Sprintf("SYSERR: error in zone file: %s", message), MudlogNormal, LVL_GOD, true)
+	command := byte(0)
+	if len(cmd.Command) > 0 {
+		command = cmd.Command[0]
+	}
+	MudLog(fmt.Sprintf("SYSERR: ...offending cmd: '%c' cmd in zone #%d, line %d",
+		command, zone.Number, cmd.Line), MudlogNormal, LVL_GOD, true)
 }
 
 // ExecuteZoneReset executes all reset commands for a zone.
@@ -335,7 +343,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			if lastMob == nil {
 				// src/db.c:2185-2189: ZONE_ERROR("attempt to give obj to
 				// non-existant mob"). C's misspelling is part of the payload.
-				zoneError("attempt to give obj to non-existant mob")
+				zoneError(zone, cmd, "attempt to give obj to non-existant mob")
 				continue
 			}
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
@@ -363,7 +371,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			if lastMob == nil {
 				// src/db.c:2200-2204: ZONE_ERROR("trying to equip
 				// non-existant mob").
-				zoneError("trying to equip non-existant mob")
+				zoneError(zone, cmd, "trying to equip non-existant mob")
 				continue
 			}
 			if !s.canSpawnObject(cmd.Arg1, cmd.Arg2) {
@@ -374,7 +382,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			if cmd.Arg3 < 0 || cmd.Arg3 >= numWears {
 				// src/db.c:2205-2208: ZONE_ERROR("invalid equipment pos
 				// number"), before the read_object the else branch would do.
-				zoneError("invalid equipment pos number")
+				zoneError(zone, cmd, "invalid equipment pos number")
 				continue
 			}
 
@@ -409,7 +417,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				// C leaves the newly read object floating and counted when the
 				// target container is missing, without calling percent_load.
 				// src/db.c:2172-2176: ZONE_ERROR("target obj not found").
-				zoneError("target obj not found")
+				zoneError(zone, cmd, "target obj not found")
 				continue
 			}
 			if !zoneObjectPercentLoad(obj.Prototype) {
@@ -429,13 +437,13 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 				// exist"). The port splits it across two arms; each fires at
 				// most once per command, so the producer still matches C's
 				// condition.
-				zoneError("door does not exist")
+				zoneError(zone, cmd, "door does not exist")
 				continue
 			}
 			if !s.world.resetDoor(cmd.Arg1, roomDirNames[cmd.Arg2], cmd.Arg3) {
 				// Second half of src/db.c:2247-2251's guard: the door exists
 				// in neither direction.
-				zoneError("door does not exist")
+				zoneError(zone, cmd, "door does not exist")
 				continue
 			}
 			lastCmd = 1
@@ -456,7 +464,7 @@ func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 			}
 		default:
 			// src/db.c:2278-2281: ZONE_ERROR before C sets ZCMD.command = '*'.
-			zoneError("unknown cmd in reset table; cmd disabled")
+			zoneError(zone, cmd, "unknown cmd in reset table; cmd disabled")
 			s.world.disableResetCommand(zone.Number, cmdIdx, cmd)
 			zone.Commands[cmdIdx].Command = "*"
 		}

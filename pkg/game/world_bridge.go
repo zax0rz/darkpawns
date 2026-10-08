@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 	"strings"
@@ -455,12 +456,23 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 		return
 	}
 	if p != nil {
+		// src/scripts.c:1246-1252: C logs a PC victim at BRF/LVL_IMMORT/file
+		// FALSE before raw_kill, naming the killer and the victim's room when
+		// the script passed one. NPC victims log nothing.
+		roomName := ""
+		if room := a.world.GetRoomInWorld(p.GetRoom()); room != nil {
+			roomName = room.Name
+		}
+		killerName := ""
 		if killer != nil {
 			if k := a.actorFor(killer); k != nil {
-				slog.Info("lua raw_kill", "victim", p.GetName(), "killer", k.GetName(), "room", p.GetRoom())
+				killerName = k.GetName()
 			}
+		}
+		if killerName != "" {
+			MudLog(fmt.Sprintf("%s killed by %s at %s.", p.GetName(), killerName, roomName), MudlogBrief, lvlImmort, false)
 		} else {
-			slog.Info("lua raw_kill", "victim", p.GetName(), "room", p.GetRoom())
+			MudLog(fmt.Sprintf("%s killed at %s.", p.GetName(), roomName), MudlogBrief, lvlImmort, false)
 		}
 		a.world.RawKillCombatant(p, attackType)
 		return
@@ -485,6 +497,17 @@ func (a *WorldScriptableAdapter) Log(msg string) {
 // other Bridge implementation moves.
 func (a *WorldScriptableAdapter) MudLog(msg string, typ, level int, toFile bool) {
 	MudLog(msg, typ, level, toFile)
+}
+
+// IsShopKeeper reports whether a mob VNum is a shop keeper's. C's
+// lua_item_check scans the shop table for SHOP_KEEPER(shop_nr) == me->nr
+// (src/scripts.c:734-736) and logs "Unable to determine shop" when no shop
+// matches; the port's ShopBuysType bool cannot separate that from a shop that
+// does not buy the type, so the engine asks this instead. It is another
+// stateless forward, reached by inline assertion like MudLog above.
+func (a *WorldScriptableAdapter) IsShopKeeper(vnum int) bool {
+	_, ok := a.world.GetShopByKeeper(vnum)
+	return ok
 }
 
 // CanSee is CAN_SEE(me, vict).
