@@ -561,6 +561,11 @@ func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *
 		return
 	}
 
+	// src/comm.c:2529-2530: arena broadcast precedes the normal room act.
+	if ch != nil && world.RoomHasFlag(ch.GetRoom(), "arena") {
+		actArenaBroadcast(world, hideInvisible, ch, vict, obj, victObj, format, arg2, deliver)
+	}
+
 	// Get all actors in the room
 	actors := world.actChar(roomVNum)
 	for _, to := range actors {
@@ -579,6 +584,33 @@ func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *
 			continue
 		}
 		msg := performAct(format, ch, vict, obj, victObj, "", arg2, to)
+		deliver(to, cap(msg)+"\r\n")
+	}
+}
+
+// actArenaBroadcast ports do_broadcast (src/comm.c:2539-2556). Its format
+// remains raw &R/&n text until the recipient's terminal color funnel expands it.
+func actArenaBroadcast(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectInstance, format, arg2 string, deliver func(Actor, string)) {
+	broadcast := "&RBroadcast: " + format + "&n"
+	var actors []Actor
+	for _, p := range world.GetAllPlayers() {
+		actors = append(actors, p)
+	}
+	for _, m := range world.GetAllMobs() {
+		actors = append(actors, m)
+	}
+	for _, to := range actors {
+		if to == ch || !sendOk(to, true) {
+			continue
+		}
+		// The live nobroadcast toggle writes PrfNoBroad, not NoBroadcast.
+		if p, ok := to.(*Player); ok && p.GetFlags()&(1<<uint(PrfNoBroad)) != 0 {
+			continue
+		}
+		if hideInvisible && !canSee(to, ch) {
+			continue
+		}
+		msg := performAct(broadcast, ch, vict, obj, victObj, "", arg2, to)
 		deliver(to, cap(msg)+"\r\n")
 	}
 }

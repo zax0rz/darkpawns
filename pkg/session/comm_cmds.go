@@ -1,9 +1,7 @@
 package session
 
 import (
-	"encoding/json"
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -99,7 +97,7 @@ func cmdGossip(s *Session, args []string) error { return cmdChannel(s, args, "go
 // ---------------------------------------------------------------------------
 
 // cmdEmote broadcasts a roleplay action to the room.
-// Source: act.comm.c do_emote() — "$n laughs." style
+// Source: src/act.wizard.c do_echo(), SCMD_EMOTE branch.
 func cmdEmote(s *Session, args []string) error {
 	if len(args) == 0 {
 		s.Send("Yes.. but what?")
@@ -122,26 +120,15 @@ func cmdEmote(s *Session, args []string) error {
 	}
 	action = filtered
 
-	// Sender sees their own name, exactly like the room does — C do_echo
-	// sends the same "$n <text>" act() line TO_CHAR (oracle-proven:
-	// command-surface-punctuation scenario; was an invented "You emit:").
-	s.Send(fmt.Sprintf("%s %s", s.player.Name, action))
-
-	// Room sees: "$n $message"
-	text := fmt.Sprintf("%s %s", s.player.Name, action)
-	msg, err := json.Marshal(ServerMessage{
-		Type: MsgEvent,
-		Data: EventData{
-			Type: "emote",
-			From: s.player.Name,
-			Text: text,
-		},
-	})
-	if err != nil {
-		slog.Error("json.Marshal error", "error", err)
-		return nil
+	// src/act.wizard.c:144-151: room act first (including arena broadcast),
+	// then the actor's repeat preference. Shared Act renders for each recipient.
+	format := "$n " + action
+	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", game.ToRoom)
+	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
+		s.Send("Okay.\r\n")
+	} else {
+		game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", game.ToChar)
 	}
-	s.manager.BroadcastToRoom(s.player.GetRoom(), msg, s.player.Name)
 	return nil
 }
 
