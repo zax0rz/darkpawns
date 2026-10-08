@@ -2,7 +2,7 @@
 title: "Welcome Back, Serapis"
 date: 2026-10-08
 description: "Room 8008 had a prayer that made three staff names immortal. We ported it to Go faithfully, then wrote a test proving it worked."
-draft: true
+draft: false
 textKind: "original"
 source: "src/spec_procs.c and src/spec_assign.c in the C oracle; git history (ae08ddadd, #745, #1720); player rumor as recounted by Zach; Zach's own account"
 voiceLayer: "mythic-admin"
