@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -222,5 +223,106 @@ func TestInflictDamage_ImmortalVictimAbsorbs(t *testing.T) {
 	// damage() enrolls before immortal absorption (src/fight.c:1443-1445, 1473-1480).
 	if victim.GetFighting() != caster.GetName() {
 		t.Errorf("immortal victim fighting = %q, want %q even when damage is absorbed", victim.GetFighting(), caster.GetName())
+	}
+}
+
+// R1/R5h: C damage subtracts HP and updates position before skill_message,
+// but emits wound notices and performs death cleanup afterward (fight.c:1484-1583).
+func TestSpellMessageSeesPostDamagePosition(t *testing.T) {
+	for _, tc := range []struct {
+		name                               string
+		hp, damage, level, wantHP, wantPos int
+	}{
+		{"lethal", 1, 50, 5, -11, combat.PosDead},
+		{"mortally", 5, 12, 5, -7, combat.PosMortally},
+		{"incapacitated", 5, 9, 5, -4, combat.PosIncap},
+		{"stunned", 5, 6, 5, -1, combat.PosStunned},
+		{"healthy", 100, 10, 5, 90, combat.PosFighting},
+		{"zero", 100, 0, 5, 100, combat.PosFighting},
+		{"immortal", 100, 50, 31, 100, combat.PosFighting},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			old := combat.GetCallbacks()
+			t.Cleanup(func() { combat.SetCallbacks(old) })
+			caster := &spellCombatant{name: "Caster", level: 30, hp: 200, maxHP: 200, pos: combat.PosStanding}
+			victim := &spellCombatant{name: "Victim", level: tc.level, hp: tc.hp, maxHP: 100, pos: combat.PosStanding}
+			world := &spellDeathWorld{}
+			calls := 0
+			combat.SetCallbacks(&combat.GameCallbacks{SkillMessage: func(dam int, ch, vict combat.Combatant, attackType, room int) bool {
+				calls++
+				if vict.GetHP() != tc.wantHP || vict.GetPosition() != tc.wantPos {
+					t.Errorf("message sees HP/position %d/%d, want %d/%d", vict.GetHP(), vict.GetPosition(), tc.wantHP, tc.wantPos)
+				}
+				if len(victim.messages) != 0 || len(world.woundMsgs) != 0 || len(world.deaths) != 0 {
+					t.Error("wound/death output preceded skill message")
+				}
+				if victim.GetFightingBody() != caster {
+					t.Error("combat cleanup preceded skill message")
+				}
+				return true
+			}})
+			inflictDamage(caster, victim, tc.damage, testSpellNum, world)
+			if calls != 1 {
+				t.Fatalf("message calls=%d, want 1", calls)
+			}
+			wantDeaths := 0
+			if tc.wantPos == combat.PosDead {
+				wantDeaths = 1
+			}
+			if len(world.deaths) != wantDeaths {
+				t.Errorf("death calls=%d, want %d", len(world.deaths), wantDeaths)
+			}
+		})
+	}
+}
+
+// The production file-backed selector must consume exactly its one variant
+// draw for lethal, ordinary, absorbed and breath damage alike (R3).
+type spellMessageRoller struct{ draws int }
+
+func (r *spellMessageRoller) Number(from, to int) int { r.draws++; return from }
+func (r *spellMessageRoller) Dice(num, size int) int  { r.draws++; return num }
+func (r *spellMessageRoller) IntN(n int) int          { r.draws++; return 0 }
+func TestSpellMessageBranchesAndDrawParity(t *testing.T) {
+	for _, tc := range []struct {
+		name                      string
+		hp, damage, level, attack int
+		branch                    string
+	}{
+		{"lethal", 1, 50, 5, 12, "die"},
+		{"wounded", 5, 12, 5, 12, "hit"},
+		{"zero", 100, 0, 5, 12, "miss"},
+		{"immortal", 100, 50, 31, 12, "god"},
+		{"breath-zero", 100, 0, 5, SpellFireBreath, "miss"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			old := combat.GetCallbacks()
+			t.Cleanup(func() { combat.SetCallbacks(old) })
+			caster := &spellCombatant{name: "Caster", level: 30, hp: 200, maxHP: 200, pos: combat.PosStanding}
+			victim := &spellCombatant{name: "Victim", level: tc.level, hp: tc.hp, maxHP: 100, pos: combat.PosStanding}
+			events := []string{}
+			cb := &combat.GameCallbacks{
+				GetHP:      func(c combat.Combatant) int { return c.GetHP() },
+				GetLevel:   func(c combat.Combatant) int { return c.GetLevel() },
+				IsNPC:      func(c combat.Combatant) bool { return c.IsNPC() },
+				SendToChar: func(c combat.Combatant, s string) { events = append(events, c.GetName()+":"+s) },
+				Broadcast:  func(_ int, s string, _ []combat.Combatant) { events = append(events, "room:"+s) },
+			}
+			action := func(s string) combat.FightMessageAction {
+				return combat.FightMessageAction{Attacker: strings.ToUpper(s[:1]) + s[1:], Victim: strings.ToUpper(s[:1]) + s[1:], Room: strings.ToUpper(s[:1]) + s[1:]}
+			}
+			combat.SetCallbacks(cb)
+			combat.InitFightMessages(cb, combat.FightMessages{tc.attack: {{Die: action("die"), Hit: action("hit"), Miss: action("miss"), God: action("god")}}})
+			roller := &spellMessageRoller{}
+			combat.WithRoller(roller, func() { inflictDamage(caster, victim, tc.damage, tc.attack, &spellDeathWorld{}) })
+			branch := strings.ToUpper(tc.branch[:1]) + tc.branch[1:]
+			want := "room:" + branch + ",Caster:" + branch + ",Victim:" + branch
+			if strings.Join(events, ",") != want {
+				t.Errorf("spell message audiences=%v, want %s", events, want)
+			}
+			if roller.draws != 1 {
+				t.Errorf("selector draws=%d, want 1", roller.draws)
+			}
+		})
 	}
 }
