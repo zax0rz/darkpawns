@@ -90,18 +90,26 @@ line only; the inventory row records this as the PR 1b design decision (add
 
 ## Remaining for 1a
 
-1. `scripts.c:1394` (`lua_skip_spaces`) — log-only, through the existing
-   `Bridge.Log` (BRF/LVL_IMMORT/file FALSE, `pkg/scripting/bridge.go:153`).
-2. `scripts.c:1765`, `:1779`, `:1800` (`run_script`) and the reachable variants
-   of `:1694` (`open_lua_file`) — all file TRUE. `Bridge.Log` is file FALSE, and
-   the `log` binding's file flag is already an inventoried `mismatch`, so these
-   need a file-TRUE sink. Smallest option, mirroring the approved precedent at
-   `pkg/spells/affect_spells.go:3516-3521`: a thin
-   `MudLog(msg string, typ, level int, toFile bool)` method on
-   `WorldScriptableAdapter`, reached by an inline type assertion in the engine —
-   it adds no method to the `Bridge` interface and changes no existing
-   signature. **This is the one structural addition in 1a and is explicitly for
-   review.**
+Everything Claude listed for 1a is landed or classified except `scripts.c:1765`:
+
+1. `scripts.c:1394` (`lua_skip_spaces`) — landed (BRF/LVL_IMMORT/file FALSE via
+   the existing `Bridge.Log`).
+2. `scripts.c:1694` (reachable kinds) and `:1779` — landed (CMP/31/file TRUE and
+   BRF/31/file TRUE, in C's order, through the new adapter sink).
+3. `scripts.c:1800` — landed (BRF/31/file TRUE, before the write-back).
+4. `scripts.c:1765` (unassigned script) — **moved to 1b, not landed.** C logs
+   `"SYSERR: Attempting to call unassigned script for %s (#%d)."` and then
+   returns TRUE. The port's counterpart is `MobInstance.RunScript`, which
+   reaches `Engine.RunScript("")` and returns an error, so a log-only insert
+   would sit on a path whose return value already differs from C's — the same
+   class the lua-seams ruling sends to 1b. The inventory row carries that reason.
+5. The file-TRUE sink itself (the ruled adapter passthrough) is landed, with a
+   compile-time assertion in `pkg/game/scripting_adapter_mudlog_test.go`.
+
+Left before this PR can be opened: nothing outstanding in code; the tree still
+needs its combined census at this tip, run from this worktree in the single
+shared census slot.
+
 
 ## Reproduce
 
