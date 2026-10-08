@@ -141,3 +141,44 @@ func TestGameDiagnosticCrossRoomDamage(t *testing.T) {
 		}
 	}
 }
+
+// src/act.movement.c:261-292; src/utils.c:145-148: destination look,
+// then BRF/31/file TRUE before the death cry and deferred extraction.
+func TestGameDiagnosticDeathTrapMovement(t *testing.T) {
+	w, players := newMessageTestWorld(t)
+	ch := players[0]
+	ch.SetLevel(10)
+	ch.SetMove(100)
+	w.CreateRoomExit(1001, "north", 1002)
+	w.SetRoomFlagBit(1002, 1)
+	s, file := diagnosticCapture(t, MudlogBrief)
+	var events []string
+	w.MovementLook = func(p *Player) {
+		if p == ch {
+			events = append(events, "look")
+		}
+	}
+	w.MessageSink = func(_ string, msg []byte) { events = append(events, string(msg)) }
+	s.probe = func() {
+		if ch.GetRoom() != 1002 || ch.HasPLRFlag(PlrExtract) || len(events) == 0 || events[len(events)-1] != "look" {
+			t.Fatalf("death-trap log boundary: room=%d extract=%t events=%q", ch.GetRoom(), ch.HasPLRFlag(PlrExtract), events)
+		}
+		if !w.mu.TryLock() {
+			t.Fatal("world lock held at death-trap diagnostic")
+		}
+		w.mu.Unlock()
+	}
+	w.DoMove(ch, "north")
+	requireDiagnostic(t, s, file, "Player1 hit death trap #1002 (Room B)", true)
+	if !ch.HasPLRFlag(PlrExtract) || len(events) < 2 {
+		t.Fatal("death trap did not cry then queue extraction")
+	}
+	s.messages = nil
+	s.probe = nil
+	file.Reset()
+	players[1].SetLevel(LVL_IMMORT)
+	w.DoMove(players[1], "north")
+	if len(s.messages) != 0 || file.Len() != 0 {
+		t.Fatal("immortal death-trap diagnostic")
+	}
+}
