@@ -63,9 +63,10 @@ func (w *World) houseLoad(vnum int) bool {
 		return false
 	}
 
-	// Build container map for nesting. We load items in two passes:
-	// first pass creates all objects, second pass places them.
-	objMap := make(map[int]*ObjectInstance) // keyed by slice index for container resolution
+	// Load items in two passes: first pass creates all objects, second pass
+	// places them. Creation is keyed by file index so container_index can
+	// address objects even when earlier records failed to load.
+	objMap := make(map[int]*ObjectInstance) // file index -> object
 	for i := range saveData.Items {
 		item := &saveData.Items[i]
 		// Look up object prototype by vnum
@@ -92,38 +93,41 @@ func (w *World) houseLoad(vnum int) bool {
 		objMap[i] = obj
 	}
 
-	// Place objects in room. Items with container_id >= 0 go into containers.
-	// Matching runs on the still-unregistered objects (ID 0), exactly as
-	// before registration existed: saved ContainerIDs are runtime IDs from a
-	// previous process (DP-1401), and fresh registry IDs could collide with
-	// them and nest an item inside the wrong object.
-	placed := make([]*ObjectInstance, 0, len(objMap))
-	for i, obj := range objMap {
-		item := &saveData.Items[i]
-		if item.ContainerID >= 0 {
-			// Find container by iterating — container was saved first (recursive)
-			for _, candidate := range objMap {
-				if candidate.ID == item.ContainerID {
-					candidate.Contains = append(candidate.Contains, obj)
-					placed = append(placed, obj)
-					break
-				}
-			}
-			continue
+	// Register every surviving object in file order (C read_object links
+	// each new object into object_list, house.c reads the file front to
+	// back), so containers carry registry IDs before contents target them.
+	for i := range saveData.Items {
+		if obj, ok := objMap[i]; ok {
+			w.registerExistingObject(obj)
 		}
-		placed = append(placed, obj)
 	}
 
-	// Register what was placed (C read_object links every object into
-	// object_list), then put the top-level objects in the room. C's house load
-	// places objects with obj_to_room (house.c:100), which prepends.
-	for _, obj := range placed {
-		w.registerExistingObject(obj)
-	}
-	for i, obj := range objMap {
-		if saveData.Items[i].ContainerID < 0 {
-			w.AddItemToRoomFront(obj, vnum)
+	// Place objects. An item whose container_index resolves to a live
+	// container goes inside it; everything else — top-level items, orphans
+	// whose container failed to load, and items pointing at a non-container —
+	// goes on the room floor, which is what C's House_load does with every
+	// object it reads (house.c:70 obj_to_room's each record; contents were
+	// saved but never re-nested). AddItemToRoomFront mirrors obj_to_room's
+	// prepend.
+	for i := range saveData.Items {
+		obj, ok := objMap[i]
+		if !ok {
+			continue
 		}
+		item := &saveData.Items[i]
+		if item.ContainerIndex != nil {
+			ci := *item.ContainerIndex
+			if ci >= 0 && ci < len(saveData.Items) && ci != i {
+				if container := objMap[ci]; container != nil && container.IsContainer() {
+					if err := w.MoveObjectToContainer(obj, container); err == nil {
+						continue
+					}
+					slog.Warn("houseLoad: nesting into container failed; item lands on the floor",
+						"vnum", item.VNum, "container_vnum", saveData.Items[ci].VNum, "error", err)
+				}
+			}
+		}
+		w.AddItemToRoomFront(obj, vnum)
 	}
 
 	return true
@@ -160,11 +164,29 @@ func (w *World) houseCrashsave(vnum int) {
 	}
 	defer func() { _ = fp.Close() }()
 
-	// Collect all objects in the room and serialize to JSON
+	// Collect all objects in the room, contents-first (C's House_save order,
+	// house.c:112-120), and serialize with container references by index.
 	objects := w.GetItemsInRoom(vnum)
-	var items []houseSaveItem
+	var flat []*ObjectInstance
+	index := make(map[*ObjectInstance]int)
+	containerOf := make(map[*ObjectInstance]int)
 	for _, obj := range objects {
-		w.collectHouseItems(obj, &items)
+		w.collectHouseItems(obj, &flat, index, containerOf)
+	}
+	items := make([]houseSaveItem, len(flat))
+	for i, obj := range flat {
+		item := ObjToStore(obj)
+		if item == nil {
+			// Unreachable for a live object (its prototype is non-nil),
+			// but one record per flat entry keeps every container_index
+			// below aligned; vnum 0 matches no prototype and is skipped
+			// on load.
+			item = &houseSaveItem{VNum: 0}
+		}
+		if ci, ok := containerOf[obj]; ok {
+			item.ContainerIndex = &ci
+		}
+		items[i] = *item
 	}
 
 	// Write JSON
@@ -179,19 +201,24 @@ func (w *World) houseCrashsave(vnum int) {
 	removeRoomFlag(realHouse, RoomFlagCrash)
 }
 
-// collectHouseItems recursively collects objects into the items slice.
-// Replaces C's House_save. Adjusts container weights for storage.
-func (w *World) collectHouseItems(obj *ObjectInstance, items *[]houseSaveItem) {
+// collectHouseItems recursively flattens objects contents-first — C
+// House_save recurses into contains before writing the object itself
+// (house.c:112-120) — recording each object's position in the flat slice and
+// the position of its container, so the save file can express nesting by
+// index (DP-1401).
+func (w *World) collectHouseItems(obj *ObjectInstance, flat *[]*ObjectInstance, index map[*ObjectInstance]int, containerOf map[*ObjectInstance]int) {
 	if obj == nil {
 		return
 	}
 	// Recurse into contents first
 	for _, contained := range obj.Contains {
-		w.collectHouseItems(contained, items)
+		w.collectHouseItems(contained, flat, index, containerOf)
 	}
 	// Add this object
-	if item := ObjToStore(obj); item != nil {
-		*items = append(*items, *item)
+	index[obj] = len(*flat)
+	*flat = append(*flat, obj)
+	for _, contained := range obj.Contains {
+		containerOf[contained] = index[obj]
 	}
 }
 

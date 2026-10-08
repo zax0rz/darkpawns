@@ -97,9 +97,21 @@ func HouseGetFilename(vnum int) string {
 // houseSaveItem represents a single object in a house save file.
 // Uses JSON instead of C's binary obj_file_elem for readability and simplicity.
 type houseSaveItem struct {
-	VNum        int                    `json:"vnum"`
-	ContainerID int                    `json:"container_id,omitempty"`
-	State       map[string]interface{} `json:"state,omitempty"`
+	VNum int `json:"vnum"`
+	// ContainerIndex names the item's container by its position in this
+	// file's items array — the C idiom from obj_file_elem's locate field
+	// ("index in obj file (if it's in a container)", structs.h:770). Nil
+	// means the item sits in the room itself.
+	//
+	// It replaces container_id, which stored a runtime registry ID that can
+	// never match the fresh objects a later boot builds, so every contained
+	// item was silently dropped on load (DP-1401). Legacy files written in
+	// that format have no container_index: they load with all items on the
+	// floor — exactly what C's House_load does with contained items, since
+	// C saves them (house.c:112 recurses into contains) but floors them on
+	// load (house.c:70 obj_to_room's every record).
+	ContainerIndex *int                   `json:"container_index,omitempty"`
+	State          map[string]interface{} `json:"state,omitempty"`
 }
 
 // houseSaveData is the top-level structure for a house save file.
@@ -133,17 +145,15 @@ func ObjFromStore(data *houseSaveItem, getProto func(vnum int) (*parser.Obj, boo
 
 // ObjToStore converts an ObjectInstance to a houseSaveItem.
 // Ported from C Obj_to_store() — serializes object for house save.
-// Returns the save item, or nil if the object is invalid.
+// Container nesting is not recorded here: it is the collector's job, because
+// the file-position reference can only be computed with the whole item list
+// in hand. Returns the save item, or nil if the object is invalid.
 func ObjToStore(obj *ObjectInstance) *houseSaveItem {
 	if obj == nil || obj.Prototype == nil {
 		return nil
 	}
 	item := &houseSaveItem{
-		VNum:        obj.Prototype.VNum,
-		ContainerID: -1,
-	}
-	if obj.Location.Kind == ObjInContainer {
-		item.ContainerID = obj.Location.ContainerObjID
+		VNum: obj.Prototype.VNum,
 	}
 	if state := obj.GetSaveState(); state != nil {
 		item.State = state

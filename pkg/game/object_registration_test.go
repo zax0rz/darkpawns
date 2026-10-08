@@ -185,12 +185,13 @@ func TestProbeObjectsStayUnregistered(t *testing.T) {
 	}
 }
 
-// House loads register what they place, but match saved container IDs on the
-// still-unregistered objects. Saved ContainerIDs are runtime IDs from an
-// earlier process (DP-1401); registering first would hand out fresh IDs in
-// the same small range, and a stored item could be nested inside an
-// unrelated object (here, a sword). Until DP-1401 changes the format, such an
-// item is dropped exactly as before registration existed.
+// House loads register what they place. Legacy saves carry runtime container
+// IDs from an earlier process (DP-1401's old format); since the format moved
+// to file indices, those IDs are ignored and their items land on the floor —
+// C House_load's behavior for contained items (house.c:70). The regression
+// this guards against: registering first and matching stale IDs would hand
+// out fresh IDs in the same small range, nesting a stored item inside an
+// unrelated object (here, a sword).
 func TestHouseLoadNestsNothingIntoWrongObject(t *testing.T) {
 	t.Chdir(t.TempDir())
 	w, err := NewWorld(&parser.World{
@@ -232,7 +233,7 @@ func TestHouseLoadNestsNothingIntoWrongObject(t *testing.T) {
 			t.Fatalf("%q (not a container) now contains %d object(s): a stale saved ContainerID matched a fresh registry ID", obj.GetShortDesc(), len(obj.Contains))
 		}
 	}
-	if len(seen) != 2 {
-		t.Fatalf("room holds %d objects, want the sword and the chest", len(seen))
+	if len(seen) != 3 {
+		t.Fatalf("room holds %d objects, want the ring, sword and chest all on the floor", len(seen))
 	}
 }
