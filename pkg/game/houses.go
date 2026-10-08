@@ -98,18 +98,9 @@ func HouseGetFilename(vnum int) string {
 // Uses JSON instead of C's binary obj_file_elem for readability and simplicity.
 type houseSaveItem struct {
 	VNum int `json:"vnum"`
-	// ContainerIndex names the item's container by its position in this
-	// file's items array — the C idiom from obj_file_elem's locate field
-	// ("index in obj file (if it's in a container)", structs.h:770). Nil
-	// means the item sits in the room itself.
-	//
-	// It replaces container_id, which stored a runtime registry ID that can
-	// never match the fresh objects a later boot builds, so every contained
-	// item was silently dropped on load (DP-1401). Legacy files written in
-	// that format have no container_index: they load with all items on the
-	// floor — exactly what C's House_load does with contained items, since
-	// C saves them (house.c:112 recurses into contains) but floors them on
-	// load (house.c:70 obj_to_room's every record).
+	// ContainerIndex retains saved nesting metadata by file index (DP-1401).
+	// House_load ignores it: C src/house.c:87-101 floors every surviving
+	// object, including contents. Keep the field for format compatibility.
 	ContainerIndex *int                   `json:"container_index,omitempty"`
 	State          map[string]interface{} `json:"state,omitempty"`
 }

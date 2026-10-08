@@ -33,11 +33,9 @@ func (w *World) saveHouseControl() {
 // ---------------------------------------------------------------------------
 
 // houseLoad loads objects for a house from its save file into the room.
-// In C: House_load() — reads .house file, calls Obj_from_store + obj_to_room.
-// When ObjFromStore is wired, this will deserialize each binary record and
-// place surviving objects in the room. Currently a no-op — the file is
-// opened to verify it exists, and any future persistence wire-up will fill
-// in the read loop via ObjFromStore.
+// C src/house.c:87-101 reads in file order, extracts unrentable objects,
+// and puts every survivor on the room floor. Saved container_index metadata
+// is retained in the format but never used to re-nest loaded objects.
 func (w *World) houseLoad(vnum int) bool {
 	realRoom := w.GetRoomInWorld(vnum)
 	if realRoom == nil {
@@ -63,10 +61,6 @@ func (w *World) houseLoad(vnum int) bool {
 		return false
 	}
 
-	// Load items in two passes: first pass creates all objects, second pass
-	// places them. Creation is keyed by file index so container_index can
-	// address objects even when earlier records failed to load.
-	objMap := make(map[int]*ObjectInstance) // file index -> object
 	for i := range saveData.Items {
 		item := &saveData.Items[i]
 		// Look up object prototype by vnum
@@ -87,46 +81,12 @@ func (w *World) houseLoad(vnum int) bool {
 			slog.Warn("houseLoad: missing prototype", "vnum", item.VNum)
 			continue
 		}
+		w.registerExistingObject(obj)
 		if IsUnrentable(obj) {
+			w.ExtractObject(obj, vnum)
 			continue
 		}
-		objMap[i] = obj
-	}
-
-	// Register every surviving object in file order (C read_object links
-	// each new object into object_list, house.c reads the file front to
-	// back), so containers carry registry IDs before contents target them.
-	for i := range saveData.Items {
-		if obj, ok := objMap[i]; ok {
-			w.registerExistingObject(obj)
-		}
-	}
-
-	// Place objects. An item whose container_index resolves to a live
-	// container goes inside it; everything else — top-level items, orphans
-	// whose container failed to load, and items pointing at a non-container —
-	// goes on the room floor, which is what C's House_load does with every
-	// object it reads (house.c:70 obj_to_room's each record; contents were
-	// saved but never re-nested). AddItemToRoomFront mirrors obj_to_room's
-	// prepend.
-	for i := range saveData.Items {
-		obj, ok := objMap[i]
-		if !ok {
-			continue
-		}
-		item := &saveData.Items[i]
-		if item.ContainerIndex != nil {
-			ci := *item.ContainerIndex
-			if ci >= 0 && ci < len(saveData.Items) && ci != i {
-				if container := objMap[ci]; container != nil && container.IsContainer() {
-					if err := w.MoveObjectToContainer(obj, container); err == nil {
-						continue
-					}
-					slog.Warn("houseLoad: nesting into container failed; item lands on the floor",
-						"vnum", item.VNum, "container_vnum", saveData.Items[ci].VNum, "error", err)
-				}
-			}
-		}
+		// obj_to_room prepends each record, so the floor list reverses file order.
 		w.AddItemToRoomFront(obj, vnum)
 	}
 
