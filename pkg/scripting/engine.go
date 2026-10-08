@@ -48,8 +48,13 @@ type Engine struct {
 	// rejections are intentionally NOT cached — those should keep logging.
 	// Accessed only under e.mu.
 	failedScripts map[string]struct{}
-	done          chan struct{}
-	closeOnce     sync.Once
+	// failedScriptKinds keeps C's open_lua_file kind for each cached load
+	// failure that has a C counterpart (timeouts are absent). C retries and
+	// logs on every run_script call; the cache skips the retry but still
+	// emits the producers (src/scripts.c:1674-1694, 1777-1779).
+	failedScriptKinds map[string]string
+	done              chan struct{}
+	closeOnce         sync.Once
 
 	// Script execution budget. Scripting is single-threaded (e.mu is held for
 	// the whole of RunScript) to match the C game loop, so one script blocks all
@@ -209,6 +214,7 @@ func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 		scriptsDir:          scriptsDir,
 		transitItems:        make(map[int]*transitEntry),
 		failedScripts:       make(map[string]struct{}),
+		failedScriptKinds:   make(map[string]string),
 		world:               world,
 		done:                make(chan struct{}),
 		scriptTimeout:       defaultScriptTimeout,
@@ -239,6 +245,7 @@ func (e *Engine) ForgetFailures() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.failedScripts = make(map[string]struct{})
+	e.failedScriptKinds = make(map[string]string)
 }
 
 func (e *Engine) SetScriptBudget(timeout, slowThreshold time.Duration) {
@@ -627,6 +634,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 	// failure was already logged when it was added to failedScripts. Per-pulse
 	// retries on a missing script would otherwise flood the log (DP-903).
 	if _, failed := e.failedScripts[cacheKey]; failed {
+		if kind, logged := e.failedScriptKinds[cacheKey]; logged {
+			scriptMudLogLoadFailure(bridge, fname, kind)
+		}
 		return false, fmt.Errorf("script %s previously failed to load", fname)
 	}
 
@@ -635,6 +645,7 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		slog.Error("error loading script", "file", fname, "error", "script not found")
 		// C reaches the same case inside lua_dofile (src/scripts.c:1677-1678
 		// "No such file.") and logs both producers before returning.
+		e.failedScriptKinds[cacheKey] = "No such file."
 		scriptMudLogLoadFailure(bridge, fname, "No such file.")
 		return false, fmt.Errorf("script not found: %s", fname)
 	}
@@ -685,7 +696,9 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			slog.Error("error loading script", "file", fname, "error", err)
 			// scripts.c:1674-1694 then 1777-1779. A Go-only timeout has no C
 			// kind, so it emits neither line rather than an invented one.
-			scriptMudLogLoadFailure(bridge, fname, luaLoadErrorKind(err))
+			kind := luaLoadErrorKind(err)
+			e.failedScriptKinds[cacheKey] = kind
+			scriptMudLogLoadFailure(bridge, fname, kind)
 		}
 		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		releaseContext()
