@@ -1,0 +1,15 @@
+# DP-1401 follow-up: C House_load floors saved contents
+
+Stop tier: house persistence/loading. Zach explicitly corrected and approved the earlier Option A premise; Claude reviews and gates, Zach merges. Authority: src/house.c:87-101. R1/R4/R5c/R5e/R5g/R5h.
+
+C reads saved records in file order, registers via Obj_from_store/read_object, extracts Crash_is_unrentable objects, and obj_to_room's every survivor. It never reconstructs nesting. Go houseLoad now registers each loaded record, extracts unrentable records, and uses AddItemToRoomFront for every survivor in file order. Thus the resulting floor list reverses saved order. container_index remains saved but is ignored by load: no format change.
+
+The DP-1401 round-trip tests now assert that a saved bag/chest with contents reloads as empty containers plus all contents on the floor, with exact prepend order, room locations and registry registration order. The unrentable proof verifies both the absence of the extracted record and registration-before-extraction via subsequent object IDs. The old #1861 nesting code compiles but fails all three updated proofs. Separately removing extraction also compiles and fails the unrentable assertion. Both restoration legs pass. The adjacent legacy/malformed-index load tests remain intact.
+
+Other readers: container_index's only load reader was houseLoad, now removed. houseCrashsave/ObjToStore still serialize it; ObjFromStore restores object state but not nesting. Legacy container_id fields remain ignored. Room display/get/drop, container weight/contents, object location and registry readers see floor objects, as C does. No session/lifecycle/identity/transport or admin code changes. HouseBoot is the production caller. registerExistingObject, ExtractObject and AddItemToRoomFront each acquire/release World.mu independently; houseLoad holds no world lock across them or its existing BasicMudLogf call. No new mudlog producers or D7 changes. No RNG is drawn.
+
+Census: **none**, as explicitly instructed by Zach under AGENTS.md's smallest-fail-capable rule. No scenario creates a saved house file, so no scenario reaches houseLoad; running one would not prove this change. Full gates plus compiling red/green unit controls carry the proof. Evidence: ~/Archives/darkpawns/oracle-runs/2026-10-08/house-load-unit-proofs/controls.txt. Control script: 2026-10-08-house-load-controls.py.
+
+The shared census slot is occupied by DeepSeek's mudlog-1c. Heavy gates and commit/PR are deferred until that run finishes, per the standing machine-load rule. DP-1402 was rebased onto main at 631fa67ee (arena prerequisite included), with all pending edits restored; its combined census must wait for mudlog-1c and the remaining gates/commit.
+
+After DeepSeek’s census finished, all gates passed separately: fmt, build, vet, all tests, game tests, lint cache clean/run (0 issues), diff check, fidelity-depth, fidelity-units and string-census. No census is required for this unreachable-in-corpus load path, per Zach’s explicit instruction. DP-1402’s checks proceed separately.
