@@ -9,6 +9,7 @@ package game
 // ch and me are both NULL (comm.c:789-793).
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 
@@ -168,13 +169,62 @@ func (w *World) ObjectActivity() {
 			continue
 		}
 		// comm.c:770-771 — drink containers, fountains and corpses never
-		// reach the script check.
+		// reach the weight check or the script block.
 		if t := obj.GetTypeFlag(); t == ITEM_DRINKCON || t == ITEM_FOUNTAIN ||
 			(t == ITEM_CONTAINER && obj.GetValue(3) == 1) {
 			continue
 		}
+		w.repairObjectWeight(obj)
 		w.RunObjPulseScript(obj)
 	}
+}
+
+// repairObjectWeight ports C's weight-mismatch arm in object_activity
+// (comm.c:773-787): an object whose instance weight differs from its
+// prototype's is reported at BRF/LVL_IMMORT/file TRUE and then reset to the
+// prototype's weight, but only while it holds nothing (comm.c:774). Drink
+// containers, fountains and corpses never reach here: the caller's skip at
+// comm.c:770-771 continues past both this block and the script block.
+//
+// The location wordings are C's, which are not the obvious mapping.
+// C tests obj->carried_by for truth, then obj->in_room, then obj->worn_by, and
+// falls back to "unknown" (comm.c:775-782). NOWHERE is -1 (src/structs.h:34),
+// which is *truthy*, so only real room 0 takes the fallback:
+//
+//   - obj_to_char sets in_room = NOWHERE (src/handler.c:565) and equip_char
+//     never resets it (src/handler.c:731), so a worn object reaches the
+//     in_room test as -1 and prints "in room": C's "worn by" arm is dead code.
+//   - an object inside a container, or one not yet placed, is also at -1 and
+//     prints "in room".
+//   - "unknown" prints only for an uncarried object whose in_room is real room
+//     0, the first room loaded ("The Void", lib/world/wld/0.wld).
+//   - a shop's stock is in the keeper's inventory in C, so it prints "carried".
+//
+// Held locks: none. liveObjectsByID snapshots under World.mu and releases it
+// before the loop, and each field read is the same lock-free instance access
+// the surrounding activity loop already makes.
+func (w *World) repairObjectWeight(obj *ObjectInstance) {
+	if obj == nil || obj.Prototype == nil {
+		return
+	}
+	if obj.GetWeight() == obj.Prototype.Weight {
+		return
+	}
+	if len(obj.Contains) != 0 {
+		return
+	}
+	location := "in room"
+	switch obj.Location.Kind {
+	case ObjInInventory, ObjInShop:
+		location = "carried"
+	case ObjInRoom:
+		if obj.Location.RoomVNum == 0 {
+			location = "unknown"
+		}
+	}
+	MudLog(fmt.Sprintf("SYSERR: Object '%s' weight incorrect, location '%s'",
+		obj.GetShortDesc(), location), MudlogBrief, LVL_IMMORT, true)
+	obj.SetWeight(obj.Prototype.Weight)
 }
 
 // liveObjectsByID snapshots every live object instance in ascending instance
