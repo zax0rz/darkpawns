@@ -9,6 +9,7 @@ package game
 // ch and me are both NULL (comm.c:789-793).
 
 import (
+	"fmt"
 	"log/slog"
 	"sort"
 
@@ -168,13 +169,52 @@ func (w *World) ObjectActivity() {
 			continue
 		}
 		// comm.c:770-771 — drink containers, fountains and corpses never
-		// reach the script check.
+		// reach the weight check or the script block.
 		if t := obj.GetTypeFlag(); t == ITEM_DRINKCON || t == ITEM_FOUNTAIN ||
 			(t == ITEM_CONTAINER && obj.GetValue(3) == 1) {
 			continue
 		}
+		w.repairObjectWeight(obj)
 		w.RunObjPulseScript(obj)
 	}
+}
+
+// repairObjectWeight ports C's weight-mismatch arm in object_activity
+// (comm.c:773-787): an object whose instance weight differs from its
+// prototype's is reported at BRF/LVL_IMMORT/file TRUE and then reset to the
+// prototype's weight, but only while it holds nothing (comm.c:774). Drink
+// containers, fountains and corpses never reach here: the caller's skip at
+// comm.c:770-771 continues past both this block and the script block.
+//
+// C reads carried_by, then in_room, then worn_by, and calls anything else
+// "unknown". The port's location union is exclusive, so the three states map
+// one to one and a contained, shop or NOWHERE object is "unknown".
+//
+// Held locks: none. liveObjectsByID snapshots under World.mu and releases it
+// before the loop, and each field read is the same lock-free instance access
+// the surrounding activity loop already makes.
+func (w *World) repairObjectWeight(obj *ObjectInstance) {
+	if obj == nil || obj.Prototype == nil {
+		return
+	}
+	if obj.GetWeight() == obj.Prototype.Weight {
+		return
+	}
+	if len(obj.Contains) != 0 {
+		return
+	}
+	location := "unknown"
+	switch obj.Location.Kind {
+	case ObjInInventory:
+		location = "carried"
+	case ObjInRoom:
+		location = "in room"
+	case ObjEquipped:
+		location = "worn by"
+	}
+	MudLog(fmt.Sprintf("SYSERR: Object '%s' weight incorrect, location '%s'",
+		obj.GetShortDesc(), location), MudlogBrief, LVL_IMMORT, true)
+	obj.SetWeight(obj.Prototype.Weight)
 }
 
 // liveObjectsByID snapshots every live object instance in ascending instance
