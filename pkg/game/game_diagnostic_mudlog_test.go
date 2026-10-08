@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 type diagnosticSessions struct {
@@ -94,6 +96,48 @@ func TestGameDiagnosticKillMilestone(t *testing.T) {
 		w.counter_procs(ch, 5000)
 		if len(s.messages) != 0 {
 			t.Fatalf("wrong NRM/31 gate %+v", state)
+		}
+	}
+}
+
+// src/fight.c:1318-1333: corpse short-circuits; only a mortal cross-room attacker logs.
+func TestGameDiagnosticCrossRoomDamage(t *testing.T) {
+	w, players := newMessageTestWorld(t)
+	ch, victim := players[0], players[2]
+	ch.SetLevel(20)
+	victim.SetLevel(20)
+	victim.SetPosition(combat.PosStanding)
+	s, file := diagnosticCapture(t, MudlogNormal)
+	s.probe = func() {
+		if !w.mu.TryLock() {
+			t.Fatal("world locked at cross-room log")
+		}
+		w.mu.Unlock()
+	}
+	hp := victim.GetHP()
+	if !w.DamageRefused(ch, victim) || victim.GetHP() != hp {
+		t.Fatal("cross-room damage not refused before mutation")
+	}
+	requireDiagnostic(t, s, file, "Attempt to assign damage when ch and vict are in different rooms.", false)
+	s.messages = nil
+	ch.SetLevel(LVL_IMMORT)
+	w.DamageRefused(ch, victim)
+	if len(s.messages) != 0 {
+		t.Fatal("immortal cross-room diagnostic")
+	}
+	ch.SetLevel(20)
+	victim.SetPosition(combat.PosDead)
+	w.DamageRefused(ch, victim)
+	if len(s.messages) != 0 {
+		t.Fatal("corpse guard must precede cross-room log")
+	}
+	victim.SetPosition(combat.PosStanding)
+	for _, typ := range []int{0, 1} {
+		s.observer.SetPlrFlag(PrfLog1, typ == 1)
+		s.observer.SetPlrFlag(PrfLog2, false)
+		w.DamageRefused(ch, victim)
+		if len(s.messages) != 0 {
+			t.Fatal("cross-room diagnostic wrong type")
 		}
 	}
 }

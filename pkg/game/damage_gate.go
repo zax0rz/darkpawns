@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -31,8 +30,7 @@ func (w *World) DamageRefused(ch, victim combat.Combatant) bool {
 	}
 
 	if ch.GetRoom() != victim.GetRoom() && ch.GetLevel() < LVL_IMMORT {
-		slog.Warn("Attempt to assign damage when ch and vict are in different rooms.",
-			"ch", ch.GetName(), "victim", victim.GetName())
+		MudLog("Attempt to assign damage when ch and vict are in different rooms.", MudlogNormal, LVL_IMMORT, false)
 		return true
 	}
 
