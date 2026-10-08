@@ -412,6 +412,9 @@ type SkillResult struct {
 	// have been delivered. do_spike/do_stake increment their PK/death counters
 	// and then raw_kill; the command wrapper owns that ordering (R1/R3/R5e).
 	RawKill bool
+	// RawKillVerb retains do_spike/do_stake's selected weapon noun for the
+	// diagnostic emitted after their acts, before counters and raw_kill.
+	RawKillVerb string
 	// RoomIncludesTarget preserves C's TO_ROOM audience when MessageToRoom
 	// intentionally includes the target instead of using TO_NOTVICT.
 	RoomIncludesTarget bool

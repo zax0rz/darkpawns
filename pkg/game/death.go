@@ -753,8 +753,10 @@ func (w *World) deathCry(player *Player) {
 // carried in the trap room and returns the descriptor to the menu, as for
 // any extraction. Called from MovePlayer, OUTSIDE w.mu.
 func (w *World) deathTrap(player *Player) {
-	// log_death_trap (src/utils.c:141) — mudlog line only.
-	slog.Info("death trap", "player", player.GetName(), "room", player.GetRoom())
+	// src/act.movement.c:291; src/utils.c:145-148.
+	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
+		LogDeathTrap(player.GetName(), room.VNum, room.Name)
+	}
 	player.StopFighting()
 	w.deathCry(player)
 	// The mount dies with its rider (act.movement.c:296-300).
@@ -1290,7 +1292,6 @@ func (w *World) counter_procs(ch *Player, kills int) {
 		}
 	}
 
-	// Log milestone to mudlog
-	// Source: fight.c:1308
-	slog.Info("kill milestone", "player", ch.Name, "kills", kills)
+	// src/fight.c:1308-1309: after rewards and the global blessing.
+	MudLog(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), MudlogNormal, LVL_IMMORT, false)
 }

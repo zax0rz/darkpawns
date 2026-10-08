@@ -1,0 +1,74 @@
+# C-first diagnostic vehicle. Unit proof also checks file/order/filters.
+# depth-case: mudlog.game-kill-milestone
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Logwarden
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Logwarden
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Logsubject
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Logsubject
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+syslog normal
+advance Logsubject 38
+force Logsubject syslog normal
+goto 8105
+set Logwarden kills 4999
+set mob trainee hit 1
+[probe]
+cast 'flame arrow' trainee
+~dpclock pulse 20

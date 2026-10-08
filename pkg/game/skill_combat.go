@@ -700,6 +700,7 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 			MessageToRoom: ActMessage("$n drives $p into the chest of $N!", chPronouns, &victPronouns, weapon.GetShortDesc()),
 			WaitCh:        2,
 			RawKill:       true,
+			RawKillVerb:   weaponName,
 		}
 	}
 

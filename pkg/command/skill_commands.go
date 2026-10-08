@@ -1984,6 +1984,10 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// counters and call raw_kill (new_cmds.c:1155-1175). Keep that tail after
 	// all three audiences so NPC death-cry bytes follow the success act exactly.
 	if result.RawKill && target != nil {
+		// src/new_cmds.c:1169-1175: after all acts, before counters/raw kill.
+		if room, ok := s.GetWorld().GetRoom(target.GetRoom()); ok {
+			game.MudLog(fmt.Sprintf("%s %sd %s at %s.", ch.GetName(), result.RawKillVerb, target.GetName(), room.Name), game.MudlogBrief, game.LVL_IMMORT, true)
+		}
 		if victim, ok := target.(*game.Player); ok {
 			ch.PKs++
 			victim.Deaths++
