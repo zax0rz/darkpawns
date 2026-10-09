@@ -317,12 +317,18 @@ func (bm *BanManager) ValidName(name string) bool {
 // DoBan handles the "ban" admin command.
 // Source: ban.c do_ban() lines 132–210
 //
-// Arguments: "<flag> <site>" or "" to list bans. actorName and invis identify
-// the acting body (R4): C logs GET_NAME(ch) at MAX(LVL_GOD, GET_INVIS_LEV(ch)).
-// ack delivers C's send_to_char acknowledgement to that descriptor, so the
-// producer lands before it — C's order is mudlog, ack, then write_ban_list().
+// Arguments: "<flag> <site>" or "" to list bans. C parses both with
+// two_arguments, which runs one_argument twice (src/interpreter.c:1267-1284),
+// so each is the first non-fill-word token, lowercased.
+//
+// actorName and invis identify the acting body (R4): C logs GET_NAME(ch) at
+// MAX(LVL_GOD, GET_INVIS_LEV(ch)). ack delivers C's send_to_char
+// acknowledgement to that descriptor, so the producer lands before it — C's
+// order is mudlog, ack, then write_ban_list().
 func (bm *BanManager) DoBan(banFilePath, actorName string, invis int, argument string, ack func(string)) {
-	argument = strings.TrimSpace(argument)
+	// C tests the raw argument (*argument), not the parsed one, so a
+	// whitespace-only line reaches two_arguments and prints the usage message
+	// rather than listing the bans.
 	if argument == "" {
 		ack(bm.ListBans())
 		return
@@ -340,8 +346,11 @@ func (bm *BanManager) DoBan(banFilePath, actorName string, invis int, argument s
 		return
 	}
 
-	// C stores at most BANNED_SITE_LENGTH (50) bytes (ban.c:189-193) but logs
-	// the site as typed, because ban_node->site is lowercased separately.
+	// C logs the parsed argument itself (src/ban.c:205-207) and stores at most
+	// BANNED_SITE_LENGTH (50) bytes of it (src/ban.c:189-193). two_arguments
+	// runs one_argument twice (src/interpreter.c:1267-1284), so `site` is
+	// already the first non-fill-word token, lowercased; only the stored copy
+	// is truncated further.
 	rawSite := site
 	if len(site) > 50 {
 		site = site[:50]
@@ -367,11 +376,13 @@ func (bm *BanManager) DoBan(banFilePath, actorName string, invis int, argument s
 // DoUnban handles the "unban" admin command.
 // Source: ban.c do_unban() lines 213–244
 //
-// C's order differs from do_ban's: the acknowledgement goes on the wire first,
-// then the producer, then the ban file. The payload names ban_node->site, the
-// stored (lowercased) spelling, and ban_types[ban_node->type].
+// C parses the argument with one_argument (src/ban.c:219): the first
+// non-fill-word token, lowercased, with anything after it ignored — so
+// "unban foo bar" unbans foo and "unban the foo" unbans foo. C's order differs
+// from do_ban's: the acknowledgement goes on the wire first, then the producer,
+// then the ban file. The payload names ban_node->site, the stored spelling.
 func (bm *BanManager) DoUnban(banFilePath, actorName string, invis int, argument string, ack func(string)) {
-	site := strings.TrimSpace(strings.ToLower(argument))
+	site, _ := oneArgument(argument)
 	if site == "" {
 		ack("A site to unban might help.\r\n")
 		return

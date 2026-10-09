@@ -173,6 +173,44 @@ func TestMudlogActorNamesActingBody(t *testing.T) {
 	})
 }
 
+// C parses unban's argument with one_argument (src/ban.c:219;
+// src/interpreter.c:1267-1284): the first non-fill-word token, lowercased, with
+// everything after it ignored. So a trailing word is not part of the site and a
+// leading filler word is skipped.
+func TestUnbanOneArgumentParsing(t *testing.T) {
+	for _, arg := range []string{"evil.example extra", "the evil.example", "tHe EVIL.example"} {
+		t.Run(arg, func(t *testing.T) {
+			m, _ := mudlogTestWorld(t)
+			actor := mudlogObserver(t, m, "Godactor", 40, game.PrfLog2)
+			if err := ExecuteCommand(actor, "ban", []string{"all", "evil.example"}); err != nil {
+				t.Fatal(err)
+			}
+			drainSessionText(t, actor)
+			if err := ExecuteCommand(actor, "unban", strings.Split(arg, " ")); err != nil {
+				t.Fatal(err)
+			}
+			// The acknowledgement leads; the actor also receives the NRM
+			// producer, which is C's order for unban.
+			if got := strings.Join(drainSessionText(t, actor), ""); !strings.HasPrefix(got, "Site unbanned.\r\n") {
+				t.Fatalf("unban %q = %q, want C's acknowledgement", arg, got)
+			}
+			if level := m.GetBanManager().IsBanned("evil.example"); level != game.BanNot {
+				t.Fatalf("unban %q left the ban in place: level %d", arg, level)
+			}
+		})
+	}
+	// A filler-word-only argument parses to nothing, which is C's empty-site
+	// arm rather than a lookup of "the".
+	m, _ := mudlogTestWorld(t)
+	actor := mudlogObserver(t, m, "Godactor", 40, game.PrfLog2)
+	if err := ExecuteCommand(actor, "unban", []string{"the"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Join(drainSessionText(t, actor), ""); got != "A site to unban might help.\r\n" {
+		t.Fatalf("filler-only unban = %q", got)
+	}
+}
+
 // readBanFileLine reads the ban file the command wrote, proving the file write
 // follows the producer instead of replacing it.
 func readBanFileLine(t *testing.T, path string) (string, error) {
