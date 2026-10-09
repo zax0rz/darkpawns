@@ -2,6 +2,8 @@
 package game
 
 import (
+	"fmt"
+
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/scripting"
@@ -22,8 +24,17 @@ var ScriptEngine interface {
 
 // HasScript checks if a mob has a script for the given trigger.
 // Based on the bitmask values in structs.h lines 659-690.
+//
+// C's gate is record-and-flag, never the name: the callers test
+// GET_MOB_SCRIPT(ch) && MOB_SCRIPT_FLAGGED(ch, bit) (mobact.c:148, :161, :180,
+// interpreter.c:1459, act.movement.c:282, act.item.c:704, :760, fight.c:597,
+// :1891). A builder who clears the name in the OLC script menu while keeping
+// the flag leaves the record in place, so the gate still passes and run_script
+// reaches its empty-name arm (src/scripts.c:1763-1767). A flag can only be set
+// while the record exists, so the flag test alone is C's gate; RunScript's
+// empty-name branch supplies the producer.
 func (m *MobInstance) HasScript(trigger string) bool {
-	if m.Proto() == nil || m.Proto().ScriptName == "" {
+	if m.Proto() == nil {
 		return false
 	}
 
@@ -64,6 +75,15 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 		return false, nil
 	}
 
+	// run_script's !*script_name arm (src/scripts.c:1763-1767): the mobile's
+	// script record exists and carries the trigger flag, but its name was
+	// cleared in the OLC script menu. C logs and returns TRUE, which consumes
+	// the trigger at the onpulse_all and oncmd callers.
+	if m.Proto().ScriptName == "" {
+		scriptUnassignedProducer(m.GetName(), m.GetVNum())
+		return true, nil
+	}
+
 	// Set me in context if not already set
 	if ctx.Me == nil {
 		ctx.Me = m
@@ -72,6 +92,28 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 	// run_script's result is the script's return value; perform_give
 	// ignores ongive's, and C has no fallback line for it.
 	return ScriptEngine.RunScript(ctx, m.Proto().ScriptName, trigger)
+}
+
+// scriptUnassignedProducer is run_script's empty-name producer
+// (src/scripts.c:1763-1767): "SYSERR: Attempting to call unassigned script for
+// %s (#%d)." at BRF / LVL_IMMORT / file TRUE, formatted with me's name and
+// vnum.
+//
+// C formats GET_NAME(me) and GET_MOB_VNUM(me). For a mobile me those are the
+// mobile's short description and prototype vnum; for a player me (the room and
+// object-oncmd owners, whose callers pass me = ch) GET_MOB_VNUM is -1, because
+// GET_MOB_VNUM is `IS_MOB(me) ? mob_index[...].virtual : -1` and IS_MOB is
+// false for a PC (src/utils.h:230-231, :431-432). The object-onpulse arm passes
+// me = NULL in C and faults before emitting; it is handled as an approved
+// divergence in RunObjPulseScript (DP-1416).
+//
+// Position: emitted where C calls mudlog, immediately after the name is read
+// and before any script is loaded. Held locks: none — every caller reaches
+// this where ScriptEngine.RunScript would otherwise run, after the world read
+// lock its owner lookup took has been released.
+func scriptUnassignedProducer(name string, mobVNum int) {
+	MudLog(fmt.Sprintf("SYSERR: Attempting to call unassigned script for %s (#%d).", name, mobVNum),
+		MudlogBrief, LVL_IMMORT, true)
 }
 
 // Helper to create script context for mob events
