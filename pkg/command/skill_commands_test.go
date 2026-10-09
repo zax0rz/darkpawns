@@ -1205,3 +1205,15 @@ func TestCmdMold_NotEnoughArgsUsesCObjectGate(t *testing.T) {
 		t.Errorf("expected C object gate, got: %q", got)
 	}
 }
+
+func TestCmdBite_FightingNoArgsIsSilent(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosFighting)
+	session.player.SetFightingBody(game.NewPlayer(99999, "target", 1001))
+	if err := CmdBite(session, nil); err != nil {
+		t.Fatalf("CmdBite: %v", err)
+	}
+	if len(session.messages) != 0 {
+		t.Fatalf("fighting no-arg bite emitted %q, want silent C return", session.messages)
+	}
+}

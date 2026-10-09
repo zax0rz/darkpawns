@@ -24,7 +24,16 @@ count that matters is 108, not 238.
 | `spells.MagAttackModifier` | Comment cites `src/magic.c mag_attack_modifier()` — **no such function exists in `src/`** | Classification: Go-only invention mislabelled as a port, or the C name drifted |
 | `game.HouseCanEnter` | Sole Go implementation of C `house_can_enter`; no C call site found in this fork's `src/` | Confirm whether C's house enter gate is dead in C too, then delete or wire |
 | `damage_stubs.go` quintet (`World.doDamage`, `getAttackerName`, `World.executeCommand`, `World.doForced`, `diceRoll`) | Real logic (DP-901/DP-1025 funnel routing), unreachable. Live damage/dispatch/force paths exist elsewhere. | Diff against the live funnels; if twins, delete in a follow-up |
-| `game.DoHide` skill logic | Deleted with a test asserting dex-bonus/toggle/improve; live path is `command.CmdHide`. | Confirm `CmdHide`'s tests cover the same skill mechanics; if not, that coverage moved with the deletion |
+
+Restored as class (d) test seams instead of deleted (live twins verified):
+`game.DoHide` (twin `DoHideInWorld` via `command.CmdHide`; the stealth
+mechanics tests drive it), the weather characterization surface
+(`AnotherHour`, `WeatherChange`, the six event wrappers,
+`weatherWorldSnapshot`, `GetMoon`, `ModifyWeatherChange`),
+`session.enqueueInput`/`queueLen` (vuln-042 cap tests),
+`spec_assign.AllSpecNames` (spec smoke tests), `dprng` draw-log hooks.
+`InitializeWeather` was repointable: its tests now call the live
+`ResetTime()`.
 
 ## Class (c) — Go-only, never wired (Zach rules: wire or delete)
 
@@ -83,18 +92,20 @@ count that matters is 108, not 238.
 - `pkg/events` (10 unpublished types): assigned to Claude's filing batch
   (mudlog-push design §8).
 
-## Tests deleted with their dead functions (assertions that rode only dead code)
-
-`TestPlayerSerializationRoundTrip`, `TestEncodeSave_*`, `TestSanitizeName`
-(restored with the save cluster), `TestCmdPractice`, `TestCmdReview_*`,
-`TestCmdWhois_No*`, `TestCmdDig_*`, `TestCmdSummon`, `TestCmdSkills`-none
-(kept; `CmdSkills` not deleted), `TestFidelityDigCosmeticStub`,
-`TestSaveLoadLocationRoundTrip`, `TestCmdQcomm_NonQuestPlayerFiltered`,
-`TestCmdFleeMovement_XPLossAtLowLevel` (canonical live flee tests cover the
-XP paths), `TestDoHideDexBonusToggleAndImprove`, `TestValidNameOnlineDuplicate`.
+## Tests deleted with their dead functions (assertions that rode only dead
+code): `TestCmdPractice`, `TestCmdReview_NoPlayer`, `TestCmdWhois_No*`,
+`TestCmdDig_*`, `TestCmdSummon`, `TestFidelityDigCosmeticStub`,
+`TestSaveLoadLocationRoundTrip`, `TestCmdQcomm_NonQuestPlayerFiltered`
+(Go-only quest channel; C's do_qcomm is live as `World.ExecQcomm`),
+`TestCmdFleeMovement_XPLossAtLowLevel` (canonical live flee tests cover
+the XP paths), `TestValidNameOnlineDuplicate` (merge_bridge free
+function; live name rules are the db unique constraint + BanManager).
 
 Repointed, not deleted: `TestCanonicalFightMessagesData` and
 `loadMessagesFile` → `ParseFightMessages`; the Dice tests → `pkg/dprng`;
-`TestGMCPOffUntilNegotiated`/GMCP gating tests → `gmcpRoomInfoForPlayer`;
-`TestDoSimpleMove_ClosedDoor` → `performMoveResult`; `NewMobInstance` test
-call sites → `NewMob`.
+the GMCP tests → `gmcpRoomInfoForPlayer`; `TestDoSimpleMove_ClosedDoor`
+and the follower-move tests → `performMoveResult`; the weather init test
+→ `ResetTime`; `NewMobInstance` call sites → `NewMob`. The weather
+characterization, heartbeat, spec, stealth and input-queue-cap suites
+are intact — an earlier automated pass over-deleted them and they were
+restored from the base commit before these commits were finalized.
