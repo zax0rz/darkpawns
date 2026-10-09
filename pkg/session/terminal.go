@@ -355,6 +355,10 @@ func (s *Session) TerminalLine(rawLine string) bool {
 // terminalName is C's CON_GET_NAME: the connection stays open until it
 // receives a usable name, and an empty line ends it.
 func (s *Session) terminalName(name string) bool {
+	// C creates d->character on the first input at the name prompt, before it
+	// even checks for an empty line (src/interpreter.c:1743-1752): from here a
+	// close_socket sees a character, whether or not it has a name.
+	s.markDescriptorBound()
 	// Preserve the approved guest-prefix transport routing (DP-1379).
 	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(name)), "guest") {
 		name = strings.TrimSpace(name)

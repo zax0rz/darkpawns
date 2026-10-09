@@ -423,7 +423,14 @@ func handleConn(rawConn net.Conn, manager *session.Manager, identity session.Con
 			line, ok = tc.readLinePreAuth()
 		}
 		if !ok {
-			// EOF or connection error: the client hung up.
+			// EOF or connection error: the client hung up. C's game loop
+			// notices the dead descriptor and calls close_socket
+			// (src/comm.c:652-655), whose non-playing arms log here. A playing
+			// descriptor logs "Closing link to:" on its linkdead transition
+			// instead, so it is not claimed here.
+			if !s.IsPlaying() {
+				s.LoseDescriptor()
+			}
 			if !s.TerminalNamed() {
 				stopWriter()
 				return
@@ -431,7 +438,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, identity session.Con
 			break
 		}
 		if !s.TerminalLine(line) {
+			// The line ended the session: an empty name, a refused login, a
+			// creation abort or the menu's exit. C reaches CON_CLOSE and
+			// close_socket from each (src/interpreter.c:1751, 1829, 2170).
 			if !s.TerminalNamed() || !s.IsAuthenticated() {
+				s.LoseDescriptor()
 				stopWriter()
 				return
 			}

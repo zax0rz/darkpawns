@@ -35,6 +35,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if err := json.Unmarshal(data, &login); err != nil {
 		return err
 	}
+	// A login message is the name-prompt input C's nanny consumes, so from here
+	// the descriptor has a character (src/interpreter.c:1743-1752).
+	s.markDescriptorBound()
 
 	// src/interpreter.c:1187-1190,1721: nanny skips leading C whitespace.
 	login.Password = strings.TrimLeft(login.Password, " \t\n\r\v\f")

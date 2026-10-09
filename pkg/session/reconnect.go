@@ -62,6 +62,9 @@ func (s *Session) performDupeCheck() bool {
 		m.mu.Unlock()
 		// Not CON_PLAYING: disconnected, and no target (interpreter.c:1561-1571).
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		// perform_dupe_check cleared k->character before CON_CLOSE
+		// (src/interpreter.c:1573-1576), so close_socket finds no character.
+		old.LoseDescriptorWithoutChar()
 		m.unregister(name)
 		old.CloseSend()
 		old.Close()
@@ -83,11 +86,15 @@ func (s *Session) performDupeCheck() bool {
 	switch {
 	case unswitch:
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		// The character is cleared before CON_CLOSE (interpreter.c:1552-1556),
+		// so close_socket has none to name.
+		old.LoseDescriptorWithoutChar()
 		old.CloseSend()
 		old.Close()
 	case usurp:
 		old.Send("\r\nThis body has been usurped!\r\n")
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		old.LoseDescriptorWithoutChar()
 		old.CloseSend()
 		old.Close()
 	case editing:
@@ -100,6 +107,8 @@ func (s *Session) performDupeCheck() bool {
 		old.cancelMedit()
 		old.cancelOedit()
 		old.cancelSedit()
+		// The editor's character is cleared for the same reason (interpreter.c:1573).
+		old.LoseDescriptorWithoutChar()
 		old.CloseSend()
 		old.Close()
 	default:

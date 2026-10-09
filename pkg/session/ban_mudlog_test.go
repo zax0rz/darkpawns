@@ -9,9 +9,9 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// banMudlogWorld builds a world whose ban file lands in a temporary working
+// mudlogTestWorld builds a world whose ban file lands in a temporary working
 // directory: C's write_ban_list() path is relative, and DoBan writes it.
-func banMudlogWorld(t *testing.T) (*Manager, *game.World) {
+func mudlogTestWorld(t *testing.T) (*Manager, *game.World) {
 	t.Helper()
 	t.Chdir(t.TempDir())
 	w, err := game.NewWorld(&parser.World{
@@ -25,9 +25,9 @@ func banMudlogWorld(t *testing.T) (*Manager, *game.World) {
 	return newTestManager(t, w, nil), w
 }
 
-// banObserver registers an immortal whose syslog and level decide whether a
+// mudlogObserver registers an immortal whose syslog and level decide whether a
 // producer reaches it.
-func banObserver(t *testing.T, m *Manager, name string, level int, flags ...int) *Session {
+func mudlogObserver(t *testing.T, m *Manager, name string, level int, flags ...int) *Session {
 	t.Helper()
 	s := makeTestSession(t, m, name, 1001, true)
 	s.player.SetLevel(level)
@@ -44,12 +44,12 @@ func banObserver(t *testing.T, m *Manager, name string, level int, flags ...int)
 // audience. The actor's own stream proves the order relative to the
 // acknowledgement; the observers prove the level and type filters.
 func TestBanMudlogProducerBytesAndOrder(t *testing.T) {
-	m, _ := banMudlogWorld(t)
+	m, _ := mudlogTestWorld(t)
 
-	actor := banObserver(t, m, "Godactor", 40, game.PrfLog1, game.PrfLog2)
-	watcher := banObserver(t, m, "Banwatch", game.LVL_GOD, game.PrfLog2)
-	below := banObserver(t, m, "Banbelow", game.LVL_GOD-1, game.PrfLog1, game.PrfLog2)
-	brief := banObserver(t, m, "Banbrief", 40, game.PrfLog1)
+	actor := mudlogObserver(t, m, "Godactor", 40, game.PrfLog1, game.PrfLog2)
+	watcher := mudlogObserver(t, m, "Banwatch", game.LVL_GOD, game.PrfLog2)
+	below := mudlogObserver(t, m, "Banbelow", game.LVL_GOD-1, game.PrfLog1, game.PrfLog2)
+	brief := mudlogObserver(t, m, "Banbrief", 40, game.PrfLog1)
 	file := captureMudlogFile(t)
 
 	if err := ExecuteCommand(actor, "ban", []string{"all", "127.000.000.*"}); err != nil {
@@ -102,12 +102,12 @@ func TestBanMudlogProducerBytesAndOrder(t *testing.T) {
 // MAX(LVL_GOD, GET_INVIS_LEV(ch)): an invisible actor raises the threshold above
 // LVL_GOD, so an ordinary god no longer sees the line.
 func TestBanMudlogInvisThreshold(t *testing.T) {
-	m, _ := banMudlogWorld(t)
+	m, _ := mudlogTestWorld(t)
 
-	actor := banObserver(t, m, "Invisactor", 40, game.PrfLog2)
+	actor := mudlogObserver(t, m, "Invisactor", 40, game.PrfLog2)
 	actor.player.SetInvisLevel(40)
-	god := banObserver(t, m, "Godwatch", game.LVL_GOD, game.PrfLog2)
-	hidden := banObserver(t, m, "Implwatch", 40, game.PrfLog2)
+	god := mudlogObserver(t, m, "Godwatch", game.LVL_GOD, game.PrfLog2)
+	hidden := mudlogObserver(t, m, "Implwatch", 40, game.PrfLog2)
 
 	if err := ExecuteCommand(actor, "ban", []string{"new", "evil.example"}); err != nil {
 		t.Fatal(err)
@@ -126,8 +126,8 @@ func TestBanMudlogInvisThreshold(t *testing.T) {
 // GET_INVIS_LEV is 0 and the threshold stays LVL_GOD.
 func TestMudlogActorNamesActingBody(t *testing.T) {
 	t.Run("ordinary immortal", func(t *testing.T) {
-		m, _ := banMudlogWorld(t)
-		actor := banObserver(t, m, "Godactor", 40, game.PrfLog2)
+		m, _ := mudlogTestWorld(t)
+		actor := mudlogObserver(t, m, "Godactor", 40, game.PrfLog2)
 		actor.player.SetInvisLevel(37)
 		name, invis := actor.mudlogActor()
 		if name != "Godactor" || invis != 37 {
@@ -136,8 +136,8 @@ func TestMudlogActorNamesActingBody(t *testing.T) {
 	})
 
 	t.Run("switched into a player", func(t *testing.T) {
-		m, _ := banMudlogWorld(t)
-		actor := banObserver(t, m, "Godactor", 40, game.PrfLog2)
+		m, _ := mudlogTestWorld(t)
+		actor := mudlogObserver(t, m, "Godactor", 40, game.PrfLog2)
 		borrowed := makeTestSession(t, m, "Borrowed", 1002, true)
 		borrowed.player = game.NewPlayer(2, "Borrowed", 1002)
 		borrowed.player.SetInvisLevel(5)
@@ -155,8 +155,8 @@ func TestMudlogActorNamesActingBody(t *testing.T) {
 	})
 
 	t.Run("switched into a mob", func(t *testing.T) {
-		m, w := banMudlogWorld(t)
-		actor := banObserver(t, m, "Godactor", 40, game.PrfLog2)
+		m, w := mudlogTestWorld(t)
+		actor := mudlogObserver(t, m, "Godactor", 40, game.PrfLog2)
 		actor.player.SetInvisLevel(37)
 		mob, err := w.SpawnMobQuiet(90, 1001)
 		if err != nil {

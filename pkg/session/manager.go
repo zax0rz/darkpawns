@@ -1539,6 +1539,12 @@ func (m *Manager) UnregisterSession(s *Session) {
 	if s == nil {
 		return
 	}
+	// C's close_socket producer for a descriptor that never played
+	// (src/comm.c:2136-2143). A playing descriptor logs "Closing link to:"
+	// where its linkdead transition happens instead, so it is skipped here.
+	if !s.IsPlaying() {
+		s.LoseDescriptor()
+	}
 	m.unregisterSession(s, s.playerName)
 }
 
