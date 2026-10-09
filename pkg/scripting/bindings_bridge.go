@@ -8,19 +8,22 @@ import (
 )
 
 // The bindings below are the cmdlib functions (scripts.c:1609-1664) as C
-// defines them, run through the game's Bridge. They replace the port's
-// earlier approximations whenever a script runs with a bridge (every run in
-// the server); the older implementations remain only for engine tests that
-// construct a world without one.
+// defines them, run through the game's Bridge. Every server run is bridged
+// (RunScript binds a bridge whenever a script has C-level references or an
+// owner, which all four production contexts provide), and tests reach them
+// through a Bridge as well (bridge_test.go's fakeBridge).
 
-// bridged returns a binding that uses the bridge implementation while a
-// bridged script is running, and the legacy one otherwise.
-func (e *Engine) bridged(withBridge func(*lua.LState, Bridge) int, legacy lua.LGFunction) lua.LGFunction {
+// bridged returns the binding for one cmdlib function. A run without a
+// bridge can no longer approximate the function — production never produces
+// one — so the binding fails the script loudly instead of silently
+// diverging from C.
+func (e *Engine) bridged(withBridge func(*lua.LState, Bridge) int) lua.LGFunction {
 	return func(L *lua.LState) int {
-		if b := e.activeBridge; b != nil {
-			return withBridge(L, b)
+		b := e.activeBridge
+		if b == nil {
+			L.RaiseError("cmdlib function called with no bridge bound")
 		}
-		return legacy(L)
+		return withBridge(L, b)
 	}
 }
 
