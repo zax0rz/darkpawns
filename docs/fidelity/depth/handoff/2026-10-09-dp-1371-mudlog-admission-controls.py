@@ -21,8 +21,10 @@ MUD_HOST = "pkg/session/mud_host.go"
 DNS_FAILURE_LOG = "\tgame.MudLog(fmt.Sprintf(\"DNS lookup failed on %s.\", padded), game.MudlogComplete, game.LVL_GOD, true) // comm.c:1554\n"
 
 # comm.c:1527-1529: with the nameserver slow C never resolves. Forcing the
-# resolved branch is the host-string switch this control disables.
-SLOW_GATE_OLD = "\tif game.NameserverIsSlow() {\n\t\t// C's wildhost and double_wild are both defined on this branch\n"
+# resolved branch in identifyConnection is the host-string switch this control
+# disables (the accept loop's copy of the gate is three tabs deep; this is the
+# one-tab gate inside identifyConnection itself).
+SLOW_GATE_OLD = "\tif nameserverSlow {\n\t\t// C's wildhost and double_wild are both defined on this branch\n"
 SLOW_GATE_NEW = "\tif false {\n\t\t// C's wildhost and double_wild are both defined on this branch\n"
 
 # comm.c:1572: the refusal bytes.

@@ -54,7 +54,7 @@ file and rewrite any raw-IP entries into the padded spelling before deploying.
 |---|---|---|
 | `comm.c:1552-1555` | `DNS lookup failed on %s.` at CMP / LVL_GOD / file TRUE, `%s` = the padded quad | Before the ban check, inside resolution; only when `nameserver_is_slow` is clear and the lookup failed. With the shipped default it cannot fire. |
 | `comm.c:1571-1575` | `Sorry, your site is banned.\r\n` written to the descriptor, then close, then `Connection attempt denied from [%s]` at CMP / LVL_GOD / file TRUE | Both telnet BanAll arms. TLS keeps its bare close (a Go-only transport, dropped before the handshake) and still logs; WebSocket keeps its policy-violation close frame and logs. |
-| `ban.c:205-209` | `%s has banned %s for %s players.` at NRM / MAX(LVL_GOD, invis) / file TRUE | After the ban is added, **before** the acknowledgement and before `write_ban_list()`. `%s` is the site as typed (`ban_node->site` is lowercased separately). |
+| `ban.c:205-209` | `%s has banned %s for %s players.` at NRM / MAX(LVL_GOD, invis) / file TRUE | After the ban is added, **before** the acknowledgement and before `write_ban_list()`. `%s` is the parsed site — the first non-fill-word token, already lowercased by `one_argument`; only the stored copy is truncated to 50 bytes. |
 | `ban.c:237-244` | `%s removed the %s-player ban on %s.` at NRM / MAX(LVL_GOD, invis) / file TRUE | **After** the acknowledgement, before `write_ban_list()`. `%s` is `ban_node->site`, the stored spelling. |
 | `comm.c:2136-2138` | `Losing player: %s.` at CMP / LVL_IMMORT / file TRUE, `%s` = `GET_NAME(d->character)` or `<null>` | The `else` of `if (d->connected == CON_PLAYING)`, for a descriptor that holds a character but never played. |
 | `comm.c:2140-2143` | `Losing descriptor without char.` at CMP / LVL_IMMORT / file TRUE | The `else` of `if (d->character)`: no character at all. |
@@ -135,16 +135,25 @@ in DP-1404 (a save-format question, not a producer).
    (C's `do_dc` → `close_socket` → `Closing link to:`) still closes without its
    linkdead line because `SendClosed` short-circuits the linkdead transition.
    Both need their own ruling.
-3. **Known Go-only edge:** `DoBan` logs the site as typed but stores at most 50
-   bytes (`BANNED_SITE_LENGTH`), as C does; C's duplicate check compares the
-   truncated stored site, so a >50-character site re-banned verbatim is accepted
-   in both.
-4. **Pre-existing flake, not from this change:** `pkg/session`
+3. **Parsing.** Both ban commands parse through `oneArgument`
+   (`src/interpreter.c:1267-1284`): the first non-fill-word token, lowercased.
+   `DoBan` logs that parsed site (untruncated) and stores at most 50 bytes of it,
+   as C does, so a >50-character site re-banned verbatim is accepted in both —
+   C's duplicate check compares the truncated stored site. `DoUnban` was
+   trimming and lowercasing the whole argument, so `unban foo bar` looked for
+   "foo bar" where C looks for `foo`; fixed in review, with tests for a
+   trailing word, a leading filler word and a filler-only argument.
+4. **One read of `nameserver_is_slow` per connection.** The accept loop used to
+   read the flag twice — once for the precheck and once as the goroutine's
+   branch selector — so a `slowns` toggle between the two could hand the session
+   an empty identity and skip its ban check. `identifyConnection` now takes the
+   flag as an argument.
+5. **Pre-existing flake, not from this change:** `pkg/session`
    `TestEntryWebSocketSavedIdentityAndMenuResume` asserts `!IsLinkless()` after
    its journey's deferred `conn.Close()`, so the assertion races the transport's
    linkdead transition. It failed once in a full-package run here and then passed
    5/5 on this tree and 4/4 on `origin/main`.
-5. **Oracle vehicles.** Ban refusal: the harness cannot open a connection it
+6. **Oracle vehicles.** Ban refusal: the harness cannot open a connection it
    expects to be refused, so the three-transport refusal test is unit-green only.
    The `Losing player:` and `Losing descriptor without char.` arms are driven
    through real transports and real command dispatch in the unit tests; the
