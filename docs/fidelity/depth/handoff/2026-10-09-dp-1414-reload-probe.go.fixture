@@ -1,0 +1,24 @@
+package db
+import (
+ "testing"
+ "github.com/zax0rz/darkpawns/pkg/game"
+ "github.com/zax0rz/darkpawns/pkg/parser"
+)
+func TestDP1414SavedEquipmentDamageProbe(t *testing.T) {
+ w,err:=game.NewWorld(&parser.World{Rooms:[]parser.Room{{VNum:1001}},Objs:[]parser.Obj{{VNum:201,Keywords:"helm",TypeFlag:game.ITEM_ARMOR,WearFlags:[4]int{1<<4},Affects:[]parser.ObjAffect{{Location:game.ApplyDex,Modifier:-10}},LoadPercent:100}}})
+ if err!=nil {t.Fatal(err)}
+ w.StopAITicker()
+ defer w.StopAITicker()
+ p:=game.NewPlayer(11,"Wearer",1001)
+ p.Stats=game.CharStats{Str:10,Int:10,Wis:10,Dex:10,Con:10,Cha:10}
+ p.CopyBaseAttributes()
+ p.SetLevel(15)
+ p.SetMaxHP(200)
+ p.SetHP(200)
+ obj,err:=w.SpawnObject(201,-1);if err!=nil {t.Fatal(err)}
+ if err:=p.Equipment.SetSlot(game.SlotHead,obj);err!=nil {t.Fatal(err)}
+ rec,err:=PlayerToRecord(p,nil);if err!=nil {t.Fatal(err)}
+ restored,err:=RecordToPlayer(rec,w);if err!=nil {t.Fatal(err)}
+ if restored.GetDex()!=0 {t.Fatalf("fixture failed: DEX=%d",restored.GetDex())}
+ if restored.GetHP()!=160 {t.Fatalf("saved zero-DEX equip HP=%d, want 160 from C equip_char -> check_for_bad_stats -> damage(ch,ch,40,TYPE_SUFFERING)",restored.GetHP())}
+}

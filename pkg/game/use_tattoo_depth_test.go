@@ -24,6 +24,8 @@ func tattooDepthWorld(t *testing.T) (*World, *Player, *Player, map[string]string
 	t.Cleanup(w.StopAITicker)
 	a, b := NewPlayer(1, "Actor", 1001), NewPlayer(2, "Observer", 1001)
 	for _, p := range []*Player{a, b, NewPlayer(3, "Outside", 1002)} {
+		p.Stats = CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+		p.CopyBaseAttributes()
 		if err := w.AddPlayer(p); err != nil {
 			t.Fatal(err)
 		}

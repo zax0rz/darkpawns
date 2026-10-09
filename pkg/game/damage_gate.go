@@ -63,7 +63,11 @@ func (w *World) DamageRefused(ch, victim combat.Combatant) bool {
 	// victim keeps a shop that does not WILL_START_FIGHT.
 	mob, _ := victim.(*MobInstance)
 	if (mob != nil && !w.okDamageShopkeeper(ch, mob)) || (mob != nil && IsShopkeeperMob(w, mob)) {
-		ch.SendMessage("Ha ha... Don't think so.\r\n")
+		if actor, ok := ch.(*MobInstance); ok && w.MobileMessageSink != nil {
+			w.MobileMessageSink(actor, []byte("Ha ha... Don't think so.\r\n"))
+		} else {
+			ch.SendMessage("Ha ha... Don't think so.\r\n")
+		}
 		w.damageGateStopFighting(ch)
 		w.damageGateStopFighting(victim)
 		return true

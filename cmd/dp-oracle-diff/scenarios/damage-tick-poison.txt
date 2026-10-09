@@ -1,0 +1,80 @@
+# DP-1406: limits.c:503-504 -> fight.c damage().
+# depth-case: damage.tick-poison
+# Poison a mortal with an immortal caster; two point-update ticks expose
+# skill_message for both the victim and the caster standing beside them.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8004 4 off
+set-room-sector 8163 7
+
+[setup:oracle]
+Tickgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Tickgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:peer]
+Tickpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tickpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Tickpeer 8004
+set player Tickpeer level 1
+set Tickpeer maxhit 500
+set Tickpeer hit 500
+cast 'poison' Tickpeer
+cast 'poison' Tickpeer
+cast 'poison' Tickpeer
+
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630

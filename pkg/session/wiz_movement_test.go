@@ -1,6 +1,7 @@
 package session
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -114,5 +115,32 @@ func TestDigDirectionsAcceptCSpellings(t *testing.T) {
 				t.Fatalf("digDirections(%q) = (%q, %q), want (%q, %q)", input, gotDirection, gotReverse, want[0], want[1])
 			}
 		})
+	}
+}
+
+// src/act.wizard.c:389 calls look_at_room(victim, 0) even below POS_SLEEPING.
+func TestTeleportMortallyWoundedRoomView(t *testing.T) {
+	m := makeTestManager(t)
+	wizard := makeTestSession(t, m, "Wizard", 1001, true)
+	wizard.player.SetLevel(LVL_GRGOD)
+	victim := makeTestSession(t, m, "Victim", 1001, true)
+	victim.player.ID = 2
+	victim.player.SetLevel(10)
+	victim.player.SetHP(-7)
+	victim.player.SetPosition(combat.PosMortally)
+	victim.terminalNamed = true
+	victim.player.SetAutoExit(true)
+	registerTestSession(t, m, wizard, "wizard")
+	registerTestSession(t, m, victim, "victim")
+	_ = captureWire(victim)
+	if err := cmdTeleport(wizard, []string{"Victim", "1002"}); err != nil {
+		t.Fatal(err)
+	}
+	got := captureWire(victim)
+	if !strings.Contains(got, "Room B\r\n") || !strings.Contains(got, "[ Exits:") {
+		t.Fatalf("wounded teleport room bytes=%q; missing direct C room view", got)
+	}
+	if victim.player.GetHP() != -7 || victim.player.GetPosition() != combat.PosMortally || victim.player.GetRoom() != 1002 {
+		t.Fatalf("teleport changed wounded state: hp=%d pos=%d room=%d", victim.player.GetHP(), victim.player.GetPosition(), victim.player.GetRoom())
 	}
 }

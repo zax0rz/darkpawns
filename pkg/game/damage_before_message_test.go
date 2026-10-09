@@ -239,7 +239,7 @@ func TestNeutralRescueDamageTailClass(t *testing.T) {
 					t.Fatal("rescue returned TRUE")
 				}
 			case "room":
-				if w.roomActivitySelfDamage(p, 40, combat.TYPE_UNDEFINED) {
+				if w.selfDamage(p, 40, combat.TYPE_UNDEFINED) {
 					t.Fatal("rescue returned TRUE")
 				}
 			case "affect":

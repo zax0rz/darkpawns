@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
@@ -146,8 +147,8 @@ func (w *World) PointUpdate() {
 			maxMana := p.MaxMana
 			move := p.Move
 			maxMove := p.MaxMove
-			poisoned := p.Affects&(1<<AffPoison) != 0
-			cutthroat := p.Affects&(1<<AffCutthroat) != 0
+			poisoned := p.isAffectedLocked(AffPoison)
+			cutthroat := p.isAffectedLocked(AffCutthroat)
 			p.mu.RUnlock()
 
 			// HP regen
@@ -186,43 +187,39 @@ func (w *World) PointUpdate() {
 
 			// Poison damage — limits.c:503-504
 			if poisoned {
-				p.TakeDamage(10)
-				w.DamageBeforeMessage(p, p, 10)
+				w.selfDamage(p, 10, 33)
+				if p.CombatRetired() {
+					continue
+				}
 			}
 
 			// Cutthroat damage — limits.c:505-506
 			if cutthroat {
-				p.TakeDamage(13)
-				w.DamageBeforeMessage(p, p, 13)
+				w.selfDamage(p, 13, 143)
 			}
 
 			// Poison/cutthroat can drive HP into the wounded band (or past the
 			// POS_DEAD threshold, HP <= -11). Re-derive position from the new HP
 			// and only die at POS_DEAD — C: damage(ch, ch, dam, ...) runs
 			// update_pos then die() only once GET_HIT <= -11 (DP-1021).
-			updatePosFromHP(p, p.GetHP())
-			if p.GetPosition() == PosDead {
-				w.HandleNonCombatDeath(p)
+			if p.CombatRetired() {
 				continue
 			}
+			updatePosFromHP(p, p.GetHP())
 		} else if pos == PosIncap {
 			// Incapacitated: 1 damage per tick — limits.c:511
-			p.TakeDamage(1)
-			w.DamageBeforeMessage(p, p, 1)
-			updatePosFromHP(p, p.GetHP())
-			if p.GetPosition() == PosDead {
-				w.HandleNonCombatDeath(p)
+			w.selfDamage(p, 1, combat.TYPE_SUFFERING)
+			if p.CombatRetired() {
 				continue
 			}
+			updatePosFromHP(p, p.GetHP())
 		} else if pos == PosMortally {
 			// Mortally wounded: 2 damage per tick — limits.c:513
-			p.TakeDamage(2)
-			w.DamageBeforeMessage(p, p, 2)
-			updatePosFromHP(p, p.GetHP())
-			if p.GetPosition() == PosDead {
-				w.HandleNonCombatDeath(p)
+			w.selfDamage(p, 2, combat.TYPE_SUFFERING)
+			if p.CombatRetired() {
 				continue
 			}
+			updatePosFromHP(p, p.GetHP())
 		}
 
 		// Memory clearing for NPCs — limits.c:516-518
@@ -256,38 +253,34 @@ func (w *World) PointUpdate() {
 			m.GainMove(MoveGainNPC(m))
 			// Poison damage — limits.c:503-504 (applies to ALL chars including NPCs)
 			if m.HasAffect(AffPoison) {
-				m.TakeDamage(10)
-				w.DamageBeforeMessage(m, m, 10)
+				w.selfDamage(m, 10, 33)
+				if m.CombatRetired() {
+					continue
+				}
 			}
 			// Cutthroat damage — limits.c:505-506
 			if m.HasAffect(AffCutthroat) {
-				m.TakeDamage(13)
-				w.DamageBeforeMessage(m, m, 13)
+				w.selfDamage(m, 13, 143)
 			}
 			// Re-derive position from the new HP; only die at POS_DEAD
 			// (HP <= -11) so poison/cutthroat progress through the wounded
 			// band instead of killing instantly at 0 (DP-1021).
-			updateMobPosFromHP(m, m.GetHP())
-			if m.GetPosition() == PosDead {
-				w.handleMobDeath(m, nil, -1)
+			if m.CombatRetired() {
 				continue
 			}
+			updateMobPosFromHP(m, m.GetHP())
 		} else if pos == PosIncap {
-			m.TakeDamage(1)
-			w.DamageBeforeMessage(m, m, 1)
-			updateMobPosFromHP(m, m.GetHP())
-			if m.GetPosition() == PosDead {
-				w.handleMobDeath(m, nil, -1)
+			w.selfDamage(m, 1, combat.TYPE_SUFFERING)
+			if m.CombatRetired() {
 				continue
 			}
+			updateMobPosFromHP(m, m.GetHP())
 		} else if pos == PosMortally {
-			m.TakeDamage(2)
-			w.DamageBeforeMessage(m, m, 2)
-			updateMobPosFromHP(m, m.GetHP())
-			if m.GetPosition() == PosDead {
-				w.handleMobDeath(m, nil, -1)
+			w.selfDamage(m, 2, combat.TYPE_SUFFERING)
+			if m.CombatRetired() {
 				continue
 			}
+			updateMobPosFromHP(m, m.GetHP())
 		}
 
 		// Memory clearing — limits.c:516-518

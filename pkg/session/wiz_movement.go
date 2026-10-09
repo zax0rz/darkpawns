@@ -333,7 +333,8 @@ func cmdTeleport(s *Session, args []string) error {
 		"$n has teleported you!", "", game.ToVict)
 	if !target.Combatant.IsNPC() {
 		if targetSession := findSessionForPlayer(s.manager, target.Combatant.(*game.Player)); targetSession != nil {
-			if err := cmdLook(targetSession, nil); err != nil {
+			// C do_teleport calls look_at_room(victim, 0), bypassing do_look position gates.
+			if err := cmdMovementLook(targetSession); err != nil {
 				slog.Error("wizard teleport look failed", "target", target.Combatant.GetName(), "error", err)
 			}
 		}

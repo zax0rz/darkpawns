@@ -807,6 +807,8 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 			if moveErr := w.MoveObject(broken, LocInventoryPlayer(ch.GetName())); moveErr != nil {
 				slog.Error("rollback broken lockpicks to inventory", "player", ch.GetName(), "error", moveErr)
 			}
+		} else {
+			ch.checkEquipmentStats()
 		}
 	}
 	return false

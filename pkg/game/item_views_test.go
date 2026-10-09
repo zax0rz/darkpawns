@@ -20,6 +20,8 @@ func newViewTestWorld(t *testing.T) (*World, *Player, *[]string) {
 	t.Cleanup(func() { w.StopAITicker() })
 
 	p := NewPlayer(1, "Viewer", 100)
+	p.Stats = CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	p.CopyBaseAttributes()
 	if err := w.AddPlayer(p); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}

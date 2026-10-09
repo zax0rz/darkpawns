@@ -234,8 +234,16 @@ func (w *World) MoveObject(obj *ObjectInstance, dst ObjectLocation) error {
 	}
 
 	w.mu.Lock()
-	defer w.mu.Unlock()
-	return w.moveObjectLocked(obj, dst)
+	err := w.moveObjectLocked(obj, dst)
+	var equipped *Player
+	if err == nil && dst.Kind == ObjEquipped && dst.OwnerKind == OwnerPlayer {
+		equipped = w.players[dst.PlayerName]
+	}
+	w.mu.Unlock()
+	if equipped != nil {
+		equipped.checkEquipmentStats()
+	}
+	return err
 }
 
 // MoveObjectToRoomFront mirrors C obj_to_room, which prepends to the room's

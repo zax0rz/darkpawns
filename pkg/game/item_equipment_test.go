@@ -236,6 +236,8 @@ func TestEquipmentCommandRoomMessages(t *testing.T) {
 	t.Cleanup(w.StopAITicker)
 
 	actor := NewPlayer(1, "Eqactor", 1001)
+	actor.Stats = CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	actor.CopyBaseAttributes()
 	observer := NewPlayer(2, "Observer", 1001)
 	if err := w.AddPlayer(actor); err != nil {
 		t.Fatalf("AddPlayer actor: %v", err)
