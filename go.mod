@@ -1,6 +1,6 @@
 module github.com/zax0rz/darkpawns
 
-go 1.26.6
+go 1.26.9
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.39.1
