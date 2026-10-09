@@ -19,6 +19,13 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	cb.NeutralRescue = pre.NeutralRescue
 	cb.RangedHunt = func(attacker, defender combat.Combatant) {
 		if mob, ok := attacker.(*MobInstance); ok && mob.HasMobFlag(MobFlagHunter) {
+			// damage()'s hunter arm: set_hunting(ch, victim) with the player
+			// the mob just hit (src/fight.c:1453-1455). The producer fires
+			// before the hunting target is stored, and a mobile victim is
+			// silent, which is C's IS_MOB arm (src/utils.c:715-724).
+			if prey, isPlayer := defender.(*Player); isPlayer {
+				LogHuntingStart(mob, prey)
+			}
 			mob.SetHunting(defender.GetName())
 		}
 	}

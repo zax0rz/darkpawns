@@ -344,6 +344,12 @@ func cmdSethunt(s *Session, args []string) error {
 		return nil
 	}
 	hunter.Mob.SetMobFlag(game.MobFlagHunter)
+	// act.wizard.c:3471: set_hunting(hunter, victim). The prey may be a player
+	// or a mobile — get_char_vis resolves either — and only a player produces
+	// C's line, which is its IS_MOB gate plus the id check (src/utils.c:715-724).
+	if prey, isPlayer := victim.Combatant.(*game.Player); isPlayer {
+		game.LogHuntingStart(hunter.Mob, prey)
+	}
 	hunter.Mob.SetHunting(victim.Combatant.GetName())
 
 	slog.Warn("wizard sethunt", "by", s.playerName, "hunter", hunter.Combatant.GetName(), "victim", victim.Combatant.GetName())

@@ -1078,11 +1078,18 @@ func (a *WorldScriptableAdapter) SetHunt(hunter scripting.CharRef, vict *scripti
 		return
 	}
 	prey := ""
+	var preyPlayer *Player
 	if vict != nil {
 		if target := a.actorFor(vict); target != nil {
 			prey = target.GetName()
+			if p, ok := target.(*Player); ok {
+				preyPlayer = p
+			}
 		}
 	}
+	// scripts.c:1358: set_hunting(hunter, vict), whose producer fires before
+	// the target is stored. A mobile or id-less prey is C's silent arm.
+	LogHuntingStart(m, preyPlayer)
 	m.SetHunting(prey)
 }
 
