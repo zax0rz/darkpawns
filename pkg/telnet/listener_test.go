@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"os"
@@ -54,7 +55,7 @@ func TestHandleConnDisconnectDuringPasswordPrompt(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
 	go drain(client)
@@ -84,7 +85,7 @@ func TestHandleConnRepromptsEmptyPassword(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
 	go drain(client)
@@ -123,7 +124,7 @@ func TestHandleConnQuitFlushesGoodbyeBeforeDisconnect(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
 	transcript := make(chan []byte, 1)
@@ -182,7 +183,7 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 	t.Cleanup(func() { _ = client.Close() })
 
@@ -272,6 +273,85 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 	}
 }
 
+// mudlogCapture is an immortal observer set: a complete-syslog level-34
+// immortal (who must receive every producer), a level-30 immortal with complete
+// syslog (below the CMP LVL_GOD gate), and a level-34 immortal whose syslog is
+// brief only (below the CMP type gate). Delivery still passes through
+// game.MudLog's own level/type/writing filters.
+type mudlogCapture struct {
+	mu            sync.Mutex
+	messages      []string
+	belowMessages []string
+	briefMessages []string
+}
+
+func newMudlogObserver(name string, level int, flags ...int) *game.Player {
+	p := game.NewCharacter(1, name, game.ClassWarrior, game.RaceHuman)
+	p.Level = level
+	for _, flag := range flags {
+		p.SetPlrFlag(flag, true)
+	}
+	return p
+}
+
+func (c *mudlogCapture) EachSession(fn func(player interface{}, send func(msg string))) {
+	fn(newMudlogObserver("Observer", 34, game.PrfLog1, game.PrfLog2), func(msg string) {
+		c.mu.Lock()
+		c.messages = append(c.messages, msg)
+		c.mu.Unlock()
+	})
+	fn(newMudlogObserver("Below", 30, game.PrfLog1, game.PrfLog2), func(msg string) {
+		c.mu.Lock()
+		c.belowMessages = append(c.belowMessages, msg)
+		c.mu.Unlock()
+	})
+	fn(newMudlogObserver("Brief", 34, game.PrfLog1), func(msg string) {
+		c.mu.Lock()
+		c.briefMessages = append(c.briefMessages, msg)
+		c.mu.Unlock()
+	})
+}
+
+// snapshot copies the captured deliveries to the qualified observer.
+func (c *mudlogCapture) snapshot() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]string(nil), c.messages...)
+}
+
+// filtered returns what reached the below-level and brief-syslog observers;
+// both must stay empty for a CMP / LVL_GOD producer.
+func (c *mudlogCapture) filtered() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append(append([]string(nil), c.belowMessages...), c.briefMessages...)
+}
+
+// waitForMessages polls until n deliveries have arrived. The refusal producers
+// run on the accept goroutine after the socket is closed, so the reader cannot
+// simply read the capture once it sees EOF.
+func waitForMessages(t *testing.T, capture *mudlogCapture, n int) []string {
+	t.Helper()
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		got := capture.snapshot()
+		if len(got) >= n || time.Now().After(deadline) {
+			return got
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
+// captureMudlog registers the observer for the duration of the test. The
+// package's tests run sequentially, so the provider is not shared.
+func captureMudlog(t *testing.T) *mudlogCapture {
+	t.Helper()
+	capture := &mudlogCapture{}
+	game.SetImmortalSessionProvider(capture)
+	t.Cleanup(func() { game.SetImmortalSessionProvider(nil) })
+	return capture
+}
+
 func stripTelnetCommands(data []byte) []byte {
 	visible := make([]byte, 0, len(data))
 	for i := 0; i < len(data); i++ {
@@ -284,60 +364,141 @@ func stripTelnetCommands(data []byte) []byte {
 	return visible
 }
 
-func TestEffectiveBanLevel_IPAndHostname(t *testing.T) {
+// C's new_descriptor stores d->host and then checks isbanned() over it and the
+// two wildcard strings derived from it (src/comm.c:1534-1569). A ban written in
+// the padded spelling matches; a ban in raw-IP form does not.
+func TestIdentifyConnectionPaddedBanStrings(t *testing.T) {
 	bm := game.NewBanManager()
-	bm.AddBan("192.0.2.10", game.BanNew, "test")
-	bm.AddBan("evil.example.com", game.BanAll, "test")
-
-	origLookup := lookupAddr
-	defer func() { lookupAddr = origLookup }()
-	lookupAddr = func(addr string) ([]string, error) {
-		if addr == "192.0.2.10" {
-			return []string{"evil.example.com."}, nil
-		}
-		return nil, nil
+	if err := bm.AddBan("192.000.002.010", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
 	}
 
-	// IP-only check would return BanNew; hostname check elevates to BanAll.
-	if got := effectiveBanLevel("192.0.2.10", bm); got != game.BanAll {
-		t.Fatalf("effectiveBanLevel = %d, want BanAll (%d)", got, game.BanAll)
+	identity := identifyConnection("192.0.2.10", bm, game.NameserverIsSlow())
+	if identity.Host != "192.000.002.010" {
+		t.Fatalf("d->host = %q, want the padded quad", identity.Host)
+	}
+	if identity.Level != game.BanAll {
+		t.Fatalf("level = %d, want BanAll (%d)", identity.Level, game.BanAll)
 	}
 }
 
-func TestEffectiveBanLevel_TimeoutFallsBackToIP(t *testing.T) {
+// A raw-IP ban (the pre-fix spelling) no longer matches the padded host, which
+// is C's behaviour: isbanned() is a substring test against sites that C stores
+// lowercased, and d->host is the padded quad.
+func TestIdentifyConnectionRawIPBanDoesNotMatch(t *testing.T) {
 	bm := game.NewBanManager()
-	bm.AddBan("198.51.100.5", game.BanAll, "test")
-
-	origLookup := lookupAddr
-	origTimeout := dnsLookupTimeout
-	defer func() {
-		lookupAddr = origLookup
-		dnsLookupTimeout = origTimeout
-	}()
-
-	lookupAddr = func(addr string) ([]string, error) {
-		time.Sleep(100 * time.Millisecond)
-		return []string{"slow.example.com."}, nil
+	if err := bm.AddBan("192.0.2.10", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
 	}
-	dnsLookupTimeout = 10 * time.Millisecond
-
-	// Even though DNS times out, the raw IP is still banned.
-	if got := effectiveBanLevel("198.51.100.5", bm); got != game.BanAll {
-		t.Fatalf("effectiveBanLevel = %d, want BanAll (%d)", got, game.BanAll)
+	if got := identifyConnection("192.0.2.10", bm, game.NameserverIsSlow()).Level; got != game.BanNot {
+		t.Fatalf("raw-IP ban matched the padded host: level = %d, want BanNot", got)
 	}
 }
 
-func TestEffectiveBanLevel_NoMatch(t *testing.T) {
+// C's wildhost ("%03u.%03u.%03u.*") and double_wild ("%03u.%03u.*.*") are the
+// other two accept-time strings, so a ban in either spelling bans the range.
+func TestIdentifyConnectionWildcardBanStrings(t *testing.T) {
 	bm := game.NewBanManager()
+	if err := bm.AddBan("198.051.100.*", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
+	}
+	if got := identifyConnection("198.51.100.5", bm, game.NameserverIsSlow()).Level; got != game.BanAll {
+		t.Fatalf("wildhost ban not honoured: level = %d, want BanAll", got)
+	}
+
+	bm = game.NewBanManager()
+	if err := bm.AddBan("203.000.*.*", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
+	}
+	if got := identifyConnection("203.0.113.7", bm, game.NameserverIsSlow()).Level; got != game.BanAll {
+		t.Fatalf("double-wild ban not honoured: level = %d, want BanAll", got)
+	}
+}
+
+// With nameserver_is_slow — C's shipped default — C never resolves
+// (src/comm.c:1527-1529): no PTR lookup may be attempted and no failure
+// producer may fire.
+func TestIdentifyConnectionSlowPerformsNoLookup(t *testing.T) {
+	game.SetNameserverIsSlow(true)
+	t.Cleanup(func() { game.SetNameserverIsSlow(true) })
 
 	origLookup := lookupAddr
 	defer func() { lookupAddr = origLookup }()
-	lookupAddr = func(addr string) ([]string, error) {
-		return []string{"clean.example.com."}, nil
+	var lookupCalled atomic.Bool
+	lookupAddr = func(string) ([]string, error) {
+		lookupCalled.Store(true)
+		return []string{"client.example."}, nil
 	}
 
-	if got := effectiveBanLevel("203.0.113.7", bm); got != game.BanNot {
-		t.Fatalf("effectiveBanLevel = %d, want BanNot (%d)", got, game.BanNot)
+	provider := captureMudlog(t)
+
+	identity := identifyConnection("192.0.2.10", game.NewBanManager(), game.NameserverIsSlow())
+	if lookupCalled.Load() {
+		t.Fatal("a reverse lookup ran with nameserver_is_slow set")
+	}
+	if identity.Host != "192.000.002.010" || identity.HostResolved {
+		t.Fatalf("identity = %+v, want the padded quad unresolved", identity)
+	}
+	if len(provider.snapshot()) != 0 {
+		t.Fatalf("producer fired in slow mode: %q", provider.snapshot())
+	}
+}
+
+// Without the slow flag a failed lookup logs C's producer before the ban check
+// (src/comm.c:1552-1555) and d->host stays the padded quad.
+func TestIdentifyConnectionFailedLookupLogs(t *testing.T) {
+	game.SetNameserverIsSlow(false)
+	t.Cleanup(func() { game.SetNameserverIsSlow(true) })
+
+	origLookup := lookupAddr
+	defer func() { lookupAddr = origLookup }()
+	lookupAddr = func(string) ([]string, error) { return nil, errors.New("no PTR") }
+
+	provider := captureMudlog(t)
+
+	identity := identifyConnection("192.0.2.10", game.NewBanManager(), game.NameserverIsSlow())
+	if identity.Host != "192.000.002.010" || identity.HostResolved {
+		t.Fatalf("identity = %+v, want the padded quad unresolved", identity)
+	}
+	if got := waitForMessages(t, provider, 1); len(got) != 1 || got[0] != "[ DNS lookup failed on 192.000.002.010. ]\r\n" {
+		t.Fatalf("producer bytes = %q", got)
+	}
+}
+
+// A resolving lookup stores the name, with its trailing dot trimmed, and logs
+// nothing.
+func TestIdentifyConnectionResolvedNameIsHost(t *testing.T) {
+	game.SetNameserverIsSlow(false)
+	t.Cleanup(func() { game.SetNameserverIsSlow(true) })
+
+	origLookup := lookupAddr
+	defer func() { lookupAddr = origLookup }()
+	lookupAddr = func(string) ([]string, error) { return []string{"client.example.com."}, nil }
+
+	provider := captureMudlog(t)
+
+	bm := game.NewBanManager()
+	if err := bm.AddBan("evil.example.com", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
+	}
+
+	identity := identifyConnection("203.0.113.7", bm, game.NameserverIsSlow())
+	if identity.Host != "client.example.com" || !identity.HostResolved {
+		t.Fatalf("identity = %+v, want the resolved name", identity)
+	}
+	if len(provider.snapshot()) != 0 {
+		t.Fatalf("producer fired on a successful lookup: %q", provider.snapshot())
+	}
+
+	// In resolved mode C compares the name only: wildhost and double_wild are
+	// uninitialised stack (src/comm.c:1541-1548), so a padded-quad ban must not
+	// match a resolved host.
+	paddedBan := game.NewBanManager()
+	if err := paddedBan.AddBan("203.000.113.*", game.BanAll, "test"); err != nil {
+		t.Fatal(err)
+	}
+	if got := identifyConnection("203.0.113.7", paddedBan, game.NameserverIsSlow()).Level; got != game.BanNot {
+		t.Fatalf("resolved lookup matched a wildcard ban: level = %d, want BanNot", got)
 	}
 }
 
@@ -568,7 +729,7 @@ func TestInitialNegotiationOffersMCCP2(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
 	data := readAllAvailable(t, client, 200*time.Millisecond)
@@ -670,7 +831,7 @@ func TestMCCP2DONTKeepsPlaintext(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
 	// Continuously drain server output so its writes do not block.
@@ -805,7 +966,7 @@ func TestTelnetQuietSessionNotReaped(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
 	go drain(client)
@@ -922,7 +1083,7 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		handleConn(server, manager, game.BanNot)
+		handleConn(server, manager, session.ConnectionIdentity{})
 	}()
 
 	transcript := make(chan []byte, 1)
@@ -973,28 +1134,31 @@ func TestPromptAfterCommandOutput(t *testing.T) {
 	}
 }
 
-// TestEffectiveBanLevelShortCircuitsBanAllBeforeDNS verifies that an IP already
-// banned at BanAll level is rejected from the in-memory check alone, without
-// ever spawning the reverse-DNS lookup (banned IPs must not pay for a slow PTR).
-func TestEffectiveBanLevelShortCircuitsBanAllBeforeDNS(t *testing.T) {
+// Without nameserver_is_slow C resolves before it checks the ban list, so a
+// BanAll refusal on the padded spelling is reached only after the lookup. In
+// the default slow mode there is no lookup and the refusal is immediate.
+func TestIdentifyConnectionSlowRefusesPaddedBanWithoutLookup(t *testing.T) {
+	game.SetNameserverIsSlow(true)
+	t.Cleanup(func() { game.SetNameserverIsSlow(true) })
+
 	bm := game.NewBanManager()
-	if err := bm.AddBan("203.0.113.99", game.BanAll, "test"); err != nil {
+	if err := bm.AddBan("203.000.113.*", game.BanAll, "test"); err != nil {
 		t.Fatal(err)
 	}
 
 	origLookup := lookupAddr
 	defer func() { lookupAddr = origLookup }()
 	var lookupCalled atomic.Bool
-	lookupAddr = func(addr string) ([]string, error) {
+	lookupAddr = func(string) ([]string, error) {
 		lookupCalled.Store(true)
 		return nil, nil
 	}
 
-	if got := effectiveBanLevel("203.0.113.99", bm); got != game.BanAll {
-		t.Fatalf("effectiveBanLevel = %d, want BanAll (%d)", got, game.BanAll)
+	if got := identifyConnection("203.0.113.99", bm, game.NameserverIsSlow()).Level; got != game.BanAll {
+		t.Fatalf("level = %d, want BanAll (%d)", got, game.BanAll)
 	}
 	if lookupCalled.Load() {
-		t.Fatal("lookupAddr was invoked for an IP already banned at BanAll level")
+		t.Fatal("a reverse lookup ran with nameserver_is_slow set")
 	}
 }
 
@@ -1005,6 +1169,10 @@ func TestEffectiveBanLevelShortCircuitsBanAllBeforeDNS(t *testing.T) {
 func TestListenAcceptNotBlockedBySlowReverseDNS(t *testing.T) {
 	manager, world := newTestManager(t)
 	defer world.StopAITicker()
+
+	// The lookup only runs when nameserver_is_slow is clear (src/comm.c:1527-1529).
+	game.SetNameserverIsSlow(false)
+	defer game.SetNameserverIsSlow(true)
 
 	origLookup := lookupAddr
 	origTimeout := dnsLookupTimeout
@@ -1122,14 +1290,15 @@ func cGreetingsFixture(t *testing.T) string {
 	return strings.ReplaceAll(string(raw), "\n", "\r\n")
 }
 
-func TestEffectiveBanHostsRetainsIdentity(t *testing.T) {
-	original := lookupAddr
-	defer func() { lookupAddr = original }()
-	lookupAddr = func(string) ([]string, error) { return []string{"client.example."}, nil }
-	bm := game.NewBanManager()
-	level, hosts := effectiveBanHosts("127.0.0.1", bm)
-	if level != game.BanNot || len(hosts) != 2 || hosts[0] != "127.0.0.1" || hosts[1] != "client.example" {
-		t.Fatalf("entry identity lost: level=%d hosts=%q", level, hosts)
+// The WebSocket accept path has no reverse-DNS worker, so its d->host is always
+// the padded quad; this asserts the session-level identity helper it shares
+// with the telnet listener.
+func TestConnectionHostIsPaddedQuad(t *testing.T) {
+	if got := session.CConnectionHost("127.0.0.1"); got != "127.000.000.001" {
+		t.Fatalf("CConnectionHost(127.0.0.1) = %q, want 127.000.000.001", got)
+	}
+	if got := session.CConnectionHost("2001:db8::1"); got != "2001:db8::1" {
+		t.Fatalf("CConnectionHost(IPv6) = %q, want the literal unchanged", got)
 	}
 }
 

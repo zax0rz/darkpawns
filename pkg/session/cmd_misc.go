@@ -184,17 +184,21 @@ func cmdHouse(s *Session, args []string) error {
 	return nil
 }
 
-// cmdBan handles the "ban" admin command (ported from ban.c do_ban).
+// cmdBan handles the "ban" admin command (ported from ban.c do_ban). The
+// producer fires inside DoBan, before the acknowledgement it writes through
+// ack (ban.c:205-209).
 func cmdBan(s *Session, args []string) error {
-	msg := s.manager.world.ExecBan(s.player, strings.Join(args, " "))
-	s.sendText(msg)
+	name, invis := s.mudlogActor()
+	s.manager.world.ExecBan(name, invis, strings.Join(args, " "), s.sendText)
 	return nil
 }
 
 // cmdUnban handles the "unban" admin command (ported from ban.c do_unban).
+// C acknowledges before it logs (ban.c:237-243), so the ack writer is passed
+// into DoUnban.
 func cmdUnban(s *Session, args []string) error {
-	msg := s.manager.world.ExecUnban(s.player, strings.Join(args, " "))
-	s.sendText(msg)
+	name, invis := s.mudlogActor()
+	s.manager.world.ExecUnban(name, invis, strings.Join(args, " "), s.sendText)
 	return nil
 }
 

@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -538,11 +537,11 @@ func parseUsersArgs(args []string) (usersOptions, bool) {
 	return opts, true
 }
 
+// usersHost is do_users' Site column: C's d->host, or "[Hostname unknown]"
+// when the descriptor has none (src/act.informative.c:2093-2097). d->host is
+// already C's padded-or-resolved string (see MudHost).
 func usersHost(s *Session) string {
-	host := s.RemoteIP()
-	if ip := net.ParseIP(host).To4(); ip != nil {
-		return fmt.Sprintf("%03d.%03d.%03d.%03d", ip[0], ip[1], ip[2], ip[3])
-	}
+	host := s.MudHost()
 	if host != "" {
 		return host
 	}

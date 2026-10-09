@@ -35,6 +35,9 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	if err := json.Unmarshal(data, &login); err != nil {
 		return err
 	}
+	// A login message is the name-prompt input C's nanny consumes, so from here
+	// the descriptor has a character (src/interpreter.c:1743-1752).
+	s.markDescriptorBound()
 
 	// src/interpreter.c:1187-1190,1721: nanny skips leading C whitespace.
 	login.Password = strings.TrimLeft(login.Password, " \t\n\r\v\f")
@@ -206,7 +209,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 				// paths emit it below; the reconnect branch already carries
 				// its own (reconnect.go).
 				s.sendRawEvent("\r\n")
-				game.MudLog(fmt.Sprintf("Bad PW: %s [%s]", rec.Name, s.RemoteIP()), game.MudlogBrief, game.LVL_GOD, true) // interpreter.c:1878-1879
+				game.MudLog(fmt.Sprintf("Bad PW: %s [%s]", rec.Name, s.MudHost()), game.MudlogBrief, game.LVL_GOD, true) // interpreter.c:1878-1879
 				if rec.Password == "" {
 					// Legacy NULL-hash row: identical wire treatment as a wrong
 					// password; only the audit log names the state.
@@ -306,7 +309,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		}
 		s.sendRawEvent("\r\n")
 		// interpreter.c:1924-1927, after the MOTD.
-		game.MudLog(fmt.Sprintf("%s [%s] has connected.", s.player.GetName(), s.RemoteIP()),
+		game.MudLog(fmt.Sprintf("%s [%s] has connected.", s.player.GetName(), s.MudHost()),
 			game.MudlogBrief, max(game.LVL_IMMORT, s.player.GetInvisLevel()), true)
 		s.startReturningMenu(s.menuPasswordHash, failedPasswords)
 		return nil

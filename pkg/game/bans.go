@@ -316,62 +316,93 @@ func (bm *BanManager) ValidName(name string) bool {
 
 // DoBan handles the "ban" admin command.
 // Source: ban.c do_ban() lines 132–210
-// Arguments: "<flag> <site>" or "" to list bans.
-// Returns the message to send to the player and an error if the command failed.
-func (bm *BanManager) DoBan(banFilePath, playerName, argument string) string {
-	argument = strings.TrimSpace(argument)
+//
+// Arguments: "<flag> <site>" or "" to list bans. C parses both with
+// two_arguments, which runs one_argument twice (src/interpreter.c:1267-1284),
+// so each is the first non-fill-word token, lowercased.
+//
+// actorName and invis identify the acting body (R4): C logs GET_NAME(ch) at
+// MAX(LVL_GOD, GET_INVIS_LEV(ch)). ack delivers C's send_to_char
+// acknowledgement to that descriptor, so the producer lands before it — C's
+// order is mudlog, ack, then write_ban_list().
+func (bm *BanManager) DoBan(banFilePath, actorName string, invis int, argument string, ack func(string)) {
+	// C tests the raw argument (*argument), not the parsed one, so a
+	// whitespace-only line reaches two_arguments and prints the usage message
+	// rather than listing the bans.
 	if argument == "" {
-		return bm.ListBans()
+		ack(bm.ListBans())
+		return
 	}
 
 	flag, rest := oneArgument(argument)
 	site, _ := oneArgument(rest)
 	if flag == "" || site == "" {
-		return "Usage: ban {all | select | new} site_name\r\n"
-	}
-	if len(site) > 50 {
-		// C stores only BANNED_SITE_LENGTH bytes after accepting the
-		// two_arguments result (ban.c:189-193).
-		site = site[:50]
+		ack("Usage: ban {all | select | new} site_name\r\n")
+		return
 	}
 
 	if flag != "select" && flag != "all" && flag != "new" {
-		return "Flag must be ALL, SELECT, or NEW.\r\n"
+		ack("Flag must be ALL, SELECT, or NEW.\r\n")
+		return
+	}
+
+	// C logs the parsed argument itself (src/ban.c:205-207) and stores at most
+	// BANNED_SITE_LENGTH (50) bytes of it (src/ban.c:189-193). two_arguments
+	// runs one_argument twice (src/interpreter.c:1267-1284), so `site` is
+	// already the first non-fill-word token, lowercased; only the stored copy
+	// is truncated further.
+	rawSite := site
+	if len(site) > 50 {
+		site = site[:50]
 	}
 
 	banType := banTypeFromString(flag)
-	if err := bm.AddBan(site, banType, playerName); err != nil {
-		return "That site has already been banned -- unban it to change the ban type.\r\n"
+	if err := bm.AddBan(site, banType, actorName); err != nil {
+		ack("That site has already been banned -- unban it to change the ban type.\r\n")
+		return
 	}
 
+	// ban.c:205-209: mudlog, then the acknowledgement, then write_ban_list().
+	MudLog(fmt.Sprintf("%s has banned %s for %s players.", actorName, rawSite, banTypeName(banType)),
+		MudlogNormal, max(LVL_GOD, invis), true)
+	ack("Site banned.\r\n")
 	if err := bm.WriteBanList(banFilePath); err != nil {
 		slog.Error("failed to write ban list", "error", err)
 	}
 
-	slog.Info("ban added", "admin", playerName, "site", site, "type", flag)
-	return "Site banned.\r\n"
+	slog.Info("ban added", "admin", actorName, "site", site, "type", flag)
 }
 
 // DoUnban handles the "unban" admin command.
 // Source: ban.c do_unban() lines 213–244
-// Returns the message to send to the player.
-func (bm *BanManager) DoUnban(banFilePath, playerName, argument string) string {
-	site := strings.TrimSpace(strings.ToLower(argument))
+//
+// C parses the argument with one_argument (src/ban.c:219): the first
+// non-fill-word token, lowercased, with anything after it ignored — so
+// "unban foo bar" unbans foo and "unban the foo" unbans foo. C's order differs
+// from do_ban's: the acknowledgement goes on the wire first, then the producer,
+// then the ban file. The payload names ban_node->site, the stored spelling.
+func (bm *BanManager) DoUnban(banFilePath, actorName string, invis int, argument string, ack func(string)) {
+	site, _ := oneArgument(argument)
 	if site == "" {
-		return "A site to unban might help.\r\n"
+		ack("A site to unban might help.\r\n")
+		return
 	}
 
 	removed, err := bm.RemoveBan(site)
 	if err != nil {
-		return "That site is not currently banned.\r\n"
+		ack("That site is not currently banned.\r\n")
+		return
 	}
 
+	// ban.c:237-244: send_to_char, then mudlog, then write_ban_list().
+	ack("Site unbanned.\r\n")
+	MudLog(fmt.Sprintf("%s removed the %s-player ban on %s.", actorName, banTypeName(removed.BanType), removed.Site),
+		MudlogNormal, max(LVL_GOD, invis), true)
 	if err := bm.WriteBanList(banFilePath); err != nil {
 		slog.Error("failed to write ban list", "error", err)
 	}
 
-	slog.Info("ban removed", "admin", playerName, "type", banTypeName(removed.BanType), "site", site)
-	return "Site unbanned.\r\n"
+	slog.Info("ban removed", "admin", actorName, "type", banTypeName(removed.BanType), "site", site)
 }
 
 // pathDir returns the directory component of a file path.

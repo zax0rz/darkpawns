@@ -62,6 +62,9 @@ func (s *Session) performDupeCheck() bool {
 		m.mu.Unlock()
 		// Not CON_PLAYING: disconnected, and no target (interpreter.c:1561-1571).
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		// perform_dupe_check cleared k->character before CON_CLOSE
+		// (src/interpreter.c:1573-1576), so close_socket finds no character.
+		old.LoseDescriptorWithoutChar()
 		m.unregister(name)
 		old.CloseSend()
 		old.Close()
@@ -83,11 +86,15 @@ func (s *Session) performDupeCheck() bool {
 	switch {
 	case unswitch:
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		// The character is cleared before CON_CLOSE (interpreter.c:1552-1556),
+		// so close_socket has none to name.
+		old.LoseDescriptorWithoutChar()
 		old.CloseSend()
 		old.Close()
 	case usurp:
 		old.Send("\r\nThis body has been usurped!\r\n")
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+		old.LoseDescriptorWithoutChar()
 		old.CloseSend()
 		old.Close()
 	case editing:
@@ -100,6 +107,8 @@ func (s *Session) performDupeCheck() bool {
 		old.cancelMedit()
 		old.cancelOedit()
 		old.cancelSedit()
+		// The editor's character is cleared for the same reason (interpreter.c:1573).
+		old.LoseDescriptorWithoutChar()
 		old.CloseSend()
 		old.Close()
 	default:
@@ -153,7 +162,7 @@ func (s *Session) finishDupeCheck(p *game.Player, name string, olcZone int, unsw
 	case unswitch:
 		// No line ending in C (interpreter.c:1650); the prompt follows.
 		s.sendRawEvent("Reconnecting to unswitched char.")
-		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.RemoteIP()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
+		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.MudHost()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
 	case usurp:
 		s.Send("You take over your own body, already in use!\r\n")
 		game.Act(w, true, p, nil, nil, nil,
@@ -166,7 +175,7 @@ func (s *Session) finishDupeCheck(p *game.Player, name string, olcZone int, unsw
 			s.Send("You have mail waiting.\r\n")
 		}
 		game.Act(w, true, p, nil, nil, nil, "$n has reconnected.", "", game.ToRoom)
-		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.RemoteIP()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
+		game.MudLog(fmt.Sprintf("%s [%s] has reconnected.", name, s.MudHost()), game.MudlogNormal, max(game.LVL_IMMORT, p.GetInvisLevel()), true)
 	}
 
 	// A GMCP client learns who it is again; the text bytes above are C's.

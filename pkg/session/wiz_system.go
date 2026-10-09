@@ -4,7 +4,6 @@ package session
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"time"
 
@@ -404,19 +403,12 @@ func formatOnlineLast(player *game.Player, session *Session) string {
 		lastLogon.Format("Mon Jan _2 15:04:05 2006"))
 }
 
+// formatLastHost renders a stored last-logon host the way the site column is
+// rendered elsewhere: C's zero-padded dotted quad for an address, anything else
+// (a resolved name, or an already-padded string) unchanged. It shares
+// CConnectionHost with the admission path so there is one padding rule.
 func formatLastHost(ip string) string {
-	parts := strings.Split(ip, ".")
-	if len(parts) != 4 {
-		return ip
-	}
-	for i, part := range parts {
-		value, err := strconv.Atoi(part)
-		if err != nil || value < 0 || value > 255 {
-			return ip
-		}
-		parts[i] = fmt.Sprintf("%03d", value)
-	}
-	return strings.Join(parts, ".")
+	return CConnectionHost(ip)
 }
 
 // wizutilSubcmd represents a wizutil sub-command.

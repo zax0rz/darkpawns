@@ -167,56 +167,81 @@ func serve(ln net.Listener, manager *session.Manager) {
 
 			// Check site bans (DP-419 / DP-557): BanAll disconnects immediately;
 			// BanNew/BanSelect allow connection but restrict at login.
-			// The accept loop only runs the fast in-memory IP check. Hostname
-			// reverse-DNS resolution (which can block up to dnsLookupTimeout)
-			// happens inside the per-connection goroutine so a slow or
-			// unresponsive resolver cannot stall the accept queue.
+			//
+			// C's new_descriptor computed d->host and ran all three isbanned()
+			// checks synchronously in the accept path (src/comm.c:1518-1569).
+			// With nameserver_is_slow — C's shipped default (src/config.c:206) —
+			// no lookup happens at all, so the whole check can run here;
+			// otherwise only the reverse-DNS part moves into the
+			// per-connection goroutine, so a slow resolver cannot stall the
+			// accept queue.
 			banManager := manager.GetBanManager()
-			if banManager.IsBanned(remoteIP) == game.BanAll {
-				_ = conn.Close() //nolint:errcheck // best-effort cleanup
-				slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
-				connMu.Lock()
-				connCount--
-				connPerIP[remoteIP]--
-				if connPerIP[remoteIP] <= 0 {
-					delete(connPerIP, remoteIP)
+			// One read of the flag per connection. The precheck and the
+			// goroutine's branch must agree: a `slowns` toggle between two
+			// reads would hand handleConn an empty identity — no host and no
+			// ban level — and skip the ban check for that connection.
+			nameserverSlow := game.NameserverIsSlow()
+			identity := session.ConnectionIdentity{}
+			if nameserverSlow {
+				identity = identifyConnection(remoteIP, banManager, nameserverSlow)
+				if identity.Level == game.BanAll {
+					releaseConnectionSlot(remoteIP)
+					refuseBannedConnection(conn, identity.Host)
+					continue
 				}
-				connMu.Unlock()
-				continue
 			}
 
-			go func(ip string) {
-				banLevel, banHosts := effectiveBanHosts(ip, banManager)
-				reject := banLevel == game.BanAll
-				if reject {
-					slog.Warn("Telnet: BanAll connection rejected", "remote_addr", conn.RemoteAddr())
-				} else if !completeTLSHandshake(conn) {
-					// A banned address is dropped before any TLS work; everyone
-					// else must finish the handshake before the banner is sent.
-					reject = true
+			go func(ip string, precomputed session.ConnectionIdentity, prechecked bool) {
+				if !prechecked {
+					precomputed = identifyConnection(ip, banManager, nameserverSlow)
 				}
+				reject := precomputed.Level == game.BanAll
 				if reject {
-					_ = conn.Close() //nolint:errcheck // best-effort cleanup
-					connMu.Lock()
-					connCount--
-					connPerIP[ip]--
-					if connPerIP[ip] <= 0 {
-						delete(connPerIP, ip)
-					}
-					connMu.Unlock()
+					releaseConnectionSlot(ip)
+					refuseBannedConnection(conn, precomputed.Host)
 					return
 				}
-				handleConn(conn, manager, banLevel, banHosts)
-				connMu.Lock()
-				connCount--
-				connPerIP[ip]--
-				if connPerIP[ip] <= 0 {
-					delete(connPerIP, ip)
+				if !completeTLSHandshake(conn) {
+					// A banned address is dropped before any TLS work; everyone
+					// else must finish the handshake before the banner is sent.
+					_ = conn.Close() //nolint:errcheck // best-effort cleanup
+					releaseConnectionSlot(ip)
+					return
 				}
-				connMu.Unlock()
-			}(remoteIP)
+				handleConn(conn, manager, precomputed)
+				releaseConnectionSlot(ip)
+			}(remoteIP, identity, nameserverSlow)
 		}
 	}()
+}
+
+// releaseConnectionSlot drops one connection from the accept-loop tally. A
+// refused connection never reaches handleConn, so it must release its slot
+// itself.
+func releaseConnectionSlot(ip string) {
+	connMu.Lock()
+	connCount--
+	connPerIP[ip]--
+	if connPerIP[ip] <= 0 {
+		delete(connPerIP, ip)
+	}
+	connMu.Unlock()
+}
+
+// refuseBannedConnection ports comm.c:1571-1575: C writes
+// "Sorry, your site is banned.\r\n" to the descriptor, closes it, and only then
+// logs "Connection attempt denied from [%s]" at CMP / LVL_GOD / file TRUE.
+//
+// The refusal bytes go to plain telnet only. The TLS port shares this accept
+// loop and drops a banned address before the handshake, so plaintext written
+// there would be garbage: TLS keeps its bare close and still logs. Callers must
+// not hold connMu — MudLog delivers to sessions and takes their locks.
+func refuseBannedConnection(conn net.Conn, host string) {
+	if !isTLSConn(conn) {
+		_, _ = conn.Write([]byte("Sorry, your site is banned.\r\n"))
+	}
+	_ = conn.Close()
+	game.MudLog(fmt.Sprintf("Connection attempt denied from [%s]", host), game.MudlogComplete, game.LVL_GOD, true)
 }
 
 func ipFromAddr(addr string) string {
@@ -227,60 +252,77 @@ func ipFromAddr(addr string) string {
 	return host
 }
 
-// effectiveBanLevel returns the most restrictive ban level for remoteIP,
-// checking both the raw IP and any hostnames returned by reverse-DNS lookup.
+// identifyConnection computes C's new_descriptor view of an accepted
+// connection: the string it stores in d->host and the ban level its three
+// isbanned() calls produce (src/comm.c:1518-1569).
 //
-// C's gethostbyaddr() was synchronous and unbounded; this version caps DNS
-// resolution at dnsLookupTimeout so a slow or unresponsive resolver cannot
-// block the connection accept loop.
-func effectiveBanLevel(remoteIP string, banManager *game.BanManager) int {
-	level, _ := effectiveBanHosts(remoteIP, banManager)
-	return level
+// With nameserver_is_slow — C's shipped default (src/config.c:206) — C never
+// resolves (src/comm.c:1527-1529), so no lookup runs and d->host is the padded
+// quad. Otherwise it resolves, and a failed lookup logs C's producer
+// (src/comm.c:1552-1555) before the ban check: "DNS lookup failed on %s." at
+// CMP / LVL_GOD / file TRUE.
+//
+// nameserverSlow is read once by the caller and passed in, so the precheck and
+// the per-connection goroutine cannot disagree about which branch this
+// connection takes.
+func identifyConnection(remoteIP string, banManager *game.BanManager, nameserverSlow bool) session.ConnectionIdentity {
+	padded := session.CConnectionHost(remoteIP)
+	if nameserverSlow {
+		// C's wildhost and double_wild are both defined on this branch
+		// (src/comm.c:1536-1548).
+		return session.ConnectionIdentity{
+			Host:  padded,
+			Level: session.AcceptBanLevel(banManager, padded, false),
+		}
+	}
+
+	if name, err := reverseLookup(remoteIP); err == nil {
+		// d->host is the resolved name (src/comm.c:1558-1560). C's wildhost
+		// and double_wild are uninitialised stack here, so C compares only the
+		// name; the port does the same (R1a; see session.AcceptBanLevel).
+		return session.ConnectionIdentity{
+			Host:         name,
+			HostResolved: true,
+			Level:        session.AcceptBanLevel(banManager, name, true),
+		}
+	}
+
+	game.MudLog(fmt.Sprintf("DNS lookup failed on %s.", padded), game.MudlogComplete, game.LVL_GOD, true) // comm.c:1554
+	return session.ConnectionIdentity{
+		Host:  padded,
+		Level: session.AcceptBanLevel(banManager, padded, false),
+	}
 }
 
-func effectiveBanHosts(remoteIP string, banManager *game.BanManager) (int, []string) {
-	hosts := []string{remoteIP}
-	level := banManager.IsBanned(remoteIP)
-	// BanAll is the most restrictive level. If the in-memory IP check already
-	// matches, no hostname ban can be stricter, so skip the reverse-DNS wait
-	// entirely (banned IPs must be dropped without paying for a slow PTR).
-	if level == game.BanAll {
-		return level, hosts
-	}
-
+// reverseLookup resolves a connection's PTR record within dnsLookupTimeout and
+// returns the canonical first name with its trailing dot removed. A timeout
+// counts as a failure, exactly as a NULL gethostbyaddr result does in C.
+func reverseLookup(remoteIP string) (string, error) {
+	lookup := lookupAddr // capture so tests can restore package var safely
 	type result struct {
-		hostnames []string
-		err       error
+		names []string
+		err   error
 	}
 	done := make(chan result, 1)
-	lookup := lookupAddr // capture for goroutine so tests can restore package var safely
 	go func() {
 		names, err := lookup(remoteIP)
-		done <- result{hostnames: names, err: err}
+		done <- result{names: names, err: err}
 	}()
 
-	var hostnames []string
 	select {
 	case res := <-done:
 		if res.err != nil {
-			slog.Debug("DNS lookup failed for ban check", "remote_ip", remoteIP, "error", res.err)
-		} else {
-			hostnames = res.hostnames
+			return "", res.err
 		}
+		if len(res.names) == 0 {
+			return "", fmt.Errorf("no PTR record for %s", remoteIP)
+		}
+		// C stores from->h_name, the canonical name; Go returns the PTR
+		// targets in order with a trailing dot.
+		return strings.TrimSuffix(res.names[0], "."), nil
 	case <-time.After(dnsLookupTimeout):
-		slog.Warn("DNS lookup timed out for ban check", "remote_ip", remoteIP)
+		return "", fmt.Errorf("reverse lookup for %s timed out", remoteIP)
 	}
-
-	for _, hostname := range hostnames {
-		// PTR records commonly end with a trailing dot.
-		hostname = strings.TrimSuffix(hostname, ".")
-		hosts = append(hosts, hostname)
-		hostLevel := banManager.IsBanned(hostname)
-		if hostLevel > level {
-			level = hostLevel
-		}
-	}
-	return level, hosts
 }
 
 type telnetConn struct {
@@ -297,7 +339,7 @@ type telnetConn struct {
 	compressWriter *zlib.Writer
 }
 
-func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHosts ...[]string) {
+func handleConn(rawConn net.Conn, manager *session.Manager, identity session.ConnectionIdentity) {
 	tc := &telnetConn{
 		Conn:    rawConn,
 		br:      bufio.NewReader(rawConn),
@@ -338,11 +380,16 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHos
 	s.SetCloseFunc(func() { _ = rawConn.Close() })
 	remoteIP := ipFromAddr(remoteAddr)
 	s.SetRemoteIP(remoteIP)
-	if len(banHosts) > 0 {
-		s.SetBanHosts(banHosts[0])
+	// C's d->host for this descriptor (src/comm.c:1534-1563). Every admission
+	// producer and the nanny's own ban checks print it.
+	s.SetMudHost(identity.Host)
+	// C's nanny tests isbanned(d->host) at each boundary (src/interpreter.c:1822,
+	// :1896) — the d->host string only, not the raw IP.
+	if identity.Host != "" {
+		s.SetBanHosts([]string{identity.Host})
 	}
-	if banLevel != game.BanNot {
-		s.SetBanLevel(banLevel)
+	if identity.Level != game.BanNot {
+		s.SetBanLevel(identity.Level)
 	}
 
 	// Welcome + name prompt
@@ -385,7 +432,14 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHos
 			line, ok = tc.readLinePreAuth()
 		}
 		if !ok {
-			// EOF or connection error: the client hung up.
+			// EOF or connection error: the client hung up. C's game loop
+			// notices the dead descriptor and calls close_socket
+			// (src/comm.c:652-655), whose non-playing arms log here. A playing
+			// descriptor logs "Closing link to:" on its linkdead transition
+			// instead, so it is not claimed here.
+			if !s.IsPlaying() {
+				s.LoseDescriptor()
+			}
 			if !s.TerminalNamed() {
 				stopWriter()
 				return
@@ -393,7 +447,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, banLevel int, banHos
 			break
 		}
 		if !s.TerminalLine(line) {
+			// The line ended the session: an empty name, a refused login, a
+			// creation abort or the menu's exit. C reaches CON_CLOSE and
+			// close_socket from each (src/interpreter.c:1751, 1829, 2170).
 			if !s.TerminalNamed() || !s.IsAuthenticated() {
+				s.LoseDescriptor()
 				stopWriter()
 				return
 			}

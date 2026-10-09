@@ -197,6 +197,9 @@ func (s *Session) handleMenuChoice(choice string) error {
 		s.manager.mu.Lock()
 		s.menuActive = false
 		s.manager.mu.Unlock()
+		// C's CON_MENU '0' reaches CON_CLOSE (interpreter.c:2168-2170) and
+		// close_socket names the character this descriptor still holds.
+		s.LoseDescriptor()
 		s.CloseSend()
 	case "1":
 		if !s.authenticated || s.player == nil {
@@ -323,6 +326,8 @@ func (s *Session) confirmDelete(choice string) error {
 		s.manager.mu.Lock()
 		s.menuActive = false
 		s.manager.mu.Unlock()
+		// The frozen arm sets CON_CLOSE (interpreter.c:2322-2325).
+		s.LoseDescriptor()
 		s.CloseSend()
 		return nil
 	}
