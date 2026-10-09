@@ -15,13 +15,16 @@ func TestEntryMOTDRawSavedColor(t *testing.T) {
 			s.player.SetPlrFlag(flag, true)
 		}
 		s.sendCharCreatePrompt("motd", "&cMOTD&n\r\n\n*** PRESS RETURN: ", nil)
-		_, got := unmarshalCharCreate(t, drainMsg(t, s))
+		got, ok := s.RenderTerminalFrame(drainMsg(t, s))
+		if !ok {
+			t.Fatal("entry frame not rendered")
+		}
 		want := "&cMOTD&n\r\n\n*** PRESS RETURN: "
 		if flag >= 0 {
 			want = "\x1b[0;36mMOTD\x1b[0m\r\n\n*** PRESS RETURN: "
 		}
-		if got.Prompt != want {
-			t.Fatalf("flag %d: prompt %q, want %q", flag, got.Prompt, want)
+		if got.Text != want {
+			t.Fatalf("flag %d: prompt %q, want %q", flag, got.Text, want)
 		}
 	}
 }

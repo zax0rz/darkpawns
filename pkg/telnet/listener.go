@@ -486,7 +486,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		case <-s.TransportDone():
 			return
 		}
-		f, ok := session.RenderTerminalFrame(msg)
+		f, ok := s.RenderTerminalFrame(msg)
 		if !ok {
 			continue
 		}
