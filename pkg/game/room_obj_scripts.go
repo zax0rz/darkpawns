@@ -33,10 +33,30 @@ const (
 
 // objHasScriptTrigger is C's GET_OBJ_RNUM(obj) != NOTHING &&
 // GET_OBJ_SCRIPT(obj) && OBJ_SCRIPT_FLAGGED gate: the object has a prototype
-// whose script carries the trigger bit.
+// whose script carries the trigger bit. C never tests the name here, so a
+// cleared name with the flag kept still passes (the owner's empty-name arm
+// supplies the producer).
 func objHasScriptTrigger(obj *ObjectInstance, bit int) bool {
-	return obj != nil && obj.Prototype != nil &&
-		obj.Prototype.ScriptName != "" && obj.Prototype.LuaFunctions&bit != 0
+	return obj != nil && obj.Prototype != nil && obj.Prototype.LuaFunctions&bit != 0
+}
+
+// objScriptActorPayload is GET_NAME(me) and GET_MOB_VNUM(me) for the object
+// oncmd unassigned-script producer. A switched mobile's session (actorRef.NPC)
+// acts as its mobile, whose short description and prototype vnum are the
+// mobile's; a plain player actor yields its name and -1 (GET_MOB_VNUM is -1
+// for a PC, src/utils.h:431-432). The room-contents arm is the only object
+// oncmd site without an IS_NPC gate (interpreter.c:1470).
+func (w *World) objScriptActorPayload(actorRef *scripting.CharRef, actorPlayer *Player) (string, int) {
+	if actorRef != nil && actorRef.NPC {
+		if m, ok := w.GetMobByID(actorRef.ID); ok && m != nil {
+			return m.GetName(), m.GetVNum()
+		}
+	}
+	if actorPlayer != nil {
+		return actorPlayer.GetName(), -1
+	}
+	// Unreachable: every object-oncmd caller supplies an actor ref or player.
+	return "", -1
 }
 
 // RunRoomOnCmdScript is the room oncmd arm of C's special()
@@ -78,8 +98,17 @@ func (w *World) runRoomScript(ch *Player, obj *ObjectInstance, bit int, trigger,
 		return false
 	}
 	room := w.GetRoomInWorld(ch.GetRoomVNum())
-	if room == nil || room.ScriptName == "" || room.ScriptFunctions&bit == 0 {
+	if room == nil || room.ScriptFunctions&bit == 0 {
 		return false
+	}
+	if room.ScriptName == "" {
+		// run_script's !*script_name arm for a room owner
+		// (src/scripts.c:1752-1767). C passes me = ch for every room trigger
+		// (interpreter.c:1421, act.item.c:212, :284, :506, act.movement.c:305,
+		// comm.c:708), so the payload names the acting player and
+		// GET_MOB_VNUM is -1.
+		scriptUnassignedProducer(ch.GetName(), -1)
+		return true
 	}
 	ctx := &ScriptContext{
 		Ch:        ch,
@@ -111,6 +140,16 @@ func (w *World) RunObjOnCmdScript(actorRef *scripting.CharRef, actorPlayer *Play
 	if ScriptEngine == nil || !objHasScriptTrigger(obj, osOnCmd) {
 		return false
 	}
+	if obj.Prototype.ScriptName == "" {
+		// run_script's !*script_name arm for an object owner
+		// (src/scripts.c:1756-1767). C passes me = ch; the actor is a player
+		// for the worn and carried arms (interpreter.c:1430, :1443, both
+		// gated !IS_NPC) and may be a switched mobile at the room-contents
+		// arm (interpreter.c:1470, no IS_NPC gate).
+		name, vnum := w.objScriptActorPayload(actorRef, actorPlayer)
+		scriptUnassignedProducer(name, vnum)
+		return true
+	}
 	ctx := &ScriptContext{
 		Ch:        actorPlayer,
 		Obj:       obj,
@@ -135,6 +174,16 @@ func (w *World) RunObjOnCmdScript(actorRef *scripting.CharRef, actorPlayer *Play
 // room or the room the object lies in. The return value is ignored in C.
 func (w *World) RunObjPulseScript(obj *ObjectInstance) {
 	if ScriptEngine == nil || !objHasScriptTrigger(obj, osOnPulse) {
+		return
+	}
+	if obj.Prototype.ScriptName == "" {
+		// DP-1416 approved divergence: C's object-onpulse caller passes both
+		// ch and me as NULL (comm.c:789-793), so run_script's empty-name arm
+		// formats GET_NAME(NULL) / GET_MOB_VNUM(NULL) and faults
+		// (IS_NPC(NULL) / IS_MOB(NULL) dereference, src/utils.h:230-231) before
+		// it emits a byte. Go cannot reproduce the fault, so it emits nothing;
+		// C ignores this trigger's return value too, so there is no consume
+		// difference to keep.
 		return
 	}
 	// C indexes world[obj->carried_by->in_room] when carried and
