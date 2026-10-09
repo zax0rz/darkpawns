@@ -21,6 +21,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/mudlog"
 )
 
 // ---------------------------------------------------------------------------
@@ -134,6 +136,11 @@ type SendFunc func(msg string)
 //
 // typ is C's OFF/BRF/NRM/CMP (0-3, utils.h:114-117).
 func MudLog(str string, typ int, level int, toFile bool) {
+	// The observer tap is the first statement: before the toFile branch and
+	// before the nil-provider fallback that early boot takes, so boot-time
+	// lines reach the feed too (mudlog-push design §4). One non-blocking
+	// send; the game never waits on the observer.
+	mudlog.Tap("", str, typ, level, toFile)
 	if toFile {
 		Alog(str)
 	}

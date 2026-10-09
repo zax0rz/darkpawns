@@ -16,6 +16,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
+	"github.com/zax0rz/darkpawns/pkg/mudlog"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 )
 
@@ -27,13 +28,21 @@ type routerConfig struct {
 	// are registered into. main passes it so the admin operations appear in
 	// the server-wide spec served at /openapi.json. Tests leave it nil and get
 	// a private document per router.
-	sharedDoc *apidoc.Doc
+	sharedDoc  *apidoc.Doc
+	mudlogFeed *mudlog.Feed
 }
 
 // WithSharedSpec registers the router's Huma operations into doc, the
 // server-wide OpenAPI document, instead of a private one.
 func WithSharedSpec(doc *apidoc.Doc) RouterOption {
 	return func(c *routerConfig) { c.sharedDoc = doc }
+}
+
+// WithMudlogFeed serves the mudlog observer's endpoints: the Huma list and
+// catalog operations plus the SSE stream at /admin/mudlog/stream. Without
+// it the admin surface is unchanged.
+func WithMudlogFeed(feed *mudlog.Feed) RouterOption {
+	return func(c *routerConfig) { c.mudlogFeed = feed }
 }
 
 // routerInternal is the full router construction result. NewRouter returns
@@ -201,6 +210,12 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	}
 	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
 	registerFileEdit(ri.api, world, database, auditLogger)
+	if cfg.mudlogFeed != nil {
+		registerMudlog(ri.api, cfg.mudlogFeed)
+		// Mudlog history and catalog — builder role like the log tail.
+		track("/admin/mudlog", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+		track("/admin/mudlog/catalog", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	}
 
 	// Zones — read/write, requires builder role
 	track("/admin/zones", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
@@ -215,6 +230,12 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 
 	// Server logs — requires builder role
 	track("/admin/logs", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+
+	// Mudlog live tail — same builder gate as the log tail. A plain handler,
+	// not a Huma operation: SSE needs http.Flusher (drift-gate allowlisted).
+	if cfg.mudlogFeed != nil {
+		track("/admin/mudlog/stream", wrap(corsMiddleware(requireRole("builder", mudlogStream(cfg.mudlogFeed)))))
+	}
 
 	// Online players — requires builder role
 	track("/admin/players", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))

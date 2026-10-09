@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/mudlog"
+
 	"github.com/zax0rz/darkpawns/pkg/db"
 )
 
@@ -22,6 +24,7 @@ var unmigratedAdminRoutes = []struct {
 	{"/admin/assets/", "static console assets"},
 	{"/admin/index.html", "SPA entry point"},
 	{"/admin/prometheus", "prometheus exposition; text format, permanently not a typed JSON operation"},
+	{"/admin/mudlog/stream", "SSE live tail; server-sent events need http.Flusher, not a Huma operation"},
 	{"/admin/", "SPA fallback for client-side routes"},
 }
 
@@ -54,7 +57,9 @@ func TestAdminRouteDriftGate(t *testing.T) {
 	}
 	defer database.Close()
 
-	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), database, nil)
+	feed := mudlog.NewFeed(mudlog.DefaultQueue, mudlog.DefaultRingCap)
+	defer feed.Stop()
+	ri, err := newRouter(testWorld(t), nil, NewLogBuffer(10), database, nil, WithMudlogFeed(feed))
 	if err != nil {
 		t.Fatalf("newRouter: %v", err)
 	}
