@@ -56,7 +56,7 @@ only to `CON_PLAYING` descriptors, `src/utils.c:212-242`).
 | autosave | `Crash_save_all` (`src/objsave.c:1213-1220`) | RENT_CRASH |
 | shutdown / reboot | `Crash_save_all` (`src/objsave.c:1217`) | RENT_CRASH |
 | idle void pull | `save_char` + `Crash_crashsave` (`src/limits.c:434-435`) | RENT_CRASH |
-| `reallyquit` outside a save room (LOSTEQ) | no `Crash_rentsave`; the old file is left untouched | previous code, or no file |
+| `reallyquit` outside a save room (LOSTEQ) | no `Crash_rentsave`; extraction then deletes a file still holding `RENT_CRASH` (`src/handler.c:1163`) | none → the no-file arm |
 | new character's first entry | no file | — (no-file arm) |
 
 `RENT_FORCED` (4) and `RENT_TIMEDOUT` (5) are never written under free rent:
@@ -86,6 +86,10 @@ never written at all. Those arms stay `excluded-valid-play` in the inventory.
   `rentCryo` for a `PLR_NODELETE` quitter and `rentRented` otherwise
   (`src/act.other.c:164-165`). The two C functions' object passes are identical
   under free rent, so only the code differs.
+- `pkg/db/object_save.go` + `pkg/session/manager.go` — `DeleteCrashObjectSave`
+  is `Crash_delete_crashfile` (`src/objsave.c:177-201`), called at PC extraction
+  (`src/handler.c:1163`) from the site that already reproduces the adjacent
+  `save_char`. See the section below for why it lands in this PR.
 
 ### Order
 
@@ -126,24 +130,70 @@ mechanism). This is recorded for the next sweep rather than acted on.
 ## Reproduce
 
 ```sh
-go test ./pkg/session -run 'TestCrashLoad|TestQuitStoresLastExitRentCode' -count=1
+go test ./pkg/session -run 'TestCrashLoad|TestQuitStoresLastExitRentCode|TestExtractionDeletesOnlyCrashFiles' -count=1
 python3 docs/fidelity/depth/handoff/2026-10-09-dp-1404-controls.py --output /absolute/evidence/path
 python3 docs/fidelity/depth/handoff/2026-10-06-dp-1371-mudlog-sites-check.py
+DP_ORACLE_BIN=$HOME/darkpawns-c-oracle/bin/circle \
+  go run ./cmd/dp-oracle-diff --scenario mudlog-crash-load-entry --seed 1 --show-oracle
 ```
 
-Controls (six cases, each `1 -> 0 -> 1` on its named assertion): one per arm's
+Controls (seven cases, each `1 -> 0 -> 1` on its named assertion): one per arm's
 payload bytes (`no-equipment`, `unrenting`, `crash-saved`, `cryo`), the cryo
-**write** (`rent-code`), and the producer itself (`producer-off`). Each mutates a
-source literal or condition so the package still compiles and the named test
-fails on its assertion, never on a build error.
+**write** (`rent-code`), the producer itself (`producer-off`), and the extraction
+**delete** (`crash-file-delete`). Each mutates a source literal, condition or
+call so the package still compiles and the named test fails on its assertion,
+never on a build error.
+
+## The extraction delete (ported here, flagged as a scope call)
+
+Reviewing the exit paths turned up a C call the port never made:
+`extract_char_final` deletes the crash file at **every PC extraction**, but only
+when the header still holds `RENT_CRASH` (`src/handler.c:1163`;
+`Crash_delete_crashfile`, `src/objsave.c:177-201`). Go's extraction had no such
+delete, so the stored code outlived the file C would have removed:
+
+- a legal quit rewrites the header to `RENT_RENTED` first, so C keeps the file → the next entry logs `:519`;
+- a **LOSTEQ** quit skips `Crash_rentsave`, so the file still holds `RENT_CRASH` and C **deletes** it → the next entry is the **no-file arm (`:489`)**, not `:524`.
+
+Without this the producer I am adding emits a wrong byte in a reachable case
+(save, walk out of a save room, `reallyquit`, log back in), which is an R1
+defect regardless of who introduced it, so it is ported here rather than left as
+a known-wrong line. It is one call site, it changes no schema, and it is a
+separate commit so it can be dropped if you rule it belongs in its own train.
+`pkg/session/manager.go` now calls `db.DeleteCrashObjectSave` at the extraction
+site that already reproduces the adjacent `save_char` (`:1162`), on both the
+ordinary and the switched early-return path.
+
+This is also an **R5e correction** to the review suggestion that "save, then a
+quit outside a save room (LOSTEQ), then `1`" would reach `:524`: on C's actual
+call path that sequence reaches `:489`, because extraction deleted the file. The
+vehicle's first arm is exactly that sequence and asserts `:489`.
 
 ## Oracle
 
-Unit-green only. The producers fire from `CON_MENU` and deliver to immortals at
-`CON_PLAYING`; a corpus scenario would need a second live immortal descriptor
-observing a menu entry, and no existing scenario stages login with a syslog
-observer. The oracle gap is recorded, not papered over: the same claim is proved
-here through the real entry dispatch against a real SQLite store.
+`cmd/dp-oracle-diff/scenarios/mudlog-crash-load-entry.txt`, claimed at seeds
+**1, 2, 3, 5, 8**. A first-player God (the primary client) sets `syslog normal`
+and watches two mortals enter from the menu:
+
+| arm | probe | observed |
+|---|---|---|
+| `:489` | `save`, `reallyquit` (LOSTEQ, still in the newbie room), menu `1` | `[ Ren entering game with no equipment. ]` — and it proves the extraction delete, since a crash file existed |
+| `:519` | `quit` in the temple, menu `1` | `[ Ren un-renting and entering game. ]` |
+| `:528` | `set Cryo nodelete on`, `recall`, `quit`, menu `1` | `[ Cryo un-cryo'ing and entering game. ]` |
+
+Two harness details worth recording: the probe is `[probe:ren]`, so the God is
+the `primary` audience observed via `send:primary ~dpclock pulse 20`; and the
+scenario needs inert `[relogin:*]` sections because that is how a scenario
+declares the port's real SQLite store (`needsPlayerStore`) — without one the port
+boots with no database and `crashLoadEntry` correctly emits nothing
+(`lifecycle-quit-reenter` is the model vehicle).
+
+**`:524` stays unit-green, deliberately.** A retained `RENT_CRASH` file requires
+an unclean or unextracted stop, and the harness's `<CRASH>` and `<RESTART>`
+vehicles both forbid passive peers, so no in-game immortal can witness that
+relogin; `TestCrashLoadEntryProducers/crash-saved` proves the arm's bytes
+instead. Every route to `:524` that a witness *could* watch is closed by the
+file's lifetime.
 
 ## Stop-and-report history
 
@@ -153,3 +203,13 @@ representation already existed (`object_saves.kind`), so the approved format
 change landed as one new code value (RENT_CRYO) rather than a new column or a
 migration. DP-1419 (the saved-equipment `check_for_bad_stats` pass) runs inside
 the same `Crash_load` and is deliberately sequenced **after** this PR.
+
+**Two items for the reviewer, recorded rather than improvised.** (1) The
+extraction-time crash-file delete (above) is the one piece of scope beyond the
+rent code and its four producers; it is in its own commit and is there because
+the producers are wrong without it (R1). If you rule it belongs to its own
+train, drop that commit and this PR's `:489` oracle arm becomes the no-file case
+only. (2) Review suggested that `save` → LOSTEQ → `1` reaches `:524`; on C's
+call path it reaches `:489`, because extraction deleted the file — the vehicle
+asserts `:489` and the `:524` row records the correction and why it stays
+unit-green.

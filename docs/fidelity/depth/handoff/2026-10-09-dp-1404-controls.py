@@ -15,6 +15,7 @@ import subprocess
 
 CRASH_LOAD = "pkg/session/crash_load.go"
 CMD_INVENTORY = "pkg/session/cmd_inventory.go"
+MANAGER = "pkg/session/manager.go"
 
 ENTRY_TEST = "TestCrashLoadEntryProducers"
 QUIT_TEST = "TestQuitStoresLastExitRentCode"
@@ -40,6 +41,11 @@ PRODUCER_OLD = (
     "s.player.GetInvisLevel()), true)\n"
 )
 PRODUCER_NEW = "\t\t\t_ = payload\n\t\t\t_ = game.MudlogNormal\n"
+
+# The extraction-time crash-file delete (src/handler.c:1163). Its second call
+# site is the ordinary extraction path.
+DELETER_OLD = "\t\tm.deleteCrashFile(player)\n\t\tif player.IdleDisconnect {\n"
+DELETER_NEW = "\t\tif player.IdleDisconnect {\n"
 
 CASES = [
     {
@@ -77,6 +83,12 @@ CASES = [
         "test": ENTRY_TEST,
         "assertion": 'observer saw ""',
         "patches": [{"path": CRASH_LOAD, "new": PRODUCER_NEW, "old": PRODUCER_OLD}],
+    },
+    {
+        "case": "crash-file-delete",
+        "test": "TestExtractionDeletesOnlyCrashFiles",
+        "assertion": "extraction kept a crash file C deletes",
+        "patches": [{"path": MANAGER, "new": DELETER_NEW, "old": DELETER_OLD}],
     },
 ]
 
