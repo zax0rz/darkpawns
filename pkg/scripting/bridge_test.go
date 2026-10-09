@@ -27,6 +27,9 @@ type fakeBridge struct {
 	// arrives through the adapter's MudLog sink rather than Log.
 	logFiles []recordedMudlog
 
+	// objToRooms records ObjToRoom calls (objto's room arm).
+	objToRooms []objToRoomCall
+
 	// onCommand, when set, runs for each Command (used to nest a script).
 	onCommand func(me CharRef, line string)
 }
@@ -34,6 +37,11 @@ type fakeBridge struct {
 type appliedChar struct {
 	Ref   CharRef
 	Write CharWrite
+}
+
+type objToRoomCall struct {
+	Ref  ObjRef
+	Room int
 }
 
 func (f *fakeBridge) CharFields(ref CharRef) (CharFields, bool) {
@@ -104,8 +112,11 @@ func (f *fakeBridge) ExtractChar(CharRef)                    {}
 func (f *fakeBridge) ObjList(CharRef, string, string) (ObjRef, *CharRef, bool) {
 	return ObjRef{}, nil, false
 }
-func (f *fakeBridge) ObjFrom(ObjRef, string)                      {}
-func (f *fakeBridge) ObjToRoom(ObjRef, int) bool                  { return false }
+func (f *fakeBridge) ObjFrom(ObjRef, string) {}
+func (f *fakeBridge) ObjToRoom(ref ObjRef, room int) bool {
+	f.objToRooms = append(f.objToRooms, objToRoomCall{ref, room})
+	return false
+}
 func (f *fakeBridge) ObjToChar(ObjRef, CharRef)                   {}
 func (f *fakeBridge) ObjToObj(ObjRef, ObjRef)                     {}
 func (f *fakeBridge) Steal(CharRef, ObjRef)                       {}
