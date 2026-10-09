@@ -213,19 +213,15 @@ func (w *World) GainExp(p *Player, gain int) {
 // ---------------------------------------------------------------------------
 // GainExpRegardless — from limits.c gain_exp_regardless()
 // ---------------------------------------------------------------------------
-func (w *World) GainExpRegardless(p *Player, gain int) {
-	w.gainExpRegardless(p, gain, true)
-}
 
-// GainExpRegardlessSilent applies the same state transitions as
-// GainExpRegardless but leaves announcement framing to the caller. This is
-// used by do_advance, whose C loop emits one contiguous stream of
-// "You rise a level!" messages across repeated gain_exp_regardless calls.
-func (w *World) GainExpRegardlessSilent(p *Player, gain int) int {
-	return w.gainExpRegardless(p, gain, false)
-}
-
-func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
+// GainExpRegardless returns the number of levels gained in this call. C's body
+// ends with the rise message followed by check_autowiz, once per call
+// (src/limits.c:350-360), and do_advance's promotion loop calls it once per
+// level (src/act.wizard.c:1569-1571). The two lines therefore interleave in the
+// promoted character's own stream, which is why the announcement cannot be
+// batched by a caller: doing so would put every autowiz line before every rise
+// line.
+func (w *World) GainExpRegardless(p *Player, gain int) int {
 	if p == nil {
 		return 0
 	}
@@ -261,18 +257,18 @@ func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
 	}
 
 	if numLevels > 0 {
-		if announce {
-			if numLevels == 1 {
-				sendToChar(p, "You rise a level!\r\n")
-			} else {
-				sendToChar(p, fmt.Sprintf("You rise %d levels!\r\n", numLevels))
-			}
+		// C's send_to_char writes these bytes as given (src/limits.c:353-356),
+		// and both strings already end in CRLF; sendToChar would add a second
+		// one.
+		if numLevels == 1 {
+			p.SendMessage("You rise a level!\r\n")
+		} else {
+			p.SendMessage(fmt.Sprintf("You rise %d levels!\r\n", numLevels))
 		}
 		// src/limits.c:357-360: check_autowiz runs inside gain_exp_regardless
-		// whenever a level was gained, alongside the rise message and not gated
-		// on who prints it. do_advance's Silent call is C's per-level
-		// gain_exp_regardless (src/act.wizard.c:1569-1571), so it must emit the
-		// producer too, once per level gained at or above LVL_IMMORT.
+		// whenever a level was gained, immediately after the rise message. Both
+		// are per call, so the two lines interleave in the promoted character's
+		// stream exactly as C's do.
 		CheckAutowiz(p)
 	}
 	return numLevels

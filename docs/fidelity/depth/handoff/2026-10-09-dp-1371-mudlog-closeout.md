@@ -25,14 +25,22 @@ GET_LEVEL(ch) >= LVL_IMMORT` and then runs `system("nice ../bin/autowiz …")`.
   set only by C's `-m` startup option (`src/comm.c:194-196`); the port has no
   mini-mud mode, so `!mini_mud` always holds. Level ≥ `LVL_IMMORT` is the same
   test in both.
-- **One gate had to move to reach C's reachability.** The port folds
-  do_advance's per-level calls into `GainExpRegardlessSilent`, and the producer
-  used to hang off the announcement branch, so `advance` never emitted it while
-  C does. `gainExpRegardless` now runs the producer whenever a level was gained
-  and only the *rise message* stays behind the announce flag — C's own split
-  (`src/limits.c:350-360`). Player-visible bytes are unchanged; the
-  `advance` command's observed stream is now C's (one `… advanced to level N`
-  from `advance_level`, then the autowiz line for each level ≥ LVL_IMMORT).
+- **Position and per-call framing (review round).** C's `check_autowiz` is per
+  *call* of `gain_exp_regardless`, and do_advance's promotion loop calls it once
+  per level, so the promoted character's own stream interleaves
+  `You rise a level!` with `[ Initiating autowiz. ]` per level. The port batched
+  do_advance's announcements in the caller and used a `announce` flag to
+  suppress them, which put every autowiz line ahead of every rise line.
+  `gainExpRegardless` now owns both lines exactly as C does
+  (`src/limits.c:350-360`) and do_advance's loop calls
+  `GainExpRegardless(victim, gain)` per level; the `…Silent` variant is gone.
+  Two byte facts came out of that: the rise message must go through
+  `p.SendMessage` (it already ends in CRLF; `sendToChar` appends a second one,
+  which the pre-fix `announce` path would have exposed), and each line is now
+  its own queued frame, so the concatenated wire bytes are C's while a
+  WebSocket client sees one message per line instead of one batched message
+  (content unchanged; no prompt is added — `outputSincePrompt` only asks
+  whether output was queued).
 - **Oracle vehicle:** `advance <peer> 31` by an implementor watched by an
   independent complete-syslog immortal. No corpus scenario stages it, so the
   claim is unit-green; the seeds are named in `mudlog.tsv` only when a scenario
@@ -183,10 +191,12 @@ python3 docs/fidelity/depth/handoff/2026-10-09-dp-1371-mudlog-closeout-controls.
 python3 docs/fidelity/depth/handoff/2026-10-06-dp-1371-mudlog-sites-check.py
 ```
 
-Controls (five cases, each `1 -> 0 -> 1` on its named assertion):
-`autowiz-producer`, `lua-log-file-flag`, `hunting-producer`,
-`deathcry-mount-guard`, and `autowiz-announce-gate` (the A1 gate move: putting
-the producer back behind `announce` fails the advance test).
+Controls (six cases, each `1 -> 0 -> 1` on its named assertion):
+`autowiz-producer` (the producer removed), `autowiz-interleave` (the caller
+batches the announcements again — the ordering defect this round fixed),
+`autowiz-rise-bytes` (`sendToChar` instead of `SendMessage`, which doubles the
+rise line's CRLF), `lua-log-file-flag`, `hunting-producer` and
+`deathcry-mount-guard`.
 
 ## Stop-and-report
 

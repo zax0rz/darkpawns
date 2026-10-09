@@ -13,6 +13,7 @@ import pathlib
 import subprocess
 
 LIMITS = "pkg/game/limits_exp.go"
+WIZ_PLAYER = "pkg/session/wiz_player.go"
 BRIDGE = "pkg/scripting/bindings_bridge.go"
 WIZ_ZONE = "pkg/session/wiz_zone.go"
 DEATH = "pkg/game/death.go"
@@ -20,12 +21,6 @@ DEATH = "pkg/game/death.go"
 # limits.c:269-283: the producer itself.
 AUTOWIZ_LOG_OLD = "\tMudLog(\"Initiating autowiz.\", MudlogComplete, LVL_IMMORT, false)\n"
 AUTOWIZ_LOG_NEW = ""
-
-# src/limits.c:357-360: C calls check_autowiz inside gain_exp_regardless whenever
-# a level was gained, not only when the rise message is printed. Gating it on the
-# announcement is the pre-fix shape that leaves do_advance's path silent.
-AUTOWIZ_CALL_OLD = "\t\tCheckAutowiz(p)\n"
-AUTOWIZ_CALL_NEW = "\t\tif announce {\n\t\t\tCheckAutowiz(p)\n\t\t}\n"
 
 # scripts.c:791: the success arm writes the file.
 LUA_LOG_OLD = "\tscriptMudLogFile(b, text, scriptMudlogBrief)\n"
@@ -41,6 +36,15 @@ HUNT_NEW = ""
 DEATH_GUARD_OLD = "\tif mount == nil {\n\t\tplayer.MountName = \"\"\n"
 DEATH_GUARD_NEW = "\tif mount == nil {\n\t\tw.roomMessage(roomVNum, \"Your blood freezes as you hear a death cry.\\r\\n\")\n\t\tplayer.MountName = \"\"\n"
 
+# The caller's rise-message batch, which is the ordering defect: C interleaves
+# each rise message with its own check_autowiz line.
+INTERLEAVE_OLD = "\t\tfor level := victim.GetLevel(); level < newLevel; level++ {\n\t\t\tgain := game.ExpNeededForLevel(victim) - victim.GetExp()\n\t\t\ts.manager.world.GainExpRegardless(victim, gain)\n\t\t}\n"
+INTERLEAVE_NEW = "\t\tvar levelMessages strings.Builder\n\t\tfor level := victim.GetLevel(); level < newLevel; level++ {\n\t\t\tgain := game.ExpNeededForLevel(victim) - victim.GetExp()\n\t\t\tif levels := s.manager.world.GainExpRegardless(victim, gain); levels == 1 {\n\t\t\t\tlevelMessages.WriteString(\"You rise a level!\\r\\n\")\n\t\t\t}\n\t\t}\n\t\tvictim.SendMessage(levelMessages.String())\n"
+
+# The rise message's own bytes: sendToChar appends a CRLF and C's does not.
+RISE_BYTES_OLD = "\t\t\tp.SendMessage(\"You rise a level!\\r\\n\")\n"
+RISE_BYTES_NEW = "\t\t\tsendToChar(p, \"You rise a level!\\r\\n\")\n"
+
 CASES = [
     {
         "case": "autowiz-producer",
@@ -50,11 +54,18 @@ CASES = [
         "patches": [{"path": LIMITS, "new": AUTOWIZ_LOG_NEW, "old": AUTOWIZ_LOG_OLD}],
     },
     {
-        "case": "autowiz-announce-gate",
+        "case": "autowiz-interleave",
         "test": "TestAutowizMudlogProducer",
         "package": "./pkg/session",
-        "assertion": "Initiating autowiz.",
-        "patches": [{"path": LIMITS, "new": AUTOWIZ_CALL_NEW, "old": AUTOWIZ_CALL_OLD}],
+        "assertion": "want it to end with the per-level interleave",
+        "patches": [{"path": WIZ_PLAYER, "new": INTERLEAVE_NEW, "old": INTERLEAVE_OLD}],
+    },
+    {
+        "case": "autowiz-rise-bytes",
+        "test": "TestAutowizMudlogProducer",
+        "package": "./pkg/session",
+        "assertion": "want it to end with the per-level interleave",
+        "patches": [{"path": LIMITS, "new": RISE_BYTES_NEW, "old": RISE_BYTES_OLD}],
     },
     {
         "case": "lua-log-file-flag",

@@ -90,6 +90,33 @@ func TestAutowizMudlogProducer(t *testing.T) {
 		}
 	})
 
+	t.Run("an immortal victim interleaves the rise and autowiz lines", func(t *testing.T) {
+		_, actor, victim, _, _, _ := autowizAdvanceFixture(t)
+		// An already-immortal victim whose syslog is complete hears both lines.
+		victim.player.SetLevel(LVL_IMMORT)
+		victim.player.SetPlrFlag(game.PrfLog1, true)
+		victim.player.SetPlrFlag(game.PrfLog2, true)
+		drainSessionText(t, victim)
+
+		if err := cmdAdvance(actor, []string{"Ghost", "33"}); err != nil {
+			t.Fatal(err)
+		}
+		// C calls gain_exp_regardless once per level (src/act.wizard.c:1569-1571)
+		// and each call ends with the rise message and then check_autowiz
+		// (src/limits.c:350-360), with advance_level's own producer inside the
+		// call. Batching the announcements in the caller would put both autowiz
+		// lines ahead of both rise lines, which is not C's stream.
+		want := "[ Ghost advanced to level 32 ]\r\nYou rise a level!\r\n[ Initiating autowiz. ]\r\n" +
+			"[ Ghost advanced to level 33 ]\r\nYou rise a level!\r\n[ Initiating autowiz. ]\r\n"
+		stream := strings.Join(drainSessionText(t, victim), "")
+		if !strings.HasSuffix(stream, want) {
+			t.Fatalf("victim stream = %q, want it to end with the per-level interleave %q", stream, want)
+		}
+		if !strings.Contains(stream, "You feel slightly different.") {
+			t.Fatalf("victim stream lost C's promotion text: %q", stream)
+		}
+	})
+
 	t.Run("below the gate", func(t *testing.T) {
 		_, actor, victim, watch, _, brief := autowizAdvanceFixture(t)
 		victim.player.SetLevel(29)
