@@ -134,14 +134,16 @@ func (e *Engine) bridgeIsHunt(L *lua.LState, b Bridge) int {
 	return 1
 }
 
-// lua_log (scripts.c:780-793): mudlog the text.
+// lua_log (scripts.c:780-793): mudlog the text. C's success arm writes the file
+// — mudlog(txt, BRF, LVL_IMMORT, TRUE) — while the bad-argument arm logs its own
+// line at BRF / LVL_IMMORT / file FALSE and returns 1.
 func (e *Engine) bridgeLog(L *lua.LState, b Bridge) int {
 	text, ok := argString(L, 1)
 	if !ok {
 		b.Log("[Lua] Invalid argument passed to lua_log.")
 		return 1
 	}
-	b.Log(text)
+	scriptMudLogFile(b, text, scriptMudlogBrief)
 	return 0
 }
 
