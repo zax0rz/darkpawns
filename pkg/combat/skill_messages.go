@@ -593,17 +593,6 @@ func InitSkillMessages(cb *GameCallbacks) {
 	}
 }
 
-// InitSkillMessagesFromFile loads C's misc/messages corpus and wires its
-// fight_messages lookup into cb.
-func InitSkillMessagesFromFile(cb *GameCallbacks, path string) error {
-	messages, err := LoadFightMessages(path)
-	if err != nil {
-		return err
-	}
-	InitFightMessages(cb, messages)
-	return nil
-}
-
 // InitEmbeddedFightMessages wires the canonical corpus embedded in the server
 // binary. This is the production initializer; the file-based form remains
 // available for tools and parser tests.

@@ -122,21 +122,6 @@ func (si *SpellInfo) HasTarget(t TargetFlags) bool {
 	return si.Routines.Targets&t != 0
 }
 
-// GetManaCost calculates mana cost for a spell given caster level.
-func (si *SpellInfo) GetManaCost(level int) int {
-	if si == nil {
-		return 0
-	}
-	cost := si.ManaMax - (si.ManaChange * level)
-	if cost < si.ManaMin {
-		cost = si.ManaMin
-	}
-	if cost < 0 {
-		cost = 0
-	}
-	return cost
-}
-
 // IsViolent returns true if the spell is considered violent (can't cast in peaceful rooms).
 func (si *SpellInfo) IsViolent() bool {
 	return si != nil && si.Routines.Violent

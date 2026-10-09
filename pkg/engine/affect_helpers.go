@@ -230,60 +230,6 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 	}
 }
 
-// MasterAffectToChar implements master_affect_to_char from handler.c lines 377-396.
-//
-// Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func MasterAffectToChar(ch interface{}, af *Affect, byType int, objNum int) {
-	sm, ok := ch.(StatModifiable)
-	if !ok {
-		return
-	}
-
-	masterAf := &MasterAffect{
-		Type:      int(af.SpellID),
-		Duration:  af.Duration,
-		Location:  af.Location,
-		Modifier:  af.Magnitude,
-		Bitvector: af.Flags,
-		ByType:    byType,
-		ObjNum:    objNum,
-	}
-
-	sm.AddMasterAffect(masterAf)
-	AffModify(ch, masterAf.Location, masterAf.Modifier, masterAf.Bitvector, true, nil)
-	AffectTotal(ch, nil)
-}
-
-// AffectToChar implements affect_to_char from handler.c line 400.
-//
-// Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func AffectToChar(ch interface{}, af *Affect) {
-	MasterAffectToChar(ch, af, BySpell, 0)
-}
-
-// AffectToChar2 implements affect_to_char2 from handler.c lines 405-427.
-//
-// Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func AffectToChar2(ch interface{}, af *MasterAffect) {
-	sm, ok := ch.(StatModifiable)
-	if !ok {
-		return
-	}
-
-	masterAf := &MasterAffect{
-		Type:      af.Type,
-		Duration:  af.Duration,
-		Location:  af.Location,
-		Modifier:  af.Modifier,
-		Bitvector: af.Bitvector,
-		ByType:    BySpell,
-		ObjNum:    0,
-	}
-	sm.AddMasterAffect(masterAf)
-	AffModify(ch, masterAf.Location, masterAf.Modifier, masterAf.Bitvector, true, nil)
-	AffectTotal(ch, nil)
-}
-
 // AffectRemove implements affect_remove from handler.c lines 428-438.
 //
 // Deprecated: superseded by the live path — Player.RemoveAffectBySpell.
@@ -311,50 +257,4 @@ func AffectFromChar(ch interface{}, spellType int) {
 			AffectRemove(ch, af)
 		}
 	}
-}
-
-// AffectedBySpell implements affected_by_spell from handler.c lines 460-469.
-//
-// Deprecated: superseded by the live path — Player.HasSpellAffect.
-func AffectedBySpell(ch interface{}, spellType int) bool {
-	sm, ok := ch.(StatModifiable)
-	if !ok {
-		return false
-	}
-	for _, af := range sm.GetMasterAffects() {
-		if af.Type == spellType {
-			return true
-		}
-	}
-	return false
-}
-
-// AffectJoin implements affect_join from handler.c lines 473-499.
-//
-// Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func AffectJoin(ch interface{}, af *MasterAffect, addDur, avgDur, addMod, avgMod bool) {
-	sm, ok := ch.(StatModifiable)
-	if !ok {
-		return
-	}
-	for _, existing := range sm.GetMasterAffects() {
-		if existing.Type == af.Type && existing.Location == af.Location {
-			if addDur {
-				af.Duration += existing.Duration
-			}
-			if avgDur {
-				af.Duration >>= 1
-			}
-			if addMod {
-				af.Modifier += existing.Modifier
-			}
-			if avgMod {
-				af.Modifier >>= 1
-			}
-			AffectRemove(ch, existing)
-			AffectToChar2(ch, af)
-			return
-		}
-	}
-	AffectToChar2(ch, af)
 }

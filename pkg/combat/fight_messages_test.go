@@ -71,9 +71,14 @@ func TestCanonicalFightMessagesData(t *testing.T) {
 		t.Fatalf("canonical messages SHA-256 = %s, want %s", got, want)
 	}
 
-	messages, err := LoadFightMessages(path)
+	msgFile, err := os.Open(filepath.Clean(path))
 	if err != nil {
-		t.Fatalf("LoadFightMessages() error = %v", err)
+		t.Fatalf("open canonical messages: %v", err)
+	}
+	defer msgFile.Close()
+	messages, err := ParseFightMessages(msgFile)
+	if err != nil {
+		t.Fatalf("ParseFightMessages() error = %v", err)
 	}
 	if got, want := len(messages), 66; got != want {
 		t.Errorf("loaded attack types = %d, want %d", got, want)
