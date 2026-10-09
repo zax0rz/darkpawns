@@ -1,0 +1,72 @@
+# C damage() rescues a downed PC in a shipped neutral room before skill_message.
+# src/fight.c:1486-1520. Actor and victim capture the rescue and destination look.
+# depth-case: damage.neutral-spell-rescue
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Rescueadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Rescueadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Rescuepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Rescuepeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8152
+teleport Rescuepeer 8152
+set Rescuepeer level 15
+set Rescuepeer hit 1
+
+[probe]
+cast 'flame arrow' Rescuepeer

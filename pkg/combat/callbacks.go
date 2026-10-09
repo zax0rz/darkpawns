@@ -7,6 +7,10 @@ package combat
 //
 // This struct is owned by CombatEngine and validated at construction time.
 type GameCallbacks struct {
+	// damage()'s pre-message state block (src/fight.c:1486-1520).
+	DamageNewbieExp func(Combatant, int)
+	StopFighting    func(Combatant)
+	NeutralRescue   func(Combatant, Combatant)
 	// RangedHunt supplies shoot retaliation's damage-side hunter assignment.
 	RangedHunt func(attacker, defender Combatant)
 	// Messaging

@@ -336,12 +336,17 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
 		dam = combat.ApplyDamageModifiers(chCombat, victCombat, dam)
-		// R1: damage() subtracts HP and silently updates position before
-		// skill_message chooses hit versus death (fight.c:1484-1493,1534-1543).
-		// Wound output and cleanup remain below, after the skill message.
-		if dam > 0 {
-			victCombat.TakeDamage(dam)
-			victCombat.SetPosition(combat.GetPositionFromHP(victCombat.GetHP(), victCombat.GetPosition()))
+		victCombat.TakeDamage(dam)
+		rescued := false
+		if pre, ok := world.(interface {
+			DamageBeforeMessage(combat.Combatant, combat.Combatant, int) bool
+		}); ok {
+			rescued = pre.DamageBeforeMessage(chCombat, victCombat, dam)
+		} else {
+			rescued = combat.DamageBeforeMessage(chCombat, victCombat, dam, combat.GetCallbacks())
+		}
+		if rescued {
+			return false
 		}
 		// C damage() still calls skill_message() when the adjusted damage is
 		// zero.  Immortal victims receive the god_msg branch, and ordinary

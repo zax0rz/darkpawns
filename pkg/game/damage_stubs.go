@@ -96,6 +96,12 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 // DamageRefused where C calls damage(): the skill command tail, which emits
 // skill_message itself between the gate and the damage.
 func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill string) bool {
+	return w.ApplySkillDamageWithMessage(attacker, victim, dam, skill, nil)
+}
+
+// ApplySkillDamageWithMessage places a command-owned skill message after
+// damage()'s HP/position/rescue block (src/fight.c:1484-1535).
+func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam int, skill string, message func(int)) bool {
 	killer := combatantFromInterface(attacker)
 	attackType := skillToAttackType(skill)
 	combat.EnterDamageFighting(killer, combatantFromInterface(victim))
@@ -107,13 +113,21 @@ func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill st
 	if victimC := combatantFromInterface(victim); victimC != nil {
 		dam = combat.ApplyDamageModifiers(killer, victimC, dam)
 	}
+	if v := combatantFromInterface(victim); v != nil {
+		v.TakeDamage(dam)
+		if w.DamageBeforeMessage(killer, v, dam) {
+			return false
+		}
+	}
+	if message != nil {
+		message(dam)
+	}
 	if dam <= 0 {
 		return false
 	}
 
 	switch v := victim.(type) {
 	case *Player:
-		v.TakeDamage(dam)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
@@ -130,7 +144,6 @@ func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill st
 		}
 		return true
 	case *MobInstance:
-		v.TakeDamage(dam)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)

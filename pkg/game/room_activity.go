@@ -242,8 +242,10 @@ func (w *World) roomActivitySelfDamage(vict combat.Combatant, dam int, attackTyp
 	if dam > 0 {
 		vict.TakeDamage(dam)
 	}
-	newPos := combat.GetPositionFromHP(vict.GetHP(), vict.GetPosition())
-	vict.SetPosition(newPos)
+	if w.DamageBeforeMessage(vict, vict, dam) {
+		return false
+	}
+	newPos := vict.GetPosition()
 
 	// fight.c:1534-1545 — a spell attacktype is never IS_WEAPON, so C always
 	// takes skill_message here, before the position bytes.

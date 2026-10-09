@@ -447,27 +447,10 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 
 	victim.TakeDamage(dam)
 
-	if ch != victim && !ch.IsNPC() && ch.GetLevel() < 2 {
-		cbGainExp(ch, victim.GetLevel()*dam)
+	if DamageBeforeMessage(ch, victim, dam, callbacks) {
+		return false
 	}
-
-	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
-	victim.SetPosition(newPos)
-
-	if newPos <= PosStunned {
-		if ch.IsNPC() && !victim.IsNPC() && victim.GetLevel() <= 5 {
-			ch.StopFighting()
-		}
-		if !victim.IsNPC() && cbHasRoomFlag(victim.GetRoom(), "ROOM_NEUTRAL") {
-			if victim.GetFightingBody() != nil {
-				victim.StopFighting()
-			}
-			victim.TakeDamage(-(victim.GetHP() - 1))
-			cbBroadcast(victim.GetRoom(),
-				fmt.Sprintf("%s is saved by the powers of the gods!", victimName), nil)
-			return false
-		}
-	}
+	newPos := victim.GetPosition()
 
 	isWeapon := attackType >= TYPE_HIT && attackType < TYPE_SUFFERING
 	if !isWeapon {

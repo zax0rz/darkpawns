@@ -1659,13 +1659,37 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		return r
 	}
 
+	damageApplied := map[combat.Combatant]bool{}
+	damageReturns := map[combat.Combatant]bool{}
+	applyDamage := func(t combat.Combatant, fn func() bool) {
+		room := t.GetRoom()
+		damageReturns[t] = fn()
+		damageApplied[t] = true
+		if t.GetRoom() != room {
+			refusals[t] = true
+		}
+	}
 	sendSkillMessage := func() {
-		if result.SkillMsgType != 0 {
-			if eng, ok := s.GetCombatEngine().(rescueCombatEngine); ok && eng != nil {
-				for _, skillTarget := range targets {
-					if skillTarget != nil && !refused(skillTarget) {
-						eng.SkillMessage(result.Damage, ch, skillTarget, result.SkillMsgType, ch.GetRoom())
-					}
+		if result.SkillMsgType == 0 {
+			return
+		}
+		for _, skillTarget := range targets {
+			if skillTarget == nil || refused(skillTarget) {
+				continue
+			}
+			message := func(dam int) {
+				if eng, ok := s.GetCombatEngine().(rescueCombatEngine); ok && eng != nil {
+					eng.SkillMessage(dam, ch, skillTarget, result.SkillMsgType, ch.GetRoom())
+				}
+			}
+			if result.SkillMsgInDamage || result.NoDamageCall {
+				message(result.Damage)
+			} else if !damageApplied[skillTarget] {
+				room := skillTarget.GetRoom()
+				damageReturns[skillTarget] = s.GetWorld().ApplySkillDamageWithMessage(ch, skillTarget, result.Damage, result.DamageSkill, message)
+				damageApplied[skillTarget] = true
+				if skillTarget.GetRoom() != room {
+					refusals[skillTarget] = true
 				}
 			}
 		}
@@ -1778,22 +1802,22 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		case result.DamageSkill == game.SkillSmackheads:
 			for _, damageTarget := range targets {
 				if damageTarget != nil && !refused(damageTarget) {
-					s.GetWorld().DoSmackheadsDamage(ch, damageTarget, result.Damage)
+					applyDamage(damageTarget, func() bool { return s.GetWorld().DoSmackheadsDamage(ch, damageTarget, result.Damage) })
 				}
 			}
 		case refused(target):
 		case result.DamageSkill == game.SkillDisembowel:
-			s.GetWorld().DoDisembowelDamage(ch, target, result.Damage)
+			applyDamage(target, func() bool { return s.GetWorld().DoDisembowelDamage(ch, target, result.Damage) })
 		case result.DamageSkill == game.SkillGroinrip:
-			s.GetWorld().DoGroinripDamage(ch, target, result.Damage)
+			applyDamage(target, func() bool { return s.GetWorld().DoGroinripDamage(ch, target, result.Damage) })
 		case result.DamageSkill == game.SkillNeckbreak:
-			s.GetWorld().DoNeckbreakDamage(ch, target, result.Damage)
+			applyDamage(target, func() bool { return s.GetWorld().DoNeckbreakDamage(ch, target, result.Damage) })
 		case result.DamageSkill == game.SkillTigerPunch:
-			s.GetWorld().DoTigerPunchDamage(ch, target, result.Damage)
+			applyDamage(target, func() bool { return s.GetWorld().DoTigerPunchDamage(ch, target, result.Damage) })
 		case result.DamageSkill == game.SkillStrike:
-			s.GetWorld().DoStrikeDamage(ch, target, result.Damage)
+			applyDamage(target, func() bool { return s.GetWorld().DoStrikeDamage(ch, target, result.Damage) })
 		case result.DamageSkill == game.SkillDragonKick:
-			s.GetWorld().DoDragonKickDamage(ch, target, result.Damage)
+			applyDamage(target, func() bool { return s.GetWorld().DoDragonKickDamage(ch, target, result.Damage) })
 		}
 	} else if result.Damage > 0 && len(targets) > 0 {
 		// Route through DoSpellDamage so skill damage uses the same death
@@ -1802,16 +1826,16 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		// parties. Previously this only called TakeDamage + printed "is dead!".
 		// See DP-942 / pkg/game/damage_stubs.go.
 		for _, damageTarget := range targets {
-			if damageTarget == nil || refused(damageTarget) {
+			if damageTarget == nil || refused(damageTarget) || damageApplied[damageTarget] || result.SkillMsgAfterDamage && result.SkillMsgType != 0 {
 				continue
 			}
 			switch result.DamageSkill {
 			case game.SkillCutthroat:
-				s.GetWorld().DoCutthroatDamage(ch, damageTarget, result.Damage)
+				applyDamage(damageTarget, func() bool { return s.GetWorld().DoCutthroatDamage(ch, damageTarget, result.Damage) })
 			case game.SkillSmackheads:
-				s.GetWorld().DoSmackheadsDamage(ch, damageTarget, result.Damage)
+				applyDamage(damageTarget, func() bool { return s.GetWorld().DoSmackheadsDamage(ch, damageTarget, result.Damage) })
 			default:
-				s.GetWorld().ApplySkillDamage(ch, damageTarget, result.Damage, result.DamageSkill)
+				applyDamage(damageTarget, func() bool { return s.GetWorld().ApplySkillDamage(ch, damageTarget, result.Damage, result.DamageSkill) })
 			}
 		}
 	}
@@ -1820,7 +1844,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// numbered seams above already did this; plain-message seams need it too.
 	if damageCall && !result.InitialAttack && !result.SkillMsgInDamage && result.Damage <= 0 {
 		for _, damageTarget := range targets {
-			if damageTarget != nil && !refused(damageTarget) {
+			if damageTarget != nil && !refused(damageTarget) && !damageApplied[damageTarget] {
 				combat.EnterDamageFighting(ch, damageTarget)
 			}
 		}
@@ -1905,7 +1929,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// message-dice → improve-draw is the exact C sequence. DP-1212.
 	// bash and trip keep the knockdown, victim wait and improvement inside
 	// C's `if (damage(...))`, so a refused damage() skips all three.
-	damageEffects := !result.EffectsNeedDamage || !refused(target)
+	damageEffects := !result.EffectsNeedDamage || !refused(target) && (!damageApplied[target] || damageReturns[target])
 	if !result.DeferredImproveAfterRoom && !result.DeferredImproveAfterActor && damageEffects {
 		for _, skill := range result.DeferredImprove {
 			game.ImproveSkill(ch, skill)

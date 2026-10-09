@@ -187,11 +187,13 @@ func (w *World) PointUpdate() {
 			// Poison damage — limits.c:503-504
 			if poisoned {
 				p.TakeDamage(10)
+				w.DamageBeforeMessage(p, p, 10)
 			}
 
 			// Cutthroat damage — limits.c:505-506
 			if cutthroat {
 				p.TakeDamage(13)
+				w.DamageBeforeMessage(p, p, 13)
 			}
 
 			// Poison/cutthroat can drive HP into the wounded band (or past the
@@ -206,6 +208,7 @@ func (w *World) PointUpdate() {
 		} else if pos == PosIncap {
 			// Incapacitated: 1 damage per tick — limits.c:511
 			p.TakeDamage(1)
+			w.DamageBeforeMessage(p, p, 1)
 			updatePosFromHP(p, p.GetHP())
 			if p.GetPosition() == PosDead {
 				w.HandleNonCombatDeath(p)
@@ -214,6 +217,7 @@ func (w *World) PointUpdate() {
 		} else if pos == PosMortally {
 			// Mortally wounded: 2 damage per tick — limits.c:513
 			p.TakeDamage(2)
+			w.DamageBeforeMessage(p, p, 2)
 			updatePosFromHP(p, p.GetHP())
 			if p.GetPosition() == PosDead {
 				w.HandleNonCombatDeath(p)
@@ -253,10 +257,12 @@ func (w *World) PointUpdate() {
 			// Poison damage — limits.c:503-504 (applies to ALL chars including NPCs)
 			if m.HasAffect(AffPoison) {
 				m.TakeDamage(10)
+				w.DamageBeforeMessage(m, m, 10)
 			}
 			// Cutthroat damage — limits.c:505-506
 			if m.HasAffect(AffCutthroat) {
 				m.TakeDamage(13)
+				w.DamageBeforeMessage(m, m, 13)
 			}
 			// Re-derive position from the new HP; only die at POS_DEAD
 			// (HP <= -11) so poison/cutthroat progress through the wounded
@@ -268,6 +274,7 @@ func (w *World) PointUpdate() {
 			}
 		} else if pos == PosIncap {
 			m.TakeDamage(1)
+			w.DamageBeforeMessage(m, m, 1)
 			updateMobPosFromHP(m, m.GetHP())
 			if m.GetPosition() == PosDead {
 				w.handleMobDeath(m, nil, -1)
@@ -275,6 +282,7 @@ func (w *World) PointUpdate() {
 			}
 		} else if pos == PosMortally {
 			m.TakeDamage(2)
+			w.DamageBeforeMessage(m, m, 2)
 			updateMobPosFromHP(m, m.GetHP())
 			if m.GetPosition() == PosDead {
 				w.handleMobDeath(m, nil, -1)

@@ -887,6 +887,9 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 
 	if !hit {
 		standVictim()
+		if DamageBeforeMessage(attacker, defender, 0, callbacks) {
+			return true
+		}
 		ce.sendMissMessage(attacker, defender, msgAttackType)
 		return false
 	}
@@ -901,11 +904,15 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	standVictim()
 
 	defender.TakeDamage(damage)
+	rescued := DamageBeforeMessage(attacker, defender, damage, callbacks)
 	if ce.DamageFunc != nil {
 		ce.DamageFunc(defender)
 	}
 
 	if BodyRetired(attacker) || BodyRetired(defender) {
+		return true
+	}
+	if rescued {
 		return true
 	}
 	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
