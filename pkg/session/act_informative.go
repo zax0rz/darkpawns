@@ -9,8 +9,8 @@ import (
 )
 
 // cmdColor — set the player's ANSI color level (off/sparse/normal/complete).
-// Source: act.informative.c do_color(). The client renders; PrfColor1/2 are
-// advisory state mirrored back via the "toggle" listing.
+// Source: src/act.informative.c do_color(). Both color macros below
+// are evaluated after the newly selected preference level is stored.
 func cmdColor(s *Session, args []string) error {
 	if s.player == nil {
 		return nil
@@ -37,7 +37,13 @@ func cmdColor(s *Session, args []string) error {
 	}
 	s.player.SetPlrFlag(game.PrfColor1, tp&1 != 0)
 	s.player.SetPlrFlag(game.PrfColor2, tp&2 != 0)
-	s.Send(fmt.Sprintf("Your color is now %s.", levels[tp]))
+	// src/act.informative.c:2494-2495: CCRED(C_SPR), CCNRM(C_OFF).
+	// C_OFF always emits the reset, including when the new level is off.
+	red := ""
+	if tp >= 1 {
+		red = "\x1b[31m"
+	}
+	s.Send(fmt.Sprintf("Your %scolor\x1b[0m is now %s.", red, levels[tp]))
 	return nil
 }
 

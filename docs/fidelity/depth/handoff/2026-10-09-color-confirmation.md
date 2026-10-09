@@ -1,0 +1,13 @@
+# Color command confirmation: approved separate commit in DP-1403 train
+
+Stop tier with DP-1403: player-facing session output. Zach approved this discovered divergence on 2026-10-09 as its own commit and control.
+
+C src/act.informative.c:2494-2495 evaluates CCRED(ch,C_SPR) and CCNRM(ch,C_OFF) after setting the new preference flags. Go now emits ESC[31m before color for sparse/normal/complete and emits ESC[0m after color at every level, including off. These are raw C ANSI macro bytes, distinct from ampersand expansion's ESC[0;31m mapping. R1/R5e/R5g.
+
+TestColorConfirmationNewLevelANSI tests all four levels from both off and complete. It verifies new flags and exact raw framing bytes, then runs the recipient terminal renderer and verifies it leaves those ANSI bytes untouched. The independent compiling removal control restores the plain confirmation: all eight subtests fail on assertion, and restoration passes. Script: 2026-10-09-color-confirmation-controls.py. Evidence: ~/Archives/darkpawns/oracle-runs/2026-10-09/dp-1403-unit-proofs/confirmation-controls.txt.
+
+Other readers/locks: only cmdColor's confirmation changes; preference writes/toggles, prompt/color-level readers and persistence retain the existing flags. The renderer does not reinterpret existing ESC bytes. No additional state mutation, lock acquisition, RNG draw, store format or D7 producer. cmdColor holds no manager/world/lifecycle lock while sending.
+
+The terminal-amp-colors probe exercises color-complete/off on the remote recipient and sparse on the actor with keep-ansi. The earlier probe and main reference each failed on the old confirmations; the direct diff shows all ampersand message blocks already match after DP-1403. A rerun attempted after this fix was refused because DeepSeek's dp-1371-mudlog-3 occupies the slot. No rerun or heavy gates were started while it runs. Full gates are required before this case's separate commit, and a combined census at the two-case train tip is required before the PR.
+
+After DeepSeek’s mudlog-3 census finished, all gates passed separately: make fmt, go build ./..., go vet ./..., go test ./..., go test ./pkg/game/..., golangci-lint cache clean/run (zero issues), git diff --check, make fidelity-depth, make fidelity-units and make string-census (zero unreviewed; existing stale-report warning retained). Both control scripts passed, with every required removed behavior failing at an assertion and restoration passing. Gate/control evidence: ~/Archives/darkpawns/oracle-runs/2026-10-09/dp-1403-unit-proofs/. This supersedes the deferred-gates note. Separate case commits and a combined census at the train tip follow.
