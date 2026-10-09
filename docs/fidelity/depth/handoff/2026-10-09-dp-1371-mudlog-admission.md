@@ -169,10 +169,10 @@ python3 docs/fidelity/depth/handoff/2026-10-09-dp-1371-mudlog-admission-controls
 python3 docs/fidelity/depth/handoff/2026-10-06-dp-1371-mudlog-sites-check.py
 ```
 
-The control script prints `1 -> 0 -> 1` for all nine cases (`dns-failure-log`,
+The control script prints `1 -> 0 -> 1` for all ten cases (`dns-failure-log`,
 `dns-slow-gate`, `refusal-bytes`, `refusal-log`, `ban-producer`, `unban-order`,
-`losing-descriptor`, `losing-player`, `host-padding`), asserting the named
-failure line in each revert and never a build failure. `ban-producer` removes the
+`unban-one-argument`, `losing-descriptor`, `losing-player`, `host-padding`),
+asserting the named failure line in each revert and never a build failure. `ban-producer` removes the
 call and leaves `_ = rawSite`; `losing-player` leaves `_ = fmt.Sprintf(...)`,
 because both files would otherwise lose an import and fail to build instead of
 failing on the assertion.

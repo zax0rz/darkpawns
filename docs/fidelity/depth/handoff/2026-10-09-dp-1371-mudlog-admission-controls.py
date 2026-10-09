@@ -50,6 +50,12 @@ PLAYER_LOG = "\t\tgame.MudLog(fmt.Sprintf(\"Losing player: %s.\", s.descriptorCh
 PADDING_OLD = "\t\treturn fmt.Sprintf(\"%03d.%03d.%03d.%03d\", ip[0], ip[1], ip[2], ip[3])\n"
 PADDING_NEW = "\t\treturn fmt.Sprintf(\"%d.%d.%d.%d\", ip[0], ip[1], ip[2], ip[3])\n"
 
+# ban.c:219 / interpreter.c:1267-1284: one_argument takes the first
+# non-fill-word token, lowercased. The pre-fix line trimmed and lowercased the
+# whole argument instead.
+UNBAN_PARSE_OLD = "\tsite, _ := oneArgument(argument)\n"
+UNBAN_PARSE_NEW = "\tsite := strings.TrimSpace(strings.ToLower(argument))\n"
+
 CASES = [
     {
         "case": "dns-failure-log",
@@ -92,6 +98,13 @@ CASES = [
         "package": "./pkg/session",
         "assertion": "unban actor stream",
         "patches": [{"path": BANS, "new": UNBAN_ORDER_NEW, "old": UNBAN_ORDER_OLD}],
+    },
+    {
+        "case": "unban-one-argument",
+        "test": "TestUnbanOneArgumentParsing",
+        "package": "./pkg/session",
+        "assertion": "unban \"evil.example extra\"",
+        "patches": [{"path": BANS, "new": UNBAN_PARSE_NEW, "old": UNBAN_PARSE_OLD}],
     },
     {
         "case": "losing-descriptor",
