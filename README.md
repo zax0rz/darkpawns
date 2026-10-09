@@ -3,7 +3,7 @@
 [![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
 ![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white)
 ![Go](https://img.shields.io/badge/Go-1.26.9-00ADD8?style=flat&logo=go&logoColor=white)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: DikuMUD/CircleMUD + MIT](https://img.shields.io/badge/License-DikuMUD%20%2F%20CircleMUD%20%2B%20MIT-yellow.svg)](LICENSE)
 
 ```
         (_____)           (_)    (_____)
@@ -172,4 +172,13 @@ Historical briefs and reports are preserved for context, not as a task queue.
 Dark Pawns grew from the work of its original developers, world builders, and
 players. The preserved [game credits](lib/text/credits) identify CircleMUD 3.0, Jeremy Elson, and its DikuMUD foundations. The [original C repository](https://github.com/rparet/darkpawns) was published by R.E. Paret (Frontline). The Go port is maintained by [zax0rz](https://github.com/zax0rz) (Aiko/Aidan).
 
-[MIT License](LICENSE) — run it, host it, fork it.
+Dark Pawns is a non-commercial hobby project. The game is derived from
+CircleMUD 3.0 (Jeremy Elson), itself derived from DikuMUD (Staerfeldt, Nyboe,
+Madsen, Seifert, Hammer), and those portions, including the Go port, are
+subject to the [CircleMUD](LICENSE.CircleMUD) and [DikuMUD](LICENSE.DikuMUD)
+licenses: strictly non-commercial, authors credited in-game, license texts
+shipped with every copy. New original code (Go port authorship, web admin,
+tooling, website) is MIT-licensed; where the licenses conflict, the
+DikuMUD/CircleMUD terms govern the combined work. Run it and host it freely,
+but never for money. See [LICENSE](LICENSE) for the full terms, including the
+story of the 1999 Usenet thread that made it necessary.
