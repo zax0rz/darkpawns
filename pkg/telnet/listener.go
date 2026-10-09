@@ -176,9 +176,14 @@ func serve(ln net.Listener, manager *session.Manager) {
 			// per-connection goroutine, so a slow resolver cannot stall the
 			// accept queue.
 			banManager := manager.GetBanManager()
+			// One read of the flag per connection. The precheck and the
+			// goroutine's branch must agree: a `slowns` toggle between two
+			// reads would hand handleConn an empty identity — no host and no
+			// ban level — and skip the ban check for that connection.
+			nameserverSlow := game.NameserverIsSlow()
 			identity := session.ConnectionIdentity{}
-			if game.NameserverIsSlow() {
-				identity = identifyConnection(remoteIP, banManager)
+			if nameserverSlow {
+				identity = identifyConnection(remoteIP, banManager, nameserverSlow)
 				if identity.Level == game.BanAll {
 					releaseConnectionSlot(remoteIP)
 					refuseBannedConnection(conn, identity.Host)
@@ -188,7 +193,7 @@ func serve(ln net.Listener, manager *session.Manager) {
 
 			go func(ip string, precomputed session.ConnectionIdentity, prechecked bool) {
 				if !prechecked {
-					precomputed = identifyConnection(ip, banManager)
+					precomputed = identifyConnection(ip, banManager, nameserverSlow)
 				}
 				reject := precomputed.Level == game.BanAll
 				if reject {
@@ -205,7 +210,7 @@ func serve(ln net.Listener, manager *session.Manager) {
 				}
 				handleConn(conn, manager, precomputed)
 				releaseConnectionSlot(ip)
-			}(remoteIP, identity, game.NameserverIsSlow())
+			}(remoteIP, identity, nameserverSlow)
 		}
 	}()
 }
@@ -256,9 +261,13 @@ func ipFromAddr(addr string) string {
 // quad. Otherwise it resolves, and a failed lookup logs C's producer
 // (src/comm.c:1552-1555) before the ban check: "DNS lookup failed on %s." at
 // CMP / LVL_GOD / file TRUE.
-func identifyConnection(remoteIP string, banManager *game.BanManager) session.ConnectionIdentity {
+//
+// nameserverSlow is read once by the caller and passed in, so the precheck and
+// the per-connection goroutine cannot disagree about which branch this
+// connection takes.
+func identifyConnection(remoteIP string, banManager *game.BanManager, nameserverSlow bool) session.ConnectionIdentity {
 	padded := session.CConnectionHost(remoteIP)
-	if game.NameserverIsSlow() {
+	if nameserverSlow {
 		// C's wildhost and double_wild are both defined on this branch
 		// (src/comm.c:1536-1548).
 		return session.ConnectionIdentity{

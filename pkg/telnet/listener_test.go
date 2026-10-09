@@ -373,7 +373,7 @@ func TestIdentifyConnectionPaddedBanStrings(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	identity := identifyConnection("192.0.2.10", bm)
+	identity := identifyConnection("192.0.2.10", bm, game.NameserverIsSlow())
 	if identity.Host != "192.000.002.010" {
 		t.Fatalf("d->host = %q, want the padded quad", identity.Host)
 	}
@@ -390,7 +390,7 @@ func TestIdentifyConnectionRawIPBanDoesNotMatch(t *testing.T) {
 	if err := bm.AddBan("192.0.2.10", game.BanAll, "test"); err != nil {
 		t.Fatal(err)
 	}
-	if got := identifyConnection("192.0.2.10", bm).Level; got != game.BanNot {
+	if got := identifyConnection("192.0.2.10", bm, game.NameserverIsSlow()).Level; got != game.BanNot {
 		t.Fatalf("raw-IP ban matched the padded host: level = %d, want BanNot", got)
 	}
 }
@@ -402,7 +402,7 @@ func TestIdentifyConnectionWildcardBanStrings(t *testing.T) {
 	if err := bm.AddBan("198.051.100.*", game.BanAll, "test"); err != nil {
 		t.Fatal(err)
 	}
-	if got := identifyConnection("198.51.100.5", bm).Level; got != game.BanAll {
+	if got := identifyConnection("198.51.100.5", bm, game.NameserverIsSlow()).Level; got != game.BanAll {
 		t.Fatalf("wildhost ban not honoured: level = %d, want BanAll", got)
 	}
 
@@ -410,7 +410,7 @@ func TestIdentifyConnectionWildcardBanStrings(t *testing.T) {
 	if err := bm.AddBan("203.000.*.*", game.BanAll, "test"); err != nil {
 		t.Fatal(err)
 	}
-	if got := identifyConnection("203.0.113.7", bm).Level; got != game.BanAll {
+	if got := identifyConnection("203.0.113.7", bm, game.NameserverIsSlow()).Level; got != game.BanAll {
 		t.Fatalf("double-wild ban not honoured: level = %d, want BanAll", got)
 	}
 }
@@ -432,7 +432,7 @@ func TestIdentifyConnectionSlowPerformsNoLookup(t *testing.T) {
 
 	provider := captureMudlog(t)
 
-	identity := identifyConnection("192.0.2.10", game.NewBanManager())
+	identity := identifyConnection("192.0.2.10", game.NewBanManager(), game.NameserverIsSlow())
 	if lookupCalled.Load() {
 		t.Fatal("a reverse lookup ran with nameserver_is_slow set")
 	}
@@ -456,7 +456,7 @@ func TestIdentifyConnectionFailedLookupLogs(t *testing.T) {
 
 	provider := captureMudlog(t)
 
-	identity := identifyConnection("192.0.2.10", game.NewBanManager())
+	identity := identifyConnection("192.0.2.10", game.NewBanManager(), game.NameserverIsSlow())
 	if identity.Host != "192.000.002.010" || identity.HostResolved {
 		t.Fatalf("identity = %+v, want the padded quad unresolved", identity)
 	}
@@ -482,7 +482,7 @@ func TestIdentifyConnectionResolvedNameIsHost(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	identity := identifyConnection("203.0.113.7", bm)
+	identity := identifyConnection("203.0.113.7", bm, game.NameserverIsSlow())
 	if identity.Host != "client.example.com" || !identity.HostResolved {
 		t.Fatalf("identity = %+v, want the resolved name", identity)
 	}
@@ -497,7 +497,7 @@ func TestIdentifyConnectionResolvedNameIsHost(t *testing.T) {
 	if err := paddedBan.AddBan("203.000.113.*", game.BanAll, "test"); err != nil {
 		t.Fatal(err)
 	}
-	if got := identifyConnection("203.0.113.7", paddedBan).Level; got != game.BanNot {
+	if got := identifyConnection("203.0.113.7", paddedBan, game.NameserverIsSlow()).Level; got != game.BanNot {
 		t.Fatalf("resolved lookup matched a wildcard ban: level = %d, want BanNot", got)
 	}
 }
@@ -1154,7 +1154,7 @@ func TestIdentifyConnectionSlowRefusesPaddedBanWithoutLookup(t *testing.T) {
 		return nil, nil
 	}
 
-	if got := identifyConnection("203.0.113.99", bm).Level; got != game.BanAll {
+	if got := identifyConnection("203.0.113.99", bm, game.NameserverIsSlow()).Level; got != game.BanAll {
 		t.Fatalf("level = %d, want BanAll (%d)", got, game.BanAll)
 	}
 	if lookupCalled.Load() {
