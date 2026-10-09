@@ -1,0 +1,98 @@
+deleted production functions: 83
+deleted tests: 91
+  keep (calls a deleted function): 63
+    TestHandleAgentStatus_POST_MissingFields [pkg/admin/handlers_test.go] -> handleAgentStatus
+    TestHandleAgentStatus_POST_NotFound [pkg/admin/handlers_test.go] -> handleAgentStatus
+    TestHandleAgentStatus_POST_Valid [pkg/admin/handlers_test.go] -> handleAgentStatus
+    TestHandleAgents_GET [pkg/admin/handlers_test.go] -> handleAgents
+    TestHandleFindings_GET_Empty [pkg/admin/handlers_test.go] -> handleFindings
+    TestHandleFindings_POST_MissingFields [pkg/admin/handlers_test.go] -> handleFindings
+    TestHandleFindings_POST_Valid [pkg/admin/handlers_test.go] -> handleFindings
+    TestHandleLogs_GET [pkg/admin/handlers_test.go] -> handleLogs
+    TestHandleLogs_GET_InvalidLinesParam [pkg/admin/handlers_test.go] -> handleLogs
+    TestHandleLogs_GET_WithLinesParam [pkg/admin/handlers_test.go] -> handleLogs
+    TestHandleLogs_WrongMethod [pkg/admin/handlers_test.go] -> handleLogs
+    TestHandleMetrics_GET [pkg/admin/handlers_test.go] -> handleMetrics
+    TestHandleMetrics_WrongMethod [pkg/admin/handlers_test.go] -> handleMetrics
+    TestHandleMobByVnum_GET_NotFound [pkg/admin/handlers_test.go] -> handleMobByVnum
+    TestHandleMobByVnum_GET_Valid [pkg/admin/handlers_test.go] -> handleMobByVnum
+    TestHandleMobs_GET [pkg/admin/handlers_test.go] -> handleMobs
+    TestHandleMobs_WrongMethod [pkg/admin/handlers_test.go] -> handleMobs
+    TestHandleObjectByVnum_GET_NotFound [pkg/admin/handlers_test.go] -> handleObjectByVnum
+    TestHandleObjectByVnum_GET_Valid [pkg/admin/handlers_test.go] -> handleObjectByVnum
+    TestHandleObjects_GET [pkg/admin/handlers_test.go] -> handleObjects
+    TestHandlePlayers_GET [pkg/admin/handlers_test.go] -> handlePlayers
+    TestHandlePlayers_WrongMethod [pkg/admin/handlers_test.go] -> handlePlayers
+    TestHandleResetAllZones_Post [pkg/admin/handlers_test.go] -> handleResetAllZones
+    TestHandleResetAllZones_WrongMethod [pkg/admin/handlers_test.go] -> handleResetAllZones
+    TestHandleRoomByVnum_GET_EmptyVNum [pkg/admin/handlers_test.go] -> handleRoomByVnum
+    TestHandleRoomByVnum_GET_InvalidVNum [pkg/admin/handlers_test.go] -> handleRoomByVnum
+    TestHandleRoomByVnum_GET_NotFound [pkg/admin/handlers_test.go] -> handleRoomByVnum
+    TestHandleRoomByVnum_GET_Valid [pkg/admin/handlers_test.go] -> handleRoomByVnum
+    TestHandleServerInfo_GET [pkg/admin/handlers_test.go] -> handleServerInfo
+    TestHandleServerInfo_WrongMethod [pkg/admin/handlers_test.go] -> handleServerInfo
+    TestHandleShops_GET [pkg/admin/handlers_test.go] -> handleShops
+    TestHandleShops_WrongMethod [pkg/admin/handlers_test.go] -> handleShops
+    TestHandleTriageSummaries_GET [pkg/admin/handlers_test.go] -> handleTriageSummaries
+    TestHandleTriageSummaries_POST_Valid [pkg/admin/handlers_test.go] -> handleTriageSummaries
+    TestHandleZoneByIDOrReset_GET_InvalidID [pkg/admin/handlers_test.go] -> handleZoneByIDOrReset
+    TestHandleZoneByIDOrReset_GET_NotFound [pkg/admin/handlers_test.go] -> handleZoneByIDOrReset
+    TestHandleZoneByIDOrReset_GET_Valid [pkg/admin/handlers_test.go] -> handleZoneByIDOrReset
+    TestHandleZoneByIDOrReset_WrongMethod [pkg/admin/handlers_test.go] -> handleZoneByIDOrReset
+    TestHandleZoneReset_NotImplemented [pkg/admin/handlers_test.go] -> handleZoneReset
+    TestHandleZoneReset_WrongMethod [pkg/admin/handlers_test.go] -> handleZoneReset
+    TestHandleZones_GET [pkg/admin/handlers_test.go] -> handleZones
+    TestHandleZones_WrongMethod [pkg/admin/handlers_test.go] -> handleZones
+    TestCmdDig_Executes [pkg/command/skill_commands_test.go] -> CmdDig
+    TestCmdDig_NoPlayer [pkg/command/skill_commands_test.go] -> CmdDig
+    TestCmdPractice [pkg/command/skill_commands_test.go] -> CmdPractice
+    TestCmdReview_Executes [pkg/command/skill_commands_test.go] -> CmdReview
+    TestCmdReview_NoPlayer [pkg/command/skill_commands_test.go] -> CmdReview
+    TestCmdWhois_NoArgs [pkg/command/skill_commands_test.go] -> CmdWhois
+    TestCmdWhois_NoPlayer [pkg/command/skill_commands_test.go] -> CmdWhois
+    TestFidelityDigCosmeticStub [pkg/game/fidelity_regression_test.go] -> DoDig
+    TestValidNameNilCallback [pkg/game/merge_bridge_test.go] -> ValidName
+    TestValidNameOnlineDuplicate [pkg/game/merge_bridge_test.go] -> ValidName
+    TestSaveLoadLocationRoundTrip [pkg/game/object_movement_test.go] -> AutoEquip
+    TestCmdSummon [pkg/session/cmd_info_test.go] -> cmdSummon
+    TestCmdFleeMovement_XPLossAtLowLevel [pkg/session/movement_cmds_test.go] -> cmdFleeMovement
+    TestCmdFleeMovement_XPLossCapped [pkg/session/movement_cmds_test.go] -> cmdFleeMovement
+    TestCmdQcomm_NonQuestPlayerFiltered [pkg/session/session_test.go] -> cmdQcomm
+    TestDice_Basic [pkg/spells/saving_throws_test.go] -> Dice
+    TestDice_MultipleDice [pkg/spells/saving_throws_test.go] -> Dice
+    TestDice_ZeroOrNegative [pkg/spells/saving_throws_test.go] -> Dice
+    TestGetManaCost_Clamping [pkg/spells/spell_info_test.go] -> GetManaCost
+    TestGetManaCost_NeverBelowZero [pkg/spells/spell_info_test.go] -> GetManaCost
+    TestGetManaCost_NilReceiver [pkg/spells/spell_info_test.go] -> GetManaCost
+  restore (no deleted call): 28
+    TestCmdBearhug_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdBearhug_NoSkill [pkg/command/skill_commands_test.go]
+    TestCmdBite_MissingTargetUsesCPunctuation [pkg/command/skill_commands_test.go]
+    TestCmdBite_NoFightingNoArgs [pkg/command/skill_commands_test.go]
+    TestCmdBite_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdFleshAlter_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdFleshAlter_NoSkill [pkg/command/skill_commands_test.go]
+    TestCmdKujiKiri_Executes [pkg/command/skill_commands_test.go]
+    TestCmdKujiKiri_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdPalm_NoArgs [pkg/command/skill_commands_test.go]
+    TestCmdPalm_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdPoint_Executes [pkg/command/skill_commands_test.go]
+    TestCmdPoint_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdSlug_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdSlug_NoSkill [pkg/command/skill_commands_test.go]
+    TestCmdSmackheads_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdSmackheads_NoSkill [pkg/command/skill_commands_test.go]
+    TestCmdSpike_NoArgs [pkg/command/skill_commands_test.go]
+    TestCmdSpike_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdSpike_NoSkillKnowledgeGate [pkg/command/skill_commands_test.go]
+    TestCmdStake_NoArgs [pkg/command/skill_commands_test.go]
+    TestCmdStake_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCmdStake_NoSkillKnowledgeGate [pkg/command/skill_commands_test.go]
+    TestCmdTag_NoArgs [pkg/command/skill_commands_test.go]
+    TestCmdTag_NoPlayer [pkg/command/skill_commands_test.go]
+    TestCheckOriginBehindTheProxy [pkg/session/session_test.go]
+    TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts [pkg/session/session_test.go]
+    TestCheckOrigin_PrivateIPWithoutAgentKeyRejects [pkg/session/session_test.go]
+helpers restored alongside: []
+restored 25 into pkg/command/skill_commands_test.go
+restored 3 into pkg/session/session_test.go
