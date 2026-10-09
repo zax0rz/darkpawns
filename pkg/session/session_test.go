@@ -3,6 +3,7 @@ package session
 import (
 	"database/sql"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
