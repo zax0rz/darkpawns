@@ -25,6 +25,8 @@ func newDonateTestWorld(t *testing.T) (*World, *Player, func() string) {
 	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
 
 	ch := NewPlayer(1, "Tester", 1001)
+	ch.Stats = CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	ch.CopyBaseAttributes()
 	if err := w.AddPlayer(ch); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}
@@ -390,6 +392,8 @@ func newDonateTestWorldWithoutDonationRooms(t *testing.T) (*World, *Player, func
 	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
 
 	ch := NewPlayer(1, "Tester", 1001)
+	ch.Stats = CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	ch.CopyBaseAttributes()
 	if err := w.AddPlayer(ch); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}

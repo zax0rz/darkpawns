@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // Mob equipment always uses C WEAR_* indices (src/structs.h:390-412),
@@ -79,22 +77,7 @@ func (m *MobInstance) equipMobileLocked(w *World, obj *ObjectInstance, pos int) 
 	}
 	m.modifyMobileEquipmentLocked(obj, true)
 	m.affectTotalLocked()
-	stats := m.effectiveAttributesLocked()
-	if stats.Str == 0 {
-		effects.bad = 's'
-	}
-	if stats.Int == 0 {
-		effects.bad = 'i'
-	}
-	if stats.Wis == 0 {
-		effects.bad = 'w'
-	}
-	if stats.Cha == 0 {
-		effects.bad = 'c'
-	}
-	if stats.Dex == 0 {
-		effects.bad = 'd'
-	}
+	effects.bad = badStat(m.effectiveAttributesLocked())
 	return effects, nil
 }
 
@@ -204,37 +187,7 @@ func (w *World) finishMobileEquipment(m *MobInstance, obj *ObjectInstance, effec
 		Act(w, false, m, nil, obj, nil, "$n is zapped by $p and instantly lets go of it.", "", ToRoom)
 		return
 	}
-	var text string
-	switch effects.bad {
-	case 's':
-		text = "You are too weak to fight!\n\r"
-	case 'i', 'w':
-		text = "You are too dumb to do much of anything!\n\r"
-	case 'c':
-		text = "The world hates you!\n\r"
-	case 'd':
-		text = "You trip over your own feet and hit your head!\n\r"
-	}
-	if text != "" && w.MobileMessageSink != nil {
-		w.MobileMessageSink(m, []byte(text))
-	}
-	switch effects.bad {
-	case 'c':
-		var pest *MobInstance
-		for _, candidate := range w.GetAllMobs() {
-			if candidate.GetVNum() == 7907 && (pest == nil || candidate.ID > pest.ID) {
-				pest = candidate
-			}
-		}
-		if pest != nil && pest.GetHunting() == "" {
-			pest.SetHunting(m.GetName())
-			pest.mu.Lock()
-			pest.HuntingMobID = m.ID
-			pest.mu.Unlock()
-		}
-	case 'd':
-		w.selfDamage(m, 40, combat.TYPE_SUFFERING)
-	}
+	w.applyBadStat(m, effects.bad)
 }
 
 // EquipMobileObject is the floating-object equip_char boundary. World lock

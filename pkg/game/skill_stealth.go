@@ -445,6 +445,7 @@ func restoreEquippedItem(target combat.Combatant, item *ObjectInstance, slot int
 			return false
 		}
 		item.Location = LocEquippedPlayer(target.Name, EquipmentSlot(slot))
+		target.checkEquipmentStats()
 	case *MobInstance:
 		return target.EquipItem(item, slot)
 	default:

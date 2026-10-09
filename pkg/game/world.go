@@ -1550,27 +1550,25 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 		return false
 	}
 	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	{
-		if p, ok := w.players[charName]; ok {
-			if p.Inventory == nil {
-				return false
-			}
-			item, found := p.Inventory.removeItemByVNum(objVNum)
-			if !found {
-				return false
-			}
-			if p.Equipment == nil {
-				p.Equipment = NewEquipment()
-				p.Equipment.OwnerName = p.Name
-				p.Equipment.afterChange = p.AffectTotal
-			}
-			err := p.Equipment.Equip(item, p.Inventory)
-			return err == nil
-		}
+	p := w.players[charName]
+	if p != nil && p.Equipment == nil {
+		p.Equipment = NewEquipment()
+		p.Equipment.OwnerName = p.Name
+		p.Equipment.afterChange = p.AffectTotal
 	}
-	return false
+	w.mu.Unlock()
+	if p == nil || p.Inventory == nil {
+		return false
+	}
+	item, found := p.Inventory.removeItemByVNum(objVNum)
+	if !found {
+		return false
+	}
+	if err := p.Equipment.Equip(item, p.Inventory); err != nil {
+		return false
+	}
+	p.checkEquipmentStats()
+	return true
 }
 
 // EquipMobByVNum finds a mob by vnum and room, removes the object from its

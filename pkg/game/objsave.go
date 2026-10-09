@@ -199,6 +199,7 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 			return
 		}
 		obj.Location = LocEquippedPlayer(p.Name, slot)
+		p.checkEquipmentStats()
 		return
 	}
 	if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
@@ -206,6 +207,8 @@ func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
 		if err := p.Inventory.addItem(obj); err != nil {
 			slog.Error("autoequip: inventory full on load (equip failed)", "player", p.Name, "obj_vnum", obj.VNum, "original_err", err)
 		}
+	} else {
+		p.checkEquipmentStats()
 	}
 }
 

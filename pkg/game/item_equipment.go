@@ -247,6 +247,7 @@ func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) error {
 	}
 	obj.Location = LocEquippedPlayer(ch.Name, goSlot)
 	NameEquippedObject(ch, obj)
+	ch.checkEquipmentStats()
 	return nil
 }
 

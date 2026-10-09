@@ -114,6 +114,8 @@ func TestCmdParrySuccessUsesCActAudiencesAndWait(t *testing.T) {
 		t.Fatalf("SpawnMob: %v", err)
 	}
 	actor := makeGateSession(t, m, 1, "Parryactor", 20)
+	actor.player.Stats = game.CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	actor.player.CopyBaseAttributes()
 	observer := makeGateSession(t, m, 2, "Parryobserver", 20)
 	weapon, err := m.world.SpawnObject(6001, -1)
 	if err != nil {
