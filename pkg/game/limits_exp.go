@@ -184,7 +184,7 @@ func (w *World) GainExp(p *Player, gain int) {
 				p.Damroll += (p.Level / 2) + 1
 				p.mu.Unlock()
 			}
-			sendToChar(p, fmt.Sprintf("You advance to level %d!\r\n", p.Level))
+			p.SendMessage(fmt.Sprintf("You advance to level %d!\r\n", p.Level))
 		}
 	} else if gain < 0 {
 		if gain < -maxExpLoss {
@@ -249,9 +249,9 @@ func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
 
 	if announce && numLevels > 0 {
 		if numLevels == 1 {
-			sendToChar(p, "You rise a level!\r\n")
+			p.SendMessage("You rise a level!\r\n")
 		} else {
-			sendToChar(p, fmt.Sprintf("You rise %d levels!\r\n", numLevels))
+			p.SendMessage(fmt.Sprintf("You rise %d levels!\r\n", numLevels))
 		}
 		CheckAutowiz(p)
 	}

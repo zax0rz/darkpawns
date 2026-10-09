@@ -55,16 +55,16 @@ func HandleNoteInput(ch *Player, line string) bool {
 		ch.SetPlrFlag(PlrWriting, false)
 
 		if !ok {
-			sendToChar(ch, "Your note was lost. (internal error)\r\n")
+			ch.SendMessage("Your note was lost. (internal error)\r\n")
 			return true
 		}
 		if state.buffer == "" {
-			sendToChar(ch, "You have written nothing. Note discarded.\r\n")
+			ch.SendMessage("You have written nothing. Note discarded.\r\n")
 			return true
 		}
 
 		state.obj.Runtime.NoteText = state.buffer
-		sendToChar(ch, "Note recorded.\r\n")
+		ch.SendMessage("Note recorded.\r\n")
 		return true
 	}
 
@@ -83,7 +83,7 @@ func HandleNoteInput(ch *Player, line string) bool {
 		state.buffer = state.buffer[:maxNoteLength]
 		// Notify and flush — C does this silently but a message is friendlier
 		noteWriteMu.Unlock()
-		sendToChar(ch, "Note limit reached. Type '@' on a new line to save.\r\n")
+		ch.SendMessage("Note limit reached. Type '@' on a new line to save.\r\n")
 		return false
 	}
 	noteWriteMu.Unlock()

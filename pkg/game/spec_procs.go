@@ -82,6 +82,18 @@ func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar,
 	}
 }
 
+// sendToChar writes msg to the player followed by a CRLF terminator. C's
+// send_to_char writes its argument verbatim — the terminator lives in the C
+// literal (src/comm.c:2335-2339) — so this helper is Go-side sugar for the
+// common case where the port dropped the trailing CRLF from the literal.
+//
+// A caller whose string ALREADY carries its line ending (or that contributes a
+// fragment to a line built across several calls, as C's do_gen_door/ok_pick and
+// the enter-circle special do) must call ch.SendMessage directly: passing a
+// terminated string here appends a second terminator and prints an extra blank
+// line the C oracle never wrote. The door and bank families were converted to
+// SendMessage for exactly this reason; do not reintroduce a terminated literal
+// here.
 func sendToChar(ch *Player, msg string) {
 	ch.SendMessage(msg + "\r\n")
 }

@@ -293,7 +293,7 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 				break
 			}
 			w.roomMessage(me.GetRoomVNum(), "Starved and needing food to make more pillows, the couch attacks!")
-			sendToChar(ch, "Starved and needing food to make more pillows, the couch attacks you!\r\n\r\n")
+			ch.SendMessage("Starved and needing food to make more pillows, the couch attacks you!\r\n\r\n")
 			for _, m := range w.GetMobsInRoom(playerRoom) {
 				if m.GetRoomVNum() == playerRoom && m != me {
 					if err := m.Attack(ch, w); err != nil {
@@ -449,7 +449,7 @@ func specTipster(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 
 	n := randN(len(tips))
-	sendToChar(ch, fmt.Sprintf("%s says '%s'\r\n", mobName(me), tips[n]))
+	ch.SendMessage(fmt.Sprintf("%s says '%s'\r\n", mobName(me), tips[n]))
 	return false
 }
 
@@ -1392,10 +1392,10 @@ func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				ch.MarkCrashNeeded()
 			}
 			if len(toRemove) > 0 {
-				sendToChar(ch, fmt.Sprintf("You trade your key for %d experience.\r\n", ch.GetLevel()*200*len(toRemove)))
+				ch.SendMessage(fmt.Sprintf("You trade your key for %d experience.\r\n", ch.GetLevel()*200*len(toRemove)))
 				w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s trades in some keys for experience!", ch.GetName()))
 			} else {
-				sendToChar(ch, "You don't have anything to trade.\r\n")
+				ch.SendMessage("You don't have anything to trade.\r\n")
 			}
 		}
 		return true
@@ -1459,7 +1459,7 @@ func specEvilLead(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	}
 	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
 		if !pl.IsNPC() && pl.GetAlignment() < 0 {
-			sendToChar(ch, fmt.Sprintf("%s says 'You're an evil one! That won't be allowed here!'\r\n", mobName(me)))
+			ch.SendMessage(fmt.Sprintf("%s says 'You're an evil one! That won't be allowed here!'\r\n", mobName(me)))
 			if err := me.Attack(pl, w); err != nil {
 				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 			}
@@ -1480,7 +1480,7 @@ func specLittleBoy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	}
 	if cmd == "give" && strings.Contains(arg, "flower") {
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s gives a flower to the little boy.", ch.GetName()))
-		sendToChar(ch, "The boy smiles and hands you a small note.\r\n")
+		ch.SendMessage("The boy smiles and hands you a small note.\r\n")
 		if obj, err := w.SpawnObject(7107, ch.GetRoom()); err == nil {
 			if ch.Inventory != nil {
 				if err := ch.Inventory.addItem(obj); err != nil {
@@ -1488,7 +1488,7 @@ func specLittleBoy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 				}
 			}
 		}
-		sendToChar(ch, "The little boy runs off!\r\n")
+		ch.SendMessage("The little boy runs off!\r\n")
 		// Remove the little boy mob from the room
 		for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {
 			if mob != me && mob.GetVNum() == littleBoyVnum {
@@ -1522,7 +1522,7 @@ func specIra(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 			continue
 		}
 		if number(0, 31) == 0 {
-			sendToChar(ch, fmt.Sprintf("%s says 'I don't like you, and you'd better leave before I make you!'\r\n", mobName(me)))
+			ch.SendMessage(fmt.Sprintf("%s says 'I don't like you, and you'd better leave before I make you!'\r\n", mobName(me)))
 			if err := me.Attack(pl, w); err != nil {
 				slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 			}
@@ -1777,7 +1777,7 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "north" || cmd == "south" || cmd == "east" || cmd == "west" || cmd == "up" || cmd == "down" {
 		if !ch.IsNPC() && number(0, 2) != 0 {
-			sendToChar(ch, "A shimmering portal appears and sucks you in!\r\n")
+			ch.SendMessage("A shimmering portal appears and sucks you in!\r\n")
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s stumbles through a shimmering portal!", ch.GetName()))
 			// Teleport to a random room
 			rooms := w.Rooms()
@@ -1787,7 +1787,7 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 				target := rooms[dprng.Number(0, len(rooms)-1)]
 				ch.SetRoom(target.VNum)
 			}
-			sendToChar(ch, "You tumble out into a strange place...\r\n")
+			ch.SendMessage("You tumble out into a strange place...\r\n")
 			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s appears from a shimmering portal!", ch.GetName()))
 			return true
 		}
@@ -1911,7 +1911,7 @@ func specBatRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		}
 	}
 	if found {
-		sendToChar(ch, "The bats swarm around you, blocking your escape!\r\n")
+		ch.SendMessage("The bats swarm around you, blocking your escape!\r\n")
 		w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s is swarmed by bats and forced back!", ch.GetName()))
 		return true
 	}
@@ -1933,7 +1933,7 @@ func specBat(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 		return false
 	}
 	if strings.Contains(a, "dripping") && number(0, 4) == 0 {
-		sendToChar(ch, "A bat swoops down and attacks you!\r\n")
+		ch.SendMessage("A bat swoops down and attacks you!\r\n")
 		if err := me.Attack(ch, w); err != nil {
 			slog.Warn("Attack failed in spec proc", "mob", me.GetName(), "error", err)
 		}
@@ -2161,7 +2161,7 @@ func specNoMoveNorth(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return false
 	}
 	if cmd == "north" {
-		sendToChar(ch, "You try to go north but are blocked by a heavy object.\r\n")
+		ch.SendMessage("You try to go north but are blocked by a heavy object.\r\n")
 		return true
 	}
 	return false

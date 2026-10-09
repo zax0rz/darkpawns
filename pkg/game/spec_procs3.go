@@ -911,7 +911,7 @@ func specFieldObject(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 			dam := me.GetLevel()/2 + 1
 			if dam > 0 {
 				vict.TakeDamage(dam)
-				sendToChar(vict, "An incredible force hits you!\r\n")
+				vict.SendMessage("An incredible force hits you!\r\n")
 				// Wounded band / POS_DEAD from the new HP; only kill at POS_DEAD
 				// (HP <= -11) — fight.c update_pos (DP-1021).
 				if combat.UpdatePositionAfterDamage(vict, w.woundBroadcast) == combat.PosDead {
@@ -1000,7 +1000,7 @@ func specItoh(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	if !strings.EqualFold(arg, "itoh") {
 		return false
 	}
-	sendToChar(ch, "\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n")
+	ch.SendMessage("\r\nWith a blinding flash of light and a crack of thunder, you are teleported...\r\n")
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("\r\nWith a blinding flash of light and a crack of thunder, %s disappears!\r\n\r\n", ch.GetName()))
 	ch.SetRoom(19875)
 	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("\r\nWith a blinding flash of light and a crack of thunder, %s appears!\r\n\r\n", ch.GetName()))
@@ -1035,7 +1035,7 @@ func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s shatters the object into a million pieces!", ch.GetName()))
 		if ch2 != nil {
 			ch2.SetRoom(objRoom)
-			sendToChar(ch2, "You feel pulled in a hundred different directions!\r\n")
+			ch2.SendMessage("You feel pulled in a hundred different directions!\r\n")
 			w.roomMessage(ch2.GetRoomVNum(), fmt.Sprintf("%s appears in a brilliant flash!", ch2.GetName()))
 		}
 		// Remove old object, spawn replacement (14503) in the same room
@@ -1051,7 +1051,7 @@ func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		if ch2 != nil {
 			// Move ch2 to obj's room
 			ch2.SetRoom(objRoom)
-			sendToChar(ch2, "You feel pulled in a hundred different directions!\r\n")
+			ch2.SendMessage("You feel pulled in a hundred different directions!\r\n")
 			w.roomMessage(ch2.GetRoomVNum(), fmt.Sprintf("%s appears in a brilliant flash!", ch2.GetName()))
 		}
 		// Move ch to room 14496
