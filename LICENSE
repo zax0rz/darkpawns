@@ -1,3 +1,97 @@
+DARK PAWNS -- LICENSING
+
+Dark Pawns is a non-commercial hobby project. Please read this whole file:
+the game you are looking at carries obligations from 1990 that are still
+in force, and this file exists so nobody has to learn about them the
+hard way.
+
+This repository contains three license texts:
+
+  LICENSE              this file: the summary, the history, and the MIT
+                       License for original new code
+  LICENSE.CircleMUD    the CircleMUD License, with the DikuMUD License
+                       appended, exactly as distributed with the Dark Pawns
+                       2.2 C code base (its src/license)
+  LICENSE.DikuMUD      the DikuMUD License on its own, extracted byte for
+                       byte from the end of LICENSE.CircleMUD, which
+                       describes that part as "the original, unmodified
+                       DikuMUD license"
+
+=====================================================================
+1. DIKUMUD AND CIRCLEMUD LICENSES (APPLY TO THE GAME)
+=====================================================================
+
+The Dark Pawns game is derived from CircleMUD 3.0 by Jeremy Elson, which is itself derived from DikuMUD Gamma 0.0 by Hans
+Henrik Staerfeldt, Katja Nyboe, Tom Madsen, Michael Seifert, and Sebastian
+Hammer. This covers the original C source kept in src/ as a read-only
+reference, and the Go port: a translation of derived code is itself a
+derivative work, and the CircleMUD license explicitly rejects the "but we
+rewrote it" defense.
+
+Those portions are subject to the CircleMUD License and the DikuMUD
+License, reproduced verbatim in LICENSE.CircleMUD and LICENSE.DikuMUD.
+In short:
+
+  a. STRICTLY NON-COMMERCIAL. You may not charge money, accept donations,
+     or receive any compensation in connection with the game -- no fees
+     to play, no paid perks, no donations for hardware, no reimbursement
+     of hosting costs, no selling the code or a hosting service.
+     (CircleMUD License, condition 1; DikuMUD License: "under no
+     circumstances make profit on *ANY* part of DikuMud in any possible
+     way.")
+
+  b. CREDIT THE AUTHORS. The login greeting names the DikuMUD and
+     CircleMUD creators, the in-game 'credits' command shows the
+     CircleMUD/DikuMUD credits file unaltered, and the CIRCLEMUD help
+     entry is kept intact. Do not remove or alter these.
+
+  c. SHIP THE LICENSES. The CircleMUD and DikuMUD license texts must
+     accompany every copy or distribution of the game, in whole or in
+     part, "as is". Do not remove copyright, licensing or authorship
+     notices from any source file.
+
+  d. TELL THE DIKUMUD AUTHORS. The DikuMUD License also asks anyone who
+     sets up a running copy, or publishes any part of DikuMud, to notify
+     its authors first. The 1990 addresses it lists are long gone; the
+     clause is reproduced here so this summary does not pretend the
+     list above is complete.
+
+This summary is a reading aid, not a substitute: the license texts govern.
+
+Historical note: in February 1999, on rec.games.mud.diku, Dark Pawns'
+administrator was publicly and thoroughly corrected on exactly these
+points after an advertisement described the game as "completely original"
+while the login screen said "Based on CircleMUD 3.0". The full thread is
+archived here:
+
+    https://darkpawns.org/archive/usenet-1999-02-11-license-dispute
+
+This file exists so that never happens again.
+
+=====================================================================
+2. ORIGINAL DARK PAWNS CONTENT
+=====================================================================
+
+The original Dark Pawns world, help text and C code additions are
+Copyright (c) 1997-2010 the Dark Pawns Coding Team. They were published
+by R.E. Paret (Frontline) at https://github.com/rparet/darkpawns "at the
+request of some nostalgic former players". That repository carries no
+license file. This project uses that content in good faith, with full
+credit to its authors, and is seeking their explicit permission.
+
+=====================================================================
+3. MIT LICENSE (APPLIES TO ORIGINAL NEW CODE ONLY)
+=====================================================================
+
+Code written originally for this project -- the Go port authorship, the
+web admin interface, tooling, and website -- is additionally offered
+under the MIT License below.
+
+Where the MIT License and the DikuMUD/CircleMUD licenses conflict, the
+DikuMUD/CircleMUD terms govern the combined work as distributed. In
+particular, the MIT permission to sell copies does NOT apply to the game
+as a whole: the upstream non-commercial restriction stands.
+
 MIT License
 
 Copyright (c) 2026 Zach Greene
@@ -19,8 +113,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Original Dark Pawns game content Copyright (c) 1997-2010 Dark Pawns Coding Team.
-Used with permission.
