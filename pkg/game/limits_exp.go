@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log/slog"
 )
 
 func updatePosFromHP(p *Player, hp int) {
@@ -62,13 +61,27 @@ func SetTitle(p *Player, title string) {
 // ---------------------------------------------------------------------------
 // CheckAutowiz — from limits.c check_autowiz()
 // ---------------------------------------------------------------------------
+
+// CheckAutowiz is C's check_autowiz (src/limits.c:269-283), called from
+// gain_exp_regardless the moment a rise message is sent (:360).
+//
+// C logs "Initiating autowiz." at CMP / LVL_IMMORT / file FALSE and then shells
+// out to ../bin/autowiz, which rewrites wizlist and immlist. The port emits the
+// producer and spawns nothing: the reference oracle has no autowiz binary and
+// src/util/ has no source for one, so C's system() call fails quietly there
+// too. Go's wizlist and immlist are read as static files, so nothing needs
+// regenerating.
+//
+// The gate is C's, and both terms are constant here. use_autowiz is YES
+// (src/config.c:273) and the port has no such flag, so YES is written directly
+// rather than adding one (R4). mini_mud is set only by C's -m startup option
+// (src/comm.c:194-196) and the port has no mini-mud mode, so !mini_mud always
+// holds.
 func CheckAutowiz(p *Player) {
-	if p == nil || p.Level < LVL_IMMORT {
+	if p == nil || p.GetLevel() < LVL_IMMORT {
 		return
 	}
-	// C spawns autowiz external binary. In Go, log and defer to admin system.
-	// Source: src/limits.c:268-281
-	slog.Info("autowiz triggered", "player", p.Name, "level", p.Level)
+	MudLog("Initiating autowiz.", MudlogComplete, LVL_IMMORT, false)
 }
 
 // ---------------------------------------------------------------------------
@@ -247,12 +260,19 @@ func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
 		}
 	}
 
-	if announce && numLevels > 0 {
-		if numLevels == 1 {
-			sendToChar(p, "You rise a level!\r\n")
-		} else {
-			sendToChar(p, fmt.Sprintf("You rise %d levels!\r\n", numLevels))
+	if numLevels > 0 {
+		if announce {
+			if numLevels == 1 {
+				sendToChar(p, "You rise a level!\r\n")
+			} else {
+				sendToChar(p, fmt.Sprintf("You rise %d levels!\r\n", numLevels))
+			}
 		}
+		// src/limits.c:357-360: check_autowiz runs inside gain_exp_regardless
+		// whenever a level was gained, alongside the rise message and not gated
+		// on who prints it. do_advance's Silent call is C's per-level
+		// gain_exp_regardless (src/act.wizard.c:1569-1571), so it must emit the
+		// producer too, once per level gained at or above LVL_IMMORT.
 		CheckAutowiz(p)
 	}
 	return numLevels
