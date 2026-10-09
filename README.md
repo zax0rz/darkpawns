@@ -2,7 +2,6 @@
 [![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
 [![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
 ![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white)
-![Go](https://img.shields.io/badge/Go-1.26.9-00ADD8?style=flat&logo=go&logoColor=white)
 [![License: DikuMUD/CircleMUD + MIT](https://img.shields.io/badge/License-DikuMUD%20%2F%20CircleMUD%20%2B%20MIT-yellow.svg)](LICENSE)
 
 ```
