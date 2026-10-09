@@ -14,9 +14,11 @@ import (
 // Rules and visibility are resolved here; transports only render Messages and
 // translate Room into their existing structured payload.
 type ObservationResult struct {
-	Messages []ObservationMessage
-	Room     *RoomView
-	Events   []SemanticEvent
+	// Room text mirrors C look_at_room send_to_char, which reaches sleepers.
+	roomDelivery bool
+	Messages     []ObservationMessage
+	Room         *RoomView
+	Events       []SemanticEvent
 	// viewer is the player a room render (Room != nil) was built for; the
 	// renderer reports that room to the out-of-band observer once the text
 	// has been delivered.
@@ -118,6 +120,10 @@ func (w *World) RenderObservationMessages(result ObservationResult) {
 		if message.Literal {
 			format = strings.ReplaceAll(format, "$", "$$")
 		}
+		actType := ToChar
+		if result.roomDelivery {
+			actType |= ToSleep
+		}
 		Act(
 			w,
 			message.HideInvisible,
@@ -127,7 +133,7 @@ func (w *World) RenderObservationMessages(result ObservationResult) {
 			message.TargetObject,
 			format,
 			message.Argument,
-			ToChar,
+			actType,
 		)
 	}
 	if result.Room != nil && result.viewer != nil {
@@ -206,7 +212,7 @@ func (w *World) DoLookRoomAt(ch *Player, roomVNum int, ignoreBrief bool) Observa
 }
 
 func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeView bool) ObservationResult {
-	var result ObservationResult
+	result := ObservationResult{roomDelivery: true}
 	if room == nil {
 		result.literal(ch, "You are in a void.")
 		return result
