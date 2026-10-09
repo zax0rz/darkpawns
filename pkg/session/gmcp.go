@@ -452,11 +452,6 @@ func gmcpTableName(table []string, index int) string {
 	return table[index]
 }
 
-// gmcpRoomInfo reports a room the player was just shown.
-func (s *Session) gmcpRoomInfo(roomVNum int) {
-	s.gmcpRoomInfoForPlayer(roomVNum, s.player)
-}
-
 func (s *Session) gmcpRoomInfoForPlayer(roomVNum int, player *game.Player) {
 	if player == nil || !s.gmcpWants("Room.Info") {
 		return

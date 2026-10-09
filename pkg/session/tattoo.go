@@ -5,10 +5,7 @@
 package session
 
 import (
-	"fmt"
-
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // Tattoo type constants — from structs.h (tattoo.c)
@@ -46,59 +43,6 @@ const (
 	// Source: tattoo.c TAT_TIMER(ch)=24
 	TatCooldownHours = 24
 )
-
-// use_tattoo activates the player's tattoo power.
-// Returns true if a tattoo was successfully used.
-// Source: src/tattoo.c use_tattoo()
-func useTattoo(ch *Session) bool {
-	if ch.player == nil {
-		return false
-	}
-
-	if ch.player.TatTimer > 0 {
-		ch.Send(fmt.Sprintf("You can't use your tattoo's magick for %d more hour%s.\r\n",
-			ch.player.TatTimer, map[bool]string{true: "s", false: ""}[ch.player.TatTimer > 1]))
-		return false
-	}
-
-	switch ch.player.Tattoo {
-	case TatNone:
-		ch.Send("You don't have a tattoo.\r\n")
-
-	case TatSkull:
-		// Spawn skull mob (vnum 9), charm it, add as follower
-		// Source: src/tattoo.c
-		if mob, err := ch.manager.world.SpawnMob(9, ch.player.RoomVNum); err == nil {
-			mob.SetFollowingBody(ch.player)
-			mob.SetLevel(1)
-			mob.SetAffected(3) // AFF_CHARM bit
-			broadcastToRoom(ch, "$n's tattoo glows brightly for a second, and a skull appears!")
-			broadcastToRoom(ch, "$n's tattoo glows brightly for a second, and a skull appears!")
-			ch.Send("Your tattoo glows brightly for a second, and a skull appears!\r\n")
-		} else {
-			ch.Send("Your tattoo flickers but nothing happens.\r\n")
-		}
-
-	case TatEye:
-		// call_magic(ch, ch, NULL, SPELL_GREATPERCEPT, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellGreatPercept, DefaultWandLvl, ch.manager.world)
-
-	case TatShip:
-		// call_magic(ch, ch, NULL, SPELL_CHANGE_DENSITY, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellChangeDensity, DefaultWandLvl, ch.manager.world)
-
-	case TatAngel:
-		// call_magic(ch, ch, NULL, SPELL_BLESS, DEFAULT_WAND_LVL, CAST_WAND)
-		spells.Cast(ch.player, ch.player, spells.SpellBless, DefaultWandLvl, ch.manager.world)
-
-	default:
-		ch.Send("Your tattoo can't be 'use'd.\r\n")
-		return false
-	}
-
-	ch.player.TatTimer = TatCooldownHours
-	return false
-}
 
 // tattooAf shares C's effective-only tattoo modifiers with the game path.
 func tattooAf(ch *Session, add bool) {
