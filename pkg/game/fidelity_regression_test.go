@@ -259,62 +259,6 @@ func TestFidelityMindlinkMobFailureContract(t *testing.T) {
 	}
 }
 
-// TestFidelityDigCosmeticStub verifies that DoDig is a fully functional action
-// that spawns real objects and transfers them into the player's inventory on success.
-func TestFidelityDigCosmeticStub(t *testing.T) {
-	ch := NewPlayer(1, "Digger", 1001)
-	ch.SetHP(100)
-	ch.SetSkill(SkillDig, 1000) // guarantee success
-
-	world := &World{
-		rooms:           make(map[int]*parser.Room),
-		objs:            make(map[int]*parser.Obj),
-		objectInstances: make(map[int]*ObjectInstance),
-		players:         make(map[string]*Player),
-		roomItems:       make(map[int][]*ObjectInstance),
-	}
-	// Add room 1001 with suitable sector (e.g. SECT_DIRT = 2)
-	world.rooms[1001] = &parser.Room{
-		VNum:   1001,
-		Sector: 2,
-	}
-	ch.RoomVNum = 1001
-	world.players[ch.Name] = ch
-
-	// Initialize the prototype that will be spawned
-	world.objs[3001] = &parser.Obj{
-		VNum:      3001,
-		ShortDesc: "a shiny gold coin",
-		Keywords:  "coin gold shiny",
-	}
-
-	// Dig
-
-	// Keep trying until we spawn the item (since dig has a 20% chance of coins instead)
-	successCount := 0
-	for i := 0; i < 20; i++ {
-		// Reset inventory
-		ch.Inventory.Items = nil
-		result := DoDig(ch, world)
-		if result.Success {
-			successCount++
-			if len(ch.Inventory.Items) > 0 {
-				break
-			}
-		}
-	}
-
-	if successCount == 0 {
-		t.Error("Digging failed to succeed in 20 attempts")
-	}
-
-	if len(ch.Inventory.Items) == 0 {
-		t.Error("Digging succeeded but never spawned any items in player inventory (expected prototype 3001)")
-	} else if ch.Inventory.Items[0].VNum != 3001 {
-		t.Errorf("Spawned wrong item type: %v", ch.Inventory.Items[0])
-	}
-}
-
 func TestMobGetSexTranslatesCFileEncodingToActorEncoding(t *testing.T) {
 	tests := []struct {
 		name string

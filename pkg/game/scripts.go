@@ -2,7 +2,7 @@
 package game
 
 import (
-	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"fmt"
 
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
@@ -22,8 +22,17 @@ var ScriptEngine interface {
 
 // HasScript checks if a mob has a script for the given trigger.
 // Based on the bitmask values in structs.h lines 659-690.
+//
+// C's gate is record-and-flag, never the name: the callers test
+// GET_MOB_SCRIPT(ch) && MOB_SCRIPT_FLAGGED(ch, bit) (mobact.c:148, :161, :180,
+// interpreter.c:1459, act.movement.c:282, act.item.c:704, :760, fight.c:597,
+// :1891). A builder who clears the name in the OLC script menu while keeping
+// the flag leaves the record in place, so the gate still passes and run_script
+// reaches its empty-name arm (src/scripts.c:1763-1767). A flag can only be set
+// while the record exists, so the flag test alone is C's gate; RunScript's
+// empty-name branch supplies the producer.
 func (m *MobInstance) HasScript(trigger string) bool {
-	if m.Proto() == nil || m.Proto().ScriptName == "" {
+	if m.Proto() == nil {
 		return false
 	}
 
@@ -64,6 +73,15 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 		return false, nil
 	}
 
+	// run_script's !*script_name arm (src/scripts.c:1763-1767): the mobile's
+	// script record exists and carries the trigger flag, but its name was
+	// cleared in the OLC script menu. C logs and returns TRUE, which consumes
+	// the trigger at the onpulse_all and oncmd callers.
+	if m.Proto().ScriptName == "" {
+		scriptUnassignedProducer(m.GetName(), m.GetVNum())
+		return true, nil
+	}
+
 	// Set me in context if not already set
 	if ctx.Me == nil {
 		ctx.Me = m
@@ -72,6 +90,28 @@ func (m *MobInstance) RunScript(trigger string, ctx *ScriptContext) (bool, error
 	// run_script's result is the script's return value; perform_give
 	// ignores ongive's, and C has no fallback line for it.
 	return ScriptEngine.RunScript(ctx, m.Proto().ScriptName, trigger)
+}
+
+// scriptUnassignedProducer is run_script's empty-name producer
+// (src/scripts.c:1763-1767): "SYSERR: Attempting to call unassigned script for
+// %s (#%d)." at BRF / LVL_IMMORT / file TRUE, formatted with me's name and
+// vnum.
+//
+// C formats GET_NAME(me) and GET_MOB_VNUM(me). For a mobile me those are the
+// mobile's short description and prototype vnum; for a player me (the room and
+// object-oncmd owners, whose callers pass me = ch) GET_MOB_VNUM is -1, because
+// GET_MOB_VNUM is `IS_MOB(me) ? mob_index[...].virtual : -1` and IS_MOB is
+// false for a PC (src/utils.h:230-231, :431-432). The object-onpulse arm passes
+// me = NULL in C and faults before emitting; it is handled as an approved
+// divergence in RunObjPulseScript (DP-1416).
+//
+// Position: emitted where C calls mudlog, immediately after the name is read
+// and before any script is loaded. Held locks: none — every caller reaches
+// this where ScriptEngine.RunScript would otherwise run, after the world read
+// lock its owner lookup took has been released.
+func scriptUnassignedProducer(name string, mobVNum int) {
+	MudLog(fmt.Sprintf("SYSERR: Attempting to call unassigned script for %s (#%d).", name, mobVNum),
+		MudlogBrief, LVL_IMMORT, true)
 }
 
 // Helper to create script context for mob events
@@ -109,73 +149,4 @@ func (m *MobInstance) CreateSelfScriptContext() *ScriptContext {
 	ctx := m.CreateScriptContext(nil, nil, "")
 	ctx.ChRef = ctx.MeRef
 	return ctx
-}
-
-// CounterProcsRewards faithfully reproduces the C counter_procs() kill milestone logic
-// from src/fight.c lines 1252-1312.
-//
-// C source has a deliberate switch fall-through bug in the major milestone case:
-//
-//	switch(number(1,3)) {
-//	    case 1: GET_MAX_HIT(ch)++;
-//	    case 2: GET_MAX_MANA(ch)++;
-//	    case 3: GET_MAX_MOVE(ch)++;
-//	    default: GET_MAX_HIT(ch)++;
-//	    break;
-//	}
-//
-// Since number(1,3) returns 1-3 and ALL cases lack break:
-//
-//	roll 1 → case 1: HP++, fall→case 2: MANA++, fall→case 3: MOVE++, fall→default: HP++
-//	        = HP+2, MANA+1, MOVE+1
-//	roll 2 → case 2: MANA++, fall→case 3: MOVE++, fall→default: HP++
-//	        = HP+1, MANA+1, MOVE+1
-//	roll 3 → case 3: MOVE++, fall→default: HP++
-//	        = HP+1, MOVE+1
-//
-// The previous Go implementation (pkg/combat/fight_core.go CounterProcs) gave
-// HP+1, MANA+1, MOVE+1 unconditionally — only matching the roll=2 path.
-//
-// Returns true if a reward milestone was hit.
-func CounterProcsRewards(p *Player) bool {
-	if p == nil {
-		return false
-	}
-
-	kills := int64(p.Kills)
-
-	switch kills {
-	case 5000, 15000, 25000, 35000, 45000:
-		// Minor milestones: full heal + global blessing
-		p.SendMessage("The gods reward your glory in battle!\r\n")
-		p.Heal(p.GetMaxHP() - p.GetHP())
-		return true
-
-	case 1000, 2000, 10000, 20000, 30000, 40000, 50000:
-		// Major milestones: random stat boost with C fall-through bug
-		p.SendMessage("The gods reward your many victories!\r\n")
-
-		// #nosec G404 — game RNG, not cryptographic
-		roll := dprng.Number(1, 3) // number(1,3) returns 1-3
-
-		switch roll {
-		case 1:
-			p.MaxHealth += 2 // case 1 (HP++) + default (HP++) = HP+2
-			p.MaxMana += 1
-			p.MaxMove += 1
-		case 2:
-			p.MaxHealth += 1 // default only = HP+1
-			p.MaxMana += 1
-			p.MaxMove += 1
-		case 3:
-			p.MaxHealth += 1 // default only = HP+1
-			p.MaxMove += 1
-		}
-
-		p.Heal(p.GetMaxHP() - p.GetHP())
-		return true
-
-	default:
-		return false
-	}
 }

@@ -114,19 +114,6 @@ func IsDonationRoom(vnum int) bool {
 	return vnum == DonationRoom1 || vnum == DonationRoom2
 }
 
-// LoginStartRoom returns the appropriate start room for a player logging in.
-// Priority: frozen → FrozenStartRoom, immortal → ImmortStartRoom, else MortalStartRoom.
-// Matches config.c start room selection logic.
-func LoginStartRoom(p *Player) int {
-	if (p.GetFlags() & (1 << uint(PlrFrozen))) != 0 {
-		return FrozenStartRoom
-	}
-	if p.GetLevel() >= LVL_IMMORT {
-		return ImmortStartRoom
-	}
-	return MortalStartRoom
-}
-
 // SelectLoginRoom ports the load-room selection every main-menu entry runs
 // (src/interpreter.c:2191-2210):
 //

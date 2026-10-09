@@ -32,7 +32,7 @@ func TestSpecBank(t *testing.T) {
 	ch.SetBankGold(0)
 
 	proto, _ := w.GetMobPrototype(8034)
-	banker := NewMobInstance(proto, 1001)
+	banker := NewMob(proto, 1001)
 
 	lastMsg := func() string { s := out.String(); out.Reset(); return s }
 

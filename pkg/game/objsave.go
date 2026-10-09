@@ -8,10 +8,6 @@
 
 package game
 
-import (
-	"log/slog"
-)
-
 // --------------------------------------------------------------------------
 // C WEAR_* position mapping — matches the 0-based array indices in C
 // char_data.equipment[] (structs.h WEAR_* constants 0–21).
@@ -75,35 +71,6 @@ func SlotToCWearPos(s EquipmentSlot) (int, bool) {
 	return c, ok
 }
 
-// cWearPosCanWearFlag maps C WEAR_* index to the ITEM_WEAR_* bit required.
-func cWearPosCanWearFlag(cPos int) int {
-	m := map[int]int{
-		0:  0,       // WEAR_LIGHT is accepted without an ITEM_WEAR bit
-		1:  1 << 1,  // ITEM_WEAR_FINGER
-		2:  1 << 1,  // ITEM_WEAR_FINGER (alt)
-		3:  1 << 2,  // ITEM_WEAR_NECK
-		4:  1 << 2,  // ITEM_WEAR_NECK (alt)
-		5:  1 << 3,  // ITEM_WEAR_BODY
-		6:  1 << 4,  // ITEM_WEAR_HEAD
-		7:  1 << 5,  // ITEM_WEAR_LEGS
-		8:  1 << 6,  // ITEM_WEAR_FEET
-		9:  1 << 7,  // ITEM_WEAR_HANDS
-		10: 1 << 8,  // ITEM_WEAR_ARMS
-		11: 1 << 9,  // ITEM_WEAR_SHIELD
-		12: 1 << 10, // ITEM_WEAR_ABOUT
-		13: 1 << 11, // ITEM_WEAR_WAIST
-		14: 1 << 12, // ITEM_WEAR_WRIST
-		15: 1 << 12, // ITEM_WEAR_WRIST (alt)
-		16: 1 << 13, // ITEM_WEAR_WIELD
-		17: 1 << 14, // ITEM_WEAR_HOLD
-		18: 1 << 15, // ITEM_WEAR_THROW
-		19: 1 << 16, // ITEM_WEAR_ABLEGS
-		20: 1 << 17, // ITEM_WEAR_FACE
-		21: 1 << 18, // ITEM_WEAR_HOVER
-	}
-	return m[cPos]
-}
-
 // Flag constants matching ITEM_* from structs.h used for alignment checks.
 // ExtraFlags[0] bits.
 const (
@@ -137,76 +104,6 @@ func IsUnrentable(obj *ObjectInstance) bool {
 		return true
 	}
 	return false
-}
-
-// ==========================================================================
-// AutoEquip — matches the C auto_equip() logic.
-// locate: C WEAR_* index + 1 (1 = worn at pos 0, 22 = worn at pos 21).
-// ==========================================================================
-func AutoEquip(p *Player, obj *ObjectInstance, locate int) {
-	if locate <= 0 {
-		obj.Location = LocInventoryPlayer(p.Name)
-		if err := p.Inventory.addItem(obj); err != nil {
-			slog.Error("autoequip: inventory full on load", "player", p.Name, "obj_vnum", obj.VNum)
-		}
-		return
-	}
-	cPos := locate - 1
-	_, ok := CWearPosToSlot(cPos)
-	if !ok {
-		obj.Location = LocInventoryPlayer(p.Name)
-		if err := p.Inventory.addItem(obj); err != nil {
-			slog.Error("autoequip: inventory full on load (invalid pos)", "player", p.Name, "obj_vnum", obj.VNum)
-		}
-		return
-	}
-	rf := cWearPosCanWearFlag(cPos)
-	wf := obj.Prototype.WearFlags[0]
-	// C's WEAR_LIGHT branch accepts the saved position without checking a
-	// wear bit; every other position must carry its exact ITEM_WEAR bit.
-	wears := cPos == 0 || (wf&rf) != 0
-	// Warriors can wield in hold slot.
-	if cPos == 17 && !wears {
-		if (wf&(1<<13)) != 0 && ItemType(obj.Prototype.TypeFlag) == ItemWeaponType {
-			wears = true
-		}
-	}
-	if !wears {
-		obj.Location = LocInventoryPlayer(p.Name)
-		if err := p.Inventory.addItem(obj); err != nil {
-			slog.Error("autoequip: inventory full on load (cant wear)", "player", p.Name, "obj_vnum", obj.VNum)
-		}
-		return
-	}
-	// Alignment restrictions.
-	xf := obj.Prototype.ExtraFlags[0]
-	if (xf&FlagAntiEvil != 0 && p.IsEvil()) ||
-		(xf&FlagAntiGood != 0 && p.IsGood()) ||
-		(xf&FlagAntiNeutral != 0 && p.IsNeutral()) {
-		obj.Location = LocInventoryPlayer(p.Name)
-		if err := p.Inventory.addItem(obj); err != nil {
-			slog.Error("autoequip: inventory full on load (alignment)", "player", p.Name, "obj_vnum", obj.VNum)
-		}
-		return
-	}
-	if cPos == 0 {
-		slot, _ := CWearPosToSlot(cPos)
-		if err := p.Equipment.SetSlot(slot, obj); err != nil {
-			obj.Location = LocInventoryPlayer(p.Name)
-			if err := p.Inventory.addItem(obj); err != nil {
-				slog.Error("autoequip: inventory full on light-slot conflict", "player", p.Name, "obj_vnum", obj.VNum, "original_err", err)
-			}
-			return
-		}
-		obj.Location = LocEquippedPlayer(p.Name, slot)
-		return
-	}
-	if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
-		obj.Location = LocInventoryPlayer(p.Name)
-		if err := p.Inventory.addItem(obj); err != nil {
-			slog.Error("autoequip: inventory full on load (equip failed)", "player", p.Name, "obj_vnum", obj.VNum, "original_err", err)
-		}
-	}
 }
 
 // ==========================================================================

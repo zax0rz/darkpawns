@@ -1041,32 +1041,6 @@ func cmdWhere(s *Session, args []string) error {
 	return nil
 }
 
-// cmdSummon pulls a named player into your current room. Debug/admin convenience.
-func cmdSummon(s *Session, args []string) error {
-	if len(args) == 0 {
-		s.sendText("Summon who?")
-		return nil
-	}
-	targetName := strings.ToLower(args[0])
-	s.manager.mu.RLock()
-	defer s.manager.mu.RUnlock()
-	for _, sess := range s.manager.sessions {
-		if sess.player == nil {
-			continue
-		}
-		if strings.ToLower(sess.player.Name) == targetName {
-			old := sess.player.GetRoom()
-			sess.player.SetRoom(s.player.GetRoom())
-			s.sendText(fmt.Sprintf("%s materializes before you.", sess.player.Name))
-			sess.sendText(fmt.Sprintf("You are summoned by %s.", s.player.Name))
-			_ = old
-			return nil
-		}
-	}
-	s.sendText("No one by that name online.")
-	return nil
-}
-
 // Help ANSI codes (CCGRN/CCRED/CCCYN/CCNRM, C_CMP mode — act.informative.c).
 const (
 	helpGreen  = "\x1b[32m"

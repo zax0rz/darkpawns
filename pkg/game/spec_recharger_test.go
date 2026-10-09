@@ -35,7 +35,7 @@ func TestSpecRecharger(t *testing.T) {
 	}
 
 	proto, _ := w.GetMobPrototype(8)
-	recharger := NewMobInstance(proto, 1001)
+	recharger := NewMob(proto, 1001)
 
 	lastMsg := func() string { s := out.String(); out.Reset(); return s }
 

@@ -607,11 +607,13 @@ func TestScriptBudgetConfigurableTimeout(t *testing.T) {
 	}
 }
 
-// TestObjToVnumFallbackNoDeadlock guards against a self-deadlock: luaObjTo's
-// vnum fallback path used to call e.mu.Lock() even though it runs as a Lua
-// callback inside RunScript, which already holds e.mu (non-reentrant). A script
-// calling objto with a table that has only a vnum (no obj_id) would re-lock the
-// held mutex and hang the entire scripting engine.
+// TestObjToVnumFallbackNoDeadlock guards against a self-deadlock in a Lua
+// callback: the old engine-only objto path called e.mu.Lock() while
+// RunScript already held e.mu (non-reentrant), so a table with only a vnum
+// (no "struct" handle — C's lua_objto reads obj as NULL there) hung the
+// whole scripting engine. objto is bridge-only now; the guard keeps
+// watching the same shape — a vnum-only table through a Lua callback must
+// reach the bridge and return.
 func TestObjToVnumFallbackNoDeadlock(t *testing.T) {
 	dir := t.TempDir()
 	script := filepath.Join(dir, "objto_vnum.lua")
@@ -624,6 +626,7 @@ end
 		t.Fatalf("write: %v", err)
 	}
 
+	b := newFakeBridge()
 	engine := NewEngine(dir, &mockWorldForTest{})
 	if engine == nil {
 		t.Fatal("nil engine")
@@ -631,7 +634,7 @@ end
 
 	done := make(chan error, 1)
 	go func() {
-		_, err := engine.RunScript(&ScriptContext{RoomVNum: 456}, "objto_vnum.lua", "ontest")
+		_, err := engine.RunScript(&ScriptContext{World: b, ChRef: &player, MeRef: &healer, RoomVNum: 456}, "objto_vnum.lua", "ontest")
 		done <- err
 	}()
 
@@ -642,5 +645,8 @@ end
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("RunScript deadlocked calling objto with a vnum-only table")
+	}
+	if len(b.objToRooms) != 1 || b.objToRooms[0].Room != 456 {
+		t.Fatalf("objto bridge calls = %+v, want one ObjToRoom to room 456", b.objToRooms)
 	}
 }

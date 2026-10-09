@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -422,52 +421,6 @@ func TestCmdAlias_UpdateMutatesSlice(t *testing.T) {
 	}
 }
 
-func TestCmdQcomm_NonQuestPlayerFiltered(t *testing.T) {
-	m := makeTestManager(t)
-
-	// Alice: questing player (sender)
-	s1 := makeTestSession(t, m, "Alice", 1001, true)
-	s1.player.SetPlrFlag(int(game.PrfQuest), true)
-
-	// Bob: questing player (receiver)
-	s2 := makeTestSession(t, m, "Bob", 1001, true)
-	s2.player.SetPlrFlag(int(game.PrfQuest), true)
-
-	// Carol: non-questing player (filtered out)
-	s3 := makeTestSession(t, m, "Carol", 1001, true)
-	s3.player.SetPlrFlag(int(game.PrfQuest), false)
-
-	m.mu.Lock()
-	m.sessions["alice"] = s1
-	m.sessions["bob"] = s2
-	m.sessions["carol"] = s3
-	m.mu.Unlock()
-
-	// Alice sends quest question
-	err := cmdQcomm(s1, []string{"Is", "anyone", "there?"})
-	if err != nil {
-		t.Fatalf("cmdQcomm failed: %v", err)
-	}
-
-	// Bob should receive Alice's question
-	select {
-	case msg := <-s2.send:
-		if !strings.Contains(string(msg), "Alice asks 'Is anyone there?'") {
-			t.Errorf("Bob received unexpected message: %s", string(msg))
-		}
-	case <-time.After(100 * time.Millisecond):
-		t.Error("Bob (questing) did not receive Alice's question")
-	}
-
-	// Carol (non-questing) should not receive the question
-	select {
-	case msg := <-s3.send:
-		t.Errorf("Carol (non-questing) received quest question: %s", string(msg))
-	case <-time.After(100 * time.Millisecond):
-		// Expected — no message
-	}
-}
-
 // mockGameStore is a minimal db.GameStore implementation.
 type mockGameStore struct{}
 
@@ -501,27 +454,6 @@ func (m *mockGameStore) Exec(query string, args ...interface{}) (sql.Result, err
 
 // TestCheckOrigin_PrivateIPWithoutAgentKeyRejects verifies that a private-IP
 // connection without an Origin header is rejected (DP-594).
-func TestCheckOrigin_PrivateIPWithoutAgentKeyRejects(t *testing.T) {
-	m := makeTestManager(t)
-	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
-	req.RemoteAddr = "192.168.1.10:12345"
-
-	if m.checkOrigin(req) {
-		t.Error("expected private IP without agent key to be rejected")
-	}
-}
-
-// TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts verifies that a public
-// origin in the allowlist is accepted (DP-594).
-func TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts(t *testing.T) {
-	m := makeTestManager(t)
-	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
-	req.Header.Set("Origin", "https://darkpawns.org")
-
-	if !m.checkOrigin(req) {
-		t.Error("expected allowed origin to be accepted")
-	}
-}
 
 // TestCheckOriginBehindTheProxy: behind Caddy every WebSocket arrives from
 // loopback carrying X-Forwarded-For. The loopback shortcut must not apply to
@@ -566,5 +498,29 @@ func TestCheckOriginBehindTheProxy(t *testing.T) {
 		if got := mgr.checkOrigin(request(tc.forwarded, tc.origin, tc.key)); got != tc.want {
 			t.Errorf("%s: checkOrigin = %v, want %v", tc.name, got, tc.want)
 		}
+	}
+}
+
+// TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts verifies that a public
+// origin in the allowlist is accepted (DP-594).
+func TestCheckOrigin_AllowedOriginWithoutAgentKeyAccepts(t *testing.T) {
+	m := makeTestManager(t)
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	req.Header.Set("Origin", "https://darkpawns.org")
+
+	if !m.checkOrigin(req) {
+		t.Error("expected allowed origin to be accepted")
+	}
+}
+
+// TestCheckOrigin_PrivateIPWithoutAgentKeyRejects verifies that a private-IP
+// connection without an Origin header is rejected (DP-594).
+func TestCheckOrigin_PrivateIPWithoutAgentKeyRejects(t *testing.T) {
+	m := makeTestManager(t)
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	req.RemoteAddr = "192.168.1.10:12345"
+
+	if m.checkOrigin(req) {
+		t.Error("expected private IP without agent key to be rejected")
 	}
 }

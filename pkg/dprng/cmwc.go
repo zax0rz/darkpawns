@@ -43,6 +43,8 @@ func (g *Generator) Seed(seed uint32) {
 }
 
 // Next returns the next raw uint32 from the CMWC stream.
+// Class (d) seam, kept on purpose: draw-log and reproducibility tooling
+// reserve this entry point; not called by the server itself.
 func (g *Generator) Next() uint32 {
 	const (
 		multiplier = uint64(123471786)
@@ -106,6 +108,8 @@ func Seed(seed uint32) {
 // contract across reseeds), this yields a byte-identical stream on every call. It
 // exists so tests of code that draws from the global stream can establish a
 // reproducible starting state; production boot uses Seed/ConfigureFromEnvironment.
+// Class (d) seam, kept on purpose: draw-log and reproducibility tooling
+// reserve this entry point; not called by the server itself.
 func ResetStream(seed uint32) {
 	streamMu.Lock()
 	defer streamMu.Unlock()

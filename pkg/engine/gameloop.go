@@ -243,15 +243,6 @@ func (gl *GameLoop) StopContext(ctx context.Context) error {
 	}
 }
 
-// Uptime returns a snapshot of the server uptime.
-func (gl *GameLoop) Uptime() UptimeSnapshot {
-	return UptimeSnapshot{
-		StartedAt:    gl.startedAt,
-		CurrentPulse: gl.Pulse.Load(),
-		Elapsed:      time.Since(gl.startedAt),
-	}
-}
-
 // run is the main goroutine body.
 func (gl *GameLoop) run(ctx context.Context) {
 	defer close(gl.doneCh)

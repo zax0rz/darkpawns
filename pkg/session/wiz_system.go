@@ -434,36 +434,6 @@ var wizutilNames = map[wizutilSubcmd]string{
 	wizutilUnaffect: "unaffect",
 }
 
-// cmdWizutil — player utility commands (LVL_IMMORT)
-func cmdWizutil(s *Session, args []string) error {
-	if !checkLevel(s, LVL_IMMORT) {
-		s.Send("Huh?!?")
-		return nil
-	}
-	if len(args) < 2 {
-		s.Send("Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect <player>")
-		return nil
-	}
-	subName := strings.ToLower(args[0])
-	targetName := args[1]
-
-	var subcmd wizutilSubcmd
-	found := false
-	for k, v := range wizutilNames {
-		if strings.HasPrefix(v, subName) {
-			subcmd = k
-			found = true
-			break
-		}
-	}
-	if !found {
-		s.Send("Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect")
-		return nil
-	}
-
-	return wizutilDispatch(s, subcmd, targetName)
-}
-
 // wizutilDispatch performs one wizutil sub-action against a named target.
 // Faithful port of do_wizutil (act.wizard.c:2077). The mortal-affecting cases
 // (pardon/notitle/squelch/freeze/thaw) mirror C byte-for-byte: the right

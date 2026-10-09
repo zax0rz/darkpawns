@@ -41,7 +41,7 @@ func newMobactDrawTestWorld() *World {
 }
 
 func newMobactDrawTestMob(flags ...string) *MobInstance {
-	return NewMobInstance(&parser.Mob{
+	return NewMob(&parser.Mob{
 		VNum:        9401,
 		Keywords:    "draw test mob",
 		ShortDesc:   "a draw test mob",

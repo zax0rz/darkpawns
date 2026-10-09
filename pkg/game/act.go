@@ -635,13 +635,3 @@ func (w *World) actChar(roomVNum int) []Actor {
 func SendToChar(ch Actor, format string) {
 	Act(nil, false, ch, nil, nil, nil, format, "", ToChar)
 }
-
-// SendToVict sends a formatted message to just vict.
-func SendToVict(ch, vict Actor, format string) {
-	Act(nil, false, ch, vict, nil, nil, format, "", ToVict)
-}
-
-// SendToRoom sends a formatted message to everyone in ch's room except ch.
-func SendToRoom(world *World, ch Actor, format string) {
-	Act(world, false, ch, nil, nil, nil, format, "", ToRoom)
-}

@@ -68,6 +68,14 @@ func DoStealth(ch *Player) SkillResult {
 	return doSneak(ch, SkillStealth, skillNumStealth)
 }
 
+// DoHideInWorld applies the live command's room/weather gates before running
+// the ordinary hide roll. C's do_hide reads the global sunlight and the
+// actor's current room sector, so this must be called by the session command
+// path with its authoritative world.
+// Class (d) test seam, kept on purpose: the stealth skill-mechanics tests
+// (dex bonus, toggle, daytime gates) drive it; the live command path is
+// DoHideInWorld via command.CmdHide. deadcode -test with cmd/tools roots
+// does not count this package's own tests, so it is falsely listed.
 // DoHide implements the newbie path through do_hide() from
 // src/act.other.c:247-306 (subcmd == 0). The world-aware command entry point
 // is DoHideInWorld; this compatibility wrapper keeps direct game-layer tests
@@ -76,10 +84,6 @@ func DoHide(ch *Player) SkillResult {
 	return doHide(ch, nil, false)
 }
 
-// DoHideInWorld applies the live command's room/weather gates before running
-// the ordinary hide roll. C's do_hide reads the global sunlight and the
-// actor's current room sector, so this must be called by the session command
-// path with its authoritative world.
 func DoHideInWorld(ch *Player, world *World) SkillResult {
 	return doHide(ch, world, false)
 }
@@ -141,15 +145,6 @@ func hideDaytimeSectorMessage(world *World, roomVNum int) string {
 	default:
 		return ""
 	}
-}
-
-// DoKabuki implements the SCMD_KABUKI path through do_hide() from
-// src/act.other.c:247-306. It is the same roll/flow as DoHide but uses the
-// kabuki skill (SkillKabuki) and message. The live command entry point is
-// DoKabukiInWorld, which supplies the room needed by the shared daytime
-// sector/weather gate.
-func DoKabuki(ch *Player) SkillResult {
-	return doHide(ch, nil, true)
 }
 
 // DoKabukiInWorld applies the shared do_hide room/weather gates for the

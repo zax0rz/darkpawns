@@ -52,74 +52,9 @@ func ReadInvalidList() error {
 	return nil
 }
 
-// AddBan adds a site ban. Callback-friendly wrapper.
-func AddBan(site, bannedBy, flag string) error {
-	if banManager == nil {
-		banManager = NewBanManager()
-	}
-	banType := banTypeFromString(flag)
-	return banManager.AddBan(site, banType, bannedBy)
-}
-
-// RemoveBan removes a site ban.
-func RemoveBan(site string) error {
-	if banManager == nil {
-		banManager = NewBanManager()
-	}
-	_, err := banManager.RemoveBan(site)
-	return err
-}
-
-// IsBanned checks if a hostname is banned, returning the BanType.
-func IsBanned(hostname string) int {
-	if banManager == nil {
-		return BanNot
-	}
-	return banManager.IsBanned(hostname)
-}
-
-// BanTypeName returns the string name for a ban type integer.
-func BanTypeName(t int) string {
-	if t < 0 || t >= len(banTypeNames) {
-		return "ERROR"
-	}
-	return banTypeNames[t]
-}
-
-// ListBans returns a formatted string of all active bans.
-func ListBans() string {
-	if banManager == nil {
-		return "No bans loaded.\n"
-	}
-	return banManager.ListBans()
-}
-
 // ---------------------------------------------------------------------------
 // Dream system bridge
 // ---------------------------------------------------------------------------
-
-// ProcessDream processes a player's dream state.
-// Returns the dream result or nil if the dream system is disabled.
-func ProcessDream(ch DreamContext, lastDeath int64) *DreamResult {
-	result := Dream(ch)
-	return &result
-}
-
-// ValidName checks if a name is valid for character creation.
-// Uses BanManager and the HasActiveCharacter callback.
-func ValidName(name string) bool {
-	if len(name) < 2 || len(name) > 20 {
-		return false
-	}
-	if banManager != nil && !banManager.ValidName(name) {
-		return false
-	}
-	// Check if character is already online (DP-554)
-	if HasActiveCharacter != nil && HasActiveCharacter(name) {
-		return false
-	}
-	return true
-}
 
 // ValidNameNoActive checks if a name is valid for character creation without
 // checking if the character is currently online.

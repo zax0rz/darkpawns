@@ -10,7 +10,6 @@
 package game
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -33,22 +32,6 @@ const (
 // ---------------------------------------------------------------------------
 // RealTimePassed — calculate real time elapsed between two timestamps
 // ---------------------------------------------------------------------------
-
-// RealTimePassed returns a TimeInfoData representing the real (wall-clock) time
-// elapsed over the interval [t1, t2]. Only hours and day are filled; month,
-// year, and moon are set to -1 / 0 as in the C original.
-// Ported from real_time_passed() in src/utils.c.
-func RealTimePassed(t2, t1 time.Time) TimeInfoData {
-	secs := int64(t2.Sub(t1).Seconds())
-
-	return TimeInfoData{
-		Hours: int(secs/SECS_PER_REAL_HOUR) % 24,
-		Day:   int(secs / SECS_PER_REAL_DAY),
-		Month: -1,
-		Year:  -1,
-		Moon:  0,
-	}
-}
 
 // ---------------------------------------------------------------------------
 // MudTimePassed — calculate MUD time elapsed between two timestamps
@@ -105,41 +88,9 @@ func Age(birthUnix int64) TimeInfoData {
 // PlayingTime — calculate total play time
 // ---------------------------------------------------------------------------
 
-// PlayingTime returns a TimeInfoData representing the total real-world time
-// the player has been playing (current session + accumulated from past sessions).
-// Only hours and day are meaningful; months/years are zero.
-// Ported from playing_time() in src/utils.c.
-//
-// In C: time_t secs = (time(0) - ch->player.time.logon) + ch->player.time.played;
-//
-//	pt.day = secs / SECS_PER_REAL_DAY;
-//	pt.hours = (secs % SECS_PER_REAL_DAY) / SECS_PER_REAL_HOUR;
-func PlayingTime(connectedAt time.Time, playedDuration int64) TimeInfoData {
-	currentSession := int64(time.Since(connectedAt).Seconds())
-	totalSecs := currentSession + playedDuration
-
-	days := totalSecs / SECS_PER_REAL_DAY
-	hours := (totalSecs % SECS_PER_REAL_DAY) / SECS_PER_REAL_HOUR
-
-	return TimeInfoData{
-		Hours: int(hours),
-		Day:   int(days),
-		Month: 0,
-		Year:  0,
-		Moon:  0,
-	}
-}
-
 // ---------------------------------------------------------------------------
 // PlayingTimeString — formatted play-time string
 // ---------------------------------------------------------------------------
-
-// PlayingTimeString returns a human-readable play-time string like
-// "X days and Y hours" (matching the C output format).
-func PlayingTimeString(connectedAt time.Time, playedDuration int64) string {
-	pt := PlayingTime(connectedAt, playedDuration)
-	return fmt.Sprintf("%d days and %d hours", pt.Day, pt.Hours)
-}
 
 // ---------------------------------------------------------------------------
 // ParseRace — convert race name character to race constant

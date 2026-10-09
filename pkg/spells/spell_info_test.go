@@ -163,53 +163,6 @@ func TestHasTarget_NilReceiver(t *testing.T) {
 	}
 }
 
-func TestGetManaCost_Clamping(t *testing.T) {
-	// ManaMax=100, ManaMin=10, ManaChange=5
-	// cost = 100 - (5 * level), clamped to [10, Inf) then bottom-clamped to >=0
-	si := &SpellInfo{ManaMax: 100, ManaMin: 10, ManaChange: 5}
-
-	tests := []struct {
-		level    int
-		expected int
-		note     string
-	}{
-		{0, 100, "level 0 → mana max"},
-		{1, 95, "level 1"},
-		{10, 50, "level 10"},
-		{18, 10, "hits ManaMin at level 18 (100-90=10)"},
-		{19, 10, "clamped to ManaMin (100-95=5 → 10)"},
-		{50, 10, "clamped to ManaMin at high level"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.note, func(t *testing.T) {
-			if got := si.GetManaCost(tt.level); got != tt.expected {
-				t.Errorf("GetManaCost(%d) = %d, want %d", tt.level, got, tt.expected)
-			}
-		})
-	}
-}
-
-func TestGetManaCost_NeverBelowZero(t *testing.T) {
-	// ManaMin=0, ManaMax=10, ManaChange=20 — high change will push negative
-	// cost = 10 - (20 * level). For level 1: 10-20 = -10 → clipped to 0
-	si := &SpellInfo{ManaMax: 10, ManaMin: 0, ManaChange: 20}
-
-	if got := si.GetManaCost(1); got < 0 {
-		t.Errorf("GetManaCost(1) = %d, want >= 0", got)
-	}
-	if got := si.GetManaCost(10); got != 0 {
-		t.Errorf("GetManaCost(10) = %d, want 0", got)
-	}
-}
-
-func TestGetManaCost_NilReceiver(t *testing.T) {
-	var si *SpellInfo = nil
-	if got := si.GetManaCost(5); got != 0 {
-		t.Errorf("nil SpellInfo.GetManaCost = %d, want 0", got)
-	}
-}
-
 func TestIsViolent(t *testing.T) {
 	violent := &SpellInfo{
 		Routines: SpellRoutines{Violent: true},

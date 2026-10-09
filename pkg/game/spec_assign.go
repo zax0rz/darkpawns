@@ -325,6 +325,25 @@ var MobSpecAssign = map[int]string{
 	21246: "con_seller",
 }
 
+// AllSpecNames returns a deduplicated set of all spec procedure names
+// referenced across mob, obj, and room assignments.
+// Class (d) test seam, kept on purpose: the spec smoke tests iterate the registry through it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
+func AllSpecNames() map[string]bool {
+	names := make(map[string]bool)
+	for _, n := range MobSpecAssign {
+		names[n] = true
+	}
+	for _, n := range ObjSpecAssign {
+		names[n] = true
+	}
+	for _, n := range RoomSpecAssign {
+		names[n] = true
+	}
+	return names
+}
+
 // ObjSpecAssign maps object virtual number to spec procedure name.
 // Source: assign_objects() in spec_assign.c
 var ObjSpecAssign = map[int]string{
@@ -426,14 +445,6 @@ func GetMobSpec(vnum int) SpecFunc {
 	return nil
 }
 
-// GetObjSpec returns the spec function for an obj VNum, or nil.
-func GetObjSpec(vnum int) SpecFunc {
-	if name, ok := ObjSpecAssign[vnum]; ok {
-		return SpecRegistry[name]
-	}
-	return nil
-}
-
 // GetObjSpecForObject returns the object-aware handler for vnum. Existing
 // object specials retain their historical SpecFunc behavior through a nil-mob
 // adapter until they are individually proven to need the concrete receiver.
@@ -474,19 +485,3 @@ func GetRoomSpec(vnum int) SpecFunc {
 //    silently returns nil, which means a zone's special behavior disappears
 //    without any log noise. A startup panic or warning would surface missing
 //    registrations immediately.
-
-// AllSpecNames returns a deduplicated set of all spec procedure names
-// referenced across mob, obj, and room assignments.
-func AllSpecNames() map[string]bool {
-	names := make(map[string]bool)
-	for _, n := range MobSpecAssign {
-		names[n] = true
-	}
-	for _, n := range ObjSpecAssign {
-		names[n] = true
-	}
-	for _, n := range RoomSpecAssign {
-		names[n] = true
-	}
-	return names
-}

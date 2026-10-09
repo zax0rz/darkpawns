@@ -93,20 +93,6 @@ func NewAffect(spellID int, location int, duration int, magnitude int, source st
 	return affect
 }
 
-// NewAffectDeprecated is backward-compatible with the old NewAffect(affectType, duration, magnitude, source) signature.
-//
-// Deprecated: Use NewAffect(spellID, location, duration, magnitude, source) instead.
-func NewAffectDeprecated(affectType int, duration int, magnitude int, source string) *Affect {
-	// Check if this is a status affect (has flags)
-	if flags, ok := StatusAffectFlags[affectType]; ok {
-		af := NewAffectDirect(0, ApplyNone, duration, magnitude, flags, source)
-		af.Type = affectType // backward compat
-		return af
-	}
-	// Otherwise treat as a stat affect — affectType IS the location
-	return NewAffect(0, affectType, duration, magnitude, source)
-}
-
 // NewAffectDirect creates an affect with explicit flags and stack settings.
 // Used by equipment and item code that needs full control over the affect.
 func NewAffectDirect(spellID int, location int, duration int, magnitude int, flags uint64, source string) *Affect {
@@ -420,16 +406,4 @@ var StatusAffectFlags = map[int]uint64{
 	145: AFFMount,
 	146: AFFNothing,
 	147: AFFRobbed,
-}
-
-// NewAffectCompat is backward-compatible with the old NewAffect(affectType, duration, magnitude, source) signature.
-//
-// Deprecated: Use NewAffect(spellID, location, duration, magnitude, source) instead.
-func NewAffectCompat(affectType int, duration int, magnitude int, source string) *Affect {
-	// Check if this is a status affect (has flags)
-	if flags, ok := StatusAffectFlags[affectType]; ok {
-		return NewAffectDirect(0, ApplyNone, duration, magnitude, flags, source)
-	}
-	// Otherwise treat as a stat affect — affectType IS the location
-	return NewAffect(0, affectType, duration, magnitude, source)
 }

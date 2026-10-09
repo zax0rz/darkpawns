@@ -126,31 +126,6 @@ func NewAgentStore(filePath string) (*AgentStore, error) {
 	return s, nil
 }
 
-// Save persists the store to the JSON file atomically.
-func (s *AgentStore) Save() error {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	sj := storeJSON{
-		Agents:        s.agents,
-		Findings:      s.findings,
-		Triages:       s.triages,
-		NextFindingID: s.nextFindingID,
-		NextTriageID:  s.nextTriageID,
-	}
-
-	data, err := json.MarshalIndent(sj, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	tmp := s.filePath + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, s.filePath)
-}
-
 // GetAgents returns all agent statuses.
 func (s *AgentStore) GetAgents() []*AgentStatus {
 	s.mu.RLock()
