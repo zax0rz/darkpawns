@@ -995,6 +995,9 @@ func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 			return true
 		}
 		hired.SetMobFlag(MobFlagHunter)
+		// spec_procs2.c:893-907: get_player_vis found a player, so the hired
+		// assassin's prey has an id number and set_hunting logs first.
+		LogHuntingStart(hired, victim)
 		hired.SetHunting(victim.GetName())
 		sendToChar(ch, "We cannot contact you if the job succeeds or not...security, you know.")
 		Act(w, false, ch, hired, nil, nil, "$n hires $N for a job.", "", ToRoom)

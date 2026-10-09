@@ -299,18 +299,14 @@ func cmdAdvance(s *Session, args []string) error {
 			"You feel slightly different."
 		game.Act(s.manager.world, false, s.player, victim, nil, nil,
 			promotionText, "", game.ToVict)
-		var levelMessages strings.Builder
+		// C's promotion loop calls gain_exp_regardless once per level
+		// (src/act.wizard.c:1569-1571), and that function sends the rise
+		// message and then runs check_autowiz itself (src/limits.c:350-360). The
+		// messages are deliberately NOT batched here: doing so put every autowiz
+		// line ahead of every rise line in the victim's own stream.
 		for level := victim.GetLevel(); level < newLevel; level++ {
 			gain := game.ExpNeededForLevel(victim) - victim.GetExp()
-			levelsGained := s.manager.world.GainExpRegardlessSilent(victim, gain)
-			if levelsGained == 1 {
-				levelMessages.WriteString("You rise a level!\r\n")
-			} else if levelsGained > 1 {
-				_, _ = fmt.Fprintf(&levelMessages, "You rise %d levels!\r\n", levelsGained)
-			}
-		}
-		if levelMessages.Len() > 0 {
-			victim.SendMessage(levelMessages.String())
+			s.manager.world.GainExpRegardless(victim, gain)
 		}
 	}
 

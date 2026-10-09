@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log/slog"
 )
 
 func updatePosFromHP(p *Player, hp int) {
@@ -62,13 +61,27 @@ func SetTitle(p *Player, title string) {
 // ---------------------------------------------------------------------------
 // CheckAutowiz — from limits.c check_autowiz()
 // ---------------------------------------------------------------------------
+
+// CheckAutowiz is C's check_autowiz (src/limits.c:269-283), called from
+// gain_exp_regardless the moment a rise message is sent (:360).
+//
+// C logs "Initiating autowiz." at CMP / LVL_IMMORT / file FALSE and then shells
+// out to ../bin/autowiz, which rewrites wizlist and immlist. The port emits the
+// producer and spawns nothing: the reference oracle has no autowiz binary and
+// src/util/ has no source for one, so C's system() call fails quietly there
+// too. Go's wizlist and immlist are read as static files, so nothing needs
+// regenerating.
+//
+// The gate is C's, and both terms are constant here. use_autowiz is YES
+// (src/config.c:273) and the port has no such flag, so YES is written directly
+// rather than adding one (R4). mini_mud is set only by C's -m startup option
+// (src/comm.c:194-196) and the port has no mini-mud mode, so !mini_mud always
+// holds.
 func CheckAutowiz(p *Player) {
-	if p == nil || p.Level < LVL_IMMORT {
+	if p == nil || p.GetLevel() < LVL_IMMORT {
 		return
 	}
-	// C spawns autowiz external binary. In Go, log and defer to admin system.
-	// Source: src/limits.c:268-281
-	slog.Info("autowiz triggered", "player", p.Name, "level", p.Level)
+	MudLog("Initiating autowiz.", MudlogComplete, LVL_IMMORT, false)
 }
 
 // ---------------------------------------------------------------------------
@@ -200,19 +213,15 @@ func (w *World) GainExp(p *Player, gain int) {
 // ---------------------------------------------------------------------------
 // GainExpRegardless — from limits.c gain_exp_regardless()
 // ---------------------------------------------------------------------------
-func (w *World) GainExpRegardless(p *Player, gain int) {
-	w.gainExpRegardless(p, gain, true)
-}
 
-// GainExpRegardlessSilent applies the same state transitions as
-// GainExpRegardless but leaves announcement framing to the caller. This is
-// used by do_advance, whose C loop emits one contiguous stream of
-// "You rise a level!" messages across repeated gain_exp_regardless calls.
-func (w *World) GainExpRegardlessSilent(p *Player, gain int) int {
-	return w.gainExpRegardless(p, gain, false)
-}
-
-func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
+// GainExpRegardless returns the number of levels gained in this call. C's body
+// ends with the rise message followed by check_autowiz, once per call
+// (src/limits.c:350-360), and do_advance's promotion loop calls it once per
+// level (src/act.wizard.c:1569-1571). The two lines therefore interleave in the
+// promoted character's own stream, which is why the announcement cannot be
+// batched by a caller: doing so would put every autowiz line before every rise
+// line.
+func (w *World) GainExpRegardless(p *Player, gain int) int {
 	if p == nil {
 		return 0
 	}
@@ -247,12 +256,19 @@ func (w *World) gainExpRegardless(p *Player, gain int, announce bool) int {
 		}
 	}
 
-	if announce && numLevels > 0 {
+	if numLevels > 0 {
+		// C's send_to_char writes these bytes as given (src/limits.c:353-356),
+		// and both strings already end in CRLF; sendToChar would add a second
+		// one.
 		if numLevels == 1 {
-			sendToChar(p, "You rise a level!\r\n")
+			p.SendMessage("You rise a level!\r\n")
 		} else {
-			sendToChar(p, fmt.Sprintf("You rise %d levels!\r\n", numLevels))
+			p.SendMessage(fmt.Sprintf("You rise %d levels!\r\n", numLevels))
 		}
+		// src/limits.c:357-360: check_autowiz runs inside gain_exp_regardless
+		// whenever a level was gained, immediately after the rise message. Both
+		// are per call, so the two lines interleave in the promoted character's
+		// stream exactly as C's do.
 		CheckAutowiz(p)
 	}
 	return numLevels

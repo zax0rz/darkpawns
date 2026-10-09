@@ -1912,6 +1912,12 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			} else {
 				mob.ConfigureCreatedMobile(result.SpawnMobLevel)
 				if result.SpawnMobHunting {
+					// create_mobile's hunting arm (src/new_cmds2.c:609-613): the
+					// new mobile hunts the player who trained, so set_hunting
+					// logs "… started hunting <player>" before it stores the
+					// target. C also gates this on !mini_mud; the port has no
+					// mini-mud mode.
+					game.LogHuntingStart(mob, ch)
 					s.GetWorld().SetHunting(mob.GetName(), ch.GetName(), true)
 				}
 			}

@@ -23,6 +23,9 @@ type fakeBridge struct {
 	commands []string
 	says     []string
 	logs     []string
+	// log()'s success arm is C's file-TRUE producer (scripts.c:791), so it
+	// arrives through the adapter's MudLog sink rather than Log.
+	logFiles []recordedMudlog
 
 	// onCommand, when set, runs for each Command (used to nest a script).
 	onCommand func(me CharRef, line string)
@@ -52,6 +55,12 @@ func (f *fakeBridge) ApplyChar(ref CharRef, w CharWrite) {
 	f.applied = append(f.applied, appliedChar{ref, w})
 }
 func (f *fakeBridge) ApplyObj(ObjRef, ObjWrite) {}
+
+// MudLog is the adapter's file-TRUE sink (pkg/game/world_bridge.go).
+func (f *fakeBridge) MudLog(msg string, typ, level int, toFile bool) {
+	f.logFiles = append(f.logFiles, recordedMudlog{msg: msg, typ: typ, level: level, toFile: toFile})
+}
+
 func (f *fakeBridge) CharRoom(ref CharRef) (int, bool) {
 	r, ok := f.room[ref]
 	return r, ok
@@ -184,9 +193,9 @@ end
 	if _, err := e.RunScript(bridgeContext(b, player, healer, "hello"), "t.lua", "ongive"); err != nil {
 		t.Fatalf("RunScript: %v", err)
 	}
-	want := "Zach|1|1234|a loaf of bread|24|12220|nil|12200|12201|2|a guard|the healer|hello"
-	if len(b.logs) != 1 || b.logs[0] != want {
-		t.Fatalf("script saw %q, want %q", b.logs, want)
+	want := recordedMudlog{msg: "Zach|1|1234|a loaf of bread|24|12220|nil|12200|12201|2|a guard|the healer|hello", typ: 1, level: 31, toFile: true}
+	if len(b.logFiles) != 1 || b.logFiles[0] != want {
+		t.Fatalf("script saw %+v, want %+v", b.logFiles, want)
 	}
 }
 
@@ -346,8 +355,13 @@ func TestBridgeGlobalsPersistAcrossRuns(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []string{"argument=south", "argument=south"}
-	if !reflect.DeepEqual(b.logs, want) {
-		t.Fatalf("logs %q, want %q", b.logs, want)
+	if len(b.logFiles) != len(want) {
+		t.Fatalf("producers %+v, want %d", b.logFiles, len(want))
+	}
+	for i, item := range b.logFiles {
+		if item.msg != want[i] || item.typ != 1 || item.level != 31 || !item.toFile {
+			t.Fatalf("producer[%d]=%+v, want %q at BRF/LVL_IMMORT/file TRUE", i, item, want[i])
+		}
 	}
 }
 
@@ -371,7 +385,12 @@ end
 		t.Fatalf("RunScript: %v", err)
 	}
 	want := []string{"south|1|5|bread", "That will cost 2000 coins|4294967295|5%", "a+b+c|43"}
-	if !reflect.DeepEqual(b.logs, want) {
-		t.Fatalf("logs %q, want %q", b.logs, want)
+	if len(b.logFiles) != len(want) {
+		t.Fatalf("producers %+v, want %d", b.logFiles, len(want))
+	}
+	for i, item := range b.logFiles {
+		if item.msg != want[i] || item.typ != 1 || item.level != 31 || !item.toFile {
+			t.Fatalf("producer[%d]=%+v, want %q at BRF/LVL_IMMORT/file TRUE", i, item, want[i])
+		}
 	}
 }
