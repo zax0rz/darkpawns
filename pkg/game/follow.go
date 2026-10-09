@@ -288,15 +288,6 @@ func (w *World) GetRider(mount *MobInstance) *Player {
 	return rider
 }
 
-// GetRiderName returns the name of the character riding mount, or "".
-// Safe string-only variant that doesn't require a World reference.
-func GetRiderName(mount *MobInstance) string {
-	if mount == nil || !mount.IsNPC() || !mount.IsMountedMob() {
-		return ""
-	}
-	return mount.MountRider
-}
-
 // --------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------

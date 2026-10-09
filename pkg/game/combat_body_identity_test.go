@@ -121,7 +121,7 @@ func TestCombatBodyIdentityDuplicateEnrollment(t *testing.T) {
 func TestCombatBodyReferencesConcurrentAndReciprocal(t *testing.T) {
 	one := NewPlayer(1, "One", 1001)
 	two := NewPlayer(2, "Two", 1001)
-	mob := NewMobInstance(&parser.Mob{VNum: 3001, ShortDesc: "a guard"}, 1001)
+	mob := NewMob(&parser.Mob{VNum: 3001, ShortDesc: "a guard"}, 1001)
 	one.SetFightingBody(two)
 	two.SetFightingBody(one)
 	done := make(chan struct{}, 3)

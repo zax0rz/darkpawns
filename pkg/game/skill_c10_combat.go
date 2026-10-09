@@ -342,18 +342,3 @@ func DoNeckbreak(ch *Player, target combat.Combatant, world *World) SkillResult 
 		DeferredImprove: []string{SkillNeckbreak},
 	}
 }
-
-// CheckNPCDodge checks if an NPC mob dodges an attack.
-// Source: fight.c:1970-1975 — number(0,100) < GET_LEVEL(ch)
-func CheckNPCDodge(mob interface {
-	GetLevel() int
-	IsAffected(int) bool
-	GetFightingBody() combat.Combatant
-},
-) bool {
-	if mob.GetFightingBody() == nil || !mob.IsAffected(affDodge) {
-		return false
-	}
-	// #nosec G404
-	return dprng.Number(0, 99) < mob.GetLevel()
-}

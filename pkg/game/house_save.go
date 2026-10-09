@@ -6,8 +6,9 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-import "github.com/zax0rz/darkpawns/pkg/parser"
 
 func (w *World) saveHouseControl() {
 	data, err := json.MarshalIndent(w.HouseControl, "", "  ")

@@ -17,9 +17,14 @@ func loadMessagesFile(t *testing.T) combat.FightMessages {
 		if _, err := os.Stat(path); err != nil {
 			continue
 		}
-		messages, err := combat.LoadFightMessages(path)
+		file, err := os.Open(path)
 		if err != nil {
-			t.Fatalf("LoadFightMessages %q: %v", path, err)
+			t.Fatalf("open %q: %v", path, err)
+		}
+		messages, err := combat.ParseFightMessages(file)
+		file.Close()
+		if err != nil {
+			t.Fatalf("ParseFightMessages %q: %v", path, err)
 		}
 		return messages
 	}

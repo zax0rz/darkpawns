@@ -105,7 +105,7 @@ func TestWanderMobRespectsStayZone(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	mob := NewMobInstance(&parser.Mob{ActionFlags: []string{"STAY_ZONE"}}, 10)
+	mob := NewMob(&parser.Mob{ActionFlags: []string{"STAY_ZONE"}}, 10)
 	for i := 0; i < 500; i++ {
 		w.wanderMobWithDoor(mob, 0)
 		if got := mob.GetRoom(); got != 10 {
@@ -119,7 +119,7 @@ func TestWanderMobRespectsStayZone(t *testing.T) {
 // door because mobileActivityForMob now owns the unconditional draw (DP-1170).
 func TestWanderMobMovesWithinConstraints(t *testing.T) {
 	w := newWanderTestWorld(t)
-	mob := NewMobInstance(&parser.Mob{Keywords: "rat", ShortDesc: "a rat"}, 1)
+	mob := NewMob(&parser.Mob{Keywords: "rat", ShortDesc: "a rat"}, 1)
 
 	valid := map[int]bool{1: true, 2: true}
 	for i := 0; i < 20; i++ {
@@ -140,7 +140,7 @@ func TestWanderMobMovesWithinConstraints(t *testing.T) {
 // point after DP-908). A sentinel mob must stay put across many AI ticks.
 func TestRunMobAISentinelNeverWanders(t *testing.T) {
 	w := newWanderTestWorld(t)
-	mob := NewMobInstance(&parser.Mob{Keywords: "guard", ShortDesc: "a cityguard", ActionFlags: []string{"SENTINEL"}}, 1)
+	mob := NewMob(&parser.Mob{Keywords: "guard", ShortDesc: "a cityguard", ActionFlags: []string{"SENTINEL"}}, 1)
 	mob.SetAlive(true)
 	mob.SetStatus("standing")
 

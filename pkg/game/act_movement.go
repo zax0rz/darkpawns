@@ -517,12 +517,6 @@ func movementRoomHasFlag(room *parser.Room, bit int, legacyName string) bool {
 	return roomHasNamedFlag(room, legacyName)
 }
 
-// performMove moves a character and all followers.
-// Returns true on success.
-func performMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
-	return performMoveResult(w, ch, dir, needSpecialsCheck, nil)
-}
-
 func performMoveResult(w *World, ch *Player, dir int, needSpecialsCheck bool, result *MoveResult) bool {
 	if ch == nil || dir < 0 || dir >= len(dirs) {
 		return false

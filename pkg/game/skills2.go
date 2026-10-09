@@ -487,67 +487,6 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 //
 // Success chance based on SKILL_DIG. Finds random loot.
 // ---------------------------------------------------------------------------
-func DoDig(ch *Player, world *World) SkillResult {
-	if ch.GetHP() < 5 {
-		return SkillResult{Success: false, MessageToCh: "You're too exhausted to dig.\r\n"}
-	}
-
-	room := world.GetRoomInWorld(ch.GetRoom())
-	if room == nil {
-		return SkillResult{MessageToCh: "You are lost in the void.\r\n"}
-	}
-
-	sector := room.Sector
-	switch sector {
-	case 2, 3, 4, 5: // SECT_DIRT, SECT_FOREST, SECT_FIELD, SECT_HILLS
-		// Valid digging terrain
-	default:
-		return SkillResult{
-			Success:     false,
-			MessageToCh: "The ground here isn't suitable for digging.\r\n",
-		}
-	}
-
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	percent := dprng.Number(1, 100)
-	prob := ch.GetSkill(SkillDig)
-	if prob == 0 {
-		prob = 10
-	}
-
-	if percent <= prob {
-		// Found something — random loot
-		lootRoll := dprng.Number(0, 4)
-		if lootRoll == 0 {
-			goldAmt := dprng.Number(10, 50) // 10-50 gold
-			ch.mu.Lock()
-			ch.Gold += goldAmt
-			ch.mu.Unlock()
-			return SkillResult{
-				Success:       true,
-				MessageToCh:   fmt.Sprintf("You dig in the earth and find %d gold coins!\r\n", goldAmt),
-				MessageToRoom: fmt.Sprintf("%s digs in the earth and finds some gold coins!\r\n", ch.Name),
-			}
-		} else {
-			obj, err := world.SpawnObject(3001, ch.GetRoomVNum())
-			if err == nil && obj != nil {
-				world.GiveObjectToChar(obj, ch)
-				return SkillResult{
-					Success:       true,
-					MessageToCh:   fmt.Sprintf("You dig in the earth and find %s!\r\n", obj.GetShortDesc()),
-					MessageToRoom: fmt.Sprintf("%s digs in the earth and finds something!\r\n", ch.Name),
-				}
-			}
-		}
-	}
-
-	return SkillResult{
-		Success:       false,
-		MessageToCh:   "You dig but find nothing.\r\n",
-		MessageToRoom: fmt.Sprintf("%s digs around but finds nothing.\r\n", ch.Name),
-	}
-}
 
 // ---------------------------------------------------------------------------
 // DoTurn — do_turn() from new_cmds2.c

@@ -46,91 +46,6 @@ const (
 // Source: src/fight.c:1722
 // --------------------------------------------------------------------------
 
-// GetMinusDam applies AC-based damage reduction.
-// In C: get_minusdam(int dam, struct char_data *ch).
-func GetMinusDam(dam int, ac int) int {
-	const pcmod = 2.0
-
-	switch {
-	case ac > 90:
-		return dam
-	case ac > 80:
-		return dam - int(float64(dam)*(0.01*pcmod))
-	case ac > 70:
-		return dam - int(float64(dam)*(0.02*pcmod))
-	case ac > 60:
-		return dam - int(float64(dam)*(0.03*pcmod))
-	case ac > 50:
-		return dam - int(float64(dam)*(0.04*pcmod))
-	case ac > 40:
-		return dam - int(float64(dam)*(0.05*pcmod))
-	case ac > 30:
-		return dam - int(float64(dam)*(0.06*pcmod))
-	case ac > 20:
-		return dam - int(float64(dam)*(0.07*pcmod))
-	case ac > 10:
-		return dam - int(float64(dam)*(0.08*pcmod))
-	case ac > 0:
-		return dam - int(float64(dam)*(0.10*pcmod))
-	case ac > -10:
-		return dam - int(float64(dam)*(0.11*pcmod))
-	case ac > -20:
-		return dam - int(float64(dam)*(0.12*pcmod))
-	case ac > -30:
-		return dam - int(float64(dam)*(0.13*pcmod))
-	case ac > -40:
-		return dam - int(float64(dam)*(0.14*pcmod))
-	case ac > -50:
-		return dam - int(float64(dam)*(0.15*pcmod))
-	case ac > -60:
-		return dam - int(float64(dam)*(0.16*pcmod))
-	case ac > -70:
-		return dam - int(float64(dam)*(0.17*pcmod))
-	case ac > -80:
-		return dam - int(float64(dam)*(0.18*pcmod))
-	case ac > -90:
-		return dam - int(float64(dam)*(0.19*pcmod))
-	case ac > -95:
-		return dam - int(float64(dam)*(0.20*pcmod))
-	case ac > -110:
-		return dam - int(float64(dam)*(0.21*pcmod))
-	case ac > -130:
-		return dam - int(float64(dam)*(0.22*pcmod))
-	case ac > -150:
-		return dam - int(float64(dam)*(0.23*pcmod))
-	case ac > -170:
-		return dam - int(float64(dam)*(0.24*pcmod))
-	case ac > -190:
-		return dam - int(float64(dam)*(0.25*pcmod))
-	case ac > -210:
-		return dam - int(float64(dam)*(0.26*pcmod))
-	case ac > -230:
-		return dam - int(float64(dam)*(0.27*pcmod))
-	case ac > -250:
-		return dam - int(float64(dam)*(0.28*pcmod))
-	case ac > -270:
-		return dam - int(float64(dam)*(0.29*pcmod))
-	case ac > -290:
-		return dam - int(float64(dam)*(0.30*pcmod))
-	case ac > -310:
-		return dam - int(float64(dam)*(0.31*pcmod))
-	default:
-		return dam - int(float64(dam)*(0.32*pcmod))
-	}
-}
-
-// ApplyDamageReduction applies AC-based reduction to damage for a target.
-// Convenience wrapper that extracts AC from a Player or namedCombatant.
-func ApplyDamageReduction(dam int, ac int) int {
-	return GetMinusDam(dam, ac)
-}
-
-// HookGetMinusDam is a hook for the combat package to call when it needs
-// AC-based damage reduction. Registered in init().
-func HookGetMinusDam(dam int, targetAC int) int {
-	return GetMinusDam(dam, targetAC)
-}
-
 // --------------------------------------------------------------------------
 // IsMounted — checks if a character is mounted
 // Source: src/utils.c:378
@@ -169,13 +84,6 @@ func (p *Player) Unmount() {
 // GetRider — returns the rider of a mount mob
 // Source: src/utils.c:387-392
 // --------------------------------------------------------------------------
-
-func GetRider(mount *MobInstance) string {
-	if mount == nil {
-		return ""
-	}
-	return mount.MountRider
-}
 
 // --------------------------------------------------------------------------
 // CanSpeak — checks if a character is intelligent enough to speak
