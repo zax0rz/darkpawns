@@ -207,4 +207,11 @@ rise line's CRLF), `lua-log-file-flag`, `hunting-producer` and
    the decisions table rather than papered over.
 3. **The `log(42)` coercion** is not a bug: C's `lua_isstring` accepts numbers,
   so the port's success arm is correct there.
+4. **Three behaviour gaps found while sweeping C's `set_hunting` callers**, out
+   of this PR and filed by Claude: `hunt_items` is dead in Go
+   (`engine.GameLoopCallbacks.OnHuntItems` is never assigned, so the hourly
+   hook never runs), `specMallory` only barks where C's mickey takes revenge
+   with `set_hunting(mickey, FIGHTING(ch))`, and `check_for_bad_stats` has only
+   its mobile path ported (C's player path is missing). Each is a *feature*
+   gap, not a log, so none of them becomes a producer here.
 
