@@ -1,6 +1,7 @@
 package mudlog
 
 import (
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -156,5 +157,32 @@ func TestCatalogGroupsUnkeyed(t *testing.T) {
 	}
 	if cat[0].Key != "unkeyed" || cat[0].Count != 1 || cat[1].Key != "interpreter.c:2154" {
 		t.Fatalf("catalog = %+v", cat)
+	}
+}
+
+// Stop may race taps from any goroutine (MudLog runs on the game loop and
+// on sessions; shutdown is exactly when logging peaks). The queue is never
+// closed, so a tap can at worst land in a full queue and drop — never send
+// on a closed channel and panic in the caller (PR #1893 review, bug 2).
+func TestStopRacesTapWithoutPanic(t *testing.T) {
+	var wg sync.WaitGroup
+	for round := 0; round < 40; round++ {
+		f := NewFeed(4, 16)
+		f.Start()
+		for g := 0; g < 8; g++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				// Tap straight through Stop: the tappers must still be
+				// mid-storm when the close lands, so the check-then-send
+				// window is actually exercised.
+				for i := 0; i < 2000; i++ {
+					f.Tap("", "race", 1, 31, false)
+				}
+			}()
+		}
+		time.Sleep(time.Duration(rand.Intn(2000)) * time.Microsecond)
+		f.Stop()
+		wg.Wait()
 	}
 }

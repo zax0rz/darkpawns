@@ -2,8 +2,10 @@ package admin
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
 )
 
@@ -155,4 +158,35 @@ func TestMudlogStreamReplaysAndTails(t *testing.T) {
 	waitForSeq(t, f, 2)
 	expectData(t, `"text":"live"`)
 	cancel()
+}
+
+// The production path, end to end through the process feed: main's one
+// helper starts the feed game.MudLog taps and hands the same feed to the
+// admin router. If the tap side and the reader side ever drift onto two
+// different feeds again (PR #1893 review, bug 1: a NewFeed in main left
+// /admin/mudlog, the SSE tail and ntfy permanently empty), the default
+// feed fills to its cap and drops, and this list comes back empty.
+func TestMudlogEndToEndUsesTheProcessFeed(t *testing.T) {
+	feed := mudlog.StartDefault(context.Background(), nil)
+	defer feed.Stop()
+	srv := mudlogAPI(t, feed)
+
+	game.MudLog("e2e default-feed line", mudlog.DefaultBriefType, mudlog.DefaultImmortalLevel, false)
+
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		resp, err := srv.Client().Get(srv.URL + "/admin/mudlog")
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if bytes.Contains(body, []byte("e2e default-feed line")) {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("game.MudLog never reached the admin endpoint; body: %s", body)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
 }

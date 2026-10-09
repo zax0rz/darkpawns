@@ -11,6 +11,9 @@
 package mudlog
 
 import (
+	"context"
+	"log/slog"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -54,9 +57,26 @@ func (f *Feed) Tap(key, str string, typ, level int, toFile bool) {
 	f.tap(key, str, typ, level, toFile)
 }
 
+// StartDefault is the production wiring: it starts the process feed — the
+// one game.MudLog's package-level Tap feeds — attaches the env-driven ntfy
+// subscription when configured, and returns that same feed for injection
+// (admin.WithMudlogFeed). main and the router test call this one helper so
+// the tap side and the reader side can never drift onto two different
+// feeds again (PR #1893 review, bug 1: a NewFeed in main left the admin
+// endpoints and ntfy reading a feed nothing ever tapped).
+func StartDefault(ctx context.Context, client *http.Client) *Feed {
+	defaultFeed.Start()
+	if cfg := NtfyFromEnv(); cfg != nil {
+		defaultFeed.SubscribeNtfy(ctx, cfg, client)
+		slog.Info("mudlog ntfy subscription active", "level", cfg.MinLevel, "type", cfg.MinType)
+	}
+	return defaultFeed
+}
+
 // Feed is one tap → dispatcher → ring/subscribers pipeline.
 type Feed struct {
 	queue   chan Event
+	done    chan struct{}
 	ringCap int
 
 	started atomic.Bool
@@ -111,7 +131,7 @@ func NewFeed(queue, ringCap int) *Feed {
 	if ringCap <= 0 {
 		ringCap = DefaultRingCap
 	}
-	return &Feed{queue: make(chan Event, queue), ringCap: ringCap}
+	return &Feed{queue: make(chan Event, queue), done: make(chan struct{}), ringCap: ringCap}
 }
 
 // Start launches the dispatcher goroutine. Calling Start on an already
@@ -122,11 +142,15 @@ func (f *Feed) Start() {
 	}
 }
 
-// Stop ends dispatch and kicks every subscriber. Tap after Stop drops
-// (counted).
+// Stop ends dispatch after draining what is queued and kicks every
+// subscriber. The queue itself is never closed: tap may race Stop from any
+// goroutine (MudLog runs on the game loop and on sessions, and shutdown is
+// exactly when logging peaks), and a send on a closed channel would panic
+// in the caller. Taps after Stop are dropped and counted; the stopped
+// check is a fast path, the never-closed queue is the guarantee.
 func (f *Feed) Stop() {
 	if f.stopped.CompareAndSwap(false, true) {
-		close(f.queue)
+		close(f.done)
 	}
 }
 
@@ -143,31 +167,49 @@ func (f *Feed) tap(key, str string, typ, level int, toFile bool) {
 }
 
 func (f *Feed) dispatch() {
-	for e := range f.queue {
-		f.mu.Lock()
-		f.seq++
-		e.Seq = f.seq
-		f.ring = append(f.ring, e)
-		if len(f.ring) > f.ringCap {
-			f.ring = f.ring[len(f.ring)-f.ringCap:]
-		}
-		f.lastID.Store(e.Seq)
-		subs := make([]*subscriber, 0, len(f.subs))
-		for s := range f.subs {
-			subs = append(subs, s)
-		}
-		f.mu.Unlock()
-		f.served.Add(1)
-		for _, s := range subs {
-			s.deliver(e)
+	for {
+		select {
+		case e := <-f.queue:
+			f.serve(e)
+		case <-f.done:
+			// Drain what was queued before Stop, then leave. Taps that
+			// land mid-drain are served too; later ones see stopped.
+			for {
+				select {
+				case e := <-f.queue:
+					f.serve(e)
+				default:
+					f.mu.Lock()
+					for s := range f.subs {
+						s.shutdown()
+					}
+					f.subs = nil
+					f.mu.Unlock()
+					return
+				}
+			}
 		}
 	}
+}
+
+func (f *Feed) serve(e Event) {
 	f.mu.Lock()
-	for s := range f.subs {
-		s.shutdown()
+	f.seq++
+	e.Seq = f.seq
+	f.ring = append(f.ring, e)
+	if len(f.ring) > f.ringCap {
+		f.ring = f.ring[len(f.ring)-f.ringCap:]
 	}
-	f.subs = nil
+	f.lastID.Store(e.Seq)
+	subs := make([]*subscriber, 0, len(f.subs))
+	for s := range f.subs {
+		subs = append(subs, s)
+	}
 	f.mu.Unlock()
+	f.served.Add(1)
+	for _, s := range subs {
+		s.deliver(e)
+	}
 }
 
 // Subscribe returns a live event channel from after the given seq (0 =

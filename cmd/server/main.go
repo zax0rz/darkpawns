@@ -747,14 +747,11 @@ func main() {
 	// Mudlog observer (mudlog-push design, slice 1): the tap inside
 	// game.MudLog feeds an in-memory ring the admin console reads, plus one
 	// optional ntfy push from the ops environment (off unless
-	// DP_MUDLOG_NTFY_URL is set — private by default).
-	mudlogFeed := mudlog.NewFeed(mudlog.DefaultQueue, mudlog.DefaultRingCap)
-	mudlogFeed.Start()
+	// DP_MUDLOG_NTFY_URL is set — private by default). StartDefault wires
+	// the process feed — the one the tap actually feeds — so the readers
+	// and the tap can never be two different feeds.
+	mudlogFeed := mudlog.StartDefault(context.Background(), nil)
 	defer mudlogFeed.Stop()
-	if ntfyCfg := mudlog.NtfyFromEnv(); ntfyCfg != nil {
-		mudlogFeed.SubscribeNtfy(context.Background(), ntfyCfg, nil)
-		slog.Info("mudlog ntfy subscription active", "level", ntfyCfg.MinLevel, "type", ntfyCfg.MinType)
-	}
 
 	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed))
 	if err != nil {
