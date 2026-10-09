@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+color_expansion	output	terminal.amp-color-codes	D3	shared	unit-green	TestTerminalColorCodes	src/comm.c:1289-1345	All 18 recognized markers, literal ampersand, unknown/trailing markers, existing ANSI; removed shared expansion fails. R1/R5h.
+color_expansion	output	terminal.amp-color-recipient	D3	audience	unit-green	TestTerminalColorPerRecipient	src/comm.c:1285-1286,1376-1378	Either color bit expands, off remains raw; same frame gives recipient-specific bytes. R1/R5h.
+color_expansion	output	terminal.amp-color-entry-once	D3	entry	unit-green	TestTerminalColorEntryOnce	src/comm.c:1289-1345,1376-1378	Pending creation color reaches shared funnel, entry envelope stays raw; literal &&r detects double expansion. R1/R5h.
+color_expansion	output	terminal.amp-color-browser-prompt	D3	transport	unit-green	TestTerminalColorBrowserAndPrompts	src/comm.c:1285-1345,1376-1378	Browser text and prompt expand, GMCP metadata stays unchanged, NPC descriptor color off. R1/R5h.
+color_expansion	output	terminal.amp-color-telnet	D3	transport	unit-green	TestWriteLoopRecipientColors	src/comm.c:1285-1345,1376-1378	Real telnet writeLoop expands exactly once; route removal fails. R1/R5h.

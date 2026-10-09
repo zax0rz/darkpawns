@@ -1,0 +1,77 @@
+# src/comm.c:1285-1345,1376-1378 per-recipient expansion.
+# Arena broadcast exercises a shared Act message and its raw wrapper too.
+# depth-case: terminal.amp-color-recipient
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Coloradmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Coloradmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Colorpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Colorpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8152
+teleport Colorpeer 8004
+
+[probe]
+emote &RRed&n &&r &z &
+force Colorpeer color complete
+emote &RRed&n &&r &z &
+force Colorpeer color off
+emote &gGreen&n
+color sparse
+emote &cCyan&n

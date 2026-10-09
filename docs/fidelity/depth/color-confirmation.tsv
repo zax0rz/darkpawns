@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_color	color	color.confirmation-new-level-ansi	D3	output	unit-green	TestColorConfirmationNewLevelANSI	src/act.informative.c:2494-2495	All four newly set levels, from off and complete; red at C_SPR, unconditional reset at C_OFF; raw ANSI unaffected by amp expansion. Independent compiling old-output control fails every subtest. R1/R5h.

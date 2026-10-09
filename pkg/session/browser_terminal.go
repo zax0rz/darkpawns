@@ -60,7 +60,13 @@ func renderForBrowserTerminal(msg []byte) ([]byte, bool) {
 // renderForBrowserTerminalTracked renders one frame for the browser terminal,
 // applying the session's prompt state when there is one.
 func renderForBrowserTerminalTracked(s *Session, msg []byte) ([]byte, bool) {
-	f, ok := RenderTerminalFrame(msg)
+	var f TerminalFrame
+	var ok bool
+	if s != nil {
+		f, ok = s.RenderTerminalFrame(msg)
+	} else {
+		f, ok = RenderTerminalFrame(msg)
+	}
 	if ok && s != nil {
 		f = s.TrackPrompt(f)
 	}
