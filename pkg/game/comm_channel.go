@@ -274,7 +274,7 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 func (w *World) doQcomm(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = skipSpaces(arg)
 	if arg == "" {
-		sendToChar(ch, "What do you want to say?\r\n")
+		ch.SendMessage("What do you want to say?\r\n")
 		return true
 	}
 
@@ -284,7 +284,7 @@ func (w *World) doQcomm(ch *Player, me *MobInstance, cmd string, arg string) boo
 			p.SendMessage(msg)
 		}
 	}
-	sendToChar(ch, fmt.Sprintf("You say, '%s'\r\n", arg))
+	ch.SendMessage(fmt.Sprintf("You say, '%s'\r\n", arg))
 	return true
 }
 
@@ -292,11 +292,11 @@ func (w *World) doQcomm(ch *Player, me *MobInstance, cmd string, arg string) boo
 func (w *World) doThink(ch *Player, me *MobInstance, cmd string, arg string) bool {
 	arg = skipSpaces(arg)
 	if arg == "" {
-		sendToChar(ch, "What do you want to think?\r\n")
+		ch.SendMessage("What do you want to think?\r\n")
 		return true
 	}
 
-	sendToChar(ch, fmt.Sprintf("You think: '%s'\r\n", arg))
+	ch.SendMessage(fmt.Sprintf("You think: '%s'\r\n", arg))
 	return true
 }
 
@@ -314,37 +314,37 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 		first, remainder := halfChop(arg)
 		clanNumber, _ = strconv.Atoi(first)
 		if clanNumber <= 0 || w.Clans == nil || clanNumber > w.Clans.ClanCount() {
-			sendToChar(ch, "There is no clan with that number.\r\n")
+			ch.SendMessage("There is no clan with that number.\r\n")
 			return true
 		}
 		arg = remainder
 	} else {
 		if ch.ClanID == 0 || ch.ClanRank == 0 {
-			sendToChar(ch, "You're not part of a clan.\r\n")
+			ch.SendMessage("You're not part of a clan.\r\n")
 			return true
 		}
 		clanNumber = ch.ClanID
 	}
 
 	if ch.GetFlags()&(1<<uint(PrfNoCTell)) != 0 {
-		sendToChar(ch, "You aren't currently on your clan channel.\r\n")
+		ch.SendMessage("You aren't currently on your clan channel.\r\n")
 		return true
 	}
 	if ch.GetFlags()&(1<<uint(PlrNoshout)) != 0 {
-		sendToChar(ch, "You cannot clan-tell anything!\r\n")
+		ch.SendMessage("You cannot clan-tell anything!\r\n")
 		return true
 	}
 
 	arg = skipSpaces(arg)
 	if arg == "" {
-		sendToChar(ch, "What do you want to tell your clan?\r\n")
+		ch.SendMessage("What do you want to tell your clan?\r\n")
 		return true
 	}
 
 	if strings.HasPrefix(arg, "#") {
 		rankText, remainder := halfChop(arg[1:])
 		if !isClanNumber(rankText) {
-			sendToChar(ch, "Try entering in a number.\r\n")
+			ch.SendMessage("Try entering in a number.\r\n")
 			return true
 		}
 		minLevel, _ = strconv.Atoi(rankText)
@@ -355,12 +355,12 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 			clanForRank = w.Clans.GetClanByIndex(clanNumber)
 		}
 		if clanForRank == nil || minLevel > clanForRank.Ranks {
-			sendToChar(ch, "No one has a clan rank high enough to hear you!\r\n")
+			ch.SendMessage("No one has a clan rank high enough to hear you!\r\n")
 			return true
 		}
 		arg = skipSpaces(remainder)
 		if arg == "" {
-			sendToChar(ch, "What do you want to tell them?\r\n")
+			ch.SendMessage("What do you want to tell them?\r\n")
 			return true
 		}
 		levelString = fmt.Sprintf(" (%d) ", minLevel)
@@ -368,10 +368,10 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 
 	arg = deleteANSIControls(arg)
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
-		sendToChar(ch, "Okay.\r\n")
+		ch.SendMessage("Okay.\r\n")
 	} else {
 		echo := fmt.Sprintf("You tell your clan%s, '%s'\r\n", levelString, arg)
-		sendToChar(ch, echo)
+		ch.SendMessage(echo)
 		w.mirrorChannelLine(ch, "clan", ch.Name, echo)
 	}
 

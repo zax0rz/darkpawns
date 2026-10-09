@@ -96,7 +96,7 @@ func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 
 	if me.GetRoom() == 5065 && cmd == "west" {
 		w.roomMessage(me.GetRoom(), "The brass dragon humiliates $n, and blocks $s way.")
-		sendToChar(ch, "The brass dragon humiliates you, and blocks your way.\r\n")
+		ch.SendMessage("The brass dragon humiliates you, and blocks your way.\r\n")
 		return true
 	}
 
@@ -201,10 +201,10 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	petRoom := me.GetRoom() + 1
 
 	if cmd == "list" {
-		sendToChar(ch, "Available pets are:\r\n")
+		ch.SendMessage("Available pets are:\r\n")
 		pets := w.GetMobsInRoom(petRoom)
 		for _, pet := range pets {
-			sendToChar(ch, fmt.Sprintf("%8d - %s\r\n", petPrice(pet), pet.GetName()))
+			ch.SendMessage(fmt.Sprintf("%8d - %s\r\n", petPrice(pet), pet.GetName()))
 		}
 		return true
 	}
@@ -212,7 +212,7 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if cmd == "buy" {
 		parts := strings.Fields(arg)
 		if len(parts) == 0 {
-			sendToChar(ch, "Buy what?\r\n")
+			ch.SendMessage("Buy what?\r\n")
 			return true
 		}
 
@@ -230,20 +230,20 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 			}
 		}
 		if pet == nil {
-			sendToChar(ch, "There is no such pet!\r\n")
+			ch.SendMessage("There is no such pet!\r\n")
 			return true
 		}
 
 		price := petPrice(pet)
 		if ch.GetGold() < price {
-			sendToChar(ch, "You don't have enough gold!\r\n")
+			ch.SendMessage("You don't have enough gold!\r\n")
 			return true
 		}
 		ch.SetGold(ch.GetGold() - price)
 
 		newPet, err := w.SpawnMob(pet.GetVNum(), me.GetRoom())
 		if err != nil {
-			sendToChar(ch, "Something went wrong.\r\n")
+			ch.SendMessage("Something went wrong.\r\n")
 			return true
 		}
 
@@ -252,7 +252,7 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 
 		w.roomMessage(me.GetRoom(), "$n buys $N as a pet.\r\n")
-		sendToChar(ch, "May you enjoy your pet.\r\n")
+		ch.SendMessage("May you enjoy your pet.\r\n")
 
 		return true
 	}
@@ -268,17 +268,17 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	if cmd == "enter" {
 		arg = strings.TrimSpace(arg)
 		if arg != "circle" && arg != "platform" {
-			sendToChar(ch, "Enter what?\r\n")
+			ch.SendMessage("Enter what?\r\n")
 			return true
 		}
 
 		portalMobs := w.GetMobsInRoom(portalRoom)
 		if len(portalMobs) >= 2 {
-			sendToChar(ch, "You can't fit on the portal, it's too crowded.\r\n")
+			ch.SendMessage("You can't fit on the portal, it's too crowded.\r\n")
 			return true
 		}
 
-		sendToChar(ch, "You stand in the circle.\r\n")
+		ch.SendMessage("You stand in the circle.\r\n")
 		w.roomMessage(me.GetRoom(), "$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!")
 		ch.SetRoom(portalRoom)
 		w.doLook(ch, nil, "look", "")
@@ -291,16 +291,16 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return false
 	}
 
-	sendToChar(ch, "Looking into the circle at the platform in the middle of the room, you see\r\n")
+	ch.SendMessage("Looking into the circle at the platform in the middle of the room, you see\r\n")
 	mobs := w.GetMobsInRoom(portalRoom)
 	if len(mobs) > 0 {
 		var names []string
 		for _, m := range mobs {
 			names = append(names, m.GetName())
 		}
-		sendToChar(ch, strings.Join(names, " and "))
+		ch.SendMessage(strings.Join(names, " and "))
 	} else {
-		sendToChar(ch, "no one")
+		ch.SendMessage("no one")
 	}
 	sendToChar(ch, ".\r\n")
 	return true
@@ -316,7 +316,7 @@ func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		return false
 	}
 
-	sendToChar(ch, "The portal begins to rise, lifted by the air elemental summoned by your rune!\r\n\r\n")
+	ch.SendMessage("The portal begins to rise, lifted by the air elemental summoned by your rune!\r\n\r\n")
 	w.roomMessage(me.GetRoom(), "The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n")
 
 	players := w.GetPlayersInRoom(portalRoom)
@@ -367,8 +367,8 @@ func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg st
 		default:
 			msg = "The forces of nature slowly rip you apart..."
 		}
-		sendToChar(ch, msg+"\r\n")
-		sendToChar(ch, "\r\nYou are DYING!\r\n")
+		ch.SendMessage(msg + "\r\n")
+		ch.SendMessage("\r\nYou are DYING!\r\n")
 
 		m.SetHealth(m.GetHP() - 100)
 		if m.GetHP() <= 0 {

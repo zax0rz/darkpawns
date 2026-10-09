@@ -584,19 +584,19 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 		// A direction was specified
 		door := searchBlock(dir, dirs, false)
 		if door == -1 {
-			sendToChar(ch, "That's not a direction.\r\n")
+			ch.SendMessage("That's not a direction.\r\n")
 			return -1
 		}
 		ext, ok := getExit(w, ch, door)
 		if !ok || strings.Contains(strings.ToLower(ext.Keywords), "secret") && !revealsSecrets {
-			sendToChar(ch, "I really don't see how you can do anything there.\r\n")
+			ch.SendMessage("I really don't see how you can do anything there.\r\n")
 			return -1
 		}
 		if ext.Keywords != "" {
 			if isName(doorType, ext.Keywords) {
 				return door
 			}
-			sendToChar(ch, fmt.Sprintf("I see no %s there.\r\n", doorType))
+			ch.SendMessage(fmt.Sprintf("I see no %s there.\r\n", doorType))
 			return -1
 		}
 		// No keywords on exit — it's just a direction, return the door index
@@ -605,7 +605,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 
 	// Try to locate by keyword
 	if doorType == "" {
-		sendToChar(ch, fmt.Sprintf("What is it you want to %s?\r\n", cmdname))
+		ch.SendMessage(fmt.Sprintf("What is it you want to %s?\r\n", cmdname))
 		return -1
 	}
 
@@ -621,7 +621,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 		}
 	}
 
-	sendToChar(ch, fmt.Sprintf("There doesn't seem to be %s %s here.\r\n", an(doorType), doorType))
+	ch.SendMessage(fmt.Sprintf("There doesn't seem to be %s %s here.\r\n", an(doorType), doorType))
 	return -1
 }
 
@@ -673,7 +673,7 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
-		sendToChar(ch, "Okay.\r\n")
+		ch.SendMessage("Okay.\r\n")
 
 	case scmdClose:
 		if obj != nil {
@@ -686,7 +686,7 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
-		sendToChar(ch, "Okay.\r\n")
+		ch.SendMessage("Okay.\r\n")
 
 	case scmdUnlock:
 		if obj != nil {
@@ -699,7 +699,7 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
-		sendToChar(ch, "*Click*\r\n")
+		ch.SendMessage("*Click*\r\n")
 
 	case scmdLock:
 		if obj != nil {
@@ -712,7 +712,7 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
-		sendToChar(ch, "*Click*\r\n")
+		ch.SendMessage("*Click*\r\n")
 
 	case scmdPick:
 		if obj != nil {
@@ -725,7 +725,7 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 			}
 		}
-		sendToChar(ch, "The lock quickly yields to your skills.\r\n")
+		ch.SendMessage("The lock quickly yields to your skills.\r\n")
 	}
 
 	// Notify the room
@@ -824,7 +824,7 @@ func doGenDoor(w *World, ch *Player, argument string, scmd int) {
 	// dropped, tokens lowercased.
 	doorType, dir := twoArguments(argument)
 	if doorType == "" {
-		sendToChar(ch, strings.ToUpper(cmdDoor[scmd][:1])+cmdDoor[scmd][1:]+" what?\r\n")
+		ch.SendMessage(strings.ToUpper(cmdDoor[scmd][:1]) + cmdDoor[scmd][1:] + " what?\r\n")
 		return
 	}
 
@@ -880,15 +880,15 @@ func doGenDoor(w *World, ch *Player, argument string, scmd int) {
 	case !openable:
 		Act(nil, false, ch, nil, nil, nil, "You can't $F that!", cmdDoor[scmd], ToChar)
 	case !open && needed&needOpen != 0:
-		sendToChar(ch, "But it's already closed!\r\n")
+		ch.SendMessage("But it's already closed!\r\n")
 	case open && needed&needClosed != 0:
-		sendToChar(ch, "But it's currently open!\r\n")
+		ch.SendMessage("But it's currently open!\r\n")
 	case unlocked && needed&needLocked != 0:
-		sendToChar(ch, "Oh.. it wasn't locked, after all..\r\n")
+		ch.SendMessage("Oh.. it wasn't locked, after all..\r\n")
 	case !unlocked && needed&needUnlocked != 0:
-		sendToChar(ch, "It seems to be locked.\r\n")
+		ch.SendMessage("It seems to be locked.\r\n")
 	case !hasKey(ch, keynum) && ch.GetLevel() < LVL_GOD && (scmd == scmdLock || scmd == scmdUnlock):
-		sendToChar(ch, "You don't seem to have the proper key.\r\n")
+		ch.SendMessage("You don't seem to have the proper key.\r\n")
 	case okPick(w, ch, keynum, pickproof, scmd):
 		doDoorcmd(w, ch, obj, door, scmd)
 	}

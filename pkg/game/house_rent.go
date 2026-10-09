@@ -10,7 +10,7 @@ import (
 func (w *World) HouseListrent(ch *Player, vnum int) {
 	fname := HouseGetFilename(vnum)
 	if fname == "" {
-		sendToChar(ch, "Invalid house vnum.\r\n")
+		ch.SendMessage("Invalid house vnum.\r\n")
 		return
 	}
 
@@ -18,15 +18,15 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 	data, err := os.ReadFile(filepath.Clean(fname))
 	if err != nil {
 		if os.IsNotExist(err) {
-			sendToChar(ch, fmt.Sprintf("No objects on file for house #%d.\r\n", vnum))
+			ch.SendMessage(fmt.Sprintf("No objects on file for house #%d.\r\n", vnum))
 		} else {
-			sendToChar(ch, "Error reading house file.\r\n")
+			ch.SendMessage("Error reading house file.\r\n")
 		}
 		return
 	}
 
 	if len(data) == 0 {
-		sendToChar(ch, fmt.Sprintf("No objects on file for house #%d.\r\n", vnum))
+		ch.SendMessage(fmt.Sprintf("No objects on file for house #%d.\r\n", vnum))
 		return
 	}
 
@@ -43,10 +43,10 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 	//     }
 	//   }
 
-	sendToChar(ch, fmt.Sprintf("Objects stored for house #%d:\r\n", vnum))
+	ch.SendMessage(fmt.Sprintf("Objects stored for house #%d:\r\n", vnum))
 	var saveData houseSaveData
 	if err := json.Unmarshal(data, &saveData); err != nil {
-		sendToChar(ch, "Error reading house file.\r\n")
+		ch.SendMessage("Error reading house file.\r\n")
 		return
 	}
 	for _, item := range saveData.Items {
@@ -60,7 +60,7 @@ func (w *World) HouseListrent(ch *Player, vnum int) {
 		if name == "" {
 			name = "unknown item"
 		}
-		sendToChar(ch, fmt.Sprintf("  [%5d] %s\r\n", item.VNum, name))
+		ch.SendMessage(fmt.Sprintf("  [%5d] %s\r\n", item.VNum, name))
 	}
 }
 

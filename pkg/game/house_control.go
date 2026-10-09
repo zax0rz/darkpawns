@@ -46,7 +46,7 @@ func (w *World) HcontrolListHouses(ch *Player) {
 	w.mu.RUnlock()
 
 	if len(control) == 0 {
-		sendToChar(ch, "No houses have been defined.\r\n")
+		ch.SendMessage("No houses have been defined.\r\n")
 		return
 	}
 
@@ -96,7 +96,7 @@ func (w *World) HcontrolListHouses(ch *Player) {
 		}
 	}
 
-	sendToChar(ch, b.String())
+	ch.SendMessage(b.String())
 }
 
 // HcontrolBuildHouse creates a new house.
@@ -104,7 +104,7 @@ func (w *World) HcontrolListHouses(ch *Player) {
 func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 	args := strings.Fields(arg)
 	if len(args) < 3 {
-		sendToChar(ch, HcontrolFormat)
+		ch.SendMessage(HcontrolFormat)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 						w.mu.Unlock()
 						owner := lookup(args[2])
 						if owner < 0 {
-							sendToChar(ch, fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2])))
+							ch.SendMessage(fmt.Sprintf("Unknown player '%s'.\r\n", toLower(args[2])))
 							return
 						}
 						w.mu.Lock()
@@ -190,7 +190,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 	w.mu.Unlock()
 
 	if message != "" {
-		sendToChar(ch, message)
+		ch.SendMessage(message)
 	}
 	if save {
 		w.saveHouseControl()
@@ -202,7 +202,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 	args := strings.Fields(arg)
 	if len(args) < 1 || args[0] == "" {
-		sendToChar(ch, HcontrolFormat)
+		ch.SendMessage(HcontrolFormat)
 		return
 	}
 
@@ -212,7 +212,7 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 	i := findHouse(w.HouseControl, vnum)
 	if i < 0 {
 		w.mu.Unlock()
-		sendToChar(ch, "Unknown house.\r\n")
+		ch.SendMessage("Unknown house.\r\n")
 		return
 	}
 
@@ -246,7 +246,7 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 	}
 	w.mu.Unlock()
 
-	sendToChar(ch, "House deleted.\r\n")
+	ch.SendMessage("House deleted.\r\n")
 	w.saveHouseControl()
 }
 
@@ -255,7 +255,7 @@ func (w *World) HcontrolDestroyHouse(ch *Player, arg string) {
 func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 	args := strings.Fields(arg)
 	if len(args) < 1 || args[0] == "" {
-		sendToChar(ch, HcontrolFormat)
+		ch.SendMessage(HcontrolFormat)
 		return
 	}
 
@@ -265,7 +265,7 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 	i := findHouse(w.HouseControl, vnum)
 	if i < 0 {
 		w.mu.Unlock()
-		sendToChar(ch, "Unknown house.\r\n")
+		ch.SendMessage("Unknown house.\r\n")
 		return
 	}
 
@@ -277,7 +277,7 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 	w.mu.Unlock()
 
 	w.saveHouseControl()
-	sendToChar(ch, "Payment recorded.\r\n")
+	ch.SendMessage("Payment recorded.\r\n")
 }
 
 // HcontrolSetKey sets the key vnum for a house.
@@ -285,7 +285,7 @@ func (w *World) HcontrolPayHouse(ch *Player, arg string) {
 func (w *World) HcontrolSetKey(ch *Player, arg string) {
 	args := strings.Fields(arg)
 	if len(args) < 2 {
-		sendToChar(ch, HcontrolFormat)
+		ch.SendMessage(HcontrolFormat)
 		return
 	}
 
@@ -296,14 +296,14 @@ func (w *World) HcontrolSetKey(ch *Player, arg string) {
 	i := findHouse(w.HouseControl, vnum)
 	if i < 0 {
 		w.mu.Unlock()
-		sendToChar(ch, "That house doesn't exist!\r\n")
+		ch.SendMessage("That house doesn't exist!\r\n")
 		return
 	}
 
 	// Validate key object exists
 	if _, ok := w.objs[keyVNum]; !ok {
 		w.mu.Unlock()
-		sendToChar(ch, "That object doesn't exist!\r\n")
+		ch.SendMessage("That object doesn't exist!\r\n")
 		return
 	}
 
@@ -311,7 +311,7 @@ func (w *World) HcontrolSetKey(ch *Player, arg string) {
 	w.mu.Unlock()
 
 	w.saveHouseControl()
-	sendToChar(ch, "House key set.\r\n")
+	ch.SendMessage("House key set.\r\n")
 }
 
 // Hcontrol is the dispatcher for the hcontrol command.
@@ -320,13 +320,13 @@ func (w *World) Hcontrol(ch *Player, argument string) {
 	// Defense-in-depth: this command mutates persistent house state, so
 	// enforce the GRGOD gate here even if another caller reaches the dispatcher.
 	if ch.GetLevel() < LVL_GRGOD {
-		sendToChar(ch, "Huh?!?\r\n")
+		ch.SendMessage("Huh?!?\r\n")
 		return
 	}
 
 	args := strings.Fields(argument)
 	if len(args) < 1 {
-		sendToChar(ch, HcontrolFormat)
+		ch.SendMessage(HcontrolFormat)
 		return
 	}
 
@@ -348,7 +348,7 @@ func (w *World) Hcontrol(ch *Player, argument string) {
 	case isAbbrev(subCmd, "key"):
 		w.HcontrolSetKey(ch, rest)
 	default:
-		sendToChar(ch, HcontrolFormat)
+		ch.SendMessage(HcontrolFormat)
 	}
 }
 

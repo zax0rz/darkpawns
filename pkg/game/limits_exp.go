@@ -197,7 +197,7 @@ func (w *World) GainExp(p *Player, gain int) {
 				p.Damroll += (p.Level / 2) + 1
 				p.mu.Unlock()
 			}
-			sendToChar(p, fmt.Sprintf("You advance to level %d!\r\n", p.Level))
+			p.SendMessage(fmt.Sprintf("You advance to level %d!\r\n", p.Level))
 		}
 	} else if gain < 0 {
 		if gain < -maxExpLoss {
