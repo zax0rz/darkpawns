@@ -416,10 +416,12 @@ func (s *Session) enterReturningPlayer() error {
 		return nil
 	}
 	name := s.player.Name
-	if s.manager.hasDB {
-		if err := db.ObjectSaveLoaded(s.manager.db, name); err != nil {
-			return err
-		}
+	// Crash_load's header read (src/objsave.c:491-541): emit the entry mudlog
+	// the stored rent code selects, then rewrite the header to RENT_CRASH
+	// (:659-663). C runs this after reset_char and before the entry save
+	// (src/interpreter.c:2174-2186).
+	if err := s.crashLoadEntry(); err != nil {
+		return err
 	}
 	// C saves the character with load_room NOWHERE at every game entry
 	// (interpreter.c:2186), so a character whose process dies mid-session

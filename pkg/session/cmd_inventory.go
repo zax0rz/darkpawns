@@ -101,7 +101,16 @@ func (s *Session) leaveGameToMenu(rent bool) {
 	if rent {
 		w.RentOut(p)
 		if w.ObjectSaver != nil {
-			if err := w.ObjectSaver(p, 2); err != nil {
+			// C stores the last-exit code here: a PLR_NODELETE quitter takes
+			// Crash_cryosave (RENT_CRYO, src/objsave.c:970-1005), everyone
+			// else Crash_rentsave (RENT_RENTED, :912-940); do_quit picks
+			// between them (src/act.other.c:164-165). The two object passes
+			// are identical under free rent (cost is 0).
+			kind := rentRented
+			if p.GetFlags()&(1<<uint(game.PlrNODELETE)) != 0 {
+				kind = rentCryo
+			}
+			if err := w.ObjectSaver(p, kind); err != nil {
 				slog.Error("rent snapshot failed", "player", p.Name, "error", err)
 			}
 		}
