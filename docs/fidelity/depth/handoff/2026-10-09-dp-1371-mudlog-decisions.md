@@ -1,28 +1,30 @@
 # DP-1371 mudlog decisions — D7 closeout (Zach rules here)
 
 Every inventory row that this train is **not** porting, with what C does, why the
-port cannot or should not reproduce it, the evidence, and a recommendation. The
-`decision` column is yours. Rows you have to settle come first.
+port cannot or should not reproduce it, the evidence, and a recommendation.
 
-Everything below is a *recommendation*: no status moves until you rule. The two
-rows already settled (`src/spell_parser.c:534`, and the `comm.c:2235` SIGUSR1
-correction) were applied in the PR-3 inventory.
+The `decision` column records **Zach's rulings of 2026-10-09** (DP-1371, comment
+"D7 mudlog rulings"). His governing principle: **builders and immortals count as
+players**, so a site reachable through ordinary OLC or immortal use is valid play.
+The proof-only PR 5 applies these dispositions to the inventory and the depth
+cases; the port rows stay `blocked` until their issue lands. The one row settled
+earlier (`src/spell_parser.c:534`) is marked `done`.
 
 ## 1. Yours to decide
 
 | row | what C does and when | why the port can't / shouldn't | evidence | recommendation | decision |
 |---|---|---|---|---|---|
-| `objsave.c:489` | `"%s entering game with no equipment."` at NRM / MAX(LVL_IMMORT,invis) / TRUE when the crash file is missing (`fopen` fails). **Every new character's first entry.** | Go keeps no rent file; the inventory is the SQLite row's blobs, so there is no rent code to select any arm. | `2026-10-09-dp-1371-mudlog-admission.md` §5; row evidence in the inventory | `blocked-representation` until DP-1404 rules the representation | |
-| `objsave.c:504` | `"%s entering game, rented equipment lost (no $)."` at BRF when `rentcode` is RENT_RENTED/RENT_TIMEDOUT and the accrued cost exceeds gold+bank | same: no stored rent code | as above | as above | |
-| `objsave.c:519` | `"%s un-renting and entering game."` at NRM for `RENT_RENTED` — **every ordinary re-login after renting in C** | same | as above | as above | |
-| `objsave.c:524` | `"%s retrieving crash-saved items and entering game."` for `RENT_CRASH` | same | as above | as above | |
-| `objsave.c:528` | `"%s un-cryo'ing and entering game."` for `RENT_CRYO` | same (Go has no cryo path) | as above | as above | |
-| `objsave.c:534` | `"%s retrieving force-saved items and entering game."` for `RENT_FORCED`/`RENT_TIMEDOUT` | same | as above | as above | |
-| `objsave.c:539` | `"WARNING: %s entering game with undefined rent code."` at BRF, the default arm | same | as above | as above | |
-| `objsave.c:1186` | the receptionist's `"%s has rented (%d/day, %d tot.)"` and `"%s has cryo-rented."` at NRM | Go has no receptionist or cryogenicist command path; `quit`'s RentOut is the quit path only | as above | as above | |
-| `whod.c:250`, `:267`, `:296` | `"WHOD port opened."` / `"WHOD port closed."` at BRF / LVL_GOD / TRUE from `init_whod`, `close_whod` and `whod_loop` (the reboot arm) | WHOD is a live C service started at boot (`src/comm.c:274`, `:290`, `:555`) with its own listener; Go has none. Its "who" surfaces are the web, MSSP and Grapevine — an approved divergence, not an omission | `LOG` is `mudlog(msg, BRF, LVL_GOD, TRUE)` (`src/whod.c:39`); no Go listener | **`divergent-approved`**, citing a new DP issue ("WHOD service not ported") that Claude files | |
-| `whod.c:335` | `"WHO request from %d.%d.%d.%d served."` / `"… from %s served."` at BRF / LVL_GOD / TRUE per served request | same service; the request it logs cannot occur without it | as above | as above | |
-| `oedit.c:422` | `"SYSERR: OLC: oedit_save_to_disk: Corrupt ex_desc!"` at BRF / LVL_BUILDER / TRUE when a saved extra description is NULL | A representation question: C distinguishes a loaded NULL from a live allocated-empty extra description. The port's OLC writer collapses them, so the arm has no reachable state until that is decided | `2026-10-07-dp-1371-oedit-null-C.py`, `2026-10-07-dp-1371-oedit-empty-Go.py`, `2026-10-07-dp-1371-olc-control-design.md` | keep `blocked-representation`; that is a save-shape decision, not a producer | |
+| `objsave.c:489` | `"%s entering game with no equipment."` at NRM / MAX(LVL_IMMORT,invis) / TRUE when the crash file is missing (`fopen` fails). **Every new character's first entry.** | Go keeps no rent file; the inventory is the SQLite row's blobs, so there is no rent code to select any arm. | `2026-10-09-dp-1371-mudlog-admission.md` §5; row evidence in the inventory | `blocked-representation` until DP-1404 rules the representation | **Port** — DP-1404 (approved) |
+| `objsave.c:504` | `"%s entering game, rented equipment lost (no $)."` at BRF when `rentcode` is RENT_RENTED/RENT_TIMEDOUT and the accrued cost exceeds gold+bank | same: no stored rent code | as above | as above | **`excluded-valid-play`** |
+| `objsave.c:519` | `"%s un-renting and entering game."` at NRM for `RENT_RENTED` — **every ordinary re-login after renting in C** | same | as above | as above | **Port** — DP-1404 (approved) |
+| `objsave.c:524` | `"%s retrieving crash-saved items and entering game."` for `RENT_CRASH` | same | as above | as above | **Port** — DP-1404 (approved) |
+| `objsave.c:528` | `"%s un-cryo'ing and entering game."` for `RENT_CRYO` | same (Go has no cryo path) | as above | as above | **Port** — DP-1404 (approved) |
+| `objsave.c:534` | `"%s retrieving force-saved items and entering game."` for `RENT_FORCED`/`RENT_TIMEDOUT` | same | as above | as above | **`excluded-valid-play`** |
+| `objsave.c:539` | `"WARNING: %s entering game with undefined rent code."` at BRF, the default arm | same | as above | as above | **`excluded-valid-play`** |
+| `objsave.c:1186` | the receptionist's `"%s has rented (%d/day, %d tot.)"` and `"%s has cryo-rented."` at NRM | Go has no receptionist or cryogenicist command path; `quit`'s RentOut is the quit path only | as above | as above | **`excluded-valid-play`** |
+| `whod.c:250`, `:267`, `:296` | `"WHOD port opened."` / `"WHOD port closed."` at BRF / LVL_GOD / TRUE from `init_whod`, `close_whod` and `whod_loop` (the reboot arm) | WHOD is a live C service started at boot (`src/comm.c:274`, `:290`, `:555`) with its own listener; Go has none. Its "who" surfaces are the web, MSSP and Grapevine — an approved divergence, not an omission | `LOG` is `mudlog(msg, BRF, LVL_GOD, TRUE)` (`src/whod.c:39`); no Go listener | **`divergent-approved`**, citing a new DP issue ("WHOD service not ported") that Claude files | **Port** — DP-1415 (listener; prod port 7779) |
+| `whod.c:335` | `"WHO request from %d.%d.%d.%d served."` / `"… from %s served."` at BRF / LVL_GOD / TRUE per served request | same service; the request it logs cannot occur without it | as above | as above | **Port** — DP-1415 |
+| `oedit.c:422` | `"SYSERR: OLC: oedit_save_to_disk: Corrupt ex_desc!"` at BRF / LVL_BUILDER / TRUE when a saved extra description is NULL | A representation question: C distinguishes a loaded NULL from a live allocated-empty extra description. The port's OLC writer collapses them, so the arm has no reachable state until that is decided | `2026-10-07-dp-1371-oedit-null-C.py`, `2026-10-07-dp-1371-oedit-empty-Go.py`, `2026-10-07-dp-1371-olc-control-design.md` | keep `blocked-representation`; that is a save-shape decision, not a producer | **Port** — DP-1417 (design first) |
 
 Rent rows are otherwise ready to port the day DP-1404 gives them a stored code;
 none of them is a lock or lifecycle problem.
@@ -32,16 +34,20 @@ none of them is a lock or lifecycle problem.
 | row | what C does and when | why the port can't / shouldn't | evidence | recommendation | decision |
 |---|---|---|---|---|---|
 | `spell_parser.c:534` | `"SYSERR: Unknown spellnum %d in manual assign"` at BRF / LVL_GOD / TRUE, `call_magic`'s default arm for a `MAG_MANUAL` spell with no switch case | C has 26 `MAG_MANUAL` spells (`src/spell_parser.c:502-536`) and 26 cases, so the default is dead. **Applied in this PR** (row relabelled from `missing`) | PR-1a handoff; the 26/26 enumeration in the row | `excluded-valid-play` (applied) | done |
-| `comm.c:2235` | `"Signal received - rereading wizlists."` at CMP / LVL_IMMORT / TRUE from the SIGUSR1 handler (the signal `re-read wizlist`, `src/comm.c:2303`) | Only an operator can send SIGUSR1: in C its normal sender was the autowiz child, and there is no autowiz binary or source. Go handles only SIGINT/SIGTERM (`cmd/server/main.go`) | `src/comm.c:2303`; inventory note corrected from "SIGHUP" | `excluded-valid-play` | |
-| `comm.c:2245` | `"Received SIGUSR2 - completely unrestricting game (emergent)"` at BRF / LVL_IMMORT / TRUE from the SIGUSR2 handler (`src/comm.c:2309`) | Same: an operator-only signal, outside valid play | `src/comm.c:2309` | `excluded-valid-play` | |
-| `spec_procs2.c:371` | `"SYSERR: …"` at BRF / LVL_GRGOD / TRUE in `stableboy`'s `else` arm, reachable only when `read_mobile(HORSE_VNUM, VIRTUAL)` fails | `HORSE_VNUM` is 8021 (`src/spec_procs2.c:314`) and mob 8021 ships in `lib/world/mob/80.mob`, so the load cannot fail in valid play. The arm also logs a stale `buf` (it formats `msg`, then logs `buf`) — undefined behaviour (R1a) | `src/spec_procs2.c:314`, `:365-371`; `lib/world/mob/80.mob` | `excluded-valid-play` | |
-| `zedit.c:264`, `:270` | `"SYSERR: OLC: Failed to open %s"` at BRF / LVL_IMPL / TRUE when the zone index cannot be opened | Reached only by a filesystem fault, not by play; the payload is also a self-overlapping `sprintf(buf, "…%s", buf)` (R1a) | #1825's unchanged-C `/dev/full` predecessor; `2026-10-07-dp-1371-zedit-unknown-C.py` | `excluded-valid-play` | |
-| `medit.c:364`, `sedit.c:486` (cases `olc-medit-checked-write`, `olc-sedit-checked-write`) | `"SYSERR: OLC: Cannot write mob file!"` / `"… to shop file!"` at BRF / LVL_BUILDER / TRUE when the OLC checked write fails | A filesystem fault. #1825's unchanged-C `/dev/full` experiment produced no diagnostic at all, so there is no C behaviour here to match. **No new experiments were run** | #1825; `2026-10-07-dp-1371-olc-checked-write-C.py` | `excluded-valid-play` | |
-| `ident.c:235` | `"Connection attempt denied from [%s]"` at CMP / LVL_GOD / TRUE when the ident reply names a banned site | Go has no ident worker and C's path needs a responding identd on the client's side. A banned connection is refused by comm.c's own `isbanned` path in both | PR-2 handoff §5 | `excluded-valid-play` | |
-| `scripts.c:1765` | `"SYSERR: Attempting to call unassigned script for %s (#%d)."` at BRF / LVL_IMMORT / TRUE when a mobile has no script for the trigger | The 1b bounded audit is complete: the port gates on the script name before the trigger flag, so C's unassigned-script state cannot be constructed (`pkg/game/scripts.go:25-28`, `pkg/game/room_obj_scripts.go:36-39`) | 1b handoff; the audit in the row | `excluded-valid-play` | |
-| `fight.c:513` | `"death_cry() in fight.c called with ch->in_room = NOWHERE"` at BRF / LVL_IMMORT / TRUE, then `char_to_room(ch, 0)` and return | See §3 below for the caller audit. Go cannot hand `death_cry` a NOWHERE room: the death-trap path is gated on a resolved ROOM_DEATH room and Go re-resolves the mount in the rider's room instead of reusing C's pre-entry pointer | `2026-10-09-dp-1371-mudlog-closeout.md` §3; `TestDeathCryBoundedCallers` | `excluded-valid-play` (see the residual in §3) | |
+| `comm.c:2235` | `"Signal received - rereading wizlists."` at CMP / LVL_IMMORT / TRUE from the SIGUSR1 handler (the signal `re-read wizlist`, `src/comm.c:2303`) | Only an operator can send SIGUSR1: in C its normal sender was the autowiz child, and there is no autowiz binary or source. Go handles only SIGINT/SIGTERM (`cmd/server/main.go`) | `src/comm.c:2303`; inventory note corrected from "SIGHUP" | `excluded-valid-play` | **`excluded-valid-play`** |
+| `comm.c:2245` | `"Received SIGUSR2 - completely unrestricting game (emergent)"` at BRF / LVL_IMMORT / TRUE from the SIGUSR2 handler (`src/comm.c:2309`) | Same: an operator-only signal, outside valid play | `src/comm.c:2309` | `excluded-valid-play` | **`excluded-valid-play`** |
+| `spec_procs2.c:371` | `"SYSERR: …"` at BRF / LVL_GRGOD / TRUE in `stableboy`'s `else` arm, reachable only when `read_mobile(HORSE_VNUM, VIRTUAL)` fails | `HORSE_VNUM` is 8021 (`src/spec_procs2.c:314`) and mob 8021 ships in `lib/world/mob/80.mob`, so the load cannot fail in valid play. The arm also logs a stale `buf` (it formats `msg`, then logs `buf`) — undefined behaviour (R1a) | `src/spec_procs2.c:314`, `:365-371`; `lib/world/mob/80.mob` | `excluded-valid-play` | **`excluded-valid-play`** |
+| `zedit.c:264`, `:270` | `"SYSERR: OLC: Failed to open %s"` at BRF / LVL_IMPL / TRUE when the zone index cannot be opened | Reached only by a filesystem fault, not by play; the payload is also a self-overlapping `sprintf(buf, "…%s", buf)` (R1a) | #1825's unchanged-C `/dev/full` predecessor; `2026-10-07-dp-1371-zedit-unknown-C.py` | `excluded-valid-play` | **`excluded-valid-play`** |
+| `medit.c:364`, `sedit.c:486` (cases `olc-medit-checked-write`, `olc-sedit-checked-write`) | `"SYSERR: OLC: Cannot write mob file!"` / `"… to shop file!"` at BRF / LVL_BUILDER / TRUE when the OLC checked write fails | A filesystem fault. #1825's unchanged-C `/dev/full` experiment produced no diagnostic at all, so there is no C behaviour here to match. **No new experiments were run** | #1825; `2026-10-07-dp-1371-olc-checked-write-C.py` | `excluded-valid-play` | **`excluded-valid-play`** |
+| `ident.c:235` | `"Connection attempt denied from [%s]"` at CMP / LVL_GOD / TRUE when the ident reply names a banned site | Go has no ident worker and C's path needs a responding identd on the client's side. A banned connection is refused by comm.c's own `isbanned` path in both | PR-2 handoff §5 | `excluded-valid-play` | **`excluded-valid-play`** |
+| `scripts.c:1765` | `"SYSERR: Attempting to call unassigned script for %s (#%d)."` at BRF / LVL_IMMORT / TRUE when a mobile has no script for the trigger | The 1b bounded audit is complete: the port gates on the script name before the trigger flag, so C's unassigned-script state cannot be constructed (`pkg/game/scripts.go:25-28`, `pkg/game/room_obj_scripts.go:36-39`) | 1b handoff; the audit in the row | `excluded-valid-play` | **Port** — DP-1416 |
+| `fight.c:513` | `"death_cry() in fight.c called with ch->in_room = NOWHERE"` at BRF / LVL_IMMORT / TRUE, then `char_to_room(ch, 0)` and return | See §3 below for the caller audit. Go cannot hand `death_cry` a NOWHERE room: the death-trap path is gated on a resolved ROOM_DEATH room and Go re-resolves the mount in the rider's room instead of reusing C's pre-entry pointer | `2026-10-09-dp-1371-mudlog-closeout.md` §3; `TestDeathCryBoundedCallers` | `excluded-valid-play` (see the residual in §3) | **`divergent-approved`** — DP-1418 |
 
 ## 3. `fight.c:513` — the bounded caller audit and its residual
+
+**Ruling (Zach 2026-10-09): `divergent-approved`, DP-1418.** Go keeps its
+re-resolving behaviour; this audit is the documented residual, and the inventory
+row and the case `mudlog.game-deathcry-nowhere` carry the disposition.
 
 C has three call sites (`grep -n death_cry src/*.c`):
 
@@ -77,10 +83,9 @@ script can clear the mount's room in this window.
 
 **Residual, stated plainly:** the exclusion rests on the absence of shipped
 content plus the two guards above, not on a mechanism that makes the mount arm
-impossible — a future greet script in a ROOM_DEATH room could reach it in C. If
-you want the stricter reading, keep `blocked-reachability` with this audit as
-its evidence; my recommendation is `excluded-valid-play` on the grounds that
-authored content reaching it is a content change, not valid play.
+impossible — a future greet script in a ROOM_DEATH room could reach it in C.
+Under DP-1418 that residual is accepted rather than reproduced: the port keeps
+its re-resolving behaviour and this audit is its evidence.
 
 Go's side is stronger than C's and is what the proof pins: `deathTrapMount`
 re-resolves the mount **in the rider's room** and returns early when it is gone
