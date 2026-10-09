@@ -18,7 +18,7 @@ func TestHuntVictimEvasionUsesSequentialSpeechDraws(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	mob := NewMobInstance(&parser.Mob{VNum: 9501, ShortDesc: "a hunter"}, 1001)
+	mob := NewMob(&parser.Mob{VNum: 9501, ShortDesc: "a hunter"}, 1001)
 	target := NewPlayer(1, "Evasive", 1002)
 	target.SetSkill("evasion", 100)
 	w.players[target.Name] = target
@@ -57,7 +57,7 @@ func TestHuntVictimSameRoomSkipsEvasionDraw(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	mob := NewMobInstance(&parser.Mob{VNum: 9502, ShortDesc: "a hunter"}, 1001)
+	mob := NewMob(&parser.Mob{VNum: 9502, ShortDesc: "a hunter"}, 1001)
 	target := NewPlayer(1, "Cornered", 1001)
 	target.SetSkill("evasion", 100)
 	w.players[target.Name] = target

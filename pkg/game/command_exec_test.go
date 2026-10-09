@@ -179,7 +179,7 @@ func TestExecuteMobCommand_NoDeadlock(t *testing.T) {
 	if !ok {
 		t.Fatal("mob prototype not found")
 	}
-	mobInst := NewMobInstance(mobProto, 1001)
+	mobInst := NewMob(mobProto, 1001)
 
 	// Register active mob
 	w.mu.Lock()

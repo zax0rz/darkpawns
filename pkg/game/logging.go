@@ -225,16 +225,6 @@ func LogDeathTrap(playerName string, roomVNum int, roomName string) {
 // Sprintbit — bitvector to string
 // ---------------------------------------------------------------------------
 
-// Sprintbit converts a bitvector to a space-separated string of flag names.
-// Ported from sprintbit() in src/utils.c.
-//
-// names should be indexed by bit position; entry names[bit] == the string for that bit.
-// If a names entry is empty, the bit is skipped.
-// If no bits are set, returns "NOBITS ".
-func Sprintbit(bitvector uint64, names []string) string {
-	return sprintnbitWithOffset(bitvector, names, 0)
-}
-
 func sprintnbitWithOffset(bitvector uint64, names []string, bitOffset int) string {
 	var b strings.Builder
 
@@ -263,18 +253,6 @@ func sprintnbitWithOffset(bitvector uint64, names []string, bitOffset int) strin
 // ---------------------------------------------------------------------------
 // Sprinttype — integer to named type
 // ---------------------------------------------------------------------------
-
-// Sprinttype returns the names entry at index typeNum.
-// Ported from sprinttype() in src/utils.c.
-//
-// Returns the name at names[typeNum], or "UNDEFINED" if out of range or
-// if the names entry at that index is empty.
-func Sprinttype(typeNum int, names []string) string {
-	if typeNum >= 0 && typeNum < len(names) && names[typeNum] != "" {
-		return names[typeNum]
-	}
-	return "UNDEFINED"
-}
 
 // ---------------------------------------------------------------------------
 // SprintbitArray — multi-word bitvector to string
@@ -314,32 +292,6 @@ func sprintnbit(bitvector uint64, names []string, bitOffset int) string {
 // ---------------------------------------------------------------------------
 // DieFollower — cleanup follower chains on character death
 // ---------------------------------------------------------------------------
-
-// DieFollower cleans up follower chains when a character dies.
-// If the character has a master, stop following.
-// If the character has followers, each follower must stop following.
-// Ported from die_follower() in src/utils.c.
-//
-// The Go follow system uses Player.Following (string = master's name).
-// Followers are found by scanning the world's player list.
-// This function only uses the World to find followers; it does not need
-// the session layer.
-func DieFollower(playerName string, getFollowers func(name string) []string, stopFollow func(name string)) {
-	// If this player is following someone, stop following.
-	if stopFollow != nil {
-		stopFollow(playerName)
-	}
-
-	// Followers are stored as players whose Following == playerName
-	if getFollowers != nil {
-		followers := getFollowers(playerName)
-		for _, followerName := range followers {
-			if stopFollow != nil {
-				stopFollow(followerName)
-			}
-		}
-	}
-}
 
 // ---------------------------------------------------------------------------
 // CoreDump — log fatal assertion and dump stack

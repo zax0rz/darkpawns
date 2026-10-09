@@ -260,14 +260,6 @@ func resetTimeLocked() {
 	}
 }
 
-// InitializeWeather is retained for compatibility with existing boot call
-// sites; it delegates to ResetTime, which supersedes the prior placeholder
-// (the old version set only pressure from a Year-0 clock). Deprecated: prefer
-// ResetTime.
-func InitializeWeather() {
-	ResetTime()
-}
-
 // WorldClimateSnapshot is an immutable point-in-time copy of the canonical
 // time_info and weather_info globals. Both halves are captured under the same
 // read lock so commands cannot observe a clock tick paired with stale weather.
@@ -277,6 +269,39 @@ type WorldClimateSnapshot struct {
 }
 
 // TimeWeatherSnapshot returns the canonical time and weather state atomically.
+// GetMoon returns the current moon phase (MoonNew … MoonThreeEmpty).
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
+func GetMoon() int {
+	weatherMu.RLock()
+	defer weatherMu.RUnlock()
+	return timeInfo.Moon
+}
+
+// ModifyWeatherChange adjusts the weather change variable.
+// Used by spell_control_weather.
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
+func ModifyWeatherChange(delta int) {
+	weatherMu.Lock()
+	weatherInfo.Change += delta
+	weatherMu.Unlock()
+}
+
+// weatherWorldSnapshot preserves synchronized direct-helper entry points.
+// Combined ticks pass their owner-captured pointer directly to the event
+// bodies, so they never re-enter weatherMu.
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
+func weatherWorldSnapshot() *World {
+	weatherMu.RLock()
+	defer weatherMu.RUnlock()
+	return weatherWorld
+}
+
 func TimeWeatherSnapshot() WorldClimateSnapshot {
 	weatherMu.RLock()
 	defer weatherMu.RUnlock()
@@ -330,6 +355,9 @@ func WeatherAndTime(mode bool, sendToOutdoor func(string)) {
 // Ported from weather.c:another_hour().
 // sendToOutdoor is invoked while weatherMu is write-locked and must not call
 // a weather accessor or mutator that attempts to acquire weatherMu.
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func AnotherHour(mode bool, sendToOutdoor func(string)) {
 	weatherMu.Lock()
 	defer weatherMu.Unlock()
@@ -415,6 +443,9 @@ func anotherHourLocked(mode bool, sendToOutdoor func(string), w *World) {
 // Ported from weather.c:weather_change().
 // sendToOutdoor is invoked while weatherMu is write-locked and must not call
 // a weather accessor or mutator that attempts to acquire weatherMu.
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func WeatherChange(sendToOutdoor func(string)) {
 	weatherMu.Lock()
 	defer weatherMu.Unlock()
@@ -562,6 +593,9 @@ func dice(num, size int) int {
 
 // fullMoon broadcasts the full moon rise to all players.
 // Called on day 22-25 at hour 21 (sunset).
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func fullMoon() {
 	fullMoonForWorld(weatherWorldSnapshot())
 }
@@ -575,6 +609,9 @@ func fullMoonForWorld(w *World) {
 
 // lunarHunter broadcasts the lunar hunter event.
 // Called alongside fullMoon on day 22-25 at hour 21.
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func lunarHunter() {
 	lunarHunterForWorld(weatherWorldSnapshot())
 }
@@ -588,6 +625,9 @@ func lunarHunterForWorld(w *World) {
 
 // loadNightGate broadcasts the night gate appearance.
 // Called at hour 21 (sunset).
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func loadNightGate() {
 	weatherMu.RLock()
 	w, moon := weatherWorld, timeInfo.Moon
@@ -623,6 +663,9 @@ func loadNightGateForWorld(w *World, moon int) {
 
 // removeNightGate broadcasts the night gate removal.
 // Called at hour 5 (sunrise).
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func removeNightGate() {
 	removeNightGateForWorld(weatherWorldSnapshot())
 }
@@ -648,6 +691,9 @@ func removeNightGateForWorld(w *World) {
 
 // ghostShipAppear broadcasts the ghost ship sighting.
 // Called at hour 21 (sunset).
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func ghostShipAppear() {
 	ghostShipAppearForWorld(weatherWorldSnapshot())
 }
@@ -673,6 +719,9 @@ func ghostShipAppearForWorld(w *World) {
 
 // ghostShipDisappear broadcasts the ghost ship departure.
 // Called at hour 5 (sunrise).
+// Class (d) test seam, kept on purpose: the weather characterization, heartbeat and race tests drive it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
 func ghostShipDisappear() {
 	ghostShipDisappearForWorld(weatherWorldSnapshot())
 }
@@ -733,23 +782,6 @@ func sendWeatherRoom(w *World, room int, message string) {
 	}
 }
 
-// weatherWorldSnapshot preserves synchronized direct-helper entry points.
-// Combined ticks pass their owner-captured pointer directly to the event
-// bodies, so they never re-enter weatherMu.
-func weatherWorldSnapshot() *World {
-	weatherMu.RLock()
-	defer weatherMu.RUnlock()
-	return weatherWorld
-}
-
-// ModifyWeatherChange adjusts the weather change variable.
-// Used by spell_control_weather.
-func ModifyWeatherChange(delta int) {
-	weatherMu.Lock()
-	weatherInfo.Change += delta
-	weatherMu.Unlock()
-}
-
 // GetSunlight returns the current sunlight state.
 // Ported from weather.c — used by IS_DARK() macro to determine if outdoor
 // rooms are dark at night.
@@ -757,11 +789,4 @@ func GetSunlight() int {
 	weatherMu.RLock()
 	defer weatherMu.RUnlock()
 	return weatherInfo.Sunlight
-}
-
-// GetMoon returns the current moon phase (MoonNew … MoonThreeEmpty).
-func GetMoon() int {
-	weatherMu.RLock()
-	defer weatherMu.RUnlock()
-	return timeInfo.Moon
 }

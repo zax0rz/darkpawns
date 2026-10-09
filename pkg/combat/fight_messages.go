@@ -5,13 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	miscdata "github.com/zax0rz/darkpawns/lib/misc"
-	"github.com/zax0rz/darkpawns/pkg/errlog"
 )
 
 // FightMessageAction contains the three audience-specific forms of one fight
@@ -52,21 +49,6 @@ type FightMessages map[int][]FightMessageVariant
 func (messages FightMessages) Variants(attackType int) ([]FightMessageVariant, bool) {
 	variants, ok := messages[attackType]
 	return variants, ok
-}
-
-// LoadFightMessages opens and parses a CircleMUD misc/messages file.
-func LoadFightMessages(path string) (FightMessages, error) {
-	file, err := os.Open(filepath.Clean(path))
-	if err != nil {
-		return nil, fmt.Errorf("open fight messages: %w", err)
-	}
-	defer errlog.Close(file, "load fight messages", "path", path)
-
-	messages, err := ParseFightMessages(file)
-	if err != nil {
-		return nil, fmt.Errorf("parse fight messages %q: %w", path, err)
-	}
-	return messages, nil
 }
 
 // ParseFightMessages parses the format consumed by C's load_messages(). Each

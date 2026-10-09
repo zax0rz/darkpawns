@@ -59,7 +59,7 @@ func newResolverTestWorld(t *testing.T) (*World, *Player) {
 		{201, "guard royal", "a royal guard stands here"},
 		{202, "postman mail", "the city postman stands here"},
 	} {
-		m := NewMobInstance(&parser.Mob{
+		m := NewMob(&parser.Mob{
 			VNum: kmob.vnum, Keywords: kmob.keywords, ShortDesc: kmob.short,
 		}, 100)
 		m.SetAlive(true)

@@ -37,7 +37,7 @@ func TestSpecStableboy(t *testing.T) {
 	}
 
 	proto, _ := w.GetMobPrototype(8022)
-	boy := NewMobInstance(proto, 1001)
+	boy := NewMob(proto, 1001)
 
 	lastMsg := func() string { s := out.String(); out.Reset(); return s }
 
@@ -213,7 +213,7 @@ func newStableboyBranchWorld(t *testing.T) (*World, *Player, *MobInstance, *stri
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	proto, _ := w.GetMobPrototype(8022)
-	return w, ch, NewMobInstance(proto, 1001), out
+	return w, ch, NewMob(proto, 1001), out
 }
 
 func TestSpecStableboyAutonomousEntry(t *testing.T) {

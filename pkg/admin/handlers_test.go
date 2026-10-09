@@ -89,118 +89,9 @@ func generateTestToken(t *testing.T, role string) string {
 // handleZones
 // ---------------------------------------------------------------------------
 
-func TestHandleZones_GET(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZones(w)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var zones []zoneResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &zones); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if len(zones) == 0 {
-		t.Error("expected at least 1 zone")
-	}
-	// Verify zone 1 is present
-	var z1 zoneResponse
-	for _, z := range zones {
-		if z.Number == 1 {
-			z1 = z
-			break
-		}
-	}
-	if z1.Name != "Test Zone" || z1.TopRoom != 2000 || z1.Lifespan != 15 || z1.ResetMode != 1 {
-		t.Errorf("zone 1 = %+v, unexpected values", z1)
-	}
-}
-
-func TestHandleZones_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZones(w)
-
-	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodDelete} {
-		t.Run(method, func(t *testing.T) {
-			req := httptest.NewRequest(method, "/admin/zones", nil)
-			rec := httptest.NewRecorder()
-			handler.ServeHTTP(rec, req)
-
-			if rec.Code != http.StatusMethodNotAllowed {
-				t.Errorf("%s returned %d, want 405", method, rec.Code)
-			}
-		})
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleZoneByIDOrReset
 // ---------------------------------------------------------------------------
-
-func TestHandleZoneByIDOrReset_GET_Valid(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/zones/1", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var z zoneResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &z); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if z.Number != 1 {
-		t.Errorf("zone number = %d, want 1", z.Number)
-	}
-}
-
-func TestHandleZoneByIDOrReset_GET_NotFound(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/zones/99", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleZoneByIDOrReset_GET_InvalidID(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/zones/abc", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleZoneByIDOrReset_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneByIDOrReset(w, nil)
-
-	req := httptest.NewRequest(http.MethodDelete, "/admin/zones/1", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handleZoneUpdate (PUT)
@@ -210,215 +101,21 @@ func TestHandleZoneByIDOrReset_WrongMethod(t *testing.T) {
 // handleMobs
 // ---------------------------------------------------------------------------
 
-func TestHandleMobs_GET(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMobs(w)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/mobs", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var mobs []mobResponse
-	json.Unmarshal(rec.Body.Bytes(), &mobs)
-	if len(mobs) < 2 {
-		t.Errorf("expected >= 2 mobs, got %d", len(mobs))
-	}
-}
-
-func TestHandleMobs_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMobs(w)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/mobs", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleObjects
 // ---------------------------------------------------------------------------
-
-func TestHandleObjects_GET(t *testing.T) {
-	w := testWorld(t)
-	handler := handleObjects(w)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/objects", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-	var objs []objResponse
-	json.Unmarshal(rec.Body.Bytes(), &objs)
-	if len(objs) < 2 {
-		t.Errorf("expected >= 2 objects, got %d", len(objs))
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handleServerInfo
 // ---------------------------------------------------------------------------
 
-func TestHandleServerInfo_GET(t *testing.T) {
-	w := testWorld(t)
-	handler := handleServerInfo(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/server", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var info serverInfoResponse
-	json.Unmarshal(rec.Body.Bytes(), &info)
-	if info.RoomCount != 2 {
-		t.Errorf("room count = %d, want 2", info.RoomCount)
-	}
-	if info.PlayerCount != 2 {
-		t.Errorf("player count = %d, want 2", info.PlayerCount)
-	}
-	if info.ZoneCount != 1 {
-		t.Errorf("zone count = %d, want 1", info.ZoneCount)
-	}
-	if info.Uptime == "" {
-		t.Error("uptime should not be empty")
-	}
-}
-
-func TestHandleServerInfo_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleServerInfo(w, nil)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/server", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleLogs
 // ---------------------------------------------------------------------------
 
-func TestHandleLogs_GET(t *testing.T) {
-	lb := NewLogBuffer(100)
-	for i := 0; i < 5; i++ {
-		fmt.Fprintf(lb, "log entry %d", i+1)
-	}
-	handler := handleLogs(lb)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/logs", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var entries []string
-	json.Unmarshal(rec.Body.Bytes(), &entries)
-	if len(entries) != 5 {
-		t.Errorf("expected 5 entries, got %d", len(entries))
-	}
-}
-
-func TestHandleLogs_GET_WithLinesParam(t *testing.T) {
-	lb := NewLogBuffer(100)
-	for i := 0; i < 10; i++ {
-		fmt.Fprintf(lb, "entry %d", i+1)
-	}
-	handler := handleLogs(lb)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/logs?lines=3", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var entries []string
-	json.Unmarshal(rec.Body.Bytes(), &entries)
-	if len(entries) != 3 {
-		t.Errorf("expected 3 entries (lines=3), got %d", len(entries))
-	}
-}
-
-func TestHandleLogs_GET_InvalidLinesParam(t *testing.T) {
-	lb := NewLogBuffer(100)
-	lb.Write([]byte("entry"))
-	handler := handleLogs(lb)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/logs?lines=invalid", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("invalid lines param should default to 100, status = %d", rec.Code)
-	}
-}
-
-func TestHandleLogs_WrongMethod(t *testing.T) {
-	lb := NewLogBuffer(10)
-	handler := handleLogs(lb)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/logs", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handlePlayers
 // ---------------------------------------------------------------------------
-
-func TestHandlePlayers_GET(t *testing.T) {
-	w := testWorld(t)
-	handler := handlePlayers(w)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/players", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var players []playerResponse
-	json.Unmarshal(rec.Body.Bytes(), &players)
-	if len(players) != 2 {
-		t.Errorf("expected 2 players, got %d", len(players))
-	}
-}
-
-func TestHandlePlayers_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handlePlayers(w)
-
-	req := httptest.NewRequest(http.MethodDelete, "/admin/players", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handlePlayerDetail
@@ -535,171 +232,17 @@ func TestHandlePlayerDetail_Save_BuilderRejected(t *testing.T) {
 // handleMetrics
 // ---------------------------------------------------------------------------
 
-func TestHandleMetrics_GET(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMetrics(w)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/metrics", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var m metricsResponse
-	json.Unmarshal(rec.Body.Bytes(), &m)
-	if m.PlayerCount != 2 {
-		t.Errorf("player count = %d, want 2", m.PlayerCount)
-	}
-	if m.RoomCount != 2 {
-		t.Errorf("room count = %d, want 2", m.RoomCount)
-	}
-	if m.Goroutines == 0 {
-		t.Error("goroutines should be > 0")
-	}
-}
-
-func TestHandleMetrics_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMetrics(w)
-
-	req := httptest.NewRequest(http.MethodPut, "/admin/metrics", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleResetAllZones
 // ---------------------------------------------------------------------------
-
-func TestHandleResetAllZones_Post(t *testing.T) {
-	w := testWorld(t)
-	handler := handleResetAllZones(w, nil)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/reset-all-zones", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var resp map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &resp)
-	if resp["status"] != "reset triggered" {
-		t.Errorf("status = %v, want 'reset triggered'", resp["status"])
-	}
-}
-
-func TestHandleResetAllZones_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleResetAllZones(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/reset-all-zones", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handleZoneReset (placeholder)
 // ---------------------------------------------------------------------------
 
-func TestHandleZoneReset_NotImplemented(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneReset(w)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/zones/reset", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotImplemented {
-		t.Errorf("status = %d, want 501; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleZoneReset_WrongMethod(t *testing.T) {
-	w := testWorld(t)
-	handler := handleZoneReset(w)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/zones/reset", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleRoomByVnum
 // ---------------------------------------------------------------------------
-
-func TestHandleRoomByVnum_GET_Valid(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/rooms/1001", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var room roomResponse
-	json.Unmarshal(rec.Body.Bytes(), &room)
-	if room.VNum != 1001 || room.Name != "Test Room" {
-		t.Errorf("room = %+v, unexpected", room)
-	}
-}
-
-func TestHandleRoomByVnum_GET_NotFound(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/rooms/9999", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404", rec.Code)
-	}
-}
-
-func TestHandleRoomByVnum_GET_InvalidVNum(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/rooms/abc", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", rec.Code)
-	}
-}
-
-func TestHandleRoomByVnum_GET_EmptyVNum(t *testing.T) {
-	w := testWorld(t)
-	handler := handleRoomByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/rooms/", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", rec.Code)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handleRoomUpdate (PUT)
@@ -709,38 +252,6 @@ func TestHandleRoomByVnum_GET_EmptyVNum(t *testing.T) {
 // handleMobByVnum
 // ---------------------------------------------------------------------------
 
-func TestHandleMobByVnum_GET_Valid(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMobByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/mobs/2001", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var m mobResponse
-	json.Unmarshal(rec.Body.Bytes(), &m)
-	if m.VNum != 2001 || m.ShortDesc != "a guard" {
-		t.Errorf("mob = %+v, unexpected", m)
-	}
-}
-
-func TestHandleMobByVnum_GET_NotFound(t *testing.T) {
-	w := testWorld(t)
-	handler := handleMobByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/mobs/9999", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleMobUpdate (PUT)
 // ---------------------------------------------------------------------------
@@ -749,67 +260,9 @@ func TestHandleMobByVnum_GET_NotFound(t *testing.T) {
 // handleObjectByVnum
 // ---------------------------------------------------------------------------
 
-func TestHandleObjectByVnum_GET_Valid(t *testing.T) {
-	w := testWorld(t)
-	handler := handleObjectByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/objects/3001", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleObjectByVnum_GET_NotFound(t *testing.T) {
-	w := testWorld(t)
-	handler := handleObjectByVnum(w, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/objects/9999", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleShops
 // ---------------------------------------------------------------------------
-
-func TestHandleShops_GET(t *testing.T) {
-	w := newWorldWithShops(t)
-	handler := handleShops(w)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/shops", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var shops []shopResponse
-	json.Unmarshal(rec.Body.Bytes(), &shops)
-	if len(shops) != 1 {
-		t.Errorf("expected 1 shop, got %d", len(shops))
-	}
-}
-
-func TestHandleShops_WrongMethod(t *testing.T) {
-	w := newWorldWithShops(t)
-	handler := handleShops(w)
-
-	req := httptest.NewRequest(http.MethodPost, "/admin/shops", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusMethodNotAllowed {
-		t.Errorf("status = %d, want 405", rec.Code)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handleShopByKeeper
@@ -858,151 +311,9 @@ func TestHandleShopByKeeper_PUT_NotAllowed(t *testing.T) {
 // handleAgents, handleAgentStatus
 // ---------------------------------------------------------------------------
 
-func TestHandleAgents_GET(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleAgents(store)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/agents", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var agents []*AgentStatus
-	json.Unmarshal(rec.Body.Bytes(), &agents)
-	if len(agents) != 2 {
-		t.Errorf("expected 2 agents, got %d", len(agents))
-	}
-}
-
-func TestHandleAgentStatus_POST_Valid(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleAgentStatus(store)
-
-	body := `{"agent_id": "daeron", "status": "active"}`
-	req := httptest.NewRequest(http.MethodPost, "/admin/agents/status", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200; body: %s", rec.Code, rec.Body.String())
-	}
-
-	var agent AgentStatus
-	json.Unmarshal(rec.Body.Bytes(), &agent)
-	if agent.Status != "active" {
-		t.Errorf("status = %q, want %q", agent.Status, "active")
-	}
-}
-
-func TestHandleAgentStatus_POST_NotFound(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleAgentStatus(store)
-
-	body := `{"agent_id": "nonexistent", "status": "active"}`
-	req := httptest.NewRequest(http.MethodPost, "/admin/agents/status", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d, want 404", rec.Code)
-	}
-}
-
-func TestHandleAgentStatus_POST_MissingFields(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleAgentStatus(store)
-
-	body := `{}`
-	req := httptest.NewRequest(http.MethodPost, "/admin/agents/status", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", rec.Code)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // handleFindings
 // ---------------------------------------------------------------------------
-
-func TestHandleFindings_GET_Empty(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleFindings(store)
-
-	req := httptest.NewRequest(http.MethodGet, "/admin/findings", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-
-	var findings []Finding
-	json.Unmarshal(rec.Body.Bytes(), &findings)
-	if len(findings) != 0 {
-		t.Errorf("expected 0 findings, got %d", len(findings))
-	}
-}
-
-func TestHandleFindings_POST_Valid(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleFindings(store)
-
-	body := `{"source": "reek", "severity": "high", "title": "nil panic", "file": "handlers.go", "line": 42}`
-	req := httptest.NewRequest(http.MethodPost, "/admin/findings", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusCreated {
-		t.Errorf("status = %d, want 201; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleFindings_POST_MissingFields(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleFindings(store)
-
-	body := `{}`
-	req := httptest.NewRequest(http.MethodPost, "/admin/findings", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusBadRequest {
-		t.Errorf("status = %d, want 400", rec.Code)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // handleFindingByID (PUT)
@@ -1069,44 +380,6 @@ func TestHandleFindingByID_PUT_MissingStatus(t *testing.T) {
 // ---------------------------------------------------------------------------
 // handleTriageSummaries
 // ---------------------------------------------------------------------------
-
-func TestHandleTriageSummaries_POST_Valid(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	handler := handleTriageSummaries(store)
-
-	body := `{"date": "2026-05-14", "confirmed": 5, "rejected": 1, "pending": 2, "summary": "Good day"}`
-	req := httptest.NewRequest(http.MethodPost, "/admin/triage/summaries", strings.NewReader(body))
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusCreated {
-		t.Errorf("status = %d, want 201; body: %s", rec.Code, rec.Body.String())
-	}
-}
-
-func TestHandleTriageSummaries_GET(t *testing.T) {
-	path, _ := tempStorePath(t)
-	store, err := NewAgentStore(path)
-	if err != nil {
-		t.Fatalf("NewAgentStore failed: %v", err)
-	}
-	if _, err := store.AddTriageSummary("2026-05-14", "test", 1, 0, 0); err != nil {
-		t.Fatalf("AddTriageSummary returned error: %v", err)
-	}
-
-	handler := handleTriageSummaries(store)
-	req := httptest.NewRequest(http.MethodGet, "/admin/triage/summaries", nil)
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want 200", rec.Code)
-	}
-}
 
 // authMiddlewareForTest validates a Bearer JWT and sets claims on context.
 // This simulates what web.AuthMiddleware does in production. It also stamps

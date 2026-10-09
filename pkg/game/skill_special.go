@@ -690,18 +690,6 @@ func DoReview(ch *Player, world *World) SkillResult {
 	}
 }
 
-// DoWhois implements do_whois() — look up player info.
-func DoWhois(ch *Player, targetName string) SkillResult {
-	if targetName == "" {
-		return SkillResult{Success: false, MessageToCh: "For whom do you wish to search?\r\n"}
-	}
-
-	return SkillResult{
-		Success:     true,
-		MessageToCh: fmt.Sprintf("[Looking up %s...]\r\n(Player database lookup not yet connected)\r\n", targetName),
-	}
-}
-
 // DoPalm implements do_palm() — conceal a small object up your sleeve.
 func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	if objName == "" {

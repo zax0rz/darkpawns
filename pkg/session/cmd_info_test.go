@@ -515,27 +515,6 @@ func TestCmdUsersCFormat(t *testing.T) {
 	}
 }
 
-func TestCmdSummon(t *testing.T) {
-	m := makeTestManager(t)
-	s1 := makeTestSession(t, m, "Alice", 1001, true)
-	s2 := makeTestSession(t, m, "Bob", 1002, true)
-
-	m.mu.Lock()
-	m.sessions["alice"] = s1
-	m.sessions["bob"] = s2
-	m.mu.Unlock()
-
-	err := cmdSummon(s1, []string{"Bob"})
-	if err != nil {
-		t.Fatalf("cmdSummon failed: %v", err)
-	}
-
-	got := readSessionText(t, s1)
-	if !strings.Contains(got, "materializes before you") {
-		t.Errorf("expected summon success output, got %q", got)
-	}
-}
-
 func TestCmdWhoisOffline(t *testing.T) {
 	database := testutil.NewMockDatabase()
 	parsed := &parser.World{
