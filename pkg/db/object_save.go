@@ -134,6 +134,17 @@ func objectSaveRecords(inventory, equipment []byte) ([]game.SaveItemData, error)
 	return out, nil
 }
 
+// DeleteCrashObjectSave is Crash_delete_crashfile (src/objsave.c:177-201), whose
+// only call site is extract_char_final (src/handler.c:1163): at PC extraction the
+// crash file is deleted only when its header still holds RENT_CRASH
+// (src/structs.h:587). A rent or cryo file survives so the next Crash_load can
+// log it, and a LOSTEQ quit — which skipped Crash_rentsave — leaves nothing
+// behind, so that character's next entry is the no-file arm.
+func DeleteCrashObjectSave(store GameStore, name string) error {
+	_, err := store.Exec("DELETE FROM object_saves WHERE identity=? AND kind=1", ObjectSaveIdentity(name))
+	return err
+}
+
 // DeleteObjectSave is Crash_delete_file, keeping the logical identity separate
 // from character deletion or name reuse (src/interpreter.c:2339).
 func DeleteObjectSave(store GameStore, name string) error {
