@@ -980,6 +980,36 @@ type queuedInput struct {
 // queue is unbounded; this is not a translation of MAX_RAW_INPUT_LENGTH.
 const maxQueuedInput = 128
 
+// enqueueInput pre-seeds the queue in tests, with the same admission bound.
+// Class (d) test seam, kept on purpose: the input-queue cap tests (vuln-042) observe through it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
+func (s *Session) enqueueInput(cmd string, args []string) {
+	s.inputMu.Lock()
+	if s.inputOverflow {
+		s.inputMu.Unlock()
+		return
+	}
+	accepted := s.reserveQueuedInputLocked(1)
+	if accepted {
+		s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args})
+	}
+	s.inputMu.Unlock()
+	if !accepted {
+		s.Close()
+	}
+}
+
+// queueLen returns the current drain-queue depth (test helper).
+// Class (d) test seam, kept on purpose: the input-queue cap tests (vuln-042) observe through it; deadcode -test with
+// cmd/tools roots does not count this package's own tests, so it is falsely
+// listed; do not delete without moving that coverage first.
+func (s *Session) queueLen() int {
+	s.inputMu.Lock()
+	defer s.inputMu.Unlock()
+	return len(s.inputQueue)
+}
+
 // tryExecuteNow is the single player-input funnel gate (called from
 // handleCommand in session_login.go). It mirrors comm.c:603: a command issued
 // while wait>0 is NOT rejected — it stays queued and drains later, with no
@@ -1031,23 +1061,6 @@ func (s *Session) reserveQueuedInputLocked(count int) bool {
 	return true
 }
 
-// enqueueInput pre-seeds the queue in tests, with the same admission bound.
-func (s *Session) enqueueInput(cmd string, args []string) {
-	s.inputMu.Lock()
-	if s.inputOverflow {
-		s.inputMu.Unlock()
-		return
-	}
-	accepted := s.reserveQueuedInputLocked(1)
-	if accepted {
-		s.inputQueue = append(s.inputQueue, queuedInput{cmd: cmd, args: args})
-	}
-	s.inputMu.Unlock()
-	if !accepted {
-		s.Close()
-	}
-}
-
 // prependAliasedInputs places the complete remaining alias expansion ahead of
 // pending input. Admission is atomic for the whole expansion; overflow closes
 // outside inputMu, preserving transport/lifecycle lock order.
@@ -1089,13 +1102,6 @@ func (s *Session) dequeueInput() (queuedInput, bool) {
 		s.inputQueue = nil
 	}
 	return head, true
-}
-
-// queueLen returns the current drain-queue depth (test helper).
-func (s *Session) queueLen() int {
-	s.inputMu.Lock()
-	defer s.inputMu.Unlock()
-	return len(s.inputQueue)
 }
 
 // DrainInputQueues is the heartbeat's per-pulse command-drain step (wired as

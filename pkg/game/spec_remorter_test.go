@@ -57,7 +57,7 @@ func TestSpecRemorterSuccessResetsStateAndSeedsClassSkills(t *testing.T) {
 	if err := w.AddPlayer(ch); err != nil {
 		t.Fatalf("AddPlayer: %v", err)
 	}
-	me := NewMobInstance(&parsed.Mobs[0], 1001)
+	me := NewMob(&parsed.Mobs[0], 1001)
 	previousLevelNumber := levelNumber
 	levelNumber = func(_, _ int) int { return 1 }
 	t.Cleanup(func() { levelNumber = previousLevelNumber })

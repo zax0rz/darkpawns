@@ -134,7 +134,7 @@ func TestPlayerEquipmentCharismaHunting(t *testing.T) {
 }
 
 func TestPlayerEquipmentBadStatEntryPoints(t *testing.T) {
-	for _, path := range []string{"lua", "move", "autoequip", "restore"} {
+	for _, path := range []string{"lua", "move", "restore"} {
 		t.Run(path, func(t *testing.T) {
 			w, p, obj, out := badStatsWorld(t, ApplyDex)
 			switch path {
@@ -149,8 +149,6 @@ func TestPlayerEquipmentBadStatEntryPoints(t *testing.T) {
 				if err := w.MoveObject(obj, LocEquippedPlayer(p.Name, SlotHead)); err != nil {
 					t.Fatal(err)
 				}
-			case "autoequip":
-				AutoEquip(p, obj, 7)
 			case "restore":
 				if !restoreEquippedItem(p, obj, int(SlotHead)) {
 					t.Fatal("equip restore failed")

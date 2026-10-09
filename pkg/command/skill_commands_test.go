@@ -516,56 +516,6 @@ func TestCmdSkills(t *testing.T) {
 	})
 }
 
-func TestCmdPractice(t *testing.T) {
-	t.Run("no args", func(t *testing.T) {
-		session := newSkillCommandSession(t)
-		if err := CmdPractice(session, nil); err != nil {
-			t.Fatalf("CmdPractice error: %v", err)
-		}
-		if !strings.Contains(joinMessages(session.messages), "Practice what?") {
-			t.Errorf("expected 'Practice what?', got: %v", session.messages)
-		}
-	})
-
-	t.Run("not learned", func(t *testing.T) {
-		session := newSkillCommandSession(t)
-		session.player.SkillManager = engine.NewSkillManager()
-		if err := CmdPractice(session, []string{"bash"}); err != nil {
-			t.Fatalf("CmdPractice error: %v", err)
-		}
-		if !strings.Contains(joinMessages(session.messages), "haven't learned") {
-			t.Errorf("expected 'haven't learned', got: %v", session.messages)
-		}
-	})
-
-	t.Run("already mastered", func(t *testing.T) {
-		session := newSkillCommandSession(t)
-		sm := engine.NewSkillManager()
-		sm.RegisterSkill(&engine.Skill{Name: "bash", DisplayName: "Bash", Type: engine.SkillTypeCombat, Level: 100, Practice: 0, Difficulty: 1, MaxLevel: 100, Learned: true})
-		session.player.SkillManager = sm
-		if err := CmdPractice(session, []string{"bash"}); err != nil {
-			t.Fatalf("CmdPractice error: %v", err)
-		}
-		if !strings.Contains(joinMessages(session.messages), "already mastered") {
-			t.Errorf("expected 'already mastered', got: %v", session.messages)
-		}
-	})
-
-	t.Run("practices learned skill", func(t *testing.T) {
-		session := newSkillCommandSession(t)
-		sm := engine.NewSkillManager()
-		sm.RegisterSkill(&engine.Skill{Name: "bash", DisplayName: "Bash", Type: engine.SkillTypeCombat, Level: 1, Practice: 0, Difficulty: 1, MaxLevel: 100, Learned: true})
-		session.player.SkillManager = sm
-		if err := CmdPractice(session, []string{"bash"}); err != nil {
-			t.Fatalf("CmdPractice error: %v", err)
-		}
-		output := joinMessages(session.messages)
-		if !strings.Contains(output, "Bash") {
-			t.Errorf("expected skill name in output, got: %v", session.messages)
-		}
-	})
-}
-
 func TestCmdLearn(t *testing.T) {
 	t.Run("no args lists skills", func(t *testing.T) {
 		session := newSkillCommandSession(t)
@@ -834,22 +784,6 @@ func TestCmdDetect_Executes(t *testing.T) {
 
 	if err := CmdDetect(session, nil); err != nil {
 		t.Fatalf("CmdDetect: %v", err)
-	}
-}
-
-func TestCmdDig_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdDig(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdDig_Executes(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-
-	if err := CmdDig(session, nil); err != nil {
-		t.Fatalf("CmdDig: %v", err)
 	}
 }
 
@@ -1272,185 +1206,6 @@ func TestCmdMold_NotEnoughArgsUsesCObjectGate(t *testing.T) {
 	}
 }
 
-func TestCmdWhois_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdWhois(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdWhois_NoArgs(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdWhois(session, nil); err != nil {
-		t.Fatalf("CmdWhois: %v", err)
-	}
-	if !strings.Contains(joinMessages(session.messages), "whom do you wish") {
-		t.Errorf("expected 'whom do you wish', got: %v", session.messages)
-	}
-}
-
-func TestCmdReview_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdReview(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdReview_Executes(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdReview(session, nil); err != nil {
-		t.Fatalf("CmdReview: %v", err)
-	}
-}
-
-func TestCmdKujiKiri_NoPlayer(t *testing.T) {
-	handler := CmdKujiKiri("rin")
-	session := &skillCommandSession{}
-	if err := handler(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdKujiKiri_Executes(t *testing.T) {
-	handler := CmdKujiKiri("rin")
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := handler(session, nil); err != nil {
-		t.Fatalf("CmdKujiKiri: %v", err)
-	}
-}
-
-func TestCmdPoint_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdPoint(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdPoint_Executes(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdPoint(session, []string{"north"}); err != nil {
-		t.Fatalf("CmdPoint: %v", err)
-	}
-}
-
-func TestCmdPalm_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdPalm(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdPalm_NoArgs(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdPalm(session, nil); err != nil {
-		t.Fatalf("CmdPalm: %v", err)
-	}
-	if !strings.Contains(joinMessages(session.messages), "Palm what") {
-		t.Errorf("expected 'Palm what', got: %v", session.messages)
-	}
-}
-
-func TestCmdFleshAlter_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdFleshAlter(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdFleshAlter_NoSkill(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdFleshAlter(session, nil); err != nil {
-		t.Fatalf("CmdFleshAlter: %v", err)
-	}
-	if !strings.Contains(joinMessages(session.messages), "altering your flesh") {
-		t.Errorf("expected 'altering your flesh', got: %v", session.messages)
-	}
-}
-
-func TestCmdSpike_NoSkillKnowledgeGate(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdSpike(session, []string{"rat"}); err != nil {
-		t.Fatalf("CmdSpike: %v", err)
-	}
-	if !strings.Contains(joinMessages(session.messages), "No-one by that name here.") {
-		t.Errorf("expected C target-missing response without a skill gate, got: %v", session.messages)
-	}
-}
-
-func TestCmdStake_NoSkillKnowledgeGate(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdStake(session, []string{"rat"}); err != nil {
-		t.Fatalf("CmdStake: %v", err)
-	}
-	if !strings.Contains(joinMessages(session.messages), "No-one by that name here.") {
-		t.Errorf("expected C target-missing response without a skill gate, got: %v", session.messages)
-	}
-}
-
-func TestCmdSpike_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdSpike(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdSpike_NoArgs(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdSpike(session, nil); err != nil {
-		t.Fatalf("CmdSpike: %v", err)
-	}
-	// C do_spike no-arg → "Whom do you wish to spike?"
-	if !strings.Contains(joinMessages(session.messages), "wish to spike") {
-		t.Errorf("expected 'wish to spike', got: %v", session.messages)
-	}
-}
-
-func TestCmdStake_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdStake(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdStake_NoArgs(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdStake(session, nil); err != nil {
-		t.Fatalf("CmdStake: %v", err)
-	}
-	// Arg check fires before skill check for this command
-	if !strings.Contains(joinMessages(session.messages), "wish to stake") {
-		t.Errorf("expected 'wish to stake', got: %v", session.messages)
-	}
-}
-
-func TestCmdBite_NoPlayer(t *testing.T) {
-	session := &skillCommandSession{}
-	if err := CmdBite(session, nil); err == nil {
-		t.Fatal("expected error when player is nil")
-	}
-}
-
-func TestCmdBite_NoFightingNoArgs(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdBite(session, nil); err != nil {
-		t.Fatalf("CmdBite: %v", err)
-	}
-	if !strings.Contains(joinMessages(session.messages), "Bite who") {
-		t.Errorf("expected 'Bite who', got: %v", session.messages)
-	}
-}
-
 func TestCmdBite_FightingNoArgsIsSilent(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosFighting)
@@ -1460,17 +1215,6 @@ func TestCmdBite_FightingNoArgsIsSilent(t *testing.T) {
 	}
 	if len(session.messages) != 0 {
 		t.Fatalf("fighting no-arg bite emitted %q, want silent C return", session.messages)
-	}
-}
-
-func TestCmdBite_MissingTargetUsesCPunctuation(t *testing.T) {
-	session := newSkillCommandSession(t)
-	session.player.SetPosition(combat.PosStanding)
-	if err := CmdBite(session, []string{"nobody", "trailing"}); err != nil {
-		t.Fatalf("CmdBite: %v", err)
-	}
-	if got := joinMessages(session.messages); !strings.Contains(got, "Bite who?!\r\n") {
-		t.Errorf("missing-target message = %q, want C punctuation", got)
 	}
 }
 
@@ -1493,14 +1237,107 @@ func TestCmdBearhug_NoSkill(t *testing.T) {
 	}
 }
 
-func TestCmdSmackheads_NoSkill(t *testing.T) {
+func TestCmdBite_MissingTargetUsesCPunctuation(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosStanding)
-	if err := CmdSmackheads(session, []string{"one", "two"}); err != nil {
-		t.Fatalf("CmdSmackheads: %v", err)
+	if err := CmdBite(session, []string{"nobody", "trailing"}); err != nil {
+		t.Fatalf("CmdBite: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "Rosie") {
-		t.Errorf("expected 'Rosie', got: %v", session.messages)
+	if got := joinMessages(session.messages); !strings.Contains(got, "Bite who?!\r\n") {
+		t.Errorf("missing-target message = %q, want C punctuation", got)
+	}
+}
+
+func TestCmdBite_NoFightingNoArgs(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdBite(session, nil); err != nil {
+		t.Fatalf("CmdBite: %v", err)
+	}
+	if !strings.Contains(joinMessages(session.messages), "Bite who") {
+		t.Errorf("expected 'Bite who', got: %v", session.messages)
+	}
+}
+
+func TestCmdBite_NoPlayer(t *testing.T) {
+	session := &skillCommandSession{}
+	if err := CmdBite(session, nil); err == nil {
+		t.Fatal("expected error when player is nil")
+	}
+}
+
+func TestCmdFleshAlter_NoPlayer(t *testing.T) {
+	session := &skillCommandSession{}
+	if err := CmdFleshAlter(session, nil); err == nil {
+		t.Fatal("expected error when player is nil")
+	}
+}
+
+func TestCmdFleshAlter_NoSkill(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdFleshAlter(session, nil); err != nil {
+		t.Fatalf("CmdFleshAlter: %v", err)
+	}
+	if !strings.Contains(joinMessages(session.messages), "altering your flesh") {
+		t.Errorf("expected 'altering your flesh', got: %v", session.messages)
+	}
+}
+
+func TestCmdKujiKiri_Executes(t *testing.T) {
+	handler := CmdKujiKiri("rin")
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := handler(session, nil); err != nil {
+		t.Fatalf("CmdKujiKiri: %v", err)
+	}
+}
+
+func TestCmdKujiKiri_NoPlayer(t *testing.T) {
+	handler := CmdKujiKiri("rin")
+	session := &skillCommandSession{}
+	if err := handler(session, nil); err == nil {
+		t.Fatal("expected error when player is nil")
+	}
+}
+
+func TestCmdPalm_NoArgs(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdPalm(session, nil); err != nil {
+		t.Fatalf("CmdPalm: %v", err)
+	}
+	if !strings.Contains(joinMessages(session.messages), "Palm what") {
+		t.Errorf("expected 'Palm what', got: %v", session.messages)
+	}
+}
+
+func TestCmdPalm_NoPlayer(t *testing.T) {
+	session := &skillCommandSession{}
+	if err := CmdPalm(session, nil); err == nil {
+		t.Fatal("expected error when player is nil")
+	}
+}
+
+func TestCmdPoint_Executes(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdPoint(session, []string{"north"}); err != nil {
+		t.Fatalf("CmdPoint: %v", err)
+	}
+}
+
+func TestCmdPoint_NoPlayer(t *testing.T) {
+	session := &skillCommandSession{}
+	if err := CmdPoint(session, nil); err == nil {
+		t.Fatal("expected error when player is nil")
+	}
+}
+
+func TestCmdSlug_NoPlayer(t *testing.T) {
+	session := &skillCommandSession{}
+	if err := CmdSlug(session, nil); err == nil {
+		t.Fatal("expected error when player is nil")
 	}
 }
 
@@ -1523,17 +1360,74 @@ func TestCmdSmackheads_NoPlayer(t *testing.T) {
 	}
 }
 
-func TestCmdSlug_NoPlayer(t *testing.T) {
+func TestCmdSmackheads_NoSkill(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdSmackheads(session, []string{"one", "two"}); err != nil {
+		t.Fatalf("CmdSmackheads: %v", err)
+	}
+	if !strings.Contains(joinMessages(session.messages), "Rosie") {
+		t.Errorf("expected 'Rosie', got: %v", session.messages)
+	}
+}
+
+func TestCmdSpike_NoArgs(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdSpike(session, nil); err != nil {
+		t.Fatalf("CmdSpike: %v", err)
+	}
+	// C do_spike no-arg → "Whom do you wish to spike?"
+	if !strings.Contains(joinMessages(session.messages), "wish to spike") {
+		t.Errorf("expected 'wish to spike', got: %v", session.messages)
+	}
+}
+
+func TestCmdSpike_NoPlayer(t *testing.T) {
 	session := &skillCommandSession{}
-	if err := CmdSlug(session, nil); err == nil {
+	if err := CmdSpike(session, nil); err == nil {
 		t.Fatal("expected error when player is nil")
 	}
 }
 
-func TestCmdTag_NoPlayer(t *testing.T) {
+func TestCmdSpike_NoSkillKnowledgeGate(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdSpike(session, []string{"rat"}); err != nil {
+		t.Fatalf("CmdSpike: %v", err)
+	}
+	if !strings.Contains(joinMessages(session.messages), "No-one by that name here.") {
+		t.Errorf("expected C target-missing response without a skill gate, got: %v", session.messages)
+	}
+}
+
+func TestCmdStake_NoArgs(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdStake(session, nil); err != nil {
+		t.Fatalf("CmdStake: %v", err)
+	}
+	// Arg check fires before skill check for this command
+	if !strings.Contains(joinMessages(session.messages), "wish to stake") {
+		t.Errorf("expected 'wish to stake', got: %v", session.messages)
+	}
+}
+
+func TestCmdStake_NoPlayer(t *testing.T) {
 	session := &skillCommandSession{}
-	if err := CmdTag(session, nil); err == nil {
+	if err := CmdStake(session, nil); err == nil {
 		t.Fatal("expected error when player is nil")
+	}
+}
+
+func TestCmdStake_NoSkillKnowledgeGate(t *testing.T) {
+	session := newSkillCommandSession(t)
+	session.player.SetPosition(combat.PosStanding)
+	if err := CmdStake(session, []string{"rat"}); err != nil {
+		t.Fatalf("CmdStake: %v", err)
+	}
+	if !strings.Contains(joinMessages(session.messages), "No-one by that name here.") {
+		t.Errorf("expected C target-missing response without a skill gate, got: %v", session.messages)
 	}
 }
 
@@ -1545,5 +1439,12 @@ func TestCmdTag_NoArgs(t *testing.T) {
 	}
 	if !strings.Contains(joinMessages(session.messages), "Tag who") {
 		t.Errorf("expected 'Tag who', got: %v", session.messages)
+	}
+}
+
+func TestCmdTag_NoPlayer(t *testing.T) {
+	session := &skillCommandSession{}
+	if err := CmdTag(session, nil); err == nil {
+		t.Fatal("expected error when player is nil")
 	}
 }

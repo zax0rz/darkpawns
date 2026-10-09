@@ -122,9 +122,9 @@ func TestDoSimpleMove_ClosedDoor(t *testing.T) {
 	t.Cleanup(func() { w.StopAITicker() })
 
 	// trySimpleMove checks door state first
-	ok := performMove(w, player, 0, false) // north
+	ok := performMoveResult(w, player, 0, false, &MoveResult{}) // north
 	if ok {
-		t.Error("performMove should fail when door is closed")
+		t.Error("performMoveResult should fail when door is closed")
 	}
 
 	if player.GetRoom() != 1001 {
@@ -166,7 +166,7 @@ func TestDoSimpleMove_LockedDoor(t *testing.T) {
 	}
 	t.Cleanup(func() { w.StopAITicker() })
 
-	ok := performMove(w, player, 0, false) // north
+	ok := performMoveResult(w, player, 0, false, &MoveResult{}) // north
 	if ok {
 		t.Error("performMove should fail when door is locked")
 	}
@@ -196,7 +196,7 @@ func TestPerformMove_FollowersFollow(t *testing.T) {
 		t.Fatal("both players should start in room 1001")
 	}
 
-	ok := performMove(w, leader, 0, false) // north
+	ok := performMoveResult(w, leader, 0, false, &MoveResult{}) // north
 	if !ok {
 		t.Fatal("performMove should succeed")
 	}
@@ -218,7 +218,7 @@ func TestPerformMove_Exhausted(t *testing.T) {
 
 	player.SetMove(0) // no movement points
 
-	ok := performMove(w, player, 0, false) // north
+	ok := performMoveResult(w, player, 0, false, &MoveResult{}) // north
 	if ok {
 		t.Error("performMove should fail when player has no movement points")
 	}
@@ -245,7 +245,7 @@ func TestPerformMove_Sneak(t *testing.T) {
 		messages = append(messages, string(msg))
 	}
 
-	ok := performMove(w, player, 0, false) // north
+	ok := performMoveResult(w, player, 0, false, &MoveResult{}) // north
 	if !ok {
 		t.Fatal("performMove should succeed with sneak")
 	}
@@ -372,7 +372,7 @@ func TestPerformMove_TunnelFull(t *testing.T) {
 	t.Cleanup(func() { w.StopAITicker() })
 
 	// Player2 tries to move north into tunnel — should be blocked
-	ok := performMove(w, player2, 0, false)
+	ok := performMoveResult(w, player2, 0, false, &MoveResult{})
 	if ok {
 		t.Error("performMove should fail when tunnel is full")
 	}

@@ -87,7 +87,7 @@ func TestInitializeWeatherConsumesCPressureRoll(t *testing.T) {
 	// Pick year=1, month=8: secs = 899640 + 8*52920 = 1323000.
 	nowFunc = func() int64 { return beginningOfTime + 1323000 }
 
-	InitializeWeather()
+	ResetTime()
 
 	if gotFrom != 1 || gotTo != 50 {
 		t.Fatalf("weather pressure draw = number(%d,%d), want number(1,50) for month %d",

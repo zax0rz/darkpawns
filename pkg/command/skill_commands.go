@@ -117,79 +117,6 @@ func CmdSkills(s SessionInterface, args []string) error {
 	return s.SendMessage(output.String())
 }
 
-// cmdPractice practices a skill
-func CmdPractice(s SessionInterface, args []string) error {
-	player, err := skillPlayer(s)
-	if err != nil {
-		return err
-	}
-
-	if len(args) == 0 {
-		return s.SendMessage("Practice what? Usage: practice <skill>\r\n")
-	}
-
-	skillName := strings.ToLower(strings.Join(args, " "))
-	skillManager := player.SkillManager
-
-	if skillManager == nil {
-		return s.SendMessage("You have no skills to practice.\r\n")
-	}
-
-	// Check if skill exists and is learned
-	skill := skillManager.GetSkill(skillName)
-	if skill == nil || !skill.Learned {
-		return s.SendMessage(fmt.Sprintf("You haven't learned '%s'.\r\n", skillName))
-	}
-
-	// Can't practice beyond max level
-	if skill.Level >= skill.MaxLevel {
-		return s.SendMessage(fmt.Sprintf("You have already mastered %s.\r\n", skill.DisplayName))
-	}
-
-	// Determine which stat to use for practice check
-	var stat int
-	switch skill.Type {
-	case engine.SkillTypeCombat:
-		// Use strength or dexterity, whichever is higher
-		str := player.GetStr()
-		dex := player.GetDex()
-		if str > dex {
-			stat = str
-		} else {
-			stat = dex
-		}
-	case engine.SkillTypeMagic:
-		// Use intelligence or wisdom, whichever is higher
-		intel := player.GetInt()
-		wis := player.GetWis()
-		if intel > wis {
-			stat = intel
-		} else {
-			stat = wis
-		}
-	case engine.SkillTypeUtility:
-		// Use dexterity or intelligence
-		dex := player.GetDex()
-		intel := player.GetInt()
-		if dex > intel {
-			stat = dex
-		} else {
-			stat = intel
-		}
-	}
-
-	// Practice the skill
-	leveledUp := skillManager.PracticeSkill(skillName, player.GetLevel(), stat)
-
-	if leveledUp {
-		return s.SendMessage(fmt.Sprintf("You practice %s diligently and advance to level %d!\r\n",
-			skill.DisplayName, skill.Level))
-	}
-	progress := skill.GetProgress()
-	return s.SendMessage(fmt.Sprintf("You practice %s. Progress: %d%% (Level %d)\r\n",
-		skill.DisplayName, progress, skill.Level))
-}
-
 // cmdLearn attempts to learn a new skill
 func CmdLearn(s SessionInterface, args []string) error {
 	player, err := skillPlayer(s)
@@ -1567,17 +1494,6 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
-// CmdDig handles the dig command.
-func CmdDig(s SessionInterface, args []string) error {
-	ch, err := skillPlayer(s)
-	if err != nil {
-		return err
-	}
-	world := s.GetWorld()
-	result := game.DoDig(ch, world)
-	return sendSkillResult(s, ch, nil, result)
-}
-
 // CmdTurn handles the turn command.
 func CmdTurn(s SessionInterface, args []string) error {
 	ch, err := skillPlayer(s)
@@ -2309,37 +2225,6 @@ func CmdGroinrip(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
-// CmdReview handles the review command — show recent gossip history.
-func CmdReview(s SessionInterface, args []string) error {
-	ch, err := skillPlayer(s)
-	if err != nil {
-		return err
-	}
-	world := s.GetWorld()
-	if world == nil {
-		return fmt.Errorf("world not available")
-	}
-
-	result := game.DoReview(ch, world)
-	return sendSkillResult(s, ch, nil, result)
-}
-
-// CmdWhois handles the whois command — check player info.
-func CmdWhois(s SessionInterface, args []string) error {
-	ch, err := skillPlayer(s)
-	if err != nil {
-		return err
-	}
-
-	if len(args) == 0 {
-		return s.SendMessage("For whom do you wish to search?\r\n")
-	}
-
-	targetName := strings.Join(args, " ")
-	result := game.DoWhois(ch, targetName)
-	return sendSkillResult(s, ch, nil, result)
-}
-
 // CmdPalm handles the palm command — hide a small item up your sleeve.
 func CmdPalm(s SessionInterface, args []string) error {
 	ch, err := skillPlayer(s)
@@ -2473,17 +2358,6 @@ func CmdCharge(s SessionInterface, args []string) error {
 
 	result := game.DoCharge(ch, target)
 	return sendSkillResult(s, ch, target, result)
-}
-
-// RegisterSkillCommands registers all skill-related commands.
-//
-// NOTE (M-04): This is currently a no-op placeholder. Skill commands are
-// registered via init() functions in pkg/command/ files and wired through
-// the session layer. This function should be the explicit entry point for
-// all skill command registration once the init()-based pattern is migrated.
-// See pkg/command/registry.go for the migration plan.
-func RegisterSkillCommands() {
-	// Registration placeholder — commands are called directly via Cmd* handlers.
 }
 
 // heldFightingTarget mirrors C FIGHTING(ch): no command matcher or visibility

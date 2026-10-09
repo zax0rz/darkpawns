@@ -29,7 +29,7 @@ func TestRangedDeathHasNoKillerBookkeeping(t *testing.T) {
 			con := p.GetCon()
 			var victim combat.Combatant = p
 			if npc { // Real runtime mobile in the canonical world registry.
-				m := NewMobInstance(&parser.Mob{VNum: 3001, Keywords: "guard", ShortDesc: "a guard", Exp: 903}, 1001)
+				m := NewMob(&parser.Mob{VNum: 3001, Keywords: "guard", ShortDesc: "a guard", Exp: 903}, 1001)
 				m.SetHealth(5)
 				exp := 903
 				m.Runtime.ExpOverride = &exp
@@ -150,7 +150,7 @@ func TestRangedRetaliationHunterCallback(t *testing.T) {
 	w, p := rawKillWorld(t)
 	p.SetHP(1000)
 	p.SetMaxHP(1000)
-	m := NewMobInstance(&parser.Mob{VNum: 3001, Keywords: "guard", ShortDesc: "a guard", Level: 10}, 1001)
+	m := NewMob(&parser.Mob{VNum: 3001, Keywords: "guard", ShortDesc: "a guard", Level: 10}, 1001)
 	m.SetHealth(1000)
 	m.SetMobFlag(MobFlagHunter)
 	w.mu.Lock()

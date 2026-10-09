@@ -80,7 +80,7 @@ func newGMCPSession(t *testing.T) *Session {
 func TestGMCPOffUntilNegotiated(t *testing.T) {
 	s := newGMCPSession(t)
 	s.gmcpSync()
-	s.gmcpRoomInfo(1001)
+	s.gmcpRoomInfoForPlayer(1001, s.player)
 	s.gmcpChannelText("say", "Walker", "You say 'hi'\r\n")
 	if got := drainQueued(t, s); len(got) != 0 {
 		t.Fatalf("session without GMCP queued %+v", got)
@@ -188,8 +188,8 @@ func TestGMCPRoomInfoExitsFollowAutoexit(t *testing.T) {
 	s.EnableGMCP()
 	drainQueued(t, s)
 
-	s.gmcpRoomInfo(1001)
-	s.gmcpRoomInfo(1002)
+	s.gmcpRoomInfoForPlayer(1001, s.player)
+	s.gmcpRoomInfoForPlayer(1002, s.player)
 	got := drainQueued(t, s)
 	want := []queued{
 		{kind: MsgGMCP, pkg: "Room.Info", payload: `{"num":1001,"name":"Room A","area":"Proving Grounds","environment":"Forest","exits":{"n":1002}}`},
@@ -201,7 +201,7 @@ func TestGMCPRoomInfoExitsFollowAutoexit(t *testing.T) {
 
 	// do_auto_exits shows immortals closed exits too.
 	s.player.SetLevel(game.LVL_IMMORT)
-	s.gmcpRoomInfo(1001)
+	s.gmcpRoomInfoForPlayer(1001, s.player)
 	if got := drainQueued(t, s); len(got) != 1 || got[0].payload != `{"num":1001,"name":"Room A","area":"Proving Grounds","environment":"Forest","exits":{"e":1002,"n":1002}}` {
 		t.Fatalf("immortal Room.Info = %+v", got)
 	}

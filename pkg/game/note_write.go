@@ -28,19 +28,6 @@ type noteWriteEntry struct {
 	buffer string
 }
 
-// StartNoteWriting registers the player as actively writing on obj.
-// Sets PLR_WRITING so the session intercept routes input here.
-// Called from doWrite after all validation passes.
-func StartNoteWriting(ch *Player, obj *ObjectInstance) {
-	noteWriteMu.Lock()
-	noteWriteEntries[ch.ID] = &noteWriteEntry{obj: obj}
-	noteWriteMu.Unlock()
-
-	ch.SetPlrFlag(PlrWriting, true)
-	// PLR_MAILING is intentionally NOT set — that's the discriminator in the
-	// session intercept to tell note writes from mail writes.
-}
-
 // HandleNoteInput processes one line of input from a player in note-write mode.
 // Returns true when writing is complete (line == "@"), false while buffering.
 // Clears PLR_WRITING on completion or error.
@@ -88,22 +75,4 @@ func HandleNoteInput(ch *Player, line string) bool {
 	}
 	noteWriteMu.Unlock()
 	return false
-}
-
-// CancelNoteWriting cleans up note writing state for a player (e.g. on disconnect).
-func CancelNoteWriting(playerID int) {
-	noteWriteMu.Lock()
-	delete(noteWriteEntries, playerID)
-	noteWriteMu.Unlock()
-}
-
-// IsWritingNote returns true if the player is in note-write mode (not mail mode).
-func IsWritingNote(ch *Player) bool {
-	if ch.GetFlags()&(1<<PlrWriting) == 0 {
-		return false
-	}
-	if ch.GetFlags()&(1<<PlrMailing) != 0 {
-		return false // that's mail
-	}
-	return true
 }

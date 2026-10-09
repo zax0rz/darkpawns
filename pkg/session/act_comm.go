@@ -31,39 +31,6 @@ func cmdRaceSayText(s *Session, msg string) error {
 	return nil
 }
 
-// cmdQcomm handles question communication (question asked to all questing players).
-// Source: act.comm.c do_qcomm() — requires PRF_QUEST flag to participate.
-func cmdQcomm(s *Session, args []string) error {
-	if blocked := qcommGuard(s); blocked {
-		return nil
-	}
-
-	if len(args) == 0 {
-		s.Send("What is your question?")
-		return nil
-	}
-
-	msg := sanitizeMessage(strings.Join(args, " "))
-	formatted := fmt.Sprintf("%s asks '%s'", s.player.Name, msg)
-
-	s.Send(fmt.Sprintf("You ask '%s'", msg))
-
-	// Broadcast to all online players
-	s.manager.mu.RLock()
-	for _, sess := range s.manager.sessions {
-		if sess.player == nil || sess == s {
-			continue
-		}
-		if sess.player.GetFlags()&(1<<uint(game.PrfQuest)) == 0 {
-			continue
-		}
-		sess.Send(formatted)
-	}
-	s.manager.mu.RUnlock()
-
-	return nil
-}
-
 // cmdQsay — "qsay <message>" quest-say (act.comm.c do_qcomm/SCMD_QSAY, level 0).
 // Broadcasts "<name> quest-says, '<msg>'" to PRF_QUEST participants. C colors it &W...&n.
 func cmdQsay(s *Session, args []string) error {

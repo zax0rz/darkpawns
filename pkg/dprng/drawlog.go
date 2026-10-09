@@ -50,6 +50,7 @@ func drawLog(consumed int, method string, a, b, value int) {
 }
 
 // DrawLogIndex returns the number of draws consumed so far (testing aid).
+// Class (d) seam, kept on purpose: oracle draw-parity tooling hooks.
 func DrawLogIndex() int {
 	drawLogMu.Lock()
 	defer drawLogMu.Unlock()
@@ -57,4 +58,5 @@ func DrawLogIndex() int {
 }
 
 // DrawLogEnabled reports whether draw logging is active.
+// Class (d) seam, kept on purpose: oracle draw-parity tooling hooks.
 func DrawLogEnabled() bool { return drawLogOn }

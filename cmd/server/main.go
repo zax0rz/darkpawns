@@ -68,6 +68,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/grapevine"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
+	"github.com/zax0rz/darkpawns/pkg/mudlog"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/session"
@@ -743,7 +744,16 @@ func main() {
 	logHandler := admin.NewSlogHandler(baseHandler, logBuffer)
 	slog.SetDefault(slog.New(logHandler))
 
-	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc))
+	// Mudlog observer (mudlog-push design, slice 1): the tap inside
+	// game.MudLog feeds an in-memory ring the admin console reads, plus one
+	// optional ntfy push from the ops environment (off unless
+	// DP_MUDLOG_NTFY_URL is set — private by default). StartDefault wires
+	// the process feed — the one the tap actually feeds — so the readers
+	// and the tap can never be two different feeds.
+	mudlogFeed := mudlog.StartDefault(context.Background(), nil)
+	defer mudlogFeed.Stop()
+
+	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed))
 	if err != nil {
 		fatal("failed to init admin router: %v", err)
 	}

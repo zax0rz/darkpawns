@@ -215,8 +215,3 @@ func CheckSavingThrow(ch interface{}, saveType SavingThrowType) bool {
 	roll := dprng.Number(0, 99)
 	return save < roll // TRUE = successful save
 }
-
-// Dice rolls N dice of S sides and returns the total (e.g. dice(2,6) = 2d6).
-func Dice(num, sides int) int {
-	return dprng.Dice(num, sides)
-}

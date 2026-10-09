@@ -56,3 +56,20 @@ for filename, test in (("limits_condition.go", "TestPointUpdatePoisonDamageTail/
         assert result.returncode == 1 and "[build failed]" not in result.stdout
         assert "--- FAIL: " + test.split("/")[0] in result.stdout
     run(["go", "test", "./pkg/game", "-run", "^" + test + "$", "-count=1"])
+
+# Guard-specific control: keep the damage tail but remove self shopkeeper refusal.
+guard_source = Path("pkg/game/room_activity.go").resolve()
+guard_text = guard_source.read_text()
+guard = "if w.DamageRefused(vict, vict) {"
+assert guard in guard_text
+with tempfile.TemporaryDirectory() as directory:
+    root = Path(directory)
+    replacement = root / guard_source.name
+    replacement.write_text(guard_text.replace(guard, "if false {", 1))
+    overlay = root / "overlay.json"
+    overlay.write_text(json.dumps({"Replace": {str(guard_source): str(replacement)}}))
+    result = subprocess.run(["go", "test", "-overlay=" + str(overlay), "./pkg/session", "-run", "^TestPointUpdatePoisonShopkeeperWire$", "-count=1"], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    print(result.stdout, end="")
+    assert result.returncode == 1 and "[build failed]" not in result.stdout
+    assert "poisoned keeper HP=" in result.stdout
+run(["go", "test", "./pkg/session", "-run", "^TestPointUpdatePoisonShopkeeperWire$", "-count=1"])

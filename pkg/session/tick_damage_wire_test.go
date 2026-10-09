@@ -45,6 +45,9 @@ func TestPointUpdatePoisonShopkeeperWire(t *testing.T) {
 	keeper.VNum = 8003 // C's is_shopkeeper hardcoded protector.
 	keeper.SetHealth(keeper.GetMaxHP())
 	keeper.SetAffected(game.AffPoison)
+	if !keeper.HasAffect(game.AffPoison) {
+		t.Fatal("fixture keeper is not poisoned")
+	}
 	_ = captureWire(wizard)
 	before := keeper.GetHP()
 	m.world.PointUpdate()

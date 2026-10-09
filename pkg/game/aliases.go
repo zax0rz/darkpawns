@@ -254,20 +254,6 @@ func ExpandAlias(aliases []Alias, command string) ([]string, bool) {
 	return expandComplexAlias(a.Replacement, rest), true
 }
 
-// PerformAlias preserves the original single-string API for callers that only
-// need the first expanded command. Session dispatch uses ExpandAlias so it can
-// put the remaining complex commands at the front of the input queue.
-func PerformAlias(aliases []Alias, command string) (string, bool) {
-	expanded, found := ExpandAlias(aliases, command)
-	if !found {
-		return command, false
-	}
-	if len(expanded) == 0 {
-		return "", true
-	}
-	return expanded[0], true
-}
-
 // expandComplexAlias is the direct Go equivalent of C's
 // perform_complex_alias. C tokenizes the text after the trigger into at most
 // nine space-delimited tokens, uses $1..$9 for those tokens, and uses $* for

@@ -232,11 +232,6 @@ func (m *MobInstance) GetID() int {
 	return m.ID
 }
 
-// NewMobInstance is an alias for NewMob for compatibility.
-func NewMobInstance(proto *parser.Mob, roomVNum int) *MobInstance {
-	return NewMob(proto, roomVNum)
-}
-
 // GetSex returns the mob's sex in Go's actor encoding
 // (0=male, 1=female, 2=neutral). Mob files retain C's encoding
 // (0=neutral, 1=male, 2=female), so translate at the Actor boundary.
