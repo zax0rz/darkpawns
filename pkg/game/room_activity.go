@@ -156,15 +156,15 @@ func (w *World) roomActivityDamageArms(ch roomActivityChar) {
 	}
 
 	if !nohassle && ch.IsAffected(affFlaming) {
-		w.roomActivitySelfDamage(ch, 15, roomActSpellFlamestrike)
+		w.selfDamage(ch, 15, roomActSpellFlamestrike)
 	}
 	if room.Sector == SECT_UNDERWATER && !ch.IsAffected(affWaterBreathe) && !nohassle {
-		w.roomActivitySelfDamage(ch, 25, roomActSpellDrowning)
+		w.selfDamage(ch, 25, roomActSpellDrowning)
 	}
 	if room.Sector == SECT_WATER_NOSWIM {
 		if !ch.IsAffected(affWaterWalk) && !ch.IsAffected(affFly) && !nohassle {
 			if !roomActivityHasBoat(ch) {
-				w.roomActivitySelfDamage(ch, 25, roomActSpellDrowning)
+				w.selfDamage(ch, 25, roomActSpellDrowning)
 			}
 		}
 	}
@@ -209,18 +209,22 @@ func roomActivityHasBoat(ch roomActivityChar) bool {
 	return false
 }
 
-// roomActivitySelfDamage ports the ch == victim arm of fight.c damage() used
-// by room_activity's fixed damage calls: the modifier funnel, HP/position
+// selfDamage ports the ch == victim arm of fight.c damage() used
+// by room activity, tick damage and equip_char: the modifier funnel, HP/position
 // update, skill_message (M-96/M-103 blocks from lib/misc/messages), the
 // position/pain/scream/bleeding bytes, and the death pipeline. Branches that
 // C cannot reach with ch == victim (peaceful-room notice, novice protection,
-// jail redirects, wimpy flee, group exp) are absent by construction.
-func (w *World) roomActivitySelfDamage(vict combat.Combatant, dam int, attackType int) bool {
+// jail redirects, wimpy flee) are absent by construction.
+func (w *World) selfDamage(vict combat.Combatant, dam int, attackType int) bool {
 	if vict == nil || vict.GetPosition() <= combat.PosDead {
 		return false // C: "Attempt to damage a corpse."
 	}
 
-	// fight.c:1449-1453 — self-damage still strips AFF_HIDE inline.
+	if w.DamageRefused(vict, vict) {
+		return false
+	}
+
+	// fight.c:1460-1464 — self-damage still strips AFF_HIDE inline.
 	hidden := false
 	switch c := vict.(type) {
 	case *Player:
@@ -250,6 +254,19 @@ func (w *World) roomActivitySelfDamage(vict combat.Combatant, dam int, attackTyp
 	// fight.c:1534-1545 — a spell attacktype is never IS_WEAPON, so C always
 	// takes skill_message here, before the position bytes.
 	combat.EmitSkillMessage(dam, vict, vict, attackType, vict.GetRoom())
+	// fight.c:1549-1558 applies to self damage too, including both draws.
+	if p, ok := vict.(*Player); ok && p.IsMounted() && dam > 0 && combat.GetRoller().Number(0, 99) < 10 {
+		Act(w, false, p, nil, nil, nil, "The hit knocks you off of your mount!\r\n", "", ToChar)
+		Act(w, false, p, nil, nil, nil, "$n gets knocked off of his mount.", "", ToRoom)
+		w.doDismount(p, nil, "dismount", "")
+		if float64(combat.GetRoller().Number(0, 99)) < float64(p.GetDex())*1.5 {
+			p.SendMessage("You land on your feet!\r\n")
+		} else {
+			p.SendMessage("You hit the ground with a thud.\r\n")
+			p.SetPosition(combat.PosSitting)
+		}
+		newPos = p.GetPosition()
+	}
 	w.emitMobSkillSurvival(vict, vict, dam, newPos)
 
 	if newPos == combat.PosDead {

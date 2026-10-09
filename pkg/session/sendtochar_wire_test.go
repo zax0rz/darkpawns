@@ -21,7 +21,7 @@ func captureWire(s *Session) string {
 			if !open {
 				return out.String()
 			}
-			f, ok := RenderTerminalFrame(msg)
+			f, ok := s.RenderTerminalFrame(msg)
 			if !ok {
 				continue
 			}

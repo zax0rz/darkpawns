@@ -233,7 +233,7 @@ func (w *World) finishMobileEquipment(m *MobInstance, obj *ObjectInstance, effec
 			pest.mu.Unlock()
 		}
 	case 'd':
-		w.roomActivitySelfDamage(m, 40, combat.TYPE_SUFFERING)
+		w.selfDamage(m, 40, combat.TYPE_SUFFERING)
 	}
 }
 

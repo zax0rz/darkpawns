@@ -312,6 +312,11 @@ func (p *Player) ClearPLRFlag(bit int) {
 func (p *Player) IsAffected(affBit int) bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
+	return p.isAffectedLocked(affBit)
+}
+
+// isAffectedLocked reads both innate and active spell flags. Caller holds p.mu.
+func (p *Player) isAffectedLocked(affBit int) bool {
 	if affBit < 0 || affBit >= 64 {
 		return false
 	}

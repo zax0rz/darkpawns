@@ -9,9 +9,9 @@ func (w *World) ManaGain(p *Player) int {
 	cThirst := p.Conditions[CondThirst]
 	veteran := isVeteran(p)
 	mystic := isMystic(p)
-	poisoned := p.Affects&(1<<AffPoison) != 0
-	flaming := p.Affects&(1<<AffFlaming) != 0
-	cutthroat := p.Affects&(1<<AffCutthroat) != 0
+	poisoned := p.isAffectedLocked(AffPoison)
+	flaming := p.isAffectedLocked(AffFlaming)
+	cutthroat := p.isAffectedLocked(AffCutthroat)
 	p.mu.RUnlock()
 
 	gain := 14
@@ -88,9 +88,9 @@ func (w *World) HitGain(p *Player) int {
 	cFull := p.Conditions[CondFull]
 	cThirst := p.Conditions[CondThirst]
 	veteran := isVeteran(p)
-	poisoned := p.Affects&(1<<AffPoison) != 0
-	flaming := p.Affects&(1<<AffFlaming) != 0
-	cutthroat := p.Affects&(1<<AffCutthroat) != 0
+	poisoned := p.isAffectedLocked(AffPoison)
+	flaming := p.isAffectedLocked(AffFlaming)
+	cutthroat := p.isAffectedLocked(AffCutthroat)
 	p.mu.RUnlock()
 
 	gain := 20
@@ -166,9 +166,9 @@ func (w *World) MoveGain(p *Player) int {
 	cFull := p.Conditions[CondFull]
 	cThirst := p.Conditions[CondThirst]
 	veteran := isVeteran(p)
-	poisoned := p.Affects&(1<<AffPoison) != 0
-	flaming := p.Affects&(1<<AffFlaming) != 0
-	cutthroat := p.Affects&(1<<AffCutthroat) != 0
+	poisoned := p.isAffectedLocked(AffPoison)
+	flaming := p.isAffectedLocked(AffFlaming)
+	cutthroat := p.isAffectedLocked(AffCutthroat)
 	p.mu.RUnlock()
 
 	gain := 20

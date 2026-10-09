@@ -1,0 +1,79 @@
+# DP-1406: limits.c:513 -> damage(i,i,2,TYPE_SUFFERING).
+# depth-case: damage.tick-mortally
+# One room_activity pulse deals fixed drowning damage 25 to an 18-HP
+# mortal, leaving HP -7. Transfer back before another mobile pulse so
+# the next point_update takes the mortally-wounded arm, not drowning.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8004 4 off
+set-room-sector 8163 7
+
+[setup:oracle]
+Tickgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Tickgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:peer]
+Tickpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tickpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Tickpeer level 10
+set Tickpeer maxhit 100
+set Tickpeer hit 18
+teleport Tickpeer 8163
+
+[probe]
+~dpclock pulse 40
+teleport Tickpeer 8004
+~dpclock pulse 630
