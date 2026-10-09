@@ -52,3 +52,20 @@ The first versions of these rulings live in the operator's private briefs, not t
 ## Ledger rows
 
 PF-061, PF-062, RO-014 and RO-015.
+
+## 5. A comparator blind spot: every blank line before a prompt
+
+Fixing one doubled line ending in #1877 (`sendToChar` appends `\r\n`, but C's `send_to_char` writes its argument as given) led to a class audit (zax0rz/darkpawns#1880). **96 of 157** call sites passed strings that already ended in a line ending, so each printed an extra blank line before the next prompt. Raw captures for the existing `door-basic` scenario:
+
+```
+C : "Okay.\r\n\r\n22H 100M 85V > "
+Go: "Okay.\r\n\r\n\r\n22H 100M 85V > "
+```
+
+The scenario was green throughout. The comparator replaces vitals prompts with `<PROMPT>`, **deletes** prompt-only lines as framing, and then trims leading and trailing blank lines (`internal/oraclediff/normalize.go:87-124`). A surplus blank line right before a prompt therefore becomes trailing padding and disappears. **Any number of blank lines before a prompt normalizes identically**, in both directions, so a Go block *missing* C's blank line is equally invisible. The census at #1880's tip was CLEAN, and could not have been anything else. The proof came from wire-byte tests.
+
+This is the second known normalization blind spot, after `\r\n` vs `\n\r` terminators. Its cause is a deliberate choice: prompts were deleted because C and Go repaint them at different times around asynchronous output. A comparator change that keeps the prompt token is proposed but not applied. Running the full corpus once with it would measure the size of the hidden class.
+
+## 6. A boot failure scored as a game divergence
+
+#1877's final census was NOT_CLEAN on one claims row (`use-tattoo-ship`, seed 8). The Go server log showed its telnet listener never bound (`bind: address already in use`), so the scenario never reached the game. The harness auto-retries INFRA and TIMEOUT rows but never a FAIL, and it classified this as FAIL. A targeted rerun at the same tip passed 3 out of 3. The likely port holder was the #1880 agent's raw-capture runs on the same host. The two findings above came from that agent's work, and so did this false alarm.
