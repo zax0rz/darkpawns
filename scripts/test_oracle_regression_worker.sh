@@ -159,6 +159,13 @@ run_case infra-pinned-confirmed "I|D:cast:$one_a|D:cast:$one_a" yes "$(pin_one "
 run_case infra-unpinned-confirmed "I|D:cast:$one_a|D:cast:$one_a" no "" $'FAIL\tfake\t3' 3 3
 run_case infra-pin-mismatch "I|D:cast:$one_a|D:cast:$one_a" yes "$(pin_one "$one_b" infra-pin-mismatch)" $'FAIL\tfake\t3' 3 3
 run_case infra-single-divergence "I|D:cast:$one_a|I" yes "$(pin_one "$one_a" infra-single-divergence)" $'INFRA\tfake\t1' 3 3
+# A listener bind failure on either engine is infrastructure (RO-016): the
+# attempt log carries the Go "Telnet listener failed ... bind: address
+# already in use" boot line (and the C "SYSERR: bind" shape), so it must be
+# retried like any infra-shaped attempt and end INFRA on a bad day, never
+# FAIL.
+run_case bind-fail-retries-then-passes "B|P" no "" $'PASS\tfake' 2 2
+run_case bind-fail-exhausts-to-infra "B|B|B" no "" $'INFRA\tfake\t1' 3 3
 run_case divergence-then-success "D:cast:$one_a|P" no "" $'INFRA\tfake\t3' 2 2
 run_case baseline-divergence-then-success "D:cast:$one_a|P" yes "$(pin_one "$one_a" baseline-divergence-then-success)" $'STALE\tfake' 2 2
 run_case unstable-divergence "D:cast:$one_a|D:cast:$one_b" yes "$(pin_one "$one_a" unstable-divergence)" $'UNPINNABLE\tfake' 2 2

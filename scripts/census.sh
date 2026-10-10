@@ -43,30 +43,40 @@ usage() {
 # ---------------------------------------------------------------------------
 # Shared one-line reporting for wait/status.
 # ---------------------------------------------------------------------------
+
+# run_label is the identity prefix every report line carries (RO-014: an
+# agent once reported another agent's census as its own): the run's own
+# name and the go-head it was captured against.
+run_label() {
+	local run_dir=$1 head
+	head=$(cut -c1-9 -- "$run_dir/go-head.txt" 2>/dev/null) || head=unknown
+	printf '%s @%s: ' "$(basename -- "$run_dir")" "${head:-unknown}"
+}
+
 report_run() {
 	local run_dir=$1 max_seconds=$2
 	local summary state pid started elapsed done total
 	if [[ ! -d "$run_dir" ]]; then
-		printf 'no census %s\n' "$run_dir"
+		printf '%sno census %s\n' "$(run_label "$run_dir")" "$run_dir"
 		return 4
 	fi
 	if [[ -s "$run_dir/summary.txt" ]]; then
 		local line verdict
 		line=$(cat -- "$run_dir/summary.txt")
 		verdict=$(printf '%s\n' "$line" | sed -n 's/.* verdict=\([A-Z_]*\).*/\1/p')
-		printf '%s\n' "$line"
+		printf '%s%s\n' "$(run_label "$run_dir")" "$line"
 		[[ "$verdict" == CLEAN || "$verdict" == CLEAN_AFTER_RECHECK ]]
 		return
 	fi
 	state=$(cat -- "$run_dir/state" 2>/dev/null || printf 'unknown')
 	pid=$(printf '%s\n' "$state" | sed -n 's/^running pid=\([0-9]*\).*/\1/p')
 	if [[ -n "$pid" ]] && ! kill -0 "$pid" 2>/dev/null; then
-		printf 'died %s\n' "$run_dir"
+		printf '%sdied %s\n' "$(run_label "$run_dir")" "$run_dir"
 		return 4
 	fi
 	if [[ "$state" != running* ]]; then
 		# state was written to done but no summary followed: treat as died.
-		printf 'died %s\n' "$run_dir"
+		printf '%sdied %s\n' "$(run_label "$run_dir")" "$run_dir"
 		return 4
 	fi
 	if ((max_seconds <= 0)); then
@@ -76,10 +86,10 @@ report_run() {
 		if [[ -s "$run_dir/claims.tsv" ]]; then
 			local claim_seed claim_done claim_total
 			IFS=$'\t' read -r claim_seed claim_done claim_total <"$run_dir/claims-progress" 2>/dev/null || true
-			printf 'running %ss seed %s %s/%s\n' "$elapsed" "${claim_seed:-pending}" "${claim_done:-0}" "${claim_total:-$total}"
+			printf '%srunning %ss seed %s %s/%s\n' "$(run_label "$run_dir")" "$elapsed" "${claim_seed:-pending}" "${claim_done:-0}" "${claim_total:-$total}"
 		else
 		done=$(grep -cE '^(PASS|FAIL|EXPECTED|EXPECTED_UNSTABLE|UNPINNABLE|STALE|TIMEOUT|INFRA|RETRY) ' "$run_dir/census.log" 2>/dev/null || printf 0)
-		printf 'running %ss %s/%s\n' "$elapsed" "$done" "$total"
+		printf '%srunning %ss %s/%s\n' "$(run_label "$run_dir")" "$elapsed" "$done" "$total"
 		fi
 		return 3
 	fi
@@ -307,11 +317,13 @@ PYCOUNT
 # wait / status
 # ---------------------------------------------------------------------------
 do_wait() {
-	local run= max_seconds=540
+	local run= expect_name= max_seconds=540
 	while (($# > 0)); do
 		case $1 in
 		--run) (($# >= 2)) || usage; run=$2; shift 2 ;;
 		--run=*) run=${1#--run=}; shift ;;
+		--name) (($# >= 2)) || usage; expect_name=$2; shift 2 ;;
+		--name=*) expect_name=${1#--name=}; shift ;;
 		--max-seconds) (($# >= 2)) || usage; max_seconds=$2; shift 2 ;;
 		--max-seconds=*) max_seconds=${1#--max-seconds=}; shift ;;
 		*) usage ;;
@@ -324,6 +336,13 @@ do_wait() {
 		printf 'no census\n'
 		exit 4
 	}
+	# --name asserts whose census this is (RO-014): refusing to report
+	# someone else's run is the point, so a mismatch is exit 4, never a
+	# verdict line.
+	if [[ -n "${expect_name:-}" ]] && [[ "$(basename -- "$run_dir")" != "$expect_name" ]]; then
+		printf 'refusing: latest census is %s, not %s\n' "$(basename -- "$run_dir")" "$expect_name" >&2
+		exit 4
+	fi
 	report_run "$run_dir" "$max_seconds"
 }
 

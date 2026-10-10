@@ -61,7 +61,12 @@ main() {
 		# "did not accept connections ... within" is dialWhenReady's readiness
 		# timeout: under a wide fan-out a server can lose the port race with 35
 		# other boots, and that is a scheduling accident, not a transcript diff.
-		grep -Eq 'exited before readiness|did not log .*within|did not accept connections .* within|: EOF|connection (reset|closed)' "$1"
+		# A listener boot failure is the same accident one step earlier: the Go
+		# server logs "Telnet listener failed: ... bind: address already in use"
+		# (RO-016; it was scored FAIL before this), and C's perror prints
+		# "SYSERR: bind" (comm.c:357). Either engine failing to bind must reach
+		# the retry path, because FAIL is never retried.
+		grep -Eq 'exited before readiness|did not log .*within|did not accept connections .* within|: EOF|connection (reset|closed)|Telnet listener failed|address already in use|SYSERR: bind' "$1"
 	}
 
 	run_attempt() {
