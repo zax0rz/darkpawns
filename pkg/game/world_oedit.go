@@ -70,17 +70,15 @@ func (w *World) CommitEditedObj(obj parser.Obj) bool {
 	w.objs[obj.VNum] = &stored
 
 	if w.parsedData != nil {
-		parsedIndex := -1
-		for i := range w.parsedData.Objs {
-			if w.parsedData.Objs[i].VNum == obj.VNum {
-				parsedIndex = i
-				break
-			}
-		}
-		if parsedIndex < 0 {
-			w.parsedData.Objs = append(w.parsedData.Objs, CloneObj(obj))
+		if existing, ok := w.parsedData.ObjByVnum(obj.VNum); ok {
+			// Same element the first-match scan found; writing through the
+			// index pointer is the slice assignment it performed.
+			*existing = CloneObj(obj)
 		} else {
-			w.parsedData.Objs[parsedIndex] = CloneObj(obj)
+			w.parsedData.Objs = append(w.parsedData.Objs, CloneObj(obj))
+			// The append may have reallocated the backing array; every index
+			// pointer into it is stale.
+			w.parsedData.RebuildObjIndex()
 		}
 		// Repoint the live map at the parsed backing array so old snapshots
 		// and escaped read pointers stay immutable.
@@ -141,13 +139,10 @@ func (w *World) SetObjScript(vnum int, name string, flags int) bool {
 	stored := updated
 	w.objs[vnum] = &stored
 	if w.parsedData != nil {
-		for i := range w.parsedData.Objs {
-			if w.parsedData.Objs[i].VNum == vnum {
-				w.parsedData.Objs[i].ScriptName = name
-				w.parsedData.Objs[i].LuaFunctions = flags
-				w.objs[vnum] = &w.parsedData.Objs[i]
-				break
-			}
+		if existing, ok := w.parsedData.ObjByVnum(vnum); ok {
+			existing.ScriptName = name
+			existing.LuaFunctions = flags
+			w.objs[vnum] = existing
 		}
 	}
 	return true

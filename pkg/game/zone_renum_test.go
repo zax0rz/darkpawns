@@ -61,7 +61,10 @@ func TestRenumDisablesInvalidCommandsAndTheirDependents(t *testing.T) {
 		}
 	}
 	spawner := NewSpawner(world)
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if got := len(spawner.objInstances[201]); got != 0 {
@@ -85,7 +88,10 @@ func TestZoneResetRemoveFindsAnyObjectInRoom(t *testing.T) {
 		t.Fatal(err)
 	}
 	spawner := NewSpawner(world)
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err = spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	for _, obj := range world.GetItemsInRoom(100) {

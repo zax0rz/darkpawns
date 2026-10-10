@@ -17,10 +17,13 @@ func TestZoneResetDoorClearsSecretMark(t *testing.T) {
 				r.Exits = map[string]parser.Exit{"north": {ExitInfo: initial}}
 			})
 			before, _ := w.GetRoom(100)
-			if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+			s.world.zoneResetMu.Lock()
+			err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 				{Command: "D", Arg1: 100, Arg2: 0, Arg3: state},
 				{Command: "O", IfFlag: 1, Arg1: 200, Arg2: 1, Arg3: 100},
-			}}); err != nil {
+			}})
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			room, _ := w.GetRoom(100)
@@ -48,10 +51,13 @@ func TestZoneResetMissingDoorPreservesSecretMark(t *testing.T) {
 		t.Run(strconv.Itoa(direction), func(t *testing.T) {
 			w, s := newZoneResetTestSpawner(t)
 			w.SetRoomFlagBit(100, 20)
-			if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+			s.world.zoneResetMu.Lock()
+			err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 				{Command: "D", Arg1: 100, Arg2: direction, Arg3: 2},
 				{Command: "O", IfFlag: 1, Arg1: 200, Arg2: 1, Arg3: 100},
-			}}); err != nil {
+			}})
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			room, _ := w.GetRoom(100)
@@ -83,10 +89,13 @@ func TestZoneResetPUsesNewestGlobalObject(t *testing.T) {
 				t.Fatal(err)
 			}
 			newest.Prototype.TypeFlag = 15
-			if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+			s.world.zoneResetMu.Lock()
+			err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 				{Command: "P", Arg1: 200, Arg2: 1, Arg3: 204},
 				{Command: "P", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 204},
-			}}); err != nil {
+			}})
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			if len(old.Contains) != 0 || len(newest.Contains) != 2 {
@@ -115,9 +124,12 @@ func TestZoneResetPAllowsNonContainerTarget(t *testing.T) {
 	if target.IsContainer() {
 		t.Fatal("fixture must not have container type")
 	}
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "P", Arg1: 200, Arg2: 1, Arg3: 204},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if len(target.Contains) != 1 || target.Contains[0].Location != LocContainer(target.ID) {
@@ -142,10 +154,13 @@ func TestZoneResetMobileRemovalIsDeferredAndGlobal(t *testing.T) {
 	if err := w.MoveObjectToMobInventoryFront(item, newest); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "R", Arg1: 100, Arg2: 0, Arg3: 300},
 		{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if newest.Flags&(1<<uint(MobFlagExtract)) == 0 {
@@ -167,7 +182,10 @@ func TestZoneResetMobileRemovalIsDeferredAndGlobal(t *testing.T) {
 	if got := w.countMobInstances(300); got != 1 {
 		t.Fatalf("drained mob count=%d, want 1", got)
 	}
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if got := w.countMobInstances(300); got != 2 {
@@ -191,7 +209,10 @@ func TestZoneResetMobileRemovalSkipsFightingAndMarked(t *testing.T) {
 		t.Fatal(err)
 	}
 	fighting.SetFightingBody(NewPlayer(99999, "opponent", 1001))
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "R", Arg1: 100, Arg2: 0, Arg3: 300}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "R", Arg1: 100, Arg2: 0, Arg3: 300}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if eligible.Flags&(1<<uint(MobFlagExtract)) == 0 {
@@ -220,11 +241,14 @@ func TestZoneResetMobileRemovalReplacesLastMob(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+			s.world.zoneResetMu.Lock()
+			err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 				{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 				{Command: "R", Arg1: 100, Arg2: 0, Arg3: 301},
 				{Command: "G", Arg1: 200, Arg2: 1},
-			}}); err != nil {
+			}})
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			if found {
@@ -262,10 +286,13 @@ func TestZoneResetObjectRemovalExtractsAllContents(t *testing.T) {
 		}
 		children = append(children, child)
 	}
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "R", Arg1: 100, Arg2: 1, Arg3: 204},
 		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if got := w.GetObjNum(204); got != old {
@@ -291,10 +318,13 @@ func TestZoneResetPSelfTargetStaysFloating(t *testing.T) {
 		t.Fatal(err)
 	}
 	calls := installZoneObjectOrderHooks(t, true)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "P", Arg1: 204, Arg2: 2, Arg3: 204},
 		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	newest := w.GetObjNum(204)

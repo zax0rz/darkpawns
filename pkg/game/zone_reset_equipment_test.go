@@ -10,12 +10,15 @@ import (
 func TestZoneResetEquipmentOwnershipAndOccupiedSlot(t *testing.T) {
 	w, s := newZoneResetTestSpawner(t)
 	calls := installZoneObjectOrderHooks(t, true)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 		{Command: "E", Arg1: 200, Arg2: 1, Arg3: 3},
 		{Command: "E", Arg1: 201, Arg2: 1, Arg3: 3},
 		{Command: "G", IfFlag: 1, Arg1: 204, Arg2: 1},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	mob := w.GetMobsInRoom(100)[0]
@@ -44,7 +47,10 @@ func TestZoneResetEquipmentAttributeBoundary(t *testing.T) {
 	}
 	t.Cleanup(w.StopAITicker)
 	s := NewSpawner(w)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100}, {Command: "E", Arg1: 200, Arg2: 1, Arg3: 3}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100}, {Command: "E", Arg1: 200, Arg2: 1, Arg3: 3}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	mob := w.GetMobsInRoom(100)[0]
@@ -80,7 +86,10 @@ func TestZoneResetEquipmentLoadGates(t *testing.T) {
 				commands = append(commands, parser.ZoneCommand{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100})
 			}
 			commands = append(commands, parser.ZoneCommand{Command: "E", Arg1: 200, Arg2: tc.cap, Arg3: tc.slot}, parser.ZoneCommand{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100})
-			if err := s.ExecuteZoneReset(&parser.Zone{Commands: commands}); err != nil {
+			s.world.zoneResetMu.Lock()
+			err := s.executeZoneResetLocked(&parser.Zone{Commands: commands})
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			if len(*calls) != tc.wantPercent {

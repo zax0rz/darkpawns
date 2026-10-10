@@ -234,7 +234,10 @@ func TestZoneDoorResetUsesRuntimeBits(t *testing.T) {
 	w, _, _ := newDoorHandlerTestWorld(t)
 	spawner := NewSpawner(w)
 	zone := &parser.Zone{Commands: []parser.ZoneCommand{{Command: "D", Arg1: 100, Arg2: 0, Arg3: 0}}}
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatalf("open reset: %v", err)
 	}
 	ext := w.GetRoomInWorld(100).Exits["north"]
@@ -242,7 +245,10 @@ func TestZoneDoorResetUsesRuntimeBits(t *testing.T) {
 		t.Fatalf("open reset exit info = %d", ext.ExitInfo)
 	}
 	zone.Commands[0].Arg3 = 2
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err = spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatalf("locked reset: %v", err)
 	}
 	ext = w.GetRoomInWorld(100).Exits["north"]

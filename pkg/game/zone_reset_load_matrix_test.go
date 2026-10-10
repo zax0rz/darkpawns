@@ -10,13 +10,16 @@ import (
 
 func TestZoneResetMobileCapRetainsLastMob(t *testing.T) {
 	w, s := newZoneResetTestSpawner(t)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 		{Command: "G", IfFlag: 1, Arg1: 201, Arg2: 1},
 		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 		{Command: "G", IfFlag: 1, Arg1: 204, Arg2: 1},
 		{Command: "G", Arg1: 200, Arg2: 1},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	mobs := w.GetMobsInRoom(100)
@@ -41,10 +44,13 @@ func TestZoneResetMobileCapCountsOutsideSpawner(t *testing.T) {
 	if _, err := w.SpawnMob(300, 100); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 		{Command: "G", IfFlag: 1, Arg1: 200, Arg2: 1},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if w.countMobInstances(300) != 1 || w.countObjectInstances(200) != 0 {
@@ -68,7 +74,10 @@ func TestZoneResetMobileBothRandomPlacements(t *testing.T) {
 	t.Cleanup(w.StopAITicker)
 	draws := installZoneRoomNumbers(t, 0, 1, 2, 3, 2, 1)
 	s := NewSpawner(w)
-	if err := s.ExecuteZoneReset(&parser.Zone{Number: 79, Commands: []parser.ZoneCommand{{Command: "M", Arg1: 7901, Arg2: 1, Arg3: 100}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Number: 79, Commands: []parser.ZoneCommand{{Command: "M", Arg1: 7901, Arg2: 1, Arg3: 100}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if *draws != 6 || len(w.GetMobsInRoom(200)) != 1 {
@@ -105,7 +114,10 @@ func TestZoneResetRandZonUsesResetZone(t *testing.T) {
 	t.Cleanup(w.StopAITicker)
 	draws := installZoneRoomNumbers(t, 1, 0)
 	s := NewSpawner(w)
-	if err := s.ExecuteZoneReset(&parser.Zone{Number: 2, Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Number: 2, Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if *draws != 1 || len(w.GetMobsInRoom(200)) != 1 {
@@ -115,11 +127,14 @@ func TestZoneResetRandZonUsesResetZone(t *testing.T) {
 
 func TestZoneResetObjectRoomOrderAndOwnership(t *testing.T) {
 	w, s := newZoneResetTestSpawner(t)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "O", Arg1: 200, Arg2: 2, Arg3: 100},
 		{Command: "O", Arg1: 201, Arg2: 1, Arg3: 100},
 		{Command: "O", Arg1: 200, Arg2: 2, Arg3: 100},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	items := w.GetItemsInRoom(100)
@@ -142,7 +157,10 @@ func TestZoneResetGiveWithoutLastMob(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "G", Arg1: 200, Arg2: 1}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "G", Arg1: 200, Arg2: 1}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if w.countObjectInstances(200) != 0 || len(mob.Inventory) != 0 {
@@ -156,13 +174,16 @@ func TestZoneResetGiveGlobalCapAndConditionalFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	calls := installZoneObjectOrderHooks(t, true)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 		{Command: "G", Arg1: 200, Arg2: 1},
 		{Command: "G", Arg1: 201, Arg2: 1},
 		{Command: "G", IfFlag: 1, Arg1: 201, Arg2: 1},
 		{Command: "G", IfFlag: 1, Arg1: 204, Arg2: 1},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	mobs := w.GetMobsInRoom(100)

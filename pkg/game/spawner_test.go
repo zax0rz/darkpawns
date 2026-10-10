@@ -57,7 +57,10 @@ func TestZoneResetFailedRemoveDoesNotEnableDependentCommand(t *testing.T) {
 				{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
 			}}
 
-			if err := spawner.ExecuteZoneReset(zone); err != nil {
+			spawner.world.zoneResetMu.Lock()
+			err := spawner.executeZoneResetLocked(zone)
+			spawner.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			if got := len(spawner.objInstances[201]); got != 0 {
@@ -77,7 +80,10 @@ func TestZoneResetSuccessfulRemoveEnablesDependentCommand(t *testing.T) {
 		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
 	}}
 
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if got := len(spawner.objInstances[200]); got != 0 {
@@ -94,7 +100,10 @@ func TestZoneResetObjectLoadIndexesObjectInRoom(t *testing.T) {
 		{Command: "O", Arg1: 200, Arg2: 1, Arg3: 100},
 	}}
 
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	items := world.GetItemsInRoom(100)
@@ -116,7 +125,10 @@ func TestZoneResetObjectMaxCountsCharacterCreationObjects(t *testing.T) {
 	zone := &parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "O", Arg1: 200, Arg2: 1, Arg3: 100},
 	}}
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if got := len(world.GetItemsInRoom(100)); got != 0 {
@@ -188,7 +200,10 @@ func TestZoneResetObjectLoadCreatesBeforePercentAndExtractsOnFailure(t *testing.
 		t.Run(test.name, func(t *testing.T) {
 			world, spawner := newZoneResetTestSpawner(t)
 			calls := installZoneObjectOrderHooks(t, false)
-			if err := spawner.ExecuteZoneReset(&parser.Zone{Commands: test.commands}); err != nil {
+			spawner.world.zoneResetMu.Lock()
+			err := spawner.executeZoneResetLocked(&parser.Zone{Commands: test.commands})
+			spawner.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			assertZoneObjectCalls(t, calls, "create", "percent")
@@ -215,7 +230,10 @@ func TestZoneResetGPrependsToMobInventory(t *testing.T) {
 		{Command: "G", IfFlag: 1, Arg1: 201, Arg2: 1},
 	}}
 
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	mobs := world.GetMobsInRoom(100)
@@ -235,7 +253,10 @@ func TestZoneResetFloatingOSkipsPercentLoad(t *testing.T) {
 		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
 	}}
 
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	assertZoneObjectCalls(t, calls, "create", "percent")
@@ -255,7 +276,10 @@ func TestZoneResetMissingPContainerCreatesThenSkipsPercent(t *testing.T) {
 		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
 	}}
 
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	assertZoneObjectCalls(t, calls, "create")
@@ -275,7 +299,10 @@ func TestZoneResetInvalidEquipPositionSkipsCreationAndPercent(t *testing.T) {
 		{Command: "E", IfFlag: 1, Arg1: 202, Arg2: 1, Arg3: numWears},
 	}}
 
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	assertZoneObjectCalls(t, calls)
@@ -358,12 +385,15 @@ func TestZoneResetRelocatesUppercaseRandZonMob(t *testing.T) {
 	spawner := NewSpawner(world)
 	calls := installZoneRoomNumbers(t, 1)
 
-	if err := spawner.ExecuteZoneReset(&parser.Zone{Number: 1, Commands: []parser.ZoneCommand{{
+	spawner.world.zoneResetMu.Lock()
+	err = spawner.executeZoneResetLocked(&parser.Zone{Number: 1, Commands: []parser.ZoneCommand{{
 		Command: "M",
 		Arg1:    300,
 		Arg2:    1,
 		Arg3:    100,
-	}}}); err != nil {
+	}}})
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if *calls != 1 {
@@ -432,7 +462,10 @@ func TestZoneResetCapIsNotAWarning(t *testing.T) {
 		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 		{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100},
 	}}
-	if err := spawner.ExecuteZoneReset(zone); err != nil {
+	spawner.world.zoneResetMu.Lock()
+	err := spawner.executeZoneResetLocked(zone)
+	spawner.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 

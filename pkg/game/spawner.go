@@ -218,16 +218,10 @@ func zoneError(zone *parser.Zone, cmd parser.ZoneCommand, message string) {
 		command, zone.Number, cmd.Line), MudlogNormal, LVL_GOD, true)
 }
 
-// ExecuteZoneReset executes all reset commands for a zone.
+// executeZoneResetLocked executes all reset commands for a zone.
 // Matches C's reset_zone() semantics including if_flag, loop, percent_load,
 // MOB_RANDZON, zone79, door-state, and remove commands.
-func (s *Spawner) ExecuteZoneReset(zone *parser.Zone) error {
-	s.world.zoneResetMu.Lock()
-	defer s.world.zoneResetMu.Unlock()
-	return s.executeZoneResetLocked(zone)
-}
-
-// executeZoneResetLocked requires World.zoneResetMu, never World.mu.
+// Requires World.zoneResetMu, never World.mu.
 func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
 	// Do NOT hold s.mu — spawn and global-count helpers lock internally.
 	// Holding s.mu causes a deadlock.

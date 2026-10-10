@@ -53,7 +53,10 @@ func TestZoneResetUnknownCommandConditionalSkip(t *testing.T) {
 	zone := parser.Zone{Number: 1, Commands: []parser.ZoneCommand{{Command: "Q", IfFlag: 1}, {Command: "O", IfFlag: 1, Arg1: 200, Arg2: 1, Arg3: 100}}}
 	w.parsedData = nil
 	w.zones[1] = &zone
-	if err := s.ExecuteZoneReset(&zone); err != nil {
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&zone)
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	after, _ := w.GetZone(1)

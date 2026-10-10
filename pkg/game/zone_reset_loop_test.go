@@ -12,12 +12,15 @@ func TestZoneResetLoopIterationMatrix(t *testing.T) {
 		t.Run(strconv.Itoa(iterations), func(t *testing.T) {
 			w, s := newZoneResetTestSpawner(t)
 			calls := installZoneObjectOrderHooks(t, true)
-			if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+			s.world.zoneResetMu.Lock()
+			err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 				{Command: "L", Arg1: 100, Arg3: iterations},
 				{Command: "O", IfFlag: 1, Arg1: 200, Arg2: 10, Arg3: 100},
 				{Command: "L", IfFlag: 1, Arg1: 100, Arg2: 1},
 				{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
-			}}); err != nil {
+			}})
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			want := max(1, iterations)
@@ -30,7 +33,8 @@ func TestZoneResetLoopIterationMatrix(t *testing.T) {
 
 func TestZoneResetLoopUsesSingleCounter(t *testing.T) {
 	w, s := newZoneResetTestSpawner(t)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "L", Arg1: 100, Arg3: 3},
 		{Command: "O", Arg1: 200, Arg2: 10, Arg3: 100},
 		{Command: "L", Arg1: 100, Arg3: 2},
@@ -38,7 +42,9 @@ func TestZoneResetLoopUsesSingleCounter(t *testing.T) {
 		{Command: "L", IfFlag: 1, Arg1: 100, Arg2: 1},
 		{Command: "O", Arg1: 204, Arg2: 10, Arg3: 100},
 		{Command: "L", IfFlag: 1, Arg1: 100, Arg2: 1},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if w.countObjectInstances(200) != 1 || w.countObjectInstances(201) != 2 || w.countObjectInstances(204) != 1 {
@@ -61,11 +67,14 @@ func TestZoneResetConditionalStateMatrix(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w, s := newZoneResetTestSpawner(t)
-			if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+			s.world.zoneResetMu.Lock()
+			err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 				{Command: "O", Arg1: 200, Arg2: 1, Arg3: 100},
 				tc.middle,
 				{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
-			}}); err != nil {
+			}})
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatal(err)
 			}
 			if got := w.GetObjNum(201) != nil; got != tc.want {
@@ -77,12 +86,15 @@ func TestZoneResetConditionalStateMatrix(t *testing.T) {
 
 func TestZoneResetSkippedLoopDoesNotStart(t *testing.T) {
 	w, s := newZoneResetTestSpawner(t)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{
 		{Command: "L", IfFlag: 1, Arg1: 100, Arg3: 5},
 		{Command: "O", IfFlag: 1, Arg1: 201, Arg2: 1, Arg3: 100},
 		{Command: "O", Arg1: 200, Arg2: 10, Arg3: 100},
 		{Command: "L", IfFlag: 1, Arg1: 100, Arg2: 1},
-	}}); err != nil {
+	}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	if w.countObjectInstances(200) != 1 || w.GetObjNum(201) != nil {
