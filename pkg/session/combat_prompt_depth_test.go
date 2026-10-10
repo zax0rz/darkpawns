@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -97,8 +98,46 @@ func TestPromptStatusColorLevels(t *testing.T) {
 			t.Fatalf("level %d INACTIVE=%q want %q", level, got, want)
 		}
 		s.infobarMode = InfobarOn
-		if got := s.promptText(); got != "> " {
-			t.Fatalf("infobar status prompt=%q", got)
+		want = "AFK > "
+		if level == 3 {
+			want = "\x1b[31mAFK\x1b[0m > "
+		}
+		if got := s.promptText(); got != want {
+			t.Fatalf("infobar status prompt=%q want %q", got, want)
+		}
+	}
+}
+
+func TestPromptInfobarOnTail(t *testing.T) {
+	for _, status := range []struct {
+		name          string
+		afk, inactive bool
+	}{
+		{"none", false, false}, {"afk", true, false}, {"inactive", false, true}, {"both", true, true},
+	} {
+		for _, invis := range []int{0, 1} {
+			for _, color := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s/invis%d/color%t", status.name, invis, color), func(t *testing.T) {
+					m := makeTestManager(t)
+					s := makeTestSession(t, m, "Viewer", 1001, true)
+					s.infobarMode = InfobarOn
+					s.player.SetInvisLevel(invis)
+					s.player.SetPlrFlag(game.PrfAFK, status.afk)
+					s.player.SetPlrFlag(game.PrfInactive, status.inactive)
+					s.player.SetPlrFlag(game.PrfColor1, color)
+					s.player.SetPlrFlag(game.PrfColor2, color)
+					want := "> "
+					if status.afk {
+						want = "AFK > "
+						if color {
+							want = "\x1b[31mAFK\x1b[0m > "
+						}
+					}
+					if got := s.promptText(); got != want {
+						t.Fatalf("ON tail=%q want %q", got, want)
+					}
+				})
+			}
 		}
 	}
 }

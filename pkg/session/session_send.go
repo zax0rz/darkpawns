@@ -396,8 +396,8 @@ func (s *Session) queuePromptText(text string, raw bool) {
 }
 
 // promptText returns the state prefixes that C's make_prompt emits after the
-// regular display fields. When both flags are set, PRF_INACTIVE wins because
-// the later sprintf in comm.c overwrites the earlier PRF_AFK prompt.
+// regular display fields. With INFOBAR_OFF, PRF_INACTIVE overwrites PRF_AFK.
+// With INFOBAR_ON, only AFK is considered and the invisibility prefix is discarded.
 func (s *Session) promptText() string {
 	if s.player == nil {
 		return "> "
@@ -454,6 +454,13 @@ func (s *Session) promptText() string {
 		if flags&(1<<uint(game.PrfAFK)) != 0 {
 			return promptStatusMarker("AFK", color) + "> "
 		}
+	} else {
+		// src/comm.c:1194-1201 rebuilds the ON prompt, discarding invisibility.
+		// This branch has AFK but no INACTIVE arm.
+		if flags&(1<<uint(game.PrfAFK)) != 0 {
+			return promptStatusMarker("AFK", color) + "> "
+		}
+		return "> "
 	}
 	return prefix.String() + "> "
 }
