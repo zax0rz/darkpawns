@@ -9,7 +9,6 @@ package game
 // flags any regression to bare field access.
 
 import (
-	"sync"
 	"testing"
 )
 
@@ -48,47 +47,3 @@ func TestVitalsSnapshotMatchesStoredFields(t *testing.T) {
 // TestPlayerCombatStateConcurrent exercises the locked combat-state
 // accessors concurrently from reader and writer goroutines. Under the race
 // detector this fails if any participating path touches the bare fields.
-func TestPlayerCombatStateConcurrent(t *testing.T) {
-	p := NewPlayer(1, "Hero", 1001)
-	p.SetHP(1000)
-	p.SetMaxHP(1000)
-
-	positions := []int{PosStanding, PosFighting, PosSitting, PosStunned}
-
-	var wg sync.WaitGroup
-	for i := 0; i < 4; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			for j := 0; j < 2000; j++ {
-				p.TakeDamage(1)
-				p.Heal(1)
-				p.SetPosition(positions[(i+j)%len(positions)])
-				p.SetFightingBody(NewPlayer(99999, "a training dummy", 1001))
-				_ = p.GetFighting()
-				p.StopFighting()
-				p.RestoreVitals()
-			}
-		}(i)
-	}
-	for i := 0; i < 4; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			for j := 0; j < 2000; j++ {
-				// Display-side read paths: prompt, infobar, score, agent vars,
-				// observation. All must snapshot under the read lock.
-				v := p.VitalsSnapshot()
-				_ = v.Health + v.MaxHealth + v.Mana + v.MaxMana + v.Move + v.MaxMove
-				_ = p.GetHP()
-				_ = p.GetPosition()
-				_ = p.IsFighting()
-				if p.GetHP() < 0 {
-					t.Errorf("HP went negative: %d", p.GetHP())
-					return
-				}
-			}
-		}(i)
-	}
-	wg.Wait()
-}

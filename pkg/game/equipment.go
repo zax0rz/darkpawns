@@ -174,51 +174,6 @@ func (eq *Equipment) Equip(item *ObjectInstance, inv *Inventory) (err error) {
 	return eq.equip(item, inv)
 }
 
-// EquipForPlayer equips an item with anti-alignment and anti-class validation.
-// Returns (zapped bool, err error). If zapped is true the item stays in inventory.
-// Source: handler.c equip_char() lines 701-720 (DP-369)
-func (eq *Equipment) EquipForPlayer(item *ObjectInstance, inv *Inventory, alignment int, class int) (zapped bool, err error) {
-	if item != nil && item.Prototype != nil {
-		xf := item.Prototype.ExtraFlags[0]
-		isEvil := alignment <= -350
-		isGood := alignment >= 350
-		isNeutral := !isEvil && !isGood
-		if (xf&FlagAntiEvil != 0 && isEvil) ||
-			(xf&FlagAntiGood != 0 && isGood) ||
-			(xf&FlagAntiNeutral != 0 && isNeutral) {
-			return true, nil
-		}
-		// Detect weapon type and shield status
-		// Source: src/act.item.c:1600 — wear() function
-		isSlash := false
-		isShieldItem := false
-
-		if item.Prototype != nil {
-			if item.Prototype.TypeFlag == int(ItemWeaponType) {
-				isSlash = item.Prototype.Values[3] == 3 // TYPE_SLASH - TYPE_HIT
-			}
-			for _, flag := range item.Prototype.WearFlags {
-				if flag == 9 { // ITEM_WEAR_SHIELD = bit 9
-					isShieldItem = true
-					break
-				}
-			}
-		}
-
-		if InvalidClass(class, uint32(xf), isSlash, isShieldItem) { // #nosec G115 -- xf is a non-negative Diku extra-flags bitmask that fits in uint32
-			return true, nil
-		}
-	}
-	eq.mu.Lock()
-	defer func() {
-		eq.mu.Unlock()
-		if err == nil && eq.afterChange != nil {
-			eq.afterChange()
-		}
-	}()
-	return false, eq.equip(item, inv)
-}
-
 // equip is the internal implementation without locking.
 func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 	// Check if item can be equipped
@@ -346,24 +301,6 @@ func (eq *Equipment) GetItemInSlot(slot EquipmentSlot) (*ObjectInstance, bool) {
 	return item, ok
 }
 
-// GetEquipmentBonus calculates total bonus for a stat from equipped items.
-func (eq *Equipment) GetEquipmentBonus(stat string) int {
-	eq.mu.RLock()
-	defer eq.mu.RUnlock()
-
-	total := 0
-	for _, item := range eq.Slots {
-		for _, affect := range item.GetAffects() {
-			// This is a simplified version - in a full implementation,
-			// we'd map affect.Location to specific stats
-			if affect.Location == getStatLocation(stat) {
-				total += affect.Modifier
-			}
-		}
-	}
-	return total
-}
-
 // GetArmorClass returns total AC bonus from equipped armor.
 func (eq *Equipment) GetArmorClass() int {
 	eq.mu.RLock()
@@ -477,35 +414,6 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 	}
 
 	return slots
-}
-
-// getStatLocation maps stat names to affect locations.
-// This is a simplified version - CircleMUD has specific location numbers.
-func getStatLocation(stat string) int {
-	switch strings.ToLower(stat) {
-	case "strength":
-		return 1
-	case "dexterity":
-		return 2
-	case "constitution":
-		return 3
-	case "intelligence":
-		return 4
-	case "wisdom":
-		return 5
-	case "charisma":
-		return 6
-	case "hp":
-		return 12
-	case "mana":
-		return 13
-	case "move":
-		return 14
-	case "ac":
-		return 17
-	default:
-		return 0
-	}
 }
 
 // GetEquippedItems returns all equipped items.

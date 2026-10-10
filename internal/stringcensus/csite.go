@@ -27,43 +27,6 @@ type CSite struct {
 // disprove that it printed.
 func (s CSite) Unverifiable() bool { return len(s.Segments) == 0 }
 
-// MatchLine reports the 1-based line of block where the site's fixed text
-// appears, or 0 when it does not appear.
-//
-// Segments of one fragment must sit on one line with arbitrary text between
-// them — that text is where printf verbs and act codes were substituted. A
-// later fragment must sit on a later line, because a fragment boundary came
-// from a line break inside the C literal.
-func (s CSite) MatchLine(block string) int {
-	if s.Unverifiable() {
-		return 0
-	}
-	lines := strings.Split(block, "\n")
-	next := 0
-	last := -1
-	for _, fragment := range s.Fragments {
-		if len(fragment) == 0 {
-			continue
-		}
-		at := -1
-		for i := next; i < len(lines); i++ {
-			if LineContainsSegments(lines[i], fragment) {
-				at = i
-				break
-			}
-		}
-		if at < 0 {
-			return 0
-		}
-		last = at
-		next = at + 1
-	}
-	if last < 0 {
-		return 0
-	}
-	return last + 1
-}
-
 // LineContainsSegments reports whether one output line contains a fragment's
 // segments in order, with arbitrary text between them. Whitespace collapses on
 // both sides first, because the C output may justify text with runs of spaces

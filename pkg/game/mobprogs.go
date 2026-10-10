@@ -57,30 +57,6 @@ func (w *World) MpGreet(who *Player, room int) {
 // MpRideGreet — port of mp_ride_greet()
 // ---------------------------------------------------------------------------
 
-func (w *World) MpRideGreet(who *Player, room int) {
-	if room < 0 {
-		return
-	}
-	mob := w.GetFirstMobInRoomByVNum(room, 8014)
-	if mob == nil {
-		return
-	}
-	if who.GetLevel() < 10 || !hasPlrFlag(who, "calibrate") {
-		return
-	}
-	clanID := who.ClanID
-	hasAccess := clanID == 1 || clanID == 2 || clanID == 3
-	if hasAccess {
-		w.roomMessage(room, "$n says, 'Welcome to the Emporium.'")
-	} else {
-		w.roomMessage(room, "$n says, 'Now get outta here!'")
-		w.MovePlayerToRoom(who, 8117)
-		if mount := w.GetMount(who); mount != nil {
-			w.MovePlayerToRoom(mount, 8117)
-		}
-	}
-}
-
 // ---------------------------------------------------------------------------
 // MpGive / MpBribe — port of mp_give()
 // ---------------------------------------------------------------------------
@@ -144,11 +120,6 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 			w.LookAtRoom(ch, false)
 		}
 	}
-}
-
-// MpBribe is an alias for MpGive.
-func (w *World) MpBribe(mob *MobInstance, ch *Player, amount int) {
-	w.MpGive(mob, ch, amount)
 }
 
 // ---------------------------------------------------------------------------

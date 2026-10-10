@@ -5,31 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-
-// mockCombatEngine is a stub CombatEngine for use in OnPlayerEnterRoom tests.
-type mockCombatEngine struct {
-	fighting map[string]bool
-	started  []string // mob names that had StartCombat called
-	startErr error
-}
-
-func newMockCE() *mockCombatEngine {
-	return &mockCombatEngine{fighting: make(map[string]bool)}
-}
-
-func (m *mockCombatEngine) StartCombat(attacker, _ combat.Combatant) error {
-	m.started = append(m.started, attacker.GetName())
-	return m.startErr
-}
-
-func (m *mockCombatEngine) IsFighting(body combat.Combatant) bool { return m.fighting[body.GetName()] }
-
-func (m *mockCombatEngine) GetCombatTarget(body combat.Combatant) (combat.Combatant, bool) {
-	return nil, false
-}
 
 // newStartingItemsWorld builds a world that includes all starting item vnums
 // so GiveStartingItems can fully execute for any class.
@@ -228,92 +205,13 @@ func TestGiveStartingItems_EmptyWorld(t *testing.T) {
 // OnPlayerEnterRoom tests
 // ---------------------------------------------------------------------------
 
-// newAggroWorld creates a world with one room containing an aggressive mob.
-func newAggroWorld(t *testing.T) (*World, *Player) {
-	t.Helper()
-
-	parsed := &parser.World{
-		Rooms: []parser.Room{
-			{VNum: 1001, Name: "Danger Room", Zone: 1},
-		},
-		Mobs: []parser.Mob{
-			{VNum: 2001, ShortDesc: "an orc", ActionFlags: []string{"aggressive"}},
-		},
-		Objs: []parser.Obj{},
-	}
-
-	w, err := NewWorld(parsed)
-	if err != nil {
-		t.Fatalf("NewWorld failed: %v", err)
-	}
-	t.Cleanup(func() { w.StopAITicker() })
-
-	player := NewPlayer(1, "TestPlayer", 1001)
-	if err := w.AddPlayer(player); err != nil {
-		t.Fatalf("AddPlayer failed: %v", err)
-	}
-	return w, player
-}
-
 // TestOnPlayerEnterRoom_NoMobs — room with no mobs returns false.
-func TestOnPlayerEnterRoom_NoMobs(t *testing.T) {
-	w, player := newTestWorld(t) // from object_movement_test.go — has room 1001, no mobs spawned
-
-	ce := newMockCE()
-	result := w.OnPlayerEnterRoom(player, 1001, ce)
-	if result {
-		t.Error("expected false when no mobs are in the room")
-	}
-	if len(ce.started) != 0 {
-		t.Errorf("expected no combat started, got %d", len(ce.started))
-	}
-}
 
 // TestOnPlayerEnterRoom_NonexistentRoom — non-existent room returns false without panic.
-func TestOnPlayerEnterRoom_NonexistentRoom(t *testing.T) {
-	w, player := newTestWorld(t)
-
-	ce := newMockCE()
-	result := w.OnPlayerEnterRoom(player, 99999, ce)
-	if result {
-		t.Error("expected false for a non-existent room")
-	}
-}
 
 // TestOnPlayerEnterRoom_AggressiveMob — aggressive mob triggers StartCombat and returns true.
-func TestOnPlayerEnterRoom_AggressiveMob(t *testing.T) {
-	w, player := newAggroWorld(t)
-
-	_, err := w.SpawnMob(2001, 1001)
-	if err != nil {
-		t.Fatalf("SpawnMob failed: %v", err)
-	}
-
-	ce := newMockCE()
-	result := w.OnPlayerEnterRoom(player, 1001, ce)
-	if !result {
-		t.Error("expected true when aggressive mob is in room")
-	}
-}
 
 // TestOnPlayerEnterRoom_AlreadyFighting — mob already in combat is skipped.
-func TestOnPlayerEnterRoom_AlreadyFighting(t *testing.T) {
-	w, player := newAggroWorld(t)
-
-	mob, err := w.SpawnMob(2001, 1001)
-	if err != nil {
-		t.Fatalf("SpawnMob failed: %v", err)
-	}
-
-	ce := newMockCE()
-	ce.fighting[mob.GetName()] = true // mark mob as already fighting
-
-	result := w.OnPlayerEnterRoom(player, 1001, ce)
-	// Mob is aggressive but already fighting — should NOT start new combat
-	if result {
-		t.Error("expected false when aggressive mob is already fighting")
-	}
-}
 
 // ---------------------------------------------------------------------------
 // Stats test

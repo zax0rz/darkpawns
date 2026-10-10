@@ -53,12 +53,6 @@ func (sm *SnapshotManager) Publish(rooms map[int]*parser.Room) {
 	sm.generation.Add(1)
 }
 
-// SnapshotGeneration returns the current snapshot generation counter.
-// Readers can use this to detect whether a new snapshot has been published.
-func (sm *SnapshotManager) SnapshotGeneration() uint64 {
-	return sm.generation.Load()
-}
-
 // GetRoomFromSnapshot returns a room by VNum from the current snapshot, lock-free.
 func (w *World) GetRoom(vnum int) (*parser.Room, bool) {
 	snap := w.snapshots.Snapshot()

@@ -307,33 +307,12 @@ func (o *ObjectInstance) GetExtraDescs() []parser.ExtraDesc {
 	return descs
 }
 
-// GetExtraDesc returns an extra description matching the given keyword.
-// Checks both prototype extra descs and runtime extra descs (from Lua extra()).
-func (o *ObjectInstance) GetExtraDesc(keyword string) string {
-	// Check all extra descs via GetExtraDescs (includes runtime from CustomData)
-	for _, ed := range o.GetExtraDescs() {
-		// Simple keyword matching - in reality would need to parse keywords
-		if ed.Keywords == keyword {
-			return ed.Description
-		}
-	}
-	return ""
-}
-
 // SetCustomData sets custom data on the object.
 func (o *ObjectInstance) SetCustomData(key string, value interface{}) {
 	if o.CustomData == nil {
 		o.CustomData = make(map[string]interface{})
 	}
 	o.CustomData[key] = value
-}
-
-// GetCustomData gets custom data from the object.
-func (o *ObjectInstance) GetCustomData(key string) interface{} {
-	if o.CustomData == nil {
-		return nil
-	}
-	return o.CustomData[key]
 }
 
 // MigrateCustomData copies known keys from CustomData to Runtime and deletes them

@@ -275,14 +275,6 @@ func TestGMCPCorePing(t *testing.T) {
 // TestGMCPDoesNotMakeASessionStructured guards the pager regression: GMCP
 // must never switch on the agent/structured-client mode, which bypasses
 // page_string and so changes the text a player reads.
-func TestGMCPDoesNotMakeASessionStructured(t *testing.T) {
-	s := newGMCPSession(t)
-	s.EnableGMCP()
-	s.HandleGMCP("Core.Hello", `{"client":"Mudlet","version":"4.19.1"}`)
-	if s.WantsStructuredData() {
-		t.Fatal("GMCP negotiation made the session a structured client")
-	}
-}
 
 // TestGMCPClientMapOffer: with a map URL configured, a GMCP client is told
 // where the world map is and which version it is, the version the map

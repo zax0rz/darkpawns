@@ -14,34 +14,6 @@ package game
 func (w *World) ExecRaceSay(ch *Player, arg string) { w.doRaceSay(ch, nil, "race_say", arg) }
 
 // ---------------------------------------------------------------------------
-// Shout bridge
-// ---------------------------------------------------------------------------
-
-// ExecShout executes the shout command.
-func (w *World) ExecShout(ch *Player, arg string) { w.doShout(ch, nil, arg) }
-
-// ---------------------------------------------------------------------------
-// QComm bridge
-// ---------------------------------------------------------------------------
-
-// ExecQcomm executes the team/quiz communication command.
-func (w *World) ExecQcomm(ch *Player, arg string) { w.doQcomm(ch, nil, "qcomm", arg) }
-
-// ---------------------------------------------------------------------------
-// Think bridge
-// ---------------------------------------------------------------------------
-
-// ExecThink executes the think command.
-func (w *World) ExecThink(ch *Player, arg string) { w.doThink(ch, nil, "think", arg) }
-
-// ---------------------------------------------------------------------------
-// GenComm bridge (gossip, chat, auction, gratz, newbie)
-// ---------------------------------------------------------------------------
-
-// ExecGenComm executes a generic channel command (gossip, chat, auction, etc.).
-func (w *World) ExecGenComm(ch *Player, cmd, arg string) { w.doGenComm(ch, nil, cmd, arg) }
-
-// ---------------------------------------------------------------------------
 // CTell bridge (clan tell)
 // ---------------------------------------------------------------------------
 

@@ -72,15 +72,6 @@ func (p *Player) UpdateCharObjects() {
 // update_char_objects_ar — handler.c:1047
 // ---------------------------------------------------------------------------
 
-// UpdateCharObjectsAR processes light source timers in the anti-regen form.
-// Source: src/handler.c update_char_objects_ar() lines 1047-1080.
-// In the original C, update_char_objects_ar behaves exactly like
-// update_char_objects but is called during anti-regen checks.
-// (The "ar" suffix denotes "anti-regen" mode.)
-func (p *Player) UpdateCharObjectsAR() {
-	p.UpdateCharObjects()
-}
-
 // ---------------------------------------------------------------------------
 // extract_char — handler.c:1194
 // ---------------------------------------------------------------------------

@@ -259,29 +259,3 @@ func (w *World) GetObjNum(vnum int) *ObjectInstance {
 	}
 	return newest
 }
-
-// GetCharNum finds a mob instance by its prototype rnum.
-// C: struct char_data *get_char_num(int nr) — linear search of character_list.
-func (w *World) GetCharNum(rnum int) *MobInstance {
-	for _, mob := range w.activeMobs {
-		if mob.Proto() != nil && mob.Proto().VNum == rnum {
-			return mob
-		}
-	}
-	return nil
-}
-
-// RemoveFollower removes a specific player from someone's follower list.
-// C: void remove_follower(struct char_data *ch) — removes ch from master's list.
-// Unlike StopFollower (which makes you stop following), this removes a specific
-// person who is following you.
-func (w *World) RemoveFollower(ch *Player) {
-	if ch == nil || ch.GetFollowing() == "" {
-		return
-	}
-	_, _ = w.GetPlayer(ch.GetFollowing()) // verify leader exists
-	// The follower removes itself from the leader's perspective
-	ch.SetFollowing("")
-	ch.RemoveAffectBit(affCharm)
-	ch.RemoveAffectBit(affGroup)
-}

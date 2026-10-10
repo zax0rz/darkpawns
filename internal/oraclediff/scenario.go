@@ -1042,29 +1042,6 @@ func PumpPulses(conn Conn, pulses int, quiescence time.Duration) (string, error)
 	return output, nil
 }
 
-// RunProbe plays the shared probe commands and returns a block per command.
-// Each block contains only the output produced by that command.
-func RunProbe(conn Conn, probe []string, quiescence time.Duration) ([]ProbeBlock, error) {
-	blocks := make([]ProbeBlock, 0, len(probe))
-	for i, step := range probe {
-		if err := conn.Send(step); err != nil {
-			return blocks, fmt.Errorf("probe step %d send %q: %w", i+1, step, err)
-		}
-		output, err := conn.ReadUntilQuiescent(quiescence)
-		if err != nil {
-			// A final quit may close the connection without emitting a goodbye
-			// block. EOF at that exact boundary is a completed scenario.
-			if i == len(probe)-1 && errors.Is(err, io.EOF) {
-				blocks = append(blocks, ProbeBlock{Command: step, Output: output})
-				break
-			}
-			return blocks, fmt.Errorf("probe step %d read after %q: %w\noutput so far:\n%s", i+1, step, err, output)
-		}
-		blocks = append(blocks, ProbeBlock{Command: step, Output: output})
-	}
-	return blocks, nil
-}
-
 // safeScriptPath reports whether a fixture script path is a relative .lua
 // path that stays inside the scripts tree.
 func safeScriptPath(path string) bool {

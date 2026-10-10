@@ -235,15 +235,6 @@ func canonicalJSON(text string) (string, error) {
 	return strings.TrimRight(buffer.String(), "\n"), nil
 }
 
-// JSONReformatOnly reports whether two raw JSON texts decode to the same value.
-// It is the difference between "the copy lost something" and "one dialect
-// re-spaced the same document", and the receipt states which one happened.
-func JSONReformatOnly(left, right string) bool {
-	leftCanonical, leftErr := canonicalJSON(left)
-	rightCanonical, rightErr := canonicalJSON(right)
-	return leftErr == nil && rightErr == nil && leftCanonical == rightCanonical
-}
-
 // RowDigest is the per-row content digest: one canonical value per copied column,
 // in column order, so two rows are equal exactly when every column is.
 func RowDigest(columns, values []string) string {

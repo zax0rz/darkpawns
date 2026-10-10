@@ -401,46 +401,6 @@ func armorWearSlot(obj *ObjectInstance) int {
 	return where
 }
 
-// DoScan implements do_scan() — scan surrounding rooms.
-func DoScan(ch *Player, world *World) SkillResult {
-	if ch.GetSkill(SkillScan) == 0 {
-		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
-	}
-
-	// Get current room exits
-	room := world.GetRoomInWorld(ch.GetRoomVNum())
-	if room == nil {
-		return SkillResult{Success: false, MessageToCh: "You are in a void."}
-	}
-
-	var scanResult string
-	scanResult = "You scan the area...\r\n"
-
-	for dir, exit := range room.Exits {
-		if exit.ToRoom > 0 {
-			exitRoom := world.GetRoomInWorld(exit.ToRoom)
-			if exitRoom != nil {
-				exitName := exitRoom.Name
-				// Check for players in that room
-				players := world.GetPlayersInRoom(exit.ToRoom)
-				if len(players) > 0 {
-					for _, p := range players {
-						scanResult += fmt.Sprintf("%-5s - %s is there.\r\n", strings.ToUpper(dir), p.Name)
-					}
-				} else {
-					scanResult += fmt.Sprintf("%-5s - %s (empty)\r\n", strings.ToUpper(dir), exitName)
-				}
-			}
-		}
-	}
-
-	if scanResult == "You scan the area...\r\n" {
-		scanResult += "Nothing interesting."
-	}
-
-	return SkillResult{Success: true, MessageToCh: scanResult}
-}
-
 // DoSharpen implements do_sharpen() — sharpen a weapon.
 func DoSharpen(ch *Player, objName string) SkillResult {
 	// C half_chop() supplies only the first word to get_obj_in_list_vis(), and
@@ -513,3 +473,43 @@ func DoSharpen(ch *Player, objName string) SkillResult {
 // ---------------------------------------------------------------------------
 
 // findItemByName searches a player's inventory and equipment for an item matching name.
+
+// DoScan implements do_scan() — scan surrounding rooms.
+func DoScan(ch *Player, world *World) SkillResult {
+	if ch.GetSkill(SkillScan) == 0 {
+		return SkillResult{Success: false, MessageToCh: "You have no idea how."}
+	}
+
+	// Get current room exits
+	room := world.GetRoomInWorld(ch.GetRoomVNum())
+	if room == nil {
+		return SkillResult{Success: false, MessageToCh: "You are in a void."}
+	}
+
+	var scanResult string
+	scanResult = "You scan the area...\r\n"
+
+	for dir, exit := range room.Exits {
+		if exit.ToRoom > 0 {
+			exitRoom := world.GetRoomInWorld(exit.ToRoom)
+			if exitRoom != nil {
+				exitName := exitRoom.Name
+				// Check for players in that room
+				players := world.GetPlayersInRoom(exit.ToRoom)
+				if len(players) > 0 {
+					for _, p := range players {
+						scanResult += fmt.Sprintf("%-5s - %s is there.\r\n", strings.ToUpper(dir), p.Name)
+					}
+				} else {
+					scanResult += fmt.Sprintf("%-5s - %s (empty)\r\n", strings.ToUpper(dir), exitName)
+				}
+			}
+		}
+	}
+
+	if scanResult == "You scan the area...\r\n" {
+		scanResult += "Nothing interesting."
+	}
+
+	return SkillResult{Success: true, MessageToCh: scanResult}
+}

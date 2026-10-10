@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -107,75 +106,6 @@ func (w *World) findCharInRoom(ch *Player, roomVNum int, name string) (*Player, 
 // ---------------------------------------------------------------------------
 // Under-ported helpers (from act.informative.c / act.wizard.c / spec_procs2.c)
 // ---------------------------------------------------------------------------
-
-// FindTargetRoom resolves a target room string to a VNum (from act.wizard.c:184).
-func (w *World) FindTargetRoom(ch *Player, raw string) int {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return -1
-	}
-	vnum := 0
-	if _, err := fmt.Sscanf(raw, "%d", &vnum); err == nil && vnum > 0 {
-		if _, ok := w.rooms[vnum]; ok {
-			return vnum
-		}
-		return -1
-	}
-	lower := strings.ToLower(raw)
-	for vnum, room := range w.rooms {
-		if room == nil {
-			continue
-		}
-		if strings.Contains(strings.ToLower(room.Name), lower) {
-			return vnum
-		}
-	}
-	return -1
-}
-
-// PrintObjectLocation formats where an object is (in room, carried, worn, inside another).
-func (w *World) PrintObjectLocation(num int, obj *ObjectInstance, ch *Player, recur bool) string {
-	var b strings.Builder
-	if num > 0 {
-		fmt.Fprintf(&b, "O%3d. %-25s - ", num, obj.Prototype.ShortDesc)
-	} else {
-		fmt.Fprintf(&b, "%33s", " - ")
-	}
-	switch {
-	case obj.RoomVNum > 0:
-		if room, ok := w.rooms[obj.RoomVNum]; ok && room != nil {
-			fmt.Fprintf(&b, "[%5d] %s\r\n", obj.RoomVNum, room.Name)
-		} else {
-			fmt.Fprintf(&b, "[%5d] (unknown room)\r\n", obj.RoomVNum)
-		}
-	case obj.Location.Kind == ObjInInventory || obj.Location.Kind == ObjEquipped:
-		name := "someone"
-		switch obj.Location.OwnerKind {
-		case OwnerPlayer:
-			if p, ok := w.players[obj.Location.PlayerName]; ok {
-				name = p.GetName()
-			}
-		case OwnerMob:
-			if m, ok := w.activeMobs[obj.Location.MobID]; ok {
-				name = m.GetName()
-			}
-		}
-		if obj.Location.Kind == ObjEquipped {
-			fmt.Fprintf(&b, "worn by %s\r\n", name)
-		} else {
-			fmt.Fprintf(&b, "carried by %s\r\n", name)
-		}
-	case obj.Location.Kind == ObjInContainer:
-		if container, ok := w.objectInstances[obj.Location.ContainerObjID]; ok {
-			fmt.Fprintf(&b, "inside %s\r\n", container.Prototype.ShortDesc)
-		} else {
-			b.WriteString("in an unknown container\r\n")
-		}
-	default:
-		b.WriteString("in an unknown location\r\n")
-	}
-	return b.String()
-}
 
 // KenderSteal ports kender_steal() and its NPC do_steal(..., subcmd=1)
 // follow-up (spec_procs2.c:594-650). It is called after look_at_char has

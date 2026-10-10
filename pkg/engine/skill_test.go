@@ -281,6 +281,24 @@ func TestNewSkillManager(t *testing.T) {
 	}
 }
 
+func TestSkillManagerGetAllSkills(t *testing.T) {
+	sm := NewSkillManager()
+	sm.InitializeDefaultSkills()
+
+	allSkills := sm.GetAllSkills()
+
+	if len(allSkills) == 0 {
+		t.Error("Expected some default skills")
+	}
+
+	// Check that skills are sorted by name
+	for i := 1; i < len(allSkills); i++ {
+		if allSkills[i-1].Name > allSkills[i].Name {
+			t.Error("Skills should be sorted by name")
+		}
+	}
+}
+
 func TestSkillManagerLearnSkill(t *testing.T) {
 	sm := NewSkillManager()
 	skill := NewSkill("test", "Test Skill", SkillTypeCombat, 3)
@@ -354,24 +372,6 @@ func TestSkillManagerUseSkill(t *testing.T) {
 	}
 }
 
-func TestSkillManagerGetAllSkills(t *testing.T) {
-	sm := NewSkillManager()
-	sm.InitializeDefaultSkills()
-
-	allSkills := sm.GetAllSkills()
-
-	if len(allSkills) == 0 {
-		t.Error("Expected some default skills")
-	}
-
-	// Check that skills are sorted by name
-	for i := 1; i < len(allSkills); i++ {
-		if allSkills[i-1].Name > allSkills[i].Name {
-			t.Error("Skills should be sorted by name")
-		}
-	}
-}
-
 func TestSkillManagerGetLearnedSkills(t *testing.T) {
 	sm := NewSkillManager()
 	sm.InitializeDefaultSkills()
@@ -401,114 +401,5 @@ func TestSkillManagerGetLearnedSkills(t *testing.T) {
 
 	if learned[0].Name != "swords" {
 		t.Errorf("Expected learned skill to be 'swords', got '%s'", learned[0].Name)
-	}
-}
-
-func TestSkillManagerForgetSkill(t *testing.T) {
-	sm := NewSkillManager()
-	skill := NewSkill("test", "Test Skill", SkillTypeCombat, 3)
-
-	sm.AddSkillPoints(5)
-	sm.LearnSkill(skill, 5, 12)
-
-	initialPoints := sm.GetSkillPoints()
-
-	// Forget the skill
-	if !sm.ForgetSkill("test") {
-		t.Error("Failed to forget skill")
-	}
-
-	// Should have refunded some points
-	finalPoints := sm.GetSkillPoints()
-	expectedRefund := (3 + 1) / 2 // Half of difficulty, rounded up = 2
-	expectedPoints := initialPoints + expectedRefund
-
-	if finalPoints != expectedPoints {
-		t.Errorf("Expected %d skill points after forgetting, got %d", expectedPoints, finalPoints)
-	}
-
-	// Skill should no longer be learned
-	if sm.HasSkill("test") {
-		t.Error("Skill should not be learned after forgetting")
-	}
-
-	// Can't forget non-existent skill
-	if sm.ForgetSkill("nonexistent") {
-		t.Error("Should not be able to forget non-existent skill")
-	}
-}
-
-func TestSkillManagerTeachSkill(t *testing.T) {
-	teacher := NewSkillManager()
-	student := NewSkillManager()
-
-	// Create a teachable skill at level 60 (high enough to teach)
-	skill := NewSkill("teachable", "Teachable Skill", SkillTypeCombat, 3)
-	skill.Learned = true
-	skill.Level = 60
-	teacher.RegisterSkill(skill)
-	teacher.AddSkillPoints(10)
-
-	student.AddSkillPoints(10)
-
-	// Teacher should be able to teach student
-	if !teacher.TeachSkill("teachable", student, 85, 5, 12) {
-		t.Error("Teacher should be able to teach skill")
-	}
-
-	// Student should now have the skill
-	if !student.HasSkill("teachable") {
-		t.Error("Student should have learned the skill")
-	}
-
-	// Student's skill should start at level 1
-	studentSkill := student.GetSkill("teachable")
-	if studentSkill == nil || studentSkill.Level != 1 {
-		t.Error("Student's skill should start at level 1")
-	}
-}
-
-func TestSkillManagerSlots(t *testing.T) {
-	sm := NewSkillManager()
-
-	// Default slots
-	if sm.GetSlots() != 10 {
-		t.Errorf("Expected 10 slots, got %d", sm.GetSlots())
-	}
-
-	if sm.GetUsedSlots() != 0 {
-		t.Errorf("Expected 0 used slots, got %d", sm.GetUsedSlots())
-	}
-
-	if sm.GetAvailableSlots() != 10 {
-		t.Errorf("Expected 10 available slots, got %d", sm.GetAvailableSlots())
-	}
-
-	// Learn some skills
-	sm.AddSkillPoints(20)
-
-	skill1 := NewSkill("skill1", "Skill 1", SkillTypeCombat, 3)
-	skill2 := NewSkill("skill2", "Skill 2", SkillTypeCombat, 3)
-
-	sm.LearnSkill(skill1, 5, 12)
-	sm.LearnSkill(skill2, 5, 12)
-
-	if sm.GetUsedSlots() != 2 {
-		t.Errorf("Expected 2 used slots, got %d", sm.GetUsedSlots())
-	}
-
-	if sm.GetAvailableSlots() != 8 {
-		t.Errorf("Expected 8 available slots, got %d", sm.GetAvailableSlots())
-	}
-
-	// Increase slots
-	sm.IncreaseSlots(5)
-
-	if sm.GetSlots() != 15 {
-		t.Errorf("Expected 15 slots after increase, got %d", sm.GetSlots())
-	}
-
-	if sm.GetAvailableSlots() != 13 {
-		t.Errorf("Expected 13 available slots after increase, got %d", sm.GetAvailableSlots())
 	}
 }

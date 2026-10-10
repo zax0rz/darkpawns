@@ -33,7 +33,10 @@ mechanics tests drive it), the weather characterization surface
 `session.enqueueInput`/`queueLen` (vuln-042 cap tests),
 `spec_assign.AllSpecNames` (spec smoke tests), `dprng` draw-log hooks.
 `InitializeWeather` was repointable: its tests now call the live
-`ResetTime()`.
+`ResetTime()`. 2026-10-10 addition: `testutil.NewTestPlayer` is class (d)
+— its sole caller is `tools/db-migrate`, a separate module invisible to
+the root `deadcode -test`, so it is root-module-baselined as a test seam
+and excluded from deletion sweeps unless db-migrate changes.
 
 ## Class (c) — Go-only, never wired (Zach rules: wire or delete)
 
