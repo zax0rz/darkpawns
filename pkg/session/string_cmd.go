@@ -305,14 +305,17 @@ func (s *Session) stringObjExtraDescEditor(obj *game.ObjectInstance, keyword str
 	}
 
 	if index >= 0 {
-		// C frees the old description and points d->str at the field, so the
-		// text is gone before the editor starts.
+		// C frees the old description and nulls the pointer before the editor
+		// starts (src/modify.c:703-706), so the field is absent until the
+		// editor writes again.
 		descs[index].Description = ""
+		descs[index].NullDescription = true
 		obj.SetLiveExtraDescs(descs)
 		s.Send(stringModifyingDescription)
 	} else {
-		// C creates the node at the head of obj->ex_description.
-		descs = append([]parser.ExtraDesc{{Keywords: keyword}}, descs...)
+		// C creates the node at the head of obj->ex_description with a NULL
+		// description (src/modify.c:693-698).
+		descs = append([]parser.ExtraDesc{{Keywords: keyword, NullDescription: true}}, descs...)
 		index = 0
 		obj.SetLiveExtraDescs(descs)
 		s.Send(stringNewField)
@@ -322,6 +325,10 @@ func (s *Session) stringObjExtraDescEditor(obj *game.ObjectInstance, keyword str
 		current := obj.LiveExtraDescs()
 		if index < len(current) {
 			current[index].Description = value
+			// C's string editor allocates the buffer it writes, so the
+			// pointer is non-NULL even when the saved text is empty
+			// (src/improved-edit.c).
+			current[index].NullDescription = false
 			obj.SetLiveExtraDescs(current)
 		}
 	}
@@ -348,10 +355,10 @@ func (s *Session) stringObjDeleteExtraDesc(obj *game.ObjectInstance, keyword str
 
 	descs := obj.LiveExtraDescs()
 	index := game.FindExtraDescIndex(descs, keyword)
-	if index < 0 || descs[index].Description == "" {
-		// find_exdesc returns the entry's description pointer, so a field whose
-		// description was never written behaves as "not found" even though the
-		// keyword exists.
+	if index < 0 || descs[index].NullDescription {
+		// find_exdesc returns the entry's description pointer (src/modify.c:718),
+		// so a field whose description pointer is NULL behaves as "not found"
+		// even though the keyword exists.
 		s.Send(stringNoFieldWithKeyword)
 		return nil
 	}

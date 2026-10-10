@@ -270,9 +270,12 @@ func (s *Session) startOedit(number int, zone *parser.Zone) error {
 	}
 	state.extraMeta = make([]oeditExtraMeta, len(obj.ExtraDescs))
 	for i, extra := range obj.ExtraDescs {
+		// C's node presence is the two pointer values, not the text: a
+		// loaded NULL (NullKeyword/NullDescription) is unset, while an
+		// editor-allocated empty string stays set.
 		state.extraMeta[i] = oeditExtraMeta{
-			keywordSet:     extra.Keywords != "",
-			descriptionSet: extra.Description != "",
+			keywordSet:     !extra.NullKeyword,
+			descriptionSet: !extra.NullDescription,
 		}
 	}
 
@@ -1486,6 +1489,19 @@ func (s *Session) saveOeditInternallyLocked() {
 		obj.Affects = append(obj.Affects, state.affects[i])
 	}
 
+	// C's ex_description nodes carry their NULL-ness in the pointers; the
+	// descriptor tracked it (extraMeta), and commit publishes it so the disk
+	// writer can tell a loaded NULL from an editor-allocated empty string
+	// (src/oedit.c:417-426). Nodes past the tracked prefix keep the zero value
+	// ("present"), which is C's allocated case.
+	for i := range obj.ExtraDescs {
+		if i >= len(state.extraMeta) {
+			break
+		}
+		obj.ExtraDescs[i].NullKeyword = !state.extraMeta[i].keywordSet
+		obj.ExtraDescs[i].NullDescription = !state.extraMeta[i].descriptionSet
+	}
+
 	// C's script fields live in obj_index[], not obj_proto[], so they are
 	// untouched by the working-copy commit; preserve the live values.
 	if live, ok := s.manager.world.SnapshotObj(state.number); ok {
@@ -1590,8 +1606,12 @@ func writeOeditObj(sb *strings.Builder, obj *parser.Obj) {
 		fmt.Fprintf(sb, "S %s %d\n", obj.ScriptName, obj.LuaFunctions)
 	}
 	for _, exDesc := range obj.ExtraDescs {
-		// C's corrupt-ex_desc sanity check skips a node missing either half.
-		if exDesc.Keywords == "" || exDesc.Description == "" {
+		// C's corrupt-ex_desc sanity check (src/oedit.c:417-426): a node whose
+		// keyword or description pointer is NULL is logged at BRF/LVL_BUILDER/
+		// file TRUE and skipped. An editor-allocated empty string
+		// (NullDescription false) is written; a loaded NULL is not.
+		if exDesc.NullKeyword || exDesc.NullDescription {
+			game.MudLog("SYSERR: OLC: oedit_save_to_disk: Corrupt ex_desc!", game.MudlogBrief, game.LVL_IMMORT, true)
 			continue
 		}
 		fmt.Fprintf(sb, "E\n%s~\n%s~\n", exDesc.Keywords,
