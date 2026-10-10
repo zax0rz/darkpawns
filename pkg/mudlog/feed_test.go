@@ -82,7 +82,19 @@ func TestSinceReplaysInOrderAndCaps(t *testing.T) {
 // and never delaying the dispatcher — while a reading subscriber keeps
 // receiving everything.
 func TestSlowSubscriberIsKickedNotDispatcher(t *testing.T) {
+	// Progress-gated, not timing-dependent: the producer taps in bursts
+	// far smaller than the subscriber buffer and does not start burst N+1
+	// until the reading subscriber confirms every earlier event. The
+	// reading subscriber therefore can never overflow and be kicked, no
+	// matter how the scheduler starves it (this test flaked under
+	// full-suite load as a free-running reader), while the subscriber that
+	// never reads is kicked deterministically once the dispatcher has
+	// delivered past its buffer.
 	f := newStartedFeed(t, 1024, 1024)
+	const (
+		total = 400
+		burst = 100 // << subscriber buffer of 256
+	)
 	fast, fastKick, fastCancel := f.Subscribe(0)
 	defer fastCancel()
 	_, slowKick, slowCancel := f.Subscribe(0)
@@ -105,10 +117,14 @@ func TestSlowSubscriberIsKickedNotDispatcher(t *testing.T) {
 		}
 	}()
 
-	for i := 0; i < 400; i++ { // slow's buffer is 256
-		f.tap("", "burst", 1, 31, false)
+	for sent := 0; sent < total; sent += burst {
+		for i := 0; i < burst; i++ {
+			f.tap("", "burst", 1, 31, false)
+		}
+		acked := sent + burst
+		waitFor(t, "reader drained the burst", func() bool { return got.Load() >= int32(acked) })
 	}
-	waitFor(t, "all 400 dispatched", func() bool { return f.LastSeq() == 400 })
+	waitFor(t, "all dispatched", func() bool { return f.LastSeq() == total })
 	waitFor(t, "slow subscriber kicked", func() bool {
 		select {
 		case <-slowKick:
@@ -117,12 +133,18 @@ func TestSlowSubscriberIsKickedNotDispatcher(t *testing.T) {
 			return false
 		}
 	})
-	waitFor(t, "fast subscriber got everything", func() bool { return got.Load() == 400 })
+	if got := got.Load(); got != total {
+		t.Fatalf("reader received %d of %d", got, total)
+	}
 	select {
 	case <-fastKick:
 		t.Fatal("reading subscriber was kicked")
 	default:
 	}
+	// Release the reader (shutdown is once-guarded; the deferred cancel is
+	// a no-op repeat) and prove it exited cleanly.
+	fastCancel()
+	<-readerDone
 }
 
 // Tap is safe under concurrent hammering (run with -race in CI).
