@@ -63,16 +63,16 @@ func infobarHitPoints(ch *infobarState) string {
 
 	var colorOpen, colorClose string
 	if percent >= 0.95 {
-		colorOpen = vtGreen
+		colorOpen = ch.color(vtGreen)
 	} else if percent >= 0.33 {
-		colorOpen = vtYellow
+		colorOpen = ch.color(vtYellow)
 	} else {
-		colorOpen = vtRed
+		colorOpen = ch.color(vtRed)
 	}
-	colorClose = vtNorm
+	colorClose = ch.color(vtNorm)
 
 	return fmt.Sprintf(vtCurSp+"%s%d%s(%s%d%s)", ch.screenSize-3, 10,
-		colorOpen, count, colorClose, vtGreen, maxcount, vtNorm)
+		colorOpen, count, colorClose, ch.color(vtGreen), maxcount, ch.color(vtNorm))
 }
 
 // infobarManaPointsStr draws the "Mana Pts:" label.
@@ -88,15 +88,15 @@ func infobarManaPoints(ch *infobarState) string {
 
 	var colorOpen string
 	if percent >= 0.95 {
-		colorOpen = vtGreen
+		colorOpen = ch.color(vtGreen)
 	} else if percent >= 0.33 {
-		colorOpen = vtYellow
+		colorOpen = ch.color(vtYellow)
 	} else {
-		colorOpen = vtRed
+		colorOpen = ch.color(vtRed)
 	}
 
 	return fmt.Sprintf(vtCurSp+"%s%d%s(%s%d%s)", ch.screenSize-3, 36,
-		colorOpen, count, vtNorm, vtGreen, maxcount, vtNorm)
+		colorOpen, count, ch.color(vtNorm), ch.color(vtGreen), maxcount, ch.color(vtNorm))
 }
 
 // infobarMovePointsStr draws the "Move Pts:" label.
@@ -112,15 +112,15 @@ func infobarMovePoints(ch *infobarState) string {
 
 	var colorOpen string
 	if percent >= 0.95 {
-		colorOpen = vtGreen
+		colorOpen = ch.color(vtGreen)
 	} else if percent >= 0.33 {
-		colorOpen = vtYellow
+		colorOpen = ch.color(vtYellow)
 	} else {
-		colorOpen = vtRed
+		colorOpen = ch.color(vtRed)
 	}
 
 	return fmt.Sprintf(vtCurSp+"%s%d%s(%s%d%s)", ch.screenSize-3, 63,
-		colorOpen, count, vtNorm, vtGreen, maxcount, vtNorm)
+		colorOpen, count, ch.color(vtNorm), ch.color(vtGreen), maxcount, ch.color(vtNorm))
 }
 
 // infobarExpPointsStr draws the "Exp:" label.
@@ -131,7 +131,7 @@ func infobarExpPointsStr(ch *infobarState) string {
 // infobarExpPoints draws the experience points value.
 func infobarExpPoints(ch *infobarState) string {
 	return fmt.Sprintf(vtCurSp+"%s%d%s", ch.screenSize-2, 6,
-		vtBlue, ch.lastExp, vtNorm)
+		ch.color(vtBlue), ch.lastExp, ch.color(vtNorm))
 }
 
 // infobarNeededExpPointsStr draws the "Needed for Level " label.
@@ -163,7 +163,7 @@ func infobarGoldStr(ch *infobarState) string {
 // infobarGold draws the gold value.
 func infobarGold(ch *infobarState) string {
 	return fmt.Sprintf(vtCurSp+"%s%d%s", ch.screenSize-1, 7,
-		vtMagenta, ch.lastGold, vtNorm)
+		ch.color(vtMagenta), ch.lastGold, ch.color(vtNorm))
 }
 
 // ---------------------------------------------------------------------------
@@ -171,6 +171,7 @@ func infobarGold(ch *infobarState) string {
 // ---------------------------------------------------------------------------
 
 type infobarState struct {
+	colorNormal       bool
 	screenSize        int
 	lastHit           int
 	lastMaxHit        int
@@ -185,6 +186,15 @@ type infobarState struct {
 	level             int
 }
 
+// color mirrors every CC*(ch, C_NRM) in src/act.display.c:311-708.
+// Cursor/control escapes remain unconditional.
+func (ch *infobarState) color(ansi string) string {
+	if !ch.colorNormal {
+		return ""
+	}
+	return ansi
+}
+
 func newInfobarState(s *Session) *infobarState {
 	p := s.player
 	v := p.VitalsSnapshot()
@@ -192,6 +202,7 @@ func newInfobarState(s *Session) *infobarState {
 	expNeeded := game.FindExp(v.Class, v.Level)
 
 	return &infobarState{
+		colorNormal:       p.GetFlags()&(1<<uint(game.PrfColor2)) != 0,
 		screenSize:        s.screenSize,
 		lastHit:           v.Health,
 		lastMaxHit:        v.MaxHealth,

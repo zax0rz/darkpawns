@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -395,8 +396,8 @@ func (s *Session) queuePromptText(text string, raw bool) {
 }
 
 // promptText returns the state prefixes that C's make_prompt emits after the
-// regular display fields. When both flags are set, PRF_INACTIVE wins because
-// the later sprintf in comm.c overwrites the earlier PRF_AFK prompt.
+// regular display fields. With INFOBAR_OFF, PRF_INACTIVE overwrites PRF_AFK.
+// With INFOBAR_ON, only AFK is considered and the invisibility prefix is discarded.
 func (s *Session) promptText() string {
 	if s.player == nil {
 		return "> "
@@ -410,16 +411,6 @@ func (s *Session) promptText() string {
 	// normal AFK/inactive prefixes.
 	if editing, _ := s.editorPromptState(); editing || flags&(1<<uint(game.PlrWriting)) != 0 {
 		return "] "
-	}
-	// C's status branches rebuild prompt in-place with sprintf(prompt, ...)
-	// after the vitals/invisibility fields. On the oracle libc this overwrites
-	// those earlier fields, leaving only the status marker; INACTIVE is the
-	// later branch and therefore wins if both flags are present.
-	if flags&(1<<uint(game.PrfInactive)) != 0 {
-		return "INACTIVE > "
-	}
-	if flags&(1<<uint(game.PrfAFK)) != 0 {
-		return "AFK > "
 	}
 	var prefix strings.Builder
 	if level := s.player.GetInvisLevel(); level > 0 {
@@ -442,6 +433,34 @@ func (s *Session) promptText() string {
 		if flags&(1<<uint(game.PrfDispmove)) != 0 {
 			prefix.WriteString(promptVital(s.player.GetMove(), s.player.GetMaxMove(), "V", color))
 		}
+		// src/comm.c:1120-1147: target and tank follow vitals, inside INFOBAR_OFF.
+		target := s.player.GetFightingBody()
+		if flags&(1<<uint(game.PrfDispTarget)) != 0 && target != nil {
+			name, _ := game.OneArgument(game.PersName(target, s.player))
+			if len(name) > 0 && name[0] >= 'a' && name[0] <= 'z' {
+				name = string(name[0]-'a'+'A') + name[1:]
+			}
+			prefix.WriteString(promptCombatSegment(name, target, color))
+		}
+		if flags&(1<<uint(game.PrfDispTank)) != 0 && target != nil {
+			if tank := target.GetFightingBody(); tank != nil {
+				prefix.WriteString(promptCombatSegment(game.PersName(tank, s.player), tank, color))
+			}
+		}
+		// src/comm.c:1149-1156 overwrites earlier fields; INACTIVE wins.
+		if flags&(1<<uint(game.PrfInactive)) != 0 {
+			return promptStatusMarker("INACTIVE", color) + "> "
+		}
+		if flags&(1<<uint(game.PrfAFK)) != 0 {
+			return promptStatusMarker("AFK", color) + "> "
+		}
+	} else {
+		// src/comm.c:1194-1201 rebuilds the ON prompt, discarding invisibility.
+		// This branch has AFK but no INACTIVE arm.
+		if flags&(1<<uint(game.PrfAFK)) != 0 {
+			return promptStatusMarker("AFK", color) + "> "
+		}
+		return "> "
 	}
 	return prefix.String() + "> "
 }
@@ -463,4 +482,37 @@ func promptVital(current, maximum int, label string, color bool) string {
 		shade = "\x1b[33m"
 	}
 	return fmt.Sprintf("%s%d\x1b[0m%s ", shade, current, label)
+}
+
+// src/comm.c:970-1025 uses integer division truncated toward zero.
+func promptCombatSegment(name string, body combat.Combatant, color bool) string {
+	percent := -1
+	if maximum := body.GetMaxHP(); maximum > 0 {
+		percent = 100 * body.GetHP() / maximum
+	}
+	status := "(nearly dead)"
+	switch {
+	case percent >= 100:
+		status = "(excellent)"
+	case percent >= 90:
+		status = "(few scratches)"
+	case percent >= 75:
+		status = "(small wounds)"
+	case percent >= 50:
+		status = "(quite a few wounds)"
+	case percent >= 30:
+		status = "(big nasty wounds)"
+	case percent >= 15:
+		status = "(pretty hurt)"
+	case percent >= 0:
+		status = "(awful)"
+	}
+	return promptStatusMarker(name+":"+status, color)
+}
+
+func promptStatusMarker(text string, color bool) string {
+	if color {
+		return "\x1b[31m" + text + "\x1b[0m "
+	}
+	return text + " "
 }

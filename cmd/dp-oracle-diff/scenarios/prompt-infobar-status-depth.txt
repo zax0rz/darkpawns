@@ -1,0 +1,79 @@
+# depth-case: prompt.infobar-on-tail
+# C comm.c:1194-1201: ON AFK, no INACTIVE arm, discards invis prefix.
+# Exact C game-loop prompt bytes for an empty line and AFK state changes.
+
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+
+[setup:oracle]
+Playingprompt
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Playingprompt
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+color off
+invis 0
+infobar on
+<ENTER>
+afk
+<ENTER>
+inactive
+<ENTER>
+afk
+<ENTER>
+inactive
+invis 1
+<ENTER>
+afk
+<ENTER>
+inactive
+<ENTER>
+afk
+<ENTER>
+inactive
+invis 0
+color complete
+<ENTER>
+afk
+<ENTER>
+inactive
+<ENTER>
+afk
+<ENTER>
+inactive
+invis 1
+<ENTER>
+afk
+<ENTER>
+inactive
+<ENTER>
+afk
+<ENTER>
+inactive
+infobar off
+invis 0
