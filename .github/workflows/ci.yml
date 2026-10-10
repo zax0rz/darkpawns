@@ -81,6 +81,16 @@ jobs:
         make deadcode-ratchet-test
         make deadcode-ratchet
 
+    # Fidelity depth + unit proofs (R5c/R5h): gen_fidelity_depth re-derives
+    # the depth manifests from the scenario fixtures and validates every row
+    # (claims-pair parse, scenario depth-case annotations, unit-proof rows),
+    # and fidelity_units actually runs the Go tests the manifests cite as
+    # unit proofs — renaming a cited proof test fails the build instead of
+    # leaving a manifest row silently unproven. Units write their classified
+    # evidence under UNIT_OUT, matching the retained-evidence convention.
+    - name: Fidelity depth and unit proofs
+      run: make fidelity-depth fidelity-units
+
     - name: Verify all packages build
       run: go build ./...
 
