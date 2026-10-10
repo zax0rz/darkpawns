@@ -258,3 +258,10 @@ func (sm *SkillManager) InitializeDefaultSkills() {
 	sm.RegisterSkill(NewSkill("steal", "Steal", SkillTypeUtility, 3))
 	sm.RegisterSkill(NewSkill("pick_lock", "Pick Lock", SkillTypeUtility, 3))
 }
+
+// AddSkillPoints adds skill points to the manager
+func (sm *SkillManager) AddSkillPoints(points int) {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	sm.points += points
+}

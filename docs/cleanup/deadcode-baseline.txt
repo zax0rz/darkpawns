@@ -56,5 +56,6 @@ pkg/game/skill_advanced.go: unreachable func: DoScan
 pkg/game/time_utils.go: unreachable func: ParseRace
 pkg/session/wiz_system.go: unreachable func: cmdBroadcast
 pkg/spells/call_magic.go: unreachable func: MagAttackModifier
+pkg/testutil/helpers.go: unreachable func: NewTestPlayer
 web/cors.go: unreachable func: CORSMiddleware
 web/security.go: unreachable func: CSPNonceFromContext

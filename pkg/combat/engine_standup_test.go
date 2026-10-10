@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -57,9 +58,46 @@ func TestProcessCombatPair_ScrambleCapitalized(t *testing.T) {
 
 // recordingRoller logs every Number/Dice call's args while delegating to the
 // production roller. Used to assert C's draw sequence through processCombatPair.
+type drawCall struct {
+	method string // "Number" or "Dice"
+	a, b   int
+}
+
 type recordingRoller struct {
 	real   Roller
 	logged []drawCall
+}
+
+func (r *recordingRoller) Number(from, to int) int {
+	r.logged = append(r.logged, drawCall{"Number", from, to})
+	return r.real.Number(from, to)
+}
+
+func (r *recordingRoller) Dice(num, size int) int {
+	r.logged = append(r.logged, drawCall{"Dice", num, size})
+	return r.real.Dice(num, size)
+}
+
+func (r *recordingRoller) IntN(n int) int { return r.real.IntN(n) }
+
+// hasDraw reports whether the log contains a Number(a,b) call.
+func (r *recordingRoller) hasNumber(a, b int) bool {
+	for _, d := range r.logged {
+		if d.method == "Number" && d.a == a && d.b == b {
+			return true
+		}
+	}
+	return false
+}
+
+// firstNumberAfter returns the first Number call after the given index, or -1.
+func (r *recordingRoller) firstNumberIndex(a, b int) int {
+	for i, d := range r.logged {
+		if d.method == "Number" && d.a == a && d.b == b {
+			return i
+		}
+	}
+	return -1
 }
 
 // TestProcessCombatPair_MobStandupRoundDrawsFirst — DP-1215: the NPC's

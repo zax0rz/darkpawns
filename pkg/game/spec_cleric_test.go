@@ -1,5 +1,12 @@
 package game
 
+import (
+	"strings"
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+)
+
 // TestSpecCleric_EntryGatesAndStand covers SPECIAL(cleric)'s AWAKE, command,
 // and C do_stand entry path (spec_procs.c:1425-1442). A sleeping cleric must
 // not stand; a sitting cleric emits the room-only do_stand line before acting.
@@ -39,6 +46,21 @@ func scriptClericRolls(t *testing.T, values ...int) *[]clericTestDraw {
 	}
 	t.Cleanup(func() { clericNumber = original })
 	return &draws
+}
+
+func prepareClericTestCombat(t *testing.T, w *World, player *Player, level int) *MobInstance {
+	t.Helper()
+	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), level)
+	mob.Intel = 8
+	mob.Wis = 8
+	mob.CopyBaseAttributes()
+	mob.SetMaxHP(100)
+	mob.SetHealth(100)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFightingBody(player)
+	player.SetPosition(combat.PosFighting)
+	player.SetFightingBody(mob)
+	return mob
 }
 
 // TestSpecCleric_EntryGatesAndStand covers SPECIAL(cleric)'s AWAKE, command,

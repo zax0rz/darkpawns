@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
