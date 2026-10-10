@@ -195,3 +195,16 @@ func (m *MockDatabase) Exec(query string, args ...interface{}) (sql.Result, erro
 
 // WriteSessionSummary satisfies db.GameStore. Summaries are keyed by
 // (agentName, sessionID) so distinct sessions never collapse into one list.
+
+// NewTestPlayer constructs a fully populated character player for test runs.
+func NewTestPlayer(name string, class, race int) *game.Player {
+	p := game.NewCharacter(0, name, class, race)
+	p.Health = 100
+	p.MaxHealth = 100
+	p.Mana = 20
+	p.MaxMana = 20
+	p.Move = 100
+	p.MaxMove = 100
+	p.Level = 1
+	return p
+}

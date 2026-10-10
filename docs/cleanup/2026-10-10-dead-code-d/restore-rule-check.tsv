@@ -1,0 +1,10 @@
+file	symbol_examined	verdict	evidence
+pkg/testutil/helpers.go	NewTestPlayer	restored-restored-symbol	restored per review; tools/db-migrate (separate module, invisible to root deadcode -test) calls it
+pkg/combat/engine_standup_test.go	Number (common)	no-violation	restored tests call recordingRoller.Number and productionRoller.Number - the live Roller interface method, a different receiver type than the deleted common.Number (review rule: receiver type decides)
+pkg/combat/engine_standup_test.go	Number (common)	artifact-only	bare `Number(` matches are inside string literals; grep -n 'Number(' | grep -v '\.' returns no code lines
+pkg/game/spec_cleric_test.go	Number (common)	artifact-only	both bare matches are doc comments: "consumes Number(0,3)" at :18 and :126; comment-stripped scan shows no code reference
+pkg/game/spec_cleric_test.go	scriptClericRolls/clericTestDraw	restored-restored-symbol	helper + value type restored with their 5 tests
+pkg/olc/registry_test.go	-	no-violation	both restored tests call live pkg/olc registry APIs only
+pkg/command/skill_commands.go	CmdLearn/CmdListSkills	restored-restored-symbol	restored per review; the scan/skills family ruling now covers the family as a whole
+pkg/command/skill_commands_test.go	CmdLearn	restored-restored-symbol	TestCmdLearn restored with its handler
+ALL	deleted-set (94 syms)	no-references	go vet ./... compiles all test packages against the final deleted set; receiver-type rule applied per review
