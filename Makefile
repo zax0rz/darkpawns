@@ -91,10 +91,6 @@ install:
 	go mod tidy
 	go mod download
 
-# Test the optional privacy-service client against an operator-provided service.
-privacy-test:
-	PRIVACY_FILTER_URL=http://localhost:8001 go test -v ./pkg/privacy/...
-
 # Development helpers
 
 # Install git hooks (pre-push runs gofumpt so CI's format check can't surprise
