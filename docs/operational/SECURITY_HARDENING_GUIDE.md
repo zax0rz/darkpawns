@@ -102,7 +102,6 @@ ENCRYPTION_KEY=$(openssl rand -base64 32)
 3. **Secret Managers**: Extensible for cloud providers (AWS Secrets Manager, etc.)
 
 ### Implementation Files
-- `pkg/secrets/manager.go` - Secret encryption/decryption
 - `.env.example` - Template with secure defaults
 
 ## Security Headers

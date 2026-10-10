@@ -109,9 +109,6 @@ The store: player persistence in one embedded SQLite file, named by `-db` or `DP
 - **`pkg/audit`** — Security event logging
 - **`pkg/metrics`** — Prometheus metrics endpoint
 - **`pkg/moderation`** — Content moderation hooks
-- **`pkg/optimization`** — Performance optimization utilities
-- **`pkg/privacy`** — Privacy/data handling utilities
-- **`pkg/secrets`** — Secret management
 - **`pkg/spells`** — Spell system (in progress)
 - **`pkg/validation`** — Input validation (player names, etc.)
 - **`web/`** — Security headers middleware
