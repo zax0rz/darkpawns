@@ -30,6 +30,14 @@ string-census:
 string-census-update:
 	go run ./cmd/dp-string-census --update
 
+# Deadcode ratchet: the set of functions unreachable from every program and
+# every test (whole-module deadcode -test ./...). The committed baseline
+# only shrinks — a new unreachable function must be wired, deleted, or added
+# to docs/cleanup/deadcode-baseline.txt with a class (d) reason (test seam,
+# tooling hook). Modelled on the string census ratchet.
+deadcode-ratchet:
+	@tmpcur=$$(mktemp); tmpbase=$$(mktemp); 	grep -v '^#' docs/cleanup/deadcode-baseline.txt | sort > "$$tmpbase"; 	go run golang.org/x/tools/cmd/deadcode@latest -test ./... 2>/dev/null | tail -n +2 | sort > "$$tmpcur"; 	current=$$(comm -23 "$$tmpcur" "$$tmpbase"); 	rm -f "$$tmpcur" "$$tmpbase"; 	if [ -n "$$current" ]; then 		echo "deadcode ratchet: NEW unreachable functions (wire, delete, or baseline them with a class (d) reason):"; 		echo "$$current"; 		exit 1; 	fi; 	echo "deadcode ratchet: ok ($$(grep -cv '^#' docs/cleanup/deadcode-baseline.txt) baselined, 0 new)"
+
 # Coverage of the C surface by the scenarios that ran. It reads an EXISTING
 # census dump and never starts its own census: coverage is a claim about the
 # scenarios in that dump. Produce one first, e.g.

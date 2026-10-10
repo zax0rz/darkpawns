@@ -70,6 +70,13 @@ jobs:
     - name: String census ratchet
       run: make string-census
 
+    # Deadcode ratchet (R5b): the unreachable-from-everything set only
+    # shrinks; a new entry must be wired, deleted, or baselined with a
+    # class (d) reason. Whole-module invocation; see
+    # docs/cleanup/deadcode-baseline.txt.
+    - name: Deadcode ratchet
+      run: make deadcode-ratchet
+
     - name: Verify all packages build
       run: go build ./...
 
