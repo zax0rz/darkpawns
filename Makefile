@@ -1,4 +1,4 @@
-.PHONY: world-fidelity world-manifest expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update census-coverage db-migrate-build db-migrate-test
+.PHONY: world-fidelity world-manifest expected-divergences build test run clean install privacy-test test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update deadcode-ratchet deadcode-ratchet-update deadcode-ratchet-test census-coverage db-migrate-build db-migrate-test
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -34,9 +34,18 @@ string-census-update:
 # every test (whole-module deadcode -test ./...). The committed baseline
 # only shrinks — a new unreachable function must be wired, deleted, or added
 # to docs/cleanup/deadcode-baseline.txt with a class (d) reason (test seam,
-# tooling hook). Modelled on the string census ratchet.
+# tooling hook). Keys are file + symbol with no position, so unrelated edits
+# in a baselined file cannot fail CI. deadcode is pinned inside the script;
+# the R5h controls run under deadcode-ratchet-test. Modelled on the string
+# census ratchet.
 deadcode-ratchet:
-	@tmpcur=$$(mktemp); tmpbase=$$(mktemp); 	grep -v '^#' docs/cleanup/deadcode-baseline.txt | sort > "$$tmpbase"; 	go run golang.org/x/tools/cmd/deadcode@latest -test ./... 2>/dev/null | tail -n +2 | sort > "$$tmpcur"; 	current=$$(comm -23 "$$tmpcur" "$$tmpbase"); 	rm -f "$$tmpcur" "$$tmpbase"; 	if [ -n "$$current" ]; then 		echo "deadcode ratchet: NEW unreachable functions (wire, delete, or baseline them with a class (d) reason):"; 		echo "$$current"; 		exit 1; 	fi; 	echo "deadcode ratchet: ok ($$(grep -cv '^#' docs/cleanup/deadcode-baseline.txt) baselined, 0 new)"
+	scripts/deadcode-ratchet.sh
+
+deadcode-ratchet-update:
+	scripts/deadcode-ratchet.sh --update
+
+deadcode-ratchet-test:
+	scripts/test_deadcode_ratchet.sh
 
 # Coverage of the C surface by the scenarios that ran. It reads an EXISTING
 # census dump and never starts its own census: coverage is a claim about the
@@ -63,6 +72,7 @@ test:
 test-all:
 	./test.sh all
 	scripts/test_census.sh
+	scripts/test_deadcode_ratchet.sh
 	python3 -m unittest discover -s scripts -p 'test_*.py'
 
 test-unit:
