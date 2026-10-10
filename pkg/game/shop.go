@@ -101,17 +101,6 @@ func (sm *ShopManager) GetShopByKeeper(vnum int) *Shop {
 	return nil
 }
 
-// GetShopsByKeeper returns all shops run by the given NPC VNUM (usually just one).
-func (sm *ShopManager) GetShopsByKeeper(vnum int) []*Shop {
-	var result []*Shop
-	for _, s := range sm.shops {
-		if s.KeeperVNum == vnum {
-			result = append(result, s)
-		}
-	}
-	return result
-}
-
 // GetAllShops returns all registered shops.
 func (sm *ShopManager) GetAllShops() []*Shop {
 	return sm.shops
@@ -221,16 +210,6 @@ func (s *Shop) SellPrice(itemCost int, cha int) int {
 func (s *Shop) WillBuyType(itemType int) bool {
 	for _, t := range s.BuyTypes {
 		if t == itemType {
-			return true
-		}
-	}
-	return false
-}
-
-// HasSellItem returns true if the shop sells an item with the given prototype VNUM.
-func (s *Shop) HasSellItem(vnum int) bool {
-	for _, v := range s.SellTypes {
-		if v == vnum {
 			return true
 		}
 	}

@@ -104,22 +104,9 @@ func (l ObjectLocation) IsInRoom() bool      { return l.Kind == ObjInRoom }
 func (l ObjectLocation) IsInInventory() bool { return l.Kind == ObjInInventory }
 func (l ObjectLocation) IsEquipped() bool    { return l.Kind == ObjEquipped }
 func (l ObjectLocation) IsInContainer() bool { return l.Kind == ObjInContainer }
-func (l ObjectLocation) IsInShop() bool      { return l.Kind == ObjInShop }
-
-func (l ObjectLocation) InRoomOf(vnum int) bool {
-	return l.Kind == ObjInRoom && l.RoomVNum == vnum
-}
 
 func (l ObjectLocation) InInventoryOfPlayer(name string) bool {
 	return l.Kind == ObjInInventory && l.PlayerName == name
-}
-
-func (l ObjectLocation) InInventoryOfMob(mobID int) bool {
-	return l.Kind == ObjInInventory && l.MobID == mobID
-}
-
-func (l ObjectLocation) InContainerOf(objID int) bool {
-	return l.Kind == ObjInContainer && l.ContainerObjID == objID
 }
 
 // Validate checks that the ObjectLocation is internally consistent.
@@ -232,5 +219,4 @@ func (l ObjectLocation) Validate() error {
 }
 
 func (l ObjectLocation) OwnerIsPlayer() bool { return l.OwnerKind == OwnerPlayer }
-func (l ObjectLocation) OwnerIsMob() bool    { return l.OwnerKind == OwnerMob }
 func (l ObjectLocation) IsZero() bool        { return l.Kind == ObjNowhere }

@@ -1246,13 +1246,6 @@ func (m *MobInstance) SetMountRider(rider string) {
 	m.MountRider = rider
 }
 
-// GetHuntingID returns the ID of the player being hunted.
-func (m *MobInstance) GetHuntingID() string {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.HuntingID
-}
-
 // SetHuntingID sets the ID of the player being hunted.
 func (m *MobInstance) SetHuntingID(id string) {
 	m.mu.Lock()
@@ -1265,13 +1258,6 @@ func (m *MobInstance) GetAffects() uint64 {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.Affects
-}
-
-// SetAffectFlags replaces the mob's entire affect flags bitmask.
-func (m *MobInstance) SetAffectFlags(flags uint64) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.Affects = flags
 }
 
 // HasAffect checks if a specific affect bit is set.
@@ -1307,9 +1293,6 @@ func (m *MobInstance) ClearMobFlag(bit int) {
 
 // IsFighting returns whether the mob is currently in combat.
 func (m *MobInstance) IsFighting() bool { return m.GetFightingBody() != nil }
-
-// GetFightingTarget returns the name of the target being fought.
-func (m *MobInstance) GetFightingTarget() string { return m.GetFighting() }
 
 // GetAlignment returns the mob's alignment from its prototype.
 func (m *MobInstance) GetAlignment() int {

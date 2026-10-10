@@ -75,13 +75,6 @@ func (p *Player) SetAFK(v bool) {
 	p.AFK = v
 }
 
-// GetAFKMessage returns the player's AFK message.
-func (p *Player) GetAFKMessage() string {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.AFKMessage
-}
-
 // SetAFKMessage sets the player's AFK message.
 func (p *Player) SetAFKMessage(msg string) {
 	p.mu.Lock()
@@ -118,34 +111,6 @@ func (p *Player) SetLinkless(v bool) {
 	p.Linkless = v
 }
 
-// GetAutoGold returns whether auto-gold is enabled.
-func (p *Player) GetAutoGold() bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.AutoGold
-}
-
-// SetAutoGold toggles auto-gold looting.
-func (p *Player) SetAutoGold(v bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.AutoGold = v
-}
-
-// GetAutoSplit returns whether auto-split is enabled.
-func (p *Player) GetAutoSplit() bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.AutoSplit
-}
-
-// SetAutoSplit toggles auto-split gold sharing.
-func (p *Player) SetAutoSplit(v bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.AutoSplit = v
-}
-
 // GetAutoExit returns whether auto-exit display is enabled.
 func (p *Player) GetAutoExit() bool {
 	p.mu.RLock()
@@ -167,49 +132,11 @@ func (p *Player) GetRoomFlags() bool {
 	return p.Flags&(1<<uint(PrfRoomFlags)) != 0
 }
 
-// SetRoomFlags toggles room flag display.
-func (p *Player) SetRoomFlags(v bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.RoomFlags = v
-	if v {
-		p.Flags |= 1 << uint(PrfRoomFlags)
-	} else {
-		p.Flags &^= 1 << uint(PrfRoomFlags)
-	}
-}
-
-// GetNoBroadcast returns whether global broadcasts are disabled.
-func (p *Player) GetNoBroadcast() bool {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.NoBroadcast
-}
-
-// SetNoBroadcast toggles global broadcast reception.
-func (p *Player) SetNoBroadcast(v bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.NoBroadcast = v
-}
-
 // GetHolyLight returns the PRF_HOLYLIGHT preference.
 func (p *Player) GetHolyLight() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.Flags&(1<<uint(PrfHolyLight)) != 0
-}
-
-// SetHolyLight toggles the holy light (see in dark) preference.
-func (p *Player) SetHolyLight(v bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.HolyLight = v
-	if v {
-		p.Flags |= 1 << uint(PrfHolyLight)
-	} else {
-		p.Flags &^= 1 << uint(PrfHolyLight)
-	}
 }
 
 // GetFollowing returns the name of the player's group leader (empty if leading).

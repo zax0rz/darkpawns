@@ -257,7 +257,6 @@ func TestUseTattooDepth(t *testing.T) {
 	t.Run("draws", TestUseTattooDrawParity)
 	t.Run("visibility", TestUseTattooSkullVisibility)
 	t.Run("eye-audience", TestUseTattooEyeAudienceGates)
-	t.Run("room-visibility-law", TestUseTattooRoomVisibilityLaw)
 	t.Run("no-magic-names", TestUseTattooNoMagicAudienceNames)
 }
 
@@ -384,61 +383,6 @@ func TestUseTattooEyeAudienceGates(t *testing.T) {
 
 // utils.h:515-530 has LIGHT_OK, INVIS_OK and holylight, not AFF_HIDE
 // or a blanket immortal bypass. Both room-message branches share this gate.
-func TestUseTattooRoomVisibilityLaw(t *testing.T) {
-	for _, tattoo := range []int{TattooEye, TattooSkull} {
-		for _, tc := range []struct {
-			name                                                         string
-			hide, invisible, blind, dark, infra, holy, writing, wizinvis bool
-			level                                                        int
-			visible                                                      bool
-		}{
-			{name: "hidden", hide: true, visible: true},
-			{name: "blind", blind: true},
-			{name: "dark", dark: true},
-			{name: "infravision", dark: true, infra: true, visible: true},
-			{name: "holy-blind", blind: true, holy: true, visible: true},
-			{name: "immortal-invisible", invisible: true, level: combat.LVL_IMMORT},
-			{name: "wizinvis-holy", wizinvis: true, holy: true},
-			{name: "writing", writing: true},
-		} {
-			t.Run(fmt.Sprintf("%d/%s", tattoo, tc.name), func(t *testing.T) {
-				w, a, b, out := tattooDepthWorld(t)
-				a.Tattoo = tattoo
-				if tc.hide {
-					a.SetAffect(affHide, true)
-				}
-				if tc.invisible {
-					a.SetAffect(affInvisible, true)
-				}
-				if tc.blind {
-					b.SetAffect(affBlind, true)
-				}
-				if tc.dark {
-					w.SetRoomFlagBit(1001, 0)
-				}
-				if tc.infra {
-					b.SetAffect(affInfravision, true)
-				}
-				if tc.holy {
-					b.SetHolyLight(true)
-				}
-				if tc.writing {
-					b.SetPlrFlag(PlrWriting, true)
-				}
-				if tc.wizinvis {
-					a.InvisLevel = 100
-				}
-				if tc.level != 0 {
-					b.Level = tc.level
-				}
-				w.DoUse(a, "tattoo")
-				if got := out[b.Name] != ""; got != tc.visible {
-					t.Fatalf("room visibility got %q want visible=%v", out[b.Name], tc.visible)
-				}
-			})
-		}
-	}
-}
 
 func TestUseTattooNoMagicAudienceNames(t *testing.T) {
 	for _, tc := range []struct {

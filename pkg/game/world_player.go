@@ -7,25 +7,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-func (w *World) OnPlayerEnterRoom(player *Player, roomVNum int, ce CombatEngine) bool {
-	mobs := w.GetMobsInRoom(roomVNum)
-	for _, mob := range mobs {
-		// Check if mob is aggressive
-		if hasMobFlag(mob, "aggressive") && !player.IsFighting() {
-			// Check if mob is already fighting
-			if !ce.IsFighting(mob) {
-				go func(m *MobInstance) {
-					if err := ce.StartCombat(m, player); err != nil {
-						slog.Debug("aggro combat start failed", "mob", m.GetName(), "target", player.Name, "error", err)
-					}
-				}(mob)
-				return true
-			}
-		}
-	}
-	return false
-}
-
 // GiveStartingItems implements do_start() item distribution from class.c lines 506-532.
 // Creates ObjectInstance items from prototypes and adds them to player inventory.
 // Source: class.c do_start()

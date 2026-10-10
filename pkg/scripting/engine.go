@@ -190,23 +190,6 @@ func (e *Engine) newSafeLState() *lua.LState {
 	return L
 }
 
-// matchKeyword checks if a search string matches any keyword in a space-separated keyword list.
-// Mirrors C's isname_with_abbrevs() behavior: case-insensitive prefix match.
-//
-//nolint:unused // Reserved for inworld() mob search when implemented
-func matchKeyword(keywords, search string) bool {
-	search = strings.ToLower(strings.TrimSpace(search))
-	if search == "" {
-		return false
-	}
-	for _, kw := range strings.Fields(keywords) {
-		if strings.HasPrefix(strings.ToLower(kw), search) {
-			return true
-		}
-	}
-	return false
-}
-
 // NewEngine creates a new Lua scripting engine.
 func NewEngine(scriptsDir string, world ScriptableWorld) *Engine {
 	engine := &Engine{
@@ -245,17 +228,6 @@ func (e *Engine) ForgetFailures() {
 	defer e.mu.Unlock()
 	e.failedScripts = make(map[string]struct{})
 	e.failedScriptKinds = make(map[string]string)
-}
-
-func (e *Engine) SetScriptBudget(timeout, slowThreshold time.Duration) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if timeout > 0 {
-		e.scriptTimeout = timeout
-	}
-	if slowThreshold > 0 {
-		e.slowScriptThreshold = slowThreshold
-	}
 }
 
 const transitItemTTL = 30 * time.Second

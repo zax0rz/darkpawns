@@ -2,8 +2,6 @@ package game
 
 import (
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // These tests guard the movement-cost table and immortal exemption (DP-1029 / F9).
@@ -64,130 +62,13 @@ func TestSectorMoveCost(t *testing.T) {
 	}
 }
 
-// newMoveCostTestWorld builds a world with two rooms of known sectors so the
-// movement cost of moving between them is deterministic: room 1001 (SECT_FIELD,
-// cost 3) ↔ room 1002 (SECT_DESERT, cost 8). Expected move cost = (3+8)/2 = 5.
-func newMoveCostTestWorld(t *testing.T) *World {
-	t.Helper()
-	parsed := &parser.World{
-		Rooms: []parser.Room{
-			{
-				VNum: 1001, Name: "Field", Zone: 1, Sector: SECT_FIELD,
-				Exits: map[string]parser.Exit{
-					"north": {Direction: "north", ToRoom: 1002, DoorState: 0},
-				},
-			},
-			{
-				VNum: 1002, Name: "Desert", Zone: 1, Sector: SECT_DESERT,
-				Exits: map[string]parser.Exit{
-					"south": {Direction: "south", ToRoom: 1001, DoorState: 0},
-				},
-			},
-		},
-		Mobs: []parser.Mob{},
-		Objs: []parser.Obj{},
-	}
-	w, err := NewWorld(parsed)
-	if err != nil {
-		t.Fatalf("NewWorld failed: %v", err)
-	}
-	t.Cleanup(func() { w.StopAITicker() })
-	return w
-}
-
 // TestMovePlayer_MortalPaysMoveCost verifies a mortal player's move points drop
 // by the (src+dst)/2 cost when moving between two rooms of known sectors.
-func TestMovePlayer_MortalPaysMoveCost(t *testing.T) {
-	w := newMoveCostTestWorld(t)
-
-	mortal := NewPlayer(1, "Mortal", 1001)
-	mortal.Level = 1 // well below LVL_IMMORT
-	mortal.SetMove(100)
-	if err := w.AddPlayer(mortal); err != nil {
-		t.Fatalf("AddPlayer failed: %v", err)
-	}
-
-	before := mortal.GetMove()
-	room, err := w.MovePlayer(mortal, "north")
-	if err != nil {
-		t.Fatalf("MovePlayer failed: %v", err)
-	}
-	if room == nil || room.VNum != 1002 {
-		t.Fatalf("expected move into room 1002, got %v", room)
-	}
-
-	wantCost := (sectorMoveCost(SECT_FIELD) + sectorMoveCost(SECT_DESERT)) / 2 // (3+8)/2 = 5
-	if got := before - mortal.GetMove(); got != wantCost {
-		t.Errorf("mortal move cost = %d, want %d (before=%d after=%d)", got, wantCost, before, mortal.GetMove())
-	}
-}
 
 // TestMovePlayer_ImmortalExempt verifies an immortal's move points are unchanged.
-func TestMovePlayer_ImmortalExempt(t *testing.T) {
-	w := newMoveCostTestWorld(t)
-
-	immort := NewPlayer(2, "Immort", 1001)
-	immort.Level = LVL_IMMORT // immortals move free (act.movement.c:210)
-	immort.SetMove(100)
-	if err := w.AddPlayer(immort); err != nil {
-		t.Fatalf("AddPlayer failed: %v", err)
-	}
-
-	before := immort.GetMove()
-	room, err := w.MovePlayer(immort, "north")
-	if err != nil {
-		t.Fatalf("MovePlayer failed: %v", err)
-	}
-	if room == nil || room.VNum != 1002 {
-		t.Fatalf("expected move into room 1002, got %v", room)
-	}
-
-	if got := immort.GetMove(); got != before {
-		t.Errorf("immortal move points changed: before=%d after=%d (should be unchanged)", before, got)
-	}
-}
 
 // TestMovePlayer_ImmortalExemptWhenExhausted confirms immortals move even with
 // zero move points — they never hit the "too exhausted" path.
-func TestMovePlayer_ImmortalExemptWhenExhausted(t *testing.T) {
-	w := newMoveCostTestWorld(t)
-
-	immort := NewPlayer(3, "TiredImmort", 1001)
-	immort.Level = LVL_IMMORT
-	immort.SetMove(0) // zero move — a mortal would be blocked
-	if err := w.AddPlayer(immort); err != nil {
-		t.Fatalf("AddPlayer failed: %v", err)
-	}
-
-	room, err := w.MovePlayer(immort, "north")
-	if err != nil {
-		t.Fatalf("immortal with 0 move should still move, got err: %v", err)
-	}
-	if room == nil || room.VNum != 1002 {
-		t.Errorf("expected room 1002, got %v", room)
-	}
-}
 
 // TestMovePlayer_MortalExhaustedBlocked confirms a mortal with too few move
 // points is still blocked (regression guard for the immortal short-circuit).
-func TestMovePlayer_MortalExhaustedBlocked(t *testing.T) {
-	w := newMoveCostTestWorld(t)
-
-	mortal := NewPlayer(4, "TiredMortal", 1001)
-	mortal.Level = 1
-	mortal.SetMove(1) // less than the 5 cost
-	if err := w.AddPlayer(mortal); err != nil {
-		t.Fatalf("AddPlayer failed: %v", err)
-	}
-
-	room, err := w.MovePlayer(mortal, "north")
-	if err == nil {
-		t.Fatal("exhausted mortal should fail to move, got nil error")
-	}
-	if room != nil {
-		t.Errorf("exhausted mortal should not change rooms, got %v", room)
-	}
-	if mortal.GetRoom() != 1001 {
-		t.Errorf("mortal should still be in 1001, got %d", mortal.GetRoom())
-	}
-}

@@ -59,19 +59,3 @@ func TestMockDatabase_PlayerOperations(t *testing.T) {
 		t.Errorf("expected password 'hashed_password', got %q", p.Password)
 	}
 }
-
-func TestAssertBehaviorMatchesC(t *testing.T) {
-	fakeT := &testing.T{}
-
-	// Exact match does not fail
-	AssertBehaviorMatchesC(fakeT, "test exact match", func() string { return "expected text" }, "expected text")
-	if fakeT.Failed() {
-		t.Error("expected assertion to succeed, but fakeT failed")
-	}
-
-	// Mismatch fails
-	AssertBehaviorMatchesC(fakeT, "test mismatch", func() string { return "actual text" }, "expected text")
-	if !fakeT.Failed() {
-		t.Error("expected assertion to fail, but fakeT did not fail")
-	}
-}

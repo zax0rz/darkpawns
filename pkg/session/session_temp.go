@@ -25,42 +25,6 @@ func (s *Session) ClearTempData(key string) {
 	}
 }
 
-// GetTempInt retrieves temporary data as an int.
-// Returns the value and true if the key exists and is an int, zero and false otherwise.
-func (s *Session) GetTempInt(key string) (int, bool) {
-	if s.tempData == nil {
-		return 0, false
-	}
-	v, ok := s.tempData[key]
-	if !ok {
-		return 0, false
-	}
-	i, ok := v.(int)
-	return i, ok
-}
-
-// GetTempString retrieves temporary data as a string.
-// Returns the value and true if the key exists and is a string, empty and false otherwise.
-func (s *Session) GetTempString(key string) (string, bool) {
-	if s.tempData == nil {
-		return "", false
-	}
-	v, ok := s.tempData[key]
-	if !ok {
-		return "", false
-	}
-	str, ok := v.(string)
-	return str, ok
-}
-
-// SetTemp stores temporary data in the session.
-func (s *Session) SetTemp(key string, value interface{}) {
-	if s.tempData == nil {
-		s.tempData = make(map[string]interface{})
-	}
-	s.tempData[key] = value
-}
-
 // RandomInt generates a random integer in range [0, n) from the canonical stream.
 func (s *Session) RandomInt(n int) int {
 	if n <= 0 {

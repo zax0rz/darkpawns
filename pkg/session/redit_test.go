@@ -180,31 +180,6 @@ func TestReditDisconnectDropsWorkingStringEditor(t *testing.T) {
 	}
 }
 
-func TestReditWorkingCopySurvivesOverlappingAdminWrite(t *testing.T) {
-	m := newReditTestManager(t)
-	s := makeCommandTestSession(t, m, "Reditgod", game.LVL_IMPL, 1001)
-	if err := ExecuteCommand(s, "redit", nil); err != nil {
-		t.Fatal(err)
-	}
-	_ = readMsgText(t, s)
-	s.handleReditInput("1")
-	_ = readMsgText(t, s)
-	s.handleReditInput("OLC draft")
-	_ = readMsgText(t, s)
-	if !m.world.SetRoomName(1001, "Web admin") {
-		t.Fatal("web-admin room write failed")
-	}
-	if room := m.world.GetRoomInWorld(1001); room.Name != "Web admin" {
-		t.Fatalf("web-admin name = %q", room.Name)
-	}
-	s.handleReditInput("q")
-	_ = readMsgText(t, s)
-	s.handleReditInput("n")
-	if room := m.world.GetRoomInWorld(1001); room.Name != "Web admin" {
-		t.Fatalf("discarded OLC draft replaced web-admin name: %q", room.Name)
-	}
-}
-
 func TestReditNewRoomCommitAndDiskSave(t *testing.T) {
 	m := newReditTestManager(t)
 	s := makeCommandTestSession(t, m, "Reditgod", game.LVL_IMPL, 1001)

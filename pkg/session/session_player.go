@@ -6,17 +6,11 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
-	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"golang.org/x/time/rate"
 )
 
 func (s *Session) GetPlayer() *game.Player {
-	return s.player
-}
-
-// GetPlayerInterface returns the player as interface{} for common.CommandSession
-func (s *Session) GetPlayerInterface() interface{} {
 	return s.player
 }
 
@@ -141,11 +135,6 @@ func (s *Session) SendChannel() <-chan []byte {
 	return s.send
 }
 
-// HandleMessage is the exported version of handleMessage (for telnet/embed).
-func (s *Session) HandleMessage(data []byte) error {
-	return s.handleMessage(data)
-}
-
 // Close closes the session
 func (s *Session) Close() {
 	if s.orderlyTransportDrain() {
@@ -211,16 +200,6 @@ func (s *Session) IsCharCreating() bool {
 // IsMenuActive reports whether the session is waiting at the post-MOTD menu.
 func (s *Session) IsMenuActive() bool {
 	return s.menuActive
-}
-
-// HasDatabase returns whether the session manager has a database connection.
-func (m *Manager) HasDatabase() bool {
-	return m.hasDB
-}
-
-// GetDatabase returns the database instance.
-func (m *Manager) GetDatabase() db.GameStore {
-	return m.db
 }
 
 // RemoteIP extracts the client IP address from request (WS) or directly (Telnet).

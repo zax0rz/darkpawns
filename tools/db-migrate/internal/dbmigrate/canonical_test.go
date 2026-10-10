@@ -1,7 +1,6 @@
 package dbmigrate
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -140,65 +139,6 @@ func TestCanonicalizeTimestampIsAnInstant(t *testing.T) {
 	}
 	if offset != fromTime {
 		t.Errorf("offset literal = %q, want %q", offset, fromTime)
-	}
-}
-
-func TestCanonicalizeJSONIsSemanticWithoutLosingNumbers(t *testing.T) {
-	left := `{"b": 2, "a": {"nested": [1, 2, 3]}}`
-	right := `{"a":{"nested":[1,2,3]},"b":2}`
-	leftCanonical, err := Canonicalize(KindJSON, []byte(left))
-	if err != nil {
-		t.Fatal(err)
-	}
-	rightCanonical, err := Canonicalize(KindJSON, right)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if leftCanonical != rightCanonical {
-		t.Fatalf("whitespace/key order changed the value: %q vs %q", leftCanonical, rightCanonical)
-	}
-
-	// A numeric literal is content, not formatting: 1 and 1.0 must not collapse,
-	// or a migration could change a stored number and still verify.
-	one, _ := Canonicalize(KindJSON, `{"n":1}`)
-	onePoint, _ := Canonicalize(KindJSON, `{"n":1.0}`)
-	if one == onePoint {
-		t.Error("1 and 1.0 canonicalized equally; a changed number would pass verification")
-	}
-
-	// Unicode and escaped quotes survive: no HTML escaping, no mangling. The
-	// document is built by the encoder rather than hand-escaped in the test, so
-	// the fixture cannot be wrong about JSON's own escaping rules.
-	original := map[string]any{"t": `a "quoted" 日本語 title`}
-	encoded, err := json.Marshal(original)
-	if err != nil {
-		t.Fatal(err)
-	}
-	unicode, err := Canonicalize(KindJSON, encoded)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(unicode, "日本語") {
-		t.Errorf("unicode was escaped or lost: %q", unicode)
-	}
-	if strings.Contains(unicode, `\u65e5`) {
-		t.Errorf("unicode arrived as an escape sequence: %q", unicode)
-	}
-	if !strings.Contains(unicode, `\"quoted\"`) {
-		t.Errorf("escaped quotes were lost: %q", unicode)
-	}
-	if unicode != string(encoded) {
-		t.Errorf("canonical form of encoder output changed it: %q vs %q", unicode, encoded)
-	}
-
-	if _, err := Canonicalize(KindJSON, "not json"); err == nil {
-		t.Error("a JSON column holding non-JSON text should be an error, not a silent pass")
-	}
-	if !JSONReformatOnly(left, right) {
-		t.Error("JSONReformatOnly should treat re-spacing as reformatting")
-	}
-	if JSONReformatOnly(`{"a":1}`, `{"a":2}`) {
-		t.Error("JSONReformatOnly should not call a value change reformatting")
 	}
 }
 

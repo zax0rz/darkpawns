@@ -999,45 +999,6 @@ func TestMoveObjectContainerToContainer(t *testing.T) {
 // TestMoveObjectPlayerToMobInventory — transfer from player to mob
 // ---------------------------------------------------------------------------
 
-func TestMoveObjectPlayerToMobInventory(t *testing.T) {
-	w, player := newTestWorld(t)
-
-	mob, _ := w.SpawnMob(2001, 1001)
-	obj, _ := w.SpawnObject(3001, 1001)
-
-	if err := w.MoveObjectToPlayerInventory(obj, player); err != nil {
-		t.Fatalf("MoveObjectToPlayerInventory failed: %v", err)
-	}
-
-	if err := w.MoveObjectToMobInventory(obj, mob); err != nil {
-		t.Fatalf("MoveObjectToMobInventory failed: %v", err)
-	}
-
-	if !obj.Location.IsInInventory() || !obj.Location.OwnerIsMob() {
-		t.Errorf("expected ObjInInventory OwnerMob, got %+v", obj.Location)
-	}
-	if obj.Location.MobID != mob.GetID() {
-		t.Errorf("expected MobID=%d, got %d", mob.GetID(), obj.Location.MobID)
-	}
-
-	for _, it := range player.Inventory.Items {
-		if it == obj {
-			t.Error("item should not be in player inventory after transfer to mob")
-		}
-	}
-
-	found := false
-	for _, it := range mob.Inventory {
-		if it == obj {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("item not found in mob inventory after transfer")
-	}
-}
-
 // ---------------------------------------------------------------------------
 // TestSaveLoadLocationRoundTrip — save/load preserves item location
 // ---------------------------------------------------------------------------

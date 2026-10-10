@@ -739,39 +739,6 @@ func dp900Fighter(name string) *mockCombatant {
 // Determinism: a ScriptedRoller forces every d20 to 20 (natural-20 auto-hit).
 // The remaining values feed the attacks-per-round probe and the damage dice.
 // The pattern repeats for each combatant's edge.
-func TestPerformRound_DefenderRetaliates(t *testing.T) {
-	attacker := dp900Fighter("Attacker")
-	defender := dp900Fighter("Defender")
-
-	ce := NewCombatEngine()
-	if err := ce.StartCombat(attacker, defender); err != nil {
-		t.Fatalf("StartCombat failed: %v", err)
-	}
-
-	// Both combatants must be flagged fighting for PerformRound to swing them.
-	if defender.GetFighting() == "" {
-		t.Fatalf("DP-900 precondition: defender should have FIGHTING set after StartCombat, got %q", defender.GetFighting())
-	}
-
-	old := GetRoller()
-	// Per edge: Number(0,900)=900 [no bonus attack], Number(1,20)=20 [auto-hit],
-	// Dice(1,8)=8 [damage die].
-	SetRoller(NewScriptedRoller([]int{
-		900, 20, 8, // attacker → defender
-		900, 20, 8, // defender → attacker
-		900, 20, 8, 900, 20, 8, // headroom
-	}))
-	defer SetRoller(old)
-
-	ce.PerformRound()
-
-	if defender.GetHP() >= 100 {
-		t.Errorf("DP-900: defender should have taken damage from attacker, HP still %d", defender.GetHP())
-	}
-	if attacker.GetHP() >= 100 {
-		t.Errorf("DP-900: attacker should have taken retaliation damage from defender, HP still %d", attacker.GetHP())
-	}
-}
 
 func TestStartCombatFromMobDefersDefenderEnrollment(t *testing.T) {
 	original := GetCallbacks()

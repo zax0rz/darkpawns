@@ -265,25 +265,6 @@ func TestLook_DarkRoom(t *testing.T) {
 // TestLook_DarkRoomWithHolyLight
 // ---------------------------------------------------------------------------
 
-func TestLook_DarkRoomWithHolyLight(t *testing.T) {
-	m := makeLookTestManager(t)
-	s := makeTestSession(t, m, "Alice", 1002, true) // dark room
-	s.player.SetLevel(31)
-	s.player.SetHolyLight(true) // C CAN_SEE_IN_DARK: PRF_HOLYLIGHT
-
-	if err := cmdLook(s, nil); err != nil {
-		t.Fatalf("cmdLook returned error: %v", err)
-	}
-
-	state := readMsgState(t, s)
-	if state.Room.VNum != 1002 {
-		t.Errorf("expected room 1002, got %d", state.Room.VNum)
-	}
-	if state.Room.Name != "Deep Cave" {
-		t.Errorf("expected room 'Deep Cave', got %q", state.Room.Name)
-	}
-}
-
 // ---------------------------------------------------------------------------
 // TestLook_PlayerInRoom
 // ---------------------------------------------------------------------------

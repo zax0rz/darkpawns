@@ -26,25 +26,6 @@ const (
 // CRIT-006: aiCombatEngine moved to World.combatEngine.
 // SetAICombatEngine is replaced by World.SetCombatEngine.
 
-// AITick runs AI for all active mobs.
-// CRIT-004: uses atomic IsAlive() check — no lock needed for the pre-filter.
-func (w *World) AITick() {
-	w.mu.RLock()
-	mobs := make([]*MobInstance, 0, len(w.activeMobs))
-	for _, mob := range w.activeMobs {
-		mobs = append(mobs, mob)
-	}
-	w.mu.RUnlock()
-
-	for _, mob := range mobs {
-		// CRIT-004: atomic alive check — skip dead mobs without acquiring m.mu
-		if !mob.IsAlive() {
-			continue
-		}
-		w.runMobAI(mob)
-	}
-}
-
 // runMobAI runs AI for a single mob.
 //
 // DP-590: this used to hold mob.mu for the whole AI cycle (CRIT-004), but the

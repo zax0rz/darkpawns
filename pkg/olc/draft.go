@@ -213,20 +213,6 @@ func (s *DraftStore) Patch(owner string, operations []Operation) (Draft, error) 
 	return cloneDraft(draft), nil
 }
 
-// Commit removes and returns the detached effective draft. World mutation is
-// deliberately separate: the caller holds the zone save lock and invokes the
-// shared commit primitive before consuming this value.
-func (s *DraftStore) Commit(owner string) (Draft, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	draft, ok := s.drafts[owner]
-	if !ok {
-		return Draft{}, false
-	}
-	delete(s.drafts, owner)
-	return cloneDraft(draft), true
-}
-
 // CommitWith performs an atomic store-side consume around a caller-supplied
 // world commit. An error leaves the draft available for correction or retry.
 func (s *DraftStore) CommitWith(owner string, commit func(Draft) error) (Draft, error) {

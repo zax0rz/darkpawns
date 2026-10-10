@@ -125,13 +125,6 @@ func (p *Player) GetStrength() int {
 	return p.Stats.Str
 }
 
-// SetStrength sets the player's strength.
-func (p *Player) SetStrength(v int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.Stats.Str = v
-}
-
 func (p *Player) GetRace() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
