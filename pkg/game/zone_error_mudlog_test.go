@@ -86,7 +86,10 @@ func TestZoneErrorMudlogBranches(t *testing.T) {
 				}
 			}}
 			SetLogWriter(file2)
-			if err := s.ExecuteZoneReset(&zone); err != nil {
+			s.world.zoneResetMu.Lock()
+			err := s.executeZoneResetLocked(&zone)
+			s.world.zoneResetMu.Unlock()
+			if err != nil {
 				t.Fatalf("reset failed: %v", err)
 			}
 			SetLogWriter(file)

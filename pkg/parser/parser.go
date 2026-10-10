@@ -30,6 +30,45 @@ type World struct {
 	// Consumers derive sibling lib paths from it (e.g. ../text/help) instead
 	// of relying on the process CWD, which differs under the oracle harness.
 	SourceDir string
+
+	// objsByVnum indexes Objs by VNum for find-by-vnum lookups. It is built
+	// once by ParseWorld and rebuilt by RebuildObjIndex wherever Objs is
+	// reassigned or reallocated (an append can move the backing array, which
+	// invalidates every pointer in the map). First occurrence wins, matching
+	// the first-match break of the linear scans it replaces. Mutation of the
+	// slice or the index must follow the same locking the mutating caller
+	// already holds (game.World.mu for OLC edits).
+	objsByVnum map[int]*Obj
+}
+
+// RebuildObjIndex rebuilds the VNum index over Objs. Call it after Objs is
+// assigned or appended to; element-wise replacement through ObjByVnum pointers
+// needs no rebuild. First occurrence wins, matching a first-match linear scan.
+func (w *World) RebuildObjIndex() {
+	index := make(map[int]*Obj, len(w.Objs))
+	for i := range w.Objs {
+		if _, exists := index[w.Objs[i].VNum]; !exists {
+			index[w.Objs[i].VNum] = &w.Objs[i]
+		}
+	}
+	w.objsByVnum = index
+}
+
+// ObjByVnum returns the object prototype for vnum — the same *Obj pointer into
+// the Objs backing array a first-match linear scan returns. Worlds that were
+// never built by ParseWorld (hand-built test fixtures) have no index and fall
+// back to scanning, which is read-only and therefore race-free.
+func (w *World) ObjByVnum(vnum int) (*Obj, bool) {
+	if w.objsByVnum != nil {
+		obj, ok := w.objsByVnum[vnum]
+		return obj, ok
+	}
+	for i := range w.Objs {
+		if w.Objs[i].VNum == vnum {
+			return &w.Objs[i], true
+		}
+	}
+	return nil, false
 }
 
 // Stats returns statistics about the parsed world.
@@ -68,6 +107,7 @@ func ParseWorld(libDir string) (*World, error) {
 		return nil, fmt.Errorf("parse objects: %w", err)
 	}
 	world.Objs = objs
+	world.RebuildObjIndex()
 
 	// Parse zones
 	zones, err := ParseAllZonFiles(libDir + "/zon")
