@@ -66,6 +66,26 @@ func clearRawKillNightbreed(p *Player) {
 	}
 }
 
+// unmountRawKillBody ports src/fight.c:562-565 before memory cleanup and
+// death_cry. MountRider retains Go's rider identity independently of following.
+func (w *World) unmountRawKillBody(body combat.Combatant) {
+	switch victim := body.(type) {
+	case *Player:
+		mount := w.riddenMount(victim)
+		w.clearMountedPair(victim, mount)
+		if mount != nil {
+			mount.RemoveAffected(affMounted)
+		}
+	case *MobInstance:
+		rider, _ := w.combatFollowingBody(victim).(*Player)
+		if rider == nil {
+			rider, _ = w.GetPlayer(victim.GetMountRider())
+		}
+		w.clearMountedPair(rider, victim)
+		victim.RemoveAffected(affMounted)
+	}
+}
+
 // C: src/fight.c:566-572. Memory is gated by MOB_MEMORY; hunting is not.
 func (w *World) forgetRawKillVictim(name string) {
 	for _, mob := range w.GetAllMobs() {

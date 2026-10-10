@@ -172,9 +172,7 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	if player.IsAffected(affWerewolf) {
 		player.SetAffect(affWerewolf, false)
 	}
-	if player.IsMounted() {
-		player.Unmount()
-	}
+	w.unmountRawKillBody(player)
 
 	w.deathCry(player)
 
@@ -374,6 +372,7 @@ func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
 // handleMobDeath implements the normal NPC death path.
 // Original: make_corpse (transfers inventory+equipment+gold), extract_char.
 func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant, attackType int) {
+	w.unmountRawKillBody(victim)
 	// raw_kill cries while the victim is still in the room, then silently
 	// builds the corpse (src/fight.c:573-578, 258-427; R1/R4).
 	combat.DeathCry(victim)
@@ -522,10 +521,7 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 					m.SetMana(m.GetMaxMana())
 				}
 			}
-			if rider, ok := w.GetPlayer(m.GetMountRider()); ok {
-				w.clearMountedPair(rider, m)
-				m.RemoveAffected(affMounted)
-			}
+			w.unmountRawKillBody(m)
 			w.forgetRawKillVictim(m.GetName())
 		}
 		w.handleMobDeath(victim, nil, attackType)
@@ -659,7 +655,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		}
 	}
 
-	combat.DeathCry(player) // src/fight.c:573, before make_corpse
+	w.unmountRawKillBody(player) // src/fight.c:562-565
+	combat.DeathCry(player)      // src/fight.c:573, before make_corpse
 
 	// Inventory & Equipment — still needs manual lock (no getters for Inventory/Equipment)
 	var inventoryItems []*ObjectInstance
