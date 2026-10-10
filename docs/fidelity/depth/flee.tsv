@@ -1,7 +1,7 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_flee	flee	flee.position-gate	D1	command	oracle-green	flee-position-gate	act.offensive.c:374-378	Position below POS_FIGHTING rejects before RNG.
-do_flee	flee	flee.six-invalid-attempts	D2	command	oracle-green	flee-no-exits	act.offensive.c:394-415	Six failed CAN_GO samples reach terminal PANIC.
-do_flee	flee	flee.death-exit-rejected	D2	command	oracle-green-multiseed	flee-death-exit@1,2,3,5,8	act.offensive.c:395-396	All six fixture exits lead to ROOM_DEATH and are rejected.
+do_flee	flee	flee.six-invalid-attempts	D2	command	oracle-green	flee-no-exits	act.offensive.c:392-415	C PANIC witness reproduced. Compiling fixture control adds six safe exits and produces movement, invalidating the original assertion; restored fixture returns to PANIC. Control evidence: 2026-10-09-luna-flee-no-exits-control (R1/R5e/R5h).
+do_flee	flee	flee.death-exit-rejected	D2	command	oracle-green-multiseed	flee-death-exit@1,2,3,5,8	act.offensive.c:392-415	C PANIC witness retained at seeds 1,2,3,5,8. Compiling fixture control clears ROOM_DEATH and produces movement, invalidating the original assertion; restored fixture returns to PANIC. Control evidence: 2026-10-09-luna-flee-death-exit-control (R1/R5e/R5h).
 do_flee	flee	flee.success-actor	D2	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.offensive.c:398-403	Destination look and self success bytes.
 do_flee	flee	flee.success-origin-audience	D3	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.offensive.c:397-398	Panic plus ordinary direction leave bytes.
 do_flee	flee	flee.success-destination-audience	D3	command	oracle-green-multiseed	flee-audience-success@1,2,3,5,8	act.movement.c:231-273	Ordinary reverse-direction arrival bytes expose the selected RNG direction.
