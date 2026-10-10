@@ -1,0 +1,13 @@
+func	file:line	has_live_twin(file:line or -)	notes
+RunProbe	internal/oraclediff/scenario.go:1047:6	-	Dead probe entry inside the otherwise-live oraclediff package (cmd/dp-oracle-diff imports its fixture types). Also filed in uncalled.tsv.
+Number	pkg/common/random.go:7:6	pkg/dprng (dprng.Number)	Dead thin alias over the live RNG seam; unreachable, so it draws nothing today. If ever wired, R3 draw-order review required.
+IsContainerClosed	pkg/game/item_helpers.go:254:6	-	Zero callers incl. tests (also in uncalled.tsv).
+DoScan	pkg/game/skill_advanced.go:405:6	-	Game-layer twin of the unwired scan command family already ruled class (b)/(c) for command.CmdScan (2026-10-09 doc: C's interpreter.c has no "scan"). Same ruling should cover this sibling; deadcode's -test run newly surfaced it.
+EntityDraftStore.Commit	pkg/olc/entity_draft.go:176:28	pkg/olc/entity_draft.go:188 (CommitWith)	Live OLC commits go through DraftStore.CommitWith (pkg/olc/draft.go:148, pkg/admin/olc_write.go:197). Commit is the unwired direct door.
+matchKeyword	pkg/scripting/engine.go:197:6	pkg/game/live_strings.go:116 (IsNameWithAbbrevs)	Marked "//nolint:unused // Reserved for inworld() mob search when implemented" - deliberately reserved dead code mirroring C isname_with_abbrevs. Keep-or-delete is a ruling, not an oversight.
+webEquivalenceOwner.DisplayName	pkg/session/olc_web_telnet_equivalence_test.go:1135:31	-	Test-file stub reported unreachable even with -test: no test calls it. Test-shape cleanup.
+webEquivalenceOwner.Frontend	pkg/session/olc_web_telnet_equivalence_test.go:1136:31	-	See DisplayName.
+NewMockDiceRoller	pkg/testutil/helpers.go:35:6	-	Zero callers incl. tests. The used siblings are NewTestWorld (14 refs) and NewMockDatabase (15 refs).
+MockDiceRoller.Roll	pkg/testutil/helpers.go:40:27	-	Only reachable via NewMockDiceRoller, which is itself dead.
+NewTestPlayer	pkg/testutil/helpers.go:52:6	-	1 test ref in the caller census yet deadcode -test flags it as unreachable - the referring test is itself not part of any reachable test binary path. Verify before deleting.
+GetPlayerNameFromContext	web/auth.go:46:6	-	AuthMiddleware writes ContextKeyPlayerName into the request context (web/auth.go:39) but this helper is its only reader and has zero callers; handlers authenticate via pkg/auth claims instead. The context write is currently write-only plumbing.
