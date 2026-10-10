@@ -6,7 +6,12 @@ import (
 )
 
 var (
-	playerSavedDates = regexp.MustCompile(`^(Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
+	// C prints "%sStarted: ..." (src/act.wizard.c:2344): the %s carries
+	// whatever precedes the line — a color code on colored surfaces, an
+	// indent — so the anchor admits ANSI escapes and whitespace before the
+	// label but no other text, keeping ordinary prose that merely contains
+	// "Started:" unnormalized.
+	playerSavedDates = regexp.MustCompile(`^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
 	ansiEscape       = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
 	wallClock        = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
 	vitalsPrompt     = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
