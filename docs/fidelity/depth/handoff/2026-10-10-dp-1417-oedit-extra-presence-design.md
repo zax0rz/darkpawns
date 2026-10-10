@@ -1,6 +1,9 @@
 # DP-1417 design: oedit extra-description presence (loaded-NULL vs editor-emptied)
 
-**Status: DESIGN ONLY — awaiting Claude's review. No Go code in this PR.**
+**Status: approved (Claude, with Zach's ruling) and implemented on this branch.**
+Approved as written: Option A; the presence flags are `json:"-"` (no
+save-format change); the §5 look fix is in scope. See the port handoff
+`2026-10-10-dp-1417-oedit-extra-presence.md`.
 Base `origin/main` `e985ab07a`. Tier: stop (OLC persistence). Zach merges.
 Author: DeepSeek. Order per `~/BRIEF-2026-10-09-mudlog-finish-deepseek.md`
 (DP-1417 → DP-1415 → PR 4 → the `mudlog.unported-sites` flip → DP-1419).
@@ -262,6 +265,13 @@ Options for review:
 Recommendation: option 1. Either way this is the item that needs Zach's
 explicit nod, because it touches the saved-object schema.
 
+**Ruling (Zach, DP-1417 review): option 2 — `json:"-"`.** There is no
+save-format change. Presence is derived from empty text wherever an extra
+description is reconstructed from stored data (the `fread_string` load rule),
+and never has to survive a player save, because C's `objsave.c` stores no extra
+descriptions. Implemented; `TestExtraDescPresenceNeverChangesSaveBytes` proves a
+pre-existing payload round-trips byte for byte.
+
 ## 8. Proof plan (R5h — each piece must be able to fail)
 
 Unit (real dispatch, real parser, real writer; an independent BRF syslog
@@ -324,3 +334,8 @@ way.
 
 Nothing is coded until 1–3 are answered. No gates and no census were run for
 this docs-only commit (a census was running in another agent's slot).
+
+**Resolved (Claude, with Zach's ruling, 2026-10-10):** (1) Option A approved;
+(2) `json:"-"` — no save-format change, derive presence from empty text on load;
+(3) the look fix is in scope, and `src/modify.c:718` was checked (the fifth
+`find_exdesc` caller — see the port handoff). Implemented on this branch.
