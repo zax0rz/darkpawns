@@ -64,13 +64,11 @@ func (w *World) houseLoad(vnum int) bool {
 
 	for i := range saveData.Items {
 		item := &saveData.Items[i]
-		// Look up object prototype by vnum
+		// Look up object prototype by vnum (parse-time VNum index; same
+		// first-match pointer the per-item scan returned)
 		var proto *parser.Obj
-		for i := range w.GetParsedWorld().Objs {
-			if w.GetParsedWorld().Objs[i].VNum == item.VNum {
-				proto = &w.GetParsedWorld().Objs[i]
-				break
-			}
+		if parsed := w.GetParsedWorld(); parsed != nil {
+			proto, _ = parsed.ObjByVnum(item.VNum)
 		}
 		obj := ObjFromStore(item, func(vnum int) (*parser.Obj, bool) {
 			if proto != nil && proto.VNum == vnum {

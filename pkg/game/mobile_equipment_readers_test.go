@@ -24,7 +24,10 @@ func zoneArmedMob(t *testing.T) (*World, *MobInstance, *Player) {
 	}
 	t.Cleanup(w.StopAITicker)
 	s := NewSpawner(w)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100}, {Command: "E", Arg1: 200, Arg2: 1, Arg3: 16}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err = s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 1, Arg3: 100}, {Command: "E", Arg1: 200, Arg2: 1, Arg3: 16}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	p := NewPlayer(1, "Tester", 100)
@@ -96,7 +99,10 @@ func TestMobileEquipmentReaderDisarm(t *testing.T) {
 func TestMobileEquipmentReaderArmor(t *testing.T) {
 	w, m, _ := zoneArmedMob(t)
 	s := NewSpawner(w)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100}, {Command: "E", Arg1: 201, Arg2: 1, Arg3: 5}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100}, {Command: "E", Arg1: 201, Arg2: 1, Arg3: 5}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	for _, mob := range w.GetMobsInRoom(100) {
@@ -109,7 +115,10 @@ func TestMobileEquipmentReaderArmor(t *testing.T) {
 func TestMobileEquipmentReaderLight(t *testing.T) {
 	w, _, _ := zoneArmedMob(t)
 	s := NewSpawner(w)
-	if err := s.ExecuteZoneReset(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100}, {Command: "E", Arg1: 202, Arg2: 1, Arg3: 17}}}); err != nil {
+	s.world.zoneResetMu.Lock()
+	err := s.executeZoneResetLocked(&parser.Zone{Commands: []parser.ZoneCommand{{Command: "M", Arg1: 300, Arg2: 2, Arg3: 100}, {Command: "E", Arg1: 202, Arg2: 1, Arg3: 17}}})
+	s.world.zoneResetMu.Unlock()
+	if err != nil {
 		t.Fatal(err)
 	}
 	r, _ := w.GetRoom(100)
