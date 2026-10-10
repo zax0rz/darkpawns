@@ -70,6 +70,7 @@ func TestInfobarUnknownStateResetsToOff(t *testing.T) {
 func TestInfobarUpdateUsesCLayoutAndBitOrder(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeCommandTestSession(t, m, "Infobarupdate", game.LVL_IMMORT, 1001)
+	s.player.SetPlrFlag(game.PrfColor2, true)
 	s.screenSize = 25
 	s.player.Health, s.player.MaxHealth = 100, 100
 	s.player.Mana, s.player.MaxMana = 100, 100
@@ -121,5 +122,73 @@ func TestInfobarUpdateUsesCLayoutAndBitOrder(t *testing.T) {
 	}
 	if _, ok := drainSend(s); ok {
 		t.Fatal("unchanged values emitted a second infobar update")
+	}
+}
+
+// Exercise the real ON and repaint paths, not an isolated color formatter.
+func TestInfobarColorLevels(t *testing.T) {
+	for level := 0; level < 4; level++ {
+		t.Run(fmt.Sprint(level), func(t *testing.T) {
+			m := makeTestManager(t)
+			s := makeCommandTestSession(t, m, "Infobarcolor", game.LVL_IMMORT, 1001)
+			s.player.SetPlrFlag(game.PrfColor1, level&1 != 0)
+			s.player.SetPlrFlag(game.PrfColor2, level&2 != 0)
+			s.screenSize = 25
+			s.infobarMode = InfobarOn
+			s.player.Health, s.player.MaxHealth = 100, 100
+			s.player.Mana, s.player.MaxMana = 50, 100
+			s.player.Move, s.player.MaxMove = 10, 100
+			s.player.Exp, s.player.Gold = 1000, 10
+			color := func(ansi string) string {
+				if level >= 2 {
+					return ansi
+				}
+				return ""
+			}
+			check := func(got string, hp, mana, move, exp, gold int, hpColor, manaColor, moveColor string) {
+				t.Helper()
+				for _, field := range []struct {
+					row, col, count int
+					ansi            string
+				}{
+					{22, 10, hp, hpColor}, {22, 36, mana, manaColor}, {22, 63, move, moveColor},
+				} {
+					want := fmt.Sprintf("\x1b[%d;%dH%s%d%s(%s100%s)", field.row, field.col, color(field.ansi), field.count, color("\x1b[0m"), color("\x1b[32m"), color("\x1b[0m"))
+					if !strings.Contains(got, want) {
+						t.Fatalf("resource missing %q in %q", want, got)
+					}
+				}
+				for _, field := range []struct {
+					col, count int
+					ansi       string
+				}{{6, exp, "\x1b[34m"}, {7, gold, "\x1b[35m"}} {
+					row := 23
+					if field.col == 7 {
+						row = 24
+					}
+					want := fmt.Sprintf("\x1b[%d;%dH%s%d%s", row, field.col, color(field.ansi), field.count, color("\x1b[0m"))
+					if !strings.Contains(got, want) {
+						t.Fatalf("field missing %q in %q", want, got)
+					}
+				}
+				if level < 2 {
+					for _, ansi := range []string{"\x1b[0m", "\x1b[31m", "\x1b[32m", "\x1b[33m", "\x1b[34m", "\x1b[35m"} {
+						if strings.Contains(got, ansi) {
+							t.Fatalf("unexpected color %q in %q", ansi, got)
+						}
+					}
+				}
+			}
+			cmdInfoBarOn(s)
+			check(readRawInfobarEvent(t, s), 100, 50, 10, 1000, 10, "\x1b[32m", "\x1b[33m", "\x1b[31m")
+			s.player.Health, s.player.Mana, s.player.Move = 50, 10, 100
+			s.player.Exp, s.player.Gold = 2000, 20
+			cmdInfoBarUpdate(s)
+			got := readRawInfobarEvent(t, s)
+			// Repaint clears fields before writing the same gated value bytes.
+			got = strings.ReplaceAll(got, "          ", "")
+			got = strings.ReplaceAll(got, "        ", "")
+			check(got, 50, 10, 100, 2000, 20, "\x1b[33m", "\x1b[31m", "\x1b[32m")
+		})
 	}
 }
