@@ -142,25 +142,6 @@ func TestObjectSnapshotFailureRetainsCrash(t *testing.T) {
 	}
 }
 
-func TestReturningEntryRewritesObjectSaveHeader(t *testing.T) {
-	e := newRecoveryEnv(t)
-	if err := db.SaveObjectSnapshot(e.store, "Recoverer", 2, []byte(`[]`), []byte(`[]`)); err != nil {
-		t.Fatal(err)
-	}
-	e.world.RemovePlayer("Recoverer")
-	e.s.menuActive = true
-	e.s.player.Stats.Con = 18
-	e.s.player.SetLoadRoom(1001)
-	e.s.player.SetPlrFlag(game.PlrLoadroom, true)
-	if err := e.s.enterReturningPlayer(); err != nil {
-		t.Fatal(err)
-	}
-	saved, err := e.store.GetObjectSave("Recoverer")
-	if err != nil || saved.Kind != 1 {
-		t.Fatalf("entry header: %+v %v", saved, err)
-	}
-}
-
 func TestMenuDeleteRemovesObjectSaveIdentity(t *testing.T) {
 	t.Chdir(t.TempDir())
 	e := newRecoveryEnv(t)

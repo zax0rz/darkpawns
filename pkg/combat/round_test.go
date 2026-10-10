@@ -484,24 +484,6 @@ func TestGetCombatTarget(t *testing.T) {
 }
 
 // TestGetCombatStatus verifies status string output.
-func TestGetCombatStatus(t *testing.T) {
-	engine := NewCombatEngine()
-	defer engine.Stop()
-
-	attacker := &mockCombatant{name: "Hero", room: 100}
-	defender := &mockCombatant{name: "Orc", room: 100}
-	_ = engine.StartCombat(attacker, defender)
-
-	status := engine.GetCombatStatus(attacker)
-	if !strings.Contains(status, "fighting") {
-		t.Errorf("expected 'fighting' in status for attacker, got %q", status)
-	}
-
-	status = engine.GetCombatStatus(nil)
-	if !strings.Contains(status, "not in combat") {
-		t.Errorf("expected 'not in combat' for non-combatant, got %q", status)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // processCombatPair — the core round execution

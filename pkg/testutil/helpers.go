@@ -6,60 +6,12 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
-
-// AssertBehaviorMatchesC compares the output of a Go routine against expected C source behavior.
-// If they do not match, it triggers a descriptive test failure.
-func AssertBehaviorMatchesC(t *testing.T, description string, goFunc func() string, cExpected string) {
-	t.Helper()
-	goActual := goFunc()
-	if goActual != cExpected {
-		t.Errorf("FIDELITY MISMATCH [%s]:\n  Go actual:   %q\n  C expected:  %q", description, goActual, cExpected)
-	}
-}
-
-// MockDiceRoller provides a way to mock dice-rolling outcomes deterministically.
-type MockDiceRoller struct {
-	mu     sync.Mutex
-	preset []int
-	index  int
-}
-
-// NewMockDiceRoller creates a MockDiceRoller with optional preset roll sequences.
-func NewMockDiceRoller(preset []int) *MockDiceRoller {
-	return &MockDiceRoller{preset: preset}
-}
-
-// Roll returns the next deterministic roll, or falls back to a neutral 10 if depleted.
-func (md *MockDiceRoller) Roll(dice, sides int) int {
-	md.mu.Lock()
-	defer md.mu.Unlock()
-	if md.index < len(md.preset) {
-		val := md.preset[md.index]
-		md.index++
-		return val
-	}
-	return dice * (sides / 2) // reasonable average fallback
-}
-
-// NewTestPlayer constructs a fully populated character player for test runs.
-func NewTestPlayer(name string, class, race int) *game.Player {
-	p := game.NewCharacter(0, name, class, race)
-	p.Health = 100
-	p.MaxHealth = 100
-	p.Mana = 20
-	p.MaxMana = 20
-	p.Move = 100
-	p.MaxMove = 100
-	p.Level = 1
-	return p
-}
 
 // NewTestWorld builds a minimal in-memory world containing essential starting rooms.
 func NewTestWorld() *game.World {

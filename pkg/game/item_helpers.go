@@ -250,11 +250,6 @@ func contIsClosed(obj *ObjectInstance) bool {
 	return obj != nil && obj.GetValue(contFlags)&contClosed != 0
 }
 
-// IsContainerClosed is the exported version of contIsClosed for session layer use.
-func IsContainerClosed(obj *ObjectInstance) bool {
-	return contIsClosed(obj)
-}
-
 // wearBitForPosition returns the wear flag bit for a given eq position
 func wearBitForPosition(where int) int {
 	switch where {

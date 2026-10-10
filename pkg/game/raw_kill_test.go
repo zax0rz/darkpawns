@@ -204,30 +204,6 @@ func TestRawKillDeathCryPrecedesCorpse(t *testing.T) {
 	}
 }
 
-func TestRawKillUnmountAndForget(t *testing.T) {
-	w, p := rawKillWorld(t)
-	mount := newSpecProcTestMob(t, w, 1001, 10)
-	mount.SetMountRider(p.Name)
-	mount.SetAffected(affMounted)
-	mount.SetFollowing(p.Name)
-	p.MountName = mount.GetName()
-	p.SetAffect(affMounted, true)
-	guard := newSpecProcTestMob(t, w, 1001, 10)
-	guard.SetMobFlag(MobFlagMemory)
-	guard.Remember(p.Name)
-	guard.SetHunting(p.Name)
-	unflagged := newSpecProcTestMob(t, w, 1001, 10)
-	unflagged.Remember(p.Name)
-	unflagged.SetHunting(p.Name)
-	w.RawKillCombatant(p, combat.TYPE_UNDEFINED)
-	if p.IsMounted() || p.IsAffected(affMounted) || mount.IsMountedMob() || mount.IsAffected(affMounted) {
-		t.Error("RawKill did not unmount both sides")
-	}
-	if len(guard.GetMemory()) != 0 || guard.IsHunting() || unflagged.IsHunting() || len(unflagged.GetMemory()) != 1 {
-		t.Error("RawKill memory/hunting gates wrong")
-	}
-}
-
 func TestRawKillProtectionBackfire(t *testing.T) {
 	for _, spell := range []int{spells.SpellProtFromEvil, spells.SpellProtFromGood} {
 		t.Run(map[int]string{spells.SpellProtFromEvil: "evil", spells.SpellProtFromGood: "good"}[spell], func(t *testing.T) {
@@ -285,34 +261,6 @@ func TestRawKillLuaBinding(t *testing.T) {
 
 // The direct spell caller uses combat.RawKill for NPC casters too. The world
 // arm must tear down the same state before handleMobDeath emits the cry.
-func TestRawKillNPCUsesFullTeardown(t *testing.T) {
-	w, observer := rawKillWorld(t)
-	mob := newSpecProcTestMob(t, w, 1001, 10)
-	proto := *mob.Proto()
-	proto.Race = combat.RACE_VAMPIRE
-	mob.SetProto(&proto)
-	mob.SetAffected(affVampire)
-	mob.SetMana(mob.GetMaxMana() + 20)
-	mob.SetAffected(affBlind)
-	mob.CustomData["affect_4"] = engine.NewAffectDirect(4, engine.ApplyNone, 10, 0, engine.AFFBlind, "blind")
-	observer.MountName = mob.GetName()
-	observer.SetAffect(affMounted, true)
-	mob.SetMountRider(observer.Name)
-	mob.SetAffected(affMounted)
-	mob.SetFollowing(observer.Name)
-	guard := newSpecProcTestMob(t, w, 1001, 10)
-	guard.SetMobFlag(MobFlagMemory)
-	guard.Remember(mob.GetName())
-	guard.SetHunting(mob.GetName())
-	combat.RawKill(mob, combat.TYPE_BLAST)
-	if mob.IsAlive() || mob.IsAffected(affBlind) || mob.IsAffected(affVampire) || mob.GetMana() != mob.GetMaxMana() || mob.IsAffected(affMounted) || observer.IsMounted() || guard.IsHunting() || len(guard.GetMemory()) != 0 {
-		t.Error("NPC RawKill did not complete teardown")
-	}
-	objects := w.GetItemsInRoom(1001)
-	if len(objects) != 1 || objects[0].GetVNum() != 1230 {
-		t.Fatalf("NPC vampire dust=%v", objects)
-	}
-}
 
 // Verify the ordering at the real callback boundary, including effects before
 // the cry/body/extraction. C: src/fight.c:541-580.

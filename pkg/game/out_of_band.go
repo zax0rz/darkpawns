@@ -141,13 +141,6 @@ func (w *World) channelSend(channel string, ch *Player, message string) {
 	w.channelAct(channel, false, ch, nil, strings.TrimSuffix(message, "\r\n"), ToChar|ToSleep)
 }
 
-// MirrorChannelLine reports a channel line that was delivered by a direct
-// SendMessage rather than through Act (group tell, which the session layer
-// renders).
-func (w *World) MirrorChannelLine(p *Player, channel, talker, line string) {
-	w.mirrorChannelLine(p, channel, talker, line)
-}
-
 // mirrorChannelLine reports a channel line that was delivered by a direct
 // SendMessage rather than through Act (NPC gossip, clan tell).
 func (w *World) mirrorChannelLine(p *Player, channel, talker, line string) {

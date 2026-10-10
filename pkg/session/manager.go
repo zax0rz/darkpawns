@@ -245,11 +245,6 @@ func (m *Manager) SetModerationChecker(mc ModerationChecker) {
 	m.modChecker = mc
 }
 
-// GetModerationChecker returns the current moderation checker.
-func (m *Manager) GetModerationChecker() ModerationChecker {
-	return m.modChecker
-}
-
 // NewManager creates a new session manager.
 func NewManager(world *game.World, database db.GameStore) *Manager {
 	ce := combat.NewCombatEngine()
@@ -2227,34 +2222,6 @@ func (m *Manager) GetOLCClaims() []olc.ClaimEntry {
 // the admin read surface.
 func (m *Manager) GetOLCDirtyZones() []olc.DirtyEntry {
 	return olcSaveList.List()
-}
-
-// SetWantsStructuredData sets whether this session receives structured updates.
-func (s *Session) SetWantsStructuredData(val bool) {
-	s.agentMu.Lock()
-	alreadySet := s.wantsStructuredData
-	s.wantsStructuredData = val
-	if val && !alreadySet {
-		// Automatically subscribe to all standard variables for structured clients
-		for _, v := range AllVariables {
-			if v != VarEvents {
-				s.subscribedVars[v] = true
-			}
-		}
-	}
-	s.agentMu.Unlock()
-
-	// Send initial dump if newly enabled and the session is authenticated
-	if val && !alreadySet && s.IsAuthenticated() {
-		s.sendFullVarDump()
-	}
-}
-
-// WantsStructuredData returns whether this session receives structured updates.
-func (s *Session) WantsStructuredData() bool {
-	s.agentMu.Lock()
-	defer s.agentMu.Unlock()
-	return s.wantsStructuredData
 }
 
 // ShutdownGracefully drains and shuts down all active sessions gracefully.

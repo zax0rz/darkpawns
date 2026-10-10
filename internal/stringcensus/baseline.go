@@ -41,20 +41,6 @@ const (
 	ReasonDivergenceApproved = "divergence:approved"
 )
 
-// Reasons lists the vocabulary for validation.
-func Reasons() []string {
-	return []string{
-		Unreviewed,
-		ReasonBugInvented,
-		ReasonBugParaphrase,
-		ReasonCensusComposed,
-		ReasonData,
-		ReasonSurfaceNoC,
-		ReasonUnsure,
-		ReasonDivergenceApproved,
-	}
-}
-
 // Baseline is the ratchet's key set.
 type Baseline struct {
 	Description string                   `json:"description"`

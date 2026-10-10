@@ -173,18 +173,6 @@ func (s *EntityDraftStore) Patch(owner string, operations []Operation) (EntityDr
 	return cloneEntityDraft(draft), nil
 }
 
-func (s *EntityDraftStore) Commit(owner string) (EntityDraft, bool) {
-	var committed EntityDraft
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	committed, ok := s.drafts[owner]
-	if !ok {
-		return EntityDraft{}, false
-	}
-	delete(s.drafts, owner)
-	return cloneEntityDraft(committed), true
-}
-
 func (s *EntityDraftStore) CommitWith(owner string, commit func(EntityDraft) error) (EntityDraft, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

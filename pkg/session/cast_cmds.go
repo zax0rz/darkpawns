@@ -199,10 +199,6 @@ func parseCastArgumentsForPower(args []string, power bool) (spellName, targetNam
 	return strings.TrimSpace(remaining[:closing]), targetName, ""
 }
 
-func resolveCastTarget(s *Session, info *spells.SpellInfo, targetName string) (castTarget, string) {
-	return resolveCastTargetForCommand(s, info, targetName, false)
-}
-
 func resolveCastTargetForCommand(s *Session, info *spells.SpellInfo, targetName string, power bool) (castTarget, string) {
 	if info.HasTarget(spells.TarIgnore) {
 		return castTarget{found: true}, ""

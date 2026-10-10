@@ -234,36 +234,6 @@ func (w *World) DieFollower(ch *Player) {
 	}
 }
 
-// DieFollowerMob cleans up follower relations when a mob dies.
-// C: src/utils.c:447-457
-func (w *World) DieFollowerMob(mob *MobInstance) {
-	// If mob is following someone, stop following.
-	if mob.GetFollowing() != "" {
-		StopFollowerMob(w, mob)
-	}
-
-	// If mob is being ridden, dismount the rider.
-	riderName := mob.GetMountRider()
-	if riderName != "" {
-		if rider, ok := w.GetPlayer(riderName); ok {
-			rider.MountName = ""
-		}
-		mob.SetMountRider("")
-	}
-
-	// Retained leader references distinguish same-description NPC leaders.
-	for _, p := range w.GetAllPlayers() {
-		if w.combatFollowingBody(p) == mob {
-			StopFollower(w, p)
-		}
-	}
-	for _, follower := range w.GetAllMobs() {
-		if w.combatFollowingBody(follower) == mob {
-			StopFollowerMob(w, follower)
-		}
-	}
-}
-
 // --------------------------------------------------------------------------
 // Mount/rider helpers
 // --------------------------------------------------------------------------

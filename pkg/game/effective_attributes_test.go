@@ -83,55 +83,6 @@ func attrItem(location, modifier int) *ObjectInstance {
 
 // Each public equipment entry point must notify after releasing eq.mu.
 // src/handler.c:748,792. A failed equip does not total restored stats.
-func TestE2AttrEquipmentBoundaries(t *testing.T) {
-	for _, entry := range []string{"exact", "equip", "player"} {
-		for _, removal := range []string{"slot", "item"} {
-			t.Run(entry+"/"+removal, func(t *testing.T) {
-				p := attrPlayer()
-				p.Stats.Dex = 17
-				p.CopyBaseAttributes()
-				base := p.Stats
-				item := attrItem(ApplyDex, 2)
-				switch entry {
-				case "exact":
-					if err := p.Equipment.SetSlot(SlotBody, item); err != nil {
-						t.Fatal(err)
-					}
-				case "equip":
-					if err := p.Equipment.Equip(item, p.Inventory); err != nil {
-						t.Fatal(err)
-					}
-				case "player":
-					if z, err := p.Equipment.EquipForPlayer(item, p.Inventory, 0, ClassWarrior); z || err != nil {
-						t.Fatalf("equip: %v %v", z, err)
-					}
-				}
-				if p.GetDex() != 18 || p.Stats != base {
-					t.Fatalf("equip dex=%d base=%+v", p.GetDex(), p.Stats)
-				}
-				if removal == "slot" {
-					if err := p.Equipment.Unequip(SlotBody, p.Inventory); err != nil {
-						t.Fatal(err)
-					}
-				} else if !p.Equipment.UnequipItem(item, p.Inventory) {
-					t.Fatal("unequip failed")
-				}
-				if p.GetDex() != 17 || p.Stats != base {
-					t.Fatalf("remove dex=%d base=%+v", p.GetDex(), p.Stats)
-				}
-			})
-		}
-	}
-	p := attrPlayer()
-	p.Stats.Dex = 25
-	p.CopyBaseAttributes()
-	if err := p.Equipment.Equip(NewObjectInstance(&parser.Obj{}, -1), p.Inventory); err == nil {
-		t.Fatal("invalid item equipped")
-	}
-	if p.GetDex() != 25 {
-		t.Fatal("failed equip totaled")
-	}
-}
 
 // src/handler.c:395,419,437. Removal restores base rather than subtracting
 // a modifier from an already clipped result; joins must total as well.

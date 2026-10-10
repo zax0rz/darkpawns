@@ -338,12 +338,6 @@ func (s *Session) OnInboundActivity() {
 	s.lastActive.Store(time.Now().UnixNano())
 }
 
-// SetLastActiveForTest allows tests in other packages to manipulate the
-// lastActive timestamp without exporting the field.
-func (s *Session) SetLastActiveForTest(ts int64) {
-	s.lastActive.Store(ts)
-}
-
 // resetIdleOnCommand mirrors comm.c:600-608: a command line dequeued for
 // dispatch resets the character's idle timer and returns a voided character
 // to their previous room BEFORE routing/dispatch. This is the shared

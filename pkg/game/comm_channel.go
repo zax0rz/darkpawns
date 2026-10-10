@@ -30,12 +30,6 @@ const (
 	colorComplete = 3 // C_CMP
 )
 
-// doShout keeps special-procedure callers on the canonical channel path.
-func (w *World) doShout(ch *Player, me *MobInstance, arg string) bool {
-	w.DoChannel(ch, arg, "shout")
-	return true
-}
-
 type channelSpec struct {
 	verb             string
 	blocked          string
@@ -268,36 +262,6 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 		w.mirrorChannelLine(player, "gossip", mobName(me), line)
 	}
 	w.updateGossipHistory(mobName(me), argument, 0)
-}
-
-// doQcomm -- port of do_qcomm() (team/quiz communication).
-func (w *World) doQcomm(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	arg = skipSpaces(arg)
-	if arg == "" {
-		ch.SendMessage("What do you want to say?\r\n")
-		return true
-	}
-
-	msg := fmt.Sprintf("%s says, '%s'\r\n", ch.Name, arg)
-	for _, p := range w.GetPlayersInRoom(ch.GetRoom()) {
-		if p.Name != ch.Name {
-			p.SendMessage(msg)
-		}
-	}
-	ch.SendMessage(fmt.Sprintf("You say, '%s'\r\n", arg))
-	return true
-}
-
-// doThink -- port of do_think().
-func (w *World) doThink(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	arg = skipSpaces(arg)
-	if arg == "" {
-		ch.SendMessage("What do you want to think?\r\n")
-		return true
-	}
-
-	ch.SendMessage(fmt.Sprintf("You think: '%s'\r\n", arg))
-	return true
 }
 
 // doCTell -- port of do_ctell() (clan tell).

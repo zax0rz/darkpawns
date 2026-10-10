@@ -7,7 +7,6 @@
 # (test seam, tooling hook). Regenerate with: make deadcode-ratchet-update.
 # See docs/cleanup/2026-10-09-dead-code-decisions.md for the rulings behind
 # these entries and the 238-vs-108 whole-module finding.
-internal/oraclediff/scenario.go: unreachable func: RunProbe
 pkg/audit/logger.go: unreachable func: LogAdminAction
 pkg/audit/logger.go: unreachable func: LogLoginAttempt
 pkg/command/admin_commands.go: unreachable func: AdminCommands.RegisterCommands
@@ -26,7 +25,6 @@ pkg/command/admin_commands.go: unreachable func: AdminCommands.getSpamConfig
 pkg/command/admin_commands.go: unreachable func: AdminCommands.logAdminAction
 pkg/command/admin_commands.go: unreachable func: AdminCommands.notifyPlayer
 pkg/command/skill_commands.go: unreachable func: CmdScan
-pkg/common/random.go: unreachable func: Number
 pkg/dprng/drawlog.go: unreachable func: DrawLogEnabled
 pkg/dprng/drawlog.go: unreachable func: DrawLogIndex
 pkg/events/types.go: unreachable func: CommandExecutedEvent.Type
@@ -44,7 +42,6 @@ pkg/game/character.go: unreachable func: DoStart
 pkg/game/class_tables.go: unreachable func: ParseClass
 pkg/game/death.go: unreachable func: IsDonationRoom
 pkg/game/house_control.go: unreachable func: HouseCanEnter
-pkg/game/item_helpers.go: unreachable func: IsContainerClosed
 pkg/game/item_helpers.go: unreachable func: ItemType.IsArmor
 pkg/game/item_helpers.go: unreachable func: ItemType.IsContainer
 pkg/game/item_helpers.go: unreachable func: ItemType.IsFood
@@ -57,15 +54,7 @@ pkg/game/serialize.go: unreachable func: SerializeEquipment
 pkg/game/serialize.go: unreachable func: SerializeInventory
 pkg/game/skill_advanced.go: unreachable func: DoScan
 pkg/game/time_utils.go: unreachable func: ParseRace
-pkg/olc/entity_draft.go: unreachable func: EntityDraftStore.Commit
-pkg/scripting/engine.go: unreachable func: matchKeyword
-pkg/session/olc_web_telnet_equivalence_test.go: unreachable func: webEquivalenceOwner.DisplayName
-pkg/session/olc_web_telnet_equivalence_test.go: unreachable func: webEquivalenceOwner.Frontend
 pkg/session/wiz_system.go: unreachable func: cmdBroadcast
 pkg/spells/call_magic.go: unreachable func: MagAttackModifier
-pkg/testutil/helpers.go: unreachable func: MockDiceRoller.Roll
-pkg/testutil/helpers.go: unreachable func: NewMockDiceRoller
-pkg/testutil/helpers.go: unreachable func: NewTestPlayer
-web/auth.go: unreachable func: GetPlayerNameFromContext
 web/cors.go: unreachable func: CORSMiddleware
 web/security.go: unreachable func: CSPNonceFromContext

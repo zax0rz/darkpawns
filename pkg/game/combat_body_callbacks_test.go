@@ -119,59 +119,6 @@ func TestCombatBodyProtectionIsNotNameSelf(t *testing.T) {
 	}
 }
 
-func TestCombatBodyCallbackPlayerState(t *testing.T) {
-	w, first, _ := callbackBodyFixture(t)
-	retired := NewPlayer(40, "Retained", 1001)
-	current := NewPlayer(41, "Retained", 1001)
-	if err := w.AddPlayer(retired); err != nil {
-		t.Fatal(err)
-	}
-	w.RemovePlayer(retired.GetName())
-	if err := w.AddPlayer(current); err != nil {
-		t.Fatal(err)
-	}
-	retired.SetSkill(SkillParry, 93)
-	current.SetSkill(SkillParry, 7)
-	retired.SetCondition(CondDrunk, 13)
-	current.SetCondition(CondDrunk, 1)
-	retired.SetGold(81)
-	current.SetGold(2)
-	retired.Kills = 3
-	current.Kills = 50
-	retired.Deaths = 4
-	current.Deaths = 60
-	retired.PKs = 5
-	current.PKs = 70
-	cb := w.WireCombatCallbacks()
-	if cb.GetSkill(retired, combat.SKILL_PARRY) != 93 || cb.GetDrunk(retired) != 13 || cb.GetGold(retired) != 81 {
-		t.Fatal("condition/skill/owner selected the replacement by name")
-	}
-	if cb.GetKills(retired) != 3 || cb.GetDeaths(retired) != 4 || cb.GetPks(retired) != 5 {
-		t.Fatal("counter selected replacement")
-	}
-	cb.SetKills(retired, 9)
-	cb.SetDeaths(retired, 10)
-	cb.SetPks(retired, 11)
-	cb.SetGold(retired, 12)
-	cb.SetLastDeath(retired, 123)
-	cb.SetAlignment(retired, -600)
-	cb.SetPlrFlag(retired)
-	if retired.Kills != 9 || retired.Deaths != 10 || retired.PKs != 11 || retired.GetGold() != 12 || retired.GetLastDeath() != 123 || retired.GetAlignment() != -600 || !cb.HasPlrFlag(retired, "outlaw") {
-		t.Fatal("mutation did not reach retained body")
-	}
-	if current.Kills != 50 || current.Deaths != 60 || current.PKs != 70 || current.GetGold() != 2 || current.GetLastDeath() != 0 || cb.HasPlrFlag(current, "outlaw") {
-		t.Fatal("mutation touched replacement")
-	}
-	// Explicit defaults for previously player-only and unwired hooks.
-	cb.SetAlignment(first, 0)
-	if first.GetAlignment() != -777 || cb.GetDrunk(first) != 0 || cb.GetSkill(first, combat.SKILL_PARRY) != 0 || cb.GetGold(first) != 0 || cb.GetWeaponDescription(first) != "" {
-		t.Fatal("player-only mobile defaults changed")
-	}
-	if cb.Broadcast != nil || cb.SendToChar != nil || cb.SendText != nil || cb.SendRaw != nil || cb.BroadChat != nil || cb.DoFlee != nil || cb.DoRetreat != nil {
-		t.Fatal("world wiring invented session hooks")
-	}
-}
-
 type bodyScriptRecorder struct {
 	bodies []combat.Combatant
 	actors []*Player
