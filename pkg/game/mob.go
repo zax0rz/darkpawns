@@ -1246,6 +1246,20 @@ func (m *MobInstance) SetMountRider(rider string) {
 	m.MountRider = rider
 }
 
+// SetAffectFlags replaces the mob's entire affect flags bitmask.
+func (m *MobInstance) SetAffectFlags(flags uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Affects = flags
+}
+
+// GetHuntingID returns the ID of the player being hunted.
+func (m *MobInstance) GetHuntingID() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.HuntingID
+}
+
 // SetHuntingID sets the ID of the player being hunted.
 func (m *MobInstance) SetHuntingID(id string) {
 	m.mu.Lock()

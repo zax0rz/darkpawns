@@ -225,3 +225,86 @@ func TestAffectUpdate_MobAffectDecrements(t *testing.T) {
 		t.Error("expected AFF_POISON to persist while affect is active")
 	}
 }
+
+func TestMovePlayer_DeathTrapExtractsMortal(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Safe Room", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
+			// ROOM_DEATH is bit 1 → bitmask value 2.
+			{VNum: 1002, Name: "Death Trap", Zone: 1, Flags: []string{"2"}},
+			// Respawn destination for mortals.
+			{VNum: MortalStartRoom, Name: "Temple", Zone: 1},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	p := NewPlayer(1, "Victim", 1001)
+	p.SetLevel(10)
+	p.SetMove(100)
+	p.SetExp(50000)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	// Repointed to the live command path (moveByIndex) after the uncalled
+	// MovePlayer wrapper was deleted. The live path reports the death-trap
+	// move as !Success (the victim is extracted mid-move), so Success is not
+	// asserted — the behavioral proof below is unchanged.
+	w.moveByIndex(p, 0, true)
+
+	// C act.movement.c:288-301: death_cry then extract_char. The victim is
+	// queued and leaves the world on the next heartbeat's extraction, with no
+	// experience or CON penalty and no corpse; the descriptor goes to the
+	// menu (the session layer's part).
+	if p.GetFlags()&(1<<PlrExtract) == 0 {
+		t.Fatal("death trap did not queue the victim for extraction")
+	}
+	w.ExtractPendingChars()
+	if _, inWorld := w.GetPlayer("Victim"); inWorld {
+		t.Error("death trap victim still in the world after extraction")
+	}
+	if p.GetExp() != 50000 {
+		t.Errorf("expected penalty-free DT (exp unchanged), got %d", p.GetExp())
+	}
+	if items := w.GetItemsInRoom(1002); len(items) != 0 {
+		t.Errorf("expected no corpse in DT room, got %d item(s)", len(items))
+	}
+}
+
+func TestMovePlayer_DeathTrapImmortalSurvives(t *testing.T) {
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Safe Room", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
+			{VNum: 1002, Name: "Death Trap", Zone: 1, Flags: []string{"2"}},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	p := NewPlayer(1, "Immortal", 1001)
+	p.SetLevel(LVL_IMMORT)
+	p.SetMove(100)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatalf("AddPlayer failed: %v", err)
+	}
+
+	// Repointed to the live command path (moveByIndex) after the uncalled
+	// MovePlayer wrapper was deleted; the death-trap proof is unchanged.
+	if result := w.moveByIndex(p, 0, true); !result.Success {
+		t.Fatalf("move north into the death trap failed: %+v", result)
+	}
+
+	if p.GetHP() <= 0 {
+		t.Errorf("expected immortal HP > 0 in death trap, got %d", p.GetHP())
+	}
+	if p.GetRoom() != 1002 {
+		t.Errorf("expected immortal to remain in DT room, got room %d", p.GetRoom())
+	}
+}
