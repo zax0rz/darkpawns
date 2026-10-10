@@ -110,12 +110,16 @@ characterization, heartbeat, spec, stealth and input-queue-cap suites
 are intact — an earlier automated pass over-deleted them and they were
 restored from the base commit before these commits were finalized.
 
-## Orphan packages — ruling requested (PR B)
+## Orphan packages — ruled 2026-10-10 (Zach): DELETE ALL SEVEN
 
-Nothing in `cmd/` or `tools/` imports any of these (~8,300 lines total).
-For each: Zach rules **delete** or **wire**. Deleting a package updates
-the current docs that mention it, in the same PR (archive/ rows are
-history and stay):
+Executed in this PR, one commit per package, pure deletion, references
+swept (Makefile privacy-test target, current docs, C_FUNCTIONS.json's
+two dangling go_location entries — both had mapped C functions into
+Go-only invented packages and were already wrong).
+
+Nothing in `cmd/` or `tools/` imported any of these (~8,300 lines
+deleted). The table keeps each package's doc-mention map as the record
+of what was updated:
 
 | Package | Lines | Current docs mentioning it | Note |
 |---|---|---|---|

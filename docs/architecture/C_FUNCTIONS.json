@@ -946,7 +946,7 @@
     "end_line": 30,
     "line_count": 4,
     "signature": "int main(int argc, char *argv[])",
-    "go_location": "pkg/privacy/integration_example.go",
+    "go_location": null,
     "status": "matched"
   },
   {
@@ -1386,7 +1386,7 @@
     "end_line": 2557,
     "line_count": 19,
     "signature": "void do_broadcast(char *str, struct char_data *ch, struct obj_data *obj,",
-    "go_location": "pkg/optimization/pool.go",
+    "go_location": null,
     "status": "matched"
   },
   {
