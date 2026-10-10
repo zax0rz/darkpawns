@@ -110,6 +110,7 @@ go vet ./...            # Static analysis — must pass before committing
 go test ./...           # All tests — must pass before committing
 go test ./pkg/game/...  # Game package tests specifically
 golangci-lint run ./... # Full lint (uses .golangci.yml)
+make deadcode-ratchet   # CI enforces it; the baseline only shrinks
 ```
 
 **NEVER commit without running all four.** Subagents that self-report passing builds have lied before.
