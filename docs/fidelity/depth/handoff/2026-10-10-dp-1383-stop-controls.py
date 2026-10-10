@@ -17,7 +17,7 @@ def run(args, failure=False):
  else: assert r.returncode==0
 command=['go','test','./pkg/game','-run','^('+tests+')$','-count=1']
 run(command)
-for old in ('mob.RemoveAffected(affCharm)','mob.RemoveAffected(affGroup)','mob.RemoveAffectBySpell(7) // src/utils.c:414-415, SPELL_CHARM'):
+for old in ('mob.RemoveAffected(affCharm)','mob.RemoveAffected(affGroup)','mob.RemoveAffectBySpell(7) // src/utils.c:415-416, SPELL_CHARM'):
  assert old in original
  with tempfile.TemporaryDirectory() as d:
   root=Path(d);mutation=root/source.name

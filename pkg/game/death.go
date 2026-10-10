@@ -169,7 +169,6 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	}
 
 	player.StopFighting()
-	w.DieFollower(player)
 	if player.IsAffected(affWerewolf) {
 		player.SetAffect(affWerewolf, false)
 	}

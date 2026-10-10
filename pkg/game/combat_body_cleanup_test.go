@@ -237,6 +237,7 @@ func TestCombatBodyRetiredLeader(t *testing.T) {
 	follower.SetFollowingBody(first)
 	other.SetFollowingBody(second)
 	w.ExtractMob(first)
+	w.ExtractPendingChars() // C releases followers at final extraction.
 	if w.combatFollowingBody(follower) != nil || w.combatFollowingBody(other) != second || !ce.IsFighting(second) {
 		t.Fatal("leader retirement conflated duplicate relationships")
 	}

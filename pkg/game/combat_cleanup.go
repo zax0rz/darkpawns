@@ -41,20 +41,8 @@ func (w *World) retireCombatBody(body combat.Combatant) {
 	if body == nil {
 		return
 	}
-	// Only the retained NPC leader edges added in step 2 need new teardown.
-	// Preserve existing outgoing follower/PC-leader teardown and its messages.
-	if body.IsNPC() {
-		for _, p := range w.GetAllPlayers() {
-			if w.combatFollowingBody(p) == body {
-				StopFollower(w, p)
-			}
-		}
-		for _, m := range w.GetAllMobs() {
-			if w.combatFollowingBody(m) == body {
-				StopFollowerMob(w, m)
-			}
-		}
-	}
+	// Follower acts belong to final extraction, before room/registry removal
+	// (src/handler.c:1116-1117), not early combat retirement.
 	var others []combat.Combatant
 	for _, p := range w.GetAllPlayers() {
 		if p != body && p.GetFightingBody() == body {

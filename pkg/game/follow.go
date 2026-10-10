@@ -18,6 +18,7 @@ package game
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -176,7 +177,7 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 			Act(w, true, mob, leader, nil, nil,
 				"$n hates your guts!", "", ToVict)
 		}
-		mob.RemoveAffectBySpell(7) // src/utils.c:414-415, SPELL_CHARM
+		mob.RemoveAffectBySpell(7) // src/utils.c:415-416, SPELL_CHARM
 	} else {
 		Act(w, false, mob, leader, nil, nil,
 			"You stop following $N.", "", ToChar)
@@ -212,23 +213,52 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 //
 //	then for each k in ch->followers, stop_follower(k->follower)
 func (w *World) DieFollower(ch *Player) {
-	// If ch is following someone, stop following.
-	if ch.GetFollowing() != "" {
-		StopFollower(w, ch)
-	}
+	w.dieFollowerBody(ch)
+}
 
-	// Find all followers of ch and make them stop following.
+// DieFollowerMob is the NPC arm of C's same die_follower path.
+func (w *World) DieFollowerMob(mob *MobInstance) {
+	w.dieFollowerBody(mob)
+}
+
+// dieFollowerBody mirrors src/utils.c:447-457: outgoing master first, then
+// the newest-first follower list (add_follower prepends at :474-475,491-492).
+// Pending NPC bodies remain on C's character_list until final extraction.
+func (w *World) dieFollowerBody(body combat.Combatant) {
+	stop := func(body combat.Combatant) {
+		switch body := body.(type) {
+		case *Player:
+			StopFollower(w, body)
+		case *MobInstance:
+			StopFollowerMob(w, body)
+		}
+	}
+	stop(body)
+	var followers []combat.Combatant
 	for _, p := range w.GetAllPlayers() {
-		if w.combatFollowingBody(p) == ch {
-			StopFollower(w, p)
+		if w.combatFollowingBody(p) == body {
+			followers = append(followers, p)
 		}
 	}
-
-	// Also check mob followers (charmed pets following this player).
-	for _, mob := range w.GetAllMobs() {
-		if w.combatFollowingBody(mob) == ch {
-			StopFollowerMob(w, mob)
+	w.mu.RLock()
+	mobs := make(map[*MobInstance]struct{}, len(w.activeMobs)+len(w.pendingMobileExtractions))
+	for _, m := range w.activeMobs {
+		mobs[m] = struct{}{}
+	}
+	for m := range w.pendingMobileExtractions {
+		mobs[m] = struct{}{}
+	}
+	w.mu.RUnlock()
+	for m := range mobs {
+		if w.combatFollowingBody(m) == body {
+			followers = append(followers, m)
 		}
+	}
+	sort.SliceStable(followers, func(i, j int) bool {
+		return actorFollowingSequence(asActor(followers[i])) > actorFollowingSequence(asActor(followers[j]))
+	})
+	for _, follower := range followers {
+		stop(follower)
 	}
 }
 

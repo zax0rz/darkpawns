@@ -6,8 +6,6 @@ package game
 
 import (
 	"log/slog"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 // CircleMUD constants used for character management.
@@ -124,7 +122,7 @@ func (w *World) HasPendingExtractions() bool {
 	}
 	extractMask := uint64(1 << uint(plrExtractBit))
 	for _, p := range w.players {
-		if p.Flags&extractMask != 0 {
+		if p.GetFlags()&extractMask != 0 {
 			return true
 		}
 	}
@@ -144,17 +142,6 @@ func (w *World) HasPendingExtractions() bool {
 // reproduce extract_char_final()'s descriptor-to-CON_MENU transition.
 func (w *World) ExtractPendingPlayers() []*Player {
 	w.mu.Lock()
-	var retired []combat.Combatant
-	var nowhere []*Player
-	defer func() {
-		w.mu.Unlock()
-		for _, body := range retired {
-			w.retireCombatBody(body)
-		}
-		for _, p := range nowhere {
-			p.SetRoom(roomNowhere)
-		}
-	}()
 
 	extractMask := uint64(1 << uint(plrExtractBit))
 	extracted := make([]*Player, 0)
@@ -171,7 +158,7 @@ func (w *World) ExtractPendingPlayers() []*Player {
 	// ExtractChar is also used by non-death lifecycle paths that do not have a
 	// World to enqueue on. Keep the legacy flag scan as a compatibility arm.
 	for _, p := range w.players {
-		if p.Flags&extractMask != 0 {
+		if p.GetFlags()&extractMask != 0 {
 			if _, alreadyQueued := seen[p]; alreadyQueued {
 				continue
 			}
@@ -180,9 +167,33 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		}
 	}
 
+	// Snapshot this pass before dropping World.mu. Newly queued bodies wait for
+	// the next pass; follower Act callbacks must run without the world lock.
+	var pendingMobs []*MobInstance
+	seenMobs := make(map[*MobInstance]struct{})
+	for _, m := range w.activeMobs {
+		if m.HasMobFlag(MobFlagExtract) {
+			pendingMobs = append(pendingMobs, m)
+			seenMobs[m] = struct{}{}
+		}
+	}
+	for m := range w.pendingMobileExtractions {
+		if _, seen := seenMobs[m]; !seen {
+			pendingMobs = append(pendingMobs, m)
+		}
+	}
+	w.mu.Unlock()
+
 	for _, p := range pending {
+		if current, ok := w.GetPlayer(p.GetName()); !ok || current != p || p.GetFlags()&extractMask == 0 {
+			continue
+		}
+		// src/handler.c:1116-1117: master and followers are still room occupants.
+		w.DieFollower(p)
+		w.mu.Lock()
 		name := p.Name
-		if p.Flags&extractMask == 0 {
+		if w.players[name] != p || p.GetFlags()&extractMask == 0 {
+			w.mu.Unlock()
 			continue
 		}
 		slog.Debug("extracting player", "name", name)
@@ -243,44 +254,41 @@ func (w *World) ExtractPendingPlayers() []*Player {
 			}
 		}
 
-		// Stop fighting
-		retired = append(retired, p)
-
-		// Move to nowhere
-		nowhere = append(nowhere, p)
-
 		// Remove from world
 		delete(w.players, name)
 
 		// The session extraction callback writes SQLite (handler.c:1162).
 
 		// Clear flag
+		p.mu.Lock()
 		p.Flags &^= extractMask
+		p.mu.Unlock()
 		delete(w.pendingPlayerExtractions, p)
 		extracted = append(extracted, p)
 
 		slog.Debug("player extracted", "name", name)
+		w.mu.Unlock()
+		w.retireCombatBody(p)
+		p.SetRoom(roomNowhere)
 	}
 
-	// Extract mobs flagged for deferred removal (MOB_EXTRACT / bit 25).
-	// Source: handler.c extract_pending_chars mob loop.
-	for id, m := range w.activeMobs {
-		m.mu.Lock()
-		if m.Flags&(1<<uint(MobFlagExtract)) == 0 {
-			m.mu.Unlock()
+	// src/handler.c:1116-1117 also applies to NPCs, including bodies already
+	// retired from combat but retained until this final extraction pass.
+	for _, m := range pendingMobs {
+		w.DieFollowerMob(m)
+		w.mu.Lock()
+		_, queued := w.pendingMobileExtractions[m]
+		if w.activeMobs[m.ID] != m && !queued {
+			w.mu.Unlock()
 			continue
 		}
-		m.mu.Unlock()
-		retired = append(retired, m)
 		w.dropMobilePossessionsLocked(m)
-
-		slog.Debug("mob extracted", "id", id)
-		delete(w.activeMobs, id)
-	}
-	for m := range w.pendingMobileExtractions {
-		retired = append(retired, m)
-		w.dropMobilePossessionsLocked(m)
+		if w.activeMobs[m.ID] == m {
+			delete(w.activeMobs, m.ID)
+		}
 		delete(w.pendingMobileExtractions, m)
+		w.mu.Unlock()
+		w.retireCombatBody(m)
 	}
 	return extracted
 }
