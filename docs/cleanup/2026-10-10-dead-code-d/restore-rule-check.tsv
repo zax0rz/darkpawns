@@ -8,3 +8,6 @@ pkg/olc/registry_test.go	-	no-violation	both restored tests call live pkg/olc re
 pkg/command/skill_commands.go	CmdLearn/CmdListSkills	restored-restored-symbol	restored per review; the scan/skills family ruling now covers the family as a whole
 pkg/command/skill_commands_test.go	CmdLearn	restored-restored-symbol	TestCmdLearn restored with its handler
 ALL	deleted-set (94 syms)	no-references	go vet ./... compiles all test packages against the final deleted set; receiver-type rule applied per review
+RE-REVIEW ROUND (2026-10-10, Claude re-review on #1904)
+pkg/combat/engine_test.go	TestPerformRound_DefenderRetaliates	restored-was-wrongly-excised	pass-2 excised it because its body calls SetRoller/NewScriptedRoller — doc-classified (c) symbols that were NEVER deleted; receiver-type check now passes (calls live Roller: SetRoller/GetRoller/NewScriptedRoller all exist); earlier "survived" report was a grep that matched a reference, not the func decl
+pkg/engine/skill_test.go	TestSkillManagerLearnSkill/PracticeSkill/UseSkill/GetLearnedSkills	restored-went-with-AddSkillPoints	excised for calling the then-deleted AddSkillPoints (now restored per review); all four pass; TestSkillManagerForgetSkill/Slots/TeachSkill stay excised — they call still-deleted IncreaseSlots/TeachSkill (uncalled.tsv rows pending the family ruling)

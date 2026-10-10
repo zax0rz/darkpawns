@@ -298,3 +298,108 @@ func TestSkillManagerGetAllSkills(t *testing.T) {
 		}
 	}
 }
+
+func TestSkillManagerLearnSkill(t *testing.T) {
+	sm := NewSkillManager()
+	skill := NewSkill("test", "Test Skill", SkillTypeCombat, 3)
+
+	// Can't learn without skill points
+	if sm.LearnSkill(skill, 5, 12) {
+		t.Error("Should not be able to learn skill without points")
+	}
+
+	// Add skill points
+	sm.AddSkillPoints(5)
+
+	// Now should be able to learn
+	if !sm.LearnSkill(skill, 5, 12) {
+		t.Error("Should be able to learn skill with points and requirements")
+	}
+
+	// Can't learn same skill twice
+	if sm.LearnSkill(skill, 5, 12) {
+		t.Error("Should not be able to learn same skill twice")
+	}
+
+	// Check that skill points were deducted
+	if sm.GetSkillPoints() != 2 { // 5 - 3 difficulty
+		t.Errorf("Expected 2 skill points remaining, got %d", sm.GetSkillPoints())
+	}
+}
+
+func TestSkillManagerPracticeSkill(t *testing.T) {
+	sm := NewSkillManager()
+	skill := NewSkill("test", "Test Skill", SkillTypeCombat, 3)
+
+	sm.AddSkillPoints(5)
+	sm.LearnSkill(skill, 5, 12)
+
+	// Practice the skill
+	leveledUp := sm.PracticeSkill("test", 5, 15)
+
+	// Might or might not level up depending on RNG
+	if leveledUp {
+		t.Log("Skill leveled up with practice")
+	} else {
+		t.Log("Skill practiced but didn't level up")
+	}
+
+	// Can't practice non-existent skill
+	if sm.PracticeSkill("nonexistent", 5, 15) {
+		t.Error("Should not be able to practice non-existent skill")
+	}
+}
+
+func TestSkillManagerUseSkill(t *testing.T) {
+	sm := NewSkillManager()
+	skill := NewSkill("test", "Test Skill", SkillTypeCombat, 3)
+
+	sm.AddSkillPoints(5)
+	sm.LearnSkill(skill, 5, 12)
+
+	// Use the skill
+	success, improved := sm.UseSkill("test", 5, 15, 5)
+
+	// Should get some result
+	if success || improved {
+		t.Log("Skill use returned:", success, improved)
+	}
+
+	// Can't use non-existent skill
+	success, improved = sm.UseSkill("nonexistent", 5, 15, 5)
+	if success || improved {
+		t.Error("Should not be able to use non-existent skill")
+	}
+}
+
+func TestSkillManagerGetLearnedSkills(t *testing.T) {
+	sm := NewSkillManager()
+	sm.InitializeDefaultSkills()
+
+	// Initially no learned skills
+	learned := sm.GetLearnedSkills()
+	if len(learned) != 0 {
+		t.Errorf("Expected 0 learned skills initially, got %d", len(learned))
+	}
+
+	// Learn a skill
+	sm.AddSkillPoints(10)
+	swords := sm.GetSkill("swords")
+	if swords == nil {
+		t.Fatal("Expected to find swords skill")
+	}
+
+	if !sm.LearnSkill(swords, 5, 12) {
+		t.Error("Failed to learn swords skill")
+	}
+
+	// Now should have one learned skill
+	learned = sm.GetLearnedSkills()
+	if len(learned) != 1 {
+		t.Errorf("Expected 1 learned skill, got %d", len(learned))
+	}
+
+	if learned[0].Name != "swords" {
+		t.Errorf("Expected learned skill to be 'swords', got '%s'", learned[0].Name)
+	}
+}
