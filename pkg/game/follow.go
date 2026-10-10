@@ -176,6 +176,7 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 			Act(w, true, mob, leader, nil, nil,
 				"$n hates your guts!", "", ToVict)
 		}
+		mob.RemoveAffectBySpell(7) // src/utils.c:414-415, SPELL_CHARM
 	} else {
 		Act(w, false, mob, leader, nil, nil,
 			"You stop following $N.", "", ToChar)
@@ -196,13 +197,10 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 		}
 	}
 
-	// C clears only the master relation. The AFF_CHARM bit survives
-	// stop_follower for ride-charm (C's affect_from_char(SPELL_CHARM) is a
-	// no-op there — the bit was set directly by do_ride), which is what keeps
-	// an attacked mount unrideable afterwards ("$S master would not like
-	// that!"). Go's mob bitmask cannot separate spell-charm from ride-charm,
-	// so the bit stays, matching the mounted surface.
+	// src/utils.c:440-442 always clears CHARM/GROUP, including ride-charm.
 	mob.SetFollowing("")
+	mob.RemoveAffected(affCharm)
+	mob.RemoveAffected(affGroup)
 }
 
 // --------------------------------------------------------------------------
