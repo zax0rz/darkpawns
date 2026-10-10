@@ -122,6 +122,9 @@ func persName(ch, observer Actor) string {
 	return ch.GetName()
 }
 
+// PersName exposes the shared C PERS visibility rule for prompt rendering.
+func PersName(subject, observer Actor) string { return persName(subject, observer) }
+
 // canSee returns true if observer can see subject.
 // Faithful port of CAN_SEE macro.
 func canSee(observer, subject Actor) bool {
