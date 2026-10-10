@@ -109,3 +109,23 @@ and the follower-move tests → `performMoveResult`; the weather init test
 characterization, heartbeat, spec, stealth and input-queue-cap suites
 are intact — an earlier automated pass over-deleted them and they were
 restored from the base commit before these commits were finalized.
+
+## Orphan packages — ruling requested (PR B)
+
+Nothing in `cmd/` or `tools/` imports any of these (~8,300 lines total).
+For each: Zach rules **delete** or **wire**. Deleting a package updates
+the current docs that mention it, in the same PR (archive/ rows are
+history and stay):
+
+| Package | Lines | Current docs mentioning it | Note |
+|---|---|---|---|
+| `pkg/privacy` | 1,852 | docs/operational/privacy-filter.md, docs/architecture/ARCHITECTURE.md | Earlier review: a client with no server; its fallback destroys logs |
+| `pkg/optimization` | 4,020 | docs/architecture/port-status.md, docs/architecture/ARCHITECTURE.md | |
+| `pkg/secrets` | 318 | docs/architecture/ARCHITECTURE.md, docs/operational/SECURITY_HARDENING_GUIDE.md, docs/research/RESEARCH-LOG.md | Overlaps the env-by-name decision (mudlog-push §12.1) |
+| `profiling` | 801 | profiling/README.md, docs/research/RESEARCH-LOG.md | |
+| `examples` + `examples/performance` | 489 | (website content mentions "examples" generically; no path references) | |
+| `benchmarks` | 329 | website-astro/PRODUCT.md, website-astro/src/content/blog/the-long-middle.md (prose, not paths) | |
+| `load_test` | 459 | docs/research/RESEARCH-LOG.md | |
+
+Rulings land as deletions in this PR (stop tier); each class (b) item
+becomes a Linear issue filed by Claude.
