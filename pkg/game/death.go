@@ -221,8 +221,10 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	// the next heartbeat, where extract_char_final returns a live descriptor to
 	// CON_MENU. No invented resurrection bytes reach the victim synchronously
 	// (R4).
+	// src/act.offensive.c:160 calls raw_kill directly; unlike die_with_killer
+	// (src/fight.c:618), it does not assign POS_DEAD. Preserve AWAKE for
+	// final-extraction follower notices (src/utils.c:422-423).
 	w.QueuePlayerExtraction(player)
-	player.SetPosition(combat.PosDead)
 }
 
 // changeAlignment shifts a player's alignment based on the victim's alignment.
