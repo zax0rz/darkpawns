@@ -29,14 +29,6 @@ func (sm *SkillManager) GetSkill(name string) *Skill {
 	return sm.skills[name]
 }
 
-// HasSkill checks if a skill is known
-func (sm *SkillManager) HasSkill(name string) bool {
-	sm.mu.RLock()
-	defer sm.mu.RUnlock()
-	skill, exists := sm.skills[name]
-	return exists && skill.Learned
-}
-
 // LearnSkill attempts to learn a new skill
 func (sm *SkillManager) LearnSkill(skill *Skill, charLevel, stat int) bool {
 	sm.mu.Lock()
@@ -96,13 +88,6 @@ func (sm *SkillManager) UseSkill(name string, charLevel, stat, targetLevel int) 
 	return skill.UseSkill(charLevel, stat, targetLevel)
 }
 
-// AddSkillPoints adds skill points to the manager
-func (sm *SkillManager) AddSkillPoints(points int) {
-	sm.mu.Lock()
-	defer sm.mu.Unlock()
-	sm.points += points
-}
-
 // GetSkillPoints returns available skill points
 func (sm *SkillManager) GetSkillPoints() int {
 	sm.mu.RLock()
@@ -129,13 +114,6 @@ func (sm *SkillManager) GetAvailableSlots() int {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 	return sm.slots - len(sm.getLearnedSkills())
-}
-
-// IncreaseSlots increases the number of skill slots
-func (sm *SkillManager) IncreaseSlots(additional int) {
-	sm.mu.Lock()
-	defer sm.mu.Unlock()
-	sm.slots += additional
 }
 
 // GetAllSkills returns all skills (learned and unlearned)
@@ -231,35 +209,6 @@ func (sm *SkillManager) ForgetSkill(name string) bool {
 	skill.Practice = 0
 
 	return true
-}
-
-// TeachSkill attempts to teach a skill to another skill manager
-func (sm *SkillManager) TeachSkill(skillName string, target *SkillManager, teacherLevel, studentLevel, studentStat int) bool {
-	sm.mu.RLock()
-
-	// Get the skill from teacher
-	skill, exists := sm.skills[skillName]
-	if !exists || !skill.Learned {
-		sm.mu.RUnlock()
-		return false
-	}
-
-	// Check if teacher can teach this skill
-	if !skill.CanTeach(teacherLevel) {
-		sm.mu.RUnlock()
-		return false
-	}
-
-	// Create a copy of the skill for teaching (starts at lower level)
-	taughtSkill := *skill
-	taughtSkill.Level = 1 // Start at level 1 when taught
-	taughtSkill.Practice = 0
-	taughtSkill.Learned = false // Will be set by LearnSkill
-
-	sm.mu.RUnlock()
-
-	// Try to learn the skill (no locks held, LearnSkill will lock target)
-	return target.LearnSkill(&taughtSkill, studentLevel, studentStat)
 }
 
 // InitializeDefaultSkills registers common MUD skills

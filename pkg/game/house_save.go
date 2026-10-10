@@ -199,27 +199,6 @@ func houseDeleteFile(vnum int) {
 // House_listrent — list objects stored in a house save file
 // ---------------------------------------------------------------------------
 
-// HouseListrent lists all objects in a house's save file.
-// In C: House_listrent() — reads .house file, prints obj vnum/weight/name.
-// When ObjFromStore is wired, each record will be deserialized and its
-// name/vnum/value shown to the player. Currently reports the file exists
-// and its size, since the object-persistence layer is not yet connected.
-func (w *World) HouseSaveAll() {
-	w.mu.RLock()
-	control := w.HouseControl
-	w.mu.RUnlock()
-
-	for i := range control {
-		realHouse := w.GetRoomInWorld(control[i].VNum)
-		if realHouse == nil {
-			continue
-		}
-		if roomHasFlagLocal(realHouse, RoomFlagCrash) {
-			w.houseCrashsave(control[i].VNum)
-		}
-	}
-}
-
 // ---------------------------------------------------------------------------
 // hcontrol command handlers (admin-only, LVL_IMPL / LVL_GRGOD level)
 // ---------------------------------------------------------------------------

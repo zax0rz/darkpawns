@@ -1131,6 +1131,4 @@ func TestWebAndTelnetRoomEditsProduceByteIdenticalZoneFiles(t *testing.T) {
 
 type webEquivalenceOwner struct{}
 
-func (w *webEquivalenceOwner) Identity() string       { return "Webgod" }
-func (w *webEquivalenceOwner) DisplayName() string    { return "Webgod" }
-func (w *webEquivalenceOwner) Frontend() olc.Frontend { return olc.FrontendTelnet + "+test" }
+func (w *webEquivalenceOwner) Identity() string { return "Webgod" }

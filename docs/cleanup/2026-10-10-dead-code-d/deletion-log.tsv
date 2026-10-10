@@ -1,0 +1,155 @@
+symbol	action	decls_removed	tests_removed	note
+AITick	DELETE	pkg/game/ai.go:29-46		
+AddSkillPoints	DELETE	pkg/engine/skill_manager.go:99-104		
+AssertBehaviorMatchesC	DELETE	pkg/testutil/helpers.go:17-25		
+BuildWhoList	DELETE	pkg/game/whod.go:203-299		
+ClearFlag	DELETE	pkg/engine/affect.go:244-247		
+DieFollowerMob	DELETE	pkg/game/follow.go:237-265		
+EntityDraftStore.Commit	DELETE	pkg/olc/entity_draft.go:176-186		
+EquipForPlayer	DELETE	pkg/game/equipment.go:177-220		
+ExecGenComm	DELETE	pkg/game/act_comm_bridge.go:41-42		
+ExecQcomm	DELETE	pkg/game/act_comm_bridge.go:27-28		
+ExecShout	DELETE	pkg/game/act_comm_bridge.go:20-21		
+ExecThink	DELETE	pkg/game/act_comm_bridge.go:34-35		
+FindTargetRoom	DELETE	pkg/game/act_informative.go:111-134		
+ForEachPlayer	DELETE	pkg/game/world.go:584-591		
+GetAFKMessage	DELETE	pkg/game/player_social.go:78-83		
+GetAutoGold	DELETE	pkg/game/player_social.go:121-126		
+GetAutoSplit	DELETE	pkg/game/player_social.go:135-140		
+GetCharNum	DELETE	pkg/game/inventory.go:263-272		
+GetCombatStatus	DELETE	pkg/combat/engine.go:1151-1157		
+GetCustomData	DELETE	pkg/game/object.go:331-337		
+GetDatabase	DELETE	pkg/session/session_player.go:221-224		
+GetEquipmentBonus	DELETE	pkg/game/equipment.go:349-365		
+GetExtraDesc	DELETE	pkg/game/object.go:310-321		
+GetFightingTarget	DELETE	pkg/game/mob.go:1311-1312		
+GetHuntingID	DELETE	pkg/game/mob.go:1249-1254		
+GetModerationChecker	DELETE	pkg/session/manager.go:248-251		
+GetNoBroadcast	DELETE	pkg/game/player_social.go:182-187		
+GetPlayerInterface	DELETE	pkg/session/session_player.go:18-21		
+GetPlayerNameFromContext	DELETE	web/auth.go:45-53		
+GetRemainingDuration	DELETE	pkg/engine/affect.go:234-237		
+GetShopsByKeeper	DELETE	pkg/game/shop.go:104-113		
+GetSnapshotManager	DELETE	pkg/game/world.go:374-377		
+GetTempInt	DELETE	pkg/session/session_temp.go:28-40		
+GetTempString	DELETE	pkg/session/session_temp.go:42-54		
+GetType	DELETE	pkg/engine/affect.go:168-188		
+HandleMessage	DELETE	pkg/session/session_player.go:144-147		
+HasDB	DELETE	pkg/session/session_idle.go:137-140		
+HasDatabase	DELETE	pkg/session/session_player.go:216-219		
+HasSellItem	DELETE	pkg/game/shop.go:230-238		
+HasSkill	DELETE	pkg/engine/skill_manager.go:32-38		
+HouseListrent	DELETE	pkg/game/house_rent.go:10-65		
+HouseSaveAll	DELETE	pkg/game/house_save.go:202-221		
+InContainerOf	DELETE	pkg/game/location.go:121-123		
+InInventoryOfMob	DELETE	pkg/game/location.go:117-119		
+InRoomOf	DELETE	pkg/game/location.go:109-111		
+IncreaseSlots	DELETE	pkg/engine/skill_manager.go:134-139		
+IsContainerClosed	DELETE	pkg/game/item_helpers.go:253-256		
+IsExpired	DELETE	pkg/engine/affect.go:201-212		
+IsInShop	DELETE	pkg/game/location.go:107-107		
+IsWizlocked	DELETE	pkg/session/session_idle.go:111-116		
+JSONReformatOnly	DELETE	tools/db-migrate/internal/dbmigrate/canonical.go:238-245		
+LegacyDoorState	DELETE	pkg/parser/wld.go:108-118		
+MatchLine	DELETE	internal/stringcensus/csite.go:30-65		
+MirrorChannelLine	DELETE	pkg/game/out_of_band.go:144-149		
+MockDiceRoller.Roll	DELETE	pkg/testutil/helpers.go:39-49		
+MovePlayer	DELETE	pkg/game/world.go:1090-1215		
+MpBribe	DELETE	pkg/game/mobprogs.go:149-152		
+MpRideGreet	DELETE	pkg/game/mobprogs.go:60-82		
+NewMockDiceRoller	DELETE	pkg/testutil/helpers.go:34-37		
+NewTestPlayer	DELETE	pkg/testutil/helpers.go:51-62		
+Number	DELETE	pkg/common/random.go:5-9		
+OnPlayerEnterRoom	DELETE	pkg/game/world_player.go:10-27		
+OwnerIsMob	DELETE	pkg/game/location.go:235-235		
+PrintObjectLocation	DELETE	pkg/game/act_informative.go:136-178		
+Reasons	DELETE	internal/stringcensus/baseline.go:44-56		
+Remember	DELETE	pkg/game/deferred_fight_fns.go:152-167		
+RemoveFollower	DELETE	pkg/game/inventory.go:274-287		
+RemovePlayer	DELETE	pkg/game/world.go:561-566		
+ReplaceParsedWorld	DELETE	pkg/game/world.go:387-402		
+ResolveCharInRoomAt	DELETE	pkg/game/target.go:77-88		
+RestoreVitals	DELETE	pkg/game/player_stats.go:280-289		
+RunProbe	DELETE	internal/oraclediff/scenario.go:1045-1066		
+SetAffectFlags	DELETE	pkg/game/mob.go:1270-1275		
+SetAutoGold	DELETE	pkg/game/player_social.go:128-133		
+SetAutoSplit	DELETE	pkg/game/player_social.go:142-147		
+SetFlag	DELETE	pkg/engine/affect.go:239-242		
+SetHolyLight	DELETE	pkg/game/player_social.go:203-213		
+SetLastActiveForTest	DELETE	pkg/session/session_pump.go:341-345		
+SetNoBroadcast	DELETE	pkg/game/player_social.go:189-194		
+SetRoomDescription	DELETE	pkg/game/world_write.go:134-137		
+SetRoomFlags	DELETE	pkg/game/player_social.go:170-180		
+SetRoomName	DELETE	pkg/game/world_write.go:129-132		
+SetScriptBudget	DELETE	pkg/scripting/engine.go:250-259		
+SetStrength	DELETE	pkg/game/player_identity.go:128-133		
+SetTemp	DELETE	pkg/session/session_temp.go:56-62		
+SetType	DELETE	pkg/engine/affect.go:190-199		
+SetWantsStructuredData	DELETE	pkg/session/manager.go:2232-2251		
+SetWizlock	DELETE	pkg/session/session_idle.go:118-128		
+SnapshotGeneration	DELETE	pkg/game/snapshot.go:56-60		
+SpawnMobInstance	DELETE	pkg/game/world.go:1281-1284		
+StartMobPositionRecovery	DELETE	pkg/combat/engine.go:183-220		
+TeachSkill	DELETE	pkg/engine/skill_manager.go:236-263		
+Tick	DELETE	pkg/engine/affect.go:214-232		
+UpdateActivity	DELETE	pkg/game/player_stats.go:10-14		
+UpdateCharObjectsAR	DELETE	pkg/game/char_mgmt.go:75-82		
+WantsStructuredData	DELETE	pkg/session/manager.go:2253-2258		
+matchKeyword	DELETE	pkg/scripting/engine.go:193-208		
+webEquivalenceOwner.DisplayName	DELETE	pkg/session/olc_web_telnet_equivalence_test.go:1135-1135		
+webEquivalenceOwner.Frontend	DELETE	pkg/session/olc_web_telnet_equivalence_test.go:1136-1136		
+-	TESTS	internal/stringcensus/baseline_vocabulary_test.go	1	TestCommittedBaselineUsesTheVocabulary
+-	TESTS	internal/stringcensus/csite_test.go	7	TestExtractCSourceReadsTheFixtureOracle,TestSiteMatchLineCollapsesOutputWhitespace,TestSiteMatchLineMatchesActCodesAsWildcards,TestSiteMatchLineMatchesVerbsAsWildcards,TestSiteMatchLineRequiresLaterLinesForLaterFragments,TestSiteMatchLineRequiresSegmentsInOrder,TestSiteUnverifiableWhenEverySegmentIsShort
+-	TESTS	pkg/combat/engine_standup_test.go	4	TestProcessCombatPair_MobAttacksOnStandupRound,TestProcessCombatPair_MobStandupRoundDrawsFirst,TestProcessCombatPair_PCStandup,TestProcessCombatPair_PositionGateAWAKE
+-	TESTS	pkg/combat/engine_test.go	1	TestPerformRound_DefenderRetaliates
+-	TESTS	pkg/combat/round_test.go	1	TestGetCombatStatus
+-	TESTS	pkg/command/skill_commands_test.go	1	TestCmdLearn
+-	TESTS	pkg/engine/affect_test.go	6	TestAffectTick,TestDurationZeroExpires,TestGetType_DeterministicMultipleFlags,TestGetType_SingleFlag,TestNewAffect_NegativeDuration,TestPermanentAffect
+-	TESTS	pkg/engine/skill_test.go	7	TestSkillManagerForgetSkill,TestSkillManagerGetLearnedSkills,TestSkillManagerLearnSkill,TestSkillManagerPracticeSkill,TestSkillManagerSlots,TestSkillManagerTeachSkill,TestSkillManagerUseSkill
+-	TESTS	pkg/game/arena_broadcast_test.go	1	TestArenaActNoBroadcastToggle
+-	TESTS	pkg/game/bad_stats_test.go	1	TestPlayerEquipmentCharismaHunting
+-	TESTS	pkg/game/batch_b_test.go	4	TestMovePlayer_DeathTrapDropsInventory,TestMovePlayer_DeathTrapExtractsMortal,TestMovePlayer_DeathTrapImmortalSurvives,TestMovePlayer_DeathTrapMountDismounts
+-	TESTS	pkg/game/combat_body_callbacks_test.go	1	TestCombatBodyCallbackPlayerState
+-	TESTS	pkg/game/combat_body_movement_window_test.go	1	TestCombatBodyMovementWindow
+-	TESTS	pkg/game/damage_before_message_test.go	2	TestMeleeNeutralRescueBeforeMessage,TestSpellNeutralRescueBeforeMessage
+-	TESTS	pkg/game/deathcry_bounded_callers_test.go	1	TestDeathCryBoundedCallers
+-	TESTS	pkg/game/directed_speech_test.go	1	TestDoReplyCGates
+-	TESTS	pkg/game/effective_attributes_test.go	1	TestE2AttrEquipmentBoundaries
+-	TESTS	pkg/game/fidelity_regression_test.go	1	TestFidelityCanSeeObjectInvisibility
+-	TESTS	pkg/game/look_depth_test.go	1	TestImmortalWithoutHolyLightCannotSeeDarkRoom
+-	TESTS	pkg/game/movement_cost_test.go	4	TestMovePlayer_ImmortalExempt,TestMovePlayer_ImmortalExemptWhenExhausted,TestMovePlayer_MortalExhaustedBlocked,TestMovePlayer_MortalPaysMoveCost
+-	TESTS	pkg/game/object_movement_test.go	1	TestMoveObjectPlayerToMobInventory
+-	TESTS	pkg/game/other_status_test.go	1	TestDoAFKToggleState
+-	TESTS	pkg/game/raw_kill_test.go	2	TestRawKillNPCUsesFullTeardown,TestRawKillUnmountAndForget
+-	TESTS	pkg/game/spec_cleric_test.go	1	scriptClericRolls
+-	TESTS	pkg/game/spec_procs_test.go	1	TestSpecFighter_NativeSkills
+-	TESTS	pkg/game/use_tattoo_depth_test.go	1	TestUseTattooRoomVisibilityLaw
+-	TESTS	pkg/game/vitals_snapshot_test.go	1	TestPlayerCombatStateConcurrent
+-	TESTS	pkg/game/world_player_test.go	4	TestOnPlayerEnterRoom_AggressiveMob,TestOnPlayerEnterRoom_AlreadyFighting,TestOnPlayerEnterRoom_NoMobs,TestOnPlayerEnterRoom_NonexistentRoom
+-	TESTS	pkg/game/world_redit_test.go	1	TestReditWorldPublicationConcurrentSnapshots
+-	TESTS	pkg/game/world_test.go	1	TestShutdown_NoMutationAfterWorldStops
+-	TESTS	pkg/olc/draft_test.go	1	TestDraftStoreAppliesOrderedOperationsAndReturnsEffectiveCopy
+-	TESTS	pkg/olc/registry_test.go	2	TestRegistryListSnapshotsClaimsAndAcquisitionTime,TestRegistryUsesTypedKeysAndStableOwners
+-	TESTS	pkg/parser/wld_test.go	1	TestExitInfoDoorCapabilityAndRuntimeStateAreIndependent
+-	TESTS	pkg/scripting/engine_runscript_test.go	1	TestScriptBudgetConfigurableTimeout
+-	TESTS	pkg/session/cast_cmds_test.go	1	TestResolveCastTargetOrderAndEmptyDefaults
+-	TESTS	pkg/session/cmd_look_test.go	1	TestLook_DarkRoomWithHolyLight
+-	TESTS	pkg/session/file_store_test.go	4	TestSQLiteOfflineClanReaderAndEdit,TestSetFileSQLiteCombatBase,TestSetFileSQLiteNameAndPassword,TestSetFileSQLitePreservesSessionFields
+-	TESTS	pkg/session/gmcp_test.go	1	TestGMCPDoesNotMakeASessionStructured
+-	TESTS	pkg/session/redit_test.go	1	TestReditWorkingCopySurvivesOverlappingAdminWrite
+-	TESTS	pkg/session/session_idle_test.go	3	TestManager_HasDB,TestManager_IsWizlocked_Default,TestManager_SetWizlock
+-	TESTS	pkg/session/show_rent_depth_test.go	1	TestReturningEntryRewritesObjectSaveHeader
+-	TESTS	pkg/telnet/heartbeat_output_test.go	1	TestHeartbeatOutputTelnetIdleBoundary
+-	TESTS	pkg/telnet/listener_test.go	2	TestObservationTelnetRenderingHasNoStateBoxAndGatesVNum,TestTelnetQuietSessionNotReaped
+-	TESTS	pkg/testutil/helpers_test.go	1	TestAssertBehaviorMatchesC
+-	TESTS	tools/db-migrate/internal/dbmigrate/canonical_test.go	1	TestCanonicalizeJSONIsSemanticWithoutLosingNumbers
+-	TESTS	tools/db-migrate/internal/dbmigrate/migrate_test.go	1	TestMigratePreservesEveryPlayerValue
+POST-RUN CASCADES (recorded 2026-10-10)
+CmdLearn	pkg/command/skill_commands.go	deleted	became unreachable when its test callers were excised (deadcode-ratchet added it to baseline; per PR-1 rule the diff must only remove lines, so the symbol went too)
+CmdListSkills	pkg/command/skill_commands.go	deleted	same as CmdLearn
+DraftStore.Commit	pkg/olc/draft.go	deleted	same; DraftStore-level twin of the deleted EntityDraftStore.Commit (CommitWith is the live path)
+orphan-cascade	33+ unexported decls	deleted	golangci-lint `unused` findings after the sweep: doShout/doQcomm/doThink ports (bridges deleted), excised-test doubles (recordingRoller, movementWindowEngine, ...), getStatLocation, etc. See aux-scripts/orphan_cascade.py; every round gated on lint going clean.
+gates	build=0 vet=0 test=0 lint=0 gofumpt=0	-	-	final tree, each gate run on its own
+ratchet	make deadcode-ratchet-update	51 entries (was 62)	diff is removals-only (0 additions)
+DoScan	pkg/game/skill_advanced.go	deleted	deferred during the sweep because command.CmdScan called it; the CmdScan family itself was deleted this PR (uncalled.tsv rows), so DoScan was removed in the same PR after all
+DoScan	pkg/game/skill_advanced.go	RESTORED	was deleted, then restored: its caller CmdScan survives (class (b) family pending Zach's wire-or-delete ruling) and the build broke. Family state: CmdLearn + CmdListSkills deleted (forced by removals-only ratchet after test excision made them unreachable); CmdScan/CmdSkills/CmdForget/CmdUseSkill/CmdSkillInfo/CmdConfirmForget/DoScan KEPT for the ruling

@@ -180,45 +180,6 @@ type PositionedMob interface {
 	GetFightingBody() Combatant
 }
 
-// StartMobPositionRecovery starts a goroutine that periodically checks mob positions.
-// Mobs that are sitting/resting/sleeping and not in combat are stood back up.
-// getMobs returns all mobs that should be checked for position recovery.
-// Separate from the combat ticker so position recovery runs at its own cadence.
-func (ce *CombatEngine) StartMobPositionRecovery(getMobs func() []PositionedMob) {
-	ce.lifecycleMu.Lock()
-	if ce.stopped {
-		ce.lifecycleMu.Unlock()
-		return
-	}
-	ce.background.Add(1)
-	ce.lifecycleMu.Unlock()
-
-	go func() {
-		defer ce.background.Done()
-		ticker := time.NewTicker(3 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				mobs := getMobs()
-				for _, mob := range mobs {
-					status := mob.GetStatus()
-					fighting := mob.GetFightingBody()
-					if fighting != nil {
-						continue
-					}
-					if status != "sleeping" && status != "resting" && status != "sitting" {
-						continue
-					}
-					mob.SetStatus("standing")
-				}
-			case <-ce.stopChan:
-				return
-			}
-		}
-	}()
-}
-
 // Stop halts the combat engine and waits for all background loops to exit.
 // It is safe to call more than once.
 func (ce *CombatEngine) Stop() {
@@ -1146,12 +1107,4 @@ func (ce *CombatEngine) GetCombatTarget(body Combatant) (Combatant, bool) {
 	}
 	target := body.GetFightingBody()
 	return target, target != nil
-}
-
-// GetCombatStatus returns display text for the actual body.
-func (ce *CombatEngine) GetCombatStatus(body Combatant) string {
-	if target, ok := ce.GetCombatTarget(body); ok {
-		return fmt.Sprintf("You are fighting %s", target.GetName())
-	}
-	return "You are not in combat"
 }

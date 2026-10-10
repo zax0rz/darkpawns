@@ -7,7 +7,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -150,130 +149,6 @@ func TestCastEarlyGatesAreExactAndDrawFree(t *testing.T) {
 				t.Errorf("wait = %d, want 0", got)
 			}
 		})
-	}
-}
-
-func TestResolveCastTargetOrderAndEmptyDefaults(t *testing.T) {
-	parsed := &parser.World{
-		Rooms: []parser.Room{
-			{VNum: 1001, Name: "Caster Room", Zone: 1},
-			{VNum: 1002, Name: "World Room", Zone: 1},
-		},
-		Mobs: []parser.Mob{{
-			VNum:      5000,
-			Keywords:  "target",
-			ShortDesc: "a distant target",
-			Level:     1,
-			HP:        parser.DiceRoll{Num: 1, Sides: 1, Plus: 10},
-		}},
-		Objs: []parser.Obj{
-			{VNum: 6001, Keywords: "inventory focus", ShortDesc: "an inventory focus"},
-			{VNum: 6002, Keywords: "equipped focus", ShortDesc: "an equipped focus"},
-			{VNum: 6003, Keywords: "room focus", ShortDesc: "a room focus"},
-			{VNum: 6004, Keywords: "world focus", ShortDesc: "a world focus"},
-		},
-	}
-	world, err := game.NewWorld(parsed)
-	if err != nil {
-		t.Fatalf("NewWorld: %v", err)
-	}
-	t.Cleanup(func() { world.StopAITicker() })
-	manager := newTestManager(t, world, nil)
-	caster := makeTestSession(t, manager, "Caster", 1001, true)
-	roomTarget := makeTestSession(t, manager, "Target", 1001, true)
-	registerInWorld(t, caster)
-	registerInWorld(t, roomTarget)
-	worldTarget, err := world.SpawnMob(5000, 1002)
-	if err != nil {
-		t.Fatalf("SpawnMob: %v", err)
-	}
-
-	roomAndWorld := &spells.SpellInfo{Routines: spells.SpellRoutines{
-		Targets: spells.TarCharRoom | spells.TarCharWorld,
-	}}
-	target, prompt := resolveCastTarget(caster, roomAndWorld, "target")
-	if prompt != "" {
-		t.Fatalf("room/world prompt = %q, want empty", prompt)
-	}
-	if !target.found || target.character != roomTarget.player {
-		t.Fatalf("room/world target = %#v, want in-room player", target.character)
-	}
-
-	nonviolent := &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: spells.TarCharRoom}}
-	target, prompt = resolveCastTarget(caster, nonviolent, "")
-	if prompt != "" || !target.found || target.character != caster.player {
-		t.Fatalf("empty nonviolent target = %#v, prompt %q; want caster", target.character, prompt)
-	}
-
-	violent := &spells.SpellInfo{Routines: spells.SpellRoutines{
-		Targets: spells.TarCharRoom,
-		Violent: true,
-	}}
-	target, prompt = resolveCastTarget(caster, violent, "")
-	if target.found || prompt != "Upon who should the spell be cast?\r\n" {
-		t.Fatalf("empty violent target found=%v prompt=%q", target.found, prompt)
-	}
-
-	worldTarget.SetRoom(1001)
-	caster.player.SetFightingBody(worldTarget)
-	fightVictim := &spells.SpellInfo{Routines: spells.SpellRoutines{
-		Targets: spells.TarFightVict,
-		Violent: true,
-	}}
-	target, prompt = resolveCastTarget(caster, fightVictim, "")
-	if prompt != "" || !target.found || target.character != worldTarget {
-		t.Fatalf("fighting target = %#v, prompt %q; want mob opponent", target.character, prompt)
-	}
-
-	caster.player.SetHolyLight(true)
-	inventoryObject, err := world.SpawnObject(6001, 1001)
-	if err != nil {
-		t.Fatalf("SpawnObject inventory: %v", err)
-	}
-	if err := caster.player.Inventory.AddItem(inventoryObject); err != nil {
-		t.Fatalf("AddItem inventory: %v", err)
-	}
-	equippedObject, err := world.SpawnObject(6002, 1001)
-	if err != nil {
-		t.Fatalf("SpawnObject equipped: %v", err)
-	}
-	if err := caster.player.Equipment.SetSlot(game.SlotHead, equippedObject); err != nil {
-		t.Fatalf("SetSlot equipped: %v", err)
-	}
-	roomObject, err := world.SpawnObject(6003, 1001)
-	if err != nil {
-		t.Fatalf("SpawnObject room: %v", err)
-	}
-	world.AddItemToRoom(roomObject, 1001)
-	worldObject, err := world.SpawnObject(6004, 1002)
-	if err != nil {
-		t.Fatalf("SpawnObject world: %v", err)
-	}
-
-	objectScopes := []struct {
-		name   string
-		flag   spells.TargetFlags
-		query  string
-		object *game.ObjectInstance
-	}{
-		{"inventory", spells.TarObjInv, "inventory", inventoryObject},
-		{"equipment", spells.TarObjEquip, "equipped", equippedObject},
-		{"room", spells.TarObjRoom, "room", roomObject},
-		{"world", spells.TarObjWorld, "world", worldObject},
-	}
-	for _, scope := range objectScopes {
-		info := &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: scope.flag}}
-		target, prompt = resolveCastTarget(caster, info, scope.query)
-		if prompt != "" || !target.found || target.object != scope.object {
-			t.Errorf("%s object target = %#v, prompt %q; want %#v", scope.name, target.object, prompt, scope.object)
-		}
-	}
-
-	allObjectScopes := &spells.SpellInfo{Routines: spells.SpellRoutines{Targets: spells.TarObjInv |
-		spells.TarObjEquip | spells.TarObjRoom | spells.TarObjWorld}}
-	target, prompt = resolveCastTarget(caster, allObjectScopes, "focus")
-	if prompt != "" || !target.found || target.object != inventoryObject {
-		t.Fatalf("object scope order target = %#v, prompt %q; want inventory object", target.object, prompt)
 	}
 }
 

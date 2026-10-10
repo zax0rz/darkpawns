@@ -126,16 +126,6 @@ func (w *World) ResetZone(number int) error {
 // Simulating a concurrent writer inside a test is not a bypass. Nothing
 // outside a test reaches these.
 
-// SetRoomName updates a room's name. Returns false if the room doesn't exist.
-func (w *World) SetRoomName(vnum int, name string) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) { room.Name = name })
-}
-
-// SetRoomDescription updates a room's description. Returns false if the room doesn't exist.
-func (w *World) SetRoomDescription(vnum int, desc string) bool {
-	return w.updateRoom(vnum, func(room *parser.Room) { room.Description = desc })
-}
-
 // SetRoomSector sets a room's sector type. Returns false if the room doesn't exist.
 func (w *World) SetRoomSector(vnum int, sector int) bool {
 	return w.updateRoom(vnum, func(room *parser.Room) { room.Sector = sector })

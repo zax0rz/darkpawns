@@ -74,19 +74,6 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 	return w.resolveCharInRoomAt(ch, ch.GetRoom(), name)
 }
 
-// ResolveCharInRoomAt resolves a visible character in an explicitly supplied
-// room while retaining ch as the viewer. C's ranged commands use this shape:
-// the shooter remains in the origin room while get_char_room() inspects the
-// destination room (act.offensive.c:887). The ordinary resolver intentionally
-// uses the viewer's current room for all local commands, so ranged callers must
-// use this entry point instead of passing a mismatched room number.
-func (w *World) ResolveCharInRoomAt(ch *Player, roomVNum int, name string) (CharTarget, bool) {
-	if ch == nil {
-		return CharTarget{}, false
-	}
-	return w.resolveCharInRoomAt(ch, roomVNum, name)
-}
-
 func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (CharTarget, bool) {
 	original := name
 	n := GetNumber(&name)                           // strips "N." prefix; returns 1 if none, 0 if non-numeric

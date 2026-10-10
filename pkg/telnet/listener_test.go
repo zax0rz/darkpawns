@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
-	"encoding/json"
 	"errors"
 	"io"
 	"net"
@@ -944,124 +943,6 @@ func TestConfigurableConnectionLimits(t *testing.T) {
 // extraction pass, and a connected player with an arbitrarily old lastActive
 // timestamp is untouched by it. Only point_update ticks (via
 // World.CheckIdling) move the idle lifecycle.
-func TestTelnetQuietSessionNotReaped(t *testing.T) {
-	parsed := &parser.World{
-		Rooms: []parser.Room{
-			{VNum: 1, Name: "Limbo", Zone: 0},
-			{VNum: 3, Name: "A Totally Empty Room", Zone: 0},
-			{VNum: game.MortalStartRoom, Name: "The Adventurers Guild", Zone: 80},
-		},
-	}
-	world, err := game.NewWorld(parsed)
-	if err != nil {
-		t.Fatalf("NewWorld: %v", err)
-	}
-	defer world.StopAITicker()
-	manager := session.NewManager(world, nil)
-	t.Cleanup(manager.Stop)
-
-	client, server := net.Pipe()
-	defer client.Close()
-
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		handleConn(server, manager, session.ConnectionIdentity{})
-	}()
-
-	go drain(client)
-
-	// Wait for the banner and "By what name" prompt.
-	time.Sleep(100 * time.Millisecond)
-
-	// Guests always get a generated name; find it once the login registers.
-	playerName := "guest"
-	_, _ = client.Write([]byte(playerName + "\r\n"))
-
-	// Wait for guest login to complete and enter the input loop.
-	time.Sleep(300 * time.Millisecond)
-
-	guestName, found := registeredGuest(manager)
-	s, ok := manager.GetSession(guestName)
-	if !found || !ok {
-		t.Fatal("telnet guest session not registered")
-	}
-	playerName = guestName
-	if !s.IsAuthenticated() {
-		t.Fatal("telnet guest session not authenticated")
-	}
-
-	// Simulate arbitrary transport silence: no inbound traffic for an age.
-	// No wall-clock sweep may touch this session (DP-1311).
-	s.SetLastActiveForTest(time.Now().Add(-24 * time.Hour).UnixNano())
-	manager.ExtractPendingChars()
-
-	if _, ok := manager.GetSession(playerName); !ok {
-		t.Error("quiet connected telnet session must stay registered")
-	}
-	if s.GetPlayer() != nil {
-		if _, ok := world.GetPlayer(playerName); !ok {
-			t.Error("quiet connected telnet player must stay in the world")
-		}
-	}
-
-	// Closing the client lets the handleConn goroutine exit cleanly.
-	_ = client.Close()
-	select {
-	case <-done:
-	case <-time.After(2 * time.Second):
-		t.Fatal("handleConn did not return after client close")
-	}
-}
-
-func TestObservationTelnetRenderingHasNoStateBoxAndGatesVNum(t *testing.T) {
-	world, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{
-		VNum:        1234,
-		Name:        "Viewer-Aware Hall",
-		Description: "No transport-specific decoration belongs here.",
-		Flags:       []string{"0", "0", "0", "0"},
-		Sector:      0,
-	}}})
-	if err != nil {
-		t.Fatalf("NewWorld: %v", err)
-	}
-	t.Cleanup(world.StopAITicker)
-
-	state, err := json.Marshal(session.ServerMessage{Type: session.MsgState, Data: map[string]interface{}{
-		"player": map[string]interface{}{"name": "Viewer", "level": 1, "health": 10, "max_health": 10},
-		"room":   map[string]interface{}{"vnum": 1234, "name": "Viewer-Aware Hall"},
-	}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if f, ok := session.RenderTerminalFrame(state); ok {
-		t.Fatalf("state frame rendered as terminal text %+v", f)
-	}
-
-	mortal := game.NewPlayer(1, "Mortal", 1234)
-	mortalResult := world.DoLookRoom(mortal, true)
-	mortalText := observationFormats(mortalResult)
-	if strings.Contains(mortalText, "---") || strings.Contains(mortalText, "Lvl ") || strings.Contains(mortalText, "[ 1234]") {
-		t.Fatalf("mortal room text leaked state decoration or vnum: %q", mortalText)
-	}
-
-	roomflagsViewer := game.NewPlayer(2, "Builder", 1234)
-	roomflagsViewer.SetLevel(game.LVL_IMMORT)
-	roomflagsViewer.SetRoomFlags(true)
-	roomflagsText := observationFormats(world.DoLookRoom(roomflagsViewer, true))
-	if !strings.Contains(roomflagsText, "[ 1234] Viewer-Aware Hall") {
-		t.Fatalf("roomflags viewer did not receive vnum: %q", roomflagsText)
-	}
-}
-
-func observationFormats(result game.ObservationResult) string {
-	var out strings.Builder
-	for _, message := range result.Messages {
-		out.WriteString(message.Format)
-		out.WriteByte('\n')
-	}
-	return out.String()
-}
 
 // TestPromptAfterCommandOutput verifies the "> " prompt is written after the
 // command's response, never before it. The prompt now travels through the

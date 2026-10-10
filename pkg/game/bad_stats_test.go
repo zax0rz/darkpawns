@@ -93,46 +93,6 @@ func TestPlayerEquipmentDexUsesDamageTail(t *testing.T) {
 	}
 }
 
-func TestPlayerEquipmentCharismaHunting(t *testing.T) {
-	w, p, obj, out := badStatsWorld(t, ApplyCha)
-	watcher := NewPlayer(12, "Watcher", 1001)
-	watcher.SetLevel(LVL_IMMORT)
-	watcher.SetPlrFlag(PrfLog1, true)
-	watcher.SetPlrFlag(PrfLog2, true)
-	if err := w.AddPlayer(watcher); err != nil {
-		t.Fatal(err)
-	}
-	old := getImmortalSessionProvider()
-	SetImmortalSessionProvider(&testSessions{watcher})
-	t.Cleanup(func() { SetImmortalSessionProvider(old) })
-	older, err := w.SpawnMobQuiet(7907, 1001)
-	if err != nil {
-		t.Fatal(err)
-	}
-	pest, err := w.SpawnMobQuiet(7907, 1001)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := w.EquipItem(p, obj, 6); err != nil {
-		t.Fatal(err)
-	}
-	if older.GetHunting() != "" || pest.GetHunting() != p.Name {
-		t.Fatalf("Pestilence target=%q, older=%q", pest.GetHunting(), older.GetHunting())
-	}
-	if pest.GetHuntingID() != "11" {
-		t.Fatalf("Pestilence player id=%q, want 11", pest.GetHuntingID())
-	}
-	if got := outputOf(out, watcher.Name); got != "[ Pestilence started hunting Wearer ]\r\n" {
-		t.Fatalf("hunting mudlog=%q", got)
-	}
-	pest.SetHunting("Already")
-	before := outputOf(out, watcher.Name)
-	w.applyBadStat(p, 'c')
-	if pest.GetHunting() != "Already" || outputOf(out, watcher.Name) != before {
-		t.Fatal("busy Pestilence was retargeted or logged")
-	}
-}
-
 func TestPlayerEquipmentBadStatEntryPoints(t *testing.T) {
 	for _, path := range []string{"lua", "move", "restore"} {
 		t.Run(path, func(t *testing.T) {

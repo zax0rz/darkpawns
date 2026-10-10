@@ -7,12 +7,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
-func (p *Player) UpdateActivity() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.LastActive = time.Now()
-}
-
 // SetRoom changes the player's current room.
 func (p *Player) SetRoom(vnum int) {
 	p.mu.RLock()
@@ -275,17 +269,6 @@ func (p *Player) VitalsSnapshot() PlayerVitals {
 		Class:     p.Class,
 		Position:  p.Position,
 	}
-}
-
-// RestoreVitals sets health, mana, and move to their stored maxima under a
-// single write lock. Used by the wizard heal/restore commands so the write
-// cannot interleave with a concurrent combat damage or regen update.
-func (p *Player) RestoreVitals() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.Health = p.MaxHealth
-	p.Mana = p.MaxMana
-	p.Move = p.MaxMove
 }
 
 // SetMaxMove sets the player's maximum movement points.

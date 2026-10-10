@@ -57,68 +57,6 @@ func siteFromRaw(raw string) CSite {
 	return site
 }
 
-func TestSiteMatchLineMatchesVerbsAsWildcards(t *testing.T) {
-	site := siteFromRaw("Saving %s.\r\nYou have %d gold pieces on hand.\r\n")
-	if site.Unverifiable() {
-		t.Fatal("the second fragment is at or above the floor, so the site is verifiable")
-	}
-	block := "Saving Frodo.\nYou have 1234 gold pieces on hand.\n"
-	if got := site.MatchLine(block); got != 2 {
-		t.Fatalf("MatchLine = %d, want 2 (the line of the last fragment)", got)
-	}
-	if got := site.MatchLine("Saving Frodo.\nYou have nothing to speak of.\n"); got != 0 {
-		t.Fatalf("MatchLine = %d, want 0 when the fixed text is absent", got)
-	}
-}
-
-func TestSiteMatchLineMatchesActCodesAsWildcards(t *testing.T) {
-	site := siteFromRaw("$n has left the game.\r\n")
-	if got := site.MatchLine("Frodo has left the game.\n"); got != 1 {
-		t.Fatalf("MatchLine = %d, want 1", got)
-	}
-	if got := site.MatchLine("Nobody here did anything.\n"); got != 0 {
-		t.Fatalf("MatchLine = %d, want 0", got)
-	}
-}
-
-func TestSiteMatchLineRequiresSegmentsInOrder(t *testing.T) {
-	site := siteFromRaw("You have to type quit--no less, to quit!\r\n")
-	if got := site.MatchLine("You have to type quit--no less, to quit!\n"); got != 1 {
-		t.Fatalf("MatchLine = %d, want 1", got)
-	}
-	if got := site.MatchLine("to quit! You have to type quit--no less,\n"); got != 0 {
-		t.Fatalf("MatchLine = %d, want 0: the words are out of order", got)
-	}
-}
-
-func TestSiteMatchLineRequiresLaterLinesForLaterFragments(t *testing.T) {
-	site := siteFromRaw("You are hungry.\r\nYou are thirsty.\r\n")
-	if got := site.MatchLine("You are hungry.\nYou are thirsty.\n"); got != 2 {
-		t.Fatalf("MatchLine = %d, want 2", got)
-	}
-	// Both fragments on one line cannot happen: the literal prints two lines.
-	if got := site.MatchLine("You are hungry. You are thirsty.\n"); got != 0 {
-		t.Fatalf("MatchLine = %d, want 0", got)
-	}
-}
-
-func TestSiteMatchLineCollapsesOutputWhitespace(t *testing.T) {
-	site := siteFromRaw("No way!  You're fighting for your life!\r\n")
-	if got := site.MatchLine("No way!  You're fighting for your life!\n"); got != 1 {
-		t.Fatalf("MatchLine = %d, want 1", got)
-	}
-}
-
-func TestSiteUnverifiableWhenEverySegmentIsShort(t *testing.T) {
-	site := siteFromRaw("Ok.\r\nNo.\r\n")
-	if !site.Unverifiable() {
-		t.Fatal("a literal with no segment at or above the floor is unverifiable")
-	}
-	if got := site.MatchLine("Ok.\nNo.\n"); got != 0 {
-		t.Fatalf("MatchLine = %d, want 0 for an unverifiable site", got)
-	}
-}
-
 func TestLineContainsSegments(t *testing.T) {
 	cases := []struct {
 		line string
@@ -136,28 +74,5 @@ func TestLineContainsSegments(t *testing.T) {
 		if got := LineContainsSegments(tc.line, tc.segs); got != tc.want {
 			t.Errorf("LineContainsSegments(%q, %v) = %v, want %v", tc.line, tc.segs, got, tc.want)
 		}
-	}
-}
-
-func TestExtractCSourceReadsTheFixtureOracle(t *testing.T) {
-	sites, err := ExtractCSource(Options{Root: "testdata/census", CDir: "src"})
-	if err != nil {
-		t.Fatalf("ExtractCSource: %v", err)
-	}
-	byText := map[string]CSite{}
-	for _, s := range sites {
-		for _, seg := range s.Segments {
-			byText[seg] = s
-		}
-	}
-	goodbye, ok := byText["Goodbye, friend.. Come back soon!"]
-	if !ok {
-		t.Fatalf("fixture site not found; got %d sites", len(sites))
-	}
-	if goodbye.Fn != "do_quit" || goodbye.Sink != "send_to_char" {
-		t.Fatalf("site = %+v, want do_quit / send_to_char", goodbye)
-	}
-	if ln := goodbye.MatchLine("Frodo waves.\nGoodbye, friend.. Come back soon!\n"); ln != 2 {
-		t.Fatalf("MatchLine = %d, want 2", ln)
 	}
 }

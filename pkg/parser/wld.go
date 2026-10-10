@@ -105,18 +105,6 @@ func ApplyDoorReset(info, state int) int {
 	return info
 }
 
-// LegacyDoorState converts runtime bits to the historic persisted 0/1/2
-// representation. The save-file schema intentionally remains unchanged.
-func LegacyDoorState(info int) int {
-	if info&ExitLocked != 0 {
-		return 2
-	}
-	if info&ExitClosed != 0 {
-		return 1
-	}
-	return 0
-}
-
 // ParseWldFile parses a single .wld file and returns all rooms.
 func ParseWldFile(path string) ([]Room, error) {
 	cleanPath, err := validateWorldPath(path)

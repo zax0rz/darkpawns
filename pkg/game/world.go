@@ -371,34 +371,12 @@ func (w *World) PostInit() {
 	w.HouseBoot()
 }
 
-// GetSnapshotManager returns the world's snapshot manager.
-func (w *World) GetSnapshotManager() *SnapshotManager {
-	return w.snapshots
-}
-
 // GetParsedWorld returns the original parsed world data used to create this world.
 // Returns nil if the world was not created from parsed data.
 func (w *World) GetParsedWorld() *parser.World {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	return w.parsedData
-}
-
-// ReplaceParsedWorld swaps the in-memory world data with a fresh parse.
-// Used by the reload wizard command.
-func (w *World) ReplaceParsedWorld(pw *parser.World) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	w.parsedData = pw
-	w.rooms = make(map[int]*parser.Room)
-	w.roomOrder = make([]int, 0, len(pw.Rooms))
-	for i := range pw.Rooms {
-		room := &pw.Rooms[i]
-		if _, exists := w.rooms[room.VNum]; !exists {
-			w.roomOrder = append(w.roomOrder, room.VNum)
-		}
-		w.rooms[room.VNum] = room
-	}
 }
 
 // GetRoom returns a room by VNum.
@@ -558,13 +536,6 @@ func (w *World) AddPlayer(p *Player) error {
 	return nil
 }
 
-// RemovePlayer removes a player from the world.
-func (w *World) RemovePlayer(name string) {
-	if p, ok := w.GetPlayer(name); ok {
-		w.RemovePlayerBody(p)
-	}
-}
-
 // RemovePlayerBody cannot delete a later same-name replacement.
 func (w *World) RemovePlayerBody(p *Player) {
 	if p == nil {
@@ -578,15 +549,6 @@ func (w *World) RemovePlayerBody(p *Player) {
 	w.mu.Unlock()
 	if removed {
 		w.retireCombatBody(p)
-	}
-}
-
-// ForEachPlayer calls fn for each player in the world. Thread-safe.
-func (w *World) ForEachPlayer(fn func(p *Player)) {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-	for _, p := range w.players {
-		fn(p)
 	}
 }
 
@@ -1087,133 +1049,6 @@ func (w *World) RoomEcho(roomVNum int, message string, excludeName string) {
 	actToRoom(w, roomVNum, message, excludeName)
 }
 
-// MovePlayer moves a player to a new room if the exit exists and doors permit.
-func (w *World) MovePlayer(p *Player, direction string) (*parser.Room, error) {
-	// H-11: Split into two phases — collect results under lock, send messages after.
-	// p.SendMessage() blocks when the send channel is full; holding w.mu.Lock()
-	// while blocked starves every other world reader and writer indefinitely.
-	var errMsg string
-	var result *parser.Room
-	var moveErr error
-
-	w.mu.Lock()
-	stopped := false
-	var cleanupSequence uint64
-validateMove:
-	currentRoom, ok := w.rooms[p.GetRoom()]
-	if !ok {
-		w.mu.Unlock()
-		return nil, fmt.Errorf("player in invalid room %d", p.RoomVNum)
-	}
-
-	exit, ok := currentRoom.Exits[direction]
-	if !ok {
-		w.mu.Unlock()
-		return nil, fmt.Errorf("no exit %s", direction)
-	}
-
-	// Door check — exit must be open to pass
-	if exit.ExitInfo&parser.ExitClosed != 0 {
-		errMsg = "The door is closed.\r\n"
-		moveErr = fmt.Errorf("door closed")
-	} else {
-		newRoom, ok := w.rooms[exit.ToRoom]
-		if !ok {
-			w.mu.Unlock()
-			return nil, fmt.Errorf("exit leads to invalid room %d", exit.ToRoom)
-		}
-
-		// Boat requirement for WATER_NOSWIM
-		// C source: act.movement.c:126-129 — needs boat for source or dest WATER_NOSWIM
-		if currentRoom.Sector == 7 || newRoom.Sector == 7 { // SECT_WATER_NOSWIM
-			if !p.HasBoat() {
-				errMsg = "You need a boat to go there.\r\n"
-				moveErr = fmt.Errorf("no boat")
-			}
-		}
-
-		// Room tunnel limit — only 1 PC allowed
-		// C source: act.movement.c:189-191 — ROOM_TUNNEL = bit 8
-		if moveErr == nil && roomHasFlagBit(newRoom.Flags, 8) {
-			pcCount := 0
-			for _, other := range w.players {
-				if other.RoomVNum == newRoom.VNum {
-					pcCount++
-				}
-			}
-			if pcCount >= 1 {
-				errMsg = "There isn’t enough room there!\r\n"
-				moveErr = fmt.Errorf("room tunnel full")
-			}
-		}
-
-		if moveErr == nil {
-			// C char_from_room stops combat before relocating (handler.c:504-529).
-			// Only fighting movement needs the unlocked engine boundary.
-			if !stopped && p.GetFightingBody() != nil {
-				from := p.GetRoom()
-				sequence := combatRoomSequence(p)
-				cleanupSequence = sequence
-				registered := w.players[p.GetName()] == p
-				w.mu.Unlock()
-				w.stopRoomFights(p)
-				w.mu.Lock()
-				p.mu.RLock()
-				interrupted := p.RoomVNum != from || p.RoomEntrySequence != sequence || p.combatRetired || p.Flags&(1<<uint(plrExtractBit)) != 0 || p.fightingBody != nil
-				p.mu.RUnlock()
-				if interrupted || (registered && w.players[p.GetName()] != p) {
-					w.mu.Unlock()
-					return nil, fmt.Errorf("movement interrupted during combat cleanup")
-				}
-				stopped = true
-				// Refresh room/exit, boat/tunnel gates and cost after the lock gap.
-				goto validateMove
-			}
-			moveCost := (sectorMoveCost(currentRoom.Sector) + sectorMoveCost(newRoom.Sector)) / 2
-			p.mu.Lock()
-			if p.RoomVNum != currentRoom.VNum || p.combatRetired || p.Flags&(1<<uint(plrExtractBit)) != 0 || (stopped && (p.fightingBody != nil || p.RoomEntrySequence != cleanupSequence)) {
-				p.mu.Unlock()
-				w.mu.Unlock()
-				return nil, fmt.Errorf("movement interrupted during combat cleanup")
-			}
-			if p.Level < LVL_IMMORT && p.Move < moveCost {
-				p.mu.Unlock()
-				errMsg = "You are too exhausted.\r\n"
-				moveErr = fmt.Errorf("too exhausted")
-			} else {
-				if p.Level < LVL_IMMORT {
-					p.Move -= moveCost
-				}
-				p.RoomVNum = newRoom.VNum
-				p.mu.Unlock()
-
-				// Adjust room light for equipped light sources
-				// If player has a lit light source, old room loses light, new room gains it
-				if p.HasLight() {
-					w.adjustRoomLight(currentRoom.VNum, -1)
-					w.adjustRoomLight(newRoom.VNum, 1)
-				}
-
-				result = newRoom
-			}
-		}
-	}
-
-	w.mu.Unlock()
-
-	if result != nil && roomHasFlagBit(result.Flags, 1) && p.Level < LVL_IMMORT {
-		// Death trap — act.movement.c:288-301. Corpse-less, penalty-free extraction
-		// to the temple; performed outside the world lock because roomMessage/
-		// SendMessage/SetRoom acquire their own locks.
-		w.deathTrap(p)
-	}
-
-	if errMsg != "" {
-		p.SendMessage(errMsg)
-	}
-	return result, moveErr
-}
-
 // sectorMoveCost returns the movement-point cost for a sector type, reading the
 // shared movementLoss table (src/constants.c movement_loss[]). Out-of-range
 // sectors fall back to the INSIDE cost rather than panicking; C never indexes
@@ -1276,11 +1111,6 @@ func (w *World) spawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
 // (act.wizard.c:1315-1321).
 func (w *World) SpawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.spawnMobQuiet(vnum, roomVNum)
-}
-
-// SpawnMobInstance is an alias for SpawnMob for compatibility.
-func (w *World) SpawnMobInstance(vnum int, roomVNum int) (*MobInstance, error) {
-	return w.SpawnMob(vnum, roomVNum)
 }
 
 // SpawnMobWithLevelI creates a mob with overridden level, returns interface{} for spell layer.

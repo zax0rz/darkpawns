@@ -56,35 +56,6 @@ func TestManager_CountSessions(t *testing.T) {
 	}
 }
 
-func TestManager_IsWizlocked_Default(t *testing.T) {
-	m := makeTestManager(t)
-	if m.IsWizlocked() {
-		t.Error("IsWizlocked should default to false")
-	}
-}
-
-func TestManager_SetWizlock(t *testing.T) {
-	m := makeTestManager(t)
-
-	m.SetWizlock(true)
-	if !m.IsWizlocked() {
-		t.Error("IsWizlocked should be true after SetWizlock(true)")
-	}
-
-	m.SetWizlock(false)
-	if m.IsWizlocked() {
-		t.Error("IsWizlocked should be false after SetWizlock(false)")
-	}
-}
-
-func TestManager_HasDB(t *testing.T) {
-	m := makeTestManager(t)
-	// makeTestManager uses newTestManager with nil DB, so HasDB should be false
-	if m.HasDB() {
-		t.Error("HasDB should be false when no database is configured")
-	}
-}
-
 func TestManager_GetShopManager(t *testing.T) {
 	m := makeTestManager(t)
 	sm := m.GetShopManager()

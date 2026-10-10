@@ -8,41 +8,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-func TestDraftStoreAppliesOrderedOperationsAndReturnsEffectiveCopy(t *testing.T) {
-	store := NewDraftStore()
-	original := parser.Room{VNum: 1001, Name: "old", Exits: map[string]parser.Exit{}}
-	if _, err := store.Open("builder-1", KindRoom, 1001, original); err != nil {
-		t.Fatal(err)
-	}
-	operations := []Operation{
-		{Kind: OpSetRoomName, Text: strings.Repeat("x", MaxRoomName+10)},
-		{Kind: OpSetRoomSector, Value: 15},
-	}
-	draft, err := store.Patch("builder-1", operations)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, want := len(draft.Working.Name), MaxRoomName-1; got != want {
-		t.Fatalf("effective room name length = %d, want %d", got, want)
-	}
-	if draft.Working.Sector != 15 {
-		t.Fatalf("effective sector = %d, want 15", draft.Working.Sector)
-	}
-	if got := draft.Diff(original); len(got) != 2 || got[0] != "name" || got[1] != "sector" {
-		t.Fatalf("draft diff = %#v, want name/sector", got)
-	}
-	if operations[0].Room != nil {
-		t.Fatal("patch retained an input room reference")
-	}
-
-	if _, ok := store.Commit("builder-1"); !ok {
-		t.Fatal("commit did not consume draft")
-	}
-	if _, ok := store.Get("builder-1"); ok {
-		t.Fatal("draft survived commit")
-	}
-}
-
 func TestZoneCommandsForRoomUsesStickyRoomCarry(t *testing.T) {
 	commands := []parser.ZoneCommand{
 		{Command: "M", Arg3: 1001},
