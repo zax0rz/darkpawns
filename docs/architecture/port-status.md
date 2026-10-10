@@ -137,7 +137,6 @@ See docs/reviews/README.md for current fix progress.
 
 ## TIER 2 ✅ DONE  # — Go Modernization (~800 lines)
 
-- [x] **Database error handling + retry** — `pkg/optimization/database.go:244`, `pkg/optimization/websocket.go:209`
 - [x] **Board room echo** — `pkg/game/boards.go` lines 335, 489
 - [x] **House storage** — `pkg/game/houses.go` lines 64, 69, 333, 494
 - [x] **Clan string_write** — `pkg/game/clans.go:1202`
