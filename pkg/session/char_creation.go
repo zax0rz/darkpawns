@@ -645,11 +645,12 @@ func (s *Session) completeCharCreation() error {
 	restoreLiveDefaults := resumingCreation && !s.creationSaved
 	s.charName = s.player.Name
 	isGod := s.player.GetLevel() >= game.LVL_IMMORT
-	// Crash_load rewrites an existing header before the entry save (src/objsave.c:659-663).
-	if s.manager.hasDB {
-		if err := db.ObjectSaveLoaded(s.manager.db, s.player.Name); err != nil {
-			return s.abortEntry(err)
-		}
+	// Crash_load reads the stored rent code, emits the matching entry mudlog,
+	// and rewrites the header before the entry save (src/objsave.c:491-541,
+	// :659-663). A brand-new character has no object save, which is C's
+	// no-file arm.
+	if err := s.crashLoadEntry(); err != nil {
+		return s.abortEntry(err)
 	}
 	// C's menu entry save precedes do_start (interpreter.c:2186).
 	if err := s.saveCreationRecord(false); err != nil {

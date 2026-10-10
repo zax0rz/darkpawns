@@ -593,6 +593,22 @@ func (m *Manager) SetPulsePump(pump func(int) error) {
 // receives nothing. C NULLs the descriptor before extract on two paths —
 // check_idling's idle disconnect (limits.c:442-444) and a linkdead
 // close_socket (comm.c:2129) — and both must retire the session here instead.
+// deleteCrashFile ports extract_char_final's Crash_delete_crashfile call
+// (src/handler.c:1163; src/objsave.c:177-201) at the extraction site that
+// already reproduces the adjacent save_char (:1162). C deletes the crash file
+// only when its header holds RENT_CRASH, so a rent or cryo file survives for
+// the next Crash_load to log, while a LOSTEQ quit — which skipped
+// Crash_rentsave — leaves no file: that character's next entry is the no-file
+// arm. Without this the stored code outlives the file C would have removed.
+func (m *Manager) deleteCrashFile(p *game.Player) {
+	if !m.hasDB || p == nil || p.ID <= 0 {
+		return
+	}
+	if err := db.DeleteCrashObjectSave(m.db, p.GetName()); err != nil {
+		slog.Error("crash-file delete failed", "player", p.GetName(), "error", err)
+	}
+}
+
 func (m *Manager) ExtractPendingChars() {
 	work := m.world.HasPendingExtractions()
 	if !work {
@@ -657,6 +673,9 @@ func (m *Manager) ExtractPendingChars() {
 			if !player.RentedOut {
 				victim.savePlayer(player, "switched extraction", player.GetLoadRoom())
 			}
+			// C extracts this body too (handler.c:1161-1163), so the
+			// crash-file decision applies on this path as well.
+			m.deleteCrashFile(player)
 			m.mu.Lock()
 			victim.menuActive = true // no second close_socket save: C frees this body
 			m.mu.Unlock()
@@ -672,6 +691,9 @@ func (m *Manager) ExtractPendingChars() {
 		if !player.RentedOut {
 			victim.saveCharacter("extraction", player.GetLoadRoom())
 		}
+		// extract_char then deletes a crash file that still holds RENT_CRASH
+		// (src/handler.c:1163; Crash_delete_crashfile, src/objsave.c:177-201).
+		m.deleteCrashFile(player)
 		if player.IdleDisconnect {
 			// limits.c:438-451: close_socket(ch->desc) ran and ch->desc is
 			// NULL before extract_char (handler.c:1172-1175), so an

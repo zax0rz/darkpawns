@@ -1,0 +1,144 @@
+# Crash_load's entry mudlogs (src/objsave.c:459-663, DP-1404) reach in-game
+# immortals by syslog level from the stored last-exit code. The God sets syslog
+# normal and watches two mortals enter from the menu.
+#
+#   save, then reallyquit outside a save room (LOSTEQ), then 1:
+#     extraction finds RENT_CRASH and deletes the crash file
+#     (src/handler.c:1163; Crash_delete_crashfile, src/objsave.c:177-201),
+#     so the next entry is the no-file arm (:489).
+#   quit in the temple, then 1:
+#     the rent file survives extraction, so the next entry logs RENT_RENTED
+#     (:519).
+#   a PLR_NODELETE quit in the temple, then 1:
+#     cryosave writes RENT_CRYO (:959-1005), which extraction keeps, so the
+#     next entry logs it (:528).
+#
+# depth-case: mudlog.crash-load-no-equipment
+# depth-case: mudlog.crash-load-unrenting
+# depth-case: mudlog.crash-load-cryo
+# depth-case: persist.crash-file-removed-at-extraction
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Syslogger
+Y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Syslogger
+y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:ren]
+Ren
+Y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:ren]
+Ren
+y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:cryo]
+Cryo
+Y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[setup:port:cryo]
+Cryo
+y
+syspass
+syspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+recall
+
+[warmup]
+syslog
+syslog normal
+syslog
+set Cryo nodelete on
+
+# Both [relogin:*] sections are required because they are how a scenario
+# declares that the port needs its real SQLite store (needsPlayerStore); the
+# object_saves row does not exist without one. They are otherwise inert here:
+# the probe re-enters on the same connection, so no <RELOGIN> step is used
+# (that step is what would relog the actor). lifecycle-quit-reenter is the
+# model vehicle.
+[relogin:oracle]
+Ren
+syspass
+<ENTER>
+1
+
+[relogin:port]
+Ren
+syspass
+<ENTER>
+1
+
+[probe:ren]
+save
+reallyquit
+send:primary ~dpclock pulse 20
+1
+quit
+send:primary ~dpclock pulse 20
+1
+send:cryo quit
+send:primary ~dpclock pulse 20
+send:cryo 1
