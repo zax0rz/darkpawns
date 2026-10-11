@@ -9,6 +9,7 @@ package game
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 // WhodMode bit constants — control what fields appear in the WHOD output.
@@ -59,14 +60,30 @@ type WhodEntry struct {
 }
 
 // Whod holds the WHOD mode flags and generates who-list output.
-// Corresponds to the static whod_mode variable in whod.c.
+// Corresponds to the static whod_mode variable in whod.c. The listener reads
+// it from its own goroutine, so every access goes through the mutex.
 type Whod struct {
-	Mode int // bitmask of WhodShow* flags
+	mu   sync.Mutex
+	mode int // bitmask of WhodShow* flags
 }
 
 // NewWhod creates a Whod instance with the default display mode.
 func NewWhod() *Whod {
-	return &Whod{Mode: WhodDefaultMode}
+	return &Whod{mode: WhodDefaultMode}
+}
+
+// GetMode returns the current whod_mode bitmask.
+func (w *Whod) GetMode() int {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.mode
+}
+
+// SetMode replaces the whod_mode bitmask.
+func (w *Whod) SetMode(mode int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.mode = mode
 }
 
 // WhodSearchBlock searches a modes list for a prefix match.
@@ -145,15 +162,18 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 	bit-- // Convert to 0-based index (C: bit-- after search returns 1-based)
 	bitMask := 1 << bit
 
+	// C reads and writes the static whod_mode directly; the snapshot keeps
+	// each command's decision consistent while the listener may read it.
+	mode := w.GetMode()
+
 	// Handle ON
-	// Source: whod.c lines 176–191
+	// Source: whod.c lines 176–191 (REMOVE_BIT/SET_BIT, then ack, then LOG)
 	if bitMask == WhodShowOn {
-		if w.Mode&WhodShowOn != 0 {
+		if mode&WhodShowOn != 0 {
 			return "WHOD already turned on.\n\r"
 		}
-		if w.Mode&WhodShowOff != 0 {
-			w.Mode &^= WhodShowOff
-			w.Mode |= WhodShowOn
+		if mode&WhodShowOff != 0 {
+			w.SetMode((mode &^ WhodShowOff) | WhodShowOn)
 			return ackLog("WHOD turned on.\n\r", fmt.Sprintf("WHOD turned on by %s.", playerName))
 		}
 		return "WHOD is not turned off.\n\r"
@@ -162,26 +182,25 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 	// Handle OFF
 	// Source: whod.c lines 193–211
 	if bitMask == WhodShowOff {
-		if w.Mode&WhodShowOff != 0 {
+		if mode&WhodShowOff != 0 {
 			return "WHOD already turned off.\n\r"
 		}
-		if w.Mode&WhodShowOn != 0 {
-			w.Mode &^= WhodShowOn
-			w.Mode |= WhodShowOff
+		if mode&WhodShowOn != 0 {
+			w.SetMode((mode &^ WhodShowOn) | WhodShowOff)
 			return ackLog("WHOD turned off.\n\r", fmt.Sprintf("WHOD turned off by %s.", playerName))
 		}
 		return "WHOD is not turned on.\n\r"
 	}
 
-	// Toggle other mode bits
-	// Source: whod.c lines 212–230
-	if w.Mode&bitMask != 0 {
+	// Toggle other mode bits. C acknowledges and LOGs before the bit changes
+	// (src/whod.c:212–230), so the mutation follows ackLog.
+	if mode&bitMask != 0 {
 		message := ackLog(fmt.Sprintf("%s will not be shown on WHOD.\n\r", WhodModeNames[bit]), fmt.Sprintf("%s removed from WHOD by %s.", WhodModeNames[bit], playerName))
-		w.Mode &^= bitMask
+		w.SetMode(mode &^ bitMask)
 		return message
 	}
 	message := ackLog(fmt.Sprintf("%s will now be shown on WHOD.\n\r", WhodModeNames[bit]), fmt.Sprintf("%s added to WHOD by %s.", WhodModeNames[bit], playerName))
-	w.Mode |= bitMask
+	w.SetMode(mode | bitMask)
 	return message
 }
 
@@ -189,8 +208,9 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 // Source: whod.c sprintbit() call in do_whod() no-argument path.
 func (w *Whod) activeModesString() string {
 	var parts []string
+	mode := w.GetMode()
 	for i, name := range WhodModeNames {
-		if w.Mode&(1<<i) != 0 {
+		if mode&(1<<i) != 0 {
 			parts = append(parts, name)
 		}
 	}
@@ -200,5 +220,137 @@ func (w *Whod) activeModesString() string {
 	return strings.Join(parts, " ")
 }
 
-// The network-service lifecycle remains unported. BuildWhoList has no live
-// transport caller; a WebSocket who command is not proof of WHOD parity.
+// WhodMudName is C's MUDNAME (#define at src/whod.c:27).
+const WhodMudName = "Dark Pawns"
+
+// WhodGreeting returns C's SHORT_GREETINGS (src/config.c:221-231) byte for
+// byte. C writes it to the accepted socket before the list (src/whod.c:337-339).
+func WhodGreeting() string {
+	return "\n\r\n\r" +
+		"         (_____)           (_)    (_____)\n\r" +
+		"   _     /  __ \\           | |    |  __ \\                            _\n\r" +
+		"  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\n\r" +
+		"   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\n\r" +
+		" .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\n\r" +
+		" ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\n\r" +
+		"        /                         |||\n\r" +
+		"                             |||\n\r" +
+		"                 `.'\n\r" +
+		"\n\r"
+}
+
+// WhodHeader is C's list header (src/whod.c:341), written after the greeting.
+func WhodHeader() string {
+	return "\n\rA list of active players on " + WhodMudName + ":\n\r\n\r"
+}
+
+// BuildWhoList renders one WHOD response body: the header, one line per entry
+// in the caller's order, then the player/god footer. It ports the WHOD_OPEN
+// assembly at src/whod.c:341-425. The caller supplies only entries C would
+// have walked (a descriptor, not an NPC) and flags IS_INVIS per entry; the
+// invisible filter and every byte below are C's.
+func (w *Whod) BuildWhoList(entries []WhodEntry) string {
+	var sb strings.Builder
+	sb.WriteString(WhodHeader())
+
+	// One consistent snapshot for the whole response: C reads the static
+	// whod_mode repeatedly, and the port must not change mid-render.
+	mode := w.GetMode()
+
+	players, gods := 0, 0
+	for _, entry := range entries {
+		// IS_INVIS gate — src/whod.c:345.
+		if entry.IsInvisible && mode&WhodShowInvis == 0 {
+			continue
+		}
+
+		if mode&(WhodShowLevel|WhodShowClass) != 0 {
+			sb.WriteString("[")
+			if mode&WhodShowWizLevel == 0 && entry.Level >= WhodMinLevel {
+				if mode&WhodShowLevel != 0 && mode&WhodShowClass != 0 {
+					switch {
+					case entry.Level >= 40:
+						sb.WriteString("*IMP*")
+					case entry.Level >= 38:
+						sb.WriteString("GRGOD")
+					case entry.Level >= 36:
+						sb.WriteString("HIGOD")
+					case entry.Level >= 35:
+						sb.WriteString("_LEG_")
+					case entry.Level >= 34:
+						sb.WriteString(" GOD ")
+					case entry.Level >= 32:
+						sb.WriteString("TITAN")
+					default:
+						sb.WriteString(" IMM ")
+					}
+				} else {
+					sb.WriteString("_GOD_")
+				}
+			} else {
+				if mode&WhodShowLevel != 0 {
+					fmt.Fprintf(&sb, "%2d", entry.Level)
+				}
+				if mode&WhodShowClass != 0 && mode&WhodShowLevel != 0 {
+					sb.WriteString(" ")
+				}
+				if mode&WhodShowClass != 0 {
+					sb.WriteString(classAbbrev(entry.Class))
+				}
+			}
+			sb.WriteString("] ")
+		}
+
+		if mode&WhodShowName != 0 {
+			sb.WriteString(entry.Name)
+		}
+		if mode&WhodShowTitle != 0 {
+			sb.WriteString(" ")
+			sb.WriteString(entry.Title)
+			if entry.AFK {
+				sb.WriteString(" (AFK)")
+			}
+		}
+		if mode&WhodShowSite != 0 {
+			if entry.Host != "" {
+				fmt.Fprintf(&sb, " [%s]", entry.Host)
+			} else {
+				sb.WriteString(" [ ** Unknown ** ]")
+			}
+		}
+		sb.WriteString("\r\n")
+
+		if entry.Level >= WhodMinLevel {
+			gods++
+		} else {
+			players++
+		}
+	}
+
+	fmt.Fprintf(&sb, "\n\rPlayers : %d     Gods : %d\n\r\n\r", players, gods)
+	return sb.String()
+}
+
+// classAbbrev returns the two-character class abbreviation C indexes with
+// class_abbrevs[GET_CLASS(ch)] (src/class.c:51-65).
+func classAbbrev(class int) string {
+	if class >= 0 && class < len(ClassAbbrevs) {
+		return ClassAbbrevs[class]
+	}
+	return "???"
+}
+
+// WhodInvisible mirrors C's IS_INVIS (src/whod.c:33): AFF_INVISIBLE, a
+// wizinvis level, or standing in a ROOM_NO_WHO_ROOM.
+func (w *World) WhodInvisible(p *Player) bool {
+	if p == nil {
+		return false
+	}
+	if p.IsAffected(affInvisible) || p.GetInvisLevel() != 0 {
+		return true
+	}
+	if room := w.GetRoomInWorld(p.GetRoom()); room != nil && room.HasFlag(RoomNoWho) {
+		return true
+	}
+	return false
+}

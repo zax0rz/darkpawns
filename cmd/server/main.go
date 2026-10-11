@@ -216,6 +216,7 @@ func main() {
 		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
 		telnetTLS  = flag.Int("telnet-tls-port", 0, "TLS telnet port (0 to disable); needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
+		whodPort   = flag.Int("whod-port", -1, "WHOD listener port (src/whod.c); -1 derives telnet port + 1 (C's rule), 0 disables")
 		httpBind   = flag.String("http-bind", "", "Interface the HTTP/WebSocket server listens on (all interfaces if empty). Behind a same-host reverse proxy, bind 127.0.0.1 so /ws, /api and /admin are reachable only through the proxy")
 	)
 	flag.Usage = usage
@@ -842,6 +843,26 @@ func main() {
 		}
 	}
 
+	// WHOD is C's separate who-daemon port (src/whod.c; init_whod is called
+	// with the game port at src/comm.c:274). C's rule is the game port + 1, so
+	// the flag's -1 default derives it from -telnet-port and a stock self-host
+	// matches C. Prod sets 7779 because 7778 is -telnet-tls-port. Plaintext,
+	// exactly as C.
+	whodListenPort := *whodPort
+	if whodListenPort < 0 {
+		whodListenPort = 0
+		if *telnetPort > 0 {
+			whodListenPort = *telnetPort + 1
+		}
+	}
+	if whodListenPort > 0 {
+		if err := manager.StartWhodListener(whodListenPort); err != nil {
+			slog.Error("WHOD listener failed", "port", whodListenPort, "error", err)
+		} else {
+			slog.Info("WHOD listening", "port", whodListenPort)
+		}
+	}
+
 	// TLS telnet is opt-in, with its own certificate variables: TLS_CERT_FILE
 	// and TLS_KEY_FILE switch the HTTP server to HTTPS, which a deployment
 	// behind a TLS-terminating proxy must not do. Asking for the port without
@@ -944,6 +965,9 @@ func main() {
 
 	// 2. Stop telnet listener (accepting new TCP connections)
 	telnet.Stop()
+
+	// 2b. Stop the WHOD daemon (src/comm.c:290 close_whod)
+	manager.StopWhodListener()
 
 	// 3. Stop HTTP/WebSocket server (accepting new WebSocket connections)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
