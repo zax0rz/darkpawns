@@ -97,7 +97,13 @@ func init() {
 
 	// Position / Movement
 	registerCommand("stand", wrapNoArgs(cmdStand), "Stand up.")
+	registerActorCommand("stand", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterStand(ctx)
+	})
 	registerCommand("sit", wrapNoArgs(cmdSit), "Sit down.")
+	registerActorCommand("sit", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterSit(ctx)
+	})
 	registerCommand("rest", wrapNoArgs(cmdRest), "Rest.")
 	registerCommand("sleep", wrapNoArgs(cmdSleep), "Go to sleep.")
 	registerCommand("wake", wrapArgs(cmdWake), "Wake up or wake someone else.")

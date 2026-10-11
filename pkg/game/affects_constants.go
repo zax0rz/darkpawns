@@ -54,6 +54,7 @@ const (
 	AffSleep      = affSleep
 	AffCharm      = affCharm
 	AffHide       = affHide
+	AffInvisible  = affInvisible
 	AffWerewolf   = affWerewolf
 	AffVampire    = affVampire
 	AffMount      = affMount

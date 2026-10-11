@@ -40,6 +40,12 @@ func registerCommand(name string, handler command.Handler, helpText string, alia
 	cmdRegistry.Register(name, handler, helpText, gate.MinLevel, gate.MinPosition, aliases...)
 }
 
+func registerActorCommand(name string, handler command.ActorHandler) {
+	if err := cmdRegistry.SetActorHandler(name, handler); err != nil {
+		panic(err)
+	}
+}
+
 func mustCommandGate(name string) commandGate {
 	gate, ok := commandGates[strings.ToLower(strings.TrimSpace(name))]
 	if !ok {
