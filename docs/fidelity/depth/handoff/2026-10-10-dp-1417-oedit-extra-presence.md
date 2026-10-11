@@ -114,10 +114,19 @@ build failure):
 
 Census: unit-green only — the harness does not drive the interactive OLC
 editor, so there is no oracle vehicle with an independent BRF observer. The
-retained unchanged-C reproduction
-(`2026-10-07-dp-1371-oedit-null-C.py`) supplies the paired C bytes. A full
-combined census is still required at the implementation tip and runs in Zach's
-slot.
+retained unchanged-C reproduction (`2026-10-07-dp-1371-oedit-null-C.py`)
+supplies the paired C bytes.
+
+Full combined census at the implementation tip `96769c1b8`:
+`~/Archives/darkpawns/oracle-runs/2026-10-10/dp-1417-oedit-presence`
+(`go-head.txt` = `96769c1b8`; `MANIFEST.md` written by the tool).
+
+**verdict CLEAN_AFTER_RECHECK** — full `scenarios=1153 passed=1149 expected=2
+unpinnable=0 stale=0 failed=0 infra=1 timed_out=0 unstable=1`; claims
+`pairs=3327 expected=5 fail=0 infra=0 pass=3322`. The single INFRA row is
+`show-player-stored`, the known `playerSavedDates` harness flake the brief
+names (GLM is fixing it); it passed on the tool's isolated re-run, so it was not
+chased.
 
 ## Inventory and manifest
 
