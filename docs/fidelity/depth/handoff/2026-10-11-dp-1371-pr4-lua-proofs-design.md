@@ -50,17 +50,30 @@ Each subtest asserts the observable contract exactly:
 Lua reads it as a value, so that row is recorded as **R1a** and asserts the log
 only — no assertion on the returned value.
 
-**Where type and level are pinned (correction).** The bindings emit through
+**Where type and level are pinned.** The bindings emit through
 `Bridge.Log(msg)`, which carries no type/level/file: the fake records it via
-`fakeBridge.Log` as a bare message. So the 57-row table can pin the payload and
-the file flag, but **not** the type and level. Those live one layer out:
+`fakeBridge.Log` as a bare message. So the 57-row table pins the payload and the
+file flag (its assertion is the whole log sequence — exactly one expected
+payload, so an unrelated extra log fails the row), but **not** the type and
+level. Those live one layer out:
 `game.WorldScriptableAdapter.Log` (pkg/game/world_bridge.go:484) is
 `MudLog(msg, MudlogBrief, lvlImmort, false)` — BRF / `LVL_IMMORT` / file FALSE,
-which is exactly the generated TSV's contract for all 57. A companion test in
-pkg/game pins that mapping (observer at 31 with BRF syslog, a level-30 negative,
-and the file capture empty), so the four dimensions are pinned where each one
-actually lives. Asserting typ/level/toFile from the scripting table would have
-been asserting the fake, not the port.
+exactly the generated TSV's contract for all 57.
+`TestScriptAdapterLogIsBriefImmortalNoFile` (pkg/game) pins that mapping once
+for all 57: an observer with `LOG1` receives the line, one with syslog off does
+not (BRF is the lowest type, so that is what distinguishes it from NRM/CMP), a
+level-30 observer does not, and the file capture stays empty. Asserting
+typ/level/toFile from the scripting table would have been asserting the fake,
+not the port.
+
+## Controls scope (eight families, not 57 mutations)
+
+`2026-10-11-dp-1371-pr4-lua-proofs-controls.py` removes the producer of **one
+representative binding per D7 family** (`lua-proof-01`…`08`) and requires that
+family's subtest to fail on the tightened assertion — a green there claims each
+family can fail, not that all 57 rows were mutated. The survey's group column
+has eight families (seven of eight rows, one of one), which is what the data
+supports.
 
 ## Controls (R5h)
 
