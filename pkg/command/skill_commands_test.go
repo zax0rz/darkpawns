@@ -848,7 +848,9 @@ func TestCmdCompare_Blind(t *testing.T) {
 	if err := CmdCompare(session, []string{"sword", "sword"}); err != nil {
 		t.Fatalf("CmdCompare: %v", err)
 	}
-	if got := joinMessages(session.messages); got != "You can't see a damned thing!\r\n\r\n" {
+	// C do_compare's blind gate sends one terminator (new_cmds.c:1969); the
+	// old \r\n\r\n expectation pinned the sendSkillResult double append (PF-063).
+	if got := joinMessages(session.messages); got != "You can't see a damned thing!\r\n" {
 		t.Fatalf("blind compare message = %q", got)
 	}
 }
