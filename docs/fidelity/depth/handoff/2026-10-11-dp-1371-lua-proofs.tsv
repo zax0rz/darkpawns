@@ -1,0 +1,58 @@
+site	c_function	payload	type	level	file
+src/scripts.c:137	lua_action	[Lua] Invalid argument passed to lua_action.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:160	lua_aff_flagged	[Lua] Invalid argument passed to lua_aff_flagged.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:184	lua_aff_flags	[Lua] Invalid set/remove to lua_aff_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:188	lua_aff_flags	[Lua] Invalid argument passed to lua_aff_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:241	lua_cansee	[Lua] Invalid argument to lua_cansee.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:380	lua_echo	[Lua] Invalid arguments passed to lua_echo.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:422	lua_equip_char	[Lua] Invalid arguments passed to lua_equip_char.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:447	lua_exit_flags	[Lua] Invalid set/remove to lua_exit_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:451	lua_exit_flags	[Lua] Invalid argument passed to lua_exit_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:475	lua_exit_flagged	[Lua] Invalid argument passed to lua_exit_flagged.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:491	lua_extchar	[Lua] Invalid char passed to lua_extchar	BRF	LVL_IMMORT	FALSE
+src/scripts.c:507	lua_extobj	[Lua] Invalid object passed to lua_extobj	BRF	LVL_IMMORT	FALSE
+src/scripts.c:537	lua_extra	[Lua] Invalid argument passed to lua_extra.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:566	lua_follow	[Lua] Invalid argument passed to lua_follow.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:608	lua_inworld	[Lua] Invalid argument passed to lua_inworld.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:617	lua_inworld	[Lua] Invalid argument passed to lua_inworld.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:621	lua_inworld	[Lua] Invalid argument passed to lua_inworld.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:631	lua_inworld	[Lua] Invalid argument passed to lua_inworld.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:692	lua_ishunt	[Lua] Invalid argument passed to lua_ishunt.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:712	lua_isnpc	[Lua] Invalid argument to lua_isnpc.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:775	lua_load_room	[Lua] Invalid argument passed to lua_load_room.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:787	lua_log	[Lua] Invalid argument passed to lua_log.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:806	lua_mload	[Lua] Invalid mobile vnum passed to lua_mload.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:815	lua_mload	[Lua] Invalid arguments passed to lua_mload.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:838	lua_mob_flagged	[Lua] Invalid argument passed to lua_mob_flagged.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:862	lua_mob_flags	[Lua] Invalid set/remove to lua_mob_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:866	lua_mob_flags	[Lua] Invalid argument passed to lua_mob_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:901	lua_mount	[Lua] Invalid position to lua_mount.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:903	lua_mount	[Lua] Invalid argument passed to lua_mount.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:942	lua_obj_extra	[Lua] Invalid set/remove to lua_obj_extra.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:946	lua_obj_extra	[Lua] Invalid argument passed to lua_obj_extra.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:969	lua_obj_flagged	[Lua] Invalid argument passed to lua_obj_flagged.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:990	lua_oload	[Lua] lua_oload returned an unknown object.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1001	lua_oload	[Lua] Invalid location specified in lua_oload.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1008	lua_oload	[Lua] Invalid argument passed to lua_oload.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1035	lua_objfrom	[Lua] Invalid argument passed to lua_objfrom.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1106	lua_obj_list	[Lua] Invalid location to search in lua_obj_list.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1123	lua_obj_list	[Lua] Invalid argument passed to lua_obj_list.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1169	lua_objto	[Lua] Invalid argument passed to lua_objto.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1192	lua_plr_flagged	[Lua] Invalid argument passed to lua_plr_flagged.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1216	lua_plr_flags	[Lua] Invalid set/remove to lua_plr_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1220	lua_plr_flags	[Lua] Invalid argument passed to lua_plr_flags.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1255	lua_raw_kill	[Lua] Invalid arguments passed to lua_raw_kill.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1287	lua_say	[Lua] Invalid argument passed to lua_say.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1304	lua_save_char	[Lua] Invalid argument passed to lua_save_char.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1320	lua_save_obj	[Lua] Invalid argument passed to lua_save_obj.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1336	lua_save_room	[Lua] Invalid argument passed to lua_save_room.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1360	lua_set_hunt	[Lua] Invalid arguments passed to lua_set_hunt.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1419	lua_social	[Lua] Unknown command passed to lua_social.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1423	lua_social	[Lua] Invalid argument passed to lua_social.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1466	lua_spell	[Lua] No spell passed to lua_spell.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1486	lua_spell	[Lua] Invalid argument passed to lua_spell.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1513	lua_steal	[Lua] Invalid argument passed to lua_steal.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1532	lua_tport	[Lua] Invalid room passed to lua_tport.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1559	lua_tport	[Lua] Invalid argument passed to lua_tport.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1586	lua_tell	[Lua] Invalid argument passed to lua_tell.	BRF	LVL_IMMORT	FALSE
+src/scripts.c:1604	lua_unaffect	[Lua] Invalid argument passed to lua_unaffect.	BRF	LVL_IMMORT	FALSE
