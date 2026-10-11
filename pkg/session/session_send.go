@@ -342,7 +342,10 @@ func (s *Session) sendPromptNow() {
 	// real player-facing output. Compact players never get the frame, on any
 	// playing flush (PF-063: the missing !PRF_COMPACT gate printed a blank
 	// line before every prompt a compact player received).
-	flags := s.player.GetFlags()
+	var flags uint64
+	if s.player != nil {
+		flags = s.player.GetFlags()
+	}
 	if s.outputSincePrompt.Swap(0) > 0 && (!editing || playing) &&
 		flags&(1<<uint(game.PrfCompact)) == 0 {
 		text = "\r\n" + text

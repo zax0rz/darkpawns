@@ -75,6 +75,48 @@ func TestSendPromptNowBarePromptWithoutPendingOutput(t *testing.T) {
 	}
 }
 
+// TestSendPromptWithoutPlayerPreservesFrameBehavior covers a bare session
+// created before a player is attached. No player has no compact flag, so its
+// prompt keeps the pre-cluster-2 noncompact framing behavior.
+func TestSendPromptWithoutPlayerPreservesFrameBehavior(t *testing.T) {
+	for _, test := range []struct {
+		name          string
+		pendingOutput int64
+		want          string
+	}{
+		{name: "pending output", pendingOutput: 1, want: "\r\n> "},
+		{name: "no pending output", pendingOutput: 0, want: "> "},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s := (&Manager{}).NewSession()
+			s.outputSincePrompt.Store(test.pendingOutput)
+			s.SendPrompt()
+			if len(s.send) != 1 {
+				t.Fatalf("SendPrompt enqueued %d messages, want exactly one", len(s.send))
+			}
+			msgBytes := <-s.send
+			var msg ServerMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				t.Fatalf("unmarshal prompt message: %v", err)
+			}
+			if msg.Type != MsgPrompt {
+				t.Fatalf("message type = %q, want %q", msg.Type, MsgPrompt)
+			}
+			data, ok := msg.Data.(map[string]interface{})
+			if !ok {
+				t.Fatalf("prompt data = %#v, want a text map", msg.Data)
+			}
+			if got, ok := data["text"].(string); !ok || got != test.want {
+				t.Fatalf("prompt text = %#v, want %q", data["text"], test.want)
+			}
+			frame, ok := s.RenderTerminalFrame(msgBytes)
+			if !ok || frame.Kind != FramePrompt || frame.Text != test.want {
+				t.Fatalf("rendered prompt = %+v, ok=%t; want FramePrompt %q", frame, ok, test.want)
+			}
+		})
+	}
+}
+
 // TestSendPromptNowEditorFrameBehavior pins the editor interactions of the
 // same C rule (comm.c:1630-1632): a CON_* editor's flush is never framed,
 // do_string's CON_PLAYING editor's flush is framed for noncompact players,
