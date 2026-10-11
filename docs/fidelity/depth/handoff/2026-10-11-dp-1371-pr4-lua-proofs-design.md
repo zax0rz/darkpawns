@@ -40,15 +40,27 @@ type luaProofCase struct {
 
 Each subtest asserts the observable contract exactly:
 
-* exactly one `recordingBridge.mudlogs` entry, with
-  `msg == payload`, `typ == BRF`, `level == LVL_IMMORT`, `toFile == false`;
-* the script's own execution still succeeds (`RunScript` returns no error), and
-  the bindings whose C return value the script can see are checked the way
-  `lua_seam_producers_test.go` does it (Lua sees no value as `nil`).
+* exactly one `Bridge.Log` line equal to `payload`, and the file-TRUE sink
+  (`fakeBridge.logFiles`, i.e. `Bridge.MudLog`) stayed **empty** — that pins the
+  bytes and the file flag at the bridge boundary;
+* the script still runs to completion (`RunScript` returns no error and counts
+  as handled), and no other diagnostic appears in the log list.
 
 `lua_tport`'s `return -1` (`src/scripts.c:1532`) is C undefined behaviour when
 Lua reads it as a value, so that row is recorded as **R1a** and asserts the log
 only — no assertion on the returned value.
+
+**Where type and level are pinned (correction).** The bindings emit through
+`Bridge.Log(msg)`, which carries no type/level/file: the fake records it via
+`fakeBridge.Log` as a bare message. So the 57-row table can pin the payload and
+the file flag, but **not** the type and level. Those live one layer out:
+`game.WorldScriptableAdapter.Log` (pkg/game/world_bridge.go:484) is
+`MudLog(msg, MudlogBrief, lvlImmort, false)` — BRF / `LVL_IMMORT` / file FALSE,
+which is exactly the generated TSV's contract for all 57. A companion test in
+pkg/game pins that mapping (observer at 31 with BRF syslog, a level-30 negative,
+and the file capture empty), so the four dimensions are pinned where each one
+actually lives. Asserting typ/level/toFile from the scripting table would have
+been asserting the fake, not the port.
 
 ## Controls (R5h)
 
