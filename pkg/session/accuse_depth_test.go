@@ -28,14 +28,9 @@ func TestAccuseRegistrationUsesCEntryGate(t *testing.T) {
 	}
 }
 
-// TestAccuseNoArgBytesPinCSource enforces the bytes the oracle census cannot
-// verify: accuse's no-argument block is classified EXPECTED_UNSTABLE because
-// the C oracle emits run-varying garbage where its own socials file specifies
-// these bytes (accuse.tsv stability=run-varying; the # line is fread_action's
-// NULL-field convention, so C's no-arg path sends only char_no_arg and act()
-// no-ops the NULL others_no_arg). A Go-side regression here would stay
-// census-green, so the source-literal expectation is enforced by unit test
-// instead (R1/R4/R5e; see PR #1501's masking-tradeoff note).
+// TestAccuseNoArgBytesPinCSource pins src/act.social.c:126-129 and
+// lib/misc/socials:1-9 through registered session dispatch. The old retained
+// anomaly needs fresh oracle evidence; this proof never depends on that ledger.
 func TestAccuseNoArgBytesPinCSource(t *testing.T) {
 	social, ok := game.Socials["accuse"]
 	if !ok {
