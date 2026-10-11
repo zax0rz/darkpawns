@@ -1371,10 +1371,14 @@ func genderPronoun(sex int) string {
 // terminator must not gain a second one — the extra "\r\n" printed a blank
 // line C never sends (PF-063: every sendSkillResult message ending in \r\n
 // went out double-terminated, e.g. do_detect's "You carefully check the
-// room...\r\n", src/new_cmds2.c:516). Literals transcribed without their
-// terminator keep receiving one here.
+// room...\r\n", src/new_cmds2.c:516). C spells that terminator both ways —
+// "\r\n" and "\n\r" (do_compare's "They're the same thing!\n\r",
+// src/new_cmds.c:1991) — and either spelling terminates the message; the
+// appended "\r\n" after an LFCR literal was the extra blank PF-063 measured
+// on compare. Literals transcribed without their terminator keep receiving
+// one here.
 func skillMessageTerminator(message string) string {
-	if strings.HasSuffix(message, "\r\n") {
+	if strings.HasSuffix(message, "\r\n") || strings.HasSuffix(message, "\n\r") {
 		return message
 	}
 	return message + "\r\n"
