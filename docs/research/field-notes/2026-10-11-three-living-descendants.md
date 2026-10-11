@@ -17,6 +17,8 @@ The Dark Pawns 2.2 C source that R.E. Paret (Frontline) published at `github.com
 | Dark Knights Remorted | **Continued development** of the C code: a self-described "fork of the classic Dark Pawns" with "small, targeted tweaks", quality-of-life changes, bug fixes, games of chance in Tyr's Pub, and a new **Necromancer** class. It allows several characters per player ("crew", with "mults"). Online since 2026-03-02, DikuMUD codebase, port 4350. It says it "is not intended to replace the original Dark Pawns, which remains active at darkpawns.net". | MUDVerse listing, 2026-10-11 |
 | This project | **Faithful translation:** a 1:1 Go port whose rule is that the game's player-facing bytes, command surface and random draws must match the C (`docs/fidelity/RULEBOOK.md`, R1 to R4) | this repository |
 
+The game was announced publicly in the darkpawns.net Discord on 2026-10-11, about seven months after its listed online date (reported by Zach, who saw the announcement; the Discord message itself is not archived here). The old community's gathering place is still where a new descendant gets announced.
+
 Zach created a character on Dark Knights Remorted on 2026-10-11 and left a congratulatory note on its bulletin board.
 
 ## Why it matters for the fidelity paper
