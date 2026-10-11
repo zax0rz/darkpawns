@@ -2,7 +2,6 @@ package game
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 )
 
@@ -12,10 +11,16 @@ import (
 // the payload and the file flag there); this adapter is the only place that
 // turns Log into a mudlog call, and it must be BRF / LVL_IMMORT / file FALSE.
 //
-// BRF from higher verbosity: BRF is the lowest type (1), so the discriminator
-// is an observer whose syslog is off (log_level 0). It is silent, which proves
-// the type is not NRM (2) or CMP (3); the LOG1 observer receiving the line
-// proves the type is at most 1. Together: BRF, not "at least BRF".
+// The three arguments are each discriminated exactly, and the controls script
+// mutates each one on its own:
+//
+//   - type: a LOG1 observer (log_level 1) receives the line, so the type is at
+//     most BRF; a syslog-off observer (log_level 0) does not, so the type is at
+//     least BRF. Together: BRF, not "at least BRF" — NRM (2) and CMP (3) would
+//     silence the LOG1 observer.
+//   - level: an observer at exactly LVL_IMMORT (31) receives it and one at 30
+//     does not, which pins 31 rather than any higher level.
+//   - file: the file sink must stay entirely empty.
 func TestScriptAdapterLogIsBriefImmortalNoFile(t *testing.T) {
 	const payload = "[Lua] Invalid argument passed to lua_action."
 
@@ -25,11 +30,11 @@ func TestScriptAdapterLogIsBriefImmortalNoFile(t *testing.T) {
 		p.SetPlrFlag(PrfLog1, log1)
 		return p
 	}
-	brfOnly := newObserver(201, "Scriptbrf", 40, true)
+	atImmort := newObserver(201, "Scriptimmort", LVL_IMMORT, true)
 	below := newObserver(202, "Scriptbelow", LVL_IMMORT-1, true)
 	quiet := newObserver(203, "Scriptquiet", 40, false)
 	provider := &milestoneProvider{
-		players: []*Player{brfOnly, below, quiet},
+		players: []*Player{atImmort, below, quiet},
 		lines:   map[string]string{},
 	}
 	oldProvider := getImmortalSessionProvider()
@@ -43,16 +48,19 @@ func TestScriptAdapterLogIsBriefImmortalNoFile(t *testing.T) {
 
 	NewWorldScriptableAdapter(nil).Log(payload)
 
-	if want := "[ " + payload + " ]\r\n"; provider.lines[brfOnly.Name] != want {
-		t.Fatalf("BRF observer bytes = %q, want %q", provider.lines[brfOnly.Name], want)
-	}
+	// Ordered so each argument's mutation trips its own assertion: a wrong
+	// level shows up here first, a wrong type at the observer below, and a
+	// wrong file flag last.
 	if got := provider.lines[below.Name]; got != "" {
 		t.Fatalf("level-%d observer saw %q, want the level filter to hide it", LVL_IMMORT-1, got)
+	}
+	if want := "[ " + payload + " ]\r\n"; provider.lines[atImmort.Name] != want {
+		t.Fatalf("level-%d BRF observer bytes = %q, want %q", LVL_IMMORT, provider.lines[atImmort.Name], want)
 	}
 	if got := provider.lines[quiet.Name]; got != "" {
 		t.Fatalf("syslog-off observer saw %q, so the type is higher than BRF", got)
 	}
-	if strings.Contains(file.String(), payload) {
-		t.Fatalf("file flag must be FALSE: %q", file.String())
+	if file.Len() != 0 {
+		t.Fatalf("file flag must be FALSE, so the file sink must be entirely empty: %q", file.String())
 	}
 }

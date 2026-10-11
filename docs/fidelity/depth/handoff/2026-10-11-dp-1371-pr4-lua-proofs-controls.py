@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""R5h controls for PR 4's 57 Lua seam proofs (DP-1371 D7).
+"""R5h controls for PR 4's Lua seam proofs (DP-1371 D7).
 
-These are **family-level** controls, not 57 independent mutation controls: the
-survey's group column splits the 57 rows into eight D7 families
-(lua-proof-01..08), and each case removes the producer of one representative
-binding from that family and requires its named subtest to fail on the
-tightened assertion. A green here does not claim each of the 57 was mutated;
-it claims every family can fail.
+Two groups:
 
-Each case runs green -> reverted (assertion red, never a build failure) ->
+* **Family producer removals (8).** The survey's group column splits the 57 rows
+  into eight D7 families (lua-proof-01..08); each case removes one
+  representative binding's producer and requires that family's subtest to fail
+  on the tightened assertion. These are family-level, **not** 57 independent
+  mutation controls: a green claims every family can fail.
+* **Companion argument mutations (3).** The adapter's type, level and file
+  arguments are mutated one at a time (BRF->CMP, LVL_IMMORT->LVL_IMMORT-1,
+  FALSE->TRUE), each required to trip its own assertion in
+  TestScriptAdapterLogIsBriefImmortalNoFile.
+
+Every case runs green -> reverted (assertion red, never a build failure) ->
 restored green:
 
     python3 docs/fidelity/depth/handoff/2026-10-11-dp-1371-pr4-lua-proofs-controls.py \
@@ -19,37 +24,68 @@ import pathlib
 import subprocess
 
 BINDINGS = "pkg/scripting/bindings_bridge.go"
-PACKAGE = "./pkg/scripting"
-TEST = "TestLuaProofBadArgumentProducers"
+ADAPTER = "pkg/game/world_bridge.go"
+SCRIPTING_TEST = "TestLuaProofBadArgumentProducers"
+ADAPTER_TEST = "TestScriptAdapterLogIsBriefImmortalNoFile"
+ADAPTER_LINE = "\tMudLog(msg, MudlogBrief, lvlImmort, false)\n"
 
-# One representative per family: its payload literal is unique in the file, so
-# the patch asserts exactly one occurrence.
 CASES = [
-    ("lua-proof-01", "src/scripts.c:137", '\tb.Log("[Lua] Invalid argument passed to lua_action.")\n'),
-    ("lua-proof-02", "src/scripts.c:451", '\tb.Log("[Lua] Invalid argument passed to lua_exit_flags.")\n'),
-    ("lua-proof-03", "src/scripts.c:692", '\tb.Log("[Lua] Invalid argument passed to lua_ishunt.")\n'),
-    ("lua-proof-04", "src/scripts.c:838", '\tb.Log("[Lua] Invalid argument passed to lua_mob_flagged.")\n'),
-    ("lua-proof-05", "src/scripts.c:990", '\tb.Log("[Lua] lua_oload returned an unknown object.")\n'),
-    ("lua-proof-06", "src/scripts.c:1255", '\tb.Log("[Lua] Invalid arguments passed to lua_raw_kill.")\n'),
-    ("lua-proof-07", "src/scripts.c:1419", '\tb.Log("[Lua] Unknown command passed to lua_social.")\n'),
-    ("lua-proof-08", "src/scripts.c:1604", '\tb.Log("[Lua] Invalid argument passed to lua_unaffect.")\n'),
+    # One representative per family: its payload literal is unique in the file,
+    # so the patch asserts exactly one occurrence.
+    {"case": "lua-proof-01", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:137", "old": '\tb.Log("[Lua] Invalid argument passed to lua_action.")\n',
+     "new": "", "assertion": "log sequence ="},
+    {"case": "lua-proof-02", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:451", "old": '\tb.Log("[Lua] Invalid argument passed to lua_exit_flags.")\n',
+     "new": "", "assertion": "log sequence ="},
+    {"case": "lua-proof-03", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:692", "old": '\tb.Log("[Lua] Invalid argument passed to lua_ishunt.")\n',
+     "new": "", "assertion": "log sequence ="},
+    {"case": "lua-proof-04", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:838", "old": '\tb.Log("[Lua] Invalid argument passed to lua_mob_flagged.")\n',
+     "new": "", "assertion": "log sequence ="},
+    {"case": "lua-proof-05", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:990", "old": '\tb.Log("[Lua] lua_oload returned an unknown object.")\n',
+     "new": "", "assertion": "log sequence ="},
+    {"case": "lua-proof-06", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:1255", "old": '\tb.Log("[Lua] Invalid arguments passed to lua_raw_kill.")\n',
+     "new": "", "assertion": "log sequence ="},
+    {"case": "lua-proof-07", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:1419", "old": '\tb.Log("[Lua] Unknown command passed to lua_social.")\n',
+     "new": "", "assertion": "log sequence ="},
+    {"case": "lua-proof-08", "file": BINDINGS, "package": "./pkg/scripting", "test": SCRIPTING_TEST,
+     "site": "src/scripts.c:1604", "old": '\tb.Log("[Lua] Invalid argument passed to lua_unaffect.")\n',
+     "new": "", "assertion": "log sequence ="},
+
+    # The adapter's three arguments, one mutation each. A wrong type silences
+    # the LOG1 observer, a wrong level lights up the level-30 observer, and a
+    # wrong file flag writes the sink.
+    {"case": "companion-type", "file": ADAPTER, "package": "./pkg/game", "test": ADAPTER_TEST,
+     "site": "", "old": ADAPTER_LINE, "new": "\tMudLog(msg, MudlogComplete, lvlImmort, false)\n",
+     "assertion": "BRF observer bytes"},
+    {"case": "companion-level", "file": ADAPTER, "package": "./pkg/game", "test": ADAPTER_TEST,
+     "site": "", "old": ADAPTER_LINE, "new": "\tMudLog(msg, MudlogBrief, lvlImmort-1, false)\n",
+     "assertion": "observer saw"},
+    {"case": "companion-file", "file": ADAPTER, "package": "./pkg/game", "test": ADAPTER_TEST,
+     "site": "", "old": ADAPTER_LINE, "new": "\tMudLog(msg, MudlogBrief, lvlImmort, true)\n",
+     "assertion": "file sink must be entirely empty"},
 ]
 
-ASSERTION = "log sequence ="
 
-
-def run(family, site, stage, root):
-    selector = "^" + TEST + "$/^" + site.replace(".", "\\.") + "$"
+def run(case, stage, root):
+    selector = "^" + case["test"] + "$"
+    if case["site"]:
+        selector += "/^" + case["site"].replace(".", "\\.") + "$"
     result = subprocess.run(
-        ["go", "test", PACKAGE, "-run", selector, "-count=1"],
+        ["go", "test", case["package"], "-run", selector, "-count=1"],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
     )
-    (root / f"{family}-{stage}.txt").write_text(result.stdout + "\nEXIT=" + str(result.returncode) + "\n")
+    (root / f"{case['case']}-{stage}.txt").write_text(result.stdout + "\nEXIT=" + str(result.returncode) + "\n")
     assert "[build failed]" not in result.stdout, result.stdout
     if stage == "revert":
         assert result.returncode != 0, result.stdout
-        assert "--- FAIL: " + TEST + "/" + site in result.stdout, result.stdout
-        assert ASSERTION in result.stdout, result.stdout
+        assert "--- FAIL: " + case["test"] in result.stdout, result.stdout
+        assert case["assertion"] in result.stdout, result.stdout
     else:
         assert result.returncode == 0, result.stdout
 
@@ -59,17 +95,18 @@ def main():
     parser.add_argument("--output", required=True)
     root = pathlib.Path(parser.parse_args().output)
     root.mkdir(parents=True, exist_ok=True)
-    original = pathlib.Path(BINDINGS).read_text()
-    for family, site, line in CASES:
-        assert original.count(line) == 1, (family, site)
-        reverted = original.replace(line, "")
+    for case in CASES:
+        original = pathlib.Path(case["file"]).read_text()
+        assert original.count(case["old"]) == 1, (case["case"], case["file"])
+        reverted = original.replace(case["old"], case["new"])
         try:
             for stage, source in (("green", original), ("revert", reverted), ("restore", original)):
-                pathlib.Path(BINDINGS).write_text(source)
-                run(family, site, stage, root)
-            print(f"{family} ({site}): 1 -> 0 -> 1", flush=True)
+                pathlib.Path(case["file"]).write_text(source)
+                run(case, stage, root)
+            suffix = f" ({case['site']})" if case["site"] else ""
+            print(f"{case['case']}{suffix}: 1 -> 0 -> 1", flush=True)
         finally:
-            pathlib.Path(BINDINGS).write_text(original)
+            pathlib.Path(case["file"]).write_text(original)
 
 
 if __name__ == "__main__":
