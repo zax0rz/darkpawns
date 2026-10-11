@@ -156,3 +156,24 @@ func TestMenuDeleteRemovesObjectSaveIdentity(t *testing.T) {
 		t.Fatalf("menu delete left identity: %+v %v", saved, err)
 	}
 }
+
+func TestReturningEntryRewritesObjectSaveHeader(t *testing.T) {
+	e := newRecoveryEnv(t)
+	if err := db.SaveObjectSnapshot(e.store, "Recoverer", 2, []byte(`[]`), []byte(`[]`)); err != nil {
+		t.Fatal(err)
+	}
+	// RemovePlayerBody is the live twin of the deleted RemovePlayer wrapper:
+	// a returning player at the menu is not in the world.
+	e.world.RemovePlayerBody(e.s.player)
+	e.s.menuActive = true
+	e.s.player.Stats.Con = 18
+	e.s.player.SetLoadRoom(1001)
+	e.s.player.SetPlrFlag(game.PlrLoadroom, true)
+	if err := e.s.enterReturningPlayer(); err != nil {
+		t.Fatal(err)
+	}
+	saved, err := e.store.GetObjectSave("Recoverer")
+	if err != nil || saved.Kind != 1 {
+		t.Fatalf("entry header: %+v %v", saved, err)
+	}
+}
