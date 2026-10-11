@@ -502,6 +502,24 @@ func Act(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectI
 	actDeliver(world, hideInvisible, ch, vict, obj, victObj, format, arg2, actType, sendActLine)
 }
 
+// ActWithPrivateSink preserves the supplied actor's identity and body state
+// throughout Act's audience, visibility, and substitution checks while
+// routing that actor's delivered line through a descriptor-owned sink. It is
+// for switched actors whose body is not itself the connected Player.
+func ActWithPrivateSink(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectInstance, format, arg2 string, actType int, privateActor Actor, privateSink func(string)) {
+	if privateActor == nil || privateSink == nil {
+		Act(world, hideInvisible, ch, vict, obj, victObj, format, arg2, actType)
+		return
+	}
+	actDeliver(world, hideInvisible, ch, vict, obj, victObj, format, arg2, actType, func(to Actor, line string) {
+		if to == privateActor {
+			privateSink(line)
+			return
+		}
+		sendActLine(to, line)
+	})
+}
+
 // sendActLine is Act's delivery: the rendered line goes straight to the
 // recipient's transport.
 func sendActLine(to Actor, line string) { to.SendMessage(line) }

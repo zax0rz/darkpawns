@@ -151,7 +151,7 @@ func TestSpecProc_SmokeAll(t *testing.T) {
 	names := AllSpecNames()
 	for name := range names {
 		t.Run(name, func(t *testing.T) {
-			fn := SpecRegistry[name]
+			fn := GetSpec(name)
 			if fn == nil {
 				t.Skipf("spec %q registered but function is nil", name)
 			}

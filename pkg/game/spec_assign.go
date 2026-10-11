@@ -410,8 +410,10 @@ var RoomSpecAssign = map[int]string{
 	1389: "fly_exit_up",
 }
 
-// SpecRegistry holds concrete spec proc implementations keyed by name.
-// Populated by init() or registration calls in spec_procs.go.
+// SpecRegistry holds the special-procedure entry keyed by name. Each entry
+// keeps the legacy *Player callback and, when ported, an actor-aware callback
+// in the same registry record. Populated by init() or registration calls in
+// spec_procs.go.
 //
 // CONTRACT: All spec_proc registrations (via RegisterSpec) must complete
 // before the game world Start() is called. SpecRegistry is a plain map
@@ -419,7 +421,7 @@ var RoomSpecAssign = map[int]string{
 // any write after game start is a data race. The startup validator
 // (AllSpecNames) should be called during world init to catch missing
 // registrations early.
-var SpecRegistry = map[string]SpecFunc{}
+var SpecRegistry = map[string]SpecEntry{}
 
 // ObjSpecRegistry contains object specials that need the concrete object
 // receiver. Object specials that do not need it continue to use SpecRegistry
@@ -428,7 +430,48 @@ var ObjSpecRegistry = map[string]ObjSpecFunc{}
 
 // RegisterSpec registers a special procedure handler by name.
 func RegisterSpec(name string, fn SpecFunc) {
-	SpecRegistry[name] = fn
+	entry := SpecRegistry[name]
+	entry.Legacy = fn
+	entry.NPCFallback = npcSpecialFallback(name, "command")
+	SpecRegistry[name] = entry
+}
+
+// RegisterActorSpec adds the actor-aware lane to the existing special entry.
+// It intentionally does not replace the legacy player callback.
+func RegisterActorSpec(name string, fn ActorSpecFunc) {
+	entry := SpecRegistry[name]
+	entry.Actor = fn
+	SpecRegistry[name] = entry
+}
+
+// npcSpecialFallback classifies only C specials whose command-time C body
+// proves that an NPC cannot consume a command. Every other legacy-only entry
+// remains unsupported for actor dispatch until its character semantics are
+// ported. Source guards: guild (src/spec_procs.c:208), key_seller
+// (src/spec_procs2.c:1877), postmaster (src/mail.c:478), remorter
+// (src/spec_procs2.c:688), fly_exit_up (src/spec_procs3.c:1294). The pulse
+// specials citizen, cleric, and dragon_breath reject nonempty command calls
+// (src/spec_procs.c:988, 1430, 931); empty command-time dispatch is unsupported
+// because those C entries may be pulse calls rather than command attempts.
+func npcSpecialFallback(name, cmd string) SpecialResult {
+	switch name {
+	case "guild", "key_seller", "postmaster", "remorter", "fly_exit_up":
+		return SpecialDeclined
+	case "citizen", "cleric", "dragon_breath":
+		if cmd != "" {
+			return SpecialDeclined
+		}
+		return SpecialUnsupported
+	default:
+		return SpecialUnsupported
+	}
+}
+
+// GetSpec returns the existing player callback for callers that dispatch the
+// legacy lane directly. Actor-aware dispatch must use DispatchCharacterSpecial
+// so it can distinguish handled, declined, and unported outcomes.
+func GetSpec(name string) SpecFunc {
+	return SpecRegistry[name].Legacy
 }
 
 // RegisterObjSpec registers an object-special handler that receives the
@@ -440,7 +483,7 @@ func RegisterObjSpec(name string, fn ObjSpecFunc) {
 // GetMobSpec returns the spec function for a mob VNum, or nil.
 func GetMobSpec(vnum int) SpecFunc {
 	if name, ok := MobSpecAssign[vnum]; ok {
-		return SpecRegistry[name]
+		return GetSpec(name)
 	}
 	return nil
 }
@@ -456,7 +499,7 @@ func GetObjSpecForObject(vnum int) ObjSpecFunc {
 	if fn := ObjSpecRegistry[name]; fn != nil {
 		return fn
 	}
-	if fn := SpecRegistry[name]; fn != nil {
+	if fn := GetSpec(name); fn != nil {
 		return func(w *World, ch *Player, _ *ObjectInstance, cmd string, arg string) bool {
 			return fn(w, ch, nil, cmd, arg)
 		}
@@ -467,7 +510,7 @@ func GetObjSpecForObject(vnum int) ObjSpecFunc {
 // GetRoomSpec returns the spec function for a room VNum, or nil.
 func GetRoomSpec(vnum int) SpecFunc {
 	if name, ok := RoomSpecAssign[vnum]; ok {
-		return SpecRegistry[name]
+		return GetSpec(name)
 	}
 	return nil
 }

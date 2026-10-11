@@ -109,7 +109,7 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 				t.Error("stable log must follow refusal and retain mount/gold")
 			}
 		}
-		invoke = func() { SpecRegistry["stableboy"](w, a, roster, "collect", "") }
+		invoke = func() { GetSpec("stableboy")(w, a, roster, "collect", "") }
 	case "remort":
 		a.SetLevel(30)
 		a.SetGold(60000)
@@ -123,7 +123,7 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 				t.Error("remort producer must precede AdvanceLevel and follow remort mutation")
 			}
 		}
-		invoke = func() { SpecRegistry["remorter"](w, a, roster, "remort", "") }
+		invoke = func() { GetSpec("remorter")(w, a, roster, "remort", "") }
 	case "assassinpc":
 		pc := NewPlayer(104, "Rosterpc", 1002)
 		if err := w.AddPlayer(pc); err != nil {
@@ -136,7 +136,7 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 				t.Error("roster log must be between victim warning and caller refusal")
 			}
 		}
-		invoke = func() { SpecRegistry["assassin"](w, a, nil, "hire", "Rosterpc") }
+		invoke = func() { GetSpec("assassin")(w, a, nil, "hire", "Rosterpc") }
 	case "assassinhire":
 		victim := NewPlayer(104, "VictimTarget", 1001)
 		victim.SetLevel(5)
@@ -160,7 +160,7 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 				t.Error("hired body not established before log")
 			}
 		}
-		invoke = func() { SpecRegistry["assassin"](w, a, nil, "hire", "street VictimTarget") }
+		invoke = func() { GetSpec("assassin")(w, a, nil, "hire", "street VictimTarget") }
 	case "medusa":
 		a.SetLevel(1)
 		a.SetClass(ClassWarrior)
@@ -172,7 +172,7 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 				t.Error("Medusa log must follow act and precede death/XP/raw kill")
 			}
 		}
-		invoke = func() { dprng.ResetStream(medusaSeed(t, false)); SpecRegistry["medusa"](w, a, mob, "look", "medusa") }
+		invoke = func() { dprng.ResetStream(medusaSeed(t, false)); GetSpec("medusa")(w, a, mob, "look", "medusa") }
 	case "loot":
 		roster, err := w.SpawnMobQuiet(8070, 1001)
 		if err != nil {
