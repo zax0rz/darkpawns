@@ -87,8 +87,10 @@ func TestShopLiteralPagerDeliveryAndSnoop(t *testing.T) {
 		if actor.pagerLiteral || actor.IsPaging() {
 			t.Fatal("single page retained literal mode")
 		}
+		// C's write path emits the string's spelling verbatim (comm.c:2335,
+		// :1348, :1380), so ordinary paging renders LFCR pairs as written.
 		PageString(actor, "normal\n\r")
-		if got := renderedOutput(actor); got != "normal\r\n" {
+		if got := renderedOutput(actor); got != "normal\n\r" {
 			t.Fatalf("ordinary paging changed: %q", got)
 		}
 		_ = renderedOutput(spy)
@@ -105,7 +107,7 @@ func TestShopLiteralPagerDeliveryAndSnoop(t *testing.T) {
 			t.Fatal("quit retained literal mode")
 		}
 		PageString(actor, "ordinary\n\r")
-		if got := renderedOutput(actor); got != "ordinary\r\n" {
+		if got := renderedOutput(actor); got != "ordinary\n\r" {
 			t.Fatalf("after quit: %q", got)
 		}
 	}

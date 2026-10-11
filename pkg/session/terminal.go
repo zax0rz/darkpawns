@@ -245,20 +245,34 @@ func ensureLineEnded(text string) string {
 	return text + "\r\n"
 }
 
-// NormalizeCRLF converts any mix of "\r\n", C's historical "\n\r", lone "\r",
-// and lone "\n" line endings into canonical "\r\n". Much of the game's text
-// (MOTD, room and help files) is stored with bare "\n"; a raw terminal treats
-// a lone LF as line-feed-only and staircases the output. LFCR is a single C
-// line ending, not two lines; preserving that pair matters for handlers such
-// as do_skillset that build output from mixed-order strings. Idempotent.
+// NormalizeCRLF keeps complete line-ending pairs — "\r\n" and C's historical
+// "\n\r" — verbatim and converts lone "\r" and lone "\n" controls to "\r\n".
+// Much of the game's text (MOTD, room and help files) is stored with bare
+// "\n"; a raw terminal treats a lone LF as line-feed-only and staircases the
+// output. Pairs are never rewritten: C's final write path emits the string's
+// own spelling untransformed (send_to_char → write_to_output →
+// write_to_descriptor, src/comm.c:2335, :1348, :1380), so do_compare's
+// "They're the same thing!\n\r" (src/new_cmds.c:1991) must reach the wire as
+// LFCR just as C writes it. Idempotent.
 func NormalizeCRLF(s string) string {
 	if !strings.ContainsAny(s, "\r\n") {
 		return s
 	}
-	s = strings.ReplaceAll(s, "\r\n", "\n")
-	s = strings.ReplaceAll(s, "\n\r", "\n")
-	s = strings.ReplaceAll(s, "\r", "\n")
-	return strings.ReplaceAll(s, "\n", "\r\n")
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; {
+		case c == '\r' && i+1 < len(s) && s[i+1] == '\n',
+			c == '\n' && i+1 < len(s) && s[i+1] == '\r':
+			b.WriteString(s[i : i+2])
+			i++
+		case c == '\r', c == '\n':
+			b.WriteString("\r\n")
+		default:
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
 }
 
 // TerminalNamed reports whether the terminal has accepted a name and handed

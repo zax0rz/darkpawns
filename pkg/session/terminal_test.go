@@ -34,7 +34,10 @@ func TestRenderTerminalFrame(t *testing.T) {
 		ok   bool
 	}{
 		{"event adds a missing line end", `{"type":"event","data":{"type":"text","text":"You hit it."}}`, TerminalFrame{Kind: FrameText, Text: "You hit it.\r\n"}, true},
-		{"event keeps C's LFCR as one break", `{"type":"event","data":{"type":"text","text":"a\n\rb\n\r"}}`, TerminalFrame{Kind: FrameText, Text: "a\r\nb\r\n"}, true},
+		// C's final write path emits the string's own spelling untransformed
+		// (send_to_char src/comm.c:2335 → write_to_output :1348 →
+		// write_to_descriptor :1380): LFCR pairs reach the wire verbatim.
+		{"event keeps C's LFCR pairs verbatim", `{"type":"event","data":{"type":"text","text":"a\n\rb\n\r"}}`, TerminalFrame{Kind: FrameText, Text: "a\n\rb\n\r"}, true},
 		{"raw event is untouched", `{"type":"event","data":{"type":"raw","text":"\u001b[1;24r"}}`, TerminalFrame{Kind: FrameText, Text: "\x1b[1;24r"}, true},
 		{"prompt defaults", `{"type":"prompt","data":{}}`, TerminalFrame{Kind: FramePrompt, Text: "> "}, true},
 		{"prompt text", `{"type":"prompt","data":{"text":"\r\n<20hp 5m 30mv> "}}`, TerminalFrame{Kind: FramePrompt, Text: "\r\n<20hp 5m 30mv> "}, true},
