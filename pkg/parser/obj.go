@@ -48,9 +48,37 @@ type ObjAffect struct {
 }
 
 // ExtraDesc represents an extra description on an object.
+//
+// C's struct extra_descr_data holds two pointers, keyword and description, and
+// NULL differs from an allocated empty string: fread_string returns NULL for an
+// empty tilde field at load (src/db.c:2736-2740), while the OLC string editor
+// can leave an allocated empty description (src/improved-edit.c:193-211) and
+// str_udup never yields a NULL keyword (src/olc.c:520-523). The two flags below
+// carry that distinction. Both are false for C's common allocated case, so the
+// zero value means "present" and every existing producer is unchanged; they are
+// never serialised (json:"-"), because C's object save stores no extra
+// descriptions (src/objsave.c has no ex_description), so presence never has to
+// survive a player save.
 type ExtraDesc struct {
 	Keywords    string
 	Description string
+
+	// NullKeyword and NullDescription mirror C's two NULL pointers.
+	NullKeyword     bool `json:"-"`
+	NullDescription bool `json:"-"`
+}
+
+// NewLoadedExtraDesc builds an ExtraDesc with C's fread_string load rule: an
+// empty tilde field loads as a NULL pointer (src/db.c:2736-2740). Callers that
+// reconstruct an extra description from stored text must use this rather than
+// the zero value.
+func NewLoadedExtraDesc(keywords, description string) ExtraDesc {
+	return ExtraDesc{
+		Keywords:        keywords,
+		Description:     description,
+		NullKeyword:     keywords == "",
+		NullDescription: description == "",
+	}
 }
 
 // lineBuffer is defined in mob.go (shared between obj and mob parsers).
@@ -221,7 +249,9 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 				}
 				descLines = append(descLines, descLine)
 			}
-			ed.Description = strings.Join(descLines, "\n")
+			// C's fread_string turns an empty tilde field into a NULL pointer
+			// (src/db.c:2736-2740); NewLoadedExtraDesc carries that presence.
+			ed = NewLoadedExtraDesc(ed.Keywords, strings.Join(descLines, "\n"))
 			obj.ExtraDescs = append(obj.ExtraDescs, ed)
 		}
 

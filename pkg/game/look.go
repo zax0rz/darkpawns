@@ -1230,6 +1230,13 @@ func observationObjectMatches(ch *Player, object *ObjectInstance, name string) b
 func findExtraDescription(name string, descriptions []parser.ExtraDesc) (string, bool) {
 	for _, description := range descriptions {
 		if isnameWithAbbrevs(name, description.Keywords) {
+			// find_exdesc returns the first keyword match's description
+			// pointer and every caller tests it against NULL
+			// (src/act.informative.c:987-996, :1033-1066): a NULL description
+			// is "not found", and the scan does NOT continue to later nodes.
+			if description.NullDescription {
+				return "", false
+			}
 			return description.Description, true
 		}
 	}

@@ -100,7 +100,7 @@ func (o *ObjectInstance) SetLiveExtraDescs(descs []parser.ExtraDesc) {
 // the first list entry whose keyword namelist matches word via
 // isname_with_abbrevs. It returns -1 when nothing matches. C returns the entry's
 // description pointer, so callers that care about C's `!find_exdesc` test must
-// additionally treat an empty description as "not found".
+// additionally treat a NULL description (NullDescription) as "not found".
 func FindExtraDescIndex(descs []parser.ExtraDesc, word string) int {
 	for i := range descs {
 		if isnameWithAbbrevs(word, descs[i].Keywords) {

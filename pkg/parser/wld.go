@@ -274,7 +274,9 @@ func parseExtraDesc(scanner *bufio.Scanner) (ExtraDesc, error) {
 		return ExtraDesc{}, fmt.Errorf("expected extra desc text: %w", err)
 	}
 
-	return ExtraDesc{Keywords: keyword, Description: desc}, nil
+	// C's fread_string load rule: an empty tilde field is a NULL pointer
+	// (src/db.c:2736-2740).
+	return NewLoadedExtraDesc(keyword, desc), nil
 }
 
 // parseExit parses a single exit section.
