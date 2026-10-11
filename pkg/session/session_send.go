@@ -339,8 +339,15 @@ func (s *Session) sendPromptNow() {
 	// own a CON_* state (tedit/luaedit and the OLC string fields) take their
 	// flush without that frame; do_string's editor stays in CON_PLAYING, so its
 	// "New field." / "Ok." flushes do get it — that blank line before "] " is
-	// real player-facing output.
-	if s.outputSincePrompt.Swap(0) > 0 && (!editing || playing) {
+	// real player-facing output. Compact players never get the frame, on any
+	// playing flush (PF-063: the missing !PRF_COMPACT gate printed a blank
+	// line before every prompt a compact player received).
+	var flags uint64
+	if s.player != nil {
+		flags = s.player.GetFlags()
+	}
+	if s.outputSincePrompt.Swap(0) > 0 && (!editing || playing) &&
+		flags&(1<<uint(game.PrfCompact)) == 0 {
 		text = "\r\n" + text
 	}
 	s.sendPromptText(text)
