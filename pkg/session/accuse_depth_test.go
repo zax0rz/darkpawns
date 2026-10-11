@@ -87,3 +87,17 @@ func TestAccuseTargetSuccessWire(t *testing.T) {
 		t.Fatalf("actor wire=%q", got)
 	}
 }
+
+// src/act.social.c:145-146; lib/misc/socials:5-6.
+func TestAccuseTargetAudienceWire(t *testing.T) {
+	actor, target, observer := accuseAudienceFixture(t)
+	if err := ExecuteCommand(actor, "accuse", []string{"Target"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := captureWire(target); got != "Accuser looks accusingly at you.\r\n" {
+		t.Fatalf("target wire=%q", got)
+	}
+	if got := captureWire(observer); got != "Accuser looks accusingly at Target.\r\n" {
+		t.Fatalf("observer wire=%q", got)
+	}
+}

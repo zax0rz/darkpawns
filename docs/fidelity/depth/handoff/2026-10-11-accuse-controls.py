@@ -7,6 +7,7 @@ import tempfile
 checks = (
  ('socCharNoArg   = 0', 'socCharNoArg   = 1', 'TestAccuseNoArgBytesPinCSource'),
  ('socCharFound   = 2', 'socCharFound   = 3', 'TestAccuseTargetSuccessWire'),
+ ('socOthersFound = 3', 'socOthersFound = 4', 'TestAccuseTargetAudienceWire'),
 )
 command = ['go', 'test', './pkg/session', '-run', '^TestAccuse', '-count=1']
 def run(args):
