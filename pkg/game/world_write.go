@@ -130,3 +130,13 @@ func (w *World) ResetZone(number int) error {
 func (w *World) SetRoomSector(vnum int, sector int) bool {
 	return w.updateRoom(vnum, func(room *parser.Room) { room.Sector = sector })
 }
+
+// SetRoomName updates a room's name. Returns false if the room doesn't exist.
+func (w *World) SetRoomName(vnum int, name string) bool {
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Name = name })
+}
+
+// SetRoomDescription updates a room's description. Returns false if the room doesn't exist.
+func (w *World) SetRoomDescription(vnum int, desc string) bool {
+	return w.updateRoom(vnum, func(room *parser.Room) { room.Description = desc })
+}

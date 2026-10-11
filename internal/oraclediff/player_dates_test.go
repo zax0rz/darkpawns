@@ -44,3 +44,38 @@ func TestPlayerReportDatesAnchorPrefixes(t *testing.T) {
 		t.Fatal("indented anchor line left unnormalized")
 	}
 }
+
+// show-player-stored runs the keep-prompts pipeline
+// (cmd/dp-oracle-diff/scenarios/show-player-stored.txt, [fixture]
+// keep-prompts) and diverged on the first [show player] block whenever the
+// two engines' setups straddled a wall-clock minute: that pipeline had no
+// playerSavedDates pass, so the Started/Last dates were compared raw
+// (dp-1404-rent-code-claims 2026-10-09; pr1904-dead-code-d 2026-10-10
+// seed 5 — C started 14:56, Go 14:55). Reproduces that first block in
+// keep-prompts mode: the captures differ in the Started minute and must
+// normalize to identical bytes, with the captured \r\n framing preserved.
+func TestPlayerReportDatesNormalizeKeepPrompts(t *testing.T) {
+	c := "Player: Shopreport   (Male) [40 Wa]\r\n" +
+		"Au: 0         Bal: 0         Exp: 7000000   Align: 0      Lessons: 0  \r\n" +
+		"Started: Sat Oct 10 14:56      Last: Sat Oct 10 14:56      Played:   0h  0m\r\n"
+	g := "Player: Shopreport   (Male) [40 Wa]\r\n" +
+		"Au: 0         Bal: 0         Exp: 7000000   Align: 0      Lessons: 0  \r\n" +
+		"Started: Sat Oct 10 14:55      Last: Sat Oct 10 14:56      Played:   0h  0m\r\n"
+	gotC, gotG := NormalizeKeepPrompts(c), NormalizeKeepPrompts(g)
+	if gotC != gotG {
+		t.Fatalf("keep-prompts left the Started minute unmasked:\nC : %q\nGo: %q", gotC, gotG)
+	}
+	if !strings.Contains(gotC, "Started: <WALL_CLOCK>      Last: <WALL_CLOCK>      Played:   0h  0m") {
+		t.Fatalf("mask shape wrong or framing not preserved: %q", gotC)
+	}
+	if !strings.Contains(gotC, "\r\n") {
+		t.Fatal("keep-prompts mode must preserve captured \\r\\n framing")
+	}
+
+	// Ordinary prose with a leading word still escapes the mask on purpose:
+	// the anchor admits only ANSI escapes and whitespace before the label.
+	say := "say Started: Sat Oct 10 14:56      Last: Sat Oct 10 14:56      Played:   0h  0m\r\n"
+	if strings.Contains(NormalizeKeepPrompts(say), "<WALL_CLOCK>") {
+		t.Fatal("masked an ordinary prose line in keep-prompts mode")
+	}
+}

@@ -132,6 +132,39 @@ func (p *Player) GetRoomFlags() bool {
 	return p.Flags&(1<<uint(PrfRoomFlags)) != 0
 }
 
+// GetNoBroadcast returns whether global broadcasts are disabled.
+func (p *Player) GetNoBroadcast() bool {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.NoBroadcast
+}
+
+// SetNoBroadcast toggles global broadcast reception.
+func (p *Player) SetNoBroadcast(v bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.NoBroadcast = v
+}
+
+// SetHolyLight toggles the holy light (see in dark) preference.
+func (p *Player) SetHolyLight(v bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.HolyLight = v
+	if v {
+		p.Flags |= 1 << uint(PrfHolyLight)
+	} else {
+		p.Flags &^= 1 << uint(PrfHolyLight)
+	}
+}
+
+// GetAFKMessage returns the player's AFK message.
+func (p *Player) GetAFKMessage() string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.AFKMessage
+}
+
 // GetHolyLight returns the PRF_HOLYLIGHT preference.
 func (p *Player) GetHolyLight() bool {
 	p.mu.RLock()

@@ -12,15 +12,24 @@ var (
 	// label but no other text, keeping ordinary prose that merely contains
 	// "Started:" unnormalized.
 	playerSavedDates = regexp.MustCompile(`^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
-	ansiEscape       = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
-	wallClock        = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
-	vitalsPrompt     = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
-	promptOnly       = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
-	promptPrefix     = regexp.MustCompile(`^> ?`)
-	autoExitLine     = regexp.MustCompile(`^\s*\[ Exits:`)
-	statusVitals     = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
-	statsLine        = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
-	volatileLine     = regexp.MustCompile(`(?i)^\s*(?:` +
+	// playerSavedDatesMultiline is playerSavedDates for the keep-prompts
+	// pipeline, which compares raw captured text without splitting lines:
+	// (?m) re-anchors ^ and $ per line and the trailing .* absorbs the \r the
+	// mode deliberately preserves ahead of the \n. It exists because
+	// show-player-stored runs keep-prompts and diverged on the Started minute
+	// whenever the two engines' setups straddled a wall-clock minute
+	// (dp-1404-rent-code-claims 2026-10-09; pr1904-dead-code-d 2026-10-10
+	// seed 5).
+	playerSavedDatesMultiline = regexp.MustCompile(`(?m)^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
+	ansiEscape                = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
+	wallClock                 = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
+	vitalsPrompt              = regexp.MustCompile(`\b\d+H\s+\d+M\s+\d+V\s*>`)
+	promptOnly                = regexp.MustCompile(`^\s*(?:<PROMPT>|>)\s*$`)
+	promptPrefix              = regexp.MustCompile(`^> ?`)
+	autoExitLine              = regexp.MustCompile(`^\s*\[ Exits:`)
+	statusVitals              = regexp.MustCompile(`\b(?:HP|Mana|Move):\s*\d+/\d+`)
+	statsLine                 = regexp.MustCompile(`^\s*(?:Str:.*Dex:.*Int:.*|Wis:.*Con:.*Cha:.*)\s*$`)
+	volatileLine              = regexp.MustCompile(`(?i)^\s*(?:` +
 		`(?:current (?:machine )?(?:time|date)|server (?:time|running since)|uptime)\s*[:=]|` +
 		`(?:players online|players\s*:|gods\s*:)\s*[:=]?\s*\d+|` +
 		`as of \d{1,4}[-/]\d{1,2}[-/]\d{1,4}\b|` +
@@ -46,10 +55,12 @@ func NormalizeKeepANSI(raw string) string {
 	return normalize(raw, true)
 }
 
-// NormalizeKeepPrompts preserves framing and colors, masking only the users
-// Login@ host-clock field approved for identical comparison in both engines.
-// TCPConn has already removed telnet IAC negotiation. Focused prompt scenarios
-// use this mode because ordinary normalization erases prompt framing.
+// NormalizeKeepPrompts preserves framing and colors, masking only host-clock
+// metadata approved for identical comparison in both engines: the users
+// Login@ field and the durable-player Started/Last date line printed by
+// show player (act.wizard.c:2344). TCPConn has already removed telnet IAC
+// negotiation. Focused prompt scenarios use this mode because ordinary
+// normalization erases prompt framing.
 func NormalizeKeepPrompts(raw string) string {
 	return normalizeUsersLoginAt(raw)
 }
@@ -140,6 +151,10 @@ const (
 var usersLoginRowClock = regexp.MustCompile(`^(?:\r|\x1b\[[0-?]*[ -/]*[@-~])*[ \t]*[0-9]+[ \t]+(?:\[[^\]\r\n]+\]|-)[ \t]+[^\r\n]*[ \t]+((?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9])[ \t]+\[[^\r\n]*\](?:\x1b\[[0-?]*[ -/]*[@-~])*[ \t\r\n]*$`)
 
 func normalizeUsersLoginAt(raw string) string {
+	// The keep-prompts mode masks host-clock metadata without touching
+	// framing: the durable-player Started/Last dates are wall clock, not
+	// game bytes — the same ruling as the Login@ field masked below.
+	raw = playerSavedDatesMultiline.ReplaceAllString(raw, "${1}<WALL_CLOCK>${2}<WALL_CLOCK>${3}")
 	lines := strings.SplitAfter(raw, "\n")
 	divider, rows := false, false
 	for i, line := range lines {

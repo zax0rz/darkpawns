@@ -60,7 +60,7 @@ def main():
     counts = Counter(record["problem"] for record in records)
     summary = f"fidelity-units: rows={len(rows)} symbols={len({r['symbol'] for r in records})} claims={len(records)} packages={len(runs)} " + " ".join(f"{k}={v}" for k,v in sorted(counts.items())) + f" elapsed={time.monotonic()-started:.3f}s"
     (out / "summary.txt").write_text(summary + "\n")
-    (out / "MANIFEST.md").write_text(f"# Unit proof evidence\n\n- Main/test root: `{root}`\n- Test and manifest HEAD: `{head}`\n- Tooling HEAD: `{tool_head}`\n- Test tree at start: `{test_state or "clean"}`\n- Tooling tree at start: `{tool_state or "clean"}`\n- Go version: `{go_version}`\n- Command: `{sys.argv}`\n- Summary: `{summary}`\n\n## Package commands\n\n" + "\n".join(f"- `{r['command']}` → exit {r['status']}; `{r['log']}`" for r in runs.values()) + "\n")
+    (out / "MANIFEST.md").write_text(f"# Unit proof evidence\n\n- Main/test root: `{root}`\n- Test and manifest HEAD: `{head}`\n- Tooling HEAD: `{tool_head}`\n- Test tree at start: `{test_state or 'clean'}`\n- Tooling tree at start: `{tool_state or 'clean'}`\n- Go version: `{go_version}`\n- Command: `{sys.argv}`\n- Summary: `{summary}`\n\n## Package commands\n\n" + "\n".join(f"- `{r['command']}` → exit {r['status']}; `{r['log']}`" for r in runs.values()) + "\n")
     print(summary)
     for record in records:
         if record["problem"] != "PASS":

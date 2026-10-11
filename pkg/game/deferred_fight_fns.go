@@ -127,6 +127,23 @@ func (p *Player) StopFollower() {
 // Source: src/utils.c:708-729
 // --------------------------------------------------------------------------
 
+func (m *MobInstance) Remember(name string) {
+	if m == nil {
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.Memory == nil {
+		return
+	}
+	for _, n := range m.Memory {
+		if n == name {
+			return
+		}
+	}
+	m.Memory = append(m.Memory, name)
+}
+
 func (m *MobInstance) SetHunting(target string) {
 	if m == nil {
 		return
