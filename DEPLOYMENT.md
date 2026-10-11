@@ -15,6 +15,7 @@ A single Go binary (`cmd/server`) that serves three surfaces:
 |---|---|---|
 | HTTP + WebSocket | `:4350` (`-port`) | Web client, `/ws`, `/api/*`, `/openapi.json`, `/admin/*`, `/health`, `/metrics` |
 | Telnet | `:7777` (`-telnet-port`, `0` disables) | Classic MUD access |
+| WHOD | `:7778` (`-whod-port`, default telnet port + 1, `0` disables) | C's separate who-daemon port (`src/whod.c`): one WHO request, then close. Prod sets **7779** (`-telnet-tls-port` is 7778). Plaintext, like C; `SHOW_SITE` is off by default |
 | SQLite (embedded) | `lib/data/darkpawns.db` | The game database — one file, no setup, no external services |
 
 It also reads/writes on-disk state: the world/scripts tree (`-world`, `-scripts`) and a
@@ -258,6 +259,12 @@ Terminate TLS at the proxy and forward the HTTP routes to `:4350`; expose telnet
 (`:7777`) directly since it isn't HTTP. A reference Caddyfile lives under
 [`website/deploy/`](website/deploy/). For a TLS telnet port, terminate TLS in front of
 the telnet listener (a dedicated port — not STARTTLS).
+
+The WHOD port (`-whod-port`, telnet + 1 by default) is also a direct, non-HTTP
+surface: open it deliberately in the firewall (hardening plan B3) and set
+`-whod-port 7779` on prod, where 7778 is the TLS telnet port. Like C's daemon it
+is plaintext and has no TLS variant, so treat it as public and keep `SHOW_SITE`
+off.
 
 The server learns each browser player's real address from the proxy's
 `X-Forwarded-For`, which it believes only from trusted proxies:
