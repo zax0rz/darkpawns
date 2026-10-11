@@ -1,0 +1,64 @@
+# PR 4 design: prove the 57 Lua seam producers (DP-1371 D7)
+
+Base `origin/main` `ee8e93467`, worktree `/home/zach/dp-mudlog-pr4`, branch
+`deepseek/mudlog-pr4`. Proof-only tier (Claude merges). GLM's Lua-fallback
+removal is already merged (#1890), so every proof runs against the bridge
+players actually use.
+
+## Scope
+
+The 57 `implemented-needs-proof` rows in
+`2026-10-09-dp-1371-lua-needs-proof-survey.tsv`. Their Go bindings live in
+`pkg/scripting/bindings_bridge.go` (the `bridged` wrapper), which production
+always reaches. The survey's `reachable_via_real_lua_call` column is `yes` for
+all 57: a script calling the binding with the bad argument.
+
+## Ground truth (not transcribed)
+
+`2026-10-11-dp-1371-lua-proofs.tsv` is **generated** by
+`2026-10-11-dp-1371-lua-proofs-extract.py`, which walks `src/scripts.c` from
+each survey site to the `mudlog` call it guards and reads the payload, type,
+level and file flag. All 57 rows are identical in the last three columns:
+**BRF / LVL_IMMORT / file FALSE**, and the payloads are C's `[Lua] …`
+diagnostics verbatim (typos included, e.g. `lua_extchar`'s missing period).
+
+## The test
+
+Table-driven, one row per survey site, following the harness
+`lua_seam_producers_test.go` established (a real `writeScript` +
+`NewEngine` + `RunScript` through `ScriptContext{World: bridge, MeRef: &me,
+OwnerType: "mob"}`), with `recordingBridge` as the observation point.
+
+```go
+type luaProofCase struct {
+    site    string // src/scripts.c:NNN, the survey's site column
+    name    string // binding name for the subtest
+    call    string // a Lua call that passes the bad argument
+    payload string // from the generated TSV
+}
+```
+
+Each subtest asserts the observable contract exactly:
+
+* exactly one `recordingBridge.mudlogs` entry, with
+  `msg == payload`, `typ == BRF`, `level == LVL_IMMORT`, `toFile == false`;
+* the script's own execution still succeeds (`RunScript` returns no error), and
+  the bindings whose C return value the script can see are checked the way
+  `lua_seam_producers_test.go` does it (Lua sees no value as `nil`).
+
+`lua_tport`'s `return -1` (`src/scripts.c:1532`) is C undefined behaviour when
+Lua reads it as a value, so that row is recorded as **R1a** and asserts the log
+only — no assertion on the returned value.
+
+## Controls (R5h)
+
+One producer per family, family = the survey's D7 group (`lua-proof-01` …
+`lua-proof-08`), as the existing `*-controls.py` scripts do: remove that
+binding's producer, require the named subtest's assertion failure (never a build
+failure), restore, re-prove green. Each control cites the C site it removes.
+
+## Evidence
+
+* A full combined census at the implementation tip.
+* The generated TSV plus the extractor, so the table can be re-derived from
+  `src/` at review time (R5g).
