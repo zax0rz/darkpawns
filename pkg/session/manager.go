@@ -82,6 +82,7 @@ type Manager struct {
 	snoopMu      sync.RWMutex        // protects the bidirectional snoop links
 	sessions     map[string]*Session // keyed by player name
 	world        *game.World
+	whod         *whodListener // C's WHOD daemon (src/whod.c); nil when disabled
 	combatEngine *combat.CombatEngine
 	shopManager  *game.ShopManager
 	pulsePumpMu  sync.RWMutex

@@ -24,10 +24,10 @@ func TestWhodMudlogProducers(t *testing.T) {
 			watch.player.SetPlrFlag(game.PrfLog1, true)
 			below := addObserver(t, m, "BelowWhod", 33, true, false)
 			a.player.SetInvisLevel(40)
-			m.world.WhodDisplay.Mode = tc.initial
+			m.world.WhodDisplay.SetMode(tc.initial)
 			file := captureMudlogFile(t)
 			ready := false
-			game.SetLogWriter(&flagProbe{buf: file, when: func() { ready = len(a.send) > 0 && m.world.WhodDisplay.Mode == tc.atLog }})
+			game.SetLogWriter(&flagProbe{buf: file, when: func() { ready = len(a.send) > 0 && m.world.WhodDisplay.GetMode() == tc.atLog }})
 			if err := executeCommand(a, "whod", []string{tc.arg}, false); err != nil {
 				t.Fatal(err)
 			}
@@ -47,8 +47,8 @@ func TestWhodMudlogProducers(t *testing.T) {
 			if got := strings.Join(drainSessionText(t, below), ""); got != "" {
 				t.Fatalf("below threshold = %q", got)
 			}
-			if m.world.WhodDisplay.Mode != tc.after {
-				t.Fatalf("mode=%d", m.world.WhodDisplay.Mode)
+			if m.world.WhodDisplay.GetMode() != tc.after {
+				t.Fatalf("mode=%d", m.world.WhodDisplay.GetMode())
 			}
 		})
 	}
@@ -58,7 +58,7 @@ func TestWhodMudlogRefusals(t *testing.T) {
 	m, a, _, w := wizardLogFixture(t)
 	file := captureMudlogFile(t)
 	for _, arg := range []string{"", "invalid", "on"} {
-		m.world.WhodDisplay.Mode = game.WhodShowOn
+		m.world.WhodDisplay.SetMode(game.WhodShowOn)
 		if err := cmdWhod(a, []string{arg}); err != nil {
 			t.Fatal(err)
 		}
@@ -74,7 +74,7 @@ func TestWhodMudlogIgnoresRemainder(t *testing.T) {
 	if err := cmdWhod(a, []string{"name", "ignored"}); err != nil {
 		t.Fatal(err)
 	}
-	if m.world.WhodDisplay.Mode&game.WhodShowName != 0 || !strings.Contains(file.String(), "name removed from WHOD by Logactor.") {
+	if m.world.WhodDisplay.GetMode()&game.WhodShowName != 0 || !strings.Contains(file.String(), "name removed from WHOD by Logactor.") {
 		t.Fatal("WHOD must use half_chop's first mode token")
 	}
 	if got := strings.Join(drainSessionText(t, watch), ""); got != "[ name removed from WHOD by Logactor. ]\r\n" {
