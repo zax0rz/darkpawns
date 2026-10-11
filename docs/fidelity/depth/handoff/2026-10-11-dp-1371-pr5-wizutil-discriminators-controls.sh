@@ -23,6 +23,13 @@ if [ -z "${REPO:-}" ] || [ ! -d "$REPO/pkg/session" ]; then
 fi
 cd "$REPO" || exit 2
 
+# Each control's raw `go test` output is retained beside the summary: the summary
+# alone cannot show *why* a test failed, and a control is only valid when the
+# failure is the expected discriminator assertion. OUT_DIR defaults to a temp dir;
+# the release evidence copy lives with the census run.
+OUT_DIR=${OUT_DIR:-${TMPDIR:-/tmp}/dp1371-pr5-controls}
+mkdir -p "$OUT_DIR"
+
 # Files this script may mutate. restore() is idempotent and safe to call at any
 # point, including twice.
 MUTABLE="pkg/session/wiz_system.go pkg/session/wiz_player.go"
@@ -82,41 +89,71 @@ print("mutated:", mid)
 PY
 }
 
-ctl() { # id, test regex
-	local id=$1 test=$2
+ctl() { # id, test regex, expected failing subtest, expected assertion substring
+	local id=$1 test=$2 sub=$3 msg=$4
+	local log="$OUT_DIR/$id.log"
 	mutate "$id" || { echo "MUTATION FAILED: $id"; restore; return 1; }
-	if go test ./pkg/session/ -run "$test" -count=1 >"/tmp/ctl5-$id.log" 2>&1; then
-		echo "CONTROL BROKEN: $id — green after mutation (/tmp/ctl5-$id.log)"
-		restore
+	# -count=1 so a cached result can never stand in for a run.
+	go test ./pkg/session/ -run "$test" -count=1 >"$log" 2>&1
+	local rc=$?
+	restore
+
+	# Reject failures that are not the control's intended discriminator failing.
+	if grep -qE '\[build failed\]|^# github\.com/|undefined:|cannot use|syntax error' "$log"; then
+		echo "CONTROL INVALID: $id — build/compile failure, not a discriminator failure ($log)"
 		return 1
 	fi
-	echo "control ok: $id — failed as required"
-	restore
+	if grep -qE 'FIFO barrier|no tap event for|panic:|DATA RACE|timed out after' "$log"; then
+		echo "CONTROL INVALID: $id — infrastructure failure (barrier/event timeout, panic or race) ($log)"
+		return 1
+	fi
+	if [ "$rc" -eq 0 ]; then
+		echo "CONTROL BROKEN: $id — test passed after mutation ($log)"
+		return 1
+	fi
+	if ! grep -qF -- "--- FAIL: $sub" "$log"; then
+		echo "CONTROL INVALID: $id — expected subtest '$sub' did not fail; other failure ($log)"
+		return 1
+	fi
+	if ! grep -qF -- "$msg" "$log"; then
+		echo "CONTROL INVALID: $id — '$sub' failed without the expected assertion '$msg' ($log)"
+		return 1
+	fi
+	echo "control ok: $id — $sub failed on '$msg' (output: $log)"
+}
+
+run_one() { # id -> the right test regex, subtest and assertion for that mutation
+	case "$1" in
+	squelch-type) ctl "$1" '^TestWizutilMudlogTypeDiscriminators$' 'TestWizutilMudlogTypeDiscriminators/squelch_is_BRF,_not_NRM' 'LOG1-only observer' ;;
+	freeze-type) ctl "$1" '^TestWizutilMudlogTypeDiscriminators$' 'TestWizutilMudlogTypeDiscriminators/freeze_is_BRF,_not_NRM' 'LOG1-only observer' ;;
+	thaw-type) ctl "$1" '^TestWizutilMudlogTypeDiscriminators$' 'TestWizutilMudlogTypeDiscriminators/thaw_is_BRF,_not_NRM' 'LOG1-only observer' ;;
+	notitle-level) ctl "$1" '^TestWizutilMudlogLevelDiscriminators$' 'TestWizutilMudlogLevelDiscriminators/notitle_needs_LVL_GOD/lv_god_floor' 'level-33 observer received' ;;
+	squelch-level) ctl "$1" '^TestWizutilMudlogLevelDiscriminators$' 'TestWizutilMudlogLevelDiscriminators/squelch_needs_LVL_GOD/lv_god_floor' 'level-33 observer received' ;;
+	freeze-level) ctl "$1" '^TestWizutilMudlogLevelDiscriminators$' 'TestWizutilMudlogLevelDiscriminators/freeze_needs_LVL_GOD/lv_god_floor' 'level-33 observer received' ;;
+	thaw-level) ctl "$1" '^TestWizutilMudlogLevelDiscriminators$' 'TestWizutilMudlogLevelDiscriminators/thaw_needs_LVL_GOD/lv_god_floor' 'level-33 observer received' ;;
+	# Flattening the helper to LVL_GOD drops the invisibility threshold to 34, so
+	# the 35-level observer (intended to be silent) receives first.
+	wizutil-invis-ignored) ctl "$1" '^TestWizutilMudlogLevelDiscriminators$' 'TestWizutilMudlogLevelDiscriminators/notitle_needs_LVL_GOD/invis_raises_threshold' 'level-35 observer received' ;;
+	skillset-type) ctl "$1" '^TestSkillsetMudlogTapMetadata$' 'TestSkillsetMudlogTapMetadata' 'tap type =' ;;
+	skillset-level) ctl "$1" '^TestSkillsetMudlogTapMetadata$' 'TestSkillsetMudlogTapMetadata' 'tap level =' ;;
+	skillset-file) ctl "$1" '^TestSkillsetMudlogTapMetadata$' 'TestSkillsetMudlogTapMetadata' 'tap to_file = false' ;;
+	*) echo "unknown control: $1" >&2; return 2 ;;
+	esac
 }
 
 if [ "${1:-}" = "--only" ] && [ -n "${2:-}" ]; then
 	# Targeted mode: one control only. Used to verify that an interrupted run
 	# restores the tree — kill the script while its mutation is applied and
-	# `git status` must be clean. See the PR body / handoff notes.
-	case "$2" in
-	squelch-type | freeze-type | thaw-type) ctl "$2" '^TestWizutilMudlogTypeDiscriminators$' ;;
-	notitle-level | squelch-level | freeze-level | thaw-level | wizutil-invis-ignored) ctl "$2" '^TestWizutilMudlogLevelDiscriminators$' ;;
-	skillset-type | skillset-level | skillset-file) ctl "$2" '^TestSkillsetMudlogTapMetadata$' ;;
-	*) echo "unknown control: $2" >&2; exit 2 ;;
-	esac
+	# `git status` must be clean.
+	run_one "$2"
 	exit $?
 fi
 
 rc=0
-ctl squelch-type '^TestWizutilMudlogTypeDiscriminators$' || rc=1
-ctl freeze-type '^TestWizutilMudlogTypeDiscriminators$' || rc=1
-ctl thaw-type '^TestWizutilMudlogTypeDiscriminators$' || rc=1
-ctl notitle-level '^TestWizutilMudlogLevelDiscriminators$' || rc=1
-ctl squelch-level '^TestWizutilMudlogLevelDiscriminators$' || rc=1
-ctl freeze-level '^TestWizutilMudlogLevelDiscriminators$' || rc=1
-ctl thaw-level '^TestWizutilMudlogLevelDiscriminators$' || rc=1
-ctl wizutil-invis-ignored '^TestWizutilMudlogLevelDiscriminators$' || rc=1
-ctl skillset-type '^TestSkillsetMudlogTapMetadata$' || rc=1
-ctl skillset-level '^TestSkillsetMudlogTapMetadata$' || rc=1
-ctl skillset-file '^TestSkillsetMudlogTapMetadata$' || rc=1
+for id in squelch-type freeze-type thaw-type notitle-level squelch-level \
+	freeze-level thaw-level wizutil-invis-ignored skillset-type skillset-level \
+	skillset-file; do
+	run_one "$id" || rc=1
+done
+echo "raw control output retained in $OUT_DIR"
 exit $rc
