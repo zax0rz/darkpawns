@@ -169,13 +169,10 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	}
 
 	player.StopFighting()
-	w.DieFollower(player)
 	if player.IsAffected(affWerewolf) {
 		player.SetAffect(affWerewolf, false)
 	}
-	if player.IsMounted() {
-		player.Unmount()
-	}
+	w.unmountRawKillBody(player)
 
 	w.deathCry(player)
 
@@ -222,8 +219,10 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	// the next heartbeat, where extract_char_final returns a live descriptor to
 	// CON_MENU. No invented resurrection bytes reach the victim synchronously
 	// (R4).
+	// src/act.offensive.c:160 calls raw_kill directly; unlike die_with_killer
+	// (src/fight.c:618), it does not assign POS_DEAD. Preserve AWAKE for
+	// final-extraction follower notices (src/utils.c:422-423).
 	w.QueuePlayerExtraction(player)
-	player.SetPosition(combat.PosDead)
 }
 
 // changeAlignment shifts a player's alignment based on the victim's alignment.
@@ -373,6 +372,7 @@ func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
 // handleMobDeath implements the normal NPC death path.
 // Original: make_corpse (transfers inventory+equipment+gold), extract_char.
 func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant, attackType int) {
+	w.unmountRawKillBody(victim)
 	// raw_kill cries while the victim is still in the room, then silently
 	// builds the corpse (src/fight.c:573-578, 258-427; R1/R4).
 	combat.DeathCry(victim)
@@ -521,10 +521,7 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 					m.SetMana(m.GetMaxMana())
 				}
 			}
-			if rider, ok := w.GetPlayer(m.GetMountRider()); ok {
-				w.clearMountedPair(rider, m)
-				m.RemoveAffected(affMounted)
-			}
+			w.unmountRawKillBody(m)
 			w.forgetRawKillVictim(m.GetName())
 		}
 		w.handleMobDeath(victim, nil, attackType)
@@ -658,7 +655,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		}
 	}
 
-	combat.DeathCry(player) // src/fight.c:573, before make_corpse
+	w.unmountRawKillBody(player) // src/fight.c:562-565
+	combat.DeathCry(player)      // src/fight.c:573, before make_corpse
 
 	// Inventory & Equipment — still needs manual lock (no getters for Inventory/Equipment)
 	var inventoryItems []*ObjectInstance

@@ -125,7 +125,8 @@ func TestSpecMedusa_PetrifyAudienceAndState(t *testing.T) {
 	if got := player.GetExp(); got != 99 {
 		t.Fatalf("exp = %d, want 99 after level-cubed loss", got)
 	}
-	if got := player.GetPosition(); got != combat.PosDead {
-		t.Fatalf("position = %d, want dead", got)
+	// src/spec_procs2.c:1577 calls raw_kill directly, preserving position.
+	if got := player.GetPosition(); got != combat.PosStanding {
+		t.Fatalf("position = %d, want standing until extraction", got)
 	}
 }

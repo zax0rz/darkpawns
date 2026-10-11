@@ -1,0 +1,103 @@
+# depth-case: death.followers-extraction-audience
+# C src/fight.c:580 -> src/handler.c:1116-1117 -> src/utils.c:447-457.
+# God kills a mortal master; the follower receives stop bytes on the
+# deferred pulse. force follow self then proves the relation was cleared.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Deathgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deathgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Deathmaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Deathmaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+
+[setup:oracle:follower]
+Deathfollower
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower]
+Deathfollower
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+force Deathfollower follow Deathmaster
+
+[probe]
+kill deathmaster
+~dpclock pulse 1
+
+force Deathfollower follow self

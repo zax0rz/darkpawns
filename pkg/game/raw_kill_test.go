@@ -313,3 +313,32 @@ func TestRawKillTeardownOrder(t *testing.T) {
 		t.Fatalf("teardown order=%q want %q", got, want)
 	}
 }
+
+// src/fight.c:562-565 unmounts at death, before deferred extraction.
+func TestMountDeathUnmountsImmediately(t *testing.T) {
+	for _, following := range []bool{false, true} {
+		for _, path := range []string{"death", "raw-kill", "instakill"} {
+			t.Run(fmt.Sprintf("%s/following=%t", path, following), func(t *testing.T) {
+				w, rider, mount := newRideDepthWorld(t)
+				rider.MountName = mount.GetName()
+				rider.SetAffect(affMounted, true)
+				mount.SetMountRider(rider.GetName())
+				mount.SetAffected(affMounted)
+				if following {
+					mount.SetFollowing(rider.GetName())
+				}
+				switch path {
+				case "death":
+					w.HandleNonCombatDeath(mount)
+				case "raw-kill":
+					w.RawKillCombatant(mount, combat.TYPE_HIT)
+				case "instakill":
+					w.Instakill(mount, rider, combat.TYPE_HIT)
+				}
+				if rider.IsMounted() || rider.IsAffected(affMounted) || mount.IsMountedMob() || mount.IsAffected(affMounted) {
+					t.Fatal("mount death left mounted state before extraction")
+				}
+			})
+		}
+	}
+}
