@@ -24,7 +24,7 @@ func (e *movementWindowEngine) StopCombat(body combat.Combatant) {
 	}
 }
 
-func TestCombatBodyMovementWindowRenamed(t *testing.T) {
+func TestCombatBodyMovementWindow(t *testing.T) {
 	for _, kind := range []string{"move", "extract", "new-fight", "door", "tunnel", "cost"} {
 		t.Run(kind, func(t *testing.T) {
 			w := newMoveCostTestWorld(t)
