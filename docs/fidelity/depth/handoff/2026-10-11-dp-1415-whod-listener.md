@@ -50,6 +50,11 @@ abbrev, title + ` (AFK)`, ` [%s]` / ` [ ** Unknown ** ]`, and the counters.
 * **Flag:** C's rule is game port + 1, so the `-1` default derives from
   `-telnet-port` (7777 → 7778) and a stock self-host matches C. **Prod sets
   7779**, because 7778 is `-telnet-tls-port`.
+* **A failed reopen bind:** C's `init_socket` exits the server on a failed
+  reopen bind (`src/whod.c:295-296`, bind then log), so C dies before the open
+  producer; Go logs a `slog` error, emits **no** `WHOD port opened.` producer,
+  and keeps running. Deliberate difference — R1a/R4, an exit is not a byte to
+  reproduce; the init path takes the same no-crash shape.
 * **Order:** the open producer is emitted **before** the bind, as C does.
 * **Visibility:** `World.WhodInvisible` (`IsAffected(affInvisible) ||
   GetInvisLevel() != 0 || RoomNoWho`); linkless players are C's `desc == NULL`
@@ -113,10 +118,17 @@ R5h controls, six cases, each 1 → 0 → 1:
 (`greeting-bytes`, `list-header`, `invisible-gate`, `linkless-filter`,
 `served-producer`, `close-producer`).
 
-**Oracle vehicle: not yet claimed.** The issue asks for one "if the harness can
-connect to the C oracle's game port + 1" and compare the raw WHOD bytes; that
-has not been demonstrated, so these rows are `unit-green`, and the vehicle is
-the open item for the census step rather than an assumed pass.
+**Oracle vehicle: the harness cannot drive this port — stopped and reported.**
+`cmd/dp-oracle-diff` reserves the C oracle's adjacent WHOD port only so the
+oracle can bind it (`allocatePorts`, `main.go:1858-1896`) and closes that
+reservation again before the servers start (`:439`); it never dials the port,
+and it launches the Go server with only `-port` and `-telnet-port` (`:459-460`),
+so neither side is driven there. The scenario format has no raw-socket or
+second-port section — the README's sections are `setup`, `warmup`, `probe`,
+`fixture`, `relogin` and `creation`, all over telnet/ws on the primary port.
+Adding one would mean extending the shared harness, which the DP-1415 review
+rules out ("stop and report rather than build around it"), so these rows stay
+`unit-green`.
 
 ## Inventory
 
