@@ -130,6 +130,7 @@ fidelity-units:
 	python3 scripts/fidelity_units.py --out "$(if $(OUT),$(OUT),$(UNIT_OUT))" $(if $(UNIT_ROOT),--root "$(UNIT_ROOT)")
 
 fidelity-depth:
+	python3 scripts/gen_fidelity_depth.py --self-test
 	python3 scripts/gen_fidelity_depth.py
 
 # Full C-vs-Go scenario regression. The per-scenario timeout is deliberately
