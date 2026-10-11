@@ -2,6 +2,8 @@ package game
 
 import (
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // These tests guard the movement-cost table and immortal exemption (DP-1029 / F9).
@@ -72,3 +74,34 @@ func TestSectorMoveCost(t *testing.T) {
 
 // TestMovePlayer_MortalExhaustedBlocked confirms a mortal with too few move
 // points is still blocked (regression guard for the immortal short-circuit).
+
+// newMoveCostTestWorld builds a world with two rooms of known sectors so the
+// movement cost of moving between them is deterministic: room 1001 (SECT_FIELD,
+// cost 3) ↔ room 1002 (SECT_DESERT, cost 8). Expected move cost = (3+8)/2 = 5.
+func newMoveCostTestWorld(t *testing.T) *World {
+	t.Helper()
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{
+				VNum: 1001, Name: "Field", Zone: 1, Sector: SECT_FIELD,
+				Exits: map[string]parser.Exit{
+					"north": {Direction: "north", ToRoom: 1002, DoorState: 0},
+				},
+			},
+			{
+				VNum: 1002, Name: "Desert", Zone: 1, Sector: SECT_DESERT,
+				Exits: map[string]parser.Exit{
+					"south": {Direction: "south", ToRoom: 1001, DoorState: 0},
+				},
+			},
+		},
+		Mobs: []parser.Mob{},
+		Objs: []parser.Obj{},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+	return w
+}
