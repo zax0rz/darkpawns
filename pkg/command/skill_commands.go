@@ -1365,6 +1365,21 @@ func genderPronoun(sex int) string {
 // Helper: send skill result to player, victim, and room
 // ---------------------------------------------------------------------------
 
+// skillMessageTerminator returns a SkillResult message's exact wire bytes.
+// C's send_to_char writes the string and nothing else (src/comm.c
+// send_to_char), so a message that already carries its transcribed
+// terminator must not gain a second one — the extra "\r\n" printed a blank
+// line C never sends (PF-063: every sendSkillResult message ending in \r\n
+// went out double-terminated, e.g. do_detect's "You carefully check the
+// room...\r\n", src/new_cmds2.c:516). Literals transcribed without their
+// terminator keep receiving one here.
+func skillMessageTerminator(message string) string {
+	if strings.HasSuffix(message, "\r\n") {
+		return message
+	}
+	return message + "\r\n"
+}
+
 func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatant, result game.SkillResult) error {
 	if target == nil && len(result.Targets) > 0 {
 		target = result.Targets[0]
@@ -1434,11 +1449,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		if result.MessageToCh != "" {
 			// C act() CAPs the assembled string (comm.c:2477); lines that begin
 			// with $e/$n render lowercase and must be capitalized here.
-			_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+			_ = s.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToCh)))
 		}
 		if result.MessageToVict != "" && target != nil {
 			if p, ok := target.(*game.Player); ok {
-				p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
+				p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToVict)))
 			}
 		}
 		if result.MessageToRoom != "" {
@@ -1452,7 +1467,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				if target != nil && !result.RoomIncludesTarget && p == target {
 					continue
 				}
-				p.SendMessage(game.CapitalizeSentence(result.MessageToRoom) + "\r\n")
+				p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToRoom)))
 			}
 		}
 		if result.MessageToRoomSecond != "" {
@@ -1466,7 +1481,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				if target != nil && !result.RoomIncludesTarget && p == target {
 					continue
 				}
-				p.SendMessage(game.CapitalizeSentence(result.MessageToRoomSecond) + "\r\n")
+				p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToRoomSecond)))
 			}
 		}
 	}
@@ -1515,7 +1530,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	} else if result.MessageToCh != "" && !result.MessageToChAfterRoom {
 		// C act() CAPs the assembled string (comm.c:2477); lines that begin
 		// with $e/$n render lowercase and must be capitalized here.
-		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+		_ = s.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToCh)))
 	}
 
 	// C's failed cutthroat arm calls hit(ch, victim, SKILL_CUTTHROAT), which
