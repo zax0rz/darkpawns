@@ -101,3 +101,23 @@ func TestAccuseTargetAudienceWire(t *testing.T) {
 		t.Fatalf("observer wire=%q", got)
 	}
 }
+
+// src/act.social.c:121-122 uses one_argument before the target acts.
+func TestAccuseOneArgumentWire(t *testing.T) {
+	actor, target, observer := accuseAudienceFixture(t)
+	if err := ExecuteCommand(actor, "accuse", []string{"the", "Target", "trailing", "words"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		s    *Session
+		want string
+	}{
+		{actor, "You look accusingly at her.\r\n"},
+		{target, "Accuser looks accusingly at you.\r\n"},
+		{observer, "Accuser looks accusingly at Target.\r\n"},
+	} {
+		if got := captureWire(tc.s); got != tc.want {
+			t.Fatalf("one-argument wire=%q, want %q", got, tc.want)
+		}
+	}
+}

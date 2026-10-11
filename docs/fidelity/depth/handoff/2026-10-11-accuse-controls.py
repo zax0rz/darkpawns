@@ -8,6 +8,7 @@ checks = (
  ('socCharNoArg   = 0', 'socCharNoArg   = 1', 'TestAccuseNoArgBytesPinCSource'),
  ('socCharFound   = 2', 'socCharFound   = 3', 'TestAccuseTargetSuccessWire'),
  ('socOthersFound = 3', 'socOthersFound = 4', 'TestAccuseTargetAudienceWire'),
+ ('arg1, _ := oneArgument(arg)', 'arg1 := strings.Fields(arg)[0]', 'TestAccuseOneArgumentWire'),
 )
 command = ['go', 'test', './pkg/session', '-run', '^TestAccuse', '-count=1']
 def run(args):
