@@ -66,3 +66,24 @@ func TestAccuseNoArgBytesPinCSource(t *testing.T) {
 		t.Fatalf("unexpected output after the actor line: %q", extra)
 	}
 }
+
+func accuseAudienceFixture(t *testing.T) (*Session, *Session, *Session) {
+	t.Helper()
+	m := makeGateTestManager(t, false)
+	actor := makeGateSession(t, m, 1, "Accuser", 1)
+	target := makeGateSession(t, m, 2, "Target", 1)
+	observer := makeGateSession(t, m, 3, "Observer", 1)
+	target.player.SetSex(game.SexFemale)
+	return actor, target, observer
+}
+
+// src/act.social.c:144; lib/misc/socials:4.
+func TestAccuseTargetSuccessWire(t *testing.T) {
+	actor, _, _ := accuseAudienceFixture(t)
+	if err := ExecuteCommand(actor, "accuse", []string{"Target"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := captureWire(actor); got != "You look accusingly at her.\r\n" {
+		t.Fatalf("actor wire=%q", got)
+	}
+}
