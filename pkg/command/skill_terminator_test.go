@@ -100,18 +100,49 @@ func TestSendSkillResultLiteralAudiencesExactBytes(t *testing.T) {
 	}
 }
 
-// TestSkillMessageTerminator pins the helper itself across the four shapes a
-// SkillResult literal can have.
+// TestSkillMessageTerminator pins the helper itself across the shapes a
+// SkillResult literal can have. C spells message terminators both ways —
+// "\r\n" and "\n\r" (do_compare: src/new_cmds.c:1984/1991,
+// do_flesh_alter: src/new_cmds.c:1900) — and either spelling terminates the
+// message; the LFCR rows fail on the CRLF-only suffix test (PF-063 cluster 3).
 func TestSkillMessageTerminator(t *testing.T) {
 	cases := []struct{ in, want string }{
 		{"Yeah, right.\r\n", "Yeah, right.\r\n"},
 		{"Yeah, right.", "Yeah, right.\r\n"},
 		{"multi\r\nline\r\n", "multi\r\nline\r\n"},
 		{"", "\r\n"},
+		{"They're the same thing!\n\r", "They're the same thing!\n\r"},
+		{"Looks like you don't have those objects..\n\r", "Looks like you don't have those objects..\n\r"},
+		{"You know nothing of altering your flesh!\n\r", "You know nothing of altering your flesh!\n\r"},
 	}
 	for _, tc := range cases {
 		if got := skillMessageTerminator(tc.in); got != tc.want {
 			t.Errorf("skillMessageTerminator(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+// TestSendSkillResultSendsLFCRBytesExactly pins the exact wire bytes —
+// including the LFCR spelling itself, which neither comparator can see
+// (normalization folds both spellings) — for do_compare's two LFCR
+// literals (src/new_cmds.c:1984, :1991) and do_flesh_alter's gate
+// (src/new_cmds.c:1900) through the full sendSkillResult seam. Fails on the
+// CRLF-only suffix test: the appended "\r\n" both adds a blank line and
+// corrupts the terminator bytes.
+func TestSendSkillResultSendsLFCRBytesExactly(t *testing.T) {
+	for _, msg := range []string{
+		"Looks like you don't have those objects..\n\r",
+		"They're the same thing!\n\r",
+		"You know nothing of altering your flesh!\n\r",
+	} {
+		session := newSkillCommandSession(t)
+		result := game.SkillResult{MessageToCh: msg}
+		if err := sendSkillResult(session, session.player, nil, result); err != nil {
+			t.Fatalf("sendSkillResult: %v", err)
+		}
+		if len(session.messages) != 1 || session.messages[0] != msg {
+			t.Fatalf("actor bytes = %q, want exactly [%q] (LFCR terminator preserved, nothing appended)",
+				session.messages, msg)
 		}
 	}
 }
