@@ -33,6 +33,9 @@ func newRecallTestWorld(t *testing.T) (*World, map[string]*strings.Builder) {
 			b.Write(msg)
 		}
 	}
+	// do_recall's fighting gate rides the literal seam (src/act.other.c:1744
+	// is bare), so the capture must see both sinks.
+	w.LiteralMessageSink = w.MessageSink
 	return w, outputs
 }
 

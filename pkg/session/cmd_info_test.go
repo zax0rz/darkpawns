@@ -32,7 +32,8 @@ func readSessionText(t *testing.T, s *Session) string {
 			var ed EventData
 			data, _ := json.Marshal(sm.Data)
 			_ = json.Unmarshal(data, &ed)
-			if ed.Type == "text" {
+			// "raw" carries the same text bytes, untouched (literal sends).
+			if ed.Type == "text" || ed.Type == "raw" {
 				return ed.Text
 			}
 		}
