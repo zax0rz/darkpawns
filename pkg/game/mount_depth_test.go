@@ -186,6 +186,57 @@ func TestLuaMountPlayerRideDismountAndUnmountUseBridgeBody(t *testing.T) {
 	}
 }
 
+func TestLegacyUnmountClearsAffectsButRetainsMasterLinks(t *testing.T) {
+	w, rider, mount := newRideDepthWorld(t)
+	rider.SetAffect(affMounted, true)
+	rider.MountName = mount.GetName()
+	mount.SetAffected(affMounted)
+	mount.SetAffected(affCharm)
+	mount.SetMountRider(rider.Name)
+	mount.SetFollowingBody(rider)
+
+	Unmount(rider, mount)
+
+	if rider.IsAffected(affMounted) || rider.GetMountName() != "" {
+		t.Fatalf("Unmount left rider mounted: affect=%t cache=%q", rider.IsAffected(affMounted), rider.GetMountName())
+	}
+	if mount.IsAffected(affMounted) || !mount.IsAffected(affCharm) {
+		t.Fatalf("Unmount mount affects: mounted=%t charm=%t", mount.IsAffected(affMounted), mount.IsAffected(affCharm))
+	}
+	if mount.GetMountRider() != rider.Name || mount.GetFollowing() != rider.Name || w.FollowingBody(mount) != rider {
+		t.Fatalf("Unmount changed master/follower links: rider=%q following=%q body=%p", mount.GetMountRider(), mount.GetFollowing(), w.FollowingBody(mount))
+	}
+	if w.GetMount(rider) != nil || w.riddenMount(rider) != nil {
+		t.Fatal("GetMount/riddenMount still returned the affect-cleared mount")
+	}
+}
+
+func TestPlayerUnmountClearsAffectWithoutCachedMountName(t *testing.T) {
+	rider := NewPlayer(77, "Unmounted", 1001)
+	rider.SetAffect(affMounted, true)
+
+	rider.Unmount()
+
+	if rider.IsAffected(affMounted) || rider.GetMountName() != "" {
+		t.Fatalf("Player.Unmount left rider mounted: affect=%t cache=%q", rider.IsAffected(affMounted), rider.GetMountName())
+	}
+}
+
+func TestLegacyUnmountClearsMountWithNilRider(t *testing.T) {
+	_, _, mount := newRideDepthWorld(t)
+	mount.SetAffected(affMounted)
+	mount.SetMountRider("Rider")
+
+	Unmount(nil, mount)
+
+	if mount.IsAffected(affMounted) {
+		t.Fatal("Unmount(nil, mount) left the mount AFF_MOUNT set")
+	}
+	if mount.GetMountRider() != "Rider" {
+		t.Fatalf("Unmount(nil, mount) changed the mount's master cache: %q", mount.GetMountRider())
+	}
+}
+
 func TestDoRideDirectGates(t *testing.T) {
 	t.Run("fighting", func(t *testing.T) {
 		w, rider, _ := newRideDepthWorld(t)

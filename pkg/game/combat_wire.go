@@ -312,7 +312,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		}
 		victim.SetHP(1)
 		if victim.IsMounted() {
-			victim.Unmount()
+			w.unmountActor(victim)
 		}
 		if guard.HasMobFlag(MobFlagMemory) || guard.HasFlag("MOB_MEMORY") {
 			guard.Forget(victim.GetName())

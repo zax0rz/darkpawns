@@ -134,17 +134,7 @@ func (w *World) doDismountActor(rider Actor) {
 // links and the Go-side display names that identify those links.
 func (w *World) unmountActor(rider Actor) {
 	mount := w.mountedFollowerFor(rider)
-	if actorHasMountAffect(rider) {
-		setActorMountAffect(rider, false)
-		if player, ok := rider.(*Player); ok {
-			// MountName is Go's cached rider-side projection; C stores only
-			// AFF_MOUNT on the rider and leaves the follower link intact.
-			player.MountName = ""
-		}
-	}
-	if mount != nil && mount.IsAffected(affMounted) {
-		mount.RemoveAffected(affMounted)
-	}
+	clearMountedAffects(rider, mount)
 }
 
 func actorHasMountAffect(actor Actor) bool {
@@ -155,19 +145,6 @@ func actorHasMountAffect(actor Actor) bool {
 		return actor != nil && actor.IsAffected(affMounted)
 	default:
 		return false
-	}
-}
-
-func setActorMountAffect(actor Actor, mounted bool) {
-	switch actor := actor.(type) {
-	case *Player:
-		actor.SetAffect(affMounted, mounted)
-	case *MobInstance:
-		if mounted {
-			actor.SetAffected(affMounted)
-		} else {
-			actor.RemoveAffected(affMounted)
-		}
 	}
 }
 

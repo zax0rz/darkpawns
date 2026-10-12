@@ -200,6 +200,10 @@ func StopFollowerMob(w *World, mob *MobInstance) {
 
 	// src/utils.c:440-442 always clears CHARM/GROUP, including ride-charm.
 	mob.SetFollowing("")
+	// MountRider is a Go-side cache of the master link. C unmount deliberately
+	// retains it while the master relation exists; StopFollowerMob removes that
+	// relation, so discard the cache here as well.
+	mob.SetMountRider("")
 	mob.RemoveAffected(affCharm)
 	mob.RemoveAffected(affGroup)
 }

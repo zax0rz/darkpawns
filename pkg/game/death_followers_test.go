@@ -35,6 +35,27 @@ func TestStopFollowerMobClearsCharmAndGroup(t *testing.T) {
 	}
 }
 
+func TestStopFollowerMobRemovesMountedMasterCacheAfterClearingAffects(t *testing.T) {
+	w, master, mob := newRideDepthWorld(t)
+	w.StopAITicker()
+	mob.SetFollowingBody(master)
+	mob.SetMountRider(master.Name)
+	mob.SetAffected(affMounted)
+	mob.SetAffected(affCharm)
+	mob.SetAffected(affGroup)
+	master.MountName = mob.GetName()
+	master.SetAffect(affMounted, true)
+
+	StopFollowerMob(w, mob)
+
+	if mob.IsAffected(affMounted) || master.IsAffected(affMounted) || master.GetMountName() != "" {
+		t.Fatalf("stop follower left mounted affects/cache: mob=%t rider=%t name=%q", mob.IsAffected(affMounted), master.IsAffected(affMounted), master.GetMountName())
+	}
+	if mob.GetMountRider() != "" || mob.GetFollowing() != "" || w.FollowingBody(mob) != nil {
+		t.Fatalf("stop follower retained master cache/relation: rider=%q following=%q body=%p", mob.GetMountRider(), mob.GetFollowing(), w.FollowingBody(mob))
+	}
+}
+
 func TestDamageBreaksMountCharmAndGroup(t *testing.T) {
 	w, master, mob := newRideDepthWorld(t)
 	w.StopAITicker()
