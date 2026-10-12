@@ -8,6 +8,7 @@ type CharacterCommandContext struct {
 	Actor         combat.Combatant
 	World         *World
 	PrivateOutput func(string)
+	RawArgs       string
 }
 
 // CharacterCommandResult distinguishes an implemented actor callback from a

@@ -20,6 +20,7 @@ const (
 type SpecEntry struct {
 	Legacy      SpecFunc
 	Actor       ActorSpecFunc
+	ActorObject ActorObjectSpecFunc
 	NPCFallback SpecialResult
 }
 
@@ -42,6 +43,11 @@ func (ctx CharacterSpecialContext) ActActor() Actor {
 // stop and retain an explicit coverage gap instead of silently running the
 // command handler.
 type ActorSpecFunc func(w *World, ctx CharacterSpecialContext, me *MobInstance, cmd, arg string) SpecialResult
+
+// ActorObjectSpecFunc is the object-host lane for a C object special. The
+// actual actor and object are both passed through; a legacy-only object
+// special remains Unsupported for NPC dispatch.
+type ActorObjectSpecFunc func(w *World, ctx CharacterSpecialContext, obj *ObjectInstance, cmd, arg string) SpecialResult
 
 // DispatchCharacterSpecial offers one registered special to the real actor.
 // It preserves the old player callback for *Player bodies, invokes an
@@ -76,6 +82,37 @@ func DispatchCharacterSpecial(name string, w *World, ctx CharacterSpecialContext
 	}
 	if entry.NPCFallback == SpecialDeclined {
 		return npcSpecialFallback(name, cmd)
+	}
+	return SpecialUnsupported
+}
+
+// DispatchCharacterObjectSpecial preserves legacy player callbacks and
+// requires an explicit actor callback for NPCs. A missing assigned handler is
+// Unsupported so the shared interpreter cannot silently bypass an applicable
+// C special.
+func DispatchCharacterObjectSpecial(name string, w *World, ctx CharacterSpecialContext, obj *ObjectInstance, cmd, arg string) SpecialResult {
+	if ctx.Actor == nil || obj == nil {
+		return SpecialUnsupported
+	}
+	if player, ok := ctx.Actor.(*Player); ok {
+		if fn := GetObjSpecForObject(obj.VNum); fn != nil {
+			if fn(w, player, obj, cmd, arg) {
+				return SpecialHandled
+			}
+			return SpecialDeclined
+		}
+		return SpecialUnsupported
+	}
+	if !ctx.Actor.IsNPC() {
+		return SpecialUnsupported
+	}
+	entry, ok := SpecRegistry[name]
+	if !ok || entry.ActorObject == nil {
+		return SpecialUnsupported
+	}
+	result := entry.ActorObject(w, ctx, obj, cmd, arg)
+	if result == SpecialHandled || result == SpecialDeclined {
+		return result
 	}
 	return SpecialUnsupported
 }

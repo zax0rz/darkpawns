@@ -73,11 +73,16 @@ func init() {
 
 	// Communication
 	registerCommand("say", wrapArgs(cmdSay), "Say something to the room.")
+	registerActorCommand("say", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCSayCommand(mob, arg) }))
 	registerCommand("'", wrapArgs(cmdSay), "Say something to the room.")
+	registerActorCommand("'", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCSayCommand(mob, arg) }))
 	registerCommand("rsay", wrapArgs(cmdRaceSay), "Say something in your racial tongue.")
 	registerCommand("tell", wrapArgs(cmdTell), "Send a private message to a player.")
+	registerActorCommand("tell", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCTellCommand(mob, arg) }))
 	registerCommand("emote", wrapArgs(cmdEmote), "Perform a roleplay action.")
+	registerActorCommand("emote", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCEmoteCommand(mob, arg) }))
 	registerCommand(":", wrapArgs(cmdEmote), "Perform a roleplay action.")
+	registerActorCommand(":", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCEmoteCommand(mob, arg) }))
 	registerCommand("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.")
 	registerCommand("holler", wrapArgs(cmdHoller), "Holler to everyone in the world.")
 	registerCommand("gtell", wrapArgs(cmdGtell), "Send a message to your group.", "gsay")
@@ -119,6 +124,7 @@ func init() {
 	registerCommand("grab", wrapArgs(cmdHold), "Hold an item.")
 	registerCommand("get", wrapArgs(cmdGet), "Pick up an item from the room, container, or corpse.", "take")
 	registerCommand("give", wrapArgs(cmdGive), "Give an item or gold to another character.")
+	registerActorCommand("give", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCGiveCommand(mob, arg) }))
 	registerCommand("put", wrapArgs(cmdPut), "Put an item into a container.")
 	registerCommand("drop", wrapArgs(cmdDrop), "Drop an item from your inventory.")
 	registerCommand("junk", wrapArgs(cmdJunk), "Destroy an item for a small experience reward.")
@@ -452,6 +458,17 @@ func init() {
 
 	// Admin commands (game pkg bans) — duplicate of whod.c port; let the first one win
 	// (no re-register here to avoid overwriting minPosition)
+}
+
+func npcActorHandler(run func(*game.World, *game.MobInstance, string)) command.ActorHandler {
+	return func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		mob, ok := ctx.Actor.(*game.MobInstance)
+		if !ok || ctx.World == nil {
+			return game.CharacterCommandUnsupported
+		}
+		run(ctx.World, mob, ctx.RawArgs)
+		return game.CharacterCommandHandled
+	}
 }
 
 // wrapArgs adapts a func(*Session, []string) error to command.Handler.

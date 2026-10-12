@@ -201,20 +201,17 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		roomVNum := p.RoomVNum
 
 		// extract_char drops what the character still holds where they are
-		// (handler.c:1132-1142): first the carried list from its head (the
-		// most recently obtained object, since obj_to_char prepends), then
-		// each worn slot in WEAR_* order. obj_to_room prepends and the room
-		// listing is built from the end of roomItems, so appending in C's
-		// drop order reproduces C's floor order. A character who rented has
+		// (handler.c:1132-1142): first the carried list from its head, then
+		// each worn slot in WEAR_* order. obj_to_room prepends each object,
+		// so preserve that linked-list order while applying each head insert.
+		// A character who rented has
 		// nothing left to drop: the rent file took it (Crash_rentsave then
 		// Crash_extract_objs).
 		if !p.RentedOut {
 			var drops []*ObjectInstance
 			if p.Inventory != nil {
 				p.Inventory.mu.Lock()
-				for i := len(p.Inventory.Items) - 1; i >= 0; i-- {
-					drops = append(drops, p.Inventory.Items[i])
-				}
+				drops = append(drops, p.Inventory.Items...)
 				p.Inventory.Items = p.Inventory.Items[:0]
 				p.Inventory.mu.Unlock()
 			}
@@ -241,7 +238,10 @@ func (w *World) ExtractPendingPlayers() []*Player {
 			}
 			for _, item := range drops {
 				if roomVNum >= 0 {
-					w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+					items := w.roomItems[roomVNum]
+					w.roomItems[roomVNum] = append(items, nil)
+					copy(w.roomItems[roomVNum][1:], items)
+					w.roomItems[roomVNum][0] = item
 					item.Location = LocRoom(roomVNum)
 					item.RoomVNum = roomVNum
 					if isLitLightSource(item) {

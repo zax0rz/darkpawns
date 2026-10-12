@@ -25,13 +25,16 @@ func (w *World) GetItemsInRoomI(roomVNum int) []interface{} {
 	return result
 }
 
-// AddItemToRoom appends an item to a room's item list.
+// AddItemToRoom places an item at the head of a room's C-ordered contents.
 // MED-023: Now sets Location and RoomVNum on the object, matching MoveObjectToRoom behavior.
 // Prefer MoveObjectToRoom for new code (it also handles detach from current location).
 func (w *World) AddItemToRoom(item *ObjectInstance, roomVNum int) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	w.roomItems[roomVNum] = append(w.roomItems[roomVNum], item)
+	items := w.roomItems[roomVNum]
+	w.roomItems[roomVNum] = append(items, nil)
+	copy(w.roomItems[roomVNum][1:], items)
+	w.roomItems[roomVNum][0] = item
 	item.SetRoomVNum(roomVNum)
 }
 

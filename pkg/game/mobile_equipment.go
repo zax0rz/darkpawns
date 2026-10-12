@@ -32,6 +32,21 @@ func (m *MobInstance) EquipmentSnapshot() map[int]*ObjectInstance {
 	return out
 }
 
+// COrderedMobWorn returns the Mob's equipment in C WEAR_ index order.
+func COrderedMobWorn(m *MobInstance) []*ObjectInstance {
+	if m == nil {
+		return nil
+	}
+	equipment := m.EquipmentSnapshot()
+	out := make([]*ObjectInstance, 0, NumWears)
+	for slot := 0; slot < NumWears; slot++ {
+		if obj := equipment[slot]; obj != nil {
+			out = append(out, obj)
+		}
+	}
+	return out
+}
+
 // mobileEquipmentEffects carries only the output/combat work that must run
 // after World and Mob locks are released. No manager/lifecycle lock is taken.
 type mobileEquipmentEffects struct {
