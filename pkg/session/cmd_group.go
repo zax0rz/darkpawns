@@ -322,6 +322,10 @@ func (s *Session) sendText(text string) {
 		return
 	}
 	s.forwardSnoopOutput(text)
+	// C's process_output frames the next prompt whenever output was flushed
+	// (comm.c:1631); a sendText-only response owed a frame it never got
+	// (PF-063 cluster 5: do_ungroup's reply lost its blank line).
+	s.notePlayerOutput()
 	select {
 	case s.send <- msg:
 	default:

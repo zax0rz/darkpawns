@@ -223,7 +223,9 @@ func TestDoSpecCommCBehavior(t *testing.T) {
 		w, actor, target, output := newDirectedSpeechWorld(t)
 		observer := directedSpeechPlayer(t, w, 3, "Observer", 1001)
 		w.DoSpecComm(actor, "Target what &Ris it", true)
-		if got := directedOutput(output, actor.Name); got != "You ask Target, 'what Ris it'\r\n" {
+		// C sprintf's the TO_CHAR reply with its own \r\n and act() appends
+		// the second (act.comm.c:1010-1012).
+		if got := directedOutput(output, actor.Name); got != "You ask Target, 'what Ris it'\r\n\r\n" {
 			t.Fatalf("actor output = %q", got)
 		}
 		if got := directedOutput(output, target.Name); got != "Actor asks you, 'what Ris it'\r\n" {

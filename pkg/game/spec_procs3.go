@@ -1296,7 +1296,9 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	default:
 		// do_say() selects "states" for a period-terminated utterance.
 		Act(w, false, me, nil, nil, nil, "$n states, 'My work here is done.'", "", ToRoom)
-		Act(w, false, me, nil, nil, nil, fmt.Sprintf("%s disappears in a flash of white light!", me.GetName()), "", ToRoom)
+		// C sprintf's the vanish line with its own \r\n and act() appends
+		// the second (spec_procs3.c:878-882) — the audience's blank line.
+		Act(w, false, me, nil, nil, nil, fmt.Sprintf("%s disappears in a flash of white light!\r\n", me.GetName()), "", ToRoom)
 	}
 	// extract_char() marks/removes the mob without running the player death
 	// pipeline: conjured creatures do not leave corpses or death announcements.

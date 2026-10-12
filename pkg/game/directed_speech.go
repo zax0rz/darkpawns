@@ -360,7 +360,10 @@ func (w *World) DoSpecComm(ch *Player, argument string, ask bool) {
 	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
 		communicationSend(ch, "Okay.")
 	} else {
-		Act(nil, false, ch, victim, nil, nil, fmt.Sprintf("You %s $N, '%s'", actionSing, message), "", ToChar)
+		// C sprintf's the reply with its own \r\n and act() appends a
+		// second one (act.comm.c:1010-1012) — the double break is the blank
+		// line C prints before the prompt (PF-063 cluster 5).
+		Act(nil, false, ch, victim, nil, nil, fmt.Sprintf("You %s $N, '%s'\r\n", actionSing, message), "", ToChar)
 	}
 	Act(w, false, ch, victim, nil, nil, actionOthers, "", ToNotVict)
 }
