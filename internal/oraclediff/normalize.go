@@ -1,9 +1,18 @@
 package oraclediff
 
 import (
+	"os"
 	"regexp"
 	"strings"
 )
+
+// MEASUREMENT ONLY (PF-063 Step 4, never-merge branch): with
+// DP_MEASURE_RAW_TERMINATORS=1, LFCR line endings survive normalization as
+// a <LFCR> token instead of folding into CRLF, exposing the raw terminator
+// spelling class the adopted comparator cannot see (its rule 2 canonicalizes
+// both spellings, as C's wire draws both). One corpus run with this env
+// counts and classifies the movers; Zach decides from the report.
+var measureRawTerminators = os.Getenv("DP_MEASURE_RAW_TERMINATORS") == "1"
 
 var (
 	// C prints "%sStarted: ..." (src/act.wizard.c:2344): the %s carries
@@ -86,6 +95,11 @@ func normalize(raw string, keepANSI bool) string {
 	}
 
 	// 2. Canonicalize CRLF/LFCR/CR and trailing whitespace: both telnet stacks may frame lines differently.
+	// In raw-terminator measurement mode, C's LFCR spelling survives as a
+	// <LFCR> token so a spelling difference between engines is a divergence.
+	if measureRawTerminators {
+		raw = strings.ReplaceAll(raw, "\n\r", "<LFCR>")
+	}
 	raw = strings.ReplaceAll(raw, "\r\n", "\n")
 	raw = strings.ReplaceAll(raw, "\n\r", "\n")
 	raw = strings.ReplaceAll(raw, "\r", "\n")
