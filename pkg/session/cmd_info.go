@@ -560,7 +560,7 @@ func cmdUsers(s *Session, args []string) error {
 
 	opts, ok := parseUsersArgs(args)
 	if !ok {
-		s.sendText(usersFormat)
+		s.Send(usersFormat)
 		return nil
 	}
 
@@ -897,7 +897,7 @@ func renderWhoShort(viewer, player *game.Player) string {
 func cmdWho(s *Session, args []string) error {
 	opts, ok := parseWhoArgs(args)
 	if !ok {
-		s.sendText(whoFormat)
+		s.Send(whoFormat)
 		return nil
 	}
 
@@ -1139,7 +1139,7 @@ func cmdReview(s *Session) error {
 	}
 	result := game.DoReview(s.player, s.manager.world)
 	if result.MessageToCh != "" {
-		s.sendText(result.MessageToCh)
+		s.Send(result.MessageToCh)
 	}
 	return nil
 }

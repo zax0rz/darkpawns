@@ -584,7 +584,7 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if s.manager.modChecker != nil && s.player != nil {
 		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
 		if reject {
-			s.sendText(errMsg)
+			s.Send(errMsg)
 			return nil
 		}
 	}
@@ -817,7 +817,7 @@ func commandGateRejected(s *Session, gate commandGate) bool {
 	}
 	playerPos := s.player.GetPosition()
 	if playerPos < gate.MinPosition {
-		s.sendText(positionFailMessage(playerPos))
+		s.Send(positionFailMessage(playerPos))
 		return true
 	}
 	return false
