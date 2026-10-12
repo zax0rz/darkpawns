@@ -78,7 +78,8 @@ Do not equate a site count with the number of assertions or branches.
 | 4 `olc-error-seams` | 8 | room/object/mob/shop open/write diagnostics and file-editor delete/write failures | Stop if classified I/O seam or error handling is needed; never equate all AtomicWrite failures to fopen |
 | 5 `olc-control-seams` | 8 | saveall; internal room-reset unknown command; room description/default; mob description/default; text-editor invalid action | Stop: missing routing, cleanup/return order and state topology need separate proofs |
 | 6 `olc-zone-seams` | 8 | zone write/unknown command; corrupt object extra-description; zone ARG display/parse diagnostics | Stop if shared writer/report signatures or behavior must change |
-| 7 `game-diagnostics` | 8 | death-cry NOWHERE; kill milestone; cross-room damage; death-trap caller; hunting; spike kill; protection evil/good | Audit combat callbacks, body identity and world locks; stop if any callback/order seam changes |
+| 7a `game-diagnostics` | 8 | death-cry NOWHERE; kill milestone; cross-room damage; player death; death-trap caller; spike kill; protection evil/good | Audit combat callbacks, body identity and world locks; stop if any callback/order seam changes |
+| 7b `hunting-diagnostics` | 1 | hunting-start producer and typed-prey caller boundary | Retain the existing hunting controls and name-only-path limitations |
 | 8 `rent-entry` | 7 | missing file, poverty, rented/crash/cryo/forced/undefined save kind at entry | Stop: actual durable loader and admission boundary; legacy absent metadata remains absent under prior decision |
 | 9 `rent-receptionist` | 1 | rent/cryo command producer (two payload arms) | Stop/design: no C receptionist analogue; quit RentOut cannot stand in |
 | 10 `admission-admin` | 7 | ban/unban, DNS/ban admission, ident, losing character/no-character close | Stop: helper signatures, acknowledgement ordering, retained-session locks or missing worker |

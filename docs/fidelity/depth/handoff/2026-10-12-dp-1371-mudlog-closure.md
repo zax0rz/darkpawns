@@ -63,16 +63,17 @@ The earlier wording credited this row to the sibling's Go code; the row's
 ## 5. Preserved limitation — fresh-login invisibility
 
 `interpreter.c:1927`'s level is `MAX(LVL_IMMORT, GET_INVIS_LEV(...))`, but the
-player object is created *inside* the login flow, so no test can raise its
-invisibility before the producer runs. `TestLoginConnectMudlog` proves the
+fresh login restores the player from storage, while `Player.InvisLevel` is
+currently runtime-only (`pkg/game/player.go`) and is not restored by
+`db.RecordToPlayer`. `TestLoginConnectMudlog` proves the
 payload, the BRF type, the file flag and the `LVL_IMMORT` floor; the invisibility
-leg stays unproven **by construction of the flow**, not by omission.
+leg remains outside this proof; do not claim the floor test covers it.
 
 ## 6. Reconciliation and required checks (as run)
 
 | Check | Result |
 |---|---|
-| `2026-10-06-dp-1371-mudlog-sites-check.py` | sites match the C sources 208/208, no duplicates, every row complete, `disabled-C` = `src/comm.c:1581`, `#if 0`/`#endif` lines unchanged — **red on one rule**: `train exceeds eight sites` (group `game-diagnostics` = 9) |
+| `2026-10-06-dp-1371-mudlog-sites-check.py` | PASS: 208 retained sites / 207 active, all calls reconciled; no duplicates, complete rows, disabled-C source checks and eight-site group limit pass. `game-diagnostics` has eight sites; the existing hunting producer is grouped separately as `hunting-diagnostics` (one site). |
 | `go build ./...` / `go vet ./...` | 0 / 0 |
 | `go test ./pkg/game/... ./pkg/session/... -count=1` | 0 |
 | `go test ./... -count=1` | 0 |
@@ -89,9 +90,6 @@ leg stays unproven **by construction of the flow**, not by omission.
 3. `olc.save-info`, `game-spike-stake` — scenario-pointer evidence only; no named
    unit proof exists. Candidates for a small follow-up if unit-level proof is
    wanted.
-4. Checker rule `train <= 8`: the `game-diagnostics` train holds 9 sites. This is
-   an authoring/grouping decision (rebalance the train or relax the rule), not a
-   fidelity gap, and it is left red rather than silently loosened.
 
 ## 8. Closure recommendation
 
@@ -99,5 +97,6 @@ Close `mudlog.unported-sites` **at case level for the D7 scope**: 114 of 133 cas
 carry a named landed unit proof, 3 more are approved divergences with named tests,
 13 are excluded by ruling, and the 2 remaining scenario-only rows plus the tracker
 row are recorded above. The 208-site enumeration still reconciles with the C
-sources, and the single red check is the stale train-size rule in §7.4, which needs
-a maintainer decision rather than a proof.
+sources. The original checker failure was resolved by separating the hunting
+producer from the eight-site game-diagnostics group without changing or weakening
+the checker.
