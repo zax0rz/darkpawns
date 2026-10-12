@@ -1,22 +1,9 @@
 package oraclediff
 
 import (
-	"os"
 	"regexp"
 	"strings"
 )
-
-// measurePromptTokens gates the PF-063 refined comparator (Step 1 of the
-// 2026-10-11 brief): with DP_MEASURE_PROMPT_TOKENS=1, prompt-only lines
-// survive normalization as <PROMPT> tokens instead of being deleted, and
-// each run of prompt/blank repaint framing is canonicalized (collapsing
-// everything from a run's first prompt onward to one token while keeping
-// the blank lines before it). The blank-run length before a prompt the
-// other side also has is the real R1 divergence class (#1880); prompt
-// frame presence and repaint counts are transport timing. Production
-// comparison — the shipping census — never sets the env, so its bytes are
-// unchanged.
-var measurePromptTokens = os.Getenv("DP_MEASURE_PROMPT_TOKENS") == "1"
 
 var (
 	// C prints "%sStarted: ..." (src/act.wizard.c:2344): the %s carries
@@ -141,27 +128,19 @@ func normalize(raw string, keepANSI bool) string {
 		filtered = append(filtered, line)
 	}
 
-	// 5. Drop volatile status/MOTD metadata lines: wall-clock, uptime, counts, and release dates vary per boot.
-	// In the PF-063 measurement mode, prompt-only lines are kept instead of dropped:
-	// framing runs are canonicalized so repaint-count differences collapse while the
-	// blank lines before a run's first prompt — where the real divergences live —
-	// stay comparable. ReconcilePromptFrames then pairs the two sides' edge frames.
-	if measurePromptTokens {
-		dropped := filtered[:0]
-		for _, line := range filtered {
-			if !volatileLine.MatchString(line) {
-				dropped = append(dropped, line)
-			}
-		}
-		lines = canonicalizePromptRuns(dropped)
-	} else {
-		lines = filtered[:0]
-		for _, line := range filtered {
-			if !volatileLine.MatchString(line) && !promptOnly.MatchString(line) {
-				lines = append(lines, line)
-			}
+	// 5. Drop volatile status/MOTD metadata lines: wall-clock, uptime, counts, and
+	// release dates vary per boot. Prompt-only lines survive as <PROMPT> tokens:
+	// each framing run is canonicalized so repaint-count differences collapse
+	// while the blank lines before a run's first prompt — where the real
+	// divergences live (#1880, PF-063) — stay comparable. ReconcilePromptFrames
+	// then pairs the two sides' block-edge frames in the harness.
+	dropped := filtered[:0]
+	for _, line := range filtered {
+		if !volatileLine.MatchString(line) {
+			dropped = append(dropped, line)
 		}
 	}
+	lines = canonicalizePromptRuns(dropped)
 
 	// Preserve internal blank lines but remove meaningless leading/trailing transcript padding.
 	return strings.Trim(strings.Join(lines, "\n"), "\n") + "\n"

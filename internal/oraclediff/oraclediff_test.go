@@ -9,13 +9,16 @@ import (
 	"time"
 )
 
+// PF-063 Step 3: prompt-only lines survive as <PROMPT> tokens (blank-run
+// framing is the compared surface; one-sided edge frames are reconciled in
+// the harness, see ReconcilePromptFrames).
 func TestNormalizeTier1Rules(t *testing.T) {
 	raw := "\x1b[31mRoom\x1b[0m\r\n" +
 		"  Str: excellent     Dex: poor          Int: average   \r\n" +
 		"  Wis: decent        Con: good          Cha: bad\r\n" +
 		"22H 100M 83V >   \r\nPlayer HP: 22/22\r\nPlayers online: 7\r\n" +
 		"As of 10-17-2008 there has been a pwipe.\r\n**** Dark Pawns 3.0 beta\r\nDescription  \r\n"
-	want := "Room\n<ROLLED_STATS>\nPlayer <VITALS>\nDescription\n"
+	want := "Room\n<ROLLED_STATS>\n<PROMPT>\nPlayer <VITALS>\nDescription\n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}
@@ -37,9 +40,14 @@ func TestNormalizeCanonicalizesCRLFAndLFCRAsSingleNewlines(t *testing.T) {
 	}
 }
 
-func TestNormalizeDropsPromptFramingButPreservesTextGreaterThan(t *testing.T) {
+// PF-063 Step 3: prompt-only lines survive as <PROMPT> tokens; the "> "
+// prefix is still stripped from lines that carry text.
+func TestNormalizeKeepsPromptTokensButPreservesTextGreaterThan(t *testing.T) {
 	raw := ">\r\n> Huh?!?\r\n>    Indented room text\r\nDoor > north\r\n22H 100M 83V >\r\n"
-	want := "Huh?!?\n   Indented room text\nDoor > north\n"
+	// The leading bare ">" loses its prefix to the "> " strip and lands as a
+	// leading blank, which the transcript trim removes; the vitals prompt
+	// survives as the token.
+	want := "Huh?!?\n   Indented room text\nDoor > north\n<PROMPT>\n"
 	if got := Normalize(raw); got != want {
 		t.Fatalf("Normalize() = %q, want %q", got, want)
 	}

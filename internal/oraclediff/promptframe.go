@@ -16,12 +16,15 @@ import "strings"
 // sides hold the prompt, both runs stand and their blank counts stay
 // comparable. Interior framing runs are never touched.
 //
-// It is a no-op unless DP_MEASURE_PROMPT_TOKENS=1: the shipping census
-// comparison is byte-for-byte unchanged.
+// ADOPTED SEMANTICS (PF-063 Step 3): this pass runs on every ordinary
+// comparison. Its one deliberate blind spot, stated explicitly: a
+// block-edge prompt frame that exists on ONE engine only is stripped as
+// transport timing, so a REAL missing edge prompt — an engine that never
+// prompts at a block edge at all — remains invisible. That is no worse than
+// the rule this comparator replaced, which deleted every prompt line
+// unconditionally; proving a prompt's presence is keep-prompts/no-settle
+// scenario territory (R5f, DP-1326), not census territory.
 func ReconcilePromptFrames(oracle, goPort string) (string, string) {
-	if !measurePromptTokens {
-		return oracle, goPort
-	}
 	return reconcilePromptFrameEdges(oracle, goPort)
 }
 
