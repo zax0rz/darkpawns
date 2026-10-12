@@ -37,7 +37,7 @@ Go state labels are source-audit labels, not manifest statuses:
   log at an approximate path.
 - `mismatch` (1): explicit Lua `log` success shares the file=false bridge
   used by diagnostics; C requires file=true. A distinct API needs a stop train.
-- `disabled-C` (1): structurally disabled C connection log, not a runtime case.
+- `disabled-C` (1): `src/comm.c:1581` ("New connection from [%s]", CMP / LVL_GOD / file FALSE) sits behind `#if 0` at `src/comm.c:1578-1582`, so the reference oracle never runs it and no Go counterpart is required. Its **live sibling** is a different site: `src/comm.c:1573` ("Connection attempt denied from [%s]", CMP / LVL_GOD / file **TRUE**), implemented at `pkg/telnet/listener.go:244` and `pkg/session/manager.go:1265` and proven by `TestBannedConnectionRefusalBytesAndLog` / `TestWebSocketBannedRefusalLogs`. The earlier wording credited this row to the sibling's Go code.
 
 The earlier [inventory](2026-10-05-dp-1371-mudlog-inventory.md) is the dated
 partial audit/history; this table supersedes its family-only enumeration.
@@ -126,3 +126,4 @@ its comment claiming a C player-target return is contradicted by the actual
 source. Site `spec_procs2.c:634` is a PC-success producer, not an NPC-success
 producer. The table now maps the missing PC arm explicitly; its routing repair
 is a separate stop/design train, not a MudLog addition to the NPC arm.
+Reconciled 2026-10-12 against `2026-10-06-dp-1371-mudlog-sites-check.py`: the enumeration still matches the C sources at 208/208 sites — `implemented-boundary` 181, `excluded-valid-play` 25, `divergent-approved` 1, `disabled-C` 1. Proof-level status now lives in `docs/fidelity/depth/mudlog.tsv` (114 unit-green / 13 excluded / 3 divergent-approved / 2 scenario-only / 1 blocked = 133 cases); the aggregate is updated only where a named landed proof exists.
