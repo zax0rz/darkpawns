@@ -14,20 +14,43 @@ import (
 	"sync"
 
 	"github.com/zax0rz/darkpawns/pkg/common"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // Handler is the function signature for command handlers.
 // It receives the session, the resolved command name, and the command arguments.
 type Handler func(common.CommandSession, string, []string) error
 
+// ActorHandler handles a command for an explicit character body. The same
+// Entry retains its existing player Handler and C-derived command metadata.
+type ActorHandler func(game.CharacterCommandContext, string, []string) game.CharacterCommandResult
+
 // Entry holds metadata for a registered command.
 type Entry struct {
-	Name        string
-	Handler     Handler
-	HelpText    string
-	MinLevel    int
-	MinPosition int
-	Aliases     []string
+	Name         string
+	Handler      Handler
+	ActorHandler ActorHandler
+	HelpText     string
+	MinLevel     int
+	MinPosition  int
+	Aliases      []string
+}
+
+// SetActorHandler adds an actor-aware lane to an existing command entry.
+// Aliases already point to that same entry, so both lanes share one command
+// registration and its C-derived metadata. Like Register, this is a startup
+// operation; command entries are read without holding the registry lock once
+// command execution begins.
+func (r *Registry) SetActorHandler(name string, handler ActorHandler) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	entry, ok := r.commands[strings.ToLower(name)]
+	if !ok {
+		return fmt.Errorf("cannot set actor handler for unregistered command %q", name)
+	}
+	entry.ActorHandler = handler
+	return nil
 }
 
 // Middleware wraps a Handler to add cross-cutting behavior (logging, auth, rate limiting).

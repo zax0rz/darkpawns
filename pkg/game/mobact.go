@@ -97,7 +97,7 @@ func getMobVNumSpec(vnum int) SpecFunc {
 	if !ok || specName == "" {
 		return nil
 	}
-	return SpecRegistry[specName]
+	return GetSpec(specName)
 }
 
 // ---------------------------------------------------------------------------

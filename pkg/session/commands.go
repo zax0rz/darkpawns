@@ -97,7 +97,13 @@ func init() {
 
 	// Position / Movement
 	registerCommand("stand", wrapNoArgs(cmdStand), "Stand up.")
+	registerActorCommand("stand", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterStand(ctx)
+	})
 	registerCommand("sit", wrapNoArgs(cmdSit), "Sit down.")
+	registerActorCommand("sit", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterSit(ctx)
+	})
 	registerCommand("rest", wrapNoArgs(cmdRest), "Rest.")
 	registerCommand("sleep", wrapNoArgs(cmdSleep), "Go to sleep.")
 	registerCommand("wake", wrapArgs(cmdWake), "Wake up or wake someone else.")
@@ -689,11 +695,11 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	// matches them misses here and falls through to the exact-match registry
 	// below — the only way Go-only names resolve (R4). Position/frozen gating
 	// stays in commandGateRejected, post-resolution; not duplicated here.
-	if canonical, ok := resolveCommandPrefix(cmd, getEffectiveLevel(s)); ok {
-		cmd = canonical
-	}
-
-	entry, ok := cmdRegistry.Lookup(cmd)
+	// Keep the player transport's existing effective-level source. Resolution
+	// itself receives an explicit level and never inspects mutable Session state.
+	resolved := resolveCharacterCommand(cmd, getEffectiveLevel(s))
+	cmd = resolved.Name
+	entry, ok := resolved.Entry, resolved.Found
 	if !ok {
 		// Socials are C command rows (do_action); a social the socials file
 		// defines but the command table does not list is "Huh?!?" in C.

@@ -13,7 +13,7 @@ func TestUnregisteredSpecProcs(t *testing.T) {
 	// Dedup and count missing specs
 	var missing []string
 	for name := range assignedNames {
-		if _, registered := SpecRegistry[name]; !registered {
+		if GetSpec(name) == nil {
 			missing = append(missing, name)
 		}
 	}
