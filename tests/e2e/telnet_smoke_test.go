@@ -446,15 +446,15 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	t.Helper()
 	root := repoRoot(t)
 	bin := serverBinary(t, root)
-	httpPort := freePort(t)
-	telnetPort := freePort(t)
+	ports, releasePorts := reserveServerPorts(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cmd := exec.CommandContext(
 		ctx, bin,
 		"-world", filepath.Join(root, "lib", "world"),
-		"-port", fmt.Sprintf("%d", httpPort),
-		"-telnet-port", fmt.Sprintf("%d", telnetPort),
+		"-port", fmt.Sprintf("%d", ports.http),
+		"-telnet-port", fmt.Sprintf("%d", ports.telnet),
+		"-whod-port", fmt.Sprintf("%d", ports.whod),
 		"-db", dbURL,
 	)
 	cmd.Dir = root // world loading reads some paths relative to cwd
@@ -489,6 +489,7 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 	var logBuf strings.Builder
 	cmd.Stdout = &logBuf
 	cmd.Stderr = &logBuf
+	releasePorts()
 	if err := cmd.Start(); err != nil {
 		cancel()
 		t.Fatalf("start server: %v", err)
@@ -501,7 +502,7 @@ func launchAndDialDB(t *testing.T, dbURL string) (net.Conn, *bufio.Reader) {
 		}
 	})
 
-	conn := dialWhenReady(t, fmt.Sprintf("127.0.0.1:%d", telnetPort), 30*time.Second)
+	conn := dialWhenReady(t, fmt.Sprintf("127.0.0.1:%d", ports.telnet), 30*time.Second)
 	return conn, bufio.NewReader(conn)
 }
 
@@ -695,16 +696,6 @@ func serverBinary(t *testing.T, _ string) string {
 		t.Fatal("server binary not built (TestMain did not run?)")
 	}
 	return serverBin
-}
-
-func freePort(t *testing.T) int {
-	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("free port: %v", err)
-	}
-	defer l.Close()
-	return l.Addr().(*net.TCPAddr).Port
 }
 
 func dialWhenReady(t *testing.T, addr string, timeout time.Duration) net.Conn {

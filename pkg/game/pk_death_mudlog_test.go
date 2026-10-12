@@ -145,7 +145,56 @@ func TestPlayerSelfDeathMudlogThroughCombatCallback(t *testing.T) {
 	}
 }
 
-// src/fight.c:1300-1309: counter_procs calls mudlog with NRM, LVL_IMMORT,
+// TestPKDeathMudlogMobKillerArm proves the game-side non-PK arm of
+// fight.c:1678 (pkg/game/death.go:591-609): a mob killer logs the unprefixed
+// "X killed by Y at <room>" line at BRF / LVL_IMMORT / file TRUE.
+//
+// This is a different path from the combat fallback's unprefixed arm
+// (pkg/combat/fight_core.go:589), which is proven by
+// TestPlayerSelfDeathMudlogThroughCombatCallback: this one runs through
+// World.HandleDeath -> handlePlayerDeath for a PC victim with an NPC killer,
+// where the killer body is not a *Player and so takes the else arm.
+func TestPKDeathMudlogMobKillerArm(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: pkRoomName, Zone: 1}},
+		Mobs:  []parser.Mob{{VNum: 300, ShortDesc: "A colliding guard", Keywords: "collision guard"}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld failed: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	provider, file, rig := newMudlogRig(t)
+
+	victim := NewPlayer(2, "Victim", 1001)
+	victim.SetLevel(20)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+	mob, err := w.SpawnMobQuiet(300, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMobQuiet: %v", err)
+	}
+	victim.SetHP(-1)
+	w.HandleDeath(victim, mob, combat.TYPE_HIT)
+
+	payload := "Victim killed by " + mob.GetName() + " at " + pkRoomName
+	if got := strings.Count(file.String(), payload); got != 1 {
+		t.Fatalf("file payload count = %d, want 1; log = %q", got, file.String())
+	}
+	if strings.Contains(file.String(), "(PK) "+payload) {
+		t.Fatalf("mob-killer arm used the PK prefix: %q", file.String())
+	}
+	if !rigSaw(provider, rig.log1, payload) {
+		t.Fatalf("LOG1-only observer did not receive %q", bracket(payload))
+	}
+	if rigSaw(provider, rig.noFlag, payload) {
+		t.Fatalf("no-flag observer received %q: type would be OFF", bracket(payload))
+	}
+	if rigSaw(provider, rig.underFloor, payload) {
+		t.Fatalf("level-%d observer received %q", LVL_IMMORT-1, bracket(payload))
+	}
+}
+
 // FALSE. Exercise combat.CounterProcs through the World's installed callback
 // set, alongside the game-layer producer test in game_diagnostic_mudlog_test.go.
 func TestCombatKillMilestoneMudlogCallbackWiring(t *testing.T) {

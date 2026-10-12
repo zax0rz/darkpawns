@@ -1,6 +1,7 @@
 package session
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -42,6 +43,11 @@ func TestPointUpdatePoisonShopkeeperWire(t *testing.T) {
 	t.Cleanup(func() { combat.SetCallbacks(old) })
 	m, wizard, _, _, _, keeper := combatDescriptorFixture(t)
 	m.world.StopAITicker()
+	// PointUpdate's poison arm dispatches through the combat callbacks. Install
+	// them here, as TestPointUpdatePoisonWireMatchesC does, so the claim cannot
+	// depend on whatever package-level callback set another test left behind.
+	m.WireCombatCallbacks()
+	m.SetCombatMessageFunc()
 	keeper.VNum = 8003 // C's is_shopkeeper hardcoded protector.
 	keeper.SetHealth(keeper.GetMaxHP())
 	keeper.SetAffected(game.AffPoison)
@@ -54,7 +60,12 @@ func TestPointUpdatePoisonShopkeeperWire(t *testing.T) {
 	if keeper.GetHP() != before {
 		t.Fatalf("poisoned keeper HP=%d, want %d", keeper.GetHP(), before)
 	}
-	if got := captureWire(wizard); got != "Ha ha... Don't think so.\r\n" {
+	// The claim is that the switched keeper keeps its HP and sees C's line.
+	// PointUpdate walks the whole world, so an unrelated act can precede it when
+	// the fidelity-units harness runs this claim in a combined binary (observed:
+	// "$n smiles in $s sleep.\r\n"); assert the line is present rather than that
+	// it is the only byte on the wire.
+	if got := captureWire(wizard); !strings.Contains(got, "Ha ha... Don't think so.\r\n") {
 		t.Fatalf("keeper descriptor bytes=%q", got)
 	}
 }

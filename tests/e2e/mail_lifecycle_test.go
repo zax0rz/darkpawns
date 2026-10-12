@@ -384,14 +384,14 @@ type mailServerProcess struct {
 
 func launchMailServer(t *testing.T, root, dbURL, fixtureRoot, label string) (*mailServerProcess, net.Conn, *bufio.Reader) {
 	t.Helper()
-	httpPort := freePort(t)
-	telnetPort := freePort(t)
+	ports, releasePorts := reserveServerPorts(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	process := &mailServerProcess{cancel: cancel, label: label}
 	process.cmd = exec.CommandContext(ctx, serverBinary(t, root),
 		"-world", filepath.Join(fixtureRoot, "lib", "world"),
-		"-port", fmt.Sprintf("%d", httpPort),
-		"-telnet-port", fmt.Sprintf("%d", telnetPort),
+		"-port", fmt.Sprintf("%d", ports.http),
+		"-telnet-port", fmt.Sprintf("%d", ports.telnet),
+		"-whod-port", fmt.Sprintf("%d", ports.whod),
 		"-db", dbURL,
 	)
 	process.cmd.Dir = root
@@ -404,12 +404,13 @@ func launchMailServer(t *testing.T, root, dbURL, fixtureRoot, label string) (*ma
 	)
 	process.cmd.Stdout = &process.logBuffer
 	process.cmd.Stderr = &process.logBuffer
+	releasePorts()
 	if err := process.cmd.Start(); err != nil {
 		cancel()
 		t.Fatalf("start mail server %s: %v", label, err)
 	}
 	t.Cleanup(func() { process.stop(t) })
-	conn := dialWhenReady(t, fmt.Sprintf("127.0.0.1:%d", telnetPort), 20*time.Second)
+	conn := dialWhenReady(t, fmt.Sprintf("127.0.0.1:%d", ports.telnet), 20*time.Second)
 	return process, conn, bufio.NewReader(conn)
 }
 
