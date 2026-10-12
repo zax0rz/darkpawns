@@ -26,6 +26,10 @@ type GameCallbacks struct {
 	SendRaw   func(name Combatant, msg string)
 	BroadChat func(chName Combatant, msg string)
 	Log       func(msg string, level string, minLevel int, toLog bool)
+	// RoomName resolves a room vnum to the world's room name, so combat-side
+	// mudlog text matches C's world[victim->in_room].name (fight.c:1675). Nil in
+	// unit tests: cbRoomName then returns "" and the payload keeps C's shape.
+	RoomName func(vnum int) string
 
 	// Character identity
 	GetRace      func(name Combatant) int
@@ -253,6 +257,16 @@ func cbLog(msg string, level string, minLevel int, toLog bool) {
 	if cb := callbacks; cb != nil && cb.Log != nil {
 		cb.Log(msg, level, minLevel, toLog)
 	}
+}
+
+// cbRoomName resolves a room vnum through the game's room-name callback.
+// C prints world[vnum].name directly (fight.c:1675); with no callback wired the
+// name is empty, which keeps the payload shape without inventing a room label.
+func cbRoomName(vnum int) string {
+	if cb := callbacks; cb != nil && cb.RoomName != nil {
+		return cb.RoomName(vnum)
+	}
+	return ""
 }
 
 // ---------------------------------------------------------------------------

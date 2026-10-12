@@ -579,14 +579,14 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		if onDeath == nil && !victim.IsNPC() {
 			if !ch.IsNPC() && ch != victim {
 				// Pkill (fight.c:1672)
-				cbLog(fmt.Sprintf("(PK) %s killed by %s at room %d", victimName, chName, roomVNum),
+				cbLog(fmt.Sprintf("(PK) %s killed by %s at %s", victimName, chName, cbRoomName(roomVNum)),
 					"BRF", LVL_IMMORT, true)
 				// flag killer as outlaw if victim wasn't one (fight.c:1675)
 				if !cbHasPlrFlag(victim, "PLR_OUTLAW") {
 					cbSetPlrFlag(ch)
 				}
 			} else {
-				cbLog(fmt.Sprintf("%s killed by %s at room %d", victimName, chName, roomVNum),
+				cbLog(fmt.Sprintf("%s killed by %s at %s", victimName, chName, cbRoomName(roomVNum)),
 					"BRF", LVL_IMMORT, true)
 			}
 			if ch != victim {
