@@ -41,19 +41,23 @@ import (
 // the LVL_IMMORT floor pair and the invisibility pair.
 type i8Rig struct {
 	log1, log2, none, floor, under, at36, under36 *Session
+	// LVL_GOD pair, for the batch 9 rows whose level is a fixed LVL_GOD.
+	god, underGod *Session
 }
 
 func newI8Rig(t *testing.T, m *Manager) (i8Rig, *bytes.Buffer) {
 	t.Helper()
 	file := captureMudlogFile(t)
 	return i8Rig{
-		log1:    addObserver(t, m, "I8log1", 40, true, false),
-		log2:    addObserver(t, m, "I8log2", 40, false, true),
-		none:    addObserver(t, m, "I8none", 40, false, false),
-		floor:   addObserver(t, m, "I8floor", game.LVL_IMMORT, true, true),
-		under:   addObserver(t, m, "I8under", game.LVL_IMMORT-1, true, true),
-		at36:    addObserver(t, m, "I8at36", 36, true, true),
-		under36: addObserver(t, m, "I8under36", 35, true, true),
+		log1:     addObserver(t, m, "I8log1", 40, true, false),
+		log2:     addObserver(t, m, "I8log2", 40, false, true),
+		none:     addObserver(t, m, "I8none", 40, false, false),
+		floor:    addObserver(t, m, "I8floor", game.LVL_IMMORT, true, true),
+		under:    addObserver(t, m, "I8under", game.LVL_IMMORT-1, true, true),
+		at36:     addObserver(t, m, "I8at36", 36, true, true),
+		under36:  addObserver(t, m, "I8under36", 35, true, true),
+		god:      addObserver(t, m, "I8god", game.LVL_GOD, true, true),
+		underGod: addObserver(t, m, "I8undergod", game.LVL_GOD-1, true, true),
 	}, file
 }
 
