@@ -129,18 +129,30 @@ func normalize(raw string, keepANSI bool) string {
 	}
 
 	// 5. Drop volatile status/MOTD metadata lines: wall-clock, uptime, counts, and
-	// release dates vary per boot. Prompt-only lines survive as <PROMPT> tokens:
-	// each framing run is canonicalized so repaint-count differences collapse
-	// while the blank lines before a run's first prompt — where the real
-	// divergences live (#1880, PF-063) — stay comparable. ReconcilePromptFrames
-	// then pairs the two sides' block-edge frames in the harness.
-	dropped := filtered[:0]
-	for _, line := range filtered {
-		if !volatileLine.MatchString(line) {
-			dropped = append(dropped, line)
+	// release dates vary per boot. Ordinary comparisons keep prompt-only lines
+	// as <PROMPT> tokens: each framing run is canonicalized so repaint-count
+	// differences collapse while the blank lines before a run's first prompt —
+	// where the real divergences live (#1880, PF-063) — stay comparable;
+	// ReconcilePromptFrames then pairs the two sides' block-edge frames in the
+	// harness. Keep-ANSI keeps its prior contract (PR #1927 review): that mode
+	// certifies raw color bytes inside surfaces whose own menus own the prompt,
+	// so prompt-only lines stay dropped there exactly as before adoption.
+	lines = filtered[:0]
+	if keepANSI {
+		for _, line := range filtered {
+			if !volatileLine.MatchString(line) && !promptOnly.MatchString(line) {
+				lines = append(lines, line)
+			}
 		}
+	} else {
+		dropped := filtered[:0]
+		for _, line := range filtered {
+			if !volatileLine.MatchString(line) {
+				dropped = append(dropped, line)
+			}
+		}
+		lines = canonicalizePromptRuns(dropped)
 	}
-	lines = canonicalizePromptRuns(dropped)
 
 	// Preserve internal blank lines but remove meaningless leading/trailing transcript padding.
 	return strings.Trim(strings.Join(lines, "\n"), "\n") + "\n"

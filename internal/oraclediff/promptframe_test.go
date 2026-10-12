@@ -169,3 +169,15 @@ func normalizeRaw(t *testing.T, raw string) string {
 	t.Helper()
 	return normalize(raw, false)
 }
+
+// TestKeepANSIContractUnchanged (PR #1927 review): the keep-ansi mode
+// certifies raw color bytes and keeps its pre-adoption contract — prompt-only
+// lines stay dropped there; the <PROMPT> token surface belongs to ordinary
+// comparisons alone.
+func TestKeepANSIContractUnchanged(t *testing.T) {
+	raw := "\x1b[31mRoom\x1b[0m\r\n22H 100M 83V >\r\nDescription\r\n"
+	want := "\x1b[31mRoom\x1b[0m\nDescription\n"
+	if got := NormalizeKeepANSI(raw); got != want {
+		t.Fatalf("keep-ansi changed: got %q, prior contract %q", got, want)
+	}
+}
