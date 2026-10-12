@@ -36,6 +36,11 @@ func TestCombatBodyLootNameCollision(t *testing.T) {
 	}
 }
 
+// TestCombatBodyDeathCreditNameCollision proves the death-credit side of
+// fight.c:1672-1690 for a mob killer that shares a name with an unrelated PC:
+// the credit must not land on that PC. It is a credit assertion only — the
+// fight.c:1672-1681 syslog producer (BRF, LVL_IMMORT, file TRUE, room name in
+// the payload) is proven by pkg/game/pk_death_mudlog_test.go.
 func TestCombatBodyDeathCreditNameCollision(t *testing.T) {
 	w, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}, {VNum: 3001}}, Mobs: []parser.Mob{{VNum: 300, ShortDesc: "Collision", Keywords: "collision", Position: 8}}})
 	if err != nil {
