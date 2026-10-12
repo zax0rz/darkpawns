@@ -307,6 +307,28 @@ func (p *Player) SendMessage(msg string) {
 	}
 }
 
+// SendLiteral sends a message whose bytes are exactly C's send_to_char
+// output — no terminator is appended and the renderer folds no line
+// endings. C's final write path emits a string's own spelling untransformed
+// (src/comm.c:2335, :1348, :1380), so bare C sends (do_pour's fill miss,
+// src/act.item.c:1196; do_recall's fighting gate, src/act.other.c:1744)
+// must reach the wire bare. Silently dropped when no sink is set, like
+// SendMessage.
+func (p *Player) SendLiteral(msg string) {
+	p.mu.RLock()
+	w := p.worldRef
+	p.mu.RUnlock()
+	if w == nil {
+		return
+	}
+	w.mu.RLock()
+	sink := w.LiteralMessageSink
+	w.mu.RUnlock()
+	if sink != nil {
+		sink(p.Name, []byte(msg))
+	}
+}
+
 // GetInventoryItems returns the player's carried objects as ScriptableObject slices.
 // Source: scripts.c char_to_table() — ch->carrying loop populates "objs" field.
 func (p *Player) GetInventoryItems() []scripting.ScriptableObject {

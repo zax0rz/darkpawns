@@ -42,10 +42,12 @@ func cmdRecite(s *Session, args []string) error {
 		return nil
 	}
 
-	// C do_use accepts only ITEM_SCROLL here (act.other.c:961-963).
+	// C do_use accepts only ITEM_SCROLL here (act.other.c:961-963); the
+	// refusal is sent with no terminator (act.other.c:959), so it rides the
+	// literal path (PF-063 cluster 4).
 	typeFlag := item.GetTypeFlag()
 	if typeFlag != game.ITEM_SCROLL {
-		s.Send("You can only recite scrolls.")
+		s.sendLiteralText("You can only recite scrolls.")
 		return nil
 	}
 

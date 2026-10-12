@@ -264,7 +264,11 @@ func cmdWiznet(s *Session, args []string) error {
 // supplies rawArgs to preserve internal and trailing spaces.
 func cmdWiznetText(s *Session, rawArgs string) error {
 	if s.player.GetLevel() < LVL_IMMORT && !s.player.HasPLRFlag(game.PlrChosen) {
-		s.Send("Huh?!?")
+		// C sends the gate reply with no terminator (src/act.wizard.c:1924):
+		// the prompt frame supplies the only line break, so these bytes ride
+		// the literal path — the text event's line-ending append would print
+		// a blank line C never sends (PF-063 cluster 4).
+		s.sendLiteralText("Huh?!?")
 		return nil
 	}
 

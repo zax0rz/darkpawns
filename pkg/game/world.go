@@ -145,6 +145,12 @@ type World struct {
 	// Set by the session manager on initialization. If nil, messages are silently dropped.
 	MessageSink MessageSinkFunc
 
+	// LiteralMessageSink routes player messages whose bytes are exactly C's
+	// send_to_char output — no terminator appended, no line-ending folding at
+	// the renderer. Set by the session manager; nil drops silently, like
+	// MessageSink.
+	LiteralMessageSink MessageSinkFunc
+
 	// IdleCloseDescriptor runs with world/player locks released at C close_socket.
 	IdleCloseDescriptor func(*Player)
 

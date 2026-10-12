@@ -117,8 +117,10 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 
 	if ch.IsFighting() {
-		// C sends this one without a trailing CRLF (act.other.c:1742).
-		ch.SendMessage("Your concentration is broken by your fighting!")
+		// C sends this one bare — no terminator (src/act.other.c:1744); the
+		// prompt frame supplies the only line break (PF-063 cluster 4). The
+		// spell_recall twin keeps its CRLF (src/spells.c:144).
+		ch.SendLiteral("Your concentration is broken by your fighting!")
 		return true
 	}
 

@@ -307,7 +307,9 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 		}
 		toObj = getObjInInvVis(ch, arg1)
 		if toObj == nil {
-			ch.SendMessage("You can't find it!\r\n")
+			// C sends the miss bare — no terminator (src/act.item.c:1196);
+			// the prompt frame supplies the only line break (PF-063 cluster 4).
+			ch.SendLiteral("You can't find it!")
 			return
 		}
 		if toObj.GetTypeFlag() != ITEM_DRINKCON {

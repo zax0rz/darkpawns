@@ -60,7 +60,9 @@ func cmdQuaff(s *Session, args []string) error {
 
 	// Check it's a potion
 	if item.GetTypeFlag() != 10 { // ITEM_POTION
-		s.Send("You can only quaff potions.")
+		// C sends the refusal with no terminator (src/act.other.c:953), so
+		// it rides the literal path (PF-063 cluster 4).
+		s.sendLiteralText("You can only quaff potions.")
 		return nil
 	}
 

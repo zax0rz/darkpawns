@@ -362,6 +362,28 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		}
 	}
 
+	// Wire LiteralMessageSink so Player.SendLiteral routes bytes exactly as
+	// C wrote them: sendLiteralText stages heartbeat output in order, keeps
+	// prompt bookkeeping, forwards the raw bytes to snooping immortals
+	// (forwardSnoopText's literal path), and drops safely on a closed or
+	// full channel. A descriptor actively switched into another body
+	// resolves to the controlling session first, like the ordinary sink;
+	// ordinary message delivery above is unchanged.
+	world.LiteralMessageSink = func(playerName string, msg []byte) {
+		s, switched := m.switchDescriptorByName(playerName)
+		if !switched {
+			var ok bool
+			s, ok = m.GetSession(playerName)
+			if !ok {
+				return
+			}
+		}
+		if s == nil {
+			return
+		}
+		s.sendLiteralText(string(msg))
+	}
+
 	world.MobileMessageSink = func(body *game.MobInstance, msg []byte) {
 		attached := m.combatSession(body)
 		if attached != nil {

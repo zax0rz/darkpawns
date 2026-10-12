@@ -174,7 +174,9 @@ func cmdStringText(s *Session, args []string, rawArgs string) error {
 
 	qa := parseStringQuadArg(argument)
 	if qa.Kind == stringTypeError {
-		s.Send(stringUsage)
+		// C sends the usage line with no terminator (src/modify.c:608), so
+		// it rides the literal path (PF-063 cluster 4).
+		s.sendLiteralText(stringUsage)
 		return nil
 	}
 	if qa.Field == 0 {
@@ -205,9 +207,11 @@ func (s *Session) stringMobBranch(qa stringQuadArg) error {
 		switch qa.Field {
 		case 1:
 			// Per-field gate inside the command: renaming a player needs
-			// LEVEL_IMPL-1.
+			// LEVEL_IMPL-1. C sends the refusal with no terminator
+			// (src/modify.c:628), so it rides the literal path (PF-063
+			// cluster 4).
 			if s.player.GetLevel() < LVL_IMPL-1 {
-				s.Send(stringPlayerFieldRefused)
+				s.sendLiteralText(stringPlayerFieldRefused)
 				return nil
 			}
 			s.Send(stringPlayerNameWarning)
