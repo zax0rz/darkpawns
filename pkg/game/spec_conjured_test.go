@@ -107,7 +107,7 @@ func TestSpecConjured_DefaultSpeechAudienceAndExtraction(t *testing.T) {
 		t.Fatal("default conjured branch should be handled")
 	}
 	want := "A Dominion Angel states, 'My work here is done.'\r\n" +
-		"A Dominion Angel disappears in a flash of white light!\r\n"
+		"A Dominion Angel disappears in a flash of white light!\r\n\r\n"
 	if messages[actor.GetName()] != want || messages[peer.GetName()] != want {
 		t.Fatalf("default audience output = actor %q peer %q, want %q each", messages[actor.GetName()], messages[peer.GetName()], want)
 	}
@@ -138,7 +138,7 @@ func TestSpecConjured_AutonomousRegisteredDispatch(t *testing.T) {
 	w.MobileActivityForMob(mob)
 
 	want := "A Dominion Angel states, 'My work here is done.'\r\n" +
-		"A Dominion Angel disappears in a flash of white light!\r\n"
+		"A Dominion Angel disappears in a flash of white light!\r\n\r\n"
 	if got := lastMsg(); got != want {
 		t.Fatalf("autonomous dispatch output = %q, want %q", got, want)
 	}

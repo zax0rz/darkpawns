@@ -601,7 +601,7 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if s.manager.modChecker != nil && s.player != nil {
 		errMsg, reject := s.manager.modChecker.CheckPreCommand(s.player.Name, cmdStr)
 		if reject {
-			s.sendText(errMsg)
+			s.Send(errMsg)
 			return nil
 		}
 	}
@@ -731,7 +731,10 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 			return nil
 		}
 		// C: interpreter.c:916 send_to_char("Huh?!?\r\n", ch) for any unmatched command.
-		s.sendText("Huh?!?\r\n")
+		// Terminated literals ride Send, not sendText: sendText's MsgText render
+		// appends another "\r\n" unconditionally, which the missing prompt frame
+		// used to cancel (PF-063 cluster 5).
+		s.Send("Huh?!?\r\n")
 		return nil
 	}
 
@@ -815,23 +818,23 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 func commandGateRejected(s *Session, gate commandGate) bool {
 	effectiveLevel := getEffectiveLevel(s)
 	if effectiveLevel < gate.MinLevel {
-		s.sendText("Huh?!?\r\n")
+		s.Send("Huh?!?\r\n")
 		return true
 	}
 	if s.player == nil {
 		return false
 	}
 	if s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 && effectiveLevel < LVL_IMPL-1 {
-		s.sendText("You try, but the mind-numbing cold prevents you...\r\n")
+		s.Send("You try, but the mind-numbing cold prevents you...\r\n")
 		return true
 	}
 	if s.isSwitched && s.switchedMob != nil && gate.MinLevel >= LVL_IMMORT {
-		s.sendText("You can't use immortal commands while switched.\r\n")
+		s.Send("You can't use immortal commands while switched.\r\n")
 		return true
 	}
 	playerPos := s.player.GetPosition()
 	if playerPos < gate.MinPosition {
-		s.sendText(positionFailMessage(playerPos))
+		s.Send(positionFailMessage(playerPos))
 		return true
 	}
 	return false
@@ -1010,7 +1013,7 @@ func cmdUse(s *Session, args []string) error {
 		return fmt.Errorf("not logged in")
 	}
 	if len(args) == 0 {
-		s.sendText("What do you want to use?\r\n")
+		s.Send("What do you want to use?\r\n")
 		return nil
 	}
 
@@ -1031,7 +1034,7 @@ func cmdUse(s *Session, args []string) error {
 			s.manager.world.DoUse(s.player, strings.Join(args, " "))
 			return nil
 		}
-		s.sendText("You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n")
+		s.Send("You can't seem to figure out how to use it.\r\nTry holding it.(?)\r\n")
 		return nil
 	}
 

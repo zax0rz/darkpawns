@@ -105,7 +105,13 @@ func RenderTerminalFrame(msg []byte) (TerminalFrame, bool) {
 		if !ok {
 			return TerminalFrame{}, false
 		}
-		return TerminalFrame{Kind: FrameText, Text: NormalizeCRLF(text + "\r\n")}, true
+		// C's send_to_char writes the string verbatim (src/comm.c:2335 →
+		// write_to_output :1348) and process_output adds exactly one
+		// noncompact frame (:1630-1632). The unconditional append emitted a
+		// second terminator for already-terminated values — three CRLFs
+		// before the prompt where C prints two (PR #1923 review). Same rule
+		// as the text event: append only what is missing.
+		return TerminalFrame{Kind: FrameText, Text: NormalizeCRLF(ensureLineEnded(text))}, true
 	case MsgPrompt:
 		// The prompt travels through the send channel so it is written only
 		// after the command's queued output (C: comm.c:637-642 flush output,

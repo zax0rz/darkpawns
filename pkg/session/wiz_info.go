@@ -385,7 +385,9 @@ func cmdDark(s *Session, args []string) error {
 
 	s.Send("You stop the senseless violence in the room with a wave of your hand.\r\n")
 	game.Act(s.manager.world, true, s.player, nil, nil, nil,
-		"$n stops the senseless violence in the room with a wave of $s hand.", "", game.ToRoom)
+		// C's act format carries its own trailing \r\n (act.wizard.c:3233-3235);
+		// act() appends the second — the blank line the room audience sees.
+		"$n stops the senseless violence in the room with a wave of $s hand.\r\n", "", game.ToRoom)
 	return nil
 }
 

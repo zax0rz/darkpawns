@@ -560,7 +560,7 @@ func cmdUsers(s *Session, args []string) error {
 
 	opts, ok := parseUsersArgs(args)
 	if !ok {
-		s.sendText(usersFormat)
+		s.Send(usersFormat)
 		return nil
 	}
 
@@ -897,7 +897,7 @@ func renderWhoShort(viewer, player *game.Player) string {
 func cmdWho(s *Session, args []string) error {
 	opts, ok := parseWhoArgs(args)
 	if !ok {
-		s.sendText(whoFormat)
+		s.Send(whoFormat)
 		return nil
 	}
 
@@ -1011,7 +1011,7 @@ func cmdWhere(s *Session, args []string) error {
 			}
 		}
 		if count == 0 {
-			s.sendText("Couldn't find any such thing.\r\n")
+			s.Send("Couldn't find any such thing.\r\n")
 		} else {
 			s.sendText(out.String())
 		}
@@ -1083,7 +1083,7 @@ func cmdHelpText(s *Session, argument string) error {
 	table := s.manager.world.HelpTable
 	if len(table) == 0 {
 		// C: "No help available.\r\n" when help_table is empty.
-		s.sendText("No help available.\r\n")
+		s.Send("No help available.\r\n")
 		return nil
 	}
 
@@ -1091,7 +1091,7 @@ func cmdHelpText(s *Session, argument string) error {
 	if entry == nil {
 		// C: "There is no help on: %s\r\n" + mudlog + append to misc/help file.
 		// The usage-file append remains a separate unported site.
-		s.sendText(fmt.Sprintf("There is no help on: %s\r\n", argument))
+		s.Send(fmt.Sprintf("There is no help on: %s\r\n", argument))
 		s.manager.mu.RLock()
 		name := s.player.GetName()
 		if s.isSwitched && s.switchedMob != nil {
@@ -1106,7 +1106,7 @@ func cmdHelpText(s *Session, argument string) error {
 	// (C: GET_LEVEL(ch) < LVL_IMMORT && strstr(entry, "wizonly")).
 	if s.player != nil && s.player.GetLevel() < LVL_IMMORT &&
 		strings.Contains(entry.Entry, "wizonly") {
-		s.sendText(fmt.Sprintf("There is no help on: %s\r\n", argument))
+		s.Send(fmt.Sprintf("There is no help on: %s\r\n", argument))
 		return nil
 	}
 
@@ -1139,7 +1139,7 @@ func cmdReview(s *Session) error {
 	}
 	result := game.DoReview(s.player, s.manager.world)
 	if result.MessageToCh != "" {
-		s.sendText(result.MessageToCh)
+		s.Send(result.MessageToCh)
 	}
 	return nil
 }
@@ -1151,7 +1151,7 @@ func cmdWhois(s *Session, args []string) error {
 		return nil
 	}
 	if len(args) == 0 {
-		s.sendText("For whom do you wish to search?\r\n")
+		s.Send("For whom do you wish to search?\r\n")
 		return nil
 	}
 	// C do_whois uses one_argument: skip leading fill words, select the first
@@ -1167,7 +1167,7 @@ func cmdWhois(s *Session, args []string) error {
 			}
 			// C do_whois (new_cmds.c:1418): "[%2d %s] %s %s" — level, class
 			// abbrev, name, AND title. The title was previously dropped.
-			s.sendText(fmt.Sprintf("[%2d %s] %s %s\r\n", p.Level, classAbbr, p.Name, p.Title))
+			s.Send(fmt.Sprintf("[%2d %s] %s %s\r\n", p.Level, classAbbr, p.Name, p.Title))
 			return nil
 		}
 	}
@@ -1176,11 +1176,11 @@ func cmdWhois(s *Session, args []string) error {
 	if s.manager.hasDB {
 		rec, err := s.manager.db.GetPlayer(targetName)
 		if err != nil {
-			s.sendText("Error looking up player.\r\n")
+			s.Send("Error looking up player.\r\n")
 			return nil
 		}
 		if rec == nil {
-			s.sendText("There is no such player.\r\n")
+			s.Send("There is no such player.\r\n")
 			return nil
 		}
 		classAbbr := "??"
@@ -1197,11 +1197,11 @@ func cmdWhois(s *Session, args []string) error {
 				title = "the Adventurer"
 			}
 		}
-		s.sendText(fmt.Sprintf("[%2d %s] %s %s\r\n", rec.Level, classAbbr, rec.Name, title))
+		s.Send(fmt.Sprintf("[%2d %s] %s %s\r\n", rec.Level, classAbbr, rec.Name, title))
 		return nil
 	}
 
-	s.sendText("There is no such player.\r\n")
+	s.Send("There is no such player.\r\n")
 	return nil
 }
 

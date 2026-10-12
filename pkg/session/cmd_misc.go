@@ -162,7 +162,7 @@ func cmdAFK(s *Session, args []string) error {
 // cmdNotHere is C's do_not_here fallback for commands whose real behavior is
 // supplied by a room special procedure (act.other.c:206-211).
 func cmdNotHere(s *Session, _ []string) error {
-	s.sendText("Sorry, but you cannot do that here!\r\n")
+	s.Send("Sorry, but you cannot do that here!\r\n")
 	return nil
 }
 
@@ -198,15 +198,20 @@ func cmdBan(s *Session, args []string) error {
 // into DoUnban.
 func cmdUnban(s *Session, args []string) error {
 	name, invis := s.mudlogActor()
-	s.manager.world.ExecUnban(name, invis, strings.Join(args, " "), s.sendText)
+	// Terminated acks ride Send: sendText's MsgText render appends another
+	// terminator, which the missing prompt frame used to cancel (PF-063
+	// cluster 5 class).
+	s.manager.world.ExecUnban(name, invis, strings.Join(args, " "), s.Send)
 	return nil
 }
 
 // cmdWhod handles the "whod" admin command (ported from whod.c do_whod).
 func cmdWhod(s *Session, args []string) error {
-	msg := s.manager.world.ExecWhod(s.player, strings.Join(args, " "), s.sendText)
+	// whod's acks are C-terminated (some LFCR, whod.c): Send renders them
+	// verbatim; sendText appended a second terminator.
+	msg := s.manager.world.ExecWhod(s.player, strings.Join(args, " "), s.Send)
 	if msg != "" {
-		s.sendText(msg)
+		s.Send(msg)
 	}
 	return nil
 }

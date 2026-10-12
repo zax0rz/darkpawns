@@ -498,7 +498,9 @@ func specGuildGuard(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	if cmd == "flee" || cmd == "escape" || cmd == "retreat" {
 		sendToChar(ch, "You try to flee inside the guild but the guard stops you!")
 		Act(w, false, ch, nil, nil, nil,
-			"$n tries to flee inside the guild but the guard block $s way!", "", ToRoom)
+			// C's act format ends with its own \r\n (spec_procs.c:580);
+			// act() appends the second — the room's blank line.
+			"$n tries to flee inside the guild but the guard block $s way!\r\n", "", ToRoom)
 		return true
 	}
 	direction, moving := guildGuardDirection(cmd)

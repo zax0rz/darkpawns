@@ -520,7 +520,17 @@ func (bs *BoardSystem) DisplayMsg(boardType int, ch BoardPlayer, arg string) boo
 		return true
 	}
 
-	reply := fmt.Sprintf("Message %d : %s\r\n\r\n%s\r\n", msg, mi.Heading, bs.msgStorage[mi.SlotNum])
+	// C's editor stores each accepted line WITH its break (modify.c
+	// string_add), so its stored body ends "\r\n" and the format's trailing
+	// "%s\r\n" prints one more break — the blank line before the pager
+	// prompt (boards.c:361-364). This port stores between-line breaks, so
+	// the read restores the body's final break the same way (a body that
+	// already carries it — C-format storage — is left untouched).
+	body := bs.msgStorage[mi.SlotNum]
+	if body != "" && !strings.HasSuffix(body, "\r\n") {
+		body += "\r\n"
+	}
+	reply := fmt.Sprintf("Message %d : %s\r\n\r\n%s\r\n", msg, mi.Heading, body)
 	ch.SendMessage(reply)
 	return true
 }
