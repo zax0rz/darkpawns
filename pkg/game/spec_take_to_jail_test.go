@@ -100,6 +100,24 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	if err := w.AddPlayer(victim); err != nil {
 		t.Fatalf("AddPlayer victim: %v", err)
 	}
+	mountProto := &parser.Mob{
+		VNum:        99002,
+		Keywords:    "horse pony",
+		ShortDesc:   "a horse",
+		ActionFlags: []string{"mountable"},
+	}
+	w.mu.Lock()
+	w.mobs[mountProto.VNum] = mountProto
+	w.mu.Unlock()
+	mount, err := w.spawnMob(mountProto.VNum, 1001)
+	if err != nil {
+		t.Fatalf("spawn mount: %v", err)
+	}
+	victim.MountName = mount.GetName()
+	victim.SetAffect(affMounted, true)
+	mount.SetAffected(affMounted)
+	mount.SetMountRider(victim.Name)
+	mount.SetFollowingBody(victim)
 	guardProto := &parser.Mob{
 		VNum:      99001,
 		Keywords:  "gateguard",
@@ -143,6 +161,12 @@ func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	}
 	if guard.GetHunting() != "" {
 		t.Fatalf("guard hunting target = %q, want empty", guard.GetHunting())
+	}
+	if victim.IsAffected(affMounted) || victim.GetMountName() != "" || mount.IsAffected(affMounted) {
+		t.Fatalf("jail subdue left mounted affects/cache: rider=%t name=%q mount=%t", victim.IsAffected(affMounted), victim.GetMountName(), mount.IsAffected(affMounted))
+	}
+	if mount.GetMountRider() != victim.Name || mount.GetFollowing() != victim.Name || w.FollowingBody(mount) != victim {
+		t.Fatalf("jail unmount changed retained master/follower links: rider=%q following=%q body=%p", mount.GetMountRider(), mount.GetFollowing(), w.FollowingBody(mount))
 	}
 }
 

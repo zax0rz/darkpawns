@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
 func newRideDepthWorld(t *testing.T) (*World, *Player, *MobInstance) {
@@ -37,6 +38,203 @@ func newRideDepthWorld(t *testing.T) (*World, *Player, *MobInstance) {
 	w.activeMobs[mount.ID] = mount
 	w.mu.Unlock()
 	return w, rider, mount
+}
+
+func TestLuaMountMobileBodyPreservesCMountState(t *testing.T) {
+	w, owner, horse := newRideDepthWorld(t)
+	other := NewPlayer(2, "Other", owner.GetRoom())
+	other.SetPosition(8)
+	if err := w.AddPlayer(other); err != nil {
+		t.Fatalf("AddPlayer other: %v", err)
+	}
+	output := captureMovementOutput(w)
+
+	owner.SetAffect(affMounted, true)
+	owner.MountName = horse.GetName()
+	horse.SetAffected(affMounted)
+	horse.SetAffected(affCharm)
+	horse.SetMountRider(owner.Name)
+	horse.SetFollowingBody(owner)
+	adapter := NewWorldScriptableAdapter(w)
+
+	adapter.Mount(scripting.CharRef{NPC: true, ID: horse.GetID()}, nil, "unmount")
+	if horse.IsAffected(affMounted) || !horse.IsAffected(affCharm) {
+		t.Fatalf("mobile mount affect state: mounted=%t charmed=%t", horse.IsAffected(affMounted), horse.IsAffected(affCharm))
+	}
+	if horse.GetMountRider() != owner.Name || horse.GetFollowing() != owner.Name || w.FollowingBody(horse) != owner {
+		t.Fatalf("C unmount changed mobile master/rider link: rider=%q following=%q body=%p", horse.GetMountRider(), horse.GetFollowing(), w.FollowingBody(horse))
+	}
+	if !owner.IsAffected(affMounted) || owner.GetMountName() != horse.GetName() {
+		t.Fatalf("unmounting the mobile changed its player's rider state: affected=%t mount=%q", owner.IsAffected(affMounted), owner.GetMountName())
+	}
+	if w.GetMount(owner) != nil || w.GetRider(horse) != nil {
+		t.Fatal("C get_mount/get_rider exposed an affect-cleared mobile")
+	}
+
+	w.doRide(other, nil, "ride", "horse")
+	if got := output[other.Name].String(); got != "Its master would not like that!\r\n" {
+		t.Fatalf("second rider output after Lua unmount = %q", got)
+	}
+}
+
+func TestLuaMountMobileRideAndDismountUseActualActors(t *testing.T) {
+	w, rider, horse := newRideDepthWorld(t)
+	observer := NewPlayer(2, "Observer", rider.GetRoom())
+	observer.SetPosition(8)
+	if err := w.AddPlayer(observer); err != nil {
+		t.Fatalf("AddPlayer observer: %v", err)
+	}
+	child := NewMob(&parser.Mob{
+		VNum:        9002,
+		Keywords:    "pony",
+		ShortDesc:   "a pony",
+		ActionFlags: []string{"mountable"},
+	}, rider.GetRoom())
+	w.mu.Lock()
+	child.ID = w.nextMobID
+	w.nextMobID++
+	w.activeMobs[child.ID] = child
+	w.mu.Unlock()
+	output := captureMovementOutput(w)
+	adapter := NewWorldScriptableAdapter(w)
+
+	adapter.Mount(scripting.CharRef{NPC: true, ID: horse.GetID()}, nil, "dismount")
+	if horse.IsAffected(affMounted) || (output[observer.Name] != nil && output[observer.Name].Len() != 0) {
+		t.Fatal("unmounted mobile dismount changed state or emitted room bytes")
+	}
+	adapter.Mount(scripting.CharRef{NPC: true, ID: horse.GetID()}, charRefFor(child), "ride")
+	if horse.IsAffected(affMounted) || child.IsAffected(affMounted) || child.GetFollowing() != "" {
+		t.Fatal("C CAN_MOUNT mobile-rider gate created a mount or follower link")
+	}
+
+	horse.SetAffected(affMounted)
+	horse.SetFollowingBody(child)
+	child.SetAffected(affMounted)
+	adapter.Mount(*charRefFor(child), nil, "dismount")
+	if child.IsAffected(affMounted) || horse.IsAffected(affMounted) {
+		t.Fatalf("mobile dismount left AFF_MOUNT: rider=%t mount=%t", child.IsAffected(affMounted), horse.IsAffected(affMounted))
+	}
+	if child.GetFollowing() != "" || horse.GetFollowing() != child.GetName() || w.FollowingBody(horse) != child {
+		t.Fatalf("C unmount changed independent master links: child=%q horse=%q body=%p", child.GetFollowing(), horse.GetFollowing(), w.FollowingBody(horse))
+	}
+	if got := output[observer.Name].String(); got != "A pony dismounts from the back of a horse.\r\n" {
+		t.Fatalf("room observer after mobile dismount = %q", got)
+	}
+}
+
+func TestLuaMountPlayerRideDismountAndUnmountUseBridgeBody(t *testing.T) {
+	w, rider, mount := newRideDepthWorld(t)
+	observer := NewPlayer(2, "Observer", rider.GetRoom())
+	observer.SetPosition(8)
+	if err := w.AddPlayer(observer); err != nil {
+		t.Fatalf("AddPlayer observer: %v", err)
+	}
+	output := captureMovementOutput(w)
+	adapter := NewWorldScriptableAdapter(w)
+	riderRef := scripting.CharRef{ID: rider.ID}
+	mountRef := charRefFor(mount)
+
+	adapter.Mount(riderRef, mountRef, "ride")
+	if !rider.IsAffected(affMounted) || !mount.IsAffected(affMounted) {
+		t.Fatal("Lua player ride did not set C mount affects")
+	}
+	if got := output[rider.Name].String(); got != "You hop on your mount.\r\n" {
+		t.Fatalf("Lua player ride output = %q", got)
+	}
+
+	output[rider.Name].Reset()
+	output[observer.Name].Reset()
+	adapter.Mount(riderRef, nil, "dismount")
+	if rider.IsAffected(affMounted) || mount.IsAffected(affMounted) || rider.GetMountName() != "" {
+		t.Fatalf("Lua player dismount state: rider=%t mount=%t name=%q", rider.IsAffected(affMounted), mount.IsAffected(affMounted), rider.GetMountName())
+	}
+	if mount.GetMountRider() != rider.Name || mount.GetFollowing() != rider.Name {
+		t.Fatalf("Lua player dismount removed C master link: rider=%q following=%q", mount.GetMountRider(), mount.GetFollowing())
+	}
+	if got := output[rider.Name].String(); got != "You hop off your mount.\r\n" {
+		t.Fatalf("Lua player dismount output = %q", got)
+	}
+	if got := output[observer.Name].String(); got != "Rider dismounts from the back of a horse.\r\n" {
+		t.Fatalf("Lua player dismount room output = %q", got)
+	}
+
+	// C's lua_mount("unmount") calls unmount(rider, get_mount(rider)); it
+	// clears AFF_MOUNT without removing the follower/master relationship.
+	newer := NewMob(&parser.Mob{
+		VNum:        9003,
+		Keywords:    "pony",
+		ShortDesc:   "a pony",
+		ActionFlags: []string{"mountable"},
+	}, rider.GetRoom())
+	w.mu.Lock()
+	newer.ID = w.nextMobID
+	w.nextMobID++
+	w.activeMobs[newer.ID] = newer
+	w.mu.Unlock()
+	rider.SetAffect(affMounted, true)
+	mount.SetAffected(affMounted)
+	newer.SetAffected(affMounted)
+	newer.SetMountRider(rider.Name)
+	newer.SetFollowingBody(rider) // newer head of C's prepended follower list
+	output[rider.Name].Reset()
+	adapter.Mount(riderRef, nil, "unmount")
+	if rider.IsAffected(affMounted) || newer.IsAffected(affMounted) || !mount.IsAffected(affMounted) {
+		t.Fatalf("Lua player unmount cleared wrong follower: rider=%t older=%t newer=%t", rider.IsAffected(affMounted), mount.IsAffected(affMounted), newer.IsAffected(affMounted))
+	}
+	if mount.GetMountRider() != rider.Name || mount.GetFollowing() != rider.Name || newer.GetMountRider() != rider.Name || newer.GetFollowing() != rider.Name {
+		t.Fatal("Lua player unmount removed a retained follower/master link")
+	}
+}
+
+func TestLegacyUnmountClearsAffectsButRetainsMasterLinks(t *testing.T) {
+	w, rider, mount := newRideDepthWorld(t)
+	rider.SetAffect(affMounted, true)
+	rider.MountName = mount.GetName()
+	mount.SetAffected(affMounted)
+	mount.SetAffected(affCharm)
+	mount.SetMountRider(rider.Name)
+	mount.SetFollowingBody(rider)
+
+	Unmount(rider, mount)
+
+	if rider.IsAffected(affMounted) || rider.GetMountName() != "" {
+		t.Fatalf("Unmount left rider mounted: affect=%t cache=%q", rider.IsAffected(affMounted), rider.GetMountName())
+	}
+	if mount.IsAffected(affMounted) || !mount.IsAffected(affCharm) {
+		t.Fatalf("Unmount mount affects: mounted=%t charm=%t", mount.IsAffected(affMounted), mount.IsAffected(affCharm))
+	}
+	if mount.GetMountRider() != rider.Name || mount.GetFollowing() != rider.Name || w.FollowingBody(mount) != rider {
+		t.Fatalf("Unmount changed master/follower links: rider=%q following=%q body=%p", mount.GetMountRider(), mount.GetFollowing(), w.FollowingBody(mount))
+	}
+	if w.GetMount(rider) != nil || w.riddenMount(rider) != nil {
+		t.Fatal("GetMount/riddenMount still returned the affect-cleared mount")
+	}
+}
+
+func TestPlayerUnmountClearsAffectWithoutCachedMountName(t *testing.T) {
+	rider := NewPlayer(77, "Unmounted", 1001)
+	rider.SetAffect(affMounted, true)
+
+	rider.Unmount()
+
+	if rider.IsAffected(affMounted) || rider.GetMountName() != "" {
+		t.Fatalf("Player.Unmount left rider mounted: affect=%t cache=%q", rider.IsAffected(affMounted), rider.GetMountName())
+	}
+}
+
+func TestLegacyUnmountClearsMountWithNilRider(t *testing.T) {
+	_, _, mount := newRideDepthWorld(t)
+	mount.SetAffected(affMounted)
+	mount.SetMountRider("Rider")
+
+	Unmount(nil, mount)
+
+	if mount.IsAffected(affMounted) {
+		t.Fatal("Unmount(nil, mount) left the mount AFF_MOUNT set")
+	}
+	if mount.GetMountRider() != "Rider" {
+		t.Fatalf("Unmount(nil, mount) changed the mount's master cache: %q", mount.GetMountRider())
+	}
 }
 
 func TestDoRideDirectGates(t *testing.T) {

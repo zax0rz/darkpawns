@@ -117,6 +117,44 @@ func TestRecallHometownTargets(t *testing.T) {
 	}
 }
 
+func TestRecallUnmountsBeforeTransferAndLeavesMountBehind(t *testing.T) {
+	w, outputs := newRecallTestWorld(t)
+	recaller := addRecallPlayer(t, w, outputs, 1, "Recaller", 8162)
+	mount := NewMob(&parser.Mob{
+		VNum:      9100,
+		Keywords:  "horse pony",
+		ShortDesc: "a horse",
+	}, recaller.GetRoom())
+	w.mu.Lock()
+	mount.ID = w.nextMobID
+	w.nextMobID++
+	w.activeMobs[mount.ID] = mount
+	w.mu.Unlock()
+	recaller.SetAffect(affMounted, true)
+	recaller.MountName = mount.GetName()
+	mount.SetAffected(affMounted)
+	mount.SetMountRider(recaller.Name)
+	mount.SetFollowingBody(recaller)
+
+	w.ExecRecall(recaller, "")
+
+	if got := recaller.GetRoomVNum(); got != MortalStartRoom {
+		t.Fatalf("recall room = %d, want %d", got, MortalStartRoom)
+	}
+	if mount.GetRoom() != 8162 {
+		t.Fatalf("mount moved with recalling player to room %d; want it left in 8162", mount.GetRoom())
+	}
+	if recaller.IsAffected(affMounted) || recaller.GetMountName() != "" || mount.IsAffected(affMounted) {
+		t.Fatalf("recall left mounted affects/cache: rider=%t name=%q mount=%t", recaller.IsAffected(affMounted), recaller.GetMountName(), mount.IsAffected(affMounted))
+	}
+	if mount.GetMountRider() != recaller.Name || mount.GetFollowing() != recaller.Name || w.FollowingBody(mount) != recaller {
+		t.Fatalf("recall unmount changed retained master/follower links: rider=%q following=%q body=%p", mount.GetMountRider(), mount.GetFollowing(), w.FollowingBody(mount))
+	}
+	if w.GetMount(recaller) != nil || w.riddenMount(recaller) != nil {
+		t.Fatal("recall left GetMount/riddenMount exposing the old mount")
+	}
+}
+
 // Gates in C's order: level > 5, ROOM_BFR, fighting — with C's exact bytes
 // (the fighting message has no trailing CRLF in do_recall).
 func TestRecallGates(t *testing.T) {

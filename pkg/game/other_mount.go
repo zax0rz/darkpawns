@@ -1,6 +1,7 @@
 package game
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -52,7 +53,7 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	if mountMob.IsMountedMob() {
+	if mountMob.IsAffected(affMounted) {
 		ch.SendMessage("The beast is already being ridden!\r\n")
 		return true
 	}
@@ -83,6 +84,21 @@ func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool
 	return true
 }
 
+// doRideMob reaches C's CAN_MOUNT(mob) refusal. NPCs have no descriptor, so
+// the final "You can't ride!" send_to_char has no player-visible recipient;
+// the source path creates no mount or follower state for an NPC rider.
+func (w *World) doRideMob(rider *MobInstance, mountName string) {
+	if rider == nil || !rider.IsNPC() {
+		return
+	}
+	// src/utils.h:364-366 defines CAN_MOUNT(ch) as !IS_MOB(ch) &&
+	// !IS_MOUNTED(ch). In do_ride's branch order this point is reached only
+	// after resolving a mountable target and passing both mounted checks.
+	// The Lua caller already supplies that target handle; the NPC actor cannot
+	// pass CAN_MOUNT, and C's attempted private message is descriptorless.
+	_ = mountName
+}
+
 // ---------------------------------------------------------------------------
 // do_dismount — from act.other.c
 // ---------------------------------------------------------------------------
@@ -91,22 +107,71 @@ func (w *World) doDismount(ch *Player, me *MobInstance, cmd string, arg string) 
 	if isPlayerNPC(ch, me) {
 		return true
 	}
-
-	if !ch.IsAffected(affMounted) {
-		ch.SendMessage("You need to be riding before you can dismount!\r\n")
-		return true
-	}
-
-	ch.SendMessage("You hop off your mount.\r\n")
-	mount := w.riddenMount(ch)
-	if mount != nil {
-		Act(w, true, ch, mount, nil, nil, "$n dismounts from the back of $N.", "", ToRoom)
-		mount.SetMountRider("")
-		mount.RemoveAffected(affMounted)
-	}
-	ch.SetAffect(affMounted, false)
-	ch.MountName = ""
+	w.doDismountActor(ch)
 	return true
+}
+
+// doDismountActor implements the Lua binding's do_dismount call for the real
+// actor body, including descriptorless mobile riders. C sends the private
+// lines to the actor/mount and the room act to peers, then unmounts affect bits
+// only; master/follower identity is not changed by utils.c:378-385.
+func (w *World) doDismountActor(rider Actor) {
+	if !actorHasMountAffect(rider) {
+		rider.SendMessage("You need to be riding before you can dismount!\r\n")
+		return
+	}
+	rider.SendMessage("You hop off your mount.\r\n")
+	mount := w.mountedFollowerFor(rider)
+	if mount != nil {
+		Act(w, true, rider, mount, nil, nil, "$n dismounts from the back of $N.", "", ToRoom)
+		mount.SendMessage("Your rider dismounts, whew!\r\n")
+	}
+	w.unmountActor(rider)
+}
+
+// unmountActor follows utils.c:378-385: clear AFF_MOUNT on the supplied
+// rider and the first mounted mobile follower, retaining master/follower
+// links and the Go-side display names that identify those links.
+func (w *World) unmountActor(rider Actor) {
+	mount := w.mountedFollowerFor(rider)
+	clearMountedAffects(rider, mount)
+}
+
+func actorHasMountAffect(actor Actor) bool {
+	switch actor := actor.(type) {
+	case *Player:
+		return actor != nil && actor.IsAffected(affMounted)
+	case *MobInstance:
+		return actor != nil && actor.IsAffected(affMounted)
+	default:
+		return false
+	}
+}
+
+func (w *World) mountedFollowerFor(rider Actor) *MobInstance {
+	body, ok := rider.(combat.Combatant)
+	if !ok || body == nil || !actorHasMountAffect(rider) {
+		return nil
+	}
+	w.mu.RLock()
+	mobs := make([]*MobInstance, 0, len(w.activeMobs))
+	for _, mob := range w.activeMobs {
+		mobs = append(mobs, mob)
+	}
+	w.mu.RUnlock()
+	var followers []*MobInstance
+	for _, mob := range mobs {
+		if mob.IsAffected(affMounted) && w.combatFollowingBody(mob) == body {
+			followers = append(followers, mob)
+		}
+	}
+	sort.SliceStable(followers, func(i, j int) bool {
+		return actorFollowingSequence(followers[i]) > actorFollowingSequence(followers[j])
+	})
+	if len(followers) == 0 {
+		return nil
+	}
+	return followers[0]
 }
 
 // ---------------------------------------------------------------------------

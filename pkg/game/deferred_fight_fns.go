@@ -65,19 +65,34 @@ func (m *MobInstance) IsMountedMob() bool {
 // --------------------------------------------------------------------------
 
 func Unmount(rider *Player, mount *MobInstance) {
-	if rider != nil && rider.IsMounted() {
-		rider.MountName = ""
-	}
-	if mount != nil && mount.IsMountedMob() {
-		mount.MountRider = ""
-	}
+	clearMountedAffects(rider, mount)
 }
 
 func (p *Player) Unmount() {
-	if p.MountName == "" {
+	if p == nil || !p.IsMounted() {
 		return
 	}
 	Unmount(p, nil)
+}
+
+// clearMountedAffects mirrors utils.c:378-385. C clears only AFF_MOUNT on
+// the supplied rider and mount; master/follower links are separate state.
+// MountName is a player-side display cache, so clear it with the rider affect.
+func clearMountedAffects(rider Actor, mount *MobInstance) {
+	switch actor := rider.(type) {
+	case *Player:
+		if actor != nil {
+			actor.SetAffect(affMounted, false)
+			actor.MountName = ""
+		}
+	case *MobInstance:
+		if actor != nil {
+			actor.RemoveAffected(affMounted)
+		}
+	}
+	if mount != nil && mount.IsAffected(affMounted) {
+		mount.RemoveAffected(affMounted)
+	}
 }
 
 // --------------------------------------------------------------------------

@@ -438,16 +438,10 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 }
 
 func (w *World) riddenMount(rider *Player) *MobInstance {
-	if rider == nil || !rider.IsMounted() {
+	if rider == nil {
 		return nil
 	}
-	for _, mount := range w.GetMobsInRoom(rider.GetRoom()) {
-		if mount.GetMountRider() == rider.Name && mount.GetName() == rider.GetMountName() &&
-			mount.IsAffected(affMounted) && mount.GetFollowing() == rider.Name {
-			return mount
-		}
-	}
-	return nil
+	return w.mountedFollowerFor(rider)
 }
 
 func (w *World) clearMountedPair(rider *Player, mount *MobInstance) {

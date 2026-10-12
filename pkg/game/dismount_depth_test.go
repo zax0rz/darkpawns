@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestDismountDepthMatchesCOrderAndPairCleanup(t *testing.T) {
+func TestDismountDepthMatchesCOrderAndAffectUnmount(t *testing.T) {
 	w, rider := newMovementTestWorld(t)
 	mount := addMovementMount(t, w, rider, 1001)
 	observer := addMovementPlayer(t, w, "Observer", 1001)
@@ -30,10 +30,13 @@ func TestDismountDepthMatchesCOrderAndPairCleanup(t *testing.T) {
 	if rider.IsMounted() || rider.GetMountName() != "" {
 		t.Fatalf("rider remained mounted: affect=%t mount=%q", rider.IsMounted(), rider.GetMountName())
 	}
-	if mount.IsAffected(affMounted) || mount.GetMountRider() != "" {
-		t.Fatalf("mount pair state = affect:%t rider:%q", mount.IsAffected(affMounted), mount.GetMountRider())
+	if mount.IsAffected(affMounted) || mount.GetMountRider() != rider.Name {
+		t.Fatalf("mount state after C unmount = affect:%t rider:%q", mount.IsAffected(affMounted), mount.GetMountRider())
 	}
 	if got := rider.GetFollowing(); got != "A different leader" {
-		t.Fatalf("ordinary following relation = %q, want preserved", got)
+		t.Fatalf("rider's ordinary following relation = %q, want preserved", got)
+	}
+	if got := mount.GetFollowing(); got != rider.Name {
+		t.Fatalf("mount's master link = %q, want retained", got)
 	}
 }
