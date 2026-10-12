@@ -21,7 +21,7 @@ func TestWhisperActMessagesMatchCForAllAudiences(t *testing.T) {
 	}
 
 	// C sprintf's the TO_CHAR reply with its own \r\n and act() appends the
-		// second (act.comm.c:1010-1012).
+	// second (act.comm.c:1010-1012).
 	assertWhisperText(t, actor, "You whisper to Victim, 'quiet words'\r\n\r\n")
 	assertWhisperText(t, victim, "Actor whispers to you, 'quiet words'\r\n")
 	assertWhisperText(t, observer, "Actor whispers something to Victim.\r\n")

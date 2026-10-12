@@ -2278,7 +2278,7 @@ func (m *Manager) shutdownGracefully(timeout time.Duration, notify bool) {
 	// shutdown already emitted its own global bytes and save notices.
 	if notify {
 		for _, s := range sessions {
-			s.sendText("\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n")
+			s.Send("\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n")
 		}
 		// 2. Wait a brief moment for messages to flush
 		time.Sleep(1 * time.Second)

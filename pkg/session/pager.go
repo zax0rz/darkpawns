@@ -296,7 +296,7 @@ func (s *Session) navigatePager(line string) {
 		// (make_prompt, comm.c:647) still reprints the pager prompt after the
 		// message. The terminal calls SendPrompt without redisplaying the page;
 		// pagerPage is the page on screen (1-based).
-		s.sendText("Valid commands while paging are RETURN, Q, R, B, or a numeric value.\r\n")
+		s.Send("Valid commands while paging are RETURN, Q, R, B, or a numeric value.\r\n")
 		return
 	}
 	// Empty input (RETURN) and R/B/number all fall through to display the page

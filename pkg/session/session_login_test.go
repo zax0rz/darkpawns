@@ -273,17 +273,20 @@ func TestHandleCommand_UnknownCommand(t *testing.T) {
 		t.Fatal("expected 'unknown command' message on send channel")
 	}
 	srv := unmarshalServerMsg(t, msg)
-	if srv.Type != MsgText {
-		t.Errorf("message type = %q, want %q", srv.Type, MsgText)
-	}
+	// C interpreter.c:916 answers any unmatched command with "Huh?!?\r\n".
+	// The reply rides Send's text event since PF-063 cluster 5 (sendText's
+	// MsgText render appended a second terminator to the terminated
+	// literal); the wire bytes are unchanged.
 	b, _ := json.Marshal(srv.Data)
-	var td TextData
-	if err := json.Unmarshal(b, &td); err != nil {
-		t.Fatalf("unmarshal TextData: %v", err)
+	var ed EventData
+	if err := json.Unmarshal(b, &ed); err != nil {
+		t.Fatalf("unmarshal EventData: %v", err)
 	}
-	// C interpreter.c:916 answers any unmatched command with "Huh?!?".
-	if !strings.Contains(td.Text, "Huh?!?") {
-		t.Errorf("expected 'Huh?!?' in response, got %q", td.Text)
+	if ed.Type != "text" {
+		t.Errorf("event type = %q, want text", ed.Type)
+	}
+	if !strings.Contains(ed.Text, "Huh?!?") {
+		t.Errorf("expected 'Huh?!?' in response, got %q", ed.Text)
 	}
 }
 

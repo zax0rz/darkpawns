@@ -7,6 +7,7 @@ package session
 // either fix fails (mutation checks).
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -59,5 +60,24 @@ func TestDarkRoomActCarriesItsOwnBreak(t *testing.T) {
 	want := "Darkgod stops the senseless violence in the room with a wave of his hand.\r\n\r\n"
 	if got := renderAllOutput(watcher); got != want {
 		t.Fatalf("watcher bytes = %q, want %q (act's own break plus act()'s append)", got, want)
+	}
+}
+
+// TestUnknownCommandRendersCTerminatedReplyWithFrame — the generic
+// not-found reply is C's terminated "Huh?!?\r\n" (interpreter.c:916); on the
+// wire that is message, blank (the frame), prompt. Pins the Send seam: the
+// old sendText doubled the terminator, which the missing frame cancelled.
+func TestUnknownCommandRendersCTerminatedReplyWithFrame(t *testing.T) {
+	m := &Manager{}
+	s := m.NewSession()
+	s.player = game.NewPlayer(1, "Tester", 1001)
+
+	data, _ := json.Marshal(CommandData{Command: "xyzzy"})
+	if err := s.handleCommand(data); err != nil {
+		t.Fatalf("handleCommand: %v", err)
+	}
+	s.SendPrompt()
+	if got := renderAllOutput(s); got != "Huh?!?\r\n\r\n> " {
+		t.Fatalf("rendered wire = %q, want %q", got, "Huh?!?\r\n\r\n> ")
 	}
 }

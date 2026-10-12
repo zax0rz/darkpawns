@@ -322,7 +322,7 @@ func (s *Session) confirmDelete(choice string) error {
 		return nil
 	}
 	if s.player != nil && s.player.GetFlags()&(1<<uint(game.PlrFrozen)) != 0 {
-		s.sendText("You try to kill yourself, but the ice stops you.\r\nCharacter not deleted.\r\n")
+		s.Send("You try to kill yourself, but the ice stops you.\r\nCharacter not deleted.\r\n")
 		s.manager.mu.Lock()
 		s.menuActive = false
 		s.manager.mu.Unlock()
@@ -381,7 +381,7 @@ func (s *Session) confirmDelete(choice string) error {
 	if err := game.DeleteAliases(name); err != nil {
 		slog.ErrorContext(s.sessionCtx, "delete aliases failed", s.logAttrs(slog.Any("error", err))...)
 	}
-	s.sendText(fmt.Sprintf("Character '%s' deleted!\r\nGoodbye.\r\n", name))
+	s.Send(fmt.Sprintf("Character '%s' deleted!\r\nGoodbye.\r\n", name))
 	level := 0
 	if s.player != nil {
 		level = s.player.GetLevel()
