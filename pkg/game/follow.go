@@ -271,7 +271,7 @@ func (w *World) dieFollowerBody(body combat.Combatant) {
 //
 //	return mount->master;
 func (w *World) GetRider(mount *MobInstance) *Player {
-	if mount == nil || !mount.IsNPC() || !mount.IsMountedMob() {
+	if mount == nil || !mount.IsNPC() || !mount.IsAffected(affMounted) || !mount.IsMountedMob() {
 		return nil
 	}
 

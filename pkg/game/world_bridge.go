@@ -1184,11 +1184,11 @@ func (a *WorldScriptableAdapter) Unaffect(ref scripting.CharRef) {
 }
 
 // Mount is lua_mount: do_ride(rider, GET_NAME(mount)), do_dismount(rider)
-// or unmount(rider, get_mount(rider)). Only player riders are ported.
+// or unmount(rider, get_mount(rider)). The supplied CharRef resolves to the
+// real player or mobile body; C's CAN_MOUNT gate still refuses mobile riders.
 func (a *WorldScriptableAdapter) Mount(rider scripting.CharRef, mount *scripting.CharRef, how string) {
-	_, p, _ := a.resolveChar(rider)
-	if p == nil {
-		slog.Warn("lua mount for a mobile rider is not ported; ignored", "how", how)
+	actor, p, m := a.resolveChar(rider)
+	if actor == nil {
 		return
 	}
 	switch how {
@@ -1199,13 +1199,15 @@ func (a *WorldScriptableAdapter) Mount(rider scripting.CharRef, mount *scripting
 				name = actor.GetName()
 			}
 		}
-		a.world.doRide(p, nil, "ride", name)
-	case "dismount":
-		a.world.doDismount(p, nil, "dismount", "")
-	case "unmount":
-		if m := a.world.riddenMount(p); m != nil {
-			a.world.clearMountedPair(p, m)
+		if p != nil {
+			a.world.doRide(p, nil, "ride", name)
+		} else if m != nil {
+			a.world.doRideMob(m, name)
 		}
+	case "dismount":
+		a.world.doDismountActor(actor)
+	case "unmount":
+		a.world.unmountActor(actor)
 	}
 }
 

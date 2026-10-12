@@ -435,12 +435,7 @@ func (w *World) GetMount(p *Player) *MobInstance {
 	if !p.IsAffected(affMounted) {
 		return nil
 	}
-	for _, m := range w.activeMobs {
-		if m.GetMountRider() == p.Name {
-			return m
-		}
-	}
-	return nil
+	return w.mountedFollowerFor(p)
 }
 
 // LookAtRoom sends the room description to the player.

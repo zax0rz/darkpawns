@@ -149,8 +149,11 @@ func TestPointUpdateMountedPoisonDamageTail(t *testing.T) {
 	p.CopyBaseAttributes()
 	p.SetAffect(AffPoison, true)
 	w.PointUpdate()
-	if p.IsMounted() || mount.GetMountRider() != "" {
+	if p.IsMounted() || mount.IsAffected(affMounted) {
 		t.Fatal("tick did not dismount")
+	}
+	if mount.GetMountRider() != p.Name || mount.GetFollowing() != p.Name {
+		t.Fatalf("C do_dismount removed the retained mount master: rider=%q following=%q", mount.GetMountRider(), mount.GetFollowing())
 	}
 	got := outputOf(out, p.Name)
 	for _, line := range []string{"The hit knocks you off of your mount!\r\n\r\n", "You hop off your mount.\r\n", "You land on your feet!\r\n"} {

@@ -1,0 +1,90 @@
+# depth-case: lua.bind-mount
+# A player first rides a scripted mobile. Its oncmd calls mount(me, nil,
+# "unmount"), so the Lua bridge receives the real mobile as rider. C clears
+# only the mobile's AFF_MOUNT bit (utils.c:378-385), retaining its charm/master
+# relationship. A second player's ride reaches do_ride's charm/master refusal;
+# leaving the old mobile-rider bridge guard in place instead says the beast is
+# already being ridden. This visible follow-up proves the NPC boundary.
+# C path: scripts.c:871-906 -> utils.c:378-385 -> act.other.c:1545-1593.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12203 999 12296 122
+clear-mob-flag 12203 RANDZON
+mob-script 12203 oracle/mount.lua 512
+
+[lua-script mob/oracle/mount.lua]
+function oncmd()
+if (argument == "say release") then
+mount(me, nil, "unmount")
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+Mountactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mountactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mountpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mountpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+teleport Mountpeer 12296
+
+[probe]
+mount crocodile
+say release
+send:peer mount crocodile
