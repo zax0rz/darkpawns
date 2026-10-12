@@ -17,20 +17,22 @@ import (
 // C (src/interpreter.c) → Go producer, all file TRUE:
 //
 //	:1641  "%s [%s] has reconnected."                        NRM / MAX(LVL_IMMORT, invis)
-//	       -> pkg/session/reconnect.go:165, finishDupeCheck's linkdead-resume arm
+//	       -> reconnect.go:178, finishDupeCheck's default arm (linkdead resume)
 //	:1650  "%s has re-logged in ... disconnecting old socket." NRM / MAX(LVL_IMMORT, invis)
 //	       -> reconnect.go:171, the usurp arm (the old body is taken over)
 //	:1655  "%s [%s] has reconnected."                        NRM / MAX(LVL_IMMORT, invis)
-//	       -> reconnect.go:178, the unswitch arm
+//	       -> reconnect.go:165, the unswitch arm
 //	:1927  "%s [%s] has connected."                          BRF / MAX(LVL_IMMORT, invis)
 //	       -> session_login.go:312, handleLogin
 //	:2155  "%s [%s] new player."                             NRM / LVL_IMMORT (no invis term)
 //	       -> char_creation.go:363, handleCharInput at the stats_roll "Y" arm
 //
-// The arm→C-line attribution follows the payload identity for :1650 and the
-// existing suite's own citation for :1641 ("RECON (interpreter.c:1634-1641)" on
-// TestPerformDupeCheckReconnectsLinkdeadBody); :1655 is the remaining
-// "has reconnected." site, the unswitch arm.
+// Arm→C-line attribution is read from the switch itself
+// (pkg/session/reconnect.go:158-178): `case unswitch` logs the reconnect line at
+// :165, `case usurp` logs the re-logged-in line at :171, and the default arm —
+// the linkdead resume — logs the reconnect line after its Act at :178. The :1650
+// payload is unique; of the two identical reconnect texts, C's :1641 is the
+// linkdead resume and C's :1655 the unswitch arm.
 //
 // Every assertion names that producer's exact bracketed bytes, so a sibling line
 // in the same flow cannot satisfy it.
