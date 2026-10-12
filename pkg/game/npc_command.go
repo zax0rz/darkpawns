@@ -17,13 +17,19 @@ import (
 // ("Huh?!?", the position messages, a command's own error lines) reaches no
 // one; what matters is which commands run and what they show the room.
 //
-// The commands ported for mobiles are the ones C's attached scripts use:
-// say, tell, emote, give and the socials. A line naming any other command is
-// logged and does nothing, rather than guessing at its NPC behaviour. The
-// special() hook C runs before the command (room, mobile and object
-// specials that may intercept it) is not reached from here yet.
+// The session-installed CharacterCommandExecFunc sends this real body through
+// the shared command interpreter and its ordered special() stages. When that
+// executor is absent, this legacy fallback retains the previously ported
+// say, tell, emote, give, stand and social behaviors. It does not claim generic
+// command parity.
 func (w *World) NPCCommand(me *MobInstance, line string) {
 	if me == nil {
+		return
+	}
+	if w.CharacterCommandExecFunc != nil {
+		if result := w.CharacterCommandExecFunc(me, line); result == CharacterCommandUnsupported {
+			slog.Warn("NPC command dispatch unsupported", "mob_vnum", me.GetVNum(), "line", line)
+		}
 		return
 	}
 	// if (!number(0,3)) REMOVE_BIT_AR(AFF_FLAGS(ch), AFF_HIDE): drawn for
@@ -77,6 +83,15 @@ func (w *World) NPCCommand(me *MobInstance, line string) {
 		}
 	}
 }
+
+// NPCSayCommand, NPCTellCommand, NPCEmoteCommand, NPCGiveCommand, and
+// NPCSocialCommand adapt the existing mobile behavior to the shared command
+// registry. Each is registered against its C command entry by pkg/session.
+func (w *World) NPCSayCommand(me *MobInstance, arg string)         { w.npcSay(me, arg) }
+func (w *World) NPCTellCommand(me *MobInstance, arg string)        { w.npcTell(me, arg) }
+func (w *World) NPCEmoteCommand(me *MobInstance, arg string)       { w.npcEmote(me, arg) }
+func (w *World) NPCGiveCommand(me *MobInstance, arg string)        { w.npcGive(me, arg) }
+func (w *World) NPCSocialCommand(me *MobInstance, cmd, arg string) { w.npcSocial(me, cmd, arg) }
 
 func isASCIIAlpha(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
@@ -220,9 +235,7 @@ func (w *World) npcCarriedVis(me *MobInstance, arg string) *ObjectInstance {
 	if number <= 0 || name == "" {
 		return nil
 	}
-	me.mu.RLock()
-	carried := append([]*ObjectInstance(nil), me.Inventory...)
-	me.mu.RUnlock()
+	carried := me.InventorySnapshot()
 	found := 0
 	for _, obj := range carried {
 		if !isnameWithAbbrevs(name, obj.GetKeywords()) {

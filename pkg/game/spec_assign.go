@@ -444,6 +444,14 @@ func RegisterActorSpec(name string, fn ActorSpecFunc) {
 	SpecRegistry[name] = entry
 }
 
+// RegisterActorObjectSpec adds the actor-aware callback to the existing
+// special entry; GetObjSpecForObject continues to expose the legacy lane.
+func RegisterActorObjectSpec(name string, fn ActorObjectSpecFunc) {
+	entry := SpecRegistry[name]
+	entry.ActorObject = fn
+	SpecRegistry[name] = entry
+}
+
 // npcSpecialFallback classifies only C specials whose command-time C body
 // proves that an NPC cannot consume a command. Every other legacy-only entry
 // remains unsupported for actor dispatch until its character semantics are
@@ -488,6 +496,10 @@ func GetMobSpec(vnum int) SpecFunc {
 	return nil
 }
 
+// GetMobSpecName returns the assigned native special name, including when
+// the name has no registered callback; actor dispatch needs that distinction.
+func GetMobSpecName(vnum int) (string, bool) { name, ok := MobSpecAssign[vnum]; return name, ok }
+
 // GetObjSpecForObject returns the object-aware handler for vnum. Existing
 // object specials retain their historical SpecFunc behavior through a nil-mob
 // adapter until they are individually proven to need the concrete receiver.
@@ -507,6 +519,9 @@ func GetObjSpecForObject(vnum int) ObjSpecFunc {
 	return nil
 }
 
+// GetObjSpecName returns the assigned object special name for actor dispatch.
+func GetObjSpecName(vnum int) (string, bool) { name, ok := ObjSpecAssign[vnum]; return name, ok }
+
 // GetRoomSpec returns the spec function for a room VNum, or nil.
 func GetRoomSpec(vnum int) SpecFunc {
 	if name, ok := RoomSpecAssign[vnum]; ok {
@@ -514,6 +529,9 @@ func GetRoomSpec(vnum int) SpecFunc {
 	}
 	return nil
 }
+
+// GetRoomSpecName returns the assigned room special name for actor dispatch.
+func GetRoomSpecName(vnum int) (string, bool) { name, ok := RoomSpecAssign[vnum]; return name, ok }
 
 // IMPROVEMENTS (do not implement — document only):
 //

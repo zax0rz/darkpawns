@@ -95,7 +95,10 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 		return nil
 
 	case ObjInRoom:
-		w.roomItems[dst.RoomVNum] = append(w.roomItems[dst.RoomVNum], obj)
+		items := w.roomItems[dst.RoomVNum]
+		w.roomItems[dst.RoomVNum] = append(items, nil)
+		copy(w.roomItems[dst.RoomVNum][1:], items)
+		w.roomItems[dst.RoomVNum][0] = obj
 		// C obj_to_room does not alter room light (src/handler.c:897-913).
 		obj.RoomVNum = dst.RoomVNum
 

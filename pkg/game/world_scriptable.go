@@ -213,8 +213,10 @@ func (a *WorldScriptableAdapter) SendToAll(msg string) {
 	a.world.SendToAll(msg)
 }
 
-// ExecuteMobCommand makes a mob execute a game command.
-// Source: scripts.c lua_action() → command_interpreter().
+// ExecuteMobCommand preserves the legacy VNum-based mob-command bridge.
+// The production Lua action() path carries a CharRef and enters NPCCommand;
+// this older adapter remains on its existing behavior until its command set
+// is migrated deliberately.
 func (a *WorldScriptableAdapter) ExecuteMobCommand(mobVNum int, cmdStr string) {
 	a.world.executeMobCommand(mobVNum, cmdStr)
 }
@@ -481,10 +483,9 @@ func (w *World) RemoveObjByInstanceID(objInstanceID int) scripting.ScriptableObj
 
 	// Check mob inventories
 	for _, m := range w.activeMobs {
-		for i, item := range m.Inventory {
+		for _, item := range m.InventorySnapshot() {
 			if item.ID == objInstanceID {
-				m.Inventory = append(m.Inventory[:i], m.Inventory[i+1:]...)
-				item.Location = LocNowhere()
+				m.RemoveFromInventory(item)
 				return &scriptableObjInstanceWrapper{item: item}
 			}
 		}
@@ -518,7 +519,9 @@ func (w *World) GiveItemToMob(mobID int, obj scripting.ScriptableObject) error {
 	if item == nil {
 		return fmt.Errorf("GiveItemToMob: object is not an ObjectInstance")
 	}
-	mob.AddToInventory(item)
+	if err := w.MoveObjectToMobInventoryFront(item, mob); err != nil {
+		return err
+	}
 	return nil
 }
 

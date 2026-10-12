@@ -171,16 +171,29 @@ func cmdForceText(s *Session, argument string) error {
 	}
 
 	// C get_char_vis checks the room first and then the global character list.
-	// ResolveCharWorld carries those visibility, self/me, abbreviation, and
-	// ordinal rules; the session lookup then selects the connected PC that C's
-	// descriptor-backed force path can command.
-	target := findForceSession(s, targetName)
-	if target == nil || target.player == nil {
+	// ResolveCharWorld retains that target resolution for both players and
+	// mobiles; only a player needs a direct session lookup.
+	resolved, found := s.manager.world.ResolveCharWorld(s.player, targetName)
+	body := resolved.Combatant
+	if !found || body == nil {
+		s.Send(noPersonHere)
+		return nil
+	}
+	var targetSession *Session
+	if resolved.Player != nil {
+		targetSession = findForceSession(s, targetName)
+		if targetSession == nil {
+			s.Send(noPersonHere)
+			return nil
+		}
+	} else if resolved.Mob != nil {
+		targetSession = s.manager.combatSession(body)
+	} else {
 		s.Send(noPersonHere)
 		return nil
 	}
 
-	if target.player.Level >= s.player.Level {
+	if body.GetLevel() >= s.player.GetLevel() {
 		s.Send("No, no, no!\r\n")
 		return nil
 	}
@@ -188,10 +201,22 @@ func cmdForceText(s *Session, argument string) error {
 	s.Send("Okay.\r\n")
 	// src/act.wizard.c:1875-1880: notify, log, then interpret.
 	if s.player.GetLevel() < LVL_IMPL {
-		game.Act(s.manager.world, true, s.player, target.player, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict)
+		if resolved.Player != nil {
+			game.Act(s.manager.world, true, s.player, resolved.Player, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict)
+		} else if targetActor, ok := body.(game.Actor); ok {
+			var privateSink func(string)
+			if targetSession != nil {
+				privateSink = func(text string) { targetSession.Send(text) }
+			}
+			game.ActWithPrivateSink(s.manager.world, true, s.player, targetActor, nil, nil, fmt.Sprintf("$n has forced you to '%s'.", forceCmd), "", game.ToVict, targetActor, privateSink)
+		}
 	}
-	game.MudLog(fmt.Sprintf("(GC) %s forced %s to %s", s.player.Name, target.player.GetName(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
-	forceSessionCommand(s, target, forceCmd, false)
+	game.MudLog(fmt.Sprintf("(GC) %s forced %s to %s", s.player.Name, body.GetName(), forceCmd), game.MudlogNormal, max(s.player.GetLevel()+1, s.player.GetInvisLevel()), true)
+	if resolved.Player != nil {
+		forceSessionCommand(s, targetSession, forceCmd, false)
+	} else if result := s.manager.executeCharacterCommand(body, targetSession, forceCmd); result == game.CharacterCommandUnsupported {
+		slog.Warn("forced character command unsupported", "target", body.GetName(), "command", forceCmd)
+	}
 	return nil
 }
 

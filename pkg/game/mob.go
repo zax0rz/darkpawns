@@ -270,10 +270,17 @@ func (m *MobInstance) GetRoom() int {
 // SetRoom sets the mob's current room.
 func (m *MobInstance) SetRoom(vnum int) {
 	if m.world != nil {
-		m.world.stopRoomFights(m)
-		m.world.mu.Lock()
-		m.moveRoomLocked(m.world, vnum)
-		m.world.mu.Unlock()
+		w := m.world
+		w.stopRoomFights(m)
+		w.mu.Lock()
+		m.moveRoomLocked(w, vnum)
+		if vnum >= 0 {
+			w.nextRoomEntrySequence++
+			m.mu.Lock()
+			m.RoomEntrySequence = w.nextRoomEntrySequence
+			m.mu.Unlock()
+		}
+		w.mu.Unlock()
 		return
 	}
 	m.mu.Lock()
@@ -518,7 +525,16 @@ func (m *MobInstance) AddToInventory(obj *ObjectInstance) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	obj.Location = LocInventoryMob(m.ID)
-	m.Inventory = append(m.Inventory, obj)
+	m.Inventory = append(m.Inventory, nil)
+	copy(m.Inventory[1:], m.Inventory[:len(m.Inventory)-1])
+	m.Inventory[0] = obj
+}
+
+// InventorySnapshot returns the Mob's carrying list in C obj_to_char order.
+func (m *MobInstance) InventorySnapshot() []*ObjectInstance {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return append([]*ObjectInstance(nil), m.Inventory...)
 }
 
 // RemoveFromInventory removes an object from the mob's inventory.

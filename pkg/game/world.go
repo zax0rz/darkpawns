@@ -37,6 +37,10 @@ type CloseConnectionFunc func(playerName string)
 // Returns true if the command was dispatched.
 type CommandExecFunc func(ch *Player, command string) bool
 
+// CharacterCommandExecFunc dispatches a direct C-style interpreter call on a
+// real character body. A descriptor is discovered by the session manager.
+type CharacterCommandExecFunc func(ch combat.Combatant, command string) CharacterCommandResult
+
 // World represents the active game world with runtime state.
 //
 // LOCK ORDERING: w.mu must be acquired BEFORE m.mu (Manager) if both are
@@ -85,6 +89,9 @@ type World struct {
 	ObjectSaver     func(*Player, int) error
 	PlayerStoreList func() ([]*Player, error)
 	PlayerStoreEdit func(string, func(*Player)) error
+	// CharacterCommandExecFunc is installed by the session manager for Lua
+	// action() and other direct command_interpreter callers.
+	CharacterCommandExecFunc CharacterCommandExecFunc
 
 	// Runtime state
 	players               map[string]*Player   // keyed by player name
@@ -800,8 +807,8 @@ func (w *World) SendToAll(msg string) {
 	}
 }
 
-// executeMobCommand makes a mob execute a game command.
-// Source: scripts.c lua_action() → command_interpreter().
+// executeMobCommand preserves the legacy VNum-based mob command adapter.
+// Production Lua action() calls use the CharRef-based Command bridge instead.
 func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	w.mu.RLock()
 	var mob *MobInstance
@@ -819,17 +826,14 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	}
 
 	slog.Debug("mob executes command", "mob_vnum", mobVNum, "mob_name", mob.GetName(), "command", cmdStr)
-
+	w.mu.RUnlock()
 	parts := strings.Fields(cmdStr)
 	if len(parts) == 0 {
-		w.mu.RUnlock()
 		return
 	}
 
 	cmd := strings.ToLower(parts[0])
 	args := strings.Join(parts[1:], " ")
-
-	w.mu.RUnlock()
 
 	switch cmd {
 	case "say":
@@ -897,17 +901,19 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 	case "drop":
 		// Mob drops item(s) to the room. "drop all" drops everything.
 		if args == "all" {
-			for _, obj := range mob.Inventory {
+			for _, obj := range mob.InventorySnapshot() {
 				// The action() drop reaches C's perform_drop, whose room
 				// placement is obj_to_room (act.item.c:504) — prepend.
-				w.AddItemToRoomFront(obj, mob.GetRoomVNum())
+				if err := w.MoveObjectToRoomFront(obj, mob.GetRoomVNum()); err != nil {
+					slog.Error("mob drop failed", "mob_vnum", mob.GetVNum(), "obj_vnum", obj.GetVNum(), "error", err)
+				}
 			}
-			mob.Inventory = mob.Inventory[:0]
 		} else {
-			for i, obj := range mob.Inventory {
+			for _, obj := range mob.InventorySnapshot() {
 				if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(args)) {
-					mob.Inventory = append(mob.Inventory[:i], mob.Inventory[i+1:]...)
-					w.AddItemToRoomFront(obj, mob.GetRoomVNum())
+					if err := w.MoveObjectToRoomFront(obj, mob.GetRoomVNum()); err != nil {
+						slog.Error("mob drop failed", "mob_vnum", mob.GetVNum(), "obj_vnum", obj.GetVNum(), "error", err)
+					}
 					break
 				}
 			}
@@ -918,14 +924,16 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 		roomItems := w.GetItemsInRoom(mob.GetRoomVNum())
 		if args == "all" {
 			for _, obj := range roomItems {
-				w.RemoveItemFromRoom(obj, mob.GetRoomVNum())
-				mob.Inventory = append(mob.Inventory, obj)
+				if err := w.MoveObjectToMobInventoryFront(obj, mob); err != nil {
+					slog.Error("mob get failed", "mob_vnum", mob.GetVNum(), "obj_vnum", obj.GetVNum(), "error", err)
+				}
 			}
 		} else {
 			for _, obj := range roomItems {
 				if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(args)) {
-					w.RemoveItemFromRoom(obj, mob.GetRoomVNum())
-					mob.Inventory = append(mob.Inventory, obj)
+					if err := w.MoveObjectToMobInventoryFront(obj, mob); err != nil {
+						slog.Error("mob get failed", "mob_vnum", mob.GetVNum(), "obj_vnum", obj.GetVNum(), "error", err)
+					}
 					break
 				}
 			}
@@ -940,17 +948,14 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 			targetName := strings.Join(parts[1:], " ")
 			target := w.FindPlayerInRoom(mob.GetRoomVNum(), targetName)
 			if target != nil {
-				for i, obj := range mob.Inventory {
+				for _, obj := range mob.InventorySnapshot() {
 					if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.ShortDesc), strings.ToLower(itemName)) {
-						mob.Inventory = append(mob.Inventory[:i], mob.Inventory[i+1:]...)
 						if target.Inventory != nil {
-							if err := target.Inventory.AddItem(obj); err != nil {
-								slog.Debug("give: AddItem error", "error", err)
+							if err := w.MoveObjectToPlayerInventory(obj, target); err != nil {
+								slog.Debug("give: inventory move error", "error", err)
 							} else {
-								// C's perform_give ends in
-								// obj_to_char(obj, vict)
-								// (src/act.item.c:696): the recipient is
-								// flagged (handler.c:569-571).
+								// C's perform_give ends in obj_to_char(obj, vict)
+								// (src/act.item.c:696).
 								target.MarkCrashNeeded()
 							}
 						}

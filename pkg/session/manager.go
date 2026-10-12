@@ -970,6 +970,10 @@ func (m *Manager) SetCommandExecFunc() {
 		}
 		return true
 	}
+	m.world.CharacterCommandExecFunc = func(body combat.Combatant, command string) game.CharacterCommandResult {
+		sess := m.combatSession(body)
+		return m.executeCharacterCommand(body, sess, command)
+	}
 }
 
 // shouldCrownFirstPlayer reports whether the character currently being created
