@@ -14,6 +14,10 @@
 # depth-case: load.object-name-lookup
 # depth-case: load.object-name-not-found
 # depth-case: load.object-success-audience
+# depth-case: load.mob-success
+# The mob-success probes need oracle seam 7e08d59 (num_moblim pinned to its
+# 32-bit value 0): before it, every successful 'load mob' dereferenced the
+# NULL MobLimits table on 64-bit and killed the C server.
 
 [fixture]
 empty-players
@@ -122,3 +126,7 @@ load object 8010
 load object bread
 load obj 8010
 load obj bread
+load mob 1
+load m 4
+load mob puff
+look
