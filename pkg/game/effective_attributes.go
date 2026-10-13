@@ -61,8 +61,22 @@ func (p *Player) CopyBaseAttributes() {
 }
 
 func (p *Player) affectTotalLocked() {
+	stats := p.affectTotalForItemsLocked(COrderedWorn(p))
+	p.effectiveAttributes = &stats
+	p.Alignment = max(-1000, min(p.Alignment, 1000))
+}
+
+// affectTotalForItemsLocked is affect_total's ability pass over an explicit
+// worn set (src/handler.c:337-372). C rebuilds aff_abils from real_abils plus
+// every slot currently filled, so Crash_load's per-item equip sequence sees
+// only the items equipped so far: a zeroed stat can fire again on each later
+// item (src/objsave.c:557; src/handler.c:749). The caller holds p.mu.
+func (p *Player) affectTotalForItemsLocked(items []*ObjectInstance) CharStats {
 	stats := p.Stats
-	for _, item := range COrderedWorn(p) {
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
 		for _, af := range item.GetAffects() {
 			addAttributeModifier(&stats, af.Location, af.Modifier)
 		}
@@ -75,9 +89,7 @@ func (p *Player) affectTotalLocked() {
 	for _, af := range GetTattooBonuses(p.Tattoo) {
 		addAttributeModifier(&stats, af.Location, af.Modifier)
 	}
-	stats = boundEffectiveAttributes(stats, false)
-	p.effectiveAttributes = &stats
-	p.Alignment = max(-1000, min(p.Alignment, 1000))
+	return boundEffectiveAttributes(stats, false)
 }
 
 // AffectTotal recomputes abilities at C's equip, affect and Lua boundaries.

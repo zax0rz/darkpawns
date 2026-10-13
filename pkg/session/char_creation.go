@@ -653,7 +653,7 @@ func (s *Session) completeCharCreation() error {
 	// and rewrites the header before the entry save (src/objsave.c:491-541,
 	// :659-663). A brand-new character has no object save, which is C's
 	// no-file arm.
-	if err := s.crashLoadEntry(); err != nil {
+	if _, err := s.crashLoadEntry(); err != nil {
 		return s.abortEntry(err)
 	}
 	// C's menu entry save precedes do_start (interpreter.c:2186).

@@ -121,6 +121,117 @@ func TestPlayerEquipmentBadStatEntryPoints(t *testing.T) {
 	}
 }
 
+// replayWorld builds the Crash_load replay fixture: four worn prototypes where
+// vnum 201 carries a -10 `location` affect and 202-204 are inert, plus a
+// level-15 player at HP 200 whose slots are filled the way restoreSavedItems
+// fills them (lowest wear position first).
+func replayWorld(t *testing.T, location int) (*World, *Player, map[string]*strings.Builder) {
+	t.Helper()
+	objs := make([]parser.Obj, 0, 4)
+	for vnum := 201; vnum <= 204; vnum++ {
+		obj := parser.Obj{VNum: vnum, Keywords: "item", ShortDesc: "a saved item", TypeFlag: ITEM_ARMOR, WearFlags: [4]int{1 << 4}, LoadPercent: 100}
+		if vnum == 201 {
+			obj.Affects = []parser.ObjAffect{{Location: location, Modifier: -10}}
+		}
+		objs = append(objs, obj)
+	}
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001}},
+		Mobs:  []parser.Mob{{VNum: 7907, ShortDesc: "Pestilence"}},
+		Objs:  objs,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.StopAITicker()
+	t.Cleanup(w.StopAITicker)
+	p := NewPlayer(11, "Wearer", 1001)
+	p.Stats = CharStats{Str: 10, Int: 10, Wis: 10, Dex: 10, Con: 10, Cha: 10}
+	p.CopyBaseAttributes()
+	p.SetLevel(15)
+	p.SetMaxHP(200)
+	p.SetHP(200)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatal(err)
+	}
+	for i, cPos := range []int{0, 5, 6, 7} { // light, body, head, legs
+		obj, err := w.SpawnObject(201+i, -1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		slot, ok := CWearPosToSlot(cPos)
+		if !ok {
+			t.Fatalf("C wear position %d has no slot", cPos)
+		}
+		obj.Location = LocEquippedPlayer(p.Name, slot)
+		if err := p.Equipment.SetSlot(slot, obj); err != nil {
+			t.Fatal(err)
+		}
+	}
+	old := combat.GetCallbacks()
+	t.Cleanup(func() { combat.SetCallbacks(old) })
+	combat.SetCallbacks(w.WireCombatCallbacks())
+	return w, p, captureOutput(w)
+}
+
+// The DEX item in the lowest wear position zeroes DEX on the first equip, and
+// every later equip re-runs affect_total over the items equipped so far, so the
+// replay fires four times: HP 200 - 4x40 = 40 (src/objsave.c:557;
+// src/handler.c:337-372,749). A single final-stats check would fire once.
+func TestReplayCrashLoadBadStatsFiresPerEquippedItem(t *testing.T) {
+	w, p, _ := replayWorld(t, ApplyDex)
+	var lines []string
+	w.ReplayCrashLoadBadStats(p, func(text string) { lines = append(lines, text) })
+	if len(lines) != 4 {
+		t.Fatalf("firings = %d, want 4: %q", len(lines), lines)
+	}
+	for _, line := range lines {
+		if line != "You trip over your own feet and hit your head!\n\r" {
+			t.Fatalf("line = %q", line)
+		}
+	}
+	if p.GetHP() != 40 {
+		t.Fatalf("HP = %d, want 40 (200 - 4x40)", p.GetHP())
+	}
+}
+
+// C's reset_char leaves ch->in_room NOWHERE for the whole of Crash_load
+// (src/db.c:2945), so the DEX arm's hide-fade and room act() have no audience
+// and log C's SYSERR instead (src/comm.c:2519-2526). The record's room must not
+// become an audience, and must be restored for the entry that follows.
+func TestReplayCrashLoadBadStatsHoldsRoomAtNowhere(t *testing.T) {
+	w, p, out := replayWorld(t, ApplyDex)
+	peer := NewPlayer(12, "Peer", 1001)
+	if err := w.AddPlayer(peer); err != nil {
+		t.Fatal(err)
+	}
+	p.SetAffect(affHide, true)
+	w.ReplayCrashLoadBadStats(p, nil)
+	if got := outputOf(out, peer.Name); got != "" {
+		t.Fatalf("room peer saw %q, want nothing", got)
+	}
+	if p.GetRoom() != 1001 {
+		t.Fatalf("room = %d, want the record's room restored", p.GetRoom())
+	}
+}
+
+// The HP <= 0 sub-case is recorded as blocked (R1a): C's damage() at NOWHERE
+// reaches die()/death_cry, which explicitly char_to_room(ch, 0) — the first room
+// of the world array (src/fight.c:507-514) — and makes a corpse there. The port
+// does not reproduce that branch. This guard only proves the replay survives a
+// lethal zero-DEX set and leaves the character's room where the entry left it.
+func TestReplayCrashLoadBadStatsLethalLeavesRoomAlone(t *testing.T) {
+	w, p, _ := replayWorld(t, ApplyDex)
+	p.SetHP(10)
+	w.ReplayCrashLoadBadStats(p, nil)
+	if p.GetHP() > 0 {
+		t.Fatalf("HP = %d, want the four 40-point firings to be lethal", p.GetHP())
+	}
+	if p.GetRoom() != 1001 {
+		t.Fatalf("room = %d, want the record's room unchanged", p.GetRoom())
+	}
+}
+
 func TestPlayerEquipmentCharismaHunting(t *testing.T) {
 	w, p, obj, out := badStatsWorld(t, ApplyCha)
 	watcher := NewPlayer(12, "Watcher", 1001)

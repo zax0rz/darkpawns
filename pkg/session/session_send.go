@@ -203,6 +203,42 @@ func (s *Session) sendGuarded(message []byte) {
 	}
 }
 
+// sendPlayerText queues one player-facing text frame with the same envelope,
+// heartbeat staging and snoop forwarding the world MessageSink uses for a
+// registered session (MsgEvent type "text"). Crash_load's equip checks run
+// before the character has a world reference or a session-registry entry
+// (src/interpreter.c:2184-2189), so the entry path hands its bytes to the
+// descriptor that owns them — C's send_to_char writes ch->desc — instead of
+// resolving the player by name.
+func (s *Session) sendPlayerText(text string) {
+	if s == nil || text == "" {
+		return
+	}
+	msg, err := json.Marshal(ServerMessage{
+		Type: MsgEvent,
+		Data: EventData{Type: "text", Text: text},
+	})
+	if err != nil {
+		slog.Error("json.Marshal error in sendPlayerText", "error", err)
+		return
+	}
+	if s.stageHeartbeat(msg, text, true) {
+		return
+	}
+	s.notePlayerOutput()
+	s.forwardSnoopOutput(text)
+	s.sendMu.RLock()
+	defer s.sendMu.RUnlock()
+	if s.sendClosed {
+		return
+	}
+	select {
+	case s.send <- msg:
+	default:
+		slog.Warn("session sendPlayerText channel full — dropping message", "player", s.playerName)
+	}
+}
+
 // forwardSnoopOutput mirrors comm.c:1646-1651. C forwards the target's
 // flushed descriptor output to its snooper with a percent delimiter; the
 // session transport has no shared descriptor buffer, so each player-facing
