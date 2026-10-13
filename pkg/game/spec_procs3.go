@@ -1300,8 +1300,8 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		// the second (spec_procs3.c:878-882) — the audience's blank line.
 		Act(w, false, me, nil, nil, nil, fmt.Sprintf("%s disappears in a flash of white light!\r\n", me.GetName()), "", ToRoom)
 	}
-	// extract_char() marks/removes the mob without running the player death
-	// pipeline: conjured creatures do not leave corpses or death announcements.
+	// extract_char() queues the mob for heartbeat removal without running the
+	// player death pipeline: conjured creatures leave no corpse or death line.
 	w.ExtractMob(me)
 	return true
 }

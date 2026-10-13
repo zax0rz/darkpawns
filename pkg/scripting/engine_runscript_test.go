@@ -14,9 +14,9 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// TestRunScriptClearsPerRunGlobals verifies that RunScript does not leak
-// context globals or trigger functions between executions.
-func TestRunScriptClearsPerRunGlobals(t *testing.T) {
+// TestRunScriptClearsLegacyContextGlobals verifies the test-only legacy path's
+// context clearing. Production bridge runs retain the globals C leaves behind.
+func TestRunScriptClearsLegacyContextGlobals(t *testing.T) {
 	dir := t.TempDir()
 
 	first := filepath.Join(dir, "first.lua")
@@ -31,9 +31,7 @@ end
 	}
 
 	second := filepath.Join(dir, "second.lua")
-	secondSrc := `leak = "no"
-if argument ~= nil then leak = "yes" end
-if room ~= nil then leak = "yes" end
+	secondSrc := `test_context_clean = argument == nil and room == nil
 `
 	if err := os.WriteFile(second, []byte(secondSrc), 0o644); err != nil {
 		t.Fatalf("write second.lua: %v", err)
@@ -62,20 +60,59 @@ if room ~= nil then leak = "yes" end
 		t.Fatalf("second run expected handled=false because trigger is missing")
 	}
 
-	// After cleanup, script-defined globals (including "leak") should be nil.
-	// This verifies that the stale "argument" and "room" from the first run
-	// did NOT leak into the second script's execution, AND that the second
-	// script's own globals were cleaned up after completion.
-	leak := engine.l.GetGlobal("leak")
-	if leak.Type() != lua.LTNil {
-		t.Fatalf("script-defined global 'leak' was not cleaned up after second run: leak=%v (type=%s)", leak, leak.Type())
+	// The legacy test path still clears context before loading the next script.
+	if clean := engine.l.GetGlobal("test_context_clean"); clean != lua.LTrue {
+		t.Fatalf("second run observed stale argument or room globals: %v", clean)
 	}
 
-	// Also verify no stale globals remain from either script
+	// The test-only legacy path also retains its historical trigger clearing.
 	for _, name := range []string{"argument", "ongive", "room"} {
 		val := engine.l.GetGlobal(name)
 		if val.Type() != lua.LTNil {
 			t.Errorf("stale global '%s' leaked between runs: %v (type=%s)", name, val, val.Type())
+		}
+	}
+}
+
+// TestRunScriptPreservesScriptGlobalsThroughBridge proves that a trigger
+// function and script-defined global survive calls through the production
+// bridge path, matching scripts.c's one shared Lua state.
+func TestRunScriptPreservesScriptGlobalsThroughBridge(t *testing.T) {
+	dir := t.TempDir()
+	writeScript(t, dir, "first.lua", `function onpulse()
+  reused_function_calls = (reused_function_calls or 0) + 1
+end
+`)
+	writeScript(t, dir, "second.lua", `-- Deliberately does not define onpulse.
+`)
+	writeScript(t, dir, "counter.lua", `persistent_counter = (persistent_counter or 0) + 1
+function oncmd() return TRUE end
+`)
+
+	engine := NewEngine(dir, nil)
+	defer engine.Close()
+	bridge := newRecordingBridge()
+	ctx := luaMudlogContext(bridge)
+
+	if _, err := engine.RunScript(ctx, "first.lua", "onpulse"); err != nil {
+		t.Fatalf("run first.lua: %v", err)
+	}
+	if _, err := engine.RunScript(ctx, "second.lua", "onpulse"); err != nil {
+		t.Fatalf("run second.lua: %v", err)
+	}
+	if got := engine.LState().GetGlobal("reused_function_calls"); got != lua.LNumber(2) {
+		t.Fatalf("second script did not call first script's onpulse: calls=%v, want 2", got)
+	}
+	if logs := fileLogs(bridge); len(logs) != 0 {
+		t.Fatalf("successful stale-trigger call emitted mudlog: %+v", logs)
+	}
+
+	for run := 1; run <= 2; run++ {
+		if _, err := engine.RunScript(ctx, "counter.lua", "oncmd"); err != nil {
+			t.Fatalf("counter.lua run %d: %v", run, err)
+		}
+		if got := engine.LState().GetGlobal("persistent_counter"); got != lua.LNumber(run) {
+			t.Fatalf("counter.lua run %d: persistent_counter=%v, want %d", run, got, run)
 		}
 	}
 }

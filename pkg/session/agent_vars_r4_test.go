@@ -227,6 +227,13 @@ func TestInstanceIDsStableAcrossDeaths(t *testing.T) {
 	// Kill one mob; the survivor's InstanceID must be unchanged.
 	m1.SetAlive(false)
 	w.ExtractMob(m1)
+	// C extract_char() only marks the mob; the heartbeat removes it
+	// (handler.c:1194-1209; comm.c:805). Its room entry remains until then.
+	pending := s.buildRoomMobs()
+	if len(pending) != 2 {
+		t.Fatalf("pending extraction: %d mobs, want both room entries until heartbeat", len(pending))
+	}
+	w.ExtractPendingChars()
 
 	after := s.buildRoomMobs()
 	if len(after) != 1 {

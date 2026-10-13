@@ -709,8 +709,8 @@ func (s *Spawner) RegisterObjectInstance(obj *ObjectInstance) {
 	s.objInstances[obj.Prototype.VNum] = append(s.objInstances[obj.Prototype.VNum], obj)
 }
 
-// RemoveMobInstance decrements the spawner's instance count for a dead mob,
-// allowing it to respawn on the next zone reset.
+// RemoveMobInstance drops the spawner's private room/count references for a
+// mob that reached final extraction, allowing it to respawn on zone reset.
 func (s *Spawner) RemoveMobInstance(mobVNum int, mob *MobInstance) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

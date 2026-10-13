@@ -113,6 +113,57 @@ func TestMobileActivitySoundDrawPrecedesAggressiveDraw(t *testing.T) {
 	assertMobactDraws(t, draws, []mobactDrawRange{{0, 18}, {0, 15}, {0, 3}})
 }
 
+type extractionPulseRecorder struct {
+	world *World
+	mob   *MobInstance
+	calls []string
+}
+
+func (r *extractionPulseRecorder) ForgetFailures() {}
+
+func (r *extractionPulseRecorder) RunScript(_ *ScriptContext, _ string, trigger string) (bool, error) {
+	r.calls = append(r.calls, trigger)
+	if trigger == "onpulse_all" {
+		r.world.ExtractMob(r.mob)
+	}
+	return false, nil
+}
+
+func TestMobileActivityCheckDeadStopsAfterPendingExtchar(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Pulse room"}},
+		Mobs: []parser.Mob{{
+			VNum: 9402, Keywords: "pulse guard", ShortDesc: "a pulse guard",
+			ScriptName: "pulse.lua", LuaFunctions: 64 | 128, // MS_ONPULSE_ALL | MS_ONPULSE_PC.
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.StopAITicker()
+	t.Cleanup(w.StopAITicker)
+	mob, err := w.SpawnMobQuiet(9402, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.AddPlayer(NewPlayer(1, "PulseObserver", 1001)); err != nil {
+		t.Fatal(err)
+	}
+	recorder := &extractionPulseRecorder{world: w, mob: mob}
+	previous := ScriptEngine
+	ScriptEngine = recorder
+	t.Cleanup(func() { ScriptEngine = previous })
+
+	w.mobileActivityForMob(mob)
+	if len(recorder.calls) != 1 || recorder.calls[0] != "onpulse_all" {
+		t.Fatalf("pulse script calls = %v, want only onpulse_all after check_dead", recorder.calls)
+	}
+	if _, ok := w.GetMobByID(mob.GetID()); !ok {
+		t.Fatal("check_dead extraction removed mob before the pending pass")
+	}
+	w.ExtractPendingChars()
+}
+
 func TestMobileActivityEmptyScavengerRoomSkipsScavengeDraw(t *testing.T) {
 	w := newMobactDrawTestWorld()
 	mob := newMobactDrawTestMob("scavenger", "sentinel")
