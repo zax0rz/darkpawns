@@ -228,6 +228,7 @@ func (s *Session) finishFileEditStart(state *textEditState) {
 	game.Act(s.manager.world, true, s.player, nil, nil, nil,
 		"$n begins editing a scroll.", "", game.ToRoom)
 	s.player.SetPlrFlag(game.PlrWriting, true)
+	s.markConEditorState(true)
 }
 
 func (s *Session) sendTextEditor(text string) {
@@ -394,6 +395,7 @@ func (s *Session) finishTextEditLocked(action textEditAction) {
 	// tedit_string_cleanup calls cleanup_olc after its own save/abort output;
 	// cleanup_olc emits this second room-visible transition for both paths.
 	s.textEdit = nil
+	s.markConEditorState(false)
 	if s.olcActor() != nil {
 		s.player.SetPlrFlag(game.PlrWriting, false)
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,
@@ -421,6 +423,7 @@ func (s *Session) cancelTextEdit() {
 	// disk. The buffer has already been committed after each input line/action;
 	// do not write this descriptor's stale snapshot back over another editor.
 	s.textEdit = nil
+	s.markConEditorState(false)
 	if s.olcActor() != nil {
 		s.player.SetPlrFlag(game.PlrWriting, false)
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,

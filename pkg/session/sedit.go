@@ -270,6 +270,7 @@ func (s *Session) finishSeditLocked(save bool) {
 		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n stops using OLC.", "", game.ToRoom)
 	}
 	s.sedit = nil
+	s.markConEditorState(false)
 	s.manager.releaseShopEdit(state.number, s)
 }
 

@@ -176,6 +176,7 @@ func (s *Session) startRedit(number int, zone *parser.Zone) error {
 
 	s.textEditMu.Lock()
 	s.roomEdit = state
+	s.markConEditorState(true)
 	s.reditDisplayMainLocked()
 	s.flushReditOutputLocked()
 	s.textEditMu.Unlock()
@@ -257,6 +258,7 @@ func (s *Session) cancelRoomEdit() {
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,
 			"$n stops using OLC.", "", game.ToRoom)
 	}
+	s.markConEditorState(false)
 }
 
 func (s *Session) finishReditLocked(save bool) {
@@ -320,6 +322,7 @@ func (s *Session) finishReditLocked(save bool) {
 	s.manager.releaseRoomEdit(state.number, s)
 	s.textEdit = nil
 	s.roomEdit = nil
+	s.markConEditorState(false)
 	if s.olcActor() != nil {
 		s.player.SetPlrFlag(game.PlrWriting, false)
 		game.Act(s.manager.world, true, s.player, nil, nil, nil,

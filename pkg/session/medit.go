@@ -230,6 +230,7 @@ func (s *Session) finishMeditLocked(mode cleanupMeditMode) {
 			s.meditActLocked(game.ToRoom, "$n stops using OLC.")
 		}
 		s.mobEdit = nil
+		s.markConEditorState(false)
 	}
 	if s.manager != nil {
 		s.manager.releaseMobEdit(number, s)
@@ -264,6 +265,9 @@ func (s *Session) meditSendLocked(text string) {
 func (s *Session) setPlayerWritingLocked(writing bool) {
 	if s.player != nil {
 		s.player.SetPlrFlag(game.PlrWriting, writing)
+	}
+	if writing {
+		s.markConEditorState(true)
 	}
 }
 

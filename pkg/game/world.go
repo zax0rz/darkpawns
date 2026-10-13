@@ -58,6 +58,13 @@ type World struct {
 	// OccupiedZoneRooms snapshots playing descriptors, not retained bodies.
 	// Installed before heartbeat starts; called without World.mu.
 	OccupiedZoneRooms func() []int
+	// PlayerHasPlayingDescriptor reports whether a world player is attached to
+	// a live CON_PLAYING descriptor. The session manager installs it at startup;
+	// nil keeps standalone game-layer fixtures independent of transport state.
+	PlayerHasPlayingDescriptor func(*Player) bool
+	// PlayerHasDescriptor distinguishes a retained linkless body from a player
+	// whose live descriptor is in a menu, creation prompt, or editor state.
+	PlayerHasDescriptor func(*Player) bool
 
 	mu sync.RWMutex
 
@@ -701,6 +708,37 @@ func (w *World) GetAllPlayers() []*Player {
 		result = append(result, p)
 	}
 	return result
+}
+
+// playingPlayers snapshots world players whose active descriptors are in
+// CON_PLAYING. Take the world snapshot before consulting the session layer so
+// callers never nest World.mu and Manager.mu.
+func (w *World) playingPlayers() []*Player {
+	players := w.GetAllPlayers()
+	if w.PlayerHasPlayingDescriptor == nil {
+		return players
+	}
+	playing := make([]*Player, 0, len(players))
+	for _, player := range players {
+		if w.PlayerHasPlayingDescriptor(player) {
+			playing = append(playing, player)
+		}
+	}
+	return playing
+}
+
+func (w *World) playerHasPlayingDescriptor(player *Player) bool {
+	if player == nil {
+		return false
+	}
+	return w.PlayerHasPlayingDescriptor == nil || w.PlayerHasPlayingDescriptor(player)
+}
+
+func (w *World) playerHasDescriptor(player *Player) bool {
+	if player == nil {
+		return false
+	}
+	return w.PlayerHasDescriptor == nil || w.PlayerHasDescriptor(player)
 }
 
 // GetHelpFileCount returns the number of loaded help entries.
