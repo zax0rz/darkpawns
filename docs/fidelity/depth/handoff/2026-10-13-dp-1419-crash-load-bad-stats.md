@@ -82,7 +82,7 @@ A -10 DEX item in an early slot followed by three more worn items costs
   replay walks the record's restored worn items and treats the file's existence
   as the gate, which holds because every C object-save boundary writes both.
 
-### Defined vs undefined at NOWHERE
+### Defined behaviour at NOWHERE, and what the port does not do
 
 * **`act()` at NOWHERE is guarded, not an out-of-bounds read.**
   `src/comm.c:2519-2526` checks `ch->in_room != NOWHERE` before reading
@@ -93,24 +93,28 @@ A -10 DEX item in an early slot followed by three more worn items costs
   NOWHERE hold makes the two agree. `src/fight.c:1337` (`ROOM_FLAGGED`) is
   short-circuited by `ch != victim` for self-damage, and the room loop at
   `:1425` is inside `if (victim != ch)`; neither is reached.
-* **The lethal sub-case is the real blocked one.** A zero-DEX replay that takes
-  HP to <= 0 runs C's `damage()` death path at NOWHERE: `death_cry`
-  (`src/fight.c:507-514`) explicitly `char_to_room(ch, 0)` — world index 0 — and
-  a corpse is made there. The port does not reproduce that branch; the guard
-  test only proves the replay survives it without moving the character. Row
-  `equipment.saved-zero-stats-lethal` is `blocked`; **Zach's ruling needed**.
-* **Finding, not fixed: the DEX arm's skill_message bytes.** `TYPE_SUFFERING`
-  is `399` and `IS_WEAPON` is `[TYPE_HIT, TYPE_SUFFERING)`, so `damage()` routes
-  the self-damage through `skill_message` (`src/fight.c:1534-1535`).
-  `lib/misc/messages:868-882` gives set 399 a hit message whose victim line
-  ("You lie on the ground suffering from your terrible wounds...", or the
-  bleeding variant — the set has two records, so `dice(1,2)` picks one) goes to
-  the character with `TO_VICT`. C therefore sends those bytes at entry; Go's
-  combat delivery (`Manager.combatSession` → `attachedBodyLocked`) requires a
-  registered session that is neither `menuActive` nor `charCreating`, so at
-  entry they are dropped. Closing that gap means a design decision about
-  pre-registration combat delivery; it is outside this round's scope and is
-  named in the PR for Zach.
+* **The lethal sub-case is defined but unported — not R1a.** A zero-DEX replay
+  that takes HP to <= 0 runs C's `damage()` death path at NOWHERE, and
+  `death_cry` handles that explicitly: `src/fight.c:510-515` logs
+  `death_cry() in fight.c called with ch->in_room = NOWHERE`, calls
+  `char_to_room(ch, 0)` — world index 0 — and returns, so a corpse is made in
+  room index 0. The port does not reproduce that branch; the guard test only
+  proves the replay survives it without moving the character. Row
+  `equipment.saved-zero-stats-lethal` stays `blocked`; **Zach's ruling needed**.
+* **The DEX arm's skill_message victim line is defined and dropped: row
+  `equipment.saved-zero-stats-dex-suffering-message` (`blocked`).**
+  `TYPE_SUFFERING` is `399` and `IS_WEAPON` is `[TYPE_HIT, TYPE_SUFFERING)`, so
+  `damage()` routes the self-damage through `skill_message`
+  (`src/fight.c:1534-1535`). `lib/misc/messages:868-882` gives set 399 a hit
+  message whose victim line ("You lie on the ground suffering from your terrible
+  wounds...", or the bleeding variant — the set has two records, so `dice(1,2)`
+  picks one) goes to the character with `TO_VICT`. C therefore sends those bytes
+  at every DEX firing at entry; Go's combat delivery (`Manager.combatSession` →
+  `attachedBodyLocked`) requires a registered session that is neither
+  `menuActive` nor `charCreating`, so at entry they are dropped. The parent row
+  `equipment.saved-zero-stats` excludes this line from its claim. Closing the gap
+  means a design decision about pre-registration combat delivery; it is outside
+  this round's scope and is named in the PR for Zach.
 
 ### Not in scope (checked, reported)
 
@@ -137,5 +141,6 @@ left alone.
   single-check mutation is the one that proves the per-equip replay: it prints
   one line and leaves HP 160 instead of 40.
 * Depth rows: `docs/fidelity/depth/combat-entry.tsv`
-  (`equipment.saved-zero-stats` and four siblings, one `blocked`).
+  (`equipment.saved-zero-stats` and five siblings, two of them `blocked`:
+  `…-lethal` and `…-dex-suffering-message`).
 
