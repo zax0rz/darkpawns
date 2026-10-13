@@ -408,7 +408,8 @@ func wiznetSessions(m *Manager) []*Session {
 }
 
 func wiznetRecipientEligible(sess *Session, level int, noChosen bool) bool {
-	if sess == nil || !sess.authenticated || sess.player == nil || !sess.hasTransport() {
+	// !d->connected (act.wizard.c:2010): a god at the menu hears nothing.
+	if sess == nil || !sess.IsPlaying() || sess.player == nil || !sess.hasTransport() {
 		return false
 	}
 	if sess.player.GetLevel() < level && (noChosen || !sess.player.HasPLRFlag(game.PlrChosen)) {
@@ -421,46 +422,53 @@ func wiznetRecipientEligible(sess *Session, level int, noChosen bool) bool {
 	return !sess.player.HasPLRFlag(game.PlrMailing) || !sess.player.HasPLRFlag(game.PlrWriting)
 }
 
+// wiznetList is do_wiznet's '@' case (act.wizard.c:1948-1980). Both loops
+// walk playing descriptors (!d->connected), so a linkless god or one at the
+// menu is in neither list. The first lists level-qualified gods without
+// NOWIZ, letting an Implementor see past CAN_SEE; the second lists the gods
+// who set NOWIZ, with no Implementor bypass.
 func wiznetList(s *Session) error {
-	var online, offline strings.Builder
-	anyOnline := false
-	anyOffline := false
-	for _, sess := range wiznetSessions(s.manager) {
-		if sess == nil || !sess.authenticated || sess.player == nil || sess.player.GetLevel() < LVL_IMMORT {
+	var out strings.Builder
+	playing := func(sess *Session) bool {
+		return sess != nil && sess.player != nil && sess.hasTransport() && sess.IsPlaying() &&
+			sess.player.GetLevel() >= LVL_IMMORT
+	}
+	nowiz := func(sess *Session) bool {
+		return sess.player.GetFlags()&(1<<uint(game.PrfNowiz)) != 0
+	}
+	sessions := wiznetSessions(s.manager)
+	any := false
+	for _, sess := range sessions {
+		if !playing(sess) || nowiz(sess) ||
+			(!game.CanSee(s.player, sess.player) && s.player.GetLevel() != LVL_IMPL) {
 			continue
 		}
-		if sess.player.GetFlags()&(1<<uint(game.PrfNowiz)) != 0 {
-			continue
+		if !any {
+			out.WriteString("Gods online:\r\n")
+			any = true
 		}
-		if s.player.GetLevel() != LVL_IMPL && !game.CanSee(s.player, sess.player) {
-			continue
-		}
-		if sess.hasTransport() {
-			if !anyOnline {
-				online.WriteString("Gods online:\r\n")
-				anyOnline = true
-			}
-			fmt.Fprintf(&online, "  %s", sess.player.GetName())
-			if sess.player.HasPLRFlag(game.PlrWriting) {
-				online.WriteString(" (Writing)\r\n")
-			} else if sess.player.HasPLRFlag(game.PlrMailing) {
-				online.WriteString(" (Writing mail)\r\n")
-			} else {
-				online.WriteString("\r\n")
-			}
+		fmt.Fprintf(&out, "  %s", sess.player.GetName())
+		if sess.player.HasPLRFlag(game.PlrWriting) {
+			out.WriteString(" (Writing)\r\n")
+		} else if sess.player.HasPLRFlag(game.PlrMailing) {
+			out.WriteString(" (Writing mail)\r\n")
 		} else {
-			if !anyOffline {
-				offline.WriteString("Gods offline:\r\n")
-				anyOffline = true
-			}
-			fmt.Fprintf(&offline, "  %s\r\n", sess.player.GetName())
+			out.WriteString("\r\n")
 		}
 	}
-	if anyOnline {
-		s.Send(online.String())
+	any = false
+	for _, sess := range sessions {
+		if !playing(sess) || !nowiz(sess) || !game.CanSee(s.player, sess.player) {
+			continue
+		}
+		if !any {
+			out.WriteString("Gods offline:\r\n")
+			any = true
+		}
+		fmt.Fprintf(&out, "  %s\r\n", sess.player.GetName())
 	}
-	if anyOffline {
-		s.Send(offline.String())
+	if out.Len() > 0 {
+		s.Send(out.String())
 	}
 	return nil
 }

@@ -1,0 +1,74 @@
+# C-first vehicle for do_wiznet's '@' listing (act.wizard.c:1948-1980). The
+# Implementor primary advances its peer to immortal, lists the gods online,
+# turns NOWIZ on and lists again: the second listing moves the primary under
+# "Gods offline:". The stale-buf1 branch (no god qualifies for the online
+# loop) is not reached here; see wiznet.gods-list-stale-buffer.
+# depth-case: wiznet.gods-online
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizlistgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizlistgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wizlistpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wizlistpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Wizlistpeer 31
+
+[probe]
+wiznet @
+nowiz
+wiznet @
