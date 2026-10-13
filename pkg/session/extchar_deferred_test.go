@@ -215,3 +215,89 @@ func TestCombatMobSpecialSkipsPendingExtraction(t *testing.T) {
 	}
 	m.world.ExtractPendingChars()
 }
+
+// TestPlayerExtcharDropsPossessionsAndReturnsToMenuAtHeartbeat proves
+// lua_extchar on a player (scripts.c:480-494): extract_char only flags them
+// (handler.c:1194-1209), and the next extract_pending_chars drops what they
+// carry then wear onto the floor, saves them and sends the menu
+// (handler.c:1131-1175).
+func TestPlayerExtcharDropsPossessionsAndReturnsToMenuAtHeartbeat(t *testing.T) {
+	obj := func(vnum int, short string) parser.Obj {
+		return parser.Obj{
+			VNum: vnum, Keywords: "token", ShortDesc: short,
+			WearFlags: [4]int{(1 << 0) | (1 << 13)}, // TAKE + WEAR_HOLD
+		}
+	}
+	m := newTestManager(t, mustWorld(t, &parser.World{
+		// A preceding room gives 1001 rnum 1: run_script writes ch back only
+		// when ch->in_room > 0 (scripts.c:1805), so the flag gate is what
+		// keeps the script's gold change from landing.
+		Rooms: []parser.Room{{VNum: 1000, Name: "Rnum zero", Zone: 1}, {VNum: 1001, Name: "Extchar room", Zone: 1}},
+		Objs:  []parser.Obj{obj(7001, "a worn token"), obj(7002, "a carried token")},
+	}), nil)
+	w := m.world
+	victim := makeTestSession(t, m, "Scriptvictim", 1001, true)
+	victim.player = game.NewPlayer(2, "Scriptvictim", 1001)
+	registerTestSession(t, m, victim, "Scriptvictim")
+	victim.player.SetGold(17)
+
+	worn, err := w.SpawnObject(7001, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := victim.player.Equipment.Equip(worn, victim.player.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	carried, err := w.SpawnObject(7002, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.MoveObjectToPlayerInventory(carried, victim.player); err != nil {
+		t.Fatal(err)
+	}
+
+	dir := t.TempDir()
+	script := `function oncmd()
+  ch.gold = 4242
+  extchar(ch)
+  return true
+end
+`
+	if err := os.MkdirAll(filepath.Join(dir, "room"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "room", "extchar_pc.lua"), []byte(script), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	engine := scripting.NewEngine(dir, game.NewWorldScriptableAdapter(w))
+	defer engine.Close()
+	ref := scripting.CharRef{ID: victim.player.ID}
+	if _, err := engine.RunScript(&scripting.ScriptContext{ChRef: &ref, OwnerType: "room", RoomVNum: 1001}, "extchar_pc.lua", "oncmd"); err != nil {
+		t.Fatal(err)
+	}
+
+	// Pending window: flagged, still in the world, still holding everything,
+	// and run_script's write-back skips the flagged ch (scripts.c:1985).
+	if got := w.GetPlayerByID(victim.player.ID); got != victim.player {
+		t.Fatal("extchar removed the player before the heartbeat")
+	}
+	if victim.player.GetGold() != 17 {
+		t.Fatalf("Lua write-back changed extracted player gold to %d", victim.player.GetGold())
+	}
+	if len(w.GetItemsInRoom(1001)) != 0 {
+		t.Fatal("extchar dropped possessions before the heartbeat")
+	}
+	if victim.menuActive {
+		t.Fatal("extchar sent the menu before the heartbeat")
+	}
+
+	m.ExtractPendingChars()
+	if !victim.menuActive || victim.menuStage != "menu" {
+		t.Fatalf("heartbeat transition = (%v, %q), want active main menu", victim.menuActive, victim.menuStage)
+	}
+	// Carried list first, then worn slots; obj_to_room prepends each.
+	floor := w.GetItemsInRoom(1001)
+	if len(floor) != 2 || floor[0] != worn || floor[1] != carried {
+		t.Fatalf("floor after extraction = %v, want [worn carried]", floor)
+	}
+}
