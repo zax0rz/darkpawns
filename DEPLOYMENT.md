@@ -15,7 +15,7 @@ A single Go binary (`cmd/server`) that serves three surfaces:
 |---|---|---|
 | HTTP + WebSocket | `:4350` (`-port`) | Web client, `/ws`, `/api/*`, `/openapi.json`, `/admin/*`, `/health`, `/metrics` |
 | Telnet | `:7777` (`-telnet-port`, `0` disables) | Classic MUD access |
-| WHOD | `:7778` (`-whod-port`, default telnet port + 1, `0` disables) | C's separate who-daemon port (`src/whod.c`): one WHO request, then close. Prod sets **7779** (`-telnet-tls-port` is 7778). Plaintext, like C; `SHOW_SITE` is off by default |
+| WHOD | `:7778` (`-whod-port`, default telnet port + 1, `0` disables) | C's separate who-daemon port (`src/whod.c`): one WHO request, then close. Prod sets **7779** (`-telnet-tls-port` is 7778). A derived or explicit WHOD port equal to `-telnet-port` or `-telnet-tls-port` is refused at boot with an error naming both flags. Plaintext, like C; `SHOW_SITE` is off by default |
 | SQLite (embedded) | `lib/data/darkpawns.db` | The game database — one file, no setup, no external services |
 
 It also reads/writes on-disk state: the world/scripts tree (`-world`, `-scripts`) and a
@@ -125,6 +125,13 @@ server exits if the port is requested without a readable certificate. It
 re-reads the files when they change, so a renewal (for example a Let's Encrypt
 certificate the reverse proxy already manages) needs no restart; the server
 user must be able to read them. Only TLS 1.2 and newer are accepted.
+
+Putting the TLS port on telnet+1 collides with the WHOD default (C derives the
+who-daemon port as game port + 1), so the server refuses a WHOD port — derived
+or explicit — that equals `-telnet-port` or `-telnet-tls-port`, logging an
+error that names both flags instead of binding it. `-telnet-port 7777
+-telnet-tls-port 7778` therefore boots with WHOD off; pass `-whod-port 7779`
+(what the official instance does) to run both.
 
 While the TLS port runs, MSSP advertises it (`TLS`, plus `HOSTNAME` from the
 certificate), and Mudlet offers the encrypted port to players who connect in

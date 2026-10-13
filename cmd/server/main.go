@@ -201,6 +201,36 @@ func listenAddr(bind, port string) string {
 	return net.JoinHostPort(bind, port)
 }
 
+// resolveWhodPort applies C's WHOD port rule to the startup flags. C opens the
+// who-daemon one port above the game port (src/whod.c:249, called with the
+// game port at src/comm.c:274), so a -whod-port of -1 derives telnet port + 1
+// and a stock self-host matches C; 0 disables; anything else is explicit. The
+// second return names the flag ("-telnet-port" or "-telnet-tls-port") whose
+// listener already owns the effective port, "" when it is free: WHOD binds
+// before the TLS telnet listener, whose bind failure is fatal, so a collision
+// must refuse WHOD here rather than take the port down with it.
+func resolveWhodPort(whod, telnet, telnetTLS int) (port int, collision string) {
+	port = whod
+	if port < 0 {
+		port = 0
+		if telnet > 0 {
+			port = telnet + 1
+		}
+	}
+	if port == 0 {
+		return port, ""
+	}
+	// port is positive here, so an equality match means that flag's listener
+	// is on and owns the port. TLS is named first: its bind failure is fatal.
+	if port == telnetTLS {
+		return port, "-telnet-tls-port"
+	}
+	if port == telnet {
+		return port, "-telnet-port"
+	}
+	return port, ""
+}
+
 func main() {
 	// Every path has a real default so that `./server`, run from a checkout
 	// root, does something. The world tree is lib/world, not lib/: the parser
@@ -216,7 +246,7 @@ func main() {
 		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
 		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
 		telnetTLS  = flag.Int("telnet-tls-port", 0, "TLS telnet port (0 to disable); needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
-		whodPort   = flag.Int("whod-port", -1, "WHOD listener port (src/whod.c); -1 derives telnet port + 1 (C's rule), 0 disables")
+		whodPort   = flag.Int("whod-port", -1, "WHOD listener port (src/whod.c); -1 derives telnet port + 1 (C's rule), 0 disables; refused if the port equals -telnet-port or -telnet-tls-port")
 		httpBind   = flag.String("http-bind", "", "Interface the HTTP/WebSocket server listens on (all interfaces if empty). Behind a same-host reverse proxy, bind 127.0.0.1 so /ws, /api and /admin are reachable only through the proxy")
 	)
 	flag.Usage = usage
@@ -846,16 +876,20 @@ func main() {
 	// WHOD is C's separate who-daemon port (src/whod.c; init_whod is called
 	// with the game port at src/comm.c:274). C's rule is the game port + 1, so
 	// the flag's -1 default derives it from -telnet-port and a stock self-host
-	// matches C. Prod sets 7779 because 7778 is -telnet-tls-port. Plaintext,
-	// exactly as C.
-	whodListenPort := *whodPort
-	if whodListenPort < 0 {
-		whodListenPort = 0
-		if *telnetPort > 0 {
-			whodListenPort = *telnetPort + 1
-		}
-	}
-	if whodListenPort > 0 {
+	// matches C. That derivation collides with a TLS listener on telnet+1
+	// (prod: 7777/7778) — WHOD binds first and the TLS bind then fails
+	// fatally, which would have crash-looped prod on 2026-10-13 had the deploy
+	// pre-flight not caught it and given the unit an explicit -whod-port 7779
+	// — so an effective port, derived or explicit, that -telnet-port or
+	// -telnet-tls-port already owns turns WHOD off with an error naming both
+	// flags instead of taking the TLS port down. Like C's daemon, plaintext
+	// only.
+	whodListenPort, whodCollision := resolveWhodPort(*whodPort, *telnetPort, *telnetTLS)
+	switch {
+	case whodCollision != "":
+		slog.Error("WHOD disabled: -whod-port collides with "+whodCollision,
+			"port", whodListenPort)
+	case whodListenPort > 0:
 		if err := manager.StartWhodListener(whodListenPort); err != nil {
 			slog.Error("WHOD listener failed", "port", whodListenPort, "error", err)
 		} else {
