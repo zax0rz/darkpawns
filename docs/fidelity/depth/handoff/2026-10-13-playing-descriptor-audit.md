@@ -15,6 +15,16 @@ C defines `CON_PLAYING` as state 0 (`src/structs.h:353-385`). The shared Go pred
 
 The Go-only `[Broadcast]` command in `pkg/session/wiz_system.go:745-782` has no C `ACMD(do_broadcast)` or interpreter registration. C `do_broadcast` is the internal `perform_act` fanout helper in `src/comm.c:2539`, not a player command. Recorded as Go-only under R4; unchanged.
 
+## Broadcast-helper family
+
+| C site / exact gate | Go equivalent / gate | Verdict |
+|---|---|---|
+| `src/comm.c:2342-2350` `send_to_all`: `!connected` | `World.SendToAll`, `Manager.SendToAll`, script global echo: `isConPlaying` | Fixed; playing string writers still receive as in C. |
+| `src/comm.c:2353-2364` `send_to_outdoor`: `!connected && character && AWAKE && OUTSIDE` | `Manager.SendToOutdoor`, script outdoor echo: `isConPlaying && awake && outside` | Fixed; exact recipient bytes tested. |
+| `src/comm.c:2366-2374` `send_to_room`: `character->desc` and position greater than sleeping; no `connected` state gate | Room-character output | Out of scope for this state audit: C tests descriptor presence, not connection state. |
+| `src/comm.c:2376-2387` `send_to_zone`: `!connected && character && AWAKE && different room && same zone` | `World.SendToZone`, mob/script zone helpers: `playingPlayers` plus awake, different-room and zone checks | Fixed; same-room and sleeping controls are asserted. |
+| `src/utils.c:230-240` `mudlog`: `!connected && !PLR_WRITING` | `Manager.EachSession` now supplies `isConPlaying`; `MudLog` retains its PLR_WRITING filter | Fixed; the existing D7 proof did not exercise menu/editor recipients, so this round adds REDIT/TEDIT state cases. |
+
 ## R5e call path and lock check
 
 Telnet `Session.TerminalLine` → `terminalCommand` → `sendClientMessage` → `handleMessage(MsgCommand)` → `handleCommand` → `executeCommandRaw` dispatches without `playerLifecycleMu`; `ExecuteCommand` also enters `executeCommandRaw` directly without that lock. The only `playerLifecycleMu` acquisition on the relevant manager side is registration/reconnect/disconnect lifecycle (`Manager.Register`, `HandleTransportDisconnect`, etc.). Manager callbacks snapshot sessions and release `Manager.mu` before calling `Session.isConPlaying`, which takes a short read lock to inspect state; command dispatch does not hold `Manager.mu` at those call sites. `World.playingPlayers` snapshots/releases `World.mu` before consulting the manager callback. OLC state is an atomic marker because `mudlog` can run while an editor mutex is held.

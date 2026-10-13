@@ -977,7 +977,7 @@ func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *
 		if text == "" {
 			return
 		}
-		for _, p := range w.GetAllPlayers() {
+		for _, p := range w.playingPlayers() {
 			if p.GetPosition() > combat.PosSleeping && w.IsOutside(p.GetRoomVNum()) {
 				p.SendMessage(text)
 			}
@@ -1015,7 +1015,7 @@ func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *
 		}
 		// do_gecho: every other player, then ch.
 		line := text + "\r\n"
-		for _, other := range w.GetAllPlayers() {
+		for _, other := range w.playingPlayers() {
 			if other != p {
 				other.SendMessage(line)
 			}

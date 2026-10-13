@@ -809,15 +809,12 @@ func (w *World) SendToZone(roomVNum int, msg string) {
 	}
 	zone := room.Zone
 
-	// H-07: Acquire read lock before iterating w.players map.
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	w.mu.RUnlock()
+	players := w.playingPlayers()
 
 	for _, p := range players {
+		if p.GetPosition() <= combat.PosSleeping || p.GetRoomVNum() == roomVNum {
+			continue
+		}
 		pr := w.GetRoomInWorld(p.RoomVNum)
 		if pr != nil && pr.Zone == zone {
 			p.SendMessage(msg)
@@ -832,13 +829,7 @@ func (w *World) SendToAll(msg string) {
 		return
 	}
 
-	// H-07: Acquire read lock before iterating w.players map.
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	w.mu.RUnlock()
+	players := w.playingPlayers()
 
 	for _, p := range players {
 		p.SendMessage(msg)

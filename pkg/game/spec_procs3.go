@@ -817,19 +817,7 @@ func (w *World) mobSendToZone(me *MobInstance, message string) {
 	if me == nil {
 		return
 	}
-	room := w.GetRoomInWorld(me.GetRoomVNum())
-	if room == nil {
-		return
-	}
-	for _, player := range w.GetAllPlayers() {
-		if player.GetPosition() <= combat.PosSleeping || player.GetRoom() == me.GetRoomVNum() {
-			continue
-		}
-		playerRoom := w.GetRoomInWorld(player.GetRoom())
-		if playerRoom != nil && playerRoom.Zone == room.Zone {
-			player.SendMessage(message)
-		}
-	}
+	w.SendToZone(me.GetRoomVNum(), message)
 }
 
 // specWerewolf howls and bites when fighting.
