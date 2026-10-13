@@ -192,6 +192,48 @@ func (s *Session) IsPlaying() bool {
 	return s.authenticated && !s.menuActive && !s.charCreating
 }
 
+// isConPlaying matches C's descriptor gate `!d->connected` (CON_PLAYING).
+// Keep this separate from IsPlaying: the telnet idle timeout and descriptor
+// lifecycle use that helper for intentionally different purposes. Editor
+// connection state is separate from PLR_WRITING/PLR_MAILING, which C keeps in
+// CON_PLAYING for note, mail, and live-string input.
+func (s *Session) isConPlaying() bool {
+	if s == nil {
+		return false
+	}
+	if s.manager == nil {
+		return s.isConPlayingLocked()
+	}
+	s.manager.mu.RLock()
+	defer s.manager.mu.RUnlock()
+	return s.isConPlayingLocked()
+}
+
+// isConPlayingLocked matches the C descriptor gate while Manager.mu protects
+// the session's body and login/menu state. Callers that already hold Manager.mu
+// use this form so switch and menu transitions remain race-free.
+func (s *Session) isConPlayingLocked() bool {
+	return s != nil && s.player != nil && s.authenticated && !s.charCreating &&
+		!s.creationSaved && !s.menuActive && !s.conEditorActive.Load() &&
+		!s.superseded.Load() && s.hasTransport() && !s.SendClosed()
+}
+
+// markConEditorState mirrors an already-established OLC/TEDIT connection
+// state for lock-free descriptor fan-out. It does not change command input or
+// editor lifecycle; those remain owned by the editor handlers.
+func (s *Session) markConEditorState(active bool) {
+	if s != nil {
+		s.conEditorActive.Store(active)
+	}
+}
+
+// hasDescriptor reports whether this session still represents a descriptor
+// that C would include in descriptor_list. Linkless retained characters have
+// no descriptor and must not appear in descriptor-list commands such as users.
+func (s *Session) hasDescriptor() bool {
+	return s != nil && !s.superseded.Load() && s.hasTransport()
+}
+
 // IsCharCreating returns whether the session is currently in character creation.
 func (s *Session) IsCharCreating() bool {
 	return s.charCreating

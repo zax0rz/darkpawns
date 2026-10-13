@@ -11,7 +11,7 @@ func (m *Manager) occupiedZoneRooms() []int {
 	var mobs []*game.MobInstance
 	m.mu.RLock()
 	for _, s := range m.sessions {
-		if s.player == nil || !s.authenticated || s.menuActive || s.charCreating || s.superseded.Load() || !s.hasTransport() || s.SendClosed() {
+		if !s.isConPlayingLocked() {
 			continue
 		}
 		if s.isSwitched && s.switchedMob != nil {

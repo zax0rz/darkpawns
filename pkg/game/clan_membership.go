@@ -271,7 +271,7 @@ func (w *World) doClanWho(ch *Player) {
 	ch.SendMessage("\r\nClan members online\r\n" +
 		"-------------------------\r\n")
 
-	for _, p := range w.players {
+	for _, p := range w.playingPlayers() {
 		if p.ClanID == ch.ClanID && p.ClanRank > 0 && chCanSee(ch, p) {
 			rankName := ""
 			if p.ClanRank-1 >= 0 && p.ClanRank-1 < len(c.RankName) {

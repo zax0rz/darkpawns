@@ -58,6 +58,13 @@ type World struct {
 	// OccupiedZoneRooms snapshots playing descriptors, not retained bodies.
 	// Installed before heartbeat starts; called without World.mu.
 	OccupiedZoneRooms func() []int
+	// PlayerHasPlayingDescriptor reports whether a world player is attached to
+	// a live CON_PLAYING descriptor. The session manager installs it at startup;
+	// nil keeps standalone game-layer fixtures independent of transport state.
+	PlayerHasPlayingDescriptor func(*Player) bool
+	// PlayerHasDescriptor distinguishes a retained linkless body from a player
+	// whose live descriptor is in a menu, creation prompt, or editor state.
+	PlayerHasDescriptor func(*Player) bool
 
 	mu sync.RWMutex
 
@@ -703,6 +710,37 @@ func (w *World) GetAllPlayers() []*Player {
 	return result
 }
 
+// playingPlayers snapshots world players whose active descriptors are in
+// CON_PLAYING. Take the world snapshot before consulting the session layer so
+// callers never nest World.mu and Manager.mu.
+func (w *World) playingPlayers() []*Player {
+	players := w.GetAllPlayers()
+	if w.PlayerHasPlayingDescriptor == nil {
+		return players
+	}
+	playing := make([]*Player, 0, len(players))
+	for _, player := range players {
+		if w.PlayerHasPlayingDescriptor(player) {
+			playing = append(playing, player)
+		}
+	}
+	return playing
+}
+
+func (w *World) playerHasPlayingDescriptor(player *Player) bool {
+	if player == nil {
+		return false
+	}
+	return w.PlayerHasPlayingDescriptor == nil || w.PlayerHasPlayingDescriptor(player)
+}
+
+func (w *World) playerHasDescriptor(player *Player) bool {
+	if player == nil {
+		return false
+	}
+	return w.PlayerHasDescriptor == nil || w.PlayerHasDescriptor(player)
+}
+
 // GetHelpFileCount returns the number of loaded help entries.
 func (w *World) GetHelpFileCount() int {
 	w.mu.RLock()
@@ -771,15 +809,12 @@ func (w *World) SendToZone(roomVNum int, msg string) {
 	}
 	zone := room.Zone
 
-	// H-07: Acquire read lock before iterating w.players map.
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	w.mu.RUnlock()
+	players := w.playingPlayers()
 
 	for _, p := range players {
+		if p.GetPosition() <= combat.PosSleeping || p.GetRoomVNum() == roomVNum {
+			continue
+		}
 		pr := w.GetRoomInWorld(p.RoomVNum)
 		if pr != nil && pr.Zone == zone {
 			p.SendMessage(msg)
@@ -794,13 +829,7 @@ func (w *World) SendToAll(msg string) {
 		return
 	}
 
-	// H-07: Acquire read lock before iterating w.players map.
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	w.mu.RUnlock()
+	players := w.playingPlayers()
 
 	for _, p := range players {
 		p.SendMessage(msg)

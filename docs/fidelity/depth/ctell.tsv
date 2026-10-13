@@ -7,3 +7,4 @@ do_ctell	ctell	ctell.immortal-rank-too-high	D1	command	oracle-green	ctell-depth	
 do_ctell	ctell	ctell.immortal-rank-filter	D3	audience	oracle-green	ctell-depth	act.comm.c:1540-1559	A rank-two threshold reaches the same-clan rank-two member; the second clan makes the C rank-count lookup reachable.
 do_ctell	ctell	ctell.immortal-broadcast	D3	audience	oracle-green	ctell-depth	act.comm.c:1528-1559	A normal immortal clan tell emits the C sender line and same-clan recipient line.
 do_ctell	ctell	ctell.norepeat	D2	audience	oracle-green	ctell-depth	act.comm.c:1528-1537	PRF_NOREPEAT replaces the sender echo with C's Okay. while recipients still receive the tell.
+do_ctell	ctell	ctell.con-playing-descriptor	D3	audience	unit-green	TestClanTellOnlyBroadcastsToConPlayingDescriptors	src/act.comm.c:1540-1560	Same-clan playing members receive exact C tell bytes; non-playing and linkless recipients do not.

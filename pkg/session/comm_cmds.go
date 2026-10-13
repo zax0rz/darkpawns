@@ -278,9 +278,13 @@ func cmdPageText(s *Session, argument string) error {
 			return nil
 		}
 		s.manager.mu.RLock()
-		defer s.manager.mu.RUnlock()
+		sessions := make([]*Session, 0, len(s.manager.sessions))
 		for _, target := range s.manager.sessions {
-			if target.player != nil && target.authenticated && target.player.GetPosition() > combat.PosSleeping {
+			sessions = append(sessions, target)
+		}
+		s.manager.mu.RUnlock()
+		for _, target := range sessions {
+			if target.isConPlaying() && target.player.GetPosition() > combat.PosSleeping {
 				target.Send(cActText)
 			}
 		}

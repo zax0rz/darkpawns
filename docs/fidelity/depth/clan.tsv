@@ -49,3 +49,4 @@ do_clan	clan	clan.rename-capitalization	D4	state	oracle-green	clan-rename-depth	
 do_clan	clan	clan.rename-state	D4	state	oracle-green	clan-rename-depth	clan.c:127-153	Renamed clan is resolved and rendered under its exact C name.
 do_clan	clan	clan.rename-empty-name	D1	command	oracle-green	clan-rename-depth	clan.c:127-153	Existing index with no replacement name emits the C prompt.
 do_clan	clan	clan.rename-invalid-number	D1	command	oracle-green	clan-rename-depth	clan.c:127-153	Signed/non-digit number is rejected by C is_number semantics.
+do_clan_who	clan who	clan.who-con-playing-descriptor	D3	audience	unit-green	TestClanWhoOnlyListsConPlayingDescriptors	src/clan.c:562-574	Exact header and rank/name rows include playing and string-writing descriptors and omit menu, creation, OLC, and linkless bodies.

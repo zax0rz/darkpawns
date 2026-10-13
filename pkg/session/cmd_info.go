@@ -500,6 +500,7 @@ func parseUsersArgs(args []string) (usersOptions, bool) {
 		case 'd':
 			opts.deadweight = true
 		case 'l', 'n', 'h', 'c':
+			opts.playing = true
 			if i+1 >= len(args) {
 				return usersOptions{}, false
 			}
@@ -548,10 +549,9 @@ func usersHost(s *Session) string {
 	return "Hostname unknown"
 }
 
-// cmdUsers ports act.informative.c do_users. The Go session map contains only
-// authenticated playing descriptors, so the menu/deadweight branches have no
-// rows to emit; the descriptor number, C host spelling, wall-clock login time,
-// and table layout remain visible exactly as they are in C.
+// cmdUsers ports act.informative.c do_users. Playing and non-playing
+// descriptors are selected by the same -p/-d branches as C; retained
+// linkless characters are absent from descriptor_list and therefore omitted.
 func cmdUsers(s *Session, args []string) error {
 	if !checkLevel(s, LVL_IMMORT) {
 		s.sendText("Huh?!?")
@@ -574,6 +574,7 @@ func cmdUsers(s *Session, args []string) error {
 	for _, sess := range s.manager.sessions {
 		sessions = append(sessions, sess)
 	}
+	s.manager.mu.RUnlock()
 	sort.SliceStable(sessions, func(i, j int) bool {
 		if sessions[i].connectionNumber != sessions[j].connectionNumber {
 			return sessions[i].connectionNumber > sessions[j].connectionNumber
@@ -581,28 +582,33 @@ func cmdUsers(s *Session, args []string) error {
 		return sessions[i].playerName > sessions[j].playerName
 	})
 	for _, sess := range sessions {
-		if sess.player == nil {
+		if sess.player == nil || !sess.hasDescriptor() {
+			continue
+		}
+		playing := sess.isConPlaying()
+		if (opts.playing && !playing) || (opts.deadweight && playing) {
 			continue
 		}
 		player := sess.player
 		level := player.GetLevel()
-		if opts.name != "" && !strings.EqualFold(player.Name, opts.name) {
-			continue
+		if playing {
+			if opts.name != "" && !strings.EqualFold(player.Name, opts.name) {
+				continue
+			}
+			if opts.host != "" && !strings.Contains(usersHost(sess), opts.host) {
+				continue
+			}
+			if level < opts.low || level > opts.high {
+				continue
+			}
+			if opts.classMask != 0 && opts.classMask&(1<<uint(player.GetClass())) == 0 {
+				continue
+			}
+			if s.player.GetInvisLevel() > s.player.GetLevel() {
+				continue
+			}
 		}
-		if opts.host != "" && !strings.Contains(usersHost(sess), opts.host) {
-			continue
-		}
-		if level < opts.low || level > opts.high {
-			continue
-		}
-		if opts.classMask != 0 && opts.classMask&(1<<uint(player.GetClass())) == 0 {
-			continue
-		}
-		if !game.CanSee(s.player, player) || s.player.GetInvisLevel() > s.player.GetLevel() {
-			continue
-		}
-		if opts.deadweight {
-			// There are no non-playing descriptors in Manager.sessions.
+		if playing && !game.CanSee(s.player, player) {
 			continue
 		}
 		classAbbr := "--"
@@ -610,23 +616,75 @@ func cmdUsers(s *Session, args []string) error {
 			classAbbr = game.ClassAbbrevs[class]
 		}
 		idle := ""
-		if player.GetLevel() < s.player.GetLevel() || s.player.GetLevel() == game.LVL_IMPL {
+		classCell := "   -   "
+		if playing {
+			classCell = fmt.Sprintf("[%2d %s]", level, classAbbr)
+		}
+		if playing && (player.GetLevel() < s.player.GetLevel() || s.player.GetLevel() == game.LVL_IMPL) {
 			idle = fmt.Sprintf("%3d", player.GetIdleTimer()*game.SECS_PER_MUD_HOUR/60)
 		}
 		loginAt := sess.connectedAt.Format("15:04:05")
-		state := "Playing"
-		if sess.isSwitched {
-			state = "Switched"
-		}
-		fmt.Fprintf(&buf, "%3d [%-2d %s] %-12s %-14s %-3s %-8s [%s]\r\n",
-			sess.connectionNumber, level, classAbbr, player.Name, state, idle, loginAt, usersHost(sess))
+		state := usersDescriptorState(sess)
+		fmt.Fprintf(&buf, "%3d %-7s %-12s %-14s %-3s %-8s [%s]\r\n",
+			sess.connectionNumber, classCell, player.Name, state, idle, loginAt, usersHost(sess))
 		count++
 	}
-	s.manager.mu.RUnlock()
 
 	fmt.Fprintf(&buf, "\r\n%d visible sockets connected.\r\n", count)
 	s.sendText(buf.String())
 	return nil
+}
+
+func usersDescriptorState(sess *Session) string {
+	if sess.SendClosed() {
+		return "Disconnecting"
+	}
+	if sess.isConPlaying() {
+		if sess.isSwitched {
+			return "Switched"
+		}
+		return "Playing"
+	}
+	if sess.isObjEditing() {
+		return "Object edit"
+	}
+	if sess.isRoomEditing() {
+		return "Room edit"
+	}
+	if sess.isZoneEditing() {
+		return "Zone edit"
+	}
+	if sess.isMobEditing() {
+		return "Mobile edit"
+	}
+	if sess.isSeditEditing() {
+		return "Shop edit"
+	}
+	if editing, playing := sess.editorPromptState(); editing && !playing {
+		return "Text edit"
+	}
+	if sess.charCreating {
+		states := map[string]string{ // #nosec G101 -- not credentials; C connected_types state labels (act.informative.c do_users)
+			"get_name": "Get name", "confirm_name": "Confirm name", "login_password": "Get password",
+			"create_password": "Get new PW", "confirm_password": "Confirm new PW", "sex": "Select sex",
+			"class": "Select class", "race": "Asking race", "color": "Asking color",
+			"hometown": "Getting hometown", "stats_roll": "Rolling abilities 1",
+		}
+		if state := states[sess.charStage]; state != "" {
+			return state
+		}
+	}
+	if sess.menuActive {
+		states := map[string]string{ // #nosec G101 -- not credentials; C connected_types state labels (act.informative.c do_users)
+			"motd": "Reading MOTD", "menu": "Main Menu", "description": "Get descript.",
+			"background": "Get descript.", "password_old": "Changing PW 1", "password_new": "Changing PW 2",
+			"password_confirm": "Changing PW 3", "delete_confirm": "Self-Delete 1", "delete_password": "Self-Delete 2",
+		}
+		if state := states[sess.menuStage]; state != "" {
+			return state
+		}
+	}
+	return "Disconnecting"
 }
 
 const (
@@ -1022,7 +1080,7 @@ func cmdWhere(s *Session, args []string) error {
 	out.WriteString("Players\n-------\n")
 	found := false
 	for _, sess := range sessions {
-		if sess.player == nil {
+		if sess.player == nil || !sess.isConPlaying() {
 			continue
 		}
 		p := sess.player

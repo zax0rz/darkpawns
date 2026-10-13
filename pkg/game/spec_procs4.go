@@ -675,14 +675,7 @@ func (w *World) sendToZoneExceptRoom(roomVNum int, msg string) {
 	}
 	zone := room.Zone
 
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	w.mu.RUnlock()
-
-	for _, p := range players {
+	for _, p := range w.playingPlayers() {
 		if p == nil || p.GetPosition() <= combat.PosSleeping || p.GetRoomVNum() == roomVNum {
 			continue
 		}

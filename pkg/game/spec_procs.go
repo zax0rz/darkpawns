@@ -285,6 +285,9 @@ func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	var vict *Player
 	for _, memName := range me.GetMemory() {
 		if p, ok := w.players[memName]; ok {
+			if !w.playerHasPlayingDescriptor(p) {
+				continue
+			}
 			vict = p
 			break
 		}
@@ -292,6 +295,9 @@ func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if vict == nil {
 		for _, p := range w.GetPlayersInRoom(me.GetRoom()) {
 			if !p.IsNPC() {
+				if !w.playerHasPlayingDescriptor(p) {
+					continue
+				}
 				for _, memName := range me.GetMemory() {
 					if memName == p.Name {
 						vict = p

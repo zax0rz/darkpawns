@@ -321,6 +321,7 @@ func (s *Session) finishOeditLocked() {
 	}
 	s.oedit = nil
 	s.textEdit = nil
+	s.markConEditorState(false)
 	if s.manager != nil {
 		s.manager.releaseObjEdit(number, s)
 	}

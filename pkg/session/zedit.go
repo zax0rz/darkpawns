@@ -213,6 +213,7 @@ func (s *Session) finishZeditLocked(save bool) {
 		game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n stops using OLC.", "", game.ToRoom)
 	}
 	s.zedit = nil
+	s.markConEditorState(false)
 	if s.manager != nil {
 		s.manager.releaseZoneEdit(state.roomVNum, s)
 	}

@@ -707,7 +707,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	}
 
 	cb.HealAllPlayers = func() {
-		for _, p := range w.AllPlayers() {
+		for _, p := range w.playingPlayers() {
 			p.SetHP(p.GetMaxHP())
 		}
 	}

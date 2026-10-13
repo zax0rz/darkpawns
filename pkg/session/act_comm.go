@@ -115,8 +115,16 @@ func qcommEmptyMsg(cmd string) string {
 func broadcastQuest(s *Session, selfMsg, otherMsg string) {
 	s.Send(selfMsg)
 	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
+		sessions = append(sessions, sess)
+	}
+	s.manager.mu.RUnlock()
+	for _, sess := range sessions {
 		if sess.player == nil || sess == s {
+			continue
+		}
+		if !sess.isConPlaying() {
 			continue
 		}
 		flags := sess.player.GetFlags()
@@ -125,7 +133,6 @@ func broadcastQuest(s *Session, selfMsg, otherMsg string) {
 		}
 		sess.Send(otherMsg)
 	}
-	s.manager.mu.RUnlock()
 }
 
 // ---------------------------------------------------------------------------

@@ -293,6 +293,8 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		nextEphemeralPlayerID: 1,
 	}
 	world.OccupiedZoneRooms = m.occupiedZoneRooms
+	world.PlayerHasPlayingDescriptor = m.playerHasPlayingDescriptor
+	world.PlayerHasDescriptor = m.playerHasDescriptor
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
 	// db.GameStore interface is itself non-nil. Normalize it to a real nil so
 	// the no-database path below is taken instead of dereferencing nil. (DP-589)
@@ -1741,18 +1743,57 @@ func (m *Manager) EachSession(fn func(player interface{}, send func(msg string))
 		if attached, involved := m.switchDescriptor(p); involved && attached != s {
 			continue
 		}
-		if p == nil {
-			continue
-		}
-		// !d->connected: only a character in the game, not one at the
-		// MOTD, menu or character creation. Session state only: mudlog is
-		// called with the world lock held (hcontrol pay), so this must not
-		// take it.
-		if s.charCreating || s.creationSaved || s.menuActive {
+		if p == nil || !s.isConPlaying() {
 			continue
 		}
 		fn(p, p.SendMessage)
 	}
+}
+
+// playerHasPlayingDescriptor is the game-layer view of a live descriptor.
+// It snapshots the matching session under Manager.mu, then evaluates editor
+// and transport state after releasing the manager lock.
+func (m *Manager) playerHasPlayingDescriptor(player *game.Player) bool {
+	if player == nil {
+		return false
+	}
+	m.mu.RLock()
+	candidates := make([]*Session, 0, 1)
+	for _, sess := range m.sessions {
+		if sess != nil && sess.player == player {
+			candidates = append(candidates, sess)
+		}
+	}
+	m.mu.RUnlock()
+	for _, candidate := range candidates {
+		if candidate.isConPlaying() {
+			return true
+		}
+	}
+	return false
+}
+
+// playerHasDescriptor reports whether any registered session for this player
+// still owns a transport. Unlike playerHasPlayingDescriptor, menu and editor
+// states still count because C's linkless checks test character->desc.
+func (m *Manager) playerHasDescriptor(player *game.Player) bool {
+	if player == nil {
+		return false
+	}
+	m.mu.RLock()
+	candidates := make([]*Session, 0, 1)
+	for _, sess := range m.sessions {
+		if sess != nil && sess.player == player {
+			candidates = append(candidates, sess)
+		}
+	}
+	m.mu.RUnlock()
+	for _, candidate := range candidates {
+		if candidate.hasDescriptor() {
+			return true
+		}
+	}
+	return false
 }
 
 // autosaveTime is C's autosave_time (config.c:125): ten minutes between
@@ -2094,6 +2135,9 @@ type Session struct {
 	// (performDupeCheck). Its transport teardown then leaves the character
 	// and the name's registration to the new session.
 	superseded atomic.Bool
+	// conEditorActive mirrors the descriptor's non-playing OLC/TEDIT state.
+	// It is atomic because fan-out may be called while textEditMu is held.
+	conEditorActive atomic.Bool
 	// inputBusy is set while this session runs one of its own input lines
 	// (TerminalLine). The end-of-pass prompt sweep skips it (DP-1307).
 	inputBusy atomic.Bool

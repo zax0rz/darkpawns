@@ -155,10 +155,14 @@ func (m *Manager) sendToPlaying(message, eventType, label string, eligible func(
 	}
 
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-
+	sessions := make([]*Session, 0, len(m.sessions))
 	for _, s := range m.sessions {
-		if s.player == nil || !s.authenticated {
+		sessions = append(sessions, s)
+	}
+	m.mu.RUnlock()
+
+	for _, s := range sessions {
+		if !s.isConPlaying() {
 			continue
 		}
 		if eligible != nil && !eligible(s) {

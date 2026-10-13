@@ -193,7 +193,7 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 	}
 
 	senderRoom := w.GetRoomInWorld(ch.GetRoom())
-	for _, target := range w.GetAllPlayers() {
+	for _, target := range w.playingPlayers() {
 		if target == ch {
 			continue
 		}
@@ -248,7 +248,7 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 	// act("$n gossips, '%s'", ..., TO_VICT) capitalizes the line (act.comm.c:1273, 1293).
 	spec := communicationChannels["gossip"]
 	message := capitalize(fmt.Sprintf("%s gossips, '%s'\r\n", mobName(me), argument))
-	for _, player := range w.GetAllPlayers() {
+	for _, player := range w.playingPlayers() {
 		if player.GetFlags()&(1<<uint(PrfNoGossip)) != 0 ||
 			player.GetFlags()&(1<<uint(PlrWriting)) != 0 ||
 			w.communicationRoomSoundproof(player.GetRoom()) {
@@ -339,7 +339,7 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 		w.mirrorChannelLine(ch, "clan", ch.Name, echo)
 	}
 
-	for _, p := range w.AllPlayers() {
+	for _, p := range w.playingPlayers() {
 		if p == ch || p.ClanID != clanNumber || p.ClanRank < minLevel {
 			continue
 		}
