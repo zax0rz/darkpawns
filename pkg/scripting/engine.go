@@ -269,34 +269,6 @@ func (e *Engine) Close() {
 	})
 }
 
-// cleanupScriptGlobalsLocked removes any global keys introduced during script execution
-// that were not present in knownGlobals. This prevents script-defined functions, variables,
-// and tables from leaking between RunScript calls. Caller must hold e.mu.
-func (e *Engine) cleanupScriptGlobalsLocked(L *lua.LState, knownGlobals map[string]struct{}) {
-	gt := L.Get(lua.GlobalsIndex)
-	if tbl, ok := gt.(*lua.LTable); ok {
-		var cleanupKeys []string
-		tbl.ForEach(func(key, _ lua.LValue) {
-			if k, ok := key.(lua.LString); ok {
-				sk := string(k)
-				if _, found := knownGlobals[sk]; !found {
-					// Keep per-run context globals set by this RunScript — they
-					// will be cleared at the top of the next run anyway.
-					// Also keep globals prefixed with "test_" for integration tests
-					// that check script results via GetGlobal after RunScript returns.
-					if sk != "ch" && sk != "me" && sk != "obj" && sk != "argument" && sk != "room" &&
-						!strings.HasPrefix(sk, "test_") {
-						cleanupKeys = append(cleanupKeys, sk)
-					}
-				}
-			}
-		})
-		for _, k := range cleanupKeys {
-			L.SetGlobal(k, lua.LNil)
-		}
-	}
-}
-
 // resolveScriptPath looks for a script file in scriptsDir, then in known
 // subdirectories (mob/, room/, obj/). Matches C's SCRIPT_DIR/type/script_name
 // pattern from scripts.c:1775.
@@ -491,19 +463,17 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			bridge = b
 		}
 	}
-	// Clear any per-run globals left over from a previous script execution so
-	// stale context and trigger functions cannot leak into this run. C's
-	// run_script sets ch, me, room, obj and argument only when it has them
-	// and never clears them, so a bridged run leaves them alone.
-	clearGlobals := []string{"ch", "me", "obj", "argument", "room"}
-	if bridge != nil {
-		clearGlobals = nil
-	}
-	if triggerName != "" {
-		clearGlobals = append(clearGlobals, triggerName)
-	}
-	for _, name := range clearGlobals {
-		L.SetGlobal(name, lua.LNil)
+	// Every production run uses the bridge. C leaves all Lua globals in its
+	// shared state, including context and trigger globals it does not replace
+	// for this run. The non-bridged path is only used by legacy engine tests.
+	if bridge == nil {
+		clearGlobals := []string{"ch", "me", "obj", "argument", "room"}
+		if triggerName != "" {
+			clearGlobals = append(clearGlobals, triggerName)
+		}
+		for _, name := range clearGlobals {
+			L.SetGlobal(name, lua.LNil)
+		}
 	}
 
 	outerBridge := e.activeBridge
@@ -630,19 +600,6 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		scriptMudLogLoadFailure(bridge, fname, "No such file.")
 		return false, fmt.Errorf("script not found: %s", fname)
 	}
-
-	// Snapshot known global keys before loading the script so we can remove
-	// script-defined globals after execution, preventing context leaks between runs.
-	knownGlobals := make(map[string]struct{})
-	gt := L.Get(lua.GlobalsIndex)
-	if tbl, ok := gt.(*lua.LTable); ok {
-		tbl.ForEach(func(key, _ lua.LValue) {
-			if k, ok := key.(lua.LString); ok {
-				knownGlobals[string(k)] = struct{}{}
-			}
-		})
-	}
-
 	// Load and execute the script file
 	// Based on open_lua_file() in scripts.c lines 1666-1699
 	// Execution timeout prevents tight loops from hanging the server indefinitely.
@@ -681,7 +638,6 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			e.failedScriptKinds[cacheKey] = kind
 			scriptMudLogLoadFailure(bridge, fname, kind)
 		}
-		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		releaseContext()
 		return false, err
 	}
@@ -698,7 +654,6 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		// scripts.c:1791-1800: C calls the global, the call fails, and the
 		// producer fires before the write-back below.
 		scriptMudLogCallFailure(bridge, fname, triggerName)
-		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		releaseContext()
 		slog.Debug("function not found in script", "trigger", triggerName, "file", fname)
 		return false, nil
@@ -720,7 +675,6 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 		} else {
 			slog.Error("error calling function", "trigger", triggerName, "file", fname, "error", err)
 		}
-		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		releaseContext()
 		return false, err
 	}
@@ -738,7 +692,6 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 
 	if bridge != nil {
 		e.bridgeWriteBack(bridge, ctx)
-		e.cleanupScriptGlobalsLocked(L, knownGlobals)
 		releaseContext()
 		// retval = (int)lua_tonumber(L, -1): any nonzero number is handled.
 		return int(lua.LVAsNumber(ret)) != 0, nil
@@ -773,8 +726,6 @@ func (e *Engine) RunScript(ctx *ScriptContext, fname string, triggerName string)
 			}
 		}
 	}
-
-	e.cleanupScriptGlobalsLocked(L, knownGlobals)
 
 	releaseContext()
 
