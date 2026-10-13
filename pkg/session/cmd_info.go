@@ -664,7 +664,7 @@ func usersDescriptorState(sess *Session) string {
 		return "Text edit"
 	}
 	if sess.charCreating {
-		states := map[string]string{
+		states := map[string]string{ // #nosec G101 -- not credentials; C connected_types state labels (act.informative.c do_users)
 			"get_name": "Get name", "confirm_name": "Confirm name", "login_password": "Get password",
 			"create_password": "Get new PW", "confirm_password": "Confirm new PW", "sex": "Select sex",
 			"class": "Select class", "race": "Asking race", "color": "Asking color",
@@ -675,7 +675,7 @@ func usersDescriptorState(sess *Session) string {
 		}
 	}
 	if sess.menuActive {
-		states := map[string]string{
+		states := map[string]string{ // #nosec G101 -- not credentials; C connected_types state labels (act.informative.c do_users)
 			"motd": "Reading MOTD", "menu": "Main Menu", "description": "Get descript.",
 			"background": "Get descript.", "password_old": "Changing PW 1", "password_new": "Changing PW 2",
 			"password_confirm": "Changing PW 3", "delete_confirm": "Self-Delete 1", "delete_password": "Self-Delete 2",
