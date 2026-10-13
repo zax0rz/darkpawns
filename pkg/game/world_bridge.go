@@ -739,15 +739,17 @@ func (a *WorldScriptableAdapter) LoadMob(vnum, roomVNum int) (scripting.CharRef,
 	return *charRefFor(mob), true
 }
 
-// ExtractChar is lua_extchar's extract_char. NPCs remain in world lists until
-// extract_pending_chars at the next heartbeat (handler.c:1194-1209;
-// comm.c:805). Player extchar remains an explicitly unported case.
+// ExtractChar is lua_extchar's extract_char. Both kinds of character remain in
+// world lists until extract_pending_chars at the next heartbeat
+// (handler.c:1194-1209; comm.c:805). A player then drops what they carry and
+// wear, is saved, and returns to the menu (extract_char_final,
+// handler.c:1131-1175), the same drain death and death traps use.
 func (a *WorldScriptableAdapter) ExtractChar(ref scripting.CharRef) {
 	switch _, p, m := a.resolveChar(ref); {
 	case m != nil:
 		a.world.ExtractMob(m)
 	case p != nil:
-		slog.Warn("lua extchar on a player is not ported; ignored", "player", p.GetName())
+		a.world.QueuePlayerExtraction(p)
 	}
 }
 
