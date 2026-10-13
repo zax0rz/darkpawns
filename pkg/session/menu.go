@@ -522,7 +522,9 @@ func (s *Session) prepareWorldEntry() bool {
 		s.manager.mu.Lock()
 		s.player = nil
 		s.manager.mu.Unlock()
+		s.manager.mu.Lock()
 		s.creationSaved = false
+		s.manager.mu.Unlock()
 		s.manager.mu.Lock()
 		s.charCreating = false
 		s.manager.mu.Unlock()

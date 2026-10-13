@@ -97,11 +97,18 @@ func (m *Manager) CheckIdlePasswords() {
 // Implements engine.UsageCounter for record_usage().
 func (m *Manager) CountSessions() (connected int, playing int) {
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-
+	sessions := make([]*Session, 0, len(m.sessions))
 	for _, s := range m.sessions {
+		sessions = append(sessions, s)
+	}
+	m.mu.RUnlock()
+
+	for _, s := range sessions {
+		if !s.hasDescriptor() {
+			continue
+		}
 		connected++
-		if s.authenticated && s.player != nil {
+		if s.isConPlaying() {
 			playing++
 		}
 	}

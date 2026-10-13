@@ -544,7 +544,9 @@ func (s *Session) abortEntry(err error) error {
 	if registered {
 		s.manager.Unregister(s.playerName)
 	}
+	s.manager.mu.Lock()
 	s.creationSaved = false
+	s.manager.mu.Unlock()
 	s.manager.mu.Lock()
 	s.charCreating = false
 	s.manager.mu.Unlock()
@@ -621,7 +623,9 @@ func (s *Session) persistAcceptedCharacter() error {
 	s.manager.mu.Lock()
 	s.authenticated = true
 	s.manager.mu.Unlock()
+	s.manager.mu.Lock()
 	s.creationSaved = true
+	s.manager.mu.Unlock()
 	s.playerName = s.charName
 	s.menuPasswordHash = s.charPassword
 	if err := s.manager.Register(s.charName, s); err != nil {
@@ -739,7 +743,9 @@ func (s *Session) completeCharCreation() error {
 
 	// Clear char creation state
 	s.releaseEntryName()
+	s.manager.mu.Lock()
 	s.creationSaved = false
+	s.manager.mu.Unlock()
 	s.manager.mu.Lock()
 	s.charCreating = false
 	s.manager.mu.Unlock()

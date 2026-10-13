@@ -1269,7 +1269,7 @@ func (w *World) counter_procs(ch *Player, kills int) {
 
 	// Blessing message + full heal to ALL other connected players
 	// Source: fight.c:1304-1310 — heals everyone in the game
-	for _, p := range w.AllPlayers() {
+	for _, p := range w.playingPlayers() {
 		if p != ch {
 			p.SendMessage("The gods of war and death bestow a blessing upon you.\r\n")
 			p.SetHP(p.GetMaxHP()) // heal everyone
