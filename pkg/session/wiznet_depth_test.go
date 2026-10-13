@@ -128,3 +128,31 @@ func TestWiznetBroadcastSkipsGodAtMenu(t *testing.T) {
 		t.Fatalf("god at the menu heard %q", got)
 	}
 }
+
+// TestWiznetListApprovedFreshBuffer pins the approved divergence
+// (wiznet.gods-list-stale-buffer): when no god qualifies for the online loop,
+// C appends to or resends the stale global buf1 (act.wizard.c:1948-1980;
+// db.h:223). The port sends only what this listing built.
+func TestWiznetListApprovedFreshBuffer(t *testing.T) {
+	m := makeTestManager(t)
+	alone := makeCommandTestSession(t, m, "Lonegod", 34, 1001)
+	alone.player.Flags |= 1 << uint(game.PrfNowiz)
+	m.sessions[alone.player.Name] = alone
+	if err := cmdWiznetText(alone, "@"); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := readSessionText(t, alone), "Gods offline:\r\n  Lonegod\r\n"; got != want {
+		t.Fatalf("NOWIZ god alone = %q, want %q", got, want)
+	}
+
+	m2 := makeTestManager(t)
+	chosen := makeCommandTestSession(t, m2, "Chosenone", 10, 1001)
+	chosen.player.SetPLRFlag(game.PlrChosen)
+	m2.sessions[chosen.player.Name] = chosen
+	if err := cmdWiznetText(chosen, "@"); err != nil {
+		t.Fatal(err)
+	}
+	if got := renderedOutput(chosen); got != "" {
+		t.Fatalf("chosen mortal with no gods = %q, want nothing", got)
+	}
+}
