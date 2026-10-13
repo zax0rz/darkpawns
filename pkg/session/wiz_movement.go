@@ -360,19 +360,16 @@ func cmdTransfer(s *Session, args []string) error {
 
 	if strings.EqualFold(targetName, "all") && s.player.GetLevel() >= LVL_GRGOD {
 		s.manager.mu.RLock()
-		targets := make([]*Session, 0, len(s.manager.sessions))
+		sessions := make([]*Session, 0, len(s.manager.sessions))
 		for _, target := range s.manager.sessions {
-			if target == nil || target.player == nil || target == s || !target.authenticated {
-				continue
-			}
-			if target.player.GetLevel() >= s.player.GetLevel() {
-				continue
-			}
-			targets = append(targets, target)
+			sessions = append(sessions, target)
 		}
 		s.manager.mu.RUnlock()
 
-		for _, target := range targets {
+		for _, target := range sessions {
+			if target == s || !target.isConPlaying() || target.player.GetLevel() >= s.player.GetLevel() {
+				continue
+			}
 			transferCharacter(s, target.player)
 		}
 		s.Send("Okay.\r\n")

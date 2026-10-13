@@ -505,6 +505,22 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 	if !found {
 		return SkillResult{Success: false, MessageToCh: "They don't seem to be here.\r\n"}
 	}
+	if victim, ok := target.(*Player); ok && !world.playerHasDescriptor(victim) {
+		return SkillResult{Success: false, MessageToCh: "No way! They're linkless!\r\n"}
+	}
+
+	var it *Player
+	for _, player := range world.playingPlayers() {
+		if player.GetFlags()&(1<<uint(PlrIt)) != 0 {
+			it = player
+		}
+	}
+	if it != nil && ch != it {
+		return SkillResult{Success: false, MessageToCh: "But you are not it!\r\n"}
+	}
+	if victim, ok := target.(*Player); ok && victim == it {
+		return SkillResult{Success: false, MessageToCh: "You're it already!\r\n"}
+	}
 
 	// Self-tag starts the game
 	if target == ch {

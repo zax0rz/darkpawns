@@ -23,12 +23,16 @@ func cmdGechoText(s *Session, msg string) error {
 		return nil
 	}
 	s.manager.mu.RLock()
+	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, sess := range s.manager.sessions {
-		if sess.player != nil && sess.player != s.player {
+		sessions = append(sessions, sess)
+	}
+	s.manager.mu.RUnlock()
+	for _, sess := range sessions {
+		if sess.isConPlaying() && sess.player != s.player {
 			sess.Send(msg)
 		}
 	}
-	s.manager.mu.RUnlock()
 	if s.player.GetFlags()&(1<<uint(game.PrfNoRepeat)) != 0 {
 		s.Send("Okay.\r\n")
 	} else {
@@ -243,11 +247,18 @@ func findForceSession(s *Session, name string) *Session {
 // would visit. C skips any victim whose level is not below the caster's.
 func forceTargets(s *Session, sameRoom bool) []*Session {
 	s.manager.mu.RLock()
-	defer s.manager.mu.RUnlock()
-
-	targets := make([]*Session, 0, len(s.manager.sessions))
+	sessions := make([]*Session, 0, len(s.manager.sessions))
 	for _, target := range s.manager.sessions {
+		sessions = append(sessions, target)
+	}
+	s.manager.mu.RUnlock()
+
+	targets := make([]*Session, 0, len(sessions))
+	for _, target := range sessions {
 		if target.player == nil || target.player.Level >= s.player.Level {
+			continue
+		}
+		if !sameRoom && !target.isConPlaying() {
 			continue
 		}
 		if sameRoom && target.player.GetRoom() != s.player.GetRoom() {

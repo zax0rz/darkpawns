@@ -139,6 +139,13 @@ func (w *World) huntVictim(m *MobInstance) {
 			target = prey
 		}
 	} else if player := w.findPlayerByName(m.GetHunting()); player != nil {
+		// C's HUNTING(ch) resolves a player ID through get_char_by_id(),
+		// which walks only CON_PLAYING descriptors (utils.c:691-704).
+		// A retained linkless body therefore leaves HUNTING(ch) NULL and
+		// hunt_victim returns before changing the hunt or drawing RNG.
+		if !w.playerHasPlayingDescriptor(player) {
+			return
+		}
 		target = player
 		evasion = player.GetSkill("evasion")
 	}
