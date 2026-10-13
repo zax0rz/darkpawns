@@ -420,8 +420,18 @@ func (s *Session) enterReturningPlayer() error {
 	// the stored rent code selects, then rewrite the header to RENT_CRASH
 	// (:659-663). C runs this after reset_char and before the entry save
 	// (src/interpreter.c:2174-2186).
-	if err := s.crashLoadEntry(); err != nil {
+	loaded, err := s.crashLoadEntry()
+	if err != nil {
 		return err
+	}
+	// C's Crash_load equips each file item through equip_char, which runs
+	// check_for_bad_stats every time (src/objsave.c:557; src/handler.c:749).
+	// A missing file equips nothing and fires nothing (:474-489). The bytes go
+	// to this session's own descriptor: C's send_to_char writes ch->desc
+	// (src/interpreter.c:2184-2189) and the character is in neither the session
+	// registry nor character_list yet.
+	if loaded {
+		s.manager.world.ReplayCrashLoadBadStats(s.player, s.sendPlayerText)
 	}
 	// C saves the character with load_room NOWHERE at every game entry
 	// (interpreter.c:2186), so a character whose process dies mid-session

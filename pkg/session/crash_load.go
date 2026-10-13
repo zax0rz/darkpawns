@@ -45,24 +45,28 @@ type objectSaveReader interface {
 // ordering.
 //
 // A store that does not implement objectSaveReader keeps the previous
-// behaviour: rewrite only, no producer.
-func (s *Session) crashLoadEntry() error {
+// behaviour: rewrite only, no producer. loaded reports whether a crash file
+// existed — C's Crash_load fopen success — which is the gate for equipping the
+// file's items and therefore for the per-item check_for_bad_stats replay
+// (src/objsave.c:474-489, :557; DP-1419).
+func (s *Session) crashLoadEntry() (loaded bool, err error) {
 	if !s.manager.hasDB || s.player == nil {
-		return nil
+		return false, nil
 	}
 	name := s.player.GetName()
 	if reader, ok := s.manager.db.(objectSaveReader); ok {
 		snapshot, err := reader.GetObjectSave(name)
 		if err != nil {
-			return err
+			return false, err
 		}
+		loaded = snapshot != nil
 		if payload := crashLoadEntryLine(name, snapshot); payload != "" {
 			// All four live arms are NRM / MAX(LVL_IMMORT, invis) / file TRUE
 			// (src/objsave.c:489, :519, :524, :528).
 			game.MudLog(payload, game.MudlogNormal, max(game.LVL_IMMORT, s.player.GetInvisLevel()), true)
 		}
 	}
-	return db.ObjectSaveLoaded(s.manager.db, name)
+	return loaded, db.ObjectSaveLoaded(s.manager.db, name)
 }
 
 // crashLoadEntryLine is Crash_load's switch on rent.rentcode
