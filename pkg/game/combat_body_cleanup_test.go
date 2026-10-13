@@ -54,6 +54,7 @@ func TestCombatBodyWorldCleanup(t *testing.T) {
 				w.RawKillCombatant(one, combat.TYPE_UNDEFINED)
 			case "extract-mob":
 				w.ExtractMob(one)
+				w.ExtractPendingChars()
 			case "pending-mob":
 				one.SetMobFlag(MobFlagExtract)
 				w.ExtractPendingChars()
@@ -146,25 +147,57 @@ func TestCombatBodyWorldCleanup(t *testing.T) {
 	}
 }
 
+func TestCombatBodyExtractionWaitsForPendingPass(t *testing.T) {
+	w, ce, one, two, p, _ := duplicateCleanupWorld(t)
+	w.ExtractMob(one)
+	if !one.HasMobFlag(MobFlagExtract) {
+		t.Fatal("extract did not mark mob")
+	}
+	if got, ok := w.GetMobByID(one.GetID()); !ok || got != one {
+		t.Fatal("extract removed mob before extract_pending_chars")
+	}
+	if !ce.IsFighting(one) || !ce.IsFighting(two) || one.GetFightingBody() == nil || p.GetFightingBody() != one {
+		t.Fatal("extract retired combat body before extract_pending_chars")
+	}
+	w.ExtractPendingChars() // handler.c:1194-1209, called from comm.c:805.
+	if _, ok := w.GetMobByID(one.GetID()); ok {
+		t.Fatal("pending pass left extracted mob active")
+	}
+	if one.GetRoom() != roomNowhere {
+		t.Fatalf("pending pass room = %d, want NOWHERE", one.GetRoom())
+	}
+	if ce.IsFighting(one) || one.GetFightingBody() != nil || p.GetFightingBody() != nil {
+		t.Fatal("pending pass left stale combat references")
+	}
+	if !ce.IsFighting(two) {
+		t.Fatal("pending pass disturbed the separate combat")
+	}
+}
+
 func TestCombatBodyRoundRetirement(t *testing.T) {
-	w, ce, one, two, _, _ := duplicateCleanupWorld(t)
+	w, ce, one, two, p, _ := duplicateCleanupWorld(t)
 	old := combat.GetRoller()
 	combat.SetRoller(combat.NewSeededRoller(123))
 	defer combat.SetRoller(old)
-	var retired bool
+	var marked bool
+	var hitsAfterMark int
 	ce.MessageFunc = func(a, b combat.Combatant, _, _ int) bool {
-		if retired && (a == one || b == one) {
-			t.Fatal("stale round snapshot revisited retired body")
+		if marked && (a == one || b == one) {
+			hitsAfterMark++ // C leaves flagged characters in combat until heartbeat.
 		}
-		if !retired {
-			retired = true
+		if !marked {
+			marked = true
 			w.ExtractMob(one)
 		}
 		return true
 	}
 	ce.PerformRound()
-	if !retired || !ce.IsFighting(two) {
-		t.Fatal("round retirement disturbed survivor")
+	if !marked || hitsAfterMark == 0 || !ce.IsFighting(one) || p.GetFightingBody() != one || !ce.IsFighting(two) {
+		t.Fatal("mid-round extraction did not preserve combat through the current pass")
+	}
+	w.ExtractPendingChars()
+	if ce.IsFighting(one) || p.GetFightingBody() != nil || !ce.IsFighting(two) {
+		t.Fatal("heartbeat extraction did not retire combat bodies")
 	}
 	if err := ce.StartCombat(one, two); err == nil {
 		t.Fatal("retired body re-enrolled")
@@ -181,6 +214,7 @@ func TestCombatBodyConcurrentRetirement(t *testing.T) {
 	go func() { defer workers.Done(); <-start; w.ExtractMob(one) }()
 	close(start)
 	workers.Wait()
+	w.ExtractPendingChars()
 	if one.GetFightingBody() != nil || p.GetFightingBody() != nil || !ce.IsFighting(two) {
 		t.Fatal("concurrent cleanup lost exact ownership")
 	}

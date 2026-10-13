@@ -780,10 +780,9 @@ func (w *World) deathTrapMount(player *Player) {
 	w.roomMessage(roomVNum,
 		fmt.Sprintf("The sound of a death cry is heard as %s enters the room!\r\n", mount.GetShortDesc()))
 
-	// Extract the mount using the existing mob-extraction helper. This deletes the
-	// mob from w.activeMobs under w.mu. Spawner instance-count cleanup is handled
-	// by ExtractMob's callers elsewhere; for a DT mount this is the established
-	// removal path in this codebase.
+	// Extract the mount using the shared delayed-extraction helper. It remains
+	// in world lists until the next heartbeat, then the pending pass removes its
+	// spawner references and room membership along with the body.
 	w.ExtractMob(mount)
 	mount.SetMountRider("")
 

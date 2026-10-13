@@ -1166,30 +1166,26 @@ func (w *World) LookAtRoomSimple(roomVNum int, sender interface{}) {
 	}
 }
 
-// extractMob removes a mob instance from the world (extract_char equivalent).
+// ExtractMob marks a mob for extraction. C keeps it in the character and room
+// lists until extract_pending_chars at the next heartbeat (handler.c:1194-1209;
+// comm.c:805), so removal and combat retirement belong to that final pass.
 func (w *World) ExtractMob(mob *MobInstance) {
 	w.mu.Lock()
-	found := false
-	for id, m := range w.activeMobs {
+	for _, m := range w.activeMobs {
 		if m == mob {
 			m.mu.Lock()
 			m.Flags |= 1 << uint(MobFlagExtract)
 			m.mu.Unlock()
 			w.pendingMobileExtractions[m] = struct{}{}
-			delete(w.activeMobs, id)
-			found = true
 			break
 		}
 	}
 	w.mu.Unlock()
-	if found {
-		w.retireCombatBody(mob)
-	}
 }
 
 // mobileObjectOwnerLocked retains C's character pointer for object ownership
-// and Lua handles until extract_pending_chars, even after combat retirement.
-// Caller holds World.mu (read or write); ordinary active lookup is unchanged.
+// and Lua handles until extract_pending_chars. The pending-map arm also covers
+// death paths that leave activeMobs before that pass. Caller holds World.mu.
 func (w *World) mobileObjectOwnerLocked(id int) *MobInstance {
 	if m := w.activeMobs[id]; m != nil {
 		return m

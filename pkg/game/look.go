@@ -267,9 +267,12 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 
 func (w *World) appendDarkOccupants(result *ObservationResult, ch *Player, room *parser.Room) {
 	for _, mob := range sortedMobs(w.GetMobsInRoom(room.VNum)) {
+		if mob == nil || mob.HasMobFlag(MobFlagExtract) {
+			continue // C list_char_to_char skips MOB_EXTRACT before visibility checks
+		}
 		// C list_char_to_char suppresses a mount while get_rider(mob) is
 		// non-nil; the rider's presence line represents the pair.
-		if mob == nil || mob.GetMountRider() != "" {
+		if mob.GetMountRider() != "" {
 			continue
 		}
 		if mob.IsAffected(affSneak) || mob.IsAffected(affHide) {
@@ -416,9 +419,12 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 	characters := make([]character, 0)
 	var lines []string
 	for _, mob := range w.GetMobsInRoom(room.VNum) {
+		if mob == nil || mob.HasMobFlag(MobFlagExtract) {
+			continue // act.informative.c:list_one_char skips MOB_EXTRACT first
+		}
 		// C list_char_to_char suppresses a mount while get_rider(mob) is
 		// non-nil; the rider's presence line represents the pair.
-		if mob == nil || mob.GetMountRider() != "" {
+		if mob.GetMountRider() != "" {
 			continue
 		}
 		if !canSee(ch, mob) || mob.IsAffected(affHide) {
@@ -426,9 +432,6 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 				lines = append(lines, "You sense a hidden presence in the room.")
 			}
 			continue
-		}
-		if mob.HasMobFlag(MobFlagExtract) {
-			continue // list_one_char skips a mobile pending extraction
 		}
 		line := mobPresenceLine(mob, ch)
 		if line == "" {

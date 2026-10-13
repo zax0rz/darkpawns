@@ -78,14 +78,20 @@ func TestSpecConjured_FizzleAudienceAndExtraction(t *testing.T) {
 	if peerOutput != "An earth elemental returns to its own plane of existence.\r\n" {
 		t.Fatalf("peer fizzle output = %q, want room plane notice only", peerOutput)
 	}
-	if got := len(w.GetMobsInRoom(master.GetRoom())); got != 0 {
-		t.Fatalf("fizzle room mob count = %d, want 0", got)
+	if got := len(w.GetMobsInRoom(master.GetRoom())); got != 1 || !mob.HasMobFlag(MobFlagExtract) {
+		t.Fatalf("fizzle pending room mob count/flag = %d/%v, want 1/true until heartbeat", got, mob.HasMobFlag(MobFlagExtract))
 	}
-	if got := len(w.GetAllMobs()); got != 0 {
-		t.Fatalf("fizzle active mob count = %d, want 0", got)
+	if got := len(w.GetAllMobs()); got != 1 {
+		t.Fatalf("fizzle active mob count before heartbeat = %d, want 1", got)
 	}
 	if strings.Contains(masterOutput+peerOutput, "corpse") {
 		t.Fatalf("fizzle output invented corpse text: master=%q peer=%q", masterOutput, peerOutput)
+	}
+	// spec_procs3.c:887 calls extract_char; handler.c:1194-1209 queues only,
+	// and comm.c:805 removes the NPC at the next heartbeat.
+	w.ExtractPendingChars()
+	if got := len(w.GetMobsInRoom(master.GetRoom())); got != 0 {
+		t.Fatalf("fizzle room mob count after heartbeat = %d, want 0", got)
 	}
 }
 
@@ -111,8 +117,12 @@ func TestSpecConjured_DefaultSpeechAudienceAndExtraction(t *testing.T) {
 	if messages[actor.GetName()] != want || messages[peer.GetName()] != want {
 		t.Fatalf("default audience output = actor %q peer %q, want %q each", messages[actor.GetName()], messages[peer.GetName()], want)
 	}
+	if got := len(w.GetMobsInRoom(actor.GetRoom())); got != 1 || !mob.HasMobFlag(MobFlagExtract) {
+		t.Fatalf("default pending room mob count/flag = %d/%v, want 1/true until heartbeat", got, mob.HasMobFlag(MobFlagExtract))
+	}
+	w.ExtractPendingChars()
 	if got := len(w.GetMobsInRoom(actor.GetRoom())); got != 0 {
-		t.Fatalf("default room mob count = %d, want 0", got)
+		t.Fatalf("default room mob count after heartbeat = %d, want 0", got)
 	}
 }
 
@@ -142,8 +152,12 @@ func TestSpecConjured_AutonomousRegisteredDispatch(t *testing.T) {
 	if got := lastMsg(); got != want {
 		t.Fatalf("autonomous dispatch output = %q, want %q", got, want)
 	}
+	if got := len(w.GetAllMobs()); got != 1 || !mob.HasMobFlag(MobFlagExtract) {
+		t.Fatalf("autonomous pending mob count/flag = %d/%v, want 1/true until heartbeat", got, mob.HasMobFlag(MobFlagExtract))
+	}
+	w.ExtractPendingChars()
 	if got := len(w.GetAllMobs()); got != 0 {
-		t.Fatalf("autonomous dispatch active mob count = %d, want 0", got)
+		t.Fatalf("autonomous active mob count after heartbeat = %d, want 0", got)
 	}
 }
 

@@ -116,6 +116,38 @@ func TestInventoryAddItemPrependsLikeObjToChar(t *testing.T) {
 	}
 }
 
+func TestCountMobInstancesDoesNotDoubleCountPendingExtraction(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Start Room"}},
+		Mobs:  []parser.Mob{{VNum: 3001, Keywords: "guard", ShortDesc: "a guard"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	mob, err := w.spawner.SpawnMob(3001, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := w.countMobInstances(3001); got != 1 {
+		t.Fatalf("initial mob count = %d, want 1", got)
+	}
+	w.ExtractMob(mob)
+	if got := w.countMobInstances(3001); got != 1 {
+		t.Fatalf("pending mob count = %d, want 1 until heartbeat", got)
+	}
+	w.ExtractPendingChars()
+	if got := w.countMobInstances(3001); got != 0 {
+		t.Fatalf("post-heartbeat mob count = %d, want 0", got)
+	}
+	if mob.GetRoom() != roomNowhere {
+		t.Fatalf("post-heartbeat mob room = %d, want NOWHERE", mob.GetRoom())
+	}
+	if instances := w.spawner.mobInstances[3001]; len(instances) != 0 {
+		t.Fatalf("post-heartbeat spawner still tracks extracted mob: %v", instances)
+	}
+}
+
 func TestGiveStartingItems_Thief(t *testing.T) {
 	w, player := newStartingItemsWorld(t)
 	player.Class = ClassThief

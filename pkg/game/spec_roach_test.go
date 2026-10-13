@@ -238,10 +238,16 @@ func TestSpecRoachStarvationExtractsWithoutCorpse(t *testing.T) {
 	if r.mob.IsAlive() {
 		t.Fatal("starved roach remained alive")
 	}
-	if got, ok := r.w.GetMobByID(r.mob.GetID()); ok || got != nil {
-		t.Fatal("starved roach remained in active world")
+	if got, ok := r.w.GetMobByID(r.mob.GetID()); !ok || got != r.mob || !r.mob.HasMobFlag(MobFlagExtract) {
+		t.Fatal("starved roach should remain flagged and registered until heartbeat")
 	}
 	if got := len(r.w.GetItemsInRoom(r.actor.GetRoomVNum())); got != 0 {
 		t.Fatalf("starvation created room objects: %d", got)
+	}
+	// spec_procs3.c:724 calls extract_char; handler.c:1194-1209 queues only,
+	// and comm.c:805 performs final removal at the next heartbeat.
+	r.w.ExtractPendingChars()
+	if got, ok := r.w.GetMobByID(r.mob.GetID()); ok || got != nil {
+		t.Fatal("starved roach remained active after heartbeat extraction")
 	}
 }

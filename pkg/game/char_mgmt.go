@@ -275,6 +275,11 @@ func (w *World) ExtractPendingPlayers() []*Player {
 	// src/handler.c:1116-1117 also applies to NPCs, including bodies already
 	// retired from combat but retained until this final extraction pass.
 	for _, m := range pendingMobs {
+		// extract_pending_chars clears MOB_EXTRACT before entering
+		// extract_char_final (handler.c:1231-1234).
+		m.mu.Lock()
+		m.Flags &^= 1 << uint(MobFlagExtract)
+		m.mu.Unlock()
 		w.DieFollowerMob(m)
 		w.mu.Lock()
 		_, queued := w.pendingMobileExtractions[m]
@@ -289,6 +294,12 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		delete(w.pendingMobileExtractions, m)
 		w.mu.Unlock()
 		w.retireCombatBody(m)
+		// char_from_room in extract_char_final removes the NPC from its room
+		// after stopping combat (handler.c:1144-1156).
+		if w.spawner != nil {
+			w.spawner.RemoveMobInstance(m.VNum, m)
+		}
+		m.SetRoom(roomNowhere)
 	}
 	return extracted
 }

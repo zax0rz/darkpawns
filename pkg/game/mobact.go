@@ -269,7 +269,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			return
 		}
 	}
-	if !ch.IsAlive() || ch.RoomVNum < 0 { // check_dead
+	if !ch.IsAlive() || ch.HasMobFlag(MobFlagExtract) || ch.RoomVNum < 0 { // utils.c:check_dead
 		return
 	}
 
@@ -277,7 +277,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	if ch.HasScript("onpulse_pc") && w.roomHasOtherOccupant(ch, true) {
 		w.runPulseScript(ch, "onpulse_pc")
 	}
-	if !ch.IsAlive() || ch.RoomVNum < 0 { // check_dead
+	if !ch.IsAlive() || ch.HasMobFlag(MobFlagExtract) || ch.RoomVNum < 0 { // utils.c:check_dead
 		return
 	}
 

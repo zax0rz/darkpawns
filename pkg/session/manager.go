@@ -925,7 +925,7 @@ func (m *Manager) SetScriptFightFunc() {
 func (m *Manager) SetMobSpecialFunc() {
 	m.combatEngine.MobSpecialFunc = func(mob combat.Combatant) bool {
 		instance, ok := mob.(*game.MobInstance)
-		if !ok || instance == nil || !instance.HasFlag("spec") {
+		if !ok || instance == nil || !instance.HasFlag("spec") || instance.HasMobFlag(game.MobFlagExtract) {
 			return false
 		}
 		spec := game.GetMobSpec(instance.GetVNum())

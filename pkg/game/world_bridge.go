@@ -237,7 +237,10 @@ func (a *WorldScriptableAdapter) ApplyChar(ref scripting.CharRef, w scripting.Ch
 		p.mu.Unlock()
 		p.AffectTotal() // scripts.c:1302, lua_save_char
 	case m != nil:
-		if !m.IsAlive() {
+		// table_to_char returns before writing any field on an extracted body
+		// (scripts.c:1985), even though the body remains resolvable until the
+		// heartbeat's extract_pending_chars pass.
+		if !m.IsAlive() || m.HasMobFlag(MobFlagExtract) {
 			return
 		}
 		m.SetAlignment(w.Align)
@@ -736,9 +739,9 @@ func (a *WorldScriptableAdapter) LoadMob(vnum, roomVNum int) (scripting.CharRef,
 	return *charRefFor(mob), true
 }
 
-// ExtractChar is lua_extchar's extract_char. C marks the character and
-// removes it at the next heartbeat (extract_pending_chars, comm.c:805); the
-// port extracts at once (lua.bind-extchar-deferred).
+// ExtractChar is lua_extchar's extract_char. NPCs remain in world lists until
+// extract_pending_chars at the next heartbeat (handler.c:1194-1209;
+// comm.c:805). Player extchar remains an explicitly unported case.
 func (a *WorldScriptableAdapter) ExtractChar(ref scripting.CharRef) {
 	switch _, p, m := a.resolveChar(ref); {
 	case m != nil:

@@ -96,6 +96,11 @@ func (w *World) countMobInstances(vnum int) int {
 		}
 	}
 	for mob := range w.pendingMobileExtractions {
+		// ExtractMob keeps this body in activeMobs until the heartbeat drain;
+		// death paths can still have a queued body already removed from it.
+		if w.activeMobs[mob.ID] == mob {
+			continue
+		}
 		if mob.VNum == vnum {
 			count++
 		}
