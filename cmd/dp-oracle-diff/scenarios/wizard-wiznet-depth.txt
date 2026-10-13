@@ -1,7 +1,7 @@
 # C-first vehicle for do_wiznet. The Implementor primary and immortal peer
 # expose actor/audience output while the probe walks usage, ordinary and emote
-# broadcasts, level prefixes, invalid prefixes, escaped @, empty payloads,
-# and the gods-online listing.
+# broadcasts, level prefixes, invalid prefixes, escaped @ and empty payloads.
+# The gods-online listing lives in wizard-wiznet-list-depth.
 
 # depth-case: wiznet.usage
 # depth-case: wiznet.no-argument
