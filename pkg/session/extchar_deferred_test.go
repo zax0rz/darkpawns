@@ -142,6 +142,44 @@ func TestPurgeRoomDrainsPendingMobsImmediately(t *testing.T) {
 	}
 }
 
+func TestPurgeRoomReturnsPendingPlayerToHeartbeatMenu(t *testing.T) {
+	queuePlayer := func(t *testing.T, m *Manager) *Session {
+		t.Helper()
+		victim := makeTestSession(t, m, "Queuedplayer", 1001, true)
+		victim.player = game.NewPlayer(2, "Queuedplayer", 1001)
+		registerTestSession(t, m, victim, "Queuedplayer")
+		m.world.QueuePlayerExtraction(victim.player)
+		return victim
+	}
+
+	// Capture the player-facing transition from the heartbeat path, which
+	// routes the world's extracted-player result back to the owning session.
+	heartbeatManager, _, _ := deferredMobFixture(t, false)
+	heartbeatVictim := queuePlayer(t, heartbeatManager)
+	heartbeatManager.ExtractPendingChars()
+	if !heartbeatVictim.menuActive || heartbeatVictim.menuStage != "menu" {
+		t.Fatalf("heartbeat transition = (%v, %q), want active main menu", heartbeatVictim.menuActive, heartbeatVictim.menuStage)
+	}
+	heartbeatMenu := renderedOutput(heartbeatVictim)
+	if heartbeatMenu == "" {
+		t.Fatal("heartbeat extraction did not send the main menu")
+	}
+
+	// The room-wide purge must produce that same menu transition for a player
+	// already queued when it calls extract_pending_chars.
+	purgeManager, actor, _ := deferredMobFixture(t, false)
+	purgeVictim := queuePlayer(t, purgeManager)
+	if err := executeCommand(actor, "purge", nil, false); err != nil {
+		t.Fatal(err)
+	}
+	if !purgeVictim.menuActive || purgeVictim.menuStage != "menu" {
+		t.Fatalf("purge transition = (%v, %q), want active main menu", purgeVictim.menuActive, purgeVictim.menuStage)
+	}
+	if got := renderedOutput(purgeVictim); !strings.HasSuffix(got, heartbeatMenu) {
+		t.Fatalf("purge output did not end with heartbeat menu; got %q, want suffix %q", got, heartbeatMenu)
+	}
+}
+
 func TestCombatMobSpecialSkipsPendingExtraction(t *testing.T) {
 	m, _, mob := deferredMobFixture(t, false)
 	m.world.StopAITicker()

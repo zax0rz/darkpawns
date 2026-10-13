@@ -267,7 +267,7 @@ func cmdPurge(s *Session, args []string) error {
 	}
 	// C's room-wide do_purge flushes extract_pending_chars immediately after
 	// marking room NPCs and before removing objects (act.wizard.c:1463-1473).
-	s.manager.world.ExtractPendingChars()
+	s.manager.drainPendingExtractions()
 	for _, item := range s.manager.world.GetItemsInRoom(roomVNum) {
 		s.manager.world.ExtractObject(item, roomVNum)
 	}

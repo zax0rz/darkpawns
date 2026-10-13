@@ -655,6 +655,24 @@ func (m *Manager) ExtractPendingChars() {
 			attached.Close()
 		}
 	}
+	m.drainPendingExtractionsLocked()
+}
+
+// drainPendingExtractions drains queued world characters and applies the
+// session-side extraction transition. Room-wide purge calls this without the
+// heartbeat's check_idling pass; both entry points serialize through
+// playerLifecycleMu before calling the shared locked half.
+func (m *Manager) drainPendingExtractions() {
+	if !m.world.HasPendingExtractions() {
+		return
+	}
+	m.playerLifecycleMu.Lock()
+	defer m.playerLifecycleMu.Unlock()
+	m.drainPendingExtractionsLocked()
+}
+
+// drainPendingExtractionsLocked requires playerLifecycleMu.
+func (m *Manager) drainPendingExtractionsLocked() {
 	extracted := m.world.ExtractPendingPlayers()
 	for _, player := range extracted {
 		// C returns a descriptor whose original or attached body is extracted
