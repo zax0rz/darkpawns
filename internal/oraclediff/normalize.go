@@ -128,16 +128,77 @@ func normalize(raw string, keepANSI bool) string {
 		filtered = append(filtered, line)
 	}
 
-	// 5. Drop volatile status/MOTD metadata lines: wall-clock, uptime, counts, and release dates vary per boot.
+	// 5. Drop volatile status/MOTD metadata lines: wall-clock, uptime, counts, and
+	// release dates vary per boot. Ordinary comparisons keep prompt-only lines
+	// as <PROMPT> tokens: each framing run is canonicalized so repaint-count
+	// differences collapse while the blank lines before a run's first prompt —
+	// where the real divergences live (#1880, PF-063) — stay comparable;
+	// ReconcilePromptFrames then pairs the two sides' block-edge frames in the
+	// harness. Keep-ANSI keeps its prior contract (PR #1927 review): that mode
+	// certifies raw color bytes inside surfaces whose own menus own the prompt,
+	// so prompt-only lines stay dropped there exactly as before adoption.
 	lines = filtered[:0]
-	for _, line := range filtered {
-		if !volatileLine.MatchString(line) && !promptOnly.MatchString(line) {
-			lines = append(lines, line)
+	if keepANSI {
+		for _, line := range filtered {
+			if !volatileLine.MatchString(line) && !promptOnly.MatchString(line) {
+				lines = append(lines, line)
+			}
 		}
+	} else {
+		dropped := filtered[:0]
+		for _, line := range filtered {
+			if !volatileLine.MatchString(line) {
+				dropped = append(dropped, line)
+			}
+		}
+		lines = canonicalizePromptRuns(dropped)
 	}
 
 	// Preserve internal blank lines but remove meaningless leading/trailing transcript padding.
 	return strings.Trim(strings.Join(lines, "\n"), "\n") + "\n"
+}
+
+// promptFramingLine reports whether a normalized line is blank or a standalone
+// prompt token — the two shapes repaint framing is made of.
+func promptFramingLine(line string) bool {
+	return line == "" || promptOnly.MatchString(line)
+}
+
+// canonicalizePromptRuns collapses each maximal run of blank/prompt lines that
+// contains a prompt: the blank lines before the run's first prompt are kept
+// (their count is the certified message-terminator bytes), and everything from
+// that first prompt to the run's end — later prompts and the blanks between
+// them, i.e. repaint framing — becomes a single <PROMPT> token. Blank runs
+// with no prompt are message-internal bytes and pass through unchanged.
+func canonicalizePromptRuns(lines []string) []string {
+	out := make([]string, 0, len(lines))
+	for i := 0; i < len(lines); {
+		if !promptFramingLine(lines[i]) {
+			out = append(out, lines[i])
+			i++
+			continue
+		}
+		j := i
+		for j < len(lines) && promptFramingLine(lines[j]) {
+			j++
+		}
+		run := lines[i:j]
+		firstPrompt := -1
+		for k, line := range run {
+			if promptOnly.MatchString(line) {
+				firstPrompt = k
+				break
+			}
+		}
+		if firstPrompt < 0 {
+			out = append(out, run...)
+		} else {
+			out = append(out, run[:firstPrompt]...)
+			out = append(out, "<PROMPT>")
+		}
+		i = j
+	}
+	return out
 }
 
 const (

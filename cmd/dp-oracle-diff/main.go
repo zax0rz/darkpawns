@@ -853,6 +853,13 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		if i < len(goBlocks) {
 			goBlock = normalize(goRaw)
 		}
+		// The adopted comparator's two-sided pass: reconcile block-edge
+		// prompt frames between the two sides before diffing. Ordinary
+		// comparisons only — keep-ansi and keep-prompts modes certify their
+		// own raw framing and are outside the blank-line class.
+		if !scenario.KeepANSI && !scenario.KeepPrompts {
+			oracleBlock, goBlock = oraclediff.ReconcilePromptFrames(oracleBlock, goBlock)
+		}
 		label := oracleResult.Command
 		if len(scenario.Peers) > 0 {
 			label = fmt.Sprintf("%s [%s]", oracleResult.Command, oracleResult.Audience)
