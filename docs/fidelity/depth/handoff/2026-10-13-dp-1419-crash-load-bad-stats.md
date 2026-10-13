@@ -93,14 +93,17 @@ A -10 DEX item in an early slot followed by three more worn items costs
   NOWHERE hold makes the two agree. `src/fight.c:1337` (`ROOM_FLAGGED`) is
   short-circuited by `ch != victim` for self-damage, and the room loop at
   `:1425` is inside `if (victim != ch)`; neither is reached.
-* **The lethal sub-case is defined but unported — not R1a.** A zero-DEX replay
-  that takes HP to <= 0 runs C's `damage()` death path at NOWHERE, and
-  `death_cry` handles that explicitly: `src/fight.c:510-515` logs
-  `death_cry() in fight.c called with ch->in_room = NOWHERE`, calls
-  `char_to_room(ch, 0)` — world index 0 — and returns, so a corpse is made in
-  room index 0. The port does not reproduce that branch; the guard test only
-  proves the replay survives it without moving the character. Row
-  `equipment.saved-zero-stats-lethal` stays `blocked`; **Zach's ruling needed**.
+* **The lethal sub-case: ruled "port faithfully" (Zach, 2026-10-13); follow-up PR.**
+  `raw_kill` returns at the top when `in_room == NOWHERE` (`src/fight.c:538-539`),
+  so `death_cry` and `make_corpse` never run during Crash_load: no corpse, no
+  room 0. Instead `damage()` sends "You are dead!  Sorry...", the PC death
+  branch logs `"%s killed by %s at %s"` with `world[-1].name` (an R1a
+  out-of-bounds read, room-name segment only; `:1670-1686`), `die_with_killer`
+  (`:586`) takes exp and may take CON through RNG draws, later items' trips are
+  refused as "damage a corpse", and the character enters the game at
+  `POS_DEAD` with HP <= 0. The full trace is Claude's ruling comment on DP-1419.
+  The guard test only proves the replay survives without moving the character.
+  Row `equipment.saved-zero-stats-lethal` stays `blocked` until the follow-up.
 * **The DEX arm's skill_message victim line is defined and dropped: row
   `equipment.saved-zero-stats-dex-suffering-message` (`blocked`).**
   `TYPE_SUFFERING` is `399` and `IS_WEAPON` is `[TYPE_HIT, TYPE_SUFFERING)`, so
