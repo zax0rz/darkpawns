@@ -75,6 +75,17 @@ or 4 (died / nothing running). Its one line is the whole result.
   scenarios and why they cover it. A brief can require more.
 - **None**: docs-only or website-only changes.
 
+**The final full census is batched, and Claude runs it.** Coding agents run
+targeted censuses while they work and open their PRs without a final full or
+combined census. When several PRs are reviewed and ready, Claude stacks them on
+one scratch branch over current `origin/main` and runs one `--combined` census
+for the batch. A `FAIL` row is attributed by re-running only that scenario
+against each PR. This stops the census queue from serializing every PR, and it
+catches PRs that collide (a duplicate `case_id`, say) before they reach main.
+Don't wait idle while a census runs: start it, then begin the next issue in a
+fresh worktree. Taught 2026-10-14, when four reviewed PRs spent 2¼ hours queued
+for four separate full censuses.
+
 **Infrastructure rows.** The tool re-runs `INFRA`/`TIMEOUT` rows alone once;
 `CLEAN_AFTER_RECHECK` counts as clean. Don't re-run the whole census for them.
 A `FAIL`, `STALE` or `UNPINNABLE` is never retried: investigate it.
