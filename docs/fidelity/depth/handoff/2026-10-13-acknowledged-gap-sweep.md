@@ -229,6 +229,11 @@ differential and targeted census `dp-1371-train10-visibility-targeted` are
 CLEAN. The targeted census ran on committed tip `3f90033f9`: 1 passed, 0
 expected/failed/stale/infra/timeout/unstable; evidence is retained at
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train10-visibility-targeted/`.
+The final combined census ran on committed tip `93e2db3cf` and completed
+`CLEAN_AFTER_RECHECK`: 3,402 pairs, 1,018 deduplicated; full `CLEAN`, claims
+`CLEAN_AFTER_RECHECK`, elapsed 1,978.534s. The scenario row is PASS; retained
+evidence is at
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train10-final/`.
 
 Remaining acknowledged candidates after Train 10 are room-wide undead `DoTurn`
 (`src/new_cmds2.c:960-1030`), the live Lua character/mobile table parity gap
@@ -254,4 +259,4 @@ combat transcript owner boundary stays intact.
 | `make string-census` | PASS: ratchet 98 known go-only segments, 0 unreviewed; reports are stale and were not updated |
 | `gosec -severity=high -quiet ./...` | PASS |
 | Targeted census `dp-1371-train10-visibility-targeted` | CLEAN: 1 passed, 0 expected/failed/stale/infra/timeout/unstable |
-| Final combined census | Pending on the final committed Train 10 tip |
+| Final combined census `dp-1371-train10-final`, Go tip `93e2db3cf` | `oracle-combined: pairs=3402 deduplicated=1018 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=1978.534s verdict=CLEAN_AFTER_RECHECK`; `spec-proc-take-to-jail-visibility` PASS; evidence at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train10-final/` |
