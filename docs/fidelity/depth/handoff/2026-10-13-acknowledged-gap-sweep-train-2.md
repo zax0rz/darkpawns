@@ -108,4 +108,9 @@ The `results.tsv` rows for `lua-bind-actions`, `lua-bind-queries`, and
 `lua-spell-object-target` are all `PASS`. The combined run directory is
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train-2/`.
 This run predates the integration of PRs #1943–#1945; the final combined
-census on the rebased tip is still required before opening the PR.
+census supersedes it. The final integrated census on tip `0b4f99f54` completed
+clean after infrastructure rechecks:
+`oracle-combined: pairs=3402 deduplicated=1018 full=CLEAN_AFTER_RECHECK claims=CLEAN_AFTER_RECHECK elapsed=2081.680s verdict=CLEAN_AFTER_RECHECK rechecked=carve-depth,set-extended-depth`.
+The `results.tsv` rows for `lua-bind-actions` (15), `lua-bind-queries` (14),
+and `lua-spell-object-target` (11) all pass. The retained run is at
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train-2-integrated/`.
