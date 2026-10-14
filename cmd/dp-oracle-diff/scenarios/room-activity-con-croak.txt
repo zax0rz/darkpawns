@@ -1,0 +1,241 @@
+# DP-1426: the CON<=0 croak (src/comm.c:748-754). A mortal whose gear stacks
+# -CON to 0 or below dies in place on the next mobile pulse: the victim line,
+# the room act, a direct raw_kill (corpse, deferred extraction, menu), and
+# HP pinned to 1 for re-entry.
+# depth-case: room-activity.con-croak
+#
+# The mage's CON is table[4] of the 4d6-drop-lowest rolls (class.c
+# roll_real_abils); 81 rerolls land it at 7 or below under seed 1, so the -7
+# stack — rags of a Holy Martyr 4372 (APPLY_CON -5, ABOUT) and a long, black
+# whip 14426 (-2, WIELD), neither carrying an ANTI_ bit a neutral mage trips
+# — pins the effective CON at 0. force-load pins both 20%/40% prototype load
+# percents to certainty. The probe wears both (no pulse advances between
+# commands); `abilities` shows the driven-down Constitution word, then one
+# ~dpclock pump crosses a PULSE_MOBILE and the croak block carries "You are
+# too unhealthy to live!" plus the extraction menu. Choice 1 re-enters past
+# the login CON gate (the gear is in the corpse now); score shows the saved
+# HP 1 and Deaths 0 — a direct raw_kill runs no die_with_killer bookkeeping.
+# The corpse's default-arm text (the attacktype-0 arm of make_corpse,
+# fight.c:369-371, byte-identical to TYPE_UNDEFINED's) is pinned by the unit
+# proof; the loadroom falls back to the hometown temple, out of corpse sight.
+
+[fixture]
+quiet-mobs
+spawn-obj 4372 1 8162 80
+spawn-obj 14426 1 8162 80
+force-load 4372
+force-load 14426
+
+[setup:oracle]
+Oracletst
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+Y
+<ENTER>
+1
+
+[setup:port]
+Oracletst
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Oracletst
+oraclepass
+<ENTER>
+1
+
+[probe]
+get rags
+wear rags
+get whip
+wield whip
+abilities
+~dpclock pulse 80
+1
+score
+look
+quit
