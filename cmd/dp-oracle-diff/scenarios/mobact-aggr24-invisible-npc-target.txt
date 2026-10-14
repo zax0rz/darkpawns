@@ -4,12 +4,14 @@
 # NOHASSLE before moving into the room, so the earlier ordinary aggressive and
 # AGGR24 player branches leave the observer alone. No exits make the pulse
 # deterministic; the probe then pumps the live heartbeat/mobile-activity path.
-# C path: src/mobact.c:324-336 -> src/utils.h:515-530.
+# The stock attacker has AFF_DETECT_INVIS; clear that bit for this case.
+# C path: src/mobact.c:324-336 -> src/utils.h:515-530; AFF bits: src/structs.h:310-321.
 
 [fixture]
 empty-players
 quiet-mobs
 spawn-mob 4914 1 8162 49
+set-mob-aff 4914 132256
 set-mob-flag 4914 AGGRESSIVE
 spawn-mob 4909 1 8162 49
 set-mob-aff 4909 2
