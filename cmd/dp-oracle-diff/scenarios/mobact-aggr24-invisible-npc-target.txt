@@ -12,7 +12,7 @@ quiet-mobs
 spawn-mob 4914 1 8162 49
 set-mob-flag 4914 AGGRESSIVE
 spawn-mob 4909 1 8162 49
-set-mob-aff 4909 1
+set-mob-aff 4909 2
 replace-room-exits 8162 none
 
 [setup:oracle]
