@@ -290,8 +290,13 @@ func (e *Engine) charToTable(b Bridge, ref CharRef) lua.LValue {
 	return e.charToTableDepth(b, ref, 0)
 }
 
-// charToTableDepth bounds the leader recursion: C follows ch->master without
-// a limit and relies on the follower graph having no cycles.
+// maxLeaderDepth bounds the leader recursion. C recurses into ch->master with
+// no limit and relies on circle_follow keeping the follower graph acyclic;
+// every real chain is far shorter than this, so the bound never changes a
+// table. It exists so a follower cycle, should one ever form, cannot recurse
+// until the Go stack overflows and takes the server down.
+const maxLeaderDepth = 1024
+
 func (e *Engine) charToTableDepth(b Bridge, ref CharRef, depth int) lua.LValue {
 	f, ok := b.CharFields(ref)
 	if !ok {
@@ -322,7 +327,7 @@ func (e *Engine) charToTableDepth(b Bridge, ref CharRef, depth int) lua.LValue {
 		t.RawSetString("wear", wear)
 	}
 	t.RawSetString("evil", luaBool(f.Evil))
-	if f.Master != nil && depth < 32 {
+	if f.Master != nil && *f.Master != ref && depth < maxLeaderDepth {
 		t.RawSetString("leader", e.charToTableDepth(b, *f.Master, depth+1))
 	}
 	if !f.NPC {
