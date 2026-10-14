@@ -54,6 +54,16 @@ check() {
 	fi
 }
 
+# run_label_of mirrors census.sh's run_label (RO-014): every report line
+# carries '<run-name> @<go-head short>: '. The short head is read from the
+# run's own go-head.txt — never hardcoded — so the assertions below stay
+# correct on any checkout.
+run_label_of() {
+	local run_dir=$1 head
+	head=$(cut -c1-9 -- "$run_dir/go-head.txt" 2>/dev/null) || head=unknown
+	printf '%s @%s: ' "$(basename -- "$run_dir")" "${head:-unknown}"
+}
+
 # make_stub_runner <file> <mode> — modes: quick, long, infra, infra_fail,
 # fail, timeout. Each writes results.tsv-shaped rows and the summary line.
 make_stub_runner() {
@@ -157,7 +167,7 @@ check "test1: start one line" "census started: $ORACLE_RUNS_ROOT/$(date +%F)/tes
 line=$("$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-quick" --max-seconds 60)
 rc=$?
 check "test1: wait exit 0" 0 "$rc"
-check "test1: wait line" "oracle-regression: stub quick line verdict=CLEAN" "$line"
+check "test1: wait line" "$(run_label_of "$ORACLE_RUNS_ROOT/$(date +%F)/test-quick")oracle-regression: stub quick line verdict=CLEAN" "$line"
 
 fi
 # --- Test 2: second start exits 5; stale lock takeover -------------------
@@ -255,7 +265,7 @@ line=$("$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-wait3" --max-sec
 rc=$?
 check "test5: exit 3" 3 "$rc"
 case "$line" in
-running*) ok "test5: running line" ;;
+"$(run_label_of "$ORACLE_RUNS_ROOT/$(date +%F)/test-wait3")"running\ *) ok "test5: running line" ;;
 *) not_ok "test5: line was: $line" ;;
 esac
 # Clean up: kill the long runner's whole process group so the lock frees.
@@ -276,7 +286,7 @@ line=$("$census" status --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-died")
 rc=$?
 check "test6: exit 4" 4 "$rc"
 case "$line" in
-died*) ok "test6: died line" ;;
+"$(run_label_of "$ORACLE_RUNS_ROOT/$(date +%F)/test-died")"died\ *) ok "test6: died line" ;;
 *) not_ok "test6: line was: $line" ;;
 esac
 
@@ -446,7 +456,7 @@ check "test10: runner gone within 2s" no "$runner_alive"
 check "test10: no stub child survived" no "$stub_alive"
 check "test10: status exit 4" 4 "$rc"
 case "$line" in
-died*) ok "test10: died line" ;;
+"$(run_label_of "$ORACLE_RUNS_ROOT/$(date +%F)/test-sigterm")"died\ *) ok "test10: died line" ;;
 *) not_ok "test10: line was: $line" ;;
 esac
 
@@ -516,7 +526,7 @@ if want_test claims_aborted; then
  line=$("$census" wait --run "$ORACLE_RUNS_ROOT/$(date +%F)/test-claims-aborted" --max-seconds 10)
  rc=$?
  check "claims_aborted: exit" 1 "$rc"
- check "claims_aborted: driver failure is not a false claim" 'oracle-claims: driver failed verdict=NOT_CLEAN' "$line"
+ check "claims_aborted: driver failure is not a false claim" "$(run_label_of "$ORACLE_RUNS_ROOT/$(date +%F)/test-claims-aborted")oracle-claims: driver failed verdict=NOT_CLEAN" "$line"
 fi
 
 if want_test claims_progress; then
