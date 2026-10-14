@@ -25,7 +25,7 @@ pkg/game/deferred_fight_fns.go:36	APPLY_RACE_HATE slot mutation not separately p
 pkg/game/other_character.go	Kai-zai substring gate	e	see source row above
 pkg/spells/affect_spells.go:2155	identify object bitvector currently prints NOBITS	c	C spells.c:476-621 reads object bitvector; Go lacks direct field but parsed APPLY_SPELL affects may support a derived value; confirm model and issue if not safely derivable
 pkg/game/ai.go:79	wandering treats every mob as unable to swim/fly in water/flying sectors	c	src/mobact.c:130-138 calls CAN_SWIM/IS_FLYING; Go has no equivalent capability model; separate design/data-model issue
-pkg/game/houses.go:56,94; house_save.go:33	house lookups and rent object load/save have incomplete adapter/persistence seams	c	lookup callbacks are registered in pkg/session/manager.go:258; house object persistence is stop-tier
+pkg/game/houses.go:56,94; pkg/game/house_save.go:33	house lookups and rent object load/save have incomplete adapter/persistence seams	c	lookup callbacks are registered in pkg/session/manager.go:258; house object persistence is stop-tier
 pkg/session/tattoo.go:64	comment says skull tattoo is message-only	d	stale: game/use_tattoo_depth_test.go proves mob spawn, follow and charm; tattoo cooldown persistence remains stop-tier
 pkg/session/tattoo.go	tattoo effects direct stats and tattoo/timer not serialized	c	C tattoo_af is effective-stat mutation; persistence is stop-tier
 pkg/game/skills2.go:511-520	DoTurn admits it lacks full race tracking and guesses from target name; C scans every room character by race	c	src/new_cmds2.c:960-1030; current skill wrapper accepts one target and lacks C room-wide mana/RNG/state flow; needs dedicated command/room architecture and issue text
@@ -36,7 +36,7 @@ pkg/game/act_display.go:54	score experience said estimated	d	stale: session/disp
 pkg/game/act_movement.go:943	door plural grammar described as rough approximation	d	C's strrchr/final-s test is equivalent to Go's final-byte-s check
 pkg/game/limits_gain.go:154	integer approximation label	d	integer division truncation is C-equivalent
 pkg/game/death.go:871	damage mapping described approximate	d	verify type mapping against src/spells.h; current mapping is a constant transcription, no admitted missing branch found
-pkg/game/skill_advanced.go:256; graph.go:248; damage_stubs.go:38; informative_cmds.go:11-13; agent_vars.go:139	legacy stub wording	d	comments are historical or helpers delegate to live implementations; no current unported C branch identified
+pkg/game/skill_advanced.go:256; pkg/game/graph.go:248; pkg/game/damage_stubs.go:38; pkg/session/informative_cmds.go:11-13; pkg/session/agent_vars.go:139	legacy stub wording	d	comments are historical or helpers delegate to live implementations; no current unported C branch identified
 pkg/session/cmd_group.go:19	shadow TODO	d	stale: `shadow.tsv` and movement_commands.go prove success arm
 pkg/game/actor_specials.go	legacy NPC dispatch limitation	a	owned with generic NPC command interpreter; not expanded in this sweep
 pkg/scripting/engine.go:114-117	dangerous Lua library names intentionally replaced with sandbox error stubs	d	security sandbox behavior, not a missing gameplay routine
