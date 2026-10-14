@@ -52,7 +52,9 @@ All required gates passed, run separately. No race run was added because this ch
 
 ## Train 13 census
 
-Targeted oracle census passed at code tip `0452cdb81`: `dp-1371-train13-aggr24-invisible-final @0452cdb81: oracle-regression: scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=15.316s started=2026-10-14T08:52:31-0400 finished=2026-10-14T08:52:46-0400 verdict=CLEAN`. Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train13-aggr24-invisible-final/`; result row: `PASS\tmobact-aggr24-invisible-npc-target\t12`. The earlier fixture attempts and their retained INFRA/FAIL diagnostics are in the adjacent `*-attempts` directories. Run the one full combined census after the manifest and handoff update, then add its exact line here.
+Targeted oracle census passed at code tip `0452cdb81`: `dp-1371-train13-aggr24-invisible-final @0452cdb81: oracle-regression: scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=15.316s started=2026-10-14T08:52:31-0400 finished=2026-10-14T08:52:46-0400 verdict=CLEAN`. Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train13-aggr24-invisible-final/`; result row: `PASS\tmobact-aggr24-invisible-npc-target\t12`. The earlier fixture attempts and their retained INFRA/FAIL diagnostics are in the adjacent `*-attempts` directories.
+
+Full combined census at final implementation tip `9d5049dc5`: `dp-1371-train13-final @9d5049dc5: oracle-combined: pairs=3410 deduplicated=1026 full=CLEAN claims=CLEAN elapsed=1963.038s verdict=CLEAN`. Retained summary: `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train13-final/summary.txt`; result row: `PASS\tmobact-aggr24-invisible-npc-target\t12` in `results.tsv`.
 
 ## Current train 13 triage delta
 
@@ -65,7 +67,7 @@ Targeted oracle census passed at code tip `0452cdb81`: `dp-1371-train13-aggr24-i
 | Detailed `show shops` | Fixed on main. | Commit `8aa563a332` (`fix: restore detailed show shops report and banking`); `cmd/dp-oracle-diff/scenarios/show-shops-detail.txt`. |
 | Jail-guard visibility | Fixed and merged. | PR #1961 merged at `c50ab9da`; `pkg/combat/engine.go` visibility callback and train-10 evidence. |
 | Water/flying mobile wandering | Fixed on main. | Commit `7a2f3b1049`; `pkg/game/ai.go` and `TestMobileActivityWaterAndFlyingSectorGates`. |
-| `DoTurn` room-wide race behavior | Owned by open PR #1962; no overlapping edits in this sweep. | `src/new_cmds2.c:960-1030`; current PR state verified OPEN. |
+| `DoTurn` room-wide race behavior | Owned by PR #1962; merged during Train 13 closeout. No overlapping edits in this sweep. | `src/new_cmds2.c:960-1030`; PR #1962 merged at `5552fe9f94cfe628482a40102f2728f2a93f35bb` on 2026-10-14. |
 | Corpse attack-type mapping | Fixed on main. | Commit `3694871a1`; `docs/fidelity/depth/corpse.tsv` row `death.corpse-attack-type-mapping` is unit-green. |
 | Lua `iscorpse` predicate and leader-chain depth | Fixed and merged. | PR #1957 merged at `abe411ddd`; `docs/fidelity/depth/lua.tsv` rows `lua.bind-iscorpse-container-value` and `lua.bridge-leader-chain`. |
 | Closed-door mobile wandering | Owned by open PR #1963; no overlapping movement-selection edits in this sweep. | PR #1963 current state verified OPEN. |
