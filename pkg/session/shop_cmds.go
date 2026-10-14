@@ -16,13 +16,6 @@ import (
 // Source: src/shop.c — shopping_list, shopping_buy, shopping_sell
 // ---------------------------------------------------------------------------
 
-// findShopKeeperInRoom scans mobs in the current room for a shopkeeper NPC
-// and returns the matching Shop if found.
-func findShopKeeperInRoom(s *Session) (*game.Shop, string) {
-	shop, name, _ := findShopKeeperAndMobInRoom(s)
-	return shop, name
-}
-
 func findShopKeeperAndMobInRoom(s *Session) (*game.Shop, string, *game.MobInstance) {
 	if s.player == nil || s.manager == nil || s.manager.world == nil {
 		return nil, "", nil
@@ -33,7 +26,9 @@ func findShopKeeperAndMobInRoom(s *Session) (*game.Shop, string, *game.MobInstan
 		return nil, "", nil
 	}
 
-	mobs := s.manager.world.GetMobsInRoom(roomVNum)
+	// src/interpreter.c:1452-1466 runs mobile specials in room-list order;
+	// COrderedRoomMobs mirrors char_to_room's prepend order there.
+	mobs := s.manager.world.COrderedRoomMobs(roomVNum)
 	if len(mobs) == 0 {
 		return nil, "", nil
 	}
@@ -277,7 +272,7 @@ func cmdList(s *Session, args []string) error {
 // cmdBuy buys an item from the shop.
 // Usage: buy <item> [count]
 func cmdBuy(s *Session, args []string) error {
-	shop, keeperName := findShopKeeperInRoom(s)
+	shop, keeperName, keeper := findShopKeeperAndMobInRoom(s)
 	if shop == nil {
 		// No shop spec-proc → do_not_here fires first (act.other.c:208),
 		// before any argument parsing; see cmdList.
@@ -323,9 +318,10 @@ func cmdBuy(s *Session, args []string) error {
 	// Calculate price per item
 	pricePerItem := shop.BuyPrice(matchedProto.Cost, s.player.GetCha())
 	totalPrice := pricePerItem * count
+	pays := s.player.GetLevel() < game.LVL_GOD
 
 	// Check if player can afford
-	if s.player.Gold < totalPrice {
+	if pays && s.player.GetGold() < totalPrice {
 		s.Send("You can't afford it!")
 		return nil
 	}
@@ -343,7 +339,7 @@ func cmdBuy(s *Session, args []string) error {
 
 		// Check gold before creating item (atomically: concurrent drains were
 		// a double-spend, VULN-053)
-		if !s.player.SpendGold(pricePerItem) {
+		if pays && !s.player.SpendGold(pricePerItem) {
 			if bought == 0 {
 				s.Send("You can't afford it!")
 				return nil
@@ -360,7 +356,9 @@ func cmdBuy(s *Session, args []string) error {
 		if err := s.player.Inventory.AddItem(item); err != nil {
 			// The registered item never reached the buyer: unregister it.
 			s.manager.world.ExtractObject(item, -1)
-			s.player.AddGold(pricePerItem)
+			if pays {
+				s.player.AddGold(pricePerItem)
+			}
 			break
 		}
 		// C shopping_buy hands the object over with obj_to_char
@@ -371,6 +369,11 @@ func cmdBuy(s *Session, args []string) error {
 
 	if bought > 0 {
 		totalSpent := pricePerItem * bought
+		// C credits the keeper only when the buyer pays; bank-enabled shops
+		// sweep coins above 15,000 into their runtime account.
+		if pays {
+			s.manager.world.CreditShopPurchase(shop.VNum, keeper, totalSpent)
+		}
 		if bought == 1 {
 			s.Send(fmt.Sprintf("You buy %s for %d gold pieces.", matchedProto.ShortDesc, totalSpent))
 		} else {
@@ -385,7 +388,7 @@ func cmdBuy(s *Session, args []string) error {
 // cmdSell sells an item to the shop.
 // Usage: sell <item>  or  sell all
 func cmdSell(s *Session, args []string) error {
-	shop, keeperName := findShopKeeperInRoom(s)
+	shop, keeperName, keeper := findShopKeeperAndMobInRoom(s)
 	if shop == nil {
 		// No shop spec-proc → do_not_here fires first (act.other.c:208),
 		// before any argument parsing; see cmdList.
@@ -402,7 +405,7 @@ func cmdSell(s *Session, args []string) error {
 
 	// Handle "sell all"
 	if strings.EqualFold(itemName, "all") {
-		return cmdSellAll(s, shop, keeperName)
+		return cmdSellAll(s, shop, keeperName, keeper)
 	}
 
 	// Find item in player's inventory by keyword
@@ -420,6 +423,10 @@ func cmdSell(s *Session, args []string) error {
 
 	// Calculate sell price
 	price := shop.SellPrice(item.GetCost(), s.player.GetCha())
+	if !s.manager.world.TryPayShopSale(shop.VNum, keeper, price) {
+		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageMissingCash1], s.player.GetName()))
+		return nil
+	}
 
 	// Remove item from player, add gold
 	if s.player.Inventory.RemoveItem(item) {
@@ -427,9 +434,11 @@ func cmdSell(s *Session, args []string) error {
 		// PLR_CRASH is set (handler.c:596-598).
 		s.player.MarkCrashNeeded()
 		s.player.AddGold(price)
+		s.manager.world.RebalanceShopBank(shop.VNum, keeper)
 		s.Send(fmt.Sprintf("You sell %s for %d gold pieces.", item.GetShortDesc(), price))
 		s.markDirty(VarInventory)
 	} else {
+		s.manager.world.RefundShopSale(shop.VNum, keeper, price)
 		s.Send("You can't sell that.")
 	}
 
@@ -437,7 +446,7 @@ func cmdSell(s *Session, args []string) error {
 }
 
 // cmdSellAll sells all items the shop will buy from the player's inventory.
-func cmdSellAll(s *Session, shop *game.Shop, keeperName string) error {
+func cmdSellAll(s *Session, shop *game.Shop, keeperName string, keeper *game.MobInstance) error {
 	items := s.player.Inventory.FindItems("")
 	if len(items) == 0 {
 		s.Send("You have nothing to sell.")
@@ -447,6 +456,7 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string) error {
 	sold := 0
 	totalGold := 0
 	var soldNames []string
+	unableToPay := false
 
 	for _, item := range items {
 		if !shop.WillBuyType(item.GetTypeFlag()) {
@@ -454,6 +464,10 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string) error {
 		}
 
 		price := shop.SellPrice(item.GetCost(), s.player.GetCha())
+		if !s.manager.world.TryPayShopSale(shop.VNum, keeper, price) {
+			unableToPay = true
+			break
+		}
 		if s.player.Inventory.RemoveItem(item) {
 			// C shopping_sell's obj_from_char per sold object (shop.c:776).
 			s.player.MarkCrashNeeded()
@@ -461,13 +475,23 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string) error {
 			totalGold += price
 			sold++
 			soldNames = append(soldNames, item.GetShortDesc())
+		} else {
+			s.manager.world.RefundShopSale(shop.VNum, keeper, price)
 		}
 	}
 
 	if sold == 0 {
+		if unableToPay {
+			s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageMissingCash1], s.player.GetName()))
+			return nil
+		}
 		s.Send("The shopkeeper doesn't want anything you have.")
 		return nil
 	}
+	if unableToPay {
+		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageMissingCash2], s.player.GetName()))
+	}
+	s.manager.world.RebalanceShopBank(shop.VNum, keeper)
 
 	if sold == 1 {
 		s.Send(fmt.Sprintf("You sell %s for %d gold pieces.", soldNames[0], totalGold))

@@ -1,0 +1,40 @@
+# C src/shop.c:1311-1444; detailed wizard shop report and selector.
+# depth-case: show.shops-detail
+[fixture]
+empty-players
+quiet-zone 80
+set-room-flag 8162 4 off
+
+[setup:oracle]
+Shopreport
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopreport
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12133
+
+[probe]
+show shops .

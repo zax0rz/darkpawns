@@ -101,6 +101,7 @@ func TestShopSellSetsCrashFlag(t *testing.T) {
 		t.Fatalf("SpawnMob: %v", err)
 	}
 	keeper.Level = 30
+	keeper.SetGold(1000)
 	obj, err := h.w.SpawnObject(7101, -1)
 	if err != nil {
 		t.Fatalf("SpawnObject: %v", err)
@@ -129,11 +130,11 @@ func TestShopSellSetsCrashFlag(t *testing.T) {
 		t.Fatalf("carry 2: %v", err)
 	}
 	h.s.player.SetPlrFlag(game.PlrCrash, false)
-	shop, keeperName := findShopKeeperInRoom(h.s)
+	shop, keeperName, keeper := findShopKeeperAndMobInRoom(h.s)
 	if shop == nil {
 		t.Fatal("no shop in room")
 	}
-	if err := cmdSellAll(h.s, shop, keeperName); err != nil {
+	if err := cmdSellAll(h.s, shop, keeperName, keeper); err != nil {
 		t.Fatalf("cmdSellAll: %v", err)
 	}
 	if !h.s.player.NeedsCrashSave() {
