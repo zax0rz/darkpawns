@@ -1048,7 +1048,7 @@ func TestMobAssistGuards(t *testing.T) {
 		master.SetFightingBody(foe)
 		foe.SetFightingBody(master)
 
-		w.mobAssist(helper, master)
+		w.mobAssist(helper, master.Name)
 		if len(ce.starts) != 0 {
 			t.Fatalf("fighting helper still assisted: %+v", ce.starts)
 		}
@@ -1062,9 +1062,26 @@ func TestMobAssistGuards(t *testing.T) {
 		master.SetFightingBody(foe)
 		foe.SetFightingBody(master)
 
-		w.mobAssist(helper, master)
+		w.mobAssist(helper, master.Name)
 		if len(ce.starts) != 0 {
 			t.Fatalf("mounted helper still assisted: %+v", ce.starts)
+		}
+	})
+	t.Run("master not visible", func(t *testing.T) {
+		// C resolves the helpee with get_char_room_vis(ch, GET_NAME(master))
+		// (src/act.offensive.c:72): an invisible master is NOPERSON to a
+		// mobile without detect invisibility, so nobody is assisted.
+		w, ce := newMobactTestWorld(t)
+		helper := newMobactTestMob(w, 9376, 1, 0, "sentinel")
+		master := newMobactSpeakingPlayer(t, w, "Master")
+		master.SetAffect(affInvisible, true)
+		foe := newMobactTestMob(w, 9377, 1, 0, "sentinel")
+		master.SetFightingBody(foe)
+		foe.SetFightingBody(master)
+
+		w.mobAssist(helper, master.Name)
+		if len(ce.starts) != 0 {
+			t.Fatalf("helper assisted a master it cannot see: %+v", ce.starts)
 		}
 	})
 	t.Run("nobody fighting the helpee", func(t *testing.T) {
@@ -1072,7 +1089,7 @@ func TestMobAssistGuards(t *testing.T) {
 		helper := newMobactTestMob(w, 9374, 1, 0, "sentinel")
 		master := newMobactSpeakingPlayer(t, w, "Master")
 
-		w.mobAssist(helper, master)
+		w.mobAssist(helper, master.Name)
 		if len(ce.starts) != 0 {
 			t.Fatalf("helper assisted with no opponent: %+v", ce.starts)
 		}

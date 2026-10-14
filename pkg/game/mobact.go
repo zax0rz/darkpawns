@@ -442,7 +442,8 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		if ch.IsAffected(affCharm) && ch.GetFollowing() != "" {
 			if master := w.followingActor(ch.GetFollowing()); master != nil {
 				if c, ok := master.(combat.Combatant); ok && c.GetFightingBody() != nil {
-					w.mobAssist(ch, master)
+					// C: do_assist(ch, GET_NAME(ch->master), 0, 0)
+					w.mobAssist(ch, master.GetName())
 					return
 				}
 			}
@@ -521,7 +522,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// -- AGGR24 + AGGRESSIVE + Full HP: attack weaker NPCs --
 	// C: src/mobact.c:324-336. The grin act fires at C's point, between
 	// selecting the visible weaker mobile and hit().
-	if hasMobFlag(ch, "aggr24") && hasMobFlag(ch, "aggressive") && ch.GetHP() >= ch.GetMaxHP() {
+	if hasMobFlag(ch, "aggr24") && hasMobFlag(ch, "aggressive") && ch.GetHP() == ch.GetMaxHP() {
 		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
 			if vict == ch {
 				continue
@@ -549,8 +550,8 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 // descriptor. What remains observable is the helpee line, the room act, and
 // the swing. The opponent scan uses the port's room-occupant helper; C's true
 // room-list order is DP-1364.
-func (w *World) mobAssist(ch *MobInstance, helpee Actor) {
-	if ch == nil || helpee == nil {
+func (w *World) mobAssist(ch *MobInstance, argument string) {
+	if ch == nil {
 		return
 	}
 	// C: if (FIGHTING(ch)) return;
@@ -561,12 +562,20 @@ func (w *World) mobAssist(ch *MobInstance, helpee Actor) {
 	if ch.IsAffected(affMount) {
 		return
 	}
-	// C: get_char_room_vis(ch, arg) — nothing outside the actor's room.
-	if helpee.GetRoom() != ch.GetRoom() {
+	// C: one_argument(argument, arg); then helpee = get_char_room_vis(ch, arg).
+	// The lookup is by name and needs CAN_SEE, so a mobile that cannot see its
+	// master (an invisible player, say) gets NOPERSON and assists nobody.
+	arg, _ := oneArgument(argument)
+	if arg == "" {
 		return
 	}
+	tgt, ok := w.resolveCharInRoomAt(ch, ch.GetRoom(), arg)
+	if !ok {
+		return
+	}
+	helpee := asActor(tgt.Combatant)
 	// C: helpee == ch
-	if Actor(ch) == helpee {
+	if helpee == nil || Actor(ch) == helpee {
 		return
 	}
 	var opponent Actor
