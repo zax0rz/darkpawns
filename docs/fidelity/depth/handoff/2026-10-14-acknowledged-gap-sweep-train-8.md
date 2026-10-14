@@ -81,7 +81,7 @@ changed. Race tests were not required.
 |---|---|
 | `go test ./pkg/game -run 'TestAttackTypeToCorpseAttack|TestRawKillCorpseAttackDispatch|TestRawKillDisintegrateDispatchesDust'` | PASS after restore. |
 | R5h mutation: restore wrong IDs 21/31/34/35, omit meteor swarm 41, and re-add bearhug/trip | RED: the mapping table failed 11 assertions and the real raw-kill description dispatch failed 7 assertions. Restored the corrected implementation. |
-| Live oracle `spec-proc-medusa`, follow-up room look, seeds 1/2/8 | Pending targeted census after the shared census slot opens. |
+| Live oracle `spec-proc-medusa`, follow-up room look | PASS: targeted census `dp-1371-train8-medusa`, seed 1, `CLEAN`; retained at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train8-medusa/`. |
 | Full combined census on committed Train 8 tip | Pending; append the retained verdict and summary after completion. |
 
 The full handoff includes the D4 attack mapping row and D3 Medusa corpse
@@ -104,7 +104,7 @@ generic (R1/R5e/R5h).
 | `make fidelity-units` | PASS; 1,426 rows, 1,316 symbols, 1,611 claims |
 | `make string-census` | PASS; 98 known Go-only segments, 0 unreviewed. It reported 24 obsolete baseline entries and stale generated reports; no report update was needed for this train. |
 | `gosec -severity=high -quiet ./...` | PASS |
-| Targeted census `spec-proc-medusa` | Pending while Train 7's full combined census occupies the shared slot. |
+| Targeted census `spec-proc-medusa` | PASS: `scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0`; `CLEAN` at Go HEAD `3694871a1`. |
 | Final combined census on committed Train 8 tip | Pending. |
 
 ## Delivery
