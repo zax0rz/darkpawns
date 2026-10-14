@@ -1,0 +1,52 @@
+# depth-case: mob.aggr24-invisible-npc-target
+# C's AGGR24 + AGGRESSIVE full-health mobile scan must skip an invisible weaker
+# NPC before it can select the candidate. The first-player God observer toggles
+# NOHASSLE before moving into the room, so the earlier ordinary aggressive and
+# AGGR24 player branches leave the observer alone. No exits make the pulse
+# deterministic; the probe then pumps the live heartbeat/mobile-activity path.
+# C path: src/mobact.c:324-336 -> src/utils.h:515-530.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4914 1 8162 49
+set-mob-flag 4914 AGGRESSIVE
+spawn-mob 4909 1 8162 49
+set-mob-aff 4909 1
+replace-room-exits 8162 none
+
+[setup:oracle]
+Aggr24probe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8162
+
+[setup:port]
+Aggr24probe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8162
+
+[probe]
+~dpclock pulse 40
+look

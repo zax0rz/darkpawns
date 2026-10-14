@@ -6,7 +6,7 @@ This train restores C's visibility gate for the AGGR24 + AGGRESSIVE full-health 
 
 C call path rechecked in `src/`: `src/comm.c:817` calls `mobile_activity()`; `src/mobact.c:324-336` contains the branch, `CAN_SEE` candidate predicate, room grin act, and `hit()`; `src/utils.h:515-530` defines visibility. Go's heartbeat path is `cmd/server/main.go:623`, then `pkg/game/mobact.go:124`. The separate C room grin at `src/mobact.c:333` is omitted by Go and remains blocked under the shared attack/message owner boundary; this train does not change it.
 
-The existing oracle fixture can spawn mobs and set innate affects, but the AGGR24 NPC branch also requires `MOB_AGGRESSIVE`. Its earlier ordinary aggressive branch attacks a visible player before this branch. The harness has no NPC combat-target state probe; an in-room player witness would enter the shared `hit()`/combat transcript boundary, while an observerless run exposes no selection result. I therefore used the live global pulse unit proof and did not add an oracle scenario that would conflate this gate with the separately owned attack/message behavior (R1/R3/R5e).
+The oracle fixture can spawn both stock NPCs, set the target's innate `AFF_INVISIBLE`, and enable the attacker's `MOB_AGGRESSIVE` flag. The scenario uses the `empty-players` fixture to crown its observer as God, toggles `NOHASSLE`, then moves the observer into room 8162. C's earlier ordinary aggressive and AGGR24 player scans skip that observer; the NPC scan must still skip the invisible weaker target. It pumps the actual heartbeat/mobile-activity path, so an ungated selection can enter combat and produce observable pulse output. Scenario: `mobact-aggr24-invisible-npc-target`. This preserves the shared `hit()` implementation and only uses it as the observable consequence of an incorrect target selection (R1/R3/R5e).
 
 ### R5h control
 
@@ -17,6 +17,8 @@ Removed the new `if !canSee(ch, vict) { continue }` gate and ran `go test ./pkg/
 - `pkg/game/mobact.go`: apply the C candidate visibility check before the level comparison and combat-engine call.
 - `pkg/game/mobact_test.go`: test invisible-candidate skip, visible weaker-candidate selection, actual `MobileActivity` dispatch, and pinned draw sequence.
 - `docs/fidelity/depth/combat-entry.tsv`: mark the selection proof unit-green and track the missing pre-hit grin separately as blocked.
+- `docs/fidelity/depth/mobile-activity.tsv`: add the invisible-NPC target proof row.
+- `cmd/dp-oracle-diff/scenarios/mobact-aggr24-invisible-npc-target.txt`: set up a NOHASSLE God observer, the stock AGGR24 attacker, and the invisible weaker NPC.
 - `docs/fidelity/depth/surface-inventory.tsv`: mark target visibility proven and add the blocked room-act surface.
 - `docs/fidelity/depth/handoff/2026-10-14-acknowledged-gap-sweep-train13.md`: this report and carried-forward full inventory.
 
@@ -29,29 +31,42 @@ All required gates passed, run separately. No race run was added because this ch
 - `go vet ./...` — PASS.
 - `go test ./...` — PASS.
 - `go test ./pkg/game/...` — PASS.
+- `go test ./cmd/dp-oracle-diff` — PASS after adding the targeted scenario.
 - `golangci-lint run ./...` — PASS, 0 issues.
 - `make deadcode-ratchet` — PASS, 52 baselined and 0 new.
-- `make fidelity-depth` — PASS, 5,540 cases, 5,449 proven/delegated, 11 blocked, 68 excluded, 12 divergent-approved; 99.8% actionable completion.
-- `make fidelity-units` — PASS, 1,432 rows, 1,324 symbols, 1,618 claims across 14 packages.
+- `make fidelity-depth` — PASS, 5,541 cases, 5,450 proven/delegated, 11 blocked, 68 excluded, 12 divergent-approved; 99.8% actionable completion.
+- `make fidelity-units` — PASS, 1,433 rows, 1,324 symbols, 1,619 claims across 14 packages.
 - `make string-census` — PASS, 98 known Go-only segments and 0 unreviewed; reports the pre-existing 24 baseline entries no longer produced and stale generated reports.
 - `gosec -severity=high -quiet ./...` — PASS.
 
 ## Train 13 census
 
-No targeted oracle census is applicable for the selection-only proof for the reasons above. The one full combined census for this train will be run on its final tip once the shared census slot is free; its exact line will be recorded here.
+Targeted oracle census for `mobact-aggr24-invisible-npc-target` is pending release of the shared slot. After it passes, run the one full combined census for this train on the final tip and record both exact lines here.
 
 ## Current train 13 triage delta
 
 | Item | Disposition | Evidence |
 |---|---|---|
-| AGGR24 aggressive-NPC target visibility | Fixed in Train 13; depth and surface rows now point to the real-pulse unit proof. | `pkg/game/mobact.go`; `TestAggr24MobileTargetVisibilityGateUsesGlobalPulse`; R5h control above. |
+| AGGR24 aggressive-NPC target visibility | Fixed in Train 13; depth and surface rows point to the real-pulse unit proof, with a targeted oracle case pending. | `pkg/game/mobact.go`; `TestAggr24MobileTargetVisibilityGateUsesGlobalPulse`; `mobact-aggr24-invisible-npc-target`; R5h control above. |
 | AGGR24 pre-hit room grin | Blocked and kept separate from the selection fix under the shared attack/message owner boundary. | C emits `act("$n grins evilly.", ..., TO_ROOM)` after selection at `src/mobact.c:333`; Go omits it before entering `StartCombat`. |
 | Global `point_update` object timer pass | Fixed by Train 12 / PR #1964. | Train 12 implementation and retained target census in the prior handoff below; combined census completion is recorded there after it exits. |
-| Remaining baseline items | Carry forward their existing fixed, owned, stop-tier, tracked, exclusion, and issue dispositions without scope change. | Full A/B inventories, triage, evidence, and prior train proof records below. |
+| Player-equipment `APPLY_RACE_HATE`; Lua object-target spell/location gate; Kai-zai spell ID; mobile wounded/charmed, scavenger visibility, player-hunter gates; mobile `canget`; Lua follow | Fixed in trains 1–5. | Their exact C paths, proof tests, PRs, controls, and census lines are in the carried-forward train records; merged PRs #1953–#1955 cover the related script/spell and mobile actor fixes. |
+| Detailed `show shops` | Fixed on main. | Commit `8aa563a332` (`fix: restore detailed show shops report and banking`); `cmd/dp-oracle-diff/scenarios/show-shops-detail.txt`. |
+| Jail-guard visibility | Fixed and merged. | PR #1961 merged at `c50ab9da`; `pkg/combat/engine.go` visibility callback and train-10 evidence. |
+| Water/flying mobile wandering | Fixed on main. | Commit `7a2f3b1049`; `pkg/game/ai.go` and `TestMobileActivityWaterAndFlyingSectorGates`. |
+| `DoTurn` room-wide race behavior | Owned by open PR #1962; no overlapping edits in this sweep. | `src/new_cmds2.c:960-1030`; current PR state verified OPEN. |
+| Corpse attack-type mapping | Fixed on main. | Commit `3694871a1`; `docs/fidelity/depth/corpse.tsv` row `death.corpse-attack-type-mapping` is unit-green. |
+| Lua `iscorpse` predicate and leader-chain depth | Fixed and merged. | PR #1957 merged at `abe411ddd`; `docs/fidelity/depth/lua.tsv` rows `lua.bind-iscorpse-container-value` and `lua.bridge-leader-chain`. |
+| Closed-door mobile wandering | Owned by open PR #1963; no overlapping movement-selection edits in this sweep. | PR #1963 current state verified OPEN. |
+| Mobile memory warning and helper-assist arms | Inventory only; defer room acts and attacks to the shared combat/message owner. | Baseline A inventory cites `src/mobact.c:261-302`; these branches remain outside the selection-only fixes. |
+| AGGR24 room grin act | Blocked under the shared attack/message owner; copy-ready Claude issue above. | `src/mobact.c:332-334`; no Go room act before `StartCombat`. |
+| `DP-1426`, `DP-1419`, `DP-1423/1424/1425`, `DP-493`, `DP-1364`, generic NPC command interpreter, persistence/session/transport/save-format work | Owned or stop-tier; inventory only. | Exact owner assignments and evidence are preserved in the baseline triage and full A/B appendices below. |
+| No-caller `get_obj`, ordinary-stock identify bitvector, legacy Lua fallback, and stale/accurate helper comments | Evidence-based exclusions or stale comments. | Baseline A inventory retains the call-site/world-data evidence and corresponding depth records. |
+| Remaining assigned SPECIAL branches | No missing Go registration; existing branch statuses remain governed by the full 533-row special manifest. | All 89 assignment names, C definitions, and Go registrations are in Appendix B; retain its excluded/delegated/divergent/blocked statuses. |
 
 ## Copy-ready issue text for Claude: preserve AGGR24's room grin act
 
-C's AGGR24 + AGGRESSIVE full-health mobile branch emits `act("$n grins evilly.", FALSE, ch, 0, 0, TO_ROOM)` after it selects the first visible weaker NPC and immediately before `hit()` (`src/mobact.c:324-336`). Go's branch in `pkg/game/mobact.go` selects a target and calls `StartCombat` without the room act. Please add the exact C room-audience message at the same point using the existing act/output path, with a fail-capable real-pulse proof and an oracle observer case if the combat-owner boundary can be isolated. Preserve C candidate order, the `CAN_SEE` gate, existing RNG draws, and shared `hit()`/combat transcript ownership. Add an R5h revert control. Cite R1/R3/R5e and coordinate with the owner of `mob.teleport-victim-combat-transcript` before changing attack/message behavior.
+C's AGGR24 + AGGRESSIVE full-health mobile branch emits `act("$n grins evilly.", FALSE, ch, 0, 0, TO_ROOM)` after it selects the first visible weaker NPC and immediately before `hit()` (`src/mobact.c:324-336`). Go's branch in `pkg/game/mobact.go` selects a target and calls `StartCombat` without the room act. Please add the exact C room-audience message at the same point using the existing act/output path, with a fail-capable real-pulse proof and an oracle observer case. The `mobact-aggr24-invisible-npc-target` fixture shows how an empty-player God observer with `NOHASSLE` avoids the ordinary player-aggression branch. Preserve C candidate order, the `CAN_SEE` gate, existing RNG draws, and shared `hit()`/combat transcript ownership. Add an R5h revert control. Cite R1/R3/R5e and coordinate with the owner of `mob.teleport-victim-combat-transcript` before changing attack/message behavior.
 
 ---
 
