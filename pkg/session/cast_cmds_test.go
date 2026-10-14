@@ -696,3 +696,61 @@ func TestResolveCastTargetOrderAndEmptyDefaults(t *testing.T) {
 		t.Fatalf("object scope order target = %#v, prompt %q; want inventory object", target.object, prompt)
 	}
 }
+
+// TestCastFumbleRetaliationDrawsAndEnrols pins DP-1438's cast arm: a violent
+// fumble makes the mob retaliate with hit(tch, ch, TYPE_UNDEFINED)
+// (spell_parser.c:1101-1106) — the mob's first swing consumes hit()'s draws
+// and runs damage()'s gates before enrolment. The old plain StartCombat
+// enrolled without a swing (zero swing draws); this test fails on that shape
+// (R5h). The seed pins a fumble roll above proficiency and a natural-1 miss,
+// so exactly castNumber + number(1,20) are consumed.
+func TestCastFumbleRetaliationDrawsAndEnrols(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	session := makeTestSession(t, m, "Caster", 1001, true)
+	registerInWorld(t, session)
+	session.player.SetMana(100)
+	prepareCaster(session, game.ClassMageUser, "flame arrow", 5)
+
+	weight := castWeightPenalty(session.player)
+	var seed uint32
+	for s := uint32(1); s < 8192; s++ {
+		dprng.ResetStream(s)
+		if dprng.Number(0, 101+weight) <= 5 {
+			continue
+		}
+		dprng.ResetStream(s)
+		dprng.Number(0, 101+weight)
+		if dprng.Number(1, 20) == 1 {
+			seed = s
+			break
+		}
+	}
+	if seed == 0 {
+		t.Fatal("no seed found with a fumble and a missed retaliation")
+	}
+
+	dprng.ResetStream(seed)
+	if err := cmdCast(session, []string{"'flame", "arrow'", "target"}); err != nil {
+		t.Fatalf("cmdCast: %v", err)
+	}
+	gotNext := dprng.Number(0, 999)
+
+	// Reference: the fumble roll, then the missed to-hit roll.
+	dprng.ResetStream(seed)
+	dprng.Number(0, 101+weight)
+	dprng.Number(1, 20)
+	wantNext := dprng.Number(0, 999)
+	if gotNext != wantNext {
+		t.Fatalf("fumble retaliation changed the draw stream: next=%d, want %d (fumble + number(1,20) consumed)", gotNext, wantNext)
+	}
+	if !m.combatEngine.IsFighting(mob) {
+		t.Error("fumble retaliation did not enrol the mob")
+	}
+	if got := readSessionText(t, session); got != "You lost your concentration!\r\n" {
+		t.Errorf("output = %q, want the concentration line", got)
+	}
+}

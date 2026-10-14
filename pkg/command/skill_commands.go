@@ -1515,12 +1515,19 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		_ = s.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToCh)))
 	}
 
-	// C's failed cutthroat arm calls hit(ch, victim, SKILL_CUTTHROAT), which
-	// resolves one ordinary weapon attack synchronously after the literal
-	// lunge messages. PerformInitialAttack is the shared hit() path used by
-	// do_hit and preserves its to-hit, damage, audience, and combat state.
+	// C's failed cutthroat arm calls hit(ch, victim, SKILL_CUTTHROAT)
+	// (new_cmds.c:652), which resolves one ordinary weapon attack
+	// synchronously after the literal lunge messages: draws first, then
+	// damage()'s gates against the pre-enrolment state, enrolment only when
+	// the damage is not refused. Older test engines keep the eager shape.
 	if result.InitialAttack && target != nil {
-		if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
+		if deferred, ok := s.GetCombatEngine().(interface {
+			PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
+		}); ok && deferred != nil {
+			if err := deferred.PerformDeferredInitialAttack(ch, target); err != nil {
+				slog.Error("cutthroat initial attack failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
+			}
+		} else if engine, ok := s.GetCombatEngine().(rescueCombatEngine); ok && engine != nil {
 			if err := engine.StartCombat(ch, target); err != nil {
 				slog.Error("cutthroat initial attack combat start failed", "attacker", ch.GetName(), "target", target.GetName(), "error", err)
 			} else if err := engine.PerformInitialAttack(ch, target); err != nil {
