@@ -22,7 +22,9 @@ func TestIsFightingBasic(t *testing.T) {
 }
 
 // mockWorldForTest is a minimal mock for testing
-type mockWorldForTest struct{}
+type mockWorldForTest struct {
+	chars map[string]ScriptableChar
+}
 
 func (m *mockWorldForTest) GetPlayersInRoom(roomVNum int) []ScriptablePlayer {
 	return nil
@@ -93,6 +95,12 @@ func (m *mockWorldForTest) SetHunting(hunterName, preyName string, hunterIsMob b
 func (m *mockWorldForTest) IsHunting(charName string, isMob bool) bool               { return false }
 func (m *mockWorldForTest) EquipMob(mobVNum, roomVNum, objVNum int)                  {}
 func (m *mockWorldForTest) GetPlayerByID(id int) ScriptablePlayer                    { return nil }
+func (m *mockWorldForTest) GetScriptableChar(name string) ScriptableChar {
+	if m.chars == nil {
+		return nil
+	}
+	return m.chars[name]
+}
 
 func (m *mockWorldForTest) SetObjectExtraDesc(vnum int, keyword string, description string) bool {
 	return false
@@ -1373,18 +1381,27 @@ type testMob struct {
 	name string
 }
 
-func (m *testMob) GetVNum() int               { return m.vnum }
-func (m *testMob) GetName() string            { return m.name }
-func (m *testMob) GetLevel() int              { return 30 }
-func (m *testMob) GetHealth() int             { return 100 }
-func (m *testMob) SetHealth(h int)            {}
-func (m *testMob) GetMaxHealth() int          { return 100 }
-func (m *testMob) GetGold() int               { return 0 }
-func (m *testMob) GetRoomVNum() int           { return 1000 }
-func (m *testMob) GetFighting() string        { return "" }
-func (m *testMob) SetHunting(target string)   {}
-func (m *testMob) IsHunting() bool            { return false }
-func (m *testMob) SetFollowing(leader string) {}
+func (m *testMob) GetVNum() int                          { return m.vnum }
+func (m *testMob) GetName() string                       { return m.name }
+func (m *testMob) GetLevel() int                         { return 30 }
+func (m *testMob) GetHealth() int                        { return 100 }
+func (m *testMob) SetHealth(h int)                       {}
+func (m *testMob) GetMaxHealth() int                     { return 100 }
+func (m *testMob) GetGold() int                          { return 0 }
+func (m *testMob) GetRoomVNum() int                      { return 1000 }
+func (m *testMob) GetFighting() string                   { return "" }
+func (m *testMob) SetHunting(target string)              {}
+func (m *testMob) IsHunting() bool                       { return false }
+func (m *testMob) SetFollowing(leader string)            {}
+func (m *testMob) GetCarriedObjects() []ScriptableObject { return nil }
+func (m *testMob) GetWornObjects() []ScriptableObject    { return nil }
+func (m *testMob) GetPosition() int                      { return 8 }
+func (m *testMob) GetAlias() string                      { return m.name }
+func (m *testMob) GetAlignment() int                     { return 0 }
+func (m *testMob) GetWaitState() int                     { return 0 }
+func (m *testMob) GetLeaderName() string                 { return "" }
+func (m *testMob) AsPlayer() ScriptablePlayer            { return nil }
+func (m *testMob) AsMob() ScriptableMob                  { return m }
 func (m *testMob) GetPrototype() ScriptableMobPrototype {
 	return &testMobPrototype{shortDesc: m.name}
 }

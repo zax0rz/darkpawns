@@ -3,6 +3,16 @@ package scripting
 
 import "github.com/zax0rz/darkpawns/pkg/parser"
 
+// ScriptableChar is char_to_table's union view of one link in the leader
+// chain: C recurses into ch->master, which may be a player or a mobile. The
+// legacy (non-bridge) table builder uses it to recurse; exactly one of
+// AsPlayer/AsMob is non-nil.
+// Source: src/scripts.c:1870-1873.
+type ScriptableChar interface {
+	AsPlayer() ScriptablePlayer
+	AsMob() ScriptableMob
+}
+
 // ScriptablePlayer represents a player that can be exposed to Lua scripts.
 type ScriptablePlayer interface {
 	GetID() int
@@ -24,6 +34,31 @@ type ScriptablePlayer interface {
 	// GetInventoryItems returns the player's carried objects for Lua exposure.
 	// Source: scripts.c char_to_table() — ch->carrying loop.
 	GetInventoryItems() []ScriptableObject
+	// GetWornObjects returns the equipped objects in C's wear-slot order
+	// (GET_EQ(ch, 0..NUM_WEARS-1), present slots only).
+	// Source: src/scripts.c:1849-1863.
+	GetWornObjects() []ScriptableObject
+	// GetPosition is GET_POS(ch). Source: src/scripts.c:1838.
+	GetPosition() int
+	// GetAlias is ch->player.name, the keyword list (NOT GET_NAME, which is
+	// the display name for a player and the short description for a mobile).
+	// Source: src/scripts.c:1839.
+	GetAlias() string
+	// GetLeaderName is ch->master as the follow target's name, or "" when the
+	// character has no master. Source: src/scripts.c:1870-1873.
+	GetLeaderName() string
+	// GetFollowerCount is num_followers(ch). Source: src/scripts.c:1884.
+	GetFollowerCount() int
+	// GetExp, GetBankGold, GetMana, GetMove, GetCha, GetJailTimer and GetTattoo
+	// are the remaining player-only fields of char_to_table.
+	// Source: src/scripts.c:1876-1884.
+	GetExp() int
+	GetBankGold() int
+	GetMana() int
+	GetMove() int
+	GetCha() int
+	GetJailTimer() int
+	GetTattoo() int
 }
 
 // ScriptableMob represents a mob that can be exposed to Lua scripts.
@@ -44,6 +79,26 @@ type ScriptableMob interface {
 	IsHunting() bool
 	// SetFollowing sets the mob's follow target by name.
 	SetFollowing(leaderName string)
+	// GetCarriedObjects returns the mobile's carried objects (ch->carrying).
+	// Source: src/scripts.c:1841-1847.
+	GetCarriedObjects() []ScriptableObject
+	// GetWornObjects returns the equipped objects in C's wear-slot order.
+	// Source: src/scripts.c:1849-1863.
+	GetWornObjects() []ScriptableObject
+	// GetPosition is GET_POS(ch). Source: src/scripts.c:1838.
+	GetPosition() int
+	// GetAlias is ch->player.name, the mobile's keyword list.
+	// Source: src/scripts.c:1839.
+	GetAlias() string
+	// GetAlignment is GET_ALIGNMENT(ch), used for IS_EVIL.
+	// Source: src/scripts.c:1833, 1865-1868.
+	GetAlignment() int
+	// GetWaitState is GET_MOB_WAIT(ch), the mobile-only "timer" field.
+	// Source: src/scripts.c:1887.
+	GetWaitState() int
+	// GetLeaderName is ch->master as the follow target's name, or "".
+	// Source: src/scripts.c:1870-1873.
+	GetLeaderName() string
 }
 
 // ScriptableMobPrototype represents mob prototype data.
@@ -174,6 +229,11 @@ type ScriptableWorld interface {
 
 	// GetPlayerByID returns a player by instance ID, or nil if not found.
 	GetPlayerByID(id int) ScriptablePlayer
+
+	// GetScriptableChar resolves a follow target (ch->master) by name for the
+	// legacy char-table builder's leader chain. It returns nil when no such
+	// character is in the world.
+	GetScriptableChar(name string) ScriptableChar
 
 	// SetObjectExtraDesc stores a runtime extra description on an object instance
 	// identified by vnum. Used by the Lua extra() function to attach custom text

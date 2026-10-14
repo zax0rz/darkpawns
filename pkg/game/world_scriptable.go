@@ -295,6 +295,19 @@ func (a *WorldScriptableAdapter) GetPlayerByID(id int) scripting.ScriptablePlaye
 	return a.world.GetPlayerByID(id)
 }
 
+// GetScriptableChar resolves a follow target (ch->master) by name for the
+// legacy char-table builder's leader chain. It reuses the world's follower
+// resolver, so it selects exactly the body C's ch->master points at.
+func (a *WorldScriptableAdapter) GetScriptableChar(name string) scripting.ScriptableChar {
+	switch v := a.world.followingActor(name).(type) {
+	case *Player:
+		return v
+	case *MobInstance:
+		return v
+	}
+	return nil
+}
+
 func (a *WorldScriptableAdapter) SetObjectExtraDesc(vnum int, keyword string, description string) bool {
 	return a.world.SetObjectExtraDesc(vnum, keyword, description)
 }
