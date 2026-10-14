@@ -33,11 +33,11 @@ behavior were reviewed but are not gaps.
 
 The TSV is the itemized inventory. Fixed in trains 1-5: player-equipment
 `APPLY_RACE_HATE`, Lua object-target spell dispatch and location gate, Kai-zai
-spell-ID gate, mobile activity/scavenger/player-hunter gates, and Lua mobile
-follow. Current fix candidates: detailed `show shops`, jail-guard visibility,
-water/flying mobile wandering, `DoTurn`'s room-wide race behavior, corpse
-attack mapping, the Lua `iscorpse`/`canget` bindings, and the Lua leader-table
-depth cap. Blocked depth rows
+spell-ID gate, mobile activity/scavenger/player-hunter gates, live mobile-actor
+`canget`, and Lua mobile follow. Current fix candidates: detailed `show shops`,
+jail-guard visibility, water/flying mobile wandering, `DoTurn`'s room-wide
+race behavior, corpse attack mapping, the Lua `iscorpse` binding, and the Lua
+leader-table depth cap. Blocked depth rows
 retain AGGR24 target visibility and global point-update object timers. Owned or
 tracked: DP-1426, DP-1364, DP-493, generic NPC command dispatch, and
 `mob.teleport-victim-combat-transcript`. Stop-tier: date-record persistence,
@@ -156,17 +156,15 @@ The wizard command currently omits C's detailed report
 formatting, and ordering, with a transcript vehicle for empty and populated
 shops. Keep it read-only and preserve the current command gates. Cite R1/R2/R5e.
 
-### Match the `iscorpse` and `canget` Lua bindings
+### Match the `iscorpse` Lua binding
 
-The production Lua table bridge follows C's `char_to_table` path. Two helper
-bindings still diverge: `pkg/scripting/engine.go:1392-1397` treats type 18 as a
-corpse instead of checking C's container type plus value[3], and
-`pkg/scripting/engine.go:1411-1459` checks the player table `ch` and player
-carry capacity where C's `lua_canget` passes mobile `me` to `CAN_GET_OBJ`.
-Please match the C predicates with real Lua dispatch proofs and a revert
-control, retaining the already-matching invalid-argument and nil return arms.
-C paths: `src/scripts.c:193-219,636-654`,
-`src/utils.h:490-491,535-549`, and `src/structs.h:434`. Cite R1/R4/R5e.
+The production Lua table bridge follows C's `char_to_table` path.
+`pkg/scripting/engine.go:1392-1397` treats type 18 as a corpse instead of
+checking C's container type plus value[3]. Please match the C predicate with
+real Lua dispatch proof and a revert control, retaining the already-matching
+invalid-argument and nil return arms. C paths: `src/scripts.c:636-654`,
+`src/utils.h:490-491`, and `src/structs.h:434`. `canget`'s acting-mobile
+predicate is fixed in train 4 / PR #1955. Cite R1/R4/R5e.
 
 ### Preserve the full Lua leader chain
 

@@ -102,8 +102,9 @@ expanded. They passed:
 
 The comments TSV now marks Lua object-target spell dispatch and its location
 gate (Train 2 / PR #1953), Kai-zai (Train 3 / PR #1954), the mobile-activity,
-scavenger, and player-hunter `set_hunt` fixes (Train 4 / PR #1955), and Lua
-mobile follow (this train) as fixed in the sweep. Ordinary stock-object
+scavenger, player-hunter `set_hunt`, and live mobile-actor `canget` fixes
+(Train 4 / PR #1955), and Lua mobile follow (this train) as fixed in the sweep.
+Ordinary stock-object
 identify bitvectors are recorded as an evidence-based exclusion; the
 unserialized legacy rent-record value remains stop-tier. Water/flying mobile
 wandering is reclassified as fixable: Go's `roomActivityHasBoat` already
@@ -117,8 +118,8 @@ omits meteor swarm (C 41). AGGR24 selection and global point-update object
 timers retain blocked depth rows; memory/helper attack transcript work remains
 with its named owner. Further fix candidates for later trains are `DoTurn`,
 detailed `show shops`, water/flying wandering, corpse attack mapping,
-jail-guard visibility, the Lua `iscorpse`/`canget` bindings, and full Lua
-leader-chain tables. Date records,
+jail-guard visibility, the Lua `iscorpse` binding, and full Lua leader-chain
+tables. Date records,
 string editing, help-miss usage logging, house object persistence, and tattoo
 timer persistence remain stop-tier under DP-1423/1424/1425 and the goal's
 entry/nanny, login, transport, session, and save-format boundaries. The
@@ -130,7 +131,9 @@ scripts are archived, so those comments are excluded. The DoMindlink
 depth proof, and the apparent success branch is excluded by C's `!IS_NPC`
 macros. Stop-tier boundaries are documented in the original handoff.
 
-PR #1955 also adds `lua.bind-follow-mobile-leader` as blocked. This train marks
+PR #1955 also adds `lua.bind-follow-mobile-leader` as blocked and modifies
+`pkg/scripting/engine.go` for the `canget` fix; the planned `iscorpse` fix will
+touch that file too, so check merge order. This train marks
 that same depth row `oracle-green`, so the PRs share a depth-manifest line and
 will need merge-order coordination or a rebase. PR #1953 and #1955 also touch
 `pkg/game/world_bridge.go`; their changes are independent of this follow path.
