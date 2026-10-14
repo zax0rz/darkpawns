@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -75,59 +76,64 @@ func (w *World) runMobAI(mob *MobInstance) {
 //   - CAN_GO(ch, door): the exit exists in that cardinal direction.
 //   - ROOM_DEATH / ROOM_NOMOB: skip.
 //   - MOB_STAY_ZONE: skip exits that leave the mob's home zone.
-//   - Sector swim/fly checks (Go has no CAN_SWIM/IS_FLYING, so water/flying
-//     rooms are skipped for all mobs — pre-existing conservative behavior).
+//   - Water sectors require CAN_SWIM; the flying sector requires IS_FLYING
+//     (mobact.c:130-138; utils.h:148-153). A failed sector gate continues the
+//     C mobile_activity loop, skipping this mob's remaining pulse behavior.
 //
 // Note: SENTINEL and exact POS_STANDING are checked by the caller only after it
 // has consumed the unconditional door draw.
-func (w *World) wanderMobWithDoor(mob *MobInstance, door int) {
+// The return value is true only for the C sector-gate continue described above.
+func (w *World) wanderMobWithDoor(mob *MobInstance, door int) bool {
 	// door < NUM_OF_DIRS (len(dirs) == 6): if the draw isn't a real direction,
 	// the mob doesn't move this tick. This is both the gate and the direction.
 	if door < 0 || door >= len(dirs) {
-		return
+		return false
 	}
 
 	snap := w.snapshots.Snapshot()
 	room, ok := snap.Rooms[mob.GetRoom()] // getter — mutex-protected
 	if !ok {
-		return
+		return false
 	}
 
 	direction := dirs[door]
 	exit, ok := room.Exits[direction] // CAN_GO(ch, door)
 	if !ok {
-		return
+		return false
 	}
 	targetRoom, ok := snap.Rooms[exit.ToRoom]
 	if !ok {
-		return
+		return false
 	}
 
 	// MOB_STAY_ZONE: skip exits that lead to a different zone (mobact.c:127-128).
 	if hasMobFlag(mob, "stay_zone") && targetRoom.Zone != room.Zone {
-		return
+		return false
 	}
 
-	// Sector constraints (C: mobact.c:130-138). Go has no CAN_SWIM/IS_FLYING,
-	// so skip water/flying rooms for all wandering mobs (pre-existing behavior).
-	if targetRoom.Sector == SECT_WATER_SWIM || targetRoom.Sector == SECT_WATER_NOSWIM {
-		return
-	}
-	if targetRoom.Sector == SECT_FLYING {
-		return
-	}
-
-	// ROOM_DEATH and ROOM_NOMOB (mobact.c:125-126).
-	// The ROOM_DEATH skip here subsumes C's NPC-DT death path
-	// (act.movement.c:288-301 includes IS_NPC(ch)); wandering mobs never enter DT rooms.
+	// C checks ROOM_DEATH and ROOM_NOMOB before either sector gate.
+	// ROOM_DEATH also subsumes C's NPC-DT death path (act.movement.c:288-301).
 	if roomHasFlag(targetRoom, "death") || roomHasFlag(targetRoom, "no_mob") {
-		return
+		return false
+	}
+
+	// C's CAN_SWIM includes waterwalk, fly, no-hassle, and has_boat
+	// (utils.h:150-153; act.movement.c:58-78). The existing room activity
+	// helper models has_boat for mobiles, including innate affects and boats.
+	if targetRoom.Sector == SECT_WATER_SWIM || targetRoom.Sector == SECT_WATER_NOSWIM {
+		if !roomActivityHasBoat(mob) {
+			return true // mobact.c:131-135 continues the outer mobile loop
+		}
+	}
+	// IS_FLYING is AFF_FLY or PRF_NOHASSLE (utils.h:148-149). NPC preference
+	// flags are the zeroed dummy_mob record (db.c:1281), so only AFF_FLY applies.
+	if targetRoom.Sector == SECT_FLYING && !mob.IsAffected(affFly) {
+		return true // mobact.c:136-138 continues the outer mobile loop
 	}
 
 	// Move mob. GetRoom/SetRoom lock individually; the caller no longer holds
 	// mob.mu (DP-590), so there is no lock to release or re-acquire here.
 	oldRoom := mob.GetRoom()
-	mob.SetRoom(targetRoom.VNum)
 
 	slog.Debug(
 		"mob wandered",
@@ -138,20 +144,52 @@ func (w *World) wanderMobWithDoor(mob *MobInstance, door int) {
 		"dir", direction,
 	)
 
-	// Notify players in old room
-	oldPlayers := w.GetPlayersInRoom(oldRoom)
-	for _, p := range oldPlayers {
-		p.SendMessage(mob.GetShortDesc() + " leaves " + direction + ".\n")
+	// src/act.movement.c:214-220: perform_move() sends the leave act unless
+	// the mobile is sneaking. Act preserves C's visibility and capitalization.
+	if !mob.IsAffected(affSneak) {
+		Act(w, true, mob, nil, nil, nil, fmt.Sprintf("$n leaves %s.", direction), "", ToRoom)
 	}
 
-	// Notify players in new room
-	newPlayers := w.GetPlayersInRoom(targetRoom.VNum)
-	for _, p := range newPlayers {
-		p.SendMessage(mob.GetShortDesc() + " has arrived.\n")
+	// C char_from_room/char_to_room and arrival act: act.movement.c:222-280.
+	mob.SetRoom(targetRoom.VNum)
+	if !mob.IsAffected(affSneak) {
+		var arrival string
+		switch door {
+		case 0, 1, 2, 3:
+			direct := dirs[revDir[door]]
+			switch {
+			case mob.IsAffected(affFly):
+				arrival = fmt.Sprintf("$n flies in from the %s.", direct)
+			case targetRoom.Sector == SECT_UNDERWATER:
+				arrival = fmt.Sprintf("$n swims in from the %s.", direct)
+			default:
+				arrival = fmt.Sprintf("$n arrives from the %s.", direct)
+			}
+		case 4:
+			switch {
+			case mob.IsAffected(affFly):
+				arrival = "$n flies in from below."
+			case targetRoom.Sector == SECT_UNDERWATER:
+				arrival = "$n swims in from below."
+			default:
+				arrival = "$n climbs in from below."
+			}
+		case 5:
+			switch {
+			case mob.IsAffected(affFly):
+				arrival = "$n flies in from above."
+			case targetRoom.Sector == SECT_UNDERWATER:
+				arrival = "$n swims in from above."
+			default:
+				arrival = "$n climbs in from above."
+			}
+		}
+		Act(w, true, mob, nil, nil, nil, arrival, "", ToRoom)
 	}
 
 	// MobProg entry trigger — fires when mob enters a room
 	w.EntryProg(mob, targetRoom.VNum)
+	return false
 }
 
 // StartEventQueue starts the event processing loop used by MobProg delayed
