@@ -286,6 +286,35 @@ func TestRoomActivityLoudMobs(t *testing.T) {
 		return w, out
 	}
 
+	t.Run("a closed door keeps the noise in", func(t *testing.T) {
+		// CAN_GO (src/utils.h:565-567) refuses an EX_CLOSED exit.
+		w, out := build(t, "You hear a sprite humming.")
+		if _, err := w.SpawnMob(1, 1001); err != nil {
+			t.Fatal(err)
+		}
+		room := w.GetRoomInWorld(1001)
+		ext := room.Exits["east"]
+		ext.ExitInfo |= parser.ExitIsDoor | parser.ExitClosed
+		room.Exits["east"] = ext
+		north := NewPlayer(1, "Northwatch", 1002)
+		east := NewPlayer(3, "Eastwatch", 1003)
+		for _, p := range []*Player{north, east} {
+			p.Stats.Con = 11
+			p.CopyBaseAttributes()
+			if err := w.AddPlayer(p); err != nil {
+				t.Fatal(err)
+			}
+		}
+		installDrawRecorder(t, 0)
+		w.RoomActivity()
+		if got, want := out["Northwatch"], "You hear a sprite humming.\r\n"; got != want {
+			t.Fatalf("open exit heard %q, want %q", got, want)
+		}
+		if got := out["Eastwatch"]; got != "" {
+			t.Fatalf("noise crossed a closed door: %q", got)
+		}
+	})
+
 	t.Run("draw fires and noise reaches adjacent rooms only", func(t *testing.T) {
 		w, out := build(t, "You hear a sprite humming.")
 		if _, err := w.SpawnMob(1, 1001); err != nil {

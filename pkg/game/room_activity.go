@@ -433,7 +433,9 @@ func (w *World) loudMobs(m *MobInstance) {
 	}
 	for door := 0; door < len(dirs); door++ {
 		ext, ok := room.Exits[dirs[door]]
-		if !ok || ext.ToRoom <= 0 {
+		// CAN_GO (src/utils.h:565-567): the exit exists, leads somewhere, and
+		// is not EX_CLOSED, so a closed door keeps the noise in.
+		if !ok || ext.ToRoom <= 0 || ext.ExitInfo&parser.ExitClosed != 0 {
 			continue
 		}
 		w.actInRoom(m, ext.ToRoom, noise)
