@@ -197,3 +197,55 @@ boundary.
 | `make string-census` | PASS, ratchet 98 known go-only segments; generated reports were already stale, and the command warned to run `make string-census-update` |
 | `gosec -severity=high -quiet ./...` | PASS |
 | Full combined census (`dp-1371-train-1`, Go code tip `e996c7e46`) | `oracle-combined: pairs=3396 deduplicated=1016 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=1994.722s verdict=CLEAN_AFTER_RECHECK`; `wear-race-hate-pulse` PASS |
+
+## Train 10 — jail-guard damage visibility
+
+Started from fresh `origin/main` at `d8e8024ddbfe52fbde36d16e0b02e2d7606fac71`
+in the isolated `codex/luna-acknowledged-gap-sweep-10` worktree. The inventory
+identified `src/fight.c:1374`'s `CAN_SEE(ch, victim)` condition missing from
+both Go damage paths: the combat engine intercept in `pkg/combat/engine.go`
+and legacy `takeDamageFrom` in `pkg/combat/fight_core.go`. The stale DP-1054
+TODO was removed. A world-wired callback now mirrors the source predicate,
+including its ordering: `GET_REAL_LEVEL` precedes HOLYLIGHT, then blindness,
+room light/infravision, and invisibility/detect-invisibility; AFF_HIDE remains
+outside this `CAN_SEE` predicate. This is separate from and does not change the
+combat transcript/RNG owner boundary `mob.teleport-victim-combat-transcript`.
+
+The fail-capable test control removed both visibility checks: the two focused
+damage tests failed, with one taking the intercept and the other suppressing
+ordinary damage. Restoring the checks made the focused tests pass. The oracle
+vehicle `spec-proc-take-to-jail-visibility` uses assigned mob 8001, whose
+prototype has DETECT_INVIS, and sets a level-1 victim's invisibility level to
+25 while the guard's level is 22. C's earlier level gate therefore rejects
+visibility even though DETECT_INVIS is present. The victim starts combat, then
+the `comm.c:822-823` -> `perform_violence()` -> `hit()` path deals ordinary
+damage and leaves the player in the room. The registered special's fighting
+arm is also reachable from the `perform_violence()` tail in
+`fight.c:2030-2031`; this scenario does not claim autonomous
+`mobile_activity()` dispatch for a fighting mob. Direct seed-1 differential is
+CLEAN; the targeted census remains pending.
+
+Remaining acknowledged candidates after Train 10 are room-wide undead `DoTurn`
+(`src/new_cmds2.c:960-1030`), the live Lua character/mobile table parity gap
+(`src/scripts.c:1812-1916`), and point-update object timers, which remain blocked
+pending depth proof. Mobile memory/helper attack arms and AGGR24+AGGRESSIVE
+visibility remain owned or blocked as recorded in the inventory; the shared
+combat transcript owner boundary stays intact.
+
+### Train 10 proof record
+
+| Evidence | Result |
+|---|---|
+| Direct `spec-proc-take-to-jail-visibility`, seed 1 | CLEAN; ordinary damage output and post-combat room look match; the victim is not jailed |
+| R5h revert control for both Go jail-guard checks | RED as required: `TestMobRedirect_JailGuardDoesNotSubdueInvisibleVictim` and `TestTakeDamage_JailGuardDoesNotSubdueInvisibleVictim` fail when their visibility checks are removed |
+| Focused combat and world visibility tests | PASS |
+| `make fmt`; `make check-fmt`; `git diff --check` | PASS |
+| `go build ./...`; `go vet ./...` | PASS separately |
+| `go test ./...`; `go test ./pkg/game/...`; `go test -race ./pkg/combat ./pkg/game` | PASS separately |
+| `golangci-lint run ./...` | PASS: 0 issues |
+| `make deadcode-ratchet` | PASS: 52 baselined, 0 new |
+| `make fidelity-depth` | PASS: 5,522 cases; 5,432 proven/delegated; 99.8% actionable completion |
+| `make fidelity-units` | PASS: 1,425 rows, 1,313 symbols, 1,608 claims |
+| `make string-census` | PASS: ratchet 98 known go-only segments, 0 unreviewed; reports are stale and were not updated |
+| `gosec -severity=high -quiet ./...` | PASS |
+| Targeted census and final combined census | Pending; shared census slot is occupied by Train 9 final run |

@@ -512,6 +512,33 @@ func TestMobRedirect_JailGuardSubduesInsteadOfDamaging(t *testing.T) {
 	}
 }
 
+func TestMobRedirect_JailGuardDoesNotSubdueInvisibleVictim(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	guard := &mockCombatant{name: "jail guard", npc: true, room: 8117, level: 30, hp: 80, maxHP: 100}
+	victim := &mockCombatant{name: "Thief", room: 8117, level: 20, hp: 1000, maxHP: 1000}
+	subdued := false
+	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		MobHasJailGuardSpec: func(Combatant) bool { return true },
+		CanSee:              func(observer, subject Combatant) bool { return false },
+		HasAffect:           func(Combatant, int) bool { return false },
+		HasAffectStr:        func(Combatant, string) bool { return false },
+		JailGuardSubdue: func(Combatant, Combatant) bool {
+			subdued = true
+			return true
+		},
+	})
+
+	if ce.applyMobCombatRedirects(guard, victim) {
+		t.Fatal("invisible victim triggered the jail-guard redirect")
+	}
+	if subdued {
+		t.Fatal("jail guard subdue callback ran for an invisible victim")
+	}
+}
+
 func TestMobRedirect_NonJailMobDoesNotSubdue(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)

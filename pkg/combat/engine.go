@@ -951,9 +951,9 @@ func (ce *CombatEngine) applyMobCombatRedirectsAfterJail(attacker, defender Comb
 
 	// Jail guard intercept: city jail guards subdue eligible PCs instead of
 	// killing them, then cart them to jail.
-	// TODO(DP-1054): C also gates on CAN_SEE(ch, victim); no CanSee callback exists yet.
 	if !defender.IsNPC() &&
 		cbMobHasJailGuardSpec(attacker) &&
+		cbCanSee(attacker, defender) &&
 		attacker.GetHP() > attacker.GetMaxHP()/2 &&
 		!cbHasAffectStr(defender, AFF_STR_VAMPIRE) &&
 		!cbHasAffectStr(defender, AFF_STR_WEREWOLF) {
