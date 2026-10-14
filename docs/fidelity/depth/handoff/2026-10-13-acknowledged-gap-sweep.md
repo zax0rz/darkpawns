@@ -215,15 +215,17 @@ The fail-capable test control removed both visibility checks: the two focused
 damage tests failed, with one taking the intercept and the other suppressing
 ordinary damage. Restoring the checks made the focused tests pass. The oracle
 vehicle `spec-proc-take-to-jail-visibility` uses assigned mob 8001, whose
-prototype has DETECT_INVIS, and sets a level-1 victim's invisibility level to
-25 while the guard's level is 22. C's earlier level gate therefore rejects
-visibility even though DETECT_INVIS is present. The victim starts combat, then
-the `comm.c:822-823` -> `perform_violence()` -> `hit()` path deals ordinary
-damage and leaves the player in the room. The registered special's fighting
-arm is also reachable from the `perform_violence()` tail in
-`fight.c:2030-2031`; this scenario does not claim autonomous
-`mobile_activity()` dispatch for a fighting mob. Direct seed-1 differential is
-CLEAN; the targeted census remains pending.
+prototype's affect value `1032` carries DETECT_INVIS bit 3
+(`lib/world/mob/80.mob:1-8`; `src/structs.h:313`), and sets a level-1 victim's
+invisibility level to 25 while the guard's level is 22. C's earlier level gate
+therefore rejects visibility even though DETECT_INVIS is present. The victim
+starts combat; then the `comm.c:822-823` -> `perform_violence()` -> `hit()` path
+deals ordinary damage and leaves the player in the room. The registered
+special is redispatched from the `perform_violence()` tail at
+`fight.c:2030-2031`; `take_to_jail` reaches its fighting arm at
+`spec_procs2.c:1430-1434`. `mobile_activity()` skips fighting mobs
+(`src/mobact.c:68`), so the exercised path is combat update. Direct seed-1
+differential is CLEAN; the targeted census remains pending.
 
 Remaining acknowledged candidates after Train 10 are room-wide undead `DoTurn`
 (`src/new_cmds2.c:960-1030`), the live Lua character/mobile table parity gap

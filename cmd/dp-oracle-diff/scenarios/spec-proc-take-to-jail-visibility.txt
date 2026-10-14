@@ -4,7 +4,9 @@
 # path and registered-special tail reach fight.c:1370-1400 and
 # SPECIAL(take_to_jail)'s fighting arm (spec_procs2.c:1432-1434). The victim is
 # level 1 with invisibility level 25; the level-22 guard has DETECT_INVIS, but
-# fails the earlier GET_REAL_LEVEL check and deals ordinary damage.
+# fails the earlier GET_REAL_LEVEL check and deals ordinary damage. Vnum 8001's
+# affect field is 1032 in lib/world/mob/80.mob:1-8; DETECT_INVIS is bit 3
+# (src/structs.h:313).
 
 [fixture]
 empty-players
