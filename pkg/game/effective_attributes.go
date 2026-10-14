@@ -61,7 +61,9 @@ func (p *Player) CopyBaseAttributes() {
 }
 
 func (p *Player) affectTotalLocked() {
-	stats := p.affectTotalForItemsLocked(COrderedWorn(p))
+	worn := COrderedWorn(p)
+	p.RaceHates = raceHateSlotsForItems(worn)
+	stats := p.affectTotalForItemsLocked(worn)
 	p.effectiveAttributes = &stats
 	p.Alignment = max(-1000, min(p.Alignment, 1000))
 }

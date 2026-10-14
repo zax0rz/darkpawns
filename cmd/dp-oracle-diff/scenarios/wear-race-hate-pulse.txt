@@ -1,0 +1,46 @@
+# Stock object 5200 applies races 18 and 20. After the real wield command,
+# the race-18 mobile pulse must select the wearer through APPLY_RACE_HATE.
+# The C affect/equipment path is src/handler.c:205-238 and the pulse consumer
+# is src/mobact.c:236-258. This vehicle observes the complete dispatch transcript.
+# depth-case: wear.player-race-hate-mobile-dispatch
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8552 1 8105 85
+
+[setup:oracle]
+Racehate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Racehate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+load obj 5200
+wield dagger
+
+[probe]
+~dpclock pulse 20
