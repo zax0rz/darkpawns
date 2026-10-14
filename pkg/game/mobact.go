@@ -173,11 +173,6 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		w.huntVictim(ch)
 	}
 
-	// C: if (GET_HIT(ch) < GET_MAX_HIT(ch) && MOB_FLAGGED(ch, MOB_CHARMED)) continue;
-	if ch.GetHP() < ch.GetMaxHP() && hasMobFlag(ch, "charmed") {
-		return
-	}
-
 	// -- MOB_SPEC: special procedure dispatch --
 	// C: spec proc returns true to skip to next mob.
 	if hasMobFlag(ch, "spec") {
@@ -196,10 +191,9 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	}
 
 	// -- Scavenger (pick up best item, ~1-in-10 chance) --
-	// C: mobact.c:103-117 — checks CAN_GET_OBJ(ch, obj) (which requires
-	// ITEM_WEAR_TAKE + carry weight/count headroom + CAN_SEE_OBJ) AND
-	// GET_OBJ_COST(obj) > max starting with max=1, so items costing 0 or 1
-	// are never picked up. Go previously had neither check (DP-1042).
+	// C: mobact.c:103-117 — checks CAN_GET_OBJ(ch, obj) (ITEM_WEAR_TAKE,
+	// carry weight/count headroom, and CAN_SEE_OBJ) AND GET_OBJ_COST(obj) > max
+	// starting with max=1, so items costing 0 or 1 are never picked up.
 	if hasMobFlag(ch, "scavenger") {
 		items := w.GetItemsInRoom(ch.RoomVNum)
 		// C only burns this draw when the room actually has contents.
@@ -207,24 +201,11 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		if len(items) > 0 && mobactNumber(0, 10) == 0 {
 			maxCost := 1 // C: max = 1; items must cost > 1 to be picked up
 			var best *ObjectInstance
-			carriedW := mobCarriedWeight(ch)
-			carriedN := len(ch.Inventory)
-			maxCarryW := mobMaxCarryWeight(ch)
-			maxCarryN := mobMaxCarryCount(ch)
 			for _, obj := range items {
-				if !obj.IsTakeable() { // CAN_WEAR(obj, ITEM_WEAR_TAKE)
+				if !w.canGetObject(ch, obj) { // C: CAN_GET_OBJ(ch, obj)
 					continue
 				}
 				if obj.GetCost() <= maxCost { // GET_OBJ_COST(obj) > max
-					continue
-				}
-				// CAN_CARRY_OBJ: weight + count headroom
-				// (utils.h:543-545). CAN_SEE_OBJ is omitted — mobs have no
-				// sight flags in Go (pre-existing behavior).
-				if carriedW+obj.GetWeight() > maxCarryW {
-					continue
-				}
-				if carriedN+1 > maxCarryN {
 					continue
 				}
 				best = obj

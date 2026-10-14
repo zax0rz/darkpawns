@@ -1,10 +1,13 @@
 package game
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
 // huntingMudlogWorld is a room, a mob prototype and a complete-syslog immortal
@@ -103,4 +106,47 @@ func TestLogHuntingStartGates(t *testing.T) {
 			t.Fatalf("observer = %q, want %q", got, want)
 		}
 	})
+}
+
+func TestLuaSetHuntPlayerHunterUsesCPlayerPreyLog(t *testing.T) {
+	w, mobile, _, output := huntingMudlogWorld(t)
+	hunter := NewPlayer(3, "Playerhunter", 1001)
+	if err := w.AddPlayer(hunter); err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "globals.lua"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "hunt.lua"), []byte(
+		"function oncmd()\nset_hunt(ch, ch)\nreturn TRUE\nend\n",
+	), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	a := NewWorldScriptableAdapter(w)
+	e := scripting.NewEngine(dir, a)
+	t.Cleanup(e.Close)
+	chRef := scripting.CharRef{ID: hunter.GetID()}
+	meRef := scripting.CharRef{NPC: true, ID: mobile.GetID()}
+	ctx := &scripting.ScriptContext{World: a, ChRef: &chRef, MeRef: &meRef, RoomVNum: 1001}
+	if handled, err := e.RunScript(ctx, "hunt.lua", "oncmd"); err != nil || !handled {
+		t.Fatalf("script contract: handled=%t err=%v", handled, err)
+	}
+	want := "[ Playerhunter started hunting Playerhunter ]\r\n"
+	if got := output.String(); got != want {
+		t.Fatalf("player hunter log = %q, want %q", got, want)
+	}
+
+	output.Reset()
+	if err := os.WriteFile(filepath.Join(dir, "hunt.lua"), []byte(
+		"function oncmd()\nset_hunt(ch, me)\nreturn TRUE\nend\n",
+	), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if handled, err := e.RunScript(ctx, "hunt.lua", "oncmd"); err != nil || !handled {
+		t.Fatalf("mobile-prey script contract: handled=%t err=%v", handled, err)
+	}
+	if got := output.String(); got != "" {
+		t.Fatalf("mobile prey arm logged %q, want no C log", got)
+	}
 }

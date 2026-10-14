@@ -271,6 +271,14 @@ func (a *WorldScriptableAdapter) CanCarryObject(charName string, objVNum int) bo
 	return a.world.CanCarryObject(charName, objVNum)
 }
 
+// CanGetObject is the live lua_canget predicate. C evaluates me and the exact
+// object table passed to canget, not the trigger player and an object vnum.
+func (a *WorldScriptableAdapter) CanGetObject(me scripting.CharRef, obj scripting.ObjRef) bool {
+	actor, _, _ := a.resolveChar(me)
+	object := a.resolveObj(obj)
+	return a.world.canGetObject(actor, object)
+}
+
 func (a *WorldScriptableAdapter) IsCorpseObj(objVNum int) bool {
 	return a.world.IsCorpseObj(objVNum)
 }

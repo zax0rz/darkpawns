@@ -1077,9 +1077,9 @@ func (a *WorldScriptableAdapter) Follow(me, leader scripting.CharRef, charm bool
 
 // SetHunt is lua_set_hunt's set_hunting(hunter, vict).
 func (a *WorldScriptableAdapter) SetHunt(hunter scripting.CharRef, vict *scripting.CharRef) {
-	m := a.mobFor(hunter)
-	if m == nil {
-		slog.Warn("lua set_hunt for a player is not ported; ignored")
+	actor, _, m := a.resolveChar(hunter)
+	if actor == nil {
+		slog.Warn("lua set_hunt target could not be resolved", "id", hunter.ID, "npc", hunter.NPC)
 		return
 	}
 	prey := ""
@@ -1094,8 +1094,10 @@ func (a *WorldScriptableAdapter) SetHunt(hunter scripting.CharRef, vict *scripti
 	}
 	// scripts.c:1358: set_hunting(hunter, vict), whose producer fires before
 	// the target is stored. A mobile or id-less prey is C's silent arm.
-	LogHuntingStart(m, preyPlayer)
-	m.SetHunting(prey)
+	LogHuntingStart(actor, preyPlayer)
+	if m != nil {
+		m.SetHunting(prey)
+	}
 }
 
 // Spell is lua_spell: cast_spell(me, vict, obj, spell) when vocal, else

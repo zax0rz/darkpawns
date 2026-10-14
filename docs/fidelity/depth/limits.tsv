@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+point_update	object timer pass	point-update.global-object-list-timers	D5	automatic-call	blocked	point-update-object-timers	src/limits.c:529-684; src/handler.c:1046-1082	C walks the global object_list and updates timers for floor, carried, and contained objects, including corpse content spill and location-specific messages. Go currently limits point-update timer effects to room-floor objects; preserve C list order, locations, draws, and output in a depth proof before fixing (R1/R3/R5e).

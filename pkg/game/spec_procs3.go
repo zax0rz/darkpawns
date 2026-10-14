@@ -360,7 +360,7 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 
 // butlerVisibleRoomObject mirrors get_obj_in_list_vis(mobile, name, room
 // contents), including numbered names, prefix matching, and object visibility.
-func butlerVisibleRoomObject(me *MobInstance, name string, items []*ObjectInstance) *ObjectInstance {
+func butlerVisibleRoomObject(w *World, me *MobInstance, name string, items []*ObjectInstance) *ObjectInstance {
 	query := strings.TrimSpace(name)
 	number := GetNumber(&query)
 	if number <= 0 || query == "" {
@@ -371,7 +371,7 @@ func butlerVisibleRoomObject(me *MobInstance, name string, items []*ObjectInstan
 		if obj == nil || !isnameWithAbbrevs(query, obj.GetKeywords()) {
 			continue
 		}
-		if !canSeeObject(me, obj) && obj.GetTypeFlag() != ITEM_LIGHT {
+		if !canSeeObjectInWorld(w, me, obj) && obj.GetTypeFlag() != ITEM_LIGHT {
 			continue
 		}
 		found++
@@ -429,20 +429,14 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 	// C resolves the three targets with get_obj_in_list_vis before its entry
 	// gate. Keep the same room-list order and visibility semantics.
-	cas := butlerVisibleRoomObject(me, "case", items)
-	cabinet := butlerVisibleRoomObject(me, "cabinet", items)
-	chest := butlerVisibleRoomObject(me, "chest", items)
+	cas := butlerVisibleRoomObject(w, me, "case", items)
+	cabinet := butlerVisibleRoomObject(w, me, "cabinet", items)
+	chest := butlerVisibleRoomObject(w, me, "chest", items)
 	if cas == nil || cabinet == nil || chest == nil {
 		return false
 	}
 
-	canGet := func(obj *ObjectInstance) bool {
-		if obj == nil || !obj.IsTakeable() || !canSeeObject(me, obj) {
-			return false
-		}
-		return mobCarriedWeight(me)+obj.GetWeight() <= mobMaxCarryWeight(me) &&
-			len(me.Inventory)+1 <= mobMaxCarryCount(me)
-	}
+	canGet := func(obj *ObjectInstance) bool { return w.canGetObject(me, obj) }
 
 	got := 0
 	// C walks world[room].contents from the head (newest first; obj_to_room

@@ -323,6 +323,24 @@ func TestSpecButler_CanGetPredicateAndFourItemCap(t *testing.T) {
 	})
 }
 
+func TestButlerVisibleRoomObjectUsesWorldLight(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	setRoomFlagBit(w.GetRoomInWorld(1001), 0)
+	mob := newMobactDrawTestMob("butler")
+	obj := NewObjectInstance(&parser.Obj{
+		VNum: 9403, Keywords: "probe case", ShortDesc: "a probe case",
+	}, 1001)
+	items := []*ObjectInstance{obj}
+
+	if got := butlerVisibleRoomObject(w, mob, "probe", items); got != nil {
+		t.Fatal("butler selected an object in darkness without infravision")
+	}
+	mob.SetAffected(affInfravision)
+	if got := butlerVisibleRoomObject(w, mob, "probe", items); got != obj {
+		t.Fatal("butler with infravision did not select the visible object")
+	}
+}
+
 func TestSpecButler_CapacityFailurePreservesInventoryState(t *testing.T) {
 	w, actor, peer, mob, messages := newButlerTestWorld(t)
 	_, _, chest := setupButlerContainers(t, w)

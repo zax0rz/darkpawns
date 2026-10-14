@@ -1411,7 +1411,9 @@ func (e *Engine) luaIsCorpse(L *lua.LState) int {
 func (e *Engine) luaCanGet(L *lua.LState) int {
 	// canget(obj) - returns true if the mob is permitted to pick up the object.
 	// Source: scripts.c lua_canget() lines 193-219.
-	// Checks CAN_GET_OBJ(ch, obj) — verifies ITEM_WEAR_TAKE flag and weight limits.
+	// C checks CAN_GET_OBJ(me, obj), including take flag, carry limits, and
+	// object visibility in me's room. Keep the old vnum query as a fallback for
+	// lightweight ScriptableWorld implementations that do not retain live refs.
 	if e.world == nil {
 		L.Push(lua.LNumber(1))
 		return 1
@@ -1431,6 +1433,22 @@ func (e *Engine) luaCanGet(L *lua.LState) int {
 		return 1
 	}
 	objVNum := int(vnumVal.(lua.LNumber))
+	if checker, ok := e.world.(interface {
+		CanGetObject(CharRef, ObjRef) bool
+	}); ok {
+		me, okMe := charRefOf(L.GetGlobal("me"))
+		obj, okObj := objRefOf(tbl)
+		if !okMe || !okObj {
+			L.Push(lua.LNil)
+			return 1
+		}
+		if checker.CanGetObject(me, obj) {
+			L.Push(lua.LNumber(1))
+		} else {
+			L.Push(lua.LNil)
+		}
+		return 1
+	}
 	// Get character name from the global 'ch' table (set by script context)
 	chTbl := L.GetGlobal("ch")
 	if chTbl == lua.LNil {

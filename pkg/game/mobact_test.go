@@ -98,6 +98,17 @@ func TestMobileActivityStandingMobBurnsSameTwoDraws(t *testing.T) {
 	assertTwoDrawStreamPosition(t, seed)
 }
 
+func TestMobileActivityWoundedCharmedMobKeepsCActivity(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	mob := newMobactDrawTestMob("sentinel", "charmed")
+	mob.SetHealth(1)
+
+	draws := captureMobactDraws(t)
+	w.mobileActivityForMob(mob)
+
+	assertMobactDraws(t, draws, []mobactDrawRange{{0, 18}, {0, 15}})
+}
+
 func TestMobileActivitySoundDrawPrecedesAggressiveDraw(t *testing.T) {
 	w := newMobactDrawTestWorld()
 	w.combatEngine = &testCombatEngine{}
@@ -185,6 +196,58 @@ func TestMobileActivityScavengerDrawPrecedesMovementWhenRoomHasContents(t *testi
 	w.mobileActivityForMob(mob)
 
 	assertMobactDraws(t, draws, []mobactDrawRange{{0, 10}, {0, 18}, {0, 15}})
+}
+
+func TestMobileActivityScavengerUsesCanGetVisibility(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		dark        bool
+		invisible   bool
+		detect      bool
+		infravision bool
+		wantPickup  bool
+	}{
+		{name: "invisible", invisible: true},
+		{name: "detect invisible", invisible: true, detect: true, wantPickup: true},
+		{name: "dark", dark: true},
+		{name: "infravision", dark: true, infravision: true, wantPickup: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := newMobactDrawTestWorld()
+			if tc.dark {
+				setRoomFlagBit(w.GetRoomInWorld(1001), 0)
+			}
+			mob := newMobactDrawTestMob("scavenger", "sentinel")
+			mob.Str, mob.Dex = 18, 18
+			mob.CopyBaseAttributes()
+			if tc.detect {
+				mob.SetAffected(affDetectInvisible)
+			}
+			if tc.infravision {
+				mob.SetAffected(affInfravision)
+			}
+			obj := NewObjectInstance(&parser.Obj{
+				VNum: 9402, Keywords: "probe gem", ShortDesc: "a probe gem",
+				WearFlags: [4]int{1}, Weight: 1, Cost: 10,
+			}, 1001)
+			if tc.invisible {
+				obj.SetExtraFlag(0, extraFlagInvisible)
+			}
+			w.roomItems[1001] = []*ObjectInstance{obj}
+			previous := mobactNumber
+			mobactNumber = func(from, to int) int { return 0 }
+			t.Cleanup(func() { mobactNumber = previous })
+
+			w.mobileActivityForMob(mob)
+
+			if got := len(mob.Inventory); (got == 1) != tc.wantPickup {
+				t.Fatalf("carried count=%d want pickup=%t", got, tc.wantPickup)
+			}
+			if got := len(w.roomItems[1001]); (got == 0) != tc.wantPickup {
+				t.Fatalf("room item count=%d want pickup=%t", got, tc.wantPickup)
+			}
+		})
+	}
 }
 
 // testCombatEngine is a minimal CombatEngine implementation for mobact tests.
