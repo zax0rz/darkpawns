@@ -1,4 +1,5 @@
 # depth-case: mob.aggr24-invisible-npc-target
+# depth-case: mobact.aggr24-visible-mobile-selection
 # C's AGGR24 + AGGRESSIVE full-health mobile scan must skip an invisible weaker
 # NPC before it can select the candidate. The first-player God observer toggles
 # NOHASSLE before moving into the room, so the earlier ordinary aggressive and

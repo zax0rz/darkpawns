@@ -2,24 +2,35 @@
 
 ## Train 13 closure
 
-This train restores C's visibility gate for the AGGR24 + AGGRESSIVE full-health mobile scan. C checks `CAN_SEE(ch, tmp_ch)` before it selects a weaker NPC; Go previously selected the first weaker NPC regardless of visibility. The real-dispatch unit proof calls `World.MobileActivity()` with one NPC candidate, captures only the existing combat-engine handoff, and pins the four movement/sound draws. It leaves character-list ordering to DP-1364 and makes no attack, message, or combat-engine changes.
+This train restores C visibility handling across the mobile activity scan and its shared callers. C checks `CAN_SEE(ch, tmp_ch)` before the AGGR24 + AGGRESSIVE full-health branch selects a weaker NPC; Go previously selected the first weaker NPC regardless of visibility. The black-box probe then exposed a broader helper bug: Go treated every level-31+ observer as seeing invisible subjects, while C's `IMM_CAN_SEE` only adds `PRF_HOLYLIGHT` to the normal light/detect-invisibility checks. The visibility-class audit also found the same level shortcut in social target lookup and `chCanSeeObj`; these now use C's affect/HOLYLIGHT gates. Mobile activity callsites and the con-seller visibility path use one room-aware CAN_SEE helper. The real-dispatch unit proof calls `World.MobileActivity()` with one NPC candidate, captures only the existing combat-engine handoff, and pins the four movement/sound draws. It leaves character-list ordering to DP-1364 and makes no attack, message, or combat-engine changes.
 
-C call path rechecked in `src/`: `src/comm.c:817` calls `mobile_activity()`; `src/mobact.c:324-336` contains the branch, `CAN_SEE` candidate predicate, room grin act, and `hit()`; `src/utils.h:515-530` defines visibility. Go's heartbeat path is `cmd/server/main.go:623`, then `pkg/game/mobact.go:124`. The separate C room grin at `src/mobact.c:333` is omitted by Go and remains blocked under the shared attack/message owner boundary; this train does not change it.
+C call paths rechecked in `src/`: `src/comm.c:817` calls `mobile_activity()`; `src/mobact.c:324-336` contains the AGGR24 branch, candidate predicate, room grin, and `hit()`; `src/utils.h:515-530` defines `CAN_SEE`/`IMM_CAN_SEE`, and `src/utils.h:535-541` defines `CAN_SEE_OBJ`. `src/handler.c:1277-1300` routes named room targets through `CAN_SEE`; `src/structs.h:310-321` defines the affect bits used by the fixture. Go's heartbeat path is `cmd/server/main.go:623`, then `pkg/game/mobact.go:124`. The separate C room grin at `src/mobact.c:333` is omitted by Go and remains blocked under the shared attack/message owner boundary; this train does not change it.
 
-The oracle fixture can spawn both stock NPCs, set the target's innate `AFF_INVISIBLE`, and enable the attacker's `MOB_AGGRESSIVE` flag. The scenario uses the `empty-players` fixture to crown its observer as God, toggles `NOHASSLE`, then moves the observer into room 8162. C's earlier ordinary aggressive and AGGR24 player scans skip that observer; the NPC scan must still skip the invisible weaker target. It pumps the actual heartbeat/mobile-activity path, so an ungated selection can enter combat and produce observable pulse output. Scenario: `mobact-aggr24-invisible-npc-target`. This preserves the shared `hit()` implementation and only uses it as the observable consequence of an incorrect target selection (R1/R3/R5e).
+The oracle fixture spawns the stock Overlord (4914) and daemon courier (4909). The target's innate mask `2` sets `AFF_INVISIBLE` (bit 1); the attacker prototype's mask changes from `132264` to `132256`, clearing `AFF_DETECT_INVIS` (bit 3) while preserving its other affects. The `empty-players` fixture creates a God observer, which toggles `NOHASSLE` before moving into room 8162. C's ordinary aggressive and AGGR24 player scans skip that observer; its NPC scan must also skip the unseen weaker target. The probe pumps the actual heartbeat/mobile-activity path and then looks, so an ungated target selection is observable. Scenario: `mobact-aggr24-invisible-npc-target`. This preserves the shared `hit()` implementation and only uses it as the observable consequence of an incorrect target selection (R1/R3/R5e).
 
 ### R5h control
 
-Removed the new `if !canSee(ch, vict) { continue }` gate and ran `go test ./pkg/game -run '^TestAggr24MobileTargetVisibilityGateUsesGlobalPulse$' -count=1`. It failed on the invisible candidate: `AGGR24 combat starts = 1, want 0; starts=[{attacker: defender:}]` (exit 1). Restored the gate; the focused visibility test plus existing AGGR24 skip/attack tests passed, as did `git diff --check`.
+Three one-at-a-time revert controls were red, then restored:
+
+- Removing the AGGR24 target visibility gate made `go test ./pkg/game -run '^TestAggr24MobileTargetVisibilityGateUsesGlobalPulse$' -count=1` fail on the invisible candidate: `AGGR24 combat starts = 1, want 0; starts=[{attacker: defender:}]` (exit 1).
+- Restoring the immortal-level shortcut in `canSeeWithHide` made the same real-pulse assertion fail with `AGGR24 combat starts = 1, want 0` (exit 1).
+- Restoring `chCanSeeObj`'s level-only bypass made `go test ./pkg/game -run '^TestFidelityChCanSeeObjInvisibility$' -count=1` fail: `immortal level alone should not reveal an invisible object` (exit 1).
+
+Restoring each fix made its focused test pass. The social target regression additionally pins invis-level ordering, HOLYLIGHT behavior, and C's `CAN_SEE` treatment of `AFF_HIDE`.
+
+### Oracle fixture diagnostics retained
+
+The failed probe attempts were fixture diagnostics or the intended fail-capable visibility proof; all retained outputs are preserved beside the final run. `4cd02e163` was INFRA because the C fixture rejects the digit in `Aggr24probe`; the observer was renamed `Mordane`. `ccc744068` was a stable FAIL because affect mask `1` is `AFF_BLIND`, not `AFF_INVISIBLE`; the target mask was corrected to `2`. `e3980d664` was INFRA/unstable because stock Overlord (4914) has `AFF_DETECT_INVIS` in mask `132264`; the fixture now clears bit 3 to `132256`. `a8740ffae` was the expected red oracle result while Go still had the level-only immortal visibility shortcut; Train 13 fixed that shared helper. The final targeted census at `0452cdb81` is CLEAN below.
 
 ### Train 13 changed files
 
-- `pkg/game/mobact.go`: apply the C candidate visibility check before the level comparison and combat-engine call.
-- `pkg/game/mobact_test.go`: test invisible-candidate skip, visible weaker-candidate selection, actual `MobileActivity` dispatch, and pinned draw sequence.
-- `docs/fidelity/depth/combat-entry.tsv`: mark the selection proof unit-green and track the missing pre-hit grin separately as blocked.
-- `docs/fidelity/depth/mobile-activity.tsv`: add the invisible-NPC target proof row.
-- `cmd/dp-oracle-diff/scenarios/mobact-aggr24-invisible-npc-target.txt`: set up a NOHASSLE God observer, the stock AGGR24 attacker, and the invisible weaker NPC.
-- `docs/fidelity/depth/surface-inventory.tsv`: mark target visibility proven and add the blocked room-act surface.
+- `pkg/game/act.go`, `act_informative.go`, and `act_social.go`: correct character/object visibility, remove the immortal-level bypass, and route named social targets through the room-aware C predicate.
+- `pkg/game/mobact.go`, `comm_channel.go`, and `spec_procs3.go`: apply room-aware C visibility to mobile scans, clan sender naming, and the con-seller path.
+- `pkg/game/combat_visibility_test.go`, `fidelity_regression_test.go`, `mobact_test.go`, and `socials_data_test.go`: cover level, detection, HOLYLIGHT, darkness, invis-level ordering, hidden targets, real pulse dispatch, and RNG draws.
+- `docs/fidelity/depth/combat-entry.tsv`: promote the selection proof to oracle-green and track the missing pre-hit grin separately as blocked.
+- `docs/fidelity/depth/mobile-activity.tsv`: promote the invisible-NPC target proof row to oracle-green.
+- `cmd/dp-oracle-diff/scenarios/mobact-aggr24-invisible-npc-target.txt`: isolate the target's invisibility from the attacker's detect-invisible affect and use an alphabetic God observer name.
+- `docs/fidelity/depth/surface-inventory.tsv`: retain target visibility as proven and keep the blocked room-act surface separate.
 - `docs/fidelity/depth/handoff/2026-10-14-acknowledged-gap-sweep-train13.md`: this report and carried-forward full inventory.
 
 ## Train 13 gates
@@ -35,19 +46,19 @@ All required gates passed, run separately. No race run was added because this ch
 - `golangci-lint run ./...` — PASS, 0 issues.
 - `make deadcode-ratchet` — PASS, 52 baselined and 0 new.
 - `make fidelity-depth` — PASS, 5,541 cases, 5,450 proven/delegated, 11 blocked, 68 excluded, 12 divergent-approved; 99.8% actionable completion.
-- `make fidelity-units` — PASS, 1,433 rows, 1,324 symbols, 1,619 claims across 14 packages.
+- `make fidelity-units` — PASS, 1,431 rows, 1,323 symbols, 1,617 claims across 14 packages.
 - `make string-census` — PASS, 98 known Go-only segments and 0 unreviewed; reports the pre-existing 24 baseline entries no longer produced and stale generated reports.
 - `gosec -severity=high -quiet ./...` — PASS.
 
 ## Train 13 census
 
-Targeted oracle census for `mobact-aggr24-invisible-npc-target` is pending release of the shared slot. After it passes, run the one full combined census for this train on the final tip and record both exact lines here.
+Targeted oracle census passed at code tip `0452cdb81`: `dp-1371-train13-aggr24-invisible-final @0452cdb81: oracle-regression: scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=15.316s started=2026-10-14T08:52:31-0400 finished=2026-10-14T08:52:46-0400 verdict=CLEAN`. Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train13-aggr24-invisible-final/`; result row: `PASS\tmobact-aggr24-invisible-npc-target\t12`. The earlier fixture attempts and their retained INFRA/FAIL diagnostics are in the adjacent `*-attempts` directories. Run the one full combined census after the manifest and handoff update, then add its exact line here.
 
 ## Current train 13 triage delta
 
 | Item | Disposition | Evidence |
 |---|---|---|
-| AGGR24 aggressive-NPC target visibility | Fixed in Train 13; depth and surface rows point to the real-pulse unit proof, with a targeted oracle case pending. | `pkg/game/mobact.go`; `TestAggr24MobileTargetVisibilityGateUsesGlobalPulse`; `mobact-aggr24-invisible-npc-target`; R5h control above. |
+| AGGR24 aggressive-NPC target visibility and level-only invisibility bypass | Fixed in Train 13; shared character/object visibility helpers now follow C's AFF_DETECT_INVIS, HOLYLIGHT, room-light, and invis-level gates. Depth rows are oracle-green. | `pkg/game/act.go`, `act_informative.go`, `act_social.go`, `mobact.go`; `src/utils.h:515-541`; `src/handler.c:1277-1300`; targeted oracle CLEAN at `0452cdb81`; R5h controls above. |
 | AGGR24 pre-hit room grin | Blocked and kept separate from the selection fix under the shared attack/message owner boundary. | C emits `act("$n grins evilly.", ..., TO_ROOM)` after selection at `src/mobact.c:333`; Go omits it before entering `StartCombat`. |
 | Global `point_update` object timer pass | Fixed by Train 12 / PR #1964. | Targeted census CLEAN; combined census `CLEAN_AFTER_RECHECK` at code tip `d64e1a6d4`; see exact lines and retained results row in the carried-forward Train 12 report. |
 | Player-equipment `APPLY_RACE_HATE`; Lua object-target spell/location gate; Kai-zai spell ID; mobile wounded/charmed, scavenger visibility, player-hunter gates; mobile `canget`; Lua follow | Fixed in trains 1–5. | Their exact C paths, proof tests, PRs, controls, and census lines are in the carried-forward train records; merged PRs #1953–#1955 cover the related script/spell and mobile actor fixes. |
