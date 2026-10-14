@@ -115,4 +115,10 @@ the final code tip and retains separate full/claims verdicts.
 | `make fidelity-units` | PASS, 1,426 rows, 1,314 symbols, 1,609 claims |
 | `make string-census` | PASS, 98 known go-only segments and 0 unreviewed; generated reports remain stale and the check warned to run `make string-census-update` |
 | `gosec -severity=high -quiet ./...` | PASS |
-| Full combined census | pending |
+| Full combined census on code tip `5444ac29356e9aacbc91bb34095ef176ba489666` | CLEAN_AFTER_RECHECK for full and claims; 3,402 pairs, 1,018 deduplicated, 2,002.366s; `mudlog-local-depth` was rechecked |
+
+The retained run is
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train6-integrated`.
+Its `summary.txt` records `verdict=CLEAN_AFTER_RECHECK`; `results.tsv` records
+`PASS lua-iscorpse-container-value 10`. Both combined verdicts are clean after
+the one permitted infrastructure recheck.
