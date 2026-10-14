@@ -394,13 +394,19 @@ func butlerDoorToggle(w *World, me *MobInstance, container *ObjectInstance, open
 		return
 	}
 	if open {
-		if flags&contClosed != 0 {
+		if flags&contClosed != 0 && flags&contLocked == 0 {
+			// C's do_gen_door reaches ok_pick on each successful state change,
+			// even though the mobile has no descriptor. Preserve its draw.
+			// #nosec G404 — game RNG, not cryptographic
+			_ = doorNumber(1, 101) // src/act.movement.c:541
 			container.SetValue(contFlags, flags&^contClosed)
 			Act(w, false, me, nil, container, nil, "$n opens $p.", "", ToRoom)
 		}
 		return
 	}
 	if flags&contClosed == 0 {
+		// #nosec G404 — game RNG, not cryptographic
+		_ = doorNumber(1, 101) // src/act.movement.c:541
 		container.SetValue(contFlags, flags|contClosed)
 		Act(w, false, me, nil, container, nil, "$n closes $p.", "", ToRoom)
 	}

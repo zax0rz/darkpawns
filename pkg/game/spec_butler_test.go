@@ -10,6 +10,11 @@ import (
 
 const butlerTestRoom = 1001
 
+type butlerTestDraw struct {
+	from int
+	to   int
+}
+
 func newButlerTestWorld(t *testing.T) (*World, *Player, *Player, *MobInstance, map[string]string) {
 	t.Helper()
 
@@ -175,6 +180,13 @@ func TestSpecButler_EntryAndContainerGates(t *testing.T) {
 func TestSpecButler_GetRoutingAudienceAndClose(t *testing.T) {
 	w, actor, peer, mob, messages := newButlerTestWorld(t)
 	cas, cabinet, chest := setupButlerContainers(t, w)
+	originalDoorNumber := doorNumber
+	var doorDraws []butlerTestDraw
+	doorNumber = func(from, to int) int {
+		doorDraws = append(doorDraws, butlerTestDraw{from: from, to: to})
+		return from
+	}
+	t.Cleanup(func() { doorNumber = originalDoorNumber })
 
 	tunic := spawnButlerTestObject(t, w, 3003)
 	sword := spawnButlerTestObject(t, w, 3004)
@@ -183,6 +195,19 @@ func TestSpecButler_GetRoutingAudienceAndClose(t *testing.T) {
 
 	if got := specButler(w, actor, mob, "", ""); !got {
 		t.Fatal("eligible butler invocation was not handled")
+	}
+	wantDoorDraws := []butlerTestDraw{
+		{from: 1, to: 101},
+		{from: 1, to: 101},
+		{from: 1, to: 101},
+	}
+	if len(doorDraws) != len(wantDoorDraws) {
+		t.Fatalf("butler door draws = %v, want %v", doorDraws, wantDoorDraws)
+	}
+	for i, got := range doorDraws {
+		if got != wantDoorDraws[i] {
+			t.Errorf("butler door draw %d = %+v, want %+v", i, got, wantDoorDraws[i])
+		}
 	}
 	want := "The Servant gets a loaf of bread.\r\n" +
 		"The Servant puts a loaf of bread in a runed chest.\r\n" +
@@ -224,6 +249,7 @@ func TestSpecButler_GetRoutingAudienceAndClose(t *testing.T) {
 	}
 
 	clearButlerMessages(messages)
+	doorDraws = nil
 	butlerDoorToggle(w, mob, cas, true)
 	if got, want := messages[peer.Name], "The Servant opens an armor display case.\r\n"; got != want {
 		t.Fatalf("open act = %q, want %q", got, want)
@@ -233,9 +259,15 @@ func TestSpecButler_GetRoutingAudienceAndClose(t *testing.T) {
 	if got := messages[peer.Name]; got != "" {
 		t.Fatalf("redundant open emitted %q", got)
 	}
+	if len(doorDraws) != 1 {
+		t.Fatalf("door draws after redundant open = %v, want one transition draw", doorDraws)
+	}
 	butlerDoorToggle(w, mob, cas, false)
 	if got, want := messages[peer.Name], "The Servant closes an armor display case.\r\n"; got != want {
 		t.Fatalf("close act = %q, want %q", got, want)
+	}
+	if len(doorDraws) != 2 {
+		t.Fatalf("door draws after close = %v, want two transition draws", doorDraws)
 	}
 }
 
