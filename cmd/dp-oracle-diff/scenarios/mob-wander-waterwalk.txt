@@ -1,0 +1,103 @@
+# depth-case: mob.wander-waterwalk
+# A water-walking mobile takes the one-way route into a swim-water room during
+# the real mobile_activity pulse. Source and destination observers expose both
+# perform_move room acts. All six exits point to the same target so the shared
+# deterministic door draw selects it on any valid cardinal result.
+# C path: src/mobact.c:119-143 -> src/utils.h:150-153 ->
+# src/act.movement.c:58-78, 185-250.
+
+[fixture]
+quiet-mobs
+spawn-mob 4900 1 8105 80
+set-mob-aff 4900 64
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 none
+set-room-sector 8106 6
+
+[setup:oracle]
+Wanderwater
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wanderwater
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Wanderwaterpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[setup:port:destination]
+Wanderwaterpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[warmup]
+north
+east
+south
+east
+
+[probe]
+look
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+look

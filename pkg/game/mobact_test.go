@@ -15,12 +15,16 @@ type mobactDrawRange struct {
 }
 
 func captureMobactDraws(t *testing.T) *[]mobactDrawRange {
+	return captureMobactDrawsWith(t, dprng.Number)
+}
+
+func captureMobactDrawsWith(t *testing.T, draw func(from, to int) int) *[]mobactDrawRange {
 	t.Helper()
 	draws := make([]mobactDrawRange, 0, 4)
 	previous := mobactNumber
 	mobactNumber = func(from, to int) int {
 		draws = append(draws, mobactDrawRange{from: from, to: to})
-		return dprng.Number(from, to)
+		return draw(from, to)
 	}
 	t.Cleanup(func() { mobactNumber = previous })
 	return &draws
@@ -37,6 +41,171 @@ func newMobactDrawTestWorld() *World {
 		players:    make(map[string]*Player),
 		activeMobs: make(map[int]*MobInstance),
 		roomItems:  make(map[int][]*ObjectInstance),
+	}
+}
+
+func newMobactWanderTestWorld(t *testing.T, targetSector int, flags ...string) (*World, *MobInstance) {
+	return newMobactWanderTestWorldWithTargetFlags(t, targetSector, nil, flags...)
+}
+
+func newMobactWanderTestWorldWithTargetFlags(t *testing.T, targetSector int, targetRoomFlags []string, flags ...string) (*World, *MobInstance) {
+	t.Helper()
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Source", Zone: 1, Exits: map[string]parser.Exit{"north": {ToRoom: 1002}}},
+			{VNum: 1002, Name: "Target", Zone: 1, Sector: targetSector, Flags: targetRoomFlags},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	mob := NewMob(&parser.Mob{
+		VNum: 9402, Keywords: "wanderer", ShortDesc: "a wanderer",
+		ActionFlags: flags, Position: 8, DefaultPos: 8, Level: 10, Race: 1,
+	}, 1001)
+	w.mu.Lock()
+	w.activeMobs[mob.GetID()] = mob
+	w.mu.Unlock()
+	return w, mob
+}
+
+func pinNorthWanderDraws(t *testing.T) *[]mobactDrawRange {
+	t.Helper()
+	return captureMobactDrawsWith(t, func(from, to int) int {
+		if from == 0 && to == 18 {
+			return 0 // north: same draw gates movement and selects the exit
+		}
+		if from == 0 && to == 15 {
+			return 1 // do not invoke the sound branch
+		}
+		return from
+	})
+}
+
+func TestMobileActivityWaterAndFlyingSectorGates(t *testing.T) {
+	tests := []struct {
+		name          string
+		sector        int
+		affect        int
+		boatInventory bool
+		boatEquipment bool
+		level         int
+		targetFlags   []string
+		wantRoom      int
+		wantDraws     []mobactDrawRange
+	}{
+		{name: "water swim requires capability", sector: SECT_WATER_SWIM, wantRoom: 1001, wantDraws: []mobactDrawRange{{0, 18}}},
+		{name: "water noswim requires capability", sector: SECT_WATER_NOSWIM, wantRoom: 1001, wantDraws: []mobactDrawRange{{0, 18}}},
+		{name: "death room gate precedes swim check", sector: SECT_WATER_SWIM, targetFlags: []string{"2"}, wantRoom: 1001, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "no-mob room gate precedes flight check", sector: SECT_FLYING, targetFlags: []string{"4"}, wantRoom: 1001, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "waterwalk crosses swim water", sector: SECT_WATER_SWIM, affect: affWaterWalk, wantRoom: 1002, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "flight crosses noswim water", sector: SECT_WATER_NOSWIM, affect: affFly, wantRoom: 1002, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "inventory boat crosses water", sector: SECT_WATER_SWIM, boatInventory: true, wantRoom: 1002, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "equipped boat crosses noswim water", sector: SECT_WATER_NOSWIM, boatEquipment: true, wantRoom: 1002, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "immortal level crosses water", sector: SECT_WATER_SWIM, level: LVL_IMMORT, wantRoom: 1002, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "flight crosses flying sector", sector: SECT_FLYING, affect: affFly, wantRoom: 1002, wantDraws: []mobactDrawRange{{0, 18}, {0, 15}}},
+		{name: "waterwalk does not cross flying sector", sector: SECT_FLYING, affect: affWaterWalk, wantRoom: 1001, wantDraws: []mobactDrawRange{{0, 18}}},
+		{name: "boat does not cross flying sector", sector: SECT_FLYING, boatInventory: true, wantRoom: 1001, wantDraws: []mobactDrawRange{{0, 18}}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w, mob := newMobactWanderTestWorldWithTargetFlags(t, tt.sector, tt.targetFlags)
+			if tt.affect != 0 {
+				mob.SetAffected(tt.affect)
+			}
+			if tt.level != 0 {
+				mob.SetLevel(tt.level)
+			}
+			if tt.boatInventory || tt.boatEquipment {
+				boat := &ObjectInstance{Prototype: &parser.Obj{VNum: 9403, TypeFlag: ITEM_BOAT}}
+				if tt.boatInventory {
+					mob.Inventory = append(mob.Inventory, boat)
+				}
+				if tt.boatEquipment {
+					mob.Equipment[0] = boat
+				}
+			}
+
+			draws := pinNorthWanderDraws(t)
+			w.MobileActivity()
+			if got := mob.GetRoom(); got != tt.wantRoom {
+				t.Fatalf("mob room = %d, want %d", got, tt.wantRoom)
+			}
+			assertMobactDraws(t, draws, tt.wantDraws)
+		})
+	}
+}
+
+func TestMobileActivityBlockedSectorSkipsAggression(t *testing.T) {
+	w, mob := newMobactWanderTestWorld(t, SECT_WATER_SWIM, "AGGRESSIVE")
+	player := NewPlayer(1, "Visible", 1001)
+	for i := range player.RaceHates {
+		player.RaceHates[i] = -1
+	}
+	w.mu.Lock()
+	w.players[player.Name] = player
+	w.mu.Unlock()
+	ce := &testCombatEngine{}
+	w.combatEngine = ce
+
+	draws := pinNorthWanderDraws(t)
+	w.MobileActivity()
+	if got := mob.GetRoom(); got != 1001 {
+		t.Fatalf("blocked mob room = %d, want 1001", got)
+	}
+	if len(ce.starts) != 0 {
+		t.Fatalf("blocked sector still dispatched aggression: %+v", ce.starts)
+	}
+	assertMobactDraws(t, draws, []mobactDrawRange{{0, 18}})
+}
+
+func TestMobileActivityWanderActsMatchPerformMove(t *testing.T) {
+	tests := []struct {
+		name       string
+		sneak      bool
+		affect     int
+		sector     int
+		wantOrigin string
+		wantTarget string
+	}{
+		{name: "visible movement", sector: SECT_FIELD, wantOrigin: "A wanderer leaves north.\r\n", wantTarget: "A wanderer arrives from the south.\r\n"},
+		{name: "flying arrival", affect: affFly, sector: SECT_FLYING, wantOrigin: "A wanderer leaves north.\r\n", wantTarget: "A wanderer flies in from the south.\r\n"},
+		{name: "sneaking movement", sneak: true, sector: SECT_FIELD},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w, mob := newMobactWanderTestWorld(t, tt.sector)
+			if tt.affect != 0 {
+				mob.SetAffected(tt.affect)
+			}
+			if tt.sneak {
+				mob.SetAffected(affSneak)
+			}
+			origin := NewPlayer(1, "Origin", 1001)
+			target := NewPlayer(2, "Target", 1002)
+			if err := w.AddPlayer(origin); err != nil {
+				t.Fatalf("AddPlayer origin: %v", err)
+			}
+			if err := w.AddPlayer(target); err != nil {
+				t.Fatalf("AddPlayer target: %v", err)
+			}
+			out := captureOutput(w)
+			pinNorthWanderDraws(t)
+
+			w.MobileActivity()
+			if got := outputOf(out, origin.Name); got != tt.wantOrigin {
+				t.Fatalf("origin movement output = %q, want %q", got, tt.wantOrigin)
+			}
+			if got := outputOf(out, target.Name); got != tt.wantTarget {
+				t.Fatalf("target movement output = %q, want %q", got, tt.wantTarget)
+			}
+			if got := mob.GetRoom(); got != 1002 {
+				t.Fatalf("mob room = %d, want 1002", got)
+			}
+		})
 	}
 }
 

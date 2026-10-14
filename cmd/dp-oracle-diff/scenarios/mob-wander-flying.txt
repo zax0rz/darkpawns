@@ -1,0 +1,103 @@
+# depth-case: mob.wander-flying
+# A mobile with AFF_FLY takes the one-way route into a flying-sector room
+# during the real mobile_activity pulse. The source observer proves the move;
+# C's room_activity ejects a non-flying destination observer before the mobile
+# arrives, so destination-act bytes are pinned by the focused unit test. All
+# six exits point to the same target so any cardinal draw exercises the gate.
+# C path: src/mobact.c:119-143 -> src/utils.h:148-149.
+
+[fixture]
+quiet-mobs
+spawn-mob 4900 1 8105 80
+set-mob-aff 4900 67108864
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 none
+set-room-sector 8106 9
+
+[setup:oracle]
+Wanderfly
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wanderfly
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Wanderflypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[setup:port:destination]
+Wanderflypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+north
+
+[warmup]
+north
+east
+south
+east
+
+[probe]
+look
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+look

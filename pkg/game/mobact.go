@@ -244,7 +244,9 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// #nosec G404 — game RNG, not cryptographic
 	door := mobactNumber(0, 18)
 	if !hasMobFlag(ch, "sentinel") && ch.GetPosition() == combat.PosStanding {
-		w.wanderMobWithDoor(ch, door)
+		if w.wanderMobWithDoor(ch, door) {
+			return // C's sector-gate continue skips the rest of this mob's pulse.
+		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
 		return
