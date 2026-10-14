@@ -15,6 +15,9 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
+// mobProgNumber is a test seam for the C-compatible draws in mobile programs.
+var mobProgNumber = dprng.Number
+
 // ---------------------------------------------------------------------------
 // IS_* checks from mobprog.h
 // ---------------------------------------------------------------------------
@@ -42,16 +45,15 @@ func (w *World) MpGreetActor(who combat.Combatant, room int) {
 	if room < 0 || who == nil {
 		return
 	}
-	for _, body := range w.GetAllCharsInRoom(room) {
-		host, ok := body.(*MobInstance)
-		if !ok || host == nil || host == who {
+	for _, host := range w.COrderedRoomMobs(room) {
+		if host == nil || host == who {
 			continue
 		}
 		if isDog(host) {
 			// C draws only after the dog-vnum gate and before checking the
 			// mover's alignment.
 			// #nosec G404 — game RNG, not cryptographic
-			if dprng.Number(0, 5) == 0 {
+			if mobProgNumber(0, 5) == 0 {
 				if actor, ok := who.(Actor); ok {
 					command := "lick"
 					if combatantAlignment(who) < 0 {
