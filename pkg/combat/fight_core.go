@@ -382,7 +382,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 
 	// jail guard logic (fight.c:1370): guards respond to PK in cities
 	if ch.IsNPC() && !victim.IsNPC() &&
-		cbMobHasJailGuardSpec(ch) {
+		cbMobHasJailGuardSpec(ch) && cbCanSee(ch, victim) {
 		if dam > 0 && ch.GetHP() > ch.GetMaxHP()/2 {
 			hasVampire := cbHasAffectStr(victim, AFF_STR_VAMPIRE)
 			hasWerewolf := cbHasAffectStr(victim, AFF_STR_WEREWOLF)

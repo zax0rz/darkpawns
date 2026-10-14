@@ -230,6 +230,7 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	cb.IsShopkeeper = func(name combat.Combatant) bool {
 		return IsShopkeeperMob(w, combatMob(name))
 	}
+	cb.CanSee = w.combatCanSee
 
 	cb.DamageRefused = w.DamageRefused
 

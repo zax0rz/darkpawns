@@ -65,6 +65,8 @@ type GameCallbacks struct {
 	HasRoomFlag         func(roomVNum int, flag string) bool
 	HasScriptFlag       func(name Combatant, flag string) bool
 	IsShopkeeper        func(name Combatant) bool
+	// CanSee mirrors the world-aware CAN_SEE macro used by damage()'s jail guard.
+	CanSee func(observer, subject Combatant) bool
 	// DamageRefused is damage()'s protection block (fight.c:1318-1368),
 	// owned by the game layer so every damage seam emits the same refusal
 	// bytes. True means C's damage() returned FALSE before hurting victim.
@@ -424,6 +426,16 @@ func cbDamageRefused(ch, victim Combatant) bool {
 		return cb.DamageRefused(ch, victim)
 	}
 	return defaultDamageRefused(ch, victim)
+}
+
+// cbCanSee delegates character visibility to the game layer, where room light
+// and world state are available. Standalone combat tests without a world keep
+// the pre-callback visible behavior.
+func cbCanSee(observer, subject Combatant) bool {
+	if cb := callbacks; cb != nil && cb.CanSee != nil {
+		return cb.CanSee(observer, subject)
+	}
+	return true
 }
 
 func cbGetRoomCombatants(roomVNum int) []Combatant {

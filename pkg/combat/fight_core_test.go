@@ -26,6 +26,31 @@ func TestNewNamedCombatant(t *testing.T) {
 	}
 }
 
+func TestTakeDamage_JailGuardDoesNotSubdueInvisibleVictim(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	guard := &mockCombatant{
+		name: "jail guard", npc: true, room: 8117, level: 30,
+		hp: 80, maxHP: 100, position: PosFighting,
+	}
+	victim := &mockCombatant{
+		name: "Thief", room: 8117, level: 20,
+		hp: 100, maxHP: 100, position: PosFighting,
+	}
+	SetCallbacks(&GameCallbacks{
+		MobHasJailGuardSpec: func(Combatant) bool { return true },
+		CanSee:              func(observer, subject Combatant) bool { return false },
+		HasAffect:           func(Combatant, int) bool { return false },
+		HasAffectStr:        func(Combatant, string) bool { return false },
+	})
+
+	takeDamageFrom(guard, victim, 1, TYPE_UNDEFINED, nil, false)
+	if victim.GetHP() != 99 {
+		t.Fatalf("invisible victim HP = %d, want normal damage to 99", victim.GetHP())
+	}
+}
+
 // ---------------------------------------------------------------------------
 // BackstabMult — formula: float64(level)*0.2 + 1.0, truncated to int (C fidelity)
 // Source: src/class.c — backstab_mult() returns int, so the float result truncates.
