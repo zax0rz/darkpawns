@@ -87,6 +87,9 @@ Targeted census: `dp-1371-train-2-lua-object-target` — CLEAN, 1 passed, 0
 expected/failed/stale/infra/timeout/unstable; elapsed 11.866s. The retained
 summary and manifest are under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train-2-lua-object-target/`.
-The manifest row is now `oracle-green`. The train's final combined census is
-still pending; check `scripts/census.sh status` and run it on this final tip
-before opening the PR.
+The manifest row is now `oracle-green`. The train's final combined census on
+code tip `7fe4c4c02` completed clean after the infrastructure recheck:
+`oracle-combined: pairs=3396 deduplicated=1016 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=1965.253s verdict=CLEAN_AFTER_RECHECK`.
+The `results.tsv` rows for `lua-bind-actions`, `lua-bind-queries`, and
+`lua-spell-object-target` are all `PASS`. The combined run directory is
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train-2/`.
