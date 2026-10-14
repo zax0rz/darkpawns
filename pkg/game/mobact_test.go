@@ -810,3 +810,271 @@ func TestAggr24MobileTargetVisibilityGateUsesGlobalPulse(t *testing.T) {
 		})
 	}
 }
+
+// ---------------------------------------------------------------------------
+// DP-1435: mobile_activity room acts
+//
+// Every case below drives the real MobileActivity pulse and reads the room
+// bytes through the message sink, so a reverted fix fails on the exact C
+// string (R1/R4/R5h).
+// ---------------------------------------------------------------------------
+
+// newMobactSpeakingPlayer registers a player that can receive act() output:
+// Player.SendMessage needs the world reference AddPlayer installs.
+func newMobactSpeakingPlayer(t *testing.T, w *World, name string) *Player {
+	t.Helper()
+	p := NewPlayer(1, name, 1001)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatalf("AddPlayer %s: %v", name, err)
+	}
+	return p
+}
+
+// TestMobileActivityMemoryWarningActs pins C's two memory-warning room acts
+// (src/mobact.c:273-278). The speak arm needs can_speak(ch); the growl arm is
+// its silent counterpart; both sit inside one ROOM_PEACEFUL gate, and the
+// attack that follows is unconditional.
+func TestMobileActivityMemoryWarningActs(t *testing.T) {
+	tests := []struct {
+		name       string
+		race       int
+		peaceful   bool
+		wantOutput string
+		wantStarts int
+	}{
+		{
+			name:       "speaking mobile exclaims",
+			race:       1, // RACE_NPCHUMAN — in intelligent_races[] (src/constants.c:353)
+			wantOutput: "'Hey!  You're the fiend that attacked me!!!', exclaims a memory mob.\r\n",
+			wantStarts: 1,
+		},
+		{
+			name:       "silent mobile growls",
+			race:       12, // not in intelligent_races[]
+			wantOutput: "You hear a low growl in the back of a memory mob's throat.\r\n",
+			wantStarts: 1,
+		},
+		{
+			name:       "peaceful room suppresses both warning acts but still attacks",
+			race:       1,
+			peaceful:   true,
+			wantStarts: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w, ce := newMobactTestWorld(t)
+			if tt.peaceful {
+				w.rooms[1001].Flags = append(w.rooms[1001].Flags, "peaceful")
+			}
+			mob := newMobactTestMob(w, 9320, tt.race, 0, "memory", "sentinel")
+			mob.Proto().ShortDesc = "a memory mob"
+			remembered := newMobactSpeakingPlayer(t, w, "Remembered")
+			observer := newMobactSpeakingPlayer(t, w, "Observer")
+			mob.Memory = []string{remembered.Name}
+
+			out := captureOutput(w)
+			pinNorthWanderDraws(t)
+			w.MobileActivity()
+
+			if got := outputOf(out, observer.Name); got != tt.wantOutput {
+				t.Fatalf("observer output = %q, want %q", got, tt.wantOutput)
+			}
+			if len(ce.starts) != tt.wantStarts {
+				t.Fatalf("memory combat starts = %d, want %d; starts=%+v", len(ce.starts), tt.wantStarts, ce.starts)
+			}
+		})
+	}
+}
+
+// TestMobileActivityHelperJumpsToAid pins C's helper room act and its CAN_SEE
+// gate (src/mobact.c:292-301). The helper joins the first mobile it can see
+// fighting a player; an invisible player is not a valid cause.
+func TestMobileActivityHelperJumpsToAid(t *testing.T) {
+	tests := []struct {
+		name        string
+		playerInvis bool
+		wantOutput  string
+		wantStarts  int
+	}{
+		{
+			name:       "visible player is defended",
+			wantOutput: "A helper mob jumps to the aid of a foe mob!\r\n",
+			wantStarts: 1,
+		},
+		{
+			name:        "invisible player is not defended",
+			playerInvis: true,
+			wantStarts:  0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w, ce := newMobactTestWorld(t)
+			helper := newMobactTestMob(w, 9330, 1, 0, "helper", "sentinel")
+			helper.Proto().ShortDesc = "a helper mob"
+			foe := newMobactTestMob(w, 9331, 1, 0, "sentinel")
+			foe.Proto().ShortDesc = "a foe mob"
+			player := newMobactSpeakingPlayer(t, w, "Bystander")
+			if tt.playerInvis {
+				player.Affects |= 1 << affInvisible
+			}
+			observer := newMobactSpeakingPlayer(t, w, "Observer")
+			foe.SetFightingBody(player)
+
+			out := captureOutput(w)
+			pinNorthWanderDraws(t)
+			w.MobileActivity()
+
+			if got := outputOf(out, observer.Name); got != tt.wantOutput {
+				t.Fatalf("observer output = %q, want %q", got, tt.wantOutput)
+			}
+			if len(ce.starts) != tt.wantStarts {
+				t.Fatalf("helper combat starts = %d, want %d; starts=%+v", len(ce.starts), tt.wantStarts, ce.starts)
+			}
+			if tt.wantStarts == 1 && (ce.starts[0].attacker != helper.GetName() || ce.starts[0].defender != player.Name) {
+				t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+			}
+		})
+	}
+}
+
+// TestMobileActivityAggr24WeakerMobileGrin pins the AGGR24 + AGGRESSIVE
+// full-health grin (src/mobact.c:332-334) at C's point, immediately before
+// hit(). The observer carries NOHASSLE so the ordinary aggressive and AGGR24
+// player branches leave it alone.
+func TestMobileActivityAggr24WeakerMobileGrin(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	attacker := newMobactTestMob(w, 9340, 1, 0, "aggr24", "aggressive", "sentinel")
+	attacker.Proto().ShortDesc = "an aggr24 mob"
+	attacker.SetLevel(33)
+	target := newMobactTestMob(w, 9341, 1, 0, "sentinel")
+	target.Proto().ShortDesc = "a weaker mob"
+	target.SetLevel(10)
+	observer := newMobactSpeakingPlayer(t, w, "Observer")
+	observer.SetPlrFlag(PrfNohassle, true)
+
+	out := captureOutput(w)
+	pinNorthWanderDraws(t)
+	w.MobileActivity()
+
+	want := "An aggr24 mob grins evilly.\r\n"
+	if got := outputOf(out, observer.Name); got != want {
+		t.Fatalf("observer output = %q, want %q", got, want)
+	}
+	if len(ce.starts) != 1 {
+		t.Fatalf("AGGR24 weaker-mobile combat starts = %d, want 1; starts=%+v", len(ce.starts), ce.starts)
+	}
+	if ce.starts[0].attacker != attacker.GetName() || ce.starts[0].defender != target.GetName() {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+// TestMobileActivityAggr24PlayerRoomActs pins the three AGGR24 player-branch
+// room acts in C's order (src/mobact.c:312-320): the grin, then the two-line
+// speak pair gated on can_speak.
+func TestMobileActivityAggr24PlayerRoomActs(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9350, 1, 0, "aggr24", "sentinel")
+	mob.Proto().ShortDesc = "a dark pawn"
+	victim := newMobactSpeakingPlayer(t, w, "Knight")
+	victim.Level = 24
+	observer := newMobactSpeakingPlayer(t, w, "Observer")
+
+	out := captureOutput(w)
+	pinNorthWanderDraws(t)
+	w.MobileActivity()
+
+	want := "A dark pawn grins evilly.\r\n" +
+		"'Another dark pawn trying to be a knight, eh?', asks a dark pawn.\r\n" +
+		"A dark pawn says, 'I can fix that.'\n\r\r\n"
+	if got := outputOf(out, observer.Name); got != want {
+		t.Fatalf("observer output = %q, want %q", got, want)
+	}
+	if len(ce.starts) != 1 {
+		t.Fatalf("AGGR24 player combat starts = %d, want 1; starts=%+v", len(ce.starts), ce.starts)
+	}
+	if ce.starts[0].attacker != mob.GetName() || ce.starts[0].defender != victim.Name {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+// TestMobileActivityCharmedHelperAssistsMaster pins the charmed-master arm
+// (src/mobact.c:287-291 → do_assist, src/act.offensive.c:92-95). The master
+// hears "$N assists you!" and the room sees "$n assists $N."; both of C's
+// TO_CHAR lines to the assisting mobile are dropped, because a mobile has no
+// descriptor.
+func TestMobileActivityCharmedHelperAssistsMaster(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	helper := newMobactTestMob(w, 9360, 1, 0, "helper", "sentinel")
+	helper.Proto().ShortDesc = "a helper mob"
+	helper.SetAffected(affCharm)
+	master := newMobactSpeakingPlayer(t, w, "Master")
+	observer := newMobactSpeakingPlayer(t, w, "Observer")
+	foe := newMobactTestMob(w, 9361, 1, 0, "sentinel")
+	foe.Proto().ShortDesc = "a foe mob"
+	helper.SetFollowing(master.Name)
+	master.SetFightingBody(foe)
+	foe.SetFightingBody(master)
+
+	out := captureOutput(w)
+	pinNorthWanderDraws(t)
+	w.MobileActivity()
+
+	if got, want := outputOf(out, master.Name), "A helper mob assists you!\r\n"; got != want {
+		t.Fatalf("master output = %q, want %q", got, want)
+	}
+	if got, want := outputOf(out, observer.Name), "A helper mob assists Master.\r\n"; got != want {
+		t.Fatalf("observer output = %q, want %q", got, want)
+	}
+	if len(ce.starts) != 1 {
+		t.Fatalf("charmed assist combat starts = %d, want 1; starts=%+v", len(ce.starts), ce.starts)
+	}
+	if ce.starts[0].attacker != helper.GetName() || ce.starts[0].defender != foe.GetName() {
+		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+	}
+}
+
+// TestMobAssistGuards pins do_assist's mobile-side entry gates: a mobile that
+// is already fighting, mounted, or looking at a helpee with no attacker in
+// sight does nothing (src/act.offensive.c:58-89).
+func TestMobAssistGuards(t *testing.T) {
+	t.Run("already fighting", func(t *testing.T) {
+		w, ce := newMobactTestWorld(t)
+		helper := newMobactTestMob(w, 9370, 1, 0, "sentinel")
+		master := newMobactSpeakingPlayer(t, w, "Master")
+		foe := newMobactTestMob(w, 9371, 1, 0, "sentinel")
+		helper.SetFightingBody(foe)
+		master.SetFightingBody(foe)
+		foe.SetFightingBody(master)
+
+		w.mobAssist(helper, master)
+		if len(ce.starts) != 0 {
+			t.Fatalf("fighting helper still assisted: %+v", ce.starts)
+		}
+	})
+	t.Run("mounted", func(t *testing.T) {
+		w, ce := newMobactTestWorld(t)
+		helper := newMobactTestMob(w, 9372, 1, 0, "sentinel")
+		helper.SetAffected(affMount)
+		master := newMobactSpeakingPlayer(t, w, "Master")
+		foe := newMobactTestMob(w, 9373, 1, 0, "sentinel")
+		master.SetFightingBody(foe)
+		foe.SetFightingBody(master)
+
+		w.mobAssist(helper, master)
+		if len(ce.starts) != 0 {
+			t.Fatalf("mounted helper still assisted: %+v", ce.starts)
+		}
+	})
+	t.Run("nobody fighting the helpee", func(t *testing.T) {
+		w, ce := newMobactTestWorld(t)
+		helper := newMobactTestMob(w, 9374, 1, 0, "sentinel")
+		master := newMobactSpeakingPlayer(t, w, "Master")
+
+		w.mobAssist(helper, master)
+		if len(ce.starts) != 0 {
+			t.Fatalf("helper assisted with no opponent: %+v", ce.starts)
+		}
+	})
+}

@@ -382,8 +382,18 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	}
 
 	// -- Mob Memory --
+	// C: src/mobact.c:261-282. The remembered victim is the first occupant in
+	// room order that is not a mobile, is visible to ch, and does not carry
+	// PRF_NOHASSLE. The two warning acts are the two halves of one
+	// ROOM_PEACEFUL gate: a speaking mobile exclaims, a silent one growls.
+	// The attack that follows is unconditional (R1/R4).
 	if hasMobFlag(ch, "memory") && len(ch.Memory) > 0 {
+		peaceful := w.roomHasFlag(ch.RoomVNum, "peaceful")
+		found := false
 		for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
+			if found {
+				break
+			}
 			if vict.IsNPC() {
 				continue
 			}
@@ -391,50 +401,29 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if !w.canSeeCharacterInRoom(ch, vict) {
 				continue
 			}
-			// C: PRF_NOHASSLE
+			// C: PRF_FLAGGED(vict, PRF_NOHASSLE)
 			if vict.GetFlags()&(1<<PrfNohassle) != 0 {
 				continue
 			}
 			for _, name := range ch.Memory {
-				if name == vict.GetName() {
-					if w.combatEngine != nil {
-						if err := w.combatEngine.StartCombat(ch, vict); err != nil {
-							slog.Warn("StartCombat failed in memory mob", "mob", ch.GetName(), "error", err)
-						}
-					}
-					break
+				if name != vict.GetName() {
+					continue
 				}
-			}
-		}
-	}
-	if !ch.IsAlive() || ch.RoomVNum < 0 {
-		return
-	}
-
-	// -- Helper Mobs --
-	if hasMobFlag(ch, "helper") {
-		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
-			if vict == ch {
-				continue
-			}
-			target := vict.GetFightingBody()
-			if target == nil {
-				continue
-			}
-			for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
-				if p == target {
-					if w.combatEngine != nil {
-						if err := w.combatEngine.StartCombat(ch, p); err != nil {
-							slog.Warn("StartCombat failed in helper mob", "mob", ch.GetName(), "error", err)
-						}
+				found = true
+				if !peaceful {
+					if ch.CanSpeak() {
+						Act(w, false, ch, nil, nil, nil,
+							"'Hey!  You're the fiend that attacked me!!!', exclaims $n.", "", ToRoom)
+					} else {
+						Act(w, false, ch, nil, nil, nil,
+							"You hear a low growl in the back of $n's throat.", "", ToRoom)
 					}
-					break
 				}
-			}
-		}
-		// Rescue any player being attacked by a mob
-		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
-			if w.NpcRescue(ch, p) {
+				if w.combatEngine != nil {
+					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
+						slog.Warn("StartCombat failed in memory mob", "mob", ch.GetName(), "error", err)
+					}
+				}
 				break
 			}
 		}
@@ -443,10 +432,59 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 		return
 	}
 
+	// -- Helper Mobs --
+	// C: src/mobact.c:284-302. A charmed helper whose master is fighting
+	// calls do_assist with the master's name and ends its pulse; otherwise it
+	// joins the first mobile in room order that is fighting a player it can
+	// see. Go has no npc_rescue wiring here: C's npc_rescue (src/mobprog.c:435)
+	// is defined but never called, so the port's call was an invention (R4).
+	if hasMobFlag(ch, "helper") {
+		if ch.IsAffected(affCharm) && ch.GetFollowing() != "" {
+			if master := w.followingActor(ch.GetFollowing()); master != nil {
+				if c, ok := master.(combat.Combatant); ok && c.GetFightingBody() != nil {
+					w.mobAssist(ch, master)
+					return
+				}
+			}
+		}
+		found := false
+		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
+			if found {
+				break
+			}
+			if vict == ch {
+				continue
+			}
+			target := vict.GetFightingBody()
+			if target == nil || target.IsNPC() || target == combat.Combatant(ch) {
+				continue
+			}
+			if !w.canSeeCharacterInRoom(ch, target) {
+				continue
+			}
+			found = true
+			Act(w, false, ch, vict, nil, nil, "$n jumps to the aid of $N!", "", ToRoom)
+			if w.combatEngine != nil {
+				if err := w.combatEngine.StartCombat(ch, target); err != nil {
+					slog.Warn("StartCombat failed in helper mob", "mob", ch.GetName(), "error", err)
+				}
+			}
+		}
+	}
+	if !ch.IsAlive() || ch.RoomVNum < 0 {
+		return
+	}
+
 	// -- MOB_AGGR24: attack players level 24+ --
+	// C: src/mobact.c:304-322. Target selection runs first, then the room
+	// grin, the optional speak pair (can_speak), and finally hit().
 	if hasMobFlag(ch, "aggr24") {
+		var vict *Player
 		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
 			// C: !IS_NPC(tmp_ch) && CAN_SEE(ch, tmp_ch) && !PRF_NOHASSLE && !ROOM_PEACEFUL
+			if p.IsNPC() {
+				continue
+			}
 			if !w.canSeeCharacterInRoom(ch, p) {
 				continue
 			}
@@ -457,12 +495,22 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				continue
 			}
 			if p.GetLevel() >= 24 {
-				if w.combatEngine != nil {
-					if err := w.combatEngine.StartCombat(ch, p); err != nil {
-						slog.Warn("StartCombat failed in aggr24 mob", "mob", ch.GetName(), "error", err)
-					}
-				}
+				vict = p
 				break
+			}
+		}
+		if vict != nil {
+			Act(w, false, ch, nil, nil, nil, "$n grins evilly.", "", ToRoom)
+			if ch.CanSpeak() {
+				Act(w, false, ch, nil, nil, nil,
+					"'Another dark pawn trying to be a knight, eh?', asks $n.", "", ToRoom)
+				Act(w, false, ch, nil, nil, nil,
+					"$n says, 'I can fix that.'\n\r", "", ToRoom)
+			}
+			if w.combatEngine != nil {
+				if err := w.combatEngine.StartCombat(ch, vict); err != nil {
+					slog.Warn("StartCombat failed in aggr24 mob", "mob", ch.GetName(), "error", err)
+				}
 			}
 		}
 	}
@@ -471,6 +519,8 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	}
 
 	// -- AGGR24 + AGGRESSIVE + Full HP: attack weaker NPCs --
+	// C: src/mobact.c:324-336. The grin act fires at C's point, between
+	// selecting the visible weaker mobile and hit().
 	if hasMobFlag(ch, "aggr24") && hasMobFlag(ch, "aggressive") && ch.GetHP() >= ch.GetMaxHP() {
 		for _, vict := range w.GetMobsInRoom(ch.RoomVNum) {
 			if vict == ch {
@@ -480,6 +530,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				continue
 			}
 			if vict.GetLevel()+3 < ch.GetLevel() {
+				Act(w, false, ch, nil, nil, nil, "$n grins evilly.", "", ToRoom)
 				if w.combatEngine != nil {
 					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
 						slog.Warn("StartCombat failed in aggr24 mob vs mob", "mob", ch.GetName(), "error", err)
@@ -487,6 +538,62 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				}
 				break
 			}
+		}
+	}
+}
+
+// mobAssist is do_assist() (src/act.offensive.c:54-98) driven by a mobile, as
+// mobile_activity's charmed-master arm calls it (src/mobact.c:287-291).
+// FIGHTING(ch) is already false — the pulse skips fighting mobiles — and every
+// send_to_char line C aims at ch is dropped, because a mobile has no
+// descriptor. What remains observable is the helpee line, the room act, and
+// the swing. The opponent scan uses the port's room-occupant helper; C's true
+// room-list order is DP-1364.
+func (w *World) mobAssist(ch *MobInstance, helpee Actor) {
+	if ch == nil || helpee == nil {
+		return
+	}
+	// C: if (FIGHTING(ch)) return;
+	if ch.GetFightingBody() != nil {
+		return
+	}
+	// C: if (IS_MOUNTED(ch)) { stc("Dismount first!\r\n", ch); return; }
+	if ch.IsAffected(affMount) {
+		return
+	}
+	// C: get_char_room_vis(ch, arg) — nothing outside the actor's room.
+	if helpee.GetRoom() != ch.GetRoom() {
+		return
+	}
+	// C: helpee == ch
+	if Actor(ch) == helpee {
+		return
+	}
+	var opponent Actor
+	var opponentCombat combat.Combatant
+	for _, to := range w.actChar(ch.GetRoom()) {
+		c, ok := to.(combat.Combatant)
+		if !ok || to == ch {
+			continue
+		}
+		if any(c.GetFightingBody()) == any(helpee) {
+			opponent, opponentCombat = to, c
+			break
+		}
+	}
+	// C's "But nobody is fighting $M!" and "You can't see who is fighting $M!"
+	// are TO_CHAR lines to a descriptorless mobile, so they are silent.
+	if opponent == nil || !w.canSeeCharacterInRoom(ch, opponent) {
+		return
+	}
+	// C: act("$N assists you!", 0, helpee, 0, ch, TO_CHAR) — the helpee hears
+	// it, and $N is the assisting mobile.
+	Act(w, false, helpee, ch, nil, nil, "$N assists you!", "", ToChar)
+	// C: act("$n assists $N.", FALSE, ch, 0, helpee, TO_NOTVICT).
+	Act(w, false, ch, helpee, nil, nil, "$n assists $N.", "", ToNotVict)
+	if w.combatEngine != nil {
+		if err := w.combatEngine.StartCombat(ch, opponentCombat); err != nil {
+			slog.Warn("StartCombat failed in charmed helper assist", "mob", ch.GetName(), "error", err)
 		}
 	}
 }
