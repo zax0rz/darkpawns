@@ -65,8 +65,12 @@ The `visible-zai-depth` targeted census is clean: one passed, zero expected,
 unpinnable, stale, failed, infra, timeout, or unstable; elapsed 16.868s. The
 `results.tsv` row is `PASS visible-zai-depth 10`. Its summary and manifest are retained under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train3-visible-zai/`.
-The `visible.zai-gate` manifest row is now `oracle-green`. The train's final
-combined census remains required after the integrated gates pass.
+The `visible.zai-gate` manifest row is now `oracle-green`. The final integrated
+combined census on tip `94758e499` completed clean:
+`oracle-combined: pairs=3402 deduplicated=1018 full=CLEAN claims=CLEAN elapsed=1956.788s verdict=CLEAN`.
+Its `results.tsv` rows for `visible-zai-depth` and `lua-bind-actions` both
+pass. The retained run is at
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train-3-integrated/`.
 
 ## Sweep continuity
 
