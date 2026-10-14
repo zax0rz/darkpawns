@@ -81,7 +81,9 @@ the real Lua `action` binding, loads bread object 8010 into its inventory with
 player's transcript. The seed-1 `--show-oracle` run had no normalized
 divergence. Its retained C block shows the carried bread, `object invisible=1`,
 and `object blessed=1`, confirming both C object-alteration arms executed. A
-targeted census and the train's final combined census remain pending. The
+full output and run manifest are retained under
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train2-show-oracle/`.
+The targeted census and the train's final combined census remain pending. The
 shared census slot is occupied at this handoff update; do not start a
 competing census. Fill in both census result lines here and mark
 `lua.bind-spell-object-target` oracle-green only after the targeted case is
