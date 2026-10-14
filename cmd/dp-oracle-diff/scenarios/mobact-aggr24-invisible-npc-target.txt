@@ -16,7 +16,7 @@ set-mob-aff 4909 1
 replace-room-exits 8162 none
 
 [setup:oracle]
-Aggr24probe
+Mordane
 Y
 oraclepass
 oraclepass
@@ -32,7 +32,7 @@ nohassle
 goto 8162
 
 [setup:port]
-Aggr24probe
+Mordane
 y
 oraclepass
 oraclepass
