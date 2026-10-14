@@ -80,12 +80,21 @@ func TestSpecCleric_EntryGatesAndStand(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosSitting)
-	scriptClericRolls(t, 0, 0) // lspell=2, then the always-offensive full-health gate
+	draws := scriptClericRolls(t, 0, 1) // lspell=2, then the always-offensive full-health gate
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Error("eligible sitting cleric should consume its special tick")
 	}
 	if got := mob.GetPosition(); got != combat.PosStanding {
 		t.Errorf("cleric position after do_stand = %d, want standing", got)
+	}
+	wantDraws := []clericTestDraw{{from: 0, to: 10}, {from: 1, to: 2}}
+	if len(*draws) != len(wantDraws) {
+		t.Fatalf("cleric draws = %v, want %v", *draws, wantDraws)
+	}
+	for i, got := range *draws {
+		if got != wantDraws[i] {
+			t.Errorf("cleric draw %d = %+v, want %+v", i, got, wantDraws[i])
+		}
 	}
 	if got := lastMsg(); !strings.Contains(got, "clambers to its feet") {
 		t.Errorf("cleric do_stand room output = %q", got)
@@ -98,7 +107,7 @@ func TestSpecCleric_Lspell12IsAnOffensiveNoOp(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := prepareClericTestCombat(t, w, player, 15)
 	_ = lastMsg()              // discard the spawn-room line
-	scriptClericRolls(t, 9, 0) // min(9+level/5,15) = 12; offense branch
+	scriptClericRolls(t, 9, 1) // min(9+level/5,15) = 12; offense branch
 
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Fatal("eligible cleric should consume its special tick")
@@ -115,7 +124,7 @@ func TestSpecCleric_EarthquakeUsesNPCRoomMessage(t *testing.T) {
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := prepareClericTestCombat(t, w, player, 20)
 	_ = lastMsg()               // discard the spawn-room line
-	scriptClericRolls(t, 13, 0) // min(13+4,20) = 17; offense branch
+	scriptClericRolls(t, 13, 1) // min(13+4,20) = 17; offense branch
 
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Fatal("eligible cleric should consume its special tick")
@@ -134,7 +143,7 @@ func TestSpecCleric_CallLightningWeatherGate(t *testing.T) {
 
 	w, player, lastMsg := newSpecProcTestWorld(t)
 	mob := prepareClericTestCombat(t, w, player, 20)
-	scriptClericRolls(t, 13, 0, 0) // lspell=17; offense; lightning succeeds
+	scriptClericRolls(t, 13, 1, 0) // lspell=17; offense; lightning succeeds
 
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Fatal("eligible cleric should consume its special tick")
@@ -156,12 +165,12 @@ func TestSpecCleric_BlindnessGateConsumesCDraw(t *testing.T) {
 		p.AffectFlags = []string{"blind"}
 		mob.SetProto(&p)
 	}
-	draws := scriptClericRolls(t, 0, 2, 1, 0)
+	draws := scriptClericRolls(t, 0, 3, 1, 0)
 
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Fatal("eligible cleric should consume its special tick")
 	}
-	want := []clericTestDraw{{0, 10}, {0, 8}, {0, 3}, {0, 3}}
+	want := []clericTestDraw{{0, 10}, {1, 9}, {0, 3}, {0, 3}}
 	if len(*draws) != len(want) {
 		t.Fatalf("cleric draw count = %d, want %d (%v)", len(*draws), len(want), *draws)
 	}

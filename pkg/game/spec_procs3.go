@@ -199,7 +199,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Roll: hit foe (<3) vs heal self (>=3), out of (healPerc+2)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if clericNumber(0, healPerc+1) >= 2 {
+	if clericNumber(1, healPerc+2) >= 3 {
 		// Heal self — check curses, poisons, blindness
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
