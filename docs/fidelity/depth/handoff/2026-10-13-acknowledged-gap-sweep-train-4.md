@@ -2,9 +2,11 @@
 
 ## Scope and source audit
 
-This train starts from freshly fetched `origin/main` at
-`9b3ecaae3d02cb1f2b066e9dd27c81bb5ec350fc`, on
-`codex/luna-acknowledged-gap-sweep-4`. The pre-fix inventory is committed in
+This train started from freshly fetched `origin/main` at
+`9b3ecaae3d02cb1f2b066e9dd27c81bb5ec350fc`. It was rebased onto fresh
+`origin/main` at `d8e8024ddbfe52fbde36d16e0b02e2d7606fac71` after PRs #1943,
+#1944, and #1945 merged, on `codex/luna-acknowledged-gap-sweep-4`. PRs #1953
+and #1954 were open and are not part of this base at handoff time. The pre-fix inventory is committed in
 Train 1 and PR #1943: `2026-10-13-acknowledged-gap-sweep.md`, its comments TSV,
 and its assigned-special crosswalk.
 
@@ -27,8 +29,10 @@ search.
 The mobile-leader `lua_follow` candidate remains for the next Lua action train;
 `lua.bind-follow-mobile-leader` is now a blocked row. The object-timer and
 AGGR24 mobile-selection gaps also have blocked rows before any future fix.
-The combat memory/helper branches remain owned by the shared combat transcript
-work, as recorded in the baseline comments TSV. Existing copy-ready issues for
+The combat memory/helper branches call the shared combat transcript path. Keep
+that common attack/message/RNG behavior with its owner; the missing source-
+specific target gates and pre-hit acts remain separately inventoried pending
+an explicit owner-boundary decision. Existing copy-ready issues for
 `DoTurn`, `show shops`, the Lua character/mobile table, water capability, and
 jail-guard visibility remain in the Train 1 handoff.
 
@@ -127,16 +131,22 @@ ok github.com/zax0rz/darkpawns/internal/oraclediff 0.003s
 
 The target oracle cases are `lua-bind-actions` and `lua-bind-queries`; both
 contain the new depth probes. Both were run with `--show-oracle` at seed 1 and
-reported no normalized divergence. The retained relevant normalized blocks are under
+reported no normalized divergence. Their targeted census is clean: two passed,
+zero expected, unpinnable, stale, failed, infra, timeout, or unstable; elapsed
+22.024s. The retained summary and manifest are under
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train4-lua-bindings/`.
+The `lua.bind-set-hunt-player-hunter` and `lua.bind-canget-world-actor` rows
+are now `oracle-green`. The retained relevant normalized blocks are under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train4-show-oracle/`;
 the `lua.bind-canget-world-actor` probe reports `canget invisible=nil` after
-the live mobile's detect-invisible effect is removed. Their targeted census
-and the train's final combined census remain pending. The preceding
-`dp-1419-lethal` combined census completed clean after rechecking
-`spank-sleeping-depth` (`full=CLEAN_AFTER_RECHECK`,
-`claims=CLEAN_AFTER_RECHECK`, 3,395 pairs).
+the live mobile's detect-invisible effect is removed. The train's final
+combined census remains pending after rebase.
 
 Required gates, all run independently after `make fmt`:
+
+The branch is based on the rebased `origin/main` noted above. All gates below
+were rerun separately after that rebase and after the two targeted rows became
+`oracle-green`.
 
 | Gate | Result |
 |---|---|
@@ -145,11 +155,12 @@ Required gates, all run independently after `make fmt`:
 | `go test ./...`; `go test ./pkg/game/...`; `go test -race ./pkg/game/...` | PASS separately |
 | `golangci-lint run ./...` | PASS: 0 issues |
 | `make deadcode-ratchet` | PASS: 52 baselined, 0 new |
-| `make fidelity-depth` | PASS: 5,521 cases; 5,426 proven/delegated; 15 blocked; 68 excluded; 12 divergent-approved |
-| `make fidelity-units` | PASS: 1,423 rows, 1,309 symbols, 1,604 claims |
+| `make fidelity-depth` | PASS: 5,529 cases; 5,436 proven/delegated; 13 blocked; 68 excluded; 12 divergent-approved |
+| `make fidelity-units` | PASS: 1,428 rows, 1,316 symbols, 1,611 claims |
 | `make string-census` | PASS: 94 Go-only, ratchet 98 known segments / 0 unreviewed; generated reports were stale, and were not updated |
 | `gosec -severity=high -quiet ./...` | PASS |
 
-Do not mark the two Lua depth rows oracle-green until the targeted census is
-clean; do not open the train PR until its final combined census and evidence
-are recorded.
+The two targeted Lua depth rows are oracle-green. Keep
+`lua.bind-follow-mobile-leader` blocked until a real mobile-leader proof exists.
+Do not open this train's PR until the final combined census and evidence are
+recorded.
