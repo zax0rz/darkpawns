@@ -1009,103 +1009,137 @@ func (e *Engine) setupBasicConstantsOn(L *lua.LState) {
 	L.SetGlobal("LT_ROOM", lua.LString("room"))
 }
 
-// charToTableLocked converts a ScriptablePlayer to a Lua table. Caller must hold e.mu.
-// Based on char_to_table() in scripts.c lines 1812-1916.
-// charToTableLocked converts a ScriptablePlayer to a Lua table. Caller must hold e.mu.
+// charToTableLocked is the legacy (non-bridge) char_to_table. Production runs
+// always bridge (see RunScript), so this path is reached only by engine tests;
+// it still emits C's exact field set so the two builders cannot drift.
+// Source: src/scripts.c:1823-1891.
 func (e *Engine) charToTableLocked(player ScriptablePlayer, globalName string) {
-	L := e.l
-	tbl := L.NewTable()
-
-	// Basic fields
-	tbl.RawSetString("name", lua.LString(player.GetName()))
-	tbl.RawSetString("level", lua.LNumber(player.GetLevel()))
-	tbl.RawSetString("hp", lua.LNumber(player.GetHealth()))
-	tbl.RawSetString("maxhp", lua.LNumber(player.GetMaxHealth()))
-	tbl.RawSetString("gold", lua.LNumber(player.GetGold()))
-	tbl.RawSetString("race", lua.LNumber(player.GetRace()))
-	tbl.RawSetString("class", lua.LNumber(player.GetClass()))
-	tbl.RawSetString("alignment", lua.LNumber(player.GetAlignment()))
-	tbl.RawSetString("room", lua.LNumber(player.GetRoomVNum()))
-	// move/maxmove not yet on ScriptablePlayer interface — skip for now
-
-	// Evil property (based on alignment - negative = evil)
-	alignment := player.GetAlignment()
-	evil := 0 // FALSE
-	if alignment < 0 {
-		evil = 1 // TRUE
+	c, ok := player.(ScriptableChar)
+	if !ok {
+		slog.Warn("char table requested for a character without a ScriptableChar view", "global", globalName)
+		return
 	}
-	tbl.RawSetString("evil", lua.LNumber(evil))
-
-	// is_npc: false for players. Source: utils.h IS_NPC() macro.
-	tbl.RawSetString("is_npc", lua.LBool(false))
-
-	// Expose raw PLR flags bitmask so plr_flagged() can check individual bits.
-	// Source: structs.h PLR_FLAGS, utils.h PLR_FLAGGED() macro.
-	tbl.RawSetString("plr_flags_raw", lua.LNumber(float64(player.GetFlags())))
-
-	// Skills table (stub for now)
-	skillsTbl := L.NewTable()
-	tbl.RawSetString("skills", skillsTbl)
-
-	// Objs — inventory items. Source: scripts.c char_to_table() lines 1842-1849.
-	if items := player.GetInventoryItems(); len(items) > 0 {
-		objsTbl := L.NewTable()
-		for i, obj := range items {
-			objsTbl.RawSetInt(i+1, e.objToTable(obj))
-		}
-		tbl.RawSetString("objs", objsTbl)
+	tbl := e.legacyCharTable(c, 0)
+	if tbl == nil {
+		return
 	}
-
-	// Store pointer to struct for write-back
-	tbl.RawSetString("struct", lua.LNumber(player.GetID()))
-
-	L.SetGlobal(globalName, tbl)
-	slog.Debug("set global", "name", globalName, "level", player.GetLevel())
+	e.l.SetGlobal(globalName, tbl)
+	slog.Debug("set global", "name", globalName)
 }
 
-// mobToTableLocked converts a ScriptableMob to a Lua table. Caller must hold e.mu.
-// Based on char_to_table() for NPCs in scripts.c lines 1904-1910.
+// mobToTableLocked is charToTableLocked for a mobile: C's char_to_table is one
+// function for both kinds (src/scripts.c:1875-1888).
 func (e *Engine) mobToTableLocked(mob ScriptableMob, globalName string) {
-	L := e.l
-	tbl := L.NewTable()
-
-	proto := mob.GetPrototype()
-
-	// Basic fields
-	tbl.RawSetString("name", lua.LString(proto.GetShortDesc()))
-	tbl.RawSetString("level", lua.LNumber(proto.GetLevel()))
-	tbl.RawSetString("hp", lua.LNumber(mob.GetHealth()))
-	tbl.RawSetString("maxhp", lua.LNumber(mob.GetMaxHealth()))
-	tbl.RawSetString("vnum", lua.LNumber(mob.GetVNum()))
-	tbl.RawSetString("gold", lua.LNumber(proto.GetGold()))
-	tbl.RawSetString("room", lua.LNumber(mob.GetRoomVNum()))
-
-	// Evil property (based on alignment - negative = evil)
-	// In Dark Pawns, alignment ranges from -1000 to +1000
-	// Negative alignment = evil (TRUE), positive = good (FALSE)
-	alignment := proto.GetAlignment()
-	evil := 0 // FALSE
-	if alignment < 0 {
-		evil = 1 // TRUE
+	c, ok := mob.(ScriptableChar)
+	if !ok {
+		slog.Warn("char table requested for a mobile without a ScriptableChar view", "global", globalName)
+		return
 	}
-	tbl.RawSetString("evil", lua.LNumber(evil))
+	tbl := e.legacyCharTable(c, 0)
+	if tbl == nil {
+		return
+	}
+	e.l.SetGlobal(globalName, tbl)
+}
 
-	// is_npc: true for mobs. Source: utils.h IS_NPC() macro — MOB_ISNPC flag always set.
-	tbl.RawSetString("is_npc", lua.LBool(true))
+// legacyCharTable builds char_to_table for one leader-chain link. depth bounds
+// the ch->master recursion exactly as the bridge's charToTableDepth does.
+func (e *Engine) legacyCharTable(c ScriptableChar, depth int) *lua.LTable {
+	switch {
+	case c.AsPlayer() != nil:
+		return e.legacyPlayerTable(c.AsPlayer(), depth)
+	case c.AsMob() != nil:
+		return e.legacyMobTable(c.AsMob(), depth)
+	}
+	return nil
+}
 
-	// Wear property (array of worn items) - placeholder empty table
-	wearTbl := L.NewTable()
-	tbl.RawSetString("wear", wearTbl)
+// legacyPlayerTable is char_to_table's player arm (src/scripts.c:1823-1891).
+func (e *Engine) legacyPlayerTable(p ScriptablePlayer, depth int) *lua.LTable {
+	tbl := e.l.NewTable()
+	tbl.RawSetString("name", lua.LString(p.GetName()))
+	tbl.RawSetString("align", lua.LNumber(p.GetAlignment()))
+	tbl.RawSetString("gold", lua.LNumber(p.GetGold()))
+	tbl.RawSetString("level", lua.LNumber(p.GetLevel()))
+	tbl.RawSetString("hp", lua.LNumber(p.GetHealth()))
+	tbl.RawSetString("maxhp", lua.LNumber(p.GetMaxHealth()))
+	tbl.RawSetString("pos", lua.LNumber(p.GetPosition()))
+	tbl.RawSetString("alias", lua.LString(p.GetAlias()))
+	if items := p.GetInventoryItems(); len(items) > 0 {
+		objs := e.l.NewTable()
+		for i, obj := range items {
+			objs.RawSetInt(i+1, e.objToTable(obj))
+		}
+		tbl.RawSetString("objs", objs)
+	}
+	if worn := p.GetWornObjects(); len(worn) > 0 {
+		wear := e.l.NewTable()
+		for i, obj := range worn {
+			wear.RawSetInt(i+1, e.objToTable(obj))
+		}
+		tbl.RawSetString("wear", wear)
+	}
+	tbl.RawSetString("evil", luaBool(p.GetAlignment() <= -350))
+	e.legacyLeaderInto(tbl, p.GetLeaderName(), depth)
+	tbl.RawSetString("id", lua.LNumber(p.GetID()))
+	tbl.RawSetString("exp", lua.LNumber(p.GetExp()))
+	tbl.RawSetString("bank", lua.LNumber(p.GetBankGold()))
+	tbl.RawSetString("mana", lua.LNumber(p.GetMana()))
+	tbl.RawSetString("move", lua.LNumber(p.GetMove()))
+	tbl.RawSetString("cha", lua.LNumber(p.GetCha()))
+	tbl.RawSetString("jail", lua.LNumber(p.GetJailTimer()))
+	tbl.RawSetString("tattoo", lua.LNumber(p.GetTattoo()))
+	tbl.RawSetString("followers", lua.LNumber(p.GetFollowerCount()))
+	tbl.RawSetString("struct", lua.LNumber(p.GetID()))
+	return tbl
+}
 
-	// Store pointer to struct for write-back
-	tbl.RawSetString("struct", lua.LNumber(mob.GetVNum()))
-	// Retain the actual body for combat reads; other legacy bindings keep their
-	// separately owned numeric struct contract until their C1 port.
-	combatBody := L.NewUserData()
-	combatBody.Value = mob
-	tbl.RawSetString("__combat_body", combatBody)
+// legacyMobTable is char_to_table's mobile arm (src/scripts.c:1885-1888).
+func (e *Engine) legacyMobTable(m ScriptableMob, depth int) *lua.LTable {
+	tbl := e.l.NewTable()
+	tbl.RawSetString("name", lua.LString(m.GetName()))
+	tbl.RawSetString("align", lua.LNumber(m.GetAlignment()))
+	tbl.RawSetString("gold", lua.LNumber(m.GetGold()))
+	tbl.RawSetString("level", lua.LNumber(m.GetLevel()))
+	tbl.RawSetString("hp", lua.LNumber(m.GetHealth()))
+	tbl.RawSetString("maxhp", lua.LNumber(m.GetMaxHealth()))
+	tbl.RawSetString("pos", lua.LNumber(m.GetPosition()))
+	tbl.RawSetString("alias", lua.LString(m.GetAlias()))
+	if items := m.GetCarriedObjects(); len(items) > 0 {
+		objs := e.l.NewTable()
+		for i, obj := range items {
+			objs.RawSetInt(i+1, e.objToTable(obj))
+		}
+		tbl.RawSetString("objs", objs)
+	}
+	if worn := m.GetWornObjects(); len(worn) > 0 {
+		wear := e.l.NewTable()
+		for i, obj := range worn {
+			wear.RawSetInt(i+1, e.objToTable(obj))
+		}
+		tbl.RawSetString("wear", wear)
+	}
+	tbl.RawSetString("evil", luaBool(m.GetAlignment() <= -350))
+	e.legacyLeaderInto(tbl, m.GetLeaderName(), depth)
+	tbl.RawSetString("vnum", lua.LNumber(m.GetVNum()))
+	tbl.RawSetString("timer", lua.LNumber(m.GetWaitState()))
+	tbl.RawSetString("struct", lua.LNumber(m.GetVNum()))
+	return tbl
+}
 
-	L.SetGlobal(globalName, tbl)
+// legacyLeaderInto sets "leader" from the follow target's name. C pushes nil
+// when there is no master, which removes the key (src/scripts.c:1870-1871).
+func (e *Engine) legacyLeaderInto(tbl *lua.LTable, leaderName string, depth int) {
+	if leaderName == "" || depth >= maxLeaderDepth || e.world == nil {
+		return
+	}
+	leader := e.world.GetScriptableChar(leaderName)
+	if leader == nil {
+		return
+	}
+	if sub := e.legacyCharTable(leader, depth+1); sub != nil {
+		tbl.RawSetString("leader", sub)
+	}
 }
 
 // objToTable creates a Lua table from a ScriptableObject, suitable for nesting
