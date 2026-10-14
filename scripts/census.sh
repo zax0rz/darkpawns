@@ -163,11 +163,12 @@ resolve_run() {
 # start
 # ---------------------------------------------------------------------------
 do_start() {
-	local name= scenarios= jobs=36 claims=0 combined=0
+	local name= scenarios= jobs=36 claims=0 combined=0 draw_parity=0
 	while (($# > 0)); do
 		case $1 in
 		--claims) claims=1; shift ;;
 		--combined) combined=1; shift ;;
+		--draw-parity) draw_parity=1; shift ;;
 		--name) (($# >= 2)) || usage; name=$2; shift 2 ;;
 		--name=*) name=${1#--name=}; shift ;;
 		--scenarios) (($# >= 2)) || usage; scenarios=$2; shift 2 ;;
@@ -178,6 +179,12 @@ do_start() {
 		esac
 	done
 	[[ -n "$name" ]] || usage
+	# DP-1427 v1: draw parity runs the full (or targeted) seed-1 corpus only;
+	# it is not yet merged with the claims/combined drivers.
+	if [[ $draw_parity == 1 ]] && (( claims || combined )); then
+		printf 'census: --draw-parity cannot be combined with --claims or --combined yet\n' >&2
+		exit 2
+	fi
 	[[ "$combined" == 0 || ( "$claims" == 0 && -z "$scenarios" ) ]] || die "--combined cannot be combined with --claims or --scenarios"
 	[[ "$claims" == 0 || -z "$scenarios" ]] || die "--claims and --scenarios are mutually exclusive"
 	[[ "$jobs" =~ ^[1-9][0-9]*$ ]] || die "--jobs needs a positive integer"
@@ -297,6 +304,7 @@ PYCOUNT
 		CENSUS_SEED="$seed" \
 		CENSUS_CLAIMS="$claims" \
 		CENSUS_COMBINED="$combined" \
+		CENSUS_DRAW_PARITY="$draw_parity" \
 		CENSUS_LOCK_FD=9 \
 		CENSUS_TEST_WORK="${CENSUS_TEST_WORK:-}" \
 		bash "$repo_root/scripts/census_runner.sh" </dev/null >"$run_dir/census.log" 2>&1 &

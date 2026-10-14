@@ -40,6 +40,11 @@ M)
 	printf 'fake harness divergence without fingerprints\n'
 	exit 3
 	;;
+X)
+	# DP-1427: transcripts match, RNG draw streams diverge.
+	printf 'draw-parity\tMISMATCH\tstream=7\tc=Number(0,20) = 0\tgo=Number(0,3) = 1\tc-step=setup\tgo-step=setup\n'
+	exit 5
+	;;
 D:*)
 	records=${step#D:}
 	IFS=',' read -r -a fingerprints <<<"$records"

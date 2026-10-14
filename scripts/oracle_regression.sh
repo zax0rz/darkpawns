@@ -146,6 +146,10 @@ if [[ -n "${ORACLE_REGRESSION_DUMP:-}" ]]; then
 	}
 	export ORACLE_REGRESSION_DUMP
 fi
+# DP-1427: workers add --draw-parity and classify exit 5 as DRAW.
+if [[ "${ORACLE_REGRESSION_DRAW_PARITY:-0}" == 1 ]]; then
+	export ORACLE_REGRESSION_DRAW_PARITY
+fi
 
 printf 'oracle-regression: %d scenarios, seed=%s, timeout=%s, jobs=%s%s\n' "${#scenarios[@]}" "$seed" "$scenario_timeout" "$jobs" "${ORACLE_REGRESSION_DUMP:+ dump=$ORACLE_REGRESSION_DUMP}"
 printf '%s\0' "${scenarios[@]}" | xargs -0 -n1 -P "$jobs" "$script_dir"/oracle_regression_worker.sh
@@ -177,6 +181,7 @@ stale=0
 failed=0
 infra=0
 timed_out=0
+draws=0
 for scenario_file in "${scenarios[@]}"; do
 	scenario=${scenario_file%.txt}
 	result_file="$result_dir/$scenario"
@@ -216,6 +221,12 @@ for scenario_file in "${scenarios[@]}"; do
 	FAIL)
 		failed=$((failed + 1))
 		;;
+	DRAW)
+		# Bytes matched, RNG draw streams did not (DP-1427). Reported on its own
+		# line; it does not change the byte verdict or exit code.
+		draws=$((draws + 1))
+		printf 'DRAW %s (transcripts match; RNG draw streams diverge)\n' "$scenario"
+		;;
 	esac
 done
 
@@ -229,6 +240,10 @@ printf 'oracle-regression: scenarios=%d passed=%d expected=%d unpinnable=%d stal
 	"${#scenarios[@]}" "$passed" "$expected" "$unpinnable" "$stale" "$failed" "$infra" "$timed_out" "$unstable" "$elapsed_seconds" "$elapsed_remainder" \
 	"$(date -d "@$run_started" '+%Y-%m-%dT%H:%M:%S%z')" \
 	"$(date -d "@$run_finished" '+%Y-%m-%dT%H:%M:%S%z')"
+
+if [[ "${ORACLE_REGRESSION_DRAW_PARITY:-0}" == 1 ]]; then
+	printf 'oracle-draw-parity: scenarios=%d draw_divergent=%d\n' "${#scenarios[@]}" "$draws"
+fi
 
 if (( failed != 0 )); then
 	exit 1

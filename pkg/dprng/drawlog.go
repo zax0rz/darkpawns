@@ -26,13 +26,14 @@ var (
 	drawLogSink  io.Writer = os.Stderr
 )
 
-// When DP_DRAW_LOG_FILE is set, draws go to that file (truncated at start)
-// instead of stderr. Harnesses that capture a subprocess's stderr into an
+// When DP_DRAW_LOG_FILE is set, draws are appended to that file instead of
+// stderr (append, so a harness <RESTART> keeps one continuous log; the harness
+// clears the file before each run). Harnesses that capture a subprocess's stderr into an
 // unread buffer (cmd/dp-oracle-diff) swallow the log otherwise, so a file sink
 // is the only way to recover the port's draw sequence.
 func init() {
 	if path := os.Getenv("DP_DRAW_LOG_FILE"); drawLogOn && path != "" {
-		if f, err := os.Create(path); err == nil { // #nosec G304 G703 -- dev draw-parity tool; path is an operator-supplied env var, not request-derived
+		if f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600); err == nil { // #nosec G304 G703 -- dev draw-parity tool; path is an operator-supplied env var, not request-derived
 			drawLogSink = f
 		}
 	}

@@ -785,6 +785,13 @@ func RunWarmup(primary Conn, peers map[string]Conn, steps []string, quiescence t
 // multi-descriptor vehicles whose C behavior depends on which connection owns
 // the next input line.
 func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration) ([]AudienceProbeBlock, error) {
+	return RunAudienceProbeHooked(primary, peers, probe, quiescence, nil)
+}
+
+// RunAudienceProbeHooked is RunAudienceProbe with an optional callback that
+// runs after each probe step's output (actor and audience) has been read. The
+// draw-parity mode uses it to record how many RNG draws each step consumed.
+func RunAudienceProbeHooked(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, afterStep func(index int, step string)) ([]AudienceProbeBlock, error) {
 	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
 	for i, step := range probe {
 		// The connection may close at the last step, or just before a relogin
@@ -845,6 +852,9 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 		blocks = append(blocks, peerBlocks...)
 		if peerErr != nil {
 			return blocks, peerErr
+		}
+		if afterStep != nil {
+			afterStep(i, step)
 		}
 	}
 	return blocks, nil

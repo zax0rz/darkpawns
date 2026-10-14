@@ -63,6 +63,9 @@ finish() {
 			printf ' rechecked=%s' "$(awk -F '\t' '{ printf "%s%s", sep, $2; sep="," }' "$run_dir/recheck-results.tsv")"
 		fi
 		printf '\n'
+		# DP-1427: the draw-parity tally is its own line; it never changes the
+		# byte verdict above.
+		grep '^oracle-draw-parity: ' "$run_dir/census.log" | tail -1 || true
 	} >"$run_dir/summary.txt"
 	printf '%s\n' "$exit_code" >"$run_dir/exit-code"
 	printf 'done verdict=%s\n' "$verdict" >"$run_dir/state"
@@ -170,6 +173,9 @@ regression_env=(
 if [[ -n "$scenarios" ]]; then
 	regression_env+=("ORACLE_REGRESSION_SCENARIOS=$scenarios")
 fi
+if [[ "${CENSUS_DRAW_PARITY:-0}" == 1 ]]; then
+	regression_env+=("ORACLE_REGRESSION_DRAW_PARITY=1")
+fi
 # The regression script must not inherit the lock FD: only the runner
 # holds it, so the kernel frees it the moment the runner dies and a killed
 # census can never leave an orphan holding the lock. (Redirections are
@@ -220,6 +226,9 @@ recheck_env=(
 	ORACLE_REGRESSION_RESULTS="$run_dir/recheck-results.tsv"
 	ORACLE_REGRESSION_SCENARIOS="$recheck_names"
 )
+if [[ "${CENSUS_DRAW_PARITY:-0}" == 1 ]]; then
+	recheck_env+=("ORACLE_REGRESSION_DRAW_PARITY=1")
+fi
 # Same background+wait discipline as the main invocation.
 "${recheck_env[@]}" "$runner" >"$run_dir/recheck.log" 2>&1 9>&- &
 child=$!

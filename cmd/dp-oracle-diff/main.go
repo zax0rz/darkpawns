@@ -173,6 +173,7 @@ func run() int {
 		firstByteWait = flag.Duration("first-byte-wait", 2*time.Second, "maximum wait for the first response byte after issuing a command; 0 uses the quiescence window")
 		quiescence    = flag.Duration("quiescence", 300*time.Millisecond, "silence interval that marks the end of an output burst")
 		bootTimeout   = flag.Duration("boot-timeout", 30*time.Second, "maximum wait for each telnet listener")
+		drawParity    = flag.Bool("draw-parity", false, "also compare the C oracle's and the Go port's RNG draw streams (needs a reference oracle built with the DP draw-log seam); a draw-only mismatch exits 5")
 		goTransport   = flag.String("go-transport", envOr("DP_ORACLE_GO_TRANSPORT", "telnet"), "how the Go port is driven: telnet, or ws (the /play browser client, run headless under node); default from DP_ORACLE_GO_TRANSPORT")
 	)
 	flag.Parse()
@@ -194,10 +195,13 @@ func run() int {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff: -go-transport must be telnet or ws")
 		return 1
 	}
-	if err := execute(*scenarioName, *quiescence, *firstByteWait, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport); err != nil {
+	if err := execute(*scenarioName, *quiescence, *firstByteWait, *bootTimeout, oracleBin, *seed, *showOracle, *dumpOracle, *showGoLog, *goTransport, *drawParity); err != nil {
 		fmt.Fprintln(os.Stderr, "dp-oracle-diff:", err)
 		if errors.Is(err, errDivergence) {
 			return 3
+		}
+		if errors.Is(err, errDrawDivergence) {
+			return 5
 		}
 		return 1
 	}
@@ -216,7 +220,12 @@ func envOr(key, fallback string) string {
 // content divergence separately from crashes (exit 1).
 var errDivergence = errors.New("normalized divergence detected")
 
-func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string) error {
+// errDrawDivergence is "the transcripts match but the RNG draw streams do
+// not" (-draw-parity). main maps it to exit code 5, separate from content
+// divergence, because a coincidence-green transcript is a different finding.
+var errDrawDivergence = errors.New("rng draw streams diverge")
+
+func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Duration, oracleBin, seed string, showOracle bool, dumpOracle string, showGoLog bool, goTransport string, drawParity bool) error {
 	if firstByteWait < 0 {
 		return errors.New("first-byte-wait must be nonnegative")
 	}
@@ -242,6 +251,16 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		return fmt.Errorf("create work directory: %w", err)
 	}
 	defer func() { _ = os.RemoveAll(tmp) }()
+
+	// -draw-parity: each engine appends its RNG draws to its own file (the C
+	// seam reads DP_C_DRAW_LOG_FILE, the Go port DP_DRAW_LOG_FILE), so a
+	// <RESTART> keeps one continuous log per side.
+	cDrawLog := filepath.Join(tmp, "c-draws.log")
+	goDrawLog := filepath.Join(tmp, "go-draws.log")
+	var oracleDrawEnv []string
+	if drawParity {
+		oracleDrawEnv = []string{"DP_C_DRAW_LOG_FILE=" + cDrawLog}
+	}
 
 	goBin := filepath.Join(tmp, "dp-server")
 	// ORACLE_REGRESSION_SERVER lets scripts/oracle_regression.sh build the
@@ -448,7 +467,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		name: "C oracle",
 		start: func() (*process, error) {
 			return startProcess(ctx, "C oracle", oracleRoot,
-				append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+				append(append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleDrawEnv...), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 		},
 	}
 	goEngine := &engine{
@@ -480,6 +499,9 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
 		"ENVIRONMENT=development",
 	)
+	if drawParity {
+		goEnv = append(goEnv, "DP_DRAW_LOG=1", "DP_DRAW_LOG_FILE="+goDrawLog)
+	}
 	goEnv = withFreshMUDEnv(goEnv, scenario.EmptyPlayers)
 	// Record consumers need the same real SQLite store as login, including
 	// stat file now that the JSON sidecar is retired.
@@ -681,6 +703,14 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	type sideResult struct {
 		setup  string
 		blocks []oraclediff.AudienceProbeBlock
+		draws  []oraclediff.DrawBoundary
+	}
+	// markDraws records how many draw entries a side's log holds when a phase
+	// or probe step finishes, so a draw mismatch can name its step.
+	markDraws := func(res *sideResult, path, label string) {
+		if drawParity {
+			res.draws = append(res.draws, oraclediff.DrawBoundary{Label: label, Count: oraclediff.CountDrawLines(path)})
+		}
 	}
 	runOracleSide := func() (res sideResult, sideErr error) {
 		res.setup, sideErr = runSetup(oracleConn, scenario.SetupOracle)
@@ -704,6 +734,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		if err := drainClients(quiescence, oracleConn, peers); err != nil {
 			return res, fmt.Errorf("drain C oracle setup output: %w", err)
 		}
+		markDraws(&res, cDrawLog, "setup")
 		if err := oraclediff.RunWarmup(oraclePrimary, peers, scenario.Warmup, quiescence); err != nil {
 			return res, fmt.Errorf("run C oracle warmup: %w", err)
 		}
@@ -718,7 +749,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			delete(peers, scenario.PeerDrop)
 		}
 		actor, audience := probeClients(oraclePrimary, peers, scenario.ProbeActor)
-		blocks, probeErr := oraclediff.RunAudienceProbe(actor, audience, scenario.Probe, quiescence)
+		markDraws(&res, cDrawLog, "warmup")
+		blocks, probeErr := oraclediff.RunAudienceProbeHooked(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
+			markDraws(&res, cDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
+		})
 		if probeErr != nil {
 			return res, fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, oracleEngine.log())
 		}
@@ -757,6 +791,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		if err := drainClients(quiescence, goConn, peers); err != nil {
 			return res, fmt.Errorf("drain Go port setup output: %w", err)
 		}
+		markDraws(&res, goDrawLog, "setup")
 		if err := oraclediff.RunWarmup(goPrimary, peers, scenario.Warmup, quiescence); err != nil {
 			return res, fmt.Errorf("run Go port warmup: %w", err)
 		}
@@ -771,7 +806,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			delete(peers, scenario.PeerDrop)
 		}
 		actor, audience := probeClients(goPrimary, peers, scenario.ProbeActor)
-		blocks, probeErr := oraclediff.RunAudienceProbe(actor, audience, scenario.Probe, quiescence)
+		markDraws(&res, goDrawLog, "warmup")
+		blocks, probeErr := oraclediff.RunAudienceProbeHooked(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
+			markDraws(&res, goDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
+		})
 		if probeErr != nil {
 			return res, fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, goEngine.log())
 		}
@@ -923,10 +961,20 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		sum := sha256.Sum256(expected)
 		fmt.Printf("script-twin: %s sha256=%x\n", scenario.ScriptTwin.Path, sum)
 	}
+	drawMismatch := false
+	if drawParity {
+		var err error
+		if drawMismatch, err = reportDrawParity(cDrawLog, goDrawLog, oracleResult.draws, goResult.draws); err != nil {
+			return err
+		}
+	}
 	for _, d := range diffs {
 		if d.Diff != "" {
 			return errDivergence
 		}
+	}
+	if drawMismatch {
+		return errDrawDivergence
 	}
 	return nil
 }
@@ -2056,4 +2104,50 @@ func applyMiscFileFixtures(root string, fixtures []oraclediff.MiscFileFixture) e
 		}
 	}
 	return nil
+}
+
+// reportDrawParity compares the two engines' RNG draw logs and prints one
+// "draw-parity" line: MATCH with the shared draw count, or MISMATCH with the
+// first diverging calls, the probe step each side was in, and a short window
+// of context. It reports true on a mismatch.
+func reportDrawParity(cPath, goPath string, cSteps, goSteps []oraclediff.DrawBoundary) (bool, error) {
+	cDraws, err := oraclediff.ReadDrawLog(cPath)
+	if err != nil {
+		return false, fmt.Errorf("read C draw log: %w", err)
+	}
+	goDraws, err := oraclediff.ReadDrawLog(goPath)
+	if err != nil {
+		return false, fmt.Errorf("read Go draw log: %w", err)
+	}
+	if len(cDraws) == 0 {
+		// A C oracle without the draw-log seam writes nothing; that is a tooling
+		// problem, never a parity result.
+		return false, errors.New("draw-parity: the C oracle wrote no draw log (is DP_ORACLE_BIN built with the DP draw-log seam?)")
+	}
+	r := oraclediff.CompareDraws(cDraws, goDraws)
+	if r.Match {
+		fmt.Printf("draw-parity\tMATCH\tentries=%d\tstream=%d\n", r.CCount, r.Stream)
+		return false, nil
+	}
+	call := func(draws []oraclediff.DrawCall, i int) string {
+		if i < len(draws) {
+			return draws[i].String()
+		}
+		return "(log ends)"
+	}
+	fmt.Printf("draw-parity\tMISMATCH\tstream=%d\tc=%s\tgo=%s\tc-step=%s\tgo-step=%s\n",
+		r.Stream, call(cDraws, r.CEntry), call(goDraws, r.GoEntry),
+		oraclediff.StepFor(cSteps, r.CEntry), oraclediff.StepFor(goSteps, r.GoEntry))
+	window := func(name string, draws []oraclediff.DrawCall, at int) {
+		for i := max(0, at-4); i < min(len(draws), at+4); i++ {
+			mark := " "
+			if i == at {
+				mark = ">"
+			}
+			fmt.Printf("draw-context\t%s\t%s %d\t%s\n", name, mark, i, draws[i])
+		}
+	}
+	window("c", cDraws, r.CEntry)
+	window("go", goDraws, r.GoEntry)
+	return true, nil
 }
