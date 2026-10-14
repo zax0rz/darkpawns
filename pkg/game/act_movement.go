@@ -407,7 +407,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 
 	if !ch.IsAffected(affSneak) {
 		// MobProg greet: C-style trigger for specific mobs.
-		w.MpGreet(ch, ext.ToRoom)
+		w.MpGreetActor(ch, ext.ToRoom)
 		// Lua greet triggers for all mobs in the new room with the script.
 		if ScriptEngine != nil {
 			for _, mob := range w.GetMobsInRoom(ext.ToRoom) {

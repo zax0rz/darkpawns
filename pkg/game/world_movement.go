@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -97,20 +98,18 @@ func (w *World) transferBody(body combat.Combatant, toRoomVNum int, moveMount bo
 // GetAllCharsInRoom returns all characters (players and mobs) in a room.
 // This is the Go equivalent of iterating world[room].people.
 func (w *World) GetAllCharsInRoom(roomVNum int) []interface{} {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	var chars []interface{}
-	for _, p := range w.players {
-		if p.RoomVNum == roomVNum {
-			chars = append(chars, p)
-		}
+	players := w.GetPlayersInRoom(roomVNum)
+	mobs := w.GetMobsInRoom(roomVNum)
+	chars := make([]interface{}, 0, len(players)+len(mobs))
+	for _, p := range players {
+		chars = append(chars, p)
 	}
-	for _, m := range w.activeMobs {
-		if m.GetRoom() == roomVNum {
-			chars = append(chars, m)
-		}
+	for _, m := range mobs {
+		chars = append(chars, m)
 	}
+	sort.SliceStable(chars, func(i, j int) bool {
+		return combatRoomSequence(chars[i].(combat.Combatant)) > combatRoomSequence(chars[j].(combat.Combatant))
+	})
 	return chars
 }
 

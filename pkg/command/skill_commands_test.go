@@ -1039,14 +1039,19 @@ func TestCmdTurn_NoPlayer(t *testing.T) {
 	}
 }
 
-func TestCmdTurn_NoFightingNoArgs(t *testing.T) {
+func TestCmdTurn_NoSkillIgnoresArguments(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosStanding)
-	if err := CmdTurn(session, nil); err != nil {
+	session.world.MessageSink = func(name string, message []byte) {
+		if name == session.player.Name {
+			session.messages = append(session.messages, string(message))
+		}
+	}
+	if err := CmdTurn(session, []string{"an", "argument"}); err != nil {
 		t.Fatalf("CmdTurn: %v", err)
 	}
-	if !strings.Contains(joinMessages(session.messages), "Turn who") {
-		t.Errorf("expected 'Turn who', got: %v", session.messages)
+	if got := joinMessages(session.messages); !strings.Contains(got, "Huh?!?\r\n") {
+		t.Errorf("expected C's unlearned message, got: %v", session.messages)
 	}
 }
 

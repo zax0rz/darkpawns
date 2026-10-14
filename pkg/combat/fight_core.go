@@ -126,8 +126,8 @@ const (
 )
 
 const (
-	RACE_UNDEAD  = 3
-	RACE_VAMPIRE = 8
+	RACE_UNDEAD  = 9 // src/structs.h:140
+	RACE_VAMPIRE = 8 // src/structs.h:139
 )
 
 // **********************************

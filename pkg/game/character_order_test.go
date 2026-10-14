@@ -87,3 +87,31 @@ func TestMobSpecialSnapshotsUseCListOrder(t *testing.T) {
 		t.Fatalf("raw room placements = %v, want new objects prepended in call order", got)
 	}
 }
+
+func TestGetAllCharsInRoomUsesCPrependOrderAcrossBodyTypes(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Order proof"}},
+		Mobs:  []parser.Mob{{VNum: 99001, Keywords: "probe", ShortDesc: "a probe"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	first := NewPlayer(1, "First", 1001)
+	if err := w.AddPlayer(first); err != nil {
+		t.Fatal(err)
+	}
+	mob, err := w.SpawnMobQuiet(99001, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	last := NewPlayer(2, "Last", 1001)
+	if err := w.AddPlayer(last); err != nil {
+		t.Fatal(err)
+	}
+	got := w.GetAllCharsInRoom(1001)
+	if len(got) != 3 || got[0] != last || got[1] != mob || got[2] != first {
+		t.Fatalf("room body order = %#v, want newest-first [last player, mob, first player]", got)
+	}
+}

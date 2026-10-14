@@ -13,6 +13,7 @@ import (
 	"log/slog"
 	"sort"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
@@ -72,6 +73,39 @@ func (w *World) RunRoomOnCmdScript(ch *Player, argument string) bool {
 // a successful move. The return value is ignored in C.
 func (w *World) RunRoomEnterScript(ch *Player) {
 	w.runRoomScript(ch, nil, rsEnter, "enter", "")
+}
+
+// RunRoomEnterScriptForActor is the room-enter trigger for a body without a
+// descriptor. C passes NPCs through run_script(ch, ch, ...) after a successful
+// movement in act.movement.c:304-305.
+func (w *World) RunRoomEnterScriptForActor(ch combat.Combatant) {
+	if player, ok := ch.(*Player); ok {
+		w.RunRoomEnterScript(player)
+		return
+	}
+	mob, ok := ch.(*MobInstance)
+	if !ok || mob == nil || ScriptEngine == nil {
+		return
+	}
+	room := w.GetRoomInWorld(mob.GetRoom())
+	if room == nil || room.ScriptFunctions&rsEnter == 0 {
+		return
+	}
+	if room.ScriptName == "" {
+		scriptUnassignedProducer(mob.GetName(), mob.GetVNum())
+		return
+	}
+	ref := &scripting.CharRef{NPC: true, ID: mob.GetID()}
+	ctx := &ScriptContext{
+		RoomVNum:  room.VNum,
+		World:     NewWorldScriptableAdapter(w),
+		ChRef:     ref,
+		MeRef:     ref,
+		OwnerType: "room",
+	}
+	if _, err := ScriptEngine.RunScript(ctx, room.ScriptName, "enter"); err != nil {
+		slog.Warn("room script error", "trigger", "enter", "room_vnum", room.VNum, "script", room.ScriptName, "error", err)
+	}
 }
 
 // RunRoomPulseScript is C's room onpulse trigger in room_activity

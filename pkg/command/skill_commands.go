@@ -1314,38 +1314,16 @@ func CmdSerpentKick(s SessionInterface, args []string) error {
 	return sendSkillResult(s, ch, target, result)
 }
 
-// CmdTurn handles the turn command.
-func CmdTurn(s SessionInterface, args []string) error {
+// CmdTurn handles the room-wide turn command; C ignores its arguments.
+func CmdTurn(s SessionInterface, _ []string) error {
 	ch, err := skillPlayer(s)
 	if err != nil {
 		return err
 	}
 	world := s.GetWorld()
 
-	// Turn affects ALL undead in the room, but for simplicity we
-	// target a specific enemy if specified or whoever we're fighting
-	var target combat.Combatant
-	var found bool
-
-	if len(args) == 0 {
-		fighting := ch.GetFightingBody()
-		if fighting == nil {
-			return s.SendMessage("Turn who?\r\n")
-		}
-		target, found = heldFightingTarget(ch)
-		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
-		}
-	} else {
-		targetName := strings.Join(args, " ")
-		target, _, found = game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch)
-		if !found {
-			return s.SendMessage("They don't seem to be here.\r\n")
-		}
-	}
-
-	result := game.DoTurn(ch, target)
-	return sendSkillResult(s, ch, target, result)
+	world.DoTurn(ch)
+	return nil
 }
 
 // genderPronoun returns the appropriate "himself" / "herself" / "itself" pronoun.

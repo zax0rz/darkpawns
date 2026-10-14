@@ -153,18 +153,24 @@ func TestRawKillCorpseHoldsInventoryEquipmentAndGold(t *testing.T) {
 }
 
 func TestRawKillRaceDust(t *testing.T) {
-	for _, race := range []int{combat.RACE_UNDEAD, combat.RACE_VAMPIRE} {
-		t.Run(map[int]string{combat.RACE_UNDEAD: "undead", combat.RACE_VAMPIRE: "vampire"}[race], func(t *testing.T) {
+	if combat.RACE_UNDEAD != 9 {
+		t.Fatalf("C RACE_UNDEAD is 9, got %d", combat.RACE_UNDEAD)
+	}
+	for _, tc := range []struct {
+		name     string
+		race     int
+		wantVNum int
+	}{
+		{name: "undead", race: 9, wantVNum: 18},
+		{name: "vampire", race: 8, wantVNum: 1230},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
 			w, p := rawKillWorld(t)
-			p.Race = race
+			p.Race = tc.race
 			inv, worn := rawKillHeldItems(t, w, p)
 			var output strings.Builder
 			w.MessageSink = func(_ string, msg []byte) { output.Write(msg) }
 			w.RawKillCombatant(p, combat.TYPE_UNDEFINED)
-			wantVNum := 18
-			if race == combat.RACE_VAMPIRE {
-				wantVNum = 1230
-			}
 			objects := w.GetItemsInRoom(1001)
 			found := map[*ObjectInstance]bool{}
 			dust := false
@@ -173,7 +179,7 @@ func TestRawKillRaceDust(t *testing.T) {
 				if obj.IsCorpse {
 					t.Error("race must produce dust, not corpse")
 				}
-				if obj.GetVNum() == wantVNum {
+				if obj.GetVNum() == tc.wantVNum {
 					dust = true
 				}
 			}

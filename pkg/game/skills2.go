@@ -488,87 +488,67 @@ func DoSerpentKick(ch *Player, target combat.Combatant, world *World) SkillResul
 // Success chance based on SKILL_DIG. Finds random loot.
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// DoTurn — do_turn() from new_cmds2.c
-// Turn undead. SKILL_TURN check. Target must be undead.
-// Damage = level * 2. If diff > 3: flee. If diff >= 15: destroy.
-// WAIT_STATE.
-// ---------------------------------------------------------------------------
-func DoTurn(ch *Player, target combat.Combatant) SkillResult {
+// DoTurn ports do_turn() from src/new_cmds2.c:960-1030. The command ignores
+// its arguments, spends one random mana cost before scanning the C-ordered
+// room list, and applies one of three race/level outcomes to each target.
+func (w *World) DoTurn(ch *Player) {
 	if ch.GetSkill(SkillTurn) == 0 {
-		return SkillResult{Success: false, MessageToCh: "Huh?!?\r\n"}
+		ch.SendMessage("Huh?!?\r\n")
+		return
 	}
-
 	if !ch.IsGood() {
-		return SkillResult{
-			Success:     false,
-			MessageToCh: "You are not holy enough to turn away the Undead!\r\n",
+		ch.SendMessage("You are not holy enough to turn away the Undead!\r\n")
+		return
+	}
+
+	ch.SendMessage("You attempt to turn away the unholy presence in this room.\r\n")
+	Act(w, false, ch, nil, nil, nil, "$n's eyes are suddenly filled with blinding white light!", "", ToRoom)
+	needMana := ch.GetLevel()*3 + dprng.Number(1, 55)
+	if needMana > ch.GetMana() {
+		ch.SendMessage("You fail to summon enough energy to dispel the darkness!\r\n")
+		mana := ch.GetMana() - needMana/4
+		if mana < 0 {
+			mana = 0
+		}
+		ch.SetMana(mana)
+		return
+	}
+	ch.SetMana(ch.GetMana() - needMana)
+
+	for _, body := range w.GetAllCharsInRoom(ch.GetRoom()) {
+		target, ok := body.(combat.Combatant)
+		if !ok || target.GetRoom() != ch.GetRoom() {
+			continue
+		}
+		race := turnRace(target)
+		if race != combat.RACE_UNDEAD && race != combat.RACE_VAMPIRE {
+			continue
+		}
+		diff := ch.GetLevel() - target.GetLevel()
+		switch {
+		case diff <= -5:
+			Act(w, false, target, nil, nil, nil, "$n shivers uncomfortably.", "", ToRoom)
+			actForPrivateBody(w, false, target, nil, nil, nil, "A disturbing feeling washes over your body.", "", ToChar, target)
+		case diff >= 15:
+			Act(w, false, target, nil, nil, nil, "$n grimaces and then explodes into a cloud of dust!", "", ToRoom)
+			actForPrivateBody(w, false, target, nil, nil, nil, "You feel your body twist horribly and disintegrate into nothing!", "", ToChar, target)
+			w.RawKillCombatant(target, 93)
+		case diff > 3:
+			Act(w, false, target, nil, nil, nil, "$n shrieks in terror!", "", ToRoom)
+			actForPrivateBody(w, false, target, nil, nil, nil, "You are suddenly terrified!", "", ToChar, target)
+			w.DoFlee(target)
 		}
 	}
+}
 
-	msgToCh := "You attempt to turn away the unholy presence in this room.\r\n"
-
-	// Check if target is undead race (3 = RACE_UNDEAD in C, using our own convention)
-	// In the C source, it checks GET_RACE(tch) == RACE_UNDEAD || RACE_VAMPIRE
-	// We don't have full race tracking on combatants yet, so we check the name for clues
-	// or assume any target that can be turned is valid
-	targetName := strings.ToLower(target.GetName())
-	isUndead := strings.Contains(targetName, "skeleton") ||
-		strings.Contains(targetName, "zombie") ||
-		strings.Contains(targetName, "ghost") ||
-		strings.Contains(targetName, "lich") ||
-		strings.Contains(targetName, "wraith") ||
-		strings.Contains(targetName, "spectre") ||
-		strings.Contains(targetName, "vampire") ||
-		strings.Contains(targetName, "undead")
-
-	if !isUndead {
-		return SkillResult{
-			Success:     false,
-			MessageToCh: msgToCh + "There is nothing unholy to turn here.\r\n",
+func turnRace(body combat.Combatant) int {
+	switch body := body.(type) {
+	case *Player:
+		return body.GetRace()
+	case *MobInstance:
+		if proto := body.Proto(); proto != nil {
+			return proto.Race
 		}
 	}
-
-	diff := ch.GetLevel() - target.GetLevel()
-
-	if diff <= -5 {
-		return SkillResult{
-			Success:       false,
-			MessageToCh:   msgToCh + "A disturbing feeling washes over your body.\r\n",
-			MessageToRoom: fmt.Sprintf("%s shivers uncomfortably.\r\n", target.GetName()),
-		}
-	}
-
-	if diff >= 15 {
-		return SkillResult{
-			Success:     true,
-			Damage:      9999, // instant kill
-			MessageToCh: msgToCh + "The undead creature explodes into a cloud of dust!\r\n",
-			MessageToRoom: fmt.Sprintf("%s grimaces and then explodes into a cloud of dust!\r\n",
-				target.GetName()),
-			MessageToVict: "You feel your body twist horribly and disintegrate into nothing!\r\n",
-		}
-	}
-
-	if diff > 3 {
-		return SkillResult{
-			Success:       true,
-			Damage:        ch.GetLevel() * 2,
-			MessageToCh:   msgToCh + "The undead creature shrieks and flees from your holiness!\r\n",
-			MessageToRoom: fmt.Sprintf("%s shrieks in terror!\r\n", target.GetName()),
-		}
-	}
-
-	// Basic damage
-	dam := ch.GetLevel() * 2
-	if dam < 1 {
-		dam = 1
-	}
-	return SkillResult{
-		Success:       true,
-		Damage:        dam,
-		MessageToCh:   msgToCh + fmt.Sprintf("Your holy power sears the undead for %d damage!\r\n", dam),
-		MessageToVict: "The holy light sears your undead flesh!\r\n",
-		MessageToRoom: fmt.Sprintf("%s is bathed in holy light!\r\n", ch.Name),
-	}
+	return -1
 }
