@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+make_corpse	raw_kill/death	death.corpse-attack-type-mapping	D4	shared	unit-green	TestAttackTypeToCorpseAttack;TestRawKillCorpseAttackDispatch;TestRawKillDisintegrateDispatchesDust	src/fight.c:258-370	The exhaustive mapping table checks every C spell, skill, and TYPE arm plus neighboring numeric IDs that must fall through; real raw_kill dispatch verifies generated corpse descriptions, default cases, and the separate disintegrate dust path (R1/R4/R5c/R5e/R5h).

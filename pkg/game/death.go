@@ -22,6 +22,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/events"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
@@ -887,31 +888,29 @@ const (
 
 // attackTypeToCorpseAttack converts numeric attack type to CorpseAttackType
 // Source: fight.c:283-370
-// Note: Many TYPE_ and SKILL_ constants are not yet defined in Go.
-// We use approximate values based on spell numbers from spells.go.
 func attackTypeToCorpseAttack(attackType int) CorpseAttackType {
 	switch attackType {
-	case 5, 26, 58, 96: // SPELL_BURNING_HANDS, FIREBALL, HELLFIRE, FLAMESTRIKE
+	case spells.SpellBurningHands, spells.SpellFireball, spells.SpellHellfire, spells.SpellFlameStrike:
 		return AttackFire
-	case 8: // SPELL_CHILL_TOUCH
+	case spells.SpellChillTouch:
 		return AttackCold
-	case 10, 92, combat.TYPE_BLAST: // src/fight.c:296-302: COLOR_SPRAY, DISRUPT, TYPE_BLAST
+	case spells.SpellColorSpray, spells.SpellMeteorSwarm, spells.SpellDisrupt, combat.TYPE_BLAST:
 		return AttackBlast
-	case 21, 83: // SPELL_ENERGY_DRAIN, SPELL_SOUL_LEECH (was incorrectly 94 before fix)
+	case spells.SpellEnergyDrain, spells.SpellSoulLeech:
 		return AttackEnergyDrain
-	case 30, 6, 31: // SPELL_LIGHTNING_BOLT, SPELL_CALL_LIGHTNING (was incorrectly 15 before fix), SPELL_SHOCKING_GRASP
+	case spells.SpellLightningBolt, spells.SpellCallLightning, spells.SpellShockingGrasp:
 		return AttackLightning
-	case 34: // SPELL_PSIBLAST
+	case spells.SpellPsiblast:
 		return AttackPsiblast
-	case 93: // SPELL_DISINTEGRATE - handled separately in makeDust
+	case spells.SpellDisintegrate: // handled separately by makeDust in the raw_kill paths
 		return AttackUndefined // Should not reach here for disintegrate
-	case 103: // SPELL_DROWNING (was incorrectly 24 before fix)
+	case spells.SpellDrowning:
 		return AttackDrowning
-	case 35: // SPELL_PETRIFY
+	case spells.SpellPetrify:
 		return AttackPetrify
 	case TypeBludgeon, TypePound, TypePunch, TypeWhip,
-		SkillBashNum, SkillBearhugNum, SkillKickNum, SkillPunchNum, SkillDragonKickNum, SkillTigerPunchNum,
-		SkillHeadbuttNum, SkillTripNum, SkillSmackheadsNum, SkillSlugNum, SkillSerpentKickNum:
+		SkillBashNum, SkillKickNum, SkillPunchNum, SkillDragonKickNum, SkillTigerPunchNum,
+		SkillHeadbuttNum, SkillSmackheadsNum, SkillSlugNum, SkillSerpentKickNum:
 		return AttackBruised
 	case SkillBiteNum, TypeBite, TypeClaw, TypeSlash,
 		SkillBackstabNum, SkillCircleNum:
