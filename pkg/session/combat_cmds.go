@@ -130,48 +130,26 @@ func cmdHit(s *Session, args []string) error {
 	// attacker 22 pulses, exactly like C.
 	s.player.SetWaitStatePulses(engine.PULSE_VIOLENCE + 2) // src/act.offensive.c:127.
 
-	// damage()'s protection block (fight.c:1318-1368): peaceful rooms, the
-	// level-10 PK protections and shopkeepers, with C's refusal bytes. The
-	// shared gate is the same one every other damage seam asks (DP-1327).
+	// hit(ch, vict, TYPE_UNDEFINED) (act.offensive.c:126): the first swing
+	// consumes hit()'s to-hit and damage draws and only then reaches
+	// damage()'s protection block (fight.c:1318-1368), which refuses against
+	// the pre-enrolment state. PerformDeferredInitialAttack runs the gate at
+	// that same point and enrols both sides at the damage point, so a refused
+	// swing draws, prints C's refusal bytes, and leaves nobody fighting.
 	var victimCombatant combat.Combatant
 	if tgt.Player != nil {
 		victimCombatant = tgt.Player
 	} else if tgt.Mob != nil {
 		victimCombatant = tgt.Mob
 	}
-	if victimCombatant != nil && s.manager.world.DamageRefused(s.player, victimCombatant) {
+	if victimCombatant == nil {
+		s.Send("They don't seem to be here.\r\n")
 		return nil
 	}
-
-	if tgt.Mob != nil {
-		mob := tgt.Mob
-		err := s.manager.combatEngine.StartCombat(s.player, mob)
-		if err != nil {
-			s.Send(err.Error())
-			return nil
-		}
-		s.markDirty(VarFighting)
-		if err := s.manager.combatEngine.PerformInitialAttack(s.player, mob); err != nil {
-			return err
-		}
-		return nil
+	if err := s.manager.combatEngine.PerformDeferredInitialAttack(s.player, victimCombatant); err != nil {
+		return err
 	}
-
-	if tgt.Player != nil {
-		p := tgt.Player
-		err := s.manager.combatEngine.StartCombat(s.player, p)
-		if err != nil {
-			s.Send(err.Error())
-			return nil
-		}
-		s.markDirty(VarFighting)
-		if err := s.manager.combatEngine.PerformInitialAttack(s.player, p); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	s.Send("They don't seem to be here.\r\n")
+	s.markDirty(VarFighting)
 	return nil
 }
 

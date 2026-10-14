@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -45,7 +46,12 @@ func makeGateTestManager(t *testing.T, peaceful bool) *Manager {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	return newTestManager(t, w, nil)
+	m := newTestManager(t, w, nil)
+	// damage()'s protections run inside the engine's performOneHit
+	// (DP-1438), so the gate path needs the production callback wiring
+	// cmd/server/main.go installs — without it the gate never refuses.
+	m.WireCombatCallbacks()
+	return m
 }
 
 func readSendText(t *testing.T, s *Session) string {
@@ -322,5 +328,122 @@ func TestPositiveControl_NormalAttackProceeds(t *testing.T) {
 
 	if !m.combatEngine.IsFighting(s.player) {
 		t.Error("level 20 attacking a mob in a normal room should start combat")
+	}
+}
+
+// missSeed returns a stream seed whose first number(1,20) roll is a natural
+// 1 — always a miss, so the swing consumes exactly hit()'s to-hit draw and no
+// damage dice. DP-1438's draw-count proofs need the count pinned.
+func missSeed(t *testing.T) uint32 {
+	t.Helper()
+	for seed := uint32(1); seed < 4096; seed++ {
+		dprng.ResetStream(seed)
+		if dprng.Number(1, 20) == 1 {
+			return seed
+		}
+	}
+	t.Fatal("no seed found whose first number(1,20) is 1")
+	return 0
+}
+
+// TestCmdHitRefusedSwingStillDraws pins DP-1438's core finding for do_hit: C
+// draws number(1,20) inside hit() (fight.c:1815) BEFORE damage()'s protection
+// block (fight.c:1335-1342), so even a swing refused by the peaceful gate
+// consumes the to-hit draw and enrols nobody (act.offensive.c:126-127). The
+// old preflight returned before any engine call — zero draws — which is the
+// stream-4106/4087/4081/4152 mismatch; this test fails on that shape (R5h).
+func TestCmdHitRefusedSwingStillDraws(t *testing.T) {
+	m := makeGateTestManager(t, true)
+	if _, err := m.world.SpawnMob(5000, 1001); err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	s := makeGateSession(t, m, 1, "Hero", 20)
+
+	seed := missSeed(t)
+	dprng.ResetStream(seed)
+	if err := cmdHit(s, []string{"target"}); err != nil {
+		t.Fatalf("cmdHit returned error: %v", err)
+	}
+	gotNext := dprng.Number(0, 999)
+
+	// Reference: exactly one draw (the missed to-hit roll) precedes the probe.
+	dprng.ResetStream(seed)
+	dprng.Number(1, 20)
+	wantNext := dprng.Number(0, 999)
+	if gotNext != wantNext {
+		t.Fatalf("refused swing changed the draw stream: next=%d, want %d (one number(1,20) consumed)", gotNext, wantNext)
+	}
+	if m.combatEngine.IsFighting(s.player) {
+		t.Error("refused swing enrolled the attacker")
+	}
+}
+
+// TestCmdAssistRefusedSwingStillDraws is the assist half (act.offensive.c:95):
+// the helper's first swing draws hit()'s roll before damage()'s peaceful
+// refusal, and the helper enrols nobody. Fails on the preflight shape (R5h).
+func TestCmdAssistRefusedSwingStillDraws(t *testing.T) {
+	m := makeGateTestManager(t, true)
+	opponent, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	helpee := makeGateSession(t, m, 2, "Helpee", 20)
+	helper := makeGateSession(t, m, 3, "Helper", 20)
+	// The opponent is already fighting the helpee, so the helper's first
+	// swing faces the peaceful gate (FIGHTING(victim) is the helpee).
+	if err := m.combatEngine.StartCombat(opponent, helpee.player); err != nil {
+		t.Fatalf("setup StartCombat failed: %v", err)
+	}
+
+	seed := missSeed(t)
+	dprng.ResetStream(seed)
+	if err := cmdAssist(helper, []string{"Helpee"}); err != nil {
+		t.Fatalf("cmdAssist returned error: %v", err)
+	}
+	gotNext := dprng.Number(0, 999)
+
+	dprng.ResetStream(seed)
+	dprng.Number(1, 20)
+	wantNext := dprng.Number(0, 999)
+	if gotNext != wantNext {
+		t.Fatalf("refused assist changed the draw stream: next=%d, want %d (one number(1,20) consumed)", gotNext, wantNext)
+	}
+	if m.combatEngine.IsFighting(helper.player) {
+		t.Error("refused assist enrolled the helper")
+	}
+}
+
+// TestCmdHitAllowedSwingDrawsAndEnrols pins the allowed arm: the swing runs
+// through the deferred entry — to-hit roll plus the bare-hands damage draw
+// (fight.c:1865 number(0, level/3)) — and enrols both sides at the damage
+// point. A broken hook that skips the swing or enrols eagerly fails here.
+func TestCmdHitAllowedSwingDrawsAndEnrols(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	mob, err := m.world.SpawnMob(5000, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob failed: %v", err)
+	}
+	s := makeGateSession(t, m, 1, "Veteran", 20)
+
+	seed := missSeed(t)
+	dprng.ResetStream(seed)
+	if err := cmdHit(s, []string{"target"}); err != nil {
+		t.Fatalf("cmdHit returned error: %v", err)
+	}
+	gotNext := dprng.Number(0, 999)
+
+	// Miss in an open room: C still calls damage(ch, vict, 0, w_type), which
+	// enrols both sides (fight.c:1408, 1445) — one to-hit draw, no dice.
+	dprng.ResetStream(seed)
+	dprng.Number(1, 20)
+	wantNext := dprng.Number(0, 999)
+	if gotNext != wantNext {
+		t.Fatalf("allowed swing changed the draw stream: next=%d, want %d (one number(1,20) consumed)", gotNext, wantNext)
+	}
+	if !m.combatEngine.IsFighting(s.player) {
+		t.Error("missed first swing failed to enrol the attacker")
+	}
+	if mob.GetFightingBody() == nil {
+		t.Error("missed first swing failed to enrol the victim")
 	}
 }
