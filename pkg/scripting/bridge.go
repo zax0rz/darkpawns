@@ -287,12 +287,6 @@ func objRefOf(v lua.LValue) (ObjRef, bool) {
 
 // charToTable is char_to_table (scripts.c:1823-1891).
 func (e *Engine) charToTable(b Bridge, ref CharRef) lua.LValue {
-	return e.charToTableDepth(b, ref, 0)
-}
-
-// charToTableDepth bounds the leader recursion: C follows ch->master without
-// a limit and relies on the follower graph having no cycles.
-func (e *Engine) charToTableDepth(b Bridge, ref CharRef, depth int) lua.LValue {
 	f, ok := b.CharFields(ref)
 	if !ok {
 		return lua.LNil
@@ -322,8 +316,8 @@ func (e *Engine) charToTableDepth(b Bridge, ref CharRef, depth int) lua.LValue {
 		t.RawSetString("wear", wear)
 	}
 	t.RawSetString("evil", luaBool(f.Evil))
-	if f.Master != nil && depth < 32 {
-		t.RawSetString("leader", e.charToTableDepth(b, *f.Master, depth+1))
+	if f.Master != nil && *f.Master != ref {
+		t.RawSetString("leader", e.charToTable(b, *f.Master))
 	}
 	if !f.NPC {
 		t.RawSetString("id", lua.LNumber(f.IDNum))

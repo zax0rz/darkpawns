@@ -1386,17 +1386,19 @@ func (e *Engine) luaStrlen(L *lua.LState) int {
 }
 
 func (e *Engine) luaIsCorpse(L *lua.LState) int {
-	// iscorpse(obj) - returns true if the object is a player or mob corpse.
-	// Source: scripts.c lua_iscorpse() lines 636-654.
-	// Checks OBJ_TYPE_CORPSE (ITEM_CORPSE) — type flag 18 in the original C.
-	// Engine gap: object type flag comparison needs GetTypeFlag() >= 18 check.
+	// iscorpse(obj) - C's IS_CORPSE macro checks ITEM_CONTAINER and value[3] == 1.
+	// Source: scripts.c:636-654; utils.h:490-491.
 
 	if tbl, ok := L.Get(1).(*lua.LTable); ok {
 		typeFlagL := tbl.RawGetString("type")
 		typeFlag, ok := typeFlagL.(lua.LNumber)
-		if ok && int(typeFlag) == 18 { // ITEM_CORPSE
-			L.Push(lua.LNumber(1))
-			return 1
+		if ok && int(typeFlag) == 15 { // ITEM_CONTAINER
+			if values, valuesOK := tbl.RawGetString("val").(*lua.LTable); valuesOK {
+				if corpseFlag, corpseFlagOK := values.RawGetInt(4).(lua.LNumber); corpseFlagOK && int(corpseFlag) == 1 { // value[3]
+					L.Push(lua.LNumber(1))
+					return 1
+				}
+			}
 		}
 	} else {
 		// scripts.c:650-653: a non-table argument logs at BRF/LVL_IMMORT/file

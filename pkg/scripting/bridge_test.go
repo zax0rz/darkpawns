@@ -210,6 +210,95 @@ end
 	}
 }
 
+func TestBridgeIsCorpseUsesContainerValue(t *testing.T) {
+	dir := t.TempDir()
+	writeScript(t, dir, "globals.lua", "")
+	writeScript(t, dir, "t.lua", `function oncmd()
+  say(tostring(iscorpse(ch.objs[1])))
+  return TRUE
+end
+`)
+
+	for _, tc := range []struct {
+		name string
+		obj  ObjFields
+		want string
+	}{
+		{
+			name: "container with corpse value",
+			obj:  ObjFields{Type: 15, Val: [4]int{0, 0, 0, 1}},
+			want: "1",
+		},
+		{
+			name: "container without corpse value",
+			obj:  ObjFields{Type: 15, Val: [4]int{0, 0, 0, 0}},
+			want: "nil",
+		},
+		{
+			name: "container with another value",
+			obj:  ObjFields{Type: 15, Val: [4]int{0, 0, 0, 2}},
+			want: "nil",
+		},
+		{
+			name: "non-container with corpse value",
+			obj:  ObjFields{Type: 18, Val: [4]int{0, 0, 0, 1}},
+			want: "nil",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			b := newFakeBridge()
+			b.objs[ObjRef{ID: 501}] = tc.obj
+			e := NewEngine(dir, nil)
+			defer e.Close()
+			if _, err := e.RunScript(bridgeContext(b, player, healer, ""), "t.lua", "oncmd"); err != nil {
+				t.Fatalf("RunScript: %v", err)
+			}
+			if len(b.says) != 1 || b.says[0] != tc.want {
+				t.Fatalf("iscorpse output = %q, want %q", b.says, tc.want)
+			}
+		})
+	}
+}
+
+func TestBridgePreservesLeaderChainsBeyondFormerLimit(t *testing.T) {
+	dir := t.TempDir()
+	writeScript(t, dir, "globals.lua", "")
+	writeScript(t, dir, "t.lua", `function oncmd()
+  local c = ch
+  for i = 1, 40 do c = c.leader end
+  say(c.name)
+  return TRUE
+end
+`)
+
+	b := newFakeBridge()
+	chain := make([]CharRef, 40)
+	for i := range chain {
+		chain[i] = CharRef{NPC: true, ID: 2000 + i}
+	}
+	playerFields := b.chars[player]
+	playerFields.Master = &chain[0]
+	b.chars[player] = playerFields
+	for i, ref := range chain {
+		fields := CharFields{Name: "leader"}
+		if i == len(chain)-1 {
+			fields.Name = "deep leader"
+		} else {
+			fields.Master = &chain[i+1]
+		}
+		b.chars[ref] = fields
+	}
+
+	e := NewEngine(dir, nil)
+	defer e.Close()
+	if _, err := e.RunScript(bridgeContext(b, player, healer, ""), "t.lua", "oncmd"); err != nil {
+		t.Fatalf("RunScript: %v", err)
+	}
+	if len(b.says) != 1 || b.says[0] != "deep leader" {
+		t.Fatalf("leader chain output = %q, want [deep leader]", b.says)
+	}
+}
+
 // run_script's write-back (scripts.c:1805-1815) reaches only the ch table:
 // table_to_char reads stack slot 1 both times. C's clamps apply; a change
 // to me is lost.

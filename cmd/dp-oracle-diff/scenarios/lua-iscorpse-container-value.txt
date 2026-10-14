@@ -1,0 +1,53 @@
+# C-first Lua IS_CORPSE predicate proof using a stock object table.
+# Object 1210 has no corpse keyword; C accepts it by ITEM_CONTAINER and value[3].
+# src/scripts.c:636-654; src/utils.h:490-491; src/structs.h:434.
+# depth-case: lua.bind-iscorpse-container-value
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+  if (argument ~= "say corpse") then return FALSE end
+  local o = oload(ch, 1210, "char")
+  say("corpse " .. tostring(iscorpse(o)))
+  return TRUE
+end
+
+[setup:oracle]
+Corpsevalue
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Corpsevalue
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+
+[probe]
+say corpse
