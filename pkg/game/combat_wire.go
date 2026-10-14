@@ -232,6 +232,29 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	}
 	cb.CanSee = w.combatCanSee
 
+	// attitude_loot's brag gate reads can_speak(ch) before drawing anything
+	// (src/fight.c:1168-1169). can_speak is is_intelligent(ch)
+	// (src/utils.c:685-687), which is true for every player.
+	cb.CanSpeak = func(name combat.Combatant) bool {
+		if p, ok := combatPlayer(name); ok {
+			return p.CanSpeak()
+		}
+		if m := combatMob(name); m != nil {
+			return m.CanSpeak()
+		}
+		return false
+	}
+
+	// The kill brag is do_gen_comm(ch, buf2, 0, SCMD_GOSSIP) (src/fight.c:1246):
+	// the global gossip channel, which also records the line in review
+	// (src/act.comm.c:1275-1276). mobGlobalGossip is that path for an NPC
+	// author -- an NPC has no descriptor, so there is no self echo.
+	cb.BroadChat = func(chName combat.Combatant, msg string) {
+		if mob := combatMob(chName); mob != nil {
+			w.mobGlobalGossip(mob, msg)
+		}
+	}
+
 	cb.DamageRefused = w.DamageRefused
 
 	cb.HasMobVNum = func(name combat.Combatant, vnum int) bool {

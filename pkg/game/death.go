@@ -316,19 +316,11 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		// (src/fight.c:1644-1667, 1691, 573-578).
 		w.recordKill(killer)
 		w.handleMobDeath(victim, killer, attackType)
+		w.attitudeLootAfterKill(killer, victim)
 	} else {
 		w.recordKill(killer)
 		w.handlePlayerDeath(victim, true, attackType, killerName, killer) // combat death with killer
-		if mobKiller, ok := killer.(*MobInstance); ok &&
-			killer != victim &&
-			(mobKiller.HasMobFlag(MobFlagAggr24) ||
-				mobKiller.HasMobFlag(MobFlagLoots) ||
-				mobKiller.GetVNum() == 19650) {
-			w.attitudeLootMob(mobKiller, victim)
-			if mobKiller.HasMobFlag(MobFlagAggr24) {
-				combat.BragMessage(mobKiller, victim)
-			}
-		}
+		w.attitudeLootAfterKill(killer, victim)
 		// Publish typed event bus event
 		if w.Events != nil {
 			if err := w.Events.Publish(context.Background(), events.PlayerKilledEvent{

@@ -1076,11 +1076,35 @@ func AttitudeLoot(ch, victim Combatant) {
 	BragMessage(ch, victim)
 }
 
-// BragMessage sends one of 12 randomized brag messages matching the C source (fight.c:1173-1248).
-// The killer brags via cbBroadChat if the victim is a player, or randomly (1-in-21) for mobs.
+// BragMessage sends one of 12 randomized brag messages matching the C source
+// (src/fight.c:1173-1248).
+//
+// C's attitude_loot returns BEFORE any draw through three gates (:1161-1172):
+// the killer must be MOB_AGGR24, must be able to speak, and must not be the
+// victim. Drawing the brag values for a killer C never reaches desyncs the
+// shared stream (R3), so every gate comes first.
 func BragMessage(ch, victim Combatant) {
+	if ch == nil || victim == nil {
+		return
+	}
+	// C: if (!MOB_FLAGGED(ch, MOB_AGGR24)) return; (:1161-1162)
+	if !cbHasMobFlag(ch, "MOB_AGGR24") {
+		return
+	}
+	// C: if (!can_speak(ch)) return; (:1168-1169)
+	if !cbCanSpeak(ch) {
+		return
+	}
+	// C: if (ch == victim) return; (:1171-1172)
+	if ch == victim {
+		return
+	}
+
 	victimName := victim.GetName()
 	victimIsNPC := victim.IsNPC()
+	// C case 5 reads IS_EVIL(ch) && !IS_EVIL(victim) (:1195); IS_EVIL is
+	// alignment <= -350 (src/utils.h).
+	victimEvil := cbGetAlignment(victim) <= -350
 
 	// C source: if !IS_MOB(victim) || !number(0,20) — always brag on player kills,
 	// 1-in-21 chance on mob kills.
@@ -1088,7 +1112,7 @@ func BragMessage(ch, victim Combatant) {
 		return
 	}
 
-	msg := pickBragMessage(ch, victimName, victimIsNPC, victim.GetSex())
+	msg := pickBragMessage(ch, victimName, victimIsNPC, victim.GetSex(), victimEvil)
 	if msg == "" {
 		return
 	}
@@ -1098,7 +1122,7 @@ func BragMessage(ch, victim Combatant) {
 
 // pickBragMessage returns one of 12 brag messages matching the C source (fight.c:1173-1248).
 // Returns empty string if the killer shouldn't speak (certain messages skip mob kills).
-func pickBragMessage(ch Combatant, victimName string, victimIsNPC bool, victimSex int) string {
+func pickBragMessage(ch Combatant, victimName string, victimIsNPC bool, victimSex int, victimEvil bool) string {
 	// Get alignment for case 5
 	alignment := cbGetAlignment(ch)
 	isEvil := alignment <= -350
@@ -1106,8 +1130,10 @@ func pickBragMessage(ch Combatant, victimName string, victimIsNPC bool, victimSe
 	// Get kill count for case 6
 	kills := cbGetKills(ch)
 
-	// Possessive pronoun matching C HSHR(victim) — sex of the victim
-	// Go encoding: 0=male, 1=female, 2=neutral (differs from C SEX_* in structs.h)
+	// Possessive pronoun matching C HSHR(victim) — sex of the victim.
+	// GetSex() already carries the port's encoding (0=male, 1=female,
+	// 2=neutral; MobInstance.GetSex translates C's mob-file order), which is
+	// what C's SEX_* arms mean here (src/utils.h:552-557).
 	var possessive string
 	switch victimSex {
 	case 0: // SEX_MALE
@@ -1129,7 +1155,8 @@ func pickBragMessage(ch Combatant, victimName string, victimIsNPC bool, victimSe
 	case 4:
 		return fmt.Sprintf("Muhahahaha... %s is dead!", victimName)
 	case 5:
-		if isEvil {
+		// C: if (IS_EVIL(ch) && !IS_EVIL(victim)) (:1195)
+		if isEvil && !victimEvil {
 			return "Now you will see that evil will always triumph, because good is dumb."
 		}
 		return fmt.Sprintf("%s is dead! R.I.P.", victimName)

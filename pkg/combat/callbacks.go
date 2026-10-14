@@ -67,6 +67,9 @@ type GameCallbacks struct {
 	IsShopkeeper        func(name Combatant) bool
 	// CanSee mirrors the world-aware CAN_SEE macro used by damage()'s jail guard.
 	CanSee func(observer, subject Combatant) bool
+	// CanSpeak mirrors can_speak(ch) (src/utils.c:685-687). attitude_loot's brag
+	// gate reads it before drawing anything (src/fight.c:1168-1169).
+	CanSpeak func(name Combatant) bool
 	// DamageRefused is damage()'s protection block (fight.c:1318-1368),
 	// owned by the game layer so every damage seam emits the same refusal
 	// bytes. True means C's damage() returned FALSE before hurting victim.
@@ -253,6 +256,15 @@ func cbBroadChat(chName Combatant, msg string) {
 	if cb := callbacks; cb != nil && cb.BroadChat != nil {
 		cb.BroadChat(chName, msg)
 	}
+}
+
+// cbCanSpeak is can_speak(ch) (src/utils.c:685-687). An unwired callback reports
+// false, which is C's silent-NPC arm.
+func cbCanSpeak(name Combatant) bool {
+	if cb := callbacks; cb != nil && cb.CanSpeak != nil {
+		return cb.CanSpeak(name)
+	}
+	return false
 }
 
 func cbLog(msg string, level string, minLevel int, toLog bool) {
