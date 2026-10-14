@@ -172,6 +172,11 @@ func (p *Player) TakeDamage(amount int) {
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	// DP-1021: HP is allowed into the wounded band instead of clamping at 0,
+	// but a single massive blow floors at -11 — C's POS_DEAD threshold
+	// (src/fight.c:192-193) — rather than going arbitrarily negative. C itself
+	// has no floor here (GET_HIT(victim) -= dam, :1483); the divergence is
+	// recorded in the DP-1419 lethal-replay handoff.
 	p.Health -= amount
 	if p.Health < -11 {
 		p.Health = -11
@@ -292,19 +297,37 @@ func (p *Player) SetLastDeath(t int64) {
 // SendMessage sends a message to the player through the session layer.
 // If the player has no world reference or the world has no MessageSink,
 // the message is silently dropped (non-blocking).
+//
+// A player with an installed entryTextSink (SetEntryTextSink) delivers there
+// instead: that is the descriptor C's send_to_char writes while a character is
+// still being reconstructed by Crash_load.
 func (p *Player) SendMessage(msg string) {
 	p.mu.RLock()
 	w := p.worldRef
+	sink := p.entryTextSink
 	p.mu.RUnlock()
+	if sink != nil {
+		sink(msg)
+		return
+	}
 	if w == nil {
 		return
 	}
 	w.mu.RLock()
-	sink := w.MessageSink
+	worldSink := w.MessageSink
 	w.mu.RUnlock()
-	if sink != nil {
-		sink(p.Name, []byte(msg))
+	if worldSink != nil {
+		worldSink(p.Name, []byte(msg))
 	}
+}
+
+// SetEntryTextSink installs (or clears, with nil) the descriptor-owned sink
+// used for this player's text while a Crash_load replay runs. It is set and
+// cleared inside World.ReplayCrashLoadBadStats, so the live path is unchanged.
+func (p *Player) SetEntryTextSink(sink func(string)) {
+	p.mu.Lock()
+	p.entryTextSink = sink
+	p.mu.Unlock()
 }
 
 // SendLiteral sends a message whose bytes are exactly C's send_to_char

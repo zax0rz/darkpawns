@@ -217,7 +217,23 @@ func roomActivityHasBoat(ch roomActivityChar) bool {
 // jail redirects, wimpy flee) are absent by construction.
 func (w *World) selfDamage(vict combat.Combatant, dam int, attackType int) bool {
 	if vict == nil || vict.GetPosition() <= combat.PosDead {
-		return false // C: "Attempt to damage a corpse."
+		if vict != nil {
+			// fight.c:1319-1325: a victim already queued for extraction returns
+			// silently; every other corpse is logged and refused. The log is
+			// C's log() → basic_mud_log (src/utils.h:39), so it goes to the
+			// server log, never to a player or an immortal audience.
+			extracting := false
+			switch c := vict.(type) {
+			case *Player:
+				extracting = c.GetFlags()&(1<<uint(plrExtractBit)) != 0
+			case *MobInstance:
+				extracting = c.HasMobFlag(MobFlagExtract)
+			}
+			if !extracting {
+				BasicMudLog("SYSERR: Attempt to damage a corpse.")
+			}
+		}
+		return false
 	}
 
 	if w.DamageRefused(vict, vict) {
