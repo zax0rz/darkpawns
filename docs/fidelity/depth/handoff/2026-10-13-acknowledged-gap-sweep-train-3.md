@@ -50,10 +50,10 @@ added; the `visible` branch remains draw-free, and the live vehicle's prior
 - Scenario parser test: PASS.
 
 The `visible-zai-depth` oracle case remains `blocked` in the manifest until the
-shared census slot is available. DP-1419 currently owns the slot; no second
-census was started. Start a targeted census for this case, change its manifest
-row to `oracle-green` only after a clean result, then run the train's combined
-census as required by the goal brief.
+targeted census is clean. The shared census slot is occupied at this handoff
+update; no second census was started. Start the targeted census after the
+current run completes, change the manifest row to `oracle-green` only after a
+clean result, then run the train's combined census as required by the goal brief.
 
 ## Sweep continuity
 
