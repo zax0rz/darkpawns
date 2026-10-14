@@ -92,9 +92,15 @@ printed the NPC short description (`the island shaman`). After matching C's
 `dp-1371-train9-show-shops-detail-recheck` passed: 1 scenario passed, no
 failures, verdict `CLEAN`, at Go HEAD `d8e8024dd`; retained at
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train9-show-shops-detail-recheck/`.
-The full combined census must run once on the final committed Train 9 tip and
-its exact line must also be appended here.
+The final combined census ran on committed Train 9 tip `8aa563a33`:
+`oracle-combined: pairs=3402 deduplicated=1018 full=CLEAN claims=CLEAN
+elapsed=1961.399s verdict=CLEAN`. The `show-shops-detail` row passed. Evidence
+is retained at
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train9-final/`.
 
 This is one shop-report/account family, below the train boundary. Open its PR
-without merging. Continue the sweep from a freshly fetched `origin/main` only
-after Train 8's pending targeted and combined census results are recorded.
+without merging. Train 8's targeted Medusa census is CLEAN, and its final
+combined census is CLEAN_AFTER_RECHECK for both full and claims, with only the
+known infrastructure row `clan-plan-mortal-depth` rechecked; those results are
+recorded in the Train 8 handoff. The next train starts from freshly fetched
+`origin/main` and remains separate from this PR.
