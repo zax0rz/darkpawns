@@ -1,6 +1,8 @@
 # Acknowledged Gap Sweep — Train 3
 
-Base: fresh `origin/main` at `9b3ecaae3d02cb1f2b066e9dd27c81bb5ec350fc`.
+Base: rebased from `9b3ecaae3d02cb1f2b066e9dd27c81bb5ec350fc` onto fresh
+`origin/main` at `d8e8024ddbfe52fbde36d16e0b02e2d7606fac71` after PRs #1943,
+#1944, and #1945 merged.
 Scope: `do_visible` Kai-zai affect lookup.
 
 ## Finding and change
@@ -34,14 +36,19 @@ added; the `visible` branch remains draw-free, and the live vehicle's prior
 
 ## Verification
 
+The branch was rebased onto `origin/main` at
+`d8e8024ddbfe52fbde36d16e0b02e2d7606fac71`; all gates below were rerun
+separately on the integrated tree and passed.
+
 - `make fmt`: PASS.
 - `go build ./...`, `go vet ./...`, `go test ./...`,
   `go test ./pkg/game/...`: PASS.
 - `golangci-lint run ./...`: PASS, 0 issues.
 - `make deadcode-ratchet`: PASS, 52 baselined and 0 new.
-- `make fidelity-depth`: PASS; 5,513 cases, 11 blocked.
-- `make fidelity-units`: PASS; 1,419 rows, 1,306 symbols, 1,600 claims.
-- `make string-census`: PASS, 98 known Go-only segments and 0 unreviewed;
+- `make fidelity-depth`: PASS; 5,521 cases, 5,431 proven/delegated, 10 blocked,
+  68 excluded, 12 divergent-approved.
+- `make fidelity-units`: PASS; 1,424 rows, 1,313 symbols, 1,607 claims.
+- `make string-census`: PASS; 94 Go-only, 98 known segments, 0 unreviewed;
   generated reports remain intentionally untouched.
 - `gosec -severity=high -quiet ./...`: PASS.
 - `go test -race ./pkg/game/...`: PASS.
@@ -54,21 +61,23 @@ had no normalized divergence. Its C blocks show the `zai` cast and the
 `visible` refusal while the affect is active; the output and run manifest are
 retained under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train3-show-oracle/`.
-The `visible-zai-depth` case remains `blocked` in the manifest until its
-targeted census is clean. The shared census slot is occupied at this handoff
-update; no second census was started. Start the targeted census after the
-current run completes, change the manifest row to `oracle-green` only after a
-clean result, then run the train's combined census as required by the goal brief.
+The `visible-zai-depth` targeted census is clean: one passed, zero expected,
+unpinnable, stale, failed, infra, timeout, or unstable; elapsed 16.868s. The
+`results.tsv` row is `PASS visible-zai-depth 10`. Its summary and manifest are retained under
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train3-visible-zai/`.
+The `visible.zai-gate` manifest row is now `oracle-green`. The train's final
+combined census remains required after the integrated gates pass.
 
 ## Sweep continuity
 
 Train 1 contains the complete inventory A/B, candidate disposition table, and
 the exact deferred implementation issue texts in
-`docs/fidelity/depth/handoff/2026-10-13-acknowledged-gap-sweep.md` on PR #1943.
-Train 2's Lua object-target work is recorded in
-`2026-10-13-acknowledged-gap-sweep-train-2.md`. Train 4 fixed the Lua
-player-target `set_hunt`, the extra wounded/charmed mobact return, and the
-scavenger `CAN_GET_OBJ` gate. Lua mobile following is the remaining actionable
-`e` candidate from the train 1 inventory. Jail-guard visibility remains
-assigned to the combat transcript owner per train 1 triage; the blocked and
-out-of-scope rows remain unchanged.
+`docs/fidelity/depth/handoff/2026-10-13-acknowledged-gap-sweep.md` (merged PR
+#1943). Train 2's Lua object-target work is recorded in
+`2026-10-13-acknowledged-gap-sweep-train-2.md` (open PR #1953). Train 4's
+mobile and Lua binding changes remain in its own worktree pending census and
+PR. Lua mobile following is one remaining actionable `e` candidate. Jail-guard
+visibility remains a separate candidate; only the shared attack/message/RNG
+divergence is owned by `mob.teleport-victim-combat-transcript`, as clarified
+in the Train 2 handoff. Other pending candidates and triage remain in the Train
+1 inventory and Train 4 handoff.
