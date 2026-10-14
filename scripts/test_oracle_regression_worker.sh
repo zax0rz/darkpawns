@@ -151,6 +151,8 @@ pin_dup() {
 }
 
 run_case immediate-pass P no "" $'PASS\tfake' 1 1
+run_case draw-confirmed "X|X" no "" $'DRAW\tfake\t5' 2 2
+run_case draw-flaky "X|P" no "" $'INFRA\tfake\t5' 2 2
 run_case immediate-stale P yes "" $'STALE\tfake' 1 1
 run_case immediate-pinned-confirmed "D:cast:$one_a|D:cast:$one_a" yes "$(pin_one "$one_a" immediate-pinned-confirmed)" $'EXPECTED\tfake' 2 2
 run_case infra-pass "I|P" no "" $'PASS\tfake' 2 2

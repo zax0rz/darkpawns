@@ -170,6 +170,35 @@ record the case in `docs/fidelity/depth/<command>.tsv`. Run `make fidelity-depth
 to reject missing scenario or unit-test proof references. See
 `docs/fidelity/DEPTH_TESTING.md` for the complete workflow.
 
+## RNG draw parity (`-draw-parity`)
+
+A byte comparison proves the two engines *print* the same thing; it can't see a
+run whose RNG stream has drifted while the bytes still happen to match. `-draw-parity`
+also compares the dice rolls. The reference oracle (built with the DP draw-log seam,
+`DP_C_DRAW_LOG_FILE`) and the Go port (`DP_DRAW_LOG_FILE`) each log every `number()`,
+`dice()` and direct `uniform()` call. The harness records each side's draw count after
+setup, warmup and every probe step, then reports one line:
+
+```text
+draw-parity	MATCH	entries=4085	stream=4223
+draw-parity	MISMATCH	stream=4098	c=Number(0,20) = 8	go=Number(0,3) = 1	c-step=setup	go-step=warmup
+```
+
+followed on a mismatch by `draw-context` lines around the first diverging draw.
+`dice(1,n)` and `Number(1,n)` are the same draw, and `dice(k,n)` matches `k` consecutive
+`Number(1,n)` calls with the same sum. The step labels say *where* each side was when the
+streams split, which is usually far from where the transcript first differs (PF-067).
+Exit codes: **5** when the bytes match but the draws diverge (a coincidence green); **3**
+when the bytes diverge (the draw line is still printed); and an error, never a pass, when
+the oracle wrote no draw log (an oracle without the seam).
+
+Corpus-wide: `scripts/census.sh start --draw-parity --name <run>` (full or `--scenarios`,
+seed 1; not yet combinable with `--claims`/`--combined`). A reproduced exit 5 is a `DRAW`
+row; it is counted on its own `oracle-draw-parity:` summary line and never changes the
+byte verdict. The fastest diagnosis loop: grep `src/` for the first mismatching C call's
+range (for example `number(0,20)`), verify the call path (R5e), and find the Go code that
+should make the same draw.
+
 ## Driving the browser client (`-go-transport ws`)
 
 By default the Go port is driven over telnet, the same transport as the C

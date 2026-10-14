@@ -21,6 +21,7 @@ main() {
 	local fingerprint_dir="$log_dir/$scenario.fingerprints"
 	local fingerprint_file
 	local -a content_attempts=()
+	local draw_attempts=0
 
 	mkdir -p -- "$fingerprint_dir"
 	if [[ -n "${EXPECTED_DIVERGENCES_FILE:-}" && -f "$EXPECTED_DIVERGENCES_FILE" ]] \
@@ -73,10 +74,13 @@ main() {
 		attempt=$((attempt + 1))
 		attempt_log="$log_dir/$scenario.attempt$attempt.log"
 		local -a dump_args=()
+		if [[ "${ORACLE_REGRESSION_DRAW_PARITY:-0}" == 1 ]]; then
+			dump_args+=(--draw-parity)
+		fi
 		if [[ -n "${ORACLE_REGRESSION_DUMP:-}" ]]; then
 			# One file per scenario, overwritten by a retry: the dump records what
 			# C printed, and the last attempt is the run of record.
-			dump_args=(--dump-oracle "$ORACLE_REGRESSION_DUMP")
+			dump_args+=(--dump-oracle "$ORACLE_REGRESSION_DUMP")
 		fi
 		(
 			cd "$repo_root" || exit 125
@@ -96,6 +100,11 @@ main() {
 			# proof that the non-baselined divergence was harmless.
 			write_result INFRA 3
 			printf 'INFRA %s (divergence did not reproduce on content attempt)\n' "$scenario" >&2
+		elif ((draw_attempts != 0)); then
+			# The same rule for DP-1427 draw divergence: a clean attempt after a
+			# draw-divergent one is a flaky run, not a pass.
+			write_result INFRA 5
+			printf 'INFRA %s (draw divergence did not reproduce)\n' "$scenario" >&2
 		else
 			write_result PASS
 			printf 'PASS %s\n' "$scenario"
@@ -205,6 +214,23 @@ main() {
 			write_result TIMEOUT "$attempt_status"
 			printf 'TIMEOUT %s (exit %d; not classified as a content diff)\n' "$scenario" "$attempt_status" >&2
 			return 0
+		fi
+		if [[ $attempt_status -eq 5 ]]; then
+			# DP-1427: transcripts matched but the RNG draw streams diverged. Draw
+			# logs are deterministic, so one more attempt must reproduce it: a
+			# second exit 5 is DRAW, anything else is a flaky run (INFRA).
+			draw_attempts=$((draw_attempts + 1))
+			if ((draw_attempts == 2)); then
+				write_result DRAW 5
+				grep -m1 '^draw-parity' "$attempt_log" >&2 || true
+				return 0
+			fi
+			if ((attempt == max_attempts)); then
+				write_result INFRA 5
+				printf 'INFRA %s (draw divergence lacked a confirming attempt within the %d-attempt budget)\n' "$scenario" "$max_attempts" >&2
+				return 0
+			fi
+			continue
 		fi
 		if [[ $attempt_status -eq 3 ]]; then
 			fingerprint_file="$fingerprint_dir/attempt$attempt"
