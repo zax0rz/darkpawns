@@ -88,6 +88,28 @@ func TestAcText(t *testing.T) {
 	}
 }
 
+// TestAcTextNakedIsExact100 pins C's boundary: only an exact 100 is "naked"
+// (src/act.informative.c:1240-1242). Gear and APPLY_AC affects push a
+// character above 100, and C still calls that "lightly clothed", so a >=100
+// test invents a band C does not have (R1/R4).
+func TestAcTextNakedIsExact100(t *testing.T) {
+	for _, tt := range []struct {
+		ac   int
+		want string
+	}{
+		{ac: 99, want: "You are lightly clothed."},
+		{ac: 100, want: "You are naked, have you no shame?"},
+		{ac: 101, want: "You are lightly clothed."},
+		{ac: 110, want: "You are lightly clothed."},
+		{ac: 71, want: "You are lightly clothed."},
+		{ac: 70, want: "You are pretty well clothed."},
+	} {
+		if got := acText(tt.ac); got != tt.want {
+			t.Errorf("acText(%d) = %q, want %q", tt.ac, got, tt.want)
+		}
+	}
+}
+
 func TestPositionText(t *testing.T) {
 	tests := []struct {
 		val  int

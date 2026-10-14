@@ -506,20 +506,16 @@ var thaco = [12][41]int{
 func (p *Player) RLock()   { p.mu.RLock() }
 func (p *Player) RUnlock() { p.mu.RUnlock() }
 
-// CarriedWeight returns the total weight of all items carried (inventory + equipment).
+// CarriedWeight returns the weight of the objects on the character's carrying
+// list — C's IS_CARRYING_W(ch) (src/utils.h:322), the running carry_weight that
+// obj_to_char and obj_from_char maintain (src/handler.c:566, :600). do_wear
+// takes the object off that list before equip_char, so worn gear never counts
+// here; do_score's pack ratio reads this value (src/act.informative.c:1304-1315).
 func (p *Player) CarriedWeight() int {
-	weight := 0
-	if p.Inventory != nil {
-		weight += p.Inventory.GetWeight()
+	if p.Inventory == nil {
+		return 0
 	}
-	if p.Equipment != nil {
-		for _, item := range p.Equipment.Slots {
-			if item != nil {
-				weight += item.GetTotalWeight()
-			}
-		}
-	}
-	return weight
+	return p.Inventory.GetWeight()
 }
 
 // MaxCarryWeight returns the maximum weight this player can carry.

@@ -301,20 +301,57 @@ func (eq *Equipment) GetItemInSlot(slot EquipmentSlot) (*ObjectInstance, bool) {
 	return item, ok
 }
 
-// GetArmorClass returns total AC bonus from equipped armor.
+// GetArmorClass returns the AC the worn armor removes from the character.
+// C's apply_ac (src/handler.c:610-635) sums factor * GET_OBJ_VAL(obj, 0) over
+// the filled positions, and equip_char applies it as
+// GET_AC(ch) -= apply_ac(ch, pos) (:734-735).
 func (eq *Equipment) GetArmorClass() int {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
 
 	ac := 0
-	for _, item := range eq.Slots {
-		// Check if item is armor (type 9 is ITEM_ARMOR in CircleMUD)
-		if item.GetTypeFlag() == 9 {
-			// Values[0] is AC for armor
-			ac += item.Prototype.Values[0]
+	for slot, item := range eq.Slots {
+		if item == nil || item.GetTypeFlag() != ITEM_ARMOR {
+			continue
 		}
+		ac += armorFactorForSlot(slot) * item.GetValue(0)
 	}
 	return ac
+}
+
+// armorFactorForSlot is apply_ac's per-position factor (src/handler.c:618-632):
+// WEAR_BODY 3, WEAR_HEAD and WEAR_LEGS 2, and every other position — WEAR_ABOUT
+// included — 1.
+func armorFactorForSlot(slot EquipmentSlot) int {
+	switch slot {
+	case SlotBody:
+		return 3
+	case SlotHead, SlotLegs:
+		return 2
+	default:
+		return 1
+	}
+}
+
+// GetWornAffectAC returns the total APPLY_AC modifier of the worn objects.
+// equip_char runs affect_modify_ar over every object affect with the flag TRUE
+// (src/handler.c:743-746), and APPLY_AC adds to GET_AC (src/handler.c:182).
+func (eq *Equipment) GetWornAffectAC() int {
+	eq.mu.RLock()
+	defer eq.mu.RUnlock()
+
+	total := 0
+	for _, item := range eq.Slots {
+		if item == nil {
+			continue
+		}
+		for _, af := range item.GetAffects() {
+			if af.Location == ApplyAC {
+				total += af.Modifier
+			}
+		}
+	}
+	return total
 }
 
 // GetWeaponDamage returns weapon damage dice if a weapon is equipped.
