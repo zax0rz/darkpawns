@@ -1,0 +1,57 @@
+# lua_follow passes the selected character's keyword string to do_follow.
+# The target is a remote guard, so C resolves that keyword to the local guard.
+# depth-case: lua.bind-follow-mobile-leader
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+spawn-mob 4818 999 8105 48
+spawn-mob 8089 999 12296 122
+mob-script 12220 oracle/lua-follow-mobile.lua 512
+
+[lua-script mob/oracle/lua-follow-mobile.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd == "say" and what == "followmob") then
+follow(inworld("mob", 4818), 0)
+say("follow mob complete")
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+Followmob
+Y
+follopass
+follopass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Followmob
+y
+follopass
+follopass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+
+[probe]
+say followmob

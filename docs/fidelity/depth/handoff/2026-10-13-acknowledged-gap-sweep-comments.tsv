@@ -3,14 +3,14 @@ pkg/game/room_activity.go:21	flow_room, loud_mobs, CON<=0 croak deliberately omi
 pkg/game/room_activity.go:54	character order differs from C	a	DP-1364; lifecycle mobile/room/object pulse order
 pkg/game/npc_command.go:78,112,116,212	mobile command interpreter, mounted dismount and NPC give forms absent	a	lua.npc-command-unported / force.npc-command-interpreter; generic NPC command design is owned by Zach
 pkg/game/actor_specials.go:7,54	legacy NPC-only special actor route is not implemented	a	generic NPC command interpreter / actor dispatch design is owned
-pkg/game/world_bridge.go:1071	Lua follow of mobile leader ignored	e	src/scripts.c:542-569; mobile follower state already exists
-pkg/game/world_bridge.go:1082	Lua set_hunt for player hunter ignored	e	src/scripts.c:1341-1363; verify live dispatch and hunt state
-pkg/game/world_bridge.go:1109	Lua object-target spell ignored	e	src/scripts.c:1428-1489; object-target `CallMagic` path exists
-pkg/spells/say_spell.go:235-236	object target location predicate is unconditional true	e	src/spell_parser.c:291-320; reachable from Lua object targets
-pkg/game/other_character.go:19	Kai-zai gate searches affect source text instead of spell number	e	src/act.other.c:557-591; SKILL_KK_ZAI=164 at src/spells.h:212
+pkg/game/world_bridge.go:1071	Lua follow of mobile leader ignored	f	src/scripts.c:542-569; fixed in train 5 with local get_char_room_vis resolution and real Lua/oracle proofs
+pkg/game/world_bridge.go:1082	Lua set_hunt for player hunter ignored	f	src/scripts.c:1341-1363; fixed in train 4; PR #1955
+pkg/game/world_bridge.go:1109	Lua object-target spell ignored	f	src/scripts.c:1428-1489; fixed in train 2; PR #1953
+pkg/spells/say_spell.go:235-236	object target location predicate is unconditional true	f	src/spell_parser.c:291-320; fixed in train 2; PR #1953
+pkg/game/other_character.go:19	Kai-zai gate searches affect source text instead of spell number	f	src/act.other.c:557-591; SKILL_KK_ZAI=164 at src/spells.h:212; fixed in train 3; PR #1954
 pkg/combat/engine.go:954	jail-guard redirect omits CAN_SEE gate	e	src/fight.c:1374; TODO's DP-1054 citation is stale/unrelated; visibility callback required
-pkg/game/mobact.go:176-179	Go has an extra wounded/charmed early return absent from C	e	src/mobact.c:54-105; real autonomous pulse path
-pkg/game/mobact.go:203-230	scavenger scan omits room-aware CAN_SEE_OBJ in CAN_GET_OBJ	e	src/mobact.c:103-117; src/utils.h:535-549; require World-aware light check
+pkg/game/mobact.go:176-179	Go has an extra wounded/charmed early return absent from C	f	src/mobact.c:54-105; fixed in train 4; PR #1955
+pkg/game/mobact.go:203-230	scavenger scan omits room-aware CAN_SEE_OBJ in CAN_GET_OBJ	f	src/mobact.c:103-117; src/utils.h:535-549; fixed in train 4; PR #1955
 pkg/game/mobact.go:376-405	memory special omits C room warning/growl before hit	a	C path verified at src/mobact.c:261-280; intersects owned shared attack/message transcript
 pkg/game/mobact.go:414-458	helper branch omits charmed-master assist and C helper visibility/room-act gates	a	C path verified at src/mobact.c:284-302; assist attack bytes stay with shared combat owner
 pkg/game/mobact.go:491-505	AGGR24+AGGRESSIVE mob target scan lacks C CAN_SEE predicate	b	src/mobact.c:324-336; add blocked depth row; target order also meets DP-1364
@@ -19,28 +19,30 @@ pkg/game/weather.go:187	date_record override is absent	c	stop-tier persistence; 
 pkg/session/wiz_system.go:740	hunt_items call absent after point_update	a	DP-493; do not implement
 pkg/session/comm_cmds.go:187	do_write shortcut omits C item/permission checks and string editor	c	src/act.comm.c:1024-1103; stop-tier session/editor lifecycle
 pkg/session/cmd_info.go:1151	help-miss usage-file append omitted	c	src/act.wizard.c help path; stop-tier file/persistence side effect
-pkg/session/wiz_info.go:237	detailed `show shops` report omitted	c	src/shop.c:1413 and src/act.wizard.c:2414; needs a separate issue if not selected
+pkg/session/wiz_info.go:237	detailed `show shops` report omitted	e	src/shop.c:1413; src/act.wizard.c:2414; shop data/order already exist; implement `.` room selection, 1-based numeric selection, invalid input, and detailed transcript
 pkg/session/string_cmd.go:20	C get_obj helper is unported but has no callers	d	rg found only its definition/use sites route through get_char_vis and get_obj_in_list_vis; docs/fidelity/depth/string.tsv records exclusion
 pkg/game/deferred_fight_fns.go:36	APPLY_RACE_HATE slot mutation not separately ported	f	src/handler.c:205-238; 18 stock affect records across 14 object prototypes; fixed in train 1 via actual player wield/remove recomputation and covered by race-hate pulse dispatch proof
-pkg/game/other_character.go	Kai-zai substring gate	e	see source row above
-pkg/spells/affect_spells.go:2155	identify object bitvector currently prints NOBITS	c	C spells.c:476-621 reads object bitvector; Go lacks direct field but parsed APPLY_SPELL affects may support a derived value; confirm model and issue if not safely derivable
-pkg/game/ai.go:79	wandering treats every mob as unable to swim/fly in water/flying sectors	c	src/mobact.c:130-138 calls CAN_SWIM/IS_FLYING; Go has no equivalent capability model; separate design/data-model issue
+pkg/spells/affect_spells.go:2155	identify object bitvector currently prints NOBITS	d	src/spells.c:476-510; src/db.c:1372,1399-1457,1947-1951; ordinary stock object prototypes have no bitvector field or gameplay setter, so C prints NOBITS; nonzero legacy rent data is stop-tier persistence
+pkg/game/ai.go:79	wandering treats every mob as unable to swim/fly in water/flying sectors	e	src/mobact.c:130-138; src/utils.h:148-153; Go roomActivityHasBoat already models AFF_WATERWALK/AFF_FLY/ITEM_BOAT for mobs; add wander predicates and pulse proofs
 pkg/game/houses.go:56,94; pkg/game/house_save.go:33	house lookups and rent object load/save have incomplete adapter/persistence seams	c	lookup callbacks are registered in pkg/session/manager.go:258; house object persistence is stop-tier
 pkg/session/tattoo.go:64	comment says skull tattoo is message-only	d	stale: game/use_tattoo_depth_test.go proves mob spawn, follow and charm; tattoo cooldown persistence remains stop-tier
 pkg/session/tattoo.go	tattoo effects direct stats and tattoo/timer not serialized	c	C tattoo_af is effective-stat mutation; persistence is stop-tier
-pkg/game/skills2.go:511-520	DoTurn admits it lacks full race tracking and guesses from target name; C scans every room character by race	c	src/new_cmds2.c:960-1030; current skill wrapper accepts one target and lacks C room-wide mana/RNG/state flow; needs dedicated command/room architecture and issue text
-pkg/game/skills2.go:274-275	DoMindlink called simplified	d	C new_cmds2.c:254-317; command's valid NPC path is the failure arm, success predicates are unreachable for NPCs
+pkg/game/skills2.go:511-520	DoTurn guesses undead status from target name and accepts one target	e	src/interpreter.c:787; src/new_cmds2.c:960-1030; fixable: C spends level*3+number(1,55) mana and scans room order by undead/vampire race; diffs -4..3 get no target effect, while Go adds damage/messages; Go also omits C mana/RNG/room-wide flow and guesses race from names
+pkg/game/skills2.go:274-275	DoMindlink called simplified	d	src/new_cmds2.c:254-317; src/utils.h:366,418; player targets take C's non-NPC return and valid NPC targets take the tested failure/RNG path, while the apparent success arm is unreachable
 pkg/game/skills2.go:482	DoDig section says sector-based gameplay	d	stale/misplaced: C do_dig is builder exit creation (new_cmds2.c:818-881), implemented by session/wiz_movement.go
 pkg/game/level.go:59	int_app TODO says display/practice wiring missing	d	stale: session/wiz_stats.go and game/spec_procs.go call IntAppLearn
 pkg/game/act_display.go:54	score experience said estimated	d	stale: session/display_cmds.go uses game.FindExp
 pkg/game/act_movement.go:943	door plural grammar described as rough approximation	d	C's strrchr/final-s test is equivalent to Go's final-byte-s check
 pkg/game/limits_gain.go:154	integer approximation label	d	integer division truncation is C-equivalent
-pkg/game/death.go:871	damage mapping described approximate	d	verify type mapping against src/spells.h; current mapping is a constant transcription, no admitted missing branch found
+pkg/game/death.go:871	damage mapping described approximate	e	src/fight.c:258,578; src/spells.h:89,101,105,165,169; current mapping uses 21 for energy drain (C=25), 31 for shocking grasp (C=37), 34 for psiblast (C=100), and 35 for petrify (C=104), and omits meteor swarm (C=41); existing death_test.go asserts several wrong IDs
 pkg/game/skill_advanced.go:256; pkg/game/graph.go:248; pkg/game/damage_stubs.go:38; pkg/session/informative_cmds.go:11-13; pkg/session/agent_vars.go:139	legacy stub wording	d	comments are historical or helpers delegate to live implementations; no current unported C branch identified
 pkg/session/cmd_group.go:19	shadow TODO	d	stale: `shadow.tsv` and movement_commands.go prove success arm
 pkg/game/actor_specials.go	legacy NPC dispatch limitation	a	owned with generic NPC command interpreter; not expanded in this sweep
 pkg/scripting/engine.go:114-117	dangerous Lua library names intentionally replaced with sandbox error stubs	d	security sandbox behavior, not a missing gameplay routine
-pkg/scripting/engine.go:806,828,1046,1096,1378,1527	economy/quest bridge groups, empty skills/wear tables, archived skill groups	c	inventory-only; compare active lib/scripts and C script API, then file a separate script-bridge issue for live missing fields/functions
+pkg/scripting/engine.go:806,828,1046,1096,1378,1421-1423,1527	stub headings, empty skills/wear tables, archived skill groups, stale canget comment	d	production RunScript always uses `charToTable` bridge (engine.go:453-468); bridge emits C's fields and nil-vs-table wear/carry (bridge.go:288-343); empty `skills` is absent from C char_to_table, skill-group scripts are archived with no C cmdlib entries (scripts.c:1609-1668), Tier API functions are registered, and the canget comment about the invalid-argument return is stale
+pkg/scripting/engine.go:1392-1397	iscorpse uses the wrong object type and omits C's corpse value flag	e	src/scripts.c:636-654; src/utils.h:490-491; src/structs.h:434; C tests ITEM_CONTAINER=15 and value[3]==1, while Go checks type 18 only
+pkg/scripting/engine.go:1411-1459	canget checks player `ch` and player carry capacity instead of acting mobile `me`	f	src/scripts.c:193-219; src/utils.h:535-549; fixed in train 4 / PR #1955 via live `me`/object references and `CAN_GET_OBJ` visibility proof (`lua.bind-canget-world-actor`, `TestLuaCanGetUsesMeAndLiveObjectVisibility`)
+pkg/scripting/bridge.go:293-326	Lua leader table recursion stops at depth 32	e	src/scripts.c:1870-1873; src/utils.c:365-375; C recursively calls char_to_table for every master until nil, and its follow path rejects cycles
 pkg/db/player.go:22	stub phrase	d	historical comment; current player store is SQLite implementation; not a gameplay C behavior omission
 pkg/session/informative_cmds.go:11-13	file header says informative commands are stubs	d	stale: cmdTitle is a live command implementation
 pkg/admin/huma_completion.go:272-274	admin zone reset placeholder	d	non-game admin API; outside requested pulse/command fidelity surface

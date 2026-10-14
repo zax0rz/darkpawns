@@ -1054,21 +1054,22 @@ func (a *WorldScriptableAdapter) Social(me, vict scripting.CharRef, social strin
 }
 
 // Follow is lua_follow: do_follow(me, leader->player.name), and AFF_CHARM on
-// me when charm is set.
+// me when charm is set. do_follow resolves that name in me's room, so a mobile
+// selected by inworld may resolve to a different local body with the same
+// keyword.
 func (a *WorldScriptableAdapter) Follow(me, leader scripting.CharRef, charm bool) {
 	m := a.mobFor(me)
 	if m == nil {
 		return
 	}
-	_, lp, lm := a.resolveChar(leader)
-	switch {
-	case lp != nil:
-		// do_follow's get_char_room_vis on the leader's name.
-		if lp.GetRoomVNum() == m.GetRoomVNum() && canSee(m, lp) && !strings.EqualFold(m.GetFollowing(), lp.GetName()) {
-			AddFollowerMob(a.world, m, lp)
+	selected, _, _ := a.resolveChar(leader)
+	if body, ok := selected.(combat.Combatant); ok {
+		argument, _ := oneArgument(charKeywords(body))
+		if argument != "" {
+			if resolved, found := a.world.resolveCharInRoomAt(m, m.GetRoomVNum(), argument); found {
+				followMobBody(a.world, m, resolved.Combatant)
+			}
 		}
-	case lm != nil:
-		slog.Warn("lua follow of a mobile leader is not ported; ignored", "mob_vnum", m.GetVNum(), "leader_vnum", lm.GetVNum())
 	}
 	if charm {
 		m.SetAffected(affCharm)

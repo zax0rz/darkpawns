@@ -31,19 +31,23 @@ behavior were reviewed but are not gaps.
 
 ## A. Acknowledged comments and triage
 
-The TSV is the itemized inventory. Current dispositions include: owned or
-already tracked — DP-1426, DP-1364, DP-493, generic NPC command dispatch,
-`mob.teleport-victim-combat-transcript`; stop-tier — date-record persistence,
-help usage logging, `do_write`'s editor/file path, tattoo persistence, and house
-object persistence; evidence-based exclusion — `get_obj` only, because it has
-no callers; stale or accurate comments — `int_app`, `DoMindlink`, `DoDig`,
-display/door/math helpers, and old stub headers; fix candidates — Kai-zai
-visibility gate, Lua object-target spell path, jail-guard visibility, mob pulse
-gates, identify's derived object flags, and `DoTurn`'s room-wide race behavior.
-Player-equipment `APPLY_RACE_HATE` is fixed in train 1. The detailed `show shops` report and the
-remaining script-table gaps need separate issues if not handled in a later
-train. `APPLY_RACE_HATE` is being fixed in the first train; see its proof and
-census record below.
+The TSV is the itemized inventory. Fixed in trains 1-5: player-equipment
+`APPLY_RACE_HATE`, Lua object-target spell dispatch and location gate, Kai-zai
+spell-ID gate, mobile activity/scavenger/player-hunter gates, live mobile-actor
+`canget`, and Lua mobile follow. Current fix candidates: detailed `show shops`,
+jail-guard visibility, water/flying mobile wandering, `DoTurn`'s room-wide
+race behavior, corpse attack mapping, the Lua `iscorpse` binding, and the Lua
+leader-table depth cap. Blocked depth rows
+retain AGGR24 target visibility and global point-update object timers. Owned or
+tracked: DP-1426, DP-1364, DP-493, generic NPC command dispatch, and
+`mob.teleport-victim-combat-transcript`. Stop-tier: date-record persistence,
+help usage logging, `do_write`'s editor/file path, tattoo persistence, and
+house object persistence. Evidence-based exclusions include `get_obj`, which
+has no callers, and comments on the legacy Lua table fallback, which is only
+used by tests; production table construction already matches C's fields and
+nil-vs-table behavior. `DoMindlink`, `DoDig`, display/door/math helpers, and old
+stub headers are stale or accurate comments. `APPLY_RACE_HATE`'s proof and
+census record are below.
 
 Evidence notes:
 
@@ -114,6 +118,8 @@ Evidence notes:
    guard visibility and mob memory/helper attack arms to their combat owner.
 5. Do not touch DP-1426, DP-1419, DP-493, DP-1364, the generic NPC command
    interpreter, descriptor/session lifecycle, persistence, or save formats.
+   DP-1423/1424/1425 and entry/nanny, login, transport, and session lifecycle
+   remain stop-tier per the goal brief; report those gaps only.
 
 The inventories above were recorded before the first production edit. The
 first train implements player equipment `APPLY_RACE_HATE` slot mutation and
@@ -135,8 +141,10 @@ existing C race-hate speech/attack draws in order (R3).
 status from its name (`pkg/game/skills2.go:492-567`). C `do_turn` in
 `src/new_cmds2.c:960-1030` scans every room occupant for undead/vampire races,
 charges mana, consumes a random mana cost, and applies outcomes to each eligible
-target. Please add room-aware command dispatch that preserves C room-list order,
-race checks, mana/RNG timing, and actor/target/room messages. Add fail-capable
+target. For level differences -4 through 3, C applies no target effect after
+the attempt message and mana charge; Go currently adds damage and messages.
+Please add room-aware command dispatch that preserves C room-list order, race
+checks, mana/RNG timing, and actor/target/room messages. Add fail-capable
 real-command and pulse/oracle proofs; do not change player save fields or
 formats. Cite R1/R3/R5e.
 
@@ -148,17 +156,24 @@ The wizard command currently omits C's detailed report
 formatting, and ordering, with a transcript vehicle for empty and populated
 shops. Keep it read-only and preserve the current command gates. Cite R1/R2/R5e.
 
-### Audit and complete the live Lua character/mobile table bridge
+### Match the `iscorpse` Lua binding
 
-Go table construction in `pkg/scripting/engine.go:1015-1096` does not match
-`char_to_table` at `src/scripts.c:1812-1916`: it omits player-only fields such as
-`id`, `exp`, `bank`, `mana`, `move`, `cha`, `jail`, `tattoo`, and `followers`,
-creates an empty `skills` table absent in C, and gives every mob an empty
-`wear` table instead of listing equipped objects when present. Please compare
-all fields and nil-vs-empty behavior against the C builder, identify consumers
-among active world scripts, then add adapter-backed tables and real Lua
-dispatch tests for carried/worn objects and PC/NPC fields. Preserve the
-existing script struct identity/write-back contract. Cite R1/R4/R5e.
+The production Lua table bridge follows C's `char_to_table` path.
+`pkg/scripting/engine.go:1392-1397` treats type 18 as a corpse instead of
+checking C's container type plus value[3]. Please match the C predicate with
+real Lua dispatch proof and a revert control, retaining the already-matching
+invalid-argument and nil return arms. C paths: `src/scripts.c:636-654`,
+`src/utils.h:490-491`, and `src/structs.h:434`. `canget`'s acting-mobile
+predicate is fixed in train 4 / PR #1955. Cite R1/R4/R5e.
+
+### Preserve the full Lua leader chain
+
+`pkg/scripting/bridge.go:293-326` stops nested `leader` tables at depth 32.
+C `char_to_table` recursively includes each `ch->master` until the pointer is
+nil or self (`src/scripts.c:1870-1873`); `circle_follow` rejects cycles
+(`src/utils.c:365-375`). Please preserve every valid chain, with a real Lua
+dispatch proof over 32 links and an R5h revert control. Add an oracle vehicle
+if the current fixture can establish the chain. Cite R1/R4/R5e.
 
 ### Add the missing water-capability checks to mobile wandering
 
