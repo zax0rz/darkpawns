@@ -56,3 +56,4 @@ score
 # depth-case: mob.teleport-victim-player-teleport
 # depth-case: mob.teleport-victim-combat-teardown
 # depth-case: mob.teleport-victim-pulse-dispatch
+# depth-case: mob.teleport-victim-combat-transcript
