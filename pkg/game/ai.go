@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // CombatEngine interface for AI to initiate combat
@@ -73,7 +74,8 @@ func (w *World) runMobAI(mob *MobInstance) {
 //     Previously Go matched the *probability* but drew the direction separately,
 //     which changes the per-direction distribution. We now reuse the gate draw
 //     as the direction index.
-//   - CAN_GO(ch, door): the exit exists in that cardinal direction.
+//   - CAN_GO(ch, door): the exit exists in that cardinal direction and is not
+//     EX_CLOSED (utils.h:565-567), read from the live room.
 //   - ROOM_DEATH / ROOM_NOMOB: skip.
 //   - MOB_STAY_ZONE: skip exits that leave the mob's home zone.
 //   - Water sectors require CAN_SWIM; the flying sector requires IS_FLYING
@@ -100,6 +102,15 @@ func (w *World) wanderMobWithDoor(mob *MobInstance, door int) bool {
 	exit, ok := room.Exits[direction] // CAN_GO(ch, door)
 	if !ok {
 		return false
+	}
+	// CAN_GO also refuses an EX_CLOSED exit (src/utils.h:565-567), so a
+	// wandering mob never passes a closed door (src/mobact.c:124). Door state
+	// changes at runtime, so read it from the live room the way player
+	// movement does (getExit), not from the snapshot.
+	if live := w.GetRoomInWorld(mob.GetRoom()); live != nil {
+		if liveExit, ok := live.Exits[direction]; ok && liveExit.ExitInfo&parser.ExitClosed != 0 {
+			return false
+		}
 	}
 	targetRoom, ok := snap.Rooms[exit.ToRoom]
 	if !ok {
