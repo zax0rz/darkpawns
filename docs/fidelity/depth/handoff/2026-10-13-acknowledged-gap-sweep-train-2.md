@@ -68,7 +68,7 @@ All commands were run separately on the final behavior code tip; all passed:
 | `go test -race ./pkg/game/...` | PASS |
 | `golangci-lint run ./...` | PASS: 0 issues |
 | `make deadcode-ratchet` | PASS: 52 baselined, 0 new |
-| `make fidelity-depth` | PASS |
+| `make fidelity-depth` | PASS: 5,514 cases; 5,424 proven/delegated; 10 blocked; 68 excluded; 12 divergent-approved |
 | `make fidelity-units` | PASS: 1,420 rows, 1,306 symbols, 1,601 claims |
 | `make string-census` | PASS: 98 known Go-only segments, 0 unreviewed; generated reports are already stale, and `make string-census-update` was not run |
 | `gosec -severity=high -quiet ./...` | PASS |
@@ -83,8 +83,10 @@ divergence. Its retained C block shows the carried bread, `object invisible=1`,
 and `object blessed=1`, confirming both C object-alteration arms executed. A
 full output and run manifest are retained under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train2-show-oracle/`.
-The targeted census and the train's final combined census remain pending. The
-shared census slot is occupied at this handoff update; do not start a
-competing census. Fill in both census result lines here and mark
-`lua.bind-spell-object-target` oracle-green only after the targeted case is
-clean.
+Targeted census: `dp-1371-train-2-lua-object-target` — CLEAN, 1 passed, 0
+expected/failed/stale/infra/timeout/unstable; elapsed 11.866s. The retained
+summary and manifest are under
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train-2-lua-object-target/`.
+The manifest row is now `oracle-green`. The train's final combined census is
+still pending; check `scripts/census.sh status` and run it on this final tip
+before opening the PR.
