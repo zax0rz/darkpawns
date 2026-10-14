@@ -1140,6 +1140,18 @@ func (m *MobInstance) SetGold(gold int) {
 	m.Gold = gold
 }
 
+// updateGold applies a balance change while holding the mob lock. The callback
+// returns the replacement balance and whether the operation was accepted.
+func (m *MobInstance) updateGold(change func(int) (int, bool)) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	gold, ok := change(m.Gold)
+	if ok {
+		m.Gold = gold
+	}
+	return ok
+}
+
 // IsAffected returns true if the given AFF bit is set on the mob.
 func (m *MobInstance) IsAffected(bit int) bool {
 	m.mu.RLock()

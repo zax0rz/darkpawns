@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -233,9 +234,9 @@ func cmdShow(s *Session, args []string) error {
 	case "shops":
 		if value == "" {
 			pageLiteralString(s, showAllShops(s.manager.world))
+		} else {
+			s.Send(showDetailedShop(s.manager.world, value, s.player.GetRoomVNum()))
 		}
-		// The separate detailed report remains unported; this case certifies
-		// list_all_shops only (src/shop.c:1267-1295).
 		return nil
 	case "houses":
 		if len(s.manager.world.HouseControl) == 0 {
@@ -786,4 +787,154 @@ func showAllShops(w *game.World) string {
 		report.WriteString("\n\r")
 	}
 	return report.String()
+}
+
+// showDetailedShop ports show_shops' selector and list_detailed_shop report
+// (src/shop.c:1311-1444). Detailed reports are sent directly, as in C; only
+// the no-argument index uses the pager.
+func showDetailedShop(w *game.World, value string, roomVNum int) string {
+	shops := w.SnapshotShopsInIndexOrder()
+	selected := -1
+	if value == "." {
+		// Preserve ok_shop_room's second comparison against real_room(1),
+		// including its original rnum/vnum behavior (src/shop.c:932-939).
+		fallbackRoom, hasFallbackRoom := w.RealRoomIndex(1)
+		for i := range shops {
+			for _, shopRoom := range shops[i].Rooms {
+				if shopRoom == roomVNum || (hasFallbackRoom && shopRoom == fallbackRoom) {
+					selected = i
+					break
+				}
+			}
+			if selected >= 0 {
+				break
+			}
+		}
+		if selected < 0 {
+			return "This isn't a shop!\n\r"
+		}
+	} else if cIsNumber(value) {
+		shopNumber, err := strconv.Atoi(value)
+		if err == nil {
+			selected = shopNumber - 1
+		}
+	}
+	if selected < 0 || selected >= len(shops) {
+		return "Illegal shop number.\n\r"
+	}
+	return detailedShopReport(w, selected, shops[selected])
+}
+
+func detailedShopReport(w *game.World, index int, shop game.Shop) string {
+	var report strings.Builder
+	fmt.Fprintf(&report, "Vnum:       [%5d], Rnum: [%5d]\n\r", shop.VNum, index+1)
+
+	rooms := make([]string, 0, len(shop.Rooms))
+	for _, roomVNum := range shop.Rooms {
+		room := w.GetRoomInWorld(roomVNum)
+		if room == nil {
+			rooms = append(rooms, fmt.Sprintf("<UNKNOWN> (#%d)", roomVNum))
+		} else {
+			rooms = append(rooms, fmt.Sprintf("%s (#%d)", room.Name, room.VNum))
+		}
+	}
+	report.WriteString(detailedShopList("Rooms:      ", rooms, "None!"))
+
+	keeperProto, keeperExists := w.GetMobPrototype(shop.KeeperVNum)
+	if shop.KeeperVNum < 0 || !keeperExists {
+		report.WriteString("Shopkeeper: <NONE>\n\r")
+	} else {
+		// assign_the_shopkeepers retains any pre-existing mobile special in
+		// SHOP_FUNC before installing shop_keeper (src/shop.c:1233-1237).
+		_, hasSpecial := game.GetMobSpecName(shop.KeeperVNum)
+		special := "NO"
+		if hasSpecial {
+			special = "YES"
+		}
+		// C's GET_NAME for an NPC resolves to player.short_descr (src/utils.h:275-276).
+		fmt.Fprintf(&report, "Shopkeeper: %s (#%d), Special Function: %s\n\r", keeperProto.ShortDesc, keeperProto.VNum, special)
+		if keeper := shopKeeperInCOrder(w, shop.KeeperVNum); keeper != nil {
+			liveShop, coins, ok := w.SnapshotShopAccount(shop.VNum, keeper)
+			bank := shop.Bank
+			if ok {
+				bank = liveShop.Bank
+			}
+			fmt.Fprintf(&report, "Coins:      [%9d], Bank: [%9d] (Total: %d)\n\r", coins, bank, coins+bank)
+		}
+	}
+
+	customers := make([]string, 0, 7)
+	for bit, customer := range []string{"Good", "Evil", "Neutral", "Magic User", "Cleric", "Thief", "Warrior"} {
+		if shop.WithWho&(1<<bit) == 0 {
+			customers = append(customers, customer)
+		}
+	}
+	customerList := strings.Join(customers, ", ")
+	if customerList == "" {
+		customerList = "None"
+	}
+	fmt.Fprintf(&report, "Customers:  %s\n\r", customerList)
+
+	produces := make([]string, 0, len(shop.SellTypes))
+	for _, vnum := range shop.SellTypes {
+		if object, ok := w.GetObjPrototype(vnum); ok {
+			produces = append(produces, fmt.Sprintf("%s (#%d)", object.ShortDesc, vnum))
+		}
+	}
+	report.WriteString(detailedShopList("Produces:   ", produces, "Nothing!"))
+
+	buys := make([]string, 0, len(shop.BuyTypes))
+	for i, itemType := range shop.BuyTypes {
+		name := "UNDEFINED"
+		// Item names follow C's item_types table (src/constants.c:782-807).
+		if itemType >= 0 && itemType < len(game.ItemTypeNames) {
+			name = game.ItemTypeNames[itemType]
+		}
+		word := "all"
+		if i < len(shop.BuyWords) && shop.BuyWords[i] != "" {
+			word = shop.BuyWords[i]
+		}
+		buys = append(buys, fmt.Sprintf("%s (#%d) [%s]", name, itemType, word))
+	}
+	report.WriteString(detailedShopList("Buys:       ", buys, "Nothing!"))
+
+	fmt.Fprintf(&report, "Buy at:     [%4.2f], Sell at: [%4.2f], Open: [%d-%d, %d-%d]\n\r", shop.ProfitSell, shop.ProfitBuy, shop.OpenHour1, shop.CloseHour1, shop.OpenHour2, shop.CloseHour2)
+	fmt.Fprintf(&report, "Bits:       %s\n\r", oeditSprintBit(shop.Flags, []string{"WILL_FIGHT", "USES_BANK"}))
+	return report.String()
+}
+
+// detailedShopList follows handle_detailed_list's 78-byte wrapping and
+// 12-space continuation indent (src/shop.c:1297-1308).
+func detailedShopList(label string, entries []string, empty string) string {
+	if len(entries) == 0 {
+		return label + empty + "\n\r"
+	}
+	var output strings.Builder
+	line := label
+	for i, entry := range entries {
+		if i > 0 {
+			line += ", "
+		}
+		if len(entry)+len(line) < 78 || len(line) < 20 {
+			line += entry
+		} else {
+			output.WriteString(line + "\n\r")
+			line = "            " + entry
+		}
+	}
+	output.WriteString(line + "\n\r")
+	return output.String()
+}
+
+// get_char_num walks C's character_list newest-first (src/handler.c:887-895);
+// Go mob IDs rise in spawn order, so descending IDs preserve that lookup.
+func shopKeeperInCOrder(w *game.World, vnum int) *game.MobInstance {
+	mobs := w.GetAllMobs()
+	sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() > mobs[j].GetID() })
+	for _, mob := range mobs {
+		if mob.GetVNum() == vnum {
+			return mob
+		}
+	}
+	return nil
 }

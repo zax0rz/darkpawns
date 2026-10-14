@@ -8,6 +8,7 @@ type Shop struct {
 	ID         int      // unique shop ID (assigned by ShopManager)
 	VNum       int      // virtual number of the shop definition
 	KeeperVNum int      // VNUM of the NPC shopkeeper
+	Bank       int      // runtime shop bank; src/shop.c initializes this to zero
 	BuyTypes   []int    // item types this shop buys (list of TypeFlag values)
 	BuyWords   []string // optional namelist keywords paired with BuyTypes
 	SellTypes  []int    // VNUMs of item prototypes this shop sells
@@ -25,6 +26,13 @@ type Shop struct {
 	OpenHour2  int
 	CloseHour2 int
 }
+
+const (
+	ShopFlagWillFight = 1 << iota
+	ShopFlagUsesBank
+	shopMinCoinsOutsideBank = 5000
+	shopMaxCoinsOutsideBank = 15000
+)
 
 // Shop message indexes follow the seven strings read by C boot_the_shops:
 // no_such_item1/2, do_not_buy, missing_cash1/2, message_buy, message_sell.
@@ -75,6 +83,8 @@ func (sm *ShopManager) ReplaceShop(updated *Shop) {
 	for i, shop := range sm.shops {
 		if shop.VNum == updated.VNum {
 			updated.ID = shop.ID
+			// C sedit.c:143-158 copies the runtime bank with the edited shop.
+			updated.Bank = shop.Bank
 			sm.shops[i] = updated
 			return
 		}
