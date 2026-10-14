@@ -139,8 +139,13 @@ The `lua.bind-set-hunt-player-hunter` and `lua.bind-canget-world-actor` rows
 are now `oracle-green`. The retained relevant normalized blocks are under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train4-show-oracle/`;
 the `lua.bind-canget-world-actor` probe reports `canget invisible=nil` after
-the live mobile's detect-invisible effect is removed. The train's final
-combined census remains pending after rebase.
+the live mobile's detect-invisible effect is removed. The final integrated
+combined census on tip `c4b115f18` completed clean after an infrastructure
+recheck:
+`oracle-combined: pairs=3401 deduplicated=1017 full=CLEAN_AFTER_RECHECK claims=CLEAN_AFTER_RECHECK elapsed=2057.310s verdict=CLEAN_AFTER_RECHECK rechecked=lambada-depth`.
+Its `results.tsv` rows for `lua-bind-actions` (16) and `lua-bind-queries` (14)
+both pass. The retained run is at
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train4-integrated/`.
 
 Required gates, all run independently after `make fmt`:
 
