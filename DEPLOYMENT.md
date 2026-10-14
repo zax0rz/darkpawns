@@ -27,6 +27,12 @@ creates on first boot). Back up the SQLite database and the instance's `lib/` tr
 edited world files. There is no database server to back up: the game state is that
 one SQLite file.
 
+**Bulletin boards are saved inside the world tree**, at `lib/world/etc/board.*`
+(`board.mort`, `board.immort`, …), as C's boards were. They are written at runtime and
+are not in the repository, so an upgrade that replaces `lib/world/` from a fresh
+checkout, or syncs it with `rsync --delete`, erases every posted message. Keep `etc/`
+out of the sync (`rsync --delete --exclude='etc/' …`) or copy it aside first.
+
 ## Quickstart
 
 A fresh clone to a running server. No external services are required: the
