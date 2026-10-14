@@ -94,7 +94,7 @@ Proposed rulebook amendment for Zach; no governing document was edited:
 
 Incident motivating this clarification: the same attack-before-protection draw order appears in three combat-entry rows, while normal mobile aggression repeats across five shop rows and the populated orc soak. These belong to shared classes; treating each scenario as a separate local exception would have produced conflicting fixes.
 
-The three new soaks are also in the final corpus results as transcript `FAIL` rows because of long-pulse Go output capture. They are not added to an expected-divergence allowlist. The post-fix draw-parity and combined census results are recorded below after completion.
+The three new soaks remain transcript `FAIL` rows in the combined full census because of long-pulse Go output capture. They are not added to an expected-divergence allowlist. The combined census is complete; the post-fix full draw-parity corpus and final-tip seed-1/seed-2 soak checks remain pending.
 
 ## Gates and final census
 
@@ -114,6 +114,6 @@ The three new soaks are also in the final corpus results as transcript `FAIL` ro
 | `go test -race ./pkg/game/...` | PASS |
 | Direct cleric and Butler controls | PASS fixed seed-1 draw reports; each revert reproduces its recorded first mismatch |
 | Corpus-2 draw-parity corpus | 1,172 scenarios; 43 DRAW; 3 populated-world FAIL; 1 INFRA; NOT_CLEAN; run and diagnostics paths above |
-| Post-fix full draw-parity corpus | Pending after final rebase |
-| Final combined census | Running at post-rebase code tip `39ad131f8`; first bounded wait returned `running 561s seed all 222/3415`. Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-final-combined/` |
+| Post-fix full draw-parity corpus | Pending; at this update, another train's combined census holds the shared lock. Start after that run releases it. |
+| Final combined census | `NOT_CLEAN`: 3,415 scheduled pairs / 1,028 deduplicated; full 1,172 scenarios: 1,169 pass, 3 fail, 0 infrastructure, 0 timeout, 0 stale, 0 unpinnable; claims 3,271/3,271 pass (`CLEAN`). The only full failures are `living-world-haven-square` (53), `living-world-dungeon-entrance` (52), and `living-world-orc-burrow-entrance` (52), the known long-pulse output-capture stop-tier findings tracked in DP-1439. Source HEAD was `39ad131f8`; the sole dirty path was this then-untracked handoff file. Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-final-combined/` |
 | Final-tip soak draw parity, seeds 1 and 2 | Pending after final rebase |
