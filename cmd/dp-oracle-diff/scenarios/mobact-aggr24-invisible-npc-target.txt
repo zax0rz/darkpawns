@@ -1,0 +1,56 @@
+# depth-case: mob.aggr24-invisible-npc-target
+# depth-case: mobact.aggr24-visible-mobile-selection
+# C's AGGR24 + AGGRESSIVE full-health mobile scan must skip an invisible weaker
+# NPC before it can select the candidate. The first-player God observer toggles
+# NOHASSLE before moving into the room, so the earlier ordinary aggressive and
+# AGGR24 player branches leave the observer alone. No exits make the pulse
+# deterministic; the probe then pumps the live heartbeat/mobile-activity path.
+# The stock attacker has AFF_DETECT_INVIS; clear that bit for this case.
+# Its mask changes from 132264 to 132256, clearing AFF_DETECT_INVIS (bit 3).
+# C path: src/mobact.c:324-336 -> src/utils.h:515-530; AFF bits: src/structs.h:310-321.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4914 1 8162 49
+set-mob-aff 4914 132256
+set-mob-flag 4914 AGGRESSIVE
+spawn-mob 4909 1 8162 49
+set-mob-aff 4909 2
+replace-room-exits 8162 none
+
+[setup:oracle]
+Mordane
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8162
+
+[setup:port]
+Mordane
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8162
+
+[probe]
+~dpclock pulse 40
+look

@@ -347,7 +347,7 @@ func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) boo
 			continue
 		}
 		senderName := ch.Name
-		if !canSeeSocialTarget(p, ch) {
+		if !w.canSeeCharacterInRoom(p, ch) {
 			senderName = "Someone"
 		}
 		line := fmt.Sprintf("%s tells your clan%s, '%s'\r\n", senderName, levelString, arg)

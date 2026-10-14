@@ -221,8 +221,8 @@ func extractArg(argument string) string {
 	return arg1
 }
 
-// findSocialTarget finds a visible character in the room by name, checking
-// mobs first then players, matching C get_char_room_vis().
+// findSocialTarget finds a character by name, checking mobs first then players
+// like C get_char_room_vis() (src/handler.c:1277-1300).
 func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 	vnum := observer.GetRoomVNum()
 	nameLower := strings.ToLower(name)
@@ -233,7 +233,7 @@ func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 	// Check mobs in the room
 	mobs := w.GetMobsInRoom(vnum)
 	for _, m := range mobs {
-		if isnameWithAbbrevs(name, charKeywords(m)) && canSeeSocialTarget(observer, m) {
+		if isnameWithAbbrevs(name, charKeywords(m)) && w.canSeeCharacterInRoom(observer, m) {
 			return m
 		}
 	}
@@ -241,40 +241,12 @@ func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 	// Check players
 	players := w.GetPlayersInRoom(vnum)
 	for _, p := range players {
-		if isnameWithAbbrevs(name, charKeywords(p)) && canSeeSocialTarget(observer, p) {
+		if isnameWithAbbrevs(name, charKeywords(p)) && w.canSeeCharacterInRoom(observer, p) {
 			return p
 		}
 	}
 
 	return nil
-}
-
-// canSeeSocialTarget matches get_char_room_vis's CAN_SEE checks. Unlike Act's
-// delivery gate, C target lookup does not reject an otherwise visible target
-// merely because the actor is sleeping; the command's POS_RESTING gate is
-// enforced by the interpreter before do_action runs.
-func canSeeSocialTarget(observer, subject Actor) bool {
-	if observer == nil || subject == nil {
-		return true
-	}
-	obs, obsOK := observer.(visibilitySubject)
-	sbj, sbjOK := subject.(visibilitySubject)
-	if !obsOK || !sbjOK || obs.GetLevel() >= LVL_IMMORT {
-		return true
-	}
-	if holyLight, ok := obs.(holyLightSubject); ok && holyLight.GetHolyLight() {
-		return true
-	}
-	if obs.IsAffected(affBlind) {
-		return false
-	}
-	if sbj.IsAffected(affInvisible) && !obs.IsAffected(affDetectInvisible) {
-		return false
-	}
-	if sbj.IsAffected(affHide) && !obs.IsAffected(affSenseLife) {
-		return false
-	}
-	return true
 }
 
 // roomMessageExcludeTwo sends a message to all players in a room except two named ones.

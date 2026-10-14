@@ -52,3 +52,38 @@ func TestCombatCanSeeMatchesDamageVisibilityGates(t *testing.T) {
 		t.Fatal("CAN_SEE self case was not visible")
 	}
 }
+
+func TestCanSeeCharacterInRoomDoesNotGrantImmortalsVisibility(t *testing.T) {
+	w, observer := newCombatTestWorld(t)
+	target := NewPlayer(2, "InvisibleTarget", 1001)
+	if err := w.AddPlayer(target); err != nil {
+		t.Fatalf("AddPlayer target: %v", err)
+	}
+	target.SetAffect(affInvisible, true)
+	observer.SetLevel(LVL_IMMORT)
+
+	if w.canSeeCharacterInRoom(observer, target) {
+		t.Fatal("immortal level alone revealed invisible target")
+	}
+	observer.SetAffect(affDetectInvisible, true)
+	if !w.canSeeCharacterInRoom(observer, target) {
+		t.Fatal("detect-invisible did not reveal target")
+	}
+	observer.SetAffect(affDetectInvisible, false)
+	observer.SetHolyLight(true)
+	if !w.canSeeCharacterInRoom(observer, target) {
+		t.Fatal("HOLYLIGHT did not reveal target")
+	}
+	observer.SetHolyLight(false)
+	observer.SetAffect(affInfravision, true)
+	if !w.SetRoomFlagBit(1001, 0) {
+		t.Fatal("SetRoomFlagBit failed")
+	}
+	if w.canSeeCharacterInRoom(observer, target) {
+		t.Fatal("infravision alone revealed invisible target")
+	}
+	observer.SetAffect(affDetectInvisible, true)
+	if !w.canSeeCharacterInRoom(observer, target) {
+		t.Fatal("infravision and detect-invisible did not reveal target")
+	}
+}

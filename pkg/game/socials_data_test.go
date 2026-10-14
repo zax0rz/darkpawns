@@ -58,13 +58,34 @@ func TestSocialTableMatchesCData(t *testing.T) {
 func TestSocialTargetLookupHonorsVisibility(t *testing.T) {
 	w, actor, target, _, _ := newChannelWorld(t)
 	target.SetAffect(affInvisible, true)
+	actor.SetLevel(LVL_IMMORT)
 
 	if got := w.findSocialTarget(actor, target.Name); got != nil {
-		t.Fatalf("invisible target resolved as %q", got.GetName())
+		t.Fatalf("immortal without detection resolved invisible target as %q", got.GetName())
 	}
 	actor.SetAffect(affDetectInvisible, true)
 	if got := w.findSocialTarget(actor, target.Name); got != target {
 		t.Fatalf("detect-invisible actor did not resolve target: %v", got)
+	}
+	target.SetInvisLevel(LVL_IMMORT + 1)
+	if got := w.findSocialTarget(actor, target.Name); got != nil {
+		t.Fatalf("actor below target invis level resolved %q", got.GetName())
+	}
+	actor.SetHolyLight(true)
+	if got := w.findSocialTarget(actor, target.Name); got != nil {
+		t.Fatalf("HOLYLIGHT bypassed target invis level and resolved %q", got.GetName())
+	}
+	actor.SetLevel(LVL_IMMORT + 1)
+	if got := w.findSocialTarget(actor, target.Name); got != target {
+		t.Fatalf("actor at target invis level did not resolve target with HOLYLIGHT: %v", got)
+	}
+	target.SetInvisLevel(0)
+	target.SetAffect(affInvisible, false)
+	actor.SetAffect(affDetectInvisible, false)
+	actor.SetHolyLight(false)
+	target.SetAffect(affHide, true)
+	if got := w.findSocialTarget(actor, target.Name); got != target {
+		t.Fatalf("CAN_SEE incorrectly rejected hidden target: %v", got)
 	}
 }
 

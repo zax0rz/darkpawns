@@ -88,8 +88,17 @@ func TestFidelityChCanSeeObjInvisibility(t *testing.T) {
 	if chCanSeeObj(mortal, invisible) {
 		t.Error("a mortal should not see an invisible object via chCanSeeObj")
 	}
+	if chCanSeeObj(immort, invisible) {
+		t.Error("immortal level alone should not reveal an invisible object")
+	}
+	immort.SetAffect(affDetectInvisible, true)
 	if !chCanSeeObj(immort, invisible) {
-		t.Error("an immortal should see an invisible object via chCanSeeObj")
+		t.Error("detect-invisible should reveal an invisible object")
+	}
+	immort.SetAffect(affDetectInvisible, false)
+	immort.SetHolyLight(true)
+	if !chCanSeeObj(immort, invisible) {
+		t.Error("HOLYLIGHT should reveal an invisible object")
 	}
 }
 
