@@ -9,10 +9,12 @@ non-test Go files under `pkg/` and `cmd/`, using the baseline expressions
 `not (yet )?ported`, `unported`, `deliberately not`, `is not ported`,
 `left unported`, `not implemented`, `no go counterpart/equivalent`, widened
 with `stub`, `simplified`, `approximat*`, `placeholder`, `TODO`, `FIXME`,
-`ignored`, and `skipped`. The baseline expression set reproduced 21 hits; the
-widened set matched 158 lines total and 136 comment lines. Most widened-only
-hits describe ordinary parser, command, or error behavior; the admissions and
-the additional gaps found by call-path review are inventoried in
+`ignored`, and `skipped`. At the recorded `origin/main` revision, the baseline
+expression set reproduced 21 hits. The widened set matched 175 lines total;
+143 lines contained Go comment syntax, and 32 were other matches. This count
+uses the original `grep -v _test` output filter. Most widened-only hits
+describe ordinary parser, command, or error behavior; the admissions and the
+additional gaps found by call-path review are inventoried in
 `2026-10-13-acknowledged-gap-sweep-comments.tsv`.
 
 For each behavior claim below, the named C site was checked in `src/` during
