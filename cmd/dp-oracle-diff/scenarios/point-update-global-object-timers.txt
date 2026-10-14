@@ -1,0 +1,46 @@
+# depth-case: point-update.global-object-list-timers
+# Wall of ice VNUM 51 is a limits.c field object. Its first point_update at a
+# real nonzero room index removes it, spawns puddle VNUM 20 with timer 2, and
+# sends the field wear-off text. The room looks on either side of the hourly
+# pulse so both the output and object transition are player-visible.
+
+[fixture]
+empty-players
+quiet-mobs
+force-load 51
+spawn-obj 51 99 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+
+[probe]
+look
+~dpclock pulse 630
+look

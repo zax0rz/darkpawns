@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -235,14 +236,8 @@ func (w *World) PointUpdate() {
 	}
 
 	// --- NPCs ---
-	// Object decay is driven per-room, not per-mob. C's point_update() iterates
-	// the global object_list exactly once per tick (src/limits.c:525-686); the
-	// decay pass is NOT nested inside the character loop. Without dedup, a room
-	// with N mobs would decay its objects N× per tick (DP-1036).
-	decayedRooms := make(map[int]bool)
 	for _, m := range mobs {
 		pos := m.GetPosition()
-		roomVNum := m.GetRoomVNum()
 
 		if pos >= PosStunned {
 			// HP regen — limits.c:498-501
@@ -296,25 +291,16 @@ func (w *World) PointUpdate() {
 			clearMemory(m)
 		}
 
-		// Object decay for things in this mob's room — once per room per tick.
-		// C iterates object_list globally; Go iterates per-mob, so dedup by room
-		// to avoid N× decay when N mobs share a room (DP-1036).
-		_ = roomVNum
-		if !decayedRooms[roomVNum] {
-			decayedRooms[roomVNum] = true
-			w.decayObjectsInRoom(roomVNum)
-		}
 	}
 
-	// Second pass: decay objects in rooms that have no mobs. C's point_update()
-	// iterates the global object_list, so corpses in cleared rooms still decay.
-	// The dedup map keeps this from double-decaying rooms already handled above.
-	rooms := w.Rooms()
-	for i := range rooms {
-		room := &rooms[i]
-		if !decayedRooms[room.VNum] {
-			decayedRooms[room.VNum] = true
-			w.decayObjectsInRoom(room.VNum)
+	// C finishes the character list before its single global object_list walk.
+	// Snapshot IDs in descending creation order: read_object prepends each new
+	// object to C's list, and objects created while processing this snapshot are
+	// not visited until the next point_update (src/db.c:1892-1893,1950-1951;
+	// src/limits.c:525-686).
+	for _, obj := range w.pointUpdateObjectList() {
+		if w.objectIsRegistered(obj) {
+			w.decayObject(obj)
 		}
 	}
 }
@@ -324,118 +310,251 @@ func clearMemory(m *MobInstance) {
 	m.ClearMemory()
 }
 
-// decayObjectsInRoom decays objects in the given room.
-// Ported from limits.c point_update() object section (lines 527-686).
+// pointUpdateObjectList snapshots the live object registry in the order C's
+// prepended object_list is traversed.
+func (w *World) pointUpdateObjectList() []*ObjectInstance {
+	w.mu.RLock()
+	objects := make([]*ObjectInstance, 0, len(w.objectInstances))
+	for _, obj := range w.objectInstances {
+		objects = append(objects, obj)
+	}
+	w.mu.RUnlock()
+	sort.Slice(objects, func(i, j int) bool { return objects[i].ID > objects[j].ID })
+	return objects
+}
+
+func (w *World) objectIsRegistered(obj *ObjectInstance) bool {
+	if obj == nil {
+		return false
+	}
+	w.mu.RLock()
+	registered := w.objectInstances[obj.ID] == obj
+	w.mu.RUnlock()
+	return registered
+}
+
+// decayObjectsInRoom remains a narrow helper for existing room-local unit
+// regressions. Production point_update uses the global object_list snapshot.
 func (w *World) decayObjectsInRoom(roomVNum int) {
-	// GetItemsInRoom returns the live backing slice; a rotted container's
-	// spill prepends into it, which would shift already-visited objects into
-	// unvisited positions and tick them twice in one pass (R3b). Snapshot
-	// the pass's work list — like C's object_list walk, each object decays
-	// at most once per pass; items spilled during the pass tick on the next
-	// one.
 	items := append([]*ObjectInstance(nil), w.GetItemsInRoom(roomVNum)...)
 	for _, obj := range items {
-		// Allow corpses (IsCorpse=true) through even with nil Prototype so the
-		// corpse decay block below can fire. All other nil-prototype objects skip.
-		if obj.Prototype == nil && !obj.IsCorpse {
+		w.decayObject(obj)
+	}
+}
+
+// decayObject ports one object_list iteration from limits.c:527-686.
+func (w *World) decayObject(obj *ObjectInstance) {
+	if obj == nil || (obj.Prototype == nil && !obj.IsCorpse) {
+		return
+	}
+	vnum := obj.GetVNum()
+	location := w.objectLocation(obj)
+	roomVNum := 0
+	if location.Kind == ObjInRoom {
+		roomVNum = location.RoomVNum
+	}
+
+	if specName, ok := GetObjSpecName(vnum); ok && specName == "moon_gate" {
+		timer := obj.GetValue(2)
+		if timer > 0 {
+			timer--
+			obj.SetValue(2, timer)
+		}
+		if timer == 0 {
+			if location.Kind == ObjInRoom && len(w.actChar(roomVNum)) != 0 {
+				w.sendToRoomExact(roomVNum, cap(fmt.Sprintf("%s fades out of existence.\r\n", obj.GetShortDesc())))
+			}
+			w.ExtractObject(obj, roomVNum)
+		}
+		return
+	}
+
+	if vnum == 20 || vnum == 21 {
+		timer := obj.GetTimer()
+		if timer > 0 {
+			timer--
+			obj.SetTimer(timer)
+		}
+		if timer == 0 {
+			w.ExtractObject(obj, roomVNum)
+		}
+		return
+	}
+
+	if vnum == 18 {
+		timer := obj.GetTimer()
+		if timer > 0 {
+			timer--
+			obj.SetTimer(timer)
+		}
+		if timer == 0 {
+			if location.Kind == ObjInRoom && len(w.actChar(roomVNum)) != 0 {
+				w.sendToRoomExact(roomVNum, "The pile of dust is blown away by a draft of wind.\r\n")
+			}
+			w.ExtractObject(obj, roomVNum)
+		}
+		return
+	}
+
+	if vnum == 64 {
+		timer := obj.GetTimer()
+		if timer > 0 {
+			timer--
+			obj.SetTimer(timer)
+		}
+		if timer <= 0 {
+			if location.Kind == ObjInRoom && len(w.actChar(roomVNum)) != 0 {
+				w.sendToRoomExact(roomVNum, "The circle on the ground slowly fades away.\r\n")
+			}
+			w.ExtractObject(obj, roomVNum)
+		}
+		return
+	}
+
+	if obj.IsContainer() && obj.GetValue(3) != 0 {
+		timer := obj.GetTimer()
+		if timer > 0 {
+			timer--
+			obj.SetTimer(timer)
+		}
+		if timer == 0 {
+			w.decayCorpse(obj, location, roomVNum)
+		}
+		return
+	}
+
+	// C reaches the field table only for floor objects and tests the C room
+	// index, where world[0] is intentionally excluded (limits.c:658-684).
+	if location.Kind != ObjInRoom || w.roomIndex(location.RoomVNum) <= 0 {
+		return
+	}
+	for _, field := range fieldObjs {
+		if vnum != field.ObjVNum {
 			continue
 		}
-		objVNum := obj.GetVNum()
-
-		// Corpse decay — ITEM_CONTAINER with val[3] set (corpse flag)
-		if obj.IsContainer() && obj.GetValue(3) != 0 {
-			if obj.GetTimer() > 0 {
-				obj.SetTimer(obj.GetTimer() - 1)
-			}
-			if obj.GetTimer() == 0 {
-				// Scatter contents to room
-				for _, contained := range obj.GetContents() {
-					obj.RemoveFromContainer(contained)
-					contained.SetRoomVNum(roomVNum)
-					// C's rotted-container spill is obj_to_room (limits.c:644/646).
-					if err := w.MoveObjectToRoomFront(contained, roomVNum); err != nil {
-						slog.Warn("MoveObjectToRoom failed in decay", "obj_vnum", contained.GetVNum(), "room", roomVNum, "error", err)
+		timer := obj.GetTimer()
+		if timer > 0 {
+			timer--
+			obj.SetTimer(timer)
+		}
+		if timer == 0 {
+			if field.WornOffObjNum > 0 {
+				if proto, ok := w.GetObjPrototype(field.WornOffObjNum); ok {
+					spawned := w.NewObjectFromProto(proto, roomVNum)
+					spawned.SetTimer(2)
+					if err := w.MoveObjectToRoomFront(spawned, roomVNum); err != nil {
+						slog.Warn("MoveObjectToRoomFront failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
+						w.ExtractObject(spawned, roomVNum)
 					}
 				}
-				// Random decay message
-				msgs := []string{
-					"A quivering horde of maggots consumes %s.\r\n",
-					"Dissolving into the ground, %s disappears.\r\n",
-					"Dissolving into the ground, %s disappears.\r\n",
-					"A horde of flesh-eating ants consumes %s.\r\n",
-					"A horde of flesh-eating ants consumes %s.\r\n",
-					"The earth opens up and swallows %s.\r\n",
-					"The earth opens up and swallows %s.\r\n",
-				}
-				// #nosec G404 — game RNG, not cryptographic
-				// #nosec G404
-				msg := fmt.Sprintf(msgs[dprng.Number(0, len(msgs)-1)], obj.GetShortDesc())
-				w.SendToRoom(roomVNum, msg)
-				w.ExtractObject(obj, roomVNum)
-				continue
+			}
+			w.sendToRoomExact(roomVNum, field.WearOffMsg+"\r\n")
+			w.ExtractObject(obj, roomVNum)
+		}
+		return
+	}
+}
+
+func (w *World) decayCorpse(obj *ObjectInstance, location ObjectLocation, roomVNum int) {
+	switch location.Kind {
+	case ObjInInventory, ObjEquipped:
+		carrier, carrierRoom := w.objectCarrier(location)
+		if carrier != nil {
+			Act(w, false, carrier, nil, obj, nil, "$p decays in your hands, and the contents fall to the ground.", "", ToChar)
+			w.spillCorpseContents(obj, LocRoom(carrierRoom), carrierRoom)
+		}
+	case ObjInContainer:
+		w.spillCorpseContents(obj, location, roomVNum)
+	case ObjInRoom:
+		actors := w.actChar(roomVNum)
+		if len(actors) != 0 {
+			messages := [...]string{
+				"A quivering horde of maggots consumes $p.",
+				"Dissolving into the ground, $p disappears.",
+				"Dissolving into the ground, $p disappears.",
+				"A horde of flesh-eating ants consumes $p.",
+				"A horde of flesh-eating ants consumes $p.",
+				"The earth opens up and swallows $p.",
+				"The earth opens up and swallows $p.",
+			}
+			// #nosec G404 — game RNG, not cryptographic
+			// #nosec G404
+			message := messages[dprng.Number(0, len(messages)-1)]
+			Act(w, true, actors[0], nil, obj, nil, message, "", ToRoom)
+			Act(w, true, actors[0], nil, obj, nil, message, "", ToChar)
+		}
+		w.spillCorpseContents(obj, location, roomVNum)
+	}
+	w.ExtractObject(obj, roomVNum)
+}
+
+func (w *World) spillCorpseContents(obj *ObjectInstance, destination ObjectLocation, roomVNum int) {
+	contents := append([]*ObjectInstance(nil), obj.GetContents()...)
+	for _, contained := range contents {
+		var err error
+		switch destination.Kind {
+		case ObjInRoom:
+			err = w.MoveObjectToRoomFront(contained, roomVNum)
+		case ObjInContainer:
+			w.mu.RLock()
+			parent := w.objectInstances[destination.ContainerObjID]
+			w.mu.RUnlock()
+			if parent == nil {
+				err = fmt.Errorf("parent container %d no longer exists", destination.ContainerObjID)
+			} else {
+				err = w.MoveObjectToContainer(contained, parent)
 			}
 		}
-
-		// Puddle/puke decay
-		if objVNum == 20 || objVNum == 21 {
-			if obj.GetTimer() > 0 {
-				obj.SetTimer(obj.GetTimer() - 1)
-			}
-			if obj.GetTimer() == 0 {
-				w.ExtractObject(obj, roomVNum)
-				continue
-			}
-		}
-
-		// Dust decay
-		if objVNum == 18 {
-			if obj.GetTimer() > 0 {
-				obj.SetTimer(obj.GetTimer() - 1)
-			}
-			if obj.GetTimer() == 0 {
-				w.SendToRoom(roomVNum, "The pile of dust is blown away by a draft of wind.\r\n")
-				w.ExtractObject(obj, roomVNum)
-				continue
-			}
-		}
-
-		// Circle of summoning (COC_VNUM = 64)
-		if objVNum == 64 {
-			if obj.GetTimer() > 0 {
-				obj.SetTimer(obj.GetTimer() - 1)
-			}
-			if obj.GetTimer() <= 0 {
-				w.SendToRoom(roomVNum, "The circle on the ground slowly fades away.\r\n")
-				w.ExtractObject(obj, roomVNum)
-				continue
-			}
-		}
-
-		// Field objects — check against fieldObjs table
-		for _, fo := range fieldObjs {
-			if objVNum == fo.ObjVNum {
-				if obj.GetTimer() > 0 {
-					obj.SetTimer(obj.GetTimer() - 1)
-				}
-				if obj.GetTimer() == 0 {
-					if fo.WornOffObjNum > 0 {
-						if proto, ok := w.GetObjPrototype(fo.WornOffObjNum); ok {
-							spawned := w.NewObjectFromProto(proto, roomVNum)
-							spawned.SetTimer(2)
-							// C's field wear-off spawn is obj_to_room (limits.c:674).
-							if err := w.MoveObjectToRoomFront(spawned, roomVNum); err != nil {
-								slog.Warn("MoveObjectToRoomFront failed in worn-off spawn", "obj_vnum", spawned.GetVNum(), "room", roomVNum, "error", err)
-								w.ExtractObject(spawned, roomVNum)
-							}
-						}
-					}
-					w.SendToRoom(roomVNum, fo.WearOffMsg+"\r\n")
-					w.ExtractObject(obj, roomVNum)
-				}
-				break
-			}
+		if err != nil {
+			slog.Warn("move corpse contents failed", "obj_vnum", contained.GetVNum(), "room", roomVNum, "error", err)
 		}
 	}
+}
+
+func (w *World) objectLocation(obj *ObjectInstance) ObjectLocation {
+	w.mu.RLock()
+	location := obj.Location
+	w.mu.RUnlock()
+	return location
+}
+
+func (w *World) sendToRoomExact(roomVNum int, message string) {
+	for _, actor := range w.actChar(roomVNum) {
+		if actor.GetPosition() > PosSleeping {
+			actor.SendMessage(message)
+		}
+	}
+}
+
+func (w *World) objectCarrier(location ObjectLocation) (Actor, int) {
+	switch location.OwnerKind {
+	case OwnerPlayer:
+		w.mu.RLock()
+		carrier := w.players[location.PlayerName]
+		w.mu.RUnlock()
+		if carrier != nil {
+			return carrier, carrier.GetRoom()
+		}
+	case OwnerMob:
+		w.mu.RLock()
+		carrier := w.mobileObjectOwnerLocked(location.MobID)
+		w.mu.RUnlock()
+		if carrier != nil {
+			return carrier, carrier.GetRoom()
+		}
+	}
+	return nil, 0
+}
+
+func (w *World) roomIndex(roomVNum int) int {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	for index, vnum := range w.roomOrder {
+		if vnum == roomVNum {
+			return index
+		}
+	}
+	return -1
 }
 
 // updatePosFromHP updates a player's position based on their HP.
