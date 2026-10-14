@@ -5,10 +5,13 @@
 The complete pre-fix acknowledged-comment inventory, silent-pulse review,
 assigned-special crosswalk, triage, and copy-ready Claude issue text are in
 `2026-10-13-acknowledged-gap-sweep.md`, `2026-10-13-acknowledged-gap-sweep-comments.tsv`,
-and `2026-10-13-acknowledged-gap-sweep-specials.tsv` on train 1 (PR #1943).
-This train starts from fresh `origin/main` at
-`9b3ecaae3d02cb1f2b066e9dd27c81bb5ec350fc` and continues the Lua object-spell
-family recorded there.
+and `2026-10-13-acknowledged-gap-sweep-specials.tsv` on train 1 (merged PR
+#1943).
+This train started from fresh `origin/main` at
+`9b3ecaae3d02cb1f2b066e9dd27c81bb5ec350fc`. After PRs #1943 (this sweep's
+train 1), #1944 (DP-1419), and #1945 (DP-1426) merged, it was rebased onto
+fresh `origin/main` at `d8e8024ddbfe52fbde36d16e0b02e2d7606fac71`. The Lua
+object-spell family recorded in train 1 remains this train's scope.
 
 ## C path and change
 
@@ -56,7 +59,9 @@ control.
 
 ## Gates
 
-All commands were run separately on the final behavior code tip; all passed:
+All commands were rerun separately after rebasing onto the integrated
+`origin/main`; all passed. The behavior and proof tip is `b74f80faa` (the
+following commits only update this handoff):
 
 | Gate | Result |
 |---|---|
@@ -68,9 +73,9 @@ All commands were run separately on the final behavior code tip; all passed:
 | `go test -race ./pkg/game/...` | PASS |
 | `golangci-lint run ./...` | PASS: 0 issues |
 | `make deadcode-ratchet` | PASS: 52 baselined, 0 new |
-| `make fidelity-depth` | PASS: 5,514 cases; 5,424 proven/delegated; 10 blocked; 68 excluded; 12 divergent-approved |
-| `make fidelity-units` | PASS: 1,420 rows, 1,306 symbols, 1,601 claims |
-| `make string-census` | PASS: 98 known Go-only segments, 0 unreviewed; generated reports are already stale, and `make string-census-update` was not run |
+| `make fidelity-depth` | PASS: 5,521 cases; 5,432 proven/delegated; 9 blocked; 68 excluded; 12 divergent-approved |
+| `make fidelity-units` | PASS: 1,425 rows, 1,313 symbols, 1,608 claims |
+| `make string-census` | PASS: 94 Go-only, ratchet 98 known segments / 0 unreviewed; generated reports remain stale and were not updated |
 | `gosec -severity=high -quiet ./...` | PASS |
 
 ## Oracle evidence
@@ -87,9 +92,11 @@ Targeted census: `dp-1371-train-2-lua-object-target` — CLEAN, 1 passed, 0
 expected/failed/stale/infra/timeout/unstable; elapsed 11.866s. The retained
 summary and manifest are under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train-2-lua-object-target/`.
-The manifest row is now `oracle-green`. The train's final combined census on
-code tip `7fe4c4c02` completed clean after the infrastructure recheck:
+The manifest row is `oracle-green`. The pre-rebase combined census on code tip
+`7fe4c4c02` completed clean after the infrastructure recheck:
 `oracle-combined: pairs=3396 deduplicated=1016 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=1965.253s verdict=CLEAN_AFTER_RECHECK`.
 The `results.tsv` rows for `lua-bind-actions`, `lua-bind-queries`, and
 `lua-spell-object-target` are all `PASS`. The combined run directory is
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train-2/`.
+This run predates the integration of PRs #1943–#1945; the final combined
+census on the rebased tip is still required before opening the PR.
