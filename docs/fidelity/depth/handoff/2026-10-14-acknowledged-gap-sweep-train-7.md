@@ -117,11 +117,11 @@ The targeted census is retained in
 | `make fidelity-units` | PASS; 1,427 rows, 1,316 symbols, 1,611 claims |
 | `make string-census` | PASS; 98 known Go-only segments, 0 unreviewed. It reported 24 obsolete baseline entries and stale generated reports; no report update was needed for this train. |
 | `gosec -severity=high -quiet ./...` | PASS |
-| Final combined census on committed Train 7 tip | Pending; append the retained result after completion. |
+| Final combined census on committed Train 7 tip `7a2f3b1049ecb370a5206e6184fdc50ba05f4a3c` | `oracle-combined: pairs=3403 deduplicated=1019 full=CLEAN_AFTER_RECHECK claims=CLEAN_AFTER_RECHECK elapsed=2000.369s verdict=CLEAN_AFTER_RECHECK rechecked=charge-failure-depth,cutthroat-failure`. |
 
 ## Delivery
 
-This is one mobile-wandering family, below the train boundary. Commit the code,
-open its PR without merging, then run the required full combined census on that
-committed tip and append its manifest/verdict here. Keep the inherited owner
-boundaries and begin the next train from a freshly fetched `origin/main`.
+This is one mobile-wandering family, below the train boundary. PR #1958 remains
+open and unmerged. Its final combined census is CLEAN_AFTER_RECHECK on the
+committed tip above. Keep the inherited owner boundaries and begin the next
+train from a freshly fetched `origin/main`.
