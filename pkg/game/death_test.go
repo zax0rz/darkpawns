@@ -8,6 +8,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // ---------------------------------------------------------------------------
@@ -20,23 +21,57 @@ func TestAttackTypeToCorpseAttack(t *testing.T) {
 		attackType int
 		want       CorpseAttackType
 	}{
-		{"fireball (5)", 5, AttackFire},
-		{"chill touch (8)", 8, AttackCold},
-		{"color spray (10)", 10, AttackBlast},
-		{"energy drain (21)", 21, AttackEnergyDrain},
-		{"lightning bolt (30)", 30, AttackLightning},
-		{"psiblast (34)", 34, AttackPsiblast},
-		{"petrify (35)", 35, AttackPetrify},
-		{"drowning (103)", 103, AttackDrowning},
+		{"burning hands (5)", spells.SpellBurningHands, AttackFire},
+		{"fireball (26)", spells.SpellFireball, AttackFire},
+		{"hellfire (58)", spells.SpellHellfire, AttackFire},
+		{"flamestrike (96)", spells.SpellFlameStrike, AttackFire},
+		{"chill touch (8)", spells.SpellChillTouch, AttackCold},
+		{"color spray (10)", spells.SpellColorSpray, AttackBlast},
+		{"meteor swarm (41)", spells.SpellMeteorSwarm, AttackBlast},
+		{"disrupt (92)", spells.SpellDisrupt, AttackBlast},
+		{"blast type (312)", combat.TYPE_BLAST, AttackBlast},
+		{"energy drain (25)", spells.SpellEnergyDrain, AttackEnergyDrain},
+		{"soul leech (83)", spells.SpellSoulLeech, AttackEnergyDrain},
+		{"lightning bolt (30)", spells.SpellLightningBolt, AttackLightning},
+		{"call lightning (6)", spells.SpellCallLightning, AttackLightning},
+		{"shocking grasp (37)", spells.SpellShockingGrasp, AttackLightning},
+		{"psiblast (100)", spells.SpellPsiblast, AttackPsiblast},
+		{"petrify (104)", spells.SpellPetrify, AttackPetrify},
+		{"drowning (103)", spells.SpellDrowning, AttackDrowning},
+		{"disintegrate uses dust path (93)", spells.SpellDisintegrate, AttackUndefined},
+		{"bludgeon type (305)", TypeBludgeon, AttackBruised},
+		{"pound type (307)", TypePound, AttackBruised},
+		{"punch type (313)", TypePunch, AttackBruised},
+		{"whip type (302)", TypeWhip, AttackBruised},
+		{"bash skill (132)", SkillBashNum, AttackBruised},
+		{"kick skill (134)", SkillKickNum, AttackBruised},
+		{"punch skill (136)", SkillPunchNum, AttackBruised},
+		{"dragon kick skill (188)", SkillDragonKickNum, AttackBruised},
+		{"tiger punch skill (189)", SkillTigerPunchNum, AttackBruised},
+		{"headbutt skill (141)", SkillHeadbuttNum, AttackBruised},
+		{"smackheads skill (145)", SkillSmackheadsNum, AttackBruised},
+		{"slug skill (146)", SkillSlugNum, AttackBruised},
+		{"serpent kick skill (156)", SkillSerpentKickNum, AttackBruised},
+		{"bearhug skill (142) is not listed in C", SkillBearhugNum, AttackUndefined},
+		{"trip skill (144) is not listed in C", SkillTripNum, AttackUndefined},
 		{"slash type (303)", TypeSlash, AttackSlash},
 		{"bite type (304)", TypeBite, AttackSlash},
 		{"claw type (308)", TypeClaw, AttackSlash},
-		{"whip type (302)", TypeWhip, AttackBruised},
-		{"crush type (306)", TypeCrush, AttackCrush},
-		{"pierce type (311)", TypePierce, AttackPierce},
-		{"bash skill (132)", SkillBashNum, AttackBruised},
-		{"backstab skill", SkillBackstabNum, AttackSlash},
+		{"bite skill (150)", SkillBiteNum, AttackSlash},
+		{"backstab skill (131)", SkillBackstabNum, AttackSlash},
+		{"circle skill (173)", SkillCircleNum, AttackSlash},
 		{"disembowel skill", SkillDisembowelNum, AttackDisembowel},
+		{"neckbreak skill (190)", SkillNeckbreakNum, AttackNeckBreak},
+		{"crush type (306)", TypeCrush, AttackCrush},
+		{"maul type (309)", TypeMaul, AttackCrush},
+		{"thrash type (310)", TypeThrash, AttackCrush},
+		{"pierce type (311)", TypePierce, AttackPierce},
+		{"stab type (314)", TypeStab, AttackPierce},
+		{"detect poison ID is not energy drain", spells.SpellDetectPoison, AttackUndefined},
+		{"locate object ID is not shocking grasp", spells.SpellLocateObject, AttackUndefined},
+		{"protection from evil ID is not psiblast", spells.SpellProtFromEvil, AttackUndefined},
+		{"remove curse ID is not petrify", spells.SpellRemoveCurse, AttackUndefined},
+		{"reserved skill ID (0) defaults", 0, AttackUndefined},
 		{"unknown (9999)", 9999, AttackUndefined},
 		{"negative (-1)", -1, AttackUndefined},
 	}
@@ -47,6 +82,48 @@ func TestAttackTypeToCorpseAttack(t *testing.T) {
 				t.Errorf("attackTypeToCorpseAttack(%d) = %d, want %d", tt.attackType, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRawKillCorpseAttackDispatch(t *testing.T) {
+	tests := []struct {
+		name       string
+		attackType int
+		want       string
+	}{
+		{"meteor swarm", spells.SpellMeteorSwarm, "A blasted corpse lies here in pieces."},
+		{"energy drain", spells.SpellEnergyDrain, "A dried up husk of a corpse is lying here."},
+		{"shocking grasp", spells.SpellShockingGrasp, "The shocked looking corpse of Victim is lying here."},
+		{"psiblast", spells.SpellPsiblast, "The corpse of Victim is lying here, brains exploded everywhere."},
+		{"petrify", spells.SpellPetrify, "The corpse of Victim is here, frozen in stone."},
+		{"detect poison defaults", spells.SpellDetectPoison, "The corpse of Victim is lying here."},
+		{"locate object defaults", spells.SpellLocateObject, "The corpse of Victim is lying here."},
+		{"protection from evil defaults", spells.SpellProtFromEvil, "The corpse of Victim is lying here."},
+		{"remove curse defaults", spells.SpellRemoveCurse, "The corpse of Victim is lying here."},
+		{"bearhug defaults", SkillBearhugNum, "The corpse of Victim is lying here."},
+		{"trip defaults", SkillTripNum, "The corpse of Victim is lying here."},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w, p := rawKillWorld(t)
+			w.RawKillCombatant(p, tt.attackType)
+			objects := w.GetItemsInRoom(1001)
+			if len(objects) != 1 {
+				t.Fatalf("raw_kill created %d room objects, want one corpse", len(objects))
+			}
+			if got := objects[0].GetLongDesc(); got != tt.want {
+				t.Fatalf("raw_kill corpse description = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRawKillDisintegrateDispatchesDust(t *testing.T) {
+	w, p := rawKillWorld(t)
+	w.RawKillCombatant(p, spells.SpellDisintegrate)
+	objects := w.GetItemsInRoom(1001)
+	if len(objects) != 1 || objects[0].GetVNum() != 18 || objects[0].IsCorpse {
+		t.Fatalf("disintegrate raw_kill objects = %v, want vnum-18 dust and no corpse", objects)
 	}
 }
 

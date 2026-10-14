@@ -2,6 +2,7 @@
 # depth-case: mob.medusa-look-target-gate
 # depth-case: mob.medusa-save-fallthrough
 # depth-case: mob.medusa-petrify-audience
+# depth-case: death.corpse-petrify-description
 # C-first vehicle for SPECIAL(medusa), registered for mobs 14101 and 14102 in
 # src/spec_assign.c:355-356 and implemented in src/spec_procs2.c:1552-1590.
 # The active 14101 vehicle is scriptless in room 14112. C only intercepts
@@ -80,3 +81,4 @@ set Gazeprobe level 1
 [probe]
 look troll
 look medusa
+look
