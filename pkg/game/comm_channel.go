@@ -22,6 +22,7 @@ const maxGossipHistory = 25
 // (src/screen.h:32-46). com_msgs[subcmd][3] carries one per channel.
 const (
 	ansiReset   = "\x1b[0m"  // KNRM
+	ansiRed     = "\x1b[31m" // KRED — perform_tell's CCRED sandwich
 	ansiYellow  = "\x1b[33m" // KYEL
 	ansiGreen   = "\x1b[32m" // KGRN
 	ansiMagenta = "\x1b[35m" // KMAG
@@ -233,11 +234,28 @@ func (w *World) doGenComm(ch *Player, me *MobInstance, cmd string, arg string) b
 	return true
 }
 
-// mobGlobalGossip implements the NPC-authored do_gen_comm(SCMD_GOSSIP) call used by
-// quan_lo. C sends this through the global descriptor list, not the room act
-// path, and the NPC has no descriptor to receive a self echo.
-func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
-	if me == nil || w.communicationRoomSoundproof(me.GetRoomVNum()) {
+// mobGenComm is do_gen_comm for an NPC author (src/act.comm.c:1146-1298). The
+// gates are the player path's, minus the two that can never fire for a mobile:
+// C's PLR_NOSHOUT and PRF channel-off arms read the mobile's player_specials
+// record, which is db.c's zeroed dummy_mob, and the speaker's own echo is a
+// TO_CHAR to a descriptor a mobile does not have.
+//
+// Delivery is act()'s, one listener at a time, so $n renders through PERS for
+// that listener and the color sandwich is the listener's own COLOR_LEV
+// (:1291-1295).
+func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
+	if me == nil {
+		return
+	}
+	spec, ok := communicationChannels[channel]
+	if !ok {
+		return
+	}
+	if w.communicationRoomSoundproof(me.GetRoom()) {
+		return
+	}
+	// C: if (GET_LEVEL(ch) < level_can_shout && subcmd != SCMD_NEWBIE) (:1215)
+	if channel != "newbie" && me.GetLevel() < spec.minimumLevel {
 		return
 	}
 	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
@@ -245,23 +263,37 @@ func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
 		return
 	}
 	argument = deleteANSIControls(argument)
-	// act("$n gossips, '%s'", ..., TO_VICT) capitalizes the line (act.comm.c:1273, 1293).
-	spec := communicationChannels["gossip"]
-	message := capitalize(fmt.Sprintf("%s gossips, '%s'\r\n", mobName(me), argument))
+	// C: if (subcmd == SCMD_GOSSIP) update_review(ch, argument); (:1275-1276)
+	if channel == "gossip" {
+		w.updateGossipHistory(mobName(me), argument, 0)
+	}
+	format := deleteANSIControls(fmt.Sprintf("$n %ss, '%s'", spec.verb, argument))
+	senderRoom := w.GetRoomInWorld(me.GetRoom())
 	for _, player := range w.playingPlayers() {
-		if player.GetFlags()&(1<<uint(PrfNoGossip)) != 0 ||
+		if (spec.recipientOffFlag >= 0 && player.GetFlags()&(1<<uint(spec.recipientOffFlag)) != 0) ||
 			player.GetFlags()&(1<<uint(PlrWriting)) != 0 ||
 			w.communicationRoomSoundproof(player.GetRoom()) {
 			continue
 		}
-		// An NPC author's descriptor loop colors each listener exactly as a
-		// player author's does: send_to_char(color_on) / act() / KNRM
-		// (src/act.comm.c:1288-1295).
-		line := channelColorLine(player, colorNormal, spec.color, message)
-		player.SendMessage(line)
-		w.mirrorChannelLine(player, "gossip", mobName(me), line)
+		// C's shout arm also filters by zone and the listener's position
+		// (:1286-1289).
+		if spec.zoneLimited {
+			targetRoom := w.GetRoomInWorld(player.GetRoom())
+			if senderRoom == nil || targetRoom == nil || senderRoom.Zone != targetRoom.Zone ||
+				player.GetPosition() < spec.minimumHearer {
+				continue
+			}
+		}
+		w.channelActWrapped(channel, false, me, player, format, ToVict|ToSleep,
+			channelColorWrap(colorNormal, spec.color, false))
 	}
-	w.updateGossipHistory(mobName(me), argument, 0)
+}
+
+// mobGlobalGossip implements the NPC-authored do_gen_comm(SCMD_GOSSIP) call used by
+// quan_lo. C sends this through the global descriptor list, not the room act
+// path, and the NPC has no descriptor to receive a self echo.
+func (w *World) mobGlobalGossip(me *MobInstance, argument string) {
+	w.mobGenComm(me, argument, "gossip")
 }
 
 // doCTell -- port of do_ctell() (clan tell).

@@ -866,31 +866,22 @@ func (w *World) executeMobCommand(mobVNum int, cmdStr string) {
 
 	switch cmd {
 	case "say":
-		w.mobSayTo(mob, args)
+		w.npcSay(mob, args)
 
 	case "emote":
-		// emote broadcasts to room: "<name> <message>"
-		msg := fmt.Sprintf("%s %s", mob.GetName(), args)
-		for _, p := range w.GetPlayersInRoom(mob.GetRoom()) {
-			p.SendMessage(msg)
-		}
+		w.npcEmote(mob, args)
 
 	case "gossip":
-		w.mobGossip(mob, args)
+		w.mobGenComm(mob, args, "gossip")
 
 	case "tell":
-		tellParts := strings.SplitN(args, " ", 2)
-		if len(tellParts) == 2 {
-			w.mobTellPlayer(mob, tellParts[0], tellParts[1])
-		} else {
-			slog.Debug("executeMobCommand: tell missing target or message", "args", args)
-		}
+		w.npcTell(mob, args)
 
 	case "shout":
-		w.mobShout(mob, args)
+		w.mobGenComm(mob, args, "shout")
 
 	case "auction":
-		w.mobAuction(mob, args)
+		w.mobGenComm(mob, args, "auction")
 
 	case "north", "east", "south", "west", "up", "down":
 		dirMap := map[string]int{"north": 0, "east": 1, "south": 2, "west": 3, "up": 4, "down": 5}

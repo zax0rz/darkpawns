@@ -302,18 +302,30 @@ func (w *World) DoReply(ch *Player, argument string) {
 	w.performTell(ch, target, argument)
 }
 
-func (w *World) performTell(ch, target *Player, message string) {
+// performTell is C's perform_tell (src/act.comm.c:873-895): the tell color
+// sandwich, the optional AFK notice, the speaker's own echo (TO_CHAR, so a
+// mobile's is dropped) and the recipient's reply target. The sender is an Actor
+// because hunt_victim's do_tell is issued by a mobile.
+func (w *World) performTell(ch Actor, target *Player, message string) {
 	message = deleteANSIControls(message)
-	w.channelAct("tell", false, ch, target, fmt.Sprintf("$n tells you, '%s'", message), ToVict|ToSleep)
+	// C sends CCRED(vict, C_NRM) before the line and CCNRM after
+	// (src/act.comm.c:875-879); the speaker's echo uses C_CMP (:887-891). Both
+	// gate on the recipient's own COLOR_LEV, which channelColorWrap models.
+	w.channelActWrapped("tell", false, ch, target, fmt.Sprintf("$n tells you, '%s'", message), ToVict|ToSleep,
+		channelColorWrap(colorNormal, ansiRed, false))
 	if target.GetAFK() {
 		Act(nil, false, ch, target, nil, nil, "$E is AFK right now, $E may not hear you.", "", ToChar|ToSleep)
 	}
-	if ch.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
-		communicationSend(ch, "Okay.")
+	if player, ok := ch.(*Player); ok && player.GetFlags()&(1<<uint(PrfNoRepeat)) != 0 {
+		communicationSend(player, "Okay.")
 	} else {
-		w.channelAct("tell", false, ch, target, fmt.Sprintf("You tell $N, '%s'", message), ToChar|ToSleep)
+		w.channelActWrapped("tell", false, ch, target, fmt.Sprintf("You tell $N, '%s'", message), ToChar|ToSleep,
+			channelColorWrap(colorComplete, ansiRed, false))
 	}
-	target.SetLastTeller(ch.Name)
+	// C stores GET_IDNUM(ch) (src/act.comm.c:894). The port keys reply on the
+	// name; a mobile's name resolves to no player, which is C's failed idnum
+	// lookup ("They are no longer playing.").
+	target.SetLastTeller(ch.GetName())
 }
 
 // DoSpecComm implements C do_spec_comm for room-local whisper and ask.
