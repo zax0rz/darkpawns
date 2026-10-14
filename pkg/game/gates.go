@@ -84,7 +84,8 @@ func (w *World) SpellGate(caster *Player) bool {
 				if caster.GetLevel() >= 30 {
 					timer++
 				}
-				redGate.SetTimer(timer)
+				// gate.c stores the moon_gate countdown in GET_OBJ_VAL(red_gate, 2).
+				redGate.SetValue(2, timer)
 				caster.SendMessage("The magick flows through you, then out into the world, changing it....\r\n")
 				w.SendToRoom(casterRoom, "A shimmering red portal fades into existence.\r\n")
 			}

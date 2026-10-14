@@ -68,8 +68,12 @@ type FieldObject struct {
 	WearOffMsg    string
 }
 
-// fieldObjs is the field objects list.
-var fieldObjs []FieldObject
+// fieldObjs is the field objects list from constants.c:1440-1448.
+var fieldObjs = []FieldObject{
+	{ObjVNum: 50, WornOffObjNum: 0, WearOffMsg: "In one last gout of flame, the wall of fire burns itself out."},
+	{ObjVNum: 51, WornOffObjNum: 20, WearOffMsg: "A wall of ice rapidly melts into a large puddle."},
+	{ObjVNum: 52, WornOffObjNum: 0, WearOffMsg: "A noxious cloud of poison gas is whisked away by a strong gust of wind."},
+}
 
 // Affect bit constants — from structs.h:321,335,341
 const (

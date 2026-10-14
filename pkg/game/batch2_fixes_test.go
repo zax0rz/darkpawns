@@ -1,7 +1,7 @@
 package game
 
 // Regression tests for Batch 2 small fixes (BRIEF-2026-07-11-batch2-small-fixes.md):
-//   - DP-1036: corpse/object decay deduped per room (not per mob)
+//   - DP-1036: corpse/object decay runs once in the global object pass
 //   - DP-1042: scavenger respects ITEM_WEAR_TAKE + cost floor + carry limits
 //
 // DP-1035 (tick speed / AI driver) and DP-1033 (backstab truncation + to-hit)
@@ -15,9 +15,8 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// DP-1036: Object/corpse decay must run once per room per tick, not once per
-// mob in the room. C iterates the global object_list once; without dedup a
-// room with N mobs would decay objects N× per tick.
+// DP-1036: Object/corpse decay follows one global C object_list pass after
+// point_update finishes its character work.
 // ---------------------------------------------------------------------------
 
 // newDecayTestWorld builds a minimal world with one room and spawns the given
@@ -63,11 +62,11 @@ func makeCorpseObject(timer int) *ObjectInstance {
 
 func TestDecayNotDoubledForMultipleMobs(t *testing.T) {
 	// Two mobs share a room with a corpse (timer=2). PointUpdate must decay the
-	// corpse exactly once → timer 1. Without the per-room dedup, each mob would
-	// trigger decayObjectsInRoom → timer 0 → corpse extracted (the bug).
+	// corpse exactly once → timer 1 after all mob memory draws.
 	w := newDecayTestWorld(t, 2)
 
 	corpse := makeCorpseObject(2)
+	w.registerExistingObject(corpse)
 	w.AddItemToRoom(corpse, 2001)
 
 	if got := corpse.GetTimer(); got != 2 {
@@ -77,7 +76,7 @@ func TestDecayNotDoubledForMultipleMobs(t *testing.T) {
 	w.PointUpdate()
 
 	if got := corpse.GetTimer(); got != 1 {
-		t.Errorf("corpse timer after one PointUpdate with 2 mobs = %d, want 1 (decay must be deduped per room, DP-1036)", got)
+		t.Errorf("corpse timer after one PointUpdate with 2 mobs = %d, want 1 from the single global pass", got)
 	}
 }
 
@@ -86,6 +85,7 @@ func TestDecaySingleMobStillWorks(t *testing.T) {
 	w := newDecayTestWorld(t, 1)
 
 	corpse := makeCorpseObject(1)
+	w.registerExistingObject(corpse)
 	w.AddItemToRoom(corpse, 2001)
 
 	w.PointUpdate()
