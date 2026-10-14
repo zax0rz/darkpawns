@@ -45,17 +45,12 @@ func chCanSee(ch *Player, target interface{}) bool {
 }
 
 func chCanSeeObj(ch *Player, obj *ObjectInstance) bool {
-	if obj == nil {
+	if ch == nil || obj == nil {
 		return false
 	}
-	if obj.HasExtraFlag(0, extraFlagInvisible) {
-		// ITEM_INVISIBLE - immortals can see invisible items
-		if ch.Level >= lvlImmort {
-			return true
-		}
-		return false
-	}
-	return chCanSee(ch, nil)
+	// C's CAN_SEE_OBJ grants no level-based bypass; visibility comes from
+	// DETECT_INVIS or PRF_HOLYLIGHT (src/utils.h:538-541).
+	return canSeeObject(ch, obj)
 }
 
 // ChCanSeeInDark is the exported dark-vision check (infravision/immortal).

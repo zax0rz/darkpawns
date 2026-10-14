@@ -5,6 +5,7 @@
 # AGGR24 player branches leave the observer alone. No exits make the pulse
 # deterministic; the probe then pumps the live heartbeat/mobile-activity path.
 # The stock attacker has AFF_DETECT_INVIS; clear that bit for this case.
+# Its mask changes from 132264 to 132256, clearing AFF_DETECT_INVIS (bit 3).
 # C path: src/mobact.c:324-336 -> src/utils.h:515-530; AFF bits: src/structs.h:310-321.
 
 [fixture]

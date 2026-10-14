@@ -138,8 +138,34 @@ func canSeeForPers(observer, subject Actor) bool {
 	return canSeeWithHide(observer, subject, false)
 }
 
+// canSeeCharacterInRoom mirrors C's CAN_SEE with the observer's room light
+// state. Unlike room-listing visibility, C's macro does not treat AFF_HIDE as
+// invisible (src/utils.h:515-530).
+func (w *World) canSeeCharacterInRoom(observer, subject Actor) bool {
+	if observer == subject {
+		return true
+	}
+	if !canSeeForPers(observer, subject) {
+		return false
+	}
+	if w == nil {
+		return true
+	}
+	obs, ok := observer.(visibilitySubject)
+	if !ok {
+		return true
+	}
+	if holy, ok := observer.(holyLightSubject); ok && holy.GetHolyLight() {
+		return true
+	}
+	return !w.IsRoomDark(observer.GetRoom()) || obs.IsAffected(affInfravision)
+}
+
 func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	if observer == nil || subject == nil {
+		return true
+	}
+	if observer == subject {
 		return true
 	}
 
@@ -155,7 +181,12 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 		return true
 	}
 
-	// Check PRF_HOLYLIGHT
+	// C compares GET_REAL_LEVEL(sub) with GET_INVIS_LEV(obj) first (src/utils.h:529-530).
+	if invis, ok := subject.(invisLevelSubject); ok && obsSub.GetLevel() < invis.GetInvisLevel() {
+		return false
+	}
+	// C's IMM_CAN_SEE is MORT_CAN_SEE || PRF_HOLYLIGHT. Level only gates the
+	// target's invis level above; it does not reveal AFF_INVISIBLE.
 	if hl, ok := obsSub.(holyLightSubject); ok && hl.GetHolyLight() {
 		return true
 	}
@@ -163,18 +194,6 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	// 1. Blindness check
 	if obsSub.IsAffected(affBlind) {
 		return false
-	}
-
-	// C's CAN_SEE compares the observer's real level with a wizinvis
-	// character's GET_INVIS_LEV before applying immortal visibility rules.
-	if invis, ok := subject.(invisLevelSubject); ok && obsSub.GetLevel() < invis.GetInvisLevel() {
-		return false
-	}
-
-	// IMMORT levels see ordinary hidden/invisible subjects after the explicit
-	// wizinvis threshold check above.
-	if obsSub.GetLevel() >= LVL_IMMORT {
-		return true
 	}
 
 	// 2. Invisibility check

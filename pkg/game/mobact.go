@@ -278,7 +278,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				continue
 			}
 			// C: !CAN_SEE(ch, vict)
-			if !canSee(ch, vict) {
+			if !w.canSeeCharacterInRoom(ch, vict) {
 				continue
 			}
 			// C: PRF_NOHASSLE
@@ -350,7 +350,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				if !hates {
 					continue
 				}
-				if !canSee(ch, vict) {
+				if !w.canSeeCharacterInRoom(ch, vict) {
 					continue
 				}
 				if vict.GetFlags()&(1<<PrfNohassle) != 0 {
@@ -388,7 +388,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				continue
 			}
 			// C: !CAN_SEE(ch, vict)
-			if !canSee(ch, vict) {
+			if !w.canSeeCharacterInRoom(ch, vict) {
 				continue
 			}
 			// C: PRF_NOHASSLE
@@ -447,7 +447,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	if hasMobFlag(ch, "aggr24") {
 		for _, p := range w.GetPlayersInRoom(ch.RoomVNum) {
 			// C: !IS_NPC(tmp_ch) && CAN_SEE(ch, tmp_ch) && !PRF_NOHASSLE && !ROOM_PEACEFUL
-			if !canSee(ch, p) {
+			if !w.canSeeCharacterInRoom(ch, p) {
 				continue
 			}
 			if p.GetFlags()&(1<<PrfNohassle) != 0 {
@@ -476,7 +476,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if vict == ch {
 				continue
 			}
-			if !canSee(ch, vict) {
+			if !w.canSeeCharacterInRoom(ch, vict) {
 				continue
 			}
 			if vict.GetLevel()+3 < ch.GetLevel() {

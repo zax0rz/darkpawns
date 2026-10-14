@@ -666,20 +666,7 @@ func conSellerCanSee(w *World, observer, subject Actor) bool {
 	if observer == nil || subject == nil {
 		return false
 	}
-	if !canSeeForPers(observer, subject) {
-		return false
-	}
-	if w == nil || !w.IsRoomDark(observer.GetRoom()) {
-		return true
-	}
-	switch observer := observer.(type) {
-	case *Player:
-		return chCanSeeInDark(observer)
-	case *MobInstance:
-		return observer.IsAffected(affInfravision)
-	default:
-		return false
-	}
+	return w.canSeeCharacterInRoom(observer, subject)
 }
 
 // conSellerPersName is PERS with the seller's room-aware LIGHT_OK gate.

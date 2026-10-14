@@ -787,7 +787,7 @@ func TestAggr24MobileTargetVisibilityGateUsesGlobalPulse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			w, ce := newMobactTestWorld(t)
 			attacker := newMobactTestMob(w, 9310, 1, 0, "aggr24", "aggressive")
-			attacker.SetLevel(30)
+			attacker.SetLevel(33)
 			target := newMobactTestMob(w, 9311, 1, 0)
 			target.SetLevel(10)
 			if tt.targetAffects != 0 {
