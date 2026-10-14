@@ -1087,7 +1087,6 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 		return
 	}
 	_ = level
-	_ = world
 
 	// Object interfaces for flag manipulation
 	// The object's own extra flags, word 0 (GET_OBJ_EXTRA): the base the
@@ -1111,52 +1110,38 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 		}
 	}
 
+	var effect string
 	switch spellNum {
 	case SpellBless:
 		flags := getExtraFlags(obj)
-		// ITEM_BLESS = 1<<0, ITEM_MAGIC = 1<<4
-		if flags&(1<<0) != 0 || flags&(1<<4) != 0 {
-			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
-			return
+		// src/structs.h: ITEM_MAGIC=6 and ITEM_BLESS=8.
+		cl := getLevel(ch)
+		if wg, ok := obj.(objWeightGetter); ok && flags&(1<<8) == 0 && flags&(1<<6) == 0 && wg.GetWeight() <= 5*cl {
+			setExtraFlags(obj, flags|(1<<8)) // ITEM_BLESS
+			effect = "$p glows briefly with a ethereal light."
 		}
-		if wg, ok := obj.(objWeightGetter); ok {
-			cl := 0
-			if clGetter, ok := ch.(interface{ GetLevel() int }); ok {
-				cl = clGetter.GetLevel()
-			}
-			if wg.GetWeight() > 5*cl {
-				sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
-				return
-			}
-		}
-		setExtraFlags(obj, flags|(1<<0)) // ITEM_BLESS
-		sendToCaster(ch, "$p glows briefly with an ethereal light.\r\n")
 
 	case SpellCurse:
 		flags := getExtraFlags(obj)
-		if flags&(1<<1) != 0 { // ITEM_NODROP
-			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
-			return
-		}
-		setExtraFlags(obj, flags|(1<<1))                               // ITEM_NODROP
-		if ot, ok := obj.(objTypeGetter); ok && ot.GetObjType() == 3 { // ITEM_WEAPON
-			if vs, ok := obj.(objValSetter); ok {
-				if vg, ok := obj.(objValGetter); ok {
-					vs.SetObjVal(2, vg.GetObjVal(2)-1)
+		if flags&(1<<7) == 0 { // ITEM_NODROP
+			setExtraFlags(obj, flags|(1<<7))
+			if ot, ok := obj.(objTypeGetter); ok && ot.GetObjType() == 3 { // ITEM_WEAPON
+				if vs, ok := obj.(objValSetter); ok {
+					if vg, ok := obj.(objValGetter); ok {
+						vs.SetObjVal(2, vg.GetObjVal(2)-1)
+					}
 				}
 			}
+			effect = "$p briefly glows red."
 		}
-		sendToCaster(ch, "$p briefly glows red.\r\n")
 
 	case SpellInvisible:
 		flags := getExtraFlags(obj)
-		// ITEM_NOINVIS = 1<<5 — don't make noinvis items invisible
-		if flags&(1<<5) != 0 {
-			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
-			return
+		// src/structs.h: ITEM_NOINVIS=4 and ITEM_INVISIBLE=5.
+		if flags&(1<<4) == 0 {
+			setExtraFlags(obj, flags|(1<<5)) // ITEM_INVISIBLE
+			effect = "$p vanishes."
 		}
-		setExtraFlags(obj, flags|(1<<2)) // ITEM_INVISIBLE
-		sendToCaster(ch, "$p vanishes.\r\n")
 
 	case SpellPoison:
 		if ot, ok := obj.(objTypeGetter); ok {
@@ -1167,8 +1152,21 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 					if vg, ok := obj.(objValGetter); ok {
 						if vg.GetObjVal(3) == 0 {
 							vs.SetObjVal(3, 1) // poison val
-							sendToCaster(ch, "$p steams briefly.\r\n")
+							effect = "$p steams briefly."
 						}
+					}
+				}
+			}
+		}
+
+	case SpellRemovePoison:
+		if ot, ok := obj.(objTypeGetter); ok {
+			objType := ot.GetObjType()
+			if objType == 17 || objType == 18 || objType == 19 { // ITEM_DRINKCON, ITEM_FOUNTAIN, ITEM_FOOD
+				if vs, ok := obj.(objValSetter); ok {
+					if vg, ok := obj.(objValGetter); ok && vg.GetObjVal(3) != 0 {
+						vs.SetObjVal(3, 0)
+						effect = "$p steams briefly."
 					}
 				}
 			}
@@ -1176,11 +1174,10 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 
 	case SpellRemoveCurse:
 		flags := getExtraFlags(obj)
-		if flags&(1<<1) == 0 { // not NODROP
-			sendToCaster(ch, "It doesn't seem to have any effect.\r\n")
-			return
+		if flags&(1<<7) == 0 { // not NODROP
+			break
 		}
-		setExtraFlags(obj, flags&^(1<<1))                              // remove NODROP
+		setExtraFlags(obj, flags&^(1<<7))                              // remove NODROP
 		if ot, ok := obj.(objTypeGetter); ok && ot.GetObjType() == 3 { // ITEM_WEAPON
 			if vs, ok := obj.(objValSetter); ok {
 				if vg, ok := obj.(objValGetter); ok {
@@ -1188,11 +1185,25 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 				}
 			}
 		}
-		sendToCaster(ch, "$p briefly glows blue.\r\n")
-
-	default:
-		sendToCaster(ch, " spell not yet implemented.\r\n")
+		effect = "$p briefly glows blue."
 	}
+
+	if effect == "" {
+		sendToCaster(ch, "Nothing seems to happen.\r\n")
+		return
+	}
+	if acter, ok := world.(interface {
+		SpellObjectAct(caster, target interface{}, message string, toRoom bool)
+	}); ok {
+		acter.SpellObjectAct(ch, obj, effect, false)
+		acter.SpellObjectAct(ch, obj, effect, true)
+		return
+	}
+	name := "something"
+	if named, ok := obj.(interface{ GetShortDesc() string }); ok {
+		name = named.GetShortDesc()
+	}
+	sendToCaster(ch, strings.ReplaceAll(effect, "$p", name)+"\r\n")
 }
 
 // ExecuteManualSpell dispatches manual (ASPELL) spell implementations.

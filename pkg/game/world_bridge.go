@@ -1105,9 +1105,9 @@ func (a *WorldScriptableAdapter) Spell(me scripting.CharRef, vict *scripting.Cha
 	if m == nil {
 		return
 	}
+	var targetObj *ObjectInstance
 	if obj != nil {
-		slog.Warn("lua spell on an object is not ported; ignored", "mob_vnum", m.GetVNum(), "spell", spellNum)
-		return
+		targetObj = a.resolveObj(*obj)
 	}
 	var target combat.Combatant
 	if vict != nil {
@@ -1116,16 +1116,30 @@ func (a *WorldScriptableAdapter) Spell(me scripting.CharRef, vict *scripting.Cha
 		}
 	}
 	if vocal {
-		castSpellC(a.world, m, target, spellNum)
+		castSpellC(a.world, m, target, targetObj, spellNum)
 		return
 	}
-	spells.CastFromSpecial(m, target, spellNum, m.GetLevel(), a.world)
+	spells.CastFromSpecialTarget(m, target, targetObj, spellNum, m.GetLevel(), a.world)
+}
+
+// SpellObjectAct dispatches mag_alter_objs' act() output to the caster or room.
+func (w *World) SpellObjectAct(caster, target interface{}, message string, toRoom bool) {
+	ch, chOK := caster.(Actor)
+	obj, objOK := target.(*ObjectInstance)
+	if !chOK || !objOK {
+		return
+	}
+	where := ToChar
+	if toRoom {
+		where = ToRoom
+	}
+	Act(w, true, ch, nil, obj, nil, message, "", where)
 }
 
 // castSpellC is cast_spell (spell_parser.c) for a mobile caster: its gates
 // answer only the mobile, so a refusal shows nothing; otherwise the verbal
 // component and call_magic.
-func castSpellC(w *World, me *MobInstance, tch combat.Combatant, spellNum int) bool {
+func castSpellC(w *World, me *MobInstance, tch combat.Combatant, tobj *ObjectInstance, spellNum int) bool {
 	if spellNum < 0 || spellNum > 299 { // TOP_SPELL_DEFINE (spells.h:260)
 		return false
 	}
@@ -1146,8 +1160,8 @@ func castSpellC(w *World, me *MobInstance, tch combat.Combatant, spellNum int) b
 	if info.HasRoutine(spells.RoutineGroups) && !me.IsAffected(affGroup) {
 		return false
 	}
-	spells.SaySpell(me, spellNum, tch, nil, w)
-	return spells.Cast(me, tch, spellNum, me.GetLevel(), w)
+	spells.SaySpell(me, spellNum, tch, tobj, w)
+	return spells.CastFromSpecialTarget(me, tch, tobj, spellNum, me.GetLevel(), w)
 }
 
 // Unaffect is lua_unaffect: affect_remove for every affect on vict.
