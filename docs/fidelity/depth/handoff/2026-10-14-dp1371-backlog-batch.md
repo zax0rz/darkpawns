@@ -384,10 +384,10 @@ verbatim.
 
 | Train | Run | Report line |
 |---|---|---|
-| DP-1435 | `dp-1371-dp-1435-final-combined` | *pending* |
-| DP-1433 | `dp-1371-dp-1433-final-combined` | *pending* |
-| DP-1429 | `dp-1371-dp-1429-final-combined` | *pending* |
-| DP-1430 | `dp-1371-dp-1430-final-combined` | *pending* |
+| DP-1435 | `dp-1371-dp-1435-final-combined` | `oracle-combined: pairs=3412 deduplicated=1028 full=CLEAN claims=CLEAN elapsed=1960.081s verdict=CLEAN` |
+| DP-1433 | `dp-1371-dp-1433-final-combined` | `oracle-combined: pairs=3412 deduplicated=1028 full=CLEAN_AFTER_RECHECK claims=CLEAN_AFTER_RECHECK elapsed=2023.178s verdict=CLEAN_AFTER_RECHECK rechecked=shishkabob-depth` |
+| DP-1429 | `dp-1371-dp-1429-final-combined` | `oracle-combined: pairs=3412 deduplicated=1028 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=2036.963s verdict=CLEAN_AFTER_RECHECK` |
+| DP-1430 | `dp-1371-dp-1430-final-combined` | `oracle-combined: pairs=3417 deduplicated=1029 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=2030.632s verdict=CLEAN_AFTER_RECHECK` |
 
 Gates, per branch, each run separately with its exit status checked:
 `make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`,
