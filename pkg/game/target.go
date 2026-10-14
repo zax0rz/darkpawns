@@ -74,7 +74,7 @@ func (w *World) ResolveCharInRoom(ch *Player, name string) (CharTarget, bool) {
 	return w.resolveCharInRoomAt(ch, ch.GetRoom(), name)
 }
 
-func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (CharTarget, bool) {
+func (w *World) resolveCharInRoomAt(ch combat.Combatant, roomVNum int, name string) (CharTarget, bool) {
 	original := name
 	n := GetNumber(&name)                           // strips "N." prefix; returns 1 if none, 0 if non-numeric
 	playerOnly := strings.HasPrefix(original, "0.") // C: 0.<name> → get_player_vis
@@ -86,7 +86,7 @@ func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (Char
 
 	// "self" / "me" → ch (C: handler.c:1284-1285).
 	if lc := strings.ToLower(name); !playerOnly && (lc == "self" || lc == "me") {
-		return CharTarget{Combatant: ch, Player: ch}, true
+		return newCharTarget(ch), true
 	}
 
 	// Construct a deterministic fallback for old fixtures with no arrival
@@ -120,7 +120,7 @@ func (w *World) resolveCharInRoomAt(ch *Player, roomVNum int, name string) (Char
 	// visible match wins. We replicate that over our ordered candidate list.
 	matched := 0
 	for _, c := range candidates {
-		if !canSee(ch, asActor(c)) {
+		if !canSee(asActor(ch), asActor(c)) {
 			continue
 		}
 		if playerOnly && !strings.EqualFold(name, c.GetName()) {

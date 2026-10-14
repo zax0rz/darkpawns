@@ -77,6 +77,64 @@ func AddFollowerMob(w *World, mob *MobInstance, leader *Player) {
 	Act(w, true, mob, leader, nil, nil, "$n starts to follow $N.", "", ToNotVict)
 }
 
+// addFollowerMobToBody ports the visible effects of add_follower for a mobile
+// follower and any selected character body. C: src/utils.c:480-498.
+func addFollowerMobToBody(w *World, mob *MobInstance, leader combat.Combatant) {
+	leaderActor := asActor(leader)
+	mob.SetFollowingBody(leader)
+	Act(w, false, mob, leaderActor, nil, nil, "You now follow $N.", "", ToChar)
+	if canSee(leaderActor, mob) && leaderActor.GetPosition() > combat.PosSleeping {
+		Act(w, true, mob, leaderActor, nil, nil, "$n starts following you.", "", ToVict)
+	}
+	Act(w, true, mob, leaderActor, nil, nil, "$n starts to follow $N.", "", ToNotVict)
+}
+
+// followMobBody ports do_follow's state transitions for an NPC actor. Messages
+// addressed to the mobile itself are retained through Act's normal no-op
+// writer, while room and leader notices remain player-visible.
+func followMobBody(w *World, mob *MobInstance, leader combat.Combatant) {
+	if w == nil || mob == nil || leader == nil {
+		return
+	}
+	master := w.combatFollowingBody(mob)
+	if master == leader {
+		return
+	}
+	if mob.IsAffected(affCharm) && master != nil {
+		return
+	}
+	if leader == mob {
+		if master != nil {
+			StopFollowerMob(w, mob)
+		}
+		return
+	}
+
+	seen := make([]combat.Combatant, 0, 4)
+	for current := leader; current != nil; current = w.combatFollowingBody(current) {
+		if current == mob {
+			return
+		}
+		cycle := false
+		for _, prior := range seen {
+			if prior == current {
+				cycle = true
+				break
+			}
+		}
+		if cycle {
+			return
+		}
+		seen = append(seen, current)
+	}
+
+	if master != nil {
+		StopFollowerMob(w, mob)
+	}
+	mob.RemoveAffected(affGroup)
+	addFollowerMobToBody(w, mob, leader)
+}
+
 // AddFollower adds ch as a follower of leader with notifications.
 // Caller must verify no follow loop exists first (use CircleFollow).
 // C: src/utils.c:480-498
