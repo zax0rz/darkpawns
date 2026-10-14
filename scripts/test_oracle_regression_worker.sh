@@ -115,7 +115,7 @@ run_aggregate_case() {
 			FAKE_HARNESS_SOURCE="$harness" \
 			FAKE_SEQUENCE="$sequence" \
 			FAKE_STATE_DIR="$test_root/aggregate-$name/state" \
-			"$repo_root/scripts/oracle_regression.sh" 2>&1
+			"$aggregate_root/scripts/oracle_regression.sh" 2>&1
 	)
 	status=$?
 	set -e
@@ -191,9 +191,41 @@ run_case multiblock-missing "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:
 run_case multiblock-extra "I|D:cast:$two_a|D:cast:$two_a" yes "$(pin_two "$two_a" multiblock-extra "$two_b")" $'FAIL\tfake\t3' 3 3
 run_case multiblock-changed "I|D:cast:$two_a,damage:$two_c|D:cast:$two_a,damage:$two_c" yes "$(pin_two "$two_a" multiblock-changed "$two_b")" $'FAIL\tfake\t3' 3 3
 
+# The aggregate cases must not lean on the repository's live ledger: it
+# legitimately empties as divergences are reconciled (6ff200c79 dropped the
+# medit rows in September 2026, and the ledger is now fully empty), and a case
+# keyed to that mutable file silently flips its verdict — aggregate-stale
+# reported PASS with exit 0 once the medit row was gone, hiding the very STALE
+# aggregation it exists to prove. The fixture below is a fresh copy of the
+# real scripts plus a frozen ledger, so the aggregate exit logic is what the
+# cases test, on any checkout.
+aggregate_root=$test_root/aggregate-repo
+mkdir -p "$aggregate_root/scripts" "$aggregate_root/cmd/dp-oracle-diff/scenarios"
+cp "$repo_root/scripts/oracle_regression.sh" "$repo_root/scripts/oracle_regression_worker.sh" \
+	"$aggregate_root/scripts/"
+cp "$repo_root/cmd/dp-oracle-diff/scenarios/yuball-depth.txt" \
+	"$repo_root/cmd/dp-oracle-diff/scenarios/medit-entry-depth.txt" \
+	"$repo_root/cmd/dp-oracle-diff/scenarios/force-mob.txt" \
+	"$repo_root/cmd/dp-oracle-diff/scenarios/accuse-noarg-depth.txt" \
+	"$aggregate_root/cmd/dp-oracle-diff/scenarios/"
+{
+	printf 'scenario\tmanifest\tcase_id\tstatus\tstability\n'
+	printf 'medit-entry-depth\tmedit.tsv\tmedit.no-argument\tblocked\t\n'
+	printf 'force-mob\tforce.tsv\tforce.npc-command-interpreter\tblocked\t\n'
+	printf 'accuse-noarg-depth\taccuse.tsv\taccuse.no-argument\tblocked\trun-varying\n'
+} >"$aggregate_root/cmd/dp-oracle-diff/expected_divergences.tsv"
+{
+	printf 'scenario\tlabel\tsha256\tcitations\n'
+	printf 'medit-entry-depth\tmedit\t%s\tmedit.tsv:medit.frozen:blocked\n' "$medit_a"
+	printf 'medit-entry-depth\tmedit abc\t%s\tmedit.tsv:medit.frozen:blocked\n' "$medit_b"
+	printf 'medit-entry-depth\tmedit 999999\t%s\tmedit.tsv:medit.frozen:blocked\n' "$medit_c"
+} >"$aggregate_root/cmd/dp-oracle-diff/expected_divergence_pins.tsv"
+
 run_aggregate_case aggregate-pass yuball-depth P 0 'scenarios=1 passed=1 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0'
 run_aggregate_case aggregate-stale medit-entry-depth P 2 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=1 failed=0 infra=0 timed_out=0 unstable=0'
 run_aggregate_case aggregate-expected medit-entry-depth "$medit_set|$medit_set" 0 'scenarios=1 passed=0 expected=1 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0'
+# Ledger row present but the diverging shape ($one_a) differs from the frozen
+# pin ($medit_a): FAIL through the aggregate, not STALE or EXPECTED.
 run_aggregate_case aggregate-fail medit-entry-depth "D:medit:$one_a|D:medit:$one_a" 1 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=1 infra=0 timed_out=0 unstable=0'
 run_aggregate_case aggregate-unpinnable force-mob "D:force:$one_a|D:force:$one_b" 2 'scenarios=1 passed=0 expected=0 unpinnable=1 stale=0 failed=0 infra=0 timed_out=0 unstable=0'
 run_aggregate_case aggregate-unstable accuse-noarg-depth "D:accuse:$one_a|D:accuse:$one_b" 0 'scenarios=1 passed=0 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=1'
