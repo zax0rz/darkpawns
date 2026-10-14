@@ -49,7 +49,12 @@ added; the `visible` branch remains draw-free, and the live vehicle's prior
   pre-fix control failed as recorded above.
 - Scenario parser test: PASS.
 
-The `visible-zai-depth` oracle case remains `blocked` in the manifest until the
+The seed-1 `--show-oracle` run at `6fe56c822b747e86af965ac3d72e5c8cdcb78b18`
+had no normalized divergence. Its C blocks show the `zai` cast and the
+`visible` refusal while the affect is active; the output and run manifest are
+retained under
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train3-show-oracle/`.
+The `visible-zai-depth` case remains `blocked` in the manifest until its
 targeted census is clean. The shared census slot is occupied at this handoff
 update; no second census was started. Start the targeted census after the
 current run completes, change the manifest row to `oracle-green` only after a
@@ -61,9 +66,9 @@ Train 1 contains the complete inventory A/B, candidate disposition table, and
 the exact deferred implementation issue texts in
 `docs/fidelity/depth/handoff/2026-10-13-acknowledged-gap-sweep.md` on PR #1943.
 Train 2's Lua object-target work is recorded in
-`2026-10-13-acknowledged-gap-sweep-train-2.md`. The remaining actionable
-`e` candidates from the train 1 inventory are Lua mobile following, Lua
+`2026-10-13-acknowledged-gap-sweep-train-2.md`. Train 4 fixed the Lua
 player-target `set_hunt`, the extra wounded/charmed mobact return, and the
-scavenger `CAN_SEE_OBJ` gate. Jail-guard visibility remains assigned to the
-combat transcript owner per train 1 triage; the blocked and out-of-scope rows
-remain unchanged.
+scavenger `CAN_GET_OBJ` gate. Lua mobile following is the remaining actionable
+`e` candidate from the train 1 inventory. Jail-guard visibility remains
+assigned to the combat transcript owner per train 1 triage; the blocked and
+out-of-scope rows remain unchanged.
