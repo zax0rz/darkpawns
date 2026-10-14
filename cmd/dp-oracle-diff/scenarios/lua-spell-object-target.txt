@@ -7,7 +7,6 @@
 empty-players
 quiet-mobs
 spawn-mob 12220 999 12296 122
-give-object 12220 8010 1 80
 mob-script 12220 oracle/probe.lua 512
 
 [lua-script mob/oracle/probe.lua]
@@ -17,7 +16,9 @@ if (cmd ~= "say") then
 return FALSE
 end
 if (what == "object") then
-local o = me.objs[1]
+action(me, "stand")
+local o = oload(me, 8010, "char")
+say("object target=" .. o.name)
 spell(nil, o, 29, 1)
 say("object invisible=" .. tostring(obj_flagged(o, 5)))
 spell(nil, o, 3, 0)

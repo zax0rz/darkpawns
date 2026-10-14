@@ -75,10 +75,14 @@ All commands were run separately on the final behavior code tip; all passed:
 
 ## Oracle evidence
 
-The stock-data scenario is `lua-spell-object-target`; it gives the mobile
-healer bread object 8010 (unblessed and nonmagical), then checks the vocal and
-silent object spell effects through the player's transcript. A targeted census
-and the train's final combined census remain pending. The shared census slot is
-occupied at this handoff update; do not start a competing census. Fill in both
-census result lines here and mark `lua.bind-spell-object-target` oracle-green
-only after the targeted case is clean.
+The stock-data scenario is `lua-spell-object-target`; it stands the healer with
+the real Lua `action` binding, loads bread object 8010 into its inventory with
+`oload`, then checks the vocal and silent object spell effects through the
+player's transcript. The seed-1 `--show-oracle` run had no normalized
+divergence. Its retained C block shows the carried bread, `object invisible=1`,
+and `object blessed=1`, confirming both C object-alteration arms executed. A
+targeted census and the train's final combined census remain pending. The
+shared census slot is occupied at this handoff update; do not start a
+competing census. Fill in both census result lines here and mark
+`lua.bind-spell-object-target` oracle-green only after the targeted case is
+clean.
