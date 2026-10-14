@@ -4,9 +4,9 @@
 
 This train starts from freshly fetched `origin/main` at
 `9b3ecaae3d02cb1f2b066e9dd27c81bb5ec350fc`, on
-`codex/luna-acknowledged-gap-sweep-4`. The pre-fix inventory is the committed
-`2026-10-13-acknowledged-gap-sweep.md` plus its comments and assigned-special
-crosswalk in Train 1.
+`codex/luna-acknowledged-gap-sweep-4`. The pre-fix inventory is committed in
+Train 1 and PR #1943: `2026-10-13-acknowledged-gap-sweep.md`, its comments TSV,
+and its assigned-special crosswalk.
 
 The C call paths were checked directly in `src/` for this train:
 
@@ -21,6 +21,68 @@ The `CAN_GET_OBJ` class audit covered all three macro call sites above. The
 butler's `get_obj_in_list_vis` preselection and `CAN_GET_OBJ` carry gate are
 both world-aware after this change. No other caller was found by that source
 search.
+
+## Remaining triage and copy-ready issue text
+
+The mobile-leader `lua_follow` candidate remains for the next Lua action train;
+`lua.bind-follow-mobile-leader` is now a blocked row. The object-timer and
+AGGR24 mobile-selection gaps also have blocked rows before any future fix.
+The combat memory/helper branches remain owned by the shared combat transcript
+work, as recorded in the baseline comments TSV. Existing copy-ready issues for
+`DoTurn`, `show shops`, the Lua character/mobile table, water capability, and
+jail-guard visibility remain in the Train 1 handoff.
+
+### Complete point-update timers across the global object list
+
+Go's `decayObjectsInRoom` only traverses room-floor objects
+(`pkg/game/limits_condition.go:327-363`), while C `point_update` walks
+`object_list` (`src/limits.c:529-684`) and also handles worn/carried objects in
+`src/handler.c:1046-1082`. Please add live object-location coverage for moon
+gates, puddles/puke, dust, circles, corpses and field objects. Preserve global
+list order, timer semantics, corpse-content spill destinations, the carried
+corpse message, room audiences, and the corpse decay draw. The blocked
+`point-update.global-object-list-timers` row names the required proof. Cite
+R1/R3/R5e.
+
+### Apply visibility before the AGGR24 mobile target is selected
+
+C's AGGR24+AGGRESSIVE full-health branch skips a mobile that fails
+`CAN_SEE(ch, vict)` before choosing the first weaker target
+(`src/mobact.c:324-336`; visibility predicates at `src/utils.h:515-530`). Go's
+`pkg/game/mobact.go:471-485` selects the first lower-level mobile without that
+gate. Please add a fail-capable pulse proof with an invisible first candidate
+and visible later candidate. Preserve C room order and coordinate with DP-1364
+and the `mob.teleport-victim-combat-transcript` owner before changing combat
+entry or transcript behavior. Cite R1/R3/R5e.
+
+### Restore the missing memory and helper mobile pulse arms
+
+C `mobile_activity` checks memory targets by player ID, rejects invisible and
+`PRF_NOHASSLE` targets, then emits the speech/growl room act before `hit`
+(`src/mobact.c:261-282`). Its helper branch first assists a fighting charmed
+master, then scans room order and requires a visible player target before its
+room act and `hit` (`src/mobact.c:284-302`). Go's corresponding branches at
+`pkg/game/mobact.go:382-439` start combat without those C pre-hit acts and use
+different helper gates. Please handle these branches with the shared combat
+transcript owner, preserve C's scan order and draw timing, and add pulse proofs
+for each audience and refusal gate. Cite R1/R3/R5e.
+
+### Identify's object affect bitvector is zero for ordinary stock objects
+
+C `spell_identify` prints `obj->obj_flags.bitvector` through `affected_bits`
+(`src/spells.c:476-510`). `src/db.c:1372,1399-1457` clears each object
+prototype and parses type/extra/wear flags, values, and `A` affect records;
+there is no object affect-bitvector field in that format. `read_object`
+clears then copies the prototype (`src/db.c:1947-1951`), so ordinary spawned
+stock objects print NOBITS in C. A source-wide `rg -n 'obj_flags\.bitvector'
+src` found no gameplay setter: the only writes are loading and saving the word
+in player object records (`src/objsave.c:60-88,102-120`); other hits read it.
+Go's parser likewise has no object bitvector field, and its `AffectFlags`
+runtime slot has no production writer; `SaveItemData` does not serialize it.
+Therefore keep the current NOBITS result for ordinary stock objects. Any
+nonzero legacy rent-record value is a persistence/save-format question, which
+this sweep must not change. Disposition: evidence-based exclusion for ordinary
+world instances (R1/R4).
 
 ## Fixes and proofs
 
@@ -65,7 +127,7 @@ ok github.com/zax0rz/darkpawns/internal/oraclediff 0.003s
 
 The target oracle cases are `lua-bind-actions` and `lua-bind-queries`; both
 contain the new depth probes. Both were run with `--show-oracle` at seed 1 and
-reported no normalized divergence. The retained normalized outputs are under
+reported no normalized divergence. The retained relevant normalized blocks are under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-13/dp-1371-train4-show-oracle/`;
 the `lua.bind-canget-world-actor` probe reports `canget invisible=nil` after
 the live mobile's detect-invisible effect is removed. Their targeted census
@@ -83,7 +145,7 @@ Required gates, all run independently after `make fmt`:
 | `go test ./...`; `go test ./pkg/game/...`; `go test -race ./pkg/game/...` | PASS separately |
 | `golangci-lint run ./...` | PASS: 0 issues |
 | `make deadcode-ratchet` | PASS: 52 baselined, 0 new |
-| `make fidelity-depth` | PASS: 5,518 cases; 5,426 proven/delegated; 12 blocked; 68 excluded; 12 divergent-approved |
+| `make fidelity-depth` | PASS: 5,521 cases; 5,426 proven/delegated; 15 blocked; 68 excluded; 12 divergent-approved |
 | `make fidelity-units` | PASS: 1,423 rows, 1,309 symbols, 1,604 claims |
 | `make string-census` | PASS: 94 Go-only, ratchet 98 known segments / 0 unreviewed; generated reports were stale, and were not updated |
 | `gosec -severity=high -quiet ./...` | PASS |
