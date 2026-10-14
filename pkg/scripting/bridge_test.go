@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	lua "github.com/yuin/gopher-lua"
 )
 
 // fakeBridge is a Bridge over a handful of characters, objects and rooms,
@@ -492,5 +494,37 @@ end
 		if item.msg != want[i] || item.typ != 1 || item.level != 31 || !item.toFile {
 			t.Fatalf("producer[%d]=%+v, want %q at BRF/LVL_IMMORT/file TRUE", i, item, want[i])
 		}
+	}
+}
+
+// TestCharToTableLeaderCycleIsBounded proves the leader recursion survives a
+// follower cycle. C's char_to_table has no bound and relies on circle_follow
+// keeping the graph acyclic; the port bounds the depth (far above any real
+// chain, which TestBridgePreservesLeaderChainsBeyondFormerLimit exercises) so a cycle
+// cannot overflow the Go stack and take the server down.
+func TestCharToTableLeaderCycleIsBounded(t *testing.T) {
+	b := newFakeBridge()
+	a := CharRef{NPC: true, ID: 9001}
+	c := CharRef{NPC: true, ID: 9002}
+	b.chars[a] = CharFields{Name: "cycle a", NPC: true, Master: &c}
+	b.chars[c] = CharFields{Name: "cycle c", NPC: true, Master: &a}
+
+	e := NewEngine(t.TempDir(), nil)
+	defer e.Close()
+	tbl, ok := e.charToTable(b, a).(*lua.LTable)
+	if !ok {
+		t.Fatal("charToTable did not return a table")
+	}
+	depth := 0
+	for {
+		next, ok := tbl.RawGetString("leader").(*lua.LTable)
+		if !ok {
+			break
+		}
+		tbl = next
+		depth++
+	}
+	if depth != maxLeaderDepth {
+		t.Fatalf("leader depth = %d, want the bound %d", depth, maxLeaderDepth)
 	}
 }
