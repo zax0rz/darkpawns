@@ -1,0 +1,102 @@
+# Populated-world soak at the Grey Keep's First Dungeon entrance. No
+# quiet-mobs fixture: stock zone resets and dungeon mobiles stay active while
+# three players watch the entrance.
+# Zone 144 has a 60-update lifetime; 6,100 pulses cross its reset and 152
+# mobile pulses (PULSE_ZONE=100, PULSE_MOBILE=40).
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Lunawatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lunawatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:keeppeer1]
+Keeppeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:keeppeer1]
+Keeppeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:keeppeer2]
+Keeplook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:keeppeer2]
+Keeplook
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 14461
+teleport Keeppeer 14461
+teleport Keeplook 14461
+
+[probe]
+look
+~dpclock pulse 6100
+look

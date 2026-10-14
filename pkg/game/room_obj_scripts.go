@@ -243,10 +243,10 @@ func (w *World) RunObjPulseScript(obj *ObjectInstance) {
 // Drink containers, fountains and corpses are skipped before the script
 // check exactly as in C. C's weight-mismatch SYSERR arm before the script is
 // a defensive invariant that only fires on corrupt object weight and is not
-// ported. C walks the object_list prepend order; the port iterates live
-// instances by ascending ID for determinism (no live object uses OS_ONPULSE).
+// ported. C walks the object_list prepend order; higher instance IDs are
+// newer and therefore run first, matching create_obj/read_object insertion.
 func (w *World) ObjectActivity() {
-	objs := w.liveObjectsByID()
+	objs := w.liveObjectsInCOrder()
 	for _, obj := range objs {
 		if obj == nil || obj.Prototype == nil { // GET_OBJ_RNUM(obj) != NOTHING
 			continue
@@ -283,9 +283,9 @@ func (w *World) ObjectActivity() {
 //     0, the first room loaded ("The Void", lib/world/wld/0.wld).
 //   - a shop's stock is in the keeper's inventory in C, so it prints "carried".
 //
-// Held locks: none. liveObjectsByID snapshots under World.mu and releases it
-// before the loop, and each field read is the same lock-free instance access
-// the surrounding activity loop already makes.
+// Held locks: none. liveObjectsInCOrder snapshots under World.mu and releases
+// it before the loop, and each field read is the same lock-free instance
+// access the surrounding activity loop already makes.
 func (w *World) repairObjectWeight(obj *ObjectInstance) {
 	if obj == nil || obj.Prototype == nil {
 		return
@@ -310,16 +310,16 @@ func (w *World) repairObjectWeight(obj *ObjectInstance) {
 	obj.SetWeight(obj.Prototype.Weight)
 }
 
-// liveObjectsByID snapshots every live object instance in ascending instance
-// ID order.
-func (w *World) liveObjectsByID() []*ObjectInstance {
+// liveObjectsInCOrder snapshots every live object instance in C's newest-first
+// object_list order (src/db.c:1892-1893,1950-1951).
+func (w *World) liveObjectsInCOrder() []*ObjectInstance {
 	w.mu.RLock()
 	objs := make([]*ObjectInstance, 0, len(w.objectInstances))
 	for _, obj := range w.objectInstances {
 		objs = append(objs, obj)
 	}
 	w.mu.RUnlock()
-	sort.Slice(objs, func(i, j int) bool { return objs[i].ID < objs[j].ID })
+	sort.Slice(objs, func(i, j int) bool { return objs[i].ID > objs[j].ID })
 	return objs
 }
 

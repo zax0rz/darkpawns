@@ -122,14 +122,11 @@ func getMobVNumSpec(vnum int) SpecFunc {
 //	GET_MOB_RNUM  → mob.Proto().VNum
 //	mob_index[].func → getMobVNumSpec()
 func (w *World) MobileActivity() {
-	w.mu.RLock()
-	mobs := make([]*MobInstance, 0, len(w.activeMobs))
-	for _, m := range w.activeMobs {
-		mobs = append(mobs, m)
-	}
-	w.mu.RUnlock()
-
-	for _, ch := range mobs {
+	for _, character := range w.cOrderedCharacters() {
+		ch := character.mob
+		if ch == nil {
+			continue
+		}
 		if !ch.IsAlive() {
 			continue
 		}

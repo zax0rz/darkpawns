@@ -24,6 +24,11 @@ const (
 type Player struct {
 	mu sync.RWMutex
 
+	// characterSequence records insertion into World.players for C's global
+	// character_list walks. It is assigned once by World.AddPlayer and never
+	// persisted or changed when the player moves rooms.
+	characterSequence uint64
+
 	// Identity
 	ID   int
 	Name string

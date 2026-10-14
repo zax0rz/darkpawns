@@ -44,6 +44,33 @@ func newMobactDrawTestWorld() *World {
 	}
 }
 
+func TestMobileActivityWalksNewestMobFirst(t *testing.T) {
+	w := newMobactDrawTestWorld()
+	w.mobs[9401] = &parser.Mob{
+		VNum: 9401, Keywords: "older scavenger", ShortDesc: "an older scavenger",
+		ActionFlags: []string{"scavenger"}, Position: 8, DefaultPos: 8, Level: 10,
+	}
+	w.mobs[9402] = &parser.Mob{
+		VNum: 9402, Keywords: "newer wanderer", ShortDesc: "a newer wanderer",
+		Position: 8, DefaultPos: 8, Level: 10,
+	}
+	if _, err := w.SpawnMob(9401, 1001); err != nil {
+		t.Fatalf("SpawnMob older: %v", err)
+	}
+	if _, err := w.SpawnMob(9402, 1001); err != nil {
+		t.Fatalf("SpawnMob newer: %v", err)
+	}
+	w.roomItems[1001] = []*ObjectInstance{{Prototype: &parser.Obj{Cost: 10}}}
+
+	draws := captureMobactDrawsWith(t, func(_, to int) int { return to })
+	w.MobileActivity()
+
+	assertMobactDraws(t, draws, []mobactDrawRange{
+		{0, 18}, {0, 15}, // newer mob's wander and sound draws
+		{0, 10}, {0, 18}, {0, 15}, // older scavenger's three draws
+	})
+}
+
 func newMobactWanderTestWorld(t *testing.T, targetSector int, flags ...string) (*World, *MobInstance) {
 	return newMobactWanderTestWorldWithTargetFlags(t, targetSector, nil, flags...)
 }

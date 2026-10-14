@@ -1,0 +1,102 @@
+# Populated-world soak at the Orc Burrows entrance. No quiet-mobs fixture:
+# the zone's stock aggressive and scavenging mobs, reset commands, and normal
+# world activity remain live for the observing players.
+# Zone 21 has a 35-update lifetime; 3,600 pulses cross its reset and 90 mobile
+# pulses (PULSE_ZONE=100, PULSE_MOBILE=40).
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Lunawatch
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lunawatch
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:burrowpeer1]
+Burrowpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:burrowpeer1]
+Burrowpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:burrowpeer2]
+Burroweye
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:burrowpeer2]
+Burroweye
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 2149
+teleport Burrowpeer 2149
+teleport Burroweye 2149
+
+[probe]
+look
+~dpclock pulse 3600
+look
