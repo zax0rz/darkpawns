@@ -225,7 +225,10 @@ special is redispatched from the `perform_violence()` tail at
 `fight.c:2030-2031`; `take_to_jail` reaches its fighting arm at
 `spec_procs2.c:1430-1434`. `mobile_activity()` skips fighting mobs
 (`src/mobact.c:68`), so the exercised path is combat update. Direct seed-1
-differential is CLEAN; the targeted census remains pending.
+differential and targeted census `dp-1371-train10-visibility-targeted` are
+CLEAN. The targeted census ran on committed tip `3f90033f9`: 1 passed, 0
+expected/failed/stale/infra/timeout/unstable; evidence is retained at
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train10-visibility-targeted/`.
 
 Remaining acknowledged candidates after Train 10 are room-wide undead `DoTurn`
 (`src/new_cmds2.c:960-1030`), the live Lua character/mobile table parity gap
@@ -250,4 +253,5 @@ combat transcript owner boundary stays intact.
 | `make fidelity-units` | PASS: 1,425 rows, 1,313 symbols, 1,608 claims |
 | `make string-census` | PASS: ratchet 98 known go-only segments, 0 unreviewed; reports are stale and were not updated |
 | `gosec -severity=high -quiet ./...` | PASS |
-| Targeted census and final combined census | Pending; shared census slot is occupied by Train 9 final run |
+| Targeted census `dp-1371-train10-visibility-targeted` | CLEAN: 1 passed, 0 expected/failed/stale/infra/timeout/unstable |
+| Final combined census | Pending on the final committed Train 10 tip |
