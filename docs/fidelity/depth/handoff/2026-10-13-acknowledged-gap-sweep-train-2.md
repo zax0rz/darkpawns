@@ -78,6 +78,7 @@ All commands were run separately on the final behavior code tip; all passed:
 The stock-data scenario is `lua-spell-object-target`; it gives the mobile
 healer bread object 8010 (unblessed and nonmagical), then checks the vocal and
 silent object spell effects through the player's transcript. A targeted census
-and the train's final combined census are pending because the shared census slot
-is occupied by `dp-1419-lethal`. Fill in both census result lines here and mark
-`lua.bind-spell-object-target` oracle-green only after the targeted case is clean.
+and the train's final combined census remain pending. The shared census slot is
+occupied at this handoff update; do not start a competing census. Fill in both
+census result lines here and mark `lua.bind-spell-object-target` oracle-green
+only after the targeted case is clean.
