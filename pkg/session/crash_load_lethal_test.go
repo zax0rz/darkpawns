@@ -45,13 +45,15 @@ func TestCrashLoadLethalEntryLeavesCharacterDead(t *testing.T) {
 		t.Fatalf("the welcome text did not follow the death bytes: %q", got)
 	}
 
-	// The character is in the world, dead, and C's HP floor applies (DP-1021
-	// clamps at -11; C itself would keep 10-40 = -30 — recorded in the handoff).
+	// The character is in the world, dead, and C's unfloored hit-point drop
+	// applies: GET_HIT(victim) -= dam with no floor (src/fight.c:1483-1484),
+	// so 10 - 40 = -30 (DP-1429). update_pos is what turns HP <= -11 into
+	// POS_DEAD (src/fight.c:192-193).
 	if p, ok := m.world.GetPlayer("Doomed"); !ok || p != s.player {
 		t.Fatal("the character did not enter the world")
 	}
-	if s.player.GetHP() != -11 || s.player.GetPosition() != combat.PosDead {
-		t.Fatalf("hp=%d pos=%d, want -11/POS_DEAD", s.player.GetHP(), s.player.GetPosition())
+	if s.player.GetHP() != -30 || s.player.GetPosition() != combat.PosDead {
+		t.Fatalf("hp=%d pos=%d, want -30/POS_DEAD", s.player.GetHP(), s.player.GetPosition())
 	}
 	if s.player.Deaths != 1 || s.player.Kills != 1 {
 		t.Fatalf("deaths=%d kills=%d, want 1/1", s.player.Deaths, s.player.Kills)
@@ -88,8 +90,8 @@ func TestCrashLoadLethalEntryFirstTickAndCommand(t *testing.T) {
 	drainSessionText(t, s)
 
 	m.world.PointUpdate()
-	if s.player.GetHP() != -11 || s.player.GetPosition() != combat.PosDead {
-		t.Fatalf("after the tick hp=%d pos=%d, want -11/POS_DEAD", s.player.GetHP(), s.player.GetPosition())
+	if s.player.GetHP() != -30 || s.player.GetPosition() != combat.PosDead {
+		t.Fatalf("after the tick hp=%d pos=%d, want -30/POS_DEAD", s.player.GetHP(), s.player.GetPosition())
 	}
 	// POS_DEAD takes no point_update branch, so the only bytes are the hunger
 	// and thirst decay every character gets (src/limits.c:471-479) — the

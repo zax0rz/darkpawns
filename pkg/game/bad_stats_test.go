@@ -245,11 +245,11 @@ func TestReplayCrashLoadBadStatsLethalStopsAtRawKill(t *testing.T) {
 	var lines []string
 	w.ReplayCrashLoadBadStats(p, func(text string) { lines = append(lines, text) })
 
-	// damage(): 10 - 40 = -30, floored to -11 by DP-1021's clamp (C keeps -30;
-	// recorded in the handoff), update_pos -> POS_DEAD for HP <= -11
-	// (src/fight.c:192-193).
-	if p.GetHP() != -11 || p.GetPosition() != combat.PosDead {
-		t.Fatalf("hp=%d pos=%d, want -11/POS_DEAD", p.GetHP(), p.GetPosition())
+	// damage(): 10 - 40 = -30, and C applies the drop with no floor
+	// (GET_HIT(victim) -= dam, src/fight.c:1483-1484); update_pos turns
+	// HP <= -11 into POS_DEAD (src/fight.c:192-193).
+	if p.GetHP() != -30 || p.GetPosition() != combat.PosDead {
+		t.Fatalf("hp=%d pos=%d, want -30/POS_DEAD", p.GetHP(), p.GetPosition())
 	}
 	// fight.c:1689-1691 counters, then die_with_killer's gain_exp(-GET_EXP/37).
 	if p.Deaths != 1 || p.Kills != 1 || p.LastDeath == 0 {

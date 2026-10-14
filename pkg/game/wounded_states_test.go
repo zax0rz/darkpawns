@@ -6,16 +6,23 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
-// TestTakeDamage_FloorsAtNegative11 is the DP-1021 regression: HP is allowed
-// into the wounded band instead of clamping at 0, but a single massive blow
-// floors at -11 (POS_DEAD threshold, fight.c update_pos) rather than going
-// arbitrarily negative.
-func TestTakeDamage_FloorsAtNegative11(t *testing.T) {
+// TestTakeDamageMatchesCHitPoints is the DP-1429 regression: C applies
+// GET_HIT(victim) -= dam with no floor (src/fight.c:1483-1484), so a massive
+// blow leaves HP far below -11. update_pos — not TakeDamage — is what turns
+// HP <= -11 into POS_DEAD (src/fight.c:192-193).
+func TestTakeDamageMatchesCHitPoints(t *testing.T) {
 	p := NewPlayer(1, "Bleeder", 1001)
 	p.SetHP(5)
 	p.TakeDamage(100)
-	if got := p.GetHP(); got != -11 {
-		t.Errorf("player HP after massive hit = %d, want -11 (floor)", got)
+	if got := p.GetHP(); got != -95 {
+		t.Errorf("player HP after massive hit = %d, want -95 (C has no floor)", got)
+	}
+
+	// damage()'s 3000 cap is the largest single blow C can deal.
+	p.SetHP(10)
+	p.TakeDamage(3000)
+	if got := p.GetHP(); got != -2990 {
+		t.Errorf("player HP after a 3000 blow = %d, want -2990 (C has no floor)", got)
 	}
 
 	// Sub-lethal damage lands in the wounded band, not clamped to 0.
@@ -27,8 +34,8 @@ func TestTakeDamage_FloorsAtNegative11(t *testing.T) {
 
 	m := &MobInstance{CurrentHP: 5, MaxHP: 30}
 	m.TakeDamage(100)
-	if got := m.GetHP(); got != -11 {
-		t.Errorf("mob HP after massive hit = %d, want -11 (floor)", got)
+	if got := m.GetHP(); got != -95 {
+		t.Errorf("mob HP after massive hit = %d, want -95 (C has no floor)", got)
 	}
 }
 
