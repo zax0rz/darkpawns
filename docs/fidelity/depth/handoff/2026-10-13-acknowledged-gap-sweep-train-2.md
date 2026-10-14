@@ -13,6 +13,15 @@ train 1), #1944 (DP-1419), and #1945 (DP-1426) merged, it was rebased onto
 fresh `origin/main` at `d8e8024ddbfe52fbde36d16e0b02e2d7606fac71`. The Lua
 object-spell family recorded in train 1 remains this train's scope.
 
+### Inventory correction
+
+The jail-guard visibility gate remains a separate fix candidate, not part of
+the shared combat attack/message/RNG divergence owned by
+`mob.teleport-victim-combat-transcript`. C checks `CAN_SEE(ch, victim)` before
+the redirect at `src/fight.c:1370-1400`; the copy-ready issue and evidence are
+in train 1's handoff. Only the broader combat transcript/RNG divergence stays
+with that owner.
+
 ## C path and change
 
 Verified in `src/` during this session:
