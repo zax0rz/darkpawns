@@ -27,6 +27,12 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
 
+// conLossNumber is the RNG seam for die_with_killer's two CON-loss draws
+// (src/fight.c:603, :606). Production uses the shared deterministic stream;
+// focused tests pin both gates so the unfloored decrement is observable inside
+// one death.
+var conLossNumber = number
+
 // Con loss probability thresholds — from fight.c die_with_killer()
 // These exactly mirror the C logic:
 //
@@ -632,29 +638,21 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	}
 
 	// CON loss — fight.c die_with_killer() lines 598-607
-	// Only applies to combat deaths (die_with_killer path)
+	// Only applies to combat deaths (die_with_killer path). C decrements
+	// real_abils.con with NO floor (src/fight.c:605-607); affect_total is what
+	// clamps the effective CON to 0..18, so enough deaths reach effective
+	// CON 0 and C's croak (src/comm.c:748-754) and "You are too unhealthy to
+	// play!" entry gate (src/interpreter.c:2174-2178).
 	if isCombatDeath {
 		playerLevel := player.GetLevel()
 		if playerLevel > ConLossMinLevel-1 {
 			// GET_LEVEL(ch) > 5 means level 6+
-			if number(0, ConLossCheckChance-1) == 0 {
+			if conLossNumber(0, ConLossCheckChance-1) == 0 {
 				player.mu.Lock()
 				player.Stats.Con--
-				// Found deviation (recorded in the DP-1419 lethal handoff): C
-				// decrements real_abils.con with no floor (src/fight.c:601) and
-				// affect_total is what clamps GET_CON to 0..18, so C can reach
-				// GET_CON 0 and the "too unhealthy to play" entry gate. The
-				// port's floor and LoginConstitution's unclamped real-con read
-				// keep that unreachable; both are pre-existing and left alone.
-				if player.Stats.Con < 1 {
-					player.Stats.Con = 1
-				}
 				// GET_LEVEL(ch) > 20 means level 21+
-				if playerLevel >= ConLossSecondLevel && number(0, ConLossSecondChance-1) == 0 {
+				if playerLevel >= ConLossSecondLevel && conLossNumber(0, ConLossSecondChance-1) == 0 {
 					player.Stats.Con--
-					if player.Stats.Con < 1 {
-						player.Stats.Con = 1
-					}
 				}
 				player.mu.Unlock()
 				player.AffectTotal() // src/fight.c:608

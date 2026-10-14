@@ -156,9 +156,9 @@ func (p *Player) ClearAmbushAction() {
 
 // TakeDamage applies damage to the player.
 //
-// HP is allowed to go negative into the wounded band; POS_DEAD is HP <= -11
-// (fight.c update_pos). We floor at -11 so a single massive blow can't drive HP
-// arbitrarily negative — anything at or past -11 is dead regardless. Position
+// HP goes negative into the wounded band and past it: C applies
+// GET_HIT(victim) -= dam with no floor (src/fight.c:1483-1484), and update_pos
+// is what turns HP <= -11 into POS_DEAD (src/fight.c:192-193). Position
 // transitions and death are handled by callers via
 // combat.UpdatePositionAfterDamage / HandleDeath, not here (DP-1021).
 func (p *Player) TakeDamage(amount int) {
@@ -172,15 +172,7 @@ func (p *Player) TakeDamage(amount int) {
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	// DP-1021: HP is allowed into the wounded band instead of clamping at 0,
-	// but a single massive blow floors at -11 — C's POS_DEAD threshold
-	// (src/fight.c:192-193) — rather than going arbitrarily negative. C itself
-	// has no floor here (GET_HIT(victim) -= dam, :1483); the divergence is
-	// recorded in the DP-1419 lethal-replay handoff.
 	p.Health -= amount
-	if p.Health < -11 {
-		p.Health = -11
-	}
 }
 
 // GetAlignment returns the player's alignment score.

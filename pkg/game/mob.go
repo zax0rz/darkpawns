@@ -469,12 +469,6 @@ func (m *MobInstance) TakeDamage(amount int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.CurrentHP -= amount
-	// Allow HP into the wounded band; floor at -11 (POS_DEAD threshold,
-	// fight.c update_pos). Position/death transitions are owned by callers via
-	// combat.UpdatePositionAfterDamage / HandleDeath, not here (DP-1021).
-	if m.CurrentHP < -11 {
-		m.CurrentHP = -11
-	}
 }
 
 // Heal restores HP to the mob.
