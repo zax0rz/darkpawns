@@ -151,3 +151,30 @@ func TestRunMobAISentinelNeverWanders(t *testing.T) {
 		}
 	}
 }
+
+// TestWanderMobStopsAtClosedDoor proves DP-1428's door gate: C's CAN_GO
+// refuses an EX_CLOSED exit (src/utils.h:565-567; src/mobact.c:124), so a
+// wandering mob stays put behind a closed door and moves again once it opens.
+func TestWanderMobStopsAtClosedDoor(t *testing.T) {
+	w := newWanderTestWorld(t)
+	mob := NewMob(&parser.Mob{Keywords: "rat", ShortDesc: "a rat"}, 1)
+
+	room := w.GetRoomInWorld(1)
+	north := room.Exits["north"]
+	north.ExitInfo |= parser.ExitIsDoor | parser.ExitClosed
+	room.Exits["north"] = north
+
+	if w.wanderMobWithDoor(mob, 0) {
+		t.Fatal("a closed door must not count as a sector-gate continue")
+	}
+	if got := mob.GetRoom(); got != 1 {
+		t.Fatalf("mob walked through a closed door into room %d", got)
+	}
+
+	north.ExitInfo &^= parser.ExitClosed
+	room.Exits["north"] = north
+	w.wanderMobWithDoor(mob, 0)
+	if got := mob.GetRoom(); got != 2 {
+		t.Fatalf("mob did not wander through the opened door: room %d", got)
+	}
+}
