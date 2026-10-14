@@ -275,6 +275,13 @@ type Player struct {
 	// Used by dream.c for nightmare progression.
 	LastDeath int64
 
+	// entryTextSink, when non-nil, receives this player's player-facing text
+	// instead of the world MessageSink. It is set only for the duration of a
+	// Crash_load replay (World.ReplayCrashLoadBadStats): C's send_to_char
+	// writes ch->desc directly, and the entering character has neither a world
+	// reference nor a session-registry entry yet. Runtime only.
+	entryTextSink func(string) `json:"-"`
+
 	// RentedOut marks a character whose objects went into the rent file, so
 	// extraction does not drop them: a legal quitter (Crash_rentsave,
 	// act.other.c:155-181) or an idle-disconnected one (free_rent's

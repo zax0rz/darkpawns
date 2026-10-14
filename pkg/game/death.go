@@ -583,6 +583,14 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 
 	// fight.c:1671-1681: the death goes to the syslog (BRF, LVL_IMMORT), and
 	// a pkill flags the killer outlaw.
+	//
+	// R1a: C builds this line with world[victim->in_room].name (:1673-1680).
+	// During Crash_load in_room is NOWHERE and world is a heap pointer
+	// (src/act.comm.c:42), so world[-1] reads the allocator's chunk header and
+	// the reference dereferences whatever pointer sits there — it does not
+	// produce a room name to reproduce. The port prints the empty segment its
+	// room lookup yields for an unresolvable vnum; the rest of the line
+	// (name, killer, the BRF/LVL_IMMORT/file flags) is C's.
 	if killerName != "" {
 		roomName := ""
 		if room, roomOK := w.GetRoom(roomVNum); roomOK {
@@ -613,22 +621,14 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	player.Deaths++
 	player.LastDeath = time.Now().Unix()
 
-	// EXP loss based on death type
-	// die_with_killer(): GET_EXP(ch)/37 (combat death) - fight.c line 590
-	// die(): GET_EXP(ch)/3 (non-combat death) - fight.c line 628
-	var expLoss int
+	// EXP loss — both C paths call gain_exp, so its level gate and its
+	// -max_exp_loss clamp apply: die_with_killer passes -(GET_EXP/37)
+	// (src/fight.c:590) and die() passes -(GET_EXP/3) (:628).
 	if isCombatDeath {
-		expLoss = player.GetExp() / 37
+		w.GainExp(player, -(player.GetExp() / 37))
 	} else {
-		expLoss = player.GetExp() / 3
+		w.GainExp(player, -(player.GetExp() / 3))
 	}
-
-	// EXP loss
-	newExp := player.GetExp() - expLoss
-	if newExp < 0 {
-		newExp = 0
-	}
-	player.SetExp(newExp)
 
 	// CON loss — fight.c die_with_killer() lines 598-607
 	// Only applies to combat deaths (die_with_killer path)
@@ -639,6 +639,12 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 			if number(0, ConLossCheckChance-1) == 0 {
 				player.mu.Lock()
 				player.Stats.Con--
+				// Found deviation (recorded in the DP-1419 lethal handoff): C
+				// decrements real_abils.con with no floor (src/fight.c:601) and
+				// affect_total is what clamps GET_CON to 0..18, so C can reach
+				// GET_CON 0 and the "too unhealthy to play" entry gate. The
+				// port's floor and LoginConstitution's unclamped real-con read
+				// keep that unreachable; both are pre-existing and left alone.
 				if player.Stats.Con < 1 {
 					player.Stats.Con = 1
 				}
@@ -653,6 +659,20 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 				player.AffectTotal() // src/fight.c:608
 			}
 		}
+	}
+
+	// raw_kill's NOWHERE guard (src/fight.c:538-539). C returns before
+	// stop_fighting, affect removal, death_cry, make_corpse and extract_char,
+	// so a lethal trip during Crash_load — where reset_char has left in_room
+	// NOWHERE (src/db.c:2945) — leaves the character POS_DEAD in place: no
+	// corpse, no dust, no affect stripping, no extraction. die_with_killer has
+	// already run its own stop_fighting and GET_POS = POS_DEAD
+	// (src/fight.c:618-621), and the caller's position bytes and mudlog have
+	// already been emitted.
+	if roomVNum == roomNowhere {
+		player.StopFighting()
+		player.SetPosition(combat.PosDead)
+		return
 	}
 
 	w.unmountRawKillBody(player) // src/fight.c:562-565

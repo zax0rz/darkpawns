@@ -63,10 +63,13 @@ func badStatLine(bad byte) string {
 // is the order Crash_crashsave wrote them (src/objsave.c:807-812), computes
 // aff_abils over that prefix, and runs the shared badStat/applyBadStat pair.
 //
-// deliver receives each player-facing line in C's order. The entry caller has
-// no world-registered descriptor yet — C's send_to_char writes ch->desc
-// directly (src/interpreter.c:2184-2189) — so it supplies the session's own
-// transport; nil keeps the live path's body.SendMessage.
+// deliver is the entering session's own descriptor. C's send_to_char writes
+// ch->desc for every line the replay produces (src/interpreter.c:2184-2189) and
+// the character has neither a world reference nor a session-registry entry yet,
+// so the replay installs deliver as the player's text sink for its duration —
+// the bad-stat lines, the DEX arm's position bytes ("You are dead!  Sorry...")
+// and anything else a later item sends. A nil deliver keeps the live path's
+// world sink.
 func (w *World) ReplayCrashLoadBadStats(p *Player, deliver func(string)) {
 	if p == nil {
 		return
@@ -80,33 +83,28 @@ func (w *World) ReplayCrashLoadBadStats(p *Player, deliver func(string)) {
 	p.SetRoom(roomNowhere)
 	defer p.SetRoom(room)
 
+	if deliver != nil {
+		p.SetEntryTextSink(deliver)
+		defer p.SetEntryTextSink(nil)
+	}
+
 	items := COrderedWorn(p)
 	for i := range items {
 		p.mu.RLock()
 		stats := p.affectTotalForItemsLocked(items[:i+1])
 		p.mu.RUnlock()
-		w.applyBadStatDeliver(p, badStat(stats), deliver)
+		w.applyBadStat(p, badStat(stats))
 	}
 }
 
 func (w *World) applyBadStat(body combat.Combatant, bad byte) {
-	w.applyBadStatDeliver(body, bad, nil)
-}
-
-// applyBadStatDeliver is applyBadStat with an explicit player-text seam: see
-// ReplayCrashLoadBadStats for why the entry path delivers its own bytes.
-func (w *World) applyBadStatDeliver(body combat.Combatant, bad byte, deliver func(string)) {
 	text := badStatLine(bad)
 	if mob, ok := body.(*MobInstance); ok {
 		if text != "" && w.MobileMessageSink != nil {
 			w.MobileMessageSink(mob, []byte(text))
 		}
 	} else if text != "" {
-		if deliver != nil {
-			deliver(text)
-		} else {
-			body.SendMessage(text)
-		}
+		body.SendMessage(text)
 	}
 	switch bad {
 	case 'c':

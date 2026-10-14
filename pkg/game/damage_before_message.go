@@ -26,6 +26,13 @@ func (w *World) damageBeforeMessageCallbacks() *combat.GameCallbacks {
 				body.SetPosition(combat.GetPositionFromHP(body.GetHP(), combat.PosStanding))
 			}
 		},
+		// R1a: C tests ROOM_FLAGGED(victim->in_room, ROOM_NEUTRAL) here
+		// (src/fight.c:1493). During Crash_load in_room is NOWHERE, so C reads
+		// world[-1].room_flags — an out-of-bounds read whose result decides
+		// whether the neutral rescue ("You are saved by the gods!" and a
+		// teleport to 8004) replaces the death. The port's lookup finds no room
+		// for an unresolvable vnum, so no flags and the death path always runs;
+		// recorded in the DP-1419 lethal-replay handoff.
 		HasRoomFlag:   func(room int, flag string) bool { return flag == "ROOM_NEUTRAL" && w.RoomHasFlag(room, "neutral") },
 		NeutralRescue: w.neutralRescue,
 	}
