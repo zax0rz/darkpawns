@@ -1,0 +1,50 @@
+# depth-case: score.equipment-ac-worn
+# C's do_score pack-weight ratio uses IS_CARRYING_W(ch) (src/utils.h:322), the
+# running char_specials.carry_weight maintained by obj_to_char/obj_from_char
+# (src/handler.c:559-601). do_wear moves the object out of the carrying list
+# before equip_char (src/act.item.c), so worn gear — including WEAR_ABOUT —
+# never counts toward the pack line. The rags of a Holy Martyr (4372) are
+# ITEM_WORN (11), WEAR_ABOUT (bit 10), weight 1, APPLY_AC +10 and APPLY_CON -5:
+# the worn APPLY_AC folds into GET_AC (src/handler.c:182, 743-746), which moves
+# C's clothing line from "naked" (ac == 100) to "lightly clothed".
+# C do_score: src/act.informative.c:1240-1265, 1304-1315.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Scorabout
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scorabout
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8105
+score
+load obj 4372
+get rags
+wear rags
+score

@@ -106,7 +106,10 @@ func alignmentText(alignment int) string {
 // Source: act.informative.c do_score() lines 1240-1265
 func acText(ac int) string {
 	switch {
-	case ac >= 100:
+	// C: if (ac == 100) — an exact test. Gear or an APPLY_AC affect can push a
+	// character above 100, and C still calls that "lightly clothed"
+	// (src/act.informative.c:1240-1265).
+	case ac == 100:
 		return "You are naked, have you no shame?"
 	case ac > 70:
 		return "You are lightly clothed."

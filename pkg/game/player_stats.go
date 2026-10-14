@@ -123,14 +123,15 @@ func (p *Player) GetAC() int {
 	// magnitudes already carry the correct sign (armor = -15 improves AC; berserk
 	// = +25 worsens it), so they fold in by addition.
 	baseAC := p.AC + p.sumAffectModsLocked(ApplyAC)
+	equipment := p.Equipment
 	p.mu.RUnlock()
 
-	// Add equipment AC bonus
-	if p.Equipment != nil {
-		baseAC -= p.Equipment.GetArmorClass() // Lower AC is better
+	if equipment == nil {
+		return baseAC
 	}
-
-	return baseAC
+	// C's equip_char subtracts apply_ac's armor value for the position and
+	// then adds each worn object's APPLY_AC modifier (src/handler.c:734-746).
+	return baseAC - equipment.GetArmorClass() + equipment.GetWornAffectAC()
 }
 
 // SetAC sets the player's base armor class (before equipment modifiers).
