@@ -476,6 +476,9 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if vict == ch {
 				continue
 			}
+			if !canSee(ch, vict) {
+				continue
+			}
 			if vict.GetLevel()+3 < ch.GetLevel() {
 				if w.combatEngine != nil {
 					if err := w.combatEngine.StartCombat(ch, vict); err != nil {

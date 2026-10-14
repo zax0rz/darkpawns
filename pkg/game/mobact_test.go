@@ -774,3 +774,39 @@ func TestAggr24_PlayerAttacked(t *testing.T) {
 		t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
 	}
 }
+
+func TestAggr24MobileTargetVisibilityGateUsesGlobalPulse(t *testing.T) {
+	for _, tt := range []struct {
+		name          string
+		targetAffects int
+		wantStarts    int
+	}{
+		{name: "invisible NPC target is skipped", targetAffects: affInvisible},
+		{name: "visible NPC target is selected", wantStarts: 1},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			w, ce := newMobactTestWorld(t)
+			attacker := newMobactTestMob(w, 9310, 1, 0, "aggr24", "aggressive")
+			attacker.SetLevel(30)
+			target := newMobactTestMob(w, 9311, 1, 0)
+			target.SetLevel(10)
+			if tt.targetAffects != 0 {
+				target.SetAffected(tt.targetAffects)
+			}
+
+			draws := pinNorthWanderDraws(t)
+			w.MobileActivity()
+
+			if len(ce.starts) != tt.wantStarts {
+				t.Fatalf("AGGR24 combat starts = %d, want %d; starts=%+v", len(ce.starts), tt.wantStarts, ce.starts)
+			}
+			if tt.wantStarts == 1 && (ce.starts[0].attacker != attacker.GetName() || ce.starts[0].defender != target.GetName()) {
+				t.Fatalf("unexpected combat pair: %+v", ce.starts[0])
+			}
+			wantDraws := []mobactDrawRange{{0, 18}, {0, 15}, {0, 18}, {0, 15}}
+			if !reflect.DeepEqual(*draws, wantDraws) {
+				t.Fatalf("mobile pulse draws = %v, want %v", *draws, wantDraws)
+			}
+		})
+	}
+}
