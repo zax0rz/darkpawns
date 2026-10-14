@@ -119,6 +119,22 @@ Run each gate on its own and check its exit status. Never chain them with `;` or
 end a chain with `; echo "passed"`: the line reports success when a gate failed,
 and that has hidden real breakage twice.
 
+### Worktrees
+
+Never switch branches in the main checkout (`/home/zach/darkpawns`): other agents
+work there. Do all branch work in a worktree under `~/wt/`, named
+`<agent>-<issue>` (e.g. `~/wt/glm-dp-1435`):
+
+```bash
+git worktree add ~/wt/<agent>-<issue> -b <branch> origin/main
+```
+
+Remove it with `git worktree remove ~/wt/<agent>-<issue>` once its PR merges.
+Don't put worktrees in `~` itself (230 accumulated there by 2026-10-14) or in
+`/tmp`: systemd-tmpfiles deletes files older than 30 days one at a time, which
+silently corrupts a long-lived worktree. Taught 2026-10-13, when a
+`git checkout main` in the shared checkout put an agent's commit on local main.
+
 ## Project Overview
 
 Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
