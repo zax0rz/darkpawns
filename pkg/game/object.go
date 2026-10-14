@@ -483,6 +483,26 @@ func (o *ObjectInstance) GetRoomVNum() int {
 	return o.RoomVNum
 }
 
+// InRoom reports whether the object's canonical location is this room.
+func (o *ObjectInstance) InRoom(roomVNum int) bool {
+	return o != nil && o.Location.IsInRoom() && o.Location.RoomVNum == roomVNum
+}
+
+// CarriedBy mirrors C's obj->carried_by check, including equipped objects.
+func (o *ObjectInstance) CarriedBy(actor interface{}) bool {
+	if o == nil || (!o.Location.IsInInventory() && !o.Location.IsEquipped()) {
+		return false
+	}
+	switch ch := actor.(type) {
+	case *Player:
+		return ch != nil && o.Location.OwnerKind == OwnerPlayer && o.Location.PlayerName == ch.GetName()
+	case *MobInstance:
+		return ch != nil && o.Location.OwnerKind == OwnerMob && o.Location.MobID == ch.GetID()
+	default:
+		return false
+	}
+}
+
 func (o *ObjectInstance) SetRoomVNum(roomVNum int) {
 	o.RoomVNum = roomVNum
 	if roomVNum > 0 {

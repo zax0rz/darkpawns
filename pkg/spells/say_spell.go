@@ -232,9 +232,24 @@ func sameRoom(ch, tch interface{}) bool {
 	return cr.GetRoomVNum() == tr.GetRoomVNum()
 }
 
-// sameRoomWithObj is a stub — returns true.
+// sameRoomWithObj mirrors spell_parser.c say_spell's object phrase gate:
+// the target must be in the caster's room or carried by the caster.
 func sameRoomWithObj(ch, tobj interface{}) bool {
-	return true
+	type roomed interface{ GetRoomVNum() int }
+	type roomContains interface{ InRoom(int) bool }
+	type carried interface{ CarriedBy(interface{}) bool }
+
+	caster, ok := ch.(roomed)
+	if !ok || tobj == nil {
+		return false
+	}
+	if object, ok := tobj.(roomContains); ok && object.InRoom(caster.GetRoomVNum()) {
+		return true
+	}
+	if object, ok := tobj.(carried); ok && object.CarriedBy(ch) {
+		return true
+	}
+	return false
 }
 
 // roomIterable is the interface needed from world for room iteration.
@@ -271,6 +286,7 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 
 	type msgSender interface{ SendMessage(string) }
 	type msgNamed interface{ GetName() string }
+	type msgObjectDescription interface{ GetShortDesc() string }
 	type msgClassed interface{ GetClass() int }
 
 	casterName := "someone"
@@ -299,7 +315,9 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 		}
 		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
 		if tobj != nil {
-			if on, ok := tobj.(msgNamed); ok {
+			if on, ok := tobj.(msgObjectDescription); ok {
+				msg = strings.ReplaceAll(msg, "$p", on.GetShortDesc())
+			} else if on, ok := tobj.(msgNamed); ok {
 				msg = strings.ReplaceAll(msg, "$p", on.GetName())
 			} else {
 				msg = strings.ReplaceAll(msg, "$p", "something")

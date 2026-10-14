@@ -32,7 +32,14 @@ func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 // position; it only rejects POS_SITTING (spell_parser.c:434-439). The normal
 // CallMagic path retains the parser-facing position check used by commands.
 func CastFromSpecial(caster, cvict interface{}, spellNum, level int, world interface{}) bool {
-	return callMagic(caster, cvict, nil, spellNum, level, CastSpell, world, true, false)
+	return CastFromSpecialTarget(caster, cvict, nil, spellNum, level, world)
+}
+
+// CastFromSpecialTarget dispatches call_magic() directly, including an object
+// target. C's native special procedures and silent Lua spell binding bypass
+// the command parser's per-spell minimum position check.
+func CastFromSpecialTarget(caster, cvict, ovict interface{}, spellNum, level int, world interface{}) bool {
+	return callMagic(caster, cvict, ovict, spellNum, level, CastSpell, world, true, false)
 }
 
 // CastFromTattoo dispatches the level-12 CAST_WAND self cast from tattoo.c.

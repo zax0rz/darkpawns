@@ -40,6 +40,16 @@ type roomMock struct {
 
 func (m *roomMock) GetRoomVNum() int { return m.vnum }
 
+type spellObjectMock struct {
+	room    int
+	carried interface{}
+}
+
+func (o *spellObjectMock) InRoom(room int) bool { return o.room == room }
+func (o *spellObjectMock) CarriedBy(actor interface{}) bool {
+	return o.carried == actor
+}
+
 type zoneWorldMock struct {
 	roomZone int // zone returned by GetRoomZone for the caster's room
 	zone     int // zone used by ForEachPlayerInZoneInterface
@@ -182,9 +192,21 @@ func TestSameRoom(t *testing.T) {
 }
 
 func TestSameRoomWithObj(t *testing.T) {
-	// Current implementation is a stub that always returns true.
-	if !sameRoomWithObj(nil, nil) {
-		t.Error("sameRoomWithObj stub should return true")
+	caster := &roomMock{vnum: 1001}
+	if !sameRoomWithObj(caster, &spellObjectMock{room: 1001}) {
+		t.Error("object in caster's room should use object phrase")
+	}
+	if !sameRoomWithObj(caster, &spellObjectMock{carried: caster}) {
+		t.Error("object carried by caster should use object phrase")
+	}
+	if sameRoomWithObj(caster, &spellObjectMock{room: 1002}) {
+		t.Error("object in another room should use generic phrase")
+	}
+	if sameRoomWithObj(caster, &spellObjectMock{}) {
+		t.Error("object neither in room nor carried should use generic phrase")
+	}
+	if sameRoomWithObj(nil, &spellObjectMock{room: 1001}) || sameRoomWithObj(caster, nil) {
+		t.Error("nil caster and object should use generic phrase")
 	}
 }
 

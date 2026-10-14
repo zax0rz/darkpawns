@@ -1,0 +1,64 @@
+# depth-case: lua.bind-spell-object-target
+# lua_spell must pass a mobile-carried object through vocal cast_spell and
+# silent call_magic; the vocal phrase names a carried target and both casts
+# alter the C ITEM_INVISIBLE / ITEM_BLESS bits.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+give-object 12220 8010 1 80
+mob-script 12220 oracle/probe.lua 512
+
+[lua-script mob/oracle/probe.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say") then
+return FALSE
+end
+if (what == "object") then
+local o = me.objs[1]
+spell(nil, o, 29, 1)
+say("object invisible=" .. tostring(obj_flagged(o, 5)))
+spell(nil, o, 3, 0)
+say("object blessed=" .. tostring(obj_flagged(o, 8)))
+else
+return FALSE
+end
+return TRUE
+end
+
+[setup:oracle]
+Spellobj
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spellobj
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+
+[probe]
+say object
