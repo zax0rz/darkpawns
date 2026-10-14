@@ -45,12 +45,33 @@ func TestDoVisiblePreservesCEntryGateOrder(t *testing.T) {
 			3,
 			0,
 			engine.AFFKujiKiri,
-			"kuji-kiri zai",
+			"unrelated source text",
 		))
 
 		w.doVisible(player, nil, "visible", "ignored")
 		if got, want := out.String(), "You cannot become visible until your zai ends!\r\n"; got != want {
 			t.Fatalf("zai output = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("other affect text containing zai does not block", func(t *testing.T) {
+		w := &World{}
+		var out strings.Builder
+		w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
+		player := NewPlayer(1, "Visible", 8162)
+		player.worldRef = w
+		player.AddAffect(engine.NewAffectDirect(
+			skillNumKkZhen,
+			engine.ApplyNone,
+			3,
+			0,
+			engine.AFFKujiKiri,
+			"unrelated zai-like source text",
+		))
+
+		w.doVisible(player, nil, "visible", "ignored")
+		if got, want := out.String(), "You are already visible.\r\n"; got != want {
+			t.Fatalf("other affect output = %q, want %q", got, want)
 		}
 	})
 
