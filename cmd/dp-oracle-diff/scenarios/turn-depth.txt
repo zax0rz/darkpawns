@@ -1,0 +1,40 @@
+# This mortal reaches do_turn's neutral-alignment gate. The deeper room
+# outcomes require a good caller and are pinned by direct world tests because
+# stock login cannot set alignment without wizard privileges.
+
+# depth-case: turn.command-ignores-arguments
+# depth-case: turn.holy-gate
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Turnactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Turnactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+turn ignored trailing words

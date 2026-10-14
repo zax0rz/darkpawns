@@ -275,3 +275,20 @@ combat transcript owner boundary stays intact.
 | `gosec -severity=high -quiet ./...` | PASS |
 | Targeted census `dp-1371-train10-visibility-targeted` | CLEAN: 1 passed, 0 expected/failed/stale/infra/timeout/unstable |
 | Final combined census `dp-1371-train10-final`, Go tip `93e2db3cf` | `oracle-combined: pairs=3402 deduplicated=1018 full=CLEAN claims=CLEAN_AFTER_RECHECK elapsed=1978.534s verdict=CLEAN_AFTER_RECHECK`; `spec-proc-take-to-jail-visibility` PASS; evidence at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/dp-1371-train10-final/` |
+
+## Train 11 progress — 2026-10-14
+
+The acknowledged `do_turn` gap is implemented and has a dedicated depth
+manifest and worktree handoff:
+[`2026-10-14-acknowledged-gap-sweep-train11.md`](2026-10-14-acknowledged-gap-sweep-train11.md).
+It replaces target/name guessing with C's whole-room numeric-race scan, corrects
+the undead race constant and room-list order, and preserves the direct flee and
+disintegration branches. The oracle fixture reaches the neutral-alignment and
+ignored-argument gates; the deeper cases have direct world tests because a
+stock mortal cannot set good alignment in the oracle fixture.
+
+The direct NPC flee lane remains blocked for legacy-only special callbacks and
+for the full movement-trigger matrix; see `turn.npc-flee-special-lane` and
+`flee.transitive-movement-failures`. At this handoff revision, all listed code
+gates and R5h controls pass, the final combined census and PR are still pending,
+and no merge has occurred.

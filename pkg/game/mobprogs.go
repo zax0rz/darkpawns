@@ -33,24 +33,92 @@ func isWhore(mob *MobInstance) bool {
 // ---------------------------------------------------------------------------
 
 func (w *World) MpGreet(who *Player, room int) {
-	if room < 0 {
+	w.MpGreetActor(who, room)
+}
+
+// MpGreetActor ports mp_greet() from src/mobprog.c:62-88 for any mover,
+// including a mobile fleeing through a direct do_flee() call.
+func (w *World) MpGreetActor(who combat.Combatant, room int) {
+	if room < 0 || who == nil {
 		return
 	}
-	mob := w.GetFirstMobInRoomByVNum(room, 8014)
-	if mob == nil {
+	for _, body := range w.GetAllCharsInRoom(room) {
+		host, ok := body.(*MobInstance)
+		if !ok || host == nil || host == who {
+			continue
+		}
+		if isDog(host) {
+			// C draws only after the dog-vnum gate and before checking the
+			// mover's alignment.
+			// #nosec G404 — game RNG, not cryptographic
+			if dprng.Number(0, 5) == 0 {
+				if actor, ok := who.(Actor); ok {
+					command := "lick"
+					if combatantAlignment(who) < 0 {
+						command = "growl"
+					}
+					doMobAction(w, host, actor, command)
+				}
+			}
+		} else if IsShopkeeperMob(w, host) && isCombatantDog(who) {
+			Act(w, true, host, nil, nil, nil, "$n mutters something about filthy animals in $s shop...", "", ToRoom)
+			if err := w.mobHit(host, who); err != nil {
+				slog.Warn("mp_greet shopkeeper attack failed", "mob_vnum", host.GetVNum(), "target", who.GetName(), "error", err)
+			}
+		} else if host.GetVNum() == 19406 {
+			leader := w.combatFollowingBody(who)
+			if leader == nil || leader == who {
+				Act(w, true, host, nil, nil, nil, "$n says, 'Have a seat there! Stay a while, rest your bones and warm your feet by the fire!'", "", ToRoom)
+			}
+		}
+	}
+}
+
+func combatantAlignment(ch combat.Combatant) int {
+	switch body := ch.(type) {
+	case *Player:
+		return body.GetAlignment()
+	case *MobInstance:
+		return body.GetAlignment()
+	default:
+		return 0
+	}
+}
+
+func isCombatantDog(ch combat.Combatant) bool {
+	mob, ok := ch.(*MobInstance)
+	return ok && isDog(mob)
+}
+
+func doMobAction(w *World, actor *MobInstance, target Actor, command string) {
+	social, ok := Socials[command]
+	if !ok || actor == nil || target == nil || !CanSee(actor, target) || actor.GetRoom() != target.GetRoom() {
 		return
 	}
-	if who.GetLevel() < 10 || !hasPlrFlag(who, "calibrate") {
+	if _, ok := socialMessage(social, socCharFound); !ok {
+		if message, ok := socialMessage(social, socOthersNoArg); ok {
+			Act(w, social.hidesInvisibleActor(), actor, nil, nil, nil, message, "", ToRoom)
+		}
 		return
 	}
-	clanID := who.ClanID
-	hasAccess := clanID == 1 || clanID == 2 || clanID == 3
-	if !hasAccess {
-		w.roomMessage(room, "$n says, 'You are not of the Inner Circle.  Be gone!'")
-		w.MovePlayerToRoom(who, 8117)
+	if target.GetPosition() < social.minimumVictimPosition() {
+		actForPrivateBody(w, false, actor, target, nil, nil, "$N is not in a proper position for that.", "", ToChar|ToSleep, actor)
 		return
 	}
-	w.roomMessage(room, "$n says, 'You may pass, friend.'")
+	if message, ok := socialMessage(social, socCharFound); ok {
+		actForPrivateBody(w, false, actor, target, nil, nil, message, "", ToChar|ToSleep, actor)
+	}
+	if message, ok := socialMessage(social, socOthersFound); ok {
+		Act(w, social.hidesInvisibleActor(), actor, target, nil, nil, message, "", ToNotVict)
+	}
+	if message, ok := socialMessage(social, socVictFound); ok {
+		actForPrivateBody(w, social.hidesInvisibleActor(), actor, target, nil, nil, message, "", ToVict, combatActor(target))
+	}
+}
+
+func combatActor(actor Actor) combat.Combatant {
+	body, _ := actor.(combat.Combatant)
+	return body
 }
 
 // ---------------------------------------------------------------------------
