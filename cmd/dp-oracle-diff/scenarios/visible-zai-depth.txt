@@ -1,0 +1,44 @@
+# C-first do_visible vehicle: learn and successfully use zai, then attempt to
+# become visible while its SKILL_KK_ZAI affect remains active.
+#
+# depth-case: visible.zai-gate
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Visiblezai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Visiblezai
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+skillset Visiblezai 'kuji-kiri zai' 100
+
+[probe]
+zai
+visible
