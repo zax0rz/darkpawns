@@ -6,6 +6,7 @@
 # depth-case: lua.bind-social
 # depth-case: lua.bind-follow
 # depth-case: lua.bind-set-hunt
+# depth-case: lua.bind-set-hunt-player-hunter
 # depth-case: lua.bind-spell
 # depth-case: lua.bind-unaffect
 # depth-case: lua.npc-command-stand
@@ -40,6 +41,9 @@ set_hunt(me, ch)
 local a = tostring(ishunt(me))
 set_hunt(me, nil)
 say("hunt set=" .. a .. " cleared=" .. tostring(ishunt(me)))
+elseif (what == "huntplayer") then
+set_hunt(ch, ch)
+say("player hunt=" .. tostring(ishunt(ch)))
 elseif (what == "stand") then
 action(me, "stand")
 elseif (what == "sanct") then
@@ -96,6 +100,8 @@ say gossip
 say social
 say follow
 say hunt
+syslog complete
+say huntplayer
 say stand
 say sanct
 score

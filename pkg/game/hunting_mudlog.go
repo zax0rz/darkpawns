@@ -20,9 +20,10 @@ import "fmt"
 // stored.
 //
 // Callers resolve the prey to a *Player because only they can tell a player
-// from a mobile; MobInstance.SetHunting takes a name, and the name-only paths
-// are listed in the closeout handoff's hunting section rather than guessed at.
-func LogHuntingStart(hunter *MobInstance, prey *Player) {
+// from a mobile. C logs player prey regardless of whether the hunter is a
+// player or a mobile; only mobile hunters retain a Go-side target because
+// HUNTING(ch) returns NULL for players (src/utils.c:715-733).
+func LogHuntingStart(hunter Actor, prey *Player) {
 	if hunter == nil || prey == nil || prey.GetID() <= 0 {
 		return
 	}

@@ -1555,8 +1555,10 @@ func (w *World) ClearAffects(charName string, isMob bool) {
 	}
 }
 
-// CanCarryObject returns true if the named player can carry the object.
-// Checks inventory capacity and carry-weight limit.
+// CanCarryObject returns true if the named player can carry the object
+// prototype. It is retained for legacy script-world clients that only carry a
+// vnum; live Lua canget dispatch uses canGetObject so it can inspect me and the
+// exact object instance.
 func (w *World) CanCarryObject(charName string, objVNum int) bool {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -1576,6 +1578,29 @@ func (w *World) CanCarryObject(charName string, objVNum int) bool {
 		return false
 	}
 	return true
+}
+
+// canGetObject implements CAN_GET_OBJ for a live character and object. It
+// includes ITEM_WEAR_TAKE, carry limits, and CAN_SEE_OBJ in the character's
+// actual room (src/utils.h:535-549).
+func (w *World) canGetObject(ch Actor, obj *ObjectInstance) bool {
+	if ch == nil || obj == nil || !obj.IsTakeable() || !canSeeObjectInWorld(w, ch, obj) {
+		return false
+	}
+	switch ch := ch.(type) {
+	case *MobInstance:
+		return mobCarriedWeight(ch)+obj.GetWeight() <= mobMaxCarryWeight(ch) &&
+			len(ch.Inventory)+1 <= mobMaxCarryCount(ch)
+	case *Player:
+		count := 0
+		if ch.Inventory != nil {
+			count = ch.Inventory.GetItemCount()
+		}
+		return count+1 <= ch.MaxCarryItems() &&
+			ch.CarriedWeight()+obj.GetWeight() <= ch.MaxCarryWeight()
+	default:
+		return false
+	}
 }
 
 // IsCorpseObj returns true if the object prototype is a corpse.

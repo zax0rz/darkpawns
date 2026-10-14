@@ -10,6 +10,7 @@
 # depth-case: lua.bind-direction
 # depth-case: lua.bind-iscorpse
 # depth-case: lua.bind-canget
+# depth-case: lua.bind-canget-world-actor
 # depth-case: lua.bind-item-check
 
 [fixture]
@@ -43,6 +44,11 @@ say("direction n=" .. direction(12296, 12281) .. " far=" .. direction(12296, 122
 elseif (what == "obj") then
 local o = ch.objs[1]
 say("obj " .. o.name .. " corpse=" .. tostring(iscorpse(o)) .. " canget=" .. tostring(canget(o)) .. " shop=" .. tostring(item_check(o)))
+elseif (what == "invisible") then
+local o = ch.objs[1]
+obj_extra(o, "set", 5)
+aff_flags(me, "remove", 3)
+say("canget invisible=" .. tostring(canget(o)) .. " flag=" .. tostring(obj_flagged(o, 5)))
 else
 return FALSE
 end
@@ -91,4 +97,5 @@ say see
 say fight
 say dir
 say obj
+say invisible
 say plain words

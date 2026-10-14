@@ -327,6 +327,28 @@ func canSeeObject(to Actor, obj *ObjectInstance) bool {
 	return true
 }
 
+// canSeeObjectInWorld adds LIGHT_OK's room-light check to CAN_SEE_OBJ. The
+// generic canSeeObject helper is also used by boundaries without a World
+// reference, so callers with a live room must use this predicate when C does
+// not let blindness, darkness, or an invisible flag bypass object selection
+// (src/utils.h:515-542).
+func canSeeObjectInWorld(w *World, to Actor, obj *ObjectInstance) bool {
+	if !canSeeObject(to, obj) {
+		return false
+	}
+	if w == nil {
+		return true
+	}
+	sub, ok := to.(visibilitySubject)
+	if !ok {
+		return true
+	}
+	if holy, ok := sub.(holyLightSubject); ok && holy.GetHolyLight() {
+		return true
+	}
+	return !w.IsRoomDark(to.GetRoom()) || sub.IsAffected(affInfravision)
+}
+
 // cap capitalizes the first rune of s.
 // C: CAP(st) — *st = UPPER(*st)
 func cap(s string) string {
