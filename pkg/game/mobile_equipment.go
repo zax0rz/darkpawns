@@ -220,23 +220,7 @@ func (w *World) EquipMobileObject(m *MobInstance, obj *ObjectInstance, pos int) 
 }
 
 func (m *MobInstance) modifyEquipmentRaceHateLocked(mod int) {
-	if mod <= 0 {
-		for i, v := range m.RaceHates {
-			if v == -mod {
-				m.RaceHates[i] = -1
-				return
-			}
-		}
-		if mod < 0 {
-			return
-		}
-	}
-	for i, v := range m.RaceHates {
-		if v == -1 {
-			m.RaceHates[i] = mod
-			return
-		}
-	}
+	modifyRaceHateSlots(&m.RaceHates, mod)
 }
 
 // C affect_total strips and reapplies every equipment modifier in WEAR order.

@@ -13,3 +13,4 @@ perform_wear	wear	wear.slot-occupied	D2	command	unit-green	TestPerformWearGates	
 do_wear	wear	wear.fill-word-parse	D2	command	oracle-green	equipment-fillword	interpreter.c:1265	C do_wear parses with two_arguments; Go doWear used strings.Fields. Wear-local routing fix.
 get_obj_in_list_vis	wear	wear.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get.
 find_all_dots	wear	wear.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get.
+do_wield	wield	wear.player-race-hate-mobile-dispatch	D3	command	oracle-green	wear-race-hate-pulse	src/handler.c:205-238; src/mobact.c:236-258	Stock dagger VNUM 5200 is wielded through the command, then the race-18 mobile pulse targets its wearer. TestRaceHateEquipmentRebuildAndRemoval covers player wield/remove plus mobile dispatch; R5h removal made it fail.
