@@ -378,7 +378,27 @@ and that is recorded here rather than silently assumed.
 Each gate was run on its own with its exit status checked. Census lines are
 filled in below as each train's final combined census completes.
 
-<!-- CENSUS-LINES -->
+One full combined census per train (`scripts/census.sh start --combined`),
+run on the branch's final, rebased tip. Each line is the tool's own report,
+verbatim.
+
+| Train | Run | Report line |
+|---|---|---|
+| DP-1435 | `dp-1371-dp-1435-final-combined` | *pending* |
+| DP-1433 | `dp-1371-dp-1433-final-combined` | *pending* |
+| DP-1429 | `dp-1371-dp-1429-final-combined` | *pending* |
+| DP-1430 | `dp-1371-dp-1430-final-combined` | *pending* |
+
+Gates, per branch, each run separately with its exit status checked:
+`make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`,
+`go test ./pkg/game/...`, `go test -race ./pkg/game/... ./pkg/scripting/...`,
+`golangci-lint run ./...`, `make deadcode-ratchet`, `make fidelity-depth`,
+`make fidelity-units`, `make string-census`, `gosec -severity=high -quiet ./...`.
+All twelve pass on all four train branches and on this handoff branch.
+
+PRs: #1974 (DP-1435), #1975 (DP-1433), #1976 (DP-1430), #1977 (DP-1429),
+#1978 (this handoff).
+
 
 ## Notes for review
 
