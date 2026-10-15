@@ -1,0 +1,41 @@
+c_site	function	classification	case_ids	notes
+src/sedit.c:565	sedit_products_menu	proven	sedit.products-menu	The product menu header is emitted by the boundary scenario's P choice.
+src/sedit.c:573	sedit_products_menu	proven	sedit.products-menu	The product-list row is emitted and compared in the boundary scenario.
+src/sedit.c:581	sedit_products_menu	proven	sedit.products-menu	The product menu choices and prompt are emitted and compared in the boundary scenario.
+src/sedit.c:595	sedit_compact_rooms_menu	proven	sedit.rooms-menu	The compact-room menu starts with this blank-line write in the boundary scenario.
+src/sedit.c:603	sedit_compact_rooms_menu	proven	sedit.rooms-menu	The compact-room rows for the fixture's three entries are emitted and compared; the five-row line rewrite remains unproven.
+src/sedit.c:612	sedit_compact_rooms_menu	proven	sedit.rooms-menu	The compact-room menu choices and prompt are compared in the boundary scenario.
+src/sedit.c:626	sedit_rooms_menu	proven	sedit.rooms-menu	The long-room menu's raw clear-screen header is compared in the boundary scenario.
+src/sedit.c:633	sedit_rooms_menu	proven	sedit.rooms-menu	The long-room listing rows are compared in the boundary scenario.
+src/sedit.c:642	sedit_rooms_menu	proven	sedit.rooms-menu	The long-room menu choices and prompt are compared in the boundary scenario.
+src/sedit.c:656	sedit_namelist_menu	proven	sedit.namelist-menu	The namelist header is emitted when the boundary scenario selects T.
+src/sedit.c:663	sedit_namelist_menu	proven	sedit.namelist-menu	The namelist row is emitted and compared before adding an entry.
+src/sedit.c:671	sedit_namelist_menu	proven	sedit.namelist-menu	The namelist menu choices and prompt are compared in the boundary scenario.
+src/sedit.c:681	sedit_shop_flags_menu	proven	sedit.flags-menu	The shop-flags menu's leading blank line is emitted after selecting F.
+src/sedit.c:689	sedit_shop_flags_menu	proven	sedit.flags-menu	The flag choices are emitted and compared before toggling a flag.
+src/sedit.c:697	sedit_shop_flags_menu	proven	sedit.flags-menu	The current flag summary and prompt are compared after the F choice and toggle.
+src/sedit.c:707	sedit_no_trade_menu	gap-reachable	-	No existing proof selects E to emit the no-trade menu's leading blank line.
+src/sedit.c:715	sedit_no_trade_menu	gap-reachable	-	No existing proof selects E to emit the no-trade choices.
+src/sedit.c:723	sedit_no_trade_menu	gap-reachable	-	No existing proof selects E to emit the current trade mask and prompt.
+src/sedit.c:736	sedit_types_menu	proven	sedit.namelist-menu	The add-entry path selects A and emits the type menu's leading blank line.
+src/sedit.c:745	sedit_types_menu	proven	sedit.namelist-menu	The full item-type list is compared before selecting the type.
+src/sedit.c:748	sedit_types_menu	proven	sedit.namelist-menu	The type-selection prompt is compared before entering the new namelist.
+src/sedit.c:808	sedit_disp_menu	proven	sedit.interactive-olc;sedit.products-menu;sedit.rooms-menu;sedit.namelist-menu;sedit.flags-menu;sedit.menu-colors-on-raw;sedit.menu-colors-off-raw	The main-menu send is reached by OLC entry/redraw and both raw color modes.
+src/sedit.c:822	sedit_parse	gap-reachable	-	The existing empty-input test asserts that empty is accepted, but no proof supplies nonnumeric input to reach the refusal.
+src/sedit.c:834	sedit_parse	gap-reachable	-	No existing proof confirms the save choice Y and this in-memory acknowledgement.
+src/sedit.c:846	sedit_parse	gap-reachable	-	The boundary scenario answers N at save confirmation; no proof supplies an invalid response.
+src/sedit.c:847	sedit_parse	gap-reachable	-	The boundary scenario answers N at save confirmation; no proof reaches the repeated prompt after an invalid response.
+src/sedit.c:859	sedit_parse	proven	sedit.confirm-save	The changed-shop boundary scenario quits and compares this save-confirmation prompt before answering N.
+src/sedit.c:866	sedit_parse	proven	sedit.keeper-validation	TestSeditKeeperValidationKeepsPrompt asserts the exact keeper VNUM prompt.
+src/sedit.c:950	sedit_parse	gap-reachable	-	The empty-numeric test consumes this prompt but does not assert its bytes; no R5h proof is mapped.
+src/sedit.c:954	sedit_parse	gap-reachable	-	The string-edit test consumes this prompt but does not assert its bytes; no R5h proof is mapped.
+src/sedit.c:967	sedit_parse	gap-reachable	-	No existing proof chooses D in the namelist menu to reach the delete-entry prompt.
+src/sedit.c:980	sedit_parse	gap-reachable	-	No existing proof chooses A in the product menu to reach the add-product prompt.
+src/sedit.c:985	sedit_parse	gap-reachable	-	No existing proof chooses D in the product menu to reach the delete-product prompt.
+src/sedit.c:998	sedit_parse	gap-reachable	-	No existing proof chooses A in the room menu to reach the add-room prompt.
+src/sedit.c:999	sedit_parse	gap-reachable	-	The second add-room prompt is reached with the first prompt, but no existing proof chooses A in the room menu.
+src/sedit.c:1013	sedit_parse	gap-reachable	-	No existing proof chooses D in the room menu to reach the delete-room prompt.
+src/sedit.c:1064	sedit_parse	proven	sedit.keeper-validation	TestSeditKeeperValidationKeepsPrompt asserts the missing-mobile response after entering a numeric keeper VNUM.
+src/sedit.c:1095	sedit_parse	proven	sedit.namelist-menu	The boundary scenario selects a type and compares the prompt before entering the new keyword.
+src/sedit.c:1107	sedit_parse	gap-reachable	-	No existing proof adds a product with a missing object VNUM.
+src/sedit.c:1124	sedit_parse	gap-reachable	-	No existing proof adds a room with a missing room VNUM.
