@@ -1,0 +1,14 @@
+c_site	function	classification	case_ids	notes
+src/handler.c:654	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the strength-zero send and checks C's direct bytes (R1/R5e/R5h).
+src/handler.c:657	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the intelligence-zero send and checks C's direct bytes (R1/R5e/R5h).
+src/handler.c:660	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the wisdom-zero arm, which shares the intelligence text, and checks C's direct bytes (R1/R5e/R5h).
+src/handler.c:663	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the charisma-zero send and checks C's direct bytes (R1/R5e/R5h).
+src/handler.c:668	check_for_bad_stats	proven	equipment.live-zero-stats	The live equipment bad-stat matrix reaches the dexterity-zero send and checks the exact direct line before the shared suffering damage path (R1/R5e/R5h).
+src/handler.c:705	equip_char	gap-reachable	-	Player wear/wield of an anti-alignment item reaches this TO_CHAR act, but the existing mobile-loot proof does not exercise the player recipient branch; add a real player-dispatch proof (R1/R2/R5e/R5h).
+src/handler.c:707	equip_char	proven	mobile.loot-wear-boundary	The real attitude-loot wear path reaches this TO_ROOM act; the observer assertion pins its exact bytes and order after the wear message (R1/R3/R5e/R5h).
+src/handler.c:715	equip_char	gap-reachable	-	A player wearing an item barred to the player's class reaches this TO_CHAR act; no proof asserts its exact bytes and real command path yet (R1/R2/R5e/R5h).
+src/handler.c:1057	update_char_objects	gap-reachable	-	C point_update invokes this held-light value-two countdown branch at src/limits.c:523; Go UpdateCharObjects is currently not called and has different message bytes (R1/R2/R5e/R5h).
+src/handler.c:1059	update_char_objects	gap-reachable	-	C point_update invokes this room audience for the held-light warning at src/limits.c:523; Go UpdateCharObjects is currently not called and has different message bytes (R1/R2/R3/R5e/R5h).
+src/handler.c:1062	update_char_objects	gap-reachable	-	C point_update invokes this held-light value-one expiry branch at src/limits.c:523; Go UpdateCharObjects is currently not called and has different message bytes (R1/R2/R5e/R5h).
+src/handler.c:1063	update_char_objects	gap-reachable	-	C point_update invokes this room audience for the light expiry at src/limits.c:523; Go UpdateCharObjects is currently not called and has different message bytes (R1/R2/R3/R5e/R5h).
+src/handler.c:1070	update_char_objects	gap-reachable	-	C point_update reaches this crumble notice when an expired held light has no affects, then extracts it; Go UpdateCharObjects is currently not called (R1/R2/R4/R5e/R5h).
