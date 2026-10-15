@@ -739,6 +739,10 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillPalm)
 
+	if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
+		return SkillResult{Success: false, MessageToCh: "Your arms are already full!\r\n"}
+	}
+
 	if objName == "" {
 		return SkillResult{Success: false, MessageToCh: "Palm what?\r\n"}
 	}

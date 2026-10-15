@@ -70,13 +70,13 @@ src/new_cmds.c:707	do_otouch	proven	orgasm.male-target-state	The cited depth pro
 src/new_cmds.c:709	do_otouch	proven	orgasm.male-target-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:717	do_otouch	proven	orgasm.female-actor-no-followup	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:719	do_otouch	proven	orgasm.female-actor-no-followup	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
-src/new_cmds.c:744	do_trip	gap-reachable		Reachable no-skill refusal before the subcommand bypass; no depth case drives it.
-src/new_cmds.c:751	do_trip	gap-reachable		Reachable peaceful-room refusal before target lookup; no depth case drives it.
-src/new_cmds.c:761	do_trip	gap-reachable		Reachable missing-target refusal when the actor has no FIGHTING target; no depth case drives it.
-src/new_cmds.c:768	do_trip	gap-reachable		Reachable mounted gate after target fallback; no depth case drives it.
-src/new_cmds.c:774	do_trip	gap-reachable		Reachable self-target response with the source-specific LFCR bytes; no depth case drives it.
-src/new_cmds.c:779	do_trip	gap-reachable		Reachable flying-victim gate after target/mount checks; no depth case drives it.
-src/new_cmds.c:784	do_trip	gap-reachable		Reachable sleeping-victim gate after target/mount/fly checks; no depth case drives it.
+src/new_cmds.c:744	do_trip	proven	trip.gate-output-bytes	The registered trip command reaches this exact early-return response; output assertions cover the branch and an adjacent learned-skill control (R1/R2/R5e/R5h).
+src/new_cmds.c:751	do_trip	proven	trip.gate-output-bytes	The registered trip command reaches this exact early-return response; output assertions cover the branch and an adjacent learned-skill control (R1/R2/R5e/R5h).
+src/new_cmds.c:761	do_trip	proven	trip.gate-output-bytes	The registered trip command reaches this exact early-return response; output assertions cover the branch and an adjacent learned-skill control (R1/R2/R5e/R5h).
+src/new_cmds.c:768	do_trip	proven	trip.gate-output-bytes	The registered trip command reaches this exact early-return response; output assertions cover the branch and an adjacent learned-skill control (R1/R2/R5e/R5h).
+src/new_cmds.c:774	do_trip	proven	trip.gate-output-bytes	The registered trip command reaches this exact early-return response; output assertions cover the branch and an adjacent learned-skill control (R1/R2/R5e/R5h).
+src/new_cmds.c:779	do_trip	proven	trip.gate-output-bytes	The registered trip command reaches this exact early-return response; output assertions cover the branch and an adjacent learned-skill control (R1/R2/R5e/R5h).
+src/new_cmds.c:784	do_trip	proven	trip.gate-output-bytes	The registered trip command reaches this exact early-return response; output assertions cover the branch and an adjacent learned-skill control (R1/R2/R5e/R5h).
 src/new_cmds.c:829	do_slug	proven	slug.no-skill;slug.no-argument	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:840	do_slug	proven	slug.no-argument;slug.target-missing;slug.fighting-fallback	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:847	do_slug	proven	slug.self-target	The named self-target case reaches this exact refusal call (R1/R5e).
@@ -134,8 +134,8 @@ src/new_cmds.c:1279	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-messag
 src/new_cmds.c:1281	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:1283	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:1288	do_bite	proven	bite.vampire-sloppy-feeding;bite.vampire-fighting-damage;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
-src/new_cmds.c:1322	full_moon	gap-reachable		The weather pulse calls full_moon at src/weather.c:74; no depth case drives the flagged-player transformation messages yet.
-src/new_cmds.c:1324	full_moon	gap-reachable		The weather pulse calls full_moon at src/weather.c:74; no depth case drives the flagged-player transformation messages yet.
+src/new_cmds.c:1322	full_moon	gap-blocked		Stop tier: full_moon walks C descriptor_list and transforms only playing descriptors; Go has no ordered descriptor snapshot, so exact connected-session reach and cross-player output order depend on session lifecycle/transport (src/weather.c:72-75; src/comm.c:1591).
+src/new_cmds.c:1324	full_moon	gap-blocked		Stop tier: full_moon walks C descriptor_list and transforms only playing descriptors; Go has no ordered descriptor snapshot, so exact connected-session reach and cross-player output order depend on session lifecycle/transport (src/weather.c:72-75; src/comm.c:1591).
 src/new_cmds.c:1410	do_whois	proven	finger.entry-gate;finger.no-arguments;finger.whois-alias;finger.offline-player	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:1415	do_whois	gap-blocked		Stop tier: do_whois has read the saved player record through load_char at src/new_cmds.c:1413; this output depends on saved identity/persistence and is not being promoted or changed.
 src/new_cmds.c:1421	do_whois	gap-blocked		Stop tier: do_whois has read the saved player record through load_char at src/new_cmds.c:1413; this output depends on saved identity/persistence and is not being promoted or changed.
@@ -177,8 +177,8 @@ src/new_cmds.c:2003	do_compare	proven	compare.missing-objects;compare.armor-resu
 src/new_cmds.c:2010	do_compare	proven	compare.missing-objects;compare.armor-result;compare.armor-slot-mismatch	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2052	do_compare	proven	compare.weapon-result;compare.armor-result	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2095	do_compare	proven	compare.weapon-result;compare.armor-result	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
-src/new_cmds.c:2118	do_palm	gap-reachable		Reachable carry-count / missing-item refusal; palm has no current depth manifest.
-src/new_cmds.c:2120	do_palm	gap-reachable		Reachable carry-count / missing-item refusal; palm has no current depth manifest.
+src/new_cmds.c:2118	do_palm	proven	palm.early-output-gates	The registered command reaches this exact early-return response; direct-dispatch byte assertions include the corresponding branch control (R1/R2/R5e/R5h).
+src/new_cmds.c:2120	do_palm	proven	palm.early-output-gates	The registered command reaches this exact early-return response; direct-dispatch byte assertions include the corresponding branch control (R1/R2/R5e/R5h).
 src/new_cmds.c:2142	do_berserk	proven	berserk.no-skill;berserk.one-argument;berserk.fighter-special;mob.fighter-berserk	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2151	do_berserk	proven	berserk.one-argument;berserk.already-affected;berserk.draw-before-affected;berserk.fighter-special;mob.fighter-berserk	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2163	do_berserk	proven	berserk.one-argument;berserk.success;berserk.failure;berserk.fighter-special;mob.fighter-berserk	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
@@ -207,7 +207,7 @@ src/new_cmds.c:2383	do_parry	proven	parry.success-actor;parry.success-victim;par
 src/new_cmds.c:2385	do_parry	proven	parry.success-actor;parry.success-victim;parry.success-observer;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2402	do_circle	proven	circle.no-arg;circle.target-missing;circle.fighting-target-fallback	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2408	do_circle	proven	circle.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
-src/new_cmds.c:2413	do_circle	gap-reachable		Reachable already-mutual-fighting refusal before weapon/mount/skill checks; circle proofs do not arrange this fighting pair.
+src/new_cmds.c:2413	do_circle	proven	circle.mutual-fighting-gate	The registered command reaches this exact early-return response; direct-dispatch byte assertions include the corresponding branch control (R1/R2/R5e/R5h).
 src/new_cmds.c:2418	do_circle	proven	circle.no-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2423	do_circle	proven	circle.wrong-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:2430	do_circle	proven	circle.mounted	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
