@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_palm	palm	palm.entry-draw	D5	rng	unit-green	TestPalmEntryDrawPrecedesEveryGate	src/new_cmds.c:2110-2122	DP-1436: do_palm draws number(1,101) before one_argument and every gate, so the no-argument return and the item and weight refusals all consume the draw; Go previously returned before drawing and deferred the draw until after the checks. The retained mortal-obj-batch scenario exercises the bare palm entry (R3/R5e/R5h).

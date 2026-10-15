@@ -708,6 +708,12 @@ func DoReview(ch *Player, world *World) SkillResult {
 
 // DoPalm implements do_palm() — conceal a small object up your sleeve.
 func DoPalm(ch *Player, objName string, world *World) SkillResult {
+	// C draws its success roll before every gate, including the no-argument
+	// return and the item and weight checks (src/new_cmds.c:2112).
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101)
+	prob := ch.GetSkill(SkillPalm)
+
 	if objName == "" {
 		return SkillResult{Success: false, MessageToCh: "Palm what?\r\n"}
 	}
@@ -732,11 +738,6 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	if targetItem.GetWeight() > 1 {
 		return SkillResult{Success: false, MessageToCh: "That's too big to palm!\r\n"}
 	}
-
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	percent := dprng.Number(1, 101)
-	prob := ch.GetSkill(SkillPalm)
 
 	if prob > percent {
 		// Success — move to inventory
