@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_trip	trip	trip.gate-output-bytes	D2	command	unit-green	TestTripOutputGatesMatchCAtRealDispatch	new_cmds.c:742-785; interpreter.c:783	Registered trip dispatch pins the exact no-skill, peaceful, missing-target, mounted, self-target, flying-target, and sleeping-target responses, including C's LFCR self-target bytes and typo (R1/R2/R5e/R5h).
