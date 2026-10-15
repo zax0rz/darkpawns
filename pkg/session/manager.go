@@ -551,14 +551,22 @@ func (m *Manager) SetCombatMessageFunc() {
 			enqueueCombatMessage(s, message)
 		}
 	}
+	// A character still inside Crash_load has a descriptor but no registered
+	// session: C's skill_message writes ch->desc there too (the DEX arm's
+	// TYPE_SUFFERING line, src/fight.c:1534-1535). Only the entry sinks the
+	// replay installs reach it, so the live path is unchanged.
 	sendToChar := func(body combat.Combatant, message string) {
 		if s := m.combatSession(body); s != nil {
 			enqueueCombatMessage(s, message)
+		} else if p, ok := body.(*game.Player); ok {
+			p.DeliverEntryText(message)
 		}
 	}
 	sendRaw := func(body combat.Combatant, message string) {
 		if s := m.combatSession(body); s != nil {
 			s.sendRawEvent(message)
+		} else if p, ok := body.(*game.Player); ok {
+			p.DeliverEntryRaw(message)
 		}
 	}
 

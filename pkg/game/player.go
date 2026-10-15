@@ -286,6 +286,9 @@ type Player struct {
 	// writes ch->desc directly, and the entering character has neither a world
 	// reference nor a session-registry entry yet. Runtime only.
 	entryTextSink func(string) `json:"-"`
+	// entryRawSink is entryTextSink's byte-exact twin for C's bare color
+	// sends (CCRED/CCNRM through send_to_char) during the same window.
+	entryRawSink func(string) `json:"-"`
 
 	// RentedOut marks a character whose objects went into the rent file, so
 	// extraction does not drop them: a legal quitter (Crash_rentsave,
