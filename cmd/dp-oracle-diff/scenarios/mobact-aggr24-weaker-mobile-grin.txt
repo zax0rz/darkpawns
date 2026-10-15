@@ -1,0 +1,54 @@
+# depth-case: mobact.peaceful-first-hit-enrolment
+# Room 8162 is ROOM_PEACEFUL (flags 28, lib/world/wld/80.wld). C's AGGR24 +
+# AGGRESSIVE full-health scan selects the visible weaker daemon courier and
+# grins, but hit() never calls set_fighting: damage()'s peaceful arm is gated
+# on FIGHTING(victim) != ch, so the FIRST swing is refused and nothing is
+# enrolled — the courier lives. The port's arms enrol first, which let the
+# damage land and killed the courier until DP-1438's deferred initial attack.
+# The God observer toggles NOHASSLE so the earlier player-facing arms leave it
+# alone; no exits keep the pulse deterministic.
+# C path: src/mobact.c:324-336 -> src/fight.c:1815, 1335-1342.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4914 1 8162 49
+set-mob-flag 4914 AGGRESSIVE
+spawn-mob 4909 1 8162 49
+replace-room-exits 8162 none
+
+[setup:oracle]
+Mordane
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8162
+
+[setup:port]
+Mordane
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+nohassle
+goto 8162
+
+[probe]
+~dpclock pulse 40
+look
