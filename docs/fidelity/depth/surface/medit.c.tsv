@@ -1,0 +1,34 @@
+c_site	function	classification	case_ids	notes
+src/medit.c:465	medit_disp_positions	proven	medit.submenus-colors-on-raw	The color-on submenu scenario selects position display and compares its leading newline.
+src/medit.c:469	medit_disp_positions	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the position rows.
+src/medit.c:471	medit_disp_positions	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the position prompt.
+src/medit.c:484	medit_disp_sex	proven	medit.submenus-colors-on-raw	The color-on submenu scenario opens the sex table and compares its leading newline.
+src/medit.c:488	medit_disp_sex	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the sex rows.
+src/medit.c:490	medit_disp_sex	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the sex prompt.
+src/medit.c:502	medit_disp_attack_types	proven	medit.submenus-colors-on-raw	The color-on submenu scenario opens the attack table and compares its leading newline.
+src/medit.c:506	medit_disp_attack_types	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the attack rows.
+src/medit.c:508	medit_disp_attack_types	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the attack prompt.
+src/medit.c:521	medit_disp_mob_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario opens NPC flags and compares the leading newline.
+src/medit.c:528	medit_disp_mob_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the NPC-flag rows.
+src/medit.c:536	medit_disp_mob_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the current flags and prompt.
+src/medit.c:546	medit_disp_aff_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario opens AFF flags and compares the leading newline.
+src/medit.c:553	medit_disp_aff_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the AFF-flag rows.
+src/medit.c:561	medit_disp_aff_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the current AFF flags and prompt.
+src/medit.c:569	medit_disp_script_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario selects script flags and compares the literal terminal-clear bytes.
+src/medit.c:576	medit_disp_script_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the script-flag rows.
+src/medit.c:584	medit_disp_script_flags	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the current script flags and prompt.
+src/medit.c:596	medit_disp_races	proven	medit.submenus-colors-on-raw	The color-on submenu scenario selects race display and compares its leading newline.
+src/medit.c:602	medit_disp_races	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the race rows.
+src/medit.c:604	medit_disp_races	proven	medit.submenus-colors-on-raw	The color-on submenu scenario compares the race prompt.
+src/medit.c:648	medit_disp_menu	proven	medit.menu-colors-on-raw;medit.menu-colors-off-raw;medit.interactive-olc	The raw color-on/off scenarios compare the full menu bytes; TestMeditNewMobDefaults also reaches this emission for an unsaved mobile.
+src/medit.c:674	medit_disp_menu	proven	medit.menu-colors-on-raw;medit.menu-colors-off-raw;medit.interactive-olc	The raw color-on/off scenarios compare the second menu block; TestMeditNewMobDefaults also reaches this emission for an unsaved mobile.
+src/medit.c:685	medit_disp_script_menu	proven	medit.new-mob-script-rejected	TestMeditScriptMenuNewMobRejected checks this exact refusal substring on the unsaved-mob script path.
+src/medit.c:704	medit_disp_script_menu	proven	medit.submenus-colors-on-raw	The color-on submenu scenario opens the existing mobile's script menu and compares its rows and prompt.
+src/medit.c:722	medit_parse	proven	medit.numerical-gate	TestMeditFieldEditing submits empty numerical input and asserts this exact gate response.
+src/medit.c:737	medit_parse	proven	medit.confirm-save	TestMeditSaveAndDiscard confirms save and asserts the exact acknowledgement.
+src/medit.c:749	medit_parse	proven	medit.confirm-save	TestMeditSaveAndDiscard submits an invalid save answer and asserts this exact error.
+src/medit.c:750	medit_parse	proven	medit.confirm-save	TestMeditSaveAndDiscard asserts the exact retry prompt after the invalid answer.
+src/medit.c:764	medit_parse	proven	medit.confirm-save	TestMeditSaveAndDiscard asserts this exact dirty-quit prompt before exercising invalid, discard, and save answers.
+src/medit.c:900	medit_parse	proven	medit.value-prompt	TestMeditFieldEditing now asserts the exact numerical-field prompt before submitting an empty value.
+src/medit.c:904	medit_parse	proven	medit.numerical-gate	TestMeditFieldEditing asserts the exact text-entry prompt before changing the alias.
+src/medit.c:982	medit_parse	proven	medit.script-shallow	TestMeditScriptShallowBehavior selects script name and asserts this exact prompt.
