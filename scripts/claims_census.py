@@ -8,8 +8,24 @@ import re
 import subprocess
 import time
 
-GOOD = {"PASS", "EXPECTED", "EXPECTED_UNSTABLE"}
+# DRAW (DP-1427): transcripts match but the RNG draw streams diverge. It is
+# byte-good, so it never changes a verdict; draw parity reports it on its own
+# oracle-draw-parity line.
+GOOD = {"PASS", "EXPECTED", "EXPECTED_UNSTABLE", "DRAW"}
 KINDS = GOOD | {"FAIL", "STALE", "UNPINNABLE", "INFRA", "TIMEOUT"}
+SUMMARY_KINDS = KINDS - {"DRAW"}
+
+
+def draw_parity():
+    return os.environ.get("CENSUS_DRAW_PARITY") == "1"
+
+
+def draw_line(label, rows):
+    """The draw-parity tally for a projection: rows keyed by (seed, name)."""
+    draws = sorted(pair for pair, (kind, _) in rows.items() if kind == "DRAW")
+    seeds = sorted({seed for seed, _ in rows})
+    return (f"oracle-draw-parity: {label} pairs={len(rows)} seeds={','.join(map(str, seeds))} "
+            f"draw_divergent={len(draws)}")
 
 
 def atomic(path, text):
@@ -47,6 +63,8 @@ def invoke(run, runner, seed, names, jobs, recheck=False):
                ORACLE_REGRESSION_RESULTS=str(results),
                ORACLE_REGRESSION_DUMP=str(directory / f"{suffix}-dump"),
                ORACLE_REGRESSION_LOG_ROOT=str(directory / f"{suffix}-logs"))
+    if draw_parity():
+        env["ORACLE_REGRESSION_DRAW_PARITY"] = "1"
     seen = set()
     with (directory / f"{suffix}.log").open("w") as log:
         process = subprocess.Popen([runner], env=env, stdout=subprocess.PIPE,
@@ -54,7 +72,7 @@ def invoke(run, runner, seed, names, jobs, recheck=False):
         for line in process.stdout:
             log.write(line)
             log.flush()
-            match = re.match(r"^(PASS|FAIL|EXPECTED|EXPECTED_UNSTABLE|UNPINNABLE|STALE|TIMEOUT|INFRA) (\S+)", line)
+            match = re.match(r"^(PASS|FAIL|EXPECTED|EXPECTED_UNSTABLE|UNPINNABLE|STALE|TIMEOUT|INFRA|DRAW) (\S+)", line)
             if match and match[2] in names:
                 seen.add(match[2])
                 if not recheck:
@@ -68,7 +86,8 @@ def invoke(run, runner, seed, names, jobs, recheck=False):
 def summarize(rows, seed, elapsed):
     counts = Counter(kind for kind, _ in rows.values())
     return (f"oracle-claims: seed={seed} pairs={len(rows)} " +
-            " ".join(f"{kind.lower()}={counts[kind]}" for kind in sorted(KINDS)) +
+            " ".join(f"{kind.lower()}={counts[kind]}" for kind in sorted(SUMMARY_KINDS)) +
+            (f" draw={counts['DRAW']}" if draw_parity() else "") +
             f" elapsed={elapsed:.3f}s")
 
 
@@ -106,6 +125,8 @@ def main():
     verdict = "NOT_CLEAN" if any(kind not in GOOD for kind, _ in all_rows.values()) else ("CLEAN_AFTER_RECHECK" if rechecked else "CLEAN")
     (run / "claims-summary.txt").write_text(summarize(all_rows, "all", time.monotonic()-started) + "\n")
     (run / "claims-verdict").write_text(verdict + "\n")
+    if draw_parity():
+        print(draw_line("claims", all_rows), flush=True)
     return 1 if verdict == "NOT_CLEAN" else 0
 
 

@@ -179,12 +179,8 @@ do_start() {
 		esac
 	done
 	[[ -n "$name" ]] || usage
-	# DP-1427 v1: draw parity runs the full (or targeted) seed-1 corpus only;
-	# it is not yet merged with the claims/combined drivers.
-	if [[ $draw_parity == 1 ]] && (( claims || combined )); then
-		printf 'census: --draw-parity cannot be combined with --claims or --combined yet\n' >&2
-		exit 2
-	fi
+	# DP-1427 v2: --draw-parity works with the full, targeted, --claims and
+	# --combined drivers. Claims pairs give the multi-seed draw measurement.
 	[[ "$combined" == 0 || ( "$claims" == 0 && -z "$scenarios" ) ]] || die "--combined cannot be combined with --claims or --scenarios"
 	[[ "$claims" == 0 || -z "$scenarios" ]] || die "--claims and --scenarios are mutually exclusive"
 	[[ "$jobs" =~ ^[1-9][0-9]*$ ]] || die "--jobs needs a positive integer"

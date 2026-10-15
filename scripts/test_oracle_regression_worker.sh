@@ -70,6 +70,7 @@ run_case() {
 	)
 	status=$?
 	set -e
+	last_output=$output
 	assert_eq 0 "$status" "$name worker exit"
 
 	# Column 3 is the worker's wall seconds (timing, not classification):
@@ -152,6 +153,12 @@ pin_dup() {
 
 run_case immediate-pass P no "" $'PASS\tfake' 1 1
 run_case draw-confirmed "X|X" no "" $'DRAW\tfake\t5' 2 2
+# Parallel workers interleave in the census log, so the confirmed draw line
+# must carry its scenario and seed (DP-1427 v2).
+if [[ "$last_output" != *$'draw-parity\tMISMATCH\tscenario=fake\tseed=1\tstream=7'* ]]; then
+	fail "draw-confirmed: draw line must name the scenario and seed: $last_output"
+fi
+pass_count=$((pass_count + 1))
 run_case draw-flaky "X|P" no "" $'INFRA\tfake\t5' 2 2
 run_case immediate-stale P yes "" $'STALE\tfake' 1 1
 run_case immediate-pinned-confirmed "D:cast:$one_a|D:cast:$one_a" yes "$(pin_one "$one_a" immediate-pinned-confirmed)" $'EXPECTED\tfake' 2 2
