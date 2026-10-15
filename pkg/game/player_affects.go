@@ -322,6 +322,41 @@ func (p *Player) SetEntryTextSink(sink func(string)) {
 	p.mu.Unlock()
 }
 
+// SetEntryRawSink installs (or clears, with nil) the raw twin of the entry
+// text sink: color codes C sends with send_to_char around a combat line
+// (src/fight.c skill_message) must reach the descriptor without a line ending.
+func (p *Player) SetEntryRawSink(sink func(string)) {
+	p.mu.Lock()
+	p.entryRawSink = sink
+	p.mu.Unlock()
+}
+
+// DeliverEntryText sends msg through the entry text sink and reports whether
+// one was installed. Combat delivery uses it for a character still inside
+// Crash_load, which has a descriptor (C ch->desc) but no registered session.
+func (p *Player) DeliverEntryText(msg string) bool {
+	p.mu.RLock()
+	sink := p.entryTextSink
+	p.mu.RUnlock()
+	if sink == nil {
+		return false
+	}
+	sink(msg)
+	return true
+}
+
+// DeliverEntryRaw is DeliverEntryText for byte-exact raw sends.
+func (p *Player) DeliverEntryRaw(msg string) bool {
+	p.mu.RLock()
+	sink := p.entryRawSink
+	p.mu.RUnlock()
+	if sink == nil {
+		return false
+	}
+	sink(msg)
+	return true
+}
+
 // SendLiteral sends a message whose bytes are exactly C's send_to_char
 // output — no terminator is appended and the renderer folds no line
 // endings. C's final write path emits a string's own spelling untransformed
