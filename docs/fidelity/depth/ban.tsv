@@ -9,3 +9,5 @@ do_ban	ban	ban.invalid-flag	D1	command	oracle-green	ban-depth	ban.c:173-180	An u
 do_ban	ban	ban.missing-site	D1	command	oracle-green	ban-depth	ban.c:173-176	A missing second token emits C's usage line.
 do_ban	ban	ban.site-truncate	D4	state	oracle-green	ban-depth	ban.c:189-193	The stored site is truncated to BANNED_SITE_LENGTH (50) before later duplicate comparison.
 isbanned	ban	ban.literal-asterisk	D5	state	unit-green	TestIsBannedLiteralAsterisk	ban.c:86-104	The login/site-check callee uses strstr; an asterisk in a site pattern is literal, not a wildcard.
+do_unban	unban	ban.unban-no-argument	D1	command	oracle-green	ban-depth	src/ban.c:219-222	A filler-only value parses to an empty one_argument result and reaches the exact missing-site response through the real command path (R1/R2/R5e/R5h).
+do_unban	unban	ban.unban-not-found	D1	command	oracle-green	ban-depth	src/ban.c:224-234	An absent site reaches C's exact not-currently-banned response through the real command path (R1/R2/R5e/R5h).
