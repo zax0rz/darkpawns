@@ -260,20 +260,25 @@ func specSnake(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
 		return false
 	}
+	// C short-circuits its draw behind FIGHTING(ch) and the same-room check
+	// (src/spec_procs.c:338-339); a snake with no same-room victim draws
+	// nothing. The victim is the FIGHTING body, not the mobile's separate
+	// hunt target.
+	vict := me.GetFightingBody()
+	if vict == nil || vict.GetRoom() != me.GetRoom() {
+		return false
+	}
+	// #nosec G404 — game RNG, not cryptographic
 	if number(0, 32-me.GetLevel()) != 0 {
 		return false
 	}
-	melee := mobMeleeTarget(me)
-	if melee == nil {
-		return false
-	}
 	w.actMessage(
-		me.RoomVNum, me, melee,
+		me.RoomVNum, me, vict,
 		"",                         // TO_CHAR (mob doesn't need a message)
 		me.GetName()+" bites you!", // TO_VICT
-		me.GetName()+" bites "+melee.GetName()+"!", // TO_ROOM
+		me.GetName()+" bites "+vict.GetName()+"!", // TO_ROOM
 	)
-	spells.Cast(me, melee, spells.SpellPoison, me.GetLevel(), w)
+	spells.Cast(me, vict, spells.SpellPoison, me.GetLevel(), w)
 	return true
 }
 
@@ -372,15 +377,23 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 
-	var vict *Player
-	for _, p := range w.GetPlayersInRoom(me.RoomVNum) {
-		if p.GetFightingBody() == me && number(0, 4) == 0 {
-			vict = p
+	// C walks world[ch->in_room].people — players and mobiles in prepend
+	// order — and draws number(0,4) only for a body that is fighting the
+	// caster (src/spec_procs.c:417-420); the fallback is FIGHTING(ch), any
+	// body.
+	var vict combat.Combatant
+	for _, body := range w.GetAllCharsInRoom(me.RoomVNum) {
+		c, ok := body.(combat.Combatant)
+		if !ok {
+			continue
+		}
+		if c.GetFightingBody() != nil && c.GetFightingBody() == combat.Combatant(me) && number(0, 4) == 0 {
+			vict = c
 			break
 		}
 	}
 	if vict == nil {
-		vict, _ = me.GetFightingBody().(*Player)
+		vict = me.GetFightingBody()
 	}
 	if vict == nil {
 		return false
@@ -397,9 +410,9 @@ func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	case spellRoll <= 11:
 		castMobSpell(w, me, vict, spells.SpellShockingGrasp)
 	case spellRoll == 12:
-		if !mobIsEvil(me) && vict.GetAlignment() <= -350 {
+		if !mobIsEvil(me) && combatantAlignment(vict) <= -350 {
 			castMobSpell(w, me, vict, spells.SpellDispelEvil)
-		} else if mobIsEvil(me) && vict.GetAlignment() >= 350 {
+		} else if mobIsEvil(me) && combatantAlignment(vict) >= 350 {
 			castMobSpell(w, me, vict, spells.SpellDispelGood)
 		}
 	case spellRoll == 13:
