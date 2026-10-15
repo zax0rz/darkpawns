@@ -65,6 +65,31 @@ func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interfa
 		}
 	}
 
+	// The target's own line (src/spell_parser.c:336-343), or "" when C sends
+	// none: no target, the caster itself, or a target in another room.
+	victLine := ""
+	if tch != nil && !selfTarget(ch, tch) && sameRoom(ch, tch) {
+		if chPsionic {
+			victLine = "$n focuses $s will on you..."
+		} else {
+			spellForTarget := spellName
+			if chClass != getClass(tch) {
+				spellForTarget = obfuscated
+			}
+			victLine = "$n stares at you and utters the words, '" + spellForTarget + "'."
+		}
+	}
+
+	// A live world renders through perform_act, so each listener's PERS and
+	// OBJS decide whether it sees the caster, target and object by name.
+	if d, ok := world.(interface {
+		SaySpellDeliver(ch, tch, tobj interface{}, sameClass, otherClass, vict string) bool
+	}); ok && d.SaySpellDeliver(ch, tch, tobj,
+		strings.Replace(format, "%s", spellName, 1),
+		strings.Replace(format, "%s", obfuscated, 1), victLine) {
+		return
+	}
+
 	// Send to room — each person sees either real or obfuscated name
 	sendToRoom(format, ch, tobj, tch, spellName, obfuscated, world)
 
