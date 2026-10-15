@@ -38,6 +38,7 @@ K
 Y
 <ENTER>
 1
+look
 
 [warmup]
 goto 8162
