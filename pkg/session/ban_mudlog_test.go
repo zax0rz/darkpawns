@@ -211,6 +211,17 @@ func TestUnbanOneArgumentParsing(t *testing.T) {
 	}
 }
 
+func TestUnbanUnknownSiteDispatch(t *testing.T) {
+	m, _ := mudlogTestWorld(t)
+	actor := mudlogObserver(t, m, "Godactor", 40, game.PrfLog2)
+	if err := ExecuteCommand(actor, "unban", []string{"missing.example"}); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := strings.Join(drainSessionText(t, actor), ""), "That site is not currently banned.\r\n"; got != want {
+		t.Fatalf("unban unknown-site output = %q, want %q", got, want)
+	}
+}
+
 // readBanFileLine reads the ban file the command wrote, proving the file write
 // follows the producer instead of replacing it.
 func readBanFileLine(t *testing.T, path string) (string, error) {
