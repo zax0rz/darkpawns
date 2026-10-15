@@ -192,12 +192,19 @@ Exit codes: **5** when the bytes match but the draws diverge (a coincidence gree
 when the bytes diverge (the draw line is still printed); and an error, never a pass, when
 the oracle wrote no draw log (an oracle without the seam).
 
-Corpus-wide: `scripts/census.sh start --draw-parity --name <run>` (full or `--scenarios`,
-seed 1; not yet combinable with `--claims`/`--combined`). A reproduced exit 5 is a `DRAW`
-row; it is counted on its own `oracle-draw-parity:` summary line and never changes the
-byte verdict. The fastest diagnosis loop: grep `src/` for the first mismatching C call's
-range (for example `number(0,20)`), verify the call path (R5e), and find the Go code that
-should make the same draw.
+Corpus-wide: add `--draw-parity` to any census: full, `--scenarios`, `--claims`, or
+`--combined`. A reproduced exit 5 is a `DRAW` row. It is byte-clean, so it never changes a
+verdict. It is counted on its own `oracle-draw-parity:` line in `summary.txt` and listed
+in `draw-results.tsv`, and the per-scenario `draw-parity MISMATCH` lines name their `scenario=` and `seed=`
+(in `census.log` for a full or targeted run, and in `seedN/initial.log` for `--claims` and `--combined`). With `--combined`, the line reports both projections:
+
+    oracle-draw-parity: full pairs=1171 seeds=1 draw_divergent=32 | claims pairs=3277 seeds=1,2,3,5,8 draw_divergent=…
+
+The claims half is the multi-seed measurement: every claimed `(seed, scenario)` pair. So a
+batch needs one `--combined --draw-parity` run, not a byte census plus a separate draw run.
+The fastest diagnosis loop: grep `src/` for the first mismatching C call's range (for
+example `number(0,20)`), verify the call path (R5e), and find the Go code that should make
+the same draw.
 
 ### Fixture rule: the setups must draw alike
 

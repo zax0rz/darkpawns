@@ -222,7 +222,10 @@ main() {
 			draw_attempts=$((draw_attempts + 1))
 			if ((draw_attempts == 2)); then
 				write_result DRAW 5
-				grep -m1 '^draw-parity' "$attempt_log" >&2 || true
+				# Name the scenario and seed: parallel workers interleave in the
+				# census log, so an anonymous line can't be joined to its row.
+				awk -v s="$scenario" -v seed="${seed:-1}" 'BEGIN { FS = OFS = "\t" }
+					/^draw-parity/ { $2 = $2 OFS "scenario=" s OFS "seed=" seed; print; exit }' "$attempt_log" >&2 || true
 				return 0
 			fi
 			if ((attempt == max_attempts)); then
