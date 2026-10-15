@@ -57,7 +57,7 @@ func TestSpecRecharger(t *testing.T) {
 	}
 	ch.SetGold(10000)
 	specRecharger(w, ch, recharger, "recharge", "rock")
-	if msg := lastMsg(); !strings.Contains(msg, "not a wand or staff") {
+	if msg := lastMsg(); !strings.Contains(msg, "does that look like a wand or staff to you?") {
 		t.Errorf("non-wand item: got %q", msg)
 	}
 	ch.Inventory.RemoveItem(notAWand)
@@ -69,7 +69,7 @@ func TestSpecRecharger(t *testing.T) {
 	}
 	ch.SetGold(0)
 	specRecharger(w, ch, recharger, "recharge", "wand")
-	if msg := lastMsg(); !strings.Contains(msg, "cannot afford") {
+	if msg := lastMsg(); !strings.Contains(msg, "You don't have enough gold!") {
 		t.Errorf("insufficient gold: got %q", msg)
 	}
 	if wand.GetValue(1) != 10 || wand.GetValue(2) != 5 {
@@ -108,7 +108,7 @@ func TestSpecRecharger(t *testing.T) {
 	}
 	ch.SetGold(500)
 	specRecharger(w, ch, recharger, "recharge", "staff")
-	if msg := lastMsg(); !strings.Contains(msg, "already fully charged") {
+	if msg := lastMsg(); !strings.Contains(msg, "does not need recharging, stop wasting my time!") {
 		t.Errorf("fully charged item: got %q", msg)
 	}
 	if fullWand.GetValue(1) != 10 || fullWand.GetValue(2) != 10 {

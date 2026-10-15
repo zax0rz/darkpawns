@@ -1,0 +1,5 @@
+c_site	function	classification	case_ids	notes
+src/db.c:242	do_reload	proven	reload.unknown-option	The registered reload command reaches C's unknown-option refusal (R1/R2/R5h).
+src/db.c:246	do_reload	proven	reload.named-options;reload.all-options	The named and all-files reload proofs reach C's bare Okay acknowledgement (R1/R2/R5h).
+src/db.c:1682	vnum_mobile	proven	vnum.mob-success	The registered vnum mob command renders matching prototypes through this send (R1/R2/R3/R5h).
+src/db.c:1701	vnum_object	proven	vnum.obj-success	The registered vnum obj command renders matching prototypes through this send (R1/R2/R3/R5h).

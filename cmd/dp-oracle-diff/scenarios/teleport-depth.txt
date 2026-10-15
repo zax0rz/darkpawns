@@ -7,6 +7,7 @@
 # depth-case: teleport.self-target
 # depth-case: teleport.missing-destination
 # depth-case: teleport.invalid-room
+# depth-case: teleport.same-level-refusal
 # depth-case: teleport.success-audience
 # depth-case: teleport.two-argument
 
@@ -98,10 +99,70 @@ Y
 <ENTER>
 1
 
+[setup:oracle:actor]
+Teleportactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Teleportactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peerhigh]
+Teleportpeerhigh
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peerhigh]
+Teleportpeerhigh
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
 teleport Teleportpeer 8162
 teleport Teleportobserver 8162
+advance Teleportactor 34
+advance Teleportpeerhigh 34
+teleport Teleportactor 8162
+teleport Teleportpeerhigh 8162
 
 [probe]
 teleport Nobody 8162
@@ -109,3 +170,6 @@ teleport Teleportwizard 8162
 teleport Teleportpeer
 teleport Teleportpeer 999999
 teleport Teleportpeer 8161 trailing words are ignored
+
+[probe:actor]
+teleport Teleportpeerhigh 8161

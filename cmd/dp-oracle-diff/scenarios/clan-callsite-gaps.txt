@@ -31,6 +31,9 @@
 # depth-case: clan.enroll-immortal-target
 # depth-case: clan.apply-low-level
 # depth-case: clan.apply-fee
+# depth-case: clan.expel-output-gates
+# depth-case: clan.demote-output-gates
+# depth-case: clan.promote-output-gates
 
 [fixture]
 empty-players
@@ -237,6 +240,53 @@ force Clanmate clan set privilege enroll nope
 force Clanmate clan set privilege enroll 99
 force Clanapply clan set privilege enroll 1
 force Clanmate clan quit
+
+# Exact real-dispatch controls for expel, demote, and promote's remaining
+# output branches. The primary is a clan god; the three mortal bodies span
+# clanless, rank-one, and equal/higher-rank gates.
+force Clanmate clan expel Clanapply
+force Clanmate clan demote Clanapply
+force Clanmate clan promote Clanapply
+
+force Clanimmlow clan expel Clanapply Wolves
+force Clanimmlow clan demote Clanapply Wolves
+
+force Clangod clan expel Nobody Missing
+force Clangod clan demote Nobody Missing
+force Clangod clan promote Nobody Missing
+
+clan set privilege expel 2 Wolves
+force Clanapply clan expel Nobody
+clan set privilege expel 1 Wolves
+clan set privilege demote 2 Wolves
+force Clanapply clan demote Nobody
+clan set privilege demote 1 Wolves
+clan set privilege promote 2 Wolves
+force Clanapply clan promote Nobody
+clan set privilege promote 1 Wolves
+
+force Clangod clan expel Nobody Wolves
+force Clangod clan demote Nobody Wolves
+force Clangod clan promote Nobody Wolves
+force Clanapply clan expel Clanother
+force Clanapply clan demote Clanother
+force Clanapply clan promote Clanother
+
+# Reuse the former Tiger leader as a rank-zero applicant, then drive rank-one,
+# successful change, top-rank, and mortal-over-rank outputs through C dispatch.
+force Clanother clan quit
+force Clanother clan apply Wolves
+force Clangod clan promote Clanother Wolves
+force Clangod clan enroll Clanother Wolves
+force Clangod clan demote Clanother Wolves
+force Clangod clan promote Clanother Wolves
+force Clangod clan demote Clanother Wolves
+force Clangod clan promote Clanother Wolves
+force Clangod clan promote Clanother Wolves
+force Clangod clan promote Clanother Wolves
+force Clanapply clan expel Clanother
+force Clanapply clan demote Clanother
+force Clanapply clan promote Clanother
 
 clan destroy Wolves
 clan destroy Tigers

@@ -471,10 +471,13 @@ func CmdTrip(s SessionInterface, args []string) error {
 	if ch == nil {
 		return nil
 	}
+	world := s.GetWorld()
+	if world != nil && world.RoomHasFlag(ch.GetRoom(), "peaceful") {
+		return s.SendMessage("This room just has such a peaceful, easy feeling...\r\n")
+	}
 
 	var target combat.Combatant
 	var found bool
-	world := s.GetWorld()
 	if len(args) > 0 {
 		targetName := strings.Join(args, " ")
 		target, _, found = game.FindTargetInRoom(world, ch.GetRoom(), targetName, ch)
@@ -491,7 +494,7 @@ func CmdTrip(s SessionInterface, args []string) error {
 	}
 
 	if target == ch {
-		return s.SendMessage("You trip over your shoe laces...\r\n")
+		return s.SendMessage("You trip over your shoe laces...\n\r")
 	}
 
 	result := game.DoTrip(ch, target, world)
@@ -1473,9 +1476,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 		if result.RetaliateHitUnenrolled {
 			if engine, ok := s.GetCombatEngine().(interface {
-				PerformUnenrolledInitialAttack(combat.Combatant, combat.Combatant) error
+				PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
 			}); ok && engine != nil {
-				if err := engine.PerformUnenrolledInitialAttack(target, ch); err != nil {
+				if err := engine.PerformDeferredInitialAttack(target, ch); err != nil {
 					slog.Error("unenrolled retaliation failed", "attacker", target.GetName(), "target", ch.GetName(), "error", err)
 				}
 				return

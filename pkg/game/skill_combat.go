@@ -330,7 +330,7 @@ func DoTrip(ch *Player, target combat.Combatant, world *World) SkillResult {
 	}
 
 	if target.GetPosition() <= combat.PosSleeping {
-		return SkillResult{Success: false, MessageToCh: "What's the point of doing that now?"}
+		return SkillResult{Success: false, MessageToCh: "Whats the point of doing that now?"}
 	}
 
 	// Formula: percent = number(1,121) + MAX(GET_LEVEL(vict)-GET_LEVEL(ch),0)
@@ -725,7 +725,7 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 	}
 
 	// Already fighting someone who is fighting you back — too busy.
-	if ch.GetFightingBody() != nil && ch.GetFightingBody() == target && target.GetFightingBody() == ch {
+	if fighting := ch.GetFightingBody(); fighting != nil && fighting.GetFightingBody() == ch {
 		return SkillResult{Success: false, MessageToCh: "You're a little too busy right now!\r\n"}
 	}
 

@@ -2161,18 +2161,17 @@ func castEnchantArmor(level int, ch, ovict interface{}) {
 	}
 }
 
-// castCreateWater — fills a drink container with water.
-// C source: spells.c:87-120. Poisons non-water liquid. Drink name helpers are cosmetic.
+// castCreateWater — fills a drink container with water or changes its liquid to slime.
+// C source: spells.c:87-120. Drink-name helpers mutate the targeting keywords only.
 func castCreateWater(level int, ch, ovict interface{}) {
 	_ = level
-	if ovict == nil {
+	if ch == nil || ovict == nil {
 		return
 	}
 
 	type typeFlagger interface{ GetTypeFlag() int }
 	tf, ok := ovict.(typeFlagger)
 	if !ok || tf.GetTypeFlag() != 17 { // ITEM_DRINKCON
-		sendToCaster(ch, "It's not a drink container.\r\n")
 		return
 	}
 
@@ -2194,9 +2193,11 @@ func castCreateWater(level int, ch, ovict interface{}) {
 
 	// LIQ_WATER = 0, LIQ_SLIME = 9 (from structs.h)
 	if liquidType != 0 && current != 0 {
-		// Poison non-water liquid — set to slime
-		ds.SetValue(2, 9) // LIQ_SLIME
-		sendToCaster(ch, "The water mixes with the liquid...\r\n")
+		// C: name_from_drinkcon(); set LIQ_SLIME; name_to_drinkcon() —
+		// src/spells.c:99-103 and src/act.item.c:861-896. This arm is silent.
+		clearDrinkconName(ovict)
+		ds.SetValue(2, 9)               // LIQ_SLIME
+		setDrinkconName(ovict, "juice") // drinknames[LIQ_SLIME], src/constants.c:955
 		return
 	}
 
@@ -2206,9 +2207,46 @@ func castCreateWater(level int, ch, ovict interface{}) {
 	if water > 0 {
 		ds.SetValue(2, 0) // LIQ_WATER
 		ds.SetValue(1, current+water)
-		sendToCaster(ch, "It is filled.\r\n")
+		if weightSetter, ok := ovict.(interface {
+			GetWeight() int
+			SetWeight(int)
+		}); ok {
+			weightSetter.SetWeight(weightSetter.GetWeight() + water)
+		}
+		clearDrinkconName(ovict)
+		setDrinkconName(ovict, "water") // drinknames[LIQ_WATER], src/constants.c:946
+		if desc, ok := ovict.(interface{ GetShortDesc() string }); ok {
+			// C act("$p is filled.", ..., TO_CHAR) uses OBJS(obj, ch),
+			// so the caster sees the object's short description (src/comm.c:2439).
+			sendToCaster(ch, fmt.Sprintf("%s is filled.\r\n", desc.GetShortDesc()))
+		}
 	} else {
 		sendToCaster(ch, "You cannot create water in that!\r\n")
+	}
+}
+
+// clearDrinkconName and setDrinkconName mirror the keyword-only mutations of
+// C's name_from_drinkcon/name_to_drinkcon; neither changes the short description.
+func clearDrinkconName(ovict interface{}) {
+	type keywordEditor interface {
+		GetKeywords() string
+		SetLiveKeywords(string)
+	}
+	if obj, ok := ovict.(keywordEditor); ok {
+		keywords := obj.GetKeywords()
+		if space := strings.IndexByte(keywords, ' '); space >= 0 {
+			obj.SetLiveKeywords(keywords[space+1:])
+		}
+	}
+}
+
+func setDrinkconName(ovict interface{}, liquidKeyword string) {
+	type keywordEditor interface {
+		GetKeywords() string
+		SetLiveKeywords(string)
+	}
+	if obj, ok := ovict.(keywordEditor); ok {
+		obj.SetLiveKeywords(liquidKeyword + " " + obj.GetKeywords())
 	}
 }
 

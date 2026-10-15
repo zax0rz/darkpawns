@@ -1,0 +1,10 @@
+c_site	function	classification	case_ids	notes
+src/file-edit.c:63	tedit_string_cleanup	proven	tedit.append-and-abort	The real tedit/luaedit descriptor abort path reaches this exact room act; the scenario checks the editor cleanup and actor-excluding room audience (R1/R2/R3/R5e/R5h).
+src/file-edit.c:98	list_directory	proven	luaedit.entry-list	A populated luaedit listing with at least four entries reaches the every-third-entry CRLF call and compares the three-column output (R1/R2/R5e/R5h).
+src/file-edit.c:101	list_directory	proven	luaedit.entry-list	The populated luaedit listing compares each %-26.26s filename field emitted by this call (R1/R2/R5e/R5h).
+src/file-edit.c:107	list_directory	proven	luaedit.empty-list	The registered luaedit empty-directory path emits exactly None.\r\n from this branch; TestLuaEditListMatchesCFilterAndThreeColumnLayout asserts the complete output (R1/R2/R5h).
+src/file-edit.c:109	list_directory	proven	luaedit.entry-list	The nonempty root listing scenario reaches and compares the trailing CRLF call after the entries (R1/R2/R5e/R5h).
+src/file-edit.c:143	view_file	proven	luaedit.root-view;luaedit.subdirectory-view	Both below-HIGOD view paths read a valid file and compare the content bytes sent by this call (R1/R2/R3/R5e/R5h).
+src/file-edit.c:156	general_file_edit	proven	luaedit.editor-entry	The real luaedit editor-entry scenario compares the shared editor-help prefix followed by this exact Edit file below block (R1/R2/R5e/R5h).
+src/file-edit.c:164	general_file_edit	proven	luaedit.editor-entry	The existing-file editor-entry scenario compares the current CRLF buffer sent by this call (R1/R2/R3/R5e/R5h).
+src/file-edit.c:171	general_file_edit	proven	luaedit.editor-entry;tedit.append-and-abort	The registered editor-entry scenarios compare the exact room act and its actor-excluding audience (R1/R2/R3/R5e/R5h).

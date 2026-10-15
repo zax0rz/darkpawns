@@ -562,7 +562,11 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		}
 		if target.player.HasPLRFlag(game.PlrVampire) {
 			target.player.SetPlrFlag(game.PlrVampire, false)
-			target.player.SetAffect(game.AffVampire, false)
+			if target.player.IsAffected(game.AffVampire) {
+				target.player.SetAffect(game.AffVampire, false)
+			}
+			// C clamps the wizard's mana here, despite clearing the victim's
+			// vampire flag (act.wizard.c:2188-2189).
 			if s.player.GetMana() > s.player.GetMaxMana() {
 				s.player.SetMana(s.player.GetMaxMana())
 			}
@@ -571,19 +575,14 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		}
 		if target.player.HasPLRFlag(game.PlrWerewolf) {
 			target.player.SetPlrFlag(game.PlrWerewolf, false)
-			target.player.SetAffect(game.AffWerewolf, false)
+			if target.player.IsAffected(game.AffWerewolf) {
+				target.player.SetAffect(game.AffWerewolf, false)
+			}
 			s.Send("Un-wered!\r\n")
 			target.Send("You're no longer a creature of the night!\r\n")
 		}
 
-		target.player.Lock()
-		hadAffects := target.player.ActiveAffects != nil
-		if hadAffects {
-			target.player.ActiveAffects = nil
-		}
-		target.player.Unlock()
-		if hadAffects {
-			target.player.AffectTotal()
+		if target.player.RemoveAllActiveAffects() {
 			target.Send("There is a brief flash of light!\r\nYou feel slightly different.\r\n")
 			s.Send("All spells removed.\r\n")
 		} else {

@@ -66,7 +66,7 @@ src/spec_procs2.c:1372	evillead	unreachable		SPECIAL(evillead) has no ASSIGNMOB 
 src/spec_procs2.c:1398	little_boy	unreachable		SPECIAL(little_boy) has no ASSIGNMOB entry in the live assign_mobiles table (src/spec_assign.c:85-511).
 src/spec_procs2.c:1417	ira	unreachable		SPECIAL(ira) has no ASSIGNMOB entry in the live assign_mobiles table (src/spec_assign.c:85-511).
 src/spec_procs2.c:1443	take_to_jail	proven	mob.take-to-jail-outlaw-warning	The cited depth proof executes this C output callsite (R1/R5e).
-src/spec_procs2.c:1462	take_to_jail	gap-reachable		This branch is reachable for an eligible fighting evil in take_to_jail when GET_ALIGNMENT(FIGHTING(evil)) >= 0. Existing protection-intervention proof exercises a different branch (R1/R5e).
+src/spec_procs2.c:1462	take_to_jail	proven	mob.take-to-jail-alignment-intervention-output	The assigned vnum-8001 mob activity path pins the warning bytes and room audience for the good-alignment target; the negative-alignment control must not warn or start combat (R1/R2/R5e/R5h).
 src/spec_procs2.c:1482	jail	proven	room.jail-commandless-body	The cited depth proof executes this C output callsite (R1/R5e).
 src/spec_procs2.c:1483	jail	proven	room.jail-commandless-body	The cited depth proof executes this C output callsite (R1/R5e).
 src/spec_procs2.c:1484	jail	proven	room.jail-commandless-body	The cited depth proof executes this C output callsite (R1/R5e).
@@ -82,7 +82,7 @@ src/spec_procs2.c:1665	portal_room	unreachable		SPECIAL(portal_room) has no ASSI
 src/spec_procs2.c:1667	portal_room	unreachable		SPECIAL(portal_room) has no ASSIGNROOM entry in the live assign_rooms table (src/spec_assign.c:568-650).
 src/spec_procs2.c:1672	portal_room	unreachable		SPECIAL(portal_room) has no ASSIGNROOM entry in the live assign_rooms table (src/spec_assign.c:568-650).
 src/spec_procs2.c:1700	breed_killer	proven	mob.cityguard-breed-killer	The cited depth proof executes this C output callsite (R1/R5e).
-src/spec_procs2.c:1702	breed_killer	gap-reachable		The else-if arm is reachable when the visible nightbreed is no-hassle or the mob cannot speak and number(0,5) returns 0; current cityguard proof exercises only the line-1700 speech arm (R1/R3/R5e).
+src/spec_procs2.c:1702	breed_killer	proven	mob.breed-killer-low-growl-output	The assigned vnum-7900 autonomous dispatch pins the low-growl bytes on a zero roll and silence on a nonzero roll, with the next draw checking exact one-draw parity (R1/R2/R3/R5e/R5h).
 src/spec_procs2.c:1747	carrion	proven	room.carrion-spawn-audience	The cited depth proof executes this C output callsite (R1/R5e).
 src/spec_procs2.c:1763	bat_room	unreachable		SPECIAL(bat_room) has no ASSIGNROOM entry in the live assign_rooms table (src/spec_assign.c:568-650).
 src/spec_procs2.c:1780	bat	unreachable		SPECIAL(bat) has no ASSIGNMOB entry in the live assign_mobiles table (src/spec_assign.c:85-511).

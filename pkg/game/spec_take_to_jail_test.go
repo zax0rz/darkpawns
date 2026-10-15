@@ -82,6 +82,99 @@ func TestSpecTakeToJail_ReturnContractAndProtectionDelegation(t *testing.T) {
 	}
 }
 
+func TestSpecTakeToJailAlignmentInterventionOutput(t *testing.T) {
+	for _, test := range []struct {
+		name              string
+		defenderAlignment int
+		wantOutput        string
+		wantCombat        bool
+	}{
+		{
+			name:              "good-aligned target",
+			defenderAlignment: 0,
+			wantOutput:        "A city guard says, 'You just pissed me off, Evil!'\r\n",
+			wantCombat:        true,
+		},
+		{name: "evil-aligned target", defenderAlignment: -1},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			w, err := NewWorld(&parser.World{
+				Rooms: []parser.Room{{VNum: 1001, Name: "City Street"}},
+				Mobs: []parser.Mob{
+					{
+						VNum:        8001,
+						Keywords:    "city guard",
+						ShortDesc:   "a city guard",
+						LongDesc:    "A city guard is here.\r\n",
+						Level:       20,
+						Race:        1,
+						Alignment:   0,
+						HP:          parser.DiceRoll{Num: 1, Sides: 1, Plus: 100},
+						ActionFlags: []string{"spec"},
+					},
+					{
+						VNum:      99001,
+						Keywords:  "fighter",
+						ShortDesc: "a fighter",
+						LongDesc:  "A fighter is here.\r\n",
+						Level:     10,
+						Race:      1,
+						Alignment: test.defenderAlignment,
+						HP:        parser.DiceRoll{Num: 1, Sides: 1, Plus: 100},
+					},
+				},
+			})
+			if err != nil {
+				t.Fatalf("NewWorld: %v", err)
+			}
+			t.Cleanup(func() { w.StopAITicker() })
+			if name, assigned := GetMobSpecName(8001); !assigned || name != "take_to_jail" {
+				t.Fatalf("mob 8001 special = %q, assigned %v; want take_to_jail", name, assigned)
+			}
+
+			outputs := make(map[string]string)
+			w.MessageSink = func(name string, message []byte) { outputs[name] += string(message) }
+			evil := NewPlayer(1, "Evil", 1001)
+			evil.SetAlignment(-100)
+			evil.SetPosition(combat.PosFighting)
+			witness := NewPlayer(2, "Witness", 1001)
+			if err := w.AddPlayer(evil); err != nil {
+				t.Fatalf("AddPlayer evil: %v", err)
+			}
+			if err := w.AddPlayer(witness); err != nil {
+				t.Fatalf("AddPlayer witness: %v", err)
+			}
+			guard, err := w.SpawnMob(8001, 1001)
+			if err != nil {
+				t.Fatalf("SpawnMob guard: %v", err)
+			}
+			defender, err := w.SpawnMob(99001, 1001)
+			if err != nil {
+				t.Fatalf("SpawnMob defender: %v", err)
+			}
+			evil.SetFightingBody(defender)
+			defender.SetFightingBody(evil)
+			defender.SetPosition(combat.PosFighting)
+
+			engine := &cityguardTestCombatEngine{}
+			w.SetCombatEngine(engine)
+			w.MobileActivity()
+
+			for _, recipient := range []string{"Evil", "Witness"} {
+				if got := outputs[recipient]; got != test.wantOutput {
+					t.Errorf("%s bytes = %q, want %q", recipient, got, test.wantOutput)
+				}
+			}
+			if got := len(engine.starts); (got == 1) != test.wantCombat {
+				t.Errorf("combat starts = %d, want combat %v", got, test.wantCombat)
+			}
+			if test.wantCombat && engine.starts[0] != [2]string{guard.GetName(), evil.GetName()} {
+				t.Errorf("combat pair = %v, want guard against evil player", engine.starts[0])
+			}
+		})
+	}
+}
+
 func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
 	parsed := &parser.World{Rooms: []parser.Room{
 		{VNum: 1001, Name: "Street"},

@@ -7,7 +7,9 @@
 # depth-case: ban.duplicate
 # depth-case: ban.invalid-flag
 # depth-case: ban.missing-site
-# C-first vehicle for ban.c:132-210. The first-player God satisfies the
+# depth-case: ban.unban-no-argument
+# depth-case: ban.unban-not-found
+# C-first vehicle for ban.c:132-244. The first-player God satisfies the
 # LVL_GRGOD command gate; all writes use the harness's disposable Go runtime
 # and copied C lib tree.
 
@@ -60,3 +62,5 @@ ban nonsense site.example
 ban all
 ban new 012345678901234567890123456789012345678901234567890123456789
 ban all 01234567890123456789012345678901234567890123456789
+unban the
+unban missing.example
