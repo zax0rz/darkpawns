@@ -211,7 +211,11 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 func visibilityWorld(observer Actor) *World {
 	switch body := observer.(type) {
 	case *Player:
-		return body.world
+		// worldRef is set by World.AddPlayer and read under the player's lock,
+		// as Player.SendMessage does.
+		body.mu.RLock()
+		defer body.mu.RUnlock()
+		return body.worldRef
 	case *MobInstance:
 		return body.world
 	}

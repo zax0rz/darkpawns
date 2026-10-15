@@ -517,10 +517,6 @@ func (w *World) AddPlayer(p *Player) error {
 		}
 	}
 
-	// CAN_SEE's LIGHT_OK arm resolves the observer's room light through the
-	// owning world (src/utils.h:515-517).
-	p.world = w
-
 	// Database-backed players already have persistent IDs. In a no-DB
 	// differential/runtime session, new characters start at ID 0; retain that
 	// first ID for fixture ownership, but give later zero-ID players distinct
