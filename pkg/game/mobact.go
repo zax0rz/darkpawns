@@ -227,7 +227,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if best != nil {
 				w.RemoveItemFromRoom(best, ch.RoomVNum)
 				ch.AddToInventory(best)
-				w.roomMessage(ch.RoomVNum, fmt.Sprintf("%s gets %s.", ch.GetName(), best.GetShortDesc()))
+				Act(w, false, ch, nil, best, nil, "$n gets $p.", "", ToRoom)
 			}
 		}
 	}

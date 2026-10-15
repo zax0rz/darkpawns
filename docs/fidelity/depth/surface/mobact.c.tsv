@@ -1,0 +1,10 @@
+c_site	function	classification	case_ids	notes
+src/mobact.c:115	mobile_activity	proven	mob.scavenger-pickup-act	TestMobileActivityScavengerUsesCanGetVisibility drives the pickup through mobile activity and checks exact Act bytes for visible, invisible, and dark-room recipients; reverting the C-equivalent Act path fails (R1/R5e/R5h).
+src/mobact.c:252	mobile_activity	proven	mob.race-hate-warning-act	TestRaceHateEquipmentRebuildAndRemoval equips the real race-hate object, dispatches the mobile, and asserts the exact warning bytes with controlled draws (R1/R5e/R5h).
+src/mobact.c:274	mobile_activity	proven	mob.memory-warning-acts	TestMobileActivityMemoryWarningActs checks the speaking branch's exact observer bytes on the live pulse (R1/R5e/R5h).
+src/mobact.c:277	mobile_activity	proven	mob.memory-warning-acts	TestMobileActivityMemoryWarningActs checks the silent growl branch's exact observer bytes on the live pulse (R1/R5e/R5h).
+src/mobact.c:298	mobile_activity	proven	mob.helper-aid-act	TestMobileActivityHelperJumpsToAid checks exact room bytes and the target pair on the live pulse (R1/R5e/R5h).
+src/mobact.c:313	mobile_activity	proven	mobact.aggr24-player-room-acts	TestMobileActivityAggr24PlayerRoomActs checks exact grin bytes and order on the live pulse (R1/R5e/R5h).
+src/mobact.c:316	mobile_activity	proven	mobact.aggr24-player-room-acts	TestMobileActivityAggr24PlayerRoomActs checks the exact spoken taunt bytes and order on the live pulse (R1/R5e/R5h).
+src/mobact.c:318	mobile_activity	proven	mobact.aggr24-player-room-acts	TestMobileActivityAggr24PlayerRoomActs checks the exact second speech act, including its embedded line ending, on the live pulse (R1/R5e/R5h).
+src/mobact.c:333	mobile_activity	proven	mobact.aggr24-room-grin-act	TestMobileActivityAggr24WeakerMobileGrin checks exact observer bytes immediately before the live pulse's attack (R1/R5e/R5h).

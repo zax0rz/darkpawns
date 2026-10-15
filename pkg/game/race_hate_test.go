@@ -9,7 +9,9 @@ import (
 func TestRaceHateEquipmentRebuildAndRemoval(t *testing.T) {
 	w, combatEngine := newMobactTestWorld(t)
 	mob := newMobactTestMob(w, 9408, 18, 0, "sentinel")
-	player := newMobactTestPlayer(w, "RaceHateWearer")
+	mob.Proto().ShortDesc = "a race-hating sentinel"
+	player := newMobactSpeakingPlayer(t, w, "RaceHateWearer")
+	observer := newMobactSpeakingPlayer(t, w, "Observer")
 	item := NewObjectInstance(&parser.Obj{
 		VNum:      5200,
 		Keywords:  "race dagger",
@@ -27,9 +29,16 @@ func TestRaceHateEquipmentRebuildAndRemoval(t *testing.T) {
 		t.Fatalf("race hates after equip = %v, want %v", got, want)
 	}
 
+	out := captureOutput(w)
+	previous := mobactNumber
+	mobactNumber = func(_, _ int) int { return 0 }
+	t.Cleanup(func() { mobactNumber = previous })
 	w.mobileActivityForMob(mob)
 	if len(combatEngine.starts) != 1 || combatEngine.starts[0].defender != player.Name {
 		t.Fatalf("race-hate mobile dispatch did not attack wearer: %+v", combatEngine.starts)
+	}
+	if got, want := outputOf(out, observer.Name), "'Come to destroy my kin? Die!', exclaims a race-hating sentinel.\r\n"; got != want {
+		t.Fatalf("observer output = %q, want %q", got, want)
 	}
 
 	w.DoRemove(player, "dagger")
