@@ -328,18 +328,9 @@ func (w *World) mobPerformMove(m *MobInstance, dir int) {
 	}
 }
 
-// mobAttackPlayer makes a mob attack a player.
-func (w *World) mobAttackPlayer(m *MobInstance, target *Player) {
-	m.SetFightingBody(target)
-	target.SetFightingBody(m)
-	if err := m.Attack(target, w); err != nil {
-		slog.Warn("Attack failed in mobAttackPlayer", "mob", m.GetName(), "target", target.Name, "error", err)
-	}
-}
-
 // mobIsIntelligent checks if a mob is intelligent enough to open doors.
 func mobIsIntelligent(m *MobInstance) bool {
-	// Check mob prototype flags for intelligence
+	// Check mob prototype for intelligence
 	if m.Proto() != nil {
 		for _, f := range m.Proto().AffectFlags {
 			if f == "intelligent" {
@@ -350,13 +341,24 @@ func mobIsIntelligent(m *MobInstance) bool {
 	return false
 }
 
-// Mobile prey is selected only by check_for_bad_stats; existing player hunting
-// keeps its original attack path. C hunt_victim calls hit(ch, HUNTING(ch), -1).
-func (w *World) attackHuntingPrey(m *MobInstance, target combat.Combatant) {
-	if player, ok := target.(*Player); ok {
-		w.mobAttackPlayer(m, player)
-		return
+// mobAttackPlayer makes a mob attack a player through the shared mobile
+// hit() seam. C's mob command dispatch reaches do_kill → do_hit → hit()
+// (interpreter.c:525; act.offensive.c:126): the swing draws and damage()'s
+// gates run before anyone enrols. The old body set both FIGHTING fields by
+// hand and applied the placeholder fixed-damage Attack stub.
+func (w *World) mobAttackPlayer(m *MobInstance, target *Player) {
+	if err := w.mobHit(m, target); err != nil {
+		slog.Warn("mob attack failed", "mob", m.GetName(), "target", target.Name, "error", err)
 	}
+}
+
+// attackHuntingPrey ports hunt_victim's arrival attack: C calls
+// do_follow(ch, GET_NAME(HUNTING(ch)), 0, 0) and then
+// hit(ch, HUNTING(ch), TYPE_UNDEFINED) (src/graph.c:312, 340-345) — the
+// swing draws and runs damage()'s gates against the pre-enrolment state
+// before anyone enrols. hunt_victim itself refuses to path into the prey's
+// ROOM_PEACEFUL/ROOM_HOUSE room earlier (graph.c:300-303).
+func (w *World) attackHuntingPrey(m *MobInstance, target combat.Combatant) {
 	if err := w.mobHit(m, target); err != nil {
 		slog.Warn("mobile prey attack failed", "mob", m.GetName(), "target", target.GetName(), "error", err)
 	}

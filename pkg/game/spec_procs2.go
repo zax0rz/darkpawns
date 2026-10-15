@@ -584,9 +584,10 @@ func mobDoRescue(w *World, me, ally *MobInstance) {
 
 	me.SetFightingBody(tmp)
 	tmp.SetFightingBody(me)
-	// hit(vict, tmp_ch) calls damage(), which starts the NPC victim's side
-	// because stop_fighting(vict) just cleared it; the player already faces me.
-	victim.SetFightingBody(tmp)
+	// hit(vict, tmp_ch) (src/act.offensive.c:575) enrols the NPC victim inside
+	// damage(), because stop_fighting(vict) just cleared it; the player already
+	// faces me. Setting FIGHTING(vict) here would make the deferred entry treat
+	// the victim as already enrolled and skip its combat pair.
 
 	if w.combatEngine != nil {
 		if err := w.combatEngine.StartCombat(me, tmp); err != nil {

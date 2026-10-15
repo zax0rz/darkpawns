@@ -802,10 +802,12 @@ func cityguardRoomCombatants(w *World, roomVNum int) []combat.Combatant {
 	return actors
 }
 
-// mobHit mirrors C hit(): a mob special calls the synchronous combat entry,
-// not the placeholder damage helper used by older mob paths. The fallback
-// keeps focused spec tests useful when they intentionally omit a combat
-// engine; production worlds provide the canonical initial-attack seam.
+// mobHit mirrors C hit(): a mob special's swing consumes hit()'s draws and
+// runs damage()'s gates against the pre-enrolment state, enrolling both
+// sides at the damage point only when the damage is not refused
+// (fight.c:1318-1445). The fallback keeps focused spec tests useful when
+// they intentionally omit a combat engine; production worlds provide the
+// canonical initial-attack seam.
 func (w *World) mobHit(attacker *MobInstance, defender combat.Combatant) error {
 	if w.combatEngine == nil {
 		player, ok := defender.(*Player)
@@ -813,6 +815,11 @@ func (w *World) mobHit(attacker *MobInstance, defender combat.Combatant) error {
 			return fmt.Errorf("mob special fallback cannot attack non-player %q", defender.GetName())
 		}
 		return attacker.Attack(player, w)
+	}
+	if hitter, ok := w.combatEngine.(interface {
+		PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
+	}); ok {
+		return hitter.PerformDeferredInitialAttack(attacker, defender)
 	}
 	starter, hasDeferredStarter := w.combatEngine.(interface {
 		StartCombatFromMob(combat.Combatant, combat.Combatant) error

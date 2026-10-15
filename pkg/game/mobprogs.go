@@ -155,7 +155,10 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 		// #nosec G404
 		if dprng.Number(0, 2) != 0 || amount < 200 {
 			w.roomMessage(mob.GetRoom(), "$n says, 'Are you trying to bribe me?  That's against the law you know...'")
-			w.StartRoomCombat(mob, ch)
+			// C: hit(mob, ch, TYPE_UNDEFINED) after the refusal act
+			// (mobprog.c:220-226) — draws, then damage()'s gates, then
+			// enrolment.
+			w.mobFirstHit(mob, ch)
 		} else {
 			w.roomMessage(mob.GetRoom(), "$n glances around warily and says, 'I am off duty now...'")
 			w.roomMessage(mob.GetRoom(), "$n lays down and falls asleep on the job!")
