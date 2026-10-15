@@ -263,7 +263,9 @@ func TestMeditFieldEditing(t *testing.T) {
 
 	// Numerical gate: empty input at a numerical mode.
 	s.handleMeditInput("6") // level
-	readMsgText(t, s)       // drain "Enter new value"
+	if got := readMsgText(t, s); got != "\r\nEnter new value : " {
+		t.Fatalf("numerical value prompt = %q", got)
+	}
 	s.handleMeditInput("")
 	if got := readMsgText(t, s); got != "Field must be numerical, try again : " {
 		t.Fatalf("numerical gate = %q", got)

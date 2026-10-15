@@ -1,0 +1,36 @@
+c_site	function	classification	case_ids	notes
+src/redit.c:459	redit_disp_extradesc_menu	proven	redit.extra-description	The boundary scenario creates an extra description and later retries advancing before its fields are complete; both menu emissions are transcript-compared.
+src/redit.c:497	redit_disp_exit_menu	proven	redit.exit	The boundary scenario creates a north exit and returns through its menu while editing target, description, keywords, key, and door flags.
+src/redit.c:511	redit_disp_exit_flag_menu	proven	redit.exit	The boundary scenario selects exit-menu door flags and reaches this choice table.
+src/redit.c:521	redit_disp_flag_menu	proven	redit.flags	The boundary scenario opens the room flag table and submits an invalid value before a valid toggle.
+src/redit.c:528	redit_disp_flag_menu	proven	redit.flags	The boundary scenario transcript-compares each emitted room-flag row.
+src/redit.c:536	redit_disp_flag_menu	proven	redit.flags	The boundary scenario transcript-compares the room-flag summary and prompt after invalid and valid inputs.
+src/redit.c:545	redit_disp_sector_menu	proven	redit.sector	The boundary scenario opens the sector table and submits an out-of-range value before a valid selection.
+src/redit.c:552	redit_disp_sector_menu	proven	redit.sector	The boundary scenario transcript-compares each emitted sector row.
+src/redit.c:554	redit_disp_sector_menu	proven	redit.sector	The boundary scenario transcript-compares the sector prompt.
+src/redit.c:565	redit_disp_script_flags	gap-reachable	redit.script-flags	Existing-room script menu option 2 reaches this clear-screen output; no current proof selects the flags submenu.
+src/redit.c:572	redit_disp_script_flags	gap-reachable	redit.script-flags	Existing-room script menu option 2 reaches this flags table; no current proof selects the flags submenu.
+src/redit.c:580	redit_disp_script_flags	gap-reachable	redit.script-flags	Existing-room script menu option 2 reaches this summary and prompt; no current proof selects the flags submenu.
+src/redit.c:587	redit_disp_script_menu	gap-reachable	redit.new-room-script-refusal	Selecting the script menu on a newly created room reaches this refusal; existing coverage only enters the script menu for an already saved room.
+src/redit.c:598	redit_disp_script_menu	proven	redit.script	The boundary scenario selects the existing room's script menu; this leading newline is transcript-compared.
+src/redit.c:607	redit_disp_script_menu	proven	redit.script	The boundary scenario compares the script menu rows and choice prompt after naming the script.
+src/redit.c:662	redit_disp_menu	proven	redit.interactive-olc;redit.main-invalid	Initial and redisplayed main menus are compared in the current-room and boundary scenarios.
+src/redit.c:689	redit_parse	proven	redit.working-copy	TestReditWorkingCopySaveAndAbort asserts the exact successful save acknowledgement after confirmation.
+src/redit.c:697	redit_parse	gap-reachable	redit.confirm-retry	A changed room with an invalid save confirmation reaches this error; current scenarios answer n or y directly.
+src/redit.c:698	redit_parse	gap-reachable	redit.confirm-retry	A changed room with an invalid save confirmation reaches this retry prompt; current scenarios answer n or y directly.
+src/redit.c:709	redit_parse	proven	redit.main-invalid;redit.working-copy	The boundary scenario reaches the dirty-room quit prompt, and TestReditWorkingCopySaveAndAbort asserts its exact bytes.
+src/redit.c:715	redit_parse	gap-reachable	redit.name-prompt	Main-menu option 1 reaches the room-name prompt; existing coverage edits the name but drains this prompt without asserting it.
+src/redit.c:773	redit_parse	proven	redit.copy	The boundary scenario selects copy and reaches the source-room prompt before copying room 8004.
+src/redit.c:781	redit_parse	proven	redit.main-invalid	The boundary scenario submits z at the main menu and transcript-compares this invalid-choice response and redisplayed menu.
+src/redit.c:802	redit_parse	proven	redit.flags	The boundary scenario submits -1 in the room-flag menu and compares the error plus redisplay.
+src/redit.c:821	redit_parse	proven	redit.sector	The boundary scenario submits sector 16 and compares the invalid-choice response plus redisplay.
+src/redit.c:834	redit_parse	proven	redit.exit	The boundary scenario adds a north exit and reaches the target-room prompt.
+src/redit.c:849	redit_parse	proven	redit.exit	The boundary scenario selects exit keywords and transcript-compares this prompt.
+src/redit.c:853	redit_parse	proven	redit.exit	The boundary scenario selects the exit key field and transcript-compares this prompt.
+src/redit.c:869	redit_parse	gap-reachable	redit.exit-invalid-choice	An unrecognized exit-menu selection reaches this retry response; current exit coverage uses only valid selections.
+src/redit.c:879	redit_parse	proven	redit.exit	The boundary scenario submits nonexistent target 999999 and compares the missing-room response before retrying with 8004.
+src/redit.c:908	redit_parse	gap-reachable	redit.exit-door-flags-invalid	An exit door-flag value outside 0..2 reaches this error and menu; current coverage selects valid value 2.
+src/redit.c:957	redit_parse	proven	redit.extra-description	The boundary scenario creates an extra description and selects its keyword field, reaching this exact prompt.
+src/redit.c:972	redit_parse	proven	redit.extra-description	The boundary scenario tries to advance the incomplete extra description and compares this warning and menu redisplay.
+src/redit.c:999	redit_parse	gap-reachable	redit.copy-missing-room	A copy source VNUM absent from the world reaches this retry error; current coverage copies existing room 8004.
+src/redit.c:1021	redit_parse	proven	redit.script	The boundary scenario selects script name and transcript-compares this prompt before setting redit_test_script.
