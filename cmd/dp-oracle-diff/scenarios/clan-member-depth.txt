@@ -16,6 +16,12 @@
 # depth-case: clan.mortal-privilege
 # depth-case: clan.mortal-membership-success
 # depth-case: clan.mortal-membership-gates
+# depth-case: clan.mortal-applev-range
+# depth-case: clan.quit-disbands
+# depth-case: clan.enroll-not-requested
+# depth-case: clan.expel-not-member
+# depth-case: clan.demote-not-member
+# depth-case: clan.promote-not-member
 
 [fixture]
 empty-players

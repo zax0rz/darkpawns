@@ -1,0 +1,243 @@
+# Direct clan output-call proof for paths missing from the existing depth set.
+# The mortal applicant is first clanless, then applies at rank zero; the member
+# starts at the top rank; the level-31 peer is immortal but below LVL_GOD.
+
+# depth-case: clan.quit-immortal-refusal
+# depth-case: clan.sp-unknown-clan
+# depth-case: clan.sp-immortal-gate
+# depth-case: clan.sp-clanless
+# depth-case: clan.sp-no-influence
+# depth-case: clan.sp-nonnumeric-rank
+# depth-case: clan.sp-rank-range
+# depth-case: clan.create-too-long
+# depth-case: clan.create-immortal-leader
+# depth-case: clan.create-already-member
+# depth-case: clan.create-duplicate-name
+# depth-case: clan.create-underpowered
+# depth-case: clan.destroy-underpowered
+# depth-case: clan.who-clanless
+# depth-case: clan.members-clanless
+# depth-case: clan.apply-already-member
+# depth-case: clan.quit-member-remains
+# depth-case: clan.info-empty-world
+# depth-case: clan.enroll-clanless
+# depth-case: clan.enroll-immortal-gate
+# depth-case: clan.enroll-unknown-clan
+# depth-case: clan.enroll-low-influence
+# depth-case: clan.enroll-applicant-list
+# depth-case: clan.enroll-target-missing
+# depth-case: clan.enroll-other-clan
+# depth-case: clan.enroll-already-member
+# depth-case: clan.enroll-immortal-target
+# depth-case: clan.apply-low-level
+# depth-case: clan.apply-fee
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:applicant]
+Clanapply
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:applicant]
+Clanapply
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:lowgod]
+Clanimmlow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:lowgod]
+Clanimmlow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:other]
+Clanother
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:other]
+Clanother
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Clanmate level 1
+set player Clanapply level 1
+set player Clanapply gold 0
+set player Clanimmlow level 31
+set player Clanother level 1
+goto 8162
+force Clanimmlow goto 8162
+force Clanapply goto 8162
+force Clanmate goto 8162
+force Clanother goto 8162
+clan create Clanmate Wolves
+clan set ranks 3 Wolves
+clan set applev 1 Wolves
+clan create Clanother Tigers
+
+[probe]
+clan create Clanapply ThisClanNameIsFarLongerThanThirtyTwoCharacters
+clan create Clanimmlow ImmortalLeader
+clan create Clanmate ExistingMember
+clan create Clanapply Wolves
+clan enroll Clanapply Missing
+clan quit
+clan set privilege enroll Missing 2
+
+force Clanimmlow clan create Clangod TooWeak
+force Clanimmlow clan destroy Wolves
+force Clanimmlow clan set privilege enroll 1
+force Clanimmlow clan enroll Clanapply Wolves
+
+force Clanapply clan enroll Clanmate
+force Clanapply clan who
+force Clanapply clan members
+force Clanapply clan set privilege enroll 1
+
+clan set applev 30 Wolves
+force Clanapply clan apply Wolves
+clan set applev 1 Wolves
+clan set appfee 10000 Wolves
+force Clanapply clan apply Wolves
+clan set appfee 0 Wolves
+force Clanapply clan apply Wolves
+force Clanapply clan enroll Clanmate
+force Clanmate clan enroll
+
+set player Clanapply level 31
+force Clanmate clan enroll Clanapply
+set player Clanapply level 1
+force Clanmate clan enroll Clanapply
+force Clanmate clan set privilege enroll 2
+force Clanapply clan enroll
+force Clanmate clan enroll Clanapply
+force Clanmate clan enroll Clanmate
+force Clanmate clan enroll Nobody
+force Clanmate clan enroll Clanother
+force Clanmate clan apply Wolves
+force Clanmate clan set privilege enroll
+force Clanmate clan set privilege enroll nope
+force Clanmate clan set privilege enroll 99
+force Clanapply clan set privilege enroll 1
+force Clanmate clan quit
+
+clan destroy Wolves
+clan destroy Tigers
+clan info

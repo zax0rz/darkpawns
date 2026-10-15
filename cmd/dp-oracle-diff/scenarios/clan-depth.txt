@@ -21,6 +21,8 @@
 # depth-case: clan.admin-private
 # depth-case: clan.privilege-list
 # depth-case: clan.unknown-subcommand
+# depth-case: clan.destroy-unknown-clan
+# depth-case: clan.info-unknown-clan
 
 [fixture]
 empty-players

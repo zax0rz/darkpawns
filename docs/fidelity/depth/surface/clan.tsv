@@ -1,0 +1,179 @@
+c_site	function	classification	case_ids	notes
+src/clan.c:67	send_clan_format	proven	clan.immortal-format;clan.mortal-format;clan.applicant-format	The named proof scenario executes this C output call.
+src/clan.c:71	send_clan_format	proven	clan.immortal-format	The named proof scenario executes this C output call.
+src/clan.c:93	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:96	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:97	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:98	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:99	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:101	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:103	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:105	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:107	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:109	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:111	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:113	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:116	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:118	send_clan_format	proven	clan.mortal-format	The named proof scenario executes this C output call.
+src/clan.c:136	do_clan_rename	proven	clan.rename-entry-gates	The named proof scenario executes this C output call.
+src/clan.c:141	do_clan_rename	proven	clan.rename-entry-gates	The named proof scenario executes this C output call.
+src/clan.c:147	do_clan_rename	proven	clan.rename-entry-gates	The named proof scenario executes this C output call.
+src/clan.c:152	do_clan_rename	proven	clan.rename-state	The named proof scenario executes this C output call.
+src/clan.c:170	do_clan_create	proven	clan.create-underpowered	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:176	do_clan_create	gap-reachable		The clan capacity gate is reachable after all MAX_CLANS slots are populated; current depth vehicles do not fill the clan table to reach this output (src/clan.c:174-177) (R1/R2/R5e).
+src/clan.c:184	do_clan_create	proven	clan.create-missing-leader;clan.create-leader-gate	The named proof scenario executes this C output call.
+src/clan.c:189	do_clan_create	proven	clan.create-too-long	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:193	do_clan_create	proven	clan.create-immortal-leader	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:197	do_clan_create	proven	clan.create-already-member	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:201	do_clan_create	proven	clan.create-duplicate-name	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:230	do_clan_create	proven	clan.create-success	The named proof scenario executes this C output call.
+src/clan.c:254	do_clan_destroy	proven	clan.destroy-unknown-clan	The named proof scenario executes this C output call.
+src/clan.c:258	do_clan_destroy	proven	clan.destroy-underpowered	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:281	do_clan_destroy	proven	clan.destroy-success	The named proof scenario executes this C output call.
+src/clan.c:299	do_clan_enroll	proven	clan.enroll-clanless	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:305	do_clan_enroll	proven	clan.enroll-immortal-gate	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:311	do_clan_enroll	proven	clan.enroll-unknown-clan	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:317	do_clan_enroll	proven	clan.enroll-low-influence	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:324	do_clan_enroll	proven	clan.enroll-applicant-list	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:334	do_clan_enroll	proven	clan.enroll-applicant-list	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:344	do_clan_enroll	gap-blocked		Stop-tier persistence path: this send is reached only while loading offline applicant records from saved player files (src/clan.c:337-345).
+src/clan.c:353	do_clan_enroll	proven	clan.enroll-target-missing	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:359	do_clan_enroll	proven	clan.enroll-other-clan	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:363	do_clan_enroll	proven	clan.enroll-not-requested	The named proof scenario executes this C output call.
+src/clan.c:369	do_clan_enroll	proven	clan.enroll-already-member	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:373	do_clan_enroll	proven	clan.enroll-immortal-target	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:381	do_clan_enroll	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
+src/clan.c:382	do_clan_enroll	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
+src/clan.c:400	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:404	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:410	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:414	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:418	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:422	do_clan_expel	proven	clan.expel-not-member	The named proof scenario executes this C output call.
+src/clan.c:426	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:434	do_clan_expel	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
+src/clan.c:435	do_clan_expel	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
+src/clan.c:453	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:457	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:463	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:467	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:471	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:475	do_clan_demote	proven	clan.demote-not-member	The named proof scenario executes this C output call.
+src/clan.c:479	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:482	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:487	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:488	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:506	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:513	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:517	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:521	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:525	do_clan_promote	proven	clan.promote-not-member	The named proof scenario executes this C output call.
+src/clan.c:529	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:532	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:535	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:540	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:541	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:555	do_clan_who	proven	clan.who-clanless	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:559	do_clan_who	proven	clan.mortal-who;clan.who-con-playing-descriptor	The named proof scenario executes this C output call.
+src/clan.c:560	do_clan_who	proven	clan.mortal-who;clan.who-con-playing-descriptor	The named proof scenario executes this C output call.
+src/clan.c:572	do_clan_who	proven	clan.mortal-who;clan.who-con-playing-descriptor	The named proof scenario executes this C output call.
+src/clan.c:587	do_clan_members	proven	clan.members-clanless	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:592	do_clan_members	proven	clan.mortal-members	The named proof scenario executes this C output call.
+src/clan.c:593	do_clan_members	proven	clan.mortal-members	The named proof scenario executes this C output call.
+src/clan.c:606	do_clan_members	proven	clan.mortal-members	The named proof scenario executes this C output call.
+src/clan.c:619	do_clan_quit	proven	clan.quit-immortal-refusal	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:645	do_clan_quit	proven	clan.quit-disbands	The named proof scenario executes this C output call.
+src/clan.c:647	do_clan_quit	proven	clan.quit-member-remains	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:658	do_clan_status	proven	clan.immortal-status-gate	The named proof scenario executes this C output call.
+src/clan.c:668	do_clan_status	proven	clan.applicant-status	The named proof scenario executes this C output call.
+src/clan.c:673	do_clan_status	proven	clan.applicant-status	The named proof scenario executes this C output call.
+src/clan.c:680	do_clan_status	proven	clan.mortal-status	The named proof scenario executes this C output call.
+src/clan.c:695	do_clan_apply	proven	clan.immortal-apply-gate	The named proof scenario executes this C output call.
+src/clan.c:699	do_clan_apply	proven	clan.apply-already-member	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:703	do_clan_apply	proven	clan.applicant-apply	The named proof scenario executes this C output call.
+src/clan.c:707	do_clan_apply	proven	clan.apply-low-level	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:711	do_clan_apply	proven	clan.apply-fee	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:719	do_clan_apply	proven	clan.applicant-apply	The named proof scenario executes this C output call.
+src/clan.c:730	do_clan_info	proven	clan.info-empty-world	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:754	do_clan_info	proven	clan.info-unknown-clan	The named proof scenario executes this C output call.
+src/clan.c:759	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
+src/clan.c:768	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
+src/clan.c:773	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
+src/clan.c:775	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
+src/clan.c:777	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
+src/clan.c:779	do_clan_info	gap-blocked		Stop-tier persistence path: the war branch reads at_war from the clan record loaded by init_clans (src/clan.c:846-855); no player command writes a nonzero value (src/clan.c:227,776-779).
+src/clan.c:781	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
+src/clan.c:783	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
+src/clan.c:900	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:906	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:914	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:922	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:929	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:932	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:935	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
+src/clan.c:943	do_clan_bank	proven	clan.mortal-bank	The named proof scenario executes this C output call.
+src/clan.c:946	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:949	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
+src/clan.c:959	do_clan_bank	proven	clan.bank-immortal-path;clan.mortal-bank	The named proof scenario executes this C output call.
+src/clan.c:964	do_clan_bank	proven	mudlog.local-clan-withdraw	The named proof scenario executes this C output call.
+src/clan.c:970	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:975	do_clan_bank	proven	clan.bank-immortal-path;clan.mortal-bank	The named proof scenario executes this C output call.
+src/clan.c:980	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
+src/clan.c:1002	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1008	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1014	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1020	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1025	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1030	do_clan_money	proven	clan.mortal-money-gates	The named proof scenario executes this C output call.
+src/clan.c:1038	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1045	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
+src/clan.c:1049	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
+src/clan.c:1052	do_clan_money	unreachable		Unreachable default action: do_clan_money is called only with CM_DUES or CM_APPFEE from src/clan.c:1523-1531.
+src/clan.c:1079	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1085	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1091	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1097	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1102	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1107	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1114	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1119	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1124	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1176	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1180	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1186	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1191	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1195	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1203	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1209	do_clan_titles	proven	clan.set-title	The named proof scenario executes this C output call.
+src/clan.c:1213	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1218	do_clan_titles	proven	clan.set-title	The named proof scenario executes this C output call.
+src/clan.c:1231	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
+src/clan.c:1236	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
+src/clan.c:1244	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
+src/clan.c:1249	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
+src/clan.c:1257	do_clan_private	proven	clan.admin-private;clan.mortal-private	The named proof scenario executes this C output call.
+src/clan.c:1265	do_clan_private	proven	clan.admin-private;clan.mortal-private	The named proof scenario executes this C output call.
+src/clan.c:1286	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
+src/clan.c:1292	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
+src/clan.c:1298	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
+src/clan.c:1304	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
+src/clan.c:1309	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
+src/clan.c:1314	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
+src/clan.c:1321	do_clan_application	proven	clan.mortal-applev-range	The named proof scenario executes this C output call.
+src/clan.c:1346	do_clan_sp	proven	clan.sp-clanless	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:1352	do_clan_sp	proven	clan.sp-immortal-gate	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:1358	do_clan_sp	proven	clan.set-privilege;clan.sp-unknown-clan	The corrected clan-callsite-gaps vehicle executes this unknown-clan output branch; the existing clan.set-privilege proof also reaches the same callsite (R1/R5e/R5h).
+src/clan.c:1364	do_clan_sp	proven	clan.sp-no-influence	The corrected clan-callsite-gaps vehicle reaches the low-rank privilege refusal; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:1369	do_clan_sp	unreachable		The empty-argument exit at src/clan.c:1339-1341 precedes this check; nonempty mortal input remains nonempty, while an immortal empty clan token returns from find_clan at src/clan.c:1357-1359. All callers dispatch from do_clan_privilege at src/clan.c:1451-1486.
+src/clan.c:1374	do_clan_sp	proven	clan.sp-nonnumeric-rank	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:1381	do_clan_sp	proven	clan.sp-rank-range	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
+src/clan.c:1398	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
+src/clan.c:1402	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
+src/clan.c:1408	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
+src/clan.c:1416	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
+src/clan.c:1424	do_clan_plan	proven	clan.plan-editor-prompt;clan.mortal-plan-editor-prompt	The named proof scenario executes this C output call.
+src/clan.c:1429	do_clan_plan	proven	clan.plan-editor-replace	The named proof scenario executes this C output call.
+src/clan.c:1430	do_clan_plan	proven	clan.plan-editor-replace	The named proof scenario executes this C output call.
+src/clan.c:1432	do_clan_plan	proven	clan.plan-editor-completion;clan.plan-editor-at-prefix;clan.mortal-plan-editor-completion	The named proof scenario executes this C output call.
+src/clan.c:1489	do_clan_privilege	proven	clan.privilege-list	The named proof scenario executes this C output call.
+src/clan.c:1493	do_clan_privilege	proven	clan.privilege-list	The named proof scenario executes this C output call.
