@@ -195,8 +195,8 @@ the oracle wrote no draw log (an oracle without the seam).
 Corpus-wide: add `--draw-parity` to any census: full, `--scenarios`, `--claims`, or
 `--combined`. A reproduced exit 5 is a `DRAW` row. It is byte-clean, so it never changes a
 verdict. It is counted on its own `oracle-draw-parity:` line in `summary.txt` and listed
-in `draw-results.tsv`, and the per-scenario `draw-parity MISMATCH` lines in `census.log`
-name their `scenario=` and `seed=`. With `--combined`, the line reports both projections:
+in `draw-results.tsv`, and the per-scenario `draw-parity MISMATCH` lines name their `scenario=` and `seed=`
+(in `census.log` for a full or targeted run, and in `seedN/initial.log` for `--claims` and `--combined`). With `--combined`, the line reports both projections:
 
     oracle-draw-parity: full pairs=1171 seeds=1 draw_divergent=32 | claims pairs=3277 seeds=1,2,3,5,8 draw_divergent=…
 
