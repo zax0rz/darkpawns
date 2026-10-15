@@ -101,18 +101,9 @@ var communicationChannels = map[string]channelSpec{
 	},
 }
 
-// channelColorLine applies do_gen_comm's listener color sandwich to one
-// already-rendered line: color_on + line + KNRM when the recipient's
-// COLOR_LEV reaches openLevel, else the line untouched
-// (src/act.comm.c:1290-1295).
-func channelColorLine(to Actor, openLevel int, color, line string) string {
-	if color == "" || channelRecipientLevel(to) < openLevel {
-		return line
-	}
-	return color + line + ansiReset
-}
-
-// channelColorWrap is channelColorLine as a channelActWrapped hook. The
+// channelColorWrap is do_gen_comm's listener color sandwich as a
+// channelActWrapped hook: color_on + line + KNRM when the recipient's COLOR_LEV
+// reaches openLevel, else the line untouched (src/act.comm.c:1290-1295). The
 // speaker's own echo sets resetBeforeNewline: C's sprintf folds KNRM into the
 // string, so the reset lands before act appends the line ending, while a
 // listener's KNRM is a separate send_to_char after act's whole line
