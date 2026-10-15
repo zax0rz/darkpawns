@@ -177,9 +177,6 @@ type ScriptableWorld interface {
 	// SendToAll sends a message to all online players.
 	// Source: comm.c send_to_all().
 	SendToAll(msg string)
-	// ExecuteMobCommand makes a mob execute a game command.
-	// Source: scripts.c lua_action() → command_interpreter().
-	ExecuteMobCommand(mobVNum int, cmdStr string)
 	// FindFirstStep returns direction (0-5) from src room to target room.
 	// Returns -1 on error, -2 if already there, -3 if no path.
 	FindFirstStep(src, target int) int

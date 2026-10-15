@@ -1,0 +1,68 @@
+# Nested run_script write-back (lua.nested-writeback-slot): a mob's oncmd
+# script calls action(me, "north"); the arrival fires the destination mob's
+# greet script (act.movement.c:285-291), so that run_script executes while
+# the outer script's lua_call frame is live. C's table_to_char reads absolute
+# stack slot 1 (scripts.c:1979 lua_pushvalue(L, 1)) — not the ch table it
+# just pushed. The greet script sets ch.pos = 6, so the arrival-room listing
+# discriminates which table the write-back applied. The player's own later
+# arrival runs the same greet top-level (no nesting) as the control.
+
+# depth-case: lua.nested-writeback-slot
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 1 8162 163
+spawn-mob 12220 999 8161 122
+mob-script 16303 oracle/nest_outer.lua 512
+mob-script 12220 oracle/nest_greet.lua 4
+
+[lua-script mob/oracle/nest_outer.lua]
+function oncmd()
+if strfind(argument, "^say nest$") then
+action(me, "north")
+return TRUE
+end
+return FALSE
+end
+
+[lua-script mob/oracle/nest_greet.lua]
+function greet()
+ch.pos = 6
+return TRUE
+end
+
+[setup:oracle]
+Nestact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nestact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+say nest
+north
+look

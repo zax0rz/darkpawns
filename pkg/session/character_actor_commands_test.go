@@ -156,49 +156,6 @@ func TestLuaNPCCommandUsesSharedExecutorOnce(t *testing.T) {
 	}
 }
 
-func TestLegacyVNumMobCommandBridgeRetainsGetAndDrop(t *testing.T) {
-	const mobVNum, objVNum = 991201, 991202
-	w, err := game.NewWorld(&parser.World{
-		Rooms: []parser.Room{{VNum: 1001, Name: "Bridge Hall"}},
-		Mobs:  []parser.Mob{{VNum: mobVNum, Keywords: "worker", ShortDesc: "a worker", Position: combat.PosStanding}},
-		Objs:  []parser.Obj{{VNum: objVNum, Keywords: "token", ShortDesc: "a token"}},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(w.StopAITicker)
-	m := newTestManager(t, w, nil)
-	m.SetCommandExecFunc()
-	mob, err := w.SpawnMob(mobVNum, 1001)
-	if err != nil {
-		t.Fatal(err)
-	}
-	item, err := w.SpawnObject(objVNum, -1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := w.MoveObjectToRoomFront(item, 1001); err != nil {
-		t.Fatal(err)
-	}
-	bridge := game.NewWorldScriptableAdapter(w)
-
-	bridge.ExecuteMobCommand(mobVNum, "get all")
-	if got := mob.InventorySnapshot(); len(got) != 1 || got[0] != item {
-		t.Fatalf("legacy get inventory = %v, want the room token", got)
-	}
-	if got := w.GetItemsInRoom(1001); len(got) != 0 {
-		t.Fatalf("legacy get left room items = %v, want empty", got)
-	}
-
-	bridge.ExecuteMobCommand(mobVNum, "drop all")
-	if got := mob.InventorySnapshot(); len(got) != 0 {
-		t.Fatalf("legacy drop inventory = %v, want empty", got)
-	}
-	if got := w.GetItemsInRoom(1001); len(got) != 1 || got[0] != item {
-		t.Fatalf("legacy drop room items = %v, want the token", got)
-	}
-}
-
 func TestNPCFloorObjectOnCmdReceivesExactRawCommandWithRunScript(t *testing.T) {
 	const (
 		actorVNum  = 991211

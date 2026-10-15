@@ -341,17 +341,6 @@ func mobIsIntelligent(m *MobInstance) bool {
 	return false
 }
 
-// mobAttackPlayer makes a mob attack a player through the shared mobile
-// hit() seam. C's mob command dispatch reaches do_kill → do_hit → hit()
-// (interpreter.c:525; act.offensive.c:126): the swing draws and damage()'s
-// gates run before anyone enrols. The old body set both FIGHTING fields by
-// hand and applied the placeholder fixed-damage Attack stub.
-func (w *World) mobAttackPlayer(m *MobInstance, target *Player) {
-	if err := w.mobHit(m, target); err != nil {
-		slog.Warn("mob attack failed", "mob", m.GetName(), "target", target.Name, "error", err)
-	}
-}
-
 // attackHuntingPrey ports hunt_victim's arrival attack: C calls
 // do_follow(ch, GET_NAME(HUNTING(ch)), 0, 0) and then
 // hit(ch, HUNTING(ch), TYPE_UNDEFINED) (src/graph.c:312, 340-345) — the
