@@ -2,7 +2,7 @@
 
 Date: 2026-10-14
 Branch: `codex/luna-dp-1364`
-Base: `2c11916b` (`origin/main`, PR #1968 merge)
+Base: `6e12f071` (`origin/main`, PR #1981 merge)
 Reference oracle SHA-256: `bd6c548c6fbc41d35eede384e4ce2c5a858ff2ce0f568a379d7fb366a9051b07`
 
 Train size: five fixes across 533 changed production lines (299 added, 234 removed). The train stops at the shared combat, mobile-aggression, room-activity, and session-capture family boundaries.
@@ -94,7 +94,7 @@ Proposed rulebook amendment for Zach; no governing document was edited:
 
 Incident motivating this clarification: the same attack-before-protection draw order appears in three combat-entry rows, while normal mobile aggression repeats across five shop rows and the populated orc soak. These belong to shared classes; treating each scenario as a separate local exception would have produced conflicting fixes.
 
-The three new soaks remain transcript `FAIL` rows in the combined full census because of long-pulse Go output capture. They are not added to an expected-divergence allowlist. The combined census is complete; the post-fix full draw-parity corpus and final-tip seed-1/seed-2 soak checks remain pending.
+The three new soaks remain transcript `FAIL` rows because long `~dpclock pulse` runs lose Go actor output. They are not added to an expected-divergence allowlist. After the first final evidence pass, `origin/main` advanced through PR #1981 with additional mobile-activity code. The train was rebased onto `6e12f071` and all final evidence below was rerun at source tip `922e53190`; the earlier `39ad131f8` and `e2f29cb39` runs are retained as superseded evidence.
 
 ## Gates and final census
 
@@ -107,13 +107,16 @@ The three new soaks remain transcript `FAIL` rows in the combined full census be
 | `go test ./pkg/game/...` | PASS |
 | `golangci-lint run ./...` | PASS, 0 issues |
 | `make deadcode-ratchet` | PASS, 52 baselined / 0 new |
-| `make fidelity-depth` | PASS, 5,561 cases; 5,470 proven/delegated |
-| `make fidelity-units` | PASS, 1,449 rows / 1,343 symbols / 1,641 claims |
-| `make string-census` | PASS, 93 Go-only / 3,046 C-missing / 28 data-sourced / 522 unresolved; ratchet 98 known / 0 unreviewed; reports stale |
+| `make fidelity-depth` | PASS, 5,570 cases; 5,479 proven/delegated; 12 blocked, 67 excluded, 12 divergent-approved |
+| `make fidelity-units` | PASS, 1,457 rows / 1,353 symbols / 1,651 claims |
+| `make string-census` | PASS, 93 Go-only / 3,039 C-missing / 28 data-sourced / 525 unresolved; ratchet 98 known / 0 unreviewed; generated reports stale |
 | `gosec -severity=high -quiet ./...` | PASS |
 | `go test -race ./pkg/game/...` | PASS |
 | Direct cleric and Butler controls | PASS fixed seed-1 draw reports; each revert reproduces its recorded first mismatch |
 | Corpus-2 draw-parity corpus | 1,172 scenarios; 43 DRAW; 3 populated-world FAIL; 1 INFRA; NOT_CLEAN; run and diagnostics paths above |
-| Post-fix full draw-parity corpus | Pending; at this update, another train's combined census holds the shared lock. Start after that run releases it. |
-| Final combined census | `NOT_CLEAN`: 3,415 scheduled pairs / 1,028 deduplicated; full 1,172 scenarios: 1,169 pass, 3 fail, 0 infrastructure, 0 timeout, 0 stale, 0 unpinnable; claims 3,271/3,271 pass (`CLEAN`). The only full failures are `living-world-haven-square` (53), `living-world-dungeon-entrance` (52), and `living-world-orc-burrow-entrance` (52), the known long-pulse output-capture stop-tier findings tracked in DP-1439. Source HEAD was `39ad131f8`; the sole dirty path was this then-untracked handoff file. Retained run: `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-final-combined/` |
-| Final-tip soak draw parity, seeds 1 and 2 | Pending after final rebase |
+| Superseded combined census before PR #1981 rebase | At `39ad131f8`, 3,415 pairs / 1,028 deduplicated; full `NOT_CLEAN`, claims `CLEAN`; the then-known three long-pulse failures. Retained at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-final-combined/`. |
+| Latest-base combined census | At `922e53190` on base `6e12f071`: 3,420 pairs / 1,029 deduplicated; full `NOT_CLEAN` with 1,173 scenarios, 1,170 pass, 3 fail, 0 infrastructure, 0 timeout; claims `CLEAN`, 3,276/3,276. Failures: dungeon entrance (52), Haven square (53), orc burrow (52), all tracked at DP-1439. Retained at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-final-combined-6e12/`. |
+| Latest-base full draw-parity corpus | At `922e53190`: 1,173 scenarios, 41 DRAW, 3 populated-world FAIL, 0 infrastructure; `NOT_CLEAN` only because the three long-pulse output-capture rows remain. No new DRAW scenario appeared; the former cleric and Butler rows are resolved. Retained at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-corpus3-6e12/`. |
+| Per-scenario current draw contexts | 41/41 DRAW scenarios reproduced serially at `922e53190`, with 41 draw divergences and clean byte verdict. The first-draw lines are retained in `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-draw-context-6e12/`; the scenarios remain within the already audited combat-entry, mobile/combat, setup/session, and direct command families above. |
+| Latest-base seed-1 soak draw parity | At `922e53190`: 3 scenarios, all 3 transcript FAIL, 0 draw divergence, 0 infrastructure; known DP-1439 output-capture boundary. Retained at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-soaks-seed1-6e12/`. |
+| Latest-base seed-2 soak draw parity | At `922e53190`: 3 scenarios, all 3 transcript FAIL, 0 draw divergence, 0 infrastructure; same DP-1439 output-capture boundary. Retained at `/home/zach/Archives/darkpawns/oracle-runs/2026-10-14/luna-living-world-dp1364-soaks-seed2-6e12/`. |
