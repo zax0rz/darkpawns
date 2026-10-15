@@ -390,28 +390,6 @@ func (ce *CombatEngine) PerformRangedRetaliation(attacker, defender Combatant) e
 	return nil
 }
 
-// PerformUnenrolledInitialAttack resolves a direct hit() call made by a mob
-// special without creating the command-engine combat pair. In C, the aware
-// backstab branch calls hit(vict, ch) directly: damage() leaves the mob facing
-// the player, but the player is not enrolled as a reciprocal fighter and the
-// hit is not added as a new engine pair. The mob therefore does not receive a
-// later perform_violence turn from this one-off retaliation.
-func (ce *CombatEngine) PerformUnenrolledInitialAttack(attacker, defender Combatant) error {
-	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
-		return fmt.Errorf("combat requires concrete bodies")
-	}
-	ce.performOneHit(&CombatPair{Attacker: attacker, Defender: defender})
-	ce.mu.Lock()
-	defer ce.mu.Unlock()
-	if !BodyRetired(attacker) && !BodyRetired(defender) && defender.GetPosition() != PosDead && attacker.GetFightingBody() == nil {
-		attacker.SetFightingBody(defender)
-		if attacker.GetPosition() > PosStunned {
-			attacker.SetPosition(PosFighting)
-		}
-	}
-	return nil
-}
-
 // StopCombat ports stop_fighting for one body, including C's ordered retarget.
 func (ce *CombatEngine) StopCombat(body Combatant) {
 	if !ValidBody(body) {

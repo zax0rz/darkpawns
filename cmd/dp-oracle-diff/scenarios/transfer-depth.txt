@@ -6,6 +6,7 @@
 # depth-case: transfer.target-not-found
 # depth-case: transfer.success-audience
 # depth-case: transfer.one-argument
+# depth-case: transfer.self-refusal
 
 [fixture]
 empty-players
@@ -103,3 +104,4 @@ teleport Transferobserver 8162
 [probe]
 transfer Nobody
 transfer Transferpeer trailing words are ignored
+transfer Transferwizard

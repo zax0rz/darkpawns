@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_dns	dns	dns.no-argument-warning	D1	command	oracle-green	dns-depth	interpreter.c:418; act.wizard.c:3106-3120	Empty subcommand reaches the C warning instead of the generic unknown-command response.
+do_dns	dns	dns.no-argument-warning	D1	command	oracle-green	dns-depth	src/interpreter.c:418; src/act.wizard.c:3118-3122	Empty subcommand reaches the C warning instead of the generic unknown-command response.
 do_dns	dns	dns.delete-missing-argument	D1	command	oracle-green	dns-depth	act.wizard.c:3122-3125	The delete arm with no address emits the exact Delete what? line.
 do_dns	dns	dns.delete-malformed-address	D1	command	oracle-green	dns-depth	act.wizard.c:3126-3130	The three-octet sscanf gate rejects malformed input with the same line.
 do_dns	dns	dns.add-missing-arguments	D1	command	oracle-green	dns-depth	act.wizard.c:3145-3148	The add arm requires both IP and host name and emits Add what? when absent.

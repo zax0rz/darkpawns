@@ -51,6 +51,13 @@ type ObjectRuntimeState struct {
 
 // MobRuntimeState replaces CustomData for known mob state keys.
 type MobRuntimeState struct {
+	// NameOverride mirrors the live player.name field on one created mobile,
+	// such as a purchased pet with its owner-selected name.
+	NameOverride string `json:"name_override,omitempty"`
+	// CarriedWeight and CarriedNumber preserve C's IS_CARRYING_W/N seeds for
+	// mobiles whose current load is initialized without inventory objects.
+	CarriedWeight int `json:"carried_weight,omitempty"`
+	CarriedNumber int `json:"carried_number,omitempty"`
 	// These overrides preserve do_set() mutations on one live NPC instance;
 	// C copies prototype data into char_data, so changing a runtime instance
 	// must not rewrite the shared mob prototype.

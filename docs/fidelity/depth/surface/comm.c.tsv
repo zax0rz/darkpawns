@@ -1,0 +1,10 @@
+c_site	function	classification	case_ids	notes
+src/comm.c:607	game_loop	proven	idle.void-return-act	The C command-dequeue return from the void is exercised with an observing peer; the actor receives no return act (R1/R2/R5h).
+src/comm.c:728	room_activity	proven	mob.wander-flying	The live mobile-pulse scenario moves a non-flying PC into SECT_FLYING and compares this exact fall response (R1/R2/R3/R5h).
+src/comm.c:729	room_activity	proven	mob.wander-flying	The paired room observer receives the fall act before C relocates the non-flying PC (R1/R2/R3/R5h).
+src/comm.c:750	room_activity	proven	room-activity.con-croak	The mortal at effective CON zero receives the exact direct croak warning before raw_kill (R1/R3/R5h).
+src/comm.c:751	room_activity	proven	room-activity.con-croak	The room observer receives the exact croak act before raw_kill (R1/R3/R5h).
+src/comm.c:2131	close_socket	proven	idle.force-rent-lost-link	The forced-rent disconnect path emits the link-loss act to paired room observers (R1/R3/R5h).
+src/comm.c:2460	perform_act	unreachable	-	The token act() occurs only inside the SYSERR string passed to log(); C does not call act() here and emits no player-facing bytes.
+src/comm.c:2524	act	unreachable	-	The token act() occurs only inside the SYSERR string passed to log(); this is diagnostic text, not a nested output call.
+src/comm.c:2525	act	unreachable	-	The token act() occurs only inside the SYSERR string passed to mudlog(); this is diagnostic text, not a nested output call.

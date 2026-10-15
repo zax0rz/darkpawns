@@ -1,6 +1,6 @@
 c_site	function	classification	case_ids	notes
-src/spells.c:112	spell_create_water	gap-reachable		C MANUAL_SPELL dispatch reaches spell_create_water (src/spell_parser.c:508); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:116	spell_create_water	gap-reachable		C MANUAL_SPELL dispatch reaches spell_create_water (src/spell_parser.c:508); no current depth case executes this output branch (R1/R2/R5e).
+src/spells.c:112	spell_create_water	proven	spell.create-water-live-dispatch	cmdCast reaches the successful fill arm; the focused live-command proof pins OBJS(obj, ch) short-description expansion and the exact C bytes (R1/R2/R5e/R5h).
+src/spells.c:116	spell_create_water	proven	spell.create-water-live-dispatch	cmdCast reaches the empty-container refusal; the focused live-command proof also controls the C-silent non-container and non-water-liquid arms (R1/R2/R4/R5e/R5h).
 src/spells.c:138	spell_recall	proven	spell.word-recall-bfr-gate	TestCastWordOfRecallGateBytes executes the manual spell on a BFR room and checks the exact victim-directed bytes and unchanged rooms (R1/R2/R5e/R5h).
 src/spells.c:144	spell_recall	proven	spell.word-recall-fighting-gate	TestCastWordOfRecallGateBytes executes the manual spell with a fighting caster and checks the exact caster-directed bytes and unchanged rooms (R1/R2/R5e/R5h).
 src/spells.c:148	spell_recall	proven	recall.transfer;recall.origin-audience	The recall vehicle executes this origin act and the peer receives its exact C bytes through the live do_recall path (R1/R3/R5e/R5h).

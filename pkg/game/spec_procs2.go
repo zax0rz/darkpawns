@@ -1562,7 +1562,7 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	var evil cityguardAlignedCombatant
 	var evilTarget cityguardAlignedCombatant
 	maxEvil := 1000
-	for _, candidate := range takeToJailRoomCombatants(w, me.GetRoomVNum()) {
+	for _, candidate := range cOrderedRoomCombatants(w, me.GetRoomVNum()) {
 		if pl, ok := candidate.(*Player); ok && canSee(me, pl) && pl.GetFlags()&(1<<uint(PlrOutlaw)) != 0 {
 			Act(w, false, me, nil, nil, nil,
 				"$n says 'We don't like OUTLAWS like you in this city!'", "", ToRoom)
@@ -1600,10 +1600,9 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	return false
 }
 
-// takeToJailRoomCombatants uses the existing char_to_room arrival sequences
-// to merge Go's separate player/mobile stores into C's newest-first room list.
-// Keep the change local: cityguard's existing helper is a separate reader.
-func takeToJailRoomCombatants(w *World, room int) []combat.Combatant {
+// cOrderedRoomCombatants merges the separate player/mobile stores into C's
+// newest-first world[room].people order using char_to_room arrival sequences.
+func cOrderedRoomCombatants(w *World, room int) []combat.Combatant {
 	actors := cityguardRoomCombatants(w, room)
 	sequence := func(actor combat.Combatant) uint64 {
 		if p, ok := actor.(*Player); ok {
@@ -1726,7 +1725,7 @@ func specEqThiefKenderSteal(w *World, thief *MobInstance, victim *Player) {
 // intentionally unobservable; the room Act is retained because players can
 // see the kender retrieving a black item from its container.
 func specEqThiefGetBlack(w *World, thief *MobInstance, container *ObjectInstance) {
-	if container == nil || contIsClosed(container) || len(thief.Inventory) >= mobMaxCarryCount(thief) {
+	if container == nil || contIsClosed(container) || mobCarriedItemCount(thief) >= mobMaxCarryCount(thief) {
 		return
 	}
 
