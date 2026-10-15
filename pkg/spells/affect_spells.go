@@ -796,6 +796,10 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 			MagAffects(level, ch, c, SpellArmor, savetype, world)
 		case SpellGroupInvis:
 			MagAffects(level, ch, c, SpellInvisible, savetype, world)
+		case SpellGroupRecall:
+			// C src/magic.c:1442-1443 routes each grouped member through
+			// spell_recall, including its BFR/fighting gates and sleeping landing.
+			ExecuteManualSpell(SpellWordOfRecall, level, ch, c, nil, "", world)
 		case SpellMassDominate:
 			// Mass dominate — charm each grouped NPC
 			ExecuteManualSpell(SpellCharm, level, ch, c, nil, "", world)
@@ -2231,7 +2235,7 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 					spells += " " + identifySpellName(value)
 				}
 			}
-			sendToCaster(ch, fmt.Sprintf("This %s casts:%s\r\n", typeName, spells))
+			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\n", typeName, spells))
 		case 3, 4: // ITEM_WAND, ITEM_STAFF
 			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\nIt has %d maximum charge%s and %d remaining.\r\n",
 				typeName, identifySpellName(v.GetValue(3)), v.GetValue(1), pluralS(v.GetValue(1)), v.GetValue(2)))

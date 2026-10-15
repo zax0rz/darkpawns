@@ -1,0 +1,75 @@
+# depth-case: spell.group-recall-sleeping-member
+# A real group-recall cast dispatches each grouped follower through
+# perform_mag_groups -> spell_recall. The sleeping follower transfers to its
+# home room but receives C's dream line instead of a room look.
+# C path: src/magic.c:1442-1443,1450-1493 -> src/spells.c:124-165.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Groupleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groupleader
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Sleeper
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Sleeper
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Sleeper 8162
+force Sleeper follow Groupleader
+group Sleeper
+force Sleeper sleep
+
+[probe]
+cast 'group recall'

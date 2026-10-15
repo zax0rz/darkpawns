@@ -1,0 +1,44 @@
+# depth-case: spell.identify-scroll-potion-output
+# The implementor casts identify through the live player command at a carried
+# stock return scroll. Its transcript pins spell-name spacing in C's scroll
+# branch.
+# C path: src/spell_parser.c:511 -> src/spells.c:476-530.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Identifyadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Identifyadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 5804
+
+[probe]
+cast 'identify' scroll
