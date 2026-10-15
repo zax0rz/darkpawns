@@ -123,8 +123,12 @@ expectation corrections (`extchar_deferred_test.go`).
   independent of the others (the brief's note on #1993).
 - Targeted census `glm-combat-specials-visibility` (24 scenarios — the
   affected spec vehicles, the mount scenarios, the three visibility
-  scenarios, and act-heavy controls, with `--draw-parity`): see the run
-  directory for the verdict; recorded here after it finishes.
+  scenarios, and act-heavy controls, with `--draw-parity`): verdict CLEAN,
+  `draw_divergent=1`. The one draw divergence is
+  `spec-proc-dragon-breath-combat` — pre-existing on main (DRAW in the
+  `batch-f-deploy-candidate` census at `e2d905876`, the finish-line
+  baseline's known "Number(0,99) | log ends | ~dpclock pulse 40" cluster),
+  not this train's.
 
 ## 5. Residuals handed forward
 
