@@ -1,0 +1,78 @@
+c_site	function	classification	case_ids	notes
+spec_procs3.c:96	clerk	proven	mob.clerk-unknown-zone-warning	src/spec_assign.c:407 registers mob 18228; interpreter.c:1407-1456 reaches the default-zone send before command fallthrough.
+spec_procs3.c:107	clerk	proven	mob.clerk-visibility-gate	src/spec_assign.c:407 registers mob 18228; interpreter.c:1407-1456 reaches the failed CAN_SEE branch, whose TO_ROOM Act includes actor and peer.
+spec_procs3.c:166	butler	proven	mob.butler-get-audience	src/spec_assign.c:300 registers mob 8092; mobact.c:68-93 reaches the commandless pickup scan and explicit room Act before transfer.
+spec_procs3.c:212	brain_eater	proven	mob.brain-eater-room-audience	src/spec_assign.c:386,389 registers brain_eater mobs; mobact.c:68-93 reaches the corpse branch and room Act after do_behead.
+spec_procs3.c:232	teleport_victim	proven	mob.teleport-victim-room-audience	src/spec_assign.c:377 registers mob 14405; mobact.c/fight.c reaches the fighting pulse special and the can_speak branch.
+spec_procs3.c:250	con_seller	proven	mob.con-seller-invisible-actor-room-warning	src/spec_assign.c:508 registers mob 21246; interpreter.c:1407-1456 reaches the failed CAN_SEE branch on LIST/BUY.
+spec_procs3.c:303	con_seller	proven	mob.con-seller-buy-success-room-audience	src/spec_assign.c:508 registers mob 21246; successful BUY CON emits these ordered TO_NOTVICT Acts after its direct tell.
+spec_procs3.c:305	con_seller	proven	mob.con-seller-buy-success-room-audience	src/spec_assign.c:508 registers mob 21246; successful BUY CON emits these ordered TO_NOTVICT Acts after its direct tell.
+spec_procs3.c:328	no_move_down	unreachable	mob.no-move-down-unassigned	src/spec_assign.c:85-168 has no active ASSIGNMOB/ASSIGNOBJ/ASSIGNROOM for no_move_down; no C special dispatcher reaches this body.
+spec_procs3.c:329	no_move_down	unreachable	mob.no-move-down-unassigned	src/spec_assign.c:85-168 has no active ASSIGNMOB/ASSIGNOBJ/ASSIGNROOM for no_move_down; no C special dispatcher reaches this body.
+spec_procs3.c:330	no_move_down	unreachable	mob.no-move-down-unassigned	src/spec_assign.c:85-168 has no active ASSIGNMOB/ASSIGNOBJ/ASSIGNROOM for no_move_down; no C special dispatcher reaches this body.
+spec_procs3.c:355	troll	proven	mob.troll-injured-idle-glow	src/spec_assign.c:318 and later mob entries register troll; mobact.c:68-93 reaches the injured idle arm and room Act.
+spec_procs3.c:362	troll	proven	mob.troll-fighting-glow	src/spec_assign.c:318 and later mob entries register troll; fight.c:1898-2032 reaches the combat special arm and room Act.
+spec_procs3.c:392	quan_lo	proven	mob.quan-lo-look-keyword-response	src/spec_assign.c:444 registers mob 19405; interpreter.c:1407-1456 reaches the matching LOOK/EXAMINE branch.
+spec_procs3.c:418	alien_elevator	unreachable	mob.alien-elevator-unassigned	The complete mob/object/room assignment tables in src/spec_assign.c:85-635 contain no active registration for alien_elevator.
+spec_procs3.c:436	werewolf	proven	mob.werewolf-howling-zone-audience	src/spec_assign.c:251 registers mob 5510; mobact.c/fight.c reaches the fighting pulse branch and room howl Act.
+spec_procs3.c:442	werewolf	proven	mob.werewolf-bite-victim-audience	src/spec_assign.c:251 registers mob 5510; the fighting pulse branch targets FIGHTING(mob) with TO_VICT before damage.
+spec_procs3.c:444	werewolf	proven	mob.werewolf-bite-room-audience	src/spec_assign.c:251 registers mob 5510; the fighting pulse branch targets TO_NOTVICT with the resolved victim before damage.
+spec_procs3.c:491	field_object	unreachable	obj.field-object-special-unreachable	src/spec_assign.c:528-529 assigns field_object to objects 50/52, but interpreter.c:1427-1474 supplies a nonzero command and src/spec_procs3.c:463-464 immediately returns; object_activity runs scripts only.
+spec_procs3.c:493	field_object	unreachable	obj.field-object-special-unreachable	src/spec_assign.c:528-529 assigns field_object to objects 50/52, but interpreter.c:1427-1474 supplies a nonzero command and src/spec_procs3.c:463-464 immediately returns; object_activity runs scripts only.
+spec_procs3.c:497	field_object	unreachable	obj.field-object-special-unreachable	src/spec_assign.c:528-529 assigns field_object to objects 50/52, but interpreter.c:1427-1474 supplies a nonzero command and src/spec_procs3.c:463-464 immediately returns; object_activity runs scripts only.
+spec_procs3.c:506	field_object	unreachable	obj.field-object-special-unreachable	src/spec_assign.c:528-529 assigns field_object to objects 50/52, but interpreter.c:1427-1474 supplies a nonzero command and src/spec_procs3.c:463-464 immediately returns; object_activity runs scripts only.
+spec_procs3.c:529	portal_to_temple	proven	room.portal-to-temple-teleport-audience	src/spec_assign.c:615 registers room 19658; interpreter.c:1407-1415 dispatches the exact say/apostrophe phrase to actor, origin-room, then destination-room output.
+spec_procs3.c:531	portal_to_temple	proven	room.portal-to-temple-teleport-audience	src/spec_assign.c:615 registers room 19658; interpreter.c:1407-1415 dispatches the exact say/apostrophe phrase to actor, origin-room, then destination-room output.
+spec_procs3.c:535	portal_to_temple	proven	room.portal-to-temple-teleport-audience	src/spec_assign.c:615 registers room 19658; interpreter.c:1407-1415 dispatches the exact say/apostrophe phrase to actor, origin-room, then destination-room output.
+spec_procs3.c:555	turn_undead	unreachable	obj.turn-undead-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for turn_undead; use/maintenance branches have no registered dispatch path.
+spec_procs3.c:597	itoh	unreachable	room.itoh-unassigned	Complete assignment tables in src/spec_assign.c:573-635 contain no ASSIGNROOM/ASSIGNOBJ/ASSIGNMOB for itoh.
+spec_procs3.c:599	itoh	unreachable	room.itoh-unassigned	Complete assignment tables in src/spec_assign.c:573-635 contain no ASSIGNROOM/ASSIGNOBJ/ASSIGNMOB for itoh.
+spec_procs3.c:604	itoh	unreachable	room.itoh-unassigned	Complete assignment tables in src/spec_assign.c:573-635 contain no ASSIGNROOM/ASSIGNOBJ/ASSIGNMOB for itoh.
+spec_procs3.c:627	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:628	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:634	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:636	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:646	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:648	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:653	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:655	mirror	unreachable	obj.mirror-unassigned	src/spec_assign.c:519-561 contains no ASSIGNOBJ for mirror; its hit/kill/look branches have no registered object dispatch path.
+spec_procs3.c:680	prostitute	proven	mob.prostitute-invisible-list-audience,mob.prostitute-invisible-buy-audience	src/spec_assign.c:283 registers mob 8023; interpreter.c:1407-1456 reaches the invisible-target LIST/BUY branches and both TO_ROOM Acts.
+spec_procs3.c:682	prostitute	proven	mob.prostitute-invisible-list-audience,mob.prostitute-invisible-buy-audience	src/spec_assign.c:283 registers mob 8023; interpreter.c:1407-1456 reaches the invisible-target LIST/BUY branches and both TO_ROOM Acts.
+spec_procs3.c:721	roach	proven	mob.roach-starvation-output	src/spec_assign.c:185 registers mob 23; mobact.c:68-93 reaches the two-draw starvation branch and room Act before queued extraction.
+spec_procs3.c:732	roach	proven	mob.roach-food-success	src/spec_assign.c:185 registers mob 23; mobact.c:68-93 reaches the takeable-food scan and feed Act before the growth draw.
+spec_procs3.c:747	roach	proven	mob.roach-split-reproduction	src/spec_assign.c:185 registers mob 23; successful growth above 400 emits the split Act after spawning the quiet second roach.
+spec_procs3.c:756	roach	proven	mob.roach-growth-state	src/spec_assign.c:185 registers mob 23; successful food growth emits stretch/rumble Act according to number(0,1).
+spec_procs3.c:758	roach	proven	mob.roach-growth-state	src/spec_assign.c:185 registers mob 23; successful food growth emits stretch/rumble Act according to number(0,1).
+spec_procs3.c:762	roach	proven	mob.roach-food-failure	src/spec_assign.c:185 registers mob 23; failed food growth emits the room burp before object extraction.
+spec_procs3.c:770	roach	proven	mob.roach-idle-output	src/spec_assign.c:185 registers mob 23; after starvation and food gates, commandless pulse idle cases 0-3 emit these Acts.
+spec_procs3.c:772	roach	proven	mob.roach-idle-output	src/spec_assign.c:185 registers mob 23; after starvation and food gates, commandless pulse idle cases 0-3 emit these Acts.
+spec_procs3.c:775	roach	proven	mob.roach-idle-output	src/spec_assign.c:185 registers mob 23; after starvation and food gates, commandless pulse idle cases 0-3 emit these Acts.
+spec_procs3.c:778	roach	proven	mob.roach-idle-output	src/spec_assign.c:185 registers mob 23; after starvation and food gates, commandless pulse idle cases 0-3 emit these Acts.
+spec_procs3.c:787	roach	proven	mob.roach-teleport-audience	src/spec_assign.c:185 registers mob 23; commandless idle case 4 covers retry output and valid origin/destination teleport Acts.
+spec_procs3.c:791	roach	proven	mob.roach-teleport-audience	src/spec_assign.c:185 registers mob 23; commandless idle case 4 covers retry output and valid origin/destination teleport Acts.
+spec_procs3.c:795	roach	proven	mob.roach-teleport-audience	src/spec_assign.c:185 registers mob 23; commandless idle case 4 covers retry output and valid origin/destination teleport Acts.
+spec_procs3.c:842	mortician	proven	mob.mortician-retrieve-audience	src/spec_assign.c:301 registers mob 8095; interpreter.c:1407-1456 reaches RETRIEVE and the actor/peer corpse-dump audience split.
+spec_procs3.c:844	mortician	proven	mob.mortician-retrieve-audience	src/spec_assign.c:301 registers mob 8095; interpreter.c:1407-1456 reaches RETRIEVE and the actor/peer corpse-dump audience split.
+spec_procs3.c:875	conjured	proven	mob.conjured-fizzle-master	src/spec_assign.c:186-191 registers mobs 81-86; command/pulse dispatch reaches the master-only direct tell for 81-84.
+spec_procs3.c:877	conjured	proven	mob.conjured-fizzle-audience	src/spec_assign.c:186-191 registers mobs 81-86; command/pulse dispatch reaches the TO_ROOM fizzle Act for 81-84.
+spec_procs3.c:883	conjured	proven	mob.conjured-default-disappear	src/spec_assign.c:186-191 registers mobs 81-86; default vnums 85-86 emit this room Act after do_say.
+spec_procs3.c:993	elements_master_column	proven	room.elements-master-column-audience	src/spec_assign.c:622 registers room 1315; the room special sends each player their private plane text and departure/arrival Acts.
+spec_procs3.c:994	elements_master_column	proven	room.elements-master-column-audience	src/spec_assign.c:622 registers room 1315; the room special sends each player their private plane text and departure/arrival Acts.
+spec_procs3.c:998	elements_master_column	proven	room.elements-master-column-audience	src/spec_assign.c:622 registers room 1315; the room special sends each player their private plane text and departure/arrival Acts.
+spec_procs3.c:1016	elements_platforms	proven	room.elements-platforms-direct-message	src/spec_assign.c:623-626 registers the four platform rooms; command entry emits this direct message.
+spec_procs3.c:1017	elements_platforms	proven	room.elements-platforms-audience	src/spec_assign.c:623-626 registers the four platform rooms; the special emits departure/arrival Acts around relocation.
+spec_procs3.c:1020	elements_platforms	proven	room.elements-platforms-audience	src/spec_assign.c:623-626 registers the four platform rooms; the special emits departure/arrival Acts around relocation.
+spec_procs3.c:1172	elements_galeru_column	proven	room.elements-galeru-column-audience	src/spec_assign.c:631 registers room 1372; all-talisman branch sends direct beam text and departure/arrival Acts.
+spec_procs3.c:1173	elements_galeru_column	proven	room.elements-galeru-column-audience	src/spec_assign.c:631 registers room 1372; all-talisman branch sends direct beam text and departure/arrival Acts.
+spec_procs3.c:1177	elements_galeru_column	proven	room.elements-galeru-column-audience	src/spec_assign.c:631 registers room 1372; all-talisman branch sends direct beam text and departure/arrival Acts.
+spec_procs3.c:1204	elements_galeru_alive	proven	room.elements-galeru-alive-audience	src/spec_assign.c:632 registers room 1394; missing-mob branch sends direct dizziness and departure/arrival Acts.
+spec_procs3.c:1205	elements_galeru_alive	proven	room.elements-galeru-alive-audience	src/spec_assign.c:632 registers room 1394; missing-mob branch sends direct dizziness and departure/arrival Acts.
+spec_procs3.c:1209	elements_galeru_alive	proven	room.elements-galeru-alive-audience	src/spec_assign.c:632 registers room 1394; missing-mob branch sends direct dizziness and departure/arrival Acts.
+spec_procs3.c:1232	elements_minion	proven	mob.elements-minion-destroy-audience	src/spec_assign.c:195 registers mob 1313; mobact.c:68-93 reaches the commandless visible-inventory scan and TO_ROOM disintegration Act.
+spec_procs3.c:1264	elements_guardian	proven	mob.elements-guardian-solo-branch	src/spec_assign.c:196 registers mob 1314; interpreter.c:1407-1456 reaches the command-triggered solo branch and observer/victim Acts.
+spec_procs3.c:1266	elements_guardian	proven	mob.elements-guardian-solo-branch	src/spec_assign.c:196 registers mob 1314; interpreter.c:1407-1456 reaches the command-triggered solo branch and observer/victim Acts.
+spec_procs3.c:1274	elements_guardian	proven	mob.elements-guardian-pair-audience	src/spec_assign.c:196 registers mob 1314; command path reaches the paired room-player branch and observer/victim/attacker Acts.
+spec_procs3.c:1277	elements_guardian	proven	mob.elements-guardian-pair-audience	src/spec_assign.c:196 registers mob 1314; command path reaches the paired room-player branch and observer/victim/attacker Acts.
+spec_procs3.c:1280	elements_guardian	proven	mob.elements-guardian-pair-audience	src/spec_assign.c:196 registers mob 1314; command path reaches the paired room-player branch and observer/victim/attacker Acts.
+spec_procs3.c:1297	fly_exit_up	proven	room.fly-exit-up-blocked-message	src/spec_assign.c:635 registers room 1389; interpreter.c movement dispatch reaches the mortal non-flying UP branch and direct refusal.
+spec_procs3.c:1298	fly_exit_up	proven	room.fly-exit-up-blocked-audience	src/spec_assign.c:635 registers room 1389; same blocked branch emits the peer-only TO_NOTVICT jump Act.

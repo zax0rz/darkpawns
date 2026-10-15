@@ -125,6 +125,25 @@ func TestSpecConSeller_DirectTellVisibilityAndOriginalCon(t *testing.T) {
 	actor.SetOrigCon(14)
 }
 
+func TestSpecConSeller_InvisibleActorRoomWarning(t *testing.T) {
+	w, actor, peer, mob, messages := newConSellerTestWorld(t, false)
+	actor.SetAffect(affInvisible, true)
+
+	for _, cmd := range []string{"list", "buy"} {
+		clearConSellerMessages(messages)
+		if !specConSeller(w, actor, mob, cmd, "con") {
+			t.Fatalf("invisible actor %s should be handled", cmd)
+		}
+		const want = "The shadowmage exclaims, 'Who's there? I can't see you!'\r\n"
+		if got := messages[actor.Name]; got != want {
+			t.Errorf("invisible actor %s output = %q, want %q", cmd, got, want)
+		}
+		if got := messages[peer.Name]; got != want {
+			t.Errorf("invisible actor %s peer output = %q, want %q", cmd, got, want)
+		}
+	}
+}
+
 func TestSpecConSeller_BranchOrderAndSuccessAudience(t *testing.T) {
 	w, actor, peer, mob, messages := newConSellerTestWorld(t, false)
 
