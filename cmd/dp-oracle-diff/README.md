@@ -216,7 +216,7 @@ Fix them by making `[setup:port]` run the same post-entry commands as
 `[setup:oracle]`, and verify the scenario still reports `no normalized divergence` and
 `draw-parity MATCH`. Asymmetry that cannot be removed — an oracle login that reattaches to
 a pre-seeded character while the port creates one, for example — leaves the row
-unfixable here and needs the probe-boundary comparison planned for DP-1427 v2.
+unfixable here and needs a probe-boundary draw comparison (planned after DP-1427 v2, which kept the from-process-start comparison).
 
 ## Driving the browser client (`-go-transport ws`)
 
