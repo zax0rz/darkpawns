@@ -25,7 +25,7 @@ func TestRiderWalkMovesMountOnceNotTwice(t *testing.T) {
 		Mobs: []parser.Mob{{
 			VNum: 99071, Keywords: "horse", ShortDesc: "a horse",
 			LongDesc: "A horse stands here.", Level: 10,
-			HP: parser.DiceRoll{Num: 1, Sides: 8, Plus: 40},
+			HP:        parser.DiceRoll{Num: 1, Sides: 8, Plus: 40},
 			Alignment: 0, Race: 1,
 			Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11,
 			Position: combat.PosStanding, DefaultPos: combat.PosStanding,

@@ -22,7 +22,7 @@ func combatSpecialWorld(t *testing.T, specVNum, mobVNum, level, hp int, keywords
 		Mobs: []parser.Mob{{
 			VNum: mobVNum, Keywords: keywords, ShortDesc: keywords,
 			LongDesc: keywords + " is here.", Level: level,
-			HP: parser.DiceRoll{Num: 1, Sides: 8, Plus: hp},
+			HP:        parser.DiceRoll{Num: 1, Sides: 8, Plus: hp},
 			Alignment: 0, Race: 1,
 			// The parser's simple-mob defaults (parse_simple_mob): base 11s.
 			Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11,
