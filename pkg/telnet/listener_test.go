@@ -207,7 +207,7 @@ func TestNewCharacterTelnetTranscriptMatchesC(t *testing.T) {
 		}
 	}
 
-	answer("By what name do you wish to be known? ", "!")
+	answer("By what name do you wish to be known? ", "X") // C rejects names under 2 characters; "!" now replays last_input (src/comm.c:1999)
 	answer("Invalid name, please try another.\r\nName: ", "Transcript")
 	answer("Did I get that right, Transcript (Y/N)? ", "Y")
 	answer("Give me a password for Transcript: ", "hunter2")

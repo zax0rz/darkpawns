@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+process_input	!	input.history-repeat	D3	command	oracle-green-multiseed	input-history-depth@1,2,3	comm.c:1999-2000	A line starting with ! is replaced whole by the descriptor's last_input, trailing text ignored; ! never changes last_input. Found in Zach's playtest 2026-10-15 ("Huh?!"); removing the history step restores Huh?!? (R1/R2/R5h).
+process_input	^	input.history-subst	D3	command	oracle-green-multiseed	input-history-depth@1,2,3;TestPerformSubstMatchesC	comm.c:2001-2003,2037-2080	^old^new replaces the first occurrence of old in last_input and the result becomes last_input; strstr finds an empty old at position 0 and the result is bounded by MAX_INPUT_LENGTH (R1/R5h).
+process_input	^	input.history-subst-invalid	D3	command	oracle-green-multiseed	input-history-depth@1,2,3	comm.c:2050-2063	A missing second ^ or an old that last_input lacks sends Invalid substitution. and queues nothing (R1/R5h).

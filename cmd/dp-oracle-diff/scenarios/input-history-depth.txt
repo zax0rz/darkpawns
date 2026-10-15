@@ -1,0 +1,51 @@
+# depth-case: input.history-repeat
+# depth-case: input.history-subst
+# depth-case: input.history-subst-invalid
+# process_input's history step (src/comm.c:1999-2005): a line starting with '!'
+# is replaced whole by the descriptor's last_input; "^old^new" is
+# perform_subst (src/comm.c:2037-2080) of last_input and becomes last_input;
+# a missing second '^' or an old that last_input lacks prints "Invalid
+# substitution." and queues nothing. Every other line becomes last_input.
+# Found in Zach's playtest 2026-10-15: '!' answered "Huh?!".
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Histtest
+Y
+histpass
+histpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Histtest
+y
+histpass
+histpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+say hello there
+!
+^hello^goodbye
+!
+!ignored tail
+^nomatch^x
+^noclosingcaret
+^there^friend
