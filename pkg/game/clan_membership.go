@@ -21,6 +21,11 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 		targetArg = arg
 	}
 
+	if !immcom && ch.ClanRank < c.Privilege[CPEnroll] {
+		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
+		return
+	}
+
 	// If no target, show applicant list
 	if targetArg == "" {
 		ch.SendMessage("The following players have applied to your clan:\r\n" +
@@ -39,11 +44,6 @@ func (w *World) doClanEnroll(ch *Player, arg string) {
 				ch.SendMessage(fmt.Sprintf("%s\r\n", p.Name))
 			}
 		}
-		return
-	}
-
-	if !immcom && ch.ClanRank < c.Privilege[CPEnroll] {
-		ch.SendMessage("You're not influent enough in the clan to do that!\r\n")
 		return
 	}
 
