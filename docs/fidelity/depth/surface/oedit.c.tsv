@@ -1,73 +1,73 @@
 c_site	function	classification	case_ids	notes
-oedit.c:463	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
-oedit.c:472	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
-oedit.c:481	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
-oedit.c:500	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
-oedit.c:510	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
-oedit.c:517	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
-oedit.c:525	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
-oedit.c:540	oedit_disp_extradesc_menu	proven	oedit.extra-desc	OEDIT main-menu F enters oedit_disp_extradesc_menu; the extra-desc oracle/unit proof checks the complete menu.
-oedit.c:554	oedit_disp_extradesc_menu	proven	oedit.extra-desc	OEDIT main-menu F enters oedit_disp_extradesc_menu; the extra-desc oracle/unit proof checks the complete menu.
-oedit.c:565	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
-oedit.c:583	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
-oedit.c:588	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
-oedit.c:591	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
-oedit.c:602	oedit_liquid_type	gap-reachable	-	oedit_disp_val3_menu reaches oedit_liquid_type for drink containers/fountains; this generated liquid table and prompt have no depth proof.
-oedit.c:610	oedit_liquid_type	gap-reachable	-	oedit_disp_val3_menu reaches oedit_liquid_type for drink containers/fountains; this generated liquid table and prompt have no depth proof.
-oedit.c:613	oedit_liquid_type	gap-reachable	-	oedit_disp_val3_menu reaches oedit_liquid_type for drink containers/fountains; this generated liquid table and prompt have no depth proof.
-oedit.c:624	oedit_disp_apply_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
-oedit.c:631	oedit_disp_apply_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
-oedit.c:633	oedit_disp_apply_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
-oedit.c:644	oedit_disp_spell_menu	gap-reachable	-	OEDIT_APPLY with APPLY_SPELL reaches oedit_disp_spell_menu; current apply case selects APPLY_RACE_HATE and never enters this branch.
-oedit.c:651	oedit_disp_spell_menu	gap-reachable	-	OEDIT_APPLY with APPLY_SPELL reaches oedit_disp_spell_menu; current apply case selects APPLY_RACE_HATE and never enters this branch.
-oedit.c:653	oedit_disp_spell_menu	gap-reachable	-	OEDIT_APPLY with APPLY_SPELL reaches oedit_disp_spell_menu; current apply case selects APPLY_RACE_HATE and never enters this branch.
-oedit.c:663	oedit_disp_race_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
-oedit.c:670	oedit_disp_race_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
-oedit.c:672	oedit_disp_race_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
-oedit.c:684	oedit_disp_weapon_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
-oedit.c:691	oedit_disp_weapon_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
-oedit.c:693	oedit_disp_weapon_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
-oedit.c:703	oedit_disp_spells_menu	gap-reachable	-	Scroll/potion/wand/staff value cascades reach oedit_disp_spells_menu; no current depth proof enters this table.
-oedit.c:710	oedit_disp_spells_menu	gap-reachable	-	Scroll/potion/wand/staff value cascades reach oedit_disp_spells_menu; no current depth proof enters this table.
-oedit.c:713	oedit_disp_spells_menu	gap-reachable	-	Scroll/potion/wand/staff value cascades reach oedit_disp_spells_menu; no current depth proof enters this table.
-oedit.c:730	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for scroll/wand/staff/potion reaches the spell-level prompt; no current proof selects these item types.
-oedit.c:739	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for ITEM_ARMOR reaches the AC prompt; no current proof selects armor.
-oedit.c:742	oedit_disp_val1_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
-oedit.c:746	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for drink containers/fountains reaches the maximum-units prompt; no current proof selects these item types.
-oedit.c:749	oedit_disp_val1_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
-oedit.c:752	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for ITEM_MONEY reaches the gold-count prompt; no current proof selects money.
-oedit.c:773	oedit_disp_val2_menu	gap-reachable	-	OEDIT_VALUE_2 for ITEM_WAND/ITEM_STAFF reaches the maximum-charge prompt; no current proof selects either type.
-oedit.c:778	oedit_disp_val2_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
-oedit.c:790	oedit_disp_val2_menu	gap-reachable	-	OEDIT_VALUE_2 for ITEM_DRINKCON/ITEM_FOUNTAIN reaches the initial-units prompt; no current proof selects these types.
-oedit.c:805	oedit_disp_val3_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
-oedit.c:814	oedit_disp_val3_menu	gap-reachable	-	OEDIT_VALUE_3 for ITEM_WAND/ITEM_STAFF reaches the remaining-charges prompt; no current proof selects either type.
-oedit.c:819	oedit_disp_val3_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
-oedit.c:822	oedit_disp_val3_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
-oedit.c:853	oedit_disp_val4_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
-oedit.c:865	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
-oedit.c:872	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
-oedit.c:874	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
-oedit.c:884	oedit_disp_extra_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-oedit.c:891	oedit_disp_extra_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-oedit.c:898	oedit_disp_extra_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-oedit.c:909	oedit_disp_wear_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-oedit.c:916	oedit_disp_wear_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-oedit.c:924	oedit_disp_wear_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-oedit.c:962	oedit_disp_menu	proven	oedit.menu-colors-on-raw,oedit.menu-colors-off-raw	Valid do_olc entry calls oedit_disp_menu; both keep-ansi cases compare the full colored/plain main menu.
-oedit.c:1000	oedit_disp_menu	proven	oedit.menu-colors-on-raw,oedit.menu-colors-off-raw	Valid do_olc entry calls oedit_disp_menu; both keep-ansi cases compare the full colored/plain main menu.
-oedit.c:1030	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
-oedit.c:1043	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
-oedit.c:1044	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
-oedit.c:1057	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
-oedit.c:1065	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
-oedit.c:1069	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
-oedit.c:1073	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
-oedit.c:1101	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choice 8 reaches the object-weight prompt; no current proof selects this field.
-oedit.c:1105	oedit_parse	proven	oedit.cost-prompt	OEDIT main-menu choice 9 emits the exact misleading maximum prompt in the boundary scenario.
-oedit.c:1110	oedit_parse	proven	oedit.load-float	OEDIT main-menu choice A emits this percent-load prompt before atof/clamp; the boundary scenario compares it.
-oedit.c:1116	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choice B reaches the timer prompt; color cases display the timer value but do not enter OEDIT_TIMER.
-oedit.c:1184	oedit_parse	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
-oedit.c:1219	oedit_parse	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
-oedit.c:1417	oedit_parse	gap-reachable	-	OEDIT_APPLY accepts an ordinary apply type and reaches the modifier prompt; current apply coverage selects only race-hate and spell.
-oedit.c:1436	oedit_parse	proven	oedit.script-shallow	Script menu choice 1 enters OEDIT_SCRIPT_NAME and the focused proof compares this direct prompt.
-oedit.c:1506	oedit_parse	proven	oedit.extra-desc	Extra-description choice 1 enters keyword editing and the proof compares this direct prompt.
+src/oedit.c:463	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
+src/oedit.c:472	oedit_disp_container_flags_menu	proven	oedit.value-cascade	Builder OEDIT D -> ITEM_CONTAINER value cascade reaches the container flag menu; TestOeditValueCascadeSkipsByType asserts the rendered menu and toggled summary.
+src/oedit.c:481	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
+src/oedit.c:500	oedit_disp_script_menu	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
+src/oedit.c:510	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
+src/oedit.c:517	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
+src/oedit.c:525	oedit_disp_script_flags	proven	oedit.script-shallow	OEDIT main-menu S and script-menu selections reach these rows; TestOeditScriptShallowBehavior checks the exact menu/prompt bytes.
+src/oedit.c:540	oedit_disp_extradesc_menu	proven	oedit.extra-desc	OEDIT main-menu F enters oedit_disp_extradesc_menu; the extra-desc oracle/unit proof checks the complete menu.
+src/oedit.c:554	oedit_disp_extradesc_menu	proven	oedit.extra-desc	OEDIT main-menu F enters oedit_disp_extradesc_menu; the extra-desc oracle/unit proof checks the complete menu.
+src/oedit.c:565	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
+src/oedit.c:583	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
+src/oedit.c:588	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
+src/oedit.c:591	oedit_disp_prompt_apply_menu	proven	oedit.apply-forms	OEDIT main-menu E enters the per-slot apply menu; the apply-forms proof checks exact prompt rows and prompt.
+src/oedit.c:602	oedit_liquid_type	gap-reachable	-	oedit_disp_val3_menu reaches oedit_liquid_type for drink containers/fountains; this generated liquid table and prompt have no depth proof.
+src/oedit.c:610	oedit_liquid_type	gap-reachable	-	oedit_disp_val3_menu reaches oedit_liquid_type for drink containers/fountains; this generated liquid table and prompt have no depth proof.
+src/oedit.c:613	oedit_liquid_type	gap-reachable	-	oedit_disp_val3_menu reaches oedit_liquid_type for drink containers/fountains; this generated liquid table and prompt have no depth proof.
+src/oedit.c:624	oedit_disp_apply_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
+src/oedit.c:631	oedit_disp_apply_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
+src/oedit.c:633	oedit_disp_apply_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
+src/oedit.c:644	oedit_disp_spell_menu	gap-reachable	-	OEDIT_APPLY with APPLY_SPELL reaches oedit_disp_spell_menu; current apply case selects APPLY_RACE_HATE and never enters this branch.
+src/oedit.c:651	oedit_disp_spell_menu	gap-reachable	-	OEDIT_APPLY with APPLY_SPELL reaches oedit_disp_spell_menu; current apply case selects APPLY_RACE_HATE and never enters this branch.
+src/oedit.c:653	oedit_disp_spell_menu	gap-reachable	-	OEDIT_APPLY with APPLY_SPELL reaches oedit_disp_spell_menu; current apply case selects APPLY_RACE_HATE and never enters this branch.
+src/oedit.c:663	oedit_disp_race_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
+src/oedit.c:670	oedit_disp_race_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
+src/oedit.c:672	oedit_disp_race_menu	proven	oedit.apply-forms	The boundary scenario selects apply slot 2 then APPLY_RACE_HATE, reaching oedit_disp_apply_menu and oedit_disp_race_menu.
+src/oedit.c:684	oedit_disp_weapon_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
+src/oedit.c:691	oedit_disp_weapon_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
+src/oedit.c:693	oedit_disp_weapon_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
+src/oedit.c:703	oedit_disp_spells_menu	gap-reachable	-	Scroll/potion/wand/staff value cascades reach oedit_disp_spells_menu; no current depth proof enters this table.
+src/oedit.c:710	oedit_disp_spells_menu	gap-reachable	-	Scroll/potion/wand/staff value cascades reach oedit_disp_spells_menu; no current depth proof enters this table.
+src/oedit.c:713	oedit_disp_spells_menu	gap-reachable	-	Scroll/potion/wand/staff value cascades reach oedit_disp_spells_menu; no current depth proof enters this table.
+src/oedit.c:730	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for scroll/wand/staff/potion reaches the spell-level prompt; no current proof selects these item types.
+src/oedit.c:739	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for ITEM_ARMOR reaches the AC prompt; no current proof selects armor.
+src/oedit.c:742	oedit_disp_val1_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:746	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for drink containers/fountains reaches the maximum-units prompt; no current proof selects these item types.
+src/oedit.c:749	oedit_disp_val1_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:752	oedit_disp_val1_menu	gap-reachable	-	OEDIT_VALUE_1 for ITEM_MONEY reaches the gold-count prompt; no current proof selects money.
+src/oedit.c:773	oedit_disp_val2_menu	gap-reachable	-	OEDIT_VALUE_2 for ITEM_WAND/ITEM_STAFF reaches the maximum-charge prompt; no current proof selects either type.
+src/oedit.c:778	oedit_disp_val2_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
+src/oedit.c:790	oedit_disp_val2_menu	gap-reachable	-	OEDIT_VALUE_2 for ITEM_DRINKCON/ITEM_FOUNTAIN reaches the initial-units prompt; no current proof selects these types.
+src/oedit.c:805	oedit_disp_val3_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:814	oedit_disp_val3_menu	gap-reachable	-	OEDIT_VALUE_3 for ITEM_WAND/ITEM_STAFF reaches the remaining-charges prompt; no current proof selects either type.
+src/oedit.c:819	oedit_disp_val3_menu	proven	oedit.weapon-val3-fallthrough	The weapon value cascade reaches damage prompts and oedit_disp_weapon_menu; the boundary scenario compares this full transcript.
+src/oedit.c:822	oedit_disp_val3_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:853	oedit_disp_val4_menu	proven	oedit.value-cascade	TestOeditValueCascadeSkipsByType follows ITEM_CONTAINER/FOOD/LIGHT value routes and asserts these exact prompts.
+src/oedit.c:865	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
+src/oedit.c:872	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
+src/oedit.c:874	oedit_disp_type_menu	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
+src/oedit.c:884	oedit_disp_extra_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
+src/oedit.c:891	oedit_disp_extra_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
+src/oedit.c:898	oedit_disp_extra_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
+src/oedit.c:909	oedit_disp_wear_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
+src/oedit.c:916	oedit_disp_wear_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
+src/oedit.c:924	oedit_disp_wear_menu	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
+src/oedit.c:962	oedit_disp_menu	proven	oedit.menu-colors-on-raw;oedit.menu-colors-off-raw	Valid do_olc entry calls oedit_disp_menu; both keep-ansi cases compare the full colored/plain main menu.
+src/oedit.c:1000	oedit_disp_menu	proven	oedit.menu-colors-on-raw;oedit.menu-colors-off-raw	Valid do_olc entry calls oedit_disp_menu; both keep-ansi cases compare the full colored/plain main menu.
+src/oedit.c:1030	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
+src/oedit.c:1043	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
+src/oedit.c:1044	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
+src/oedit.c:1057	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
+src/oedit.c:1065	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
+src/oedit.c:1069	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
+src/oedit.c:1073	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
+src/oedit.c:1101	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choice 8 reaches the object-weight prompt; no current proof selects this field.
+src/oedit.c:1105	oedit_parse	proven	oedit.cost-prompt	OEDIT main-menu choice 9 emits the exact misleading maximum prompt in the boundary scenario.
+src/oedit.c:1110	oedit_parse	proven	oedit.load-float	OEDIT main-menu choice A emits this percent-load prompt before atof/clamp; the boundary scenario compares it.
+src/oedit.c:1116	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choice B reaches the timer prompt; color cases display the timer value but do not enter OEDIT_TIMER.
+src/oedit.c:1184	oedit_parse	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
+src/oedit.c:1219	oedit_parse	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
+src/oedit.c:1417	oedit_parse	gap-reachable	-	OEDIT_APPLY accepts an ordinary apply type and reaches the modifier prompt; current apply coverage selects only race-hate and spell.
+src/oedit.c:1436	oedit_parse	proven	oedit.script-shallow	Script menu choice 1 enters OEDIT_SCRIPT_NAME and the focused proof compares this direct prompt.
+src/oedit.c:1506	oedit_parse	proven	oedit.extra-desc	Extra-description choice 1 enters keyword editing and the proof compares this direct prompt.
