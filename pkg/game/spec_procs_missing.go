@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -31,14 +30,11 @@ func specNoGet(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	Act(w, true, me, ch, nil, nil, "$n strikes at $N's hand!", "", ToNotVict)
 	Act(nil, false, me, ch, nil, nil, "$n strikes at your hand!", "", ToVict)
-	if w != nil && w.combatEngine != nil {
-		// C calls hit(me, ch, TYPE_UNDEFINED) here. The shared combat engine
-		// owns the combat-entry state; TYPE_UNDEFINED has no loaded C skill
-		// message, so this special must not invent a swing transcript.
-		if err := w.combatEngine.StartCombat(me, ch); err != nil {
-			slog.Debug("no_get combat entry already active", "mob", me.GetName(), "player", ch.GetName(), "error", err)
-		}
-	}
+	// C calls hit(me, ch, TYPE_UNDEFINED) after the two acts
+	// (new_cmds2.c:561-569): the swing consumes hit()'s draws and damage()'s
+	// gates run before anyone enrols. The old plain enrolment skipped the
+	// swing entirely.
+	w.mobFirstHit(me, ch)
 	return true
 }
 

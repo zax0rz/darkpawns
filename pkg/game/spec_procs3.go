@@ -1730,10 +1730,20 @@ func elementsGuardianSelfDamage(w *World, target *Player, dam int) {
 }
 
 // elementsGuardianPlayerHit preserves the C hit(ppl, next, TYPE_UNDEFINED)
-// call after its three Act writes. Unlike a mobile-special hit, both
-// combatants here are players, so use the ordinary player combat opener.
+// call after its three Act writes (spec_procs3.c:1281): unlike a
+// mobile-special hit, both combatants here are players, but the swing still
+// consumes hit()'s draws and runs damage()'s gates against the pre-enrolment
+// state before either side enrols (fight.c:1318-1445).
 func elementsGuardianPlayerHit(w *World, attacker, defender *Player) {
 	if w.combatEngine == nil {
+		return
+	}
+	if hitter, ok := w.combatEngine.(interface {
+		PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
+	}); ok {
+		if err := hitter.PerformDeferredInitialAttack(attacker, defender); err != nil {
+			slog.Warn("elements guardian deferred hit failed", "attacker", attacker.GetName(), "defender", defender.GetName(), "error", err)
+		}
 		return
 	}
 	if err := w.combatEngine.StartCombat(attacker, defender); err != nil {
