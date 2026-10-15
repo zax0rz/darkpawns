@@ -454,9 +454,11 @@ type SkillResult struct {
 	// RetaliateHitAfterMessages preserves commands whose C act() audience
 	// messages all precede hit(vict, ch), such as do_disarm.
 	RetaliateHitAfterMessages bool
-	// RetaliateHitUnenrolled preserves MOB_AWARE backstab's direct hit(vict, ch)
-	// path: C's damage() leaves only the mob fighting, without creating the
-	// command-engine combat pair used by ordinary command entry.
+	// RetaliateHitUnenrolled marks MOB_AWARE backstab's direct hit(vict, ch)
+	// (src/act.offensive.c:213-216). The caller runs it through the deferred
+	// initial attack: damage() enrols at its own point, before the blow lands,
+	// so a lethal retaliation's death clears the fight as C's stop_fighting
+	// does. Setting FIGHTING after the hit left the mob fighting a dead body.
 	RetaliateHitUnenrolled bool
 
 	// SkillMsgType, when non-zero, routes the combat message through the

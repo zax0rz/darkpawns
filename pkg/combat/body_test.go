@@ -16,7 +16,7 @@ func TestCombatBodyRejectsInvalidReferences(t *testing.T) {
 	valid := &mockCombatant{name: "valid", position: PosStanding, hp: 100}
 	for _, bad := range []Combatant{nil, typedNil, valueBody{valid}, sliceBody{valid, []int{1}}} {
 		ce := NewCombatEngine()
-		for _, entry := range []func(Combatant, Combatant) error{ce.StartCombat, ce.StartCombatAfterDamage, ce.PerformInitialAttack, ce.PerformUnenrolledInitialAttack} {
+		for _, entry := range []func(Combatant, Combatant) error{ce.StartCombat, ce.StartCombatAfterDamage, ce.PerformInitialAttack, ce.PerformDeferredInitialAttack} {
 			if err := entry(bad, valid); err == nil {
 				t.Fatalf("invalid %T attacker accepted", bad)
 			}
