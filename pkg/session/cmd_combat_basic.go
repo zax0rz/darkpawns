@@ -105,17 +105,12 @@ func cmdAssist(s *Session, args []string) error {
 			"$n assists $N.", "", game.ToNotVict)
 	}
 
-	// do_assist calls hit() after its own audience messages, and hit()
-	// reaches damage()'s protection block (fight.c:1318-1368) before the
-	// helper is enrolled.
-	if s.manager.world.DamageRefused(s.player, opponent) {
-		return nil
-	}
-	if err := s.manager.combatEngine.StartCombat(s.player, opponent); err != nil {
-		s.Send(err.Error())
-		return nil
-	}
-	if err := s.manager.combatEngine.PerformInitialAttack(s.player, opponent); err != nil {
+	// do_assist calls hit() after its own audience messages
+	// (act.offensive.c:95): the swing consumes hit()'s to-hit and damage
+	// draws and only then reaches damage()'s protection block
+	// (fight.c:1318-1368) against the pre-enrolment state. The helper enrols
+	// at the damage point only when the damage is not refused.
+	if err := s.manager.combatEngine.PerformDeferredInitialAttack(s.player, opponent); err != nil {
 		return err
 	}
 	s.markDirty(VarFighting)

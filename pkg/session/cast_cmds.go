@@ -411,7 +411,11 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 		}
 		if info.IsViolent() {
 			if mob, ok := target.character.(*game.MobInstance); ok && mob.GetFightingBody() == nil && s.manager.combatEngine != nil {
-				if err := s.manager.combatEngine.StartCombat(mob, s.player); err != nil {
+				// C: hit(tch, ch, TYPE_UNDEFINED) on a violent fumble
+				// (spell_parser.c:1101-1106) — the mob's first swing consumes
+				// hit()'s draws and runs damage()'s gates before anyone
+				// enrols; a plain enrolment skips the swing entirely.
+				if err := s.manager.combatEngine.PerformDeferredInitialAttack(mob, s.player); err != nil {
 					slog.Warn("cast-failure retaliation failed", "mob", mob.GetName(), "caster", s.player.Name, "error", err)
 				}
 			}

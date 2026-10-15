@@ -169,7 +169,17 @@ func (w *World) kenderStealItem(ch *Player, mob *MobInstance, obj *ObjectInstanc
 		Act(w, false, ch, mob, nil, nil, "$n tried to steal something from you!", "", ToVict)
 		Act(w, true, ch, mob, nil, nil, "$n tries to steal something from $N.", "", ToNotVict)
 		if mob.GetPosition() > combat.PosSleeping && w.combatEngine != nil {
-			if err := w.combatEngine.StartCombat(mob, ch); err != nil {
+			// C: hit(vict, ch, TYPE_UNDEFINED) when a caught steal leaves an
+			// awake NPC victim (act.other.c:528-529) — the mob's first swing
+			// draws and runs damage()'s gates before enrolment. Focused spec
+			// vehicles without the deferred entry keep the plain enrolment.
+			if hitter, ok := w.combatEngine.(interface {
+				PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
+			}); ok {
+				if err := hitter.PerformDeferredInitialAttack(mob, ch); err != nil {
+					slog.Error("kender steal retaliation failed", "mob", mob.GetName(), "player", ch.GetName(), "error", err)
+				}
+			} else if err := w.combatEngine.StartCombat(mob, ch); err != nil {
 				slog.Error("kender steal retaliation failed", "mob", mob.GetName(), "player", ch.GetName(), "error", err)
 			}
 		}

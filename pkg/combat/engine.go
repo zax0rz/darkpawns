@@ -29,6 +29,11 @@ type CombatPair struct {
 	// damage() sets the victim's FIGHTING field after the NPC switcheroo scan;
 	// ordinary command entry keeps the historical eager enrollment.
 	DeferDefenderEnrollment bool
+	// DeferAttackerEnrollment preserves C damage()'s enrolment point for a
+	// first hit(): set_fighting(ch, victim) runs inside damage(), after the
+	// protection block and the jail guard and before the charm/switcheroo
+	// draws (fight.c:1404-1408). A refused first swing enrols nobody.
+	DeferAttackerEnrollment bool
 	// DefenderNeedsStand retains the pending posture half of an eager initial
 	// enrollment. C performs both halves in damage(), src/fight.c:1443-1445.
 	DefenderNeedsStand bool
@@ -348,6 +353,28 @@ func (ce *CombatEngine) PerformInitialAttack(attacker, defender Combatant) error
 	}
 
 	ce.performOneHit(pair)
+	return nil
+}
+
+// PerformDeferredInitialAttack resolves a first hit() with C damage()'s
+// enrolment point: hit() consumes its to-hit and damage draws, damage()'s
+// protection block runs against the pre-enrolment state (neither FIGHTING
+// field names the other yet), and both sides enrol at the damage point
+// (fight.c:1408, 1445) only when the damage is not refused. This is the entry
+// every C hit() caller's first swing uses — do_hit, do_assist, the failed
+// cutthroat arm, cast-fumble retaliation and caught stealing — so a refused
+// first swing still draws and prints C's refusal bytes while leaving nobody
+// fighting (src/fight.c:1318-1368; src/act.offensive.c:126).
+func (ce *CombatEngine) PerformDeferredInitialAttack(attacker, defender Combatant) error {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
+		return fmt.Errorf("combat requires concrete bodies")
+	}
+	ce.performOneHit(&CombatPair{
+		Attacker:                attacker,
+		Defender:                defender,
+		DeferDefenderEnrollment: true,
+		DeferAttackerEnrollment: true,
+	})
 	return nil
 }
 
@@ -770,7 +797,10 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return false
 	}
 
-	// Only ranged entry delays attacker enrollment past the jail redirect.
+	// Only ranged entry and deferred initial entry delay attacker enrollment
+	// past the jail redirect: both place it where C damage() calls
+	// set_fighting (fight.c:1404-1408), after the protection block and the
+	// jail guard, before the charm/switcheroo draws.
 	var afterJail func() bool
 	ranged := pair.RangedRetaliation
 	if ranged {
@@ -788,6 +818,33 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 					return false
 				}
 			}
+			return true
+		}
+	} else if pair.DeferAttackerEnrollment {
+		// fight.c:1404-1408: an unstunned, not-yet-fighting attacker enrols
+		// via set_fighting (which also stands it up); an already fighting one
+		// keeps its current target. The hit itself proceeds either way. The
+		// jail guard, charm-guard and switcheroo redirects are NPC-only
+		// (fight.c:1369-1401, 1413-1440) while set_fighting(ch) is not, so a
+		// player attacker enrols before the redirect call and an NPC attacker
+		// enrols inside it — both between C's jail and charm arms.
+		deferred := func() bool {
+			if attacker.GetPosition() <= PosStunned || attacker.GetFightingBody() != nil {
+				return true
+			}
+			if err := ce.startCombat(attacker, defender, true, true); err != nil {
+				return false
+			}
+			attacker.SetPosition(PosFighting)
+			key := CombatPairKey{Attacker: attacker, Target: defender}
+			ce.mu.RLock()
+			pair = ce.combatPairs[key]
+			ce.mu.RUnlock()
+			return pair != nil
+		}
+		if attacker.IsNPC() {
+			afterJail = deferred
+		} else if !deferred() {
 			return true
 		}
 	}
