@@ -2,18 +2,19 @@
 # depth-case: mob.key-seller-owner-buy-no-arg
 # depth-case: mob.key-seller-owner-buy-wrong-key
 # depth-case: mob.key-seller-owner-buy-unaffordable
+# depth-case: mob.key-seller-owner-buy-success-audience
 # C key_seller (spec_procs2.c:1870-1932) first requires a house-control
-# record for the seller's room. The C owner is the seeded Testor record (ID 1);
-# the no-DB Go fixture explicitly maps that owner to the new Testor's ID 1.
-# The two room placements cover C's immortal load room and Go's post-birth
-# mortal room.
+# record for the seller's room. C needs its seeded Testor (owner ID 1) present
+# when House_boot validates the record; the Go fixture maps that owner to its
+# first new Testor (ID 1). C's immortal moves to room 8162, where the Go actor
+# and both peers start. A real money object crosses the buy threshold after
+# the unaffordable probe.
 
 [fixture]
 quiet-mobs
-spawn-mob 19610 2 1204 80
 spawn-mob 19610 2 8162 80
-house-control 1204 1205 down 1 1 19604
 house-control 8162 8161 north 1 1 19604
+spawn-obj 80 1 8162 80
 
 [setup:oracle]
 Testor
@@ -35,8 +36,42 @@ Y
 <ENTER>
 1
 
+[setup:oracle:peer]
+Keypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Keypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
 [probe]
 list
 buy
 buy junk
 buy key
+get coins
+buy key
+gold

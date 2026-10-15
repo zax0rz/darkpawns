@@ -359,6 +359,7 @@ func TestButlerVisibleRoomObjectUsesWorldLight(t *testing.T) {
 	w := newMobactDrawTestWorld()
 	setRoomFlagBit(w.GetRoomInWorld(1001), 0)
 	mob := newMobactDrawTestMob("butler")
+	mob.world = w
 	obj := NewObjectInstance(&parser.Obj{
 		VNum: 9403, Keywords: "probe case", ShortDesc: "a probe case",
 	}, 1001)

@@ -1,9 +1,7 @@
 # depth-case: mob.roach-entry-gates
 # depth-case: mob.roach-food-predicate
-# depth-case: mob.roach-food-success
 # depth-case: mob.roach-food-failure
 # depth-case: mob.roach-growth-state
-# depth-case: mob.roach-food-failure
 # depth-case: mob.roach-idle-output
 # depth-case: mob.roach-teleport-subgate
 # depth-case: mob.roach-pulse-dispatch

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
@@ -126,17 +127,77 @@ func TestTransferAllOnlyMovesConPlayingDescriptors(t *testing.T) {
 func TestTagDescriptorSearchAndLinklessGateMatchC(t *testing.T) {
 	f := newConPlayingFixture(t)
 	f.editing.player.SetPlrFlag(game.PlrIt, true)
+	if err := ExecuteCommand(f.actor, "tag", nil); err != nil {
+		t.Fatalf("dispatch tag without argument: %v", err)
+	}
+	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "Tag who?\r\n"; got != want {
+		t.Fatalf("empty tag output = %q, want %q", got, want)
+	}
+	if err := ExecuteCommand(f.actor, "tag", []string{"NoSuchPlayer"}); err != nil {
+		t.Fatalf("dispatch tag with missing target: %v", err)
+	}
+	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "They don't seem to be here.\r\n"; got != want {
+		t.Fatalf("missing tag target output = %q, want %q", got, want)
+	}
+
 	if err := ExecuteCommand(f.actor, "tag", []string{"Playing"}); err != nil {
 		t.Fatalf("dispatch tag to playing target: %v", err)
 	}
 	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "You tap Playing and scream, 'TAG! You're it!'\r\n"; got != want {
 		t.Fatalf("actor tag output = %q, want %q", got, want)
 	}
-	if err := ExecuteCommand(f.actor, "tag", []string{"Editing"}); err != nil {
+	if got, want := strings.Join(drainSessionText(t, f.playing), ""), "Actor taps you and screams, 'TAG! You're it!'\r\n"; got != want {
+		t.Fatalf("tag target output = %q, want %q", got, want)
+	}
+	roomTag := "Actor taps Playing and screams, 'TAG! You're it!'\r\n"
+	for _, observer := range []*Session{f.mailing, f.noteWrite} {
+		if got := strings.Join(drainSessionText(t, observer), ""); got != roomTag {
+			t.Errorf("%s room tag output = %q, want %q", observer.playerName, got, roomTag)
+		}
+	}
+	if got := strings.Join(drainSessionText(t, f.editing), ""); got != roomTag {
+		t.Errorf("OLC room tag output = %q, want %q", got, roomTag)
+	}
+	for _, observer := range []*Session{f.menu, f.creating, f.textEditing, f.linkless} {
+		drainSessionText(t, observer)
+	}
+	if !f.playing.player.HasPLRFlag(game.PlrIt) || f.actor.player.HasPLRFlag(game.PlrIt) || !f.editing.player.HasPLRFlag(game.PlrIt) {
+		t.Fatal("tag should mark the playing target, leave the actor clear, and ignore stale OLC PLR_IT")
+	}
+	if got, want := f.playing.player.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
+		t.Fatalf("tag target wait = %d, want %d pulses", got, want)
+	}
+
+	if err := ExecuteCommand(f.actor, "tag", []string{"Playing"}); err != nil {
+		t.Fatalf("dispatch tag as non-it actor: %v", err)
+	}
+	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "But you are not it!\r\n"; got != want {
+		t.Fatalf("non-it actor output = %q, want %q", got, want)
+	}
+	if err := ExecuteCommand(f.playing, "tag", []string{"Playing"}); err != nil {
+		t.Fatalf("dispatch tag on current it: %v", err)
+	}
+	if got, want := strings.Join(drainSessionText(t, f.playing), ""), "You're it already!\r\n"; got != want {
+		t.Fatalf("already-it output = %q, want %q", got, want)
+	}
+
+	if err := ExecuteCommand(f.playing, "tag", []string{"Editing"}); err != nil {
 		t.Fatalf("dispatch tag to OLC descriptor: %v", err)
 	}
-	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "You tap Editing and scream, 'TAG! You're it!'\r\n"; got != want {
+	if got, want := strings.Join(drainSessionText(t, f.playing), ""), "You tap Editing and scream, 'TAG! You're it!'\r\n"; got != want {
 		t.Fatalf("actor tag-to-editor output = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(drainSessionText(t, f.editing), ""), "Playing taps you and screams, 'TAG! You're it!'\r\n"; got != want {
+		t.Fatalf("editor target output = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "Playing taps Editing and screams, 'TAG! You're it!'\r\n"; got != want {
+		t.Fatalf("tag room output = %q, want %q", got, want)
+	}
+	if f.playing.player.HasPLRFlag(game.PlrIt) || !f.editing.player.HasPLRFlag(game.PlrIt) {
+		t.Fatal("tagging from the current it should move PLR_IT to the selected OLC player")
+	}
+	if got, want := f.editing.player.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
+		t.Fatalf("OLC target wait = %d, want %d pulses", got, want)
 	}
 	for _, s := range []*Session{f.actor, f.playing, f.mailing, f.noteWrite, f.menu, f.creating, f.editing, f.textEditing, f.linkless} {
 		drainSessionText(t, s)
@@ -146,6 +207,39 @@ func TestTagDescriptorSearchAndLinklessGateMatchC(t *testing.T) {
 	}
 	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "No way! They're linkless!\r\n"; got != want {
 		t.Fatalf("linkless target output = %q, want %q", got, want)
+	}
+	if err := ExecuteCommand(f.actor, "tag", []string{"Actor"}); err != nil {
+		t.Fatalf("dispatch self-tag: %v", err)
+	}
+	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "Let the game begin!\r\n"; got != want {
+		t.Fatalf("self-tag output = %q, want %q", got, want)
+	}
+	if !f.actor.player.HasPLRFlag(game.PlrIt) {
+		t.Fatal("self-tag should set PLR_IT after the game has no playing target")
+	}
+	if got := f.actor.player.GetWaitState(); got != 0 {
+		t.Fatalf("self-tag wait state = %d, want 0", got)
+	}
+}
+
+func TestCmdTagNPCAcknowledgment(t *testing.T) {
+	m := makeTestManagerWithMobs(t)
+	actor := makeCommandTestSession(t, m, "Tagger", game.LVL_GOD, 1001)
+	registerInWorld(t, actor)
+	target := registerMob(t, m, 2001, 1001)
+	actor.player.SetPlrFlag(game.PlrIt, true)
+
+	if err := ExecuteCommand(actor, "tag", []string{"goblin"}); err != nil {
+		t.Fatalf("ExecuteCommand tag NPC: %v", err)
+	}
+	if got, want := strings.Join(drainSessionText(t, actor), ""), "You tag A goblin guard, but It tags you right back!\r\n"; got != want {
+		t.Fatalf("NPC tag output = %q, want %q", got, want)
+	}
+	if !actor.player.HasPLRFlag(game.PlrIt) {
+		t.Fatal("tagging an NPC should not clear the current player's PLR_IT marker")
+	}
+	if got := target.GetWaitState(); got != 0 {
+		t.Fatalf("NPC tag wait state = %d, want 0", got)
 	}
 }
 
