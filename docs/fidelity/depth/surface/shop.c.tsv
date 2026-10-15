@@ -1,0 +1,25 @@
+c_site	function	classification	case_ids	notes
+src/shop.c:522	shopping_buy	proven	shops.buy-count-capacity	The real buy dispatch pins fname(obj->name), exact refusal bytes and no charge when item count is full (R1/R2/R5e/R5h).
+src/shop.c:529	shopping_buy	proven	shops.buy-weight-capacity	The real buy dispatch pins fname(obj->name), exact refusal bytes and no charge when carried weight is full (R1/R2/R5e/R5h).
+src/shop.c:577	shopping_buy	proven	shops.buy-success-audience	The real buy dispatch proves the room-only act at a connected peer, while the actor receives no duplicate room act (R1/R2/R5e/R5h).
+src/shop.c:582	shopping_buy	proven	shops.buy-success-audience	The buyer receives the configured keeper tell and C times_message bytes, including LFCR (R1/R2/R5e/R5h).
+src/shop.c:798	shopping_sell	proven	shops.sell-success-audience	The real sell dispatch proves the room-only act at a connected peer, while the actor receives no duplicate room act (R1/R2/R5e/R5h).
+src/shop.c:803	shopping_sell	proven	shops.sell-success-audience	The seller receives the configured keeper tell and C times_message bytes, including LFCR (R1/R2/R5e/R5h).
+src/shop.c:918	shopping_list	proven	shops.live-inventory-gate	The empty keeper inventory probe reaches C's fixed nothing-for-sale response (R1/R2/R5e/R5h).
+src/shop.c:920	shopping_list	proven	shops.bridge.stocked-definition;shops.live-inventory-control	Stocked-list keyword misses reach C's fixed none-are-for-sale response, including the final-group control (R1/R2/R3/R5e/R5h).
+src/shop.c:977	shop_keeper	proven	shops.steal-keeper-response	Real command dispatch invokes the assigned shop_keeper special before do_steal; the actor and a room peer pin slap and thief-response audiences (R1/R2/R5e/R5h).
+src/shop.c:1305	handle_detailed_list	proven	show.shops-detail	Long report fields cross the C byte-width boundary and flush through this direct send (R1/R2/R5e/R5h).
+src/shop.c:1320	list_detailed_shop	proven	show.shops-detail	The detailed selector emits the version and index header asserted by the real-dispatch report proof (R1/R2/R5e/R5h).
+src/shop.c:1334	list_detailed_shop	proven	show.shops-detail	An empty room list reaches the fixed Rooms None report row (R1/R2/R5e/R5h).
+src/shop.c:1338	list_detailed_shop	proven	show.shops-detail	A populated room list reaches the wrapped room report row (R1/R2/R5e/R5h).
+src/shop.c:1348	list_detailed_shop	proven	show.shops-detail	A live keeper reaches the direct keeper-and-coins report path (R1/R2/R5e/R5h).
+src/shop.c:1355	list_detailed_shop	proven	show.shops-detail	A live keeper reaches the coins row; a missing keeper reaches the <NONE> row (R1/R2/R5e/R5h).
+src/shop.c:1359	list_detailed_shop	proven	show.shops-detail	The detail report emits its customer-trade row (R1/R2/R5e/R5h).
+src/shop.c:1372	list_detailed_shop	proven	show.shops-detail	An empty product list reaches the fixed Produces Nothing report row (R1/R2/R5e/R5h).
+src/shop.c:1376	list_detailed_shop	proven	show.shops-detail	A populated product list reaches the wrapped product report row (R1/R2/R5e/R5h).
+src/shop.c:1393	list_detailed_shop	proven	show.shops-detail	An empty buy-type list reaches the fixed Buys Nothing report row (R1/R2/R5e/R5h).
+src/shop.c:1397	list_detailed_shop	proven	show.shops-detail	A populated buy-type list reaches the wrapped buy-type report row (R1/R2/R5e/R5h).
+src/shop.c:1404	list_detailed_shop	proven	show.shops-detail	The report emits configured buy and sell rates and opening hours (R1/R2/R5e/R5h).
+src/shop.c:1408	list_detailed_shop	proven	show.shops-detail	The numeric and current-room detailed reports share this final bit line (R1/R2/R5e/R5h).
+src/shop.c:1429	show_shops	proven	show.shops-detail	The current-room selector outside any shop reaches the exact C refusal (R1/R2/R5e/R5h).
+src/shop.c:1440	show_shops	proven	show.shops-detail	An invalid numeric selector reaches the exact C refusal (R1/R2/R5e/R5h).

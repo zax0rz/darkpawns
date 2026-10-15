@@ -50,8 +50,11 @@ func findShopKeeperAndMobInRoom(s *Session) (*game.Shop, string, *game.MobInstan
 // shopKeeperTell formats the direct do_tell path used by shop.c. The C shop
 // strings begin with the buyer's name so do_tell can consume it as the target
 // argument; the player sees only the message body from the keeper.
-func shopKeeperTell(keeperName, message, playerName string) string {
-	formatted := fmt.Sprintf(message, playerName)
+func shopKeeperTell(keeperName, message, playerName string, values ...any) string {
+	args := make([]any, 1, len(values)+1)
+	args[0] = playerName
+	args = append(args, values...)
+	formatted := fmt.Sprintf(message, args...)
 	formatted = strings.TrimPrefix(formatted, playerName)
 	formatted = strings.TrimSpace(formatted)
 	if keeperName == "" {
@@ -60,6 +63,22 @@ func shopKeeperTell(keeperName, message, playerName string) string {
 		keeperName = strings.ToUpper(keeperName[:1]) + keeperName[1:]
 	}
 	return fmt.Sprintf("%s tells you, '%s'\r\n", keeperName, formatted)
+}
+
+// shopTimesMessage mirrors shop.c:times_message for the one description and
+// count that shopping_buy/shopping_sell expose after a completed transaction.
+func shopTimesMessage(description string, count int) string {
+	if count > 1 {
+		return fmt.Sprintf("%s (x %d)", description, count)
+	}
+	return description
+}
+
+func shopObjectFirstKeyword(keywords string) string {
+	if first, _, ok := strings.Cut(keywords, " "); ok {
+		return first
+	}
+	return keywords
 }
 
 func shopKeeperSay(keeperName, message string) string {
@@ -326,6 +345,18 @@ func cmdBuy(s *Session, args []string) error {
 		return nil
 	}
 
+	// src/shop.c:520-532 checks count before weight and emits fname(obj->name)
+	// followed by the exact LFCR-terminated refusal. Keep this ahead of object
+	// creation so the rejected purchase has no registry or inventory effects.
+	if s.player.Inventory.GetItemCount()+1 > s.player.MaxCarryItems() {
+		s.Send(fmt.Sprintf("%s: You can't carry any more items.\n\r", shopObjectFirstKeyword(matchedProto.Keywords)))
+		return nil
+	}
+	if s.player.CarriedWeight()+matchedProto.Weight > s.player.MaxCarryWeight() {
+		s.Send(fmt.Sprintf("%s: You can't carry that much weight.\n\r", shopObjectFirstKeyword(matchedProto.Keywords)))
+		return nil
+	}
+
 	// Buy up to count items (stop if inventory is full or gold runs out)
 	bought := 0
 	for i := 0; i < count; i++ {
@@ -374,11 +405,10 @@ func cmdBuy(s *Session, args []string) error {
 		if pays {
 			s.manager.world.CreditShopPurchase(shop.VNum, keeper, totalSpent)
 		}
-		if bought == 1 {
-			s.Send(fmt.Sprintf("You buy %s for %d gold pieces.", matchedProto.ShortDesc, totalSpent))
-		} else {
-			s.Send(fmt.Sprintf("You buy %s (x%d) for %d gold pieces.", matchedProto.ShortDesc, bought, totalSpent))
-		}
+		times := shopTimesMessage(matchedProto.ShortDesc, bought)
+		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n buys "+times+".", "", game.ToRoom)
+		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageBuy], s.player.GetName(), totalSpent))
+		s.Send("You now have " + times + ".\n\r")
 		s.markDirty(VarInventory)
 	}
 
@@ -435,7 +465,10 @@ func cmdSell(s *Session, args []string) error {
 		s.player.MarkCrashNeeded()
 		s.player.AddGold(price)
 		s.manager.world.RebalanceShopBank(shop.VNum, keeper)
-		s.Send(fmt.Sprintf("You sell %s for %d gold pieces.", item.GetShortDesc(), price))
+		times := shopTimesMessage(item.GetShortDesc(), 1)
+		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n sells "+times+".", "", game.ToRoom)
+		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageSell], s.player.GetName(), price))
+		s.Send("The shopkeeper now has " + times + ".\n\r")
 		s.markDirty(VarInventory)
 	} else {
 		s.manager.world.RefundShopSale(shop.VNum, keeper, price)

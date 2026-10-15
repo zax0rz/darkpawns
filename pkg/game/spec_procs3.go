@@ -15,6 +15,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
+// msgNoStealHere is src/shop.h:193's MSG_NO_STEAL_HERE, expanded by the
+// native shopkeeper special in src/shop.c:975.
+const msgNoStealHere = "$n is a bloody thief!"
+
 // mobHasAffect checks if a MobInstance has a given affect flag string in its prototype.
 func mobHasAffect(me *MobInstance, affect string) bool {
 	for _, f := range me.Proto().AffectFlags {
@@ -75,16 +79,34 @@ func init() {
 	RegisterSpec("cleric", specCleric)
 }
 
-// specShopKeeper is intentionally a no-op in the Go port.
-//
-// In CircleMUD, specShopKeeper intercepted "list", "buy", "sell", etc.
-// In the Go codebase, the command layer (cmdList/cmdBuy/cmdSell in
-// pkg/session/shop_cmds.go) handles shop lookup by scanning room mobs
-// and calling World.GetShopByKeeper directly. The spec proc only needs
-// to exist so that zone files can assign it to shopkeeper mobs; the
-// actual shop logic lives in the session command handlers.
+// specShopKeeper handles the command-time shopkeeper behavior that cannot be
+// reached through the ordinary session shop handlers. Transaction commands
+// are handled by pkg/session/shop_cmds.go; C's steal interception remains a
+// mobile special because it must run before the steal command handler.
 func specShopKeeper(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	return false
+	if ch == nil || me == nil || cmd != "steal" {
+		return false
+	}
+	shop, ok := w.GetShopByKeeper(me.GetVNum())
+	if !ok {
+		return false
+	}
+	inShopRoom := false
+	for _, room := range shop.Rooms {
+		if room == ch.GetRoomVNum() {
+			inShopRoom = true
+			break
+		}
+	}
+	if !inShopRoom || me.GetPosition() <= combat.PosSleeping {
+		return false
+	}
+	if ch.GetRace() == RaceKender {
+		w.mobShoutGenComm(me, "Stinkin' Kender scum!")
+	}
+	w.npcSocial(me, "slap", ch.GetName())
+	Act(w, false, ch, me, nil, nil, "$N shouts '"+msgNoStealHere+"'", "", ToChar)
+	return true
 }
 
 // specCleric — cleric mob: heals self, casts offensive/defensive spells while fighting.
