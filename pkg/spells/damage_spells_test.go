@@ -1,6 +1,39 @@
 package spells
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/dprng"
+)
+
+func TestMagDamageDispelProtectionNamesTarget(t *testing.T) {
+	cases := []struct {
+		name      string
+		spellNum  int
+		alignment int
+	}{
+		{"dispel evil protects a good target", SpellDispelEvil, 1000},
+		{"dispel good protects an evil target", SpellDispelGood, -1000},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dprng.ResetStream(1)
+			caster := newAffectMale("Castero", 8162)
+			victim := newAffectMale("Barnaby", 8162)
+			victim.alignment = tc.alignment
+
+			MagDamage(20, caster, victim, tc.spellNum, int(SaveSpell), nil)
+
+			if !reflect.DeepEqual(caster.messages, []string{"The gods protect Barnaby.\r\n"}) {
+				t.Errorf("caster messages = %q, want target-substituted act output", caster.messages)
+			}
+			if len(victim.messages) != 0 {
+				t.Errorf("victim messages = %q, want none", victim.messages)
+			}
+		})
+	}
+}
 
 // ---------------------------------------------------------------------------
 // DP-938: MagDamage must not silently fabricate damage for spells that have

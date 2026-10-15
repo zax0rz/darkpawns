@@ -1,6 +1,8 @@
 package spells
 
 import (
+	"strings"
+
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -81,7 +83,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 				dam = getHP(victim) - 10
 			}
 		} else if isGood(victim) {
-			sendToCaster(ch, "The gods protect $N.\r\n")
+			sendActTargetToCaster(ch, victim, "The gods protect $N.\r\n")
 			return
 		}
 	case SpellDispelGood:
@@ -91,7 +93,7 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 				dam = getHP(victim) - 10
 			}
 		} else if isEvil(victim) {
-			sendToCaster(ch, "The gods protect $N.\r\n")
+			sendActTargetToCaster(ch, victim, "The gods protect $N.\r\n")
 			return
 		}
 	}
@@ -148,6 +150,16 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 			sendToZone("Thunder rumbles through the air.", ch, world)
 		}
 	}
+}
+
+func sendActTargetToCaster(ch, target interface{}, format string) {
+	type named interface{ GetName() string }
+	n, ok := target.(named)
+	if !ok {
+		return
+	}
+	msg := strings.ReplaceAll(format, "$N", n.GetName())
+	sendToCaster(ch, capitalizeActMessage(msg))
 }
 
 func isBreathSpell(spellNum int) bool {

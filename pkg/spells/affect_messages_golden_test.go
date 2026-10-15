@@ -74,6 +74,8 @@ func (w *affectMsgWorld) ForEachPlayerInRoomInterface(room int, fn func(interfac
 
 func (w *affectMsgWorld) ForEachMobInRoomInterface(room int, fn func(interface{})) {}
 
+func (w *affectMsgWorld) GetAllCharsInRoom(room int) []interface{} { return w.rooms[room] }
+
 func newAffectMsgWorld(chars ...*affectMsgChar) *affectMsgWorld {
 	w := &affectMsgWorld{rooms: map[int][]interface{}{}}
 	for _, c := range chars {
@@ -132,6 +134,69 @@ func TestMagAffectsMessages_SelfTarget(t *testing.T) {
 				t.Errorf("self-cast %s messages = %q, want %q", tc.name, self.messages, tc.want)
 			}
 		})
+	}
+}
+
+// TestMagPointsMessages pins the direct, victim, and room bytes from
+// src/magic.c:1754-1824. The room acts use TO_NOTVICT, so both caster and
+// healed character are excluded while another player receives the line.
+func TestMagPointsMessages(t *testing.T) {
+	cases := []struct {
+		name        string
+		spellNum    int
+		casterClass int
+		victim      []string
+		observer    []string
+	}{
+		{"cure light", SpellCureLight, 0, []string{"You feel better.\r\n"}, []string{"Barnaby's wounds glow and mend themselves.\r\n"}},
+		{"cure critic", SpellCureCritic, 0, []string{"You feel a lot better!\r\n"}, []string{"Barnaby's wounds glow and mend themselves.\r\n"}},
+		{"heal", SpellHeal, 0, []string{"A warm feeling floods your body.\r\n"}, []string{"Barnaby's wounds glow and mend themselves.\r\n"}},
+		{"mass heal", SpellMassHeal, 0, []string{"A warm feeling floods your body.\r\n"}, []string{"Barnaby's wounds glow and mend themselves.\r\n"}},
+		{"cell adjustment", SpellCellAdjustment, 0, []string{"A warm feeling floods your body.\r\n"}, []string{"Barnaby's wounds glow and mend themselves.\r\n"}},
+		{"vitality", SpellVitality, 0, []string{"You feel vitalized!\r\n"}, nil},
+		{"invigorate", SpellInvigorate, 0, []string{"You feel invigorated!\r\n"}, nil},
+		{"psionic heal", SpellHeal, 9, []string{"You focus your mind on healing your body..\r\n", "Your wounds mend themselves!\r\n"}, nil},
+		{"psionic cell adjustment", SpellCellAdjustment, 9, []string{"You focus your mind on healing your body..\r\n", "Your wounds mend themselves!\r\n"}, nil},
+		{"lay hands", SpellLayHands, 0, []string{"Your wounds start to heal beneath Castero's hands!\r\n"}, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := newAffectMale("Castero", 8162)
+			caster.class = tc.casterClass
+			victim := newAffectMale("Barnaby", 8162)
+			observer := newAffectMale("Observe", 8162)
+			world := newAffectMsgWorld(caster, victim, observer)
+			MagPoints(20, caster, victim, tc.spellNum, int(SaveSpell), world)
+			if !reflect.DeepEqual(victim.messages, tc.victim) {
+				t.Errorf("victim messages = %q, want %q", victim.messages, tc.victim)
+			}
+			if !reflect.DeepEqual(observer.messages, tc.observer) {
+				t.Errorf("observer messages = %q, want %q", observer.messages, tc.observer)
+			}
+			if len(caster.messages) != 0 {
+				t.Errorf("caster messages = %q, want none for TO_NOTVICT/TO_VICT", caster.messages)
+			}
+		})
+	}
+}
+
+func TestMagMassesSmokescreenMessages(t *testing.T) {
+	caster := newAffectMale("Castero", 8162)
+	victim := newAffectMale("Barnaby", 8162)
+	observer := newAffectMale("Observe", 8162)
+	world := newAffectMsgWorld(caster, victim, observer)
+
+	MagMasses(20, caster, SpellSmokescreen, int(SaveSpell), world)
+
+	if !reflect.DeepEqual(caster.messages, []string{"As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.\r\n"}) {
+		t.Errorf("caster messages = %q", caster.messages)
+	}
+	wantRoom := "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of Castero!\r\n"
+	if !reflect.DeepEqual(victim.messages, []string{wantRoom}) {
+		t.Errorf("victim messages = %q, want room announcement", victim.messages)
+	}
+	if !reflect.DeepEqual(observer.messages, []string{wantRoom}) {
+		t.Errorf("observer messages = %q, want room announcement", observer.messages)
 	}
 }
 

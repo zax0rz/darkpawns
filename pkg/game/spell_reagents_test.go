@@ -2,6 +2,28 @@ package game
 
 import "testing"
 
+func TestSpawnObjectToPlayerInventoryIUsesObjToCharPlacement(t *testing.T) {
+	w, player := newTestWorld(t)
+
+	value, err := w.SpawnObjectToPlayerInventoryI(3001, player)
+	if err != nil {
+		t.Fatalf("SpawnObjectToPlayerInventoryI: %v", err)
+	}
+	obj, ok := value.(*ObjectInstance)
+	if !ok {
+		t.Fatalf("spawned value type = %T, want *ObjectInstance", value)
+	}
+	if got := obj.Location; got != LocInventoryPlayer(player.Name) {
+		t.Errorf("spawned object location = %+v, want player inventory", got)
+	}
+	if got := player.Inventory.Snapshot(); len(got) != 1 || got[0] != obj {
+		t.Errorf("player inventory = %v, want spawned object", got)
+	}
+	if got := w.GetItemsInRoom(player.GetRoomVNum()); len(got) != 0 {
+		t.Errorf("spawned object also remains in room: %v", got)
+	}
+}
+
 func TestConsumeSpellReagentUsesObjectLocationPipeline(t *testing.T) {
 	w, player := newTestWorld(t)
 	obj, err := w.SpawnObject(3001, 1001)
