@@ -241,6 +241,18 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 	ack = setCap(ack)
 	s.Send(ack)
 
+	// C's save path is draw-bearing. save_char → char_to_store unequips every
+	// worn item and equips them all again (src/db.c:2634-2637), and equip_char
+	// runs check_for_bad_stats for each one (src/handler.c:749), so a stat this
+	// set just zeroed fires its arm again — once per worn item. do_set's tail
+	// reaches it for a live player through save_char(vict, NOWHERE)
+	// (src/act.wizard.c:3064) and for a file target through char_to_store
+	// (:3067); both run after the acknowledgement line, before the file write
+	// and "Saved in file." (R3a).
+	if target.player != nil && s.manager != nil && s.manager.world != nil {
+		s.manager.world.ReplayEquipmentBadStats(target.player)
+	}
+
 	if target.file && target.player != nil {
 		// C's file path uses char_to_store directly, retaining load_room
 		// and saved olc_zone (act.wizard.c:3066-3069).
