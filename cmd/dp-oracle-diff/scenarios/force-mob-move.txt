@@ -1,0 +1,79 @@
+# C-first NPC movement through the generic interpreter: do_force hands
+# "north"/"south" to command_interpreter for the trainee
+# (src/act.wizard.c:1880; src/interpreter.c:883-949), whose do_move leg is
+# perform_move(ch, dir, 0) (src/act.movement.c:361-366, 311-358). Room 8162's
+# natural open north exit leads to 8161, so both audiences and both direction
+# rows are live.
+
+# depth-case: force.npc-command-interpreter
+# depth-case: turn.npc-flee-special-lane
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Forcemov
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Forcemov
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Forcedst
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[setup:port:destination]
+Forcedst
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[warmup]
+goto 8162
+
+[probe]
+force trainee north
+force trainee south

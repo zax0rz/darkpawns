@@ -37,6 +37,7 @@ K
 Y
 <ENTER>
 1
+look
 recall
 
 [probe]

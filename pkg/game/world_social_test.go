@@ -25,15 +25,15 @@ func spawnSocialTestMob(t *testing.T, w *World) *MobInstance {
 // mob path indexed past the table on both target shapes and killed the whole
 // process on the recover-less telnet input goroutine (order <pet> blush
 // <word>). The unified npcSocial path renders it like C's do_action instead.
-func TestExecMobCommandShortSocialDoesNotPanic(t *testing.T) {
+func TestNPCCommandShortSocialDoesNotPanic(t *testing.T) {
 	w, actor, local, _, output := newChannelWorld(t)
 	mob := spawnSocialTestMob(t, w)
 
-	// Target not found, target found, and the explicit "social" form —
-	// all three routes on a three-message social.
-	w.ExecMobCommand(mob.GetVNum(), "blush nobodyhere")
-	w.ExecMobCommand(mob.GetVNum(), "blush "+local.Name)
-	w.ExecMobCommand(mob.GetVNum(), "social blush "+local.Name)
+	// Target not found and target found — both routes on a three-message
+	// social. (The retired adapter's "social <name>" prefix form was an R4
+	// invention: C registers no such command, so it is gone with the adapter.)
+	w.NPCCommand(mob, "blush nobodyhere")
+	w.NPCCommand(mob, "blush "+local.Name)
 
 	for _, name := range []string{actor.Name, local.Name} {
 		if got := channelOutput(output, name); strings.Contains(got, "#") {
@@ -42,7 +42,7 @@ func TestExecMobCommandShortSocialDoesNotPanic(t *testing.T) {
 	}
 
 	// grin carries all slots: the targeted form still reaches the target.
-	w.ExecMobCommand(mob.GetVNum(), "grin "+actor.Name)
+	w.NPCCommand(mob, "grin "+actor.Name)
 	if got := channelOutput(output, actor.Name); !strings.Contains(got, "grins at you") {
 		t.Fatalf("actor output after grin = %q, want the ToVict grin message", got)
 	}
@@ -55,7 +55,7 @@ func TestMobSocialNoTargetedFormPlaysNoArgRoomLine(t *testing.T) {
 	w, actor, local, _, output := newChannelWorld(t)
 	mob := spawnSocialTestMob(t, w)
 
-	w.ExecMobCommand(mob.GetVNum(), "blush "+local.Name)
+	w.NPCCommand(mob, "blush "+local.Name)
 
 	if got := channelOutput(output, actor.Name); !strings.Contains(got, "blushes.") {
 		t.Fatalf("actor output for targeted blush = %q, want the no-arg room line", got)

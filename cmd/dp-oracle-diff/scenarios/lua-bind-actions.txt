@@ -10,6 +10,7 @@
 # depth-case: lua.bind-spell
 # depth-case: lua.bind-unaffect
 # depth-case: lua.npc-command-stand
+# depth-case: lua.npc-command-unported
 
 [fixture]
 empty-players
@@ -46,6 +47,8 @@ set_hunt(ch, ch)
 say("player hunt=" .. tostring(ishunt(ch)))
 elseif (what == "stand") then
 action(me, "stand")
+elseif (what == "actiongossip") then
+action(me, "gossip an action spoke")
 elseif (what == "sanct") then
 spell(ch, nil, SPELL_SANCTUARY, 0)
 elseif (what == "cure") then
@@ -103,6 +106,7 @@ say hunt
 syslog complete
 say huntplayer
 say stand
+say actiongossip
 say sanct
 score
 say cure

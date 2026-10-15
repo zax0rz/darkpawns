@@ -15,7 +15,7 @@ import shutil
 import subprocess
 import time
 
-from claims_census import GOOD, atomic, read_results, summarize
+from claims_census import GOOD, atomic, draw_line, draw_parity, read_results, summarize
 
 
 def scenario_cost(path):
@@ -93,6 +93,7 @@ def full_summary(rows, elapsed):
               "timed_out": "TIMEOUT", "unstable": "EXPECTED_UNSTABLE"}
     return (f"oracle-regression: scenarios={len(rows)} " +
             " ".join(f"{label}={counts[kind]}" for label, kind in labels.items()) +
+            (f" draw={counts['DRAW']}" if draw_parity() else "") +
             f" elapsed={elapsed:.3f}s")
 
 
@@ -126,6 +127,8 @@ def run_worker(repo, run, binaries, pair, recheck=False):
                ORACLE_REGRESSION_SERVER=str(binaries / "dp-server-prebuilt"), ORACLE_REGRESSION_DUMP=str(dump),
                EXPECTED_DIVERGENCES_FILE=str(repo / "cmd/dp-oracle-diff/expected_divergences.tsv"),
                EXPECTED_DIVERGENCE_PINS_FILE=str(repo / "cmd/dp-oracle-diff/expected_divergence_pins.tsv"))
+    if draw_parity():
+        env["ORACLE_REGRESSION_DRAW_PARITY"] = "1"
     process = subprocess.run([str(repo / "scripts/oracle_regression_worker.sh"), name + ".txt"],
                              env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     (log_dir / f"{name}.worker.log").write_text(process.stdout)
@@ -172,6 +175,9 @@ def project(run, full, claims, initial, repeats, elapsed):
         claim_rows = {pair: value for pair, value in (initial | repeats).items() if pair in claims and pair[0] == seed}
         atomic(run / f"summary-seed{seed}.txt", summarize(claim_rows, seed, elapsed) +
                f" verdict={verdict(claim_rows, {})}\n")
+    if draw_parity():
+        final = initial | repeats
+        write_rows(run / "draw-results.tsv", {pair: value for pair, value in final.items() if value[0] == "DRAW"}, True)
     if (run / "seed1/recheck.log").exists():
         shutil.copy2(run / "seed1/recheck.log", run / "recheck.log")
     # Seed-1 normalized C blocks remain available at the full census path too.
@@ -215,6 +221,14 @@ def main():
     print((run / "full-summary.txt").read_text().strip(), flush=True)
     print((run / "claims-summary.txt").read_text().strip(), flush=True)
     print((run / "combined-summary.txt").read_text().strip(), flush=True)
+    if draw_parity():
+        final = initial | repeats
+        # One line, both projections: seed 1 over the full corpus, and every
+        # claimed (seed, scenario) pair, which is the multi-seed measurement.
+        full_rows = {pair: final[pair] for pair in final if pair[0] == 1 and pair[1] in full}
+        claim_rows = {pair: final[pair] for pair in claims}
+        print(draw_line("full", full_rows) + " | " + draw_line("claims", claim_rows)
+              .removeprefix("oracle-draw-parity: "), flush=True)
     return 1 if outcome == "NOT_CLEAN" else 0
 
 

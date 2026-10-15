@@ -64,6 +64,12 @@ func (w *World) NPCCommand(me *MobInstance, line string) {
 		if position >= combat.PosResting && me.GetLevel() >= 1 {
 			w.npcEmote(me, rest)
 		}
+	case "gossip":
+		w.mobGenComm(me, strings.TrimPrefix(rest, " "), "gossip")
+	case "shout":
+		w.mobGenComm(me, strings.TrimPrefix(rest, " "), "shout")
+	case "auction":
+		w.mobGenComm(me, strings.TrimPrefix(rest, " "), "auction")
 	case "give":
 		if position >= combat.PosResting {
 			w.npcGive(me, rest)
@@ -92,6 +98,13 @@ func (w *World) NPCTellCommand(me *MobInstance, arg string)        { w.npcTell(m
 func (w *World) NPCEmoteCommand(me *MobInstance, arg string)       { w.npcEmote(me, arg) }
 func (w *World) NPCGiveCommand(me *MobInstance, arg string)        { w.npcGive(me, arg) }
 func (w *World) NPCSocialCommand(me *MobInstance, cmd, arg string) { w.npcSocial(me, cmd, arg) }
+
+// NPCGossipCommand, NPCShoutCommand, and NPCAuctionCommand adapt the NPC
+// do_gen_comm delivery (src/act.comm.c:1146-1298) to the shared command
+// registry.
+func (w *World) NPCGossipCommand(me *MobInstance, arg string)  { w.mobGenComm(me, arg, "gossip") }
+func (w *World) NPCShoutCommand(me *MobInstance, arg string)   { w.mobGenComm(me, arg, "shout") }
+func (w *World) NPCAuctionCommand(me *MobInstance, arg string) { w.mobGenComm(me, arg, "auction") }
 
 func isASCIIAlpha(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
@@ -270,6 +283,8 @@ func (w *World) npcPerformGive(me *MobInstance, vict interface{}, obj *ObjectIns
 			slog.Error("NPC give to player failed", "mob_vnum", me.GetVNum(), "obj_vnum", obj.VNum, "error", err)
 			return
 		}
+		// MoveObject's attach is obj_to_char and flags the player recipient's
+		// crash save there (src/handler.c:569-571; movement.go).
 		Act(nil, false, me, v, obj, nil, "$n gives you $p.", "", ToVict)
 		Act(w, true, me, v, obj, nil, "$n gives $p to $N.", "", ToNotVict)
 	case *MobInstance:

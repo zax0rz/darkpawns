@@ -101,9 +101,6 @@ func (w *World) ExecInsult(ch *Player, arg string) { DoInsult(w, ch, arg) }
 // ExecDream prints the do_dream flavor message (only meaningful while sleeping).
 func (w *World) ExecDream(ch *Player) { DoDream(w, ch) }
 
-// ExecMobCommand makes a mob (identified by VNum) execute a game command string.
-func (w *World) ExecMobCommand(mobVNum int, cmdStr string) { w.executeMobCommand(mobVNum, cmdStr) }
-
 // ExecBan handles the "ban" admin command (ported from ban.c do_ban).
 // actorName and invis are the acting body's (R4). DoBan logs inside itself, in
 // C's order (producer, acknowledgement, ban file); ack delivers the

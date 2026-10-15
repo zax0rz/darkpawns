@@ -355,9 +355,15 @@ func (s *Session) TerminalLine(rawLine string) bool {
 			s.SendPrompt()
 		}
 	case line == "":
-		// RETURN with no command refreshes the prompt, queued after any
-		// pending output (C: comm.c:637-642).
-		s.SendPrompt()
+		// C's game_loop hands a bare RETURN to command_interpreter like any
+		// other dequeued line (comm.c:628). It draws its leading number(0,3)
+		// and clears AFF_HIDE, then returns on the empty argument without
+		// output (interpreter.c:889-895). The prompt is refreshed after,
+		// queued behind the output flush (C: comm.c:633-648).
+		s.terminalError(s.terminalCommand("", nil, rawLine))
+		if !s.SendClosed() {
+			s.SendPrompt()
+		}
 	default:
 		// C tokenization (interpreter.c:883-907): a non-letter first character
 		// is a one-character command, no separating space needed ("'hello").

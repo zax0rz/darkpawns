@@ -8,8 +8,10 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest import mock
 from unittest.mock import patch
 
+import claims_census
 import combined_census as gate
 
 
@@ -76,6 +78,28 @@ class CombinedTest(unittest.TestCase):
             self.assertEqual((run/'claims-results.tsv').read_text(), 'INFRA\ta\t1\t4\nPASS\ta\t2\t7\n')
             self.assertEqual((run/'results.tsv').read_text(), 'INFRA\ta\t4\nFAIL\tb\t5\nPASS\tc\t6\n')
 
+    def test_draw_rows_are_byte_clean_and_tallied(self):
+        # DP-1427 v2: DRAW keeps the byte verdict clean, is listed in
+        # draw-results.tsv, and the summaries count it only with draw parity on.
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {'CENSUS_DRAW_PARITY': '1'}):
+            run = Path(tmp)
+            full = {'a', 'b'}
+            claims = {(1, 'a'), (2, 'a')}
+            initial = {(1, 'a'): ('DRAW', '4'), (1, 'b'): ('PASS', '5'), (2, 'a'): ('DRAW', '6')}
+            gate.project(run, full, claims, initial, {}, 10)
+            self.assertEqual((run/'full-verdict').read_text(), 'CLEAN\n')
+            self.assertEqual((run/'claims-verdict').read_text(), 'CLEAN\n')
+            self.assertEqual((run/'draw-results.tsv').read_text(), 'DRAW\ta\t1\t4\nDRAW\ta\t2\t6\n')
+            self.assertIn(' draw=1 ', (run/'full-summary.txt').read_text())
+            self.assertIn(' draw=2 ', (run/'claims-summary.txt').read_text())
+            self.assertEqual(claims_census.draw_line('claims', {p: initial[p] for p in claims}),
+                             'oracle-draw-parity: claims pairs=2 seeds=1,2 draw_divergent=2')
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {'CENSUS_DRAW_PARITY': '0'}):
+            run = Path(tmp)
+            gate.project(run, {'a'}, set(), {(1, 'a'): ('PASS', '1')}, {}, 1)
+            self.assertNotIn('draw=', (run/'full-summary.txt').read_text())
+            self.assertFalse((run/'draw-results.tsv').exists())
+
     def test_rechecks_only_infrastructure_once(self):
         pairs = [(1, 'a'), (1, 'b'), (2, 'a'), (2, 'b'), (2, 'c')]
         rows = dict(zip(pairs, [('TIMEOUT', '1'), ('FAIL', '1'), ('INFRA', '1'), ('STALE', '1'), ('UNPINNABLE', '1')]))
@@ -119,6 +143,25 @@ printf 'PASS %s\\n' "$name"
             self.assertIn('Combined gate', (run/'MANIFEST.md').read_text())
             bad = subprocess.run([script, 'start', '--combined', '--claims', '--name', 'bad'], env=env, capture_output=True)
             self.assertEqual(bad.returncode, 2)
+            # DP-1427 v2: --draw-parity rides the same pool; seed-2 alpha is a
+            # coincidence green, the byte verdict stays CLEAN, and summary.txt
+            # carries the tally for both projections.
+            worker.write_text('''#!/bin/sh
+name=${1%.txt}
+kind=PASS
+[ "$ORACLE_REGRESSION_DRAW_PARITY" = 1 ] && [ "$seed" = 2 ] && kind=DRAW
+printf '%s\\t%s\\t1\\n' "$kind" "$name" > "$result_dir/$name"
+printf '%s %s\\n' "$kind" "$name"
+''')
+            start = subprocess.run([script, 'start', '--combined', '--draw-parity', '--name', 'draws', '--jobs', '2'], env=env, capture_output=True, text=True)
+            self.assertEqual(start.returncode, 0, start.stderr)
+            wait = subprocess.run([script, 'wait', '--max-seconds', '10'], env=env, capture_output=True, text=True)
+            self.assertEqual(wait.returncode, 0, wait.stdout + wait.stderr)
+            run = next(p for p in (repo/'runs').glob('*/draws'))
+            summary = (run/'summary.txt').read_text()
+            self.assertIn('full=CLEAN claims=CLEAN', summary)
+            self.assertIn('oracle-draw-parity: full pairs=2 seeds=1 draw_divergent=0 | claims pairs=2 seeds=1,2 draw_divergent=1', summary)
+            self.assertEqual((run/'draw-results.tsv').read_text(), 'DRAW\talpha\t2\t1\n')
 
     def test_fail_closed_results(self):
         with tempfile.TemporaryDirectory() as tmp:
