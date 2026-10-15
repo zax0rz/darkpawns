@@ -40,7 +40,19 @@ Note: that table counts the 60 blocked surface-inventory rows among the 71, as t
 | lifecycle | 10 | death, rent, save/load, pulse order, descriptors |
 | shops | 3 | core, specials, rent-adjacent |
 
-**Draw parity** (`--draw-parity` over the 1,171-scenario corpus): DRAW_RESULT.
+**Draw parity** (`--draw-parity`, seed 1, run `finish-baseline-draw-parity`): byte verdict CLEAN (1,139 passed, 0 failed), and **32 scenarios are DRAW**, meaning their transcripts match on a drifted RNG stream. That's down from 61 on 2026-10-14 (PF-068), after DP-1364, DP-1438 parts 1 and 2, and DP-1440. First-mismatch clusters, by C draw against Go draw:
+
+| Rows | C | Go | Where |
+|---|---|---|---|
+| 8 | `Number(0,3)` | log ends | at a command step (`look`, `exits`, `give`, `inactive` …) |
+| 7 | `Number(0,18)` / `Number(1,6)` / `Number(0,3)` interleaved | swapped | setup/warmup pulses (residual pulse/round order) |
+| 4 | `Dice(1,1)` | `Number(0,20)` | combat message selector (`fight.c:1035`) against `loud_mobs` |
+| 2 | `Number(0,900)` | `Number(0,20)` | setup |
+| 2 | `Number(0,99)` | log ends | `~dpclock pulse 40` |
+| 2 | `Dice(1,2)` | `Number(0,3)` | warmup |
+| 2 | C log ends | `Number(0,3)` | after the last step (Go draws extra) |
+| 2 | `Number(1,101)` | other | `palm` (DP-1436), `peek` (DP-1437) |
+| 3 | singles | | `open pack`, `checkload mob`, one warmup |
 
 ## Interpretation
 
@@ -53,7 +65,7 @@ Note: that table counts the 60 blocked surface-inventory rows among the 71, as t
 
 | Date | Commit | Case rows blocked | Surface units blocked | DRAW rows |
 |---|---|---|---|---|
-| 2026-10-15 | `fd327ae1a` | 11 (+60 surface rows) | 4,031 / 4,929 | DRAW_COUNT |
+| 2026-10-15 | `fd327ae1a` | 11 (+60 surface rows) | 4,031 / 4,929 | 32 / 1,171 |
 
 ## Measurement script
 
@@ -82,5 +94,5 @@ DRAW rows: `scripts/census.sh start --draw-parity --name <run>`, then the `oracl
 ## Caveats
 
 - `units` are the audit's counts of call sites or vectors, not weighted by player exposure. A wizard-only `act()` counts the same as a combat message.
-- The draw-parity run is seed 1 only. DP-1427 v1 has no multi-seed mode.
+- The draw-parity run is seed 1 only. DP-1427 v1 has no multi-seed mode, and its `draw-parity` log lines don't name the scenario, so clusters can't be joined to scenario names from one run (a DP-1427 v2 item).
 - "Done" here is still the rulebook's definition (R1–R5). This note changes the measurement, not the target.

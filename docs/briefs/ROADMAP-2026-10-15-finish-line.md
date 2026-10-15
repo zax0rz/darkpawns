@@ -10,7 +10,7 @@ Baseline: `docs/research/field-notes/2026-10-15-finish-line-baseline.md` (PF-070
 |---|---|---|
 | Depth-case rows not blocked | 5,588 / 5,659 (98.7%) | 100% (or recorded) |
 | **C surface units blocked** | **4,031 / 4,929 (82%)** | 0 |
-| Coincidence greens (DRAW rows) | DRAW_BASELINE | 0 |
+| Coincidence greens (DRAW rows) | 32 / 1,171 (seed 1) | 0 |
 | Blocked depth cases (non-surface) | 11 | 0 |
 | Populated-world soaks | parked (DP-1439) | green, in the corpus |
 
@@ -31,7 +31,7 @@ Per C file: enumerate every `act()`/`send_to_char()` site, map it to the proofs 
   - the two saved-zero-stats rows (persistence-adjacent).
 - **Extras:** DP-1436 and DP-1437.
 
-### 3. DeepSeek: draw parity to zero (brief to follow)
+### 3. DeepSeek: draw parity to zero (`~/DEEPSEEK-BRIEF-2026-10-15-draw-parity-zero.md`)
 
 Every DRAW row in the baseline run is a coincidence green: bytes match on a drifted stream. Triage by first-mismatch cluster and fix by class. Known starting points:
 
