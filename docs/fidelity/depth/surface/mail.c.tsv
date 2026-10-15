@@ -1,0 +1,12 @@
+c_site	function	classification	case_ids	notes
+src/mail.c:485	postmaster	gap-blocked	-	The no_mail guard depends on mail-store availability; its failure path is blocked by mail persistence (stop tier).
+src/mail.c:512	postmaster_send_mail	gap-reachable	-	The minimum-level refusal precedes argument parsing, identity lookup, persistent mail access, and entry to the writer.
+src/mail.c:518	postmaster_send_mail	gap-reachable	-	The missing-addressee refusal precedes identity lookup, persistent mail access, and entry to the writer.
+src/mail.c:525	postmaster_send_mail	gap-reachable	-	The stamp-funds refusal occurs before get_id_by_name, persistent mail access, and entry to the writer.
+src/mail.c:529	postmaster_send_mail	gap-blocked	-	This branch requires get_id_by_name to resolve the target through the player identity index (stop tier).
+src/mail.c:533	postmaster_send_mail	gap-blocked	-	The room audience is reached only after player-index identity lookup succeeds; the composing path crosses the identity and session-lifecycle stop tiers.
+src/mail.c:538	postmaster_send_mail	gap-blocked	-	The instruction output follows player-index identity lookup and immediately precedes PLR_MAILING/string_write session state (stop tiers: identity and session lifecycle).
+src/mail.c:557	postmaster_check_mail	gap-blocked	-	The output branch depends on has_mail reading the persistent mail index (stop tier: mail persistence).
+src/mail.c:569	postmaster_receive_mail	gap-blocked	-	The no-mail output depends on has_mail reading the persistent mail index (stop tier: mail persistence).
+src/mail.c:593	postmaster_receive_mail	gap-blocked	-	Delivery is reached only for persisted mail and follows read_delete; the durable mail read is a stop-tier surface.
+src/mail.c:594	postmaster_receive_mail	gap-blocked	-	The room delivery audience follows persisted-mail lookup, read_delete, and object delivery (stop tier: mail persistence).
