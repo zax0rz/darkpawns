@@ -1,0 +1,79 @@
+# DP-1295: CAN_SEE's LIGHT_OK arm (src/utils.h:515-517). Room 8162 is flagged
+# dark for this run; an actor's smile reaches the observer's transcript only
+# through act()'s hide_invisible filter (comm.c:2537-2538), and PERS resolves
+# "Someone" wherever a non-hide line names the actor. The observer is the
+# implementor WITHOUT holylight, proving level alone does not see in the
+# dark; the follow-up probe in the lit vestibule is the control.
+
+# depth-case: visibility.dark-act-hidden
+# depth-case: visibility.dark-look
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 0 on
+
+[setup:oracle]
+Visdarka
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Visdarka
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Visdarkb
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Visdarkb
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+smile
+look
+north
+smile

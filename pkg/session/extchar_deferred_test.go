@@ -49,7 +49,15 @@ func assertDeferredMobVisibleToTargetingButHiddenFromLook(t *testing.T, m *Manag
 	if got, ok := w.GetMobByID(mob.GetID()); !ok || got != mob {
 		t.Fatal("pending mob disappeared from active lookup before heartbeat")
 	}
-	if target, ok := w.ResolveCharInRoom(actor.player, "guard"); !ok || target.Mob != mob {
+	// C's get_char_room_vis flows through CAN_SEE, so in darkness even a
+	// pending-extchar mob is not targetable (DP-1295's own "They aren't
+	// here." example); the lit variant proves the pending mob stays
+	// targetable.
+	if target, ok := w.ResolveCharInRoom(actor.player, "guard"); dark {
+		if ok || target.Mob == mob {
+			t.Fatal("dark room targeted a mob the actor cannot see")
+		}
+	} else if !ok || target.Mob != mob {
 		t.Fatal("pending mob disappeared from room targeting before heartbeat")
 	}
 	if ref, ok := game.NewWorldScriptableAdapter(w).InWorldMob(3001); !ok || !ref.NPC || ref.ID != mob.GetID() {

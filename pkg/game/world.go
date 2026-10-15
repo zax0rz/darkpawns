@@ -1399,7 +1399,7 @@ func (w *World) CanCarryObject(charName string, objVNum int) bool {
 // includes ITEM_WEAR_TAKE, carry limits, and CAN_SEE_OBJ in the character's
 // actual room (src/utils.h:535-549).
 func (w *World) canGetObject(ch Actor, obj *ObjectInstance) bool {
-	if ch == nil || obj == nil || !obj.IsTakeable() || !canSeeObjectInWorld(w, ch, obj) {
+	if ch == nil || obj == nil || !obj.IsTakeable() || !canSeeObject(ch, obj) {
 		return false
 	}
 	switch ch := ch.(type) {

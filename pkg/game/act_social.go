@@ -233,7 +233,7 @@ func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 	// Check mobs in the room
 	mobs := w.GetMobsInRoom(vnum)
 	for _, m := range mobs {
-		if isnameWithAbbrevs(name, charKeywords(m)) && w.canSeeCharacterInRoom(observer, m) {
+		if isnameWithAbbrevs(name, charKeywords(m)) && canSeeForPers(observer, m) {
 			return m
 		}
 	}
@@ -241,7 +241,7 @@ func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 	// Check players
 	players := w.GetPlayersInRoom(vnum)
 	for _, p := range players {
-		if isnameWithAbbrevs(name, charKeywords(p)) && w.canSeeCharacterInRoom(observer, p) {
+		if isnameWithAbbrevs(name, charKeywords(p)) && canSeeForPers(observer, p) {
 			return p
 		}
 	}
