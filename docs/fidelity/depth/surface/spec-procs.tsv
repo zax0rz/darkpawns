@@ -10,8 +10,8 @@ src/spec_procs.c:282	dump	gap-reachable		Assigned room dump procedure reaches th
 src/spec_procs.c:284	dump	gap-reachable		Assigned room dump procedure reaches this object-removal or award output; no current depth proof exercises this room interaction (R1/R2/R5e).
 src/spec_procs.c:312	npc_steal	proven	mob.thief-awake-audience;mob.thief-gold-transfer;mob.thief-periodic-steal	The cited manifest proof executes this C output call through its named branch and audience (R1/R5e).
 src/spec_procs.c:314	npc_steal	proven	mob.thief-awake-audience;mob.thief-gold-transfer;mob.thief-periodic-steal	The cited manifest proof executes this C output call through its named branch and audience (R1/R5e).
-src/spec_procs.c:340	snake	gap-reachable	mob.snake-unreachable	Reachable through perform_violence()'s per-round MOB_SPEC call for fighting mobiles (fight.c:2030-2031); no proof yet (R5e correction in review).
-src/spec_procs.c:341	snake	gap-reachable	mob.snake-unreachable	Reachable through perform_violence()'s per-round MOB_SPEC call for fighting mobiles (fight.c:2030-2031); no proof yet (R5e correction in review).
+src/spec_procs.c:340	snake	proven	mob.snake-unreachable	perform_violence()'s per-round MOB_SPEC call (fight.c:2030-2031) reaches the bite; proven by the combat-round tests on mob.snake-unreachable (#2003).
+src/spec_procs.c:341	snake	proven	mob.snake-unreachable	perform_violence()'s per-round MOB_SPEC call (fight.c:2030-2031) reaches the bite; proven by the combat-round tests on mob.snake-unreachable (#2003).
 src/spec_procs.c:579	guild_guard	proven	mob.guild-guard-entry-gates;mob.guild-guard-flee	The cited manifest proof executes this C output call through its named branch and audience (R1/R5e).
 src/spec_procs.c:580	guild_guard	proven	mob.guild-guard-entry-gates;mob.guild-guard-flee	The cited manifest proof executes this C output call through its named branch and audience (R1/R5e).
 src/spec_procs.c:601	guild_guard	proven	mob.guild-guard-entry-gates;mob.guild-guard-move-block	The cited manifest proof executes this C output call through its named branch and audience (R1/R5e).

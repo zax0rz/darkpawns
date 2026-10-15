@@ -1812,7 +1812,10 @@ func specBreedKiller(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return false
 	}
 	if me.GetFightingBody() != nil {
-		return false
+		// C delegates a fighting breed_killer to fighter()
+		// (src/spec_procs2.c:1688-1690); perform_violence reaches this arm
+		// every combat round (src/fight.c:2030-2031).
+		return specFighter(w, nil, me, "", "")
 	}
 
 	var victim combat.Combatant
