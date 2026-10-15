@@ -452,3 +452,32 @@ func (p *Player) RemoveAffectBySpell(spellNum int) {
 		p.refreshAttributeCapacity()
 	}
 }
+
+// RemoveAllActiveAffects removes the character's active effects, including
+// their C affect-vector bits, and recomputes effective attributes. It reports
+// whether the character had an active affect record, matching C's
+// `vict->affected` check in do_wizutil (src/act.wizard.c:2197).
+func (p *Player) RemoveAllActiveAffects() bool {
+	p.mu.Lock()
+	if len(p.ActiveAffects) == 0 {
+		p.mu.Unlock()
+		return false
+	}
+
+	var activeFlags uint64
+	for _, affect := range p.ActiveAffects {
+		if affect != nil {
+			activeFlags |= affect.Flags
+		}
+	}
+	p.ActiveAffects = nil
+	for engineFlag, affectBit := range EngineFlagToAffBit {
+		if activeFlags&engineFlag != 0 {
+			p.Affects &^= 1 << uint(affectBit)
+		}
+	}
+	p.affectTotalLocked()
+	p.mu.Unlock()
+	p.refreshAttributeCapacity()
+	return true
+}

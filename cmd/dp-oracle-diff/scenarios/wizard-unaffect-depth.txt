@@ -1,0 +1,75 @@
+# A real Dracula look gives the lower-level peer PLR_VAMPIRE; the registered
+# Implementor command then clears it through do_wizutil's unaffect branch.
+# Warmup output is discarded so the probe pins only unaffect's ordered bytes.
+
+# depth-case: wizutil.unaffect-vampire
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14110 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Unaffectgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Unaffectgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Unvictim
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Unvictim
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Unvictim 8105
+force Unvictim look lothar
+
+[probe]
+unaffect Unvictim

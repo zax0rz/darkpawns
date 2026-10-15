@@ -1,10 +1,10 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_checkload	checkload	checkload.no-args	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	interpreter.c:381; act.wizard.c:3847-3853	Missing both arguments reaches C's exact usage line.
-do_checkload	checkload	checkload.missing-number	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	act.wizard.c:3850-3853	A type without a number is rejected before type or prototype lookup.
-do_checkload	checkload	checkload.non-digit	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	act.wizard.c:3850-3853	C tests only the first numeric byte and otherwise emits usage.
-do_checkload	checkload	checkload.invalid-type	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	act.wizard.c:3854-3870	Unknown first type byte reaches the shared usage line.
-do_checkload	checkload	checkload.missing-mob	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	act.wizard.c:3854-3862	A missing mobile vnum emits C's exact existence error.
-do_checkload	checkload	checkload.missing-object	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	act.wizard.c:3863-3869	A missing object vnum emits C's exact existence error.
+do_checkload	checkload	checkload.no-args	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	src/interpreter.c:381; src/act.wizard.c:3827-3830	Missing both arguments reaches C's exact usage line.
+do_checkload	checkload	checkload.missing-number	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	src/act.wizard.c:3827-3830	A type without a number is rejected before type or prototype lookup.
+do_checkload	checkload	checkload.non-digit	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	src/act.wizard.c:3827-3830	C tests only the first numeric byte and otherwise emits usage.
+do_checkload	checkload	checkload.invalid-type	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	src/act.wizard.c:3833-3859	Unknown first type byte reaches the shared usage line.
+do_checkload	checkload	checkload.missing-mob	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	src/act.wizard.c:3833-3841	A missing mobile vnum emits C's exact existence error.
+do_checkload	checkload	checkload.missing-object	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	src/act.wizard.c:3846-3852	A missing object vnum emits C's exact existence error.
 do_checkload	checkload	checkload.mob-report	D3	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	act.wizard.c:3681-3721; 3854-3862	The live vehicle proves temporary mob-name lookup, M reset rows, and output ordering across the guard-training zone.
 do_checkload	checkload	checkload.mob-remove	D3	state	unit-green	TestCheckloadReportsMobAndObjectResetBranches	act.wizard.c:3695-3704	The focused report test proves the mob R removal arm and its room formatting without inventing a production reset fixture.
 do_checkload	checkload	checkload.mob-first-char-alias	D1	command	oracle-green-multiseed	checkload-depth@1,2,3,5,8	act.wizard.c:3854-3862	The M alias is accepted because C dispatches on the first type byte; trailing words are ignored by two_arguments.
