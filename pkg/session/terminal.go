@@ -295,6 +295,17 @@ func (s *Session) TerminalLine(rawLine string) bool {
 	// Telnet and the browser terminal both arrive here: apply C's
 	// process_input character pass before any consumer sees the line.
 	rawLine = cInputLine(rawLine)
+	// C's seam consumes a DP_CLOCK control before the history step; every
+	// other line runs it (src/comm.c:1999-2005).
+	if _, isControl := clockControlPulses(strings.TrimSpace(rawLine)); !isControl {
+		var queued bool
+		if rawLine, queued = s.applyInputHistory(rawLine); !queued {
+			if !s.SendClosed() {
+				s.SendPrompt()
+			}
+			return true
+		}
+	}
 	line := strings.TrimSpace(rawLine)
 	if !s.terminalNamed {
 		return s.terminalName(rawLine)

@@ -18,15 +18,8 @@ const maxControlPumpPulses = 100_000
 // interpreter). Outside DP_CLOCK it never matches. Telnet and WebSocket
 // sessions share it, so a scenario can drive the clock over either transport.
 func (s *Session) HandleClockControl(line string) bool {
-	if !dpclock.Frozen() {
-		return false
-	}
-	fields := strings.Fields(line)
-	if len(fields) != 3 || fields[0] != "~dpclock" || fields[1] != "pulse" {
-		return false
-	}
-	n, err := strconv.Atoi(fields[2])
-	if err != nil || n <= 0 || n > maxControlPumpPulses {
+	n, ok := clockControlPulses(line)
+	if !ok {
 		return false
 	}
 	// The control line is input on this session's descriptor: C's input
@@ -36,6 +29,24 @@ func (s *Session) HandleClockControl(line string) bool {
 		slog.Error("DP_CLOCK pulse pump failed", "pulses", n, "error", err)
 	}
 	return true
+}
+
+// clockControlPulses reports whether line is a valid "~dpclock pulse N"
+// control under DP_CLOCK, and N. Outside DP_CLOCK nothing is a control, so
+// the line is ordinary input (and, like C's seam, becomes last_input).
+func clockControlPulses(line string) (int, bool) {
+	if !dpclock.Frozen() {
+		return 0, false
+	}
+	fields := strings.Fields(line)
+	if len(fields) != 3 || fields[0] != "~dpclock" || fields[1] != "pulse" {
+		return 0, false
+	}
+	n, err := strconv.Atoi(fields[2])
+	if err != nil || n <= 0 || n > maxControlPumpPulses {
+		return 0, false
+	}
+	return n, true
 }
 
 // isClockControlMessage handles a command message whose line is the clock

@@ -2132,6 +2132,9 @@ type Session struct {
 	// terminalNamed is set once a terminal client's name line has been
 	// accepted and handed to the nanny (see TerminalLine).
 	terminalNamed bool
+	// lastInput is the descriptor's last_input: the line "!" repeats and
+	// "^old^new" edits (src/comm.c:1999-2005).
+	lastInput string
 	// browserTerminal marks a WebSocket session driven as a terminal: its
 	// queued frames are rendered to telnet's bytes before they are sent.
 	// Written by readPump, read by writePump.
