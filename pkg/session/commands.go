@@ -609,23 +609,12 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	if len(args) == 0 {
 		cmdStr, args = splitCommandInput(cmdStr)
 	}
-	if cmdStr == "" {
-		return nil
-	}
 	cmd := strings.ToLower(cmdStr)
-	// Counted here, after the empty line is discarded and before any of the
-	// special-cased text branches below return early, so every path that runs a
-	// command is covered by one deferred call rather than thirty call sites.
-	// classifyCommand is reused rather than inventing a second taxonomy: the
-	// decision log already groups commands this way, and two groupings that
-	// disagree would be worse than none.
-	cmdStart := time.Now()
-	defer func() { metrics.CommandProcessed(classifyCommand(cmd), time.Since(cmdStart)) }()
 
 	// C performs alias expansion before command_interpreter, so the command
 	// interpreter's leading RNG draw belongs to the resolved command, not to
 	// the alias trigger itself.
-	if allowAlias && s.player != nil && len(s.player.Aliases) > 0 {
+	if cmdStr != "" && allowAlias && s.player != nil && len(s.player.Aliases) > 0 {
 		fullInput := cmd
 		if len(args) > 0 {
 			fullInput = cmd + " " + strings.Join(args, " ")
@@ -656,20 +645,35 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 			}
 			cmdStr, args = splitCommandInput(expanded[0])
 			rawArgs = ""
-			if cmdStr == "" {
-				return nil
-			}
 			cmd = strings.ToLower(cmdStr)
 		}
 	}
 
 	// C command_interpreter draws number(0,3) at the top of every playing
-	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890).
-	// This must follow alias expansion and precede command lookup.
+	// character command and clears AFF_HIDE on 0 (interpreter.c:889-890). It
+	// draws *before* skip_spaces and the empty-argument return
+	// (interpreter.c:893-895), so a bare RETURN — and an alias whose
+	// replacement is empty — draws too. This must follow alias expansion and
+	// precede command lookup.
 	// #nosec G404 — game RNG, not cryptographic
 	if s.player != nil && commandNumber(0, 3) == 0 {
 		s.player.SetAffect(game.AffHide, false)
 	}
+
+	if cmdStr == "" {
+		// C: skip_spaces(&argument); if (!*argument) return; — no output, and
+		// nothing for the decision log to count.
+		return nil
+	}
+
+	// Counted here, after the empty line is discarded and before any of the
+	// special-cased text branches below return early, so every path that runs a
+	// command is covered by one deferred call rather than thirty call sites.
+	// classifyCommand is reused rather than inventing a second taxonomy: the
+	// decision log already groups commands this way, and two groupings that
+	// disagree would be worse than none.
+	cmdStart := time.Now()
+	defer func() { metrics.CommandProcessed(classifyCommand(cmd), time.Since(cmdStart)) }()
 
 	if s.isGuest {
 		guestAllowedCmds := map[string]bool{
