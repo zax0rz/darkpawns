@@ -198,9 +198,10 @@ func TestSpecRescuer_NilChDoesNotPanic_DefendsAllyAgainstAttacker(t *testing.T) 
 	if rescuer.GetFighting() != player.GetName() || player.GetFighting() != rescuer.GetName() {
 		t.Fatalf("expected rescue to interpose rescuer, got rescuer=%q player=%q", rescuer.GetFighting(), player.GetFighting())
 	}
-	if ally.GetFighting() != player.GetName() {
-		t.Errorf("expected ally's canonical hit to restore its attack target, got %q", ally.GetFighting())
-	}
+	// This fixture has no combat engine, so the ally's swing is the
+	// engineless fallback and nothing enrols it. C enrols the ally inside
+	// hit()'s damage() (src/act.offensive.c:575); that is pinned with a real
+	// engine by TestSpecRescuer_UsesCanonicalAllyHitAndWaitState.
 }
 
 func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
