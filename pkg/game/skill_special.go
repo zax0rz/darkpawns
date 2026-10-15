@@ -522,16 +522,41 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "You're it already!\r\n"}
 	}
 
-	// Self-tag starts the game
+	// C's NPC arm only acknowledges the attempted tag; it does not change the
+	// actor's or target's PLR_IT state (new_cmds.c:2240-2244).
+	if target.IsNPC() {
+		pronoun := GetPronouns(target.GetName(), target.GetSex()).He
+		return SkillResult{
+			Success:     true,
+			MessageToCh: fmt.Sprintf("You tag %s, but %s tags you right back!\r\n", target.GetName(), CapitalizeSentence(pronoun)),
+		}
+	}
+
+	// SCMD_TAG transfers the marker from the command actor/target, then marks
+	// the selected player. C checks the descriptor-backed 'it' player above,
+	// but only these two PLR_IT bits are cleared here (new_cmds.c:2247-2252).
+	if ch.HasPLRFlag(PlrIt) {
+		ch.ClearPLRFlag(PlrIt)
+	}
+	victim := target.(*Player)
+	if victim.HasPLRFlag(PlrIt) {
+		victim.ClearPLRFlag(PlrIt)
+	}
+	victim.SetPLRFlag(PlrIt)
+
+	// Self-tag starts the game after setting PLR_IT and has no WAIT_STATE.
 	if target == ch {
 		return SkillResult{Success: true, MessageToCh: "Let the game begin!\r\n"}
 	}
 
+	// C sends the room, victim, and actor acts in this order, then waits the
+	// victim for two violence pulses (new_cmds.c:2258-2264).
+	victim.SetWaitState(2)
 	return SkillResult{
 		Success:       true,
 		MessageToCh:   fmt.Sprintf("You tap %s and scream, 'TAG! You're it!'\r\n", target.GetName()),
-		MessageToVict: fmt.Sprintf("%s taps you and screams, 'TAG! You're it!'\r\n", ch.Name),
-		MessageToRoom: fmt.Sprintf("%s taps %s and screams, 'TAG! You're it!'\r\n", ch.Name, target.GetName()),
+		MessageToVict: fmt.Sprintf("%s taps you and screams, 'TAG! You're it!'", ch.Name),
+		MessageToRoom: fmt.Sprintf("%s taps %s and screams, 'TAG! You're it!'", ch.Name, target.GetName()),
 	}
 }
 

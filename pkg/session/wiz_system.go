@@ -551,16 +551,45 @@ func wizutilDispatch(s *Session, subcmd wizutilSubcmd, targetName string) error 
 		broadcastToRoomExcept(s, target.player.GetRoom(), target.player.Name,
 			fmt.Sprintf("A sudden fireball conjured from nowhere thaws %s!\r\n", target.player.Name))
 	case wizutilUnaffect:
+		// SCMD_UNAFFECT clears the three non-spell status flags before checking
+		// the affect list (act.wizard.c:2174-2211). Those flags are independent
+		// of ActiveAffects, so unaffect still removes them when there are no
+		// active spells.
+		if target.player.HasPLRFlag(game.PlrIt) {
+			target.player.SetPlrFlag(game.PlrIt, false)
+			s.Send("Un-tagged!\r\n")
+			target.Send("You're no longer it!\r\n")
+		}
+		if target.player.HasPLRFlag(game.PlrVampire) {
+			target.player.SetPlrFlag(game.PlrVampire, false)
+			target.player.SetAffect(game.AffVampire, false)
+			if s.player.GetMana() > s.player.GetMaxMana() {
+				s.player.SetMana(s.player.GetMaxMana())
+			}
+			s.Send("Un-vamped!\r\n")
+			target.Send("You're no longer a creature of the night!\r\n")
+		}
+		if target.player.HasPLRFlag(game.PlrWerewolf) {
+			target.player.SetPlrFlag(game.PlrWerewolf, false)
+			target.player.SetAffect(game.AffWerewolf, false)
+			s.Send("Un-wered!\r\n")
+			target.Send("You're no longer a creature of the night!\r\n")
+		}
+
 		target.player.Lock()
-		if target.player.ActiveAffects != nil {
+		hadAffects := target.player.ActiveAffects != nil
+		if hadAffects {
 			target.player.ActiveAffects = nil
-			target.player.Unlock()
+		}
+		target.player.Unlock()
+		if hadAffects {
 			target.player.AffectTotal()
-			target.Send("There is a brief flash of light! You feel slightly different.")
-			s.Send("All spells removed.")
+			target.Send("There is a brief flash of light!\r\nYou feel slightly different.\r\n")
+			s.Send("All spells removed.\r\n")
 		} else {
-			target.player.Unlock()
-			s.Send("Your victim does not have any affections!")
+			// C returns here, before save_char(vict, NOWHERE).
+			s.Send("Your victim does not have any affections!\r\n")
+			return nil
 		}
 	}
 	// C do_wizutil ends its subcmd block with save_char(vict, NOWHERE)
