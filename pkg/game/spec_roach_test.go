@@ -107,34 +107,71 @@ func TestSpecRoachEntryGates(t *testing.T) {
 	}
 }
 
-func TestSpecRoachFoodSuccessGrowthAndExtraction(t *testing.T) {
-	r := newRoachTestWorld(t, 1001)
-	obj := addRoachFood(t, r, 4001, 100)
-	r.mob.SetMaxHP(100)
-	r.mob.SetHealth(100)
-	r.clearMessages()
+func TestSpecRoachIdleOutput(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		draw int
+		want string
+	}{
+		{name: "chirps", draw: 0, want: "A large roach chirps gleefully.\r\n"},
+		{name: "changes-colors", draw: 1, want: "A large roach changes colors and clicks happily.\r\n"},
+		{name: "skitters", draw: 2, want: "A large roach skitters around in tight circles.\r\n"},
+		{name: "purple-dots", draw: 3, want: "Strange purple dots appear on a large roach's back.\r\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := newRoachTestWorld(t, 1001)
+			setRoachDraws(t, 0, 1, tc.draw)
+			if got := specRoach(r.w, nil, r.mob, "", ""); got {
+				t.Fatal("idle output should leave the special unhandled")
+			}
+			for _, player := range []*Player{r.actor, r.peer} {
+				if got := r.message[player.Name]; got != tc.want {
+					t.Errorf("%s idle output = %q, want %q", player.Name, got, tc.want)
+				}
+			}
+		})
+	}
+}
 
-	// The first two draws are starvation checks, followed by food success,
-	// damnodice increment, damsizedice increment, and stretching choice.
-	setRoachDraws(t, 0, 1, 0, 0, 0, 0)
-	if !specRoach(r.w, nil, r.mob, "", "") {
-		t.Fatal("food success was not handled")
-	}
-	want := "A large roach feeds on a loaf of bread.\r\nYou hear some stretching noises.\r\n"
-	if r.message[r.actor.Name] != want || r.message[r.peer.Name] != want {
-		t.Fatalf("food success audience: actor=%q peer=%q want=%q", r.message[r.actor.Name], r.message[r.peer.Name], want)
-	}
-	if got := r.mob.GetMaxHealth(); got != 150 {
-		t.Fatalf("grown max HP = %d, want 150", got)
-	}
-	if got := r.mob.GetDamageRoll(); got != (combat.DiceRoll{Num: 2, Sides: 5, Plus: 1}) {
-		t.Fatalf("grown damage roll = %+v, want 2d5+1", got)
-	}
-	if got := obj.Location; got != LocNowhere() {
-		t.Fatalf("food location = %+v, want nowhere", got)
-	}
-	if got := len(r.w.GetItemsInRoom(r.actor.GetRoomVNum())); got != 0 {
-		t.Fatalf("room food count = %d, want 0", got)
+func TestSpecRoachFoodSuccessGrowthAndExtraction(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		stretching int
+		noise      string
+	}{
+		{name: "stretching", stretching: 0, noise: "You hear some stretching noises.\r\n"},
+		{name: "rumbling", stretching: 1, noise: "You hear a strange rumbling from a large roach's stonach.\r\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := newRoachTestWorld(t, 1001)
+			obj := addRoachFood(t, r, 4001, 100)
+			r.mob.SetMaxHP(100)
+			r.mob.SetHealth(100)
+			r.clearMessages()
+
+			// The first two draws are starvation checks, followed by food
+			// success, the two damage-dice draws, and the selected noise.
+			setRoachDraws(t, 0, 1, 0, 0, 0, tc.stretching)
+			if !specRoach(r.w, nil, r.mob, "", "") {
+				t.Fatal("food success was not handled")
+			}
+			want := "A large roach feeds on a loaf of bread.\r\n" + tc.noise
+			if r.message[r.actor.Name] != want || r.message[r.peer.Name] != want {
+				t.Fatalf("food success audience: actor=%q peer=%q want=%q", r.message[r.actor.Name], r.message[r.peer.Name], want)
+			}
+			if got := r.mob.GetMaxHealth(); got != 150 {
+				t.Fatalf("grown max HP = %d, want 150", got)
+			}
+			if got := r.mob.GetDamageRoll(); got != (combat.DiceRoll{Num: 2, Sides: 5, Plus: 1}) {
+				t.Fatalf("grown damage roll = %+v, want 2d5+1", got)
+			}
+			if got := obj.Location; got != LocNowhere() {
+				t.Fatalf("food location = %+v, want nowhere", got)
+			}
+			if got := len(r.w.GetItemsInRoom(r.actor.GetRoomVNum())); got != 0 {
+				t.Fatalf("room food count = %d, want 0", got)
+			}
+		})
 	}
 }
 
