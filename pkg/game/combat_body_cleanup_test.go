@@ -88,7 +88,7 @@ func TestCombatBodyWorldCleanup(t *testing.T) {
 
 			switch kind {
 			case "death", "raw-kill", "extract-mob", "pending-mob", "pending-player", "remove-player":
-				if err := ce.PerformUnenrolledInitialAttack(dead, two); err == nil {
+				if err := ce.PerformDeferredInitialAttack(dead, two); err == nil {
 					t.Fatal("removed body admitted a stale direct hit")
 				}
 			}
