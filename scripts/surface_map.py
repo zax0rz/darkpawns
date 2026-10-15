@@ -36,12 +36,15 @@ SITE = re.compile(r"^(src/[A-Za-z0-9_.-]+\.c):([1-9][0-9]*)$")
 # An output call at the start of an expression: act(, send_to_char(, stc(.
 CALL = re.compile(r"(?<![A-Za-z0-9_])(act|send_to_char|stc)\s*\(")
 COMMENT = re.compile(r"/\*.*?\*/", re.S)
+# A declaration names its return type first ("void act(char *str, ...").
+PROTOTYPE = re.compile(r"^\s*(?:extern\s+)?(?:void|int|bool|char|long|struct\s+\w+)\b[\s*]*(?:act|send_to_char|stc)\s*\(")
 
 
 def output_lines(source: str) -> set[int]:
     """Line numbers of output calls, ignoring calls inside C comments."""
     stripped = COMMENT.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), source)
-    return {i for i, line in enumerate(stripped.split("\n"), 1) if CALL.search(line)}
+    return {i for i, line in enumerate(stripped.split("\n"), 1)
+            if CALL.search(line) and not PROTOTYPE.match(line)}
 
 
 def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None) -> list[str]:
@@ -121,7 +124,7 @@ def self_test() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = pathlib.Path(tmp)
         (root / "src").mkdir()
-        (root / "src/demo.c").write_text("void f() {\n  act(\"a\");\n  /* stc(\"no\"); */\n  send_to_char(\"b\", ch);\n}\n")
+        (root / "src/demo.c").write_text("void f() {\n  act(\"a\");\n  /* stc(\"no\"); */\n  send_to_char(\"b\", ch);\n}\nvoid act(char *str, int i);\n")
         surface = root / "surface"
         surface.mkdir()
         inventory = root / "inventory.tsv"
