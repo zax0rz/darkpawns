@@ -29,8 +29,7 @@ K
 Y
 <ENTER>
 1
-w
-s
+look
 
 [probe]
 hcontrol show
