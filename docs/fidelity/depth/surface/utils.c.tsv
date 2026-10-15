@@ -1,0 +1,14 @@
+c_site	function	classification	case_ids	notes
+src/utils.c:236	mudlog	proven	mudlog.broadcast-by-syslog-level	A qualifying syslog observer receives the exact bracketed record; the case's proof includes the color-level matrix for this send (R1/R5h).
+src/utils.c:237	mudlog	proven	mudlog.broadcast-by-syslog-level	The broadcast body is asserted byte-for-byte for eligible and excluded observers (R1/R5h).
+src/utils.c:238	mudlog	proven	mudlog.broadcast-by-syslog-level	The same proof checks the color reset after the CRLF across color levels (R1/R5h).
+src/utils.c:412	stop_follower	proven	hit.dismount-branch	A damage-triggered charm break enters this branch of stop_follower before the swing output (R1/R5e/R5h).
+src/utils.c:413	stop_follower	proven	hit.dismount-branch	The same reached charm-break branch sends its room audience act (R1/R5e/R5h).
+src/utils.c:414	stop_follower	proven	hit.dismount-branch	The mounted-master oracle path reaches the victim-facing charm-break act (R1/R5e/R5h).
+src/utils.c:418	stop_follower	proven	shadow.stop-shadowing	Self-stopping a shadow reaches the actor-only stop message and proves leader/room silence (R1/R3/R5e/R5h).
+src/utils.c:420	stop_follower	proven	follow.stop-self	Self-stopping an ordinary follower reaches the actor-facing stop message (R1/R3/R5e/R5h).
+src/utils.c:421	stop_follower	proven	follow.stop-self	The same ordinary stop reaches the room-observer message (R1/R3/R5e/R5h).
+src/utils.c:423	stop_follower	proven	follow.stop-self	The same ordinary stop reaches the awake leader's victim message (R1/R3/R5e/R5h).
+src/utils.c:494	add_follower	proven	follow.target-success;shadow.failure-normal-audience	Ordinary follow success and failed quiet-shadow fallback both reach the actor's add_follower message (R1/R3/R5e/R5h).
+src/utils.c:496	add_follower	proven	follow.target-success;shadow.failure-normal-audience	The visible awake player leader receives add_follower's victim message in both covered paths (R1/R3/R5e/R5h).
+src/utils.c:497	add_follower	proven	follow.target-success;shadow.failure-normal-audience	The room observer receives add_follower's non-victim message in both covered paths (R1/R3/R5e/R5h).
