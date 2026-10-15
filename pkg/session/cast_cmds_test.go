@@ -489,6 +489,118 @@ func TestCastInfravisionConsumesOnlyConcentrationAndAccumulates(t *testing.T) {
 	}
 }
 
+func TestCastCreateWaterCBranchesAndExactObjectMessage(t *testing.T) {
+	tests := []struct {
+		name          string
+		typeFlag      int
+		values        [4]int
+		weight        int
+		wantSpellText string
+		wantValues    [4]int
+		wantWeight    int
+		wantKeywords  string
+	}{
+		{
+			name:         "non-container stays silent",
+			typeFlag:     game.ITEM_FOOD,
+			values:       [4]int{5, 0, 0, 0},
+			weight:       3,
+			wantValues:   [4]int{5, 0, 0, 0},
+			wantWeight:   3,
+			wantKeywords: "flask",
+		},
+		{
+			name:          "empty container refuses",
+			typeFlag:      game.ITEM_DRINKCON,
+			values:        [4]int{5, 5, game.LiqWater, 0},
+			weight:        3,
+			wantSpellText: "You cannot create water in that!\r\n",
+			wantValues:    [4]int{5, 5, game.LiqWater, 0},
+			wantWeight:    3,
+			wantKeywords:  "flask",
+		},
+		{
+			name:          "fill names object and adds liquid weight",
+			typeFlag:      game.ITEM_DRINKCON,
+			values:        [4]int{5, 2, game.LiqWater, 0},
+			weight:        3,
+			wantSpellText: "a silver flask is filled.\r\n",
+			wantValues:    [4]int{5, 5, game.LiqWater, 0},
+			wantWeight:    6,
+			wantKeywords:  "water flask",
+		},
+		{
+			name:         "non-water liquid becomes slime silently",
+			typeFlag:     game.ITEM_DRINKCON,
+			values:       [4]int{5, 2, game.LiqBeer, 0},
+			weight:       3,
+			wantValues:   [4]int{5, 2, game.LiqSlime, 0},
+			wantWeight:   3,
+			wantKeywords: "juice flask",
+		},
+	}
+
+	originalCastNumber := castNumber
+	castNumber = func(minVal, _ int) int { return minVal }
+	t.Cleanup(func() { castNumber = originalCastNumber })
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			manager := makeTestManager(t)
+			session := makeTestSession(t, manager, "Caster", 1001, true)
+			registerInWorld(t, session)
+			prepareCaster(session, game.ClassCleric, "create water", 100)
+			session.player.SetLevel(2)
+
+			proto := &parser.Obj{
+				VNum:      8800,
+				Keywords:  "flask",
+				ShortDesc: "a silver flask",
+				TypeFlag:  test.typeFlag,
+				Values:    test.values,
+				Weight:    test.weight,
+			}
+			obj := manager.world.NewObjectFromProto(proto, -1)
+			if obj == nil {
+				t.Fatal("NewObjectFromProto returned nil")
+			}
+			if err := manager.world.MoveObjectToPlayerInventory(obj, session.player); err != nil {
+				t.Fatalf("MoveObjectToPlayerInventory: %v", err)
+			}
+
+			if err := cmdCast(session, []string{"'create", "water'", "flask"}); err != nil {
+				t.Fatalf("cmdCast: %v", err)
+			}
+			if got := readSessionText(t, session); got != "Okay.\r\n" {
+				t.Fatalf("cast acknowledgement = %q, want Okay", got)
+			}
+			if test.wantSpellText != "" {
+				if got := readSessionText(t, session); got != test.wantSpellText {
+					t.Errorf("spell output = %q, want %q", got, test.wantSpellText)
+				}
+			} else {
+				select {
+				case <-session.send:
+					t.Error("cast produced unexpected caster output")
+				default:
+				}
+			}
+
+			for i, want := range test.wantValues {
+				if got := obj.GetValue(i); got != want {
+					t.Errorf("value[%d] = %d, want %d", i, got, want)
+				}
+			}
+			if got := obj.GetWeight(); got != test.wantWeight {
+				t.Errorf("weight = %d, want %d", got, test.wantWeight)
+			}
+			if got := obj.GetKeywords(); got != test.wantKeywords {
+				t.Errorf("keywords = %q, want %q", got, test.wantKeywords)
+			}
+		})
+	}
+}
+
 func TestCastFlameArrowDrawOrderIncantationAndComponentMessage(t *testing.T) {
 	m := makeGateTestManager(t, false)
 	mob, err := m.world.SpawnMob(5000, 1001)
