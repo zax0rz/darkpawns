@@ -155,9 +155,13 @@ func TestExecuteCommand_DifferentPlayers(t *testing.T) {
 	}
 }
 
-// TestExecuteMobCommand_NoDeadlock verifies that executing a command on a mob (like "open")
-// does not deadlock because of nested World locks.
-func TestExecuteMobCommand_NoDeadlock(t *testing.T) {
+// TestMobCommandMovement_NoDeadlock verifies that a dispatched mobile command
+// (a northward perform_move, whose transfer takes the world write lock) runs
+// without deadlocking because of nested World locks. The retired
+// executeMobCommand adapter's "open north" case is gone with the adapter: an
+// unported command must leave the world untouched rather than run an
+// imitation, so the door case now asserts no-op.
+func TestMobCommandMovement_NoDeadlock(t *testing.T) {
 	parsed := &parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1001, Name: "Test Room", Zone: 1},
@@ -211,15 +215,30 @@ func TestExecuteMobCommand_NoDeadlock(t *testing.T) {
 	}}
 	w.mu.Unlock()
 
-	// This calls executeMobCommand -> open north -> mobOpenDoor -> locks w.mu
-	// If executeMobCommand held the read lock, this would deadlock.
-	w.executeMobCommand(5001, "open north")
+	// An openable east exit gives the movement handler a lock-taking success
+	// leg in the same dispatch: do_simple_move's transfer locks w.mu.
+	w.mu.Lock()
+	room.Exits["east"] = parser.Exit{ToRoom: 1003}
+	w.rooms[1003] = &parser.Room{VNum: 1003, Name: "East Room"}
+	w.mu.Unlock()
 
-	// Verify the door opened
-	w.mu.RLock()
-	doorState := w.rooms[1001].Exits["north"].ExitInfo
-	w.mu.RUnlock()
-	if doorState&parser.ExitClosed != 0 {
-		t.Errorf("expected door to be open (0), got %d", doorState)
+	// performMoveMob walks the closed-door refusal (no transfer) and the
+	// open-exit transfer (w.mu.Lock inside MobTransfer) without holding a
+	// reader across either.
+	w.performMoveMob(mobInst, 0, false)
+	if got := mobInst.GetRoom(); got != 1001 {
+		t.Fatalf("closed-door leg moved the mob to %d, want 1001", got)
+	}
+
+	w.performMoveMob(mobInst, 1, false)
+	if got := mobInst.GetRoom(); got != 1003 {
+		t.Fatalf("east leg left the mob in %d, want 1003", got)
+	}
+
+	// The unported "open north" command no longer runs an imitation door
+	// handler: the dispatcher has no actor handler for open, so the door
+	// stays closed.
+	if doorState := w.rooms[1001].Exits["north"].ExitInfo; doorState&parser.ExitClosed == 0 {
+		t.Errorf("unported open command opened the door; want it untouched")
 	}
 }

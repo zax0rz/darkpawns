@@ -98,6 +98,30 @@ func CharacterSit(ctx CharacterCommandContext) CharacterCommandResult {
 	return CharacterCommandHandled
 }
 
+// CharacterMove ports do_move's perform_move call (src/act.movement.c:361-366)
+// for a mobile dispatched through the command interpreter. needSpecialsCheck
+// is false because command_interpreter already offered the command to
+// special() (src/interpreter.c:947) — C's double-spec-proc guard.
+func CharacterMove(ctx CharacterCommandContext, dir int) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil || dir < 0 || dir >= len(dirs) {
+		return CharacterCommandUnsupported
+	}
+	ctx.World.performMoveMob(mob, dir, false)
+	return CharacterCommandHandled
+}
+
+// CharacterFlee ports do_flee (src/act.offensive.c:360-415) for a mobile
+// dispatched through the command interpreter.
+func CharacterFlee(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	ctx.World.DoFlee(mob)
+	return CharacterCommandHandled
+}
+
 func characterCommandAct(ctx CharacterCommandContext, hideInvisible bool, format string, actType int) {
 	actor := ctx.Actor.(Actor)
 	ActWithPrivateSink(ctx.World, hideInvisible, actor, nil, nil, nil, format, "", actType, actor, ctx.PrivateOutput)

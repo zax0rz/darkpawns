@@ -3,6 +3,8 @@
 # no-arg/no-target paths from a fresh Human Warrior. Greens ship as coverage
 # wins; reds get diagnosed and fixed or deferred.
 
+# depth-case: palm.entry-draw
+
 [fixture]
 quiet-mobs
 

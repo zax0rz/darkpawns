@@ -300,8 +300,10 @@ func TestCombatBodyNPCFollowing(t *testing.T) {
 	if held != first && held != second {
 		t.Fatal("name-taking follow did not retain an actual NPC")
 	}
-	w.executeMobCommand(302, "follow Guard")
+	// The retired executeMobCommand follow imitation is gone; the command
+	// dispatcher reports follow unsupported for an NPC actor instead of
+	// guessing, so the name-taking API above is the live seam.
 	if got := cb.GetFollowing(follower); got != first && got != second {
-		t.Fatal("mob follow command did not retain actual NPC")
+		t.Fatal("name-taking follow did not retain an actual NPC")
 	}
 }

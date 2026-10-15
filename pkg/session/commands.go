@@ -64,6 +64,18 @@ func init() {
 	registerCommand("west", wrapMove("west"), "Move west.")
 	registerCommand("up", wrapMove("up"), "Move up.")
 	registerCommand("down", wrapMove("down"), "Move down.")
+	// do_move for a mobile body: perform_move(ch, dir, 0) — the interpreter's
+	// special() pass already ran (src/interpreter.c:947, act.movement.c:365).
+	for _, dir := range []struct {
+		name string
+		idx  int
+	}{{"north", 0}, {"east", 1}, {"south", 2}, {"west", 3}, {"up", 4}, {"down", 5}} {
+		registerActorCommand(dir.name, func(idx int) command.ActorHandler {
+			return func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+				return game.CharacterMove(ctx, idx)
+			}
+		}(dir.idx))
+	}
 	registerCommand("enter", wrapArgs(cmdEnter), "Enter a nearby doorway or indoor area.")
 	registerCommand("leave", wrapNoArgs(cmdLeave), "Leave for the outdoors.")
 
@@ -84,6 +96,7 @@ func init() {
 	registerCommand(":", wrapArgs(cmdEmote), "Perform a roleplay action.")
 	registerActorCommand(":", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCEmoteCommand(mob, arg) }))
 	registerCommand("shout", wrapArgs(cmdShout), "Shout to everyone in your zone.")
+	registerActorCommand("shout", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCShoutCommand(mob, arg) }))
 	registerCommand("holler", wrapArgs(cmdHoller), "Holler to everyone in the world.")
 	registerCommand("gtell", wrapArgs(cmdGtell), "Send a message to your group.", "gsay")
 	registerCommand("think", wrapArgs(cmdThink), "Think a thought, optionally aloud.")
@@ -96,6 +109,9 @@ func init() {
 	registerCommand("parry", wrapArgs(cmdParry), "Enter a defensive parry position.")
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
+	registerActorCommand("flee", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterFlee(ctx)
+	})
 	registerCommand("escape", wrapNoArgs(cmdRetreat), "Attempt to escape from combat.")
 	// C maps both "escape" and "retreat" to do_retreat (src/interpreter.c:434, 652).
 	registerCommand("retreat", wrapNoArgs(cmdRetreat), "Attempt to retreat from combat.")
@@ -438,7 +454,9 @@ func init() {
 	registerCommand("house", wrapArgs(cmdHouse), "House management commands.")
 	registerCommand("hcontrol", wrapArgs(cmdHcontrol), "Admin house control.")
 	registerCommand("gossip", wrapArgs(cmdGossip), "Gossip on the channel.")
+	registerActorCommand("gossip", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCGossipCommand(mob, arg) }))
 	registerCommand("auction", wrapArgs(cmdAuction), "Auction an item to the channel.")
+	registerActorCommand("auction", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) { w.NPCAuctionCommand(mob, arg) }))
 	registerCommand("grats", wrapArgs(cmdGratz), "Congratulate someone on the channel.")
 	registerCommand("newbie", wrapArgs(cmdNewbieChannel), "Ask a question on the newbie channel.")
 	registerCommand("ctell", wrapArgs(cmdCTell), "Send a message to your clan.")

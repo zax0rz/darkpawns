@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -55,7 +56,7 @@ func cmdOrder(s *Session, args []string) error {
 		}
 
 		s.Send("Okay.\r\n")
-		executeOrder(world, victim, orderCmd)
+		executeOrder(s.manager, world, victim, orderCmd)
 		return nil
 	}
 
@@ -70,7 +71,7 @@ func cmdOrder(s *Session, args []string) error {
 			continue
 		}
 		foundFollower = true
-		executeOrder(world, follower, orderCmd)
+		executeOrder(s.manager, world, follower, orderCmd)
 	}
 	if foundFollower {
 		s.Send("Okay.\r\n")
@@ -105,14 +106,24 @@ func orderFollowing(actor game.Actor) string {
 	}
 }
 
-func executeOrder(world *game.World, follower game.Actor, command string) {
+// executeOrder runs the ordered command on the follower. C hands the command
+// to command_interpreter for every follower body (src/act.offensive.c:332,
+// 348-351): the mob lane therefore goes through the shared character
+// dispatcher and its gates, specials ladder, and number(0,3) draw — not a
+// separate mobile adapter.
+func executeOrder(m *Manager, world *game.World, follower game.Actor, command string) {
 	switch value := follower.(type) {
 	case *game.Player:
 		if world.CommandExecFunc != nil {
 			world.CommandExecFunc(value, command)
 		}
 	case *game.MobInstance:
-		world.ExecMobCommand(value.GetVNum(), command)
+		if m == nil {
+			return
+		}
+		if result := m.executeCharacterCommand(value, m.combatSession(value), command); result == game.CharacterCommandUnsupported {
+			slog.Warn("ordered NPC command unsupported", "target", value.GetName(), "command", command)
+		}
 	}
 }
 
