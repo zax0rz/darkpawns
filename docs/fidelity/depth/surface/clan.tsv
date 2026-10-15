@@ -44,35 +44,35 @@ src/clan.c:369	do_clan_enroll	proven	clan.enroll-already-member	The corrected cl
 src/clan.c:373	do_clan_enroll	proven	clan.enroll-immortal-target	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:381	do_clan_enroll	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
 src/clan.c:382	do_clan_enroll	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
-src/clan.c:400	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
-src/clan.c:404	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
-src/clan.c:410	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
-src/clan.c:414	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
-src/clan.c:418	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:400	do_clan_expel	proven	clan.expel-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:404	do_clan_expel	proven	clan.expel-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:410	do_clan_expel	proven	clan.expel-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:414	do_clan_expel	proven	clan.expel-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:418	do_clan_expel	proven	clan.expel-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
 src/clan.c:422	do_clan_expel	proven	clan.expel-not-member	The named proof scenario executes this C output call.
-src/clan.c:426	do_clan_expel	gap-reachable		No current proof reaches this output branch in do_clan_expel; reachable through the clan command surface.
+src/clan.c:426	do_clan_expel	proven	clan.expel-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
 src/clan.c:434	do_clan_expel	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
 src/clan.c:435	do_clan_expel	proven	clan.mortal-membership-success	The named proof scenario executes this C output call.
-src/clan.c:453	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:457	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:463	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:467	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:471	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
+src/clan.c:453	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:457	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:463	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:467	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:471	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
 src/clan.c:475	do_clan_demote	proven	clan.demote-not-member	The named proof scenario executes this C output call.
-src/clan.c:479	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:482	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:487	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:488	do_clan_demote	gap-reachable		No current proof reaches this output branch in do_clan_demote; reachable through the clan command surface.
-src/clan.c:506	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
-src/clan.c:513	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
-src/clan.c:517	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
-src/clan.c:521	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:479	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:482	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:487	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:488	do_clan_demote	proven	clan.demote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:506	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:513	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:517	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:521	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
 src/clan.c:525	do_clan_promote	proven	clan.promote-not-member	The named proof scenario executes this C output call.
-src/clan.c:529	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
-src/clan.c:532	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
-src/clan.c:535	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
-src/clan.c:540	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
-src/clan.c:541	do_clan_promote	gap-reachable		No current proof reaches this output branch in do_clan_promote; reachable through the clan command surface.
+src/clan.c:529	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:532	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:535	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:540	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
+src/clan.c:541	do_clan_promote	proven	clan.promote-output-gates	The named real-dispatch depth test reaches this exact C output branch (R1/R2/R5e/R5h).
 src/clan.c:555	do_clan_who	proven	clan.who-clanless	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:559	do_clan_who	proven	clan.mortal-who;clan.who-con-playing-descriptor	The named proof scenario executes this C output call.
 src/clan.c:560	do_clan_who	proven	clan.mortal-who;clan.who-con-playing-descriptor	The named proof scenario executes this C output call.
