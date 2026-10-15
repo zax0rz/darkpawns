@@ -431,7 +431,9 @@ func (s *Session) enterReturningPlayer() error {
 	// (src/interpreter.c:2184-2189) and the character is in neither the session
 	// registry nor character_list yet.
 	if loaded {
+		s.player.SetEntryRawSink(s.sendRawEvent)
 		s.manager.world.ReplayCrashLoadBadStats(s.player, s.sendPlayerText)
+		s.player.SetEntryRawSink(nil)
 	}
 	// C saves the character with load_room NOWHERE at every game entry
 	// (interpreter.c:2186), so a character whose process dies mid-session

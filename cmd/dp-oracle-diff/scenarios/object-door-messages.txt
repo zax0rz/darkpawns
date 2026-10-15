@@ -38,6 +38,7 @@ K
 Y
 <ENTER>
 1
+look
 recall
 south
 west
@@ -77,6 +78,7 @@ K
 Y
 <ENTER>
 1
+look
 recall
 south
 west
@@ -118,6 +120,7 @@ K
 Y
 <ENTER>
 1
+look
 recall
 south
 west

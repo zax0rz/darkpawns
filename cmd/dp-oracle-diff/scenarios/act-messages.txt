@@ -34,8 +34,7 @@ K
 Y
 <ENTER>
 1
-w
-s
+look
 
 [setup:oracle:victim]
 Actvictim
@@ -65,8 +64,7 @@ K
 Y
 <ENTER>
 1
-w
-s
+look
 
 [setup:oracle:observer]
 Actobserver
@@ -96,8 +94,7 @@ K
 Y
 <ENTER>
 1
-w
-s
+look
 
 [probe]
 whisper Actvictim quiet words
