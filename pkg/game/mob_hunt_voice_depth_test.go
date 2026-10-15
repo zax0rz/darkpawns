@@ -192,11 +192,11 @@ func TestHuntVictimAuctionAndShoutReachEveryListener(t *testing.T) {
 	})
 }
 
-// TestExecuteMobCommandUsesTheMobileSpeechPaths is DP-1440's class audit
-// (R5c): the legacy VNum-based mob command adapter's say, emote, gossip, tell,
+// TestNPCCommandUsesTheMobileSpeechPaths is DP-1440's class audit
+// (R5c): the session-less NPCCommand fallback's say, emote, gossip, tell,
 // shout and auction cases must reach the same sinks as the native mobile
 // commands, not hand-built lines of their own.
-func TestExecuteMobCommandUsesTheMobileSpeechPaths(t *testing.T) {
+func TestNPCCommandUsesTheMobileSpeechPaths(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		command string
@@ -213,7 +213,7 @@ func TestExecuteMobCommandUsesTheMobileSpeechPaths(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			w, mob, _, _, out := huntVoiceWorld(t)
 
-			w.executeMobCommand(mob.GetVNum(), tc.command)
+			w.NPCCommand(mob, tc.command)
 
 			if got := out[tc.who]; !strings.Contains(got, tc.want) {
 				t.Fatalf("%s bytes = %q, want %q among them", tc.who, got, tc.want)

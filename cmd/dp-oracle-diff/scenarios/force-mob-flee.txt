@@ -1,0 +1,79 @@
+# C-first NPC flee through the generic interpreter: do_force hands "flee" to
+# command_interpreter (src/act.wizard.c:1880), whose do_flee leg draws
+# number(0,5) per attempt (src/act.offensive.c:392) and moves through
+# do_simple_move(ch, attempt, TRUE). All six exits lead to 8161 (as the player
+# flee-audience fixture does), so movement succeeds on the first draw while
+# the destination peer's arrival text names the drawn direction. The trainee
+# has no descriptor, so C's "You flee head over heels." reaches no one.
+
+# depth-case: force.npc-command-interpreter
+# depth-case: flee.npc-forced-entry
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 all 8161 0
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Forcflee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Forcflee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:destination]
+Forcdst
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[setup:port:destination]
+Forcdst
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+
+[warmup]
+goto 8162
+
+[probe]
+force trainee flee

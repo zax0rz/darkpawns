@@ -213,14 +213,6 @@ func (a *WorldScriptableAdapter) SendToAll(msg string) {
 	a.world.SendToAll(msg)
 }
 
-// ExecuteMobCommand preserves the legacy VNum-based mob-command bridge.
-// The production Lua action() path carries a CharRef and enters NPCCommand;
-// this older adapter remains on its existing behavior until its command set
-// is migrated deliberately.
-func (a *WorldScriptableAdapter) ExecuteMobCommand(mobVNum int, cmdStr string) {
-	a.world.executeMobCommand(mobVNum, cmdStr)
-}
-
 // FindFirstStep returns direction (0-5) from src room to target room.
 // Delegates to World.FindFirstStep (public wrapper added to graph.go).
 func (a *WorldScriptableAdapter) FindFirstStep(src, target int) int {

@@ -325,8 +325,9 @@ func TestEviltradeSetsFlag(t *testing.T) {
 	}
 }
 
-// TestMobCommandGiveSetsRecipientFlag drives executeMobCommand's give path:
-// C's perform_give ends in obj_to_char(obj, vict) (src/act.item.c:696).
+// TestMobCommandGiveSetsRecipientFlag drives NPCCommand's give path: C's
+// perform_give ends in obj_to_char(obj, vict), which flags the player
+// recipient's crash save (src/act.item.c:696; src/handler.c:570-571).
 func TestMobCommandGiveSetsRecipientFlag(t *testing.T) {
 	w := newFlagWorldWithMob(t)
 	recipient := NewPlayer(1, "Flagtest", 1001)
@@ -341,7 +342,7 @@ func TestMobCommandGiveSetsRecipientFlag(t *testing.T) {
 	mob.AddToInventory(obj)
 	recipient.SetPlrFlag(PlrCrash, false)
 
-	w.executeMobCommand(2001, "give thing "+recipient.Name)
+	w.NPCCommand(mob, "give thing "+recipient.Name)
 
 	if _, ok := recipient.Inventory.FindItem("thing"); !ok {
 		t.Fatal("mob give did not deliver the object")

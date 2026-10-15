@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -110,14 +111,24 @@ func (w *World) DoFlee(ch combat.Combatant) {
 }
 
 // doFleeMoveMob executes the do_simple_move leg for an NPC that flees through
-// a direct C call. It keeps the movement text and state changes on the normal
-// movement path; the NPC does not use the player command dispatcher.
+// a direct C call. C's do_flee passes need_specials_check=TRUE
+// (src/act.offensive.c:398), so the specials ladder always runs here.
 func (w *World) doFleeMoveMob(ch *MobInstance, dir int) bool {
+	return w.doSimpleMoveMob(ch, dir, true)
+}
+
+// doSimpleMoveMob is do_simple_move (src/act.movement.c:95-305) for a mobile.
+// It keeps the movement text and state changes on the normal movement path;
+// the NPC does not use the player command dispatcher. needSpecialsCheck
+// mirrors the C parameter: command_interpreter has already offered a typed
+// direction command to special() (src/interpreter.c:947), so do_move's
+// perform_move leg passes FALSE and direct calls pass TRUE.
+func (w *World) doSimpleMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool) bool {
 	if ch == nil || dir < 0 || dir >= len(dirs) {
 		return false
 	}
 	direction := dirs[dir]
-	if w.movementSpecialBlocksMob(ch, direction) {
+	if needSpecialsCheck && w.movementSpecialBlocksMob(ch, direction) {
 		return false
 	}
 	if ch.IsAffected(affCharm) {
@@ -231,6 +242,64 @@ func (w *World) doFleeMoveMob(ch *MobInstance, dir int) bool {
 		return false
 	}
 	w.RunRoomEnterScriptForActor(ch)
+	return true
+}
+
+// performMoveMob ports perform_move (src/act.movement.c:311-358) for a mobile
+// mover: the exit refusals, the do_simple_move leg, and the follower drag.
+// needSpecialsCheck mirrors the C parameter (do_move passes 0 because
+// command_interpreter already ran special(); recursive follower moves pass 1).
+func (w *World) performMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool) bool {
+	if ch == nil || dir < 0 || dir >= len(dirs) {
+		return false
+	}
+	fromRoom := w.GetRoomInWorld(ch.GetRoom())
+	if fromRoom == nil {
+		return false
+	}
+	exit, ok := fromRoom.Exits[dirs[dir]]
+	if !ok || exit.ToRoom == -1 {
+		sendBodyMessage(w, ch, "Alas, you cannot go that way...\r\n")
+		return false
+	}
+	if exit.ExitInfo&parser.ExitClosed != 0 {
+		if exit.Keywords != "" {
+			// C prints the secret exit as missing unless the room is marked;
+			// otherwise it names the door (src/act.movement.c:326-335).
+			isSecret := strings.Contains(strings.ToLower(exit.Keywords), "secret")
+			if isSecret && !movementRoomHasFlag(fromRoom, roomFlagSecretMark, "secret_mark") {
+				sendBodyMessage(w, ch, "Alas, you cannot go that way...\r\n")
+			} else {
+				sendBodyMessage(w, ch, fmt.Sprintf("The %s seems to be closed.\r\n", firstWord(exit.Keywords)))
+			}
+		} else {
+			sendBodyMessage(w, ch, "It seems to be closed.\r\n")
+		}
+		return false
+	}
+	wasIn := ch.GetRoom()
+	if !w.doSimpleMoveMob(ch, dir, needSpecialsCheck) {
+		return false
+	}
+	// C drags the mover's followers along (src/act.movement.c:343-352). Only
+	// the port's player followers are enumerable; a mobile's mobile-followers
+	// lane has no runtime index yet and stays unported (R5d).
+	for _, follower := range w.GetFollowers(ch.GetName()) {
+		if follower.GetRoom() != wasIn || follower.GetPosition() < combat.PosStanding {
+			continue
+		}
+		// C skips a follower whose rider is the mover (get_rider check,
+		// src/act.movement.c:347): the mount carries its own rider.
+		if w.riddenMount(follower) == ch {
+			continue
+		}
+		Act(nil, false, follower, ch, nil, nil, "You follow $N.", "", ToChar)
+		// C's follower loop emits this notice, then the recursive
+		// perform_move() starts a separate room-look output burst.
+		follower.SendMessage("\r\n")
+		follower.SetAffect(affHide, false)
+		performMoveResult(w, follower, dir, true, nil)
+	}
 	return true
 }
 
