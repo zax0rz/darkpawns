@@ -74,8 +74,8 @@ Y
 [setup:oracle:Castobserve]
 Castobserve
 Y
-observepass
-observepass
+obspass
+obspass
 N
 M
 H
@@ -88,8 +88,8 @@ Y
 [setup:port:Castobserve]
 Castobserve
 y
-observepass
-observepass
+obspass
+obspass
 N
 M
 H
