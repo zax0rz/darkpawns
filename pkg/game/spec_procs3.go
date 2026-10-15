@@ -677,8 +677,16 @@ func conSellerPersName(w *World, subject, observer Actor) string {
 	return subject.GetName()
 }
 
+// conSellerTell is C's do_tell(mobile, msg, find_command("tell"), 0)
+// (src/spec_procs3.c:116, :121, :126, :131, :138), where msg is
+// "<player name> <text>". The line is rendered with conSellerPersName rather
+// than act()'s PERS: the shared act engine has no room-light argument, and C's
+// CAN_SEE includes LIGHT_OK for this deliberately dark shop. perform_tell's
+// reply-target assignment is kept, so reply behaves as C's does
+// (src/act.comm.c:894).
 func conSellerTell(w *World, me *MobInstance, target *Player, msg string) {
 	target.SendMessage(fmt.Sprintf("%s tells you, '%s'\r\n", cap(conSellerPersName(w, me, target)), msg))
+	target.SetLastTeller(me.GetShortDesc())
 }
 
 // conSellerRoomAct emits the two fixed TO_NOTVICT/TO_ROOM acts without using
