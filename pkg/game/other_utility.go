@@ -42,9 +42,12 @@ func (w *World) doPeek(ch *Player, me *MobInstance, cmd string, arg string) bool
 		return true
 	}
 
-	// C skips the skill roll entirely for immortals. Mortals burn exactly one
-	// number(1,101) draw before comparing their peek skill.
-	if ch.GetLevel() < LVL_IMMORT && dprng.Number(1, 101) > ch.GetSkill(SkillPeek) {
+	// C consumes number(1,101) before its immortal-level test
+	// (src/act.other.c:1688-1692), so an immortal burns the draw too; the
+	// comparison order then mirrors C's percent-skill && level gate.
+	// #nosec G404 — game RNG, not cryptographic
+	percent := dprng.Number(1, 101)
+	if percent > ch.GetSkill(SkillPeek) && ch.GetLevel() < LVL_IMMORT {
 		// The failure path calls do_look with the original, unparsed argument;
 		// retain its ordinary look parser and player-facing bytes.
 		w.doLook(ch, nil, "look", arg)

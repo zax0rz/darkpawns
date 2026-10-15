@@ -2056,10 +2056,9 @@ func CmdPalm(s SessionInterface, args []string) error {
 		return err
 	}
 
-	if len(args) == 0 {
-		return s.SendMessage("Palm what?\r\n")
-	}
-
+	// No early no-argument return: C consumes its number(1,101) draw before
+	// the "Palm what?" branch (src/new_cmds.c:2110-2119), and DoPalm draws
+	// first, so an empty argument must reach it.
 	objName := strings.Join(args, " ")
 	world := s.GetWorld()
 	result := game.DoPalm(ch, objName, world)
