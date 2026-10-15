@@ -1,0 +1,3 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+page_string	pager	pager.empty-page	D1	state	unit-green	TestPageStringEmptySendsWholeNoMode	modify.c:430-438	An empty string sends no bytes and does not enter pager mode, matching C's empty send_to_char call (R1/R5e/R5h).
+show_string	pager	pager.invalid-input	D1	command	unit-green	TestPagerJunkInputPrintsValidLineAndDoesNotAdvance	modify.c:497-502	Invalid input emits exactly the C diagnostic including CRLF and leaves the next page unchanged (R1/R5e/R5h).

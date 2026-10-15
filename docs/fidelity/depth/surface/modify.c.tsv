@@ -1,0 +1,41 @@
+c_site	function	classification	case_ids	notes
+src/modify.c:134	string_add	proven	string.editor-truncation-messages	First-line editor overflow diagnostic; focused exact-byte assertion.
+src/modify.c:147	string_add	proven	string.editor-truncation-messages	Subsequent-line editor overflow diagnostic; focused exact-byte assertion.
+src/modify.c:265	do_skillset	proven	skillset.no-argument	Syntax line on the no-argument branch.
+src/modify.c:273	do_skillset	proven	skillset.no-argument	Four-column skill-list output flush.
+src/modify.c:278	do_skillset	proven	skillset.no-argument	Final partial skill-list output flush.
+src/modify.c:279	do_skillset	proven	skillset.no-argument	Mixed-ending terminator after the skill list.
+src/modify.c:283	do_skillset	proven	skillset.target-not-found	Visible target lookup refusal.
+src/modify.c:290	do_skillset	proven	skillset.skill-name-expected	Missing skill argument refusal.
+src/modify.c:294	do_skillset	proven	skillset.skill-not-quoted	Unquoted skill token refusal.
+src/modify.c:303	do_skillset	proven	skillset.unterminated-quote	Opening quote without a matching closing quote refusal.
+src/modify.c:309	do_skillset	proven	skillset.unrecognized-skill	Unknown canonical skill refusal.
+src/modify.c:316	do_skillset	proven	skillset.value-expected	Missing learned-value refusal.
+src/modify.c:321	do_skillset	proven	skillset.value-negative	Negative learned-value refusal.
+src/modify.c:325	do_skillset	proven	skillset.value-too-high	Learned value above 100 refusal.
+src/modify.c:329	do_skillset	proven	skillset.npc-target	NPC target refusal after earlier parser gates.
+src/modify.c:340	do_skillset	proven	skillset.success	Successful player skill mutation confirmation.
+src/modify.c:436	page_string	proven	pager.empty-page	Empty input emits no player-facing bytes and leaves pager mode off.
+src/modify.c:499	show_string	proven	pager.invalid-input	Invalid pager command diagnostic; exact bytes and no-advance state are asserted.
+src/modify.c:508	show_string	proven	info.pager-navigation;sysfile.read-page	Final page output and automatic pager teardown.
+src/modify.c:524	show_string	proven	help.no-argument-pager;info.pager-navigation;sysfile.read-page	Non-final page output through help, info navigation, and sysfile paging.
+src/modify.c:608	do_string	proven	string.usage	Usage output when parsing cannot resolve mob/obj input.
+src/modify.c:613	do_string	proven	string.empty-field-token	Empty field token refusal.
+src/modify.c:621	do_string	proven	string.unknown-target	Visible mob lookup refusal.
+src/modify.c:628	do_string	proven	string.player-rename-gate	Low-implementor player-name refusal.
+src/modify.c:633	do_string	proven	string.player-rename-gate	Implementor player-name warning before the write path.
+src/modify.c:637	do_string	proven	string.mob-npc-field-refusals	NPC-only short-description refusal for a player target.
+src/modify.c:644	do_string	proven	string.mob-npc-field-refusals	NPC-only long-description refusal for a player target.
+src/modify.c:655	do_string	proven	string.mob-npc-field-refusals	Player title refusal on an NPC target.
+src/modify.c:661	do_string	proven	string.unknown-field	Unknown mob field refusal.
+src/modify.c:669	do_string	proven	string.unknown-target	Carried-object lookup refusal.
+src/modify.c:685	do_string	proven	string.extradesc-keyword-required	Missing extra-description keyword refusal.
+src/modify.c:698	do_string	proven	string.extradesc-create	New keyword creates an extra-description node.
+src/modify.c:705	do_string	proven	string.extradesc-modify	Existing keyword selects the existing description.
+src/modify.c:713	do_string	proven	string.extradesc-delete-keyword-required	Missing delete-description keyword refusal.
+src/modify.c:719	do_string	proven	string.extradesc-delete-unknown-keyword	Unknown delete-description keyword refusal.
+src/modify.c:738	do_string	proven	string.extradesc-delete	Successful head-node deletion confirmation.
+src/modify.c:743	do_string	proven	string.obj-undefined-field	Undefined object field refusal.
+src/modify.c:758	do_string	proven	string.inline-truncation	Inline string is truncated with the command-specific message.
+src/modify.c:765	do_string	proven	string.mob-inline-fields;string.obj-inline-fields	Successful inline field update confirmation.
+src/modify.c:767	do_string	proven	string.editor-write-through;string.editor-entry-clears-field	Editor entry prompt and live-field clearing behavior.
