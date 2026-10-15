@@ -34,8 +34,6 @@ package game
 // position bytes, and HandleDeath for the corpse's SPELL_DROWNING wording.
 
 import (
-	"sort"
-
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -79,36 +77,18 @@ const (
 
 // RoomActivity runs C room_activity() for every character in the world.
 //
-// C walks the global character_list, which is prepend-ordered (most recently
-// created first; db.c:1716-1746). Go has no equivalent single list, so this
-// port processes players (sorted by name) before mobs (sorted by VNum) — a
-// deterministic order that matches C for the single-observer cases the
-// oracle corpus exercises. Multi-occupant water rooms may interleave
-// differently than C's list order; that approximation is recorded in the
-// round handoff.
+// C walks the global character_list, newest first (db.c:1716-1717,1745-1746).
 func (w *World) RoomActivity() {
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	mobs := make([]*MobInstance, 0, len(w.activeMobs))
-	for _, m := range w.activeMobs {
-		mobs = append(mobs, m)
-	}
-	w.mu.RUnlock()
-
-	sort.Slice(players, func(i, j int) bool { return players[i].Name < players[j].Name })
-	sort.Slice(mobs, func(i, j int) bool { return mobs[i].VNum < mobs[j].VNum })
-
-	for _, p := range players {
-		if w.roomActivityForPlayer(p) {
-			// C returns from room_activity when a room spec reports TRUE or a
-			// flying fall lands in the down-less death trap.
-			return
+	for _, character := range w.cOrderedCharacters() {
+		if character.player != nil {
+			if w.roomActivityForPlayer(character.player) {
+				// C returns from room_activity when a room spec reports TRUE or a
+				// flying fall lands in the down-less death trap.
+				return
+			}
+			continue
 		}
-	}
-	for _, m := range mobs {
+		m := character.mob
 		if m == nil || !m.IsAlive() {
 			continue
 		}

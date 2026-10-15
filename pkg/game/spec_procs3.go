@@ -199,7 +199,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Roll: hit foe (<3) vs heal self (>=3), out of (healPerc+2)
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if clericNumber(0, healPerc+1) >= 2 {
+	if clericNumber(1, healPerc+2) >= 3 {
 		// Heal self — check curses, poisons, blindness
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
@@ -394,13 +394,19 @@ func butlerDoorToggle(w *World, me *MobInstance, container *ObjectInstance, open
 		return
 	}
 	if open {
-		if flags&contClosed != 0 {
+		if flags&contClosed != 0 && flags&contLocked == 0 {
+			// C's do_gen_door reaches ok_pick on each successful state change,
+			// even though the mobile has no descriptor. Preserve its draw.
+			// #nosec G404 — game RNG, not cryptographic
+			_ = doorNumber(1, 101) // src/act.movement.c:541
 			container.SetValue(contFlags, flags&^contClosed)
 			Act(w, false, me, nil, container, nil, "$n opens $p.", "", ToRoom)
 		}
 		return
 	}
 	if flags&contClosed == 0 {
+		// #nosec G404 — game RNG, not cryptographic
+		_ = doorNumber(1, 101) // src/act.movement.c:541
 		container.SetValue(contFlags, flags|contClosed)
 		Act(w, false, me, nil, container, nil, "$n closes $p.", "", ToRoom)
 	}

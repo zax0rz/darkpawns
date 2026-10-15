@@ -200,6 +200,21 @@ func (w *World) wanderMobWithDoor(mob *MobInstance, door int) bool {
 
 	// MobProg entry trigger — fires when mob enters a room
 	w.EntryProg(mob, targetRoom.VNum)
+	if mob.GetRoom() < 0 {
+		return false // C: perform_move returns if entry_prog extracted the mover.
+	}
+	if !mob.IsAffected(affSneak) {
+		// act.movement.c:273-282 runs mp_greet and then each room mob's greet
+		// script after entry_prog, in the destination room's character order.
+		w.MpGreetActor(mob, mob.GetRoom())
+		if mob.GetRoom() < 0 {
+			return false
+		}
+		w.runMobGreetScripts(mob, mob.GetRoom())
+		if mob.GetRoom() < 0 {
+			return false
+		}
+	}
 	return false
 }
 

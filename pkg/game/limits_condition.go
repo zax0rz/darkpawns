@@ -94,149 +94,142 @@ func (w *World) PointUpdate() {
 		}
 	}()
 
-	// Snapshot players under read lock, operate without lock
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	mobs := make([]*MobInstance, 0, len(w.activeMobs))
-	for _, m := range w.activeMobs {
-		mobs = append(mobs, m)
-	}
-	w.mu.RUnlock()
-
-	// --- Players ---
-	for _, p := range players {
-		p.mu.RLock()
-		pos := p.Position
-		inactive := p.Flags&(1<<PrfInactive) != 0
-		p.mu.RUnlock()
-
-		// Condition decay — skip if inactive (PRF_INACTIVE)
-		if !inactive {
-			GainCondition(p, CondFull, -1)
-			GainCondition(p, CondDrunk, -1)
-			GainCondition(p, CondThirst, -1)
-		}
-
-		// Tattoo timer
-		p.mu.Lock()
-		if p.TatTimer > 0 {
-			p.TatTimer--
-		}
-		p.mu.Unlock()
-
-		// src/limits.c:486-487 only decrements; the jail room pulse owns release.
-		p.mu.Lock()
-		if p.JailTimer > 0 {
-			p.JailTimer--
-		}
-		p.mu.Unlock()
-
-		// Dream processing for sleeping characters
-		// Source: limits.c:476
-		if pos == PosSleeping {
-			adapter := &PlayerDreamAdapter{p: p, w: w}
-			Dream(adapter)
-		}
-
-		if pos >= PosStunned {
+	// point_update() walks every body in C's global character_list order.
+	for _, character := range w.cOrderedCharacters() {
+		if p := character.player; p != nil {
 			p.mu.RLock()
-			hp := p.Health
-			maxHP := p.MaxHealth
-			mana := p.Mana
-			maxMana := p.MaxMana
-			move := p.Move
-			maxMove := p.MaxMove
-			poisoned := p.isAffectedLocked(AffPoison)
-			cutthroat := p.isAffectedLocked(AffCutthroat)
+			pos := p.Position
+			inactive := p.Flags&(1<<PrfInactive) != 0
 			p.mu.RUnlock()
 
-			// C: limits.c:495-501 gates all three player resource gains on
-			// PRF_INACTIVE; poison/cutthroat damage below remains outside it.
+			// Condition decay — skip if inactive (PRF_INACTIVE)
 			if !inactive {
-				// HP regen
-				if hp < maxHP {
-					gain := w.HitGain(p)
-					hp += gain
-					if hp > maxHP {
-						hp = maxHP
-					}
-					p.mu.Lock()
-					p.Health = hp
-					p.mu.Unlock()
-				}
-
-				// Mana regen
-				if mana < maxMana {
-					gain := w.ManaGain(p)
-					mana += gain
-					if mana > maxMana {
-						mana = maxMana
-					}
-					p.mu.Lock()
-					p.Mana = mana
-					p.mu.Unlock()
-				}
-
-				// Move regen — always (even at max, original limits.c:501)
-				mvGain := w.MoveGain(p)
-				move += mvGain
-				if move > maxMove {
-					move = maxMove
-				}
-				p.mu.Lock()
-				p.Move = move
-				p.mu.Unlock()
+				GainCondition(p, CondFull, -1)
+				GainCondition(p, CondDrunk, -1)
+				GainCondition(p, CondThirst, -1)
 			}
 
-			// Poison damage — limits.c:503-504
-			if poisoned {
-				w.selfDamage(p, 10, 33)
+			// Tattoo timer
+			p.mu.Lock()
+			if p.TatTimer > 0 {
+				p.TatTimer--
+			}
+			p.mu.Unlock()
+
+			// src/limits.c:486-487 only decrements; the jail room pulse owns release.
+			p.mu.Lock()
+			if p.JailTimer > 0 {
+				p.JailTimer--
+			}
+			p.mu.Unlock()
+
+			// Dream processing for sleeping characters
+			// Source: limits.c:476
+			if pos == PosSleeping {
+				adapter := &PlayerDreamAdapter{p: p, w: w}
+				Dream(adapter)
+			}
+
+			if pos >= PosStunned {
+				p.mu.RLock()
+				hp := p.Health
+				maxHP := p.MaxHealth
+				mana := p.Mana
+				maxMana := p.MaxMana
+				move := p.Move
+				maxMove := p.MaxMove
+				poisoned := p.isAffectedLocked(AffPoison)
+				cutthroat := p.isAffectedLocked(AffCutthroat)
+				p.mu.RUnlock()
+
+				// C: limits.c:495-501 gates all three player resource gains on
+				// PRF_INACTIVE; poison/cutthroat damage below remains outside it.
+				if !inactive {
+					// HP regen
+					if hp < maxHP {
+						gain := w.HitGain(p)
+						hp += gain
+						if hp > maxHP {
+							hp = maxHP
+						}
+						p.mu.Lock()
+						p.Health = hp
+						p.mu.Unlock()
+					}
+
+					// Mana regen
+					if mana < maxMana {
+						gain := w.ManaGain(p)
+						mana += gain
+						if mana > maxMana {
+							mana = maxMana
+						}
+						p.mu.Lock()
+						p.Mana = mana
+						p.mu.Unlock()
+					}
+
+					// Move regen — always (even at max, original limits.c:501)
+					mvGain := w.MoveGain(p)
+					move += mvGain
+					if move > maxMove {
+						move = maxMove
+					}
+					p.mu.Lock()
+					p.Move = move
+					p.mu.Unlock()
+				}
+
+				// Poison damage — limits.c:503-504
+				if poisoned {
+					w.selfDamage(p, 10, 33)
+					if p.CombatRetired() {
+						continue
+					}
+				}
+
+				// Cutthroat damage — limits.c:505-506
+				if cutthroat {
+					w.selfDamage(p, 13, 143)
+				}
+
+				// Poison/cutthroat can drive HP into the wounded band (or past the
+				// POS_DEAD threshold, HP <= -11). Re-derive position from the new HP
+				// and only die at POS_DEAD — C: damage(ch, ch, dam, ...) runs
+				// update_pos then die() only once GET_HIT <= -11 (DP-1021).
 				if p.CombatRetired() {
 					continue
 				}
+				updatePosFromHP(p, p.GetHP())
+			} else if pos == PosIncap {
+				// Incapacitated: 1 damage per tick — limits.c:511
+				w.selfDamage(p, 1, combat.TYPE_SUFFERING)
+				if p.CombatRetired() {
+					continue
+				}
+				updatePosFromHP(p, p.GetHP())
+			} else if pos == PosMortally {
+				// Mortally wounded: 2 damage per tick — limits.c:513
+				w.selfDamage(p, 2, combat.TYPE_SUFFERING)
+				if p.CombatRetired() {
+					continue
+				}
+				updatePosFromHP(p, p.GetHP())
 			}
 
-			// Cutthroat damage — limits.c:505-506
-			if cutthroat {
-				w.selfDamage(p, 13, 143)
-			}
+			// Memory clearing for NPCs — limits.c:516-518
+			// (handled in NPC section below)
 
-			// Poison/cutthroat can drive HP into the wounded band (or past the
-			// POS_DEAD threshold, HP <= -11). Re-derive position from the new HP
-			// and only die at POS_DEAD — C: damage(ch, ch, dam, ...) runs
-			// update_pos then die() only once GET_HIT <= -11 (DP-1021).
-			if p.CombatRetired() {
-				continue
-			}
-			updatePosFromHP(p, p.GetHP())
-		} else if pos == PosIncap {
-			// Incapacitated: 1 damage per tick — limits.c:511
-			w.selfDamage(p, 1, combat.TYPE_SUFFERING)
-			if p.CombatRetired() {
-				continue
-			}
-			updatePosFromHP(p, p.GetHP())
-		} else if pos == PosMortally {
-			// Mortally wounded: 2 damage per tick — limits.c:513
-			w.selfDamage(p, 2, combat.TYPE_SUFFERING)
-			if p.CombatRetired() {
-				continue
-			}
-			updatePosFromHP(p, p.GetHP())
+			// Idle check for players — limits.c:521-524
+			w.CheckIdling(p)
+			continue
+		}
+		m := character.mob
+		if m == nil {
+			continue
 		}
 
-		// Memory clearing for NPCs — limits.c:516-518
-		// (handled in NPC section below)
-
-		// Idle check for players — limits.c:521-524
-		w.CheckIdling(p)
-	}
-
-	// --- NPCs ---
-	for _, m := range mobs {
+		// --- NPCs ---
 		pos := m.GetPosition()
 
 		if pos >= PosStunned {

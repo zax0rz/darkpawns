@@ -36,58 +36,55 @@ func SpellWearOffMsg(spellType int) string {
 // AffectUpdate decrements affect durations and removes expired affects.
 // Source: src/magic.c affect_update() lines 431-461.
 func (w *World) AffectUpdate() {
-	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
-	w.mu.RUnlock()
+	for _, character := range w.cOrderedCharacters() {
+		if p := character.player; p != nil {
+			// Snapshot the player's current affects under p.mu (not w.mu).
+			// ActiveAffects belongs to the Player, not the World.
+			p.mu.RLock()
+			affects := make([]*engine.Affect, len(p.ActiveAffects))
+			copy(affects, p.ActiveAffects)
+			p.mu.RUnlock()
 
-	for _, p := range players {
-		// Snapshot the player's current affects under p.mu (not w.mu).
-		// ActiveAffects belongs to the Player, not the World.
-		p.mu.RLock()
-		affects := make([]*engine.Affect, len(p.ActiveAffects))
-		copy(affects, p.ActiveAffects)
-		p.mu.RUnlock()
+			var remaining []*engine.Affect
 
-		var remaining []*engine.Affect
+			for _, af := range affects {
+				if af.Duration == -1 {
+					// Permanent affect (immortal only). Matches C: duration == -1 → no action.
+					remaining = append(remaining, af)
+					continue
+				}
+				if af.Duration >= 1 {
+					// Active spell — decrement. Matches C: duration >= 1 → duration--.
+					af.Duration--
+					remaining = append(remaining, af)
+					continue
+				}
+				// Duration == 0 (or unexpected negative) — expires this tick.
+				// Matches C: else branch → affect_remove.
+				if msg := SpellWearOffMsg(af.SpellID); msg != "" {
+					p.SendMessage(msg + "\r\n")
+				}
+				engine.AffectFromChar(p, af.SpellID)
+			}
 
-		for _, af := range affects {
-			if af.Duration == -1 {
-				// Permanent affect (immortal only). Matches C: duration == -1 → no action.
-				remaining = append(remaining, af)
-				continue
+			p.mu.Lock()
+			p.ActiveAffects = remaining
+			if len(remaining) != len(affects) {
+				p.affectTotalLocked()
 			}
-			if af.Duration >= 1 {
-				// Active spell — decrement. Matches C: duration >= 1 → duration--.
-				af.Duration--
-				remaining = append(remaining, af)
-				continue
+			p.mu.Unlock()
+			if len(remaining) != len(affects) {
+				p.refreshAttributeCapacity()
 			}
-			// Duration == 0 (or unexpected negative) — expires this tick.
-			// Matches C: else branch → affect_remove.
-			if msg := SpellWearOffMsg(af.SpellID); msg != "" {
-				p.SendMessage(msg + "\r\n")
-			}
-			engine.AffectFromChar(p, af.SpellID)
+			continue
 		}
 
-		p.mu.Lock()
-		p.ActiveAffects = remaining
-		if len(remaining) != len(affects) {
-			p.affectTotalLocked()
+		// Mob affect expiration — magic.c:431-457
+		// C iterates character_list which includes both players and NPCs.
+		mob := character.mob
+		if mob == nil {
+			continue
 		}
-		p.mu.Unlock()
-		if len(remaining) != len(affects) {
-			p.refreshAttributeCapacity()
-		}
-	}
-
-	// Mob affect expiration — magic.c:431-457
-	// C iterates character_list which includes both players and NPCs.
-	mobs := w.GetAllMobs()
-	for _, mob := range mobs {
 		if !mob.IsAlive() {
 			continue
 		}

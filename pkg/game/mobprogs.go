@@ -15,6 +15,9 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
+// mobProgNumber is a test seam for the C-compatible draws in mobile programs.
+var mobProgNumber = dprng.Number
+
 // ---------------------------------------------------------------------------
 // IS_* checks from mobprog.h
 // ---------------------------------------------------------------------------
@@ -42,16 +45,15 @@ func (w *World) MpGreetActor(who combat.Combatant, room int) {
 	if room < 0 || who == nil {
 		return
 	}
-	for _, body := range w.GetAllCharsInRoom(room) {
-		host, ok := body.(*MobInstance)
-		if !ok || host == nil || host == who {
+	for _, host := range w.COrderedRoomMobs(room) {
+		if host == nil || host == who {
 			continue
 		}
 		if isDog(host) {
 			// C draws only after the dog-vnum gate and before checking the
 			// mover's alignment.
 			// #nosec G404 — game RNG, not cryptographic
-			if dprng.Number(0, 5) == 0 {
+			if mobProgNumber(0, 5) == 0 {
 				if actor, ok := who.(Actor); ok {
 					command := "lick"
 					if combatantAlignment(who) < 0 {
@@ -380,7 +382,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8066:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 1) == 0 {
+		if mobProgNumber(0, 1) == 0 {
 			sound = "Sign this, please! There's too much violence!"
 		} else {
 			sound = "You look like a kind person.. sign this petition?"
@@ -389,7 +391,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8067:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 1) == 0 {
+		if mobProgNumber(0, 1) == 0 {
 			sound = "adjusts his tool belt."
 		} else {
 			sound = "wipes the sweat of labor from his brow."
@@ -398,7 +400,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8068:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 1) == 0 {
+		if mobProgNumber(0, 1) == 0 {
 			sound = "Arch Bishop Dinive to arrive on the Day of Winter Dawning!"
 		} else {
 			sound = "By mandate of the church, no violence in town! The penalty is jail time!"
@@ -410,7 +412,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8071:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 1) == 0 {
+		if mobProgNumber(0, 1) == 0 {
 			sound = "Spare a coin, buddy?"
 			useSay = true
 		} else {
@@ -423,7 +425,7 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 8074:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 1) == 0 {
+		if mobProgNumber(0, 1) == 0 {
 			sound = "plays a lilting tune about your mother's beauty."
 		} else {
 			sound = "sings a melody about your conquests in battle."
@@ -445,33 +447,42 @@ func (w *World) MpSound(mob *MobInstance) {
 	case 16300:
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 1) == 0 {
+		if mobProgNumber(0, 1) == 0 {
 			sound = "smiles at you."
 		} else {
 			sound = "shuffles some papers around on his desk."
 		}
 		useSay = false
-	default:
-		return
 	}
 
-	if useSay {
-		w.roomMessage(mob.GetRoom(), fmt.Sprintf("$n says, '%s'", sound))
-	} else {
-		w.roomMessage(mob.GetRoom(), fmt.Sprintf("$n %s", sound))
-	}
-
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	if isDemon(mob) && dprng.Number(0, 2) != 0 {
-		w.roomMessage(mob.GetRoom(), "$n says, 'I seek the dull blackened stones in which the souls of mortals have been trapped!'")
-		w.roomMessage(mob.GetRoom(), "$n says, 'I shall open a portal to the Grey Fortress in exchange for a soul stone.'")
+	if sound != "" {
+		if useSay {
+			w.roomMessage(mob.GetRoom(), fmt.Sprintf("$n says, '%s'", sound))
+		} else {
+			w.roomMessage(mob.GetRoom(), fmt.Sprintf("$n %s", sound))
+		}
 	}
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	if isDog(mob) && dprng.Number(0, 25) == 0 {
-		w.roomMessage(mob.GetRoom(), "$n relieves itself, nearly hitting your foot.")
+	if isDemon(mob) {
+		if mobProgNumber(0, 2) != 0 {
+			return
+		}
+		switch mob.GetAlignment() {
+		case -1000:
+			w.npcSay(mob, "I seek the dull blackened stones in which the souls of mortals have been trapped!")
+			mob.SetAlignment(-999)
+		case -999:
+			w.npcSay(mob, "I shall open a portal to the Grey Fortress in exchange for a soul stone.")
+			mob.SetAlignment(-1000)
+		}
+	}
+
+	// #nosec G404 — game RNG, not cryptographic
+	// #nosec G404
+	if isDog(mob) && mobProgNumber(0, 25) == 0 {
+		w.npcEmote(mob, "relieves itself, nearly hitting your foot.")
 		puddle := w.CreateObject(20, mob.GetRoom())
 		if puddle != nil {
 			puddle.SetTimer(2)

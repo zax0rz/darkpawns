@@ -104,6 +104,7 @@ type World struct {
 	players               map[string]*Player   // keyed by player name
 	activeMobs            map[int]*MobInstance // keyed by instance ID
 	nextMobID             int
+	nextCharacterSequence uint64
 	nextRoomEntrySequence uint64
 	// pendingPlayerExtractions is the explicit queue used by death paths that
 	// mirror C's extract_char() to next-heartbeat extract_pending_chars() flow.
@@ -548,6 +549,8 @@ func (w *World) AddPlayer(p *Player) error {
 	p.mu.Lock()
 	p.worldRef = w
 	p.combatRetired = false
+	w.nextCharacterSequence++
+	p.characterSequence = w.nextCharacterSequence
 	w.nextRoomEntrySequence++
 	p.RoomEntrySequence = w.nextRoomEntrySequence
 	p.mu.Unlock()
@@ -1134,6 +1137,8 @@ func (w *World) spawnMob(vnum int, roomVNum int) (*MobInstance, error) {
 	mob := NewMob(proto, roomVNum)
 	mob.world = w
 	mob.ID = w.nextMobID
+	w.nextCharacterSequence++
+	mob.characterSequence = w.nextCharacterSequence
 	w.nextRoomEntrySequence++
 	mob.RoomEntrySequence = w.nextRoomEntrySequence
 	w.activeMobs[w.nextMobID] = mob

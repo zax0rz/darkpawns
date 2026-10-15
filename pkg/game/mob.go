@@ -37,6 +37,9 @@ type MobInstance struct {
 	// RoomEntrySequence mirrors char_to_room's prepend order for room looks.
 	// Higher values are newer arrivals and therefore appear first.
 	RoomEntrySequence uint64
+	// characterSequence records read_mobile insertion into C's global list.
+	// Unlike RoomEntrySequence, movement between rooms never changes it.
+	characterSequence uint64
 	CurrentHP         int
 	MaxHP             int
 	CurrentMana       int
