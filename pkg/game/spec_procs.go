@@ -1170,18 +1170,18 @@ func specBlackUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, ar
 	return specUndeadKnight(w, me, cmd, 11471, func() {
 		switch randRange(1, 20) {
 		case 1:
-			w.roomMessage(me.RoomVNum, me.GetName()+" screams, 'Protect the kingdom!'")
+			Act(w, false, me, nil, nil, nil, "$n screams, 'Protect the kingdom!'", "", ToRoom)
 		case 2:
-			w.roomMessage(me.RoomVNum, me.GetName()+" shouts, 'If I'm going to hell, you're going with me!'")
+			Act(w, false, me, nil, nil, nil, "$n shouts, 'If I'm going to hell, your going with me!'", "", ToRoom)
 		case 3:
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'You dirty rotten scoundrel. I'm gonna make you very sorry.'")
+			Act(w, false, me, nil, nil, nil, "$n says, 'You dirty rotten scoundrel.  I'm gonna make you very sorry.'", "", ToRoom)
 		case 4:
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'I know what you're thinking...'")
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Did he fire five shots, or did he fire six.'")
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Well let me ask you...'")
-			w.roomMessage(me.RoomVNum, me.GetName()+" asks, 'Do you feel lucky PUNK?  Well... DO YOU?'")
+			Act(w, false, me, nil, nil, nil, "$n says, 'I know what your thinking...'", "", ToRoom)
+			Act(w, false, me, nil, nil, nil, "$n says, 'Did he fire five shots, or did he fire six.'", "", ToRoom)
+			Act(w, false, me, nil, nil, nil, "$n says, 'Well let me ask you...'", "", ToRoom)
+			Act(w, false, me, nil, nil, nil, "$n asks, 'Do you feel lucky PUNK?  Well... DO YOU?'", "", ToRoom)
 		case 5:
-			w.roomMessage(me.RoomVNum, me.GetName()+" claims, 'I am the greatest!'")
+			Act(w, false, me, nil, nil, nil, "$n claims, 'I am the greatest!'", "", ToRoom)
 		}
 	})
 }
@@ -1191,17 +1191,17 @@ func specRedUndeadKnight(w *World, ch *Player, me *MobInstance, cmd string, arg 
 	return specUndeadKnight(w, me, cmd, 11470, func() {
 		switch randRange(1, 20) {
 		case 1:
-			w.roomMessage(me.RoomVNum, me.GetName()+" screams, 'Protect the homeland!'")
+			Act(w, false, me, nil, nil, nil, "$n screams, 'Protect the homeland!'", "", ToRoom)
 		case 2:
-			w.roomMessage(me.RoomVNum, me.GetName()+" shouts, 'If you think you have had a bad day before, watch this!'")
+			Act(w, false, me, nil, nil, nil, "$n shouts, 'If you think you have had a bad day before, watch this!'", "", ToRoom)
 		case 3:
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'Don't ever argue with the big dog,'")
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'cause the big dog is always right.'")
+			Act(w, false, me, nil, nil, nil, "$n says, 'Don't ever argue with the big dog,'", "", ToRoom)
+			Act(w, false, me, nil, nil, nil, "$n says, 'cause the big dog is always right.'", "", ToRoom)
 		case 4:
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'There's more than one way to skin a cat:'")
-			w.roomMessage(me.RoomVNum, me.GetName()+" continues: 'Way number 15 -- Krazy Glue and a toothbrush.'")
+			Act(w, false, me, nil, nil, nil, "$n says, 'There's more that one way to skin a cat:'", "", ToRoom)
+			Act(w, false, me, nil, nil, nil, "$n continues: 'Way number 15 -- Krazy Glue and a toothbrush.'", "", ToRoom)
 		case 5:
-			w.roomMessage(me.RoomVNum, me.GetName()+" says, 'A friend with weed is a friend indeed.'")
+			Act(w, false, me, nil, nil, nil, "$n says, 'A friend with weed is a friend indeed.'", "", ToRoom)
 		}
 	})
 }
@@ -1213,19 +1213,21 @@ func specMickey(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	}
 	if me.IsFighting() {
 		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
-			w.roomMessage(me.RoomVNum, me.GetName()+" stands up!")
+			// C: do_stand(ch, "", 0, 0) (src/spec_procs.c:1280), which emits the
+			// ordinary stand acts for the mobile's position.
+			w.npcStand(me)
 		} else {
 			switch randRange(1, 10) {
 			case 1:
-				w.roomMessage(me.RoomVNum, me.GetName()+" shouts, 'I'll always love you Mal, no matter what!'")
+				Act(w, false, me, nil, nil, nil, "$n shouts, 'I'll always love you Mal, no matter what!'", "", ToRoom)
 			case 2:
-				w.roomMessage(me.RoomVNum, me.GetName()+" asks, 'Do you believe in fate?'")
+				Act(w, false, me, nil, nil, nil, "$n asks, 'Do you believe in fate?'", "", ToRoom)
 			case 3:
-				w.roomMessage(me.RoomVNum, me.GetName()+" says, 'You're not centered.'")
+				Act(w, false, me, nil, nil, nil, "$n says, 'You're not centered.'", "", ToRoom)
 			case 4:
-				w.roomMessage(me.RoomVNum, me.GetName()+" shouts, 'When they come and ask you who did this, tell them it was Mickey and Mallory Knox!'")
+				Act(w, false, me, nil, nil, nil, "$n shouts, 'When they come and ask you who did this, tell them it was Mickey and Mallory Knox!'", "", ToRoom)
 			case 5:
-				w.roomMessage(me.RoomVNum, me.GetName()+" states, 'It's not nice to point.'")
+				Act(w, false, me, nil, nil, nil, "$n states, 'It's not nice to point.'", "", ToRoom)
 			}
 		}
 		return true

@@ -65,6 +65,42 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 	if !victim.IsNPC() {
 		MudLog(fmt.Sprintf("(LOOT) %s attitude looted %s.", killer.GetName(), victim.GetName()), MudlogComplete, LVL_IMMORT, true)
 	}
+
+	// C: if (!MOB_FLAGGED(ch, MOB_AGGR24)) return; (:1161-1162). The other
+	// attitude_loot callers (MOB_LOOTS, vnum 19650) only loot.
+	if !killer.HasFlag("MOB_AGGR24") {
+		return
+	}
+	// The brag lives inside attitude_loot in C, after the loot and the log
+	// (:1173-1247), so its gates and both draws sit here rather than at the
+	// kill call site.
+	combat.BragMessage(killer, victim)
+}
+
+// attitudeLootAfterKill is damage()'s kill tail (src/fight.c:1689-1697):
+//
+//	GET_KILLS(ch)++; counter_procs(ch); die_with_killer(victim, ch, attacktype);
+//	if (ch != victim && (MOB_FLAGGED(ch, MOB_AGGR24) ||
+//	                     MOB_FLAGGED(ch, MOB_LOOTS) || GET_MOB_VNUM(ch) == 19650))
+//	  attitude_loot(ch, victim);
+//
+// The block sits OUTSIDE the !IS_NPC(victim) arm that closes at :1687, so a
+// mobile victim loots and brags too. The port used to run it only in its
+// player-victim branch.
+func (w *World) attitudeLootAfterKill(killer, victim combat.Combatant) {
+	if w == nil || killer == nil || victim == nil || killer == victim {
+		return
+	}
+	mobKiller, ok := killer.(*MobInstance)
+	if !ok {
+		return
+	}
+	if !mobKiller.HasMobFlag(MobFlagAggr24) &&
+		!mobKiller.HasMobFlag(MobFlagLoots) &&
+		mobKiller.GetVNum() != 19650 {
+		return
+	}
+	w.attitudeLootMob(mobKiller, victim)
 }
 
 func (w *World) findAttitudeLootCorpse(roomVNum int, victimName string) *ObjectInstance {

@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 	"strings"
 
@@ -151,7 +150,7 @@ func (w *World) huntVictim(m *MobInstance) {
 	}
 	if target == nil || target.GetRoom() < 2 {
 		if m.CanSpeak() {
-			w.mobSayTo(m, "Damn!  My prey is gone!!")
+			w.npcSay(m, "Damn!  My prey is gone!!")
 		}
 		m.SetHunting("")
 		return
@@ -164,9 +163,9 @@ func (w *World) huntVictim(m *MobInstance) {
 	// #nosec G404 — game RNG, not cryptographic
 	if evasion > 0 && dir != BFS_ALREADY_THERE && huntNumber(1, 151) < evasion {
 		if m.CanSpeak() && huntNumber(0, 6) == 0 {
-			w.mobSayTo(m, "Where the hell did my prey go?!")
+			w.npcSay(m, "Where the hell did my prey go?!")
 		} else if m.CanSpeak() && huntNumber(0, 6) == 0 {
-			w.mobSayTo(m, "Fuck this...")
+			w.npcSay(m, "Fuck this...")
 		}
 		return
 	}
@@ -201,54 +200,58 @@ func (w *World) huntVictim(m *MobInstance) {
 	if m.GetRoom() == target.GetRoom() {
 		w.attackHuntingPrey(m, target)
 	} else if m.CanSpeak() {
-		w.huntTrashTalk(m, target.GetName())
+		if victim := asActor(target); victim != nil {
+			w.huntTrashTalk(m, victim)
+		}
 	}
 }
 
-// huntTrashTalk delivers the classic mob trash-talk messages while hunting.
-func (w *World) huntTrashTalk(m *MobInstance, victimName string) {
+// huntTrashTalk delivers C's hunt_victim taunts (src/graph.c:346-402). Every
+// sink is the real command: do_tell for the tells, do_gen_comm for the gossip,
+// auction and shout. C prepends the victim's name to each tell's text, and that
+// name is the tell's target argument.
+func (w *World) huntTrashTalk(m *MobInstance, victim Actor) {
+	victimName := victim.GetName()
 	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
 	switch huntNumber(0, 150) {
 	case 0:
-		w.mobTellPlayer(m, victimName, "Let's have an ass-kicking contest")
+		w.npcTell(m, victimName+" Let's have an ass-kicking contest")
 	case 1:
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		w.mobAuction(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, huntNumber(1000, 2000)))
+		w.mobGenComm(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, huntNumber(1000, 2000)), "auction")
 	case 2:
-		w.mobTellPlayer(m, victimName, "Run to your momma, pansy!")
+		w.npcTell(m, victimName+" Run to your momma, pansy!")
 	case 3:
-		w.mobTellPlayer(m, victimName, "I'm coming to kill you!")
+		w.npcTell(m, victimName+" I'm coming to kill you!")
 	case 4:
-		w.mobGossip(m, fmt.Sprintf("I hear %s thinks they're bad.", victimName))
+		// C: sprintf(msg, "I hear %s thinks %s's bad.", GET_NAME(HUNTING(ch)),
+		// HSSH(HUNTING(ch))) (src/graph.c:367-368).
+		w.mobGenComm(m, fmt.Sprintf("I hear %s thinks %s's bad.", victimName, hssh(victim)), "gossip")
 	case 5:
-		w.mobGossip(m, fmt.Sprintf("Your momma ain't gonna save you this time, %s.", victimName))
+		w.mobGenComm(m, fmt.Sprintf("Your momma ain't gonna save you this time, %s.", victimName), "gossip")
 	case 6:
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
 		if huntNumber(0, 20) == 0 {
-			w.mobGossip(m, fmt.Sprintf("%s flees like a rabbit...", victimName))
+			w.mobGenComm(m, fmt.Sprintf("%s flees like a rabbit...", victimName), "gossip")
 		}
 	case 7:
-		w.mobTellPlayer(m, victimName, "Come out and fight!")
+		w.npcTell(m, victimName+" Come out and fight!")
 	case 8:
-		w.mobTellPlayer(m, victimName, "Watch out! Here I come to get you!")
+		w.npcTell(m, victimName+" Watch out! Here I come to get you!")
 	case 9:
-		w.mobAuction(m, fmt.Sprintf("How much will I get for the head of %s?", victimName))
+		w.mobGenComm(m, fmt.Sprintf("How much will I get for the head of %s?", victimName), "auction")
 	case 10:
-		w.mobGossip(m, fmt.Sprintf("Where is that little wimp, %s?", victimName))
+		w.mobGenComm(m, fmt.Sprintf("Where is that little wimp, %s?", victimName), "gossip")
 	case 11:
-		w.mobGossip(m, fmt.Sprintf("%s, you jerk!", victimName))
+		w.mobGenComm(m, fmt.Sprintf("%s, you jerk!", victimName), "gossip")
 	case 12:
-		w.mobShout(m, "Damn it!")
+		w.mobGenComm(m, "Damn it!", "shout")
 	}
 }
 
-// --- Stub helpers for mob communication and actions ---
-// These delegate to existing World methods. Remove as native mob comm is added.
-
-// findPlayerByName finds a player by name (case-insensitive).
+// findPlayerByName finds a player by name (case-insensitive). It is the
+// name-keyed lookup hunt_victim and the mobile command helpers use; it is not
+// a communication sink.
 func (w *World) findPlayerByName(name string) *Player {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
@@ -258,48 +261,6 @@ func (w *World) findPlayerByName(name string) *Player {
 		}
 	}
 	return nil
-}
-
-// mobSayTo makes a mob say something to their room.
-func (w *World) mobSayTo(m *MobInstance, msg string) {
-	m.SendMessage(msg)
-}
-
-// mobTellPlayer makes a mob tell a player something.
-func (w *World) mobTellPlayer(m *MobInstance, targetName, msg string) {
-	target := w.findPlayerByName(targetName)
-	if target == nil {
-		log.Printf("mobTellPlayer: player %q not found", targetName)
-		return
-	}
-	target.SendMessage(fmt.Sprintf("\r\n%s tells you, '%s'\r\n", m.GetName(), msg))
-	m.SendMessage(fmt.Sprintf("\r\nYou tell %s, '%s'\r\n", targetName, msg))
-}
-
-// mobGossip makes a mob gossip.
-func (w *World) mobGossip(m *MobInstance, msg string) {
-	text := fmt.Sprintf("%s gossips, '%s'\r\n", m.GetName(), msg)
-	for _, p := range w.GetPlayersInRoom(m.GetRoom()) {
-		p.SendMessage(text)
-	}
-}
-
-// mobAuction makes a mob auction.
-func (w *World) mobAuction(m *MobInstance, msg string) {
-	text := fmt.Sprintf("%s auctions, '%s'\r\n", m.GetName(), msg)
-	for _, p := range w.GetPlayersInRoom(m.GetRoom()) {
-		p.SendMessage(text)
-	}
-}
-
-// mobShout makes a mob shout.
-func (w *World) mobShout(m *MobInstance, msg string) {
-	text := fmt.Sprintf("%s shouts, '%s'\r\n", m.GetName(), msg)
-	w.mu.RLock()
-	for _, p := range w.players {
-		p.SendMessage(text)
-	}
-	w.mu.RUnlock()
 }
 
 // mobOpenDoor has a mob open a door in a given direction.

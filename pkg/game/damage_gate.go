@@ -1,9 +1,6 @@
 package game
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -160,31 +157,9 @@ func IsShopkeeperMob(w *World, mob *MobInstance) bool {
 	return ok
 }
 
-// mobShoutGenComm is do_gen_comm(mob, arg, 0, SCMD_SHOUT) (act.comm.c:1146):
-// an NPC has no descriptor for its own echo, and the zone, position, deaf,
+// mobShoutGenComm is do_gen_comm(mob, arg, 0, SCMD_SHOUT) (act.comm.c:1146): an
+// NPC has no descriptor for its own echo, and the zone, position, deaf,
 // writing and soundproof filters are the player channel's.
 func (w *World) mobShoutGenComm(me *MobInstance, argument string) {
-	if me == nil || w.communicationRoomSoundproof(me.GetRoom()) || me.GetLevel() < levelCanShout {
-		return
-	}
-	argument = strings.TrimLeft(argument, " \t\r\n\v\f")
-	if argument == "" {
-		return
-	}
-	spec := communicationChannels["shout"]
-	format := deleteANSIControls(fmt.Sprintf("$n %ss, '%s'", spec.verb, argument))
-	senderRoom := w.GetRoomInWorld(me.GetRoom())
-	for _, target := range w.GetAllPlayers() {
-		if target.GetFlags()&(1<<uint(spec.recipientOffFlag)) != 0 ||
-			target.GetFlags()&(1<<uint(PlrWriting)) != 0 ||
-			w.communicationRoomSoundproof(target.GetRoom()) {
-			continue
-		}
-		targetRoom := w.GetRoomInWorld(target.GetRoom())
-		if senderRoom == nil || targetRoom == nil || senderRoom.Zone != targetRoom.Zone ||
-			target.GetPosition() < spec.minimumHearer {
-			continue
-		}
-		Act(w, false, me, target, nil, nil, format, "", ToVict|ToSleep)
-	}
+	w.mobGenComm(me, argument, "shout")
 }

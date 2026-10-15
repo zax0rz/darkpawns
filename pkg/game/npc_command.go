@@ -177,10 +177,9 @@ func (w *World) npcTell(me *MobInstance, argument string) {
 		me.GetLevel() < lvlImmort {
 		return
 	}
-	w.channelAct("tell", false, me, target, deleteANSIControls(fmt.Sprintf("$n tells you, '%s'", message)), ToVict|ToSleep)
-	if target.GetAFK() {
-		return // "$E is AFK right now..." goes to the mobile
-	}
+	// The player path's own perform_tell carries the color sandwich, the AFK
+	// notice (TO_CHAR, so a mobile's is dropped) and the reply target.
+	w.performTell(me, target, message)
 }
 
 // npcVisiblePlayer is get_char_vis for a mobile looking for a player to
