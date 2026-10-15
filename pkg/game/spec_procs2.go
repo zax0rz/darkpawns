@@ -1725,7 +1725,7 @@ func specEqThiefKenderSteal(w *World, thief *MobInstance, victim *Player) {
 // intentionally unobservable; the room Act is retained because players can
 // see the kender retrieving a black item from its container.
 func specEqThiefGetBlack(w *World, thief *MobInstance, container *ObjectInstance) {
-	if container == nil || contIsClosed(container) || len(thief.Inventory) >= mobMaxCarryCount(thief) {
+	if container == nil || contIsClosed(container) || mobCarriedItemCount(thief) >= mobMaxCarryCount(thief) {
 		return
 	}
 

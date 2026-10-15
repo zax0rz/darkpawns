@@ -522,7 +522,7 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		slashWeapon := wielded != nil && wielded.GetValue(3) == 3
 		result := performBehead(w, me, target, wielded != nil, slashWeapon,
 			func(headObj *ObjectInstance) bool {
-				return headObj.IsTakeable() && mobCarriedWeight(me)+headObj.GetWeight() <= mobMaxCarryWeight(me) && len(me.Inventory)+1 <= mobMaxCarryCount(me)
+				return headObj.IsTakeable() && mobCarriedWeight(me)+headObj.GetWeight() <= mobMaxCarryWeight(me) && mobCarriedItemCount(me)+1 <= mobMaxCarryCount(me)
 			},
 			func(headObj *ObjectInstance) error { return w.MoveObjectToMobInventoryFront(headObj, me) },
 		)
