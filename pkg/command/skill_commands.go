@@ -1964,14 +1964,16 @@ func CmdTag(s SessionInterface, args []string) error {
 		return err
 	}
 
-	if len(args) == 0 {
-		return s.SendMessage("Tag who?\r\n")
-	}
-
-	targetName := strings.Join(args, " ")
+	targetName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
 	result := game.DoTag(ch, targetName, world)
-	return sendSkillResult(s, ch, nil, result)
+	var target combat.Combatant
+	if targetName != "" {
+		if resolved, _, found := game.FindTargetInRoom(world, ch.GetRoomVNum(), targetName, ch); found {
+			target = resolved
+		}
+	}
+	return sendSkillResult(s, ch, target, result)
 }
 
 // CmdPoint handles the point command.

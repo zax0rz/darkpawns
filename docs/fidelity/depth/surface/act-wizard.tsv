@@ -1,0 +1,358 @@
+c_site	function	classification	case_ids	notes
+src/act.wizard.c:135	do_echo	proven	echo.immort;emote.no-arg	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:141	do_echo	proven	emote.noshout	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:148	do_echo	proven	echo.immort;emote.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:150	do_echo	proven	act.arena-emote-live-path	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:152	do_echo	proven	echo.immort;emote.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:164	do_send	proven	send.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:168	do_send	proven	send.missing-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:171	do_send	proven	send.same-room;send.empty-message	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:172	do_send	proven	send.same-room;send.empty-message	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:174	do_send	proven	send.norepeat	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:177	do_send	proven	send.normal-confirmation	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:195	find_target_room	proven	goto.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:201	find_target_room	proven	goto.numeric-invalid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:210	find_target_room	proven	goto.object-unavailable	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:214	find_target_room	proven	goto.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:221	find_target_room	proven	goto.god-room-gate	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:226	find_target_room	proven	goto.private-room-gate	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:249	do_at	proven	at.no-arg	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:254	do_at	proven	at.no-command	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:289	do_goto	proven	goto.numeric-success;poofout.consumer-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:303	do_goto	proven	goto.numeric-success;poofin.consumer-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:318	do_trans	proven	transfer.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:321	do_trans	proven	transfer.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:323	do_trans	gap-reachable		Self-transfer refusal is reachable, but transfer-depth does not issue transfer to the actor.
+src/act.wizard.c:326	do_trans	gap-reachable		Lower-level authority refusal is reachable, but transfer-depth uses an Implementor actor and has no lower-level actor control.
+src/act.wizard.c:329	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:337	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:338	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:343	do_trans	gap-reachable		The transfer all level refusal is reachable, but current transfer proofs exercise the permitted all path only.
+src/act.wizard.c:352	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:355	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:356	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:359	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:373	do_teleport	proven	teleport.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:375	do_teleport	proven	teleport.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:377	do_teleport	proven	teleport.self-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:379	do_teleport	gap-reachable		Equal-or-higher target level refusal is reachable, but teleport-depth covers lower-level success and other target gates only.
+src/act.wizard.c:381	do_teleport	proven	teleport.missing-destination	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:383	do_teleport	proven	teleport.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:384	do_teleport	proven	teleport.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:387	do_teleport	proven	teleport.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:388	do_teleport	proven	teleport.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:400	do_vnum	proven	vnum.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:405	do_vnum	proven	vnum.mob-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:409	do_vnum	proven	vnum.obj-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:424	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:429	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:434	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:436	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:438	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:440	do_stat_room	gap-reachable		No-description room branch; the stat.room-success fixture uses a room description.
+src/act.wizard.c:449	do_stat_room	gap-reachable		Room extra-description output; stat.room-success does not create an extra-description fixture.
+src/act.wizard.c:460	do_stat_room	gap-reachable		Long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
+src/act.wizard.c:462	do_stat_room	gap-reachable		Final long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
+src/act.wizard.c:468	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:469	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:480	do_stat_room	gap-reachable		Long room-contents wrap branch; the report fixture stays below the C 62-byte row boundary.
+src/act.wizard.c:482	do_stat_room	gap-reachable		Final long room-contents wrap branch; the report fixture stays below the C 62-byte row boundary.
+src/act.wizard.c:488	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:489	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:503	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:508	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:525	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:533	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:535	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:544	do_stat_object	gap-reachable		Object extra-description output; the bread fixture has no extra descriptions.
+src/act.wizard.c:546	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:549	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:551	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:554	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:556	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:559	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:563	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:579	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:644	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:658	do_stat_object	gap-reachable		Long object-contents intermediate row; the report fixture uses an empty bread container list.
+src/act.wizard.c:660	do_stat_object	gap-reachable		Long object-contents final row; the report fixture uses an empty bread container list.
+src/act.wizard.c:666	do_stat_object	gap-reachable		Object contents final row; the report fixture uses an object without contents.
+src/act.wizard.c:667	do_stat_object	gap-reachable		Contents color-reset output; the report fixture uses an object without contents.
+src/act.wizard.c:670	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:676	do_stat_object	gap-reachable		Object modifier-affect output; the bread fixture has no non-spell object affects.
+src/act.wizard.c:682	do_stat_object	gap-reachable		Object permanent-spell affect output; the bread fixture has no permanent spell affects.
+src/act.wizard.c:685	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:687	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:720	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:724	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:730	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:734	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:750	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:765	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:788	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:793	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:827	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:835	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:841	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:846	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:861	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:866	do_stat_character	gap-reachable		NPC noise output is conditional on a nonempty GET_NOISE value; the live orc report has no noise fixture.
+src/act.wizard.c:875	do_stat_character	proven	stat.player-default-position;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:880	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:886	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:889	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:898	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:905	do_stat_character	gap-reachable		Poofin/poofout report is conditional on an immortal player; the valid player fixture is mortal.
+src/act.wizard.c:911	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:924	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:931	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:937	do_stat_character	gap-reachable		NPC hunting output requires a live HUNTING target; the report fixture has none.
+src/act.wizard.c:945	do_stat_character	gap-reachable		Clan report output requires a PC with a nonzero clan and rank; the player fixture is not a clan member.
+src/act.wizard.c:956	do_stat_character	gap-reachable		Intermediate follower-list wrap is not exercised by the short follower fixture.
+src/act.wizard.c:958	do_stat_character	gap-reachable		Final follower-list wrap is not exercised by the short follower fixture.
+src/act.wizard.c:964	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:969	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:989	do_stat_character	gap-reachable		Active spell list output is not exercised by the player/mob report fixtures.
+src/act.wizard.c:1005	do_stat	proven	stat.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1011	do_stat	gap-reachable		The stat mob selector with no second token is reachable but wizard-report-depth only probes a missing named mob.
+src/act.wizard.c:1016	do_stat	proven	stat.mob-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1020	do_stat	gap-reachable		The stat player selector with no second token is reachable but wizard-report-depth only probes a missing named player.
+src/act.wizard.c:1025	do_stat	proven	stat.player-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1029	do_stat	gap-reachable		The stat file selector with no second token is reachable but current stat proofs use an explicit player name.
+src/act.wizard.c:1037	do_stat	gap-blocked		identity and persistence/save format: file-report access to a higher-level saved character is unproved.
+src/act.wizard.c:1042	do_stat	proven	stat.file-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1048	do_stat	gap-reachable		The stat object selector with no second token is reachable but current stat proofs use an explicit missing or valid object.
+src/act.wizard.c:1053	do_stat	proven	stat.object-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1069	do_stat	proven	stat.fallback-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1080	do_shutdown	proven	shutdown.shutdow-guard	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1109	do_shutdown	proven	shutdown.unknown-option	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1123	stop_snooping	proven	snoop.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1125	stop_snooping	proven	snoop.no-argument;snoop.self-stop	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1144	do_snoop	proven	snoop.missing-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1146	do_snoop	proven	snoop.no-descriptor-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1150	do_snoop	proven	snoop.busy-self;snoop.busy-other-snooper	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1152	do_snoop	proven	snoop.dont-be-stupid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1160	do_snoop	proven	snoop.level-boundary	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1163	do_snoop	proven	snoop.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1182	do_switch	proven	switch.already-switched	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1184	do_switch	proven	switch.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1186	do_switch	proven	switch.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1188	do_switch	proven	switch.self-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1190	do_switch	proven	switch.player-in-use	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1192	do_switch	proven	switch.mortal-player-level-gate	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1194	do_switch	proven	switch.mob-success;switch.player-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1208	do_return	proven	return.switched-body-message	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1231	random_load_msg	proven	load.mob-success;load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1233	random_load_msg	proven	load.mob-success;load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1237	random_load_msg	proven	load.mob-success;load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1238	random_load_msg	proven	load.mob-success;load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1241	random_load_msg	proven	load.mob-success;load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1242	random_load_msg	proven	load.mob-success;load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1274	do_load	proven	load.mob-name-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1285	do_load	proven	load.object-name-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1289	do_load	proven	load.missing-argument;load.invalid-kind	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1295	do_load	gap-reachable		Negative numeric vnums are accepted by atoi and reach the explicit refusal; load-depth covers missing positive vnums but does not exercise this branch.
+src/act.wizard.c:1300	do_load	proven	load.invalid-mob-vnum	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1307	do_load	unreachable	load.mob-success	In the 32-bit reference C build, sizeof(MobLimits pointer)/sizeof(load_limits) is zero, so the loop containing this message never runs. The 64-bit expression would dereference the NULL table; the pinned oracle seam records this architecture-dependent source behavior (src/act.wizard.c:112-126; R1a/R3/R5e).
+src/act.wizard.c:1318	do_load	proven	load.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1320	do_load	proven	load.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1321	do_load	proven	load.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1324	do_load	proven	load.invalid-object-vnum	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1330	do_load	proven	load.object-limit-gates	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1363	do_load	proven	load.object-cost-gate	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1373	do_load	proven	load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1375	do_load	proven	load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1376	do_load	proven	load.object-success-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1378	do_load	proven	load.invalid-kind	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1391	do_vstat	proven	vstat.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1395	do_vstat	gap-reachable		Negative vstat numbers are reachable; wizard-report-depth uses a missing positive vnum and does not take this branch.
+src/act.wizard.c:1400	do_vstat	proven	vstat.mob-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1409	do_vstat	proven	vstat.obj-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1416	do_vstat	proven	vstat.invalid-category	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1434	do_purge	proven	purge.protected-player	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1437	do_purge	proven	purge.player-extraction	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1450	do_purge	proven	purge.object-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1454	do_purge	proven	purge.object-cleanup	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1457	do_purge	proven	purge.npc-target;purge.object-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1459	do_purge	proven	purge.no-argument-audiences	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1494	do_advance	proven	advance.target-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1498	do_advance	proven	advance.no-arg	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1504	do_advance	proven	advance.actor-authority-gate	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1510	do_advance	proven	advance.npc-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1514	do_advance	proven	advance.target-not-level;advance.target-level-zero	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1519	do_advance	proven	advance.highest-level	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1523	do_advance	proven	advance.actor-newlevel-gate	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1527	do_advance	proven	advance.already-at-level	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1541	do_advance	proven	advance.demote	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1556	do_advance	proven	advance.promote;advance.promote-to-impl	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1575	do_advance	proven	advance.promote;advance.promote-to-impl;advance.demote	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1591	do_restore	proven	restore.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1593	do_restore	proven	restore.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1615	do_restore	proven	restore.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1616	do_restore	proven	restore.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1629	perform_immort_vis	proven	visible.immortal-path	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1635	perform_immort_vis	proven	invis.toggle-off;visible.immortal-appearance	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1650	perform_immort_invis	proven	invis.peer-below-level-crossing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1653	perform_immort_invis	proven	invis.peer-below-level-crossing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1659	perform_immort_invis	proven	invis.level-prompt	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1668	do_invis	gap-reachable		NPC do_invis is reachable through a high-level mobile command dispatch; no current depth case drives that actor class.
+src/act.wizard.c:1681	do_invis	proven	invis.above-own-level	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1697	do_gecho	proven	gecho.empty	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1702	do_gecho	proven	gecho.broadcast;gecho.con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1704	do_gecho	proven	gecho.norepeat	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1706	do_gecho	proven	gecho.broadcast	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1731	do_poofset	proven	poofin.custom-message;poofout.custom-message	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1743	do_dc	proven	dc.no-argument;dc.invalid-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1749	do_dc	proven	dc.missing-connection	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1753	do_dc	proven	dc.equal-level	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1764	do_dc	proven	dc.lower-level-close	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1778	do_wizlock	proven	wizlock.negative-invalid;wizlock.above-own-level-invalid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1798	do_wizlock	proven	wizlock.query-open;wizlock.set-level-one;wizlock.query-level-one;wizlock.set-level-two;wizlock.query-level-two;wizlock.set-open;wizlock.query-open-again;wizlock.atoi-nonnumeric;wizlock.one-argument;wizlock.query-level-three	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1829	do_date	proven	date.machine-time;date.argument-ignored	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1841	do_last	proven	last.no-arguments	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1845	do_last	proven	last.not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1852	do_last	proven	last.found-player	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1867	do_force	proven	force.no-arguments;force.no-command	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1870	do_force	proven	force.missing-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1872	do_force	proven	force.equal-level-target;force.self-alias;force.me-alias	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1874	do_force	proven	force.single-target-order;force.god-caster;force.victim-notification	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1876	do_force	proven	force.victim-notification;force.notification-sleep;force.notification-invisible	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1883	do_force	proven	force.room-filter;force.room-all-notification	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1891	do_force	proven	force.room-filter;force.room-all-notification;force.notification-sleep;force.notification-invisible	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1895	do_force	proven	force.all-filter;force.room-all-notification	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1904	do_force	proven	force.all-filter;force.room-all-notification;force.notification-sleep;force.notification-invisible	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1924	do_wiznet	proven	wiznet.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1928	do_wiznet	proven	wiznet.usage	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1942	do_wiznet	proven	wiznet.level-above-owner	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1979	do_wiznet	proven	wiznet.level-prefix;wiznet.nonnumeric-prefix;wiznet.escaped-at;wiznet.broadcast;wiznet.emote	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1989	do_wiznet	proven	wiznet.nowiz	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:1995	do_wiznet	proven	wiznet.emote-empty	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2020	do_wiznet	proven	wiznet.broadcast;wiznet.emote;wiznet.level-prefix;wiznet.chosen-recipient;wiznet.gods-online	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2022	do_wiznet	proven	wiznet.broadcast;wiznet.emote;wiznet.level-prefix;wiznet.chosen-recipient;wiznet.gods-online	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2024	do_wiznet	proven	wiznet.broadcast;wiznet.emote;wiznet.level-prefix;wiznet.chosen-recipient;wiznet.gods-online	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2025	do_wiznet	proven	wiznet.broadcast;wiznet.emote;wiznet.level-prefix;wiznet.chosen-recipient;wiznet.gods-online	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2030	do_wiznet	proven	wiznet.broadcast;wiznet.emote;wiznet.level-prefix;wiznet.chosen-recipient;wiznet.gods-online	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2043	do_zreset	proven	zreset.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2049	do_zreset	proven	zreset.world	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2065	do_zreset	proven	zreset.numeric-zone;zreset.numeric-prefix;zreset.current-zone	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2069	do_zreset	proven	zreset.invalid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2084	do_wizutil	proven	pardon.low-level-authorization;mute.low-level-authorization	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2091	do_wizutil	proven	freeze.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2093	do_wizutil	proven	freeze.missing-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2095	do_wizutil	proven	freeze.visible-npc-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2098	do_wizutil	proven	pardon.higher-immortal;mute.higher-immortal-target;reroll.higher-immortal-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2102	do_wizutil	proven	reroll.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2110	do_wizutil	proven	reroll.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2114	do_wizutil	proven	pardon.non-outlaw	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2118	do_wizutil	proven	pardon.success-actor	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2119	do_wizutil	proven	pardon.success-victim	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2129	do_wizutil	proven	notitle.actor-acknowledgement	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2137	do_wizutil	proven	mute.actor-acknowledgement	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2141	do_wizutil	proven	freeze.self-alias	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2145	do_wizutil	proven	freeze.already-frozen	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2150	do_wizutil	proven	freeze.success-victim	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2151	do_wizutil	proven	freeze.success-victim	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2152	do_wizutil	proven	freeze.success-victim	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2158	do_wizutil	gap-reachable		Thawing a target that is not frozen is reachable; there is no thaw-specific depth row for this refusal.
+src/act.wizard.c:2164	do_wizutil	gap-reachable		A target frozen by a higher-level immortal reaches this refusal; current thaw proof covers only the successful thaw path.
+src/act.wizard.c:2170	do_wizutil	proven	mudlog.wizutil-thaw	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2171	do_wizutil	proven	mudlog.wizutil-thaw	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2172	do_wizutil	proven	mudlog.wizutil-thaw	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2178	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2179	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2188	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2189	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2196	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2197	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2203	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2205	do_wizutil	proven	wizard.unaffect-special-states	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2209	do_wizutil	proven	wizard.unaffect-empty-control-unit	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2280	do_show	proven	show.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2292	do_show	gap-reachable		A level-32 immortal can invoke show but cannot reach the God/Implementor fields; no current show case tests this entry-level refusal.
+src/act.wizard.c:2312	do_show	proven	show.prefix-zone-invalid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2324	do_show	proven	show.player-no-name	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2330	do_show	proven	show.player-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2347	do_show	proven	show.player-valid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2351	do_show	proven	show.rent-no-name	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2386	do_show	proven	show.stats	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2395	do_show	proven	show.errors	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2403	do_show	proven	show.death	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2411	do_show	proven	show.godrooms	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2426	do_show	proven	show.tattoos	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2438	do_show	proven	show.aggr-populated	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2455	do_show	proven	show.reagents	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2464	do_show	proven	show.hooks-no-zone	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2487	do_show	proven	show.hooks-valid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2498	do_show	proven	show.neutral	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2503	do_show	proven	show.nothing-row	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2626	do_set	proven	set.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2635	do_set	gap-blocked		identity: set player resolves an account name through get_player_vis; the branch has no current depth proof.
+src/act.wizard.c:2643	do_set	proven	set.missing-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2661	do_set	gap-blocked		persistence/save format: set file loads and compares a durable character record.
+src/act.wizard.c:2670	do_set	gap-blocked		identity and persistence/save format: set file misses a durable player record.
+src/act.wizard.c:2678	do_set	gap-reachable		Target-at-or-above-actor-level refusal is reachable; set-depth uses the Implementor and a lower-level target.
+src/act.wizard.c:2688	do_set	proven	set.per-field-level-gate	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2693	do_set	gap-reachable		A PC-only set field on an NPC is reachable (for example set mob cleaner brief on); set.npc-fields only tests BOTH fields.
+src/act.wizard.c:2698	do_set	unreachable		Unreachable by the C field table: every entry at src/act.wizard.c:2543-2601 is PC or BOTH; there is no NPC-only field that can enter this player-target arm (R5e).
+src/act.wizard.c:2709	do_set	gap-reachable		Invalid binary value is reachable; set-depth uses valid on/off values and invalid field-name coverage does not take this value branch.
+src/act.wizard.c:2818	do_set	gap-reachable		Invalid sex text is reachable; set-extended-depth only supplies valid sex values.
+src/act.wizard.c:2845	do_set	gap-reachable		Setting another player invisibility level requires the Implementor; current set proofs cover nohassle authority, not invis authority.
+src/act.wizard.c:2852	do_set	proven	set.nohassle.authority	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2859	do_set	proven	set.frozen.self	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2881	do_set	gap-reachable		Invalid condition text is reachable; set-extended-depth covers off and numeric inputs only.
+src/act.wizard.c:2899	do_set	gap-reachable		Setting a level at or above the actor is reachable; current set cases only use a lower target level.
+src/act.wizard.c:2907	do_set	gap-reachable		Invalid room value is reachable; current set cases use valid live destinations.
+src/act.wizard.c:2936	do_set	gap-reachable		Invalid class selector is reachable; set-extended-depth uses a valid class abbreviation.
+src/act.wizard.c:2975	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2976	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:2985	do_set	gap-blocked		persistence/save format: the offline set file password mutation path.
+src/act.wizard.c:3007	do_set	gap-reachable		Invalid race selector is reachable; set-extended-depth uses a valid race abbreviation.
+src/act.wizard.c:3061	do_set	proven	set.numeric-clamp;set.misc-field;set.binary-field	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3071	do_set	gap-blocked		persistence/save format: successful set file save acknowledgement.
+src/act.wizard.c:3089	do_syslog	proven	syslog.query-brief;syslog.query-normal-after-brief;syslog.query-complete;syslog.query-off-again	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3093	do_syslog	proven	syslog.no-argument;syslog.invalid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3101	do_syslog	proven	syslog.full-brief;syslog.normal-transition;syslog.complete-prefix;syslog.off-prefix	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3121	do_dns	proven	dns.no-argument-warning	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3127	do_dns	proven	dns.delete-missing-argument;dns.delete-malformed-address	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3133	do_dns	proven	dns.delete-malformed-address	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3142	do_dns	proven	dns.delete-prefix-matches	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3153	do_dns	proven	dns.add-missing-arguments;dns.add-missing-name	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3160	do_dns	proven	dns.add-four-octet-entry;dns.add-three-octet-entry	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3168	do_dns	proven	dns.add-four-octet-entry;dns.add-three-octet-entry	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3227	do_dark	proven	dark.fighter-peace;dark.room-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3231	do_dark	proven	dark.no-fighters;dark.room-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3233	do_dark	proven	dark.room-audience	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3250	do_home	proven	home.invalid-default	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3253	do_home	proven	home.invalid-default	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3257	do_home	proven	home.no-argument-teleport;home.saved-home-transfer	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3258	do_home	proven	home.no-argument-teleport;home.saved-home-transfer	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3263	do_home	proven	home.poof-audiences	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3266	do_home	proven	home.poof-audiences	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3279	do_home	proven	home.numeric-load-state;home.numeric-set	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3287	do_home	proven	home.numeric-load-state;home.numeric-set	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3293	do_home	proven	home.numeric-set	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3298	do_home	proven	home.nonnumeric-usage	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3364	do_rlist	proven	rlist.empty-zone;rlist.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3369	do_rlist	proven	rlist.overflow	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3425	do_sysfile	proven	sysfile.invalid	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3430	do_sysfile	proven	sysfile.bugs-prefix	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3455	do_sethunt	proven	sethunt.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3457	do_sethunt	proven	sethunt.victim-missing;sethunt.hunter-missing	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3459	do_sethunt	proven	sethunt.same-character	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3461	do_sethunt	proven	sethunt.same-character	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3463	do_sethunt	proven	sethunt.pc-hunter	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3466	do_sethunt	proven	sethunt.high-victim	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3472	do_sethunt	proven	sethunt.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3526	do_newbie	proven	wnewbie.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3528	do_newbie	proven	wnewbie.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3536	do_newbie	proven	wnewbie.local-player;wnewbie.global-player	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3537	do_newbie	proven	wnewbie.mob-target	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3571	do_zlist	proven	zlist.missing-file	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3588	do_idlist	gap-reachable		File-open failure is reachable through an unwritable working directory; the current success proof does not take this branch.
+src/act.wizard.c:3670	do_idlist	proven	idlist.success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3813	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3816	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3829	do_checkload	proven	checkload.no-args	The cited command bytes are compared; checkload-depth is DRAW, so this row makes no R3 stream-parity claim (R1/R5e).
+src/act.wizard.c:3838	do_checkload	proven	checkload.missing-mob	The cited command bytes are compared; checkload-depth is DRAW, so this row makes no R3 stream-parity claim (R1/R5e).
+src/act.wizard.c:3850	do_checkload	proven	checkload.missing-object	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:3858	do_checkload	proven	checkload.invalid-type	The cited manifest proof executes this C callsite (R1/R5e).

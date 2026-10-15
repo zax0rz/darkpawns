@@ -1,6 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_groinrip	groinrip	groinrip.no-descriptor	D5	command	excluded	-	new_cmds.c:2565-2567	The descriptorless !subcmd early return is unreachable from the registered player-command surface; player dispatch always supplies a descriptor and this branch emits no player-visible bytes (R2/R4/R5e).
-do_groinrip	groinrip	groinrip.peaceful	D1	command	oracle-green	bite-groinrip-peaceful	new_cmds.c:2569-2572	The peaceful-room refusal runs before skill knowledge, target parsing, and all later branches; the shared vehicle reaches the exact player-facing line.
+do_groinrip	groinrip	groinrip.peaceful	D1	command	oracle-green	bite-groinrip-peaceful	new_cmds.c:2574-2577	The peaceful-room refusal runs before skill knowledge, target parsing, and all later branches; the shared vehicle reaches the exact player-facing line.
 do_groinrip	groinrip	groinrip.no-skill	D1	command	oracle-green	groinrip-no-skill-depth	interpreter.c:478; new_cmds.c:2580-2583	A learned-skill miss is stopped after the peaceful gate and before mount or target lookup with C's martial-arts refusal.
 do_groinrip	groinrip	groinrip.no-argument	D1	command	oracle-green	groinrip-depth	new_cmds.c:2585-2605	A skilled awake caller with neither an argument nor FIGHTING(ch) receives Groinrip who?.
 do_groinrip	groinrip	groinrip.target-missing	D1	command	oracle-green	groinrip-depth	new_cmds.c:2590-2605	A missing named target falls back to the fighting pointer and otherwise reaches Groinrip who? without consuming the outcome roll.
