@@ -114,7 +114,7 @@ func getMobVNumSpec(vnum int) SpecFunc {
 //	FIGHTING(mob) → mob.GetFightingBody() != nil
 //	AWAKE(mob)    → mob.GetPosition() >= combat.PosSitting
 //	MOB_FLAGGED   → hasMobFlag()
-//	hit()         → w.combatEngine.StartCombat()
+//	hit()         → w.mobFirstHit() (DP-1438 deferred entry)
 //	GET_HIT       → mob.GetHP()
 //	GET_MAX_HIT   → mob.GetMaxHP()
 //	CAN_SEE       → canSeePlayer()
@@ -318,11 +318,10 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				}
 			}
 			if shouldHit || aggressive {
-				if w.combatEngine != nil {
-					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
-						slog.Warn("StartCombat failed in aggressive mob", "mob", ch.GetName(), "error", err)
-					}
-				}
+				// C: hit(ch, vict, TYPE_UNDEFINED) — mobact.c:223, 227. The
+				// swing draws before damage()'s gates, and a peaceful-room
+				// refusal enrols nobody.
+				w.mobFirstHit(ch, vict)
 				break
 			}
 		}
@@ -362,11 +361,8 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				if mobactNumber(0, 5) == 0 && ch.CanSpeak() {
 					w.RoomEcho(ch.RoomVNum, fmt.Sprintf("'Come to destroy my kin? Die!', exclaims %s.", ch.GetName()), ch.GetName())
 				}
-				if w.combatEngine != nil {
-					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
-						slog.Warn("StartCombat failed in race-hate mob", "mob", ch.GetName(), "error", err)
-					}
-				}
+				// C: hit(ch, vict, TYPE_UNDEFINED) — mobact.c:254.
+				w.mobFirstHit(ch, vict)
 				attacked = true
 			}
 			if attacked {
@@ -416,11 +412,10 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 							"You hear a low growl in the back of $n's throat.", "", ToRoom)
 					}
 				}
-				if w.combatEngine != nil {
-					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
-						slog.Warn("StartCombat failed in memory mob", "mob", ch.GetName(), "error", err)
-					}
-				}
+				// C: hit(ch, vict, TYPE_UNDEFINED) — mobact.c:279. The attack
+				// is unconditional after the acts: damage()'s peaceful gate,
+				// not mobact, refuses it.
+				w.mobFirstHit(ch, vict)
 				break
 			}
 		}
@@ -462,11 +457,8 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 			found = true
 			Act(w, false, ch, vict, nil, nil, "$n jumps to the aid of $N!", "", ToRoom)
-			if w.combatEngine != nil {
-				if err := w.combatEngine.StartCombat(ch, target); err != nil {
-					slog.Warn("StartCombat failed in helper mob", "mob", ch.GetName(), "error", err)
-				}
-			}
+			// C: hit(ch, FIGHTING(vict), TYPE_UNDEFINED) — mobact.c:299.
+			w.mobFirstHit(ch, target)
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
@@ -505,11 +497,8 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				Act(w, false, ch, nil, nil, nil,
 					"$n says, 'I can fix that.'\n\r", "", ToRoom)
 			}
-			if w.combatEngine != nil {
-				if err := w.combatEngine.StartCombat(ch, vict); err != nil {
-					slog.Warn("StartCombat failed in aggr24 mob", "mob", ch.GetName(), "error", err)
-				}
-			}
+			// C: hit(ch, vict, 0) — mobact.c:320.
+			w.mobFirstHit(ch, vict)
 		}
 	}
 	if !ch.IsAlive() || ch.RoomVNum < 0 {
@@ -529,11 +518,10 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			}
 			if vict.GetLevel()+3 < ch.GetLevel() {
 				Act(w, false, ch, nil, nil, nil, "$n grins evilly.", "", ToRoom)
-				if w.combatEngine != nil {
-					if err := w.combatEngine.StartCombat(ch, vict); err != nil {
-						slog.Warn("StartCombat failed in aggr24 mob vs mob", "mob", ch.GetName(), "error", err)
-					}
-				}
+				// C: hit(ch, vict, 0) — mobact.c:334. No peaceful check at
+				// selection: damage()'s gate refuses the first swing in a
+				// peaceful room and nobody enrols (the room-8162 courier).
+				w.mobFirstHit(ch, vict)
 				break
 			}
 		}
@@ -597,11 +585,9 @@ func (w *World) mobAssist(ch *MobInstance, argument string) {
 	Act(w, false, helpee, ch, nil, nil, "$N assists you!", "", ToChar)
 	// C: act("$n assists $N.", FALSE, ch, 0, helpee, TO_NOTVICT).
 	Act(w, false, ch, helpee, nil, nil, "$n assists $N.", "", ToNotVict)
-	if w.combatEngine != nil {
-		if err := w.combatEngine.StartCombat(ch, opponentCombat); err != nil {
-			slog.Warn("StartCombat failed in charmed helper assist", "mob", ch.GetName(), "error", err)
-		}
-	}
+	// C: hit(ch, opponent, TYPE_UNDEFINED) after the audience lines
+	// (act.offensive.c:95): draws, then damage()'s gates, then enrolment.
+	w.mobFirstHit(ch, opponentCombat)
 }
 
 // roomHasOtherOccupant is mobact.c's people scan for the pulse triggers:
