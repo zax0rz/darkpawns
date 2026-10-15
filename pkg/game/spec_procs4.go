@@ -195,42 +195,53 @@ func petPrice(pet *MobInstance) int {
 }
 
 func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if me == nil {
+	if ch == nil {
 		return false
 	}
-	petRoom := me.GetRoom() + 1
+	petRoom := ch.GetRoomVNum() + 1
 
 	if cmd == "list" {
 		ch.SendMessage("Available pets are:\r\n")
-		pets := w.GetMobsInRoom(petRoom)
+		pets := w.COrderedRoomMobs(petRoom)
 		for _, pet := range pets {
-			ch.SendMessage(fmt.Sprintf("%8d - %s\r\n", petPrice(pet), pet.GetName()))
+			ch.SendMessage(fmt.Sprintf("%8d - %s\r\n", petPrice(pet), charKeywords(pet)))
 		}
 		return true
 	}
 
 	if cmd == "buy" {
 		parts := strings.Fields(arg)
-		if len(parts) == 0 {
-			ch.SendMessage("Buy what?\r\n")
-			return true
-		}
-
+		petQuery := ""
 		petName := ""
+		if len(parts) > 0 {
+			petQuery = parts[0]
+		}
 		if len(parts) > 1 {
 			petName = parts[1]
 		}
 
-		pets := w.GetMobsInRoom(petRoom)
+		ordinal := GetNumber(&petQuery)
 		var pet *MobInstance
-		for _, p := range pets {
-			if strings.Contains(strings.ToLower(p.GetName()), strings.ToLower(parts[0])) {
-				pet = p
-				break
+		matched := 0
+		if ordinal > 0 {
+			for _, p := range w.COrderedRoomMobs(petRoom) {
+				if !isnameWithAbbrevs(petQuery, charKeywords(p)) {
+					continue
+				}
+				matched++
+				if matched == ordinal {
+					pet = p
+					break
+				}
 			}
 		}
 		if pet == nil {
 			ch.SendMessage("There is no such pet!\r\n")
+			return true
+		}
+
+		if w.NumFollowers(ch.GetName()) >= ch.GetCha()/2 {
+			ch.SendMessage("You can't have any more followers!\r\n")
 			return true
 		}
 
@@ -241,18 +252,35 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 		ch.SetGold(ch.GetGold() - price)
 
-		newPet, err := w.SpawnMob(pet.GetVNum(), me.GetRoom())
+		newPet, err := w.SpawnMob(pet.GetVNum(), ch.GetRoomVNum())
 		if err != nil {
-			ch.SendMessage("Something went wrong.\r\n")
+			slog.Error("pet shop: failed to spawn selected pet", "player", ch.GetName(), "mob_vnum", pet.GetVNum(), "error", err)
 			return true
 		}
 
+		zeroExp := 0
+		newPet.mu.Lock()
+		newPet.Runtime.ExpOverride = &zeroExp
+		newPet.Runtime.CarriedWeight = 1000
+		newPet.Runtime.CarriedNumber = 100
+		newPet.mu.Unlock()
+		newPet.SetAffected(affCharm)
+		petNameList := charKeywords(pet)
 		if petName != "" {
-			_ = newPet // name would be set on prototype
+			petProto := newPet.Proto()
+			if petProto != nil {
+				clone := *petProto
+				clone.Keywords = petNameList + " " + petName
+				clone.LongDesc = fmt.Sprintf("%sA small sign on a chain around the neck says 'My name is %s'\r\n", clone.LongDesc, petName)
+				newPet.SetProto(&clone)
+				petNameList = clone.Keywords
+			}
 		}
+		newPet.SetNameOverride(petNameList)
+		AddFollowerMob(w, newPet, ch)
 
-		w.roomMessage(me.GetRoom(), "$n buys $N as a pet.\r\n")
 		ch.SendMessage("May you enjoy your pet.\r\n")
+		Act(w, false, ch, newPet, nil, nil, "$n buys $N as a pet.", "", ToRoom)
 
 		return true
 	}

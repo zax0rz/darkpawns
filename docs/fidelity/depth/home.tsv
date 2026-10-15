@@ -2,7 +2,7 @@ handler	command	case_id	depth	scope	status	proof	c_site	notes
 do_home	home	home.entry-gate	D1	command	oracle-green	home-entry-gate-depth@1	interpreter.c:500; command_gates.tsv:home	A mortal is refused by the LVL_IMMORT command entry before do_home, matching the C dispatcher bytes.
 do_home	home	home.numeric-set	D1	command	oracle-green-multiseed	home-depth@1,2,3,5,8	act.wizard.c:3270-3293	A numeric destination sets the load-room flag and emits Home room set without moving the live character.
 do_home	home	home.one-argument-boundary	D1	command	oracle-green	home-depth@1	act.wizard.c:3244-3275	C one_argument consumes the first non-fill token and ignores trailing words on the numeric path.
-do_home	home	home.nonnumeric-usage	D1	command	oracle-green	home-depth@1,2,3,5,8	act.wizard.c:3294-3297	A nonnumeric first token reaches the exact Home or Home <room-number> usage branch.
+do_home	home	home.nonnumeric-usage	D1	command	oracle-green	home-depth@1,2,3,5,8	src/act.wizard.c:3296-3299	A nonnumeric first token reaches the exact Home or Home <room-number> usage branch.
 do_home	home	home.invalid-room	D2	command	oracle-green	home-depth@1,2,3,5,8	act.wizard.c:3270-3278; act.wizard.c:184-239	The failed find_target_room diagnostic and do_home's additional That room does not exist line both remain visible.
 do_home	home	home.invalid-default	D2	command	oracle-green	home-default-depth@1,2,3,5,8	act.wizard.c:3247-3256	An unset or invalid load room is reset to Limbo room 1 with both C error lines before transfer.
 do_home	home	home.saved-home-transfer	D3	state	oracle-green	home-audience-depth@1,2,3,5,8	act.wizard.c:3257-3271	A configured load room is used for the no-argument transfer and the destination room look follows it.

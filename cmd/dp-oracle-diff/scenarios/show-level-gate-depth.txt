@@ -1,0 +1,72 @@
+# C-first do_show field-level gate through the registered command. The first
+# player is the fixture's crowned implementor and advances a peer to LVL_IMMORT;
+# show player is allowed at entry and stopped at the field gate before a saved
+# identity lookup.
+
+# depth-case: show.lower-level-player-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Showgate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Showgate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Showpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Showpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Showpeer 31
+
+[probe:peer]
+show player

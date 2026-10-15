@@ -1,0 +1,12 @@
+c_site	function	classification	case_ids	notes
+src/ban.c:143	do_ban	proven	ban.no-bans	The empty list probe reaches this exact response (R1/R2/R5h).
+src/ban.c:152	do_ban	proven	ban.list-format	The listing probe reaches the fixed heading row (R1/R5h).
+src/ban.c:158	do_ban	proven	ban.list-format	The listing probe reaches the fixed separator row (R1/R5h).
+src/ban.c:169	do_ban	proven	ban.list-format	The listing probe renders the stored ban row (R1/R5h).
+src/ban.c:175	do_ban	proven	ban.missing-site	The registered ban command reaches C's missing-operand usage response (R1/R2/R5h).
+src/ban.c:179	do_ban	proven	ban.invalid-flag	The registered ban command reaches C's invalid flag response (R1/R2/R5h).
+src/ban.c:184	do_ban	proven	ban.duplicate	The registered ban command reaches C's duplicate-site response (R1/R2/R5h).
+src/ban.c:208	do_ban	proven	ban.add	The valid ban command reaches the acknowledgement after the producer (R1/R2/R5h).
+src/ban.c:221	do_unban	proven	ban.unban-no-argument	The registered unban command receives only filler words and emits C's exact missing-site response (R1/R2/R5h).
+src/ban.c:233	do_unban	proven	ban.unban-not-found	The registered unban command reaches C's exact absent-site response (R1/R2/R5h).
+src/ban.c:237	do_unban	proven	mudlog.unban-site-unbanned	The real-dispatch proof pins C's acknowledgement before its producer (R1/R2/R5h).

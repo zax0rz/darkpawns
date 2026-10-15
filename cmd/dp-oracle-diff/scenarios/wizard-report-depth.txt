@@ -6,9 +6,13 @@
 # depth-case: vnum.obj-missing
 # depth-case: vnum.invalid-category
 # depth-case: stat.mob-missing
+# depth-case: stat.mob-no-name
 # depth-case: stat.player-missing
+# depth-case: stat.player-no-name
 # depth-case: stat.file-missing
+# depth-case: stat.file-no-name
 # depth-case: stat.object-missing
+# depth-case: stat.object-no-name
 # depth-case: stat.fallback-missing
 # depth-case: vstat.mob-missing
 # depth-case: vstat.obj-missing
@@ -52,9 +56,13 @@ vnum mob Nobody
 vnum obj Nobody
 vnum nonsense Nobody
 stat mob Nobody
+stat mob
 stat player Nobody
+stat player
 stat file Nobody
+stat file
 stat object Nobody
+stat object
 stat Nobody
 vstat mob 999999
 vstat obj 999999

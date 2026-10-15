@@ -1,0 +1,5 @@
+c_site	function	classification	case_ids	notes
+src/mapcode.c:154	do_map	proven	map.mortal-gate	The registered command's mortal fallback reaches this exact stc() call before map rendering (R1/R2/R5e/R5h).
+src/mapcode.c:184	do_map	proven	map.default-zone-map;map.all-zones-mode;map.overlap-mode;map.underlap-mode;map.unknown-mode-defaults	The rendered-map scenarios reach the exact map heading send_to_char() on entry to the output section (R1/R2/R3/R5e/R5h).
+src/mapcode.c:201	do_map	proven	map.default-zone-map;map.all-zones-mode;map.overlap-mode;map.underlap-mode;map.unknown-mode-defaults	The five registered map-mode scenarios compare the full rendered grid, exercising this per-row send_to_char() loop (R1/R2/R3/R5e/R5h).
+src/mapcode.c:224	do_map	proven	map.default-zone-map;map.all-zones-mode;map.overlap-mode;map.underlap-mode;map.unknown-mode-defaults	The five rendered-map scenarios compare the legend bytes emitted by this stc() call (R1/R2/R3/R5e/R5h).

@@ -209,6 +209,30 @@ func TestReplayCrashLoadBadStatsFiresPerEquippedItem(t *testing.T) {
 	}
 }
 
+// C's do_set tail saves a live player target — save_char(vict, NOWHERE)
+// (src/act.wizard.c:3064) — and the file path calls char_to_store (:3067).
+// char_to_store unequips every worn item and equips them all again
+// (src/db.c:2634-2637), and equip_char runs check_for_bad_stats for each one
+// (src/handler.c:749). A stat the set just zeroed therefore fires its arm again
+// once per worn item: the DEX arm's damage(ch, ch, 40, TYPE_SUFFERING)
+// (src/handler.c:667-671) reaches skill_message's selector
+// dice(1, number_of_attacks) (src/fight.c:1035).
+//
+// Taught by the seed-1 DRAW rows shoot-mob-miss-depth and shoot-pc-miss-depth,
+// whose first mismatch was C's Dice(1,2) after `set player <god> dex 0` against
+// Go's next hide roll. The four-item fixture mirrors the Crash_load proof: four
+// firings, HP 200 - 4x40 = 40.
+func TestReplayEquipmentBadStatsFiresPerWornItem(t *testing.T) {
+	w, p, _ := replayWorld(t, ApplyDex)
+	if got := p.GetHP(); got != 200 {
+		t.Fatalf("setup HP = %d, want 200", got)
+	}
+	w.ReplayEquipmentBadStats(p)
+	if got := p.GetHP(); got != 40 {
+		t.Errorf("HP after the save-path replay = %d, want 40 (200 - 4x40)", got)
+	}
+}
+
 // C's reset_char leaves ch->in_room NOWHERE for the whole of Crash_load
 // (src/db.c:2945), so the DEX arm's hide-fade and room act() have no audience
 // and log C's SYSERR instead (src/comm.c:2519-2526). The record's room must not

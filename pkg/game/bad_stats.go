@@ -51,6 +51,37 @@ func badStatLine(bad byte) string {
 	return ""
 }
 
+// ReplayEquipmentBadStats runs C's char_to_store re-equip side effect for a
+// live character. C's save path is draw-bearing: char_to_store unequips every
+// worn item and then equips them all again (src/db.c:2634-2637), and equip_char
+// calls check_for_bad_stats for each one (src/handler.c:749). A stat already at
+// zero therefore fires again once per worn item, and the DEX arm's
+// damage(ch, ch, 40, TYPE_SUFFERING) (src/handler.c:667-671) draws
+// skill_message's selector dice(1, number_of_attacks) (src/fight.c:1035).
+// do_set's tail reaches it through save_char(vict, NOWHERE)
+// (src/act.wizard.c:3064-3067) and the file path through char_to_store
+// (:3067-3069), so a `set <player> dex 0` must draw there (R3a).
+func (w *World) ReplayEquipmentBadStats(p *Player) {
+	if w == nil || p == nil {
+		return
+	}
+	w.replayBadStatsOverWorn(p)
+}
+
+// replayBadStatsOverWorn walks the worn items in ascending C wear position —
+// the order Crash_crashsave wrote them (src/objsave.c:807-812) — rebuilding
+// aff_abils over each prefix, because equip_char's affect_total only sees the
+// slots filled SO FAR (src/handler.c:337-372).
+func (w *World) replayBadStatsOverWorn(p *Player) {
+	items := COrderedWorn(p)
+	for i := range items {
+		p.mu.RLock()
+		stats := p.affectTotalForItemsLocked(items[:i+1])
+		p.mu.RUnlock()
+		w.applyBadStat(p, badStat(stats))
+	}
+}
+
 // ReplayCrashLoadBadStats ports Crash_load's per-item equip checks. C loads a
 // crash file object by object and calls auto_equip, which calls equip_char and
 // therefore check_for_bad_stats for every item it wears (src/objsave.c:557;
@@ -88,13 +119,7 @@ func (w *World) ReplayCrashLoadBadStats(p *Player, deliver func(string)) {
 		defer p.SetEntryTextSink(nil)
 	}
 
-	items := COrderedWorn(p)
-	for i := range items {
-		p.mu.RLock()
-		stats := p.affectTotalForItemsLocked(items[:i+1])
-		p.mu.RUnlock()
-		w.applyBadStat(p, badStat(stats))
-	}
+	w.replayBadStatsOverWorn(p)
 }
 
 func (w *World) applyBadStat(body combat.Combatant, bad byte) {

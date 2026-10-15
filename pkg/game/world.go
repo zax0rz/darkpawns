@@ -1405,7 +1405,7 @@ func (w *World) canGetObject(ch Actor, obj *ObjectInstance) bool {
 	switch ch := ch.(type) {
 	case *MobInstance:
 		return mobCarriedWeight(ch)+obj.GetWeight() <= mobMaxCarryWeight(ch) &&
-			len(ch.Inventory)+1 <= mobMaxCarryCount(ch)
+			mobCarriedItemCount(ch)+1 <= mobMaxCarryCount(ch)
 	case *Player:
 		count := 0
 		if ch.Inventory != nil {

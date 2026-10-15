@@ -1,0 +1,44 @@
+# depth-case: spell.create-water-live-dispatch
+# A first-player Implementor casts create water on the empty ITEM_DRINKCON
+# vnum 2506 after a real get. Its water capacity and short description prove
+# the successful C spell_create_water $p output at src/spells.c:108-112.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 2506 1 8162 25
+
+[setup:oracle]
+Spellwater
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spellwater
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get chalice
+
+[probe]
+cast 'create water' chalice

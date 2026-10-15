@@ -1,103 +1,103 @@
 c_site	function	classification	case_ids	notes
-src/new_cmds2.c:73	do_scrounge	proven	scrounge.no-skill	The no-skill branch emits this private refusal before rolling or reaching the room act (R1/R5e).
-src/new_cmds2.c:80	do_scrounge	proven	scrounge.mounted-gate	The mounted refusal runs after the skill gate and before the scrounge roll (R1/R3/R5e).
-src/new_cmds2.c:112	do_scrounge	proven	scrounge.default-sector	The default-sector branch emits this refusal while continuing to the unconditional room act (R1/R5e).
-src/new_cmds2.c:122	do_scrounge	proven	scrounge.mountain-find	The mountain fixture succeeds through find=true and compares the resulting actor line (R1/R3/R5e).
-src/new_cmds2.c:124	do_scrounge	proven	scrounge.success-object-and-audience	The forest success fixture reaches the capture arm and compares the actor object line (R1/R3/R5e).
-src/new_cmds2.c:131	do_scrounge	proven	scrounge.food-failure	The failed wilderness roll emits this actor refusal (R1/R3/R5e).
-src/new_cmds2.c:135	do_scrounge	proven	scrounge.default-room-audience;scrounge.success-object-and-audience;scrounge.food-failure-room-audience	Default, success, and failed-food probes compare the unconditional TO_ROOM search act (R1/R3/R5e).
-src/new_cmds2.c:148	do_first_aid	proven	aid.skill-gate-order	The no-skill command test reaches the exact private skill refusal before argument handling (R1/R2/R5e).
-src/new_cmds2.c:153	do_first_aid	proven	aid.no-arg	The skill-trained no-argument vehicle reaches the direct prompt (R1/R2/R5e).
-src/new_cmds2.c:155	do_first_aid	proven	aid.target-missing	A missing room-visible target reaches this direct refusal (R1/R5e).
-src/new_cmds2.c:157	do_first_aid	proven	aid.self	Self-targeting reaches this refusal before the HP check (R1/R2/R5e).
-src/new_cmds2.c:162	do_first_aid	proven	aid.target-alive	The positive-HP target is rejected before the roll (R1/R3/R5e).
-src/new_cmds2.c:172	do_first_aid	proven	aid.immortal-success	The immortal success vehicle compares the actor-facing recovery act and target state (R1/R3/R5e).
-src/new_cmds2.c:174	do_first_aid	proven	aid.immortal-success	The success vehicle compares the TO_NOTVICT bandaging act for the observer (R1/R3/R5e).
-src/new_cmds2.c:176	do_first_aid	proven	aid.immortal-success	The success vehicle compares the TO_VICT bandaging act for the target (R1/R3/R5e).
-src/new_cmds2.c:183	do_first_aid	proven	aid.failure-audience	The failed-roll vehicle compares the direct fumble line (R1/R3/R5e).
-src/new_cmds2.c:184	do_first_aid	proven	aid.failure-audience	The failed-roll vehicle compares the TO_ROOM fumble act to target and observer (R1/R3/R5e).
-src/new_cmds2.c:201	do_disarm	proven	disarm.no-skill	The registered player command reaches the exact no-skill refusal before target lookup (R1/R2/R5e/R5h).
-src/new_cmds2.c:209	do_disarm	unreachable	-	The registered row is POS_FIGHTING (src/interpreter.c:414); set_fighting establishes POS_FIGHTING with a non-null FIGHTING pointer and stop_fighting clears both (src/fight.c:223,230-260). The only internal paladin call also requires and passes FIGHTING(ch) (src/spec_procs.c:536-566), so the no-target branch has no valid call path (R2/R4/R5e).
-src/new_cmds2.c:214	do_disarm	unreachable	-	Self-target resolution occurs only when FIGHTING(ch) is null, which cannot reach the POS_FIGHTING command row in valid combat state; the paladin subcommand always supplies FIGHTING(ch) (src/interpreter.c:414; src/fight.c:223,230-260; src/spec_procs.c:536-566) (R2/R4/R5e).
-src/new_cmds2.c:219	do_disarm	proven	disarm.no-weapon	A visible target without a wielded weapon reaches the pronoun act before the combat consistency check (R1/R5e).
-src/new_cmds2.c:225	do_disarm	unreachable	-	The no-fight/mismatched-victim refusal follows the no-fighting target path, which cannot enter through the POS_FIGHTING player command with a valid combat pointer; the paladin call also supplies its current opponent (src/interpreter.c:414; src/fight.c:223,230-260; src/spec_procs.c:536-566) (R2/R4/R5e).
-src/new_cmds2.c:233	do_disarm	proven	disarm.success-actor	The successful roll compares the actor act with the target and wielded object's short description (R1/R3/R5e).
-src/new_cmds2.c:234	do_disarm	proven	disarm.success-room	The successful roll compares the TO_NOTVICT act and excludes the target (R1/R3/R5e).
-src/new_cmds2.c:235	do_disarm	proven	disarm.success-victim	The successful roll compares the direct target act (R1/R3/R5e).
-src/new_cmds2.c:244	do_disarm	proven	disarm.failure-actor	The failed roll compares the actor-facing stumble act (R1/R3/R5e).
-src/new_cmds2.c:245	do_disarm	proven	disarm.failure-victim	The failed roll compares the victim-facing stumble act (R1/R3/R5e).
-src/new_cmds2.c:246	do_disarm	proven	disarm.failure-room	The failed roll compares the TO_NOTVICT stumble act (R1/R3/R5e).
-src/new_cmds2.c:262	do_mindlink	proven	mindlink.no-arg	The empty-argument path emits this direct prompt (R1/R2/R5e).
-src/new_cmds2.c:264	do_mindlink	proven	mindlink.target-missing	A missing room-visible target reaches this direct refusal (R1/R5e).
-src/new_cmds2.c:266	do_mindlink	proven	mindlink.self	Self-targeting reaches the self refusal before the skill check (R1/R2/R5e).
-src/new_cmds2.c:268	do_mindlink	proven	mindlink.skill-missing	An untrained actor with a valid NPC target reaches the no-skill refusal (R1/R5e).
-src/new_cmds2.c:273	do_mindlink	proven	mindlink.player-target	The non-NPC target branch compares its direct actor stare line (R1/R5e).
-src/new_cmds2.c:274	do_mindlink	proven	mindlink.player-target	The non-NPC target branch compares the TO_ROOM stare act and audience (R1/R5e).
-src/new_cmds2.c:276	do_mindlink	proven	mindlink.player-target	The non-NPC target branch compares the actor failure line (R1/R5e).
-src/new_cmds2.c:281	do_mindlink	proven	mindlink.actor-fighting;mindlink.target-fighting	Both actor- and target-fighting gates return through this exact busy refusal (R1/R5e).
-src/new_cmds2.c:286	do_mindlink	proven	mindlink.actor-low-health	An actor below 100 HP reaches the life refusal before target mana or RNG (R1/R3/R5e).
-src/new_cmds2.c:291	do_mindlink	proven	mindlink.low-mana-target	The ordinary low-mana NPC reaches the target energy refusal before RNG or output acts (R1/R3/R5e).
-src/new_cmds2.c:302	do_mindlink	unreachable	-	The player-target path returns at the preceding !IS_NPC check; the only targets that continue are NPCs, while IS_PSIONIC and IS_MYSTIC both require !IS_NPC (src/new_cmds2.c:274-291; src/utils.h:366,418) (R4/R5e).
-src/new_cmds2.c:303	do_mindlink	unreachable	-	The apparent success room act is in the same contradictory class-macro arm: players return earlier and NPCs cannot satisfy either macro (src/new_cmds2.c:274-291; src/utils.h:366,418) (R4/R5e).
-src/new_cmds2.c:309	do_mindlink	proven	mindlink.npc-failure-state	A valid NPC target reaches the unconditional failure room act after the C roll (R1/R3/R5e).
-src/new_cmds2.c:314	do_mindlink	proven	mindlink.npc-failure-state	The post-roll failure path reaches this final actor line and stunned state (R1/R3/R5e).
-src/new_cmds2.c:336	beholder	gap-reachable	-	The assigned vnum 11011 can receive CAST or RECITE and reach this TO_NOTVICT act; no depth case proves its spell-interception output (src/spec_assign.c:332; src/new_cmds2.c:328-340) (R2/R5e).
-src/new_cmds2.c:338	beholder	gap-reachable	-	The assigned vnum 11011 can receive CAST or RECITE and reach this TO_VICT act; no depth case proves its spell-interception output (src/spec_assign.c:332; src/new_cmds2.c:328-340) (R2/R5e).
-src/new_cmds2.c:426	recharger	proven	mob.recharger-list-help	The assigned live mob's LIST and HELP branch emits the first room emote (R1/R2/R5e).
-src/new_cmds2.c:427	recharger	proven	mob.recharger-list-help	The LIST and HELP proof compares the first room speech line (R1/R2/R5e).
-src/new_cmds2.c:429	recharger	proven	mob.recharger-list-help	The LIST and HELP proof compares the price speech line (R1/R2/R5e).
-src/new_cmds2.c:431	recharger	proven	mob.recharger-list-help	The LIST and HELP proof compares the example-price speech line (R1/R2/R5e).
-src/new_cmds2.c:433	recharger	proven	mob.recharger-list-help	The LIST and HELP proof compares the maximum-charge speech line (R1/R2/R5e).
-src/new_cmds2.c:435	recharger	proven	mob.recharger-list-help	The LIST and HELP proof compares the remaining-charge speech line (R1/R2/R5e).
-src/new_cmds2.c:437	recharger	proven	mob.recharger-list-help	The LIST and HELP proof compares the recharge-instructions line (R1/R2/R5e).
-src/new_cmds2.c:439	recharger	proven	mob.recharger-list-help	The peer vehicle proves this TO_NOTVICT look excludes the requesting player (R1/R5e).
-src/new_cmds2.c:440	recharger	proven	mob.recharger-list-help	The actor vehicle proves the direct expectant-look line (R1/R5e).
-src/new_cmds2.c:448	recharger	proven	mob.recharger-missing-item	The missing-item branch compares C's direct tell (R1/R5e).
-src/new_cmds2.c:449	recharger	proven	mob.recharger-missing-item	The peer vehicle compares the separate TO_NOTVICT whap (R1/R5e).
-src/new_cmds2.c:450	recharger	proven	mob.recharger-missing-item	The actor vehicle compares the direct whap after the peer act (R1/R5e).
-src/new_cmds2.c:455	recharger	proven	mob.recharger-invalid-type	The visible carried non-wand case compares C's direct type question (R1/R5e).
-src/new_cmds2.c:457	recharger	proven	mob.recharger-invalid-type	The same case compares the subsequent TO_ROOM shake-head act (R1/R5e).
-src/new_cmds2.c:462	recharger	proven	mob.recharger-insufficient-gold	An underfunded carried wand reaches this exact direct refusal before mutation (R1/R3/R5e).
-src/new_cmds2.c:474	recharger	proven	mob.recharger-success	The funded case compares the room chant after C's independent charge updates (R1/R3/R5e).
-src/new_cmds2.c:478	recharger	proven	mob.recharger-success	The funded case compares the exact direct remaining-charge line after the room chant (R1/R3/R5e).
-src/new_cmds2.c:481	recharger	proven	mob.recharger-full-item	The full staff reaches C's direct no-recharge tell (R1/R5e).
-src/new_cmds2.c:506	do_detect	proven	search.no-skill	The untrained path reaches this refusal before the room line or random draw (R1/R3/R5e).
-src/new_cmds2.c:512	do_detect	proven	search.blind	The blind path emits this refusal before the room-check line (R1/R5e).
-src/new_cmds2.c:516	do_detect	proven	search.no-secret-success	The successful roll with no secret exit emits the room-check line and no invented suffix (R1/R3/R5e).
-src/new_cmds2.c:520	do_detect	proven	search.failed-roll	The failed roll emits this line after the initial room-check message (R1/R3/R5e).
-src/new_cmds2.c:536	do_detect	proven	search.secret-exit-order	A detected secret exit emits its wall, ceiling, or floor line in C direction order (R1/R3/R5e).
-src/new_cmds2.c:567	no_get	proven	mob.spec-no-get-get-arg;mob.spec-no-get-palm;mob.spec-no-get-take;mob.spec-no-get-bare	The assigned no_get path compares the TO_NOTVICT hand-strike act for each tested command form (R1/R2/R5e).
-src/new_cmds2.c:568	no_get	proven	mob.spec-no-get-get-arg;mob.spec-no-get-palm;mob.spec-no-get-take;mob.spec-no-get-bare	The assigned no_get path compares the direct TO_VICT hand-strike line for each tested command form (R1/R2/R5e).
-src/new_cmds2.c:636	black_horn	unreachable	-	SPECIAL(black_horn) has no ASSIGNOBJ row; the sole vnum 14415 is assigned to horn instead (src/spec_assign.c:521-562), so player use never enters this special (R2/R4/R5e).
-src/new_cmds2.c:637	black_horn	unreachable	-	SPECIAL(black_horn) has no ASSIGNOBJ row; the sole vnum 14415 is assigned to horn instead (src/spec_assign.c:521-562), so player use never enters this special (R2/R4/R5e).
-src/new_cmds2.c:638	black_horn	unreachable	-	SPECIAL(black_horn) has no ASSIGNOBJ row; the sole vnum 14415 is assigned to horn instead (src/spec_assign.c:521-562), so player use never enters this special (R2/R4/R5e).
-src/new_cmds2.c:639	black_horn	unreachable	-	SPECIAL(black_horn) has no ASSIGNOBJ row; the sole vnum 14415 is assigned to horn instead (src/spec_assign.c:521-562), so player use never enters this special (R2/R4/R5e).
-src/new_cmds2.c:674	zen_master	gap-reachable	-	The assigned vnum 18219 can take the case-0 fighting pulse path to both touch acts; no depth case proves it (src/spec_assign.c:406; src/new_cmds2.c:658-681) (R2/R5e).
-src/new_cmds2.c:675	zen_master	gap-reachable	-	The assigned vnum 18219 can take the case-0 fighting pulse path to both touch acts; no depth case proves it (src/spec_assign.c:406; src/new_cmds2.c:658-681) (R2/R5e).
-src/new_cmds2.c:679	zen_master	gap-reachable	-	The assigned vnum 18219 can take the case-20 fighting pulse path to its room speech act; no depth case proves it (src/spec_assign.c:406; src/new_cmds2.c:658-681) (R2/R5e).
-src/new_cmds2.c:700	do_serpent_kick	proven	serpent.no-skill	The untrained command reaches the exact martial-arts refusal before target lookup (R1/R2/R5e).
-src/new_cmds2.c:711	do_serpent_kick	proven	serpent.no-argument-no-fighting;serpent.missing-target	Empty or unresolved input without a fighting target reaches Kick who? (R1/R2/R5e).
-src/new_cmds2.c:717	do_serpent_kick	proven	serpent.self-target	Self-targeting is rejected before the mounted gate (R1/R5e).
-src/new_cmds2.c:722	do_serpent_kick	proven	serpent.mounted-gate	A mounted trained caller reaches this refusal before the percent draw (R1/R3/R5e).
-src/new_cmds2.c:834	do_dig	proven	dig.no-argument	Missing direction or room reaches the exact format line (R1/R2/R5e).
-src/new_cmds2.c:840	do_dig	proven	dig.missing-room	An unknown room VNUM reaches the formatted missing-room line (R1/R5e).
-src/new_cmds2.c:849	do_dig	proven	dig.permission-current-zone	A builder whose selected OLC zone differs from the current zone reaches this refusal (R1/R5e).
-src/new_cmds2.c:851	do_dig	proven	dig.permission-target-zone	A builder targeting a different zone reaches this refusal (R1/R5e).
-src/new_cmds2.c:865	do_dig	proven	dig.invalid-direction	The invalid direction branch emits this line and continues to build the default north exit (R1/R5e).
-src/new_cmds2.c:882	do_dig	proven	dig.success;dig.invalid-direction	The ordinary and invalid-direction success probes compare the final exit confirmation (R1/R5e).
-src/new_cmds2.c:940	flow_room	gap-reachable	-	A mounted player in a flagged flow room reaches this old-room TO_NOTVICT mount act; the existing room-activity proof exercises only an unmounted player (src/new_cmds2.c:930-945; docs/fidelity/depth/room-activity.tsv) (R1/R5e).
-src/new_cmds2.c:944	flow_room	gap-reachable	-	A mounted player in a flagged flow room reaches this destination-room TO_NOTVICT mount act; the existing room-activity proof exercises only an unmounted player (src/new_cmds2.c:930-945; docs/fidelity/depth/room-activity.tsv) (R1/R5e).
-src/new_cmds2.c:949	flow_room	proven	room-activity.flow-room	The unmounted flow path compares the old-room TO_ROOM drift act for observers (R1/R3/R5e).
-src/new_cmds2.c:952	flow_room	proven	room-activity.flow-room	The unmounted flow path compares the direct drift line before the room change/look (R1/R3/R5e).
-src/new_cmds2.c:957	flow_room	proven	room-activity.flow-room	The unmounted flow path compares the arrival TO_NOTVICT act in the destination room (R1/R3/R5e).
-src/new_cmds2.c:966	do_turn	proven	turn.no-skill	The untrained caller receives this refusal before alignment, target scan, or RNG (R1/R3/R5e).
-src/new_cmds2.c:972	do_turn	proven	turn.holy-gate	An evil or neutral mortal reaches the exact alignment refusal (R1/R2/R5e).
-src/new_cmds2.c:976	do_turn	proven	turn.shiver-band;turn.low-mana-quarter-cost	A successful-alignment attempt compares this opening direct line before target effects or the energy refusal (R1/R3/R5e).
-src/new_cmds2.c:978	do_turn	proven	turn.shiver-band;turn.low-mana-quarter-cost	The same attempts compare the opening room flash to the actor's peers (R1/R3/R5e).
-src/new_cmds2.c:984	do_turn	proven	turn.low-mana-quarter-cost	The low-mana path emits the exact energy refusal after the opening two acts (R1/R3/R5e).
-src/new_cmds2.c:1004	do_turn	proven	turn.shiver-band	An eligible target five or more levels above the caller receives the room shiver (R1/R5e).
-src/new_cmds2.c:1005	do_turn	proven	turn.shiver-band	The shiver band sends its exact direct discomfort line to a player target (R1/R5e).
-src/new_cmds2.c:1011	do_turn	proven	turn.disintegrate-undead-mob	An eligible undead NPC reaches the room disintegration act before raw_kill (R1/R5e).
-src/new_cmds2.c:1013	do_turn	gap-reachable	-	The direct disintegration act is player-visible when a high-level-difference undead or vampire player is selected; existing disintegration evidence uses only NPC targets, whose private output is not asserted (src/new_cmds2.c:1008-1014; docs/fidelity/depth/turn.tsv) (R1/R5e).
-src/new_cmds2.c:1019	do_turn	proven	turn.flee-undead-mob;turn.flee-undead-player	The eligible fleeing target reaches the room terror act before C's movement path (R1/R3/R5e).
-src/new_cmds2.c:1020	do_turn	proven	turn.flee-undead-player	The vampire-player fixture compares the direct terror line before fleeing (R1/R3/R5e).
+src/new_cmds2.c:73	do_scrounge	proven	scrounge.no-skill	The no-skill early return emits this direct refusal before the scrounge roll.
+src/new_cmds2.c:80	do_scrounge	proven	scrounge.mounted-gate	The mounted gate emits the direct refusal before the scrounge roll.
+src/new_cmds2.c:112	do_scrounge	proven	scrounge.default-sector	The non-wilderness sector branch emits this refusal and then reaches the room search act.
+src/new_cmds2.c:122	do_scrounge	proven	scrounge.mountain-find	The mountain success arm is the only path that reaches the find-worded actor act.
+src/new_cmds2.c:124	do_scrounge	proven	scrounge.forest-capture-success;scrounge.field-capture;scrounge.hills-capture;scrounge.desert-capture;scrounge.water-capture	Each listed sector fixture reaches the shared capture-worded actor act.
+src/new_cmds2.c:131	do_scrounge	proven	scrounge.food-failure	A failed wilderness result reaches the private edible-refusal output.
+src/new_cmds2.c:135	do_scrounge	proven	scrounge.default-room-audience;scrounge.success-object-and-audience;scrounge.food-failure-room-audience	Default, successful, and failed food branches all reach the unconditional room search act.
+src/new_cmds2.c:148	do_first_aid	proven	aid.skill-gate-order	The no-skill command gate is tested before argument lookup.
+src/new_cmds2.c:153	do_first_aid	proven	aid.no-arg	A skilled actor with no argument reaches Aid who?.
+src/new_cmds2.c:155	do_first_aid	proven	aid.target-missing	A missing room-visible target reaches this direct refusal.
+src/new_cmds2.c:157	do_first_aid	proven	aid.self	Self-targeting reaches the direct self refusal.
+src/new_cmds2.c:162	do_first_aid	proven	aid.target-alive	The positive-HP target gate emits this direct line before RNG.
+src/new_cmds2.c:172	do_first_aid	proven	aid.immortal-success	Immortal auto-success reaches the actor-facing bandage act.
+src/new_cmds2.c:174	do_first_aid	proven	aid.immortal-success	Immortal auto-success reaches the observer-facing bandage act.
+src/new_cmds2.c:176	do_first_aid	proven	aid.immortal-success	Immortal auto-success reaches the victim-facing bandage act.
+src/new_cmds2.c:183	do_first_aid	proven	aid.failure-audience	A failed roll reaches the direct bandage failure line.
+src/new_cmds2.c:184	do_first_aid	proven	aid.failure-audience	The same failed roll reaches the room act for target and observer.
+src/new_cmds2.c:201	do_disarm	proven	disarm.no-skill-output	The no-skill command gate is exercised through real ExecuteCommand dispatch with exact bytes.
+src/new_cmds2.c:209	do_disarm	proven	disarm.no-arg-output	The trained command with no argument and no fighting target reaches the exact prompt through real dispatch.
+src/new_cmds2.c:214	do_disarm	proven	disarm.self-target-output	The trained self-target command reaches the exact refusal through real dispatch.
+src/new_cmds2.c:219	do_disarm	proven	disarm.no-weapon	The target weapon gate emits the pronoun-aware direct act before combat-state validation.
+src/new_cmds2.c:225	do_disarm	proven	disarm.not-fighting-output	A visible wielding target without mutual combat reaches the exact refusal through real dispatch.
+src/new_cmds2.c:233	do_disarm	proven	disarm.success-actor	The successful player command reaches the actor-facing disarm act.
+src/new_cmds2.c:234	do_disarm	proven	disarm.success-room	The successful player command reaches the observer-facing TO_NOTVICT act.
+src/new_cmds2.c:235	do_disarm	proven	disarm.success-victim	The successful player command reaches the victim-facing disarm act.
+src/new_cmds2.c:244	do_disarm	proven	disarm.failure-actor	The failed roll reaches the actor-facing failure act.
+src/new_cmds2.c:245	do_disarm	proven	disarm.failure-victim	The failed roll reaches the victim-facing failure act.
+src/new_cmds2.c:246	do_disarm	proven	disarm.failure-room	The failed roll reaches the observer-facing TO_NOTVICT failure act.
+src/new_cmds2.c:262	do_mindlink	proven	mindlink.no-arg	An empty argument returns this direct prompt before target lookup.
+src/new_cmds2.c:264	do_mindlink	proven	mindlink.target-missing	A missing visible target reaches this direct room-lookup refusal.
+src/new_cmds2.c:266	do_mindlink	proven	mindlink.self	Self-targeting reaches this direct refusal before the skill gate.
+src/new_cmds2.c:268	do_mindlink	proven	mindlink.skill-missing	An untrained actor reaches this direct skill refusal on a valid target.
+src/new_cmds2.c:273	do_mindlink	proven	mindlink.player-target	A valid player target reaches the actor-facing blank-stare act.
+src/new_cmds2.c:274	do_mindlink	proven	mindlink.player-target	A valid player target reaches the room-facing blank-stare act.
+src/new_cmds2.c:276	do_mindlink	proven	mindlink.player-target	A valid player target reaches the actor-facing failure line and returns.
+src/new_cmds2.c:281	do_mindlink	proven	mindlink.actor-fighting;mindlink.target-fighting	Either mutual-combat gate reaches this direct busy refusal.
+src/new_cmds2.c:286	do_mindlink	proven	mindlink.actor-low-health	The low-health gate reaches this direct resource refusal before target mana and RNG.
+src/new_cmds2.c:291	do_mindlink	proven	mindlink.low-mana-target	The loaded NPC target mana gate reaches this direct refusal before RNG.
+src/new_cmds2.c:302	do_mindlink	unreachable		The apparent success branch is unreachable: the earlier !IS_NPC return excludes players, while IS_PSIONIC and IS_MYSTIC both require !IS_NPC (utils.h:366,418; R4/R5e).
+src/new_cmds2.c:303	do_mindlink	unreachable		This room act is in the same impossible success branch; no legitimate C call path reaches it (utils.h:366,418; R4/R5e).
+src/new_cmds2.c:309	do_mindlink	proven	mindlink.npc-failure-state	A valid high-mana NPC target reaches the room-facing failure act; the C class predicates force this outcome.
+src/new_cmds2.c:314	do_mindlink	proven	mindlink.npc-failure-state	The post-roll NPC path reaches this final direct drain line after the room act.
+src/new_cmds2.c:336	beholder	proven	mob.beholder-command-output	The assigned beholder intercepts CAST/RECITE and sends the ray hit to TO_NOTVICT.
+src/new_cmds2.c:338	beholder	proven	mob.beholder-command-output	The assigned beholder intercepts CAST/RECITE and sends this concentration line to TO_VICT.
+src/new_cmds2.c:426	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger reaches this room act for LIST and HELP.
+src/new_cmds2.c:427	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger reaches this authored LIST/HELP line.
+src/new_cmds2.c:429	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger reaches this authored LIST/HELP line.
+src/new_cmds2.c:431	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger reaches this authored LIST/HELP line.
+src/new_cmds2.c:433	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger reaches this authored LIST/HELP line.
+src/new_cmds2.c:435	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger reaches this authored LIST/HELP line.
+src/new_cmds2.c:437	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger reaches this authored LIST/HELP line.
+src/new_cmds2.c:439	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger sends the target-excluding stare act to room peers.
+src/new_cmds2.c:440	recharger	proven	mob.recharger-list-output	The assigned vnum-8 recharger sends the final stare directly to its customer.
+src/new_cmds2.c:448	recharger	proven	mob.recharger-transaction-output	A missing carried item reaches the target-facing refusal act.
+src/new_cmds2.c:449	recharger	proven	mob.recharger-transaction-output	A missing carried item reaches the room-peer whap act.
+src/new_cmds2.c:450	recharger	proven	mob.recharger-transaction-output	A missing carried item reaches the customer-facing whap act.
+src/new_cmds2.c:455	recharger	proven	mob.recharger-transaction-output	A non-wand/staff carried item reaches the target-facing refusal act.
+src/new_cmds2.c:457	recharger	proven	mob.recharger-transaction-output	A non-wand/staff carried item reaches the room disgust act.
+src/new_cmds2.c:462	recharger	proven	mob.recharger-transaction-output	An unaffordable recharge reaches the target-facing refusal act.
+src/new_cmds2.c:474	recharger	proven	mob.recharger-transaction-output	An eligible recharge reaches the room chant act before updating output.
+src/new_cmds2.c:478	recharger	proven	mob.recharger-transaction-output	An eligible recharge sends the remaining-charge count directly to the actor.
+src/new_cmds2.c:481	recharger	proven	mob.recharger-transaction-output	An item that needs no recharge reaches the exact target-facing refusal act.
+src/new_cmds2.c:506	do_detect	proven	search.no-skill	A non-elf with no detect skill reaches this direct refusal before room lookup.
+src/new_cmds2.c:512	do_detect	proven	search.blind	Blindness reaches this direct profanity line before the room-check output.
+src/new_cmds2.c:516	do_detect	proven	search.no-secret-success;search.failed-roll;search.secret-exit-order	Each learned, unblinded path begins with this direct room-check line before roll or exit scan.
+src/new_cmds2.c:520	do_detect	proven	search.failed-roll	A failed number(1,101) roll reaches this direct refusal after the room-check line.
+src/new_cmds2.c:536	do_detect	proven	search.secret-exit-order	The secret-exit fixture reaches this direct directional notice in C dirs[] order.
+src/new_cmds2.c:567	no_get	proven	mob.spec-no-get-get-arg;mob.spec-no-get-palm;mob.spec-no-get-take;mob.spec-no-get-bare	Assigned no_get intercepts each one-argument or bare GET/PALM/TAKE path and emits the room-peer hand-strike act.
+src/new_cmds2.c:568	no_get	proven	mob.spec-no-get-get-arg;mob.spec-no-get-palm;mob.spec-no-get-take;mob.spec-no-get-bare	The same assigned no_get paths emit the direct victim hand-strike act.
+src/new_cmds2.c:636	black_horn	unreachable		SPECIAL(black_horn) is declared at src/spec_assign.c:523, but no ASSIGNOBJ(..., black_horn) exists in the complete C assignment table; object special dispatch cannot reach this body (R2/R4/R5e).
+src/new_cmds2.c:637	black_horn	unreachable		SPECIAL(black_horn) is never assigned by src/spec_assign.c; no registered object can execute this call (R2/R4/R5e).
+src/new_cmds2.c:638	black_horn	unreachable		SPECIAL(black_horn) is never assigned by src/spec_assign.c; no registered object can execute this call (R2/R4/R5e).
+src/new_cmds2.c:639	black_horn	unreachable		SPECIAL(black_horn) is never assigned by src/spec_assign.c; no registered object can execute this call (R2/R4/R5e).
+src/new_cmds2.c:674	zen_master	proven	mob.zen-master-arm-touch-output	Assigned zen_master mob 18219 reaches the arm-touch branch after its combat turn; the test exercises the real combat special callback and proves the TO_NOTVICT bytes (src/spec_assign.c:406; src/fight.c:2030-2031; R1/R5e/R5h).
+src/new_cmds2.c:675	zen_master	proven	mob.zen-master-arm-touch-output	The same combat turn sends the arm-touch line directly to FIGHTING(me), proven through the registered callback and exact target bytes (src/spec_assign.c:406; src/fight.c:2030-2031; R1/R5e/R5h).
+src/new_cmds2.c:679	zen_master	proven	mob.zen-master-violence-output	Assigned zen_master mob 18219 reaches case 20 after its combat turn; the registered callback emits the room act to both the attacker and peer before teleport (src/spec_assign.c:406; src/fight.c:2030-2031; R1/R5e/R5h).
+src/new_cmds2.c:700	do_serpent_kick	proven	serpent.no-skill	A missing serpent-kick skill reaches the private refusal before argument parsing.
+src/new_cmds2.c:711	do_serpent_kick	proven	serpent.no-argument-no-fighting	An empty argument without a fighting target reaches this prompt.
+src/new_cmds2.c:717	do_serpent_kick	proven	serpent.self-target	Self-target rejection precedes the mounted gate.
+src/new_cmds2.c:722	do_serpent_kick	proven	serpent.mounted-gate	A mounted caller reaches this refusal before the percent roll.
+src/new_cmds2.c:834	do_dig	proven	dig.no-argument	Missing direction or room emits this exact format line.
+src/new_cmds2.c:840	do_dig	proven	dig.missing-room	An unknown room number emits this formatted direct refusal.
+src/new_cmds2.c:849	do_dig	proven	dig.permission-current-zone	A builder whose selected OLC zone differs from current room zone reaches this direct refusal.
+src/new_cmds2.c:851	do_dig	proven	dig.permission-target-zone	A builder denied the target zone reaches this direct refusal.
+src/new_cmds2.c:865	do_dig	proven	dig.invalid-direction	An invalid direction emits this warning and continues with the default north exit.
+src/new_cmds2.c:882	do_dig	proven	dig.success;dig.builder-success	A successful builder operation reaches this formatted exit confirmation.
+src/new_cmds2.c:940	flow_room	proven	room-activity.flow-room	The mounted-rider pulse reaches the old-room TO_NOTVICT drift act.
+src/new_cmds2.c:944	flow_room	proven	room-activity.flow-room	The mounted-rider pulse reaches the new-room TO_NOTVICT drift-in act.
+src/new_cmds2.c:949	flow_room	proven	room-activity.flow-room	The unmounted flow branch reaches the old-room TO_ROOM act.
+src/new_cmds2.c:952	flow_room	proven	room-activity.flow-room	The room-flow pulse sends this direct drift line after the old-room act.
+src/new_cmds2.c:957	flow_room	proven	room-activity.flow-room	The flow pulse reaches the new-room TO_NOTVICT arrival act after movement and look.
+src/new_cmds2.c:966	do_turn	proven	turn.no-skill	No learned turn skill reaches Huh?!? before alignment and target work.
+src/new_cmds2.c:972	do_turn	proven	turn.holy-gate	An evil or neutral actor reaches the holy-alignment refusal.
+src/new_cmds2.c:976	do_turn	proven	turn.low-mana-quarter-cost	The low-mana proof reaches the initial direct attempt line before its room act and resource failure.
+src/new_cmds2.c:978	do_turn	proven	turn.low-mana-quarter-cost	The low-mana proof reaches the initial TO_ROOM flash act before the resource failure.
+src/new_cmds2.c:984	do_turn	proven	turn.low-mana-quarter-cost	Insufficient mana reaches the exact energy failure line and quarter-cost mutation.
+src/new_cmds2.c:1004	do_turn	proven	turn.shiver-band	The room scan selects an eligible undead body at least five levels above the caller and reaches the TO_ROOM shiver act.
+src/new_cmds2.c:1005	do_turn	proven	turn.shiver-band	The same level-band fixture reaches the target-only disturbing-feeling act.
+src/new_cmds2.c:1011	do_turn	proven	turn.disintegrate-undead-mob	A fifteen-level advantage reaches the TO_ROOM disintegration act before raw_kill.
+src/new_cmds2.c:1013	do_turn	proven	turn.disintegrate-undead-mob	The same disintegration path reaches the direct victim act before raw_kill.
+src/new_cmds2.c:1019	do_turn	proven	turn.flee-undead-mob;turn.flee-undead-player	The eligible undead/vampire flee band emits this TO_ROOM terror act before do_flee.
+src/new_cmds2.c:1020	do_turn	proven	turn.flee-undead-mob;turn.flee-undead-player	The eligible undead/vampire flee band emits this direct terror line before do_flee.

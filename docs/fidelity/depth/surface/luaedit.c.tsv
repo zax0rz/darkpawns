@@ -1,0 +1,3 @@
+c_site	function	classification	case_ids	notes
+src/luaedit.c:46	do_luaedit	proven	luaedit.invalid-directory	The registered command reaches this error call when list_directory rejects or cannot open the selected directory; the oracle scenario compares the exact single error response (R1/R2/R4/R5e/R5h).
+src/luaedit.c:56	do_luaedit	proven	luaedit.missing-file;luaedit.invalid-filename	The error call is reached after a failed view_file or edit_file result; the oracle missing-file case and focused invalid-filename proof exercise both paths and compare the error bytes (R1/R2/R4/R5e/R5h).

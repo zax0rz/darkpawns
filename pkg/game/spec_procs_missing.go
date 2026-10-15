@@ -38,8 +38,8 @@ func specNoGet(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	return true
 }
 
-// specRecharger charges wands/staves for gold and answers LIST/HELP with the
-// room emotes authored by C's SPECIAL(recharger).
+// specRecharger charges wands/staves for gold.
+// Intercepts RECHARGE.
 func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if ch == nil || me == nil {
 		return false
@@ -48,41 +48,52 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	if cmd == "list" || cmd == "help" {
-		for _, line := range []string{
-			"$n sighs loudly.",
-			"$n says 'I recharge wands and staves, of course!'",
-			"$n says 'My price is 100 coins per spell level per charge..'",
-			"$n says 'So a wand casting heal at level 25 would cost 2500 coins per charge.'",
-			"$n says 'If it had 10 max charges at first, it would have 9 max after charging.",
-			"$n says 'That means that an item could have 1 charge maximum, with 2 charges remaining (after a recharge)'",
-			"$n says 'To recharge an item type: recharge <staff or wand>.'",
-		} {
-			Act(w, false, me, nil, nil, nil, line, "", ToRoom)
-		}
+		Act(w, false, me, ch, nil, nil, "$n sighs loudly.", "", ToRoom)
+		Act(w, false, me, ch, nil, nil, "$n says 'I recharge wands and staves, of course!'", "", ToRoom)
+		Act(w, false, me, ch, nil, nil, "$n says 'My price is 100 coins per spell level per charge..'", "", ToRoom)
+		Act(w, false, me, ch, nil, nil, "$n says 'So a wand casting heal at level 25 would cost 2500 coins per charge.'", "", ToRoom)
+		Act(w, false, me, ch, nil, nil, "$n says 'If it had 10 max charges at first, it would have 9 max after charging.", "", ToRoom)
+		Act(w, false, me, ch, nil, nil, "$n says 'That means that an item could have 1 charge maximum, with 2 charges remaining (after a recharge)'", "", ToRoom)
+		Act(w, false, me, ch, nil, nil, "$n says 'To recharge an item type: recharge <staff or wand>.'", "", ToRoom)
 		Act(w, true, me, ch, nil, nil, "$n stares expectantly at $N.", "", ToNotVict)
-		Act(nil, false, me, ch, nil, nil, "$n stares expectantly at you.", "", ToVict)
+		Act(w, false, me, ch, nil, nil, "$n stares expectantly at you.", "", ToVict)
 		return true
 	}
 	if cmd != "recharge" {
 		return false
 	}
-	arg, _ = OneArgument(strings.TrimSpace(arg))
+	fields := strings.Fields(arg)
+	arg = ""
+	if len(fields) > 0 {
+		arg = fields[0]
+	}
+	ordinal := GetNumber(&arg)
 
 	var item *ObjectInstance
-	if arg != "" && ch.Inventory != nil {
-		item, _ = ch.Inventory.FindItem(arg)
+	if ordinal > 0 {
+		matches := 0
+		for _, carried := range COrderedCarrying(ch) {
+			if carried == nil || (!CanSeeObject(ch, carried) && carried.GetTypeFlag() != ITEM_LIGHT) || !isnameWithAbbrevs(arg, carried.GetKeywords()) {
+				continue
+			}
+			matches++
+			if matches == ordinal {
+				item = carried
+				break
+			}
+		}
 	}
 	if item == nil {
-		Act(nil, false, me, ch, nil, nil, "$n tells you, 'You don't have that!'", "", ToVict)
+		Act(w, false, me, ch, nil, nil, "$n tells you, 'You don't have that!'", "", ToVict)
 		Act(w, true, me, ch, nil, nil, "$n whaps $N upside the head.", "", ToNotVict)
-		Act(nil, false, me, ch, nil, nil, "$n whaps you upside the head.", "", ToVict)
+		Act(w, false, me, ch, nil, nil, "$n whaps you upside the head.", "", ToVict)
 		return true
 	}
 
 	itemType := item.GetTypeFlag()
 	if itemType != ITEM_WAND && itemType != ITEM_STAFF {
-		Act(nil, false, me, ch, nil, nil, "$n tells you, 'Ummm... does that look like a wand or staff to you?'", "", ToVict)
-		Act(w, false, me, nil, nil, nil, "$n shakes his head in disgust.", "", ToRoom)
+		Act(w, false, me, ch, nil, nil, "$n tells you, 'Ummm... does that look like a wand or staff to you?'", "", ToVict)
+		Act(w, false, me, ch, nil, nil, "$n shakes his head in disgust.", "", ToRoom)
 		return true
 	}
 
@@ -91,7 +102,7 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	spellLvl := item.GetValue(0)
 
 	if currCharges >= maxCharges {
-		Act(nil, false, me, ch, nil, nil, "$n tells you, 'The item does not need recharging, stop wasting my time!'", "", ToVict)
+		Act(w, false, me, ch, nil, nil, "$n tells you, 'The item does not need recharging, stop wasting my time!'", "", ToVict)
 		return true
 	}
 
@@ -103,9 +114,11 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	ch.mu.Lock()
 	if ch.Gold < cost {
 		ch.mu.Unlock()
-		Act(nil, false, me, ch, nil, nil, "$n tells you, 'You don't have enough gold!'", "", ToVict)
+		Act(w, false, me, ch, nil, nil, "$n tells you, 'You don't have enough gold!'", "", ToVict)
 		return true
 	}
+	ch.Gold -= cost
+	ch.mu.Unlock()
 
 	// Source: src/new_cmds2.c SPECIAL(recharger) — current charges and max
 	// charges move independently (current+1, max-1), not to a shared value.
@@ -115,10 +128,8 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	newMax := maxCharges - 1
 	item.SetValue(2, newCurr)
 	item.SetValue(1, newMax)
-	ch.Gold -= cost
-	ch.mu.Unlock()
 
-	Act(w, false, me, nil, nil, nil, "$n waves his hands around and chants strange things.", "", ToRoom)
+	Act(w, false, me, ch, nil, nil, "$n waves his hands around and chants strange things.", "", ToRoom)
 	ch.SendMessage(fmt.Sprintf("The item now has %d charges remaining.\r\n", newCurr))
 	return true
 }
@@ -127,7 +138,8 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	// Block spellcasting in beholder's presence (C: intercepts cast and recite)
 	if cmd == "cast" || cmd == "recite" {
-		ch.SendMessage("You feel your magic dissipate in the beholder's presence!\r\n")
+		Act(w, true, me, ch, nil, nil, "A ray of light shoots out from one of $n's eyestalks, hitting $N!", "", ToNotVict)
+		Act(w, false, me, ch, nil, nil, "A ray of light shoots out from one of $n's eyestalks, breaking your concentration!", "", ToVict)
 		return true
 	}
 	if cmd != "" {
@@ -158,18 +170,44 @@ func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	return true
 }
 
-// specZenMaster teleports attackers in combat.
+// specZenMaster ports the Kir-Oshi zen master's combat-only pulse.
 func specZenMaster(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
+	if w == nil || me == nil || cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() <= 0 {
 		return false
 	}
-	melee := mobMeleeTarget(me)
-	if melee == nil || number(0, 6) != 0 {
+
+	// C scans world[room].people head-first and gives every body fighting this
+	// mob an independent 1-in-5 selection draw. If none is selected, it falls
+	// back to FIGHTING(me), then always draws the action number.
+	var victim combat.Combatant
+	for _, candidate := range cOrderedRoomCombatants(w, me.GetRoomVNum()) {
+		if candidate.GetFightingBody() != me || number(0, 4) != 0 {
+			continue
+		}
+		victim = candidate
+		break
+	}
+	if victim == nil {
+		victim = me.GetFightingBody()
+	}
+
+	switch number(0, 20) {
+	case 0:
+		var victimActor Actor
+		if actor, ok := victim.(Actor); ok {
+			victimActor = actor
+		}
+		Act(w, true, me, victimActor, nil, nil, "$n touches $N on the arm.", "", ToNotVict)
+		Act(nil, true, me, victimActor, nil, nil, "$n touches you lightly on the arm.", "", ToVict)
+		spells.CastFromSpecial(me, victim, spells.SpellWordOfRecall, me.GetLevel(), w)
+		return true
+	case 20:
+		Act(w, false, me, nil, nil, nil, "$n says, 'You have violence, but not thought.'", "", ToRoom)
+		spells.CastFromSpecial(me, victim, spells.SpellTeleport, me.GetLevel(), w)
+		return true
+	default:
 		return false
 	}
-	w.roomMessage(me.RoomVNum, me.GetName()+" touches "+melee.GetName()+" lightly on the forehead!")
-	spells.Cast(me, melee, spells.SpellTeleport, me.GetLevel(), nil)
-	return true
 }
 
 // specMoonGate teleports players entering night portals.
