@@ -1,0 +1,6 @@
+c_site	function	classification	case_ids	notes
+src/tattoo.c:42	use_tattoo	proven	use.tattoo	The manifest-owned live use matrix reaches the active-timer branch and asserts exact cooldown bytes for singular, plural, and negative timer values (R1/R2/R5e/R5h).
+src/tattoo.c:48	use_tattoo	proven	use.tattoo-none	The ordinary use-tattoo vehicle selects TATTOO_NONE and checks the exact no-tattoo message plus its 24-hour timer result (R1/R2/R5e/R5h).
+src/tattoo.c:67	use_tattoo	proven	use.tattoo-skull	The paired skull vehicle reaches this TO_ROOM act and checks the observer text and room boundary (R1/R3/R5e/R5h).
+src/tattoo.c:69	use_tattoo	proven	use.tattoo-skull	The paired skull vehicle reaches this TO_CHAR act and checks the exact actor text (R1/R3/R5e/R5h).
+src/tattoo.c:85	use_tattoo	proven	use.tattoo-unsupported	The ordinary use-tattoo vehicle reaches the default switch branch and checks the exact refusal with no cooldown mutation (R1/R2/R5e/R5h).
