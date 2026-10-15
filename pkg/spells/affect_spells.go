@@ -129,10 +129,18 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			npcRetaliate(victim, ch)
 			return
 		}
-		pending = append(pending, engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4+reag), "blindness"), engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness"))
-		toVictim = "You have been blinded!\r\n"
-		toRoom = "$n seems to be blinded!\r\n"
-		toSelf = "A streak of blackness courses from your hand!\r\n"
+		// C types both affects with spellnum and gives both AFF_BLIND:
+		// hitroll -(4+reag) for 2, and AC +40 for 2+reag (src/magic.c:879,
+		// 949-957). Only SPELL_BLINDNESS speaks; smokescreen's mag_masses
+		// announces once and blinds silently (src/magic.c:959-964).
+		pending = append(pending,
+			engine.NewAffectDirect(spellNum, engine.ApplyHitroll, 2, -(4+reag), engine.AFFBlind, "blindness"),
+			engine.NewAffectDirect(spellNum, engine.ApplyAC, 2+reag, 40, engine.AFFBlind, "blindness"))
+		if spellNum == SpellBlindness {
+			toVictim = "You have been blinded!\r\n"
+			toRoom = "$n seems to be blinded!\r\n"
+			toSelf = "A streak of blackness courses from your hand!\r\n"
+		}
 	case SpellCurse:
 		if saved {
 			sendToCaster(ch, "Nothing seems to happen.\r\n")
