@@ -1,0 +1,244 @@
+c_site	function	classification	case_ids	notes
+src/new_cmds.c:71	do_mold	proven	mold.no-argument;mold.missing-object;mold.object-type-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:78	do_mold	proven	mold.object-type-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:84	do_mold	proven	mold.missing-name;mold.missing-description	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:103	do_mold	proven	mold.success-output;mold.success-room-description	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:126	do_carve	proven	carve.target-missing;carve.living-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:131	do_carve	proven	carve.target-missing;carve.living-target;carve.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:136	do_carve	proven	carve.target-missing;carve.living-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:141	do_carve	proven	carve.non-corpse	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:147	do_carve	proven	carve.non-carvable-corpse;carve.corpse-keyword-list	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:152	do_carve	proven	carve.full-arms;carve.corpse-keyword-list	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:158	do_carve	proven	carve.no-wield;carve.success;carve.wrong-weapon;carve.food-mappings;carve.corpse-keyword-list	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:164	do_carve	proven	carve.no-wield;carve.success;carve.wrong-weapon;carve.food-mappings;carve.corpse-keyword-list	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:188	do_carve	proven	carve.no-wield;carve.success	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:195	do_carve	proven	carve.success;carve.contents-dump	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:200	do_carve	proven	carve.success;carve.contents-dump	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:201	do_carve	proven	carve.success;carve.contents-dump	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:237	do_behead	proven	mob.brain-eater-behead;behead.no-arg	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:242	do_behead	proven	mob.brain-eater-behead;behead.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:247	do_behead	proven	mob.brain-eater-behead;behead.living-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:252	do_behead	proven	mob.brain-eater-behead;behead.target-missing	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:258	do_behead	proven	mob.brain-eater-behead;behead.container-value-predicate;behead.headless	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:263	do_behead	proven	mob.brain-eater-behead	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:269	do_behead	proven	mob.brain-eater-behead;behead.bare-message;behead.slash-message;behead.room-audience	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:277	do_behead	proven	mob.brain-eater-behead;behead.bare-message;behead.slash-message;behead.room-audience	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:278	do_behead	proven	mob.brain-eater-behead;behead.bare-message;behead.slash-message;behead.room-audience	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:283	do_behead	proven	mob.brain-eater-behead;behead.bare-message;behead.slash-message;behead.room-audience	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:286	do_behead	proven	mob.brain-eater-behead;behead.bare-message;behead.slash-message;behead.room-audience	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:288	do_behead	proven	mob.brain-eater-behead;behead.bare-message;behead.slash-message;behead.room-audience	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:294	do_behead	proven	mob.brain-eater-behead;behead.object-state;behead.replacement-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:297	do_behead	proven	mob.brain-eater-behead;behead.object-state;behead.replacement-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:299	do_behead	proven	mob.brain-eater-behead;behead.object-state;behead.replacement-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:378	do_headbutt	proven	headbutt.entry-gate;headbutt.peaceful-gate;headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:384	do_headbutt	proven	headbutt.no-skill;headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:390	do_headbutt	proven	headbutt.mounted-gate;headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:402	do_headbutt	proven	headbutt.no-argument;headbutt.missing-target;headbutt.one-argument;headbutt.fighting-fallback;headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:409	do_headbutt	proven	headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:415	do_headbutt	proven	headbutt.immortal-target;headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:416	do_headbutt	proven	headbutt.immortal-target;headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:433	do_headbutt	proven	headbutt.opener-outcome;headbutt.hp-gate;headbutt.mob-subcmd;mob.fighter-headbutt	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:481	do_bearhug	proven	bearhug.no-skill;bearhug.no-arg	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:489	do_bearhug	proven	bearhug.no-arg;bearhug.mounted-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:499	do_bearhug	proven	bearhug.no-arg;bearhug.target-missing;bearhug.fighting-target-fallback	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:506	do_bearhug	proven	bearhug.immortal-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:512	do_bearhug	proven	bearhug.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:518	do_bearhug	proven	bearhug.wielded	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:561	do_cutthroat	proven	cutthroat.no-skill;cutthroat.no-argument	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:567	do_cutthroat	proven	cutthroat.no-argument;cutthroat.target-missing;cutthroat.first-token-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:572	do_cutthroat	proven	cutthroat.self-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:577	do_cutthroat	proven	cutthroat.no-wield	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:582	do_cutthroat	proven	cutthroat.non-piercing	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:589	do_cutthroat	proven	cutthroat.peaceful	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:595	do_cutthroat	proven	cutthroat.low-level-player	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:601	do_cutthroat	proven	cutthroat.existing-affect	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:607	do_cutthroat	proven	cutthroat.fighting	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:613	do_cutthroat	proven	cutthroat.immortal-caster;cutthroat.immortal-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:637	do_cutthroat	proven	cutthroat.success;cutthroat.failure	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:638	do_cutthroat	proven	cutthroat.success;cutthroat.failure	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:643	do_cutthroat	proven	cutthroat.success;cutthroat.failure	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:646	do_cutthroat	proven	cutthroat.success;cutthroat.failure	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:673	do_otouch	proven	orgasm.entry-gate;orgasm.handler-low-level	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:680	do_otouch	proven	orgasm.no-argument;orgasm.one-argument-fill-word	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:684	do_otouch	proven	orgasm.target-not-found;orgasm.one-argument-fill-word	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:688	do_otouch	proven	orgasm.self-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:690	do_otouch	proven	orgasm.self-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:695	do_otouch	proven	orgasm.visible-npc;orgasm.male-target-audience-state;orgasm.female-target-audience-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:697	do_otouch	proven	orgasm.visible-npc;orgasm.male-target-audience-state;orgasm.female-target-audience-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:701	do_otouch	proven	orgasm.visible-npc;orgasm.male-target-audience-state;orgasm.female-target-audience-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:707	do_otouch	proven	orgasm.male-target-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:709	do_otouch	proven	orgasm.male-target-state	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:717	do_otouch	proven	orgasm.female-actor-no-followup	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:719	do_otouch	proven	orgasm.female-actor-no-followup	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:744	do_trip	gap-reachable		Reachable no-skill refusal before the subcommand bypass; no depth case drives it.
+src/new_cmds.c:751	do_trip	gap-reachable		Reachable peaceful-room refusal before target lookup; no depth case drives it.
+src/new_cmds.c:761	do_trip	gap-reachable		Reachable missing-target refusal when the actor has no FIGHTING target; no depth case drives it.
+src/new_cmds.c:768	do_trip	gap-reachable		Reachable mounted gate after target fallback; no depth case drives it.
+src/new_cmds.c:774	do_trip	gap-reachable		Reachable self-target response with the source-specific LFCR bytes; no depth case drives it.
+src/new_cmds.c:779	do_trip	gap-reachable		Reachable flying-victim gate after target/mount checks; no depth case drives it.
+src/new_cmds.c:784	do_trip	gap-reachable		Reachable sleeping-victim gate after target/mount/fly checks; no depth case drives it.
+src/new_cmds.c:829	do_slug	proven	slug.no-skill;slug.no-argument	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:840	do_slug	proven	slug.no-argument;slug.target-missing;slug.fighting-fallback	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:847	do_slug	proven	slug.self-target	The named self-target case reaches this exact refusal call (R1/R5e).
+src/new_cmds.c:854	do_slug	proven	slug.wielded-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:860	do_slug	proven	slug.mounted-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:890	do_charge	proven	charge.no-skill;charge.no-arg;mob.paladin-charge	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:901	do_charge	proven	charge.self;mob.paladin-charge	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:908	do_charge	proven	charge.no-weapon;mob.paladin-charge	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:915	do_charge	proven	charge.wrong-weapon;mob.paladin-charge	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:923	do_charge	proven	charge.mounted;mob.paladin-charge	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:979	do_smackheads	proven	smackheads.no-skill	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:987	do_smackheads	proven	smackheads.no-argument;smackheads.missing-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:993	do_smackheads	proven	smackheads.self-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:999	do_smackheads	unreachable		C control flow makes this call unreachable: the earlier victim1==ch || victim2==ch return at src/new_cmds.c:991-994 preempts the both-self condition (R2/R4/R5e).
+src/new_cmds.c:1005	do_smackheads	proven	smackheads.wielded-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1011	do_smackheads	proven	smackheads.mounted-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1017	do_smackheads	proven	smackheads.actor-fighting	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1023	do_smackheads	proven	smackheads.target-fighting	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1029	do_smackheads	unreachable		C control flow makes this prompt unreachable: empty operands fail the earlier lookups at src/new_cmds.c:984-988 and return before this condition (R2/R4/R5e).
+src/new_cmds.c:1035	do_smackheads	proven	smackheads.peaceful-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1049	do_smackheads	proven	smackheads.failure;smackheads.miss-result-contract	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1056	do_smackheads	proven	smackheads.failure;smackheads.miss-result-contract	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1068	do_smackheads	proven	smackheads.success;smackheads.hit-result-contract	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1075	do_smackheads	proven	smackheads.success;smackheads.hit-result-contract	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1112	do_spike	proven	spike.no-skill-gate;spike.fighting-entry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1120	do_spike	proven	spike.no-arg;spike.target-missing	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1123	do_spike	proven	spike.target-missing	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1128	do_spike	proven	spike.no-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1131	do_spike	proven	spike.peaceful	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1133	do_spike	proven	spike.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1135	do_spike	proven	spike.target-affect;spike.mob-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1137	do_spike	proven	spike.target-affect;spike.mob-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1140	do_spike	proven	spike.own-kind;spike.mob-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1149	do_spike	proven	spike.mob-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1159	do_spike	proven	spike.success-audience;spike.success-mob-extraction;spike.success-player-state;spike.random-success;mudlog.game-spike-stake	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1161	do_spike	proven	spike.success-audience;spike.success-mob-extraction;spike.success-player-state;spike.random-success;mudlog.game-spike-stake	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1163	do_spike	proven	spike.success-audience;spike.success-mob-extraction;spike.success-player-state;spike.random-success;mudlog.game-spike-stake	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1179	do_spike	proven	spike.failure	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1181	do_spike	proven	spike.failure	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1183	do_spike	proven	spike.failure	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1218	do_bite	proven	bite.no-arg;bite.target-missing;bite.one-argument	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1224	do_bite	proven	bite.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1233	do_bite	proven	bite.love-bite	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1234	do_bite	proven	bite.love-bite	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1238	do_bite	proven	bite.love-bite	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1239	do_bite	proven	bite.love-bite	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1241	do_bite	proven	bite.love-bite	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1247	do_bite	proven	bite.transformation-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1254	do_bite	proven	bite.immortal-victim-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1260	do_bite	proven	bite.night-creature-victim	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1267	do_bite	proven	bite.werewolf-damage;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1269	do_bite	proven	bite.werewolf-damage;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1271	do_bite	proven	bite.werewolf-damage;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1279	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1281	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1283	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1288	do_bite	proven	bite.vampire-sloppy-feeding;bite.vampire-fighting-damage;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1322	full_moon	gap-reachable		The weather pulse calls full_moon at src/weather.c:74; no depth case drives the flagged-player transformation messages yet.
+src/new_cmds.c:1324	full_moon	gap-reachable		The weather pulse calls full_moon at src/weather.c:74; no depth case drives the flagged-player transformation messages yet.
+src/new_cmds.c:1410	do_whois	proven	finger.entry-gate;finger.no-arguments;finger.whois-alias;finger.offline-player	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1415	do_whois	gap-blocked		Stop tier: do_whois has read the saved player record through load_char at src/new_cmds.c:1413; this output depends on saved identity/persistence and is not being promoted or changed.
+src/new_cmds.c:1421	do_whois	gap-blocked		Stop tier: do_whois has read the saved player record through load_char at src/new_cmds.c:1413; this output depends on saved identity/persistence and is not being promoted or changed.
+src/new_cmds.c:1442	do_strike	proven	strike.no-target;strike.percent-draw	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1450	do_strike	proven	strike.no-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1455	do_strike	proven	strike.no-target;strike.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1460	do_strike	proven	strike.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1461	do_strike	proven	strike.self	The named self-target case reaches the room act before returning (R1/R5e).
+src/new_cmds.c:1466	do_strike	unreachable		The source-declared charm/master refusal is not reachable through the player command surface: this tree assigns AFF_CHARM and master links only to NPCs, while do_strike is registered as a player command (src/new_cmds.c:1464-1468; R2/R4/R5e).
+src/new_cmds.c:1473	do_strike	proven	strike.mounted	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1561	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1567	do_kuji_kiri	proven	kyo.lockout-gate;kyo.success-lockout;kyo.failure-lockout;visible.zai-gate;retsu.lockout-gate;retsu.argument-ignored;retsu.success-lockout;kai.lockout-gate;kai.success-lockout;kai.failure-lockout;jin.lockout-gate;sha.lockout-gate;sha.argument-ignored;sha.success-lockout;rin.lockout-gate;rin.success-lockout;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1573	do_kuji_kiri	proven	kyo.mounted-gate;visible.zai-gate;retsu.mounted-gate;retsu.argument-ignored;kai.mounted-gate;jin.mounted-gate;sha.mounted-gate;sha.argument-ignored;rin.mounted-gate;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1579	do_kuji_kiri	proven	kyo.mastery-gate;visible.zai-gate;retsu.mastery-gate;retsu.argument-ignored;kai.mastery-gate;jin.mastery-gate;sha.mastery-gate;sha.argument-ignored;rin.mastery-gate;rin.success-actor-and-room;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1608	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;jin.success-actor-and-room;jin.success-double-lockout;sha.argument-ignored;rin.success-actor-and-room;rin.success-affects;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1622	do_kuji_kiri	proven	kyo.success-actor-and-room;kyo.success-affects;visible.zai-gate;retsu.argument-ignored;kai.success-actor-and-room;jin.success-actor-and-room;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1633	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;kai.success-actor-and-room;kai.success-affects;jin.success-actor-and-room;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1647	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;retsu.success-actor-destination;retsu.success-origin-audience;retsu.peaceful-spell-gate;retsu.peaceful-lockout;retsu.failure-origin-audience;kai.success-actor-and-room;jin.success-actor-and-room;sha.argument-ignored;sha.success-actor-and-room;sha.success-heal-floor;sha.success-heal-cap;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1657	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;retsu.success-actor-destination;retsu.success-origin-audience;retsu.peaceful-spell-gate;retsu.peaceful-lockout;retsu.failure-origin-audience;kai.success-actor-and-room;jin.success-actor-and-room;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1671	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;kai.success-actor-and-room;jin.success-actor-and-room;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1679	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;kai.success-actor-and-room;jin.success-actor-and-room;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1692	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;kai.success-actor-and-room;jin.success-actor-and-room;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1706	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;jin.success-actor-and-room;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1736	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1738	do_kuji_kiri	proven	visible.zai-gate;retsu.argument-ignored;sha.argument-ignored;rin.argument-ignored	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1900	do_flesh_alter	proven	alter.no-skill;flesh.no-skill	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1908	do_flesh_alter	proven	alter.concentration-failure;alter.failure-wait-improve	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1916	do_flesh_alter	proven	alter.success-unequips-wielded;alter.toggle-off	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1930	do_flesh_alter	proven	alter.success-unequips-wielded;alter.room-audience-message;flesh.success-bare-handed	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1931	do_flesh_alter	proven	alter.room-audience-message;flesh.success-bare-handed	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1938	do_flesh_alter	proven	alter.room-audience-message;flesh.success-bare-handed	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1939	do_flesh_alter	proven	alter.room-audience-message;flesh.success-bare-handed	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1969	do_compare	proven	compare.missing-objects;compare.blind-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1979	do_compare	proven	compare.missing-objects;compare.fighting-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1984	do_compare	proven	compare.missing-objects	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1991	do_compare	proven	compare.missing-objects;compare.armor-result;compare.armor-slot-mismatch	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:1997	do_compare	proven	compare.missing-objects;compare.armor-result;compare.armor-slot-mismatch	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2003	do_compare	proven	compare.missing-objects;compare.armor-result;compare.armor-slot-mismatch	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2010	do_compare	proven	compare.missing-objects;compare.armor-result;compare.armor-slot-mismatch	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2052	do_compare	proven	compare.weapon-result;compare.armor-result	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2095	do_compare	proven	compare.weapon-result;compare.armor-result	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2118	do_palm	gap-reachable		Reachable carry-count / missing-item refusal; palm has no current depth manifest.
+src/new_cmds.c:2120	do_palm	gap-reachable		Reachable carry-count / missing-item refusal; palm has no current depth manifest.
+src/new_cmds.c:2142	do_berserk	proven	berserk.no-skill;berserk.one-argument;berserk.fighter-special;mob.fighter-berserk	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2151	do_berserk	proven	berserk.one-argument;berserk.already-affected;berserk.draw-before-affected;berserk.fighter-special;mob.fighter-berserk	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2163	do_berserk	proven	berserk.one-argument;berserk.success;berserk.failure;berserk.fighter-special;mob.fighter-berserk	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2167	do_berserk	proven	berserk.one-argument;berserk.success;berserk.failure;berserk.failure-affects;berserk.unconditional-improve;berserk.fighter-special;mob.fighter-berserk	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2207	do_tag	proven	tag.no-argument	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2212	do_tag	proven	tag.target-missing	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2217	do_tag	proven	tag.playing-it-descriptor-search	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2230	do_tag	proven	tag.playing-it-descriptor-search	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2236	do_tag	proven	tag.already-it	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2242	do_tag	proven	tag.npc-ack-unit	The real-dispatch unit proof reaches C's NPC-target acknowledgment and confirms its exact audience bytes without player marker mutation (R1/R5e/R5h).
+src/new_cmds.c:2255	do_tag	proven	tag.playing-it-descriptor-search;tag.self-start	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2258	do_tag	proven	tag.playing-it-descriptor-search	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2260	do_tag	proven	tag.playing-it-descriptor-search	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2262	do_tag	proven	tag.playing-it-descriptor-search	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2289	do_scan	unreachable		The function is marked obsolete at src/new_cmds.c:2268 and has no command-table entry or caller anywhere in src/; no registered player path exists under R2/R4/R5e.
+src/new_cmds.c:2318	do_scan	unreachable		The function is marked obsolete at src/new_cmds.c:2268 and has no command-table entry or caller anywhere in src/; no registered player path exists under R2/R4/R5e.
+src/new_cmds.c:2329	do_scan	unreachable		The function is marked obsolete at src/new_cmds.c:2268 and has no command-table entry or caller anywhere in src/; no registered player path exists under R2/R4/R5e.
+src/new_cmds.c:2336	do_scan	unreachable		The function is marked obsolete at src/new_cmds.c:2268 and has no command-table entry or caller anywhere in src/; no registered player path exists under R2/R4/R5e.
+src/new_cmds.c:2346	do_parry	proven	parry.entry-gate;parry.no-skill;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2353	do_parry	proven	parry.mutual-fighting-gate;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2358	do_parry	proven	parry.no-wield;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2364	do_parry	proven	parry.failure-message;parry.failure-improve-skill;parry.failure-wait-state;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2373	do_parry	proven	parry.failure-message;parry.failure-improve-skill;parry.failure-wait-state;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2381	do_parry	proven	parry.success-actor;parry.success-victim;parry.success-observer;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2383	do_parry	proven	parry.success-actor;parry.success-victim;parry.success-observer;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2385	do_parry	proven	parry.success-actor;parry.success-victim;parry.success-observer;parry.argument-ignored;parry.special-subcmd;mob.fighter-parry;mob.paladin-parry	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2402	do_circle	proven	circle.no-arg;circle.target-missing;circle.fighting-target-fallback	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2408	do_circle	proven	circle.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2413	do_circle	gap-reachable		Reachable already-mutual-fighting refusal before weapon/mount/skill checks; circle proofs do not arrange this fighting pair.
+src/new_cmds.c:2418	do_circle	proven	circle.no-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2423	do_circle	proven	circle.wrong-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2430	do_circle	proven	circle.mounted	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2436	do_circle	proven	circle.aware	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2437	do_circle	proven	circle.aware	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2438	do_circle	proven	circle.aware	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2445	do_circle	proven	circle.no-skill	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2477	point_obj	proven	point.character-wielded-weapon;point.object-wielded-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2478	point_obj	proven	point.character-wielded-weapon;point.object-wielded-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2482	point_obj	proven	point.character-wielded-weapon;point.object-wielded-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2483	point_obj	proven	point.character-wielded-weapon;point.object-wielded-weapon	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2526	do_point	proven	point.no-argument;point.target-not-found	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2528	do_point	proven	point.no-argument;point.target-not-found	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2558	do_point	proven	point.no-argument;point.character-no-weapon;point.character-wielded-weapon;point.self-target;point.target-not-found	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2560	do_point	proven	point.no-argument;point.character-no-weapon;point.character-wielded-weapon;point.self-target;point.target-not-found	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2562	do_point	proven	point.no-argument;point.character-no-weapon;point.character-wielded-weapon;point.self-target;point.target-not-found	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2576	do_groinrip	proven	groinrip.peaceful	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2582	do_groinrip	proven	groinrip.no-skill	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2589	do_groinrip	proven	groinrip.no-argument;groinrip.one-argument	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2601	do_groinrip	proven	groinrip.no-argument;groinrip.target-missing;groinrip.one-argument;groinrip.fighting-fallback	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2608	do_groinrip	proven	groinrip.self-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2614	do_groinrip	proven	groinrip.shopkeeper-gate	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2620	do_groinrip	proven	groinrip.immortal-victim	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2621	do_groinrip	proven	groinrip.immortal-victim	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2629	do_groinrip	proven	groinrip.nonmale-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2643	do_groinrip	proven	groinrip.newbie-protection;groinrip.success-message-and-state;groinrip.result-contract	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2753	do_sharpen	proven	sharpen.non-slash-gate;sharpen.non-weapon-gate;sharpen.fighting-missing-object	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2759	do_sharpen	proven	sharpen.already-affected-gate;sharpen.magic-gate;sharpen.fighting-missing-object	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2766	do_sharpen	proven	sharpen.fighting-missing-object;sharpen.fighting-valid-object	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2771	do_sharpen	proven	sharpen.fighting-missing-object;sharpen.fighting-valid-object	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2781	do_sharpen	proven	sharpen.success-actor;sharpen.success-room;sharpen.failure-mutation-and-improve	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2782	do_sharpen	proven	sharpen.success-actor;sharpen.success-room;sharpen.failure-mutation-and-improve	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2788	do_sharpen	proven	sharpen.failure-actor;sharpen.failure-room;sharpen.failure-mutation-and-improve	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
+src/new_cmds.c:2789	do_sharpen	proven	sharpen.failure-actor;sharpen.failure-room;sharpen.failure-mutation-and-improve	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).

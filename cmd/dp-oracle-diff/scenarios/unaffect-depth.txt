@@ -1,0 +1,107 @@
+# C-first SCMD_UNAFFECT vehicle (src/act.wizard.c:2174-2217).
+# The Implementor tags a live peer, then removes the marker through unaffect;
+# a harmless bless proves the spell-list branch and its embedded CRLF bytes.
+
+# depth-case: wizard.unaffect-marker-state
+# depth-case: wizard.unaffect-active-spells
+# depth-case: wizard.unaffect-empty-control
+# depth-case: tag.not-it-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Godunaffect
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Godunaffect
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Unaffectpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Unaffectpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Tagwitness
+Y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Tagwitness
+y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8004
+teleport Unaffectpeer 8004
+teleport Tagwitness 8004
+tag Unaffectpeer
+tag Tagwitness
+unaffect Unaffectpeer
+cast 'bless' Unaffectpeer
+unaffect Unaffectpeer
+unaffect Unaffectpeer

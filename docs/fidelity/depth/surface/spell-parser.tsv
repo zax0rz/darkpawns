@@ -1,0 +1,89 @@
+c_site	function	classification	case_ids	notes
+src/spell_parser.c:342	say_spell	proven	cast.missing-target	The C cast-depth vehicle sends a valid in-room target through do_cast, cast_spell, say_spell, and this TO_VICT act; the target transcript makes removal fail (R1/R2/R5e/R5h).
+src/spell_parser.c:419	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle reaches call_magic and checks the caster bytes; class-wording variants are covered by the same manifest claim (R1/R3/R5e/R5h).
+src/spell_parser.c:420	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle has a room observer for this magic-fizzle act (R1/R3/R5e/R5h).
+src/spell_parser.c:424	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle reaches the psionic/mystic will-fade variant through call_magic (R1/R3/R5e/R5h).
+src/spell_parser.c:425	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle has a room observer for the will-fade act through call_magic (R1/R3/R5e/R5h).
+src/spell_parser.c:432	call_magic	proven	use.tattoo-sitting	The live tattoo sitting vehicle reaches call_magic while the actor is sitting and checks this refusal (R1/R3/R5e/R5h).
+src/spell_parser.c:441	call_magic	proven	objmagic.peaceful-block	The C-first peaceful quaff reaches this direct refusal and compares the caster bytes (R1/R3/R5e/R5h).
+src/spell_parser.c:444	call_magic	gap-reachable		The registered cast and use paths reach call_magic in a peaceful room; the psionic/mystic direct wording branch has no output proof (R1/R2/R5e).
+src/spell_parser.c:447	call_magic	gap-reachable		The registered cast and use paths reach this peaceful-room audience act; the current peaceful proof has no room observer, so the bytes remain unproven (R1/R2/R5e).
+src/spell_parser.c:580	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:582	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:584	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:589	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:590	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:615	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:616	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:620	mag_objectmagic	proven	use.effect	The C-first wand use targets a present peer and proves the direct-to-caster target message (R1/R3/R5e/R5h).
+src/spell_parser.c:622	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:624	mag_objectmagic	proven	use.effect	The held wand has no action description; the C-first use vehicle reaches this fallback act with a room observer (R1/R3/R5e/R5h).
+src/spell_parser.c:633	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:635	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:637	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:641	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:647	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:648	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:663	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this scroll recitation branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:668	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this scroll recitation branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:676	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this scroll recitation branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:684	mag_objectmagic	proven	objmagic.armor.to-self;objmagic.infravision.to-self	Targeted scroll vehicles reach the successful recite actor act; the transcripts preserve its bytes (R1/R3/R5e/R5h).
+src/spell_parser.c:686	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this scroll recitation branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:688	mag_objectmagic	gap-reachable		C targeted recite reaches this TO_ROOM call, but the current scroll proofs have no third player to receive the bytes after act excludes the actor and target (R1/R2/R5e/R5h).
+src/spell_parser.c:702	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this potion quaff branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:705	mag_objectmagic	proven	quaff.potion-effect	The C-first quaff vehicle executes the actor quaff act and compares the output (R1/R3/R5e/R5h).
+src/spell_parser.c:707	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this potion quaff branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:709	mag_objectmagic	proven	objmagic.sanctuary.to-room	The live sanctuary-quaff vehicle has a room observer and proves the fallback quaff act bytes as well as the effect audience (R1/R3/R5e/R5h).
+src/spell_parser.c:732	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:735	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:737	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:742	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:745	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:747	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:756	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:759	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:761	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:766	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:771	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:772	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:787	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:789	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:791	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:794	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:795	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this worn staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:841	cast_spell	proven	cast.smartness-gate	The direct cast contract test reaches the zero-intelligence/wisdom guard and checks this refusal before mana or wait changes (R1/R5e/R5h).
+src/spell_parser.c:847	cast_spell	gap-reachable		C spell casting reaches this cast-wait or position restriction, but no current proof exercises this exact output arm (R1/R2/R5e).
+src/spell_parser.c:856	cast_spell	gap-reachable		C spell casting reaches this cast-wait or position restriction, but no current proof exercises this exact output arm (R1/R2/R5e).
+src/spell_parser.c:859	cast_spell	gap-reachable		C spell casting reaches this cast-wait or position restriction, but no current proof exercises this exact output arm (R1/R2/R5e).
+src/spell_parser.c:862	cast_spell	gap-reachable		C spell casting reaches this cast-wait or position restriction, but no current proof exercises this exact output arm (R1/R2/R5e).
+src/spell_parser.c:865	cast_spell	gap-reachable		C spell casting reaches this cast-wait or position restriction, but no current proof exercises this exact output arm (R1/R2/R5e).
+src/spell_parser.c:868	cast_spell	gap-reachable		C spell casting reaches this cast-wait or position restriction, but no current proof exercises this exact output arm (R1/R2/R5e).
+src/spell_parser.c:875	cast_spell	proven	cast.power-contract-gates	The cast contract test reaches the charmed-caster/master branch and checks its refusal bytes (R1/R5e/R5h).
+src/spell_parser.c:881	cast_spell	gap-reachable		C spoken casting reaches the normal-class self-only wording; the existing contract test covers only the psionic/mystic wording (R1/R2/R5e).
+src/spell_parser.c:883	cast_spell	proven	cast.power-contract-gates	The cast contract test reaches the psionic/mystic self-only wording branch (R1/R5e/R5h).
+src/spell_parser.c:889	cast_spell	gap-reachable		C spoken casting reaches the normal-class not-self wording; the existing contract test covers only the psionic/mystic wording (R1/R2/R5e).
+src/spell_parser.c:891	cast_spell	proven	cast.power-contract-gates	The cast contract test reaches the psionic/mystic not-self wording branch (R1/R5e/R5h).
+src/spell_parser.c:897	cast_spell	gap-reachable		C spoken casting reaches the normal-class group restriction; the existing contract test covers only the psionic/mystic wording (R1/R2/R5e).
+src/spell_parser.c:899	cast_spell	proven	cast.power-contract-gates	The cast contract test reaches the psionic/mystic group wording branch (R1/R5e/R5h).
+src/spell_parser.c:902	cast_spell	proven	cast.success-call-magic	The successful spoken-cast contract asserts C's Okay bytes before SaySpell and CallMagic (R1/R3/R5e/R5h).
+src/spell_parser.c:928	do_cast	proven	cast.psionic-literal-cast	The live psionic cast command reaches and compares this will-only refusal (R1/R5e/R5h).
+src/spell_parser.c:937	do_cast	proven	cast.no-arg	The live empty normal-class cast command reaches this prompt (R1/R5e/R5h).
+src/spell_parser.c:939	do_cast	proven	cast.will-entry	The live empty will command reaches this psionic/mystic prompt (R1/R5e/R5h).
+src/spell_parser.c:945	do_cast	proven	cast.unquoted	The cast-depth vehicle submits an unquoted normal spell and reaches this exact enclosure refusal (R1/R5e/R5h).
+src/spell_parser.c:948	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unquoted-spell wording (R1/R5e/R5h).
+src/spell_parser.c:958	do_cast	proven	cast.unknown	The live normal cast-depth vehicle reaches this unknown-spell refusal (R1/R5e/R5h).
+src/spell_parser.c:960	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unknown-spell wording (R1/R5e/R5h).
+src/spell_parser.c:965	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:967	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:972	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:974	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:980	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this peaceful-room or target-resolution output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:1049	do_cast	proven	cast.no-target-violent	The draw-free no-target control reaches and compares this generated target prompt (R1/R5e/R5h).
+src/spell_parser.c:1056	do_cast	proven	cast.violent-self	The draw-free self-target control reaches and compares this normal-class self-harm refusal (R1/R5e/R5h).
+src/spell_parser.c:1059	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this target, mana, or concentration output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:1063	do_cast	proven	cast.missing-target	The C-first absent-target cast reaches this Okay send before its incantation and missing-target refusal (R1/R3/R5e/R5h).
+src/spell_parser.c:1066	do_cast	proven	cast.missing-target	The C-first absent-target cast reaches and compares the normal-class missing-target bytes (R1/R3/R5e/R5h).
+src/spell_parser.c:1068	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this target, mana, or concentration output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:1074	do_cast	proven	cast.mana-gate	The cast contract test reaches the insufficient-mana arm and compares the normal-class refusal without a draw (R1/R3/R5e/R5h).
+src/spell_parser.c:1076	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this target, mana, or concentration output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:1101	do_cast	proven	cast.concentration-failure	The failed-concentration control reaches this send when no skill-message target consumes the branch and checks the actor bytes (R1/R3/R5e/R5h).

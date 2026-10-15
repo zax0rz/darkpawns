@@ -23,6 +23,48 @@ func (w *World) GetObjPrototype(vnum int) (*parser.Obj, bool) {
 	return obj, ok
 }
 
+// ReadDisposableMob builds a throwaway mobile instance exactly as C's
+// read_mobile(nr, REAL) does (src/db.c:1725-1777) and returns it, or false when
+// no prototype carries the vnum.
+//
+// C reaches this read from handlers that keep only part of the instance:
+// do_checkload copies GET_NAME and extracts the mobile
+// (src/act.wizard.c:3841-3844), and check_load does the same for every zone 'M'
+// command (src/act.wizard.c:3750-3753). The read rolls the hit dice and the
+// gold variance (src/db.c:1748-1773), so a caller that reads the prototype
+// instead loses draws the C oracle makes and desynchronizes the shared stream
+// (R3a). The instance is never registered with the world; C's extract_char
+// discards its own copy immediately.
+func (w *World) ReadDisposableMob(vnum int) (*MobInstance, bool) {
+	proto, ok := w.GetMobPrototype(vnum)
+	if !ok {
+		return nil, false
+	}
+	return NewMob(proto, 0), true
+}
+
+// ReadDisposableObject builds a throwaway object instance exactly as C's
+// read_object(nr, REAL) does (src/db.c:1928-1962) and returns it, or false when
+// no prototype carries the vnum. The read applies the ITEM_RARE affect variance
+// (src/db.c:1899-1925), which burns dice(1,100) per affected slot.
+//
+// C reaches this read from handlers that keep only the instance's load
+// percentage and short description: do_checkload (src/act.wizard.c:3853-3855)
+// and check_load's O/E/G arm (src/act.wizard.c:3729-3732). Skipping the read
+// loses those draws (R3a). The instance is never registered with the world;
+// C's extract_obj discards its own copy immediately.
+func (w *World) ReadDisposableObject(vnum int) (*ObjectInstance, bool) {
+	proto, ok := w.GetObjPrototype(vnum)
+	if !ok {
+		return nil, false
+	}
+	obj := NewObjectInstance(proto, 0)
+	if len(proto.ExtraFlags) > 0 && proto.ExtraFlags[0]&FlagItemRare != 0 {
+		initRare(obj)
+	}
+	return obj, true
+}
+
 // GetZoneCount returns the total number of zones in the world.
 func (w *World) GetZoneCount() int {
 	w.mu.RLock()

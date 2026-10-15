@@ -425,41 +425,67 @@ func TestCmdUnaffectBlockedBelowGod(t *testing.T) {
 
 func TestCmdUnaffectAtGodClearsAffects(t *testing.T) {
 	m := makeTestManager(t)
-	s := makeTestSession(t, m, "Alice", 1001, true)
+	s := makeCommandTestSession(t, m, "Alice", LVL_GOD, 1001)
 	s.player.Level = LVL_GOD
-	target := makeTestSession(t, m, "Bob", 1001, true)
+	s.player.SetMaxMana(100)
+	s.player.SetMana(150)
+	target := makeCommandTestSession(t, m, "Bob", 1, 1001)
 	target.player.ActiveAffects = []*engine.Affect{
 		engine.NewAffectDirect(0, engine.ApplyNone, 10, 0, engine.AFFPoison, "test"),
 	}
-	m.mu.Lock()
-	m.sessions["bob"] = target
-	m.mu.Unlock()
+	target.player.SetPlrFlag(game.PlrIt, true)
+	target.player.SetPlrFlag(game.PlrVampire, true)
+	target.player.SetPlrFlag(game.PlrWerewolf, true)
+	target.player.SetAffect(game.AffVampire, true)
+	target.player.SetAffect(game.AffWerewolf, true)
+	registerInWorld(t, s)
+	registerInWorld(t, target)
 
-	if err := cmdUnaffect(s, []string{"bob"}); err != nil {
-		t.Fatalf("cmdUnaffect: %v", err)
+	if err := ExecuteCommand(s, "unaffect", []string{"bob"}); err != nil {
+		t.Fatalf("ExecuteCommand unaffect: %v", err)
 	}
-	if msg := readSessionText(t, s); !strings.Contains(msg, "All spells removed") {
-		t.Errorf("unaffect-clears-affects message: got %q", msg)
+	actorText := readSessionText(t, s) + readSessionText(t, s) + readSessionText(t, s) + readSessionText(t, s)
+	if want := "Un-tagged!\r\nUn-vamped!\r\nUn-wered!\r\nAll spells removed.\r\n"; actorText != want {
+		t.Errorf("unaffect actor bytes = %q, want %q", actorText, want)
+	}
+	targetText := readSessionText(t, target) + readSessionText(t, target) + readSessionText(t, target) + readSessionText(t, target)
+	if want := "You're no longer it!\r\nYou're no longer a creature of the night!\r\nYou're no longer a creature of the night!\r\nThere is a brief flash of light!\r\nYou feel slightly different.\r\n"; targetText != want {
+		t.Errorf("unaffect target bytes = %q, want %q", targetText, want)
 	}
 	if target.player.ActiveAffects != nil {
 		t.Errorf("unaffect should clear the target's ActiveAffects, got %v", target.player.ActiveAffects)
+	}
+	for _, flag := range []int{game.PlrIt, game.PlrVampire, game.PlrWerewolf} {
+		if target.player.HasPLRFlag(flag) {
+			t.Errorf("unaffect should clear PLR bit %d", flag)
+		}
+	}
+	if target.player.IsAffected(game.AffVampire) || target.player.IsAffected(game.AffWerewolf) {
+		t.Error("unaffect should clear vampire and werewolf affect bits")
+	}
+	if got := s.player.GetMana(); got != 100 {
+		t.Errorf("unaffect vampire mana clamp = %d, want 100", got)
 	}
 }
 
 func TestCmdUnaffectNoAffects(t *testing.T) {
 	m := makeTestManager(t)
-	s := makeTestSession(t, m, "Alice", 1001, true)
+	s := makeCommandTestSession(t, m, "Alice", LVL_GOD, 1001)
 	s.player.Level = LVL_GOD
-	target := makeTestSession(t, m, "Bob", 1001, true)
-	m.mu.Lock()
-	m.sessions["bob"] = target
-	m.mu.Unlock()
+	target := makeCommandTestSession(t, m, "Bob", 1, 1001)
+	registerInWorld(t, s)
+	registerInWorld(t, target)
 
-	if err := cmdUnaffect(s, []string{"bob"}); err != nil {
-		t.Fatalf("cmdUnaffect: %v", err)
+	if err := ExecuteCommand(s, "unaffect", []string{"bob"}); err != nil {
+		t.Fatalf("ExecuteCommand unaffect: %v", err)
 	}
-	if msg := readSessionText(t, s); !strings.Contains(msg, "affections") {
-		t.Errorf("unaffect-with-no-affects message: got %q", msg)
+	if msg := readSessionText(t, s); msg != "Your victim does not have any affections!\r\n" {
+		t.Errorf("unaffect-with-no-affects bytes: got %q", msg)
+	}
+	select {
+	case msg := <-target.send:
+		t.Errorf("unaffect control unexpectedly sent target bytes: %s", msg)
+	default:
 	}
 }
 

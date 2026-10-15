@@ -136,12 +136,15 @@ func TestSpecProstitute_CanSeeUsesC_LightGate(t *testing.T) {
 	if !specProstitute(w, actor, mob, "list", "") {
 		t.Fatal("dark-room list should be handled")
 	}
-	wantHidden := "A half-elven prostitute says, 'If I could see you, we could do business..'\r\nA half-elven prostitute winks coyly.\r\n"
-	if got := messages[actor.Name]; got != wantHidden {
-		t.Fatalf("dark-room output = %q, want %q", got, wantHidden)
+	// C act() drops a hide_invisible act for a recipient who cannot see the
+	// actor (comm.c:2537-2538). In darkness neither the actor nor the peer
+	// can see the prostitute, so the "If I could see you" acts reach no one;
+	// the tell arm never runs because CAN_SEE(mobile, ch) fails first.
+	if got := messages[actor.Name]; got != "" {
+		t.Fatalf("dark-room output = %q, want none (act hidden by darkness)", got)
 	}
-	if got := messages[peer.Name]; got != wantHidden {
-		t.Fatalf("dark-room peer output = %q, want %q", got, wantHidden)
+	if got := messages[peer.Name]; got != "" {
+		t.Fatalf("dark-room peer output = %q, want none (act hidden by darkness)", got)
 	}
 
 	clearProstituteMessages(messages)

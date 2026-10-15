@@ -275,7 +275,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				continue
 			}
 			// C: !CAN_SEE(ch, vict)
-			if !w.canSeeCharacterInRoom(ch, vict) {
+			if !canSeeForPers(ch, vict) {
 				continue
 			}
 			// C: PRF_NOHASSLE
@@ -346,7 +346,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				if !hates {
 					continue
 				}
-				if !w.canSeeCharacterInRoom(ch, vict) {
+				if !canSeeForPers(ch, vict) {
 					continue
 				}
 				if vict.GetFlags()&(1<<PrfNohassle) != 0 {
@@ -391,7 +391,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				continue
 			}
 			// C: !CAN_SEE(ch, vict)
-			if !w.canSeeCharacterInRoom(ch, vict) {
+			if !canSeeForPers(ch, vict) {
 				continue
 			}
 			// C: PRF_FLAGGED(vict, PRF_NOHASSLE)
@@ -452,7 +452,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if target == nil || target.IsNPC() || target == combat.Combatant(ch) {
 				continue
 			}
-			if !w.canSeeCharacterInRoom(ch, target) {
+			if !canSeeForPers(ch, target) {
 				continue
 			}
 			found = true
@@ -475,7 +475,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if p.IsNPC() {
 				continue
 			}
-			if !w.canSeeCharacterInRoom(ch, p) {
+			if !canSeeForPers(ch, p) {
 				continue
 			}
 			if p.GetFlags()&(1<<PrfNohassle) != 0 {
@@ -513,7 +513,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if vict == ch {
 				continue
 			}
-			if !w.canSeeCharacterInRoom(ch, vict) {
+			if !canSeeForPers(ch, vict) {
 				continue
 			}
 			if vict.GetLevel()+3 < ch.GetLevel() {
@@ -577,7 +577,7 @@ func (w *World) mobAssist(ch *MobInstance, argument string) {
 	}
 	// C's "But nobody is fighting $M!" and "You can't see who is fighting $M!"
 	// are TO_CHAR lines to a descriptorless mobile, so they are silent.
-	if opponent == nil || !w.canSeeCharacterInRoom(ch, opponent) {
+	if opponent == nil || !canSeeForPers(ch, opponent) {
 		return
 	}
 	// C: act("$N assists you!", 0, helpee, 0, ch, TO_CHAR) — the helpee hears
