@@ -44,11 +44,6 @@ def output_lines(source: str) -> set[int]:
     return {i for i, line in enumerate(stripped.split("\n"), 1) if CALL.search(line)}
 
 
-def family_for(map_path: pathlib.Path) -> str:
-    """surface/spec-procs.tsv -> 'src/spec_procs.c act-send family'."""
-    return f"src/{map_path.stem.replace('-', '_')}.c act-send family"
-
-
 def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None) -> list[str]:
     errors: list[str] = []
     if case_ids is None:
@@ -107,9 +102,12 @@ def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None
             errors.append(f"{name}: {c_file}:{line} is not an act/send_to_char/stc call (stale line?)")
         for line in sorted(calls - listed):
             errors.append(f"{name}: {c_file}:{line} is an output call the map does not list")
-        family = families.get(family_for(path))
+        # The family is named for the C file the map's rows cite
+        # (src/act.wizard.c, src/spec_procs.c), not for the map's file name.
+        family_name = f"{c_file} act-send family"
+        family = families.get(family_name)
         if family is None:
-            errors.append(f"{name}: no surface-inventory row {family_for(path)!r}")
+            errors.append(f"{name}: no surface-inventory row {family_name!r}")
             continue
         if family["units"] != str(gaps):
             errors.append(f"{name}: surface-inventory units {family['units']} != {gaps} gaps in the map")
