@@ -1,0 +1,77 @@
+# depth-case: give.gold-mob-bribe-dispatch
+# depth-case: mob.mp-bribe-cityguard-refuses
+# An offer below 200 coins always reaches the cityguard's refusal act and C
+# hit() boundary, regardless of the preceding number(0,2) result.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2747 1 8105 27
+replace-room-exits 8105 none
+
+[setup:oracle]
+BribeGuardRefusal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BribeGuardRefusal
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BribeGuardPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BribeGuardPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BribeGuardPeer 8105
+set BribeGuardRefusal gold 1000
+set BribeGuardRefusal level 10
+set BribeGuardRefusal hit 30000
+set BribeGuardRefusal maxhit 30000
+
+[probe]
+give 50 coins guard

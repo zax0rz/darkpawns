@@ -1,0 +1,75 @@
+# depth-case: give.gold-mob-bribe-dispatch
+# depth-case: mob.mp-bribe-gremlin-eject
+# An insufficient offer reaches all three gremlin ejection acts before the
+# player is transferred to room 13193.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 13108 1 8059 131
+replace-room-exits 8059 none
+
+[setup:oracle]
+BribeGremlinProbe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BribeGremlinProbe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BribeGremlinPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BribeGremlinPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8059
+teleport BribeGremlinPeer 8059
+set BribeGremlinProbe gold 2000
+set BribeGremlinProbe level 10
+
+[probe]
+give 999 coins gremlin

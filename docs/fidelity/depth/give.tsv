@@ -17,6 +17,7 @@ perform_give	give	give.weight	D2	command	unit-green	TestPerformGiveHandsFullAndW
 perform_give_gold	give	give.gold-zero	D2	command	oracle-green	give-gold	act.item.c:730-732	"give 0 coins X" yields "Heh heh heh ... we are jolly funny today, eh?".
 perform_give_gold	give	give.gold-insufficient	D2	command	oracle-green	give-gold	act.item.c:733-736	Giving more coins than held yields "You don't have that many coins!".
 perform_give_gold	give	give.gold-success	D3	command	unit-green	TestPerformGiveGoldSuccess	act.item.c:737-744	Actor "Okay.\r\n", victim "$n gives you N gold coins." (TO_VICT), bystander "$n gives <money_desc> to $N." (TO_NOTVICT).
+perform_give_gold	give	give.gold-mob-bribe-dispatch	D5	npc-call	unit-green	TestMpBribeDispatchRendersCBranches/dog_eats_coins	src/act.item.c:748-757	A real `DoGive` command to an NPC sends OK and the bystander money act before dispatching `mp_bribe`; the same output prefix is checked in the focused dog branch (R1/R5e/R5h).
 get_obj_in_list_vis	give	give.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get; proven under the get manifest.
 find_all_dots	give	give.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get; proven under the get manifest.
 perform_give	give	give.mob-ongive	D5	npc-call	excluded	-	act.item.c:707-709	Mob ongive/bribe behavior belongs to the mob/specproc depth surface.

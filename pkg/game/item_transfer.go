@@ -544,6 +544,8 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 					return true
 				}
 				ch.SetGold(ch.GetGold() - amount)
+				ch.SendMessage("Okay.\r\n")
+				Act(w, true, ch, mob, nil, nil, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), "", ToNotVict)
 				w.MpGive(mob, ch, amount)
 				if ScriptEngine != nil && mob.HasScript("bribe") {
 					ctx := mob.CreateScriptContext(ch, nil, fmt.Sprintf("%d", amount))

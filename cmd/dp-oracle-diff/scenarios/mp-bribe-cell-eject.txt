@@ -1,0 +1,75 @@
+# depth-case: give.gold-mob-bribe-dispatch
+# depth-case: mob.mp-bribe-cell-eject
+# A sufficient offer exercises the jailguard's thank-you, ejection acts,
+# character movement, and destination-room rendering.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8088 1 8059 80
+replace-room-exits 8059 none
+
+[setup:oracle]
+BribeCellProbe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BribeCellProbe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BribeCellPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BribeCellPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8059
+teleport BribeCellPeer 8059
+set BribeCellProbe gold 1000
+set BribeCellProbe level 10
+
+[probe]
+give 100 coins jailguard

@@ -1,0 +1,51 @@
+c_site	function	classification	case_ids	notes
+src/mobprog.c:83	mp_greet	proven	mob.mp-greet-shopkeeper-dog	The C hardcoded shopkeeper vnum branch is exercised through NPC movement into a room with a warg (R1/R5e).
+src/mobprog.c:89	mp_greet	proven	mob.mp-greet-innkeeper	The vnum 19406 solo/leader branch is exercised through NPC movement (R1/R5e).
+src/mobprog.c:119	mp_give	proven	mp_give.dog-food	The C food branch emits this act before extracting the object (R1/R5e).
+src/mobprog.c:124	mp_give	proven	mp_give.dog-junk	The C non-food branch emits this act before dropping the object (R1/R5e).
+src/mobprog.c:128	mp_give	proven	mp_give.dog-junk	The C non-food branch emits this second act after dropping the object (R1/R5e).
+src/mobprog.c:135	mp_give	proven	mp_give.demon-nonsoul;mp_give.demon-nonsoul-mob-giver	The C non-soul path emits this act before returning the object to its giver (R1/R5e).
+src/mobprog.c:137	mp_give	proven	mp_give.demon-nonsoul;mp_give.demon-nonsoul-mob-giver	The C non-soul path emits this act before returning the object to its giver (R1/R5e).
+src/mobprog.c:145	mp_give	proven	mp_give.demon-soul	The C soul path emits this act before consuming the object (R1/R5e).
+src/mobprog.c:147	mp_give	proven	mp_give.demon-soul	The C soul path emits this act before consuming the object (R1/R5e).
+src/mobprog.c:149	mp_give	proven	mp_give.demon-soul	The C soul path emits this act before consuming the object (R1/R5e).
+src/mobprog.c:155	mp_give	proven	mp_give.demon-soul	The C soul path emits this act after extraction and before portal placement (R1/R5e).
+src/mobprog.c:164	mp_give	proven	mp_give.janitor-junk	The C junk predicate branch emits this act for a takeable low-cost item (R1/R5e).
+src/mobprog.c:167	mp_give	proven	mp_give.janitor-nonjunk	The C non-junk branch emits this act for a takeable higher-cost item (R1/R5e).
+src/mobprog.c:180	mp_bribe	proven	mob.mp-bribe-dog-coin	The real gold-give dispatch reaches the dog coin branch and its room act (R1/R5e).
+src/mobprog.c:184	mp_bribe	proven	mob.mp-bribe-janitor-coin	The real gold-give dispatch reaches the janitor room act (R1/R5e).
+src/mobprog.c:189	mp_bribe	proven	mob.mp-bribe-mercenary-hire	The successful mercenary branch sends this literal directly to the briber (R1/R5e).
+src/mobprog.c:191	mp_bribe	proven	mob.mp-bribe-mercenary-hire	The successful mercenary branch sends this literal directly to the briber (R1/R5e).
+src/mobprog.c:193	mp_bribe	proven	mob.mp-bribe-mercenary-hire	The successful mercenary branch sends this hire act to room peers (R1/R5e).
+src/mobprog.c:195	mp_bribe	proven	mob.mp-bribe-mercenary-decline	A low offer or existing master reaches the rude-laugh act (R1/R5e).
+src/mobprog.c:199	mp_bribe	proven	mob.mp-bribe-cell-refund	The underfunded jailguard branch emits this first refusal act (R1/R5e).
+src/mobprog.c:201	mp_bribe	proven	mob.mp-bribe-cell-refund	The underfunded jailguard branch emits the cash-threshold act (R1/R5e).
+src/mobprog.c:203	mp_bribe	proven	mob.mp-bribe-cell-refund	The underfunded jailguard branch emits the grin act and returns the coins (R1/R5e).
+src/mobprog.c:208	mp_bribe	proven	mob.mp-bribe-cell-eject	A sufficient jailguard bribe reaches the first success act (R1/R5e).
+src/mobprog.c:210	mp_bribe	proven	mob.mp-bribe-cell-eject	A sufficient jailguard bribe reaches the second success act (R1/R5e).
+src/mobprog.c:211	mp_bribe	proven	mob.mp-bribe-cell-eject	The private briber act substitutes the jailguard as $N (R1/R5e).
+src/mobprog.c:212	mp_bribe	proven	mob.mp-bribe-cell-eject	The bystander act substitutes the jailguard and briber in C order (R1/R5e).
+src/mobprog.c:223	mp_bribe	proven	mob.mp-bribe-cityguard-refuses	The cityguard refusal act precedes the real hit boundary (R1/R5e).
+src/mobprog.c:227	mp_bribe	proven	mob.mp-bribe-cityguard-sleeps	A sufficient accepted bribe reaches the first success act (R1/R5e).
+src/mobprog.c:229	mp_bribe	proven	mob.mp-bribe-cityguard-sleeps	A sufficient accepted bribe reaches the sleep act (R1/R5e).
+src/mobprog.c:235	mp_bribe	proven	mob.mp-bribe-citizen-bow	Citizen bribe executes the thanks act before the targeted bow social (R1/R5e).
+src/mobprog.c:240	mp_bribe	proven	mob.mp-bribe-whore-service	A sufficient offer reaches the bystander-only act (R1/R5e).
+src/mobprog.c:242	mp_bribe	proven	mob.mp-bribe-whore-service	A sufficient offer reaches the private act (R1/R5e).
+src/mobprog.c:244	mp_bribe	proven	mob.mp-bribe-whore-service	A sufficient offer reaches this direct send to the briber (R1/R5e).
+src/mobprog.c:248	mp_bribe	proven	mob.mp-bribe-whore-refusal	An insufficient offer reaches the refusal room act (R1/R5e).
+src/mobprog.c:253	mp_bribe	proven	mob.mp-bribe-gremlin-tunnel	A sufficient offer reaches the bystander-only hidden-door act (R1/R5e).
+src/mobprog.c:262	mp_bribe	proven	mob.mp-bribe-gremlin-tunnel	A sufficient offer sends the tunnel description directly to the briber (R1/R5e).
+src/mobprog.c:270	mp_bribe	proven	mob.mp-bribe-gremlin-eject	An insufficient offer reaches the room exclamation act (R1/R5e).
+src/mobprog.c:272	mp_bribe	proven	mob.mp-bribe-gremlin-eject	An insufficient offer reaches the bystander-only kicked-out act (R1/R5e).
+src/mobprog.c:273	mp_bribe	proven	mob.mp-bribe-gremlin-eject	An insufficient offer reaches the briber-only kicked-out act (R1/R5e).
+src/mobprog.c:305	entry_prog	proven	mob.entry-prog-wake-guard	The captain wakes a sleeping guard during real NPC movement (R1/R5e).
+src/mobprog.c:306	entry_prog	proven	mob.entry-prog-wake-guard	The sleeping guard receives this room act during the C entry branch (R1/R5e).
+src/mobprog.c:308	entry_prog	proven	mob.entry-prog-wake-guard	The captain's report act is emitted after the wake act (R1/R5e).
+src/mobprog.c:315	entry_prog	proven	mob.entry-prog-salute-guard	A standing guard emits the salute act during real NPC movement (R1/R5e).
+src/mobprog.c:316	entry_prog	proven	mob.entry-prog-salute-guard	The captain emits the at-ease act during real NPC movement (R1/R5e).
+src/mobprog.c:322	entry_prog	proven	mob.entry-prog-greet-citizen	The captain frown act substitutes the citizen's short description (R1/R5e).
+src/mobprog.c:323	entry_prog	proven	mob.entry-prog-greet-citizen	The citizen greeting act follows the captain's frown (R1/R5e).
+src/mobprog.c:425	kill_bad_guy	unreachable		No C caller exists in src/: rg finds only this definition; no registered path reaches kill_bad_guy (R2/R4/R5e).
+src/mobprog.c:445	npc_rescue	unreachable		No C caller exists in src/: rg finds only this definition; no registered path reaches npc_rescue (R2/R4/R5e).
+src/mobprog.c:446	npc_rescue	unreachable		No C caller exists in src/: rg finds only this definition; no registered path reaches npc_rescue (R2/R4/R5e).
+src/mobprog.c:448	npc_rescue	unreachable		No C caller exists in src/: rg finds only this definition; no registered path reaches npc_rescue (R2/R4/R5e).

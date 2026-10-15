@@ -1,0 +1,75 @@
+# depth-case: give.gold-mob-bribe-dispatch
+# depth-case: mob.mp-bribe-cityguard-sleeps
+# A 500-coin offer reaches the cityguard's success acts when C's preceding
+# number(0,2) is nonzero, then sets the guard sleeping and decrements its gold.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2747 1 8105 27
+replace-room-exits 8105 none
+
+[setup:oracle]
+BribeGuardSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BribeGuardSuccess
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BribeGuardPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BribeGuardPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BribeGuardPeer 8105
+set BribeGuardSuccess gold 1000
+set BribeGuardSuccess level 10
+
+[probe]
+give 500 coins guard
