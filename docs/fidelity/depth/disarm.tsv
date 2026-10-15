@@ -1,4 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_disarm	disarm	disarm.no-skill	D1	command	unit-green	TestCmdDisarm_NoFightingNoArgs	new_cmds2.c:199-203; interpreter.c:414	The registered command reaches C's skill refusal before target lookup; the test compares the exact private line (R1/R2/R5e/R5h).
 do_disarm	disarm	disarm.fighting-argument-ignored	D2	command	oracle-green	disarm-depth	new_cmds2.c:204-211	When already fighting, C ignores the typed target and uses FIGHTING(ch); the wrong-argument vehicle reaches the opponent's success arm.
 do_disarm	disarm	disarm.success-actor	D3	command	oracle-green	disarm-depth	new_cmds2.c:231-234	C's actor act names the target and the actual wielded object's short description.
 do_disarm	disarm	disarm.success-victim	D3	command	oracle-green	disarm-depth	new_cmds2.c:235	C's victim act names the actual wielded object's short description.

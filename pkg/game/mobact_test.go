@@ -405,15 +405,18 @@ func TestMobileActivityScavengerUsesCanGetVisibility(t *testing.T) {
 	}{
 		{name: "invisible", invisible: true},
 		{name: "detect invisible", invisible: true, detect: true, wantPickup: true},
+		{name: "visible object", wantPickup: true},
 		{name: "dark", dark: true},
 		{name: "infravision", dark: true, infravision: true, wantPickup: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w := newMobactDrawTestWorld()
+			w.GetRoomInWorld(1001).Sector = SECT_INSIDE
 			if tc.dark {
 				setRoomFlagBit(w.GetRoomInWorld(1001), 0)
 			}
 			mob := newMobactDrawTestMob("scavenger", "sentinel")
+			mob.Proto().ShortDesc = "a scavenger"
 			mob.world = w // LIGHT_OK resolves the observer's room light.
 			mob.Str, mob.Dex = 18, 18
 			mob.CopyBaseAttributes()
@@ -431,6 +434,8 @@ func TestMobileActivityScavengerUsesCanGetVisibility(t *testing.T) {
 				obj.SetExtraFlag(0, extraFlagInvisible)
 			}
 			w.roomItems[1001] = []*ObjectInstance{obj}
+			observer := newMobactSpeakingPlayer(t, w, "Observer")
+			out := captureOutput(w)
 			previous := mobactNumber
 			mobactNumber = func(from, to int) int { return 0 }
 			t.Cleanup(func() { mobactNumber = previous })
@@ -442,6 +447,18 @@ func TestMobileActivityScavengerUsesCanGetVisibility(t *testing.T) {
 			}
 			if got := len(w.roomItems[1001]); (got == 0) != tc.wantPickup {
 				t.Fatalf("room item count=%d want pickup=%t", got, tc.wantPickup)
+			}
+			wantOutput := ""
+			switch tc.name {
+			case "detect invisible":
+				wantOutput = "A scavenger gets something.\r\n"
+			case "visible object":
+				wantOutput = "A scavenger gets a probe gem.\r\n"
+			case "infravision":
+				wantOutput = "Someone gets something.\r\n"
+			}
+			if got := outputOf(out, observer.Name); got != wantOutput {
+				t.Fatalf("observer output = %q, want %q", got, wantOutput)
 			}
 		})
 	}

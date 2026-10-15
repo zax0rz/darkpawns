@@ -38,8 +38,8 @@ func specNoGet(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	return true
 }
 
-// specRecharger charges wands/staves for gold.
-// Intercepts RECHARGE.
+// specRecharger charges wands/staves for gold and answers LIST/HELP with the
+// room emotes authored by C's SPECIAL(recharger).
 func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if ch == nil || me == nil {
 		return false
@@ -47,36 +47,42 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	if ch.GetPosition() < combat.PosSitting {
 		return false
 	}
+	if cmd == "list" || cmd == "help" {
+		for _, line := range []string{
+			"$n sighs loudly.",
+			"$n says 'I recharge wands and staves, of course!'",
+			"$n says 'My price is 100 coins per spell level per charge..'",
+			"$n says 'So a wand casting heal at level 25 would cost 2500 coins per charge.'",
+			"$n says 'If it had 10 max charges at first, it would have 9 max after charging.",
+			"$n says 'That means that an item could have 1 charge maximum, with 2 charges remaining (after a recharge)'",
+			"$n says 'To recharge an item type: recharge <staff or wand>.'",
+		} {
+			Act(w, false, me, nil, nil, nil, line, "", ToRoom)
+		}
+		Act(w, true, me, ch, nil, nil, "$n stares expectantly at $N.", "", ToNotVict)
+		Act(nil, false, me, ch, nil, nil, "$n stares expectantly at you.", "", ToVict)
+		return true
+	}
 	if cmd != "recharge" {
 		return false
 	}
-	arg = strings.TrimSpace(arg)
-	if arg == "" {
-		ch.SendMessage("What do you want to recharge?\r\n")
-		return true
-	}
+	arg, _ = OneArgument(strings.TrimSpace(arg))
 
 	var item *ObjectInstance
-	if ch.Inventory != nil {
+	if arg != "" && ch.Inventory != nil {
 		item, _ = ch.Inventory.FindItem(arg)
 	}
-	if item == nil && ch.Equipment != nil {
-		equipped := ch.Equipment.GetEquippedItems()
-		for _, eqItem := range equipped {
-			if eqItem != nil && (strings.Contains(strings.ToLower(eqItem.GetKeywords()), strings.ToLower(arg)) || strings.Contains(strings.ToLower(eqItem.GetShortDesc()), strings.ToLower(arg))) {
-				item = eqItem
-				break
-			}
-		}
-	}
 	if item == nil {
-		ch.SendMessage("You don't seem to have that item.\r\n")
+		Act(nil, false, me, ch, nil, nil, "$n tells you, 'You don't have that!'", "", ToVict)
+		Act(w, true, me, ch, nil, nil, "$n whaps $N upside the head.", "", ToNotVict)
+		Act(nil, false, me, ch, nil, nil, "$n whaps you upside the head.", "", ToVict)
 		return true
 	}
 
 	itemType := item.GetTypeFlag()
 	if itemType != ITEM_WAND && itemType != ITEM_STAFF {
-		ch.SendMessage("That is not a wand or staff.\r\n")
+		Act(nil, false, me, ch, nil, nil, "$n tells you, 'Ummm... does that look like a wand or staff to you?'", "", ToVict)
+		Act(w, false, me, nil, nil, nil, "$n shakes his head in disgust.", "", ToRoom)
 		return true
 	}
 
@@ -85,7 +91,7 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	spellLvl := item.GetValue(0)
 
 	if currCharges >= maxCharges {
-		ch.SendMessage("That item is already fully charged.\r\n")
+		Act(nil, false, me, ch, nil, nil, "$n tells you, 'The item does not need recharging, stop wasting my time!'", "", ToVict)
 		return true
 	}
 
@@ -97,11 +103,9 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	ch.mu.Lock()
 	if ch.Gold < cost {
 		ch.mu.Unlock()
-		ch.SendMessage(fmt.Sprintf("It costs %d gold to recharge that, which you cannot afford.\r\n", cost))
+		Act(nil, false, me, ch, nil, nil, "$n tells you, 'You don't have enough gold!'", "", ToVict)
 		return true
 	}
-	ch.Gold -= cost
-	ch.mu.Unlock()
 
 	// Source: src/new_cmds2.c SPECIAL(recharger) — current charges and max
 	// charges move independently (current+1, max-1), not to a shared value.
@@ -111,9 +115,11 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	newMax := maxCharges - 1
 	item.SetValue(2, newCurr)
 	item.SetValue(1, newMax)
+	ch.Gold -= cost
+	ch.mu.Unlock()
 
-	w.roomMessage(ch.GetRoomVNum(), fmt.Sprintf("%s recharges %s.", me.Proto().ShortDesc, item.GetShortDesc()))
-	ch.SendMessage(fmt.Sprintf("The recharger works their magic on %s! It costs %d gold. The item now has %d charges remaining.\r\n", item.GetShortDesc(), cost, newCurr))
+	Act(w, false, me, nil, nil, nil, "$n waves his hands around and chants strange things.", "", ToRoom)
+	ch.SendMessage(fmt.Sprintf("The item now has %d charges remaining.\r\n", newCurr))
 	return true
 }
 
