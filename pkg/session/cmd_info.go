@@ -1198,10 +1198,9 @@ func cmdReview(s *Session) error {
 	if s.player == nil {
 		return nil
 	}
+	// C: page_string(ch->desc, buf, 1) (src/new_cmds.c:1390).
 	result := game.DoReview(s.player, s.manager.world)
-	if result.MessageToCh != "" {
-		s.Send(result.MessageToCh)
-	}
+	PageString(s, result.MessageToCh)
 	return nil
 }
 

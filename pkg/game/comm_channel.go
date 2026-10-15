@@ -26,6 +26,7 @@ const (
 	ansiYellow  = "\x1b[33m" // KYEL
 	ansiGreen   = "\x1b[32m" // KGRN
 	ansiMagenta = "\x1b[35m" // KMAG
+	ansiCyan    = "\x1b[36m" // KCYN
 
 	colorNormal   = 2 // C_NRM
 	colorComplete = 3 // C_CMP
@@ -395,10 +396,18 @@ func (w *World) updateGossipHistory(name, message string, invisLevel int) {
 }
 
 // ReviewGossip returns the formatted gossip history for the review command.
-// Matches C: do_review() in new_cmds.c.
+// Matches C: do_review() in new_cmds.c (src/new_cmds.c:1369-1391). Each entry
+// is CCCYN + name + ": " + CCYEL + text + CCNRM, all at C_CMP, and ends in
+// "\n\r" (not "\r\n"); the header lines end in "\r\n".
 func (w *World) ReviewGossip(ch *Player) string {
 	w.gossipMu.RLock()
 	defer w.gossipMu.RUnlock()
+
+	// CCCYN/CCYEL/CCNRM(ch, C_CMP) are empty below complete color (src/screen.h:49-56).
+	var cyan, yellow, normal string
+	if colorLevel(ch) >= colorComplete {
+		cyan, yellow, normal = ansiCyan, ansiYellow, ansiReset
+	}
 
 	var buf strings.Builder
 	buf.WriteString("Last Gossips:\r\n-------------\r\n")
@@ -408,15 +417,18 @@ func (w *World) ReviewGossip(ch *Player) string {
 	// slot 0). Preserve the player-visible oldest-first order.
 	for index := len(w.gossipHistory) - 1; index >= 0; index-- {
 		entry := w.gossipHistory[index]
-		// Hide invisible players below viewer's level
+		buf.WriteString(cyan)
+		// C: if (review[count].invis <= GET_LEVEL(ch)) name else "Someone invisible"
 		if entry.Invis > ch.GetLevel() {
-			buf.WriteString("Someone invisible: ")
+			buf.WriteString("Someone invisible")
 		} else {
 			buf.WriteString(entry.Name)
-			buf.WriteString(": ")
 		}
+		buf.WriteString(": ")
+		buf.WriteString(yellow)
 		buf.WriteString(entry.Message)
-		buf.WriteString("\r\n")
+		buf.WriteString(normal)
+		buf.WriteString("\n\r")
 	}
 
 	return buf.String()
