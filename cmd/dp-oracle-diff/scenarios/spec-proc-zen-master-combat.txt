@@ -1,0 +1,75 @@
+# depth-case: mob.zen-master-arm-touch-output
+# depth-case: mob.zen-master-violence-output
+# C assigns mob 18219 to zen_master (src/spec_assign.c:406). The mob's combat
+# turn invokes its native special after ordinary attacks; commandless mob AI
+# does not reach the fighting callback. A fixed room and quiet mobile pulse
+# isolate the fight.c:2030-2031 path.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18219 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Zenmasteractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zenmasteractor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Zenmasterpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Zenmasterpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+hit zen master
+
+[probe]
+~dpclock pulse 20
