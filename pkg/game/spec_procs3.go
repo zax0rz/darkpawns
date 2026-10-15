@@ -371,7 +371,7 @@ func butlerVisibleRoomObject(w *World, me *MobInstance, name string, items []*Ob
 		if obj == nil || !isnameWithAbbrevs(query, obj.GetKeywords()) {
 			continue
 		}
-		if !canSeeObjectInWorld(w, me, obj) && obj.GetTypeFlag() != ITEM_LIGHT {
+		if !canSeeObject(me, obj) && obj.GetTypeFlag() != ITEM_LIGHT {
 			continue
 		}
 		found++
@@ -672,7 +672,7 @@ func conSellerCanSee(w *World, observer, subject Actor) bool {
 	if observer == nil || subject == nil {
 		return false
 	}
-	return w.canSeeCharacterInRoom(observer, subject)
+	return canSeeForPers(observer, subject)
 }
 
 // conSellerPersName is PERS with the seller's room-aware LIGHT_OK gate.

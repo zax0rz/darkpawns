@@ -138,28 +138,9 @@ func canSeeForPers(observer, subject Actor) bool {
 	return canSeeWithHide(observer, subject, false)
 }
 
-// canSeeCharacterInRoom mirrors C's CAN_SEE with the observer's room light
-// state. Unlike room-listing visibility, C's macro does not treat AFF_HIDE as
-// invisible (src/utils.h:515-530).
-func (w *World) canSeeCharacterInRoom(observer, subject Actor) bool {
-	if observer == subject {
-		return true
-	}
-	if !canSeeForPers(observer, subject) {
-		return false
-	}
-	if w == nil {
-		return true
-	}
-	obs, ok := observer.(visibilitySubject)
-	if !ok {
-		return true
-	}
-	if holy, ok := observer.(holyLightSubject); ok && holy.GetHolyLight() {
-		return true
-	}
-	return !w.IsRoomDark(observer.GetRoom()) || obs.IsAffected(affInfravision)
-}
+// canSeeCharacterInRoom is canSeeForPers: CAN_SEE's LIGHT_OK arm resolves
+// the observer's room light through the body's owning world
+// (src/utils.h:515-530), so the shared predicate needs no explicit world.
 
 func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	if observer == nil || subject == nil {
@@ -191,19 +172,29 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 		return true
 	}
 
-	// 1. Blindness check
+	// 1. LIGHT_OK's blindness arm (src/utils.h:515-517).
 	if obsSub.IsAffected(affBlind) {
 		return false
 	}
 
-	// 2. Invisibility check
+	// 2. LIGHT_OK's room-light arm: the observer's room must be lit or the
+	// observer has infravision. DP-1295 — every act() $n/$N, PERS and the
+	// shared look/target helpers flow through here, so a dark room renders
+	// "someone" exactly as C does.
+	if w := visibilityWorld(observer); w != nil {
+		if w.IsRoomDark(observer.GetRoom()) && !obsSub.IsAffected(affInfravision) {
+			return false
+		}
+	}
+
+	// 3. Invisibility check
 	if sbjSub.IsAffected(affInvisible) {
 		if !obsSub.IsAffected(affDetectInvisible) {
 			return false
 		}
 	}
 
-	// 3. Hiding check — this is a Go room-visibility extension and is not part
+	// 4. Hiding check — this is a Go room-visibility extension and is not part
 	// of C's CAN_SEE macro, so PERS() opts out via canSeeForPers.
 	if hide && sbjSub.IsAffected(affHide) {
 		if !obsSub.IsAffected(affSenseLife) {
@@ -212,6 +203,19 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 	}
 
 	return true
+}
+
+// visibilityWorld resolves the owning world from a body for CAN_SEE's
+// LIGHT_OK arm. Both live bodies carry it; a foreign Actor implementation
+// (tests only) sees the pre-DP-1295 light-blind behavior.
+func visibilityWorld(observer Actor) *World {
+	switch body := observer.(type) {
+	case *Player:
+		return body.world
+	case *MobInstance:
+		return body.world
+	}
+	return nil
 }
 
 // CanSee reports whether observer can see subject using the canonical
@@ -328,13 +332,16 @@ func canSeeObject(to Actor, obj *ObjectInstance) bool {
 		return true
 	}
 
-	// MORT_CAN_SEE_OBJ = LIGHT_OK && INVIS_OK_OBJ
 	// LIGHT_OK = !AFF_BLIND && (room is light || observer has infravision)
-	// Since we don't have a World reference here for the room light check,
-	// this version checks blind and infravision. The room light check is
-	// done by World-aware callers (look commands, session layer).
+	// (src/utils.h:515-517). DP-1295: the room-light arm resolves through the
+	// observer's owning world, so this is the complete CAN_SEE_OBJ predicate.
 	if sub.IsAffected(affBlind) {
 		return false
+	}
+	if w := visibilityWorld(to); w != nil {
+		if w.IsRoomDark(to.GetRoom()) && !sub.IsAffected(affInfravision) {
+			return false
+		}
 	}
 
 	// INVIS_OK_OBJ = !ITEM_INVISIBLE || observer has detect invis
@@ -346,27 +353,9 @@ func canSeeObject(to Actor, obj *ObjectInstance) bool {
 	return true
 }
 
-// canSeeObjectInWorld adds LIGHT_OK's room-light check to CAN_SEE_OBJ. The
-// generic canSeeObject helper is also used by boundaries without a World
-// reference, so callers with a live room must use this predicate when C does
-// not let blindness, darkness, or an invisible flag bypass object selection
-// (src/utils.h:515-542).
-func canSeeObjectInWorld(w *World, to Actor, obj *ObjectInstance) bool {
-	if !canSeeObject(to, obj) {
-		return false
-	}
-	if w == nil {
-		return true
-	}
-	sub, ok := to.(visibilitySubject)
-	if !ok {
-		return true
-	}
-	if holy, ok := sub.(holyLightSubject); ok && holy.GetHolyLight() {
-		return true
-	}
-	return !w.IsRoomDark(to.GetRoom()) || sub.IsAffected(affInfravision)
-}
+// canSeeObjectInWorld is canSeeObject: LIGHT_OK's room-light arm resolves
+// through the observer's owning world (src/utils.h:515-542), so the shared
+// object predicate needs no explicit world.
 
 // cap capitalizes the first rune of s.
 // C: CAP(st) — *st = UPPER(*st)

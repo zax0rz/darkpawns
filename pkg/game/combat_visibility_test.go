@@ -62,16 +62,16 @@ func TestCanSeeCharacterInRoomDoesNotGrantImmortalsVisibility(t *testing.T) {
 	target.SetAffect(affInvisible, true)
 	observer.SetLevel(LVL_IMMORT)
 
-	if w.canSeeCharacterInRoom(observer, target) {
+	if canSeeForPers(observer, target) {
 		t.Fatal("immortal level alone revealed invisible target")
 	}
 	observer.SetAffect(affDetectInvisible, true)
-	if !w.canSeeCharacterInRoom(observer, target) {
+	if !canSeeForPers(observer, target) {
 		t.Fatal("detect-invisible did not reveal target")
 	}
 	observer.SetAffect(affDetectInvisible, false)
 	observer.SetHolyLight(true)
-	if !w.canSeeCharacterInRoom(observer, target) {
+	if !canSeeForPers(observer, target) {
 		t.Fatal("HOLYLIGHT did not reveal target")
 	}
 	observer.SetHolyLight(false)
@@ -79,11 +79,11 @@ func TestCanSeeCharacterInRoomDoesNotGrantImmortalsVisibility(t *testing.T) {
 	if !w.SetRoomFlagBit(1001, 0) {
 		t.Fatal("SetRoomFlagBit failed")
 	}
-	if w.canSeeCharacterInRoom(observer, target) {
+	if canSeeForPers(observer, target) {
 		t.Fatal("infravision alone revealed invisible target")
 	}
 	observer.SetAffect(affDetectInvisible, true)
-	if !w.canSeeCharacterInRoom(observer, target) {
+	if !canSeeForPers(observer, target) {
 		t.Fatal("infravision and detect-invisible did not reveal target")
 	}
 }
