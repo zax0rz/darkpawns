@@ -414,6 +414,7 @@ func TestMobileActivityScavengerUsesCanGetVisibility(t *testing.T) {
 				setRoomFlagBit(w.GetRoomInWorld(1001), 0)
 			}
 			mob := newMobactDrawTestMob("scavenger", "sentinel")
+			mob.world = w // LIGHT_OK resolves the observer's room light.
 			mob.Str, mob.Dex = 18, 18
 			mob.CopyBaseAttributes()
 			if tc.detect {

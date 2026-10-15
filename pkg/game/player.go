@@ -29,6 +29,10 @@ type Player struct {
 	// persisted or changed when the player moves rooms.
 	characterSequence uint64
 
+	// world is the owning world, set by World.AddPlayer. CAN_SEE's LIGHT_OK
+	// arm reads the observer's room light through it (src/utils.h:515-517).
+	world *World
+
 	// Identity
 	ID   int
 	Name string

@@ -517,6 +517,10 @@ func (w *World) AddPlayer(p *Player) error {
 		}
 	}
 
+	// CAN_SEE's LIGHT_OK arm resolves the observer's room light through the
+	// owning world (src/utils.h:515-517).
+	p.world = w
+
 	// Database-backed players already have persistent IDs. In a no-DB
 	// differential/runtime session, new characters start at ID 0; retain that
 	// first ID for fixture ownership, but give later zero-ID players distinct
@@ -1580,7 +1584,7 @@ func (w *World) CanCarryObject(charName string, objVNum int) bool {
 // includes ITEM_WEAR_TAKE, carry limits, and CAN_SEE_OBJ in the character's
 // actual room (src/utils.h:535-549).
 func (w *World) canGetObject(ch Actor, obj *ObjectInstance) bool {
-	if ch == nil || obj == nil || !obj.IsTakeable() || !canSeeObjectInWorld(w, ch, obj) {
+	if ch == nil || obj == nil || !obj.IsTakeable() || !canSeeObject(ch, obj) {
 		return false
 	}
 	switch ch := ch.(type) {

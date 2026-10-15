@@ -1,0 +1,49 @@
+# DP-1295: CAN_SEE's LIGHT_OK infravision arm (src/utils.h:515-517). Room
+# 8162 is flagged dark; the implementor grants itself the infravision spell
+# (skillset) and casts it, so the same smile renders "someone" before and the
+# trainee's name after AFF_INFRAVISION lands.
+
+# depth-case: visibility.dark-infravision
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 0 on
+spawn-mob 16303 1 8162 163
+
+[setup:oracle]
+Visinfra
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Visinfra
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+smile trainee
+skillset Visinfra 'infravision' 100
+cast 'infravision' Visinfra
+smile trainee
