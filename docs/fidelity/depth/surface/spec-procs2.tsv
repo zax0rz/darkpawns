@@ -91,8 +91,8 @@ src/spec_procs2.c:1790	bat	unreachable		SPECIAL(bat) has no ASSIGNMOB entry in t
 src/spec_procs2.c:1812	bat	unreachable		SPECIAL(bat) has no ASSIGNMOB entry in the live assign_mobiles table (src/spec_assign.c:85-511).
 src/spec_procs2.c:1835	no_move_east	proven	mob.spec-no-move-east	The cited depth proof executes this C output callsite (R1/R5e).
 src/spec_procs2.c:1837	no_move_east	proven	mob.spec-no-move-east	The cited depth proof executes this C output callsite (R1/R5e).
-src/spec_procs2.c:1916	key_seller	gap-reachable		Reachable when the registered owner key seller loads its key object after a funded buy; the existing list, rejection, and unaffordable probes return before this success act. Funded owner-audience oracle proof pending (R1/R5e/R5h).
-src/spec_procs2.c:1917	key_seller	gap-reachable		Reachable when the registered owner key seller loads its key object after a funded buy; the existing list, rejection, and unaffordable probes return before this success act. Funded owner-audience oracle proof pending (R1/R5e/R5h).
+src/spec_procs2.c:1916	key_seller	proven	mob.key-seller-owner-buy-success-audience	The registered owner key seller loads its key object after a funded buy; the seed-1 vehicle compares this success act for both the owner and a room peer (R1/R3/R5e/R5h).
+src/spec_procs2.c:1917	key_seller	proven	mob.key-seller-owner-buy-success-audience	The registered owner key seller loads its key object after a funded buy; the seed-1 vehicle compares this success act for both the owner and a room peer (R1/R3/R5e/R5h).
 src/spec_procs2.c:1951	castle_guard_east	unreachable		SPECIAL(castle_guard_east) has no ASSIGNMOB entry in the live assign_mobiles table (src/spec_assign.c:85-511).
 src/spec_procs2.c:1954	castle_guard_east	unreachable		SPECIAL(castle_guard_east) has no ASSIGNMOB entry in the live assign_mobiles table (src/spec_assign.c:85-511).
 src/spec_procs2.c:1983	mindflayer	proven	mob.mindflayer-soul-leech-audience	The cited depth proof executes this C output callsite (R1/R5e).
