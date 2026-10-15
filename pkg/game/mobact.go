@@ -35,13 +35,29 @@ func roomHasFlag(room *parser.Room, flag string) bool {
 // mobCarriedWeight returns the total weight a mob is currently carrying.
 // Mirrors C's IS_CARRYING_W(ch) (utils.h). Used by the scavenger check.
 func mobCarriedWeight(m *MobInstance) int {
-	weight := 0
-	for _, obj := range m.Inventory {
+	if m == nil {
+		return 0
+	}
+	m.mu.RLock()
+	weight := m.Runtime.CarriedWeight
+	inventory := append([]*ObjectInstance(nil), m.Inventory...)
+	m.mu.RUnlock()
+	for _, obj := range inventory {
 		if obj != nil {
 			weight += obj.GetWeight()
 		}
 	}
 	return weight
+}
+
+// mobCarriedItemCount returns the live C carrying count plus registered items.
+func mobCarriedItemCount(m *MobInstance) int {
+	if m == nil {
+		return 0
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.Runtime.CarriedNumber + len(m.Inventory)
 }
 
 // mobMaxCarryWeight returns the maximum weight a mob can carry.

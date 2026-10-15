@@ -243,7 +243,9 @@ func specDump(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 	value := w.roomCleanup(roomVNum)
 	if value > 0 {
 		sendToChar(ch, "You are awarded for outstanding performance.")
-		w.roomMessage(roomVNum, ch.GetName()+" has been awarded by the gods!")
+		// src/spec_procs.c:282-284 uses act(..., TRUE, ch, ..., TO_ROOM):
+		// omit the actor and hide the message from observers who cannot see them.
+		Act(w, true, ch, nil, nil, nil, "$n has been awarded by the gods!", "", ToRoom)
 		ch.mu.Lock()
 		if ch.Level < 3 {
 			ch.Exp += value
