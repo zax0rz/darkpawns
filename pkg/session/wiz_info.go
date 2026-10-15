@@ -499,6 +499,13 @@ func cmdCheckload(s *Session, args []string) error {
 			s.Send("That mob does not exist.\r\n")
 			return nil
 		}
+		// C do_checkload reads a mobile before reporting (src/act.wizard.c:
+		// 3841-3844): read_mobile rolls the hit dice and the gold variance
+		// (src/db.c:1748-1773) and only its GET_NAME — the short description,
+		// src/utils.h:275-276 — is kept. The read must happen for the draw
+		// count to match (R3a); the instance is discarded as C's extract_char
+		// discards it.
+		w.ReadDisposableMob(vnum)
 		s.Send(checkloadMobReport(w, vnum, mob.ShortDesc))
 	case "o":
 		obj, ok := w.GetObjPrototype(vnum)
@@ -506,6 +513,12 @@ func cmdCheckload(s *Session, args []string) error {
 			s.Send("That object does not exist.\r\n")
 			return nil
 		}
+		// C do_checkload reads an object before reporting (src/act.wizard.c:
+		// 3853-3855): read_object applies the ITEM_RARE affect variance
+		// (src/db.c:1899-1925), which burns dice, and only the short
+		// description is kept. The read must happen for the draw count to match
+		// (R3a).
+		w.ReadDisposableObject(vnum)
 		s.Send(checkloadObjectReport(w, vnum, obj.ShortDesc))
 	default:
 		s.Send("Usage: checkload { obj | mob } <number>\r\n")
@@ -584,12 +597,16 @@ func checkloadObjectReport(w *game.World, vnum int, name string) string {
 	for _, zone := range w.GetAllZones() {
 		for _, cmd := range zone.Commands {
 			if cmd.Command == "O" || cmd.Command == "E" || cmd.Command == "G" {
-				obj, ok := w.GetObjPrototype(cmd.Arg1)
+				// C check_load reads a throwaway object for every O/E/G command
+				// and keeps only its load percentage and short description
+				// (src/act.wizard.c:3729-3732). The read's ITEM_RARE variance
+				// burns dice, so it has to happen here (R3a).
+				obj, ok := w.ReadDisposableObject(cmd.Arg1)
 				if !ok {
 					continue
 				}
 				lastObjectVNum = obj.VNum
-				lastObjectName = obj.ShortDesc
+				lastObjectName = obj.GetShortDesc()
 			}
 			if cmd.Command == "M" || cmd.Command == "O" {
 				lastRoomVNum = cmd.Arg3
@@ -597,10 +614,14 @@ func checkloadObjectReport(w *game.World, vnum int, name string) string {
 
 			switch cmd.Command {
 			case "M":
-				mob, ok := w.GetMobPrototype(cmd.Arg1)
+				// C reads a throwaway mobile for every M command and keeps only
+				// GET_NAME — the short description (src/act.wizard.c:3750-3753,
+				// src/utils.h:275-276). The read rolls the hit dice and gold
+				// variance (src/db.c:1748-1773), so it has to happen (R3a).
+				mob, ok := w.ReadDisposableMob(cmd.Arg1)
 				if ok {
 					lastMobVNum = mob.VNum
-					lastMobName = mob.ShortDesc
+					lastMobName = mob.GetShortDesc()
 				}
 			case "O":
 				if cmd.Arg1 != vnum {
