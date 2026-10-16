@@ -1217,17 +1217,26 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		return false
 	}
 	self := tch != nil && victRef != nil && *victRef == meRef
-	if (!self && info.HasTarget(spells.TarSelfOnly)) || (self && info.HasTarget(spells.TarNotSelf)) {
+	power := !me.IsNPC() && (me.GetClass() == ClassPsionic || me.GetClass() == ClassMystic)
+	if !self && info.HasTarget(spells.TarSelfOnly) {
 		message := "You can only cast this spell upon yourself!\r\n"
-		if !me.IsNPC() && (me.GetClass() == ClassPsionic || me.GetClass() == ClassMystic) {
+		if power {
 			message = "You can only will this power upon yourself!\r\n"
+		}
+		me.SendMessage(message)
+		return false
+	}
+	if self && info.HasTarget(spells.TarNotSelf) {
+		message := "You cannot cast this spell upon yourself!\r\n"
+		if power {
+			message = "You cannot will this power upon yourself!\r\n"
 		}
 		me.SendMessage(message)
 		return false
 	}
 	if info.HasRoutine(spells.RoutineGroups) && !body.IsAffected(affGroup) {
 		message := "You can't cast this spell if you're not in a group!\r\n"
-		if !me.IsNPC() && (me.GetClass() == ClassPsionic || me.GetClass() == ClassMystic) {
+		if power {
 			message = "You cannot use this power if you are not in a group!\r\n"
 		}
 		me.SendMessage(message)
