@@ -54,6 +54,34 @@ drain:
 	}
 }
 
+func TestStatPlayerPoofFieldsMatchImmortalGate(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	s.player.SetLevel(LVL_IMMORT)
+	s.player.PoofIn = "a swirl of arrival"
+	s.player.PoofOut = "a cloud of departure"
+
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
+	out := drainSessionOutput(t, s)
+	if want := "Poofin:a swirl of arrival\r\nPoofout:a cloud of departure\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("immortal stat poof fields missing: got %q, want substring %q", out, want)
+	}
+
+	s.player.PoofIn, s.player.PoofOut = "", ""
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
+	out = drainSessionOutput(t, s)
+	if want := "Poofin:None\r\nPoofout:None\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("immortal stat poof defaults missing: got %q, want substring %q", out, want)
+	}
+
+	s.player.SetLevel(LVL_IMMORT - 1)
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
+	out = drainSessionOutput(t, s)
+	if strings.Contains(out, "Poofin:") || strings.Contains(out, "Poofout:") {
+		t.Fatalf("mortal stat report included immortal poof fields: %q", out)
+	}
+}
+
 func TestStatMobileEquipmentPoints(t *testing.T) {
 	w, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}}, Mobs: []parser.Mob{{VNum: 300, ShortDesc: "a guard", Keywords: "guard", AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11, Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 7}}}, Objs: []parser.Obj{{VNum: 200, TypeFlag: game.ITEM_ARMOR, Values: [4]int{10}, Affects: []parser.ObjAffect{{Location: 18, Modifier: 4}, {Location: 19, Modifier: 3}, {Location: 20, Modifier: -2}}}}})
 	if err != nil {

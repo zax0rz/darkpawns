@@ -306,6 +306,18 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 
 	s.Send("PRF: " + wizardPreferenceFlags(preferenceFlags, autoExit) + "\r\n")
 	s.Send("Racial Hatreds: None None None None None\r\n")
+	if p.GetLevel() >= LVL_IMMORT {
+		poofIn, poofOut := p.PoofIn, p.PoofOut
+		if poofIn == "" {
+			poofIn = "None"
+		}
+		if poofOut == "" {
+			poofOut = "None"
+		}
+		// C prints the configured arrival/departure strings for immortal PCs
+		// (src/act.wizard.c:905), including the literal fallback "None".
+		s.Send(fmt.Sprintf("Poofin:%s\r\nPoofout:%s\r\n", poofIn, poofOut))
+	}
 	eqCount := 0
 	if p.Equipment != nil {
 		for _, item := range p.Equipment.Slots {

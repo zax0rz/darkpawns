@@ -8,6 +8,7 @@
 # depth-case: stat.room-success
 # depth-case: stat.mob-success
 # depth-case: stat.player-success
+# depth-case: stat.player-immortal-poof-fields
 # depth-case: stat.player-default-position
 # depth-case: stat.file-success
 # depth-case: stat.object-success
@@ -91,6 +92,9 @@ vnum obj bread
 stat room
 stat mob orc
 stat player Wizardvalidpeer
+poofin a swirl of arrival
+poofout a cloud of departure
+stat player Wizardvalid
 stat file Wizardvalidpeer
 stat object bread
 stat bread

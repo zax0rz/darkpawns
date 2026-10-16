@@ -102,7 +102,7 @@ src/act.wizard.c:880	do_stat_character	proven	stat.mob-success	The cited manifes
 src/act.wizard.c:886	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:889	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:898	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:905	do_stat_character	gap-reachable		Poofin/poofout report is conditional on an immortal player; the valid player fixture is mortal.
+src/act.wizard.c:905	do_stat_character	proven	stat.player-immortal-poof-fields	The live Implementor sets both poof strings through registered commands and then stats self, reaching C's immortal-player report line (R1/R2/R5e/R5h).
 src/act.wizard.c:911	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:924	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:931	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
