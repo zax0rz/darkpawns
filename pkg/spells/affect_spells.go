@@ -3810,7 +3810,14 @@ func castMirrorImage(level int, ch, world interface{}) {
 		}
 
 		sendToCaster(ch, "You divide yourself in two!\r\n")
-		sendToRoom("$n divides $mself in two!\r\n", ch, nil, nil, "", "", world)
+		type roomActer interface {
+			SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
+		}
+		if acter, ok := world.(roomActer); ok {
+			// C src/spells.c:1153 uses act(..., TRUE, ..., TO_ROOM), so retain
+			// the canonical act substitutions and invisibility filtering.
+			acter.SpellActToRoom(ch, nil, "$n divides $mself in two!", true)
+		}
 	}
 }
 

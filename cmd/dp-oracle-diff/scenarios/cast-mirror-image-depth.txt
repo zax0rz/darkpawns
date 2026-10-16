@@ -1,0 +1,71 @@
+# The caster's pre-entry description and class title satisfy the early-return
+# gates at src/spells.c:1141-1143; a separate room witness checks TO_ROOM.
+# depth-case: spell.mirror-image-output-audience
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Mirror
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+
+[setup:port]
+Mirror
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+
+[setup:oracle:peer]
+Mirrorpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mirrorpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+2
+A silver-haired figure with a calm gaze.
+/s
+1
+goto 8105
+teleport Mirrorpeer 8105
+cast 'mirror image'

@@ -162,6 +162,50 @@ func TestCastCoCOutputAndRoomAudience(t *testing.T) {
 	}
 }
 
+type mirrorImageOutputMob struct{ name string }
+
+func (m *mirrorImageOutputMob) SetName(name string) { m.name = name }
+
+type mirrorImageOutputWorld struct {
+	actor         interface{}
+	format        string
+	hideInvisible bool
+	calls         int
+	vnum          int
+	room          int
+	level         int
+	mob           *mirrorImageOutputMob
+}
+
+func (w *mirrorImageOutputWorld) SpawnMobWithLevelI(vnum, room, level int) (interface{}, error) {
+	w.vnum, w.room, w.level = vnum, room, level
+	w.mob = &mirrorImageOutputMob{}
+	return w.mob, nil
+}
+
+func (w *mirrorImageOutputWorld) SpellActToRoom(actor, _ interface{}, format string, hideInvisible bool) bool {
+	w.actor, w.format, w.hideInvisible = actor, format, hideInvisible
+	w.calls++
+	return true
+}
+
+func TestCastMirrorImageOutputAndRoomAudience(t *testing.T) {
+	caster := &mockSpellsChar{name: "Mirror", level: 22, roomVNum: 8105}
+	world := &mirrorImageOutputWorld{}
+
+	ExecuteManualSpell(SpellMirrorImage, caster.level, caster, nil, nil, "", world)
+
+	if got, want := strings.Join(caster.messages, ""), "You divide yourself in two!\r\n"; got != want {
+		t.Fatalf("mirror image caster output = %q, want exact C bytes %q", got, want)
+	}
+	if world.vnum != 69 || world.room != caster.roomVNum || world.level != caster.level || world.mob == nil || world.mob.name != caster.name {
+		t.Fatalf("mirror image clone = {vnum:%d room:%d level:%d mob:%+v}, want named clone vnum 69 in caster room", world.vnum, world.room, world.level, world.mob)
+	}
+	if world.calls != 1 || world.actor != caster || world.format != "$n divides $mself in two!" || !world.hideInvisible {
+		t.Fatalf("mirror image room act = {calls:%d actor:%v format:%q hideInvisible:%t}, want one C-compatible TO_ROOM act", world.calls, world.actor, world.format, world.hideInvisible)
+	}
+}
+
 type transformationOutputPlayer struct {
 	mockSpellsChar
 	playerFlags uint64
