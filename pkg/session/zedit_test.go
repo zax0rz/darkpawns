@@ -410,3 +410,26 @@ func TestZeditNewZoneTemplatesAndIndexInsertion(t *testing.T) {
 		}
 	}
 }
+
+func TestZeditNewZoneRefusals(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		number string
+		want   string
+	}{
+		{name: "maximum", number: "327", want: "326 is the highest zone allowed.\r\n"},
+		{name: "overlap", number: "30", want: "A zone already covers that area.\r\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := makeZeditTestWorld(t)
+			m := newTestManager(t, w, nil)
+			s := makeZeditTestSession(t, m, "Zeditimpl", LVL_HIGOD)
+			if err := cmdZedit(s, []string{"new", tc.number}); err != nil {
+				t.Fatal(err)
+			}
+			if got := readMsgText(t, s); got != tc.want {
+				t.Fatalf("new-zone refusal = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}

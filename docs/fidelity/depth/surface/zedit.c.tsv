@@ -1,6 +1,6 @@
 c_site	function	classification	case_ids	notes
-src/zedit.c:117	zedit_new_zone	gap-reachable	-	The maximum-zone refusal is reachable through the new-zone entry, but no existing proof reaches this guard.
-src/zedit.c:127	zedit_new_zone	gap-reachable	-	The overlapping-zone refusal is reachable through the new-zone entry, but no existing proof reaches this guard.
+src/zedit.c:117	zedit_new_zone	proven	zedit.new-zone-refusals	TestZeditNewZoneRefusals drives the high-god ZEDIT handler with `new 327` and asserts the maximum-zone refusal.
+src/zedit.c:127	zedit_new_zone	proven	zedit.new-zone-refusals	TestZeditNewZoneRefusals drives the high-god ZEDIT handler with `new 30` and asserts the overlap refusal.
 src/zedit.c:227	zedit_new_zone	proven	zedit.new-zone-templates	TestZeditNewZoneTemplatesAndIndexInsertion asserts the exact Zone created response on the successful new-zone path.
 src/zedit.c:700	zedit_disp_menu	proven	zedit.no-argument-current-room;zedit.main-invalid;zedit.menu-colors-on-raw;zedit.menu-colors-off-raw	The initial menu send is reached by entry, invalid-choice redraw, and raw color-on/off oracle scenarios.
 src/zedit.c:720	zedit_disp_comtype	proven	zedit.new-at-end	The boundary scenario appends at the end, chooses D, and compares the command-type menu before continuing.
