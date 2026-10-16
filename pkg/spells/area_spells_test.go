@@ -81,9 +81,9 @@ func TestCastHellfire_BlocksPeacefulRoom(t *testing.T) {
 
 func TestCastHellfire_DealsAreaDamage_InstakillsLowLevel_SkipsCasterAndGroup(t *testing.T) {
 	caster := &mockSpellsChar{name: "Caster", level: 30, roomVNum: 100, inGroup: true}
-	victim := &mockSpellsChar{name: "Victim", level: 30, maxHP: 200, hp: 200}
-	weakling := &mockSpellsChar{name: "Weakling", level: 3, maxHP: 50, hp: 50}
-	ally := &mockSpellsChar{name: "Ally", level: 30, maxHP: 200, hp: 200, inGroup: true, following: "Caster"}
+	victim := &mockSpellsChar{name: "Victim", level: 30, roomVNum: 100, maxHP: 200, hp: 200}
+	weakling := &mockSpellsChar{name: "Weakling", level: 3, roomVNum: 100, maxHP: 50, hp: 50}
+	ally := &mockSpellsChar{name: "Ally", level: 30, roomVNum: 100, maxHP: 200, hp: 200, inGroup: true, following: "Caster"}
 
 	world := &mockAreaWorld{
 		room:  &parser.Room{},

@@ -1,0 +1,183 @@
+# Room 3065's live oncmd invokes silent lua_spell to enter call_magic directly;
+# level-5, level-4, and level-31 room peers plus a same-zone descriptor expose
+# every non-peaceful Hellfire output branch (src/spells.c:712-761).
+# depth-case: spell.hellfire-area-audience-levels
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 3065 4 off
+
+[lua-script room/30/pattern_3065.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say" or what ~= "hellfire") then
+return FALSE
+end
+spell(nil, nil, 58, 0)
+return TRUE
+end
+
+[setup:oracle]
+Hellcaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hellcaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mid]
+Hellmid
+Y
+midpass
+midpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mid]
+Hellmid
+y
+midpass
+midpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:low]
+Helllow
+Y
+lowpass
+lowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:low]
+Helllow
+y
+lowpass
+lowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:imm]
+Hellimm
+Y
+immpass
+immpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:imm]
+Hellimm
+y
+immpass
+immpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:zone]
+Hellzone
+Y
+zonepass
+zonepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:zone]
+Hellzone
+y
+zonepass
+zonepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 3065
+teleport Hellmid 3065
+teleport Helllow 3065
+teleport Hellimm 3065
+teleport Hellzone 3064
+set Hellmid level 5
+set Hellmid maxhit 30000
+set Hellmid hit 30000
+set Helllow level 4
+set Helllow maxhit 30000
+set Helllow hit 30000
+set Hellimm level 31
+set Hellcaster class mage
+set Hellcaster maxmana 5000
+set Hellcaster mana 5000
+set Hellcaster dex 0
+skillset Hellcaster 'hellfire' 100
+set Hellcaster level 31
+
+[probe]
+say hellfire

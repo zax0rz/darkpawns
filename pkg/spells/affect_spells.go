@@ -2918,7 +2918,8 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 // castHellfire ports src/spells.c spell_hellfire (lines 701-767).
 // AoE fire damage. DEX check can knock targets to sitting.
 // Uses fixed dice (12d5) matching C source, not level-scaled dice.
-// C bug: iterates character_list instead of room people (inefficient but functionally same).
+// C iterates the global character_list, so preserve its ordering before the
+// source's same-room predicate; room-entry order is not equivalent here.
 func castHellfire(level int, ch, world interface{}) {
 	w, ok := world.(worldAoe)
 	if !ok {
@@ -2940,15 +2941,21 @@ func castHellfire(level int, ch, world interface{}) {
 	}
 
 	dam := dice(12, 5) + (2 * level) - 10
-	if dam < 1 {
-		dam = 1
+	casterDex := 0
+	if dexGetter, ok := ch.(interface{ GetDex() int }); ok {
+		casterDex = dexGetter.GetDex()
 	}
 
 	sendToCaster(ch, "The bowels of hell open beneath your feet!!\r\n")
+	if zoneSender, ok := world.(interface{ SendToZone(int, string) }); ok {
+		zoneSender.SendToZone(roomVNum, "The shrieks of demons accompany the sounds of fire..\r\n")
+	}
+	spellActToRoom(world, ch, "$n conjures the flames of hell upon $s enemies!!", true)
 
-	// Dice function
-	// dice(num, sides) — need this
 	chars := w.GetAllCharsInRoom(roomVNum)
+	if ordered, ok := world.(interface{ GetAllCharsInCharacterListOrder() []interface{} }); ok {
+		chars = ordered.GetAllCharsInCharacterListOrder()
+	}
 	for _, c := range chars {
 		if c == ch {
 			continue
@@ -2957,10 +2964,7 @@ func castHellfire(level int, ch, world interface{}) {
 		if !ok {
 			continue
 		}
-		// Skip immortals. C spell_hellfire only reaches a target when
-		// (GET_LEVEL(tmp_victim) < LEVEL_IMMORT) || IS_NPC(tmp_victim)
-		// (src/spells.c:727).
-		if nc, ok := c.(npcChecker2); ok && !nc.IsNPC() && cn.GetLevel() >= combat.LVL_IMMORT {
+		if cn.GetRoomVNum() != roomVNum {
 			continue
 		}
 		// Skip grouped
@@ -2968,30 +2972,52 @@ func castHellfire(level int, ch, world interface{}) {
 			continue
 		}
 
-		// C source: spells.c:729-756 — level <= 4 takes GET_MAX_HIT*12 (instant kill)
+		isNPC := false
+		if nc, ok := c.(npcChecker2); ok {
+			isNPC = nc.IsNPC()
+		}
+		if cn.GetLevel() >= combat.LVL_IMMORT && !isNPC {
+			castHellfireActToVictim(world, ch, c, "The flames of hell spring up around you!!\n\r")
+			continue
+		}
+
 		if cn.GetLevel() <= 4 {
-			if vn, ok := c.(interface{ SendMessage(string) }); ok {
-				vn.SendMessage("The fires of hell overcome you!!\r\n")
-			}
+			castHellfireActToVictim(world, ch, c, "The fires of hell overcome you!!")
+			castHellfireActNotVictim(world, ch, c, "The soul of $N is charred by the flames of hell!", false)
 			w.DoSpellDamage(ch, c, cn.GetMaxHP()*12, "hellfire")
 		} else {
-			// Level > 4: normal damage
-			if vn, ok := c.(interface{ SendMessage(string) }); ok {
-				vn.SendMessage("The fires of hell bring blisters on your skin!\r\n")
+			castHellfireActToVictim(world, ch, c, "The fires of hell bring blisters on your skin!!\n\r")
+			castHellfireActNotVictim(world, ch, c, "The fires of hell scorch the skin of $N!\r\n", false)
+			// C source: spells.c:737-742 uses number(1, 20) before the damage call.
+			// #nosec G404 — game RNG, not cryptographic
+			if dprng.Number(1, 20) > casterDex {
+				cn.SetPosition(5) // POS_SITTING
+				castHellfireActToVictim(world, ch, c, "The fires of hell bring you to your knees!\r\n")
+				castHellfireActNotVictim(world, ch, c, "The fires of hell bring $N to $S knees!\r\n", false)
 			}
 			w.DoSpellDamage(ch, c, dam, "hellfire")
-
-			// DEX-based knockdown to POS_SITTING — C source: spells.c:748-754
-			// if (number(0, 25) > GET_DEX(victim)) SET_POS(victim, POS_SITTING)
-			// POS_SITTING = 5 in combat/formulas.go
-			// #nosec G404 — game RNG, not cryptographic
-			if dprng.Number(0, 25) > cn.GetDex() {
-				cn.SetPosition(5) // POS_SITTING
-				if vn, ok := c.(interface{ SendMessage(string) }); ok {
-					vn.SendMessage("The force of the blast knocks you off your feet!\r\n")
-				}
-			}
 		}
+	}
+}
+
+func castHellfireActToVictim(world, ch, victim interface{}, format string) {
+	type victimActer interface {
+		SpellActToVictim(caster, target interface{}, format string) bool
+	}
+	if acter, ok := world.(victimActer); ok && acter.SpellActToVictim(ch, victim, format) {
+		return
+	}
+	if sender, ok := victim.(interface{ SendMessage(string) }); ok {
+		sender.SendMessage(format + "\r\n")
+	}
+}
+
+func castHellfireActNotVictim(world, ch, victim interface{}, format string, hideInvisible bool) {
+	type notVictimActer interface {
+		SpellActNotVict(caster, target interface{}, format string, hideInvisible bool) bool
+	}
+	if acter, ok := world.(notVictimActer); ok {
+		acter.SpellActNotVict(ch, victim, format, hideInvisible)
 	}
 }
 

@@ -1,0 +1,55 @@
+# A level-31 room oncmd invokes silent lua_spell, reaching C call_magic without
+# the command peaceful refusal and then proving spell_hellfire's own guard.
+# depth-case: spell.hellfire-peaceful-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 3065 4 on
+
+[lua-script room/30/pattern_3065.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say" or what ~= "hellfire") then
+return FALSE
+end
+spell(nil, nil, 58, 0)
+return TRUE
+end
+
+[setup:oracle]
+Helllua
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Helllua
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 3065
+set Helllua class mage
+set Helllua level 31
+
+[probe]
+say hellfire

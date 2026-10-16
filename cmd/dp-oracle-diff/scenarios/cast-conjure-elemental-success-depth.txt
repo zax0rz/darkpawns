@@ -1,0 +1,84 @@
+# Room 3065's live oncmd invokes silent lua_spell for slot 105 (Conjure
+# Elemental) with an earth brazier fixture. C currently ends before output at
+# spell_conjure_elemental's NULL comp dereference (src/spells.c:1055; R1a).
+# depth-case: spell.conjure-elemental-success-output
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-obj 81 99 3065 27
+
+[lua-script room/30/pattern_3065.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say" or what ~= "conjure") then
+return FALSE
+end
+spell(nil, nil, 105, 0)
+return TRUE
+end
+
+[setup:oracle]
+Conjurer
+Y
+conjpass
+conjpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Conjurer
+y
+conjpass
+conjpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Conjpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Conjpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 3065
+teleport Conjpeer 3065
+set Conjurer level 31
+
+[probe]
+say conjure
