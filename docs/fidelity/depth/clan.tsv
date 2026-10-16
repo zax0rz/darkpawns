@@ -9,6 +9,7 @@ do_clan	clan	clan.rename-entry-gates	D1	command	oracle-green	clan-depth	clan.c:1
 do_clan	clan	clan.bank-immortal-path	D4	state	oracle-green	clan-depth	clan.c:880-985	Immortal amount-plus-clan parsing and treasury deposit/withdraw state match.
 do_clan	clan	clan.bank-refusal-gates	D2	command	oracle-green	clan-callsite-gaps	src/clan.c:903-915	Real dispatch covers the level-31 clan-privilege refusal and the clan-god unknown-clan refusal before bank parsing.
 do_clan	clan	clan.set-money	D2	state	oracle-green	clan-depth	clan.c:988-1057	Application-fee and dues validation and updates match.
+do_clan	clan	clan.money-output-gates	D2	command	oracle-green	clan-money-output-gates-depth	clan.c:988-1040,1523-1531; interpreter.c:1372-1378	Registered clan commands prove the clanless, below-clan-god, unknown-clan, low-setfees-rank, and over-10,000 output branches. The empty-amount output is unreachable: initial empty input returns through send_clan_format, and the immortal path only reaches the clan lookup after half_chop provides a nonempty first token (R1/R2/R5e/R5h).
 do_clan	clan	clan.set-applev	D2	state	oracle-green	clan-depth	clan.c:1272-1329	Application-level validation and update path match.
 do_clan	clan	clan.set-ranks	D4	state	oracle-green	clan-depth	clan.c:1060-1162	Immortal clan/rank parsing and hierarchy update path match.
 do_clan	clan	clan.set-title	D4	state	oracle-green	clan-depth	clan.c:1164-1220	Index/rank/title validation and exact Done path match.

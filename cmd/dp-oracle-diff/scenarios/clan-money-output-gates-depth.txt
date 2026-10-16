@@ -1,0 +1,141 @@
+# Prove the five reachable do_clan_money output branches through registered
+# clan command dispatch; the empty-amount branch is source-unreachable after
+# the nonempty argument gate and the immortal amount/clan half-chop.
+# depth-case: clan.money-output-gates
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:applicant]
+Clanapply
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:applicant]
+Clanapply
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:lowgod]
+Clanimmlow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:lowgod]
+Clanimmlow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Clanmate level 1
+set player Clanapply level 1
+set player Clanimmlow level 31
+goto 8162
+force Clanmate goto 8162
+force Clanapply goto 8162
+force Clanimmlow goto 8162
+clan create Clanmate Wolves
+clan set ranks 3 Wolves
+clan set applev 1 Wolves
+
+[probe]
+force Clanapply clan set dues 5
+force Clanapply clan apply Wolves
+force Clanmate clan enroll Clanapply
+force Clanimmlow clan set dues 5 Wolves
+clan set dues 5 Missing
+force Clanapply clan set dues 5
+clan set dues 10001 Wolves

@@ -119,13 +119,13 @@ src/clan.c:964	do_clan_bank	proven	mudlog.local-clan-withdraw	The named proof sc
 src/clan.c:970	do_clan_bank	proven	clan.mortal-bank-output-gates	A member with zero gold reaches the personal-funds refusal for a one-coin deposit (R1/R2/R5e/R5h).
 src/clan.c:975	do_clan_bank	proven	clan.bank-immortal-path;clan.mortal-bank	The named proof scenario executes this C output call.
 src/clan.c:980	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
-src/clan.c:1002	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1008	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1014	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1020	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1025	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1002	do_clan_money	proven	clan.money-output-gates	The isolated registered-command case reaches this branch while Clanapply is clanless (R1/R2/R5e/R5h).
+src/clan.c:1008	do_clan_money	proven	clan.money-output-gates	The level-31 Clanimmlow target reaches the below-LVL_CLAN_GOD refusal through force and clan dispatch (R1/R2/R5e/R5h).
+src/clan.c:1014	do_clan_money	proven	clan.money-output-gates	The clan God supplies a valid amount and unknown clan name to the registered dues command (R1/R2/R5e/R5h).
+src/clan.c:1020	do_clan_money	proven	clan.money-output-gates	The enrolled rank-1 Clanapply is below the clan's CP_SET_FEES rank 3 and reaches this refusal (R1/R2/R5e/R5h).
+src/clan.c:1025	do_clan_money	unreachable		The initial empty-argument check at src/clan.c:996-998 returns before this test. On the immortal path, src/interpreter.c:1372-1378 splits the amount and clan; a successful clan lookup requires a nonempty clan token in arg2 and a nonempty amount token in arg1, which is then copied back to arg. Mortal dispatch never overwrites its nonempty arg (src/clan.c:989-1026,1523-1531) (R1/R5e).
 src/clan.c:1030	do_clan_money	proven	clan.mortal-money-gates	The named proof scenario executes this C output call.
-src/clan.c:1038	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1038	do_clan_money	proven	clan.money-output-gates	The clan God sets dues to 10,001, reaching the upper-range refusal after numeric parsing (R1/R2/R5e/R5h).
 src/clan.c:1045	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
 src/clan.c:1049	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
 src/clan.c:1052	do_clan_money	unreachable		Unreachable default action: do_clan_money is called only with CM_DUES or CM_APPFEE from src/clan.c:1523-1531.
