@@ -1,5 +1,8 @@
 # depth-case: boards.immortal-read-god
 # depth-case: boards.immortal-read-mortal-refused
+# depth-case: boards.write-immortal-board-refused
+# depth-case: boards.read-immortal-numeric-refused
+# depth-case: boards.remove-immortal-level-refused
 # C board_info[] gives the immortal board (obj 8098, reset into room 1204)
 # READ_LVL = WRITE_LVL = LVL_IMMORT (src/boards.c:96; src/structs.h:620). The
 # port carried a foreign 50, so the level-40 Implementor was refused.
@@ -77,3 +80,9 @@ read board
 read 1
 look board
 send:mortal read board
+send:mortal read 1
+send:mortal write mortal post
+write immortal post
+immortal board body
+@
+send:mortal remove 1

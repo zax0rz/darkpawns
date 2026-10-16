@@ -1,5 +1,9 @@
 # depth-case: boards.list-empty
 # depth-case: boards.read-empty
+# depth-case: boards.write-empty-headline
+# depth-case: boards.read-past-end
+# depth-case: boards.remove-empty
+# depth-case: boards.remove-past-end
 # depth-case: boards.write-headline
 # depth-case: boards.post-body
 # depth-case: boards.revise-post
@@ -77,6 +81,8 @@ recall
 look board
 read board
 read 1
+remove 1
+write
 write depth headline
 tell Boardactor blocked while writing
 reply blocked while writing
@@ -85,6 +91,8 @@ board body
 /e1 revised body
 @
 look board
+read 2
 read 1
+remove 2
 remove 1
 look board
