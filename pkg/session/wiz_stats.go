@@ -163,8 +163,13 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	s.sendStatMobLine(fmt.Sprintf("Coins: [%9d], Bank: [%9d] (Total: %d)", mob.GetGold(), 0, mob.GetGold()))
 	s.sendStatMobLine(fmt.Sprintf("AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [%d/%d/%d/%d/%d]",
 		mob.GetAC(), mob.GetHitroll(), mob.GetDamrollPoint(), mob.GetSavingThrow(0), mob.GetSavingThrow(1), mob.GetSavingThrow(2), mob.GetSavingThrow(3), mob.GetSavingThrow(4)))
-	s.sendStatMobLine(fmt.Sprintf("Pos: %s, Fighting: %s, Attack type: hit",
-		wizardPositionName(mob.GetPosition()), wizardFightingName(mob.GetFighting())))
+	attackType := proto.BareHandAttack
+	attackName := combat.AttackHitTexts[0].Singular
+	if attackType >= 0 && attackType < len(combat.AttackHitTexts) {
+		attackName = combat.AttackHitTexts[attackType].Singular
+	}
+	s.sendStatMobLine(fmt.Sprintf("Pos: %s, Fighting: %s, Attack type: %s",
+		wizardPositionName(mob.GetPosition()), wizardFightingName(mob.GetFighting()), attackName))
 	if proto.Noise != "" {
 		color, reset := "", ""
 		if s.player != nil && s.player.GetFlags()&(1<<uint(game.PrfColor2)) != 0 {

@@ -95,7 +95,7 @@ src/act.wizard.c:827	do_stat_character	proven	stat.player-success;stat.mob-succe
 src/act.wizard.c:835	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:841	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:846	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:861	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:861	do_stat_character	proven	stat.player-success;stat.mob-success;vstat.mob-attack-type	The cited stat proof reaches the default hit label; vstat vnum 5000 reaches C's nondefault BareHandAttack=2 whip label and pins the shared report output (R1/R5e/R5h).
 src/act.wizard.c:866	do_stat_character	proven	vstat.mob-success	The valid `vstat mob 5000` report delegates to do_stat_character with nonempty Noise; the unit proof pins C_CNRM yellow and reset gating (R1/R5e/R5h).
 src/act.wizard.c:875	do_stat_character	proven	stat.player-default-position;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:880	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).

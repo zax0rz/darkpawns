@@ -13,13 +13,13 @@
 # depth-case: stat.object-success
 # depth-case: stat.object-fallback-success
 # depth-case: vstat.mob-success
+# depth-case: vstat.mob-attack-type
 # depth-case: vstat.obj-success
 
 [fixture]
 empty-players
 quiet-mobs
 spawn-mob 2109 1 8162 80
-spawn-mob 5000 1 8162 80
 spawn-obj 8010 1 8162 80
 
 [setup:oracle]
@@ -90,7 +90,6 @@ vnum mob orc
 vnum obj bread
 stat room
 stat mob orc
-stat mob scorpion
 stat player Wizardvalidpeer
 stat file Wizardvalidpeer
 stat object bread

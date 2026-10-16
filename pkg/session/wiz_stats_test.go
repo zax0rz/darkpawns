@@ -126,6 +126,33 @@ func TestStatMobNoiseColorAndHuntingMatchC(t *testing.T) {
 	}
 }
 
+func TestStatMobUsesPrototypeBareHandAttackType(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room One"}},
+		Mobs: []parser.Mob{{
+			VNum: 301, ShortDesc: "a whip guard", Keywords: "guard", BareHandAttack: 2,
+			AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11,
+			Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 1},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Alice", 1001, true)
+	mob, err := w.SpawnMob(301, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s.sendStatMob(mob)
+	out := drainSessionOutput(t, s)
+	if want := "Pos: Standing, Fighting: Nobody, Attack type: whip\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("stat attack type line = %q, want substring %q", out, want)
+	}
+}
+
 func drainSessionOutput(t *testing.T, s *Session) string {
 	t.Helper()
 	var text strings.Builder
