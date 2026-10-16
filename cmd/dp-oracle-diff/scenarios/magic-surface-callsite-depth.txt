@@ -1,0 +1,120 @@
+# depth-case: magic.dispel-protected-target-name
+# depth-case: magic.create-food-message-pair
+# depth-case: magic.smokescreen-room-pair
+# depth-case: magic.points-room-pair
+# depth-case: magic.animate-dead-message-pair
+# Real player-command dispatch for four shared magic.c output paths. The good
+# target drives SPELL_DISPEL_EVIL's protected-target act; create food exercises
+# object-description substitution and its room audience; smokescreen exercises
+# MAG_MASSES' caster/room pair; cure light exercises MAG_POINTS' victim and
+# TO_NOTVICT room output. C paths: spell_parser.c:1040-1110; magic.c:735,
+# 752, 1527-1529, 1729-1736, 1767-1769, 1997-1998.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Casttarget]
+Casttarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Casttarget]
+Casttarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Castobserve]
+Castobserve
+Y
+obspass
+obspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Castobserve]
+Castobserve
+y
+obspass
+obspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Casttarget 8105
+teleport Castobserve 8105
+set Casttarget alignment 1000
+nohassle
+kill trainee
+
+[probe]
+cast 'dispel evil' Casttarget
+~dpclock pulse 20
+cast 'create food'
+~dpclock pulse 20
+cast 'smokescreen'
+~dpclock pulse 20
+cast 'cure light' Casttarget
+~dpclock pulse 20
+cast 'animate dead' corpse
+~dpclock pulse 20

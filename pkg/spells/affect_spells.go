@@ -129,10 +129,18 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			npcRetaliate(victim, ch)
 			return
 		}
-		pending = append(pending, engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 2, -(4+reag), "blindness"), engine.NewAffectDirect(SpellBlindness, engine.ApplyNone, 2+reag, 40, engine.AFFBlind, "blindness"))
-		toVictim = "You have been blinded!\r\n"
-		toRoom = "$n seems to be blinded!\r\n"
-		toSelf = "A streak of blackness courses from your hand!\r\n"
+		// C types both affects with spellnum and gives both AFF_BLIND:
+		// hitroll -(4+reag) for 2, and AC +40 for 2+reag (src/magic.c:879,
+		// 949-957). Only SPELL_BLINDNESS speaks; smokescreen's mag_masses
+		// announces once and blinds silently (src/magic.c:959-964).
+		pending = append(pending,
+			engine.NewAffectDirect(spellNum, engine.ApplyHitroll, 2, -(4+reag), engine.AFFBlind, "blindness"),
+			engine.NewAffectDirect(spellNum, engine.ApplyAC, 2+reag, 40, engine.AFFBlind, "blindness"))
+		if spellNum == SpellBlindness {
+			toVictim = "You have been blinded!\r\n"
+			toRoom = "$n seems to be blinded!\r\n"
+			toSelf = "A streak of blackness courses from your hand!\r\n"
+		}
 	case SpellCurse:
 		if saved {
 			sendToCaster(ch, "Nothing seems to happen.\r\n")
@@ -634,14 +642,33 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 		}
 	case SpellCureCritic:
 		sendToVictim(victim, "You feel a lot better!\r\n")
-	case SpellHeal, SpellMassHeal:
+		if ch != victim {
+			sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+		}
+	case SpellHeal:
+		if isPsiMystic {
+			sendToVictim(victim, "You focus your mind on healing your body..\r\n")
+			sendToVictim(victim, "Your wounds mend themselves!\r\n")
+		} else {
+			sendToVictim(victim, "A warm feeling floods your body.\r\n")
+			if ch != victim {
+				sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+			}
+		}
+	case SpellMassHeal:
 		sendToVictim(victim, "A warm feeling floods your body.\r\n")
+		if ch != victim {
+			sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+		}
 	case SpellCellAdjustment:
 		if isPsiMystic {
 			sendToVictim(victim, "You focus your mind on healing your body..\r\n")
 			sendToVictim(victim, "Your wounds mend themselves!\r\n")
 		} else {
 			sendToVictim(victim, "A warm feeling floods your body.\r\n")
+			if ch != victim {
+				sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+			}
 		}
 	case SpellVitality:
 		sendToVictim(victim, "You feel vitalized!\r\n")
@@ -651,7 +678,7 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 		if ch == victim {
 			sendToVictim(victim, "Your wounds mend beneath your hands!\r\n")
 		} else {
-			sendToCaster(ch, "Your wounds start to heal beneath $n's hands!\r\n")
+			sendAct("Your wounds start to heal beneath $n's hands!\r\n", ch, nil, victim, world)
 		}
 	}
 
@@ -838,6 +865,7 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 	switch spellNum {
 	case SpellSmokescreen:
 		sendToCaster(ch, "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.\r\n")
+		sendAffectRoom(ch, nil, "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of $n!\r\n", world)
 	}
 
 	// Apply to each non-grouped character in the room
@@ -1037,7 +1065,10 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 			cf.CharmAndFollowI(mob, ch)
 		}
 
-		sendToCaster(ch, "The corpse starts to twitch, then stands with a life of its own!\r\n")
+		// C indexes mag_summon_msgs with fmsg, which remains zero for
+		// SPELL_ANIMATE_DEAD; act() therefore sends one CRLF to the room.
+		sendAffectRoom(ch, nil, "\r\n", world)
+		sendToCaster(ch, "The corpse starts to twitch, then stands with a life of it's own!\r\n")
 	}
 }
 
@@ -1051,37 +1082,56 @@ func MagCreations(level int, ch interface{}, spellNum int, world interface{}) {
 	case SpellCreateFood:
 		// Create food spawns magic mushrooms (vnum 8062)
 		type roomGetter interface{ GetRoomVNum() int }
-		rg, ok := ch.(roomGetter)
-		if !ok {
+		if _, ok := ch.(roomGetter); !ok {
 			return
 		}
-		roomVNum := rg.GetRoomVNum()
 
-		type objSpawner interface {
-			SpawnObject(vnum, roomVNum int) (interface{}, error)
+		type objectCreator interface {
+			SpawnObjectToPlayerInventoryI(vnum int, player interface{}) (interface{}, error)
 		}
-		w, ok := world.(objSpawner)
+		w, ok := world.(objectCreator)
 		if !ok {
 			return
 		}
 
-		obj, err := w.SpawnObject(8062, roomVNum) // OBJ_MAGIC_MUSHROOMS = 8062
+		obj, err := w.SpawnObjectToPlayerInventoryI(8062, ch)
 		if err != nil {
 			sendToCaster(ch, "I seem to have goofed.\r\n")
 			return
 		}
 
-		// Give to caster
-		type inventoryAdder interface{ AddItemToInventory(interface{}) error }
-		if ia, ok := ch.(inventoryAdder); ok {
-			if err := ia.AddItemToInventory(obj); err != nil {
-				sendToCaster(ch, "You can't carry any more!\r\n")
-				return
-			}
+		type shortDescriber interface{ GetShortDesc() string }
+		desc, ok := obj.(shortDescriber)
+		if !ok {
+			return
 		}
-
-		sendToCaster(ch, "You create some magic mushrooms.\r\n")
+		sendCreatedObjectRoom(ch, obj, world)
+		sendToCaster(ch, "You create "+desc.GetShortDesc()+".\r\n")
 	}
+}
+
+func sendCreatedObjectRoom(ch, obj, world interface{}) {
+	type roomGetter interface{ GetRoomVNum() int }
+	type named interface{ GetName() string }
+	type shortDescriber interface{ GetShortDesc() string }
+	type sender interface{ SendMessage(string) }
+
+	actor, actorOK := ch.(named)
+	room, roomOK := ch.(roomGetter)
+	object, objectOK := obj.(shortDescriber)
+	w, worldOK := world.(roomIterable)
+	if !actorOK || !roomOK || !objectOK || !worldOK {
+		return
+	}
+	msg := capitalizeActMessage(actor.GetName() + " creates " + object.GetShortDesc() + ".\r\n")
+	w.ForEachPlayerInRoomInterface(room.GetRoomVNum(), func(p interface{}) {
+		if selfTarget(ch, p) {
+			return
+		}
+		if s, ok := p.(sender); ok {
+			s.SendMessage(msg)
+		}
+	})
 }
 
 // MagAlterObjs alters objects.

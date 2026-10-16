@@ -1,8 +1,27 @@
 package game
 
 import (
+	"fmt"
 	"strings"
 )
+
+// SpawnObjectToPlayerInventoryI mirrors read_object() followed by obj_to_char()
+// for the spell layer without exposing concrete game types there.
+func (w *World) SpawnObjectToPlayerInventoryI(vnum int, player interface{}) (interface{}, error) {
+	p, ok := player.(*Player)
+	if !ok || p == nil {
+		return nil, fmt.Errorf("player is required")
+	}
+	obj, err := w.SpawnObject(vnum, -1)
+	if err != nil {
+		return nil, err
+	}
+	if err := w.PlaceObjectInPlayerInventory(obj, p); err != nil {
+		w.ExtractObject(obj, -1)
+		return nil, fmt.Errorf("place spawned object in player inventory: %w", err)
+	}
+	return obj, nil
+}
 
 // GetItemsInRoom returns a snapshot copy: callers previously iterated the
 // live slice while writers mutated it under w.mu — a fatal concurrent map

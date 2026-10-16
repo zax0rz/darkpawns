@@ -2,6 +2,7 @@ package spells
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -366,6 +367,7 @@ func (m *mockCorpse) GetKeywords() string { return m.keywords }
 // mockAnimateWorld is a minimal world for testing Animate Dead.
 type mockAnimateWorld struct {
 	items             []interface{}
+	players           []interface{}
 	removed           bool
 	spawnErr          error
 	spawnedVNum       int
@@ -396,6 +398,14 @@ func (w *mockAnimateWorld) CanRaiseUndeadI(ch interface{}) (bool, string) {
 	w.canRaiseCalled = true
 	return w.canRaise, w.canRaiseMsg
 }
+
+func (w *mockAnimateWorld) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
+	for _, player := range w.players {
+		fn(player)
+	}
+}
+
+func (w *mockAnimateWorld) ForEachMobInRoomInterface(int, func(interface{})) {}
 
 func (w *mockAnimateWorld) CharmAndFollowI(mob, leader interface{}) {
 	w.charmFollowCalled = true
@@ -515,8 +525,10 @@ func TestMagSummons_AnimateDead_Success(t *testing.T) {
 	forceAnimateDeadRoll(t, 101) // pass the pfail so the spawn path runs
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
 	corpse := &mockCorpse{keywords: "corpse"}
+	observer := &mockSpellsChar{name: "Observer", roomVNum: 100}
 	world := &mockAnimateWorld{
 		items:    []interface{}{corpse},
+		players:  []interface{}{caster, observer},
 		canRaise: true,
 	}
 
@@ -539,12 +551,15 @@ func TestMagSummons_AnimateDead_Success(t *testing.T) {
 	}
 	foundSuccessMsg := false
 	for _, m := range caster.messages {
-		if strings.Contains(m, "stands with a life of its own") {
+		if strings.Contains(m, "stands with a life of it's own") {
 			foundSuccessMsg = true
 			break
 		}
 	}
 	if !foundSuccessMsg {
 		t.Errorf("expected success message, got %v", caster.messages)
+	}
+	if got := observer.messages; !reflect.DeepEqual(got, []string{"\r\n"}) {
+		t.Errorf("room message = %q, want C's blank act line", got)
 	}
 }

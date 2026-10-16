@@ -285,10 +285,9 @@ func (w *World) MoveObjectToPlayerInventory(obj *ObjectInstance, p *Player) erro
 	return w.MoveObject(obj, LocInventoryPlayer(p.Name))
 }
 
-// PlaceWizardLoadedObjectInInventory mirrors C obj_to_char() for the immortal
-// load command, which deliberately bypasses mortal carry limits. C prepends
-// each loaded object to ch->carrying, so preserve that visible list order.
-func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Player) error {
+// PlaceObjectInPlayerInventory mirrors C obj_to_char(), which prepends the
+// object without enforcing command carry limits.
+func (w *World) PlaceObjectInPlayerInventory(obj *ObjectInstance, p *Player) error {
 	if obj == nil || p == nil || p.Inventory == nil {
 		return fmt.Errorf("object and player inventory are required")
 	}
@@ -308,6 +307,12 @@ func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Playe
 	obj.RoomVNum = -1
 	obj.Location = LocInventoryPlayer(p.Name)
 	return nil
+}
+
+// PlaceWizardLoadedObjectInInventory preserves the wizard load command's
+// obj_to_char placement behavior, including its carry-limit bypass.
+func (w *World) PlaceWizardLoadedObjectInInventory(obj *ObjectInstance, p *Player) error {
+	return w.PlaceObjectInPlayerInventory(obj, p)
 }
 
 func (w *World) MoveObjectToMobInventory(obj *ObjectInstance, m *MobInstance) error {

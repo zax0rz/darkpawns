@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -238,26 +239,42 @@ func TestCast_UnknownSpellReturnsFalse(t *testing.T) {
 
 type spawnWorldMock struct {
 	spawnedVNum int
-	spawnRoom   int
+	player      interface{}
+	players     []interface{}
 }
 
-func (w *spawnWorldMock) SpawnObject(vnum, roomVNum int) (interface{}, error) {
+func (w *spawnWorldMock) SpawnObjectToPlayerInventoryI(vnum int, player interface{}) (interface{}, error) {
 	w.spawnedVNum = vnum
-	w.spawnRoom = roomVNum
-	return &mockItem{shortDesc: "a magic mushroom"}, nil
+	w.player = player
+	return &mockItem{shortDesc: "a Magic Mushroom"}, nil
 }
+
+func (w *spawnWorldMock) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
+	for _, player := range w.players {
+		fn(player)
+	}
+}
+
+func (w *spawnWorldMock) ForEachMobInRoomInterface(int, func(interface{})) {}
 
 func TestMagCreations_CreateFood(t *testing.T) {
-	caster := &roomMock{vnum: 1001}
-	world := &spawnWorldMock{}
+	caster := newAffectMale("Castero", 1001)
+	observer := newAffectMale("Observe", 1001)
+	world := &spawnWorldMock{players: []interface{}{caster, observer}}
 
 	MagCreations(10, caster, SpellCreateFood, world)
 
 	if world.spawnedVNum != 8062 {
 		t.Errorf("expected spawn vnum 8062, got %d", world.spawnedVNum)
 	}
-	if world.spawnRoom != 1001 {
-		t.Errorf("expected spawn room 1001, got %d", world.spawnRoom)
+	if world.player != caster {
+		t.Errorf("inventory placement player = %v, want caster", world.player)
+	}
+	if got, want := caster.messages, []string{"You create a Magic Mushroom.\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("caster creation message = %q, want %q", got, want)
+	}
+	if got, want := observer.messages, []string{"Castero creates a Magic Mushroom.\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("observer creation message = %q, want %q", got, want)
 	}
 }
 

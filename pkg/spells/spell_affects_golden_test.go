@@ -112,8 +112,8 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellBlindness, false, 0, nil)
 		expectAffects(t, "blindness", v, []affectExpectation{
-			{SpellBlindness, engine.ApplyHitroll, 2, -4, engine.AFFNone},
-			{SpellBlindness, engine.ApplyNone, 2, 40, engine.AFFBlind},
+			{SpellBlindness, engine.ApplyHitroll, 2, -4, engine.AFFBlind},
+			{SpellBlindness, engine.ApplyAC, 2, 40, engine.AFFBlind},
 		})
 	})
 
@@ -121,8 +121,19 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellBlindness, false, 1, nil)
 		expectAffects(t, "blindness reagent", v, []affectExpectation{
-			{SpellBlindness, engine.ApplyHitroll, 2, -5, engine.AFFNone},
-			{SpellBlindness, engine.ApplyNone, 3, 40, engine.AFFBlind},
+			{SpellBlindness, engine.ApplyHitroll, 2, -5, engine.AFFBlind},
+			{SpellBlindness, engine.ApplyAC, 3, 40, engine.AFFBlind},
+		})
+	})
+
+	t.Run("smokescreen is typed smokescreen", func(t *testing.T) {
+		// C's mag_affects sets af[i].type = spellnum (src/magic.c), so the
+		// smokescreen blind wears off as smokescreen, not blindness.
+		v := &mockAffectVictim{}
+		magAffectsApply(20, ch, v, SpellSmokescreen, false, 0, nil)
+		expectAffects(t, "smokescreen", v, []affectExpectation{
+			{SpellSmokescreen, engine.ApplyHitroll, 2, -4, engine.AFFBlind},
+			{SpellSmokescreen, engine.ApplyAC, 2, 40, engine.AFFBlind},
 		})
 	})
 
