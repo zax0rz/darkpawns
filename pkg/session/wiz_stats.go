@@ -572,6 +572,27 @@ func (s *Session) sendStatRoom() {
 	if room.Description != "" {
 		s.Send(strings.ReplaceAll(room.Description, "\n", "\r\n"))
 	}
+	if parsed := w.GetParsedWorld(); parsed != nil {
+		for i := range parsed.Rooms {
+			prototype := &parsed.Rooms[i]
+			if prototype.VNum != room.VNum || len(prototype.ExtraDescs) == 0 {
+				continue
+			}
+			line := "Extra descs:"
+			flags := s.player.GetFlags()
+			if flags&(1<<uint(game.PrfColor2)) != 0 {
+				line += "\x1b[36m" // CCCYN(ch, C_NRM), src/screen.h:45-56.
+			}
+			for _, desc := range prototype.ExtraDescs {
+				line += " " + desc.Keywords
+			}
+			if flags&(1<<uint(game.PrfColor2)) != 0 {
+				line += "\x1b[0m" // CCNRM(ch, C_NRM), src/screen.h:45-56.
+			}
+			s.Send(line + "\r\n")
+			break
+		}
+	}
 
 	players := w.GetPlayersInRoom(room.VNum)
 	sort.Slice(players, func(i, j int) bool { return players[i].GetID() > players[j].GetID() })

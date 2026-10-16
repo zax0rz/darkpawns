@@ -50,7 +50,7 @@ src/act.wizard.c:434	do_stat_room	proven	stat.room-success	The cited manifest pr
 src/act.wizard.c:436	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:438	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:440	do_stat_room	gap-reachable		No-description room branch; the stat.room-success fixture uses a room description.
-src/act.wizard.c:449	do_stat_room	gap-reachable		Room extra-description output; stat.room-success does not create an extra-description fixture.
+src/act.wizard.c:449	do_stat_room	proven	stat.room-success;stat.room-extra-description-output	The live report now visits room 8151, whose C prototype has an extra-description list, and outputs the keyword line with C's color gate (R1/R2/R5e/R5h).
 src/act.wizard.c:460	do_stat_room	gap-reachable		Long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
 src/act.wizard.c:462	do_stat_room	gap-reachable		Final long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
 src/act.wizard.c:468	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).

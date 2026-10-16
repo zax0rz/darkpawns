@@ -90,6 +90,8 @@ sethunt Wizardvalid orc
 vnum mob orc
 vnum obj bread
 stat room
+goto 8151
+stat room
 stat mob orc
 stat player Wizardvalidpeer
 poofin a swirl of arrival
