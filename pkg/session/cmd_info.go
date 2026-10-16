@@ -1049,32 +1049,16 @@ func cmdWhere(s *Session, args []string) error {
 		return sessions[i].connectedAt.After(sessions[j].connectedAt)
 	})
 
-	// C's one_argument branch searches the visible character list by name
-	// (act.informative.c:2283-2301); it does not interpret the argument as a
-	// zone filter. Keep the optional argument's player-facing format separate
-	// from the no-argument Players page.
+	// C's one_argument branch searches character_list (players and mobiles)
+	// and object_list (src/act.informative.c:2281-2306).
 	if len(args) > 0 && strings.TrimSpace(args[0]) != "" {
-		query := strings.ToLower(strings.TrimSpace(args[0]))
-		count := 0
-		var out strings.Builder
-		for _, sess := range sessions {
-			if sess.player == nil || !strings.HasPrefix(strings.ToLower(sess.player.Name), query) {
-				continue
-			}
-			room, ok := s.manager.world.GetRoom(sess.player.GetRoom())
-			if !ok || !game.CanSee(s.player, sess.player) {
-				continue
-			}
-			count++
-			fmt.Fprintf(&out, "M%3d. %-25s - [%5d]%s\r\n", count, sess.player.Name, room.VNum, room.Name)
-			if count >= 30 {
-				break
-			}
-		}
-		if count == 0 {
+		out := s.manager.world.WhereMatches(s.player, strings.Join(args, " "))
+		if out == "" {
 			s.Send("Couldn't find any such thing.\r\n")
+		} else if len(paginate(out)) > 1 {
+			PageString(s, out)
 		} else {
-			s.sendText(out.String())
+			s.sendText(out)
 		}
 		return nil
 	}

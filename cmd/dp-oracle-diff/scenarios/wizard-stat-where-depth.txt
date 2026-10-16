@@ -1,0 +1,86 @@
+# C-first depth vehicle for DP-1442 (do_stat fallback chain and do_where
+# character_list/object_list search) plus do_stat_character AFF:/SPL: lines.
+#
+# References:
+# - src/act.wizard.c:966-992 (do_stat_character AFF: effective bits and SPL: lines)
+# - src/act.wizard.c:1055-1070 (do_stat untyped 6-step fallback chain)
+# - src/act.informative.c:2203-2306 (do_where argument branch: character_list + object_list)
+
+# depth-case: stat.mob-fallback-world
+# depth-case: stat.character-spell-affects
+# depth-case: where.immort-mob-and-obj
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 1 8162 80
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Statwheregod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Statwheregod
+y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Statwherepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Statwherepeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+stat orc
+where orc
+where bread
+goto 8162
+teleport Statwherepeer 8162
+get bread
+where bread
+stat bread
+cast 'bless' Statwherepeer
+~dpclock pulse 20
+stat Statwherepeer

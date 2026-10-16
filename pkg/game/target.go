@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -257,6 +258,16 @@ func (w *World) ResolveObjectInEquipment(ch *Player, name string) (*ObjectInstan
 	return nil, false
 }
 
+// ResolveObjectInEquipmentVis mirrors get_object_in_equip_vis (src/handler.c:1384-1394).
+func (w *World) ResolveObjectInEquipmentVis(ch *Player, name string) (*ObjectInstance, bool) {
+	for _, object := range COrderedWorn(ch) {
+		if object != nil && canSeeObject(ch, object) && isnameWithAbbrevs(name, object.GetKeywords()) {
+			return object, true
+		}
+	}
+	return nil, false
+}
+
 // ResolveObjectInRoom mirrors get_obj_in_list_vis over room contents.
 func (w *World) ResolveObjectInRoom(ch *Player, name string) (*ObjectInstance, bool) {
 	if ch == nil {
@@ -278,6 +289,115 @@ func (w *World) ResolveObjectWorld(ch *Player, name string) (*ObjectInstance, bo
 	objects := w.GetAllObjects()
 	sort.Slice(objects, func(i, j int) bool { return objects[i].ID < objects[j].ID })
 	return resolveVisibleObject(ch, name, objects, false)
+}
+
+// WhereMatches implements do_where's argument branch (src/act.informative.c:2281-2306),
+// walking character_list (players and mobiles) and object_list in C's newest-first
+// order with print_object_location (src/act.informative.c:2203-2241).
+func (w *World) WhereMatches(ch *Player, rawArg string) string {
+	arg, _ := OneArgument(rawArg)
+	if arg == "" {
+		return ""
+	}
+
+	var out strings.Builder
+	num := 0
+	for _, entry := range w.cOrderedCharacters() {
+		if entry.player != nil {
+			p := entry.player
+			room, ok := w.GetRoom(p.GetRoom())
+			if !ok || !canSee(ch, p) || !isnameWithAbbrevs(arg, charKeywords(p)) {
+				continue
+			}
+			num++
+			fmt.Fprintf(&out, "M%3d. %-25s - [%5d]%s\r\n", num, p.GetName(), room.VNum, room.Name)
+		} else if entry.mob != nil {
+			mob := entry.mob
+			room, ok := w.GetRoom(mob.GetRoomVNum())
+			if !ok || !canSee(ch, mob) || !isnameWithAbbrevs(arg, charKeywords(mob)) {
+				continue
+			}
+			num++
+			fmt.Fprintf(&out, "M%3d. %-25s - [%5d]%s\r\n", num, mob.GetShortDesc(), room.VNum, room.Name)
+		}
+		if num >= 30 {
+			break
+		}
+	}
+	objects := w.GetAllObjects()
+	// C create_obj and read_object prepend to object_list (src/db.c:1892,1950).
+	sort.Slice(objects, func(i, j int) bool { return objects[i].ID > objects[j].ID })
+	num = 0
+	for _, obj := range objects {
+		if obj == nil || !canSeeObject(ch, obj) || !isnameWithAbbrevs(arg, obj.GetKeywords()) {
+			continue
+		}
+		num++
+		out.WriteString(w.printObjectLocation(num, obj, ch, true))
+		if num >= 30 {
+			break
+		}
+	}
+	return out.String()
+}
+
+func (w *World) printObjectLocation(num int, obj *ObjectInstance, ch *Player, recur bool) string {
+	var prefix string
+	if num > 0 {
+		prefix = fmt.Sprintf("O%3d. %-25s - ", num, obj.GetShortDesc())
+	} else {
+		prefix = fmt.Sprintf("%33s", " - ")
+	}
+
+	loc := obj.Location
+	switch loc.Kind {
+	case ObjInRoom:
+		if room, ok := w.GetRoom(loc.RoomVNum); ok {
+			return prefix + fmt.Sprintf("[%5d] %s\r\n", room.VNum, room.Name)
+		}
+	case ObjInInventory:
+		return prefix + fmt.Sprintf("carried by %s\r\n", w.whereOwnerPers(ch, loc))
+	case ObjEquipped:
+		return prefix + fmt.Sprintf("worn by %s\r\n", w.whereOwnerPers(ch, loc))
+	case ObjInContainer:
+		for _, candidate := range w.GetAllObjects() {
+			if candidate != nil && candidate.ID == loc.ContainerObjID {
+				suffix := " "
+				if recur {
+					suffix = ", which is"
+				}
+				line := prefix + fmt.Sprintf("inside %s%s\r\n", candidate.GetShortDesc(), suffix)
+				if recur {
+					line += w.printObjectLocation(0, candidate, ch, recur)
+				}
+				return line
+			}
+		}
+	}
+	return prefix + "in an unknown location\r\n"
+}
+
+func (w *World) whereOwnerPers(ch *Player, loc ObjectLocation) string {
+	switch loc.OwnerKind {
+	case OwnerPlayer:
+		if owner, ok := w.GetPlayer(loc.PlayerName); ok && owner != nil {
+			if canSee(ch, owner) {
+				return owner.GetName()
+			}
+			return "someone"
+		}
+		return loc.PlayerName
+	case OwnerMob:
+		for _, mob := range w.GetAllMobs() {
+			if mob != nil && mob.GetID() == loc.MobID {
+				if canSee(ch, mob) {
+					return mob.GetShortDesc()
+				}
+				return "someone"
+			}
+		}
+	}
+	return "someone"
 }
 
 // CharTarget is the result of ResolveCharInRoom. At most one of Player / Mob is
