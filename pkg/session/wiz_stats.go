@@ -10,6 +10,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -741,21 +742,57 @@ func (s *Session) sendStatObjectInstance(object *game.ObjectInstance) {
 	if contents := wizardObjectContentsOutput(object.GetContents(), wizardHasNormalColor(s.player.GetFlags())); contents != "" {
 		s.Send(contents)
 	}
-	if affects := object.GetAffects(); len(affects) > 0 {
-		var rendered []string
-		for _, affect := range affects {
-			if affect.Location != 0 {
-				rendered = append(rendered, fmt.Sprintf("%+d to %s", affect.Modifier, wizardApplyTypeName(affect.Location)))
-			}
+	s.Send(wizardObjectAffectOutput(object.GetAffects()))
+}
+
+func wizardObjectAffectOutput(affects []parser.ObjAffect) string {
+	var output strings.Builder
+	output.WriteString("Affections:")
+	found := 0
+	for _, affect := range affects {
+		if affect.Location == 0 || affect.Location == game.ApplySpell {
+			continue
 		}
-		if len(rendered) == 0 {
-			s.Send("Affections: None\r\n")
-		} else {
-			s.Send(fmt.Sprintf("Affections: %s\r\n", strings.Join(rendered, ",")))
+		if found > 0 {
+			output.WriteByte(',')
 		}
-		return
+		fmt.Fprintf(&output, " %+d to %s", affect.Modifier, wizardApplyTypeName(affect.Location))
+		found++
 	}
-	s.Send("Affections: None\r\n")
+	for _, affect := range affects {
+		if affect.Location != game.ApplySpell {
+			continue
+		}
+		if found > 0 {
+			output.WriteByte(',')
+		}
+		fmt.Fprintf(&output, " casts permanent %s", wizardObjectAffectedBitName(affect.Modifier))
+		found++
+	}
+	if found == 0 {
+		output.WriteString(" None")
+	}
+	output.WriteString("\r\n")
+	return output.String()
+}
+
+func wizardObjectAffectedBitName(index int) string {
+	// C's affected_bits[] names differ from the general Go bit labels.
+	// Preserve the stat report spelling and index order from src/constants.c:596-635.
+	// C indexes the table unchecked (src/act.wizard.c:680); an out-of-range
+	// modifier is undefined behaviour there and would panic here (R1a), so it
+	// renders as sprinttype's "UNDEFINED".
+	names := [...]string{
+		"BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC", "SENSE-LIFE", "WATERWALK", "SANCT",
+		"GROUP", "CURSE", "INFRA", "POISON", "PROT-EVIL", "PROT-GOOD", "SLEEP", "!TRACK",
+		"FLESH-ALTER", "DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM", "FOLLOW", "WIMPY",
+		"KUJI-KIRI", "CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNTED", "INVULN", "FLAMING",
+		"NOTHING", "HASTE", "SLOW", "DREAM", "WATERBREATHE", "METALSKIN", "ROBBED",
+	}
+	if index < 0 || index >= len(names) {
+		return "UNDEFINED"
+	}
+	return names[index]
 }
 
 func objectFlagWords(flags [4]int) []uint32 {
@@ -826,17 +863,55 @@ func (s *Session) objectLocation(object *game.ObjectInstance) (string, string, s
 func wizardObjectValues(object *game.ObjectInstance) string {
 	values := [4]int{object.GetValue(0), object.GetValue(1), object.GetValue(2), object.GetValue(3)}
 	switch object.GetTypeFlag() {
+	case game.ITEM_LIGHT:
+		if values[2] == -1 {
+			return "Hours left: Infinite"
+		}
+		return fmt.Sprintf("Hours left: [%d]", values[2])
+	case game.ITEM_SCROLL, game.ITEM_POTION:
+		return fmt.Sprintf("Spells: (Level %d) %s, %s, %s", values[0], wizardSkillName(values[1]), wizardSkillName(values[2]), wizardSkillName(values[3]))
+	case game.ITEM_WAND, game.ITEM_STAFF:
+		return fmt.Sprintf("Spell: %s at level %d, %d (of %d) charges remaining", wizardSkillName(values[3]), values[0], values[2], values[1])
+	case game.ITEM_WEAPON:
+		average := (float64(values[2]+1) / 2.0) * float64(values[1])
+		return fmt.Sprintf("Todam: %dd%d, Message type: %d Apr: %.1f", values[1], values[2], values[3], average)
+	case game.ITEM_ARMOR:
+		return fmt.Sprintf("AC-apply: [%d]", values[0])
+	case game.ITEM_TRAP:
+		return fmt.Sprintf("Spell: %d, - Hitpoints: %d", values[0], values[1])
 	case game.ITEM_CONTAINER:
 		lockType := "<INVALID BITVECTOR>"
 		if values[1] >= 0 {
 			lockType = game.SprintbitArray([]uint32{wizardIntFlagWord(values[1])}, game.ContainerBitNames, 1)
 		}
 		return fmt.Sprintf("Capacity: %d, Lock Type: %s, Key Num: %d, Corpse: %s", values[0], lockType, values[2], wizardYesNo(values[3]))
+	case game.ITEM_DRINKCON, game.ITEM_FOUNTAIN:
+		return fmt.Sprintf("Capacity: %d, Contains: %d, Poisoned: %s, Liquid: %s", values[0], values[1], wizardYesNo(values[3]), game.DrinkName(values[2]))
+	case game.ITEM_NOTE:
+		return fmt.Sprintf("Tongue: %d", values[0])
+	case game.ITEM_KEY:
+		return ""
 	case game.ITEM_FOOD:
 		return fmt.Sprintf("Makes full: %d, Poisoned: %s", values[0], wizardYesNo(values[3]))
+	case game.ITEM_MONEY:
+		return fmt.Sprintf("Coins: %d", values[0])
 	default:
 		return fmt.Sprintf("Values 0-3: [%d] [%d] [%d] [%d]", values[0], values[1], values[2], values[3])
 	}
+}
+
+func wizardSkillName(skill int) string {
+	if skill <= 0 {
+		if skill == -1 {
+			return "UNUSED"
+		}
+		return "UNDEFINED"
+	}
+	name := spells.SpellRawName(skill)
+	if name == "" || name == "\n" {
+		return "UNDEFINED"
+	}
+	return name
 }
 
 func wizardExtraDescriptionLine(keywords []string, colored bool) string {
@@ -910,10 +985,16 @@ func wizardYesNo(value int) string {
 }
 
 func wizardApplyTypeName(location int) string {
-	if location >= 0 && location < len(game.ApplyTypeNames) {
-		return game.ApplyTypeNames[location]
+	if location >= 0 && location < len(wizardCApplyTypeNames) {
+		return wizardCApplyTypeNames[location]
 	}
 	return "UNDEFINED"
+}
+
+var wizardCApplyTypeNames = [...]string{
+	"NONE", "STR", "DEX", "INT", "WIS", "CON", "CHA", "CLASS", "LEVEL", "AGE",
+	"CHAR_WEIGHT", "CHAR_HEIGHT", "MAXMANA", "MAXHIT", "MAXMOVE", "GOLD", "EXP", "ARMOR", "HITROLL", "DAMROLL",
+	"SAVING_PARA", "SAVING_ROD", "SAVING_PETRI", "SAVING_BREATH", "SAVING_SPELL", "RACE_HATE", "HIT_REGEN", "MANA_REGEN", "MOVE_REGEN", "PERM_SPELL",
 }
 
 // cmdVnum — find vnums by keyword (LVL_IMMORT)

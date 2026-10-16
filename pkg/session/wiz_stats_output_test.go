@@ -112,3 +112,60 @@ func TestWizardObjectContentsUsesC62ByteWrap(t *testing.T) {
 		t.Fatalf("wizardObjectContentsOutput() = %q, want %q", got, want)
 	}
 }
+
+func TestWizardObjectAffectOutputMatchesCOrderAndBytes(t *testing.T) {
+	affects := []parser.ObjAffect{
+		{Location: game.ApplyManaRegen, Modifier: 10},
+		{Location: game.ApplySpell, Modifier: 10},
+		{Location: game.ApplySpell, Modifier: 18},
+	}
+	want := "Affections: +10 to MANA_REGEN, casts permanent INFRA, casts permanent SNEAK\r\n"
+	if got := wizardObjectAffectOutput(affects); got != want {
+		t.Fatalf("wizardObjectAffectOutput() = %q, want %q", got, want)
+	}
+	if got, want := wizardObjectAffectOutput(nil), "Affections: None\r\n"; got != want {
+		t.Fatalf("wizardObjectAffectOutput(nil) = %q, want %q", got, want)
+	}
+}
+
+func TestWizardObjectValuesMatchesCItemTypeBranches(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		itemType int
+		values   [4]int
+		want     string
+	}{
+		{name: "light finite", itemType: game.ITEM_LIGHT, values: [4]int{0, 0, 8, 0}, want: "Hours left: [8]"},
+		{name: "light infinite", itemType: game.ITEM_LIGHT, values: [4]int{0, 0, -1, 0}, want: "Hours left: Infinite"},
+		{name: "scroll", itemType: game.ITEM_SCROLL, values: [4]int{16, 2, 33, -1}, want: "Spells: (Level 16) shift reality, poison, UNUSED"},
+		{name: "wand", itemType: game.ITEM_WAND, values: [4]int{16, 1, 2, 17}, want: "Spell: curse at level 16, 2 (of 1) charges remaining"},
+		{name: "weapon", itemType: game.ITEM_WEAPON, values: [4]int{0, 2, 5, 3}, want: "Todam: 2d5, Message type: 3 Apr: 6.0"},
+		{name: "armor", itemType: game.ITEM_ARMOR, values: [4]int{20, 0, 0, 0}, want: "AC-apply: [20]"},
+		{name: "trap", itemType: game.ITEM_TRAP, values: [4]int{7, 12, 0, 0}, want: "Spell: 7, - Hitpoints: 12"},
+		{name: "drink container", itemType: game.ITEM_DRINKCON, values: [4]int{20, 5, 3, 1}, want: "Capacity: 20, Contains: 5, Poisoned: YES, Liquid: ale"},
+		{name: "note", itemType: game.ITEM_NOTE, values: [4]int{4, 0, 0, 0}, want: "Tongue: 4"},
+		{name: "key", itemType: game.ITEM_KEY, want: ""},
+		{name: "food", itemType: game.ITEM_FOOD, values: [4]int{5, 0, 0, 1}, want: "Makes full: 5, Poisoned: YES"},
+		{name: "money", itemType: game.ITEM_MONEY, values: [4]int{100, 0, 0, 0}, want: "Coins: 100"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			object := game.NewObjectInstance(&parser.Obj{TypeFlag: test.itemType, Values: test.values}, 0)
+			if got := wizardObjectValues(object); got != test.want {
+				t.Fatalf("wizardObjectValues() = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+// An APPLY_SPELL modifier outside affected_bits[] is C undefined behaviour;
+// the port must not panic on a God's stat (R1a).
+func TestWizardObjectAffectedBitNameOutOfRange(t *testing.T) {
+	for _, index := range []int{-1, 39, 1000} {
+		if got := wizardObjectAffectedBitName(index); got != "UNDEFINED" {
+			t.Fatalf("wizardObjectAffectedBitName(%d) = %q, want UNDEFINED", index, got)
+		}
+	}
+	if got := wizardObjectAffectedBitName(0); got != "BLIND" {
+		t.Fatalf("index 0 = %q, want BLIND", got)
+	}
+}
