@@ -1,0 +1,55 @@
+# The room oncmd calls silent lua_spell, reaching call_magic directly and
+# bypassing both do_cast and cast_spell's peaceful-room refusals.
+# depth-case: spell.meteor-swarm-peaceful-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 3065 4 on
+
+[lua-script room/30/pattern_3065.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say" or what ~= "meteor") then
+return FALSE
+end
+spell(nil, nil, 41, 0)
+return TRUE
+end
+
+[setup:oracle]
+Stormlua
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Stormlua
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 3065
+set Stormlua level 31
+
+[probe]
+say meteor
