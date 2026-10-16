@@ -1,0 +1,56 @@
+# depth-case: spell.locate-object-no-results-script
+# The existing Pattern room's oncmd script is replaced in the disposable world.
+# It invokes silent lua_spell as the level-1 player with a live object,
+# exercising call_magic below do_cast's min-level gate and the zero-result
+# output.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[lua-script room/30/pattern_3065.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say" or what ~= "zero") then
+return FALSE
+end
+local o = oload(ch, 3515, "char")
+spell(nil, o, 31, 1)
+return TRUE
+end
+
+[setup:oracle]
+LocateLua
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+LocateLua
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 3065
+set LocateLua level 1
+
+[probe]
+say zero

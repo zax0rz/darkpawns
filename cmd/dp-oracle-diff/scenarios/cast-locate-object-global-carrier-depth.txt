@@ -1,0 +1,79 @@
+# depth-case: spell.locate-object-global-carrier
+# The target object is held by a peer, forcing get_obj_vis and spell_locate_object
+# through object_list rather than the caster's inventory or room
+# (src/spell_parser.c:512,1033-1035,1360; src/spells.c:364-398).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Locator
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Locator
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Witness
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Witness 8162
+set Locator class a
+set Witness class a
+skillset Locator 'locate object' 100
+set Locator maxmana 5000
+set Locator mana 5000
+load obj 3515
+give bulbous Witness
+set Locator level 31
+
+[probe]
+cast 'locate object' bulbous

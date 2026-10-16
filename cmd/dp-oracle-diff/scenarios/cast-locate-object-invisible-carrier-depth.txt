@@ -1,0 +1,80 @@
+# depth-case: spell.locate-object-invisible-carrier
+# C's hidden-owner CAN_SEE arm skips sprintf, so CAP/send_to_char reuses the
+# obfuscated say_spell buffer (src/spell_parser.c:271-343; src/spells.c:375-399).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Locator
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Locator
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Witness
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Witness 8162
+set Locator class a
+set Witness class a
+skillset Locator 'locate object' 100
+set Locator maxmana 5000
+set Locator mana 5000
+load obj 3515
+give bulbous Witness
+advance Witness 32
+force Witness invis 32
+set Locator level 31
+
+[probe]
+cast 'locate object' bulbous

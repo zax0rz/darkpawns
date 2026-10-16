@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -190,22 +191,138 @@ func (w *World) removeItemFromRoomLocked(item *ObjectInstance, roomVNum int) boo
 }
 
 // FindObjectByName searches all objects in the world by keyword name.
+// It preserves C object_list order (newest first) and exact isname token
+// matching, after spell_locate_object's fname() reduction. C references:
+// src/spells.c:361-365, src/handler.c:68-95, src/db.c:1892-1893,1950-1951.
 // Returns matching objects as []interface{} for spell system compatibility.
 func (w *World) FindObjectByName(name string) []interface{} {
-	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	var results []interface{}
-	name = strings.ToLower(name)
-
-	for _, objs := range w.roomItems {
-		for _, obj := range objs {
-			if obj.Prototype != nil && strings.Contains(strings.ToLower(obj.Prototype.Keywords), name) {
-				results = append(results, obj)
-			}
+	name = cFName(name)
+	if name == "" {
+		return nil
+	}
+	objects := w.GetAllObjects()
+	sort.Slice(objects, func(i, j int) bool { return objects[i].ID > objects[j].ID })
+	results := make([]interface{}, 0, len(objects))
+	for _, obj := range objects {
+		if obj != nil && cIsName(name, obj.GetKeywords()) {
+			results = append(results, obj)
 		}
 	}
 	return results
+}
+
+// LocateObjectResults formats spell_locate_object's object_list matches.
+// The bool is true when C's ITEM_NOLOCATE gate aborts the entire spell.
+func (w *World) LocateObjectResults(name string, viewer interface{}, limit int, unseenOwnerText string) ([]string, bool) {
+	observer, _ := viewer.(Actor)
+	results := make([]string, 0)
+	if limit <= 0 {
+		return results, false
+	}
+	for _, candidate := range w.FindObjectByName(name) {
+		obj, ok := candidate.(*ObjectInstance)
+		if !ok || obj == nil {
+			continue
+		}
+		if obj.HasExtraFlag(0, 25) { // ITEM_NOLOCATE, src/structs.h:493.
+			return nil, true
+		}
+		results = append(results, w.locateObjectDescription(obj, observer, unseenOwnerText))
+		limit--
+		if limit == 0 {
+			break
+		}
+	}
+	return results, false
+}
+
+func (w *World) locateObjectDescription(obj *ObjectInstance, observer Actor, unseenOwnerText string) string {
+	description := obj.GetShortDesc()
+	var text string
+	switch loc := obj.Location; loc.Kind {
+	case ObjInRoom:
+		if room := w.GetRoomInWorld(loc.RoomVNum); room != nil {
+			text = fmt.Sprintf("%s is in %s.\n\r", description, room.Name)
+		}
+	case ObjInInventory, ObjEquipped:
+		owner := w.locateObjectOwner(loc)
+		if owner != nil {
+			if observer == nil || !canSeeForPers(observer, owner) {
+				// C leaves the global buf untouched in the failed CAN_SEE arm;
+				// say_spell's syllable buffer remains in place (spells.c:377-391).
+				return capLocateObjectText(unseenOwnerText)
+			}
+			verb := "being carried by"
+			if loc.Kind == ObjEquipped {
+				verb = "being worn by"
+			}
+			text = fmt.Sprintf("%s is %s %s.\n\r", description, verb, persName(owner, observer))
+		}
+	case ObjInContainer:
+		if container := w.locateObjectByID(loc.ContainerObjID); container != nil {
+			text = fmt.Sprintf("%s is in %s.\n\r", description, container.GetShortDesc())
+		}
+	}
+	if text == "" {
+		text = fmt.Sprintf("%s's location is uncertain.\n\r", description)
+	}
+	return capLocateObjectText(text)
+}
+
+func capLocateObjectText(text string) string {
+	if len(text) > 0 && text[0] >= 'a' && text[0] <= 'z' {
+		return string(text[0]-('a'-'A')) + text[1:]
+	}
+	return text
+}
+
+func (w *World) locateObjectOwner(loc ObjectLocation) Actor {
+	switch loc.OwnerKind {
+	case OwnerPlayer:
+		if owner, ok := w.GetPlayer(loc.PlayerName); ok {
+			return owner
+		}
+	case OwnerMob:
+		if owner, ok := w.GetMobByID(loc.MobID); ok {
+			return owner
+		}
+	}
+	return nil
+}
+
+func (w *World) locateObjectByID(id int) *ObjectInstance {
+	w.mu.RLock()
+	defer w.mu.RUnlock()
+	return w.objectInstances[id]
+}
+
+// cFName and cIsName preserve spell_locate_object's fname()/isname() token
+// rules. The C helpers operate on alphabetic byte runs, not substrings.
+func cFName(name string) string {
+	end := 0
+	for end < len(name) && isASCIIAlpha(name[end]) {
+		end++
+	}
+	return name[:end]
+}
+
+func cIsName(name, nameList string) bool {
+	if name == "" {
+		return false
+	}
+	for offset := 0; offset < len(nameList); {
+		for offset < len(nameList) && !isASCIIAlpha(nameList[offset]) {
+			offset++
+		}
+		start := offset
+		for offset < len(nameList) && isASCIIAlpha(nameList[offset]) {
+			offset++
+		}
+		if offset > start && strings.EqualFold(name, nameList[start:offset]) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetMobPrototype returns a mob prototype by VNum.

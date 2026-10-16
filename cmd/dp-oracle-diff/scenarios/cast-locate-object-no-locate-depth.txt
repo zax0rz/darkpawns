@@ -1,0 +1,48 @@
+# depth-case: spell.locate-object-no-locate
+# C MANUAL_SPELL dispatch finds a live ITEM_NOLOCATE object and returns before
+# scanning farther (src/spell_parser.c:512,1360; src/spells.c:361-372;
+# src/structs.h:493).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Locator
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Locator
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set Locator class a
+skillset Locator 'locate object' 100
+set Locator maxmana 5000
+set Locator mana 5000
+load obj 3513
+set Locator level 31
+
+[probe]
+cast 'locate object' kelp

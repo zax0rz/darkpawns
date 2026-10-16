@@ -307,6 +307,85 @@ func TestCastDivineIntOutputBranchesAndRoomAudience(t *testing.T) {
 	})
 }
 
+type locateObjectOutputTarget struct{ name string }
+
+func (o locateObjectOutputTarget) GetName() string { return o.name }
+
+type locateObjectOutputWorld struct {
+	messages []string
+	blocked  bool
+	name     string
+	viewer   interface{}
+	limit    int
+	unseen   string
+}
+
+func (w *locateObjectOutputWorld) LocateObjectResults(name string, viewer interface{}, limit int, unseenOwnerText string) ([]string, bool) {
+	w.name, w.viewer, w.limit, w.unseen = name, viewer, limit, unseenOwnerText
+	return w.messages, w.blocked
+}
+
+func TestCastLocateObjectOutputBranches(t *testing.T) {
+	t.Run("visible matches preserve world output bytes", func(t *testing.T) {
+		caster := &mockSpellsChar{name: "Seeker", level: 30}
+		world := &locateObjectOutputWorld{messages: []string{"A silver coin is being carried by Carrier.\n\r"}}
+
+		ExecuteManualSpell(SpellLocateObject, 30, caster, nil, locateObjectOutputTarget{name: "silver coin"}, "", world)
+
+		if got, want := strings.Join(caster.messages, ""), "A silver coin is being carried by Carrier.\n\r"; got != want {
+			t.Fatalf("locate output = %q, want %q", got, want)
+		}
+		if world.name != "silver coin" || world.viewer != caster || world.limit != 15 || world.unseen != ObfuscateSpellName(GetSpellName(SpellLocateObject)) {
+			t.Fatalf("locate query = (%q, %T, %d, %q), want target name, caster, level/2, and C say_spell buffer", world.name, world.viewer, world.limit, world.unseen)
+		}
+	})
+
+	t.Run("hidden owner buffer stays adjacent to the next match", func(t *testing.T) {
+		caster := &mockSpellsChar{name: "Seeker", level: 31}
+		world := &locateObjectOutputWorld{messages: []string{
+			"Hiqi avykamina",
+			"The kelp is in Fortified Fringe.\n\r",
+		}}
+
+		ExecuteManualSpell(SpellLocateObject, 31, caster, nil, locateObjectOutputTarget{name: "bulbous"}, "", world)
+
+		if len(caster.messages) != 1 {
+			t.Fatalf("hidden-owner output used %d sends, want one C output-buffer write", len(caster.messages))
+		}
+		const want = "Hiqi avykaminaThe kelp is in Fortified Fringe.\n\r"
+		if caster.messages[0] != want {
+			t.Fatalf("hidden-owner output = %q, want %q", caster.messages[0], want)
+		}
+	})
+
+	t.Run("unlocatable object aborts with C refusal", func(t *testing.T) {
+		caster := &mockSpellsChar{name: "Seeker", level: 30}
+		world := &locateObjectOutputWorld{blocked: true}
+
+		ExecuteManualSpell(SpellLocateObject, 30, caster, nil, locateObjectOutputTarget{name: "silver"}, "", world)
+
+		const want = "Your magick suddenly dissolves into a wash of brilliant colours, and then, nothing.\r\n"
+		if got := strings.Join(caster.messages, ""); got != want {
+			t.Fatalf("unlocatable output = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("zero result limit senses nothing", func(t *testing.T) {
+		caster := &mockSpellsChar{name: "Seeker", level: 1}
+		world := &locateObjectOutputWorld{}
+
+		ExecuteManualSpell(SpellLocateObject, 1, caster, nil, locateObjectOutputTarget{name: "silver"}, "", world)
+
+		const want = "You sense nothing.\n\r"
+		if got := strings.Join(caster.messages, ""); got != want {
+			t.Fatalf("zero-limit output = %q, want %q", got, want)
+		}
+		if world.limit != 0 {
+			t.Fatalf("zero-limit query used limit %d, want 0", world.limit)
+		}
+	})
+}
+
 type transformationOutputPlayer struct {
 	mockSpellsChar
 	playerFlags uint64

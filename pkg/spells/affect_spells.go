@@ -3756,37 +3756,43 @@ func castLocateObject(level int, ch, ovict, world interface{}) {
 		return
 	}
 
-	// Use ovict (target object) to get the name to search for
-	type objName interface{ GetName() string }
 	if ovict == nil {
-		sendToCaster(ch, "What object are you looking for?\r\n")
 		return
 	}
+	// C reaches this manual spell only after get_obj_vis found a target;
+	// spell_locate_object then fname()s that object's keywords.
 	name := ""
-	if on, ok := ovict.(objName); ok {
+	if on, ok := ovict.(interface{ GetKeywords() string }); ok {
+		name = on.GetKeywords()
+	} else if on, ok := ovict.(interface{ GetName() string }); ok {
 		name = on.GetName()
 	}
 	if name == "" {
-		sendToCaster(ch, "What object are you looking for?\r\n")
 		return
 	}
 
-	type worldSearch interface {
-		FindObjectByName(name string) []interface{}
+	type locateResults interface {
+		LocateObjectResults(name string, viewer interface{}, limit int, unseenOwnerText string) ([]string, bool)
 	}
-	if ws, ok := world.(worldSearch); ok {
-		objs := ws.FindObjectByName(name)
-		count := level >> 1
-		for _, obj := range objs {
-			if count <= 0 {
-				break
-			}
-			type objDesc interface{ GetShortDesc() string }
-			if od, ok := obj.(objDesc); ok {
-				sendToCaster(ch, od.GetShortDesc()+"\r\n")
-			}
-			count--
+	if w, ok := world.(locateResults); ok {
+		// say_spell leaves the syllable buffer in C's global buf. If the
+		// matched object's owner is invisible, spell_locate_object's skipped
+		// sprintf sends that buffer unchanged (src/spells.c:377-391).
+		unseenOwnerText := ObfuscateSpellName(GetSpellName(SpellLocateObject))
+		messages, blocked := w.LocateObjectResults(name, ch, level>>1, unseenOwnerText)
+		if blocked {
+			sendToCaster(ch, "Your magick suddenly dissolves into a wash of brilliant colours, and then, nothing.\r\n")
+			return
 		}
+		if len(messages) == 0 {
+			sendToCaster(ch, "You sense nothing.\n\r")
+			return
+		}
+		// C writes every matching line into one output buffer. In particular,
+		// the hidden-owner CAN_SEE arm reuses say_spell's buffer without a line
+		// ending, so separate Go text events would each acquire a transport
+		// line ending and change the bytes between results.
+		sendToCaster(ch, strings.Join(messages, ""))
 	}
 }
 

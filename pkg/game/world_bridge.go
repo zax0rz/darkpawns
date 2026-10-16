@@ -1104,8 +1104,9 @@ func (a *WorldScriptableAdapter) SetHunt(hunter scripting.CharRef, vict *scripti
 // Spell is lua_spell: cast_spell(me, vict, obj, spell) when vocal, else
 // call_magic(me, vict, obj, spell, GET_LEVEL(me), CAST_SPELL).
 func (a *WorldScriptableAdapter) Spell(me scripting.CharRef, vict *scripting.CharRef, obj *scripting.ObjRef, spellNum int, vocal bool) {
-	m := a.mobFor(me)
-	if m == nil {
+	actor := a.actorFor(&me)
+	caster, ok := actor.(combat.Combatant)
+	if !ok || caster == nil {
 		return
 	}
 	var targetObj *ObjectInstance
@@ -1119,10 +1120,10 @@ func (a *WorldScriptableAdapter) Spell(me scripting.CharRef, vict *scripting.Cha
 		}
 	}
 	if vocal {
-		castSpellC(a.world, m, target, targetObj, spellNum)
+		castSpellC(a.world, caster, me, vict, a.masterRef(actor, ""), target, targetObj, spellNum)
 		return
 	}
-	spells.CastFromSpecialTarget(m, target, targetObj, spellNum, m.GetLevel(), a.world)
+	spells.CastFromSpecialTarget(caster, target, targetObj, spellNum, caster.GetLevel(), a.world)
 }
 
 // SpellObjectAct dispatches mag_alter_objs' act() output to the caster or room.
@@ -1168,30 +1169,71 @@ func (w *World) IsSpellCharmShopkeeper(victim interface{}) bool {
 	return ok
 }
 
-// castSpellC is cast_spell (spell_parser.c) for a mobile caster: its gates
-// answer only the mobile, so a refusal shows nothing; otherwise the verbal
-// component and call_magic.
-func castSpellC(w *World, me *MobInstance, tch combat.Combatant, tobj *ObjectInstance, spellNum int) bool {
+// castSpellC is cast_spell (spell_parser.c) for a Lua caster. Room and object
+// scripts can bind me to a player as well as a mobile; C's visible gates must
+// therefore deliver to either body before say_spell and call_magic.
+func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef, masterRef *scripting.CharRef, tch combat.Combatant, tobj *ObjectInstance, spellNum int) bool {
 	if spellNum < 0 || spellNum > 299 { // TOP_SPELL_DEFINE (spells.h:260)
 		return false
 	}
-	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+	body, ok := me.(interface {
+		GetWaitState() int
+		IsAffected(int) bool
+	})
+	if !ok {
+		return false
+	}
+	if me.GetWis() == 0 || me.GetInt() == 0 {
+		me.SendMessage("You're not smart enough to cast!\r\n")
+		return false
+	}
+	if me.IsNPC() && body.GetWaitState() > 0 {
+		me.SendMessage("You can't cast anything yet!\r\n")
 		return false
 	}
 	info := spells.GetSpellInfo(spellNum)
-	if info == nil || me.GetPosition() < int(info.MinPosition) {
+	if info == nil {
 		return false
 	}
-	if me.IsAffected(affCharm) && tch != nil && strings.EqualFold(me.GetFollowing(), tch.GetName()) {
+	if me.GetPosition() < int(info.MinPosition) {
+		var message string
+		switch me.GetPosition() {
+		case combat.PosSleeping:
+			message = "You dream about great magical powers.\r\n"
+		case combat.PosResting:
+			message = "You cannot concentrate while resting.\r\n"
+		case combat.PosSitting:
+			message = "You can't do this sitting!\r\n"
+		case combat.PosFighting:
+			message = "Impossible!  You can't concentrate enough!\r\n"
+		default:
+			message = "You can't do much of anything like this!\r\n"
+		}
+		me.SendMessage(message)
 		return false
 	}
-	self := tch != nil && tch.GetName() == me.GetName()
+	if body.IsAffected(affCharm) && tch != nil && masterRef != nil && victRef != nil && *masterRef == *victRef {
+		me.SendMessage("You are afraid you might hurt your master!\r\n")
+		return false
+	}
+	self := tch != nil && victRef != nil && *victRef == meRef
 	if (!self && info.HasTarget(spells.TarSelfOnly)) || (self && info.HasTarget(spells.TarNotSelf)) {
+		message := "You can only cast this spell upon yourself!\r\n"
+		if !me.IsNPC() && (me.GetClass() == ClassPsionic || me.GetClass() == ClassMystic) {
+			message = "You can only will this power upon yourself!\r\n"
+		}
+		me.SendMessage(message)
 		return false
 	}
-	if info.HasRoutine(spells.RoutineGroups) && !me.IsAffected(affGroup) {
+	if info.HasRoutine(spells.RoutineGroups) && !body.IsAffected(affGroup) {
+		message := "You can't cast this spell if you're not in a group!\r\n"
+		if !me.IsNPC() && (me.GetClass() == ClassPsionic || me.GetClass() == ClassMystic) {
+			message = "You cannot use this power if you are not in a group!\r\n"
+		}
+		me.SendMessage(message)
 		return false
 	}
+	me.SendMessage("Okay.\r\n")
 	spells.SaySpell(me, spellNum, tch, tobj, w)
 	return spells.CastFromSpecialTarget(me, tch, tobj, spellNum, me.GetLevel(), w)
 }
