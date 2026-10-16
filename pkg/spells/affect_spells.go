@@ -1292,7 +1292,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellSobriety:
 		castSobriety(level, ch, cvict)
 	case SpellZen:
-		castZen(level, ch, cvict)
+		castZen(level, ch, cvict, world)
 	case SpellDetectPoison:
 		castDetectPoison(level, ch, cvict, ovict, world)
 	case SpellCalliope:
@@ -1706,13 +1706,17 @@ func castSobriety(level int, ch, cvict interface{}) {
 	sendToVictim(cvict, "You are splashed in the face with HOT coffee, but feel much more sober.\n\r")
 }
 
-// castZen — heals caster and sets position to stunned (meditating).
-// C source: spells.c:871-883. C bug fixed: C uses 'victim' for healing but 'ch' for position.
-func castZen(level int, ch, cvict interface{}) {
-	sendToCaster(ch, "You begin to meditate deeply, focusing your thoughts only on ")
-	sendToCaster(ch, "healing.\r\n")
+// castZen ports src/spells.c:871-883. The spell is self-only; C sends one
+// caster line and a room act before setting position and restoring hit points.
+func castZen(level int, ch, cvict, world interface{}) {
+	sendToCaster(ch, "You begin to meditate deeply, focusing your thoughts only on healing.\r\n")
+	if renderer, ok := world.(interface {
+		SpellActToRoom(caster, victim interface{}, format string, hideInvisible bool) bool
+	}); ok {
+		renderer.SpellActToRoom(ch, nil, "$n sinks into a deep, meditative sleep.", false)
+	}
 
-	// Heal caster (ch), not victim — C bug fix
+	// TAR_SELF_ONLY makes victim the caster on the registered C command path.
 	healHP(ch, 2*level)
 
 	type poser interface{ SetPosition(int) }

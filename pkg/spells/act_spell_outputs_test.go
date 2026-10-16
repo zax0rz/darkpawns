@@ -77,6 +77,41 @@ func TestCastEnchantOutputBranches(t *testing.T) {
 	})
 }
 
+type zenSpellOutputWorld struct {
+	actor         interface{}
+	format        string
+	hideInvisible bool
+	calls         int
+}
+
+func (w *zenSpellOutputWorld) SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool {
+	w.actor = actor
+	w.format = format
+	w.hideInvisible = hideInvisible
+	w.calls++
+	return true
+}
+
+func TestCastZenOutputAndMeditationState(t *testing.T) {
+	caster := &mockSpellsChar{
+		name: "Zenmind", level: 10, position: int(PosStanding), hp: 20, maxHP: 60,
+	}
+	world := &zenSpellOutputWorld{}
+
+	ExecuteManualSpell(SpellZen, caster.level, caster, caster, nil, "", world)
+
+	const want = "You begin to meditate deeply, focusing your thoughts only on healing.\r\n"
+	if got := strings.Join(caster.messages, ""); got != want {
+		t.Fatalf("zen caster output = %q, want exact C bytes %q", got, want)
+	}
+	if world.calls != 1 || world.actor != caster || world.format != "$n sinks into a deep, meditative sleep." || world.hideInvisible {
+		t.Fatalf("zen room act = {calls:%d actor:%v format:%q hideInvisible:%t}, want one visible TO_ROOM act", world.calls, world.actor, world.format, world.hideInvisible)
+	}
+	if caster.position != int(PosStunned) || caster.hp != 40 {
+		t.Fatalf("zen state = {position:%d hp:%d}, want stunned with 40 HP", caster.position, caster.hp)
+	}
+}
+
 type mentalLapseProbe struct {
 	mockSpellsChar
 	hunting string

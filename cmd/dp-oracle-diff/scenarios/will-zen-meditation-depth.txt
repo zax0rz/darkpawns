@@ -1,0 +1,69 @@
+# depth-case: spell.zen-meditation-output
+# The first Psionic character on the empty playerbase is immortal, so will
+# dispatches spell_zen while a separate player witnesses its TO_ROOM act.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Zenmind
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zenmind
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Zenpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Zenpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Zenpeer 8105
+
+[probe]
+will 'zen'
