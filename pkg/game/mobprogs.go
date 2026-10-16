@@ -218,7 +218,7 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 		} else {
 			Act(w, true, mob, nil, nil, nil, "$n exclaims, 'Cheap bastard, come back with some money!'", "", ToRoom)
 			Act(w, true, mob, ch, nil, nil, "$N gets kicked out on $S ass!'", "", ToNotVict)
-			Act(w, true, mob, ch, nil, nil, "$n kicks you out on your ass!", "", ToVict)
+			Act(w, true, mob, ch, nil, nil, "$n kicks you out on your ass!\r\n", "", ToVict)
 			w.MovePlayerToRoom(ch, 13193)
 			w.LookAtRoom(ch, false)
 		}

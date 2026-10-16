@@ -153,7 +153,7 @@ func TestMpBribeDispatchRendersCBranches(t *testing.T) {
 		},
 		{
 			name: "gremlin throws out miser", vnum: 13108, amount: 999, keyword: "gremlin",
-			wantPlayer:     []string{"Okay.", "kicks you out on your ass"},
+			wantPlayer:     []string{"Okay.", "kicks you out on your ass!\r\n\r\n"},
 			wantObserver:   []string{"gives a pile of gold coins to the gremlin.", "Cheap bastard", "gets kicked out on his ass"},
 			wantPlayerGold: 1, wantMobGold: 500, wantRoom: 13193,
 		},
@@ -328,4 +328,35 @@ func TestMobGreetOutputRunsThroughMobileMovement(t *testing.T) {
 			}
 		})
 	}
+}
+
+// perform_give_gold's checks run before mp_bribe (src/act.item.c:738-754): a
+// zero offer is refused before the cityguard sees it, and a god's purse is
+// neither checked nor charged.
+func TestMobBribeGoesThroughPerformGiveGoldChecks(t *testing.T) {
+	t.Run("zero coins never reach the bribe", func(t *testing.T) {
+		w, player, observer, mob, output := newMobProgDispatchWorld(t, 2747, "guard")
+		w.DoGive(player, "0 coins guard")
+		if got, want := output[player.Name], "Heh heh heh ... we are jolly funny today, eh?\r\n"; got != want {
+			t.Fatalf("player output = %q, want %q", got, want)
+		}
+		if got := output[observer.Name]; got != "" {
+			t.Fatalf("observer output = %q, want nothing", got)
+		}
+		if mob.GetFighting() != "" || player.GetGold() != 1000 {
+			t.Fatalf("zero bribe changed state: fighting %q, gold %d", mob.GetFighting(), player.GetGold())
+		}
+	})
+	t.Run("a god bribes from an empty purse", func(t *testing.T) {
+		w, player, _, _, output := newMobProgDispatchWorld(t, 8061, "janitor")
+		player.SetLevel(lvlGod)
+		player.SetGold(0)
+		w.DoGive(player, "50 coins janitor")
+		if got := output[player.Name]; !strings.Contains(got, "Okay.") || !strings.Contains(got, "tips his hat") {
+			t.Fatalf("god's bribe output = %q, want Okay. and the janitor's thanks", got)
+		}
+		if got := player.GetGold(); got != 0 {
+			t.Fatalf("god's gold = %d, want 0 (C never charges a god)", got)
+		}
+	})
 }

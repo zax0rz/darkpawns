@@ -539,11 +539,17 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			// Check mob before player — bribe path
 			mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
 			if mob != nil {
-				if ch.Gold < amount {
+				// C perform_give_gold (src/act.item.c:738-754): the amount
+				// and purse checks come before the bribe, and a god's purse
+				// is never checked or charged.
+				if amount <= 0 {
+					ch.SendMessage("Heh heh heh ... we are jolly funny today, eh?\r\n")
+					return true
+				}
+				if ch.GetLevel() < lvlGod && !ch.SpendGold(amount) {
 					ch.SendMessage("You don't have that many coins!\r\n")
 					return true
 				}
-				ch.SetGold(ch.GetGold() - amount)
 				ch.SendMessage("Okay.\r\n")
 				Act(w, true, ch, mob, nil, nil, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), "", ToNotVict)
 				w.MpGive(mob, ch, amount)
