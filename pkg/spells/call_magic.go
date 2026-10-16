@@ -139,7 +139,7 @@ func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 	}
 
 	if si.HasRoutine(RoutineSummons) {
-		MagSummons(level, caster, spellNum, world)
+		MagSummons(level, caster, ovict, spellNum, world)
 	}
 
 	if si.HasRoutine(RoutineCreations) {

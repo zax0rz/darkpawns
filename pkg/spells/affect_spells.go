@@ -975,7 +975,7 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 // deterministic without replacing the process-wide production stream.
 var animateDeadPfailRoll = func() int { return dprng.Number(0, 101) } // #nosec G404 — intentional MUD RNG
 
-func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
+func MagSummons(level int, ch, obj interface{}, spellNum int, world interface{}) {
 	if ch == nil {
 		return
 	}
@@ -989,31 +989,18 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 		}
 		roomVNum := rg.GetRoomVNum()
 
-		// Require a corpse in the room
-		type itemsLister interface {
-			GetItemsInRoomI(roomVNum int) []interface{}
-		}
-		type keywordsGetter interface{ GetKeywords() string }
+		// C mag_summons requires the explicitly targeted object to be a
+		// container whose value[3] is nonzero (src/magic.c:1689-1697).
+		type objectTypeGetter interface{ GetObjType() int }
+		type objectValueGetter interface{ GetValue(int) int }
 		type itemRemover interface {
 			RemoveItemFromRoomI(item interface{}, roomVNum int)
 		}
 
-		var corpse interface{}
-		if lister, ok2 := world.(itemsLister); ok2 {
-			for _, item := range lister.GetItemsInRoomI(roomVNum) {
-				if item == nil {
-					continue
-				}
-				if kg, ok3 := item.(keywordsGetter); ok3 {
-					if strings.Contains(strings.ToLower(kg.GetKeywords()), "corpse") {
-						corpse = item
-						break
-					}
-				}
-			}
-		}
-		if corpse == nil {
-			sendToCaster(ch, "You don't see a corpse here to animate.\r\n")
+		objectType, hasObjectType := obj.(objectTypeGetter)
+		objectValue, hasObjectValue := obj.(objectValueGetter)
+		if !hasObjectType || !hasObjectValue || objectType.GetObjType() != 15 || objectValue.GetValue(3) == 0 {
+			sendToCaster(ch, "There is no corpse!\r\n")
 			return
 		}
 
@@ -1058,7 +1045,7 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 
 		// C magic.c: extract_obj(corpse) runs only after create_mobile succeeds.
 		if remover, ok2 := world.(itemRemover); ok2 {
-			remover.RemoveItemFromRoomI(corpse, roomVNum)
+			remover.RemoveItemFromRoomI(obj, roomVNum)
 		}
 
 		// C magic.c: SET_BIT(AFF_FLAGS(mob), AFF_CHARM); add_follower_quiet(mob, ch).
