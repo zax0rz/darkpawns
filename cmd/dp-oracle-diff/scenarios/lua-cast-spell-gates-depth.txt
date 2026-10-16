@@ -1,0 +1,164 @@
+# C-first vocal cast_spell gate matrix from the Pattern rooms' oncmd and
+# onpulse Lua paths. Room 3065's oncmd writes the peer's exact position; room
+# 22500's onpulse invokes lua_spell with that PC as me even when normal command
+# input cannot run, then restores standing. The oncmd spell probes bypass
+# do_cast's earlier self and class gates and reach cast_spell directly.
+# depth-case: lua.bind-spell-position-sleeping
+# depth-case: lua.bind-spell-position-resting
+# depth-case: lua.bind-spell-position-sitting
+# depth-case: lua.bind-spell-position-fighting
+# depth-case: lua.bind-spell-position-default
+# depth-case: lua.bind-spell-self-only-normal
+# depth-case: lua.bind-spell-not-self-normal
+# depth-case: lua.bind-spell-group-normal
+# depth-case: lua.bind-spell-self-only-power
+# depth-case: lua.bind-spell-not-self-power
+# depth-case: lua.bind-spell-group-power
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[lua-script room/30/pattern_3065.lua]
+function oncmd()
+local found, e, cmd, what = strfind(argument, "^(%a+) (%a+)")
+if (cmd ~= "say") then
+return FALSE
+end
+if (what == "sleeping") then
+ch.pos = 4
+elseif (what == "resting") then
+ch.pos = 5
+elseif (what == "sitting") then
+ch.pos = 6
+elseif (what == "fighting") then
+ch.pos = 7
+elseif (what == "default") then
+ch.pos = 3
+elseif (what == "selfonly") then
+spell(room.char[1], nil, SPELL_INVULNERABILITY, 1)
+elseif (what == "notself") then
+spell(ch, nil, SPELL_BLINDNESS, 1)
+elseif (what == "group") then
+spell(nil, nil, 48, 1)
+else
+return FALSE
+end
+return TRUE
+end
+
+[lua-script room/30/pattern_dmg.lua]
+function onpulse()
+if (me.pos == 4) then
+spell(nil, nil, SPELL_SANCTUARY, 1)
+ch.pos = 8
+elseif (me.pos == 5) then
+spell(nil, nil, SPELL_SANCTUARY, 1)
+ch.pos = 8
+elseif (me.pos == 6) then
+spell(nil, nil, SPELL_SANCTUARY, 1)
+ch.pos = 8
+elseif (me.pos == 7) then
+spell(nil, nil, SPELL_SANCTUARY, 1)
+ch.pos = 8
+elseif (me.pos == 3) then
+spell(nil, nil, SPELL_SANCTUARY, 1)
+ch.pos = 8
+end
+end
+
+[setup:oracle]
+Castmatrix
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castmatrix
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Gatepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Gatepeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 3065
+teleport Gatepeer 3065
+set Castmatrix class mage
+set Castmatrix level 50
+
+[probe]
+say selfonly
+say notself
+say group
+set Castmatrix class i
+say selfonly
+say notself
+say group
+set Castmatrix class mage
+send:peer say sleeping
+send:peer score
+teleport Gatepeer 22500
+~dpclock pulse 120
+send:peer score
+teleport Gatepeer 3065
+send:peer say resting
+teleport Gatepeer 22500
+~dpclock pulse 120
+teleport Gatepeer 3065
+send:peer say sitting
+teleport Gatepeer 22500
+~dpclock pulse 120
+teleport Gatepeer 3065
+send:peer say fighting
+teleport Gatepeer 22500
+~dpclock pulse 120
+teleport Gatepeer 3065
+send:peer say default
+teleport Gatepeer 22500
+~dpclock pulse 120
+teleport Gatepeer 3065
