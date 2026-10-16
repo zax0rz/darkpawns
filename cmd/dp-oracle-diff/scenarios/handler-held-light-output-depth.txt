@@ -1,0 +1,104 @@
+# Drive the real player hold command, then advance exact C MUD-hour periods.
+# The six-hour fixture torch warns at hour five and expires at hour six.
+# depth-case: equipment.held-light-flicker-audience
+# depth-case: equipment.held-light-expiry-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 19737 9999 8162 21
+
+[setup:oracle]
+Lightgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lightgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Lightuser
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Lightuser
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Lightpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Lightpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+force Lightuser goto 8162
+force Lightpeer goto 8162
+force Lightuser get torch
+force Lightuser hold torch
+
+[probe:actor]
+~dpclock pulse 3150
+~dpclock pulse 630

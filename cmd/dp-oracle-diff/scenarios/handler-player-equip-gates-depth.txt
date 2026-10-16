@@ -1,0 +1,110 @@
+# Real player dispatch through do_wear -> equip_char for anti-alignment and
+# invalid-class refusals. A second player proves the TO_ROOM zap audience.
+# depth-case: equipment.player-anti-alignment-equip-output
+# depth-case: equipment.player-invalid-class-equip-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 2108 9999 8162 21
+spawn-obj 4705 9999 8162 21
+force-load 2108
+force-load 4705
+
+[setup:oracle]
+Equipgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Equipgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wearer]
+Wearer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wearer]
+Wearer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Observer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Observer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Wearer align 1000
+set player Wearer class mage
+goto 8162
+force Wearer goto 8162
+force Observer goto 8162
+
+[probe:wearer]
+get shield
+wear shield
+look
+get dragonscale
+wear dragonscale
