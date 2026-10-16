@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -310,6 +311,179 @@ func TestZeditObjectLoadPrompts(t *testing.T) {
 	}
 }
 
+func TestZeditActivityOutputPrompts(t *testing.T) {
+	newSession := func(t *testing.T, name string) *Session {
+		t.Helper()
+		w := makeZeditTestWorld(t)
+		m := newTestManager(t, w, nil)
+		s := makeZeditTestSession(t, m, name, game.LVL_IMPL)
+		if err := cmdZedit(s, []string{"3000"}); err != nil {
+			t.Fatal(err)
+		}
+		_ = readMsgText(t, s)
+		return s
+	}
+	appendCommand := func(t *testing.T, s *Session, command string) {
+		t.Helper()
+		s.handleZeditInput("n")
+		if got, want := readMsgText(t, s), "What number in the list should the new command be? : "; got != want {
+			t.Fatalf("new-command prompt = %q, want %q", got, want)
+		}
+		s.handleZeditInput("3")
+		_ = readMsgText(t, s)
+		s.handleZeditInput(command)
+		if got, want := readMsgText(t, s), "Is this command dependent on the success of the previous one? (y/n)\r\n"; got != want {
+			t.Fatalf("if-flag prompt = %q, want %q", got, want)
+		}
+		s.handleZeditInput("n")
+	}
+
+	t.Run("remove selector and both vnum prompts", func(t *testing.T) {
+		s := newSession(t, "Zeditremove-prompts")
+		appendCommand(t, s, "R")
+		if got, want := readMsgText(t, s), "Input 0 for a mobile, 1 for an object: "; got != want {
+			t.Fatalf("remove selector = %q, want %q", got, want)
+		}
+		s.handleZeditInput("1")
+		if got, want := readMsgText(t, s), "Input object's vnum : "; got != want {
+			t.Fatalf("object-removal VNUM prompt = %q, want %q", got, want)
+		}
+
+		s = newSession(t, "Zeditremove-mobile")
+		appendCommand(t, s, "R")
+		_ = readMsgText(t, s)
+		s.handleZeditInput("0")
+		if got, want := readMsgText(t, s), "Input mobile's vnum : "; got != want {
+			t.Fatalf("mobile-removal VNUM prompt = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("loop selector and start repeat prompt", func(t *testing.T) {
+		s := newSession(t, "Zeditloop-prompts")
+		appendCommand(t, s, "L")
+		if got, want := readMsgText(t, s), "Input 0 for loop start, 1 for loop finish: "; got != want {
+			t.Fatalf("loop selector = %q, want %q", got, want)
+		}
+		s.handleZeditInput("0")
+		if got, want := readMsgText(t, s), "Input the number of times to repeat the loop : "; got != want {
+			t.Fatalf("loop repeat prompt = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("equipment list and prompt", func(t *testing.T) {
+		s := newSession(t, "Zeditequip-prompts")
+		appendCommand(t, s, "E")
+		if got, want := readMsgText(t, s), "Input object vnum : "; got != want {
+			t.Fatalf("equipment object VNUM prompt = %q, want %q", got, want)
+		}
+		s.handleZeditInput("3003")
+		if got, want := readMsgText(t, s), "Input the maximum number that can exist on the mud : "; got != want {
+			t.Fatalf("equipment max-count prompt = %q, want %q", got, want)
+		}
+		s.handleZeditInput("1")
+		got := readMsgText(t, s)
+		var want strings.Builder
+		equipment := []string{
+			"Used as light", "Worn on right finger", "Worn on left finger", "First worn around Neck",
+			"Second worn around Neck", "Worn on body", "Worn on head", "Worn on legs",
+			"Worn on feet", "Worn on hands", "Worn on arms", "Worn as shield",
+			"Worn about body", "Worn around waist", "Worn around right wrist", "Worn around left wrist",
+			"Wielded", "Held", "Wielded for throwing", "Worn about legs", "Worn on face", "Hovering near head",
+		}
+		for i := 0; i < len(equipment); i += 2 {
+			second := ""
+			if i+1 < len(equipment) {
+				second = equipment[i+1]
+			}
+			fmt.Fprintf(&want, "%2d) %26.26s %2d) %26.26s\r\n", i, equipment[i], i+1, second)
+		}
+		want.WriteString("Input location to equip : ")
+		if got != want.String() {
+			t.Fatalf("equipment choices = %q, want %q", got, want.String())
+		}
+	})
+
+	t.Run("put-container prompt", func(t *testing.T) {
+		s := newSession(t, "Zeditput-prompts")
+		appendCommand(t, s, "P")
+		if got, want := readMsgText(t, s), "Input object vnum : "; got != want {
+			t.Fatalf("put object VNUM prompt = %q, want %q", got, want)
+		}
+		s.handleZeditInput("3003")
+		if got, want := readMsgText(t, s), "Input the maximum number that can exist on the mud : "; got != want {
+			t.Fatalf("put max-count prompt = %q, want %q", got, want)
+		}
+		s.handleZeditInput("1")
+		if got, want := readMsgText(t, s), "Input the vnum of the container : "; got != want {
+			t.Fatalf("container VNUM prompt = %q, want %q", got, want)
+		}
+	})
+
+	for _, tc := range []struct {
+		choice string
+		want   string
+	}{
+		{choice: "e", want: "Which command do you wish to change? : "},
+		{choice: "z", want: "Enter new zone name : "},
+	} {
+		t.Run("main menu "+tc.choice, func(t *testing.T) {
+			s := newSession(t, "Zeditmenu-prompt")
+			s.handleZeditInput(tc.choice)
+			if got := readMsgText(t, s); got != tc.want {
+				t.Fatalf("main-menu prompt = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestZeditActivityRetryOutputs(t *testing.T) {
+	tests := []struct {
+		name    string
+		command string
+		mode    zeditMode
+		arg2    int
+		input   string
+		want    string
+	}{
+		{name: "command type", command: "*", mode: zeditCommandType, input: "?", want: "Invalid choice, try again : "},
+		{name: "if flag", command: "M", mode: zeditIfFlag, input: "?", want: "Try again : "},
+		{name: "nonnumeric arg1", command: "M", mode: zeditArg1, input: "x", want: "Must be a numeric value, try again : "},
+		{name: "missing mobile", command: "M", mode: zeditArg1, input: "999999", want: "That mobile does not exist, try again : "},
+		{name: "missing object", command: "O", mode: zeditArg1, input: "999999", want: "That object does not exist, try again : "},
+		{name: "nonnumeric arg2", command: "M", mode: zeditArg2, input: "x", want: "Must be a numeric value, try again : "},
+		{name: "door direction", command: "D", mode: zeditArg2, input: "9", want: "Try again : "},
+		{name: "remove selector", command: "R", mode: zeditArg2, input: "9", want: "Try again : "},
+		{name: "loop selector", command: "L", mode: zeditArg2, input: "9", want: "Try again : "},
+		{name: "nonnumeric arg3", command: "E", mode: zeditArg3, input: "x", want: "Must be a numeric value, try again : "},
+		{name: "equipment location", command: "E", mode: zeditArg3, input: "99", want: "Try again : "},
+		{name: "missing container", command: "P", mode: zeditArg3, input: "999999", want: "That object does not exist, try again : "},
+		{name: "door state", command: "D", mode: zeditArg3, input: "3", want: "Try again : "},
+		{name: "zero loop repeat", command: "L", mode: zeditArg3, arg2: 0, input: "0", want: "The loop must repeat at least once, try again : "},
+		{name: "missing object removal", command: "R", mode: zeditArg3, arg2: 1, input: "999999", want: "That object does not exist, try again : "},
+		{name: "missing mobile removal", command: "R", mode: zeditArg3, arg2: 0, input: "999999", want: "That mobile does not exist, try again : "},
+		{name: "lifespan", command: "", mode: zeditZoneLife, input: "241", want: "Try again (0-240) : "},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			w := makeZeditTestWorld(t)
+			m := newTestManager(t, w, nil)
+			s := makeZeditTestSession(t, m, "Zeditretry", game.LVL_IMPL)
+			if err := cmdZedit(s, []string{"3000"}); err != nil {
+				t.Fatal(err)
+			}
+			_ = readMsgText(t, s)
+			state := s.zedit
+			state.zone.Commands = []parser.ZoneCommand{{Command: tc.command, Arg1: 3000, Arg2: tc.arg2}}
+			state.position = 0
+			state.mode = tc.mode
+			s.handleZeditInput(tc.input)
+			if got := readMsgText(t, s); got != tc.want {
+				t.Fatalf("retry output = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestZeditBoundaryQuirks(t *testing.T) {
 	if got := zeditSetupCommands([]parser.ZoneCommand{
 		{Command: "M", Arg3: 3000},
@@ -408,5 +582,28 @@ func TestZeditNewZoneTemplatesAndIndexInsertion(t *testing.T) {
 		if string(data) != "30."+ext+"\n31."+ext+"\n$\n" {
 			t.Errorf("%s index = %q", ext, data)
 		}
+	}
+}
+
+func TestZeditNewZoneRefusals(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		number string
+		want   string
+	}{
+		{name: "maximum", number: "327", want: "326 is the highest zone allowed.\r\n"},
+		{name: "overlap", number: "30", want: "A zone already covers that area.\r\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := makeZeditTestWorld(t)
+			m := newTestManager(t, w, nil)
+			s := makeZeditTestSession(t, m, "Zeditimpl", LVL_HIGOD)
+			if err := cmdZedit(s, []string{"new", tc.number}); err != nil {
+				t.Fatal(err)
+			}
+			if got := readMsgText(t, s); got != tc.want {
+				t.Fatalf("new-zone refusal = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }

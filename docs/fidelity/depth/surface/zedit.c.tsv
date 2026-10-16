@@ -1,6 +1,6 @@
 c_site	function	classification	case_ids	notes
-src/zedit.c:117	zedit_new_zone	gap-reachable	-	The maximum-zone refusal is reachable through the new-zone entry, but no existing proof reaches this guard.
-src/zedit.c:127	zedit_new_zone	gap-reachable	-	The overlapping-zone refusal is reachable through the new-zone entry, but no existing proof reaches this guard.
+src/zedit.c:117	zedit_new_zone	proven	zedit.new-zone-refusals	TestZeditNewZoneRefusals drives the high-god ZEDIT handler with `new 327` and asserts the maximum-zone refusal.
+src/zedit.c:127	zedit_new_zone	proven	zedit.new-zone-refusals	TestZeditNewZoneRefusals drives the high-god ZEDIT handler with `new 30` and asserts the overlap refusal.
 src/zedit.c:227	zedit_new_zone	proven	zedit.new-zone-templates	TestZeditNewZoneTemplatesAndIndexInsertion asserts the exact Zone created response on the successful new-zone path.
 src/zedit.c:700	zedit_disp_menu	proven	zedit.no-argument-current-room;zedit.main-invalid;zedit.menu-colors-on-raw;zedit.menu-colors-off-raw	The initial menu send is reached by entry, invalid-choice redraw, and raw color-on/off oracle scenarios.
 src/zedit.c:720	zedit_disp_comtype	proven	zedit.new-at-end	The boundary scenario appends at the end, chooses D, and compares the command-type menu before continuing.
@@ -9,43 +9,43 @@ src/zedit.c:740	zedit_disp_arg1	proven	zedit.object-load-prompts	TestZeditObject
 src/zedit.c:776	zedit_disp_arg2	proven	zedit.command-type-and-if-flag;zedit.object-load-prompts	Both the M and O real-parser paths assert the exact maximum-count prompt.
 src/zedit.c:781	zedit_disp_arg2	proven	zedit.new-at-end	The D path emits the complete direction list; the boundary scenario compares it before selecting the terminal direction.
 src/zedit.c:784	zedit_disp_arg2	proven	zedit.new-at-end	The D path emits the exit-number prompt in the boundary scenario.
-src/zedit.c:787	zedit_disp_arg2	gap-reachable	-	No existing proof selects R to reach the mobile/object selector.
-src/zedit.c:790	zedit_disp_arg2	gap-reachable	-	No existing proof selects L to reach the loop start/finish selector.
-src/zedit.c:815	zedit_disp_arg3	gap-reachable	-	No existing proof selects E to emit the equipment-location choices.
-src/zedit.c:821	zedit_disp_arg3	gap-reachable	-	No existing proof selects E to emit the equipment-location prompt.
-src/zedit.c:824	zedit_disp_arg3	gap-reachable	-	No existing proof selects P to reach the container VNUM prompt.
+src/zedit.c:787	zedit_disp_arg2	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects R through the parser and asserts the mobile/object selector bytes.
+src/zedit.c:790	zedit_disp_arg2	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects L through the parser and asserts the loop start/finish selector bytes.
+src/zedit.c:815	zedit_disp_arg3	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts reaches E's third-argument display and compares the complete C-shaped equipment list.
+src/zedit.c:821	zedit_disp_arg3	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts compares the equipment-location prompt after the full list.
+src/zedit.c:824	zedit_disp_arg3	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects P, enters a valid object and max count, then asserts the container VNUM prompt.
 src/zedit.c:827	zedit_disp_arg3	proven	zedit.new-at-end	The D path emits the three door-state choices and prompt in the boundary scenario.
-src/zedit.c:834	zedit_disp_arg3	gap-reachable	-	No existing proof selects L loop start to emit the repeat-count prompt.
-src/zedit.c:840	zedit_disp_arg3	gap-reachable	-	No existing proof selects R object-removal mode to emit this prompt.
-src/zedit.c:842	zedit_disp_arg3	gap-reachable	-	No existing proof selects R mobile-removal mode to emit this prompt.
+src/zedit.c:834	zedit_disp_arg3	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects L loop start and asserts the repeat-count prompt.
+src/zedit.c:840	zedit_disp_arg3	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects R object-removal mode and asserts its VNUM prompt.
+src/zedit.c:842	zedit_disp_arg3	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects R mobile-removal mode and asserts its VNUM prompt.
 src/zedit.c:874	zedit_parse	proven	zedit.command-type-and-if-flag	TestZeditStaleCarryAndCommandSave asserts the exact in-memory save acknowledgement after Y.
 src/zedit.c:886	zedit_parse	proven	zedit.confirm-save	The boundary scenario changes zone state, quits, enters an invalid confirmation, and compares this refusal.
 src/zedit.c:887	zedit_parse	proven	zedit.confirm-save	The same invalid confirmation reaches and compares the repeated save prompt.
 src/zedit.c:898	zedit_parse	proven	zedit.confirm-save	The boundary scenario reaches the initial save prompt after changing zone state and quitting.
 src/zedit.c:903	zedit_parse	proven	zedit.interactive-olc	The clean entry-and-quit scenario reaches the no-changes response.
 src/zedit.c:910	zedit_parse	proven	zedit.new-at-end	The boundary scenario selects N and reaches the insertion-position prompt before appending at the terminator.
-src/zedit.c:916	zedit_parse	gap-reachable	-	No existing proof selects E to reach the change-command position prompt.
+src/zedit.c:916	zedit_parse	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects E from the live main menu and asserts the change-command prompt.
 src/zedit.c:922	zedit_parse	proven	zedit.delete-numeric-invalid	The boundary scenario selects D and reaches this deletion-index prompt before testing an invalid numeric index.
-src/zedit.c:928	zedit_parse	gap-reachable	-	No existing proof selects Z to reach the zone-name prompt.
+src/zedit.c:928	zedit_parse	proven	zedit.activity-output-prompts	TestZeditActivityOutputPrompts selects Z from the live main menu and asserts the zone-name prompt.
 src/zedit.c:937	zedit_parse	proven	zedit.top-clamp	The boundary scenario edits the zone top and compares the prompt and resulting menu bytes.
 src/zedit.c:944	zedit_parse	proven	zedit.zone-header-gates	The boundary scenario reaches the lifespan prompt and checks its valid input path.
 src/zedit.c:950	zedit_parse	proven	zedit.zone-header-gates	The boundary scenario selects reset mode and compares the displayed choices.
-src/zedit.c:1004	zedit_parse	gap-reachable	-	No existing proof supplies an invalid command type to reach this retry prompt.
+src/zedit.c:1004	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the exact invalid-command-type retry.
 src/zedit.c:1008	zedit_parse	proven	zedit.command-type-and-if-flag	TestZeditStaleCarryAndCommandSave asserts the exact dependent-command quiz after choosing M.
-src/zedit.c:1031	zedit_parse	gap-reachable	-	No existing proof supplies an invalid answer to the dependent-command quiz.
-src/zedit.c:1042	zedit_parse	gap-reachable	-	No existing proof supplies a nonnumeric argument-one value.
-src/zedit.c:1052	zedit_parse	gap-reachable	-	No existing proof exercises a missing mobile VNUM in an M command.
-src/zedit.c:1063	zedit_parse	gap-reachable	-	No existing proof exercises a missing object VNUM in an object-load command.
-src/zedit.c:1081	zedit_parse	gap-reachable	-	No existing proof supplies a nonnumeric argument-two value.
-src/zedit.c:1106	zedit_parse	gap-reachable	-	The D scenario selects a valid direction; no proof selects an out-of-range direction to reach this retry.
-src/zedit.c:1115	zedit_parse	gap-reachable	-	No existing proof selects R and supplies an invalid mobile/object selector.
-src/zedit.c:1124	zedit_parse	gap-reachable	-	No existing proof selects L and supplies an invalid loop start/finish selector.
-src/zedit.c:1145	zedit_parse	gap-reachable	-	No existing proof supplies a nonnumeric argument-three value.
-src/zedit.c:1156	zedit_parse	gap-reachable	-	No existing proof selects E and supplies an out-of-range equipment location.
-src/zedit.c:1168	zedit_parse	gap-reachable	-	No existing proof selects P and supplies a missing container VNUM.
-src/zedit.c:1173	zedit_parse	gap-reachable	-	The D scenario selects a valid door state; no proof supplies an out-of-range state.
-src/zedit.c:1186	zedit_parse	gap-reachable	-	No existing proof selects L loop start and supplies a zero/negative repeat count.
-src/zedit.c:1202	zedit_parse	gap-reachable	-	No existing proof selects R object-removal mode and supplies a missing object VNUM.
-src/zedit.c:1204	zedit_parse	gap-reachable	-	No existing proof selects R mobile-removal mode and supplies a missing mobile VNUM.
+src/zedit.c:1031	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the invalid dependent-command answer retry.
+src/zedit.c:1042	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the nonnumeric arg1 response.
+src/zedit.c:1052	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the missing-mobile response for M.
+src/zedit.c:1063	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the missing-object response for O.
+src/zedit.c:1081	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the nonnumeric arg2 response.
+src/zedit.c:1106	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the out-of-range door-direction retry.
+src/zedit.c:1115	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the invalid R selector retry.
+src/zedit.c:1124	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the invalid L selector retry.
+src/zedit.c:1145	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the nonnumeric arg3 response.
+src/zedit.c:1156	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the invalid equipment-location retry.
+src/zedit.c:1168	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the missing-container response for P.
+src/zedit.c:1173	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the invalid door-state retry.
+src/zedit.c:1186	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the zero loop-repeat retry.
+src/zedit.c:1202	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the missing-object response for R object mode.
+src/zedit.c:1204	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the missing-mobile response for R mobile mode.
 src/zedit.c:1232	zedit_parse	proven	zedit.zone-header-gates	The boundary scenario supplies reset type 3 and compares the exact 0-2 retry prompt.
-src/zedit.c:1245	zedit_parse	gap-reachable	-	The boundary scenario uses the valid maximum lifespan 240; no proof reaches the out-of-range retry.
+src/zedit.c:1245	zedit_parse	proven	zedit.parser-retry-output-sites	TestZeditActivityRetryOutputs asserts the out-of-range zone-lifespan response.
