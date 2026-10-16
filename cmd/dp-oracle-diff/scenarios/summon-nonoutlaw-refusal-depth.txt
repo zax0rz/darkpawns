@@ -1,0 +1,81 @@
+# depth-case: spell.summon.nonoutlaw-refusal
+# C path: do_cast -> cast_spell -> call_magic -> spell_summon
+# (spell_parser.c:879-925,1038-1110,513; spells.c:261-266).
+# A mortal PC caster is made summonable and the target explicitly unsummonable
+# through the registered God `set` command. Circle and open-exit controls keep
+# earlier and later summon gates from masking the non-outlaw target refusal.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+spawn-obj 64 1 8162 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Summontarget]
+Summontarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Summontarget]
+Summontarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Summontarget 8162
+set Castgod class cleric
+skillset Castgod 'summon' 100
+set Summontarget nosummon off
+set Castgod nosummon on
+set Castgod level 30
+set Summontarget level 1
+
+[probe]
+cast 'summon' Summontarget

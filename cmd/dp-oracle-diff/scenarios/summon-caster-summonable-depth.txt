@@ -69,6 +69,8 @@ Y
 [warmup]
 goto 8162
 teleport Summontarget 8162
+set Castgod class cleric
+skillset Castgod 'summon' 100
 set Castgod level 30
 set Summontarget level 5
 

@@ -3085,10 +3085,6 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	if n, ok := ch.(namer); ok {
 		chName = n.GetName()
 	}
-	victName := ""
-	if n, ok := cvict.(namer); ok {
-		victName = n.GetName()
-	}
 	chRoom := 0
 	if rg, ok := ch.(roomGet); ok {
 		chRoom = rg.GetRoomVNum()
@@ -3137,6 +3133,12 @@ func castSummon(level int, ch, cvict, world interface{}) {
 
 	// MOB_NOSUMMON check
 	if victIsNPC && hasSummonMobFlag(cvict, mobNoSummonBit) {
+		sendToCaster(ch, "You failed.\r\n")
+		return
+	}
+	// src/spells.c:261-266 refuses a mortal PC caster's attempt to summon a
+	// non-summonable, non-outlaw PC before the later save and transfer paths.
+	if !chIsNPC && !victIsNPC && !isSummonable(cvict) && getLevel(ch) < combat.LVL_IMMORT && !hasOutlawFlag(cvict) {
 		sendToCaster(ch, "You failed.\r\n")
 		return
 	}
@@ -3211,6 +3213,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		PlayerTransfer(ch interface{}, toRoomVNum int) error
 		MobTransfer(ch interface{}, toRoomVNum int) error
 	}
+	sendAffectRoom(cvict, nil, "$n disappears suddenly.\r\n", world)
 	if tw, ok := world.(transferWorld); ok {
 		if victIsNPC {
 			if err := tw.MobTransfer(cvict, chRoom); err != nil {
@@ -3222,11 +3225,19 @@ func castSummon(level int, ch, cvict, world interface{}) {
 			}
 		}
 	}
+	sendAffectRoom(cvict, nil, "$n arrives suddenly.\r\n", world)
 
-	if vs, ok := cvict.(interface{ SendMessage(string) }); ok {
-		vs.SendMessage(fmt.Sprintf("%s has summoned you!\r\n", chName))
+	if getPos(cvict) > int(PosSleeping) {
+		sendToVictim(cvict, fmt.Sprintf("%s has summoned you!\r\n", chName))
+		// C calls look_at_room(victim, 0) immediately after the awake victim
+		// message; the game adapter owns the room renderer to avoid a package
+		// cycle from spells to game.
+		if looker, ok := world.(interface{ LookAtRoomForSpell(victim interface{}) }); ok {
+			looker.LookAtRoomForSpell(cvict)
+		}
+	} else {
+		sendToVictim(cvict, "You have a strange dream about falling...\r\n")
 	}
-	sendToCaster(ch, fmt.Sprintf("%s has been summoned.\r\n", victName))
 }
 
 // consumeSummoningCircle mirrors utils.c:circle_check. C decrements the first

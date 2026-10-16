@@ -206,10 +206,14 @@ func TestSummonManualDispatchHighLevelVictimGetsCNotice(t *testing.T) {
 }
 
 func TestSummonManualDispatchAllowsSummonableMortalCaster(t *testing.T) {
+	oldSaveRoll := magSummonSaveRoll
+	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
+
 	circle := &summonTestObject{vnum: CocVnum, timer: 2}
 	flags := uint64(1) << prfSummonableBit
 	caster := &mockSpellsChar{name: "Mage", level: combat.LVL_IMMORT - 1, roomVNum: 1001, flags: flags}
-	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, flags: flags}
+	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, flags: flags, position: int(PosStanding)}
 	world := &summonTestWorld{
 		items: []interface{}{circle},
 		rooms: map[int]*parser.Room{
@@ -219,8 +223,65 @@ func TestSummonManualDispatchAllowsSummonableMortalCaster(t *testing.T) {
 
 	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", world)
 
-	if len(caster.messages) == 0 || caster.messages[0] == "Sorry, but you need to be summonable to summon other players.\r\n" {
-		t.Fatalf("caster messages = %#v, summonable mortal was refused", caster.messages)
+	if len(caster.messages) != 0 {
+		t.Fatalf("caster messages = %#v, want no invented success line", caster.messages)
+	}
+	if len(victim.messages) != 1 || victim.messages[0] != "Mage has summoned you!\r\n" {
+		t.Fatalf("victim messages = %#v, want the C success line", victim.messages)
+	}
+}
+
+func TestSummonManualDispatchRejectsNonOutlawUnSummonablePC(t *testing.T) {
+	oldSaveRoll := magSummonSaveRoll
+	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
+
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	caster := &mockSpellsChar{name: "Mage", level: combat.LVL_IMMORT - 1, roomVNum: 1001, flags: uint64(1) << prfSummonableBit}
+	victim := &mockSpellsChar{name: "Target", level: 1}
+	world := &summonTestWorld{
+		items: []interface{}{circle},
+		rooms: map[int]*parser.Room{
+			1001: {VNum: 1001, Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+		},
+	}
+
+	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", world)
+
+	if circle.timer != 1 {
+		t.Fatalf("circle timer = %d, want 1 before the non-outlaw target refusal", circle.timer)
+	}
+	if len(caster.messages) != 1 || caster.messages[0] != "You failed.\r\n" {
+		t.Fatalf("caster messages = %#v, want only You failed", caster.messages)
+	}
+	if len(victim.messages) != 0 {
+		t.Fatalf("victim messages = %#v, want none", victim.messages)
+	}
+}
+
+func TestSummonManualDispatchSleepingVictimDreamOutput(t *testing.T) {
+	oldSaveRoll := magSummonSaveRoll
+	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
+
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	flags := uint64(1) << prfSummonableBit
+	caster := &mockSpellsChar{name: "Mage", level: combat.LVL_IMMORT - 1, roomVNum: 1001, flags: flags}
+	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, flags: flags, position: int(PosSleeping)}
+	world := &summonTestWorld{
+		items: []interface{}{circle},
+		rooms: map[int]*parser.Room{
+			1001: {VNum: 1001, Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+		},
+	}
+
+	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", world)
+
+	if len(caster.messages) != 0 {
+		t.Fatalf("caster messages = %#v, want no success message", caster.messages)
+	}
+	if len(victim.messages) != 1 || victim.messages[0] != "You have a strange dream about falling...\r\n" {
+		t.Fatalf("sleeping victim messages = %#v, want the C dream line", victim.messages)
 	}
 }
 
