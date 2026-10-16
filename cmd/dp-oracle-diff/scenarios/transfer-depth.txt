@@ -7,6 +7,8 @@
 # depth-case: transfer.success-audience
 # depth-case: transfer.one-argument
 # depth-case: transfer.self-refusal
+# depth-case: transfer.lower-level-refusal
+# depth-case: transfer.all-level-refusal
 
 [fixture]
 empty-players
@@ -96,12 +98,47 @@ Y
 <ENTER>
 1
 
+[setup:oracle:low]
+Transferlow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:low]
+Transferlow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
 teleport Transferpeer 8162
 teleport Transferobserver 8162
+teleport Transferlow 8162
+set Transferpeer level 35
+set Transferlow level 31
 
 [probe]
 transfer Nobody
 transfer Transferpeer trailing words are ignored
 transfer Transferwizard
+
+[probe:low]
+transfer Transferpeer
+transfer all

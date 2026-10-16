@@ -23,11 +23,11 @@ src/act.wizard.c:303	do_goto	proven	goto.numeric-success;poofin.consumer-audienc
 src/act.wizard.c:318	do_trans	proven	transfer.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:321	do_trans	proven	transfer.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:323	do_trans	proven	transfer.self-refusal	The registered command resolves the actor as its own target and matches C's refusal (R1/R2/R5e/R5h).
-src/act.wizard.c:326	do_trans	gap-reachable		Lower-level authority refusal is reachable, but transfer-depth uses an Implementor actor and has no lower-level actor control.
+src/act.wizard.c:326	do_trans	proven	transfer.lower-level-refusal	A level-31 actor targets a level-35 visible player through dispatch and receives C's exact refusal before movement (R1/R2/R5e/R5h).
 src/act.wizard.c:329	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:337	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:338	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:343	do_trans	gap-reachable		The transfer all level refusal is reachable, but current transfer proofs exercise the permitted all path only.
+src/act.wizard.c:343	do_trans	proven	transfer.all-level-refusal	A level-31 actor reaches C's GRGOD refusal before transfer-all descriptor scanning (R1/R2/R5e/R5h).
 src/act.wizard.c:352	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:355	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:356	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
