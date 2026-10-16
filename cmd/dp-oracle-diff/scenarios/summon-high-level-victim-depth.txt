@@ -1,0 +1,76 @@
+# depth-case: spell.summon.high-level-victim
+# C path: do_cast -> cast_spell -> call_magic -> spell_summon
+# (spell_parser.c:879-925,1038-1110,513; spells.c:243-253).
+# A level-40 implementor targets a level-31 PC from a room containing COC_VNUM;
+# the level cap MIN(LVL_IMMORT-1, level+3) makes the victim refusal reachable.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+spawn-obj 64 1 8162 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Summontarget]
+Summontarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Summontarget]
+Summontarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Summontarget 8162
+set Castgod level 40
+set Summontarget level 31
+
+[probe]
+cast 'summon' Summontarget

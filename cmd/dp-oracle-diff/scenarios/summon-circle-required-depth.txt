@@ -1,0 +1,45 @@
+# depth-case: spell.summon.circle-required
+# C path: do_cast -> cast_spell -> call_magic -> spell_summon
+# (spell_parser.c:879-925,1038-1110,513; spells.c:218-235; utils.c:877-893).
+# An open exit and an in-world NPC ensure the glyph prerequisite is the first
+# summon-specific branch. No circle exists in the caster's room.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+spawn-mob 4800 1 8162 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+cast 'summon' sailor

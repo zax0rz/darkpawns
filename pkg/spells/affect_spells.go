@@ -22,6 +22,9 @@ import (
 // lose every attempt.
 var magAffectsSaveRoll = magSavingThrow
 
+// magSummonSaveRoll keeps summon save branches deterministic in focused tests.
+var magSummonSaveRoll = magSavingThrow
+
 func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world interface{}) {
 	magAffectsForCast(level, ch, victim, spellNum, savetype, CastSpell, world)
 }
@@ -3096,7 +3099,6 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	type lever interface{ GetLevel() int }
 	type roomGet interface{ GetRoomVNum() int }
 	type npcCheck interface{ IsNPC() bool }
-	type mobFlagger interface{ HasMobFlag(flag uint64) bool }
 
 	chName := ""
 	if n, ok := ch.(namer); ok {
@@ -3124,32 +3126,38 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		victIsNPC = nc.IsNPC()
 	}
 
-	// Level check: can't summon someone > level+3
+	// src/utils.c:877-893: circle_check runs for every caster and consumes one
+	// tick from the first summoning circle in the caster's room. Only PCs need
+	// a circle to continue.
+	if !consumeSummoningCircle(chRoom, world) && !chIsNPC {
+		sendToCaster(ch, "You lack the proper glyphs to perform this magick.\r\n")
+		return
+	}
+	if !chIsNPC && !victIsNPC && getLevel(ch) < combat.LVL_IMMORT && !isSummonable(ch) {
+		sendToCaster(ch, "Sorry, but you need to be summonable to summon other players.\r\n")
+		return
+	}
+
+	// C caps the victim at the lower of level+3 and LVL_IMMORT-1.
 	if vl, ok := cvict.(lever); ok {
 		victLevel := vl.GetLevel()
-		if victLevel > level+3 {
+		maxVictimLevel := combat.LVL_IMMORT - 1
+		if level+3 < maxVictimLevel {
+			maxVictimLevel = level + 3
+		}
+		if victLevel > maxVictimLevel {
 			sendToCaster(ch, "You failed.\r\n")
 			if vs, ok := cvict.(interface{ SendMessage(string) }); ok {
-				vs.SendMessage(fmt.Sprintf("%s just tried to summon you but failed.\r\n", chName))
+				vs.SendMessage(summonAttemptNotice(ch, chName, chRoom, world))
 			}
 			return
 		}
 	}
 
 	// MOB_NOSUMMON check
-	if victIsNPC {
-		if mf, ok := cvict.(mobFlagger); ok && mf.HasMobFlag(1<<12) { // MOB_NOSUMMON
-			sendToCaster(ch, "You failed.\r\n")
-			return
-		}
-	}
-
-	// MOB_NOCHARM check (C checks this in summon too)
-	if victIsNPC {
-		if mf, ok := cvict.(mobFlagger); ok && mf.HasMobFlag(1<<4) { // MOB_NOCHARM
-			sendToCaster(ch, "You failed.\r\n")
-			return
-		}
+	if victIsNPC && hasSummonMobFlag(cvict, mobNoSummonBit) {
+		sendToCaster(ch, "You failed.\r\n")
+		return
 	}
 
 	// Peaceful room check for NPC victims
@@ -3184,11 +3192,13 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	}
 
 	// Saving throw with backfire
-	if victIsNPC && magSavingThrow(cvict, int(SaveSpell)) {
+	if (magSummonSaveRoll(cvict, int(SaveSpell)) && !isSummonable(cvict)) ||
+		(victIsNPC && hasSummonMobFlag(cvict, mobNoCharmBit)) {
 		// 10% backfire chance for PC casters
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if !chIsNPC && dprng.Number(0, 9) == 0 {
+		backfireRoll := dprng.Number(0, 9)
+		if backfireRoll == 0 && !chIsNPC {
 			sendToCaster(ch, "Your spell backfires!\r\n")
 			// Transfer caster to victim's room instead
 			type transferWorld interface {
@@ -3210,7 +3220,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		}
 		sendToCaster(ch, "You failed.\r\n")
 		if vs, ok := cvict.(interface{ SendMessage(string) }); ok {
-			vs.SendMessage(fmt.Sprintf("%s just tried to summon you but failed.\r\n", chName))
+			vs.SendMessage(summonAttemptNotice(ch, chName, chRoom, world))
 		}
 		return
 	}
@@ -3236,6 +3246,68 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		vs.SendMessage(fmt.Sprintf("%s has summoned you!\r\n", chName))
 	}
 	sendToCaster(ch, fmt.Sprintf("%s has been summoned.\r\n", victName))
+}
+
+// consumeSummoningCircle mirrors utils.c:circle_check. C decrements the first
+// room circle's timer at spell use, even when a later summon gate fails.
+func consumeSummoningCircle(roomVNum int, world interface{}) bool {
+	type roomObjectLister interface{ GetItemsInRoomI(int) []interface{} }
+	type vnumGetter interface{ GetVNum() int }
+	type timer interface {
+		GetTimer() int
+		SetTimer(int)
+	}
+
+	lister, ok := world.(roomObjectLister)
+	if !ok {
+		return false
+	}
+	for _, object := range lister.GetItemsInRoomI(roomVNum) {
+		vnum, ok := object.(vnumGetter)
+		if !ok || vnum.GetVNum() != CocVnum {
+			continue
+		}
+		if timed, ok := object.(timer); ok {
+			timed.SetTimer(timed.GetTimer() - 1)
+		}
+		return true
+	}
+	return false
+}
+
+const (
+	mobNoCharmBit    = 13 // src/structs.h:260, MOB_NOCHARM
+	mobNoSummonBit   = 14 // src/structs.h:261, MOB_NOSUMMON
+	prfSummonableBit = 42 // PRF_SUMMONABLE=10 at game.prfBase=32
+)
+
+func hasSummonMobFlag(ch interface{}, bit uint) bool {
+	type mobFlagReader interface{ GetMobFlags() uint64 }
+	mob, ok := ch.(mobFlagReader)
+	return ok && mob.GetMobFlags()&(uint64(1)<<bit) != 0
+}
+
+func isSummonable(ch interface{}) bool {
+	type flagReader interface{ GetFlags() uint64 }
+	flags, ok := ch.(flagReader)
+	return ok && flags.GetFlags()&(uint64(1)<<prfSummonableBit) != 0
+}
+
+func summonAttemptNotice(ch interface{}, chName string, roomVNum int, world interface{}) string {
+	roomName := ""
+	if roomWorld, ok := world.(interface{ GetRoomInWorld(int) *parser.Room }); ok {
+		if room := roomWorld.GetRoomInWorld(roomVNum); room != nil {
+			roomName = room.Name
+		}
+	}
+	if chName != "" {
+		chName = strings.ToUpper(chName[:1]) + chName[1:]
+	}
+	pronoun := "She"
+	if sex, ok := ch.(interface{ GetSex() int }); ok && sex.GetSex() == 0 {
+		pronoun = "He"
+	}
+	return fmt.Sprintf("%s just tried to summon you to: %s.\r\n%s failed.\r\n", chName, roomName, pronoun)
 }
 
 // castDivineInt ports src/spells.c spell_divine_int (lines 1170-1215).

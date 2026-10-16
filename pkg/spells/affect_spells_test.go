@@ -6,7 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // mockSpellsChar satisfies all local interfaces in affect_spells.go
@@ -25,6 +27,7 @@ type mockSpellsChar struct {
 	dex           int
 	aff           uint64
 	flags         uint64
+	mobFlags      uint64
 	inGroup       bool
 	following     string
 	messages      []string
@@ -75,6 +78,7 @@ func (m *mockSpellsChar) IsInGroup() bool            { return m.inGroup }
 func (m *mockSpellsChar) GetFollowing() string       { return m.following }
 func (m *mockSpellsChar) IsAffected(bit int) bool    { return m.aff&(1<<bit) != 0 }
 func (m *mockSpellsChar) HasMobFlag(bit uint64) bool { return m.flags&bit != 0 }
+func (m *mockSpellsChar) GetMobFlags() uint64        { return m.mobFlags }
 func (m *mockSpellsChar) GetCha() int                { return 18 }
 func (m *mockSpellsChar) GetInventory() ReagentInventory {
 	if m.inventory == nil {
@@ -101,6 +105,152 @@ func TestMagAffects_ChillTouch(t *testing.T) {
 	}
 	if aff.Magnitude != -1 {
 		t.Errorf("Magnitude = %d, want -1", aff.Magnitude)
+	}
+}
+
+type summonTestObject struct {
+	vnum  int
+	timer int
+}
+
+func (o *summonTestObject) GetVNum() int       { return o.vnum }
+func (o *summonTestObject) GetTimer() int      { return o.timer }
+func (o *summonTestObject) SetTimer(timer int) { o.timer = timer }
+
+type summonTestWorld struct {
+	items []interface{}
+	rooms map[int]*parser.Room
+}
+
+func (w *summonTestWorld) GetItemsInRoomI(int) []interface{}    { return w.items }
+func (w *summonTestWorld) GetRoomInWorld(vnum int) *parser.Room { return w.rooms[vnum] }
+
+func TestSummonManualDispatchRequiresGlyphBeforeOtherGates(t *testing.T) {
+	caster := &mockSpellsChar{name: "Mage", roomVNum: 1001}
+	victim := &mockSpellsChar{name: "Target", npc: true, level: 1}
+
+	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", &summonTestWorld{})
+
+	if len(caster.messages) != 1 || caster.messages[0] != "You lack the proper glyphs to perform this magick.\r\n" {
+		t.Fatalf("caster messages = %#v, want the exact glyph refusal", caster.messages)
+	}
+	if len(victim.messages) != 0 {
+		t.Fatalf("victim messages = %#v, want none", victim.messages)
+	}
+}
+
+func TestSummonManualDispatchConsumesCircleThenRejectsNoSummonMob(t *testing.T) {
+	oldSaveRoll := magSummonSaveRoll
+	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
+
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	caster := &mockSpellsChar{name: "Mage", roomVNum: 1001}
+	victim := &mockSpellsChar{name: "Guard", npc: true, level: 1, mobFlags: 1 << 14}
+	world := &summonTestWorld{
+		items: []interface{}{circle},
+		rooms: map[int]*parser.Room{
+			1001: {VNum: 1001, Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+		},
+	}
+
+	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", world)
+
+	if circle.timer != 1 {
+		t.Fatalf("circle timer = %d, want 1 after C circle_check use", circle.timer)
+	}
+	if len(caster.messages) != 1 || caster.messages[0] != "You failed.\r\n" {
+		t.Fatalf("caster messages = %#v, want only You failed", caster.messages)
+	}
+	if len(victim.messages) != 0 {
+		t.Fatalf("victim messages = %#v, want none", victim.messages)
+	}
+}
+
+func TestSummonManualDispatchRequiresCasterSummonableForPvP(t *testing.T) {
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	caster := &mockSpellsChar{name: "Mage", level: combat.LVL_IMMORT - 1, roomVNum: 1001}
+	victim := &mockSpellsChar{name: "Target", level: 1}
+	world := &summonTestWorld{items: []interface{}{circle}}
+
+	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", world)
+
+	if circle.timer != 1 {
+		t.Fatalf("circle timer = %d, want 1 before the player target gate", circle.timer)
+	}
+	if len(caster.messages) != 1 || caster.messages[0] != "Sorry, but you need to be summonable to summon other players.\r\n" {
+		t.Fatalf("caster messages = %#v, want exact player-summon refusal", caster.messages)
+	}
+	if len(victim.messages) != 0 {
+		t.Fatalf("victim messages = %#v, want none", victim.messages)
+	}
+}
+
+func TestSummonManualDispatchHighLevelVictimGetsCNotice(t *testing.T) {
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	caster := &mockSpellsChar{name: "Mage", level: 40, roomVNum: 1001}
+	victim := &mockSpellsChar{name: "Target", level: combat.LVL_IMMORT}
+	world := &summonTestWorld{
+		items: []interface{}{circle},
+		rooms: map[int]*parser.Room{1001: {VNum: 1001, Name: "Summon Test Room"}},
+	}
+
+	ExecuteManualSpell(SpellSummon, 40, caster, victim, nil, "", world)
+
+	if len(caster.messages) != 1 || caster.messages[0] != "You failed.\r\n" {
+		t.Fatalf("caster messages = %#v, want only You failed", caster.messages)
+	}
+	if len(victim.messages) != 1 || victim.messages[0] != "Mage just tried to summon you to: Summon Test Room.\r\nHe failed.\r\n" {
+		t.Fatalf("victim messages = %#v, want the C room and pronoun notice", victim.messages)
+	}
+}
+
+func TestSummonManualDispatchAllowsSummonableMortalCaster(t *testing.T) {
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	flags := uint64(1) << prfSummonableBit
+	caster := &mockSpellsChar{name: "Mage", level: combat.LVL_IMMORT - 1, roomVNum: 1001, flags: flags}
+	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, flags: flags}
+	world := &summonTestWorld{
+		items: []interface{}{circle},
+		rooms: map[int]*parser.Room{
+			1001: {VNum: 1001, Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+		},
+	}
+
+	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", world)
+
+	if len(caster.messages) == 0 || caster.messages[0] == "Sorry, but you need to be summonable to summon other players.\r\n" {
+		t.Fatalf("caster messages = %#v, summonable mortal was refused", caster.messages)
+	}
+}
+
+func TestSummonManualDispatchHonorsNoCharmFlag(t *testing.T) {
+	oldSaveRoll := magSummonSaveRoll
+	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
+
+	caster := &mockSpellsChar{name: "Mage", npc: true, roomVNum: 1001}
+	victim := &mockSpellsChar{name: "Guard", npc: true, roomVNum: 1002, mobFlags: 1 << mobNoCharmBit}
+	world := &summonTestWorld{
+		rooms: map[int]*parser.Room{
+			1001: {VNum: 1001, Name: "Summon Test Room", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+		},
+	}
+
+	ExecuteManualSpell(SpellSummon, 20, caster, victim, nil, "", world)
+
+	if len(caster.messages) != 1 || caster.messages[0] != "You failed.\r\n" {
+		t.Fatalf("caster messages = %#v, want only You failed", caster.messages)
+	}
+	if len(victim.messages) != 1 || victim.messages[0] != "Mage just tried to summon you to: Summon Test Room.\r\nHe failed.\r\n" {
+		t.Fatalf("victim messages = %#v, want the C room and pronoun notice", victim.messages)
+	}
+}
+
+func TestSummonMobFlagPositionsMatchC(t *testing.T) {
+	mob := &mockSpellsChar{mobFlags: (1 << mobNoCharmBit) | (1 << mobNoSummonBit)}
+	if !hasSummonMobFlag(mob, mobNoCharmBit) || !hasSummonMobFlag(mob, mobNoSummonBit) {
+		t.Fatalf("C summon flags were not read: flags=%#x", mob.mobFlags)
 	}
 }
 

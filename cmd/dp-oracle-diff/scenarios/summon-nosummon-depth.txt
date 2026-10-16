@@ -1,0 +1,46 @@
+# depth-case: spell.summon.nosummon-mob
+# C path: do_cast -> cast_spell -> call_magic -> spell_summon
+# (spell_parser.c:879-925,1038-1110,513; spells.c:218-247; structs.h:261).
+# The room has an open exit and COC_VNUM object; the fixture mob carries only
+# MOB_NOSUMMON among the summon-relevant flags, so the early C gate is reached.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+spawn-obj 64 1 8162 80
+spawn-mob 19642 1 8162 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+cast 'summon' waitress
