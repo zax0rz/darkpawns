@@ -453,30 +453,53 @@ func TestMagAffects_Metalskin(t *testing.T) {
 
 func TestMagPoints(t *testing.T) {
 	tests := []struct {
-		spell    int
-		initial  int
-		max      int
-		wantHP   int
-		expected string
+		spell            int
+		initialHP        int
+		maxHP            int
+		initialMove      int
+		maxMove          int
+		wantHPIncrease   bool
+		wantMoveIncrease bool
+		self             bool
+		expected         string
 	}{
-		{SpellCureLight, 50, 100, 50, "better"},
-		{SpellCureCritic, 50, 100, 50, "lot better"},
-		{SpellHeal, 50, 200, 150, "warm feeling"},
-		{SpellVitality, 50, 150, 50, "vitalized"},
+		{spell: SpellCureLight, initialHP: 50, maxHP: 100, wantHPIncrease: true, expected: "better"},
+		{spell: SpellCureCritic, initialHP: 50, maxHP: 100, wantHPIncrease: true, expected: "lot better"},
+		{spell: SpellVitality, initialHP: 50, maxHP: 150, initialMove: 50, maxMove: 150, wantHPIncrease: true, wantMoveIncrease: true, expected: "vitalized"},
+		{spell: SpellInvigorate, initialHP: 50, maxHP: 50, initialMove: 50, maxMove: 150, wantMoveIncrease: true, expected: "invigorated"},
+		{spell: SpellCellAdjustment, initialHP: 50, maxHP: 150, wantHPIncrease: true, expected: "warm feeling"},
+		{spell: SpellLayHands, initialHP: 50, maxHP: 150, self: true, wantHPIncrease: true, expected: "mend beneath your hands"},
 	}
 
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			ch := &mockSpellsChar{level: 20}
-			victim := &mockSpellsChar{hp: tt.initial, maxHP: tt.max}
+			ch := &mockSpellsChar{name: "Castero", level: 20}
+			victim := &mockSpellsChar{name: "Barnaby", hp: tt.initialHP, maxHP: tt.maxHP, move: tt.initialMove, maxMove: tt.maxMove}
+			if tt.self {
+				victim = ch
+				victim.hp, victim.maxHP = tt.initialHP, tt.maxHP
+				victim.move, victim.maxMove = tt.initialMove, tt.maxMove
+			}
 
 			MagPoints(20, ch, victim, tt.spell, int(SaveSpell), nil)
 
-			if victim.hp <= tt.initial {
-				t.Errorf("Heal failed: HP remained at %d", victim.hp)
+			if tt.wantHPIncrease && victim.hp <= tt.initialHP {
+				t.Errorf("HP did not increase: got %d from %d", victim.hp, tt.initialHP)
 			}
-			if victim.hp > tt.max {
-				t.Errorf("HP overflowed: %d, max is %d", victim.hp, tt.max)
+			if !tt.wantHPIncrease && victim.hp != tt.initialHP {
+				t.Errorf("HP changed to %d, want unchanged %d", victim.hp, tt.initialHP)
+			}
+			if victim.hp > tt.maxHP {
+				t.Errorf("HP overflowed: %d, max is %d", victim.hp, tt.maxHP)
+			}
+			if tt.wantMoveIncrease && victim.move <= tt.initialMove {
+				t.Errorf("movement did not increase: got %d from %d", victim.move, tt.initialMove)
+			}
+			if !tt.wantMoveIncrease && victim.move != tt.initialMove {
+				t.Errorf("movement changed to %d, want unchanged %d", victim.move, tt.initialMove)
+			}
+			if victim.move > victim.maxMove {
+				t.Errorf("movement overflowed: %d, max is %d", victim.move, victim.maxMove)
 			}
 
 			// Verify text message
