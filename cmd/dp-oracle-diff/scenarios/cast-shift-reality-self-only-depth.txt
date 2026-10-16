@@ -1,0 +1,69 @@
+# depth-case: spell.teleport-self-only-output
+# An immortal Psionic uses the normal cast parser to target another room PC.
+# The manual spell dispatch must reach C's PC self-only refusal before a draw.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Teleportwill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teleportwill
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Teleportpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Teleportpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Teleportpeer 8105
+
+[probe]
+cast 'shift reality' Teleportpeer
