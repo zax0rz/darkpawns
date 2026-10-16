@@ -292,21 +292,21 @@ src/act.wizard.c:2661	do_set	gap-blocked		persistence/save format: set file load
 src/act.wizard.c:2670	do_set	gap-blocked		identity and persistence/save format: set file misses a durable player record.
 src/act.wizard.c:2678	do_set	proven	set.same-level-refusal	A level-34 actor sets a same-level live PC through dispatch and reaches C's target-authority refusal (R1/R2/R5e/R5h).
 src/act.wizard.c:2688	do_set	proven	set.per-field-level-gate	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:2693	do_set	gap-reachable		A PC-only set field on an NPC is reachable (for example set mob cleaner brief on); set.npc-fields only tests BOTH fields.
+src/act.wizard.c:2693	do_set	proven	set.pc-field-on-npc	A real registered `set mob cleaner brief on` dispatch reaches the PC-only field refusal for an NPC (R1/R2/R5e/R5h).
 src/act.wizard.c:2698	do_set	unreachable		Unreachable by the C field table: every entry at src/act.wizard.c:2543-2601 is PC or BOTH; there is no NPC-only field that can enter this player-target arm (R5e).
-src/act.wizard.c:2709	do_set	gap-reachable		Invalid binary value is reachable; set-depth uses valid on/off values and invalid field-name coverage does not take this value branch.
-src/act.wizard.c:2818	do_set	gap-reachable		Invalid sex text is reachable; set-extended-depth only supplies valid sex values.
-src/act.wizard.c:2845	do_set	gap-reachable		Setting another player invisibility level requires the Implementor; current set proofs cover nohassle authority, not invis authority.
+src/act.wizard.c:2709	do_set	proven	set.invalid-binary-value	A real registered dispatch supplies a non-binary value and asserts C's exact validation bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2818	do_set	proven	set.invalid-sex	A real registered dispatch supplies an invalid sex value and asserts C's exact validation bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2845	do_set	unreachable		The field table sets invis to LVL_IMPL at src/act.wizard.c:2568 and returns below-LVL_IMPL actors at 2688-2691, so the lower-level/non-self condition in this switch arm can never be true (R2/R4/R5e).
 src/act.wizard.c:2852	do_set	proven	set.nohassle.authority	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2859	do_set	proven	set.frozen.self	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:2881	do_set	gap-reachable		Invalid condition text is reachable; set-extended-depth covers off and numeric inputs only.
-src/act.wizard.c:2899	do_set	gap-reachable		Setting a level at or above the actor is reachable; current set cases only use a lower target level.
-src/act.wizard.c:2907	do_set	gap-reachable		Invalid room value is reachable; current set cases use valid live destinations.
-src/act.wizard.c:2936	do_set	gap-reachable		Invalid class selector is reachable; set-extended-depth uses a valid class abbreviation.
+src/act.wizard.c:2881	do_set	proven	set.invalid-condition	A real registered dispatch supplies invalid condition text and asserts C's exact validation bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2899	do_set	proven	set.level-not-lower	A level-55 actor requests level 55; this exercises the refusal through registered dispatch (R1/R2/R5e/R5h).
+src/act.wizard.c:2907	do_set	proven	set.invalid-room	An Implementor supplies a nonexistent room number and reaches C's exact rejection (R1/R2/R5e/R5h).
+src/act.wizard.c:2936	do_set	proven	set.invalid-class	A real registered dispatch supplies an invalid class selector and asserts C's exact validation bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:2975	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2976	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2985	do_set	gap-blocked		persistence/save format: the offline set file password mutation path.
-src/act.wizard.c:3007	do_set	gap-reachable		Invalid race selector is reachable; set-extended-depth uses a valid race abbreviation.
+src/act.wizard.c:3007	do_set	proven	set.invalid-race	A real registered dispatch supplies an invalid race selector and asserts C's exact validation bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:3061	do_set	proven	set.numeric-clamp;set.misc-field;set.binary-field	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3071	do_set	gap-blocked		persistence/save format: successful set file save acknowledgement.
 src/act.wizard.c:3089	do_syslog	proven	syslog.query-brief;syslog.query-normal-after-brief;syslog.query-complete;syslog.query-off-again	The cited manifest proof executes this C callsite (R1/R5e).
