@@ -63,9 +63,15 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 				sendToCaster(ch, "You crush a small lens under your heel.\r\n")
 			}
 		}
+	case SpellWaterwalk:
+		reag = checkReagents(ch, SpellWaterwalk, getLevel(ch), "frog leg",
+			"A frog leg turns into dust as you mouth the words of the spell...")
 	case SpellMetalskin:
 		reag = checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
 			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
+		if reag > 0 {
+			sendAffectActRoom(ch, "A small chunk of iron melts in $n's palm as $e cast a spell...", world)
+		}
 	case SpellSleep:
 		// C magic.c:1203-1210 consumes the exact vnum-1226 sand component
 		// before the outlaw/level gates or save roll. Keep the two audience
@@ -1444,6 +1450,17 @@ func sendAffectRoom(victim, exclude interface{}, format string, world interface{
 			s.SendMessage(capitalizeActMessage(msg))
 		}
 	})
+}
+
+func sendAffectActRoom(actor interface{}, format string, world interface{}) {
+	type roomActor interface {
+		SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
+	}
+	if a, ok := world.(roomActor); ok && a.SpellActToRoom(actor, nil, format, true) {
+		return
+	}
+	format = strings.ReplaceAll(format, "$e", subjectivePronoun(actor))
+	sendAffectRoom(actor, nil, format+"\r\n", world)
 }
 
 func removeAffect(entity interface{}, spellNum int) {
