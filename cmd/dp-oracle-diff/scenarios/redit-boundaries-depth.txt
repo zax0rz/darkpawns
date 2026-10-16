@@ -10,6 +10,13 @@
 # depth-case: redit.copy
 # depth-case: redit.script
 # depth-case: redit.activity-audience
+# depth-case: redit.script-flags
+# depth-case: redit.new-room-script-refusal
+# depth-case: redit.confirm-retry
+# depth-case: redit.name-prompt
+# depth-case: redit.exit-invalid-choice
+# depth-case: redit.exit-door-flags-invalid
+# depth-case: redit.copy-missing-room
 
 [fixture]
 empty-players
@@ -90,6 +97,7 @@ z
 16
 2
 5
+z
 1
 999999
 1
@@ -102,6 +110,7 @@ north gate
 4
 123
 5
+3
 2
 6
 B
@@ -114,11 +123,20 @@ old extra
 3
 0
 C
+999999
 8004
 S
 1
 redit_test_script
+2
+1
 0
-n
+0
+1
+Mapped room name
 q
+?
 n
+redit 8091
+S
+Q
