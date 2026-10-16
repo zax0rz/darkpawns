@@ -142,6 +142,76 @@ func (w *World) wanderMobWithDoor(mob *MobInstance, door int) bool {
 		return true // mobact.c:136-138 continues the outer mobile loop
 	}
 
+	// mobact.c:139 does not move the mob itself: it calls
+	// perform_move(ch, door, 1) (src/act.movement.c:311-351) → do_simple_move
+	// (src/act.movement.c:95-305), whose own gate list the port must apply too.
+	// The two lists are different lists, and they refuse differently: mobact's
+	// sector gates end the mob's whole pulse (the `continue` above), while
+	// do_simple_move's gates only refuse the step, so the rest of the pulse
+	// still runs. Stopping at mobact's list let a mob walk out of a
+	// WATER_NOSWIM room with no boat, which C's very first do_simple_move gate
+	// refuses (act.movement.c:126-132).
+
+	// act.movement.c:119-125 — a charmed body in its master's room does not
+	// leave ("The thought of leaving your master makes you weep.").
+	if mob.IsAffected(affCharm) && mob.GetFollowing() != "" {
+		if master := w.followingActor(mob.GetFollowing()); master != nil && master.GetRoom() == mob.GetRoom() {
+			return false
+		}
+	}
+
+	// act.movement.c:126-132 — "if this room or the one we're going to needs a
+	// boat, check for one": the source room counts, so a mob standing in
+	// SECT_WATER_NOSWIM without a boat cannot move anywhere at all.
+	if room.Sector == SECT_WATER_NOSWIM || targetRoom.Sector == SECT_WATER_NOSWIM {
+		if !roomActivityHasBoat(mob) {
+			return false
+		}
+	}
+
+	// act.movement.c:142-176 — the mount branch. IS_MOUNTED is AFF_MOUNT
+	// (utils.h:362). A flagged mount with no rider is unmounted where it stands
+	// and does not move; a rider-bearing mount is refused when it is not
+	// standing and when it cannot pay the step's movement cost. Unlike the
+	// exhaustion gate below, that cost check is not PC-only.
+	if mob.IsAffected(affMount) {
+		if mob.GetMountRider() == "" {
+			mob.RemoveAffected(affMount)
+			return false
+		}
+		if mob.GetPosition() < combat.PosStanding {
+			return false
+		}
+		if cost, ok := mobWanderMovementCost(room, targetRoom); !ok || mob.GetMove() < cost {
+			return false
+		}
+	}
+
+	// act.movement.c:177-182 — ROOM_TUNNEL admits one player and nobody else.
+	if movementRoomHasFlag(targetRoom, roomFlagTunnel, "tunnel") && len(w.GetPlayersInRoom(targetRoom.VNum)) >= 1 {
+		return false
+	}
+
+	// act.movement.c:184-189 — a mount cannot be ridden indoors.
+	if mob.IsAffected(affMount) && movementRoomHasFlag(targetRoom, roomFlagIndoors, "indoors") {
+		return false
+	}
+
+	// The remaining do_simple_move gates are no-ops for a mobile: the movement
+	// point refusal is PC-only (act.movement.c:172-176) and C deducts points
+	// only for non-NPC non-immortals (act.movement.c:208-211), so mobs never
+	// spend them.
+	//
+	// TODO(port): do_simple_move's first step is
+	// `if (need_specials_check && special(ch, dir + 1, "")) return 0;`
+	// (src/act.movement.c:113-115), and mobact passes need_specials_check = 1
+	// (src/mobact.c:139). special() walks the room's mobile, object and room
+	// special procedures with that command number; any of them can refuse the
+	// step and some of them draw. The player path models this as
+	// movementSpecialBlocks (pkg/game/act_movement.go:457-475), which passes a
+	// direction *string* rather than C's command number, so the mobile wander
+	// cannot reuse it as-is. Not ported here; no scenario has shown it yet.
+
 	// Move mob. GetRoom/SetRoom lock individually; the caller no longer holds
 	// mob.mu (DP-590), so there is no lock to release or re-acquire here.
 	oldRoom := mob.GetRoom()
@@ -216,6 +286,23 @@ func (w *World) wanderMobWithDoor(mob *MobInstance, door int) bool {
 		}
 	}
 	return false
+}
+
+// mobWanderMovementCost is C's need_movement for one step
+// (src/act.movement.c:135-136): the average of the source and destination
+// sector movement losses. The false return is the port's bounds guard for a
+// sector outside C's SECT_* range — C indexes movement_loss[] with no check
+// (undefined behaviour, R1a), so the step is refused instead of panicking,
+// the same guard the player movement path applies (DP-924).
+func mobWanderMovementCost(from, to *parser.Room) (int, bool) {
+	if from == nil || to == nil {
+		return 0, false
+	}
+	if from.Sector < 0 || from.Sector >= len(movementLoss) ||
+		to.Sector < 0 || to.Sector >= len(movementLoss) {
+		return 0, false
+	}
+	return (movementLoss[from.Sector] + movementLoss[to.Sector]) >> 1, true
 }
 
 // StartEventQueue starts the event processing loop used by MobProg delayed
