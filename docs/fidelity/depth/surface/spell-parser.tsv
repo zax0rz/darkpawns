@@ -6,7 +6,7 @@ src/spell_parser.c:424	call_magic	proven	use.tattoo-nomagic	The live tattoo no-m
 src/spell_parser.c:425	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle has a room observer for the will-fade act through call_magic (R1/R3/R5e/R5h).
 src/spell_parser.c:432	call_magic	proven	use.tattoo-sitting	The live tattoo sitting vehicle reaches call_magic while the actor is sitting and checks this refusal (R1/R3/R5e/R5h).
 src/spell_parser.c:441	call_magic	proven	objmagic.peaceful-block	The C-first peaceful quaff reaches this direct refusal and compares the caster bytes (R1/R3/R5e/R5h).
-src/spell_parser.c:444	call_magic	gap-reachable		The registered cast and use paths reach call_magic in a peaceful room; the psionic/mystic direct wording branch has no output proof (R1/R2/R5e).
+src/spell_parser.c:444	call_magic	proven	objmagic.peaceful-power-wording	The CLEAN held-wand fixture uses a mortal Psionic in a peaceful room, bypasses do_cast's earlier refusal, and reaches C's "violent power" send (act.other.c:895-973; R1/R2/R5e/R5h).
 src/spell_parser.c:447	call_magic	proven	objmagic.peaceful-block	CLEAN targeted quaff-peaceful-block includes a room observer, proving the peaceful-room act bytes (R1/R2/R5e/R5h).
 src/spell_parser.c:580	mag_objectmagic	proven	use.staff-tap-output	CLEAN targeted staff-use-depth reaches the held sleep-staff branch and proves the caster tap line through do_use (R1/R2/R5e/R5h).
 src/spell_parser.c:582	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).

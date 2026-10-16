@@ -1,0 +1,81 @@
+# depth-case: objmagic.peaceful-power-wording
+# A mortal Psionic uses a held crystal wand of Lightning Bolt (spell 30) in a
+# peaceful room. The item path reaches call_magic directly, bypassing do_cast's
+# earlier peaceful-room refusal at spell_parser.c:978. This reaches C's class-
+# specific "violent power" send at spell_parser.c:444 before damage; the
+# Implementor witness stays in-room for the separately mapped white-light act.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 on
+force-load 11702
+spawn-obj 11702 1 8105 117
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Willcaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Willcaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Willwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Willwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Willwitness 8105
+set Willcaster level 10
+get wand
+hold wand
+
+[probe]
+use wand trainee
+~dpclock pulse 20
