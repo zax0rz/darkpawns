@@ -1,0 +1,11 @@
+c_site	function	classification	case_ids	notes
+src/whod.c:153	do_whod	proven	whod.current-mode	The no-argument branch emits the exact header (R1/R2/R5h).
+src/whod.c:156	do_whod	proven	whod.current-mode;whod.empty-mode-bitvector	Default and empty sprintbit output are pinned, including C's trailing space and NOBITS spelling (R1/R5e/R5h).
+src/whod.c:162	do_whod	proven	whod.invalid-mode	The unknown-mode preamble is compared against the C oracle (R1/R2/R5h).
+src/whod.c:171	do_whod	proven	whod.invalid-mode	The complete available-mode list is compared against the C oracle (R1/R2/R5h).
+src/whod.c:179	do_whod	proven	whod.already-on	The registered command reaches the already-on refusal with SHOW_ON set (R1/R2/R5h).
+src/whod.c:186	do_whod	proven	mudlog.whod-on	The mode-change test reaches the transition arm and asserts the exact actor acknowledgement (R1/R2/R5h).
+src/whod.c:197	do_whod	proven	whod.already-off	The registered command reaches the already-off refusal with SHOW_OFF set (R1/R2/R5h).
+src/whod.c:204	do_whod	proven	mudlog.whod-off	The mode-change test reaches the transition arm and asserts the exact actor acknowledgement (R1/R2/R5h).
+src/whod.c:215	do_whod	proven	mudlog.whod-remove	The mode-change test reaches the set-bit branch and asserts the exact actor acknowledgement (R1/R2/R5h).
+src/whod.c:225	do_whod	proven	mudlog.whod-add	The mode-change test reaches the clear-bit branch and asserts the exact actor acknowledgement (R1/R2/R5h).

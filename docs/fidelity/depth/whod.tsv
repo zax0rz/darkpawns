@@ -1,0 +1,6 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_whod	whod	whod.current-mode	D1	command	oracle-green	mudlog-whod-depth	src/whod.c:153-156	No-argument command emits the default bit list; C sprintbit preserves its trailing space before the final LFCR (R1/R2/R5e/R5h).
+do_whod	whod	whod.empty-mode-bitvector	D1	command	unit-green	TestWhodOutputBranches	src/whod.c:154-156; src/utils.c:243-263	The empty bitvector uses C sprintbit's "NOBITS " result (R1/R5e/R5h).
+do_whod	whod	whod.invalid-mode	D1	command	oracle-green	mudlog-whod-depth	src/whod.c:160-172	An unknown first token emits the invalid-mode preamble and the full mode list with C's trailing space (R1/R2/R5e/R5h).
+do_whod	whod	whod.already-on	D2	command	unit-green	TestWhodOutputBranches	src/whod.c:176-180	An already-set SHOW_ON bit emits the exact refusal (R1/R2/R5e/R5h).
+do_whod	whod	whod.already-off	D2	command	unit-green	TestWhodOutputBranches	src/whod.c:193-198	An already-set SHOW_OFF bit emits the exact refusal (R1/R2/R5e/R5h).
