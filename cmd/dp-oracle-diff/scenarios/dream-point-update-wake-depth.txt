@@ -1,0 +1,75 @@
+# depth-case: dream.point-update-wake-through-point-update
+# An above-immortal sleeper reaches dream() through limits.c:490 and the
+# default-level Orodreth branch; the seeded successful dream then calls
+# do_wake and compares the actor plus room witness output.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dreampulse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dreampulse
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dreamwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dreamwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Dreamwitness 8162
+set Dreampulse level 32
+
+[probe]
+sleep
+# Startup commands can leave the global heartbeat between hourly boundaries;
+# two MUD hours guarantee point_update() runs at least once.
+~dpclock pulse 1260
