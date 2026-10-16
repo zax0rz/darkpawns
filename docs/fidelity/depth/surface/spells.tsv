@@ -111,8 +111,8 @@ src/spells.c:967	spell_mental_lapse	proven	spell.mental-lapse-output-branches	Ex
 src/spells.c:970	spell_mental_lapse	proven	spell.mental-lapse-output-branches	Exact manual-spell proof pins hunting gates and level-30 preamble framing (R1/R2/R5e/R5h).
 src/spells.c:974	spell_mental_lapse	proven	spell.mental-lapse-output-branches	Exact manual-spell proof pins C's target possessive pronoun act output (R1/R2/R5e/R5h).
 src/spells.c:1005	spell_control_weather	gap-reachable		C MANUAL_SPELL dispatch reaches spell_control_weather (src/spell_parser.c:525); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:1019	spell_coc	gap-reachable		C MANUAL_SPELL dispatch reaches spell_coc (src/spell_parser.c:527); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:1020	spell_coc	gap-reachable		C MANUAL_SPELL dispatch reaches spell_coc (src/spell_parser.c:527); no current depth case executes this output branch (R1/R2/R5e).
+src/spells.c:1019	spell_coc	proven	spell.coc-room-audience	CLEAN targeted census dp1371-coc-room-audience-final proves the registered cast creates and places the circle and sends the exact caster line; valid red dp1371-coc-room-audience-output-red caught Go's spawner-interface mismatch (R1/R2/R3/R5e/R5h).
+src/spells.c:1020	spell_coc	proven	spell.coc-room-audience	CLEAN targeted census dp1371-coc-room-audience-final proves the peer receives C's exact room act through canonical SpellActToRoom (R1/R2/R3/R5e/R5h).
 src/spells.c:1069	spell_conjure_elemental	gap-reachable		C MANUAL_SPELL dispatch reaches spell_conjure_elemental (src/spell_parser.c:528); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:1070	spell_conjure_elemental	gap-reachable		C MANUAL_SPELL dispatch reaches spell_conjure_elemental (src/spell_parser.c:528); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:1078	spell_conjure_elemental	gap-reachable		C MANUAL_SPELL dispatch reaches spell_conjure_elemental (src/spell_parser.c:528); no current depth case executes this output branch (R1/R2/R5e).

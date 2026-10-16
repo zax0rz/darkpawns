@@ -1,0 +1,69 @@
+# depth-case: spell.coc-room-audience
+# The first Psionic character on the empty playerbase is immortal, so will
+# dispatches glyph of summoning while a separate player witnesses its room act.
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Circle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Circle
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Cocpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Cocpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Cocpeer 8105
+
+[probe]
+will 'glyph of summoning'

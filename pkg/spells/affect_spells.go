@@ -1891,8 +1891,7 @@ func castControlWeather(level int, ch interface{}, arg string, world interface{}
 func castCoC(level int, ch interface{}, world interface{}) {
 	type roomGetter interface{ GetRoomVNum() int }
 	type spawner interface {
-		SpawnObject(int, int) (interface{}, error)
-		AddItemToRoom(interface{}, int)
+		SpawnObjectToRoomForSpell(int, int) (interface{}, error)
 	}
 
 	s, ok := world.(spawner)
@@ -1913,14 +1912,12 @@ func castCoC(level int, ch interface{}, world interface{}) {
 		return
 	}
 
-	obj, err := s.SpawnObject(CocVnum, roomVNum)
+	obj, err := s.SpawnObjectToRoomForSpell(CocVnum, roomVNum)
 	if err != nil {
 		slog.Error("spell_coc: failed to spawn COC object", "error", err, "vnum", CocVnum)
 		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
-
-	s.AddItemToRoom(obj, roomVNum)
 
 	// Set timer
 	type timerSetter interface{ SetTimer(int) }
@@ -1935,6 +1932,12 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	}
 
 	sendToCaster(ch, "You draw a magic circle on the ground.\r\n")
+	type roomActer interface {
+		SpellActToRoom(caster, victim interface{}, format string, hideInvisible bool) bool
+	}
+	if acter, ok := world.(roomActer); ok {
+		acter.SpellActToRoom(ch, nil, "$n draws a magic circle on the ground.", false)
+	}
 }
 
 // castSilkenMissile — converts armor/clothing into a missile arrow.

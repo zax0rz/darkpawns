@@ -24,6 +24,25 @@ func TestSpawnObjectToPlayerInventoryIUsesObjToCharPlacement(t *testing.T) {
 	}
 }
 
+func TestSpawnObjectToRoomForSpellUsesObjToRoomPlacement(t *testing.T) {
+	w, _ := newTestWorld(t)
+
+	value, err := w.SpawnObjectToRoomForSpell(3001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObjectToRoomForSpell: %v", err)
+	}
+	obj, ok := value.(*ObjectInstance)
+	if !ok {
+		t.Fatalf("spawned value type = %T, want *ObjectInstance", value)
+	}
+	if got := obj.Location; got != LocRoom(1001) {
+		t.Errorf("spawned object location = %+v, want room 1001", got)
+	}
+	if got := w.GetItemsInRoom(1001); len(got) != 1 || got[0] != obj {
+		t.Errorf("room contents = %v, want spawned object", got)
+	}
+}
+
 func TestConsumeSpellReagentUsesObjectLocationPipeline(t *testing.T) {
 	w, player := newTestWorld(t)
 	obj, err := w.SpawnObject(3001, 1001)

@@ -112,6 +112,56 @@ func TestCastZenOutputAndMeditationState(t *testing.T) {
 	}
 }
 
+type cocOutputObject struct {
+	vnum  int
+	timer int
+}
+
+func (o *cocOutputObject) SetTimer(timer int) { o.timer = timer }
+
+type cocOutputWorld struct {
+	object        *cocOutputObject
+	room          int
+	actor         interface{}
+	format        string
+	hideInvisible bool
+	calls         int
+}
+
+func (w *cocOutputWorld) SpawnObjectToRoomForSpell(vnum, room int) (interface{}, error) {
+	w.object = &cocOutputObject{vnum: vnum}
+	w.room = room
+	return w.object, nil
+}
+
+func (w *cocOutputWorld) SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool {
+	w.actor = actor
+	w.format = format
+	w.hideInvisible = hideInvisible
+	w.calls++
+	return true
+}
+
+func TestCastCoCOutputAndRoomAudience(t *testing.T) {
+	caster := &mockSpellsChar{name: "Circle", level: 30, roomVNum: 8105}
+	world := &cocOutputWorld{}
+
+	ExecuteManualSpell(SpellCoC, caster.level, caster, nil, nil, "", world)
+
+	if got, want := strings.Join(caster.messages, ""), "You draw a magic circle on the ground.\r\n"; got != want {
+		t.Fatalf("COC caster output = %q, want exact C bytes %q", got, want)
+	}
+	if world.object == nil || world.object.vnum != CocVnum || world.room != caster.roomVNum {
+		t.Fatalf("COC object placement = {object:%+v room:%d}, want vnum %d in room %d", world.object, world.room, CocVnum, caster.roomVNum)
+	}
+	if world.object.timer < caster.level/2-2 || world.object.timer > caster.level/2+1 {
+		t.Fatalf("COC object timer = %d, want level/2 plus C's -2..1 draw", world.object.timer)
+	}
+	if world.calls != 1 || world.actor != caster || world.format != "$n draws a magic circle on the ground." || world.hideInvisible {
+		t.Fatalf("COC room act = {calls:%d actor:%v format:%q hideInvisible:%t}, want one visible TO_ROOM act", world.calls, world.actor, world.format, world.hideInvisible)
+	}
+}
+
 type mentalLapseProbe struct {
 	mockSpellsChar
 	hunting string

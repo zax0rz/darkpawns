@@ -23,6 +23,17 @@ func (w *World) SpawnObjectToPlayerInventoryI(vnum int, player interface{}) (int
 	return obj, nil
 }
 
+// SpawnObjectToRoomForSpell mirrors read_object() followed by obj_to_room()
+// for spell code without exposing the concrete game object type there.
+func (w *World) SpawnObjectToRoomForSpell(vnum, roomVNum int) (interface{}, error) {
+	obj, err := w.SpawnObject(vnum, roomVNum)
+	if err != nil {
+		return nil, err
+	}
+	w.AddItemToRoom(obj, roomVNum)
+	return obj, nil
+}
+
 // GetItemsInRoom returns a snapshot copy: callers previously iterated the
 // live slice while writers mutated it under w.mu — a fatal concurrent map
 // read (VULN-019) and a torn iteration (VULN-055).
