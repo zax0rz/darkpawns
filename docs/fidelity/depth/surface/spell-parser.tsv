@@ -7,10 +7,10 @@ src/spell_parser.c:425	call_magic	proven	use.tattoo-nomagic	The live tattoo no-m
 src/spell_parser.c:432	call_magic	proven	use.tattoo-sitting	The live tattoo sitting vehicle reaches call_magic while the actor is sitting and checks this refusal (R1/R3/R5e/R5h).
 src/spell_parser.c:441	call_magic	proven	objmagic.peaceful-block	The C-first peaceful quaff reaches this direct refusal and compares the caster bytes (R1/R3/R5e/R5h).
 src/spell_parser.c:444	call_magic	gap-reachable		The registered cast and use paths reach call_magic in a peaceful room; the psionic/mystic direct wording branch has no output proof (R1/R2/R5e).
-src/spell_parser.c:447	call_magic	gap-reachable		The registered cast and use paths reach this peaceful-room audience act; the current peaceful proof has no room observer, so the bytes remain unproven (R1/R2/R5e).
-src/spell_parser.c:580	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:447	call_magic	proven	objmagic.peaceful-block	CLEAN targeted quaff-peaceful-block includes a room observer, proving the peaceful-room act bytes (R1/R2/R5e/R5h).
+src/spell_parser.c:580	mag_objectmagic	proven	use.staff-tap-output	CLEAN targeted staff-use-depth reaches the held sleep-staff branch and proves the caster tap line through do_use (R1/R2/R5e/R5h).
 src/spell_parser.c:582	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
-src/spell_parser.c:584	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
+src/spell_parser.c:584	mag_objectmagic	proven	use.staff-tap-output	CLEAN targeted staff-use-depth reaches the stock staff's empty action-description fallback; the peer transcript proves the TO_ROOM tap line (R1/R2/R5e/R5h).
 src/spell_parser.c:589	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
 src/spell_parser.c:590	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
 src/spell_parser.c:615	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this held staff or wand branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
@@ -29,7 +29,7 @@ src/spell_parser.c:668	mag_objectmagic	gap-reachable		C do_use dispatches into m
 src/spell_parser.c:676	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this scroll recitation branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
 src/spell_parser.c:684	mag_objectmagic	proven	objmagic.armor.to-self;objmagic.infravision.to-self	Targeted scroll vehicles reach the successful recite actor act; the transcripts preserve its bytes (R1/R3/R5e/R5h).
 src/spell_parser.c:686	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this scroll recitation branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
-src/spell_parser.c:688	mag_objectmagic	gap-reachable		C targeted recite reaches this TO_ROOM call, but the current scroll proofs have no third player to receive the bytes after act excludes the actor and target (R1/R2/R5e/R5h).
+src/spell_parser.c:688	mag_objectmagic	proven	objmagic.armor.to-self	CLEAN targeted recite-armor-target proves the fallback TO_ROOM act reaches the target peer: C passes a NULL victim, and act(TO_ROOM) excludes only the actor (src/comm.c:2534-2542) (R1/R2/R5e/R5h).
 src/spell_parser.c:702	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this potion quaff branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
 src/spell_parser.c:705	mag_objectmagic	proven	quaff.potion-effect	The C-first quaff vehicle executes the actor quaff act and compares the output (R1/R3/R5e/R5h).
 src/spell_parser.c:707	mag_objectmagic	gap-reachable		C do_use dispatches into mag_objectmagic for this potion quaff branch (src/act.other.c:895-968); the exact output arm has no current proof (R1/R2/R5e).
