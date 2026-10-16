@@ -59,13 +59,13 @@ src/oedit.c:1030	oedit_parse	proven	oedit.confirm-save	Changed-object quit reach
 src/oedit.c:1043	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
 src/oedit.c:1044	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
 src/oedit.c:1057	oedit_parse	proven	oedit.confirm-save	Changed-object quit reaches the first save prompt, invalid confirmation retry, and accepted save message in the boundary scenario.
-src/oedit.c:1065	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
-src/oedit.c:1069	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
-src/oedit.c:1073	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choices 1/2/3 reach namelist/short-description/long-description prompts; no current depth case selects these editor fields.
-src/oedit.c:1101	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choice 8 reaches the object-weight prompt; no current proof selects this field.
+src/oedit.c:1065	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 1 and checks the exact namelist prompt (R1/R2/R5e/R5h).
+src/oedit.c:1069	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 2 and checks the exact short-description prompt (R1/R2/R5e/R5h).
+src/oedit.c:1073	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 3 and checks the exact long-description prompt bytes (R1/R2/R5e/R5h).
+src/oedit.c:1101	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice 8 and checks the exact weight prompt (R1/R2/R5e/R5h).
 src/oedit.c:1105	oedit_parse	proven	oedit.cost-prompt	OEDIT main-menu choice 9 emits the exact misleading maximum prompt in the boundary scenario.
 src/oedit.c:1110	oedit_parse	proven	oedit.load-float	OEDIT main-menu choice A emits this percent-load prompt before atof/clamp; the boundary scenario compares it.
-src/oedit.c:1116	oedit_parse	gap-reachable	-	OEDIT_MAIN_MENU choice B reaches the timer prompt; color cases display the timer value but do not enter OEDIT_TIMER.
+src/oedit.c:1116	oedit_parse	proven	oedit.main-field-entry-prompts	The registered OEDIT session test selects choice B and checks the exact timer prompt (R1/R2/R5e/R5h).
 src/oedit.c:1184	oedit_parse	proven	oedit.type-menu	The boundary scenario enters the type table, follows invalid and valid choices, and compares the menu/retry bytes.
 src/oedit.c:1219	oedit_parse	proven	oedit.extras-wear-asymmetry	The boundary scenario enters both flag tables and exercises invalid extra/wear input; the complete output sequence is compared.
 src/oedit.c:1417	oedit_parse	gap-reachable	-	OEDIT_APPLY accepts an ordinary apply type and reaches the modifier prompt; current apply coverage selects only race-hate and spell.

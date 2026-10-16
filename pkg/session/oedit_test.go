@@ -175,6 +175,32 @@ func TestOeditEntryGates(t *testing.T) {
 	}
 }
 
+func TestOeditMainFieldEntryPrompts(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		choice string
+		want   string
+	}{
+		{name: "namelist", choice: "1", want: "Enter namelist : "},
+		{name: "short description", choice: "2", want: "Enter short desc : "},
+		{name: "long description", choice: "3", want: "Enter long desc :-\r\n| "},
+		{name: "weight", choice: "8", want: "Enter weight : "},
+		{name: "timer", choice: "B", want: "Enter timer : "},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			w := makeOeditTestWorld(t)
+			m := newTestManager(t, w, nil)
+			s := makeOeditTestSession(t, m, "Field"+strings.ReplaceAll(tt.name, " ", ""), 35)
+			openOedit(t, s, "3001")
+
+			s.handleOeditInput(tt.choice)
+			if got := readMsgText(t, s); got != tt.want {
+				t.Fatalf("choice %q prompt = %q, want exactly %q", tt.choice, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestOeditNoZoneSaveGate(t *testing.T) {
 	w := makeOeditTestWorld(t)
 	m := newTestManager(t, w, nil)
