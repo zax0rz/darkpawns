@@ -1,13 +1,14 @@
 # depth-case: mob.scavenger-pickup-act
-# The stock grub scavenger in room 8105 picks up the dropped bread during the
-# mobile-activity pulse. The observer transcript pins the C act() output.
+# A spawned scavenger (the Amber sailor, mob 2764) in room 8105 picks up the
+# dropped bread during the mobile-activity pulses; C rolls !number(0, 10) per
+# pulse, so 300 pulses reach the pickup on every pinned seed. The observer
+# transcript pins the C act() output.
 # C path: src/mobact.c:103-117 -> src/comm.c:2485-2557 act() object/audience rendering.
 
 [fixture]
 empty-players
 quiet-mobs
-spawn-mob 18403 1 8105 18
-set-mob-flag 18403 SENTINEL
+spawn-mob 2764 1 8105 27
 replace-room-exits 8105 none
 
 [setup:oracle]
@@ -45,5 +46,5 @@ load obj 8010
 drop bread
 
 [probe]
-~dpclock pulse 80
+~dpclock pulse 300
 look
