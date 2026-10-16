@@ -335,12 +335,16 @@ func (w *World) npcSocial(me *MobInstance, cmd, argument string) {
 		}
 		return
 	}
-	target := mobRescueVictim(w, me, targetName)
-	if target == nil {
+	// C do_action uses get_char_room_vis(ch, arg), which searches visible
+	// players and mobiles in char_to_room order. A bare prefix can therefore
+	// resolve to a newer character whose name starts with the command actor's
+	// name.
+	target, ok := w.resolveCharInRoomAt(me, me.GetRoomVNum(), targetName)
+	if !ok {
 		return // action->not_found to the mobile
 	}
-	targetActor, _ := target.(Actor)
-	if target.GetName() == me.GetName() {
+	targetActor, _ := target.Combatant.(Actor)
+	if target.Combatant == me {
 		if message, ok := socialMessage(social, socOthersAuto); ok {
 			Act(w, social.hidesInvisibleActor(), me, nil, nil, nil, message, "", ToRoom)
 		}

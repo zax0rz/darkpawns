@@ -208,6 +208,21 @@ func TestShopKeeperStealSpecialRunsBeforeCommandThroughDispatch(t *testing.T) {
 	}
 }
 
+func TestShopKeeperStealSocialUsesCNewestPrefixMatchThroughDispatch(t *testing.T) {
+	_, manager, _, _ := shopOutputFixture(t, 1)
+	actor := addShopOutputSession(t, manager, "Shopoutput")
+	peer := addShopOutputSession(t, manager, "Shopoutputpeer")
+	if err := ExecuteCommand(actor, "steal", []string{"merchant"}); err != nil {
+		t.Fatalf("steal dispatch: %v", err)
+	}
+	if got, want := renderedOutput(actor), "A merchant slaps Shopoutputpeer.\r\nA merchant shouts 'Shopoutput is a bloody thief!'\r\n"; got != want {
+		t.Fatalf("shopkeeper actor response = %q, want %q", got, want)
+	}
+	if got, want := renderedOutput(peer), "You are slapped by a merchant.\r\n"; got != want {
+		t.Fatalf("newest prefix-match target response = %q, want %q", got, want)
+	}
+}
+
 func itoaShopOutput(value int) string {
 	return strconv.Itoa(value)
 }
