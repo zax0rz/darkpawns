@@ -73,17 +73,17 @@ src/spell_parser.c:945	do_cast	proven	cast.unquoted	The cast-depth vehicle submi
 src/spell_parser.c:948	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unquoted-spell wording (R1/R5e/R5h).
 src/spell_parser.c:958	do_cast	proven	cast.unknown	The live normal cast-depth vehicle reaches this unknown-spell refusal (R1/R5e/R5h).
 src/spell_parser.c:960	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unknown-spell wording (R1/R5e/R5h).
-src/spell_parser.c:965	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
-src/spell_parser.c:967	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
-src/spell_parser.c:972	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
-src/spell_parser.c:974	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this spell lookup or class wording output arm has no matching proof (R1/R2/R5e).
-src/spell_parser.c:980	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this peaceful-room or target-resolution output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:965	do_cast	proven	cast.level-gate	Registered cast dispatch with Mage-user class and level 1 reaches this minimum-level refusal (R1/R2/R5e/R5h).
+src/spell_parser.c:967	do_cast	proven	will.level-gate	Registered will dispatch with Psionic class and level 1 reaches this minimum-level refusal (R1/R2/R5e/R5h).
+src/spell_parser.c:972	do_cast	proven	cast.unfamiliar-spell	The real cast command reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
+src/spell_parser.c:974	do_cast	proven	will.unfamiliar-power	The real will command reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
+src/spell_parser.c:980	do_cast	proven	cast.peaceful-room	The real cast command reaches the peaceful-room gate for a violent spell before target lookup (R1/R2/R5e/R5h).
 src/spell_parser.c:1049	do_cast	proven	cast.no-target-violent	The draw-free no-target control reaches and compares this generated target prompt (R1/R5e/R5h).
 src/spell_parser.c:1056	do_cast	proven	cast.violent-self	The draw-free self-target control reaches and compares this normal-class self-harm refusal (R1/R5e/R5h).
-src/spell_parser.c:1059	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this target, mana, or concentration output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:1059	do_cast	proven	will.violent-self	A registered will command with a named violent self-target reaches the power wording (R1/R2/R5e/R5h).
 src/spell_parser.c:1063	do_cast	proven	cast.missing-target	The C-first absent-target cast reaches this Okay send before its incantation and missing-target refusal (R1/R3/R5e/R5h).
 src/spell_parser.c:1066	do_cast	proven	cast.missing-target	The C-first absent-target cast reaches and compares the normal-class missing-target bytes (R1/R3/R5e/R5h).
-src/spell_parser.c:1068	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this target, mana, or concentration output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:1068	do_cast	proven	will.missing-target	A registered will command with a missing named target reaches the power-specific refusal after say_spell (R1/R2/R5e/R5h).
 src/spell_parser.c:1074	do_cast	proven	cast.mana-gate	The cast contract test reaches the insufficient-mana arm and compares the normal-class refusal without a draw (R1/R3/R5e/R5h).
-src/spell_parser.c:1076	do_cast	gap-reachable		C registers do_cast for cast and will (src/interpreter.c:373,825); this target, mana, or concentration output arm has no matching proof (R1/R2/R5e).
+src/spell_parser.c:1076	do_cast	proven	will.insufficient-mana	A registered will command with a live target and insufficient mana reaches the power-specific no-mana refusal (R1/R2/R5e/R5h).
 src/spell_parser.c:1101	do_cast	proven	cast.concentration-failure	The failed-concentration control reaches this send when no skill-message target consumes the branch and checks the actor bytes (R1/R3/R5e/R5h).
