@@ -1,0 +1,72 @@
+# depth-case: spell.mindsight-watcher-audience
+# C src/spell_parser.c:521 dispatches a valid mindsight cast. A Psionic caster
+# looks at a low-level mobile in room 8105 while a separate player watches;
+# C sends the watcher line to that peer from spell_mindsight's target-room loop.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Mindsight
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindsight
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mindwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mindwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mindwitness 8105
+
+[probe]
+cast 'mindsight' trainee

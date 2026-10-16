@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // mobHasLight returns true if the mob has a lit light source equipped.
@@ -116,6 +117,43 @@ func (w *World) GetAllCharsInRoom(roomVNum int) []interface{} {
 // PlayerTransfer moves a player to a new room, stopping fights and moving mounts.
 func (w *World) PlayerTransfer(p *Player, toRoomVNum int) error {
 	return w.transferBody(p, toRoomVNum, true)
+}
+
+// PlayerTransferForSpell mirrors spell-side char_from_room/char_to_room by
+// moving only the player body. Those C helpers do not transfer a ridden mount.
+func (w *World) PlayerTransferForSpell(actor interface{}, toRoomVNum int) error {
+	p, ok := actor.(*Player)
+	if !ok || p == nil {
+		return fmt.Errorf("spell player transfer: invalid actor")
+	}
+	if err := w.transferBody(p, toRoomVNum, false); err != nil {
+		return err
+	}
+	// char_to_room calls circle_check after placing the character (handler.c:553).
+	for _, item := range w.GetItemsInRoom(toRoomVNum) {
+		if item.GetVNum() == spells.CocVnum {
+			item.SetTimer(item.GetTimer() - 1)
+			break
+		}
+	}
+	return nil
+}
+
+// MindsightNotifyWatchers sends spell_mindsight's direct observer message to
+// other player characters in the caster's current room (src/spells.c:945-947).
+func (w *World) MindsightNotifyWatchers(actor interface{}) {
+	caster, ok := actor.(*Player)
+	if !ok || caster == nil {
+		return
+	}
+	if class := caster.GetClass(); class != ClassPsionic && class != ClassMystic {
+		return
+	}
+	for _, observer := range w.GetPlayersInRoom(caster.GetRoom()) {
+		if observer != caster {
+			observer.SendMessage("You feel like you're being watched.\r\n")
+		}
+	}
 }
 
 // MobTransfer moves a mob to a new room, stopping fights.

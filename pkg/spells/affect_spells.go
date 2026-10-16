@@ -3622,25 +3622,29 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 		return
 	}
 
-	// Transfer caster to victim's room, look, transfer back
-	type transferWorld interface {
-		PlayerTransfer(ch interface{}, toRoomVNum int) error
-		LookAtRoomSimple(roomVNum int, sender interface{})
+	// C spell_mindsight uses char_from_room/char_to_room, do_look, then
+	// notifies other PCs in the caster's current room (src/spells.c:938-955).
+	type mindsightWorld interface {
+		PlayerTransferForSpell(actor interface{}, toRoomVNum int) error
+		LookAtRoomForSpell(actor interface{})
+		MindsightNotifyWatchers(actor interface{})
 	}
-	tw, ok := world.(transferWorld)
+	tw, ok := world.(mindsightWorld)
 	if !ok {
 		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 
-	if err := tw.PlayerTransfer(ch, victRoom); err != nil {
+	if err := tw.PlayerTransferForSpell(ch, victRoom); err != nil {
 		slog.Error("PlayerTransfer failed", "error", err)
 	}
-	tw.LookAtRoomSimple(victRoom, ch)
-	if err := tw.PlayerTransfer(ch, chRoom); err != nil {
-		slog.Error("PlayerTransfer failed", "error", err)
+	tw.LookAtRoomForSpell(ch)
+	tw.MindsightNotifyWatchers(ch)
+	if currentRoom, ok := ch.(roomGet); ok && currentRoom.GetRoomVNum() == victRoom {
+		if err := tw.PlayerTransferForSpell(ch, chRoom); err != nil {
+			slog.Error("PlayerTransfer failed", "error", err)
+		}
 	}
-	sendToCaster(ch, "You have a strange dream about seeing...\r\n")
 }
 
 // castGate creates a red portal in one of the 8 legal rooms.
