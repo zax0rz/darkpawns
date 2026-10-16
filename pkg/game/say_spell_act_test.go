@@ -59,3 +59,35 @@ func TestSaySpellRendersThroughPerformAct(t *testing.T) {
 		}
 	})
 }
+
+// mag_points' heal line is act(..., TRUE, ch, 0, victim, TO_NOTVICT)
+// (src/magic.c:1769): a listener who cannot see the caster hears nothing, and
+// $N is PERS(victim). The old path pasted the victim's name for everyone.
+func TestMendRoomLineRendersThroughAct(t *testing.T) {
+	t.Run("seeing listener", func(t *testing.T) {
+		w, caster, local, _, out := newChannelWorld(t)
+		target := channelPlayer(t, w, 4, "Patient", 1001)
+		spells.MagPoints(10, caster, target, spells.SpellCureLight, 0, w)
+		if got, want := outputOf(out, local.Name), "Patient's wounds glow and mend themselves.\r\n"; got != want {
+			t.Fatalf("listener = %q, want %q", got, want)
+		}
+	})
+	t.Run("blind listener hears nothing", func(t *testing.T) {
+		w, caster, local, _, out := newChannelWorld(t)
+		target := channelPlayer(t, w, 4, "Patient", 1001)
+		local.SetAffect(affBlind, true)
+		spells.MagPoints(10, caster, target, spells.SpellCureLight, 0, w)
+		if got := outputOf(out, local.Name); got != "" {
+			t.Fatalf("blind listener = %q, want nothing (C: hide_invisible)", got)
+		}
+	})
+	t.Run("invisible patient is someone", func(t *testing.T) {
+		w, caster, local, _, out := newChannelWorld(t)
+		target := channelPlayer(t, w, 4, "Patient", 1001)
+		target.SetAffect(affInvisible, true)
+		spells.MagPoints(10, caster, target, spells.SpellCureLight, 0, w)
+		if got, want := outputOf(out, local.Name), "Someone's wounds glow and mend themselves.\r\n"; got != want {
+			t.Fatalf("listener = %q, want %q", got, want)
+		}
+	})
+}

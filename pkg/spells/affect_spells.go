@@ -638,12 +638,12 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 	case SpellCureLight:
 		sendToVictim(victim, "You feel better.\r\n")
 		if ch != victim {
-			sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+			mendRoomLine(ch, victim, world)
 		}
 	case SpellCureCritic:
 		sendToVictim(victim, "You feel a lot better!\r\n")
 		if ch != victim {
-			sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+			mendRoomLine(ch, victim, world)
 		}
 	case SpellHeal:
 		if isPsiMystic {
@@ -652,13 +652,13 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 		} else {
 			sendToVictim(victim, "A warm feeling floods your body.\r\n")
 			if ch != victim {
-				sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+				mendRoomLine(ch, victim, world)
 			}
 		}
 	case SpellMassHeal:
 		sendToVictim(victim, "A warm feeling floods your body.\r\n")
 		if ch != victim {
-			sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+			mendRoomLine(ch, victim, world)
 		}
 	case SpellCellAdjustment:
 		if isPsiMystic {
@@ -667,7 +667,7 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 		} else {
 			sendToVictim(victim, "A warm feeling floods your body.\r\n")
 			if ch != victim {
-				sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+				mendRoomLine(ch, victim, world)
 			}
 		}
 	case SpellVitality:
@@ -1029,9 +1029,11 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 			}
 		}
 
-		// C magic.c: pfail = 8; number(0, 101) < pfail.
+		// C magic.c: pfail = 8; number(0, 101) < pfail sends
+		// mag_summon_fail_msgs[fmsg] (src/magic.c:1719-1722), and fmsg stays
+		// 0 for SPELL_ANIMATE_DEAD: a bare CRLF, not "You failed.".
 		if animateDeadPfailRoll() < 8 {
-			sendToCaster(ch, "You failed.\r\n")
+			sendToCaster(ch, "\r\n")
 			return
 		}
 
@@ -1066,8 +1068,14 @@ func MagSummons(level int, ch interface{}, spellNum int, world interface{}) {
 		}
 
 		// C indexes mag_summon_msgs with fmsg, which remains zero for
-		// SPELL_ANIMATE_DEAD; act() therefore sends one CRLF to the room.
-		sendAffectRoom(ch, nil, "\r\n", world)
+		// SPELL_ANIMATE_DEAD: act("\r\n", FALSE, ch, 0, mob, TO_ROOM)
+		// (src/magic.c:1729), and act() appends its own CRLF, so every
+		// listener, blind or not, gets two.
+		if a, ok := world.(interface {
+			SpellActToRoom(ch, vict interface{}, format string, hideInvisible bool) bool
+		}); !ok || !a.SpellActToRoom(ch, mob, "\r\n", false) {
+			sendAffectRoom(ch, nil, "\r\n\r\n", world)
+		}
 		sendToCaster(ch, "The corpse starts to twitch, then stands with a life of it's own!\r\n")
 	}
 }
@@ -1391,6 +1399,19 @@ func joinAffect(entity interface{}, aff *engine.Affect, addDuration, addMagnitud
 		return
 	}
 	applyAffect(entity, aff)
+}
+
+// mendRoomLine is mag_points' heal line (src/magic.c:1769,1776,1793,1803):
+// act("$N's wounds glow and mend themselves.", TRUE, ch, 0, victim,
+// TO_NOTVICT). Only a listener who can see the caster hears it, and $N is
+// PERS(victim) for that listener.
+func mendRoomLine(ch, victim, world interface{}) {
+	if a, ok := world.(interface {
+		SpellActNotVict(ch, vict interface{}, format string, hideInvisible bool) bool
+	}); ok && a.SpellActNotVict(ch, victim, "$N's wounds glow and mend themselves.", true) {
+		return
+	}
+	sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
 }
 
 func sendAffectRoom(victim, exclude interface{}, format string, world interface{}) {

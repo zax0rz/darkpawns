@@ -465,15 +465,10 @@ func TestMagSummons_AnimateDead_PfailKeepsCorpseNoSpawn(t *testing.T) {
 	if world.removed {
 		t.Error("pfail should not remove the corpse")
 	}
-	foundFailMsg := false
-	for _, m := range caster.messages {
-		if strings.Contains(m, "You failed") {
-			foundFailMsg = true
-			break
-		}
-	}
-	if !foundFailMsg {
-		t.Errorf("expected pfail message, got %v", caster.messages)
+	// C sends mag_summon_fail_msgs[fmsg] with fmsg still 0: a bare CRLF
+	// (src/magic.c:1719-1722).
+	if !reflect.DeepEqual(caster.messages, []string{"\r\n"}) {
+		t.Errorf("pfail message = %q, want C's bare CRLF", caster.messages)
 	}
 }
 
@@ -559,7 +554,8 @@ func TestMagSummons_AnimateDead_Success(t *testing.T) {
 	if !foundSuccessMsg {
 		t.Errorf("expected success message, got %v", caster.messages)
 	}
-	if got := observer.messages; !reflect.DeepEqual(got, []string{"\r\n"}) {
-		t.Errorf("room message = %q, want C's blank act line", got)
+	// act("\r\n", ...) appends its own CRLF (src/magic.c:1729).
+	if got := observer.messages; !reflect.DeepEqual(got, []string{"\r\n\r\n"}) {
+		t.Errorf("room message = %q, want C's blank act line plus act's CRLF", got)
 	}
 }

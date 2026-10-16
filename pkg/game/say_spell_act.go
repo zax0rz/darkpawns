@@ -58,3 +58,30 @@ func actorClass(a Actor) (int, bool) {
 	}
 	return 0, false
 }
+
+// SpellActNotVict is act(format, hideInvisible, ch, 0, vict, TO_NOTVICT) for
+// spell code, which cannot import this package. Rendering through Act gives
+// each listener PERS for $n/$N and, with hideInvisible, skips a listener who
+// cannot see ch, as C does. It reports false when ch is not a body, so the
+// caller can fall back.
+func (w *World) SpellActNotVict(ch, vict interface{}, format string, hideInvisible bool) bool {
+	caster, ok := ch.(Actor)
+	if !ok || caster == nil || w == nil {
+		return false
+	}
+	target, _ := vict.(Actor)
+	Act(w, hideInvisible, caster, target, nil, nil, format, "", ToNotVict)
+	return true
+}
+
+// SpellActToRoom is act(format, hideInvisible, ch, 0, vict, TO_ROOM) for spell
+// code; see SpellActNotVict.
+func (w *World) SpellActToRoom(ch, vict interface{}, format string, hideInvisible bool) bool {
+	caster, ok := ch.(Actor)
+	if !ok || caster == nil || w == nil {
+		return false
+	}
+	target, _ := vict.(Actor)
+	Act(w, hideInvisible, caster, target, nil, nil, format, "", ToRoom)
+	return true
+}
