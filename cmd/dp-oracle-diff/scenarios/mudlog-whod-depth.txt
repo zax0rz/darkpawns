@@ -1,5 +1,7 @@
 # depth-case: mudlog.whod-add
 # depth-case: mudlog.whod-remove
+# depth-case: whod.current-mode
+# depth-case: whod.invalid-mode
 
 [fixture]
 empty-players
@@ -99,3 +101,5 @@ teleport Mudvictim 21226
 [probe:actor]
 whod name ignored
 whod name ignored
+whod
+whod bogus

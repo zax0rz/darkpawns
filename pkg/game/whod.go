@@ -204,8 +204,9 @@ func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
 	return message
 }
 
-// activeModesString returns a space-separated list of currently active mode names.
-// Source: whod.c sprintbit() call in do_whod() no-argument path.
+// activeModesString returns C's sprintbit() output for the active modes.
+// Source: utils.c:243-263; whod.c:154-156. C keeps the trailing space and
+// spells an empty bitvector "NOBITS ".
 func (w *Whod) activeModesString() string {
 	var parts []string
 	mode := w.GetMode()
@@ -215,9 +216,9 @@ func (w *Whod) activeModesString() string {
 		}
 	}
 	if len(parts) == 0 {
-		return "(none)"
+		return "NOBITS "
 	}
-	return strings.Join(parts, " ")
+	return strings.Join(parts, " ") + " "
 }
 
 // WhodMudName is C's MUDNAME (#define at src/whod.c:27).
