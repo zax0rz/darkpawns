@@ -1692,8 +1692,8 @@ func castSobriety(level int, ch, cvict interface{}) {
 	c.SetCondition(0, 0) // DRUNK = 0
 	// Position may change after condition reset (C calls update_pos)
 	// update_pos logic: if pos > POS_SLEEPING and drunk is 0 and thirst/hunger are 0, sit
-	sendToVictim(cvict, "You are splashed in the face with HOT coffee, ")
-	sendToVictim(cvict, "but feel much more sober.\r\n")
+	// C's adjacent send_to_char calls form one output burst with LFCR at the end.
+	sendToVictim(cvict, "You are splashed in the face with HOT coffee, but feel much more sober.\n\r")
 }
 
 // castZen — heals caster and sets position to stunned (meditating).
