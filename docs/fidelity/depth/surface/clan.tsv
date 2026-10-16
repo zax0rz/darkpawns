@@ -138,27 +138,27 @@ src/clan.c:1107	do_clan_ranks	proven	clan.ranks-refusal-gates	The paired scenari
 src/clan.c:1114	do_clan_ranks	proven	clan.ranks-refusal-gates	The paired scenario exercises the unchanged-rank-count refusal through registered clan dispatch (R1/R2/R5e/R5h).
 src/clan.c:1119	do_clan_ranks	proven	clan.ranks-refusal-gates	The paired scenario exercises both sides of the 2..20 range refusal through registered clan dispatch (R1/R2/R5e/R5h).
 src/clan.c:1124	do_clan_ranks	proven	clan.ranks-refusal-gates	A rank-three clan leader with zero gold reaches the fee refusal through registered clan dispatch (R1/R2/R5e/R5h).
-src/clan.c:1176	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1180	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1186	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1176	do_clan_titles	proven	clan.set-title-authorization-gates	The named real-dispatch census shows the clanless TO_CHAR output in the C block (R1/R2/R5e/R5h).
+src/clan.c:1180	do_clan_titles	proven	clan.set-title-authorization-gates	The named real-dispatch census shows the below-clan-god refusal in the target player's C block (R1/R2/R5e/R5h).
+src/clan.c:1186	do_clan_titles	proven	clan.set-title-authorization-gates	The clan-member applicant reaches the insufficient-influence title refusal (R1/R2/R5e/R5h).
 src/clan.c:1191	do_clan_titles	proven	clan.set-title-clan-number-nonnumeric	The live title command reaches C's nonnumeric clan-number refusal (R1/R2/R5e/R5h).
 src/clan.c:1195	do_clan_titles	proven	clan.set-title-clan-number-range	The live title command reaches C's missing-clan-number refusal for an out-of-range index (R1/R2/R5e/R5h).
 src/clan.c:1203	do_clan_titles	proven	clan.set-title-rank-nonnumeric	The live title command reaches C's nonnumeric rank refusal (R1/R2/R5e/R5h).
 src/clan.c:1209	do_clan_titles	proven	clan.set-title;clan.set-title-rank-range	The named success proof and out-of-range rank case execute this C output call (R1/R2/R5e/R5h).
 src/clan.c:1213	do_clan_titles	proven	clan.set-title-too-long	The live title command reaches C's >19-byte title-length refusal (R1/R2/R5e/R5h).
 src/clan.c:1218	do_clan_titles	proven	clan.set-title	The named proof scenario executes this C output call.
-src/clan.c:1231	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
-src/clan.c:1236	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
-src/clan.c:1244	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
-src/clan.c:1249	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
+src/clan.c:1231	do_clan_private	proven	clan.private-authorization-gates	The named real-dispatch census shows the clanless TO_CHAR output in the C block (R1/R2/R5e/R5h).
+src/clan.c:1236	do_clan_private	proven	clan.private-authorization-gates	The named real-dispatch census shows the below-clan-god refusal in the target player's C block (R1/R2/R5e/R5h).
+src/clan.c:1244	do_clan_private	proven	clan.private-authorization-gates	The clan-god command reaches the unknown-clan output (R1/R2/R5e/R5h).
+src/clan.c:1249	do_clan_private	proven	clan.private-authorization-gates	The clan-member applicant reaches the insufficient-influence output (R1/R2/R5e/R5h).
 src/clan.c:1257	do_clan_private	proven	clan.admin-private;clan.mortal-private	The named proof scenario executes this C output call.
 src/clan.c:1265	do_clan_private	proven	clan.admin-private;clan.mortal-private	The named proof scenario executes this C output call.
-src/clan.c:1286	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
-src/clan.c:1292	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
-src/clan.c:1298	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
-src/clan.c:1304	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
-src/clan.c:1309	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
-src/clan.c:1314	do_clan_application	gap-reachable		No current proof reaches this output branch in do_clan_application; reachable through the clan command surface.
+src/clan.c:1286	do_clan_application	proven	clan.applev-authorization-gates	The named real-dispatch census shows the clanless application-level output in the C block (R1/R2/R5e/R5h).
+src/clan.c:1292	do_clan_application	proven	clan.applev-authorization-gates	The named real-dispatch census shows the below-clan-god refusal in the target player's C block (R1/R2/R5e/R5h).
+src/clan.c:1298	do_clan_application	proven	clan.applev-authorization-gates	The clan-god command reaches the unknown-clan output (R1/R2/R5e/R5h).
+src/clan.c:1304	do_clan_application	proven	clan.applev-authorization-gates	The clan-member applicant reaches the insufficient-influence output (R1/R2/R5e/R5h).
+src/clan.c:1309	do_clan_application	unreachable		For mortals, the initial empty-argument guard at src/clan.c:1280 returns before this second empty check. For immortals, half_chop yields an empty first token only when there is no amount; the subsequent find_clan on the empty remainder returns at src/clan.c:1298 first (src/interpreter.c:1322-1332,1372-1378) (R1/R5e).
+src/clan.c:1314	do_clan_application	proven	clan.applev-authorization-gates	The top-rank mortal's nonnumeric application-level command emits the C number-validation refusal (R1/R2/R5e/R5h).
 src/clan.c:1321	do_clan_application	proven	clan.mortal-applev-range	The named proof scenario executes this C output call.
 src/clan.c:1346	do_clan_sp	proven	clan.sp-clanless	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:1352	do_clan_sp	proven	clan.sp-immortal-gate	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
@@ -167,10 +167,10 @@ src/clan.c:1364	do_clan_sp	proven	clan.sp-no-influence	The corrected clan-callsi
 src/clan.c:1369	do_clan_sp	unreachable		The empty-argument exit at src/clan.c:1339-1341 precedes this check; nonempty mortal input remains nonempty, while an immortal empty clan token returns from find_clan at src/clan.c:1357-1359. All callers dispatch from do_clan_privilege at src/clan.c:1451-1486.
 src/clan.c:1374	do_clan_sp	proven	clan.sp-nonnumeric-rank	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:1381	do_clan_sp	proven	clan.sp-rank-range	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
-src/clan.c:1398	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
-src/clan.c:1402	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
-src/clan.c:1408	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
-src/clan.c:1416	do_clan_plan	gap-reachable		No current proof reaches this output branch in do_clan_plan; reachable through the clan command surface.
+src/clan.c:1398	do_clan_plan	proven	clan.plan-authorization-gates	The named real-dispatch census shows the clanless plan output in the C block (R1/R2/R5e/R5h).
+src/clan.c:1402	do_clan_plan	proven	clan.plan-authorization-gates	The named real-dispatch census shows the below-clan-god refusal in the target player's C block (R1/R2/R5e/R5h).
+src/clan.c:1408	do_clan_plan	proven	clan.plan-authorization-gates	The clan-member applicant reaches the insufficient-influence output (R1/R2/R5e/R5h).
+src/clan.c:1416	do_clan_plan	proven	clan.plan-authorization-gates	The clan-god command reaches the unknown-clan output (R1/R2/R5e/R5h).
 src/clan.c:1424	do_clan_plan	proven	clan.plan-editor-prompt;clan.mortal-plan-editor-prompt	The named proof scenario executes this C output call.
 src/clan.c:1429	do_clan_plan	proven	clan.plan-editor-replace	The named proof scenario executes this C output call.
 src/clan.c:1430	do_clan_plan	proven	clan.plan-editor-replace	The named proof scenario executes this C output call.
