@@ -1,0 +1,79 @@
+# C-first postmaster vehicle for the three send-mail refusals that run before
+# player identity lookup or persistent mail access. The live special is assigned
+# to mob 3010; a wizard forces the mortal through each reachable gate.
+
+# depth-case: mail.send-level-refusal
+# depth-case: mail.send-missing-addressee
+# depth-case: mail.send-insufficient-stamp
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 3010 1 8162 27
+
+[setup:oracle]
+Mailgategod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mailgategod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Mailgatetarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Mailgatetarget
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Mailgatetarget 8162
+
+[probe]
+force Mailgatetarget mail recipient
+set Mailgatetarget level 5
+set Mailgatetarget gold 0
+force Mailgatetarget mail
+force Mailgatetarget mail recipient

@@ -59,8 +59,8 @@ func TestMailProductionBootBoundary(t *testing.T) {
 	mustWrite(t, conn, "mail Recipient body\r\n")
 	blocked := readFor(t, conn, reader, 3*time.Second)
 	t.Logf("production-mail-output=%q", blocked)
-	if !strings.Contains(blocked, "$n tells you, 'A stamp costs 50 coins.'") ||
-		!strings.Contains(blocked, "$n tells you, '...which I see you can't afford.'") {
+	if !strings.Contains(blocked, "The postman tells you, 'A stamp costs 25 coins.'") ||
+		!strings.Contains(blocked, "the postman tells you, '...which I see you can't afford.'") {
 		t.Fatalf("production mail path did not expose the expected affordability boundary: %q", blocked)
 	}
 	t.Logf("production_mail_blocked_stage=stamp_affordability output=%q", strings.TrimSpace(blocked))

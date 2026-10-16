@@ -1,8 +1,8 @@
 c_site	function	classification	case_ids	notes
 src/mail.c:485	postmaster	gap-blocked	-	The no_mail guard depends on mail-store availability; its failure path is blocked by mail persistence (stop tier).
-src/mail.c:512	postmaster_send_mail	gap-reachable	-	The minimum-level refusal precedes argument parsing, identity lookup, persistent mail access, and entry to the writer.
-src/mail.c:518	postmaster_send_mail	gap-reachable	-	The missing-addressee refusal precedes identity lookup, persistent mail access, and entry to the writer.
-src/mail.c:525	postmaster_send_mail	gap-reachable	-	The stamp-funds refusal occurs before get_id_by_name, persistent mail access, and entry to the writer.
+src/mail.c:512	postmaster_send_mail	proven	mail.send-level-refusal	The real mob-3010 postmaster command reaches the level-1 refusal and pins its exact minimum-level text before identity/mail access (R1/R2/R5e/R5h).
+src/mail.c:518	postmaster_send_mail	proven	mail.send-missing-addressee	A level-5 mortal using the assigned postmaster with empty mail arguments reaches the C empty-addressee output before identity/mail access (R1/R2/R5e/R5h).
+src/mail.c:525	postmaster_send_mail	proven	mail.send-insufficient-stamp	A level-5 mortal with zero gold and a recipient reaches C's 25-coin refusal before identity/mail access (R1/R2/R5e/R5h).
 src/mail.c:529	postmaster_send_mail	gap-blocked	-	This branch requires get_id_by_name to resolve the target through the player identity index (stop tier).
 src/mail.c:533	postmaster_send_mail	gap-blocked	-	The room audience is reached only after player-index identity lookup succeeds; the composing path crosses the identity and session-lifecycle stop tiers.
 src/mail.c:538	postmaster_send_mail	gap-blocked	-	The instruction output follows player-index identity lookup and immediately precedes PLR_MAILING/string_write session state (stop tiers: identity and session lifecycle).

@@ -4,6 +4,7 @@ do_drop	junk	junk.not-carried	D2	command	oracle-green	junk-basic	act.item.c:650-
 do_drop	junk	junk.success	D3	command	oracle-green	junk-basic	act.item.c:492-495	"You junk $p.  It vanishes in a puff of smoke!" pair (two spaces before It).
 do_drop	junk	junk.room-audience	D3	command	oracle-green	junk-basic	act.item.c:494-495	Peer transcript proves "$n junks $p.  It vanishes in a puff of smoke!"
 do_drop	junk	junk.reward	D4	command	oracle-green	junk-basic	act.item.c:660-665	"You have been rewarded by the gods!" pair fires after any junked item (value MAX(1,MIN(200,cost>>4)) > 0).
+do_drop	junk	junk.gain-exp-level-up-color	D4	command	oracle-green	gain-exp-level-up-color-depth@1	act.item.c:660-665; limits.c:287-315	A registered junk command gives a level-1 player at 1500 XP the one point that crosses the 1500 threshold; complete color proves the exact C_CMP cyan, level-up line, and reset bytes (R1/R2/R3/R5e/R5h).
 do_drop	junk	junk.reward-arithmetic	D4	state	unit-green	TestDoJunk	act.item.c:664	gain_exp(MIN(10, amount)) is silent in the transcript; unit-proven.
 do_drop	junk	junk.all-gate	D2	command	oracle-green	junk-basic	act.item.c:606-611	"Go to the dump if you want to junk EVERYTHING!"
 do_drop	junk	junk.alldot-none	D2	command	oracle-green	junk-basic	act.item.c:628-640	"You don't seem to have any breads."

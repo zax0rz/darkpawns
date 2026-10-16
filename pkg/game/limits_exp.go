@@ -197,7 +197,11 @@ func (w *World) GainExp(p *Player, gain int) {
 				p.Damroll += (p.Level / 2) + 1
 				p.mu.Unlock()
 			}
-			p.SendMessage(fmt.Sprintf("You advance to level %d!\r\n", p.Level))
+			levelMessage := fmt.Sprintf("You advance to level %d!\r\n", p.Level)
+			if colorLevel(p) >= colorComplete {
+				levelMessage = ansiCyan + levelMessage + ansiReset
+			}
+			p.SendLiteral(levelMessage)
 		}
 	} else if gain < 0 {
 		if gain < -maxExpLoss {
