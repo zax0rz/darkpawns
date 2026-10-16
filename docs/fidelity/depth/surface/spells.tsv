@@ -72,8 +72,8 @@ src/spells.c:668	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reache
 src/spells.c:673	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:676	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:682	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:696	spell_sobriety	proven	spell.sobriety.splash-output	The registered cast reaches C's first send_to_char fragment; the target transcript proves it is concatenated directly with the second fragment into one HOT-coffee line (R1/R2/R5e/R5h).
-src/spells.c:697	spell_sobriety	proven	spell.sobriety.splash-output	The registered cast reaches C's LFCR-ending second fragment; the target transcript proves exact concatenated output after the first fragment (R1/R2/R5e/R5h).
+src/spells.c:696	spell_sobriety	proven	spell.sobriety.splash-output	Census dp1371-spell-sobriety-output-final is CLEAN (1/1) at 2de04234d; the registered cast reaches C's first fragment and the target receives it concatenated with the next fragment (R1/R2/R5e/R5h).
+src/spells.c:697	spell_sobriety	proven	spell.sobriety.splash-output	Census dp1371-spell-sobriety-output-final is CLEAN (1/1) at 2de04234d; C's LFCR-ending second fragment completes the exact HOT-coffee output (R1/R2/R5e/R5h).
 src/spells.c:708	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches spell_hellfire (src/spell_parser.c:518); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:714	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches spell_hellfire (src/spell_parser.c:518); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:717	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches spell_hellfire (src/spell_parser.c:518); no current depth case executes this output branch (R1/R2/R5e).
