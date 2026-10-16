@@ -378,6 +378,47 @@ func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
 	}
 }
 
+// sendSpellActToCaster mirrors C's act(..., TO_CHAR) formatting for spell
+// reports. The live world renders through its canonical act() implementation
+// so object visibility and short descriptions match src/comm.c; direct spell
+// unit tests use the same substitutions without a World.
+func sendSpellActToCaster(format string, ch, victim, obj, world interface{}) {
+	if renderer, ok := world.(interface {
+		SpellActToChar(caster, victim, object interface{}, format string)
+	}); ok {
+		renderer.SpellActToChar(ch, victim, obj, format)
+		return
+	}
+
+	message := format
+	if victim != nil {
+		message = strings.ReplaceAll(message, "$E", subjectivePronoun(victim))
+	}
+	if obj != nil {
+		shortDesc := "something"
+		if named, ok := obj.(interface{ GetShortDesc() string }); ok {
+			shortDesc = named.GetShortDesc()
+		}
+		message = strings.ReplaceAll(message, "$p", shortDesc)
+	}
+	sendToCaster(ch, message+"\r\n")
+}
+
+// subjectivePronoun mirrors C's HSSH macro in src/utils.h using the Go sex
+// encoding (male=0, female=1, neutral=2).
+func subjectivePronoun(ch interface{}) string {
+	type sexer interface{ GetSex() int }
+	if s, ok := ch.(sexer); ok {
+		switch s.GetSex() {
+		case 0:
+			return "he"
+		case 1:
+			return "she"
+		}
+	}
+	return "it"
+}
+
 // capitalizeActMessage mirrors C act()'s CAP(lbuf), which uppercases the
 // first byte after token substitution. Mob short descriptions are commonly
 // lowercase, making this visible on NPC verbal-component messages.

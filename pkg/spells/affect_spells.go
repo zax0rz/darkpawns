@@ -1284,7 +1284,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellZen:
 		castZen(level, ch, cvict)
 	case SpellDetectPoison:
-		castDetectPoison(level, ch, cvict, ovict)
+		castDetectPoison(level, ch, cvict, ovict, world)
 	case SpellCalliope:
 		castCalliope(level, ch, cvict)
 	case SpellLycanthropy:
@@ -1715,13 +1715,12 @@ func castZen(level int, ch, cvict interface{}) {
 
 // castDetectPoison — checks for poison on victims and objects.
 // C source: spells.c:794-836. AFF_POISON = bit 11.
-func castDetectPoison(level int, ch, cvict, ovict interface{}) {
+func castDetectPoison(level int, ch, cvict, ovict, world interface{}) {
 	_ = level
 
 	// Check victim for poison affect
 	if cvict != nil {
 		type affecter interface{ IsAffected(int) bool }
-		type namer interface{ GetName() string }
 
 		a, ok := cvict.(affecter)
 		if !ok {
@@ -1732,15 +1731,13 @@ func castDetectPoison(level int, ch, cvict, ovict interface{}) {
 			if cvict == ch {
 				sendToCaster(ch, "You can sense poison in your blood.\r\n")
 			} else {
-				sendToCaster(ch, "You sense that they are poisoned.\r\n")
+				sendSpellActToCaster("You sense that $E is poisoned.", ch, cvict, nil, world)
 			}
 		} else {
 			if cvict == ch {
 				sendToCaster(ch, "You feel healthy.\r\n")
 			} else {
-				if n, ok := cvict.(namer); ok {
-					sendToCaster(ch, "You sense that "+n.GetName()+" is healthy.\r\n")
-				}
+				sendSpellActToCaster("You sense that $E is healthy.", ch, cvict, nil, world)
 			}
 		}
 	}
@@ -1760,9 +1757,9 @@ func castDetectPoison(level int, ch, cvict, ovict interface{}) {
 		switch tf.GetTypeFlag() {
 		case 17, 23, 19: // ITEM_DRINKCON=17, ITEM_FOUNTAIN=23, ITEM_FOOD=19
 			if v, ok := ovict.(valuer); ok && v.GetValue(3) != 0 {
-				sendToCaster(ch, "You sense that it has been contaminated.\r\n")
+				sendSpellActToCaster("You sense that $p has been contaminated.", ch, nil, ovict, world)
 			} else {
-				sendToCaster(ch, "You sense that it is safe for consumption.\r\n")
+				sendSpellActToCaster("You sense that $p is safe for consumption.", ch, nil, ovict, world)
 			}
 		default:
 			sendToCaster(ch, "You sense that it should not be consumed.\r\n")

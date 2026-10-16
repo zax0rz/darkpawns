@@ -1139,6 +1139,19 @@ func (w *World) SpellObjectAct(caster, target interface{}, message string, toRoo
 	Act(w, true, ch, nil, obj, nil, message, "", where)
 }
 
+// SpellActToChar dispatches a spell's act(..., TO_CHAR) report through the
+// canonical C-compatible formatter. C performs target pronoun and object
+// visibility/short-description substitution in src/comm.c:2397-2477.
+func (w *World) SpellActToChar(caster, victim, object interface{}, message string) {
+	ch, chOK := caster.(Actor)
+	if !chOK {
+		return
+	}
+	target, _ := victim.(Actor)
+	obj, _ := object.(*ObjectInstance)
+	Act(w, false, ch, target, obj, nil, message, "", ToChar)
+}
+
 // castSpellC is cast_spell (spell_parser.c) for a mobile caster: its gates
 // answer only the mobile, so a refusal shows nothing; otherwise the verbal
 // component and call_magic.

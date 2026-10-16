@@ -1,0 +1,45 @@
+# depth-case: spell.detect-poison-food-output
+# C path: do_cast -> cast_spell -> call_magic -> spell_detect_poison
+# (src/spell_parser.c:509,879-925,1038-1110; src/spells.c:815-827).
+# A real loaf is loaded into inventory and inspected through registered player
+# cast dispatch, exercising C's $p short-description expansion.
+
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 188.obj
+
+[setup:oracle]
+Poisoncheckfood
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Poisoncheckfood
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 18801
+
+[probe]
+cast 'detect poison' bread
