@@ -1,0 +1,104 @@
+# depth-case: spell.waterwalk-spoken
+# waterwalk is cast at a room target through the spoken parser; caster, target,
+# and observer transcripts exercise every mag_affects audience this spell sets.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Walkcast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Walkcast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Walkpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Walkpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Walkwatch
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Walkwatch
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Walkpeer 8105
+teleport Walkwatch 8105
+set Walkcast class m
+set Walkcast level 31
+skillset Walkcast 'waterwalk' 100
+set Walkcast maxmana 5000
+set Walkcast mana 5000
+
+[probe]
+cast 'waterwalk' Walkpeer

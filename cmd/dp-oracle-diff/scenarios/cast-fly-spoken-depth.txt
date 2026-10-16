@@ -1,0 +1,104 @@
+# depth-case: spell.fly-spoken
+# fly is cast at a room target through the spoken parser; caster, target,
+# and observer transcripts exercise every mag_affects audience this spell sets.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Flycast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Flycast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Flypeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Flypeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Flywatch
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Flywatch
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Flypeer 8105
+teleport Flywatch 8105
+set Flycast class a
+set Flycast level 31
+skillset Flycast 'fly' 100
+set Flycast maxmana 5000
+set Flycast mana 5000
+
+[probe]
+cast 'fly' Flypeer

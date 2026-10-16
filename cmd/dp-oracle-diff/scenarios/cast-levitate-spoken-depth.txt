@@ -1,0 +1,75 @@
+# depth-case: spell.levitate-spoken
+# Levitate is C self-only (src/spell_parser.c:1354-1355); the caster and a
+# room observer prove its target and TO_ROOM messages through spoken will.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Levcast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Levcast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Levwatch
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Levwatch
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Levwatch 8105
+set Levcast class i
+set Levcast level 31
+skillset Levcast 'levitate' 100
+set Levcast maxmana 5000
+set Levcast mana 5000
+
+[probe]
+will 'levitate'

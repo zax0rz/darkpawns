@@ -397,6 +397,39 @@ func TestCallMagicPerceptionSpellsApplyAffects(t *testing.T) {
 	}
 }
 
+func TestCallMagicMovementSpellsApplyAffects(t *testing.T) {
+	cases := []struct {
+		name     string
+		spellNum int
+		duration int
+		flag     uint64
+		message  string
+	}{
+		{"waterwalk", SpellWaterwalk, 20, engine.AFFWaterwalk, "You feel webbing between your toes.\r\n"},
+		{"fly", SpellFly, 31, engine.AFFFlying, "Your feet rise off the ground!\r\n"},
+		{"levitate", SpellLevitate, 31, engine.AFFFlying, "Your feet rise off the ground!\r\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding), inventory: &mockInventory{}}
+
+			if !CallMagic(caster, caster, nil, tc.spellNum, 31, CastSpell, nil) {
+				t.Fatal("CallMagic did not dispatch movement spell")
+			}
+			if len(caster.activeAffects) != 1 {
+				t.Fatalf("expected one movement affect, got %d", len(caster.activeAffects))
+			}
+			aff := caster.activeAffects[0]
+			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != tc.duration || aff.Flags != tc.flag {
+				t.Errorf("unexpected movement affect: %+v", aff)
+			}
+			if len(caster.messages) != 1 || caster.messages[0] != tc.message {
+				t.Errorf("self-cast messages = %q, want %q", caster.messages, tc.message)
+			}
+		})
+	}
+}
+
 // forceMagAffectsSave makes the mag_affects saving throw deterministic for the
 // duration of a test: saved=true means the victim resists, saved=false means the
 // spell lands. Restores the real (RNG-backed) roll via t.Cleanup.
