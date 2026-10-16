@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // TestStatPlayer_DefaultPositionStanding is the DP-1332 regression: C's
@@ -78,5 +80,199 @@ func TestStatMobileEquipmentPoints(t *testing.T) {
 	}
 	if !strings.Contains(text.String(), "AC: [70/10], Hitroll: [ 4], Damroll: [10], Saving throws: [-2/0/0/0/0]") {
 		t.Fatalf("stat did not read effective mobile equipment points: %s", text.String())
+	}
+}
+
+func drainSessionOutput(t *testing.T, s *Session) string {
+	t.Helper()
+	var text strings.Builder
+	for len(s.send) > 0 {
+		text.WriteString(readSendText(t, s))
+	}
+	return text.String()
+}
+
+func TestCmdStatFallbackChainMatchesC(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Room One"},
+			{VNum: 1002, Name: "Room Two"},
+		},
+		Mobs: []parser.Mob{
+			{VNum: 300, ShortDesc: "the remote orc", Keywords: "orc", AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11, Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 1}},
+		},
+		Objs: []parser.Obj{
+			{VNum: 200, ShortDesc: "a worn ring", Keywords: "ring", TypeFlag: game.ITEM_WORN},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Alice", 1001, true)
+	s.player.SetLevel(LVL_IMPL)
+
+	// Spawn a mobile in room 1002 while Alice is in room 1001.
+	if _, err := w.SpawnMob(300, 1002); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmdStat(s, []string{"orc"}); err != nil {
+		t.Fatal(err)
+	}
+	out := drainSessionOutput(t, s)
+	if !strings.Contains(out, "MOB 'the remote orc'") || !strings.Contains(out, "In room [ 1002]") {
+		t.Fatalf("stat <mob> did not resolve remote world mobile via get_char_vis fallback:\n%s", out)
+	}
+
+	// Equip an object on Alice and verify step 1 (get_object_in_equip_vis) resolves it.
+	ring, err := w.SpawnObject(200, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.player.Equipment.SetSlot(game.SlotFingerR, ring); err != nil {
+		t.Fatal(err)
+	}
+	if err := cmdStat(s, []string{"ring"}); err != nil {
+		t.Fatal(err)
+	}
+	out = drainSessionOutput(t, s)
+	if !strings.Contains(out, "Name: 'a worn ring'") {
+		t.Fatalf("stat <equip> did not resolve equipped item via get_object_in_equip_vis:\n%s", out)
+	}
+}
+
+func TestCmdWhereSearchesMobsAndObjectsMatchC(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Room One"},
+			{VNum: 1002, Name: "Room Two"},
+		},
+		Mobs: []parser.Mob{
+			{VNum: 300, ShortDesc: "a cityguard", Keywords: "cityguard guard", AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11},
+		},
+		Objs: []parser.Obj{
+			{VNum: 200, ShortDesc: "a loaf of bread", Keywords: "bread loaf", TypeFlag: game.ITEM_FOOD},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Alice", 1001, true)
+	s.player.SetLevel(LVL_IMPL)
+
+	if _, err := w.SpawnMob(300, 1002); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.SpawnObject(200, 1002); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := cmdWhere(s, []string{"cityguard"}); err != nil {
+		t.Fatal(err)
+	}
+	out := drainSessionOutput(t, s)
+	wantMob := "M  1. a cityguard               - [ 1002]Room Two\r\n"
+	if out != wantMob {
+		t.Fatalf("where <mob> mismatch:\ngot:  %q\nwant: %q", out, wantMob)
+	}
+
+	if err := cmdWhere(s, []string{"bread"}); err != nil {
+		t.Fatal(err)
+	}
+	out = drainSessionOutput(t, s)
+	wantObj := "O  1. a loaf of bread           - [ 1002] Room Two\r\n"
+	if out != wantObj {
+		t.Fatalf("where <obj> mismatch:\ngot:  %q\nwant: %q", out, wantObj)
+	}
+}
+
+func TestStatCharacterAffectFlagsAndSpellLinesMatchC(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room One"}},
+		Mobs:  []parser.Mob{{VNum: 300, ShortDesc: "a guard", Keywords: "guard", AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11, Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 1}}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Alice", 1001, true)
+
+	// Apply bless (+2 HITROLL and -1 SAVING_SPELL, AFF_NOTHING) and sanctuary (AFF_SANCTUARY) to Alice.
+	s.player.AddAffect(&engine.Affect{
+		Origin:    engine.OriginSpell,
+		SpellID:   spells.SpellBless,
+		Source:    "bless",
+		Duration:  5,
+		Location:  engine.ApplyHitroll,
+		Magnitude: 2,
+		Flags:     engine.AFFNothing,
+	})
+	s.player.AddAffect(&engine.Affect{
+		Origin:    engine.OriginSpell,
+		SpellID:   spells.SpellBless,
+		Source:    "bless",
+		Duration:  5,
+		Location:  engine.ApplySavingSpell,
+		Magnitude: -1,
+		Flags:     engine.AFFNothing,
+	})
+	s.player.AddAffect(&engine.Affect{
+		Origin:   engine.OriginSpell,
+		SpellID:  spells.SpellSanctuary,
+		Source:   "sanctuary",
+		Duration: 3,
+		Flags:    engine.AFFSanctuary,
+	})
+
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
+	out := drainSessionOutput(t, s)
+	if !strings.Contains(out, "AFF: SANCT NOTHING\r\n") {
+		t.Fatalf("player stat AFF: line missing active spell bits SANCT NOTHING:\n%s", out)
+	}
+	wantSPL := "SPL: (  4hr) sanctuary             sets SANCT\r\n" +
+		"SPL: (  6hr) bless                 -1 to SAVING_SPELL, sets NOTHING\r\n" +
+		"SPL: (  6hr) bless                 +2 to HITROLL, sets NOTHING\r\n"
+	if !strings.Contains(out, wantSPL) {
+		t.Fatalf("player stat SPL: lines mismatch:\ngot:\n%s\nwant substring:\n%s", out, wantSPL)
+	}
+
+	// Verify MobInstance stat also renders AFF: and SPL: lines in newest-first order,
+	// and that smokescreen (AFF_BLIND = C bit 0) sets BLIND in AFF: without emitting a bitvector suffix on SPL:.
+	mob, err := w.SpawnMob(300, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mob.AddAffect(&engine.Affect{
+		Origin:    engine.OriginSpell,
+		SpellID:   spells.SpellSmokescreen,
+		Source:    "smokescreen",
+		Duration:  1,
+		Location:  engine.ApplyHitroll,
+		Magnitude: -4,
+		Flags:     engine.AFFBlind,
+	})
+	mob.AddAffect(&engine.Affect{
+		Origin:    engine.OriginSpell,
+		SpellID:   spells.SpellSmokescreen,
+		Source:    "smokescreen",
+		Duration:  1,
+		Location:  engine.ApplyAC,
+		Magnitude: 40,
+		Flags:     engine.AFFBlind,
+	})
+
+	s.sendStatMob(mob)
+	mobOut := drainSessionOutput(t, s)
+	if !strings.Contains(mobOut, "AFF: BLIND\r\n") {
+		t.Fatalf("mob stat AFF: line missing BLIND:\n%s", mobOut)
+	}
+	wantMobSPL := "SPL: (  2hr) smokescreen           +40 to ARMOR\r\n" +
+		"SPL: (  2hr) smokescreen           -4 to HITROLL\r\n"
+	if !strings.Contains(mobOut, wantMobSPL) {
+		t.Fatalf("mob stat SPL: lines mismatch:\ngot:\n%s\nwant substring:\n%s", mobOut, wantMobSPL)
 	}
 }

@@ -3,6 +3,7 @@ package game
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1480,6 +1481,35 @@ func (m *MobInstance) RemoveAffectBySpell(spellNum int) {
 		}
 		m.AffectTotal()
 	}
+}
+
+// OrderedAffects returns active spell affects in C's newest-first ch->affected
+// order (src/handler.c:391,415).
+func (m *MobInstance) OrderedAffects() []*engine.Affect {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	type entry struct {
+		key   string
+		order uint64
+		aff   *engine.Affect
+	}
+	var entries []entry
+	for key, value := range m.CustomData {
+		if aff, ok := value.(*engine.Affect); ok && aff != nil {
+			entries = append(entries, entry{key: key, order: m.affectOrder[key], aff: aff})
+		}
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].order != entries[j].order {
+			return entries[i].order > entries[j].order
+		}
+		return entries[i].key > entries[j].key
+	})
+	out := make([]*engine.Affect, 0, len(entries))
+	for _, e := range entries {
+		out = append(out, e.aff)
+	}
+	return out
 }
 
 // HitModifiers returns combat modifiers for the mob's equipped weapon.

@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 func cmdStat(s *Session, args []string) error {
@@ -32,8 +34,8 @@ func cmdStat(s *Session, args []string) error {
 			s.Send("Stats on which mobile?\r\n")
 			return nil
 		}
-		if target, ok := s.manager.world.ResolveCharWorld(s.player, args[1]); ok && target.Combatant != nil && target.Combatant.IsNPC() {
-			s.sendStatMob(target.Combatant.(*game.MobInstance))
+		if victim, ok := s.manager.world.ResolveCharWorld(s.player, args[1]); ok && victim.Combatant != nil {
+			s.sendStatCharacter(victim)
 			return nil
 		}
 		s.Send("No such mobile around.\r\n")
@@ -73,6 +75,28 @@ func cmdStat(s *Session, args []string) error {
 		s.sendStatObject(args[1])
 		return nil
 	}
+	// C do_stat fallback chain (src/act.wizard.c:1055-1070):
+	// equip -> inventory -> room char -> room obj -> world char -> world obj.
+	if object, ok := s.manager.world.ResolveObjectInEquipmentVis(s.player, args[0]); ok {
+		s.sendStatObjectInstance(object)
+		return nil
+	}
+	if object, ok := s.manager.world.ResolveObjectInInventory(s.player, args[0]); ok {
+		s.sendStatObjectInstance(object)
+		return nil
+	}
+	if victim, ok := s.manager.world.ResolveCharInRoom(s.player, args[0]); ok {
+		s.sendStatCharacter(victim)
+		return nil
+	}
+	if object, ok := s.manager.world.ResolveObjectInRoom(s.player, args[0]); ok {
+		s.sendStatObjectInstance(object)
+		return nil
+	}
+	if victim, ok := s.manager.world.ResolveCharWorld(s.player, args[0]); ok {
+		s.sendStatCharacter(victim)
+		return nil
+	}
 	if object, ok := s.manager.world.ResolveObjectWorld(s.player, args[0]); ok {
 		s.sendStatObjectInstance(object)
 		return nil
@@ -83,6 +107,16 @@ func cmdStat(s *Session, args []string) error {
 	}
 	s.Send("Nothing around by that name.\r\n")
 	return nil
+}
+
+func (s *Session) sendStatCharacter(target game.CharTarget) {
+	if target.Player != nil {
+		s.sendStatPlayer(target.Player)
+		return
+	}
+	if target.Mob != nil {
+		s.sendStatMob(target.Mob)
+	}
 }
 
 func (s *Session) sendStatMob(mob *game.MobInstance) {
@@ -142,7 +176,8 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	s.sendStatMobLine(fmt.Sprintf("Carried: weight: %d, items: %d; Items in: inventory: %d, eq: %d",
 		carriedWeight, len(mob.Inventory), len(mob.Inventory), len(mob.Equipment)))
 	s.sendStatMobLine("Master is: <none>, Followers are:")
-	s.sendStatMobLine("AFF: " + wizardAffectFlags(mob.GetAffects()))
+	s.sendStatMobLine("AFF: " + wizardAffectFlags(mobEffectiveAffectBits(mob)))
+	s.sendStatAffectLines(mob.OrderedAffects())
 }
 
 func (s *Session) sendStatMobLine(line string) {
@@ -273,7 +308,93 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 
 	s.Send(fmt.Sprintf("Hunger: %d, Thirst: %d, Drunk: %d, Tattoo: None (%d)\r\n", full, thirst, drunk, p.TatTimer))
 	s.Send("Master is: <none>, Followers are:\r\n")
-	s.Send("AFF: " + wizardAffectFlags(p.GetAffectBitVector()) + "\r\n")
+	s.Send("AFF: " + wizardAffectFlags(playerEffectiveAffectBits(p)) + "\r\n")
+	// C affect_to_char/affect_to_char2 prepends to ch->affected (src/handler.c:391,415),
+	// whereas Go appends to p.ActiveAffects (pkg/game/player_affects.go:405).
+	ordered := make([]*engine.Affect, 0, len(p.ActiveAffects))
+	for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
+		ordered = append(ordered, p.ActiveAffects[i])
+	}
+	s.sendStatAffectLines(ordered)
+}
+
+func playerEffectiveAffectBits(p *game.Player) uint64 {
+	if p == nil {
+		return 0
+	}
+	flags := p.GetAffectBitVector()
+	for bit := 0; bit < len(wizardCaffectNames); bit++ {
+		if p.IsAffected(bit) {
+			flags |= 1 << uint(bit)
+		}
+	}
+	for _, aff := range p.ActiveAffects {
+		if aff != nil && (aff.Flags == 0 || aff.Flags == engine.AFFNothing) {
+			flags |= 1 << 32 // AFF_NOTHING (src/structs.h:348)
+		}
+	}
+	return flags
+}
+
+func mobEffectiveAffectBits(mob *game.MobInstance) uint64 {
+	if mob == nil {
+		return 0
+	}
+	flags := mob.GetAffects()
+	for _, aff := range mob.OrderedAffects() {
+		if aff != nil && (aff.Flags == 0 || aff.Flags == engine.AFFNothing) {
+			flags |= 1 << 32 // AFF_NOTHING (src/structs.h:348)
+		}
+	}
+	return flags
+}
+
+// sendStatAffectLines renders do_stat_character's SPL: rows (src/act.wizard.c:971-991).
+func (s *Session) sendStatAffectLines(affects []*engine.Affect) {
+	for _, aff := range affects {
+		if aff == nil {
+			continue
+		}
+		spellName := spells.SpellRawName(aff.SpellID)
+		if spellName == "" {
+			spellName = aff.Source
+		}
+		line := fmt.Sprintf("SPL: (%3dhr) %-21s ", aff.Duration+1, spellName)
+		hasMod := false
+		if aff.Magnitude != 0 {
+			line += fmt.Sprintf("%+d to %s", aff.Magnitude, wizardApplyTypeName(aff.Location))
+			hasMod = true
+		}
+		if bitName, ok := wizardAffectBitName(aff); ok {
+			if hasMod {
+				line += ", sets " + bitName
+			} else {
+				line += "sets " + bitName
+			}
+		}
+		s.Send(line + "\r\n")
+	}
+}
+
+func wizardAffectBitName(aff *engine.Affect) (string, bool) {
+	if aff == nil {
+		return "", false
+	}
+	// In C (src/structs.h:310,348; src/act.wizard.c:980):
+	// AFF_BLIND is bit 0, so `if (aff->bitvector)` is false for AFF_BLIND.
+	// Pure-stat spells set `af.bitvector = AFF_NOTHING` (32), which is non-zero.
+	if aff.Flags == engine.AFFBlind {
+		return "", false
+	}
+	if aff.Flags == 0 || aff.Flags == engine.AFFNothing {
+		return "NOTHING", true
+	}
+	for cBit := 1; cBit < len(wizardCaffectNames); cBit++ {
+		if engFlag, ok := game.AffBitToEngineFlag[cBit]; ok && aff.Flags&engFlag != 0 {
+			return wizardCaffectNames[cBit], true
+		}
+	}
+	return "", false
 }
 
 func wizardSexName(sex int) string {
@@ -345,7 +466,7 @@ func wizardMobFlags(flags uint64) string {
 }
 
 func wizardAffectFlags(flags uint64) string {
-	return strings.TrimSpace(game.SprintbitArray([]uint32{wizardFlagWord(flags)}, wizardCaffectNames, 1))
+	return strings.TrimSpace(game.SprintbitArray([]uint32{wizardFlagWord(flags), wizardFlagWord(flags >> 32), 0, 0}, wizardCaffectNames, 4))
 }
 
 func wizardFlagWord(flags uint64) uint32 {
