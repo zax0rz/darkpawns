@@ -13,8 +13,8 @@ behind a classification (that is review's job, R5e):
 - the classification is one of the four;
 - a proven site cites case_ids, and every cited case_id exists in a depth
   manifest;
-- the family's surface-inventory row agrees: units equals the gap count, and
-  the row is proven-already exactly when there are no gaps.
+- the C file's activity-call-sites row agrees, and any non-activity inventory
+  row that explicitly references this map has the same residual count/status.
 """
 from __future__ import annotations
 
@@ -52,9 +52,11 @@ def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None
     if case_ids is None:
         case_ids = {row["case_id"] for row in load_rows()}
     families = {}
+    inventory_rows = []
     if inventory.exists():
         with inventory.open(encoding="utf-8", newline="") as stream:
-            for row in csv.DictReader(stream, delimiter="\t"):
+            inventory_rows = list(csv.DictReader(stream, delimiter="\t"))
+            for row in inventory_rows:
                 families[row["family"]] = row
     for path in sorted(surface_dir.glob("*.tsv")):
         name = path.relative_to(root) if path.is_relative_to(root) else path
@@ -116,6 +118,19 @@ def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None
             errors.append(f"{name}: surface-inventory units {family['units']} != {gaps} gaps in the map")
         if (family["status"] == "proven-already") != (gaps == 0):
             errors.append(f"{name}: inventory status {family['status']!r} disagrees with {gaps} gaps")
+        map_ref = path.relative_to(inventory.parent).as_posix()
+        for linked in inventory_rows:
+            if linked["surface_class"] == "activity-call-sites":
+                continue
+            references = [part.strip() for part in linked["proof_or_attempt"].split(";")]
+            if map_ref not in references:
+                continue
+            if linked["units"] != str(gaps):
+                errors.append(f"{name}: linked surface-inventory row {linked['family']!r} units "
+                              f"{linked['units']} != {gaps} gaps in the map")
+            if (linked["status"] == "proven-already") != (gaps == 0):
+                errors.append(f"{name}: linked inventory row {linked['family']!r} status "
+                              f"{linked['status']!r} disagrees with {gaps} gaps")
     return errors
 
 
@@ -130,10 +145,13 @@ def self_test() -> None:
         inventory = root / "inventory.tsv"
         good = ["\t".join(HEADER), "src/demo.c:2\tf\tproven\tcase.a\tok", "src/demo.c:4\tf\tgap-reachable\t-\tgap"]
 
-        def run(rows, units="1", status="blocked", ids=frozenset({"case.a"})):
+        def run(rows, units="1", status="blocked", ids=frozenset({"case.a"}),
+                linked_units="1", linked_status="blocked"):
             (surface / "demo.tsv").write_text("\n".join(rows) + "\n")
             inventory.write_text("surface_class\tfamily\tunits\tstatus\tproof_or_attempt\tc_source_scope\tnotes\n"
-                                 f"activity-call-sites\tsrc/demo.c act-send family\t{units}\t{status}\t-\t-\t-\n")
+                                 f"activity-call-sites\tsrc/demo.c act-send family\t{units}\t{status}\t-\t-\t-\n"
+                                 f"fight-skill\tdemo skill output\t{linked_units}\t{linked_status}\t"
+                                 "surface/demo.tsv\t-\t-\n")
             return check(surface, inventory, root, set(ids))
 
         assert run(good) == [], run(good)
@@ -147,6 +165,8 @@ def self_test() -> None:
             "unknown case": ([good[0], good[1].replace("case.a", "case.zz"), good[2]], {}),
             "units": (good, {"units": "2"}),
             "status": (good, {"status": "proven-already"}),
+            "linked units": (good, {"linked_units": "2"}),
+            "linked status": (good, {"linked_status": "proven-already"}),
         }
         for label, (rows, kwargs) in cases.items():
             assert run(rows, **kwargs), f"self-test: {label} was not caught"
