@@ -202,3 +202,20 @@ func TestCmdSetFrozenAuthorityAndSelfTarget(t *testing.T) {
 func plrBits(p *game.Player) uint64 {
 	return p.GetFlags() & (1<<uint(game.PrfBrief) - 1)
 }
+
+// TestCmdSetAtOrAboveActorLevelUsesCRefusal pins do_set's case 34 byte at
+// src/act.wizard.c:2896-2901 through the registered command dispatch. Reverting
+// the punctuation diverges from C's send_to_char and fails this assertion.
+func TestCmdSetAtOrAboveActorLevelUsesCRefusal(t *testing.T) {
+	wiz, target := makeSetTestSession(t)
+	initialLevel := target.player.Level
+	if err := ExecuteCommand(wiz, "set", []string{"Hero", "level", fmt.Sprintf("%d", wiz.player.Level)}); err != nil {
+		t.Fatalf("ExecuteCommand(set Hero level): %v", err)
+	}
+	if got, want := readSessionText(t, wiz), "You can't do that.\r\n"; got != want {
+		t.Fatalf("set level refusal = %q, want %q", got, want)
+	}
+	if target.player.Level != initialLevel {
+		t.Fatalf("rejected set level changed target to %d, want %d", target.player.Level, initialLevel)
+	}
+}

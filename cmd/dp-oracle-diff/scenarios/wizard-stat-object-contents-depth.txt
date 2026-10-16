@@ -1,0 +1,42 @@
+# Zone 121's reset leaves gold bars and a seal pelt in its oak chest; normal
+# color exposes C's container values, accumulated weight, contents row, and reset.
+# depth-case: stat.object-contents-census
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizardcontents
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardcontents
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12136
+color normal
+
+[probe]
+stat object chest

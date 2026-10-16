@@ -18,6 +18,14 @@
 # depth-case: set.invalid-room
 # depth-case: set.invalid-class
 # depth-case: set.invalid-race
+# depth-case: set.npc-pc-field-gate
+# depth-case: set.binary-invalid-value
+# depth-case: set.sex-invalid-value
+# depth-case: set.condition-invalid-value
+# depth-case: set.level-at-or-above
+# depth-case: set.room-invalid
+# depth-case: set.class-invalid
+# depth-case: set.race-invalid
 
 [fixture]
 empty-players

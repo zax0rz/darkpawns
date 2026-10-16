@@ -163,8 +163,20 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	s.sendStatMobLine(fmt.Sprintf("Coins: [%9d], Bank: [%9d] (Total: %d)", mob.GetGold(), 0, mob.GetGold()))
 	s.sendStatMobLine(fmt.Sprintf("AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [%d/%d/%d/%d/%d]",
 		mob.GetAC(), mob.GetHitroll(), mob.GetDamrollPoint(), mob.GetSavingThrow(0), mob.GetSavingThrow(1), mob.GetSavingThrow(2), mob.GetSavingThrow(3), mob.GetSavingThrow(4)))
-	s.sendStatMobLine(fmt.Sprintf("Pos: %s, Fighting: %s, Attack type: hit",
-		wizardPositionName(mob.GetPosition()), wizardFightingName(mob.GetFighting())))
+	attackType := proto.BareHandAttack
+	attackName := combat.AttackHitTexts[0].Singular
+	if attackType >= 0 && attackType < len(combat.AttackHitTexts) {
+		attackName = combat.AttackHitTexts[attackType].Singular
+	}
+	s.sendStatMobLine(fmt.Sprintf("Pos: %s, Fighting: %s, Attack type: %s",
+		wizardPositionName(mob.GetPosition()), wizardFightingName(mob.GetFighting()), attackName))
+	if proto.Noise != "" {
+		color, reset := "", ""
+		if s.player != nil && s.player.GetFlags()&(1<<uint(game.PrfColor2)) != 0 {
+			color, reset = "\x1b[33m", "\x1b[0m"
+		}
+		s.sendStatMobLine("Noise: " + color + proto.Noise + reset)
+	}
 	s.sendStatMobLine(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]",
 		wizardPositionName(proto.DefaultPos), 0))
 	s.sendStatMobLine("NPC flags: " + wizardMobFlags(mob.GetMobFlags()))
@@ -175,6 +187,9 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	}
 	s.sendStatMobLine(fmt.Sprintf("Carried: weight: %d, items: %d; Items in: inventory: %d, eq: %d",
 		carriedWeight, len(mob.Inventory), len(mob.Inventory), len(mob.Equipment)))
+	if hunting := mob.GetHunting(); hunting != "" {
+		s.sendStatMobLine("Hunting: " + hunting)
+	}
 	s.sendStatMobLine("Master is: <none>, Followers are:")
 	s.sendStatMobLine("AFF: " + wizardAffectFlags(mobEffectiveAffectBits(mob)))
 	s.sendStatAffectLines(mob.OrderedAffects())
@@ -291,6 +306,18 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 
 	s.Send("PRF: " + wizardPreferenceFlags(preferenceFlags, autoExit) + "\r\n")
 	s.Send("Racial Hatreds: None None None None None\r\n")
+	if p.GetLevel() >= LVL_IMMORT {
+		poofIn, poofOut := p.PoofIn, p.PoofOut
+		if poofIn == "" {
+			poofIn = "None"
+		}
+		if poofOut == "" {
+			poofOut = "None"
+		}
+		// C prints the configured arrival/departure strings for immortal PCs
+		// (src/act.wizard.c:905), including the literal fallback "None".
+		s.Send(fmt.Sprintf("Poofin:%s\r\nPoofout:%s\r\n", poofIn, poofOut))
+	}
 	eqCount := 0
 	if p.Equipment != nil {
 		for _, item := range p.Equipment.Slots {
@@ -545,6 +572,20 @@ func (s *Session) sendStatRoom() {
 	if room.Description != "" {
 		s.Send(strings.ReplaceAll(room.Description, "\n", "\r\n"))
 	}
+	if parsed := w.GetParsedWorld(); parsed != nil {
+		for i := range parsed.Rooms {
+			prototype := &parsed.Rooms[i]
+			if prototype.VNum != room.VNum || len(prototype.ExtraDescs) == 0 {
+				continue
+			}
+			keywords := make([]string, 0, len(prototype.ExtraDescs))
+			for _, desc := range prototype.ExtraDescs {
+				keywords = append(keywords, desc.Keywords)
+			}
+			s.Send(wizardExtraDescriptionLine(keywords, wizardHasNormalColor(s.player.GetFlags())))
+			break
+		}
+	}
 
 	players := w.GetPlayersInRoom(room.VNum)
 	sort.Slice(players, func(i, j int) bool { return players[i].GetID() > players[j].GetID() })
@@ -685,24 +726,20 @@ func (s *Session) sendStatObjectInstance(object *game.ObjectInstance) {
 		for _, desc := range extra {
 			names = append(names, desc.Keywords)
 		}
-		s.Send(fmt.Sprintf("Extra descs: %s\r\n", strings.Join(names, " ")))
+		s.Send(wizardExtraDescriptionLine(names, wizardHasNormalColor(s.player.GetFlags())))
 	}
 
 	words := objectFlagWords(proto.WearFlags)
 	s.Send(fmt.Sprintf("Can be worn on: %s\r\n", strings.TrimSpace(game.SprintbitArray(words, wizardWearBitNames, len(words)))))
 	s.Send(fmt.Sprintf("Set char bits : %s\r\n", strings.TrimSpace(game.SprintbitArray([]uint32{0, 0, 0, 0}, game.AffectedBitNames, 4))))
 	s.Send(fmt.Sprintf("Extra flags   : %s\r\n", strings.TrimSpace(game.SprintbitArray(objectFlagWords(object.GetExtraFlags()), wizardExtraBitNames, 4))))
-	s.Send(fmt.Sprintf("Encumbrance: %d, Value: %d, Percent Load: %.2f%%, Timer: %d\r\n", object.GetWeight(), object.GetCost(), proto.LoadPercent, object.GetTimer()))
+	s.Send(fmt.Sprintf("Encumbrance: %d, Value: %d, Percent Load: %.2f%%, Timer: %d\r\n", object.GetTotalWeight(), object.GetCost(), proto.LoadPercent, object.GetTimer()))
 
 	inRoom, inObject, carriedBy, wornBy := s.objectLocation(object)
 	s.Send(fmt.Sprintf("In room: %s, In object: %s, Carried by: %s, Worn by: %s\r\n", inRoom, inObject, carriedBy, wornBy))
 	s.Send(fmt.Sprintf("%s\r\n", wizardObjectValues(object)))
-	if len(object.GetContents()) > 0 {
-		var contents []string
-		for _, child := range object.GetContents() {
-			contents = append(contents, child.GetShortDesc())
-		}
-		s.Send(fmt.Sprintf("\r\nContents: %s\r\n", strings.Join(contents, ", ")))
+	if contents := wizardObjectContentsOutput(object.GetContents(), wizardHasNormalColor(s.player.GetFlags())); contents != "" {
+		s.Send(contents)
 	}
 	if affects := object.GetAffects(); len(affects) > 0 {
 		var rendered []string
@@ -789,11 +826,80 @@ func (s *Session) objectLocation(object *game.ObjectInstance) (string, string, s
 func wizardObjectValues(object *game.ObjectInstance) string {
 	values := [4]int{object.GetValue(0), object.GetValue(1), object.GetValue(2), object.GetValue(3)}
 	switch object.GetTypeFlag() {
+	case game.ITEM_CONTAINER:
+		lockType := "<INVALID BITVECTOR>"
+		if values[1] >= 0 {
+			lockType = game.SprintbitArray([]uint32{wizardIntFlagWord(values[1])}, game.ContainerBitNames, 1)
+		}
+		return fmt.Sprintf("Capacity: %d, Lock Type: %s, Key Num: %d, Corpse: %s", values[0], lockType, values[2], wizardYesNo(values[3]))
 	case game.ITEM_FOOD:
 		return fmt.Sprintf("Makes full: %d, Poisoned: %s", values[0], wizardYesNo(values[3]))
 	default:
 		return fmt.Sprintf("Values 0-3: [%d] [%d] [%d] [%d]", values[0], values[1], values[2], values[3])
 	}
+}
+
+func wizardExtraDescriptionLine(keywords []string, colored bool) string {
+	var line strings.Builder
+	line.WriteString("Extra descs:")
+	if colored {
+		line.WriteString("\x1b[36m") // CCCYN(ch, C_NRM), src/screen.h:45-56.
+	}
+	for _, keyword := range keywords {
+		line.WriteByte(' ')
+		line.WriteString(keyword)
+	}
+	if colored {
+		line.WriteString("\x1b[0m") // CCNRM(ch, C_NRM), src/screen.h:45-56.
+	}
+	line.WriteString("\r\n")
+	return line.String()
+}
+
+func wizardHasNormalColor(flags uint64) bool {
+	// C's clr(ch, C_NRM) is _clrlevel(ch) >= 2, where PRF_COLOR_1 counts 1 and
+	// PRF_COLOR_2 counts 2 (src/screen.h:45-49): PRF_COLOR_2 alone ("color
+	// normal") is enough.
+	return flags&(1<<uint(game.PrfColor2)) != 0
+}
+
+func wizardObjectContentsOutput(contents []*game.ObjectInstance, colored bool) string {
+	if len(contents) == 0 {
+		return ""
+	}
+
+	var output, line strings.Builder
+	line.WriteString("\r\nContents:")
+	if colored {
+		line.WriteString("\x1b[32m") // CCGRN(ch, C_NRM), src/screen.h:45-56.
+	}
+	found := 0
+	for i, child := range contents {
+		if found > 0 {
+			line.WriteByte(',')
+		}
+		line.WriteByte(' ')
+		line.WriteString(child.GetShortDesc())
+		found++
+		if line.Len() >= 62 {
+			if i+1 < len(contents) {
+				line.WriteString(",\r\n")
+			} else {
+				line.WriteString("\r\n")
+			}
+			output.WriteString(line.String())
+			line.Reset()
+			found = 0
+		}
+	}
+	if line.Len() > 0 {
+		line.WriteString("\r\n")
+		output.WriteString(line.String())
+	}
+	if colored {
+		output.WriteString("\x1b[0m") // CCNRM(ch, C_NRM), src/screen.h:45-56.
+	}
+	return output.String()
 }
 
 func wizardYesNo(value int) string {

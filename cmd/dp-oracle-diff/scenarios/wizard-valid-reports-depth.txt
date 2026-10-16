@@ -8,11 +8,13 @@
 # depth-case: stat.room-success
 # depth-case: stat.mob-success
 # depth-case: stat.player-success
+# depth-case: stat.player-immortal-poof-fields
 # depth-case: stat.player-default-position
 # depth-case: stat.file-success
 # depth-case: stat.object-success
 # depth-case: stat.object-fallback-success
 # depth-case: vstat.mob-success
+# depth-case: vstat.mob-attack-type
 # depth-case: vstat.obj-success
 
 [fixture]
@@ -82,6 +84,7 @@ rest
 [warmup]
 goto 8162
 teleport Wizardvalidpeer 8162
+sethunt Wizardvalid orc
 
 [probe]
 vnum mob orc
@@ -89,8 +92,12 @@ vnum obj bread
 stat room
 stat mob orc
 stat player Wizardvalidpeer
+poofin a swirl of arrival
+poofout a cloud of departure
+stat player Wizardvalid
 stat file Wizardvalidpeer
 stat object bread
 stat bread
 vstat mob 2109
+vstat mob 5000
 vstat obj 8010

@@ -23,11 +23,11 @@ src/act.wizard.c:303	do_goto	proven	goto.numeric-success;poofin.consumer-audienc
 src/act.wizard.c:318	do_trans	proven	transfer.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:321	do_trans	proven	transfer.target-not-found	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:323	do_trans	proven	transfer.self-refusal	The registered command resolves the actor as its own target and matches C's refusal (R1/R2/R5e/R5h).
-src/act.wizard.c:326	do_trans	gap-reachable		Lower-level authority refusal is reachable, but transfer-depth uses an Implementor actor and has no lower-level actor control.
+src/act.wizard.c:326	do_trans	proven	transfer.lower-level-refusal	A level-31 actor targets a level-35 visible player through dispatch and receives C's exact refusal before movement (R1/R2/R5e/R5h).
 src/act.wizard.c:329	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:337	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:338	do_trans	proven	transfer.success-audience	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:343	do_trans	gap-reachable		The transfer all level refusal is reachable, but current transfer proofs exercise the permitted all path only.
+src/act.wizard.c:343	do_trans	proven	transfer.all-level-refusal	A level-31 actor reaches C's GRGOD refusal before transfer-all descriptor scanning (R1/R2/R5e/R5h).
 src/act.wizard.c:352	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:355	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:356	do_trans	proven	transfer.all-con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
@@ -50,7 +50,7 @@ src/act.wizard.c:434	do_stat_room	proven	stat.room-success	The cited manifest pr
 src/act.wizard.c:436	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:438	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:440	do_stat_room	gap-reachable		No-description room branch; the stat.room-success fixture uses a room description.
-src/act.wizard.c:449	do_stat_room	gap-reachable		Room extra-description output; stat.room-success does not create an extra-description fixture.
+src/act.wizard.c:449	do_stat_room	proven	stat.room-extra-description-census;stat.room-extra-description-output	The isolated live stat command runs in room 8151, whose C prototype has the scrolls extra-description; output matches with C's color gate (R1/R2/R5e/R5h).
 src/act.wizard.c:460	do_stat_room	gap-reachable		Long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
 src/act.wizard.c:462	do_stat_room	gap-reachable		Final long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
 src/act.wizard.c:468	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
@@ -64,20 +64,20 @@ src/act.wizard.c:508	do_stat_room	proven	stat.room-success	The cited manifest pr
 src/act.wizard.c:525	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:533	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:535	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:544	do_stat_object	gap-reachable		Object extra-description output; the bread fixture has no extra descriptions.
+src/act.wizard.c:544	do_stat_object	proven	stat.object-extra-description-census	A live room reset spawns prototype 8007 with the ring/wedding-band extra-description; the registered stat object report emits the exact C keyword list (R1/R2/R5e/R5h).
 src/act.wizard.c:546	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:549	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:551	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:554	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:556	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:559	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:563	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:563	do_stat_object	proven	stat.object-success;stat.object-contents-census	The object-with-contents proof confirms C's accumulated GET_OBJ_WEIGHT value against the Go nested total (R1/R2/R5e/R5h).
 src/act.wizard.c:579	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:644	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:644	do_stat_object	proven	stat.object-success;stat.object-contents-census	The oak chest reaches C's ITEM_CONTAINER values formatter, including trailing sprintbit spacing and corpse flag (R1/R2/R5e/R5h).
 src/act.wizard.c:658	do_stat_object	gap-reachable		Long object-contents intermediate row; the report fixture uses an empty bread container list.
 src/act.wizard.c:660	do_stat_object	gap-reachable		Long object-contents final row; the report fixture uses an empty bread container list.
-src/act.wizard.c:666	do_stat_object	gap-reachable		Object contents final row; the report fixture uses an object without contents.
-src/act.wizard.c:667	do_stat_object	gap-reachable		Contents color-reset output; the report fixture uses an object without contents.
+src/act.wizard.c:666	do_stat_object	proven	stat.object-contents-census	The reset oak chest emits the final contents row with the C comma and space sequence (R1/R2/R5e/R5h).
+src/act.wizard.c:667	do_stat_object	proven	stat.object-contents-census	The contents report emits C's color-level reset after the final row (R1/R2/R5e/R5h).
 src/act.wizard.c:670	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:676	do_stat_object	gap-reachable		Object modifier-affect output; the bread fixture has no non-spell object affects.
 src/act.wizard.c:682	do_stat_object	gap-reachable		Object permanent-spell affect output; the bread fixture has no permanent spell affects.
@@ -95,18 +95,18 @@ src/act.wizard.c:827	do_stat_character	proven	stat.player-success;stat.mob-succe
 src/act.wizard.c:835	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:841	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:846	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:861	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:866	do_stat_character	gap-reachable		NPC noise output is conditional on a nonempty GET_NOISE value; the live orc report has no noise fixture.
+src/act.wizard.c:861	do_stat_character	proven	stat.player-success;stat.mob-success;vstat.mob-attack-type	The cited stat proof reaches the default hit label; vstat vnum 5000 reaches C's nondefault BareHandAttack=2 whip label and pins the shared report output (R1/R5e/R5h).
+src/act.wizard.c:866	do_stat_character	proven	vstat.mob-success	The valid `vstat mob 5000` report delegates to do_stat_character with nonempty Noise; the unit proof pins C_CNRM yellow and reset gating (R1/R5e/R5h).
 src/act.wizard.c:875	do_stat_character	proven	stat.player-default-position;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:880	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:886	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:889	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:898	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:905	do_stat_character	gap-reachable		Poofin/poofout report is conditional on an immortal player; the valid player fixture is mortal.
+src/act.wizard.c:905	do_stat_character	proven	stat.player-immortal-poof-fields	The live Implementor sets both poof strings through registered commands and then stats self, reaching C's immortal-player report line (R1/R2/R5e/R5h).
 src/act.wizard.c:911	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:924	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:931	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:937	do_stat_character	gap-reachable		NPC hunting output requires a live HUNTING target; the report fixture has none.
+src/act.wizard.c:937	do_stat_character	proven	stat.mob-success	The valid-report warmup sets the live orc's HUNTING target to the wizard before `stat mob orc` (R1/R5e/R5h).
 src/act.wizard.c:945	do_stat_character	gap-reachable		Clan report output requires a PC with a nonzero clan and rank; the player fixture is not a clan member.
 src/act.wizard.c:956	do_stat_character	gap-reachable		Intermediate follower-list wrap is not exercised by the short follower fixture.
 src/act.wizard.c:958	do_stat_character	gap-reachable		Final follower-list wrap is not exercised by the short follower fixture.
@@ -292,21 +292,21 @@ src/act.wizard.c:2661	do_set	gap-blocked		persistence/save format: set file load
 src/act.wizard.c:2670	do_set	gap-blocked		identity and persistence/save format: set file misses a durable player record.
 src/act.wizard.c:2678	do_set	proven	set.same-level-refusal	A level-34 actor sets a same-level live PC through dispatch and reaches C's target-authority refusal (R1/R2/R5e/R5h).
 src/act.wizard.c:2688	do_set	proven	set.per-field-level-gate	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:2693	do_set	proven	set.pc-field-on-npc	A real registered `set mob cleaner brief on` dispatch reaches the PC-only field refusal for an NPC (R1/R2/R5e/R5h).
+src/act.wizard.c:2693	do_set	proven	set.pc-field-on-npc;set.npc-pc-field-gate	The real-dispatch unit assertion and targeted oracle transcript reach C's PC-only field refusal for an NPC (R1/R2/R5e/R5h).
 src/act.wizard.c:2698	do_set	unreachable		Unreachable by the C field table: every entry at src/act.wizard.c:2543-2601 is PC or BOTH; there is no NPC-only field that can enter this player-target arm (R5e).
-src/act.wizard.c:2709	do_set	proven	set.invalid-binary-value	A real registered dispatch supplies a non-binary value and asserts C's exact validation bytes (R1/R2/R5e/R5h).
-src/act.wizard.c:2818	do_set	proven	set.invalid-sex	A real registered dispatch supplies an invalid sex value and asserts C's exact validation bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2709	do_set	proven	set.invalid-binary-value;set.binary-invalid-value	The real-dispatch unit assertion and targeted oracle transcript pin C's non-binary value refusal bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2818	do_set	proven	set.invalid-sex;set.sex-invalid-value	The real-dispatch unit assertion and targeted oracle transcript pin C's invalid sex refusal bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:2845	do_set	unreachable		The field table sets invis to LVL_IMPL at src/act.wizard.c:2568 and returns below-LVL_IMPL actors at 2688-2691, so the lower-level/non-self condition in this switch arm can never be true (R2/R4/R5e).
 src/act.wizard.c:2852	do_set	proven	set.nohassle.authority	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2859	do_set	proven	set.frozen.self	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:2881	do_set	proven	set.invalid-condition	A real registered dispatch supplies invalid condition text and asserts C's exact validation bytes (R1/R2/R5e/R5h).
-src/act.wizard.c:2899	do_set	proven	set.level-not-lower	A level-55 actor requests level 55; this exercises the refusal through registered dispatch (R1/R2/R5e/R5h).
-src/act.wizard.c:2907	do_set	proven	set.invalid-room	An Implementor supplies a nonexistent room number and reaches C's exact rejection (R1/R2/R5e/R5h).
-src/act.wizard.c:2936	do_set	proven	set.invalid-class	A real registered dispatch supplies an invalid class selector and asserts C's exact validation bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2881	do_set	proven	set.invalid-condition;set.condition-invalid-value	The real-dispatch unit assertion and targeted oracle transcript pin C's invalid condition refusal bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2899	do_set	proven	set.level-not-lower;set.level-at-or-above;set.level-at-or-above-control	Oracle and unit controls reach C's level refusal; the equal-level unit case also checks that target state is unchanged (R1/R2/R5e/R5h).
+src/act.wizard.c:2907	do_set	proven	set.invalid-room;set.room-invalid	The real-dispatch unit assertion and targeted oracle transcript pin C's missing-room rejection bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:2936	do_set	proven	set.invalid-class;set.class-invalid	The real-dispatch unit assertion and targeted oracle transcript pin C's invalid class refusal bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:2975	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2976	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2985	do_set	gap-blocked		persistence/save format: the offline set file password mutation path.
-src/act.wizard.c:3007	do_set	proven	set.invalid-race	A real registered dispatch supplies an invalid race selector and asserts C's exact validation bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:3007	do_set	proven	set.invalid-race;set.race-invalid	The real-dispatch unit assertion and targeted oracle transcript pin C's invalid race refusal bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:3061	do_set	proven	set.numeric-clamp;set.misc-field;set.binary-field	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3071	do_set	gap-blocked		persistence/save format: successful set file save acknowledgement.
 src/act.wizard.c:3089	do_syslog	proven	syslog.query-brief;syslog.query-normal-after-brief;syslog.query-complete;syslog.query-off-again	The cited manifest proof executes this C callsite (R1/R5e).

@@ -54,6 +54,34 @@ drain:
 	}
 }
 
+func TestStatPlayerPoofFieldsMatchImmortalGate(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	s.player.SetLevel(LVL_IMMORT)
+	s.player.PoofIn = "a swirl of arrival"
+	s.player.PoofOut = "a cloud of departure"
+
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
+	out := drainSessionOutput(t, s)
+	if want := "Poofin:a swirl of arrival\r\nPoofout:a cloud of departure\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("immortal stat poof fields missing: got %q, want substring %q", out, want)
+	}
+
+	s.player.PoofIn, s.player.PoofOut = "", ""
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
+	out = drainSessionOutput(t, s)
+	if want := "Poofin:None\r\nPoofout:None\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("immortal stat poof defaults missing: got %q, want substring %q", out, want)
+	}
+
+	s.player.SetLevel(LVL_IMMORT - 1)
+	s.sendStatPlayerReport(s.player, 1001, true, 0)
+	out = drainSessionOutput(t, s)
+	if strings.Contains(out, "Poofin:") || strings.Contains(out, "Poofout:") {
+		t.Fatalf("mortal stat report included immortal poof fields: %q", out)
+	}
+}
+
 func TestStatMobileEquipmentPoints(t *testing.T) {
 	w, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}}, Mobs: []parser.Mob{{VNum: 300, ShortDesc: "a guard", Keywords: "guard", AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11, Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 7}}}, Objs: []parser.Obj{{VNum: 200, TypeFlag: game.ITEM_ARMOR, Values: [4]int{10}, Affects: []parser.ObjAffect{{Location: 18, Modifier: 4}, {Location: 19, Modifier: 3}, {Location: 20, Modifier: -2}}}}})
 	if err != nil {
@@ -80,6 +108,76 @@ func TestStatMobileEquipmentPoints(t *testing.T) {
 	}
 	if !strings.Contains(text.String(), "AC: [70/10], Hitroll: [ 4], Damroll: [10], Saving throws: [-2/0/0/0/0]") {
 		t.Fatalf("stat did not read effective mobile equipment points: %s", text.String())
+	}
+}
+
+func TestStatMobNoiseColorAndHuntingMatchC(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room One"}},
+		Mobs: []parser.Mob{{
+			VNum: 300, ShortDesc: "a noisy guard", Keywords: "guard", Noise: "The guard rattles.",
+			AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11,
+			Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 1},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Alice", 1001, true)
+	mob, err := w.SpawnMob(300, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mob.SetHunting("Huntvictim")
+
+	s.player.SetPlrFlag(game.PrfColor2, true)
+	s.sendStatMob(mob)
+	out := drainSessionOutput(t, s)
+	if want := "Noise: \x1b[33mThe guard rattles.\x1b[0m\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("colored stat noise line = %q, want substring %q", out, want)
+	}
+	if want := "Hunting: Huntvictim\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("stat hunting line = %q, want substring %q", out, want)
+	}
+
+	s.player.SetPlrFlag(game.PrfColor2, false)
+	mob.SetHunting("")
+	s.sendStatMob(mob)
+	out = drainSessionOutput(t, s)
+	if want := "Noise: The guard rattles.\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("uncolored stat noise line = %q, want substring %q", out, want)
+	}
+	if strings.Contains(out, "\x1b[33m") || strings.Contains(out, "\x1b[0m") || strings.Contains(out, "Hunting:") {
+		t.Fatalf("stat report invented color or empty hunting output: %q", out)
+	}
+}
+
+func TestStatMobUsesPrototypeBareHandAttackType(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room One"}},
+		Mobs: []parser.Mob{{
+			VNum: 301, ShortDesc: "a whip guard", Keywords: "guard", BareHandAttack: 2,
+			AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11,
+			Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 1},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Alice", 1001, true)
+	mob, err := w.SpawnMob(301, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s.sendStatMob(mob)
+	out := drainSessionOutput(t, s)
+	if want := "Pos: Standing, Fighting: Nobody, Attack type: whip\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("stat attack type line = %q, want substring %q", out, want)
 	}
 }
 
