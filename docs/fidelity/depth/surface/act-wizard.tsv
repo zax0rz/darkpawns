@@ -108,8 +108,8 @@ src/act.wizard.c:924	do_stat_character	proven	stat.player-success;stat.mob-succe
 src/act.wizard.c:931	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:937	do_stat_character	proven	stat.mob-success	The valid-report warmup sets the live orc's HUNTING target to the wizard before `stat mob orc` (R1/R5e/R5h).
 src/act.wizard.c:945	do_stat_character	proven	stat.player-clan-report	The live enrolled PC reaches the nonzero clan-ID/rank gate and emits the clan name through registered `stat player` (R1/R2/R5e/R5h).
-src/act.wizard.c:956	do_stat_character	proven	stat.player-follower-wrap-boundaries	The live six-follower report crosses this intermediate C send with more linked followers remaining, preserving its comma and CRLF (R1/R2/R3/R5e/R5h).
-src/act.wizard.c:958	do_stat_character	proven	stat.player-follower-wrap-boundaries	The final long-name follower crosses this C send after the buffer resets; the report preserves its non-comma CRLF ending (R1/R2/R3/R5e/R5h).
+src/act.wizard.c:956	do_stat_character	proven	stat.player-follower-wrap-boundaries;stat.mob-follower-wrap-boundaries	Live six-follower PC and mobile reports cross this intermediate C send with more linked followers remaining, preserving its comma and CRLF (R1/R2/R3/R5e/R5h).
+src/act.wizard.c:958	do_stat_character	proven	stat.player-follower-wrap-boundaries;stat.mob-follower-wrap-boundaries	The final long-name follower in each live PC and mobile report crosses this C send after the buffer resets; each report preserves its non-comma CRLF ending (R1/R2/R3/R5e/R5h).
 src/act.wizard.c:964	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:969	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:989	do_stat_character	proven	stat.character-spell-affects	The registered stat peer report emits two active SPL rows after a live bless cast; the transcript includes exact modifier and bitvector bytes (R1/R2/R5e/R5h).

@@ -191,7 +191,7 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	if hunting := mob.GetHunting(); hunting != "" {
 		s.sendStatMobLine("Hunting: " + hunting)
 	}
-	s.sendStatMobLine("Master is: <none>, Followers are:")
+	s.Send(s.statFollowerListOutput(mob.GetFollowing(), mob.GetName(), true))
 	s.sendStatMobLine("AFF: " + wizardAffectFlags(mobEffectiveAffectBits(mob)))
 	s.sendStatAffectLines(mob.OrderedAffects())
 }
@@ -342,18 +342,10 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	}
 
 	master := ""
-	var followers []game.Actor
 	if connected {
 		master = p.GetFollowing()
-		if s.manager != nil && s.manager.world != nil {
-			followers = s.manager.world.GetFollowerActors(p.GetName())
-		}
 	}
-	followerNames := make([]string, 0, len(followers))
-	for _, follower := range followers {
-		followerNames = append(followerNames, game.PersName(follower, s.player))
-	}
-	s.Send(wizardFollowerListOutput(master, followerNames))
+	s.Send(s.statFollowerListOutput(master, p.GetName(), connected))
 	s.Send("AFF: " + wizardAffectFlags(playerEffectiveAffectBits(p)) + "\r\n")
 	// C affect_to_char/affect_to_char2 prepends to ch->affected (src/handler.c:391,415),
 	// whereas Go appends to p.ActiveAffects (pkg/game/player_affects.go:405).
@@ -362,6 +354,18 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 		ordered = append(ordered, p.ActiveAffects[i])
 	}
 	s.sendStatAffectLines(ordered)
+}
+
+func (s *Session) statFollowerListOutput(master, characterName string, connected bool) string {
+	var followers []game.Actor
+	if connected && s.manager != nil && s.manager.world != nil {
+		followers = s.manager.world.GetFollowerActors(characterName)
+	}
+	followerNames := make([]string, 0, len(followers))
+	for _, follower := range followers {
+		followerNames = append(followerNames, game.PersName(follower, s.player))
+	}
+	return wizardFollowerListOutput(master, followerNames)
 }
 
 func playerEffectiveAffectBits(p *game.Player) uint64 {

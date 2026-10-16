@@ -84,6 +84,38 @@ func TestStatPlayerClanAndFollowerReportUsesLiveRelationships(t *testing.T) {
 	}
 }
 
+func TestStatMobFollowerReportUsesLiveRelationships(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room One"}},
+		Mobs: []parser.Mob{{
+			VNum: 300, ShortDesc: "a guard", Keywords: "guard", AC: 100, THAC0: 20,
+			Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11,
+			Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 1},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Statgod", 1001, true)
+	mob, err := w.SpawnMob(300, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	follower := game.NewPlayer(2, "Follower", 1001)
+	follower.SetFollowing(mob.GetName())
+	if err := w.AddPlayer(follower); err != nil {
+		t.Fatal(err)
+	}
+
+	s.sendStatMob(mob)
+	out := drainSessionOutput(t, s)
+	if want := "Master is: <none>, Followers are: Follower\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("live stat mob follower output = %q, want substring %q", out, want)
+	}
+}
+
 func TestStatPlayerPoofFieldsMatchImmortalGate(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)

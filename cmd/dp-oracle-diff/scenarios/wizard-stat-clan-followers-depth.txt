@@ -1,11 +1,13 @@
-# Live do_stat_character report for a clan member whose six long-name player
-# followers cross both 62-byte follower-list send sites.
+# Live do_stat_character reports for a clan member and a mobile whose six
+# long-name player followers cross both 62-byte follower-list send sites.
 # depth-case: stat.player-clan-report
 # depth-case: stat.player-follower-wrap-boundaries
+# depth-case: stat.mob-follower-wrap-boundaries
 
 [fixture]
 empty-players
 quiet-mobs
+spawn-mob 2109 1 8162 80
 
 [setup:oracle]
 Wizardwrap
@@ -251,3 +253,10 @@ force FoxtrotFollowXX follow Clanmate
 
 [probe]
 stat player Clanmate
+force AlphaFollowerAA follow orc
+force BravoFollowerBB follow orc
+force CharlieFollower follow orc
+force DeltaFollowerXX follow orc
+force EchoFollowerXXX follow orc
+force FoxtrotFollowXX follow orc
+stat mob orc
