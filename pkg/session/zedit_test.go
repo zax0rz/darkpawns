@@ -73,6 +73,36 @@ func TestZeditRegistrationUsesCEntryGate(t *testing.T) {
 	}
 }
 
+// TestZeditNewZoneRequiresNumber pins src/olc.c:138 through the ZEDIT entry
+// handler. A high god's incomplete "new" request gets C's exact prompt.
+func TestZeditNewZoneRequiresNumber(t *testing.T) {
+	w := makeZeditTestWorld(t)
+	m := newTestManager(t, w, nil)
+	s := makeZeditTestSession(t, m, "Zeditimpl", game.LVL_IMPL)
+
+	if err := cmdZedit(s, []string{"new"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := readMsgText(t, s); got != "Specify a new zone number.\r\n" {
+		t.Fatalf("incomplete new-zone request = %q", got)
+	}
+}
+
+// TestZeditMissingRoomRefusal pins src/olc.c:243 for a room number inside a
+// real zone whose room record is absent.
+func TestZeditMissingRoomRefusal(t *testing.T) {
+	w := makeZeditTestWorld(t)
+	m := newTestManager(t, w, nil)
+	s := makeZeditTestSession(t, m, "Zeditimpl", game.LVL_IMPL)
+
+	if err := cmdZedit(s, []string{"3005"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := readMsgText(t, s); got != "That room does not exist.\r\n" {
+		t.Fatalf("missing-room refusal = %q", got)
+	}
+}
+
 func TestZeditEntryAndNoDirtyQuit(t *testing.T) {
 	w := makeZeditTestWorld(t)
 	m := newTestManager(t, w, nil)
