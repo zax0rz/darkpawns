@@ -198,10 +198,12 @@ func (w *World) npcTell(me *MobInstance, argument string) {
 // npcVisiblePlayer is get_char_vis for a mobile looking for a player to
 // tell: the room first, then the world, visible to the mobile.
 func (w *World) npcVisiblePlayer(me *MobInstance, name string) *Player {
-	for _, p := range w.GetPlayersInRoom(me.GetRoom()) {
-		if isnameWithAbbrevs(name, p.GetName()) && canSee(me, p) {
-			return p
-		}
+	// C get_char_vis() starts with get_char_room_vis(), which scans the
+	// combined room.people chain newest-first and lets the first visible
+	// abbreviation match win (handler.c:1276-1325). A matching mobile is
+	// still the winner; do_tell then rejects it when it has no descriptor.
+	if target, found := w.resolveCharInRoomAt(me, me.GetRoom(), name); found {
+		return target.Player
 	}
 	players := w.GetAllPlayers()
 	sort.Slice(players, func(i, j int) bool { return players[i].GetName() < players[j].GetName() })

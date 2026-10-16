@@ -139,6 +139,29 @@ func TestShopBuySuccessHasCTransactionAudiencesThroughDispatch(t *testing.T) {
 	}
 }
 
+func TestShopKeeperTellUsesCRoomOrderForAbbreviatedTargetThroughDispatch(t *testing.T) {
+	_, manager, _, _ := shopOutputFixture(t, 1)
+	buyer := addShopOutputSession(t, manager, "Buyer")
+	peer := addShopOutputSession(t, manager, "BuyerPeer")
+	buyer.player.SetGold(100)
+	buyer.player.Inventory.MaxWeight = 100
+	if buyer.player.GetRoomEntrySequence() >= peer.player.GetRoomEntrySequence() {
+		t.Fatal("test precondition: peer must be first in C's room.people order")
+	}
+	if err := ExecuteCommand(buyer, "buy", []string{"apple"}); err != nil {
+		t.Fatalf("buy dispatch: %v", err)
+	}
+	if got, want := renderedOutput(buyer), "You now have a red apple.\n\r"; got != want {
+		t.Fatalf("nonselected buyer output = %q, want %q", got, want)
+	}
+	if got, want := renderedOutput(peer), "Buyer buys a red apple.\r\nA merchant tells you, 'That'll be 10 coins, thanks.'\r\n"; got != want {
+		t.Fatalf("C abbreviation target output = %q, want %q", got, want)
+	}
+	if got := buyer.player.Inventory.GetItemCount(); got != 1 {
+		t.Fatalf("buyer inventory count = %d, want 1", got)
+	}
+}
+
 func TestShopSellSuccessHasCTransactionAudiencesThroughDispatch(t *testing.T) {
 	w, manager, keeper, shop := shopOutputFixture(t, 1)
 	seller := addShopOutputSession(t, manager, "Seller")

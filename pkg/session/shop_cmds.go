@@ -47,22 +47,23 @@ func findShopKeeperAndMobInRoom(s *Session) (*game.Shop, string, *game.MobInstan
 	return nil, "", nil
 }
 
-// shopKeeperTell formats the direct do_tell path used by shop.c. The C shop
-// strings begin with the buyer's name so do_tell can consume it as the target
-// argument; the player sees only the message body from the keeper.
-func shopKeeperTell(keeperName, message, playerName string, values ...any) string {
+// shopKeeperTellArgument builds the do_tell argument used by shop.c: the
+// formatted string begins with the buyer's name, which C resolves through
+// get_char_vis (handler.c:1276-1325).
+func shopKeeperTellArgument(message, playerName string, values ...any) string {
 	args := make([]any, 1, len(values)+1)
 	args[0] = playerName
 	args = append(args, values...)
-	formatted := fmt.Sprintf(message, args...)
-	formatted = strings.TrimPrefix(formatted, playerName)
-	formatted = strings.TrimSpace(formatted)
-	if keeperName == "" {
-		keeperName = "The shopkeeper"
-	} else {
-		keeperName = strings.ToUpper(keeperName[:1]) + keeperName[1:]
+	return fmt.Sprintf(message, args...)
+}
+
+func sendShopKeeperTell(s *Session, keeper *game.MobInstance, message, playerName string, values ...any) {
+	if s == nil || s.manager == nil || s.manager.world == nil || keeper == nil {
+		return
 	}
-	return fmt.Sprintf("%s tells you, '%s'\r\n", keeperName, formatted)
+	// shopping_buy/sell call do_tell(keeper, buf) at src/shop.c:580, 801;
+	// preserve its room-order target resolution and directed-speech side effects.
+	s.manager.world.NPCTellCommand(keeper, shopKeeperTellArgument(message, playerName, values...))
 }
 
 // shopTimesMessage mirrors shop.c:times_message for the one description and
@@ -100,7 +101,7 @@ const (
 	shopTradeNoWarrior
 )
 
-func shopIsOK(s *Session, shop *game.Shop, keeper game.Actor, keeperName string) bool {
+func shopIsOK(s *Session, shop *game.Shop, keeper *game.MobInstance, keeperName string) bool {
 	hours := game.TimeSnapshot().Hours
 	closedMessage := ""
 	if shop.OpenHour1 > hours {
@@ -133,7 +134,7 @@ func shopIsOK(s *Session, shop *game.Shop, keeper game.Actor, keeperName string)
 	if (s.player.IsGood() && trade&shopTradeNoGood != 0) ||
 		(s.player.IsEvil() && trade&shopTradeNoEvil != 0) ||
 		(s.player.IsNeutral() && trade&shopTradeNoNeutral != 0) {
-		s.Send(shopKeeperTell(keeperName, "%s Get out of here before I call the guards!", s.player.GetName()))
+		sendShopKeeperTell(s, keeper, "%s Get out of here before I call the guards!", s.player.GetName())
 		return false
 	}
 
@@ -141,7 +142,7 @@ func shopIsOK(s *Session, shop *game.Shop, keeper game.Actor, keeperName string)
 		(s.player.GetClass() == game.ClassCleric && trade&shopTradeNoCleric != 0) ||
 		(s.player.GetClass() == game.ClassThief && trade&shopTradeNoThief != 0) ||
 		(s.player.GetClass() == game.ClassWarrior && trade&shopTradeNoWarrior != 0) {
-		s.Send(shopKeeperTell(keeperName, "%s We don't serve your kind here!", s.player.GetName()))
+		sendShopKeeperTell(s, keeper, "%s We don't serve your kind here!", s.player.GetName())
 		return false
 	}
 	return true
@@ -291,7 +292,7 @@ func cmdList(s *Session, args []string) error {
 // cmdBuy buys an item from the shop.
 // Usage: buy <item> [count]
 func cmdBuy(s *Session, args []string) error {
-	shop, keeperName, keeper := findShopKeeperAndMobInRoom(s)
+	shop, _, keeper := findShopKeeperAndMobInRoom(s)
 	if shop == nil {
 		// No shop spec-proc → do_not_here fires first (act.other.c:208),
 		// before any argument parsing; see cmdList.
@@ -330,7 +331,7 @@ func cmdBuy(s *Session, args []string) error {
 	}
 
 	if matchedProto == nil {
-		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageNoSuchItem1], s.player.GetName()))
+		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageNoSuchItem1], s.player.GetName())
 		return nil
 	}
 
@@ -407,7 +408,7 @@ func cmdBuy(s *Session, args []string) error {
 		}
 		times := shopTimesMessage(matchedProto.ShortDesc, bought)
 		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n buys "+times+".", "", game.ToRoom)
-		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageBuy], s.player.GetName(), totalSpent))
+		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageBuy], s.player.GetName(), totalSpent)
 		s.Send("You now have " + times + ".\n\r")
 		s.markDirty(VarInventory)
 	}
@@ -454,7 +455,7 @@ func cmdSell(s *Session, args []string) error {
 	// Calculate sell price
 	price := shop.SellPrice(item.GetCost(), s.player.GetCha())
 	if !s.manager.world.TryPayShopSale(shop.VNum, keeper, price) {
-		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageMissingCash1], s.player.GetName()))
+		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageMissingCash1], s.player.GetName())
 		return nil
 	}
 
@@ -467,7 +468,7 @@ func cmdSell(s *Session, args []string) error {
 		s.manager.world.RebalanceShopBank(shop.VNum, keeper)
 		times := shopTimesMessage(item.GetShortDesc(), 1)
 		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n sells "+times+".", "", game.ToRoom)
-		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageSell], s.player.GetName(), price))
+		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageSell], s.player.GetName(), price)
 		s.Send("The shopkeeper now has " + times + ".\n\r")
 		s.markDirty(VarInventory)
 	} else {
@@ -515,14 +516,14 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string, keeper *game.Mob
 
 	if sold == 0 {
 		if unableToPay {
-			s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageMissingCash1], s.player.GetName()))
+			sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageMissingCash1], s.player.GetName())
 			return nil
 		}
 		s.Send("The shopkeeper doesn't want anything you have.")
 		return nil
 	}
 	if unableToPay {
-		s.Send(shopKeeperTell(keeperName, shop.Messages[game.ShopMessageMissingCash2], s.player.GetName()))
+		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageMissingCash2], s.player.GetName())
 	}
 	s.manager.world.RebalanceShopBank(shop.VNum, keeper)
 
