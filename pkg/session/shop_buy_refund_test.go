@@ -7,15 +7,10 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
-// Claude review on #1830: the atomic spend precedes the item hand-over in the
-// buy loop, so a failed AddItem must refund — otherwise a weight-rejected buy
-// eats the player's gold. Drop-gold already refunds on failure.
-//
-// The rejection must happen INSIDE AddItem (weight gate) with IsFull() false,
-// after the spend; and a control phase proves the buy path is live so the
-// test cannot pass vacuously (the first draft never placed the keeper in the
-// room and cmdBuy exited before touching gold at all).
-func TestCmdBuyRefundsWhenInventoryAddFails(t *testing.T) {
+// A successful transaction control followed by a capacity refusal proves the
+// buy dispatch leaves the already-carried item and purchase charge alone when
+// the C carry limit rejects a second object.
+func TestCmdBuyCapacityRefusalPreservesGold(t *testing.T) {
 	world, err := game.NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Shop Room", Zone: 1}},
 		Mobs: []parser.Mob{{
@@ -45,10 +40,11 @@ func TestCmdBuyRefundsWhenInventoryAddFails(t *testing.T) {
 	world.SetShopManager(sm)
 
 	s := makeTestSession(t, m, "Buyer", 1001, true)
+	setShopOutputTestAttributes(s.player)
 	s.player.SetGold(100)
 
-	// Control: with carry weight unenforced the buy must succeed and spend.
-	s.player.Inventory.MaxWeight = 0
+	// Control: the first buy fits the player's carry capacity and spends.
+	s.player.Inventory.MaxWeight = 1000
 	if err := cmdBuy(s, []string{"rock"}); err != nil {
 		t.Fatalf("cmdBuy control: %v", err)
 	}
@@ -56,8 +52,8 @@ func TestCmdBuyRefundsWhenInventoryAddFails(t *testing.T) {
 		t.Fatalf("control: gold = %d, want 90 — buy path not live (shop or keeper not found)", got)
 	}
 
-	// Rejection: cap carry weight below the already-carried rock; the count
-	// gate stays open, so AddItem itself fails after the spend.
+	// Rejection: the inventory hand-over fails after the payment attempt; the
+	// command refunds the charge and leaves the carried object unchanged.
 	s.player.Inventory.MaxWeight = 10
 	if err := cmdBuy(s, []string{"rock"}); err != nil {
 		t.Fatalf("cmdBuy rejection: %v", err)
@@ -94,16 +90,17 @@ func TestBuyRejectedAtWeightLeavesNoRegisteredObject(t *testing.T) {
 	world.SetShopManager(sm)
 
 	s := makeTestSession(t, m, "Buyer", 1001, true)
+	setShopOutputTestAttributes(s.player)
 	s.player.SetGold(100)
-	s.player.Inventory.MaxWeight = 10 // below one rock: AddItem fails after the spend
+	s.player.Inventory.MaxWeight = 10 // Force Inventory.AddItem to reject the hand-over.
 	before := len(world.GetAllObjects())
 	if err := cmdBuy(s, []string{"rock"}); err != nil {
 		t.Fatalf("cmdBuy: %v", err)
 	}
 	if got := s.player.GetGold(); got != 100 {
-		t.Fatalf("precondition: gold = %d, want 100 (the buy must have been rejected and refunded)", got)
+		t.Fatalf("gold after carry refusal = %d, want 100", got)
 	}
 	if after := len(world.GetAllObjects()); after != before {
-		t.Fatalf("registry grew from %d to %d after a rejected buy: the unsold rock stayed registered", before, after)
+		t.Fatalf("registry grew from %d to %d after a carry refusal", before, after)
 	}
 }

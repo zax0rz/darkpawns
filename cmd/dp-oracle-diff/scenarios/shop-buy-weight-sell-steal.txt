@@ -1,0 +1,91 @@
+# A disposable shop-keeper reset carries a boat so the buyer can exercise a
+# produced-item purchase, sell it back to a funded keeper, then accumulate
+# enough boat weight to hit shopping_buy's up-front weight refusal. The first
+# empty-player character is C's first-player God and bypasses purchase cost.
+# The connected peer witnesses buy/sell room acts and the keeper's slap social.
+# depth-case: shops.buy-weight-capacity
+# depth-case: shops.buy-success-audience
+# depth-case: shops.sell-success-audience
+# depth-case: shops.steal-keeper-response
+[fixture]
+empty-players
+quiet-zone 80
+quiet-zone 121
+spawn-mob 12106 1 12137 121
+give-object 12106 6 100000 121
+
+[setup:oracle]
+Shopoutput
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopoutput
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopoutputpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopoutputpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12137
+teleport Shopoutputpeer 12137
+
+[probe]
+look
+buy boat
+sell boat
+buy boat
+buy boat
+buy boat
+buy boat
+buy boat
+buy boat
+buy boat
+buy boat
+buy boat
+buy boat
+steal

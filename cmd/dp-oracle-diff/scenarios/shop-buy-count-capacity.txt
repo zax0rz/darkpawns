@@ -1,0 +1,111 @@
+# The first empty-player character is C's first-player God, so each one-coin
+# produced pepper purchase bypasses the gold check. Repeated successful buys
+# fill carry count; the final request must reach shopping_buy's early count
+# refusal. The peer proves every successful TO_ROOM act.
+# depth-case: shops.buy-count-capacity
+[fixture]
+empty-players
+quiet-zone 80
+
+[setup:oracle]
+Shopcount
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopcount
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopcountpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopcountpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12133
+teleport Shopcountpeer 12133
+
+[probe]
+list
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper
+buy pepper

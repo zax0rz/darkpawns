@@ -224,7 +224,9 @@ func TestShopBuyCreditsKeeperBankThroughDispatch(t *testing.T) {
 	w.SetShopManager(shops)
 	manager := newTestManager(t, w, nil)
 	buyer := makeCommandTestSession(t, manager, "Buyer", 1, 1001)
+	setShopOutputTestAttributes(buyer.player)
 	buyer.player.SetGold(1000)
+	buyer.player.Inventory.MaxWeight = 1000
 	price := shops.GetShopByVNum(77).BuyPrice(100, buyer.player.GetCha())
 	if err := ExecuteCommand(buyer, "buy", []string{"apple"}); err != nil {
 		t.Fatalf("real buy dispatch: %v", err)

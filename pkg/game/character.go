@@ -339,6 +339,12 @@ func BootstrapFirstPlayerGod(p *Player) {
 	// db.c:3016-3024 — the God stat block.
 	p.SetExp(7000000)
 	p.SetLevel(LVL_IMPL)
+	// C computes CAN_CARRY_N from GET_LEVEL on demand (utils.h:449). The Go
+	// inventory caches that limit, so refresh it after init_char crowns the
+	// first player; otherwise the first God retains the mortal creation limit.
+	if p.Inventory != nil {
+		p.Inventory.SetCapacity(p.GetStr(), p.GetStrAdd(), p.GetDex(), p.GetLevel())
+	}
 	// db.c:3014-3074: init_char() does not set PRF_AUTOEXIT for the first
 	// player; only the later do_start() path does that for mortals.
 	p.SetAutoExit(false)

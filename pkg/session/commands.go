@@ -969,7 +969,17 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 			if mob == nil || mob.HasMobFlag(game.MobFlagExtract) {
 				continue
 			}
-			if mobSpec := game.GetMobSpec(mob.VNum); mobSpec != nil {
+			mobSpec := game.GetMobSpec(mob.VNum)
+			// src/shop.c:1232-1243 assign_the_shopkeepers installs the native
+			// shop_keeper special for every keeper loaded from .shp data. The Go
+			// assignment table is static, so recover that C boot-time assignment
+			// from the world's shop index at this dispatch boundary.
+			if mobSpec == nil {
+				if _, isShopKeeper := w.GetShopByKeeper(mob.VNum); isShopKeeper {
+					mobSpec = game.GetSpec("shop_keeper")
+				}
+			}
+			if mobSpec != nil {
 				if mobSpec(w, s.player, mob, name, arg) {
 					return true
 				}

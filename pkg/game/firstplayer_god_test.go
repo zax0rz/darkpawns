@@ -30,6 +30,9 @@ func TestBootstrapFirstPlayerGod_StatsAndSkillsAndConditions(t *testing.T) {
 	if got := p.GetLevel(); got != LVL_IMPL {
 		t.Errorf("God level = %d, want %d (LVL_IMPL)", got, LVL_IMPL)
 	}
+	if got, want := p.Inventory.GetCapacity(), p.MaxCarryItems(); got != want {
+		t.Errorf("God carry capacity = %d, want C CAN_CARRY_N %d at level %d", got, want, p.GetLevel())
+	}
 	if got := p.GetExp(); got != 7000000 {
 		t.Errorf("God exp = %d, want 7000000", got)
 	}
