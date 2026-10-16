@@ -141,11 +141,11 @@ src/clan.c:1124	do_clan_ranks	proven	clan.ranks-refusal-gates	A rank-three clan 
 src/clan.c:1176	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
 src/clan.c:1180	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
 src/clan.c:1186	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1191	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1195	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1203	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1209	do_clan_titles	proven	clan.set-title	The named proof scenario executes this C output call.
-src/clan.c:1213	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1191	do_clan_titles	proven	clan.set-title-clan-number-nonnumeric	The live title command reaches C's nonnumeric clan-number refusal (R1/R2/R5e/R5h).
+src/clan.c:1195	do_clan_titles	proven	clan.set-title-clan-number-range	The live title command reaches C's missing-clan-number refusal for an out-of-range index (R1/R2/R5e/R5h).
+src/clan.c:1203	do_clan_titles	proven	clan.set-title-rank-nonnumeric	The live title command reaches C's nonnumeric rank refusal (R1/R2/R5e/R5h).
+src/clan.c:1209	do_clan_titles	proven	clan.set-title;clan.set-title-rank-range	The named success proof and out-of-range rank case execute this C output call (R1/R2/R5e/R5h).
+src/clan.c:1213	do_clan_titles	proven	clan.set-title-too-long	The live title command reaches C's >19-byte title-length refusal (R1/R2/R5e/R5h).
 src/clan.c:1218	do_clan_titles	proven	clan.set-title	The named proof scenario executes this C output call.
 src/clan.c:1231	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
 src/clan.c:1236	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.

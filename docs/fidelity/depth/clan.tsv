@@ -12,6 +12,11 @@ do_clan	clan	clan.set-money	D2	state	oracle-green	clan-depth	clan.c:988-1057	App
 do_clan	clan	clan.set-applev	D2	state	oracle-green	clan-depth	clan.c:1272-1329	Application-level validation and update path match.
 do_clan	clan	clan.set-ranks	D4	state	oracle-green	clan-depth	clan.c:1060-1162	Immortal clan/rank parsing and hierarchy update path match.
 do_clan	clan	clan.set-title	D4	state	oracle-green	clan-depth	clan.c:1164-1220	Index/rank/title validation and exact Done path match.
+do_clan	clan	clan.set-title-clan-number-nonnumeric	D1	command	oracle-green	clan-depth	clan.c:1188-1192	A nonnumeric clan index reaches the title handler's C-specific number prompt (R1/R2/R5e/R5h).
+do_clan	clan	clan.set-title-clan-number-range	D1	command	oracle-green	clan-depth	clan.c:1194-1196	An out-of-range clan index reaches the missing clan-number refusal (R1/R2/R5e/R5h).
+do_clan	clan	clan.set-title-rank-nonnumeric	D1	command	oracle-green	clan-depth	clan.c:1200-1204	A nonnumeric rank reaches C's rank-number prompt (R1/R2/R5e/R5h).
+do_clan	clan	clan.set-title-rank-range	D1	command	oracle-green	clan-depth	clan.c:1206-1210	A rank beyond the configured three ranks reaches C's rank-range refusal (R1/R2/R5e/R5h).
+do_clan	clan	clan.set-title-too-long	D1	command	oracle-green	clan-depth	clan.c:1212-1214	A 20-byte replacement title reaches C's maximum-title-length refusal (R1/R2/R5e/R5h).
 do_clan	clan	clan.set-privilege	D2	state	oracle-green	clan-depth	src/clan.c:1331-1361; src/clan.c:1442-1495	The scenario reaches the immortal helper's failed-clan lookup and the ordered privilege list through the actual do_clan_set dispatch.
 do_clan	clan	clan.create-success	D4	state	oracle-green	clan-depth	clan.c:156-236	Live creation assigns the leader, defaults ranks/privileges, and emits C bytes.
 do_clan	clan	clan.create-leader-gate	D1	command	oracle-green	clan-depth	clan.c:180-184	Missing leader remains the first reachable creation refusal.
