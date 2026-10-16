@@ -1,4 +1,4 @@
-# depth-case: use.effect
+# depth-case: use.staff-tap-output
 # Paired CAST_STAFF vehicle for mag_objectmagic (src/spell_parser.c:585-609,
 # 785-817). 8054 is the one-charge sleep staff with level 12 and spell 38;
 # the God holds it and uses it once on a room containing a mortal peer. The
