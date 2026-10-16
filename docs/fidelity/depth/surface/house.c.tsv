@@ -1,0 +1,42 @@
+c_site	function	classification	case_ids	notes
+src/house.c:209	House_listrent	unreachable		Only the definition and header declaration exist in src/; there is no C caller that can reach the no-file message (R2/R4/R5e).
+src/house.c:227	House_listrent	unreachable		Only the definition and header declaration exist in src/; there is no C caller that can reach the object listing send (R2/R4/R5e).
+src/house.c:339	hcontrol_list_houses	proven	hcontrol.show-empty	The registered hcontrol show path emits the empty-house response.
+src/house.c:381	hcontrol_list_houses	proven	hcontrol.show-defined;hcontrol.show-paid	Defined and post-payment listings reach the populated-list send.
+src/house.c:394	hcontrol_build_house	gap-reachable		A control table at MAX_HOUSES reaches the capacity refusal; no capacity proof exists.
+src/house.c:401	hcontrol_build_house	proven	hcontrol.build-usage	A build command without arguments reaches this shared usage output.
+src/house.c:406	hcontrol_build_house	gap-reachable		A vnum with no matching room reaches this refusal; the nonnumeric vnum proof resolves room zero and takes the later missing-exit branch.
+src/house.c:410	hcontrol_build_house	proven	hcontrol.build-duplicate	A second build of the same house reaches the duplicate refusal.
+src/house.c:417	hcontrol_build_house	gap-reachable		A valid house vnum with no exit-direction argument reaches this shared usage output; existing proof omits this parser position.
+src/house.c:422	hcontrol_build_house	proven	hcontrol.build-invalid-direction	The build scenario reaches the invalid-direction refusal.
+src/house.c:428	hcontrol_build_house	proven	hcontrol.build-invalid-vnum	C atoi maps the nonnumeric vnum to room zero; that room has no east exit, so the probe reaches this branch.
+src/house.c:436	hcontrol_build_house	gap-reachable		A one-way exit reaches the two-way-door refusal; existing build probes use a valid reciprocal exit or fail earlier.
+src/house.c:443	hcontrol_build_house	gap-reachable		A valid room and reciprocal exit with no owner argument reaches this shared usage output; existing proof supplies an owner token.
+src/house.c:448	hcontrol_build_house	proven	hcontrol.build-unknown-owner	An unknown owner name reaches the exact C refusal.
+src/house.c:469	hcontrol_build_house	proven	hcontrol.build-success	The registered build scenario reaches the success message after creating a valid house.
+src/house.c:482	hcontrol_set_key	proven	hcontrol.key-usage	A key subcommand without a house vnum reaches this shared usage output.
+src/house.c:489	hcontrol_set_key	proven	hcontrol.key-unknown-house	An absent house vnum reaches the key-control refusal.
+src/house.c:496	hcontrol_set_key	gap-reachable		A known house vnum without a key vnum reaches this shared usage output; existing key probes supply the second token.
+src/house.c:504	hcontrol_set_key	gap-reachable		A key vnum absent from the world reaches the missing-object refusal; existing invalid-vnum probe maps atoi to object zero, which exists.
+src/house.c:510	hcontrol_set_key	proven	hcontrol.key-invalid-vnum;hcontrol.key-success	The existing object-zero atoi case and the ordinary key case both reach the success send.
+src/house.c:521	hcontrol_destroy_house	proven	hcontrol.destroy-usage	A destroy subcommand without a vnum reaches the shared usage output.
+src/house.c:525	hcontrol_destroy_house	proven	hcontrol.destroy-unknown-house	An absent house vnum reaches the destroy refusal.
+src/house.c:546	hcontrol_destroy_house	proven	hcontrol.destroy-success	The destroy scenario removes the house and emits the success message.
+src/house.c:565	hcontrol_pay_house	proven	hcontrol.pay-usage	A pay subcommand without a vnum reaches the shared usage output.
+src/house.c:567	hcontrol_pay_house	proven	hcontrol.pay-unknown-house;hcontrol.pay-invalid-vnum	An absent numeric house and C atoi's nonnumeric-to-zero case reach the unknown-house refusal.
+src/house.c:574	hcontrol_pay_house	proven	hcontrol.pay-success	The payment scenario records the timestamp and emits the confirmation.
+src/house.c:597	do_hcontrol	proven	hcontrol.usage;hcontrol.unknown-subcommand	Both a bare command and unknown subcommand reach this default usage send.
+src/house.c:612	do_house	proven	house.entry-gate	The registered house command outside a ROOM_HOUSE reaches this refusal before control lookup.
+src/house.c:617	do_house	proven	house.malformed-control	A house room without a matching control record reaches the corruption diagnostic.
+src/house.c:622	do_house	proven	house.owner-gate-after-transfer	The former owner reaches the owner-only refusal after the successful transfer.
+src/house.c:630	do_house	proven	house.usage	A bare house command reaches the two-line usage output.
+src/house.c:647	do_house	proven	house.guest-list-empty;house.guest-list	Both empty and populated guest listings reach the header send.
+src/house.c:649	do_house	proven	house.guest-list-empty	An owner with no guest entries receives the None line.
+src/house.c:654	do_house	proven	house.guest-list	A populated guest list reaches the title-cased guest-name send.
+src/house.c:658	do_house	proven	house.guest-not-found	An unknown guest reaches the exact no-such-player refusal.
+src/house.c:668	do_house	proven	house.guest-delete	Repeating an existing guest removes it and emits Guest deleted.
+src/house.c:673	do_house	proven	house.guest-cap	A full guest array reaches the capacity refusal.
+src/house.c:679	do_house	proven	house.guest-add	A valid guest name is stored and reaches Guest added.
+src/house.c:686	do_house	proven	house.transfer-usage	A transfer subcommand without a target reaches the target prompt.
+src/house.c:691	do_house	proven	house.transfer-not-found	An unknown transfer target reaches the exact no-such-player refusal.
+src/house.c:697	do_house	proven	house.transfer-success	A valid target changes the owner and emits C's intentional transfered spelling.
