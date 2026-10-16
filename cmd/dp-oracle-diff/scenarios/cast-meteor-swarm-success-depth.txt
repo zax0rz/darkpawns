@@ -1,0 +1,73 @@
+# An immortal room witness is skipped by the AoE damage loop but receives the
+# C TO_ROOM act; the census also checks that the preceding damage draw matches.
+# depth-case: spell.meteor-swarm-success-audience
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Mirror
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mirror
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mirrorpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mirrorpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mirrorpeer 8105
+set Mirrorpeer level 31
+
+[probe]
+cast 'meteor swarm'

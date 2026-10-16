@@ -2832,6 +2832,14 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 // castMeteorSwarm ports src/spells.c spell_meteor_swarm (lines 1088-1133).
 // AoE damage to all non-grouped characters in room. Must be outdoors.
 func castMeteorSwarm(level int, ch, world interface{}) {
+	// C src/spells.c:1094 consumes this damage draw before the peaceful and
+	// outdoor refusal gates.
+	// #nosec G404 -- game RNG, not cryptographic
+	dam := level*6 + dprng.Number(-10, level*3)
+	if dam < 1 {
+		dam = 1
+	}
+
 	w, ok := world.(worldAoe)
 	if !ok {
 		sendToCaster(ch, "The magic fizzles.\r\n")
@@ -2857,14 +2865,15 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 		return
 	}
 
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	dam := level*6 + dprng.Number(-10, level*3)
-	if dam < 1 {
-		dam = 1
-	}
-
 	sendToCaster(ch, "Your incantation brings the heavens down upon your victims!\r\n")
+	const roomAct = "As $n finishes $s incantation, bright lights from the heavens streak downward towards you."
+	type roomActer interface {
+		SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
+	}
+	if acter, ok := world.(roomActer); ok {
+		// C src/spells.c:1110 uses act(..., TRUE, ..., TO_ROOM).
+		acter.SpellActToRoom(ch, nil, roomAct, true)
+	}
 
 	// Damage all non-grouped, non-immort, non-caster chars in room
 	casterName := ""

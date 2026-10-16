@@ -11,13 +11,27 @@ import (
 // mockAreaWorld satisfies worldAoe (affect_spells.go) for castHellfire /
 // castMeteorSwarm regression tests.
 type mockAreaWorld struct {
-	room  *parser.Room
-	chars []interface{}
+	room     *parser.Room
+	chars    []interface{}
+	roomActs []struct {
+		actor         interface{}
+		format        string
+		hideInvisible bool
+	}
 	calls []struct {
 		Attacker, Victim interface{}
 		Dam              int
 		Skill            string
 	}
+}
+
+func (w *mockAreaWorld) SpellActToRoom(actor, _ interface{}, format string, hideInvisible bool) bool {
+	w.roomActs = append(w.roomActs, struct {
+		actor         interface{}
+		format        string
+		hideInvisible bool
+	}{actor: actor, format: format, hideInvisible: hideInvisible})
+	return true
 }
 
 func (w *mockAreaWorld) GetAllCharsInRoom(roomVNum int) []interface{} { return w.chars }
@@ -116,6 +130,21 @@ func TestCastMeteorSwarm_DealsAreaDamage_SkipsImmortalsAndGroup(t *testing.T) {
 	}
 	if ally.hp != 500 {
 		t.Errorf("expected grouped ally to be skipped by meteor swarm, got %d HP left", ally.hp)
+	}
+}
+
+func TestCastMeteorSwarmOutputAndRoomAudience(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 30, roomVNum: 8105}
+	world := &mockAreaWorld{room: &parser.Room{}, chars: []interface{}{caster}}
+
+	castMeteorSwarm(caster.level, caster, world)
+
+	if got, want := strings.Join(caster.messages, ""), "Your incantation brings the heavens down upon your victims!\r\n"; got != want {
+		t.Fatalf("meteor swarm caster output = %q, want exact C bytes %q", got, want)
+	}
+	const format = "As $n finishes $s incantation, bright lights from the heavens streak downward towards you."
+	if len(world.roomActs) != 1 || world.roomActs[0].actor != caster || world.roomActs[0].format != format || !world.roomActs[0].hideInvisible {
+		t.Fatalf("meteor swarm room act = %+v, want one C-compatible TO_ROOM act", world.roomActs)
 	}
 }
 
