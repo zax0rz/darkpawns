@@ -1304,7 +1304,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellCreateWater:
 		castCreateWater(level, ch, ovict)
 	case SpellIdentify:
-		castIdentify(level, ch, cvict, ovict)
+		castIdentify(level, ch, cvict, ovict, world)
 	case SpellSilkenMissile:
 		castSilkenMissile(level, ch, ovict, world)
 	case SpellWordOfRecall:
@@ -2280,11 +2280,11 @@ func setDrinkconName(ovict interface{}, liquidKeyword string) {
 
 // castIdentify — reveals item stats or PC stats.
 // C source: spells.c:476-621. Simplified Go implementation.
-func castIdentify(level int, ch, cvict, ovict interface{}) {
+func castIdentify(level int, ch, cvict, ovict, world interface{}) {
 	if ovict != nil {
 		castIdentifyObject(level, ch, ovict)
 	} else if cvict != nil {
-		castIdentifyCharacter(level, ch, cvict)
+		castIdentifyCharacter(level, ch, cvict, world)
 	}
 }
 
@@ -2487,25 +2487,42 @@ func pluralS(n int) string {
 	return "s"
 }
 
-func castIdentifyCharacter(level int, ch, cvict interface{}) {
+func castIdentifyCharacter(level int, ch, cvict, world interface{}) {
 	_ = level
-	type namer interface{ GetName() string }
 	type lever interface{ GetLevel() int }
-	type stater interface {
+	type npcChecker interface{ IsNPC() bool }
+	type identifyReport interface {
+		GetName() string
+		GetAgeParts() (int, int, int, int)
+		GetHeight() int
+		GetWeight() int
+		GetLevel() int
 		GetHP() int
-		GetMaxHP() int
 		GetMana() int
-	}
-	type hper interface {
+		GetAC() int
 		GetHitroll() int
 		GetDamroll() int
-		GetAC() int
+		GetStr() int
+		GetStrAdd() int
+		GetInt() int
+		GetWis() int
+		GetDex() int
+		GetCon() int
+		GetCha() int
 	}
-	type npcChecker interface{ IsNPC() bool }
 
 	// C: identify on NPCs fails and aggros
 	if nc, ok := cvict.(npcChecker); ok && nc.IsNPC() {
 		sendToCaster(ch, "The magicks fail horribly!\r\n")
+		if attacker, ok := cvict.(combat.Combatant); ok {
+			if defender, ok := ch.(combat.Combatant); ok {
+				if hitter, ok := world.(interface {
+					MobFirstHit(combat.Combatant, combat.Combatant)
+				}); ok {
+					hitter.MobFirstHit(attacker, defender)
+				}
+			}
+		}
 		return
 	}
 
@@ -2517,59 +2534,22 @@ func castIdentifyCharacter(level int, ch, cvict interface{}) {
 		}
 	}
 
-	sendToCaster(ch, "You feel informed:\r\n")
-
-	if n, ok := cvict.(namer); ok {
-		sendToCaster(ch, fmt.Sprintf("Name: %s\r\n", n.GetName()))
-	}
-	if l, ok := cvict.(lever); ok {
-		sendToCaster(ch, fmt.Sprintf("Level: %d\r\n", l.GetLevel()))
-	}
-	if s, ok := cvict.(stater); ok {
-		sendToCaster(ch, fmt.Sprintf("Hits: %d/%d, Mana: %d\r\n", s.GetHP(), s.GetMaxHP(), s.GetMana()))
-	}
-	if h, ok := cvict.(hper); ok {
-		sendToCaster(ch, fmt.Sprintf("AC: %d, Hitroll: %d, Damroll: %d\r\n", h.GetAC(), h.GetHitroll(), h.GetDamroll()))
-	}
-
-	// Full stat line
-	type strGetter interface {
-		GetStr() int
-		GetStrAdd() int
-	}
-	type intGetter interface{ GetInt() int }
-	type wisGetter interface{ GetWis() int }
-	type dexGetter interface{ GetDex() int }
-	type conGetter interface{ GetCon() int }
-	type chaGetter interface{ GetCha() int }
-
-	if sg, ok := cvict.(strGetter); ok {
-		str, strAdd := sg.GetStr(), sg.GetStrAdd()
-		var strStr string
-		if str == 18 && strAdd > 0 {
-			strStr = fmt.Sprintf("%d/%d", str, strAdd)
-		} else {
-			strStr = fmt.Sprintf("%d", str)
+	if report, ok := cvict.(identifyReport); ok {
+		sendToCaster(ch, "You feel informed:\r\n")
+		sendToCaster(ch, fmt.Sprintf("Name: %s\r\n", report.GetName()))
+		years, months, days, hours := report.GetAgeParts()
+		sendToCaster(ch, fmt.Sprintf("%s is %d years, %d months, %d days and %d hours old.\r\n", report.GetName(), years, months, days, hours))
+		sendToCaster(ch, fmt.Sprintf("Height %d cm, Weight %d pounds\r\n", report.GetHeight(), report.GetWeight()))
+		sendToCaster(ch, fmt.Sprintf("Level: %d, Hits: %d, Mana: %d\r\n", report.GetLevel(), report.GetHP(), report.GetMana()))
+		sendToCaster(ch, fmt.Sprintf("AC: %d, Hitroll: %d, Damroll: %d\r\n", report.GetAC(), report.GetHitroll(), report.GetDamroll()))
+		sendToCaster(ch, fmt.Sprintf("Str: %d/%d, Int: %d, Wis: %d, Dex: %d, Con: %d, Cha: %d\r\n", report.GetStr(), report.GetStrAdd(), report.GetInt(), report.GetWis(), report.GetDex(), report.GetCon(), report.GetCha()))
+	} else {
+		// Real C player characters expose every GET_* field above. Keep an
+		// explicit fallback for external test or integration character values.
+		if name, ok := cvict.(interface{ GetName() string }); ok {
+			sendToCaster(ch, "You feel informed:\r\n")
+			sendToCaster(ch, fmt.Sprintf("Name: %s\r\n", name.GetName()))
 		}
-		line := fmt.Sprintf("Str: %s", strStr)
-
-		if ig, ok := cvict.(intGetter); ok {
-			line += fmt.Sprintf(", Int: %d", ig.GetInt())
-		}
-		if wg, ok := cvict.(wisGetter); ok {
-			line += fmt.Sprintf(", Wis: %d", wg.GetWis())
-		}
-		if dg, ok := cvict.(dexGetter); ok {
-			line += fmt.Sprintf(", Dex: %d", dg.GetDex())
-		}
-		if cg, ok := cvict.(conGetter); ok {
-			line += fmt.Sprintf(", Con: %d", cg.GetCon())
-		}
-		if chg, ok := cvict.(chaGetter); ok {
-			line += fmt.Sprintf(", Cha: %d", chg.GetCha())
-		}
-		line += "\r\n"
-		sendToCaster(ch, line)
 	}
 }
 

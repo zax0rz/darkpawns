@@ -176,6 +176,29 @@ func (p *Player) GetMana() int {
 	return p.Mana
 }
 
+// GetHeight returns the player's height in centimeters.
+func (p *Player) GetHeight() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Height
+}
+
+// GetWeight returns the player's stored weight value, as exposed by C GET_WEIGHT.
+func (p *Player) GetWeight() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.Weight
+}
+
+// GetAgeParts returns the current MUD age components used by spell_identify.
+func (p *Player) GetAgeParts() (years, months, days, hours int) {
+	p.mu.RLock()
+	birth := p.Birth
+	p.mu.RUnlock()
+	age := Age(birth)
+	return age.Year, age.Month, age.Day, age.Hours
+}
+
 // SetMana sets the player's current mana.
 func (p *Player) SetMana(v int) {
 	p.mu.Lock()

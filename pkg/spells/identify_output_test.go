@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -103,5 +104,97 @@ func TestCastIdentifyLowLevelCharacterRefusal(t *testing.T) {
 	const want = "You cannot identify them yet.\r\n"
 	if got := strings.Join(caster.messages, ""); got != want {
 		t.Fatalf("identify refusal output = %q, want exactly %q", got, want)
+	}
+}
+
+type identifyReportTarget struct {
+	mockSpellsChar
+	str, strAdd, intStat, wis, dex, con, cha   int
+	ac, hitroll, damroll, mana, height, weight int
+	age                                        [4]int
+}
+
+func (p *identifyReportTarget) GetAgeParts() (int, int, int, int) {
+	return p.age[0], p.age[1], p.age[2], p.age[3]
+}
+func (p *identifyReportTarget) GetHeight() int  { return p.height }
+func (p *identifyReportTarget) GetWeight() int  { return p.weight }
+func (p *identifyReportTarget) GetMana() int    { return p.mana }
+func (p *identifyReportTarget) GetAC() int      { return p.ac }
+func (p *identifyReportTarget) GetHitroll() int { return p.hitroll }
+func (p *identifyReportTarget) GetDamroll() int { return p.damroll }
+func (p *identifyReportTarget) GetStr() int     { return p.str }
+func (p *identifyReportTarget) GetStrAdd() int  { return p.strAdd }
+func (p *identifyReportTarget) GetInt() int     { return p.intStat }
+func (p *identifyReportTarget) GetWis() int     { return p.wis }
+func (p *identifyReportTarget) GetDex() int     { return p.dex }
+func (p *identifyReportTarget) GetCon() int     { return p.con }
+func (p *identifyReportTarget) GetCha() int     { return p.cha }
+
+func TestCastIdentifyCharacterReportMatchesCBytes(t *testing.T) {
+	caster := &mockSpellsChar{name: "Identifier", level: 30}
+	target := &identifyReportTarget{
+		mockSpellsChar: mockSpellsChar{name: "Target", level: 12, hp: 87},
+		str:            18,
+		strAdd:         42,
+		intStat:        13,
+		wis:            14,
+		dex:            15,
+		con:            16,
+		cha:            17,
+		ac:             -4,
+		hitroll:        6,
+		damroll:        8,
+		mana:           99,
+		height:         177,
+		weight:         143,
+		age:            [4]int{19, 2, 3, 4},
+	}
+
+	ExecuteManualSpell(SpellIdentify, caster.level, caster, target, nil, "", nil)
+
+	const want = "You feel informed:\r\n" +
+		"Name: Target\r\n" +
+		"Target is 19 years, 2 months, 3 days and 4 hours old.\r\n" +
+		"Height 177 cm, Weight 143 pounds\r\n" +
+		"Level: 12, Hits: 87, Mana: 99\r\n" +
+		"AC: -4, Hitroll: 6, Damroll: 8\r\n" +
+		"Str: 18/42, Int: 13, Wis: 14, Dex: 15, Con: 16, Cha: 17\r\n"
+	if got := strings.Join(caster.messages, ""); got != want {
+		t.Fatalf("identify character report = %q, want exact C bytes %q", got, want)
+	}
+}
+
+type identifyCombatant struct {
+	combat.Combatant
+	char *mockSpellsChar
+}
+
+func (c *identifyCombatant) GetName() string        { return c.char.GetName() }
+func (c *identifyCombatant) IsNPC() bool            { return c.char.IsNPC() }
+func (c *identifyCombatant) SendMessage(msg string) { c.char.SendMessage(msg) }
+
+type identifyHitSpy struct {
+	attacker combat.Combatant
+	defender combat.Combatant
+}
+
+func (s *identifyHitSpy) MobFirstHit(attacker, defender combat.Combatant) {
+	s.attacker = attacker
+	s.defender = defender
+}
+
+func TestCastIdentifyNPCRefusalMakesCOpeningHit(t *testing.T) {
+	caster := &identifyCombatant{char: &mockSpellsChar{name: "Identifier", level: 30}}
+	target := &identifyCombatant{char: &mockSpellsChar{name: "Test", level: 27, npc: true}}
+	world := &identifyHitSpy{}
+
+	ExecuteManualSpell(SpellIdentify, 30, caster, target, nil, "", world)
+
+	if got := strings.Join(caster.char.messages, ""); got != "The magicks fail horribly!\r\n" {
+		t.Fatalf("NPC refusal output = %q, want exact C bytes", got)
+	}
+	if world.attacker != target || world.defender != caster {
+		t.Fatalf("opening hit = (%T, %T), want victim as attacker and caster as defender", world.attacker, world.defender)
 	}
 }

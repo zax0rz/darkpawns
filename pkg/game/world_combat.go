@@ -18,6 +18,12 @@ func (w *World) StartCombat(attacker, defender combat.Combatant) error {
 	return w.combatEngine.StartCombat(attacker, defender)
 }
 
+// MobFirstHit exposes the world's canonical seam for C hit(mob, victim, ...)
+// calls that immediately resolve the NPC's opening attack.
+func (w *World) MobFirstHit(attacker, defender combat.Combatant) {
+	w.mobFirstHit(attacker, defender)
+}
+
 // mobFirstHit ports a C mobile's hit() call: hit() consumes its to-hit and
 // damage draws, damage()'s protection block runs against the pre-enrolment
 // state, and both sides enrol at the damage point only when the damage is

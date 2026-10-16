@@ -1,0 +1,76 @@
+# depth-case: spell.identify-character-report
+# depth-case: spell.identify-npc-refusal
+# The character arm reaches the complete player report and then the NPC
+# failure path through the registered cast command. C's NPC branch immediately
+# calls hit(victim, caster, TYPE_UNDEFINED), so the mobile's opening swing is
+# part of the same probe.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Identifyadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Identifyadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Identifytarget
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Identifytarget
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Identifytarget 8162
+set Identifytarget level 6
+
+[probe]
+cast 'identify' Identifytarget
+load mob 3
+cast 'identify' test
