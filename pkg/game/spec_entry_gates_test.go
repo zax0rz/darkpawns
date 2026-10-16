@@ -115,12 +115,11 @@ func TestCityguardBribeRefusalSwings(t *testing.T) {
 			t.Fatalf("AddPlayer: %v", err)
 		}
 
-		// The bribe arm draws number(0,2) first; pin a seed where it refuses
-		// (roll != 0) and the swing then misses.
+		// C refuses when number(0,2) is zero; pin that draw and a missed swing.
 		var seed uint32
 		for s := uint32(1); s < 8192; s++ {
 			dprng.ResetStream(s)
-			if dprng.Number(0, 2) == 0 {
+			if dprng.Number(0, 2) != 0 {
 				continue
 			}
 			dprng.ResetStream(s)

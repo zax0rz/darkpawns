@@ -1,0 +1,98 @@
+# depth-case: give.gold-mob-bribe-dispatch
+# depth-case: mob.mp-bribe-dog-coin
+# depth-case: mob.mp-bribe-janitor-coin
+# depth-case: mob.mp-bribe-mercenary-hire
+# depth-case: mob.mp-bribe-mercenary-decline
+# depth-case: mob.mp-bribe-cell-refund
+# depth-case: mob.mp-bribe-citizen-bow
+# depth-case: mob.mp-bribe-whore-service
+# depth-case: mob.mp-bribe-whore-refusal
+# C path: do_give -> perform_give_gold (act.item.c:733-763) -> mp_bribe
+# (mobprog.c:173-279). This stays in one room so the probe compares the
+# direct command output, direct sends, and all bystander acts for each branch.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8063 1 8059 80
+spawn-mob 8061 1 8059 80
+clear-mob-flag 8061 RANDZON
+spawn-mob 3063 1 8059 27
+spawn-mob 8088 1 8059 80
+spawn-mob 2749 1 8059 27
+spawn-mob 8023 1 8059 80
+clear-mob-flag 8023 RANDZON
+replace-room-exits 8059 none
+
+[setup:oracle]
+BribeRoomProbe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BribeRoomProbe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BribeRoomPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BribeRoomPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8059
+teleport BribeRoomPeer 8059
+set BribeRoomProbe gold 5000
+set BribeRoomProbe level 10
+
+[probe]
+give 7 coins warg
+give 7 coins janitor
+give 50 coins mercenary
+give 100 coins mercenary
+give 100 coins mercenary
+give 50 coins jailguard
+give 7 coins citizen
+give 5 coins prostitute
+give 4 coins prostitute

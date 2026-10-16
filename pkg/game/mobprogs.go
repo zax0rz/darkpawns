@@ -22,9 +22,10 @@ var mobProgNumber = dprng.Number
 // IS_* checks from mobprog.h
 // ---------------------------------------------------------------------------
 
-func isDog(mob *MobInstance) bool     { v := mob.GetVNum(); return v == 8063 || v == 8065 }
-func isJanitor(mob *MobInstance) bool { return mob.GetVNum() == 8061 }
-func isDemon(mob *MobInstance) bool   { return mob.GetVNum() == 14401 }
+func isDog(mob *MobInstance) bool       { v := mob.GetVNum(); return v == 8063 || v == 8065 }
+func isJanitor(mob *MobInstance) bool   { return mob.GetVNum() == 8061 }
+func isDemon(mob *MobInstance) bool     { return mob.GetVNum() == 14401 }
+func isMercenary(mob *MobInstance) bool { return mob.GetVNum() == 3063 }
 
 func isWhore(mob *MobInstance) bool {
 	specName, ok := MobSpecAssign[mob.GetVNum()]
@@ -132,54 +133,82 @@ func combatActor(actor Actor) combat.Combatant {
 // ---------------------------------------------------------------------------
 
 func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
-	if mob == nil {
+	if mob == nil || ch == nil {
 		return
 	}
 	vnum := mob.GetVNum()
 
 	switch {
-	case vnum == 8088:
-		w.roomMessage(mob.GetRoom(), "$n says, 'Now get outta here!'")
-		ch.SendMessage("$N throws you out of the cell!\r\n")
-		ch.Gold -= amount
-		if ch.Gold < 0 {
-			ch.Gold = 0
+	case isDog(mob):
+		Act(w, true, mob, nil, nil, nil, "$n sniffs the coins and proceeds to eat them.", "", ToRoom)
+		mob.SetGold(mob.GetGold() - amount)
+
+	case isJanitor(mob):
+		Act(w, true, mob, nil, nil, nil, "$n tips his hat and smiles a thank you.", "", ToRoom)
+
+	case isMercenary(mob):
+		if amount > 99 && mob.GetFollowing() == "" {
+			mob.SetAffected(affCharm)
+			mob.SetGold(mob.GetGold() - amount)
+			ch.SendMessage("The mercenary counts the coins then secrets them away.\r\n")
+			ch.SendMessage("The mercenary swears his allegiance to you.\r\n")
+			AddFollowerMob(w, mob, ch)
+			Act(w, false, ch, mob, nil, nil, "$n hires the mercenary.", "", ToRoom)
+		} else {
+			Act(w, true, mob, nil, nil, nil, "$n laughs somewhat rudely.", "", ToRoom)
 		}
-		w.MovePlayerToRoom(ch, 8117)
-		if mount := w.GetMount(ch); mount != nil {
-			w.MovePlayerToRoom(mount, 8117)
+
+	case vnum == 8088:
+		if amount < ch.GetLevel()*ch.GetLevel() {
+			Act(w, true, mob, nil, nil, nil, "$n says, 'Are you trying to bribe me?  That's against the law you\r\nknow...'\r\n", "", ToRoom)
+			Act(w, true, mob, nil, nil, nil, "$n says, 'And not quite enough cash, either.'\r\n", "", ToRoom)
+			Act(w, true, mob, nil, nil, nil, "$n grins evilly.", "", ToRoom)
+			mob.SetGold(mob.GetGold() - amount)
+			ch.AddGold(amount)
+		} else {
+			Act(w, true, mob, nil, nil, nil, "$n says, 'Thank you very much, monsieur.'\r\n", "", ToRoom)
+			Act(w, true, mob, nil, nil, nil, "$n says, 'Now get outta here!'\r\n", "", ToRoom)
+			Act(w, true, ch, mob, nil, nil, "$N throws you out of the cell!", "", ToChar)
+			Act(w, true, mob, ch, nil, nil, "$n throws $N out of the cell!", "", ToNotVict)
+			mob.SetGold(mob.GetGold() - amount)
+			w.MovePlayerToRoom(ch, 8117)
+			if mount := w.GetMount(ch); mount != nil {
+				w.MovePlayerToRoom(mount, 8117)
+			}
 		}
 
 	case w.isCityguard(mob):
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		if dprng.Number(0, 2) != 0 || amount < 200 {
-			w.roomMessage(mob.GetRoom(), "$n says, 'Are you trying to bribe me?  That's against the law you know...'")
+		if dprng.Number(0, 2) == 0 || amount < 200 {
+			Act(w, true, mob, nil, nil, nil, "$n says, 'Are you trying to bribe me?  That's against the law you know...'", "", ToRoom)
 			// C: hit(mob, ch, TYPE_UNDEFINED) after the refusal act
 			// (mobprog.c:220-226) — draws, then damage()'s gates, then
 			// enrolment.
 			w.mobFirstHit(mob, ch)
 		} else {
-			w.roomMessage(mob.GetRoom(), "$n glances around warily and says, 'I am off duty now...'")
-			w.roomMessage(mob.GetRoom(), "$n lays down and falls asleep on the job!")
+			Act(w, true, mob, nil, nil, nil, "$n glances around warily and says, 'I am off duty now...'", "", ToRoom)
+			Act(w, true, mob, nil, nil, nil, "$n lays down and falls asleep on the job!", "", ToRoom)
 			mob.SetStatus("sleeping")
-			ch.Gold -= amount
-			if ch.Gold < 0 {
-				ch.Gold = 0
-			}
+			mob.SetGold(mob.GetGold() - amount)
 		}
 
 	case w.isCitizen(mob):
-		w.roomMessage(mob.GetRoom(), "$n says, 'Thanks for the investment, I appreciate it.'")
-		w.roomMessage(mob.GetRoom(), "$n bows graciously.")
+		Act(w, true, mob, nil, nil, nil, "$n says, 'Thanks for the investment, I appreciate it.'", "", ToRoom)
+		doMobAction(w, mob, ch, "bow")
 
 	case isWhore(mob):
-		ch.SendMessage("$n pulls you into the shadows, and gives you a lot more than you\r\nexpected for your money.\r\n")
-		ch.SendMessage("A few coins lighter and quite a bit happier, you continue on your way.\r\n")
+		if amount >= 5 {
+			Act(w, true, mob, ch, nil, nil, "$n pulls $N into the shadows for a few minutes... you decide not to watch.", "", ToNotVict)
+			Act(w, true, mob, ch, nil, nil, "$n pulls you into the shadows, and gives you a lot more than you\r\nexpected for your money.", "", ToVict)
+			ch.SendMessage("A few coins lighter and quite a bit happier, you continue on your way.\r\n")
+		} else {
+			Act(w, true, mob, nil, nil, nil, "$n says, 'Thanks hon, but I ain't THAT cheap.'", "", ToRoom)
+		}
 
 	case vnum == 13108:
 		if amount >= 1000 {
-			w.roomMessage(mob.GetRoom(), "$n leads $N through a hidden door.")
+			Act(w, true, mob, ch, nil, nil, "$n leads $N through a hidden door.", "", ToNotVict)
 			w.MovePlayerToRoom(ch, 13154)
 			if mount := w.GetMount(ch); mount != nil {
 				w.MovePlayerToRoom(mount, 13154)
@@ -187,8 +216,9 @@ func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
 			ch.SendMessage("  You follow the gremlin through a series of tunnels, full of twists, turns,\r\nand circles. Slowly you become aware of a tiny crack of light coming through\r\nthe top of the cavern. Suddenly the gremlin turns around and hurries away\r\nbefore you can even turn around.\r\n\r\n")
 			w.LookAtRoom(ch, false)
 		} else {
-			w.roomMessage(mob.GetRoom(), "$n exclaims, 'Cheap bastard, come back with some money!'")
-			w.roomMessage(mob.GetRoom(), "$n kicks $N out on $S ass!")
+			Act(w, true, mob, nil, nil, nil, "$n exclaims, 'Cheap bastard, come back with some money!'", "", ToRoom)
+			Act(w, true, mob, ch, nil, nil, "$N gets kicked out on $S ass!'", "", ToNotVict)
+			Act(w, true, mob, ch, nil, nil, "$n kicks you out on your ass!\r\n", "", ToVict)
 			w.MovePlayerToRoom(ch, 13193)
 			w.LookAtRoom(ch, false)
 		}
@@ -295,18 +325,18 @@ func (w *World) EntryProg(mob *MobInstance, room int) {
 		switch {
 		case w.isCityguard(tch):
 			if tch.GetPosition() < PosStanding {
-				w.roomMessage(room, "$n barks 'On your feet, slacker!'")
-				w.roomMessage(room, "$n wakes up and quickly snaps to attention!")
-				w.roomMessage(room, "$n growls, 'Report to my office at 0500 tomorrow morning.'")
+				Act(w, true, mob, nil, nil, nil, "$n barks 'On your feet, slacker!'", "", ToRoom)
+				Act(w, true, tch, nil, nil, nil, "$n wakes up and quickly snaps to attention!", "", ToRoom)
+				Act(w, true, mob, nil, nil, nil, "$n growls, 'Report to my office at 0500 tomorrow morning.'", "", ToRoom)
 				tch.SetStatus("standing")
 			} else {
-				w.roomMessage(room, "$n snaps to attention and salutes!")
-				w.roomMessage(room, "$n growls, 'At ease, soldier.'")
+				Act(w, true, tch, nil, nil, nil, "$n snaps to attention and salutes!", "", ToRoom)
+				Act(w, true, mob, nil, nil, nil, "$n growls, 'At ease, soldier.'", "", ToRoom)
 			}
 			return
 		case w.isCitizen(tch):
-			w.roomMessage(room, "$n frowns at $N.")
-			w.roomMessage(room, "$n says, 'Hail unto the True One, Captain.'")
+			Act(w, true, mob, tch, nil, nil, "$n frowns at $N.", "", ToRoom)
+			Act(w, true, tch, nil, nil, nil, "$n says, 'Hail unto the True One, Captain.'", "", ToRoom)
 			return
 		}
 	}

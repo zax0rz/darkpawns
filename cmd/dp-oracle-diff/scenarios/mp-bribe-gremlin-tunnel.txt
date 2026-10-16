@@ -1,0 +1,75 @@
+# depth-case: give.gold-mob-bribe-dispatch
+# depth-case: mob.mp-bribe-gremlin-tunnel
+# A sufficient offer reaches the gremlin's hidden-door act and direct tunnel
+# send before the player is transferred to room 13154.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 13108 1 8059 131
+replace-room-exits 8059 none
+
+[setup:oracle]
+BribeTunnelProbe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BribeTunnelProbe
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+BribeTunnelPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+BribeTunnelPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8059
+teleport BribeTunnelPeer 8059
+set BribeTunnelProbe gold 2000
+set BribeTunnelProbe level 10
+
+[probe]
+give 1000 coins gremlin
