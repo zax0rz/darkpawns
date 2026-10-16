@@ -1,0 +1,69 @@
+# Force-load a disposable open belt pouch and move eight bread resets into it to cross both
+# C do_stat_object 62-byte contents-row sends through the live stat command.
+# depth-case: stat.object-contents-wrap-census
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8006 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+force-load 8006
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+
+[setup:oracle]
+Wizardobjwrap
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardobjwrap
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+color normal
+open beltpouch
+get bread
+put bread beltpouch
+get bread
+put bread beltpouch
+get bread
+put bread beltpouch
+get bread
+put bread beltpouch
+get bread
+put bread beltpouch
+get bread
+put bread beltpouch
+get bread
+put bread beltpouch
+get bread
+put bread beltpouch
+
+[probe]
+stat object beltpouch

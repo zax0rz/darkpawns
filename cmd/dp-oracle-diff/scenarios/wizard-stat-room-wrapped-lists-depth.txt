@@ -1,0 +1,60 @@
+# Force both C 62-byte list boundaries in do_stat_room with disposable resets.
+# depth-case: stat.room-character-list-wrap-census
+# depth-case: stat.room-contents-wrap-census
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-mob 2109 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+spawn-obj 8010 99 8162 80
+
+[setup:oracle]
+Wizardwrap
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardwrap
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+color normal
+
+[probe]
+stat room
