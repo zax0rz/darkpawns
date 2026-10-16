@@ -1,0 +1,62 @@
+# depth-case: mob.npc-guard-obeys-and-follows-unguarded-direction
+# depth-case: mob.npc-guard-blocks-its-own-direction
+# A bought horse is a charmed NPC follower. C's special() offers each of the
+# pet's steps and each ordered command to every room special
+# (src/interpreter.c:1407-1476). SPECIAL(no_move_south) (src/spec_procs2.c:2092-2111)
+# is the cleanest both-halves vehicle: a mortal, non-hunting body moving south is
+# refused with the guard's three lines, and every other command or direction
+# returns FALSE, so the horse obeys an order and follows north. The primary is an
+# immortal, so C's GET_LEVEL(ch) >= LVL_IMMORT gate lets the leader walk south
+# alone while the horse stays behind. Reported in play by Egon (2026-10-16):
+# horses "don't follow" and order "doesn't seem to work either, at least not
+# consistently". Revert control: dropping the no_move_south actor registration
+# fails this scenario, because the horse then follows south (R1/R5c/R5h).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+spawn-mob 16308 1 8105 163
+
+[setup:oracle]
+GuardBlock
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GuardBlock
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set GuardBlock gold 1000
+
+[probe]
+buy horse
+order horse emote neighs
+order followers say hello
+south
+look
+north
+look
+north
+look

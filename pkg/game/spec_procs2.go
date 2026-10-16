@@ -1949,18 +1949,44 @@ func specBat(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool
 }
 
 // ================================================================
-// no_move_east — Blocks movement east
+// no_move_* — Blocks movement in one direction
 // ================================================================
-func specNoMoveEast(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+
+// noMoveGuardLegacy is the player lane of the C SPECIAL(no_move_*) bodies
+// (src/spec_procs2.c:1823-1842 east, :2033-2052 west, :2054-2073 north,
+// :2092-2111 south): `if (!cmd || mini_mud || !IS_MOVE(cmd) || !AWAKE(mobile))
+// return FALSE ;`, then `if (GET_LEVEL(ch) >= LVL_IMMORT || HUNTING(ch)) return
+// FALSE;`, then the directional arm. The immortal, hunting and awake gates are
+// part of the C body: an immortal or hunting leader, or a sleeping guard, walks
+// past. specNoMove*Actor carries the same body for a mobile actor.
+func noMoveGuardLegacy(w *World, ch *Player, me *MobInstance, cmd string, spec noMoveGuardSpec) bool {
+	if w == nil || ch == nil || me == nil || cmd == "" || !isMoveCmd(cmd) || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
-	if cmd == "east" {
-		Act(w, false, me, ch, nil, nil, "$n humiliates $N, and blocks $S way.", "", ToNotVict)
-		Act(w, false, me, ch, nil, nil, "$n humiliates you and blocks your way.", "", ToVict)
-		return true
+	if ch.GetLevel() >= LVL_IMMORT || w.IsHunting(ch.GetName(), false) {
+		return false
 	}
-	return false
+	if cmd != spec.direction || ch.GetLevel() >= LVL_IMMORT { // C's directional arm repeats the level guard with LEVEL_IMMORT.
+		return false
+	}
+	Act(w, false, me, ch, nil, nil, spec.blockToNotVict, "", ToNotVict)
+	Act(w, false, me, ch, nil, nil, spec.blockToVict, "", ToVict)
+	if spec.roomLine != "" {
+		Act(w, false, me, nil, nil, nil, spec.roomLine, "", ToRoom)
+	}
+	return true
+}
+
+// no_move_east — Blocks movement east
+func specNoMoveEast(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if ch == nil || ch.IsNPC() {
+		return false
+	}
+	return noMoveGuardLegacy(w, ch, me, cmd, noMoveGuardSpec{
+		direction:      "east",
+		blockToNotVict: "$n humiliates $N, and blocks $S way.",
+		blockToVict:    "$n humiliates you and blocks your way.",
+	})
 }
 
 // ================================================================
@@ -2148,29 +2174,29 @@ func specTeleporter(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 // specNoMoveWest — Blocks movement west
 // ================================================================
 func specNoMoveWest(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil || ch.IsNPC() {
 		return false
 	}
-	if cmd == "west" {
-		Act(w, false, me, ch, nil, nil, "$n humiliates $N, and blocks $S way.", "", ToNotVict)
-		Act(w, false, me, ch, nil, nil, "$n humiliates you and blocks your way.", "", ToVict)
-		return true
-	}
-	return false
+	return noMoveGuardLegacy(w, ch, me, cmd, noMoveGuardSpec{
+		direction:      "west",
+		blockToNotVict: "$n humiliates $N, and blocks $S way.",
+		blockToVict:    "$n humiliates you and blocks your way.",
+	})
 }
 
 // ================================================================
 // specNoMoveNorth — Blocks movement north
 // ================================================================
 func specNoMoveNorth(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil || ch.IsNPC() {
 		return false
 	}
-	if cmd == "north" {
-		ch.SendMessage("You try to go north but are blocked by a heavy object.\r\n")
-		return true
-	}
-	return false
+	return noMoveGuardLegacy(w, ch, me, cmd, noMoveGuardSpec{
+		direction:      "north",
+		blockToNotVict: "$n blocks $N's way.",
+		blockToVict:    "$n blocks your way.",
+		roomLine:       "$n says 'I cannot let you pass.'",
+	})
 }
 
 // ================================================================
@@ -2194,16 +2220,15 @@ func specNeverDie(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 // specNoMoveSouth — Blocks movement south
 // ================================================================
 func specNoMoveSouth(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if ch == nil || ch.IsNPC() {
 		return false
 	}
-	if cmd == "south" {
-		Act(w, false, me, ch, nil, nil, "$n blocks $N's way.", "", ToNotVict)
-		Act(w, false, me, ch, nil, nil, "$n blocks your way.", "", ToVict)
-		Act(w, false, me, nil, nil, nil, "$n says 'Thou shalt not pass.'", "", ToRoom)
-		return true
-	}
-	return false
+	return noMoveGuardLegacy(w, ch, me, cmd, noMoveGuardSpec{
+		direction:      "south",
+		blockToNotVict: "$n blocks $N's way.",
+		blockToVict:    "$n blocks your way.",
+		roomLine:       "$n says 'Thou shalt not pass.'",
+	})
 }
 
 // ================================================================
