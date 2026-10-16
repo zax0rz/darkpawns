@@ -64,7 +64,7 @@ src/act.wizard.c:508	do_stat_room	proven	stat.room-success	The cited manifest pr
 src/act.wizard.c:525	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:533	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:535	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:544	do_stat_object	gap-reachable		Object extra-description output; the bread fixture has no extra descriptions.
+src/act.wizard.c:544	do_stat_object	proven	stat.object-extra-description-census	A live room reset spawns prototype 8007 with the ring/wedding-band extra-description; the registered stat object report emits the exact C keyword list (R1/R2/R5e/R5h).
 src/act.wizard.c:546	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:549	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:551	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).

@@ -1,0 +1,42 @@
+# Isolate the object extra-description output through the registered stat command.
+# Object 8007 has the ring wedding band extra-description in indexed 80.obj.
+# depth-case: stat.object-extra-description-census
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8007 1 8162 80
+
+[setup:oracle]
+Wizardobject
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardobject
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+stat object ring
