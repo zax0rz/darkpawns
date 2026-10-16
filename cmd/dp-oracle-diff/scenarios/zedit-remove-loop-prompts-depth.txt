@@ -1,0 +1,57 @@
+# C-first ZEDIT R/L command prompts through the registered do_olc path.
+# Appends both R selectors and a loop-start command from the same live editor.
+# depth-case: zedit.remove-loop-prompts
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zeditbounds
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zeditbounds
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+
+[probe]
+zedit
+n
+0
+R
+1
+1
+n
+1
+R
+n
+0
+1
+n
+2
+L
+n
+0

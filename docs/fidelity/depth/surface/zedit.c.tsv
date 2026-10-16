@@ -9,15 +9,15 @@ src/zedit.c:740	zedit_disp_arg1	proven	zedit.object-load-prompts	TestZeditObject
 src/zedit.c:776	zedit_disp_arg2	proven	zedit.command-type-and-if-flag;zedit.object-load-prompts	Both the M and O real-parser paths assert the exact maximum-count prompt.
 src/zedit.c:781	zedit_disp_arg2	proven	zedit.new-at-end	The D path emits the complete direction list; the boundary scenario compares it before selecting the terminal direction.
 src/zedit.c:784	zedit_disp_arg2	proven	zedit.new-at-end	The D path emits the exit-number prompt in the boundary scenario.
-src/zedit.c:787	zedit_disp_arg2	gap-reachable	-	No existing proof selects R to reach the mobile/object selector.
-src/zedit.c:790	zedit_disp_arg2	gap-reachable	-	No existing proof selects L to reach the loop start/finish selector.
+src/zedit.c:787	zedit_disp_arg2	proven	zedit.remove-loop-prompts	The real command parser selects R for both mobile and object removals and captures the selector bytes (R1/R2/R5e/R5h).
+src/zedit.c:790	zedit_disp_arg2	proven	zedit.remove-loop-prompts	The real command parser selects L and captures the loop start/finish selector bytes (R1/R2/R5e/R5h).
 src/zedit.c:815	zedit_disp_arg3	gap-reachable	-	No existing proof selects E to emit the equipment-location choices.
 src/zedit.c:821	zedit_disp_arg3	gap-reachable	-	No existing proof selects E to emit the equipment-location prompt.
 src/zedit.c:824	zedit_disp_arg3	gap-reachable	-	No existing proof selects P to reach the container VNUM prompt.
 src/zedit.c:827	zedit_disp_arg3	proven	zedit.new-at-end	The D path emits the three door-state choices and prompt in the boundary scenario.
-src/zedit.c:834	zedit_disp_arg3	gap-reachable	-	No existing proof selects L loop start to emit the repeat-count prompt.
-src/zedit.c:840	zedit_disp_arg3	gap-reachable	-	No existing proof selects R object-removal mode to emit this prompt.
-src/zedit.c:842	zedit_disp_arg3	gap-reachable	-	No existing proof selects R mobile-removal mode to emit this prompt.
+src/zedit.c:834	zedit_disp_arg3	proven	zedit.remove-loop-prompts	The live L loop-start path emits the repeat-count prompt after selecting 0 (R1/R2/R5e/R5h).
+src/zedit.c:840	zedit_disp_arg3	proven	zedit.remove-loop-prompts	The live R object-removal path emits the object VNUM prompt after selecting 1 (R1/R2/R5e/R5h).
+src/zedit.c:842	zedit_disp_arg3	proven	zedit.remove-loop-prompts	The live R mobile-removal path emits the mobile VNUM prompt after selecting 0 (R1/R2/R5e/R5h).
 src/zedit.c:874	zedit_parse	proven	zedit.command-type-and-if-flag	TestZeditStaleCarryAndCommandSave asserts the exact in-memory save acknowledgement after Y.
 src/zedit.c:886	zedit_parse	proven	zedit.confirm-save	The boundary scenario changes zone state, quits, enters an invalid confirmation, and compares this refusal.
 src/zedit.c:887	zedit_parse	proven	zedit.confirm-save	The same invalid confirmation reaches and compares the repeated save prompt.
