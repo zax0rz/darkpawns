@@ -79,8 +79,8 @@ src/act.wizard.c:660	do_stat_object	gap-reachable		Long object-contents final ro
 src/act.wizard.c:666	do_stat_object	proven	stat.object-contents-census	The reset oak chest emits the final contents row with the C comma and space sequence (R1/R2/R5e/R5h).
 src/act.wizard.c:667	do_stat_object	proven	stat.object-contents-census	The contents report emits C's color-level reset after the final row (R1/R2/R5e/R5h).
 src/act.wizard.c:670	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:676	do_stat_object	gap-reachable		Object modifier-affect output; the bread fixture has no non-spell object affects.
-src/act.wizard.c:682	do_stat_object	gap-reachable		Object permanent-spell affect output; the bread fixture has no permanent spell affects.
+src/act.wizard.c:676	do_stat_object	proven	stat.object-affect-output	The morion object report emits the C APPLY_MANA_REGEN name and modifier in exact byte order (R1/R2/R5e/R5h).
+src/act.wizard.c:682	do_stat_object	proven	stat.object-affect-output	The morion object report emits C's INFRA and SNEAK permanent-spell labels in exact byte order (R1/R2/R5e/R5h).
 src/act.wizard.c:685	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:687	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:720	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).

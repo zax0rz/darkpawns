@@ -1,0 +1,43 @@
+# The object has ordinary APPLY_* records and APPLY_SPELL records. C prints
+# all modifiers first and permanent spell names second.
+# depth-case: stat.object-affect-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 14533 1 8162 80
+force-load 14533
+
+[setup:oracle]
+Wizardaffect
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardaffect
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+stat object morion
