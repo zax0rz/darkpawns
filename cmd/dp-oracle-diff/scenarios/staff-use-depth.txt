@@ -86,3 +86,4 @@ hold staff
 [probe]
 use staff
 ~dpclock pulse 20
+use staff
