@@ -141,6 +141,34 @@ func (w *World) AddFollowerQuiet(ch, leader interface{}) {
 	}
 }
 
+// AddFollowerForSpell applies add_follower's link and audience messages for a
+// manual spell target. C spell_charm calls the noisy add_follower, so using the
+// quiet helpers here drops its target, leader, and room notices.
+func (w *World) AddFollowerForSpell(follower, leader interface{}) bool {
+	followerBody := combatantFromInterface(follower)
+	leaderBody := combatantFromInterface(leader)
+	if followerBody == nil || leaderBody == nil {
+		return false
+	}
+
+	switch ch := followerBody.(type) {
+	case *Player:
+		leaderActor := asActor(leaderBody)
+		ch.SetFollowingBody(leaderBody)
+		Act(w, false, ch, leaderActor, nil, nil, "You now follow $N.", "", ToChar)
+		if leaderActor != nil && canSee(leaderActor, ch) && leaderActor.GetPosition() > combat.PosSleeping {
+			Act(w, true, ch, leaderActor, nil, nil, "$n starts following you.", "", ToVict)
+		}
+		Act(w, true, ch, leaderActor, nil, nil, "$n starts to follow $N.", "", ToNotVict)
+		return true
+	case *MobInstance:
+		addFollowerMobToBody(w, ch, leaderBody)
+		return true
+	default:
+		return false
+	}
+}
+
 // StopFollowerByName removes a named character from following via string lookup.
 func (w *World) StopFollowerByName(name string) {
 	if p, ok := w.players[name]; ok {

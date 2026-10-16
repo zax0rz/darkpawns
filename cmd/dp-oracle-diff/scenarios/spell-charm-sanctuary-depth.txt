@@ -1,0 +1,43 @@
+# depth-case: spell.charm.sanctuary-refusal
+# Real cast dispatch reaches spell_charm's AFF_SANCTUARY gate before the
+# no-charm flag, save roll, follower limit, or outlaw check.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-aff 16303 128
+
+[setup:oracle]
+Sanctgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sanctgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+cast 'charm' trainee

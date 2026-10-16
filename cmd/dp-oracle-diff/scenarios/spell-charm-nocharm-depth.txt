@@ -1,0 +1,42 @@
+# depth-case: spell.charm.nocharm-mob-refusal
+# Real cast dispatch reaches C's MOB_NOCHARM bit-13 gate before the saving
+# throw. The target is otherwise an eligible low-level NPC.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 7049 1 8105 70
+
+[setup:oracle]
+Charmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Charmgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+cast 'charm' jasper

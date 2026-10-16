@@ -25,6 +25,9 @@ var magAffectsSaveRoll = magSavingThrow
 // magSummonSaveRoll keeps summon save branches deterministic in focused tests.
 var magSummonSaveRoll = magSavingThrow
 
+// magCharmSaveRoll keeps charm's C saving-throw branch deterministic in focused tests.
+var magCharmSaveRoll = magSavingThrow
+
 func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world interface{}) {
 	magAffectsForCast(level, ch, victim, spellNum, savetype, CastSpell, world)
 }
@@ -2950,9 +2953,9 @@ func castHellfire(level int, ch, world interface{}) {
 	}
 }
 
-// castCharm ports src/spells.c spell_charm (lines 407-476).
-// Charms a mob to follow the caster. Checks: MOB_NOCHARM, level, circle follow,
-// saving throw, max followers (CHA/2), PC-victims blocked.
+// castCharm ports src/spells.c spell_charm (lines 407-471), including C's
+// sanctuary, no-charm, existing-charm, shopkeeper, circle, save, follower-cap,
+// outlaw, and successful act branches.
 func castCharm(level int, ch, cvict, world interface{}) {
 	if cvict == nil || ch == nil {
 		return
@@ -2972,7 +2975,9 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		victName = n.GetName()
 	}
 
-	if chName == victName {
+	// C compares character pointers here; equal display names do not make two
+	// distinct bodies a self-target.
+	if ch == cvict {
 		sendToCaster(ch, "You like yourself even better!\r\n")
 		return
 	}
@@ -2981,20 +2986,38 @@ func castCharm(level int, ch, cvict, world interface{}) {
 	if nc, ok := cvict.(npcCheck); ok {
 		victIsNPC = nc.IsNPC()
 	}
+	type affectChecker interface{ IsAffected(bit int) bool }
+	if affected, ok := cvict.(affectChecker); ok && affected.IsAffected(affSanctuaryBit) {
+		sendToCaster(ch, "Your victim is protected by sanctuary!\r\n")
+		return
+	}
 
-	// MOB_NOCHARM check on mob victim
-	if victIsNPC {
-		type mobFlagger interface{ HasMobFlag(flag uint64) bool }
-		if mf, ok := cvict.(mobFlagger); ok && mf.HasMobFlag(1<<4) {
-			sendToCaster(ch, "Your victim resists!\r\n")
-			return
-		}
+	// src/structs.h:260 defines MOB_NOCHARM at bit 13. Use the C bit-position
+	// mask from GetMobFlags, as MOB_FLAGGED does in the oracle.
+	if victIsNPC && hasSummonMobFlag(cvict, mobNoCharmBit) {
+		sendToCaster(ch, "Your victim resists!\r\n")
+		return
+	}
+	if affected, ok := ch.(affectChecker); ok && affected.IsAffected(affCharmBit) {
+		sendToCaster(ch, "You can't have any followers of your own!\r\n")
+		return
+	}
+	if affected, ok := cvict.(affectChecker); ok && affected.IsAffected(affCharmBit) {
+		sendToCaster(ch, "You fail.\r\n")
+		return
 	}
 
 	// Level check
 	if victL, ok := cvict.(lever); ok {
 		if level < victL.GetLevel() {
 			sendToCaster(ch, "You fail.\r\n")
+			return
+		}
+	}
+	if victIsNPC {
+		type shopKeeperChecker interface{ IsSpellCharmShopkeeper(victim interface{}) bool }
+		if checker, ok := world.(shopKeeperChecker); ok && checker.IsSpellCharmShopkeeper(cvict) {
+			sendToCaster(ch, "Ha ha... Don't think so.\r\n")
 			return
 		}
 	}
@@ -3010,16 +3033,28 @@ func castCharm(level int, ch, cvict, world interface{}) {
 	// C spell_charm checks the victim's saving throw for both NPCs and PCs
 	// (spells.c:430-444). A PC victim is only gated by the caster's outlaw flag;
 	// an outlaw can establish the same master relation that do_hit later tests.
-	if magSavingThrow(cvict, int(SaveParalysis)) {
+	if magCharmSaveRoll(cvict, int(SaveParalysis)) {
 		sendToCaster(ch, "Your victim resists!\r\n")
+		// C: spells.c:430-433 — a resisting NPC immediately attacks the caster.
+		if victIsNPC {
+			if attacker, ok := cvict.(combat.Combatant); ok {
+				if defender, ok := ch.(combat.Combatant); ok {
+					if hitter, ok := world.(interface {
+						MobFirstHit(combat.Combatant, combat.Combatant)
+					}); ok {
+						hitter.MobFirstHit(attacker, defender)
+					}
+				}
+			}
+		}
 		return
 	}
 
 	// Max followers check (CHA/2)
 	if fw, ok := world.(followerWorld); ok {
 		chCha := 10
-		if ci, ok := ch.(intGetter); ok {
-			chCha = ci.GetInt()
+		if ci, ok := ch.(interface{ GetCha() int }); ok {
+			chCha = ci.GetCha()
 		}
 		if fw.NumFollowers(chName) >= chCha/2 {
 			sendToCaster(ch, "You can't have any more followers!\r\n")
@@ -3039,7 +3074,13 @@ func castCharm(level int, ch, cvict, world interface{}) {
 	// Stop victim's current following, add as our follower
 	if fw, ok := world.(followerWorld); ok {
 		fw.StopFollowerByName(victName)
-		fw.AddFollowerQuiet(cvict, ch)
+	}
+	if adder, ok := world.(interface {
+		AddFollowerForSpell(follower, leader interface{}) bool
+	}); !ok || !adder.AddFollowerForSpell(cvict, ch) {
+		if fw, ok := world.(followerWorld); ok {
+			fw.AddFollowerQuiet(cvict, ch)
+		}
 	}
 
 	// C source: spells.c:448-464 — apply AFF_CHARM affect with duration
@@ -3065,7 +3106,12 @@ func castCharm(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	sendToVictim(cvict, fmt.Sprintf("Isn't %s just such a nice fellow?\r\n", chName))
+	const successAct = "Isn't $n just such a nice fellow?"
+	if renderer, ok := world.(interface {
+		SpellActToVictim(caster, victim interface{}, format string) bool
+	}); !ok || !renderer.SpellActToVictim(ch, cvict, successAct) {
+		sendAct(successAct, ch, nil, cvict, world)
+	}
 }
 
 // castSummon ports src/spells.c spell_summon (lines 220-355).
@@ -3268,6 +3314,8 @@ func consumeSummoningCircle(roomVNum int, world interface{}) bool {
 }
 
 const (
+	affSanctuaryBit  = 7  // src/structs.h:317, AFF_SANCTUARY
+	affCharmBit      = 21 // src/structs.h:331, AFF_CHARM
 	mobNoCharmBit    = 13 // src/structs.h:260, MOB_NOCHARM
 	mobNoSummonBit   = 14 // src/structs.h:261, MOB_NOSUMMON
 	prfSummonableBit = 42 // PRF_SUMMONABLE=10 at game.prfBase=32

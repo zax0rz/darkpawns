@@ -60,6 +60,39 @@ func TestSaySpellRendersThroughPerformAct(t *testing.T) {
 	})
 }
 
+func TestSpellActToVictimRendersCasterThroughPers(t *testing.T) {
+	w, caster, target, _, out := newChannelWorld(t)
+	caster.SetAffect(affInvisible, true)
+
+	if !w.SpellActToVictim(caster, target, "Isn't $n just such a nice fellow?") {
+		t.Fatal("spell act did not reach the live caster and victim")
+	}
+	if got, want := outputOf(out, target.Name), "Isn't someone just such a nice fellow?\r\n"; got != want {
+		t.Fatalf("victim spell act = %q, want %q", got, want)
+	}
+}
+
+func TestSpellAddFollowerRendersCFollowerAudiences(t *testing.T) {
+	w, leader, follower, _, out := newChannelWorld(t)
+	observer := channelPlayer(t, w, 4, "Observer", 1001)
+
+	if !w.AddFollowerForSpell(follower, leader) {
+		t.Fatal("spell follower link was not applied to live players")
+	}
+	if w.FollowingBody(follower) != leader {
+		t.Fatal("spell follower link does not point to the caster")
+	}
+	if got, want := outputOf(out, follower.Name), "You now follow Actor.\r\n"; got != want {
+		t.Fatalf("follower output = %q, want %q", got, want)
+	}
+	if got, want := outputOf(out, leader.Name), "Local starts following you.\r\n"; got != want {
+		t.Fatalf("leader output = %q, want %q", got, want)
+	}
+	if got, want := outputOf(out, observer.Name), "Local starts to follow Actor.\r\n"; got != want {
+		t.Fatalf("room output = %q, want %q", got, want)
+	}
+}
+
 // mag_points' heal line is act(..., TRUE, ch, 0, victim, TO_NOTVICT)
 // (src/magic.c:1769): a listener who cannot see the caster hears nothing, and
 // $N is PERS(victim). The old path pasted the victim's name for everyone.

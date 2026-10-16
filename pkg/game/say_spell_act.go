@@ -85,3 +85,15 @@ func (w *World) SpellActToRoom(ch, vict interface{}, format string, hideInvisibl
 	Act(w, hideInvisible, caster, target, nil, nil, format, "", ToRoom)
 	return true
 }
+
+// SpellActToVictim is act(format, FALSE, caster, 0, victim, TO_VICT) for
+// manual spells. The target observes $n through C's PERS visibility rules.
+func (w *World) SpellActToVictim(ch, vict interface{}, format string) bool {
+	caster, casterOK := ch.(Actor)
+	target, targetOK := vict.(Actor)
+	if !casterOK || !targetOK || caster == nil || target == nil || w == nil {
+		return false
+	}
+	Act(w, false, caster, target, nil, nil, format, "", ToVict)
+	return true
+}

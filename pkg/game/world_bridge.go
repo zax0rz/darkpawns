@@ -1152,6 +1152,22 @@ func (w *World) SpellActToChar(caster, victim, object interface{}, message strin
 	Act(w, false, ch, target, obj, nil, message, "", ToChar)
 }
 
+// IsSpellCharmShopkeeper mirrors spells.c:424's exact GET_MOB_SPEC ==
+// shop_keeper predicate. Shop records assign that special at boot; other
+// protected special mobs are not included here.
+func (w *World) IsSpellCharmShopkeeper(victim interface{}) bool {
+	mob, ok := victim.(*MobInstance)
+	if !ok || mob == nil || w == nil {
+		return false
+	}
+	vnum := mob.GetVNum()
+	if MobSpecAssign[vnum] == "shop_keeper" {
+		return true
+	}
+	_, ok = w.GetShopByKeeper(vnum)
+	return ok
+}
+
 // castSpellC is cast_spell (spell_parser.c) for a mobile caster: its gates
 // answer only the mobile, so a refusal shows nothing; otherwise the verbal
 // component and call_magic.
