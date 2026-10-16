@@ -1,0 +1,64 @@
+# depth-case: mob.npc-special-decline-follows-leader
+# depth-case: obj.npc-special-decline-obeys-orders
+# A bought horse is a charmed NPC follower (src/spec_procs2.c:348-354). Every
+# command it is given, and every step it takes, asks the room's specials first:
+# C's special() walks the room's mobiles and then its objects
+# (src/interpreter.c:1407-1476) and only a TRUE return consumes the command.
+# The C bodies of SPECIAL(recruiter) (src/spec_procs3.c:905-930) and
+# SPECIAL(bank) (src/spec_procs.c:2345-2399) return FALSE for every command
+# they do not name, so a pet beside them moves and obeys. Go reported each
+# unported NPC special as unsupported and blocked both.
+# Reported in play by Egon (2026-10-16): horses "don't follow" and order
+# "doesn't seem to work either, at least not consistently".
+# Revert controls: dropping the "bank" entry, the "recruiter" entry, or the
+# object lane's table consult fails this scenario (R1/R5c/R5h).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+spawn-mob 16300 1 8105 163
+spawn-obj 8034 99 8105 80
+force-load 8034
+
+[setup:oracle]
+SpecialDecline
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SpecialDecline
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set SpecialDecline gold 1000
+
+[probe]
+buy horse
+order horse emote neighs
+order followers say hello
+north
+look
+south
+look
+order horse emote neighs
