@@ -178,3 +178,70 @@ func TestWanderMobStopsAtClosedDoor(t *testing.T) {
 		t.Fatalf("mob did not wander through the opened door: room %d", got)
 	}
 }
+
+// newNoswimWanderWorld is newWanderTestWorld with the source room in
+// SECT_WATER_NOSWIM and the destination a FIELD, mirroring room 4611 (the
+// Swamp of Sadness) --north--> room 4601 in lib/world/wld/46.wld.
+func newNoswimWanderWorld(t *testing.T) *World {
+	t.Helper()
+	parsed := &parser.World{
+		Rooms: []parser.Room{
+			{
+				VNum: 10, Name: "Swamp", Zone: 46, Sector: SECT_WATER_NOSWIM,
+				Exits: map[string]parser.Exit{"north": {ToRoom: 20}},
+			},
+			{
+				VNum: 20, Name: "Field", Zone: 46, Sector: 2,
+				Exits: map[string]parser.Exit{"south": {ToRoom: 10}},
+			},
+		},
+	}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+	return w
+}
+
+// TestWanderMobNeedsBoatInNoswimRoom proves perform_move's first do_simple_move
+// gate (src/act.movement.c:126-132): "if this room or the one we're going to
+// needs a boat, check for one". mobact's own gate list (src/mobact.c:121-138)
+// only inspects the *destination* sector, so a port that stops there walks a
+// boatless mob out of SECT_WATER_NOSWIM. C refuses the step, which is why the
+// oracle's Spandaramet (mob 4600) stays in room 4611 forever and takes
+// room_activity's 25 drowning damage every pulse while the port moved it to the
+// field room 4621 (R1, R3a).
+func TestWanderMobNeedsBoatInNoswimRoom(t *testing.T) {
+	w := newNoswimWanderWorld(t)
+
+	boatless := NewMob(&parser.Mob{Keywords: "naga", ShortDesc: "a naga"}, 10)
+	if w.wanderMobWithDoor(boatless, 0) {
+		t.Fatal("a boatless noswim step must not report a sector-gate continue")
+	}
+	if got := boatless.GetRoom(); got != 10 {
+		t.Fatalf("boatless mob left the WATER_NOSWIM room for %d", got)
+	}
+
+	// has_boat returns 1 for AFF_WATERWALK (src/act.movement.c:62-63), so the
+	// same step is legal for a waterwalking body.
+	swimmer := NewMob(&parser.Mob{Keywords: "naga", ShortDesc: "a naga"}, 10)
+	swimmer.SetAffected(affWaterWalk)
+	w.wanderMobWithDoor(swimmer, 0)
+	if got := swimmer.GetRoom(); got != 20 {
+		t.Fatalf("a waterwalking mob did not make the legal step: room %d", got)
+	}
+}
+
+// TestWanderMobMovesFromDryRoom is the revert control for
+// TestWanderMobNeedsBoatInNoswimRoom: from a FIELD room the identical step must
+// still land, so the boat gate is a water gate and not a blanket move refusal.
+func TestWanderMobMovesFromDryRoom(t *testing.T) {
+	w := newWanderTestWorld(t)
+	mob := NewMob(&parser.Mob{Keywords: "rat", ShortDesc: "a rat"}, 1)
+
+	w.wanderMobWithDoor(mob, 0) // north out of the field room 1
+	if got := mob.GetRoom(); got != 2 {
+		t.Fatalf("mob did not wander from a dry room: room %d", got)
+	}
+}
