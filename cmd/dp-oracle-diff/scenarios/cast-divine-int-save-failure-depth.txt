@@ -1,0 +1,78 @@
+# The failed save must retain the pre-save caster prayer and room act, then
+# emit Nothing seems to happen (src/spells.c:1195-1200).
+# depth-case: spell.divine-intervention-save-failure
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Avatar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Avatar
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Witness
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Witness 8105
+set Avatar class v
+set Witness class v
+skillset Avatar 'divine intervention' 100
+set Avatar align 900
+set Avatar maxmana 5000
+set Avatar mana 5000
+set Avatar level 30
+
+[probe]
+cast 'divine intervention'

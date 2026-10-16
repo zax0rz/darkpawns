@@ -887,9 +887,9 @@ func parseSetClass(value string) (int, bool) {
 	case "t":
 		return game.ClassThief, true
 	case "a":
-		return game.ClassAvatar, true
-	case "v":
 		return game.ClassMagus, true
+	case "v":
+		return game.ClassAvatar, true
 	case "s":
 		return game.ClassAssassin, true
 	case "p":

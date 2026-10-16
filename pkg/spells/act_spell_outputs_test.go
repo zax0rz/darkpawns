@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
@@ -204,6 +205,106 @@ func TestCastMirrorImageOutputAndRoomAudience(t *testing.T) {
 	if world.calls != 1 || world.actor != caster || world.format != "$n divides $mself in two!" || !world.hideInvisible {
 		t.Fatalf("mirror image room act = {calls:%d actor:%v format:%q hideInvisible:%t}, want one C-compatible TO_ROOM act", world.calls, world.actor, world.format, world.hideInvisible)
 	}
+}
+
+type divineIntRoomAct struct {
+	actor         interface{}
+	format        string
+	hideInvisible bool
+}
+
+type divineIntOutputWorld struct {
+	acts       []divineIntRoomAct
+	spawnVNums []int
+	spawnRooms []int
+	spawnLvls  []int
+	angels     []*mockSpellsChar
+	followers  []interface{}
+}
+
+func (w *divineIntOutputWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error) {
+	w.spawnVNums = append(w.spawnVNums, vnum)
+	w.spawnRooms = append(w.spawnRooms, roomVNum)
+	w.spawnLvls = append(w.spawnLvls, level)
+	mob := &mockSpellsChar{name: "Dominion Angel", npc: true, level: level, roomVNum: roomVNum}
+	w.angels = append(w.angels, mob)
+	return mob, nil
+}
+
+func (w *divineIntOutputWorld) SpellActToRoom(actor, _ interface{}, format string, hideInvisible bool) bool {
+	w.acts = append(w.acts, divineIntRoomAct{actor: actor, format: format, hideInvisible: hideInvisible})
+	return true
+}
+
+func (w *divineIntOutputWorld) AddFollowerQuiet(ch, _ interface{}) {
+	w.followers = append(w.followers, ch)
+}
+
+func TestCastDivineIntOutputBranchesAndRoomAudience(t *testing.T) {
+	oldSaveRoll := magDivineIntSaveRoll
+	t.Cleanup(func() { magDivineIntSaveRoll = oldSaveRoll })
+
+	t.Run("neutral refusal", func(t *testing.T) {
+		magDivineIntSaveRoll = func(interface{}, int) bool { t.Fatal("neutral branch must not roll a save"); return false }
+		caster := &alignedSpellProbe{mockSpellsChar: &mockSpellsChar{name: "Avatar", level: 30}, alignment: 349}
+		world := &divineIntOutputWorld{}
+
+		ExecuteManualSpell(SpellDivineInt, 30, caster, nil, nil, "", world)
+
+		if got, want := strings.Join(caster.messages, ""), "Your request for intervention falls on deaf ears.\r\n"; got != want {
+			t.Fatalf("neutral output = %q, want %q", got, want)
+		}
+		if len(world.acts) != 0 || len(world.angels) != 0 {
+			t.Fatalf("neutral branch acts=%+v angels=%d, want no room acts or spawns", world.acts, len(world.angels))
+		}
+	})
+
+	t.Run("failed save follows prayer act", func(t *testing.T) {
+		magDivineIntSaveRoll = func(interface{}, int) bool { return false }
+		caster := &alignedSpellProbe{mockSpellsChar: &mockSpellsChar{name: "Avatar", level: 30, roomVNum: 8105}, alignment: 900}
+		world := &divineIntOutputWorld{}
+
+		ExecuteManualSpell(SpellDivineInt, 30, caster, nil, nil, "", world)
+
+		if got, want := strings.Join(caster.messages, ""), "You pray for the intervention of your deity.\r\nNothing seems to happen.\r\n"; got != want {
+			t.Fatalf("failed-save output = %q, want %q", got, want)
+		}
+		if len(world.acts) != 1 || world.acts[0].actor != caster || world.acts[0].format != "$n grovels in the dirt and prays for a miracle." || !world.acts[0].hideInvisible {
+			t.Fatalf("failed-save room acts = %+v, want only the hidden-prayer act", world.acts)
+		}
+		if len(world.angels) != 0 {
+			t.Fatalf("failed save spawned %d angels, want none", len(world.angels))
+		}
+	})
+
+	t.Run("successful extreme alignment announces both angels", func(t *testing.T) {
+		magDivineIntSaveRoll = func(interface{}, int) bool { return true }
+		caster := &alignedSpellProbe{mockSpellsChar: &mockSpellsChar{name: "Avatar", level: 30, roomVNum: 8105}, alignment: 1000}
+		world := &divineIntOutputWorld{}
+
+		ExecuteManualSpell(SpellDivineInt, 30, caster, nil, nil, "", world)
+
+		if got, want := strings.Join(caster.messages, ""), "You pray for the intervention of your deity.\r\nSuddenly, a portal of light appears out of nowhere!\r\n"; got != want {
+			t.Fatalf("successful output = %q, want %q", got, want)
+		}
+		if len(world.acts) != 4 || world.acts[0].actor != caster || world.acts[0].format != "$n grovels in the dirt and prays for a miracle." || !world.acts[0].hideInvisible || world.acts[1].actor != caster || world.acts[1].format != "Suddenly, a portal of light appears out of nowhere!" || world.acts[1].hideInvisible {
+			t.Fatalf("success room acts = %+v, want prayer, portal, and two angel arrivals", world.acts)
+		}
+		if len(world.spawnVNums) != 2 || world.spawnVNums[0] != 85 || world.spawnVNums[1] != 85 || world.spawnRooms[0] != 8105 || world.spawnRooms[1] != 8105 || world.spawnLvls[0] != 15 || world.spawnLvls[1] != 15 {
+			t.Fatalf("angel spawns = vnums %v rooms %v levels %v, want two good angels in room 8105 at level 15", world.spawnVNums, world.spawnRooms, world.spawnLvls)
+		}
+		for i, angel := range world.angels {
+			if world.acts[i+2].actor != angel || world.acts[i+2].format != "$n steps through the portal!" || !world.acts[i+2].hideInvisible {
+				t.Errorf("angel %d room act = %+v, want its hidden TO_ROOM step act", i+1, world.acts[i+2])
+			}
+			if len(angel.activeAffects) != 1 || angel.activeAffects[0].SpellID != SpellDivineInt || angel.activeAffects[0].Duration != 13 || angel.activeAffects[0].Flags != engine.AFFCharm {
+				t.Errorf("angel %d affects = %+v, want C's divine charm affect", i+1, angel.activeAffects)
+			}
+		}
+		if len(world.followers) != 2 || world.followers[0] != world.angels[0] || world.followers[1] != world.angels[1] {
+			t.Fatalf("quiet followers = %v, want both spawned angels", world.followers)
+		}
+	})
 }
 
 type transformationOutputPlayer struct {

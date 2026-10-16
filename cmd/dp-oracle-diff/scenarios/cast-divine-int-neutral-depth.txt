@@ -1,0 +1,49 @@
+# A neutral Avatar reaches the early alignment refusal via registered
+# MANUAL_SPELL dispatch (src/spell_parser.c:530).
+# depth-case: spell.divine-intervention-neutral-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Avatar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Avatar
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Avatar class v
+skillset Avatar 'divine intervention' 100
+set Avatar align 0
+set Avatar maxmana 5000
+set Avatar mana 5000
+
+set Avatar level 30
+
+[probe]
+cast 'divine intervention'

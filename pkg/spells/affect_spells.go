@@ -35,6 +35,10 @@ var (
 // magCharmSaveRoll keeps charm's C saving-throw branch deterministic in focused tests.
 var magCharmSaveRoll = magSavingThrow
 
+// magDivineIntSaveRoll gives the manual intervention branch deterministic
+// success/failure coverage without changing the production saving-throw path.
+var magDivineIntSaveRoll = magSavingThrow
+
 func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world interface{}) {
 	magAffectsForCast(level, ch, victim, spellNum, savetype, CastSpell, world)
 }
@@ -3423,71 +3427,72 @@ func castDivineInt(level int, ch, world interface{}) {
 		alignment = a.GetAlignment()
 	}
 
-	// Neutral alignment fails
-	if alignment == 0 {
+	good := alignment >= 350
+	evil := alignment <= -350
+	if !good && !evil {
 		sendToCaster(ch, "Your request for intervention falls on deaf ears.\r\n")
 		return
 	}
 
-	// Saving throw — caster must FAIL for it to work (C quirk: !mag_savingthrow = success)
-	// Actually re-reading C: if (!mag_savingthrow(ch, SAVING_SPELL)) → caster failed save → nothing happens
-	// So if caster saves, the spell works. If caster fails, nothing happens.
-	// Wait, let me re-read: "if (!mag_savingthrow(ch, SAVING_SPELL)) { stc('Nothing seems to happen.'); return; }"
-	// So if saving throw FAILS (returns false), nothing happens. If saving throw SUCCEEDS (returns true), proceed.
-	// That's backwards from usual. This is a C quirk — divine intervention requires the caster to resist.
-	if !magSavingThrow(ch, int(SaveSpell)) {
-		sendToCaster(ch, "Nothing seems to happen.\r\n")
-		return
+	mobVNum := 86
+	if good {
+		mobVNum = 85
 	}
 
-	// Determine angel type
-	mobVNum := 86 // default evil angel
-	if alignment > 0 {
-		mobVNum = 85 // good angel
+	sendToCaster(ch, "You pray for the intervention of your deity.\r\n")
+	spellActToRoom(world, ch, "$n grovels in the dirt and prays for a miracle.", true)
+
+	// C emits the prayer before this save. The unusual branch succeeds only
+	// when the caster saves: src/spells.c:1195-1200.
+	if !magDivineIntSaveRoll(ch, int(SaveSpell)) {
+		sendToCaster(ch, "Nothing seems to happen.\r\n")
+		return
 	}
 
 	roomVNum := 0
 	if rg, ok := ch.(roomGet); ok {
 		roomVNum = rg.GetRoomVNum()
 	}
-	if roomVNum <= 0 {
-		sendToCaster(ch, "You can't do that here.\r\n")
-		return
-	}
-
-	number := 1
+	angelCount := 1
 	if alignment == -1000 || alignment == 1000 {
-		number = 2
+		angelCount++
 	}
 
-	sendToCaster(ch, "You pray for the intervention of your deity.\r\n")
 	sendToCaster(ch, "Suddenly, a portal of light appears out of nowhere!\r\n")
+	spellActToRoom(world, ch, "Suddenly, a portal of light appears out of nowhere!", false)
 
 	type mobSpawner interface {
 		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 	}
 	spawner, ok := world.(mobSpawner)
 	if !ok {
-		sendToCaster(ch, "The magic fails.\r\n")
 		return
 	}
 
 	type followerAdder interface{ AddFollowerQuiet(ch, leader interface{}) }
 	fa, _ := world.(followerAdder)
 
-	for i := 0; i < number; i++ {
+	for i := 0; i < angelCount; i++ {
 		mobLevel := level / 2
-		if mobLevel < 1 {
-			mobLevel = 1
-		}
 		mob, err := spawner.SpawnMobWithLevelI(mobVNum, roomVNum, mobLevel)
 		if err != nil {
 			slog.Warn("spell_divine_int: failed to spawn angel", "error", err, "vnum", mobVNum)
 			continue
 		}
+		spellActToRoom(world, mob, "$n steps through the portal!", true)
+		applyAffect(mob, engine.NewAffectDirect(SpellDivineInt, engine.ApplyNone, level/2-2, 0, engine.AFFCharm, "divine intervention"))
 		if fa != nil {
 			fa.AddFollowerQuiet(mob, ch)
 		}
+	}
+}
+
+func spellActToRoom(world, actor interface{}, format string, hideInvisible bool) {
+	type roomActer interface {
+		SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
+	}
+	if acter, ok := world.(roomActer); ok {
+		acter.SpellActToRoom(actor, nil, format, hideInvisible)
 	}
 }
 

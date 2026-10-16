@@ -9,6 +9,39 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
+// TestParseSetClassMatchesCClassLetters pins the set-class letter mapping to
+// parse_class (src/class.c:122-160), including the distinct Magus/Avatar
+// initials. set class is the live setup path for Avatar-only manual spells.
+func TestParseSetClassMatchesCClassLetters(t *testing.T) {
+	tests := []struct {
+		letter string
+		class  int
+	}{
+		{"m", game.ClassMageUser},
+		{"c", game.ClassCleric},
+		{"w", game.ClassWarrior},
+		{"t", game.ClassThief},
+		{"a", game.ClassMagus},
+		{"v", game.ClassAvatar},
+		{"s", game.ClassAssassin},
+		{"p", game.ClassPaladin},
+		{"n", game.ClassNinja},
+		{"i", game.ClassPsionic},
+		{"r", game.ClassRanger},
+		{"y", game.ClassMystic},
+	}
+	for _, tc := range tests {
+		t.Run(tc.letter, func(t *testing.T) {
+			for _, input := range []string{tc.letter, strings.ToUpper(tc.letter)} {
+				got, ok := parseSetClass(input)
+				if !ok || got != tc.class {
+					t.Errorf("parseSetClass(%q) = (%d, %t), want (%d, true)", input, got, ok, tc.class)
+				}
+			}
+		})
+	}
+}
+
 // makeSetTestSession creates a wizard-actor session registered in the manager
 // (so findSessionByName resolves the target) plus a separate mortal target.
 func makeSetTestSession(t *testing.T) (*Session, *Session) {
