@@ -1,0 +1,97 @@
+# The disposable world loads one exact vnum-1239 obsidian shard in room 8105;
+# a Mage picks it up and the first registered cast consumes it. The next casts
+# reach C's missing-components fallback. Each cast targets a witness in the
+# Street of Wizardry, with ROOM_PEACEFUL disabled for this test.
+# depth-case: objmagic.magic-missile-reagent-output
+# depth-case: objmagic.magic-missile-missing-reagent
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 1239 1 8105 80
+force-load 1239
+
+[setup:oracle]
+FlareMage
+Y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port]
+FlareMage
+y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport FlarePeer 8105
+get shard
+
+[setup:oracle:FlarePeer]
+FlarePeer
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:FlarePeer]
+FlarePeer
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe]
+cast 'flame arrow' FlarePeer
+~dpclock pulse 20
+cast 'flame arrow' FlarePeer
+~dpclock pulse 20
+cast 'flame arrow' FlarePeer

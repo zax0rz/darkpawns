@@ -570,6 +570,62 @@ func TestMagUnaffects(t *testing.T) {
 	})
 }
 
+func TestMagUnaffectsActivityOutputSites(t *testing.T) {
+	t.Run("no-effect message goes only to caster", func(t *testing.T) {
+		caster := &mockSpellsChar{}
+		target := &mockSpellsChar{}
+		MagUnaffects(20, caster, target, SpellCureBlind, nil)
+		if got := victimText(caster); got != "Nothing seems to happen.\r\n" {
+			t.Fatalf("no-effect caster output = %q, want exact C message", got)
+		}
+		if got := victimText(target); got != "" {
+			t.Fatalf("no-effect target output = %q, want silence", got)
+		}
+	})
+
+	t.Run("cured victim and room witness", func(t *testing.T) {
+		caster := newAffectMale("Caster", 8008)
+		victim := newAffectMale("Victim", 8008)
+		witness := newAffectMale("Witness", 8008)
+		victim.affects = []*engine.Affect{
+			engine.NewAffect(SpellBlindness, engine.ApplyHitroll, 5, -2, "blind"),
+		}
+		world := newAffectMsgWorld(caster, victim, witness)
+
+		MagUnaffects(20, caster, victim, SpellCureBlind, world)
+		if got := strings.Join(victim.messages, ""); got != "Your vision returns!\r\n" {
+			t.Fatalf("cured-victim output = %q, want exact C message", got)
+		}
+		if got := strings.Join(witness.messages, ""); got != "There's a momentary gleam in Victim's eyes.\r\n" {
+			t.Fatalf("room-witness output = %q, want exact C act", got)
+		}
+		if got := strings.Join(caster.messages, ""); got != "There's a momentary gleam in Victim's eyes.\r\n" {
+			t.Fatalf("room-caster output = %q, want exact C act", got)
+		}
+	})
+
+	t.Run("removed poison output reaches victim and room witness", func(t *testing.T) {
+		caster := newAffectMale("Caster", 8008)
+		victim := newAffectMale("Victim", 8008)
+		witness := newAffectMale("Witness", 8008)
+		victim.affects = []*engine.Affect{
+			engine.NewAffect(SpellPoison, engine.ApplyStr, 5, -2, "poison"),
+		}
+		world := newAffectMsgWorld(caster, victim, witness)
+
+		MagUnaffects(20, caster, victim, SpellRemovePoison, world)
+		if got := strings.Join(victim.messages, ""); got != "A warm feeling runs through your body!\r\n" {
+			t.Fatalf("cured-victim output = %q, want exact C message", got)
+		}
+		if got := strings.Join(witness.messages, ""); got != "Victim looks better.\r\n" {
+			t.Fatalf("room-witness output = %q, want exact C act", got)
+		}
+		if got := strings.Join(caster.messages, ""); got != "Victim looks better.\r\n" {
+			t.Fatalf("room-caster output = %q, want exact C act", got)
+		}
+	})
+}
+
 // mockCorpse satisfies the object interfaces MagSummons uses for C's explicit
 // animate-dead container target.
 type mockCorpse struct {

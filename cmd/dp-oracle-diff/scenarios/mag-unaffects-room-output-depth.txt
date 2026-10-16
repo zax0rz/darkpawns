@@ -1,0 +1,155 @@
+# depth-case: objmagic.mag-unaffects-output-sites
+# Three Mages cast blindness on a low-level Cleric through the registered cast
+# command, then the Cleric cures themself while the Mages observe both
+# mag_unaffects acts (src/spell_parser.c:478;
+# src/magic.c:1834-1884).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+# PRIMARY = first player ⇒ God; the peer casts blindness during warmup.
+[setup:oracle]
+Blindgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Blindgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Curetarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Curetarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:blindtwo]
+Blindtwo
+Y
+blindpass
+blindpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:blindtwo]
+Blindtwo
+y
+blindpass
+blindpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:blindthree]
+Blindthree
+Y
+blindpass
+blindpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:blindthree]
+Blindthree
+y
+blindpass
+blindpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Curetarget 8162
+teleport Blindtwo 8162
+teleport Blindthree 8162
+set Blindgod class cleric
+skillset Blindgod 'cure blind' 100
+set Blindgod maxmana 5000
+set Blindgod mana 5000
+set Curetarget class mage
+skillset Curetarget 'blindness' 100
+set Curetarget level 30
+set Curetarget maxmana 5000
+set Curetarget mana 5000
+set Blindtwo class mage
+skillset Blindtwo 'blindness' 100
+set Blindtwo level 30
+set Blindtwo maxmana 5000
+set Blindtwo mana 5000
+set Blindthree class mage
+skillset Blindthree 'blindness' 100
+set Blindthree level 30
+set Blindthree maxmana 5000
+set Blindthree mana 5000
+set Blindgod level 4
+
+[probe]
+send:victim cast 'blindness' Blindgod
+send:blindtwo cast 'blindness' Blindgod
+send:blindthree cast 'blindness' Blindgod
+cast 'cure blind' Blindgod

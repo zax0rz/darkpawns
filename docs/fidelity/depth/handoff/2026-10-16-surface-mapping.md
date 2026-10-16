@@ -1,10 +1,20 @@
 # Surface mapping handoff — 2026-10-16
 
+## Final measurement — 2026-10-16
+
+The 2026-10-15 field-note baseline was **4,929 numeric inventory units / 4,031 blocked units**, including **2,060 blocked activity-call-site units**. At current `origin/main` `58e7c503ab7251be00e0b3776f7072a8b68748fe`, the inventory sums to **3,014 units / 2,116 blocked**, and activity-call-site rows account for **1,039 units / 145 blocked**. The blocked count has fallen by 1,915 overall, including 1,915 activity-call-site units. All activity-call-site families now have source-order site maps.
+
+The current activity maps enumerate 2,228 sites: 1,893 proven, 68 gap-reachable, 77 gap-blocked, and 190 unreachable. Three draft PRs remain open: [#2071](https://github.com/zax0rz/darkpawns/pull/2071) closes the two remaining ZEDIT sites; [#2082](https://github.com/zax0rz/darkpawns/pull/2082) proves two board refusals; and [#2080](https://github.com/zax0rz/darkpawns/pull/2080) proves six magic sites and fixes the missing CRLF on `MagUnaffects` room acts. If all three apply, the projection is **3,004 units / 2,106 blocked** overall and **1,029 units / 135 blocked** for activity-call-sites. The activity-map projection is 1,903 proven, 58 gap-reachable, 77 gap-blocked, and 190 unreachable. These remaining reachable rows are still proof gaps; this handoff does not claim that every possible behavior gap has been fixed.
+
+For #2080, `src/magic.c:1873,1882,1884` now map to `objmagic.mag-unaffects-output-sites`. The focused unit test was red before the fix because `MagUnaffects` omitted the CRLF that C's `perform_act()` appends (`src/comm.c:2458-2462`). The live `mag-unaffects-room-output-depth` scenario and targeted census `dp1371-mag-unaffects-output-rebased` are CLEAN (1/1), including the cured victim and all three room witnesses. The magic map moves from 50 proven / 30 gap-reachable / 0 gap-blocked / 3 unreachable on current main to 56 / 24 / 0 / 3 in #2080.
+
+The original seven-PR projection below is retained as history. PRs #2050, #2053, #2054, #2056, #2058, #2059, and #2060 are now merged; #2071, #2080, and #2082 are the remaining open draft PRs.
+
 ## Measured baseline and projection
 
-Current `origin/main` is `d48aec241a8e4ba61d8f61ab651095e9dbe45305`. Its surface inventory sums to **3,360 units**: **2,462 blocked**, **897 proven-already**, and **1 excluded-with-C-reason**. The `activity-call-sites` rows account for **1,385 units**: **491 blocked** and **894 proven-already**.
+At the initial handoff snapshot, `origin/main` was `d48aec241a8e4ba61d8f61ab651095e9dbe45305`. Its surface inventory summed to **3,360 units**: **2,462 blocked**, **897 proven-already**, and **1 excluded-with-C-reason**. The `activity-call-sites` rows accounted for **1,385 units**: **491 blocked** and **894 proven-already**.
 
-The seven draft PRs recorded below are based on that same main revision. Their per-file residual reductions total 151 units across the #2050 shop map, #2053 spell outputs, #2054 magic-summons target proof, #2056 immortal stat and container output proof, #2058 clan map, #2059 house outputs, and #2060 spell-parser map. If all seven changes apply, the conditional projection is **3,209 total units / 2,311 blocked** overall and **1,234 total / 340 blocked** for `activity-call-sites`. The projection is not a measurement of main; none of the seven PRs has merged.
+The seven draft PRs recorded below were based on that same main revision. Their per-file residual reductions totaled 151 units across the #2050 shop map, #2053 spell outputs, #2054 magic-summons target proof, #2056 immortal stat and container output proof, #2058 clan map, #2059 house outputs, and #2060 spell-parser map. At that time, if all seven changes applied, the conditional projection was **3,209 total units / 2,311 blocked** overall and **1,234 total / 340 blocked** for `activity-call-sites`. That projection was not a measurement of main; none of the seven PRs had merged yet.
 
 | PR | C file | Inventory units before → after | Site classifications before → after |
 |---|---|---:|---|
@@ -38,8 +48,8 @@ For `shop.c`, the prior row had 22 residual inventory units but no per-site map;
 - **#2059 house:** `dp1371-house-control-gaps` is CLEAN (1/1) at `415aed140` for `hcontrol-depth`; `make fidelity-depth` passed with 36 maps and 0 errors.
 - **#2060 spell parser:** `dp1371-spell-parser-output-map` is CLEAN (3/3) at `f05b281ba` for the peaceful quaff audience, held sleep staff, and targeted armor-scroll recitation. The `TO_ROOM` recitation call passes a NULL victim, so its target peer receives the line; C `act(TO_ROOM)` excludes only the actor. The new `dp1371-spell-parser-psionic-peaceful` census is CLEAN (1/1): a mortal Psionic uses a held Lightning Bolt wand in a peaceful room and reaches `src/spell_parser.c:444` through `src/act.other.c:895-973`, bypassing the separate `do_cast` refusal at line 978. The C transcript proves the class-specific “violent power” wording for the actor and the room line for an in-room witness. The file map now has 44 proven, 44 gap-reachable, 0 gap-blocked, and 0 unreachable sites (49 residual units before, 44 after). All ten repository gates passed individually; fidelity depth reports 36 maps and 0 errors, and fidelity units passes 1,806/1,806 claims.
 
-All seven PRs remain draft and open. Nothing was merged or deployed.
+At that initial snapshot all seven listed PRs were draft and open. The seven have since merged. Nothing was deployed.
 
 ## Remaining activity-call-site work
 
-After the seven draft changes, the largest activity-call-site residual rows are `src/spells.c` 18, `src/spell_parser.c` 44, `src/magic.c` 34, `src/zedit.c` 31, `src/dream.c` 29, `src/act.wizard.c` 22, `src/clan.c` 20, and `src/spec_procs.c` 20. The four `src/new_cmds.c` residual sites are mapped as stop-tier blocked. The `src/spec_procs.c` residual sites are gap-blocked by the approved protected-name divergence. Continue with reachable output gaps and retain the same source-order/C-call-path evidence (R1/R2/R4/R5e/R5g/R5h).
+At the current `origin/main` snapshot, the remaining gap-reachable sites are in `src/boards.c` (3), `src/magic.c` (30), `src/spell_parser.c` (33), and `src/zedit.c` (2). The three open draft PRs reduce these to 1, 24, 33, and 0 respectively. Other residual activity-call-site rows are classified as stop-tier/protected-divergence gaps or have their remaining output sites proven. Continue only with evidence-backed reachable gaps and preserve source-order/C-call-path evidence (R1/R2/R4/R5e/R5g/R5h).
