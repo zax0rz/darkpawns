@@ -1,5 +1,6 @@
 # depth-case: magic.dispel-protected-target-name
 # depth-case: magic.create-food-message-pair
+# depth-case: spell-route.spoken-dispatch
 # depth-case: magic.smokescreen-room-pair
 # depth-case: magic.points-room-pair
 # depth-case: magic.animate-dead-message-pair

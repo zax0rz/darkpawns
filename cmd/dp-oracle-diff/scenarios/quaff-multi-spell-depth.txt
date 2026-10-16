@@ -1,0 +1,41 @@
+# Multi-spell potion route proof: object 4399 carries Invigorate, Vitality,
+# and Poison in values 1..3. C do_use must dispatch each in order as
+# CAST_POTION, stopping only when a spell reports a miss.
+# depth-case: quaff.multi-spell-effects
+# depth-case: spell-route.potion-dispatch
+
+[fixture]
+quiet-mobs
+spawn-obj 4399 1 8162 80
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get powder
+quaff powder

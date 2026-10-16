@@ -89,7 +89,7 @@ func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 					s.SendMessage("A flash of white light fills the room, dispelling your violent magic!\r\n")
 				}
 			}
-			sendAffectRoom(caster, caster, "White light from no particular source suddenly fills the room, then vanishes.\r\n", world)
+			sendAffectRoom(caster, nil, "White light from no particular source suddenly fills the room, then vanishes.\r\n", false, world)
 			return false
 		}
 	}

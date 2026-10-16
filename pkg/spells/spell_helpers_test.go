@@ -52,19 +52,15 @@ func (o *spellObjectMock) CarriedBy(actor interface{}) bool {
 }
 
 type zoneWorldMock struct {
-	roomZone int // zone returned by GetRoomZone for the caster's room
-	zone     int // zone used by ForEachPlayerInZoneInterface
-	players  []interface{}
+	roomVNum int
+	message  string
+	calls    int
 }
 
-func (w *zoneWorldMock) GetRoomZone(vnum int) int { return w.roomZone }
-func (w *zoneWorldMock) ForEachPlayerInZoneInterface(zone int, fn func(interface{})) {
-	if zone != w.zone {
-		return
-	}
-	for _, p := range w.players {
-		fn(p)
-	}
+func (w *zoneWorldMock) SendToZone(roomVNum int, message string) {
+	w.roomVNum = roomVNum
+	w.message = message
+	w.calls++
 }
 
 type msgMock struct {
@@ -121,28 +117,18 @@ func TestGetHP(t *testing.T) {
 
 func TestSendToZone(t *testing.T) {
 	caster := &roomMock{vnum: 1001}
-	receiver := &msgMock{}
-	world := &zoneWorldMock{
-		roomZone: 5,
-		zone:     5,
-		players:  []interface{}{receiver, &hpMock{}},
-	}
+	world := &zoneWorldMock{}
 
 	sendToZone("hello zone", caster, world)
-	if len(receiver.messages) != 1 || receiver.messages[0] != "hello zone" {
-		t.Errorf("expected zone message, got %v", receiver.messages)
+	if world.calls != 1 || world.roomVNum != caster.vnum || world.message != "hello zone" {
+		t.Fatalf("SendToZone call = (%d, %d, %q), want (1, %d, %q)", world.calls, world.roomVNum, world.message, caster.vnum, "hello zone")
 	}
 
-	// Wrong room zone should not deliver.
-	receiver.messages = nil
-	wrongZoneWorld := &zoneWorldMock{
-		roomZone: 5,
-		zone:     99,
-		players:  []interface{}{receiver},
-	}
-	sendToZone("hello zone", caster, wrongZoneWorld)
-	if len(receiver.messages) != 0 {
-		t.Errorf("expected no message for wrong zone, got %v", receiver.messages)
+	// A live world without C's zone-send operation must not fall back to a
+	// broader broadcast that would include the caster's room.
+	sendToZone("hello zone", caster, struct{}{})
+	if world.calls != 1 {
+		t.Errorf("unsupported world changed recorded calls: %d", world.calls)
 	}
 }
 

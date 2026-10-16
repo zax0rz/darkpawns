@@ -1,0 +1,78 @@
+# Multi-spell scroll route proof: edit object 4404 to carry Bless, Heal, and
+# Lightning Bolt in values 1..3. Reciting it at a peer dispatches an affect,
+# points spell, and violent targeted spell in order as CAST_SCROLL.
+# depth-case: recite.multi-spell-effects
+# depth-case: spell-route.scroll-dispatch
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Mordecai
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mordecai
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Barnaby
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Barnaby
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+oedit 4404
+D
+30
+3
+28
+30
+q
+y
+load obj 4404
+
+[probe]
+recite book Barnaby
