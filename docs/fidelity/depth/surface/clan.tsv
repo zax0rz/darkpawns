@@ -104,19 +104,19 @@ src/clan.c:777	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-de
 src/clan.c:779	do_clan_info	gap-blocked		Stop-tier persistence path: the war branch reads at_war from the clan record loaded by init_clans (src/clan.c:846-855); no player command writes a nonzero value (src/clan.c:227,776-779).
 src/clan.c:781	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:783	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
-src/clan.c:900	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:906	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:914	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:922	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:929	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:932	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:900	do_clan_bank	proven	clan.mortal-bank-output-gates	The rank-zero applicant is sent through the live bank command before any bank argument parsing (R1/R2/R5e/R5h).
+src/clan.c:906	do_clan_bank	proven	clan.bank-refusal-gates	The level-31 peer reaches the clan privilege refusal before immortal clan-name parsing (R1/R2/R5e/R5h).
+src/clan.c:914	do_clan_bank	proven	clan.bank-refusal-gates	The clan god supplies a missing clan name and reaches the unknown-clan refusal (R1/R2/R5e/R5h).
+src/clan.c:922	do_clan_bank	proven	clan.mortal-bank-output-gates	The enrolled rank-one peer fails the configured rank-two withdrawal threshold (R1/R2/R5e/R5h).
+src/clan.c:929	do_clan_bank	unreachable		The initial empty-argument return at src/clan.c:889-893 exits before the empty-amount branch; immortal parsing also requires a clan token before reaching this check (R1/R5e).
+src/clan.c:932	do_clan_bank	unreachable		The initial empty-argument return at src/clan.c:889-893 exits before the empty-amount branch; immortal parsing also requires a clan token before reaching this check (R1/R5e).
 src/clan.c:935	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
 src/clan.c:943	do_clan_bank	proven	clan.mortal-bank	The named proof scenario executes this C output call.
-src/clan.c:946	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:946	do_clan_bank	proven	clan.mortal-bank-output-gates	A top-rank mortal reaches the nonnumeric withdrawal refusal after passing the withdrawal privilege gate (R1/R2/R5e/R5h).
 src/clan.c:949	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
 src/clan.c:959	do_clan_bank	proven	clan.bank-immortal-path;clan.mortal-bank	The named proof scenario executes this C output call.
 src/clan.c:964	do_clan_bank	proven	mudlog.local-clan-withdraw	The named proof scenario executes this C output call.
-src/clan.c:970	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:970	do_clan_bank	proven	clan.mortal-bank-output-gates	A member with zero gold reaches the personal-funds refusal for a one-coin deposit (R1/R2/R5e/R5h).
 src/clan.c:975	do_clan_bank	proven	clan.bank-immortal-path;clan.mortal-bank	The named proof scenario executes this C output call.
 src/clan.c:980	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
 src/clan.c:1002	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
