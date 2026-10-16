@@ -585,3 +585,27 @@ func TestBoardSystem_SaveFailureNotifiesPlayer(t *testing.T) {
 		t.Fatal("RemoveMsg = false, want true")
 	}
 }
+
+func TestBoardWriteHeadingAllocationFailureMatchesC(t *testing.T) {
+	bs := InitBoards(t.TempDir())
+	actor := newMockBoardPlayer("Writer", 1, 1001)
+	allocationSize := 0
+	bs.allocateHeading = func(size int) []byte {
+		allocationSize = size
+		return nil
+	}
+
+	if magic := bs.WriteMessage(0, actor, "Allocation failure"); magic != -1 {
+		t.Fatalf("write magic = %d, want failure", magic)
+	}
+	want := "The board is malfunctioning - sorry.\r\n"
+	if len(actor.messages) != 1 || actor.messages[0] != want {
+		t.Fatalf("allocation failure output = %q, want %q", actor.messages, want)
+	}
+	if allocationSize == 0 {
+		t.Fatal("heading allocator was not called")
+	}
+	if bs.numOfMsgs[0] != 0 || !bs.msgStorageTaken[0] || len(bs.writerSlots) != 0 {
+		t.Fatalf("C allocation failure state differs: messages=%d slotTaken=%v writers=%v", bs.numOfMsgs[0], bs.msgStorageTaken[0], bs.writerSlots)
+	}
+}

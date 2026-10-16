@@ -1,0 +1,171 @@
+# depth-case: parser.use.staff-action-description
+# depth-case: parser.use.wand-self-actions
+# depth-case: parser.use.wand-target-action-description
+# depth-case: parser.use.wand-object-target-default
+# depth-case: parser.use.wand-object-action-description
+# depth-case: parser.use.wand-no-target-prompt
+# depth-case: parser.use.wand-empty-charges
+# depth-case: parser.recite.scroll-sitting
+# depth-case: parser.recite.scroll-missing-target
+# depth-case: parser.recite.scroll-action-description
+# depth-case: parser.recite.scroll-equipped-target
+# depth-case: parser.quaff.potion-sitting
+# depth-case: parser.quaff.potion-action-description
+# Real do_use -> mag_objectmagic dispatch for the object-specific message arms
+# in src/spell_parser.c:580-707. Stock C prototypes provide the action
+# descriptions (war gong, ruby gem, important scroll, lycanthropy potion). An
+# unrestricted wand prototype is reconfigured through OEDIT for object output.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 on
+spawn-obj 20302 1 8105 80
+spawn-obj 2117 1 8105 80
+spawn-obj 8053 1 8105 80
+spawn-obj 9906 3 8105 80
+spawn-obj 14438 1 8105 80
+spawn-obj 70 1 8105 80
+spawn-obj 8010 1 8105 80
+force-load 20302
+force-load 2117
+force-load 8053
+force-load 9906
+force-load 14438
+force-load 70
+force-load 8010
+
+[setup:oracle]
+Parsergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parsergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Parserpeer]
+Parserpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Parserpeer]
+Parserpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Parserpeer 8105
+get gong
+get gem
+hold gem
+get important
+get important
+get important
+get recall
+get potion
+get bread
+
+[probe]
+recite important gem
+~dpclock pulse 20
+use gem Parsergod
+~dpclock pulse 20
+use gem Parserpeer
+~dpclock pulse 20
+use gem
+~dpclock pulse 20
+use gem Parserpeer
+~dpclock pulse 20
+remove gem
+drop gem
+oedit 8053
+1
+actionwand wand
+D
+12
+2
+2
+13
+q
+y
+load obj 8053
+hold actionwand
+use actionwand bread
+~dpclock pulse 20
+remove actionwand
+drop actionwand
+oedit 8053
+1
+actionwand2 wand
+4
+A shimmering current leaps from $p toward $P.
+@
+q
+y
+load obj 8053
+hold actionwand2
+use actionwand2 bread
+~dpclock pulse 20
+remove actionwand2
+drop actionwand2
+hold gong
+use gong
+~dpclock pulse 20
+sit
+recite recall
+stand
+recite important Phantom
+recite important
+~dpclock pulse 20
+sit
+quaff potion
+stand
+quaff potion
+~dpclock pulse 20

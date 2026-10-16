@@ -3,7 +3,7 @@ src/boards.c:221	Board_write_message	proven	boards.write-immortal-board-refused	
 src/boards.c:225	Board_write_message	proven	boards.full-board-refusal	TestGenBoardFullBoardWriteRefusalOutput fills the C per-board message ceiling, then asserts the exact refusal through gen_board.
 src/boards.c:229	Board_write_message	proven	boards.global-slot-exhaustion	TestGenBoardGlobalSlotExhaustionRefusalOutput repeats empty-headline writes to reserve every global slot, then asserts the exact failure response.
 src/boards.c:241	Board_write_message	proven	boards.write-empty-headline;boards.global-slot-exhaustion	The dispatched blank headline reaches the exact prompt; the exhaustion test proves repeated prompts reserve all global slots (R1/R2/R5e/R5h).
-src/boards.c:254	Board_write_message	gap-reachable		Allocation failure after heading creation reaches this response; it has no proof.
+src/boards.c:254	Board_write_message	proven	boards.write-heading-allocation-failure	The injected nil heading allocation asserts the exact refusal bytes; the C slot remains taken after failure (R1/R2/R5e/R5h).
 src/boards.c:261	Board_write_message	proven	boards.write-headline	The real write command enters the improved editor and emits this prompt (R1/R2/R5h).
 src/boards.c:263	Board_write_message	proven	boards.write-headline	The paired room probe observes this start-writing act (R1/R5h).
 src/boards.c:290	Board_show_board	proven	boards.immortal-read-mortal-refused	The mortal's read-board command routes through the assigned special to this READ_LVL gate (R1/R2/R5e/R5h).

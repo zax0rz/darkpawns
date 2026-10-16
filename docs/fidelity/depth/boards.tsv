@@ -23,3 +23,4 @@ gen_board	write	boards.global-slot-exhaustion	D2	command	unit-green	TestGenBoard
 gen_board	read	boards.read-past-end	D1	command	oracle-green	boards-depth	src/boards.c:337-344	After one saved post, reading message 2 reaches the numeric range refusal (R1/R2/R5e/R5h).
 gen_board	remove	boards.remove-empty	D1	command	oracle-green	boards-depth	src/boards.c:377-386	Removing message 1 from the empty board reaches the empty-board refusal before range validation (R1/R2/R5e/R5h).
 gen_board	remove	boards.remove-past-end	D1	command	oracle-green	boards-depth	src/boards.c:384-391	After one saved post, removing 2 reaches the numeric range refusal (R1/R2/R5e/R5h).
+gen_board	write	boards.write-heading-allocation-failure	D2	command	unit-green	TestBoardWriteHeadingAllocationFailureMatchesC	boards.c:251-255	A nil heading allocation after the slot is marked proves the exact C refusal bytes and retained slot-taken/no-message state (R1/R2/R5e/R5h).

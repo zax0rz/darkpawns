@@ -51,28 +51,35 @@ func cmdRecite(s *Session, args []string) error {
 		return nil
 	}
 
+	if item.VNum == 8052 && s.player.IsFighting() {
+		// C spell_parser.c:661-664 refuses the recall scroll before the
+		// sitting gate and before the scroll is consumed.
+		s.Send("You can't concentrate enough!.")
+		return nil
+	}
+	if s.player.GetPosition() == game.PosSitting {
+		// C spell_parser.c:666-669 leaves the scroll untouched when sitting.
+		s.Send("You can't do this sitting!!")
+		return nil
+	}
 	if item.Prototype == nil || len(item.Prototype.Values) < 2 {
 		s.Send("Nothing magical happens.")
 		return nil
 	}
 
-	// Extract spell data from prototype values
-	// Values[0] = spell level, Values[1]/[2]/[3] = spell numbers (1-3 spells on scroll)
-	spellLevel := item.Prototype.Values[0]
-	spellNumbers := []int{item.Prototype.Values[1]}
-	if len(item.Prototype.Values) >= 3 && item.Prototype.Values[2] > 0 {
-		spellNumbers = append(spellNumbers, item.Prototype.Values[2])
-	}
-	if len(item.Prototype.Values) >= 4 && item.Prototype.Values[3] > 0 {
-		spellNumbers = append(spellNumbers, item.Prototype.Values[3])
+	// C uses object-instance values 0..3 for level and up to three spells.
+	spellLevel := item.GetValue(0)
+	spellNumbers := []int{item.GetValue(1), item.GetValue(2), item.GetValue(3)}
+	for len(spellNumbers) > 1 && spellNumbers[len(spellNumbers)-1] <= 0 {
+		spellNumbers = spellNumbers[:len(spellNumbers)-1]
 	}
 
 	// Determine target — default to self.
 	var target interface{} = s.player
+	var objectTarget interface{}
 
 	if targetName != "" {
-		// Resolve via the canonical in-room resolver (DP-907) so `recite scroll
-		// X` agrees with consider/kick/... on what "X" is.
+		// C generic_find resolves a room character first, then carried/room objects.
 		if tgt, found := s.manager.world.ResolveCharInRoom(s.player, targetName); found {
 			switch {
 			case tgt.Player != nil:
@@ -80,6 +87,19 @@ func cmdRecite(s *Session, args []string) error {
 			case tgt.Mob != nil:
 				target = tgt.Mob
 			}
+		} else if obj, found := s.manager.world.ResolveObjectInInventory(s.player, targetName); found {
+			target = nil
+			objectTarget = obj
+		} else if obj, found := s.manager.world.ResolveObjectInRoom(s.player, targetName); found {
+			target = nil
+			objectTarget = obj
+		} else if obj, found := s.manager.world.ResolveObjectInEquipment(s.player, targetName); found {
+			target = nil
+			objectTarget = obj
+		} else {
+			game.Act(nil, false, s.player, nil, item, nil,
+				"There is nothing to here to affect with $p.", "", game.ToChar)
+			return nil
 		}
 	}
 
@@ -87,8 +107,13 @@ func cmdRecite(s *Session, args []string) error {
 	// recipient-specific visibility for both the actor and room audiences.
 	game.Act(nil, true, s.player, nil, item, nil,
 		"You recite $p which dissolves.", "", game.ToChar)
-	game.Act(s.manager.world, false, s.player, nil, item, nil,
-		"$n recites $p.", "", game.ToRoom)
+	if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+		game.Act(s.manager.world, false, s.player, nil, item, nil,
+			item.Prototype.ActionDesc, "", game.ToRoom)
+	} else {
+		game.Act(s.manager.world, false, s.player, nil, item, nil,
+			"$n recites $p.", "", game.ToRoom)
+	}
 
 	// C mag_objectmagic stalls the reader for one combat round before the
 	// spells resolve (spell_parser.c:683).
@@ -113,9 +138,11 @@ func cmdRecite(s *Session, args []string) error {
 	// Cast each spell on the scroll
 	for _, spellNum := range spellNumbers {
 		if spellNum <= 0 {
-			continue
+			break
 		}
-		spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world)
+		if !spells.CallMagic(s.player, target, objectTarget, spellNum, spellLevel, spells.CastScroll, s.manager.world) {
+			break
+		}
 	}
 
 	return nil

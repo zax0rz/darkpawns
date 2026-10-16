@@ -13,24 +13,25 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
-// SpellWearOffMsg returns the wear-off message for a given spell type.
-// Source: src/spells.c spell_wear_off_msg[].
-// Extended list matching CircleMUD original messages.
-// wearOffMessages maps spell type index to wear-off message.
+// SpellWearOffMsg returns the C wear-off message for a one-based spell number.
+// C's spell_wear_off_msg[0] is reserved, so Go entry n-1 represents spell n.
 var wearOffMessages = map[int]string{}
 
 func init() {
 	for i, msg := range SpellWearOffMessages {
-		wearOffMessages[i] = msg
+		wearOffMessages[i+1] = msg
 	}
 }
 
 // SpellWearOffMsg gets the wear-off message for a spell type.
 func SpellWearOffMsg(spellType int) string {
+	if spellType <= 0 {
+		return ""
+	}
 	if msg, ok := wearOffMessages[spellType]; ok {
 		return msg
 	}
-	return "You feel strange."
+	return ""
 }
 
 // AffectUpdate decrements affect durations and removes expired affects.

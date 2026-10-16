@@ -192,7 +192,7 @@ func TestAffectUpdateDurationZeroExpires(t *testing.T) {
 	p := NewPlayer(1, "Tester", 3001)
 	world.AddPlayer(p)
 
-	const spellID = 0
+	const spellID = 1 // SPELL_ARMOR in src/spells.h
 	af := engine.NewAffect(spellID, engine.ApplyHitroll, 0, 5, "zero-duration buff")
 	p.AddAffect(af)
 
@@ -206,7 +206,7 @@ func TestAffectUpdateDurationZeroExpires(t *testing.T) {
 		t.Errorf("expected duration-0 affect to be removed after AffectUpdate, got %d affects", len(p.ActiveAffects))
 	}
 
-	expectedMsg := SpellWearOffMsg(spellID) + "\r\n"
+	const expectedMsg = "You feel less protected.\r\n"
 	found := false
 	for _, msg := range messages {
 		if msg == expectedMsg {

@@ -1,0 +1,49 @@
+# depth-case: parser.recite.scroll-fighting
+# Exercise the live do_hit -> FIGHTING path, then recite C's recall scroll
+# vnum 8052. mag_objectmagic must refuse before sitting checks or consumption.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-obj 8052 1 8105 80
+force-load 8052
+
+[setup:oracle]
+Parserfight
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Parserfight
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+get recall
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+
+[probe]
+hit trainee
+~dpclock pulse 20
+recite recall
