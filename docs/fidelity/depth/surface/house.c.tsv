@@ -3,7 +3,7 @@ src/house.c:209	House_listrent	unreachable		Only the definition and header decla
 src/house.c:227	House_listrent	unreachable		Only the definition and header declaration exist in src/; there is no C caller that can reach the object listing send (R2/R4/R5e).
 src/house.c:339	hcontrol_list_houses	proven	hcontrol.show-empty	The registered hcontrol show path emits the empty-house response.
 src/house.c:381	hcontrol_list_houses	proven	hcontrol.show-defined;hcontrol.show-paid	Defined and post-payment listings reach the populated-list send.
-src/house.c:394	hcontrol_build_house	gap-reachable		A control table at MAX_HOUSES reaches the capacity refusal; no capacity proof exists.
+src/house.c:394	hcontrol_build_house	proven	hcontrol.build-capacity	After 100 registered hcontrol builds fill the table, the 101st command proves C's capacity refusal before VNUM parsing (R1/R2/R5e/R5h).
 src/house.c:401	hcontrol_build_house	proven	hcontrol.build-usage	A build command without arguments reaches this shared usage output.
 src/house.c:406	hcontrol_build_house	proven	hcontrol.build-no-such-room	A truly absent room VNUM reaches C's no-such-room refusal; the nonnumeric vnum proof still reaches the later missing-exit branch.
 src/house.c:410	hcontrol_build_house	proven	hcontrol.build-duplicate	A second build of the same house reaches the duplicate refusal.
