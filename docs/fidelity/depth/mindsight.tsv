@@ -1,2 +1,3 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
 spell_mindsight	will mindsight	spell.mindsight-immortal-recoil	D3	output	unit-green	TestCastMindsight_ImmortalVictimRecoils	spells.c:922-927	The exact output assertion covers C's immortal-victim recoil branch before target-room lookup (R1/R2/R5e/R5h).
+spell_mindsight	cast mindsight	spell.mindsight-no-track-refusal	D1	command	oracle-green	cast-mindsight-no-track	spell_parser.c:521; spells.c:930-933	Registered live cast reaches the AFF_NOTRACK refusal before room lookup; the spawned trainee's C affect bit 15 is set by the scenario fixture (R1/R2/R5e/R5h).

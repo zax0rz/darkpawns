@@ -3521,6 +3521,13 @@ func castMindsight(level int, ch, cvict, world interface{}) {
 		sendToCaster(ch, "With a searing pain, your psionic energy recoils!\r\n")
 		return
 	}
+	// C spell_mindsight refuses AFF_NOTRACK before reading the target room
+	// (src/spells.c:930-933; AFF_NOTRACK is C affect bit 15).
+	type affectChecker interface{ IsAffected(int) bool }
+	if affected, ok := cvict.(affectChecker); ok && affected.IsAffected(15) {
+		sendToCaster(ch, "Cannot find the target of your will!\r\n")
+		return
+	}
 
 	victRoom := 0
 	if rg, ok := cvict.(roomGet); ok {

@@ -1,0 +1,46 @@
+# depth-case: spell.mindsight-no-track-refusal
+# C spell_parser.c:521 dispatches an eligible registered `cast 'mindsight'`
+# command to spell_mindsight. The trainee carries AFF_NOTRACK (C bit 15); its
+# level is below the Implementor's, so the earlier random/immortal recoil gate
+# is skipped and spell_mindsight reaches its exact refusal at spells.c:930-933
+# before room transfer or watcher output.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-aff 16303 32768
+
+[setup:oracle]
+Mindgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+cast 'mindsight' trainee

@@ -280,3 +280,15 @@ func TestCastMindsight_ImmortalVictimRecoils(t *testing.T) {
 		t.Fatalf("immortal victim recoil = %q, want exact C bytes %q", got, want)
 	}
 }
+
+func TestCastMindsight_NoTrackVictimRefuses(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 30, roomVNum: 100}
+	victim := &mockSpellsChar{name: "Hidden", level: 1, roomVNum: 200, aff: 1 << 15}
+
+	castMindsight(30, caster, victim, &mockAreaWorld{})
+
+	const want = "Cannot find the target of your will!\r\n"
+	if got := strings.Join(caster.messages, ""); got != want {
+		t.Fatalf("no-track refusal = %q, want exact C bytes %q", got, want)
+	}
+}
