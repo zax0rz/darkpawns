@@ -3,6 +3,7 @@
 # depth-case: magic.smokescreen-room-pair
 # depth-case: magic.points-room-pair
 # depth-case: magic.animate-dead-message-pair
+# depth-case: magic.animate-dead-invalid-target
 # Real player-command dispatch for four shared magic.c output paths. The good
 # target drives SPELL_DISPEL_EVIL's protected-target act; create food exercises
 # object-description substitution and its room audience; smokescreen exercises
@@ -13,6 +14,7 @@
 [fixture]
 empty-players
 quiet-mobs
+spawn-obj 8010 1 8105 80
 spawn-mob 16303 1 8105 80
 
 [setup:oracle]
@@ -115,6 +117,8 @@ cast 'create food'
 cast 'smokescreen'
 ~dpclock pulse 20
 cast 'cure light' Casttarget
+~dpclock pulse 20
+cast 'animate dead' bread
 ~dpclock pulse 20
 cast 'animate dead' corpse
 ~dpclock pulse 20

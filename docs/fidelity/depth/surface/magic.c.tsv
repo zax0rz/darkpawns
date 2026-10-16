@@ -32,7 +32,7 @@ src/magic.c:1145	mag_affects	proven	mudlog.game-protection-evil-death	The evil-p
 src/magic.c:1165	mag_affects	proven	mudlog.game-protection-good-death	The good-protection death test executes the warning before the caster is killed (R1/R5e/R5h).
 src/magic.c:1204	mag_affects	proven	objmagic.sleep-outlaw-sand	The sand-bearing sleep potion executes the caster's reagent narration (R1/R5e/R5h).
 src/magic.c:1206	mag_affects	proven	objmagic.sleep-outlaw-sand	The sand-bearing sleep potion executes the room reagent act (R1/R5e/R5h).
-src/magic.c:1210	mag_affects	gap-reachable		Sleep cast without reagent 1226 reaches the missing-component message; existing sleep cases provide sand (R1/R2/R5e).
+src/magic.c:1210	mag_affects	proven	objmagic.sleep-refusal-bare	The clean five-seed bare-potion case executes the missing-component message before the non-Outlaw refusal (R1/R2/R5e/R5h).
 src/magic.c:1214	mag_affects	proven	objmagic.sleep-refusal-sand;objmagic.sleep-refusal-bare	The non-outlaw self-quaff scenarios execute the outlaw refusal message (R1/R5e/R5h).
 src/magic.c:1217	mag_affects	proven	objmagic.sleep-refusal-sand;objmagic.sleep-refusal-bare	The paired refusal scenarios execute the second recipient write for the self-target case (R1/R5e/R5h).
 src/magic.c:1224	mag_affects	gap-reachable		A player sleep target outside the caster's three-level window reaches this room act; no current case exercises that gate (R1/R2/R5e).
@@ -51,10 +51,10 @@ src/magic.c:1527	mag_masses	proven	objmagic.smokescreen-message-pair	The direct-
 src/magic.c:1529	mag_masses	proven	objmagic.smokescreen-message-pair	The room-message unit test asserts caster substitution and delivery to other players (R1/R5e/R5h).
 src/magic.c:1589	mag_areas	gap-reachable		Earthquake and acid-blast casts reach this caster act; the native-cleric case has no player descriptor to make its assertion fail on this site (R1/R2/R5e/R5h).
 src/magic.c:1591	mag_areas	proven	mob.cleric-earthquake-room-message	The registered cleric earthquake proof asserts the room act's exact text (R1/R5e/R5h).
-src/magic.c:1696	mag_summons	gap-reachable		Animate-dead with no valid container target reaches the C "There is no corpse!" write; no case proves this gate (R1/R2/R5e).
-src/magic.c:1711	mag_summons	gap-reachable		A charmed caster reaches the too-giddy refusal; no case proves this message path (R1/R2/R5e).
-src/magic.c:1716	mag_summons	gap-reachable		A caster at the follower cap reaches this refusal; no case proves this message path (R1/R2/R5e).
-src/magic.c:1721	mag_summons	gap-reachable		Animate-dead's one-in-101 pfail branch reaches this failure message; no live case proves the branch (R1/R3/R5e).
+src/magic.c:1696	mag_summons	proven	magic.animate-dead-invalid-target	Targeting bread while a valid corpse remains in the room reaches this C early return; the live case asserts the exact no-corpse line (R1/R2/R5e/R5h).
+src/magic.c:1711	mag_summons	proven	objmagic.animate-dead-giddy-refusal	The exact charmed-caster refusal and early return are pinned by the focused routine test (R1/R2/R5e/R5h).
+src/magic.c:1716	mag_summons	proven	objmagic.animate-dead-follower-cap	The exact follower-cap refusal and early return are pinned by the focused routine test (R1/R2/R5e/R5h).
+src/magic.c:1721	mag_summons	proven	objmagic.animate-dead-pfail-message	The fixed failing draw reaches C's fmsg-zero bare CRLF; the test asserts exact bytes and no spawn or corpse extraction (R1/R3/R5e/R5h).
 src/magic.c:1729	mag_summons	proven	objmagic.animate-dead-message-pair	The successful real helper test asserts C's blank act output to the room (R1/R5e/R5h).
 src/magic.c:1736	mag_summons	proven	objmagic.animate-dead-message-pair	The successful animate-dead test pins C's exact "it's own" caster line (R1/R5e/R5h).
 src/magic.c:1767	mag_points	proven	objmagic.points-message-audiences	The cure-light branch delivers its direct message to the healed character (R1/R5e/R5h).

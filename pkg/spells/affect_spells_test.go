@@ -570,10 +570,22 @@ func TestMagUnaffects(t *testing.T) {
 	})
 }
 
-// mockCorpse satisfies the interfaces MagSummons uses to find a corpse.
-type mockCorpse struct{ keywords string }
+// mockCorpse satisfies the object interfaces MagSummons uses for C's explicit
+// animate-dead container target.
+type mockCorpse struct {
+	keywords string
+	objType  int
+	values   [4]int
+}
 
 func (m *mockCorpse) GetKeywords() string { return m.keywords }
+func (m *mockCorpse) GetObjType() int     { return m.objType }
+func (m *mockCorpse) GetValue(idx int) int {
+	if idx < 0 || idx >= len(m.values) {
+		return 0
+	}
+	return m.values[idx]
+}
 
 // mockAnimateWorld is a minimal world for testing Animate Dead.
 type mockAnimateWorld struct {
@@ -642,14 +654,14 @@ func forceAnimateDeadRoll(t *testing.T, val int) {
 func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
 	forceAnimateDeadRoll(t, 101) // pass the pfail so we reach the spawn attempt
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
-	corpse := &mockCorpse{keywords: "corpse"}
+	corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
 	world := &mockAnimateWorld{
 		items:    []interface{}{corpse},
 		spawnErr: fmt.Errorf("spawn failed"),
 		canRaise: true,
 	}
 
-	MagSummons(10, caster, SpellAnimateDead, world)
+	MagSummons(10, caster, corpse, SpellAnimateDead, world)
 
 	if world.removed {
 		t.Error("corpse was removed even though spawn failed")
@@ -659,16 +671,32 @@ func TestMagSummons_AnimateDead_KeepsCorpseOnSpawnFailure(t *testing.T) {
 	}
 }
 
+func TestMagSummons_AnimateDead_InvalidTarget(t *testing.T) {
+	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
+	roomCorpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
+	invalidTarget := &mockCorpse{keywords: "bread", objType: 19}
+	world := &mockAnimateWorld{items: []interface{}{roomCorpse}, canRaise: true}
+
+	MagSummons(10, caster, invalidTarget, SpellAnimateDead, world)
+
+	if !reflect.DeepEqual(caster.messages, []string{"There is no corpse!\r\n\r\n"}) {
+		t.Errorf("invalid-target output = %q, want C's exact no-corpse line", caster.messages)
+	}
+	if world.spawnedVNum != 0 || world.removed || world.canRaiseCalled {
+		t.Errorf("invalid target passed C's early gate: spawn=%d removed=%t raise-check=%t", world.spawnedVNum, world.removed, world.canRaiseCalled)
+	}
+}
+
 func TestMagSummons_AnimateDead_PfailKeepsCorpseNoSpawn(t *testing.T) {
 	forceAnimateDeadRoll(t, 0) // 0 < 8 -> the pfail roll fails
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
-	corpse := &mockCorpse{keywords: "corpse"}
+	corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
 	world := &mockAnimateWorld{
 		items:    []interface{}{corpse},
 		canRaise: true,
 	}
 
-	MagSummons(10, caster, SpellAnimateDead, world)
+	MagSummons(10, caster, corpse, SpellAnimateDead, world)
 
 	if world.spawnedVNum != 0 {
 		t.Errorf("pfail should abort before spawn, but spawned vnum %d", world.spawnedVNum)
@@ -685,14 +713,14 @@ func TestMagSummons_AnimateDead_PfailKeepsCorpseNoSpawn(t *testing.T) {
 
 func TestMagSummons_AnimateDead_GiddyBlocked(t *testing.T) {
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
-	corpse := &mockCorpse{keywords: "corpse"}
+	corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
 	world := &mockAnimateWorld{
 		items:       []interface{}{corpse},
 		canRaise:    false,
 		canRaiseMsg: "You are too giddy to have any followers!\r\n",
 	}
 
-	MagSummons(10, caster, SpellAnimateDead, world)
+	MagSummons(10, caster, corpse, SpellAnimateDead, world)
 
 	if world.spawnedVNum != 0 {
 		t.Error("expected no spawn when caster is charmed")
@@ -700,21 +728,21 @@ func TestMagSummons_AnimateDead_GiddyBlocked(t *testing.T) {
 	if world.removed {
 		t.Error("corpse should not be removed when blocked")
 	}
-	if !strings.Contains(caster.messages[0], "too giddy") {
-		t.Errorf("expected giddy message, got %q", caster.messages)
+	if !reflect.DeepEqual(caster.messages, []string{"You are too giddy to have any followers!\r\n"}) {
+		t.Errorf("giddy output = %q, want C's exact refusal", caster.messages)
 	}
 }
 
 func TestMagSummons_AnimateDead_FollowerCapBlocked(t *testing.T) {
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
-	corpse := &mockCorpse{keywords: "corpse"}
+	corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
 	world := &mockAnimateWorld{
 		items:       []interface{}{corpse},
 		canRaise:    false,
 		canRaiseMsg: "You can't have any more followers!\r\n",
 	}
 
-	MagSummons(10, caster, SpellAnimateDead, world)
+	MagSummons(10, caster, corpse, SpellAnimateDead, world)
 
 	if world.spawnedVNum != 0 {
 		t.Error("expected no spawn at follower cap")
@@ -722,15 +750,15 @@ func TestMagSummons_AnimateDead_FollowerCapBlocked(t *testing.T) {
 	if world.removed {
 		t.Error("corpse should not be removed when blocked")
 	}
-	if !strings.Contains(caster.messages[0], "can't have any more followers") {
-		t.Errorf("expected cap message, got %q", caster.messages)
+	if !reflect.DeepEqual(caster.messages, []string{"You can't have any more followers!\r\n"}) {
+		t.Errorf("follower-cap output = %q, want C's exact refusal", caster.messages)
 	}
 }
 
 func TestMagSummons_AnimateDead_Success(t *testing.T) {
 	forceAnimateDeadRoll(t, 101) // pass the pfail so the spawn path runs
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
-	corpse := &mockCorpse{keywords: "corpse"}
+	corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
 	observer := &mockSpellsChar{name: "Observer", roomVNum: 100}
 	world := &mockAnimateWorld{
 		items:    []interface{}{corpse},
@@ -738,7 +766,7 @@ func TestMagSummons_AnimateDead_Success(t *testing.T) {
 		canRaise: true,
 	}
 
-	MagSummons(10, caster, SpellAnimateDead, world)
+	MagSummons(10, caster, corpse, SpellAnimateDead, world)
 	if world.spawnedVNum != 10 {
 		t.Fatalf("expected zombie vnum 10 spawned, got %d", world.spawnedVNum)
 	}
