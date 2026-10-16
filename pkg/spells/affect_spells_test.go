@@ -350,6 +350,22 @@ func TestMagAffects_Armor(t *testing.T) {
 	}
 }
 
+func TestCallMagicArmorSpokenCastAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosFighting)}
+	victim := &mockSpellsChar{name: "Victim", level: 10, position: int(PosStanding)}
+
+	if !CallMagic(caster, victim, nil, SpellArmor, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch holy ward")
+	}
+	if len(victim.activeAffects) != 1 {
+		t.Fatalf("expected one armor affect, got %d", len(victim.activeAffects))
+	}
+	aff := victim.activeAffects[0]
+	if aff.SpellID != SpellArmor || aff.Location != engine.ApplyAC || aff.Magnitude != -15 {
+		t.Errorf("unexpected armor affect from spoken dispatch: %+v", aff)
+	}
+}
+
 // forceMagAffectsSave makes the mag_affects saving throw deterministic for the
 // duration of a test: saved=true means the victim resists, saved=false means the
 // spell lands. Restores the real (RNG-backed) roll via t.Cleanup.
