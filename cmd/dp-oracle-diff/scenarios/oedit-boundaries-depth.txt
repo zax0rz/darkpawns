@@ -11,6 +11,10 @@
 # depth-case: oedit.extra-desc
 # depth-case: oedit.apply-forms
 # depth-case: oedit.confirm-save
+# depth-case: oedit.liquid-value-prompts
+# depth-case: oedit.wand-charge-prompts
+# depth-case: oedit.spell-slot-menus
+# depth-case: oedit.permanent-spell-menu
 
 [fixture]
 empty-players
@@ -74,6 +78,26 @@ e
 25
 5
 0
+e
+1
+29
+1
+0
+0
+5
+17
+d
+50
+20
+0
+0
+5
+3
+d
+10
+20
+10
+1
 q
 z
 n
