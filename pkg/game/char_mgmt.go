@@ -40,30 +40,55 @@ func (p *Player) HasLight() bool {
 // update_char_objects — handler.c:1016
 // ---------------------------------------------------------------------------
 
-// UpdateCharObjects processes light source timers each pulse.
-// Source: src/handler.c update_char_objects() lines 1016-1042.
-func (p *Player) UpdateCharObjects() {
-	if p.Equipment == nil {
+// updateCharObjects processes the held light exactly where C's point_update
+// calls update_char_objects (limits.c:521-525). C checks WEAR_HOLD and value[2],
+// emits separate actor and room acts at the one-hour and zero-hour boundaries,
+// then removes an unmodified light when it expires.
+func (w *World) updateCharObjects(p *Player) {
+	if p == nil || p.Equipment == nil {
 		return
 	}
-	item, ok := p.Equipment.GetItemInSlot(SlotLight)
-	if !ok || item == nil || item.Prototype == nil {
+	item, ok := p.Equipment.GetItemInSlot(SlotHold)
+	if !ok || item == nil || item.GetTypeFlag() != itemLightTypeFlag {
 		return
 	}
-	if item.Prototype.TypeFlag != itemLightTypeFlag {
+
+	hours := item.GetValue(2)
+	if hours <= 0 {
 		return
 	}
-	if item.Prototype.Values[1] > 0 {
-		item.Prototype.Values[1]--
-		if item.Prototype.Values[1] == 1 {
-			p.SendMessage("Your light source flickers and sputters.\r\n")
-		} else if item.Prototype.Values[1] <= 0 {
-			p.SendMessage("Your light source has gone out.\r\n")
-			if err := p.Equipment.Unequip(SlotLight, p.Inventory); err != nil {
-				slog.Warn("light unequip failed", "player", p.Name, "error", err)
-			}
+	hours--
+	item.SetValue(2, hours)
+	if hours == 1 {
+		w.actToChar(p, "Your light begins to flicker and fade.", nil, nil)
+		w.actToRoom(p, "$n's light begins to flicker and fade.", nil, nil)
+		return
+	}
+	if hours != 0 {
+		return
+	}
+
+	w.actToChar(p, "Your light sputters out and dies.", nil, nil)
+	w.actToRoom(p, "$n's light sputters out and dies.", nil, nil)
+	w.adjustRoomLight(p.GetRoom(), -1)
+
+	hasAffects := false
+	for _, affect := range item.GetAffects() {
+		if affect.Location != ApplyNone {
+			hasAffects = true
+			break
 		}
 	}
+	if hasAffects {
+		return
+	}
+
+	p.SendMessage("It crumbles into dust.\r\n")
+	if err := w.MoveObjectToNowhere(item); err != nil {
+		slog.Error("expired held light could not be detached", "player", p.Name, "obj_vnum", item.GetVNum(), "error", err)
+		return
+	}
+	w.ExtractObject(item, p.GetRoom())
 }
 
 // ---------------------------------------------------------------------------

@@ -221,6 +221,9 @@ func (w *World) PointUpdate() {
 			// (handled in NPC section below)
 
 			// Idle check for players — limits.c:521-524
+			// C updates held-light fuel before checking whether the character is
+			// idle (src/limits.c:521-525).
+			w.updateCharObjects(p)
 			w.CheckIdling(p)
 			continue
 		}
