@@ -1,0 +1,43 @@
+# Route the invalid-argument output through the live manual-spell command.
+# depth-case: spell.control-weather-invalid-argument
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Weather
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Weather
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set Weather class mage
+set Weather level 31
+skillset Weather 'control weather' 100
+
+[probe]
+cast 'control weather' sideways

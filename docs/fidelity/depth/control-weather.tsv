@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_cast	cast	spell.control-weather-invalid-argument	D2	command	oracle-green	spell-control-weather-invalid-depth	class.c:772-798; spell_parser.c:525,1265; spells.c:997-1012	The registered immortal Mage cast supplies an unsupported direction and reaches C's default message branch; the fixture and direct oracle comparison confirm identical bytes (R1/R2/R5e/R5g/R5h).
