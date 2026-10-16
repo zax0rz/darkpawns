@@ -1,0 +1,344 @@
+# C-first hcontrol capacity vehicle. The disposable fixture supplies 100
+# unique house/atrium pairs from rooms in the production world index. Live
+# immortal build commands fill MAX_HOUSES before the final capacity refusal.
+
+# depth-case: hcontrol.build-capacity
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8001 north 8002 0
+replace-room-exits 8002 south 8001 0
+replace-room-exits 8003 north 8004 0
+replace-room-exits 8004 south 8003 0
+replace-room-exits 8005 north 8006 0
+replace-room-exits 8006 south 8005 0
+replace-room-exits 8007 north 8008 0
+replace-room-exits 8008 south 8007 0
+replace-room-exits 8009 north 8010 0
+replace-room-exits 8010 south 8009 0
+replace-room-exits 8011 north 8012 0
+replace-room-exits 8012 south 8011 0
+replace-room-exits 8013 north 8014 0
+replace-room-exits 8014 south 8013 0
+replace-room-exits 8015 north 8016 0
+replace-room-exits 8016 south 8015 0
+replace-room-exits 8017 north 8018 0
+replace-room-exits 8018 south 8017 0
+replace-room-exits 8019 north 8020 0
+replace-room-exits 8020 south 8019 0
+replace-room-exits 8021 north 8022 0
+replace-room-exits 8022 south 8021 0
+replace-room-exits 8023 north 8024 0
+replace-room-exits 8024 south 8023 0
+replace-room-exits 8025 north 8026 0
+replace-room-exits 8026 south 8025 0
+replace-room-exits 8027 north 8028 0
+replace-room-exits 8028 south 8027 0
+replace-room-exits 8029 north 8030 0
+replace-room-exits 8030 south 8029 0
+replace-room-exits 8031 north 8032 0
+replace-room-exits 8032 south 8031 0
+replace-room-exits 8033 north 8034 0
+replace-room-exits 8034 south 8033 0
+replace-room-exits 8035 north 8036 0
+replace-room-exits 8036 south 8035 0
+replace-room-exits 8037 north 8038 0
+replace-room-exits 8038 south 8037 0
+replace-room-exits 8039 north 8040 0
+replace-room-exits 8040 south 8039 0
+replace-room-exits 8041 north 8042 0
+replace-room-exits 8042 south 8041 0
+replace-room-exits 8043 north 8044 0
+replace-room-exits 8044 south 8043 0
+replace-room-exits 8045 north 8046 0
+replace-room-exits 8046 south 8045 0
+replace-room-exits 8047 north 8048 0
+replace-room-exits 8048 south 8047 0
+replace-room-exits 8049 north 8050 0
+replace-room-exits 8050 south 8049 0
+replace-room-exits 8051 north 8052 0
+replace-room-exits 8052 south 8051 0
+replace-room-exits 8053 north 8054 0
+replace-room-exits 8054 south 8053 0
+replace-room-exits 8055 north 8056 0
+replace-room-exits 8056 south 8055 0
+replace-room-exits 8057 north 8058 0
+replace-room-exits 8058 south 8057 0
+replace-room-exits 8059 north 8060 0
+replace-room-exits 8060 south 8059 0
+replace-room-exits 8061 north 8062 0
+replace-room-exits 8062 south 8061 0
+replace-room-exits 8063 north 8064 0
+replace-room-exits 8064 south 8063 0
+replace-room-exits 8065 north 8066 0
+replace-room-exits 8066 south 8065 0
+replace-room-exits 8067 north 8068 0
+replace-room-exits 8068 south 8067 0
+replace-room-exits 8069 north 8070 0
+replace-room-exits 8070 south 8069 0
+replace-room-exits 8071 north 8072 0
+replace-room-exits 8072 south 8071 0
+replace-room-exits 8073 north 8074 0
+replace-room-exits 8074 south 8073 0
+replace-room-exits 8075 north 8076 0
+replace-room-exits 8076 south 8075 0
+replace-room-exits 8077 north 8078 0
+replace-room-exits 8078 south 8077 0
+replace-room-exits 8079 north 8080 0
+replace-room-exits 8080 south 8079 0
+replace-room-exits 8081 north 8082 0
+replace-room-exits 8082 south 8081 0
+replace-room-exits 8083 north 8084 0
+replace-room-exits 8084 south 8083 0
+replace-room-exits 8085 north 8086 0
+replace-room-exits 8086 south 8085 0
+replace-room-exits 8087 north 8088 0
+replace-room-exits 8088 south 8087 0
+replace-room-exits 8089 north 8090 0
+replace-room-exits 8090 south 8089 0
+replace-room-exits 8099 north 8101 0
+replace-room-exits 8101 south 8099 0
+replace-room-exits 8102 north 8103 0
+replace-room-exits 8103 south 8102 0
+replace-room-exits 8104 north 8105 0
+replace-room-exits 8105 south 8104 0
+replace-room-exits 8106 north 8107 0
+replace-room-exits 8107 south 8106 0
+replace-room-exits 8108 north 8109 0
+replace-room-exits 8109 south 8108 0
+replace-room-exits 8110 north 8111 0
+replace-room-exits 8111 south 8110 0
+replace-room-exits 8112 north 8113 0
+replace-room-exits 8113 south 8112 0
+replace-room-exits 8114 north 8115 0
+replace-room-exits 8115 south 8114 0
+replace-room-exits 8116 north 8117 0
+replace-room-exits 8117 south 8116 0
+replace-room-exits 8118 north 8119 0
+replace-room-exits 8119 south 8118 0
+replace-room-exits 8120 north 8121 0
+replace-room-exits 8121 south 8120 0
+replace-room-exits 8122 north 8123 0
+replace-room-exits 8123 south 8122 0
+replace-room-exits 8124 north 8125 0
+replace-room-exits 8125 south 8124 0
+replace-room-exits 8126 north 8127 0
+replace-room-exits 8127 south 8126 0
+replace-room-exits 8128 north 8129 0
+replace-room-exits 8129 south 8128 0
+replace-room-exits 8130 north 8131 0
+replace-room-exits 8131 south 8130 0
+replace-room-exits 8132 north 8133 0
+replace-room-exits 8133 south 8132 0
+replace-room-exits 8134 north 8135 0
+replace-room-exits 8135 south 8134 0
+replace-room-exits 8136 north 8137 0
+replace-room-exits 8137 south 8136 0
+replace-room-exits 8138 north 8139 0
+replace-room-exits 8139 south 8138 0
+replace-room-exits 8140 north 8141 0
+replace-room-exits 8141 south 8140 0
+replace-room-exits 8142 north 8143 0
+replace-room-exits 8143 south 8142 0
+replace-room-exits 8144 north 8145 0
+replace-room-exits 8145 south 8144 0
+replace-room-exits 8146 north 8147 0
+replace-room-exits 8147 south 8146 0
+replace-room-exits 8148 north 8149 0
+replace-room-exits 8149 south 8148 0
+replace-room-exits 8150 north 8151 0
+replace-room-exits 8151 south 8150 0
+replace-room-exits 8152 north 8153 0
+replace-room-exits 8153 south 8152 0
+replace-room-exits 8154 north 8155 0
+replace-room-exits 8155 south 8154 0
+replace-room-exits 8156 north 8157 0
+replace-room-exits 8157 south 8156 0
+replace-room-exits 8158 north 8159 0
+replace-room-exits 8159 south 8158 0
+replace-room-exits 8160 north 8163 0
+replace-room-exits 8163 south 8160 0
+replace-room-exits 9100 north 9101 0
+replace-room-exits 9101 south 9100 0
+replace-room-exits 9102 north 9103 0
+replace-room-exits 9103 south 9102 0
+replace-room-exits 9104 north 9105 0
+replace-room-exits 9105 south 9104 0
+replace-room-exits 9106 north 9107 0
+replace-room-exits 9107 south 9106 0
+replace-room-exits 9108 north 9109 0
+replace-room-exits 9109 south 9108 0
+replace-room-exits 9110 north 9111 0
+replace-room-exits 9111 south 9110 0
+replace-room-exits 9112 north 9113 0
+replace-room-exits 9113 south 9112 0
+replace-room-exits 9114 north 9115 0
+replace-room-exits 9115 south 9114 0
+replace-room-exits 9116 north 9117 0
+replace-room-exits 9117 south 9116 0
+replace-room-exits 9118 north 9119 0
+replace-room-exits 9119 south 9118 0
+replace-room-exits 9120 north 9121 0
+replace-room-exits 9121 south 9120 0
+replace-room-exits 9122 north 9123 0
+replace-room-exits 9123 south 9122 0
+replace-room-exits 9124 north 9125 0
+replace-room-exits 9125 south 9124 0
+replace-room-exits 9126 north 9127 0
+replace-room-exits 9127 south 9126 0
+replace-room-exits 9128 north 9129 0
+replace-room-exits 9129 south 9128 0
+replace-room-exits 9130 north 9131 0
+replace-room-exits 9131 south 9130 0
+replace-room-exits 9132 north 9133 0
+replace-room-exits 9133 south 9132 0
+replace-room-exits 9134 north 9135 0
+replace-room-exits 9135 south 9134 0
+replace-room-exits 9136 north 9137 0
+replace-room-exits 9137 south 9136 0
+replace-room-exits 9138 north 9139 0
+replace-room-exits 9139 south 9138 0
+replace-room-exits 9140 north 9141 0
+replace-room-exits 9141 south 9140 0
+replace-room-exits 9142 north 9143 0
+replace-room-exits 9143 south 9142 0
+replace-room-exits 9144 north 9145 0
+replace-room-exits 9145 south 9144 0
+replace-room-exits 9146 north 9147 0
+replace-room-exits 9147 south 9146 0
+
+[setup:oracle]
+Hcontrolactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hcontrolactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+~dpclock pulse 20
+hcontrol build 8001 north Hcontrolactor
+hcontrol build 8003 north Hcontrolactor
+hcontrol build 8005 north Hcontrolactor
+hcontrol build 8007 north Hcontrolactor
+hcontrol build 8009 north Hcontrolactor
+hcontrol build 8011 north Hcontrolactor
+hcontrol build 8013 north Hcontrolactor
+hcontrol build 8015 north Hcontrolactor
+hcontrol build 8017 north Hcontrolactor
+hcontrol build 8019 north Hcontrolactor
+hcontrol build 8021 north Hcontrolactor
+hcontrol build 8023 north Hcontrolactor
+hcontrol build 8025 north Hcontrolactor
+hcontrol build 8027 north Hcontrolactor
+hcontrol build 8029 north Hcontrolactor
+hcontrol build 8031 north Hcontrolactor
+hcontrol build 8033 north Hcontrolactor
+hcontrol build 8035 north Hcontrolactor
+hcontrol build 8037 north Hcontrolactor
+hcontrol build 8039 north Hcontrolactor
+hcontrol build 8041 north Hcontrolactor
+hcontrol build 8043 north Hcontrolactor
+hcontrol build 8045 north Hcontrolactor
+hcontrol build 8047 north Hcontrolactor
+hcontrol build 8049 north Hcontrolactor
+hcontrol build 8051 north Hcontrolactor
+hcontrol build 8053 north Hcontrolactor
+hcontrol build 8055 north Hcontrolactor
+hcontrol build 8057 north Hcontrolactor
+hcontrol build 8059 north Hcontrolactor
+hcontrol build 8061 north Hcontrolactor
+hcontrol build 8063 north Hcontrolactor
+hcontrol build 8065 north Hcontrolactor
+hcontrol build 8067 north Hcontrolactor
+hcontrol build 8069 north Hcontrolactor
+hcontrol build 8071 north Hcontrolactor
+hcontrol build 8073 north Hcontrolactor
+hcontrol build 8075 north Hcontrolactor
+hcontrol build 8077 north Hcontrolactor
+hcontrol build 8079 north Hcontrolactor
+hcontrol build 8081 north Hcontrolactor
+hcontrol build 8083 north Hcontrolactor
+hcontrol build 8085 north Hcontrolactor
+hcontrol build 8087 north Hcontrolactor
+hcontrol build 8089 north Hcontrolactor
+hcontrol build 8099 north Hcontrolactor
+hcontrol build 8102 north Hcontrolactor
+hcontrol build 8104 north Hcontrolactor
+hcontrol build 8106 north Hcontrolactor
+hcontrol build 8108 north Hcontrolactor
+hcontrol build 8110 north Hcontrolactor
+hcontrol build 8112 north Hcontrolactor
+hcontrol build 8114 north Hcontrolactor
+hcontrol build 8116 north Hcontrolactor
+hcontrol build 8118 north Hcontrolactor
+hcontrol build 8120 north Hcontrolactor
+hcontrol build 8122 north Hcontrolactor
+hcontrol build 8124 north Hcontrolactor
+hcontrol build 8126 north Hcontrolactor
+hcontrol build 8128 north Hcontrolactor
+hcontrol build 8130 north Hcontrolactor
+hcontrol build 8132 north Hcontrolactor
+hcontrol build 8134 north Hcontrolactor
+hcontrol build 8136 north Hcontrolactor
+hcontrol build 8138 north Hcontrolactor
+hcontrol build 8140 north Hcontrolactor
+hcontrol build 8142 north Hcontrolactor
+hcontrol build 8144 north Hcontrolactor
+hcontrol build 8146 north Hcontrolactor
+hcontrol build 8148 north Hcontrolactor
+hcontrol build 8150 north Hcontrolactor
+hcontrol build 8152 north Hcontrolactor
+hcontrol build 8154 north Hcontrolactor
+hcontrol build 8156 north Hcontrolactor
+hcontrol build 8158 north Hcontrolactor
+hcontrol build 8160 north Hcontrolactor
+hcontrol build 9100 north Hcontrolactor
+hcontrol build 9102 north Hcontrolactor
+hcontrol build 9104 north Hcontrolactor
+hcontrol build 9106 north Hcontrolactor
+hcontrol build 9108 north Hcontrolactor
+hcontrol build 9110 north Hcontrolactor
+hcontrol build 9112 north Hcontrolactor
+hcontrol build 9114 north Hcontrolactor
+hcontrol build 9116 north Hcontrolactor
+hcontrol build 9118 north Hcontrolactor
+hcontrol build 9120 north Hcontrolactor
+hcontrol build 9122 north Hcontrolactor
+hcontrol build 9124 north Hcontrolactor
+hcontrol build 9126 north Hcontrolactor
+hcontrol build 9128 north Hcontrolactor
+hcontrol build 9130 north Hcontrolactor
+hcontrol build 9132 north Hcontrolactor
+hcontrol build 9134 north Hcontrolactor
+hcontrol build 9136 north Hcontrolactor
+hcontrol build 9138 north Hcontrolactor
+hcontrol build 9140 north Hcontrolactor
+hcontrol build 9142 north Hcontrolactor
+hcontrol build 9144 north Hcontrolactor
+hcontrol build 9146 north Hcontrolactor
+
+[probe]
+hcontrol build 999999 east Hcontrolactor
