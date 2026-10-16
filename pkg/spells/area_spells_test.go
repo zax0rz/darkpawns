@@ -275,7 +275,8 @@ func TestCastMindsight_ImmortalVictimRecoils(t *testing.T) {
 
 	castMindsight(lvlImmort, caster, god, &mockAreaWorld{})
 
-	if got := strings.Join(caster.messages, ""); !strings.Contains(got, "searing pain") {
-		t.Fatalf("immortal victim did not recoil mindsight: %q", got)
+	const want = "With a searing pain, your psionic energy recoils!\r\n"
+	if got := strings.Join(caster.messages, ""); got != want {
+		t.Fatalf("immortal victim recoil = %q, want exact C bytes %q", got, want)
 	}
 }

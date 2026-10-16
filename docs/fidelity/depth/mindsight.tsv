@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+spell_mindsight	will mindsight	spell.mindsight-immortal-recoil	D3	output	unit-green	TestCastMindsight_ImmortalVictimRecoils	spells.c:922-927	The exact output assertion covers C's immortal-victim recoil branch before target-room lookup (R1/R2/R5e/R5h).
