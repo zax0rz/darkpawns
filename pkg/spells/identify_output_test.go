@@ -153,8 +153,7 @@ func TestCastIdentifyCharacterReportMatchesCBytes(t *testing.T) {
 
 	ExecuteManualSpell(SpellIdentify, caster.level, caster, target, nil, "", nil)
 
-	const want = "You feel informed:\r\n" +
-		"Name: Target\r\n" +
+	const want = "Name: Target\r\n" +
 		"Target is 19 years, 2 months, 3 days and 4 hours old.\r\n" +
 		"Height 177 cm, Weight 143 pounds\r\n" +
 		"Level: 12, Hits: 87, Mana: 99\r\n" +

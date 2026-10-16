@@ -2535,7 +2535,6 @@ func castIdentifyCharacter(level int, ch, cvict, world interface{}) {
 	}
 
 	if report, ok := cvict.(identifyReport); ok {
-		sendToCaster(ch, "You feel informed:\r\n")
 		sendToCaster(ch, fmt.Sprintf("Name: %s\r\n", report.GetName()))
 		years, months, days, hours := report.GetAgeParts()
 		sendToCaster(ch, fmt.Sprintf("%s is %d years, %d months, %d days and %d hours old.\r\n", report.GetName(), years, months, days, hours))
