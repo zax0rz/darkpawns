@@ -64,10 +64,10 @@ src/spells.c:589	spell_identify	proven	spell.identify-npc-refusal	The registered
 src/spells.c:595	spell_identify	proven	spell.identify-character-report	The registered cast and exact-output unit proof pin the PC name line in C order (R1/R2/R5e/R5h).
 src/spells.c:602	spell_identify	proven	spell.identify-character-report	The registered cast and exact-output unit proof pin the live MUD-age values in C order (R1/R2/R3/R5e/R5h).
 src/spells.c:615	spell_identify	proven	spell.identify-character-report	The registered cast and exact-output unit proof pin C's combined dimensions, level/resources, combat stats, and attributes line (R1/R2/R5e/R5h).
-src/spells.c:647	spell_enchant_weapon	gap-reachable		C MANUAL_SPELL dispatch reaches spell_enchant_weapon (src/spell_parser.c:510); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:652	spell_enchant_weapon	gap-reachable		C MANUAL_SPELL dispatch reaches spell_enchant_weapon (src/spell_parser.c:510); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:655	spell_enchant_weapon	gap-reachable		C MANUAL_SPELL dispatch reaches spell_enchant_weapon (src/spell_parser.c:510); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:658	spell_enchant_weapon	gap-reachable		C MANUAL_SPELL dispatch reaches spell_enchant_weapon (src/spell_parser.c:510); no current depth case executes this output branch (R1/R2/R5e).
+src/spells.c:647	spell_enchant_weapon	proven	spell.enchant-output-branches;spell.enchant-weapon-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
+src/spells.c:652	spell_enchant_weapon	proven	spell.enchant-output-branches;spell.enchant-weapon-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
+src/spells.c:655	spell_enchant_weapon	proven	spell.enchant-output-branches;spell.enchant-weapon-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
+src/spells.c:658	spell_enchant_weapon	proven	spell.enchant-output-branches	Exact unit branch proof pins the non-weapon refusal bytes through manual-spell dispatch (R1/R2/R5e/R5h).
 src/spells.c:668	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:673	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:676	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
@@ -88,16 +88,16 @@ src/spells.c:774	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches 
 src/spells.c:779	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches spell_vampirism (src/spell_parser.c:516); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:782	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches spell_vampirism (src/spell_parser.c:516); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:788	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches spell_vampirism (src/spell_parser.c:516); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:801	spell_detect_poison	gap-reachable		C MANUAL_SPELL dispatch reaches spell_detect_poison (src/spell_parser.c:509); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:803	spell_detect_poison	gap-reachable		C MANUAL_SPELL dispatch reaches spell_detect_poison (src/spell_parser.c:509); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:808	spell_detect_poison	gap-reachable		C MANUAL_SPELL dispatch reaches spell_detect_poison (src/spell_parser.c:509); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:811	spell_detect_poison	gap-reachable		C MANUAL_SPELL dispatch reaches spell_detect_poison (src/spell_parser.c:509); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:823	spell_detect_poison	gap-reachable		C MANUAL_SPELL dispatch reaches spell_detect_poison (src/spell_parser.c:509); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:826	spell_detect_poison	gap-reachable		C MANUAL_SPELL dispatch reaches spell_detect_poison (src/spell_parser.c:509); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:830	spell_detect_poison	gap-reachable		C MANUAL_SPELL dispatch reaches spell_detect_poison (src/spell_parser.c:509); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:858	spell_enchant_armor	gap-reachable		C MANUAL_SPELL dispatch reaches spell_enchant_armor (src/spell_parser.c:519); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:863	spell_enchant_armor	gap-reachable		C MANUAL_SPELL dispatch reaches spell_enchant_armor (src/spell_parser.c:519); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:866	spell_enchant_armor	gap-reachable		C MANUAL_SPELL dispatch reaches spell_enchant_armor (src/spell_parser.c:519); no current depth case executes this output branch (R1/R2/R5e).
+src/spells.c:801	spell_detect_poison	proven	spell.detect-poison-output-branches	Exact unit proof pins self-target result wording and the empty-object failure branch (R1/R2/R5e/R5h).
+src/spells.c:803	spell_detect_poison	proven	spell.detect-poison-output-branches	Exact unit proof pins self-target poison wording (R1/R2/R5e/R5h).
+src/spells.c:808	spell_detect_poison	proven	spell.detect-poison-output-branches;spell.detect-poison-target-output	Unit pronoun matrix and CLEAN live male-target cast prove the canonical $E act output (R1/R2/R5e/R5h).
+src/spells.c:811	spell_detect_poison	proven	spell.detect-poison-output-branches;spell.detect-poison-target-output	Unit pronoun matrix and CLEAN live male-target cast prove the canonical $E act output (R1/R2/R5e/R5h).
+src/spells.c:823	spell_detect_poison	proven	spell.detect-poison-output-branches;spell.detect-poison-food-output	Unit object matrix and CLEAN live food cast prove the canonical $p act output (R1/R2/R5e/R5h).
+src/spells.c:826	spell_detect_poison	proven	spell.detect-poison-output-branches;spell.detect-poison-food-output	Unit object matrix and CLEAN live food cast prove the canonical $p act output (R1/R2/R5e/R5h).
+src/spells.c:830	spell_detect_poison	proven	spell.detect-poison-output-branches	Exact unit proof pins the default unsupported-object result bytes (R1/R2/R5e/R5h).
+src/spells.c:858	spell_enchant_armor	proven	spell.enchant-output-branches;spell.enchant-armor-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
+src/spells.c:863	spell_enchant_armor	proven	spell.enchant-output-branches;spell.enchant-armor-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
+src/spells.c:866	spell_enchant_armor	proven	spell.enchant-output-branches;spell.enchant-armor-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
 src/spells.c:873	spell_zen	gap-reachable		C MANUAL_SPELL dispatch reaches spell_zen (src/spell_parser.c:520); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:875	spell_zen	gap-reachable		C MANUAL_SPELL dispatch reaches spell_zen (src/spell_parser.c:520); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:892	spell_silken_missile	unreachable		SPECIAL-free ASPELL body has only its definition and header declaration; no source caller exists and the MANUAL_SPELL dispatcher has no spell_silken_missile case (src/spells.c:883-910; src/spells.h:373; src/spell_parser.c:503-535) (R2/R5e).
@@ -107,9 +107,9 @@ src/spells.c:906	spell_silken_missile	unreachable		SPECIAL-free ASPELL body has 
 src/spells.c:925	spell_mindsight	proven	spell.mindsight-immortal-recoil	The exact unit proof reaches C's immortal-victim recoil branch and pins its complete message before any target-room lookup (R1/R2/R5e/R5h).
 src/spells.c:931	spell_mindsight	gap-reachable		C MANUAL_SPELL dispatch reaches spell_mindsight (src/spell_parser.c:521); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:946	spell_mindsight	gap-reachable		C MANUAL_SPELL dispatch reaches spell_mindsight (src/spell_parser.c:521); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:967	spell_mental_lapse	gap-reachable		C MANUAL_SPELL dispatch reaches spell_mental_lapse (src/spell_parser.c:523); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:970	spell_mental_lapse	gap-reachable		C MANUAL_SPELL dispatch reaches spell_mental_lapse (src/spell_parser.c:523); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:974	spell_mental_lapse	gap-reachable		C MANUAL_SPELL dispatch reaches spell_mental_lapse (src/spell_parser.c:523); no current depth case executes this output branch (R1/R2/R5e).
+src/spells.c:967	spell_mental_lapse	proven	spell.mental-lapse-output-branches	Exact manual-spell proof pins hunting gates and level-30 preamble framing (R1/R2/R5e/R5h).
+src/spells.c:970	spell_mental_lapse	proven	spell.mental-lapse-output-branches	Exact manual-spell proof pins hunting gates and level-30 preamble framing (R1/R2/R5e/R5h).
+src/spells.c:974	spell_mental_lapse	proven	spell.mental-lapse-output-branches	Exact manual-spell proof pins C's target possessive pronoun act output (R1/R2/R5e/R5h).
 src/spells.c:1005	spell_control_weather	gap-reachable		C MANUAL_SPELL dispatch reaches spell_control_weather (src/spell_parser.c:525); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:1019	spell_coc	gap-reachable		C MANUAL_SPELL dispatch reaches spell_coc (src/spell_parser.c:527); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:1020	spell_coc	gap-reachable		C MANUAL_SPELL dispatch reaches spell_coc (src/spell_parser.c:527); no current depth case executes this output branch (R1/R2/R5e).
