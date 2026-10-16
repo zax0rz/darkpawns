@@ -8,6 +8,7 @@
 # depth-case: cast.no-target-violent
 # depth-case: cast.violent-self
 # depth-case: cast.low-level-pc-protection
+# depth-case: cast.teleport-other-player
 # C-first vehicle for do_cast at interpreter.c:373 and :825, with the
 # spell_parser.c:916-1110 entry path. The Implementor primary has the complete
 # spell catalog; the peer supplies an in-room character target. Pulses are
@@ -87,3 +88,4 @@ cast 'flame arrow'
 cast 'flame arrow' missing
 cast 'flame arrow' Casttarget
 ~dpclock pulse 20
+cast 'teleport' Casttarget
