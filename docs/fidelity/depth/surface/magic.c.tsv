@@ -3,9 +3,9 @@ src/magic.c:451	affect_update	gap-reachable		Expired player affects with a nonem
 src/magic.c:452	affect_update	gap-reachable		This CRLF is paired with the wear-off line after the duration reaches zero; no current pulse case proves it (R1/R2/R5e).
 src/magic.c:588	mag_materials	unreachable		The only live caller has_reagents passes verbose=FALSE, so the puff-to-caster branch cannot run (src/magic.c:475-491; R2/R5e).
 src/magic.c:589	mag_materials	unreachable		The only live caller has_reagents passes verbose=FALSE, so the puff-to-room branch cannot run (src/magic.c:475-491; R2/R5e).
-src/magic.c:624	mag_damage	gap-reachable		Mage magic-missile reagent narration is reachable through damage casts; no case executes this reagent branch (R1/R2/R5e).
-src/magic.c:626	mag_damage	gap-reachable		Mage magic-missile reagent room act is reachable through damage casts; no case executes this audience branch (R1/R2/R5e).
-src/magic.c:629	mag_damage	gap-reachable		Mage magic-missile without its reagent reaches this caster message; no case proves the missing-component branch (R1/R2/R5e).
+src/magic.c:624	mag_damage	proven	objmagic.magic-missile-reagent-output	CLEAN targeted live Mage cast reaches the vnum-1239 reagent narration before the target-protection return (R1/R2/R3/R5e/R5g/R5h).
+src/magic.c:626	mag_damage	proven	objmagic.magic-missile-reagent-output	The same real cast has a room witness and compares C's obsidian-shard act (R1/R2/R3/R5e/R5g/R5h).
+src/magic.c:629	mag_damage	proven	objmagic.magic-missile-missing-reagent	A second cast after the first consumes the only reagent reaches and compares C's missing-components message (R1/R2/R3/R5e/R5g/R5h).
 src/magic.c:662	mag_damage	gap-reachable		Mage color-spray reagent narration is reachable through damage casts; no case executes this branch (R1/R2/R5e).
 src/magic.c:664	mag_damage	gap-reachable		Mage color-spray reagent room act is reachable through damage casts; no case executes this audience branch (R1/R2/R5e).
 src/magic.c:678	mag_damage	gap-reachable		Mage fireball reagent narration is reachable through damage casts; no case executes this branch (R1/R2/R5e).
