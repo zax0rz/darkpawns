@@ -1,0 +1,99 @@
+c_site	function	classification	case_ids	notes
+src/fight.c:117	appear	proven	invis.appear-audience	The live invisibility appearance path reaches appear() and pins the room act. (R1/R3/R5e/R5h).
+src/fight.c:119	appear	proven	invis.appear-audience	The live invisibility appearance path reaches appear() and pins the room act. (R1/R3/R5e/R5h).
+src/fight.c:517	death_cry	proven	kill.immortal-instinstakill	The registered immortal kill reaches raw_kill/death_cry; the room and adjacent-room cries are in the retained transcript. (R1/R3/R5e/R5h).
+src/fight.c:524	death_cry	proven	kill.immortal-instinstakill	The registered immortal kill reaches raw_kill/death_cry; the room and adjacent-room cries are in the retained transcript. (R1/R3/R5e/R5h).
+src/fight.c:696	perform_group_gain	gap-reachable	-	Group member experience output lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:699	perform_group_gain	gap-reachable	-	The one-point group experience variant lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:760	group_gain	proven	death.group-autosplit-remainder	The live grouped kill pins the actor's corpse-loot line using the victim's name. (R1/R3/R5e/R5h).
+src/fight.c:763	group_gain	proven	death.group-autosplit-remainder	The live grouped kill pins the room loot act before any member-share lines. (R1/R3/R5e/R5h).
+src/fight.c:773	group_gain	gap-reachable	-	Leader-to-member gold share lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:778	group_gain	gap-reachable	-	Member receipt of shared gold lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:792	group_gain	proven	death.group-autosplit-remainder	The live grouped kill pins the leader's follower-share line. (R1/R3/R5e/R5h).
+src/fight.c:797	group_gain	proven	death.group-autosplit-remainder	The follower receives the exact truncated share after the room loot act. (R1/R3/R5e/R5h).
+src/fight.c:806	group_gain	gap-reachable	-	No-gold leader warning lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:810	group_gain	gap-reachable	-	No-gold follower warning lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:820	group_gain	proven	death.group-autosplit-remainder	The actor keeps the same truncated per-member share as each follower. (R1/R3/R5e/R5h).
+src/fight.c:823	group_gain	gap-reachable	-	The zero-gold split refusal lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:830	group_gain	proven	death.group-autosplit-remainder	The actor receives the odd coin in a separate leftover line after the equal share. (R1/R3/R5e/R5h).
+src/fight.c:840	group_gain	gap-reachable	-	Follower-remainder output lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:843	group_gain	gap-reachable	-	Room gold-loot audience in the no-split arm lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:998	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
+src/fight.c:1001	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
+src/fight.c:1005	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
+src/fight.c:1006	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
+src/fight.c:1009	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
+src/fight.c:1013	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
+src/fight.c:1014	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
+src/fight.c:1041	skill_message	proven	tiger.god	The immortal-victim route reaches the god_msg attacker, victim, and room acts. (R1/R3/R5e/R5h).
+src/fight.c:1042	skill_message	proven	tiger.god	The immortal-victim route reaches the god_msg attacker, victim, and room acts. (R1/R3/R5e/R5h).
+src/fight.c:1043	skill_message	proven	tiger.god	The immortal-victim route reaches the god_msg attacker, victim, and room acts. (R1/R3/R5e/R5h).
+src/fight.c:1049	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1050	skill_message	proven	tiger.killing-blow	The lethal Tiger Punch route reaches the die_msg branch; the separate color-framing case pins the ANSI wrappers. (R1/R3/R5e/R5h).
+src/fight.c:1052	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1054	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1055	skill_message	proven	tiger.killing-blow	The lethal Tiger Punch route reaches the die_msg branch; the separate color-framing case pins the ANSI wrappers. (R1/R3/R5e/R5h).
+src/fight.c:1057	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1059	skill_message	proven	tiger.killing-blow	The lethal Tiger Punch route reaches the die_msg branch; the separate color-framing case pins the ANSI wrappers. (R1/R3/R5e/R5h).
+src/fight.c:1064	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1065	skill_message	proven	tiger.hit	The successful Tiger Punch route reaches hit_msg for actor, victim, and room. (R1/R3/R5e/R5h).
+src/fight.c:1067	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1069	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1070	skill_message	proven	tiger.hit	The successful Tiger Punch route reaches hit_msg for actor, victim, and room. (R1/R3/R5e/R5h).
+src/fight.c:1072	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1074	skill_message	proven	tiger.hit	The successful Tiger Punch route reaches hit_msg for actor, victim, and room. (R1/R3/R5e/R5h).
+src/fight.c:1080	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1081	skill_message	proven	tiger.miss	The forced miss route reaches miss_msg for actor, victim, and room. (R1/R3/R5e/R5h).
+src/fight.c:1082	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1084	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1085	skill_message	proven	tiger.miss	The forced miss route reaches miss_msg for actor, victim, and room. (R1/R3/R5e/R5h).
+src/fight.c:1087	skill_message	proven	tiger.color-framing	The C_CMP color prefix/reset bytes are pinned by the focused skill-message framing test. (R1/R3/R5e/R5h).
+src/fight.c:1089	skill_message	proven	tiger.miss	The forced miss route reaches miss_msg for actor, victim, and room. (R1/R3/R5e/R5h).
+src/fight.c:1129	attitude_loot	gap-blocked	-	A switched-mob descriptor is required to deliver this NPC TO_CHAR call; stop-tier session lifecycle. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1130	attitude_loot	proven	mob.attitude-loot-junk-output	The corpse-loot path asserts both room junk acts in order; its real death caller is separately pinned. (R1/R3/R5e/R5h).
+src/fight.c:1145	attitude_loot	gap-blocked	-	A switched-mob descriptor is required to deliver this NPC TO_CHAR call; stop-tier session lifecycle. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1146	attitude_loot	proven	mob.attitude-loot-junk-output	The corpse-loot path asserts both room junk acts in order; its real death caller is separately pinned. (R1/R3/R5e/R5h).
+src/fight.c:1267	counter_procs	proven	death.reward-milestone-output	The kill-milestone actor reward preserves C's LFCR bytes (src/fight.c:1267). (R1/R3/R5e/R5h).
+src/fight.c:1278	counter_procs	proven	death.reward-milestone-output	The kill-milestone actor reward preserves C's LFCR bytes (src/fight.c:1278). (R1/R3/R5e/R5h).
+src/fight.c:1303	counter_procs	proven	death.blessing-con-playing-audience	The playing-descriptor audience and exact bestowal line are pinned by the real counter_procs callback test. (R1/R3/R5e/R5h).
+src/fight.c:1339	damage	proven	hit.peaceful-gate	The hit path reaches the peaceful-room refusal before combat damage output. (R1/R3/R5e/R5h).
+src/fight.c:1346	damage	proven	hit.newbie-pc-gate	The hit path reaches the low-level protection line. (R1/R3/R5e/R5h).
+src/fight.c:1353	damage	proven	groinrip.newbie-protection	The real groinrip damage path reaches the low-level protection response. (R1/R3/R5e/R5h).
+src/fight.c:1362	damage	proven	hit.shopkeeper-gate	The hit path reaches the shopkeeper refusal line. (R1/R3/R5e/R5h).
+src/fight.c:1387	damage	proven	mob.take-to-jail-subdue-audience	The registered jail-guard damage redirect pins the actor, victim, and room output order. (R1/R3/R5e/R5h).
+src/fight.c:1390	damage	proven	mob.take-to-jail-subdue-audience	The registered jail-guard damage redirect pins the actor, victim, and room output order. (R1/R3/R5e/R5h).
+src/fight.c:1392	damage	proven	mob.take-to-jail-subdue-audience	The registered jail-guard damage redirect pins the actor, victim, and room output order. (R1/R3/R5e/R5h).
+src/fight.c:1463	damage	proven	mob.dragon-breath-call-magic	The focused breath damage tail reaches the hidden actor appearance act. (R1/R3/R5e/R5h).
+src/fight.c:1510	damage	proven	damage.neutral-melee-rescue	The real melee damage tail pins neutral-room rescue actor, room, and victim output before transfer. (R1/R3/R5e/R5h).
+src/fight.c:1512	damage	proven	damage.neutral-melee-rescue	The real melee damage tail pins neutral-room rescue actor, room, and victim output before transfer. (R1/R3/R5e/R5h).
+src/fight.c:1514	damage	proven	damage.neutral-melee-rescue	The real melee damage tail pins neutral-room rescue actor, room, and victim output before transfer. (R1/R3/R5e/R5h).
+src/fight.c:1549	damage	proven	damage.tick-mounted	The mounted-victim damage tail pins both knock-off acts and both landing messages. (R1/R3/R5e/R5h).
+src/fight.c:1550	damage	proven	damage.tick-mounted	The mounted-victim damage tail pins both knock-off acts and both landing messages. (R1/R3/R5e/R5h).
+src/fight.c:1553	damage	proven	damage.tick-mounted	The mounted-victim damage tail pins both knock-off acts and both landing messages. (R1/R3/R5e/R5h).
+src/fight.c:1555	damage	proven	damage.tick-mounted	The mounted-victim damage tail pins both knock-off acts and both landing messages. (R1/R3/R5e/R5h).
+src/fight.c:1564	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
+src/fight.c:1566	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
+src/fight.c:1570	damage	proven	update_pos.incap-victim-typo	The exact incapacitated room/victim bytes, including C’s typo, are pinned. (R1/R3/R5e/R5h).
+src/fight.c:1572	damage	proven	update_pos.incap-victim-typo	The exact incapacitated room/victim bytes, including C’s typo, are pinned. (R1/R3/R5e/R5h).
+src/fight.c:1576	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
+src/fight.c:1578	damage	proven	damage.wounded-band-broadcast	The live wounded-band path pins room capitalization and victim exclusion. (R1/R3/R5e/R5h).
+src/fight.c:1582	damage	proven	damage.wounded-band-broadcast	The live wounded-band path pins room capitalization and victim exclusion. (R1/R3/R5e/R5h).
+src/fight.c:1583	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
+src/fight.c:1589	damage	gap-reachable	-	The direct pain response lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1591	damage	gap-reachable	-	The observer pain-scream act lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1597	damage	gap-reachable	-	The low-health bleeding warning lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1605	damage	gap-reachable	-	The wimpy flee notice lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1647	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
+src/fight.c:1650	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
+src/fight.c:1660	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
+src/fight.c:1662	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
+src/fight.c:1957	perform_violence	gap-reachable	-	The automatic PC parry actor line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1959	perform_violence	gap-reachable	-	The automatic PC parry room line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1961	perform_violence	gap-reachable	-	The automatic PC parry victim line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1969	perform_violence	gap-blocked	-	A switched-mob descriptor is required to deliver this NPC TO_CHAR call; stop-tier session lifecycle. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1970	perform_violence	gap-reachable	-	The mobile-dodge room line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1971	perform_violence	gap-reachable	-	The mobile-dodge victim line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1985	perform_violence	gap-reachable	-	The mobile stand-up room line lacks a source-specific combat-round proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1986	perform_violence	gap-blocked	-	A switched-mob descriptor is required to deliver this NPC TO_CHAR call; stop-tier session lifecycle. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1995	perform_violence	gap-reachable	-	The player stand-up room line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1996	perform_violence	gap-reachable	-	The player stand-up actor line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).

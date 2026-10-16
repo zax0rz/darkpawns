@@ -328,4 +328,12 @@ func (p *Player) SetPlrFlag(bit int, val bool) {
 	} else {
 		p.Flags &^= 1 << uint(bit)
 	}
+	// Keep the persisted convenience fields in sync with their canonical C
+	// preference bits. Combat reads these mirrors during group_gain().
+	switch bit {
+	case PrfAutoGold:
+		p.AutoGold = val
+	case PrfAutoSplit:
+		p.AutoSplit = val
+	}
 }

@@ -134,6 +134,36 @@ func TestCounterProcs_HealsToFull(t *testing.T) {
 	}
 }
 
+func TestCounterProcsMilestoneActorBytesMatchC(t *testing.T) {
+	// src/fight.c:1267,1278 uses LFCR for both actor reward lines.
+	for _, tc := range []struct {
+		name  string
+		kills int
+		want  string
+	}{
+		{"glory", 5000, "The gods reward your glory in battle!\n\r"},
+		{"victories", 1000, "The gods reward your many victories!\n\r"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := newCounterProcsTestWorld(t)
+			p := NewPlayer(1, "Hero", 1001)
+			if err := w.AddPlayer(p); err != nil {
+				t.Fatal(err)
+			}
+			var got string
+			w.MessageSink = func(name string, msg []byte) {
+				if name == p.Name {
+					got += string(msg)
+				}
+			}
+			w.counter_procs(p, tc.kills)
+			if got != tc.want {
+				t.Fatalf("counter milestone bytes = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // DP-1038: Carry weight (CAN_CARRY_W) enforcement
 //
