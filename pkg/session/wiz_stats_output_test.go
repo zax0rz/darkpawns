@@ -112,3 +112,19 @@ func TestWizardObjectContentsUsesC62ByteWrap(t *testing.T) {
 		t.Fatalf("wizardObjectContentsOutput() = %q, want %q", got, want)
 	}
 }
+
+func TestWizardRoomListMatchesC62ByteWrapAndColorBytes(t *testing.T) {
+	long := strings.Repeat("x", 30)
+	medium := strings.Repeat("y", 20)
+	last := strings.Repeat("z", 61)
+	want := "Chars present: " + long + ", " + medium + ",\r\n " + last + "\r\n"
+	if got := wizardWrappedListOutput("Chars present:", []string{long, medium, last}, "\x1b[33m", false); got != want {
+		t.Fatalf("uncolored room list = %q, want %q", got, want)
+	}
+
+	forty := strings.Repeat("x", 40)
+	coloredWant := "Chars present:\x1b[33m " + forty + ", y,\r\n z, w\r\n\x1b[0m"
+	if got := wizardWrappedListOutput("Chars present:", []string{forty, "y", "z", "w"}, "\x1b[33m", true); got != coloredWant {
+		t.Fatalf("colored room list = %q, want %q", got, coloredWant)
+	}
+}

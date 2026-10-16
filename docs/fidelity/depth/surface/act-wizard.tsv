@@ -49,14 +49,14 @@ src/act.wizard.c:429	do_stat_room	proven	stat.room-success	The cited manifest pr
 src/act.wizard.c:434	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:436	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:438	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:440	do_stat_room	gap-reachable		No-description room branch; the stat.room-success fixture uses a room description.
+src/act.wizard.c:440	do_stat_room	gap-blocked		C's null-description branch is unproven: fread_string() returns NULL for an empty ~ value (src/db.c:2690-2738), and the only blank-description room is unindexed room #18000 in urgats_old.wld; add-wld-index breaks C's zone-order requirement. Blocked by the stop-tier census-harness fixture surface (R1/R5e/R5g).
 src/act.wizard.c:449	do_stat_room	proven	stat.room-extra-description-census;stat.room-extra-description-output	The isolated live stat command runs in room 8151, whose C prototype has the scrolls extra-description; output matches with C's color gate (R1/R2/R5e/R5h).
-src/act.wizard.c:460	do_stat_room	gap-reachable		Long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
-src/act.wizard.c:462	do_stat_room	gap-reachable		Final long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
+src/act.wizard.c:460	do_stat_room	proven	stat.room-character-list-wrap-census	The live wrapped-room report crosses this intermediate C send with normal color enabled; census proof retains the comma and CRLF bytes (R1/R2/R5e/R5h).
+src/act.wizard.c:462	do_stat_room	proven	stat.room-character-list-wrap-census	The live wrapped-room report crosses this final C send after its final character reaches the 62-byte threshold (R1/R2/R5e/R5h).
 src/act.wizard.c:468	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:469	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:480	do_stat_room	gap-reachable		Long room-contents wrap branch; the report fixture stays below the C 62-byte row boundary.
-src/act.wizard.c:482	do_stat_room	gap-reachable		Final long room-contents wrap branch; the report fixture stays below the C 62-byte row boundary.
+src/act.wizard.c:480	do_stat_room	proven	stat.room-contents-wrap-census	The live wrapped-room report crosses this intermediate C send with additional room contents remaining (R1/R2/R5e/R5h).
+src/act.wizard.c:482	do_stat_room	proven	stat.room-contents-wrap-census	The live wrapped-room report crosses this final C send when the last contents entry reaches the 62-byte threshold (R1/R2/R5e/R5h).
 src/act.wizard.c:488	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:489	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:503	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
@@ -74,8 +74,8 @@ src/act.wizard.c:559	do_stat_object	proven	stat.object-success	The cited manifes
 src/act.wizard.c:563	do_stat_object	proven	stat.object-success;stat.object-contents-census	The object-with-contents proof confirms C's accumulated GET_OBJ_WEIGHT value against the Go nested total (R1/R2/R5e/R5h).
 src/act.wizard.c:579	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:644	do_stat_object	proven	stat.object-success;stat.object-contents-census	The oak chest reaches C's ITEM_CONTAINER values formatter, including trailing sprintbit spacing and corpse flag (R1/R2/R5e/R5h).
-src/act.wizard.c:658	do_stat_object	gap-reachable		Long object-contents intermediate row; the report fixture uses an empty bread container list.
-src/act.wizard.c:660	do_stat_object	gap-reachable		Long object-contents final row; the report fixture uses an empty bread container list.
+src/act.wizard.c:658	do_stat_object	proven	stat.object-contents-wrap-census	The live stat object report crosses the intermediate contents send with more belt-pouch entries remaining (R1/R2/R5e/R5h).
+src/act.wizard.c:660	do_stat_object	proven	stat.object-contents-wrap-census	The live stat object report crosses the final contents send when its last entry reaches the 62-byte threshold (R1/R2/R5e/R5h).
 src/act.wizard.c:666	do_stat_object	proven	stat.object-contents-census	The reset oak chest emits the final contents row with the C comma and space sequence (R1/R2/R5e/R5h).
 src/act.wizard.c:667	do_stat_object	proven	stat.object-contents-census	The contents report emits C's color-level reset after the final row (R1/R2/R5e/R5h).
 src/act.wizard.c:670	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
@@ -112,7 +112,7 @@ src/act.wizard.c:956	do_stat_character	gap-reachable		Intermediate follower-list
 src/act.wizard.c:958	do_stat_character	gap-reachable		Final follower-list wrap is not exercised by the short follower fixture.
 src/act.wizard.c:964	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:969	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:989	do_stat_character	gap-reachable		Active spell list output is not exercised by the player/mob report fixtures.
+src/act.wizard.c:989	do_stat_character	proven	stat.character-spell-affects	The registered stat peer report emits two active SPL rows after a live bless cast; the transcript includes exact modifier and bitvector bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:1005	do_stat	proven	stat.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:1011	do_stat	proven	stat.mob-no-name	The registered stat mob command reaches the empty mobile-name prompt (R1/R2/R5e/R5h).
 src/act.wizard.c:1016	do_stat	proven	stat.mob-missing	The cited manifest proof executes this C callsite (R1/R5e).
@@ -348,7 +348,7 @@ src/act.wizard.c:3528	do_newbie	proven	wnewbie.target-not-found	The cited manife
 src/act.wizard.c:3536	do_newbie	proven	wnewbie.local-player;wnewbie.global-player	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3537	do_newbie	proven	wnewbie.mob-target	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3571	do_zlist	proven	zlist.missing-file	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:3588	do_idlist	gap-reachable		File-open failure is reachable through an unwritable working directory; the current success proof does not take this branch.
+src/act.wizard.c:3588	do_idlist	gap-blocked		The failure requires an unwritable object_idlist path; producing that filesystem state would require a census-harness working-directory/permission fixture, which is stop-tier (R1/R5g).
 src/act.wizard.c:3670	do_idlist	proven	idlist.success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3813	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3816	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).

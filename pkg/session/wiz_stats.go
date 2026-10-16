@@ -598,7 +598,8 @@ func (s *Session) sendStatRoom() {
 	for _, mob := range mobs {
 		chars = append(chars, fmt.Sprintf("%s(MOB)", mob.GetName()))
 	}
-	s.Send(fmt.Sprintf("Chars present: %s\r\n", strings.Join(chars, ", ")))
+	colored := wizardHasNormalColor(s.player.GetFlags())
+	s.Send(wizardWrappedListOutput("Chars present:", chars, "\x1b[33m", colored))
 
 	items := w.GetItemsInRoom(room.VNum)
 	var itemNames []string
@@ -606,7 +607,7 @@ func (s *Session) sendStatRoom() {
 		itemNames = append(itemNames, item.GetShortDesc())
 	}
 	if len(itemNames) > 0 {
-		s.Send(fmt.Sprintf("Contents: %s\r\n", strings.Join(itemNames, ", ")))
+		s.Send(wizardWrappedListOutput("Contents:", itemNames, "\x1b[32m", colored))
 	}
 	for _, direction := range []string{"north", "east", "south", "west", "up", "down"} {
 		exit, ok := room.Exits[direction]
@@ -861,6 +862,46 @@ func wizardHasNormalColor(flags uint64) bool {
 	// PRF_COLOR_2 counts 2 (src/screen.h:45-49): PRF_COLOR_2 alone ("color
 	// normal") is enough.
 	return flags&(1<<uint(game.PrfColor2)) != 0
+}
+
+// wizardWrappedListOutput mirrors do_stat_room's 62-byte buffer flushes.
+// C starts each list with its label and optional color, then clears the whole
+// buffer after a wrapped line; continuation lines therefore have no label or
+// color prefix (src/act.wizard.c:451-490; src/screen.h:45-56).
+func wizardWrappedListOutput(label string, entries []string, colorCode string, colored bool) string {
+	var output, line strings.Builder
+	line.WriteString(label)
+	if colored {
+		line.WriteString(colorCode)
+	}
+
+	found := 0
+	for i, entry := range entries {
+		if found > 0 {
+			line.WriteByte(',')
+		}
+		line.WriteByte(' ')
+		line.WriteString(entry)
+		found++
+		if line.Len() >= 62 {
+			if i+1 < len(entries) {
+				line.WriteString(",\r\n")
+			} else {
+				line.WriteString("\r\n")
+			}
+			output.WriteString(line.String())
+			line.Reset()
+			found = 0
+		}
+	}
+	if line.Len() > 0 {
+		line.WriteString("\r\n")
+		output.WriteString(line.String())
+	}
+	if colored {
+		output.WriteString("\x1b[0m")
+	}
+	return output.String()
 }
 
 func wizardObjectContentsOutput(contents []*game.ObjectInstance, colored bool) string {
