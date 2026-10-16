@@ -201,6 +201,56 @@ func TestOeditMainFieldEntryPrompts(t *testing.T) {
 	}
 }
 
+// TestOeditValue1TypePrompts pins the type-specific OEDIT_VALUE_1 branches in
+// src/oedit.c:730,739,746,752 through registered command entry and descriptor
+// input. Each case changes the working object's type, then enters Values.
+func TestOeditValue1TypePrompts(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		typeChoice string
+		want       string
+	}{
+		{name: "scroll", typeChoice: "2", want: "Spell level : "},
+		{name: "armor", typeChoice: "9", want: "Apply to AC : "},
+		{name: "drink container", typeChoice: "17", want: "Max drink units : "},
+		{name: "money", typeChoice: "20", want: "Number of gold coins : "},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			w := makeOeditTestWorld(t)
+			m := newTestManager(t, w, nil)
+			s := makeOeditTestSession(t, m, "Value1"+strings.ReplaceAll(tt.name, " ", ""), 35)
+			openOedit(t, s, "3001")
+
+			s.handleOeditInput("5") // object type menu
+			_ = readMsgText(t, s)
+			s.handleOeditInput(tt.typeChoice)
+			_ = readMsgText(t, s)
+			s.handleOeditInput("D") // values -> value 1
+			if got := readMsgText(t, s); got != tt.want {
+				t.Fatalf("type %s value 1 prompt = %q, want exactly %q", tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestOeditApplyModifierEntryPrompt pins the ordinary OEDIT_APPLY branch in
+// src/oedit.c:1417 after selecting a slot through the descriptor-owned editor.
+func TestOeditApplyModifierEntryPrompt(t *testing.T) {
+	w := makeOeditTestWorld(t)
+	m := newTestManager(t, w, nil)
+	s := makeOeditTestSession(t, m, "Applymod", 35)
+	openOedit(t, s, "3001")
+
+	s.handleOeditInput("E")
+	_ = readMsgText(t, s)
+	s.handleOeditInput("2") // choose the empty second affect slot
+	_ = readMsgText(t, s)
+	s.handleOeditInput("1") // APPLY_STR
+	if got := readMsgText(t, s); got != "Modifier : " {
+		t.Fatalf("ordinary apply modifier prompt = %q, want exactly %q", got, "Modifier : ")
+	}
+}
+
 func TestOeditNoZoneSaveGate(t *testing.T) {
 	w := makeOeditTestWorld(t)
 	m := newTestManager(t, w, nil)
