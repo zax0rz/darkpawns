@@ -857,8 +857,10 @@ func wizardExtraDescriptionLine(keywords []string, colored bool) string {
 }
 
 func wizardHasNormalColor(flags uint64) bool {
-	// C's clr(ch, C_NRM) requires both PRF_COLOR_1 and PRF_COLOR_2.
-	return flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0
+	// C's clr(ch, C_NRM) is _clrlevel(ch) >= 2, where PRF_COLOR_1 counts 1 and
+	// PRF_COLOR_2 counts 2 (src/screen.h:45-49): PRF_COLOR_2 alone ("color
+	// normal") is enough.
+	return flags&(1<<uint(game.PrfColor2)) != 0
 }
 
 func wizardObjectContentsOutput(contents []*game.ObjectInstance, colored bool) string {

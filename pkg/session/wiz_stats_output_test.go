@@ -62,8 +62,9 @@ func TestWizardObjectExtraDescriptionUsesCColorLevel(t *testing.T) {
 	}{
 		{name: "color off", want: "Extra descs: oak chest\r\n"},
 		{name: "color 1 only", flags: 1 << uint(game.PrfColor1), want: "Extra descs: oak chest\r\n"},
-		{name: "color 2 only", flags: 1 << uint(game.PrfColor2), want: "Extra descs: oak chest\r\n"},
-		{name: "normal color", flags: 1<<uint(game.PrfColor1) | 1<<uint(game.PrfColor2), want: "Extra descs:\x1b[36m oak chest\x1b[0m\r\n"},
+		// _clrlevel: COLOR_1 counts 1, COLOR_2 counts 2; C_NRM is 2 (src/screen.h:45-49).
+		{name: "normal (color 2 only)", flags: 1 << uint(game.PrfColor2), want: "Extra descs:\x1b[36m oak chest\x1b[0m\r\n"},
+		{name: "complete (both)", flags: 1<<uint(game.PrfColor1) | 1<<uint(game.PrfColor2), want: "Extra descs:\x1b[36m oak chest\x1b[0m\r\n"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			got := wizardExtraDescriptionLine([]string{"oak chest"}, wizardHasNormalColor(test.flags))
