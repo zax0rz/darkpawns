@@ -393,6 +393,7 @@ func sendSpellActToCaster(format string, ch, victim, obj, world interface{}) {
 	message := format
 	if victim != nil {
 		message = strings.ReplaceAll(message, "$E", subjectivePronoun(victim))
+		message = strings.ReplaceAll(message, "$S", possessivePronoun(victim))
 	}
 	if obj != nil {
 		shortDesc := "something"

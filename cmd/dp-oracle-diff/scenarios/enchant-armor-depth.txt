@@ -1,0 +1,44 @@
+# depth-case: spell.enchant-armor-glow
+# C path: do_cast -> cast_spell -> call_magic -> spell_enchant_armor
+# (src/spell_parser.c:519,879-925,1038-1110; src/spells.c:836-867).
+# The first player is a real implementor caster; a stock unenchanted breastplate
+# reaches the alignment-colored $p act through registered manual-spell cast.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Enchantarmor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Enchantarmor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 8040
+
+[probe]
+cast 'enchant armor' plate

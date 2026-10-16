@@ -1,0 +1,44 @@
+# depth-case: spell.enchant-weapon-glow
+# C path: do_cast -> cast_spell -> call_magic -> spell_enchant_weapon
+# (src/spell_parser.c:510,879-925,1038-1110; src/spells.c:621-659).
+# The first player is a real implementor caster; a stock unenchanted dagger
+# reaches the alignment-colored $p act through registered manual-spell cast.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Enchantweapon
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Enchantweapon
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 8020
+
+[probe]
+cast 'enchant weapon' dagger

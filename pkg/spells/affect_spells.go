@@ -1296,11 +1296,11 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellCoC:
 		castCoC(level, ch, world)
 	case SpellMentalLapse:
-		castMentalLapse(level, ch, cvict)
+		castMentalLapse(level, ch, cvict, world)
 	case SpellEnchantWeapon:
-		castEnchantWeapon(level, ch, ovict)
+		castEnchantWeapon(level, ch, ovict, world)
 	case SpellEnchantArmor:
-		castEnchantArmor(level, ch, ovict)
+		castEnchantArmor(level, ch, ovict, world)
 	case SpellCreateWater:
 		castCreateWater(level, ch, ovict)
 	case SpellIdentify:
@@ -1992,7 +1992,8 @@ func castSilkenMissile(level int, ch, ovict interface{}, world interface{}) {
 
 // castMentalLapse — clears mob hunting target. Partial implementation.
 // C source: spells.c:960-983. Full version needs mob hunting system.
-func castMentalLapse(level int, ch, cvict interface{}) {
+func castMentalLapse(level int, ch, cvict, world interface{}) {
+	_ = level
 	if cvict == nil {
 		slog.Warn("spell_mental_lapse: no victim")
 		return
@@ -2005,48 +2006,52 @@ func castMentalLapse(level int, ch, cvict interface{}) {
 		casterName = n.GetName()
 	}
 
-	// MobInstance must implement HuntingGetter/Setter interfaces
+	// C tests NPC status and HUNTING separately before sending the optional
+	// mental-voice preamble and the target's possessive-pronoun act output.
+	type npcChecker interface{ IsNPC() bool }
+	isNPC := false
+	if nc, ok := cvict.(npcChecker); ok {
+		isNPC = nc.IsNPC()
+	}
+
 	type hunter interface {
 		GetHunting() string
 		ClearHunting()
 	}
-
-	mob, ok := cvict.(hunter)
-	if !ok {
-		sendToCaster(ch, "Your psionic energy recoils!\r\n")
-		return
+	h, hasHunting := cvict.(hunter)
+	hunting := ""
+	if hasHunting {
+		hunting = h.GetHunting()
 	}
 
-	hunting := mob.GetHunting()
-	if hunting == "" {
-		sendToCaster(ch, "Your psionic energy recoils!\r\n")
-		return
-	}
-
-	// Level 30+ can redirect mobs hunting others
-	if hunting != casterName {
+	// A target already hunting the caster proceeds directly. A different
+	// active target requires level 30 and gets the mental-voice preamble.
+	if !isNPC || hunting == "" || hunting != casterName {
 		type lever interface{ GetLevel() int }
 		casterLevel := 0
 		if l, ok := ch.(lever); ok {
 			casterLevel = l.GetLevel()
 		}
-		if casterLevel < 30 {
+		if hunting != "" && hunting != casterName && casterLevel >= 30 {
+			sendToCaster(ch, "You send out your mental voice...\r\n")
+		} else {
 			sendToCaster(ch, "Your psionic energy recoils!\r\n")
 			return
 		}
 	}
 
-	sendToCaster(ch, "You sense their intentions even from where you are, and ")
-	sendToCaster(ch, "change their mind.\r\n")
+	sendSpellActToCaster("You sense $S intentions even from where you are, and change $S mind.", ch, cvict, nil, world)
 
-	mob.ClearHunting()
+	if hasHunting {
+		h.ClearHunting()
+	}
 }
 
 // --- Wave B manual spell implementations ---
 
 // castEnchantWeapon — adds +hitroll/+damroll to a non-magic weapon.
 // C source: spells.c:621-662. Sets ITEM_MAGIC, alignment-colored glow.
-func castEnchantWeapon(level int, ch, ovict interface{}) {
+func castEnchantWeapon(level int, ch, ovict, world interface{}) {
 	if ovict == nil {
 		return
 	}
@@ -2109,19 +2114,19 @@ func castEnchantWeapon(level int, ch, ovict interface{}) {
 		switch {
 		case a.GetAlignment() > 0:
 			obj.SetExtraFlag(0, 10) // ITEM_ANTI_EVIL
-			sendToCaster(ch, "It glows blue.\r\n")
+			sendSpellActToCaster("$p glows blue.", ch, nil, ovict, world)
 		case a.GetAlignment() < 0:
 			obj.SetExtraFlag(0, 9) // ITEM_ANTI_GOOD
-			sendToCaster(ch, "It glows red.\r\n")
+			sendSpellActToCaster("$p glows red.", ch, nil, ovict, world)
 		default:
-			sendToCaster(ch, "It glows yellow.\r\n")
+			sendSpellActToCaster("$p glows yellow.", ch, nil, ovict, world)
 		}
 	}
 }
 
 // castEnchantArmor — adds AC improvement to non-magic armor/worn items.
 // C source: spells.c:836-871. Sets ITEM_MAGIC, alignment-colored glow.
-func castEnchantArmor(level int, ch, ovict interface{}) {
+func castEnchantArmor(level int, ch, ovict, world interface{}) {
 	if ovict == nil {
 		return
 	}
@@ -2176,12 +2181,12 @@ func castEnchantArmor(level int, ch, ovict interface{}) {
 		switch {
 		case a.GetAlignment() > 0:
 			obj.SetExtraFlag(0, 10) // ITEM_ANTI_EVIL
-			sendToCaster(ch, "It glows blue.\r\n")
+			sendSpellActToCaster("$p glows blue.", ch, nil, ovict, world)
 		case a.GetAlignment() < 0:
 			obj.SetExtraFlag(0, 9) // ITEM_ANTI_GOOD
-			sendToCaster(ch, "It glows red.\r\n")
+			sendSpellActToCaster("$p glows red.", ch, nil, ovict, world)
 		default:
-			sendToCaster(ch, "It glows yellow.\r\n")
+			sendSpellActToCaster("$p glows yellow.", ch, nil, ovict, world)
 		}
 	}
 }
