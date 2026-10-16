@@ -4,7 +4,7 @@
 
 Current `origin/main` is `d48aec241a8e4ba61d8f61ab651095e9dbe45305`. Its surface inventory sums to **3,360 units**: **2,462 blocked**, **897 proven-already**, and **1 excluded-with-C-reason**. The `activity-call-sites` rows account for **1,385 units**: **491 blocked** and **894 proven-already**.
 
-The seven draft PRs recorded below are based on that same main revision. Their per-file residual reductions total 86 units after the #2053 spell-output proof, #2054 magic-summons target proof, and #2060 spell-parser map. If all seven changes apply, the conditional projection is **3,274 total units / 2,376 blocked** overall and **1,299 total / 405 blocked** for `activity-call-sites`. The projection is not a measurement of main; none of the seven PRs has merged.
+The seven draft PRs recorded below are based on that same main revision. Their per-file residual reductions total 87 units after the #2053 spell-output proof, #2054 magic-summons target proof, and #2060 spell-parser map. If all seven changes apply, the conditional projection is **3,273 total units / 2,375 blocked** overall and **1,298 total / 404 blocked** for `activity-call-sites`. The projection is not a measurement of main; none of the seven PRs has merged.
 
 | PR | C file | Inventory units before → after | Site classifications before → after |
 |---|---|---:|---|
@@ -14,7 +14,7 @@ The seven draft PRs recorded below are based on that same main revision. Their p
 | [#2056](https://github.com/zax0rz/darkpawns/pull/2056) | `src/act.wizard.c` | 31 → 27 | 320 proven, 25 gap-reachable, 6 stop-tier gap-blocked, 6 unreachable → 324 proven, 21 gap-reachable, 6 stop-tier gap-blocked, 6 unreachable |
 | [#2058](https://github.com/zax0rz/darkpawns/pull/2058) | `src/clan.c` | 38 → 26 | 134 proven, 36 gap-reachable, 2 gap-blocked, 6 unreachable → 144 proven, 24 gap-reachable, 2 gap-blocked, 8 unreachable |
 | [#2059](https://github.com/zax0rz/darkpawns/pull/2059) | `src/house.c` | 7 → 1 | 32 proven, 7 gap-reachable, 0 gap-blocked, 2 unreachable → 38 proven, 1 gap-reachable, 0 gap-blocked, 2 unreachable |
-| [#2060](https://github.com/zax0rz/darkpawns/pull/2060) | `src/spell_parser.c` | 49 → 45 | 39 proven, 49 gap-reachable, 0 gap-blocked, 0 unreachable → 43 proven, 45 gap-reachable, 0 gap-blocked, 0 unreachable |
+| [#2060](https://github.com/zax0rz/darkpawns/pull/2060) | `src/spell_parser.c` | 49 → 44 | 39 proven, 49 gap-reachable, 0 gap-blocked, 0 unreachable → 44 proven, 44 gap-reachable, 0 gap-blocked, 0 unreachable |
 
 For `shop.c`, the prior row had 22 residual inventory units but no per-site map; PR #2050 enumerates all 24 live sends and maps them as proven. For `house.c`, the remaining gap is the `MAX_HOUSES` capacity refusal.
 
@@ -26,10 +26,10 @@ For `shop.c`, the prior row had 22 residual inventory units but no per-site map;
 - **#2056 wizard:** the first stat-report run exposed room-list order and a nondefault attack-label mismatch; both are documented and retained. Corrected `dp1371-wizard-stat-nondefault` and `dp1371-wizard-transfer-refusals` are CLEAN (1/1 each) at `eda7e8185`. All ten gates passed individually.
 - **#2058 clan:** `dp1371-clan-bank-title` is CLEAN (3/3) at `a5be90b28` for `clan-callsite-gaps`, `clan-depth`, and `clan-member-depth`. All ten gates passed individually.
 - **#2059 house:** `dp1371-house-control-gaps` is CLEAN (1/1) at `415aed140` for `hcontrol-depth`; `make fidelity-depth` passed with 36 maps and 0 errors.
-- **#2060 spell parser:** `dp1371-spell-parser-output-map` is CLEAN (3/3) at `f05b281ba` for the peaceful quaff audience, held sleep staff, and targeted armor-scroll recitation. The `TO_ROOM` recitation call passes a NULL victim, so its target peer receives the line; C `act(TO_ROOM)` excludes only the actor. All ten repository gates passed individually; fidelity depth reports 36 maps and 0 errors, and fidelity units passes 1,806/1,806 claims.
+- **#2060 spell parser:** `dp1371-spell-parser-output-map` is CLEAN (3/3) at `f05b281ba` for the peaceful quaff audience, held sleep staff, and targeted armor-scroll recitation. The `TO_ROOM` recitation call passes a NULL victim, so its target peer receives the line; C `act(TO_ROOM)` excludes only the actor. The new `dp1371-spell-parser-psionic-peaceful` census is CLEAN (1/1): a mortal Psionic uses a held Lightning Bolt wand in a peaceful room and reaches `src/spell_parser.c:444` through `src/act.other.c:895-973`, bypassing the separate `do_cast` refusal at line 978. The C transcript proves the class-specific “violent power” wording for the actor and the room line for an in-room witness. The file map now has 44 proven, 44 gap-reachable, 0 gap-blocked, and 0 unreachable sites (49 residual units before, 44 after). All ten repository gates passed individually; fidelity depth reports 36 maps and 0 errors, and fidelity units passes 1,806/1,806 claims.
 
 All seven PRs remain draft and open. Nothing was merged or deployed.
 
 ## Remaining activity-call-site work
 
-After the seven draft changes, the largest activity-call-site residual rows are `src/spells.c` 71, `src/spell_parser.c` 45, `src/magic.c` 34, `src/zedit.c` 31, `src/dream.c` 29, `src/act.wizard.c` 27, `src/clan.c` 26, and `src/spec_procs.c` 20. The four `src/new_cmds.c` residual sites are mapped as stop-tier blocked. The `src/spec_procs.c` residual sites are gap-blocked by the approved protected-name divergence. Continue with reachable output gaps and retain the same source-order/C-call-path evidence (R1/R2/R4/R5e/R5g/R5h).
+After the seven draft changes, the largest activity-call-site residual rows are `src/spells.c` 71, `src/spell_parser.c` 44, `src/magic.c` 34, `src/zedit.c` 31, `src/dream.c` 29, `src/act.wizard.c` 27, `src/clan.c` 26, and `src/spec_procs.c` 20. The four `src/new_cmds.c` residual sites are mapped as stop-tier blocked. The `src/spec_procs.c` residual sites are gap-blocked by the approved protected-name divergence. Continue with reachable output gaps and retain the same source-order/C-call-path evidence (R1/R2/R4/R5e/R5g/R5h).
