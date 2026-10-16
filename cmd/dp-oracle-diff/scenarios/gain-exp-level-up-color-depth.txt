@@ -1,0 +1,78 @@
+# C-first live do_drop -> gain_exp level-up vehicle. The wizard seeds a level-1
+# target at the one-step threshold, enables complete color, then forces the
+# target to junk a room loaf worth one XP. This crosses the level-2 threshold
+# through normal dispatch and keeps the ANSI sandwich visible to the diff.
+
+# depth-case: junk.gain-exp-level-up-color
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Levelgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Levelgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Levelprobe
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Levelprobe
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Levelprobe 8162
+set Levelprobe exp 1500
+force Levelprobe color complete
+force Levelprobe get bread
+
+[probe]
+force Levelprobe junk bread

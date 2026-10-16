@@ -24,8 +24,8 @@ import (
 const (
 	MailBlockSize  = 512
 	MailFile       = "data/mail"
-	MailMinLevel   = 5
-	MailStampPrice = 50
+	MailMinLevel   = 2
+	MailStampPrice = 25
 	MailMaxSize    = 4096
 
 	MailBlockHeader  = 1
@@ -504,22 +504,20 @@ func fixedMailText(field []byte) string {
 
 func (w *World) PostmasterSendMail(ch *Player, mailman *MobInstance, arg string) {
 	if ch.GetLevel() < MailMinLevel {
-		ch.SendMessage(fmt.Sprintf("$n tells you, 'Sorry, you have to be level %d to send mail!'\r\n", MailMinLevel))
+		Act(w, false, mailman, ch, nil, nil, fmt.Sprintf("$n tells you, 'Sorry, you have to be level %d to send mail!'", MailMinLevel), "", ToVict)
 		return
 	}
 
-	arg = strings.TrimSpace(arg)
-	spaceIdx := strings.Index(arg, " ")
-	if spaceIdx == -1 {
-		ch.SendMessage("$n tells you, 'You need to specify an addressee!'\r\n")
+	name, _ := oneArgument(arg)
+	if name == "" {
+		Act(w, false, mailman, ch, nil, nil, "$n tells you, 'You need to specify an addressee!'", "", ToVict)
 		return
 	}
-	name := arg[:spaceIdx]
 
 	ch.mu.Lock()
 	if ch.Gold < MailStampPrice {
 		ch.mu.Unlock()
-		ch.SendMessage(fmt.Sprintf("$n tells you, 'A stamp costs %d coins.'\r\n$n tells you, '...which I see you can't afford.'\r\n", MailStampPrice))
+		Act(w, false, mailman, ch, nil, nil, fmt.Sprintf("$n tells you, 'A stamp costs %d coins.'\r\n$n tells you, '...which I see you can't afford.'", MailStampPrice), "", ToVict)
 		return
 	}
 

@@ -1,7 +1,7 @@
 c_site	function	classification	case_ids	notes
-src/limits.c:311	gain_exp	gap-reachable		A player reaches this color-prefix send when gain_exp crosses the next-level threshold; current gain_exp call paths have no level-up byte proof (R1/R2/R5e).
-src/limits.c:313	gain_exp	gap-reachable		A player reaches this level-up line when combat or junk experience crosses the next-level threshold; advance.promote only enters gain_exp_regardless (R1/R2/R5e).
-src/limits.c:314	gain_exp	gap-reachable		The color-reset send follows the unproved gain_exp level-up line and is reachable on the same threshold crossing (R1/R2/R5e).
+src/limits.c:311	gain_exp	proven	junk.gain-exp-level-up-color	The forced mortal crosses level 1 to 2 through registered junk dispatch at complete color, proving C's cyan prefix (R1/R2/R3/R5e/R5h).
+src/limits.c:313	gain_exp	proven	junk.gain-exp-level-up-color	The forced mortal crosses level 1 to 2 through registered junk dispatch with exact C level-up bytes (R1/R2/R3/R5e/R5h).
+src/limits.c:314	gain_exp	proven	junk.gain-exp-level-up-color	The complete-color level-up transcript proves C's trailing normal-color reset (R1/R2/R3/R5e/R5h).
 src/limits.c:354	gain_exp_regardless	proven	advance.promote;advance.promote-to-impl	The registered advance command crosses one and multiple levels through gain_exp_regardless, asserting the actor's rise text (R1/R2/R5e).
 src/limits.c:358	gain_exp_regardless	proven	advance.promote;advance.promote-to-impl	The registered advance command proves the multi-level formatted rise line (R1/R2/R5e).
 src/limits.c:386	gain_condition	proven	point-update.condition-full-warning	A real hourly point_update takes fullness 2 to 1 and proves the warning bytes at the one-point threshold (R1/R3/R5e/R5h).
