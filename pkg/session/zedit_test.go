@@ -241,7 +241,9 @@ func TestZeditStaleCarryAndCommandSave(t *testing.T) {
 		t.Fatalf("arg1 prompt = %q", got)
 	}
 	s.handleZeditInput("3002")
-	_ = readMsgText(t, s)
+	if got := readMsgText(t, s); got != "Input the maximum number that can exist on the mud : " {
+		t.Fatalf("mobile max-count prompt = %q", got)
+	}
 	s.handleZeditInput("2")
 	menu := readMsgText(t, s)
 	if !strings.Contains(menu, "3 - Load a zedit mob [3002], Max : 2\r\n") {
@@ -275,6 +277,36 @@ func TestZeditStaleCarryAndCommandSave(t *testing.T) {
 	text := string(data)
 	if !strings.Contains(text, "M 0 3002 1 3000\n") || !strings.Contains(text, "G 1 3003 1 -1\n") || strings.Contains(text, "* ") {
 		t.Fatalf("written zone = %q", text)
+	}
+}
+
+// TestZeditObjectLoadPrompts pins src/zedit.c:740 and :776 through the real
+// interactive parser: selecting O emits the object VNUM prompt, then the
+// maximum-count prompt after accepting an existing object.
+func TestZeditObjectLoadPrompts(t *testing.T) {
+	w := makeZeditTestWorld(t)
+	m := newTestManager(t, w, nil)
+	s := makeZeditTestSession(t, m, "Zeditobject", game.LVL_IMPL)
+	if err := cmdZedit(s, []string{"3000"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = readMsgText(t, s)
+
+	s.handleZeditInput("n")
+	_ = readMsgText(t, s)
+	s.handleZeditInput("3")
+	_ = readMsgText(t, s)
+	s.handleZeditInput("O")
+	if got := readMsgText(t, s); got != "Is this command dependent on the success of the previous one? (y/n)\r\n" {
+		t.Fatalf("if-flag prompt = %q", got)
+	}
+	s.handleZeditInput("n")
+	if got := readMsgText(t, s); got != "Input object vnum : " {
+		t.Fatalf("object VNUM prompt = %q", got)
+	}
+	s.handleZeditInput("3003")
+	if got := readMsgText(t, s); got != "Input the maximum number that can exist on the mud : " {
+		t.Fatalf("object max-count prompt = %q", got)
 	}
 }
 
