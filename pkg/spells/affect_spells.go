@@ -1711,6 +1711,7 @@ func castSobriety(level int, ch, cvict interface{}) {
 
 	type conder interface {
 		SetCondition(int, int)
+		GetHP() int
 		GetPosition() int
 		SetPosition(int)
 	}
@@ -1720,8 +1721,8 @@ func castSobriety(level int, ch, cvict interface{}) {
 	}
 
 	c.SetCondition(0, 0) // DRUNK = 0
-	// Position may change after condition reset (C calls update_pos)
-	// update_pos logic: if pos > POS_SLEEPING and drunk is 0 and thirst/hunger are 0, sit
+	// C src/spells.c:694 calls update_pos after clearing DRUNK.
+	c.SetPosition(combat.GetPositionFromHP(c.GetHP(), c.GetPosition()))
 	// C's adjacent send_to_char calls form one output burst with LFCR at the end.
 	sendToVictim(cvict, "You are splashed in the face with HOT coffee, but feel much more sober.\n\r")
 }
