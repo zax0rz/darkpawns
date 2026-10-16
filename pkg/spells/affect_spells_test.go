@@ -468,7 +468,7 @@ func TestMagSummons_AnimateDead_InvalidTarget(t *testing.T) {
 
 	MagSummons(10, caster, invalidTarget, SpellAnimateDead, world)
 
-	if !reflect.DeepEqual(caster.messages, []string{"There is no corpse!\r\n"}) {
+	if !reflect.DeepEqual(caster.messages, []string{"There is no corpse!\r\n\r\n"}) {
 		t.Errorf("invalid-target output = %q, want C's exact no-corpse line", caster.messages)
 	}
 	if world.spawnedVNum != 0 || world.removed || world.canRaiseCalled {

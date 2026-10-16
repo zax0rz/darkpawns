@@ -1000,7 +1000,9 @@ func MagSummons(level int, ch, obj interface{}, spellNum int, world interface{})
 		objectType, hasObjectType := obj.(objectTypeGetter)
 		objectValue, hasObjectValue := obj.(objectValueGetter)
 		if !hasObjectType || !hasObjectValue || objectType.GetObjType() != 15 || objectValue.GetValue(3) == 0 {
-			sendToCaster(ch, "There is no corpse!\r\n")
+			// C sends mag_summon_fail_msgs[7] through act(..., TO_CHAR), which
+			// appends its own CRLF after the message's (src/magic.c:1693-1695).
+			sendToCaster(ch, "There is no corpse!\r\n\r\n")
 			return
 		}
 
