@@ -297,13 +297,11 @@ func (a *PlayerDreamAdapter) HasAffect(bitNum int) bool {
 
 func (a *PlayerDreamAdapter) RemoveAffect(bitNum int) { a.p.RemoveAffectBit(bitNum) }
 func (a *PlayerDreamAdapter) SendToChar(msg string)   { a.p.SendMessage(msg) }
-func (a *PlayerDreamAdapter) SendToRoom(msg string)   { a.w.roomMessage(a.p.RoomVNum, msg) }
-
-func (a *PlayerDreamAdapter) WakeUp() {
-	if a.p.GetPosition() == PosSleeping {
-		a.p.SetPosition(PosStanding)
-	}
+func (a *PlayerDreamAdapter) SendToRoom(msg string) {
+	Act(a.w, false, a.p, nil, nil, nil, msg, "", ToRoom)
 }
+
+func (a *PlayerDreamAdapter) WakeUp() { a.w.DoWake(a.p, "") }
 
 func (a *PlayerDreamAdapter) MoveToRoom(roomVNum int) {
 	if err := a.w.PlayerTransfer(a.p, roomVNum); err != nil {
