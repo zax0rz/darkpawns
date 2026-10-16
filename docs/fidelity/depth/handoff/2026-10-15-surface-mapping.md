@@ -13,8 +13,9 @@ inventory's `units` column, grouped by `status`.
 Five earlier DP-1371 PRs (#2041–#2045) from `05aaa2f3d` reduce their inventory
 rows by 65 units in aggregate. Two more PRs from measured current main
 `e3645cd5b` reduce the `spells.c` row by one (#2047) and the `oedit.c` row by
-ten (#2048). If all seven changes apply cleanly, the arithmetic would be
-**3,528 total / 2,630 blocked**. This is a conditional projection only: none
+ten and the `olc.c` row by twenty (#2048). If all seven changes apply cleanly,
+the arithmetic would be **3,508 total / 2,610 blocked**. This is a conditional
+projection only: none
 has merged, the first five use an older main revision, and all changes must be
 reconciled before the projection can become a measured result.
 
@@ -31,7 +32,7 @@ residual row.
 | [#2044](https://github.com/zax0rz/darkpawns/pull/2044) | `src/spell_parser.c` | 57 → 49 | 39 proven, 49 gap-reachable | Experimental target NOT_CLEAN; see evidence below |
 | [#2045](https://github.com/zax0rz/darkpawns/pull/2045) | `src/act.wizard.c` | 40 → 31 | 320 proven, 25 gap-reachable, 6 stop-tier gap-blocked, 6 unreachable | `set-extended-depth`: CLEAN; show-oracle had no normalized divergence |
 | [#2047](https://github.com/zax0rz/darkpawns/pull/2047) | `src/spells.c` | 105 → 104 | 25 proven, 104 gap-reachable, 4 unreachable | No census required; proof and inventory update only |
-| [#2048](https://github.com/zax0rz/darkpawns/pull/2048) | `src/oedit.c` | 22 → 12 | 60 proven, 12 gap-reachable | No census required; proof and inventory update only |
+| [#2048](https://github.com/zax0rz/darkpawns/pull/2048) | `src/oedit.c`, `src/olc.c` | OEDIT 22 → 12; OLC 21 → 1 | OEDIT: 60 proven, 12 gap-reachable; OLC: 20 proven, 1 gap-blocked | No census required; tests, maps, and inventory updates only |
 
 For #2044, the retained failed `cast-power-surface-gaps` run exposed the
 independent `do_set` level-refusal punctuation difference at
@@ -86,15 +87,16 @@ PR #2047 proves one of the 105 `spells.c` gaps from current main. It leaves the
 other 104 reachable sites open; its updated row is not part of the measured
 current-main count until merge.
 
-PR #2048 proves ten of the 22 `oedit.c` gaps from current main. It leaves 12
-reachable sites open; its updated row is not part of the measured current-main
-count until merge.
+PR #2048 proves ten of the 22 `oedit.c` gaps and maps all 21 `olc.c` output
+sites from current main. OEDIT retains 12 reachable sites; OLC retains one
+session-lifecycle/transport gap. Neither updated row is part of the measured
+current-main count until merge.
 
 ## Handoff state
 
-The seven PRs account for 76 fewer blocked units after applying their per-row
+The seven PRs account for 96 fewer blocked units after applying their per-row
 changes, but substantial blocked work remains. The activity-call-site families
 and the deferred spell-matrix and fight-skill families are not complete. No PR
 was merged and nothing was deployed. Use a fresh inventory measurement after
-the open PRs are reconciled and merged; do not report the conditional 3,528 /
-2,630 projection as a main-branch measurement.
+the open PRs are reconciled and merged; do not report the conditional 3,508 /
+2,610 projection as a main-branch measurement.
