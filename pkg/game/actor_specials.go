@@ -83,6 +83,12 @@ func DispatchCharacterSpecial(name string, w *World, ctx CharacterSpecialContext
 	if entry.NPCFallback == SpecialDeclined {
 		return npcSpecialFallback(name, cmd)
 	}
+	if cmd != "" && cSpecialDeclinesEveryCommand[name] {
+		return SpecialDeclined
+	}
+	if intercepted, listed := cSpecialInterceptsOnly[name]; listed && cmd != "" && !intercepted[cmd] {
+		return SpecialDeclined
+	}
 	return SpecialUnsupported
 }
 
@@ -105,6 +111,9 @@ func DispatchCharacterObjectSpecial(name string, w *World, ctx CharacterSpecialC
 	}
 	if !ctx.Actor.IsNPC() {
 		return SpecialUnsupported
+	}
+	if cmd != "" && cSpecialDeclinesEveryCommand[name] {
+		return SpecialDeclined
 	}
 	entry, ok := SpecRegistry[name]
 	if !ok || entry.ActorObject == nil {
@@ -153,4 +162,69 @@ func specNoMoveEastActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 	ActWithPrivateSink(w, false, me, actingBody, nil, nil, "$n humiliates $N, and blocks $S way.", "", ToNotVict, ctx.Actor, ctx.PrivateOutput)
 	ActWithPrivateSink(w, false, me, actingBody, nil, nil, "$n humiliates you and blocks your way.", "", ToVict, ctx.Actor, ctx.PrivateOutput)
 	return SpecialHandled
+}
+
+// cSpecialDeclinesEveryCommand lists the C specials whose first statement is
+// `if (cmd || ...) return FALSE;`, with no side effect before it: they act only
+// on the pulse (cmd == 0) and decline every typed command, whoever types it.
+// For an NPC issuing a command (an ordered pet, a follower's perform_move), the
+// faithful answer is therefore "declined", not "unsupported". Without this, a
+// charmed follower could neither move nor obey orders in any room holding one
+// of these mobiles (Egon's playtest report, 2026-10-16).
+//
+// Derived mechanically from src/*.c: the SPECIAL's first non-declaration
+// statement is an early return whose || operands include a bare `cmd`
+// (butler's initializers call only get_obj_in_list_vis). Specials that test
+// particular commands (CMD_IS, IS_MOVE) are not here; they need per-command
+// ports (DP-1448).
+var cSpecialDeclinesEveryCommand = map[string]bool{
+	"backstabber":         true,
+	"black_undead_knight": true,
+	"brain_eater":         true,
+	"breed_killer":        true,
+	"butler":              true,
+	"citizen":             true,
+	"cityguard":           true,
+	"cleric":              true,
+	"conductor":           true,
+	"dragon_breath":       true,
+	"elemental_room":      true,
+	"eq_thief":            true,
+	"fearface":            true,
+	"fido":                true,
+	"field_object":        true,
+	"fighter":             true,
+	"ira":                 true,
+	"jail":                true,
+	"janitor":             true,
+	"little_boy":          true,
+	"magic_user":          true,
+	"mallory":             true,
+	"mickey":              true,
+	"mindflayer":          true,
+	"never_die":           true,
+	"normal_checker":      true,
+	"paladin":             true,
+	"pissedalchemist":     true,
+	"puff":                true,
+	"red_undead_knight":   true,
+	"rescuer":             true,
+	"snake":               true,
+	"take_to_jail":        true,
+	"teleport_victim":     true,
+	"teleporter":          true,
+	"thief":               true,
+	"tipster":             true,
+	"troll":               true,
+	"zen_master":          true,
+}
+
+// cSpecialInterceptsOnly lists C specials, verified by hand, that act only on
+// the named commands and return FALSE, with no side effect, for every other
+// one. An NPC issuing any other command is declined; the named commands from
+// an NPC stay unsupported until they are ported for NPC actors.
+var cSpecialInterceptsOnly = map[string]map[string]bool{
+	// SPECIAL(stableboy), src/spec_procs2.c:315-460: buy, list, stable and
+	// collect branches, then return(FALSE).
+	"stableboy": {"buy": true, "list": true, "stable": true, "collect": true},
 }

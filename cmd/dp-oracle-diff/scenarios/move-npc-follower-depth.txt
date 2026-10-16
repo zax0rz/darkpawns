@@ -1,0 +1,85 @@
+# depth-case: move.npc-follower-follows-leader
+# depth-case: order.npc-follower-obeys-beside-special
+# A bought horse is a charmed NPC follower (src/spec_procs2.c:348-354). When
+# its leader walks, perform_move's follower loop moves it too: C walks
+# ch->followers, players and mobiles alike (src/act.movement.c:342-351). The
+# witness stays behind and sees the horse leave; the leader sees it arrive.
+# Orders reach the horse beside the stableboy, whose special declines every
+# command but buy/list/stable/collect (src/spec_procs2.c:315-460).
+# Reported in play by Egon (2026-10-16): "horses don't follow", and order
+# "doesn't seem to work either, at least not consistently".
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+
+[setup:oracle]
+StableSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+StableSuccess
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+StableWitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+StableWitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport StableWitness 8105
+set StableSuccess gold 1000
+
+[probe]
+buy horse
+north
+look
+south
+look
+order followers say hello
+order horse emote neighs
