@@ -49,7 +49,7 @@ src/act.wizard.c:429	do_stat_room	proven	stat.room-success	The cited manifest pr
 src/act.wizard.c:434	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:436	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:438	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:440	do_stat_room	gap-reachable		No-description room branch; the stat.room-success fixture uses a room description.
+src/act.wizard.c:440	do_stat_room	gap-blocked		C's null-description branch is unproven. `fread_string()` returns NULL for an empty `~` field (src/db.c:2690-2738), but the only blank-description room is unindexed `urgats_old.wld` (#18000); the current add-wld-index fixture inserts a nonnumeric filename before all indexed zones and breaks C's required zone order, so the branch is blocked by the stop-tier census-harness fixture surface (R1/R5e/R5g).
 src/act.wizard.c:449	do_stat_room	proven	stat.room-extra-description-census;stat.room-extra-description-output	The isolated live stat command runs in room 8151, whose C prototype has the scrolls extra-description; output matches with C's color gate (R1/R2/R5e/R5h).
 src/act.wizard.c:460	do_stat_room	gap-reachable		Long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
 src/act.wizard.c:462	do_stat_room	gap-reachable		Final long character-list wrap branch; the report fixture stays below the C 62-byte row boundary.
@@ -348,7 +348,7 @@ src/act.wizard.c:3528	do_newbie	proven	wnewbie.target-not-found	The cited manife
 src/act.wizard.c:3536	do_newbie	proven	wnewbie.local-player;wnewbie.global-player	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3537	do_newbie	proven	wnewbie.mob-target	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3571	do_zlist	proven	zlist.missing-file	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:3588	do_idlist	gap-reachable		File-open failure is reachable through an unwritable working directory; the current success proof does not take this branch.
+src/act.wizard.c:3588	do_idlist	gap-blocked		Stop-tier filesystem persistence boundary: the failure occurs only when C cannot open `object_idlist` for writing (src/act.wizard.c:3585-3589); this surface excludes filesystem permission and path-failure work (R1/R5g).
 src/act.wizard.c:3670	do_idlist	proven	idlist.success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3813	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3816	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
