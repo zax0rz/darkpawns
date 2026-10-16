@@ -281,11 +281,15 @@ func (w *World) performMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool)
 	if !w.doSimpleMoveMob(ch, dir, needSpecialsCheck) {
 		return false
 	}
-	// C drags the mover's followers along (src/act.movement.c:343-352). Only
-	// the port's player followers are enumerable; a mobile's mobile-followers
-	// lane has no runtime index yet and stays unported (R5d).
-	for _, follower := range w.GetFollowers(ch.GetName()) {
-		if follower.GetRoom() != wasIn || follower.GetPosition() < combat.PosStanding {
+	// C drags the mover's followers along, players and mobiles alike
+	// (src/act.movement.c:342-351).
+	for _, actor := range w.GetFollowerActors(ch.GetName()) {
+		if mob, isMob := actor.(*MobInstance); isMob {
+			w.moveMobFollower(mob, ch, wasIn, dir)
+			continue
+		}
+		follower, isPlayer := actor.(*Player)
+		if !isPlayer || follower.GetRoom() != wasIn || follower.GetPosition() < combat.PosStanding {
 			continue
 		}
 		// C skips a follower whose rider is the mover (get_rider check,

@@ -542,21 +542,42 @@ func performMoveResult(w *World, ch *Player, dir int, needSpecialsCheck bool, re
 		return false
 	}
 
-	// Followers
-	followers := w.GetFollowers(ch.Name)
-	for _, f := range followers {
-		if f.GetRoom() == wasIn && f.GetPosition() >= combat.PosStanding {
-			Act(nil, false, f, ch, nil, nil, "You follow $N.", "", ToChar)
-			// C's follower loop emits this notice, then the recursive
-			// perform_move() starts a separate room-look output burst.
-			f.SendMessage("\r\n")
-			f.SetAffect(affHide, false)
-			if performMoveResult(w, f, dir, true, result) && result != nil {
-				result.Followers = append(result.Followers, f.Name)
+	// Followers: C walks ch->followers, players and mobiles alike, newest
+	// first (src/act.movement.c:342-351).
+	for _, follower := range w.GetFollowerActors(ch.Name) {
+		switch f := follower.(type) {
+		case *Player:
+			if f.GetRoom() == wasIn && f.GetPosition() >= combat.PosStanding {
+				Act(nil, false, f, ch, nil, nil, "You follow $N.", "", ToChar)
+				// C's follower loop emits this notice, then the recursive
+				// perform_move() starts a separate room-look output burst.
+				f.SendMessage("\r\n")
+				f.SetAffect(affHide, false)
+				if performMoveResult(w, f, dir, true, result) && result != nil {
+					result.Followers = append(result.Followers, f.Name)
+				}
 			}
+		case *MobInstance:
+			w.moveMobFollower(f, ch, wasIn, dir)
 		}
 	}
 	return true
+}
+
+// moveMobFollower is one mobile iteration of perform_move's follower loop
+// (src/act.movement.c:344-349): a standing follower still in the room the
+// leader left, and not the leader's own ridden mount (get_rider), follows
+// through perform_move(follower, dir, 1). Its "You follow $N." has no
+// descriptor to reach.
+func (w *World) moveMobFollower(f *MobInstance, leader Actor, wasIn, dir int) {
+	if f == nil || f.GetRoom() != wasIn || f.GetPosition() < combat.PosStanding {
+		return
+	}
+	if rider := w.GetRider(f); rider != nil && Actor(rider) == leader {
+		return
+	}
+	f.RemoveAffected(affHide)
+	w.performMoveMob(f, dir, true)
 }
 
 // ---------------------------------------------------------------------------
