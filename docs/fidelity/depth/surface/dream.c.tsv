@@ -1,0 +1,30 @@
+c_site	function	classification	case_ids	notes
+src/dream.c:67	dream	gap-reachable		A sleeping player less than one day after death, with the 1-in-6 draw, receives the private nightmare text; no automatic dream pulse proof exists.
+src/dream.c:69	dream	gap-reachable		The same recent-death draw reaches the wake-scream room act before do_wake; no automatic dream pulse proof exists.
+src/dream.c:76	dream	gap-reachable		A sleeping player one to two days after death reaches the private dark-figure dream on a 1-in-6 draw; no automatic dream pulse proof exists.
+src/dream.c:78	dream	gap-reachable		The one-to-two-day death branch emits the shiver room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:83	dream	gap-reachable		A sleeping player two to three days after death reaches the dark-cloud private dream on a 1-in-6 draw; no automatic dream pulse proof exists.
+src/dream.c:85	dream	gap-reachable		The two-to-three-day death branch emits the toss-and-turn room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:91	dream	gap-reachable		A sleeping player three to five days after death reaches the uneasy-sleep private text on a 1-in-6 draw; no automatic dream pulse proof exists.
+src/dream.c:93	dream	gap-reachable		The three-to-five-day death branch emits the grunt room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:114	dream	gap-reachable		A level-zero-through-five sleeping player reaches the low-level dream on a 1-in-16 draw; no automatic dream pulse proof exists.
+src/dream.c:116	dream	gap-reachable		The level-zero-through-five branch emits the smile room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:125	dream	gap-reachable		A level-six-through-ten sleeping player reaches the travel dream on a 1-in-16 draw; no automatic dream pulse proof exists.
+src/dream.c:127	dream	gap-reachable		The level-six-through-ten branch emits the happy-ditty room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:139	dream	gap-reachable		A level-eleven-through-twenty sleeping player reaches the conquest dream on a 1-in-16 draw; no automatic dream pulse proof exists.
+src/dream.c:140	dream	gap-reachable		The level-eleven-through-twenty branch emits the grin room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:150	dream	gap-reachable		A level-twenty-one-through-twenty-eight sleeping player reaches the dark-creatures dream on a 1-in-16 draw; no automatic dream pulse proof exists.
+src/dream.c:152	dream	gap-reachable		The level-twenty-one-through-twenty-eight branch emits the smirk room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:159	dream	gap-reachable		A level-twenty-nine-or-thirty sleeping player reaches the immortality dream on a 1-in-16 draw; no automatic dream pulse proof exists.
+src/dream.c:161	dream	gap-reachable		The level-twenty-nine-or-thirty branch emits the big-dreams room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:168	dream	gap-reachable		A level-LVL_IMMORT sleeping player reaches the Gods-power dream on a 1-in-16 draw; no automatic dream pulse proof exists.
+src/dream.c:170	dream	gap-reachable		The immortal-level branch emits the glow room act after its private text; no automatic dream pulse proof exists.
+src/dream.c:177	dream	gap-reachable		A sleeping player in the default level arm reaches the Orodreth nightmare on a 1-in-16 draw; no automatic dream pulse proof exists.
+src/dream.c:179	dream	gap-reachable		The default-level nightmare sends a second private wake-up line before its room act; no automatic dream pulse proof exists.
+src/dream.c:180	dream	gap-reachable		The default-level nightmare emits its wake room act after both private lines; no automatic dream pulse proof exists.
+src/dream.c:197	dream_travel	gap-reachable		A sleeping AFF_DREAM character without a recent death reaches a normal destination message when a subcmd-zero table entry wins; no travel pulse proof exists.
+src/dream.c:198	dream_travel	gap-reachable		Normal dream travel emits the source-room fade act before char_from_room/char_to_room; no travel pulse proof exists.
+src/dream.c:202	dream_travel	gap-reachable		Normal dream travel emits the destination-room fade act after relocation; no travel pulse proof exists.
+src/dream.c:210	dream_travel	gap-reachable		A sleeping AFF_DREAM character with a recent death reaches a bad-dream destination message when a table entry wins; no bad-travel pulse proof exists.
+src/dream.c:211	dream_travel	gap-reachable		Bad dream travel emits the source-room fade act before relocation; no bad-travel pulse proof exists.
+src/dream.c:215	dream_travel	gap-reachable		Bad dream travel emits the destination-room fade act after relocation; no bad-travel pulse proof exists.
