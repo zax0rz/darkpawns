@@ -7,6 +7,8 @@ package game
 
 import (
 	"log/slog"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
 const (
@@ -59,14 +61,13 @@ func (w *World) SpellGate(caster *Player) bool {
 		if vnum == BluePortalVNum || vnum == RedPortalVNum {
 			// Portal collision — disaster!
 			caster.SendMessage("The magick flows through you, then out into the world, changing it....\r\n")
-			w.SendToRoom(casterRoom, "As you watch the red portal slowly fade into existence,\r\n"+
-				"the existing portal pulses once, then begins to expand,\r\n"+
-				"consuming the new portal, and then the entire grove.\r\n"+
-				"The fabric of time and space warps and stretches\r\n"+
+			w.SendToRoom(casterRoom, "As you watch the red portal slowly fade into existence, \r\n"+
+				"the existing portal pulses once, then begins to expand, \r\n"+
+				"consuming the new portal, and then the entire grove.\r\nThe fabric of time and space warps and stretches\r\n"+
 				"around you, and flashes of white light explode in the back of your mind.\r\n")
 			caster.SendMessage("In your final moments, the only thing you can feel is a\r\n" +
 				"wave of cosmic energy coursing through you, tearing your soul to shreds.\r\n")
-			w.RawKill(caster, "suffering")
+			w.RawKillCombatant(caster, combat.TYPE_BLAST)
 			if err := w.MoveObjectToNowhere(obj); err != nil {
 				slog.Warn("MoveObjectToNowhere failed in gate collision", "obj_vnum", obj.GetVNum(), "error", err)
 			}
@@ -81,7 +82,7 @@ func (w *World) SpellGate(caster *Player) bool {
 			redGate := w.CreateObject(RedPortalVNum, casterRoom)
 			if redGate != nil {
 				timer := 2
-				if caster.GetLevel() >= 30 {
+				if caster.GetLevel() == 30 {
 					timer++
 				}
 				// gate.c stores the moon_gate countdown in GET_OBJ_VAL(red_gate, 2).
@@ -96,6 +97,19 @@ func (w *World) SpellGate(caster *Player) bool {
 	return false
 }
 
+// CastGateSpell is the bridge used by pkg/spells' manual-spell dispatcher.
+// C spell_gate prints the non-room refusal when no legal room or existing
+// portal applies (src/gate.c:383-390).
+func (w *World) CastGateSpell(caster interface{}) {
+	player, ok := caster.(*Player)
+	if !ok || player == nil {
+		return
+	}
+	if !w.SpellGate(player) && player.GetRoom() != roomNowhere {
+		player.SendMessage("The magic flows through you, but nothing else happens.\r\n")
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Helper methods used by gate functions
 
@@ -106,7 +120,12 @@ func (w *World) RealRoom(vnum int) int {
 
 // SendToRoom sends a message to all players in a room.
 func (w *World) SendToRoom(rnum int, msg string) {
-	w.roomMessage(rnum, msg)
+	// C's send_to_room transmits the caller's bytes as-is. roomMessage is a
+	// convenience for newline-terminated prose and appends its own CRLF, which
+	// would insert a blank line before the spell's following caster message.
+	for _, player := range w.GetPlayersInRoom(rnum) {
+		player.SendMessage(msg)
+	}
 }
 
 // RawKill kills a player.
@@ -121,8 +140,10 @@ func (w *World) RawKill(ch *Player, attackType string) {
 		at = 3
 	case "hit", "pound":
 		at = 4
+	case "blast":
+		at = combat.TYPE_BLAST
 	case "suffering":
-		at = 399 // TYPE_SUFFERING
+		at = combat.TYPE_SUFFERING
 	}
 	w.rawKill(ch, at)
 }

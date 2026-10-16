@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -210,33 +211,65 @@ func specZenMaster(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	}
 }
 
-// specMoonGate teleports players entering night portals.
-// Intercepts ENTER. Destination is Exit1 from the gatePhases table for the
-// player's current room; falls back to MortalStartRoom if not found.
-func specMoonGate(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "enter" {
-		return false
-	}
-	arg = strings.TrimSpace(arg)
-	if arg != "gate" && arg != "portal" && arg != "moon gate" {
+// specMoonGate ports SPECIAL(moon_gate) (src/gate.c:237-325). The assigned
+// object supplies its name and the red/blue destination rules.
+func specMoonGate(w *World, ch *Player, obj *ObjectInstance, cmd string, arg string) bool {
+	if ch == nil || obj == nil {
 		return false
 	}
 
-	sendToChar(ch, "You step into the shimmering, iridescent moon gate...")
-	w.roomMessage(ch.GetRoomVNum(), "$n steps into the shimmering moon gate and vanishes!")
-
-	dest := MortalStartRoom
-	currentRoom := ch.GetRoomVNum()
-	for _, ge := range gatePhases {
-		if ge.Room == currentRoom && ge.Exit1 != 0 {
-			dest = ge.Exit1
-			break
+	switch cmd {
+	case "enter":
+		if !isName(arg, obj.GetName()) {
+			return false
 		}
-	}
 
-	ch.SetRoom(dest)
-	w.actToRoom(ch, "$n arrives through a shimmering moon gate!", nil, nil)
-	return true
+		portalRoom := 0
+		if obj.GetVNum() == BluePortalVNum {
+			for _, gate := range gatePhases {
+				if gate.Room != ch.GetRoomVNum() {
+					continue
+				}
+				exitRoom := gate.Exit1
+				if combat.GetRoller().Number(0, 3) >= 2 {
+					exitRoom = gate.Exit2
+				}
+				if exitRoom == 0 {
+					exitRoom = gate.Exit1
+				}
+				portalRoom = exitRoom
+				break
+			}
+		} else if obj.GetCost() > 0 {
+			portalRoom = obj.GetCost()
+		} else {
+			portalRoom = 4000
+		}
+
+		ch.SendMessage("You enter the portal and are transferred...\n\r")
+		Act(w, true, ch, nil, nil, nil,
+			"$n enters the gate which suddenly starts glowing brightly,\r\nobscuring your view of $m!", "", ToRoom)
+		if err := w.PlayerTransfer(ch, portalRoom); err != nil {
+			slog.Error("moon gate transfer failed", "player", ch.GetName(), "to", portalRoom, "error", err)
+			return true
+		}
+		Act(w, true, ch, nil, nil, nil,
+			"With a sound like a raging river, a hole in space opens up and $n steps out.", "", ToRoom)
+		w.lookAtRoom(ch, true)
+		return true
+	case "look":
+		lowered := strings.ToLower(strings.TrimSpace(arg))
+		if lowered != "gate" && lowered != "moongate" && lowered != "portal" {
+			// C moon_gate delegates non-portal targets to do_look and consumes
+			// the command (src/gate.c:309-316).
+			w.doLook(ch, nil, cmd, lowered)
+			return true
+		}
+		ch.SendMessage("You see a shimmering light... you could ENTER the gate.\r\n")
+		return false
+	default:
+		return false
+	}
 }
 
 func init() {
@@ -244,5 +277,8 @@ func init() {
 	RegisterSpec("recharger", specRecharger)
 	RegisterSpec("beholder", specBeholder)
 	RegisterSpec("zen_master", specZenMaster)
-	RegisterSpec("moon_gate", specMoonGate)
+	// Keep the assigned-special registry validation satisfied; concrete
+	// moon_gate dispatch uses the object-aware handler below.
+	RegisterSpec("moon_gate", func(_ *World, _ *Player, _ *MobInstance, _, _ string) bool { return false })
+	RegisterObjSpec("moon_gate", specMoonGate)
 }

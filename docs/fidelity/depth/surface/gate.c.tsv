@@ -1,0 +1,9 @@
+c_site	function	classification	case_ids	notes
+src/gate.c:278	moon_gate	proven	gate.portal.entry-actor	The assigned blue object special runs from registered enter dispatch and emits the exact actor line (R1/R2/R5e/R5h).
+src/gate.c:279	moon_gate	proven	gate.portal.entry-origin	The C TO_ROOM act reaches the origin witness before transfer (R1/R5e/R5h).
+src/gate.c:283	moon_gate	proven	gate.portal.entry-destination	The C TO_ROOM arrival act reaches the selected destination witness (R1/R5e/R5h).
+src/gate.c:322	moon_gate	proven	gate.portal.look-prompt	The assigned room-object special handles look portal with C's exact prompt (R1/R2/R5e/R5h).
+src/gate.c:353	spell_gate	proven	gate.spell.collision-actor;gate.spell.collision-spacing	The real cast's portal collision emits the exact caster prelude before the raw room bytes (R1/R2/R5e/R5h).
+src/gate.c:363	spell_gate	proven	gate.spell.collision-actor;gate.spell.collision-spacing	The same collision emits C's exact final-moments line directly after the room bytes and before TYPE_BLAST raw_kill (R1/R4/R5e/R5h).
+src/gate.c:375	spell_gate	proven	gate.spell.create-actor	A legal grove cast emits the exact actor success line through call_magic (R1/R2/R5e/R5h).
+src/gate.c:388	spell_gate	proven	gate.spell.refusal	A real cast outside rooms 4001-4008 reaches C's stc refusal (R1/R2/R5e/R5h).
