@@ -376,6 +376,41 @@ func TestHandleSurvivingVictimState_AutoWimpyFleesAfterBleedingMessage(t *testin
 	}
 }
 
+func TestHandleSurvivingVictimState_PainAndObserverScream(t *testing.T) {
+	origRoller := GetRoller()
+	origCB := GetCallbacks()
+	t.Cleanup(func() { SetRoller(origRoller); SetCallbacks(origCB) })
+	roller := NewScriptedRoller([]int{0, 1})
+	SetRoller(roller)
+	SetCallbacks(defaultCombatCallbacks())
+
+	attacker := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "Attacker", npc: true, room: 8105, hp: 20, maxHP: 20,
+		position: PosFighting, fighting: &mockCombatant{name: "Victim"},
+	}}
+	victim := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "Victim", room: 8105, hp: 15, maxHP: 20,
+		position: PosFighting, fighting: attacker,
+	}}
+	attacker.SetFightingBody(victim)
+	ce := NewCombatEngine()
+	var roomMessages []string
+	ce.BroadcastFunc = func(_ int, message string, _ []Combatant) { roomMessages = append(roomMessages, message) }
+
+	if ended := ce.handleSurvivingVictimState(attacker, victim, 6, PosFighting); ended {
+		t.Fatal("surviving pain feedback ended the combat exchange")
+	}
+	if got, want := strings.Join(victim.messages, ""), "That really did HURT!\r\n"; got != want {
+		t.Fatalf("pain actor output = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(roomMessages, ""), "Victim screams in pain!\r\n"; got != want {
+		t.Fatalf("pain observer output = %q, want %q", got, want)
+	}
+	if roller.Index != 1 {
+		t.Fatalf("pain response consumed %d draws, want exactly the C Number(0,2) draw", roller.Index)
+	}
+}
+
 func TestSendHitMessageFallsBackWhenNil(t *testing.T) {
 	ce := NewCombatEngine()
 	atk := &msgMockCombatant{mockCombatant: mockCombatant{name: "Alice"}}
@@ -897,6 +932,8 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 	player.SetFightingBody(mob)
 
 	ce := NewCombatEngine()
+	var observerMessages []string
+	ce.BroadcastFunc = func(_ int, message string, _ []Combatant) { observerMessages = append(observerMessages, message) }
 	hits := 0
 	// DamageFunc runs once for every landed hit, on the same path that
 	// applies the damage.
@@ -920,7 +957,19 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 		t.Fatalf("hits before opponent prepares parry = %d, want 2", hits)
 	}
 
+	player.messages = nil
+	mob.messages = nil
+	observerMessages = nil
 	ce.prepareRoundDefense(player, mob)
+	if got, want := strings.Join(player.messages, ""), "With a dazzling show of swordplay, you move into defensive position...\r\n"; got != want {
+		t.Fatalf("parry actor output = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(mob.messages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off your every blow!\r\n"; got != want {
+		t.Fatalf("parry victim output = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(observerMessages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off orc's every blow!\r\n"; got != want {
+		t.Fatalf("parry room output = %q, want %q", got, want)
+	}
 	if hits != 2 {
 		t.Fatalf("preparing parry performed an immediate attack: hits = %d, want 2", hits)
 	}
@@ -931,6 +980,35 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 	}
 	if got := player.GetHP(); got != 97 {
 		t.Fatalf("player HP after 2-hit then parried 1-hit turns = %d, want 97", got)
+	}
+}
+
+func TestProcessCombatPair_MobileDodgeEmitsAllCOutputs(t *testing.T) {
+	origRoller := GetRoller()
+	origCB := GetCallbacks()
+	t.Cleanup(func() { SetRoller(origRoller); SetCallbacks(origCB) })
+	SetRoller(NewScriptedRoller([]int{900, 0}))
+	SetCallbacks(&GameCallbacks{HasAffect: func(c Combatant, affect int) bool {
+		return c.GetName() == "dodging_mob" && affect == AFF_DODGE
+	}})
+
+	mob := &mockCombatant{name: "dodging_mob", npc: true, room: 1, level: 10, hp: 100, maxHP: 100, position: PosStanding}
+	player := &mockCombatant{name: "Hero", room: 1, level: 20, hp: 100, maxHP: 100, position: PosStanding}
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
+	ce := NewCombatEngine()
+	var roomMessages []string
+	ce.BroadcastFunc = func(_ int, message string, _ []Combatant) { roomMessages = append(roomMessages, message) }
+	ce.processCombatPair(&CombatPair{Attacker: mob, Defender: player})
+
+	if len(mob.messages) == 0 || mob.messages[0] != "You dodge!\r\n" {
+		t.Fatalf("dodge actor output = %q, want leading exact C line", strings.Join(mob.messages, ""))
+	}
+	if len(player.messages) == 0 || player.messages[0] != "Dodging_mob dodges your attack!\r\n" {
+		t.Fatalf("dodge victim output = %q, want leading exact C line", strings.Join(player.messages, ""))
+	}
+	if len(roomMessages) == 0 || roomMessages[0] != "Dodging_mob dodges Hero's attack!\r\n" {
+		t.Fatalf("dodge room output = %q, want leading exact C line", strings.Join(roomMessages, ""))
 	}
 }
 

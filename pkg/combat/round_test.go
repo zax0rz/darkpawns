@@ -288,6 +288,9 @@ func TestPerformGroupGain_Basic(t *testing.T) {
 	victim := &mockCombatant{name: "Orc", level: 8, npc: true}
 
 	PerformGroupGain(ch, victim, 200)
+	if got, want := strings.Join(ch.messages, ""), "You receive your share of experience -- 200 points.\r\n"; got != want {
+		t.Fatalf("group XP output = %q, want %q", got, want)
+	}
 
 	if gainedName != "Fighter" {
 		t.Errorf("expected exp assigned to Fighter, got %q", gainedName)
@@ -312,7 +315,9 @@ func TestPerformGroupGain_OneExpPoint(t *testing.T) {
 
 	// base=1, extreme level diff, level>20 penalty → should floor at 1
 	PerformGroupGain(ch, victim, 1)
-	// Should not panic, internal calc returns at least 1
+	if got, want := strings.Join(ch.messages, ""), "You receive your share of experience -- one measly little point!\r\n"; got != want {
+		t.Fatalf("one-point group XP output = %q, want %q", got, want)
+	}
 }
 
 // ---------------------------------------------------------------------------

@@ -224,16 +224,11 @@ func TestProcessCombatPair_PCStandup(t *testing.T) {
 		if attacker.GetPosition() != PosFighting {
 			t.Errorf("downed PC wait 0 should stand: pos %d", attacker.GetPosition())
 		}
-		// The "You drag yourself to your feet." self-message.
-		found := false
-		for _, m := range attacker.messages {
-			if strings.Contains(m, "drag yourself to your feet") {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !strings.Contains(strings.Join(attacker.messages, ""), "You drag yourself to your feet.\r\n") {
 			t.Errorf("PC stand-up self-message missing; got %v", attacker.messages)
+		}
+		if len(msgs) == 0 || msgs[0] != "Hero scrambles to his feet!" {
+			t.Errorf("PC stand-up room output = %v, want exact C act", msgs)
 		}
 	})
 

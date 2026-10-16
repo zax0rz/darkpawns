@@ -208,6 +208,8 @@ func TestAwardMobKillXPGroupHigherLevelPenalty(t *testing.T) {
 	if err := w.AddPlayer(follower); err != nil {
 		t.Fatalf("AddPlayer follower failed: %v", err)
 	}
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
 
 	w.AwardMobKillXP(leader, nil, 2000, 0, 10, 0)
 
@@ -216,6 +218,11 @@ func TestAwardMobKillXPGroupHigherLevelPenalty(t *testing.T) {
 	}
 	if got := follower.GetExp(); got != 693 {
 		t.Fatalf("follower grouped kill XP = %d, want 693", got)
+	}
+	for _, name := range []string{leader.Name, follower.Name} {
+		if !strings.Contains(output[name], "You receive your share of experience -- 693 points.\r\n") {
+			t.Errorf("%s output = %q, missing exact numeric group XP line", name, output[name])
+		}
 	}
 }
 
@@ -235,6 +242,11 @@ func TestAwardMobKillXPSplitsOddGoldRemainderSeparately(t *testing.T) {
 	output := make(map[string]string)
 	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
 	w.AwardMobKillXP(leader, victim, 0, 101, victim.GetLevel(), 0)
+	for _, name := range []string{leader.Name, follower.Name} {
+		if !strings.Contains(output[name], "You receive your share of experience -- one measly little point!\r\n") {
+			t.Errorf("%s output = %q, missing exact one-point group XP line", name, output[name])
+		}
+	}
 
 	if got := leader.GetGold(); got != 51 {
 		t.Errorf("leader gold = %d, want 51", got)
@@ -261,6 +273,62 @@ func TestAwardMobKillXPSplitsOddGoldRemainderSeparately(t *testing.T) {
 	}
 	if strings.Index(output[follower.Name], roomLoot) > strings.Index(output[follower.Name], followerShare) {
 		t.Errorf("follower received gold before the corpse-loot room act: %q", output[follower.Name])
+	}
+}
+
+func TestAwardMobKillXPGroupGoldZeroShareMessages(t *testing.T) {
+	w, leader, victim := newDeathOrderWorld(t, 10, 100)
+	leader.SetInGroup(true)
+	leader.AutoGold = true
+	leader.AutoSplit = true
+	followers := []*Player{NewPlayer(2, "FollowerOne", 1001), NewPlayer(3, "FollowerTwo", 1001)}
+	for _, follower := range followers {
+		follower.SetFollowing(leader.Name)
+		follower.SetInGroup(true)
+		if err := w.AddPlayer(follower); err != nil {
+			t.Fatalf("AddPlayer follower: %v", err)
+		}
+	}
+	victim.SetGold(1)
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
+
+	w.AwardMobKillXP(leader, victim, 0, 1, victim.GetLevel(), 0)
+
+	if !strings.Contains(output[leader.Name], "When you split no gold, you got none.\r\n") {
+		t.Errorf("leader output = %q, missing zero-share self line", output[leader.Name])
+	}
+	for _, follower := range followers {
+		if !strings.Contains(output[leader.Name], "You would share gold with "+follower.Name+", but there was none to split!\r\n") {
+			t.Errorf("leader output = %q, missing warning for %s", output[leader.Name], follower.Name)
+		}
+		if !strings.Contains(output[follower.Name], leader.Name+" would have shared some gold with you but there was none to split!\r\n") {
+			t.Errorf("%s output = %q, missing exact zero-share receipt", follower.Name, output[follower.Name])
+		}
+	}
+}
+
+func TestAwardMobKillXPGroupGoldWithoutAutosplitNotifiesRoom(t *testing.T) {
+	w, leader, victim := newDeathOrderWorld(t, 10, 100)
+	leader.SetInGroup(true)
+	leader.AutoGold = true
+	follower := NewPlayer(2, "Follower", 1001)
+	follower.SetFollowing(leader.Name)
+	follower.SetInGroup(true)
+	if err := w.AddPlayer(follower); err != nil {
+		t.Fatalf("AddPlayer follower: %v", err)
+	}
+	victim.SetGold(7)
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
+
+	w.AwardMobKillXP(leader, victim, 0, 7, victim.GetLevel(), 0)
+
+	if want := "You loot 7 coins from the corpse of a victim.\r\n"; !strings.Contains(output[leader.Name], want) {
+		t.Errorf("leader output = %q, missing %q", output[leader.Name], want)
+	}
+	if want := "Killer loots some gold from the corpse of a victim.\r\n"; !strings.Contains(output[follower.Name], want) {
+		t.Errorf("follower output = %q, missing room announcement %q", output[follower.Name], want)
 	}
 }
 

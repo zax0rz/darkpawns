@@ -3,21 +3,21 @@ src/fight.c:117	appear	proven	invis.appear-audience	The live invisibility appear
 src/fight.c:119	appear	proven	invis.appear-audience	The live invisibility appearance path reaches appear() and pins the room act. (R1/R3/R5e/R5h).
 src/fight.c:517	death_cry	proven	kill.immortal-instinstakill	The registered immortal kill reaches raw_kill/death_cry; the room and adjacent-room cries are in the retained transcript. (R1/R3/R5e/R5h).
 src/fight.c:524	death_cry	proven	kill.immortal-instinstakill	The registered immortal kill reaches raw_kill/death_cry; the room and adjacent-room cries are in the retained transcript. (R1/R3/R5e/R5h).
-src/fight.c:696	perform_group_gain	gap-reachable	-	Group member experience output lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:699	perform_group_gain	gap-reachable	-	The one-point group experience variant lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:696	perform_group_gain	proven	fight.group-xp-numeric	Exact plural group XP bytes are asserted for leader and follower through AwardMobKillXP. (R1/R2/R5e/R5g/R5h).
+src/fight.c:699	perform_group_gain	proven	fight.group-xp-one-point	The clamped one-point group XP line is asserted through both the share helper and grouped award path. (R1/R2/R5e/R5g/R5h).
 src/fight.c:760	group_gain	proven	death.group-autosplit-remainder	The live grouped kill pins the actor's corpse-loot line using the victim's name. (R1/R3/R5e/R5h).
 src/fight.c:763	group_gain	proven	death.group-autosplit-remainder	The live grouped kill pins the room loot act before any member-share lines. (R1/R3/R5e/R5h).
-src/fight.c:773	group_gain	gap-reachable	-	Leader-to-member gold share lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:778	group_gain	gap-reachable	-	Member receipt of shared gold lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:773	group_gain	proven	death.group-autosplit-remainder	The grouped live kill asserts the leader's share message for a follower. (R1/R3/R5e/R5h).
+src/fight.c:778	group_gain	proven	death.group-autosplit-remainder	The grouped live kill asserts the follower receipt after the loot room act. (R1/R3/R5e/R5h).
 src/fight.c:792	group_gain	proven	death.group-autosplit-remainder	The live grouped kill pins the leader's follower-share line. (R1/R3/R5e/R5h).
 src/fight.c:797	group_gain	proven	death.group-autosplit-remainder	The follower receives the exact truncated share after the room loot act. (R1/R3/R5e/R5h).
-src/fight.c:806	group_gain	gap-reachable	-	No-gold leader warning lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:810	group_gain	gap-reachable	-	No-gold follower warning lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:806	group_gain	proven	fight.group-zero-share	Exact no-share leader warnings are asserted for each grouped follower. (R1/R2/R5e/R5h).
+src/fight.c:810	group_gain	proven	fight.group-zero-share	Exact no-share follower receipts are asserted for each grouped follower. (R1/R2/R5e/R5h).
 src/fight.c:820	group_gain	proven	death.group-autosplit-remainder	The actor keeps the same truncated per-member share as each follower. (R1/R3/R5e/R5h).
-src/fight.c:823	group_gain	gap-reachable	-	The zero-gold split refusal lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:823	group_gain	proven	fight.group-zero-share	The exact zero-per-member split refusal is asserted for a positive corpse gold balance. (R1/R2/R5e/R5h).
 src/fight.c:830	group_gain	proven	death.group-autosplit-remainder	The actor receives the odd coin in a separate leftover line after the equal share. (R1/R3/R5e/R5h).
-src/fight.c:840	group_gain	gap-reachable	-	Follower-remainder output lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:843	group_gain	gap-reachable	-	Room gold-loot audience in the no-split arm lacks a proof that reaches this C branch. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:840	group_gain	proven	death.group-autosplit-remainder	The 101-coin grouped live kill asserts the actor's one-coin remainder after equal shares. (R1/R3/R5e/R5h).
+src/fight.c:843	group_gain	proven	fight.group-gold-no-split	The no-autosplit branch asserts the exact room loot announcement to the follower. (R1/R2/R5e/R5h).
 src/fight.c:998	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
 src/fight.c:1001	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
 src/fight.c:1005	dam_message	proven	melee.weapon-hit	The real sleeping-victim weapon hit reaches dam_message and compares attacker, victim, and room bytes. (R1/R3/R5e/R5h).
@@ -79,21 +79,21 @@ src/fight.c:1576	damage	proven	damage.tick-wounded	The wounded damage tail pins 
 src/fight.c:1578	damage	proven	damage.wounded-band-broadcast	The live wounded-band path pins room capitalization and victim exclusion. (R1/R3/R5e/R5h).
 src/fight.c:1582	damage	proven	damage.wounded-band-broadcast	The live wounded-band path pins room capitalization and victim exclusion. (R1/R3/R5e/R5h).
 src/fight.c:1583	damage	proven	damage.tick-wounded	The wounded damage tail pins the position-specific room and victim messages. (R1/R3/R5e/R5h).
-src/fight.c:1589	damage	gap-reachable	-	The direct pain response lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1591	damage	gap-reachable	-	The observer pain-scream act lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1597	damage	gap-reachable	-	The low-health bleeding warning lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1605	damage	gap-reachable	-	The wimpy flee notice lacks an exact player-facing proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1589	damage	proven	fight.damage-high-pain	The high-damage path asserts the exact victim pain line. (R1/R2/R5e/R5h).
+src/fight.c:1591	damage	proven	fight.damage-high-pain	The scripted number(0,2) path asserts the observer scream output and draw. (R1/R2/R3/R5e/R5h).
+src/fight.c:1597	damage	proven	fight.damage-bleeding-wimpy	The low-health path asserts the exact bleeding warning before fleeing. (R1/R2/R5e/R5h).
+src/fight.c:1605	damage	proven	fight.damage-bleeding-wimpy	The player wimpy branch asserts its exact attempt-to-flee line after bleeding. (R1/R2/R5e/R5h).
 src/fight.c:1647	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
 src/fight.c:1650	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
 src/fight.c:1660	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
 src/fight.c:1662	damage	proven	smackheads.damage-death-pipeline	The multi-seed lethal combat route pins death, XP/autogold ordering, and the silent-corpse tail. (R1/R3/R5e/R5h).
-src/fight.c:1957	perform_violence	gap-reachable	-	The automatic PC parry actor line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1959	perform_violence	gap-reachable	-	The automatic PC parry room line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1961	perform_violence	gap-reachable	-	The automatic PC parry victim line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1957	perform_violence	proven	fight.round-parry	The real combat pair asserts the exact PC parry self message. (R1/R2/R3/R5e/R5h).
+src/fight.c:1959	perform_violence	proven	fight.round-parry	The real combat pair asserts the capitalized room parry act. (R1/R2/R3/R5e/R5h).
+src/fight.c:1961	perform_violence	proven	fight.round-parry	The real combat pair asserts the parry victim act. (R1/R2/R3/R5e/R5h).
 src/fight.c:1969	perform_violence	gap-blocked	-	A switched-mob descriptor is required to deliver this NPC TO_CHAR call; stop-tier session lifecycle. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1970	perform_violence	gap-reachable	-	The mobile-dodge room line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1971	perform_violence	gap-reachable	-	The mobile-dodge victim line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1985	perform_violence	gap-reachable	-	The mobile stand-up room line lacks a source-specific combat-round proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1970	perform_violence	proven	fight.round-dodge	The AFF_DODGE combat round asserts the exact room act. (R1/R2/R3/R5e/R5h).
+src/fight.c:1971	perform_violence	proven	fight.round-dodge	The AFF_DODGE combat round asserts the exact victim act. (R1/R2/R3/R5e/R5h).
+src/fight.c:1985	perform_violence	proven	fight.round-mob-standup	The downed NPC combat round asserts the capitalized room scramble. (R1/R2/R3/R5e/R5h).
 src/fight.c:1986	perform_violence	gap-blocked	-	A switched-mob descriptor is required to deliver this NPC TO_CHAR call; stop-tier session lifecycle. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1995	perform_violence	gap-reachable	-	The player stand-up room line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
-src/fight.c:1996	perform_violence	gap-reachable	-	The player stand-up actor line lacks a real combat-round output proof. (R1/R2/R4/R5e/R5g/R5h).
+src/fight.c:1995	perform_violence	proven	fight.round-player-standup	The downed PC combat round asserts the capitalized room scramble. (R1/R2/R3/R5e/R5h).
+src/fight.c:1996	perform_violence	proven	fight.round-player-standup	The downed PC combat round asserts the exact self message. (R1/R2/R3/R5e/R5h).
