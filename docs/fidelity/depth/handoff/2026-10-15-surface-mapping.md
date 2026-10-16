@@ -10,12 +10,14 @@ was a historical snapshot, not today's main branch. Recounting
 and 1 excluded-with-C-reason** (75.1% blocked). The counts sum from the
 inventory's `units` column, grouped by `status`.
 
-Five DP-1371 PRs from the earlier `05aaa2f3d` base remain open. Their individual
-inventory deltas total 65 units. If all five changes apply cleanly to current
-main, the arithmetic would be **3,539 total / 2,641 blocked**. This is a
-conditional projection only: the PRs are unmerged, based on an older main
-revision, and must be reconciled with current main before the projection can
-become a measured result.
+Five earlier DP-1371 PRs (#2041–#2045) from `05aaa2f3d` reduce their inventory
+rows by 65 units in aggregate. Two more PRs from measured current main
+`e3645cd5b` reduce the `spells.c` row by one (#2047) and the `oedit.c` row by
+ten and the `olc.c` row by twenty (#2048). If all seven changes apply cleanly,
+the arithmetic would be **3,508 total / 2,610 blocked**. This is a conditional
+projection only: none
+has merged, the first five use an older main revision, and all changes must be
+reconciled before the projection can become a measured result.
 
 The before/after figures below are the blocked residual `units` on each PR's
 inventory row. Classification counts describe all enumerated C output sites in
@@ -29,6 +31,8 @@ residual row.
 | [#2043](https://github.com/zax0rz/darkpawns/pull/2043) | `src/clan.c` | 47 → 38 | 134 proven, 36 gap-reachable, 2 stop-tier gap-blocked, 6 unreachable | `clan-callsite-gaps`: CLEAN |
 | [#2044](https://github.com/zax0rz/darkpawns/pull/2044) | `src/spell_parser.c` | 57 → 49 | 39 proven, 49 gap-reachable | Experimental target NOT_CLEAN; see evidence below |
 | [#2045](https://github.com/zax0rz/darkpawns/pull/2045) | `src/act.wizard.c` | 40 → 31 | 320 proven, 25 gap-reachable, 6 stop-tier gap-blocked, 6 unreachable | `set-extended-depth`: CLEAN; show-oracle had no normalized divergence |
+| [#2047](https://github.com/zax0rz/darkpawns/pull/2047) | `src/spells.c` | 105 → 104 | 25 proven, 104 gap-reachable, 4 unreachable | No census required; proof and inventory update only |
+| [#2048](https://github.com/zax0rz/darkpawns/pull/2048) | `src/oedit.c`, `src/olc.c` | OEDIT 22 → 12; OLC 21 → 1 | OEDIT: 60 proven, 12 gap-reachable; OLC: 20 proven, 1 gap-blocked | No census required; tests, maps, and inventory updates only |
 
 For #2044, the retained failed `cast-power-surface-gaps` run exposed the
 independent `do_set` level-refusal punctuation difference at
@@ -48,7 +52,7 @@ rerun.
 ## Largest blocked families on current main
 
 These are the largest remaining inventory rows at `e3645cd5b`, before applying
-the five open PRs. The five 299-unit use-vector rows are the 1,495-unit
+the seven open PRs. The five 299-unit use-vector rows are the 1,495-unit
 spell-matrix family, which this goal defers. Other large rows include:
 
 | Units | Family |
@@ -79,11 +83,20 @@ for `shop-buy-count-capacity` and `shop-buy-weight-sell-steal`; the latter
 transcript did not reach the intended successful buy/sell branches. No PR was
 opened and those failed rows were not rerun.
 
+PR #2047 proves one of the 105 `spells.c` gaps from current main. It leaves the
+other 104 reachable sites open; its updated row is not part of the measured
+current-main count until merge.
+
+PR #2048 proves ten of the 22 `oedit.c` gaps and maps all 21 `olc.c` output
+sites from current main. OEDIT retains 12 reachable sites; OLC retains one
+session-lifecycle/transport gap. Neither updated row is part of the measured
+current-main count until merge.
+
 ## Handoff state
 
-The five mapping PRs reduce the measured units on their own base by 65 in total,
-but substantial blocked work remains. The activity-call-site families and the
-deferred spell-matrix and fight-skill families are not complete. No PR was
-merged and nothing was deployed. Use a fresh inventory measurement after the
-open PRs are reconciled and merged; do not report the conditional 3,539 / 2,641
-projection as a main-branch measurement.
+The seven PRs account for 96 fewer blocked units after applying their per-row
+changes, but substantial blocked work remains. The activity-call-site families
+and the deferred spell-matrix and fight-skill families are not complete. No PR
+was merged and nothing was deployed. Use a fresh inventory measurement after
+the open PRs are reconciled and merged; do not report the conditional 3,508 /
+2,610 projection as a main-branch measurement.
