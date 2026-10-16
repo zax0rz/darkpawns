@@ -12,7 +12,7 @@ empty-players
 quiet-zone 80
 quiet-zone 121
 spawn-mob 12106 1 12137 121
-give-object 12106 6 1 121
+give-object 12106 6 100000 121
 
 [setup:oracle]
 Shopoutput
