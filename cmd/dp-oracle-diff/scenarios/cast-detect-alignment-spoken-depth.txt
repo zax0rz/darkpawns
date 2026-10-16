@@ -1,0 +1,46 @@
+# depth-case: spell.detect-alignment-spoken
+# A level-31 Cleric reaches detect alignment through the registered spoken-cast parser.
+# C applies its perception affect and emits the exact self-target line.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Aligncast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Aligncast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Aligncast class cleric
+set Aligncast level 31
+skillset Aligncast 'detect alignment' 100
+set Aligncast maxmana 5000
+set Aligncast mana 5000
+
+[probe]
+cast 'detect alignment'

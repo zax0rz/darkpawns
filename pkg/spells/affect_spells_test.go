@@ -366,6 +366,37 @@ func TestCallMagicArmorSpokenCastAppliesAffect(t *testing.T) {
 	}
 }
 
+func TestCallMagicPerceptionSpellsApplyAffects(t *testing.T) {
+	cases := []struct {
+		name     string
+		spellNum int
+		flag     uint64
+	}{
+		{"detect alignment", SpellDetectAlign, engine.AFFDetectAlign},
+		{"detect invisibility", SpellDetectInvis, engine.AFFDetectInvisible},
+		{"detect magic", SpellDetectMagic, engine.AFFDetectMagic},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding)}
+
+			if !CallMagic(caster, caster, nil, tc.spellNum, 31, CastSpell, nil) {
+				t.Fatal("CallMagic did not dispatch spell")
+			}
+			if len(caster.activeAffects) != 1 {
+				t.Fatalf("expected one perception affect, got %d", len(caster.activeAffects))
+			}
+			aff := caster.activeAffects[0]
+			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != 43 || aff.Flags != tc.flag {
+				t.Errorf("unexpected perception affect: %+v", aff)
+			}
+			if len(caster.messages) != 1 || caster.messages[0] != "Your eyes tingle.\r\n" {
+				t.Errorf("self-cast messages = %q, want the C recipient line", caster.messages)
+			}
+		})
+	}
+}
+
 // forceMagAffectsSave makes the mag_affects saving throw deterministic for the
 // duration of a test: saved=true means the victim resists, saved=false means the
 // spell lands. Restores the real (RNG-backed) roll via t.Cleanup.

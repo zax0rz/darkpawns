@@ -1,0 +1,46 @@
+# depth-case: spell.detect-invisibility-spoken
+# A level-31 Mage reaches detect invisibility through the registered spoken-cast parser.
+# C applies its perception affect and emits the exact self-target line.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Inviscast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Inviscast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Inviscast class mage
+set Inviscast level 31
+skillset Inviscast 'detect invisibility' 100
+set Inviscast maxmana 5000
+set Inviscast mana 5000
+
+[probe]
+cast 'detect invisibility'

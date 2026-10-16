@@ -1,0 +1,46 @@
+# depth-case: spell.detect-magic-spoken
+# A level-31 Mage reaches detect magic through the registered spoken-cast parser.
+# C applies its perception affect and emits the exact self-target line.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Magiccast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Magiccast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Magiccast class mage
+set Magiccast level 31
+skillset Magiccast 'detect magic' 100
+set Magiccast maxmana 5000
+set Magiccast mana 5000
+
+[probe]
+cast 'detect magic'
