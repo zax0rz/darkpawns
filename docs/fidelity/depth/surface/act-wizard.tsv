@@ -71,13 +71,13 @@ src/act.wizard.c:551	do_stat_object	proven	stat.object-success	The cited manifes
 src/act.wizard.c:554	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:556	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:559	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:563	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:563	do_stat_object	proven	stat.object-success;stat.object-contents-census	The object-with-contents proof confirms C's accumulated GET_OBJ_WEIGHT value against the Go nested total (R1/R2/R5e/R5h).
 src/act.wizard.c:579	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:644	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
+src/act.wizard.c:644	do_stat_object	proven	stat.object-success;stat.object-contents-census	The oak chest reaches C's ITEM_CONTAINER values formatter, including trailing sprintbit spacing and corpse flag (R1/R2/R5e/R5h).
 src/act.wizard.c:658	do_stat_object	gap-reachable		Long object-contents intermediate row; the report fixture uses an empty bread container list.
 src/act.wizard.c:660	do_stat_object	gap-reachable		Long object-contents final row; the report fixture uses an empty bread container list.
-src/act.wizard.c:666	do_stat_object	gap-reachable		Object contents final row; the report fixture uses an object without contents.
-src/act.wizard.c:667	do_stat_object	gap-reachable		Contents color-reset output; the report fixture uses an object without contents.
+src/act.wizard.c:666	do_stat_object	proven	stat.object-contents-census	The reset oak chest emits the final contents row with the C comma and space sequence (R1/R2/R5e/R5h).
+src/act.wizard.c:667	do_stat_object	proven	stat.object-contents-census	The contents report emits C's color-level reset after the final row (R1/R2/R5e/R5h).
 src/act.wizard.c:670	do_stat_object	proven	stat.object-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:676	do_stat_object	gap-reachable		Object modifier-affect output; the bread fixture has no non-spell object affects.
 src/act.wizard.c:682	do_stat_object	gap-reachable		Object permanent-spell affect output; the bread fixture has no permanent spell affects.
