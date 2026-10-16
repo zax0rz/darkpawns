@@ -17,6 +17,7 @@
 # depth-case: clan.destroy-underpowered
 # depth-case: clan.who-clanless
 # depth-case: clan.members-clanless
+# depth-case: clan.bank-refusal-gates
 # depth-case: clan.apply-already-member
 # depth-case: clan.quit-member-remains
 # depth-case: clan.info-empty-world
@@ -197,6 +198,10 @@ clan set applev 1 Wolves
 clan create Clanother Tigers
 
 [probe]
+force Clanapply clan deposit 1
+force Clanimmlow clan deposit 1 Wolves
+clan deposit 1 Missing
+
 clan create Clanapply ThisClanNameIsFarLongerThanThirtyTwoCharacters
 clan create Clanimmlow ImmortalLeader
 clan create Clanmate ExistingMember

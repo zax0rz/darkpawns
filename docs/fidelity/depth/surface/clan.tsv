@@ -104,28 +104,28 @@ src/clan.c:777	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-de
 src/clan.c:779	do_clan_info	gap-blocked		Stop-tier persistence path: the war branch reads at_war from the clan record loaded by init_clans (src/clan.c:846-855); no player command writes a nonzero value (src/clan.c:227,776-779).
 src/clan.c:781	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:783	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
-src/clan.c:900	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:906	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:914	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:922	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:929	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
-src/clan.c:932	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:900	do_clan_bank	proven	clan.mortal-bank-output-gates	The rank-zero applicant is sent through the live bank command before any bank argument parsing (R1/R2/R5e/R5h).
+src/clan.c:906	do_clan_bank	proven	clan.bank-refusal-gates	The level-31 peer reaches the clan privilege refusal before immortal clan-name parsing (R1/R2/R5e/R5h).
+src/clan.c:914	do_clan_bank	proven	clan.bank-refusal-gates	The clan god supplies a missing clan name and reaches the unknown-clan refusal (R1/R2/R5e/R5h).
+src/clan.c:922	do_clan_bank	proven	clan.mortal-bank-output-gates	The enrolled rank-one peer fails the configured rank-two withdrawal threshold (R1/R2/R5e/R5h).
+src/clan.c:929	do_clan_bank	unreachable		The initial empty-argument return at src/clan.c:889-893 exits before the empty-amount branch; immortal parsing also requires a clan token before reaching this check (R1/R5e).
+src/clan.c:932	do_clan_bank	unreachable		The initial empty-argument return at src/clan.c:889-893 exits before the empty-amount branch; immortal parsing also requires a clan token before reaching this check (R1/R5e).
 src/clan.c:935	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
 src/clan.c:943	do_clan_bank	proven	clan.mortal-bank	The named proof scenario executes this C output call.
-src/clan.c:946	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:946	do_clan_bank	proven	clan.mortal-bank-output-gates	A top-rank mortal reaches the nonnumeric withdrawal refusal after passing the withdrawal privilege gate (R1/R2/R5e/R5h).
 src/clan.c:949	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
 src/clan.c:959	do_clan_bank	proven	clan.bank-immortal-path;clan.mortal-bank	The named proof scenario executes this C output call.
 src/clan.c:964	do_clan_bank	proven	mudlog.local-clan-withdraw	The named proof scenario executes this C output call.
-src/clan.c:970	do_clan_bank	gap-reachable		No current proof reaches this output branch in do_clan_bank; reachable through the clan command surface.
+src/clan.c:970	do_clan_bank	proven	clan.mortal-bank-output-gates	A member with zero gold reaches the personal-funds refusal for a one-coin deposit (R1/R2/R5e/R5h).
 src/clan.c:975	do_clan_bank	proven	clan.bank-immortal-path;clan.mortal-bank	The named proof scenario executes this C output call.
 src/clan.c:980	do_clan_bank	unreachable		Unreachable default action: do_clan_bank is called only with CB_WITHDRAW or CB_DEPOSIT from src/clan.c:1562-1569.
-src/clan.c:1002	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1008	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1014	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1020	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
-src/clan.c:1025	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1002	do_clan_money	proven	clan.money-output-gates	The isolated registered-command case reaches this branch while Clanapply is clanless (R1/R2/R5e/R5h).
+src/clan.c:1008	do_clan_money	proven	clan.money-output-gates	The level-31 Clanimmlow target reaches the below-LVL_CLAN_GOD refusal through force and clan dispatch (R1/R2/R5e/R5h).
+src/clan.c:1014	do_clan_money	proven	clan.money-output-gates	The clan God supplies a valid amount and unknown clan name to the registered dues command (R1/R2/R5e/R5h).
+src/clan.c:1020	do_clan_money	proven	clan.money-output-gates	The enrolled rank-1 Clanapply is below the clan's CP_SET_FEES rank 3 and reaches this refusal (R1/R2/R5e/R5h).
+src/clan.c:1025	do_clan_money	unreachable		The initial empty-argument check at src/clan.c:996-998 returns before this test. On the immortal path, src/interpreter.c:1372-1378 splits the amount and clan; a successful clan lookup requires a nonempty clan token in arg2 and a nonempty amount token in arg1, which is then copied back to arg. Mortal dispatch never overwrites its nonempty arg (src/clan.c:989-1026,1523-1531) (R1/R5e).
 src/clan.c:1030	do_clan_money	proven	clan.mortal-money-gates	The named proof scenario executes this C output call.
-src/clan.c:1038	do_clan_money	gap-reachable		No current proof reaches this output branch in do_clan_money; reachable through the clan command surface.
+src/clan.c:1038	do_clan_money	proven	clan.money-output-gates	The clan God sets dues to 10,001, reaching the upper-range refusal after numeric parsing (R1/R2/R5e/R5h).
 src/clan.c:1045	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
 src/clan.c:1049	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
 src/clan.c:1052	do_clan_money	unreachable		Unreachable default action: do_clan_money is called only with CM_DUES or CM_APPFEE from src/clan.c:1523-1531.
@@ -141,11 +141,11 @@ src/clan.c:1124	do_clan_ranks	proven	clan.ranks-refusal-gates	A rank-three clan 
 src/clan.c:1176	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
 src/clan.c:1180	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
 src/clan.c:1186	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1191	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1195	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1203	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
-src/clan.c:1209	do_clan_titles	proven	clan.set-title	The named proof scenario executes this C output call.
-src/clan.c:1213	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
+src/clan.c:1191	do_clan_titles	proven	clan.set-title-clan-number-nonnumeric	The live title command reaches C's nonnumeric clan-number refusal (R1/R2/R5e/R5h).
+src/clan.c:1195	do_clan_titles	proven	clan.set-title-clan-number-range	The live title command reaches C's missing-clan-number refusal for an out-of-range index (R1/R2/R5e/R5h).
+src/clan.c:1203	do_clan_titles	proven	clan.set-title-rank-nonnumeric	The live title command reaches C's nonnumeric rank refusal (R1/R2/R5e/R5h).
+src/clan.c:1209	do_clan_titles	proven	clan.set-title;clan.set-title-rank-range	The named success proof and out-of-range rank case execute this C output call (R1/R2/R5e/R5h).
+src/clan.c:1213	do_clan_titles	proven	clan.set-title-too-long	The live title command reaches C's >19-byte title-length refusal (R1/R2/R5e/R5h).
 src/clan.c:1218	do_clan_titles	proven	clan.set-title	The named proof scenario executes this C output call.
 src/clan.c:1231	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.
 src/clan.c:1236	do_clan_private	gap-reachable		No current proof reaches this output branch in do_clan_private; reachable through the clan command surface.

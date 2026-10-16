@@ -10,6 +10,7 @@
 # depth-case: clan.mortal-members
 # depth-case: clan.mortal-private
 # depth-case: clan.mortal-bank
+# depth-case: clan.mortal-bank-output-gates
 # depth-case: clan.mortal-money-gates
 # depth-case: clan.mortal-ranks
 # depth-case: clan.mortal-title
@@ -116,6 +117,7 @@ clan create Clanmate Wolves
 clan enroll Clanmate Wolves
 clan set applev 1 Wolves
 force Clanapply clan apply Wolves
+set player Clanmate gold 0
 
 [probe:member]
 clan
@@ -124,10 +126,13 @@ clan info
 clan info Wolves
 clan who
 clan members
+send:applicant clan deposit 1
 clan private
 clan info
 clan private
 clan deposit nope
+clan withdraw nope
+clan deposit 1
 clan deposit 0
 clan withdraw 0
 clan withdraw 1
@@ -138,6 +143,8 @@ clan set ranks 3
 clan set title 1 Chief
 clan set privilege enroll 1
 clan enroll Clanapply
+clan set privilege withdraw 2
+send:applicant clan withdraw 1
 clan expel Clanapply
 clan enroll Clanapply
 clan promote Clanapply

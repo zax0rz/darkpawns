@@ -14,6 +14,11 @@
 # depth-case: clan.set-applev
 # depth-case: clan.set-ranks
 # depth-case: clan.set-title
+# depth-case: clan.set-title-clan-number-nonnumeric
+# depth-case: clan.set-title-clan-number-range
+# depth-case: clan.set-title-rank-nonnumeric
+# depth-case: clan.set-title-rank-range
+# depth-case: clan.set-title-too-long
 # depth-case: clan.set-privilege
 # depth-case: clan.create-success
 # depth-case: clan.create-leader-gate
@@ -139,6 +144,11 @@ clan set applev 2 Wolves
 clan set ranks 3 Wolves
 clan set title 0 1 Chief
 clan set title 0 3 Leader
+clan set title bad 1 Chief
+clan set title 99 1 Chief
+clan set title 0 bad Chief
+clan set title 0 99 Chief
+clan set title 0 1 ABCDEFGHIJKLMNOPQRST
 clan set privilege enroll 1 Wolves
 clan info
 clan info Wolves
