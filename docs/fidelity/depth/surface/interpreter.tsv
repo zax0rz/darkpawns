@@ -1,0 +1,27 @@
+c_site	function	classification	case_ids	notes
+src/interpreter.c:916	command_interpreter	proven	handbook.mortal-gate	The mortal handbook case is rejected by command-table level lookup and executes this Huh?!? output site (R1/R2/R5e).
+src/interpreter.c:918	command_interpreter	proven	interpreter.frozen-refusal	TestCommandGateCascadeFrozenAndSwitchedBeforePosition reaches this refusal before position output (R1/R2/R5e/R5h).
+src/interpreter.c:920	command_interpreter	unreachable		The command table has no NULL handler for any named command; its only null handler is the final newline sentinel at src/interpreter.c:850, which the preceding command-name test catches before this else-if (R5e/R5g).
+src/interpreter.c:922	command_interpreter	proven	interpreter.switched-immortal-refusal	TestCommandGateCascadeFrozenAndSwitchedBeforePosition reaches this switched-NPC refusal before position output (R1/R2/R5e/R5h).
+src/interpreter.c:926	command_interpreter	proven	interpreter.position-dead	The real wiggle dispatch reaches the POS_DEAD refusal and checks its complete CRLF output (R1/R2/R5e/R5h).
+src/interpreter.c:930	command_interpreter	proven	interpreter.position-incap;interpreter.position-mortally-wounded	Real wiggle dispatch reaches both C labels sharing the incapacitated refusal output (R1/R2/R5e/R5h).
+src/interpreter.c:933	command_interpreter	proven	interpreter.position-stunned	The real wiggle dispatch reaches the POS_STUNNED refusal and checks its complete CRLF output (R1/R2/R5e/R5h).
+src/interpreter.c:936	command_interpreter	proven	interpreter.position-sleeping	The real wiggle dispatch reaches the POS_SLEEPING refusal and checks its complete CRLF output; fade.position-gate independently covers the same branch (R1/R2/R5e/R5h).
+src/interpreter.c:939	command_interpreter	proven	interpreter.position-resting	The real wiggle dispatch reaches the POS_RESTING refusal and checks its complete CRLF output (R1/R2/R5e/R5h).
+src/interpreter.c:942	command_interpreter	proven	interpreter.position-sitting	The real wiggle dispatch reaches the POS_SITTING refusal and checks its complete CRLF output (R1/R2/R5e/R5h).
+src/interpreter.c:945	command_interpreter	proven	interpreter.position-fighting	The real wiggle dispatch reaches the POS_FIGHTING refusal and checks its complete CRLF output (R1/R2/R5e/R5h).
+src/interpreter.c:992	do_alias	proven	alias.list-empty;alias.list-format	The alias depth cases render the header before an empty list or formatted stored aliases (R1/R2/R5e).
+src/interpreter.c:994	do_alias	proven	alias.list-empty	The empty alias-list case executes the None output branch (R1/R2/R5e).
+src/interpreter.c:998	do_alias	proven	alias.list-format	The alias formatting case sends each formatted alias buffer through this output site (R1/R2/R5e).
+src/interpreter.c:1011	do_alias	proven	alias.delete-missing	The missing-alias case emits this refusal (R1/R2/R5e).
+src/interpreter.c:1013	do_alias	proven	alias.delete-existing	The existing-alias case deletes the alias and executes this acknowledgment (R1/R2/R5e).
+src/interpreter.c:1016	do_alias	proven	alias.protect-self	The reserved self-alias case executes this refusal (R1/R2/R5e).
+src/interpreter.c:1025	do_alias	proven	alias.length-truncate	The unit depth case supplies an overlength replacement and executes this warning output (R1/R2/R5e/R5h).
+src/interpreter.c:1036	do_alias	proven	alias.add-simple;alias.redefine;alias.doubled-dollar	These creation cases execute the added acknowledgment after storing the replacement (R1/R2/R5e).
+src/interpreter.c:1638	perform_dupe_check	gap-blocked		Reconnect mail notification belongs to the stop-tier session lifecycle and identity surface; it requires durable reconnect evidence.
+src/interpreter.c:1639	perform_dupe_check	gap-blocked		Reconnect room broadcast belongs to the stop-tier session lifecycle and transport surface; it requires reconnect audience evidence.
+src/interpreter.c:1645	perform_dupe_check	gap-blocked		USURP room broadcast belongs to the stop-tier identity and session lifecycle surface.
+src/interpreter.c:2187	nanny	gap-blocked		Welcome output is part of the stop-tier login and entry surface.
+src/interpreter.c:2211	nanny	gap-blocked		Entered-game room broadcast is part of the stop-tier login and entry lifecycle surface.
+src/interpreter.c:2225	nanny	gap-blocked		Entry mail notification is part of the stop-tier login, persistence, and entry surface.
+src/interpreter.c:2227	nanny	gap-blocked		Rent-loss warning is part of the stop-tier persistence and rent surface.
