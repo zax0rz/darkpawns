@@ -165,6 +165,13 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 		mob.GetAC(), mob.GetHitroll(), mob.GetDamrollPoint(), mob.GetSavingThrow(0), mob.GetSavingThrow(1), mob.GetSavingThrow(2), mob.GetSavingThrow(3), mob.GetSavingThrow(4)))
 	s.sendStatMobLine(fmt.Sprintf("Pos: %s, Fighting: %s, Attack type: hit",
 		wizardPositionName(mob.GetPosition()), wizardFightingName(mob.GetFighting())))
+	if proto.Noise != "" {
+		color, reset := "", ""
+		if s.player != nil && s.player.GetFlags()&(1<<uint(game.PrfColor2)) != 0 {
+			color, reset = "\x1b[33m", "\x1b[0m"
+		}
+		s.sendStatMobLine("Noise: " + color + proto.Noise + reset)
+	}
 	s.sendStatMobLine(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]",
 		wizardPositionName(proto.DefaultPos), 0))
 	s.sendStatMobLine("NPC flags: " + wizardMobFlags(mob.GetMobFlags()))
@@ -175,6 +182,9 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	}
 	s.sendStatMobLine(fmt.Sprintf("Carried: weight: %d, items: %d; Items in: inventory: %d, eq: %d",
 		carriedWeight, len(mob.Inventory), len(mob.Inventory), len(mob.Equipment)))
+	if hunting := mob.GetHunting(); hunting != "" {
+		s.sendStatMobLine("Hunting: " + hunting)
+	}
 	s.sendStatMobLine("Master is: <none>, Followers are:")
 	s.sendStatMobLine("AFF: " + wizardAffectFlags(mobEffectiveAffectBits(mob)))
 	s.sendStatAffectLines(mob.OrderedAffects())

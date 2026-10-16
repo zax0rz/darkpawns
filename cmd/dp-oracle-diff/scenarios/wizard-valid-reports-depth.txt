@@ -19,6 +19,7 @@
 empty-players
 quiet-mobs
 spawn-mob 2109 1 8162 80
+spawn-mob 5000 1 8162 80
 spawn-obj 8010 1 8162 80
 
 [setup:oracle]
@@ -82,15 +83,18 @@ rest
 [warmup]
 goto 8162
 teleport Wizardvalidpeer 8162
+sethunt Wizardvalid orc
 
 [probe]
 vnum mob orc
 vnum obj bread
 stat room
 stat mob orc
+stat mob scorpion
 stat player Wizardvalidpeer
 stat file Wizardvalidpeer
 stat object bread
 stat bread
 vstat mob 2109
+vstat mob 5000
 vstat obj 8010

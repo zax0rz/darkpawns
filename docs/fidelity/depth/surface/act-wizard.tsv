@@ -96,7 +96,7 @@ src/act.wizard.c:835	do_stat_character	proven	stat.player-success	The cited mani
 src/act.wizard.c:841	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:846	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:861	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:866	do_stat_character	gap-reachable		NPC noise output is conditional on a nonempty GET_NOISE value; the live orc report has no noise fixture.
+src/act.wizard.c:866	do_stat_character	proven	vstat.mob-success	The valid `vstat mob 5000` report delegates to do_stat_character with nonempty Noise; the unit proof pins C_CNRM yellow and reset gating (R1/R5e/R5h).
 src/act.wizard.c:875	do_stat_character	proven	stat.player-default-position;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:880	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:886	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
@@ -106,7 +106,7 @@ src/act.wizard.c:905	do_stat_character	gap-reachable		Poofin/poofout report is c
 src/act.wizard.c:911	do_stat_character	proven	stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:924	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:931	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:937	do_stat_character	gap-reachable		NPC hunting output requires a live HUNTING target; the report fixture has none.
+src/act.wizard.c:937	do_stat_character	proven	stat.mob-success	The valid-report warmup sets the live orc's HUNTING target to the wizard before `stat mob orc` (R1/R5e/R5h).
 src/act.wizard.c:945	do_stat_character	gap-reachable		Clan report output requires a PC with a nonzero clan and rank; the player fixture is not a clan member.
 src/act.wizard.c:956	do_stat_character	gap-reachable		Intermediate follower-list wrap is not exercised by the short follower fixture.
 src/act.wizard.c:958	do_stat_character	gap-reachable		Final follower-list wrap is not exercised by the short follower fixture.

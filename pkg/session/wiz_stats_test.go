@@ -83,6 +83,49 @@ func TestStatMobileEquipmentPoints(t *testing.T) {
 	}
 }
 
+func TestStatMobNoiseColorAndHuntingMatchC(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Room One"}},
+		Mobs: []parser.Mob{{
+			VNum: 300, ShortDesc: "a noisy guard", Keywords: "guard", Noise: "The guard rattles.",
+			AC: 100, THAC0: 20, Str: 11, Int: 11, Wis: 11, Dex: 11, Con: 11, Cha: 11,
+			Damage: parser.DiceRoll{Num: 1, Sides: 4, Plus: 1},
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	s := makeTestSession(t, manager, "Alice", 1001, true)
+	mob, err := w.SpawnMob(300, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mob.SetHunting("Huntvictim")
+
+	s.player.SetPlrFlag(game.PrfColor2, true)
+	s.sendStatMob(mob)
+	out := drainSessionOutput(t, s)
+	if want := "Noise: \x1b[33mThe guard rattles.\x1b[0m\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("colored stat noise line = %q, want substring %q", out, want)
+	}
+	if want := "Hunting: Huntvictim\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("stat hunting line = %q, want substring %q", out, want)
+	}
+
+	s.player.SetPlrFlag(game.PrfColor2, false)
+	mob.SetHunting("")
+	s.sendStatMob(mob)
+	out = drainSessionOutput(t, s)
+	if want := "Noise: The guard rattles.\r\n"; !strings.Contains(out, want) {
+		t.Fatalf("uncolored stat noise line = %q, want substring %q", out, want)
+	}
+	if strings.Contains(out, "\x1b[33m") || strings.Contains(out, "\x1b[0m") || strings.Contains(out, "Hunting:") {
+		t.Fatalf("stat report invented color or empty hunting output: %q", out)
+	}
+}
+
 func drainSessionOutput(t *testing.T, s *Session) string {
 	t.Helper()
 	var text strings.Builder
