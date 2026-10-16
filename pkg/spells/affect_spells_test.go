@@ -430,6 +430,37 @@ func TestCallMagicMovementSpellsApplyAffects(t *testing.T) {
 	}
 }
 
+func TestCallMagicAwarenessSpellsApplyAffects(t *testing.T) {
+	cases := []struct {
+		name     string
+		spellNum int
+		flag     uint64
+		message  string
+	}{
+		{"sense life", SpellSenseLife, engine.AFFSenseLife, "Your feel your awareness improve.\r\n"},
+		{"chameleon", SpellChameleon, engine.AFFHide, "You blend into the surroundings.\r\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding)}
+
+			if !CallMagic(caster, caster, nil, tc.spellNum, 31, CastSpell, nil) {
+				t.Fatal("CallMagic did not dispatch awareness spell")
+			}
+			if len(caster.activeAffects) != 1 {
+				t.Fatalf("expected one awareness affect, got %d", len(caster.activeAffects))
+			}
+			aff := caster.activeAffects[0]
+			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != 31 || aff.Flags != tc.flag {
+				t.Errorf("unexpected awareness affect: %+v", aff)
+			}
+			if len(caster.messages) != 1 || caster.messages[0] != tc.message {
+				t.Errorf("self-cast messages = %q, want %q", caster.messages, tc.message)
+			}
+		})
+	}
+}
+
 // forceMagAffectsSave makes the mag_affects saving throw deterministic for the
 // duration of a test: saved=true means the victim resists, saved=false means the
 // spell lands. Restores the real (RNG-backed) roll via t.Cleanup.
