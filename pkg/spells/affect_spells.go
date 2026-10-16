@@ -3706,62 +3706,11 @@ func castGate(level int, ch, world interface{}) {
 	if ch == nil {
 		return
 	}
-
-	type roomGetter interface{ GetRoomVNum() int }
-	rg, ok := ch.(roomGetter)
-	if !ok {
-		return
+	type gateCaster interface {
+		CastGateSpell(caster interface{})
 	}
-	roomVNum := rg.GetRoomVNum()
-
-	// Check if portal already exists in room
-	type roomObjects interface {
-		GetObjectsInRoom(roomVNum int) []interface{}
-	}
-	if wo, ok := world.(roomObjects); ok {
-		objs := wo.GetObjectsInRoom(roomVNum)
-		for _, obj := range objs {
-			type objVnum interface{ GetVNum() int }
-			if ov, ok := obj.(objVnum); ok {
-				// Red portal vnum 10, Blue portal vnum 11 (from gate.c)
-				if ov.GetVNum() == 4002 || ov.GetVNum() == 4001 {
-					sendToCaster(ch, "The magick flows through you, then out into the world, changing it....\r\n")
-					sendToRoom("The fabric of time and space warps and stretches around you...\r\n", ch, nil, nil, "", "", world)
-					sendToCaster(ch, "In your final moments, the only thing you can feel is a wave of cosmic energy coursing through you, tearing your soul to shreds.\r\n")
-					// Kill the caster
-					type killer interface{ Die() }
-					if k, ok := ch.(killer); ok {
-						k.Die()
-					}
-					return
-				}
-			}
-		}
-	}
-
-	// Legal rooms for gate creation (from gate.c)
-	legalRooms := map[int]bool{4001: true, 4002: true, 4003: true, 4004: true, 4005: true, 4006: true, 4007: true, 4008: true}
-	if !legalRooms[roomVNum] {
-		sendToCaster(ch, "The magic flows through you, but nothing else happens.\r\n")
-		return
-	}
-
-	// Create red portal in room
-	type objSpawner interface {
-		SpawnObject(vnum, roomVNum int) (interface{}, error)
-	}
-	type timerSetter interface{ SetTimer(int) }
-	if wo, ok := world.(objSpawner); ok {
-		obj, err := wo.SpawnObject(4002, roomVNum) // red_portal = 4002
-		if err != nil {
-			sendToCaster(ch, "The magic flows through you, but nothing else happens.\r\n")
-			return
-		}
-		if ts, ok := obj.(timerSetter); ok {
-			ts.SetTimer(2)
-		}
-		sendToCaster(ch, "The magick flows through you, then out into the world, changing it....\r\n")
-		sendToRoom("A shimmering red portal fades into existence.\r\n", ch, nil, nil, "", "", world)
+	if gateWorld, ok := world.(gateCaster); ok {
+		gateWorld.CastGateSpell(ch)
 	}
 }
 
