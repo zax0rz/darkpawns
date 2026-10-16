@@ -1,0 +1,41 @@
+# Isolate the room extra-description output through the registered stat command.
+# Room 8151 has an authoritative scrolls extra-description in 80.wld.
+# depth-case: stat.room-extra-description-census
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wizardroom
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardroom
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8151
+
+[probe]
+stat room
