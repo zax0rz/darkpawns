@@ -657,7 +657,7 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		slog.Warn("set renamed live player", "old_name", old, "new_name", value)
 	case "level":
 		if valueInt >= getEffectiveLevel(s) || valueInt > LVL_IMPL {
-			return "You can't do that!\r\n", false, true
+			return "You can't do that.\r\n", false, true
 		}
 		valueInt = clamp(valueInt, 0, LVL_IMPL)
 		if p != nil {

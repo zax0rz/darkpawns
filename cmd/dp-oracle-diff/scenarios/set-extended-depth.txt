@@ -10,6 +10,14 @@
 # depth-case: set.numeric-clamp
 # depth-case: set.special-errors
 # depth-case: set.npc-fields
+# depth-case: set.pc-field-on-npc
+# depth-case: set.invalid-binary-value
+# depth-case: set.invalid-sex
+# depth-case: set.invalid-condition
+# depth-case: set.level-not-lower
+# depth-case: set.invalid-room
+# depth-case: set.invalid-class
+# depth-case: set.invalid-race
 
 [fixture]
 empty-players
@@ -122,4 +130,12 @@ set Setalltarget clan 0
 set Setalltarget played 77
 set mob cleaner hit 7
 set mob cleaner gold 7
+set mob cleaner brief on
+set Setalltarget brief maybe
+set Setalltarget sex other
+set Setalltarget drunk tipsy
 set Setalltarget level 5
+set Setalltarget level 59
+set Setalltarget room 999999
+set Setalltarget class other
+set Setalltarget race other
