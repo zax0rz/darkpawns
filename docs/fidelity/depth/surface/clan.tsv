@@ -20,7 +20,7 @@ src/clan.c:141	do_clan_rename	proven	clan.rename-entry-gates	The named proof sce
 src/clan.c:147	do_clan_rename	proven	clan.rename-entry-gates	The named proof scenario executes this C output call.
 src/clan.c:152	do_clan_rename	proven	clan.rename-state	The named proof scenario executes this C output call.
 src/clan.c:170	do_clan_create	proven	clan.create-underpowered	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
-src/clan.c:176	do_clan_create	gap-reachable		The clan capacity gate is reachable after all MAX_CLANS slots are populated; current depth vehicles do not fill the clan table to reach this output (src/clan.c:174-177) (R1/R2/R5e).
+src/clan.c:176	do_clan_create	gap-blocked		C reaches this refusal only when num_of_clans == MAX_CLANS (20; src/clan.c:174-177; src/clan.h:26). init_clans loads num_of_clans from the binary CLAN_FILE (src/clan.c:836-861); live expansion also requires distinct non-immortal leaders. Full-state proof would need stop-tier persistent clan data or multi-session setup (R1/R2/R5e/R5g).
 src/clan.c:184	do_clan_create	proven	clan.create-missing-leader;clan.create-leader-gate	The named proof scenario executes this C output call.
 src/clan.c:189	do_clan_create	proven	clan.create-too-long	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:193	do_clan_create	proven	clan.create-immortal-leader	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
