@@ -779,13 +779,20 @@ func wizardObjectAffectOutput(affects []parser.ObjAffect) string {
 func wizardObjectAffectedBitName(index int) string {
 	// C's affected_bits[] names differ from the general Go bit labels.
 	// Preserve the stat report spelling and index order from src/constants.c:596-635.
-	return [...]string{
+	// C indexes the table unchecked (src/act.wizard.c:680); an out-of-range
+	// modifier is undefined behaviour there and would panic here (R1a), so it
+	// renders as sprinttype's "UNDEFINED".
+	names := [...]string{
 		"BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC", "SENSE-LIFE", "WATERWALK", "SANCT",
 		"GROUP", "CURSE", "INFRA", "POISON", "PROT-EVIL", "PROT-GOOD", "SLEEP", "!TRACK",
 		"FLESH-ALTER", "DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM", "FOLLOW", "WIMPY",
 		"KUJI-KIRI", "CUTTHROAT", "FLY", "WEREWOLF", "VAMPIRE", "MOUNTED", "INVULN", "FLAMING",
 		"NOTHING", "HASTE", "SLOW", "DREAM", "WATERBREATHE", "METALSKIN", "ROBBED",
-	}[index]
+	}
+	if index < 0 || index >= len(names) {
+		return "UNDEFINED"
+	}
+	return names[index]
 }
 
 func objectFlagWords(flags [4]int) []uint32 {

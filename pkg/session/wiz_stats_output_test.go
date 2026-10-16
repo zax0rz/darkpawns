@@ -156,3 +156,16 @@ func TestWizardObjectValuesMatchesCItemTypeBranches(t *testing.T) {
 		})
 	}
 }
+
+// An APPLY_SPELL modifier outside affected_bits[] is C undefined behaviour;
+// the port must not panic on a God's stat (R1a).
+func TestWizardObjectAffectedBitNameOutOfRange(t *testing.T) {
+	for _, index := range []int{-1, 39, 1000} {
+		if got := wizardObjectAffectedBitName(index); got != "UNDEFINED" {
+			t.Fatalf("wizardObjectAffectedBitName(%d) = %q, want UNDEFINED", index, got)
+		}
+	}
+	if got := wizardObjectAffectedBitName(0); got != "BLIND" {
+		t.Fatalf("index 0 = %q, want BLIND", got)
+	}
+}
