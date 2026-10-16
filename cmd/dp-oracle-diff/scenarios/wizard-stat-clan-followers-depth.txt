@@ -1,0 +1,262 @@
+# Live do_stat_character reports for a clan member and a mobile whose six
+# long-name player followers cross both 62-byte follower-list send sites.
+# depth-case: stat.player-clan-report
+# depth-case: stat.player-follower-wrap-boundaries
+# depth-case: stat.mob-follower-wrap-boundaries
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2109 1 8162 80
+
+[setup:oracle]
+Wizardwrap
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wizardwrap
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:clanmate]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:clanmate]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower1]
+AlphaFollowerAA
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower1]
+AlphaFollowerAA
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower2]
+BravoFollowerBB
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower2]
+BravoFollowerBB
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower3]
+CharlieFollower
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower3]
+CharlieFollower
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower4]
+DeltaFollowerXX
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower4]
+DeltaFollowerXX
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower5]
+EchoFollowerXXX
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower5]
+EchoFollowerXXX
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:follower6]
+FoxtrotFollowXX
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:follower6]
+FoxtrotFollowXX
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Clanmate 8162
+teleport AlphaFollowerAA 8162
+teleport BravoFollowerBB 8162
+teleport CharlieFollower 8162
+teleport DeltaFollowerXX 8162
+teleport EchoFollowerXXX 8162
+teleport FoxtrotFollowXX 8162
+clan create Clanmate Wolves
+clan enroll Clanmate Wolves
+force AlphaFollowerAA follow Clanmate
+force BravoFollowerBB follow Clanmate
+force CharlieFollower follow Clanmate
+force DeltaFollowerXX follow Clanmate
+force EchoFollowerXXX follow Clanmate
+force FoxtrotFollowXX follow Clanmate
+
+[probe]
+stat player Clanmate
+force AlphaFollowerAA follow orc
+force BravoFollowerBB follow orc
+force CharlieFollower follow orc
+force DeltaFollowerXX follow orc
+force EchoFollowerXXX follow orc
+force FoxtrotFollowXX follow orc
+stat mob orc

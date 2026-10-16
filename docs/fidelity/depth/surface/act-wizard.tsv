@@ -107,9 +107,9 @@ src/act.wizard.c:911	do_stat_character	proven	stat.mob-success	The cited manifes
 src/act.wizard.c:924	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:931	do_stat_character	proven	stat.player-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:937	do_stat_character	proven	stat.mob-success	The valid-report warmup sets the live orc's HUNTING target to the wizard before `stat mob orc` (R1/R5e/R5h).
-src/act.wizard.c:945	do_stat_character	gap-reachable		Clan report output requires a PC with a nonzero clan and rank; the player fixture is not a clan member.
-src/act.wizard.c:956	do_stat_character	gap-reachable		Intermediate follower-list wrap is not exercised by the short follower fixture.
-src/act.wizard.c:958	do_stat_character	gap-reachable		Final follower-list wrap is not exercised by the short follower fixture.
+src/act.wizard.c:945	do_stat_character	proven	stat.player-clan-report	The live enrolled PC reaches the nonzero clan-ID/rank gate and emits the clan name through registered `stat player` (R1/R2/R5e/R5h).
+src/act.wizard.c:956	do_stat_character	proven	stat.player-follower-wrap-boundaries;stat.mob-follower-wrap-boundaries	Live six-follower PC and mobile reports cross this intermediate C send with more linked followers remaining, preserving its comma and CRLF (R1/R2/R3/R5e/R5h).
+src/act.wizard.c:958	do_stat_character	proven	stat.player-follower-wrap-boundaries;stat.mob-follower-wrap-boundaries	The final long-name follower in each live PC and mobile report crosses this C send after the buffer resets; each report preserves its non-comma CRLF ending (R1/R2/R3/R5e/R5h).
 src/act.wizard.c:964	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:969	do_stat_character	proven	stat.player-success;stat.mob-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:989	do_stat_character	proven	stat.character-spell-affects	The registered stat peer report emits two active SPL rows after a live bless cast; the transcript includes exact modifier and bitvector bytes (R1/R2/R5e/R5h).
@@ -195,7 +195,7 @@ src/act.wizard.c:1635	perform_immort_vis	proven	invis.toggle-off;visible.immorta
 src/act.wizard.c:1650	perform_immort_invis	proven	invis.peer-below-level-crossing	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:1653	perform_immort_invis	proven	invis.peer-below-level-crossing	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:1659	perform_immort_invis	proven	invis.level-prompt	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:1668	do_invis	gap-reachable		NPC do_invis is reachable through a high-level mobile command dispatch; no current depth case drives that actor class.
+src/act.wizard.c:1668	do_invis	unreachable	-	The only caller is the `invis` command row (src/interpreter.c:170,519), whose LVL_IMMORT minimum is rejected for NPC actors by command_interpreter before handler dispatch (src/interpreter.c:921); no direct C caller exists (R2/R5e).
 src/act.wizard.c:1681	do_invis	proven	invis.above-own-level	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:1697	do_gecho	proven	gecho.empty	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:1702	do_gecho	proven	gecho.broadcast;gecho.con-playing-descriptor	The cited manifest proof executes this C callsite (R1/R5e).
@@ -254,7 +254,7 @@ src/act.wizard.c:2150	do_wizutil	proven	freeze.success-victim	The cited manifest
 src/act.wizard.c:2151	do_wizutil	proven	freeze.success-victim	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2152	do_wizutil	proven	freeze.success-victim	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2158	do_wizutil	proven	mudlog.wizutil-producer-bytes	The staged thaw-not-frozen refusal executes this C response through registered command dispatch (R1/R5e/R5h).
-src/act.wizard.c:2164	do_wizutil	gap-reachable		A target frozen by a higher-level immortal reaches this refusal; current thaw proof covers only the successful thaw path.
+src/act.wizard.c:2164	do_wizutil	proven	wizutil.thaw-higher-freeze-level	The live higher-freeze-level scenario freezes the peer at level 40, then reaches this refusal through level-38 registered thaw without changing target state (R1/R2/R3/R5e/R5h).
 src/act.wizard.c:2170	do_wizutil	proven	mudlog.wizutil-thaw	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2171	do_wizutil	proven	mudlog.wizutil-thaw	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2172	do_wizutil	proven	mudlog.wizutil-thaw	The cited manifest proof executes this C callsite (R1/R5e).

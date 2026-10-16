@@ -191,7 +191,7 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	if hunting := mob.GetHunting(); hunting != "" {
 		s.sendStatMobLine("Hunting: " + hunting)
 	}
-	s.sendStatMobLine("Master is: <none>, Followers are:")
+	s.Send(s.statFollowerListOutput(mob.GetFollowing(), mob.GetName(), true))
 	s.sendStatMobLine("AFF: " + wizardAffectFlags(mobEffectiveAffectBits(mob)))
 	s.sendStatAffectLines(mob.OrderedAffects())
 }
@@ -335,7 +335,17 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	drunk := p.GetCondition(game.CondDrunk)
 
 	s.Send(fmt.Sprintf("Hunger: %d, Thirst: %d, Drunk: %d, Tattoo: None (%d)\r\n", full, thirst, drunk, p.TatTimer))
-	s.Send("Master is: <none>, Followers are:\r\n")
+	if p.ClanID != 0 && p.ClanRank != 0 && s.manager != nil && s.manager.world != nil && s.manager.world.Clans != nil {
+		if _, clan := s.manager.world.Clans.FindClanByID(p.ClanID); clan != nil {
+			s.Send("Clan : " + clan.Name + "\r\n")
+		}
+	}
+
+	master := ""
+	if connected {
+		master = p.GetFollowing()
+	}
+	s.Send(s.statFollowerListOutput(master, p.GetName(), connected))
 	s.Send("AFF: " + wizardAffectFlags(playerEffectiveAffectBits(p)) + "\r\n")
 	// C affect_to_char/affect_to_char2 prepends to ch->affected (src/handler.c:391,415),
 	// whereas Go appends to p.ActiveAffects (pkg/game/player_affects.go:405).
@@ -344,6 +354,18 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 		ordered = append(ordered, p.ActiveAffects[i])
 	}
 	s.sendStatAffectLines(ordered)
+}
+
+func (s *Session) statFollowerListOutput(master, characterName string, connected bool) string {
+	var followers []game.Actor
+	if connected && s.manager != nil && s.manager.world != nil {
+		followers = s.manager.world.GetFollowerActors(characterName)
+	}
+	followerNames := make([]string, 0, len(followers))
+	for _, follower := range followers {
+		followerNames = append(followerNames, game.PersName(follower, s.player))
+	}
+	return wizardFollowerListOutput(master, followerNames)
 }
 
 func playerEffectiveAffectBits(p *game.Player) uint64 {
@@ -937,6 +959,46 @@ func wizardHasNormalColor(flags uint64) bool {
 	// PRF_COLOR_2 counts 2 (src/screen.h:45-49): PRF_COLOR_2 alone ("color
 	// normal") is enough.
 	return flags&(1<<uint(game.PrfColor2)) != 0
+}
+
+// wizardFollowerListOutput mirrors do_stat_character's follower buffer and
+// 62-byte flushes (src/act.wizard.c:948-965). Continuation rows start with the
+// follower name's leading space because C clears the whole buffer after each
+// send.
+func wizardFollowerListOutput(master string, followers []string) string {
+	if master == "" {
+		master = "<none>"
+	}
+
+	var output, line strings.Builder
+	line.WriteString("Master is: ")
+	line.WriteString(master)
+	line.WriteString(", Followers are:")
+
+	found := 0
+	for i, follower := range followers {
+		if found > 0 {
+			line.WriteByte(',')
+		}
+		line.WriteByte(' ')
+		line.WriteString(follower)
+		found++
+		if line.Len() >= 62 {
+			if i+1 < len(followers) {
+				line.WriteString(",\r\n")
+			} else {
+				line.WriteString("\r\n")
+			}
+			output.WriteString(line.String())
+			line.Reset()
+			found = 0
+		}
+	}
+	if line.Len() > 0 {
+		line.WriteString("\r\n")
+		output.WriteString(line.String())
+	}
+	return output.String()
 }
 
 // wizardWrappedListOutput mirrors do_stat_room's 62-byte buffer flushes.

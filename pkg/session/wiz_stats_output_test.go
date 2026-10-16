@@ -185,3 +185,22 @@ func TestWizardRoomListMatchesC62ByteWrapAndColorBytes(t *testing.T) {
 		t.Fatalf("colored room list = %q, want %q", got, coloredWant)
 	}
 }
+
+func TestWizardFollowerListUsesC62ByteWrap(t *testing.T) {
+	followers := []string{
+		"FoxtrotFollowXX",
+		"EchoFollowerXXX",
+		"DeltaFollowerXX",
+		"CharlieFollower",
+		"BravoFollowerBB",
+		"AlphaFollowerAA",
+	}
+	want := "Master is: <none>, Followers are: FoxtrotFollowXX, EchoFollowerXXX,\r\n" +
+		" DeltaFollowerXX, CharlieFollower, BravoFollowerBB, AlphaFollowerAA\r\n"
+	if got := wizardFollowerListOutput("", followers); got != want {
+		t.Fatalf("wizardFollowerListOutput() = %q, want %q", got, want)
+	}
+	if got, want := wizardFollowerListOutput("Master", nil), "Master is: Master, Followers are:\r\n"; got != want {
+		t.Fatalf("empty follower output = %q, want %q", got, want)
+	}
+}
