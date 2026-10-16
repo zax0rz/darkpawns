@@ -14,28 +14,28 @@ src/sedit.c:671	sedit_namelist_menu	proven	sedit.namelist-menu	The namelist menu
 src/sedit.c:681	sedit_shop_flags_menu	proven	sedit.flags-menu	The shop-flags menu's leading blank line is emitted after selecting F.
 src/sedit.c:689	sedit_shop_flags_menu	proven	sedit.flags-menu	The flag choices are emitted and compared before toggling a flag.
 src/sedit.c:697	sedit_shop_flags_menu	proven	sedit.flags-menu	The current flag summary and prompt are compared after the F choice and toggle.
-src/sedit.c:707	sedit_no_trade_menu	gap-reachable	-	No existing proof selects E to emit the no-trade menu's leading blank line.
-src/sedit.c:715	sedit_no_trade_menu	gap-reachable	-	No existing proof selects E to emit the no-trade choices.
-src/sedit.c:723	sedit_no_trade_menu	gap-reachable	-	No existing proof selects E to emit the current trade mask and prompt.
+src/sedit.c:707	sedit_no_trade_menu	proven	sedit.no-trade-menu	E reaches the no-trade menu blank line; the scenario then pins its choices, mask, prompt, and changed-mask redraw.
+src/sedit.c:715	sedit_no_trade_menu	proven	sedit.no-trade-menu	The real E branch emits all trade choices through the SEDIT descriptor parser.
+src/sedit.c:723	sedit_no_trade_menu	proven	sedit.no-trade-menu	The real E branch emits the current mask and prompt and redraws after toggling Good.
 src/sedit.c:736	sedit_types_menu	proven	sedit.namelist-menu	The add-entry path selects A and emits the type menu's leading blank line.
 src/sedit.c:745	sedit_types_menu	proven	sedit.namelist-menu	The full item-type list is compared before selecting the type.
 src/sedit.c:748	sedit_types_menu	proven	sedit.namelist-menu	The type-selection prompt is compared before entering the new namelist.
 src/sedit.c:808	sedit_disp_menu	proven	sedit.interactive-olc;sedit.products-menu;sedit.rooms-menu;sedit.namelist-menu;sedit.flags-menu;sedit.menu-colors-on-raw;sedit.menu-colors-off-raw	The main-menu send is reached by OLC entry/redraw and both raw color modes.
-src/sedit.c:822	sedit_parse	gap-reachable	-	The existing empty-input test asserts that empty is accepted, but no proof supplies nonnumeric input to reach the refusal.
-src/sedit.c:834	sedit_parse	gap-reachable	-	No existing proof confirms the save choice Y and this in-memory acknowledgement.
-src/sedit.c:846	sedit_parse	gap-reachable	-	The boundary scenario answers N at save confirmation; no proof supplies an invalid response.
-src/sedit.c:847	sedit_parse	gap-reachable	-	The boundary scenario answers N at save confirmation; no proof reaches the repeated prompt after an invalid response.
+src/sedit.c:822	sedit_parse	proven	sedit.numeric-retry	The live numeric field receives -x and emits the C numerical refusal before accepting 0.
+src/sedit.c:834	sedit_parse	proven	sedit.save-confirmation-output	The changed live shop accepts Y and emits the C in-memory save acknowledgement.
+src/sedit.c:846	sedit_parse	proven	sedit.save-confirmation-output	The changed live shop receives an invalid confirmation and emits the C refusal.
+src/sedit.c:847	sedit_parse	proven	sedit.save-confirmation-output	The invalid confirmation is followed by C’s exact save retry prompt.
 src/sedit.c:859	sedit_parse	proven	sedit.confirm-save	The changed-shop boundary scenario quits and compares this save-confirmation prompt before answering N.
 src/sedit.c:866	sedit_parse	proven	sedit.keeper-validation	TestSeditKeeperValidationKeepsPrompt asserts the exact keeper VNUM prompt.
-src/sedit.c:950	sedit_parse	gap-reachable	-	The empty-numeric test consumes this prompt but does not assert its bytes; no R5h proof is mapped.
-src/sedit.c:954	sedit_parse	gap-reachable	-	The string-edit test consumes this prompt but does not assert its bytes; no R5h proof is mapped.
-src/sedit.c:967	sedit_parse	gap-reachable	-	No existing proof chooses D in the namelist menu to reach the delete-entry prompt.
-src/sedit.c:980	sedit_parse	gap-reachable	-	No existing proof chooses A in the product menu to reach the add-product prompt.
-src/sedit.c:985	sedit_parse	gap-reachable	-	No existing proof chooses D in the product menu to reach the delete-product prompt.
-src/sedit.c:998	sedit_parse	gap-reachable	-	No existing proof chooses A in the room menu to reach the add-room prompt.
-src/sedit.c:999	sedit_parse	gap-reachable	-	The second add-room prompt is reached with the first prompt, but no existing proof chooses A in the room menu.
-src/sedit.c:1013	sedit_parse	gap-reachable	-	No existing proof chooses D in the room menu to reach the delete-room prompt.
+src/sedit.c:950	sedit_parse	proven	sedit.numeric-retry	The live numeric field emits its exact initial prompt before the invalid-input retry.
+src/sedit.c:954	sedit_parse	proven	sedit.string-prompt	The live no-item string field emits its exact multiline prompt before replacement.
+src/sedit.c:967	sedit_parse	proven	sedit.delete-prompts	The live namelist menu emits the delete-entry prompt.
+src/sedit.c:980	sedit_parse	proven	sedit.add-prompts	The live products menu emits the new-product VNUM prompt.
+src/sedit.c:985	sedit_parse	proven	sedit.delete-prompts	The live products menu emits the delete-product prompt.
+src/sedit.c:998	sedit_parse	proven	sedit.add-prompts	The live rooms menu emits the first room-add prompt.
+src/sedit.c:999	sedit_parse	proven	sedit.add-prompts	The live rooms menu emits the second consecutive room-add prompt.
+src/sedit.c:1013	sedit_parse	proven	sedit.delete-prompts	The live rooms menu emits the delete-room prompt.
 src/sedit.c:1064	sedit_parse	proven	sedit.keeper-validation	TestSeditKeeperValidationKeepsPrompt asserts the missing-mobile response after entering a numeric keeper VNUM.
 src/sedit.c:1095	sedit_parse	proven	sedit.namelist-menu	The boundary scenario selects a type and compares the prompt before entering the new keyword.
-src/sedit.c:1107	sedit_parse	gap-reachable	-	No existing proof adds a product with a missing object VNUM.
-src/sedit.c:1124	sedit_parse	gap-reachable	-	No existing proof adds a room with a missing room VNUM.
+src/sedit.c:1107	sedit_parse	proven	sedit.invalid-add-vnums	A nonexistent product VNUM reaches the exact retry line in SEDIT_NEW_PRODUCT.
+src/sedit.c:1124	sedit_parse	proven	sedit.invalid-add-vnums	A nonexistent room VNUM reaches the exact retry line in SEDIT_NEW_ROOM.

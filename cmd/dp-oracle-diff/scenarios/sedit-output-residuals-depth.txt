@@ -1,0 +1,79 @@
+# depth-case: sedit.no-trade-menu
+# depth-case: sedit.numeric-retry
+# depth-case: sedit.string-prompt
+# depth-case: sedit.save-confirmation-output
+# depth-case: sedit.delete-prompts
+# depth-case: sedit.add-prompts
+# depth-case: sedit.invalid-add-vnums
+# Reach the remaining ordinary SEDIT outputs through the existing shop parser.
+# The final Y exercises the in-memory confirmation path only; no disk save occurs.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Seditresidual
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Seditresidual
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+sedit 8034
+E
+1
+0
+1
+-x
+0
+7
+No value
+T
+D
+999
+Q
+P
+A
+999999
+-1
+D
+999999
+Q
+R
+A
+999999
+-1
+D
+999999
+Q
+F
+1
+0
+Q
+?
+Y
