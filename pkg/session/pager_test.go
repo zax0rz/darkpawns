@@ -132,6 +132,9 @@ func TestPageStringEmptySendsWholeNoMode(t *testing.T) {
 	if s.IsPaging() {
 		t.Error("empty PageString entered pager mode; want no mode")
 	}
+	if got := readMsgText(t, s); got != "" {
+		t.Errorf("empty PageString output = %q, want no bytes", got)
+	}
 }
 
 func TestPageStringShortSendsWholeNoMode(t *testing.T) {
@@ -343,12 +346,10 @@ func TestPagerCaseInsensitiveQuit(t *testing.T) {
 func TestPagerJunkInputPrintsValidLineAndDoesNotAdvance(t *testing.T) {
 	s := newPagerTestSession(t) // next-to-display = page 2
 	s.navigatePager("xyzzy")
-	out := drainSendChannel(t, s)
-	// drainSendChannel returns raw JSON bytes, so match the visible message text
-	// without the trailing CRLF (which is JSON-escaped).
-	const want = "Valid commands while paging are RETURN, Q, R, B, or a numeric value."
-	if !strings.Contains(out, want) {
-		t.Errorf("junk input output = %q; want it to contain %q", out, want)
+	out := readMsgText(t, s)
+	const want = "Valid commands while paging are RETURN, Q, R, B, or a numeric value.\r\n"
+	if out != want {
+		t.Errorf("junk input output = %q, want %q", out, want)
 	}
 	// Junk input must NOT have advanced — the next RETURN should still show page 2.
 	s.navigatePager("")
