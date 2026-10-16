@@ -1,0 +1,2 @@
+c_site	function	classification	case_ids	notes
+src/scripts.c:117	lua_act	proven	lua.bridge-act	The oncmd Hisc fixture executes lua_act's act(txt, ..., me, obj, vict, where) call for TO_NOTVICT and TO_VICT; the oracle transcript checks both audience outputs (R1/R2/R5e/R5g/R5h).

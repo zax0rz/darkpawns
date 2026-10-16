@@ -1,0 +1,3 @@
+c_site	function	classification	case_ids	notes
+src/oc.c:104	oc_show_list	proven	inventory.list-multi;look.lookin-container-contents	Both nonempty mode-15 paths set show_header and execute this header send; inventory-basic reaches it through do_inventory and look-container reaches it through look_in_obj (R1/R2/R5e/R5g/R5h).
+src/oc.c:167	oc_show_list	proven	inventory.list-multi;look.lookin-container-contents	Both cases render at least one grouped object row through list_obj_to_char into this per-row send; their oracle output pins the formatted bytes (R1/R2/R5e/R5g/R5h).

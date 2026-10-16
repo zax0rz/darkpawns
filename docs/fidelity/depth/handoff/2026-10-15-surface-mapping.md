@@ -1,6 +1,46 @@
 # DP-1371 surface-mapping handoff — 2026-10-15
 
-## Measured baseline
+## Latest measured continuation
+
+The current `origin/main` snapshot is `d48aec241` (2026-10-15): **3,360
+inventory units, 2,462 blocked, 897 proven-already, and 1 excluded with a C
+reason**. The activity-call-site subtotal is 1,385 units, 491 blocked. This is
+the measured main-branch state; the PR deltas below are still drafts.
+
+| Open PR | C file | Inventory units before → after | Site classifications after |
+|---|---|---:|---|
+| [#2050](https://github.com/zax0rz/darkpawns/pull/2050) | `src/shop.c` | 22 → 0 | 24 proven, 0 gaps |
+| [#2051](https://github.com/zax0rz/darkpawns/pull/2051) | `src/whod.c` | 10 → 0 | 10 proven, 0 gaps |
+| [#2053](https://github.com/zax0rz/darkpawns/pull/2053) | `src/spells.c` | 104 → 97 | 32 proven, 97 gap-reachable, 4 unreachable |
+| [#2054](https://github.com/zax0rz/darkpawns/pull/2054) | `src/magic.c` | 39 → 38 | 42 proven, 38 gap-reachable, 3 unreachable |
+| [#2055](https://github.com/zax0rz/darkpawns/pull/2055) | `src/gate.c` | 7 → 0 | 8 proven, 0 gaps |
+| [#2056](https://github.com/zax0rz/darkpawns/pull/2056) | `src/act.wizard.c` | 31 → 31 | 320 proven, 25 gap-reachable, 6 stop-tier blocked, 6 unreachable |
+| [#2057](https://github.com/zax0rz/darkpawns/pull/2057) | `src/oc.c`, `src/scripts.c` | 2 → 0 each | `oc.c`: 2 proven; `scripts.c`: 1 live site proven, line 87 is a declaration |
+
+Applying these seven draft changes together would project **3,309 total units,
+2,411 blocked**, including **1,334 activity-call-site units, 440 blocked**.
+That projection is not a measurement of main; the PRs must be reconciled and
+merged before the inventory is recounted. The wizard change adds clean
+five-seed oracle transcripts for eight branches that already had unit proofs,
+so it strengthens evidence without reducing the measured residual. The
+`scripts.c` audit removes one stale count that treated the local `act`
+declaration as a call site.
+
+The historical finish-line baseline was 4,929 total units and 4,031 blocked at
+`fd327ae1a` (2026-09-04). Compared with that snapshot, current `origin/main`
+has 1,569 fewer units and 1,569 fewer blocked units. The seven open PRs
+would bring that cumulative reduction to 1,620 if all land.
+
+Targeted census results for this continuation: `dp1371-gate-collision-spacing-rebased`
+and `dp1371-gate-portal-final` are CLEAN; `dp1371-set-extended-output-gaps`
+is CLEAN across five seeds; `dp1371-spell-summon-rebased` is CLEAN (4/4);
+`dp1371-whod-rebased` is CLEAN (1/1). The `oc.c` and `scripts.c` changes are
+documentation-only mappings and require no census.
+The old `gate-spell-depth` divergence is retained at `e3645cd5b`, investigated
+as the pre-fix extra CRLF from `roomMessage`, and not retried. Claude owns the
+final full census; this work uses targeted censuses only.
+
+## Historical measured baseline (e364 checkpoint)
 
 The finish-line field note measured the then-current inventory at
 `fd327ae1a`: 4,929 C surface units, of which 4,031 were `blocked` (82%). That
@@ -49,7 +89,7 @@ and claims `CLEAN`. Its retained summary is
 `~/Archives/darkpawns/oracle-runs/2026-10-15/batch-m/summary.txt`. It was not
 rerun.
 
-## Largest blocked families on current main
+## Largest blocked families at the e364 checkpoint
 
 These are the largest remaining inventory rows at `e3645cd5b`, before applying
 the seven open PRs. The five 299-unit use-vector rows are the 1,495-unit
@@ -92,7 +132,7 @@ sites from current main. OEDIT retains 12 reachable sites; OLC retains one
 session-lifecycle/transport gap. Neither updated row is part of the measured
 current-main count until merge.
 
-## Handoff state
+## Historical handoff state at e364
 
 The seven PRs account for 96 fewer blocked units after applying their per-row
 changes, but substantial blocked work remains. The activity-call-site families
