@@ -32,7 +32,7 @@ src/magic.c:1145	mag_affects	proven	mudlog.game-protection-evil-death	The evil-p
 src/magic.c:1165	mag_affects	proven	mudlog.game-protection-good-death	The good-protection death test executes the warning before the caster is killed (R1/R5e/R5h).
 src/magic.c:1204	mag_affects	proven	objmagic.sleep-outlaw-sand	The sand-bearing sleep potion executes the caster's reagent narration (R1/R5e/R5h).
 src/magic.c:1206	mag_affects	proven	objmagic.sleep-outlaw-sand	The sand-bearing sleep potion executes the room reagent act (R1/R5e/R5h).
-src/magic.c:1210	mag_affects	gap-reachable		Sleep cast without reagent 1226 reaches the missing-component message; existing sleep cases provide sand (R1/R2/R5e).
+src/magic.c:1210	mag_affects	proven	objmagic.sleep-refusal-bare	The clean five-seed bare-potion case executes the missing-component message before the non-Outlaw refusal (R1/R2/R5e/R5h).
 src/magic.c:1214	mag_affects	proven	objmagic.sleep-refusal-sand;objmagic.sleep-refusal-bare	The non-outlaw self-quaff scenarios execute the outlaw refusal message (R1/R5e/R5h).
 src/magic.c:1217	mag_affects	proven	objmagic.sleep-refusal-sand;objmagic.sleep-refusal-bare	The paired refusal scenarios execute the second recipient write for the self-target case (R1/R5e/R5h).
 src/magic.c:1224	mag_affects	gap-reachable		A player sleep target outside the caster's three-level window reaches this room act; no current case exercises that gate (R1/R2/R5e).
