@@ -1,0 +1,80 @@
+# depth-case: spell.summon.outlaw-resistance
+# An unsummonable outlaw PC gets the C number(1,100) resistance roll before
+# room-exit validation; this seed selects the refusal and its two audiences.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+spawn-obj 64 1 8162 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Summontarget]
+Summontarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Summontarget]
+Summontarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Summontarget 8162
+set Castgod class cleric
+skillset Castgod 'summon' 100
+set Summontarget nosummon off
+set Summontarget class warrior
+set Summontarget level 0
+set Summontarget outlaw on
+set Castgod nosummon on
+set Castgod level 30
+
+[probe]
+cast 'summon' Summontarget

@@ -1,0 +1,107 @@
+# depth-case: spell.summon.backfire-output
+# A no-charm sentinel troll ambassador keeps the C refusal expression stable.
+# The frozen seed selects backfire, disappearance, arrival, and landing look.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+spawn-obj 64 1 8161 80
+spawn-mob 14311 1 8161 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Summonold]
+Summonold
+Y
+oldpass
+oldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Summonold]
+Summonold
+y
+oldpass
+oldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Summonnew]
+Summonnew
+Y
+newpass
+newpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Summonnew]
+Summonnew
+y
+newpass
+newpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Summonold 8162
+teleport Summonnew 8161
+set Castgod class cleric
+skillset Castgod 'summon' 100
+goto 8161
+set Castgod level 30
+
+[probe]
+look
+cast 'summon' ambassador

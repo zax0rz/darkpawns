@@ -25,6 +25,13 @@ var magAffectsSaveRoll = magSavingThrow
 // magSummonSaveRoll keeps summon save branches deterministic in focused tests.
 var magSummonSaveRoll = magSavingThrow
 
+// magSummonOutlawResistanceRoll and magSummonBackfireRoll preserve the C
+// summon draws while letting focused tests select each branch deterministically.
+var (
+	magSummonOutlawResistanceRoll = func() int { return dprng.Number(1, 100) }
+	magSummonBackfireRoll         = func() int { return dprng.Number(0, 9) }
+)
+
 // magCharmSaveRoll keeps charm's C saving-throw branch deterministic in focused tests.
 var magCharmSaveRoll = magSavingThrow
 
@@ -3188,47 +3195,51 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		sendToCaster(ch, "You failed.\r\n")
 		return
 	}
-
-	// Peaceful room check for NPC victims
-	type worldRoom interface{ GetRoomInWorld(vnum int) *parser.Room }
-	if wr, ok := world.(worldRoom); ok {
-		chRoomData := wr.GetRoomInWorld(chRoom)
-		if chRoomData != nil && chRoomData.HasFlag(RoomPeaceful) && victIsNPC {
-			// Fail silently for peaceful room + NPC victim
-			sendToCaster(ch, "You failed.\r\n")
-			return
-		}
-		// NOMAGIC check on victim's room
-		victRoomData := wr.GetRoomInWorld(victRoom)
-		if victRoomData != nil && victRoomData.HasFlag(RoomNoMagic) {
-			sendToCaster(ch, "You failed.\r\n")
-			return
-		}
-	}
-
-	// Room exit check: caster's room must have at least one open exit
-	type worldExits interface{ GetRoomInWorld(vnum int) *parser.Room }
-	roomOK := false
-	if we, ok := world.(worldExits); ok {
-		roomData := we.GetRoomInWorld(chRoom)
-		if roomData != nil && len(roomData.Exits) > 0 {
-			roomOK = true
-		}
-	}
-	if !roomOK {
+	// C src/spells.c:268-279 gives an unsummonable outlaw PC a 36% chance to
+	// resist before the exit check. The roll is unconditional for this class,
+	// independent of the caster's level or summonable preference.
+	if !chIsNPC && !victIsNPC && hasOutlawFlag(cvict) && !isSummonable(cvict) && magSummonOutlawResistanceRoll() >= 65 {
 		sendToCaster(ch, "You failed.\r\n")
+		if vs, ok := cvict.(interface{ SendMessage(string) }); ok {
+			vs.SendMessage(summonAttemptNotice(ch, chName, chRoom, world))
+		}
 		return
 	}
 
-	// Saving throw with backfire
-	if (magSummonSaveRoll(cvict, int(SaveSpell)) && !isSummonable(cvict)) ||
-		(victIsNPC && hasSummonMobFlag(cvict, mobNoCharmBit)) {
+	// C's later refusal expression checks the room states and the caster exit
+	// after taking the victim save, so those conditions participate in the
+	// same backfire branch instead of returning early.
+	type worldRoom interface{ GetRoomInWorld(vnum int) *parser.Room }
+	var chRoomData, victRoomData *parser.Room
+	if wr, ok := world.(worldRoom); ok {
+		chRoomData = wr.GetRoomInWorld(chRoom)
+		victRoomData = wr.GetRoomInWorld(victRoom)
+	}
+
+	// C accepts any existing, non-NOWHERE, open exit from the caster's room.
+	roomOK := false
+	if chRoomData != nil {
+		for _, exit := range chRoomData.Exits {
+			if exit.ToRoom != -1 && exit.ExitInfo&parser.ExitClosed == 0 {
+				roomOK = true
+				break
+			}
+		}
+	}
+
+	// src/spells.c:290-297 evaluates these gates in order after the save.
+	summonRefused := (magSummonSaveRoll(cvict, int(SaveSpell)) && !isSummonable(cvict)) ||
+		(chRoomData != nil && chRoomData.HasFlag(RoomPeaceful) && victIsNPC) ||
+		(victRoomData != nil && victRoomData.HasFlag(RoomNoMagic)) ||
+		(victIsNPC && hasSummonMobFlag(cvict, mobNoCharmBit)) ||
+		!roomOK
+	if summonRefused {
 		// 10% backfire chance for PC casters
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		backfireRoll := dprng.Number(0, 9)
+		backfireRoll := magSummonBackfireRoll()
 		if backfireRoll == 0 && !chIsNPC {
 			sendToCaster(ch, "Your spell backfires!\r\n")
+			sendAffectRoom(ch, nil, "$n disappears suddenly.\r\n", world)
 			// Transfer caster to victim's room instead
 			type transferWorld interface {
 				PlayerTransfer(ch interface{}, toRoomVNum int) error
@@ -3242,6 +3253,21 @@ func castSummon(level int, ch, cvict, world interface{}) {
 				} else {
 					if err := tw.PlayerTransfer(ch, victRoom); err != nil {
 						slog.Error("PlayerTransfer failed", "error", err)
+					}
+				}
+			}
+			sendAffectRoom(ch, nil, "$n arrives suddenly.\r\n", world)
+			if looker, ok := world.(interface{ LookAtRoomForSpell(victim interface{}) }); ok {
+				looker.LookAtRoomForSpell(ch)
+			}
+			if victIsNPC && getPos(cvict) > int(PosSleeping) {
+				if attacker, ok := cvict.(combat.Combatant); ok {
+					if defender, ok := ch.(combat.Combatant); ok {
+						if hitter, ok := world.(interface {
+							MobFirstHit(attacker, defender combat.Combatant)
+						}); ok {
+							hitter.MobFirstHit(attacker, defender)
+						}
 					}
 				}
 			}
