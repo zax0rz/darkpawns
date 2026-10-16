@@ -1,0 +1,42 @@
+# depth-case: spell.vampirism-npc-silent
+# A registered Psionic will targets a live NPC. C spell_vampirism returns
+# silently for NPC victims before its player-only sends.
+
+[fixture]
+empty-players
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Circle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Circle
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+look
+will 'vampirism' trainee

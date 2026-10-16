@@ -68,10 +68,10 @@ src/spells.c:647	spell_enchant_weapon	proven	spell.enchant-output-branches;spell
 src/spells.c:652	spell_enchant_weapon	proven	spell.enchant-output-branches;spell.enchant-weapon-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
 src/spells.c:655	spell_enchant_weapon	proven	spell.enchant-output-branches;spell.enchant-weapon-glow	Exact unit branch proof plus CLEAN live neutral-alignment cast; C short description expands in the glow output (R1/R2/R5e/R5h).
 src/spells.c:658	spell_enchant_weapon	proven	spell.enchant-output-branches	Exact unit branch proof pins the non-weapon refusal bytes through manual-spell dispatch (R1/R2/R5e/R5h).
-src/spells.c:668	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:673	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:676	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:682	spell_lycanthropy	gap-reachable		C MANUAL_SPELL dispatch reaches spell_lycanthropy (src/spell_parser.c:515); no current depth case executes this output branch (R1/R2/R5e).
+src/spells.c:668	spell_lycanthropy	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's already-werewolf bytes and the adjacent transformation output branches (R1/R2/R3/R5e/R5h).
+src/spells.c:673	spell_lycanthropy	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's LFCR-ending vampire refusal bytes (R1/R2/R3/R5e/R5h).
+src/spells.c:676	spell_lycanthropy	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's LFCR-ending victim line; the NPC branch preserves the C bit-16 action flag (R1/R2/R3/R5e/R5h).
+src/spells.c:682	spell_lycanthropy	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's LFCR-ending missing-target bytes (R1/R2/R3/R5e/R5h).
 src/spells.c:696	spell_sobriety	proven	spell.sobriety.splash-output	Census dp1371-spell-sobriety-output-final is CLEAN (1/1) at 2de04234d; the registered cast reaches C's first fragment and the target receives it concatenated with the next fragment (R1/R2/R5e/R5h).
 src/spells.c:697	spell_sobriety	proven	spell.sobriety.splash-output	Census dp1371-spell-sobriety-output-final is CLEAN (1/1) at 2de04234d; C's LFCR-ending second fragment completes the exact HOT-coffee output (R1/R2/R5e/R5h).
 src/spells.c:708	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches spell_hellfire (src/spell_parser.c:518); no current depth case executes this output branch (R1/R2/R5e).
@@ -84,10 +84,10 @@ src/spells.c:741	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches s
 src/spells.c:748	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches spell_hellfire (src/spell_parser.c:518); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:751	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches spell_hellfire (src/spell_parser.c:518); no current depth case executes this output branch (R1/R2/R5e).
 src/spells.c:759	spell_hellfire	gap-reachable		C MANUAL_SPELL dispatch reaches spell_hellfire (src/spell_parser.c:518); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:774	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches spell_vampirism (src/spell_parser.c:516); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:779	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches spell_vampirism (src/spell_parser.c:516); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:782	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches spell_vampirism (src/spell_parser.c:516); no current depth case executes this output branch (R1/R2/R5e).
-src/spells.c:788	spell_vampirism	gap-reachable		C MANUAL_SPELL dispatch reaches spell_vampirism (src/spell_parser.c:516); no current depth case executes this output branch (R1/R2/R5e).
+src/spells.c:774	spell_vampirism	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's LFCR-ending vampire refusal bytes; the registered NPC cast confirms C's silent earlier return (R1/R2/R3/R5e/R5h).
+src/spells.c:779	spell_vampirism	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's LFCR-ending werewolf refusal bytes (R1/R2/R3/R5e/R5h).
+src/spells.c:782	spell_vampirism	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's LFCR-ending victim line; the NPC branch returns before this send (R1/R2/R3/R5e/R5h).
+src/spells.c:788	spell_vampirism	proven	spell.creature-transformation-output-bytes	Exact manual-spell unit proof pins C's LFCR-ending missing-target bytes (R1/R2/R3/R5e/R5h).
 src/spells.c:801	spell_detect_poison	proven	spell.detect-poison-output-branches	Exact unit proof pins self-target result wording and the empty-object failure branch (R1/R2/R5e/R5h).
 src/spells.c:803	spell_detect_poison	proven	spell.detect-poison-output-branches	Exact unit proof pins self-target poison wording (R1/R2/R5e/R5h).
 src/spells.c:808	spell_detect_poison	proven	spell.detect-poison-output-branches;spell.detect-poison-target-output	Unit pronoun matrix and CLEAN live male-target cast prove the canonical $E act output (R1/R2/R5e/R5h).

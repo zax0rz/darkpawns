@@ -1800,7 +1800,20 @@ func castCalliope(level int, ch, cvict interface{}) {
 func castLycanthropy(level int, ch, cvict interface{}) {
 	_ = level
 	if cvict == nil {
-		sendToCaster(ch, "Specify a target.\r\n")
+		sendToCaster(ch, "Specify a target.\n\r")
+		return
+	}
+	type npcTarget interface{ IsNPC() bool }
+	if npc, ok := cvict.(npcTarget); ok && npc.IsNPC() {
+		// C's PLR_FLAGS and MOB_FLAGS both alias saved.act, and PLR_FLAGGED is
+		// false for NPCs. spell_lycanthropy still sends to the NPC (which has no
+		// descriptor) and sets bit 16, also MOB_NOBASH (src/utils.h:225-234;
+		// src/structs.h:238-266; src/spells.c:676-680).
+		sendToVictim(cvict, "You feel a strange sensation in your bones...\n\r")
+		type mobFlagSetter interface{ SetMobFlag(int) }
+		if setter, ok := cvict.(mobFlagSetter); ok {
+			setter.SetMobFlag(16)
+		}
 		return
 	}
 
@@ -1811,7 +1824,6 @@ func castLycanthropy(level int, ch, cvict interface{}) {
 	}
 	p, ok := cvict.(flagChecker)
 	if !ok {
-		sendToCaster(ch, "That only works on players.\r\n")
 		return
 	}
 
@@ -1820,11 +1832,11 @@ func castLycanthropy(level int, ch, cvict interface{}) {
 		return
 	}
 	if p.HasPLRFlag(17) { // PLR_VAMPIRE
-		sendToCaster(ch, "Already a creature of the night.\r\n")
+		sendToCaster(ch, "Already a creature of the night.\n\r")
 		return
 	}
 
-	sendToVictim(cvict, "You feel a strange sensation in your bones...\r\n")
+	sendToVictim(cvict, "You feel a strange sensation in your bones...\n\r")
 	p.SetPLRFlag(16)
 }
 
@@ -1833,7 +1845,11 @@ func castLycanthropy(level int, ch, cvict interface{}) {
 func castVampirism(level int, ch, cvict interface{}) {
 	_ = level
 	if cvict == nil {
-		sendToCaster(ch, "Specify a target.\r\n")
+		sendToCaster(ch, "Specify a target.\n\r")
+		return
+	}
+	type npcTarget interface{ IsNPC() bool }
+	if npc, ok := cvict.(npcTarget); ok && npc.IsNPC() {
 		return
 	}
 
@@ -1844,20 +1860,19 @@ func castVampirism(level int, ch, cvict interface{}) {
 
 	p, ok := cvict.(flagChecker)
 	if !ok {
-		sendToCaster(ch, "That only works on players.\r\n")
 		return
 	}
 
 	if p.HasPLRFlag(17) { // PLR_VAMPIRE
-		sendToCaster(ch, "Already a vampire.\r\n")
+		sendToCaster(ch, "Already a vampire.\n\r")
 		return
 	}
 	if p.HasPLRFlag(16) { // PLR_WEREWOLF
-		sendToCaster(ch, "Already a creature of the night.\r\n")
+		sendToCaster(ch, "Already a creature of the night.\n\r")
 		return
 	}
 
-	sendToVictim(cvict, "You feel a strange sensation in your blood!\r\n")
+	sendToVictim(cvict, "You feel a strange sensation in your blood!\n\r")
 	p.SetPLRFlag(17)
 }
 

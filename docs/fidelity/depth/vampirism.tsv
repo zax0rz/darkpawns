@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+spell_vampirism	will 'vampirism' trainee	spell.vampirism-npc-silent	D3	output	oracle-green	will-vampirism-npc-silent-depth	src/spell_parser.c:516; src/spells.c:766-794	CLEAN census dp1371-vampirism-npc-silent-final reaches the spawned guard trainee and confirms C's silent IS_NPC return before its player-only sends. Valid red dp1371-vampirism-npc-silent-red-corrected exposed Go's invented refusal; earlier dp1371-vampirism-npc-silent-red failed to spawn the target and is excluded (R1/R2/R4/R5e/R5h).

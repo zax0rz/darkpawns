@@ -162,6 +162,96 @@ func TestCastCoCOutputAndRoomAudience(t *testing.T) {
 	}
 }
 
+type transformationOutputPlayer struct {
+	mockSpellsChar
+	playerFlags uint64
+}
+
+func (p *transformationOutputPlayer) HasPLRFlag(flag int) bool {
+	return p.playerFlags&(1<<uint(flag)) != 0
+}
+
+func (p *transformationOutputPlayer) SetPLRFlag(flag int) {
+	p.playerFlags |= 1 << uint(flag)
+}
+
+type transformationNPCProbe struct {
+	mobFlags uint64
+}
+
+func (*transformationNPCProbe) IsNPC() bool { return true }
+func (*transformationNPCProbe) SendMessage(string) {
+}
+
+func (p *transformationNPCProbe) SetMobFlag(bit int) {
+	p.mobFlags |= 1 << uint(bit)
+}
+
+func TestCastLycanthropyVampirismOutputBytes(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		spell          int
+		victimFlags    uint64
+		withVictim     bool
+		wantCaster     string
+		wantVictim     string
+		wantVictimFlag uint64
+	}{
+		{name: "lycanthropy missing target", spell: SpellLycanthropy, wantCaster: "Specify a target.\n\r"},
+		{name: "lycanthropy already werewolf", spell: SpellLycanthropy, victimFlags: 1 << 16, withVictim: true, wantCaster: "Already a werewolf.\r\n"},
+		{name: "lycanthropy already vampire", spell: SpellLycanthropy, victimFlags: 1 << 17, withVictim: true, wantCaster: "Already a creature of the night.\n\r"},
+		{name: "lycanthropy success", spell: SpellLycanthropy, withVictim: true, wantVictim: "You feel a strange sensation in your bones...\n\r", wantVictimFlag: 1 << 16},
+		{name: "vampirism missing target", spell: SpellVampirism, wantCaster: "Specify a target.\n\r"},
+		{name: "vampirism already vampire", spell: SpellVampirism, victimFlags: 1 << 17, withVictim: true, wantCaster: "Already a vampire.\n\r"},
+		{name: "vampirism already werewolf", spell: SpellVampirism, victimFlags: 1 << 16, withVictim: true, wantCaster: "Already a creature of the night.\n\r"},
+		{name: "vampirism success", spell: SpellVampirism, withVictim: true, wantVictim: "You feel a strange sensation in your blood!\n\r", wantVictimFlag: 1 << 17},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 20}
+			var victim interface{}
+			var target *transformationOutputPlayer
+			if tc.withVictim {
+				target = &transformationOutputPlayer{mockSpellsChar: mockSpellsChar{name: "Target"}, playerFlags: tc.victimFlags}
+				victim = target
+			}
+
+			ExecuteManualSpell(tc.spell, caster.level, caster, victim, nil, "", nil)
+
+			if got := strings.Join(caster.messages, ""); got != tc.wantCaster {
+				t.Fatalf("caster output = %q, want exact C bytes %q", got, tc.wantCaster)
+			}
+			if target == nil {
+				return
+			}
+			if got := strings.Join(target.messages, ""); got != tc.wantVictim {
+				t.Fatalf("victim output = %q, want exact C bytes %q", got, tc.wantVictim)
+			}
+			if got := target.playerFlags; tc.wantVictimFlag != 0 && got&tc.wantVictimFlag == 0 {
+				t.Fatalf("victim flags = %#x, want bit %#x set", got, tc.wantVictimFlag)
+			}
+		})
+	}
+}
+
+func TestCastCreatureTransformationNPCBehavior(t *testing.T) {
+	for _, spell := range []int{SpellLycanthropy, SpellVampirism} {
+		t.Run(GetSpellName(spell), func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 20}
+			npc := &transformationNPCProbe{}
+			ExecuteManualSpell(spell, caster.level, caster, npc, nil, "", nil)
+			if got := strings.Join(caster.messages, ""); got != "" {
+				t.Fatalf("NPC target caster output = %q, want no C output", got)
+			}
+			if spell == SpellLycanthropy && npc.mobFlags&(1<<16) == 0 {
+				t.Fatal("lycanthropy NPC target did not receive C's bit-16 act flag")
+			}
+			if spell == SpellVampirism && npc.mobFlags != 0 {
+				t.Fatalf("vampirism changed NPC act flags to %#x, want no C mutation", npc.mobFlags)
+			}
+		})
+	}
+}
+
 type mentalLapseProbe struct {
 	mockSpellsChar
 	hunting string

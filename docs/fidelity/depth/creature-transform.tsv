@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+spell_lycanthropy;spell_vampirism	manual-spell-dispatch	spell.creature-transformation-output-bytes	D3	output	unit-green	TestCastLycanthropyVampirismOutputBytes;TestCastCreatureTransformationNPCBehavior	src/spell_parser.c:515-516; src/spells.c:662-700,766-794; src/utils.h:225-234; src/structs.h:238-266	Exact unit cases pin all eight C caster/victim output literals, including LFCR order, and the NPC control pins C's bit-16 Lycanthropy action flag and silent Vampirism return (R1/R2/R3/R5e/R5h).
