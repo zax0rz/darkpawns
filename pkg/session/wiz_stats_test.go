@@ -54,6 +54,36 @@ drain:
 	}
 }
 
+func TestStatPlayerClanAndFollowerReportUsesLiveRelationships(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Statgod", 1001, true)
+	if err := m.world.AddPlayer(s.player); err != nil {
+		t.Fatal(err)
+	}
+
+	m.world.Clans = game.NewClanManager()
+	clan := &game.Clan{Name: "Wolves"}
+	m.world.Clans.AddClan(clan)
+	target := game.NewPlayer(2, "Clanmate", 1001)
+	target.ClanID, target.ClanRank = clan.ID, 1
+	target.SetFollowing("Master")
+	if err := m.world.AddPlayer(target); err != nil {
+		t.Fatal(err)
+	}
+	follower := game.NewPlayer(3, "Follower", 1001)
+	follower.SetFollowing(target.GetName())
+	if err := m.world.AddPlayer(follower); err != nil {
+		t.Fatal(err)
+	}
+
+	s.sendStatPlayerReport(target, 1001, true, 0)
+	out := drainSessionOutput(t, s)
+	want := "Clan : Wolves\r\nMaster is: Master, Followers are: Follower\r\n"
+	if !strings.Contains(out, want) {
+		t.Fatalf("live stat clan/follower output = %q, want substring %q", out, want)
+	}
+}
+
 func TestStatPlayerPoofFieldsMatchImmortalGate(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)

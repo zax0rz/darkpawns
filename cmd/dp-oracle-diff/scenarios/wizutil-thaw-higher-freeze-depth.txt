@@ -1,0 +1,102 @@
+# C-first do_wizutil thaw refusal when a higher-level God froze the target.
+# The implementor freezes a peer, then a level-38 God runs the registered thaw
+# command and receives C's freeze-level refusal without changing victim state.
+
+# depth-case: wizutil.thaw-higher-freeze-level
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Thawhigh
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thawhigh
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:thawer]
+Thawlow
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:thawer]
+Thawlow
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Thawvictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Thawvictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+advance Thawhigh 40
+advance Thawlow 38
+transfer Thawvictim
+freeze Thawvictim
+
+[probe:thawer]
+thaw Thawvictim
