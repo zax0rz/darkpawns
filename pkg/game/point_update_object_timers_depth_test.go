@@ -243,6 +243,7 @@ func TestPointUpdateRunsGlobalObjectPassAfterAllMemoryDraws(t *testing.T) {
 	objs := []parser.Obj{{VNum: 7001, Keywords: "corpse", ShortDesc: "a corpse", TypeFlag: ITEM_CONTAINER, Values: [4]int{0, 0, 0, 1}}}
 	w := newObjectTimerDepthWorld(t, []parser.Room{room}, parsedMobs, objs)
 	p := objectTimerDepthPlayer(t, w, "Witness", 1001)
+	observer := objectTimerDepthPlayer(t, w, "Observer", 1001)
 	out := captureMovementOutput(w)
 	for _, vnum := range []int{2100, 2101} {
 		mob, err := w.SpawnMob(vnum, 1001)
@@ -275,8 +276,46 @@ func TestPointUpdateRunsGlobalObjectPassAfterAllMemoryDraws(t *testing.T) {
 	if want := firstMessage + secondMessage; got != want {
 		t.Fatalf("corpse messages = %q, want C global-list order %q", got, want)
 	}
+	if got := out[observer.Name].String(); got != firstMessage+secondMessage {
+		t.Fatalf("room observer corpse messages = %q, want C's paired TO_ROOM acts %q", got, firstMessage+secondMessage)
+	}
 	if gotNext := dprng.Next(); gotNext != wantNext {
 		t.Fatalf("next CMWC draw = %d, want %d after two memory draws then two corpse draws", gotNext, wantNext)
+	}
+}
+
+func TestPointUpdateConditionOutputThresholds(t *testing.T) {
+	cases := []struct {
+		name      string
+		condition int
+		starting  int
+		want      string
+		remaining int
+	}{
+		{"full warning at one", CondFull, 2, "Your stomach growls with hunger.\r\n", 1},
+		{"thirst warning at one", CondThirst, 2, "You feel a bit parched.\r\n", 1},
+		{"drunk clears at one", CondDrunk, 2, "Your head starts to clear.\r\n", 1},
+		{"drunk becomes sober at zero", CondDrunk, 1, "You are now sober.\r\n", 0},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w := newObjectTimerDepthWorld(t, []parser.Room{{VNum: 1001, Name: "Condition room", Zone: 1}}, nil, nil)
+			p := objectTimerDepthPlayer(t, w, "Ticker", 1001)
+			p.SetCondition(CondFull, -1)
+			p.SetCondition(CondDrunk, -1)
+			p.SetCondition(CondThirst, -1)
+			p.SetCondition(tc.condition, tc.starting)
+			out := captureMovementOutput(w)
+
+			w.PointUpdate()
+
+			if got := out[p.Name].String(); got != tc.want {
+				t.Fatalf("tick output = %q, want %q", got, tc.want)
+			}
+			if got := p.GetCondition(tc.condition); got != tc.remaining {
+				t.Fatalf("condition after tick = %d, want %d", got, tc.remaining)
+			}
+		})
 	}
 }
 
