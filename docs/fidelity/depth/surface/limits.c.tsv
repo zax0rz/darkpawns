@@ -1,0 +1,23 @@
+c_site	function	classification	case_ids	notes
+src/limits.c:311	gain_exp	gap-reachable		A player reaches this color-prefix send when gain_exp crosses the next-level threshold; current gain_exp call paths have no level-up byte proof (R1/R2/R5e).
+src/limits.c:313	gain_exp	gap-reachable		A player reaches this level-up line when combat or junk experience crosses the next-level threshold; advance.promote only enters gain_exp_regardless (R1/R2/R5e).
+src/limits.c:314	gain_exp	gap-reachable		The color-reset send follows the unproved gain_exp level-up line and is reachable on the same threshold crossing (R1/R2/R5e).
+src/limits.c:354	gain_exp_regardless	proven	advance.promote;advance.promote-to-impl	The registered advance command crosses one and multiple levels through gain_exp_regardless, asserting the actor's rise text (R1/R2/R5e).
+src/limits.c:358	gain_exp_regardless	proven	advance.promote;advance.promote-to-impl	The registered advance command proves the multi-level formatted rise line (R1/R2/R5e).
+src/limits.c:386	gain_condition	proven	point-update.condition-full-warning	A real hourly point_update takes fullness 2 to 1 and proves the warning bytes at the one-point threshold (R1/R3/R5e/R5h).
+src/limits.c:389	gain_condition	proven	point-update.condition-thirst-warning	A real hourly point_update takes thirst 2 to 1 and proves the warning bytes at the one-point threshold (R1/R3/R5e/R5h).
+src/limits.c:393	gain_condition	proven	point-update.condition-drunk-clear	A real hourly point_update takes drunkenness 2 to 1 and proves the clearing bytes (R1/R3/R5e/R5h).
+src/limits.c:403	gain_condition	proven	equipment.saved-zero-stats-lethal-tick	The point_update on a dead returning character still applies condition decay; the focused test proves C's hunger bytes at zero (R1/R3/R5e/R5h).
+src/limits.c:406	gain_condition	proven	equipment.saved-zero-stats-lethal-tick	The point_update on a dead returning character still applies condition decay; the focused test proves C's thirst bytes at zero (R1/R3/R5e/R5h).
+src/limits.c:410	gain_condition	proven	point-update.condition-drunk-sober	A real hourly point_update takes drunkenness 1 to 0 and proves the sober bytes (R1/R3/R5e/R5h).
+src/limits.c:432	check_idling	proven	idle.void-departure-act	The ninth idle hour emits the void departure act to the room that the player leaves (R1/R3/R5e).
+src/limits.c:433	check_idling	proven	idle.void-return-audiences	The ninth idle hour emits the pulled-into-void line to the idle player, distinct from the room departure act (R1/R3/R5e).
+src/limits.c:599	point_update	proven	point-update.object-location-spill-and-rng	A carried corpse expiration proves the actor-only decay line and contents spill (R1/R3/R5e/R5h).
+src/limits.c:607	point_update	proven	point-update.object-location-spill-and-rng	A room observer proves the first corpse decay TO_ROOM audience; the paired actor line is asserted separately (R1/R3/R5e/R5h).
+src/limits.c:609	point_update	proven	point-update.object-location-spill-and-rng	The tick test proves the corpse decay TO_CHAR audience and CMWC draw order (R1/R3/R5e/R5h).
+src/limits.c:614	point_update	proven	point-update.object-location-spill-and-rng	A room observer proves the second corpse decay TO_ROOM audience; the paired actor line is asserted separately (R1/R3/R5e/R5h).
+src/limits.c:616	point_update	proven	point-update.object-location-spill-and-rng	The tick test proves the corpse decay TO_CHAR audience and CMWC draw order (R1/R3/R5e/R5h).
+src/limits.c:621	point_update	proven	point-update.object-location-spill-and-rng	A room observer proves the third corpse decay TO_ROOM audience; the paired actor line is asserted separately (R1/R3/R5e/R5h).
+src/limits.c:623	point_update	proven	point-update.object-location-spill-and-rng	The tick test proves the corpse decay TO_CHAR audience and CMWC draw order (R1/R3/R5e/R5h).
+src/limits.c:629	point_update	proven	point-update.object-location-spill-and-rng	A room observer proves the final corpse decay TO_ROOM audience; the paired actor line is asserted separately (R1/R3/R5e/R5h).
+src/limits.c:631	point_update	proven	point-update.object-location-spill-and-rng	The tick test proves the corpse decay TO_CHAR audience and CMWC draw order (R1/R3/R5e/R5h).
