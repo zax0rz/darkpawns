@@ -24,6 +24,7 @@
 # depth-case: clan.enroll-immortal-gate
 # depth-case: clan.enroll-unknown-clan
 # depth-case: clan.enroll-low-influence
+# depth-case: clan.ranks-refusal-gates
 # depth-case: clan.enroll-applicant-list
 # depth-case: clan.enroll-target-missing
 # depth-case: clan.enroll-other-clan
@@ -204,6 +205,16 @@ clan enroll Clanapply Missing
 clan quit
 clan set privilege enroll Missing 2
 
+# do_clan_ranks refusal paths; the no-argument source call returns through
+# send_clan_format before it can reach the later empty-rank check.
+force Clanapply clan set ranks 3
+force Clanimmlow clan set ranks 3 Wolves
+clan set ranks 3 Missing
+clan set ranks nope Wolves
+clan set ranks 3 Wolves
+clan set ranks 1 Wolves
+clan set ranks 21 Wolves
+
 force Clanimmlow clan create Clangod TooWeak
 force Clanimmlow clan destroy Wolves
 force Clanimmlow clan set privilege enroll 1
@@ -228,6 +239,9 @@ set player Clanapply level 31
 force Clanmate clan enroll Clanapply
 set player Clanapply level 1
 force Clanmate clan enroll Clanapply
+force Clanapply clan set ranks 2
+set player Clanmate gold 0
+force Clanmate clan set ranks 2
 force Clanmate clan set privilege enroll 2
 force Clanapply clan enroll
 force Clanmate clan enroll Clanapply

@@ -129,15 +129,15 @@ src/clan.c:1038	do_clan_money	gap-reachable		No current proof reaches this outpu
 src/clan.c:1045	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
 src/clan.c:1049	do_clan_money	proven	clan.set-money	The named proof scenario executes this C output call.
 src/clan.c:1052	do_clan_money	unreachable		Unreachable default action: do_clan_money is called only with CM_DUES or CM_APPFEE from src/clan.c:1523-1531.
-src/clan.c:1079	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1085	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1091	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1097	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1102	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1107	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1114	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1119	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
-src/clan.c:1124	do_clan_ranks	gap-reachable		No current proof reaches this output branch in do_clan_ranks; reachable through the clan command surface.
+src/clan.c:1079	do_clan_ranks	proven	clan.ranks-refusal-gates	Real clan-command dispatch exercises the clanless refusal and the session proof asserts the C bytes (R1/R2/R5e/R5h).
+src/clan.c:1085	do_clan_ranks	proven	clan.ranks-refusal-gates	Real clan-command dispatch exercises the level-31 lower-immortal gate and the session proof asserts the C bytes (R1/R2/R5e/R5h).
+src/clan.c:1091	do_clan_ranks	proven	clan.ranks-refusal-gates	The paired scenario exercises the unknown-clan refusal through the registered clan command (R1/R2/R5e/R5h).
+src/clan.c:1097	do_clan_ranks	proven	clan.ranks-refusal-gates	The scenario first enrolls a rank-one player, then exercises the hierarchy-rank refusal through clan dispatch (R1/R2/R5e/R5h).
+src/clan.c:1102	do_clan_ranks	unreachable		do_clan_ranks returns to send_clan_format for an empty argument at src/clan.c:1073-1075; its sole caller do_clan_set passes arg2 (src/clan.c:1497-1511), and any nonempty immortal argument is replaced with its nonempty first token at :1088-1090.
+src/clan.c:1107	do_clan_ranks	proven	clan.ranks-refusal-gates	The paired scenario exercises the nonnumeric rank refusal through registered clan dispatch (R1/R2/R5e/R5h).
+src/clan.c:1114	do_clan_ranks	proven	clan.ranks-refusal-gates	The paired scenario exercises the unchanged-rank-count refusal through registered clan dispatch (R1/R2/R5e/R5h).
+src/clan.c:1119	do_clan_ranks	proven	clan.ranks-refusal-gates	The paired scenario exercises both sides of the 2..20 range refusal through registered clan dispatch (R1/R2/R5e/R5h).
+src/clan.c:1124	do_clan_ranks	proven	clan.ranks-refusal-gates	A rank-three clan leader with zero gold reaches the fee refusal through registered clan dispatch (R1/R2/R5e/R5h).
 src/clan.c:1176	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
 src/clan.c:1180	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
 src/clan.c:1186	do_clan_titles	gap-reachable		No current proof reaches this output branch in do_clan_titles; reachable through the clan command surface.
