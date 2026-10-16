@@ -35,13 +35,13 @@ src/magic.c:1206	mag_affects	proven	objmagic.sleep-outlaw-sand	The sand-bearing 
 src/magic.c:1210	mag_affects	proven	objmagic.sleep-refusal-bare	The clean five-seed bare-potion case executes the missing-component message before the non-Outlaw refusal (R1/R2/R5e/R5h).
 src/magic.c:1214	mag_affects	proven	objmagic.sleep-refusal-sand;objmagic.sleep-refusal-bare	The non-outlaw self-quaff scenarios execute the outlaw refusal message (R1/R5e/R5h).
 src/magic.c:1217	mag_affects	proven	objmagic.sleep-refusal-sand;objmagic.sleep-refusal-bare	The paired refusal scenarios execute the second recipient write for the self-target case (R1/R5e/R5h).
-src/magic.c:1224	mag_affects	gap-reachable		A player sleep target outside the caster's three-level window reaches this room act; no current case exercises that gate (R1/R2/R5e).
+src/magic.c:1224	mag_affects	proven	objmagic.sleep-level-window-refusal	CLEAN targeted census dp1371-magic-sleep-level-window (1/1) sends a level-8 outlaw Mage cast at a level-12 player through the three-level-window return and checks the room act (R1/R2/R5e/R5h).
 src/magic.c:1231	mag_affects	proven	objmagic.sleep.messages	The saved or sleep-immune target reaches the room-only shake-head act in the unit proof (R1/R5e/R5h).
 src/magic.c:1243	mag_affects	proven	objmagic.sleep.messages;objmagic.sleep-outlaw-sand	An unsaved sleep target above sleeping position receives the exact sleepy line in unit and live proofs (R1/R5e/R5h).
 src/magic.c:1245	mag_affects	proven	objmagic.sleep.messages;objmagic.sleep-outlaw-sand	The unsaved sleep target path emits the room sleep act in unit and live proofs (R1/R5e/R5h).
-src/magic.c:1276	mag_affects	gap-reachable		Mage waterwalk reagent narration is reachable with frog-leg reagent 1228; no case proves this output (R1/R2/R5e).
-src/magic.c:1303	mag_affects	gap-reachable		Mage metalskin reagent narration is reachable with iron reagent 1229; no case proves this output (R1/R2/R5e).
-src/magic.c:1305	mag_affects	gap-reachable		Mage metalskin reagent room act is reachable with iron reagent 1229; no case proves this audience branch (R1/R2/R5e).
+src/magic.c:1276	mag_affects	proven	objmagic.waterwalk-reagent-output	CLEAN dp1371-magic-reagent-output-clean (1/1) reaches this caster message through a real waterwalk cast carrying vnum 1228 (R1/R2/R5e/R5h).
+src/magic.c:1303	mag_affects	proven	objmagic.metalskin-reagent-output	CLEAN dp1371-magic-reagent-output-clean (1/1) reaches this caster message through a real metalskin cast carrying vnum 1229 (R1/R2/R5e/R5h).
+src/magic.c:1305	mag_affects	proven	objmagic.metalskin-reagent-output	CLEAN dp1371-magic-reagent-output-clean (1/1) includes a room witness for the real metalskin cast carrying vnum 1229 (R1/R2/R5e/R5h).
 src/magic.c:1392	mag_affects	proven	objmagic.mob-innate-gate	The live innate-sanctuary cast reaches the NOEFFECT write when the target already carries the affect (R1/R5e/R5h).
 src/magic.c:1402	mag_affects	proven	objmagic.reapply-noeffect	The live recast-armor proof executes the NOEFFECT write for a non-accumulating affect (R1/R5e/R5h).
 src/magic.c:1415	mag_affects	proven	objmagic.armor.to-self;objmagic.bless.to-self	Live and unit effect proofs execute the shared caster-target act site (R1/R5e/R5h).

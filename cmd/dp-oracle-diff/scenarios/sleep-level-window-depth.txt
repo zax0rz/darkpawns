@@ -1,0 +1,113 @@
+# depth-case: objmagic.sleep-level-window-refusal
+# C path: do_cast -> cast_spell -> call_magic -> mag_affects SPELL_SLEEP
+# (spell_parser.c:879-905; magic.c:1199-1225). The immortal primary gives
+# an outlaw level-8 Mage the sleep skill and C's vnum-1226 sand reagent, then
+# raises the player target to level 12. The real cast reaches mag_affects'
+# three-level window gate and emits its room act before any saving throw or
+# affect application (src/magic.c:1221-1225).
+
+[fixture]
+empty-players
+quiet-mobs
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-obj 1226 1 8162 80
+force-load 1226
+
+[setup:oracle]
+Windowgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Windowgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Windowcast]
+Windowcast
+Y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:Windowcast]
+Windowcast
+y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Windowtarget]
+Windowtarget
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Windowtarget]
+Windowtarget
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Windowcast 8162
+teleport Windowtarget 8162
+get sand
+give sand Windowcast
+set Windowcast level 8
+set Windowtarget level 12
+skillset Windowcast 'sleep' 100
+set Windowcast outlaw on
+
+[probe:Windowcast]
+cast 'sleep' Windowtarget

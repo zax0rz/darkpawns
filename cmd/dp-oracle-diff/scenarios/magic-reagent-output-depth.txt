@@ -1,0 +1,118 @@
+# depth-case: objmagic.waterwalk-reagent-output
+# depth-case: objmagic.metalskin-reagent-output
+# C path: do_cast -> cast_spell -> call_magic -> mag_affects
+# (spell_parser.c:879-905; magic.c:1273-1305). A level-31 Mage carries the
+# exact frog-leg and iron reagents, then casts waterwalk and metalskin on
+# herself through the live command. Both reagent messages execute before
+# affect application; a room witness receives the metalskin act.
+
+[fixture]
+empty-players
+quiet-mobs
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-obj 1228 1 8162 80
+force-load 1228
+spawn-obj 1229 1 8162 80
+force-load 1229
+
+[setup:oracle]
+ReagGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ReagGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:ReagMage]
+ReagMage
+Y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:ReagMage]
+ReagMage
+y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:ReagWitness]
+ReagWitness
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:ReagWitness]
+ReagWitness
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ReagMage 8162
+teleport ReagWitness 8162
+get frog
+get chunk
+give frog ReagMage
+give chunk ReagMage
+set ReagMage level 31
+skillset ReagMage 'waterwalk' 100
+skillset ReagMage 'metalskin' 100
+
+[probe:ReagMage]
+cast 'waterwalk' ReagMage
+~dpclock pulse 20
+cast 'metalskin' ReagMage
