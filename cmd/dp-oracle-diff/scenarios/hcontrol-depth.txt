@@ -27,10 +27,18 @@
 # depth-case: hcontrol.destroy-invalid-vnum
 # depth-case: hcontrol.destroy-success
 # depth-case: hcontrol.show-after-destroy
+# depth-case: hcontrol.build-no-such-room
+# depth-case: hcontrol.build-room-missing-direction
+# depth-case: hcontrol.build-room-missing-owner
+# depth-case: hcontrol.build-one-way-exit
+# depth-case: hcontrol.key-missing-key-vnum
+# depth-case: hcontrol.key-missing-object
 
 [fixture]
 empty-players
 quiet-mobs
+replace-room-exits 8162 east 8161 0
+replace-room-exits 8161 none
 
 [setup:oracle]
 Hcontrolactor
@@ -70,14 +78,20 @@ hcontrol unknown
 hcontrol show
 hcontrol build
 hcontrol build nope east Hcontrolactor
+hcontrol build 999999 east Hcontrolactor
 hcontrol build 1204 BOGUS Hcontrolactor
 hcontrol build 8004 east Nobody
+hcontrol build 8004
+hcontrol build 8004 east
+hcontrol build 8162 east Hcontrolactor
 hcontrol build 8004 east Hcontrolactor
 hcontrol build 8004 east Hcontrolactor
 hcontrol show
 hcontrol key
 hcontrol key 99999 8004
 hcontrol key 8004 nope
+hcontrol key 8004
+hcontrol key 8004 999999
 hcontrol key 8004 8004
 hcontrol pay
 hcontrol pay 99999

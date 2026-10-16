@@ -5,19 +5,19 @@ src/house.c:339	hcontrol_list_houses	proven	hcontrol.show-empty	The registered h
 src/house.c:381	hcontrol_list_houses	proven	hcontrol.show-defined;hcontrol.show-paid	Defined and post-payment listings reach the populated-list send.
 src/house.c:394	hcontrol_build_house	gap-reachable		A control table at MAX_HOUSES reaches the capacity refusal; no capacity proof exists.
 src/house.c:401	hcontrol_build_house	proven	hcontrol.build-usage	A build command without arguments reaches this shared usage output.
-src/house.c:406	hcontrol_build_house	gap-reachable		A vnum with no matching room reaches this refusal; the nonnumeric vnum proof resolves room zero and takes the later missing-exit branch.
+src/house.c:406	hcontrol_build_house	proven	hcontrol.build-no-such-room	A truly absent room VNUM reaches C's no-such-room refusal; the nonnumeric vnum proof still reaches the later missing-exit branch.
 src/house.c:410	hcontrol_build_house	proven	hcontrol.build-duplicate	A second build of the same house reaches the duplicate refusal.
-src/house.c:417	hcontrol_build_house	gap-reachable		A valid house vnum with no exit-direction argument reaches this shared usage output; existing proof omits this parser position.
+src/house.c:417	hcontrol_build_house	proven	hcontrol.build-room-missing-direction	A valid, unbuilt room without the direction argument reaches the shared usage output at this parser position.
 src/house.c:422	hcontrol_build_house	proven	hcontrol.build-invalid-direction	The build scenario reaches the invalid-direction refusal.
 src/house.c:428	hcontrol_build_house	proven	hcontrol.build-invalid-vnum	C atoi maps the nonnumeric vnum to room zero; that room has no east exit, so the probe reaches this branch.
-src/house.c:436	hcontrol_build_house	gap-reachable		A one-way exit reaches the two-way-door refusal; existing build probes use a valid reciprocal exit or fail earlier.
-src/house.c:443	hcontrol_build_house	gap-reachable		A valid room and reciprocal exit with no owner argument reaches this shared usage output; existing proof supplies an owner token.
+src/house.c:436	hcontrol_build_house	proven	hcontrol.build-one-way-exit	The disposable room fixture supplies a one-way exit and reaches C's two-way-door refusal.
+src/house.c:443	hcontrol_build_house	proven	hcontrol.build-room-missing-owner	A valid two-way exit without the owner argument reaches the shared usage output at this parser position.
 src/house.c:448	hcontrol_build_house	proven	hcontrol.build-unknown-owner	An unknown owner name reaches the exact C refusal.
 src/house.c:469	hcontrol_build_house	proven	hcontrol.build-success	The registered build scenario reaches the success message after creating a valid house.
 src/house.c:482	hcontrol_set_key	proven	hcontrol.key-usage	A key subcommand without a house vnum reaches this shared usage output.
 src/house.c:489	hcontrol_set_key	proven	hcontrol.key-unknown-house	An absent house vnum reaches the key-control refusal.
-src/house.c:496	hcontrol_set_key	gap-reachable		A known house vnum without a key vnum reaches this shared usage output; existing key probes supply the second token.
-src/house.c:504	hcontrol_set_key	gap-reachable		A key vnum absent from the world reaches the missing-object refusal; existing invalid-vnum probe maps atoi to object zero, which exists.
+src/house.c:496	hcontrol_set_key	proven	hcontrol.key-missing-key-vnum	A known house without the key VNUM reaches the shared key usage output.
+src/house.c:504	hcontrol_set_key	proven	hcontrol.key-missing-object	A truly absent key object VNUM reaches C's missing-object refusal; the existing nonnumeric VNUM proof maps atoi to zero and succeeds.
 src/house.c:510	hcontrol_set_key	proven	hcontrol.key-invalid-vnum;hcontrol.key-success	The existing object-zero atoi case and the ordinary key case both reach the success send.
 src/house.c:521	hcontrol_destroy_house	proven	hcontrol.destroy-usage	A destroy subcommand without a vnum reaches the shared usage output.
 src/house.c:525	hcontrol_destroy_house	proven	hcontrol.destroy-unknown-house	An absent house vnum reaches the destroy refusal.
