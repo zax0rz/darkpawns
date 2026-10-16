@@ -9,43 +9,43 @@ src/zedit.c:740	zedit_disp_arg1	proven	zedit.object-load-prompts	TestZeditObject
 src/zedit.c:776	zedit_disp_arg2	proven	zedit.command-type-and-if-flag;zedit.object-load-prompts	Both the M and O real-parser paths assert the exact maximum-count prompt.
 src/zedit.c:781	zedit_disp_arg2	proven	zedit.new-at-end	The D path emits the complete direction list; the boundary scenario compares it before selecting the terminal direction.
 src/zedit.c:784	zedit_disp_arg2	proven	zedit.new-at-end	The D path emits the exit-number prompt in the boundary scenario.
-src/zedit.c:787	zedit_disp_arg2	gap-reachable	-	No existing proof selects R to reach the mobile/object selector.
-src/zedit.c:790	zedit_disp_arg2	gap-reachable	-	No existing proof selects L to reach the loop start/finish selector.
-src/zedit.c:815	zedit_disp_arg3	gap-reachable	-	No existing proof selects E to emit the equipment-location choices.
-src/zedit.c:821	zedit_disp_arg3	gap-reachable	-	No existing proof selects E to emit the equipment-location prompt.
-src/zedit.c:824	zedit_disp_arg3	gap-reachable	-	No existing proof selects P to reach the container VNUM prompt.
+src/zedit.c:787	zedit_disp_arg2	proven	zedit.remove-loop-prompts	The real command parser selects R for both mobile and object removals and captures the selector bytes (R1/R2/R5e/R5h).
+src/zedit.c:790	zedit_disp_arg2	proven	zedit.remove-loop-prompts	The real command parser selects L and captures the loop start/finish selector bytes (R1/R2/R5e/R5h).
+src/zedit.c:815	zedit_disp_arg3	proven	zedit.command-validation-depth	The live E command emits the equipment-location table before the prompt (R1/R2/R5e/R5h).
+src/zedit.c:821	zedit_disp_arg3	proven	zedit.command-validation-depth	The live E command emits the equipment-location prompt after accepting an existing object (R1/R2/R5e/R5h).
+src/zedit.c:824	zedit_disp_arg3	proven	zedit.command-validation-depth	The live P command emits the container VNUM prompt after accepting an object and max count (R1/R2/R5e/R5h).
 src/zedit.c:827	zedit_disp_arg3	proven	zedit.new-at-end	The D path emits the three door-state choices and prompt in the boundary scenario.
-src/zedit.c:834	zedit_disp_arg3	gap-reachable	-	No existing proof selects L loop start to emit the repeat-count prompt.
-src/zedit.c:840	zedit_disp_arg3	gap-reachable	-	No existing proof selects R object-removal mode to emit this prompt.
-src/zedit.c:842	zedit_disp_arg3	gap-reachable	-	No existing proof selects R mobile-removal mode to emit this prompt.
+src/zedit.c:834	zedit_disp_arg3	proven	zedit.remove-loop-prompts	The live L loop-start path emits the repeat-count prompt after selecting 0 (R1/R2/R5e/R5h).
+src/zedit.c:840	zedit_disp_arg3	proven	zedit.remove-loop-prompts	The live R object-removal path emits the object VNUM prompt after selecting 1 (R1/R2/R5e/R5h).
+src/zedit.c:842	zedit_disp_arg3	proven	zedit.remove-loop-prompts	The live R mobile-removal path emits the mobile VNUM prompt after selecting 0 (R1/R2/R5e/R5h).
 src/zedit.c:874	zedit_parse	proven	zedit.command-type-and-if-flag	TestZeditStaleCarryAndCommandSave asserts the exact in-memory save acknowledgement after Y.
 src/zedit.c:886	zedit_parse	proven	zedit.confirm-save	The boundary scenario changes zone state, quits, enters an invalid confirmation, and compares this refusal.
 src/zedit.c:887	zedit_parse	proven	zedit.confirm-save	The same invalid confirmation reaches and compares the repeated save prompt.
 src/zedit.c:898	zedit_parse	proven	zedit.confirm-save	The boundary scenario reaches the initial save prompt after changing zone state and quitting.
 src/zedit.c:903	zedit_parse	proven	zedit.interactive-olc	The clean entry-and-quit scenario reaches the no-changes response.
 src/zedit.c:910	zedit_parse	proven	zedit.new-at-end	The boundary scenario selects N and reaches the insertion-position prompt before appending at the terminator.
-src/zedit.c:916	zedit_parse	gap-reachable	-	No existing proof selects E to reach the change-command position prompt.
+src/zedit.c:916	zedit_parse	proven	zedit.command-validation-depth	After building commands, the live editor selects E and compares the change-position prompt before editing command zero (R1/R2/R5e/R5h).
 src/zedit.c:922	zedit_parse	proven	zedit.delete-numeric-invalid	The boundary scenario selects D and reaches this deletion-index prompt before testing an invalid numeric index.
-src/zedit.c:928	zedit_parse	gap-reachable	-	No existing proof selects Z to reach the zone-name prompt.
+src/zedit.c:928	zedit_parse	proven	zedit.command-validation-depth	The live editor selects Z and compares the zone-name prompt before submitting the new name (R1/R2/R5e/R5h).
 src/zedit.c:937	zedit_parse	proven	zedit.top-clamp	The boundary scenario edits the zone top and compares the prompt and resulting menu bytes.
 src/zedit.c:944	zedit_parse	proven	zedit.zone-header-gates	The boundary scenario reaches the lifespan prompt and checks its valid input path.
 src/zedit.c:950	zedit_parse	proven	zedit.zone-header-gates	The boundary scenario selects reset mode and compares the displayed choices.
-src/zedit.c:1004	zedit_parse	gap-reachable	-	No existing proof supplies an invalid command type to reach this retry prompt.
+src/zedit.c:1004	zedit_parse	proven	zedit.command-validation-depth	The real command-type parser rejects X with the exact retry prompt (R1/R2/R5e/R5h).
 src/zedit.c:1008	zedit_parse	proven	zedit.command-type-and-if-flag	TestZeditStaleCarryAndCommandSave asserts the exact dependent-command quiz after choosing M.
-src/zedit.c:1031	zedit_parse	gap-reachable	-	No existing proof supplies an invalid answer to the dependent-command quiz.
-src/zedit.c:1042	zedit_parse	gap-reachable	-	No existing proof supplies a nonnumeric argument-one value.
-src/zedit.c:1052	zedit_parse	gap-reachable	-	No existing proof exercises a missing mobile VNUM in an M command.
-src/zedit.c:1063	zedit_parse	gap-reachable	-	No existing proof exercises a missing object VNUM in an object-load command.
-src/zedit.c:1081	zedit_parse	gap-reachable	-	No existing proof supplies a nonnumeric argument-two value.
-src/zedit.c:1106	zedit_parse	gap-reachable	-	The D scenario selects a valid direction; no proof selects an out-of-range direction to reach this retry.
-src/zedit.c:1115	zedit_parse	gap-reachable	-	No existing proof selects R and supplies an invalid mobile/object selector.
-src/zedit.c:1124	zedit_parse	gap-reachable	-	No existing proof selects L and supplies an invalid loop start/finish selector.
-src/zedit.c:1145	zedit_parse	gap-reachable	-	No existing proof supplies a nonnumeric argument-three value.
-src/zedit.c:1156	zedit_parse	gap-reachable	-	No existing proof selects E and supplies an out-of-range equipment location.
-src/zedit.c:1168	zedit_parse	gap-reachable	-	No existing proof selects P and supplies a missing container VNUM.
-src/zedit.c:1173	zedit_parse	gap-reachable	-	The D scenario selects a valid door state; no proof supplies an out-of-range state.
-src/zedit.c:1186	zedit_parse	gap-reachable	-	No existing proof selects L loop start and supplies a zero/negative repeat count.
-src/zedit.c:1202	zedit_parse	gap-reachable	-	No existing proof selects R object-removal mode and supplies a missing object VNUM.
-src/zedit.c:1204	zedit_parse	gap-reachable	-	No existing proof selects R mobile-removal mode and supplies a missing mobile VNUM.
+src/zedit.c:1031	zedit_parse	proven	zedit.command-validation-depth	An invalid if-flag answer reaches the retry before the accepted N path (R1/R2/R5e/R5h).
+src/zedit.c:1042	zedit_parse	proven	zedit.command-validation-depth	The live M argument-one parser rejects a nonnumeric value before validating the missing VNUM (R1/R2/R5e/R5h).
+src/zedit.c:1052	zedit_parse	proven	zedit.command-validation-depth	The live M path rejects absent mobile VNUM 999999 and then accepts VNUM 1 (R1/R2/R5e/R5h).
+src/zedit.c:1063	zedit_parse	proven	zedit.command-validation-depth	The live O path rejects absent object VNUM 999999 and then accepts VNUM 1 (R1/R2/R5e/R5h).
+src/zedit.c:1081	zedit_parse	proven	zedit.command-validation-depth	The live M maximum-count parser rejects a nonnumeric value before accepting 1 (R1/R2/R5e/R5h).
+src/zedit.c:1106	zedit_parse	proven	zedit.command-validation-depth	The live D path rejects direction 9 before accepting direction 0 (R1/R2/R5e/R5h).
+src/zedit.c:1115	zedit_parse	proven	zedit.command-validation-depth	The live R path rejects selector 2 before accepting the mobile selector (R1/R2/R5e/R5h).
+src/zedit.c:1124	zedit_parse	proven	zedit.command-validation-depth	The live L path rejects selector 2 before accepting loop start (R1/R2/R5e/R5h).
+src/zedit.c:1145	zedit_parse	proven	zedit.command-validation-depth	The live R branches reject nonnumeric removal VNUMs before reporting absent numeric VNUMs (R1/R2/R5e/R5h).
+src/zedit.c:1156	zedit_parse	proven	zedit.command-validation-depth	The live E path rejects equipment location 999 before accepting location 0 (R1/R2/R5e/R5h).
+src/zedit.c:1168	zedit_parse	proven	zedit.command-validation-depth	The live P path rejects absent container VNUM 999999 before accepting VNUM 1 (R1/R2/R5e/R5h).
+src/zedit.c:1173	zedit_parse	proven	zedit.command-validation-depth	The live D path rejects door state 9 before accepting state 0 (R1/R2/R5e/R5h).
+src/zedit.c:1186	zedit_parse	proven	zedit.command-validation-depth	The live L loop-start path rejects repeat count 0 before accepting 1 (R1/R2/R5e/R5h).
+src/zedit.c:1202	zedit_parse	proven	zedit.command-validation-depth	The live R object-removal path rejects absent object VNUM 999999 and then accepts VNUM 1 (R1/R2/R5e/R5h).
+src/zedit.c:1204	zedit_parse	proven	zedit.command-validation-depth	The live R mobile-removal path rejects absent mobile VNUM 999999 and then accepts VNUM 1 (R1/R2/R5e/R5h).
 src/zedit.c:1232	zedit_parse	proven	zedit.zone-header-gates	The boundary scenario supplies reset type 3 and compares the exact 0-2 retry prompt.
-src/zedit.c:1245	zedit_parse	gap-reachable	-	The boundary scenario uses the valid maximum lifespan 240; no proof reaches the out-of-range retry.
+src/zedit.c:1245	zedit_parse	proven	zedit.command-validation-depth	The live editor rejects lifespan 241 with the range retry, then accepts the C maximum 240 (R1/R2/R5e/R5h).
