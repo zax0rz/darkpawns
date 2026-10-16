@@ -776,11 +776,11 @@ func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interfa
 	case SpellCureBlind, SpellHeal, SpellMassHeal:
 		spell, spell2 = SpellBlindness, SpellSmokescreen
 		toVictim = "Your vision returns!\r\n"
-		toRoom = "There's a momentary gleam in $n's eyes."
+		toRoom = "There's a momentary gleam in $n's eyes.\r\n"
 	case SpellRemovePoison:
 		spell = SpellPoison
 		toVictim = "A warm feeling runs through your body!\r\n"
-		toRoom = "$n looks better."
+		toRoom = "$n looks better.\r\n"
 	case SpellRemoveCurse:
 		spell = SpellCurse
 		toVictim = "You don't feel so unlucky.\r\n"
