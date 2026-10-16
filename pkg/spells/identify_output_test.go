@@ -93,3 +93,15 @@ func TestCastIdentifyObjectOutputBranches(t *testing.T) {
 		})
 	}
 }
+
+func TestCastIdentifyLowLevelCharacterRefusal(t *testing.T) {
+	caster := &mockSpellsChar{name: "Identifier", level: 30}
+	target := &mockSpellsChar{name: "New player", level: 5}
+
+	ExecuteManualSpell(SpellIdentify, caster.level, caster, target, nil, "", nil)
+
+	const want = "You cannot identify them yet.\r\n"
+	if got := strings.Join(caster.messages, ""); got != want {
+		t.Fatalf("identify refusal output = %q, want exactly %q", got, want)
+	}
+}
