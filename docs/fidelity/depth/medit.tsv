@@ -1,5 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_olc	medit	medit.no-argument	D1	command	unit-green	TestMeditEntryGates	interpreter.c:553; olc.c:80-105	C emits `Specify a mobile VNUM to edit.`; Go implements the entry gate (pkg/session/medit.go) with unit test TestMeditEntryGates. Oracle proof pending (R1/R5e).
+do_olc	medit	medit.no-argument	D1	command	unit-green	TestMeditEntryGates	interpreter.c:553; olc.c:80-115	C emits `Specify a mobile VNUM to edit.`; Go implements the entry gate (pkg/session/medit.go) with unit test TestMeditEntryGates. Oracle proof pending (R1/R5e).
 do_olc	medit	medit.nonnumeric-argument	D1	command	unit-green	TestMeditEntryGates	olc.c:106-130	C emits `Yikes!  Stop that, someone will get hurt!`; Go implements via olcAtoi quirk (pkg/session/olc_shared.go) with unit test. Oracle proof pending (R1/R5e).
 do_olc	medit	medit.unknown-zone	D1	command	unit-green	TestMeditEntryGates	olc.c:132-144	C emits `Sorry, there is no zone for that number!`; Go implements zone lookup (pkg/session/olc_shared.go) with unit test. Oracle proof pending (R1/R5e).
 do_olc	medit	medit.interactive-olc	D3	command	unit-green	TestMeditNewMobDefaults	src/olc.c:132-275; src/medit.c:612-676	C enters MEDIT_MAIN_MENU; Go implements the full descriptor-driven session (pkg/session/medit.go) with 12 unit tests. Oracle proof pending (R1/R5e).

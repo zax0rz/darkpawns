@@ -1,0 +1,22 @@
+c_site	function	classification	case_ids	notes
+src/olc.c:115	do_olc	proven	oedit.no-argument;medit.no-argument;sedit.no-argument	The registered editor entry paths exercise this per-editor VNUM prompt; OEDIT, MEDIT, and SEDIT assertions pin their exact text (R1/R2/R5e).
+src/olc.c:125	do_olc	proven	oedit.save-message	The OEDIT save handler's empty-zone request reaches and asserts the exact "Save which zone?" bytes (R1/R2/R5h).
+src/olc.c:138	do_olc	proven	zedit.new-zone-requires-number	The high-god ZEDIT new-zone path with no zone argument reaches the exact prompt (R1/R2/R5e/R5h).
+src/olc.c:143	do_olc	proven	oedit.nonnumeric-argument	Registered OEDIT with a nonnumeric argument reaches C's exact safety refusal across the focused seed matrix (R1/R2/R5e).
+src/olc.c:159	do_olc	gap-blocked	zedit.duplicate-gate-cleanup	The duplicate branch is exercised, but Go adds telnet/idle metadata to C's name-only response; the exact identity and transport detail depends on the session-lifecycle stop tier (R1/R4/R5e).
+src/olc.c:172	do_olc	proven	oedit.unknown-zone	An out-of-zone OEDIT VNUM reaches and compares C's exact unknown-zone response (R1/R2/R5e).
+src/olc.c:181	do_olc	proven	oedit.zone-permission-refusal	The confined builder reaches the exact zone-permission refusal and releases its object-edit reservation (R1/R2/R5h).
+src/olc.c:189	do_olc	proven	mudlog.olc-disk-redit	The real REDIT save command emits this exact acknowledgement before the writer and log producer (R1/R2/R5e/R5h).
+src/olc.c:196	do_olc	proven	mudlog.olc-disk-zedit	The real ZEDIT save command emits this exact acknowledgement before the writer and log producer (R1/R2/R5e/R5h).
+src/olc.c:203	do_olc	proven	mudlog.olc-disk-oedit	The real OEDIT save command emits this exact acknowledgement before the writer and log producer (R1/R2/R5e/R5h).
+src/olc.c:210	do_olc	proven	mudlog.olc-disk-medit	The real MEDIT save command emits this exact acknowledgement before the writer and log producer (R1/R2/R5e/R5h).
+src/olc.c:217	do_olc	proven	mudlog.olc-disk-sedit	The real SEDIT save command emits this exact acknowledgement before the writer and log producer (R1/R2/R5e/R5h).
+src/olc.c:243	do_olc	proven	zedit.missing-room-refusal	A ZEDIT VNUM inside a real zone but absent from the room table reaches the exact C refusal (R1/R2/R5e/R5h).
+src/olc.c:275	do_olc	proven	redit.activity-audience	The REDIT boundary scenario checks the start-using-OLC act at the co-located observer with C's actor-excluding audience behavior (R1/R3/R5e).
+src/olc.c:305	adjust_mobs	proven	admobs.output	The registered adjust_mobs command reaches and compares the exact "Okay." response (R1/R2/R5e).
+src/olc.c:326	olc_saveall	proven	olc.save-all	The empty save-all path reaches and compares the exact up-to-date response (R1/R2/R5e/R5h).
+src/olc.c:336	olc_saveall	proven	olc.save-all	The save-all proof reaches each dirty-zone acknowledgement in C's save-list order (R1/R3/R5e/R5h).
+src/olc.c:352	olc_saveinfo	proven	olc.save-info	The nonempty save-info path emits and compares the exact list heading (R1/R2/R5e/R5h).
+src/olc.c:354	olc_saveinfo	proven	olc.save-info	The empty save-info path emits and compares the exact up-to-date response (R1/R2/R5e/R5h).
+src/olc.c:361	olc_saveinfo	proven	olc.save-info	The nonempty save-info proof compares each dirty-kind row and its ordering (R1/R3/R5e/R5h).
+src/olc.c:514	cleanup_olc	proven	redit.activity-audience	Normal REDIT cleanup reaches the stop-using-OLC act and the observer transcript compares C's audience and bytes (R1/R3/R5e).
