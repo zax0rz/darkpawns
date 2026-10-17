@@ -1171,6 +1171,13 @@ func (m *MobInstance) IsAffected(bit int) bool {
 	return m.Affects&(1<<bit) != 0
 }
 
+// IsInGroup reports the mobile's AFF_GROUP state (src/utils.c:655-674).
+// Spell-side room traversals use the same character capability for players
+// and mobiles.
+func (m *MobInstance) IsInGroup() bool {
+	return m.IsAffected(affGroup)
+}
+
 // SetAffected sets the given AFF bit on the mob.
 func (m *MobInstance) SetAffected(bit int) {
 	m.mu.Lock()

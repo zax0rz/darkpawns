@@ -1,0 +1,182 @@
+# DP-1371: TYPE_SUFFERING death and immortal message variants.
+# Two mortal victims take Drowning self-damage to the mortally wounded state,
+# then point_update reaches limits.c:513 and kills them with TYPE_SUFFERING.
+# A separate level-31 God equips vnum 4406 at DEX 5; its -5 DEX affect calls
+# check_for_bad_stats -> damage(ch,ch,40,TYPE_SUFFERING), reaching God text.
+# C paths: src/comm.c:713-720; src/limits.c:511-513;
+# src/handler.c:640-675,749; src/fight.c:1023-1095,1314-1545.
+# depth-case: damage.tick-suffering-message-outcomes
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-sector 8163 8
+
+[setup:oracle]
+SufferingActor
+Y
+sufferpass
+sufferpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SufferingActor
+y
+sufferpass
+sufferpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+SufferVictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+SufferVictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+SufferTwo
+Y
+secondpass
+secondpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+SufferTwo
+y
+secondpass
+secondpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:god]
+SufferingGod
+Y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:god]
+SufferingGod
+y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+SufferView
+Y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+SufferView
+y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport SufferVictim 8163
+teleport SufferTwo 8163
+teleport SufferingGod 8004
+set player SufferVictim level 10
+set player SufferVictim maxhit 100
+set player SufferVictim hit 16
+set player SufferTwo level 10
+set player SufferTwo maxhit 100
+set player SufferTwo hit 16
+set player SufferingGod level 31
+set SufferingGod dex 5
+
+[probe]
+send:god load obj 4406
+send:god wear robe
+send:god remove robe
+send:god wear robe
+send:god remove robe
+send:god wear robe
+send:god remove robe
+send:god wear robe
+~dpclock pulse 40
+teleport SufferVictim 8004
+teleport SufferTwo 8004
+~dpclock pulse 630

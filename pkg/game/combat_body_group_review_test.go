@@ -44,3 +44,20 @@ func TestCombatBodyLiveGroupSpellLeaders(t *testing.T) {
 		t.Fatal("actual shared leader group was skipped")
 	}
 }
+
+func TestMobInstanceIsInGroupReflectsAFFGroup(t *testing.T) {
+	mob := &MobInstance{}
+	if mob.IsInGroup() {
+		t.Fatal("new mob is unexpectedly in a group")
+	}
+
+	mob.SetAffected(affGroup)
+	if !mob.IsInGroup() {
+		t.Fatal("AFF_GROUP mob is not recognized as grouped")
+	}
+
+	mob.RemoveAffected(affGroup)
+	if mob.IsInGroup() {
+		t.Fatal("mob remains grouped after AFF_GROUP is removed")
+	}
+}

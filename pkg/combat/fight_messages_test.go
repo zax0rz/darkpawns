@@ -150,7 +150,9 @@ func TestFightMessageSelectionConsumesOneDrawAndUsesActTokens(t *testing.T) {
 
 	roller := NewScriptedRoller([]int{2, 99})
 	WithRoller(roller, func() {
-		if handled := cb.SkillMessage(0, testCombatBody("Attacker"), testCombatBody("Victim"), TYPE_HIT, 100); !handled {
+		attacker := &mockCombatant{name: "Attacker", position: PosStanding}
+		victim := &mockCombatant{name: "Victim", position: PosStanding}
+		if handled := cb.SkillMessage(0, attacker, victim, TYPE_HIT, 100); !handled {
 			t.Fatal("TYPE_HIT miss was not handled")
 		}
 	})
@@ -304,8 +306,8 @@ func TestFightMessageCorpusAllVariantOutcomesThroughSkillMessageDispatch(t *test
 	SetCallbacks(cb)
 	InitFightMessages(cb, messages)
 
-	attacker := testCombatBody("Attacker")
-	victim := testCombatBody("Victim")
+	attacker := &mockCombatant{name: "Attacker", position: PosStanding}
+	victim := &mockCombatant{name: "Victim", position: PosStanding}
 	attackTypes := make([]int, 0, len(messages))
 	for attackType := range messages {
 		attackTypes = append(attackTypes, attackType)

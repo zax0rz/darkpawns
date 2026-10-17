@@ -111,7 +111,9 @@ func TestGameCallbacks_InitSkillMessages(t *testing.T) {
 	}
 
 	// Use a known skill from the table (BACKSTAB = 131).
-	sent := cb.SkillMessage(50, testCombatBody("Alice"), testCombatBody("Bob"), 131, 200)
+	alice := &mockCombatant{name: "Alice", position: PosStanding}
+	bob := &mockCombatant{name: "Bob", position: PosStanding}
+	sent := cb.SkillMessage(50, alice, bob, 131, 200)
 	if !sent {
 		t.Fatal("expected SkillMessage to return true for a known skill")
 	}

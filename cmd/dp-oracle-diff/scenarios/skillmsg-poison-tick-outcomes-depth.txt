@@ -1,0 +1,204 @@
+# DP-1371: live SPELL_POISON message outcomes.
+# A registered Cleric cast reaches concentration-failure SkillMessage with a
+# distinct connected victim; successful casts apply AFF_POISON to low-level
+# PCs. Repeated low-level casts ensure the immortal target also receives
+# AFF_POISON before the final point_update pulse reaches hit, God, and death.
+# C paths: src/spell_parser.c:963-1110,1372; src/magic.c:1086-1112;
+# src/limits.c:503-504; src/fight.c:1023-1095,1314-1545.
+# depth-case: cast.poison.message-concentration-miss
+# depth-case: damage.tick-poison-skill-message-outcomes
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+PoisonCaster
+Y
+poisonpass
+poisonpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PoisonCaster
+y
+poisonpass
+poisonpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+PoisonVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+PoisonVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+PoisonDeath
+Y
+deathpass
+deathpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+PoisonDeath
+y
+deathpass
+deathpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:god]
+PoisonGod
+Y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:god]
+PoisonGod
+y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+PoisonView
+Y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+PoisonView
+y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport PoisonVictim 8105
+teleport PoisonDeath 8105
+teleport PoisonGod 8105
+teleport PoisonView 8105
+set player PoisonCaster class cleric
+skillset PoisonCaster 'poison' 100
+set PoisonCaster maxmana 5000
+set PoisonCaster mana 5000
+set player PoisonVictim level 0
+set PoisonVictim maxhit 100
+set PoisonVictim hit 100
+set player PoisonDeath level 0
+set PoisonDeath maxhit 100
+set PoisonDeath hit 100
+set player PoisonGod level 0
+set PoisonGod maxhit 100
+set PoisonGod hit 100
+
+[probe]
+cast 'poison' PoisonVictim
+~dpclock pulse 20
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+cast 'poison' PoisonGod
+~dpclock pulse 20
+cast 'poison' PoisonDeath
+~dpclock pulse 20
+skillset PoisonCaster 'poison' 1
+cast 'poison' PoisonVictim
+~dpclock pulse 20
+cast 'poison' PoisonVictim
+~dpclock pulse 20
+cast 'poison' PoisonVictim
+~dpclock pulse 20
+skillset PoisonCaster 'poison' 100
+set player PoisonGod level 31
+set PoisonVictim hit 100
+set PoisonDeath hit -10
+~dpclock pulse 630

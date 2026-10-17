@@ -581,8 +581,12 @@ func InitSkillMessages(cb *GameCallbacks) {
 				cb.Broadcast(roomVNum, roomMsg, []Combatant{ch, victim})
 			}
 			if cb.SendToChar != nil {
-				cb.SendToChar(ch, charMsg)
-				cb.SendToChar(victim, victimMsg)
+				if skillActSendOK(ch, false) {
+					cb.SendToChar(ch, charMsg)
+				}
+				if skillActSendOK(victim, true) {
+					cb.SendToChar(victim, victimMsg)
+				}
 			}
 		}
 		return true
@@ -643,6 +647,7 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 		// draw above has already consumed its RNG value.
 		var action FightMessageAction
 		colored := false
+		victimToSleep := false
 		switch {
 		case !cbIsNPC(victim) && cbGetLevel(victim) >= LVL_IMMORT:
 			action = variant.God
@@ -654,9 +659,11 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 				action = variant.Hit
 			}
 			colored = true
+			victimToSleep = true
 		case ch != victim:
 			action = variant.Miss
 			colored = true
+			victimToSleep = true
 		default:
 			return true
 		}
@@ -667,29 +674,40 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 			rendered := replaceMessageTokens(message, ch.GetName(), victim.GetName(), "", "", chSex, victimSex)
 			return strings.ReplaceAll(rendered, "$p", cbWeaponDescription(ch))
 		}
-		sendColored := func(name Combatant, code, message string) {
-			if message == "" || cb.SendToChar == nil {
-				return
-			}
-			if colored && cbGetColorLevel(name) >= skillColorCMP && cb.SendRaw != nil {
+		sendColored := func(name Combatant, code, message string, toSleep bool) {
+			color := colored && cbGetColorLevel(name) >= skillColorCMP && cb.SendRaw != nil
+			if color {
 				cbSendRaw(name, code)
-				cb.SendToChar(name, message)
-				cbSendRaw(name, skillColorReset)
-				return
 			}
-			// C always calls send_to_char for the color codes; below the gate
-			// CCNRM/CCYEL/CCRED expand to the empty string, so the message is
-			// the only visible byte.
-			cb.SendToChar(name, message)
+			if message != "" && cb.SendToChar != nil && skillActSendOK(name, toSleep) {
+				// C's act() applies SENDOK after the direct color write. A
+				// sleeping/dead TO_CHAR recipient therefore still receives the
+				// surrounding color controls but not the attacker line.
+				cb.SendToChar(name, message)
+			}
+			if color {
+				cbSendRaw(name, skillColorReset)
+			}
 		}
 
 		if action.Room != "" && cb.Broadcast != nil {
 			cb.Broadcast(roomVNum, render(action.Room), []Combatant{ch, victim})
 		}
-		sendColored(ch, skillColorYellow, render(action.Attacker))
-		sendColored(victim, skillColorRed, render(action.Victim))
+		sendColored(ch, skillColorYellow, render(action.Attacker), false)
+		sendColored(victim, skillColorRed, render(action.Victim), victimToSleep)
 		return true
 	}
+}
+
+// skillActSendOK mirrors comm.c:2481-2482 SENDOK for the direct act() routes
+// used by skill_message. TO_CHAR and the god victim act omit TO_SLEEP; the
+// ordinary victim act includes it. Direct color writes are deliberately
+// outside this gate, as in fight.c:1049-1054, 1064-1069, and 1080-1085.
+func skillActSendOK(body Combatant, toSleep bool) bool {
+	if body == nil || (!toSleep && body.GetPosition() <= PosSleeping) {
+		return false
+	}
+	return !cbHasPlrFlag(body, "writing")
 }
 
 // basicTokenReplace handles $n/$N/$s/$e substitution with sex-aware pronouns.

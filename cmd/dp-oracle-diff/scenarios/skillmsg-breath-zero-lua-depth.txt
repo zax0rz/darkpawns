@@ -1,0 +1,127 @@
+# A registered say command fires a room mob's Lua spell calls for the four
+# dragon-breath attack types that have C callers. The mob is the caster, so its
+# attacker lines have no connected player audience. C mag_damage starts dam at
+# zero and has no cases for these spells; the miss victim and room triplets
+# are the only reachable outcomes. mag_areas skips immortal victims.
+# C: src/scripts.c:1428-1490; src/spec_procs.c:926-983;
+# src/spell_parser.c:953-958,1549-1561; src/magic.c:612-855,1559-1624;
+# src/fight.c:1023-1095,1534-1545.
+# depth-case: fightmsg.202.record-1
+# depth-case: fightmsg.204.record-1
+# depth-case: fightmsg.205.record-1
+# depth-case: fightmsg.206.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+spawn-mob 69 999 8105 80
+mob-script 69 oracle/breath_matrix.lua 512
+
+[lua-script mob/oracle/breath_matrix.lua]
+function oncmd()
+if (argument ~= "say breath") then
+return FALSE
+end
+me = ch
+spell(nil, nil, 202, 0)
+spell(nil, nil, 204, 0)
+spell(nil, nil, 205, 0)
+spell(nil, nil, 206, 0)
+return TRUE
+end
+
+[setup:oracle]
+Breathactor
+Y
+breathpass
+breathpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Breathactor
+y
+breathpass
+breathpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Breathpeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Breathpeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Breathview
+Y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Breathview
+y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Breathpeer 8105
+teleport Breathview 8105
+set player Breathpeer level 20
+set player Breathview level 20
+
+[probe]
+say breath

@@ -64,7 +64,9 @@ func newSkillMessageRig(t *testing.T, hp int, victimLevel int, victimIsNPC bool,
 func (r *skillMessageRig) run(t *testing.T, dam int) {
 	t.Helper()
 	WithRoller(NewScriptedRoller([]int{1}), func() {
-		if handled := r.cb.SkillMessage(dam, testCombatBody("Attacker"), testCombatBody("Victim"), 900, 100); !handled {
+		attacker := &mockCombatant{name: "Attacker", position: PosStanding}
+		victim := &mockCombatant{name: "Victim", position: PosStanding}
+		if handled := r.cb.SkillMessage(dam, attacker, victim, 900, 100); !handled {
 			t.Fatal("set 900 was not handled")
 		}
 	})
@@ -122,6 +124,70 @@ func TestSkillMessageBranchOrderByDamageAndPosition(t *testing.T) {
 			})
 		})
 	}
+}
+
+// TestSkillMessageDeadSelfTickMatchesActSleepGates — poison and other
+// point-update damage call damage(ch, ch, ...). C's TO_CHAR attacker act is
+// suppressed after the position update reaches POS_DEAD, while TO_VICT|TO_SLEEP
+// still delivers the victim line. The direct color writes bracket the act in
+// C even when SENDOK suppresses its message (src/comm.c:2481-2510).
+func TestSkillMessageDeadSelfTickMatchesActSleepGates(t *testing.T) {
+	rig := newSkillMessageRig(t, -12, 1, true, 3)
+	self := &mockCombatant{name: "Victim", position: PosDead}
+	WithRoller(NewScriptedRoller([]int{1}), func() {
+		if handled := rig.cb.SkillMessage(5, self, self, 900, 100); !handled {
+			t.Fatal("set 900 was not handled")
+		}
+	})
+
+	assertSkillMessageEvents(t, rig, []string{
+		"room:Die room line",
+		"raw:Victim:\x1b[33m",
+		"raw:Victim:\x1b[0m",
+		"raw:Victim:\x1b[31m",
+		"to:Victim:Die victim line",
+		"raw:Victim:\x1b[0m",
+	})
+}
+
+// TestSkillMessageGodVictimUsesAwakeGate — the god branch's TO_VICT act omits
+// TO_SLEEP, so a sleeping immortal receives neither its victim line nor room
+// line, while the awake attacker still receives the TO_CHAR line.
+func TestSkillMessageGodVictimUsesAwakeGate(t *testing.T) {
+	rig := newSkillMessageRig(t, 10, LVL_IMMORT, false, 0)
+	attacker := &mockCombatant{name: "Attacker", position: PosStanding}
+	victim := &mockCombatant{name: "Victim", position: PosSleeping}
+	WithRoller(NewScriptedRoller([]int{1}), func() {
+		if handled := rig.cb.SkillMessage(0, attacker, victim, 900, 100); !handled {
+			t.Fatal("set 900 was not handled")
+		}
+	})
+
+	assertSkillMessageEvents(t, rig, []string{
+		"room:God room line",
+		"to:Attacker:God attacker line",
+	})
+}
+
+// TestSkillMessageDirectActHonorsWritingGate — comm.c SENDOK also suppresses
+// direct act() output while a player is in PLR_WRITING.
+func TestSkillMessageDirectActHonorsWritingGate(t *testing.T) {
+	rig := newSkillMessageRig(t, 10, 1, true, 0)
+	rig.cb.HasPlrFlag = func(body Combatant, flag string) bool {
+		return body.GetName() == "Attacker" && flag == "writing"
+	}
+	attacker := &mockCombatant{name: "Attacker", position: PosStanding}
+	victim := &mockCombatant{name: "Victim", position: PosStanding}
+	WithRoller(NewScriptedRoller([]int{1}), func() {
+		if handled := rig.cb.SkillMessage(5, attacker, victim, 900, 100); !handled {
+			t.Fatal("set 900 was not handled")
+		}
+	})
+
+	assertSkillMessageEvents(t, rig, []string{
+		"room:Hit room line",
+		"to:Victim:Hit victim line",
+	})
 }
 
 // TestSkillMessageSelfZeroDamageEmitsNothing — when dam is 0 and ch == vict, C

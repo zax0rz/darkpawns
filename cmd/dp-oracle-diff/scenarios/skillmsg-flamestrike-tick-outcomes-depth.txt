@@ -1,0 +1,188 @@
+# DP-1371: a connected say command uses the registered Lua affect-flag API to
+# prepare three live AFF_FLAMING PCs, then the real pulse reaches point_update,
+# damage(..., SPELL_FLAMESTRIKE), and SkillMessage for hit, death, and God.
+# The direct point_update caller self-damages by 15, so miss is unreachable;
+# this focused fixture sets only the state consumed by that C caller.
+# C: src/interpreter.c:670,1459; src/scripts.c:170-188,589-625;
+# src/structs.h:341; src/comm.c:710-711; src/fight.c:1023-1095,1479-1484,1534-1545.
+# depth-case: fightmsg.96.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+spawn-mob 69 999 8105 80
+mob-script 69 oracle/flamestrike_matrix.lua 512
+
+[lua-script mob/oracle/flamestrike_matrix.lua]
+function oncmd()
+if (argument ~= "say flame") then
+return FALSE
+end
+aff_flags(inworld("char", "AffectPeer"), "set", 31)
+aff_flags(inworld("char", "DrownDeath"), "set", 31)
+aff_flags(inworld("char", "DrownGod"), "set", 31)
+return TRUE
+end
+
+[setup:oracle]
+AffectMage
+Y
+magepass
+magepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AffectMage
+y
+magepass
+magepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:hit]
+AffectPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:hit]
+AffectPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:death]
+DrownDeath
+Y
+deathpass
+deathpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:death]
+DrownDeath
+y
+deathpass
+deathpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:god]
+DrownGod
+Y
+godpass
+godpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:god]
+DrownGod
+y
+godpass
+godpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+DrownView
+Y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+DrownView
+y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport AffectPeer 8105
+teleport DrownDeath 8105
+teleport DrownGod 8105
+teleport DrownView 8105
+set player AffectPeer level 20
+set player AffectPeer maxhit 1000
+set player AffectPeer hit 500
+set player DrownDeath level 20
+set player DrownDeath maxhit 1000
+set player DrownDeath hit 1
+set player DrownGod level 31
+set player DrownGod maxhit 1000
+set player DrownGod hit 500
+set player DrownView level 20
+
+[probe]
+say flame
+~dpclock pulse 40
