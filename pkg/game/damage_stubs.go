@@ -32,6 +32,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
 // ---------------------------------------------------------------------------
@@ -39,9 +40,9 @@ import (
 // These match the CircleMUD fight.c patterns: damage() and hit_skill()
 // ---------------------------------------------------------------------------
 
-// skillToAttackType maps a skill/spell name to the closest TYPE_* / SKILL_*
-// numeric attack type used by the corpse-description system. Unknown skills
-// fall back to TYPE_SLASH (303) to preserve legacy behavior.
+// skillToAttackType maps a skill/spell name to the C numeric attack type passed
+// to damage(), which also selects its fight-message record and corpse wording.
+// Unknown skills fall back to TYPE_SLASH (303) to preserve legacy behavior.
 func skillToAttackType(skill string) int {
 	switch skill {
 	case "backstab":
@@ -65,6 +66,10 @@ func skillToAttackType(skill string) int {
 		return SkillDisembowelNum // 184
 	case "neckbreak":
 		return SkillNeckbreakNum // 190
+	case "meteor swarm":
+		return spells.SpellMeteorSwarm
+	case "hellfire":
+		return spells.SpellHellfire
 	default:
 		return TypeSlash // 303 fallback
 	}
@@ -81,15 +86,22 @@ func combatantFromInterface(attacker interface{}) combat.Combatant {
 	return nil
 }
 
-// DoSpellDamage applies damage to a player or mob, handling death.
-// Used by damage spells (hellfire, meteor_swarm, etc.) that need to hit any
-// character type. It asks damage()'s protection gate first (DP-1327).
+// DoSpellDamage applies damage to a player or mob, handling C's fight-message
+// dispatch and death order. Used by area damage spells such as Hellfire and
+// Meteor Swarm. It asks damage()'s protection gate first (DP-1327).
 func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill string) bool {
 	killer := combatantFromInterface(attacker)
-	if victimC := combatantFromInterface(victim); killer != nil && victimC != nil && w.DamageRefused(killer, victimC) {
+	victimC := combatantFromInterface(victim)
+	if killer != nil && victimC != nil && w.DamageRefused(killer, victimC) {
 		return false
 	}
-	return w.ApplySkillDamage(attacker, victim, dam, skill)
+	if killer == nil || victimC == nil {
+		return w.ApplySkillDamage(attacker, victim, dam, skill)
+	}
+	attackType := skillToAttackType(skill)
+	return combat.TakeDamageAfterGate(killer, victimC, dam, attackType, func() {
+		w.HandleDeath(victimC, killer, attackType)
+	})
 }
 
 // ApplySkillDamage is DoSpellDamage for a caller that has already asked

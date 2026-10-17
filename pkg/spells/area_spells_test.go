@@ -148,6 +148,21 @@ func TestCastMeteorSwarmOutputAndRoomAudience(t *testing.T) {
 	}
 }
 
+func TestCastMeteorSwarmPreservesLevelZeroNonpositiveDamage(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 0, roomVNum: 8105}
+	victim := &mockSpellsChar{name: "Victim", level: 11, maxHP: 1000, hp: 1000}
+	world := &mockAreaWorld{room: &parser.Room{}, chars: []interface{}{caster, victim}}
+
+	castMeteorSwarm(0, caster, world)
+
+	if len(world.calls) != 1 {
+		t.Fatalf("level-zero Meteor Swarm damage calls = %d, want 1", len(world.calls))
+	}
+	if got := world.calls[0].Dam; got > 0 {
+		t.Fatalf("level-zero Meteor Swarm damage = %d, want C's nonpositive range [-10, 0]", got)
+	}
+}
+
 // TestCastCalliope_FiresMultipleMissiles: castCalliope fires
 // MAX(4, number(level/6, level*2)) magic missiles at the target. At level 0,
 // lo=hi=0 so the MAX(4,...) floor makes this exactly 4 missiles — deterministic.

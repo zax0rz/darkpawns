@@ -1,0 +1,106 @@
+# Registered Meteor Swarm cast reaches the M@0189 death triplet for connected
+# caster, PC victim, and immortal room witness. The victim starts alive at one
+# hit point, so C updates POS_DEAD before selecting the message.
+# depth-case: fightmsg.41.meteor-swarm-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Mirror
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mirror
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Mirrorpeer
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Mirrorpeer
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Mirrorobs
+Y
+witness
+witness
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Mirrorobs
+y
+witness
+witness
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mirrorpeer 8105
+teleport Mirrorobs 8105
+set Mirrorpeer level 11
+set Mirrorpeer maxhit 1000
+set Mirrorpeer hit 1
+set Mirrorobs level 31
+
+[probe]
+cast 'meteor swarm'

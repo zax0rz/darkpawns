@@ -6,9 +6,112 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/events"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 )
+
+func TestSkillToAttackTypePreservesDamageSpellIDs(t *testing.T) {
+	tests := []struct {
+		name string
+		want int
+	}{
+		{name: "meteor swarm", want: spells.SpellMeteorSwarm},
+		{name: "hellfire", want: spells.SpellHellfire},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := skillToAttackType(tt.name); got != tt.want {
+				t.Fatalf("skillToAttackType(%q) = %d, want C spell attack type %d", tt.name, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDoSpellDamageEmitsMeteorSwarmMessages(t *testing.T) {
+	messages, err := combat.LoadEmbeddedFightMessages()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range []struct {
+		name       string
+		lethal     bool
+		wantVictim string
+		wantRoom   string
+	}{
+		{name: "hit", wantVictim: "Meteors from the heavens rain down upon you!", wantRoom: "Meteors from the heavens rain down all around you!"},
+		{name: "death", lethal: true, wantVictim: "ending your life.", wantRoom: "killing"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w, attacker := newCombatTestWorld(t)
+			victim := spawnTargetMob(t, w)
+			var victimMessages, roomMessages []string
+			previous := combat.GetCallbacks()
+			t.Cleanup(func() { combat.SetCallbacks(previous) })
+			cb := w.WireCombatCallbacks()
+			cb.SendToChar = func(body combat.Combatant, message string) {
+				if body == victim {
+					victimMessages = append(victimMessages, message)
+				}
+			}
+			cb.Broadcast = func(_ int, message string, _ []combat.Combatant) {
+				roomMessages = append(roomMessages, message)
+			}
+			combat.InitFightMessages(cb, messages)
+			combat.SetCallbacks(cb)
+
+			dam := 1
+			if tc.lethal {
+				dam = victim.GetHP() + 11
+			}
+			if !w.DoSpellDamage(attacker, victim, dam, "meteor swarm") {
+				t.Fatal("DoSpellDamage returned false")
+			}
+			if got := strings.Join(victimMessages, ""); !strings.Contains(got, tc.wantVictim) {
+				t.Errorf("victim message = %q, want substring %q", got, tc.wantVictim)
+			}
+			if got := strings.Join(roomMessages, ""); !strings.Contains(got, tc.wantRoom) {
+				t.Errorf("room message = %q, want substring %q", got, tc.wantRoom)
+			}
+		})
+	}
+}
+
+func TestDoSpellDamageEmitsMeteorSwarmMissToPlayerCaster(t *testing.T) {
+	messages, err := combat.LoadEmbeddedFightMessages()
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, attacker := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	attacker.Level = 0 // C's level-scaled spell damage may be nonpositive.
+	var attackerMessages, roomMessages []string
+	previous := combat.GetCallbacks()
+	t.Cleanup(func() { combat.SetCallbacks(previous) })
+	cb := w.WireCombatCallbacks()
+	cb.SendToChar = func(body combat.Combatant, message string) {
+		if body == attacker {
+			attackerMessages = append(attackerMessages, message)
+		}
+	}
+	cb.Broadcast = func(_ int, message string, _ []combat.Combatant) {
+		roomMessages = append(roomMessages, message)
+	}
+	combat.InitFightMessages(cb, messages)
+	combat.SetCallbacks(cb)
+
+	// C damage() emits skill_message for nonpositive damage before returning
+	// false; DoSpellDamage preserves that return value after the message.
+	w.DoSpellDamage(attacker, mob, -6, "meteor swarm")
+	if got := strings.Join(attackerMessages, ""); !strings.Contains(got, "Meteor miss vict - tell a god.") {
+		t.Errorf("attacker miss message = %q, want C's M@0189 miss line", got)
+	}
+	if got := strings.Join(roomMessages, ""); !strings.Contains(got, "Meteor miss room - tell a god.") {
+		t.Errorf("room miss message = %q, want C's M@0189 miss line", got)
+	}
+}
 
 // TestDoDamage_AppliesToMob is the DP-901 regression: doDamage previously
 // type-asserted vict.(*Player) and silently returned false for mobs, so every
@@ -186,6 +289,12 @@ func TestDoSpellDamageAwardsXP(t *testing.T) {
 	if player.Kills != startKills+1 {
 		t.Errorf("player Kills = %d, want %d", player.Kills, startKills+1)
 	}
+	for _, obj := range w.GetItemsInRoom(player.GetRoom()) {
+		if obj.IsCorpse && strings.Contains(obj.GetLongDesc(), "charred corpse") {
+			return
+		}
+	}
+	t.Fatal("hellfire corpse did not retain its C fire attack type")
 }
 
 func TestDoSpellDamageCircleUsesCircleCorpseType(t *testing.T) {

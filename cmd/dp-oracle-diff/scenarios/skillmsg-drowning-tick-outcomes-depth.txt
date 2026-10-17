@@ -1,0 +1,144 @@
+# depth-case: room-activity.drowning-matrix-outcomes
+# room_activity applies SPELL_DROWNING to every PC in underwater sector 8.
+# The three connected actors expose its hit, death, and God SkillMessage
+# triplets through the real pulse path (src/comm.c:713-720).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-sector 8163 8
+
+[setup:oracle]
+DrownHit
+Y
+hitpass
+hitpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DrownHit
+y
+hitpass
+hitpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+DrownDeath
+Y
+deathpass
+deathpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+DrownDeath
+y
+deathpass
+deathpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:god]
+DrownGod
+Y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:god]
+DrownGod
+y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+DrownView
+Y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+DrownView
+y
+viewpass
+viewpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport DrownDeath 8163
+teleport DrownGod 8163
+teleport DrownView 8163
+set player DrownHit maxhit 1000
+set player DrownHit hit 500
+set player DrownDeath level 1
+set player DrownDeath maxhit 1000
+set player DrownDeath hit 1
+set player DrownGod level 31
+set player DrownGod maxhit 1000
+set player DrownGod hit 500
+set player DrownView level 1
+set player DrownView maxhit 1000
+set player DrownView hit 500
+teleport DrownHit 8163
+set player DrownHit level 1
+
+[probe]
+~dpclock pulse 40
