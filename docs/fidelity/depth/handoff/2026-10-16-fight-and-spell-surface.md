@@ -2,9 +2,9 @@
 
 ## Result and inventory
 
-The starting comparison requested by this goal is PF-075's **2,106 blocked units**. The shared batch had already advanced `origin/main` to `3d4a35ea6`; that measured tree has 1,470 total units and 572 blocked. The two refreshed draft PRs together project to **1,535 total units and 637 blocked**, a net reduction of **1,469 blocked units** against the requested 2,106 baseline.
+The starting comparison requested by this goal is PF-075's **2,106 blocked units**. The shared batch had already advanced `origin/main` to `3d4a35ea6`; that measured tree has 1,470 total units and 572 blocked. The two refreshed draft PRs together project to **1,529 total units and 631 blocked**, a net reduction of **1,475 blocked units** against the requested 2,106 baseline.
 
-The delta from the current main snapshot is +65 blocked units: the fight PR adds 78 units of live-dispatch evidence scope, because the helper-only corpus test on main does not satisfy this goal's real registered-command proof bar, while the spell PR closes 13 matrix residuals. This is a deliberate scope correction, not a claim that the live-dispatch corpus regressed. The pair remains in draft and is not yet current main.
+The delta from the current main snapshot is +59 blocked units: the fight PR adds 78 units of live-dispatch evidence scope, because the helper-only corpus test on main does not satisfy this goal's real registered-command proof bar, while the spell PR closes 19 matrix residuals. This is a deliberate scope correction, not a claim that the live-dispatch corpus regressed. The pair remains in draft and is not yet current main.
 
 | Inventory family | Current main | Updated draft(s) | Reason |
 |---|---:|---:|---|
@@ -12,13 +12,13 @@ The delta from the current main snapshot is +65 blocked units: the fight PR adds
 | `fight-skill / src/fight.c act-send family` | 4 blocked | 4 blocked | 98 live sites: 94 proven, 0 gap-reachable, 4 switched-mob session-delivery stop-tier sites. |
 | `fight-skill / new_cmds skill/action output` | 0 | 0 | Reconciliation is already in merged PR #2087. |
 | `fight-skill / new_cmds2 skill/action output` | 0 | 0 | Reconciliation is already in merged PR #2087. |
-| `spell-matrix / CAST_SPELL` | 66 | 64 | Two additional five-seed spoken proofs. |
+| `spell-matrix / CAST_SPELL` | 66 | 58 | Eight spoken cells are proven: Protection from Good, Water Breathing, Bless, Cure Blind, Sleep, Animate Dead, Metalskin, and Mirror Image. |
 | `spell-matrix / CAST_POTION` | 103 | 96 | Seven verified delegations, including Protection from Good. |
 | `spell-matrix / CAST_SCROLL` | 103 | 101 | Create Food and Meteor Swarm are delegated after source audit. |
 | `spell-matrix / CAST_WAND` | 103 | 101 | Create Food and Meteor Swarm are delegated after source audit. |
 | `spell-matrix / CAST_STAFF` | 103 | 103 | No staff spell cell was promoted by the failed exploratory fixture. |
 
-The resulting 299×5 spell matrix classifies 39 spoken cells proven, 11 item cells delegated, 464 gap-reachable cells, one C-undefined-behavior gap-blocked cell, and 980 C-unreachable cells. Residual spell inventory is 465. The only item delegations are the seven potion cells and two each for scroll and wand; staff-wide fan-out, item-level duration changes, and other route-sensitive branches remain open.
+The resulting 299×5 spell matrix classifies 45 spoken cells proven, 11 item cells delegated, 458 gap-reachable cells, one C-undefined-behavior gap-blocked cell, and 980 C-unreachable cells. Residual spell inventory is 459. The only item delegations are the seven potion cells and two each for scroll and wand; staff-wide fan-out, item-level duration changes, and other route-sensitive branches remain open.
 
 ## Fight message proof
 
@@ -35,7 +35,9 @@ Fresh-main retained censuses `dp1371-final-surface-seed1`, `seed2`, `seed3`, `se
 
 ## Spell routes and delegations
 
-The five route rows remain separately proven. Spoken samples include the violent `mag_damage` rescue and targeted Water Breathing. The potion fixture dispatches Invigorate, Vitality, and Poison in order; the scroll fixture dispatches Bless, Heal, and Lightning Bolt. The wand cases cover targeted Invisibility and violent targeted Lightning Bolt. Staff cases cover Sleep and Lightning Bolt room fan-out. The existing five-seed route batch is `dp1371-spell-routes-final-seed1/2/3/5/8`; the two newly promoted spoken spells are also included in the fresh-main five-seed runs above.
+The five route rows remain separately proven. Spoken samples include the violent `mag_damage` rescue and targeted Water Breathing. The potion fixture dispatches Invigorate, Vitality, and Poison in order; the scroll fixture dispatches Bless, Heal, and Lightning Bolt. The wand cases cover targeted Invisibility and violent targeted Lightning Bolt. Staff cases cover Sleep and Lightning Bolt room fan-out. The existing five-seed route batch is `dp1371-spell-routes-final-seed1/2/3/5/8` and is CLEAN with draw parity.
+
+Six further per-spell spoken cells now have registered-cast output and state evidence: Bless (`wizard.unaffect-active-spells`), Cure Blind (`objmagic.mag-unaffects-output-sites`), Sleep (`objmagic.sleep-entry-gates.cast`), Animate Dead (`magic.animate-dead-message-pair`), Metalskin (`objmagic.metalskin-reagent-output`), and Mirror Image (`spell.mirror-image-output-audience`). Their five-seed targeted batches are `dp1371-bless-current-seed1/2/3/5/8`, `dp1371-cure-blind-current-seed1/2/3/5/8`, `dp1371-sleep-spell-current-seed1/2/3/5/8`, `dp1371-magic-surface-current-seed1/2/3/5/8`, `dp1371-metalskin-current-seed1/2/3/5/8`, and `dp1371-mirror-image-depth-seed1/2/3/5/8`. All are CLEAN at Go HEAD `9b87c8dff` with zero seed-1 draw divergence; the Go runtime is unchanged from `origin/main` `3d4a35ea6`. The runs are retained under `~/Archives/darkpawns/oracle-runs/2026-10-16/` and `2026-10-17/`.
 
 Delegations are limited to C bodies whose selected branches ignore the item-only inputs: `mag_creations` ignores level, target, object, and save type (`src/magic.c:1968-1998`); Meteor Swarm reads caster level and room victims rather than the selected item arguments (`src/spells.c:1088-1127`); selected self-only `mag_affects` branches for Sense Life, Levitate, Chameleon, Protection from Evil, and Protection from Good preserve recipient, state, and output without reading item level or `SAVING_ROD` (`src/magic.c:1132-1181,1266-1271,1292-1297`). Scroll/wand/staff distinctions remain open where arguments or recipient fan-out change (`src/spell_parser.c:592-817`; `src/act.other.c:897-968`).
 
@@ -49,7 +51,7 @@ At the combined draft projection, the original 58 gap-reachable activity-call-si
 
 Six PRs were in the DP-1371 batch: #2087 and #2089 are merged; #2088 (fight/message) and #2090 (spell matrix) remain drafts refreshed from `origin/main`; #2091 and #2092 were closed unmerged after their selected changes were carried into main. No PR was merged or deployed by this goal.
 
-Each draft body carries its row deltas, classifications, C paths, retained evidence, and a revert control. The fight draft closes no `fight.c` residuals; the spell draft reduces its five rows by 2, 7, 2, 2, and 0 units respectively. The PR count is six.
+Each draft body carries its row deltas, classifications, C paths, retained evidence, and a revert control. The fight draft closes no `fight.c` residuals; the spell draft reduces its five rows by 8, 7, 2, 2, and 0 units respectively. The PR count is six.
 
 ## Census and gates
 
@@ -57,4 +59,4 @@ The shared full census for `3d4a35ea6` is retained at `~/Archives/darkpawns/orac
 
 Individually passed on the fresh-main code tree: `make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`, `golangci-lint run ./...`, `make deadcode-ratchet`, `make fidelity-depth`, `make fidelity-units`, `make string-census`, and `gosec -severity=high -quiet ./...`. `make fidelity-depth` passed separately on both draft trees (42 maps, 0 errors); `make fidelity-units` passed on both trees. The string-census ratchet passed with 98 known Go-only segments and 0 unreviewed; generated reports warned of 36 stale baseline entries and were left unchanged. `git diff --check` passed.
 
-**Total goal elapsed at final handoff refresh:** 37,026 seconds (10h 17m 06s). The six-PR count includes the two drafts, two merged PRs, and two closed unmerged PRs.
+**Total goal elapsed at final handoff refresh:** 39,173 seconds (10h 52m 53s). The six-PR count includes the two drafts, two merged PRs, and two closed unmerged PRs.
