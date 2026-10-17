@@ -1,0 +1,111 @@
+# A registered spoken Dispel Evil cast reaches M@0077 through mag_damage -> damage -> SkillMessage.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.dispel-evil.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+DispelHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DispelHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+DispelHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+DispelHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+DispelHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+DispelHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport DispelHitVictim 8105
+teleport DispelHitObserver 8105
+set player DispelHitActor class cleric
+skillset DispelHitActor 'dispel evil' 100
+set player DispelHitActor maxmana 5000
+set player DispelHitActor mana 5000
+set player DispelHitActor align 1000
+set player DispelHitVictim align 0
+set player DispelHitVictim class mage
+set player DispelHitVictim level 20
+set player DispelHitVictim maxhit 1000
+set player DispelHitVictim hit 1000
+set player DispelHitActor level 31
+
+[probe]
+cast 'dispel evil' DispelHitVictim

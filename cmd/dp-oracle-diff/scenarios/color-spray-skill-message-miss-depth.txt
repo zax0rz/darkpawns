@@ -1,0 +1,163 @@
+# A room script sets the victim's AFF_SANCTUARY and AFF_PROTECT_GOOD bits.
+# The disposable spellbook prototype is edited into a level-1 Color Spray scroll.
+# A room script sets Sanctuary and Protection from Good on the level-30 target.
+# This is the registered spoken-cast path, not a forced SkillMessage call.
+# Six real spoken Infravision self-casts and their wait periods precede the scroll
+# route. The level-1 Color Spray roll reaches zero after the target's Sanctuary,
+# successful save, and Protection from Good; connected recipient sessions assert
+# the C miss triplet through recite -> CAST_SCROLL -> mag_damage -> damage.
+# depth-case: spell.color-spray.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/color_spray.lua 512
+
+[lua-script mob/oracle/color_spray.lua]
+function oncmd()
+if (argument == "say shield") then
+aff_flags(ch, "set", 7)
+aff_flags(ch, "set", 13)
+return TRUE
+end
+if (argument == "say state") then
+say("sanctuary=" .. tostring(aff_flagged(ch, 7)) .. " protect-good=" .. tostring(aff_flagged(ch, 13)))
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+ColorMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ColorMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+ColorMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+ColorMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ColorMissObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ColorMissObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ColorMissVictim 8105
+teleport ColorMissObserver 8105
+oedit 8054
+1
+color scroll
+2
+a color scroll
+5
+2
+D
+1
+10
+0
+0
+q
+y
+load obj 8054
+get color
+set player ColorMissActor class mage
+skillset ColorMissActor 'color spray' 100
+skillset ColorMissActor infravision 100
+set player ColorMissActor maxmana 5000
+set player ColorMissActor mana 5000
+set player ColorMissActor align 1000
+set player ColorMissVictim class mage
+set player ColorMissVictim level 30
+set player ColorMissVictim maxhit 1000
+set player ColorMissVictim hit 1000
+set player ColorMissActor level 11
+
+[probe]
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+send:victim say shield
+send:victim say state
+recite color ColorMissVictim
