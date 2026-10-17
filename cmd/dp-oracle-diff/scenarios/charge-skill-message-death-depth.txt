@@ -1,0 +1,125 @@
+# Live registered do_charge -> damage() -> SkillMessage set-147 death-depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer. Victim AC 50 makes C's shifted term zero (no negative-shift UB); skill 100 reaches the hit arm unless the roll is 101. Starting the living victim at -10 HP makes any successful charge lethal.
+# depth-case: charge.skill-message-death
+# depth-case: fightmsg.147.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+ChargeDeathGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ChargeDeathGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+ChargeDeathAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:attacker]
+ChargeDeathAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:oracle:victim]
+ChargeDeathVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wimpy 0
+
+[setup:port:victim]
+ChargeDeathVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wimpy 0
+
+[warmup]
+set player ChargeDeathAttacker level 20
+skillset ChargeDeathAttacker 'charge' 100
+set player ChargeDeathVictim level 15
+set player ChargeDeathVictim ac 50
+set player ChargeDeathVictim maxhit 1
+set player ChargeDeathVictim hit -10
+set player ChargeDeathGod room 8105
+
+[probe:attacker]
+charge ChargeDeathVictim

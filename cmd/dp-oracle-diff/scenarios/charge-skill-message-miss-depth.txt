@@ -1,0 +1,126 @@
+# Live registered do_charge -> damage() -> SkillMessage set-147 miss proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer.
+# Skill 1 and victim AC 0 force miss; C's left-shift operand remains nonnegative.
+#
+# depth-case: charge.skill-message-miss
+# depth-case: fightmsg.147.record-1
+
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+ChargeMissGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ChargeMissGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+ChargeMissAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:attacker]
+ChargeMissAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:oracle:victim]
+ChargeMissVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+ChargeMissVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player ChargeMissAttacker level 15
+skillset ChargeMissAttacker 'charge' 1
+set player ChargeMissVictim level 15
+set player ChargeMissVictim ac 0
+set player ChargeMissVictim maxhit 1000
+set player ChargeMissVictim hit 1000
+set player ChargeMissGod room 8105
+
+[probe:attacker]
+charge ChargeMissVictim

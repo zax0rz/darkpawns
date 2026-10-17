@@ -1,0 +1,123 @@
+# Live registered do_charge -> damage() -> SkillMessage set-147 depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer. Victim AC 50 makes C's shifted term zero (no negative-shift UB); skill 100 reaches the hit arm unless the roll is 101.
+# depth-case: charge.skill-message-hit
+# depth-case: fightmsg.147.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+ChargeHitGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ChargeHitGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+ChargeHitAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:port:attacker]
+ChargeHitAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield sword
+
+[setup:oracle:victim]
+ChargeHitVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+ChargeHitVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player ChargeHitAttacker level 20
+skillset ChargeHitAttacker 'charge' 100
+set player ChargeHitVictim level 15
+set player ChargeHitVictim ac 50
+set player ChargeHitVictim maxhit 1000
+set player ChargeHitVictim hit 1000
+set player ChargeHitGod room 8105
+
+[probe:attacker]
+charge ChargeHitVictim
