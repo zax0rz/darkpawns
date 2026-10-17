@@ -1,0 +1,99 @@
+c_site	function	classification	case_ids	notes
+src/fight.c:117	appear	proven	invis.appear-audience	The ordinary appear path proves both the actor-visible room line and its audience through a live visibility transition. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:119	appear	proven	invis.appear-audience	The ordinary appear path proves both the actor-visible room line and its audience through a live visibility transition. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:517	death_cry	proven	kill.immortal-instinstakill;mob.medusa-petrify-audience	Live raw_kill scenarios prove the same-room death cry. Adjacent-room delivery is a separate source site at line 524. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:524	death_cry	gap-reachable		Reachable adjacent-room death-cry output; current death tests cover the local room but no remote adjacent-room witness asserts this call yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:696	perform_group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:699	perform_group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:760	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:763	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:773	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:778	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:792	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:797	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:806	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:810	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:820	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:823	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:830	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:840	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:843	group_gain	gap-reachable		Reachable party kill/loot branch; no exact live transcript proof owns this experience, junking, gold-split, or room output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:998	dam_message	proven	melee.weapon-hit	The real weapon-hit route reaches dam_message and compares the attacker, victim, and room outputs; other damage tiers remain in the skill-message matrix. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1001	dam_message	proven	melee.weapon-hit	The real weapon-hit route reaches dam_message and compares the attacker, victim, and room outputs; other damage tiers remain in the skill-message matrix. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1005	dam_message	proven	melee.weapon-hit	The real weapon-hit route reaches dam_message and compares the attacker, victim, and room outputs; other damage tiers remain in the skill-message matrix. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1006	dam_message	proven	melee.weapon-hit	The real weapon-hit route reaches dam_message and compares the attacker, victim, and room outputs; other damage tiers remain in the skill-message matrix. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1009	dam_message	proven	melee.weapon-hit	The real weapon-hit route reaches dam_message and compares the attacker, victim, and room outputs; other damage tiers remain in the skill-message matrix. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1013	dam_message	proven	melee.weapon-hit	The real weapon-hit route reaches dam_message and compares the attacker, victim, and room outputs; other damage tiers remain in the skill-message matrix. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1014	dam_message	proven	melee.weapon-hit	The real weapon-hit route reaches dam_message and compares the attacker, victim, and room outputs; other damage tiers remain in the skill-message matrix. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1041	skill_message	proven	tiger.god	The live Tiger Punch god-victim branch reaches all three god-message audiences. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1042	skill_message	proven	tiger.god	The live Tiger Punch god-victim branch reaches all three god-message audiences. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1043	skill_message	proven	tiger.god	The live Tiger Punch god-victim branch reaches all three god-message audiences. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1049	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1050	skill_message	proven	smackheads.damage-death-pipeline	The live lethal damage path reaches the death outcome before XP, death cry, and corpse handling. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1052	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1054	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1055	skill_message	proven	smackheads.damage-death-pipeline	The live lethal damage path reaches the death outcome before XP, death cry, and corpse handling. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1057	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1059	skill_message	proven	smackheads.damage-death-pipeline	The live lethal damage path reaches the death outcome before XP, death cry, and corpse handling. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1064	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1065	skill_message	proven	tiger.hit	The live Tiger Punch success branch reaches attacker, victim, and room hit-message outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1067	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1069	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1070	skill_message	proven	tiger.hit	The live Tiger Punch success branch reaches attacker, victim, and room hit-message outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1072	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1074	skill_message	proven	tiger.hit	The live Tiger Punch success branch reaches attacker, victim, and room hit-message outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1080	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1081	skill_message	proven	tiger.miss	The live Tiger Punch miss branch reaches attacker, victim, and room miss-message outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1082	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1084	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1085	skill_message	proven	tiger.miss	The live Tiger Punch miss branch reaches attacker, victim, and room miss-message outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1087	skill_message	proven	dragon.color-framing	The focused C_CMP proof pins the attacker/victim color boundaries; message text and audience rows are covered by the adjacent outcome cases. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1089	skill_message	proven	tiger.miss	The live Tiger Punch miss branch reaches attacker, victim, and room miss-message outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1129	attitude_loot	gap-reachable		Reachable mobile kill/loot branch; no exact live transcript proof asserts this junking output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1130	attitude_loot	gap-reachable		Reachable mobile kill/loot branch; no exact live transcript proof asserts this junking output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1145	attitude_loot	gap-reachable		Reachable mobile kill/loot branch; no exact live transcript proof asserts this junking output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1146	attitude_loot	gap-reachable		Reachable mobile kill/loot branch; no exact live transcript proof asserts this junking output yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1267	counter_procs	gap-reachable		Reachable exact kill-count reward branch; no live player kill-count vehicle asserts this reward wording yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1278	counter_procs	gap-reachable		Reachable exact kill-count reward branch; no live player kill-count vehicle asserts this reward wording yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1303	counter_procs	proven	death.blessing-con-playing-audience	The playing-descriptor test pins this exact blessing line and recipient boundary. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1339	damage	proven	hit.peaceful-gate	The registered hit command reaches the peaceful-room damage refusal. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1346	damage	proven	hit.newbie-pc-gate	The registered hit command reaches the low-level PC protection refusal. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1353	damage	proven	groinrip.newbie-protection	The live skill path reaches the shared ancient-forces protection line. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1362	damage	proven	hit.shopkeeper-gate	The registered hit command reaches the shared shopkeeper protection refusal. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1387	damage	proven	mob.take-to-jail-subdue-audience	The assigned jail-guard damage path proves the room, victim, and direct jail-submission outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1390	damage	proven	mob.take-to-jail-subdue-audience	The assigned jail-guard damage path proves the room, victim, and direct jail-submission outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1392	damage	proven	mob.take-to-jail-subdue-audience	The assigned jail-guard damage path proves the room, victim, and direct jail-submission outputs. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1463	damage	gap-reachable		Reachable hidden-attacker damage branch; no live witness case currently asserts the fade-to-room line at this damage callsite. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1510	damage	proven	damage.neutral-spell-rescue	The live spell-rescue case proves caster, victim, room witness, arena broadcast, and destination look at five draw-parity seeds. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1512	damage	proven	damage.neutral-spell-rescue	The live spell-rescue case proves caster, victim, room witness, arena broadcast, and destination look at five draw-parity seeds. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1514	damage	proven	damage.neutral-spell-rescue	The live spell-rescue case proves caster, victim, room witness, arena broadcast, and destination look at five draw-parity seeds. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1549	damage	proven	damage.tick-mounted	The mounted-poison test pins both dismount acts and the direct landing outcomes. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1550	damage	proven	damage.tick-mounted	The mounted-poison test pins both dismount acts and the direct landing outcomes. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1553	damage	proven	damage.tick-mounted	The mounted-poison test pins both dismount acts and the direct landing outcomes. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1555	damage	proven	damage.tick-mounted	The mounted-poison test pins both dismount acts and the direct landing outcomes. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1564	damage	proven	damage.tick-wounded	The wound-tick proof pins the mortal-wound room and victim bytes. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1566	damage	proven	damage.tick-wounded	The wound-tick proof pins the mortal-wound room and victim bytes. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1570	damage	proven	update_pos.incap-victim-typo	The state-level test pins the exact incapacitated room and victim strings, including C’s typo. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1572	damage	proven	update_pos.incap-victim-typo	The state-level test pins the exact incapacitated room and victim strings, including C’s typo. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1576	damage	proven	damage.wounded-band-broadcast	The live multi-seed wound-band case pins the stunned room and victim output. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1578	damage	proven	damage.wounded-band-broadcast	The live multi-seed wound-band case pins the stunned room and victim output. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1582	damage	proven	smackheads.damage-death-pipeline	The live lethal damage path reaches the death outcome before XP, death cry, and corpse handling. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1583	damage	proven	smackheads.damage-death-pipeline	The live lethal damage path reaches the death outcome before XP, death cry, and corpse handling. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1589	damage	gap-reachable		Reachable surviving-damage branch; pain, scream, bleeding, and wimpy-flee output do not yet have exact live transcript owners for this callsite. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1591	damage	gap-reachable		Reachable surviving-damage branch; pain, scream, bleeding, and wimpy-flee output do not yet have exact live transcript owners for this callsite. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1597	damage	gap-reachable		Reachable surviving-damage branch; pain, scream, bleeding, and wimpy-flee output do not yet have exact live transcript owners for this callsite. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1605	damage	gap-reachable		Reachable surviving-damage branch; pain, scream, bleeding, and wimpy-flee output do not yet have exact live transcript owners for this callsite. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1647	damage	proven	smackheads.damage-death-pipeline	The live lethal skill path exercises the damage XP and autogold output ordering before the death cry. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1650	damage	proven	smackheads.damage-death-pipeline	The live lethal skill path exercises the damage XP and autogold output ordering before the death cry. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1660	damage	proven	smackheads.damage-death-pipeline	The live lethal skill path exercises the damage XP and autogold output ordering before the death cry. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1662	damage	proven	smackheads.damage-death-pipeline	The live lethal skill path exercises the damage XP and autogold output ordering before the death cry. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1957	perform_violence	proven	mob.fighter-parry	The native fighter parry test pins the direct warning and both room/victim parry audiences. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1959	perform_violence	proven	mob.fighter-parry	The native fighter parry test pins the direct warning and both room/victim parry audiences. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1961	perform_violence	proven	mob.fighter-parry	The native fighter parry test pins the direct warning and both room/victim parry audiences. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1969	perform_violence	gap-reachable		Reachable NPC dodge branch in perform_violence; no live combat scenario asserts all three dodge audiences yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1970	perform_violence	gap-reachable		Reachable NPC dodge branch in perform_violence; no live combat scenario asserts all three dodge audiences yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1971	perform_violence	gap-reachable		Reachable NPC dodge branch in perform_violence; no live combat scenario asserts all three dodge audiences yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1985	perform_violence	proven	dragon.failure	The five-seed live Dragon Kick sequence reaches the NPC recovery room and direct lines on the following combat pulse. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1986	perform_violence	proven	dragon.failure	The five-seed live Dragon Kick sequence reaches the NPC recovery room and direct lines on the following combat pulse. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1995	perform_violence	gap-reachable		Reachable player recovery branch in perform_violence; NPC recovery is covered, but no live scenario asserts this player room/direct pair yet. (R1/R2/R3/R5e/R5g/R5h).
+src/fight.c:1996	perform_violence	gap-reachable		Reachable player recovery branch in perform_violence; NPC recovery is covered, but no live scenario asserts this player room/direct pair yet. (R1/R2/R3/R5e/R5g/R5h).

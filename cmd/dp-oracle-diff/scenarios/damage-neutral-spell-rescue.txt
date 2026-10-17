@@ -1,5 +1,8 @@
-# C damage() rescues a downed PC in a shipped neutral room before skill_message.
-# src/fight.c:1486-1520. Actor and victim capture the rescue and destination look.
+# C call path: do_cast -> cast_spell -> call_magic -> mag_damage -> damage.
+# src/spell_parser.c:827-905,1098-1107,406-473; src/magic.c:602-827;
+# src/fight.c:1484-1520; src/comm.c:2529-2554. Actor, victim, and a third
+# same-room observer capture the rescue, arena broadcast, local room act, and
+# destination look.
 # depth-case: damage.neutral-spell-rescue
 
 [fixture]
@@ -62,9 +65,38 @@ Y
 <ENTER>
 1
 
+[setup:oracle:peer2]
+Rescueobserver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer2]
+Rescueobserver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8152
 teleport Rescuepeer 8152
+teleport Rescueobserver 8152
 set Rescuepeer level 15
 set Rescuepeer hit 1
 
