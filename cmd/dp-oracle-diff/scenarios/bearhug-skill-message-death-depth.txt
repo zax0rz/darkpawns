@@ -1,0 +1,124 @@
+# Real registered do_bearhug -> damage -> SkillMessage lethal proof with a
+# connected victim and room observer.  C's level-15 bearhug damage is 22; an
+# awake one-HP victim takes the ordinary skill roll and the death message arm.
+# Wimpy is disabled so a miss cannot move the victim before the probe ends.
+#
+# depth-case: bearhug.skill-message-death
+# depth-case: fightmsg.142.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+BhDieGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BhDieGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+BhDieAttacker
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+BhDieAttacker
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+BhDieVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wimpy 0
+
+[setup:port:victim]
+BhDieVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wimpy 0
+
+[warmup]
+set player BhDieAttacker level 15
+set player BhDieVictim level 15
+skillset BhDieAttacker 'bearhug' 100
+set player BhDieVictim maxhit 1
+set player BhDieVictim hit 1
+set player BhDieGod room 8105
+
+[probe:attacker]
+bearhug BhDieVictim

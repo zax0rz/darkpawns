@@ -1,0 +1,123 @@
+# Real registered do_bearhug -> damage -> SkillMessage proof with a connected
+# victim and room observer.  Both players are raised above C's level-10 PvP
+# gate; the high-HP target keeps the hit branch alive, while seed-controlled
+# skill rolls cover both the hit and miss variants.
+#
+# depth-case: bearhug.skill-message-miss
+# depth-case: bearhug.skill-message-hit
+# depth-case: fightmsg.142.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+BhMsgGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BhMsgGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+BhMsgAttacker
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+BhMsgAttacker
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+BhMsgVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+BhMsgVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player BhMsgAttacker level 15
+set player BhMsgVictim level 15
+skillset BhMsgAttacker 'bearhug' 100
+set player BhMsgVictim maxhit 100
+set player BhMsgVictim hit 100
+set player BhMsgGod room 8105
+
+[probe:attacker]
+bearhug BhMsgVictim

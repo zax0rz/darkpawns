@@ -54,6 +54,31 @@ func TestDoBearhug_ResultContract(t *testing.T) {
 	}
 }
 
+func TestDoBearhug_SignedCharRollAbove127HitsLikeReferenceC(t *testing.T) {
+	w, ch := newBashTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	mob.SetPosition(combat.PosFighting)
+	ch.SetSkill(SkillBearhug, 100)
+
+	for seed := uint32(1); seed < 1000; seed++ {
+		dprng.ResetStream(seed)
+		roll := dprng.Number(1, 150)
+		if roll < 128 {
+			continue
+		}
+
+		// C stores the roll in a signed plain char on the reference build;
+		// those out-of-range values wrap negative and compare below skill 100.
+		dprng.ResetStream(seed)
+		result := DoBearhug(ch, mob, w)
+		if !result.Success || result.Damage == 0 {
+			t.Fatalf("seed %d roll %d: bearhug = success %v damage %d, want wrapped hit", seed, roll, result.Success, result.Damage)
+		}
+		return
+	}
+	t.Fatal("no deterministic seed produced a bearhug roll above signed-char max")
+}
+
 func TestDoBearhug_CForcedFailureBranches(t *testing.T) {
 	tests := []struct {
 		name string

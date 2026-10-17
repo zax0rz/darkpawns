@@ -222,7 +222,13 @@ func DoBearhug(ch *Player, target combat.Combatant, world *World) SkillResult {
 
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
-	percent := dprng.Number(1, 150) // 1-150; 101+ is complete failure
+	// `byte` is a plain char in C (src/structs.h:703). The reference build
+	// treats it as signed, so the 128-150 rolls become negative before C's
+	// percent > prob comparison and take the hit branch.
+	percent := dprng.Number(1, 150)
+	if percent >= 1<<7 {
+		percent -= 1 << 8
+	}
 
 	// Sleeping targets and immortal casters force the C failure percent. The
 	// later MOB_NOBASH assignment intentionally has the same order as C.
