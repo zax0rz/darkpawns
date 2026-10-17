@@ -347,11 +347,15 @@ func cmdScore(s *Session) error {
 			if bv == affKujiKiriBit && aff.Modifier == 0 {
 				continue
 			}
-			visibleAffects = append(visibleAffects, fmt.Sprintf("%-24s", spells.GetSpellName(aff.Type)))
+			visibleAffects = append(visibleAffects, fmt.Sprintf("%-24.24s", spells.GetSpellName(aff.Type)))
 		}
 
 		// Also check ActiveAffects (for spells that don't have MasterAffects)
-		for _, aff := range p.ActiveAffects {
+		// Player.ActiveAffects appends new effects; C's affect_to_char prepends
+		// them to ch->affected. Walk this slice backwards to retain C's visible
+		// newest-first order (handler.c:415-420).
+		for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
+			aff := p.ActiveAffects[i]
 			bv := uint64(aff.Flags)
 			if bv == affSneakBit || bv == affDodgeBit || bv == affBerserkBit || bv == affRobbedBit {
 				continue
@@ -359,13 +363,18 @@ func cmdScore(s *Session) error {
 			if bv == affKujiKiriBit && aff.Magnitude == 0 {
 				continue
 			}
-			visibleAffects = append(visibleAffects, fmt.Sprintf("%-24s", spells.GetSpellName(aff.SpellID)))
+			visibleAffects = append(visibleAffects, fmt.Sprintf("%-24.24s", spells.GetSpellName(aff.SpellID)))
 		}
 
 		if len(visibleAffects) > 0 {
 			buf.WriteString("Spells affecting you:\r\n")
-			for _, sa := range visibleAffects {
-				buf.WriteString("     " + sa + "\r\n")
+			// C appends spell names in two columns and writes a line break only
+			// after every second affect (src/act.informative.c:1392-1412).
+			for i, sa := range visibleAffects {
+				buf.WriteString("     " + sa)
+				if (i+1)%2 == 0 {
+					buf.WriteString("\r\n")
+				}
 			}
 		}
 	}
@@ -392,7 +401,12 @@ func cmdScore(s *Session) error {
 		buf.WriteString("\r\n")
 	}
 
-	s.Send(buf.String())
+	// C's do_score writes this buffer verbatim, then process_output adds the
+	// single noncompact CRLF before its prompt (act.informative.c:1371-1412;
+	// comm.c:1615-1640). Preserve that split: terminal text normalization
+	// would terminate an odd-length affect list here and prompt framing would
+	// add a second CRLF.
+	s.sendLiteralText(buf.String())
 	return nil
 }
 

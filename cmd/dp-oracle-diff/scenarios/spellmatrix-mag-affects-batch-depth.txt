@@ -1,0 +1,183 @@
+# depth-case: spell.sanctuary.matrix-spoken-effect
+# depth-case: spell.invulnerability.matrix-spoken-effect
+# depth-case: spell.lesser-perception.matrix-spoken-effect
+# depth-case: spell.greater-perception.matrix-spoken-effect
+# depth-case: spell.adrenaline-boost.matrix-spoken-effect
+# depth-case: spell.psychic-shield.matrix-spoken-effect
+# depth-case: spell.change-density.matrix-spoken-effect
+# depth-case: spell.mind-bar.matrix-spoken-effect
+# depth-case: spell.transparency.matrix-spoken-effect
+# depth-case: spell.know-align.matrix-spoken-effect
+# depth-case: spell.word-of-intellect.matrix-spoken-effect
+# depth-case: spell.flame-strike.matrix-spoken-effect
+# depth-case: spell.slow.matrix-spoken-effect
+# depth-case: spell.dream-travel.matrix-spoken-effect
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+AffectMage
+Y
+magepass
+magepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AffectMage
+y
+magepass
+magepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+AffectPeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+AffectPeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Visible
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Visible
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport AffectPeer 8105
+teleport Visible 8105
+set AffectMage class mage
+set AffectMage level 31
+set AffectMage maxmana 5000
+set AffectMage mana 5000
+set AffectMage align 1000
+set AffectPeer class paladin
+set AffectPeer level 0
+set AffectPeer maxhit 5000
+set AffectPeer hit 5000
+set AffectPeer align 0
+set AffectPeer outlaw on
+skillset AffectMage 'sanctuary' 100
+skillset AffectMage 'globe of invulnerability' 100
+skillset AffectMage 'lesser perception' 100
+skillset AffectMage 'greater perception' 100
+skillset AffectMage 'adrenaline boost' 100
+skillset AffectMage 'psychic shield' 100
+skillset AffectMage 'change density' 100
+skillset AffectMage 'mind bar' 100
+skillset AffectMage 'transparency' 100
+skillset AffectMage 'know align' 100
+skillset AffectMage 'word of intellect' 100
+skillset AffectMage 'flame strike' 100
+skillset AffectMage 'slow' 100
+skillset AffectMage 'dream travel' 100
+
+[probe]
+# Sanctuary is targetable and appends the victim's own active affect.
+cast 'sanctuary' AffectPeer
+~dpclock pulse 20
+send:victim score
+# The remaining perception, defensive, and transformation effects are
+# self-only in C's spello() table (src/spell_parser.c:1447-1504).
+cast 'globe of invulnerability' AffectMage
+~dpclock pulse 20
+score
+cast 'lesser perception' AffectMage
+~dpclock pulse 20
+score
+cast 'greater perception' AffectMage
+~dpclock pulse 20
+score
+cast 'adrenaline boost' AffectMage
+~dpclock pulse 20
+score
+cast 'psychic shield' AffectMage
+~dpclock pulse 20
+score
+cast 'change density' AffectMage
+~dpclock pulse 20
+score
+# Mind Bar and Intellect take a room target; the other output lines are
+# checked against their exact C recipient gates.
+cast 'mind bar' AffectPeer
+~dpclock pulse 20
+send:victim score
+cast 'transparency' AffectMage
+~dpclock pulse 20
+score
+send:observer look
+cast 'know align' AffectMage
+~dpclock pulse 20
+score
+cast 'word of intellect' AffectPeer
+~dpclock pulse 20
+send:victim score
+cast 'flame strike' AffectPeer
+~dpclock pulse 20
+send:victim score
+cast 'slow' AffectPeer
+~dpclock pulse 20
+send:victim score
+cast 'dream travel' AffectMage
+~dpclock pulse 20
+score

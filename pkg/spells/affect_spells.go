@@ -175,12 +175,13 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			return
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
-		// AFF_CURSE flag affect, plus the damroll penalty (constructed but
-		// never applied in old C) and the hitroll penalty — magic.c curse.
+		// C applies exactly two AFF_CURSE records, for hitroll then damroll
+		// (src/magic.c:986-994). ActiveAffects is oldest-first while C's
+		// ch->affected list is newest-first, so keep the C insertion order
+		// here and reverse only when rendering that linked-list view.
 		pending = append(pending,
-			engine.NewAffectDirect(SpellCurse, engine.ApplyNone, curseDur, -3, engine.AFFCurse, "curse"),
-			engine.NewAffect(SpellCurse, engine.ApplyDamroll, curseDur, -3, "curse"),
-			engine.NewAffect(SpellCurse, engine.ApplyHitroll, curseDur, -3, "curse"))
+			engine.NewAffectDirect(SpellCurse, engine.ApplyHitroll, curseDur, -3, engine.AFFCurse, "curse"),
+			engine.NewAffectDirect(SpellCurse, engine.ApplyDamroll, curseDur, -3, engine.AFFCurse, "curse"))
 		toVictim = "You feel very uncomfortable.\r\n"
 		toRoom = "$n briefly glows red!\r\n"
 		toSelf = "A streak of red light courses from your hand!\r\n"
@@ -270,12 +271,11 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		if dur < 1 {
 			dur = 1
 		}
-		// AFF_POISON flag affect, plus APPLY_STR -2 and APPLY_HITROLL -2
-		// (magic.c poison).
+		// C stores exactly two AFF_POISON nodes, each carrying a stat
+		// modifier (src/magic.c:1095-1102).
 		pending = append(pending,
-			engine.NewAffectDirect(SpellPoison, engine.ApplyNone, dur, -2, engine.AFFPoison, "poison"),
-			engine.NewAffect(SpellPoison, engine.ApplyStr, dur, -2, "poison"),
-			engine.NewAffect(SpellPoison, engine.ApplyHitroll, dur, -2, "poison"))
+			engine.NewAffectDirect(SpellPoison, engine.ApplyStr, dur, -2, engine.AFFPoison, "poison"),
+			engine.NewAffectDirect(SpellPoison, engine.ApplyHitroll, dur, -2, engine.AFFPoison, "poison"))
 		toVictim = "You feel very sick.\r\n"
 		toRoom = "$n gets violently ill!\r\n"
 		toSelf = "Your tainted magick pulses towards $M.\r\n"
@@ -323,7 +323,9 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffectDirect(SpellWaterBreathe, engine.ApplyNone, getLevel(ch), 0, engine.AFFWaterBreathing, "water breathe")
 		toVictim = "You feel your breath become colder.\r\n"
 	case SpellDetectAlign, SpellKnowAlign:
-		aff = engine.NewAffectDirect(SpellDetectAlign, engine.ApplyNone, 12+level, 0, engine.AFFDetectAlign, "detect align")
+		// C initializes every affect record's type from spellnum (magic.c:877-879).
+		// Know Align shares Detect Align's flag and duration, but keeps its own ID.
+		aff = engine.NewAffectDirect(spellNum, engine.ApplyNone, 12+level, 0, engine.AFFDetectAlign, GetSpellName(spellNum))
 		if spellNum == SpellDetectAlign {
 			toVictim = "Your eyes tingle.\r\n"
 		} else {
@@ -364,7 +366,8 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		if ch == victim && spellNum == SpellAdrenaline {
 			mag++
 		}
-		aff = engine.NewAffect(SpellStrength, engine.ApplyStr, (getLevel(ch)>>1)+4, mag, "strength")
+		// C initializes every affect record's type from spellnum (magic.c:877-879).
+		aff = engine.NewAffect(spellNum, engine.ApplyStr, (getLevel(ch)>>1)+4, mag, GetSpellName(spellNum))
 		toVictim = "You feel stronger!\r\n"
 		toSelf = "Grabbing $M, you feel a strong flow of magick course between you.\r\n"
 	case SpellSenseLife:
@@ -389,7 +392,11 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		pending = append(pending, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"), engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
 		toVictim = "Your skin turns metallic!\r\n"
 	case SpellInvulnerability:
-		pending = append(pending, engine.NewAffectDirect(SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln, "invulnerability"), engine.NewAffect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, "invulnerability"))
+		// C magic.c:1316-1328 applies AFF_INVULN to both records; the first
+		// modifies armor class and the second modifies spell saving throws.
+		pending = append(pending,
+			engine.NewAffectDirect(SpellInvulnerability, engine.ApplyAC, 7, -100, engine.AFFInvuln, "invulnerability"),
+			engine.NewAffectDirect(SpellInvulnerability, engine.ApplySavingSpell, 7, -7, engine.AFFInvuln, "invulnerability"))
 		toVictim = "A globe of protection appears around you!\r\n"
 	case SpellPsyshield:
 		aff = engine.NewAffect(SpellPsyshield, engine.ApplyAC, getLevel(ch)/2, -15, "psyshield")

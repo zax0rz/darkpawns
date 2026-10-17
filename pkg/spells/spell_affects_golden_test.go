@@ -142,9 +142,8 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		magAffectsApply(20, ch, v, SpellCurse, false, 0, nil)
 		wantDur := 1 + (20 >> 1)
 		expectAffects(t, "curse", v, []affectExpectation{
-			{SpellCurse, engine.ApplyNone, wantDur, -3, engine.AFFCurse},
-			{SpellCurse, engine.ApplyDamroll, wantDur, -3, engine.AFFNone},
-			{SpellCurse, engine.ApplyHitroll, wantDur, -3, engine.AFFNone},
+			{SpellCurse, engine.ApplyHitroll, wantDur, -3, engine.AFFCurse},
+			{SpellCurse, engine.ApplyDamroll, wantDur, -3, engine.AFFCurse},
 		})
 	})
 
@@ -189,9 +188,8 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		magAffectsApply(20, ch, v, SpellPoison, false, 0, nil)
 		wantDur := (20 / 2) - 2
 		expectAffects(t, "poison", v, []affectExpectation{
-			{SpellPoison, engine.ApplyNone, wantDur, -2, engine.AFFPoison},
-			{SpellPoison, engine.ApplyStr, wantDur, -2, engine.AFFNone},
-			{SpellPoison, engine.ApplyHitroll, wantDur, -2, engine.AFFNone},
+			{SpellPoison, engine.ApplyStr, wantDur, -2, engine.AFFPoison},
+			{SpellPoison, engine.ApplyHitroll, wantDur, -2, engine.AFFPoison},
 		})
 	})
 
@@ -251,6 +249,14 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		})
 	})
 
+	t.Run("know align retains its spell ID", func(t *testing.T) {
+		v := &mockAffectVictim{}
+		magAffectsApply(20, ch, v, SpellKnowAlign, false, 0, nil)
+		expectAffects(t, "know align", v, []affectExpectation{
+			{SpellKnowAlign, engine.ApplyNone, 12 + 20, 0, engine.AFFDetectAlign},
+		})
+	})
+
 	t.Run("dream travel", func(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellDreamTravel, false, 0, nil)
@@ -303,7 +309,7 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, v, v, SpellAdrenaline, false, 0, nil)
 		expectAffects(t, "adrenaline", v, []affectExpectation{
-			{SpellStrength, engine.ApplyStr, (20 >> 1) + 4, 3, engine.AFFNone},
+			{SpellAdrenaline, engine.ApplyStr, (20 >> 1) + 4, 3, engine.AFFNone},
 		})
 	})
 
@@ -356,8 +362,8 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		v := &mockAffectVictim{}
 		magAffectsApply(20, ch, v, SpellInvulnerability, false, 0, nil)
 		expectAffects(t, "invulnerability", v, []affectExpectation{
-			{SpellInvulnerability, engine.ApplyNone, 7, -100, engine.AFFInvuln},
-			{SpellInvulnerability, engine.ApplySavingSpell, 7, -7, engine.AFFNone},
+			{SpellInvulnerability, engine.ApplyAC, 7, -100, engine.AFFInvuln},
+			{SpellInvulnerability, engine.ApplySavingSpell, 7, -7, engine.AFFInvuln},
 		})
 	})
 

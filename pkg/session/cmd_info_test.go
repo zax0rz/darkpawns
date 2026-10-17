@@ -11,6 +11,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/spells"
 	"github.com/zax0rz/darkpawns/pkg/testutil"
 )
 
@@ -400,6 +401,51 @@ func TestCmdScoreStateVariants(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("score output missing %q:\n%q", want, got)
 		}
+	}
+}
+
+func TestCmdScoreSpellAffectsUseCNewestFirstTwoColumnLayout(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scoreaffect", 1001, true)
+	s.player.AddAffect(engine.NewAffectDirect(spells.SpellStrength, game.ApplyStr, 6, 2, engine.AFFNothing, "strength"))
+	s.player.AddAffect(engine.NewAffectDirect(spells.SpellCurse, game.ApplyHitroll, 6, -3, engine.AFFCurse, "curse"))
+	s.player.AddAffect(engine.NewAffectDirect(spells.SpellCurse, game.ApplyDamroll, 6, -3, engine.AFFCurse, "curse"))
+	s.player.AddAffect(engine.NewAffectDirect(spells.SpellPoison, game.ApplyStr, 6, -2, engine.AFFPoison, "poison"))
+	s.player.AddAffect(engine.NewAffectDirect(spells.SpellPoison, game.ApplyHitroll, 6, -2, engine.AFFPoison, "poison"))
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	msg := <-s.send
+	var sm ServerMessage
+	if err := json.Unmarshal(msg, &sm); err != nil {
+		t.Fatalf("unmarshal score event: %v", err)
+	}
+	var event EventData
+	data, err := json.Marshal(sm.Data)
+	if err != nil {
+		t.Fatalf("marshal score event data: %v", err)
+	}
+	if err := json.Unmarshal(data, &event); err != nil {
+		t.Fatalf("unmarshal score event data: %v", err)
+	}
+	if event.Type != "raw" {
+		t.Fatalf("score event type = %q, want raw so prompt framing supplies the single trailing CRLF", event.Type)
+	}
+	frame, ok := RenderTerminalFrame(msg)
+	if !ok {
+		t.Fatal("score event was not rendered as a terminal frame")
+	}
+	got := frame.Text
+	spellCell := func(name string) string {
+		return "     " + fmt.Sprintf("%-24.24s", name)
+	}
+	want := "Spells affecting you:\r\n" + spellCell("poison") + spellCell("poison") + "\r\n" + spellCell("curse") + spellCell("curse") + "\r\n" + spellCell("strength")
+	if !strings.HasSuffix(got, want) {
+		t.Fatalf("C spell affect list suffix = %q, want %q (full output %q)", strings.TrimSuffix(got, want), want, got)
+	}
+	if strings.HasSuffix(got, "\r") || strings.HasSuffix(got, "\n") {
+		t.Fatalf("score buffer has a terminal line ending; C's prompt flush owns it: %q", got[len(got)-32:])
 	}
 }
 

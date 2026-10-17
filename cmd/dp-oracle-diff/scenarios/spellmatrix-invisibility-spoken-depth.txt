@@ -1,0 +1,113 @@
+# A registered spoken Invisibility cast reaches mag_affects and lets a room observer verify visibility after the effect.
+# The caster, PC victim, and observer expose the spoken and effect outputs; the observer look checks the invisible state.
+# depth-case: spell.invisibility.matrix-spoken-effect
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+InvisActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+InvisActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+InvisVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+InvisVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+InvisWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+InvisWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport InvisVictim 8105
+teleport InvisWatch 8105
+set InvisActor class mage
+skillset InvisActor 'invisibility' 100
+set InvisActor maxmana 5000
+set InvisActor mana 5000
+set InvisActor align 1000
+set InvisVictim align 0
+set InvisVictim class paladin
+set InvisVictim level 0
+set InvisVictim maxhit 100
+set InvisVictim hit 100
+set InvisActor level 31
+
+[probe]
+cast 'invisibility' InvisVictim
+send:observer look

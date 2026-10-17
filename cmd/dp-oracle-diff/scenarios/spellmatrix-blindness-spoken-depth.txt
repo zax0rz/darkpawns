@@ -1,0 +1,113 @@
+# A registered spoken Blindness cast reaches mag_affects and follows the affected victim through C do_exits.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.blindness.matrix-spoken-effect
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+BlindActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BlindActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+BlindVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+BlindVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BlindWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BlindWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BlindVictim 8105
+teleport BlindWatch 8105
+set BlindActor class mage
+skillset BlindActor 'blindness' 100
+set BlindActor maxmana 5000
+set BlindActor mana 5000
+set BlindActor align 1000
+set BlindVictim align 0
+set BlindVictim class paladin
+set BlindVictim level 0
+set BlindVictim maxhit 100
+set BlindVictim hit 100
+set BlindActor level 31
+
+[probe]
+cast 'blindness' BlindVictim
+send:victim exits
