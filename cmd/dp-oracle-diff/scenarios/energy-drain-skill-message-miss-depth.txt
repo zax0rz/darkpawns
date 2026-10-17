@@ -1,0 +1,160 @@
+# The room script sets real AFF_SANCTUARY and AFF_PROTECT_GOOD bits on a level-30 neutral PC.
+# The disposable staff prototype becomes a level-0 Energy Drain scroll; C passes its
+# item level unchanged, so 10d6 can reach zero after save and mitigation.
+# The recite command reaches CAST_SCROLL -> mag_damage -> damage -> SkillMessage.
+# depth-case: spell.energy-drain.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/energy_drain.lua 512
+
+[lua-script mob/oracle/energy_drain.lua]
+function oncmd()
+if (argument == "say shield") then
+aff_flags(ch, "set", 7)
+aff_flags(ch, "set", 13)
+return TRUE
+end
+if (argument == "say state") then
+say("sanctuary=" .. tostring(aff_flagged(ch, 7)) .. " protect-good=" .. tostring(aff_flagged(ch, 13)))
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+EnergyActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+EnergyActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+EnergyVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+EnergyVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+EnergyWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+EnergyWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport EnergyVictim 8105
+teleport EnergyWatch 8105
+oedit 8054
+1
+energy drain scroll
+2
+a scroll of energy drain
+5
+2
+D
+0
+25
+0
+0
+q
+y
+load obj 8054
+get scroll
+set player EnergyActor class mage
+skillset EnergyActor 'energy drain' 100
+skillset EnergyActor infravision 100
+set player EnergyActor maxmana 5000
+set player EnergyActor mana 5000
+set player EnergyActor align 1000
+set player EnergyVictim class mage
+set player EnergyVictim level 30
+set player EnergyVictim align 0
+set player EnergyVictim maxhit 1000
+set player EnergyVictim hit 1000
+set player EnergyActor level 14
+
+[probe]
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+cast 'infravision'
+~dpclock pulse 20
+send:victim say shield
+send:victim say state
+recite energy EnergyVictim

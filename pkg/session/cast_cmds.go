@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
@@ -405,7 +406,11 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 	// #nosec G404 — game RNG, not cryptographic
 	if castNumber(0, 101+weightAdd) > proficiency {
 		s.player.SetWaitState(1)
-		s.Send("You lost your concentration!\r\n")
+		// C routes aimed concentration failures through skill_message before
+		// falling back to this generic text (spell_parser.c:1085-1095).
+		if victim, ok := target.character.(combat.Combatant); !ok || victim == nil || !combat.EmitSkillMessage(0, s.player, victim, spellNum, s.player.GetRoomVNum()) {
+			s.Send("You lost your concentration!\r\n")
+		}
 		if cost > 0 {
 			s.player.SetMana(max(0, s.player.GetMana()-(cost>>1)))
 		}

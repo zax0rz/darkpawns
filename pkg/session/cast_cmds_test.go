@@ -1,14 +1,15 @@
 package session
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
-
-	"github.com/zax0rz/darkpawns/pkg/parser"
+	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -682,6 +683,76 @@ func TestCastFailureConsumesOneDrawHalfManaAndNoIncantation(t *testing.T) {
 	}
 	if got := dprng.Number(0, 101); got != wantNext {
 		t.Errorf("next RNG = %d, want %d after failure draw", got, wantNext)
+	}
+}
+
+func TestCastConcentrationFailureEmitsSpellSkillMessage(t *testing.T) {
+	m := makeGateTestManager(t, false)
+	m.SetCombatMessageFunc()
+	caster := makeGateSession(t, m, 1, "FireActor", 15)
+	victim := makeGateSession(t, m, 2, "FireVictim", 30)
+	observer := makeGateSession(t, m, 3, "FireWatch", 1)
+	prepareCaster(caster, game.ClassMageUser, "fireball", 1)
+	caster.player.SetLevel(15)
+	caster.player.SetMana(5000)
+
+	seed := seedForCastRoll(t, func(roll int) bool { return roll > 1 })
+	wantStream := dprng.New(seed)
+	wantStream.Number(0, 101) // concentration
+	wantStream.Dice(1, 1)     // Fireball miss-message variant
+	wantNext := wantStream.Number(0, 101)
+	dprng.ResetStream(seed)
+
+	if err := cmdCast(caster, []string{"'fireball'", "FireVictim"}); err != nil {
+		t.Fatalf("cmdCast fireball fumble: %v", err)
+	}
+	readCombatText := func(s *Session) string {
+		t.Helper()
+		select {
+		case message := <-s.send:
+			var envelope ServerMessage
+			if err := json.Unmarshal(message, &envelope); err != nil {
+				t.Fatalf("unmarshal combat message: %v", err)
+			}
+			if envelope.Type != MsgEvent {
+				t.Fatalf("message type = %q, want %q", envelope.Type, MsgEvent)
+			}
+			var event EventData
+			data, err := json.Marshal(envelope.Data)
+			if err != nil {
+				t.Fatalf("marshal event data: %v", err)
+			}
+			if err := json.Unmarshal(data, &event); err != nil {
+				t.Fatalf("unmarshal event data: %v", err)
+			}
+			if event.Type != "combat" {
+				t.Fatalf("event type = %q, want combat", event.Type)
+			}
+			return event.Text
+		case <-time.After(200 * time.Millisecond):
+			t.Fatal("timeout waiting for combat message")
+		}
+		return ""
+	}
+
+	if got, want := readCombatText(caster), "Your fireball blooms a few feet before FireVictim who claps his hands in wonder."; got != want {
+		t.Errorf("caster message = %q, want %q", got, want)
+	}
+	if got, want := readCombatText(victim), "FireActor aims a fireball at you but it blooms few feet before you; you clap your hands at the show."; got != want {
+		t.Errorf("victim message = %q, want %q", got, want)
+	}
+	if got, want := readCombatText(observer), "A fireball from FireActor misses FireVictim -- what great fireworks around here!!"; got != want {
+		t.Errorf("observer message = %q, want %q", got, want)
+	}
+	for name, s := range map[string]*Session{"caster": caster, "victim": victim, "observer": observer} {
+		select {
+		case extra := <-s.send:
+			t.Errorf("unexpected extra %s output after the miss triplet: %s", name, extra)
+		default:
+		}
+	}
+	if got := dprng.Number(0, 101); got != wantNext {
+		t.Errorf("next RNG = %d, want %d after concentration + skill-message variant", got, wantNext)
 	}
 }
 

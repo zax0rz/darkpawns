@@ -1,0 +1,147 @@
+# The room script sets real AFF_SANCTUARY and AFF_PROTECT_EVIL bits on a level-30 neutral PC.
+# The disposable staff prototype becomes a level-0 Dispel Good scroll; C passes its
+# item level unchanged, so 9d5+5 can reach zero after save and mitigation.
+# The recite command reaches CAST_SCROLL -> mag_damage -> damage -> SkillMessage.
+# depth-case: spell.dispel-good.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/dispel_good.lua 512
+
+[lua-script mob/oracle/dispel_good.lua]
+function oncmd()
+if (argument == "say shield") then
+aff_flags(ch, "set", 7)
+aff_flags(ch, "set", 12)
+return TRUE
+end
+if (argument == "say state") then
+say("sanctuary=" .. tostring(aff_flagged(ch, 7)) .. " protect-evil=" .. tostring(aff_flagged(ch, 12)))
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+GoodActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GoodActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+GoodVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+GoodVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+GoodWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+GoodWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport GoodVictim 8105
+teleport GoodWatch 8105
+oedit 8054
+1
+dispel good scroll
+2
+a scroll of dispel good
+5
+2
+D
+0
+46
+0
+0
+q
+y
+load obj 8054
+get scroll
+set player GoodActor class cleric
+skillset GoodActor 'dispel good' 100
+set player GoodActor maxmana 5000
+set player GoodActor mana 5000
+set player GoodActor align -1000
+set player GoodVictim class mage
+set player GoodVictim level 30
+set player GoodVictim align 0
+set player GoodVictim maxhit 1000
+set player GoodVictim hit 1000
+set player GoodActor level 14
+
+[probe]
+send:victim say shield
+send:victim say state
+recite dispel GoodVictim
