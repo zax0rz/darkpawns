@@ -6,7 +6,9 @@
 
 [fixture]
 quiet-mobs
-spawn-obj 4399 1 8162 80
+set-room-flag 8162 4 off
+spawn-obj 4399 99 8162 80
+force-load 4399
 
 [setup:oracle]
 Mordecai
