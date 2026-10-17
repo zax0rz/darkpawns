@@ -201,7 +201,7 @@ func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool 
 	if itemType == ITEM_WAND {
 		w.useWand(ch, item, useRest, spellNum, spellLevel)
 	} else {
-		w.useStaff(ch, item, spellNum, spellLevel)
+		w.useStaff(ch, item, useRest, spellNum, spellLevel)
 	}
 
 	return true
@@ -326,19 +326,33 @@ func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spel
 		if target == ch {
 			Act(nil, false, ch, nil, item, nil,
 				"Your $p bathes you in a blinding glow!", "", ToChar)
-			Act(w, false, ch, nil, item, nil,
-				"$n's $p bathes $m in a blinding glow!", "", ToRoom)
+			roomAct := "$n's $p bathes $m in a blinding glow!"
+			hideInvisible := false
+			if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+				roomAct = item.Prototype.ActionDesc
+			}
+			Act(w, hideInvisible, ch, target, item, nil, roomAct, "", ToRoom)
 		} else {
 			Act(nil, false, ch, target, item, nil,
 				"Your $p flares up with a blinding glow that surges toward $N!", "", ToChar)
-			Act(w, true, ch, target, item, nil,
-				"$n's $p flares up with a blinding glow that surges toward $N!", "", ToRoom)
+			roomAct := "$n's $p flares up with a blinding glow that surges toward $N!"
+			hideInvisible := true
+			if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+				roomAct = item.Prototype.ActionDesc
+				hideInvisible = false
+			}
+			Act(w, hideInvisible, ch, target, item, nil, roomAct, "", ToRoom)
 		}
 	} else {
 		Act(nil, false, ch, nil, item, targetObj,
 			"Your $p flares up with a blinding glow that surges toward $P!", "", ToChar)
-		Act(w, true, ch, nil, item, targetObj,
-			"$n's $p flares up with a blinding glow that surges toward $P!", "", ToRoom)
+		roomAct := "$n's $p flares up with a blinding glow that surges toward $P!"
+		hideInvisible := true
+		if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+			roomAct = item.Prototype.ActionDesc
+			hideInvisible = false
+		}
+		Act(w, hideInvisible, ch, nil, item, targetObj, roomAct, "", ToRoom)
 	}
 
 	if item.GetValue(2) <= 0 {
@@ -362,9 +376,21 @@ func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spel
 // useStaff is the castable-equipment staff branch of mag_objectmagic
 // (src/spell_parser.c:785-817). The caster is excluded from the room fan-out;
 // area/mass routines receive a nil character target once, matching C.
-func (w *World) useStaff(ch *Player, item *ObjectInstance, spellNum, spellLevel int) {
-	Act(w, true, ch, nil, item, nil,
-		"$n's $p sparks blindingly, bathing you in its glow.", "", ToRoom)
+func (w *World) useStaff(ch *Player, item *ObjectInstance, targetArg string, spellNum, spellLevel int) {
+	roomAct := "$n's $p sparks blindingly, bathing you in its glow."
+	hideInvisible := true
+	var targetObj *ObjectInstance
+	if item.Prototype != nil && item.Prototype.ActionDesc != "" {
+		roomAct = item.Prototype.ActionDesc
+		hideInvisible = false
+		targetObj = w.resolveUseActionObjectTarget(ch, targetArg)
+		if targetObj == nil {
+			// C perform_act's CHECK_NULL(vict_obj, OBJS(...)) emits ACTNULL
+			// for a missing $P argument (src/comm.c:2392-2435).
+			roomAct = strings.ReplaceAll(roomAct, "$P", "<NULL>")
+		}
+	}
+	Act(w, hideInvisible, ch, nil, item, targetObj, roomAct, "", ToRoom)
 	Act(nil, false, ch, nil, item, nil,
 		"Your $p radiates an ethereal glow that lights the room.", "", ToChar)
 
@@ -392,6 +418,31 @@ func (w *World) useStaff(ch *Player, item *ObjectInstance, spellNum, spellLevel 
 	}
 }
 
+// resolveUseActionObjectTarget mirrors mag_objectmagic's generic_find lookup
+// for the object argument used only by a staff's action description
+// (src/spell_parser.c:560-565,785-790). Character matches take precedence;
+// otherwise C searches inventory, room, then equipment before using the
+// object as $P in the room act.
+func (w *World) resolveUseActionObjectTarget(ch *Player, targetArg string) *ObjectInstance {
+	targetArg, _ = halfChop(targetArg)
+	if targetArg == "" {
+		return nil
+	}
+	if _, ok := w.ResolveCharInRoom(ch, targetArg); ok {
+		return nil
+	}
+	if obj, ok := w.ResolveObjectInInventory(ch, targetArg); ok {
+		return obj
+	}
+	if obj, ok := w.ResolveObjectInRoom(ch, targetArg); ok {
+		return obj
+	}
+	if obj, ok := w.ResolveObjectInEquipment(ch, targetArg); ok {
+		return obj
+	}
+	return nil
+}
+
 // resolveMagicItemTarget mirrors generic_find's character-first target lookup
 // for wand use, followed by the object scopes allowed by the spell template.
 func (w *World) resolveMagicItemTarget(ch *Player, targetArg string, spellNum int) (Actor, *ObjectInstance, bool) {
@@ -409,25 +460,22 @@ func (w *World) resolveMagicItemTarget(ch *Player, targetArg string, spellNum in
 	if si == nil {
 		return nil, nil, false
 	}
-	if si.HasTarget(spells.TarObjInv) {
-		if obj, ok := w.ResolveObjectInInventory(ch, targetArg); ok {
-			return nil, obj, true
-		}
+	if !si.HasTarget(spells.TarObjInv) && !si.HasTarget(spells.TarObjRoom) &&
+		!si.HasTarget(spells.TarObjEquip) && !si.HasTarget(spells.TarObjWorld) {
+		return nil, nil, false
 	}
-	if si.HasTarget(spells.TarObjRoom) {
-		if obj, ok := w.ResolveObjectInRoom(ch, targetArg); ok {
-			return nil, obj, true
-		}
+	// C generic_find searches inventory, room, and equipment in that order
+	// before mag_objectmagic checks whether the spell accepts any object target
+	// (src/spell_parser.c:560-565,628-637). The individual TAR_OBJ_* bits do
+	// not restrict where generic_find may find that object.
+	if obj, ok := w.ResolveObjectInInventory(ch, targetArg); ok {
+		return nil, obj, true
 	}
-	if si.HasTarget(spells.TarObjEquip) {
-		if obj, ok := w.ResolveObjectInEquipment(ch, targetArg); ok {
-			return nil, obj, true
-		}
+	if obj, ok := w.ResolveObjectInRoom(ch, targetArg); ok {
+		return nil, obj, true
 	}
-	if si.HasTarget(spells.TarObjWorld) {
-		if obj, ok := w.ResolveObjectWorld(ch, targetArg); ok {
-			return nil, obj, true
-		}
+	if obj, ok := w.ResolveObjectInEquipment(ch, targetArg); ok {
+		return nil, obj, true
 	}
 	return nil, nil, false
 }

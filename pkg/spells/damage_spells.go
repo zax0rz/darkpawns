@@ -29,24 +29,36 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		if isMage && !hasReag {
 			sendToCaster(ch, "You attempt the spell without the components..\r\n")
 		} else if hasReag {
-			sendAffectRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...\r\n", world)
+			sendAffectActRoom(ch, "$n pulls something out of $s pocket and crushes it beneath $s heel...", world)
 		}
 	case SpellColorSpray:
 		hasReag = isMage && consumeReagent(ch, SpellColorSpray, level, "prism",
 			"Pulling a prism from a pocket, you crush it under your heel...",
 			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
+		if hasReag {
+			sendAffectActRoom(ch, "$n pulls something out of $s pocket and crushes it beneath $s heel...", world)
+		}
 	case SpellFireball:
 		hasReag = isMage && consumeReagent(ch, SpellFireball, level, "pinch of ash",
 			"Pulling a pinch of ash from a pocket, you cast it about the room...",
 			"$n pulls a pinch of ash out of a pocket and casts it about the room.")
+		if hasReag {
+			sendAffectActRoom(ch, "$n pulls a pinch of ash out of a pocket and casts it about the room.", world)
+		}
 	case SpellDisintegrate:
 		hasReag = isMage && consumeReagent(ch, SpellDisintegrate, level, "eye of a beholder",
 			"Pulling the eye of a beholder from a pocket, you throw it to the ground...",
 			"$n pulls a small orb out of a pocket and dashes it to the ground.")
+		if hasReag {
+			sendAffectActRoom(ch, "$n pulls a small orb out of a pocket and dashes it to the ground.", world)
+		}
 	case SpellSoulLeech, SpellEnergyDrain:
 		hasReag = isMage && consumeReagent(ch, SpellEnergyDrain, level, "vampire dust",
 			"Pulling the vampire dust from a pocket, you throw it into the air...",
 			"$n throws some dust into the air...")
+		if hasReag {
+			sendAffectActRoom(ch, "$n throws some dust into the air...", world)
+		}
 	}
 
 	// Compute base damage dice/flat from the C mag_damage() formula table.

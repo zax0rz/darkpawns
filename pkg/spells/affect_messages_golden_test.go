@@ -527,3 +527,94 @@ func TestMagAffectsMobInnateGateUnsetSlot(t *testing.T) {
 		t.Errorf("innate-blind mob should gain no affects; got %d", len(mob.affects))
 	}
 }
+
+// reagentVNumSpellsChar exposes C's reagent lookup as exact prototype IDs for
+// focused mag_affects output proofs.
+type reagentVNumSpellsChar struct {
+	*mockSpellsChar
+	reagents map[int]bool
+}
+
+func (c *reagentVNumSpellsChar) ConsumeSpellReagentVNum(vnum int) bool {
+	if !c.reagents[vnum] {
+		return false
+	}
+	delete(c.reagents, vnum)
+	return true
+}
+
+func TestMagAffectsMageBlindnessAndCurseReagentOutputsMatchC(t *testing.T) {
+	previousSaveRoll := magAffectsSaveRoll
+	magAffectsSaveRoll = func(interface{}, int) bool { return false }
+	defer func() { magAffectsSaveRoll = previousSaveRoll }()
+
+	cases := []struct {
+		name        string
+		spell       int
+		reagentVNum int
+		casterLines []string
+		victimLine  string
+		roomLines   []string
+	}{
+		{
+			name:        "blindness lens",
+			spell:       SpellBlindness,
+			reagentVNum: 1234,
+			casterLines: []string{
+				"You crush a small lens under your heel.\r\n",
+				"A streak of blackness courses from your hand!\r\n",
+			},
+			victimLine: "You have been blinded!\r\n",
+			roomLines: []string{
+				"Mage crushes a small lens under his heel.\r\n",
+				"Target seems to be blinded!\r\n",
+			},
+		},
+		{
+			name:        "curse feather",
+			spell:       SpellCurse,
+			reagentVNum: 1233,
+			casterLines: []string{
+				"You throw a raven's feather into the air...\r\n",
+				"A streak of red light courses from your hand!\r\n",
+			},
+			victimLine: "You feel very uncomfortable.\r\n",
+			roomLines: []string{
+				"Mage throws a feather into the air...\r\n",
+				"Target briefly glows red!\r\n",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &reagentVNumSpellsChar{
+				mockSpellsChar: &mockSpellsChar{
+					name:     "Mage",
+					level:    30,
+					class:    0, // CLASS_MAGIC_USER
+					roomVNum: 8162,
+				},
+				reagents: map[int]bool{tc.reagentVNum: true},
+			}
+			victim := newAffectMale("Target", 8162)
+			witness := newAffectMale("Witness", 8162)
+			world := newAffectMsgWorld(witness)
+
+			MagAffects(30, caster, victim, tc.spell, int(SaveSpell), world)
+
+			if len(caster.reagents) != 0 {
+				t.Errorf("reagent vnum %d was not consumed", tc.reagentVNum)
+			}
+			if !reflect.DeepEqual(caster.messages, tc.casterLines) {
+				t.Errorf("caster bytes = %q, want %q", caster.messages, tc.casterLines)
+			}
+			if !reflect.DeepEqual(victim.messages, []string{tc.victimLine}) {
+				t.Errorf("victim bytes = %q, want %q", victim.messages, tc.victimLine)
+			}
+			if !reflect.DeepEqual(witness.messages, tc.roomLines) {
+				t.Errorf("room bytes = %q, want %q", witness.messages, tc.roomLines)
+			}
+		})
+	}
+}

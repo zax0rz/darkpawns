@@ -71,6 +71,7 @@ type BoardInfo struct {
 type BoardSystem struct {
 	mu              sync.RWMutex
 	boards          []BoardInfo
+	allocateHeading func(int) []byte
 	msgIndex        [NumBoards][MaxBoardMessages]BoardMsgInfo
 	numOfMsgs       [NumBoards]int
 	msgStorage      [NumBoards*MaxBoardMessages + 5]string
@@ -344,6 +345,13 @@ func (bs *BoardSystem) findSlot() int {
 	return -1
 }
 
+func (bs *BoardSystem) headingBuffer(size int) []byte {
+	if bs.allocateHeading != nil {
+		return bs.allocateHeading(size)
+	}
+	return make([]byte, size)
+}
+
 // isAbbrev returns true if arg is a non-empty case-insensitive prefix of name.
 func isAbbrev(arg, name string) bool {
 	if len(arg) == 0 || len(name) == 0 {
@@ -393,6 +401,15 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 	// bytes, whose day-of-month field is space-padded ("Sun Sep  6").
 	tmStr := now.Format("Mon Jan _2 15:04:05 2006")
 	heading := fmt.Sprintf("%6.10s %-12s :: %s", tmStr, "("+ch.GetName()+")", arg)
+	headingBuffer := bs.headingBuffer(len(heading) + 1)
+	if len(headingBuffer) < len(heading)+1 {
+		// src/boards.c:251-255: find_slot has already marked the slot taken;
+		// the C allocation-failure path reports the error without releasing it.
+		ch.SendMessage("The board is malfunctioning - sorry.\r\n")
+		return -1
+	}
+	copy(headingBuffer, heading)
+	heading = string(headingBuffer[:len(heading)])
 
 	// Bind this post to its writer (C desc->str, boards.c:268): appends,
 	// revisions and finalize resolve the writer's own slot, never "newest"

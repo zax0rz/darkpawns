@@ -1,0 +1,194 @@
+# depth-case: parser.worn.wand-action-self
+# depth-case: parser.worn.wand-default-self
+# depth-case: parser.worn.wand-action-target
+# depth-case: parser.worn.wand-default-target
+# depth-case: parser.worn.wand-object-action
+# depth-case: parser.worn.wand-object-default
+# depth-case: parser.worn.wand-no-target
+# depth-case: parser.worn.wand-empty-charges
+# depth-case: parser.worn.staff-action-description
+# depth-case: parser.worn.staff-default
+# depth-case: parser.worn.staff-caster-output
+# depth-case: parser.worn.staff-empty-charges
+# OEDIT sets the ruby gem and wand to harmless Create Water and adds the FINGER
+# wear bit to disposable staff/wand prototypes. That keeps the participants
+# visible for peer isolation while ordinary load/wear/use reaches
+# mag_objectmagic's worn branches. C sites: src/spell_parser.c:725-795.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8010 1 8105 80
+force-load 8010
+
+[setup:oracle]
+WornParser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WornParser
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Wornpeer]
+Wornpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Wornpeer]
+Wornpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Wornpeer 8105
+
+[probe]
+oedit 2117
+D
+19
+2
+2
+13
+7
+2
+0
+q
+y
+load obj 2117
+wear gem finger
+use gem Wornpeer
+~dpclock pulse 20
+use gem WornParser
+~dpclock pulse 20
+remove gem
+drop gem
+oedit 8053
+D
+12
+2
+2
+13
+7
+2
+0
+q
+y
+load obj 8053
+wear wand finger
+use wand
+use wand WornParser
+~dpclock pulse 20
+use wand Wornpeer
+~dpclock pulse 20
+use wand Wornpeer
+~dpclock pulse 20
+remove wand
+drop wand
+oedit 8053
+1
+defaultwand wand
+D
+12
+2
+2
+13
+q
+y
+load obj 8053
+wear defaultwand finger
+use defaultwand bread
+~dpclock pulse 20
+remove defaultwand
+drop defaultwand
+oedit 8053
+1
+actionwand wand
+4
+A shimmering current leaps from $p toward $P.
+@
+q
+y
+load obj 8053
+wear actionwand finger
+use actionwand bread
+~dpclock pulse 20
+remove actionwand
+drop actionwand
+oedit 20302
+7
+2
+0
+q
+y
+load obj 20302
+wear gong finger
+use gong bread
+~dpclock pulse 20
+remove gong
+oedit 8054
+7
+2
+0
+q
+y
+oedit 8054
+4
+A resounding note rolls from $p toward $P.
+@
+q
+y
+load obj 8054
+wear staff finger
+use staff bread
+~dpclock pulse 20
+use staff
+~dpclock pulse 20
+remove staff

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -75,9 +76,11 @@ func cmdQuaff(s *Session, args []string) error {
 	// Quaff message
 	s.Send(fmt.Sprintf("You quaff %s.", item.GetShortDesc()))
 	if item.Prototype != nil && item.Prototype.ActionDesc != "" {
-		broadcastToRoom(s, fmt.Sprintf("%s %s", s.player.Name, item.Prototype.ActionDesc))
+		game.Act(s.manager.world, false, s.player, nil, item, nil,
+			item.Prototype.ActionDesc, "", game.ToRoom)
 	} else {
-		broadcastToRoom(s, fmt.Sprintf("%s quaffs %s.", s.player.Name, item.GetShortDesc()))
+		game.Act(s.manager.world, true, s.player, nil, item, nil,
+			"$n quaffs $p.", "", game.ToRoom)
 	}
 
 	// C mag_objectmagic stalls the drinker for one combat round before the

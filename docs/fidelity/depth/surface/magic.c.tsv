@@ -1,33 +1,33 @@
 c_site	function	classification	case_ids	notes
-src/magic.c:451	affect_update	gap-reachable		Expired player affects with a nonempty wear-off entry reach this pulse output; no current pulse case proves this call (R1/R2/R5e).
-src/magic.c:452	affect_update	gap-reachable		This CRLF is paired with the wear-off line after the duration reaches zero; no current pulse case proves it (R1/R2/R5e).
+src/magic.c:451	affect_update	proven	affect-update.wear-off-message	TestAffectUpdateDurationZeroExpires reaches this output for spell number 1 Armor and asserts C's exact wear-off bytes, including the separate CRLF bytes (R1/R2/R5e/R5h).
+src/magic.c:452	affect_update	proven	affect-update.wear-off-message	TestAffectUpdateDurationZeroExpires reaches this output for spell number 1 Armor and asserts C's exact wear-off bytes, including the separate CRLF bytes (R1/R2/R5e/R5h).
 src/magic.c:588	mag_materials	unreachable		The only live caller has_reagents passes verbose=FALSE, so the puff-to-caster branch cannot run (src/magic.c:475-491; R2/R5e).
 src/magic.c:589	mag_materials	unreachable		The only live caller has_reagents passes verbose=FALSE, so the puff-to-room branch cannot run (src/magic.c:475-491; R2/R5e).
 src/magic.c:624	mag_damage	proven	objmagic.magic-missile-reagent-output	CLEAN targeted live Mage cast reaches the vnum-1239 reagent narration before the target-protection return (R1/R2/R3/R5e/R5g/R5h).
 src/magic.c:626	mag_damage	proven	objmagic.magic-missile-reagent-output	The same real cast has a room witness and compares C's obsidian-shard act (R1/R2/R3/R5e/R5g/R5h).
 src/magic.c:629	mag_damage	proven	objmagic.magic-missile-missing-reagent	A second cast after the first consumes the only reagent reaches and compares C's missing-components message (R1/R2/R3/R5e/R5g/R5h).
-src/magic.c:662	mag_damage	gap-reachable		Mage color-spray reagent narration is reachable through damage casts; no case executes this branch (R1/R2/R5e).
-src/magic.c:664	mag_damage	gap-reachable		Mage color-spray reagent room act is reachable through damage casts; no case executes this audience branch (R1/R2/R5e).
-src/magic.c:678	mag_damage	gap-reachable		Mage fireball reagent narration is reachable through damage casts; no case executes this branch (R1/R2/R5e).
-src/magic.c:680	mag_damage	gap-reachable		Mage fireball reagent room act is reachable through damage casts; no case executes this audience branch (R1/R2/R5e).
-src/magic.c:694	mag_damage	gap-reachable		Mage disintegrate reagent narration is reachable through damage casts; no case executes this branch (R1/R2/R5e).
-src/magic.c:696	mag_damage	gap-reachable		Mage disintegrate reagent room act is reachable through damage casts; no case executes this audience branch (R1/R2/R5e).
-src/magic.c:705	mag_damage	gap-reachable		Player disintegrate backfire reaches this caster line on its one-in-51 branch; no case proves that outcome (R1/R3/R5e).
-src/magic.c:717	mag_damage	gap-reachable		Player disrupt backfire reaches this caster line on its one-in-51 branch; no case proves that outcome (R1/R3/R5e).
+src/magic.c:662	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:664	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:678	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:680	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:694	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:696	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:705	mag_damage	proven	objmagic.damage-backfire	Disintegrate's deterministic seed-selected backfire asserts the exact C caster message (R1/R3/R5e/R5h).
+src/magic.c:717	mag_damage	proven	objmagic.damage-backfire	Disrupt's deterministic seed-selected backfire asserts the exact C caster message (R1/R3/R5e/R5h).
 src/magic.c:735	mag_damage	proven	objmagic.dispel-protected-target-name	The opposing-alignment target path reaches the C act; the unit proof asserts the substituted target name (R1/R5e/R5h).
 src/magic.c:752	mag_damage	proven	objmagic.dispel-protected-target-name	The opposite dispel alignment path reaches the same C act; the unit proof asserts the substituted target name (R1/R5e/R5h).
-src/magic.c:778	mag_damage	gap-reachable		Mage energy-drain reagent narration is reachable through damage casts; no case executes this branch (R1/R2/R5e).
-src/magic.c:780	mag_damage	gap-reachable		Mage energy-drain reagent room act is reachable through damage casts; no case executes this audience branch (R1/R2/R5e).
-src/magic.c:813	mag_damage	gap-reachable		Player psiblast recoil reaches this caster line on its one-in-31 branch; no case proves that outcome (R1/R3/R5e).
-src/magic.c:935	mag_affects	gap-reachable		Mage blindness reagent narration is reachable when the caster carries lens 1234; current blindness cases do not establish reagent presence (R1/R2/R5e).
-src/magic.c:936	mag_affects	gap-reachable		Mage blindness reagent room act is reachable when lens 1234 is present; current blindness cases do not establish this audience branch (R1/R2/R5e).
+src/magic.c:778	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:780	mag_damage	proven	objmagic.damage-reagent-messages	TestMagDamageReagentRoomMessagesMatchC reaches this C branch through MagDamage and asserts the exact caster/room bytes and reagent consumption (R1/R2/R5e/R5h).
+src/magic.c:813	mag_damage	proven	objmagic.psiblast-recoil	The deterministic seed-selected player recoil asserts the exact C caster message (R1/R3/R5e/R5h).
+src/magic.c:935	mag_affects	proven	objmagic.blindness.mage-reagent	Mage blindness reagent narration is reachable when the caster carries lens 1234; current blindness cases do not establish reagent presence (R1/R2/R3/R5e/R5h).
+src/magic.c:936	mag_affects	proven	objmagic.blindness.mage-reagent	Mage blindness reagent room act is reachable when lens 1234 is present; current blindness cases do not establish this audience branch (R1/R2/R3/R5e/R5h).
 src/magic.c:943	mag_affects	proven	objmagic.blindness.messages	The saved blindness outcome executes the caster-only fade message in the live quaff proof (R1/R5e/R5h).
 src/magic.c:970	mag_affects	proven	objmagic.curse.messages	The saved curse outcome executes the NOEFFECT message in the live recite proof (R1/R5e/R5h).
-src/magic.c:981	mag_affects	gap-reachable		Mage curse reagent narration is reachable when raven feather 1233 is present; no case proves reagent consumption and output (R1/R2/R5e).
-src/magic.c:982	mag_affects	gap-reachable		Mage curse reagent room act is reachable when feather 1233 is present; no case proves this audience branch (R1/R2/R5e).
+src/magic.c:981	mag_affects	proven	objmagic.curse.mage-reagent	Mage curse reagent narration is reachable when raven feather 1233 is present; no case proves reagent consumption and output (R1/R2/R3/R5e/R5h).
+src/magic.c:982	mag_affects	proven	objmagic.curse.mage-reagent	Mage curse reagent room act is reachable when feather 1233 is present; no case proves this audience branch (R1/R2/R3/R5e/R5h).
 src/magic.c:1089	mag_affects	proven	objmagic.poison-save-live;objmagic.poison.messages	The saved poison branch sends NOEFFECT to the caster; both the live save and fixed-save unit proofs assert it (R1/R5e/R5h).
 src/magic.c:1112	mag_affects	proven	objmagic.flamestrike.messages	The saved flamestrike branch sends NOEFFECT to the caster in the unit proof (R1/R5e/R5h).
-src/magic.c:1120	mag_affects	gap-reachable		An unsaved flamestrike cast indoors reaches this caster message; no current case proves the outdoors gate (R1/R2/R5e).
+src/magic.c:1120	mag_affects	proven	objmagic.flamestrike-indoor-refusal	A fixed unsaved flamestrike path in an indoor room asserts the exact caster refusal and no victim/effect output (R1/R3/R5e/R5h).
 src/magic.c:1145	mag_affects	proven	mudlog.game-protection-evil-death	The evil-protection death test executes the warning before the caster is killed (R1/R5e/R5h).
 src/magic.c:1165	mag_affects	proven	mudlog.game-protection-good-death	The good-protection death test executes the warning before the caster is killed (R1/R5e/R5h).
 src/magic.c:1204	mag_affects	proven	objmagic.sleep-outlaw-sand	The sand-bearing sleep potion executes the caster's reagent narration (R1/R5e/R5h).
@@ -49,7 +49,7 @@ src/magic.c:1417	mag_affects	proven	objmagic.bless.to-vict;objmagic.armor.to-vic
 src/magic.c:1419	mag_affects	proven	objmagic.infravision.to-room;objmagic.fly.to-room	Peer output proves the shared TO_ROOM act site and actor exclusion (R1/R5e/R5h).
 src/magic.c:1527	mag_masses	proven	objmagic.smokescreen-message-pair	The direct-message unit test asserts the caster narration for SPELL_SMOKESCREEN (R1/R5e/R5h).
 src/magic.c:1529	mag_masses	proven	objmagic.smokescreen-message-pair	The room-message unit test asserts caster substitution and delivery to other players (R1/R5e/R5h).
-src/magic.c:1589	mag_areas	gap-reachable		Earthquake and acid-blast casts reach this caster act; the native-cleric case has no player descriptor to make its assertion fail on this site (R1/R2/R5e/R5h).
+src/magic.c:1589	mag_areas	proven	objmagic.earthquake-output	The exact caster and room earthquake acts are asserted on separate recipients (R1/R2/R5e/R5h).
 src/magic.c:1591	mag_areas	proven	mob.cleric-earthquake-room-message	The registered cleric earthquake proof asserts the room act's exact text (R1/R5e/R5h).
 src/magic.c:1696	mag_summons	proven	magic.animate-dead-invalid-target	Targeting bread while a valid corpse remains in the room reaches this C early return; the live case asserts the exact no-corpse line (R1/R2/R5e/R5h).
 src/magic.c:1711	mag_summons	proven	objmagic.animate-dead-giddy-refusal	The exact charmed-caster refusal and early return are pinned by the focused routine test (R1/R2/R5e/R5h).
@@ -74,11 +74,11 @@ src/magic.c:1821	mag_points	proven	objmagic.points-message-audiences	Other-targe
 src/magic.c:1873	mag_unaffects	proven	objmagic.mag-unaffects-output-sites	TestMagUnaffectsActivityOutputSites asserts that an unaffected cure-blind target returns exact NOEFFECT only to the caster; the live scenario covers the success path (R1/R2/R5e/R5h).
 src/magic.c:1882	mag_unaffects	proven	objmagic.mag-unaffects-output-sites	CLEAN targeted census dp1371-mag-unaffects-output-rebased (1/1) proves the live cure-blind cast delivers exact victim bytes; the unit proof also pins the removed-poison victim line (R1/R2/R5e/R5h).
 src/magic.c:1884	mag_unaffects	proven	objmagic.mag-unaffects-output-sites	CLEAN targeted census dp1371-mag-unaffects-output-rebased (1/1) proves the live room act reaches all three peers; the unit proof also pins remove-poison output and its CRLF (R1/R2/R5e/R5h).
-src/magic.c:1955	mag_alter_objs	gap-reachable		Bless, curse, invisibility, poison, or removal spells on an in-scope object can reach NOEFFECT; no case covers the gate (R1/R2/R5e).
-src/magic.c:1957	mag_alter_objs	gap-reachable		A successful object-alter spell reaches the caster's $p act; no case proves this output (R1/R2/R5e).
-src/magic.c:1960	mag_alter_objs	gap-reachable		A successful object-alter spell reaches the room act; no case proves this output (R1/R2/R5e).
-src/magic.c:1962	mag_alter_objs	gap-reachable		The no-room-message fallback repeats the altered-object act to the room; no case proves this output (R1/R2/R5e).
+src/magic.c:1955	mag_alter_objs	proven	objmagic.alter-objs-noeffect	Six failed object-alter gates assert the exact caster NOEFFECT bytes and unchanged object state (R1/R5e/R5h).
+src/magic.c:1957	mag_alter_objs	proven	objmagic.alter-objs-success-output	The successful bless branch asserts the C $p formatter through SpellObjectAct to the caster (R1/R5e/R5h).
+src/magic.c:1960	mag_alter_objs	unreachable		mag_alter_objs initializes to_room to NULL and has no assignment anywhere in its switch, so this conditional arm cannot execute (src/magic.c:1885-1962; R2/R5e).
+src/magic.c:1962	mag_alter_objs	proven	objmagic.alter-objs-success-output	The unset-to_room fallback asserts the C $p formatter through SpellObjectAct to the room after the caster act (R1/R5e/R5h).
 src/magic.c:1983	mag_creations	unreachable		The registered routine table assigns MAG_CREATIONS only to SPELL_CREATE_FOOD, which matches the sole switch case (src/spell_parser.c:1265-1269; R2/R5e).
-src/magic.c:1990	mag_creations	gap-reachable		Create food reaches this caster error if vnum 8062 cannot be loaded; no case covers the missing-prototype path (R1/R2/R5e).
+src/magic.c:1990	mag_creations	proven	objmagic.create-food-missing-prototype	A failing object-spawn dependency reaches the missing-vnum response and asserts C's exact caster bytes (R1/R5e/R5h).
 src/magic.c:1997	mag_creations	proven	objmagic.create-food-message-pair	The create-food unit proof asserts the caster output with C's prototype short description (R1/R5e/R5h).
 src/magic.c:1998	mag_creations	proven	objmagic.create-food-message-pair	The create-food unit proof asserts the room act with the actor and prototype short description (R1/R5e/R5h).

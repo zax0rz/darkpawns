@@ -1,0 +1,2 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+AffectUpdate	affect-expiry	affect-update.wear-off-message	D3	shared	unit-green	TestAffectUpdateDurationZeroExpires	magic.c:441-455	A real spell-number 1 Armor affect expires through World.AffectUpdate and asserts the C literal plus CRLF before removal; spell number 0 remains silent as C requires (R1/R2/R5e/R5h).

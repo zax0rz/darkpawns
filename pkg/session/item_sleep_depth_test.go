@@ -99,9 +99,9 @@ func TestItemSleepEntryDepth(t *testing.T) {
 						if got := messages["Drinker"]; got != want {
 							t.Fatalf("self bytes=%q want %q", got, want)
 						}
-						wantObserver := ""
+						wantObserver := "Drinker quaffs a sleeping potion.\r\n"
 						if sand {
-							wantObserver = "Drinker pulls a bit of sand out of a pocket and casts it about the room.\r\n"
+							wantObserver += "Drinker pulls a bit of sand out of a pocket and casts it about the room.\r\n"
 						}
 						if slept {
 							wantObserver += "Drinker goes to sleep.\r\n"
