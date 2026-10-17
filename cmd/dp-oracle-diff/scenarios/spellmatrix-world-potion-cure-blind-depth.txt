@@ -1,0 +1,94 @@
+# depth-case: spell.cure-blind.matrix-potion
+# A registered Mage cast blinds the connected quaffer, then world potion 16139
+# reaches three ordered Cure Blind calls through CAST_POTION. The exits probe
+# exposes the blindness state before and after quaffing.
+# C paths: src/spell_parser.c:963-1110,699-718; src/magic.c:863-965,1834-1884;
+# src/act.other.c:897-924.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 161.obj
+set-room-flag 8162 4 off
+spawn-obj 16139 99 8162 100
+force-load 16139
+
+[setup:oracle]
+PotionBlinder
+Y
+blinder1
+blinder1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PotionBlinder
+y
+blinder1
+blinder1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+PotionQuaffer
+Y
+potquaf1
+potquaf1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+PotionQuaffer
+y
+potquaf1
+potquaf1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport PotionQuaffer 8162
+send:victim get flask
+set player PotionBlinder class mage
+skillset PotionBlinder 'blindness' 100
+set player PotionBlinder maxmana 5000
+set player PotionBlinder mana 5000
+set player PotionQuaffer level 0
+
+[probe]
+cast 'blindness' PotionQuaffer
+~dpclock pulse 20
+cast 'blindness' PotionQuaffer
+~dpclock pulse 20
+cast 'blindness' PotionQuaffer
+~dpclock pulse 20
+send:victim exits
+send:victim quaff flask
+~dpclock pulse 20
+~dpclock pulse 20
+send:victim exits

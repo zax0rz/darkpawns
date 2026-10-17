@@ -140,6 +140,27 @@ func TestE2AttrAffectBoundaries(t *testing.T) {
 	}
 }
 
+func TestPlayerJoinAffectUsesNewestMatchingRecord(t *testing.T) {
+	p := NewPlayer(1, "Affectjoin", 1001)
+	older := engine.NewAffectDirect(20, engine.ApplyNone, 5, 0, engine.AFFDetectMagic, "detect magic")
+	newer := engine.NewAffectDirect(20, engine.ApplyNone, 7, 0, engine.AFFDetectMagic, "detect magic")
+	p.AddAffect(older)
+	p.AddAffect(newer)
+
+	joined := engine.NewAffectDirect(20, engine.ApplyNone, 3, 0, engine.AFFDetectMagic, "detect magic")
+	p.JoinAffect(joined, true, false)
+
+	if got := len(p.ActiveAffects); got != 2 {
+		t.Fatalf("joined affect count = %d, want 2", got)
+	}
+	if p.ActiveAffects[0] != older || p.ActiveAffects[1] != joined {
+		t.Fatalf("JoinAffect did not replace the newest matching node: %#v", p.ActiveAffects)
+	}
+	if got, want := joined.Duration, 10; got != want {
+		t.Fatalf("joined duration = %d, want %d from C's newest matching record", got, want)
+	}
+}
+
 // src/tattoo.c:104-195 and act.wizard.c:3027-3030: remove old before
 // assigning new, add new, then total. The direct tattoo pass is unbounded.
 func TestE2AttrTattooReplacement(t *testing.T) {

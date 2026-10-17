@@ -1,0 +1,92 @@
+# depth-case: spell.fly.matrix-potion
+# depth-case: spell.waterbreathe.matrix-potion
+# depth-case: spell.waterwalk.matrix-potion
+# World potion 21210 carries Fly by itself; world potion 15825 carries
+# Waterbreathe then Waterwalk. Each registered quaff reaches its actual
+# CAST_POTION slot and preserves the effect messages and state.
+# C paths: src/act.other.c:897-924; src/spell_parser.c:699-718;
+# src/magic.c:1064-1069,1132-1139,1273-1290.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 158.obj
+add-obj-index 212.obj
+set-room-flag 8162 4 off
+spawn-obj 21210 99 8162 80
+force-load 21210
+spawn-obj 15825 99 8162 80
+force-load 15825
+
+[setup:oracle]
+MoveQuaf
+Y
+movequaf1
+movequaf1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MoveQuaf
+y
+movequaf1
+movequaf1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+MoveWit
+Y
+movewit1
+movewit1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+MoveWit
+y
+movewit1
+movewit1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport MoveWit 8162
+
+[probe]
+get elixir
+quaff elixir
+~dpclock pulse 20
+~dpclock pulse 20
+score
+get potion
+quaff potion
+~dpclock pulse 20
+~dpclock pulse 20
+score

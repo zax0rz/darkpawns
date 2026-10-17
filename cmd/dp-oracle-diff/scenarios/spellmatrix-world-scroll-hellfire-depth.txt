@@ -1,0 +1,56 @@
+# depth-case: spell.hellfire.matrix-scroll
+# Indexed world scroll 20011 reaches the manual Hellfire routine at item level
+# 30. C's mag_areas arm returns before damage; spell_hellfire still runs its
+# caster-side room effect when no other targets are present.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698,518,1341;
+# src/act.other.c:897-924; src/spell_parser.c:660-698;
+# src/magic.c:1583; src/spells.c:701-755; src/class.c:792.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+add-obj-index 200.obj
+spawn-obj 20011 99 8162 100
+force-load 20011
+
+[setup:oracle]
+HellReader
+Y
+hellread1
+hellread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HellReader
+y
+hellread1
+hellread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player HellReader class mage
+set player HellReader level 30
+
+[probe]
+get vellum
+recite vellum
+~dpclock pulse 20
+~dpclock pulse 20
+score

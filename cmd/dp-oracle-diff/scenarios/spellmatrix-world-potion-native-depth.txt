@@ -1,0 +1,202 @@
+# depth-case: spell.lycanthropy.matrix-potion
+# depth-case: spell.detect-magic.matrix-potion
+# depth-case: spell.invisibility.matrix-potion
+# depth-case: spell.vampirism.matrix-potion
+# depth-case: spell.sobriety.matrix-potion
+# World prototypes exercise their actual potion slot through CAST_POTION,
+# including a single-slot effect and the repeated sobriety slot.
+# C paths: src/act.other.c:897-924; src/spell_parser.c:515-517,699-718;
+# src/magic.c:1024-1031,1072-1089; src/spells.c:662-681,688-693,766-787.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 0.obj
+add-obj-index 49.obj
+add-obj-index 161.obj
+add-obj-index 197.obj
+add-obj-index 27.obj
+set-room-flag 8162 4 off
+spawn-obj 70 99 8162 0
+force-load 70
+spawn-obj 4909 99 8162 100
+force-load 4909
+spawn-obj 16136 99 8162 100
+force-load 16136
+spawn-obj 19732 99 8162 100
+force-load 19732
+spawn-obj 2713 99 8162 27
+force-load 2713
+
+[setup:oracle]
+LycanDrink
+Y
+lycan1
+lycan1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+LycanDrink
+y
+lycan1
+lycan1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+DetectDrink
+Y
+detect1
+detect1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+DetectDrink
+y
+detect1
+detect1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+InvisDrink
+Y
+invis1
+invis1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+InvisDrink
+y
+invis1
+invis1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:god]
+VampDrink
+Y
+vampdrink1
+vampdrink1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:god]
+VampDrink
+y
+vampdrink1
+vampdrink1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+SoberDrink
+Y
+sober1
+sober1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+SoberDrink
+y
+sober1
+sober1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport DetectDrink 8162
+teleport InvisDrink 8162
+teleport VampDrink 8162
+teleport SoberDrink 8162
+get lycanthropy
+send:victim get greenish
+send:peer get bubbly
+send:god get vial
+send:observer get flask
+set SoberDrink drunk 24
+
+[probe]
+quaff lycanthropy
+~dpclock pulse 20
+score
+send:victim quaff greenish
+~dpclock pulse 20
+send:victim score
+send:peer quaff bubbly
+~dpclock pulse 20
+send:peer score
+send:god quaff vial
+~dpclock pulse 20
+send:god score
+send:observer say the black moon shines over the hills
+send:observer quaff flask
+~dpclock pulse 20
+send:observer say the black moon shines over the hills
+send:observer score

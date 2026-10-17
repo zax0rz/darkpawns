@@ -1,4 +1,6 @@
 # depth-case: objmagic.curse.messages
+# depth-case: spell.curse.matrix-scroll
+# depth-case: spell.word-of-recall.matrix-scroll
 # The curse arm of mag_affects (magic.c:967-1002) live, via the add-obj-index
 # fixture: scroll 5804 (vals 16/17/42 — curse then word of recall) lives in
 # 58.obj, which the shipped obj index omits on BOTH trees. With the file

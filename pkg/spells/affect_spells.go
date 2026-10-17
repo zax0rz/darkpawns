@@ -434,11 +434,23 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		return
 	}
 
-	for _, a := range pending {
+	apply := func(a *engine.Affect) {
+		// C magic.c:1410-1412 sends every populated affect record through
+		// affect_join, even when both accumulation flags are false. Spells
+		// with accum_duration or accum_affect therefore merge an existing
+		// matching (spell, APPLY location) record instead of appending a
+		// duplicate affect node.
+		if accumDur || accumAff {
+			joinAffect(victim, a, accumDur, accumAff)
+			return
+		}
 		applyAffect(victim, a)
 	}
+	for _, a := range pending {
+		apply(a)
+	}
 	if aff != nil {
-		applyAffect(victim, aff)
+		apply(aff)
 	}
 
 	// C magic.c:1414-1421 — send block. to_self goes to the caster only when

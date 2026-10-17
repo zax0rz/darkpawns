@@ -497,6 +497,24 @@ func TestCmdScoreSpellAffectsUseCNewestFirstTwoColumnLayout(t *testing.T) {
 	}
 }
 
+func TestCmdScoreActiveAffectFilterUsesCBitPositions(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scoreaffectbits", 1001, true)
+	s.player.AddAffect(engine.NewAffectDirect(spells.SpellProtFromEvil, game.ApplyNone, 24, 0, engine.AFFProtectionEvil, "protection from evil"))
+	s.player.AddAffect(engine.NewAffectDirect(138, game.ApplyNone, 6, 0, engine.AFFSneak, "sneak"))
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	got := readSessionText(t, s)
+	if !strings.Contains(got, "     protection from evil") {
+		t.Fatalf("score omitted active protection-from-evil affect whose engine bit aliases C AFF_SNEAK: %q", got)
+	}
+	if strings.Contains(got, "     sneak") {
+		t.Fatalf("score included active sneak affect that C excludes from the spell list: %q", got)
+	}
+}
+
 func TestFleshAlterWeaponMatchesCLevelBands(t *testing.T) {
 	for _, tc := range []struct {
 		level int

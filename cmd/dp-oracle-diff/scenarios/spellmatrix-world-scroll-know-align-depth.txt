@@ -1,0 +1,56 @@
+# depth-case: spell.know-align.matrix-scroll
+# Indexed world tome 4819 is an ITEM_SCROLL with Know Align in its third slot.
+# The two preceding object spells are no-ops without an object target; Know
+# Align still reaches its self-targeted CAST_SCROLL affect branch.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698;
+# src/magic.c:1004-1013,1412; src/act.informative.c:1391-1412.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 48.obj
+spawn-obj 4819 99 8162 100
+force-load 4819
+
+[setup:oracle]
+ScrollReader
+Y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ScrollReader
+y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player ScrollReader class mage
+set player ScrollReader level 30
+set player ScrollReader maxmana 5000
+set player ScrollReader mana 5000
+
+[probe]
+get tome
+recite tome
+~dpclock pulse 20
+~dpclock pulse 20
+score
