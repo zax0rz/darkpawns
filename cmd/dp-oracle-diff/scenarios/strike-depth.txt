@@ -8,6 +8,7 @@
 # depth-case: strike.miss
 # depth-case: strike.no-target
 # depth-case: strike.self
+# depth-case: fightmsg.155.record-1
 
 [fixture]
 empty-players

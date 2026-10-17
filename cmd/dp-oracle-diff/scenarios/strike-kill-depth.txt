@@ -7,6 +7,8 @@
 #
 # depth-case: strike.killing-blow
 
+# depth-case: fightmsg.155.record-1
+
 [fixture]
 empty-players
 quiet-mobs
