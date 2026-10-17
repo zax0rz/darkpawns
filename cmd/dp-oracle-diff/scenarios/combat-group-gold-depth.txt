@@ -1,0 +1,96 @@
+# depth-case: death.group-autosplit-remainder
+# C group_gain() pays each member the truncated share, then pays the actor any
+# odd remainder separately. A real combat kill with 101 coins reaches both
+# output lines and the room announcement.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Qsayactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qsayactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Qsaypart
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Qsaypart
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Qsaypart 8105
+send:peer follow Qsayactor
+group all
+auto gold
+auto split
+set mob trainee hit 1
+set mob trainee gold 101
+set Qsayactor gold 0
+set Qsaypart gold 0
+set Qsayactor level 10
+
+[probe]
+group
+hit trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+look
+gold
+
+send:peer gold

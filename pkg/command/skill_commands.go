@@ -1559,6 +1559,8 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			applyDamage(target, func() bool { return s.GetWorld().DoTigerPunchDamage(ch, target, result.Damage) })
 		case result.DamageSkill == game.SkillStrike:
 			applyDamage(target, func() bool { return s.GetWorld().DoStrikeDamage(ch, target, result.Damage) })
+		case result.DamageSkill == game.SkillCutthroat:
+			applyDamage(target, func() bool { return s.GetWorld().DoCutthroatDamage(ch, target, result.Damage) })
 		case result.DamageSkill == game.SkillDragonKick:
 			applyDamage(target, func() bool { return s.GetWorld().DoDragonKickDamage(ch, target, result.Damage) })
 		}

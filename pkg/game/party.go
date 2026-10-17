@@ -141,9 +141,12 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 // If victimGold > 0 and the killer has AutoGold enabled, gold is looted/split
 // according to the autosplit preference.
 // Source: fight.c group_gain() lines 708–745, called at die_with_killer() line 1638
-func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGold int, victimLevel int, victimAlign int) {
-	killerName := killer.GetName()
+func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp int, victimGold int, victimLevel int, victimAlign int) {
 	killerRoom := killer.GetRoom()
+	victimName := ""
+	if victim != nil {
+		victimName = victim.GetName()
+	}
 
 	// Look up the killer as a Player for preference flags
 	kp, isPlayer := combatPlayer(killer)
@@ -159,7 +162,11 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 				// Autosplit path — fight.c lines 756-830
 				// Announce the loot to killer
 				kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
-					goldLooted, killerName))
+					goldLooted, victimName))
+				if victim != nil {
+					Act(w, false, kp, nil, nil, nil,
+						fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
+				}
 
 				// Get group members in the room
 				members := w.combatGroupMembers(killer)
@@ -198,15 +205,21 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 						}
 					}
 
-					// Killer keeps the remainder
-					if remaining > 0 {
-						kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", remaining))
+					if goldPerMember > 0 {
+						kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", goldPerMember))
 						// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
+						kp.mu.Lock()
+						kp.Gold += goldPerMember
+						kp.mu.Unlock()
+						remaining -= goldPerMember
+					} else {
+						kp.SendMessage("When you split no gold, you got none.\r\n")
+					}
+					if remaining > 0 {
+						kp.SendMessage(fmt.Sprintf("You keep %d gold leftover.\r\n", remaining))
 						kp.mu.Lock()
 						kp.Gold += remaining
 						kp.mu.Unlock()
-					} else {
-						kp.SendMessage("When you split no gold, you got none.\r\n")
 					}
 				} else {
 					// Solo kill with autogold+autosplit but no group — just take all
@@ -217,12 +230,17 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 					kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
 				}
 			} else {
-				// AutoGold without AutoSplit — just loot
+				// AutoGold without AutoSplit — fight.c:835-845 also notifies the room.
+				kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
+					goldLooted, victimName))
+				if victim != nil {
+					Act(w, false, kp, nil, nil, nil,
+						fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
+				}
 				// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
 				kp.mu.Lock()
 				kp.Gold += goldLooted
 				kp.mu.Unlock()
-				kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
 			}
 		}
 	}
@@ -284,12 +302,14 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victimExp int, victimGol
 	// perform_group_gain() for each member — fight.c lines 688–705
 	for _, m := range inRoom {
 		xp := combat.CalcXPShare(m.GetLevel(), victimLevel, base, true, maxExpGain)
-		w.GainExp(m, xp)
 		if xp > 1 {
 			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", xp))
 		} else {
 			m.SendMessage("You receive your share of experience -- one measly little point!\r\n")
 		}
+		// C perform_group_gain emits the share before gain_exp can announce a
+		// level transition (src/fight.c:688-705).
+		w.GainExp(m, xp)
 		// Alignment shift for every group member — fight.c:704 change_alignment(ch, victim).
 		changeAlignment(m, victimAlign)
 	}

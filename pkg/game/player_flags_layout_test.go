@@ -61,6 +61,22 @@ func TestPLRAccessorsShareOneStore(t *testing.T) {
 	}
 }
 
+func TestAutoGoldAndSplitFlagsStaySyncedWithCombatPreferences(t *testing.T) {
+	p := NewPlayer(1, "AutoPlayer", 1001)
+
+	p.SetPlrFlag(PrfAutoGold, true)
+	p.SetPlrFlag(PrfAutoSplit, true)
+	if !p.AutoGold || !p.AutoSplit {
+		t.Fatalf("enabled preferences did not reach combat state: autogold=%t autosplit=%t", p.AutoGold, p.AutoSplit)
+	}
+
+	p.SetPlrFlag(PrfAutoGold, false)
+	p.SetPlrFlag(PrfAutoSplit, false)
+	if p.AutoGold || p.AutoSplit {
+		t.Fatalf("disabled preferences remain in combat state: autogold=%t autosplit=%t", p.AutoGold, p.AutoSplit)
+	}
+}
+
 // TestMigrateFlagsV1: an old save's preferences land on the new bits, and
 // its PLR bits are untouched.
 func TestMigrateFlagsV1(t *testing.T) {

@@ -304,7 +304,8 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		// Award XP, gold, and alignment shift to killer and party members.
 		// fight.c group_gain() lines 708-830; change_alignment at line 704.
 		if killer != nil {
-			w.AwardMobKillXP(killer, mobExp, mobGold, mobLevel, victimAlign)
+			victimActor, _ := victim.(Actor)
+			w.AwardMobKillXP(killer, victimActor, mobExp, mobGold, mobLevel, victimAlign)
 			if kp, ok := killer.(*Player); ok && kp.AutoGold && mobGold != 0 && len(w.GetGroupMembers(killerName)) == 0 {
 				if mob, ok := victim.(*MobInstance); ok {
 					Act(w, false, kp, mob, nil, nil, "$n loots some gold from the corpse of $N.", "", ToRoom)
@@ -1253,7 +1254,7 @@ func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipm
 //	roll 3: +1 hit, +1 move           (case 3→default, no mana)
 func (w *World) counter_procs(ch *Player, kills int) {
 	if counterProcsBoostMilestones[kills] {
-		ch.SendMessage("The gods reward your many victories!\r\n")
+		ch.SendMessage("The gods reward your many victories!\n\r")
 		// Faithful C fall-through: case 3 → default always fires (+1 move,
 		// +1 hit); case 2 adds +1 mana; case 1 adds another +1 hit.
 		// #nosec G404 — game RNG, not cryptographic
@@ -1270,7 +1271,7 @@ func (w *World) counter_procs(ch *Player, kills int) {
 		ch.Health = ch.MaxHealth // C: GET_HIT(ch)=GET_MAX_HIT(ch)
 		ch.Unlock()
 	} else if counterProcsHealMilestones[kills] {
-		ch.SendMessage("The gods reward your glory in battle!\r\n")
+		ch.SendMessage("The gods reward your glory in battle!\n\r")
 		ch.SetHP(ch.GetMaxHP()) // heal to full
 	} else {
 		return // not a milestone

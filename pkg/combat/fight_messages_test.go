@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"strings"
 	"testing"
+	"unicode"
 )
 
 func TestParseFightMessages(t *testing.T) {
@@ -245,4 +248,137 @@ func TestDamMessage_OutOfBoundsAttackType(t *testing.T) {
 			t.Errorf("DamMessage(10, attackType=%d) = %q, want %q", invalidType, attackerMessage, want)
 		}
 	}
+}
+
+func TestFightMessageCorpusAllVariantOutcomesThroughSkillMessageDispatch(t *testing.T) {
+	originalCallbacks := GetCallbacks()
+	defer SetCallbacks(originalCallbacks)
+
+	messages, err := LoadEmbeddedFightMessages()
+	if err != nil {
+		t.Fatalf("load embedded C fight messages: %v", err)
+	}
+
+	type emitted struct {
+		attacker []string
+		victim   []string
+		room     []string
+	}
+	var got emitted
+	cb := &GameCallbacks{
+		Broadcast: func(_ int, message string, _ []Combatant) {
+			got.room = append(got.room, message)
+		},
+		SendToChar: func(body Combatant, message string) {
+			switch body.GetName() {
+			case "Attacker":
+				got.attacker = append(got.attacker, message)
+			case "Victim":
+				got.victim = append(got.victim, message)
+			}
+		},
+		GetSex: func(body Combatant) int {
+			if body.GetName() == "Victim" {
+				return 1
+			}
+			return 0
+		},
+		GetHP: func(body Combatant) int {
+			if body.GetName() == "Victim" {
+				return -11
+			}
+			return 10
+		},
+		GetLevel: func(body Combatant) int {
+			if body.GetName() == "Victim" {
+				return LVL_IMMORT
+			}
+			return 1
+		},
+		IsNPC:         func(Combatant) bool { return false },
+		GetColorLevel: func(Combatant) int { return 0 },
+		GetWeaponDescription: func(Combatant) string {
+			return "a steel sword"
+		},
+	}
+	SetCallbacks(cb)
+	InitFightMessages(cb, messages)
+
+	attacker := testCombatBody("Attacker")
+	victim := testCombatBody("Victim")
+	attackTypes := make([]int, 0, len(messages))
+	for attackType := range messages {
+		attackTypes = append(attackTypes, attackType)
+	}
+	sort.Ints(attackTypes)
+	totalVariants := 0
+	for _, attackType := range attackTypes {
+		variants := messages[attackType]
+		for variantIndex, variant := range variants {
+			totalVariants++
+			for _, outcome := range []struct {
+				name   string
+				dam    int
+				hp     int
+				god    bool
+				action FightMessageAction
+			}{
+				{name: "death", dam: 1, hp: -11, action: variant.Die},
+				{name: "miss", dam: 0, hp: 10, action: variant.Miss},
+				{name: "hit", dam: 1, hp: 10, action: variant.Hit},
+				{name: "god", dam: 0, hp: 10, god: true, action: variant.God},
+			} {
+				t.Run(fmt.Sprintf("attack-%03d/variant-%02d/%s", attackType, variantIndex+1, outcome.name), func(t *testing.T) {
+					got = emitted{}
+					cb.GetHP = func(body Combatant) int {
+						if body.GetName() == "Victim" {
+							return outcome.hp
+						}
+						return 10
+					}
+					cb.GetLevel = func(body Combatant) int {
+						if body.GetName() == "Victim" && outcome.god {
+							return LVL_IMMORT
+						}
+						return 1
+					}
+					WithRoller(NewScriptedRoller([]int{variantIndex + 1}), func() {
+						if !cb.SkillMessage(outcome.dam, attacker, victim, attackType, 100) {
+							t.Fatalf("SkillMessage did not handle loaded attack type %d", attackType)
+						}
+					})
+
+					want := emitted{
+						attacker: expectedFightAudience(outcome.action.Attacker),
+						victim:   expectedFightAudience(outcome.action.Victim),
+						room:     expectedFightAudience(outcome.action.Room),
+					}
+					if !reflect.DeepEqual(got, want) {
+						t.Fatalf("attack type %d variant %d %s audiences = %#v, want %#v", attackType, variantIndex+1, outcome.name, got, want)
+					}
+				})
+			}
+		}
+	}
+	if totalVariants != 83 {
+		t.Fatalf("C skill-message records = %d, want 83 (including the whitespace-padded M record)", totalVariants)
+	}
+}
+
+func expectedFightAudience(message string) []string {
+	if message == "" {
+		return nil
+	}
+	rendered := strings.NewReplacer(
+		"$n", "Attacker", "$N", "Victim",
+		"$e", "he", "$E", "she",
+		"$s", "his", "$S", "her",
+		"$m", "him", "$M", "her",
+		"$p", "a steel sword", "#w", "", "#W", "",
+	).Replace(message)
+	runes := []rune(rendered)
+	if len(runes) != 0 {
+		runes[0] = unicode.ToUpper(runes[0])
+	}
+	return []string{string(runes)}
 }

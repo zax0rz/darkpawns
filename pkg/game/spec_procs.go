@@ -1049,14 +1049,12 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str
 		Act(w, true, me, nil, nil, nil, "$n looks at you.", "", ToRoom)
 		Act(w, true, me, nil, nil, nil, "$n growls, 'So, you have found my lair...'", "", ToRoom)
 		Act(w, true, me, nil, nil, nil, "$n exclaims, 'For that you must die!'", "", ToRoom)
-		// raw_kill() leaves the extracted player in the room until the next
-		// heartbeat, but damage() rejects a POS_DEAD/PLR_EXTRACT target. Keep
-		// the dragon's authored greeting visible to other room occupants while
-		// avoiding a second breath message for the already-dead player.
-		extracted := victim.GetFlags()&(1<<uint(PlrExtract)) != 0
-		if victim.GetPosition() != combat.PosDead && !extracted {
-			spells.CallMagic(me, victim, nil, spell, me.GetLevel(), spells.CastBreath, w)
-		}
+		// C still calls mag_areas when its selected room victim is dead or
+		// pending extraction. mag_damage consumes the saving throw before
+		// damage() rejects that victim (src/magic.c:1611-1615, 825-827;
+		// src/fight.c:1318-1325). Keep that draw even though no second breath
+		// message or damage reaches the dead player.
+		spells.CallMagic(me, victim, nil, spell, me.GetLevel(), spells.CastBreath, w)
 		return true
 	}
 	return false

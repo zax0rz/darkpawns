@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -69,7 +70,7 @@ func TestAwardMobKillXPUsesGainExpCap(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 250000, 0, 10, 0)
+	w.AwardMobKillXP(killer, nil, 250000, 0, 10, 0)
 
 	if got := killer.GetExp(); got != maxExpGain {
 		t.Fatalf("kill XP = %d, want %d cap from src/limits.c gain_exp", got, maxExpGain)
@@ -85,7 +86,7 @@ func TestAwardMobKillXPCanAdvanceOneLevel(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 200000, 0, 10, 0)
+	w.AwardMobKillXP(killer, nil, 200000, 0, 10, 0)
 
 	if got := killer.GetLevel(); got != 11 {
 		t.Fatalf("level after kill XP = %d, want 11 via src/limits.c gain_exp", got)
@@ -166,7 +167,7 @@ func TestAwardMobKillXPDoesNotGrantFightUpBonus(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 1000, 0, 20, 0)
+	w.AwardMobKillXP(killer, nil, 1000, 0, 20, 0)
 
 	if got := killer.GetExp(); got != 1000 {
 		t.Fatalf("kill XP against higher-level victim = %d, want 1000 with no C fight-up bonus", got)
@@ -182,7 +183,7 @@ func TestAwardMobKillXPSoloHigherLevelSlack(t *testing.T) {
 		t.Fatalf("AddPlayer failed: %v", err)
 	}
 
-	w.AwardMobKillXP(killer, 1000, 0, 10, 0)
+	w.AwardMobKillXP(killer, nil, 1000, 0, 10, 0)
 
 	if got := killer.GetExp(); got != 1000 {
 		t.Fatalf("solo kill XP = %d, want 1000 because C applies two-level solo slack", got)
@@ -207,14 +208,127 @@ func TestAwardMobKillXPGroupHigherLevelPenalty(t *testing.T) {
 	if err := w.AddPlayer(follower); err != nil {
 		t.Fatalf("AddPlayer follower failed: %v", err)
 	}
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
 
-	w.AwardMobKillXP(leader, 2000, 0, 10, 0)
+	w.AwardMobKillXP(leader, nil, 2000, 0, 10, 0)
 
 	if got := leader.GetExp(); got != 693 {
 		t.Fatalf("leader grouped kill XP = %d, want 693", got)
 	}
 	if got := follower.GetExp(); got != 693 {
 		t.Fatalf("follower grouped kill XP = %d, want 693", got)
+	}
+	for _, name := range []string{leader.Name, follower.Name} {
+		if !strings.Contains(output[name], "You receive your share of experience -- 693 points.\r\n") {
+			t.Errorf("%s output = %q, missing exact numeric group XP line", name, output[name])
+		}
+	}
+}
+
+func TestAwardMobKillXPSplitsOddGoldRemainderSeparately(t *testing.T) {
+	w, leader, victim := newDeathOrderWorld(t, 10, 100)
+	leader.SetInGroup(true)
+	leader.AutoGold = true
+	leader.AutoSplit = true
+	follower := NewPlayer(2, "Follower", 1001)
+	follower.SetFollowing(leader.Name)
+	follower.SetInGroup(true)
+	if err := w.AddPlayer(follower); err != nil {
+		t.Fatalf("AddPlayer follower: %v", err)
+	}
+	victim.SetGold(101)
+
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
+	w.AwardMobKillXP(leader, victim, 0, 101, victim.GetLevel(), 0)
+	for _, name := range []string{leader.Name, follower.Name} {
+		if !strings.Contains(output[name], "You receive your share of experience -- one measly little point!\r\n") {
+			t.Errorf("%s output = %q, missing exact one-point group XP line", name, output[name])
+		}
+	}
+
+	if got := leader.GetGold(); got != 51 {
+		t.Errorf("leader gold = %d, want 51", got)
+	}
+	if got := follower.GetGold(); got != 50 {
+		t.Errorf("follower gold = %d, want 50", got)
+	}
+	for _, want := range []string{
+		"You loot 101 coins from the corpse of a victim.\r\n",
+		"You split the gold and keep 50 for yourself.\r\n",
+		"You keep 1 gold leftover.\r\n",
+	} {
+		if !strings.Contains(output[leader.Name], want) {
+			t.Errorf("leader output %q does not contain %q", output[leader.Name], want)
+		}
+	}
+	if strings.Contains(output[leader.Name], "You split the gold and keep 51 for yourself.") {
+		t.Errorf("leader output combined the equal share and remainder: %q", output[leader.Name])
+	}
+	roomLoot := "Killer loots some gold from the corpse of a victim.\r\n"
+	followerShare := "Killer splits some gold with you, you get 50.\r\n"
+	if !strings.Contains(output[follower.Name], roomLoot) || !strings.Contains(output[follower.Name], followerShare) {
+		t.Errorf("follower output = %q, want room loot and 50-gold receipt", output[follower.Name])
+	}
+	if strings.Index(output[follower.Name], roomLoot) > strings.Index(output[follower.Name], followerShare) {
+		t.Errorf("follower received gold before the corpse-loot room act: %q", output[follower.Name])
+	}
+}
+
+func TestAwardMobKillXPGroupGoldZeroShareMessages(t *testing.T) {
+	w, leader, victim := newDeathOrderWorld(t, 10, 100)
+	leader.SetInGroup(true)
+	leader.AutoGold = true
+	leader.AutoSplit = true
+	followers := []*Player{NewPlayer(2, "FollowerOne", 1001), NewPlayer(3, "FollowerTwo", 1001)}
+	for _, follower := range followers {
+		follower.SetFollowing(leader.Name)
+		follower.SetInGroup(true)
+		if err := w.AddPlayer(follower); err != nil {
+			t.Fatalf("AddPlayer follower: %v", err)
+		}
+	}
+	victim.SetGold(1)
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
+
+	w.AwardMobKillXP(leader, victim, 0, 1, victim.GetLevel(), 0)
+
+	if !strings.Contains(output[leader.Name], "When you split no gold, you got none.\r\n") {
+		t.Errorf("leader output = %q, missing zero-share self line", output[leader.Name])
+	}
+	for _, follower := range followers {
+		if !strings.Contains(output[leader.Name], "You would share gold with "+follower.Name+", but there was none to split!\r\n") {
+			t.Errorf("leader output = %q, missing warning for %s", output[leader.Name], follower.Name)
+		}
+		if !strings.Contains(output[follower.Name], leader.Name+" would have shared some gold with you but there was none to split!\r\n") {
+			t.Errorf("%s output = %q, missing exact zero-share receipt", follower.Name, output[follower.Name])
+		}
+	}
+}
+
+func TestAwardMobKillXPGroupGoldWithoutAutosplitNotifiesRoom(t *testing.T) {
+	w, leader, victim := newDeathOrderWorld(t, 10, 100)
+	leader.SetInGroup(true)
+	leader.AutoGold = true
+	follower := NewPlayer(2, "Follower", 1001)
+	follower.SetFollowing(leader.Name)
+	follower.SetInGroup(true)
+	if err := w.AddPlayer(follower); err != nil {
+		t.Fatalf("AddPlayer follower: %v", err)
+	}
+	victim.SetGold(7)
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { output[name] += string(msg) }
+
+	w.AwardMobKillXP(leader, victim, 0, 7, victim.GetLevel(), 0)
+
+	if want := "You loot 7 coins from the corpse of a victim.\r\n"; !strings.Contains(output[leader.Name], want) {
+		t.Errorf("leader output = %q, missing %q", output[leader.Name], want)
+	}
+	if want := "Killer loots some gold from the corpse of a victim.\r\n"; !strings.Contains(output[follower.Name], want) {
+		t.Errorf("follower output = %q, missing room announcement %q", output[follower.Name], want)
 	}
 }
 
@@ -246,7 +360,7 @@ func TestAwardMobKillXPGroupAlignmentShift(t *testing.T) {
 
 	// Strong evil victim should pull every group member toward positive.
 	victimAlign := -1000
-	w.AwardMobKillXP(leader, 1000, 0, 10, victimAlign)
+	w.AwardMobKillXP(leader, nil, 1000, 0, 10, victimAlign)
 
 	if got := leader.GetAlignment(); got <= 0 {
 		t.Fatalf("leader alignment = %d, want > 0 after group kill of evil victim", got)
