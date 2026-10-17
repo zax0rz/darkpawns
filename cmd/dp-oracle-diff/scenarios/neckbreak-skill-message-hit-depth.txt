@@ -1,0 +1,120 @@
+# Live registered do_neckbreak -> damage()/SkillMessage set-190 hit proof.
+# The primary session observes the room; connected attacker and target
+# sessions receive C's exact lines after the command.
+# depth-case: neckbreak.skill-message-hit
+# depth-case: fightmsg.190.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+NbMsgGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+NbMsgGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+NbMsgAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+NbMsgAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+NbMsgVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+NbMsgVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player NbMsgAttacker level 20
+skillset NbMsgAttacker 'neckbreak' 100
+set player NbMsgVictim level 20
+set player NbMsgVictim ac 70
+set player NbMsgVictim maxhit 1000
+set player NbMsgVictim hit 1000
+goto 8105
+[probe:attacker]
+neckbreak NbMsgVictim
