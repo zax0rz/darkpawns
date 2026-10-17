@@ -1,0 +1,122 @@
+# Live registered do_groinrip -> damage() -> SkillMessage set-174 death proof.
+# The primary God session observes the room; connected attacker and male
+# target sessions receive C's actor/victim lines. Skill 1 forces the awake
+# miss; sleeping forces a hit, with HP distinguishing hit from death.
+# depth-case: groinrip.skill-message-death
+# depth-case: fightmsg.174.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+GroinripMsgGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GroinripMsgGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+GroinripMsgAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+GroinripMsgAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+GroinripMsgVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+GroinripMsgVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player GroinripMsgAttacker level 11
+skillset GroinripMsgAttacker 'groinrip' 75
+set player GroinripMsgVictim level 11
+set player GroinripMsgVictim maxhit 1000
+set player GroinripMsgVictim hit -10
+goto 8105
+set player GroinripMsgGod room 8105
+force GroinripMsgVictim sleep
+[probe:attacker]
+groinrip GroinripMsgVictim
