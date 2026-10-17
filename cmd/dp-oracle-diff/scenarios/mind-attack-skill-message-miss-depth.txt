@@ -1,0 +1,113 @@
+# A registered spoken Mind Attack cast with skill 1 reaches do_cast's real
+# concentration-failure branch, which calls skill_message(0, ch, tch, spellnum).
+# Seed 1's concentration roll is 58; the miss triplet reaches caster, victim,
+# and room observer with the shared message-variant draw in the same order.
+# depth-case: spell.mind-attack.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+FireActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+FireActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+FireVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+FireVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+FireWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+FireWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport FireVictim 8105
+teleport FireWatch 8105
+set player FireActor class i
+skillset FireActor 'mind attack' 1
+set player FireActor maxmana 5000
+set player FireActor mana 5000
+set player FireActor align 1000
+set player FireVictim class i
+set player FireVictim level 30
+set player FireVictim align 0
+set player FireVictim maxhit 1000
+set player FireVictim hit 1000
+set player FireActor level 15
+
+[probe]
+will 'mind attack' FireVictim
