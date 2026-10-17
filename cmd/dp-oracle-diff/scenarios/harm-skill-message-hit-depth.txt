@@ -1,3 +1,4 @@
+# depth-case: spell.harm.message-hit
 # A registered spoken Harm cast reaches M@0141 through mag_damage -> damage -> SkillMessage.
 # The connected caster, PC victim, and room observer expose all three recipient lines.
 
