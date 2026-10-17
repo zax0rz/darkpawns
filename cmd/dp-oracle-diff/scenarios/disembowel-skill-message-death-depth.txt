@@ -1,0 +1,123 @@
+# Live registered do_disembowel -> hit()/damage() -> SkillMessage set-184 death proof.
+# The primary God session observes the room; connected attacker and
+# victim sessions receive C's exact audience lines. The attacker wields
+# a piercing dagger; sleeping targets force hit/death/God dispatch.
+# depth-case: disembowel.skill-message-death
+# depth-case: fightmsg.184.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+DisMsgGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DisMsgGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+DisMsgAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:attacker]
+DisMsgAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:oracle:victim]
+DisMsgVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+DisMsgVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player DisMsgAttacker level 20
+skillset DisMsgAttacker 'disembowel' 100
+set player DisMsgVictim level 20
+set player DisMsgVictim maxhit 1
+set player DisMsgVictim hit -10
+goto 8105
+force DisMsgVictim sleep
+[probe:attacker]
+disembowel DisMsgVictim
