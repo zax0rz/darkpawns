@@ -1,0 +1,120 @@
+# Live registered do_slug -> damage() -> SkillMessage set-146 depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer.
+# depth-case: slug.skill-message-hit
+# depth-case: fightmsg.146.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+SlugMsgGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SlugMsgGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+SlugMsgAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+SlugMsgAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+SlugMsgVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+SlugMsgVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player SlugMsgAttacker level 15
+skillset SlugMsgAttacker 'slug' 100
+set player SlugMsgVictim level 15
+set player SlugMsgVictim maxhit 1000
+set player SlugMsgVictim hit 1000
+set player SlugMsgGod room 8105
+
+[probe:attacker]
+slug SlugMsgVictim

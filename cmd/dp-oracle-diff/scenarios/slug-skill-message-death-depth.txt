@@ -1,0 +1,122 @@
+# Live registered do_slug -> damage() -> SkillMessage set-146 death-depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer.
+# depth-case: slug.skill-message-death
+# depth-case: fightmsg.146.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+SlugDieGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SlugDieGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+SlugDieAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+SlugDieAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+SlugDieVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wimpy 0
+
+[setup:port:victim]
+SlugDieVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wimpy 0
+
+[warmup]
+set player SlugDieAttacker level 15
+skillset SlugDieAttacker 'slug' 100
+set player SlugDieVictim level 15
+set player SlugDieVictim maxhit 1
+set player SlugDieVictim hit 1
+set player SlugDieGod room 8105
+
+[probe:attacker]
+slug SlugDieVictim

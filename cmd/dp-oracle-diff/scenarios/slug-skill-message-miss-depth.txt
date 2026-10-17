@@ -1,0 +1,123 @@
+# Live registered do_slug -> damage() -> SkillMessage set-146 miss proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer.
+# Skill 1 makes the seed-1 miss branch deterministic.
+#
+# depth-case: slug.skill-message-miss
+# depth-case: fightmsg.146.record-1
+
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+SlugMissGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SlugMissGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+SlugMissAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+SlugMissAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+SlugMissVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+SlugMissVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player SlugMissAttacker level 15
+skillset SlugMissAttacker 'slug' 1
+set player SlugMissVictim level 15
+set player SlugMissVictim maxhit 1000
+set player SlugMissVictim hit 1000
+set player SlugMissGod room 8105
+
+[probe:attacker]
+slug SlugMissVictim
