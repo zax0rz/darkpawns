@@ -430,15 +430,38 @@ func TestCallMagicMovementSpellsApplyAffects(t *testing.T) {
 	}
 }
 
+// TestCallMagicHasteSelfAppliesAffect pins the spoken self-cast state for
+// Haste: C applies AFF_HASTE at the effective level and mag_affects emits no
+// effect-specific message when caster and victim are the same character.
+func TestCallMagicHasteSelfAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Hastecast", level: 31, position: int(PosStanding)}
+
+	if !CallMagic(caster, caster, nil, SpellHaste, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Haste")
+	}
+	if len(caster.activeAffects) != 1 {
+		t.Fatalf("expected one Haste affect, got %d", len(caster.activeAffects))
+	}
+	aff := caster.activeAffects[0]
+	if aff.SpellID != SpellHaste || aff.Location != engine.ApplyNone || aff.Duration != 31 || aff.Flags != engine.AFFHaste {
+		t.Errorf("unexpected Haste affect: %+v", aff)
+	}
+	if len(caster.messages) != 0 {
+		t.Errorf("self-cast messages = %q, want no mag_affects effect line", caster.messages)
+	}
+}
+
 func TestCallMagicAwarenessSpellsApplyAffects(t *testing.T) {
 	cases := []struct {
 		name     string
 		spellNum int
+		duration int
 		flag     uint64
 		message  string
 	}{
-		{"sense life", SpellSenseLife, engine.AFFSenseLife, "Your feel your awareness improve.\r\n"},
-		{"chameleon", SpellChameleon, engine.AFFHide, "You blend into the surroundings.\r\n"},
+		{"sense life", SpellSenseLife, 31, engine.AFFSenseLife, "Your feel your awareness improve.\r\n"},
+		{"chameleon", SpellChameleon, 31, engine.AFFHide, "You blend into the surroundings.\r\n"},
+		{"infravision", SpellInfravision, 43, engine.AFFInfrared, "Your eyes glow red.\r\n"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -451,7 +474,7 @@ func TestCallMagicAwarenessSpellsApplyAffects(t *testing.T) {
 				t.Fatalf("expected one awareness affect, got %d", len(caster.activeAffects))
 			}
 			aff := caster.activeAffects[0]
-			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != 31 || aff.Flags != tc.flag {
+			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != tc.duration || aff.Flags != tc.flag {
 				t.Errorf("unexpected awareness affect: %+v", aff)
 			}
 			if len(caster.messages) != 1 || caster.messages[0] != tc.message {

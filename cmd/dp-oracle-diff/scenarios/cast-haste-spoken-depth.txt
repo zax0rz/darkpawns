@@ -1,0 +1,80 @@
+# depth-case: spell.haste-spoken
+# depth-case: cast.say-spell-syllable-substitution
+# A level-31 Mystic self-casts Haste through do_cast -> cast_spell ->
+# call_magic -> mag_affects. The spell applies AFF_HASTE for 31 ticks; C's
+# mag_affects self-target branch emits no effect-specific message because its
+# only to_self line is guarded by ch != victim (src/class.c:1050;
+# src/spell_parser.c:879-925,963-1110; src/magic.c:1042-1046).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Hastecast
+Y
+hastepass
+hastepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hastecast
+y
+hastepass
+hastepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hasteobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hasteobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Hastecast 8105
+teleport Hasteobs 8105
+set Hastecast class mystic
+set Hastecast level 31
+skillset Hastecast haste 100
+set Hastecast maxmana 5000
+set Hastecast mana 5000
+
+[probe]
+cast 'haste'

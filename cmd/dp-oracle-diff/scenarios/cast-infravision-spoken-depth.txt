@@ -1,0 +1,108 @@
+# depth-case: spell.infravision-spoken
+# depth-case: cast.say-spell-syllable-substitution
+# A level-31 Mage casts Infravision on a room target through do_cast ->
+# cast_spell -> call_magic -> mag_affects. C sends the caster, target, and
+# room lines and adds AFF_INFRAVISION (src/class.c:773,913;
+# src/spell_parser.c:879-925,963-1110; src/magic.c:1033-1038).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+InfraCaster
+Y
+infrapass
+infrapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+InfraCaster
+y
+infrapass
+infrapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+InfraVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+InfraVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Infraobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Infraobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport InfraCaster 8105
+teleport InfraVictim 8105
+teleport Infraobs 8105
+set InfraCaster class mage
+set InfraCaster level 31
+skillset InfraCaster infravision 100
+set InfraCaster maxmana 5000
+set InfraCaster mana 5000
+
+[probe]
+cast 'infravision' InfraVictim
