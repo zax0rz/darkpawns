@@ -1,0 +1,54 @@
+# depth-case: spell.cure-light.matrix-potion
+# World potion 4814 reaches Cure Light in slot two after a Remove Poison no-op;
+# the wounded quaffer's score exposes the healing result.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 4814 99 8162 100
+force-load 4814
+
+[setup:oracle]
+PotionQuaffer
+Y
+potquaf1
+potquaf1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PotionQuaffer
+y
+potquaf1
+potquaf1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player PotionQuaffer class mage
+set player PotionQuaffer maxhit 1000
+set player PotionQuaffer hit 50
+set player PotionQuaffer level 1
+
+[probe]
+score
+get garlic
+quaff garlic
+~dpclock pulse 20
+~dpclock pulse 20
+score

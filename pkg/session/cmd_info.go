@@ -225,9 +225,6 @@ func cmdScore(s *Session) error {
 	// 8. XP to next level (from C line 1275)
 	if p.Level < game.LVL_IMMORT-1 {
 		needed := game.FindExp(p.Class, p.Level) - p.Exp
-		if needed < 0 {
-			needed = 0
-		}
 		fmt.Fprintf(&buf, "You need %d exp to reach your next level.\r\n", needed)
 	}
 

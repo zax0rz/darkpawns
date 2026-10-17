@@ -1,0 +1,91 @@
+# depth-case: spell.detect-invisibility.matrix-potion
+# The indexed world potion 8051 must grant the item-level AFF_DETECT_INVIS
+# affect. The quaffer first cannot see an invisible PC, then quaffs and looks
+# again through the live CAST_POTION route.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 8051 99 8162 100
+force-load 8051
+
+[setup:oracle]
+PotionQuaffer
+Y
+potquaf1
+potquaf1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PotionQuaffer
+y
+potquaf1
+potquaf1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:caster]
+InvisibleMage
+Y
+invismage1
+invismage1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:caster]
+InvisibleMage
+y
+invismage1
+invismage1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport InvisibleMage 8162
+set player PotionQuaffer class mage
+set player PotionQuaffer maxmana 5000
+set player PotionQuaffer mana 5000
+set player InvisibleMage class mage
+set player InvisibleMage maxmana 5000
+set player InvisibleMage mana 5000
+skillset InvisibleMage 'invisibility' 100
+set player InvisibleMage level 15
+set player PotionQuaffer level 15
+
+[probe]
+send:caster cast 'invisibility'
+~dpclock pulse 20
+send:primary look
+get seeinvis
+quaff seeinvis
+~dpclock pulse 20
+~dpclock pulse 20
+look
