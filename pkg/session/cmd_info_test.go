@@ -353,6 +353,22 @@ func TestCmdScoreFixedFixtureGolden(t *testing.T) {
 	}
 }
 
+func TestCmdScorePreservesNegativeExperienceToNextLevel(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scoreoverlevel", 1001, true)
+	s.player.Class = game.ClassMageUser
+	s.player.Level = 1
+	s.player.Exp = 7_000_000
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	got := readSessionText(t, s)
+	if !strings.Contains(got, "You need -6998500 exp to reach your next level.\r\n") {
+		t.Fatalf("score omitted C's negative XP remainder: %q", got)
+	}
+}
+
 func TestCmdScoreUsesPlayerRaceAndClassNamesAndCLineEnding(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Racecheck", 1001, true)

@@ -71,17 +71,17 @@ Y
 goto 8162
 teleport InvisibleMage 8162
 set player PotionQuaffer class mage
-set player PotionQuaffer level 15
 set player PotionQuaffer maxmana 5000
 set player PotionQuaffer mana 5000
 set player InvisibleMage class mage
-set player InvisibleMage level 15
 set player InvisibleMage maxmana 5000
 set player InvisibleMage mana 5000
-skillset InvisibleMage invisibility 100
+skillset InvisibleMage 'invisibility' 100
+set player InvisibleMage level 15
+set player PotionQuaffer level 15
 
 [probe]
-cast invisibility
+send:caster cast 'invisibility'
 ~dpclock pulse 20
 send:primary look
 get seeinvis

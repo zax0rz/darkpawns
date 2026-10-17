@@ -1,0 +1,52 @@
+# depth-case: spell.heal.matrix-potion
+# World potion 15812 dispatches Heal through the registered CAST_POTION path;
+# an injured quaffer exposes the live HP change in score.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 15812 99 8162 100
+force-load 15812
+
+[setup:oracle]
+PotionHealer
+Y
+potheal1
+potheal1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PotionHealer
+y
+potheal1
+potheal1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player PotionHealer maxhit 1000
+set player PotionHealer hit 20
+
+[probe]
+score
+get vial
+quaff vial
+~dpclock pulse 20
+~dpclock pulse 20
+score
