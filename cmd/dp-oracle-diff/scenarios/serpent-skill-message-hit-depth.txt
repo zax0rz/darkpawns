@@ -1,0 +1,123 @@
+# Live registered do_slug -> damage() -> SkillMessage set-146 depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer.
+# depth-case: serpent.skill-message-hit
+# depth-case: fightmsg.156.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+SerpentHitGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SerpentHitGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+SerpentHitAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+SerpentHitAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+SerpentHitVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+sleep
+
+[setup:port:victim]
+SerpentHitVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+sleep
+
+[warmup]
+set player SerpentHitAttacker level 15
+skillset SerpentHitAttacker 'serpent kick' 100
+set player SerpentHitVictim level 15
+set player SerpentHitVictim ac 70
+set player SerpentHitVictim maxhit 1000
+set player SerpentHitVictim hit 1000
+set player SerpentHitGod room 8105
+
+[probe:attacker]
+serpent SerpentHitVictim
