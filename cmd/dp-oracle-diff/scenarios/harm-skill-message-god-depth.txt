@@ -1,0 +1,110 @@
+# A registered spoken Harm cast reaches M@0141 through mag_damage -> damage -> SkillMessage.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+HarmActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HarmActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+HarmVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+HarmVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+HarmWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+HarmWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport HarmVictim 8105
+teleport HarmWatch 8105
+set player HarmActor class mage
+skillset HarmActor 'harm' 100
+set player HarmActor maxmana 5000
+set player HarmActor mana 5000
+set player HarmActor align 1000
+set player HarmVictim align 0
+set player HarmVictim class mage
+set player HarmVictim level 31
+set player HarmVictim maxhit 1000
+set player HarmVictim hit 1000
+set player HarmActor level 31
+
+[probe]
+cast 'harm' HarmVictim
