@@ -2,13 +2,13 @@
 
 ## Result and inventory
 
-The starting comparison requested by this goal is PF-075's **2,106 blocked units**. The shared batch had already advanced `origin/main` to `3d4a35ea6`; that measured tree has 1,470 total units and 572 blocked. The two refreshed draft PRs together project to **1,529 total units and 631 blocked**, a net reduction of **1,475 blocked units** against the requested 2,106 baseline.
+The starting comparison requested by this goal is PF-075's **2,106 blocked units**. The shared batch had already advanced `origin/main` to `3d4a35ea6`; that measured tree has 1,470 total units and 572 blocked. The two refreshed draft PRs together project to **1,528 total units and 630 blocked**, a net reduction of **1,476 blocked units** against the requested 2,106 baseline.
 
-The delta from the current main snapshot is +59 blocked units: the fight PR adds 78 units of live-dispatch evidence scope, because the helper-only corpus test on main does not satisfy this goal's real registered-command proof bar, while the spell PR closes 19 matrix residuals. This is a deliberate scope correction, not a claim that the live-dispatch corpus regressed. The pair remains in draft and is not yet current main.
+The delta from the current main snapshot is +58 blocked units: the fight PR adds 77 units of live-dispatch evidence scope, because the helper-only corpus test on main does not satisfy this goal's real registered-command proof bar and six records are now proven through registered commands, while the spell PR closes 19 matrix residuals. This is a deliberate scope correction, not a claim that the live-dispatch corpus regressed. The pair remains in draft and is not yet current main.
 
 | Inventory family | Current main | Updated draft(s) | Reason |
 |---|---:|---:|---|
-| `fight-skill / lib/misc/messages skill-message corpus` | 0 proven-already units | 78 blocked units | 83 C records are in scope; five are now proved through registered dispatch, and 78 still need their live command-to-damage proof. |
+| `fight-skill / lib/misc/messages skill-message corpus` | 0 proven-already units | 77 blocked units | 83 C records are in scope; six are now proved through registered dispatch, and 77 still need their live command-to-damage proof. |
 | `fight-skill / src/fight.c act-send family` | 4 blocked | 4 blocked | 98 live sites: 94 proven, 0 gap-reachable, 4 switched-mob session-delivery stop-tier sites. |
 | `fight-skill / new_cmds skill/action output` | 0 | 0 | Reconciliation is already in merged PR #2087. |
 | `fight-skill / new_cmds2 skill/action output` | 0 | 0 | Reconciliation is already in merged PR #2087. |
@@ -22,16 +22,17 @@ The resulting 299×5 spell matrix classifies 45 spoken cells proven, 11 item cel
 
 ## Fight message proof
 
-`lib/misc/messages` contains 83 `M` records across 66 attack types; C accepts the whitespace-padded marker at line 1175 (`src/fight.c:152`), so the prior 82-record count was low by one. `skill-message-matrix.tsv` records every record and the attacker, victim, and room result for each defined death, miss, hit, and god outcome. Five records are now fully proven, all 12 outcome/audience cells per record:
+`lib/misc/messages` contains 83 `M` records across 66 attack types; C accepts the whitespace-padded marker at line 1175 (`src/fight.c:152`), so the prior 82-record count was low by one. `skill-message-matrix.tsv` records every record and the attacker, victim, and room result for each defined death, miss, hit, and god outcome. Six records are now proven through registered command dispatch. The five existing records prove their defined outcome/audience cells; Trip proves its nine non-# death/miss/hit cells:
 
 - `M@0241` — Bash, through `do_bash`.
 - `M@1284` — Tiger Punch, through `do_tiger_punch`.
 - `M@1268` — Dragon Kick, through `do_dragon_kick`.
 - `M@0257` and `M@0271` — the two Kick variants, through `do_kick`.
+- `M@0335` — Trip, through `do_trip`; the three cases cover miss, hit, and death for attacker, victim, and room observer, while the God fields are `#`.
 
-Each proof reaches the production command, `damage()`, and `SkillMessage`, with exact C bytes and zero draw divergence. The other 78 records remain gap-reachable; the existing corpus unit test remains supplemental. C parses the records in `src/fight.c:126-175`, dispatches at `src/fight.c:1023-1095`, and reaches the handler from `damage()` at `src/fight.c:1534-1545`. Command call sites are in `src/act.offensive.c:419-741`.
+Each proof reaches the production command, `damage()`, and `SkillMessage`, with exact C bytes and zero draw divergence. The other 77 records remain gap-reachable; the existing corpus unit test remains supplemental. C parses the records in `src/fight.c:126-175`, dispatches at `src/fight.c:1023-1095`, and reaches the handler from `damage()` at `src/fight.c:1534-1545`. Command call sites are in `src/act.offensive.c:419-741` and `src/new_cmds.c:735-815` for Trip.
 
-Fresh-main retained censuses `dp1371-final-surface-seed1`, `seed2`, `seed3`, `seed5`, and `seed8` each cover 20 scenarios: all Bash, Tiger Punch, Kick, and Dragon Kick outcomes, Dragon breath, neutral spell rescue, Protection from Good, and Water Breathing. Every run is CLEAN (20/20) with zero draw-divergent cases at Go HEAD `3d4a35ea6`. The five-run set is in `~/Archives/darkpawns/oracle-runs/2026-10-16/`.
+Fresh-main retained censuses `dp1371-final-surface-seed1`, `seed2`, `seed3`, `seed5`, and `seed8` each cover 20 scenarios: all Bash, Tiger Punch, Kick, and Dragon Kick outcomes, Dragon breath, neutral spell rescue, Protection from Good, and Water Breathing. Every run is CLEAN (20/20) with zero draw-divergent cases at Go HEAD `3d4a35ea6`. The five-run set is in `~/Archives/darkpawns/oracle-runs/2026-10-16/`. The three Trip cases also pass at seeds 1, 2, 3, 5, and 8 with zero draw divergence; retained runs are `dp1371-trip-skill-message-final-seed1/2/3/5/8` under `~/Archives/darkpawns/oracle-runs/2026-10-17/` at Go HEAD `f233a290a`.
 
 ## Spell routes and delegations
 
@@ -57,6 +58,6 @@ Each draft body carries its row deltas, classifications, C paths, retained evide
 
 The shared full census for `3d4a35ea6` is retained at `~/Archives/darkpawns/oracle-runs/2026-10-16/batch-u/` and is CLEAN_AFTER_RECHECK for both full and claims verdicts. This goal ran targeted censuses only.
 
-Individually passed on the fresh-main code tree: `make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`, `golangci-lint run ./...`, `make deadcode-ratchet`, `make fidelity-depth`, `make fidelity-units`, `make string-census`, and `gosec -severity=high -quiet ./...`. `make fidelity-depth` passed separately on both draft trees (42 maps, 0 errors); `make fidelity-units` passed on both trees. The string-census ratchet passed with 98 known Go-only segments and 0 unreviewed; generated reports warned of 36 stale baseline entries and were left unchanged. `git diff --check` passed.
+Individually passed on the fresh-main code tree: `make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`, `golangci-lint run ./...`, `make deadcode-ratchet`, `make fidelity-depth`, `make fidelity-units`, `make string-census`, and `gosec -severity=high -quiet ./...`. `make fidelity-depth` passed separately on both draft trees (42 maps, 0 errors); `make fidelity-units` passed on both trees. The string-census ratchet passed with 98 known Go-only segments and 0 unreviewed; generated reports warned of 36 stale baseline entries and were left unchanged. `git diff --check` passed. On the refreshed fight worktree, the same gates passed again after adding the Trip fixtures and evidence: `make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`, `golangci-lint run ./...`, `make deadcode-ratchet`, `make fidelity-depth` (6,065 proven/delegated, 11 blocked; 42 maps and 0 errors), `make fidelity-units` (1,963 claims PASS), `make string-census`, and CI's `gosec -severity=high -quiet ./...`. The string-census ratchet remains clean with its 36 stale generated-report entries untouched. `git diff --check` passed.
 
-**Total goal elapsed at final handoff refresh:** 39,173 seconds (10h 52m 53s). The six-PR count includes the two drafts, two merged PRs, and two closed unmerged PRs.
+**Total goal elapsed at this handoff refresh:** 40,845 seconds (11h 20m 45s). The six-PR count includes the two drafts, two merged PRs, and two closed unmerged PRs.
