@@ -1,0 +1,131 @@
+# Live registered do_bite -> damage() -> SkillMessage set-1015 death proof.
+# A production room oncmd sets the actor's valid PLR_WEREWOLF/AFF_WEREWOLF
+# state. The level-15 werewolf attacker deals lethal damage to a still-living
+# victim at -10 HP, reaching the C death triplet.
+# depth-case: bite.skill-message-death
+# depth-case: fightmsg.150.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/wolf.lua 512
+
+[lua-script mob/oracle/wolf.lua]
+function oncmd()
+if (argument ~= "say moon") then return FALSE end
+plr_flags(ch, "set", 16)
+aff_flags(ch, "set", 27)
+return TRUE
+end
+
+[setup:oracle]
+BiteMsgDeathGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BiteMsgDeathGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+BiteMsgDeathAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+BiteMsgDeathAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+BiteMsgDeathVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+BiteMsgDeathVictim
+y
+actorpass
+actorpass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player BiteMsgDeathAttacker level 15
+set player BiteMsgDeathVictim level 15
+set player BiteMsgDeathVictim maxhit 1
+set player BiteMsgDeathVictim hit -10
+goto 8105
+
+[probe:attacker]
+say moon
+bite BiteMsgDeathVictim
