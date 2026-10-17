@@ -316,6 +316,7 @@ func (w tattooSpellWorld) ForEachPlayerInRoomInterface(room int, fn func(interfa
 // half_chop token, so an ordinary `use wand target` takes this branch even when
 // the wand is held; the source call path and its bytes are the authority here.
 func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spellNum, spellLevel int) {
+	spellArgument, _ := OneArgument(targetArg)
 	target, targetObj, found := w.resolveMagicItemTarget(ch, targetArg, spellNum)
 	if !found {
 		Act(nil, false, ch, nil, item, nil, "You can't use $p like that.", "", ToChar)
@@ -370,13 +371,14 @@ func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spel
 	if targetObj != nil {
 		objectTarget = targetObj
 	}
-	spells.CallMagic(ch, target, objectTarget, spellNum, level, spells.CastWand, w)
+	spells.CallMagicWithArgument(ch, target, objectTarget, spellNum, level, spells.CastWand, w, spellArgument)
 }
 
 // useStaff is the castable-equipment staff branch of mag_objectmagic
 // (src/spell_parser.c:785-817). The caster is excluded from the room fan-out;
 // area/mass routines receive a nil character target once, matching C.
 func (w *World) useStaff(ch *Player, item *ObjectInstance, targetArg string, spellNum, spellLevel int) {
+	spellArgument, _ := OneArgument(targetArg)
 	roomAct := "$n's $p sparks blindingly, bathing you in its glow."
 	hideInvisible := true
 	var targetObj *ObjectInstance
@@ -407,14 +409,14 @@ func (w *World) useStaff(ch *Player, item *ObjectInstance, targetArg string, spe
 	}
 	si := spells.GetSpellInfo(spellNum)
 	if si != nil && (si.HasRoutine(spells.RoutineMasses) || si.HasRoutine(spells.RoutineAreas)) {
-		spells.CallMagic(ch, nil, nil, spellNum, level, spells.CastStaff, w)
+		spells.CallMagicWithArgument(ch, nil, nil, spellNum, level, spells.CastStaff, w, spellArgument)
 		return
 	}
 	for _, actor := range w.actChar(ch.GetRoomVNum()) {
 		if actor == ch {
 			continue
 		}
-		spells.CallMagic(ch, actor, nil, spellNum, level, spells.CastStaff, w)
+		spells.CallMagicWithArgument(ch, actor, nil, spellNum, level, spells.CastStaff, w, spellArgument)
 	}
 }
 

@@ -1,0 +1,57 @@
+# depth-case: spell.heal.matrix-spoken-state
+# depth-case: spell.mass-heal.matrix-spoken-state
+# Registered spoken casts expose mag_points' actor output and changed HP through score.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+PointsMage
+Y
+pointspass
+pointspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PointsMage
+y
+pointspass
+pointspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player PointsMage class mage
+set player PointsMage maxmana 5000
+set player PointsMage mana 5000
+set player PointsMage maxhit 1000
+set player PointsMage hit 100
+skillset PointsMage 'heal' 100
+skillset PointsMage 'mass heal' 100
+set player PointsMage level 31
+
+[probe]
+score
+cast 'heal' PointsMage
+~dpclock pulse 20
+score
+cast 'mass heal' PointsMage
+~dpclock pulse 20
+score

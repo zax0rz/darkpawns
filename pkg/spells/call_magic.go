@@ -24,7 +24,15 @@ const lvlImmort = combat.LVL_IMMORT
 //
 // Returns true if the spell was executed.
 func CallMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}) bool {
-	return callMagic(caster, cvict, ovict, spellNum, level, castType, world, false, false)
+	return CallMagicWithArgument(caster, cvict, ovict, spellNum, level, castType, world, "")
+}
+
+// CallMagicWithArgument dispatches call_magic() with the argument buffer that
+// C's MANUAL_SPELL macro passes to manual spell bodies. Spoken casts preserve
+// the text following the quoted spell name; item callers preserve the first
+// token from mag_objectmagic's argument parse.
+func CallMagicWithArgument(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, argument string) bool {
+	return callMagic(caster, cvict, ovict, spellNum, level, castType, world, false, false, argument)
 }
 
 // CastFromSpecial dispatches a spell from a native special-procedure call.
@@ -39,16 +47,16 @@ func CastFromSpecial(caster, cvict interface{}, spellNum, level int, world inter
 // target. C's native special procedures and silent Lua spell binding bypass
 // the command parser's per-spell minimum position check.
 func CastFromSpecialTarget(caster, cvict, ovict interface{}, spellNum, level int, world interface{}) bool {
-	return callMagic(caster, cvict, ovict, spellNum, level, CastSpell, world, true, false)
+	return callMagic(caster, cvict, ovict, spellNum, level, CastSpell, world, true, false, "")
 }
 
 // CastFromTattoo dispatches the level-12 CAST_WAND self cast from tattoo.c.
 // The game tattoo entry point has already applied C's room and sitting gates.
 func CastFromTattoo(caster interface{}, spellNum int, world interface{}) bool {
-	return callMagic(caster, caster, nil, spellNum, 12, CastWand, world, true, true)
+	return callMagic(caster, caster, nil, spellNum, 12, CastWand, world, true, true, "")
 }
 
-func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, fromSpecial, fromTattoo bool) bool {
+func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, fromSpecial, fromTattoo bool, argument string) bool {
 	si := GetSpellInfo(spellNum)
 	if si == nil {
 		return false
@@ -147,7 +155,7 @@ func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 	}
 
 	if si.HasRoutine(RoutineManual) {
-		ExecuteManualSpell(spellNum, level, caster, cvict, ovict, "", world)
+		ExecuteManualSpell(spellNum, level, caster, cvict, ovict, argument, world)
 	}
 
 	return true

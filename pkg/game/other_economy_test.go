@@ -64,3 +64,51 @@ func TestDoUseWandConsumesInstanceChargeAndUsesDefaultLevel(t *testing.T) {
 		t.Errorf("haste duration = %d, want 12 from default wand level 12", duration)
 	}
 }
+
+func TestDoUseWandPassesManualSpellArgumentToControlWeather(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Test Room", Zone: 1}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	caster := NewPlayer(1, "Caster", 1001)
+	target := NewPlayer(2, "Worse", 1001)
+	if err := w.AddPlayer(caster); err != nil {
+		t.Fatalf("AddPlayer caster: %v", err)
+	}
+	if err := w.AddPlayer(target); err != nil {
+		t.Fatalf("AddPlayer target: %v", err)
+	}
+
+	wand := NewObjectInstance(&parser.Obj{
+		VNum:      8053,
+		Keywords:  "wand",
+		ShortDesc: "a weather wand",
+		TypeFlag:  ITEM_WAND,
+		Values:    [4]int{12, 2, 1, spells.SpellControlWeather},
+	}, -1)
+	if err := caster.Inventory.AddItem(wand); err != nil {
+		t.Fatalf("AddItem wand: %v", err)
+	}
+	if err := w.EquipItem(caster, wand, eqWearHold); err != nil {
+		t.Fatalf("EquipItem wand: %v", err)
+	}
+
+	weatherMu.RLock()
+	before := weatherInfo.Change
+	weatherMu.RUnlock()
+	t.Cleanup(func() {
+		weatherMu.Lock()
+		weatherInfo.Change = before
+		weatherMu.Unlock()
+	})
+	if !w.DoUse(caster, "wand Worse") {
+		t.Fatal("DoUse returned false")
+	}
+	if got := TimeWeatherSnapshot().Weather.Change; got >= before {
+		t.Fatalf("weather change = %d, want less than %d after C's manual-spell argument 'worse'", got, before)
+	}
+}

@@ -290,6 +290,12 @@ func ModifyWeatherChange(delta int) {
 	weatherMu.Unlock()
 }
 
+// ModifyWeatherChange implements the spell-world adapter used by the manual
+// Control Weather spell (src/spells.h:353; src/spells.c:997-1007).
+func (*World) ModifyWeatherChange(delta int) {
+	ModifyWeatherChange(delta)
+}
+
 // weatherWorldSnapshot preserves synchronized direct-helper entry points.
 // Combined ticks pass their owner-captured pointer directly to the event
 // bodies, so they never re-enter weatherMu.

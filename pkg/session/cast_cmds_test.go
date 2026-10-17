@@ -197,6 +197,16 @@ func TestCastArgumentParsingMatchesCQuoteAndWordRules(t *testing.T) {
 	}
 }
 
+func TestCastArgumentParsingPreservesManualSpellRemainder(t *testing.T) {
+	spell, target, argument, errMessage := parseCastArgumentsForPowerWithArgument([]string{"'control", "weather'", "Worse", "ignored"}, false)
+	if errMessage != "" {
+		t.Fatalf("parse error = %q, want none", errMessage)
+	}
+	if spell != "control weather" || target != "worse" || argument != " Worse ignored" {
+		t.Fatalf("parsed spell/target/argument = %q/%q/%q, want control weather/worse/\" Worse ignored\"", spell, target, argument)
+	}
+}
+
 func TestWillEntryUsesPowerSurface(t *testing.T) {
 	if _, ok := cmdRegistry.Lookup("will"); !ok {
 		t.Fatal("will command is not registered")

@@ -167,19 +167,24 @@ func parseCastArguments(args []string) (spellName, targetName, errorMessage stri
 }
 
 func parseCastArgumentsForPower(args []string, power bool) (spellName, targetName, errorMessage string) {
+	spellName, targetName, _, errorMessage = parseCastArgumentsForPowerWithArgument(args, power)
+	return spellName, targetName, errorMessage
+}
+
+func parseCastArgumentsForPowerWithArgument(args []string, power bool) (spellName, targetName, spellArgument, errorMessage string) {
 	input := strings.Join(args, " ")
 	if strings.TrimSpace(input) == "" {
 		if power {
-			return "", "", "Will what?\r\n"
+			return "", "", "", "Will what?\r\n"
 		}
-		return "", "", "Cast what where?\r\n"
+		return "", "", "", "Cast what where?\r\n"
 	}
 	opening := strings.IndexByte(input, '\'')
 	if opening < 0 {
 		if power {
-			return "", "", "Psionic powers must be enclosed in the symbols: '\r\n"
+			return "", "", "", "Psionic powers must be enclosed in the symbols: '\r\n"
 		}
-		return "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
+		return "", "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
 	}
 	remaining := input[opening+1:]
 	closing := strings.IndexByte(remaining, '\'')
@@ -189,15 +194,16 @@ func parseCastArgumentsForPower(args []string, power bool) (spellName, targetNam
 		// that space as its first token and accepts the rest of the input as
 		// the spell name when there is no closing quote. The target is empty.
 		if spellName := strings.TrimSpace(remaining); spellName != "" {
-			return spellName, "", ""
+			return spellName, "", "", ""
 		}
 		if power {
-			return "", "", "Psionic powers must be enclosed in the symbols: '\r\n"
+			return "", "", "", "Psionic powers must be enclosed in the symbols: '\r\n"
 		}
-		return "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
+		return "", "", "", "Spell names must be enclosed in the magick symbols: '\r\n"
 	}
-	targetName, _ = game.OneArgument(remaining[closing+1:])
-	return strings.TrimSpace(remaining[:closing]), targetName, ""
+	spellArgument = remaining[closing+1:]
+	targetName, _ = game.OneArgument(spellArgument)
+	return strings.TrimSpace(remaining[:closing]), targetName, spellArgument, ""
 }
 
 func resolveCastTarget(s *Session, info *spells.SpellInfo, targetName string) (castTarget, string) {
@@ -337,7 +343,7 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 		return nil
 	}
 
-	spellName, targetName, parseError := parseCastArgumentsForPower(args, power)
+	spellName, targetName, spellArgument, parseError := parseCastArgumentsForPowerWithArgument(args, power)
 	if parseError != "" {
 		s.Send(parseError)
 		return nil
@@ -434,7 +440,7 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 
 	s.Send("Okay.\r\n")
 	spells.SaySpell(s.player, spellNum, target.character, target.object, s.manager.world)
-	if spells.CallMagic(s.player, target.character, target.object, spellNum, casterLevel, spells.CastSpell, s.manager.world) {
+	if spells.CallMagicWithArgument(s.player, target.character, target.object, spellNum, casterLevel, spells.CastSpell, s.manager.world, spellArgument) {
 		s.player.SetWaitState(1)
 		if cost > 0 {
 			s.player.SetMana(max(0, s.player.GetMana()-cost))

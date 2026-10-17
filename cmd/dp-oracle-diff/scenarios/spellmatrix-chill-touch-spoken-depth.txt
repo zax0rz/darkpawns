@@ -1,0 +1,110 @@
+# depth-case: spell.chill-touch.matrix-spoken-state
+# A registered spoken Chill Touch cast exposes its mag_damage and mag_affects state through the target score.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+ChillMage
+Y
+chillpass
+chillpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ChillMage
+y
+chillpass
+chillpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ChillPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ChillPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ChillWitness
+Y
+witpass
+witpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ChillWitness
+y
+witpass
+witpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ChillPeer 8105
+teleport ChillWitness 8105
+set player ChillMage class mage
+set player ChillMage maxmana 5000
+set player ChillMage mana 5000
+skillset ChillMage 'chill touch' 100
+set player ChillPeer maxhit 5000
+set player ChillPeer hit 5000
+set player ChillPeer level 20
+set player ChillMage level 31
+
+[probe]
+cast 'chill touch' ChillPeer
+send:peer score
+send:observer look

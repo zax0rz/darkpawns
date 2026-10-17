@@ -1922,7 +1922,7 @@ func castControlWeather(level int, ch interface{}, arg string, world interface{}
 		w, _ = world.(weatherMutator)
 	}
 
-	switch strings.ToLower(strings.TrimSpace(arg)) {
+	switch firstManualSpellArgument(arg) {
 	case "better":
 		if w != nil {
 			w.ModifyWeatherChange(dice(level/3, 4))
@@ -1934,6 +1934,38 @@ func castControlWeather(level int, ch interface{}, arg string, world interface{}
 	default:
 		sendToCaster(ch, "Do you want it to get better or worse?\r\n")
 	}
+}
+
+// firstManualSpellArgument mirrors C one_argument's leading fill-word skip and
+// lowercase token handling (src/interpreter.c:1251-1281).
+func firstManualSpellArgument(argument string) string {
+	for {
+		argument = strings.TrimLeft(argument, " \t\n\v\f\r")
+		if argument == "" {
+			return ""
+		}
+		end := strings.IndexAny(argument, " \t\n\v\f\r")
+		if end < 0 {
+			end = len(argument)
+		}
+		word := lowerManualSpellASCII(argument[:end])
+		switch word {
+		case "in", "from", "with", "the", "on", "at", "to":
+			argument = argument[end:]
+		default:
+			return word
+		}
+	}
+}
+
+func lowerManualSpellASCII(word string) string {
+	bytes := []byte(word)
+	for i, b := range bytes {
+		if b >= 'A' && b <= 'Z' {
+			bytes[i] += 'a' - 'A'
+		}
+	}
+	return string(bytes)
 }
 
 // castCoC — circle of summoning. Creates a COC object in the caster's room.

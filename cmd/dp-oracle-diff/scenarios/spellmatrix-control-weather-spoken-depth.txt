@@ -1,0 +1,48 @@
+# A registered spoken Control Weather cast changes the weather state reported by the live weather command.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+WeatherMage
+Y
+wthrpass
+wthrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WeatherMage
+y
+wthrpass
+wthrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player WeatherMage class mage
+set player WeatherMage maxmana 5000
+set player WeatherMage mana 5000
+skillset WeatherMage 'control weather' 100
+set player WeatherMage level 31
+
+[probe]
+weather
+cast 'control weather' worse
+~dpclock pulse 20
+weather
