@@ -2,7 +2,8 @@
 # The trainee is left at 1 hit point and the level-20 attacker always lands
 # (AC 80), so damage() updates the position to POS_DEAD before skill_message
 # runs: set 189's die_msg is selected, which a pre-damage message selection can
-# never reach. The observer captures the room audience and the corpse.
+# never reach. Connected Tigervictim receives the death line and Tigerobs
+# captures the room audience and corpse.
 #
 # depth-case: tiger.killing-blow
 
@@ -111,15 +112,53 @@ east
 south
 east
 
+[setup:oracle:victim]
+Tigervictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Tigervictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
 [warmup]
 goto 8105
 teleport Tigeratt 8105
 teleport Tigerobs 8105
+teleport Tigervictim 8105
 set Tigeratt level 20
 skillset Tigeratt 'tiger punch' 100
-set trainee ac 80
-set trainee maxhit 500
-set trainee hit 1
+set Tigervictim level 15
+set Tigervictim ac 80
+set Tigervictim maxhit 500
+set Tigervictim hit 1
 
 [probe:attacker]
-tiger trainee
+tiger Tigervictim
