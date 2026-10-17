@@ -1,0 +1,111 @@
+# A registered spoken Burning Hands cast reaches M@0029 through mag_damage -> damage -> SkillMessage.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.burning-hands.matrix-spoken-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+BurnHandsActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BurnHandsActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+BurnHandsVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+BurnHandsVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BurnHandsWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BurnHandsWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BurnHandsVictim 8105
+teleport BurnHandsWatch 8105
+set player BurnHandsActor class mage
+skillset BurnHandsActor 'burning hands' 100
+set player BurnHandsActor maxmana 5000
+set player BurnHandsActor mana 5000
+set player BurnHandsActor align 1000
+set player BurnHandsVictim align 0
+set player BurnHandsVictim class mage
+set player BurnHandsVictim level 20
+set player BurnHandsVictim maxhit 1
+set player BurnHandsVictim hit -10
+set player BurnHandsActor level 31
+
+[probe]
+cast 'burning hands' BurnHandsVictim

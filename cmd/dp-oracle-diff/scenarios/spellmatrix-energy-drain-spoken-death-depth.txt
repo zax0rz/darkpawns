@@ -1,0 +1,111 @@
+# A registered spoken Energy Drain cast reaches M@0109 through mag_damage -> damage -> SkillMessage.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.energy-drain.matrix-spoken-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+EnergyActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+EnergyActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+EnergyVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+EnergyVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+EnergyWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+EnergyWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport EnergyVictim 8105
+teleport EnergyWatch 8105
+set player EnergyActor class mage
+skillset EnergyActor 'energy drain' 100
+set player EnergyActor maxmana 5000
+set player EnergyActor mana 5000
+set player EnergyActor align 1000
+set player EnergyVictim align 0
+set player EnergyVictim class mage
+set player EnergyVictim level 20
+set player EnergyVictim maxhit 1
+set player EnergyVictim hit -10
+set player EnergyActor level 31
+
+[probe]
+cast 'energy drain' EnergyVictim
