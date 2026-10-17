@@ -1,0 +1,116 @@
+# A level-zero clone invokes silent lua_spell on a real connected say command.
+# C's nonpositive level-scaled damage selects the M@0189 miss triplet.
+# depth-case: fightmsg.41.meteor-swarm-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+spawn-mob 69 999 8105 80
+mob-script 69 oracle/meteor_swarm.lua 512
+
+[lua-script mob/oracle/meteor_swarm.lua]
+function oncmd()
+if (argument ~= "say meteor") then
+return FALSE
+end
+spell(nil, nil, 41, 0)
+return TRUE
+end
+
+[setup:oracle]
+Mirror
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mirror
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Mirrorpeer
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Mirrorpeer
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Mirrorobs
+Y
+witness
+witness
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Mirrorobs
+y
+witness
+witness
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mirrorpeer 8105
+teleport Mirrorobs 8105
+set Mirrorpeer level 11
+set Mirrorpeer maxhit 1000
+set Mirrorpeer hit 1000
+set Mirrorobs level 31
+
+[probe]
+say meteor

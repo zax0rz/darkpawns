@@ -2903,9 +2903,6 @@ func castMeteorSwarm(level int, ch, world interface{}) {
 	// outdoor refusal gates.
 	// #nosec G404 -- game RNG, not cryptographic
 	dam := level*6 + dprng.Number(-10, level*3)
-	if dam < 1 {
-		dam = 1
-	}
 
 	w, ok := world.(worldAoe)
 	if !ok {
