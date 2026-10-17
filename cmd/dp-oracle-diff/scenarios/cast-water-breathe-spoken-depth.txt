@@ -1,0 +1,78 @@
+# depth-case: spell.water-breathe-spoken
+# A level-31 Mage casts waterbreathe on a room target through do_cast ->
+# cast_spell -> call_magic -> mag_affects. C applies AFF_WATERBREATHE for
+# GET_LEVEL(ch) ticks and sends the cold-breath line to the target
+# (src/class.c:794; src/spell_parser.c:879-925,963-1110,1543;
+# src/magic.c:1064-1069,1414-1419).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Breathcast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Breathcast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Breathpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Breathpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Breathpeer 8105
+set Breathcast class mage
+set Breathcast level 31
+skillset Breathcast 'waterbreathe' 100
+set Breathcast maxmana 5000
+set Breathcast mana 5000
+
+[probe]
+cast 'waterbreathe' Breathpeer

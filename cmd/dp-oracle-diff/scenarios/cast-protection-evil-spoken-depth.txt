@@ -1,0 +1,110 @@
+# depth-case: spell.protection-from-evil-spoken
+# A level-31 Cleric self-casts Protection from Evil through do_cast ->
+# cast_spell -> call_magic -> mag_affects. C's TAR_SELF_ONLY gate requires no
+# target argument; mag_affects applies 24-tick AFF_PROTECT_EVIL, sends the
+# silver-light line to the caster, and the room act to both connected witnesses
+# (src/class.c:811; src/spell_parser.c:879-925,963-1110,1381;
+# src/magic.c:1142-1159,1414-1419).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+ProtCaster
+Y
+infrapass
+infrapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ProtCaster
+y
+infrapass
+infrapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+ProtVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+ProtVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Protobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Protobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ProtCaster 8105
+teleport ProtVictim 8105
+teleport Protobs 8105
+set ProtCaster class cleric
+set ProtCaster level 31
+skillset ProtCaster 'protection from evil' 100
+set ProtCaster maxmana 5000
+set ProtCaster mana 5000
+set ProtCaster align 0
+
+[probe]
+cast 'protection from evil'

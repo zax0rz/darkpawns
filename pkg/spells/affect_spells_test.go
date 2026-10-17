@@ -16,6 +16,7 @@ type mockSpellsChar struct {
 	name          string
 	npc           bool
 	level         int
+	alignment     int
 	class         int
 	sex           int
 	roomVNum      int
@@ -47,6 +48,7 @@ func (m *mockSpellsChar) HasSpellAffect(n int) bool {
 	return false
 }
 func (m *mockSpellsChar) GetLevel() int          { return m.level }
+func (m *mockSpellsChar) GetAlignment() int      { return m.alignment }
 func (m *mockSpellsChar) GetClass() int          { return m.class }
 func (m *mockSpellsChar) GetSex() int            { return m.sex }
 func (m *mockSpellsChar) GetRoomVNum() int       { return m.roomVNum }
@@ -448,6 +450,70 @@ func TestCallMagicHasteSelfAppliesAffect(t *testing.T) {
 	}
 	if len(caster.messages) != 0 {
 		t.Errorf("self-cast messages = %q, want no mag_affects effect line", caster.messages)
+	}
+}
+
+// TestCallMagicProtectionFromEvilSpokenAppliesAffect pins the real
+// call_magic -> mag_affects state and self-target bytes for a neutral caster.
+func TestCallMagicProtectionFromEvilSpokenAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, alignment: 0, position: int(PosStanding)}
+
+	if !CallMagic(caster, caster, nil, SpellProtFromEvil, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Protection from Evil")
+	}
+	if len(caster.activeAffects) != 1 {
+		t.Fatalf("expected one Protection from Evil affect, got %d", len(caster.activeAffects))
+	}
+	aff := caster.activeAffects[0]
+	if aff.SpellID != SpellProtFromEvil || aff.Location != engine.ApplyNone || aff.Duration != 24 || aff.Flags != engine.AFFProtectionEvil {
+		t.Errorf("unexpected Protection from Evil affect: %+v", aff)
+	}
+	want := "A stream of silver light surges from your fingertips, covering you!\r\n"
+	if len(caster.messages) != 1 || caster.messages[0] != want {
+		t.Errorf("self-cast messages = %q, want [%q]", caster.messages, want)
+	}
+}
+
+// TestCallMagicProtectionFromGoodSpokenAppliesAffect pins the real
+// call_magic -> mag_affects state and self-target bytes for a neutral caster.
+func TestCallMagicProtectionFromGoodSpokenAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, alignment: 0, position: int(PosStanding)}
+
+	if !CallMagic(caster, caster, nil, SpellProtFromGood, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Protection from Good")
+	}
+	if len(caster.activeAffects) != 1 {
+		t.Fatalf("expected one Protection from Good affect, got %d", len(caster.activeAffects))
+	}
+	aff := caster.activeAffects[0]
+	if aff.SpellID != SpellProtFromGood || aff.Location != engine.ApplyNone || aff.Duration != 24 || aff.Flags != engine.AFFProtectionGood {
+		t.Errorf("unexpected Protection from Good affect: %+v", aff)
+	}
+	want := "A stream of silver light surges from your fingertips, covering you!\r\n"
+	if len(caster.messages) != 1 || caster.messages[0] != want {
+		t.Errorf("self-cast messages = %q, want [%q]", caster.messages, want)
+	}
+}
+
+// TestCallMagicWaterBreatheSpokenAppliesAffect pins the registered spell's
+// level-duration affect and exact target message.
+func TestCallMagicWaterBreatheSpokenAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding)}
+	victim := &mockSpellsChar{name: "Victim", level: 10, position: int(PosStanding)}
+
+	if !CallMagic(caster, victim, nil, SpellWaterBreathe, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Waterbreathe")
+	}
+	if len(victim.activeAffects) != 1 {
+		t.Fatalf("expected one Waterbreathe affect, got %d", len(victim.activeAffects))
+	}
+	aff := victim.activeAffects[0]
+	if aff.SpellID != SpellWaterBreathe || aff.Location != engine.ApplyNone || aff.Duration != 31 || aff.Flags != engine.AFFWaterBreathing {
+		t.Errorf("unexpected Waterbreathe affect: %+v", aff)
+	}
+	want := "You feel your breath become colder.\r\n"
+	if len(victim.messages) != 1 || victim.messages[0] != want {
+		t.Errorf("target messages = %q, want [%q]", victim.messages, want)
 	}
 }
 

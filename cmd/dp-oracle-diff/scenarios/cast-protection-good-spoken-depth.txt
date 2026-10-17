@@ -1,0 +1,110 @@
+# depth-case: spell.protection-from-good-spoken
+# A level-31 neutral Cleric self-casts Protection from Good through do_cast ->
+# cast_spell -> call_magic -> mag_affects. C's TAR_SELF_ONLY gate requires no
+# target argument; mag_affects applies 24-tick AFF_PROTECT_GOOD, sends the
+# silver-light line to the caster, and the room act to both connected witnesses
+# (src/class.c:812; src/spell_parser.c:879-925,963-1110,1383;
+# src/magic.c:1162-1181,1414-1419).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Goodcaster
+Y
+infrapass
+infrapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Goodcaster
+y
+infrapass
+infrapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Goodvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Goodvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Goodobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Goodobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Goodcaster 8105
+teleport Goodvictim 8105
+teleport Goodobs 8105
+set Goodcaster class cleric
+set Goodcaster level 31
+skillset Goodcaster 'protection from good' 100
+set Goodcaster maxmana 5000
+set Goodcaster mana 5000
+set Goodcaster align 0
+
+[probe]
+cast 'protection from good'
