@@ -1,0 +1,110 @@
+# The connected level-31 PC is C's immortal boundary. damage() zeros damage
+# before dispatch, selecting M@0029's God triplet for all three audiences.
+# depth-case: spell.burning-hands.message-god
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+BurnGodActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BurnGodActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+BurnGodVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+BurnGodVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BurnGodObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BurnGodObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BurnGodVictim 8105
+teleport BurnGodObserver 8105
+set player BurnGodActor class mage
+skillset BurnGodActor 'burning hands' 100
+set player BurnGodActor maxmana 5000
+set player BurnGodActor mana 5000
+set player BurnGodActor align 1000
+set player BurnGodVictim class mage
+set player BurnGodVictim level 31
+set player BurnGodVictim maxhit 1000
+set player BurnGodVictim hit 1000
+set player BurnGodActor level 20
+
+[probe]
+cast 'burning hands' BurnGodVictim

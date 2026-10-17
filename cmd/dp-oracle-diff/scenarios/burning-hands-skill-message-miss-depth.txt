@@ -1,0 +1,131 @@
+# A room script sets and reports the victim's real AFF_SANCTUARY and
+# AFF_PROTECT_GOOD bits. At level 11, Burning Hands deals 4d5+11; a level-30
+# Mage saves at threshold 8, then damage() halves twice and subtracts level/4
+# for a good caster. The low 4d5 rolls reach zero and select the miss triplet.
+# This is the registered spoken-cast path, not a forced SkillMessage call.
+# depth-case: spell.burning-hands.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/burning_hands.lua 512
+
+[lua-script mob/oracle/burning_hands.lua]
+function oncmd()
+if (argument == "say shield") then
+aff_flags(ch, "set", 7)
+aff_flags(ch, "set", 13)
+return TRUE
+end
+if (argument == "say state") then
+say("sanctuary=" .. tostring(aff_flagged(ch, 7)) .. " protect-good=" .. tostring(aff_flagged(ch, 13)))
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+BurnMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BurnMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+BurnMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+BurnMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BurnMissObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BurnMissObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BurnMissVictim 8105
+teleport BurnMissObserver 8105
+set player BurnMissActor class mage
+skillset BurnMissActor 'burning hands' 100
+set player BurnMissActor maxmana 5000
+set player BurnMissActor mana 5000
+set player BurnMissActor align 1000
+set player BurnMissVictim class mage
+set player BurnMissVictim level 30
+set player BurnMissVictim maxhit 1000
+set player BurnMissVictim hit 1000
+set player BurnMissActor level 11
+
+[probe]
+send:victim say shield
+send:victim say state
+cast 'burning hands' BurnMissVictim

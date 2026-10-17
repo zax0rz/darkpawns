@@ -1,0 +1,111 @@
+# The registered spoken cast reaches M@0029's death triplet through
+# mag_damage -> damage -> SkillMessage. The still-living PC starts at -10 HP;
+# the minimum 4d5+20 damage remains lethal even when C's save halves it.
+# depth-case: spell.burning-hands.message-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+BurnDeathActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BurnDeathActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+BurnDeathVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+BurnDeathVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+BurnDeathObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+BurnDeathObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BurnDeathVictim 8105
+teleport BurnDeathObserver 8105
+set player BurnDeathActor class mage
+skillset BurnDeathActor 'burning hands' 100
+set player BurnDeathActor maxmana 5000
+set player BurnDeathActor mana 5000
+set player BurnDeathActor align 1000
+set player BurnDeathVictim class mage
+set player BurnDeathVictim level 20
+set player BurnDeathVictim maxhit 1
+set player BurnDeathVictim hit -10
+set player BurnDeathActor level 20
+
+[probe]
+cast 'burning hands' BurnDeathVictim
