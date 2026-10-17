@@ -127,6 +127,7 @@ north
 east
 south
 east
+wimpy 0
 
 [setup:port:victim]
 Tripvict
@@ -145,6 +146,7 @@ north
 east
 south
 east
+wimpy 0
 
 [warmup]
 goto 8105
