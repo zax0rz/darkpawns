@@ -100,6 +100,45 @@ func TestObfuscateSpellName_PoisonMatchesOracle(t *testing.T) {
 	}
 }
 
+func TestObfuscateSpellNameMatchesCCompoundAndCharacterPass(t *testing.T) {
+	// The C loop in src/spell_parser.c:282-289 does not break after a
+	// substitution. This is the source-audited set of spell catalog entries
+	// whose output differed when Go restarted the table after each match.
+	tests := map[string]string{
+		"clone":                    "qrabo",
+		"color spray":              "qahif gsfil",
+		"create food":              "qfoi yaam",
+		"create water":             "qfoi xif",
+		"detect poison":            "oculoinfra saugab",
+		"energy drain":             "unsoftl mfiub",
+		"fireball":                 "yufovirr",
+		"poison":                   "saugab",
+		"protection from evil":     "sfahkaminauab yfaw ozur",
+		"remove curse":             "canduswazo judifgo",
+		"shocking grasp":           "gpaqtubt tfigs",
+		"infravision":              "ubyfizuguab",
+		"hellfire":                 "porryufo",
+		"globe of invulnerability": "travo ay ubzerbofivuruhl",
+		"invigorate":               "ubzutafi",
+		"greater perception":       "tfoif dudaqoshuab",
+		"adrenaline boost":         "imfunsirubo vaagh",
+		"divine intervention":      "muzubo ubhofzunshuab",
+		"smokescreen":              "gwatogqfouns",
+		"disintegration":           "marubhotfihuab",
+		"protection from good":     "sfahkaminauab yfaw taam",
+		"flame strike":             "yriwo ghfuto",
+		"dream travel":             "mfoiw hgruzor",
+		"waterbreathe":             "xifvfoihpo",
+	}
+	for name, want := range tests {
+		t.Run(name, func(t *testing.T) {
+			if got := ObfuscateSpellName(name); got != want {
+				t.Errorf("ObfuscateSpellName(%q) = %q, want C output %q", name, got, want)
+			}
+		})
+	}
+}
+
 func TestSaySpell_TargetMessageDeliveredToTarget(t *testing.T) {
 	caster := newSayChar("Alice", 0, 100)
 	target := newSayChar("Bob", 0, 100)

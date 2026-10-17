@@ -1,0 +1,46 @@
+# depth-case: spell.chameleon-spoken
+# A level-31 Psionic reaches chameleon through the spoken parser and self-targets.
+# The transcript pins C's self-recipient line; the CallMagic test pins its affect.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Chamcast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chamcast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Chamcast class i
+set Chamcast level 31
+skillset Chamcast 'chameleon' 100
+set Chamcast maxmana 5000
+set Chamcast mana 5000
+
+[probe]
+will 'chameleon'

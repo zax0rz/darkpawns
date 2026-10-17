@@ -132,6 +132,8 @@ fidelity-units:
 fidelity-depth:
 	python3 scripts/gen_fidelity_depth.py --self-test
 	python3 scripts/gen_fidelity_depth.py
+	python3 scripts/spell_matrix.py --self-test
+	python3 scripts/spell_matrix.py
 	python3 scripts/surface_map.py --self-test
 	python3 scripts/surface_map.py
 

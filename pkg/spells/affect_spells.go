@@ -43,9 +43,7 @@ func MagAffects(level int, ch, victim interface{}, spellNum, savetype int, world
 	magAffectsForCast(level, ch, victim, spellNum, savetype, CastSpell, world)
 }
 
-// magAffectsForCast carries the C object-cast type through the shared affect
-// routine. Room output follows C's act(to_room, TRUE, victim, 0, ch, TO_ROOM)
-// audience and visibility rules for every cast type.
+// magAffectsForCast carries the C object-cast type to the final affect handler.
 func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int, castType CastType, world interface{}) {
 	if victim == nil || ch == nil {
 		return
@@ -59,7 +57,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 		if isClassMage(ch) && consumeSpellReagentVNum(ch, 1234) {
 			reag = 1
 			sendToCaster(ch, "You crush a small lens under your heel.\r\n")
-			sendAffectActRoom(ch, "$n crushes a small lens under $s heel.", world)
+			sendAffectActRoom(ch, nil, "$n crushes a small lens under $s heel.", true, world)
 		}
 	case SpellWaterwalk:
 		reag = checkReagents(ch, SpellWaterwalk, getLevel(ch), "frog leg",
@@ -68,7 +66,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 		reag = checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
 			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
 		if reag > 0 {
-			sendAffectActRoom(ch, "A small chunk of iron melts in $n's palm as $e cast a spell...", world)
+			sendAffectActRoom(ch, nil, "A small chunk of iron melts in $n's palm as $e cast a spell...", true, world)
 		}
 	case SpellSleep:
 		// C magic.c:1203-1210 consumes the exact vnum-1226 sand component
@@ -77,7 +75,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 		if consumeSpellReagentVNum(ch, 1226) {
 			reag = 1
 			sendToCaster(ch, "Pulling a bit of sand from a pocket, you cast it about the room...\r\n")
-			sendAffectActRoom(ch, "$n pulls a bit of sand out of a pocket and casts it about the room.", world)
+			sendAffectRoom(ch, nil, "$n pulls a bit of sand out of a pocket and casts it about the room.\r\n", true, world)
 		} else {
 			sendToCaster(ch, "You attempt the spell without the components...\r\n")
 		}
@@ -98,7 +96,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 			return
 		}
 		if getLevel(ch) < lvlImmort && absInt(getLevel(victim)-getLevel(ch)) > 3 {
-			sendAffectActRoom(victim, "$n shakes his head wearily, but then snaps out of it!", world)
+			sendAffectRoom(victim, nil, "$n shakes his head wearily, but then snaps out of it!\r\n", true, world)
 			return
 		}
 	}
@@ -116,7 +114,7 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 	if spellNum == SpellCurse && !saved && isClassMage(ch) && consumeSpellReagentVNum(ch, 1233) {
 		reag = 1
 		sendToCaster(ch, "You throw a raven's feather into the air...\r\n")
-		sendAffectActRoom(ch, "$n throws a feather into the air...", world)
+		sendAffectActRoom(ch, nil, "$n throws a feather into the air...", true, world)
 	}
 	magAffectsApply(level, ch, victim, spellNum, saved, reag, world, castType)
 }
@@ -220,7 +218,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			nosleep = true
 		}
 		if nosleep || saved {
-			sendAffectActRoom(victim, "$n shakes his head wearily, but then snaps out of it!", world)
+			sendAffectRoom(victim, nil, "$n shakes his head wearily, but then snaps out of it!\r\n", true, world)
 			npcRetaliate(victim, ch)
 			return
 		}
@@ -438,7 +436,8 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 
 	// C magic.c:1414-1421 — send block. to_self goes to the caster only when
 	// ch != victim, with $M/$S taken from the victim; to_vict always fires;
-	// to_room reaches everyone except the victim.
+	// to_room uses act(..., TRUE, victim, 0, ch, TO_ROOM), so it excludes the
+	// affected character while retaining the caster as a room recipient.
 	if toSelf != "" && ch != victim {
 		sendToCaster(ch, substituteToSelfPronouns(toSelf, victim))
 	}
@@ -446,7 +445,9 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		sendToVictim(victim, toVictim)
 	}
 	if toRoom != "" {
-		sendAffectActRoomTo(victim, ch, toRoom, true, world)
+		// C magic.c:1421 executes act(to_room, TRUE, victim, 0, ch, TO_ROOM).
+		// The wand caster is the substitution target, not an excluded recipient.
+		sendAffectRoom(victim, ch, toRoom, true, world)
 	}
 }
 
@@ -805,7 +806,7 @@ func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interfa
 		sendToVictim(victim, toVictim)
 	}
 	if toRoom != "" {
-		sendAffectActRoomTo(victim, ch, toRoom, true, world)
+		sendAffectRoom(victim, ch, toRoom, true, world) // C magic.c:1884 act(to_room, TRUE, victim, 0, ch, TO_ROOM)
 	}
 }
 
@@ -890,7 +891,7 @@ func MagMasses(level int, ch interface{}, spellNum, savetype int, world interfac
 	switch spellNum {
 	case SpellSmokescreen:
 		sendToCaster(ch, "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.\r\n")
-		sendAffectActRoom(ch, "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of $n!", world)
+		sendAffectRoom(ch, nil, "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of $n!\r\n", false, world)
 	}
 
 	// Apply to each non-grouped character in the room
@@ -955,10 +956,10 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 	switch spellNum {
 	case SpellEarthquake:
 		sendToCaster(ch, "You gesture and the earth begins to shake all around you!\r\n")
-		sendAffectActRoomTo(ch, nil, "$n gracefully gestures and the earth begins to shake violently!", false, world)
+		sendAffectRoom(ch, nil, "$n gracefully gestures and the earth begins to shake violently!\r\n", false, world)
 	case SpellAcidBlast:
 		sendToCaster(ch, "A spray of acid flows from your fingertips!\r\n")
-		sendAffectActRoomTo(ch, nil, "$n raises a hand and acid sprays from $s fingers!", false, world)
+		sendAffectRoom(ch, nil, "$n raises a hand and acid sprays from $s fingers!\r\n", false, world)
 	}
 
 	chars := w.GetAllCharsInRoom(roomVNum)
@@ -1088,7 +1089,7 @@ func MagSummons(level int, ch, obj interface{}, spellNum int, world interface{})
 		if a, ok := world.(interface {
 			SpellActToRoom(ch, vict interface{}, format string, hideInvisible bool) bool
 		}); !ok || !a.SpellActToRoom(ch, mob, "\r\n", false) {
-			sendAffectRoom(ch, nil, "\r\n\r\n", world)
+			sendAffectRoomFallback(ch, mob, nil, "\r\n\r\n", world)
 		}
 		sendToCaster(ch, "The corpse starts to twitch, then stands with a life of it's own!\r\n")
 	}
@@ -1425,27 +1426,47 @@ func mendRoomLine(ch, victim, world interface{}) {
 	}); ok && a.SpellActNotVict(ch, victim, "$N's wounds glow and mend themselves.", true) {
 		return
 	}
-	sendAffectRoom(victim, ch, "$N's wounds glow and mend themselves.\r\n", world)
+	sendAffectRoomFallback(ch, victim, victim, "$N's wounds glow and mend themselves.\r\n", world)
 }
 
-func sendAffectRoom(victim, exclude interface{}, format string, world interface{}) {
+func sendAffectRoom(actor, target interface{}, format string, hideInvisible bool, world interface{}) {
+	type roomActor interface {
+		SpellActToRoom(actor, target interface{}, format string, hideInvisible bool) bool
+	}
+	actFormat := strings.TrimRight(format, "\r\n")
+	if a, ok := world.(roomActor); ok && a.SpellActToRoom(actor, target, actFormat, hideInvisible) {
+		return
+	}
+	sendAffectRoomFallback(actor, target, nil, format, world)
+}
+
+// sendAffectRoomFallback keeps small spell test adapters usable when they do
+// not provide the live act() renderer. Production worlds take the path above.
+func sendAffectRoomFallback(actor, target, extraExclude interface{}, format string, world interface{}) {
 	type roomed interface{ GetRoomVNum() int }
 	type named interface{ GetName() string }
 	type sender interface{ SendMessage(string) }
 	w, ok := world.(roomIterable)
-	vr, roomOK := victim.(roomed)
-	vn, nameOK := victim.(named)
-	if !ok || !roomOK || !nameOK {
+	ar, roomOK := actor.(roomed)
+	actorName, actorNameOK := actor.(named)
+	if !ok || !roomOK || !actorNameOK {
 		return
 	}
-	msg := strings.ReplaceAll(format, "$n", vn.GetName())
-	msg = strings.ReplaceAll(msg, "$N", vn.GetName())
-	msg = strings.ReplaceAll(msg, "$s", possessivePronoun(victim))
-	// C act(to_room, ..., victim, ...) exposes $m as the victim's objective
-	// pronoun (prot-evil/prot-good room lines use it).
-	msg = strings.ReplaceAll(msg, "$m", objectivePronoun(victim))
-	w.ForEachPlayerInRoomInterface(vr.GetRoomVNum(), func(p interface{}) {
-		if selfTarget(victim, p) || (exclude != nil && selfTarget(exclude, p)) {
+	targetName := ""
+	if namedTarget, ok := target.(named); ok {
+		targetName = namedTarget.GetName()
+	}
+	msg := strings.ReplaceAll(format, "$n", actorName.GetName())
+	msg = strings.ReplaceAll(msg, "$N", targetName)
+	msg = strings.ReplaceAll(msg, "$s", possessivePronoun(actor))
+	msg = strings.ReplaceAll(msg, "$S", possessivePronoun(target))
+	msg = strings.ReplaceAll(msg, "$m", objectivePronoun(actor))
+	msg = strings.ReplaceAll(msg, "$M", objectivePronoun(target))
+	if !strings.HasSuffix(msg, "\r\n") {
+		msg += "\r\n"
+	}
+	w.ForEachPlayerInRoomInterface(ar.GetRoomVNum(), func(p interface{}) {
+		if selfTarget(actor, p) || (extraExclude != nil && selfTarget(extraExclude, p)) {
 			return
 		}
 		if s, ok := p.(sender); ok {
@@ -1454,20 +1475,9 @@ func sendAffectRoom(victim, exclude interface{}, format string, world interface{
 	})
 }
 
-func sendAffectActRoom(actor interface{}, format string, world interface{}) {
-	sendAffectActRoomTo(actor, nil, format, true, world)
-}
-
-func sendAffectActRoomTo(actor, victim interface{}, format string, hideInvisible bool, world interface{}) {
-	type roomActor interface {
-		SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
-	}
-	format = strings.TrimSuffix(format, "\r\n")
-	if a, ok := world.(roomActor); ok && a.SpellActToRoom(actor, victim, format, hideInvisible) {
-		return
-	}
+func sendAffectActRoom(actor, target interface{}, format string, hideInvisible bool, world interface{}) {
 	format = strings.ReplaceAll(format, "$e", subjectivePronoun(actor))
-	sendAffectRoom(actor, nil, format+"\r\n", world)
+	sendAffectRoom(actor, target, format, hideInvisible, world)
 }
 
 func removeAffect(entity interface{}, spellNum int) {
@@ -1708,6 +1718,7 @@ func castSobriety(level int, ch, cvict interface{}) {
 
 	type conder interface {
 		SetCondition(int, int)
+		GetHP() int
 		GetPosition() int
 		SetPosition(int)
 	}
@@ -1717,8 +1728,8 @@ func castSobriety(level int, ch, cvict interface{}) {
 	}
 
 	c.SetCondition(0, 0) // DRUNK = 0
-	// Position may change after condition reset (C calls update_pos)
-	// update_pos logic: if pos > POS_SLEEPING and drunk is 0 and thirst/hunger are 0, sit
+	// C src/spells.c:694 calls update_pos after clearing DRUNK.
+	c.SetPosition(combat.GetPositionFromHP(c.GetHP(), c.GetPosition()))
 	// C's adjacent send_to_char calls form one output burst with LFCR at the end.
 	sendToVictim(cvict, "You are splashed in the face with HOT coffee, but feel much more sober.\n\r")
 }
@@ -2813,7 +2824,7 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 		roomData := w.GetRoomInWorld(toRoom)
 		if roomData != nil && !roomData.HasFlag(RoomPrivate) {
 			sendToVictim(cvict, "The world around you turns black and you suddenly find yourself..\r\n")
-			sendAffectActRoomTo(cvict, nil, "$n slowly fades out of existence and is gone.", false, world)
+			sendAffectRoom(cvict, nil, "$n slowly fades out of existence and is gone.", false, world)
 
 			// Live worlds transfer the supplied concrete combat body. Legacy test
 			// adapters retain their existing name-taking bridge.
@@ -2834,7 +2845,7 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 			if err := transferErr; err != nil {
 				slog.Error("CharTransfer failed", "error", err)
 			}
-			sendAffectActRoomTo(cvict, nil, "$n slowly fades into existence.", false, world)
+			sendAffectRoom(cvict, nil, "$n slowly fades into existence.", false, world)
 			// C calls look_at_room(victim, 0) after the destination act. The
 			// game adapter owns the player-facing room renderer because spells
 			// cannot import pkg/game without creating a cycle.
@@ -3313,7 +3324,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		backfireRoll := magSummonBackfireRoll()
 		if backfireRoll == 0 && !chIsNPC {
 			sendToCaster(ch, "Your spell backfires!\r\n")
-			sendAffectActRoom(ch, "$n disappears suddenly.", world)
+			sendAffectRoom(ch, nil, "$n disappears suddenly.\r\n", true, world)
 			// Transfer caster to victim's room instead
 			type transferWorld interface {
 				PlayerTransfer(ch interface{}, toRoomVNum int) error
@@ -3330,7 +3341,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 					}
 				}
 			}
-			sendAffectActRoom(ch, "$n arrives suddenly.", world)
+			sendAffectRoom(ch, nil, "$n arrives suddenly.\r\n", true, world)
 			if looker, ok := world.(interface{ LookAtRoomForSpell(victim interface{}) }); ok {
 				looker.LookAtRoomForSpell(ch)
 			}
@@ -3359,7 +3370,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		PlayerTransfer(ch interface{}, toRoomVNum int) error
 		MobTransfer(ch interface{}, toRoomVNum int) error
 	}
-	sendAffectActRoom(cvict, "$n disappears suddenly.", world)
+	sendAffectRoom(cvict, nil, "$n disappears suddenly.\r\n", true, world)
 	if tw, ok := world.(transferWorld); ok {
 		if victIsNPC {
 			if err := tw.MobTransfer(cvict, chRoom); err != nil {
@@ -3371,7 +3382,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 			}
 		}
 	}
-	sendAffectActRoom(cvict, "$n arrives suddenly.", world)
+	sendAffectRoom(cvict, nil, "$n arrives suddenly.\r\n", true, world)
 
 	if getPos(cvict) > int(PosSleeping) {
 		sendToVictim(cvict, fmt.Sprintf("%s has summoned you!\r\n", chName))

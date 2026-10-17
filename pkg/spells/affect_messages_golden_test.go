@@ -181,6 +181,10 @@ func TestMagPointsMessages(t *testing.T) {
 }
 
 func TestMagMassesSmokescreenMessages(t *testing.T) {
+	originalSaveRoll := magAffectsSaveRoll
+	magAffectsSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magAffectsSaveRoll = originalSaveRoll })
+
 	caster := newAffectMale("Castero", 8162)
 	victim := newAffectMale("Barnaby", 8162)
 	observer := newAffectMale("Observe", 8162)
@@ -197,6 +201,15 @@ func TestMagMassesSmokescreenMessages(t *testing.T) {
 	}
 	if !reflect.DeepEqual(observer.messages, []string{wantRoom}) {
 		t.Errorf("observer messages = %q, want room announcement", observer.messages)
+	}
+	if caster.HasSpellAffect(SpellSmokescreen) {
+		t.Error("caster received the room-only smokescreen affect")
+	}
+	if !victim.HasSpellAffect(SpellSmokescreen) {
+		t.Error("non-grouped victim did not receive the smokescreen affect")
+	}
+	if !observer.HasSpellAffect(SpellSmokescreen) {
+		t.Error("non-grouped observer did not receive the smokescreen affect")
 	}
 }
 

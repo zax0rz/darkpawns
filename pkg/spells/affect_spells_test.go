@@ -16,6 +16,7 @@ type mockSpellsChar struct {
 	name          string
 	npc           bool
 	level         int
+	alignment     int
 	class         int
 	sex           int
 	roomVNum      int
@@ -47,6 +48,7 @@ func (m *mockSpellsChar) HasSpellAffect(n int) bool {
 	return false
 }
 func (m *mockSpellsChar) GetLevel() int          { return m.level }
+func (m *mockSpellsChar) GetAlignment() int      { return m.alignment }
 func (m *mockSpellsChar) GetClass() int          { return m.class }
 func (m *mockSpellsChar) GetSex() int            { return m.sex }
 func (m *mockSpellsChar) GetRoomVNum() int       { return m.roomVNum }
@@ -350,6 +352,204 @@ func TestMagAffects_Armor(t *testing.T) {
 	}
 }
 
+func TestCallMagicArmorSpokenCastAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosFighting)}
+	victim := &mockSpellsChar{name: "Victim", level: 10, position: int(PosStanding)}
+
+	if !CallMagic(caster, victim, nil, SpellArmor, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch holy ward")
+	}
+	if len(victim.activeAffects) != 1 {
+		t.Fatalf("expected one armor affect, got %d", len(victim.activeAffects))
+	}
+	aff := victim.activeAffects[0]
+	if aff.SpellID != SpellArmor || aff.Location != engine.ApplyAC || aff.Magnitude != -15 {
+		t.Errorf("unexpected armor affect from spoken dispatch: %+v", aff)
+	}
+}
+
+func TestCallMagicPerceptionSpellsApplyAffects(t *testing.T) {
+	cases := []struct {
+		name     string
+		spellNum int
+		flag     uint64
+	}{
+		{"detect alignment", SpellDetectAlign, engine.AFFDetectAlign},
+		{"detect invisibility", SpellDetectInvis, engine.AFFDetectInvisible},
+		{"detect magic", SpellDetectMagic, engine.AFFDetectMagic},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding)}
+
+			if !CallMagic(caster, caster, nil, tc.spellNum, 31, CastSpell, nil) {
+				t.Fatal("CallMagic did not dispatch spell")
+			}
+			if len(caster.activeAffects) != 1 {
+				t.Fatalf("expected one perception affect, got %d", len(caster.activeAffects))
+			}
+			aff := caster.activeAffects[0]
+			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != 43 || aff.Flags != tc.flag {
+				t.Errorf("unexpected perception affect: %+v", aff)
+			}
+			if len(caster.messages) != 1 || caster.messages[0] != "Your eyes tingle.\r\n" {
+				t.Errorf("self-cast messages = %q, want the C recipient line", caster.messages)
+			}
+		})
+	}
+}
+
+func TestCallMagicMovementSpellsApplyAffects(t *testing.T) {
+	cases := []struct {
+		name     string
+		spellNum int
+		duration int
+		flag     uint64
+		message  string
+	}{
+		{"waterwalk", SpellWaterwalk, 20, engine.AFFWaterwalk, "You feel webbing between your toes.\r\n"},
+		{"fly", SpellFly, 31, engine.AFFFlying, "Your feet rise off the ground!\r\n"},
+		{"levitate", SpellLevitate, 31, engine.AFFFlying, "Your feet rise off the ground!\r\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding), inventory: &mockInventory{}}
+
+			if !CallMagic(caster, caster, nil, tc.spellNum, 31, CastSpell, nil) {
+				t.Fatal("CallMagic did not dispatch movement spell")
+			}
+			if len(caster.activeAffects) != 1 {
+				t.Fatalf("expected one movement affect, got %d", len(caster.activeAffects))
+			}
+			aff := caster.activeAffects[0]
+			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != tc.duration || aff.Flags != tc.flag {
+				t.Errorf("unexpected movement affect: %+v", aff)
+			}
+			if len(caster.messages) != 1 || caster.messages[0] != tc.message {
+				t.Errorf("self-cast messages = %q, want %q", caster.messages, tc.message)
+			}
+		})
+	}
+}
+
+// TestCallMagicHasteSelfAppliesAffect pins the spoken self-cast state for
+// Haste: C applies AFF_HASTE at the effective level and mag_affects emits no
+// effect-specific message when caster and victim are the same character.
+func TestCallMagicHasteSelfAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Hastecast", level: 31, position: int(PosStanding)}
+
+	if !CallMagic(caster, caster, nil, SpellHaste, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Haste")
+	}
+	if len(caster.activeAffects) != 1 {
+		t.Fatalf("expected one Haste affect, got %d", len(caster.activeAffects))
+	}
+	aff := caster.activeAffects[0]
+	if aff.SpellID != SpellHaste || aff.Location != engine.ApplyNone || aff.Duration != 31 || aff.Flags != engine.AFFHaste {
+		t.Errorf("unexpected Haste affect: %+v", aff)
+	}
+	if len(caster.messages) != 0 {
+		t.Errorf("self-cast messages = %q, want no mag_affects effect line", caster.messages)
+	}
+}
+
+// TestCallMagicProtectionFromEvilSpokenAppliesAffect pins the real
+// call_magic -> mag_affects state and self-target bytes for a neutral caster.
+func TestCallMagicProtectionFromEvilSpokenAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, alignment: 0, position: int(PosStanding)}
+
+	if !CallMagic(caster, caster, nil, SpellProtFromEvil, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Protection from Evil")
+	}
+	if len(caster.activeAffects) != 1 {
+		t.Fatalf("expected one Protection from Evil affect, got %d", len(caster.activeAffects))
+	}
+	aff := caster.activeAffects[0]
+	if aff.SpellID != SpellProtFromEvil || aff.Location != engine.ApplyNone || aff.Duration != 24 || aff.Flags != engine.AFFProtectionEvil {
+		t.Errorf("unexpected Protection from Evil affect: %+v", aff)
+	}
+	want := "A stream of silver light surges from your fingertips, covering you!\r\n"
+	if len(caster.messages) != 1 || caster.messages[0] != want {
+		t.Errorf("self-cast messages = %q, want [%q]", caster.messages, want)
+	}
+}
+
+// TestCallMagicProtectionFromGoodSpokenAppliesAffect pins the real
+// call_magic -> mag_affects state and self-target bytes for a neutral caster.
+func TestCallMagicProtectionFromGoodSpokenAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, alignment: 0, position: int(PosStanding)}
+
+	if !CallMagic(caster, caster, nil, SpellProtFromGood, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Protection from Good")
+	}
+	if len(caster.activeAffects) != 1 {
+		t.Fatalf("expected one Protection from Good affect, got %d", len(caster.activeAffects))
+	}
+	aff := caster.activeAffects[0]
+	if aff.SpellID != SpellProtFromGood || aff.Location != engine.ApplyNone || aff.Duration != 24 || aff.Flags != engine.AFFProtectionGood {
+		t.Errorf("unexpected Protection from Good affect: %+v", aff)
+	}
+	want := "A stream of silver light surges from your fingertips, covering you!\r\n"
+	if len(caster.messages) != 1 || caster.messages[0] != want {
+		t.Errorf("self-cast messages = %q, want [%q]", caster.messages, want)
+	}
+}
+
+// TestCallMagicWaterBreatheSpokenAppliesAffect pins the registered spell's
+// level-duration affect and exact target message.
+func TestCallMagicWaterBreatheSpokenAppliesAffect(t *testing.T) {
+	caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding)}
+	victim := &mockSpellsChar{name: "Victim", level: 10, position: int(PosStanding)}
+
+	if !CallMagic(caster, victim, nil, SpellWaterBreathe, 31, CastSpell, nil) {
+		t.Fatal("CallMagic did not dispatch Waterbreathe")
+	}
+	if len(victim.activeAffects) != 1 {
+		t.Fatalf("expected one Waterbreathe affect, got %d", len(victim.activeAffects))
+	}
+	aff := victim.activeAffects[0]
+	if aff.SpellID != SpellWaterBreathe || aff.Location != engine.ApplyNone || aff.Duration != 31 || aff.Flags != engine.AFFWaterBreathing {
+		t.Errorf("unexpected Waterbreathe affect: %+v", aff)
+	}
+	want := "You feel your breath become colder.\r\n"
+	if len(victim.messages) != 1 || victim.messages[0] != want {
+		t.Errorf("target messages = %q, want [%q]", victim.messages, want)
+	}
+}
+
+func TestCallMagicAwarenessSpellsApplyAffects(t *testing.T) {
+	cases := []struct {
+		name     string
+		spellNum int
+		duration int
+		flag     uint64
+		message  string
+	}{
+		{"sense life", SpellSenseLife, 31, engine.AFFSenseLife, "Your feel your awareness improve.\r\n"},
+		{"chameleon", SpellChameleon, 31, engine.AFFHide, "You blend into the surroundings.\r\n"},
+		{"infravision", SpellInfravision, 43, engine.AFFInfrared, "Your eyes glow red.\r\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &mockSpellsChar{name: "Caster", level: 31, position: int(PosStanding)}
+
+			if !CallMagic(caster, caster, nil, tc.spellNum, 31, CastSpell, nil) {
+				t.Fatal("CallMagic did not dispatch awareness spell")
+			}
+			if len(caster.activeAffects) != 1 {
+				t.Fatalf("expected one awareness affect, got %d", len(caster.activeAffects))
+			}
+			aff := caster.activeAffects[0]
+			if aff.SpellID != tc.spellNum || aff.Location != engine.ApplyNone || aff.Duration != tc.duration || aff.Flags != tc.flag {
+				t.Errorf("unexpected awareness affect: %+v", aff)
+			}
+			if len(caster.messages) != 1 || caster.messages[0] != tc.message {
+				t.Errorf("self-cast messages = %q, want %q", caster.messages, tc.message)
+			}
+		})
+	}
+}
+
 // forceMagAffectsSave makes the mag_affects saving throw deterministic for the
 // duration of a test: saved=true means the victim resists, saved=false means the
 // spell lands. Restores the real (RNG-backed) roll via t.Cleanup.
@@ -453,30 +653,53 @@ func TestMagAffects_Metalskin(t *testing.T) {
 
 func TestMagPoints(t *testing.T) {
 	tests := []struct {
-		spell    int
-		initial  int
-		max      int
-		wantHP   int
-		expected string
+		spell            int
+		initialHP        int
+		maxHP            int
+		initialMove      int
+		maxMove          int
+		wantHPIncrease   bool
+		wantMoveIncrease bool
+		self             bool
+		expected         string
 	}{
-		{SpellCureLight, 50, 100, 50, "better"},
-		{SpellCureCritic, 50, 100, 50, "lot better"},
-		{SpellHeal, 50, 200, 150, "warm feeling"},
-		{SpellVitality, 50, 150, 50, "vitalized"},
+		{spell: SpellCureLight, initialHP: 50, maxHP: 100, wantHPIncrease: true, expected: "better"},
+		{spell: SpellCureCritic, initialHP: 50, maxHP: 100, wantHPIncrease: true, expected: "lot better"},
+		{spell: SpellVitality, initialHP: 50, maxHP: 150, initialMove: 50, maxMove: 150, wantHPIncrease: true, wantMoveIncrease: true, expected: "vitalized"},
+		{spell: SpellInvigorate, initialHP: 50, maxHP: 50, initialMove: 50, maxMove: 150, wantMoveIncrease: true, expected: "invigorated"},
+		{spell: SpellCellAdjustment, initialHP: 50, maxHP: 150, wantHPIncrease: true, expected: "warm feeling"},
+		{spell: SpellLayHands, initialHP: 50, maxHP: 150, self: true, wantHPIncrease: true, expected: "mend beneath your hands"},
 	}
 
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			ch := &mockSpellsChar{level: 20}
-			victim := &mockSpellsChar{hp: tt.initial, maxHP: tt.max}
+			ch := &mockSpellsChar{name: "Castero", level: 20}
+			victim := &mockSpellsChar{name: "Barnaby", hp: tt.initialHP, maxHP: tt.maxHP, move: tt.initialMove, maxMove: tt.maxMove}
+			if tt.self {
+				victim = ch
+				victim.hp, victim.maxHP = tt.initialHP, tt.maxHP
+				victim.move, victim.maxMove = tt.initialMove, tt.maxMove
+			}
 
 			MagPoints(20, ch, victim, tt.spell, int(SaveSpell), nil)
 
-			if victim.hp <= tt.initial {
-				t.Errorf("Heal failed: HP remained at %d", victim.hp)
+			if tt.wantHPIncrease && victim.hp <= tt.initialHP {
+				t.Errorf("HP did not increase: got %d from %d", victim.hp, tt.initialHP)
 			}
-			if victim.hp > tt.max {
-				t.Errorf("HP overflowed: %d, max is %d", victim.hp, tt.max)
+			if !tt.wantHPIncrease && victim.hp != tt.initialHP {
+				t.Errorf("HP changed to %d, want unchanged %d", victim.hp, tt.initialHP)
+			}
+			if victim.hp > tt.maxHP {
+				t.Errorf("HP overflowed: %d, max is %d", victim.hp, tt.maxHP)
+			}
+			if tt.wantMoveIncrease && victim.move <= tt.initialMove {
+				t.Errorf("movement did not increase: got %d from %d", victim.move, tt.initialMove)
+			}
+			if !tt.wantMoveIncrease && victim.move != tt.initialMove {
+				t.Errorf("movement changed to %d, want unchanged %d", victim.move, tt.initialMove)
+			}
+			if victim.move > victim.maxMove {
+				t.Errorf("movement overflowed: %d, max is %d", victim.move, victim.maxMove)
 			}
 
 			// Verify text message

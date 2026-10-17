@@ -29,35 +29,35 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 		if isMage && !hasReag {
 			sendToCaster(ch, "You attempt the spell without the components..\r\n")
 		} else if hasReag {
-			sendAffectActRoom(ch, "$n pulls something out of $s pocket and crushes it beneath $s heel...", world)
+			sendAffectRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...\r\n", true, world)
 		}
 	case SpellColorSpray:
 		hasReag = isMage && consumeReagent(ch, SpellColorSpray, level, "prism",
 			"Pulling a prism from a pocket, you crush it under your heel...",
 			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
 		if hasReag {
-			sendAffectActRoom(ch, "$n pulls something out of $s pocket and crushes it beneath $s heel...", world)
+			sendAffectActRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...", true, world)
 		}
 	case SpellFireball:
 		hasReag = isMage && consumeReagent(ch, SpellFireball, level, "pinch of ash",
 			"Pulling a pinch of ash from a pocket, you cast it about the room...",
 			"$n pulls a pinch of ash out of a pocket and casts it about the room.")
 		if hasReag {
-			sendAffectActRoom(ch, "$n pulls a pinch of ash out of a pocket and casts it about the room.", world)
+			sendAffectActRoom(ch, nil, "$n pulls a pinch of ash out of a pocket and casts it about the room.", true, world)
 		}
 	case SpellDisintegrate:
 		hasReag = isMage && consumeReagent(ch, SpellDisintegrate, level, "eye of a beholder",
 			"Pulling the eye of a beholder from a pocket, you throw it to the ground...",
 			"$n pulls a small orb out of a pocket and dashes it to the ground.")
 		if hasReag {
-			sendAffectActRoom(ch, "$n pulls a small orb out of a pocket and dashes it to the ground.", world)
+			sendAffectActRoom(ch, nil, "$n pulls a small orb out of a pocket and dashes it to the ground.", true, world)
 		}
 	case SpellSoulLeech, SpellEnergyDrain:
 		hasReag = isMage && consumeReagent(ch, SpellEnergyDrain, level, "vampire dust",
 			"Pulling the vampire dust from a pocket, you throw it into the air...",
 			"$n throws some dust into the air...")
 		if hasReag {
-			sendAffectActRoom(ch, "$n throws some dust into the air...", world)
+			sendAffectActRoom(ch, nil, "$n throws some dust into the air...", true, world)
 		}
 	}
 
@@ -458,35 +458,23 @@ func getHP(ch interface{}) int {
 	return 0
 }
 
-// zoneMessager is the interface for world to send messages to all players in a zone.
-type zoneMessager interface {
-	ForEachPlayerInZoneInterface(int, func(interface{}))
-}
-
 func sendToZone(msg string, ch interface{}, world interface{}) {
-	w, ok := world.(zoneMessager)
-	if !ok {
-		return
-	}
 	type roomed interface{ GetRoomVNum() int }
 	rg, ok := ch.(roomed)
 	if !ok {
 		return
 	}
-	// Get caster's zone from world
-	type zoner interface{ GetRoomZone(int) int }
-	zw, ok := world.(zoner)
+	// C comm.c:2377-2387 sends to awake descriptors in the caster's zone,
+	// excluding everyone in the caster's room. The world method owns those
+	// recipient rules; a zone-wide iteration would incorrectly echo to the room.
+	type zoneSender interface {
+		SendToZone(roomVNum int, msg string)
+	}
+	zs, ok := world.(zoneSender)
 	if !ok {
 		return
 	}
-	zone := zw.GetRoomZone(rg.GetRoomVNum())
-
-	type sender interface{ SendMessage(string) }
-	w.ForEachPlayerInZoneInterface(zone, func(p interface{}) {
-		if s, ok := p.(sender); ok {
-			s.SendMessage(msg)
-		}
-	})
+	zs.SendToZone(rg.GetRoomVNum(), msg)
 }
 
 func randBool(denom int) bool {

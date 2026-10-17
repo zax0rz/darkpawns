@@ -124,3 +124,21 @@ func TestMendRoomLineRendersThroughAct(t *testing.T) {
 		}
 	})
 }
+
+// C magic.c:1421 uses act(to_room, TRUE, victim, 0, ch, TO_ROOM) for affect
+// room lines. A listener who cannot see the affected character receives no
+// line; the former pasted-name path leaked it to invisible targets.
+func TestMagAffectsRoomLineHidesInvisibleTarget(t *testing.T) {
+	w, caster, observer, _, out := newChannelWorld(t)
+	target := channelPlayer(t, w, 4, "Patient", 1001)
+	target.SetAffect(affInvisible, true)
+
+	spells.MagAffects(20, caster, target, spells.SpellSanctuary, int(spells.SaveSpell), w)
+
+	if got := outputOf(out, observer.Name); got != "" {
+		t.Fatalf("observer who cannot see the target = %q, want no room line", got)
+	}
+	if got, want := outputOf(out, target.Name), "A white aura momentarily surrounds you.\r\n"; got != want {
+		t.Fatalf("target output = %q, want %q", got, want)
+	}
+}

@@ -1,0 +1,51 @@
+# depth-case: spell.route.wand-lightning
+# depth-case: spell-route.wand-dispatch
+# A held wand of lightning routes the real do_use path through
+# mag_objectmagic -> call_magic as CAST_WAND with the wand's item level and
+# charge count. A durable trainee makes the violent targeted spell observable.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+spawn-mob 16303 1 8162 80
+spawn-obj 5504 1 8162 80
+force-load 5504
+
+[setup:oracle]
+Wandroutegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wandroutegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set mob trainee maxhit 30000
+set mob trainee hit 30000
+get wand
+hold wand
+
+[probe]
+use wand trainee

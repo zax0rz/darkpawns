@@ -21,6 +21,9 @@ func TestCastDetectPoisonOutputBranches(t *testing.T) {
 				if got := strings.Join(caster.messages, ""); got != tc.want {
 					t.Fatalf("self detect-poison output = %q, want %q", got, tc.want)
 				}
+				if caster.aff != tc.aff {
+					t.Errorf("self detect-poison changed affects: got %d, want %d", caster.aff, tc.aff)
+				}
 			})
 		}
 	})
@@ -46,6 +49,9 @@ func TestCastDetectPoisonOutputBranches(t *testing.T) {
 				if got := strings.Join(caster.messages, ""); got != tc.want {
 					t.Fatalf("other-character detect-poison output = %q, want %q", got, tc.want)
 				}
+				if caster.aff != 0 || victim.aff != tc.aff {
+					t.Errorf("character detect-poison changed affects: caster=%d victim=%d, want 0/%d", caster.aff, victim.aff, tc.aff)
+				}
 			})
 		}
 	})
@@ -62,9 +68,13 @@ func TestCastDetectPoisonOutputBranches(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				caster := &mockSpellsChar{name: "Poisoncheck"}
 				obj := &identifyOutputObject{typeFlag: 19, values: [4]int{0, 0, 0, tc.poison}, short: "a loaf of bread"}
+				originalValues := obj.values
 				ExecuteManualSpell(SpellDetectPoison, 30, caster, nil, obj, "", nil)
 				if got := strings.Join(caster.messages, ""); got != tc.want {
 					t.Fatalf("food detect-poison output = %q, want %q", got, tc.want)
+				}
+				if obj.values != originalValues {
+					t.Errorf("food detect-poison changed values: got %v, want %v", obj.values, originalValues)
 				}
 			})
 		}
@@ -73,10 +83,14 @@ func TestCastDetectPoisonOutputBranches(t *testing.T) {
 	t.Run("non-consumable object", func(t *testing.T) {
 		caster := &mockSpellsChar{name: "Poisoncheck"}
 		obj := &identifyOutputObject{typeFlag: 5, short: "a sword"}
+		originalValues := obj.values
 		ExecuteManualSpell(SpellDetectPoison, 30, caster, nil, obj, "", nil)
 		const want = "You sense that it should not be consumed.\r\n"
 		if got := strings.Join(caster.messages, ""); got != want {
 			t.Fatalf("non-consumable detect-poison output = %q, want %q", got, want)
+		}
+		if obj.values != originalValues {
+			t.Errorf("non-consumable detect-poison changed values: got %v, want %v", obj.values, originalValues)
 		}
 	})
 }

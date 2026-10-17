@@ -1,0 +1,133 @@
+# depth-case: spell.points.cure-critic
+# depth-case: spell.points.cure-light
+# depth-case: spell.points.vitality
+# depth-case: spell.points.invigorate
+# depth-case: spell.points.cell-adjustment
+# depth-case: spell.points.lay-hands
+# Real spoken casts exercise each active spell dispatched to C mag_points.
+# Formula and state bounds are also pinned by TestMagPoints and
+# TestMagPointsFormula_GoldenAgainstCSource; C spell entries are at
+# src/spell_parser.c:1277-1281,1450-1454,1483-1485,1513-1515 and the shared
+# effect branches at src/magic.c:1767-1824.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+PointsGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PointsGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:PointsTarget]
+PointsTarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:PointsTarget]
+PointsTarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:PointsObserve]
+PointsObserve
+Y
+obspass
+obspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:PointsObserve]
+PointsObserve
+y
+obspass
+obspass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport PointsTarget 8105
+teleport PointsObserve 8105
+set PointsGod class i
+set PointsGod level 100
+set PointsGod maxhit 5000
+set PointsGod hit 1
+set PointsGod maxmana 5000
+set PointsGod mana 5000
+set PointsTarget level 20
+set PointsTarget maxhit 5000
+set PointsTarget hit 1
+set PointsTarget alignment 1000
+
+[probe]
+cast 'cure critic' PointsTarget
+~dpclock pulse 20
+set PointsTarget hit 1
+cast 'cure light' PointsTarget
+~dpclock pulse 20
+set PointsTarget hit 1
+cast 'vitality' PointsTarget
+~dpclock pulse 20
+set PointsTarget hit 1
+cast 'invigorate' PointsTarget
+~dpclock pulse 20
+set PointsGod hit 1
+cast 'cell adjustment'
+~dpclock pulse 20
+set PointsGod hit 1
+cast 'lay hands'
+~dpclock pulse 20

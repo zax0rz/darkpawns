@@ -1,0 +1,46 @@
+# depth-case: spell.sense-life-spoken
+# A level-31 Mage reaches sense life through the spoken parser and self-targets.
+# The transcript pins C's self-recipient line; the CallMagic test pins its affect.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Sensecast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sensecast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Sensecast class m
+set Sensecast level 31
+skillset Sensecast 'sense life' 100
+set Sensecast maxmana 5000
+set Sensecast mana 5000
+
+[probe]
+cast 'sense life'

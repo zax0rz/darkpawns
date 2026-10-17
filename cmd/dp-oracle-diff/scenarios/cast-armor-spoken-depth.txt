@@ -1,0 +1,76 @@
+# depth-case: spell.armor-spoken
+# A Mage casts holy ward at another player through do_cast -> cast_spell ->
+# call_magic -> mag_affects. C emits the caster and victim lines and applies
+# the fixed AC affect (src/spell_parser.c:963-1110; src/magic.c:902-910).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Armorcast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Armorcast
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Armorpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Armorpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Armorpeer 8105
+set Armorcast class mage
+set Armorcast level 31
+skillset Armorcast 'holy ward' 100
+set Armorcast maxmana 5000
+set Armorcast mana 5000
+
+[probe]
+cast 'holy ward' Armorpeer

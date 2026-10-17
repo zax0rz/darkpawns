@@ -1,0 +1,46 @@
+# depth-case: spell.mental-lapse-spoken
+# A Psionic immortal sets a mobile hunting itself, then reaches
+# spell_mental_lapse through the registered spoken-cast parser.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Lapsewill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lapsewill
+y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Lapsewill class i
+set Lapsewill level 31
+skillset Lapsewill 'mental lapse' 100
+sethunt Lapsewill trainee
+
+[probe]
+cast 'mental lapse' trainee

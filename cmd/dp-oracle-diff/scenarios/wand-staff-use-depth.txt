@@ -1,10 +1,12 @@
 # depth-case: use.effect
+# depth-case: spell-route.staff-dispatch
+# depth-case: spell.route.staff-lightning
 # C-first mag_objectmagic vehicle (src/spell_parser.c:558-707, 754-817).
 # 8053 is a two-charge invisibility wand, spawned into 8162 and force-loaded
-# in the disposable worlds. The God holds it, casts at a mortal peer, and pads
-# the cast with twenty frozen pulses. The vehicle exercises charge decrement,
-# the item level, and CAST_WAND dispatch; the paired staff vehicle proves the
-# CAST_STAFF room fan-out.
+# in the disposable worlds. Object 8054 is edited to a one-charge Lightning
+# staff; its live use proves CAST_STAFF's room fan-out reaches a violent
+# targeted spell. The God holds both items and the wand cast is padded with
+# twenty frozen pulses.
 # The primary is an immortal only to make the item vehicle deterministic; the
 # peer remains a mortal room audience and target for the wand/staff effects.
 
@@ -81,10 +83,23 @@ east
 
 [warmup]
 goto 8162
+oedit 8054
+D
+12
+1
+1
+30
+q
+y
+load obj 8054
+hold staff
 teleport Wandvictim 8162
 get wand
-hold wand
 
 [probe]
+use staff
+~dpclock pulse 20
+remove staff
+hold wand
 use wand Wandvictim
 ~dpclock pulse 20
