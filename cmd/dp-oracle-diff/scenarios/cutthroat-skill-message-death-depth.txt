@@ -1,0 +1,123 @@
+# Live registered do_cutthroat -> damage()/hit() -> SkillMessage set-143 depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer. The thief starts with a piercing dagger. Cutthroat has no shifted expression; the fixture forces the selected C outcome through its documented skill and victim-level gates.
+# depth-case: cutthroat.skill-message-death
+# depth-case: fightmsg.143.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CutMsgDeathGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CutMsgDeathGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+CutMsgDeathAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:attacker]
+CutMsgDeathAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:oracle:victim]
+CutMsgDeathVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+CutMsgDeathVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player CutMsgDeathAttacker level 32
+skillset CutMsgDeathAttacker 'cutthroat' 100
+set player CutMsgDeathVictim level 15
+set player CutMsgDeathVictim ac 50
+set player CutMsgDeathVictim maxhit 1
+set player CutMsgDeathVictim hit -10
+set player CutMsgDeathGod room 8105
+
+[probe:attacker]
+cutthroat CutMsgDeathVictim

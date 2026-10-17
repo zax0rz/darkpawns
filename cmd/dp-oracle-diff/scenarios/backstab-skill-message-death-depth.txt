@@ -1,0 +1,125 @@
+# Live registered do_backstab -> damage()/hit() -> SkillMessage set-131 depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer. The thief starts with a piercing dagger. A sleeping victim bypasses the awake-only failure check for hit/death; the death victim starts alive at -10 HP. The miss case is awake with skill 1.
+# depth-case: backstab.skill-message-death
+# depth-case: fightmsg.131.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+BackstabDeathGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BackstabDeathGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+BsDeathAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:attacker]
+BsDeathAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:oracle:victim]
+BackstabDeathVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+sleep
+
+[setup:port:victim]
+BackstabDeathVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+sleep
+
+[warmup]
+set player BsDeathAttacker level 20
+skillset BsDeathAttacker 'backstab' 100
+set player BackstabDeathVictim level 15
+set player BackstabDeathVictim ac 50
+set player BackstabDeathVictim maxhit 1
+set player BackstabDeathVictim hit -10
+set player BackstabDeathGod room 8105
+
+[probe:attacker]
+backstab BackstabDeathVictim

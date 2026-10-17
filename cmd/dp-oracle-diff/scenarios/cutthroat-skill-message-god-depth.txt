@@ -1,0 +1,123 @@
+# Live registered do_cutthroat -> damage()/hit() -> SkillMessage set-143 depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer. The thief starts with a piercing dagger. Cutthroat has no shifted expression. A level-32 immortal caster and level-31 immortal target hit C's victim-level boundary: the target is protected from damage but still selects the God triplet.
+# depth-case: cutthroat.skill-message-god
+# depth-case: fightmsg.143.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CutMsgGodGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CutMsgGodGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+CutMsgGodAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:attacker]
+CutMsgGodAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:oracle:victim]
+CutMsgGodVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+CutMsgGodVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player CutMsgGodAttacker level 32
+skillset CutMsgGodAttacker 'cutthroat' 100
+set player CutMsgGodVictim level 31
+set player CutMsgGodVictim ac 50
+set player CutMsgGodVictim maxhit 1000
+set player CutMsgGodVictim hit 1000
+set player CutMsgGodGod room 8105
+
+[probe:attacker]
+cutthroat CutMsgGodVictim

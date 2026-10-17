@@ -1,0 +1,129 @@
+# Live registered do_cutthroat -> damage()/hit() -> SkillMessage set-143 depth proof.
+# The attacker and target are connected players above C's level-10 PvP guard;
+# the primary God session is the connected room observer. The thief starts with a piercing dagger. An evil-aligned level-13 attacker gets zero post-mitigation skill damage against a level-30 PC with Protection from Good: C starts at 6 and subtracts victim level/4 (7).
+# depth-case: cutthroat.skill-message-miss
+# depth-case: fightmsg.143.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+CutMsgMissGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CutMsgMissGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+CutMsgMissAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:attacker]
+CutMsgMissAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:oracle:victim]
+CutMsgMissVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+CutMsgMissVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player CutMsgMissAttacker level 13
+set player CutMsgMissAttacker align 1000
+skillset CutMsgMissAttacker 'cutthroat' 100
+set player CutMsgMissVictim level 30
+set player CutMsgMissVictim class cleric
+set player CutMsgMissVictim align 0
+set player CutMsgMissVictim maxmana 5000
+set player CutMsgMissVictim mana 5000
+skillset CutMsgMissVictim 'protection from good' 100
+set player CutMsgMissVictim maxhit 1000
+set player CutMsgMissVictim hit 1000
+goto 8105
+force CutMsgMissVictim cast 'protection from good'
+
+[probe:attacker]
+cutthroat CutMsgMissVictim
