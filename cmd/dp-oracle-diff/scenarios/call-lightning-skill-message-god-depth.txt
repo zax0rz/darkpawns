@@ -1,0 +1,110 @@
+# The connected level-31 PC is C's immortal boundary. damage() zeros damage
+# before dispatch, selecting M@0045's God triplet for all three audiences.
+# depth-case: spell.call-lightning.message-god
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+CallGodActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CallGodActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+CallGodVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+CallGodVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+CallGodObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+CallGodObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CallGodVictim 8105
+teleport CallGodObserver 8105
+set player CallGodActor class mage
+skillset CallGodActor 'call lightning' 100
+set player CallGodActor maxmana 5000
+set player CallGodActor mana 5000
+set player CallGodActor align 1000
+set player CallGodVictim class mage
+set player CallGodVictim level 31
+set player CallGodVictim maxhit 1000
+set player CallGodVictim hit 1000
+set player CallGodActor level 31
+
+[probe]
+cast 'call lightning' CallGodVictim

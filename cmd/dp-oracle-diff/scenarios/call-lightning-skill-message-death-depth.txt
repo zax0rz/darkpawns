@@ -1,0 +1,111 @@
+# The registered spoken cast reaches M@0045's death triplet through
+# mag_damage -> damage -> SkillMessage. The still-living PC starts at -10 HP;
+# the minimum 10d8+31+5 damage remains lethal even when C's save halves it.
+# depth-case: spell.call-lightning.message-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+CallDeathActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CallDeathActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+CallDeathVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+CallDeathVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+CallDeathObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+CallDeathObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CallDeathVictim 8105
+teleport CallDeathObserver 8105
+set player CallDeathActor class mage
+skillset CallDeathActor 'call lightning' 100
+set player CallDeathActor maxmana 5000
+set player CallDeathActor mana 5000
+set player CallDeathActor align 1000
+set player CallDeathVictim class mage
+set player CallDeathVictim level 20
+set player CallDeathVictim maxhit 1
+set player CallDeathVictim hit -10
+set player CallDeathActor level 31
+
+[probe]
+cast 'call lightning' CallDeathVictim

@@ -1,0 +1,111 @@
+# The registered spoken cast reaches mag_damage -> damage -> SkillMessage.
+# A high-health connected PC and a separate room session expose all three
+# recipient lines for M@0045's hit outcome.
+# depth-case: spell.call-lightning.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+CallHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CallHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+CallHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+CallHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+CallHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+CallHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CallHitVictim 8105
+teleport CallHitObserver 8105
+set player CallHitActor class mage
+skillset CallHitActor 'call lightning' 100
+set player CallHitActor maxmana 5000
+set player CallHitActor mana 5000
+set player CallHitActor align 1000
+set player CallHitVictim class mage
+set player CallHitVictim level 20
+set player CallHitVictim maxhit 1000
+set player CallHitVictim hit 1000
+set player CallHitActor level 31
+
+[probe]
+cast 'call lightning' CallHitVictim

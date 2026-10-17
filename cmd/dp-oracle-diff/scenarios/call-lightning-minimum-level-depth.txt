@@ -1,0 +1,130 @@
+# Call Lightning's spello initializes every class minimum to LVL_IMMORT;
+# init_spell_levels assigns no class entry. Even with proficiency set, a level-11
+# Mage receives C's do_cast minimum-level refusal before target resolution or
+# damage(). The NPC magic_user call is audited separately in the M@0045 matrix.
+# depth-case: spell.call-lightning.minimum-level-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/call_lightning.lua 512
+
+[lua-script mob/oracle/call_lightning.lua]
+function oncmd()
+if (argument == "say shield") then
+aff_flags(ch, "set", 7)
+aff_flags(ch, "set", 13)
+return TRUE
+end
+if (argument == "say state") then
+say("sanctuary=" .. tostring(aff_flagged(ch, 7)) .. " protect-good=" .. tostring(aff_flagged(ch, 13)))
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+CallMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CallMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+CallMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+CallMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+CallMissObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+CallMissObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CallMissVictim 8105
+teleport CallMissObserver 8105
+set player CallMissActor class mage
+skillset CallMissActor 'call lightning' 100
+set player CallMissActor maxmana 5000
+set player CallMissActor mana 5000
+set player CallMissActor align 1000
+set player CallMissVictim class mage
+set player CallMissVictim level 30
+set player CallMissVictim maxhit 1000
+set player CallMissVictim hit 1000
+set player CallMissActor level 11
+
+[probe]
+send:victim say shield
+send:victim say state
+cast 'call lightning' CallMissVictim
