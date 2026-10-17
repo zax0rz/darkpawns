@@ -10,6 +10,7 @@
 # The primary is an immortal only to make the item vehicle deterministic; the
 # peer remains a mortal room audience and target for the wand/staff effects.
 
+# depth-case: spell.route.wand-invisibility
 [fixture]
 empty-players
 quiet-mobs

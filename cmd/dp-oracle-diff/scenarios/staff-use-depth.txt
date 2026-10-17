@@ -6,6 +6,7 @@
 # type, and the room fan-out. A frozen twenty-pulse pad drains WAIT_STATE
 # without adding combat or clock noise.
 
+# depth-case: spell.route.staff-sleep
 [fixture]
 empty-players
 quiet-mobs
