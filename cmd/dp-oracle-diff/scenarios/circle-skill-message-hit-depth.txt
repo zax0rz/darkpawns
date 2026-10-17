@@ -1,0 +1,150 @@
+# C-first registered do_circle -> hit/damage -> skill_message proof for SKILL_CIRCLE
+# (src/new_cmds.c:2391-2467; src/fight.c:1023-1095,1534-1545;
+# lib/misc/messages:1221-1234). A connected target and room witness expose
+# every defined outcome audience. The five-seed census checks transcript and draws.
+#
+# depth-case: circle.skill-message-hit
+# depth-case: fightmsg.173.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Circlelord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Circlelord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Circleatt]
+Circleatt
+Y
+circlepass
+circlepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:port:Circleatt]
+Circleatt
+Y
+circlepass
+circlepass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+wield dagger
+
+[setup:oracle:Circlevict]
+Circlevict
+Y
+victimpass
+victimpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+wimpy 0
+
+[setup:port:Circlevict]
+Circlevict
+Y
+victimpass
+victimpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+wimpy 0
+
+[setup:oracle:Circleobs]
+Circleobs
+Y
+obspass
+obspass
+N
+F
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:Circleobs]
+Circleobs
+Y
+obspass
+obspass
+N
+F
+H
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Circleatt 8105
+teleport Circlevict 8105
+teleport Circleobs 8105
+set Circleatt level 20
+skillset Circleatt 'circle' 100
+set Circlevict level 15
+set Circlevict ac 80
+set Circlevict maxhit 500
+set Circlevict hit 500
+
+[probe:Circleatt]
+circle Circlevict
