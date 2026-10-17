@@ -2,8 +2,8 @@
 # command's target refusals. A learned value of 1 can never beat
 # percent = ((7 - AC/10) << 1) + number(1,101) >= 15, so the final step always
 # runs damage(ch, vict, 0, SKILL_TIGER_PUNCH) and the three lines come from
-# lib/misc/messages set 189 through skill_message (fight.c:1023-1092) rather
-# than from Go literal strings. The named observer captures the room audience.
+# lib/misc/messages set 189 through skill_message (src/fight.c:1023-1095).
+# Connected Tigervictim and Tigerobs capture the victim and room audiences.
 #
 # depth-case: tiger.miss
 # depth-case: tiger.no-argument
@@ -114,15 +114,55 @@ east
 south
 east
 
+[setup:oracle:victim]
+Tigervictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Tigervictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
 [warmup]
 goto 8105
 teleport Tigeratt 8105
 teleport Tigerobs 8105
+teleport Tigervictim 8105
 set Tigeratt level 20
 skillset Tigeratt 'tiger punch' 1
+set Tigervictim level 15
+set Tigervictim maxhit 500
+set Tigervictim hit 500
 
 [probe:attacker]
 tiger
 tiger nobody
 tiger Tigeratt
-tiger trainee
+tiger Tigervictim

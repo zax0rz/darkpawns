@@ -3,7 +3,8 @@
 # tops out at 99 and a learned value of 100 always lands: damage(ch, vict,
 # GET_LEVEL(ch)*2.5, SKILL_TIGER_PUNCH) selects set 189's hit_msg after the
 # HP/position update, then improve_skill runs. The observer captures the room
-# audience.
+# audiences. Connected Tigervictim receives the TO_VICT line and Tigerobs
+# receives TO_NOTVICT; their exact blocks are part of this proof.
 #
 # depth-case: tiger.hit
 
@@ -112,15 +113,53 @@ east
 south
 east
 
+[setup:oracle:victim]
+Tigervictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Tigervictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
 [warmup]
 goto 8105
 teleport Tigeratt 8105
 teleport Tigerobs 8105
+teleport Tigervictim 8105
 set Tigeratt level 20
 skillset Tigeratt 'tiger punch' 100
-set trainee ac 80
-set trainee maxhit 500
-set trainee hit 500
+set Tigervictim level 15
+set Tigervictim ac 80
+set Tigervictim maxhit 500
+set Tigervictim hit 500
 
 [probe:attacker]
-tiger trainee
+tiger Tigervictim
