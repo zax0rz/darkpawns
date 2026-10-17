@@ -141,6 +141,61 @@ func TestSummonManualDispatchRequiresGlyphBeforeOtherGates(t *testing.T) {
 	}
 }
 
+type controlWeatherTestWorld struct {
+	change int
+}
+
+func (w *controlWeatherTestWorld) ModifyWeatherChange(delta int) {
+	w.change += delta
+}
+
+func TestCallMagicControlWeatherUsesManualArgument(t *testing.T) {
+	world := &controlWeatherTestWorld{}
+	caster := &mockSpellsChar{name: "Weather Mage", level: 31, position: int(PosStanding)}
+
+	if !CallMagicWithArgument(caster, nil, nil, SpellControlWeather, 31, CastSpell, world, " the WoRsE ignored") {
+		t.Fatal("CallMagicWithArgument did not dispatch Control Weather")
+	}
+	if world.change >= 0 {
+		t.Fatalf("weather change = %d, want a negative change from C's first argument 'worse'", world.change)
+	}
+	if len(caster.messages) != 0 {
+		t.Fatalf("caster messages = %#v, want no invalid-argument prompt", caster.messages)
+	}
+}
+
+func TestCallMagicControlWeatherInvalidArgumentKeepsCRefusal(t *testing.T) {
+	world := &controlWeatherTestWorld{}
+	caster := &mockSpellsChar{name: "Weather Mage", level: 31, position: int(PosStanding)}
+
+	if !CallMagicWithArgument(caster, nil, nil, SpellControlWeather, 31, CastSpell, world, "sideways") {
+		t.Fatal("CallMagicWithArgument did not dispatch Control Weather")
+	}
+	if world.change != 0 {
+		t.Fatalf("weather change = %d, want unchanged for invalid argument", world.change)
+	}
+	if !reflect.DeepEqual(caster.messages, []string{"Do you want it to get better or worse?\r\n"}) {
+		t.Fatalf("caster messages = %#v, want C's exact invalid-argument prompt", caster.messages)
+	}
+}
+
+func TestFirstManualSpellArgumentMatchesCWhitespaceAndFillWords(t *testing.T) {
+	for _, tc := range []struct {
+		input string
+		want  string
+	}{
+		{input: "\tthe WoRsE ignored", want: "worse"},
+		{input: "\vIN\tBetter", want: "better"},
+		{input: "  with the", want: ""},
+	} {
+		t.Run(tc.want+"/"+tc.input, func(t *testing.T) {
+			if got := firstManualSpellArgument(tc.input); got != tc.want {
+				t.Fatalf("firstManualSpellArgument(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestSummonManualDispatchConsumesCircleThenRejectsNoSummonMob(t *testing.T) {
 	oldSaveRoll := magSummonSaveRoll
 	magSummonSaveRoll = func(interface{}, int) bool { return false }

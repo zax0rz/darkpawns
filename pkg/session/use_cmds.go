@@ -136,11 +136,12 @@ func cmdRecite(s *Session, args []string) error {
 	s.markDirty(VarInventory)
 
 	// Cast each spell on the scroll
+	spellArgument, _ := game.OneArgument(targetName)
 	for _, spellNum := range spellNumbers {
 		if spellNum <= 0 {
 			break
 		}
-		if !spells.CallMagic(s.player, target, objectTarget, spellNum, spellLevel, spells.CastScroll, s.manager.world) {
+		if !spells.CallMagicWithArgument(s.player, target, objectTarget, spellNum, spellLevel, spells.CastScroll, s.manager.world, spellArgument) {
 			break
 		}
 	}
@@ -261,7 +262,8 @@ func cmdZap(s *Session, args []string) error {
 			s.Send(fmt.Sprintf("Your %s flares up with a blinding glow that surges toward %s!", item.GetShortDesc(), targetNameDisp))
 			broadcastToRoom(s, fmt.Sprintf("%s's %s flares up with a blinding glow that surges toward %s!", actorName, item.GetShortDesc(), targetNameDisp))
 		}
-		spells.Cast(s.player, target, spellNum, spellLevel, s.manager.world)
+		spellArgument, _ := game.OneArgument(targetName)
+		spells.CallMagicWithArgument(s.player, target, nil, spellNum, spellLevel, spells.CastWand, s.manager.world, spellArgument)
 	} else { // ITEM_STAFF
 		s.Send(fmt.Sprintf("Your %s radiates an ethereal glow that lights the room.", item.GetShortDesc()))
 		broadcastToRoom(s, fmt.Sprintf("%s's %s sparks blindingly, bathing you in its glow.", actorName, item.GetShortDesc()))

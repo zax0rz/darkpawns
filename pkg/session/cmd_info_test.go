@@ -404,6 +404,38 @@ func TestCmdScoreStateVariants(t *testing.T) {
 	}
 }
 
+func TestCmdScoreFightingTargetUsesCPersAndThinAirFallback(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scorefighter", 1001, true)
+	s.player.Level = 1
+	s.player.SetPosition(game.PosFighting)
+	target := game.NewPlayer(2002, "Scoretarget", 1001)
+	s.player.SetFightingBody(target)
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	if got := readSessionText(t, s); !strings.Contains(got, "You are fighting Scoretarget.\r\n") {
+		t.Fatalf("score omitted visible fighting target: %q", got)
+	}
+
+	target.SetInvisLevel(game.LVL_IMMORT)
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	if got := readSessionText(t, s); !strings.Contains(got, "You are fighting someone.\r\n") || strings.Contains(got, "You are fighting Scoretarget.") {
+		t.Fatalf("score did not apply C PERS visibility to fighting target: %q", got)
+	}
+
+	s.player.SetFightingBody(nil)
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	if got := readSessionText(t, s); !strings.Contains(got, "You are fighting thin air.\r\n") {
+		t.Fatalf("score omitted C thin-air fallback: %q", got)
+	}
+}
+
 func TestCmdScoreSpellAffectsUseCNewestFirstTwoColumnLayout(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Scoreaffect", 1001, true)

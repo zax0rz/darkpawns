@@ -93,8 +93,9 @@ func cmdQuaff(s *Session, args []string) error {
 	// call_magic returns false for a zero/negative or unknown spellnum, so the
 	// break also handles the -1/0 sentinel spell slots on single-spell potions.
 	level := item.GetValue(0)
+	spellArgument, _ := game.OneArgument(strings.Join(args[1:], " "))
 	for i := 1; i < 4; i++ {
-		if !spells.CallMagic(s.player, s.player, nil, item.GetValue(i), level, spells.CastPotion, s.manager.world) {
+		if !spells.CallMagicWithArgument(s.player, s.player, nil, item.GetValue(i), level, spells.CastPotion, s.manager.world, spellArgument) {
 			break
 		}
 	}

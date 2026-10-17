@@ -1,0 +1,127 @@
+# depth-case: spell.remove-curse.matrix-spoken
+# depth-case: spell.remove-poison.matrix-spoken
+# Registered spoken casts expose mag_unaffects' actor output and changed state through score.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+CleanCleric
+Y
+cleanpass
+cleanpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CleanCleric
+y
+cleanpass
+cleanpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+HexVictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+HexVictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Visible
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Visible
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport HexVictim 8105
+teleport Visible 8105
+set player CleanCleric class cleric
+set player CleanCleric maxmana 5000
+set player CleanCleric mana 5000
+skillset CleanCleric 'curse' 100
+skillset CleanCleric 'poison' 100
+skillset CleanCleric 'remove curse' 100
+skillset CleanCleric 'remove poison' 100
+set player CleanCleric align 1000
+set player HexVictim class paladin
+set player HexVictim level 0
+set player HexVictim maxhit 500
+set player HexVictim hit 500
+set player HexVictim align 0
+set player CleanCleric level 31
+
+[probe]
+cast 'curse' HexVictim
+~dpclock pulse 20
+send:victim score
+cast 'poison' HexVictim
+~dpclock pulse 20
+send:victim score
+cast 'remove curse' HexVictim
+~dpclock pulse 20
+send:victim score
+cast 'remove poison' HexVictim
+~dpclock pulse 20
+send:victim score
+send:observer look

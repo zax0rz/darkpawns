@@ -61,6 +61,25 @@ func TestAnotherHour_AdvancesTimeAndSunlight(t *testing.T) {
 	}
 }
 
+func TestWorldModifyWeatherChangeUpdatesCanonicalState(t *testing.T) {
+	weatherMu.Lock()
+	initial := weatherInfo.Change
+	weatherMu.Unlock()
+	t.Cleanup(func() {
+		weatherMu.Lock()
+		weatherInfo.Change = initial
+		weatherMu.Unlock()
+	})
+
+	(&World{}).ModifyWeatherChange(-13)
+	weatherMu.RLock()
+	got := weatherInfo.Change
+	weatherMu.RUnlock()
+	if got != initial-13 {
+		t.Fatalf("weather change = %d, want %d", got, initial-13)
+	}
+}
+
 func TestInitializeWeatherConsumesCPressureRoll(t *testing.T) {
 	originalNumber := weatherInitNumber
 	originalNow := nowFunc

@@ -164,6 +164,23 @@ func positionText(pos int) string {
 	}
 }
 
+// scorePositionText includes C's PERS(FIGHTING(ch), ch) name when a live
+// combat target is available. C's score reports "thin air" for the inconsistent
+// POS_FIGHTING-without-FIGHTING state.
+func scorePositionText(player *game.Player) string {
+	if player.GetPosition() != game.PosFighting {
+		return positionText(player.GetPosition())
+	}
+	target := player.GetFightingBody()
+	if target == nil {
+		return "You are fighting thin air."
+	}
+	if actor, ok := target.(game.Actor); ok {
+		return fmt.Sprintf("You are fighting %s.", game.PersName(actor, player))
+	}
+	return positionText(game.PosFighting)
+}
+
 func cmdScore(s *Session) error {
 	p := s.player
 	if p == nil {
@@ -282,7 +299,7 @@ func cmdScore(s *Session) error {
 	}
 
 	// 16. Position (from C lines 1318-1340)
-	buf.WriteString(positionText(p.GetPosition()))
+	buf.WriteString(scorePositionText(p))
 	buf.WriteString("\r\n")
 
 	// 17. Status conditions (from C lines 1342-1347)

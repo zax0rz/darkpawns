@@ -1,0 +1,116 @@
+# depth-case: spell.create-food.staff-fanout
+# A held Create Food staff reaches mag_creations once for every non-caster
+# character in the room. Two peers expose C's repeated item creation and
+# message fan-out through the live use -> mag_objectmagic -> call_magic path.
+# The edited staff display name identifies the spell; values select spell 12.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Foodstaff
+Y
+foodpass
+foodpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Foodstaff
+y
+foodpass
+foodpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer1]
+Foodpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer1]
+Foodpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer2]
+Foodwatch
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer2]
+Foodwatch
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Foodpeer 8105
+teleport Foodwatch 8105
+set player Foodstaff level 35
+oedit 8054
+2
+staff of create food
+D
+12
+1
+1
+12
+q
+y
+load obj 8054
+hold staff
+
+[probe]
+use staff
+~dpclock pulse 20
+inventory
