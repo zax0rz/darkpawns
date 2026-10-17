@@ -1,0 +1,121 @@
+# Live registered do_ambush -> delayed ambush_event -> damage()/SkillMessage set-191 hit proof.
+# The primary session observes the room; connected attacker and target
+# sessions receive C's exact lines after the event's two-pulse delay.
+# depth-case: ambush.skill-message-hit
+# depth-case: fightmsg.191.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+AmbMsgGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AmbMsgGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+AmbMsgAttacker
+Y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+AmbMsgAttacker
+y
+actorpass
+actorpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+AmbMsgVictim
+Y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+AmbMsgVictim
+y
+actorpass
+actorpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player AmbMsgAttacker level 20
+skillset AmbMsgAttacker 'ambush' 100
+set player AmbMsgVictim level 20
+set player AmbMsgVictim maxhit 1000
+set player AmbMsgVictim hit 1000
+goto 8105
+[probe:attacker]
+ambush AmbMsgVictim
+~dpclock pulse 20
+~dpclock pulse 20
