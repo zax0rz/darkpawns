@@ -1,7 +1,8 @@
 # Real registered do_headbutt -> damage -> SkillMessage lethal proof with a
-# connected victim and a connected room observer.  A level-1 headbutt deals one
-# point, so the Implementor sets this level-1 victim to one HP.  SkillMessage's
-# die arm runs before death teardown, preserving all three recipient outputs.
+# connected victim and a connected room observer.  The level-15 attacker deals
+# 15 points to a one-HP victim.  C forces headbutt's roll to zero against a
+# sleeping victim, and SkillMessage's die arm runs before teardown, preserving
+# all three recipient outputs.
 #
 # depth-case: headbutt.skill-message-death
 
@@ -90,6 +91,7 @@ north
 east
 south
 east
+sleep
 wimpy 0
 
 [setup:port:victim]
@@ -109,6 +111,7 @@ north
 east
 south
 east
+sleep
 wimpy 0
 
 [warmup]
