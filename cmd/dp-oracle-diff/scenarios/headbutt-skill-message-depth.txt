@@ -7,6 +7,7 @@
 #
 # depth-case: headbutt.skill-message-miss
 # depth-case: headbutt.skill-message-hit
+# depth-case: fightmsg.141.record-1
 
 [fixture]
 empty-players

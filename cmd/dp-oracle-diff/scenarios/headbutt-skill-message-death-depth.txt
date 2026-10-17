@@ -5,6 +5,7 @@
 # all three recipient outputs.
 #
 # depth-case: headbutt.skill-message-death
+# depth-case: fightmsg.141.record-1
 
 [fixture]
 empty-players
