@@ -1,0 +1,110 @@
+# Color Spray is learnable by a Mage at level 11. Even with proficiency set,
+# a level-10 Mage receives C's do_cast minimum-level refusal before damage().
+# depth-case: spell.color-spray.minimum-level-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ColorLevelActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ColorLevelActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+ColorLevelVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+ColorLevelVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ColorLevelObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ColorLevelObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ColorLevelVictim 8105
+teleport ColorLevelObserver 8105
+set player ColorLevelActor class mage
+skillset ColorLevelActor 'color spray' 100
+set player ColorLevelActor maxmana 5000
+set player ColorLevelActor mana 5000
+set player ColorLevelActor align 1000
+set player ColorLevelVictim class mage
+set player ColorLevelVictim level 30
+set player ColorLevelVictim maxhit 1000
+set player ColorLevelVictim hit 1000
+set player ColorLevelActor level 10
+
+[probe]
+cast 'color spray' ColorLevelVictim

@@ -1,0 +1,111 @@
+# A registered spoken cast reaches M@0173 hit through mag_damage -> damage -> SkillMessage.
+# A high-health connected PC and a separate room session expose all three
+# recipient lines for M@0173's hit outcome.
+# depth-case: spell.magic-missile.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+MissileHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MissileHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+MissileHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+MissileHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+MissileHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+MissileHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport MissileHitVictim 8105
+teleport MissileHitObserver 8105
+set player MissileHitActor class mage
+skillset MissileHitActor 'flame arrow' 100
+set player MissileHitActor maxmana 5000
+set player MissileHitActor mana 5000
+set player MissileHitActor align 1000
+set player MissileHitVictim class mage
+set player MissileHitVictim level 20
+set player MissileHitVictim maxhit 1000
+set player MissileHitVictim hit 1000
+set player MissileHitActor level 11
+
+[probe]
+cast 'flame arrow' MissileHitVictim

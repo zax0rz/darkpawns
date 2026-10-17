@@ -1,0 +1,110 @@
+# A registered spoken cast reaches M@0173 god through mag_damage -> damage -> SkillMessage.
+# before dispatch, selecting M@0173's God triplet for all three audiences.
+# depth-case: spell.magic-missile.message-god
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+MissileGodActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MissileGodActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+MissileGodVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+MissileGodVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+MissileGodObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+MissileGodObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport MissileGodVictim 8105
+teleport MissileGodObserver 8105
+set player MissileGodActor class mage
+skillset MissileGodActor 'flame arrow' 100
+set player MissileGodActor maxmana 5000
+set player MissileGodActor mana 5000
+set player MissileGodActor align 1000
+set player MissileGodVictim class mage
+set player MissileGodVictim level 31
+set player MissileGodVictim maxhit 1000
+set player MissileGodVictim hit 1000
+set player MissileGodActor level 11
+
+[probe]
+cast 'flame arrow' MissileGodVictim

@@ -1,0 +1,130 @@
+# A room script sets the victim's AFF_SANCTUARY and AFF_PROTECT_GOOD bits.
+# At level 11, Magic Missile tops out at 4d3+11=23. A successful spell save
+# halves it; Sanctuary halves it again and level-30 protection subtracts 7.
+# This is the registered spoken-cast path, not a forced SkillMessage call.
+# depth-case: spell.magic-missile.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/magic_missile.lua 512
+
+[lua-script mob/oracle/magic_missile.lua]
+function oncmd()
+if (argument == "say shield") then
+aff_flags(ch, "set", 7)
+aff_flags(ch, "set", 13)
+return TRUE
+end
+if (argument == "say state") then
+say("sanctuary=" .. tostring(aff_flagged(ch, 7)) .. " protect-good=" .. tostring(aff_flagged(ch, 13)))
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+MissileMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MissileMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+MissileMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+MissileMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+MissileMissObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+MissileMissObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport MissileMissVictim 8105
+teleport MissileMissObserver 8105
+set player MissileMissActor class mage
+skillset MissileMissActor 'flame arrow' 100
+set player MissileMissActor maxmana 5000
+set player MissileMissActor mana 5000
+set player MissileMissActor align 1000
+set player MissileMissVictim class mage
+set player MissileMissVictim level 30
+set player MissileMissVictim maxhit 1000
+set player MissileMissVictim hit 1000
+set player MissileMissActor level 11
+
+[probe]
+send:victim say shield
+send:victim say state
+cast 'flame arrow' MissileMissVictim

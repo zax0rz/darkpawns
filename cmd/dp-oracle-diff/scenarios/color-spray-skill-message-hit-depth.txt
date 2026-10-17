@@ -1,0 +1,111 @@
+# A registered spoken cast reaches M@0061 through mag_damage -> damage -> SkillMessage.
+# A high-health connected PC and a separate room session expose all three
+# recipient lines for M@0061's hit outcome.
+# depth-case: spell.color-spray.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ColorHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ColorHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+ColorHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+ColorHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ColorHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ColorHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ColorHitVictim 8105
+teleport ColorHitObserver 8105
+set player ColorHitActor class mage
+skillset ColorHitActor 'color spray' 100
+set player ColorHitActor maxmana 5000
+set player ColorHitActor mana 5000
+set player ColorHitActor align 1000
+set player ColorHitVictim class mage
+set player ColorHitVictim level 20
+set player ColorHitVictim maxhit 1000
+set player ColorHitVictim hit 1000
+set player ColorHitActor level 31
+
+[probe]
+cast 'color spray' ColorHitVictim

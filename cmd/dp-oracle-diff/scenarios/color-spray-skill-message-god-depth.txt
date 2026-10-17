@@ -1,0 +1,110 @@
+# A connected level-31 PC reaches M@0061 God for all three audiences.
+# before dispatch, selecting M@0061's God triplet for all three audiences.
+# depth-case: spell.color-spray.message-god
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ColorGodActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ColorGodActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+ColorGodVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+ColorGodVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ColorGodObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ColorGodObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ColorGodVictim 8105
+teleport ColorGodObserver 8105
+set player ColorGodActor class mage
+skillset ColorGodActor 'color spray' 100
+set player ColorGodActor maxmana 5000
+set player ColorGodActor mana 5000
+set player ColorGodActor align 1000
+set player ColorGodVictim class mage
+set player ColorGodVictim level 31
+set player ColorGodVictim maxhit 1000
+set player ColorGodVictim hit 1000
+set player ColorGodActor level 31
+
+[probe]
+cast 'color spray' ColorGodVictim
