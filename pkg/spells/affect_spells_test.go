@@ -601,26 +601,23 @@ func TestMagAffects_Poison(t *testing.T) {
 
 	MagAffects(20, ch, victim, SpellPoison, int(SaveSpell), nil)
 
-	if len(victim.activeAffects) != 3 {
-		t.Fatalf("expected 3 affects on victim for Poison, got %d", len(victim.activeAffects))
+	if len(victim.activeAffects) != 2 {
+		t.Fatalf("expected 2 C affects on victim for Poison, got %d", len(victim.activeAffects))
 	}
-	// Direct, Str, and Hitroll affects
-	var foundStr, foundHitroll, foundDirect bool
+	var foundStr, foundHitroll bool
 	for _, aff := range victim.activeAffects {
 		if aff.SpellID == SpellPoison {
 			switch aff.Location {
 			case engine.ApplyStr:
-				foundStr = true
+				foundStr = aff.Flags == engine.AFFPoison
 			case engine.ApplyHitroll:
-				foundHitroll = true
-			case engine.ApplyNone:
-				foundDirect = true
+				foundHitroll = aff.Flags == engine.AFFPoison
 			}
 		}
 	}
 
-	if !foundStr || !foundHitroll || !foundDirect {
-		t.Errorf("missing expected poison affects: str=%t, hitroll=%t, direct=%t", foundStr, foundHitroll, foundDirect)
+	if !foundStr || !foundHitroll {
+		t.Errorf("missing C poison affects: str=%t, hitroll=%t", foundStr, foundHitroll)
 	}
 }
 

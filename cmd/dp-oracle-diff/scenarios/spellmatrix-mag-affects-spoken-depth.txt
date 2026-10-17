@@ -1,0 +1,124 @@
+# Three registered Mage casts prove mag_affects output and state for Strength, Curse, and Poison.
+# The target's score after each effect is the C-visible discriminator; seed branches also cover Curse/Poison saves.
+# depth-case: spell.strength.matrix-spoken-state
+# depth-case: spell.curse.matrix-spoken-state
+# depth-case: spell.poison.matrix-spoken-state
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+AffectMage
+Y
+magepass
+magepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AffectMage
+y
+magepass
+magepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+AffectPeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+AffectPeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Visible
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Visible
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport AffectPeer 8105
+teleport Visible 8105
+set AffectMage class mage
+set AffectMage level 31
+skillset AffectMage 'strength' 100
+skillset AffectMage 'curse' 100
+skillset AffectMage 'poison' 100
+set AffectMage maxmana 5000
+set AffectMage mana 5000
+set AffectMage align 1000
+set AffectPeer class paladin
+set AffectPeer level 0
+set AffectPeer maxhit 100
+set AffectPeer hit 100
+set AffectPeer align 0
+
+[probe]
+cast 'strength' AffectPeer
+~dpclock pulse 20
+send:victim score
+cast 'curse' AffectPeer
+~dpclock pulse 20
+send:victim score
+cast 'poison' AffectPeer
+~dpclock pulse 20
+send:victim score

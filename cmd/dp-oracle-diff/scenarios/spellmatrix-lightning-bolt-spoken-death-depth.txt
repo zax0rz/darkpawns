@@ -1,0 +1,111 @@
+# A registered spoken Lightning Bolt cast reaches M@0157 through mag_damage -> damage -> SkillMessage.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.lightning-bolt.matrix-spoken-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+FireActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+FireActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+FireVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+FireVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+FireWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+FireWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport FireVictim 8105
+teleport FireWatch 8105
+set player FireActor class mage
+skillset FireActor 'lightning bolt' 100
+set player FireActor maxmana 5000
+set player FireActor mana 5000
+set player FireActor align 1000
+set player FireVictim align 0
+set player FireVictim class mage
+set player FireVictim level 20
+set player FireVictim maxhit 1
+set player FireVictim hit -10
+set player FireActor level 31
+
+[probe]
+cast 'lightning bolt' FireVictim

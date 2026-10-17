@@ -1,4 +1,5 @@
 # depth-case: objmagic.blindness.messages
+# depth-case: spell.blindness.matrix-potion-state
 # The blindness arm of mag_affects (magic.c:928-965) live, via the new
 # add-obj-index fixture: 13103 (the plaid potion, vals 20/52/4) lives in
 # 131.obj, which the shipped obj index omits entirely on BOTH trees — every
@@ -50,3 +51,4 @@ get plaid
 quaff plaid
 ~dpclock pulse 20
 ~dpclock pulse 20
+exits

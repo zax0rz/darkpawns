@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
@@ -41,6 +42,45 @@ func TestMagDamageBackfireAndPsiblastRecoilAssertCMessages(t *testing.T) {
 			}
 			if !found {
 				t.Fatalf("did not select C %s branch with seeds 1..2048; want caster output %q", tc.name, tc.want)
+			}
+		})
+	}
+}
+
+// TestMagDamageSoulLeechHealsCasterFromDamage pins C's post-damage GET_HIT(ch)
+// increment and maximum-hit cap (src/magic.c:826-848).
+func TestMagDamageSoulLeechHealsCasterFromDamage(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		casterHP int
+		maxHP    int
+	}{
+		{name: "heals for one third of damage", casterHP: 20, maxHP: 100},
+		{name: "caps at maximum hit points", casterHP: 95, maxHP: 100},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dprng.ResetStream(1)
+			caster := &mockSpellsChar{
+				name: "Ninja", level: 30, class: combat.ClassNinja,
+				hp: tc.casterHP, maxHP: tc.maxHP, inventory: &mockInventory{},
+			}
+			victim := &mockSpellsChar{
+				name: "Target", level: 20, hp: 1000, maxHP: 1000,
+			}
+			beforeVictimHP := victim.hp
+
+			MagDamage(30, caster, victim, SpellSoulLeech, int(SaveSpell), nil)
+
+			damageDealt := beforeVictimHP - victim.hp
+			if damageDealt <= 0 {
+				t.Fatalf("soul leech dealt %d damage, want positive damage", damageDealt)
+			}
+			wantHP := tc.casterHP + damageDealt/3
+			if wantHP > tc.maxHP {
+				wantHP = tc.maxHP
+			}
+			if caster.hp != wantHP {
+				t.Errorf("caster HP = %d, want %d after %d damage", caster.hp, wantHP, damageDealt)
 			}
 		})
 	}

@@ -1,0 +1,111 @@
+# A registered spoken Shocking Grasp cast reaches damage() and C death output; SPELL_SHOCKING_GRASP has no dedicated lib/misc/messages record.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.shocking-grasp.matrix-spoken-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+ShockingActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ShockingActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+ShockingVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+ShockingVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ShockingWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ShockingWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ShockingVictim 8105
+teleport ShockingWatch 8105
+set player ShockingActor class mage
+skillset ShockingActor 'shocking grasp' 100
+set player ShockingActor maxmana 5000
+set player ShockingActor mana 5000
+set player ShockingActor align 1000
+set player ShockingVictim align 0
+set player ShockingVictim class mage
+set player ShockingVictim level 20
+set player ShockingVictim maxhit 1
+set player ShockingVictim hit -10
+set player ShockingActor level 31
+
+[probe]
+cast 'shocking grasp' ShockingVictim
