@@ -1,0 +1,162 @@
+# C-first registered do_trip -> damage() -> skill_message proof for the hit arm
+# of SKILL_TRIP (src/new_cmds.c:735-815; src/fight.c:1023-1095,1534-1545;
+# lib/misc/messages:335-348). A connected target and room witness expose all
+# three defined audience lines; five-seed census checks transcript and draws.
+#
+# depth-case: trip.skill-message-hit
+# depth-case: fightmsg.144.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Tripgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tripgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Tripatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Tripatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Tripobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Tripobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Tripvict
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Tripvict
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Tripatt 8105
+teleport Tripobs 8105
+teleport Tripvict 8105
+set Tripatt level 20
+skillset Tripatt 'trip' 100
+set Tripvict level 15
+set Tripvict ac 80
+set Tripvict maxhit 500
+set Tripvict hit 500
+
+[probe:attacker]
+trip Tripvict
