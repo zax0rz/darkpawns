@@ -1,0 +1,92 @@
+# depth-case: spell.control-weather.matrix-wand-state
+# A held Control Weather wand passes the first non-fill argument into the
+# manual spell body through live do_use -> mag_objectmagic dispatch.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+spawn-obj 8053 1 8105 80
+force-load 8053
+
+[setup:oracle]
+WeatherMage
+Y
+wthrpass
+wthrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WeatherMage
+y
+wthrpass
+wthrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Worse]
+Worse
+Y
+worsepass
+worsepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Worse]
+Worse
+y
+worsepass
+worsepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Worse 8105
+set player WeatherMage class mage
+set player WeatherMage level 35
+
+[probe]
+oedit 8053
+1
+actionwand wand
+D
+12
+1
+1
+11
+q
+y
+load obj 8053
+get actionwand
+hold actionwand
+weather
+use actionwand worse
+~dpclock pulse 20
+weather

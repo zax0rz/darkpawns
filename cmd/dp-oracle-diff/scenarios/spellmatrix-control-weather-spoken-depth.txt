@@ -1,3 +1,4 @@
+# depth-case: spell.control-weather.matrix-spoken
 # A registered spoken Control Weather cast changes the weather state reported by the live weather command.
 
 [fixture]

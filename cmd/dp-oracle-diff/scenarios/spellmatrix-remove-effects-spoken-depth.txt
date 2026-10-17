@@ -1,3 +1,5 @@
+# depth-case: spell.remove-curse.matrix-spoken
+# depth-case: spell.remove-poison.matrix-spoken
 # Registered spoken casts expose mag_unaffects' actor output and changed state through score.
 
 [fixture]
