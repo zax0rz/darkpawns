@@ -1,0 +1,111 @@
+# A registered spoken Soul Leech cast reaches mag_damage and damage() death handling; C defines no dedicated SPELL_SOUL_LEECH SkillMessage record.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.soul-leech.matrix-spoken-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+SoulActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+SoulActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+SoulVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+SoulVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+SoulWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+SoulWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport SoulVictim 8105
+teleport SoulWatch 8105
+set player SoulActor class ninja
+skillset SoulActor 'soul leech' 100
+set player SoulActor maxmana 5000
+set player SoulActor mana 5000
+set player SoulActor align 1000
+set player SoulVictim align 0
+set player SoulVictim class ninja
+set player SoulVictim level 20
+set player SoulVictim maxhit 1
+set player SoulVictim hit -10
+set player SoulActor level 31
+
+[probe]
+cast 'soul leech' SoulVictim
