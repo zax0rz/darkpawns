@@ -1,0 +1,85 @@
+# depth-case: spell.strength.matrix-potion
+# World potion 4826 carries Strength, Vitality, and Invigorate at item level 30.
+# The item is a 100%-load indexed object; force-load makes the real quaff path
+# deterministic. A level-31 Mage quaffs it so Strength's caster-level duration
+# matches the existing spoken Strength case while its item-level arguments
+# still flow through CAST_POTION.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 4826 99 8162 100
+force-load 4826
+
+[setup:oracle]
+StrengthQuaffer
+Y
+strpass1
+strpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+StrengthQuaffer
+y
+strpass1
+strpass1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+StrengthWitness
+Y
+witpass1
+witpass1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+StrengthWitness
+y
+witpass1
+witpass1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport StrengthWitness 8162
+set player StrengthQuaffer class mage
+set player StrengthQuaffer level 31
+set player StrengthQuaffer maxhit 1000
+set player StrengthQuaffer hit 50
+
+[probe]
+get clear
+quaff clear
+~dpclock pulse 20
+~dpclock pulse 20
+score
