@@ -1,0 +1,111 @@
+# A registered spoken Call Lightning cast reaches M@0045 through mag_damage -> damage -> SkillMessage.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.call-lightning.matrix-spoken-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+CallActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CallActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+CallVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+CallVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+CallWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+CallWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CallVictim 8105
+teleport CallWatch 8105
+set player CallActor class mage
+skillset CallActor 'call lightning' 100
+set player CallActor maxmana 5000
+set player CallActor mana 5000
+set player CallActor align 1000
+set player CallVictim align 0
+set player CallVictim class mage
+set player CallVictim level 20
+set player CallVictim maxhit 1
+set player CallVictim hit -10
+set player CallActor level 34
+
+[probe]
+cast 'call lightning' CallVictim

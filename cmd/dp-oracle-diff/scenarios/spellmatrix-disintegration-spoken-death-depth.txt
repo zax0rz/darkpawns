@@ -1,0 +1,111 @@
+# A registered spoken Disintegration cast reaches M@1191 through mag_damage -> damage -> SkillMessage.
+# The connected caster, PC victim, and room observer expose all three recipient lines.
+# depth-case: spell.disintegration.matrix-spoken-death
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+DisintegrateActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DisintegrateActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+DisintegrateVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+DisintegrateVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+DisintegrateWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+DisintegrateWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport DisintegrateVictim 8105
+teleport DisintegrateWatch 8105
+set player DisintegrateActor class mage
+skillset DisintegrateActor 'disintegration' 100
+set player DisintegrateActor maxmana 5000
+set player DisintegrateActor mana 5000
+set player DisintegrateActor align 1000
+set player DisintegrateVictim align 0
+set player DisintegrateVictim class mage
+set player DisintegrateVictim level 20
+set player DisintegrateVictim maxhit 1
+set player DisintegrateVictim hit -10
+set player DisintegrateActor level 34
+
+[probe]
+cast 'disintegration' DisintegrateVictim

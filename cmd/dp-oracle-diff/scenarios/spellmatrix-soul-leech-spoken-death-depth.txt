@@ -1,4 +1,4 @@
-# A registered spoken Soul Leech cast reaches mag_damage and damage() death handling; C defines no dedicated SPELL_SOUL_LEECH SkillMessage record.
+# A registered spoken Soul Leech cast reaches M@01159 through mag_damage -> damage -> SkillMessage.
 # The connected caster, PC victim, and room observer expose all three recipient lines.
 # depth-case: spell.soul-leech.matrix-spoken-death
 
