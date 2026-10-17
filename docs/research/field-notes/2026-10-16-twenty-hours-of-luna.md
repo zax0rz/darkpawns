@@ -55,6 +55,14 @@ The 26-hour run is the continuation of that work against the second denominator.
 
 The throughput is the obvious number, but the more useful observation is the shape: the agent produces proofs with failing controls, and the reviewer's job narrows to the places the oracle cannot see: line endings it normalizes, fixtures that silently no-op, and call paths the scenario never reaches. Both halves were needed. This is the harness-not-model point of the slop-squash thesis again: the same class of model that wrote the invented messages removed them, once the process demanded a failing control for every claim.
 
+## Addendum, 2026-10-17: the second goal
+
+Luna's follow-up goal (fight-skill reconciliation, `fight.c` and the `lib/misc/messages` corpus, the spell matrix, the last activity gaps) ran 20h 10m 44s by its own handoff (`docs/fidelity/depth/handoff/2026-10-16-fight-and-spell-surface.md`). It ended with blocked inventory units at 494 of 1,392 on main `c2cd1e004`, down from this note's 2,106: 1,612 fewer. The spell matrix (`surface/spell-matrix.tsv`) records 96 proven cells, 70 delegated, 348 reachable gaps, 1 blocked gap and 980 cells C cannot reach. Its last work landed through Claude's batches t to w, each a combined draw-parity census that came back CLEAN_AFTER_RECHECK (PF-076 and PF-077 record the intermediate projections; PF-078 the final one).
+
+Review caught one new class in this goal. #2088's later commits put 43 targeted-census **run names** (`dp1371-groinrip-skill-message-seed5` and similar, 108 tokens across six manifests) in `proof` columns, where the claims census expects scenario names. Every gate passed, because none checks that a proof token names a scenario file. The batch-v combined census died at startup on the first missing file (`~/Archives/darkpawns/oracle-runs/2026-10-17/batch-v/census.log`). The run names moved to the rows' notes (`cdbb7d64f`); batch-v2 ran clean. The goal brief asked for per-seed proof and did not say where run names belong: an instruction gap, not a fidelity error. A depth-gate check that every proof token resolves to a scenario or `Test*` symbol is proposed to Zach.
+
+Two goals also mapped the same C file in parallel PRs twice (#2091 against #2088 for `fight.c`, #2092's skill-message matrix), and the batches dropped the duplicates by hand. The proposed steer is to check open PRs and `origin/main` for an existing map before starting a surface.
+
 ## Open action items
 
 - **Recover the five-day session's own record.** The repository fixes the late-August work by PR range and dates, but not that it was one Luna session lasting more than five days; that comes from Zach. The session has not been deleted. Find it, then cite its start and end times, turn count, and any compaction or handoff points here and in PF-075's evidence, replacing "per Zach".
