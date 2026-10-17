@@ -1,0 +1,121 @@
+# Real registered do_headbutt -> damage -> SkillMessage lethal proof with a
+# connected victim and a connected room observer.  A level-1 headbutt deals one
+# point, so the Implementor sets this level-1 victim to one HP.  SkillMessage's
+# die arm runs before death teardown, preserving all three recipient outputs.
+#
+# depth-case: headbutt.skill-message-death
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+HbDieGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HbDieGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+HbDieAttacker
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+HbDieAttacker
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+HbDieVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+HbDieVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player HbDieAttacker level 15
+set player HbDieVictim level 15
+skillset HbDieAttacker 'headbutt' 75
+set player HbDieVictim maxhit 1
+set player HbDieVictim hit 1
+set player HbDieGod room 8105
+
+[probe:attacker]
+headbutt HbDieVictim

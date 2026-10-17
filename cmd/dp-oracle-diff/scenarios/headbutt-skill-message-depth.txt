@@ -1,0 +1,124 @@
+# Real registered do_headbutt -> damage -> SkillMessage proof against a live
+# connected victim, with a connected room observer.  The immortal primary
+# grants the skill and positions itself in the room for the third audience.
+# The normal fixture leaves the victim above death so hit/miss are independent
+# of character teardown; the death fixture sets one HP, matching the one point
+# of level-1 headbutt damage.
+#
+# depth-case: headbutt.skill-message-miss
+# depth-case: headbutt.skill-message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+HbMsgGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HbMsgGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+HbMsgAttacker
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+HbMsgAttacker
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+HbMsgVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+HbMsgVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player HbMsgAttacker level 15
+set player HbMsgVictim level 15
+skillset HbMsgAttacker 'headbutt' 75
+set player HbMsgVictim maxhit 100
+set player HbMsgVictim hit 100
+set player HbMsgGod room 8105
+
+[probe:attacker]
+headbutt HbMsgVictim
