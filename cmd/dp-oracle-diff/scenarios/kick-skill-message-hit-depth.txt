@@ -1,0 +1,166 @@
+# depth-case: skill-message.kick-hit
+# depth-case: fightmsg.134.record-1
+# depth-case: fightmsg.134.record-2
+# C-first hit real-dispatch proof for do_kick (src/act.offensive.c:587-634).
+# This forced arm reaches skill_message type 134, whose two C M records
+# each define attacker, victim, and room hit bytes (src/fight.c:1023-1095,1534-1545;
+# lib/misc/messages:259-284). Draw parity is required at all five seeds.
+
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Kickgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kickgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Kickatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Kickatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:observer]
+Kickobs
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:observer]
+Kickobs
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:victim]
+Kickvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:victim]
+Kickvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Kickatt 8105
+teleport Kickobs 8105
+teleport Kickvictim 8105
+set Kickatt level 20
+skillset Kickatt 'kick' 100
+set Kickvictim level 15
+set Kickvictim ac 80
+set Kickvictim maxhit 500
+set Kickvictim hit 500
+
+[probe:attacker]
+kick
+kick nobody
+kick Kickatt
+kick Kickvictim

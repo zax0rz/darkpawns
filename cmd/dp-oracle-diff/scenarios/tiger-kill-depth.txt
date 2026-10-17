@@ -6,6 +6,7 @@
 # captures the room audience and corpse.
 #
 # depth-case: tiger.killing-blow
+# depth-case: fightmsg.189.record-1
 
 [fixture]
 empty-players

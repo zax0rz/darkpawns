@@ -1,0 +1,123 @@
+# C-first god_msg vehicle for do_dragon_kick (src/act.offensive.c:636-690).
+# The first-player God is both the skill-granting wizard and the immortal
+# target; skill 1 selects the miss arm, so the transcript proves skill_message
+# gives god_msg precedence over zero damage. The observer captures the room
+# audience (src/fight.c:1023-1095).
+#
+# depth-case: dragon.god
+# depth-case: fightmsg.188.record-1
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Dragonlord
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dragonlord
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Dragonwarrior]
+Dragonwarrior
+Y
+dragonpass
+dragonpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Dragonwarrior]
+Dragonwarrior
+y
+dragonpass
+dragonpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:oracle:Dragonobserver]
+Dragonobserver
+Y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:Dragonobserver]
+Dragonobserver
+y
+obspass
+obspass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Dragonwarrior 8105
+teleport Dragonobserver 8105
+set Dragonwarrior level 20
+skillset Dragonwarrior 'dragon kick' 1
+
+[probe:Dragonwarrior]
+dragon Dragonlord

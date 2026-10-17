@@ -10,6 +10,7 @@
 # depth-case: dragon.failure
 # depth-case: dragon.wait
 
+# depth-case: fightmsg.188.record-1
 [fixture]
 empty-players
 quiet-mobs

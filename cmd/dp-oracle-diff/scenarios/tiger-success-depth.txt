@@ -7,6 +7,7 @@
 # receives TO_NOTVICT; their exact blocks are part of this proof.
 #
 # depth-case: tiger.hit
+# depth-case: fightmsg.189.record-1
 
 [fixture]
 empty-players

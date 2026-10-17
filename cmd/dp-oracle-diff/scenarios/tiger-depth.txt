@@ -6,6 +6,7 @@
 # Connected Tigervictim and Tigerobs capture the victim and room audiences.
 #
 # depth-case: tiger.miss
+# depth-case: fightmsg.189.record-1
 # depth-case: tiger.no-argument
 # depth-case: tiger.self
 

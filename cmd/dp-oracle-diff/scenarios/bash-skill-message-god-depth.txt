@@ -1,4 +1,5 @@
 # depth-case: skill-message.bash-god
+# depth-case: fightmsg.132.record-1
 # C-first real-dispatch proof for do_bash: each case forces one
 # skill-message outcome while connected attacker, victim, and room
 # witness capture all three audience lines (src/act.offensive.c:419-498;

@@ -6,6 +6,7 @@
 #
 # depth-case: dragon.killing-blow
 
+# depth-case: fightmsg.188.record-1
 [fixture]
 empty-players
 quiet-mobs
