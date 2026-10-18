@@ -25,6 +25,7 @@ func shopOutputFixture(t *testing.T, itemWeight int) (*game.World, *Manager, *ga
 		Shops: []parser.ShopProto{{
 			VNum: 77, KeeperVNum: 5001, Rooms: []int{1001}, Products: []int{6001},
 			BuyTypes: []int{int(game.ItemOther)}, BuyProfit: 1, SellProfit: 1,
+			OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 			Messages: [7]string{"%s No such item.", "%s You don't have that.", "%s I don't buy that.", "%s I can't afford that!", "%s You're too poor!", "%s That'll be %d coins, thanks.", "%s I'll give you %d coins for that."},
 		}},
 	})

@@ -24,6 +24,36 @@ func (w *World) ShopInventory(shopVNum int, keeper *MobInstance) ([]*ObjectInsta
 	return keeper.InventorySnapshot(), nil
 }
 
+// DiscardShopPurchaseObject mirrors get_purchase_obj's extract_obj branch for
+// a selected keeper item with no purchase value. C does not decrement
+// SHOP_SORT when this removes the object.
+func (w *World) DiscardShopPurchaseObject(keeper *MobInstance, stock *ObjectInstance) error {
+	if keeper == nil || stock == nil {
+		return fmt.Errorf("shop keeper and stock are required")
+	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if stock.Location.Kind != ObjInInventory || stock.Location.OwnerKind != OwnerMob || stock.Location.MobID != keeper.ID {
+		return fmt.Errorf("object %d is not carried by shop keeper %d", stock.ID, keeper.ID)
+	}
+	w.extractObjectLocked(stock)
+	return nil
+}
+
+// ResetShopStockSort mirrors shop_keeper's keeper==ch safety branch after a
+// switched shopkeeper issues a command (src/shop.c:958-963).
+func (w *World) ResetShopStockSort(keeperVNum int) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	sm, ok := w.shopManager.(*ShopManager)
+	if !ok {
+		return
+	}
+	if shop := sm.GetShopByKeeper(keeperVNum); shop != nil {
+		shop.LastSort = 0
+	}
+}
+
 // BuyShopObject applies shop.c's produced-versus-stocked distinction and
 // transfers one selected object to the buyer. Produced stock is cloned;
 // finite stock leaves the keeper and decrements SHOP_SORT.

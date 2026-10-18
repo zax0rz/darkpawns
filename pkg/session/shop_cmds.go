@@ -203,6 +203,9 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 	if name == "" {
 		return nil
 	}
+	// get_purchase_obj calls one_argument before selecting either # or slide
+	// syntax, so a trailing word after a hash selector is ignored by C.
+	name = strings.Fields(name)[0]
 	if strings.HasPrefix(name, "#") {
 		index, err := strconv.Atoi(strings.TrimPrefix(name, "#"))
 		if err != nil || index < 1 {
@@ -239,7 +242,9 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 	keyword = fields[0]
 	last, group := (*game.ObjectInstance)(nil), 0
 	for _, obj := range inventory {
-		if obj == nil || obj.GetCost() <= 0 || !game.CanSeeObject(viewer, obj) || !shopListKeywordMatches(keyword, obj.GetKeywords()) {
+		// get_slide_obj_vis can select zero-cost objects. get_purchase_obj
+		// extracts them and repeats the search; the caller mirrors that loop.
+		if obj == nil || !game.CanSeeObject(viewer, obj) || !shopListKeywordMatches(keyword, obj.GetKeywords()) {
 			continue
 		}
 		if last != nil && shopObjectsSame(last, obj) {
@@ -252,6 +257,25 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 		last = obj
 	}
 	return nil
+}
+
+// shopPurchaseObject mirrors get_purchase_obj, including its side effect of
+// extracting selected zero-cost stock before retrying the same selector.
+func shopPurchaseObject(world *game.World, shopVNum int, keeper *game.MobInstance, name string, inventory []*game.ObjectInstance, viewer *game.Player) (*game.ObjectInstance, error) {
+	for {
+		stock := findShopPurchaseObject(name, inventory, viewer)
+		if stock == nil || stock.GetCost() > 0 {
+			return stock, nil
+		}
+		if err := world.DiscardShopPurchaseObject(keeper, stock); err != nil {
+			return nil, err
+		}
+		var err error
+		inventory, err = world.ShopInventory(shopVNum, keeper)
+		if err != nil {
+			return nil, err
+		}
+	}
 }
 
 func capitalizeFirstRune(value string) string {
@@ -354,12 +378,22 @@ func cmdList(s *Session, args []string) error {
 // cmdBuy buys an item from the shop.
 // Usage: buy <item> [count]
 func cmdBuy(s *Session, args []string) error {
-	shop, _, keeper := findShopKeeperAndMobInRoom(s)
+	shop, keeperName, keeper := findShopKeeperAndMobInRoom(s)
 	if shop == nil {
 		// No shop spec-proc → do_not_here fires first (act.other.c:208),
 		// before any argument parsing; see cmdList.
 		s.Send("Sorry, but you cannot do that here!\r\n")
 		return nil
+	}
+	if !shopIsOK(s, shop, keeper, keeperName) {
+		return nil
+	}
+
+	// shopping_buy sorts keeper stock immediately after is_ok, even when the
+	// command has no item argument (src/shop.c:482-486).
+	inventory, err := s.manager.world.ShopInventory(shop.VNum, keeper)
+	if err != nil {
+		return err
 	}
 
 	if len(args) == 0 {
@@ -378,15 +412,15 @@ func cmdBuy(s *Session, args []string) error {
 		}
 	}
 
-	inventory, err := s.manager.world.ShopInventory(shop.VNum, keeper)
+	stock, err := shopPurchaseObject(s.manager.world, shop.VNum, keeper, itemName, inventory, s.player)
 	if err != nil {
 		return err
 	}
-	stock := findShopPurchaseObject(itemName, inventory, s.player)
 	if stock == nil {
 		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageNoSuchItem1], s.player.GetName())
 		return nil
 	}
+	itemDescription := stock.GetShortDesc()
 
 	// Calculate price per item
 	pricePerItem := shop.BuyPrice(stock.GetCost(), s.player.GetCha())
@@ -415,16 +449,8 @@ func cmdBuy(s *Session, args []string) error {
 	bought := 0
 	var lastBought *game.ObjectInstance
 	for i := 0; i < count; i++ {
-		if bought > 0 {
-			inventory, err = s.manager.world.ShopInventory(shop.VNum, keeper)
-			if err != nil {
-				return err
-			}
-			next := findShopPurchaseObject(itemName, inventory, s.player)
-			if next == nil || !shopObjectsSame(lastBought, next) {
-				break
-			}
-			stock = next
+		if bought > 0 && !shopObjectsSame(lastBought, stock) {
+			break
 		}
 		if s.player.Inventory.IsFull() {
 			if bought == 0 {
@@ -456,6 +482,19 @@ func cmdBuy(s *Session, args []string) error {
 		}
 		lastBought = item
 		bought++
+		// C calls get_purchase_obj after every hand-over, including the last
+		// requested item; this can extract a following zero-cost stock object.
+		inventory, err = s.manager.world.ShopInventory(shop.VNum, keeper)
+		if err != nil {
+			return err
+		}
+		stock, err = shopPurchaseObject(s.manager.world, shop.VNum, keeper, itemName, inventory, s.player)
+		if err != nil {
+			return err
+		}
+		if !shopObjectsSame(lastBought, stock) {
+			break
+		}
 	}
 
 	if bought > 0 {
@@ -465,7 +504,7 @@ func cmdBuy(s *Session, args []string) error {
 		if pays {
 			s.manager.world.CreditShopPurchase(shop.VNum, keeper, totalSpent)
 		}
-		times := shopTimesMessage(stock.GetShortDesc(), bought)
+		times := shopTimesMessage(itemDescription, bought)
 		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n buys "+times+".", "", game.ToRoom)
 		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageBuy], s.player.GetName(), totalSpent)
 		s.Send("You now have " + times + ".\n\r")
@@ -483,6 +522,9 @@ func cmdSell(s *Session, args []string) error {
 		// No shop spec-proc → do_not_here fires first (act.other.c:208),
 		// before any argument parsing; see cmdList.
 		s.Send("Sorry, but you cannot do that here!\r\n")
+		return nil
+	}
+	if !shopIsOK(s, shop, keeper, keeperName) {
 		return nil
 	}
 

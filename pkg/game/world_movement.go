@@ -139,6 +139,9 @@ func (w *World) PlayerTransferForSpell(actor interface{}, toRoomVNum int) error 
 // mount break after transfer. It accepts the spell package's interface actor
 // without weakening the concrete command transfer APIs.
 func (w *World) CharacterTransferForSpell(actor interface{}, toRoomVNum int) error {
+	// char_from_room sets in_room to NOWHERE before calling circle_check, so
+	// that source-side call cannot consume an origin-room circle (handler.c:527,
+	// utils.c:877-891). char_to_room's destination check does consume one.
 	switch body := actor.(type) {
 	case *Player:
 		if err := w.PlayerTransferForSpell(body, toRoomVNum); err != nil {

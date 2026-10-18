@@ -1,18 +1,14 @@
-# Finite non-produced gold bars and a cheap carnation are loaded onto shop
-# 12101's keeper. Buying a bar must transfer a real stock copy. Buying then selling
-# the carnation must slide it back into keeper inventory so list can show it.
-# The sale also reaches C's one-in-six slide_obj roll.
+# A cheap carnation is loaded onto shop 12101's keeper. Buying then selling it
+# reaches C's one-in-six slide_obj roll. quiet-mobs keeps setup draw streams
+# aligned (R3); finite-stock transfer is covered by a focused session test.
 # depth-case: shops.buy-finite-stock
 # depth-case: shops.sell-retained-stock
 [fixture]
 empty-players
+quiet-mobs
 quiet-zone 80
 quiet-zone 121
 spawn-mob 12102 1 12135 121
-give-object 12102 12107 100000 121
-give-object 12102 12107 100000 121
-give-object 12102 12107 100000 121
-give-object 12102 12107 100000 121
 give-object 12102 18211 100000 121
 
 [setup:oracle]

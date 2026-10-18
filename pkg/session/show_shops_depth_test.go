@@ -76,6 +76,7 @@ func TestShowShopDetailedReportAndLiveBankThroughDispatch(t *testing.T) {
 		VNum: 77, KeeperVNum: 5001, Flags: game.ShopFlagUsesBank, Bank: 1000,
 		Rooms: []int{1001}, SellTypes: []int{6001}, BuyTypes: []int{int(game.ItemOther)},
 		ProfitBuy: 1, ProfitSell: 1,
+		OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 	})
 	world.SetShopManager(shops)
 
@@ -123,7 +124,7 @@ func TestShowShopDetailedReportAndLiveBankThroughDispatch(t *testing.T) {
 			"Customers:  Good, Evil, Neutral, Magic User, Cleric, Thief, Warrior\n\r"+
 			"Produces:   a red apple (#6001)\n\r"+
 			"Buys:       OTHER (#12) [all]\n\r"+
-			"Buy at:     [1.00], Sell at: [1.00], Open: [0-0, 0-0]\n\r"+
+			"Buy at:     [1.00], Sell at: [1.00], Open: [0-28, 0-28]\n\r"+
 			"Bits:       USES_BANK \n\r", newestKeeper.GetGold(), shop.Bank, newestKeeper.GetGold()+shop.Bank)
 	if got := renderedOutput(s); got != want {
 		t.Fatalf("detailed report bytes\ngot:  %q\nwant: %q", got, want)
@@ -227,6 +228,7 @@ func TestShopBuyCreditsKeeperBankThroughDispatch(t *testing.T) {
 		VNum: 77, KeeperVNum: 5001, Flags: game.ShopFlagUsesBank,
 		Rooms: []int{1001}, SellTypes: []int{6001}, BuyTypes: []int{int(game.ItemOther)},
 		ProfitBuy: 1, ProfitSell: 1,
+		OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 	})
 	w.SetShopManager(shops)
 	manager := newTestManager(t, w, nil)

@@ -40,6 +40,7 @@ func TestBuyContainerThenPutSucceeds(t *testing.T) {
 		VNum: 1, KeeperVNum: 5001,
 		SellTypes: []int{7001, 7002}, BuyTypes: []int{},
 		ProfitBuy: 1.0, ProfitSell: 1.0,
+		OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 	})
 	world.SetShopManager(sm)
 

@@ -1003,6 +1003,12 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 					return true
 				}
 			}
+			// src/shop.c:958-963 sees keeper == ch when a player has switched
+			// into that shopkeeper. Its safety reset runs after any secondary
+			// special declines the command.
+			if actorIsNPC && s.switchedMob == mob {
+				w.ResetShopStockSort(mob.GetVNum())
+			}
 			if !actorIsNPC && mob.HasScript("oncmd") {
 				ctx := mob.CreateScriptContext(s.player, nil, scriptText)
 				handled, err := mob.RunScript("oncmd", ctx)
