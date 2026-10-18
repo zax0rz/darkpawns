@@ -1,10 +1,12 @@
-# C-first postmaster vehicle for the three send-mail refusals that run before
-# player identity lookup or persistent mail access. The live special is assigned
-# to mob 3010; a wizard forces the mortal through each reachable gate.
+# C-first postmaster vehicle for send-mail refusals and the unknown-recipient
+# branch. The live special is assigned to mob 3010; a wizard forces the mortal
+# through each reachable gate. A successful saved-name lookup remains blocked
+# by the Go oracle fixture's persistent identity boundary.
 
 # depth-case: mail.send-level-refusal
 # depth-case: mail.send-missing-addressee
 # depth-case: mail.send-insufficient-stamp
+# depth-case: mail.send-unregistered-recipient
 
 [fixture]
 empty-players
@@ -77,3 +79,5 @@ set Mailgatetarget level 5
 set Mailgatetarget gold 0
 force Mailgatetarget mail
 force Mailgatetarget mail recipient
+set Mailgatetarget gold 100
+force Mailgatetarget mail Notregistered
