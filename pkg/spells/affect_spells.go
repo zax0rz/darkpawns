@@ -836,6 +836,14 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 	if ch == nil {
 		return
 	}
+	// C mag_groups (src/magic.c:1469-1474) returns before iterating anyone
+	// unless the caster carries AFF_GROUP. Item routes do not have the spoken
+	// cast gate, so this check is required here as well.
+	type affectChecker interface{ IsAffected(int) bool }
+	groupedCaster, ok := ch.(affectChecker)
+	if !ok || !groupedCaster.IsAffected(combat.AFF_GROUP) {
+		return
+	}
 
 	// Get all characters in the room
 	type roomGetter interface{ GetRoomVNum() int }

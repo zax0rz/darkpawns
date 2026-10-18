@@ -90,7 +90,9 @@ func TestMagGroupsGroupRecallDispatchesSleepingMember(t *testing.T) {
 	leader := addGroupRecallPlayer(t, w, outputs, 1, "Leader", 1001)
 	member := addGroupRecallPlayer(t, w, outputs, 2, "Sleeper", 1001)
 	leader.SetInGroup(true)
+	leader.SetAffect(game.AffGroup, true)
 	member.SetInGroup(true)
+	member.SetAffect(game.AffGroup, true)
 	w.AddFollowerQuiet(member, leader)
 	member.SetPosition(game.PosSleeping)
 
@@ -104,5 +106,27 @@ func TestMagGroupsGroupRecallDispatchesSleepingMember(t *testing.T) {
 	}
 	if got := leader.GetRoomVNum(); got != 8004 {
 		t.Fatalf("group leader room = %d, want mortal start 8004", got)
+	}
+}
+
+func TestMagGroupsGroupRecallRequiresGroupedCaster(t *testing.T) {
+	w, outputs := newGroupRecallWorld(t, false)
+	leader := addGroupRecallPlayer(t, w, outputs, 1, "Leader", 1001)
+	member := addGroupRecallPlayer(t, w, outputs, 2, "Member", 1001)
+	member.SetInGroup(true)
+	member.SetAffect(game.AffGroup, true)
+	w.AddFollowerQuiet(member, leader)
+
+	// C do_group marks the selected follower, while the caster remains outside
+	// the group until explicitly grouped. mag_groups must return before recall.
+	spells.MagGroups(30, leader, spells.SpellGroupRecall, int(spells.SaveSpell), w)
+
+	if leader.GetRoomVNum() != 1001 || member.GetRoomVNum() != 1001 {
+		t.Fatalf("ungrouped caster moved group recall participants: leader=%d member=%d", leader.GetRoomVNum(), member.GetRoomVNum())
+	}
+	for name, output := range outputs {
+		if got := output.String(); got != "" {
+			t.Fatalf("ungrouped caster emitted output for %s: %q", name, got)
+		}
 	}
 }

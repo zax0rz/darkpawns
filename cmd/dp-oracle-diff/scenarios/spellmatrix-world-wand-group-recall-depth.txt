@@ -1,6 +1,7 @@
 # depth-case: spell.group-recall.matrix-world-wand
-# Indexed world wand prototype #14437 dispatches group recall through the live item route.
+# Indexed world wand prototype #14437 dispatches group recall through the live item route for a grouped leader and follower.
 # Item level is 30; the item is taken from its indexed prototype and used against connected room peers.
+# C: src/act.other.c:685-717; src/magic.c:1465-1494; src/spell_parser.c:610-658,777-782; src/spells.c:124-165.
 
 [fixture]
 empty-players
@@ -13,8 +14,8 @@ force-load 14437
 [setup:oracle]
 ItemMage
 Y
-itemmage
-itemmage
+castpass
+castpass
 N
 M
 H
@@ -27,8 +28,8 @@ Y
 [setup:port]
 ItemMage
 y
-itemmage
-itemmage
+castpass
+castpass
 N
 M
 H
@@ -41,8 +42,8 @@ Y
 [setup:oracle:peer]
 ItemPeer
 Y
-itempeer
-itempeer
+castpass
+castpass
 N
 F
 H
@@ -55,8 +56,8 @@ Y
 [setup:port:peer]
 ItemPeer
 y
-itempeer
-itempeer
+castpass
+castpass
 N
 F
 H
@@ -69,8 +70,8 @@ Y
 [setup:oracle:observer]
 ItemView
 Y
-itemview
-itemview
+castpass
+castpass
 N
 M
 H
@@ -83,8 +84,8 @@ Y
 [setup:port:observer]
 ItemView
 y
-itemview
-itemview
+castpass
+castpass
 N
 M
 H
@@ -110,7 +111,7 @@ set player ItemView maxhit 5000
 set player ItemView hit 5000
 set player ItemView align -1000
 force ItemPeer follow ItemMage
-group ItemPeer
+group all
 get orb
 wear orb
 

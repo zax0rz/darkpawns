@@ -13,8 +13,8 @@ force-load 11006
 [setup:oracle]
 ItemMage
 Y
-itemmage
-itemmage
+castpass
+castpass
 N
 M
 H
@@ -27,8 +27,8 @@ Y
 [setup:port]
 ItemMage
 y
-itemmage
-itemmage
+castpass
+castpass
 N
 M
 H
@@ -41,8 +41,8 @@ Y
 [setup:oracle:peer]
 ItemPeer
 Y
-itempeer
-itempeer
+castpass
+castpass
 N
 F
 H
@@ -55,8 +55,8 @@ Y
 [setup:port:peer]
 ItemPeer
 y
-itempeer
-itempeer
+castpass
+castpass
 N
 F
 H
@@ -69,8 +69,8 @@ Y
 [setup:oracle:observer]
 ItemView
 Y
-itemview
-itemview
+castpass
+castpass
 N
 M
 H
@@ -83,8 +83,8 @@ Y
 [setup:port:observer]
 ItemView
 y
-itemview
-itemview
+castpass
+castpass
 N
 M
 H

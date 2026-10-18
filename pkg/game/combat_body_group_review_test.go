@@ -24,6 +24,7 @@ func TestCombatBodyLiveGroupSpellLeaders(t *testing.T) {
 	x, y := NewPlayer(1, "First", 1001), NewPlayer(2, "Second", 1001)
 	for _, p := range []*Player{x, y} {
 		p.SetInGroup(true)
+		p.SetAffect(affGroup, true)
 		p.SetMaxHP(500)
 		p.SetHP(100)
 		if err := w.AddPlayer(p); err != nil {
