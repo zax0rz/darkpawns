@@ -1,0 +1,114 @@
+# depth-case: spell.hellfire.matrix-wand-world
+# Indexed world wand 9912 reaches Hellfire through the registered CAST_WAND
+# path; two connected room peers expose the spell's real audience and damage.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 9912 99 8162 80
+force-load 9912
+
+[setup:oracle]
+Hellwand
+Y
+hellwand1
+hellwand1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hellwand
+y
+hellwand1
+hellwand1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Hellpeer
+Y
+hellpeer1
+hellpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Hellpeer
+y
+hellpeer1
+hellpeer1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hellwatch
+Y
+hellwatch1
+hellwatch1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hellwatch
+y
+hellwatch1
+hellwatch1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Hellpeer 8162
+teleport Hellwatch 8162
+set player Hellwand class mage
+set player Hellwand align -1000
+set player Hellpeer level 30
+set player Hellwatch level 30
+get rod
+hold rod
+set player Hellpeer maxhit 5000
+set player Hellpeer hit 5000
+set player Hellwatch maxhit 5000
+set player Hellwatch hit 5000
+
+[probe]
+equipment
+use rod Hellpeer

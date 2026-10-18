@@ -1,0 +1,78 @@
+# depth-case: spell.clone.matrix-spoken
+# A registered spoken cast reaches MAG_SUMMONS for Clone; look verifies the current C default branch creates no follower.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+
+[setup:oracle]
+Clonecas
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clonecas
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Clonewat
+Y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Clonewat
+y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Clonewat 8105
+set player Clonecas class mage
+set player Clonecas level 34
+set player Clonecas maxmana 5000
+set player Clonecas mana 5000
+skillset Clonecas 'clone' 100
+
+[probe]
+cast 'clone' Clonecas
+look

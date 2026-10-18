@@ -1005,6 +1005,12 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		if areGrouped(ch, c, world) {
 			continue
 		}
+		if spellNum == SpellMassDominate {
+			// C mag_areas routes each eligible target through spell_charm with
+			// the caster's level (magic.c:1617-1618), not mag_damage.
+			ExecuteManualSpell(SpellCharm, getLevel(ch), ch, c, nil, "", world)
+			continue
+		}
 		// C mag_areas deliberately passes SAVING_SPELL (literal 1) to
 		// mag_damage, even when call_magic was entered as CAST_BREATH
 		// (magic.c:1611). Preserve that call-path quirk.
@@ -1317,7 +1323,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellDetectPoison:
 		castDetectPoison(level, ch, cvict, ovict, world)
 	case SpellCalliope:
-		castCalliope(level, ch, cvict)
+		castCalliope(level, ch, cvict, world)
 	case SpellLycanthropy:
 		castLycanthropy(level, ch, cvict)
 	case SpellVampirism:
@@ -1830,7 +1836,7 @@ func castDetectPoison(level int, ch, cvict, ovict, world interface{}) {
 
 // castCalliope — fires multiple magic missiles at a target.
 // C source: spells.c:983-997. missiles = MAX(4, number(level/6, level*2)).
-func castCalliope(level int, ch, cvict interface{}) {
+func castCalliope(level int, ch, cvict, world interface{}) {
 	if cvict == nil {
 		return
 	}
@@ -1838,7 +1844,7 @@ func castCalliope(level int, ch, cvict interface{}) {
 	missiles := max(4, dprng.Number(level/6, level*2))
 
 	for i := 0; i < missiles; i++ {
-		CallMagic(ch, cvict, nil, SpellMagicMissile, level, CastSpell, nil)
+		CallMagic(ch, cvict, nil, SpellMagicMissile, level, CastSpell, world)
 	}
 }
 
