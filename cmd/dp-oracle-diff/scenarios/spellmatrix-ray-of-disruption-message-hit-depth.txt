@@ -1,0 +1,112 @@
+# A registered spoken Ray of Disruption route reaches its C SkillMessage hit triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.ray-of-disruption.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+RayHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RayHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+RayHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+RayHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+RayHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+RayHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport RayHitVictim 8105
+teleport RayHitObserver 8105
+set player RayHitActor class mage
+skillset RayHitActor 'ray of disruption' 100
+set player RayHitActor maxmana 5000
+set player RayHitActor mana 5000
+set player RayHitActor maxhit 10000
+set player RayHitActor hit 10000
+set player RayHitVictim class mage
+set player RayHitVictim level 20
+set player RayHitVictim maxhit 10000
+set player RayHitVictim hit 10000
+set player RayHitVictim align 0
+
+set player RayHitActor level 34
+[probe]
+cast 'ray of disruption' RayHitVictim

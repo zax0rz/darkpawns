@@ -1,0 +1,112 @@
+# A registered spoken Soul Leech route reaches its C SkillMessage god triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.soul-leech.message-god
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+LeechGodActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+LeechGodActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+LeechGodTarget
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+LeechGodTarget
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+LeechGodWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+LeechGodWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport LeechGodTarget 8105
+teleport LeechGodWatch 8105
+set player LeechGodActor class ninja
+skillset LeechGodActor 'soul leech' 100
+set player LeechGodActor maxmana 5000
+set player LeechGodActor mana 5000
+set player LeechGodActor maxhit 10000
+set player LeechGodActor hit 10000
+set player LeechGodTarget class ninja
+set player LeechGodTarget level 31
+set player LeechGodTarget maxhit 10000
+set player LeechGodTarget hit 10000
+set player LeechGodTarget align 0
+
+set player LeechGodActor level 31
+[probe]
+cast 'soul leech' LeechGodTarget

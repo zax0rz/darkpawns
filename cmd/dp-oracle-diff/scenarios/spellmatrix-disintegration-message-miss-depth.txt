@@ -1,0 +1,117 @@
+# A registered spoken Disintegration route reaches its C SkillMessage miss triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.disintegration.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+DisintMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DisintMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+DisintMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+DisintMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+DisintMissWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+DisintMissWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport DisintMissVictim 8105
+teleport DisintMissWatch 8105
+set player DisintMissActor class mage
+skillset DisintMissActor 'disintegration' 1
+set player DisintMissActor maxmana 5000
+set player DisintMissActor mana 5000
+set player DisintMissActor maxhit 10000
+set player DisintMissActor hit 10000
+set player DisintMissVictim class mage
+set player DisintMissVictim level 20
+set player DisintMissVictim maxhit 10000
+set player DisintMissVictim hit 10000
+set player DisintMissVictim align 0
+
+set player DisintMissActor level 34
+[probe]
+cast 'disintegration' DisintMissVictim
+~dpclock pulse 20
+cast 'disintegration' DisintMissVictim
+~dpclock pulse 20
+cast 'disintegration' DisintMissVictim
+~dpclock pulse 20

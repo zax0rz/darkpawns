@@ -1,0 +1,223 @@
+# One registered do_hit -> hit -> damage -> SkillMessage call reaches the TYPE_STAB death branch.
+# Its connected attacker, target and room observer expose the C attacker/victim/room triplets.
+# C: src/interpreter.c:495; src/act.offensive.c:101-111; src/fight.c:1023-1095,1314-1545,1763-1805;
+# src/act.wizard.c:1856-1908; lib/world/obj/25.obj:25-32
+# depth-case: fightmsg.314.record-1
+# depth-case: fightmsg.314.record-2
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+WmsgGod
+Y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WmsgGod
+y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+WmsgAtt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+WmsgAtt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+WmsgTarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+WmsgTarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker2]
+WmsgB
+Y
+attpass2
+attpass2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker2]
+WmsgB
+y
+attpass2
+attpass2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker3]
+WmsgC
+Y
+attpass3
+attpass3
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker3]
+WmsgC
+y
+attpass3
+attpass3
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker4]
+WmsgD
+Y
+attpass4
+attpass4
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker4]
+WmsgD
+y
+attpass4
+attpass4
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[warmup]
+goto 8105
+teleport WmsgAtt 8105
+teleport WmsgTarget 8105
+teleport WmsgB 8105
+set player WmsgB level 15
+set WmsgB maxhit 5000
+set WmsgB hit 1
+set WmsgB ac 100
+force WmsgB sleep
+teleport WmsgC 8105
+set player WmsgC level 15
+set WmsgC maxhit 5000
+set WmsgC hit 1
+set WmsgC ac 100
+force WmsgC sleep
+teleport WmsgD 8105
+set player WmsgD level 15
+set WmsgD maxhit 5000
+set WmsgD hit 1
+set WmsgD ac 100
+force WmsgD sleep
+set player WmsgAtt class warrior
+set WmsgAtt level 20
+set WmsgAtt maxhit 5000
+set WmsgAtt hit 5000
+set WmsgAtt damroll 100
+set WmsgAtt hitroll 100
+set WmsgTarget level 15
+set WmsgTarget maxhit 5000
+set WmsgTarget hit 1
+set WmsgTarget ac 100
+load obj 2502
+give spear WmsgAtt
+force WmsgAtt wield spear
+
+force WmsgTarget sleep
+
+[probe]
+force WmsgAtt hit WmsgTarget
+force WmsgAtt hit WmsgB
+force WmsgAtt hit WmsgC
+force WmsgAtt hit WmsgD

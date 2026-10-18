@@ -1,0 +1,117 @@
+# A registered spoken Psiblast route reaches its C SkillMessage miss triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.psiblast.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+PsiMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PsiMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+PsiMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+PsiMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+PsiMissWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+PsiMissWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport PsiMissVictim 8105
+teleport PsiMissWatch 8105
+set player PsiMissActor class i
+skillset PsiMissActor 'psiblast' 1
+set player PsiMissActor maxmana 5000
+set player PsiMissActor mana 5000
+set player PsiMissActor maxhit 10000
+set player PsiMissActor hit 10000
+set player PsiMissVictim class i
+set player PsiMissVictim level 20
+set player PsiMissVictim maxhit 10000
+set player PsiMissVictim hit 10000
+set player PsiMissVictim align 0
+
+set player PsiMissActor level 31
+[probe]
+will 'psiblast' PsiMissVictim
+~dpclock pulse 20
+will 'psiblast' PsiMissVictim
+~dpclock pulse 20
+will 'psiblast' PsiMissVictim
+~dpclock pulse 20

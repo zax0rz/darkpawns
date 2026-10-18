@@ -1,0 +1,112 @@
+# A registered spoken Soul Leech route reaches its C SkillMessage hit triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.soul-leech.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+LeechHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+LeechHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+LeechHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+LeechHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+LeechHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+LeechHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport LeechHitVictim 8105
+teleport LeechHitObserver 8105
+set player LeechHitActor class ninja
+skillset LeechHitActor 'soul leech' 100
+set player LeechHitActor maxmana 5000
+set player LeechHitActor mana 5000
+set player LeechHitActor maxhit 10000
+set player LeechHitActor hit 10000
+set player LeechHitVictim class ninja
+set player LeechHitVictim level 20
+set player LeechHitVictim maxhit 10000
+set player LeechHitVictim hit 10000
+set player LeechHitVictim align 0
+
+set player LeechHitActor level 31
+[probe]
+cast 'soul leech' LeechHitVictim

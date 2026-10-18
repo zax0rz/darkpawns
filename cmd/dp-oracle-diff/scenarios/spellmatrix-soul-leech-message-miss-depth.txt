@@ -1,0 +1,117 @@
+# A registered spoken Soul Leech route reaches its C SkillMessage miss triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.soul-leech.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+LeechMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+LeechMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+LeechMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+LeechMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+LeechMissWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+LeechMissWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport LeechMissVictim 8105
+teleport LeechMissWatch 8105
+set player LeechMissActor class ninja
+skillset LeechMissActor 'soul leech' 1
+set player LeechMissActor maxmana 5000
+set player LeechMissActor mana 5000
+set player LeechMissActor maxhit 10000
+set player LeechMissActor hit 10000
+set player LeechMissVictim class ninja
+set player LeechMissVictim level 20
+set player LeechMissVictim maxhit 10000
+set player LeechMissVictim hit 10000
+set player LeechMissVictim align 0
+
+set player LeechMissActor level 31
+[probe]
+cast 'soul leech' LeechMissVictim
+~dpclock pulse 20
+cast 'soul leech' LeechMissVictim
+~dpclock pulse 20
+cast 'soul leech' LeechMissVictim
+~dpclock pulse 20

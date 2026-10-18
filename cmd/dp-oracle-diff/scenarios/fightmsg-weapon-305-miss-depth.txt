@@ -1,0 +1,233 @@
+# One registered do_hit -> hit -> damage -> SkillMessage call reaches the TYPE_BLUDGEON miss branch.
+# Its connected attacker, target and room observer expose the C attacker/victim/room triplets.
+# C: src/interpreter.c:495; src/act.offensive.c:101-111; src/fight.c:1023-1095,1314-1545,1763-1805;
+# src/act.wizard.c:1856-1908; lib/world/obj/21.obj:67-73
+# depth-case: fightmsg.305.record-1
+# depth-case: fightmsg.305.record-2
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+WmsgGod
+Y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WmsgGod
+y
+godpass
+godpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+WmsgAtt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+WmsgAtt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+WmsgTarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+WmsgTarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker2]
+WmsgB
+Y
+attpass2
+attpass2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker2]
+WmsgB
+y
+attpass2
+attpass2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker3]
+WmsgC
+Y
+attpass3
+attpass3
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker3]
+WmsgC
+y
+attpass3
+attpass3
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker4]
+WmsgD
+Y
+attpass4
+attpass4
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker4]
+WmsgD
+y
+attpass4
+attpass4
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[warmup]
+goto 8105
+teleport WmsgAtt 8105
+teleport WmsgTarget 8105
+set player WmsgAtt class warrior
+set WmsgAtt level 20
+set WmsgAtt maxhit 5000
+set WmsgAtt hit 5000
+set WmsgAtt damroll 100
+set WmsgAtt hitroll -100
+set WmsgTarget level 15
+set WmsgTarget maxhit 5000
+set WmsgTarget hit 5000
+set WmsgTarget ac 80
+load obj 2106
+give spiked WmsgAtt
+force WmsgAtt wield spiked
+teleport WmsgB 8105
+set player WmsgB class warrior
+set WmsgB level 20
+set WmsgB maxhit 5000
+set WmsgB hit 5000
+set WmsgB damroll 100
+set WmsgB hitroll -100
+teleport WmsgC 8105
+set player WmsgC class warrior
+set WmsgC level 20
+set WmsgC maxhit 5000
+set WmsgC hit 5000
+set WmsgC damroll 100
+set WmsgC hitroll -100
+teleport WmsgD 8105
+set player WmsgD class warrior
+set WmsgD level 20
+set WmsgD maxhit 5000
+set WmsgD hit 5000
+set WmsgD damroll 100
+set WmsgD hitroll -100
+load obj 2106
+give spiked WmsgB
+load obj 2106
+give spiked WmsgC
+load obj 2106
+give spiked WmsgD
+force WmsgB wield spiked
+force WmsgC wield spiked
+force WmsgD wield spiked
+
+[probe]
+force WmsgAtt hit WmsgTarget
+force WmsgB hit WmsgTarget
+force WmsgC hit WmsgTarget
+force WmsgD hit WmsgTarget

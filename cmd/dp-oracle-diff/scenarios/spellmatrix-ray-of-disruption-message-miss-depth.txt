@@ -1,0 +1,117 @@
+# A registered spoken Ray of Disruption route reaches its C SkillMessage miss triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.ray-of-disruption.message-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+RayMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RayMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+RayMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+RayMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+RayMissWatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+RayMissWatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport RayMissVictim 8105
+teleport RayMissWatch 8105
+set player RayMissActor class mage
+skillset RayMissActor 'ray of disruption' 1
+set player RayMissActor maxmana 5000
+set player RayMissActor mana 5000
+set player RayMissActor maxhit 10000
+set player RayMissActor hit 10000
+set player RayMissVictim class mage
+set player RayMissVictim level 20
+set player RayMissVictim maxhit 10000
+set player RayMissVictim hit 10000
+set player RayMissVictim align 0
+
+set player RayMissActor level 34
+[probe]
+cast 'ray of disruption' RayMissVictim
+~dpclock pulse 20
+cast 'ray of disruption' RayMissVictim
+~dpclock pulse 20
+cast 'ray of disruption' RayMissVictim
+~dpclock pulse 20

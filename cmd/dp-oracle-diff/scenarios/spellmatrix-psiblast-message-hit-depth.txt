@@ -1,0 +1,112 @@
+# A registered spoken Psiblast route reaches its C SkillMessage hit triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.psiblast.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+PsiHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PsiHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+PsiHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+PsiHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+PsiHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+PsiHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport PsiHitVictim 8105
+teleport PsiHitObserver 8105
+set player PsiHitActor class i
+skillset PsiHitActor 'psiblast' 100
+set player PsiHitActor maxmana 5000
+set player PsiHitActor mana 5000
+set player PsiHitActor maxhit 10000
+set player PsiHitActor hit 10000
+set player PsiHitVictim class i
+set player PsiHitVictim level 20
+set player PsiHitVictim maxhit 10000
+set player PsiHitVictim hit 10000
+set player PsiHitVictim align 0
+
+set player PsiHitActor level 31
+[probe]
+will 'psiblast' PsiHitVictim

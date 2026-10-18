@@ -1,0 +1,112 @@
+# A registered spoken Disintegration route reaches its C SkillMessage hit triplet.
+# Connected caster, target, and room observer expose attacker, victim, and room lines.
+# depth-case: spell.disintegration.message-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+DisintHitActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DisintHitActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+DisintHitVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+DisintHitVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+DisintHitObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+DisintHitObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport DisintHitVictim 8105
+teleport DisintHitObserver 8105
+set player DisintHitActor class mage
+skillset DisintHitActor 'disintegration' 100
+set player DisintHitActor maxmana 5000
+set player DisintHitActor mana 5000
+set player DisintHitActor maxhit 10000
+set player DisintHitActor hit 10000
+set player DisintHitVictim class mage
+set player DisintHitVictim level 20
+set player DisintHitVictim maxhit 10000
+set player DisintHitVictim hit 10000
+set player DisintHitVictim align 0
+
+set player DisintHitActor level 34
+[probe]
+cast 'disintegration' DisintHitVictim
