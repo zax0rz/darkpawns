@@ -15,6 +15,22 @@ MATRIX = MANIFEST_DIR / "surface" / "spell-matrix.tsv"
 INVENTORY = MANIFEST_DIR / "surface-inventory.tsv"
 ROUTES = ("spoken", "potion", "scroll", "wand", "staff")
 STATUSES = {"proven", "delegated", "gap-reachable", "gap-blocked", "unreachable"}
+GAP_BLOCKED_CELLS = {
+    (105, "spoken"): (),
+    (31, "potion"): (
+        "R1a",
+        "src/spells.c:361",
+        "src/spell_parser.c:713",
+    ),
+    (31, "staff"): (
+        "R1a",
+        "src/spells.c:361",
+        "src/spell_parser.c:602",
+        "src/spell_parser.c:605",
+        "src/spell_parser.c:804",
+        "src/spell_parser.c:809",
+    ),
+}
 ROUTINE_MAP = (
     ("MAG_DAMAGE", "mag_damage"),
     ("MAG_AFFECTS", "mag_affects"),
@@ -177,11 +193,19 @@ def check(matrix=MATRIX, inventory=INVENTORY, root=ROOT, case_ids=None) -> list[
                 errors.append(f"{where}: {route} gap needs a source-backed reason in notes")
             if status == "unreachable" and not row["notes"].strip():
                 errors.append(f"{where}: {route} unreachable needs a source-backed reason in notes")
-            if route == "spoken":
-                expected = "gap-blocked" if spell_id == 105 else (
-                    {"proven", "delegated", "gap-reachable"} if 1 <= spell_id <= 102 else {"unreachable"}
-                )
-                allowed = {expected} if isinstance(expected, str) else expected
+            blocked_citations = GAP_BLOCKED_CELLS.get((spell_id, route))
+            if status == "gap-blocked":
+                if blocked_citations is None:
+                    errors.append(f"{where}: {route} gap-blocked cell is not in the explicit allowlist")
+                else:
+                    missing_citations = [cite for cite in blocked_citations if cite not in row["notes"]]
+                    if missing_citations:
+                        errors.append(
+                            f"{where}: {route} gap-blocked notes must cite {', '.join(missing_citations)}"
+                        )
+                allowed = {"gap-blocked"} if blocked_citations is not None else set()
+            elif route == "spoken":
+                allowed = {"proven", "delegated", "gap-reachable"} if 1 <= spell_id <= 102 else {"unreachable"}
             else:
                 allowed = {"proven", "delegated", "gap-reachable"} if spell_id <= 103 else {"unreachable"}
             if status not in allowed:
@@ -230,9 +254,15 @@ def self_test() -> None:
             row = {key: "-" for key in HEADER}
             row.update({"spell_id": str(spell_id), "symbol": "-", "spell_name": f"spell {spell_id}",
                         "definition": "unused", "routine": "-", "body_file": "src/spells.c", "notes": "boundary"})
+            if spell_id == 31:
+                row["notes"] = (
+                    "R1a src/spells.c:361 src/spell_parser.c:713 "
+                    "src/spell_parser.c:602 src/spell_parser.c:605 "
+                    "src/spell_parser.c:804 src/spell_parser.c:809"
+                )
             for route in ROUTES:
                 row[f"{route}_status"] = (
-                    "gap-blocked" if route == "spoken" and spell_id == 105 else
+                    "gap-blocked" if (spell_id, route) in GAP_BLOCKED_CELLS else
                     "gap-reachable" if (route == "spoken" and spell_id <= 102) or (route != "spoken" and spell_id <= 103) else
                     "unreachable"
                 )
@@ -258,6 +288,12 @@ def self_test() -> None:
             return check(matrix, inventory, root, set())
 
         assert run() == [], run()
+        rows[4]["potion_status"] = "gap-blocked"
+        errors = run()
+        assert any("potion gap-blocked cell is not in the explicit allowlist" in error for error in errors), (
+            "self-test: a third gap-blocked item cell was accepted"
+        )
+        rows[4]["potion_status"] = "gap-reachable"
         rows[102]["spoken_status"] = "gap-reachable"
         counts["spoken"] += 1
         assert run(), "self-test: unreachable route cell was not caught"
