@@ -320,8 +320,8 @@ func hasMail(recipient int) bool {
 }
 
 func storeMail(to, from int, message string) { //nolint:unused // mail helper
-	log.Printf("SYSERR: Mail system -- non-fatal error #5. (from == %d, to == %d)", from, to)
 	if from < 0 || to < 0 || message == "" {
+		log.Printf("SYSERR: Mail system -- non-fatal error #5. (from == %d, to == %d)", from, to)
 		return
 	}
 	mailGlobalMu.Lock()
