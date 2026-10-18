@@ -19,7 +19,7 @@ func TestBuyContainerThenPutSucceeds(t *testing.T) {
 		}},
 		Objs: []parser.Obj{
 			// TypeFlag 15 = container; Values[0]=0 means holds anything.
-			{VNum: 7001, Keywords: "bag", ShortDesc: "a leather bag", LongDesc: "A bag.", TypeFlag: 15, Values: [4]int{0, 0, 0, 0}},
+			{VNum: 7001, Keywords: "bag", ShortDesc: "a leather bag", LongDesc: "A bag.", TypeFlag: 15, Values: [4]int{0, 0, 0, 0}, Cost: 10},
 			{VNum: 7002, Keywords: "sword", ShortDesc: "a sword", LongDesc: "A sword.", Cost: 10},
 		},
 	})
@@ -29,9 +29,12 @@ func TestBuyContainerThenPutSucceeds(t *testing.T) {
 	t.Cleanup(world.StopAITicker)
 	m := newTestManager(t, world, nil)
 
-	if _, err := world.SpawnMob(5001, 1001); err != nil {
+	keeper, err := world.SpawnMob(5001, 1001)
+	if err != nil {
 		t.Fatalf("SpawnMob keeper: %v", err)
 	}
+	addShopKeeperStock(t, world, keeper, 7001)
+	addShopKeeperStock(t, world, keeper, 7002)
 	sm := game.NewShopManager()
 	sm.AddShop(&game.Shop{
 		VNum: 1, KeeperVNum: 5001,
@@ -41,6 +44,9 @@ func TestBuyContainerThenPutSucceeds(t *testing.T) {
 	world.SetShopManager(sm)
 
 	s := makeTestSession(t, m, "Buyer", 1001, true)
+	if err := world.AddPlayer(s.player); err != nil {
+		t.Fatalf("AddPlayer buyer: %v", err)
+	}
 	s.player.SetGold(200)
 
 	// Buy the container through the real command.
@@ -49,7 +55,7 @@ func TestBuyContainerThenPutSucceeds(t *testing.T) {
 	}
 	bag := s.player.Inventory.FindItems("bag")
 	if len(bag) == 0 {
-		t.Fatal("bag not bought — test preconditions wrong")
+		t.Fatalf("bag not bought — test preconditions wrong: output=%q keeper-stock=%v", renderedOutput(s), keeper.InventorySnapshot())
 	}
 
 	// Buy the item.
@@ -67,7 +73,7 @@ func TestBuyContainerThenPutSucceeds(t *testing.T) {
 	if err := cmdPut(s, []string{"sword", "bag"}); err != nil {
 		t.Fatalf("put sword bag: %v", err)
 	}
-	swords := s.player.Inventory.FindItems("sword")
+	swords := bag[0].GetContents()
 	if len(swords) == 0 {
 		t.Fatal("sword vanished entirely")
 	}

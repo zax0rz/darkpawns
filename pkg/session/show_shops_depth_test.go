@@ -81,12 +81,18 @@ func TestShowShopDetailedReportAndLiveBankThroughDispatch(t *testing.T) {
 
 	manager := newTestManager(t, world, nil)
 	s := makeCommandTestSession(t, manager, "Showgod", game.LVL_IMPL, 1001)
+	if err := world.AddPlayer(s.player); err != nil {
+		t.Fatal(err)
+	}
 	proto, ok := world.GetObjPrototype(6001)
 	if !ok {
 		t.Fatal("apple prototype missing")
 	}
-	item := world.NewObjectFromProto(proto, -1)
-	if err := s.player.Inventory.AddItem(item); err != nil {
+	item, err := world.SpawnObject(proto.VNum, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := world.MoveObjectToPlayerInventory(item, s.player); err != nil {
 		t.Fatal(err)
 	}
 	price := shops.GetShopByVNum(77).SellPrice(item.GetCost(), s.player.GetCha())
@@ -215,6 +221,7 @@ func TestShopBuyCreditsKeeperBankThroughDispatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	keeper.SetGold(14995)
+	addShopKeeperStock(t, w, keeper, 6001)
 	shops := game.NewShopManager()
 	shops.AddShop(&game.Shop{
 		VNum: 77, KeeperVNum: 5001, Flags: game.ShopFlagUsesBank,
@@ -224,6 +231,9 @@ func TestShopBuyCreditsKeeperBankThroughDispatch(t *testing.T) {
 	w.SetShopManager(shops)
 	manager := newTestManager(t, w, nil)
 	buyer := makeCommandTestSession(t, manager, "Buyer", 1, 1001)
+	if err := w.AddPlayer(buyer.player); err != nil {
+		t.Fatal(err)
+	}
 	setShopOutputTestAttributes(buyer.player)
 	buyer.player.SetGold(1000)
 	buyer.player.Inventory.MaxWeight = 1000

@@ -129,14 +129,49 @@ func (w *World) PlayerTransferForSpell(actor interface{}, toRoomVNum int) error 
 	if err := w.transferBody(p, toRoomVNum, false); err != nil {
 		return err
 	}
-	// char_to_room calls circle_check after placing the character (handler.c:553).
-	for _, item := range w.GetItemsInRoom(toRoomVNum) {
+	// char_to_room calls circle_check after placing the character (src/handler.c:553).
+	w.consumeRoomSummoningCircle(toRoomVNum)
+	return nil
+}
+
+// CharacterTransferForSpell mirrors spell_summon's char_from_room /
+// char_to_room path, including the destination circle check and its explicit
+// mount break after transfer. It accepts the spell package's interface actor
+// without weakening the concrete command transfer APIs.
+func (w *World) CharacterTransferForSpell(actor interface{}, toRoomVNum int) error {
+	switch body := actor.(type) {
+	case *Player:
+		if err := w.PlayerTransferForSpell(body, toRoomVNum); err != nil {
+			return err
+		}
+		if actorHasMountAffect(body) {
+			w.unmountActor(body)
+		}
+		return nil
+	case *MobInstance:
+		if err := w.transferBody(body, toRoomVNum, false); err != nil {
+			return err
+		}
+		w.consumeRoomSummoningCircle(toRoomVNum)
+		if actorHasMountAffect(body) {
+			w.unmountActor(body)
+		}
+		if rider := w.GetRider(body); rider != nil {
+			w.unmountActor(rider)
+		}
+		return nil
+	default:
+		return fmt.Errorf("spell character transfer: unsupported actor %T", actor)
+	}
+}
+
+func (w *World) consumeRoomSummoningCircle(roomVNum int) {
+	for _, item := range w.GetItemsInRoom(roomVNum) {
 		if item.GetVNum() == spells.CocVnum {
 			item.SetTimer(item.GetTimer() - 1)
-			break
+			return
 		}
 	}
-	return nil
 }
 
 // MindsightNotifyWatchers sends spell_mindsight's direct observer message to

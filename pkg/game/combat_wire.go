@@ -479,6 +479,9 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			defer p.mu.RUnlock()
 			return int64(p.Kills)
 		}
+		if name != nil && name.IsNPC() {
+			return w.mobKillCount.Load()
+		}
 		return 0
 	}
 
@@ -487,6 +490,8 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			p.mu.Lock()
 			p.Kills = int(kills)
 			p.mu.Unlock()
+		} else if name != nil && name.IsNPC() {
+			w.mobKillCount.Store(kills)
 		}
 	}
 

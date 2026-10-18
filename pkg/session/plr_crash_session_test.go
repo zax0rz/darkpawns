@@ -75,6 +75,7 @@ func TestShopBuySetsCrashFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob: %v", err)
 	}
+	addShopKeeperStock(t, h.w, keeper, 7101)
 	keeper.Level = 30
 	h.s.player.SetGold(1000)
 	h.s.player.SetPlrFlag(game.PlrCrash, false)

@@ -349,6 +349,11 @@ func (w *World) recordKill(killer combat.Combatant) {
 		kills := kp.Kills
 		kp.mu.Unlock()
 		w.counter_procs(kp, kills)
+	} else if killer != nil && killer.IsNPC() {
+		// Every mob prototype points at C's one dummy_mob.player_specials
+		// record, so the kill count is shared by all NPCs. counter_procs itself
+		// returns immediately for NPCs (src/fight.c:1252-1254).
+		w.mobKillCount.Add(1)
 	}
 }
 

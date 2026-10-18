@@ -1,9 +1,9 @@
 # depth-case: spell.summon.success-output
 # C path: do_cast -> cast_spell -> call_magic -> spell_summon
-# (spell_parser.c:879-925,1038-1110,513; spells.c:332-351).
-# A God caster and lower-level PC target share the room containing the circle
-# and an open exit. The successful summon exercises C's room departure/arrival
-# acts and its victim-only success line.
+# (src/spell_parser.c:879-925,1038-1110,513; src/spells.c:332-351).
+# A God caster and lower-level PC target start in different rooms. The caster's
+# room has the circle and an open exit; passive peers prove the target leaves
+# its original room and arrives in the caster's room.
 
 [fixture]
 empty-players
@@ -67,9 +67,67 @@ Y
 <ENTER>
 1
 
+[setup:oracle:Originpeer]
+Originpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Originpeer]
+Originpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Targetpeer]
+Targetpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Targetpeer]
+Targetpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8162
-teleport Summontarget 8162
+teleport Summontarget 8161
+teleport Originpeer 8162
+teleport Targetpeer 8161
 
 [probe]
 cast 'summon' Summontarget

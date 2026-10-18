@@ -8,7 +8,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // ---------------------------------------------------------------------------
@@ -196,6 +195,65 @@ func shopObjectIsProduced(s *Session, shop *game.Shop, obj *game.ObjectInstance)
 	return false
 }
 
+// findShopPurchaseObject follows get_slide_obj_vis/get_hash_obj_vis: matches
+// complete keyword tokens, ignores invisible or zero-cost stock, and counts
+// identical objects as one listed group for ordinal selection.
+func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewer *game.Player) *game.ObjectInstance {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil
+	}
+	if strings.HasPrefix(name, "#") {
+		index, err := strconv.Atoi(strings.TrimPrefix(name, "#"))
+		if err != nil || index < 1 {
+			return nil
+		}
+		last, group := (*game.ObjectInstance)(nil), 0
+		for _, obj := range inventory {
+			if obj == nil || obj.GetCost() <= 0 || !game.CanSeeObject(viewer, obj) {
+				continue
+			}
+			if last != nil && shopObjectsSame(last, obj) {
+				continue
+			}
+			group++
+			if group == index {
+				return obj
+			}
+			last = obj
+		}
+		return nil
+	}
+
+	ordinal := 1
+	keyword := name
+	if before, after, found := strings.Cut(name, "."); found {
+		if n, err := strconv.Atoi(before); err == nil && n > 0 {
+			ordinal, keyword = n, after
+		}
+	}
+	fields := strings.Fields(keyword)
+	if len(fields) == 0 {
+		return nil
+	}
+	keyword = fields[0]
+	last, group := (*game.ObjectInstance)(nil), 0
+	for _, obj := range inventory {
+		if obj == nil || obj.GetCost() <= 0 || !game.CanSeeObject(viewer, obj) || !shopListKeywordMatches(keyword, obj.GetKeywords()) {
+			continue
+		}
+		if last != nil && shopObjectsSame(last, obj) {
+			continue
+		}
+		group++
+		if group == ordinal {
+			return obj
+		}
+		last = obj
+	}
+	return nil
+}
+
 func capitalizeFirstRune(value string) string {
 	r, size := utf8.DecodeRuneInString(value)
 	if size == 0 {
@@ -236,6 +294,10 @@ func cmdList(s *Session, args []string) error {
 	if !shopIsOK(s, shop, keeper, keeperName) {
 		return nil
 	}
+	inventory, err := s.manager.world.ShopInventory(shop.VNum, keeper)
+	if err != nil {
+		return err
+	}
 
 	var last *game.ObjectInstance
 	count, index := 0, 0
@@ -254,7 +316,7 @@ func cmdList(s *Session, args []string) error {
 			found = true
 		}
 	}
-	for _, obj := range keeper.Inventory {
+	for _, obj := range inventory {
 		if obj == nil || obj.GetCost() <= 0 || !game.CanSeeObject(s.player, obj) {
 			continue
 		}
@@ -316,27 +378,18 @@ func cmdBuy(s *Session, args []string) error {
 		}
 	}
 
-	// Find the item prototype in the shop's sell list by keyword match
-	var matchedProto *parser.Obj
-	for _, vnum := range shop.SellTypes {
-		proto, ok := s.manager.world.GetObjPrototype(vnum)
-		if !ok {
-			continue
-		}
-		if strings.Contains(strings.ToLower(proto.Keywords), strings.ToLower(itemName)) ||
-			strings.Contains(strings.ToLower(proto.ShortDesc), strings.ToLower(itemName)) {
-			matchedProto = proto
-			break
-		}
+	inventory, err := s.manager.world.ShopInventory(shop.VNum, keeper)
+	if err != nil {
+		return err
 	}
-
-	if matchedProto == nil {
+	stock := findShopPurchaseObject(itemName, inventory, s.player)
+	if stock == nil {
 		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageNoSuchItem1], s.player.GetName())
 		return nil
 	}
 
 	// Calculate price per item
-	pricePerItem := shop.BuyPrice(matchedProto.Cost, s.player.GetCha())
+	pricePerItem := shop.BuyPrice(stock.GetCost(), s.player.GetCha())
 	totalPrice := pricePerItem * count
 	pays := s.player.GetLevel() < game.LVL_GOD
 
@@ -350,17 +403,29 @@ func cmdBuy(s *Session, args []string) error {
 	// followed by the exact LFCR-terminated refusal. Keep this ahead of object
 	// creation so the rejected purchase has no registry or inventory effects.
 	if s.player.Inventory.GetItemCount()+1 > s.player.MaxCarryItems() {
-		s.Send(fmt.Sprintf("%s: You can't carry any more items.\n\r", shopObjectFirstKeyword(matchedProto.Keywords)))
+		s.Send(fmt.Sprintf("%s: You can't carry any more items.\n\r", shopObjectFirstKeyword(stock.GetKeywords())))
 		return nil
 	}
-	if s.player.CarriedWeight()+matchedProto.Weight > s.player.MaxCarryWeight() {
-		s.Send(fmt.Sprintf("%s: You can't carry that much weight.\n\r", shopObjectFirstKeyword(matchedProto.Keywords)))
+	if s.player.CarriedWeight()+stock.GetWeight() > s.player.MaxCarryWeight() {
+		s.Send(fmt.Sprintf("%s: You can't carry that much weight.\n\r", shopObjectFirstKeyword(stock.GetKeywords())))
 		return nil
 	}
 
 	// Buy up to count items (stop if inventory is full or gold runs out)
 	bought := 0
+	var lastBought *game.ObjectInstance
 	for i := 0; i < count; i++ {
+		if bought > 0 {
+			inventory, err = s.manager.world.ShopInventory(shop.VNum, keeper)
+			if err != nil {
+				return err
+			}
+			next := findShopPurchaseObject(itemName, inventory, s.player)
+			if next == nil || !shopObjectsSame(lastBought, next) {
+				break
+			}
+			stock = next
+		}
 		if s.player.Inventory.IsFull() {
 			if bought == 0 {
 				s.Send("You can't carry any more items.")
@@ -379,23 +444,17 @@ func cmdBuy(s *Session, args []string) error {
 			break
 		}
 
-		// Create item — registered with the world so it carries a container-
-		// capable identity (C's read_object links every object; a bare
-		// instance kept ID 0 and put-into-container failed). The atomic spend
-		// precedes the hand-over, so a failed add must refund — otherwise a
-		// full inventory eats the gold.
-		item := s.manager.world.NewObjectFromProto(matchedProto, -1)
-		if err := s.player.Inventory.AddItem(item); err != nil {
-			// The registered item never reached the buyer: unregister it.
-			s.manager.world.ExtractObject(item, -1)
+		// BuyShopObject clones produced stock and transfers finite stock from
+		// the keeper. The atomic spend precedes the hand-over; refund if the
+		// object cannot be moved.
+		item, err := s.manager.world.BuyShopObject(shop.VNum, keeper, stock, s.player)
+		if err != nil {
 			if pays {
 				s.player.AddGold(pricePerItem)
 			}
 			break
 		}
-		// C shopping_buy hands the object over with obj_to_char
-		// (shop.c:545): PLR_CRASH is set (handler.c:569-571).
-		s.player.MarkCrashNeeded()
+		lastBought = item
 		bought++
 	}
 
@@ -406,7 +465,7 @@ func cmdBuy(s *Session, args []string) error {
 		if pays {
 			s.manager.world.CreditShopPurchase(shop.VNum, keeper, totalSpent)
 		}
-		times := shopTimesMessage(matchedProto.ShortDesc, bought)
+		times := shopTimesMessage(stock.GetShortDesc(), bought)
 		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n buys "+times+".", "", game.ToRoom)
 		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageBuy], s.player.GetName(), totalSpent)
 		s.Send("You now have " + times + ".\n\r")
@@ -442,12 +501,12 @@ func cmdSell(s *Session, args []string) error {
 	// Find item in player's inventory by keyword
 	item, found := s.player.Inventory.FindItem(itemName)
 	if !found {
-		s.Send(fmt.Sprintf("%s says, 'You don't have that item.'", keeperName))
+		sendShopKeeperTell(s, keeper, shop.Messages[game.ShopMessageNoSuchItem2], s.player.GetName())
 		return nil
 	}
 
 	// Check if shop buys this item type
-	if !shop.WillBuyType(item.GetTypeFlag()) {
+	if !shop.WillBuyType(item.GetTypeFlag()) || item.GetCost() < 1 || item.HasExtraFlag(0, 16) { // ITEM_NOSELL, src/structs.h:484.
 		s.Send("The shopkeeper doesn't want that.")
 		return nil
 	}
@@ -460,10 +519,7 @@ func cmdSell(s *Session, args []string) error {
 	}
 
 	// Remove item from player, add gold
-	if s.player.Inventory.RemoveItem(item) {
-		// C shopping_sell takes the object with obj_from_char (shop.c:776):
-		// PLR_CRASH is set (handler.c:596-598).
-		s.player.MarkCrashNeeded()
+	if err := s.manager.world.SellShopObject(shop.VNum, keeper, item, s.player); err == nil {
 		s.player.AddGold(price)
 		s.manager.world.RebalanceShopBank(shop.VNum, keeper)
 		times := shopTimesMessage(item.GetShortDesc(), 1)
@@ -493,7 +549,7 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string, keeper *game.Mob
 	unableToPay := false
 
 	for _, item := range items {
-		if !shop.WillBuyType(item.GetTypeFlag()) {
+		if !shop.WillBuyType(item.GetTypeFlag()) || item.GetCost() < 1 || item.HasExtraFlag(0, 16) { // ITEM_NOSELL, src/structs.h:484.
 			continue
 		}
 
@@ -502,9 +558,7 @@ func cmdSellAll(s *Session, shop *game.Shop, keeperName string, keeper *game.Mob
 			unableToPay = true
 			break
 		}
-		if s.player.Inventory.RemoveItem(item) {
-			// C shopping_sell's obj_from_char per sold object (shop.c:776).
-			s.player.MarkCrashNeeded()
+		if err := s.manager.world.SellShopObject(shop.VNum, keeper, item, s.player); err == nil {
 			s.player.AddGold(price)
 			totalGold += price
 			sold++
