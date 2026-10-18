@@ -1,0 +1,87 @@
+# depth-case: spell.ray-of-disruption.matrix-scroll
+# Indexed world scroll 74 reaches Ray of Disruption at item level 30 through
+# registered recite against a connected room target.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698;
+# src/magic.c:709-720; src/fight.c:1023-1095,1534-1545.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+add-obj-index 0.obj
+spawn-obj 74 99 8162 100
+force-load 74
+
+[setup:oracle]
+DisruptReader
+Y
+disrupt1
+disrupt1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DisruptReader
+y
+disrupt1
+disrupt1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+DisruptTarget
+Y
+disrupt2
+disrupt2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+DisruptTarget
+y
+disrupt2
+disrupt2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player DisruptReader class mage
+set player DisruptReader level 30
+set player DisruptReader maxmana 5000
+set player DisruptReader mana 5000
+set player DisruptTarget class mage
+set player DisruptTarget level 20
+set player DisruptTarget maxhit 1000
+set player DisruptTarget hit 1000
+
+[probe]
+get vellum
+recite vellum DisruptTarget
+~dpclock pulse 20
+~dpclock pulse 20

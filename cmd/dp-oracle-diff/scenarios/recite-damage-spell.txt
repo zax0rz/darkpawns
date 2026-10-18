@@ -1,4 +1,5 @@
 # depth-case: objmagic.damage-spell-message
+# depth-case: spell.lightning-bolt.matrix-scroll
 [fixture]
 quiet-mobs
 spawn-mob 2109 1 8105 80

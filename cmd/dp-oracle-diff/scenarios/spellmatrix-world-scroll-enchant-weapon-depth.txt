@@ -1,0 +1,58 @@
+# depth-case: spell.enchant-weapon.matrix-scroll
+# Indexed world tome 4819 reaches Enchant Weapon on an actual weapon; a second
+# world scroll's Identify report exposes the enchantment stored on that item.
+# C: src/act.other.c:897-924; src/spell_parser.c:511,660-698;
+# src/spells.c:621-659,476-530.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 21.obj
+add-obj-index 48.obj
+add-obj-index 80.obj
+spawn-obj 2102 99 8162 100
+force-load 2102
+spawn-obj 4819 99 8162 100
+force-load 4819
+spawn-obj 8050 99 8162 100
+force-load 8050
+
+[setup:oracle]
+EnchantReader
+Y
+enchread1
+enchread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+EnchantReader
+y
+enchread1
+enchread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player EnchantReader level 30
+
+[probe]
+get tome
+get spear
+get scroll
+recite tome spear
+recite scroll spear

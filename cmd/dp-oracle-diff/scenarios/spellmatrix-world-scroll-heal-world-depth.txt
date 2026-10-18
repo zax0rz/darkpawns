@@ -1,0 +1,53 @@
+# depth-case: spell.heal.matrix-scroll
+# Indexed world book 4404 is an ITEM_SCROLL with Bless, Heal, and Sanctuary
+# in its stored order; the injured reader exposes the Heal state change.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698;
+# src/magic.c:1779-1797,1826-1829.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 43.obj
+spawn-obj 4404 99 8162 100
+
+[setup:oracle]
+HealScrollReader
+Y
+healread1
+healread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HealScrollReader
+y
+healread1
+healread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player HealScrollReader maxhit 1000
+set player HealScrollReader hit 20
+
+[probe]
+score
+get book
+recite book
+~dpclock pulse 20
+~dpclock pulse 20
+score

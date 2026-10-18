@@ -1,0 +1,58 @@
+# depth-case: spell.enchant-armor.matrix-scroll
+# Indexed world tome 4819 reaches Enchant Armor on actual armor; a second
+# world scroll's Identify report exposes the enchantment stored on that item.
+# C: src/act.other.c:897-924; src/spell_parser.c:511,660-698;
+# src/spells.c:836-868,476-530.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 1.obj
+add-obj-index 48.obj
+add-obj-index 80.obj
+spawn-obj 101 99 8162 100
+force-load 101
+spawn-obj 4819 99 8162 100
+force-load 4819
+spawn-obj 8050 99 8162 100
+force-load 8050
+
+[setup:oracle]
+ArmorReader
+Y
+armorread1
+armorread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ArmorReader
+y
+armorread1
+armorread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player ArmorReader level 30
+
+[probe]
+get tome
+get gloves
+get scroll
+recite tome gloves
+recite scroll gloves
