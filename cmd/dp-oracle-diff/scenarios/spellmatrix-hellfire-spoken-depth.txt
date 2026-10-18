@@ -1,0 +1,109 @@
+# depth-case: spell.hellfire.matrix-spoken
+# A registered spoken Hellfire cast reaches spell_hellfire with two mortal room victims and a same-room observer.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+
+[setup:oracle]
+Hellcast
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hellcast
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Hellvict
+Y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Hellvict
+y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Hellwat
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Hellwat
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Hellvict 8105
+teleport Hellwat 8105
+set player Hellcast class mage
+set player Hellcast level 34
+set player Hellcast maxmana 5000
+set player Hellcast mana 5000
+skillset Hellcast 'hellfire' 100
+set player Hellvict level 10
+set player Hellvict maxhit 5000
+set player Hellvict hit 5000
+
+[probe]
+cast 'hellfire'

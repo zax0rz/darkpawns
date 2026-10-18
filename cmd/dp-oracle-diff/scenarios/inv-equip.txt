@@ -7,6 +7,7 @@
 quiet-mobs
 spawn-obj 8010 3 8004 80
 spawn-obj 8030 1 8004 80
+force-load 8030
 spawn-obj 8019 1 8004 80
 spawn-obj 8037 1 8004 80
 

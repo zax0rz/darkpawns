@@ -7,6 +7,7 @@
 empty-players
 quiet-mobs
 spawn-obj 2506 1 8162 25
+force-load 2506
 
 [setup:oracle]
 Spellwater

@@ -406,7 +406,8 @@ func (p *Player) AddAffect(aff *engine.Affect) {
 }
 
 // JoinAffect mirrors C affect_join for spell affects sharing a spell and
-// APPLY location. Infravision uses addDuration=true on every recast.
+// APPLY location. ActiveAffects appends newest records, so search backward to
+// select the same first match as C's newest-first affected list.
 func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) {
 	p.mu.Lock()
 	defer func() {
@@ -414,7 +415,8 @@ func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) 
 		p.mu.Unlock()
 		p.refreshAttributeCapacity()
 	}()
-	for i, current := range p.ActiveAffects {
+	for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
+		current := p.ActiveAffects[i]
 		if current == nil || current.SpellID != aff.SpellID || current.Location != aff.Location {
 			continue
 		}

@@ -22,6 +22,27 @@ func (m *mockAffectVictim) AddAffect(a *engine.Affect) {
 	}
 }
 
+func (m *mockAffectVictim) JoinAffect(a *engine.Affect, addDuration, addMagnitude bool) {
+	if a == nil {
+		return
+	}
+	for i := len(m.affects) - 1; i >= 0; i-- {
+		current := m.affects[i]
+		if current == nil || current.SpellID != a.SpellID || current.Location != a.Location {
+			continue
+		}
+		if addDuration {
+			a.Duration += current.Duration
+		}
+		if addMagnitude {
+			a.Magnitude += current.Magnitude
+		}
+		m.affects[i] = a
+		return
+	}
+	m.AddAffect(a)
+}
+
 func (m *mockAffectVictim) SetPosition(pos int)         { m.position = pos }
 func (m *mockAffectVictim) GetAlignment() int           { return m.alignment }
 func (m *mockAffectVictim) IsNPC() bool                 { return m.npc }
@@ -214,6 +235,25 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		magAffectsApply(20, ch, v, SpellDetectMagic, false, 0, nil)
 		expectAffects(t, "detect magic", v, []affectExpectation{
 			{SpellDetectMagic, engine.ApplyNone, 12 + 20, 0, engine.AFFDetectMagic},
+		})
+	})
+
+	t.Run("detect magic repeated slots accumulate duration", func(t *testing.T) {
+		v := &mockAffectVictim{}
+		for range 3 {
+			magAffectsApply(3, ch, v, SpellDetectMagic, false, 0, nil)
+		}
+		expectAffects(t, "detect magic repeated slots", v, []affectExpectation{
+			{SpellDetectMagic, engine.ApplyNone, 3 * (12 + 3), 0, engine.AFFDetectMagic},
+		})
+	})
+
+	t.Run("strength repeated casts accumulate magnitude", func(t *testing.T) {
+		v := &mockAffectVictim{}
+		magAffectsApply(20, ch, v, SpellStrength, false, 0, nil)
+		magAffectsApply(20, ch, v, SpellStrength, false, 0, nil)
+		expectAffects(t, "strength repeated casts", v, []affectExpectation{
+			{SpellStrength, engine.ApplyStr, (20 >> 1) + 4, 4, engine.AFFNone},
 		})
 	})
 

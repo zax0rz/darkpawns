@@ -1,0 +1,54 @@
+# depth-case: spell.mass-heal.matrix-scroll
+# Indexed world book 11035 is a real ITEM_SCROLL with a level-30 Mass Heal
+# slot. The caster's HP before and after recitation exposes the 200-point heal.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698;
+# src/magic.c:1767-1803,1847-1884; src/act.informative.c:1391-1412.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 110.obj
+spawn-obj 11035 99 8162 100
+force-load 11035
+
+[setup:oracle]
+HealReader
+Y
+healread1
+healread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+HealReader
+y
+healread1
+healread1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player HealReader maxhit 1000
+set player HealReader hit 20
+
+[probe]
+score
+get book
+recite book
+~dpclock pulse 20
+~dpclock pulse 20
+score

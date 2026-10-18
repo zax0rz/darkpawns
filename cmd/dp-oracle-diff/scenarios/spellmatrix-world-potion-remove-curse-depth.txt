@@ -1,0 +1,87 @@
+# depth-case: spell.remove-curse.matrix-potion
+# The registered Cleric curse and world potion 2714's Remove Curse slot prove
+# the live item path clears the quaffer's AFF_CURSE affect.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 2714 99 8162 100
+force-load 2714
+
+[setup:oracle]
+CurseCleric
+Y
+curcler1
+curcler1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CurseCleric
+y
+curcler1
+curcler1
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:quaffer]
+PotionQuaffer
+Y
+potquaf1
+potquaf1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:quaffer]
+PotionQuaffer
+y
+potquaf1
+potquaf1
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport PotionQuaffer 8162
+set player CurseCleric class mage
+skillset CurseCleric 'curse' 100
+set player CurseCleric maxmana 5000
+set player CurseCleric mana 5000
+set player CurseCleric align 1000
+set player CurseCleric level 31
+
+[probe]
+cast 'curse' PotionQuaffer
+~dpclock pulse 20
+send:quaffer score
+send:quaffer get ruddy
+send:quaffer quaff ruddy
+~dpclock pulse 20
+~dpclock pulse 20
+send:quaffer score

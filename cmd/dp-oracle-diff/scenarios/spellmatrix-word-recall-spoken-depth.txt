@@ -1,0 +1,78 @@
+# depth-case: spell.word-recall.matrix-spoken
+# A registered spoken Word of Recall moves the caster to the configured home room and exposes it with look.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+
+[setup:oracle]
+Recallca
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Recallca
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Recallwa
+Y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Recallwa
+y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Recallwa 8105
+set player Recallca class mage
+set player Recallca level 34
+set player Recallca maxmana 5000
+set player Recallca mana 5000
+skillset Recallca 'word of recall' 100
+
+[probe]
+cast 'word of recall' Recallca
+look

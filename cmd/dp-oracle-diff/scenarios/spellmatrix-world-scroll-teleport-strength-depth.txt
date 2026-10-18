@@ -1,0 +1,62 @@
+# depth-case: spell.teleport.matrix-scroll
+# depth-case: spell.strength.matrix-scroll
+# Indexed world dragon tooth 5808 is an ITEM_SCROLL with Teleport then
+# Strength at item level 31; recitation self-targets both slots. A subsequent
+# spoken Teleport proves its registered cast route in the resulting room.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698;
+# src/spells.c:124-199; src/magic.c:912-921,1412;
+# src/act.informative.c:1391-1412; src/interpreter.c:373;
+# src/spell_parser.c:963-981,1107-1110.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+add-obj-index 58.obj
+spawn-obj 5808 99 8162 100
+force-load 5808
+
+[setup:oracle]
+ScrollReader
+Y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ScrollReader
+y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player ScrollReader class i
+set player ScrollReader level 30
+set player ScrollReader maxmana 5000
+set player ScrollReader mana 5000
+skillset ScrollReader 'shift reality' 100
+
+[probe]
+get tooth
+recite tooth
+~dpclock pulse 20
+~dpclock pulse 20
+score
+will 'shift reality'

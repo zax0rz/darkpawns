@@ -1,0 +1,115 @@
+# depth-case: spell.lycanthropy.matrix-spoken
+# depth-case: spell.vampirism.matrix-spoken
+# Registered spoken casts set both character flags; the opposite follow-up cast reaches C's existing-creature branches.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+
+[setup:oracle]
+LycanDrink
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+LycanDrink
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+VampDrink
+Y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+VampDrink
+y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+InvisDrink
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+InvisDrink
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport VampDrink 8105
+teleport InvisDrink 8105
+set player LycanDrink class mage
+set player LycanDrink level 34
+set player LycanDrink maxmana 5000
+set player LycanDrink mana 5000
+skillset LycanDrink 'lycanthropy' 100
+set player VampDrink class mage
+set player VampDrink level 34
+set player VampDrink maxmana 5000
+set player VampDrink mana 5000
+skillset VampDrink 'vampirism' 100
+
+[probe]
+cast 'lycanthropy' LycanDrink
+cast 'vampirism' VampDrink
+cast 'vampirism' LycanDrink
+cast 'lycanthropy' VampDrink

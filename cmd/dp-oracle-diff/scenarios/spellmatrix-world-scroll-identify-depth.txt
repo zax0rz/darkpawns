@@ -1,0 +1,51 @@
+# depth-case: spell.identify.matrix-scroll
+# Indexed world scroll 8050 invokes Identify's real object report on itself.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698,511;
+# src/spells.c:476-530.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 80.obj
+spawn-obj 8050 99 8162 100
+force-load 8050
+
+[setup:oracle]
+ScrollReader
+Y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ScrollReader
+y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player ScrollReader class mage
+set player ScrollReader level 30
+set player ScrollReader maxmana 5000
+set player ScrollReader mana 5000
+
+[probe]
+get scroll
+recite scroll

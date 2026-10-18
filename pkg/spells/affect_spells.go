@@ -434,11 +434,23 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		return
 	}
 
-	for _, a := range pending {
+	apply := func(a *engine.Affect) {
+		// C magic.c:1410-1412 sends every populated affect record through
+		// affect_join, even when both accumulation flags are false. Spells
+		// with accum_duration or accum_affect therefore merge an existing
+		// matching (spell, APPLY location) record instead of appending a
+		// duplicate affect node.
+		if accumDur || accumAff {
+			joinAffect(victim, a, accumDur, accumAff)
+			return
+		}
 		applyAffect(victim, a)
 	}
+	for _, a := range pending {
+		apply(a)
+	}
 	if aff != nil {
-		applyAffect(victim, aff)
+		apply(aff)
 	}
 
 	// C magic.c:1414-1421 — send block. to_self goes to the caster only when
@@ -824,6 +836,14 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 	if ch == nil {
 		return
 	}
+	// C mag_groups (src/magic.c:1469-1474) returns before iterating anyone
+	// unless the caster carries AFF_GROUP. Item routes do not have the spoken
+	// cast gate, so this check is required here as well.
+	type affectChecker interface{ IsAffected(int) bool }
+	groupedCaster, ok := ch.(affectChecker)
+	if !ok || !groupedCaster.IsAffected(combat.AFF_GROUP) {
+		return
+	}
 
 	// Get all characters in the room
 	type roomGetter interface{ GetRoomVNum() int }
@@ -991,6 +1011,12 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		}
 		// Skip grouped
 		if areGrouped(ch, c, world) {
+			continue
+		}
+		if spellNum == SpellMassDominate {
+			// C mag_areas routes each eligible target through spell_charm with
+			// the caster's level (magic.c:1617-1618), not mag_damage.
+			ExecuteManualSpell(SpellCharm, getLevel(ch), ch, c, nil, "", world)
 			continue
 		}
 		// C mag_areas deliberately passes SAVING_SPELL (literal 1) to
@@ -1305,7 +1331,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellDetectPoison:
 		castDetectPoison(level, ch, cvict, ovict, world)
 	case SpellCalliope:
-		castCalliope(level, ch, cvict)
+		castCalliope(level, ch, cvict, world)
 	case SpellLycanthropy:
 		castLycanthropy(level, ch, cvict)
 	case SpellVampirism:
@@ -1818,7 +1844,7 @@ func castDetectPoison(level int, ch, cvict, ovict, world interface{}) {
 
 // castCalliope — fires multiple magic missiles at a target.
 // C source: spells.c:983-997. missiles = MAX(4, number(level/6, level*2)).
-func castCalliope(level int, ch, cvict interface{}) {
+func castCalliope(level int, ch, cvict, world interface{}) {
 	if cvict == nil {
 		return
 	}
@@ -1826,7 +1852,7 @@ func castCalliope(level int, ch, cvict interface{}) {
 	missiles := max(4, dprng.Number(level/6, level*2))
 
 	for i := 0; i < missiles; i++ {
-		CallMagic(ch, cvict, nil, SpellMagicMissile, level, CastSpell, nil)
+		CallMagic(ch, cvict, nil, SpellMagicMissile, level, CastSpell, world)
 	}
 }
 

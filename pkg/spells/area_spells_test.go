@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -170,13 +171,43 @@ func TestCastCalliope_FiresMultipleMissiles(t *testing.T) {
 	caster := &mockSpellsChar{name: "Caster", level: 0, class: 99, position: int(PosFighting)}
 	victim := &mockSpellsChar{name: "Victim", level: 10, maxHP: 1000, hp: 1000, position: int(PosFighting)}
 
-	castCalliope(0, caster, victim)
+	castCalliope(0, caster, victim, nil)
 
 	// Each missile: dice(4,3)+level(0), bounded [4,12]. 4 missiles -> [16,48] before saves.
 	// magSavingThrow can halve individual missile damage (min 1), so floor is 4×1 = 4.
 	dealt := 1000 - victim.hp
 	if dealt < 4 || dealt > 48 {
 		t.Errorf("DP-938: expected ~4 magic missiles worth of damage (4-48 after saves), got %d", dealt)
+	}
+}
+
+type calliopeDamageGate struct {
+	calls int
+}
+
+func (w *calliopeDamageGate) DamageRefused(combat.Combatant, combat.Combatant) bool {
+	w.calls++
+	return true
+}
+
+func TestCastCalliopePassesWorldToRecursiveMagicMissiles(t *testing.T) {
+	caster := &breathCombatant{mockSpellsChar: mockSpellsChar{
+		name: "Caster", level: 0, class: 99, roomVNum: 100,
+		position: int(PosFighting), hp: 100, maxHP: 100,
+	}}
+	victim := &breathCombatant{mockSpellsChar: mockSpellsChar{
+		name: "Victim", level: 30, class: 99, roomVNum: 100,
+		position: int(PosFighting), hp: 1000, maxHP: 1000,
+	}}
+	world := &calliopeDamageGate{}
+
+	castCalliope(0, caster, victim, world)
+
+	if world.calls != 4 {
+		t.Fatalf("Calliope recursive missiles reached damage gate %d times, want 4", world.calls)
+	}
+	if victim.hp != 1000 {
+		t.Fatalf("damage gate refused missiles but victim HP changed to %d", victim.hp)
 	}
 }
 
@@ -272,6 +303,31 @@ func TestMagAreas_BreathUsesCImmortalGateAndZeroDamageTail(t *testing.T) {
 	}
 	if mortal.GetHP() != 100 {
 		t.Fatalf("breath must deal zero damage, HP = %d", mortal.GetHP())
+	}
+}
+
+type massDominateAreaWorld struct {
+	*mockAreaWorld
+	*charmDispatchWorld
+}
+
+func TestMagAreas_MassDominateUsesCasterLevelCharmDispatch(t *testing.T) {
+	caster := &mockSpellsChar{name: "Mage", level: 30, roomVNum: 100}
+	victim := &mockSpellsChar{name: "Target", npc: true, level: 40, roomVNum: 100, hp: 100, maxHP: 100}
+	world := &massDominateAreaWorld{
+		mockAreaWorld:      &mockAreaWorld{chars: []interface{}{caster, victim}},
+		charmDispatchWorld: &charmDispatchWorld{},
+	}
+
+	// C ignores the item's/dispatch level here and passes GET_LEVEL(caster) to
+	// spell_charm. The target therefore refuses this level-30 caster.
+	MagAreas(50, caster, SpellMassDominate, int(SaveSpell), world)
+
+	if got, want := caster.messages, []string{"You fail.\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("mass dominate caster output = %#v, want %#v", got, want)
+	}
+	if len(world.calls) != 0 {
+		t.Fatalf("mass dominate reached damage dispatcher %d times, want no damage", len(world.calls))
 	}
 }
 

@@ -20,6 +20,7 @@ spawn-obj 8005 1 8162 80
 spawn-obj 8012 1 8162 80
 spawn-obj 8035 1 8162 80
 spawn-obj 8006 1 8162 80
+force-load 8006
 spawn-obj 8038 1 8162 80
 
 [setup:oracle]

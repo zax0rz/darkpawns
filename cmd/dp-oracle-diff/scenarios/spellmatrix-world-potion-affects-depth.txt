@@ -1,0 +1,90 @@
+# depth-case: spell.armor.matrix-potion
+# depth-case: spell.bless.matrix-potion
+# depth-case: spell.sanctuary.matrix-potion
+# World potion 13101 carries Sanctuary, Bless, and Armor at item level 25.
+# add-obj-index loads its unindexed source prototype into the disposable world;
+# a registered quaff runs all three CAST_POTION calls in slot order. The
+# post-quaff score lists the resulting affects, and the peer sees the room
+# quaff line. C path: do_use -> call_magic -> mag_affects.
+
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 131.obj
+set-room-flag 8162 4 off
+spawn-obj 13101 99 8162 80
+force-load 13101
+
+[setup:oracle]
+WardQuaffer
+Y
+wardpass
+wardpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+WardQuaffer
+y
+wardpass
+wardpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+WardWitness
+Y
+witness
+witness
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+WardWitness
+y
+witness
+witness
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport WardWitness 8162
+set player WardQuaffer class mage
+set player WardQuaffer maxhit 1000
+set player WardQuaffer hit 50
+set player WardQuaffer maxmove 1000
+set player WardQuaffer move 100
+set player WardQuaffer exp 0
+set player WardQuaffer level 1
+
+[probe]
+get bowl
+quaff bowl
+~dpclock pulse 20
+~dpclock pulse 20
+score

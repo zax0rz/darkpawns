@@ -1,0 +1,109 @@
+# depth-case: spell.calliope.matrix-spoken
+# A registered spoken Calliope cast exposes its repeated Magic Missile dispatch against a live high-HP target and room observer.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+
+[setup:oracle]
+Callcast
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Callcast
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Calltarg
+Y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Calltarg
+y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Callwat
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Callwat
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Calltarg 8105
+teleport Callwat 8105
+set player Callcast class mage
+set player Callcast level 34
+set player Callcast maxmana 5000
+set player Callcast mana 5000
+skillset Callcast 'calliope' 100
+set player Calltarg level 10
+set player Calltarg maxhit 10000
+set player Calltarg hit 10000
+
+[probe]
+cast 'calliope' Calltarg

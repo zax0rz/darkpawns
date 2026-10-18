@@ -1,0 +1,117 @@
+# depth-case: spell.fireball.matrix-world-wand
+# Indexed world wand prototype #20014 dispatches fireball through the live item route.
+# Item level is 28; the item is taken from its indexed prototype and used against connected room peers.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 20014 99 8162 200
+force-load 20014
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+castpass
+castpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+castpass
+castpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 30
+set player ItemMage align -1000
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemPeer align -1000
+set player ItemView level 30
+set player ItemView maxhit 5000
+set player ItemView hit 5000
+set player ItemView align -1000
+get book
+wear book
+
+[probe]
+equipment
+use book ItemPeer

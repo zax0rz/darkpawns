@@ -1,0 +1,64 @@
+# depth-case: spell.detect-magic.matrix-scroll
+# depth-case: spell.detect-alignment.matrix-scroll
+# Indexed scrolls v16120 and v16131 exercise their three repeated perception
+# spell slots at level 3.
+# C: src/act.other.c:897-924; src/spell_parser.c:660-698;
+# src/magic.c:1004-1032.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+add-obj-index 161.obj
+set-room-flag 8162 4 off
+spawn-obj 16120 99 8162 100
+force-load 16120
+spawn-obj 16131 99 8162 100
+force-load 16131
+
+[setup:oracle]
+ScrollReader
+Y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ScrollReader
+y
+scrollr2
+scrollr2
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set player ScrollReader class mage
+set player ScrollReader level 30
+set player ScrollReader maxmana 5000
+set player ScrollReader mana 5000
+
+[probe]
+get scroll
+recite scroll
+~dpclock pulse 20
+~dpclock pulse 20
+score
+get scroll
+recite scroll
+~dpclock pulse 20
+~dpclock pulse 20
+score

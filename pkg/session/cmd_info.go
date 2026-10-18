@@ -225,9 +225,6 @@ func cmdScore(s *Session) error {
 	// 8. XP to next level (from C line 1275)
 	if p.Level < game.LVL_IMMORT-1 {
 		needed := game.FindExp(p.Class, p.Level) - p.Exp
-		if needed < 0 {
-			needed = 0
-		}
 		fmt.Fprintf(&buf, "You need %d exp to reach your next level.\r\n", needed)
 	}
 
@@ -373,7 +370,12 @@ func cmdScore(s *Session) error {
 		// newest-first order (handler.c:415-420).
 		for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
 			aff := p.ActiveAffects[i]
-			bv := uint64(aff.Flags)
+			// ActiveAffects.Flags uses engine.AFF_* positions. Convert them
+			// back to C's AFF_* positions before applying the exclusion list
+			// from act.informative.c:1391-1412. The numeric layouts differ:
+			// for example, engine AFF_PROTECT_EVIL is bit 18, while C bit 18
+			// is AFF_SNEAK.
+			bv := scoreActiveAffectCBitvector(aff.Flags)
 			if bv == affSneakBit || bv == affDodgeBit || bv == affBerserkBit || bv == affRobbedBit {
 				continue
 			}
@@ -454,6 +456,16 @@ func scoreAffectHasNode(p *game.Player, bit int) bool {
 		}
 	}
 	return false
+}
+
+func scoreActiveAffectCBitvector(engineFlags uint64) uint64 {
+	var cBits uint64
+	for engineFlag, cBit := range game.EngineFlagToAffBit {
+		if engineFlags&engineFlag != 0 {
+			cBits |= uint64(1) << uint(cBit)
+		}
+	}
+	return cBits
 }
 
 // fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.

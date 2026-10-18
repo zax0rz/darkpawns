@@ -353,6 +353,22 @@ func TestCmdScoreFixedFixtureGolden(t *testing.T) {
 	}
 }
 
+func TestCmdScorePreservesNegativeExperienceToNextLevel(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scoreoverlevel", 1001, true)
+	s.player.Class = game.ClassMageUser
+	s.player.Level = 1
+	s.player.Exp = 7_000_000
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	got := readSessionText(t, s)
+	if !strings.Contains(got, "You need -6998500 exp to reach your next level.\r\n") {
+		t.Fatalf("score omitted C's negative XP remainder: %q", got)
+	}
+}
+
 func TestCmdScoreUsesPlayerRaceAndClassNamesAndCLineEnding(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Racecheck", 1001, true)
@@ -478,6 +494,24 @@ func TestCmdScoreSpellAffectsUseCNewestFirstTwoColumnLayout(t *testing.T) {
 	}
 	if strings.HasSuffix(got, "\r") || strings.HasSuffix(got, "\n") {
 		t.Fatalf("score buffer has a terminal line ending; C's prompt flush owns it: %q", got[len(got)-32:])
+	}
+}
+
+func TestCmdScoreActiveAffectFilterUsesCBitPositions(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Scoreaffectbits", 1001, true)
+	s.player.AddAffect(engine.NewAffectDirect(spells.SpellProtFromEvil, game.ApplyNone, 24, 0, engine.AFFProtectionEvil, "protection from evil"))
+	s.player.AddAffect(engine.NewAffectDirect(138, game.ApplyNone, 6, 0, engine.AFFSneak, "sneak"))
+
+	if err := cmdScore(s); err != nil {
+		t.Fatal(err)
+	}
+	got := readSessionText(t, s)
+	if !strings.Contains(got, "     protection from evil") {
+		t.Fatalf("score omitted active protection-from-evil affect whose engine bit aliases C AFF_SNEAK: %q", got)
+	}
+	if strings.Contains(got, "     sneak") {
+		t.Fatalf("score included active sneak affect that C excludes from the spell list: %q", got)
 	}
 }
 

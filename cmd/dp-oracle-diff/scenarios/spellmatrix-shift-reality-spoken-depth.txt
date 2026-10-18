@@ -1,0 +1,78 @@
+# depth-case: spell.teleport.matrix-spoken
+# A registered spoken cast targets the caster, and the subsequent look exposes the live random relocation.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+
+[setup:oracle]
+Telecast
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Telecast
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Telepeer
+Y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Telepeer
+y
+pass123
+pass123
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Telepeer 8105
+set player Telecast class mage
+set player Telecast level 34
+set player Telecast maxmana 5000
+set player Telecast mana 5000
+skillset Telecast 'shift reality' 100
+
+[probe]
+cast 'shift reality' Telecast
+look
