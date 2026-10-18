@@ -14,6 +14,16 @@ type poserMock struct {
 func (m *poserMock) GetPosition() int { return m.position }
 func (m *poserMock) SetPosition(int)  {}
 
+type positionedMsgMock struct {
+	position int
+	messages []string
+}
+
+func (m *positionedMsgMock) GetPosition() int { return m.position }
+func (m *positionedMsgMock) SendMessage(msg string) {
+	m.messages = append(m.messages, msg)
+}
+
 // ---------------------------------------------------------------------------
 // Mock types for helper-function tests
 // ---------------------------------------------------------------------------
@@ -218,9 +228,37 @@ func TestSendAct(t *testing.T) {
 
 func TestCast_UnknownSpellReturnsFalse(t *testing.T) {
 	caster := &msgMock{}
-	if got := CallMagic(caster, nil, nil, -9999, 10, CastSpell, nil); got {
-		t.Error("expected CallMagic with unknown spell to return false")
+	for _, spellNum := range []int{-9999, 0, topSpellDefine + 1} {
+		if got := CallMagic(caster, nil, nil, spellNum, 10, CastSpell, nil); got {
+			t.Errorf("CallMagic with out-of-range spell %d returned true", spellNum)
+		}
 	}
+}
+
+func TestCallMagicInactiveInRangeSpellIsSuccessfulNoop(t *testing.T) {
+	if GetSpellInfo(SpellDrowning) != nil {
+		t.Fatalf("SpellDrowning unexpectedly has an active SpellInfo entry")
+	}
+
+	t.Run("standing continues item sequence", func(t *testing.T) {
+		caster := &positionedMsgMock{position: int(PosStanding)}
+		if !CallMagic(caster, caster, nil, SpellDrowning, 20, CastPotion, nil) {
+			t.Fatal("in-range inactive spell should return success so later item slots run")
+		}
+		if len(caster.messages) != 0 {
+			t.Fatalf("inactive spell sent messages: %q", caster.messages)
+		}
+	})
+
+	t.Run("sitting still uses call_magic gate", func(t *testing.T) {
+		caster := &positionedMsgMock{position: int(PosSitting)}
+		if CallMagic(caster, caster, nil, SpellDrowning, 20, CastPotion, nil) {
+			t.Fatal("sitting caster should fail before the inactive spell no-op")
+		}
+		if got, want := caster.messages, []string{"You cannot do this sitting!\r\n"}; !reflect.DeepEqual(got, want) {
+			t.Fatalf("sitting message = %q, want %q", got, want)
+		}
+	})
 }
 
 type spawnWorldMock struct {

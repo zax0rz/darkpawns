@@ -11,6 +11,11 @@ import (
 // is owned by combat because spells cannot import game without a cycle.
 const lvlImmort = combat.LVL_IMMORT
 
+// topSpellDefine matches TOP_SPELL_DEFINE in src/spells.h:260: spell numbers in
+// this range are valid call_magic inputs, even when they have no active Go
+// SpellInfo entry and therefore no routines to dispatch (src/spell_parser.c:411-412,472-502).
+const topSpellDefine = 299
+
 // CallMagic is the central spell dispatch function, ported from src/spell_parser.c call_magic().
 //
 // Parameters:
@@ -57,10 +62,11 @@ func CastFromTattoo(caster interface{}, spellNum int, world interface{}) bool {
 }
 
 func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType CastType, world interface{}, fromSpecial, fromTattoo bool, argument string) bool {
-	si := GetSpellInfo(spellNum)
-	if si == nil {
+	if spellNum < 1 || spellNum > topSpellDefine {
 		return false
 	}
+
+	si := GetSpellInfo(spellNum)
 
 	// Check room for NOMAGIC flag
 	if !fromTattoo && roomHasNoMagic(caster, world) {
@@ -69,6 +75,22 @@ func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 			s.SendMessage("A magical force prevents you from casting here.\r\n")
 		}
 		return false
+	}
+
+	// C call_magic accepts any in-range spell number (src/spell_parser.c:411-412).
+	// An unused slot such as SPELL_DROWNING has a zeroed SINFO entry, runs no
+	// spell routine, and still returns success so multi-slot potions and scrolls
+	// continue (src/spell_parser.c:431-434,472-502; potion loop: 711-715).
+	if si == nil {
+		type poser interface{ GetPosition() int }
+		if p, ok := caster.(poser); ok && p.GetPosition() == int(PosSitting) {
+			type sender interface{ SendMessage(string) }
+			if s, ok := caster.(sender); ok {
+				s.SendMessage("You cannot do this sitting!\r\n")
+			}
+			return false
+		}
+		return true
 	}
 
 	// Command dispatch checks each spell's minimum position. Native special
