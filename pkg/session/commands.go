@@ -126,8 +126,17 @@ func init() {
 		return game.CharacterSit(ctx)
 	})
 	registerCommand("rest", wrapNoArgs(cmdRest), "Rest.")
+	registerActorCommand("rest", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterRest(ctx)
+	})
 	registerCommand("sleep", wrapNoArgs(cmdSleep), "Go to sleep.")
+	registerActorCommand("sleep", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterSleep(ctx)
+	})
 	registerCommand("wake", wrapArgs(cmdWake), "Wake up or wake someone else.")
+	registerActorCommand("wake", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterWake(ctx)
+	})
 
 	// Items
 	registerCommand("inventory", wrapArgs(cmdInventory), "Show your inventory.")
@@ -191,6 +200,9 @@ func init() {
 
 	// Group
 	registerCommand("follow", wrapArgs(cmdFollow), "Follow another player.")
+	registerActorCommand("follow", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterFollow(ctx)
+	})
 	registerCommand("shadow", wrapArgs(cmdShadow), "Follow another player quietly (shadow skill).")
 	registerCommand("group", wrapArgs(cmdGroup), "Manage your group.")
 	registerCommand("ungroup", wrapArgs(cmdUngroup), "Disband or leave a group.")
@@ -395,13 +407,20 @@ func init() {
 	// Other commands (act_other.go)
 	registerCommand("save", wrapArgs(cmdSave), "Save your character.")
 	registerCommand("report", wrapArgs(cmdReport), "Show report of your surroundings.")
+	registerActorCommand("report", npcActorHandler(func(w *game.World, mob *game.MobInstance, _ string) { w.NPCReportCommand(mob) }))
 	registerCommand("split", wrapArgs(cmdSplit), "Split gold with your group.")
 	registerCommand("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.")
 	registerCommand("display", wrapArgs(cmdDisplay), "Set display preferences.")
 	registerCommand("transform", wrapArgs(cmdTransform), "Transform your appearance.")
 	// "mount" is src/interpreter.c's other top-level name for do_ride — identical handler, same subcmd.
 	registerCommand("ride", wrapArgs(cmdRide), "Ride a mount.", "mount")
+	registerActorCommand("ride", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterMount(ctx)
+	})
 	registerCommand("dismount", wrapArgs(cmdDismount), "Dismount from your mount.")
+	registerActorCommand("dismount", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterDismount(ctx)
+	})
 	registerCommand("yank", wrapArgs(cmdYank), "Yank someone from a mount or chair.")
 	registerCommand("peek", wrapArgs(cmdPeek), "Peek at another player's inventory.")
 	registerCommand("recall", wrapArgs(cmdRecall), "Recall to your home city.")

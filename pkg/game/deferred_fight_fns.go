@@ -52,7 +52,7 @@ func (p *Player) IsMounted() bool {
 }
 
 func (m *MobInstance) IsMountedMob() bool {
-	return m.MountRider != ""
+	return m.IsAffected(affMounted)
 }
 
 // --------------------------------------------------------------------------

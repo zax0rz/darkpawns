@@ -328,6 +328,14 @@ func (w *World) dieFollowerBody(body combat.Combatant) {
 // Mount/rider helpers
 // --------------------------------------------------------------------------
 
+// mobHasRider is C get_rider(mob) != NULL (src/utils.c:387-392): the body is an
+// NPC, IS_MOUNTED (AFF_MOUNT), and still has a master link. The master link
+// outlives unmount() in C, so the affect bit — not the cached rider name — is
+// what ends the mounted suppression in list_char_to_char.
+func mobHasRider(mob *MobInstance) bool {
+	return mob != nil && mob.IsNPC() && mob.IsMountedMob() && mob.GetMountRider() != ""
+}
+
 // GetRider returns the character riding mount, or nil.
 // C: src/utils.c:387-394 — if (mount && IS_NPC(mount) && IS_MOUNTED(mount))
 //

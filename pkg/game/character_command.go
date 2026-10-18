@@ -1,6 +1,10 @@
 package game
 
-import "github.com/zax0rz/darkpawns/pkg/combat"
+import (
+	"strings"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+)
 
 // CharacterCommandContext keeps the command body separate from an optional
 // descriptor that controls it. Actor is always the real Player or Mob body.
@@ -23,78 +27,96 @@ const (
 // CharacterStand ports the actor body of do_stand. The command interpreter's
 // POS_RESTING gate is applied by its caller; this callback does not emulate it.
 func CharacterStand(ctx CharacterCommandContext) CharacterCommandResult {
-	actor, ok := ctx.Actor.(Actor)
-	if !ok || !actor.IsNPC() || ctx.World == nil {
+	if _, ok := ctx.Actor.(*MobInstance); !ok || ctx.World == nil {
 		return CharacterCommandUnsupported
 	}
-	switch actor.GetPosition() {
-	case combat.PosStanding:
-		mob, ok := ctx.Actor.(*MobInstance)
-		if !ok {
-			return CharacterCommandUnsupported
-		}
-		if mob.IsAffected(affMounted) {
-			// C calls do_dismount here. Go has no generic NPC rider-to-mount
-			// relationship, so do not treat a mounted body as unmounted.
-			return CharacterCommandUnsupported
-		}
-		characterCommandAct(ctx, false, "You are already standing.", ToChar)
-	case combat.PosSitting:
-		characterCommandAct(ctx, false, "You stand up.", ToChar)
-		characterCommandAct(ctx, true, "$n clambers to $s feet.", ToRoom)
-		ctx.Actor.SetPosition(combat.PosStanding)
-	case combat.PosResting:
-		characterCommandAct(ctx, false, "You stop resting, and stand up.", ToChar)
-		characterCommandAct(ctx, true, "$n stops resting, and clambers on $s feet.", ToRoom)
-		ctx.Actor.SetPosition(combat.PosStanding)
-	case combat.PosSleeping:
-		characterCommandAct(ctx, false, "You have to wake up first!", ToChar)
-	case combat.PosFighting:
-		characterCommandAct(ctx, false, "Do you not consider fighting as standing?", ToChar)
-	default:
-		characterCommandAct(ctx, false, "You stop floating around, and put your feet on the ground.", ToChar)
-		characterCommandAct(ctx, true, "$n stops floating around, and puts $s feet on the ground.", ToRoom)
-		ctx.Actor.SetPosition(combat.PosStanding)
-	}
+	ctx.World.doPositionCommand(ctx.Actor.(Actor), positionCommandSpecs[0], ctx.PrivateOutput)
 	return CharacterCommandHandled
 }
 
-// CharacterSit ports the actor body of do_sit. The command interpreter's
-// POS_RESTING gate is applied by its caller; this callback does not emulate it.
+// CharacterSit ports the actor body of do_sit.
 func CharacterSit(ctx CharacterCommandContext) CharacterCommandResult {
-	actor, ok := ctx.Actor.(Actor)
-	if !ok || !actor.IsNPC() || ctx.World == nil {
+	if _, ok := ctx.Actor.(*MobInstance); !ok || ctx.World == nil {
 		return CharacterCommandUnsupported
 	}
-	switch actor.GetPosition() {
-	case combat.PosStanding:
-		mob, ok := ctx.Actor.(*MobInstance)
-		if !ok {
-			return CharacterCommandUnsupported
-		}
-		if mob.IsAffected(affMounted) {
-			characterCommandAct(ctx, false, "You can't rest while mounted.", ToChar)
-			return CharacterCommandHandled
-		}
-		characterCommandAct(ctx, false, "You sit down.", ToChar)
-		characterCommandAct(ctx, false, "$n sits down.", ToRoom)
-		ctx.Actor.SetPosition(combat.PosSitting)
-	case combat.PosSitting:
-		characterCommandAct(ctx, false, "You're sitting already.", ToChar)
-	case combat.PosResting:
-		characterCommandAct(ctx, false, "You stop resting, and sit up.", ToChar)
-		characterCommandAct(ctx, true, "$n stops resting.", ToRoom)
-		ctx.Actor.SetPosition(combat.PosSitting)
-	case combat.PosSleeping:
-		characterCommandAct(ctx, false, "You have to wake up first.", ToChar)
-	case combat.PosFighting:
-		characterCommandAct(ctx, false, "Sit down while fighting? are you MAD?", ToChar)
-	default:
-		characterCommandAct(ctx, false, "You stop floating around, and sit down.", ToChar)
-		// src/act.movement.c:763 passes TRUE for this room act.
-		characterCommandAct(ctx, true, "$n stops floating around, and sits down.", ToRoom)
-		ctx.Actor.SetPosition(combat.PosSitting)
+	ctx.World.doPositionCommand(ctx.Actor.(Actor), positionCommandSpecs[1], ctx.PrivateOutput)
+	return CharacterCommandHandled
+}
+
+// CharacterRest ports the actor body of do_rest (src/act.movement.c:770-806).
+func CharacterRest(ctx CharacterCommandContext) CharacterCommandResult {
+	if _, ok := ctx.Actor.(*MobInstance); !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
 	}
+	ctx.World.doPositionCommand(ctx.Actor.(Actor), positionCommandSpecs[2], ctx.PrivateOutput)
+	return CharacterCommandHandled
+}
+
+// CharacterSleep ports the actor body of do_sleep (src/act.movement.c:808-839).
+func CharacterSleep(ctx CharacterCommandContext) CharacterCommandResult {
+	if _, ok := ctx.Actor.(*MobInstance); !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	ctx.World.doPositionCommand(ctx.Actor.(Actor), positionCommandSpecs[3], ctx.PrivateOutput)
+	return CharacterCommandHandled
+}
+
+// CharacterDismount ports do_dismount (src/act.other.c:1597-1619) for a mobile
+// rider. The refusal and confirmation lines are descriptorless; the room act
+// for a real mount is not.
+func CharacterDismount(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	ctx.World.doDismountActor(mob)
+	return CharacterCommandHandled
+}
+
+// CharacterMount ports do_ride's mobile lanes (src/act.other.c:1545-1593). Every
+// refusal in do_ride is send_to_char to the rider except the non-mountable
+// target's act(...TO_CHAR); CAN_MOUNT(mob) is false (src/utils.h:365-366), so an
+// NPC rider has no player-visible output and no state change.
+func CharacterMount(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	ctx.World.doRideMob(mob, extractArg(ctx.RawArgs))
+	return CharacterCommandHandled
+}
+
+// CharacterFollow ports the non-quiet do_follow lane (src/act.movement.c:883-950)
+// for a mobile actor. Order/force/lua carry subcmd 0, so C skips the shadow
+// skill draw; the state transition and its room/leader notices are shared with
+// the mobile follow path.
+func CharacterFollow(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	arg := extractArg(ctx.RawArgs)
+	if arg == "" {
+		return CharacterCommandHandled
+	}
+	target, found := ctx.World.resolveCharInRoomAt(mob, mob.GetRoomVNum(), arg)
+	if !found {
+		return CharacterCommandHandled
+	}
+	if target.Combatant == nil {
+		return CharacterCommandUnsupported
+	}
+	followMobBody(ctx.World, mob, target.Combatant)
+	return CharacterCommandHandled
+}
+
+// CharacterWake ports do_wake (src/act.movement.c:841-881) for a mobile actor.
+func CharacterWake(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	wakeBody(ctx.World, mob, ctx.RawArgs, ctx.PrivateOutput)
 	return CharacterCommandHandled
 }
 
@@ -122,7 +144,68 @@ func CharacterFlee(ctx CharacterCommandContext) CharacterCommandResult {
 	return CharacterCommandHandled
 }
 
-func characterCommandAct(ctx CharacterCommandContext, hideInvisible bool, format string, actType int) {
-	actor := ctx.Actor.(Actor)
-	ActWithPrivateSink(ctx.World, hideInvisible, actor, nil, nil, nil, format, "", actType, actor, ctx.PrivateOutput)
+// wakeBody is do_wake's body shared by both character types. Every message
+// addressed to the waker is act(...TO_CHAR) and therefore descriptorless for a
+// mobile; the room and victim notices reach players.
+func wakeBody(w *World, body combat.Combatant, argument string, private func(string)) {
+	actor, ok := body.(Actor)
+	if !ok {
+		return
+	}
+	argument = firstWord(strings.TrimSpace(argument))
+	if argument != "" {
+		if actor.GetPosition() == combat.PosSleeping {
+			wakeSelfLine(w, actor, "Maybe you should wake yourself up first.", private)
+			return
+		}
+		var target Actor
+		if strings.EqualFold(argument, actor.GetName()) || strings.EqualFold(argument, "self") || strings.EqualFold(argument, "me") {
+			target = actor
+		} else if resolved, ok := w.resolveCharInRoomAt(body, actor.GetRoom(), argument); ok {
+			target = asActor(resolved.Combatant)
+		}
+		if target == nil {
+			wakeSelfLine(w, actor, NoPersonHere, private)
+			return
+		}
+		if target != actor {
+			switch {
+			case target.GetPosition() > combat.PosSleeping:
+				ActWithPrivateSink(w, false, actor, target, nil, nil, "$E is already awake.", "", ToChar, actor, private)
+			case actorIsAffected(target, affSleep):
+				ActWithPrivateSink(w, false, actor, target, nil, nil, "You can't wake $M up!", "", ToChar, actor, private)
+			case target.GetPosition() < combat.PosSleeping:
+				ActWithPrivateSink(w, false, actor, target, nil, nil, "$E's in pretty bad shape!", "", ToChar, actor, private)
+			default:
+				ActWithPrivateSink(w, false, actor, target, nil, nil, "You wake $M up.", "", ToChar, actor, private)
+				Act(w, false, actor, target, nil, nil, "$n wakes up $N.", "", ToNotVict)
+				// Make the victim awake before rendering their message so
+				// PERS($n) resolves the waker as C's TO_SLEEP delivery does.
+				setActorPosition(target, combat.PosSitting)
+				Act(w, false, actor, target, nil, nil, "You are awakened by $n.", "", ToVict|ToSleep)
+			}
+			return
+		}
+	}
+
+	if actorIsAffected(actor, affSleep) {
+		wakeSelfLine(w, actor, "You can't wake up!", private)
+		Act(w, true, actor, nil, nil, nil, "$n tosses and turns uncomfortably.", "", ToRoom)
+	} else if actor.GetPosition() > combat.PosSleeping {
+		wakeSelfLine(w, actor, "You are already awake...", private)
+	} else {
+		wakeSelfLine(w, actor, "You awaken, and sit up.", private)
+		Act(w, true, actor, nil, nil, nil, "$n awakens.", "", ToRoom)
+		setActorPosition(actor, combat.PosSitting)
+	}
+}
+
+// wakeSelfLine keeps the player path's ToSleep audience and drops the line for
+// a descriptorless mobile, as C's send_to_char does.
+func wakeSelfLine(w *World, actor Actor, message string, private func(string)) {
+	if player, ok := actor.(*Player); ok {
+		movementSendToChar(player, message)
+		return
+	}
+	ActWithPrivateSink(w, false, actor, nil, nil, nil, message, "", ToChar|ToSleep, actor, private)
 }

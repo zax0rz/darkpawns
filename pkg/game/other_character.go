@@ -49,25 +49,70 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 // do_report — from act.other.c
 // ---------------------------------------------------------------------------
 
+// doReport ports do_report (src/act.other.c:799-821) for either body. C has no
+// IS_NPC gate: the reporter's numbers are formatted once per character in the
+// room through that recipient's own color wrappers, so the same line reaches
+// every occupant and always carries the *reporter's* stats (quirk included).
+// A mobile has no descriptor, so send_to_char("You report:", ch) and every
+// TO_CHAR audience line are invisible for it; the room header and the players'
+// lines are not.
 func (w *World) doReport(ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if isPlayerNPC(ch, me) {
+	var (
+		reporter           Actor
+		roomVNum           int
+		hp, maxHP          int
+		mana, maxMana      int
+		move, maxMove      int
+		kills, pks, deaths int
+	)
+	switch {
+	case me != nil:
+		reporter = me
+		roomVNum = me.GetRoomVNum()
+		hp, maxHP = me.GetHP(), me.GetMaxHP()
+		mana, maxMana = me.GetMana(), me.GetMaxMana()
+		move, maxMove = me.GetMove(), me.GetMaxMove()
+		// C reads GET_KILLS/PKS/DEATHS from player_specials; every mobile
+		// shares the zeroed dummy_mob (src/db.c:104,1281), so those three
+		// fields report 0 for a mobile.
+	case ch != nil:
+		reporter = ch
+		roomVNum = ch.GetRoomVNum()
+		hp, maxHP = ch.GetHP(), ch.GetMaxHP()
+		mana, maxMana = ch.GetMana(), ch.GetMaxMana()
+		move, maxMove = ch.GetMove(), ch.GetMaxMove()
+		kills, pks, deaths = ch.Kills, ch.PKs, ch.Deaths
+	default:
 		return true
 	}
 
-	w.actToRoom(ch, "$n reports:\r\n", nil, nil)
-	ch.SendMessage("You report:\r\n")
+	// act("$n reports:", FALSE, ch, 0, 0, TO_ROOM) — act appends the CRLF.
+	Act(w, false, reporter, nil, nil, nil, "$n reports:", "", ToRoom)
+	if ch != nil {
+		ch.SendMessage("You report:\r\n")
+	}
 
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
-	for _, p := range players {
-		if p.IsNPC() {
-			continue
-		}
-		msg := fmt.Sprintf("    [%d/%d]H [%d/%d]M [%d/%d]V [%d]Kills [%d]PKs [%d]Deaths\r\n",
-			ch.GetHP(), ch.GetMaxHP(),
-			ch.GetMana(), ch.GetMaxMana(),
-			ch.GetMove(), ch.GetMaxMove(),
-			ch.Kills, ch.PKs, ch.Deaths)
-		p.SendMessage(msg)
+	// for (tch = world[ch->in_room].people; tch; tch = tch->next_in_room)
+	//   act(buf, FALSE, tch, 0, 0, TO_CHAR);
+	// tch supplies only the color wrappers; the numbers are ch's.
+	for _, p := range w.GetPlayersInRoom(roomVNum) {
+		green := observationColors(p, ansiGreen)
+		red := observationColors(p, ansiRed)
+		normal := observationColors(p, ansiReset)
+		line := fmt.Sprintf(
+			"    [%s%d%s/%s%d%s]H [%s%d%s/%s%d%s]M [%s%d%s/%s%d%s]V"+
+				" [%s%d%s]Kills [%s%d%s]PKs [%s%d%s]Deaths",
+			green, hp, normal, green, maxHP, normal,
+			green, mana, normal, green, maxMana, normal,
+			green, move, normal, green, maxMove, normal,
+			red, kills, normal, red, pks, normal, red, deaths, normal)
+		// act(buf, FALSE, tch, 0, 0, TO_CHAR): the awake/writing gate is
+		// SENDOK(tch, false), so a sleeping or writing occupant gets nothing.
+		Act(w, false, p, nil, nil, nil, line, "", ToChar)
 	}
 	return true
 }
+
+// NPCReportCommand adapts do_report to a descriptorless mobile actor reached
+// through command_interpreter (order, force, lua action).
+func (w *World) NPCReportCommand(me *MobInstance) { w.doReport(nil, me, "report", "") }
