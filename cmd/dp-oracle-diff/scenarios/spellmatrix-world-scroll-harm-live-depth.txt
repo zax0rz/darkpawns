@@ -1,0 +1,121 @@
+# depth-case: spell.harm.matrix-world-scroll-live
+# Indexed world scroll #13107 (harmful harm) reaches Harm through CAST_SCROLL at item level 20.
+# Its second slot is Shift Reality; the probe records Harm damage before the later relocation.
+# C: src/act.other.c:897-924; src/spell_parser.c:452-459,660-698; src/magic.c:603-827; src/fight.c:1534-1545.
+# Prototype: lib/world/obj/131.obj:#13107.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 13107 99 8162 131
+force-load 13107
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 30
+set player ItemMage align 1000
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemPeer align -1000
+set player ItemView level 30
+set player ItemView maxhit 5000
+set player ItemView hit 5000
+set player ItemView align -1000
+get scroll
+
+[probe]
+recite scroll ItemPeer
+~dpclock pulse 20
+score
+send:peer score
+send:observer score

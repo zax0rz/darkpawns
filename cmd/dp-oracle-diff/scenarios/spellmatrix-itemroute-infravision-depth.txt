@@ -1,0 +1,209 @@
+# depth-case: spell.infravision.matrix-potion-live
+# OLC access: ItemBuilder remains level 35 and edits through its own descriptor because oedit requires LVL_BUILDER (src/interpreter.c:592; src/olc.h:54; src/structs.h:620); ItemMage remains level 30 for item use, and object value[0] supplies the spell level.
+# depth-case: spell.infravision.matrix-scroll-live
+# depth-case: spell.infravision.matrix-wand-live
+# depth-case: spell.infravision.matrix-staff-live
+# OLC-configured item routes exercise Infravision at item level 20 against a
+# level-30 caster. The potion self-targets; scroll and wand target separate
+# peers; the staff fans out to both room peers.
+# C: src/act.other.c:897-924,908-974; src/spell_parser.c:406-520,452-459,610-658,660-718,724-817; src/magic.c:1033-1038.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:builder]
+ItemBuilder
+Y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:builder]
+ItemBuilder
+y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemBuilder 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 35
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemView level 30
+set player ItemView maxhit 5000
+set player ItemView hit 5000
+
+set player ItemBuilder level 35
+set player ItemMage level 30
+
+[probe]
+send:builder oedit 4399
+send:builder D
+send:builder 20
+send:builder 50
+send:builder 0
+send:builder 0
+send:builder q
+send:builder y
+load obj 4399
+get powder
+quaff powder
+~dpclock pulse 20
+score
+
+send:builder oedit 4404
+send:builder D
+send:builder 20
+send:builder 50
+send:builder 0
+send:builder 0
+send:builder q
+send:builder y
+load obj 4404
+get book
+recite book ItemPeer
+~dpclock pulse 20
+score
+send:peer score
+
+send:builder oedit 8053
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 50
+send:builder q
+send:builder y
+load obj 8053
+get wand
+hold wand
+use wand ItemView
+~dpclock pulse 20
+score
+send:peer score
+
+remove wand
+send:builder oedit 8054
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 50
+send:builder q
+send:builder y
+load obj 8054
+get staff
+hold staff
+use staff
+~dpclock pulse 20
+score
+send:peer score
+send:observer score
+

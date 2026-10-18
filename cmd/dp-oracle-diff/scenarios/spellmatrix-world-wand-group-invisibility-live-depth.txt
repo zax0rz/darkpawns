@@ -1,0 +1,125 @@
+# depth-case: spell.group-invisibility.matrix-world-wand-live
+# The indexed world wand #4822 (snuff) reaches Group Invisibility through CAST_WAND.
+# A grouped follower and an ungrouped observer expose group membership and recipient state.
+# C route: src/act.other.c:908-974; src/spell_parser.c:487-489,610-658,724-783; src/magic.c:1435-1499.
+# Prototype/reset: lib/world/obj/48.obj:#4822; lib/world/zon/48.zon:76.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 4822 99 8162 48
+force-load 4822
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 30
+set player ItemMage align 1000
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemPeer align -1000
+set player ItemView level 30
+set player ItemView maxhit 5000
+set player ItemView hit 5000
+set player ItemView align -1000
+force ItemPeer follow ItemMage
+group ItemPeer
+get snuff
+wear snuff
+
+[probe]
+equipment
+use snuff ItemPeer
+~dpclock pulse 20
+score
+send:peer score
+send:observer look

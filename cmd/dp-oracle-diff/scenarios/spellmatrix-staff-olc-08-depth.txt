@@ -1,0 +1,259 @@
+# OLC-configured CAST_STAFF live route; item level 20 (caster level 30; peers level 30).
+# OLC access: ItemBuilder remains level 35 and edits through its own descriptor because oedit requires LVL_BUILDER (src/interpreter.c:592; src/olc.h:54; src/structs.h:620); ItemMage remains level 30 for item use, and object value[0] supplies the spell level.
+# C route: src/act.other.c:908-974; src/spell_parser.c:452-459,592-609,790-809; spell bodies: src/magic.c:1466, src/magic.c:1754, src/magic.c:1834, src/magic.c:863, src/spells.c:662, src/spells.c:688, src/spells.c:766.
+# Active spello definitions: src/spell_parser.c:1329,1423,1432,1435,1398.
+# depth-case: spell.group-recall.matrix-staff-olc
+# depth-case: spell.mass-heal.matrix-staff-olc
+# depth-case: spell.lycanthropy.matrix-staff-olc
+# depth-case: spell.vampirism.matrix-staff-olc
+# depth-case: spell.sobriety.matrix-staff-olc
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+
+[setup:oracle:builder]
+ItemBuilder
+Y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:builder]
+ItemBuilder
+y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemBuilder 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 35
+set player ItemMage align 1000
+set player ItemMage maxhit 100000
+set player ItemMage hit 100000
+set player ItemPeer level 30
+set player ItemPeer align -1000
+set player ItemPeer maxhit 100000
+set player ItemPeer hit 100000
+set player ItemView level 30
+set player ItemView align -1000
+set player ItemView maxhit 100000
+set player ItemView hit 100000
+force ItemPeer follow ItemMage
+group ItemPeer
+
+set player ItemBuilder level 35
+set player ItemMage level 30
+
+[probe]
+send:builder oedit 8054
+send:builder 1
+send:builder staff0801
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 49
+send:builder q
+send:builder y
+load obj 8054
+get staff0801
+hold staff0801
+use staff0801
+~dpclock pulse 20
+remove staff0801
+drop staff0801
+score
+send:peer score
+send:observer score
+look
+send:builder oedit 8054
+send:builder 1
+send:builder staff0802
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 52
+send:builder q
+send:builder y
+load obj 8054
+get staff0802
+hold staff0802
+use staff0802
+~dpclock pulse 20
+remove staff0802
+drop staff0802
+score
+send:peer score
+send:observer score
+look
+send:builder oedit 8054
+send:builder 1
+send:builder staff0803
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 54
+send:builder q
+send:builder y
+load obj 8054
+get staff0803
+hold staff0803
+use staff0803
+~dpclock pulse 20
+remove staff0803
+drop staff0803
+score
+send:peer score
+send:observer score
+look
+send:builder oedit 8054
+send:builder 1
+send:builder staff0804
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 55
+send:builder q
+send:builder y
+load obj 8054
+get staff0804
+hold staff0804
+use staff0804
+~dpclock pulse 20
+remove staff0804
+drop staff0804
+score
+send:peer score
+send:observer score
+look
+send:builder oedit 8054
+send:builder 1
+send:builder staff0805
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 56
+send:builder q
+send:builder y
+load obj 8054
+get staff0805
+hold staff0805
+use staff0805
+~dpclock pulse 20
+remove staff0805
+drop staff0805
+score
+send:peer score
+send:observer score
+look

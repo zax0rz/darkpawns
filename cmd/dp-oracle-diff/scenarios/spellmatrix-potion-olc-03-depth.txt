@@ -1,0 +1,223 @@
+# OLC-configured CAST_POTION live route; item level 20 (caster level 30; peers level 30).
+# OLC access: ItemBuilder remains level 35 and edits through its own descriptor because oedit requires LVL_BUILDER (src/interpreter.c:592; src/olc.h:54; src/structs.h:620); ItemMage remains level 30 for item use, and object value[0] supplies the spell level.
+# C route: src/act.other.c:897-924; src/spell_parser.c:452-459,699-718; spell bodies: src/gate.c:337, src/magic.c:1512, src/magic.c:1754, src/magic.c:602, src/magic.c:863, src/spells.c:1132, src/spells.c:1170, src/spells.c:912, src/spells.c:960.
+# Active spello definitions: src/spell_parser.c:1483,1489,1525,1498,1495,1504,1507,1510,1513,1516,1519,1522.
+# depth-case: spell.cell-adjustment.matrix-potion-olc
+# depth-case: spell.mirror-image.matrix-potion-olc
+# depth-case: spell.divine-intervention.matrix-potion-olc
+# depth-case: spell.mind-bar.matrix-potion-olc
+# depth-case: spell.mindsight.matrix-potion-olc
+# depth-case: spell.know-align.matrix-potion-olc
+# depth-case: spell.gate.matrix-potion-olc
+# depth-case: spell.word-of-intellect.matrix-potion-olc
+# depth-case: spell.lay-hands.matrix-potion-olc
+# depth-case: spell.mental-lapse.matrix-potion-olc
+# depth-case: spell.smokescreen.matrix-potion-olc
+# depth-case: spell.ray-of-disruption.matrix-potion-olc
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+
+[setup:oracle:builder]
+ItemBuilder
+Y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:builder]
+ItemBuilder
+y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemBuilder 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 35
+set player ItemMage align 1000
+set player ItemMage maxhit 100000
+set player ItemMage hit 100000
+set player ItemPeer level 30
+set player ItemPeer align -1000
+set player ItemPeer maxhit 100000
+set player ItemPeer hit 100000
+set player ItemView level 30
+set player ItemView align -1000
+set player ItemView maxhit 100000
+set player ItemView hit 100000
+
+set player ItemBuilder level 35
+set player ItemMage level 30
+
+[probe]
+send:builder oedit 4399
+send:builder D
+send:builder 20
+send:builder 77
+send:builder 79
+send:builder 81
+send:builder q
+send:builder y
+load obj 4399
+get powder
+quaff powder
+~dpclock pulse 20
+score
+send:peer score
+send:observer score
+look
+send:builder oedit 4399
+send:builder D
+send:builder 20
+send:builder 82
+send:builder 84
+send:builder 86
+send:builder q
+send:builder y
+load obj 4399
+get powder
+quaff powder
+~dpclock pulse 20
+score
+send:peer score
+send:observer score
+look
+send:builder oedit 4399
+send:builder D
+send:builder 20
+send:builder 87
+send:builder 88
+send:builder 89
+send:builder q
+send:builder y
+load obj 4399
+get powder
+quaff powder
+~dpclock pulse 20
+score
+send:peer score
+send:observer score
+look
+send:builder oedit 4399
+send:builder D
+send:builder 20
+send:builder 90
+send:builder 91
+send:builder 92
+send:builder q
+send:builder y
+load obj 4399
+get powder
+quaff powder
+~dpclock pulse 20
+score
+send:peer score
+send:observer score
+look

@@ -1,0 +1,123 @@
+# depth-case: spell.earthquake.matrix-world-staff-live
+# The indexed world staff #20302 (war gong) reaches Earthquake through the staff area branch.
+# C sends one CAST_STAFF call with NULL targets; mag_areas fans out to room peers and uses caster level for damage.
+# C route: src/act.other.c:908-974; src/spell_parser.c:487-495,790-809; src/magic.c:787-789,1574-1621.
+# Prototype/reset: lib/world/obj/203.obj:#20302; lib/world/zon/203.zon:18,20.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 20302 99 8162 203
+force-load 20302
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 30
+set player ItemMage align 1000
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemPeer align -1000
+set player ItemView level 30
+set player ItemView maxhit 5000
+set player ItemView hit 5000
+set player ItemView align -1000
+get gong
+wear gong
+
+[probe]
+equipment
+use gong
+~dpclock pulse 20
+send:peer score
+send:observer score
+look

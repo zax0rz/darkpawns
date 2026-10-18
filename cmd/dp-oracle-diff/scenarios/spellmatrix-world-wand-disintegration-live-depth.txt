@@ -1,0 +1,123 @@
+# depth-case: spell.disintegration.matrix-world-wand-live
+# The indexed world wand #2708 (dark metal ball) reaches Disintegration at prototype item level 35.
+# C path: do_use -> mag_objectmagic -> call_magic(CAST_WAND/SAVING_ROD) -> mag_damage.
+# C route: src/act.other.c:908-974; src/spell_parser.c:610-658,724-783; src/magic.c:688-708,822-827.
+# Prototype/reset: lib/world/obj/27.obj:#2708; lib/world/zon/27.zon:78.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 2708 99 8162 27
+force-load 2708
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 30
+set player ItemMage align 1000
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemPeer align -1000
+set player ItemView level 30
+set player ItemView maxhit 5000
+set player ItemView hit 5000
+set player ItemView align -1000
+get ball
+wear ball
+
+[probe]
+equipment
+use ball ItemPeer
+~dpclock pulse 20
+score
+send:peer score
+send:observer look

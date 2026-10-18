@@ -1,0 +1,124 @@
+# depth-case: spell.soul-leech.matrix-world-wand-live
+# The indexed world wand #14405 (Winterwand) reaches Soul Leech at prototype item level 17.
+# C mag_damage applies the CAST_WAND saving type, damages the peer, and heals the caster from dealt damage.
+# C route: src/act.other.c:908-974; src/spell_parser.c:452-459,610-658,724-783; src/magic.c:767-785,822-827,840-844.
+# Prototype/reset: lib/world/obj/144.obj:#14405; lib/world/zon/144.zon:206.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8162 4 off
+spawn-obj 14405 99 8162 144
+force-load 14405
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ItemPeer 8162
+teleport ItemView 8162
+set player ItemMage class mage
+set player ItemMage level 30
+set player ItemMage align 1000
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemPeer align -1000
+set player ItemView level 30
+set player ItemView maxhit 5000
+set player ItemView hit 5000
+set player ItemView align -1000
+set player ItemMage maxhit 5000
+set player ItemMage hit 200
+get winterwand
+wear winterwand
+
+[probe]
+equipment
+use winterwand ItemPeer
+~dpclock pulse 20
+score
+send:peer score

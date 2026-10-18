@@ -1,0 +1,88 @@
+# depth-case: spell.gate.matrix-world-staff-live
+# The indexed world staff #14408 (spectacles) reaches Gate via CAST_STAFF in C-legal room 4001.
+# A single connected room peer exercises the staff target loop once; the generated red portal exposes the manual body.
+# C route: src/act.other.c:908-974; src/spell_parser.c:502-523,790-809; src/gate.c:337-390.
+# Prototype/reset: lib/world/obj/144.obj:#14408; lib/world/zon/144.zon:39.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 4001 4 off
+spawn-obj 14408 99 4001 144
+force-load 14408
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 4001
+teleport ItemPeer 4001
+set player ItemMage class mage
+set player ItemMage level 30
+set player ItemMage align 1000
+set player ItemPeer level 30
+set player ItemPeer maxhit 5000
+set player ItemPeer hit 5000
+set player ItemPeer align -1000
+get spectacles
+wear spectacles
+
+[probe]
+equipment
+use spectacles
+~dpclock pulse 20
+look portal
