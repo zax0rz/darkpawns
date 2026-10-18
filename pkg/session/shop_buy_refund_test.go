@@ -19,7 +19,7 @@ func TestCmdBuyCapacityRefusalPreservesGold(t *testing.T) {
 		}},
 		Objs: []parser.Obj{{
 			VNum: 6001, Keywords: "rock", ShortDesc: "a heavy rock",
-			LongDesc: "A heavy rock.", Cost: 10, Weight: 50,
+			LongDesc: "A heavy rock.", Cost: 10, Weight: 15,
 		}},
 	})
 	if err != nil {
@@ -28,18 +28,24 @@ func TestCmdBuyCapacityRefusalPreservesGold(t *testing.T) {
 	t.Cleanup(world.StopAITicker)
 	m := newTestManager(t, world, nil)
 
-	if _, err := world.SpawnMob(5001, 1001); err != nil {
+	keeper, err := world.SpawnMob(5001, 1001)
+	if err != nil {
 		t.Fatalf("SpawnMob keeper: %v", err)
 	}
+	addShopKeeperStock(t, world, keeper, 6001)
 	sm := game.NewShopManager()
 	sm.AddShop(&game.Shop{
 		VNum: 1, KeeperVNum: 5001,
 		SellTypes: []int{6001}, BuyTypes: []int{},
 		ProfitBuy: 1.0, ProfitSell: 1.0,
+		OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 	})
 	world.SetShopManager(sm)
 
 	s := makeTestSession(t, m, "Buyer", 1001, true)
+	if err := world.AddPlayer(s.player); err != nil {
+		t.Fatalf("AddPlayer buyer: %v", err)
+	}
 	setShopOutputTestAttributes(s.player)
 	s.player.SetGold(100)
 
@@ -52,14 +58,18 @@ func TestCmdBuyCapacityRefusalPreservesGold(t *testing.T) {
 		t.Fatalf("control: gold = %d, want 90 — buy path not live (shop or keeper not found)", got)
 	}
 
-	// Rejection: the inventory hand-over fails after the payment attempt; the
-	// command refunds the charge and leaves the carried object unchanged.
-	s.player.Inventory.MaxWeight = 10
+	// Rejection: C's carry-weight gate runs before the second charge.
+	s.player.Stats.Str = 4
+	s.player.CopyBaseAttributes()
+	s.player.Inventory.SetCapacity(s.player.GetStr(), s.player.GetStrAdd(), s.player.GetDex(), s.player.GetLevel())
 	if err := cmdBuy(s, []string{"rock"}); err != nil {
-		t.Fatalf("cmdBuy rejection: %v", err)
+		t.Fatalf("cmdBuy weight refusal: %v", err)
 	}
 	if got := s.player.GetGold(); got != 90 {
-		t.Fatalf("gold after weight-rejected buy = %d, want 90 (refund missing — the failed add ate the gold)", got)
+		t.Fatalf("gold after weight refusal = %d, want 90", got)
+	}
+	if got := s.player.Inventory.GetItemCount(); got != 1 {
+		t.Fatalf("carried item count after weight refusal = %d, want 1", got)
 	}
 }
 
@@ -82,17 +92,24 @@ func TestBuyRejectedAtWeightLeavesNoRegisteredObject(t *testing.T) {
 	}
 	t.Cleanup(world.StopAITicker)
 	m := newTestManager(t, world, nil)
-	if _, err := world.SpawnMob(5001, 1001); err != nil {
+	keeper, err := world.SpawnMob(5001, 1001)
+	if err != nil {
 		t.Fatalf("SpawnMob keeper: %v", err)
 	}
+	addShopKeeperStock(t, world, keeper, 6001)
 	sm := game.NewShopManager()
-	sm.AddShop(&game.Shop{VNum: 1, KeeperVNum: 5001, SellTypes: []int{6001}, BuyTypes: []int{}, ProfitBuy: 1.0, ProfitSell: 1.0})
+	sm.AddShop(&game.Shop{VNum: 1, KeeperVNum: 5001, SellTypes: []int{6001}, BuyTypes: []int{}, ProfitBuy: 1.0, ProfitSell: 1.0, OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28})
 	world.SetShopManager(sm)
 
 	s := makeTestSession(t, m, "Buyer", 1001, true)
+	if err := world.AddPlayer(s.player); err != nil {
+		t.Fatalf("AddPlayer buyer: %v", err)
+	}
 	setShopOutputTestAttributes(s.player)
 	s.player.SetGold(100)
-	s.player.Inventory.MaxWeight = 10 // Force Inventory.AddItem to reject the hand-over.
+	s.player.Stats.Str = 4
+	s.player.CopyBaseAttributes()
+	s.player.Inventory.SetCapacity(s.player.GetStr(), s.player.GetStrAdd(), s.player.GetDex(), s.player.GetLevel())
 	before := len(world.GetAllObjects())
 	if err := cmdBuy(s, []string{"rock"}); err != nil {
 		t.Fatalf("cmdBuy: %v", err)

@@ -44,6 +44,7 @@ func newFlagShopHarnessWithStore(t *testing.T, store db.GameStore) *flagShopHarn
 			Products:  []int{7101},
 			BuyTypes:  []int{1},
 			BuyProfit: 1.0, SellProfit: 1.0,
+			OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 		}},
 	})
 	if err != nil {
@@ -75,6 +76,7 @@ func TestShopBuySetsCrashFlag(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob: %v", err)
 	}
+	addShopKeeperStock(t, h.w, keeper, 7101)
 	keeper.Level = 30
 	h.s.player.SetGold(1000)
 	h.s.player.SetPlrFlag(game.PlrCrash, false)

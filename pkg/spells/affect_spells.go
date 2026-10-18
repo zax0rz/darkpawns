@@ -3388,20 +3388,8 @@ func castSummon(level int, ch, cvict, world interface{}) {
 			sendToCaster(ch, "Your spell backfires!\r\n")
 			sendAffectRoom(ch, nil, "$n disappears suddenly.\r\n", true, world)
 			// Transfer caster to victim's room instead
-			type transferWorld interface {
-				PlayerTransfer(ch interface{}, toRoomVNum int) error
-				MobTransfer(ch interface{}, toRoomVNum int) error
-			}
-			if tw, ok := world.(transferWorld); ok {
-				if chIsNPC {
-					if err := tw.MobTransfer(ch, victRoom); err != nil {
-						slog.Error("MobTransfer failed", "error", err)
-					}
-				} else {
-					if err := tw.PlayerTransfer(ch, victRoom); err != nil {
-						slog.Error("PlayerTransfer failed", "error", err)
-					}
-				}
+			if err := transferSummonCharacter(world, ch, victRoom); err != nil {
+				slog.Error("summon backfire transfer failed", "error", err)
 			}
 			sendAffectRoom(ch, nil, "$n arrives suddenly.\r\n", true, world)
 			if looker, ok := world.(interface{ LookAtRoomForSpell(victim interface{}) }); ok {
@@ -3428,21 +3416,9 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	}
 
 	// Success — transfer victim to caster's room
-	type transferWorld interface {
-		PlayerTransfer(ch interface{}, toRoomVNum int) error
-		MobTransfer(ch interface{}, toRoomVNum int) error
-	}
 	sendAffectRoom(cvict, nil, "$n disappears suddenly.\r\n", true, world)
-	if tw, ok := world.(transferWorld); ok {
-		if victIsNPC {
-			if err := tw.MobTransfer(cvict, chRoom); err != nil {
-				slog.Error("MobTransfer failed", "error", err)
-			}
-		} else {
-			if err := tw.PlayerTransfer(cvict, chRoom); err != nil {
-				slog.Error("PlayerTransfer failed", "error", err)
-			}
-		}
+	if err := transferSummonCharacter(world, cvict, chRoom); err != nil {
+		slog.Error("summon transfer failed", "error", err)
 	}
 	sendAffectRoom(cvict, nil, "$n arrives suddenly.\r\n", true, world)
 
@@ -3457,6 +3433,20 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	} else {
 		sendToVictim(cvict, "You have a strange dream about falling...\r\n")
 	}
+}
+
+// transferSummonCharacter uses the live world's interface{} adapter. The
+// concrete PlayerTransfer and MobTransfer methods take pointer types, so a
+// widened interface assertion silently skipped both transfers before DP-1450.
+func transferSummonCharacter(world, actor interface{}, roomVNum int) error {
+	type spellTransferWorld interface {
+		CharacterTransferForSpell(actor interface{}, toRoomVNum int) error
+	}
+	transfer, ok := world.(spellTransferWorld)
+	if !ok {
+		return fmt.Errorf("spell world does not support summon transfer")
+	}
+	return transfer.CharacterTransferForSpell(actor, roomVNum)
 }
 
 // consumeSummoningCircle mirrors utils.c:circle_check. C decrements the first

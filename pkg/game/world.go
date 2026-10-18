@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -47,6 +48,10 @@ type CharacterCommandExecFunc func(ch combat.Combatant, command string) Characte
 // certain they don't acquire m.mu. See Manager.Register() comment for
 // details.
 type World struct {
+	// mobKillCount mirrors C's shared dummy_mob.player_specials killcount:
+	// every NPC reads and increments the same counter (src/db.c:104,1281).
+	mobKillCount atomic.Int64
+
 	// zoneResetMu serializes boot, manual, admin and heartbeat resets.
 	// It precedes brief World/Spawner locks; no lifecycle lock is acquired.
 	zoneResetMu      sync.Mutex

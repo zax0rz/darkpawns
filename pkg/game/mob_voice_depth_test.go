@@ -206,6 +206,42 @@ func TestMobOnMobKillLootsAndBrags(t *testing.T) {
 	}
 }
 
+func TestNPCsShareDummyMobKillCountForBrag(t *testing.T) {
+	w, out := croakTestWorld(t)
+	killerOne := voiceMob(t, w, 9615, 1001, "a dune stalker", 1, 20, -500, "AGGR24")
+	killerTwo := voiceMob(t, w, 9616, 1001, "the Leviathan", 1, 20, -500, "AGGR24")
+	watcher := croakPlayer(t, w, "Watcher", 1001)
+	callbacks := w.WireCombatCallbacks()
+	if got := callbacks.GetKills(killerOne); got != 0 {
+		t.Fatalf("initial NPC kill count = %d, want 0", got)
+	}
+	if got := callbacks.GetKills(killerTwo); got != 0 {
+		t.Fatalf("initial shared NPC kill count = %d, want 0", got)
+	}
+
+	installBragRoller(t, 0, 6) // pass the mob gate and choose C's case 6.
+	for i, killer := range []*MobInstance{killerOne, killerTwo} {
+		victim := voiceMob(t, w, 9617+i, 1001, []string{"a bulette", "an ahuizotl"}[i], 1, 5, 0)
+		victim.TakeDamage(victim.GetHP() + 1)
+		w.HandleDeath(victim, killer, 0)
+
+		wantCount := int64(i + 1)
+		if got := callbacks.GetKills(killerOne); got != wantCount {
+			t.Fatalf("first NPC's shared kill count after kill %d = %d, want %d", i+1, got, wantCount)
+		}
+		if got := callbacks.GetKills(killerTwo); got != wantCount {
+			t.Fatalf("second NPC's shared kill count after kill %d = %d, want %d", i+1, got, wantCount)
+		}
+		wantBrag := []string{
+			"A dune stalker gossips, 'Kill number 1: a bulette.'\r\n",
+			"The Leviathan gossips, 'Kill number 2: an ahuizotl.'\r\n",
+		}[i]
+		if got := out[watcher.Name]; !strings.Contains(got, wantBrag) {
+			t.Fatalf("gossip after NPC kill %d = %q, want %q", i+1, got, wantBrag)
+		}
+	}
+}
+
 // TestBragCaseFiveRequiresAGoodVictim pins C's case 5 test
 // (src/fight.c:1195): the evil-triumphs line needs an evil killer AND a
 // non-evil victim. The port tested only the killer (R1/R4).

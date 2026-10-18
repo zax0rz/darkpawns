@@ -9,6 +9,7 @@ type Shop struct {
 	VNum       int      // virtual number of the shop definition
 	KeeperVNum int      // VNUM of the NPC shopkeeper
 	Bank       int      // runtime shop bank; src/shop.c initializes this to zero
+	LastSort   int      // count of sorted keeper objects; src/shop.h SHOP_SORT
 	BuyTypes   []int    // item types this shop buys (list of TypeFlag values)
 	BuyWords   []string // optional namelist keywords paired with BuyTypes
 	SellTypes  []int    // VNUMs of item prototypes this shop sells
@@ -83,8 +84,9 @@ func (sm *ShopManager) ReplaceShop(updated *Shop) {
 	for i, shop := range sm.shops {
 		if shop.VNum == updated.VNum {
 			updated.ID = shop.ID
-			// C sedit.c:143-158 copies the runtime bank with the edited shop.
+			// C src/sedit.c:143-158 copies runtime shop state with the edited shop.
 			updated.Bank = shop.Bank
+			updated.LastSort = shop.LastSort
 			sm.shops[i] = updated
 			return
 		}

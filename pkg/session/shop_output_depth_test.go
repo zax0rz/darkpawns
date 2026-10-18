@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -19,10 +20,12 @@ func shopOutputFixture(t *testing.T, itemWeight int) (*game.World, *Manager, *ga
 		Objs: []parser.Obj{
 			{VNum: 6001, Keywords: "apple red", ShortDesc: "a red apple", TypeFlag: int(game.ItemOther), Cost: 10, Weight: itemWeight},
 			{VNum: 6002, Keywords: "pebble", ShortDesc: "a pebble", TypeFlag: int(game.ItemOther), Cost: 0, Weight: 0},
+			{VNum: 6003, Keywords: "manual", ShortDesc: "a field manual", TypeFlag: int(game.ItemOther), Cost: 15, Weight: 1},
 		},
 		Shops: []parser.ShopProto{{
 			VNum: 77, KeeperVNum: 5001, Rooms: []int{1001}, Products: []int{6001},
 			BuyTypes: []int{int(game.ItemOther)}, BuyProfit: 1, SellProfit: 1,
+			OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 			Messages: [7]string{"%s No such item.", "%s You don't have that.", "%s I don't buy that.", "%s I can't afford that!", "%s You're too poor!", "%s That'll be %d coins, thanks.", "%s I'll give you %d coins for that."},
 		}},
 	})
@@ -36,7 +39,73 @@ func shopOutputFixture(t *testing.T, itemWeight int) (*game.World, *Manager, *ga
 		t.Fatalf("SpawnMob keeper: %v", err)
 	}
 	keeper.SetGold(1000)
+	addShopKeeperStock(t, w, keeper, 6001)
 	return w, m, keeper, w.GetAllShops()[0]
+}
+
+type shopStockRoller struct{}
+
+func (shopStockRoller) Number(_, _ int) int { return 1 }
+func (shopStockRoller) Dice(num, _ int) int { return num }
+func (shopStockRoller) IntN(_ int) int      { return 1 }
+
+func TestShopMovesFiniteStockOnBuyAndRetainsSale(t *testing.T) {
+	w, manager, keeper, shop := shopOutputFixture(t, 1)
+	seller := addShopOutputSession(t, manager, "Stockbuyer")
+	seller.player.SetGold(100)
+	seller.player.Inventory.MaxWeight = 100
+	manual := addShopKeeperStock(t, w, keeper, 6003)
+
+	oldRoller := combat.GetRoller()
+	combat.SetRoller(shopStockRoller{})
+	t.Cleanup(func() { combat.SetRoller(oldRoller) })
+
+	if err := ExecuteCommand(seller, "buy", []string{"manual"}); err != nil {
+		t.Fatalf("buy finite stock: %v", err)
+	}
+	if got := seller.player.Inventory.FindItems("manual"); len(got) != 1 || got[0] != manual {
+		t.Fatalf("bought finite stock = %v, want the keeper's original object %d", got, manual.ID)
+	}
+	if manual.Location.Kind != game.ObjInInventory || manual.Location.OwnerKind != game.OwnerPlayer || manual.Location.PlayerName != seller.player.Name {
+		t.Fatalf("bought object's location = %+v, want buyer inventory", manual.Location)
+	}
+	for _, stock := range keeper.InventorySnapshot() {
+		if stock == manual {
+			t.Fatal("finite stock remained with keeper after purchase")
+		}
+	}
+
+	if err := ExecuteCommand(seller, "sell", []string{"manual"}); err != nil {
+		t.Fatalf("sell finite stock: %v", err)
+	}
+	if got := seller.player.Inventory.FindItems("manual"); len(got) != 0 {
+		t.Fatalf("seller still carries the sold item: %v", got)
+	}
+	if manual.Location.Kind != game.ObjInInventory || manual.Location.OwnerKind != game.OwnerMob || manual.Location.MobID != keeper.ID {
+		t.Fatalf("sold object's location = %+v, want keeper inventory", manual.Location)
+	}
+	found := false
+	for _, stock := range keeper.InventorySnapshot() {
+		found = found || stock == manual
+	}
+	if !found {
+		t.Fatalf("sold item %d was not retained in keeper inventory", manual.ID)
+	}
+	if _, _, ok := w.SnapshotShopAccount(shop.VNum, keeper); !ok {
+		t.Fatal("shop account disappeared after stock transfer")
+	}
+}
+
+func addShopKeeperStock(t *testing.T, w *game.World, keeper *game.MobInstance, vnum int) *game.ObjectInstance {
+	t.Helper()
+	obj, err := w.SpawnObject(vnum, -1)
+	if err != nil {
+		t.Fatalf("SpawnObject shop stock %d: %v", vnum, err)
+	}
+	if err := w.MoveObjectToMobInventoryFront(obj, keeper); err != nil {
+		t.Fatalf("MoveObjectToMobInventoryFront shop stock %d: %v", vnum, err)
+	}
+	return obj
 }
 
 func addShopOutputSession(t *testing.T, manager *Manager, name string) *Session {
@@ -170,9 +239,12 @@ func TestShopSellSuccessHasCTransactionAudiencesThroughDispatch(t *testing.T) {
 	if !ok {
 		t.Fatal("apple prototype missing")
 	}
-	item := w.NewObjectFromProto(proto, -1)
-	if err := seller.player.Inventory.AddItem(item); err != nil {
-		t.Fatalf("add sale item: %v", err)
+	item, err := w.SpawnObject(proto.VNum, -1)
+	if err != nil {
+		t.Fatalf("SpawnObject sale item: %v", err)
+	}
+	if err := w.MoveObjectToPlayerInventory(item, seller.player); err != nil {
+		t.Fatalf("MoveObjectToPlayerInventory sale item: %v", err)
 	}
 	price := shop.SellPrice(item.GetCost(), seller.player.GetCha())
 	if err := ExecuteCommand(seller, "sell", []string{"apple"}); err != nil {

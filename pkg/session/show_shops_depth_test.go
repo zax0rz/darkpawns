@@ -76,17 +76,24 @@ func TestShowShopDetailedReportAndLiveBankThroughDispatch(t *testing.T) {
 		VNum: 77, KeeperVNum: 5001, Flags: game.ShopFlagUsesBank, Bank: 1000,
 		Rooms: []int{1001}, SellTypes: []int{6001}, BuyTypes: []int{int(game.ItemOther)},
 		ProfitBuy: 1, ProfitSell: 1,
+		OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 	})
 	world.SetShopManager(shops)
 
 	manager := newTestManager(t, world, nil)
 	s := makeCommandTestSession(t, manager, "Showgod", game.LVL_IMPL, 1001)
+	if err := world.AddPlayer(s.player); err != nil {
+		t.Fatal(err)
+	}
 	proto, ok := world.GetObjPrototype(6001)
 	if !ok {
 		t.Fatal("apple prototype missing")
 	}
-	item := world.NewObjectFromProto(proto, -1)
-	if err := s.player.Inventory.AddItem(item); err != nil {
+	item, err := world.SpawnObject(proto.VNum, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := world.MoveObjectToPlayerInventory(item, s.player); err != nil {
 		t.Fatal(err)
 	}
 	price := shops.GetShopByVNum(77).SellPrice(item.GetCost(), s.player.GetCha())
@@ -117,7 +124,7 @@ func TestShowShopDetailedReportAndLiveBankThroughDispatch(t *testing.T) {
 			"Customers:  Good, Evil, Neutral, Magic User, Cleric, Thief, Warrior\n\r"+
 			"Produces:   a red apple (#6001)\n\r"+
 			"Buys:       OTHER (#12) [all]\n\r"+
-			"Buy at:     [1.00], Sell at: [1.00], Open: [0-0, 0-0]\n\r"+
+			"Buy at:     [1.00], Sell at: [1.00], Open: [0-28, 0-28]\n\r"+
 			"Bits:       USES_BANK \n\r", newestKeeper.GetGold(), shop.Bank, newestKeeper.GetGold()+shop.Bank)
 	if got := renderedOutput(s); got != want {
 		t.Fatalf("detailed report bytes\ngot:  %q\nwant: %q", got, want)
@@ -215,15 +222,20 @@ func TestShopBuyCreditsKeeperBankThroughDispatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	keeper.SetGold(14995)
+	addShopKeeperStock(t, w, keeper, 6001)
 	shops := game.NewShopManager()
 	shops.AddShop(&game.Shop{
 		VNum: 77, KeeperVNum: 5001, Flags: game.ShopFlagUsesBank,
 		Rooms: []int{1001}, SellTypes: []int{6001}, BuyTypes: []int{int(game.ItemOther)},
 		ProfitBuy: 1, ProfitSell: 1,
+		OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
 	})
 	w.SetShopManager(shops)
 	manager := newTestManager(t, w, nil)
 	buyer := makeCommandTestSession(t, manager, "Buyer", 1, 1001)
+	if err := w.AddPlayer(buyer.player); err != nil {
+		t.Fatal(err)
+	}
 	setShopOutputTestAttributes(buyer.player)
 	buyer.player.SetGold(1000)
 	buyer.player.Inventory.MaxWeight = 1000

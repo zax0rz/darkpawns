@@ -2,6 +2,7 @@ package spells
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -73,6 +74,53 @@ func (w *summonBackfireWorld) PlayerTransfer(actor interface{}, room int) error 
 	}
 	w.transfers = append(w.transfers, room)
 	return nil
+}
+
+func (w *summonBackfireWorld) CharacterTransferForSpell(actor interface{}, room int) error {
+	return w.PlayerTransfer(actor, room)
+}
+
+func TestSummonSuccessTransfersPlayerBeforeArrivalAct(t *testing.T) {
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	caster := &mockSpellsChar{name: "Mage", level: combat.LVL_IMMORT, roomVNum: 1001, position: int(PosStanding)}
+	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, position: int(PosStanding)}
+	originPeer := &mockSpellsChar{name: "Originpeer", roomVNum: 1001}
+	targetPeer := &mockSpellsChar{name: "Targetpeer", roomVNum: 1002}
+	world := &summonBackfireWorld{
+		summonTestWorld: summonTestWorld{
+			items: []interface{}{circle},
+			rooms: map[int]*parser.Room{
+				1001: {VNum: 1001, Name: "Caster Room", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+				1002: {VNum: 1002, Name: "Victim Room"},
+			},
+		},
+		players: map[int][]interface{}{
+			1001: {caster, originPeer},
+			1002: {victim, targetPeer},
+		},
+	}
+
+	oldSaveRoll := magSummonSaveRoll
+	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
+
+	ExecuteManualSpell(SpellSummon, combat.LVL_IMMORT, caster, victim, nil, "", world)
+
+	if victim.GetRoomVNum() != 1001 {
+		t.Fatalf("summoned target room = %d, want caster room 1001", victim.GetRoomVNum())
+	}
+	if got, want := world.transfers, []int{1001}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("summon transfers = %#v, want %#v", got, want)
+	}
+	if got := strings.Join(targetPeer.messages, ""); !strings.Contains(got, "Target disappears suddenly.") {
+		t.Fatalf("target-room peer messages = %q, want the departure act", got)
+	}
+	if got := strings.Join(originPeer.messages, ""); !strings.Contains(got, "Target arrives suddenly.") {
+		t.Fatalf("caster-room peer messages = %q, want the arrival act", got)
+	}
+	if got, want := victim.messages, []string{"Mage has summoned you!\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("target messages = %#v, want %#v", got, want)
+	}
 }
 
 func (w *summonBackfireWorld) MobTransfer(actor interface{}, room int) error {
