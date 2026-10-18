@@ -93,13 +93,23 @@ var positionCommandSpecs = [...]positionCommandSpec{
 	},
 }
 
-func (w *World) doPositionCommand(ch *Player, spec positionCommandSpec) {
-	position := ch.GetPosition()
-	if position == combat.PosStanding && ch.IsMounted() {
+// doPositionCommand runs one C position transition (do_stand/do_sit/do_rest/
+// do_sleep, src/act.movement.c:696-839) for either body. The interpreter's
+// position gate is applied by the caller; this body owns the transition and
+// its room act. A mobile has no descriptor, so its self lines are invisible
+// exactly as C's act(..., TO_CHAR) is for a body with no desc.
+func (w *World) doPositionCommand(actor Actor, spec positionCommandSpec, private func(string)) {
+	position := actor.GetPosition()
+	if position == combat.PosStanding && actorIsMounted(actor) {
 		if spec.mountedDismount {
-			w.dismountForStand(ch)
+			switch body := actor.(type) {
+			case *Player:
+				w.dismountForStand(body)
+			case *MobInstance:
+				w.doDismountActor(body)
+			}
 		} else {
-			movementSendToChar(ch, spec.mountedMessage)
+			positionSelfLine(w, actor, spec.mountedMessage, private)
 		}
 		return
 	}
@@ -108,15 +118,36 @@ func (w *World) doPositionCommand(ch *Player, spec positionCommandSpec) {
 	if position >= 0 && position < len(spec.arms) && spec.arms[position].self != "" {
 		arm = spec.arms[position]
 	}
-	movementSendToChar(ch, arm.self)
+	positionSelfLine(w, actor, arm.self, private)
 	if arm.room != "" {
-		Act(w, arm.hideRoom, ch, nil, nil, nil, arm.room, "", ToRoom)
-		ch.SetPosition(arm.next)
+		Act(w, arm.hideRoom, actor, nil, nil, nil, arm.room, "", ToRoom)
+		setActorPosition(actor, arm.next)
 	}
 }
 
+// positionSelfLine is C's act(..., TO_CHAR) for a position command. The player
+// path keeps movementSendToChar's ToSleep audience; a mobile has no descriptor.
+func positionSelfLine(w *World, actor Actor, message string, private func(string)) {
+	if player, ok := actor.(*Player); ok {
+		movementSendToChar(player, message)
+		return
+	}
+	ActWithPrivateSink(w, false, actor, nil, nil, nil, message, "", ToChar|ToSleep, actor, private)
+}
+
+// actorIsMounted is IS_MOUNTED (src/utils.h:362) for both bodies.
+func actorIsMounted(actor Actor) bool {
+	switch body := actor.(type) {
+	case *Player:
+		return body.IsMounted()
+	case *MobInstance:
+		return body.IsAffected(affMounted)
+	}
+	return false
+}
+
 // DoStand implements the C position transition, including stand-as-dismount.
-func (w *World) DoStand(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[0]) }
+func (w *World) DoStand(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[0], nil) }
 
 func (w *World) dismountForStand(ch *Player) {
 	mount := w.GetMount(ch)
@@ -134,64 +165,16 @@ func (w *World) dismountForStand(ch *Player) {
 }
 
 // DoSit implements do_sit from act.movement.c.
-func (w *World) DoSit(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[1]) }
+func (w *World) DoSit(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[1], nil) }
 
 // DoRest implements do_rest from act.movement.c.
-func (w *World) DoRest(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[2]) }
+func (w *World) DoRest(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[2], nil) }
 
 // DoSleep implements do_sleep from act.movement.c.
-func (w *World) DoSleep(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[3]) }
+func (w *World) DoSleep(ch *Player) { w.doPositionCommand(ch, positionCommandSpecs[3], nil) }
 
 // DoWake implements self and targeted wake behavior, including magical sleep.
-func (w *World) DoWake(ch *Player, argument string) {
-	argument = firstWord(strings.TrimSpace(argument))
-	if argument != "" {
-		if ch.GetPosition() == combat.PosSleeping {
-			movementSendToChar(ch, "Maybe you should wake yourself up first.\r\n")
-			return
-		}
-
-		var target Actor
-		if strings.EqualFold(argument, ch.Name) || strings.EqualFold(argument, "self") || strings.EqualFold(argument, "me") {
-			target = ch
-		} else if resolved, ok := w.ResolveCharInRoom(ch, argument); ok {
-			target = asActor(resolved.Combatant)
-		}
-		if target == nil {
-			movementSendToChar(ch, "No-one by that name here.\r\n")
-			return
-		}
-		if target != ch {
-			switch {
-			case target.GetPosition() > combat.PosSleeping:
-				Act(nil, false, ch, target, nil, nil, "$E is already awake.", "", ToChar)
-			case actorIsAffected(target, affSleep):
-				Act(nil, false, ch, target, nil, nil, "You can't wake $M up!", "", ToChar)
-			case target.GetPosition() < combat.PosSleeping:
-				Act(nil, false, ch, target, nil, nil, "$E's in pretty bad shape!", "", ToChar)
-			default:
-				Act(nil, false, ch, target, nil, nil, "You wake $M up.", "", ToChar)
-				Act(w, false, ch, target, nil, nil, "$n wakes up $N.", "", ToNotVict)
-				// Make the victim awake before rendering their message so PERS($n)
-				// resolves the waker just as C's TO_SLEEP wake delivery does.
-				setActorPosition(target, combat.PosSitting)
-				Act(nil, false, ch, target, nil, nil, "You are awakened by $n.", "", ToVict|ToSleep)
-			}
-			return
-		}
-	}
-
-	if ch.IsAffected(affSleep) {
-		movementSendToChar(ch, "You can't wake up!\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n tosses and turns uncomfortably.", "", ToRoom)
-	} else if ch.GetPosition() > combat.PosSleeping {
-		movementSendToChar(ch, "You are already awake...\r\n")
-	} else {
-		movementSendToChar(ch, "You awaken, and sit up.\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n awakens.", "", ToRoom)
-		ch.SetPosition(combat.PosSitting)
-	}
-}
+func (w *World) DoWake(ch *Player, argument string) { wakeBody(w, ch, argument, nil) }
 
 func actorIsAffected(actor Actor, affect int) bool {
 	switch target := actor.(type) {

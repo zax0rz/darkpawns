@@ -271,8 +271,10 @@ func (w *World) appendDarkOccupants(result *ObservationResult, ch *Player, room 
 			continue // C list_char_to_char skips MOB_EXTRACT before visibility checks
 		}
 		// C list_char_to_char suppresses a mount while get_rider(mob) is
-		// non-nil; the rider's presence line represents the pair.
-		if mob.GetMountRider() != "" {
+		// non-nil; the rider's presence line represents the pair. get_rider is
+		// IS_MOUNTED(mount) (src/utils.c:387-392), so a cleared AFF_MOUNT shows
+		// the mount again even though the master link survives.
+		if mobHasRider(mob) {
 			continue
 		}
 		if mob.IsAffected(affSneak) || mob.IsAffected(affHide) {
@@ -423,8 +425,10 @@ func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView
 			continue // act.informative.c:list_one_char skips MOB_EXTRACT first
 		}
 		// C list_char_to_char suppresses a mount while get_rider(mob) is
-		// non-nil; the rider's presence line represents the pair.
-		if mob.GetMountRider() != "" {
+		// non-nil; the rider's presence line represents the pair. get_rider
+		// is IS_MOUNTED(mount) (src/utils.c:387-392), so a cleared AFF_MOUNT
+		// shows the mount again even though the master link survives.
+		if mobHasRider(mob) {
 			continue
 		}
 		if !canSee(ch, mob) || mob.IsAffected(affHide) {

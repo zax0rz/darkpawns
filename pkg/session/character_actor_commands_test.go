@@ -98,13 +98,16 @@ func TestNPCForceUsesSharedExecutorAndActualBody(t *testing.T) {
 
 func TestNPCForcePositionGateAndMountedStandRemainExplicit(t *testing.T) {
 	for _, test := range []struct {
-		name     string
-		command  string
-		position int
-		mounted  bool
+		name        string
+		command     string
+		position    int
+		mounted     bool
+		wantMounted bool
 	}{
 		{name: "sit below minimum", command: "sit", position: combat.PosSleeping},
-		{name: "mounted stand needs unported dismount", command: "stand", position: combat.PosStanding, mounted: true},
+		// C do_stand calls do_dismount when the body is mounted
+		// (src/act.movement.c:698-702), which clears AFF_MOUNT.
+		{name: "mounted stand dismounts", command: "stand", position: combat.PosStanding, mounted: true, wantMounted: false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			f := newActorPositionFixture(t, test.position)
@@ -127,8 +130,8 @@ func TestNPCForcePositionGateAndMountedStandRemainExplicit(t *testing.T) {
 			if got := f.roomOut.String(); got != "" {
 				t.Fatalf("room bytes = %q, want none", got)
 			}
-			if got := f.actor.IsAffected(game.AffMount); got != test.mounted {
-				t.Fatalf("AFF_MOUNT = %v, want %v", got, test.mounted)
+			if got := f.actor.IsAffected(game.AffMount); got != test.wantMounted {
+				t.Fatalf("AFF_MOUNT = %v, want %v", got, test.wantMounted)
 			}
 		})
 	}
@@ -467,7 +470,9 @@ func TestRegisteredActorPositionRefusalsAndMountedDistinction(t *testing.T) {
 		{"sit already sitting", "sit", combat.PosSitting, false, game.CharacterCommandHandled, "You're sitting already.\r\n"},
 		{"sit fighting", "sit", combat.PosFighting, false, game.CharacterCommandHandled, "Sit down while fighting? are you MAD?\r\n"},
 		{"sit mounted", "sit", combat.PosStanding, true, game.CharacterCommandHandled, "You can't rest while mounted.\r\n"},
-		{"stand mounted dismount unported", "stand", combat.PosStanding, true, game.CharacterCommandUnsupported, ""},
+		// do_stand on a mounted body calls do_dismount and clears AFF_MOUNT
+		// (src/act.movement.c:698-702; src/act.other.c:1597-1619).
+		{"stand mounted dismounts", "stand", combat.PosStanding, true, game.CharacterCommandHandled, ""},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -489,8 +494,13 @@ func TestRegisteredActorPositionRefusalsAndMountedDistinction(t *testing.T) {
 			if got := f.actor.GetPosition(); got != test.position {
 				t.Errorf("actor position = %d, want unchanged %d", got, test.position)
 			}
-			if got := f.actor.IsAffected(game.AffMount); got != test.mounted {
-				t.Errorf("AFF_MOUNT = %v, want unchanged %v", got, test.mounted)
+			wantMounted := test.mounted
+			if test.command == "stand" && test.mounted {
+				// do_stand calls do_dismount, which clears AFF_MOUNT.
+				wantMounted = false
+			}
+			if got := f.actor.IsAffected(game.AffMount); got != wantMounted {
+				t.Errorf("AFF_MOUNT = %v, want %v", got, wantMounted)
 			}
 		})
 	}

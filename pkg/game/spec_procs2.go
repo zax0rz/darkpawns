@@ -313,6 +313,32 @@ func specCouch(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 // ================================================================
 const horseVnum = 8021
 
+// applyStableHorseState ports the initialisation C's stableboy applies to every
+// horse it hands over — buy and collect use the same block
+// (src/spec_procs2.c:348-360 and 431-445):
+//
+//	GET_EXP(horse) = 0;
+//	IS_CARRYING_W(horse) = 1000;   /* Be certain that pets can't carry items */
+//	IS_CARRYING_N(horse) = 100;
+//	GET_MOVE(horse) = 230;
+//	GET_MAX_MOVE(horse) = 230;
+//
+// The move pool is the mob's live points.move/max_move, not a side record: Go
+// previously filed 230 only in Runtime.Horse and left the pool at read_mobile's
+// 50, so bought horses were exhausted after a fraction of C's range.
+func applyStableHorseState(horse *MobInstance) {
+	if horse == nil {
+		return
+	}
+	zeroExp := 0
+	horse.mu.Lock()
+	horse.Runtime.ExpOverride = &zeroExp
+	horse.Runtime.CarriedWeight = 1000
+	horse.Runtime.CarriedNumber = 100
+	horse.mu.Unlock()
+	horse.SetMovePool(230, 230)
+}
+
 func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if ch == nil || ch.IsNPC() {
 		return false
@@ -345,7 +371,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		horse.SetAffected(affCharm)
 		Act(w, false, horse, me, nil, nil, "$N brings $n up from the stables out back.", "", ToRoom)
 		AddFollowerMob(w, horse, ch)
-		horse.Runtime.Horse = &HorseState{CarryWeight: 1000, CarryNumber: 100, Move: 230, MaxMove: 230}
+		applyStableHorseState(horse)
 		ch.SetGold(ch.GetGold() - 300)
 		tellFromMob(me, ch, "That'll be 300 coins, treat'er well")
 		return true
@@ -413,7 +439,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		horse.SetAffected(affCharm)
 		Act(w, false, horse, me, nil, nil, "$N brings $n up from the stables out back.", "", ToRoom)
 		AddFollowerMob(w, horse, ch)
-		horse.Runtime.Horse = &HorseState{CarryWeight: 1000, CarryNumber: 100, Move: 230, MaxMove: 230}
+		applyStableHorseState(horse)
 		ch.SetGold(ch.GetGold() - cost)
 		tellFromMob(me, ch, fmt.Sprintf("Here ya go pal, all patted down and ready to go... cost ya %d to keep 'em here.", cost))
 		return true

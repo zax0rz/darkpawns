@@ -342,6 +342,18 @@ func (m *MobInstance) GetMaxMove() int {
 	return m.MaxMove
 }
 
+// SetMovePool sets the current and maximum movement points together. C assigns
+// points.move then points.max_move with no interleaving (single-threaded,
+// src/spec_procs2.c:359-360,444-445); one lock keeps the live pool atomic here,
+// so a concurrent point_update cannot clamp the new current value to the old
+// read_mobile maximum of 50 (src/db.c:1073).
+func (m *MobInstance) SetMovePool(current, max int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.CurrentMove = current
+	m.MaxMove = max
+}
+
 // SpendMove deducts movement points after all movement gates pass.
 func (m *MobInstance) SpendMove(cost int) bool {
 	m.mu.Lock()
