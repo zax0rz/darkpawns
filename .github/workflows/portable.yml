@@ -78,6 +78,24 @@ jobs:
           bundles = list(destination.iterdir())
           assert len(bundles) == 1, bundles
           subprocess.run(['python', 'scripts/portable_smoke.py', '--bundle', str(bundles[0])], check=True)
+      - name: Ensure the Linux user service manager is available
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo loginctl enable-linger "$(id -un)"
+          sudo systemctl start "user@$(id -u).service"
+          echo "XDG_RUNTIME_DIR=/run/user/$(id -u)" >> "$GITHUB_ENV"
+          echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus" >> "$GITHUB_ENV"
+      - name: Exercise background ownership and native automatic startup
+        shell: python
+        run: |
+          import pathlib, subprocess, sys
+          bundles = list(pathlib.Path('portable-extracted').iterdir())
+          assert len(bundles) == 1, bundles
+          args = ['python', 'scripts/portable_lifecycle_smoke.py', '--bundle', str(bundles[0]), '--native-service']
+          if sys.platform == 'linux':
+              args.append('--shutdown-failure')
+          subprocess.run(args, check=True)
       - uses: actions/upload-artifact@v4
         with:
           name: unsigned-portable-${{ runner.os }}-${{ runner.arch }}

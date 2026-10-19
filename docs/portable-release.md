@@ -1,7 +1,7 @@
 # Portable development bundle
 
-These are unsigned development snapshots with a guided setup wizard. Background
-services, doctor, updater and the public release/signing workflow are later milestones.
+These are unsigned development snapshots with a guided setup wizard. Background lifecycle commands, doctor and optional per-user automatic startup are
+included. Updater and the public release/signing workflow are later milestones.
 
 The archive contains `darkpawns`, `darkpawns-server` (both `.exe` on Windows),
 `release-assets/`, and the original license notices. Go, Node, Python and a source
@@ -25,8 +25,11 @@ The three-step terminal wizard asks for a new instance folder, a local web port
 (default `4350`), then reviews the settings before creating anything. Use Tab or
 Shift+Tab to move between fields, Enter to continue, and Ctrl+C to cancel. The
 review includes the browser choice and explains that the first character becomes
-the immortal. The server starts in this terminal; setup waits for `/health`, then
-opens the browser when a desktop session is available. Ctrl+C saves and stops it.
+the immortal. Background mode is the default: setup returns once the world is ready, and you
+can close the terminal. Setup waits for `/health`, then opens the browser when a
+desktop session is available. Choose foreground mode (or `--foreground`) to keep
+it attached to the terminal; Ctrl+C then saves and stops it. Automatic startup at
+sign-in is a separate, optional choice, disabled by default. It requires background mode.
 A missing or failed browser opener leaves the server running and prints the URL.
 
 Default instance folders (separate from the extracted release):
@@ -49,7 +52,8 @@ For screen readers or a basic terminal, use `setup --plain`: line prompts with a
 explicit yes at review (the default is no). Non-terminal input requires `--plain`
 or `--yes`. Small, `TERM=dumb` or `NO_COLOR` terminals use line prompts automatically.
 `setup --yes --no-browser --instance <new-folder>` explicitly accepts
-the selected settings and starts the foreground server without prompts.
+the selected settings and starts the background server without prompts. Add `--foreground` for terminal-attached startup.
+`--autostart` explicitly opts into native automatic startup during unattended setup.
 
 For a headless host, use `setup --no-browser` (also the default over SSH and on
 Linux without a desktop display). The URL is local to the server machine. To use
@@ -70,6 +74,83 @@ After stopping, restart using the printed command, or:
 The first successfully created character becomes the immortal. Create it before
 exposing the server to other people. Setup does not create an admin account or
 change the existing character creation dialogue (R4).
+
+## Start, stop, restart and status
+
+Every lifecycle command accepts `--instance <folder>`. If omitted, it uses the
+same platform default folder as setup. These commands do not create a world;
+run setup first.
+
+```sh
+/path/to/release/darkpawns start --instance '/path/to/your/world'
+/path/to/release/darkpawns status --instance '/path/to/your/world'
+/path/to/release/darkpawns restart --instance '/path/to/your/world'
+/path/to/release/darkpawns stop --instance '/path/to/your/world'
+/path/to/release/darkpawns doctor --instance '/path/to/your/world'
+```
+
+`start` returns only after readiness; starting an already-running world is
+idempotent. `stop` asks the instance's own launcher to shut down and waits for its
+save/shutdown path. `restart` waits for that stop before starting again. These
+operations serialize per instance. A private `.last-exit.json` record ties the
+shutdown result to that run; stop reports a failed shutdown rather than treating
+lock release alone as success. The launcher allows 30 seconds for the game to
+exit, then terminates a stuck child and reports failure. Inspect the log and data
+before restarting after that failure. `status --json` and `doctor --json` provide
+structured output; doctor exits nonzero when it finds a problem.
+
+Background output goes to `lib/logs/launcher.log`. Keep the extracted release
+in place while it is running. Foreground `run` instances can also be inspected
+and stopped by these commands. Stopped worlds keep all their data and secrets.
+
+The launcher exposes a separate authenticated loopback control endpoint, with a
+fresh per-run capability in `.control.json`. Never share that private runtime
+file. Game/admin authentication cannot control it. Lifecycle commands do not
+signal PIDs read from disk or treat an arbitrary healthy web port as ownership.
+`.run.lock` remains held through the child's shutdown; `.lifecycle.lock` serializes
+operator changes. Do not delete a held lock. If the supervisor dies abruptly,
+use doctor and the OS tools to identify any orphaned game before restarting;
+a busy configured port is refused before starting another server.
+
+## Automatic startup at sign-in
+
+Choose it during setup, or configure an existing instance:
+
+```sh
+/path/to/release/darkpawns service install --instance '/path/to/your/world'
+/path/to/release/darkpawns start --instance '/path/to/your/world'
+/path/to/release/darkpawns service remove --instance '/path/to/your/world'
+```
+
+Removal gracefully stops the instance and removes its owned startup registration,
+without deleting the world. Registration names derive from the canonical instance
+path, so multiple worlds stay separate. Existing definitions are refused. Changes to owned Linux/macOS files or the
+Windows launch action are refused. A failed registration retains owned files for diagnosis and cleanup;
+Windows rolls back its local record if task creation fails.
+
+| Platform | Current-user startup mechanism | Requirements |
+|---|---|---|
+| Linux | systemd user unit under `$XDG_CONFIG_HOME/systemd/user` or `~/.config/systemd/user` | Active user service manager; a user session bus |
+| macOS | LaunchAgent under `~/Library/LaunchAgents` | A logged-in GUI session for the account |
+| Windows | Task Scheduler logon trigger with `InteractiveToken` and least privileges | Task Scheduler permissions for your own account; an interactive sign-in |
+
+These are user jobs, not system-wide boot services. No root/admin elevation is
+requested. Local Windows policy may restrict task registration; errors are
+reported. On headless macOS without a GUI login, use ordinary background `start`
+or foreground `run`. Linux administrators may independently configure lingering
+if the user service should remain after logout. Registration pins the launcher's
+absolute release path; remove it before moving the release and reinstall from the
+new path. This is not an updater or migration mechanism. Native definitions do not
+automatically restart a crashed world in this slice.
+
+Doctor checks release checksums, the server executable, instance configuration,
+POSIX private permissions, launcher state, local web availability and owned startup
+files/tasks. While stopped, it opens the existing SQLite database read-only and
+runs `quick_check`; it reports a missing, not-yet-created database separately.
+It reports a failed last shutdown when stopped and skips offline integrity
+checking while a launcher is active. It performs no
+repairs, password resets or credential changes. Windows ACL inspection and real
+logout/reboot behavior remain desktop verification work.
 
 ## Manual create and run
 
@@ -152,8 +233,7 @@ than certifying desktop browser integration (R5f).
 
 ## Follow-up milestones
 
-- Cobra lifecycle/doctor commands, Windows ACLs and desktop installation checks.
-- Native user services and explicit ownership of start/stop/restart.
+- Windows ACLs, desktop installation checks, real sign-out/reboot verification and crash supervision.
 - Signed releases, macOS notarization and Windows installation experience.
 - Manual updates with consistent backups, compatibility gates and recovery.
 - Opt-in scheduled updates using that same engine: notify-only or a maintenance
