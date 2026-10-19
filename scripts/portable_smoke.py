@@ -35,16 +35,42 @@ def main(bundle):
             probe.bind(('127.0.0.1', 0))
             port = probe.getsockname()[1]
         command = [str(bundle / ('darkpawns' + suffix))]
-        subprocess.run(command + ['init', '--instance', str(instance), '--port', str(port)], cwd=unrelated, check=True)
-        original_config = (instance / 'instance.json').read_bytes()
-        duplicate = subprocess.run(command + ['init', '--instance', str(instance)], cwd=unrelated, capture_output=True)
-        assert duplicate.returncode != 0
-        assert (instance / 'instance.json').read_bytes() == original_config
+        # The line-mode wizard is the same reviewed plan used by the TUI.
+        # Cancel/EOF/occupied-port paths must not create even the parent folder.
+        cancelled = root / 'cancelled parent' / 'world'
+        for answer in ['\n\nno\nno\n', '']:
+            result = subprocess.run(command + ['setup', '--plain', '--no-browser', '--instance', str(cancelled), '--port', str(port)], input=answer, text=True, cwd=unrelated, capture_output=True, timeout=20)
+            assert result.returncode == 0 and 'cancelled' in result.stdout, result
+            assert not cancelled.parent.exists()
+        with socket.socket() as occupied:
+            occupied.bind(('127.0.0.1', 0))
+            occupied.listen()
+            result = subprocess.run(command + ['setup', '--yes', '--no-browser', '--instance', str(cancelled), '--port', str(occupied.getsockname()[1])], cwd=unrelated, capture_output=True, timeout=20)
+            assert result.returncode != 0 and b'unavailable' in result.stderr
+            assert not cancelled.parent.exists()
+        # A failed child start retains the initialized world and gives a usable
+        # restart command; fixing the release must not require setup again.
+        server = bundle / ('darkpawns-server' + suffix)
+        hidden_server = bundle / ('darkpawns-server-hidden' + suffix)
+        failed_instance = root / 'retained after failure'
+        server.rename(hidden_server)
+        try:
+            result = subprocess.run(command + ['setup', '--yes', '--no-browser', '--instance', str(failed_instance), '--port', str(port)], cwd=unrelated, capture_output=True, timeout=20)
+            assert result.returncode != 0 and b'instance is retained' in result.stderr, result
+            assert (failed_instance / 'instance.json').exists()
+        finally:
+            hidden_server.rename(server)
         log = open(root / 'server.log', 'w+', encoding='utf-8')
 
-        def start(executable):
+        def start(executable, setup=False):
             flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
-            process = subprocess.Popen([str(executable), 'run', '--instance', str(instance)], cwd=unrelated, stdout=log, stderr=log, creationflags=flags)
+            args = [str(executable), 'run', '--instance', str(instance)]
+            if setup:
+                args = [str(executable), 'setup', '--plain', '--no-browser', '--instance', str(instance), '--port', str(port)]
+            process = subprocess.Popen(args, cwd=unrelated, stdin=subprocess.PIPE if setup else None, stdout=log, stderr=log, creationflags=flags)
+            if setup:
+                process.stdin.write(b'\n\nno\nyes\n')
+                process.stdin.close()
             try:
                 deadline = time.monotonic() + 30
                 while time.monotonic() < deadline:
@@ -89,7 +115,15 @@ def main(bundle):
 
         process = None
         try:
-            process = start(bundle / ('darkpawns' + suffix))
+            process = start(bundle / ('darkpawns' + suffix), setup=True)
+            original_config = (instance / 'instance.json').read_bytes()
+            for operation in ['init', 'setup']:
+                args = command + [operation, '--instance', str(instance)]
+                if operation == 'setup':
+                    args += ['--yes', '--no-browser']
+                duplicate = subprocess.run(args, cwd=unrelated, capture_output=True, timeout=20)
+                assert duplicate.returncode != 0
+                assert (instance / 'instance.json').read_bytes() == original_config
             duplicate = subprocess.run(command + ['run', '--instance', str(instance)], cwd=unrelated, capture_output=True, timeout=20)
             assert duplicate.returncode != 0 and b'already running' in duplicate.stderr
             for path in ['/', '/admin/']:
@@ -125,7 +159,8 @@ def main(bundle):
             assert (instance / 'instance.json').read_bytes() == original_config
             assert not (unrelated / 'data').exists()
             assert not (bundle / 'lib').exists()
-            print('PASS: isolated init, served assets, first immortal, second mortal, lock, graceful stop, edited world and saved login across release relocation')
+            assert 'Ready: http://127.0.0.1:' in (root / 'server.log').read_text(encoding='utf-8')
+            print('PASS: reviewed setup, cancellation/EOF, occupied port, retained failed start, served assets, first immortal, second mortal, lock, graceful stop, edited world and saved login across release relocation')
         except BaseException:
             log.flush()
             print((root / 'server.log').read_text(encoding='utf-8')[-12000:])

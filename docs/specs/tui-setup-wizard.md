@@ -26,6 +26,15 @@ loopback with telnet/WHOD disabled. It does not implement the YAML interface or
 seven-screen flow below. Scheduled updates and independent updater notifications
 are captured as follow-up work in that guide.
 
+**Implementation slice 2 (2026-10-19):** `darkpawns setup` now provides the
+approved three-step flow (instance folder, local port, review/launch), using Huh
+with a line-prompt alternative. It reuses `instance.json` and `init/run`, waits for
+local HTTP readiness, prints the restart command, and opens a browser on desktop
+sessions. Cancellation and EOF do not initialize a world. Platform-native default
+folders and headless/SSH instructions are in the portable guide. This supersedes
+the seven-screen/YAML proposal below for the current release; services, public
+installers and updates remain follow-up slices.
+
 ---
 
 ## 1. What This Is
