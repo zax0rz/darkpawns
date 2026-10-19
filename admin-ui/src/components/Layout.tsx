@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { to: '/admin/game/shops', label: 'Shops', icon: 'objects', role: 'player', group: 'Build the world' },
   { to: '/admin/workshop', label: 'Workshop & saves', icon: 'operations', role: 'builder', group: 'Build the world' },
   { to: '/admin/workshop/help', label: 'Builder guide', icon: 'info', role: 'builder', group: 'Build the world' },
+  { to: '/admin/staff/players', label: 'Players', icon: 'operations', role: 'admin', group: 'Staff tools' },
   { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder', group: 'Staff tools' },
 ];
 
@@ -231,7 +232,7 @@ function SidebarContent({
 
       {/* Navigation */}
       <nav className="flex-1 p-3 overflow-y-auto bg-paper" aria-label="Admin navigation">
-        {(['Overview', 'Build the world', 'Staff tools'] as const).map((group) => {
+        {(['Overview', 'Staff tools', 'Build the world'] as const).map((group) => {
           const items = navItems.filter((item) => item.group === group);
           if (items.length === 0) return null;
           return <div key={group} className="mb-5 last:mb-0">

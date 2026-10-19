@@ -290,3 +290,32 @@ export const api = {
   prometheus: async () => (await requestResponse('/prometheus')).text(),
   resetAllZones: () => request<{ status: string; zones_reset: number; zones_total: number; errors?: string[] }>('/reset-all-zones', { method: 'POST' }),
 };
+
+export interface SavedPlayerItem {
+  index: number;
+  vnum: number;
+  name: string;
+  count: number;
+  locate: number;
+  parent: number;
+}
+export interface SavedPlayer {
+  name: string;
+  last_saved_at: string | null;
+  revision: string;
+  values: Record<string, number>;
+  fields: { key: string; label: string; min: number; max: number; group: string }[];
+  inventory: SavedPlayerItem[];
+  equipment: SavedPlayerItem[];
+  slots: { locate: number; name: string }[];
+}
+export const playerEditor = {
+  list: (q: string) => request<string[]>(`/characters?q=${encodeURIComponent(q)}`),
+  get: (name: string) => request<SavedPlayer>(`/characters/${encodeURIComponent(name)}`),
+  stats: (name: string, revision: string, values: Record<string, number>) =>
+    request<SavedPlayer>(`/characters/${encodeURIComponent(name)}`, { method: 'PATCH', body: JSON.stringify({ revision, values }) }),
+  password: (name: string, revision: string, password: string) =>
+    request<SavedPlayer>(`/characters/${encodeURIComponent(name)}/password`, { method: 'POST', body: JSON.stringify({ revision, password }) }),
+  items: (name: string, revision: string, data: { action: 'grant' | 'move' | 'remove'; source: 'inventory' | 'equipment'; index: number; vnum: number; locate: number }) =>
+    request<SavedPlayer>(`/characters/${encodeURIComponent(name)}/items`, { method: 'POST', body: JSON.stringify({ revision, ...data }) }),
+};

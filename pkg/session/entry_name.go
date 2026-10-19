@@ -147,3 +147,9 @@ func (m *Manager) reserveOfflineRename(oldName, newName string) (release func(),
 	}
 	return release, true
 }
+
+// ReserveOfflinePlayer excludes entry, playing, switched and retained bodies
+// while a web administrator reads and commits a saved-character edit.
+func (m *Manager) ReserveOfflinePlayer(name string) (func(), bool) {
+	return m.reserveOfflineRename(name, name)
+}

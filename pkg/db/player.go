@@ -512,6 +512,22 @@ var ErrPlayerRecordChanged = errors.New("player record changed during offline ed
 // field SavePlayer replaces. Session-owned OLC and all other untouched values
 // are retained by the caller's conversion, and a concurrent newer save wins.
 func SavePlayerIfCurrent(store GameStore, updated, original *PlayerRecord) error {
+	query, args := playerCompareUpdate(updated, original)
+	result, err := store.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrPlayerRecordChanged
+	}
+	return nil
+}
+
+func playerCompareUpdate(updated, original *PlayerRecord) (string, []any) {
 	query, args := playerUpdate(updated)
 	_, oldArgs := playerUpdate(original)
 	if updated.Name != original.Name {
@@ -535,18 +551,7 @@ func SavePlayerIfCurrent(store GameStore, updated, original *PlayerRecord) error
 		query += " AND " + expression + " IS ?"
 		args = append(args, oldArgs[i])
 	}
-	result, err := store.Exec(query, args...)
-	if err != nil {
-		return err
-	}
-	count, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if count != 1 {
-		return ErrPlayerRecordChanged
-	}
-	return nil
+	return query, args
 }
 
 // characterDataOrEmpty stores an absent record as the column's default.

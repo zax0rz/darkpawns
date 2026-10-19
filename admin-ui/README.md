@@ -61,3 +61,58 @@ renders but authenticated editor work is unavailable. The Go admin router serves
 build from `admin-ui/dist`; see `pkg/admin/router.go` and the root Makefile for
 the build integration. The editor API is implemented in `pkg/admin/olc*.go`,
 with shared OLC behavior in `pkg/olc/`.
+
+## Edit a saved player
+
+Choose **Staff tools → Players** (`/admin/staff/players`). This is a staff editor,
+separate from the online-player inspector in Operations. It requires an admin
+session and a current saved level of HIGOD or higher. The API rechecks the staff
+record on every request. Staff below IMPL can edit only lower-level characters
+and cannot grant a level above their own.
+
+The list reports the total saved-character count (and matching count when
+filtered). Beneath the selected name, **Last saved** shows the elapsed time with
+an exact local date on hover. This is the existing character-save timestamp,
+not a distinct login event; missing timestamps show **unknown**.
+
+The character must be fully disconnected, including menus, character entry,
+switched bodies and retained/linkdead characters. A session-manager name
+reservation excludes new entry while a read or write runs. Deployments without
+that provider refuse editing with 503.
+
+- **Character stats:** level, experience, health/mana/movement and their maxima,
+  and the six base attributes plus exceptional strength. Save or discard the
+  draft before changing equipment or resetting a password.
+- **Equipment & inventory:** grant a prototype by vnum, move an existing item
+  to inventory or one of the 22 equipment positions, or remove it. Every action
+  saves immediately. A container's contents and saved instance state travel
+  with it; removing a container removes its contents. Occupied slots and
+  equipping a stack are rejected. Slot selection is an explicit staff override,
+  rather than a simulation of the in-game wear command. Normal entry-time
+  equipment effects and checks still run on the next login.
+- **Password:** set and confirm a password of 8 to 72 bytes. The server uses
+  bcrypt and clears failed-login counts and the stored account lockout. Passwords
+  and hashes are excluded from responses and audit details.
+
+All writes require the revision returned by the read endpoint. A stale browser
+receives 409 and keeps its draft for review; reload to obtain the current record.
+Character, optional password, and equipment snapshot updates commit in one
+SQLite transaction. Item edits preserve an existing rent/cryo header and create
+an ordinary rented snapshot if none exists. Stats and password edits do not
+create or rewrite object snapshots. Unrelated character data stays intact.
+Legacy object JSON requiring migration is refused, never silently rewritten.
+
+The Huma/OpenAPI operations are:
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| GET | `/admin/characters?q=` | Search saved names |
+| GET | `/admin/characters/{name}` | Read record, editable field catalog and revision |
+| PATCH | `/admin/characters/{name}` | Save changed numeric `values` with `revision` |
+| POST | `/admin/characters/{name}/items` | Grant, move or remove a saved item |
+| POST | `/admin/characters/{name}/password` | Reset password and clear account lockout |
+
+These are modern staff operations permitted by R4. They do not add telnet
+commands or change ordinary gameplay output. Full/combined oracle verification
+remains the batched pre-merge gate; targeted checks cover the shared offline
+compare-and-save path, re-entry and rent reporting.
