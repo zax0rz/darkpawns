@@ -64,6 +64,7 @@ func command() *cobra.Command {
 		return portable.Run(cmd.Context(), base, instance, cmd.InOrStdin(), cmd.OutOrStdout(), cmd.ErrOrStderr())
 	}}
 	root.AddCommand(initCmd, runCmd, setupCommand(&instance, bundle))
+	addLifecycle(root, &instance, bundle)
 	return root
 }
 

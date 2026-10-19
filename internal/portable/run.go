@@ -30,7 +30,7 @@ func RunWithReady(ctx context.Context, bundle, instance string, in io.Reader, ou
 }
 
 func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer, ready func(string) error) (result error) {
-	instance, err := filepath.Abs(instance)
+	instance, err := canonicalInstance(instance)
 	if err != nil {
 		return err
 	}
@@ -58,6 +58,14 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 		return errors.New("this instance is already running")
 	}
 	defer func() { result = errors.Join(result, lock.Close()) }()
+	ctx, stop := context.WithCancel(ctx)
+	defer stop()
+	markReady, closeControl, err := serveControl(instance, bundle, cfg.HTTPPort, stop)
+	if err != nil {
+		return err
+	}
+	defer func() { result = errors.Join(result, closeControl()) }()
+
 	suffix := ""
 	if runtime.GOOS == "windows" {
 		suffix = ".exe"
@@ -77,7 +85,10 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	defer cancel()
 	var readiness <-chan error
 	url := "http://127.0.0.1:" + strconv.Itoa(cfg.HTTPPort)
-	if ready != nil {
+	if ready == nil {
+		ready = func(string) error { return nil }
+	}
+	{
 		ch := make(chan error, 1)
 		readiness = ch
 		go func() { ch <- waitForHTTP(monitorCtx, url+"/health", 30*time.Second) }()
@@ -99,6 +110,7 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 			default:
 			}
 			if err == nil {
+				markReady()
 				err = ready(url)
 			}
 			ready = nil

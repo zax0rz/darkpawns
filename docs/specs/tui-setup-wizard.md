@@ -35,6 +35,14 @@ folders and headless/SSH instructions are in the portable guide. This supersedes
 the seven-screen/YAML proposal below for the current release; services, public
 installers and updates remain follow-up slices.
 
+**Implementation slice 3 (2026-10-19):** Setup defaults to background mode, with an
+explicit foreground alternative and an optional native sign-in startup choice.
+`start`, `stop`, `restart`, `status` and `doctor` operate on the selected instance;
+`service install/remove` configures systemd user units, macOS LaunchAgents or
+Windows logon tasks. Current-user session requirements and remaining desktop
+verification boundaries are recorded in the portable guide. There is no updater,
+root daemon, always-on dashboard or crash-restart policy in this slice.
+
 ---
 
 ## 1. What This Is

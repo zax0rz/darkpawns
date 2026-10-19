@@ -23,9 +23,11 @@ import (
 )
 
 type setupPlan struct {
-	Instance string
-	Port     string
-	Browser  bool
+	Instance   string
+	Port       string
+	Browser    bool
+	Background bool
+	AutoStart  bool
 }
 
 func defaultInstance() (string, error) {
@@ -138,7 +140,15 @@ func (p setupPlan) summary() string {
 	if p.Browser {
 		browser = "Yes, when the server is ready"
 	}
-	return fmt.Sprintf("Instance: %s\nWeb client: http://127.0.0.1:%s/\nOpen browser: %s\n\nThe first character you create becomes the immortal.\nCreate it before allowing other people to connect.\nKeep this terminal open while playing; Ctrl+C saves and stops the server.", p.Instance, p.Port, browser)
+	mode := "Foreground; keep this terminal open. Ctrl+C saves and stops."
+	if p.Background {
+		mode = "Background; use darkpawns stop to save and stop."
+	}
+	auto := "No"
+	if p.AutoStart {
+		auto = "Yes, for this account"
+	}
+	return fmt.Sprintf("Instance: %s\nWeb client: http://127.0.0.1:%s/\nOpen browser: %s\nStart at sign-in: %s\n\nThe first character you create becomes the immortal.\nCreate it before allowing other people to connect.\n%s", p.Instance, p.Port, browser, auto, mode)
 }
 
 func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, out io.Writer) (bool, error) {
@@ -155,7 +165,16 @@ func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, o
 	theme.Help.Ellipsis = theme.Help.Ellipsis.UnsetForeground()
 	form := huh.NewForm(
 		huh.NewGroup(huh.NewInput().Title("1. Choose a home").Description("A new folder for your world, players and settings. Keep it outside the release folder.").Value(&p.Instance).Validate(func(value string) error { _, err := resolveDestination(bundle, value); return err })),
-		huh.NewGroup(huh.NewInput().Title("2. Choose a port").Description("Local browser access only. The default is 4350.").Value(&p.Port).Validate(availablePort)),
+		huh.NewGroup(
+			huh.NewInput().Title("2. Choose a port").Description("Local browser access only. The default is 4350.").Value(&p.Port).Validate(availablePort),
+			huh.NewConfirm().Title("Run in the background?").Description("Keep the world running when you close this terminal.").Value(&p.Background),
+			huh.NewConfirm().Title("Start automatically when you sign in?").Description("Register a native startup job for this account.").Value(&p.AutoStart).Validate(func(value bool) error {
+				if value && !p.Background {
+					return errors.New("choose background mode to enable automatic startup")
+				}
+				return nil
+			}),
+		),
 		huh.NewGroup(
 			huh.NewConfirm().Title("Open your browser after launch?").Value(&p.Browser),
 			huh.NewConfirm().Title("3. Create instance and launch?").Description(p.summary()).DescriptionFunc(func() string { return p.summary() }, p).Affirmative("Create and launch").Negative("Cancel").Value(&confirmed),
@@ -247,6 +266,32 @@ func setupPlain(ctx context.Context, bundle string, p *setupPlan, in io.Reader, 
 		}
 		return errors.New("enter yes or no")
 	}
+	backgroundDefault := "no"
+	if p.Background {
+		backgroundDefault = "yes"
+	}
+	background, err := ask("Run in the background?", backgroundDefault, boolean)
+	if err != nil {
+		return false, err
+	}
+	p.Background = strings.EqualFold(background, "yes") || strings.EqualFold(background, "y")
+	autoDefault := "no"
+	if p.AutoStart {
+		autoDefault = "yes"
+	}
+	auto, err := ask("Start automatically when you sign in?", autoDefault, func(value string) error {
+		if err := boolean(value); err != nil {
+			return err
+		}
+		if !p.Background && (strings.EqualFold(value, "yes") || strings.EqualFold(value, "y")) {
+			return errors.New("automatic startup requires background mode; choose no or restart setup")
+		}
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+	p.AutoStart = strings.EqualFold(auto, "yes") || strings.EqualFold(auto, "y")
 	fallback := "no"
 	if p.Browser {
 		fallback = "yes"
@@ -265,12 +310,14 @@ func setupPlain(ctx context.Context, bundle string, p *setupPlan, in io.Reader, 
 
 func setupCommand(instance *string, bundle func() (string, error)) *cobra.Command {
 	var port int
-	var plain, yes, noBrowser bool
+	var plain, yes, noBrowser, foreground, autoStart bool
 	cmd := &cobra.Command{Use: "setup", Short: "Choose a home and port, then launch your new world", Args: cobra.NoArgs}
 	cmd.Flags().IntVar(&port, "port", 4350, "Initial local web client port")
 	cmd.Flags().BoolVar(&plain, "plain", false, "Use line prompts for screen readers or a basic terminal")
 	cmd.Flags().BoolVar(&yes, "yes", false, "Create and launch using the selected values without prompts")
 	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "Print the address without opening a browser")
+	cmd.Flags().BoolVar(&foreground, "foreground", false, "Keep the server attached to this terminal")
+	cmd.Flags().BoolVar(&autoStart, "autostart", false, "Register automatic startup at sign-in (requires background mode)")
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error {
 		base, err := bundle()
 		if err != nil {
@@ -283,7 +330,7 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 				return err
 			}
 		}
-		p := setupPlan{Instance: destination, Port: strconv.Itoa(port), Browser: !noBrowser && browserAvailable()}
+		p := setupPlan{Instance: destination, Port: strconv.Itoa(port), Browser: !noBrowser && browserAvailable(), Background: !foreground, AutoStart: autoStart}
 		out := cmd.OutOrStdout()
 		if _, err := fmt.Fprint(out, "Dark Pawns setup\nA local world with its own players and settings.\n\n"); err != nil {
 			return err
@@ -314,6 +361,9 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		} else if _, err := fmt.Fprintln(out, p.summary()); err != nil {
 			return err
 		}
+		if p.AutoStart && !p.Background {
+			return errors.New("automatic startup requires background mode; omit --foreground")
+		}
 		if err := cmd.Context().Err(); err != nil {
 			return err
 		}
@@ -342,21 +392,40 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		if err := portable.Init(base, p.Instance, port); err != nil {
 			return fmt.Errorf("initialize instance: %w", err)
 		}
-		if _, err := fmt.Fprintf(out, "\nInstance created: %s\nRestart with: %s\nStarting server. Keep this terminal open; press Ctrl+C to save and stop.\n", p.Instance, restartCommand(p.Instance)); err != nil {
+		if _, err := fmt.Fprintf(out, "\nInstance created: %s\nRestart with: %s\n", p.Instance, restartCommand(p.Instance)); err != nil {
 			return err
 		}
-		err = portable.RunWithReady(cmd.Context(), base, p.Instance, cmd.InOrStdin(), out, cmd.ErrOrStderr(), func(url string) error {
-			if _, err := fmt.Fprintf(out, "\nReady: %s/\nCreate your first character in the web client to become the immortal.\n", url); err != nil {
+		ready := func(url string) error {
+			if _, err := fmt.Fprintf(out, "\nReady: %s/\nCreate your first character in the web client to become the immortal.\n", strings.TrimSuffix(url, "/")); err != nil {
 				return err
 			}
 			if p.Browser {
-				if err := openBrowser(cmd.Context(), url+"/"); err != nil {
-					_, err = fmt.Fprintf(cmd.ErrOrStderr(), "Could not open a browser: %v\nOpen %s/ manually. The server is still running.\n", err, url)
+				if openErr := openBrowser(cmd.Context(), strings.TrimSuffix(url, "/")+"/"); openErr != nil {
+					_, err := fmt.Fprintf(cmd.ErrOrStderr(), "Could not open a browser: %v\nOpen %s manually. The server is still running.\n", openErr, url)
 					return err
 				}
 			}
 			return nil
-		})
+		}
+		if p.AutoStart {
+			if err := portable.InstallService(cmd.Context(), p.Instance); err != nil {
+				return fmt.Errorf("world retained at %q; automatic startup registration failed. Use service remove to clean up, or run this instance in the foreground: %w", p.Instance, err)
+			}
+		}
+		if p.Background {
+			status, err := portable.Start(cmd.Context(), base, p.Instance)
+			if err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintln(out, "Running in the background. You can close this terminal; use darkpawns stop to save and stop."); err != nil {
+				return err
+			}
+			return ready(status.URL)
+		}
+		if _, err := fmt.Fprintln(out, "Starting server. Keep this terminal open; Ctrl+C saves and stops."); err != nil {
+			return err
+		}
+		err = portable.RunWithReady(cmd.Context(), base, p.Instance, cmd.InOrStdin(), out, cmd.ErrOrStderr(), ready)
 		if err != nil {
 			return fmt.Errorf("server launch failed; your instance is retained at %q. Resolve the error above, then use %s: %w", p.Instance, restartCommand(p.Instance), err)
 		}

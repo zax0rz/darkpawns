@@ -16,7 +16,7 @@ import (
 )
 
 func TestSetupCancellationDoesNotCreateFolders(t *testing.T) {
-	for _, input := range []string{"", "\n\nno\nno\n", "\n\nno\n", "\n\nno\nyesterday\nno\n"} {
+	for _, input := range []string{"", "\n\nno\nno\nno\nno\n", "\n\nno\n", "\n\nno\nno\nno\nyesterday\nno\n"} {
 		t.Run(strconv.Quote(input), func(t *testing.T) {
 			bundle := t.TempDir()
 			destination := filepath.Join(t.TempDir(), "missing parent", "world")
@@ -48,7 +48,7 @@ func TestSetupValidationAndReview(t *testing.T) {
 	var out bytes.Buffer
 	// Existing destination, corrected path, occupied port, corrected port, browser
 	// choice and explicit review approval all pass through the actual line prompts.
-	input := strings.Join([]string{root, destination, occupied, port, "no", "yes"}, "\n") + "\n"
+	input := strings.Join([]string{root, destination, occupied, port, "no", "no", "no", "yes"}, "\n") + "\n"
 	confirmed, err := setupPlain(context.Background(), bundle, &p, strings.NewReader(input), &out)
 	if err != nil || !confirmed {
 		t.Fatalf("%v %v\n%s", confirmed, err, out.String())
