@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/zax0rz/darkpawns/pkg/audit"
@@ -58,13 +59,14 @@ type savedPlayerItem struct {
 	Parent int    `json:"parent"`
 }
 type savedPlayerResponse struct {
-	Name      string            `json:"name"`
-	Revision  string            `json:"revision"`
-	Values    map[string]int    `json:"values"`
-	Fields    []playerField     `json:"fields"`
-	Inventory []savedPlayerItem `json:"inventory"`
-	Equipment []savedPlayerItem `json:"equipment"`
-	Slots     []playerSlot      `json:"slots"`
+	Name        string            `json:"name"`
+	LastSavedAt *time.Time        `json:"last_saved_at"`
+	Revision    string            `json:"revision"`
+	Values      map[string]int    `json:"values"`
+	Fields      []playerField     `json:"fields"`
+	Inventory   []savedPlayerItem `json:"inventory"`
+	Equipment   []savedPlayerItem `json:"equipment"`
+	Slots       []playerSlot      `json:"slots"`
 }
 type (
 	playerSlot struct {
@@ -307,7 +309,12 @@ func decodeEditorItems(raw []byte) ([]game.SaveItemData, error) {
 }
 
 func savedPlayerView(world *game.World, r *db.PlayerRecord) (*savedPlayerOutput, error) {
-	out := savedPlayerResponse{Name: r.Name, Revision: playerRevision(r), Fields: playerFields, Values: map[string]int{}, Inventory: []savedPlayerItem{}, Equipment: []savedPlayerItem{}, Slots: []playerSlot{}}
+	var lastSaved *time.Time
+	if r.LastLogon > 0 {
+		timestamp := time.Unix(r.LastLogon, 0).UTC()
+		lastSaved = &timestamp
+	}
+	out := savedPlayerResponse{Name: r.Name, LastSavedAt: lastSaved, Revision: playerRevision(r), Fields: playerFields, Values: map[string]int{}, Inventory: []savedPlayerItem{}, Equipment: []savedPlayerItem{}, Slots: []playerSlot{}}
 	for key, value := range playerValues(r) {
 		out.Values[key] = *value
 	}

@@ -70,6 +70,11 @@ session and a current saved level of HIGOD or higher. The API rechecks the staff
 record on every request. Staff below IMPL can edit only lower-level characters
 and cannot grant a level above their own.
 
+The list reports the total saved-character count (and matching count when
+filtered). Beneath the selected name, **Last saved** shows the elapsed time with
+an exact local date on hover. This is the existing character-save timestamp,
+not a distinct login event; missing timestamps show **unknown**.
+
 The character must be fully disconnected, including menus, character entry,
 switched bodies and retained/linkdead characters. A session-manager name
 reservation excludes new entry while a read or write runs. Deployments without

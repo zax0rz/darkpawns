@@ -44,7 +44,7 @@ export function PlayersPage() {
         <input id="player-search" type="search" placeholder="Search by name" value={search} onChange={(event) => setSearch(event.target.value)} className={fieldClass} />
         {names.isLoading && <p role="status" className="animate-pulse text-sm">Loading characters…</p>}
         {names.error && <div role="alert"><p>{names.error.message}</p><button className={buttonClass} onClick={() => names.refetch()}>Try again</button></div>}
-        {names.data && <p className="text-xs text-ink-muted">{visible.length} matching {visible.length === 1 ? 'character' : 'characters'}</p>}
+        {names.data && <p className="text-xs text-ink-muted">{search ? `${visible.length} of ${names.data.length}` : names.data.length} saved {names.data.length === 1 ? 'character' : 'characters'}</p>}
         <div className="max-h-64 lg:max-h-[65vh] overflow-y-auto border-t border-rule">
           {visible.map((name) => <button key={name} aria-pressed={name === selected} onClick={() => {
             if (name === selected || (dirty && !window.confirm('Discard unsaved stat changes?'))) return;
@@ -97,7 +97,7 @@ function CharacterEditor({ player, onDirty }: { player: SavedPlayer; onDirty: (d
   };
 
   return <div className="space-y-5" aria-busy={mutation.isPending}>
-    <div className="flex flex-wrap gap-3 items-baseline justify-between"><h2 className="text-2xl">{player.name}</h2><span className="text-sm text-ink-muted">Saved character · Level {player.values.level}</span></div>
+    <div className="flex flex-wrap gap-3 items-baseline justify-between"><div><h2 className="text-2xl">{player.name}</h2><LastSaved timestamp={player.last_saved_at} /></div><span className="text-sm text-ink-muted">Saved character · Level {player.values.level}</span></div>
     <div className="flex flex-wrap gap-1 border-b border-rule" aria-label="Editor sections">
       {(['stats', 'items', 'password'] as const).map((key) => <button key={key} type="button" aria-pressed={tab === key} disabled={mutation.isPending} onClick={() => setTab(key)} className={`px-4 py-3 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-accent ${tab === key ? 'border-accent text-accent' : 'border-transparent hover:bg-paper-deep'}`}>{key === 'stats' ? 'Character stats' : key === 'items' ? 'Equipment & inventory' : 'Password'}</button>)}
     </div>
@@ -152,4 +152,19 @@ function ItemRow({ item, player, source, onAction }: { item: SavedPlayerItem; pl
     <div className="flex flex-wrap justify-between gap-2"><div><span className="font-medium">{item.name}</span><span className="font-mono text-xs text-ink-muted ml-2">#{item.vnum}{item.count > 1 ? ` × ${item.count}` : ''}</span></div><span className="text-sm text-ink-muted">{item.parent ? 'Inside container' : source === 'equipment' ? player.slots.find((slot) => slot.locate === item.locate)?.name ?? 'Unknown slot' : 'Carried'}</span></div>
     <div className="flex flex-wrap gap-2"><select aria-label={`Destination for ${item.name} ${item.index + 1}`} className={`${fieldClass} sm:max-w-52`} value={locate} onChange={(event) => setLocate(Number(event.target.value))}><option value={0}>Inventory</option>{player.slots.map((slot) => <option key={slot.locate} value={slot.locate}>{slot.name}</option>)}</select><button type="button" className={buttonClass} onClick={() => onAction('move', locate)}>Move item</button><button type="button" className={`${buttonClass} text-accent`} onClick={() => { if (window.confirm(`Remove ${item.name} and anything inside it from ${player.name}?`)) onAction('remove', 0); }}>Remove</button></div>
   </li>;
+}
+
+function LastSaved({ timestamp }: { timestamp: string | null }) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+  if (!timestamp) return <p className="text-sm text-ink-muted mt-1">Last saved: unknown</p>;
+  const date = new Date(timestamp);
+  const elapsed = Math.max(0, (now - date.getTime()) / 1000);
+  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+  const [seconds, unit]: [number, Intl.RelativeTimeFormatUnit] = elapsed < 60 ? [1, 'second'] : elapsed < 3600 ? [60, 'minute'] : elapsed < 86400 ? [3600, 'hour'] : elapsed < 2592000 ? [86400, 'day'] : elapsed < 31536000 ? [2592000, 'month'] : [31536000, 'year'];
+  const relative = elapsed < 60 ? 'just now' : formatter.format(-Math.floor(elapsed / seconds), unit);
+  return <p className="text-sm text-ink-muted mt-1">Last saved <time dateTime={timestamp} title={date.toLocaleString()}>{relative}</time></p>;
 }

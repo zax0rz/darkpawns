@@ -81,7 +81,17 @@ func TestSavedPlayerEditor(t *testing.T) {
 			t.Fatalf("unauthorized: %d", res.Code)
 		}
 	}
+	if unknown := get(); unknown.LastSavedAt != nil {
+		t.Fatal("invented timestamp for unsaved character")
+	}
+	record.LastLogon = 1735689600
+	if err := database.SavePlayer(record); err != nil {
+		t.Fatal(err)
+	}
 	original := get()
+	if original.LastSavedAt == nil || original.LastSavedAt.Unix() != record.LastLogon {
+		t.Fatal("last save timestamp missing")
+	}
 	res := request("PATCH", "/admin/characters/Returner", map[string]any{"revision": original.Revision, "values": map[string]int{"str": 20, "health": 19}}, token)
 	if res.Code != 200 {
 		t.Fatalf("edit: %d %s", res.Code, res.Body.String())

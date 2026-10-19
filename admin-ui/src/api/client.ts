@@ -301,6 +301,7 @@ export interface SavedPlayerItem {
 }
 export interface SavedPlayer {
   name: string;
+  last_saved_at: string | null;
   revision: string;
   values: Record<string, number>;
   fields: { key: string; label: string; min: number; max: number; group: string }[];
