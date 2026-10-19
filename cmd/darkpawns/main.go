@@ -50,7 +50,7 @@ func command() *cobra.Command {
 		if err := portable.Init(base, instance, *port); err != nil {
 			return err
 		}
-		_, err = fmt.Fprintln(cmd.OutOrStdout(), "Instance created. Run darkpawns run --instance <this directory> to start it.")
+		_, err = fmt.Fprintf(cmd.OutOrStdout(), "Instance created. Run %s to start it in the foreground.\n", portable.OperatorCommand(instance, "run"))
 		return err
 	}
 	runCmd := &cobra.Command{Use: "run", Short: "Run an existing instance in the foreground on localhost", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {

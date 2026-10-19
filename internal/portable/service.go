@@ -93,10 +93,10 @@ func readService(instance string) (serviceRecord, error) {
 	if runtime.GOOS == "windows" {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		script := "[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $ErrorActionPreference='Stop'; $t=Get-ScheduledTask -TaskPath '\\' -TaskName '" + record.Name + "'; [pscustomobject]@{Command=$t.Actions[0].Execute; Arguments=$t.Actions[0].Arguments} | ConvertTo-Json -Compress"
-		data, err := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script).Output()
+		script := "[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $ErrorActionPreference='Stop'; $s=New-Object -ComObject Schedule.Service; $s.Connect(); $t=$s.GetFolder('\\').GetTask('" + record.Name + "'); $a=$t.Definition.Actions.Item(1); [pscustomobject]@{Command=$a.Path; Arguments=$a.Arguments} | ConvertTo-Json -Compress"
+		data, err := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script).CombinedOutput()
 		if err != nil {
-			return record, fmt.Errorf("query owned startup task: %w", err)
+			return record, fmt.Errorf("query owned startup task: %w: %s", err, strings.TrimSpace(string(data)))
 		}
 		var action struct {
 			Command   string
@@ -149,7 +149,7 @@ func InstallService(ctx context.Context, instance string) (result error) {
 	}
 	defer func() { result = errors.Join(result, unlock()) }()
 	if _, err := os.Lstat(filepath.Join(instance, ".service.json")); !os.IsNotExist(err) {
-		return errors.New("automatic-start registration already exists; use service remove before reinstalling")
+		return fmt.Errorf("automatic-start registration already exists; remove it with %s before reinstalling", OperatorCommand(instance, "service", "remove"))
 	}
 	launcher, err := os.Executable()
 	if err != nil {
@@ -238,11 +238,17 @@ func startService(ctx context.Context, instance string) error {
 		if err != nil {
 			return err
 		}
-		return serviceCommand(ctx, "launchctl", "kickstart", "-k", "gui/"+account.Uid+"/"+record.Name)
+		target := "gui/" + account.Uid + "/" + record.Name
+		if err := serviceCommand(ctx, "launchctl", "bootout", target); err != nil {
+			if probe := serviceCommand(ctx, "launchctl", "print", target); probe == nil {
+				return err
+			}
+		}
+		return serviceCommand(ctx, "launchctl", "bootstrap", "gui/"+account.Uid, record.Path)
 	case "windows":
 		// The previous supervisor can release its run lock just before Task
 		// Scheduler observes exit. Wait for that task to finish before launching it.
-		script := "$ErrorActionPreference='Stop'; $deadline=(Get-Date).AddSeconds(5); while ((Get-ScheduledTask -TaskName '" + record.Name + "').State -eq 'Running') { if ((Get-Date) -gt $deadline) { throw 'Previous startup task is still exiting' }; Start-Sleep -Milliseconds 100 }; Start-ScheduledTask -TaskName '" + record.Name + "'"
+		script := "$ErrorActionPreference='Stop'; $s=New-Object -ComObject Schedule.Service; $s.Connect(); $t=$s.GetFolder('\\').GetTask('" + record.Name + "'); $deadline=(Get-Date).AddSeconds(5); while ($t.State -eq 4) { if ((Get-Date) -gt $deadline) { throw 'Previous startup task is still exiting' }; Start-Sleep -Milliseconds 100 }; $t.Run($null) | Out-Null"
 		return serviceCommand(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script)
 	}
 	return errors.New("unsupported service platform")
@@ -328,7 +334,7 @@ func windowsTaskAction(launcher, instance string) (string, string) {
 		system = `C:\Windows`
 	}
 	executable := strings.TrimRight(system, `\/`) + `\System32\WindowsPowerShell\v1.0\powershell.exe`
-	return executable, "-NoProfile -NonInteractive -EncodedCommand " + base64.StdEncoding.EncodeToString(encoded)
+	return executable, "-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand " + base64.StdEncoding.EncodeToString(encoded)
 }
 
 func renderService(platform, name, launcher, instance, account string) ([]byte, error) {

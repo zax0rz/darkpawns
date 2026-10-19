@@ -91,11 +91,11 @@ func Doctor(ctx context.Context, bundle, instance string) []Check {
 		add("SQLite", checkDatabase(ctx, database), "Integrity check passed (read-only)", "Keep the original files and restore a consistent backup; doctor performs no repairs.")
 	}
 	installed, err := ServiceInstalled(instance)
-	detail := "Not installed; use service install to start at sign-in"
+	detail := "Not installed; configure sign-in startup with " + OperatorCommand(instance, "service", "install")
 	if installed {
 		detail = "Registered for your account"
 	}
-	add("Automatic startup", err, detail, "Use service remove to clean up a failed registration, then install again in a supported user session.")
+	add("Automatic startup", err, detail, "Restore any externally changed definition first. To clean up owned registration, use "+OperatorCommand(instance, "service", "remove")+", then install again in a supported user session.")
 	return checks
 }
 

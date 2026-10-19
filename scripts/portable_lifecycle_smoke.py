@@ -49,8 +49,24 @@ def main(bundle, native_service=False):
                 assert state['player']['level'] == 40
                 await cmd(ws, 'save', wait=.5)
 
+        def recovery(operation, folder=instance):
+            def quote(value):
+                value = str(value)
+                return "'" + value.replace("'", "''" if os.name == 'nt' else "'\"'\"'") + "'"
+            return ('& ' if os.name == 'nt' else '') + quote(launcher) + ' ' + operation + ' --instance ' + quote(folder)
+
         installed = False
         try:
+            # Force failure before touching the native manager, after the world
+            # was created. Recovery commands must target this custom instance.
+            failed_registration = instance.parent / "failed startup world's é"
+            no_home = os.environ.copy()
+            no_home.pop('USERPROFILE' if os.name == 'nt' else 'HOME', None)
+            failed = subprocess.run([str(launcher), 'setup', '--yes', '--autostart', '--no-browser', '--instance', str(failed_registration), '--port', str(port)], env=no_home, text=True, encoding='utf-8', capture_output=True, timeout=30)
+            assert failed.returncode != 0 and (failed_registration / 'instance.json').exists(), failed
+            assert recovery('service remove', failed_registration) in failed.stderr, failed.stderr
+            assert recovery('run', failed_registration) in failed.stderr, failed.stderr
+
             # Default setup returns after readiness while the server survives it.
             run('setup', '--yes', '--no-browser', '--port', str(port))
             cfg = (instance / 'instance.json').read_bytes()
@@ -79,6 +95,20 @@ def main(bundle, native_service=False):
             assert status()['state'] == 'stopped'
             assert not (instance / '.control.json').exists()
             run('stop')
+            with socket.socket() as occupied:
+                occupied.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                occupied.bind(('127.0.0.1', port))
+                occupied.listen()
+                failed = run('start', good=False)
+                expected = recovery('doctor')
+                assert expected in failed.stderr, failed.stderr
+                # Execute the printed shell command with the launcher absent
+                # from PATH, including apostrophes/Unicode in the instance path.
+                clean_environment = os.environ.copy()
+                clean_environment['PATH'] = str(instance.parent / 'empty-path')
+                shell = [str(pathlib.Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'), '-NoProfile', '-NonInteractive', '-Command'] if os.name == 'nt' else ['/bin/sh', '-c']
+                checked = subprocess.run(shell + [expected], env=clean_environment, text=True, encoding='utf-8', capture_output=True, timeout=30)
+                assert checked.returncode != 0 and 'Web port' in checked.stdout, checked
             checks = json.loads(run('doctor', '--json').stdout)
             assert any(c['name'] == 'SQLite' and c['ok'] and 'Integrity' in c['detail'] for c in checks)
             with closing(sqlite3.connect(instance / 'lib/data/darkpawns.db')) as database:

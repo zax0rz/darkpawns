@@ -57,7 +57,7 @@ func TestNativeServiceDefinitionsPreserveArguments(t *testing.T) {
 			if err := xml.Unmarshal(data, &task); err != nil {
 				t.Fatal(err)
 			}
-			encoded := strings.TrimPrefix(task.Actions.Exec.Arguments, "-NoProfile -NonInteractive -EncodedCommand ")
+			encoded := strings.TrimPrefix(task.Actions.Exec.Arguments, "-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand ")
 			data, err := base64.StdEncoding.DecodeString(encoded)
 			if err != nil {
 				t.Fatal(err)

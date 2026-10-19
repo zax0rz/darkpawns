@@ -86,7 +86,7 @@ func start(ctx context.Context, bundle, instance string) (RuntimeStatus, error) 
 		// launching over an orphaned game after an abrupt supervisor failure.
 		probe, err := net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d", cfg.HTTPPort))
 		if err != nil {
-			return status, fmt.Errorf("web port is occupied; use doctor before starting: %w", err)
+			return status, fmt.Errorf("web port is occupied; diagnose with %s before starting: %w", OperatorCommand(instance, "doctor"), err)
 		}
 		if err := probe.Close(); err != nil {
 			return status, err

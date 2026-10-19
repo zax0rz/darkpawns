@@ -78,7 +78,7 @@ func resolveDestination(bundle, value string) (string, error) {
 		return "", err
 	}
 	if _, err := os.Lstat(path); err == nil {
-		return "", errors.New("folder already exists; choose a new folder, or use darkpawns run --instance to resume it")
+		return "", fmt.Errorf("folder already exists; choose a new folder, or resume it with %s", portable.OperatorCommand(path, "run"))
 	} else if !os.IsNotExist(err) {
 		return "", err
 	}
@@ -409,7 +409,7 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		}
 		if p.AutoStart {
 			if err := portable.InstallService(cmd.Context(), p.Instance); err != nil {
-				return fmt.Errorf("world retained at %q; automatic startup registration failed. Use service remove to clean up, or run this instance in the foreground: %w", p.Instance, err)
+				return fmt.Errorf("world retained at %q; automatic startup registration failed. Clean up any partial registration with %s, or run in the foreground with %s: %w", p.Instance, portable.OperatorCommand(p.Instance, "service", "remove"), portable.OperatorCommand(p.Instance, "run"), err)
 			}
 		}
 		if p.Background {
@@ -461,15 +461,5 @@ func openBrowser(ctx context.Context, url string) error {
 func restartCommand(instance string) string { return operatorCommand(instance, "run") }
 
 func operatorCommand(instance, command string) string {
-	launcher, err := os.Executable()
-	if err != nil {
-		launcher = "darkpawns"
-	}
-	quote := func(value string) string { return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'" }
-	prefix := ""
-	if runtime.GOOS == "windows" {
-		quote = func(value string) string { return "'" + strings.ReplaceAll(value, "'", "''") + "'" }
-		prefix = "& "
-	}
-	return prefix + quote(launcher) + " " + command + " --instance " + quote(instance)
+	return portable.OperatorCommand(instance, command)
 }
