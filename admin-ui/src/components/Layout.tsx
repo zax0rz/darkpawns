@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { to: '/admin/game/shops', label: 'Shops', icon: 'objects', role: 'player', group: 'Build the world' },
   { to: '/admin/workshop', label: 'Workshop & saves', icon: 'operations', role: 'builder', group: 'Build the world' },
   { to: '/admin/workshop/help', label: 'Builder guide', icon: 'info', role: 'builder', group: 'Build the world' },
+  { to: '/admin/staff/players', label: 'Players', icon: 'operations', role: 'admin', group: 'Staff tools' },
   { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder', group: 'Staff tools' },
 ];
 

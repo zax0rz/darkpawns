@@ -210,6 +210,10 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	}
 	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
 	registerFileEdit(ri.api, world, database, auditLogger)
+	registerPlayerEditor(ri.api, world, database, liveSessions, auditLogger)
+	for _, path := range []string{"/admin/characters", "/admin/characters/{name}", "/admin/characters/{name}/password", "/admin/characters/{name}/items"} {
+		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	}
 	if cfg.mudlogFeed != nil {
 		registerMudlog(ri.api, cfg.mudlogFeed)
 		// Mudlog history and catalog — builder role like the log tail.

@@ -81,6 +81,10 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 		"/admin/files/{root}/listing":           {"get"},
 		"/admin/files/{root}/content":           {"get", "put", "delete"},
 		"/admin/files/lua/usage":                {"get"},
+		"/admin/characters":                     {"get"},
+		"/admin/characters/{name}":              {"get", "patch"},
+		"/admin/characters/{name}/password":     {"post"},
+		"/admin/characters/{name}/items":        {"post"},
 		"/admin/files/lua/resolve":              {"get"},
 	}
 
