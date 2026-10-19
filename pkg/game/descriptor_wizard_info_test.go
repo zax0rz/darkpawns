@@ -46,10 +46,13 @@ func TestHuntVictimLeavesLinklessHuntingIDUnresolved(t *testing.T) {
 	}
 	w.PlayerHasPlayingDescriptor = func(*Player) bool { return false }
 	mob := newSpecProcTestMob(t, w, 1001, 20)
-	mob.SetHunting(target.Name)
+	w.SetHuntingTarget(mob, target)
 
 	w.huntVictim(mob)
 	if got, want := mob.GetHunting(), target.Name; got != want {
 		t.Fatalf("hunting lookup after missing descriptor = %q, want C's unresolved ID %q retained", got, want)
+	}
+	if got, want := mob.GetHuntingID(), "1"; got != want {
+		t.Fatalf("linkless player hunting ID = %q, want %q", got, want)
 	}
 }

@@ -294,6 +294,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 	}
 	world.OccupiedZoneRooms = m.occupiedZoneRooms
 	world.PlayerHasPlayingDescriptor = m.playerHasPlayingDescriptor
+	world.PlayingDescriptorBodies = m.playingDescriptorBodies
 	world.PlayerHasDescriptor = m.playerHasDescriptor
 	// Guard against the typed-nil interface trap: a nil *db.DB stored in a
 	// db.GameStore interface is itself non-nil. Normalize it to a real nil so

@@ -1,10 +1,6 @@
 package game
 
-import (
-	"strconv"
-
-	"github.com/zax0rz/darkpawns/pkg/combat"
-)
+import "github.com/zax0rz/darkpawns/pkg/combat"
 
 // badStat preserves the last-zero-wins STR/INT/WIS/CHA/DEX order of
 // src/handler.c:640-675; CON is deliberately absent.
@@ -139,22 +135,8 @@ func (w *World) applyBadStat(body combat.Combatant, bad byte) {
 				pest = candidate
 			}
 		}
-		if pest != nil && pest.GetHunting() == "" {
-			if prey, ok := body.(*Player); ok {
-				if prey.GetID() <= 0 {
-					return
-				}
-				LogHuntingStart(pest, prey)
-			}
-			pest.SetHunting(body.GetName())
-			if prey, ok := body.(*Player); ok {
-				pest.SetHuntingID(strconv.Itoa(prey.GetID()))
-			}
-			if prey, ok := body.(*MobInstance); ok {
-				pest.mu.Lock()
-				pest.HuntingMobID = prey.ID
-				pest.mu.Unlock()
-			}
+		if prey, ok := body.(Actor); pest != nil && ok && !w.mobHasActiveHunt(pest) {
+			w.SetHuntingTarget(pest, prey)
 		}
 	case 'd':
 		w.selfDamage(body, 40, combat.TYPE_SUFFERING)

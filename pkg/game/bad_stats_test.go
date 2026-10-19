@@ -420,7 +420,11 @@ func TestPlayerEquipmentCharismaHunting(t *testing.T) {
 	if got := outputOf(out, watcher.Name); got != "[ Pestilence started hunting Wearer ]\r\n" {
 		t.Fatalf("hunting mudlog=%q", got)
 	}
-	pest.SetHunting("Already")
+	busyTarget := NewPlayer(13, "Already", 1001)
+	if err := w.AddPlayer(busyTarget); err != nil {
+		t.Fatal(err)
+	}
+	w.SetHuntingTarget(pest, busyTarget)
 	before := outputOf(out, watcher.Name)
 	w.applyBadStat(p, 'c')
 	if pest.GetHunting() != "Already" || outputOf(out, watcher.Name) != before {

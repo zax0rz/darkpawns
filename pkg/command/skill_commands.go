@@ -1662,8 +1662,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 					// logs "… started hunting <player>" before it stores the
 					// target. C also gates this on !mini_mud; the port has no
 					// mini-mud mode.
-					game.LogHuntingStart(mob, ch)
-					s.GetWorld().SetHunting(mob.GetName(), ch.GetName(), true)
+					s.GetWorld().SetHuntingTarget(mob, ch)
 				}
 			}
 		}
