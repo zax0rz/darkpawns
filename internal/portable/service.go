@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
@@ -104,7 +105,8 @@ func readService(instance string) (serviceRecord, error) {
 		if err := json.Unmarshal(bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}), &action); err != nil {
 			return record, err
 		}
-		if !strings.EqualFold(action.Command, record.Launcher) || action.Arguments != "_serve --instance "+windowsArg(instance) {
+		expectedCommand, expectedArgs := windowsTaskAction(record.Launcher, instance)
+		if !strings.EqualFold(action.Command, expectedCommand) || action.Arguments != expectedArgs {
 			return record, errors.New("startup task was modified externally; refusing to operate on it")
 		}
 	}
@@ -310,28 +312,23 @@ func systemdArg(value string) string {
 	return strconv.Quote(strings.ReplaceAll(strings.ReplaceAll(value, "%", "%%"), "$", "$$"))
 }
 
-func windowsArg(value string) string {
-	// Windows command line quoting: double backslashes before quotes and before
-	// the closing delimiter; never pass paths through cmd.exe or PowerShell.
-	var b strings.Builder
-	b.WriteByte('"')
-	slashes := 0
-	for _, c := range value {
-		if c == '\\' {
-			slashes++
-			continue
-		}
-		if c == '"' {
-			b.WriteString(strings.Repeat("\\", slashes*2+1))
-		} else {
-			b.WriteString(strings.Repeat("\\", slashes))
-		}
-		slashes = 0
-		b.WriteRune(c)
+// Task Scheduler expands environment expressions even in Exec arguments.
+// A UTF-16 encoded PowerShell command carries literal paths (including %) with
+// single-quote escaping, without interpolating operator input into shell syntax.
+// https://learn.microsoft.com/windows/win32/taskschd/execaction
+func windowsTaskAction(launcher, instance string) (string, string) {
+	quote := func(value string) string { return "'" + strings.ReplaceAll(value, "'", "''") + "'" }
+	script := "$ErrorActionPreference='Stop'; & " + quote(launcher) + " '_serve' '--instance' " + quote(instance) + "; exit $LASTEXITCODE"
+	var encoded []byte
+	for _, v := range utf16.Encode([]rune(script)) {
+		encoded = append(encoded, byte(v&0xff), byte(v>>8))
 	}
-	b.WriteString(strings.Repeat("\\", slashes*2))
-	b.WriteByte('"')
-	return b.String()
+	system := os.Getenv("SystemRoot")
+	if system == "" {
+		system = `C:\Windows`
+	}
+	executable := strings.TrimRight(system, `\/`) + `\System32\WindowsPowerShell\v1.0\powershell.exe`
+	return executable, "-NoProfile -NonInteractive -EncodedCommand " + base64.StdEncoding.EncodeToString(encoded)
 }
 
 func renderService(platform, name, launcher, instance, account string) ([]byte, error) {
@@ -341,7 +338,8 @@ func renderService(platform, name, launcher, instance, account string) ([]byte, 
 	case "darwin":
 		return []byte(`<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>Label</key><string>` + xmlText(name) + `</string><key>ProgramArguments</key><array><string>` + xmlText(launcher) + `</string><string>_serve</string><string>--instance</string><string>` + xmlText(instance) + `</string></array><key>RunAtLoad</key><true/><key>ExitTimeOut</key><integer>45</integer><key>StandardOutPath</key><string>` + xmlText(filepath.Join(instance, "lib", "logs", "launcher.log")) + `</string><key>StandardErrorPath</key><string>` + xmlText(filepath.Join(instance, "lib", "logs", "launcher.log")) + `</string></dict></plist>`), nil
 	case "windows":
-		return []byte(`<?xml version="1.0" encoding="UTF-8"?><Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Triggers><LogonTrigger><Enabled>true</Enabled><UserId>` + xmlText(account) + `</UserId></LogonTrigger></Triggers><Principals><Principal id="Operator"><UserId>` + xmlText(account) + `</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals><Settings><MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy><DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries><StopIfGoingOnBatteries>false</StopIfGoingOnBatteries><ExecutionTimeLimit>PT0S</ExecutionTimeLimit><AllowHardTerminate>false</AllowHardTerminate><Enabled>true</Enabled></Settings><Actions Context="Operator"><Exec><Command>` + xmlText(launcher) + `</Command><Arguments>_serve --instance ` + xmlText(windowsArg(instance)) + `</Arguments><WorkingDirectory>` + xmlText(instance) + `</WorkingDirectory></Exec></Actions></Task>`), nil
+		command, args := windowsTaskAction(launcher, instance)
+		return []byte(`<?xml version="1.0" encoding="UTF-8"?><Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task"><Triggers><LogonTrigger><Enabled>true</Enabled><UserId>` + xmlText(account) + `</UserId></LogonTrigger></Triggers><Principals><Principal id="Operator"><UserId>` + xmlText(account) + `</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals><Settings><MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy><DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries><StopIfGoingOnBatteries>false</StopIfGoingOnBatteries><ExecutionTimeLimit>PT0S</ExecutionTimeLimit><AllowHardTerminate>false</AllowHardTerminate><Enabled>true</Enabled></Settings><Actions Context="Operator"><Exec><Command>` + xmlText(command) + `</Command><Arguments>` + xmlText(args) + `</Arguments></Exec></Actions></Task>`), nil
 	}
 	return nil, errors.New("unsupported service platform")
 }

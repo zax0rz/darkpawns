@@ -2,6 +2,8 @@ package portable
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
 	"io"
@@ -10,6 +12,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"unicode/utf16"
 )
 
 func TestNativeServiceDefinitionsPreserveArguments(t *testing.T) {
@@ -42,14 +45,35 @@ func TestNativeServiceDefinitionsPreserveArguments(t *testing.T) {
 			}
 		}
 		joined := strings.Join(text, "\n")
-		if !strings.Contains(joined, launcher) {
-			t.Fatal(joined)
-		}
-		want := instance
 		if platform == "windows" {
-			want = windowsArg(instance)
-		}
-		if !strings.Contains(joined, want) {
+			var task struct {
+				Actions struct {
+					Exec struct {
+						Command   string
+						Arguments string
+					}
+				}
+			}
+			if err := xml.Unmarshal(data, &task); err != nil {
+				t.Fatal(err)
+			}
+			encoded := strings.TrimPrefix(task.Actions.Exec.Arguments, "-NoProfile -NonInteractive -EncodedCommand ")
+			data, err := base64.StdEncoding.DecodeString(encoded)
+			if err != nil {
+				t.Fatal(err)
+			}
+			words := make([]uint16, len(data)/2)
+			for i := range words {
+				words[i] = binary.LittleEndian.Uint16(data[2*i:])
+			}
+			script := string(utf16.Decode(words))
+			if !strings.Contains(script, launcher) || !strings.Contains(script, instance) {
+				t.Fatal(script)
+			}
+			if strings.Contains(task.Actions.Exec.Arguments, "%") || !strings.HasSuffix(task.Actions.Exec.Command, `\powershell.exe`) {
+				t.Fatal(task)
+			}
+		} else if !strings.Contains(joined, launcher) || !strings.Contains(joined, instance) {
 			t.Fatal(joined)
 		}
 	}

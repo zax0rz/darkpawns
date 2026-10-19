@@ -142,7 +142,7 @@ func (p setupPlan) summary() string {
 	}
 	mode := "Foreground; keep this terminal open. Ctrl+C saves and stops."
 	if p.Background {
-		mode = "Background; use darkpawns stop to save and stop."
+		mode = "Background; you can close this terminal after setup completes."
 	}
 	auto := "No"
 	if p.AutoStart {
@@ -392,7 +392,7 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		if err := portable.Init(base, p.Instance, port); err != nil {
 			return fmt.Errorf("initialize instance: %w", err)
 		}
-		if _, err := fmt.Fprintf(out, "\nInstance created: %s\nRestart with: %s\n", p.Instance, restartCommand(p.Instance)); err != nil {
+		if _, err := fmt.Fprintf(out, "\nInstance created: %s\nRun in the foreground when stopped: %s\n", p.Instance, restartCommand(p.Instance)); err != nil {
 			return err
 		}
 		ready := func(url string) error {
@@ -417,7 +417,7 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 			if err != nil {
 				return err
 			}
-			if _, err := fmt.Fprintln(out, "Running in the background. You can close this terminal; use darkpawns stop to save and stop."); err != nil {
+			if _, err := fmt.Fprintf(out, "Running in the background. You can close this terminal.\nStop with: %s\nRestart with: %s\n", operatorCommand(p.Instance, "stop"), operatorCommand(p.Instance, "restart")); err != nil {
 				return err
 			}
 			return ready(status.URL)
@@ -458,7 +458,9 @@ func openBrowser(ctx context.Context, url string) error {
 }
 
 // Commands are quoted for the operator's platform shell, not Go string syntax.
-func restartCommand(instance string) string {
+func restartCommand(instance string) string { return operatorCommand(instance, "run") }
+
+func operatorCommand(instance, command string) string {
 	launcher, err := os.Executable()
 	if err != nil {
 		launcher = "darkpawns"
@@ -469,5 +471,5 @@ func restartCommand(instance string) string {
 		quote = func(value string) string { return "'" + strings.ReplaceAll(value, "'", "''") + "'" }
 		prefix = "& "
 	}
-	return prefix + quote(launcher) + " run --instance " + quote(instance)
+	return prefix + quote(launcher) + " " + command + " --instance " + quote(instance)
 }
