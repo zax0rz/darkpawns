@@ -365,3 +365,84 @@ SELECT count(*) FROM players WHERE password_hash IS NULL OR password_hash = '';
 UPDATE players SET password_hash = '<bcrypt hash>' WHERE name = '<name>';
 ```
 
+
+## Optional game notifications
+
+Build/deploy the admin console alongside the server, then open **Staff tools →
+Notifications** with a HIGOD account. Paste your Discord webhook URL, Pushover
+application token and user/group key, or hosted Healthchecks ping URL into the
+corresponding destination form. Save credentials, choose events, enable the
+required destinations and save settings. Use each test button to check delivery.
+Credential changes take effect immediately; no restart or environment-variable
+editing is required. Use HTTPS for remote admin access.
+
+Saved credentials are write-only: the API returns configuration status, never
+secret values. Replace requires a complete new credential set. Remove disables
+the destination and keeps its event choices; previously queued jobs are discarded.
+Already in-flight provider requests can finish. Tests report queued, not delivered;
+check provider acceptance status and the destination/device for receipt.
+
+### Private storage and backups
+
+Settings default to `data/notifications.json` relative to the server CWD (`lib/`
+normally). `DP_NOTIFICATION_CONFIG_PATH` can override that location. Credentials
+are encrypted with AES-256-GCM; each provider has an authenticated ciphertext and
+fresh random nonce. On the first credential save, the server automatically creates
+a random 32-byte master key at `<config-path>.key` with mode `0600`. An optional
+`DP_NOTIFICATION_KEY_PATH` selects another private location. The server needs
+write access to those parent directories. The key is independent of JWT secrets.
+
+**Back up both the settings file and the original key.** Protect backups as
+secrets. Without that key, encrypted credentials cannot be recovered; startup
+refuses missing, changed, corrupt, or overly permissive keys when encrypted
+credentials exist. Do not generate a replacement key to fix a missing-key error.
+Restore the original. Moving the key requires moving its existing bytes and
+updating the path. Encryption protects a settings-file-only disclosure; it does
+not protect against someone who obtains the host or a backup containing both files.
+Never commit either private file to source control or share the key with exported
+settings. Removing credentials clears active storage and is not a secure disk wipe.
+
+### Existing environment configuration
+
+These optional variables remain a compatibility fallback for destinations that
+have never been managed in admin. They are read at startup; portal-saved values
+take precedence. Removing a destination in admin suppresses its environment
+fallback, including after restart.
+
+| Variable | Value |
+|---|---|
+| `DP_NOTIFY_PUSHOVER_TOKEN` | Pushover application's API token |
+| `DP_NOTIFY_PUSHOVER_USER` | Pushover user or group key |
+| `DP_NOTIFY_DISCORD_WEBHOOK` | `https://discord.com/api/webhooks/<id>/<token>` |
+| `DP_NOTIFY_HEARTBEAT_URL` | Hosted Healthchecks `https://hc-ping.com/<uuid>` URL |
+
+Discord URLs must use the canonical host and contain no query string. Heartbeat
+URLs currently support hosted `hc-ping.com` UUID checks only. Arbitrary webhook
+hosts are not supported. No provider is required to run the game.
+
+**Migrating legacy Discord alerts:** `DISCORD_WEBHOOK_URL` is no longer consumed.
+Paste its value into the Discord destination form (or migrate it to
+`DP_NOTIFY_DISCORD_WEBHOOK`), then explicitly configure/enable event subscriptions.
+The old all-events behavior is not enabled automatically. The separate
+`DP_MUDLOG_NTFY_*` staff-log observer is unchanged and is not a public announcement
+feed.
+
+### Outage detection
+
+Create a Healthchecks check with a one-minute period and about two minutes of
+grace. Configure its Pushover down/recovery integration **in Healthchecks**, save
+its ping URL in admin, then enable the heartbeat. The game pings only while its
+loop is progressing; the external service sends alerts even when the whole game
+host is down. Pause the check there during planned maintenance. Add independent
+external public HTTP/game-port probes for network, DNS and TLS coverage; an
+outbound heartbeat alone does not verify public access. Backups should have a
+separate success heartbeat from the backup job itself.
+
+Delivery is best effort: there is no durable outbox/retry or replay; settings
+changes invalidate older queued jobs. Status/counters reset on restart.
+
+The [notification scope and v2 backlog](docs/design/admin-notifications.md) records
+future providers and delivery/monitoring work. Provider API references:
+[Pushover](https://pushover.net/api),
+[Discord webhooks](https://docs.discord.com/developers/resources/webhook), and
+[Healthchecks ping API](https://healthchecks.io/docs/http_api/).

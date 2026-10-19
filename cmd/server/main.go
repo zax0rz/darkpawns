@@ -50,6 +50,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -69,6 +70,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
+	"github.com/zax0rz/darkpawns/pkg/notify"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/session"
@@ -593,11 +595,37 @@ func main() {
 	// = 4s), faithful to C's mobile_activity() (DP-1035).
 	gameWorld.StartEventQueue()
 
+	// Notification workers never run on the game loop. No credentials in the
+	// API responses: portal credentials use encrypted storage; environment values
+	// remain a compatibility fallback.
+	notificationPath := os.Getenv("DP_NOTIFICATION_CONFIG_PATH")
+	if notificationPath == "" {
+		notificationPath = "data/notifications.json"
+	}
+	notifications, err := notify.New(notificationPath)
+	if err != nil {
+		fatal("Initialize notifications: %v", err)
+	}
+	manager.SetNotifications(notifications)
+	var lastCompletedPulse atomic.Int64
+	notificationCtx, stopNotifications := context.WithCancel(context.Background())
+	defer stopNotifications()
+	notifications.Run(notificationCtx, func() time.Time {
+		n := lastCompletedPulse.Load()
+		if n == 0 {
+			return time.Time{}
+		}
+		return time.Unix(0, n)
+	})
+
 	// Start game loop (heartbeat, mobile activity, combat ticks).
 	// PointUpdate shares the hourly heartbeat in live and DP_CLOCK modes.
 	gameLoop := engine.NewGameLoop(engine.GameLoopCallbacks{
 		OnBeginOutputTurn: manager.BeginHeartbeatOutput,
-		OnEndOutputTurn:   manager.EndHeartbeatOutput,
+		OnEndOutputTurn: func() {
+			manager.EndHeartbeatOutput()
+			lastCompletedPulse.Store(time.Now().UnixNano())
+		},
 		OnDrainInput: func() {
 			// DP-1201: per-pulse command drain (comm.c:603). Drains one queued
 			// command per session when its wait reaches 0. Runs every tick, at
@@ -785,7 +813,7 @@ func main() {
 	mudlogFeed := mudlog.StartDefault(context.Background(), nil)
 	defer mudlogFeed.Stop()
 
-	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed))
+	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications))
 	if err != nil {
 		fatal("failed to init admin router: %v", err)
 	}

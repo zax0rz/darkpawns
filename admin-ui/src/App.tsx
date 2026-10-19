@@ -20,6 +20,7 @@ import { RoomEditorPage } from './pages/RoomEditorPage';
 import { MobEditorPage } from './pages/MobEditorPage';
 import { ObjectEditorPage } from './pages/ObjectEditorPage';
 import { TerminalPage } from './pages/TerminalPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { WorkshopPage } from './pages/WorkshopPage';
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="/admin/game/objects/:vnum/edit" element={<ErrorBoundary><ObjectEditorPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum" element={<ErrorBoundary><RoomDetailPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum/edit" element={<ErrorBoundary><RoomEditorPage /></ErrorBoundary>} />
+            <Route path="/admin/staff/notifications" element={<ErrorBoundary><NotificationsPage /></ErrorBoundary>} />
             <Route path="/admin/staff/players" element={<ErrorBoundary><PlayersPage /></ErrorBoundary>} />
             <Route path="/admin/operations" element={<ErrorBoundary><OperationsPage /></ErrorBoundary>} />
             <Route path="/admin/workshop" element={<ErrorBoundary><WorkshopPage /></ErrorBoundary>} />

@@ -17,6 +17,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
+	"github.com/zax0rz/darkpawns/pkg/notify"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 )
 
@@ -28,8 +29,9 @@ type routerConfig struct {
 	// are registered into. main passes it so the admin operations appear in
 	// the server-wide spec served at /openapi.json. Tests leave it nil and get
 	// a private document per router.
-	sharedDoc  *apidoc.Doc
-	mudlogFeed *mudlog.Feed
+	sharedDoc     *apidoc.Doc
+	mudlogFeed    *mudlog.Feed
+	notifications *notify.Service
 }
 
 // WithSharedSpec registers the router's Huma operations into doc, the
@@ -210,6 +212,10 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	}
 	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
 	registerFileEdit(ri.api, world, database, auditLogger)
+	registerNotifications(ri.api, database, auditLogger, cfg.notifications)
+	for _, path := range []string{"/admin/notifications", "/admin/notifications/{provider}/test", "/admin/notifications/{provider}/credentials"} {
+		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	}
 	registerPlayerEditor(ri.api, world, database, liveSessions, auditLogger)
 	for _, path := range []string{"/admin/characters", "/admin/characters/{name}", "/admin/characters/{name}/password", "/admin/characters/{name}/items"} {
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))

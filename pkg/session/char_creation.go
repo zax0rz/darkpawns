@@ -14,6 +14,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/notify"
 )
 
 // C source race help constants from src/constants.c
@@ -616,6 +617,9 @@ func (s *Session) persistAcceptedCharacter() error {
 		p.ID = r.ID
 	} else {
 		p.ID = s.manager.allocateEphemeralPlayerID()
+	}
+	if !s.isGuest {
+		s.manager.notifications.Publish(notify.Event{ID: notify.Created, Player: s.charName})
 	}
 	s.manager.mu.Lock()
 	s.player = p

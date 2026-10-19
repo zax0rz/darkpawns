@@ -24,6 +24,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/moderation"
 	"github.com/zax0rz/darkpawns/pkg/mudletmap"
+	"github.com/zax0rz/darkpawns/pkg/notify"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"golang.org/x/time/rate"
 )
@@ -64,7 +65,8 @@ var allowedWebSocketOrigins = []string{
 
 // Manager handles all active sessions.
 type Manager struct {
-	outputBatch heartbeatOutput
+	outputBatch   heartbeatOutput
+	notifications *notify.Service // installed before listeners start
 
 	// mudletMap is the generated Mudlet world map (GMCP Client.Map and the
 	// /darkpawns-map.xml endpoint).
@@ -446,15 +448,20 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 		slog.Warn("Failed to load invalid name list", "error", err)
 	}
 
-	// Subscribe to PlayerLeveledEvent to trigger Discord level-up notifications
+	// Observe structured milestones without forwarding private mudlog text.
 	world.Events.Subscribe(events.PlayerLeveledEvent{}.Type(), func(ctx context.Context, ev events.BusEvent) error {
 		if ple, ok := ev.(events.PlayerLeveledEvent); ok {
-			isGuest := false
-			if s, ok := m.GetSession(ple.PlayerID); ok {
-				isGuest = s.isGuest
+			if sess, found := m.GetSession(ple.PlayerID); found && notificationVisible(sess) {
+				m.notifications.Publish(notify.Event{ID: notify.Level, Player: ple.PlayerID, Level: ple.NewLevel})
 			}
-			if !isGuest {
-				sendDiscordNotification(fmt.Sprintf("_**%s has attained circle %d!**_", ple.PlayerID, ple.NewLevel))
+		}
+		return nil
+	})
+
+	world.Events.Subscribe(events.PlayerDiedEvent{}.Type(), func(_ context.Context, ev events.BusEvent) error {
+		if death, ok := ev.(events.PlayerDiedEvent); ok {
+			if sess, found := m.GetSession(death.PlayerID); found && notificationVisible(sess) {
+				m.notifications.Publish(notify.Event{ID: notify.Death, Player: death.PlayerID})
 			}
 		}
 		return nil
@@ -716,6 +723,7 @@ func (m *Manager) drainPendingExtractionsLocked() {
 		if victim == nil {
 			continue
 		}
+		m.notifyLeftWorld(victim, player.GetName())
 		if len(switched) > 0 && !original && !victim.hasTransport() {
 			if !player.RentedOut {
 				victim.savePlayer(player, "switched extraction", player.GetLoadRoom())
@@ -872,18 +880,9 @@ func (m *Manager) SetDeathFunc() {
 
 		// If victim was a player, send updated room state after respawn
 		if !victim.IsNPC() {
-			isGuest := false
 			if s := m.combatSession(victim); s != nil {
-				isGuest = s.isGuest
 				if err := cmdLook(s, nil); err != nil {
 					slog.Error("cmdLook failed after death", "player", victim.GetName(), "error", err)
-				}
-			}
-			if !isGuest {
-				if killer != nil && killer.GetName() != "" {
-					sendDiscordNotification(fmt.Sprintf("_**%s was slain by %s!**_", victim.GetName(), killer.GetName()))
-				} else {
-					sendDiscordNotification(fmt.Sprintf("_**%s has met their demise!**_", victim.GetName()))
 				}
 			}
 			return
@@ -1414,10 +1413,6 @@ func (m *Manager) register(playerName string, s *Session) error {
 		m.world.RemovePlayerBody(oldBody)
 	}
 
-	if s.authenticated && !s.isGuest {
-		sendDiscordNotification(fmt.Sprintf("_**%s has stepped into the shadows of the world.**_", playerName))
-	}
-
 	return nil
 }
 
@@ -1432,6 +1427,9 @@ func (m *Manager) enterWorld(name string, s *Session) error {
 	if err := m.world.AddPlayer(s.player); err != nil {
 		m.unregister(name)
 		return err
+	}
+	if s.authenticated && !s.isGuest && !s.notificationInWorld.Swap(true) && notificationVisible(s) {
+		m.notifications.Publish(notify.Event{ID: notify.Login, Player: name})
 	}
 	return nil
 }
@@ -1467,9 +1465,7 @@ func (m *Manager) cleanupSession(s *Session, playerName string) {
 		}
 	}
 
-	if s.authenticated && !s.isGuest {
-		sendDiscordNotification(fmt.Sprintf("_**%s has retreated back into the mist.**_", playerName))
-	}
+	m.notifyLeftWorld(s, playerName)
 
 	// 3. Clean snoop references
 	m.snoopMu.Lock()
@@ -2070,6 +2066,8 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 
 // Session represents a single WebSocket connection.
 type Session struct {
+	notificationInWorld atomic.Bool
+
 	conn                 *websocket.Conn
 	request              *http.Request // Store the original HTTP request for IP extraction
 	remoteIP             string        // Store remote IP directly for non-HTTP (Telnet) sessions
@@ -2405,3 +2403,17 @@ var (
 // Command management methods to implement common.CommandManager interface
 
 // RegisterCommand registers a command handler
+
+// SetNotifications installs the observer before network listeners start.
+func (m *Manager) SetNotifications(service *notify.Service) { m.notifications = service }
+
+func (m *Manager) notifyLeftWorld(s *Session, name string) {
+	if s.notificationInWorld.Swap(false) && notificationVisible(s) {
+		m.notifications.Publish(notify.Event{ID: notify.Logout, Player: name})
+	}
+}
+
+// Public-safe templates also respect invisible staff presence.
+func notificationVisible(s *Session) bool {
+	return !s.isGuest && s.player != nil && s.player.GetInvisLevel() == 0
+}

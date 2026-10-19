@@ -319,3 +319,33 @@ export const playerEditor = {
   items: (name: string, revision: string, data: { action: 'grant' | 'move' | 'remove'; source: 'inventory' | 'equipment'; index: number; vnum: number; locate: number }) =>
     request<SavedPlayer>(`/characters/${encodeURIComponent(name)}/items`, { method: 'POST', body: JSON.stringify({ revision, ...data }) }),
 };
+
+export type NotificationProvider = 'pushover' | 'discord';
+export type CredentialProvider = NotificationProvider | 'heartbeat';
+export interface NotificationCredentials { token?: string; user?: string; url?: string }
+export interface NotificationDestination { enabled: boolean; events: string[] }
+export interface NotificationConfig {
+  revision: number;
+  pushover: NotificationDestination;
+  discord: NotificationDestination;
+  heartbeat: boolean;
+}
+export interface NotificationStatus {
+  source: 'admin' | 'environment' | 'none';
+  ready: boolean;
+  last_success: string | null;
+  last_failure: string | null;
+  last_error: string;
+  dropped: number;
+}
+export interface NotificationView {
+  config: NotificationConfig;
+  status: Record<NotificationProvider | 'heartbeat', NotificationStatus>;
+}
+export const notifications = {
+  get: () => request<NotificationView>('/notifications'),
+  save: (config: NotificationConfig) => request<NotificationView>('/notifications', { method: 'PUT', body: JSON.stringify(config) }),
+  credentials: (provider: CredentialProvider, revision: number, values: NotificationCredentials) => request<NotificationView>(`/notifications/${provider}/credentials`, { method: 'PUT', body: JSON.stringify({ revision, ...values }) }),
+  removeCredentials: (provider: CredentialProvider, revision: number) => request<NotificationView>(`/notifications/${provider}/credentials`, { method: 'DELETE', body: JSON.stringify({ revision }) }),
+  test: (provider: NotificationProvider) => request<{ status: string }>(`/notifications/${provider}/test`, { method: 'POST' }),
+};

@@ -263,6 +263,10 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 }
 
 func playerEditorGate(database *db.DB) func(huma.Context, func(huma.Context)) {
+	return staffAdminGate(database, "Player editing requires HIGOD")
+}
+
+func staffAdminGate(database *db.DB, denied string) func(huma.Context, func(huma.Context)) {
 	return func(ctx huma.Context, next func(huma.Context)) {
 		ctx.SetHeader("Cache-Control", "no-store")
 		if !hasAdminCSRFHeader(ctx.Header) {
@@ -284,7 +288,7 @@ func playerEditorGate(database *db.DB) func(huma.Context, func(huma.Context)) {
 			return
 		}
 		if !claims.HasRole("admin") || r.Level < game.LVL_HIGOD {
-			writeOLCError(ctx, 403, olcMiddlewareError{Error: "Player editing requires HIGOD"})
+			writeOLCError(ctx, 403, olcMiddlewareError{Error: denied})
 			return
 		}
 		c := auth.SetClaimsOnContext(ctx.Context(), claims)
