@@ -143,6 +143,16 @@ func (p setupPlan) summary() string {
 
 func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, out io.Writer) (bool, error) {
 	confirmed := false
+	// Navigation is essential text. Use the operator's default foreground rather
+	// than the library's dim gray, which loses contrast on common dark terminals.
+	theme := huh.ThemeBase()
+	theme.Help.ShortKey = theme.Help.ShortKey.UnsetForeground()
+	theme.Help.ShortDesc = theme.Help.ShortDesc.UnsetForeground()
+	theme.Help.ShortSeparator = theme.Help.ShortSeparator.UnsetForeground()
+	theme.Help.FullKey = theme.Help.FullKey.UnsetForeground()
+	theme.Help.FullDesc = theme.Help.FullDesc.UnsetForeground()
+	theme.Help.FullSeparator = theme.Help.FullSeparator.UnsetForeground()
+	theme.Help.Ellipsis = theme.Help.Ellipsis.UnsetForeground()
 	form := huh.NewForm(
 		huh.NewGroup(huh.NewInput().Title("1. Choose a home").Description("A new folder for your world, players and settings. Keep it outside the release folder.").Value(&p.Instance).Validate(func(value string) error { _, err := resolveDestination(bundle, value); return err })),
 		huh.NewGroup(huh.NewInput().Title("2. Choose a port").Description("Local browser access only. The default is 4350.").Value(&p.Port).Validate(availablePort)),
@@ -150,7 +160,7 @@ func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, o
 			huh.NewConfirm().Title("Open your browser after launch?").Value(&p.Browser),
 			huh.NewConfirm().Title("3. Create instance and launch?").Description(p.summary()).DescriptionFunc(func() string { return p.summary() }, p).Affirmative("Create and launch").Negative("Cancel").Value(&confirmed),
 		),
-	).WithInput(in).WithOutput(out).WithTheme(huh.ThemeBase()).WithAccessible(false)
+	).WithInput(in).WithOutput(out).WithTheme(theme).WithAccessible(false)
 	if err := form.RunWithContext(ctx); err != nil {
 		if errors.Is(err, huh.ErrUserAborted) {
 			return false, nil
