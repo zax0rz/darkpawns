@@ -2,16 +2,19 @@ package portable
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 	"unicode/utf16"
 )
 
@@ -109,5 +112,49 @@ func TestServiceOwnershipRejectsChangedDefinition(t *testing.T) {
 	}
 	if _, err := ServiceInstalled(instance); err == nil {
 		t.Fatal("modified definition treated as owned")
+	}
+}
+
+func TestLaunchAgentWaitsForDeregistrationAndBootstrap(t *testing.T) {
+	prints, bootstraps := 0, 0
+	err := startLaunchAgent(context.Background(), "gui/1/owned", "gui/1", "owned.plist", func(_ context.Context, _ string, args ...string) error {
+		switch args[0] {
+		case "bootout":
+			return nil
+		case "print":
+			prints++
+			if prints == 1 {
+				return nil
+			}
+			return errors.New("not registered")
+		case "bootstrap":
+			bootstraps++
+			if bootstraps == 1 {
+				return errors.New("teardown still pending")
+			}
+			return nil
+		}
+		t.Fatalf("unexpected native operation: %v", args)
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prints != 3 || bootstraps != 2 {
+		t.Fatalf("did not observe the manager transition: prints=%d bootstrap=%d", prints, bootstraps)
+	}
+}
+
+func TestLaunchAgentReloadFailureRemainsAnError(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+	err := startLaunchAgent(ctx, "gui/1/owned", "gui/1", "owned.plist", func(_ context.Context, _ string, args ...string) error {
+		if args[0] == "bootout" {
+			return nil
+		}
+		return errors.New("manager unavailable")
+	})
+	if err == nil {
+		t.Fatal("failed native manager transition reported success")
 	}
 }
