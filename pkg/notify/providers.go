@@ -82,14 +82,14 @@ func deliver(ctx context.Context, id, message string) error {
 	// Addresses are fixed provider hosts with strict path validation. Never follow
 	// redirects, expose upstream response bodies, or include credential-bearing URLs
 	// in returned errors (including net/http's *url.Error).
-	req, err := http.NewRequestWithContext(ctx, method, target, body)
+	req, err := http.NewRequestWithContext(ctx, method, target, body) // #nosec G704 -- fixed Pushover URL or providerURL-validated HTTPS discord.com/hc-ping.com host and path; redirects refused
 	if err != nil {
 		return errors.New("could not create provider request")
 	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
-	resp, err := providerClient.Do(req)
+	resp, err := providerClient.Do(req) // #nosec G704 -- target passes providerURL host/path allowlist; client refuses redirects; covered by TestProviderURLRestrictions and TestProviderRejectionAndRedirect
 	if err != nil {
 		return errors.New("provider request failed or timed out")
 	}
