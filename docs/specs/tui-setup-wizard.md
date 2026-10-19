@@ -17,6 +17,15 @@ still a draft; configuration-file, packaging, signing, service installation,
 browser-launch, and wizard interfaces below are proposals and must be reconciled
 with the current [running guide](../../DEPLOYMENT.md) before implementation.
 
+**Implementation slice 1 (2026-10-19):** The portable bundle foundation is
+implemented separately from this proposed wizard. See
+[portable development bundles](../portable-release.md) for `darkpawns init/run`,
+release/instance ownership, native verification and remaining milestones. The
+launcher currently requires an explicit instance directory and binds HTTP to
+loopback with telnet/WHOD disabled. It does not implement the YAML interface or
+seven-screen flow below. Scheduled updates and independent updater notifications
+are captured as follow-up work in that guide.
+
 ---
 
 ## 1. What This Is

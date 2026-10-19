@@ -130,3 +130,10 @@ docs/fidelity/strings/coverage-summary.txt
 .github/skills/
 /dp-oracle-diff
 /lib/object_idlist
+
+# Portable release staging and GoReleaser output
+/release-assets/
+/.release-stage-*/
+/dist/
+/.goreleaser-native.yaml
+/portable-extracted/

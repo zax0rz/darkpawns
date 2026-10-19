@@ -1,0 +1,49 @@
+version: 2
+project_name: darkpawns
+before:
+  hooks:
+    - npm --prefix admin-ui ci
+    - npm --prefix admin-ui run build
+    - python3 scripts/stage_portable_release.py --version {{ .Version }}
+builds:
+  - id: launcher
+    main: ./cmd/darkpawns
+    binary: darkpawns
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}
+  - id: server
+    main: ./cmd/server
+    binary: darkpawns-server
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: [-s -w]
+archives:
+  - id: portable
+    ids: [launcher, server]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    wrap_in_directory: true
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - release-assets/**/*
+      - release-assets/manifest.json
+      - LICENSE
+      - LICENSE.CircleMUD
+      - LICENSE.DikuMUD
+      - src: docs/portable-release.md
+        dst: .
+        strip_parent: true
+checksum:
+  name_template: checksums.txt
+# Snapshot builds are unsigned development artifacts. Publishing/signing is a
+# later milestone, not an automatic side effect of pushing a tag or this PR.
+release:
+  disable: true

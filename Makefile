@@ -294,3 +294,8 @@ endif
 	rsync -avz --delete website-astro/dist/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)
 
 .DEFAULT_GOAL := build
+
+# Unsigned portable development artifacts; needs GoReleaser v2.18.3 + Go/Node/Python.
+.PHONY: portable-snapshot
+portable-snapshot:
+	goreleaser release --snapshot --clean
