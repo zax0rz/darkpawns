@@ -1,14 +1,77 @@
 # Portable development bundle
 
-This is the first installation milestone, not the public installer. Archives are
-unsigned development snapshots. No TUI, automatic browser launch, background
-service, doctor, updater, or public release/signing workflow is included yet.
+These are unsigned development snapshots with a guided setup wizard. Background
+services, doctor, updater and the public release/signing workflow are later milestones.
 
 The archive contains `darkpawns`, `darkpawns-server` (both `.exe` on Windows),
 `release-assets/`, and the original license notices. Go, Node, Python and a source
 checkout are not needed to **run** an extracted bundle.
 
-## Create and run
+## Guided setup
+
+Extract the whole archive, then run:
+
+```sh
+/path/to/release/darkpawns setup
+```
+
+PowerShell:
+
+```powershell
+& 'C:\DarkPawns\release\darkpawns.exe' setup
+```
+
+The three-step terminal wizard asks for a new instance folder, a local web port
+(default `4350`), then reviews the settings before creating anything. Use Tab or
+Shift+Tab to move between fields, Enter to continue, and Ctrl+C to cancel. The
+review includes the browser choice and explains that the first character becomes
+the immortal. The server starts in this terminal; setup waits for `/health`, then
+opens the browser when a desktop session is available. Ctrl+C saves and stops it.
+A missing or failed browser opener leaves the server running and prints the URL.
+
+Default instance folders (separate from the extracted release):
+
+| Platform | Default |
+|---|---|
+| Linux | `$XDG_DATA_HOME/darkpawns/world`, otherwise `~/.local/share/darkpawns/world` |
+| macOS | `~/Library/Application Support/darkpawns/world` |
+| Windows | `%LOCALAPPDATA%\darkpawns\world` |
+
+`setup --instance <new-folder> --port <number>` preselects different values.
+Missing parent folders are created only after confirmation and bundle verification.
+Existing folders are refused, even when empty; resume a world with `run` rather
+than rerunning setup. Cancellation, EOF and an occupied port create no instance.
+Initialization or startup errors retain any created instance for inspection and
+print recovery instructions. Port checks are advisory; another process can take
+the port between the check and the server binding it.
+
+For screen readers or a basic terminal, use `setup --plain`: line prompts with an
+explicit yes at review (the default is no). Non-terminal input requires `--plain`
+or `--yes`. Small, `TERM=dumb` or `NO_COLOR` terminals use line prompts automatically.
+`setup --yes --no-browser --instance <new-folder>` explicitly accepts
+the selected settings and starts the foreground server without prompts.
+
+For a headless host, use `setup --no-browser` (also the default over SSH and on
+Linux without a desktop display). The URL is local to the server machine. To use
+your laptop browser, forward the chosen port, for example:
+
+```sh
+ssh -L 4350:127.0.0.1:4350 your-host
+```
+
+Run setup in that session, then open `http://127.0.0.1:4350/` on your laptop.
+
+After stopping, restart using the printed command, or:
+
+```sh
+/path/to/release/darkpawns run --instance '/path/to/your/world'
+```
+
+The first successfully created character becomes the immortal. Create it before
+exposing the server to other people. Setup does not create an admin account or
+change the existing character creation dialogue (R4).
+
+## Manual create and run
 
 Extract the whole archive into a release directory. Choose a **new directory
 outside that release** for your instance; its parent must already exist. Existing
@@ -80,13 +143,16 @@ browser's WebSocket protocol, duplicate-run rejection, graceful stop, release
 relocation and saved login after restart. It checks that edited instance world
 files survive changing the release seed. A cross-build is not a runtime proof;
 Windows console and macOS runtime results must come from those native jobs.
-The TUI, graphical browser journey and actual Windows/Mac desktop experience
-remain untested until those features exist.
+The same native journey now goes through the line-mode setup wizard, checking
+cancellation/EOF, port conflicts and retained state after a failed server start.
+Unit tests cover prompt correction, review and readiness timeout/cancellation.
+The graphical browser and terminal renderer still require desktop verification;
+native headless CI exercises the shared setup plan and server protocol, rather
+than certifying desktop browser integration (R5f).
 
 ## Follow-up milestones
 
-- Huh setup wizard and Cobra lifecycle/doctor commands, browser handoff and
-  headless instructions; platform-native instance locations and Windows ACLs.
+- Cobra lifecycle/doctor commands, Windows ACLs and desktop installation checks.
 - Native user services and explicit ownership of start/stop/restart.
 - Signed releases, macOS notarization and Windows installation experience.
 - Manual updates with consistent backups, compatibility gates and recovery.

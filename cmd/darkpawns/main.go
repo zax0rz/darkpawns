@@ -1,5 +1,5 @@
 // darkpawns is the portable operator launcher. The legacy cmd/server flags and
-// checkout startup remain unchanged; the wizard will build on this boundary.
+// checkout startup remain unchanged; setup builds on the isolated instance boundary.
 package main
 
 import (
@@ -63,7 +63,7 @@ func command() *cobra.Command {
 		}
 		return portable.Run(cmd.Context(), base, instance, cmd.InOrStdin(), cmd.OutOrStdout(), cmd.ErrOrStderr())
 	}}
-	root.AddCommand(initCmd, runCmd)
+	root.AddCommand(initCmd, runCmd, setupCommand(&instance, bundle))
 	return root
 }
 

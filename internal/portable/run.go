@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +20,16 @@ import (
 // Run holds the instance lock for the entire child lifetime, including shutdown.
 // It forwards console interruption, then waits for the game's normal saves.
 func Run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer) (result error) {
+	return run(ctx, bundle, instance, in, out, errOut, nil)
+}
+
+// RunWithReady calls ready only after the child's local health endpoint responds.
+// Startup failure or timeout stops and reaps the child before releasing its lock.
+func RunWithReady(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer, ready func(string) error) error {
+	return run(ctx, bundle, instance, in, out, errOut, ready)
+}
+
+func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer, ready func(string) error) (result error) {
 	instance, err := filepath.Abs(instance)
 	if err != nil {
 		return err
@@ -62,20 +73,79 @@ func Run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	}
 	done := make(chan error, 1)
 	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		return err
-	case <-ctx.Done():
+	monitorCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	var readiness <-chan error
+	url := "http://127.0.0.1:" + strconv.Itoa(cfg.HTTPPort)
+	if ready != nil {
+		ch := make(chan error, 1)
+		readiness = ch
+		go func() { ch <- waitForHTTP(monitorCtx, url+"/health", 30*time.Second) }()
+	}
+	var startupErr error
+	for {
+		select {
+		case err := <-done:
+			if ready != nil {
+				return errors.Join(errors.New("server exited before becoming ready"), err)
+			}
+			return err
+		case err := <-readiness:
+			readiness = nil
+			// An early process exit takes precedence over an unrelated HTTP response.
+			select {
+			case exitErr := <-done:
+				return errors.Join(errors.New("server exited before becoming ready"), exitErr)
+			default:
+			}
+			if err == nil {
+				err = ready(url)
+			}
+			ready = nil
+			if err != nil {
+				startupErr = err
+			} else {
+				continue
+			}
+		case <-ctx.Done():
+		}
 		signalErr := interruptProcess(cmd.Process)
 		timer := time.NewTimer(30 * time.Second)
 		defer timer.Stop()
 		select {
 		case err := <-done:
-			return errors.Join(signalErr, err)
+			return errors.Join(startupErr, signalErr, err)
 		case <-timer.C:
 			killErr := cmd.Process.Kill()
 			waitErr := <-done
-			return errors.Join(errors.New("server did not stop within 30 seconds"), signalErr, killErr, waitErr)
+			return errors.Join(startupErr, errors.New("server did not stop within 30 seconds"), signalErr, killErr, waitErr)
+		}
+	}
+}
+
+func waitForHTTP(ctx context.Context, url string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	client := &http.Client{Timeout: time.Second, Transport: &http.Transport{Proxy: nil}, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
+	defer client.CloseIdleConnections()
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		if err != nil {
+			return err
+		}
+		response, err := client.Do(req)
+		if err == nil {
+			response.Body.Close()
+			if response.StatusCode == http.StatusOK {
+				return nil
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("local web client did not become ready: %w", ctx.Err())
+		case <-ticker.C:
 		}
 	}
 }
