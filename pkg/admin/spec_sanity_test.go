@@ -35,6 +35,8 @@ func TestGeneratedOpenAPISpec(t *testing.T) {
 	root.Handle("/admin/", ri.handler)
 
 	wantPaths := map[string][]string{
+		"/admin/notifications":                  {"get", "put"},
+		"/admin/notifications/{provider}/test":  {"post"},
 		"/health":                               {"get"},
 		"/admin/login":                          {"post"},
 		"/admin/logout":                         {"post"},

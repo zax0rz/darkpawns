@@ -132,3 +132,9 @@ type WizardCommandEvent struct {
 }
 
 func (e WizardCommandEvent) Type() string { return "admin.wizard_command" }
+
+// PlayerDiedEvent observes a guarded death, including environmental deaths.
+// Unlike PlayerKilledEvent, it does not imply a player killer.
+type PlayerDiedEvent struct{ PlayerID string }
+
+func (e PlayerDiedEvent) Type() string { return "player.died" }

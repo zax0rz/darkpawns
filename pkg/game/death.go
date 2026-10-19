@@ -622,6 +622,8 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		MudLog(line, MudlogBrief, lvlImmort, true)
 	}
 
+	w.observePlayerDeath(player)
+
 	// Death counter — fight.c:1689. GET_DEATHS(victim)++ is unconditional.
 	player.Deaths++
 	player.LastDeath = time.Now().Unix()
@@ -1293,4 +1295,14 @@ func (w *World) counter_procs(ch *Player, kills int) {
 
 	// src/fight.c:1308-1309: after rewards and the global blessing.
 	MudLog(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), MudlogNormal, LVL_IMMORT, false)
+}
+
+// R4: operational observation only. Both die() and the raw_kill callback reach
+// this seam after their guards, with no RNG, output, or game-state mutation.
+func (w *World) observePlayerDeath(player *Player) {
+	if w.Events != nil {
+		if err := w.Events.Publish(context.Background(), events.PlayerDiedEvent{PlayerID: player.GetName()}); err != nil {
+			slog.Warn("Publish PlayerDiedEvent failed", "error", err)
+		}
+	}
 }

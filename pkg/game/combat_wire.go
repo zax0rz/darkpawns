@@ -588,6 +588,9 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 
 	cb.ExtractChar = func(name combat.Combatant) {
 		if p, ok := combatPlayer(name); ok {
+			if p.GetFlags()&(1<<uint(plrExtractBit)) == 0 {
+				w.observePlayerDeath(p)
+			}
 			ExtractChar(p)
 		}
 	}

@@ -319,3 +319,28 @@ export const playerEditor = {
   items: (name: string, revision: string, data: { action: 'grant' | 'move' | 'remove'; source: 'inventory' | 'equipment'; index: number; vnum: number; locate: number }) =>
     request<SavedPlayer>(`/characters/${encodeURIComponent(name)}/items`, { method: 'POST', body: JSON.stringify({ revision, ...data }) }),
 };
+
+export type NotificationProvider = 'pushover' | 'discord';
+export interface NotificationDestination { enabled: boolean; events: string[] }
+export interface NotificationConfig {
+  revision: number;
+  pushover: NotificationDestination;
+  discord: NotificationDestination;
+  heartbeat: boolean;
+}
+export interface NotificationStatus {
+  ready: boolean;
+  last_success: string | null;
+  last_failure: string | null;
+  last_error: string;
+  dropped: number;
+}
+export interface NotificationView {
+  config: NotificationConfig;
+  status: Record<NotificationProvider | 'heartbeat', NotificationStatus>;
+}
+export const notifications = {
+  get: () => request<NotificationView>('/notifications'),
+  save: (config: NotificationConfig) => request<NotificationView>('/notifications', { method: 'PUT', body: JSON.stringify(config) }),
+  test: (provider: NotificationProvider) => request<{ status: string }>(`/notifications/${provider}/test`, { method: 'POST' }),
+};

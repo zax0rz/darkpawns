@@ -365,3 +365,50 @@ SELECT count(*) FROM players WHERE password_hash IS NULL OR password_hash = '';
 UPDATE players SET password_hash = '<bcrypt hash>' WHERE name = '<name>';
 ```
 
+
+## Optional game notifications
+
+Build/deploy the admin console alongside the server, then open **Staff tools →
+Notifications** with a HIGOD account. Events and destinations start disabled.
+Configure server secrets first, restart, choose events independently for Pushover
+and Discord, enable the desired destinations, save, and use each test button.
+Tests queue a message; check delivery status and the destination for receipt.
+
+Set these in your private service environment, never in source control:
+
+| Variable | Value |
+|---|---|
+| `DP_NOTIFY_PUSHOVER_TOKEN` | Your Pushover application's API token |
+| `DP_NOTIFY_PUSHOVER_USER` | Your Pushover user or group key |
+| `DP_NOTIFY_DISCORD_WEBHOOK` | `https://discord.com/api/webhooks/<id>/<token>` |
+| `DP_NOTIFY_HEARTBEAT_URL` | Optional hosted Healthchecks `https://hc-ping.com/<uuid>` URL |
+| `DP_NOTIFICATION_CONFIG_PATH` | Optional settings path; default `data/notifications.json` relative to server CWD (`lib/` normally) |
+
+Discord URLs must use the canonical host and contain no query string. Heartbeat
+URLs currently support hosted `hc-ping.com` UUID checks only. No provider is
+required to run the game. The portal shows credential readiness without returning
+secret values. Credentials are supplied once per server, not per staff browser.
+Keep the settings file in the instance's backups; do not replace it with an empty
+file on upgrade. Delivery counters/times reset on restart. Queued events are best
+effort and may be dropped during overload or after settings changes.
+
+**Migrating legacy Discord alerts:** `DISCORD_WEBHOOK_URL` is no longer consumed.
+Move its value to `DP_NOTIFY_DISCORD_WEBHOOK`, restart, then explicitly configure
+event subscriptions in the portal. Do not expect the old all-events behavior to
+be enabled automatically. The separate `DP_MUDLOG_NTFY_*` staff-log observer is
+unchanged and is not a public Discord-style announcement feed.
+
+For outage detection, create a Healthchecks check with a one-minute period and
+about two minutes of grace. Configure its Pushover down/recovery integration
+**in Healthchecks**, set the ping URL above, then enable the heartbeat in admin.
+The game pings only while its loop is progressing; the external service sends
+alerts even when the whole game host is down. Pause the check there during planned
+maintenance. Add independent external public HTTP/game-port probes for network,
+DNS and TLS coverage; an outbound heartbeat alone does not verify public access.
+Backups should have a separate success heartbeat from the backup job itself.
+
+The [notification scope and v2 backlog](docs/design/admin-notifications.md) records
+future providers and delivery/monitoring work. Provider API references:
+[Pushover](https://pushover.net/api),
+[Discord webhooks](https://docs.discord.com/developers/resources/webhook), and
+[Healthchecks ping API](https://healthchecks.io/docs/http_api/).
