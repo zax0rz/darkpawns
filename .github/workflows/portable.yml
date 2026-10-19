@@ -89,10 +89,13 @@ jobs:
       - name: Exercise background ownership and native automatic startup
         shell: python
         run: |
-          import pathlib, subprocess
+          import pathlib, subprocess, sys
           bundles = list(pathlib.Path('portable-extracted').iterdir())
           assert len(bundles) == 1, bundles
-          subprocess.run(['python', 'scripts/portable_lifecycle_smoke.py', '--bundle', str(bundles[0]), '--native-service'], check=True)
+          args = ['python', 'scripts/portable_lifecycle_smoke.py', '--bundle', str(bundles[0]), '--native-service']
+          if sys.platform == 'linux':
+              args.append('--shutdown-failure')
+          subprocess.run(args, check=True)
       - uses: actions/upload-artifact@v4
         with:
           name: unsigned-portable-${{ runner.os }}-${{ runner.arch }}

@@ -21,7 +21,7 @@ func TestControlOwnershipAuthenticationAndStop(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer closeControl()
+	defer closeControl(nil)
 	var record controlRecord
 	if err := readJSON(filepath.Join(instance, ".control.json"), &record); err != nil {
 		t.Fatal(err)
@@ -100,5 +100,25 @@ func TestStatusDoesNotGuessFromHeldLock(t *testing.T) {
 	}
 	if err := unlock(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestExitResultMustMatchAndPropagateFailure(t *testing.T) {
+	instance := t.TempDir()
+	for _, test := range []struct {
+		record exitRecord
+		ok     bool
+	}{{exitRecord{RunID: "ours"}, true}, {exitRecord{RunID: "other"}, false}, {exitRecord{RunID: "ours", Error: "server did not stop within 30 seconds"}, false}} {
+		data, err := json.Marshal(test.record)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := writePrivate(filepath.Join(instance, ".last-exit.json"), data); err != nil {
+			t.Fatal(err)
+		}
+		err = verifyExit(instance, "ours")
+		if (err == nil) != test.ok {
+			t.Fatalf("%+v: %v", test, err)
+		}
 	}
 }

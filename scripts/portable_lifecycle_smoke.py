@@ -8,6 +8,8 @@ import json
 import os
 import pathlib
 import socket
+import signal
+import sys
 import sqlite3
 import subprocess
 import tempfile
@@ -18,7 +20,7 @@ import websockets
 from smoke_test_2b import PASSWORD, cmd, create_character, login_existing, send
 
 
-def main(bundle, native_service=False):
+def main(bundle, native_service=False, shutdown_failure=False):
     bundle = pathlib.Path(bundle).resolve()
     launcher = bundle / ('darkpawns.exe' if os.name == 'nt' else 'darkpawns')
     with tempfile.TemporaryDirectory(prefix='darkpawns lifecycle ') as temporary:
@@ -139,6 +141,29 @@ def main(bundle, native_service=False):
             assert hashlib.sha256(database_path.read_bytes()).hexdigest() == damaged
             database_path.write_bytes(original)
             assert (instance / 'instance.json').read_bytes() == cfg
+            if shutdown_failure:
+                assert sys.platform == 'linux', 'stalled-child proof uses Linux /proc and SIGSTOP'
+                run('start')
+                owner = status()
+                children = set()
+                for task in pathlib.Path(f"/proc/{owner['pid']}/task").glob('*/children'):
+                    try:
+                        children.update(task.read_text().split())
+                    except FileNotFoundError:
+                        pass
+                assert len(children) == 1, children
+                child = int(next(iter(children)))
+                argv = pathlib.Path(f'/proc/{child}/cmdline').read_bytes().split(b'\0')
+                assert str(instance / 'lib/world').encode() in argv, argv
+                os.kill(child, signal.SIGSTOP)
+                failed = run('stop', good=False)
+                assert 'server did not stop within 30 seconds' in failed.stderr, failed.stderr
+                receipt = json.loads((instance / '.last-exit.json').read_text())
+                assert receipt['run_id'] == owner['run_id'] and receipt['error']
+                assert status()['state'] == 'stopped'
+                checks = json.loads(run('doctor', '--json', good=False).stdout)
+                assert any(c['name'] == 'Last shutdown' and not c['ok'] for c in checks)
+                print('PASS: stalled child shutdown fails explicitly and doctor reports the matching run result')
             print('PASS: setup survives parent exit, authenticated ownership, duplicate start, graceful stop/restart, saved immortal login, read-only doctor' + (', native startup install/start/restart/remove' if native_service else ''))
         finally:
             try:
@@ -157,5 +182,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', required=True)
     parser.add_argument('--native-service', action='store_true')
+    parser.add_argument('--shutdown-failure', action='store_true')
     options = parser.parse_args()
-    main(options.bundle, options.native_service)
+    main(options.bundle, options.native_service, options.shutdown_failure)

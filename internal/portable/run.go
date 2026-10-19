@@ -64,7 +64,7 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	if err != nil {
 		return err
 	}
-	defer func() { result = errors.Join(result, closeControl()) }()
+	defer func() { result = errors.Join(result, closeControl(result)) }()
 
 	suffix := ""
 	if runtime.GOOS == "windows" {

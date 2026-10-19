@@ -92,7 +92,11 @@ run setup first.
 `start` returns only after readiness; starting an already-running world is
 idempotent. `stop` asks the instance's own launcher to shut down and waits for its
 save/shutdown path. `restart` waits for that stop before starting again. These
-operations serialize per instance. `status --json` and `doctor --json` provide
+operations serialize per instance. A private `.last-exit.json` record ties the
+shutdown result to that run; stop reports a failed shutdown rather than treating
+lock release alone as success. The launcher allows 30 seconds for the game to
+exit, then terminates a stuck child and reports failure. Inspect the log and data
+before restarting after that failure. `status --json` and `doctor --json` provide
 structured output; doctor exits nonzero when it finds a problem.
 
 Background output goes to `lib/logs/launcher.log`. Keep the extracted release
@@ -143,7 +147,8 @@ Doctor checks release checksums, the server executable, instance configuration,
 POSIX private permissions, launcher state, local web availability and owned startup
 files/tasks. While stopped, it opens the existing SQLite database read-only and
 runs `quick_check`; it reports a missing, not-yet-created database separately.
-It skips offline integrity checking while a launcher is active. It performs no
+It reports a failed last shutdown when stopped and skips offline integrity
+checking while a launcher is active. It performs no
 repairs, password resets or credential changes. Windows ACL inspection and real
 logout/reboot behavior remain desktop verification work.
 

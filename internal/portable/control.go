@@ -3,6 +3,7 @@ package portable
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
@@ -20,6 +21,7 @@ import (
 
 type RuntimeStatus struct {
 	State    string `json:"state"`
+	RunID    string `json:"run_id"`
 	Instance string `json:"instance"`
 	Bundle   string `json:"bundle"`
 	PID      int    `json:"pid"`
@@ -33,7 +35,7 @@ type controlRecord struct {
 
 // The local operator endpoint is separate from the game's HTTP/admin surface.
 // Its per-run capability is written only inside the private instance directory.
-func serveControl(instance, bundle string, port int, stop context.CancelFunc) (markReady func(), closeControl func() error, err error) {
+func serveControl(instance, bundle string, port int, stop context.CancelFunc) (markReady func(), closeControl func(error) error, err error) {
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
 		return nil, nil, err
@@ -43,7 +45,8 @@ func serveControl(instance, bundle string, port int, stop context.CancelFunc) (m
 		return nil, nil, errors.Join(err, listener.Close())
 	}
 	record := controlRecord{Address: listener.Addr().String(), Token: hex.EncodeToString(secret)}
-	state := RuntimeStatus{State: "starting", Instance: instance, Bundle: bundle, PID: os.Getpid(), URL: "http://127.0.0.1:" + strconv.Itoa(port) + "/"}
+	digest := sha256.Sum256(secret)
+	state := RuntimeStatus{RunID: hex.EncodeToString(digest[:]), State: "starting", Instance: instance, Bundle: bundle, PID: os.Getpid(), URL: "http://127.0.0.1:" + strconv.Itoa(port) + "/"}
 	var mu sync.Mutex
 	mux := http.NewServeMux()
 	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
@@ -90,19 +93,34 @@ func serveControl(instance, bundle string, port int, stop context.CancelFunc) (m
 			stop()
 		}
 	}()
-	return func() { mu.Lock(); state.State = "running"; mu.Unlock() }, func() error {
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		closeErr := server.Shutdown(shutdownCtx)
-		if closeErr != nil {
-			closeErr = errors.Join(closeErr, server.Close())
-		}
-		removeErr := os.Remove(path)
-		if os.IsNotExist(removeErr) {
-			removeErr = nil
-		}
-		return errors.Join(closeErr, removeErr)
-	}, nil
+	return func() {
+			mu.Lock()
+			if state.State == "starting" {
+				state.State = "running"
+			}
+			mu.Unlock()
+		}, func(runErr error) error {
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			closeErr := server.Shutdown(shutdownCtx)
+			if closeErr != nil {
+				closeErr = errors.Join(closeErr, server.Close())
+			}
+			removeErr := os.Remove(path)
+			if os.IsNotExist(removeErr) {
+				removeErr = nil
+			}
+			runErr = errors.Join(runErr, closeErr, removeErr)
+			receipt := exitRecord{RunID: state.RunID}
+			if runErr != nil {
+				receipt.Error = runErr.Error()
+			}
+			data, encodeErr := json.Marshal(receipt)
+			if encodeErr == nil {
+				encodeErr = writePrivate(filepath.Join(instance, ".last-exit.json"), data)
+			}
+			return errors.Join(closeErr, removeErr, encodeErr)
+		}, nil
 }
 
 func writePrivate(path string, data []byte) (result error) {
@@ -187,4 +205,23 @@ func canonicalInstance(instance string) (string, error) {
 		return "", err
 	}
 	return filepath.EvalSymlinks(path)
+}
+
+type exitRecord struct {
+	RunID string `json:"run_id"`
+	Error string `json:"error,omitempty"`
+}
+
+func verifyExit(instance, runID string) error {
+	var receipt exitRecord
+	if err := readJSON(filepath.Join(instance, ".last-exit.json"), &receipt); err != nil {
+		return fmt.Errorf("shutdown finished but its result is unavailable; inspect the launcher log: %w", err)
+	}
+	if runID == "" || receipt.RunID != runID {
+		return errors.New("shutdown result belongs to a different run; inspect the launcher log")
+	}
+	if receipt.Error != "" {
+		return fmt.Errorf("shutdown failed: %s", receipt.Error)
+	}
+	return nil
 }

@@ -80,6 +80,15 @@ func Doctor(ctx context.Context, bundle, instance string) []Check {
 		cancel()
 		add("Web client", err, status.URL, "Wait for startup or inspect the launcher log.")
 	}
+	if status.State == "stopped" {
+		var last exitRecord
+		if exitErr := readJSON(filepath.Join(instance, ".last-exit.json"), &last); !os.IsNotExist(exitErr) {
+			if exitErr == nil && last.Error != "" {
+				exitErr = errors.New(last.Error)
+			}
+			add("Last shutdown", exitErr, "Exited normally", "Inspect lib/logs/launcher.log and verify the saved data before restarting.")
+		}
+	}
 	database := filepath.Join(instance, "lib", "data", "darkpawns.db")
 	if _, err := os.Stat(database); os.IsNotExist(err) {
 		add("SQLite", nil, "Not created yet; the first successful start creates it", "")

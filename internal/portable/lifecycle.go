@@ -185,7 +185,7 @@ func stopInstance(ctx context.Context, instance string) error {
 			return err
 		}
 		if !locked {
-			return nil
+			return verifyExit(instance, status.RunID)
 		}
 		select {
 		case <-timeout.Done():
