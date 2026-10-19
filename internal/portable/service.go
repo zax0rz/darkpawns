@@ -238,13 +238,8 @@ func startService(ctx context.Context, instance string) error {
 		if err != nil {
 			return err
 		}
-		target := "gui/" + account.Uid + "/" + record.Name
-		if err := serviceCommand(ctx, "launchctl", "bootout", target); err != nil {
-			if probe := serviceCommand(ctx, "launchctl", "print", target); probe == nil {
-				return err
-			}
-		}
-		return serviceCommand(ctx, "launchctl", "bootstrap", "gui/"+account.Uid, record.Path)
+		domain := "gui/" + account.Uid
+		return startLaunchAgent(ctx, domain+"/"+record.Name, domain, record.Path, serviceCommand)
 	case "windows":
 		// The previous supervisor can release its run lock just before Task
 		// Scheduler observes exit. Wait for that task to finish before launching it.
@@ -366,4 +361,34 @@ func windowsTaskFile(data []byte) []byte {
 		result = append(result, byte(v&0xff), byte(v>>8))
 	}
 	return result
+}
+
+// bootout can return before launchd finishes deregistration. Observe absence
+// before bootstrap, and bound the native manager's teardown/registration window.
+// Retrying this transition never changes the owned definition or force-kills it.
+func startLaunchAgent(ctx context.Context, target, domain, path string, command func(context.Context, string, ...string) error) error {
+	if err := command(ctx, "launchctl", "bootout", target); err != nil {
+		if probe := command(ctx, "launchctl", "print", target); probe == nil {
+			return err
+		}
+	}
+	wait, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	var lastErr error
+	for {
+		if probe := command(wait, "launchctl", "print", target); probe != nil {
+			if err := command(wait, "launchctl", "bootstrap", domain, path); err == nil {
+				return nil
+			} else {
+				lastErr = err
+			}
+		}
+		select {
+		case <-wait.Done():
+			return errors.Join(errors.New("launchd did not finish reloading the owned job"), lastErr, wait.Err())
+		case <-ticker.C:
+		}
+	}
 }

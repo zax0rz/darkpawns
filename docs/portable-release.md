@@ -1,7 +1,8 @@
 # Portable development bundle
 
 These are unsigned development snapshots with a guided setup wizard. Background lifecycle commands, doctor and optional per-user automatic startup are
-included. Updater and the public release/signing workflow are later milestones.
+included, along with manual updates and snapshot recovery. The public release/signing
+workflow remains a separate milestone.
 
 The archive contains `darkpawns`, `darkpawns-server` (both `.exe` on Windows),
 `release-assets/`, and the original license notices. Go, Node, Python and a source
@@ -199,10 +200,103 @@ instance. The raw server is still available for advanced deployments.
 
 Replaceable binaries and browser/admin assets stay in the release directory.
 Running a different compatible development bundle against the same instance
-must not copy starter files again. This separation is **not** a safe general
-upgrade/rollback system: schema compatibility, backups, signing and controlled
-activation still need implementation. Never extract a release over your instance.
+must not copy starter files again. Managed updates keep replaceable releases alongside private update history under
+`<instance>/.updates/`. They preserve the instance's edited starter files rather
+than copying a newer seed over them. Keep the original launcher directory: PATH
+shortcuts and native sign-in jobs use it as a stable entry point and dispatch to
+the active release. Never extract a release over your instance.
 A partially failed initialization is retained for inspection rather than erased.
+
+## Manual updates
+
+From an **updater-capable portable release**, run:
+
+```sh
+darkpawns update --check                 # stage and verify; keep the world running
+darkpawns update                         # review, then approve the stop/backup/update
+darkpawns update --yes                   # explicit unattended approval
+# Add --instance /absolute/path for a nondefault world.
+```
+
+The default source is the latest published stable release of this repository,
+with an archive for the native OS/architecture. The updater obtains the expected
+SHA-256 from the GitHub Releases API over HTTPS, downloads privately, and verifies
+the archive before extracting or stopping the world. Missing releases, missing
+digests and unsupported platforms fail without downtime. No portable releases
+are published by the current workflow, so the default command reports that none
+is available until a maintainer deliberately publishes the first stable release.
+The API contract is documented in [GitHub's release API](https://docs.github.com/en/rest/releases/releases).
+This trusts GitHub/repository access and TLS; independent publisher signatures
+and attestations are still a separate release milestone.
+
+For development or an offline host, supply a **trusted** archive and its digest:
+
+```sh
+darkpawns update --archive /path/to/native-release.tar.gz --sha256 <64-hex-digits>
+# Windows archives are .zip. Obtain the expected digest independently of a download.
+```
+
+A local digest detects a mismatch; it does not make an untrusted archive safe to
+execute. Both modes check the payload manifest, native Go binary targets and
+explicit updater/data format declarations. An identical payload is a no-op.
+`--check`, rejection, EOF and declined approval never stop the game. Cancellation
+removes unapplied staging. No tools, compiler, Git or Node are needed on the host.
+
+After approval, a lifecycle lock serializes operations. The launcher stops the
+current game and verifies its shutdown receipt, obtains the run lock, checks
+SQLite read-only, and copies the stopped instance to a private backup. It includes
+world edits, boards, database files/sidecars, admin and notification settings,
+notification encryption keys, stable signing configuration and logs. Updater
+history and transient process/lock records are excluded. Links and special files
+in the backed-up tree are refused. Backup file hashes are recorded and verified;
+the updater does not claim a filesystem-wide snapshot of unrelated writers.
+Keep enough free disk for releases, the whole backup, and a retained failed tree;
+there is no automatic history deletion or disk-space reservation yet.
+
+New releases live in unique directories; a durable active-release record selects
+the payload. Running Windows executables are never overwritten. If the world was
+running, the candidate supervisor must become locally healthy before commit.
+A stopped world stays stopped, so that path verifies the payload and backup but
+**does not certify runtime startup**. The game continues to use its existing
+instance world, not the release's fresh starter world.
+
+If candidate startup fails, the updater stops it, verifies the backup, preserves
+its attempted `lib/` as `failed-lib`, restores the saved `lib/` and byte-identical
+`instance.json`, selects the previous release and restarts it only if it was
+running before. This is **snapshot recovery**, not a claim that old binaries can
+undo a schema migration. Any writes accepted during the candidate's short startup
+window remain in `failed-lib`; they are not merged into the restored snapshot.
+Keep players out during a manual update. Automatic scheduling/idle-player gates
+are not implemented in this slice.
+
+An interrupted transaction blocks normal startup. Inspect `doctor`, retain the
+`.updates/` history, then use the original launcher if the active payload is
+unavailable:
+
+```sh
+/absolute/path/to/original/darkpawns update recover --instance /path/to/world
+```
+
+Recovery is retryable after interruption, refuses a held game lock or damaged
+backup, and retains attempted state. A partial backup made before activation is
+never restored. If restart fails after restoration, fix the reported environment
+or service issue and run `start`; recovery never deletes the player's world to
+start fresh. Journals and per-update receipts record the source, selected release,
+archive digest, previous run state and outcome. `doctor` reports pending recovery.
+There is no general-purpose restore command for a successfully committed update.
+
+Releases declare `update_format: 1` and `data_format: 1`. Maintainers must change
+the data epoch when a release cannot safely run against the current instance
+format or recover using the previous snapshot. Unknown target epochs are refused;
+there is no force-compatibility flag. The epoch is a producer declaration, not an
+automatic schema-diff proof. The pre-updater bundles can supply format-1 instance
+data, but sign-in jobs anchored to their old launchers must be removed/reinstalled
+with an updater-capable release before updating.
+
+These commands manage **portable instances**, not an arbitrary checkout or custom
+system daemon. Migrating an existing deployment requires preserving its flags,
+environment, networking, service account and state paths first. They do not deploy
+the separate Astro website, change the reverse proxy, or alter production services.
 
 ## Build and verification
 
@@ -224,6 +318,13 @@ browser's WebSocket protocol, duplicate-run rejection, graceful stop, release
 relocation and saved login after restart. It checks that edited instance world
 files survive changing the release seed. A cross-build is not a runtime proof;
 Windows console and macOS runtime results must come from those native jobs.
+Native CI also exercises local-archive updates: checksum/epoch refusal before
+downtime, check/cancel, complete backup, active-launcher dispatch through the
+original entry point, saved login, native registration across updates, failed-start
+snapshot recovery and preservation of a stopped state. Unit tests cover hostile
+archives, damaged backups and interruption during restore. This does not certify
+a live published feed, independent signatures, power-loss durability or arbitrary
+schema migrations.
 The same native journey now goes through the line-mode setup wizard, checking
 cancellation/EOF, port conflicts and retained state after a failed server start.
 Unit tests cover prompt correction, review and readiness timeout/cancellation.
@@ -235,7 +336,7 @@ than certifying desktop browser integration (R5f).
 
 - Windows ACLs, desktop installation checks, real sign-out/reboot verification and crash supervision.
 - Signed releases, macOS notarization and Windows installation experience.
-- Manual updates with consistent backups, compatibility gates and recovery.
+- A reviewed migration path for existing custom system-daemon deployments.
 - Opt-in scheduled updates using that same engine: notify-only or a maintenance
   window, no connected players, independently delivered success/failure/recovery
   notifications from an updater outside the game process. Never promise binary

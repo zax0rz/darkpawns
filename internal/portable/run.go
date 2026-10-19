@@ -20,17 +20,21 @@ import (
 // Run holds the instance lock for the entire child lifetime, including shutdown.
 // It forwards console interruption, then waits for the game's normal saves.
 func Run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer) (result error) {
-	return run(ctx, bundle, instance, in, out, errOut, nil)
+	return run(ctx, bundle, instance, in, out, errOut, nil, "")
 }
 
 // RunWithReady calls ready only after the child's local health endpoint responds.
 // Startup failure or timeout stops and reaps the child before releasing its lock.
 func RunWithReady(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer, ready func(string) error) error {
-	return run(ctx, bundle, instance, in, out, errOut, ready)
+	return run(ctx, bundle, instance, in, out, errOut, ready, "")
 }
 
-func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer, ready func(string) error) (result error) {
+func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut io.Writer, ready func(string) error, updateID string) (result error) {
 	instance, err := canonicalInstance(instance)
+	if err != nil {
+		return err
+	}
+	bundle, err = ActiveBundle(bundle, instance)
 	if err != nil {
 		return err
 	}
@@ -58,6 +62,9 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 		return errors.New("this instance is already running")
 	}
 	defer func() { result = errors.Join(result, lock.Close()) }()
+	if err := updateRunAllowed(instance, bundle, updateID); err != nil {
+		return err
+	}
 	ctx, stop := context.WithCancel(ctx)
 	defer stop()
 	markReady, closeControl, err := serveControl(instance, bundle, cfg.HTTPPort, stop)

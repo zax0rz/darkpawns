@@ -67,6 +67,14 @@ func Start(ctx context.Context, bundle, instance string) (status RuntimeStatus, 
 }
 
 func start(ctx context.Context, bundle, instance string) (RuntimeStatus, error) {
+	if err := pendingUpdate(instance); err != nil {
+		return RuntimeStatus{}, err
+	}
+	var resolveErr error
+	bundle, resolveErr = ActiveBundle(bundle, instance)
+	if resolveErr != nil {
+		return RuntimeStatus{}, resolveErr
+	}
 	status, err := Status(ctx, instance)
 	if err != nil {
 		return status, err
@@ -135,13 +143,17 @@ func start(ctx context.Context, bundle, instance string) (RuntimeStatus, error) 
 	}
 }
 
-func spawnSupervisor(launcher, instance string) (result error) {
+func spawnSupervisor(launcher, instance string, arguments ...string) (result error) {
 	log, err := os.OpenFile(filepath.Join(instance, "lib", "logs", "launcher.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
 	defer func() { result = errors.Join(result, log.Close()) }()
-	cmd := exec.Command(launcher, "_serve", "--instance", instance)
+	if len(arguments) == 0 {
+		arguments = []string{"_serve"}
+	}
+	arguments = append(arguments, "--instance", instance)
+	cmd := exec.Command(launcher, arguments...)
 	cmd.Dir = instance
 	cmd.Stdout, cmd.Stderr = log, log
 	detachProcess(cmd)
@@ -213,6 +225,10 @@ func Restart(ctx context.Context, bundle, instance string) (status RuntimeStatus
 
 // ServeBackground is entered only by the launcher or the registered user job.
 func ServeBackground(ctx context.Context, bundle, instance string) error {
+	return ServeUpdateBackground(ctx, bundle, instance, "")
+}
+
+func ServeUpdateBackground(ctx context.Context, bundle, instance, transaction string) error {
 	if err := backgroundConsole(); err != nil {
 		return err
 	}
@@ -221,7 +237,7 @@ func ServeBackground(ctx context.Context, bundle, instance string) error {
 		return err
 	}
 	defer log.Close()
-	err = Run(ctx, bundle, instance, nil, log, log)
+	err = run(ctx, bundle, instance, nil, log, log, nil, transaction)
 	if err != nil {
 		if _, writeErr := fmt.Fprintln(log, err); writeErr != nil {
 			return errors.Join(err, writeErr)

@@ -43,6 +43,15 @@ Windows logon tasks. Current-user session requirements and remaining desktop
 verification boundaries are recorded in the portable guide. There is no updater,
 root daemon, always-on dashboard or crash-restart policy in this slice.
 
+**Implementation slice 4 (2026-10-19):** Manual `update` stages and verifies a
+native archive, takes a stopped-instance backup, activates a side-by-side release,
+and recovers the previous snapshot after a failed candidate start. `--check`,
+explicit local archive/digest inputs and interrupted-transaction `recover` are
+available. The default GitHub stable feed needs deliberate release publishing;
+signing, existing custom-daemon migration, scheduled updates and independent
+notifications remain follow-ups. See the portable guide for compatibility epochs,
+snapshot recovery semantics and the native test boundary.
+
 ---
 
 ## 1. What This Is
