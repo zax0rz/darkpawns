@@ -765,8 +765,7 @@ func cmdTick(s *Session, args []string) error {
 	game.WeatherAndTime(true, s.manager.SendToOutdoor)
 	s.manager.world.AffectUpdate()
 	s.manager.world.PointUpdate()
-	// TODO(port): C calls hunt_items() after point_update(); no Go equivalent
-	// exists yet. Add it here in the same order when that subsystem is ported.
+	s.manager.world.HuntItems()
 	return nil
 }
 

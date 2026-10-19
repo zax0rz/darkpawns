@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -123,10 +124,10 @@ func (w *World) huntVictim(m *MobInstance) {
 		return
 	}
 
-	// Ordinary name-based hunting retains its player lookup. Equipment's
-	// zero-CHA check stores C's exact mobile prey identity (handler.c:669).
+	// C HUNTING prefers a retained mobile pointer, then resolves a player ID
+	// through a playing descriptor (src/utils.c:715-733).
 	m.mu.RLock()
-	preyID := m.HuntingMobID
+	preyID, playerID, preyName := m.HuntingMobID, m.HuntingID, m.Hunting
 	m.mu.RUnlock()
 	var target combat.Combatant
 	var evasion int
@@ -137,22 +138,38 @@ func (w *World) huntVictim(m *MobInstance) {
 		if prey != nil {
 			target = prey
 		}
-	} else if player := w.findPlayerByName(m.GetHunting()); player != nil {
-		// C's HUNTING(ch) resolves a player ID through get_char_by_id(),
-		// which walks only CON_PLAYING descriptors (utils.c:691-704).
-		// A retained linkless body therefore leaves HUNTING(ch) NULL and
-		// hunt_victim returns before changing the hunt or drawing RNG.
+	} else if playerID != "" {
+		id, err := strconv.Atoi(playerID)
+		if err != nil {
+			return
+		}
+		player := w.GetPlayerByID(id)
+		if player == nil || !w.playerHasPlayingDescriptor(player) {
+			// get_char_by_id only traverses CON_PLAYING descriptors. HUNTING
+			// is NULL while the player is linkless, so C returns untouched.
+			return
+		}
+		target = player
+		evasion = player.GetSkill("evasion")
+	} else if player := w.findPlayerByName(preyName); player != nil {
+		// Name-only targets are retained for legacy standalone fixtures. Every
+		// production set_hunting caller stores the C player ID instead.
 		if !w.playerHasPlayingDescriptor(player) {
 			return
 		}
 		target = player
 		evasion = player.GetSkill("evasion")
+	} else if mob := w.GetMobByName(preyName); mob != nil {
+		target = mob
 	}
-	if target == nil || target.GetRoom() < 2 {
+	if target == nil {
 		if m.CanSpeak() {
 			w.npcSay(m, "Damn!  My prey is gone!!")
 		}
 		m.SetHunting("")
+		return
+	}
+	if target.GetRoom() < 2 {
 		return
 	}
 

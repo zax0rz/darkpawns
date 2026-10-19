@@ -66,6 +66,10 @@ type World struct {
 	// a live CON_PLAYING descriptor. The session manager installs it at startup;
 	// nil keeps standalone game-layer fixtures independent of transport state.
 	PlayerHasPlayingDescriptor func(*Player) bool
+	// PlayingDescriptorBodies returns d->character bodies in descriptor_list
+	// order. hunt_items walks descriptors, not the world player registry; the
+	// session manager supplies this snapshot, including switched bodies.
+	PlayingDescriptorBodies func() []Actor
 	// PlayerHasDescriptor distinguishes a retained linkless body from a player
 	// whose live descriptor is in a menu, creation prompt, or editor state.
 	PlayerHasDescriptor func(*Player) bool
@@ -1438,18 +1442,29 @@ func (w *World) IsCorpseObj(objVNum int) bool {
 
 // SetHunting sets a character's hunting target.
 func (w *World) SetHunting(hunterName, preyName string, hunterIsMob bool) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	if hunterIsMob {
-		for _, m := range w.activeMobs {
-			if m.GetName() == hunterName {
-				m.SetHunting(preyName)
-				return
+	if !hunterIsMob {
+		return
+	}
+	var hunter *MobInstance
+	var prey Actor
+	for _, character := range w.cOrderedCharacters() {
+		if hunter == nil && character.mob != nil && strings.EqualFold(character.mob.GetName(), hunterName) {
+			hunter = character.mob
+		}
+		if prey == nil {
+			if character.player != nil && strings.EqualFold(character.player.GetName(), preyName) {
+				prey = character.player
+			} else if character.mob != nil && strings.EqualFold(character.mob.GetName(), preyName) {
+				prey = character.mob
 			}
 		}
+		if hunter != nil && prey != nil {
+			break
+		}
 	}
-	// Players don't have hunting state in current implementation.
+	if hunter != nil && prey != nil {
+		w.SetHuntingTarget(hunter, prey)
+	}
 }
 
 // IsHunting returns true if the character is hunting.

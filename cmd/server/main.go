@@ -639,9 +639,10 @@ func main() {
 		OnAffectUpdate: func() {
 			gameWorld.AffectUpdate()
 		},
-		// src/comm.c:825-830: one hourly point_update, after weather and
-		// affects, in both live and deterministic-clock execution.
+		// src/comm.c:825-830: hourly point_update then hunt_items, in both live
+		// and deterministic-clock execution.
 		OnPointUpdate: gameWorld.PointUpdate,
+		OnHuntItems:   gameWorld.HuntItems,
 		OnCheckIdlePasswords: func() {
 			manager.CheckIdlePasswords()
 		},

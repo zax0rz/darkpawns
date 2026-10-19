@@ -1,0 +1,69 @@
+# depth-case: mob.hunt-items-spiked-armor
+# depth-case: mob.hunt-items-hourly-dispatch
+# do_tick calls hunt_items after point_update. The wearer starts three rooms away
+# before an eligible Skarash is loaded. Seed 123 succeeds on the 11th armor
+# check; one mobile pulse then proves Skarash pursues the wearer across rooms.
+# C path: src/act.wizard.c:3501-3510 -> src/new_cmds2.c:748-805 ->
+# src/utils.c:715-733 -> src/graph.c:262-404.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+Huntgear
+Y
+huntpass
+huntpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Huntgear
+y
+huntpass
+huntpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Huntgear align -1000
+load obj 4210
+wear jade
+load obj 14223
+wear spiked
+~dpclock pulse 600
+load mob 14203
+goto 8108
+
+[probe]
+~dpclock pulse 30
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+tick
+~dpclock pulse 10
+goto 8107
+look
+equipment

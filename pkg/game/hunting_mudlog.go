@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // LogHuntingStart emits set_hunting's producer (src/utils.c:715-724):
 //
@@ -28,4 +31,66 @@ func LogHuntingStart(hunter Actor, prey *Player) {
 		return
 	}
 	MudLog(fmt.Sprintf("%s started hunting %s", hunter.GetName(), prey.GetName()), MudlogComplete, LVL_IMMORT, false)
+}
+
+// SetHuntingTarget is set_hunting's typed counterpart. Player targets are
+// retained by ID and resolved only through a playing descriptor; mobile
+// targets are retained by body ID. C logs player prey before storing its ID.
+func (w *World) SetHuntingTarget(hunter Actor, prey Actor) {
+	if hunter == nil {
+		return
+	}
+	mobHunter, isMobHunter := hunter.(*MobInstance)
+	if isMobHunter {
+		if w.mobAlreadyHunts(mobHunter, prey) {
+			return
+		}
+		mobHunter.ClearHunting()
+	}
+	if prey == nil {
+		return
+	}
+
+	switch target := prey.(type) {
+	case *Player:
+		targetName, targetID := target.GetName(), target.GetID()
+		LogHuntingStart(hunter, target)
+		if isMobHunter && targetID > 0 {
+			mobHunter.mu.Lock()
+			mobHunter.Hunting = targetName
+			mobHunter.HuntingID = strconv.Itoa(targetID)
+			mobHunter.HuntingMobID = 0
+			mobHunter.mu.Unlock()
+		}
+	case *MobInstance:
+		if isMobHunter {
+			targetName, targetID := target.GetName(), target.GetID()
+			mobHunter.mu.Lock()
+			mobHunter.Hunting = targetName
+			mobHunter.HuntingID = ""
+			mobHunter.HuntingMobID = targetID
+			mobHunter.mu.Unlock()
+		}
+	}
+}
+
+func (w *World) mobAlreadyHunts(hunter *MobInstance, prey Actor) bool {
+	if hunter == nil || prey == nil {
+		return false
+	}
+	hunter.mu.RLock()
+	name, playerID, mobID := hunter.Hunting, hunter.HuntingID, hunter.HuntingMobID
+	hunter.mu.RUnlock()
+	switch target := prey.(type) {
+	case *Player:
+		return target.GetID() > 0 && playerID == strconv.Itoa(target.GetID()) && w.playerHasPlayingDescriptor(target)
+	case *MobInstance:
+		return mobID != 0 && mobID == target.GetID()
+	default:
+		return name != "" && name == prey.GetName()
+	}
+}
+
+func parseHuntingPlayerID(id string) (int, error) {
+	return strconv.Atoi(id)
 }
