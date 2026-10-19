@@ -1,0 +1,88 @@
+name: Portable bundle
+on:
+  pull_request:
+    paths:
+      - '.goreleaser.yaml'
+      - '.github/workflows/portable.yml'
+      - 'cmd/darkpawns/**'
+      - 'internal/portable/**'
+      - 'cmd/server/**'
+      - 'pkg/**'
+      - 'lib/**'
+      - 'web/**'
+      - 'admin-ui/**'
+      - 'go.mod'
+      - 'go.sum'
+      - 'scripts/*portable*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Portable unit and asset-curation checks
+        run: |
+          go test ./internal/portable ./cmd/darkpawns
+          python -m unittest discover -s scripts -p test_stage_portable_release.py
+          python -m pip install 'websockets>=12,<16'
+      - name: Windows editor access adapter
+        if: runner.os == 'Windows'
+        run: go test ./pkg/session -run '^TestPortableWindowsEditorDelete$'
+      - name: Select the native target from the shared release definition
+        shell: python
+        run: |
+          import pathlib, subprocess
+          goos = subprocess.check_output(['go', 'env', 'GOOS'], text=True).strip()
+          goarch = subprocess.check_output(['go', 'env', 'GOARCH'], text=True).strip()
+          config = pathlib.Path('.goreleaser.yaml').read_text()
+          config = config.replace('goos: [linux, darwin, windows]', 'goos: [' + goos + ']')
+          config = config.replace('goarch: [amd64, arm64]', 'goarch: [' + goarch + ']')
+          pathlib.Path('.goreleaser-native.yaml').write_text(config)
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: v2.18.3
+          args: release --snapshot --clean --config .goreleaser-native.yaml
+      - name: Extract the generated native archive and exercise the instance journey
+        shell: python
+        run: |
+          import pathlib, subprocess, tarfile, zipfile
+          archives = list(pathlib.Path('dist').glob('*.tar.gz')) + list(pathlib.Path('dist').glob('*.zip'))
+          assert len(archives) == 1, archives
+          archive = archives[0]
+          destination = pathlib.Path('portable-extracted')
+          destination.mkdir()
+          if archive.suffix == '.zip':
+              with zipfile.ZipFile(archive) as source:
+                  source.extractall(destination)
+          else:
+              with tarfile.open(archive) as source:
+                  source.extractall(destination, filter='data')
+          bundles = list(destination.iterdir())
+          assert len(bundles) == 1, bundles
+          subprocess.run(['python', 'scripts/portable_smoke.py', '--bundle', str(bundles[0])], check=True)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-portable-${{ runner.os }}-${{ runner.arch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
+          retention-days: 7

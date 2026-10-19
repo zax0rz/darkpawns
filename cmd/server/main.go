@@ -827,7 +827,11 @@ func main() {
 	rootMux.Handle("/admin/", adminRouter)
 
 	// Serve admin UI static assets (compiled React app)
-	rootMux.Handle("/assets/", http.StripPrefix("/assets/", fingerprinted(http.FileServer(http.Dir("admin-ui-dist/assets")))))
+	adminUIDir := os.Getenv("ADMIN_UI_DIR")
+	if adminUIDir == "" {
+		adminUIDir = "admin-ui-dist"
+	}
+	rootMux.Handle("/assets/", http.StripPrefix("/assets/", fingerprinted(http.FileServer(http.Dir(filepath.Join(adminUIDir, "assets"))))))
 
 	// Test hook for the API route drift gate (TestAPIRouteDriftGate in
 	// api_routes_test.go): with the env guard set, print the root route table

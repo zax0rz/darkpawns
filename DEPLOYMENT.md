@@ -33,6 +33,14 @@ are not in the repository, so an upgrade that replaces `lib/world/` from a fresh
 checkout, or syncs it with `rsync --delete`, erases every posted message. Keep `etc/`
 out of the sync (`rsync --delete --exclude='etc/' …`) or copy it aside first.
 
+## Portable development bundles
+
+The new [portable bundle foundation](docs/portable-release.md) packages the server,
+web client, admin console and a clean starter world for Windows, macOS and Linux.
+It creates a separate private instance and runs on loopback without a source
+checkout or build tools. These are unsigned development snapshots; the public
+installer, wizard, services, signing and update lifecycle are not implemented yet.
+
 ## Quickstart
 
 A fresh clone to a running server. No external services are required: the
