@@ -162,6 +162,7 @@ func TestUpdateRecoveryRestoresWholeMutableTreeAndIsRetryable(t *testing.T) {
 	if err := Init(bundle, instance, 4350); err != nil {
 		t.Fatal(err)
 	}
+	instance = canonicalTestPath(t, instance)
 	original, err := os.ReadFile(filepath.Join(instance, "instance.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -247,6 +248,7 @@ func TestDamagedBackupAndRunLockBlockRecovery(t *testing.T) {
 			if err := Init(bundle, instance, 4350); err != nil {
 				t.Fatal(err)
 			}
+			instance = canonicalTestPath(t, instance)
 			record := updateRecord{ID: strings.Repeat("b", 32), Phase: "testing", Previous: bundle, Candidate: filepath.Join(instance, ".updates", strings.Repeat("b", 32), "release", "candidate")}
 			work := filepath.Join(updatePath(instance), record.ID)
 			if err := os.MkdirAll(work, 0o700); err != nil {
@@ -269,8 +271,15 @@ func TestDamagedBackupAndRunLockBlockRecovery(t *testing.T) {
 				}
 				defer unlock()
 			}
-			if err := RecoverUpdate(context.Background(), instance); err == nil {
+			recoveryErr := RecoverUpdate(context.Background(), instance)
+			if recoveryErr == nil {
 				t.Fatal("unsafe restore accepted")
+			}
+			if kind == "checksum" && !strings.Contains(recoveryErr.Error(), "backup checksum mismatch") {
+				t.Fatalf("wrong refusal: %v", recoveryErr)
+			}
+			if kind == "lock" && !strings.Contains(recoveryErr.Error(), "lock") {
+				t.Fatalf("wrong refusal: %v", recoveryErr)
 			}
 			if _, err := Load(instance); err != nil {
 				t.Fatal("live config damaged", err)
@@ -292,4 +301,13 @@ func TestAppliedPlanCloseRetainsHistoryAfterAnotherTransaction(t *testing.T) {
 	if _, err := os.Stat(work); err != nil {
 		t.Fatal("applied history was deleted", err)
 	}
+}
+
+func canonicalTestPath(t *testing.T, path string) string {
+	t.Helper()
+	canonical, err := canonicalInstance(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return canonical
 }

@@ -48,6 +48,11 @@ func validateUpdatesDir(instance string) error {
 func updatePath(instance string) string { return filepath.Join(instance, ".updates") }
 func readUpdate(instance string) (updateRecord, error) {
 	var record updateRecord
+	canonical, canonicalErr := canonicalInstance(instance)
+	if canonicalErr != nil {
+		return record, canonicalErr
+	}
+	instance = canonical
 	if err := validateUpdatesDir(instance); err != nil {
 		return record, err
 	}

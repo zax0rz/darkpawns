@@ -242,6 +242,9 @@ func extractUpdate(archive, destination string) (bundle string, result error) {
 	}
 	if z, err := zip.NewReader(file, info.Size()); err == nil {
 		for _, entry := range z.File {
+			if entry.UncompressedSize64 > maxExpanded {
+				return "", errors.New("release expansion limit exceeded")
+			}
 			r, err := entry.Open()
 			if err != nil {
 				return "", err
