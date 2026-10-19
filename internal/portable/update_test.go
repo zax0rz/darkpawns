@@ -6,9 +6,15 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +22,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/internal/releaseauth"
 )
 
 func TestUpdateArchiveRefusesUnsafeEntries(t *testing.T) {
@@ -311,3 +319,50 @@ func canonicalTestPath(t *testing.T, path string) string {
 	}
 	return canonical
 }
+
+func TestPublishedAssetRequiresMatchingPublisherSignature(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	public := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der})
+	name, err := releaseauth.ArchiveName("v0.1.0", runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := strings.Repeat("a", 64)
+	data := []byte("darkpawns-release-v1\nversion v0.1.0\ncommit " + strings.Repeat("b", 40) + "\nasset " + runtime.GOOS + " " + runtime.GOARCH + " " + name + " 10 sha256 " + digest + "\n")
+	hash := sha256.Sum256(data)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, hash[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := &http.Client{Transport: releaseRoundTrip(func(req *http.Request) (*http.Response, error) {
+		body := data
+		if strings.HasSuffix(req.URL.Path, ".sig") {
+			body = signature
+		}
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(body)), Header: make(http.Header)}, nil
+	})}
+	asset := releaseAsset{Name: name, URL: "https://github.com/zax0rz/darkpawns/releases/download/v0.1.0/" + name, Size: 10, Digest: "sha256:" + digest}
+	if err := verifyPublishedAsset(context.Background(), client, asset, public); err != nil {
+		t.Fatal(err)
+	}
+	asset.Digest = "sha256:" + strings.Repeat("c", 64)
+	if err := verifyPublishedAsset(context.Background(), client, asset, public); err == nil {
+		t.Fatal("API disagreement with signed digest accepted")
+	}
+	asset.Digest = "sha256:" + digest
+	signature[0] ^= 1
+	if err := verifyPublishedAsset(context.Background(), client, asset, public); err == nil {
+		t.Fatal("tampered publisher signature accepted")
+	}
+}
+
+type releaseRoundTrip func(*http.Request) (*http.Response, error)
+
+func (f releaseRoundTrip) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }

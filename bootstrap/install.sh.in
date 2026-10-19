@@ -1,0 +1,79 @@
+#!/bin/sh
+# Dark Pawns portable bootstrap. Publisher verification precedes extraction.
+set -eu
+umask 077
+base=https://github.com/zax0rz/darkpawns/releases/latest/download
+root=${XDG_DATA_HOME:-"$HOME/.local/share"}/darkpawns/releases
+bin=$HOME/.local/bin
+source_dir=
+setup=yes
+while [ "$#" -gt 0 ]; do
+ case "$1" in
+  --install-dir) root=$2; shift 2;;
+  --bin-dir) bin=$2; shift 2;;
+  --source-dir) source_dir=$2; shift 2;;
+  --no-setup) setup=no; shift;;
+  *) echo "Unknown installer option: $1" >&2; exit 1;;
+ esac
+done
+case "$root:$bin" in /*:/*) ;; *) echo 'Choose absolute installation and command folders.' >&2; exit 1;; esac
+for tool in openssl tar awk uname mktemp head grep wc tr cp mv; do command -v "$tool" >/dev/null 2>&1 || { echo "Required system utility is missing: $tool" >&2; exit 1; }; done
+if [ -z "$source_dir" ]; then command -v curl >/dev/null 2>&1 || { echo 'curl is required for HTTPS downloads.' >&2; exit 1; }; fi
+case "$(uname -s)" in Linux) platform=linux;; Darwin) platform=darwin;; *) echo 'This installer supports Linux and macOS.' >&2; exit 1;; esac
+case "$(uname -m)" in x86_64|amd64) arch=amd64;; aarch64|arm64) arch=arm64;; *) echo 'This processor is not supported.' >&2; exit 1;; esac
+work=$(mktemp -d "${TMPDIR:-/tmp}/darkpawns-install.XXXXXXXX")
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+cat > "$work/publisher.pem" <<'PUBLIC_KEY'
+@@PUBLIC_KEY_PEM@@
+PUBLIC_KEY
+fetch() {
+ if [ -n "$source_dir" ]; then cp "$source_dir/$1" "$work/$1";
+ else curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --tlsv1.2 --max-time 180 --max-filesize 536870912 "$2/$1" -o "$work/$1"; fi
+}
+echo 'Dark Pawns: checking the publisher signature.'
+fetch release-manifest.txt "$base"
+fetch release-manifest.sig "$base"
+[ "$(wc -c < "$work/release-manifest.txt")" -le 32768 ] && [ "$(wc -c < "$work/release-manifest.sig")" -le 1024 ] || { echo 'Release metadata exceeds size limit.' >&2; exit 1; }
+openssl dgst -sha256 -verify "$work/publisher.pem" -signature "$work/release-manifest.sig" "$work/release-manifest.txt" >/dev/null || { echo 'Publisher verification failed. Nothing installed.' >&2; exit 1; }
+[ "$(head -n 1 "$work/release-manifest.txt")" = darkpawns-release-v1 ] || { echo 'Unsupported release metadata.' >&2; exit 1; }
+tag=$(awk '$1=="version" && NF==2 {print $2}' "$work/release-manifest.txt")
+printf '%s\n' "$tag" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' || { echo 'Invalid stable release tag.' >&2; exit 1; }
+version=${tag#v}
+name=darkpawns_${version}_${platform}_${arch}.tar.gz
+record=$(awk -v os="$platform" -v arch="$arch" '$1=="asset" && $2==os && $3==arch && NF==7 {print $4 " " $5 " " $6 " " $7}' "$work/release-manifest.txt")
+# Signed metadata is still treated as data, never shell code.
+set -f
+set -- $record
+[ "$#" = 4 ] && [ "$1" = "$name" ] && [ "$3" = sha256 ] || { echo 'No unique signed archive for this platform.' >&2; exit 1; }
+expected_size=$2
+expected_hash=$4
+case "$expected_size" in ''|*[!0-9]*) echo 'Invalid archive size.' >&2; exit 1;; esac
+[ "$expected_size" -gt 0 ] && [ "$expected_size" -le 536870912 ] || { echo 'Archive exceeds size limit.' >&2; exit 1; }
+printf '%s\n' "$expected_hash" | grep -Eq '^[a-f0-9]{64}$' || { echo 'Invalid archive digest.' >&2; exit 1; }
+fetch "$name" "https://github.com/zax0rz/darkpawns/releases/download/$tag"
+actual_size=$(wc -c < "$work/$name" | tr -d ' ')
+actual_hash=$(openssl dgst -sha256 "$work/$name" | awk '{print $NF}')
+[ "$actual_size" = "$expected_size" ] && [ "$actual_hash" = "$expected_hash" ] || { echo 'Archive verification failed. Nothing installed.' >&2; exit 1; }
+wrapper=darkpawns_${version}_${platform}_${arch}
+# Generated releases have one wrapper and regular files/directories only.
+tar -tzf "$work/$name" > "$work/paths"
+awk -v root="$wrapper" 'BEGIN{ok=1} {if ($0!=root && $0!=root"/" && index($0,root"/")!=1)ok=0; n=split($0,p,"/");for(i=1;i<=n;i++)if(p[i]==".." || p[i]==".")ok=0; if(index($0,"\\"))ok=0} END{exit !ok}' "$work/paths" || { echo 'Unsafe archive paths.' >&2; exit 1; }
+tar -tvzf "$work/$name" > "$work/types"
+awk 'substr($0,1,1)!="d" && substr($0,1,1)!="-" {bad=1} END{exit bad}' "$work/types" || { echo 'Archive contains links or special files.' >&2; exit 1; }
+mkdir -p "$root" "$bin"
+target=$root/$wrapper
+[ ! -e "$target" ] && [ ! -L "$target" ] || { echo "Release already exists at $target. Use its darkpawns update command." >&2; exit 1; }
+# Stage on the destination filesystem; never merge an archive into existing files.
+stage=$(mktemp -d "$root/.install.XXXXXXXX")
+trap 'rm -rf "$work" "$stage"' EXIT
+tar -xzf "$work/$name" -C "$stage" --no-same-owner
+[ -x "$stage/$wrapper/darkpawns" ] && [ -x "$stage/$wrapper/darkpawns-server" ] || { echo 'Release executables are missing.' >&2; exit 1; }
+mv "$stage/$wrapper" "$target"
+if [ ! -e "$bin/darkpawns" ] && [ ! -L "$bin/darkpawns" ]; then ln -s "$target/darkpawns" "$bin/darkpawns"; else echo 'Existing darkpawns command preserved.'; fi
+printf 'Installed: %s/darkpawns\n' "$target"
+printf 'Command folder: %s (add it to PATH if needed).\n' "$bin"
+if [ "$setup" = yes ]; then
+ if [ -r /dev/tty ] && ( : </dev/tty ) 2>/dev/null; then "$target/darkpawns" setup </dev/tty;
+ else printf 'No interactive terminal. Run "%s/darkpawns" setup to choose your world folder.\n' "$target"; fi
+fi

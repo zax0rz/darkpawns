@@ -52,6 +52,14 @@ signing, existing custom-daemon migration, scheduled updates and independent
 notifications remain follow-ups. See the portable guide for compatibility epochs,
 snapshot recovery semantics and the native test boundary.
 
+**Implementation slice 5 (2026-10-19):** Shell and Windows PowerShell bootstraps
+verify pinned publisher signatures and native archive digests before installation,
+then start the existing setup wizard. A manually approved workflow validates a
+reviewed stable tag on main, runs native journeys, builds six archives and signs
+publication metadata in the protected release environment. No public release is
+created on merge or tag push. The existing wizard stays unchanged; ASCII splash
+art and a design-system terminal pass are queued separately.
+
 ---
 
 ## 1. What This Is

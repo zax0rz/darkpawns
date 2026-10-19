@@ -44,6 +44,6 @@ archives:
 checksum:
   name_template: checksums.txt
 # Snapshot builds are unsigned development artifacts. Publishing/signing is a
-# later milestone, not an automatic side effect of pushing a tag or this PR.
+# separate manually approved workflow, never a side effect of pushing a tag.
 release:
   disable: true

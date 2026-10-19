@@ -2,11 +2,53 @@
 
 These are unsigned development snapshots with a guided setup wizard. Background lifecycle commands, doctor and optional per-user automatic startup are
 included, along with manual updates and snapshot recovery. The public release/signing
-workflow remains a separate milestone.
+workflow is manually approved; see [publishing releases](publishing-releases.md).
 
 The archive contains `darkpawns`, `darkpawns-server` (both `.exe` on Windows),
 `release-assets/`, and the original license notices. Go, Node, Python and a source
 checkout are not needed to **run** an extracted bundle.
+
+## Bootstrap installation
+
+After the first stable release is published, Linux/macOS can download and run the
+installer in one shell command:
+
+```sh
+sh -c 'set -e; installer=$(mktemp); trap '\''rm -f "$installer"'\'' EXIT; curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://github.com/zax0rz/darkpawns/releases/latest/download/install.sh -o "$installer"; sh "$installer"'
+```
+
+Windows PowerShell 5.1 or newer:
+
+```powershell
+$installer = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-' + [Guid]::NewGuid().ToString('N') + '.ps1'); try { Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1' -OutFile $installer; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer; if ($LASTEXITCODE -ne 0) { throw 'Installer did not complete.' } } finally { Remove-Item -LiteralPath $installer -ErrorAction SilentlyContinue }
+```
+
+The installer checks the signed release manifest and native archive before
+extracting it, installs under your user account, and opens `darkpawns setup`.
+Linux/macOS require the standard `curl`, OpenSSL and tar utilities; there is no
+compiler or language runtime to install. Windows uses built-in PowerShell/.NET.
+Nothing needs administrator privileges. This is a shell/PowerShell bootstrap,
+not an MSI, macOS application or OS code-signing certificate. The initial script
+itself is delivered using GitHub HTTPS; its pinned publisher key authenticates
+the manifest and bundle. Independently inspecting that script/key is the trust
+boundary for first installation.
+
+Default release folders are `$XDG_DATA_HOME/darkpawns/releases` (falling back to
+`~/.local/share/darkpawns/releases`) on POSIX and
+`%LOCALAPPDATA%\darkpawns\releases` on Windows. The world remains in the wizard's
+separate instance folder. POSIX installs a new `~/.local/bin/darkpawns` symlink;
+it prints the command folder so you can add it to PATH when needed. Windows
+installs a UTF-8 `darkpawns.cmd` wrapper and adds its bin folder to your user PATH;
+open a new terminal to pick that up. The Windows wrapper sets console code page
+65001 so Unicode installation paths work. Existing commands and release folders
+are preserved; use `darkpawns update` for an existing installation.
+
+Downloaded scripts also accept `--install-dir`, `--bin-dir`, `--no-setup` and
+`--source-dir` on POSIX; Windows uses `-InstallDir`, `-BinDir`, `-NoSetup`,
+`-SourceDir` and optional `-NoPath`. Source-dir mode reads an offline release
+folder and still requires the pinned signature; it is not an unsigned bypass.
+In a headless POSIX session without a controlling terminal, installation prints
+the setup command instead of reading prompts from a download pipe.
 
 ## Guided setup
 
@@ -220,14 +262,18 @@ darkpawns update --yes                   # explicit unattended approval
 
 The default source is the latest published stable release of this repository,
 with an archive for the native OS/architecture. The updater obtains the expected
-SHA-256 from the GitHub Releases API over HTTPS, downloads privately, and verifies
-the archive before extracting or stopping the world. Missing releases, missing
-digests and unsupported platforms fail without downtime. No portable releases
-are published by the current workflow, so the default command reports that none
-is available until a maintainer deliberately publishes the first stable release.
-The API contract is documented in [GitHub's release API](https://docs.github.com/en/rest/releases/releases).
-This trusts GitHub/repository access and TLS; independent publisher signatures
-and attestations are still a separate release milestone.
+SHA-256 from the GitHub Releases API over HTTPS and requires it to match the
+publisher's signed manifest and archive size. The signature is RSA PKCS#1 v1.5
+with SHA-256, verified against the embedded public key in
+`internal/releaseauth/trusted-key.pem`. Changed metadata, foreign keys, mismatched
+release identities and unsigned official downloads are refused before downtime.
+
+No portable release is published simply by merging or pushing a tag. Until the
+first stable release is deliberately approved, the default command reports that
+none is available. See [publishing releases](publishing-releases.md). A publisher
+signature proves possession of that key; native compatibility tests, protected
+publication review, signing-key security and TLS/script delivery remain separate
+parts of the release process. It is not Apple notarization or Windows Authenticode.
 
 For development or an offline host, supply a **trusted** archive and its digest:
 
@@ -309,8 +355,9 @@ make portable-snapshot
 This builds Linux/macOS/Windows amd64 and arm64 archives, with checksums. Starter
 assets come from the current **committed** Git tree; the admin UI is freshly
 built. Checksums detect damaged payloads, not publisher authenticity. No artifacts
-are published automatically, including on tags. Signing/notarization and the
-one-command bootstrap remain later milestones.
+are published automatically on tags. The manually approved publication workflow
+signs the archive manifest and publishes the bootstrap scripts; macOS
+notarization and Windows Authenticode/MSI remain follow-ups.
 
 The portable CI workflow builds native unsigned snapshots, then tests initialization,
 loopback HTTP/browser/admin assets, first-immortal/second-mortal creation over the
@@ -323,7 +370,7 @@ downtime, check/cancel, complete backup, active-launcher dispatch through the
 original entry point, saved login, native registration across updates, failed-start
 snapshot recovery and preservation of a stopped state. Unit tests cover hostile
 archives, damaged backups and interruption during restore. This does not certify
-a live published feed, independent signatures, power-loss durability or arbitrary
+a successful live published feed activation, OS code signing, power-loss durability or arbitrary
 schema migrations.
 The same native journey now goes through the line-mode setup wizard, checking
 cancellation/EOF, port conflicts and retained state after a failed server start.
@@ -335,7 +382,8 @@ than certifying desktop browser integration (R5f).
 ## Follow-up milestones
 
 - Windows ACLs, desktop installation checks, real sign-out/reboot verification and crash supervision.
-- Signed releases, macOS notarization and Windows installation experience.
+- macOS notarization, Windows Authenticode and a native Windows installer.
+- ASCII splash art and terminal polish using the established design/voice.
 - A reviewed migration path for existing custom system-daemon deployments.
 - Opt-in scheduled updates using that same engine: notify-only or a maintenance
   window, no connected players, independently delivered success/failure/recovery
