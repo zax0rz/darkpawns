@@ -21,10 +21,12 @@ const Format = 1
 // Manifest describes the immutable payload, not the operator's editable world.
 // Checksums detect damaged bundles; they are not a substitute for release signing.
 type Manifest struct {
-	Format  int               `json:"format"`
-	Version string            `json:"version"`
-	Commit  string            `json:"commit"`
-	Files   map[string]string `json:"files"`
+	Format       int               `json:"format"`
+	UpdateFormat int               `json:"update_format,omitempty"`
+	DataFormat   int               `json:"data_format,omitempty"`
+	Version      string            `json:"version"`
+	Commit       string            `json:"commit"`
+	Files        map[string]string `json:"files"`
 }
 
 type Config struct {

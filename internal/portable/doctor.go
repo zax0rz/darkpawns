@@ -26,6 +26,11 @@ type Check struct {
 // resets credentials, repairs SQLite or kills processes.
 func Doctor(ctx context.Context, bundle, instance string) []Check {
 	checks := []Check{}
+	originalBundle := bundle
+	resolved, resolveErr := ActiveBundle(bundle, instance)
+	if resolveErr == nil {
+		bundle = resolved
+	}
 	add := func(name string, err error, success, fix string) {
 		detail := success
 		if err != nil {
@@ -33,6 +38,8 @@ func Doctor(ctx context.Context, bundle, instance string) []Check {
 		}
 		checks = append(checks, Check{Name: name, OK: err == nil, Detail: detail})
 	}
+	add("Active release", resolveErr, bundle, "Inspect .updates/active.json; retain the original launcher at "+originalBundle+" for recovery.")
+	add("Update transaction", pendingUpdate(instance), "No interrupted update", "Use "+OperatorCommand(instance, "update", "recover")+" to recover an interrupted update.")
 	manifest, err := ReadManifest(bundle)
 	if err == nil {
 		err = Verify(bundle, manifest)

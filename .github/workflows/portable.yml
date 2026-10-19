@@ -96,6 +96,13 @@ jobs:
           if sys.platform == 'linux':
               args.append('--shutdown-failure')
           subprocess.run(args, check=True)
+      - name: Exercise verified updates and failed-start recovery
+        shell: python
+        run: |
+          import pathlib, subprocess
+          bundles = list(pathlib.Path('portable-extracted').iterdir())
+          assert len(bundles) == 1, bundles
+          subprocess.run(['python', 'scripts/portable_update_smoke.py', '--bundle', str(bundles[0]), '--native-service'], check=True)
       - uses: actions/upload-artifact@v4
         with:
           name: unsigned-portable-${{ runner.os }}-${{ runner.arch }}

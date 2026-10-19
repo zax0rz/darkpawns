@@ -65,13 +65,19 @@ func command() *cobra.Command {
 	}}
 	root.AddCommand(initCmd, runCmd, setupCommand(&instance, bundle))
 	addLifecycle(root, &instance, bundle)
+	addUpdate(root, &instance, bundle)
 	return root
 }
 
 func execute() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	return command().ExecuteContext(ctx)
+	root := command()
+	root.SetContext(ctx)
+	if forwarded, err := forwardActive(root, os.Args[1:]); forwarded || err != nil {
+		return err
+	}
+	return root.ExecuteContext(ctx)
 }
 
 func main() {

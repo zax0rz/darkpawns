@@ -63,7 +63,7 @@ def stage(root, version):
             p.relative_to(staged).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in sorted(staged.rglob('*')) if p.is_file()
         }
-        manifest = {'format': 1, 'version': version, 'commit': commit, 'files': files}
+        manifest = {'format': 1, 'update_format': 1, 'data_format': 1, 'version': version, 'commit': commit, 'files': files}
         (staged / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
         if destination.exists():
             shutil.rmtree(destination)

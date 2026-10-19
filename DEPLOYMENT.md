@@ -7,6 +7,11 @@ infrastructure-agnostic: it describes the software, not any particular deploymen
 > **Operating the official `darkpawns.org` instance** (host access, deploy/rollback
 > mechanics, backup targets) is documented separately in the private ops repo, not here.
 
+For the portable launcher, see [portable releases and manual updates](docs/portable-release.md).
+`darkpawns update` manages that isolated instance layout. An existing custom system
+service must first be migrated with its full configuration and state; running the
+portable updater does not adopt a checkout deployment or replace this runbook.
+
 ## What you're running
 
 A single Go binary (`cmd/server`) that serves three surfaces:
