@@ -2,9 +2,43 @@ package game
 
 import (
 	"bytes"
+	"log"
 	"os"
+	"strings"
 	"testing"
 )
+
+func TestStoreMailLogsErrorOnlyForInvalidInput(t *testing.T) {
+	setupNativeMailReadFixture(t)
+
+	oldOutput := log.Writer()
+	var logOutput bytes.Buffer
+	log.SetOutput(&logOutput)
+	t.Cleanup(func() { log.SetOutput(oldOutput) })
+
+	tests := []struct {
+		name       string
+		to, from   int
+		message    string
+		wantLogged bool
+	}{
+		{name: "valid IDs and message", to: 3, from: 11, message: "mail body"},
+		{name: "negative sender ID", to: 3, from: -1, message: "mail body", wantLogged: true},
+		{name: "negative recipient ID", to: -1, from: 11, message: "mail body", wantLogged: true},
+		{name: "empty message", to: 3, from: 11, wantLogged: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logOutput.Reset()
+			storeMail(tt.to, tt.from, tt.message)
+			gotLogged := strings.Contains(logOutput.String(), "non-fatal error #5.")
+			if gotLogged != tt.wantLogged {
+				t.Fatalf("error #5 logged = %t, want %t; log=%q", gotLogged, tt.wantLogged, logOutput.String())
+			}
+		})
+	}
+}
 
 func TestMailReadWriteSharedFilePositioning(t *testing.T) {
 	t.Chdir(t.TempDir())

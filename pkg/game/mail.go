@@ -320,8 +320,8 @@ func hasMail(recipient int) bool {
 }
 
 func storeMail(to, from int, message string) { //nolint:unused // mail helper
-	log.Printf("SYSERR: Mail system -- non-fatal error #5. (from == %d, to == %d)", from, to)
 	if from < 0 || to < 0 || message == "" {
+		log.Printf("SYSERR: Mail system -- non-fatal error #5. (from == %d, to == %d)", from, to)
 		return
 	}
 	mailGlobalMu.Lock()
@@ -524,7 +524,7 @@ func (w *World) PostmasterSendMail(ch *Player, mailman *MobInstance, arg string)
 	recipient := GetIDByName(name)
 	if recipient < 0 {
 		ch.mu.Unlock()
-		ch.SendMessage("$n tells you, 'No one by that name is registered here!'\r\n")
+		Act(w, false, mailman, ch, nil, nil, "$n tells you, 'No one by that name is registered here!'", "", ToVict)
 		return
 	}
 
@@ -534,8 +534,8 @@ func (w *World) PostmasterSendMail(ch *Player, mailman *MobInstance, arg string)
 	}
 	ch.mu.Unlock()
 
-	w.roomMessage(ch.GetRoom(), "$n starts to write some mail.")
-	ch.SendMessage(fmt.Sprintf("$n tells you, 'I'll take %d coins for the stamp.'\r\n$n tells you, 'Write your message, use @ on a new line when done.'\r\n", MailStampPrice))
+	Act(w, true, ch, nil, nil, nil, "$n starts to write some mail.", "", ToRoom)
+	Act(w, false, mailman, ch, nil, nil, fmt.Sprintf("$n tells you, 'I'll take %d coins for the stamp.'\r\n$n tells you, 'Write your message, use @ on a new line when done.'", MailStampPrice), "", ToVict)
 
 	// Set PLR_WRITING and PLR_MAILING flags, store recipient in writing state.
 	ch.SetPlrFlag(PlrWriting, true)
@@ -547,15 +547,15 @@ func (w *World) PostmasterSendMail(ch *Player, mailman *MobInstance, arg string)
 
 func (w *World) PostmasterCheckMail(ch *Player, mailman *MobInstance) {
 	if hasMail(ch.ID) {
-		ch.SendMessage("$n tells you, 'You have mail waiting.'\r\n")
+		Act(w, false, mailman, ch, nil, nil, "$n tells you, 'You have mail waiting.'", "", ToVict)
 	} else {
-		ch.SendMessage("$n tells you, 'Sorry, you don't have any mail waiting.'\r\n")
+		Act(w, false, mailman, ch, nil, nil, "$n tells you, 'Sorry, you don't have any mail waiting.'", "", ToVict)
 	}
 }
 
 func (w *World) PostmasterReceiveMail(ch *Player, mailman *MobInstance) {
 	if !hasMail(ch.ID) {
-		ch.SendMessage("$n tells you, 'Sorry, you don't have any mail waiting.'\r\n")
+		Act(w, false, mailman, ch, nil, nil, "$n tells you, 'Sorry, you don't have any mail waiting.'", "", ToVict)
 		return
 	}
 
@@ -570,7 +570,8 @@ func (w *World) PostmasterReceiveMail(ch *Player, mailman *MobInstance) {
 			w.GiveObjectToChar(obj, ch)
 		}
 
-		ch.SendMessage("$n gives you a piece of mail.\r\n")
+		Act(w, false, mailman, ch, nil, nil, "$n gives you a piece of mail.", "", ToVict)
+		Act(w, false, ch, mailman, nil, nil, "$N gives $n a piece of mail.", "", ToRoom)
 	}
 }
 

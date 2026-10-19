@@ -55,6 +55,8 @@ func TestMailLifecycleAcrossProcessRestart_HelperLevel(t *testing.T) {
 		"phase=send completed=true",
 		"postmaster_assigned=true",
 		"mail_file_bytes=512",
+		"sender_prompt_rendered=true",
+		"observer_prompt_rendered=true",
 	} {
 		if !strings.Contains(sendOutput, want) {
 			t.Fatalf("send phase missing %q\n%s", want, sendOutput)
@@ -64,11 +66,12 @@ func TestMailLifecycleAcrossProcessRestart_HelperLevel(t *testing.T) {
 	restartOutput := runMailLifecycleHelper(t, fixtureRoot, "restart")
 	for _, want := range []string{
 		"phase=restart init_scan=true",
-		"check=$n tells you, 'You have mail waiting.'",
-		"receive=$n gives you a piece of mail.",
+		"check=The postman tells you, 'You have mail waiting.'",
+		"receive=The postman gives you a piece of mail.",
+		"receive_room=The postman gives Recipient a piece of mail.",
 		"received_body=true",
-		"second_check=$n tells you, 'Sorry, you don't have any mail waiting.'",
-		"second_receive=$n tells you, 'Sorry, you don't have any mail waiting.'",
+		"second_check=The postman tells you, 'Sorry, you don't have any mail waiting.'",
+		"second_receive=The postman tells you, 'Sorry, you don't have any mail waiting.'",
 		"receive_inventory_items=1",
 		"mail_remaining=false",
 	} {
@@ -94,8 +97,9 @@ func TestMailHelperLifecycleSameProcess(t *testing.T) {
 	for _, want := range []string{
 		"phase=same-process completed=true",
 		"postmaster_assigned=true",
-		"check=$n tells you, 'You have mail waiting.'",
-		"receive=$n gives you a piece of mail.",
+		"check=The postman tells you, 'You have mail waiting.'",
+		"receive=The postman gives you a piece of mail.",
+		"receive_room=The postman gives Recipient a piece of mail.",
 		"received_body=true",
 		"consumed_once=true",
 	} {
@@ -147,12 +151,27 @@ func TestMailLifecycleHelperProcess(t *testing.T) {
 
 func runMailSendPhase(t *testing.T) {
 	t.Helper()
-	w, sender, postmasterFn, postmasterMob, _ := newMailLifecycleWorld(t)
+	w, sender, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
+	observer := NewPlayer(303, "Observer", 1001)
+	if err := w.AddPlayer(observer); err != nil {
+		t.Fatalf("add room observer: %v", err)
+	}
 	if !InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName) {
 		t.Fatal("mail initialization failed")
 	}
 
+	postmasterFn(w, sender, postmasterMob, "mail", "Missing")
+	if got, want := mailLifecycleLastMessage(messages, sender.Name), "The postman tells you, 'No one by that name is registered here!'"; got != want {
+		t.Fatalf("unknown-recipient response = %q, want %q", got, want)
+	}
+
 	postmasterFn(w, sender, postmasterMob, "mail", "Recipient body")
+	if got, want := mailLifecycleLastMessage(messages, sender.Name), "The postman tells you, 'I'll take 25 coins for the stamp.'\r\nthe postman tells you, 'Write your message, use @ on a new line when done.'"; got != want {
+		t.Fatalf("sender mail prompt = %q, want %q", got, want)
+	}
+	if got, want := mailLifecycleLastMessage(messages, observer.Name), "Sender starts to write some mail."; got != want {
+		t.Fatalf("room mail prompt = %q, want %q", got, want)
+	}
 	if !HandleMailInput(sender, mailLifecycleBody) {
 		// Expected: the first body line keeps the editor open.
 	} else {
@@ -166,11 +185,11 @@ func runMailSendPhase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stat isolated mail file: %v", err)
 	}
-	fmt.Printf("phase=send completed=true postmaster_assigned=true mail_file_bytes=%d\n", stat.Size())
+	fmt.Printf("phase=send completed=true postmaster_assigned=true mail_file_bytes=%d sender_prompt_rendered=true observer_prompt_rendered=true\n", stat.Size())
 }
 
 func runMailRestartPhase(t *testing.T) {
-	w, _, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
+	w, sender, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
 	if !InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName) {
 		t.Fatal("mail initialization failed")
 	}
@@ -183,6 +202,7 @@ func runMailRestartPhase(t *testing.T) {
 	checkOutput := mailLifecycleLastMessage(messages, recipient.Name)
 	postmasterFn(w, recipient, postmasterMob, "receive", "")
 	receiveOutput := mailLifecycleLastMessage(messages, recipient.Name)
+	receiveRoomOutput := mailLifecycleLastMessage(messages, sender.Name)
 	if len(recipient.Inventory.Items) != 1 {
 		t.Fatalf("restart receive inventory items = %d, want 1", len(recipient.Inventory.Items))
 	}
@@ -195,8 +215,8 @@ func runMailRestartPhase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stat mail file after restart: %v", err)
 	}
-	fmt.Printf("phase=restart init_scan=true mail_file_bytes=%d check=%s receive=%s received_body=%t second_check=%s second_receive=%s receive_inventory_items=%d mail_remaining=%t\n",
-		stat.Size(), checkOutput, receiveOutput, receivedBody, secondCheckOutput, secondReceiveOutput, len(recipient.Inventory.Items), hasMail(mailLifecycleRecipientID))
+	fmt.Printf("phase=restart init_scan=true mail_file_bytes=%d check=%s receive=%s receive_room=%s received_body=%t second_check=%s second_receive=%s receive_inventory_items=%d mail_remaining=%t\n",
+		stat.Size(), checkOutput, receiveOutput, receiveRoomOutput, receivedBody, secondCheckOutput, secondReceiveOutput, len(recipient.Inventory.Items), hasMail(mailLifecycleRecipientID))
 }
 
 func runMailSameProcessPhase(t *testing.T) {
@@ -222,14 +242,15 @@ func runMailSameProcessPhase(t *testing.T) {
 	checkOutput := mailLifecycleLastMessage(messages, recipient.Name)
 	postmasterFn(w, recipient, postmasterMob, "receive", "")
 	receiveOutput := mailLifecycleLastMessage(messages, recipient.Name)
+	receiveRoomOutput := mailLifecycleLastMessage(messages, sender.Name)
 
 	if len(recipient.Inventory.Items) != 1 {
 		t.Fatalf("same-process receive inventory items = %d, want 1", len(recipient.Inventory.Items))
 	}
 	receivedBody := strings.Contains(recipient.Inventory.Items[0].Runtime.MailText, mailLifecycleBody)
 	consumedOnce := !hasMail(mailLifecycleRecipientID)
-	fmt.Printf("phase=same-process completed=true postmaster_assigned=true check=%s receive=%s received_body=%t consumed_once=%t\n",
-		checkOutput, receiveOutput, receivedBody, consumedOnce)
+	fmt.Printf("phase=same-process completed=true postmaster_assigned=true check=%s receive=%s receive_room=%s received_body=%t consumed_once=%t\n",
+		checkOutput, receiveOutput, receiveRoomOutput, receivedBody, consumedOnce)
 }
 
 func newMailLifecycleWorld(t *testing.T) (*World, *Player, SpecFunc, *MobInstance, map[string][]string) {
@@ -252,6 +273,7 @@ func newMailLifecycleWorld(t *testing.T) (*World, *Player, SpecFunc, *MobInstanc
 		t.Fatal("VNum 3010 has no assigned postmaster procedure")
 	}
 	postmasterMob := &MobInstance{VNum: 3010, Status: "standing"}
+	postmasterMob.SetProto(&parser.Mob{VNum: 3010, ShortDesc: "the postman"})
 	sender := NewPlayer(mailLifecycleSenderID, "Sender", 1001)
 	sender.Level = MailMinLevel
 	sender.Gold = MailStampPrice + 1
