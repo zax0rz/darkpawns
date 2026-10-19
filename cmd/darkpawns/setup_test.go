@@ -73,11 +73,24 @@ func TestResolveDestination(t *testing.T) {
 			t.Fatalf("accepted %q", path)
 		}
 	}
-	outside := filepath.Join(t.TempDir(), "new parent", "world")
-	if got, err := resolveDestination(bundle, outside); err != nil || got != outside {
+	outsideParent := t.TempDir()
+	outside := filepath.Join(outsideParent, "new parent", "world")
+	canonicalParent, err := filepath.EvalSymlinks(outsideParent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(canonicalParent, "new parent", "world")
+	if got, err := resolveDestination(bundle, outside); err != nil || got != want {
 		t.Fatalf("%q %v", got, err)
 	}
 	if runtime.GOOS != "windows" {
+		outsideLink := filepath.Join(t.TempDir(), "outside-link")
+		if err := os.Symlink(outsideParent, outsideLink); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := resolveDestination(bundle, filepath.Join(outsideLink, "new parent", "world")); err != nil || got != want {
+			t.Fatalf("resolved outside link: %q %v", got, err)
+		}
 		link := filepath.Join(t.TempDir(), "release-link")
 		if err := os.Symlink(bundle, link); err != nil {
 			t.Fatal(err)
