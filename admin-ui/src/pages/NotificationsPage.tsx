@@ -9,7 +9,7 @@ import { Skeleton } from '../components/Skeleton';
 const button = 'border border-rule px-4 py-2 text-sm hover:bg-paper-deep focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed';
 const checkbox = 'size-5 shrink-0 accent-accent focus-visible:outline-2 focus-visible:outline-accent';
 const providers: NotificationProvider[] = ['pushover', 'discord'];
-const names = { pushover: 'Pushover', discord: 'Discord' };
+const names = { pushover: 'Pushover', discord: 'Discord', heartbeat: 'Healthchecks' };
 const events = [
   { id: 'player.created', name: 'Character created', description: 'After a new character is saved.', example: 'Avery created a character.' },
   { id: 'player.login', name: 'Login', description: 'When a character enters the world.', example: 'Avery entered the game.' },
@@ -36,6 +36,7 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
   const [notice, setNotice] = useState('');
   const [secretDirty, setSecretDirty] = useState<Record<string, boolean>>({});
   const [credentialBusy, setCredentialBusy] = useState(false);
+  const [credentialReset, setCredentialReset] = useState(0);
   const onCredentialDirty = useCallback((provider: CredentialProvider, value: boolean) => setSecretDirty((previous) => previous[provider] === value ? previous : { ...previous, [provider]: value }), []);
   const cache = useQueryClient();
   const settingsDirty = JSON.stringify(config) !== JSON.stringify(saved);
@@ -59,9 +60,10 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
   const onCredentialSaved = (view: NotificationView, provider: CredentialProvider, removed: boolean) => {
     setSaved(view.config);
     setConfig((current) => ({ ...current, revision: view.config.revision, ...(removed ? provider === 'heartbeat' ? { heartbeat: false } : { [provider]: { ...current[provider], enabled: false } } : {}) }));
+    onCredentialDirty(provider, false);
     cache.setQueryData(['notifications'], view);
   };
-  const credentialForm = (provider: CredentialProvider) => <NotificationCredentialsForm provider={provider} revision={saved.revision} status={latest.status[provider]} busy={save.isPending || credentialBusy} onSaved={onCredentialSaved} onDirty={onCredentialDirty} onBusy={setCredentialBusy} />;
+  const credentialForm = (provider: CredentialProvider) => <NotificationCredentialsForm key={`${provider}-${credentialReset}`} provider={provider} revision={saved.revision} status={latest.status[provider]} busy={save.isPending || credentialBusy} onSaved={onCredentialSaved} onDirty={onCredentialDirty} onBusy={setCredentialBusy} />;
   const update = (provider: NotificationProvider, patch: Partial<NotificationConfig[NotificationProvider]>) => {
     setNotice(''); setConfig({ ...config, [provider]: { ...config[provider], ...patch } });
   };
@@ -102,8 +104,8 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
       <div className="sticky -bottom-4 md:-bottom-6 z-10 bg-paper border-t border-rule pt-3 pb-4 md:pb-6">
       <div className="flex flex-wrap items-center gap-3">
         <button className={`${button} bg-accent text-paper hover:bg-accent-deep`} disabled={!settingsDirty || stale || save.isPending || credentialBusy} type="submit">{save.isPending ? 'Saving…' : 'Save settings'}</button>
-        <button className={button} type="button" disabled={!settingsDirty || save.isPending || credentialBusy} onClick={() => { setConfig(saved); setNotice('Changes discarded.'); save.reset(); }}>Discard changes</button>
-        <span className="text-sm text-ink-muted">{settingsDirty ? 'Unsaved settings' : dirty ? 'Unsaved credentials' : 'All changes saved'}</span>
+        <button className={button} type="button" disabled={!dirty || save.isPending || credentialBusy} onClick={() => { setConfig(saved); setCredentialReset((value) => value + 1); setSecretDirty({}); setNotice('Changes discarded.'); save.reset(); }}>Discard changes</button>
+        <span className="text-sm text-ink-muted">{settingsDirty ? 'Unsaved settings' : dirty ? `Unsaved credentials: ${Object.entries(secretDirty).filter(([, value]) => value).map(([provider]) => names[provider as CredentialProvider]).join(', ')}` : 'All changes saved'}</span>
       </div>
       {save.error && <p role="alert" className="text-accent">{save.error.message}</p>}
       {notice && <p role="status" className="mt-2">{notice}</p>}
@@ -111,22 +113,22 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
     </form>
     <section aria-labelledby="destinations-heading" className="space-y-5">
       <div><h2 id="destinations-heading" className="text-xl">Destinations & delivery</h2><p className="mt-2 text-sm text-ink-muted max-w-prose">Paste credentials here to connect a destination. Saved values are encrypted and hidden; changes take effect immediately. Tests work even when a destination is disabled. Use Discord for a community channel or a private staff channel.</p></div>
-      {providers.map((provider) => <DestinationDelivery key={provider} provider={provider} status={latest.status[provider]} dirty={dirty} credentials={credentialForm(provider)} />)}
+      {providers.map((provider) => <DestinationDelivery key={provider} provider={provider} status={latest.status[provider]} dirty={Boolean(secretDirty[provider])} busy={save.isPending || credentialBusy} credentials={credentialForm(provider)} />)}
       <div id="heartbeat-credentials" className="border-t border-rule pt-5 space-y-3"><h3 className="text-lg">Healthchecks</h3>{credentialForm('heartbeat')}</div>
       <p className="text-sm text-ink-muted max-w-prose">Delivery is best effort. Events are not replayed after an outage or restart. Queues and rate limits protect the game; skipped messages are counted below each destination.</p>
     </section>
   </div>;
 }
 
-function DestinationDelivery({ provider, status, dirty, credentials }: { provider: NotificationProvider; status: NotificationStatus; dirty: boolean; credentials: React.ReactNode }) {
+function DestinationDelivery({ provider, status, dirty, busy, credentials }: { provider: NotificationProvider; status: NotificationStatus; dirty: boolean; busy: boolean; credentials: React.ReactNode }) {
   const [notice, setNotice] = useState('');
   const test = useMutation({ mutationFn: () => notifications.test(provider), onSuccess: () => setNotice('Test queued. Check the destination and delivery status for the result.') });
   return <div className="border-t border-rule pt-5 space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg">{names[provider]}</h3><span className={`text-sm ${status.ready ? 'text-ink' : 'text-accent'}`}>{status.ready ? 'Credentials configured' : 'Setup needed'}</span></div>
     {credentials}
     <DeliveryStatus status={status} />
-    <button className={button} type="button" disabled={!status.ready || test.isPending || dirty} onClick={() => { setNotice(''); test.mutate(); }}>{test.isPending ? 'Queuing…' : `Send ${names[provider]} test`}</button>
-    {dirty && <p className="text-sm text-ink-muted">Save or discard changes before sending a test.</p>}
+    <button className={button} type="button" disabled={!status.ready || test.isPending || dirty || busy} onClick={() => { setNotice(''); test.mutate(); }}>{test.isPending ? 'Queuing…' : `Send ${names[provider]} test`}</button>
+    {dirty && <p className="text-sm text-ink-muted">Save or discard this destination’s credentials before sending a test.</p>}
     {test.error && <p role="alert" className="text-accent">{test.error.message}</p>}
     {notice && <p role="status" className="text-sm">{notice}</p>}
   </div>;

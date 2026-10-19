@@ -21,8 +21,11 @@ export function NotificationCredentialsForm({ provider, revision, status, busy, 
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const dirty = Object.values(values).some(Boolean);
-  useEffect(() => { onDirty(provider, dirty); }, [provider, dirty, onDirty]);
-  const close = () => { setValues({}); setEditing(false); setRemoving(false); setError(''); };
+  useEffect(() => {
+    onDirty(provider, dirty);
+    return () => onDirty(provider, false);
+  }, [provider, dirty, onDirty]);
+  const close = () => { setValues({}); setEditing(false); setRemoving(false); setError(''); onDirty(provider, false); };
   // Deliberately not a mutation with variables cached by React Query: secrets
   // live only in the current inputs/request, and are cleared after saving.
   const submit = async (remove: boolean) => {
@@ -39,7 +42,7 @@ export function NotificationCredentialsForm({ provider, revision, status, busy, 
   };
   const input = (key: keyof NotificationCredentials, label: string, maxLength: number) => <label className="block text-sm" key={key}>
     {label}
-    <input className={field} type="password" inputMode={key === 'url' ? 'url' : 'text'} autoComplete="off" autoCapitalize="none" spellCheck={false} maxLength={maxLength} required value={values[key] ?? ''} disabled={busy || pending} onChange={(event) => { setError(''); setValues({ ...values, [key]: event.target.value.trim() }); }} />
+    <input className={field} type="password" inputMode={key === 'url' ? 'url' : 'text'} name={`notification-${provider}-${key}`} autoComplete="new-password" autoCapitalize="none" spellCheck={false} maxLength={maxLength} required value={values[key] ?? ''} disabled={busy || pending} onChange={(event) => { setError(''); setValues({ ...values, [key]: event.target.value.trim() }); }} />
   </label>;
   return <div className="space-y-3">
     <p className="text-sm">{status.ready ? <><span className="font-semibold">Configured</span> <span className="font-mono" aria-label="Saved credentials are hidden">••••••••</span></> : 'Not configured'}</p>
