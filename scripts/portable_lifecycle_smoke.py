@@ -22,7 +22,7 @@ def main(bundle, native_service=False):
     bundle = pathlib.Path(bundle).resolve()
     launcher = bundle / ('darkpawns.exe' if os.name == 'nt' else 'darkpawns')
     with tempfile.TemporaryDirectory(prefix='darkpawns lifecycle ') as temporary:
-        instance = pathlib.Path(temporary) / "my world's é %data%"
+        instance = pathlib.Path(temporary).resolve() / "my world's é %data%"
         with socket.socket() as probe:
             probe.bind(('127.0.0.1', 0))
             port = probe.getsockname()[1]
@@ -142,7 +142,8 @@ def main(bundle, native_service=False):
             print('PASS: setup survives parent exit, authenticated ownership, duplicate start, graceful stop/restart, saved immortal login, read-only doctor' + (', native startup install/start/restart/remove' if native_service else ''))
         finally:
             try:
-                run('stop')
+                if (instance / 'instance.json').exists():
+                    run('stop')
                 if installed:
                     run('service', 'remove')
             except BaseException:

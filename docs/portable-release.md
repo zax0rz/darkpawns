@@ -120,8 +120,8 @@ Choose it during setup, or configure an existing instance:
 
 Removal gracefully stops the instance and removes its owned startup registration,
 without deleting the world. Registration names derive from the canonical instance
-path, so multiple worlds stay separate. Existing or externally edited definitions
-are refused. A failed registration retains owned files for diagnosis and cleanup;
+path, so multiple worlds stay separate. Existing definitions are refused. Changes to owned Linux/macOS files or the
+Windows launch action are refused. A failed registration retains owned files for diagnosis and cleanup;
 Windows rolls back its local record if task creation fails.
 
 | Platform | Current-user startup mechanism | Requirements |
