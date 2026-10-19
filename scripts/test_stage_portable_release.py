@@ -15,7 +15,7 @@ class PortableStagingTest(unittest.TestCase):
                 name = path + '/index.html'
             target = root / name
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text('starter\n')
+            target.write_bytes(b'starter\n')
         for name in ['lib/etc/players', 'lib/plrobjs/A-E/alice.objs', 'lib/world/etc/board.mort']:
             target = root / name
             target.parent.mkdir(parents=True, exist_ok=True)

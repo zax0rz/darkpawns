@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise an extracted native development bundle, using only disposable state."""
 import argparse
+from contextlib import closing
 import asyncio
 import hashlib
 import json
@@ -102,7 +103,7 @@ def main(bundle):
             asyncio.run(create_players())
             stop(process)
             process = None
-            with sqlite3.connect(instance / 'lib/data/darkpawns.db') as db:
+            with closing(sqlite3.connect(instance / 'lib/data/darkpawns.db')) as db:
                 assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
                 assert dict(db.execute('SELECT name,level FROM players')) == {'Portowner': 40, 'Portplayer': 1}
             # An edited world stays with the instance, even when the replacement
