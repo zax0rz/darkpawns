@@ -596,7 +596,8 @@ func main() {
 	gameWorld.StartEventQueue()
 
 	// Notification workers never run on the game loop. No credentials in the
-	// settings file or API: only fixed provider-specific environment variables.
+	// API responses: portal credentials use encrypted storage; environment values
+	// remain a compatibility fallback.
 	notificationPath := os.Getenv("DP_NOTIFICATION_CONFIG_PATH")
 	if notificationPath == "" {
 		notificationPath = "data/notifications.json"

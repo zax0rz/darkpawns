@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { notifications, type NotificationConfig, type NotificationProvider, type NotificationStatus, type NotificationView } from '../api/client';
+import { notifications, type NotificationConfig, type NotificationProvider, type NotificationStatus, type NotificationView, type CredentialProvider } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
+import { NotificationCredentialsForm } from '../components/NotificationCredentials';
 import { Skeleton } from '../components/Skeleton';
 
 const button = 'border border-rule px-4 py-2 text-sm hover:bg-paper-deep focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed';
@@ -33,8 +34,12 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
   const [config, setConfig] = useState(initial.config);
   const [saved, setSaved] = useState(initial.config);
   const [notice, setNotice] = useState('');
+  const [secretDirty, setSecretDirty] = useState<Record<string, boolean>>({});
+  const [credentialBusy, setCredentialBusy] = useState(false);
+  const onCredentialDirty = useCallback((provider: CredentialProvider, value: boolean) => setSecretDirty((previous) => previous[provider] === value ? previous : { ...previous, [provider]: value }), []);
   const cache = useQueryClient();
-  const dirty = JSON.stringify(config) !== JSON.stringify(saved);
+  const settingsDirty = JSON.stringify(config) !== JSON.stringify(saved);
+  const dirty = settingsDirty || Object.values(secretDirty).some(Boolean);
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname);
   useEffect(() => {
     if (!dirty) return;
@@ -51,6 +56,12 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
     setConfig(view.config); setSaved(view.config); setNotice('Notification settings saved.');
     cache.setQueryData(['notifications'], view);
   } });
+  const onCredentialSaved = (view: NotificationView, provider: CredentialProvider, removed: boolean) => {
+    setSaved(view.config);
+    setConfig((current) => ({ ...current, revision: view.config.revision, ...(removed ? provider === 'heartbeat' ? { heartbeat: false } : { [provider]: { ...current[provider], enabled: false } } : {}) }));
+    cache.setQueryData(['notifications'], view);
+  };
+  const credentialForm = (provider: CredentialProvider) => <NotificationCredentialsForm provider={provider} revision={saved.revision} status={latest.status[provider]} busy={save.isPending || credentialBusy} onSaved={onCredentialSaved} onDirty={onCredentialDirty} onBusy={setCredentialBusy} />;
   const update = (provider: NotificationProvider, patch: Partial<NotificationConfig[NotificationProvider]>) => {
     setNotice(''); setConfig({ ...config, [provider]: { ...config[provider], ...patch } });
   };
@@ -68,12 +79,12 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
             {providers.map((provider) => <div key={provider} className="text-center space-y-2">
               <p className="font-semibold">{names[provider]}</p>
               {!latest.status[provider].ready && <a href="#destinations-heading" className="text-xs underline text-accent">Setup needed</a>}
-              <label className="flex justify-center items-center gap-2 text-sm cursor-pointer min-h-11"><input className={checkbox} type="checkbox" checked={config[provider].enabled} disabled={save.isPending} onChange={(event) => update(provider, { enabled: event.target.checked })} /><span>Enable<span className="sr-only"> {names[provider]}</span></span></label>
+              <label className="flex justify-center items-center gap-2 text-sm cursor-pointer min-h-11"><input className={checkbox} type="checkbox" checked={config[provider].enabled} disabled={save.isPending || credentialBusy} onChange={(event) => update(provider, { enabled: event.target.checked })} /><span>Enable<span className="sr-only"> {names[provider]}</span></span></label>
             </div>)}
           </div>
           {events.map((item) => <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] sm:grid-cols-[minmax(0,1fr)_9rem_9rem] border-b border-rule py-2">
             <div className="pl-3 pr-2"><p className="font-semibold">{item.name}</p><p className="text-sm text-ink-muted mt-1">{item.description}</p></div>
-            {providers.map((provider) => <label key={provider} className="flex items-center justify-center cursor-pointer"><span className="sr-only">{item.name} to {names[provider]}</span><input className={checkbox} type="checkbox" checked={config[provider].events.includes(item.id)} disabled={save.isPending} onChange={(event) => update(provider, { events: event.target.checked ? [...config[provider].events, item.id] : config[provider].events.filter((id) => id !== item.id) })} /></label>)}
+            {providers.map((provider) => <label key={provider} className="flex items-center justify-center cursor-pointer"><span className="sr-only">{item.name} to {names[provider]}</span><input className={checkbox} type="checkbox" checked={config[provider].events.includes(item.id)} disabled={save.isPending || credentialBusy} onChange={(event) => update(provider, { events: event.target.checked ? [...config[provider].events, item.id] : config[provider].events.filter((id) => id !== item.id) })} /></label>)}
           </div>)}
         </div>
         <details className="mt-3 text-sm">
@@ -84,34 +95,35 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
       </section>
       <section aria-labelledby="heartbeat-heading" className="border-y border-rule py-5">
         <h2 id="heartbeat-heading" className="text-xl">External monitoring</h2>
-        <label className="flex items-start gap-3 mt-4 cursor-pointer"><input className={`${checkbox} mt-0.5`} type="checkbox" checked={config.heartbeat} disabled={save.isPending} onChange={(event) => { setNotice(''); setConfig({ ...config, heartbeat: event.target.checked }); }} /><span><span className="font-semibold">Enable Healthchecks heartbeat</span><span className="block text-sm text-ink-muted mt-1 max-w-prose">Check in every minute while the game loop is progressing. Configure outage and recovery alerts in Healthchecks so they can reach you when this server is down.</span></span></label>
-        <p className="text-sm mt-3 text-ink-muted">{latest.status.heartbeat.ready ? 'Heartbeat URL configured on the server.' : 'Server setup needed: DP_NOTIFY_HEARTBEAT_URL.'}</p>
+        <label className="flex items-start gap-3 mt-4 cursor-pointer"><input className={`${checkbox} mt-0.5`} type="checkbox" checked={config.heartbeat} disabled={save.isPending || credentialBusy} onChange={(event) => { setNotice(''); setConfig({ ...config, heartbeat: event.target.checked }); }} /><span><span className="font-semibold">Enable Healthchecks heartbeat</span><span className="block text-sm text-ink-muted mt-1 max-w-prose">Check in every minute while the game loop is progressing. Configure outage and recovery alerts in Healthchecks so they can reach you when this server is down.</span></span></label>
+        <p className="mt-3 text-sm"><a href="#heartbeat-credentials" className="underline underline-offset-2">{latest.status.heartbeat.ready ? 'Manage Healthchecks credentials' : 'Set up Healthchecks'}</a></p>
         <DeliveryStatus status={latest.status.heartbeat} />
       </section>
       <div className="sticky -bottom-4 md:-bottom-6 z-10 bg-paper border-t border-rule pt-3 pb-4 md:pb-6">
       <div className="flex flex-wrap items-center gap-3">
-        <button className={`${button} bg-accent text-paper hover:bg-accent-deep`} disabled={!dirty || stale || save.isPending} type="submit">{save.isPending ? 'Saving…' : 'Save settings'}</button>
-        <button className={button} type="button" disabled={!dirty || save.isPending} onClick={() => { setConfig(saved); setNotice('Changes discarded.'); save.reset(); }}>Discard changes</button>
-        <span className="text-sm text-ink-muted">{dirty ? 'Unsaved changes' : 'All changes saved'}</span>
+        <button className={`${button} bg-accent text-paper hover:bg-accent-deep`} disabled={!settingsDirty || stale || save.isPending || credentialBusy} type="submit">{save.isPending ? 'Saving…' : 'Save settings'}</button>
+        <button className={button} type="button" disabled={!settingsDirty || save.isPending || credentialBusy} onClick={() => { setConfig(saved); setNotice('Changes discarded.'); save.reset(); }}>Discard changes</button>
+        <span className="text-sm text-ink-muted">{settingsDirty ? 'Unsaved settings' : dirty ? 'Unsaved credentials' : 'All changes saved'}</span>
       </div>
       {save.error && <p role="alert" className="text-accent">{save.error.message}</p>}
       {notice && <p role="status" className="mt-2">{notice}</p>}
       </div>
     </form>
     <section aria-labelledby="destinations-heading" className="space-y-5">
-      <div><h2 id="destinations-heading" className="text-xl">Destinations & delivery</h2><p className="mt-2 text-sm text-ink-muted max-w-prose">Credentials are read from the server environment and never displayed here. Restart the server after changing them. Tests work even when a destination is disabled. Use Discord for a community channel or a private staff channel.</p></div>
-      {providers.map((provider) => <DestinationDelivery key={provider} provider={provider} status={latest.status[provider]} dirty={dirty} />)}
+      <div><h2 id="destinations-heading" className="text-xl">Destinations & delivery</h2><p className="mt-2 text-sm text-ink-muted max-w-prose">Paste credentials here to connect a destination. Saved values are encrypted and hidden; changes take effect immediately. Tests work even when a destination is disabled. Use Discord for a community channel or a private staff channel.</p></div>
+      {providers.map((provider) => <DestinationDelivery key={provider} provider={provider} status={latest.status[provider]} dirty={dirty} credentials={credentialForm(provider)} />)}
+      <div id="heartbeat-credentials" className="border-t border-rule pt-5 space-y-3"><h3 className="text-lg">Healthchecks</h3>{credentialForm('heartbeat')}</div>
       <p className="text-sm text-ink-muted max-w-prose">Delivery is best effort. Events are not replayed after an outage or restart. Queues and rate limits protect the game; skipped messages are counted below each destination.</p>
     </section>
   </div>;
 }
 
-function DestinationDelivery({ provider, status, dirty }: { provider: NotificationProvider; status: NotificationStatus; dirty: boolean }) {
+function DestinationDelivery({ provider, status, dirty, credentials }: { provider: NotificationProvider; status: NotificationStatus; dirty: boolean; credentials: React.ReactNode }) {
   const [notice, setNotice] = useState('');
   const test = useMutation({ mutationFn: () => notifications.test(provider), onSuccess: () => setNotice('Test queued. Check the destination and delivery status for the result.') });
   return <div className="border-t border-rule pt-5 space-y-3">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg">{names[provider]}</h3><span className={`text-sm ${status.ready ? 'text-ink' : 'text-accent'}`}>{status.ready ? 'Credentials configured' : 'Server setup needed'}</span></div>
-    <p className="text-sm text-ink-muted">{provider === 'pushover' ? 'Set DP_NOTIFY_PUSHOVER_TOKEN and DP_NOTIFY_PUSHOVER_USER.' : 'Set DP_NOTIFY_DISCORD_WEBHOOK to your Discord channel webhook URL.'}</p>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg">{names[provider]}</h3><span className={`text-sm ${status.ready ? 'text-ink' : 'text-accent'}`}>{status.ready ? 'Credentials configured' : 'Setup needed'}</span></div>
+    {credentials}
     <DeliveryStatus status={status} />
     <button className={button} type="button" disabled={!status.ready || test.isPending || dirty} onClick={() => { setNotice(''); test.mutate(); }}>{test.isPending ? 'Queuing…' : `Send ${names[provider]} test`}</button>
     {dirty && <p className="text-sm text-ink-muted">Save or discard changes before sending a test.</p>}

@@ -22,7 +22,8 @@ OWN-WORLD: Existing warm paper, cream table headings, charcoal hairline rules,
 serif labels and sparse oxblood actions; native checkboxes and square controls.
 
 STORY: See destinations, select different events, save, send a test, then inspect
-provider acceptance. Missing server credentials have a concrete setup path.
+provider acceptance. Credentials are pasted into write-only inline forms, then shown as Configured.
+Replace and Remove are explicit; no environment editing is needed.
 
 FIRST VIEWPORT: Existing sidebar and page header, then the ruled event matrix.
 Pushover and Discord own narrow comparison columns. Save stays at the bottom of
@@ -37,3 +38,8 @@ No raster assets ship. Local evidence: desktop at 1272×716 and mobile via an ac
 390×640 iframe in a temporary preview harness (preview-only CSP/frame headers
 omitted to allow embedding). The production header path was checked on the first
 desktop browser pass. Browser settings use a disposable database/config directory.
+
+2026-10-19 extension: write-only credential forms for Pushover, Discord and hosted
+Healthchecks. Password-masked inputs use existing paper/ink fields; inline removal
+confirmation avoids a modal. Saving credentials preserves event drafts. Secrets
+never appear in saved values or screenshots; review uses disposable fake values.

@@ -50,6 +50,7 @@ type Config struct {
 type Status struct {
 	Queued uint64 `json:"queued"`
 
+	Source      string     `json:"source"`
 	Ready       bool       `json:"ready"`
 	LastSuccess *time.Time `json:"last_success"`
 	LastFailure *time.Time `json:"last_failure"`
@@ -64,7 +65,7 @@ type View struct {
 var (
 	ErrConflict = errors.New("settings changed; reload before saving")
 	ErrInvalid  = errors.New("unknown notification event")
-	ErrNotReady = errors.New("provider credentials are missing or invalid; check server environment")
+	ErrNotReady = errors.New("provider credentials are missing or invalid; configure this destination")
 	ErrBusy     = errors.New("notification queue or rate limit reached; try again shortly")
 )
 
@@ -84,6 +85,7 @@ type (
 // the game or another provider. Delivery is best effort, with no replay or retry.
 type Service struct {
 	saveMu sync.Mutex
+	vault  *credentialVault
 
 	mu      sync.Mutex
 	cfg     Config
@@ -95,22 +97,28 @@ type Service struct {
 }
 
 // New loads settings; malformed files fail closed instead of silently enabling
-// defaults or discarding an operator's selections. Credentials stay in env only.
+// defaults or discarding an operator's selections. Credentials are loaded from encrypted storage or legacy environment settings.
 func New(path string) (*Service, error) {
 	s := &Service{path: filepath.Clean(path), cfg: Config{Revision: 1, Pushover: Destination{Events: []string{}}, Discord: Destination{Events: []string{}}}, status: map[string]Status{}, workers: map[string]*worker{}}
+	var stored diskConfig
 	data, err := os.ReadFile(s.path) // #nosec G703 -- path comes only from server configuration
 	if err == nil {
-		if err = json.Unmarshal(data, &s.cfg); err != nil {
+		if err = json.Unmarshal(data, &stored); err != nil {
 			return nil, fmt.Errorf("decode notification settings: %w", err)
 		}
+		s.cfg = stored.Config
 		if err = validate(s.cfg); err != nil {
 			return nil, err
 		}
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("read notification settings: %w", err)
 	}
-	s.send = deliver
-	s.ready = credentialsReady
+	s.vault, err = newCredentialVault(s.path, stored.Credentials)
+	if err != nil {
+		return nil, err
+	}
+	s.send = credentialSender(s.vault.snapshot.Load())
+	s.ready = func(id string) bool { return validCredentials(id, s.vault.snapshot.Load().values[id]) }
 	for _, id := range []string{Pushover, Discord, "heartbeat"} {
 		s.workers[id] = &worker{jobs: make(chan job, 16), limiter: rate.NewLimiter(rate.Every(2*time.Second), 5)}
 	}
@@ -149,6 +157,10 @@ func (s *Service) View() View {
 	for id := range s.workers {
 		st := s.status[id]
 		st.Ready = s.ready(id)
+		st.Source = s.vault.snapshot.Load().sources[id]
+		if !st.Ready {
+			st.Source = "none"
+		}
 		out.Status[id] = st
 	}
 	return out
@@ -172,7 +184,19 @@ func (s *Service) Save(c Config) error {
 		}
 	}
 	c.Revision++
-	data, err := json.MarshalIndent(c, "", "  ")
+	if err := s.persist(c, s.vault.encrypted); err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+	s.cfg = clone(c)
+	s.mu.Unlock()
+	return nil
+}
+
+// persist is called only under saveMu, outside the publisher mutex.
+func (s *Service) persist(c Config, encrypted map[string]string) error {
+	data, err := json.MarshalIndent(diskConfig{Config: c, Credentials: encrypted}, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -203,9 +227,6 @@ func (s *Service) Save(c Config) error {
 	if err = os.Rename(tmp, s.path); err != nil {
 		return err
 	}
-	s.mu.Lock()
-	s.cfg = clone(c)
-	s.mu.Unlock()
 	return nil
 }
 
@@ -309,14 +330,19 @@ func (s *Service) runWorker(ctx context.Context, id string, w *worker) {
 				enabled = s.destination(id).Enabled
 			}
 			allowed := j.revision == s.cfg.Revision && (enabled || j.test)
+			send := s.send // bind the destination before releasing the configuration epoch
 			s.mu.Unlock()
 			if !allowed {
 				continue
 			}
 			deliveryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			err := s.send(deliveryCtx, id, j.message)
+			err := send(deliveryCtx, id, j.message)
 			cancel()
 			s.mu.Lock()
+			if j.revision != s.cfg.Revision {
+				s.mu.Unlock()
+				continue
+			}
 			st := s.status[id]
 			now := time.Now().UTC()
 			if err != nil {

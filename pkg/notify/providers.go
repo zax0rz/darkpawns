@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -30,22 +29,8 @@ func providerURL(raw, host string, path *regexp.Regexp) (string, bool) {
 	return u.String(), true
 }
 
-func credentialsReady(id string) bool {
-	switch id {
-	case Pushover:
-		return keyPattern.MatchString(os.Getenv("DP_NOTIFY_PUSHOVER_TOKEN")) && keyPattern.MatchString(os.Getenv("DP_NOTIFY_PUSHOVER_USER"))
-	case Discord:
-		_, ok := providerURL(os.Getenv("DP_NOTIFY_DISCORD_WEBHOOK"), "discord.com", webhookPattern)
-		return ok
-	case "heartbeat":
-		_, ok := providerURL(os.Getenv("DP_NOTIFY_HEARTBEAT_URL"), "hc-ping.com", heartbeatPattern)
-		return ok
-	}
-	return false
-}
-
-func deliver(ctx context.Context, id, message string) error {
-	if !credentialsReady(id) {
+func deliverWithCredentials(ctx context.Context, id, message string, credentials Credentials) error {
+	if !validCredentials(id, credentials) {
 		return ErrNotReady
 	}
 	var target, contentType string
@@ -54,11 +39,11 @@ func deliver(ctx context.Context, id, message string) error {
 	switch id {
 	case Pushover:
 		target = "https://api.pushover.net/1/messages.json"
-		form := url.Values{"token": {os.Getenv("DP_NOTIFY_PUSHOVER_TOKEN")}, "user": {os.Getenv("DP_NOTIFY_PUSHOVER_USER")}, "message": {message}, "priority": {"0"}}
+		form := url.Values{"token": {credentials.Token}, "user": {credentials.User}, "message": {message}, "priority": {"0"}}
 		body = strings.NewReader(form.Encode())
 		contentType = "application/x-www-form-urlencoded"
 	case Discord:
-		target, _ = providerURL(os.Getenv("DP_NOTIFY_DISCORD_WEBHOOK"), "discord.com", webhookPattern)
+		target, _ = providerURL(credentials.URL, "discord.com", webhookPattern)
 		target += "?wait=true"
 		data, err := json.Marshal(struct {
 			Content         string `json:"content"`
@@ -74,7 +59,7 @@ func deliver(ctx context.Context, id, message string) error {
 		body = bytes.NewReader(data)
 		contentType = "application/json"
 	case "heartbeat":
-		target, _ = providerURL(os.Getenv("DP_NOTIFY_HEARTBEAT_URL"), "hc-ping.com", heartbeatPattern)
+		target, _ = providerURL(credentials.URL, "hc-ping.com", heartbeatPattern)
 		method = http.MethodGet
 	default:
 		return ErrInvalid

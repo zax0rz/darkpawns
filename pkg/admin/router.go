@@ -213,7 +213,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
 	registerFileEdit(ri.api, world, database, auditLogger)
 	registerNotifications(ri.api, database, auditLogger, cfg.notifications)
-	for _, path := range []string{"/admin/notifications", "/admin/notifications/{provider}/test"} {
+	for _, path := range []string{"/admin/notifications", "/admin/notifications/{provider}/test", "/admin/notifications/{provider}/credentials"} {
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	}
 	registerPlayerEditor(ri.api, world, database, liveSessions, auditLogger)

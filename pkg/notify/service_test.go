@@ -258,3 +258,48 @@ func TestPublicTemplates(t *testing.T) {
 		t.Fatal("arbitrary logs allowed")
 	}
 }
+
+func TestOlderDeliveryResultDoesNotDescribeNewSettings(t *testing.T) {
+	s := testService(t)
+	started := make(chan struct{})
+	release := make(chan struct{})
+	second := make(chan struct{})
+	calls := 0
+	s.send = func(context.Context, string, string) error {
+		calls++
+		if calls == 1 {
+			close(started)
+			<-release
+		} else {
+			if s.View().Status[Discord].LastSuccess != nil {
+				t.Error("older destination result reported for new settings")
+			}
+			close(second)
+		}
+		return nil
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s.Run(ctx, nil)
+	if err := s.Test(Discord); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("delivery did not start")
+	}
+	if err := s.Save(s.View().Config); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Test(Discord); err != nil {
+		t.Fatal(err)
+	}
+	close(release)
+	select {
+	case <-second:
+	case <-time.After(time.Second):
+		t.Fatal("second delivery did not start")
+	}
+	waitStatus(t, s, func(st Status) bool { return st.LastSuccess != nil })
+}

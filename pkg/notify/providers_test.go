@@ -124,3 +124,8 @@ func TestProviderRejectionAndRedirect(t *testing.T) {
 		t.Fatal("redirect followed")
 	}
 }
+
+func credentialsReady(id string) bool { return validCredentials(id, envCredentials(id)) }
+func deliver(ctx context.Context, id, message string) error {
+	return deliverWithCredentials(ctx, id, message, envCredentials(id))
+}

@@ -30,11 +30,28 @@ character name and optionally a level; no mudlog free text is forwarded. Discord
 mentions are disabled in the request payload. Operators choose channel access in
 Discord; neither provider implies public or private visibility.
 
-Secrets live only in fixed server environment variables. Admin can read readiness
-but cannot read or overwrite secrets. This preserves the existing mudlog-push
-separation between operator secret provisioning and portal subscriptions. Provider
-hosts and URL paths are restricted, HTTPS is mandatory, redirects are refused,
-and upstream response bodies/credential-bearing URLs never enter API errors.
+Credentials are entered directly in admin through write-only destination forms.
+Pushover accepts an application token and user/group key; Discord accepts a webhook
+URL; Healthchecks accepts a ping URL. Saved values are hidden, replacements take
+effect without a restart, and removal disables the destination while preserving
+event selections. Event drafts survive credential saves. Secret inputs are cleared
+after saving and are not put into React Query mutation variables or browser storage.
+
+The settings file contains AES-256-GCM ciphertexts, authenticated separately per
+provider and version. A random 32-byte master key is automatically created on the
+first credential save in a mode-0600 file, default `<config-path>.key` (override:
+`DP_NOTIFICATION_KEY_PATH`). Ciphertexts have fresh nonces; missing/changed/corrupt
+keys fail closed. Keep the original key and settings together in protected backups;
+this protects settings-file-only leakage, not host or full-backup compromise.
+Environment credentials remain a startup compatibility fallback until managed in
+admin; removal explicitly suppresses that fallback across restart.
+
+Provider hosts and URL paths are restricted, HTTPS is mandatory, redirects are
+refused, and upstream response bodies/credential-bearing URLs never enter API
+errors. Credential operations validate raw JSON themselves to avoid schema errors
+echoing invalid secret values; OpenAPI still documents a write-only JSON contract.
+Audit events contain only action and provider name. Current stored HIGOD level,
+JWT admin role and CSRF protection gate every credential read/status/write action.
 
 Settings use an atomic, mode-0600 JSON file, default `lib/data/notifications.json`
 in a normal deployment. Revision checks reject concurrent stale edits. Saving
@@ -47,8 +64,8 @@ invalidate queued jobs from older revisions; already in-flight requests can fini
 Counters and delivery times reset on server restart.
 
 The previous `DISCORD_WEBHOOK_URL` sender is replaced, so there is one delivery
-path. Operators migrating from it must provision `DP_NOTIFY_DISCORD_WEBHOOK` and
-explicitly enable desired events in admin. The separate environment-only mudlog
+path. Operators migrating from it must paste the webhook into admin (or provision
+`DP_NOTIFY_DISCORD_WEBHOOK`) and explicitly enable desired events. The separate environment-only mudlog
 ntfy observer remains independent; it forwards raw staff logs when explicitly
 configured and is not a new public announcement provider.
 
@@ -56,7 +73,7 @@ configured and is not a new public announcement provider.
 
 An optional hosted Healthchecks heartbeat runs every minute only if the completed
 game-loop callback has advanced within 30 seconds. No progress means no success
-ping. It starts off and requires a valid `DP_NOTIFY_HEARTBEAT_URL`. Healthchecks
+ping. It starts off and requires a valid hosted ping URL saved in admin (or supplied by the environment). Healthchecks
 sends outage/recovery alerts directly to the operator's Pushover independently of
 the game. Configure a one-minute period and about two minutes of grace. Planned
 maintenance is paused in Healthchecks itself. The portal exposes its own last
@@ -97,8 +114,8 @@ These are captured ideas, not promises or automatic additions to v1.
   success/failure/drop counters and Prometheus collectors. Never store credentials
   or full provider responses in history.
 - **Credential management:** operator-managed secret references for multiple
-  destinations; evaluate encrypted write-only portal provisioning separately.
-  Do not put secrets into ordinary settings JSON or audit descriptions.
+  destinations. Write-only encrypted portal provisioning is in v1. Do not put
+  plaintext secrets into settings JSON or audit descriptions.
 - **Monitoring:** external public HTTPS/application-readiness and game-port probes;
   login-greeting synthetic check; separate successful-backup heartbeat; links to
   monitoring dashboards/status pages; maintenance windows and off-host monitoring.
@@ -114,4 +131,7 @@ secret redaction, redirects, failure/recovery, stalled heartbeat suppression,
 creation idempotence, entry/extraction timing, guest/invisible-staff exclusion and
 combat/environment/raw death observation. Provider requests use mocked transports;
 no test sends to a real Pushover account, Discord channel or Healthchecks project.
-Live credential provisioning and device receipt remain operator acceptance steps.
+Tests also cover write-only credential APIs (including malformed secret values),
+encrypted restart loading, nonce freshness, live replacement/removal, environment
+override suppression, key loss/tampering and persistence failure. Live account and
+device receipt remain operator acceptance steps.
