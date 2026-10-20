@@ -143,8 +143,9 @@ import mapScriptUrl from '../scripts/map.js?url';
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1rem;
-  height: 40px;
+  padding: 0 0.75rem;
+  min-height: 42px;
+  gap: 0.5rem;
   background: var(--paper-deep);
   border-bottom: 1px solid var(--ink);
   flex-shrink: 0;
@@ -157,12 +158,17 @@ import mapScriptUrl from '../scripts/map.js?url';
   letter-spacing: 0.08em;
   font-weight: 700;
   font-family: var(--font-display);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 #map-controls {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .map-btn {
@@ -176,9 +182,10 @@ import mapScriptUrl from '../scripts/map.js?url';
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem 0.55rem;
   line-height: 1.2;
-  transition: all 0.1s;
+  transition: background-color 0.1s, color 0.1s, border-color 0.1s;
+  white-space: nowrap;
 }
 .map-btn:hover { background: var(--accent); color: var(--paper); border-color: var(--accent); }
 .map-btn.active { background: var(--accent); border-color: var(--accent); color: var(--paper); }
@@ -186,6 +193,63 @@ import mapScriptUrl from '../scripts/map.js?url';
 .map-view-switch .map-btn { border-radius: 0; margin-left: -1px; }
 .map-view-switch .map-btn:first-child { border-radius: 2px 0 0 2px; margin-left: 0; }
 .map-view-switch .map-btn:last-child { border-radius: 0 2px 2px 0; }
+
+/* ── Floating HUD in Graph Mode ──────────────────────── */
+#map-graph-hud {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 8;
+  pointer-events: auto;
+}
+#map-graph-hud[hidden] {
+  display: none !important;
+}
+.graph-dim-switch {
+  display: inline-flex;
+  background: rgba(16, 14, 12, 0.88);
+  border: 1px solid rgba(239, 231, 214, 0.35);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.graph-dim-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(239, 231, 214, 0.25);
+  color: rgba(239, 231, 214, 0.78);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+.graph-dim-btn:last-child {
+  border-right: none;
+}
+.graph-dim-btn:hover {
+  color: #efe7d6;
+  background: rgba(207, 75, 66, 0.28);
+}
+.graph-dim-btn.active {
+  background: #cf4b42;
+  color: #efe7d6;
+}
+#graph-hud-hint {
+  background: rgba(16, 14, 12, 0.82);
+  border: 1px solid rgba(239, 231, 214, 0.22);
+  color: rgba(239, 231, 214, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 2px;
+  pointer-events: none;
+}
 
 /* ── View wrapper — holds both canvas and svg ────────── */
 #map-view-wrap {
@@ -254,17 +318,17 @@ import mapScriptUrl from '../scripts/map.js?url';
   color: var(--ink);
   pointer-events: none;
   z-index: 100;
-  max-width: 240px;
-  line-height: 1.5;
-  box-shadow: 3px 3px 10px rgba(0,0,0,0.15);
+  max-width: 260px;
+  line-height: 1.45;
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.18);
   display: none;
 }
-#map-tooltip strong { color: var(--accent); display: block; margin-bottom: 0.2rem; font-family: var(--font-display); font-size: 0.8rem; }
+#map-tooltip strong { color: var(--accent); display: block; margin-bottom: 0.15rem; font-family: var(--font-display); font-size: 0.8rem; }
 
 /* ── Detail panel ────────────────────────────────────── */
 #map-detail {
-  width: 280px;
-  min-width: 280px;
+  width: 300px;
+  min-width: 300px;
   background: var(--paper-deep);
   border-left: 1px solid var(--ink);
   display: flex;
@@ -309,7 +373,7 @@ import mapScriptUrl from '../scripts/map.js?url';
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
-  padding: 0;
+  padding: 0.15rem;
   flex-shrink: 0;
 }
 #detail-close:hover { color: var(--accent); }
@@ -327,21 +391,58 @@ import mapScriptUrl from '../scripts/map.js?url';
 #detail-body::-webkit-scrollbar-thumb { background: var(--ink-muted); border-radius: 2px; }
 
 #detail-desc {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--ink);
-  line-height: 1.5;
+  line-height: 1.55;
   font-family: var(--font-body);
 }
+#detail-desc p {
+  margin: 0;
+}
+#detail-desc p + p {
+  margin-top: 0.65em;
+}
+#detail-desc pre {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.3;
+  overflow-x: auto;
+  margin: 0;
+}
 
-#detail-exits h2, #detail-path-section h2 {
-  font-size: 0.65rem;
+#detail-exits h2, #detail-exits h4, #detail-mobs h4, #detail-path-section h2 {
+  font-size: 0.75rem;
   font-family: var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-muted);
   margin: 0 0 0.4rem;
-  border-bottom: 1px solid rgba(26, 22, 20, 0.1);
+  border-bottom: 1px solid var(--rule);
   padding-bottom: 0.2rem;
+}
+
+.inhabitant-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink);
+}
+.inhabitant-item:last-child { border-bottom: none; }
+.inhabitant-item:hover .inhabitant-name { color: var(--accent); text-decoration: underline; }
+.inhabitant-name {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.inhabitant-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-muted);
 }
 
 .exit-item {
@@ -364,7 +465,16 @@ import mapScriptUrl from '../scripts/map.js?url';
   font-weight: 700;
   text-transform: uppercase;
 }
-.exit-dest { color: var(--ink-muted); font-size: 0.65rem; }
+.exit-dest { color: var(--ink-muted); font-size: 0.65rem; margin-left: auto; }
+
+#detail-mobs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+#detail-mobs:empty {
+  display: none;
+}
 
 #detail-path-section { border-top: 1px solid var(--ink); padding-top: 0.75rem; }
 
@@ -393,8 +503,8 @@ import mapScriptUrl from '../scripts/map.js?url';
 
 /* ── SVG element styles ──────────────────────────────── */
 .exit-line {
-  stroke: rgba(26, 22, 20, 0.15);
-  stroke-width: 1.5;
+  stroke: rgba(26, 22, 20, 0.22);
+  stroke-width: 1.6;
   fill: none;
   pointer-events: none;
 }
@@ -449,12 +559,39 @@ import mapScriptUrl from '../scripts/map.js?url';
 
 @media (max-width: 768px) {
   #map-sidebar {
-    width: 0; min-width: 0; overflow: hidden;
+    width: 0; min-width: 0; overflow: hidden; border-right: none;
   }
   #map-sidebar.open {
-    width: 80vw; max-width: 300px; min-width: 240px;
-    position: absolute; z-index: 20; height: 100%;
-    box-shadow: 4px 0 16px rgba(0,0,0,0.18);
+    width: 82vw; max-width: 300px; min-width: 240px;
+    position: absolute; z-index: 25; height: 100%;
+    border-right: 1px solid var(--ink);
+    box-shadow: 4px 0 16px rgba(0,0,0,0.25);
+  }
+  #map-header {
+    padding: 0.35rem 0.6rem;
+    min-height: auto;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.5rem;
+  }
+  #zone-title {
+    width: 100%;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+  #map-controls {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.25rem;
+  }
+  .map-btn {
+    padding: 0.24rem 0.45rem;
+    font-size: 0.68rem;
+  }
+  #graph-hud-hint {
+    display: none;
+  }
+  #map-legend {
+    display: none !important;
   }
   /* Detail panel: bottom sheet on mobile */
   #map-detail {
@@ -462,20 +599,21 @@ import mapScriptUrl from '../scripts/map.js?url';
     position: absolute; bottom: 0; left: 0; right: 0;
     max-height: 0; overflow: hidden;
     border-left: none;
-    border-top: 1px solid var(--ink);
+    border-top: 2px solid var(--ink);
     transition: max-height 0.25s ease;
-    z-index: 20;
+    z-index: 22;
+    box-shadow: 0 -4px 18px rgba(0,0,0,0.22);
   }
   #map-detail.open:not(.hidden) {
-    max-height: 60vh;
+    max-height: 58vh;
     overflow-y: auto;
   }
   #map-detail.hidden { max-height: 0 !important; }
-  #btn-sidebar { display: block !important; }
+  #btn-sidebar { display: inline-flex !important; align-items: center; }
 }
 
 @media (max-width: 640px) {
-  #map-page { height: calc(100dvh - 9.75rem); }
+  #map-page { height: calc(100dvh - 8.5rem); }
 }
 </style>
 
@@ -487,9 +625,9 @@ import mapScriptUrl from '../scripts/map.js?url';
       <input id="zone-search" type="text" placeholder="Search zones…" autocomplete="off" aria-label="Search zones">
     </div>
     <div id="zone-list" role="list" aria-label="Zone list"></div>
-    <div id="zone-index-link"><a href="/zones/">Zone records</a></div>
+    <div id="zone-index-link"><a href="/zones/">Zone records</a> · <a href="/database/">Mob &amp; Item Codex</a></div>
     <div id="room-search-section">
-      <input id="room-search" type="text" placeholder="Search rooms in zone…" autocomplete="off" aria-label="Search rooms">
+      <input id="room-search" type="text" placeholder="Search rooms…" autocomplete="off" aria-label="Search rooms">
       <div id="room-search-results" role="list" aria-label="Room search results"></div>
     </div>
   </aside>
@@ -499,20 +637,29 @@ import mapScriptUrl from '../scripts/map.js?url';
     <div id="map-header">
       <span id="zone-title">Loading…</span>
       <div id="map-controls">
-        <button class="map-btn" id="btn-sidebar" title="Toggle sidebar" aria-label="Toggle sidebar">☰</button>
+        <button class="map-btn" id="btn-sidebar" title="Toggle zone list" aria-label="Toggle zone list">☰ Zones</button>
         <button class="map-btn" id="btn-zoom-in"  title="Zoom in"  aria-label="Zoom in">+</button>
         <button class="map-btn" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
         <button class="map-btn" id="btn-reset"    title="Reset view" aria-label="Reset view">⌂</button>
         <button class="map-btn" id="btn-path"     title="Pathfinding mode" aria-label="Toggle pathfinding">Path</button>
         <div class="map-view-switch" role="group" aria-label="Map view">
-          <button class="map-btn active" id="btn-view-graph" title="World graph" aria-label="World graph view">✦ Graph</button>
-          <button class="map-btn" id="btn-view-grid" title="Flat world overview" aria-label="Flat world overview">▦ Grid</button>
+          <button class="map-btn active" id="btn-view-graph" title="Obsidian-style 3D / 2D constellation graph" aria-label="World graph view">✦ Graph</button>
+          <button class="map-btn" id="btn-view-grid" title="Point-connected MUD room grid" aria-label="Point-connected grid view">▦ Grid</button>
         </div>
       </div>
     </div>
 
     <!-- View: both canvas and svg live here; JS toggles display -->
     <div id="map-view-wrap">
+
+      <!-- Floating Graph Mode HUD (switches between 3D World Sphere and 2D Constellation Plane) -->
+      <div id="map-graph-hud">
+        <div class="graph-dim-switch" role="group" aria-label="Graph projection">
+          <button type="button" class="graph-dim-btn active" id="btn-graph-3d" title="3D interactive Obsidian sphere">3D World</button>
+          <button type="button" class="graph-dim-btn" id="btn-graph-2d" title="2D planar Obsidian constellation">2D Plane</button>
+        </div>
+        <span id="graph-hud-hint">Drag to rotate · Scroll to zoom · Shift+drag to pan · Click any room</span>
+      </div>
 
       <!-- World map: Canvas (all rooms, pan/zoom) -->
       <div id="map-canvas-wrap">
@@ -573,8 +720,8 @@ import mapScriptUrl from '../scripts/map.js?url';
         <button class="path-btn" id="btn-set-start">Set as path start</button>
         <button class="path-btn clear" id="btn-clear-path" style="display:none;margin-top:.3rem">Clear path</button>
       </div>
-      <div id="detail-expand-section" style="margin-top:0.75rem">
-        <button class="path-btn" id="btn-expand-zone" style="border-color:var(--accent);color:var(--accent)">Expand to Zone Map</button>
+      <div id="detail-expand-section" style="margin-top:0.5rem">
+        <button class="path-btn" id="btn-expand-zone" style="border-color:var(--accent);color:var(--accent)">Open 2D Zone Grid Map →</button>
       </div>
     </div>
   </aside>

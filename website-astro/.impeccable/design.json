@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-14T13:00:00Z",
+  "generatedAt": "2026-10-17T00:00:00Z",
   "title": "Design System: Dark Pawns",
   "extensions": {
     "colorMeta": {
@@ -42,12 +42,13 @@
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Wordmark, page titles, splash. Paperback-cover register." },
+      "display": { "displayName": "Display", "purpose": "Wordmark, page titles, splash. Paperback-cover register. The home-page title takes the larger title-page cut." },
       "headline": { "displayName": "Headline", "purpose": "Section titles (h2)." },
       "title": { "displayName": "Title", "purpose": "Sub-sections (h3)." },
       "body": { "displayName": "Body", "purpose": "Reading copy, 45-75ch measure." },
-      "label": { "displayName": "Label", "purpose": "Section bar and editorial eyebrows, uppercase, letter-spaced." },
-      "mono": { "displayName": "Mono", "purpose": "Game and machine chrome ONLY: terminal, stats, install commands." }
+      "label": { "displayName": "Label", "purpose": "Section bar only: display serif, uppercase, letter-spaced. Editorial eyebrows are Micro." },
+      "mono": { "displayName": "Mono", "purpose": "Game and machine chrome ONLY: terminal, stats, install commands." },
+      "micro": { "displayName": "Micro", "purpose": "Print furniture ONLY: editorial eyebrows (oxblood), source lines, figure labels, captions, timestamps." }
     },
     "shadows": [],
     "motion": [
@@ -64,16 +65,16 @@
       "kind": "button",
       "refersTo": "button-primary",
       "description": "Oxblood CTA for the single most important action on a surface.",
-      "html": "<button class='ds-btn-primary'>ENTER THE GAME</button>",
-      "css": ".ds-btn-primary{background:#A8201A;color:#EFE7D6;border:1px solid #A8201A;border-radius:0;padding:0.6rem 1.4rem;font-family:'DM Serif Display',Georgia,serif;text-transform:uppercase;letter-spacing:0.06em;font-size:0.9rem;cursor:pointer;transition:background .2s,border-color .2s}.ds-btn-primary:hover{background:#7A1812;border-color:#7A1812}.ds-btn-primary:focus-visible{outline:2px solid #A8201A;outline-offset:2px}"
+      "html": "<button class='ds-btn-primary'>Enter the game</button>",
+      "css": ".ds-btn-primary{background:#A8201A;color:#EFE7D6;border:1px solid #A8201A;border-radius:0;padding:0.6rem 1.4rem;font-family:'DM Serif Display',Georgia,serif;font-size:1rem;cursor:pointer;transition:background .2s,border-color .2s}.ds-btn-primary:hover{background:#7A1812;border-color:#7A1812}.ds-btn-primary:focus-visible{outline:2px solid #A8201A;outline-offset:2px}"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
       "description": "Outline button for secondary actions; inverts to ink on hover.",
-      "html": "<button class='ds-btn-secondary'>CONNECTION GUIDE</button>",
-      "css": ".ds-btn-secondary{background:transparent;color:#1A1614;border:1px solid #1A1614;border-radius:0;padding:0.6rem 1.4rem;font-family:'DM Serif Display',Georgia,serif;text-transform:uppercase;letter-spacing:0.06em;font-size:0.9rem;cursor:pointer;transition:background .2s,color .2s}.ds-btn-secondary:hover{background:#1A1614;color:#EFE7D6}.ds-btn-secondary:focus-visible{outline:2px solid #A8201A;outline-offset:2px}"
+      "html": "<button class='ds-btn-secondary'>Connection guide</button>",
+      "css": ".ds-btn-secondary{background:transparent;color:#1A1614;border:1px solid #1A1614;border-radius:0;padding:0.6rem 1.4rem;font-family:'DM Serif Display',Georgia,serif;font-size:1rem;cursor:pointer;transition:background .2s,color .2s}.ds-btn-secondary:hover{background:#1A1614;color:#EFE7D6}.ds-btn-secondary:focus-visible{outline:2px solid #A8201A;outline-offset:2px}"
     },
     {
       "name": "Card",
@@ -126,7 +127,8 @@
       { "name": "The Flat-Ink Rule", "body": "Surfaces are flat at rest and on interaction. Raised elements get a rule or a shift to Paper-Deep, never a shadow.", "section": "elevation" },
       { "name": "The 2px Rule", "body": "Nothing is rounder than 2px, except a true circle for a genuine status dot or avatar.", "section": "shapes" },
       { "name": "The Sourced-or-Silent Rule", "body": "No claim, number, date, or lore appears on any surface unless it traces to a primary source. When there is no source, the surface stays silent rather than plausible.", "section": "dos-donts" },
-      { "name": "The Archive-Is-The-Pitch Rule", "body": "Marketing surfaces persuade through the depth, age, and specificity of the world, never through product-launch conventions.", "section": "dos-donts" }
+      { "name": "The Archive-Is-The-Pitch Rule", "body": "Marketing surfaces persuade through the depth, age, and specificity of the world, never through product-launch conventions.", "section": "dos-donts" },
+      { "name": "The Quoted-Not-Paraphrased Rule", "body": "An excerpt is reproduced verbatim, labelled with its source, and linked to the canonical copy. A paraphrase presented as an excerpt is a lie about the archive.", "section": "dos-donts" }
     ],
     "dos": [
       "Do lead with the specificity of the world; the archive is the pitch",
@@ -134,11 +136,13 @@
       "Do convey depth with rules and cream layering only",
       "Do write all public copy in brand-voice.md Layer 3 (Frontline's Mythic Admin register)",
       "Do treat the human player as the primary visitor in every layout and hierarchy decision",
-      "Do keep monospace for game and machine chrome exclusively"
+      "Do keep monospace for game and machine chrome exclusively",
+      "Do quote the world verbatim and label the source; derive counts at build time"
     ],
     "donts": [
       "Don't use em-dashes in UI copy: headlines, buttons, labels, nav, captions",
       "Don't use section-numbering eyebrows or decorative colophons; the FILED UNDER line is banned",
+      "Don't put a kicker above a heading that repeats it; a kicker must carry a fact the heading cannot",
       "Don't build three-equal-card feature rows; use asymmetric or two-column editorial layouts",
       "Don't build fake terminal or dashboard UIs; the only real terminal is the game client at /play",
       "Don't use gradients, box-shadows, glows, or any border radius over 2px",

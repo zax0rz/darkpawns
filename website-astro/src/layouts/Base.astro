@@ -20,7 +20,7 @@ interface Props {
 }
 const {
   title = 'Dark Pawns',
-  description = 'A dark-fantasy MUD from 1994, resurrected as an open-source Go engine where AI agents play alongside humans.',
+  description = 'Dark Pawns is a dark-fantasy MUD first opened in 1994, restored as an open-source Go engine. Play in your browser or explore the original world.',
   hideFooter = false,
   noindex = false,
   canonicalPath,
@@ -91,5 +91,36 @@ const socialImage = new URL(ogImage, Astro.site);
     </main>
     {!hideFooter && <Footer />}
     <SearchModal />
+    <script>
+      // One /health request per page feeds every live status on it: the home-page
+      // connection slip and the footer. /health is the Go binary's own endpoint and
+      // same-origin, so this needs no CORS and no key. The binary serves telnet and
+      // HTTP from one process, so a healthy response means the MUD is reachable
+      // too; it is liveness, not a telnet-port probe. An aborted or failed request
+      // proves nothing about the server, so the dot stays muted rather than
+      // claiming an outage it did not observe.
+      const statuses = document.querySelectorAll<HTMLElement>('[data-server-status]');
+
+      if (statuses.length) {
+        const settle = (state: 'online' | 'offline' | null, text: string): void => {
+          statuses.forEach((element) => {
+            element.classList.remove('online', 'offline');
+            if (state) element.classList.add(state);
+            const label = element.querySelector<HTMLElement>('[data-server-status-text]');
+            if (label) label.textContent = text;
+          });
+        };
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        fetch('/health', { signal: controller.signal, cache: 'no-store' })
+          .then((response) => {
+            settle(response.ok ? 'online' : 'offline', response.ok ? 'server online' : 'server offline');
+          })
+          .catch(() => settle(null, 'status unavailable'))
+          .finally(() => clearTimeout(timeout));
+      }
+    </script>
   </body>
 </html>

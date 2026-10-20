@@ -14,7 +14,7 @@ web
 
 **Tertiary: developers and researchers.** People evaluating the open-source Go engine or the persistent-agent research. Served by docs and the codebase, not the front door.
 
-> Priority decision (2026-08-14): when these audiences conflict, the site optimizes for **human players first**. The current home page, which leads with agent onboarding, is misaligned with this and should be reworked.
+> Priority decision (2026-08-14): when these audiences conflict, the site optimizes for **human players first**. The home page was reworked on 2026-10-17 to lead with the game itself: the world's own words, the depth of the world, and a direct connection. Agents and research stay off the front door.
 
 ## Product Purpose
 
@@ -28,7 +28,7 @@ A neighboring product cannot truthfully copy this: a specific, faithfully-ported
 
 - **Play (humans):** an in-browser CRT web client at `/play`, or any MUD client on `darkpawns.org` port `7778` with TLS (Mudlet installs its own dock; guide at `/mudlet`). Unencrypted telnet on `7777` stays open for clients without TLS.
 - **Play (agents):** planned after the port is complete. The first agent surface (agent keys, a JSON protocol, narrative memory, skills) was removed in September 2026 to be rebuilt properly; agents will connect as ordinary clients.
-- **Explore:** browser archive/codex — help files, world/lore, class & race handbooks, an interactive map, a mob/item database, and The Daily Dispatch (news).
+- **Explore:** browser archive/codex — help files, world/lore, class & race handbooks, an interactive map, a mob/item database, and the Dispatch blog (news).
 - **Evaluate:** GitHub repo, developer docs, research notes.
 - Marketing is a someday intent, and when it happens it stays in the editorial/archival register of this site. Never a product-launch/SaaS surface.
 
@@ -36,7 +36,7 @@ A neighboring product cannot truthfully copy this: a specific, faithfully-ported
 
 - Go engine (CircleMUD/DikuMUD lineage), Lua mob behavior scripts, WebSocket-native agent client, narrative-memory and "dreaming" consolidation, real-time privacy filtering of agent-accessible logs.
 - Machine-readability is a first-class requirement, not a nice-to-have: `llms.txt`, per-page Markdown via `Accept:`/`index.md`, `llms-full` bundles, JSON section indexes, JSON-LD. Content is git-native and agent-authorable (agents open PRs; `make new-post`).
-- Static site generator: Hugo (0.161.1).
+- Static site generator: Astro 7, with content collections validated at build time.
 - **Character management from the web is a future idea, explicitly not being architected for yet** (decision 2026-08-14). Do not reserve nav or build stubs for it now.
 
 ## Brand Commitments
@@ -49,7 +49,7 @@ A neighboring product cannot truthfully copy this: a specific, faithfully-ported
 ## Evidence on Hand
 
 - Real, sourced game history: `content/community/history/timeline.md` (Frontline's Wayback-preserved chronicle); `docs/wayback/` captures; credits with the real staff.
-- 494 content files, 431 help topics, mob/item database, a ~9,590-room interactive map, the GitHub repo, 37 Wayback records from dp-players.com and darkpawns.com, and 18 curated Usenet records from 1996-2002.
+- 494 content files, 429 help topics, 1,319 mobs and 1,672 objects, a 9,590-room interactive map, the GitHub repo, 37 Wayback records from dp-players.com and darkpawns.com, and 18 curated Usenet records from 1996-2002.
 - A living community revival at darkpawns.net ("DPReturns") that is still online.
 - **Absences future work must NOT fabricate:** no current player counts, testimonials, or benchmarks exist — do not invent them. Founding history is now sourced and must not be re-embellished (the prior "First Age" prose was hallucinated). The darkpawns.net revival year (~2019) is unverified and must render hedged.
 

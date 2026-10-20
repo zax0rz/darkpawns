@@ -24,16 +24,18 @@ ITEM_TYPES = {
 WEAR_FLAGS = {
     0: "TAKE", 1: "FINGER", 2: "NECK", 3: "BODY", 4: "HEAD",
     5: "LEGS", 6: "FEET", 7: "HANDS", 8: "ARMS", 9: "SHIELD",
-    10: "ABOUT", 11: "WAIST", 12: "WRIST", 13: "WIELD", 14: "HOLD"
+    10: "ABOUT", 11: "WAIST", 12: "WRIST", 13: "WIELD", 14: "HOLD",
+    15: "THROW", 16: "ABLEGS", 17: "FACE", 18: "HOVER"
 }
 
 EXTRA_FLAGS = {
     0: "GLOW", 1: "HUM", 2: "NORENT", 3: "NODONATE", 4: "NOINVIS",
     5: "INVISIBLE", 6: "MAGIC", 7: "NODROP", 8: "BLESS", 9: "ANTI_GOOD",
-    10: "ANTI_EVIL", 11: "ANTI_NEUTRAL", 12: "ANTI_CLERIC", 13: "ANTI_MAGE",
-    14: "ANTI_THIEF", 15: "ANTI_WARRIOR", 16: "NOSELL", 17: "DK_METAL",
-    18: "DK_ORGANIC", 19: "DK_SHARP", 20: "DK_BLUNT", 21: "DK_CRIT",
-    22: "DK_CURSED", 23: "DK_UNIQUE"
+    10: "ANTI_EVIL", 11: "ANTI_NEUTRAL", 12: "ANTI_MAGE", 13: "ANTI_CLERIC",
+    14: "ANTI_THIEF", 15: "ANTI_WARRIOR", 16: "NOSELL", 17: "NAMED",
+    18: "ANTI_PSIONICIST", 19: "ANTI_NINJA", 20: "ANTI_PALADIN", 21: "ANTI_MAGUS",
+    22: "ANTI_ASSASSIN", 23: "ANTI_AVATAR", 24: "RARE", 25: "NOLOCATE",
+    26: "ANTI_RANGER", 27: "ANTI_MYSTIC", 28: "TWOHANDS"
 }
 
 APPLY_LOCATIONS = {
@@ -41,13 +43,14 @@ APPLY_LOCATIONS = {
     6: "CHA", 7: "CLASS", 8: "LEVEL", 9: "AGE", 10: "CHAR_WEIGHT",
     11: "CHAR_HEIGHT", 12: "MANA", 13: "HIT", 14: "MOVE", 15: "GOLD",
     16: "EXP", 17: "AC", 18: "HITROLL", 19: "DAMROLL", 20: "SAVING_PARA",
-    21: "SAVING_ROD", 22: "SAVING_PETRI", 23: "SAVING_BREATH", 24: "SAVING_SPELL"
+    21: "SAVING_ROD", 22: "SAVING_PETRI", 23: "SAVING_BREATH", 24: "SAVING_SPELL",
+    25: "RACE_HATE", 26: "HIT_REGEN", 27: "MANA_REGEN", 28: "MOVE_REGEN", 29: "PERM_SPELL"
 }
 
 EQUIP_SLOTS = {
     0: "used as light",
-    1: "worn on left finger",
-    2: "worn on right finger",
+    1: "worn on right finger",
+    2: "worn on left finger",
     3: "worn around neck (1)",
     4: "worn around neck (2)",
     5: "worn on body",
@@ -59,25 +62,50 @@ EQUIP_SLOTS = {
     11: "worn as shield",
     12: "worn about body",
     13: "worn about waist",
-    14: "worn around left wrist",
-    15: "worn around right wrist",
+    14: "worn around right wrist",
+    15: "worn around left wrist",
     16: "wielded",
-    17: "held"
+    17: "held",
+    18: "wielded for throwing",
+    19: "worn about legs",
+    20: "worn on face",
+    21: "hovering near head"
 }
 
 ACTION_BITS = [
-    "SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "NICE", "AGGRESSIVE", "GREEDY", 
-    "STAY_ZONE", "WIMPY", "FOLLOW", "PURSUE", "DEADLY", "POLYSELF", "META_AGG", 
-    "GUARD", "AUCTION", "CHARITABLE", "MOUNT", "INVISIBLE"
+    "SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGR",
+    "STAY-ZONE", "WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL",
+    "MEMORY", "HELPER", "!CHARM", "!SUMMN", "!SLEEP", "!BASH",
+    "!BLIND", "HUNTER", "AGGR24", "RNDLD_ZONE", "MOUNTABLE",
+    "RARE", "LOOTS", "OKGIVE"
 ]
 
 AFFECT_BITS = [
-    "BLIND", "CHARM", "CURSE", "POISON", "PROTECT_EVIL", "PROTECT_GOOD", "SLEEP", 
-    "NO_FLIGHT", "FLYING", "TRUE_SIGHT", "INFRARED", "WATERWALK", "SANCTUARY", 
-    "GROUP", "HASTE", "SLOW", "PLAGUE", "WEAKEN", "INVISIBLE", "DETECT_ALIGN", 
-    "DETECT_INVIS", "DETECT_MAGIC", "SENSE_LIFE", "SENSE_PSY", "SHIELD", "WEB", 
-    "BERSERK", "BLADE", "BLUR", "FIRESHIELD", "ICESHIELD", "SHOCKSHIELD", "BARKSKIN", 
-    "LEVITATE", "DETECT_INV"
+    "BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC",
+    "SENSE-LIFE", "WATERWALK", "SANCT", "GROUP", "CURSE", "INFRA",
+    "POISON", "PROT-EVIL", "PROT-GOOD", "SLEEP", "!TRACK",
+    "FLESH-ALTER", "DODGE", "SNEAK", "HIDE", "BERSERK", "CHARM",
+    "FOLLOW", "WIMPY", "KUJI-KIRI", "CUTTHROAT", "FLY", "WEREWOLF",
+    "VAMPIRE", "MOUNTED", "INVULN", "FLAMING", "NOTHING", "HASTE",
+    "SLOW", "DREAM", "WATERBREATHE", "METALSKIN", "ROBBED"
+]
+
+MOB_RACES = [
+    "Human", "Elf", "Dwarf", "Kender", "Centaur", "Rakshasa", "Troll",
+    "Lycanthrope", "Vampire", "Undead", "Dragon", "Demon", "Horse", "Reptile",
+    "Arachnid", "Rodent", "Other", "Vegetable", "Giant", "Demi-god", "Ogre",
+    "Insect", "Mammal", "Fish", "Avian", "Magical Construct", "Amphibian",
+    "Humanoid", "Faery", "Ssaur", "Minotaur"
+]
+
+ATTACK_TYPES = [
+    "hit", "sting", "whip", "slash", "bite", "bludgeon", "crush",
+    "pound", "claw", "maul", "thrash", "pierce", "blast", "punch", "stab"
+]
+
+POSITIONS = [
+    "Dead", "Mortally wounded", "Incapacitated", "Stunned",
+    "Sleeping", "Resting", "Sitting", "Fighting", "Standing"
 ]
 
 def clean_desc(desc):
@@ -169,32 +197,37 @@ def parse_mobs():
                     flags_line = flags_line + " " + lines[i].strip()
                     i += 1
                 
+                letter = 'S'
+                if flags_line.endswith('E'):
+                    letter = 'E'
                 flags_line = flags_line.rstrip(' ES')
                 fields = flags_line.split()
                 
                 action_flags = []
                 affect_flags = []
                 alignment = 0
-                race = 7
+                race = 16  # Default RACE_OTHER in src/db.c:1110
                 
-                if len(fields) >= 1:
+                if len(fields) >= 9:
+                    act_raw = [parse_flag(fields[j]) for j in range(4)]
+                    aff_raw = [parse_flag(fields[4 + j]) for j in range(4)]
+                    action_flags = [flg for flg in get_bitmask_flags(act_raw, ACTION_BITS) if flg != "ISNPC"]
+                    affect_flags = get_bitmask_flags(aff_raw, AFFECT_BITS)
                     try:
-                        mask = int(fields[0])
-                        action_flags = [ACTION_BITS[b] for b in range(min(len(ACTION_BITS), 32)) if mask & (1 << b)]
-                    except ValueError: pass
-                if len(fields) >= 2:
+                        alignment = int(fields[8])
+                    except ValueError:
+                        pass
+                elif len(fields) >= 3:
                     try:
-                        mask = int(fields[1])
-                        affect_flags = [AFFECT_BITS[b] for b in range(min(len(AFFECT_BITS), 32)) if mask & (1 << b)]
-                    except ValueError: pass
-                if len(fields) >= 3:
-                    try: alignment = int(fields[2])
-                    except ValueError: pass
-                if len(fields) >= 4:
-                    try: race = int(fields[3])
-                    except ValueError: pass
+                        act_raw = [parse_flag(fields[0]), 0, 0, 0]
+                        aff_raw = [parse_flag(fields[1]), 0, 0, 0]
+                        action_flags = [flg for flg in get_bitmask_flags(act_raw, ACTION_BITS) if flg != "ISNPC"]
+                        affect_flags = get_bitmask_flags(aff_raw, AFFECT_BITS)
+                        alignment = int(fields[2])
+                    except ValueError:
+                        pass
                 
-                # Stats line
+                # Stats line: <level> <thac0> <ac> <hp_dice> <dmg_dice>
                 stats_line = lines[i].strip()
                 i += 1
                 stats = stats_line.split()
@@ -203,14 +236,15 @@ def parse_mobs():
                 ac = 100
                 hp_dice = "1d1+1"
                 damage_dice = "1d1+0"
-                if len(stats) >= 9:
+                if len(stats) >= 5:
                     try:
                         level = int(stats[0])
                         thac0 = int(stats[1])
-                        ac = int(stats[2]) * 10 # C scale
-                        hp_dice = f"{stats[3]}d{stats[4]}+{stats[5]}"
-                        damage_dice = f"{stats[6]}d{stats[7]}+{stats[8]}"
-                    except ValueError: pass
+                        ac = int(stats[2]) * 10  # C scale (src/db.c:1064)
+                        hp_dice = stats[3]
+                        damage_dice = stats[4]
+                    except ValueError:
+                        pass
                 
                 # Gold / Exp
                 ge_line = lines[i].strip()
@@ -222,55 +256,86 @@ def parse_mobs():
                     try:
                         gold = int(ge[0])
                         exp = int(ge[1])
-                    except ValueError: pass
+                    except ValueError:
+                        pass
                 
-                # Position
+                # Position / Default Position / Sex
                 pos_line = lines[i].strip()
                 i += 1
                 pos = pos_line.split()
+                position = 8
+                default_pos = 8
                 sex = 0
                 if len(pos) >= 3:
-                    try: sex = int(pos[2])
-                    except ValueError: pass
+                    try:
+                        position = int(pos[0])
+                        default_pos = int(pos[1])
+                        sex = int(pos[2])
+                    except ValueError:
+                        pass
                 
-                # Stats base
+                # Base stats
                 str_stat, int_stat, wis_stat, dex_stat, con_stat, cha_stat = 11, 11, 11, 11, 11, 11
                 bare_hand_attack = 0
                 noise = ""
                 script = ""
                 
-                # Parse espec lines
-                while i < len(lines):
-                    line = lines[i].strip()
-                    if line == "E" or line.startswith('#') or line.startswith('$'):
-                        break
-                    i += 1
-                    
-                    if line.startswith("BareHandAttack:"):
-                        try: bare_hand_attack = int(line.split(":", 1)[1].strip())
-                        except ValueError: pass
-                    elif line.startswith("Str:"):
-                        try: str_stat = int(line.split(":", 1)[1].strip())
-                        except ValueError: pass
-                    elif line.startswith("Int:"):
-                        try: int_stat = int(line.split(":", 1)[1].strip())
-                        except ValueError: pass
-                    elif line.startswith("Wis:"):
-                        try: wis_stat = int(line.split(":", 1)[1].strip())
-                        except ValueError: pass
-                    elif line.startswith("Dex:"):
-                        try: dex_stat = int(line.split(":", 1)[1].strip())
-                        except ValueError: pass
-                    elif line.startswith("Con:"):
-                        try: con_stat = int(line.split(":", 1)[1].strip())
-                        except ValueError: pass
-                    elif line.startswith("Cha:"):
-                        try: cha_stat = int(line.split(":", 1)[1].strip())
-                        except ValueError: pass
-                    elif line.startswith("Noise:"):
-                        noise = line.split(":", 1)[1].strip().rstrip('~')
-                    elif line.startswith("Script:"):
-                        script = line.split(":", 1)[1].strip()
+                # Parse espec lines (only when mob type is 'E')
+                if letter == 'E':
+                    while i < len(lines):
+                        line = lines[i].strip()
+                        if line == "E" or line.startswith('#') or line.startswith('$'):
+                            if line == "E":
+                                i += 1
+                            break
+                        i += 1
+                        
+                        if line.startswith("BareHandAttack:"):
+                            try:
+                                bare_hand_attack = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Race:"):
+                            try:
+                                race = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Str:"):
+                            try:
+                                str_stat = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Int:"):
+                            try:
+                                int_stat = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Wis:"):
+                            try:
+                                wis_stat = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Dex:"):
+                            try:
+                                dex_stat = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Con:"):
+                            try:
+                                con_stat = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Cha:"):
+                            try:
+                                cha_stat = int(line.split(":", 1)[1].strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Noise:"):
+                            noise = line.split(":", 1)[1].strip().rstrip('~')
+                        elif line.startswith("Script:"):
+                            sp_parts = line.split(":", 1)[1].strip().split()
+                            if sp_parts and sp_parts[0] != "0":
+                                script = sp_parts[0]
                 
                 mobs[vnum] = {
                     "vnum": vnum,
@@ -282,6 +347,7 @@ def parse_mobs():
                     "affect_flags": affect_flags,
                     "alignment": alignment,
                     "race": race,
+                    "race_name": MOB_RACES[race] if 0 <= race < len(MOB_RACES) else f"Race {race}",
                     "level": level,
                     "thac0": thac0,
                     "ac": ac,
@@ -289,6 +355,8 @@ def parse_mobs():
                     "damage_dice": damage_dice,
                     "gold": gold,
                     "exp": exp,
+                    "position": POSITIONS[position] if 0 <= position < len(POSITIONS) else "Standing",
+                    "default_pos": POSITIONS[default_pos] if 0 <= default_pos < len(POSITIONS) else "Standing",
                     "sex": sex,
                     "str": str_stat,
                     "int": int_stat,
@@ -297,6 +365,7 @@ def parse_mobs():
                     "con": con_stat,
                     "cha": cha_stat,
                     "bare_hand_attack": bare_hand_attack,
+                    "attack_name": ATTACK_TYPES[bare_hand_attack] if 0 <= bare_hand_attack < len(ATTACK_TYPES) else "hit",
                     "noise": noise,
                     "script": script,
                     "spawns": [],
@@ -352,6 +421,12 @@ def parse_objects():
                         for f_idx in range(4):
                             wear_flags_raw[f_idx] = parse_flag(flags_fields[5+f_idx])
                     except ValueError: pass
+                elif len(flags_fields) >= 3:
+                    try:
+                        type_flag = int(flags_fields[0])
+                        extra_flags_raw[0] = parse_flag(flags_fields[1])
+                        wear_flags_raw[0] = parse_flag(flags_fields[2])
+                    except ValueError: pass
                 
                 # Values line
                 values_line = lines[i].strip()
@@ -382,7 +457,7 @@ def parse_objects():
                 
                 while i < len(lines):
                     line = lines[i].strip()
-                    if line == "$" or line.startswith('#'):
+                    if line == "$" or line == "$~" or line.startswith('#'):
                         break
                     i += 1
                     
@@ -400,10 +475,15 @@ def parse_objects():
                                 mod = int(aff_fields[1])
                                 affects.append({"location": APPLY_LOCATIONS.get(loc, f"LOC_{loc}"), "modifier": mod})
                             except ValueError: pass
-                    elif line == "S":
-                        s_line = lines[i].strip()
-                        i += 1
-                        script = s_line.split()[0] if s_line.split() else ""
+                    elif line == "S" or line.startswith("S "):
+                        if line == "S" and i < len(lines):
+                            s_line = lines[i].strip()
+                            i += 1
+                        else:
+                            s_line = line[1:].strip()
+                        s_parts = s_line.split()
+                        if s_parts and s_parts[0] != "0":
+                            script = s_parts[0]
                 
                 extra_flags = get_bitmask_flags(extra_flags_raw, list(EXTRA_FLAGS.values()))
                 wear_flags = get_bitmask_flags(wear_flags_raw, list(WEAR_FLAGS.values()))
@@ -748,16 +828,25 @@ def main():
             "l": mv["long_desc"],
             "d": mv["detailed_desc"],
             "lvl": mv["level"],
+            "thac0": mv["thac0"],
             "rc": mv["race"],
+            "rcn": mv["race_name"],
             "alg": mv["alignment"],
             "sex": mv["sex"],
+            "pos": mv["position"],
+            "dpos": mv["default_pos"],
             "hp": mv["hp_dice"],
             "dmg": mv["damage_dice"],
+            "bha": mv["bare_hand_attack"],
+            "atk": mv["attack_name"],
             "gld": mv["gold"],
             "exp": mv["exp"],
             "ac": mv["ac"],
             "stat": [mv["str"], mv["int"], mv["wis"], mv["dex"], mv["con"], mv["cha"]],
+            "act": mv["action_flags"],
+            "aff": mv["affect_flags"],
             "noise": mv["noise"],
+            "scr": mv["script"],
             "spw": mv["spawns"],
             "drp": mv["drops"],
             "shop": mv["shop"]
@@ -770,6 +859,7 @@ def main():
             "k": ov["keywords"],
             "s": ov["short_desc"],
             "l": ov["long_desc"],
+            "ad": ov["action_desc"],
             "type": ov["type"],
             "wear": ov["wear_flags"],
             "extra": ov["extra_flags"],
@@ -779,6 +869,7 @@ def main():
             "load": ov["load_percent"],
             "aff": ov["affects"],
             "edesc": ov["extra_descs"],
+            "scr": ov["script"],
             "mobs": ov["loaded_by"],
             "rms": ov["placed_in"],
             "shp": ov["sold_by"]

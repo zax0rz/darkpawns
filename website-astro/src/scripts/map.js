@@ -1,49 +1,64 @@
-/* Dark Pawns — World Map  (v3 — static positions, no force sim)
+/* Dark Pawns — Interactive World Map & Obsidian Constellation Atlas
  *
- * Architecture:
- *   1. Fetch /map/map-index.json on load  → instant zone list + room→zone lookup
- *   2. World map view                     → fetch /map/world-map.json (9590 rooms)
- *                                            Canvas render, pan/pinch/zoom via D3
- *                                            Centroids, zone links, BFS, zone hulls
- *                                            all computed once at load time
- *   3. Zone click (from world map or list) → fetch /map/zone-{id}.json (lazy, cached)
- *                                            SVG render with pre-baked BFS x,y
- *   4. Room click                          → show detail panel (no extra fetch)
- *
- * Touch/mobile: D3 zoom handles pointer events (mouse + touch + trackpad pinch)
- * on both canvas and SVG elements. No force simulation anywhere.
+ * Modes:
+ *   - ✦ Graph (3D World / 2D Plane):
+ *       - 3D World (/map/world-sphere.json): Interactive 3D Obsidian sphere where users can
+ *         drag to rotate in 3D, scroll/pinch to zoom, Shift+drag / right-drag / 2-finger pan,
+ *         hover any node to illuminate its connected exit web, and click any room to inspect
+ *         its description, exits, mobs, and items.
+ *       - 2D Plane (/map/world-graph.json): Planar force-directed Obsidian constellation.
+ *   - ▦ Grid (Point-Connected MUD Map):
+ *       - World Overview (/map/world-map.json): Stitched 2D cardinal layout of all 91 zones.
+ *       - Zone Grid (/map/zone-{id}.json): Classic point-connected MUD map with N/S/E/W/U/D links.
  */
 (function () {
   'use strict';
 
   // ── State ──────────────────────────────────────────────────────────────────
   const zoneCache = {};        // zone_id → loaded zone JSON
-  let   indexData   = null;    // {zones: [{id, name, rooms}]}
-  let   worldMapData = null;   // {rooms: [{id, x, y, sector, zone_id}], links: [{s, t}]}
-  let   wmRoomPosMap = {};     // room_id → room object (for O(1) hit-testing)
-  let   zoneCentroids = {};    // zone_id → {x, y, name, count}
-  let   worldZoneLinks = [];   // [{z1, z2, count}]
-  let   reachableRooms = {};   // room_id → true
-  let   zoneHulls = {};        // zone_id → {hull, ds, bx0, by0, bx1, by1}
+  let indexData = null;        // {zones: [{id, name, rooms}], room_zones: {}, room_names: {}}
+  let worldMapData = null;     // {rooms: [{id, x, y, sector, zone_id}], links: [{s, t}]}
+  let wmRoomPosMap = {};       // room_id → room object (for O(1) hit-testing)
+  let worldAdj = {};           // room_id → Set of connected room_ids across the world
+  let zoneCentroids = {};      // zone_id → {x, y, name, count}
+  let worldZoneLinks = [];     // [{z1, z2, count}]
+  let reachableRooms = {};     // room_id → true
+  let zoneHulls = {};          // zone_id → {hull, ds, bx0, by0, bx1, by1}
 
-  let currentZoneId  = null;   // null = world map
+  let currentZoneId = null;    // null = world map; number = focused/selected zone
   let selectedRoomId = null;
-  let pathStartId    = null;
-  let pathMode       = false;
-  let currentRooms   = [];     // rooms in the current zone (with x,y)
-  let currentLinks   = [];     // links [{s, t}] in the current zone
+  let hoveredRoomId = null;
+  let pathStartId = null;
+  let pathMode = false;
+  let currentRooms = [];       // rooms in the current zone (with x,y)
+  let currentLinks = [];       // links [{s, t}] in the current zone
 
-  // canvas transform state (world map)
+  // Canvas transform state
   let cvTransform = d3.zoomIdentity;
-  let viewMode = 'grid';       // 'grid' | 'globe'
+  let viewMode = 'globe';      // 'globe' (3D Obsidian World) | 'graph' (2D Obsidian Plane) | 'grid' (MUD Grid)
+  let graphDim = '3d';         // '3d' | '2d' — sub-mode of ✦ Graph
   let roomDegrees = {};        // room_id → degree (exit count)
+  let roomInhabitants = {};    // room_id → { mobs: [], items: [] }
 
-  // 3D Globe View State
+  // 2D Obsidian Graph State
+  let graphData = null;        // loaded from world-graph.json
+  let graphRoomMap = null;     // room_id → projected node {x,y,degree,sector,zone}
+
+  // 3D Obsidian Globe State
   let globeData = null;        // loaded from world-sphere.json
-  let globeRotation = [0.3, -0.4]; // [theta, phi] tracking angles
+  let globeRoomMap = null;     // room_id → sphere node {id,x,y,z,sector,zone}
+  let globeRotation = [0.3, -0.18]; // [theta, phi]
+  let globePan = [0, 0];       // [panX, panY] screen-space offset for panning zoomed-in 3D view
   let isDraggingGlobe = false;
+  let isPanningGlobe = false;
   let lastMousePos = { x: 0, y: 0 };
   let dragMoveDistance = 0;
+  let globeAnimFrame = null;
+
+  // Touch pinch/pan state for 3D Globe
+  let touchPinchStartDist = 0;
+  let touchPinchStartScale = 1;
+  let touchPinchLastMid = { x: 0, y: 0 };
 
   // ── Sector colors ──────────────────────────────────────────────────────────
   const SECTOR_COLOR = {
@@ -60,38 +75,82 @@
   };
   function sectorColor(s) { return SECTOR_COLOR[s] ?? '#a8201a'; }
 
-  const DIR_FULL = { n: 'north', e: 'east', s: 'south', w: 'west', u: 'up', d: 'down' };
+  // Lifted sector palette for the dark Obsidian graph canvas
+  const SECTOR_COLOR_DARK = {
+    0: '#9a948e', 1: '#cf4b42', 2: '#b8c07e',  3: '#6fa061',
+    4: '#d0ac7d', 5: '#a39481', 6: '#7fb3d1',  7: '#5c83b8',
+    8: '#4a6b9e', 9: '#8fc9f2', 10: '#e0c08a', 11: '#ee7a66',
+    12: '#b09c7e', 13: '#dbe2ea', 14: '#5c83b8', 15: '#87a086',
+  };
+  function sectorColorDark(s) { return SECTOR_COLOR_DARK[s] ?? '#cf4b42'; }
+
+  // ── World Text Reflow Helper (matches src/lib/world-text.mjs) ──────────────
+  const DRAWING_RE = /\*--|--\*|\|\s{2,}\|/;
+  function reflowWorldText(text) {
+    const source = String(text ?? '').replace(/\r\n?/g, '\n').replace(/\s+$/, '');
+    if (!source) return { drawing: false, paragraphs: [] };
+    if (DRAWING_RE.test(source)) return { drawing: true, paragraphs: [source] };
+
+    const paragraphs = [];
+    let current = [];
+    const flush = () => {
+      if (current.length) paragraphs.push(current.join(' ').replace(/\s+/g, ' ').trim());
+      current = [];
+    };
+    for (const line of source.split('\n')) {
+      if (!line.trim()) {
+        flush();
+        continue;
+      }
+      if (/^\s/.test(line)) flush();
+      current.push(line.trim());
+    }
+    flush();
+    return { drawing: false, paragraphs };
+  }
+
+  function renderReflowedDesc(text) {
+    const { drawing, paragraphs } = reflowWorldText(text);
+    if (!paragraphs.length) return '';
+    if (drawing) return `<pre>${escHtml(paragraphs[0])}</pre>`;
+    return paragraphs.map(p => `<p>${escHtml(p)}</p>`).join('');
+  }
 
   // ── DOM refs ───────────────────────────────────────────────────────────────
-  const $zoneSearch  = document.getElementById('zone-search');
-  const $zoneList    = document.getElementById('zone-list');
-  const $roomSearch  = document.getElementById('room-search');
-  const $roomResults = document.getElementById('room-search-results');
-  const $zoneTitle   = document.getElementById('zone-title');
-  const $loading     = document.getElementById('map-loading');
-  const $loadingMsg  = document.getElementById('map-loading-msg');
-  const $empty       = document.getElementById('map-empty');
-  const $legend      = document.getElementById('map-legend');
-  const $tooltip     = document.getElementById('map-tooltip');
-  const $detail      = document.getElementById('map-detail');
-  const $detailName  = document.getElementById('detail-room-name');
-  const $detailVnum  = document.getElementById('detail-vnum');
-  const $detailDesc  = document.getElementById('detail-desc');
-  const $detailExits = document.getElementById('detail-exits');
-  const $detailMobs  = document.getElementById('detail-mobs');
-  const $pathStatus  = document.getElementById('path-status');
-  const $sidebar     = document.getElementById('map-sidebar');
-  const $btnSidebar  = document.getElementById('btn-sidebar');
-  const $btnSetStart = document.getElementById('btn-set-start');
-  const $btnClrPath  = document.getElementById('btn-clear-path');
-  const $btnPath     = document.getElementById('btn-path');
-  const $btnView     = document.getElementById('btn-view');
-  const $svgWrap     = document.getElementById('map-svg-wrap');
-  const $canvasWrap  = document.getElementById('map-canvas-wrap');
-  const canvasEl     = document.getElementById('map-canvas');
-  const ctx          = canvasEl ? canvasEl.getContext('2d') : null;
+  const $zoneSearch   = document.getElementById('zone-search');
+  const $zoneList     = document.getElementById('zone-list');
+  const $roomSearch   = document.getElementById('room-search');
+  const $roomResults  = document.getElementById('room-search-results');
+  const $zoneTitle    = document.getElementById('zone-title');
+  const $loading      = document.getElementById('map-loading');
+  const $loadingMsg   = document.getElementById('map-loading-msg');
+  const $empty        = document.getElementById('map-empty');
+  const $legend       = document.getElementById('map-legend');
+  const $tooltip      = document.getElementById('map-tooltip');
+  const $detail       = document.getElementById('map-detail');
+  const $detailName   = document.getElementById('detail-room-name');
+  const $detailVnum   = document.getElementById('detail-vnum');
+  const $detailDesc   = document.getElementById('detail-desc');
+  const $detailExits  = document.getElementById('detail-exits');
+  const $detailMobs   = document.getElementById('detail-mobs');
+  const $pathStatus   = document.getElementById('path-status');
+  const $sidebar      = document.getElementById('map-sidebar');
+  const $btnSidebar   = document.getElementById('btn-sidebar');
+  const $btnSetStart  = document.getElementById('btn-set-start');
+  const $btnClrPath   = document.getElementById('btn-clear-path');
+  const $btnPath      = document.getElementById('btn-path');
+  const $btnViewGraph = document.getElementById('btn-view-graph');
+  const $btnViewGrid  = document.getElementById('btn-view-grid');
+  const $graphHud     = document.getElementById('map-graph-hud');
+  const $btnGraph3d   = document.getElementById('btn-graph-3d');
+  const $btnGraph2d   = document.getElementById('btn-graph-2d');
+  const $graphHudHint = document.getElementById('graph-hud-hint');
+  const $svgWrap      = document.getElementById('map-svg-wrap');
+  const $canvasWrap   = document.getElementById('map-canvas-wrap');
+  const canvasEl      = document.getElementById('map-canvas');
+  const ctx           = canvasEl ? canvasEl.getContext('2d') : null;
 
-  // ── D3 SVG setup (zone view) ───────────────────────────────────────────────
+  // ── D3 SVG setup (zone point-connected grid view) ──────────────────────────
   const svgEl  = document.getElementById('map-svg');
   const svg    = d3.select(svgEl);
   const gRoot  = svg.append('g').attr('id', 'map-g');
@@ -103,12 +162,12 @@
     .on('zoom', ev => gRoot.attr('transform', ev.transform));
   svg.call(svgZoom);
 
-  // ── Canvas zoom (world map) ────────────────────────────────────────────────
+  // ── Canvas zoom (world map / 2D graph / 3D globe wheel zoom) ───────────────
   const canvasZoom = d3.zoom()
-    .scaleExtent([0.04, 12])
+    .scaleExtent([0.04, 18])
     .filter(event => {
       if (viewMode === 'globe') {
-        // Allow wheel zoom in globe mode, but ignore mousedown dragging so custom trackball drag can run
+        // In 3D globe mode, wheel zooms smoothly; pointer/touch drag is handled by 3D trackball + pan
         return event.type === 'wheel';
       }
       return !event.button;
@@ -131,65 +190,101 @@
     $loading.style.display = 'none';
   }
   function escHtml(s) {
-    return String(s)
+    return String(s ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function getRoomName(roomId) {
+    return indexData?.room_names?.[String(roomId)] || `Room #${roomId}`;
+  }
+  function getZoneName(zoneId) {
+    return indexData?.zones?.find(z => z.id === zoneId)?.name || `Zone ${zoneId}`;
+  }
+
+  function isShowingZoneSvg() {
+    return currentZoneId !== null && viewMode === 'grid';
   }
 
   // ── Init ───────────────────────────────────────────────────────────────────
   function init() {
     showLoading('Loading…');
 
-    // Wire sidebar toggle (mobile)
     if ($btnSidebar) {
       $btnSidebar.addEventListener('click', () => {
         $sidebar.classList.toggle('open');
       });
     }
 
-    // Wire zoom buttons
     document.getElementById('btn-zoom-in')?.addEventListener('click', () => {
-      const target = currentZoneId === null
-        ? d3.select(canvasEl)
-        : svg;
-      const z = currentZoneId === null ? canvasZoom : svgZoom;
+      const target = isShowingZoneSvg() ? svg : d3.select(canvasEl);
+      const z = isShowingZoneSvg() ? svgZoom : canvasZoom;
       target.transition().duration(200).call(z.scaleBy, 1.4);
     });
+
     document.getElementById('btn-zoom-out')?.addEventListener('click', () => {
-      const target = currentZoneId === null
-        ? d3.select(canvasEl)
-        : svg;
-      const z = currentZoneId === null ? canvasZoom : svgZoom;
+      const target = isShowingZoneSvg() ? svg : d3.select(canvasEl);
+      const z = isShowingZoneSvg() ? svgZoom : canvasZoom;
       target.transition().duration(200).call(z.scaleBy, 1 / 1.4);
     });
+
     document.getElementById('btn-reset')?.addEventListener('click', () => {
-      if (currentZoneId === null) fitCanvasToWorldMap();
-      else fitSvgToZone();
-    });
-    $btnPath?.addEventListener('click', togglePathMode);
-    $btnView?.addEventListener('click', toggleViewMode);
-    document.getElementById('btn-expand-zone')?.addEventListener('click', () => {
-      if (selectedRoomId !== null) {
-        const room = globeData?.rooms.find(r => r.id === selectedRoomId);
-        if (room) {
-          selectZone(room.zone).then(() => {
-            const zRoom = currentRooms.find(r => r.id === room.id);
-            if (zRoom) { selectRoom(zRoom); jumpToRoom(room.id); }
-          });
-        }
+      if (isShowingZoneSvg()) {
+        fitSvgToZone();
+      } else if (viewMode === 'globe') {
+        globePan = [0, 0];
+        globeRotation = [0.3, -0.18];
+        d3.select(canvasEl).transition().duration(280).call(canvasZoom.transform, d3.zoomIdentity);
+      } else if (viewMode === 'graph') {
+        fitCanvasToGraph();
+      } else {
+        fitCanvasToWorldMap();
       }
     });
+
+    $btnPath?.addEventListener('click', togglePathMode);
+
+    // Top-level view mode buttons: ✦ Graph vs ▦ Grid
+    $btnViewGraph?.addEventListener('click', () => {
+      setViewMode(graphDim === '2d' ? 'graph' : 'globe');
+    });
+    $btnViewGrid?.addEventListener('click', () => {
+      setViewMode('grid');
+    });
+
+    // Sub-mode switcher inside ✦ Graph HUD: 3D World vs 2D Plane
+    $btnGraph3d?.addEventListener('click', () => {
+      graphDim = '3d';
+      setViewMode('globe');
+    });
+    $btnGraph2d?.addEventListener('click', () => {
+      graphDim = '2d';
+      setViewMode('graph');
+    });
+
+    document.getElementById('btn-expand-zone')?.addEventListener('click', () => {
+      const roomId = selectedRoomId;
+      const zId = roomId !== null
+        ? (indexData?.room_zones?.[String(roomId)] ?? currentZoneId)
+        : currentZoneId;
+      if (zId !== null && zId !== undefined) {
+        viewMode = 'grid';
+        syncViewBtn();
+        selectZone(zId).then(() => {
+          if (roomId !== null) {
+            const zRoom = currentRooms.find(r => r.id === roomId);
+            if (zRoom) { selectRoom(zRoom); jumpToRoom(roomId); }
+          }
+        });
+      }
+    });
+
     $btnSetStart?.addEventListener('click', () => setPathStart(selectedRoomId));
     $btnClrPath?.addEventListener('click', resetPath);
     document.getElementById('detail-close')?.addEventListener('click', deselectRoom);
 
-    // Zone search
     $zoneSearch?.addEventListener('input', e => renderZoneList(e.target.value));
-
-    // Room search
     $roomSearch?.addEventListener('input', e => handleRoomSearch(e.target.value));
 
-    // Close sidebar on outside tap (mobile)
     document.addEventListener('click', e => {
       if (window.innerWidth > 768) return;
       if ($sidebar.classList.contains('open') &&
@@ -199,7 +294,45 @@
       }
     });
 
-    // Fetch index (map-index.json avoids conflict with Hugo's generated /map/index.json)
+    // Fetch database.json in the background to index room mobs & items
+    fetch('/data/database.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(db => {
+        if (!db) return;
+        const byRoom = {};
+        const ensure = (rid) => (byRoom[rid] || (byRoom[rid] = { mobs: [], items: [] }));
+        Object.values(db.mobs || {}).forEach(m => {
+          (m.spw || []).forEach(s => {
+            if (s.room !== undefined) {
+              ensure(s.room).mobs.push({
+                v: m.v,
+                s: m.s || m.k,
+                lvl: m.lvl,
+                alg: m.alg,
+                shop: Boolean(m.shop),
+                drpCount: (m.drp || []).length,
+              });
+            }
+          });
+        });
+        Object.values(db.items || {}).forEach(it => {
+          (it.rms || []).forEach(rm => {
+            if (rm.room !== undefined) {
+              ensure(rm.room).items.push({
+                v: it.v,
+                s: it.s || it.k,
+                type: it.type,
+              });
+            }
+          });
+        });
+        roomInhabitants = byRoom;
+        if (selectedRoomId !== null) {
+          renderRoomInhabitants(selectedRoomId);
+        }
+      })
+      .catch(() => {});
+
     fetch('/map/map-index.json')
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
@@ -208,31 +341,32 @@
         $empty.style.display = 'none';
         renderZoneList('');
 
-        // Deep-link routing
-        if (window.location.hash === '#globe' || window.location.hash === '#constellation') {
-          viewMode = 'globe';
-          $btnView?.classList.add('active');
-          if (window.location.hash === '#constellation') {
-            window.location.hash = 'globe';
-          }
-        } else {
-          viewMode = 'grid';
-          $btnView?.classList.remove('active');
-        }
-
-        const params  = new URLSearchParams(window.location.search);
+        const params = new URLSearchParams(window.location.search);
         const roomArg = params.get('room');
         const zoneArg = params.get('zone');
+        const hash = window.location.hash;
+
+        if (hash === '#grid') {
+          viewMode = 'grid';
+        } else if (hash === '#2d' || hash === '#graph') {
+          graphDim = '2d';
+          viewMode = 'graph';
+        } else if (zoneArg || roomArg) {
+          // Deep-links to a specific ?zone= or ?room= open directly in the classic 2D point-connected MUD grid
+          viewMode = 'grid';
+        } else {
+          // Default to the rich 3D Obsidian World
+          graphDim = '3d';
+          viewMode = 'globe';
+        }
+        syncViewBtn();
 
         if (zoneArg) {
           selectZone(parseInt(zoneArg, 10));
         } else if (roomArg) {
-          // need to find which zone the room is in — check each zone's JSON
-          // Fallback: show world overview, then load
-          selectWorldOverview();
           resolveRoomDeepLink(parseInt(roomArg, 10));
         } else {
-          selectWorldOverview();
+          selectWorldOverview({ pushHistory: false });
         }
       })
       .catch(err => {
@@ -240,31 +374,31 @@
       });
   }
 
-  // ── Deep-link room resolve ─────────────────────────────────────────────────
-  // index.json includes room_zones: {roomId → zoneId} built at precompute time.
-  // We wait for the zone fetch to complete before jumping — no setTimeout hack.
   function resolveRoomDeepLink(roomId) {
     if (!indexData) return;
     const zoneId = indexData.room_zones?.[String(roomId)];
     if (zoneId !== undefined) {
+      viewMode = 'grid';
+      syncViewBtn();
       selectZone(zoneId, { pushHistory: false }).then(() => {
         const room = currentRooms.find(r => r.id === roomId);
         if (room) { selectRoom(room); jumpToRoom(roomId); }
         else jumpToRoom(roomId);
       });
+    } else {
+      selectWorldOverview({ pushHistory: false });
     }
   }
 
-  // ── URL / history helpers ──────────────────────────────────────────────────
   function pushState(params) {
     const url = new URL(window.location.href);
-    // Clear and rebuild cleanly
     url.search = '';
     for (const [k, v] of Object.entries(params)) {
       if (v !== null && v !== undefined) url.searchParams.set(k, v);
     }
     history.pushState({}, '', url);
   }
+
   function replaceState(params) {
     const url = new URL(window.location.href);
     url.search = '';
@@ -274,39 +408,41 @@
     history.replaceState({}, '', url);
   }
 
-  // Handle browser back/forward
   window.addEventListener('popstate', () => {
-    const p     = new URLSearchParams(window.location.search);
+    const p = new URLSearchParams(window.location.search);
     const zoneArg = p.get('zone');
     const roomArg = p.get('room');
+    const hash = window.location.hash;
 
-    if (window.location.hash === '#globe' || window.location.hash === '#constellation') {
-      viewMode = 'globe';
-      $btnView?.classList.add('active');
-      if (window.location.hash === '#constellation') {
-        window.location.hash = 'globe';
-      }
-    } else {
+    if (hash === '#grid') {
       viewMode = 'grid';
-      $btnView?.classList.remove('active');
+    } else if (hash === '#2d' || hash === '#graph') {
+      graphDim = '2d';
+      viewMode = 'graph';
+    } else if (zoneArg || roomArg) {
+      viewMode = 'grid';
+    } else {
+      graphDim = '3d';
+      viewMode = 'globe';
     }
+    syncViewBtn();
 
     if (zoneArg) {
       selectZone(parseInt(zoneArg, 10), { pushHistory: false }).then(() => {
         if (roomArg) jumpToRoom(parseInt(roomArg, 10));
       });
+    } else if (roomArg) {
+      resolveRoomDeepLink(parseInt(roomArg, 10));
     } else {
       selectWorldOverview({ pushHistory: false });
     }
   });
 
-  // ── Copy link to clipboard ─────────────────────────────────────────────────
   function copyRoomLink(roomId) {
     const url = `${location.origin}${location.pathname}?room=${roomId}`;
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(url).then(() => flashCopyBtn('Copied!')).catch(() => flashCopyBtn('Copy failed'));
     } else {
-      // Fallback for older mobile browsers
       const ta = document.createElement('textarea');
       ta.value = url;
       ta.style.cssText = 'position:fixed;opacity:0';
@@ -330,7 +466,7 @@
     if (!indexData) return;
     const q = filter.toLowerCase().trim();
     const zones = indexData.zones.filter(z =>
-      !q || z.name.toLowerCase().includes(q)
+      !q || z.name.toLowerCase().includes(q) || String(z.id).includes(q)
     );
 
     if (!zones.length) {
@@ -355,13 +491,106 @@
 
     $zoneList.innerHTML = html;
 
-    document.getElementById('item-world-map')?.addEventListener('click', selectWorldOverview);
+    document.getElementById('item-world-map')?.addEventListener('click', () => {
+      selectWorldOverview();
+    });
     $zoneList.querySelectorAll('.zone-item[data-zone]').forEach(el =>
-      el.addEventListener('click', () => selectZone(+el.dataset.zone))
+      el.addEventListener('click', () => {
+        const zid = +el.dataset.zone;
+        onSidebarZoneClick(zid);
+      })
     );
-    // Record links navigate; keep the click from also selecting the zone.
     $zoneList.querySelectorAll('.zone-record-link').forEach(el =>
       el.addEventListener('click', e => e.stopPropagation())
+    );
+  }
+
+  function onSidebarZoneClick(zoneId) {
+    if (viewMode === 'globe' || viewMode === 'graph') {
+      // In Obsidian Graph mode, clicking a zone focuses & highlights that zone cluster in the graph!
+      currentZoneId = zoneId;
+      updateZoneListActive();
+      const zName = getZoneName(zoneId);
+      $zoneTitle.textContent = `${zName.toUpperCase()} · GRAPH`;
+      if (window.innerWidth <= 768) $sidebar.classList.remove('open');
+
+      if (viewMode === 'globe') {
+        focusGlobeOnZone(zoneId);
+      } else {
+        focusGraph2DOnZone(zoneId);
+      }
+      return;
+    }
+    selectZone(zoneId);
+  }
+
+  function focusGlobeOnZone(zoneId) {
+    if (!globeData) {
+      loadGlobeAndDraw(() => focusGlobeOnZone(zoneId));
+      return;
+    }
+    const zNode = globeData.zones?.find(z => z.id === zoneId);
+    if (!zNode) return;
+
+    // Rotate zNode (x, y, z) to face the camera (x_rot = 0, y_rot = 0, z_rot > 0)
+    const targetTheta = -Math.atan2(zNode.x, zNode.z);
+    const z1 = Math.hypot(zNode.x, zNode.z);
+    const targetPhi = Math.atan2(zNode.y, z1);
+
+    const startTheta = globeRotation[0];
+    const startPhi = globeRotation[1];
+    const startPanX = globePan[0];
+    const startPanY = globePan[1];
+    const startK = cvTransform.k;
+    const targetK = Math.max(startK, 2.3);
+
+    if (globeAnimFrame) cancelAnimationFrame(globeAnimFrame);
+    const t0 = performance.now();
+    const dur = 480;
+
+    function step(now) {
+      const p = Math.min(1, (now - t0) / dur);
+      const ease = 1 - Math.pow(1 - p, 3);
+      globeRotation[0] = startTheta + (targetTheta - startTheta) * ease;
+      globeRotation[1] = startPhi + (targetPhi - startPhi) * ease;
+      globePan[0] = startPanX * (1 - ease);
+      globePan[1] = startPanY * (1 - ease);
+      const kNow = startK + (targetK - startK) * ease;
+      d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity.scale(kNow));
+      if (p < 1) {
+        globeAnimFrame = requestAnimationFrame(step);
+      } else {
+        globeAnimFrame = null;
+        drawWorldMap();
+      }
+    }
+    globeAnimFrame = requestAnimationFrame(step);
+  }
+
+  function focusGraph2DOnZone(zoneId) {
+    if (!graphData || !canvasEl) {
+      loadGraphAndDraw(() => focusGraph2DOnZone(zoneId));
+      return;
+    }
+    const zRooms = graphData.rooms.filter(r => r.zone === zoneId);
+    if (!zRooms.length) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvasEl.width / dpr;
+    const H = canvasEl.height / dpr;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const r of zRooms) {
+      if (r.x < minX) minX = r.x; if (r.x > maxX) maxX = r.x;
+      if (r.y < minY) minY = r.y; if (r.y > maxY) maxY = r.y;
+    }
+    const pad = 80;
+    const k = Math.max(0.8, Math.min(8,
+      Math.min((W - pad * 2) / (maxX - minX + 20), (H - pad * 2) / (maxY - minY + 20))
+    ));
+    const tx = W / 2 - k * ((minX + maxX) / 2);
+    const ty = H / 2 - k * ((minY + maxY) / 2);
+    d3.select(canvasEl).transition().duration(420).call(
+      canvasZoom.transform,
+      d3.zoomIdentity.translate(tx, ty).scale(k)
     );
   }
 
@@ -383,22 +612,73 @@
       .then(data => { zoneCache[zoneId] = data; return data; });
   }
 
-  function loadGlobeAndDraw() {
+  function loadGlobeAndDraw(cb) {
     if (globeData) {
       drawWorldMap();
+      if (cb) cb();
       return;
     }
-    showLoading('Loading sphere coordinates…');
+    showLoading('Loading 3D world graph…');
     fetch('/map/world-sphere.json')
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
         globeData = data;
+        globeRoomMap = {};
+        for (const r of data.rooms) {
+          globeRoomMap[r.id] = r;
+        }
         hideLoading();
         drawWorldMap();
+        if (cb) cb();
       })
       .catch(err => {
-        if ($loadingMsg) $loadingMsg.textContent = `Failed to load sphere: ${err.message}`;
+        if ($loadingMsg) $loadingMsg.textContent = `Failed to load 3D world: ${err.message}`;
       });
+  }
+
+  function loadGraphAndDraw(cb) {
+    if (graphData) {
+      drawWorldMap();
+      if (cb) cb();
+      return;
+    }
+    showLoading('Loading 2D constellation graph…');
+    fetch('/map/world-graph.json')
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        graphData = data;
+        graphRoomMap = {};
+        for (const r of data.rooms) {
+          r.degree = roomDegrees[r.id] || 0;
+          graphRoomMap[r.id] = r;
+        }
+        hideLoading();
+        fitCanvasToGraph();
+        drawWorldMap();
+        if (cb) cb();
+      })
+      .catch(err => {
+        if ($loadingMsg) $loadingMsg.textContent = `Failed to load graph: ${err.message}`;
+      });
+  }
+
+  function fitCanvasToGraph() {
+    if (!graphData || !canvasEl) return;
+    const W = canvasEl.width  / (window.devicePixelRatio || 1);
+    const H = canvasEl.height / (window.devicePixelRatio || 1);
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const r of graphData.rooms) {
+      if (r.x < minX) minX = r.x;  if (r.x > maxX) maxX = r.x;
+      if (r.y < minY) minY = r.y;  if (r.y > maxY) maxY = r.y;
+    }
+    const pad = 40;
+    const k   = Math.max(0.02, Math.min(10,
+      Math.min((W - pad * 2) / (maxX - minX + 1), (H - pad * 2) / (maxY - minY + 1))
+    ));
+    const tx  = W / 2 - k * ((minX + maxX) / 2);
+    const ty  = H / 2 - k * ((minY + maxY) / 2);
+    d3.select(canvasEl).call(canvasZoom.transform,
+      d3.zoomIdentity.translate(tx, ty).scale(k));
   }
 
   // ── World overview — Canvas ────────────────────────────────────────────────
@@ -409,17 +689,23 @@
     updateZoneListActive();
 
     if (pushHistory) pushState({});
-    $zoneTitle.textContent = 'WORLD MAP';
+    $zoneTitle.textContent = viewMode === 'grid' ? 'WORLD MAP · GRID' : 'WORLD MAP · OBSIDIAN GRAPH';
     $legend.classList.add('visible');
     $svgWrap.style.display    = 'none';
     $canvasWrap.style.display = '';
+    syncViewBtn();
     if (window.innerWidth <= 768) $sidebar.classList.remove('open');
 
     if (worldMapData) {
       resizeCanvas();
       if (viewMode === 'globe') {
+        globePan = [0, 0];
+        d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity);
         loadGlobeAndDraw();
+      } else if (viewMode === 'graph') {
+        loadGraphAndDraw();
       } else {
+        fitCanvasToWorldMap();
         drawWorldMap();
       }
       return;
@@ -431,16 +717,21 @@
       .then(data => {
         worldMapData = data;
         wmRoomPosMap = {};
-        for (const room of data.rooms) wmRoomPosMap[room.id] = room;
+        worldAdj = {};
+        for (const room of data.rooms) {
+          wmRoomPosMap[room.id] = room;
+          worldAdj[room.id] = new Set();
+        }
 
-        // Compute room degrees for Constellation View / Globe
         roomDegrees = {};
         for (const lk of data.links) {
           roomDegrees[lk.s] = (roomDegrees[lk.s] || 0) + 1;
           roomDegrees[lk.t] = (roomDegrees[lk.t] || 0) + 1;
+          worldAdj[lk.s]?.add(lk.t);
+          worldAdj[lk.t]?.add(lk.s);
         }
 
-        // 1. Compute Zone Centroids (DP-312 / DP-316)
+        // 1. Compute Zone Centroids
         const sums = {};
         for (const room of data.rooms) {
           if (room.zone_id !== undefined) {
@@ -461,7 +752,7 @@
           };
         }
 
-        // 2. Compute Inter-Zone Link Counts (DP-315)
+        // 2. Compute Inter-Zone Link Counts
         const zoneLinksMap = {};
         for (const lk of data.links) {
           const s = wmRoomPosMap[lk.s];
@@ -477,28 +768,24 @@
           worldZoneLinks.push({ z1, z2, count });
         }
 
-        // 3. Run BFS from room 0 to find Reachable Rooms (DP-313)
+        // 3. Run BFS from room 0 to find Reachable Rooms
         reachableRooms = { 0: true };
-        const adj = {};
-        for (const room of data.rooms) adj[room.id] = [];
-        for (const lk of data.links) {
-          adj[lk.s]?.push(lk.t);
-          adj[lk.t]?.push(lk.s);
-        }
         const queue = [0];
         let head = 0;
         while (head < queue.length) {
           const u = queue[head++];
-          const neighbors = adj[u] || [];
-          for (const v of neighbors) {
-            if (!reachableRooms[v]) {
-              reachableRooms[v] = true;
-              queue.push(v);
+          const neighbors = worldAdj[u];
+          if (neighbors) {
+            for (const v of neighbors) {
+              if (!reachableRooms[v]) {
+                reachableRooms[v] = true;
+                queue.push(v);
+              }
             }
           }
         }
 
-        // 4. Per-Zone Convex Hulls for territory shading (DP-314 rework)
+        // 4. Per-Zone Convex Hulls for territory shading
         const roomsByZone = {};
         for (const room of data.rooms) (roomsByZone[room.zone_id] ??= []).push(room);
         zoneHulls = {};
@@ -522,11 +809,17 @@
         hideLoading();
         resizeCanvas();
         d3.select(canvasEl).call(canvasZoom);
-        fitCanvasToWorldMap();
+        if (viewMode === 'globe') {
+          d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity);
+        } else if (viewMode === 'grid') {
+          fitCanvasToWorldMap();
+        }
         attachCanvasEvents();
 
         if (viewMode === 'globe') {
           loadGlobeAndDraw();
+        } else if (viewMode === 'graph') {
+          loadGraphAndDraw();
         } else {
           drawWorldMap();
         }
@@ -544,17 +837,16 @@
     canvasEl.height = rect.height * dpr;
     canvasEl.style.width  = rect.width  + 'px';
     canvasEl.style.height = rect.height + 'px';
-    ctx.scale(dpr, dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   window.addEventListener('resize', () => {
-    if (currentZoneId === null && worldMapData) {
+    if (!isShowingZoneSvg() && worldMapData) {
       resizeCanvas();
       drawWorldMap();
     }
   });
 
-  // ── Dot radius in world coords that renders at desired screen pixels ─────────
   function dotRadius(k) {
     if (k < 0.15) return 1.5 / k;
     if (k < 0.5)  return 2.0 / k;
@@ -563,7 +855,6 @@
     return 5.0 / k;
   }
 
-  // Monotone Chain algorithm for Convex Hull (O(N log N)) (DP-314)
   function convexHull(points) {
     if (points.length <= 1) return points;
     const sorted = points.slice().sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
@@ -587,26 +878,98 @@
     lower.pop();
     return lower.concat(upper);
   }
-  function toggleViewMode() {
-    viewMode = viewMode === 'grid' ? 'globe' : 'grid';
-    $btnView?.classList.toggle('active', viewMode === 'globe');
 
-    // Sync hash
-    if (viewMode === 'globe') {
-      window.location.hash = 'globe';
-    } else {
-      history.replaceState(null, document.title, window.location.pathname + window.location.search);
+  function syncViewBtn() {
+    const isGraph = viewMode === 'globe' || viewMode === 'graph';
+    $btnViewGraph?.classList.toggle('active', isGraph);
+    $btnViewGrid?.classList.toggle('active', viewMode === 'grid');
+
+    if ($graphHud) {
+      $graphHud.hidden = !isGraph || isShowingZoneSvg();
+    }
+    $btnGraph3d?.classList.toggle('active', viewMode === 'globe');
+    $btnGraph2d?.classList.toggle('active', viewMode === 'graph');
+
+    if ($graphHudHint) {
+      $graphHudHint.textContent = viewMode === 'globe'
+        ? 'Drag to rotate 3D · Scroll to zoom · Shift+drag to pan · Hover or click any room'
+        : 'Drag to pan · Scroll to zoom · Hover or click any room';
     }
 
-    if (currentZoneId !== null) {
-      selectWorldOverview();
-    } else if (worldMapData) {
-      if (viewMode === 'globe') {
-        loadGlobeAndDraw();
-      } else {
-        drawWorldMap();
+    const $expandSection = document.getElementById('detail-expand-section');
+    if ($expandSection) {
+      $expandSection.style.display = isShowingZoneSvg() ? 'none' : '';
+    }
+  }
+
+  function setViewMode(mode) {
+    const prevZone = currentZoneId;
+    const prevRoom = selectedRoomId;
+    viewMode = mode;
+    if (mode === 'globe') graphDim = '3d';
+    if (mode === 'graph') graphDim = '2d';
+    syncViewBtn();
+
+    if (mode === 'grid') {
+      history.replaceState(null, document.title, window.location.pathname + window.location.search + '#grid');
+      if (prevZone !== null) {
+        selectZone(prevZone, { pushHistory: false }).then(() => {
+          if (prevRoom !== null) {
+            const zRoom = currentRooms.find(r => r.id === prevRoom);
+            if (zRoom) { selectRoom(zRoom); jumpToRoom(prevRoom); }
+          }
+        });
+        return;
       }
+      $svgWrap.style.display = 'none';
+      $canvasWrap.style.display = '';
+      $zoneTitle.textContent = 'WORLD MAP · GRID';
+      if (worldMapData) {
+        resizeCanvas();
+        fitCanvasToWorldMap();
+        drawWorldMap();
+      } else {
+        selectWorldOverview({ pushHistory: false });
+      }
+      return;
     }
+
+    // Switching to ✦ Graph ('globe' 3D or 'graph' 2D)
+    const hashSuffix = mode === 'graph' ? '#2d' : '';
+    history.replaceState(null, document.title, window.location.pathname + window.location.search + hashSuffix);
+
+    $svgWrap.style.display = 'none';
+    $canvasWrap.style.display = '';
+    $legend.classList.add('visible');
+    if (prevZone !== null) {
+      $zoneTitle.textContent = `${getZoneName(prevZone).toUpperCase()} · GRAPH`;
+    } else {
+      $zoneTitle.textContent = 'WORLD MAP · OBSIDIAN GRAPH';
+    }
+
+    const ensureWorldLoaded = worldMapData
+      ? Promise.resolve()
+      : new Promise(resolve => {
+          selectWorldOverview({ pushHistory: false });
+          const check = setInterval(() => {
+            if (worldMapData) { clearInterval(check); resolve(); }
+          }, 50);
+        });
+
+    ensureWorldLoaded.then(() => {
+      resizeCanvas();
+      if (mode === 'globe') {
+        globePan = [0, 0];
+        d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity);
+        loadGlobeAndDraw(() => {
+          if (prevZone !== null) focusGlobeOnZone(prevZone);
+        });
+      } else {
+        loadGraphAndDraw(() => {
+          if (prevZone !== null) focusGraph2DOnZone(prevZone);
+        });
+      }
+    });
   }
 
   // ── 3D Rotation Math ────────────────────────────────────────────────────────
@@ -622,75 +985,41 @@
     return { x: x1, y: y2, z: z2 };
   }
 
-  // ── Globe View Renderer ─────────────────────────────────────────────────────
+  // ── 3D Volumetric Obsidian World Renderer ───────────────────────────────────
   function drawGlobe() {
     if (!ctx || !globeData || !worldMapData) return;
     const dpr = window.devicePixelRatio || 1;
     const W   = canvasEl.width  / dpr;
     const H   = canvasEl.height / dpr;
 
-    // Clear transparent so the vintage cream paper CSS background displays
-    ctx.clearRect(0, 0, W, H);
+    // Full-bleed dark Obsidian plate
+    ctx.fillStyle = '#0a0908';
+    ctx.fillRect(0, 0, W, H);
+
+    const cx = W / 2 + globePan[0];
+    const cy = H / 2 + globePan[1];
+    const R = Math.min(W, H) * 0.44 * cvTransform.k;
 
     ctx.save();
-    const cx = W / 2;
-    const cy = H / 2;
-    // visual radius: 38% of min dimension scaled by zoom scale
-    const R = Math.min(W, H) * 0.38 * cvTransform.k;
 
-    // 1. Subtle 3D Spherical Gridlines (Latitude & Longitude)
-    ctx.lineWidth = 0.45;
-    // Longitude lines
-    ctx.strokeStyle = 'rgba(168, 32, 26, 0.04)';
-    for (let i = 0; i < 6; i++) {
-      const lon = (i / 6) * Math.PI * 2;
-      ctx.beginPath();
-      for (let j = 0; j <= 60; j++) {
-        const lat = -Math.PI / 2 + (j / 60) * Math.PI;
-        const p = {
-          x: Math.cos(lat) * Math.cos(lon),
-          y: Math.sin(lat),
-          z: Math.cos(lat) * Math.sin(lon)
-        };
-        const rot = rotate3D(p, globeRotation[0], globeRotation[1]);
-        if (rot.z >= -0.1) {
-          const sx = cx + R * rot.x;
-          const sy = cy + R * rot.y;
-          if (j === 0) ctx.moveTo(sx, sy);
-          else ctx.lineTo(sx, sy);
-        }
-      }
-      ctx.stroke();
-    }
-    // Latitude lines
-    for (let i = 1; i < 5; i++) {
-      const lat = -Math.PI / 2 + (i / 5) * Math.PI;
-      ctx.beginPath();
-      for (let j = 0; j <= 60; j++) {
-        const lon = (j / 60) * Math.PI * 2;
-        const p = {
-          x: Math.cos(lat) * Math.cos(lon),
-          y: Math.cos(lat) * Math.sin(lon),
-          z: Math.sin(lat)
-        };
-        const rot = rotate3D(p, globeRotation[0], globeRotation[1]);
-        if (rot.z >= -0.1) {
-          const sx = cx + R * rot.x;
-          const sy = cy + R * rot.y;
-          if (j === 0) ctx.moveTo(sx, sy);
-          else ctx.lineTo(sx, sy);
-        }
-      }
-      ctx.stroke();
-    }
+    // Subtle warm volumetric glow at the center of the 3D constellation
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.15);
+    glow.addColorStop(0, 'rgba(42, 34, 26, 0.72)');
+    glow.addColorStop(0.55, 'rgba(20, 16, 13, 0.45)');
+    glow.addColorStop(1, 'rgba(10, 9, 8, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
 
-    // 2. Rotate & Project Rooms
+    // 1. Rotate & Project All 9,590 Rooms in 3D space with perspective depth
     const roomProj = {};
     const visibleRooms = [];
     for (const r of globeData.rooms) {
       const rot = rotate3D(r, globeRotation[0], globeRotation[1]);
-      const sx = cx + R * rot.x;
-      const sy = cy + R * rot.y;
+      // Camera sits at z = +2.8 looking toward the origin; perspective scale = 2.6 / (2.6 - z)
+      const zClamped = Math.max(-1.6, Math.min(1.6, rot.z));
+      const persp = 2.6 / (2.6 - zClamped * 0.55);
+      const sx = cx + R * rot.x * persp;
+      const sy = cy + R * rot.y * persp;
 
       const proj = {
         id: r.id,
@@ -699,108 +1028,163 @@
         x_rot: rot.x,
         y_rot: rot.y,
         z_rot: rot.z,
-        sx: sx,
-        sy: sy,
-        degree: roomDegrees[r.id] || 0
+        persp,
+        sx,
+        sy,
+        degree: roomDegrees[r.id] || 0,
       };
       roomProj[r.id] = proj;
-
-      // Front-face occlusion culling (z_rot < 0 is behind sphere)
-      if (rot.z >= 0) {
-        visibleRooms.push(proj);
-      }
+      visibleRooms.push(proj);
     }
 
-    // 3. Connective Edges (Delicate Oxblood Web, Outward Curved)
-    ctx.lineWidth = 0.35;
-    ctx.strokeStyle = 'rgba(168, 32, 26, 0.08)'; // Fine oxblood ink threads
+    const activeFocusId = hoveredRoomId ?? selectedRoomId;
+    const activeNeighbors = activeFocusId !== null ? worldAdj[activeFocusId] : null;
+    const lodLeaves = cvTransform.k >= 1.25;
+
+    // 2. Connective Edges (Luminous 3D web + Obsidian-style neighbor highlight)
+    ctx.lineWidth = 0.6;
+    ctx.strokeStyle = activeFocusId !== null
+      ? 'rgba(239, 231, 214, 0.06)'
+      : 'rgba(239, 231, 214, 0.14)';
     ctx.beginPath();
+
+    const highlightEdges = [];
+    const zoneFocusEdges = [];
+
     for (const lk of worldMapData.links) {
       const s = roomProj[lk.s];
       const t = roomProj[lk.t];
       if (!s || !t) continue;
-      if (s.z_rot < 0 || t.z_rot < 0) continue; // culled back face
 
-      // Outward quadratic bend to prevent links from slicing the sphere core
-      const mx = (s.sx + t.sx) / 2;
-      const my = (s.sy + t.sy) / 2;
-      const vx = mx - cx, vy = my - cy;
-      const len = Math.hypot(vx, vy);
-      if (len > 0.01) {
-        const dist = Math.hypot(t.sx - s.sx, t.sy - s.sy);
-        const bend = dist * 0.15;
-        const ctrlX = mx + (vx / len) * bend;
-        const ctrlY = my + (vy / len) * bend;
-        ctx.moveTo(s.sx, s.sy);
-        ctx.quadraticCurveTo(ctrlX, ctrlY, t.sx, t.sy);
-      } else {
-        ctx.moveTo(s.sx, s.sy);
-        ctx.lineTo(t.sx, t.sy);
+      if (activeFocusId !== null && (lk.s === activeFocusId || lk.t === activeFocusId)) {
+        highlightEdges.push([s, t]);
+        continue;
       }
+      if (currentZoneId !== null && s.zone === currentZoneId && t.zone === currentZoneId) {
+        zoneFocusEdges.push([s, t]);
+        continue;
+      }
+      if (!lodLeaves && s.degree <= 1 && t.degree <= 1) continue;
+
+      ctx.moveTo(s.sx, s.sy);
+      ctx.lineTo(t.sx, t.sy);
     }
     ctx.stroke();
 
-    // 4. Double-Circle "Ink-Bleed" Nodes (Sorted by depth z_rot so front layers render on top)
-    visibleRooms.sort((a, b) => a.z_rot - b.z_rot);
-
-    // Pass 1: Diluted oxblood bleeding halos
-    ctx.fillStyle = 'rgba(168, 32, 26, 0.08)';
-    ctx.beginPath();
-    for (const r of visibleRooms) {
-      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.0);
-      const dr = rVal * (0.7 + 0.3 * r.z_rot);
-      ctx.moveTo(r.sx + dr * 2.8, r.sy);
-      ctx.arc(r.sx, r.sy, dr * 2.8, 0, Math.PI * 2);
-    }
-    ctx.fill();
-
-    // Pass 2: Saturated sector cores
-    for (const r of visibleRooms) {
-      ctx.fillStyle = sectorColor(r.sector);
+    // Focused zone edges
+    if (zoneFocusEdges.length > 0) {
+      ctx.lineWidth = 1.05;
+      ctx.strokeStyle = 'rgba(207, 75, 66, 0.45)';
       ctx.beginPath();
-      const rVal = r.degree <= 1 ? 1.6 : (r.degree <= 4 ? 2.8 : 4.0);
-      const dr = rVal * (0.7 + 0.3 * r.z_rot);
-      ctx.arc(r.sx, r.sy, dr, 0, Math.PI * 2);
+      for (const [s, t] of zoneFocusEdges) {
+        ctx.moveTo(s.sx, s.sy);
+        ctx.lineTo(t.sx, t.sy);
+      }
+      ctx.stroke();
+    }
+
+    // Active hovered/selected room's direct exit web
+    if (highlightEdges.length > 0) {
+      ctx.lineWidth = 1.75;
+      ctx.strokeStyle = '#cf4b42';
+      ctx.beginPath();
+      for (const [s, t] of highlightEdges) {
+        ctx.moveTo(s.sx, s.sy);
+        ctx.lineTo(t.sx, t.sy);
+      }
+      ctx.stroke();
+    }
+
+    // 3. Luminous Nodes (Sorted back-to-front by z_rot for genuine 3D occlusion & depth)
+    visibleRooms.sort((a, b) => a.z_rot - b.z_rot);
+    const zoomScale = Math.min(2.4, Math.max(0.85, Math.sqrt(cvTransform.k)));
+
+    for (const r of visibleRooms) {
+      const isFocused = r.id === activeFocusId;
+      const isNeighbor = Boolean(activeNeighbors && activeNeighbors.has(r.id));
+      const inFocusedZone = currentZoneId !== null && r.zone === currentZoneId;
+
+      if (!lodLeaves && r.degree <= 1 && !isFocused && !isNeighbor && !inFocusedZone) continue;
+
+      // Normalize depth into [0.22, 1.0] so back clusters recede into atmospheric haze
+      const depthNorm = Math.max(0.22, Math.min(1.0, (r.z_rot + 1.05) / 2.0));
+      const baseR = r.degree <= 1 ? 1.45 : (r.degree <= 4 ? 2.35 : 3.8);
+      const dr = baseR * r.persp * zoomScale * (0.72 + 0.35 * depthNorm);
+
+      if (r.degree >= 6 || isFocused || isNeighbor) {
+        ctx.fillStyle = (isFocused || isNeighbor)
+          ? 'rgba(207, 75, 66, 0.34)'
+          : `rgba(207, 75, 66, ${(0.18 * depthNorm).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(r.sx, r.sy, dr * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = (isFocused || isNeighbor || inFocusedZone)
+        ? 1.0
+        : (activeFocusId !== null ? 0.32 * depthNorm : depthNorm);
+      ctx.fillStyle = isFocused
+        ? '#efe7d6'
+        : isNeighbor
+        ? '#cf4b42'
+        : sectorColorDark(r.sector);
+
+      ctx.beginPath();
+      ctx.arc(r.sx, r.sy, isFocused ? dr * 1.45 : dr, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.globalAlpha = 1.0;
 
-    // 5. Selected Room Highlight
-    if (selectedRoomId !== null) {
-      const sel = roomProj[selectedRoomId];
-      if (sel && sel.z_rot >= 0) {
-        const rVal = sel.degree <= 1 ? 1.6 : (sel.degree <= 4 ? 2.8 : 4.0);
-        const dr = rVal * (0.7 + 0.3 * sel.z_rot);
+    // 4. Selected / Hovered Room Ring
+    for (const ringId of [selectedRoomId, hoveredRoomId]) {
+      if (ringId === null) continue;
+      const sel = roomProj[ringId];
+      if (sel) {
         ctx.beginPath();
-        ctx.arc(sel.sx, sel.sy, dr * 2.8, 0, Math.PI * 2);
-        ctx.strokeStyle = '#a8201a';
-        ctx.lineWidth = 1.8;
+        ctx.arc(sel.sx, sel.sy, 8.5 * zoomScale, 0, Math.PI * 2);
+        ctx.strokeStyle = ringId === selectedRoomId ? '#cf4b42' : '#efe7d6';
+        ctx.lineWidth = 2.0;
         ctx.stroke();
       }
     }
 
-    // 6. Floating Zone Typographic Labels (DM Serif Display, Oxblood)
-    if (cvTransform.k >= 0.12 && globeData.zones) {
+    // 5. Floating Zone Typographic Labels (decluttered, foreground-weighted)
+    if (cvTransform.k >= 0.35 && globeData.zones) {
+      const labelAll = cvTransform.k >= 1.85;
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
-      const fontSize = cvTransform.k >= 1.0 ? 12 : 10;
-      ctx.font = cvTransform.k >= 1.0 
-        ? `bold ${fontSize}px 'DM Serif Display', Georgia, serif` 
-        : `${fontSize}px 'DM Serif Display', Georgia, serif`;
-      
-      ctx.fillStyle = cvTransform.k >= 1.0 
-        ? 'rgba(168, 32, 26, 0.85)' // full oxblood at close zoom
-        : 'rgba(168, 32, 26, 0.55)';  // muted oxblood at medium zoom
 
+      const candidates = [];
       for (const z of globeData.zones) {
+        const isCurrentZone = z.id === currentZoneId;
+        if (!labelAll && !isCurrentZone && (z.count || 0) < 120) continue;
         const rot = rotate3D(z, globeRotation[0], globeRotation[1]);
-        if (rot.z < 0) continue; // culled back face
+        if (rot.z < -0.15 && !isCurrentZone) continue;
+        const zClamped = Math.max(-1.6, Math.min(1.6, rot.z));
+        const persp = 2.6 / (2.6 - zClamped * 0.55);
+        const sx = cx + R * rot.x * persp;
+        const sy = cy + R * rot.y * persp;
+        candidates.push({ ...z, sx, sy, z_rot: rot.z, isCurrentZone });
+      }
 
-        const sx = cx + R * rot.x;
-        const sy = cy + R * rot.y;
-        
-        ctx.fillText(z.name.toUpperCase(), sx, sy - 12);
+      candidates.sort((a, b) => (b.isCurrentZone - a.isCurrentZone) || ((b.count || 0) - (a.count || 0)));
+      const placed = [];
+      const minGap = labelAll ? 58 : 105;
+
+      for (const z of candidates) {
+        if (!z.isCurrentZone && placed.some(p => Math.hypot(p.sx - z.sx, p.sy - z.sy) < minGap)) continue;
+        placed.push(z);
+        const fs = z.isCurrentZone ? 13 : (cvTransform.k >= 1.2 ? 11.5 : 11);
+        ctx.font = `${z.isCurrentZone || cvTransform.k >= 1.0 ? 'bold ' : ''}${fs}px 'DM Serif Display', Georgia, serif`;
+        ctx.lineWidth = 3.4;
+        ctx.strokeStyle = 'rgba(10, 9, 8, 0.88)';
+        ctx.strokeText(z.name.toUpperCase(), z.sx, z.sy - 10);
+        const depthAlpha = Math.max(0.5, Math.min(0.95, 0.65 + 0.3 * z.z_rot));
+        ctx.fillStyle = z.isCurrentZone
+          ? '#cf4b42'
+          : `rgba(239, 231, 214, ${depthAlpha.toFixed(2)})`;
+        ctx.fillText(z.name.toUpperCase(), z.sx, z.sy - 10);
       }
       ctx.restore();
     }
@@ -808,189 +1192,150 @@
     ctx.restore();
   }
 
-  function drawConstellation() {
-    if (!ctx || !worldMapData) return;
+  // ── 2D Obsidian Constellation Graph Renderer ────────────────────────────────
+  function drawGraph() {
+    if (!ctx || !graphData || !worldMapData) return;
     const dpr = window.devicePixelRatio || 1;
     const W   = canvasEl.width  / dpr;
     const H   = canvasEl.height / dpr;
     const { x: tx, y: ty, k } = cvTransform;
 
-    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0a0908';
+    ctx.fillRect(0, 0, W, H);
+    const glow = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.55);
+    glow.addColorStop(0, 'rgba(38, 32, 25, 0.6)');
+    glow.addColorStop(1, 'rgba(10, 9, 8, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
     ctx.save();
     ctx.translate(tx, ty);
     ctx.scale(k, k);
 
-    // Viewport bounds in world coords (with generous padding to avoid edge flicker)
-    const pad = 80 / k;
+    const pad = 60 / k;
     const vx0 = -tx / k - pad,  vx1 = (W - tx) / k + pad;
     const vy0 = -ty / k - pad,  vy1 = (H - ty) / k + pad;
+    const inView = p => p.x >= vx0 && p.x <= vx1 && p.y >= vy0 && p.y <= vy1;
 
-    // ── 1. Graph Edges (with zoom alpha fade-in to prevent popping) ────────────
-    if (k >= 0.05) {
-      ctx.save();
-      
-      // 1a. Inter-Zone Links (faint oxblood threads representing major highways)
-      const interAlpha = Math.min(0.20, Math.max(0, (k - 0.05) * 1.5));
-      ctx.strokeStyle = `rgba(168, 32, 26, ${interAlpha.toFixed(3)})`;
-      ctx.lineWidth   = 1.0 / k;
+    const lodLeaves = k >= 1.2;
+    const allLabels = k >= 2.5;
+    const activeFocusId = hoveredRoomId ?? selectedRoomId;
+    const activeNeighbors = activeFocusId !== null ? worldAdj[activeFocusId] : null;
+
+    // 1. The Web — all edges, plus highlighted neighbor web
+    ctx.lineWidth = 0.7 / k;
+    ctx.strokeStyle = activeFocusId !== null
+      ? 'rgba(239, 231, 214, 0.08)'
+      : 'rgba(239, 231, 214, 0.16)';
+    ctx.beginPath();
+    const highlightEdges = [];
+    for (const lk of worldMapData.links) {
+      const s = graphRoomMap[lk.s];
+      const t = graphRoomMap[lk.t];
+      if (!s || !t) continue;
+      if (!inView(s) && !inView(t)) continue;
+      if (activeFocusId !== null && (lk.s === activeFocusId || lk.t === activeFocusId)) {
+        highlightEdges.push([s, t]);
+        continue;
+      }
+      if (!lodLeaves && s.degree <= 1 && t.degree <= 1) continue;
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(t.x, t.y);
+    }
+    ctx.stroke();
+
+    if (highlightEdges.length > 0) {
+      ctx.lineWidth = 1.8 / k;
+      ctx.strokeStyle = '#cf4b42';
       ctx.beginPath();
-      for (const lk of worldMapData.links) {
-        const s = wmRoomPosMap[lk.s];
-        const t = wmRoomPosMap[lk.t];
-        if (!s || !t || s.zone_id === t.zone_id) continue;
-        if ((s.x < vx0 && t.x < vx0) || (s.x > vx1 && t.x > vx1)) continue;
-        if ((s.y < vy0 && t.y < vy0) || (s.y > vy1 && t.y > vy1)) continue;
+      for (const [s, t] of highlightEdges) {
         ctx.moveTo(s.x, s.y);
         ctx.lineTo(t.x, t.y);
       }
       ctx.stroke();
+    }
 
-      // 1b. Intra-Zone Links (super-fine charcoal threads representing standard paths)
-      if (k >= 0.08) {
-        const intraAlpha = Math.min(0.08, Math.max(0, (k - 0.08) * 0.8));
-        ctx.strokeStyle = `rgba(26, 22, 20, ${intraAlpha.toFixed(3)})`;
-        ctx.lineWidth   = 0.5 / k;
+    // 2. Hub halos
+    for (const r of graphData.rooms) {
+      if (r.degree < 6) continue;
+      if (!inView(r)) continue;
+      const dr = 5.5 / k;
+      ctx.fillStyle = 'rgba(207, 75, 66, 0.22)';
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, dr * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 3. Nodes — sector-colored, sized by degree
+    for (const r of graphData.rooms) {
+      const isFocused = r.id === activeFocusId;
+      const isNeighbor = Boolean(activeNeighbors && activeNeighbors.has(r.id));
+      const inFocusedZone = currentZoneId !== null && r.zone === currentZoneId;
+      if (!lodLeaves && r.degree <= 1 && !isFocused && !isNeighbor && !inFocusedZone) continue;
+      if (!inView(r)) continue;
+      const base = r.degree <= 1 ? 1.4 : (r.degree <= 4 ? 2.4 : 4.0);
+      const dr = Math.max(base, base / k * 0.35);
+      ctx.fillStyle = isFocused
+        ? '#efe7d6'
+        : isNeighbor
+        ? '#cf4b42'
+        : sectorColorDark(r.sector);
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, isFocused ? dr * 1.4 : dr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 4. Selection / Hover ring
+    for (const ringId of [selectedRoomId, hoveredRoomId]) {
+      if (ringId === null) continue;
+      const sel = graphRoomMap[ringId];
+      if (sel) {
         ctx.beginPath();
-        for (const lk of worldMapData.links) {
-          const s = wmRoomPosMap[lk.s];
-          const t = wmRoomPosMap[lk.t];
-          if (!s || !t || s.zone_id !== t.zone_id) continue;
-          if ((s.x < vx0 && t.x < vx0) || (s.x > vx1 && t.x > vx1)) continue;
-          if ((s.y < vy0 && t.y < vy0) || (s.y > vy1 && t.y > vy1)) continue;
-          ctx.moveTo(s.x, s.y);
-          ctx.lineTo(t.x, t.y);
-        }
+        ctx.arc(sel.x, sel.y, 9 / k, 0, Math.PI * 2);
+        ctx.strokeStyle = ringId === selectedRoomId ? '#cf4b42' : '#efe7d6';
+        ctx.lineWidth = 1.8 / k;
         ctx.stroke();
       }
-
-      ctx.restore();
     }
 
-    // ── 2. Graph Nodes (Double-Circle "Ink-Blot" Draw) ────────────────────────
-    const TAU = Math.PI * 2;
-    
-    // Group rooms inside viewport by sector and reachability for batch drawing
-    const reachableBySector = {};
-    const unreachableRooms = [];
-
-    for (const r of worldMapData.rooms) {
-      if (r.x < vx0 || r.x > vx1 || r.y < vy0 || r.y > vy1) continue;
-      if (reachableRooms[r.id]) {
-        (reachableBySector[r.sector] ??= []).push(r);
-      } else {
-        unreachableRooms.push(r);
-      }
-    }
-
-    // 2a. Draw Unreachable Rooms first (ghostly, barely printed ink)
-    if (unreachableRooms.length > 0) {
-      ctx.save();
-      // Outer extremely faint ink bleeding
-      ctx.fillStyle = 'rgba(26, 22, 20, 0.03)';
-      ctx.beginPath();
-      for (const r of unreachableRooms) {
-        const deg = roomDegrees[r.id] || 0;
-        const rVal = deg <= 1 ? 1.8 : (deg <= 4 ? 3.0 : 4.5);
-        const dr = rVal / k;
-        ctx.moveTo(r.x + dr * 2.5, r.y);
-        ctx.arc(r.x, r.y, dr * 2.5, 0, TAU);
-      }
-      ctx.fill();
-
-      // Inner ghostly charcoal core
-      ctx.fillStyle = 'rgba(74, 69, 64, 0.15)';
-      ctx.beginPath();
-      for (const r of unreachableRooms) {
-        const deg = roomDegrees[r.id] || 0;
-        const rVal = deg <= 1 ? 1.8 : (deg <= 4 ? 3.0 : 4.5);
-        const dr = rVal / k;
-        ctx.moveTo(r.x + dr, r.y);
-        ctx.arc(r.x, r.y, dr, 0, TAU);
-      }
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 2b. Draw Reachable Rooms in two passes
-    // Pass 1: Outer soft ink bleed/halo for all reachable nodes
+    // 5. Zone labels
     ctx.save();
-    ctx.fillStyle = 'rgba(26, 22, 20, 0.08)';
-    ctx.beginPath();
-    for (const sector in reachableBySector) {
-      for (const r of reachableBySector[sector]) {
-        const deg = roomDegrees[r.id] || 0;
-        const rVal = deg <= 1 ? 1.8 : (deg <= 4 ? 3.0 : 4.5);
-        const dr = rVal / k;
-        ctx.moveTo(r.x + dr * 2.5, r.y);
-        ctx.arc(r.x, r.y, dr * 2.5, 0, TAU);
-      }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const labelZones = graphData.zones
+      .filter(z => allLabels || z.id === currentZoneId || (z.count || 0) >= 130)
+      .filter(z => inView(z))
+      .sort((a, b) => (b.count || 0) - (a.count || 0));
+    const placed = [];
+    const minGap = allLabels ? 60 / k : 130 / k;
+    for (const z of labelZones) {
+      if (z.id !== currentZoneId && placed.some(p => Math.hypot(p.x - z.x, p.y - z.y) < minGap)) continue;
+      placed.push(z);
+      const fs = (allLabels ? 11 : 13) / k;
+      ctx.font = `${allLabels ? '' : 'bold '}${fs}px 'DM Serif Display', Georgia, serif`;
+      ctx.lineWidth = 3.5 / k;
+      ctx.strokeStyle = 'rgba(10, 9, 8, 0.85)';
+      ctx.strokeText(z.name.toUpperCase(), z.x, z.y);
+      ctx.fillStyle = z.id === currentZoneId ? '#cf4b42' : 'rgba(239, 231, 214, 0.88)';
+      ctx.fillText(z.name.toUpperCase(), z.x, z.y);
     }
-    ctx.fill();
     ctx.restore();
-
-    // Pass 2: Inner solid sector cores
-    for (const sector in reachableBySector) {
-      ctx.save();
-      ctx.fillStyle = SECTOR_COLOR[+sector] ?? '#a8201a';
-      ctx.beginPath();
-      for (const r of reachableBySector[sector]) {
-        const deg = roomDegrees[r.id] || 0;
-        const rVal = deg <= 1 ? 1.8 : (deg <= 4 ? 3.0 : 4.5);
-        const dr = rVal / k;
-        ctx.moveTo(r.x + dr, r.y);
-        ctx.arc(r.x, r.y, dr, 0, TAU);
-      }
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // ── 3. Selected Room Highlight ─────────────────────────────────────────────
-    const selRoom = selectedRoomId !== null ? wmRoomPosMap[selectedRoomId] : null;
-    if (selRoom) {
-      const deg = roomDegrees[selRoom.id] || 0;
-      const rVal = deg <= 1 ? 1.8 : (deg <= 4 ? 3.0 : 4.5);
-      const dr = rVal / k;
-      ctx.beginPath();
-      ctx.arc(selRoom.x, selRoom.y, dr * 2.5, 0, TAU);
-      ctx.strokeStyle = '#a8201a';
-      ctx.lineWidth   = 2.0 / k;
-      ctx.stroke();
-    }
-
-    // ── 4. Zone Name Labels ───────────────────────────────────────────────────
-    if (k >= 0.12 && zoneCentroids) {
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      const fontSize = k >= 1.0 ? 12 : 10;
-      ctx.font = k >= 1.0 
-        ? `bold ${fontSize/k}px 'DM Serif Display', Georgia, serif` 
-        : `${fontSize/k}px 'DM Serif Display', Georgia, serif`;
-      
-      ctx.fillStyle = k >= 1.0 
-        ? 'rgba(168, 32, 26, 0.85)' // full oxblood at close zoom
-        : 'rgba(86, 80, 74, 0.55)';  // muted ink-muted at medium zoom
-        
-      for (const [zoneId, z] of Object.entries(zoneCentroids)) {
-        if (z.x < vx0 || z.x > vx1 || z.y < vy0 || z.y > vy1) continue;
-        ctx.fillText(z.name.toUpperCase(), z.x, z.y - 12 / k);
-      }
-      ctx.restore();
-    }
 
     ctx.restore();
   }
+
+  // ── World Map Dispatcher & Stitched 2D Grid Renderer ────────────────────────
   function drawWorldMap() {
     if (!ctx || !worldMapData) return;
     if (viewMode === 'globe') {
       drawGlobe();
       return;
     }
-    if (viewMode === 'constellation') {
-      drawConstellation();
+    if (viewMode === 'graph') {
+      drawGraph();
       return;
     }
+
     const dpr = window.devicePixelRatio || 1;
     const W   = canvasEl.width  / dpr;
     const H   = canvasEl.height / dpr;
@@ -1001,14 +1346,11 @@
     ctx.translate(tx, ty);
     ctx.scale(k, k);
 
-    // Viewport bounds in world coords (with generous padding to avoid edge flicker)
     const pad = 80 / k;
     const vx0 = -tx / k - pad,  vx1 = (W - tx) / k + pad;
     const vy0 = -ty / k - pad,  vy1 = (H - ty) / k + pad;
 
-    // ── 1. Per-Zone Territory Shading (DP-314) ─────────────────────────────────
-    // Hull per zone (pre-computed at load), colored by that zone's dominant sector.
-    // Avoids global-sector hulls which span 97%+ of the world for common sectors.
+    // 1. Per-Zone Territory Shading
     if (k > 0.08 && Object.keys(zoneHulls).length > 0) {
       ctx.save();
       ctx.globalAlpha = 0.06;
@@ -1024,17 +1366,17 @@
       ctx.restore();
     }
 
-    // ── 2. Inter-Zone Links (DP-315) ──────────────────────────────────────────
+    // 2. Inter-Zone Links
     if (k > 0.12 && worldZoneLinks) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(139, 0, 0, 0.06)'; // elegant thin oxblood lines
+      ctx.strokeStyle = 'rgba(139, 0, 0, 0.08)';
       for (const zl of worldZoneLinks) {
         const c1 = zoneCentroids[zl.z1];
         const c2 = zoneCentroids[zl.z2];
         if (!c1 || !c2) continue;
         if ((c1.x < vx0 && c2.x < vx0) || (c1.x > vx1 && c2.x > vx1)) continue;
         if ((c1.y < vy0 && c2.y < vy0) || (c1.y > vy1 && c2.y > vy1)) continue;
-        
+
         ctx.lineWidth = Math.min(zl.count * 0.4, 3.5) / k;
         ctx.beginPath();
         ctx.moveTo(c1.x, c1.y);
@@ -1044,11 +1386,11 @@
       ctx.restore();
     }
 
-    // ── 3. Intra-Zone Links ────────────────────────────────────────────────────
+    // 3. Intra-Zone Links
     if (k > 0.1) {
-      const alpha = Math.min(0.2, Math.max(0.04, k * 0.25));
+      const alpha = Math.min(0.24, Math.max(0.06, k * 0.25));
       ctx.strokeStyle = `rgba(26,22,20,${alpha.toFixed(2)})`;
-      ctx.lineWidth   = 0.7 / k;
+      ctx.lineWidth   = 0.75 / k;
       ctx.beginPath();
       for (const lk of worldMapData.links) {
         const s = wmRoomPosMap[lk.s];
@@ -1062,10 +1404,9 @@
       ctx.stroke();
     }
 
-    // ── 4. Rooms with Unreachable Dimming (DP-313) ─────────────────────────────
+    // 4. Rooms
     const dr = dotRadius(k);
     const TAU = Math.PI * 2;
-
     const bySector = {};
     for (const room of worldMapData.rooms) {
       if (room.x < vx0 || room.x > vx1 || room.y < vy0 || room.y > vy1) continue;
@@ -1074,7 +1415,6 @@
     }
 
     for (const [sector, rooms] of Object.entries(bySector)) {
-      // 4a. Draw Reachable rooms in sector colors
       ctx.fillStyle = SECTOR_COLOR[+sector] ?? '#a8201a';
       ctx.beginPath();
       for (const r of rooms) {
@@ -1085,8 +1425,7 @@
       }
       ctx.fill();
 
-      // 4b. Draw Unreachable rooms dimmed (ghostly parchment overlay)
-      ctx.fillStyle = 'rgba(74, 69, 64, 0.18)'; 
+      ctx.fillStyle = 'rgba(74, 69, 64, 0.18)';
       ctx.beginPath();
       for (const r of rooms) {
         if (!reachableRooms[r.id]) {
@@ -1097,7 +1436,7 @@
       ctx.fill();
     }
 
-    // ── 5. Selected Room Highlight ─────────────────────────────────────────────
+    // 5. Selected Room Highlight
     const selRoom = selectedRoomId !== null ? wmRoomPosMap[selectedRoomId] : null;
     if (selRoom) {
       ctx.beginPath();
@@ -1107,24 +1446,20 @@
       ctx.stroke();
     }
 
-    // ── 6. Zone Name Labels (DP-312) ───────────────────────────────────────────
-    if (k >= 0.2 && zoneCentroids) {
+    // 6. Zone Name Labels
+    if (k >= 0.18 && zoneCentroids) {
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
       const fontSize = k >= 1.0 ? 12 : 10;
-      ctx.font = k >= 1.0 
-        ? `bold ${fontSize/k}px "IM Fell English", Georgia, serif` 
-        : `${fontSize/k}px "IM Fell English", Georgia, serif`;
-      
-      ctx.fillStyle = k >= 1.0 
-        ? 'rgba(139, 0, 0, 0.85)' // full opacity oxblood at close zoom
-        : 'rgba(74, 69, 64, 0.55)'; // muted charcoal at medium zoom
-        
-      for (const [zoneId, z] of Object.entries(zoneCentroids)) {
+      ctx.font = k >= 1.0
+        ? `bold ${fontSize / k}px 'DM Serif Display', Georgia, serif`
+        : `${fontSize / k}px 'DM Serif Display', Georgia, serif`;
+      ctx.fillStyle = k >= 1.0
+        ? 'rgba(168, 32, 26, 0.88)'
+        : 'rgba(74, 69, 64, 0.65)';
+      for (const [, z] of Object.entries(zoneCentroids)) {
         if (z.x < vx0 || z.x > vx1 || z.y < vy0 || z.y > vy1) continue;
-        // Float label slightly above the calculated centroid
         ctx.fillText(z.name.toUpperCase(), z.x, z.y - 12 / k);
       }
       ctx.restore();
@@ -1154,14 +1489,14 @@
     d3.select(canvasEl).call(canvasZoom.transform,
       d3.zoomIdentity.translate(tx, ty).scale(k));
   }
-  // Canvas hit-test: find nearest room under pointer (world map)
+
+  // ── Hit-Testing across Grid, 2D Graph, and 3D Globe ─────────────────────────
   function worldMapHitTest(clientX, clientY) {
     if (!worldMapData || !canvasEl) return null;
     const rect = canvasEl.getBoundingClientRect();
     const { x: tx, y: ty, k } = cvTransform;
     const wx = (clientX - rect.left - tx) / k;
     const wy = (clientY - rect.top  - ty) / k;
-    // Threshold: 14px in screen coords converted to world units
     const threshold = 14 / k;
     let nearest = null, minDist = threshold;
     for (const room of worldMapData.rooms) {
@@ -1171,28 +1506,43 @@
     return nearest;
   }
 
-  // Globe hit-test: find nearest room under pointer (3D globe)
+  function graphHitTest(clientX, clientY) {
+    if (!graphData || !canvasEl) return null;
+    const rect = canvasEl.getBoundingClientRect();
+    const { x: tx, y: ty, k } = cvTransform;
+    const wx = (clientX - rect.left - tx) / k;
+    const wy = (clientY - rect.top  - ty) / k;
+    const threshold = 13 / k;
+    let nearest = null, minDist = threshold;
+    for (const room of graphData.rooms) {
+      const d = Math.hypot(room.x - wx, room.y - wy);
+      if (d < minDist) { minDist = d; nearest = room; }
+    }
+    return nearest;
+  }
+
   function globeHitTest(clientX, clientY) {
     if (!globeData || !canvasEl) return null;
     const rect = canvasEl.getBoundingClientRect();
     const W = rect.width;
     const H = rect.height;
-    const cx = W / 2;
-    const cy = H / 2;
-    const R = Math.min(W, H) * 0.38 * cvTransform.k;
+    const cx = W / 2 + globePan[0];
+    const cy = H / 2 + globePan[1];
+    const R = Math.min(W, H) * 0.44 * cvTransform.k;
 
     const mx = clientX - rect.left;
     const my = clientY - rect.top;
 
     let nearest = null;
-    let minDist = 14; // screen space pixels threshold
+    let minDist = 16; // screen pixels
 
     for (const r of globeData.rooms) {
       const rot = rotate3D(r, globeRotation[0], globeRotation[1]);
-      if (rot.z < 0) continue; // culled back face
-
-      const sx = cx + R * rot.x;
-      const sy = cy + R * rot.y;
+      if (rot.z < -1.2) continue;
+      const zClamped = Math.max(-1.2, Math.min(1.2, rot.z));
+      const persp = 2.6 / (2.6 - zClamped * 0.55);
+      const sx = cx + R * rot.x * persp;
+      const sy = cy + R * rot.y * persp;
 
       const dist = Math.hypot(sx - mx, sy - my);
       if (dist < minDist) {
@@ -1205,10 +1555,12 @@
 
   function selectGlobeRoom(room) {
     selectedRoomId = room.id;
-    // Reflect room in URL hash
+    currentZoneId = room.zone;
+    updateZoneListActive();
     replaceState({ room: room.id });
-    
-    showLoading('Loading details…');
+    drawWorldMap();
+
+    showLoading('Loading room details…');
     fetchZone(room.zone)
       .then(zoneData => {
         hideLoading();
@@ -1227,26 +1579,33 @@
       })
       .catch(err => {
         hideLoading();
-        console.error("Failed to load room zone details:", err);
+        console.error('Failed to load room zone details:', err);
       });
   }
 
   function attachCanvasEvents() {
     if (!canvasEl) return;
 
-    // Click / tap handler
+    canvasEl.addEventListener('contextmenu', e => {
+      if (viewMode === 'globe') e.preventDefault();
+    });
+
     canvasEl.addEventListener('click', e => {
       if (viewMode === 'globe') {
-        if (dragMoveDistance > 5) return; // ignore click if dragged
+        if (dragMoveDistance > 6) return;
         const room = globeHitTest(e.clientX, e.clientY);
-        if (room) {
-          selectGlobeRoom(room);
-        } else {
-          deselectRoom();
-        }
+        if (room) selectGlobeRoom(room);
+        else deselectRoom();
         return;
       }
-      
+
+      if (viewMode === 'graph') {
+        const room = graphHitTest(e.clientX, e.clientY);
+        if (room) selectGlobeRoom(room);
+        else deselectRoom();
+        return;
+      }
+
       const room = worldMapHitTest(e.clientX, e.clientY);
       if (!room) return;
       selectZone(room.zone_id).then(() => {
@@ -1255,33 +1614,50 @@
       });
     });
 
-    // Custom trackball mouse dragging events
+    // 3D Globe trackball rotate (left drag) and pan (Shift+drag or right/middle drag)
     canvasEl.addEventListener('mousedown', e => {
       if (viewMode !== 'globe') return;
       isDraggingGlobe = true;
+      isPanningGlobe = e.shiftKey || e.button === 1 || e.button === 2;
       dragMoveDistance = 0;
       lastMousePos = { x: e.clientX, y: e.clientY };
     });
 
     window.addEventListener('mousemove', e => {
+      if (isShowingZoneSvg()) return;
+
       if (viewMode === 'globe') {
         if (isDraggingGlobe) {
           const dx = e.clientX - lastMousePos.x;
           const dy = e.clientY - lastMousePos.y;
           dragMoveDistance += Math.hypot(dx, dy);
-          globeRotation[0] += dx * 0.005;
-          globeRotation[1] += dy * 0.005;
+          if (isPanningGlobe || e.shiftKey) {
+            globePan[0] += dx;
+            globePan[1] += dy;
+          } else {
+            const sensitivity = 0.0055 / Math.max(1, Math.sqrt(cvTransform.k) * 0.65);
+            globeRotation[0] += dx * sensitivity;
+            globeRotation[1] = Math.max(-1.48, Math.min(1.48, globeRotation[1] + dy * sensitivity));
+          }
           lastMousePos = { x: e.clientX, y: e.clientY };
+          hideTooltip();
           drawWorldMap();
         } else {
-          // Hover tooltips in globe mode
           const room = globeHitTest(e.clientX, e.clientY);
+          const nextHoverId = room ? room.id : null;
+          if (nextHoverId !== hoveredRoomId) {
+            hoveredRoomId = nextHoverId;
+            drawWorldMap();
+          }
           if (room) {
             canvasEl.style.cursor = 'pointer';
-            const zoneName = indexData?.zones.find(z => z.id === room.zone)?.name
-                             ?? `Zone ${room.zone}`;
-            showTooltip(e.clientX, e.clientY,
-              `<strong>${escHtml(zoneName)}</strong>${escHtml(SECTOR_NAME[room.sector] ?? 'unknown')}`);
+            const roomName = getRoomName(room.id);
+            const zoneName = getZoneName(room.zone);
+            showTooltip(
+              e.clientX,
+              e.clientY,
+              `<strong>${escHtml(roomName)}</strong>#${room.id} · ${escHtml(zoneName)} · ${escHtml(SECTOR_NAME[room.sector] ?? 'unknown')}`
+            );
           } else {
             canvasEl.style.cursor = '';
             hideTooltip();
@@ -1290,14 +1666,40 @@
         return;
       }
 
-      // Hover tooltip for grid mode
+      if (viewMode === 'graph') {
+        const room = graphHitTest(e.clientX, e.clientY);
+        const nextHoverId = room ? room.id : null;
+        if (nextHoverId !== hoveredRoomId) {
+          hoveredRoomId = nextHoverId;
+          drawWorldMap();
+        }
+        if (room) {
+          canvasEl.style.cursor = 'pointer';
+          const roomName = getRoomName(room.id);
+          const zoneName = getZoneName(room.zone);
+          showTooltip(
+            e.clientX,
+            e.clientY,
+            `<strong>${escHtml(roomName)}</strong>#${room.id} · ${escHtml(zoneName)} · ${escHtml(SECTOR_NAME[room.sector] ?? 'unknown')}`
+          );
+        } else {
+          canvasEl.style.cursor = '';
+          hideTooltip();
+        }
+        return;
+      }
+
+      // Grid world overview hover
       const room = worldMapHitTest(e.clientX, e.clientY);
       if (room) {
         canvasEl.style.cursor = 'pointer';
-        const zoneName = indexData?.zones.find(z => z.id === room.zone_id)?.name
-                         ?? `Zone ${room.zone_id}`;
-        showTooltip(e.clientX, e.clientY,
-          `<strong>${escHtml(zoneName)}</strong>${SECTOR_NAME[room.sector] ?? 'unknown'}`);
+        const roomName = getRoomName(room.id);
+        const zoneName = getZoneName(room.zone_id);
+        showTooltip(
+          e.clientX,
+          e.clientY,
+          `<strong>${escHtml(roomName)}</strong>#${room.id} · ${escHtml(zoneName)} · ${escHtml(SECTOR_NAME[room.sector] ?? 'unknown')}`
+        );
       } else {
         canvasEl.style.cursor = '';
         hideTooltip();
@@ -1306,40 +1708,76 @@
 
     window.addEventListener('mouseup', () => {
       isDraggingGlobe = false;
+      isPanningGlobe = false;
     });
 
-    // Mobile touch dragging events
+    // Mobile Touch Support for 3D Globe (1-finger rotate, 2-finger pinch-zoom + pan)
     canvasEl.addEventListener('touchstart', e => {
-      if (viewMode !== 'globe' || e.touches.length !== 1) return;
-      isDraggingGlobe = true;
-      dragMoveDistance = 0;
-      lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    });
+      if (viewMode !== 'globe') return;
+      if (e.touches.length === 1) {
+        isDraggingGlobe = true;
+        dragMoveDistance = 0;
+        lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        isDraggingGlobe = false;
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        touchPinchStartDist = Math.hypot(dx, dy) || 1;
+        touchPinchStartScale = cvTransform.k;
+        touchPinchLastMid = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+      }
+    }, { passive: true });
 
     canvasEl.addEventListener('touchmove', e => {
-      if (!isDraggingGlobe || viewMode !== 'globe' || e.touches.length !== 1) return;
-      const dx = e.touches[0].clientX - lastMousePos.x;
-      const dy = e.touches[0].clientY - lastMousePos.y;
-      dragMoveDistance += Math.hypot(dx, dy);
-      globeRotation[0] += dx * 0.005;
-      globeRotation[1] += dy * 0.005;
-      lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      drawWorldMap();
-    });
+      if (viewMode !== 'globe') return;
+      if (e.touches.length === 1 && isDraggingGlobe) {
+        const dx = e.touches[0].clientX - lastMousePos.x;
+        const dy = e.touches[0].clientY - lastMousePos.y;
+        dragMoveDistance += Math.hypot(dx, dy);
+        const sensitivity = 0.0055 / Math.max(1, Math.sqrt(cvTransform.k) * 0.65);
+        globeRotation[0] += dx * sensitivity;
+        globeRotation[1] = Math.max(-1.48, Math.min(1.48, globeRotation[1] + dy * sensitivity));
+        lastMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        drawWorldMap();
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        globePan[0] += midX - touchPinchLastMid.x;
+        globePan[1] += midY - touchPinchLastMid.y;
+        touchPinchLastMid = { x: midX, y: midY };
+
+        const nextScale = Math.max(0.35, Math.min(14, touchPinchStartScale * (dist / touchPinchStartDist)));
+        d3.select(canvasEl).call(canvasZoom.transform, d3.zoomIdentity.scale(nextScale));
+      }
+    }, { passive: true });
 
     canvasEl.addEventListener('touchend', () => {
       isDraggingGlobe = false;
     });
 
-    canvasEl.addEventListener('mouseleave', hideTooltip);
+    canvasEl.addEventListener('mouseleave', () => {
+      if (hoveredRoomId !== null) {
+        hoveredRoomId = null;
+        drawWorldMap();
+      }
+      hideTooltip();
+    });
   }
-  // ── Zone view — SVG with pre-baked positions ───────────────────────────────
-  // Returns a Promise that resolves after the zone is rendered.
+
+  // ── Zone view — Point-Connected MUD Grid (SVG) ─────────────────────────────
   function selectZone(zoneId, { pushHistory = true } = {}) {
     currentZoneId = zoneId;
+    viewMode = 'grid';
     deselectRoom();
     resetPath();
     updateZoneListActive();
+    syncViewBtn();
 
     if (pushHistory) pushState({ zone: zoneId });
     if (window.innerWidth <= 768) $sidebar.classList.remove('open');
@@ -1369,7 +1807,6 @@
     const roomMap = {};
     for (const r of currentRooms) roomMap[r.id] = r;
 
-    // ── Links ──
     gLinks.selectAll('line')
       .data(currentLinks, d => `${d.s}-${d.t}`)
       .join('line')
@@ -1379,12 +1816,11 @@
       .attr('x2', d => roomMap[d.t]?.x ?? 0)
       .attr('y2', d => roomMap[d.t]?.y ?? 0);
 
-    // ── Nodes ──
     gNodes.selectAll('circle')
       .data(currentRooms, d => d.id)
       .join('circle')
       .attr('class', 'room-node')
-      .attr('r', 5)
+      .attr('r', 5.5)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
       .attr('fill', d => sectorColor(d.sector))
@@ -1446,8 +1882,6 @@
   function selectRoom(room) {
     selectedRoomId = room.id;
 
-    // Reflect room in URL without adding a history entry — room selection is
-    // a detail within a zone page, not a separate navigation step.
     if (currentZoneId !== null) {
       replaceState({ zone: currentZoneId, room: room.id });
     }
@@ -1468,41 +1902,39 @@
 
   function deselectRoom() {
     selectedRoomId = null;
-    // Restore URL to just the zone (drop the room param)
-    if (currentZoneId !== null) replaceState({ zone: currentZoneId });
+    if (currentZoneId !== null && isShowingZoneSvg()) replaceState({ zone: currentZoneId });
     gNodes.selectAll('circle')
       .classed('selected', false)
       .attr('stroke-width', 1.2);
     $detail.classList.add('hidden');
     $detail.classList.remove('open');
+    if (!isShowingZoneSvg() && worldMapData) drawWorldMap();
   }
 
   function showDetail(room) {
     $detailName.textContent = room.name;
     $detailVnum.textContent = `#${room.id} · ${SECTOR_NAME[room.sector] ?? ''}`;
-    $detailDesc.textContent = room.desc ?? '';
+    $detailDesc.innerHTML = renderReflowedDesc(room.desc ?? '');
 
-    // Permanent record link for the selected room
     const $recordLink = document.getElementById('detail-record-link');
     if ($recordLink) {
       $recordLink.href = `/rooms/${room.id}/`;
       $recordLink.style.display = '';
     }
 
-    // Wire copy-link button
     const $copyBtn = document.getElementById('detail-copy-link');
     if ($copyBtn) {
       $copyBtn.onclick = () => copyRoomLink(room.id);
     }
 
-    // Exits
     const exits = (room.exits ?? []).filter(e => ['n','s','e','w','u','d'].includes(e.d));
     $detailExits.innerHTML = exits.length
       ? `<h4>Exits</h4>` + exits.map(ex => {
           const target = currentRooms.find(r => r.id === ex.t);
+          const targetName = target?.name ?? getRoomName(ex.t);
           return `<div class="exit-item" data-target="${ex.t}" tabindex="0" role="button">
             <span class="exit-dir">${ex.d}</span>
-            <span>${escHtml(target?.name ?? `Room #${ex.t}`)}</span>
+            <span>${escHtml(targetName)}</span>
             <span class="exit-dest">#${ex.t}</span>
           </div>`;
         }).join('')
@@ -1511,16 +1943,34 @@
     $detailExits.querySelectorAll('.exit-item').forEach(el => {
       const action = () => {
         const tid = +el.dataset.target;
-        const tr  = currentRooms.find(r => r.id === tid);
-        if (tr) { selectRoom(tr); jumpToRoom(tid); }
+        const tr = currentRooms.find(r => r.id === tid);
+        if (tr) {
+          if (isShowingZoneSvg()) {
+            selectRoom(tr);
+            jumpToRoom(tid);
+          } else {
+            selectGlobeRoom({ id: tid, zone: indexData?.room_zones?.[String(tid)] ?? currentZoneId, sector: tr.sector });
+          }
+        } else {
+          const targetZone = indexData?.room_zones?.[String(tid)];
+          if (targetZone !== undefined) {
+            if (isShowingZoneSvg()) {
+              selectZone(targetZone).then(() => {
+                const ntr = currentRooms.find(r => r.id === tid);
+                if (ntr) { selectRoom(ntr); jumpToRoom(tid); }
+              });
+            } else {
+              selectGlobeRoom({ id: tid, zone: targetZone, sector: 0 });
+            }
+          }
+        }
       };
       el.addEventListener('click', action);
       el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') action(); });
     });
 
-    $detailMobs.innerHTML = '';
+    renderRoomInhabitants(room.id);
 
-    // Path buttons
     if (pathMode && pathStartId && pathStartId !== room.id) {
       $btnSetStart.style.display = 'none';
       $btnClrPath.style.display  = '';
@@ -1533,11 +1983,48 @@
     }
   }
 
+  function renderRoomInhabitants(roomId) {
+    if (!$detailMobs) return;
+    const info = roomInhabitants[roomId];
+    if (!info || ((info.mobs || []).length === 0 && (info.items || []).length === 0)) {
+      $detailMobs.innerHTML = '';
+      return;
+    }
+
+    const parts = [];
+    if (info.mobs && info.mobs.length > 0) {
+      parts.push(`<h4>Mobs Here (${info.mobs.length})</h4>`);
+      info.mobs.forEach(m => {
+        const alignTag = m.alg >= 300 ? 'Good' : m.alg <= -300 ? 'Evil' : 'Neutral';
+        const shopTag = m.shop ? ' · Shop' : '';
+        parts.push(`
+          <a class="inhabitant-item" href="/database/#mob-${m.v}">
+            <span class="inhabitant-name">${escHtml(m.s)}</span>
+            <span class="inhabitant-meta">Lvl ${m.lvl} · ${alignTag}${shopTag} · #${m.v}</span>
+          </a>
+        `);
+      });
+    }
+
+    if (info.items && info.items.length > 0) {
+      parts.push(`<h4 style="margin-top:0.5rem">Items Here (${info.items.length})</h4>`);
+      info.items.forEach(it => {
+        parts.push(`
+          <a class="inhabitant-item" href="/database/#item-${it.v}">
+            <span class="inhabitant-name">${escHtml(it.s)}</span>
+            <span class="inhabitant-meta">${escHtml(it.type)} · #${it.v}</span>
+          </a>
+        `);
+      });
+    }
+
+    $detailMobs.innerHTML = parts.join('');
+  }
+
   function jumpToRoom(roomId) {
     const room = currentRooms.find(r => r.id === roomId);
     if (!room) return;
     const { w, h } = svgDims();
-    // Get current scale
     const t = d3.zoomTransform(svgEl);
     svg.transition().duration(400).call(
       svgZoom.transform,
@@ -1582,7 +2069,6 @@
     if (!roomId) return;
     pathStartId = roomId;
     $pathStatus.textContent = `Start set: #${roomId} — now click destination`;
-    // Highlight start node
     gNodes.selectAll('circle')
       .classed('path-start', d => d.id === roomId);
   }
@@ -1597,10 +2083,6 @@
   }
 
   function drawPath(startId, endId) {
-    // BFS pathfinding (single zone)
-    const roomMap = {};
-    for (const r of currentRooms) roomMap[r.id] = r;
-
     const adj = {};
     for (const r of currentRooms) adj[r.id] = [];
     for (const lk of currentLinks) {
@@ -1626,7 +2108,6 @@
       return;
     }
 
-    // Trace back
     const pathSet = new Set();
     const edgeSet = new Set();
     let cur = endId;
@@ -1646,33 +2127,71 @@
       .classed('in-path', d => edgeSet.has(`${Math.min(d.s, d.t)}-${Math.max(d.s, d.t)}`));
   }
 
-  // ── Room search ────────────────────────────────────────────────────────────
+  // ── Room search (works both within a selected zone AND globally across all 9,590 rooms) ──
   function handleRoomSearch(q) {
-    if (!q.trim() || !currentRooms.length) {
+    const trimmed = q.trim();
+    if (!trimmed) {
       $roomResults.style.display = 'none';
       $roomResults.innerHTML = '';
       return;
     }
-    const ql = q.toLowerCase();
-    const hits = currentRooms.filter(r =>
-      r.name.toLowerCase().includes(ql) || String(r.id).includes(ql)
-    ).slice(0, 20);
+    const ql = trimmed.toLowerCase().replace(/^#/, '');
+    let hits = [];
+
+    if (isShowingZoneSvg() && currentRooms.length) {
+      hits = currentRooms
+        .filter(r => r.name.toLowerCase().includes(ql) || String(r.id).includes(ql))
+        .slice(0, 20)
+        .map(r => ({ id: r.id, name: r.name, zoneId: currentZoneId }));
+    } else if (indexData?.room_names) {
+      for (const [ridStr, rName] of Object.entries(indexData.room_names)) {
+        if (rName.toLowerCase().includes(ql) || ridStr.includes(ql)) {
+          const rid = parseInt(ridStr, 10);
+          hits.push({
+            id: rid,
+            name: rName,
+            zoneId: indexData.room_zones?.[ridStr],
+          });
+          if (hits.length >= 25) break;
+        }
+      }
+    }
 
     if (!hits.length) {
       $roomResults.style.display = 'none';
       return;
     }
     $roomResults.style.display = 'block';
-    $roomResults.innerHTML = hits.map(r => `
-      <div class="room-result" data-id="${r.id}" tabindex="0" role="button">
+    $roomResults.innerHTML = hits.map(r => {
+      const zLabel = r.zoneId !== undefined ? ` · ${getZoneName(r.zoneId)}` : '';
+      return `
+      <div class="room-result" data-id="${r.id}" data-zone="${r.zoneId ?? ''}" tabindex="0" role="button">
         <div>${escHtml(r.name)}</div>
-        <div class="room-result-zone">#${r.id}</div>
-      </div>`).join('');
+        <div class="room-result-zone">#${r.id}${escHtml(zLabel)}</div>
+      </div>`;
+    }).join('');
 
     $roomResults.querySelectorAll('.room-result').forEach(el => {
       const action = () => {
-        const room = currentRooms.find(r => r.id === +el.dataset.id);
-        if (room) { selectRoom(room); jumpToRoom(room.id); }
+        const rid = +el.dataset.id;
+        const zid = el.dataset.zone ? +el.dataset.zone : indexData?.room_zones?.[String(rid)];
+        if (isShowingZoneSvg() && zid === currentZoneId) {
+          const room = currentRooms.find(r => r.id === rid);
+          if (room) { selectRoom(room); jumpToRoom(room.id); }
+        } else if (viewMode === 'globe' && globeRoomMap?.[rid]) {
+          const gr = globeRoomMap[rid];
+          focusGlobeOnZone(gr.zone);
+          selectGlobeRoom(gr);
+        } else if (viewMode === 'graph' && graphRoomMap?.[rid]) {
+          const gr = graphRoomMap[rid];
+          focusGraph2DOnZone(gr.zone);
+          selectGlobeRoom(gr);
+        } else if (zid !== undefined) {
+          selectZone(zid).then(() => {
+            const room = currentRooms.find(r => r.id === rid);
+            if (room) { selectRoom(room); jumpToRoom(room.id); }
+          });
+        }
         $roomResults.style.display = 'none';
         $roomSearch.value = '';
       };

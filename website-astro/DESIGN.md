@@ -42,6 +42,12 @@ typography:
     fontSize: "0.9rem"
     fontWeight: 400
     lineHeight: 1.5
+  micro:
+    fontFamily: "JetBrains Mono, Fira Code, monospace"
+    fontSize: "0.7rem"
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: "0.08em"
 rounded:
   sharp: "0"
   micro: "2px"
@@ -125,19 +131,20 @@ A warm print palette: two creams, two inks, and one rare oxblood stamp. Green ap
 **Character:** A paperback cover meeting a wire-service dispatch. The display serif has the high-contrast drama of a genre-fiction title; the body serif is a comfortable, bookish read; the mono is the machine speaking in its own voice. Nothing here is sans-serif.
 
 ### Hierarchy
-- **Display** (400, `clamp(2.5rem, 5vw + 1rem, 3rem)`, 1.1): the DARK PAWNS wordmark, page titles, splash. The paperback-cover register (the splash wordmark amplifies this to `clamp(3.5rem, 8vw + 1rem, 5rem)`).
+- **Display** (400, `clamp(2.5rem, 5vw + 1rem, 3rem)`, 1.1): the DARK PAWNS wordmark, page titles, splash. The paperback-cover register (the splash wordmark amplifies this to `clamp(3.5rem, 8vw + 1rem, 5rem)`). The home-page title takes the title-page cut, `clamp(3rem, 6.6vw, 6.25rem)` at line-height 0.98, and breaks to two lines on desktop.
 - **Headline** (400, `clamp(1.75rem, 3vw + 0.5rem, 2rem)`, 1.15): section titles (h2).
 - **Title** (400, `clamp(1.25rem, 2vw + 0.5rem, 1.5rem)`, 1.2): sub-sections (h3).
 - **Body** (400, `1rem`, 1.6): reading copy. Optimal measure 45–75ch.
-- **Label** (400, `~0.8rem`, letter-spacing `0.08em`, uppercase): the section bar and editorial eyebrows, in the display serif.
+- **Label** (400, `~0.8rem`, letter-spacing `0.08em`, uppercase): the section bar, in the display serif. Editorial eyebrows are Micro, not Label.
 - **Mono** (400, `~0.9rem`, 1.5): game chrome only — terminal output, command logs, in-game stats, install commands, commit hashes.
+- **Micro** (400, `0.7rem`, mono, letter-spacing `0.12em`, uppercase when used as a label): print furniture only — editorial eyebrows (oxblood), source lines, figure labels, captions, timestamps. The smallest step in the system; never used for reading copy.
 
 ### Named Rules
-**The Two-Serif-and-a-Terminal Rule.** Display serif for headings and the wordmark, body serif for reading, monospace *only* for game and machine chrome. No sans-serif font enters this system, and no font is loaded that isn't used (the `Archivo Narrow` link is dead weight — remove it).
+**The Two-Serif-and-a-Terminal Rule.** Display serif for headings and the wordmark, body serif for reading, monospace *only* for game and machine chrome. No sans-serif font enters this system, and no font is loaded that isn't used: the three families are DM Serif Display, Source Serif 4, and JetBrains Mono.
 
 ## Layout
 
-A centered broadsheet. The global container is `--max-width: 72rem`; editorial reading columns narrow to `--content-width: 42rem` (≈45–75ch). The home page is a two-column broadsheet grid (main dispatch column + sidebar). Spacing follows a fixed scale: `xs 0.25rem`, `sm 0.5rem`, `md 1rem`, `lg 2rem`, `xl 4rem` — density is tight and print-like, not airy SaaS whitespace. The persistent section bar sits at `--nav-height: 3.5rem`.
+A centered broadsheet. The global container is `--max-width: 72rem`; editorial reading columns narrow to `--content-width: 42rem` (≈45–75ch). Spacing follows a fixed scale: `xs 0.25rem`, `sm 0.5rem`, `md 1rem`, `lg 2rem`, `xl 4rem` — density is tight and print-like, not airy SaaS whitespace. The persistent section bar sits at `--nav-height: 3.5rem`. Section hubs use the shared card grid; the home page uses the front-page sequence described below.
 
 **Breakpoints:** mobile `640px` (single column; the section bar collapses behind a hamburger, still no JS), tablet `1024px` (two-column list grids).
 
@@ -157,6 +164,18 @@ rather than rely on the media query to win.
 ### Hero discipline (adapted from tasteskill.dev)
 For any landing or hero surface: headline **two lines maximum** on desktop; subtext **≤20 words and 4 lines**; the primary action is **visible without scrolling**; the section bar stays a **single line, ≤80px tall**. A hero that needs a scroll cue has failed, and there are no scroll cues here.
 
+### The front page
+
+The home page is a title page followed by a broadsheet front, in this order:
+
+1. **Title and connection.** The two-line title, the lede, the browser CTA, and the direct-connection slip all sit above the fold. The slip gives the host and two ports (`7778` TLS, `7777` no TLS), not a protocol table. A player who already knows the game never has to scroll to find the port.
+2. **The depth rail.** Four real figures read at build time from the same data the map and database pages ship: rooms, creatures, objects, help topics. Never typed by hand, never approximate.
+3. **Latest from the restoration.** The newest post is featured with its title, date, and description; the next two follow with theirs. The blog is a first-class surface here, not a footer afterthought: the posts are part of the archive and the work.
+4. **The world in its own words.** Verbatim excerpts from the files the server loads: the founding letter, a room, a help file. The room keeps its own title and indented text; the help file keeps its own voice. Each carries its source, and the spellings are left alone.
+5. **Field guides**, then the **recovered archive and restoration**.
+
+A home-page excerpt is a quotation, not a summary. It is reproduced exactly, labelled with its file or archive entry, and linked to the canonical copy. A paraphrase presented as an excerpt is a lie about the archive.
+
 ## Elevation & Depth
 
 **The system is flat.** There are no box-shadows, no blurs, no glows anywhere. Depth is conveyed two ways, both drawn from print: **hairline rules** (1–2px Ink borders) and **tonal cream layering** (Paper-Deep sits "above" Paper). That is the entire elevation vocabulary.
@@ -169,7 +188,7 @@ For any landing or hero surface: headline **two lines maximum** on desktop; subt
 Sharp, printed geometry. Corners are square by default; the maximum radius anywhere is `2px` (`--rounded-micro`), used on cards, inputs, and small frames to soften a hairline join, never to look "rounded." The pawn mark and the brutalist rules reinforce a stamped, letterpress silhouette.
 
 ### Named Rules
-**The 2px Rule.** Nothing on this site is rounder than 2px, with one exception: a true circle (`50%`) for a genuine dot (status indicator) or avatar. There are currently two violations to fix — a `9999px` pill and a `20px` radius in `style.css`; both must come down to `2px` or become sharp.
+**The 2px Rule.** Nothing on this site is rounder than 2px, with one exception: a true circle (`50%`) for a genuine dot (status indicator) or avatar. The `9999px` pill and `20px` radius that the old Hugo stylesheet carried are gone with it; the live stylesheets are the reference, and they hold the rule.
 
 ## Identity
 
@@ -215,7 +234,7 @@ two different lockups at once.
 ## Components
 
 ### Buttons
-- **Shape:** sharp (radius `0`), all-caps display serif, generous letter-spacing.
+- **Shape:** sharp (radius `0`), sentence-case display serif. The button says what happens ("Enter the game"), in the same register as the page; the all-caps treatment belongs to the section bar.
 - **Primary (`.btn-primary`):** Oxblood background, Paper text. Hover deepens to Oxblood-Deep.
 - **Secondary (`.btn-secondary`):** transparent background, Ink text, 1px Ink border. Hover inverts to an Ink fill with Paper text.
 
@@ -226,7 +245,7 @@ two different lockups at once.
 - Warm Paper background, 1px Ink border, `2px` corners. Focus is an **oxblood outline**, not a glow or a shift to blue.
 
 ### Navigation
-- **Section bar:** one shared, ruled bar (hairline top and bottom, newspaper style) listing the seven sections — Play · World · Help · Database · Map · Dispatch · About. All-caps, letter-spaced, equal spacing; active section marked in Oxblood. Mobile: one horizontally-scrolling row, no hamburger.
+- **Section bar:** one shared, ruled bar (hairline top and bottom, newspaper style). The player spine is Play · World · Help · Map · Database · Archive · Blog; the utility cluster follows as Search · Docs · About. All-caps, letter-spaced; active section marked in Oxblood. Mobile: the bar collapses behind the `<details>` hamburger described under Layout, not a scrolling row.
 - **Breadcrumbs:** one shared partial, `Section » Subsection » Page`; ancestors are oxblood links, current page plain. Not shown on section indexes or top-level leaves.
 - **Section card grid:** one shared card-grid pattern for all section indexes (title, description, meta count, oxblood hover) from a single partial and CSS block. **MUST** extend these shared patterns — no bespoke per-section nav, breadcrumbs, or index layouts.
 
@@ -252,10 +271,12 @@ Concrete guardrails. These are enforceable by `impeccable detect` and by review;
 - **Do** write all public copy in `docs/brand-voice.md` Layer 3 (Frontline's Mythic Admin register).
 - **Do** treat the human player as the primary visitor in every layout and hierarchy decision.
 - **Do** keep monospace for game and machine chrome exclusively.
+- **Do** quote the world verbatim and label the source; derive any count from the shipped data at build time.
 
 ### Don't:
 - **Don't** use em-dashes in UI copy — headlines, buttons, labels, nav, captions. (Sentence-level prose in long-form articles may, sparingly; chrome may not.)
 - **Don't** use section-numbering eyebrows ("01 · Features", decorative "PART I" counters) or decorative colophons and filler tags. The `FILED UNDER … SEE ALSO` line is banned.
+- **Don't** put a kicker above a heading that already says the same thing. A kicker has to carry a fact the heading cannot (a category, a correction, a dateline); otherwise it is template decoration. The home page uses none.
 - **Don't** build three-equal-card feature rows. Use asymmetric or two-column editorial layouts instead.
 - **Don't** build fake terminal or dashboard UIs. The only real terminal is the game client at `/play`.
 - **Don't** use gradients, box-shadows, glows, or any border radius > 2px (kill the `9999px` and `20px` offenders).
@@ -276,9 +297,9 @@ Concrete guardrails. These are enforceable by `impeccable detect` and by review;
 
 ## Posting News
 
-- **Dispatch posts are manual:** a news post is a Markdown file in `content/news/`, from the `archetypes/news.md` archetype; `make new-post TITLE="..."` wraps `hugo new`.
-- **The changelog is automatic:** `/changelog` is generated from conventional commits at build time. Do not hand-edit the generated section; only the hand-written release history at the top is maintained by hand.
+- **Dispatch posts are manual:** a news post is a Markdown file in `website-astro/src/content/blog/`. `make new-post TITLE="..."` writes the draft scaffold; the blog collection schema fails the build if `title`, `date`, `description`, `textKind`, `source`, or `voiceLayer` is missing.
+- **No changelog page:** `/changelog` redirects to the home page. Release history lives in git and in the blog, not in a generated feed.
 
 ## History facts
 
-All dates, founders, and lineage are governed by `data/history.toml` (the single source of truth) and `content/community/history/timeline.md` (the primary source). Never hardcode a founding fact anywhere else. Canonical: founded **September 1994**, ran to ~2010, Go rewrite 2026.
+All dates, founders, and lineage are governed by `website/data/history.toml` (the single source of truth) and `src/content/archive/history.md` (the primary source). Never hardcode a founding fact anywhere else. Canonical: founded **September 1994**, ran to ~2010, Go rewrite 2026.

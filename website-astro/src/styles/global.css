@@ -41,7 +41,13 @@ body {
   font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.6;
+  caret-color: var(--accent);
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--paper);
 }
 
 h1, h2, h3, h4 {
@@ -49,15 +55,16 @@ h1, h2, h3, h4 {
   font-weight: 400;
   line-height: 1.15;
   margin: 0 0 var(--space-md);
+  text-wrap: balance;
 }
 h1 { font-size: clamp(2.5rem, 5vw + 1rem, 3rem); }
 h2 { font-size: clamp(1.75rem, 3vw + 0.5rem, 2rem); }
 h3 { font-size: clamp(1.25rem, 2vw + 0.5rem, 1.5rem); }
 
-p { margin: 0 0 var(--space-md); max-width: 68ch; }
+p { margin: 0 0 var(--space-md); max-width: 68ch; text-wrap: pretty; }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; text-underline-offset: 2px; }
+a { color: var(--accent); text-decoration: none; text-underline-offset: 2px; }
+a:hover { text-decoration: underline; }
 
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid var(--accent);

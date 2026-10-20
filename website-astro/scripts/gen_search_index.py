@@ -311,16 +311,29 @@ def index_database():
             name = mob.get("s") or mob.get("k") or f"Mob #{vnum}"
             level = mob.get("lvl", 1)
             align_val = mob.get("alg", 0)
-            align = "Good" if align_val > 350 else ("Evil" if align_val < -350 else "Neutral")
+            align = "Good" if align_val >= 300 else ("Evil" if align_val <= -300 else "Neutral")
+            race_name = mob.get("rcn") or ""
             keywords = mob.get("k", "")
-            long_desc = mob.get("l") or mob.get("d") or f"Level {level} {align} NPC in Dark Pawns."
+            spawns = mob.get("spw", [])
+            spawn_rooms = " ".join(s.get("name", "") for s in spawns[:3] if s.get("name"))
+            first_room = spawns[0].get("name", "") if spawns else ""
+            long_desc = mob.get("l") or mob.get("d") or f"Level {level} {align} {race_name} NPC in Dark Pawns."
+            if first_room:
+                long_desc = f"{long_desc} (Spawns: {first_room})"
+            
+            sub_parts = [f"Lvl {level}"]
+            if race_name:
+                sub_parts.append(race_name)
+            sub_parts.append(align)
+            if mob.get("shop"):
+                sub_parts.append("Shop")
             
             entries.append({
                 "t": name,
                 "c": "mobs",
-                "s": f"Lvl {level} {align} NPC",
-                "u": f"/mobs/{vnum}/",
-                "k": f"mob npc {keywords} #{vnum}",
+                "s": " · ".join(sub_parts),
+                "u": f"/database/#mob-{vnum}",
+                "k": f"mob npc {keywords} {race_name} {spawn_rooms} #{vnum}",
                 "d": clean_text(long_desc, 150),
                 "v": vnum
             })
@@ -332,17 +345,24 @@ def index_database():
             vnum = item.get("v", 0)
             name = item.get("s") or item.get("k") or f"Item #{vnum}"
             item_type = str(item.get("type", "ITEM")).upper()
-            wear_list = item.get("wear", [])
-            wear_str = f" · {' '.join(wear_list)}" if wear_list else ""
+            wear_list = [w for w in item.get("wear", []) if w != "TAKE"]
+            wear_str = f" · {' '.join(wear_list[:2])}" if wear_list else ""
+            affects = item.get("aff", [])
+            aff_str = ", ".join(
+                f"{'+' if a.get('modifier', 0) >= 0 else ''}{a.get('modifier', 0)} {a.get('location', '')}"
+                for a in affects if a.get("location")
+            )
             keywords = item.get("k", "")
             action_desc = item.get("l") or f"VNUM {vnum} {item_type}{wear_str}."
+            if aff_str:
+                action_desc = f"{action_desc} ({aff_str})"
             
             entries.append({
                 "t": name,
                 "c": "items",
                 "s": f"{item_type}{wear_str}",
-                "u": f"/items/{vnum}/",
-                "k": f"item object equipment {keywords} #{vnum}",
+                "u": f"/database/#item-{vnum}",
+                "k": f"item object equipment {item_type.lower()} {keywords} {aff_str} #{vnum}",
                 "d": clean_text(action_desc, 150),
                 "v": vnum
             })

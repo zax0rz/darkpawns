@@ -1,23 +1,11 @@
 {
-  "generatedAt": "2026-09-30T14:39:30-04:00",
+  "generatedAt": "2026-10-18T13:50:11-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
     {
-      "week": "2026-07-13",
-      "commits": 72
-    },
-    {
-      "week": "2026-07-20",
-      "commits": 82
-    },
-    {
-      "week": "2026-07-27",
-      "commits": 3
-    },
-    {
       "week": "2026-08-03",
-      "commits": 1
+      "commits": 0
     },
     {
       "week": "2026-08-10",
@@ -49,39 +37,51 @@
     },
     {
       "week": "2026-09-28",
-      "commits": 24
+      "commits": 78
+    },
+    {
+      "week": "2026-10-05",
+      "commits": 110
+    },
+    {
+      "week": "2026-10-12",
+      "commits": 243
+    },
+    {
+      "week": "2026-10-19",
+      "commits": 0
     }
   ],
   "recentCommits": [
     {
-      "sha": "46e14c48fcbfe48d5139b6530daa180145bfe3fc",
-      "date": "2026-09-30",
-      "title": "Merge pull request #1720 from zax0rz/claude/remove-name-backdoors",
-      "url": "https://github.com/zax0rz/darkpawns/commit/46e14c48fcbfe48d5139b6530daa180145bfe3fc"
+      "sha": "d81fbb59017369d499473437e0b952e605fa408a",
+      "date": "2026-10-18",
+      "title": "Merge remote-tracking branch 'origin/cline/dp1452-1453' into claude/batch-z",
+      "url": "https://github.com/zax0rz/darkpawns/commit/d81fbb59017369d499473437e0b952e605fa408a"
     },
     {
-      "sha": "dfe9328c610f8299404319b65ba5dd71e604dd59",
-      "date": "2026-09-30",
-      "title": "Merge pull request #1718 from zax0rz/claude/research-pf050-clean-claims",
-      "url": "https://github.com/zax0rz/darkpawns/commit/dfe9328c610f8299404319b65ba5dd71e604dd59"
+      "sha": "351418e8770aa09aa6bbeeb47b421cd4c626d4fd",
+      "date": "2026-10-18",
+      "title": "test: close reachable spell item-route matrix",
+      "url": "https://github.com/zax0rz/darkpawns/commit/351418e8770aa09aa6bbeeb47b421cd4c626d4fd"
     },
     {
-      "sha": "015eddfa9494689ea995010bab5f4b8e416d4561",
-      "date": "2026-09-30",
-      "title": "Merge pull request #1717 from zax0rz/sol/integrity-3b",
-      "url": "https://github.com/zax0rz/darkpawns/commit/015eddfa9494689ea995010bab5f4b8e416d4561"
+      "sha": "8f32edface91f6c25e0bda697492297267994e73",
+      "date": "2026-10-18",
+      "title": "fix: preserve inactive in-range spell no-op returns",
+      "url": "https://github.com/zax0rz/darkpawns/commit/8f32edface91f6c25e0bda697492297267994e73"
     },
     {
-      "sha": "c26caab37bc52d762527eee481af49723511b941",
-      "date": "2026-09-30",
-      "title": "Merge pull request #1716 from zax0rz/glm/security-guarded-sends",
-      "url": "https://github.com/zax0rz/darkpawns/commit/c26caab37bc52d762527eee481af49723511b941"
+      "sha": "750b5c9c70b47f7b29cac1bb1d12ff0724f589fc",
+      "date": "2026-10-18",
+      "title": "fix: allow the two R1a Locate Object cells",
+      "url": "https://github.com/zax0rz/darkpawns/commit/750b5c9c70b47f7b29cac1bb1d12ff0724f589fc"
     },
     {
-      "sha": "793c20358681b5de3d505f163a8306aad005695c",
-      "date": "2026-09-30",
-      "title": "Merge pull request #1715 from zax0rz/glm/security-mob-socials",
-      "url": "https://github.com/zax0rz/darkpawns/commit/793c20358681b5de3d505f163a8306aad005695c"
+      "sha": "de3ab7340cc70a9b09a9bad593416369f825a456",
+      "date": "2026-10-18",
+      "title": "Merge remote-tracking branch 'origin/codex/luna-dp1371-spell-matrix' into claude/batch-x",
+      "url": "https://github.com/zax0rz/darkpawns/commit/de3ab7340cc70a9b09a9bad593416369f825a456"
     }
   ],
   "pullRequests": [

@@ -5,38 +5,227 @@ import { getCollection } from 'astro:content';
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
-const fmt = (d: Date) => d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+const [latest, ...earlier] = posts;
 ---
+
 <Base title="Blog | Dark Pawns" description="Notes on the port, the world, and the development of Dark Pawns.">
-  <div class="container blog-index">
-    <h1>Blog</h1>
-    <p class="lede">Notes on the port, the world, and where this is all going.</p>
-    <ul class="post-list">
-      {posts.map((p) => (
-        <li class="post-item">
-          <time datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
-          <h2><a href={`/blog/${p.id}/`}>{p.data.title}</a></h2>
-          <p>{p.data.description}</p>
-        </li>
-      ))}
-    </ul>
-  </div>
+  <article class="container blog-index">
+    <header class="blog-header">
+      <div class="blog-header-top">
+        <p class="eyebrow">Dispatches · {posts.length} Essays</p>
+        <a class="rss-link" href="/rss.xml" title="Subscribe via RSS">RSS Feed</a>
+      </div>
+      <h1>Blog</h1>
+      <p class="lede">
+        Notes on the C-to-Go port, the recovered community archive, the original world files, and where Dark Pawns is going.
+      </p>
+    </header>
+
+    {latest && (
+      <section class="featured" aria-labelledby="featured-heading">
+        <div class="featured-bar">
+          <span class="featured-tag">Latest Dispatch</span>
+          <time datetime={latest.data.date.toISOString()}>{fmt(latest.data.date)}</time>
+        </div>
+        <h2 id="featured-heading">
+          <a href={`/blog/${latest.id}/`}>{latest.data.title}</a>
+        </h2>
+        <p class="featured-desc">{latest.data.description}</p>
+        <a class="featured-read" href={`/blog/${latest.id}/`}>Read essay →</a>
+      </section>
+    )}
+
+    {earlier.length > 0 && (
+      <section class="earlier" aria-labelledby="earlier-heading">
+        <header class="earlier-head">
+          <h2 id="earlier-heading">Earlier Dispatches</h2>
+          <span>{earlier.length} entries</span>
+        </header>
+        <ol class="post-list">
+          {earlier.map((p) => (
+            <li class="post-item">
+              <time datetime={p.data.date.toISOString()}>{fmt(p.data.date)}</time>
+              <div class="post-main">
+                <h3>
+                  <a href={`/blog/${p.id}/`}>{p.data.title}</a>
+                </h3>
+                <p>{p.data.description}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+  </article>
 </Base>
 
 <style>
-  .blog-index { max-width: var(--content-width); padding-block: var(--space-xl) var(--space-lg); }
-  .lede { color: var(--ink-muted); font-size: 1.1rem; margin-bottom: var(--space-lg); }
-  .post-list { list-style: none; margin: 0; padding: 0; }
-  .post-item { padding: var(--space-lg) 0; border-top: 1px solid var(--rule); }
+  .blog-index {
+    max-width: 54rem;
+    padding-block: var(--space-xl);
+  }
+  .blog-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xs);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .rss-link {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--rule);
+    background: var(--paper-deep);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .rss-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .blog-header h1 {
+    margin-bottom: var(--space-sm);
+  }
+  .lede {
+    color: var(--ink-muted);
+    font-size: 1.15rem;
+    max-width: 58ch;
+    margin: 0 0 var(--space-xl);
+  }
+
+  /* Featured Lead Post */
+  .featured {
+    padding: var(--space-lg);
+    border: 1px solid var(--ink);
+    border-left: 4px solid var(--accent);
+    background: var(--paper-deep);
+    margin-bottom: var(--space-xl);
+  }
+  .featured-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-sm);
+  }
+  .featured-tag {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .featured-bar time {
+    color: var(--ink-muted);
+  }
+  .featured h2 {
+    margin: 0 0 var(--space-sm);
+    font-size: 2rem;
+    line-height: 1.18;
+  }
+  .featured h2 a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .featured h2 a:hover {
+    color: var(--accent);
+  }
+  .featured-desc {
+    color: var(--ink-muted);
+    font-size: 1.15rem;
+    max-width: 58ch;
+    margin: 0 0 var(--space-md);
+  }
+  .featured-read {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* Earlier Posts */
+  .earlier-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-top: 2px solid var(--ink);
+    padding-top: var(--space-md);
+    margin-bottom: var(--space-sm);
+  }
+  .earlier-head h2 {
+    margin: 0;
+    font-size: 1.375rem;
+  }
+  .earlier-head span {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+  }
+  .post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+  .post-item {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--rule);
+  }
   .post-item time {
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--ink-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    padding-top: 0.25rem;
   }
-  .post-item h2 { margin: var(--space-xs) 0 var(--space-sm); }
-  .post-item h2 a { color: var(--ink); }
-  .post-item h2 a:hover { color: var(--accent); text-decoration: none; }
-  .post-item p { color: var(--ink-muted); margin: 0; }
+  .post-main h3 {
+    margin: 0 0 var(--space-xs);
+    font-size: 1.375rem;
+  }
+  .post-main h3 a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .post-main h3 a:hover {
+    color: var(--accent);
+  }
+  .post-main p {
+    color: var(--ink-muted);
+    margin: 0;
+    max-width: 56ch;
+  }
+
+  @media (max-width: 680px) {
+    .post-item {
+      grid-template-columns: 1fr;
+      gap: var(--space-xs);
+    }
+  }
 </style>

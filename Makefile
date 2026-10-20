@@ -267,6 +267,7 @@ site-check: voice-lint test-voice-lint test-markdown check-content-inventory che
 
 parse-world-json:
 	python3 website/scripts/parse_world.py
+	python3 scripts/precompute_map.py
 	python3 website/scripts/parse_db.py
 	python3 website/scripts/precompute_sphere.py
 	python3 website/scripts/precompute_graph.py

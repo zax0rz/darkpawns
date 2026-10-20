@@ -1,1351 +1,1507 @@
-(function() {
-  let dbData = null;
-  let activeTab = 'mobs'; // 'mobs' or 'items'
-  let activeId = null;
+/**
+ * Dark Pawns Interactive Database & Map Codex
+ * Connects Mobs, Items, Rooms, and Zones from /data/database.json and /map/zone-*.json
+ */
 
-  // Virtualization / Progressive Scroll State
-  let filteredRecords = [];
-  let renderedCount = 0;
-  const BATCH_SIZE = 50;
+import { reflowWorldText } from '../lib/world-text.mjs';
 
-  // Active Filter state
-  let filters = {
-    mobs: {
-      search: '',
-      levelMin: 0,
-      align: 'all',
-      zones: new Set(),
-      shopkeeper: false,
-      aggressive: false,
-      unique: false,
-      sort: 'zone'
-    },
-    items: {
-      search: '',
-      type: 'all',
-      wear: 'all',
-      affect: 'all',
-      zones: new Set(),
-      magic: false,
-      script: false,
-      sort: 'zone'
+const MOB_RACES = [
+  'Human', 'Elf', 'Dwarf', 'Kender', 'Centaur', 'Rakshasa', 'Troll',
+  'Lycanthrope', 'Vampire', 'Undead', 'Dragon', 'Demon', 'Horse', 'Reptile',
+  'Arachnid', 'Rodent', 'Other', 'Vegetable', 'Giant', 'Demi-god', 'Ogre',
+  'Insect', 'Mammal', 'Fish', 'Avian', 'Magical Construct', 'Amphibian',
+  'Humanoid', 'Faery', 'Ssaur', 'Minotaur',
+];
+
+const AFFECT_BIT_NAMES = [
+  'BLIND', 'INVIS', 'DET-ALIGN', 'DET-INVIS', 'DET-MAGIC',
+  'SENSE-LIFE', 'WATERWALK', 'SANCT', 'GROUP', 'CURSE', 'INFRA',
+  'POISON', 'PROT-EVIL', 'PROT-GOOD', 'SLEEP', '!TRACK',
+  'FLESH-ALTER', 'DODGE', 'SNEAK', 'HIDE', 'BERSERK', 'CHARM',
+  'FOLLOW', 'WIMPY', 'KUJI-KIRI', 'CUTTHROAT', 'FLY', 'WEREWOLF',
+  'VAMPIRE', 'MOUNTED', 'INVULN', 'FLAMING', 'NOTHING', 'HASTE',
+  'SLOW', 'DREAM', 'WATERBREATHE', 'METALSKIN', 'ROBBED',
+];
+
+const ATTACK_TYPES = [
+  'hit', 'sting', 'whip', 'slash', 'bite', 'bludgeon', 'crush',
+  'pound', 'claw', 'maul', 'thrash', 'pierce', 'blast', 'punch', 'stab',
+];
+
+const DRINK_TYPES = [
+  'water', 'beer', 'wine', 'ale', 'dark ale', 'whiskey', 'lemonade',
+  'firebreather', 'local speciality', 'slime mold juice', 'milk',
+  'tea', 'coffee', 'blood', 'salt water', 'clear water',
+];
+
+const SPELL_NAMES = {
+  1: 'holy ward', 2: 'shift reality', 3: 'bless', 4: 'blindness', 5: 'burning hands',
+  6: 'call lightning', 7: 'charm person', 8: 'chill touch', 9: 'clone', 10: 'color spray',
+  11: 'control weather', 12: 'create food', 13: 'create water', 14: 'cure blind', 15: 'cure critic',
+  16: 'cure light', 17: 'curse', 18: 'detect alignment', 19: 'detect invisibility', 20: 'detect magic',
+  21: 'detect poison', 22: 'dispel evil', 23: 'earthquake', 24: 'enchant weapon', 25: 'energy drain',
+  26: 'fireball', 27: 'harm', 28: 'heal', 29: 'invisibility', 30: 'lightning bolt',
+  31: 'locate object', 32: 'flame arrow', 33: 'poison', 34: 'protection from evil', 35: 'remove curse',
+  36: 'sanctuary', 37: 'shocking grasp', 38: 'sleep', 39: 'strength', 40: 'summon',
+  41: 'meteor swarm', 42: 'word of recall', 43: 'remove poison', 44: 'sense life', 45: 'animate dead',
+  46: 'dispel good', 47: 'holy shield', 48: 'group heal', 49: 'group recall', 50: 'infravision',
+  51: 'waterwalk', 52: 'mass heal', 53: 'fly', 54: 'lycanthropy', 55: 'vampirism',
+  56: 'sobriety', 57: 'group invisibility', 58: 'hellfire', 59: 'enchant armor', 60: 'identify',
+  61: 'mind poke', 62: 'mind blast', 63: 'chameleon', 64: 'levitate', 65: 'metalskin',
+  66: 'globe of invulnerability', 67: 'vitality', 68: 'invigorate', 69: 'lesser perception', 70: 'greater perception',
+  71: 'mind attack', 72: 'adrenaline boost', 73: 'psychic shield', 74: 'change density', 75: 'acid blast',
+  76: 'dominate', 77: 'cell adjustment', 78: 'zen', 79: 'mirror image', 80: 'mass dominate',
+  81: 'divine intervention', 82: 'mind bar', 83: 'soul leech', 84: 'mindsight', 85: 'transparency',
+  86: 'know align', 87: 'gate', 88: 'word of intellect', 89: 'lay hands', 90: 'mental lapse',
+  91: 'smokescreen', 92: 'ray of disruption', 93: 'disintegration', 94: 'calliope', 95: 'protection from good',
+  96: 'flame strike', 97: 'haste', 98: 'slow', 99: 'dream travel', 100: 'psiblast',
+  101: 'glyph of summoning', 102: 'waterbreathe', 105: 'conjure elemental',
+  202: 'fire breath', 203: 'gas breath', 204: 'frost breath', 205: 'acid breath', 206: 'lightning breath',
+};
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderProseBlock(text) {
+  const { drawing, paragraphs } = reflowWorldText(text);
+  if (!paragraphs.length) return '';
+  if (drawing) {
+    return `<pre class="sheet-prose is-drawing">${escapeHtml(paragraphs[0])}</pre>`;
+  }
+  return `<div class="sheet-prose">${paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}</div>`;
+}
+
+function calcDiceAvg(diceStr) {
+  if (!diceStr) return 0;
+  const m = String(diceStr).match(/^(\d+)d(\d+)([+-]\d+)?$/i);
+  if (!m) return 0;
+  const num = parseInt(m[1], 10);
+  const sides = parseInt(m[2], 10);
+  const plus = m[3] ? parseInt(m[3], 10) : 0;
+  return Math.round(num * ((sides + 1) / 2) + plus);
+}
+
+function formatAffect(aff) {
+  if (!aff) return '';
+  if (aff.location === 'PERM_SPELL') {
+    const bitName = AFFECT_BIT_NAMES[aff.modifier] || `BIT_${aff.modifier}`;
+    return `Permanent ${bitName}`;
+  }
+  if (aff.location === 'RACE_HATE') {
+    const rName = MOB_RACES[aff.modifier] || `Race ${aff.modifier}`;
+    return `Hates ${rName}`;
+  }
+  const sign = aff.modifier >= 0 ? '+' : '';
+  return `${sign}${aff.modifier} ${aff.location}`;
+}
+
+function describeItemValues(item) {
+  const [v0, v1, v2, v3] = item.val || [0, 0, 0, 0];
+  switch (item.type) {
+    case 'WEAPON': {
+      const avg = (((v2 + 1) / 2.0) * v1).toFixed(1);
+      const atk = ATTACK_TYPES[v3] || `type ${v3}`;
+      return `${v1}d${v2} (${avg} avg, ${atk})`;
     }
+    case 'ARMOR':
+      return `AC apply ${v0}`;
+    case 'LIGHT':
+      return v2 === -1 ? 'Infinite hours' : `${v2} hours`;
+    case 'SCROLL':
+    case 'POTION': {
+      const spells = [v1, v2, v3]
+        .filter((s) => s > 0)
+        .map((s) => SPELL_NAMES[s] || `spell #${s}`);
+      return `Level ${v0}: ${spells.length ? spells.join(', ') : 'none'}`;
+    }
+    case 'WAND':
+    case 'STAFF': {
+      const spell = v3 > 0 ? (SPELL_NAMES[v3] || `spell #${v3}`) : 'none';
+      return `Level ${v0} ${spell} (${v2}/${v1} charges)`;
+    }
+    case 'CONTAINER':
+      return `Capacity ${v0}${v2 > 0 ? `, key #${v2}` : ''}`;
+    case 'DRINKCON':
+    case 'FOUNTAIN': {
+      const liq = DRINK_TYPES[v2] || `liquid #${v2}`;
+      return `${v1}/${v0} units of ${liq}${v3 ? ' (poisoned)' : ''}`;
+    }
+    case 'FOOD':
+      return `Fills ${v0} hours${v3 ? ' (poisoned)' : ''}`;
+    case 'MONEY':
+      return `${v0} coins`;
+    default:
+      return `[${v0}, ${v1}, ${v2}, ${v3}]`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const dbPage = document.getElementById('db-page');
+  if (!dbPage) return;
+
+  // State
+  let dbData = { mobs: {}, items: {} };
+  let mobsList = [];
+  let itemsList = [];
+  let zonesMap = {};
+  let zoneRanges = [];
+  const zoneCache = new Map();
+
+  let currentTab = 'mobs';
+  let currentId = null;
+  let searchQuery = '';
+  let sortMode = 'zone';
+
+  let filters = {
+    zone: '',
+    levelRange: '',
+    alignment: '',
+    mobRole: '',
+    itemType: '',
+    itemWear: '',
+    itemAffect: '',
   };
 
   // DOM Elements
-  const loadingEl = document.getElementById('db-loading');
-  const searchInput = document.getElementById('db-search');
-  const resultsContainer = document.getElementById('db-results-container');
-  const resultsInner = document.getElementById('db-results-inner');
-  const emptyState = document.getElementById('db-empty');
-  const detailContainer = document.getElementById('db-detail-container');
-  
-  // Skyline Overview Strip
-  const skylineContainer = document.getElementById('db-skyline');
-
-  // Tab Elements
   const tabMobs = document.getElementById('tab-mobs');
   const tabItems = document.getElementById('tab-items');
-  const filterMobsSection = document.getElementById('filter-mobs-section');
-  const filterItemsSection = document.getElementById('filter-items-section');
-
-  // Mobile navigation
-  const dbMain = document.getElementById('db-main');
-  const dbMobileClose = document.getElementById('db-mobile-close');
-  const mobileFiltersTrigger = document.getElementById('mobile-filters-trigger');
-  const dbFiltersDrawer = document.getElementById('db-filters');
-  const filterSheetCloseBtn = document.getElementById('filter-sheet-close-btn');
-  const activeChipsBar = document.getElementById('active-chips-bar');
+  const countMobs = document.getElementById('count-mobs');
+  const countItems = document.getElementById('count-items');
+  const searchInput = document.getElementById('db-search');
+  const clearBtn = document.getElementById('db-clear-btn');
   const sortSelect = document.getElementById('db-sort');
+  const summaryEl = document.getElementById('db-result-summary');
 
-  // Filter Elements
-  const mobLevelSlider = document.getElementById('filter-mob-level');
-  const mobLevelVal = document.getElementById('filter-mob-level-val');
-  const mobAlignSelect = document.getElementById('filter-mob-align');
-  const mobZoneContainer = document.getElementById('filter-mob-zone');
-  
-  const chkMobShop = document.getElementById('chk-mob-shop');
-  const chkMobAgg = document.getElementById('chk-mob-agg');
-  const chkMobUniq = document.getElementById('chk-mob-uniq');
+  const filterZone = document.getElementById('filter-zone');
+  const filterLevelRange = document.getElementById('filter-level-range');
+  const filterAlignment = document.getElementById('filter-alignment');
+  const filterMobRole = document.getElementById('filter-mob-role');
+  const filterItemType = document.getElementById('filter-item-type');
+  const filterItemWear = document.getElementById('filter-item-wear');
+  const filterItemAffect = document.getElementById('filter-item-affect');
 
-  const itemTypeSelect = document.getElementById('filter-item-type');
-  const itemWearSelect = document.getElementById('filter-item-wear');
-  const itemAffectSelect = document.getElementById('filter-item-affect');
-  const itemZoneContainer = document.getElementById('filter-item-zone');
+  const mobFilterFields = document.querySelectorAll('.mob-only-filter');
+  const itemFilterFields = document.querySelectorAll('.item-only-filter');
 
-  const chkItmMag = document.getElementById('chk-itm-mag');
-  const chkItmScr = document.getElementById('chk-itm-scr');
+  const resultsList = document.getElementById('db-results-list');
+  const loadingEl = document.getElementById('db-loading');
+  const emptyStateEl = document.getElementById('db-empty-state');
+  const detailViewEl = document.getElementById('db-detail-view');
+  const contentPane = document.getElementById('db-content');
 
-  // Scroll Shadows
-  const shadowTop = document.getElementById('shadow-top');
-  const shadowBottom = document.getElementById('shadow-bottom');
-
-  // Helper: Dice Average
-  function calcDiceAvg(diceStr) {
-    if (!diceStr) return 0;
-    const match = diceStr.match(/^(\d+)d(\d+)\+(\d+)$/);
-    if (!match) return 0;
-    const num = parseInt(match[1]);
-    const sides = parseInt(match[2]);
-    const plus = parseInt(match[3]);
-    const avgSides = (1 + sides) / 2;
-    return Math.round(num * avgSides + plus);
+  function getZoneForRecord(record) {
+    if (record.spw && record.spw.length > 0 && record.spw[0].zone !== undefined && record.spw[0].zone !== -1) {
+      return record.spw[0].zone;
+    }
+    if (record.rms && record.rms.length > 0 && record.rms[0].zone !== undefined && record.rms[0].zone !== -1) {
+      return record.rms[0].zone;
+    }
+    // Check if carried by a mob whose spawn zone is known
+    if (record.mobs && record.mobs.length > 0) {
+      const m = dbData.mobs[record.mobs[0].mob_vnum];
+      if (m && m.spw && m.spw.length > 0 && m.spw[0].zone !== -1) {
+        return m.spw[0].zone;
+      }
+    }
+    const v = record.v;
+    for (const zr of zoneRanges) {
+      if (v >= zr.min && v <= zr.max) return zr.id;
+    }
+    return Math.floor(v / 100);
   }
 
-  // Load Database
-  let zoneNames = {}; // zone id → display name (from the world map index)
-  async function loadDatabase() {
+  function isMobAggressive(mob) {
+    if (!mob.act || !Array.isArray(mob.act)) return false;
+    return mob.act.some((f) => f === 'AGGR' || f.startsWith('AGGR'));
+  }
+
+  async function init() {
     try {
       const [dbResp, mapResp] = await Promise.all([
         fetch('/data/database.json'),
-        fetch('/map/map-index.json')
+        fetch('/map/map-index.json').catch(() => null),
       ]);
-      if (!dbResp.ok) throw new Error('Network response not ok');
+      if (!dbResp.ok) throw new Error(`HTTP ${dbResp.status}`);
       dbData = await dbResp.json();
-      if (mapResp.ok) {
-        const mapIndex = await mapResp.json();
-        for (const z of mapIndex.zones || []) zoneNames[z.id] = z.name;
+
+      if (mapResp && mapResp.ok) {
+        const mapIdx = await mapResp.json();
+        if (mapIdx && Array.isArray(mapIdx.zones)) {
+          mapIdx.zones.forEach((z) => {
+            zonesMap[z.id] = z.name;
+            if (z.minVnum !== undefined && z.maxVnum !== undefined) {
+              zoneRanges.push({ id: z.id, min: z.minVnum, max: z.maxVnum });
+            }
+          });
+        }
       }
 
-      // Setup counts
-      const mobCount = document.getElementById('mob-count');
-      const itemCount = document.getElementById('item-count');
-      if (mobCount) mobCount.textContent = dbData.mobs ? Object.keys(dbData.mobs).length.toLocaleString() : '';
-      if (itemCount) itemCount.textContent = dbData.items ? Object.keys(dbData.items).length.toLocaleString() : '';
+      mobsList = Object.values(dbData.mobs || {}).map((m) => ({
+        ...m,
+        _hpAvg: calcDiceAvg(m.hp),
+        _dmgAvg: calcDiceAvg(m.dmg),
+        _zone: getZoneForRecord(m),
+      }));
 
-      // Initialize filter UI (zones list)
-      populateZoneFilters();
+      itemsList = Object.values(dbData.items || {}).map((it) => ({
+        ...it,
+        _zone: getZoneForRecord(it),
+      }));
 
-      // Hide loading
-      if (loadingEl) loadingEl.style.display = 'none';
+      if (countMobs) countMobs.textContent = mobsList.length.toLocaleString('en-US');
+      if (countItems) countItems.textContent = itemsList.length.toLocaleString('en-US');
 
-      // Setup Event Listeners
-      setupFilterListeners();
-      setupScrollShadows();
-      setupVirtualScroll();
+      populateSelectOptions();
+      if (loadingEl) loadingEl.hidden = true;
 
-      // Initial render, routing, skyline
-      initRouting();
-      renderSkyline();
-      applyFiltersAndRender();
-    } catch (error) {
-      console.error('Failed to load database.json:', error);
+      applyUrlState();
+      renderList();
+
+      window.addEventListener('hashchange', () => {
+        applyHashOnly();
+      });
+    } catch (err) {
+      console.error('Failed to load database:', err);
       if (loadingEl) {
-        loadingEl.innerHTML = '<div style="color:var(--accent);font-weight:bold;padding:2rem;text-align:center;">Failed to load MUD database. Please try reloading.</div>';
+        loadingEl.textContent = 'Error loading world database. Please refresh the page.';
       }
     }
   }
 
-  // Populate dynamic multi-select Zone lists
-  function populateZoneFilters() {
-    // Mobs Zones
-    const mobZones = new Set();
-    for (const id in dbData.mobs) {
-      const m = dbData.mobs[id];
-      if (m.spw && m.spw.length > 0) {
-        mobZones.add(m.spw[0].zone);
-      }
-    }
-    const sortedMobZones = Array.from(mobZones).sort((a,b) => a - b);
-    mobZoneContainer.innerHTML = sortedMobZones.map(zoneId => `
-      <label class="filter-checkbox-row" data-zone="${zoneId}">
-        <input type="checkbox" class="chk-mob-zone-item" value="${zoneId}">
-        ${getZoneName(zoneId)}
-      </label>
-    `).join('');
+  function populateSelectOptions() {
+    // Zones
+    const zoneSet = new Set();
+    mobsList.forEach((m) => {
+      if (m._zone !== undefined && m._zone !== -1) zoneSet.add(m._zone);
+      (m.spw || []).forEach((s) => {
+        if (s.zone !== undefined && s.zone !== -1) zoneSet.add(s.zone);
+      });
+    });
+    itemsList.forEach((it) => {
+      if (it._zone !== undefined && it._zone !== -1) zoneSet.add(it._zone);
+    });
 
-    // Items Zones
-    const itemZones = new Set();
-    for (const id in dbData.items) {
-      const o = dbData.items[id];
-      if (o.rms && o.rms.length > 0) {
-        const primarySpawn = o.rms[0];
-        if (primarySpawn.zone) {
-          itemZones.add(primarySpawn.zone);
+    const sortedZones = Array.from(zoneSet).sort((a, b) => {
+      const nameA = (zonesMap[a] || `Zone ${a}`).replace(/^\([^)]+\)\s*/, '');
+      const nameB = (zonesMap[b] || `Zone ${b}`).replace(/^\([^)]+\)\s*/, '');
+      return nameA.localeCompare(nameB);
+    });
+
+    sortedZones.forEach((zid) => {
+      const opt = document.createElement('option');
+      opt.value = String(zid);
+      opt.textContent = `${zonesMap[zid] || `Zone ${zid}`} (#${zid})`;
+      filterZone.appendChild(opt);
+    });
+
+    // Item Types
+    const typeCounts = {};
+    const wearCounts = {};
+    const affectCounts = {};
+
+    itemsList.forEach((it) => {
+      if (it.type) typeCounts[it.type] = (typeCounts[it.type] || 0) + 1;
+      (it.wear || []).forEach((w) => {
+        if (w !== 'TAKE') wearCounts[w] = (wearCounts[w] || 0) + 1;
+      });
+      (it.aff || []).forEach((a) => {
+        if (a.location && a.location !== 'NONE') {
+          affectCounts[a.location] = (affectCounts[a.location] || 0) + 1;
         }
-      }
-    }
-    const sortedItemZones = Array.from(itemZones).sort((a,b) => a - b);
-    itemZoneContainer.innerHTML = sortedItemZones.map(zoneId => `
-      <label class="filter-checkbox-row" data-zone="${zoneId}">
-        <input type="checkbox" class="chk-itm-zone-item" value="${zoneId}">
-        ${getZoneName(zoneId)}
-      </label>
-    `).join('');
-  }
-
-  // Event Listeners for Filters
-  function setupFilterListeners() {
-    // Search input
-    searchInput.addEventListener('input', () => {
-      filters[activeTab].search = searchInput.value;
-      applyFiltersAndRender();
-    });
-
-    // Sort select
-    sortSelect.addEventListener('change', () => {
-      filters[activeTab].sort = sortSelect.value;
-      applyFiltersAndRender();
-    });
-
-    // Mob Level slider
-    mobLevelSlider.addEventListener('input', () => {
-      mobLevelVal.innerText = mobLevelSlider.value;
-      filters.mobs.levelMin = parseInt(mobLevelSlider.value);
-      applyFiltersAndRender();
-    });
-
-    // Mob Alignment
-    mobAlignSelect.addEventListener('change', () => {
-      filters.mobs.align = mobAlignSelect.value;
-      applyFiltersAndRender();
-    });
-
-    // Mob Zone checkboxes
-    mobZoneContainer.addEventListener('change', () => {
-      const checked = mobZoneContainer.querySelectorAll('.chk-mob-zone-item:checked');
-      filters.mobs.zones = new Set(Array.from(checked).map(c => parseInt(c.value)));
-      applyFiltersAndRender();
-    });
-
-    // Mob Flags
-    chkMobShop.addEventListener('change', () => {
-      filters.mobs.shopkeeper = chkMobShop.checked;
-      toggleFlagClass('switch-mob-shop', chkMobShop.checked);
-      applyFiltersAndRender();
-    });
-    chkMobAgg.addEventListener('change', () => {
-      filters.mobs.aggressive = chkMobAgg.checked;
-      toggleFlagClass('switch-mob-agg', chkMobAgg.checked);
-      applyFiltersAndRender();
-    });
-    chkMobUniq.addEventListener('change', () => {
-      filters.mobs.unique = chkMobUniq.checked;
-      toggleFlagClass('switch-mob-uniq', chkMobUniq.checked);
-      applyFiltersAndRender();
-    });
-
-    // Item Type
-    itemTypeSelect.addEventListener('change', () => {
-      filters.items.type = itemTypeSelect.value;
-      applyFiltersAndRender();
-    });
-
-    // Item Wear
-    itemWearSelect.addEventListener('change', () => {
-      filters.items.wear = itemWearSelect.value;
-      applyFiltersAndRender();
-    });
-
-    // Item Affect
-    itemAffectSelect.addEventListener('change', () => {
-      filters.items.affect = itemAffectSelect.value;
-      applyFiltersAndRender();
-    });
-
-    // Item Zone checkboxes
-    itemZoneContainer.addEventListener('change', () => {
-      const checked = itemZoneContainer.querySelectorAll('.chk-itm-zone-item:checked');
-      filters.items.zones = new Set(Array.from(checked).map(c => parseInt(c.value)));
-      applyFiltersAndRender();
-    });
-
-    // Item Flags
-    chkItmMag.addEventListener('change', () => {
-      filters.items.magic = chkItmMag.checked;
-      toggleFlagClass('switch-itm-mag', chkItmMag.checked);
-      applyFiltersAndRender();
-    });
-    chkItmScr.addEventListener('change', () => {
-      filters.items.script = chkItmScr.checked;
-      toggleFlagClass('switch-itm-scr', chkItmScr.checked);
-      applyFiltersAndRender();
-    });
-
-    // Tab buttons
-    tabMobs.addEventListener('click', () => switchTab('mobs'));
-    tabItems.addEventListener('click', () => switchTab('items'));
-
-    // Mobile specific controls
-    mobileFiltersTrigger.addEventListener('click', () => {
-      dbFiltersDrawer.classList.add('open');
-    });
-    filterSheetCloseBtn.addEventListener('click', () => {
-      dbFiltersDrawer.classList.remove('open');
-    });
-
-    dbMobileClose.addEventListener('click', () => {
-      dbMain.classList.remove('open');
-      window.location.hash = ''; // clear hash routing
-    });
-  }
-
-  function toggleFlagClass(id, checked) {
-    const el = document.getElementById(id);
-    if (el) {
-      if (checked) el.classList.add('active');
-      else el.classList.remove('active');
-    }
-  }
-
-  // Active filter chip management
-  function renderActiveChips() {
-    activeChipsBar.innerHTML = '';
-    let chips = [];
-    const active = filters[activeTab];
-
-    if (activeTab === 'mobs') {
-      if (active.levelMin > 0) {
-        chips.push({ label: `Lvl ≥ ${active.levelMin}`, clear: () => {
-          mobLevelSlider.value = 0;
-          mobLevelVal.innerText = 0;
-          active.levelMin = 0;
-        }});
-      }
-      if (active.align !== 'all') {
-        chips.push({ label: `Align: ${active.align}`, clear: () => {
-          mobAlignSelect.value = 'all';
-          active.align = 'all';
-        }});
-      }
-      active.zones.forEach(z => {
-        chips.push({ label: getZoneName(z), clear: () => {
-          const chk = mobZoneContainer.querySelector(`.chk-mob-zone-item[value="${z}"]`);
-          if (chk) chk.checked = false;
-          active.zones.delete(z);
-        }});
       });
-      if (active.shopkeeper) {
-        chips.push({ label: 'Shopkeeper', clear: () => {
-          chkMobShop.checked = false;
-          toggleFlagClass('switch-mob-shop', false);
-          active.shopkeeper = false;
-        }});
-      }
-      if (active.aggressive) {
-        chips.push({ label: 'Aggressive', clear: () => {
-          chkMobAgg.checked = false;
-          toggleFlagClass('switch-mob-agg', false);
-          active.aggressive = false;
-        }});
-      }
-      if (active.unique) {
-        chips.push({ label: 'Unique', clear: () => {
-          chkMobUniq.checked = false;
-          toggleFlagClass('switch-mob-uniq', false);
-          active.unique = false;
-        }});
-      }
-    } else {
-      if (active.type !== 'all') {
-        chips.push({ label: `Type: ${active.type}`, clear: () => {
-          itemTypeSelect.value = 'all';
-          active.type = 'all';
-        }});
-      }
-      if (active.wear !== 'all') {
-        chips.push({ label: `Wear: ${active.wear}`, clear: () => {
-          itemWearSelect.value = 'all';
-          active.wear = 'all';
-        }});
-      }
-      if (active.affect !== 'all') {
-        chips.push({ label: `Affect: ${active.affect}`, clear: () => {
-          itemAffectSelect.value = 'all';
-          active.affect = 'all';
-        }});
-      }
-      active.zones.forEach(z => {
-        chips.push({ label: getZoneName(z), clear: () => {
-          const chk = itemZoneContainer.querySelector(`.chk-itm-zone-item[value="${z}"]`);
-          if (chk) chk.checked = false;
-          active.zones.delete(z);
-        }});
+    });
+
+    Object.keys(typeCounts)
+      .sort()
+      .forEach((t) => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = `${t} (${typeCounts[t]})`;
+        filterItemType.appendChild(opt);
       });
-      if (active.magic) {
-        chips.push({ label: 'Magic', clear: () => {
-          chkItmMag.checked = false;
-          toggleFlagClass('switch-itm-mag', false);
-          active.magic = false;
-        }});
-      }
-      if (active.script) {
-        chips.push({ label: 'Scripted', clear: () => {
-          chkItmScr.checked = false;
-          toggleFlagClass('switch-itm-scr', false);
-          active.script = false;
-        }});
-      }
-    }
 
-    if (chips.length > 0) {
-      activeChipsBar.style.display = 'flex';
-      // Mobile indicator counts
-      const countLabel = document.getElementById('active-filters-count');
-      if (countLabel) {
-        countLabel.innerText = chips.length;
-        countLabel.style.display = 'inline-block';
-      }
-
-      chips.forEach(c => {
-        const item = document.createElement('div');
-        item.className = 'filter-chip';
-        item.innerHTML = `${c.label} <span class="close-x">✕</span>`;
-        item.addEventListener('click', () => {
-          c.clear();
-          applyFiltersAndRender();
-        });
-        activeChipsBar.appendChild(item);
+    Object.keys(wearCounts)
+      .sort()
+      .forEach((w) => {
+        const opt = document.createElement('option');
+        opt.value = w;
+        opt.textContent = `${w} (${wearCounts[w]})`;
+        filterItemWear.appendChild(opt);
       });
+
+    Object.keys(affectCounts)
+      .sort()
+      .forEach((a) => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = `${a} (${affectCounts[a]})`;
+        filterItemAffect.appendChild(opt);
+      });
+  }
+
+  function updateSortOptionsForTab() {
+    const currentVal = sortSelect.value;
+    if (currentTab === 'mobs') {
+      sortSelect.innerHTML = `
+        <option value="zone">By Zone</option>
+        <option value="lvl-desc">Highest Level</option>
+        <option value="lvl-asc">Lowest Level</option>
+        <option value="hp-desc">Highest Hit Points</option>
+        <option value="name">Alphabetical</option>
+        <option value="vnum">By VNUM</option>
+      `;
     } else {
-      activeChipsBar.style.display = 'none';
-      const countLabel = document.getElementById('active-filters-count');
-      if (countLabel) countLabel.style.display = 'none';
+      sortSelect.innerHTML = `
+        <option value="zone">By Zone</option>
+        <option value="name">Alphabetical</option>
+        <option value="cost-desc">Highest Value</option>
+        <option value="wt-asc">Lightest Weight</option>
+        <option value="vnum">By VNUM</option>
+      `;
+    }
+    if (Array.from(sortSelect.options).some((o) => o.value === currentVal)) {
+      sortSelect.value = currentVal;
+    } else {
+      sortSelect.value = 'zone';
+      sortMode = 'zone';
     }
   }
 
-  // Scroll shadows
-  function setupScrollShadows() {
-    resultsContainer.addEventListener('scroll', updateScrollShadows);
-    window.addEventListener('resize', updateScrollShadows);
-  }
+  function switchTab(tab, preserveSelection = false) {
+    if (tab !== 'mobs' && tab !== 'items') return;
+    currentTab = tab;
 
-  function updateScrollShadows() {
-    const el = resultsContainer;
-    if (el.scrollHeight > el.clientHeight) {
-      if (el.scrollTop > 5) shadowTop.style.display = 'block';
-      else shadowTop.style.display = 'none';
+    tabMobs.classList.toggle('active', tab === 'mobs');
+    tabMobs.setAttribute('aria-selected', tab === 'mobs' ? 'true' : 'false');
+    tabItems.classList.toggle('active', tab === 'items');
+    tabItems.setAttribute('aria-selected', tab === 'items' ? 'true' : 'false');
 
-      if (el.scrollTop + el.clientHeight < el.scrollHeight - 5) shadowBottom.style.display = 'block';
-      else shadowBottom.style.display = 'none';
-    } else {
-      shadowTop.style.display = 'none';
-      shadowBottom.style.display = 'none';
+    mobFilterFields.forEach((el) => {
+      el.hidden = tab !== 'mobs';
+    });
+    itemFilterFields.forEach((el) => {
+      el.hidden = tab !== 'items';
+    });
+
+    searchInput.placeholder =
+      tab === 'mobs'
+        ? 'Filter mobs by name, keyword, zone, or #VNUM...'
+        : 'Filter items by name, type, stat affect, or #VNUM...';
+
+    updateSortOptionsForTab();
+    if (!preserveSelection) {
+      renderList();
     }
   }
 
-  // State & Hash Routing
-  function initRouting() {
-    window.addEventListener('hashchange', handleHash);
-    handleHash();
-  }
+  function applyUrlState() {
+    const params = new URLSearchParams(window.location.search);
+    const qParam = params.get('q');
+    const tabParam = params.get('tab');
+    const zoneParam = params.get('zone');
+    const mobParam = params.get('mob');
+    const itemParam = params.get('item');
 
-  function handleHash() {
+    if (qParam) {
+      searchQuery = qParam.trim().toLowerCase();
+      searchInput.value = qParam.trim();
+    }
+    if (zoneParam) {
+      filters.zone = zoneParam;
+      filterZone.value = zoneParam;
+    }
+
     const hash = window.location.hash;
-    if (!hash) {
-      clearDetail();
+    if (hash.startsWith('#mob-')) {
+      const vnum = parseInt(hash.replace('#mob-', ''), 10);
+      switchTab('mobs', true);
+      if (dbData.mobs[vnum]) selectRecord(vnum, 'mobs', false);
+      return;
+    }
+    if (hash.startsWith('#item-')) {
+      const vnum = parseInt(hash.replace('#item-', ''), 10);
+      switchTab('items', true);
+      if (dbData.items[vnum]) selectRecord(vnum, 'items', false);
+      return;
+    }
+    if (mobParam && dbData.mobs[mobParam]) {
+      switchTab('mobs', true);
+      selectRecord(parseInt(mobParam, 10), 'mobs', false);
+      return;
+    }
+    if (itemParam && dbData.items[itemParam]) {
+      switchTab('items', true);
+      selectRecord(parseInt(itemParam, 10), 'items', false);
+      return;
+    }
+    if (tabParam === 'items' || tabParam === 'mobs') {
+      switchTab(tabParam, true);
+    }
+
+    // Default selection on desktop so the right pane isn't blank
+    if (window.innerWidth > 960) {
+      const defaultMob = dbData.mobs[3005] ? 3005 : mobsList[0]?.v;
+      if (currentTab === 'mobs' && defaultMob) {
+        selectRecord(defaultMob, 'mobs', false);
+      } else if (currentTab === 'items' && itemsList[0]) {
+        selectRecord(itemsList[0].v, 'items', false);
+      }
+    }
+  }
+
+  function applyHashOnly() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#mob-')) {
+      const vnum = parseInt(hash.replace('#mob-', ''), 10);
+      if (dbData.mobs[vnum]) {
+        if (currentTab !== 'mobs') switchTab('mobs', true);
+        selectRecord(vnum, 'mobs', false);
+        renderList();
+      }
+    } else if (hash.startsWith('#item-')) {
+      const vnum = parseInt(hash.replace('#item-', ''), 10);
+      if (dbData.items[vnum]) {
+        if (currentTab !== 'items') switchTab('items', true);
+        selectRecord(vnum, 'items', false);
+        renderList();
+      }
+    }
+  }
+
+  function hasActiveFilters() {
+    return Boolean(
+      searchQuery ||
+        filters.zone ||
+        filters.levelRange ||
+        filters.alignment ||
+        filters.mobRole ||
+        filters.itemType ||
+        filters.itemWear ||
+        filters.itemAffect
+    );
+  }
+
+  function resetAllFilters() {
+    searchQuery = '';
+    searchInput.value = '';
+    filters = {
+      zone: '',
+      levelRange: '',
+      alignment: '',
+      mobRole: '',
+      itemType: '',
+      itemWear: '',
+      itemAffect: '',
+    };
+    filterZone.value = '';
+    filterLevelRange.value = '';
+    filterAlignment.value = '';
+    filterMobRole.value = '';
+    filterItemType.value = '';
+    filterItemWear.value = '';
+    filterItemAffect.value = '';
+    renderList();
+  }
+
+  function getFilteredRecords() {
+    const source = currentTab === 'mobs' ? mobsList : itemsList;
+    const q = searchQuery.replace(/^#/, '');
+
+    const filtered = source.filter((r) => {
+      // Search query match
+      if (q) {
+        const zName = (zonesMap[r._zone] || '').toLowerCase();
+        const rcn = (r.rcn || '').toLowerCase();
+        const typeStr = (r.type || '').toLowerCase();
+        const affStr = (r.aff || [])
+          .map((a) => (typeof a === 'string' ? a : a.location || ''))
+          .join(' ')
+          .toLowerCase();
+        const matchText =
+          (r.s && r.s.toLowerCase().includes(q)) ||
+          (r.k && r.k.toLowerCase().includes(q)) ||
+          String(r.v).includes(q) ||
+          zName.includes(q) ||
+          rcn.includes(q) ||
+          typeStr.includes(q) ||
+          affStr.includes(q);
+        if (!matchText) return false;
+      }
+
+      // Zone filter
+      if (filters.zone) {
+        const targetZone = parseInt(filters.zone, 10);
+        let inZone = r._zone === targetZone;
+        if (!inZone && r.spw) {
+          inZone = r.spw.some((s) => s.zone === targetZone);
+        }
+        if (!inZone && r.rms) {
+          inZone = r.rms.some((rm) => rm.zone === targetZone);
+        }
+        if (!inZone) return false;
+      }
+
+      if (currentTab === 'mobs') {
+        if (filters.levelRange) {
+          const [minL, maxL] = filters.levelRange.split('-').map(Number);
+          if (r.lvl < minL || r.lvl > maxL) return false;
+        }
+        if (filters.alignment) {
+          if (filters.alignment === 'good' && r.alg < 300) return false;
+          if (filters.alignment === 'evil' && r.alg > -300) return false;
+          if (filters.alignment === 'neutral' && (r.alg >= 300 || r.alg <= -300)) return false;
+        }
+        if (filters.mobRole) {
+          if (filters.mobRole === 'shop' && !r.shop) return false;
+          if (filters.mobRole === 'aggr' && !isMobAggressive(r)) return false;
+          if (filters.mobRole === 'drops' && (!r.drp || r.drp.length === 0)) return false;
+          if (filters.mobRole === 'script' && !r.scr) return false;
+        }
+      } else {
+        if (filters.itemType && r.type !== filters.itemType) return false;
+        if (filters.itemWear && (!r.wear || !r.wear.includes(filters.itemWear))) return false;
+        if (filters.itemAffect && (!r.aff || !r.aff.some((a) => a.location === filters.itemAffect))) return false;
+      }
+
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortMode === 'zone') {
+        if (a._zone !== b._zone) return a._zone - b._zone;
+        return a.v - b.v;
+      }
+      if (sortMode === 'vnum') return a.v - b.v;
+      if (sortMode === 'name') return (a.s || '').localeCompare(b.s || '');
+      if (currentTab === 'mobs') {
+        if (sortMode === 'lvl-desc') return b.lvl - a.lvl || a.v - b.v;
+        if (sortMode === 'lvl-asc') return a.lvl - b.lvl || a.v - b.v;
+        if (sortMode === 'hp-desc') return b._hpAvg - a._hpAvg || b.lvl - a.lvl;
+      } else {
+        if (sortMode === 'cost-desc') return b.cst - a.cst || a.v - b.v;
+        if (sortMode === 'wt-asc') return a.wt - b.wt || a.v - b.v;
+      }
+      return a.v - b.v;
+    });
+
+    return filtered;
+  }
+
+  function renderList() {
+    const filtered = getFilteredRecords();
+    const total = currentTab === 'mobs' ? mobsList.length : itemsList.length;
+
+    clearBtn.hidden = !hasActiveFilters();
+    summaryEl.textContent =
+      filtered.length === total
+        ? `Showing all ${total.toLocaleString('en-US')} ${currentTab}`
+        : `Showing ${filtered.length.toLocaleString('en-US')} of ${total.toLocaleString('en-US')} ${currentTab}`;
+
+    resultsList.innerHTML = '';
+
+    if (filtered.length === 0) {
+      const emptyLi = document.createElement('li');
+      emptyLi.style.padding = '1.5rem 1rem';
+      emptyLi.style.fontFamily = 'var(--font-mono)';
+      emptyLi.style.fontSize = 'var(--text-xs)';
+      emptyLi.style.color = 'var(--ink-muted)';
+      emptyLi.textContent = 'No matching records found.';
+      resultsList.appendChild(emptyLi);
       return;
     }
 
-    const match = hash.match(/^#(mob|item)-(\d+)$/);
-    if (match) {
-      const type = match[1] === 'mob' ? 'mobs' : 'items';
-      const id = match[2];
+    const fragment = document.createDocumentFragment();
+    let lastZone = null;
 
-      if (dbData && dbData[type] && dbData[type][id]) {
-        switchTab(type);
-        selectRecord(type, id);
+    filtered.forEach((r) => {
+      if (sortMode === 'zone' && r._zone !== lastZone) {
+        lastZone = r._zone;
+        const zHeader = document.createElement('li');
+        zHeader.className = 'db-zone-divider';
+        const zTitle = zonesMap[lastZone] || `Zone #${lastZone}`;
+        zHeader.innerHTML = `<span>${escapeHtml(zTitle)}</span><span>#${lastZone}</span>`;
+        fragment.appendChild(zHeader);
       }
-    }
-  }
 
-  function selectRecord(type, id) {
-    activeId = id;
-
-    // List item highlight
-    const items = resultsInner.querySelectorAll('.result-item');
-    items.forEach(el => {
-      if (el.getAttribute('data-id') === id) {
-        el.classList.add('active');
-        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const li = document.createElement('li');
+      li.className = 'db-list-item';
+      li.setAttribute('role', 'option');
+      const isSelected = currentId === r.v;
+      if (isSelected) {
+        li.classList.add('active');
+        li.setAttribute('aria-selected', 'true');
       } else {
-        el.classList.remove('active');
-      }
-    });
-
-    renderDetail(type, id);
-
-    // Slide up bottom-sheet on Mobile
-    if (window.innerWidth <= 900) {
-      dbMain.classList.add('open');
-    }
-  }
-
-  function clearDetail() {
-    activeId = null;
-    if (emptyState) emptyState.style.display = 'flex';
-    if (detailContainer) detailContainer.style.display = 'none';
-    const items = resultsInner.querySelectorAll('.result-item');
-    items.forEach(el => el.classList.remove('active'));
-    dbMain.classList.remove('open');
-  }
-
-  // Tab Management
-  function switchTab(tab) {
-    if (activeTab === tab) return;
-    activeTab = tab;
-
-    // Reset sort select
-    sortSelect.value = filters[activeTab].sort;
-
-    if (activeTab === 'mobs') {
-      tabMobs.classList.add('active');
-      tabItems.classList.remove('active');
-      filterMobsSection.style.display = 'block';
-      filterItemsSection.style.display = 'none';
-      searchInput.placeholder = 'Search mobs by name or VNUM…';
-    } else {
-      tabMobs.classList.remove('active');
-      tabItems.classList.add('active');
-      filterMobsSection.style.display = 'none';
-      filterItemsSection.style.display = 'block';
-      searchInput.placeholder = 'Search items by name or VNUM…';
-    }
-
-    searchInput.value = filters[activeTab].search;
-    renderSkyline();
-    applyFiltersAndRender();
-  }
-
-  // Progressive infinite scroll loader (Virtualization)
-  function setupVirtualScroll() {
-    resultsContainer.addEventListener('scroll', () => {
-      if (renderedCount >= filteredRecords.length) return;
-      const el = resultsContainer;
-      // If we scroll within 60px of the bottom, load the next block
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 60) {
-        appendNextBatch();
-      }
-    });
-  }
-
-  // Core Filtering and Sorting calculations
-  function applyFiltersAndRender() {
-    if (!dbData) return;
-    renderActiveChips();
-
-    const query = filters[activeTab].search.toLowerCase().trim();
-    const dataList = dbData[activeTab];
-    filteredRecords = [];
-
-    for (const id in dataList) {
-      const record = dataList[id];
-      const name = record.s.toLowerCase();
-      const keywords = record.k.toLowerCase();
-      const vnumStr = String(record.v);
-
-      // Search match
-      const textMatch = !query || name.includes(query) || keywords.includes(query) || vnumStr.includes(query);
-      if (!textMatch) continue;
-
-      if (activeTab === 'mobs') {
-        // Level Min
-        if (record.lvl < filters.mobs.levelMin) continue;
-
-        // Alignment
-        const alignType = filters.mobs.align;
-        if (alignType === 'good' && record.alg <= 300) continue;
-        if (alignType === 'neutral' && (record.alg > 300 || record.alg < -300)) continue;
-        if (alignType === 'evil' && record.alg >= -300) continue;
-
-        // Spawns in Zone (Multi-select)
-        if (filters.mobs.zones.size > 0) {
-          const spawnZones = record.spw ? record.spw.map(s => s.zone) : [];
-          const matchesZone = spawnZones.some(z => filters.mobs.zones.has(z));
-          if (!matchesZone) continue;
-        }
-
-        // Shopkeeper Flag
-        if (filters.mobs.shopkeeper && !record.shop) continue;
-
-        // Aggressive Flag (alignment <= -700, or keywords/action flags contain aggressive)
-        const isAgg = record.alg <= -700 || record.k.includes('aggressive') || record.k.includes('aggro');
-        if (filters.mobs.aggressive && !isAgg) continue;
-
-        // Unique Mob Flag (derived from spawns count == 1)
-        const isUniq = record.spw && record.spw.length === 1;
-        if (filters.mobs.unique && !isUniq) continue;
-
-      } else {
-        // Item Type
-        const itemType = filters.items.type;
-        if (itemType !== 'all' && record.type !== itemType) continue;
-
-        // Wear position
-        const wearPos = filters.items.wear;
-        if (wearPos !== 'all' && !record.wear.includes(wearPos)) continue;
-
-        // Magical affects locations
-        if (filters.items.affect !== 'all') {
-          const hasAffect = record.aff && record.aff.some(a => a.location === filters.items.affect);
-          if (!hasAffect) continue;
-        }
-
-        // Spawns in Zone (Multi-select)
-        if (filters.items.zones.size > 0) {
-          const spawnZones = record.rms ? record.rms.map(r => r.zone).filter(Boolean) : [];
-          const matchesZone = spawnZones.some(z => filters.items.zones.has(z));
-          if (!matchesZone) continue;
-        }
-
-        // Magic Quality Flag
-        if (filters.items.magic && (!record.aff || record.aff.length === 0)) continue;
-
-        // Scripted Flag
-        if (filters.items.script && !record.script) continue;
+        li.setAttribute('aria-selected', 'false');
       }
 
-      filteredRecords.push(record);
-    }
+      if (currentTab === 'mobs') {
+        const alignTag = r.alg >= 300 ? 'Good' : r.alg <= -300 ? 'Evil' : 'Neutral';
+        const raceStr = r.rcn || MOB_RACES[r.rc] || '';
+        const badges = [];
+        if (r.shop) badges.push('<span class="db-mini-tag tag-accent">Shop</span>');
+        if (isMobAggressive(r)) badges.push('<span class="db-mini-tag tag-accent">Aggr</span>');
+        if (r.drp && r.drp.length > 0) badges.push(`<span class="db-mini-tag">${r.drp.length} eq</span>`);
 
-    // Sort Layer
-    sortFilteredRecords();
-
-    // Clear list and progressive render first batch
-    resultsInner.innerHTML = '';
-    renderedCount = 0;
-    appendNextBatch();
-  }
-
-  // Sort logic layer
-  function sortFilteredRecords() {
-    const order = filters[activeTab].sort;
-
-    if (order === 'name') {
-      filteredRecords.sort((a,b) => a.s.localeCompare(b.s));
-    } else if (order === 'level') {
-      if (activeTab === 'mobs') {
-        filteredRecords.sort((a,b) => b.lvl - a.lvl || a.v - b.v); // Level descending, VNUM ascending
-      } else {
-        filteredRecords.sort((a,b) => b.cst - a.cst || a.v - b.v); // Cost descending for items
-      }
-    } else if (order === 'vnum') {
-      filteredRecords.sort((a,b) => a.v - b.v);
-    } else {
-      // Default: Sort by primary zone, then level/cost, then name
-      filteredRecords.sort((a,b) => {
-        const zoneA = getPrimaryZone(a);
-        const zoneB = getPrimaryZone(b);
-        if (zoneA !== zoneB) return zoneA - zoneB;
-
-        if (activeTab === 'mobs') {
-          if (a.lvl !== b.lvl) return b.lvl - a.lvl;
-        } else {
-          if (a.cst !== b.cst) return b.cst - a.cst;
-        }
-        return a.s.localeCompare(b.s);
-      });
-    }
-  }
-
-  function getPrimaryZone(r) {
-    if (activeTab === 'mobs') {
-      return r.spw && r.spw.length > 0 ? r.spw[0].zone : 999;
-    } else {
-      return r.rms && r.rms.length > 0 && r.rms[0].zone ? r.rms[0].zone : 999;
-    }
-  }
-
-  function getZoneName(zoneId) {
-    if (zoneId === 999) return "Isolated Items / Objects";
-    return zoneNames[zoneId] || `Zone ${zoneId}`;
-  }
-
-  // progressive progressive appending to list
-  function appendNextBatch() {
-    if (filteredRecords.length === 0) {
-      resultsInner.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--ink-muted);font-size:0.8rem;">No records matched your filters.</div>';
-      updateScrollShadows();
-      return;
-    }
-
-    const start = renderedCount;
-    const end = Math.min(start + BATCH_SIZE, filteredRecords.length);
-    const batch = filteredRecords.slice(start, end);
-
-    let lastZone = start > 0 ? getPrimaryZone(filteredRecords[start - 1]) : null;
-    let lastLevelBand = start > 0 ? Math.floor(filteredRecords[start - 1].lvl / 10) : null;
-
-    const isZoneSorted = filters[activeTab].sort === 'zone';
-    const isLevelSorted = filters[activeTab].sort === 'level' && activeTab === 'mobs';
-
-    batch.forEach((r, idx) => {
-      const currentZone = getPrimaryZone(r);
-
-      // Zone Category headers in default sort
-      if (isZoneSorted && currentZone !== lastZone) {
-        const groupHeader = document.createElement('div');
-        groupHeader.className = 'zone-header';
-        const zoneCount = filteredRecords.filter(rec => getPrimaryZone(rec) === currentZone).length;
-        groupHeader.innerText = `// ${getZoneName(currentZone).toUpperCase()} · ${zoneCount} entries`;
-        resultsInner.appendChild(groupHeader);
-        lastZone = currentZone;
-      }
-
-      // Level band tier dividers
-      if (isLevelSorted && activeTab === 'mobs') {
-        const currentBand = Math.floor(r.lvl / 10);
-        if (currentBand !== lastLevelBand) {
-          const tierDiv = document.createElement('div');
-          tierDiv.className = 'tier-divider';
-          const minL = currentBand * 10 || 1;
-          const maxL = currentBand * 10 + 9;
-          tierDiv.innerText = `TIER ${getRomanNumeral(4 - currentBand)} (LVL ${minL}-${maxL})`;
-          resultsInner.appendChild(tierDiv);
-          lastLevelBand = currentBand;
-        }
-      }
-
-      // Result Row
-      const item = document.createElement('div');
-      item.className = 'result-item';
-      if (String(r.v) === activeId) {
-        item.classList.add('active');
-      }
-      item.setAttribute('data-id', r.v);
-
-      // Gutter flags
-      let gutterHtml = '';
-      if (activeTab === 'mobs') {
-        const isShop = !!r.shop;
-        const isAgg = r.alg <= -700 || r.k.includes('aggressive') || r.k.includes('aggro');
-        const isUniq = r.spw && r.spw.length === 1;
-
-        if (isShop) gutterHtml = `<span class="gutter-flag" title="Shopkeeper">§</span>`;
-        else if (isUniq) gutterHtml = `<span class="gutter-flag" title="Unique Mob">◆</span>`;
-        else if (isAgg) gutterHtml = `<span class="gutter-flag" title="Aggressive candidate">‼</span>`;
-        else gutterHtml = `<span class="gutter-flag"></span>`;
-      } else {
-        const isMag = r.aff && r.aff.length > 0;
-        const isScr = !!r.script;
-
-        if (isScr) gutterHtml = `<span class="gutter-flag" title="Special Scripted Object">📜</span>`;
-        else if (isMag) gutterHtml = `<span class="gutter-flag" title="Magical Affects Object">✦</span>`;
-        else gutterHtml = `<span class="gutter-flag"></span>`;
-      }
-
-      let metaLeft = '';
-      let metaRight = '';
-
-      if (activeTab === 'mobs') {
-        metaLeft = `Lvl ${r.lvl} ${r.sex === 1 ? 'Male' : r.sex === 2 ? 'Female' : 'Neutral'}`;
-        metaRight = `Align: ${r.alg}`;
-      } else {
-        metaLeft = r.type;
-        metaRight = `${r.wt} lbs | ${r.cst} gp`;
-      }
-
-      item.innerHTML = `
-        ${gutterHtml}
-        <div class="result-item-content">
-          <span class="result-name">${r.s}</span>
-          <div class="result-meta">
-            <span>${metaLeft}</span>
-            <span class="result-vnum">#${r.v}</span>
+        li.innerHTML = `
+          <div class="db-item-row-top">
+            <span class="db-item-title">${escapeHtml(r.s || r.k)}</span>
+            <span class="db-item-vnum">#${r.v}</span>
           </div>
-        </div>
-      `;
-
-      item.addEventListener('click', () => {
-        const hashType = activeTab === 'mobs' ? 'mob' : 'item';
-        window.location.hash = `#${hashType}-${r.v}`;
-      });
-
-      resultsInner.appendChild(item);
-    });
-
-    renderedCount = end;
-    updateScrollShadows();
-  }
-
-  function getRomanNumeral(n) {
-    const map = { 4: 'IV', 3: 'III', 2: 'II', 1: 'I' };
-    return map[n] || 'I';
-  }
-
-  // Skyline analytics rendering
-  function renderSkyline() {
-    if (!dbData) return;
-    const contentEl = skylineContainer.querySelector('.skyline-content');
-    const skeletonEl = skylineContainer.querySelector('.skyline-skeleton');
-
-    skeletonEl.style.display = 'none';
-    contentEl.style.display = 'block';
-    contentEl.innerHTML = '';
-
-    const list = dbData[activeTab];
-    
-    // Panel 1: Level histogram
-    let panel1Html = '';
-    if (activeTab === 'mobs') {
-      const bands = [0, 0, 0, 0, 0, 0, 0, 0]; // 8 bands of 5 levels: 1-5, 6-10, 11-15, 16-20, 21-25, 26-30, 31-35, 36-40
-      for (const id in list) {
-        const m = list[id];
-        const bandIdx = Math.min(7, Math.floor((m.lvl - 1) / 5));
-        if (bandIdx >= 0) bands[bandIdx]++;
-      }
-      const maxBand = Math.max(...bands);
-      const barsHtml = bands.map((cnt, idx) => {
-        const minL = idx * 5 + 1;
-        const maxL = idx * 5 + 5;
-        const bandLabel = idx === 7 ? `${minL}+` : `${minL}-${maxL}`;
-        const heightPct = maxBand > 0 ? (cnt / maxBand) * 100 : 0;
-        const isActive = filters.mobs.levelMin >= minL && filters.mobs.levelMin <= maxL;
-        return `
-          <div class="skyline-bar-wrap ${isActive ? 'active' : ''}" data-min="${minL}">
-            <div class="skyline-bar" style="height: ${heightPct}%;"></div>
-            <div class="skyline-tooltip">${cnt} mobs (Lvl ${bandLabel})</div>
+          <div class="db-item-row-meta">
+            <span>Lvl ${r.lvl} · ${escapeHtml(raceStr)} · ${alignTag}</span>
+            <span class="db-item-badges">${badges.join('')}</span>
           </div>
         `;
-      }).join('');
-      panel1Html = `
-        <div class="skyline-panel">
-          <h2>Level Curve Density</h2>
-          <div class="skyline-chart">${barsHtml}</div>
-        </div>
-      `;
-    } else {
-      // Items by Weight Curves
-      const bands = [0, 0, 0, 0, 0, 0, 0, 0]; // 8 bands: 0-1, 2-5, 6-10, 11-20, 21-50, 51-100, 101-200, 201+
-      const bandLabels = ['0-1', '2-5', '6-10', '11-20', '21-50', '51-100', '101-200', '201+'];
-      for (const id in list) {
-        const o = list[id];
-        let idx = 7;
-        if (o.wt <= 1) idx = 0;
-        else if (o.wt <= 5) idx = 1;
-        else if (o.wt <= 10) idx = 2;
-        else if (o.wt <= 20) idx = 3;
-        else if (o.wt <= 50) idx = 4;
-        else if (o.wt <= 100) idx = 5;
-        else if (o.wt <= 200) idx = 6;
-        bands[idx]++;
-      }
-      const maxBand = Math.max(...bands);
-      const barsHtml = bands.map((cnt, idx) => {
-        const heightPct = maxBand > 0 ? (cnt / maxBand) * 100 : 0;
-        return `
-          <div class="skyline-bar-wrap" data-weight-idx="${idx}">
-            <div class="skyline-bar" style="height: ${heightPct}%;"></div>
-            <div class="skyline-tooltip">${cnt} items (${bandLabels[idx]} lbs)</div>
+      } else {
+        const wearSlots = (r.wear || []).filter((w) => w !== 'TAKE').slice(0, 2).join(', ');
+        const badges = [];
+        if (r.type === 'WEAPON' && r.val) {
+          badges.push(`<span class="db-mini-tag">${r.val[1]}d${r.val[2]}</span>`);
+        } else if (r.type === 'ARMOR' && r.val) {
+          badges.push(`<span class="db-mini-tag">AC ${r.val[0]}</span>`);
+        }
+        if (r.aff && r.aff.length > 0) {
+          const firstAff = formatAffect(r.aff[0]);
+          badges.push(`<span class="db-mini-tag tag-accent">${escapeHtml(firstAff)}${r.aff.length > 1 ? ` +${r.aff.length - 1}` : ''}</span>`);
+        }
+
+        li.innerHTML = `
+          <div class="db-item-row-top">
+            <span class="db-item-title">${escapeHtml(r.s || r.k)}</span>
+            <span class="db-item-vnum">#${r.v}</span>
+          </div>
+          <div class="db-item-row-meta">
+            <span>${escapeHtml(r.type)}${wearSlots ? ` · ${escapeHtml(wearSlots)}` : ''}</span>
+            <span class="db-item-badges">${badges.join('')}</span>
           </div>
         `;
-      }).join('');
-      panel1Html = `
-        <div class="skyline-panel">
-          <h2>Weight Spectrum (lbs)</h2>
-          <div class="skyline-chart">${barsHtml}</div>
-        </div>
-      `;
-    }
-
-    // Panel 2: Density by Zone (Top 3 active zones)
-    const zoneCounts = {};
-    for (const id in list) {
-      const r = list[id];
-      const zoneId = getPrimaryZone(r);
-      if (zoneId !== 999) {
-        zoneCounts[zoneId] = (zoneCounts[zoneId] || 0) + 1;
       }
-    }
-    const topZones = Object.entries(zoneCounts)
-      .sort((a,b) => b[1] - a[1])
-      .slice(0, 3);
 
-    const zonesListHtml = topZones.map(([zoneId, cnt]) => {
-      const isSelected = activeTab === 'mobs' ? filters.mobs.zones.has(parseInt(zoneId)) : filters.items.zones.has(parseInt(zoneId));
-      return `
-        <div class="skyline-row ${isSelected ? 'active' : ''}" data-zone="${zoneId}">
-          <span>${getZoneName(parseInt(zoneId))}</span>
-          <span style="font-weight:700;">${cnt}</span>
-        </div>
-      `;
-    }).join('');
-    
-    const panel2Html = `
-      <div class="skyline-panel">
-        <h2>Top Spawn Areas</h2>
-        <div class="skyline-list" style="margin-top:0.25rem;">
-          ${zonesListHtml || '<div style="font-size:0.65rem;color:var(--ink-muted);">No zones spawned.</div>'}
-        </div>
-      </div>
-    `;
-
-    // Panel 3: Flag breakdowns
-    let panel3Html = '';
-    if (activeTab === 'mobs') {
-      let shops = 0, aggs = 0, uniqs = 0;
-      for (const id in list) {
-        const m = list[id];
-        if (m.shop) shops++;
-        if (m.alg <= -700 || m.k.includes('aggressive') || m.k.includes('aggro')) aggs++;
-        if (m.spw && m.spw.length === 1) uniqs++;
-      }
-      panel3Html = `
-        <div class="skyline-panel">
-          <h2>Observable Temperaments</h2>
-          <div class="skyline-chips">
-            <span class="skyline-chip ${filters.mobs.shopkeeper ? 'active' : ''}" id="sky-chip-shop">§ Shopkeepers (${shops})</span>
-            <span class="skyline-chip ${filters.mobs.aggressive ? 'active' : ''}" id="sky-chip-agg">‼ Aggressive (${aggs})</span>
-            <span class="skyline-chip ${filters.mobs.unique ? 'active' : ''}" id="sky-chip-uniq">◆ Uniques (${uniqs})</span>
-          </div>
-        </div>
-      `;
-    } else {
-      let magical = 0, scripted = 0, standard = 0;
-      for (const id in list) {
-        const o = list[id];
-        if (o.aff && o.aff.length > 0) magical++;
-        if (o.script) scripted++;
-        if ((!o.aff || o.aff.length === 0) && !o.script) standard++;
-      }
-      panel3Html = `
-        <div class="skyline-panel">
-          <h2>Object Attributes</h2>
-          <div class="skyline-chips">
-            <span class="skyline-chip ${filters.items.magic ? 'active' : ''}" id="sky-chip-mag">🪄 Magic (${magical})</span>
-            <span class="skyline-chip ${filters.items.script ? 'active' : ''}" id="sky-chip-scr">📜 Scripted (${scripted})</span>
-            <span class="skyline-chip" style="pointer-events:none;">✦ Standard (${standard})</span>
-          </div>
-        </div>
-      `;
-    }
-
-    const grid = document.createElement('div');
-    grid.className = 'skyline-grid';
-    grid.innerHTML = panel1Html + panel2Html + panel3Html;
-    contentEl.appendChild(grid);
-
-    // Bind skyline click listeners
-    // 1. Level chart click
-    const bars = grid.querySelectorAll('.skyline-bar-wrap');
-    bars.forEach(bar => {
-      bar.addEventListener('click', () => {
-        if (activeTab === 'mobs') {
-          const minL = parseInt(bar.getAttribute('data-min'));
-          mobLevelSlider.value = minL;
-          mobLevelVal.innerText = minL;
-          filters.mobs.levelMin = minL;
-          applyFiltersAndRender();
-          renderSkyline();
-        }
+      li.addEventListener('click', () => {
+        selectRecord(r.v, currentTab, true);
+        resultsList.querySelectorAll('.db-list-item.active').forEach((el) => {
+          el.classList.remove('active');
+          el.setAttribute('aria-selected', 'false');
+        });
+        li.classList.add('active');
+        li.setAttribute('aria-selected', 'true');
       });
+
+      fragment.appendChild(li);
     });
 
-    // 2. Zone rows click
-    const rows = grid.querySelectorAll('.skyline-row');
-    rows.forEach(row => {
-      row.addEventListener('click', () => {
-        const zoneId = parseInt(row.getAttribute('data-zone'));
-        if (activeTab === 'mobs') {
-          if (filters.mobs.zones.has(zoneId)) filters.mobs.zones.delete(zoneId);
-          else filters.mobs.zones.add(zoneId);
-          // Sync checkbox UI
-          const chk = mobZoneContainer.querySelector(`.chk-mob-zone-item[value="${zoneId}"]`);
-          if (chk) chk.checked = filters.mobs.zones.has(zoneId);
-        } else {
-          if (filters.items.zones.has(zoneId)) filters.items.zones.delete(zoneId);
-          else filters.items.zones.add(zoneId);
-          // Sync checkbox UI
-          const chk = itemZoneContainer.querySelector(`.chk-itm-zone-item[value="${zoneId}"]`);
-          if (chk) chk.checked = filters.items.zones.has(zoneId);
-        }
-        applyFiltersAndRender();
-        renderSkyline();
-      });
-    });
-
-    // 3. Flag chip click
-    const shopChip = grid.querySelector('#sky-chip-shop');
-    const aggChip = grid.querySelector('#sky-chip-agg');
-    const uniqChip = grid.querySelector('#sky-chip-uniq');
-
-    if (shopChip) {
-      shopChip.addEventListener('click', () => {
-        chkMobShop.checked = !chkMobShop.checked;
-        filters.mobs.shopkeeper = chkMobShop.checked;
-        toggleFlagClass('switch-mob-shop', chkMobShop.checked);
-        applyFiltersAndRender();
-        renderSkyline();
-      });
-    }
-    if (aggChip) {
-      aggChip.addEventListener('click', () => {
-        chkMobAgg.checked = !chkMobAgg.checked;
-        filters.mobs.aggressive = chkMobAgg.checked;
-        toggleFlagClass('switch-mob-agg', chkMobAgg.checked);
-        applyFiltersAndRender();
-        renderSkyline();
-      });
-    }
-    if (uniqChip) {
-      uniqChip.addEventListener('click', () => {
-        chkMobUniq.checked = !chkMobUniq.checked;
-        filters.mobs.unique = chkMobUniq.checked;
-        toggleFlagClass('switch-mob-uniq', chkMobUniq.checked);
-        applyFiltersAndRender();
-        renderSkyline();
-      });
-    }
-
-    const magChip = grid.querySelector('#sky-chip-mag');
-    const scrChip = grid.querySelector('#sky-chip-scr');
-
-    if (magChip) {
-      magChip.addEventListener('click', () => {
-        chkItmMag.checked = !chkItmMag.checked;
-        filters.items.magic = chkItmMag.checked;
-        toggleFlagClass('switch-itm-mag', chkItmMag.checked);
-        applyFiltersAndRender();
-        renderSkyline();
-      });
-    }
-    if (scrChip) {
-      scrChip.addEventListener('click', () => {
-        chkItmScr.checked = !chkItmScr.checked;
-        filters.items.script = chkItmScr.checked;
-        toggleFlagClass('switch-itm-scr', chkItmScr.checked);
-        applyFiltersAndRender();
-        renderSkyline();
-      });
-    }
+    resultsList.appendChild(fragment);
   }
 
-  // Render Detail Card
-  function renderDetail(type, id) {
-    if (!dbData || !detailContainer || !emptyState) return;
-
-    const record = dbData[type][id];
+  function selectRecord(vnum, tab, updateHash = true) {
+    currentId = vnum;
+    const record = tab === 'mobs' ? dbData.mobs[vnum] : dbData.items[vnum];
     if (!record) return;
 
-    emptyState.style.display = 'none';
-    detailContainer.style.display = 'block';
+    if (updateHash) {
+      const prefix = tab === 'mobs' ? 'mob' : 'item';
+      history.replaceState(null, '', `#${prefix}-${vnum}`);
+    }
 
-    if (type === 'mobs') {
-      renderMobDetail(record);
+    emptyStateEl.hidden = true;
+    detailViewEl.hidden = false;
+    dbPage.classList.add('mobile-detail-open');
+
+    if (tab === 'mobs') {
+      renderMobSheet(record);
     } else {
-      renderItemDetail(record);
+      renderItemSheet(record);
     }
+
+    if (contentPane) contentPane.scrollTop = 0;
+    if (window.innerWidth <= 960) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function renderMobDetail(m) {
-    let sexStr = 'Neutral';
-    if (m.sex === 1) sexStr = 'Male';
-    else if (m.sex === 2) sexStr = 'Female';
+  async function renderZoneMiniMap(containerId, zoneId, highlightRoomIds) {
+    const container = document.getElementById(containerId);
+    if (!container || zoneId === undefined || zoneId === -1) return;
 
-    // Spawn Locations
-    let spawnsHtml = '<li>This mobile does not spawn naturally in the world.</li>';
-    if (m.spw && m.spw.length > 0) {
-      spawnsHtml = m.spw.map(s => `
-        <li class="rel-item">
-          <a class="rel-link" href="/map?room=${s.room}">Room ${s.room}: ${s.name}</a>
-          <span class="rel-meta">Zone ${s.zone}</span>
-        </li>
-      `).join('');
-    }
+    try {
+      let zoneData = zoneCache.get(zoneId);
+      if (!zoneData) {
+        const resp = await fetch(`/map/zone-${zoneId}.json`);
+        if (!resp.ok) throw new Error(`Zone ${zoneId} not found`);
+        zoneData = await resp.json();
+        zoneCache.set(zoneId, zoneData);
+      }
 
-    // Equipment & Inventory drops (enriched with lookup values)
-    let dropsHtml = '<li>This mobile carries no items.</li>';
-    if (m.drp && m.drp.length > 0) {
-      dropsHtml = m.drp.map(d => {
-        const itemLookup = dbData.items[d.obj_vnum];
-        let priceText = '';
-        let magicalHtml = '';
-        if (itemLookup) {
-          priceText = ` · <span style="color:var(--accent);font-weight:700;">${itemLookup.cst} gp</span> · ${itemLookup.type}`;
-          
-          // Magical affects chips preview
-          if (itemLookup.aff && itemLookup.aff.length > 0) {
-            const chips = itemLookup.aff.map(a => `
-              <span class="aff-micro-chip">${a.location} ${a.modifier > 0 ? '+' : ''}${a.modifier}</span>
-            `).join('');
-            magicalHtml = `<div class="aff-chip-row">${chips}</div>`;
+      const rooms = zoneData.rooms || [];
+      if (rooms.length === 0) {
+        container.innerHTML = '<span class="xref-sub">No room coordinates in this zone.</span>';
+        return;
+      }
+
+      const highlightSet = new Set(highlightRoomIds);
+      const roomMap = new Map(rooms.map((rm) => [rm.id, rm]));
+
+      // If the zone is very wide/tall and we have highlighted rooms in it,
+      // crop the viewBox to a generous neighborhood around the highlighted rooms
+      // so the local room topology and oxblood markers are crisp and legible.
+      const highlightedNodes = rooms.filter((rm) => highlightSet.has(rm.id));
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+      let fullMinX = Infinity, fullMaxX = -Infinity, fullMinY = Infinity, fullMaxY = -Infinity;
+      rooms.forEach((rm) => {
+        const x = rm.x || 0;
+        const y = rm.y || 0;
+        if (x < fullMinX) fullMinX = x;
+        if (x > fullMaxX) fullMaxX = x;
+        if (y < fullMinY) fullMinY = y;
+        if (y > fullMaxY) fullMaxY = y;
+      });
+
+      const fullSpan = Math.max(fullMaxX - fullMinX, fullMaxY - fullMinY);
+      if (highlightedNodes.length > 0 && fullSpan > 420) {
+        let hMinX = Infinity, hMaxX = -Infinity, hMinY = Infinity, hMaxY = -Infinity;
+        highlightedNodes.forEach((rm) => {
+          const x = rm.x || 0;
+          const y = rm.y || 0;
+          if (x < hMinX) hMinX = x;
+          if (x > hMaxX) hMaxX = x;
+          if (y < hMinY) hMinY = y;
+          if (y > hMaxY) hMaxY = y;
+        });
+        const neighborhoodMargin = 160;
+        minX = Math.max(fullMinX, hMinX - neighborhoodMargin);
+        maxX = Math.min(fullMaxX, hMaxX + neighborhoodMargin);
+        minY = Math.max(fullMinY, hMinY - neighborhoodMargin);
+        maxY = Math.min(fullMaxY, hMaxY + neighborhoodMargin);
+      } else {
+        minX = fullMinX;
+        maxX = fullMaxX;
+        minY = fullMinY;
+        maxY = fullMaxY;
+      }
+
+      const pad = 28;
+      const rawW = maxX - minX + pad * 2;
+      const rawH = maxY - minY + pad * 2;
+      const width = Math.max(140, rawW);
+      const height = Math.max(95, rawH);
+      const vx = minX - pad - (width - rawW) / 2;
+      const vy = minY - pad - (height - rawH) / 2;
+
+      // Scale node radius and stroke width proportionally to viewBox span
+      const scale = Math.max(1, Math.min(width, height * 1.6) / 180);
+      const rHighlight = (6.5 * scale).toFixed(1);
+      const rNormal = (3.4 * scale).toFixed(1);
+      const lineStroke = (1.5 * scale).toFixed(1);
+      const ringStroke = (1.6 * scale).toFixed(1);
+
+      const lines = [];
+      rooms.forEach((rm) => {
+        const x1 = rm.x || 0;
+        const y1 = rm.y || 0;
+        (rm.exits || []).forEach((ex) => {
+          const target = roomMap.get(ex.t);
+          if (target && target.id > rm.id) {
+            lines.push(
+              `<line x1="${x1}" y1="${y1}" x2="${target.x || 0}" y2="${target.y || 0}" stroke="#d8ceb8" stroke-width="${lineStroke}" />`
+            );
           }
-        }
+        });
+      });
 
-        return `
-          <li class="rel-item" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
-            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-              <a class="rel-link" href="#item-${d.obj_vnum}">${d.name}</a>
-              <span class="rel-meta">${d.slot}${priceText}</span>
-            </div>
-            ${magicalHtml}
-          </li>
-        `;
-      }).join('');
-    }
+      const circles = rooms.map((rm) => {
+        const isHighlighted = highlightSet.has(rm.id);
+        const r = isHighlighted ? rHighlight : rNormal;
+        const fill = isHighlighted ? '#a8201a' : '#766a5a';
+        const stroke = isHighlighted ? '#f3ede0' : 'none';
+        const sw = isHighlighted ? ringStroke : '0';
+        return `<a href="/map/?room=${rm.id}" title="${escapeHtml(rm.name)} (#${rm.id})"><circle cx="${rm.x || 0}" cy="${rm.y || 0}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" /></a>`;
+      });
 
-    // Shopkeeper details
-    let shopHtml = '';
-    if (m.shop) {
-      const shopItems = m.shop.items_sold.map(itm => `
-        <li class="rel-item">
-          <a class="rel-link" href="#item-${itm.vnum}">${itm.name}</a>
-          <span class="rel-meta">#${itm.vnum}</span>
-        </li>
-      `).join('');
-      shopHtml = `
-        <div class="detail-section">
-          <h3>Shopkeeper Inventory</h3>
-          <p style="font-size:0.75rem;margin:0 0 0.5rem;color:var(--ink-muted);line-height:1.4;">
-            Runs shop #${m.shop.shop_vnum} open ${m.shop.open_hours}. Markup: x${m.shop.sell_mult}
-          </p>
-          <ul class="rel-list">${shopItems}</ul>
-        </div>
+      // Draw highlighted nodes last so they sit on top
+      const normalCircles = [];
+      const activeCircles = [];
+      rooms.forEach((rm, idx) => {
+        if (highlightSet.has(rm.id)) activeCircles.push(circles[idx]);
+        else normalCircles.push(circles[idx]);
+      });
+
+      container.innerHTML = `
+        <svg viewBox="${vx} ${vy} ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Zone ${zoneId} map preview">
+          <g>${lines.join('')}</g>
+          <g>${normalCircles.join('')}</g>
+          <g>${activeCircles.join('')}</g>
+        </svg>
       `;
+    } catch {
+      container.innerHTML = '<span class="xref-sub">Zone map preview unavailable.</span>';
     }
+  }
 
-    const totalCount = Object.keys(dbData.mobs).length;
+  function renderMobSheet(mob) {
+    const sexStr = mob.sex === 1 ? 'Male' : mob.sex === 2 ? 'Female' : 'Neutral';
+    const alignStr =
+      mob.alg >= 300 ? `Good (${mob.alg})` : mob.alg <= -300 ? `Evil (${mob.alg})` : `Neutral (${mob.alg})`;
+    const raceStr = mob.rcn || MOB_RACES[mob.rc] || `Race ${mob.rc}`;
+    const thac0 = mob.thac0 !== undefined ? mob.thac0 : 20;
+    const hitroll = 20 - thac0;
+    const hitrollStr = hitroll >= 0 ? `+${hitroll}` : String(hitroll);
+    const hpAvg = calcDiceAvg(mob.hp);
+    const dmgAvg = calcDiceAvg(mob.dmg);
+    const atkName = mob.atk || ATTACK_TYPES[mob.bha || 0] || 'hit';
+    const stats = mob.stat || [11, 11, 11, 11, 11, 11];
+    const statLabels = ['STR', 'INT', 'WIS', 'DEX', 'CON', 'CHA'];
 
-    detailContainer.innerHTML = `
-      <article class="detail-card">
-        <header class="detail-header">
-          <div class="detail-stamp">№ ${m.v} · Mob record of ${totalCount}</div>
-          <h2 class="detail-short">${m.s}</h2>
-          <p class="detail-long">${m.l}</p>
-          <p style="font-family:var(--font-mono);font-size:0.65rem;margin:0.5rem 0 0;"><a href="/mobs/${m.v}/">Permanent record</a></p>
+    const actionFlags = mob.act || [];
+    const affectFlags = mob.aff || [];
+    const spawns = mob.spw || [];
+    const drops = mob.drp || [];
+    const primaryZone = spawns.length > 0 ? spawns[0].zone : mob._zone;
+    const primaryZoneName = zonesMap[primaryZone] || `Zone #${primaryZone}`;
+    const spawnRoomIds = spawns.map((s) => s.room);
+
+    detailViewEl.innerHTML = `
+      <article class="sheet">
+        <button type="button" class="sheet-mobile-back" id="sheet-back-btn">← Back to mob list</button>
+
+        <header class="sheet-header">
+          <div class="sheet-meta-bar">
+            <span class="sheet-eyebrow">Mob Record · VNUM #${mob.v} · ${escapeHtml(primaryZoneName)}</span>
+            <div class="sheet-actions">
+              <a href="/mobs/${mob.v}/">Permanent page</a>
+              <span>·</span>
+              <a href="/mobs/${mob.v}.json">JSON</a>
+              <span>·</span>
+              <button type="button" id="copy-record-link">Copy link</button>
+            </div>
+          </div>
+          <h2 class="sheet-title">${escapeHtml(mob.s || mob.k)}</h2>
+          ${mob.l ? `<p class="sheet-lede">${escapeHtml(mob.l)}</p>` : ''}
+          <div class="sheet-keywords">Keywords: <code>${escapeHtml(mob.k)}</code></div>
         </header>
 
-        <div class="detail-grid">
-          <!-- Left Column: Core Stats -->
-          <div class="detail-section">
-            <h3>Character Stats</h3>
-            <table class="stats-table">
-              <tr><td class="label">VNUM</td><td class="val">#${m.v}</td></tr>
-              <tr><td class="label">Level</td><td class="val">${m.lvl}</td></tr>
-              <tr><td class="label">Race</td><td class="val">${m.rc}</td></tr>
-              <tr><td class="label">Sex</td><td class="val">${sexStr}</td></tr>
-              <tr><td class="label">Alignment</td><td class="val">${m.alg}</td></tr>
-              <tr><td class="label">Base AC</td><td class="val">${m.ac} ac</td></tr>
-              <tr><td class="label">Gold</td><td class="val">${m.gld} gp</td></tr>
-              <tr><td class="label">Experience</td><td class="val">${m.exp.toLocaleString()}</td></tr>
-            </table>
-          </div>
+        <div class="sheet-grid">
+          <!-- Left Column: Look Description + Complete Combat & Identity Stats -->
+          <div>
+            ${
+              mob.d
+                ? `
+              <section class="sheet-section">
+                <h2 class="sheet-section-title">Look Description</h2>
+                ${renderProseBlock(mob.d)}
+              </section>
+            `
+                : ''
+            }
 
-          <!-- Middle Column: Combat & Power visuals -->
-          <div class="detail-section">
-            <h3>Power Index Visuals</h3>
-            <div class="stat-vis-wrap" id="mob-visualizer">
-              <div style="width:100%;">
-                <div class="vis-bar-row">
-                  <div class="vis-bar-label"><span>Base Level</span><span>${m.lvl}/40</span></div>
-                  <div class="vis-bar-bg"><div class="vis-bar-fill" style="width:${Math.min(100, (m.lvl / 40) * 100)}%;"></div></div>
-                </div>
-                <div class="vis-bar-row">
-                  <div class="vis-bar-label"><span>Avg Hit Points</span><span>${calcDiceAvg(m.hp)} hp</span></div>
-                  <div class="vis-bar-bg"><div class="vis-bar-fill" style="width:${Math.min(100, (calcDiceAvg(m.hp) / 1000) * 100)}%;"></div></div>
-                </div>
-                <div class="vis-bar-row">
-                  <div class="vis-bar-label"><span>Armor Rating</span><span>${m.ac} ac</span></div>
-                  <div class="vis-bar-bg"><div class="vis-bar-fill" style="width:${Math.min(100, (Math.max(0, 1000 - m.ac) / 1000) * 100)}%;"></div></div>
-                </div>
-                <div class="vis-bar-row">
-                  <div class="vis-bar-label"><span>Avg Attack Power</span><span>${calcDiceAvg(m.dmg)} dmg</span></div>
-                  <div class="vis-bar-bg"><div class="vis-bar-fill" style="width:${Math.min(100, (calcDiceAvg(m.dmg) / 50) * 100)}%;"></div></div>
-                </div>
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">Combat &amp; Identity Stats</h2>
+              <dl class="sheet-dl">
+                <dt>VNUM</dt>
+                <dd>#${mob.v}</dd>
+                <dt>Level</dt>
+                <dd>${mob.lvl}</dd>
+                <dt>Race</dt>
+                <dd>${escapeHtml(raceStr)} (${mob.rc})</dd>
+                <dt>Sex</dt>
+                <dd>${sexStr}</dd>
+                <dt>Alignment</dt>
+                <dd>${alignStr}</dd>
+                <dt>Hit Points</dt>
+                <dd>${mob.hp} (${hpAvg.toLocaleString('en-US')} avg)</dd>
+                <dt>Barehand Damage</dt>
+                <dd>${mob.dmg} (${dmgAvg} avg · ${escapeHtml(atkName)})</dd>
+                <dt>THAC0 / Hitroll</dt>
+                <dd>${thac0} (${hitrollStr} hitroll)</dd>
+                <dt>Armor Class</dt>
+                <dd>${mob.ac} (${mob.ac / 10}/10)</dd>
+                <dt>Gold Carried</dt>
+                <dd>${mob.gld.toLocaleString('en-US')} coins</dd>
+                <dt>Experience</dt>
+                <dd>${mob.exp.toLocaleString('en-US')} xp</dd>
+                <dt>Position</dt>
+                <dd>${escapeHtml(mob.pos || 'Standing')}${mob.dpos && mob.dpos !== mob.pos ? ` (default: ${escapeHtml(mob.dpos)})` : ''}</dd>
+                ${mob.scr ? `<dt>Lua Script</dt><dd>${escapeHtml(mob.scr)}</dd>` : ''}
+              </dl>
+
+              <div class="attr-strip" aria-label="Base Attributes">
+                ${statLabels
+                  .map(
+                    (lbl, idx) => `
+                  <div class="attr-cell">
+                    <span class="attr-label">${lbl}</span>
+                    <span class="attr-val">${stats[idx] ?? 11}</span>
+                  </div>
+                `
+                  )
+                  .join('')}
               </div>
-            </div>
-          </div>
-        </div>
+            </section>
 
-        <div class="detail-grid" style="margin-top:0.5rem;">
-          <div class="detail-section">
-            <h3 style="border-bottom:none;">Vital Stats</h3>
-            <table class="stats-table">
-              <tr><td class="label">Hit Points (HP)</td><td class="val">${calcDiceAvg(m.hp)} hp (${m.hp})</td></tr>
-              <tr><td class="label">Damage Range</td><td class="val">${calcDiceAvg(m.dmg)} avg (${m.dmg})</td></tr>
-            </table>
-          </div>
-          <div class="detail-section">
-            <h3 style="border-bottom:none;">Base Attributes</h3>
-            <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:0.5rem;font-size:0.7rem;text-align:center;">
-              <div style="background:var(--paper-deep);padding:0.4rem;border-radius:2px;"><strong style="display:block;color:var(--accent);">STR</strong> ${m.stat[0]}</div>
-              <div style="background:var(--paper-deep);padding:0.4rem;border-radius:2px;"><strong style="display:block;color:var(--accent);">INT</strong> ${m.stat[1]}</div>
-              <div style="background:var(--paper-deep);padding:0.4rem;border-radius:2px;"><strong style="display:block;color:var(--accent);">WIS</strong> ${m.stat[2]}</div>
-              <div style="background:var(--paper-deep);padding:0.4rem;border-radius:2px;"><strong style="display:block;color:var(--accent);">DEX</strong> ${m.stat[3]}</div>
-              <div style="background:var(--paper-deep);padding:0.4rem;border-radius:2px;"><strong style="display:block;color:var(--accent);">CON</strong> ${m.stat[4]}</div>
-              <div style="background:var(--paper-deep);padding:0.4rem;border-radius:2px;"><strong style="display:block;color:var(--accent);">CHA</strong> ${m.stat[5]}</div>
-            </div>
-          </div>
-        </div>
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">Action &amp; Affect Flags</h2>
+              ${
+                actionFlags.length > 0 || affectFlags.length > 0
+                  ? `
+                <ul class="sheet-tags">
+                  ${actionFlags.map((flg) => `<li class="sheet-tag">${escapeHtml(flg)}</li>`).join('')}
+                  ${affectFlags.map((flg) => `<li class="sheet-tag tag-affect">${escapeHtml(flg)}</li>`).join('')}
+                </ul>
+              `
+                  : '<p class="xref-empty">No special action or affect flags set.</p>'
+              }
+            </section>
 
-        ${m.d ? `
-        <div class="detail-section">
-          <h3>Detailed Observation</h3>
-          <div class="detail-desc-block">${m.d}</div>
-        </div>
-        ` : ''}
+            ${
+              mob.noise
+                ? `
+              <section class="sheet-section">
+                <h2 class="sheet-section-title">Ambient Room Noise</h2>
+                ${renderProseBlock(mob.noise)}
+              </section>
+            `
+                : ''
+            }
+          </div>
 
-        <div class="detail-grid" style="margin-top:0.5rem;">
-          <div class="detail-section">
-            <h3>Spawn Points</h3>
-            <ul class="rel-list">${spawnsHtml}</ul>
-          </div>
-          <div class="detail-section">
-            <h3>Equipment & Drops</h3>
-            <ul class="rel-list">${dropsHtml}</ul>
+          <!-- Right Column: Map Spawns, Equipment Resets, & Shop Inventory -->
+          <div>
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">
+                <span>World Map Spawns</span>
+                <small>${spawns.length} ${spawns.length === 1 ? 'room' : 'rooms'}</small>
+              </h2>
+
+              ${
+                spawns.length > 0
+                  ? `
+                <div class="minimap-card">
+                  <div class="minimap-bar">
+                    <span class="minimap-zone-title">${escapeHtml(primaryZoneName)}</span>
+                    <a href="/map/?room=${spawns[0].room}">Open interactive map →</a>
+                  </div>
+                  <div class="minimap-stage" id="mob-minimap-stage">
+                    <span class="xref-sub">Loading zone map...</span>
+                  </div>
+                  <div class="minimap-caption">
+                    <span>Oxblood nodes mark spawn rooms in this zone</span>
+                    <a href="/zones/${primaryZone}/">Zone #${primaryZone} record</a>
+                  </div>
+                </div>
+
+                <ul class="xref-list">
+                  ${spawns
+                    .map((s) => {
+                      const zTitle = zonesMap[s.zone] || `Zone #${s.zone}`;
+                      return `
+                      <li class="xref-item">
+                        <div class="xref-main">
+                          <a class="xref-link" href="/map/?room=${s.room}">${escapeHtml(s.name || `Room #${s.room}`)}</a>
+                          <span class="xref-sub">
+                            <a href="/rooms/${s.room}/">Room #${s.room}</a> · <a href="/zones/${s.zone}/">${escapeHtml(zTitle)}</a>
+                          </span>
+                        </div>
+                        <div class="xref-actions">
+                          <a class="xref-pill" href="/map/?room=${s.room}">Show on Map</a>
+                        </div>
+                      </li>
+                    `;
+                    })
+                    .join('')}
+                </ul>
+              `
+                  : '<p class="xref-empty">This mob does not spawn via standard zone reset rules.</p>'
+              }
+            </section>
+
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">
+                <span>Equipped &amp; Carried Items</span>
+                <small>${drops.length} ${drops.length === 1 ? 'item' : 'items'}</small>
+              </h2>
+              ${
+                drops.length > 0
+                  ? `
+                <ul class="xref-list">
+                  ${drops
+                    .map((d) => {
+                      const fullItem = dbData.items[d.obj_vnum];
+                      const itemSummary = fullItem ? `${fullItem.type} · ${describeItemValues(fullItem)}` : '';
+                      const itemAffects =
+                        fullItem && fullItem.aff && fullItem.aff.length
+                          ? ' · ' + fullItem.aff.map(formatAffect).join(', ')
+                          : '';
+                      return `
+                      <li class="xref-item">
+                        <div class="xref-main">
+                          <button type="button" class="xref-link js-open-item" data-vnum="${d.obj_vnum}">
+                            ${escapeHtml(d.name)}
+                          </button>
+                          <span class="xref-sub">
+                            #${d.obj_vnum} · ${escapeHtml(d.slot)}${itemSummary ? ` · ${escapeHtml(itemSummary)}` : ''}${escapeHtml(itemAffects)}
+                          </span>
+                        </div>
+                        <div class="xref-actions">
+                          <button type="button" class="xref-pill js-open-item" data-vnum="${d.obj_vnum}">Inspect Item</button>
+                        </div>
+                      </li>
+                    `;
+                    })
+                    .join('')}
+                </ul>
+              `
+                  : '<p class="xref-empty">No equipment or inventory items assigned in zone resets.</p>'
+              }
+            </section>
+
+            ${
+              mob.shop
+                ? `
+              <section class="sheet-section">
+                <h2 class="sheet-section-title">
+                  <span>Shopkeeper Inventory</span>
+                  <small>Open ${escapeHtml(mob.shop.open_hours)} · Sell ×${mob.shop.sell_mult}</small>
+                </h2>
+                <ul class="xref-list">
+                  ${(mob.shop.items_sold || [])
+                    .map((si) => {
+                      const fullItem = dbData.items[si.vnum];
+                      const price = fullItem ? Math.floor(fullItem.cst * mob.shop.sell_mult) : null;
+                      return `
+                      <li class="xref-item">
+                        <div class="xref-main">
+                          <button type="button" class="xref-link js-open-item" data-vnum="${si.vnum}">
+                            ${escapeHtml(si.name)}
+                          </button>
+                          <span class="xref-sub">
+                            #${si.vnum}${fullItem ? ` · ${escapeHtml(fullItem.type)}` : ''}${price !== null ? ` · ${price.toLocaleString('en-US')} coins` : ''}
+                          </span>
+                        </div>
+                        <div class="xref-actions">
+                          <button type="button" class="xref-pill js-open-item" data-vnum="${si.vnum}">Inspect Item</button>
+                        </div>
+                      </li>
+                    `;
+                    })
+                    .join('')}
+                </ul>
+              </section>
+            `
+                : ''
+            }
           </div>
         </div>
-        
-        ${shopHtml}
       </article>
     `;
+
+    bindSheetEvents();
+    if (spawns.length > 0 && primaryZone !== undefined && primaryZone !== -1) {
+      renderZoneMiniMap('mob-minimap-stage', primaryZone, spawnRoomIds);
+    }
   }
 
-  function renderItemDetail(o) {
-    const wearPosStr = o.wear.length > 0 ? o.wear.join(', ') : 'None';
-    const extraFlagsStr = o.extra.length > 0 ? o.extra.join(', ') : 'None';
+  function renderItemSheet(item) {
+    const wearFlags = item.wear || [];
+    const extraFlags = item.extra || [];
+    const affects = item.aff || [];
+    const edescs = item.edesc || [];
+    const loaders = item.mobs || [];
+    const placements = item.rms || [];
+    const shops = item.shp || [];
+    const decodedProps = describeItemValues(item);
 
-    // Magical Affects location list
-    let affectsHtml = '<p style="font-size:0.75rem;color:var(--ink-muted);margin:0;">No magical affects on this item.</p>';
-    if (o.aff && o.aff.length > 0) {
-      affectsHtml = o.aff.map(a => `
-        <div style="font-size:0.75rem;padding:0.45rem 0.6rem;background:var(--paper-deep);border:1px solid rgba(26,22,20,0.15);border-radius:2px;display:flex;justify-content:space-between;margin-bottom:0.25rem;">
-          <span style="font-weight:700;color:var(--accent);">${a.location}</span>
-          <span style="font-family:var(--font-mono);font-weight:700;">${a.modifier > 0 ? '+' : ''}${a.modifier}</span>
-        </div>
-      `).join('');
-    }
+    // Collect all rooms where this item can be found (via mob carriers, ground placements, or shopkeepers)
+    const huntRooms = [];
+    let primaryZone = item._zone;
 
-    // Spawn / Loaded by Mob details (enriched with mob lookup stats)
-    let dropsHtml = '<li>No mobs load naturally with this item.</li>';
-    if (o.mobs && o.mobs.length > 0) {
-      dropsHtml = o.mobs.map(l => {
-        const mobLookup = dbData.mobs[l.mob_vnum];
-        let mobMeta = '';
-        if (mobLookup) {
-          const isAgg = mobLookup.alg <= -700 || mobLookup.k.includes('aggressive');
-          mobMeta = ` · Lvl ${mobLookup.lvl} ${isAgg ? '‼' : ''} ${mobLookup.alg >= 300 ? 'Good' : mobLookup.alg <= -300 ? 'Evil' : 'Neutral'}`;
+    placements.forEach((p) => {
+      if (p.room !== undefined) {
+        huntRooms.push(p.room);
+        if (p.zone !== undefined && p.zone !== -1) primaryZone = p.zone;
+      }
+    });
+
+    loaders.forEach((l) => {
+      const m = dbData.mobs[l.mob_vnum];
+      if (m && m.spw && m.spw.length > 0) {
+        m.spw.forEach((s) => huntRooms.push(s.room));
+        if (m.spw[0].zone !== undefined && m.spw[0].zone !== -1) {
+          primaryZone = m.spw[0].zone;
         }
-        return `
-          <li class="rel-item">
-            <a class="rel-link" href="#mob-${l.mob_vnum}">${l.name}</a>
-            <span class="rel-meta">${l.slot}${mobMeta}</span>
-          </li>
-        `;
-      }).join('');
-    }
+      }
+    });
 
-    // Spawn in rooms / containers
-    let roomsHtml = '';
-    if (o.rms && o.rms.length > 0) {
-      const roomItems = o.rms.map(p => {
-        if (p.container_vnum) {
-          return `
-            <li class="rel-item">
-              <a class="rel-link" href="#item-${p.container_vnum}">Inside ${p.name}</a>
-              <span class="rel-meta">#${p.container_vnum}</span>
-            </li>
-          `;
-        } else {
-          return `
-            <li class="rel-item">
-              <a class="rel-link" href="/map?room=${p.room}">Room ${p.room}: ${p.name}</a>
-              <span class="rel-meta">Zone ${p.zone}</span>
-            </li>
-          `;
-        }
-      }).join('');
-      roomsHtml = `
-        <div class="detail-section">
-          <h3>Placed In Rooms / Containers</h3>
-          <ul class="rel-list">${roomItems}</ul>
-        </div>
-      `;
-    }
+    const primaryZoneName = zonesMap[primaryZone] || `Zone #${primaryZone}`;
 
-    // Sold by merchants
-    let shopsHtml = '';
-    if (o.shp && o.shp.length > 0) {
-      const shopItems = o.shp.map(s => `
-        <li class="rel-item">
-          <a class="rel-link" href="#mob-${s.keeper_vnum}">${s.keeper_name}</a>
-          <span class="rel-meta" style="color:var(--accent);font-weight:700;">${s.price} gp</span>
-        </li>
-      `).join('');
-      shopsHtml = `
-        <div class="detail-section">
-          <h3>Sold by Merchants</h3>
-          <ul class="rel-list">${shopItems}</ul>
-        </div>
-      `;
-    }
+    detailViewEl.innerHTML = `
+      <article class="sheet">
+        <button type="button" class="sheet-mobile-back" id="sheet-back-btn">← Back to item list</button>
 
-    // Extra observation text
-    let edescHtml = '';
-    if (o.edesc && o.edesc.length > 0) {
-      const edescItems = o.edesc.map(ed => `
-        <div style="margin-bottom:0.75rem;">
-          <h4 style="font-family:var(--font-display);font-size:0.7rem;text-transform:uppercase;color:var(--ink-muted);margin:0 0 0.25rem 0;border-bottom:1px solid rgba(26,22,20,0.1);padding-bottom:0.15rem;">Keywords: ${ed.keywords}</h4>
-          <p style="font-size:0.85rem;line-height:1.55;margin:0;white-space:pre-wrap;font-family:var(--font-body);">${ed.desc}</p>
-        </div>
-      `).join('');
-      edescHtml = `
-        <div class="detail-section">
-          <h3>Extra Details</h3>
-          <div class="detail-desc-block">${edescItems}</div>
-        </div>
-      `;
-    }
-
-    const totalCount = Object.keys(dbData.items).length;
-
-    detailContainer.innerHTML = `
-      <article class="detail-card">
-        <header class="detail-header">
-          <div class="detail-stamp">№ ${o.v} · Item record of ${totalCount}</div>
-          <h2 class="detail-short">${o.s}</h2>
-          <p class="detail-long">${o.l}</p>
-          <p style="font-family:var(--font-mono);font-size:0.65rem;margin:0.5rem 0 0;"><a href="/items/${o.v}/">Permanent record</a></p>
+        <header class="sheet-header">
+          <div class="sheet-meta-bar">
+            <span class="sheet-eyebrow">Item Record · VNUM #${item.v} · ${escapeHtml(item.type)}</span>
+            <div class="sheet-actions">
+              <a href="/items/${item.v}/">Permanent page</a>
+              <span>·</span>
+              <a href="/items/${item.v}.json">JSON</a>
+              <span>·</span>
+              <button type="button" id="copy-record-link">Copy link</button>
+            </div>
+          </div>
+          <h2 class="sheet-title">${escapeHtml(item.s || item.k)}</h2>
+          ${item.l ? `<p class="sheet-lede">${escapeHtml(item.l)}</p>` : ''}
+          <div class="sheet-keywords">Keywords: <code>${escapeHtml(item.k)}</code></div>
         </header>
 
-        <div class="detail-grid">
-          <!-- Left Column: Core Specs -->
-          <div class="detail-section">
-            <h3>Object Specs</h3>
-            <table class="stats-table">
-              <tr><td class="label">VNUM</td><td class="val">#${o.v}</td></tr>
-              <tr><td class="label">Item Type</td><td class="val">${o.type}</td></tr>
-              <tr><td class="label">Wear Slot</td><td class="val" style="font-size:0.65rem;">${wearPosStr}</td></tr>
-              <tr><td class="label">Weight</td><td class="val">${o.wt} lbs</td></tr>
-              <tr><td class="label">Standard Cost</td><td class="val">${o.cst} gp</td></tr>
-              <tr><td class="label">Load Probability</td><td class="val">${o.load}%</td></tr>
-              <tr><td class="label">Active Flags</td><td class="val" style="font-size:0.65rem;">${extraFlagsStr}</td></tr>
-            </table>
+        <div class="sheet-grid">
+          <!-- Left Column: Complete Object Specifications, Affects & Flags -->
+          <div>
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">Object Specifications</h2>
+              <dl class="sheet-dl">
+                <dt>VNUM</dt>
+                <dd>#${item.v}</dd>
+                <dt>Item Type</dt>
+                <dd>${escapeHtml(item.type)}</dd>
+                <dt>Type Properties</dt>
+                <dd>${escapeHtml(decodedProps)}</dd>
+                <dt>Wear Flags</dt>
+                <dd>${escapeHtml(wearFlags.join(', ') || 'None')}</dd>
+                <dt>Weight</dt>
+                <dd>${item.wt} lbs</dd>
+                <dt>Base Value</dt>
+                <dd>${item.cst.toLocaleString('en-US')} coins</dd>
+                <dt>Load Probability</dt>
+                <dd>${item.load}%</dd>
+                <dt>Raw Values [0..3]</dt>
+                <dd>[${(item.val || [0, 0, 0, 0]).join(', ')}]</dd>
+                ${item.scr ? `<dt>Lua Script</dt><dd>${escapeHtml(item.scr)}</dd>` : ''}
+              </dl>
+            </section>
+
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">Magical Affects</h2>
+              ${
+                affects.length > 0
+                  ? `
+                <ul class="sheet-tags">
+                  ${affects.map((a) => `<li class="sheet-tag tag-affect">${escapeHtml(formatAffect(a))}</li>`).join('')}
+                </ul>
+              `
+                  : '<p class="xref-empty">No magical stat modifiers on this item.</p>'
+              }
+            </section>
+
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">Extra Flags</h2>
+              ${
+                extraFlags.length > 0
+                  ? `
+                <ul class="sheet-tags">
+                  ${extraFlags.map((flg) => `<li class="sheet-tag">${escapeHtml(flg)}</li>`).join('')}
+                </ul>
+              `
+                  : '<p class="xref-empty">No extra restriction or property flags.</p>'
+              }
+            </section>
+
+            ${
+              item.ad
+                ? `
+              <section class="sheet-section">
+                <h2 class="sheet-section-title">Action Description</h2>
+                ${renderProseBlock(item.ad)}
+              </section>
+            `
+                : ''
+            }
+
+            ${
+              edescs.length > 0
+                ? `
+              <section class="sheet-section">
+                <h2 class="sheet-section-title">Extra Descriptions</h2>
+                ${edescs
+                  .map(
+                    (ed) => `
+                  <div style="margin-bottom: var(--space-sm);">
+                    <div class="xref-sub" style="margin-bottom: 0.2rem;">Keywords: <code>${escapeHtml(ed.keywords)}</code></div>
+                    ${renderProseBlock(ed.desc)}
+                  </div>
+                `
+                  )
+                  .join('')}
+              </section>
+            `
+                : ''
+            }
           </div>
 
-          <!-- Middle Column: Affects & Scripts -->
-          <div class="detail-section">
-            <h3>Magical Affects</h3>
-            ${affectsHtml}
-            
-            ${o.script ? `
-            <div style="margin-top:0.75rem;padding:0.5rem 0.75rem;border:1px solid var(--accent);border-radius:2px;font-size:0.75rem;background:rgba(168, 32, 26, 0.04);box-shadow: 2px 2px 0px var(--accent);">
-              <strong style="color:var(--accent);font-family:var(--font-display);text-transform:uppercase;font-size:0.6rem;letter-spacing:0.05em;display:block;margin-bottom:0.15rem;">Special Script</strong>
-              <code style="font-family:var(--font-mono);background:none;color:var(--ink);padding:0;">${o.script}</code>
-            </div>
-            ` : ''}
-          </div>
-        </div>
+          <!-- Right Column: Where to Find This Item (Mobs, Map Rooms, Containers, Shops) -->
+          <div>
+            ${
+              huntRooms.length > 0 && primaryZone !== undefined && primaryZone !== -1
+                ? `
+              <section class="sheet-section">
+                <h2 class="sheet-section-title">
+                  <span>Zone Map Preview</span>
+                  <small>${escapeHtml(primaryZoneName)}</small>
+                </h2>
+                <div class="minimap-card">
+                  <div class="minimap-bar">
+                    <span class="minimap-zone-title">${escapeHtml(primaryZoneName)}</span>
+                    <a href="/map/?room=${huntRooms[0]}">Open interactive map →</a>
+                  </div>
+                  <div class="minimap-stage" id="item-minimap-stage">
+                    <span class="xref-sub">Loading zone map...</span>
+                  </div>
+                  <div class="minimap-caption">
+                    <span>Oxblood nodes mark rooms where this item loads</span>
+                    <a href="/zones/${primaryZone}/">Zone #${primaryZone} record</a>
+                  </div>
+                </div>
+              </section>
+            `
+                : ''
+            }
 
-        ${edescHtml}
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">
+                <span>Loaded / Carried by Mobs</span>
+                <small>${loaders.length} ${loaders.length === 1 ? 'mob' : 'mobs'}</small>
+              </h2>
+              ${
+                loaders.length > 0
+                  ? `
+                <ul class="xref-list">
+                  ${loaders
+                    .map((l) => {
+                      const fullMob = dbData.mobs[l.mob_vnum];
+                      const firstSpawn = fullMob && fullMob.spw && fullMob.spw.length > 0 ? fullMob.spw[0] : null;
+                      const zName = firstSpawn ? zonesMap[firstSpawn.zone] || `Zone #${firstSpawn.zone}` : '';
+                      return `
+                      <li class="xref-item">
+                        <div class="xref-main">
+                          <button type="button" class="xref-link js-open-mob" data-vnum="${l.mob_vnum}">
+                            ${escapeHtml(l.name)}
+                          </button>
+                          <span class="xref-sub">
+                            Mob #${l.mob_vnum}${fullMob ? ` (Lvl ${fullMob.lvl})` : ''} · ${escapeHtml(l.slot)}
+                            ${
+                              firstSpawn
+                                ? ` · Spawns in <a href="/map/?room=${firstSpawn.room}">${escapeHtml(firstSpawn.name || `Room #${firstSpawn.room}`)}</a> (${escapeHtml(zName)})`
+                                : ''
+                            }
+                          </span>
+                        </div>
+                        <div class="xref-actions">
+                          <button type="button" class="xref-pill js-open-mob" data-vnum="${l.mob_vnum}">Inspect Mob</button>
+                          ${firstSpawn ? `<a class="xref-pill" href="/map/?room=${firstSpawn.room}">Map</a>` : ''}
+                        </div>
+                      </li>
+                    `;
+                    })
+                    .join('')}
+                </ul>
+              `
+                  : '<p class="xref-empty">No mobs load with this item in the zone reset files.</p>'
+              }
+            </section>
 
-        <div class="detail-grid" style="margin-top:0.5rem;">
-          <div class="detail-section">
-            <h3>Spawned / Carried By Mobs</h3>
-            <ul class="rel-list">${dropsHtml}</ul>
+            <section class="sheet-section">
+              <h2 class="sheet-section-title">
+                <span>Room &amp; Container Placements</span>
+                <small>${placements.length}</small>
+              </h2>
+              ${
+                placements.length > 0
+                  ? `
+                <ul class="xref-list">
+                  ${placements
+                    .map((p) => {
+                      if (p.container_vnum !== undefined) {
+                        return `
+                        <li class="xref-item">
+                          <div class="xref-main">
+                            <button type="button" class="xref-link js-open-item" data-vnum="${p.container_vnum}">
+                              Inside: ${escapeHtml(p.name)}
+                            </button>
+                            <span class="xref-sub">Container Item #${p.container_vnum}</span>
+                          </div>
+                          <div class="xref-actions">
+                            <button type="button" class="xref-pill js-open-item" data-vnum="${p.container_vnum}">Inspect Container</button>
+                          </div>
+                        </li>
+                      `;
+                      }
+                      const zName = zonesMap[p.zone] || `Zone #${p.zone}`;
+                      return `
+                        <li class="xref-item">
+                          <div class="xref-main">
+                            <a class="xref-link" href="/map/?room=${p.room}">${escapeHtml(p.name || `Room #${p.room}`)}</a>
+                            <span class="xref-sub">
+                              <a href="/rooms/${p.room}/">Room #${p.room}</a> · <a href="/zones/${p.zone}/">${escapeHtml(zName)}</a>
+                            </span>
+                          </div>
+                          <div class="xref-actions">
+                            <a class="xref-pill" href="/map/?room=${p.room}">Show on Map</a>
+                          </div>
+                        </li>
+                      `;
+                    })
+                    .join('')}
+                </ul>
+              `
+                  : '<p class="xref-empty">Not placed directly on the ground or inside a container.</p>'
+              }
+            </section>
+
+            ${
+              shops.length > 0
+                ? `
+              <section class="sheet-section">
+                <h2 class="sheet-section-title">
+                  <span>Sold by Shopkeepers</span>
+                  <small>${shops.length}</small>
+                </h2>
+                <ul class="xref-list">
+                  ${shops
+                    .map((sh) => {
+                      const keeper = dbData.mobs[sh.keeper_vnum];
+                      const firstSpawn = keeper && keeper.spw && keeper.spw.length > 0 ? keeper.spw[0] : null;
+                      return `
+                      <li class="xref-item">
+                        <div class="xref-main">
+                          <button type="button" class="xref-link js-open-mob" data-vnum="${sh.keeper_vnum}">
+                            ${escapeHtml(sh.keeper_name)}
+                          </button>
+                          <span class="xref-sub">
+                            Mob #${sh.keeper_vnum} · Price: ${sh.price.toLocaleString('en-US')} coins
+                            ${firstSpawn ? ` · <a href="/map/?room=${firstSpawn.room}">${escapeHtml(firstSpawn.name)}</a>` : ''}
+                          </span>
+                        </div>
+                        <div class="xref-actions">
+                          <button type="button" class="xref-pill js-open-mob" data-vnum="${sh.keeper_vnum}">Shopkeeper</button>
+                          ${firstSpawn ? `<a class="xref-pill" href="/map/?room=${firstSpawn.room}">Map</a>` : ''}
+                        </div>
+                      </li>
+                    `;
+                    })
+                    .join('')}
+                </ul>
+              </section>
+            `
+                : ''
+            }
           </div>
-          ${roomsHtml || shopsHtml ? `
-          <div class="detail-section" style="display:flex;flex-direction:column;gap:1.5rem;">
-            ${roomsHtml}
-            ${shopsHtml}
-          </div>
-          ` : ''}
         </div>
       </article>
     `;
+
+    bindSheetEvents();
+    if (huntRooms.length > 0 && primaryZone !== undefined && primaryZone !== -1) {
+      renderZoneMiniMap('item-minimap-stage', primaryZone, huntRooms);
+    }
   }
 
-  // Launch on DOM ready
-  document.addEventListener('DOMContentLoaded', loadDatabase);
+  function bindSheetEvents() {
+    const backBtn = document.getElementById('sheet-back-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        dbPage.classList.remove('mobile-detail-open');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
 
-})();
+    const copyBtn = document.getElementById('copy-record-link');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          copyBtn.textContent = 'Copied';
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy link';
+          }, 1500);
+        });
+      });
+    }
+
+    detailViewEl.querySelectorAll('.js-open-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const vnum = parseInt(btn.getAttribute('data-vnum'), 10);
+        if (dbData.items[vnum]) {
+          if (currentTab !== 'items') switchTab('items', true);
+          selectRecord(vnum, 'items', true);
+          renderList();
+        }
+      });
+    });
+
+    detailViewEl.querySelectorAll('.js-open-mob').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const vnum = parseInt(btn.getAttribute('data-vnum'), 10);
+        if (dbData.mobs[vnum]) {
+          if (currentTab !== 'mobs') switchTab('mobs', true);
+          selectRecord(vnum, 'mobs', true);
+          renderList();
+        }
+      });
+    });
+  }
+
+  // Toolbar Event Listeners
+  tabMobs.addEventListener('click', () => switchTab('mobs'));
+  tabItems.addEventListener('click', () => switchTab('items'));
+
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim().toLowerCase();
+    renderList();
+  });
+
+  clearBtn.addEventListener('click', resetAllFilters);
+
+  sortSelect.addEventListener('change', (e) => {
+    sortMode = e.target.value;
+    renderList();
+  });
+
+  filterZone.addEventListener('change', (e) => {
+    filters.zone = e.target.value;
+    renderList();
+  });
+
+  filterLevelRange.addEventListener('change', (e) => {
+    filters.levelRange = e.target.value;
+    renderList();
+  });
+
+  filterAlignment.addEventListener('change', (e) => {
+    filters.alignment = e.target.value;
+    renderList();
+  });
+
+  filterMobRole.addEventListener('change', (e) => {
+    filters.mobRole = e.target.value;
+    renderList();
+  });
+
+  filterItemType.addEventListener('change', (e) => {
+    filters.itemType = e.target.value;
+    renderList();
+  });
+
+  filterItemWear.addEventListener('change', (e) => {
+    filters.itemWear = e.target.value;
+    renderList();
+  });
+
+  filterItemAffect.addEventListener('change', (e) => {
+    filters.itemAffect = e.target.value;
+    renderList();
+  });
+
+  init();
+});

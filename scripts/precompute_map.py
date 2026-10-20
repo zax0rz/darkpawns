@@ -36,17 +36,28 @@ SPRING_ITERS = 800 # force spring iterations for world overview
 GRAVITY      = 0.09 # center-pull per iteration (creates globe shape)
 WEIGHT_CAP   = 4.0  # max edge-weight multiplier (prevents dominant corridors collapsing)
 
-DIR_DELTA = {"n": (0, -1), "s": (0, 1), "e": (1, 0), "w": (-1, 0)}
-# U/D intentionally skipped — 2D map; connected rooms appear as separate nodes
+DIR_DELTA = {
+    "n": (0, -1),
+    "s": (0, 1),
+    "e": (1, 0),
+    "w": (-1, 0),
+    # Vertical exits get a diagonal grid step so multi-level dungeons and
+    # immortal/entry stairs stay connected in the 2D zone graph rather than
+    # stranding entire floors into a flat fallback strip.
+    "u": (1, -1),
+    "d": (-1, 1),
+}
 
 
-# ── BFS cardinal-direction grid layout ──────────────────────────────────────
+# ── BFS cardinal + vertical grid layout ─────────────────────────────────────
 
 def bfs_layout(rooms: list, cell: int = CELL) -> dict:
     """
-    Assign pixel x,y to each room using BFS from the first room, following
-    N/S/E/W exits. Collisions resolved by spiral outward search. Rooms
-    unreachable via cardinal exits are placed below the main grid.
+    Assign pixel x,y to each room using BFS across all connected components in
+    the zone. Within each component, N/S/E/W exits step orthogonally and U/D
+    exits step diagonally, with spiral collision resolution. Separate
+    components (e.g. an isolated Immortal Map Room vs. the main zone dungeon)
+    are laid out as their own 2D graphs and stacked cleanly with a 2-row gap.
 
     Returns: {room_id: {"x": px, "y": py}}
     """
@@ -54,71 +65,161 @@ def bfs_layout(rooms: list, cell: int = CELL) -> dict:
         return {}
 
     room_by_id = {r["id"]: r for r in rooms}
-    pos   = {}          # room_id → (col, row)
-    grid  = {}          # (col, row) → room_id
 
-    start = rooms[0]["id"]
-    pos[start]    = (0, 0)
-    grid[(0, 0)]  = start
-    queue = deque([start])
+    # Build undirected intra-zone adjacency so we can start each component from
+    # a well-connected room even if exits are one-way.
+    undir_adj = {r["id"]: set() for r in rooms}
+    for r in rooms:
+        rid = r["id"]
+        for ex in r.get("exits", []):
+            tid = ex.get("t")
+            if tid in room_by_id and tid != rid:
+                undir_adj[rid].add(tid)
+                undir_adj[tid].add(rid)
 
-    while queue:
-        rid  = queue.popleft()
-        room = room_by_id.get(rid)
-        if not room:
+    visited = set()
+    components = []  # list of (comp_pos_dict, width_cols, height_rows)
+
+    # Order candidate roots so rooms with exits come before isolated 0-exit rooms
+    ordered_ids = sorted(
+        (r["id"] for r in rooms),
+        key=lambda rid: (0 if len(undir_adj[rid]) > 0 else 1, rid),
+    )
+
+    for root_id in ordered_ids:
+        if root_id in visited:
             continue
-        col, row = pos[rid]
 
-        for ex in room.get("exits", []):
-            tid   = ex.get("t")
-            d     = ex.get("d", "")
-            delta = DIR_DELTA.get(d)
-            if not delta or tid not in room_by_id or tid in pos:
+        comp_pos = {}
+        comp_grid = {}
+        comp_pos[root_id] = (0, 0)
+        comp_grid[(0, 0)] = root_id
+        visited.add(root_id)
+        queue = deque([root_id])
+
+        while queue:
+            rid = queue.popleft()
+            room = room_by_id.get(rid)
+            if not room:
                 continue
+            col, row = comp_pos[rid]
 
-            tc, tr = col + delta[0], row + delta[1]
+            # Prefer cardinal exits first, then U/D exits
+            exits = sorted(
+                room.get("exits", []),
+                key=lambda ex: 0 if ex.get("d") in ("n", "s", "e", "w") else 1,
+            )
 
-            # Resolve collision with spiral search
-            if (tc, tr) in grid and grid[(tc, tr)] != tid:
-                placed = False
-                for radius in range(1, 10):
-                    for dc in range(-radius, radius + 1):
-                        for dr in range(-radius, radius + 1):
-                            if abs(dc) != radius and abs(dr) != radius:
-                                continue
-                            nc = col + delta[0] + dc
-                            nr = row + delta[1] + dr
-                            if (nc, nr) not in grid:
-                                tc, tr = nc, nr
-                                placed = True
+            for ex in exits:
+                tid = ex.get("t")
+                d = ex.get("d", "")
+                delta = DIR_DELTA.get(d)
+                if not delta or tid not in room_by_id or tid in visited:
+                    continue
+
+                tc, tr = col + delta[0], row + delta[1]
+
+                # Resolve collision with spiral search
+                if (tc, tr) in comp_grid and comp_grid[(tc, tr)] != tid:
+                    placed = False
+                    for radius in range(1, 14):
+                        for dc in range(-radius, radius + 1):
+                            for dr in range(-radius, radius + 1):
+                                if abs(dc) != radius and abs(dr) != radius:
+                                    continue
+                                nc = col + delta[0] + dc
+                                nr = row + delta[1] + dr
+                                if (nc, nr) not in comp_grid:
+                                    tc, tr = nc, nr
+                                    placed = True
+                                    break
+                            if placed:
                                 break
                         if placed:
                             break
-                    if placed:
+                    if not placed:
+                        continue
+
+                comp_pos[tid] = (tc, tr)
+                comp_grid[(tc, tr)] = tid
+                visited.add(tid)
+                queue.append(tid)
+
+            # Also pull in any room that has a one-way exit *into* rid
+            for nb in sorted(undir_adj[rid]):
+                if nb in visited:
+                    continue
+                nb_room = room_by_id[nb]
+                reverse_dir = None
+                for ex in nb_room.get("exits", []):
+                    if ex.get("t") == rid and ex.get("d") in DIR_DELTA:
+                        reverse_dir = ex.get("d")
                         break
-                if not placed:
-                    continue  # give up on this exit; room may arrive via another path
+                if reverse_dir:
+                    dx, dy = DIR_DELTA[reverse_dir]
+                    tc, tr = col - dx, row - dy
+                else:
+                    tc, tr = col + 1, row
 
-            pos[tid]      = (tc, tr)
-            grid[(tc, tr)] = tid
-            queue.append(tid)
+                if (tc, tr) in comp_grid:
+                    placed = False
+                    for radius in range(1, 14):
+                        for dc in range(-radius, radius + 1):
+                            for dr in range(-radius, radius + 1):
+                                if abs(dc) != radius and abs(dr) != radius:
+                                    continue
+                                nc, nr = tc + dc, tr + dr
+                                if (nc, nr) not in comp_grid:
+                                    tc, tr = nc, nr
+                                    placed = True
+                                    break
+                            if placed:
+                                break
+                        if placed:
+                            break
+                comp_pos[nb] = (tc, tr)
+                comp_grid[(tc, tr)] = nb
+                visited.add(nb)
+                queue.append(nb)
 
-    # Fallback: rooms unreachable via cardinal exits → row below main grid
-    max_row = max((r for _, r in pos.values()), default=0)
-    col_cursor = 0
-    for room in rooms:
-        if room["id"] not in pos:
-            pos[room["id"]]               = (col_cursor, max_row + 3)
-            grid[(col_cursor, max_row + 3)] = room["id"]
-            col_cursor += 1
+        # Normalize this component's coordinates to start at (0, 0)
+        min_c = min(c for c, _ in comp_pos.values())
+        min_r = min(r for _, r in comp_pos.values())
+        max_c = max(c for c, _ in comp_pos.values())
+        max_r = max(r for _, r in comp_pos.values())
+        norm_pos = {
+            rid: (c - min_c, r - min_r) for rid, (c, r) in comp_pos.items()
+        }
+        components.append((norm_pos, max_c - min_c + 1, max_r - min_r + 1))
 
-    # Normalize to (0,0) origin and convert to pixels
-    min_col = min(c for c, _ in pos.values())
-    min_row = min(r for _, r in pos.values())
+    # Place largest connected components first; pack singletons into a compact
+    # grid row below the connected components rather than a 100-column line.
+    multi_comps = [c for c in components if len(c[0]) > 1]
+    single_comps = [c for c in components if len(c[0]) == 1]
+    multi_comps.sort(key=lambda c: -len(c[0]))
+
+    final_pos = {}
+    row_cursor = 0
+    max_width_cols = max((w for _, w, _ in multi_comps), default=12)
+
+    for norm_pos, w, h in multi_comps:
+        for rid, (c, r) in norm_pos.items():
+            final_pos[rid] = (c, row_cursor + r)
+        row_cursor += h + 2
+
+    if single_comps:
+        wrap_cols = max(8, min(16, max_width_cols))
+        for idx, (norm_pos, _, _) in enumerate(single_comps):
+            rid = next(iter(norm_pos.keys()))
+            c = idx % wrap_cols
+            r = row_cursor + (idx // wrap_cols)
+            final_pos[rid] = (c, r)
+
     return {
-        rid: {"x": (c - min_col) * cell, "y": (r - min_row) * cell}
-        for rid, (c, r) in pos.items()
+        rid: {"x": c * cell, "y": r * cell}
+        for rid, (c, r) in final_pos.items()
     }
+
 
 
 # ── Fruchterman–Reingold spring layout (91 nodes, fast) ─────────────────────
@@ -320,6 +421,11 @@ def main():
     # Used by the browser for fast ?room=N deep-link resolution without
     # iterating through all zone files.
     room_zones = {str(rid): zid for rid, zid in zone_of_room.items()}
+    room_names = {
+        str(r["id"]): r.get("name", f"Room #{r['id']}")
+        for z in zones
+        for r in z["rooms"]
+    }
 
     # Named map-index.json (not index.json) to avoid conflict with Hugo's
     # generated section JSON output at /map/index.json.
@@ -330,6 +436,7 @@ def main():
                 "zones":      [{"id": z["id"], "name": z["name"],
                                 "rooms": len(z["rooms"])} for z in zones],
                 "room_zones": room_zones,
+                "room_names": room_names,
             },
             f, separators=(",", ":"),
         )

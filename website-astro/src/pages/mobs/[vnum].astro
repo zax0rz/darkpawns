@@ -1,7 +1,7 @@
 ---
 import DatabaseRecord from '../../components/DatabaseRecord.astro';
 import WorldText from '../../components/WorldText.astro';
-import { alignmentName, descriptionFor, mobs, sexName, zoneNames, type Mob } from '../../lib/database';
+import { alignmentName, descriptionFor, mobs, raceName, sexName, zoneNames, type Mob } from '../../lib/database';
 
 export function getStaticPaths() {
   return mobs.map((mob) => ({ params: { vnum: String(mob.v) }, props: { mob } }));
@@ -10,6 +10,7 @@ export function getStaticPaths() {
 interface Props { mob: Mob }
 const { mob } = Astro.props;
 const description = descriptionFor(mob.s, mob.l, mob.d);
+const rName = raceName(mob.rc, mob.rcn);
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Thing',
@@ -19,7 +20,7 @@ const jsonLd = {
   isPartOf: { '@type': 'VideoGame', name: 'Dark Pawns', url: 'https://darkpawns.org/' },
   additionalProperty: [
     { '@type': 'PropertyValue', name: 'Level', value: mob.lvl },
-    { '@type': 'PropertyValue', name: 'Race code', value: mob.rc },
+    { '@type': 'PropertyValue', name: 'Race', value: `${rName} (${mob.rc})` },
     { '@type': 'PropertyValue', name: 'Alignment', value: mob.alg },
     { '@type': 'PropertyValue', name: 'Hit points', value: mob.hp },
     { '@type': 'PropertyValue', name: 'Damage', value: mob.dmg },
@@ -36,15 +37,19 @@ const jsonLd = {
       <table class="record-stats">
         <caption class="visually-hidden">Stats for {mob.s}</caption>
         <tbody>
+          <tr><th scope="row">Keywords</th><td>{mob.k}</td></tr>
           <tr><th scope="row">Level</th><td>{mob.lvl}</td></tr>
-          <tr><th scope="row">Race code</th><td>{mob.rc}</td></tr>
+          <tr><th scope="row">Race</th><td>{rName} ({mob.rc})</td></tr>
           <tr><th scope="row">Sex</th><td>{sexName(mob.sex)}</td></tr>
           <tr><th scope="row">Alignment</th><td>{alignmentName(mob.alg)} ({mob.alg})</td></tr>
+          <tr><th scope="row">THAC0</th><td>{mob.thac0 ?? 20} (Hitroll {(20 - (mob.thac0 ?? 20)) >= 0 ? `+${20 - (mob.thac0 ?? 20)}` : 20 - (mob.thac0 ?? 20)})</td></tr>
           <tr><th scope="row">Armor class</th><td>{mob.ac}</td></tr>
           <tr><th scope="row">Hit points</th><td>{mob.hp}</td></tr>
-          <tr><th scope="row">Damage</th><td>{mob.dmg}</td></tr>
-          <tr><th scope="row">Gold</th><td>{mob.gld}</td></tr>
+          <tr><th scope="row">Barehand damage</th><td>{mob.dmg} ({mob.atk || 'hit'})</td></tr>
+          <tr><th scope="row">Gold</th><td>{mob.gld.toLocaleString('en-US')}</td></tr>
           <tr><th scope="row">Experience</th><td>{mob.exp.toLocaleString('en-US')}</td></tr>
+          <tr><th scope="row">Position</th><td>{mob.pos || 'Standing'} (default: {mob.dpos || 'Standing'})</td></tr>
+          {mob.scr && <tr><th scope="row">Script</th><td>{mob.scr}</td></tr>}
         </tbody>
       </table>
     </section>
@@ -60,17 +65,33 @@ const jsonLd = {
         </tbody>
       </table>
     </section>
+
+    <section class="record-panel">
+      <h2>Flags</h2>
+      <h3>Action flags</h3>
+      {mob.act?.length ? <ul class="flag-list">{mob.act.map((flag) => <li>{flag}</li>)}</ul> : <p class="record-empty">None</p>}
+      <h3>Affect flags</h3>
+      {mob.aff?.length ? <ul class="flag-list">{mob.aff.map((flag) => <li>{flag}</li>)}</ul> : <p class="record-empty">None</p>}
+    </section>
   </div>
 
   <div>
     {mob.d && <section class="record-panel"><h2>Description</h2><WorldText text={mob.d} /></section>}
+    {mob.noise && <section class="record-panel"><h2>Ambient noise</h2><p>{mob.noise}</p></section>}
 
     <section class="record-panel">
       <h2>Spawn locations</h2>
       {mob.spw.length ? (
         <ul class="record-list">
           {mob.spw.map((spawn) => (
-            <li><a href={`/map/?room=${spawn.room}`}>{spawn.name || `Room ${spawn.room}`}</a><small>Room {spawn.room} / {zoneNames[spawn.zone] ?? `Zone ${spawn.zone}`}</small></li>
+            <li>
+              <a href={`/map/?room=${spawn.room}`}>{spawn.name || `Room ${spawn.room}`}</a>
+              <small>
+                <a href={`/rooms/${spawn.room}/`}>Room {spawn.room}</a>
+                {' / '}
+                <a href={`/zones/${spawn.zone}/`}>{zoneNames[spawn.zone] ?? `Zone ${spawn.zone}`}</a>
+              </small>
+            </li>
           ))}
         </ul>
       ) : <p class="record-empty">This mob does not spawn through the world reset files.</p>}

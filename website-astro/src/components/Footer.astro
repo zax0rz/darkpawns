@@ -33,7 +33,14 @@ const year = new Date().getFullYear();
         <li><a href="/about/">About</a></li>
         <li><a href="/docs/">Developer Docs</a></li>
         <li><a href="/docs/research/">Port Research</a></li>
-        <li><a href="https://github.com/zax0rz/darkpawns">GitHub Repository</a></li>
+        <li>
+          <a class="footer-github-link" href="https://github.com/zax0rz/darkpawns">
+            <svg class="footer-icon" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+              <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+            </svg>
+            <span>GitHub Repository</span>
+          </a>
+        </li>
         <li><a href="/credits/">Credits &amp; Staff</a></li>
         <li><a href="/privacy/">Privacy</a></li>
       </ul>
@@ -42,9 +49,15 @@ const year = new Date().getFullYear();
   <div class="footer-bottom container">
     <p class="footer-wordmark">DARK PAWNS · EST. 1994 · RESURRECTED 2026</p>
     <div class="footer-bottom-info">
-      <span class="status" id="footer-status" title="MUD server status" aria-live="polite">
-        <span class="dot" aria-hidden="true"></span><span id="footer-status-text">checking status</span>
+      <span class="status" id="footer-status" data-server-status title="MUD server status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span><span id="footer-status-text" data-server-status-text>status unknown</span>
       </span>
+      <a class="footer-social-badge" href="https://github.com/zax0rz/darkpawns" aria-label="Dark Pawns on GitHub" title="zax0rz/darkpawns on GitHub">
+        <svg class="footer-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+        </svg>
+        <span>GitHub</span>
+      </a>
       <p>Non-commercial · <a href="https://github.com/zax0rz/darkpawns/blob/main/LICENSE">DikuMUD, CircleMUD &amp; MIT Licenses</a> · &copy; {year}</p>
     </div>
   </div>
@@ -65,6 +78,20 @@ const year = new Date().getFullYear();
   .footer-col p { color: var(--ink-muted); font-size: 0.95rem; }
   .footer-col ul { list-style: none; margin: 0; padding: 0; }
   .footer-col li { padding: 0.15rem 0; }
+  .footer-github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+  }
+  .footer-icon {
+    flex-shrink: 0;
+    color: var(--ink-muted);
+    transition: color 0.15s ease;
+  }
+  .footer-github-link:hover .footer-icon,
+  .footer-social-badge:hover .footer-icon {
+    color: var(--accent);
+  }
   .footer-bottom {
     display: flex;
     align-items: center;
@@ -83,6 +110,25 @@ const year = new Date().getFullYear();
   }
   .footer-bottom-info { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
   .footer-bottom-info p { margin: 0; color: var(--ink-muted); font-size: 0.85rem; }
+  .footer-social-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--rule);
+    background: var(--paper-deep);
+    text-decoration: none;
+  }
+  .footer-social-badge:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+  }
   .status {
     font-family: var(--font-mono);
     font-size: 0.8rem;
@@ -100,34 +146,3 @@ const year = new Date().getFullYear();
   @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 520px) { .footer-grid { grid-template-columns: 1fr; } }
 </style>
-
-<script>
-  // The footer dot reports whether the game server is answering. /health is the
-  // Go binary's own endpoint and same-origin, so this needs no CORS and no key.
-  // The binary serves telnet and HTTP from one process, so a healthy response
-  // means the MUD is reachable too; it is liveness, not a telnet-port probe.
-  const status = document.getElementById('footer-status');
-  const label = document.getElementById('footer-status-text');
-
-  if (status && label) {
-    const settle = (state, text) => {
-      status.classList.remove('online', 'offline');
-      if (state) status.classList.add(state);
-      label.textContent = text;
-    };
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    fetch('/health', { signal: controller.signal, cache: 'no-store' })
-      .then((response) => {
-        settle(response.ok ? 'online' : 'offline', response.ok ? 'server online' : 'server offline');
-      })
-      .catch(() => {
-        // An aborted or failed request proves nothing about the server, so the
-        // dot stays muted rather than claiming an outage it did not observe.
-        settle(null, 'status unavailable');
-      })
-      .finally(() => clearTimeout(timeout));
-  }
-</script>

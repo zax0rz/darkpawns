@@ -1,7 +1,7 @@
 ---
 import DatabaseRecord from '../../components/DatabaseRecord.astro';
 import WorldText from '../../components/WorldText.astro';
-import { descriptionFor, items, mobByVnum, signed, zoneNames, type Item } from '../../lib/database';
+import { describeItemValues, descriptionFor, formatItemAffect, items, mobByVnum, zoneNames, type Item } from '../../lib/database';
 
 export function getStaticPaths() {
   return items.map((item) => ({ params: { vnum: String(item.v) }, props: { item } }));
@@ -10,6 +10,7 @@ export function getStaticPaths() {
 interface Props { item: Item }
 const { item } = Astro.props;
 const description = descriptionFor(item.s, item.l, item.k);
+const decodedValues = describeItemValues(item);
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Product',
@@ -20,6 +21,7 @@ const jsonLd = {
   isRelatedTo: { '@type': 'VideoGame', name: 'Dark Pawns', url: 'https://darkpawns.org/' },
   additionalProperty: [
     { '@type': 'PropertyValue', name: 'Dark Pawns item VNUM', value: item.v },
+    { '@type': 'PropertyValue', name: 'Properties', value: decodedValues },
     { '@type': 'PropertyValue', name: 'Weight', value: item.wt },
     { '@type': 'PropertyValue', name: 'Cost in gold', value: item.cst },
     { '@type': 'PropertyValue', name: 'Load probability', value: `${item.load}%` },
@@ -36,11 +38,14 @@ const jsonLd = {
       <table class="record-stats">
         <caption class="visually-hidden">Object specifications for {item.s}</caption>
         <tbody>
+          <tr><th scope="row">Keywords</th><td>{item.k}</td></tr>
           <tr><th scope="row">Item type</th><td>{item.type}</td></tr>
+          <tr><th scope="row">Properties</th><td>{decodedValues}</td></tr>
           <tr><th scope="row">Wear locations</th><td>{item.wear.join(', ') || 'None'}</td></tr>
           <tr><th scope="row">Weight</th><td>{item.wt}</td></tr>
-          <tr><th scope="row">Cost</th><td>{item.cst} gold</td></tr>
+          <tr><th scope="row">Cost</th><td>{item.cst.toLocaleString('en-US')} gold</td></tr>
           <tr><th scope="row">Load probability</th><td>{item.load}%</td></tr>
+          {item.scr && <tr><th scope="row">Script</th><td>{item.scr}</td></tr>}
           {item.val.map((value, index) => <tr><th scope="row">Value {index}</th><td>{value}</td></tr>)}
         </tbody>
       </table>
@@ -57,12 +62,19 @@ const jsonLd = {
     <section class="record-panel">
       <h2>Magical affects</h2>
       {item.aff.length ? (
-        <ul class="record-list">{item.aff.map((affect) => <li>{affect.location} <small>Modifier {signed(affect.modifier)}</small></li>)}</ul>
+        <ul class="record-list">{item.aff.map((affect) => <li>{formatItemAffect(affect)} <small>{affect.location} ({affect.modifier})</small></li>)}</ul>
       ) : <p class="record-empty">No magical affects are defined.</p>}
     </section>
   </div>
 
   <div>
+    {item.ad && (
+      <section class="record-panel">
+        <h2>Action description</h2>
+        <WorldText text={item.ad} />
+      </section>
+    )}
+
     {item.edesc.length > 0 && (
       <section class="record-panel">
         <h2>Detailed descriptions</h2>
@@ -73,7 +85,29 @@ const jsonLd = {
     <section class="record-panel">
       <h2>Carried by mobs</h2>
       {item.mobs.length ? (
-        <ul class="record-list">{item.mobs.map((mob) => <li><a href={`/mobs/${mob.mob_vnum}/`}>{mob.name}</a><small>Mob {mob.mob_vnum} / {mob.slot}</small></li>)}</ul>
+        <ul class="record-list">
+          {item.mobs.map((mobRef) => {
+            const fullMob = mobByVnum[String(mobRef.mob_vnum)];
+            const firstSpawn = fullMob?.spw?.[0];
+            return (
+              <li>
+                <a href={`/mobs/${mobRef.mob_vnum}/`}>{mobRef.name}</a>
+                <small>
+                  Mob {mobRef.mob_vnum}{fullMob ? ` (level ${fullMob.lvl})` : ''} / {mobRef.slot}
+                  {firstSpawn && (
+                    <>
+                      {' / '}
+                      <a href={`/map/?room=${firstSpawn.room}`}>{firstSpawn.name || `Room ${firstSpawn.room}`}</a>
+                      {' ('}
+                      {zoneNames[firstSpawn.zone] ?? `Zone ${firstSpawn.zone}`}
+                      {')'}
+                    </>
+                  )}
+                </small>
+              </li>
+            );
+          })}
+        </ul>
       ) : <p class="record-empty">No mobs load with this item through the world reset files.</p>}
     </section>
 
@@ -84,7 +118,14 @@ const jsonLd = {
           {item.rms.map((place) => place.container_vnum ? (
             <li><a href={`/items/${place.container_vnum}/`}>{place.name}</a><small>Inside item {place.container_vnum}</small></li>
           ) : (
-            <li><a href={`/map/?room=${place.room}`}>{place.name || `Room ${place.room}`}</a><small>Room {place.room} / {zoneNames[place.zone ?? -1] ?? `Zone ${place.zone}`}</small></li>
+            <li>
+              <a href={`/map/?room=${place.room}`}>{place.name || `Room ${place.room}`}</a>
+              <small>
+                <a href={`/rooms/${place.room}/`}>Room {place.room}</a>
+                {' / '}
+                <a href={`/zones/${place.zone}/`}>{zoneNames[place.zone ?? -1] ?? `Zone ${place.zone}`}</a>
+              </small>
+            </li>
           ))}
         </ul>
       ) : <p class="record-empty">No direct room or container placement is defined.</p>}
@@ -93,7 +134,26 @@ const jsonLd = {
     {item.shp.length > 0 && (
       <section class="record-panel">
         <h2>Sold by merchants</h2>
-        <ul class="record-list">{item.shp.map((shop) => <li>{mobByVnum[String(shop.keeper_vnum)] ? <a href={`/mobs/${shop.keeper_vnum}/`}>{shop.keeper_name}</a> : <span>{shop.keeper_name}</span>}<small>Mob {shop.keeper_vnum} / {shop.price} gold</small></li>)}</ul>
+        <ul class="record-list">
+          {item.shp.map((shop) => {
+            const keeper = mobByVnum[String(shop.keeper_vnum)];
+            const firstSpawn = keeper?.spw?.[0];
+            return (
+              <li>
+                {keeper ? <a href={`/mobs/${shop.keeper_vnum}/`}>{shop.keeper_name}</a> : <span>{shop.keeper_name}</span>}
+                <small>
+                  Mob {shop.keeper_vnum} / {shop.price.toLocaleString('en-US')} gold
+                  {firstSpawn && (
+                    <>
+                      {' / '}
+                      <a href={`/map/?room=${firstSpawn.room}`}>{firstSpawn.name || `Room ${firstSpawn.room}`}</a>
+                    </>
+                  )}
+                </small>
+              </li>
+            );
+          })}
+        </ul>
       </section>
     )}
   </div>

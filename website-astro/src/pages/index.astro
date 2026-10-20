@@ -1,66 +1,241 @@
 ---
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+// Counts come from the same generated assets the map and database pages ship,
+// resolved at build time. The front page cannot advertise a world the rest of
+// the site does not hold: when the world files grow, these figures follow.
+import worldGraph from '../../../website/static/map/world-graph.json';
+import database from '../../../website/static/data/database.json';
+
+const rooms: number = worldGraph.rooms.length;
+// database.json keys each record by VNUM rather than storing an array.
+const mobs: number = Object.keys(database.mobs).length;
+const objects: number = Object.keys(database.items).length;
+const helpEntries = await getCollection('help', ({ data }) => !data.draft);
+const handbooks = await getCollection('world', ({ data }) => !data.draft);
+const archiveRecords = await getCollection('archive', ({ data }) => !data.draft);
+
+const count = (value: number) => value.toLocaleString('en-US');
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 3);
 const fmt = (date: Date) => date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
-const fieldGuides = [
-  { href: '/map/', title: 'Map', text: 'Trace rooms and connections drawn from the world files.' },
-  { href: '/database/', title: 'Database', text: 'Look through the mobs and objects loaded by the current server.' },
-  { href: '/help/', title: 'Help files', text: 'Search the commands, spells, skills, and reference files used in the game.' },
+const postCards = posts.map((post) => ({
+  id: post.id,
+  href: `/blog/${post.id}/`,
+  isoDate: post.data.date.toISOString(),
+  displayDate: fmt(post.data.date),
+  title: post.data.title,
+  summary: post.data.description,
+}));
+const [lead, ...morePosts] = postCards;
+
+const facts = [
+  { label: 'rooms', figure: count(rooms), detail: '95 zones across Aralius, Xixieqi, and Arakon' },
+  { label: 'creatures', figure: count(mobs), detail: 'City guards, guildmasters, and dungeon bosses' },
+  { label: 'objects', figure: count(objects), detail: '100% rent-free gear saved in your temple' },
+  { label: 'help topics', figure: count(helpEntries.length), detail: 'In-game reference files from the server' },
 ];
+
+const fieldGuides = [
+  { href: '/world/', title: 'The world', meta: `${handbooks.length} handbooks`, text: 'Six starting classes, six remort classes, seven races, vampirism, and the rules of life and death.' },
+  { href: '/map/', title: 'Map', meta: `${count(rooms)} rooms`, text: 'Every room and every connection across three continents, drawn from the world files.' },
+  { href: '/database/', title: 'Database', meta: `${count(mobs + objects)} records`, text: 'Every creature and object loaded by the current server, indexed by VNUM.' },
+  { href: '/help/', title: 'Help files', meta: `${count(helpEntries.length)} topics`, text: 'The commands, spells, and reference files used in the game, preserved word for word.' },
+];
+
+const eras = [
+  ['1994', 'knight.ufp.org', 'Serapis (Derek Karnes) and Tracer (C. Jackson) open Dark Pawns on CircleMUD 1.7 in September.'],
+  ['1998', 'Version 2.2', 'Frontline (R.E. Paret) and Orodreth (S. Thompson) become co-implementors and ship the largest update in the game\u2019s history.'],
+  ['2001', 'The break-in', 'An intruder wipes talon.wolfpaw.net; Orodreth\u2019s backups save the world and darkpawns.com is registered.'],
+  ['2010', 'The quiet years', 'The public server closes, and Frontline later publishes the surviving C source and world files on GitHub.'],
+  ['2019', 'DPReturns', 'Former players reopen the C codebase at dpreturns.com (now darkpawns.net), started by Slayer, expanded over the pandemic years, and later maintained by Vintage.'],
+  ['2026', 'The Go restoration', 'A new open-source server loads the original world and verifies its behavior byte for byte against the C oracle.'],
+] as const;
 ---
 
-<Base title="Dark Pawns | A fantasy world from 1994">
+<Base
+  title="Dark Pawns | A fantasy world from 1994"
+  description="Dark Pawns is a dark-fantasy MUD first opened in September 1994, restored in Go from the surviving C source and world files. Play in your browser or explore all 9,590 rooms."
+>
   <div class="home-page">
-    <section class="cover container">
-      <div class="cover-copy">
-        <h1>A fantasy world first opened in 1994.</h1>
-        <p class="lede">Play in your browser, explore the original world, or read what survived from the people who built it.</p>
-        <div class="cover-actions">
-          <a class="btn-primary" href="/play/">Enter the game</a>
-          <a class="btn-secondary" href="/world/">Explore the world</a>
+    <section class="cover container" aria-labelledby="cover-heading">
+      <h1 id="cover-heading">A fantasy world first opened in 1994.</h1>
+
+      <div class="cover-deck">
+        <div class="cover-copy">
+          <p class="lede">You type and the world answers. Start at the black marble altar in Kir Drax&rsquo;in in your browser, or explore what survived of the original game.</p>
+          <p class="cover-story">
+            Serapis and Tracer opened Dark Pawns in September 1994, and Frontline, Orodreth, Oddity, and the immortal staff built it over the next sixteen years until the server went dark around 2010. Its C source and 95 zones survived. In 2026 I began porting the engine to Go and recovering the old player sites so the world stays open.
+          </p>
+          <dl class="world-rules" aria-label="Distinctive rules of Dark Pawns">
+            <div>
+              <dt>30 levels + remort</dt>
+              <dd>Six base classes unlock Assassin, Avatar, Magus, Paladin, Ranger, and Mystic at Hero.</dd>
+            </div>
+            <div>
+              <dt>Three-character parties</dt>
+              <dd>A solo level 15 character will not survive a level 15 fight; run up to three characters at once.</dd>
+            </div>
+            <div>
+              <dt>Wyldlands &amp; blood</dt>
+              <dd>100% rent-free temples, vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
+            </div>
+          </dl>
+          <div class="cover-actions">
+            <a class="btn-primary" href="/play/">Enter the game</a>
+            <a class="btn-secondary" href="/world/">Explore the world</a>
+            <a class="cover-history-link" href="/about/">Read the history <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+
+        <aside class="connection-slip" aria-labelledby="connect-heading">
+          <div class="slip-header">
+            <p class="slip-label" id="connect-heading">Direct connection</p>
+            <p class="slip-status" id="slip-status" data-server-status aria-live="polite">
+              <span class="dot" aria-hidden="true"></span><span id="slip-status-text" data-server-status-text>status unknown</span>
+            </p>
+          </div>
+          <p class="slip-host">darkpawns.org</p>
+          <dl class="slip-ports">
+            <div><dt>7778</dt><dd>TLS, preferred</dd></div>
+            <div><dt>7777</dt><dd>no TLS (classic telnet)</dd></div>
+          </dl>
+          <p class="slip-note">New characters begin at the Kir Drax&rsquo;in Temple, where quitting saves your equipment rent-free.</p>
+          <p class="slip-foot"><a href="/connect/">Set up Mudlet or another client <span aria-hidden="true">→</span></a></p>
+        </aside>
+      </div>
+
+      <dl class="facts" aria-label="What the world contains">
+        {facts.map((fact) => (
+          <div>
+            <dt>{fact.label}</dt>
+            <dd class="fact-figure">{fact.figure}</dd>
+            <dd class="fact-detail">{fact.detail}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+
+    {lead && (
+      <section class="dispatch" aria-labelledby="dispatch-heading">
+        <div class="container">
+          <header class="dispatch-head">
+            <div>
+              <h2 id="dispatch-heading">Latest from the restoration</h2>
+              <p class="dispatch-sub">Field notes from the Go port, the C oracle, and the Wayback Machine.</p>
+            </div>
+            <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
+          </header>
+          <div class="dispatch-grid">
+            <article class="dispatch-lead">
+              {lead.id === 'welcome-back-serapis' && (
+                <a class="dispatch-plate" href={lead.href} tabindex="-1" aria-hidden="true">
+                  <img
+                    src="/images/blog/welcome-back-serapis.webp"
+                    width="1500"
+                    height="643"
+                    loading="lazy"
+                    alt=""
+                  />
+                </a>
+              )}
+              <time datetime={lead.isoDate}>
+                {lead.displayDate}
+              </time>
+              <h3>
+                <a href={lead.href}>
+                  {lead.title}
+                </a>
+              </h3>
+              <p>{lead.summary}</p>
+              <a class="dispatch-read" href={lead.href}>Read the post <span aria-hidden="true">→</span></a>
+            </article>
+            {morePosts.length > 0 && (
+              <ol class="dispatch-more">
+                {morePosts.map(({ href, isoDate, displayDate, title, summary }) => (
+                  <li>
+                    <time datetime={isoDate}>{displayDate}</time>
+                    <h3><a href={href}>{title}</a></h3>
+                    <p>{summary}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="voices" aria-labelledby="voices-heading">
+      <div class="container">
+        <header class="voices-head">
+          <h2 id="voices-heading">The world in its own words.</h2>
+          <p class="voices-sub">Excerpts from the original website and the world files the server loads today, with every original spelling left intact.</p>
+        </header>
+
+        <div class="voices-grid">
+          <figure class="letter">
+            <blockquote>
+              <p>Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.</p>
+              <p>Outside those thick walls that enable &ldquo;civilized&rdquo; persons to sleep so well lies an untamed land, some partly still ruled by the power of fangs, claws, and magic. The other parts of the savage land are not ruled at all, twisted and warped by forgotten times into a vision that would make any sane man&rsquo;s nightmare seem like a pleasant summer daydream.</p>
+              <p>Beware the unseen, adventurer. The power is there, cloaked in a forgotten tomb or a dragon&rsquo;s hoard, but it is there.</p>
+            </blockquote>
+            <figcaption>
+              The letter of Friar Drake to the cities of Kir Drax&rsquo;in, Kir-oshi, and Alaozar (R.E. Paret / Frontline, darkpawns.com, <a href="/world/world-creation/">read the full letter</a>).
+            </figcaption>
+          </figure>
+
+          <div class="artifacts">
+            <figure class="artifact artifact-room">
+              <div class="artifact-bar">
+                <p class="artifact-title">At the Temple Altar</p>
+                <span class="artifact-stamp">ROOM 8004 · LIB/WORLD/WLD/80.WLD</span>
+              </div>
+              <blockquote>
+                You stand before the temple altar. Carved from a solid block of black marble, it is an exquisite example of dwarven craftsmanship. Black pillars of the same marble hold up the ceiling of this open-aired pavilion, and to the south a narrow aisle runs its way between hard oaken pews. There is a small hand painted sign posted as well.
+              </blockquote>
+              <figcaption>
+                Room description in Kir Drax&rsquo;in, where new characters begin (<a href="/map/?room=8004">find it on the map</a>).
+              </figcaption>
+            </figure>
+
+            <figure class="artifact artifact-help">
+              <div class="artifact-bar">
+                <p class="artifact-title">FLEE</p>
+                <span class="artifact-stamp">HELP COMMANDS · LIB/TEXT/HELP</span>
+              </div>
+              <blockquote>
+                If you are in a fight and things are beginning to get a little uncomfortable (maybe you are dying), just type 'flee', and presto! You are out of harms way - that is, IF there is a suitable exit nearby, and IF that exit doesn't simply bring you from the ashes to the fire... but then, who wants to live forever?
+              </blockquote>
+              <figcaption>
+                In-game help entry (<a href="/help/commands/flee/">open the help file</a>).
+              </figcaption>
+            </figure>
+
+            <figure class="artifact artifact-help">
+              <div class="artifact-bar">
+                <p class="artifact-title">DREAMS &amp; NIGHTMARES</p>
+                <span class="artifact-stamp">HELP INFO · LIB/TEXT/HELP</span>
+              </div>
+              <blockquote>
+                It is rumored that in the magick-rich Wyldlands DREAMS have the power to physically effect the dreamer, in essence, the DREAMS become real.
+              </blockquote>
+              <figcaption>
+                In-game help entry (<a href="/help/info/dream-dreams-nightmare-nightmares/">open the help file</a>).
+              </figcaption>
+            </figure>
+          </div>
         </div>
       </div>
-      <aside class="connection-slip" aria-label="Direct connection details">
-        <p class="slip-label">Direct connection</p>
-        <dl>
-          <div><dt>Host</dt><dd>darkpawns.org</dd></div>
-          <div><dt>Port</dt><dd>7778</dd></div>
-          <div><dt>Protocol</dt><dd>Telnet over TLS</dd></div>
-          <div><dt>Plaintext</dt><dd>7777, no TLS</dd></div>
-        </dl>
-        <p><a href="/connect/">Desktop client instructions</a></p>
-      </aside>
     </section>
 
-    <section class="dispatch container">
-      <header>
-        <div>
-          <p class="eyebrow">Dispatch</p>
-          <h2>Notes from the restoration</h2>
-        </div>
-        <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
-      </header>
-      <ol class="dispatch-list">
-        {posts.map((post) => (
-          <li>
-            <time datetime={post.data.date.toISOString()}>{fmt(post.data.date)}</time>
-            <div>
-              <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
-
-    <section class="world-desk">
+    <section class="world-desk" aria-labelledby="guides-heading">
       <div class="container world-grid">
         <div class="world-intro">
-          <h2>Field guides to the original world</h2>
-          <p>The map, database, and help index are generated from the same files used by the server. They are useful before you enter and after you get lost.</p>
+          <h2 id="guides-heading">Field guides to the original world</h2>
+          <p>The map, database, and help index are generated at build time from the same files the server loads. They are useful before you enter and after you get lost.</p>
         </div>
         <ol class="guide-list">
           {fieldGuides.map((guide) => (
@@ -68,7 +243,8 @@ const fieldGuides = [
               <a href={guide.href}>
                 <h3>{guide.title}</h3>
                 <p>{guide.text}</p>
-                <span aria-hidden="true">→</span>
+                <span class="guide-meta">{guide.meta}</span>
+                <span class="guide-arrow" aria-hidden="true">→</span>
               </a>
             </li>
           ))}
@@ -76,81 +252,297 @@ const fieldGuides = [
       </div>
     </section>
 
-    <section class="record container">
+    <section class="record container" aria-labelledby="archive-heading">
       <article class="archive-feature">
-        <p class="eyebrow">Recovered from the old web</p>
-        <h2>The recovered community archive</h2>
-        <p>Copies of dp-players.com and darkpawns.com survived in the Wayback Machine. Public Usenet threads survived elsewhere. The archive preserves a sourced selection and records where every page came from.</p>
+        <h2 id="archive-heading">Thirty-two years in the record</h2>
+        <p>Copies of dp-players.com (which I ran as Aidan in 2004) and Frontline&rsquo;s darkpawns.com survived in the Wayback Machine, alongside eighteen threads from rec.games.mud. The archive preserves {count(archiveRecords.length)} sourced records and documents where every page came from.</p>
+        <ol class="era-ledger" aria-label="Key dates in Dark Pawns history">
+          {eras.map(([year, title, text]) => (
+            <li>
+              <time>{year}</time>
+              <div>
+                <strong>{title}:</strong> {text}
+              </div>
+            </li>
+          ))}
+        </ol>
         <div class="record-links">
-          <a href="/archive/">Browse the archive <span aria-hidden="true">→</span></a>
-          <a href="/about/">Read the history <span aria-hidden="true">→</span></a>
+          <a href="/archive/">Browse all {count(archiveRecords.length)} archive records <span aria-hidden="true">→</span></a>
+          <a href="/about/">Read the full history <span aria-hidden="true">→</span></a>
+          <a href="/about/dpreturns/">DPReturns history <span aria-hidden="true">→</span></a>
+          <a href="/credits/">Original staff &amp; credits <span aria-hidden="true">→</span></a>
         </div>
       </article>
 
-      <aside class="restoration-note">
-        <p class="eyebrow">The current restoration</p>
-        <h2>The game is the game.</h2>
-        <p>The new Go server treats the original C implementation as the oracle. Player-facing behavior is preserved rather than redesigned.</p>
-        <p><a href="/about/project/">See the current work and how to help <span aria-hidden="true">→</span></a></p>
+      <aside class="restoration-note" aria-labelledby="oracle-heading">
+        <figure class="wanderer-plate">
+          <img
+            src="/images/blog/the-long-middle.png"
+            width="900"
+            height="720"
+            loading="lazy"
+            alt="Pen-and-ink illustration of a hooded traveller with a staff walking a mountain road toward a low sun"
+          />
+        </figure>
+        <h2 id="oracle-heading">The game is the game.</h2>
+        <p>The Go server treats the original C implementation as a read-only oracle. Both servers run side by side against deterministic scenarios; when a single player-facing byte or random roll disagrees, the C source wins.</p>
+        <p>While the separate community revival at <a href="https://www.darkpawns.net/">darkpawns.net</a> expanded the C codebase after 2019, this project preserves the 1994 to 2010 game intact.</p>
+        <p class="restoration-cta"><a href="/about/project/">See the current work and how to help <span aria-hidden="true">→</span></a></p>
       </aside>
     </section>
-
   </div>
 </Base>
 
 <style>
-  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
-  .cover { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(18rem, .55fr); gap: var(--space-xl); align-items: end; padding-block: var(--space-xl); }
-  .cover h1 { max-width: 14ch; font-size: clamp(3.5rem, 7vw, 6.5rem); line-height: .98; }
-  .lede { max-width: 48ch; color: var(--ink-muted); font-size: 1.2rem; }
-  .cover-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
-  .btn-primary, .btn-secondary { display: inline-block; border: 1px solid var(--rule); padding: .65rem 1rem; font-family: var(--font-display); color: var(--ink); }
-  .btn-primary { border-color: var(--accent); background: var(--accent); color: var(--paper); }
-  .btn-primary:hover { background: var(--accent-deep); text-decoration: none; }
-  .btn-secondary:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
-  .connection-slip { border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
-  .slip-label { font-family: var(--font-display); font-size: 1.1rem; }
-  .connection-slip dl { margin: 0 0 var(--space-md); }
-  .connection-slip dl div { display: grid; grid-template-columns: 5rem 1fr; gap: var(--space-sm); border-top: 1px solid var(--rule); padding-block: var(--space-sm); }
-  .connection-slip dt { color: var(--ink-muted); }
-  .connection-slip dd { margin: 0; overflow-wrap: anywhere; font-family: var(--font-mono); font-size: .8rem; }
-  .connection-slip p:last-child { margin: 0; }
-  .world-desk { border-block: 1px solid var(--rule); background: var(--paper-deep); padding-block: var(--space-xl); }
-  .world-grid { display: grid; grid-template-columns: minmax(17rem, .7fr) minmax(26rem, 1.3fr); gap: var(--space-xl); }
-  .world-intro p:last-child { color: var(--ink-muted); }
-  .guide-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
-  .guide-list li { border-bottom: 1px solid var(--rule); }
-  .guide-list a { display: grid; grid-template-columns: 9rem 1fr 1rem; gap: var(--space-md); align-items: baseline; padding-block: var(--space-md); color: var(--ink); }
-  .guide-list a:hover { color: var(--accent); text-decoration: none; }
-  .guide-list h3 { font-size: 1.2rem; margin: 0; }
-  .guide-list p { color: var(--ink-muted); margin: 0; }
-  .record { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .55fr); gap: var(--space-xl); padding-block: var(--space-xl); }
-  .archive-feature { border-top: 2px solid var(--rule); padding-top: var(--space-md); }
-  .archive-feature h2 { max-width: 21ch; font-size: clamp(2rem, 4vw, 3.5rem); }
-  .archive-feature > p:not(.eyebrow) { color: var(--ink-muted); }
-  .record-links { display: flex; flex-wrap: wrap; gap: var(--space-lg); }
-  .restoration-note { align-self: start; border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
-  .restoration-note h2 { font-size: 1.45rem; }
-  .restoration-note p:not(.eyebrow) { color: var(--ink-muted); }
-  .dispatch { border-top: 1px solid var(--rule); padding-block: var(--space-lg) var(--space-xl); }
-  .dispatch header { display: flex; align-items: end; justify-content: space-between; gap: var(--space-md); }
-  .dispatch header h2 { margin: 0; }
-  .dispatch-list { list-style: none; margin: var(--space-lg) 0 0; padding: 0; border-top: 1px solid var(--rule); }
-  .dispatch-list li { display: grid; grid-template-columns: 10rem 1fr; gap: var(--space-lg); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
-  .dispatch-list time { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; }
-  .dispatch-list h3 { font-size: 1.2rem; margin-bottom: 0; }
-  .dispatch-list h3 a { color: var(--ink); }
-  .dispatch-list h3 a:hover { color: var(--accent); text-decoration: none; }
-  @media (max-width: 800px) {
-    .cover, .world-grid, .record { grid-template-columns: 1fr; gap: var(--space-lg); }
-    .connection-slip { max-width: 30rem; }
+  /* --- Cover: a title page, then a lower deck ---------------------------- */
+  .cover { padding-block: var(--space-xl) var(--space-lg); }
+  .cover h1 { max-width: 20ch; margin-bottom: var(--space-lg); font-size: clamp(3rem, 6.6vw, 6.25rem); line-height: .98; letter-spacing: -.01em; text-wrap: initial; }
+  .cover-deck { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(18rem, .55fr); gap: var(--space-xl); align-items: start; }
+  .lede { max-width: 52ch; color: var(--ink); font-size: 1.25rem; line-height: 1.45; margin-bottom: var(--space-md); }
+  .cover-story { max-width: 60ch; color: var(--ink-muted); font-size: 1rem; margin-bottom: var(--space-lg); }
+
+  .world-rules {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+    margin: 0 0 var(--space-lg);
+    padding-block: var(--space-md);
+    border-block: 1px solid var(--rule);
   }
-  @media (max-width: 560px) {
-    .cover, .world-grid, .record, .dispatch { padding-inline: var(--space-md); }
-    .cover h1 { font-size: clamp(3rem, 15vw, 4.5rem); }
+  .world-rules dt {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--ink);
+    margin-bottom: .2rem;
+  }
+  .world-rules dd {
+    margin: 0;
+    font-size: .9rem;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+
+  .cover-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); margin-top: var(--space-md); }
+  .btn-primary, .btn-secondary { display: inline-block; border: 1px solid var(--rule); padding: .7rem 1.15rem; font-family: var(--font-display); font-size: 1rem; color: var(--ink); }
+  .btn-primary { border-color: var(--accent); background: var(--accent); color: var(--paper); }
+  .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
+  .btn-secondary:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
+  .cover-history-link { font-family: var(--font-display); font-size: 1rem; padding-inline: var(--space-xs); }
+
+  .connection-slip {
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    background: var(--paper-deep);
+    padding: var(--space-md);
+  }
+  .slip-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: var(--space-xs);
+  }
+  .slip-label { font-family: var(--font-display); font-size: 1.25rem; margin: 0; }
+  .slip-status { display: inline-flex; align-items: center; gap: .4rem; margin: 0; font-family: var(--font-mono); font-size: .7rem; color: var(--ink-muted); }
+  .slip-status .dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--ink-muted); flex: none; }
+  .slip-status.online .dot { background: var(--online); }
+  .slip-status.offline .dot { background: var(--accent); }
+  .slip-host { margin: var(--space-sm) 0; font-family: var(--font-mono); font-size: 1rem; font-weight: 500; letter-spacing: .01em; }
+  .slip-ports { margin: 0 0 var(--space-sm); font-variant-numeric: tabular-nums; }
+  .slip-ports div { display: flex; gap: var(--space-sm); align-items: baseline; border-top: 1px solid var(--rule); padding-block: .45rem; }
+  .slip-ports dt { min-width: 3.4rem; font-family: var(--font-mono); font-size: .9rem; font-weight: 500; }
+  .slip-ports dd { margin: 0; color: var(--ink-muted); font-size: .9rem; }
+  .slip-note { margin: 0 0 var(--space-sm); padding-top: var(--space-xs); border-top: 1px solid var(--rule); font-size: .9rem; line-height: 1.45; color: var(--ink-muted); }
+  .slip-foot { margin: 0; font-family: var(--font-display); font-size: 1rem; }
+
+  /* The depth rail: real figures, read from the shipped world data. */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: var(--space-xl) 0 0;
+    border-top: 2px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding-block: var(--space-md);
+    font-variant-numeric: tabular-nums;
+  }
+  .facts > div { display: flex; flex-direction: column; gap: .15rem; padding-right: var(--space-md); }
+  .facts > div + div { border-left: 1px solid var(--rule); padding-left: var(--space-lg); }
+  .facts dt { order: 2; font-family: var(--font-mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-top: .15rem; }
+  .facts .fact-figure { order: 1; margin: 0; font-family: var(--font-display); font-size: clamp(1.75rem, 2.8vw, 2.5rem); line-height: 1; color: var(--ink); }
+  .facts .fact-detail { order: 3; margin: .2rem 0 0; font-size: .9rem; line-height: 1.35; color: var(--ink-muted); }
+
+  /* --- Dispatch ---------------------------------------------------------- */
+  .dispatch { padding-block: var(--space-lg) var(--space-xl); }
+  .dispatch-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; margin-bottom: var(--space-lg); }
+  .dispatch-head h2 { margin: 0 0 var(--space-xs); }
+  .dispatch-sub { margin: 0; color: var(--ink-muted); font-size: 1rem; }
+  .dispatch-head > a { font-family: var(--font-display); white-space: nowrap; }
+  .dispatch-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(19rem, .65fr); gap: var(--space-xl); }
+  .dispatch-lead { border-top: 2px solid var(--rule); padding-top: var(--space-md); }
+  .dispatch-plate {
+    display: block;
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-sm) 0;
+    background: var(--paper-deep);
+    border: 1px solid var(--rule);
+  }
+  .dispatch-plate img { display: block; width: 100%; height: auto; }
+  .dispatch-lead time, .dispatch-more time { color: var(--ink-muted); font-family: var(--font-mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; }
+  .dispatch-lead h3 { margin: var(--space-xs) 0 var(--space-sm); font-size: clamp(1.75rem, 2.8vw, 2.5rem); }
+  .dispatch-lead h3 a { color: var(--ink); }
+  .dispatch-lead h3 a:hover, .dispatch-more h3 a:hover { color: var(--accent); text-decoration: none; }
+  .dispatch-lead p { max-width: 58ch; color: var(--ink-muted); }
+  .dispatch-read { font-family: var(--font-display); }
+  .dispatch-more { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--rule); align-self: start; }
+  .dispatch-more li { padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
+  .dispatch-more h3 { margin: var(--space-xs) 0; font-size: 1.25rem; }
+  .dispatch-more h3 a { color: var(--ink); }
+  .dispatch-more p { margin: 0; color: var(--ink-muted); font-size: 1rem; }
+
+  /* --- The world in its own words ---------------------------------------- */
+  .voices { border-block: 1px solid var(--rule); background: var(--paper-deep); padding-block: var(--space-xl); }
+  .voices-head {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid var(--rule);
+  }
+  .voices h2 { margin: 0 0 var(--space-xs); font-size: clamp(1.75rem, 3.3vw, 2.5rem); }
+  .voices-sub { margin: 0; max-width: 60ch; color: var(--ink-muted); font-size: 1rem; }
+  .voices-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(22rem, .85fr); gap: clamp(2rem, 4vw, 4rem); align-items: start; }
+  figure { margin: 0; }
+  figcaption { margin-top: var(--space-sm); font-family: var(--font-mono); font-size: .7rem; line-height: 1.65; color: var(--ink-muted); }
+  figcaption a { color: var(--accent); }
+  .letter {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: var(--space-lg);
+  }
+  .letter blockquote { margin: 0; }
+  .letter blockquote p {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  .letter blockquote p:first-child {
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 2.1vw, 1.75rem);
+    line-height: 1.28;
+    text-indent: -.4em;
+  }
+  .letter blockquote p:first-child::before { content: "\201C"; color: var(--accent); }
+  .letter blockquote p:last-child { margin-bottom: 0; font-style: italic; }
+  .letter figcaption { margin-top: var(--space-md); padding-top: var(--space-sm); border-top: 1px solid var(--rule); }
+
+  .artifacts { display: grid; gap: var(--space-md); align-content: start; }
+  .artifact {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: var(--space-md);
+  }
+  .artifact-bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: var(--space-xs);
+    margin-bottom: var(--space-sm);
+  }
+  .artifact-title { margin: 0; font-family: var(--font-display); font-size: 1.25rem; }
+  .artifact-stamp { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; color: var(--accent); }
+  .artifact blockquote { margin: 0; }
+  .artifact-room blockquote { font-family: var(--font-mono); font-size: .9rem; line-height: 1.6; color: var(--ink); }
+  .artifact-help blockquote { font-family: var(--font-body); font-size: 1rem; font-style: italic; line-height: 1.55; color: var(--ink); }
+  .artifact figcaption { margin-top: var(--space-sm); padding-top: var(--space-xs); border-top: 1px solid var(--rule); }
+
+  /* --- Field guides ------------------------------------------------------ */
+  .world-desk { padding-block: var(--space-xl); border-bottom: 1px solid var(--rule); }
+  .world-grid { display: grid; grid-template-columns: minmax(16rem, .68fr) minmax(26rem, 1.32fr); gap: var(--space-xl); }
+  .world-intro p { color: var(--ink-muted); }
+  .guide-list { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--rule); font-variant-numeric: tabular-nums; }
+  .guide-list li { border-bottom: 1px solid var(--rule); }
+  .guide-list a { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr) 7.5rem 1rem; gap: var(--space-md); align-items: baseline; padding-block: var(--space-md); color: var(--ink); }
+  .guide-list a:hover { color: var(--accent); text-decoration: none; }
+  .guide-list h3 { margin: 0; font-size: 1.25rem; }
+  .guide-list p { margin: 0; color: var(--ink-muted); font-size: 1rem; }
+  .guide-meta { font-family: var(--font-mono); font-size: .7rem; color: var(--ink-muted); text-align: right; white-space: nowrap; }
+  .guide-arrow { color: var(--accent); text-align: right; }
+
+  /* --- Archive and restoration ------------------------------------------- */
+  .record { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(19rem, .6fr); gap: var(--space-xl); padding-block: var(--space-xl) var(--space-lg); }
+  .archive-feature { border-top: 2px solid var(--rule); padding-top: var(--space-md); }
+  .archive-feature h2 { max-width: 21ch; font-size: clamp(1.75rem, 3.2vw, 2.5rem); }
+  .archive-feature > p { color: var(--ink-muted); }
+  .era-ledger {
+    list-style: none;
+    margin: var(--space-lg) 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+    font-variant-numeric: tabular-nums;
+  }
+  .era-ledger li {
+    display: grid;
+    grid-template-columns: 3.8rem minmax(0, 1fr);
+    gap: var(--space-md);
+    padding-block: .65rem;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+    font-size: 1rem;
+  }
+  .era-ledger time {
+    font-family: var(--font-mono);
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .era-ledger div { color: var(--ink-muted); }
+  .era-ledger strong { font-family: var(--font-display); font-weight: 400; font-size: 1rem; color: var(--ink); }
+  .record-links { display: flex; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); font-family: var(--font-display); }
+
+  .restoration-note {
+    align-self: start;
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--accent);
+    background: var(--paper-deep);
+    padding: var(--space-md);
+  }
+  .wanderer-plate {
+    margin: 0 0 var(--space-md);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: var(--space-sm);
+  }
+  .wanderer-plate img { display: block; width: 100%; height: auto; max-width: 16rem; margin-inline: auto; }
+  .restoration-note h2 { font-size: 1.5rem; margin-bottom: var(--space-xs); }
+  .restoration-note p { color: var(--ink-muted); font-size: 1rem; }
+  .restoration-cta { margin-bottom: 0; font-family: var(--font-display); font-size: 1rem; }
+
+  @media (max-width: 1000px) {
+    .voices-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
+  }
+  @media (max-width: 900px) {
+    .cover-deck, .world-grid, .record, .dispatch-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
+    .world-rules { grid-template-columns: 1fr; gap: var(--space-sm); }
+    .connection-slip { max-width: 32rem; }
+    .facts { grid-template-columns: 1fr 1fr; padding-block: 0; }
+    .facts > div, .facts > div + div { border-left: 0; padding: var(--space-md) var(--space-md) var(--space-md) 0; }
+    .facts > div:nth-child(even) { border-left: 1px solid var(--rule); padding-left: var(--space-md); padding-right: 0; }
+    .facts > div:nth-child(n + 3) { border-top: 1px solid var(--rule); }
+  }
+  @media (max-width: 640px) {
+    .cover { padding-block: var(--space-lg); }
+    .cover h1 { font-size: clamp(2.5rem, 12vw, 3rem); }
+    .cover-actions { gap: var(--space-xs) var(--space-sm); }
+    .btn-primary, .btn-secondary { padding: .65rem .9rem; font-size: 1rem; }
+    .letter { padding: var(--space-md); }
     .guide-list a { grid-template-columns: 1fr 1rem; gap: var(--space-xs) var(--space-sm); }
-    .guide-list p { grid-column: 1; }
-    .guide-list a > span { grid-column: 2; grid-row: 1; }
-    .dispatch-list li { grid-template-columns: 1fr; gap: var(--space-xs); }
+    .guide-list h3, .guide-list p, .guide-meta { grid-column: 1; }
+    .guide-meta { text-align: left; }
+    .guide-arrow { grid-column: 2; grid-row: 1; }
   }
 </style>
