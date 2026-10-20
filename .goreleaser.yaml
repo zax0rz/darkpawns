@@ -22,7 +22,7 @@ builds:
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
     flags: [-trimpath]
-    ldflags: [-s -w]
+    ldflags: ['-s -w -X main.version={{ .Version }}']
 archives:
   - id: portable
     ids: [launcher, server]

@@ -16,7 +16,7 @@ import tempfile
 WORLD_PARTS = ('wld', 'mob', 'obj', 'zon', 'shp', 'movesel', 'scripts')
 SEEDS = [f'lib/world/{part}' for part in WORLD_PARTS] + [
     'lib/text', 'lib/misc/help', 'lib/misc/messages', 'lib/misc/socials', 'web/public',
-    'mudlet/darkpawns.xml', 'mudlet/VERSION',
+    'mudlet/darkpawns.xml', 'mudlet/VERSION', 'bootstrap/motd',
 ]
 
 
@@ -34,6 +34,7 @@ def stage(root, version):
     with tempfile.TemporaryDirectory(prefix='.release-stage-', dir=root) as temporary:
         staged = pathlib.Path(temporary) / 'release-assets'
         staged.mkdir()
+        motd = None
         with tarfile.open(fileobj=io.BytesIO(source)) as archive:
             for member in archive:
                 if member.isdir():
@@ -43,6 +44,10 @@ def stage(root, version):
                 path = pathlib.PurePosixPath(member.name)
                 if path.is_absolute() or '..' in path.parts:
                     raise RuntimeError('Invalid starter asset path')
+                if member.name == 'bootstrap/motd':
+                    with archive.extractfile(member) as content:
+                        motd = content.read()
+                    continue
                 name = member.name
                 if name.startswith('web/public/'):
                     name = 'web/' + name.removeprefix('web/public/')
@@ -50,6 +55,11 @@ def stage(root, version):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 with archive.extractfile(member) as content:
                     target.write_bytes(content.read())
+        if motd is None:
+            raise RuntimeError('Missing release starter MOTD')
+        # Overlay only the staged starter file, never canonical source or an
+        # existing instance. Operators own lib/text/motd after initialization.
+        (staged / 'lib/text/motd').write_bytes(motd)
         ui = root / 'admin-ui/dist'
         if not (ui / 'index.html').is_file():
             raise RuntimeError('Build admin-ui before staging the portable release')

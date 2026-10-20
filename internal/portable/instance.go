@@ -33,6 +33,7 @@ type Config struct {
 	Format          int               `json:"format"`
 	HTTPPort        int               `json:"http_port"`
 	JWTSecret       string            `json:"jwt_secret"`
+	GreetingOverlay bool              `json:"greeting_overlay,omitempty"`
 	TelnetBind      string            `json:"telnet_bind,omitempty"`
 	TelnetTLSBind   string            `json:"telnet_tls_bind,omitempty"`
 	WhodBind        string            `json:"whod_bind,omitempty"`
@@ -98,7 +99,7 @@ func InitWithTelnet(bundle, instance string, port, telnetPort int) error {
 	if port < 1 || port > 65535 {
 		return errors.New("HTTP port must be between 1 and 65535")
 	}
-	if err := (Config{HTTPPort: port, TelnetPort: telnetPort, TelnetBind: "127.0.0.1"}).validateHosting(); err != nil {
+	if err := (Config{HTTPPort: port, TelnetPort: telnetPort, TelnetBind: "127.0.0.1", GreetingOverlay: true}).validateHosting(); err != nil {
 		return err
 	}
 	bundle, err := filepath.Abs(bundle)
@@ -156,7 +157,7 @@ func InitWithTelnet(bundle, instance string, port, telnetPort int) error {
 			return err
 		}
 	}
-	cfg := Config{Format: Format, HTTPPort: port, JWTSecret: hex.EncodeToString(secret), TelnetPort: telnetPort, TelnetBind: "127.0.0.1"}
+	cfg := Config{Format: Format, HTTPPort: port, JWTSecret: hex.EncodeToString(secret), TelnetPort: telnetPort, TelnetBind: "127.0.0.1", GreetingOverlay: true}
 	f, err := os.OpenFile(filepath.Join(instance, "instance.json"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
 		return err

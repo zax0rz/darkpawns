@@ -43,6 +43,7 @@ def main(bundle):
         config = json.loads(config_path.read_text())
         assert config['telnet_bind'] == '127.0.0.1'
         assert config['telnet_port'] == telnet_port
+        assert config['greeting_overlay'] is True
         try:
             run('start')
             assert connections() == {'telnet': {'bind': '127.0.0.1', 'port': telnet_port}}
@@ -54,6 +55,8 @@ def main(bundle):
                     assert chunk, greeting
                     greeting += chunk
                 assert b'CircleMUD' in greeting and b'DikuMUD' in greeting
+                assert b'Dark Pawns MUD v' in greeting
+                assert b'As of 10-17-2008' not in greeting
             with urllib.request.urlopen(f'http://127.0.0.1:{web_port}/login', timeout=3) as response:
                 assert response.status == 200
                 assert b'<html' in response.read().lower()

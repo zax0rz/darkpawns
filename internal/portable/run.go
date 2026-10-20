@@ -79,6 +79,9 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	}
 	lib := filepath.Join(instance, "lib")
 	cmd := exec.Command(filepath.Join(bundle, "darkpawns-server"+suffix), "-world", filepath.Join(lib, "world"), "-scripts", filepath.Join(lib, "world", "scripts"), "-db", filepath.Join(lib, "data", "darkpawns.db"), "-web", filepath.Join(bundle, "release-assets", "web"), "-http-bind", "127.0.0.1", "-port", strconv.Itoa(cfg.HTTPPort), "-telnet-bind", cfg.TelnetBind, "-telnet-tls-bind", cfg.TelnetTLSBind, "-whod-bind", cfg.WhodBind, "-telnet-port", strconv.Itoa(cfg.TelnetPort), "-telnet-tls-port", strconv.Itoa(cfg.TelnetTLSPort), "-whod-port", strconv.Itoa(cfg.WhodPort))
+	if cfg.GreetingOverlay {
+		cmd.Args = append(cmd.Args, "-greeting-overlay")
+	}
 	if err := preflightHosting(cfg); err != nil {
 		return err
 	}
