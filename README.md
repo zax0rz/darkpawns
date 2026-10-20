@@ -83,7 +83,10 @@ for an archive downloaded with a browser. The vendors explain what the warnings
 mean and how to open software you trust:
 
 - **macOS:** [Safely open apps on your Mac](https://support.apple.com/102445)
-  (Gatekeeper).
+  (Gatekeeper). On macOS 26.3, a copy installed by the one-line installer ran
+  with no prompt. The same archive downloaded with a browser was blocked until
+  approved under **System Settings → Privacy & Security → Open Anyway**;
+  removing its quarantine attribute afterwards did not unblock it.
 - **Windows:** [Microsoft Defender SmartScreen](https://learn.microsoft.com/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen).
 
 If you skipped the installer, check the archive against the signed
