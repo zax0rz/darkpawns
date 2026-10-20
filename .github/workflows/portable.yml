@@ -18,6 +18,8 @@ on:
       - 'go.mod'
       - 'go.sum'
       - 'scripts/*portable*'
+      - 'scripts/test_install_entry.py'
+      - 'website/static/install.sh'
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -51,6 +53,7 @@ jobs:
         run: |
           go test ./internal/portable ./internal/releaseauth ./cmd/darkpawns ./cmd/dp-release
           python -m unittest discover -s scripts -p test_stage_portable_release.py
+          python -m unittest discover -s scripts -p test_install_entry.py
           node --test scripts/connection-info.test.mjs
           python -m pip install 'websockets>=12,<16'
       - name: Windows editor access adapter

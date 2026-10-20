@@ -25,7 +25,13 @@ binary, running live today and built so anyone can host their own instance.
 
 ## Host your own world
 
-[Download a portable release](https://github.com/zax0rz/darkpawns/releases/latest)
+On macOS or Linux:
+
+```sh
+curl -fsSL https://darkpawns.org/install.sh | bash
+```
+
+Or [download a portable release](https://github.com/zax0rz/darkpawns/releases/latest)
 for Windows, macOS or Linux, extract it, then run `darkpawns setup`
 (`darkpawns.exe setup` on Windows). The wizard starts a local world and opens the
 browser; the first character you create becomes the immortal.
