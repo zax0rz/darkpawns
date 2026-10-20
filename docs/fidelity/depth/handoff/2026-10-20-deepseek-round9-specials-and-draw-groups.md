@@ -110,3 +110,153 @@ descriptor-less pet: `do_tell` reaches nobody, and the `steal` arm's
 `one_argument`, which truncates `"a horse"` to `"a"`, so the slap resolves to
 nobody in both engines. The lane is pinned by `TestSpecShopKeeperActorPortsC`;
 no scenario is claimed for it.
+
+## Oracle evidence
+
+Five scenarios, each diffed against the C oracle with `--draw-parity` on seeds
+1, 2, 3, 5 and 8 — all `result: no normalized divergence` and
+`draw-parity MATCH` (25/25):
+
+```
+spec-npc-quan-lo-depth                 seed 1   MATCH  entries=4082 stream=4139
+spec-npc-quan-lo-depth                 seed 2   MATCH  entries=4077 stream=4134
+spec-npc-quan-lo-depth                 seed 3   MATCH  entries=4078 stream=4135
+spec-npc-quan-lo-depth                 seed 5   MATCH  entries=4078 stream=4135
+spec-npc-quan-lo-depth                 seed 8   MATCH  entries=4077 stream=4134
+spec-npc-elements-guardian-depth       seed 1   MATCH  entries=4114 stream=4176
+spec-npc-elements-guardian-depth       seed 2   MATCH  entries=4116 stream=4178
+spec-npc-elements-guardian-depth       seed 3   MATCH  entries=4116 stream=4178
+spec-npc-elements-guardian-depth       seed 5   MATCH  entries=4109 stream=4171
+spec-npc-elements-guardian-depth       seed 8   MATCH  entries=4116 stream=4178
+spec-npc-elements-minion-depth         seed 1   MATCH  entries=4080 stream=4132
+spec-npc-elements-minion-depth         seed 2   MATCH  entries=4079 stream=4131
+spec-npc-elements-minion-depth         seed 3   MATCH  entries=4079 stream=4131
+spec-npc-elements-minion-depth         seed 5   MATCH  entries=4080 stream=4132
+spec-npc-elements-minion-depth         seed 8   MATCH  entries=4079 stream=4131
+spec-npc-carrion-depth                 seed 1   MATCH  entries=4078 stream=4130
+spec-npc-carrion-depth                 seed 2   MATCH  entries=4074 stream=4126
+spec-npc-carrion-depth                 seed 3   MATCH  entries=4075 stream=4127
+spec-npc-carrion-depth                 seed 5   MATCH  entries=4074 stream=4126
+spec-npc-carrion-depth                 seed 8   MATCH  entries=4074 stream=4126
+spec-npc-dump-depth                    seed 1   MATCH  entries=4074 stream=4108
+spec-npc-dump-depth                    seed 2   MATCH  entries=4072 stream=4106
+spec-npc-dump-depth                    seed 3   MATCH  entries=4073 stream=4107
+spec-npc-dump-depth                    seed 5   MATCH  entries=4072 stream=4106
+spec-npc-dump-depth                    seed 8   MATCH  entries=4073 stream=4107
+```
+
+Targeted census (the smallest census that can fail on this change: the five new
+scenarios plus round 8's two, which share the NPC dispatch path):
+
+```
+deepseek-r9-specials @07e908821: scenarios=7 passed=7 expected=0 unpinnable=0
+  stale=0 failed=0 infra=0 timed_out=0 unstable=0 verdict=CLEAN
+```
+
+Evidence: `~/Archives/darkpawns/oracle-runs/2026-10-20/deepseek-r9-specials/`.
+
+Revert controls, each run to a red report:
+
+| control | result |
+|---|---|
+| comment out all eleven `RegisterActorSpec` calls | `spec-npc-quan-lo-depth`, `spec-npc-elements-guardian-depth`, `spec-npc-elements-minion-depth`, `spec-npc-carrion-depth` and `spec-npc-dump-depth` all red |
+| disable the NPC-side shop-index recovery | no transcript change (see "Unprovable by bytes"); `TestSpecShopKeeperActorPortsC` is the proof |
+
+`make fidelity-depth` passes: 6,708 cases, 6,617 proven/delegated, 0 errors.
+
+## Gates
+
+Run individually, each checked for its own exit status:
+`make fmt` · `go build ./...` · `go vet ./...` · `go test ./...` (43 packages,
+0 failures) · `golangci-lint run ./...` (0 issues) · `make deadcode-ratchet` ·
+`make fidelity-depth` · `make fidelity-units` · `make string-census` ·
+`gosec -severity=high -quiet ./...` — all exit 0.
+
+## Part 2 — the coincidence greens
+
+The 2026-10-18 batch census
+(`~/Archives/darkpawns/oracle-runs/2026-10-18/batch-z/draw-results.tsv`) has 36
+DRAW rows over 18 scenarios. Per the brief they were grouped by first divergent
+draw before any fix (`--draw-parity`, which prints the C call, the Go call and
+the step each engine was in).
+
+| first divergent stream index | scenarios (seeds) | what the first divergence is |
+|---|---|---|
+| 106 | `carve-depth` (1,2,3,5,8) | C `Number(1,20)=9` in warmup vs Go `Number(0,3)=1` in probe step 1 |
+| 54 / 55 | `house-depth` (1,2,3,5,8) | C `Number(0,3)=0` in warmup vs Go `Number(1,6)=1` in setup |
+| 40 | `circle-aware-depth`, `checkload-depth` (2,3,5,8) | same index in two unrelated scenarios |
+| 19–24 | `peek-gates-depth` (19), `sedit-session-depth` (22), `sedit-entry-depth` (23), `idlist-depth` (23/24) (3,8) | a tight cluster one to five draws apart |
+| 37 | `will-zen-meditation-depth` (3,8) | not yet diagnosed |
+| 64 / 65 | `mudlog-crash-load-entry` (3,8) | not yet diagnosed |
+| 54 | `shop-buy-weight-sell-steal` (1) | not yet diagnosed |
+| 22 | `shop-live-inventory-gate`, `shop-live-inventory-filters` (1) | C `Number(0,900)=759` vs Go `Number(0,20)=17`, both in setup |
+| 42 / 20 / 21 | `spec-proc-key-seller` (1), `spec-proc-key-seller-non-owner` (1), `spell-charm-shopkeeper-depth` (1) | not yet diagnosed |
+| 30 | `spec-proc-beholder-command` (1) | not yet diagnosed |
+| 35 | `spec-proc-cityguard` (5) | not yet diagnosed |
+
+### carve-depth: the first divergence is a combat attack roll
+
+`carve-depth` diverges at index 106 on every seed it runs, the strongest signal
+in the set. C's draw is `number(1, 20)` — `hit()`'s attack roll
+(`src/fight.c:1815`) — and Go's draw at the same position is `number(0, 3)`, the
+hide-clear roll that precedes the next command (`src/interpreter.c:883-949`,
+`pkg/game/npc_command.go`). C therefore rolls one more attack roll during the
+warmup's ten `~dpclock pulse 20` rounds than the port does. `hit()` makes that
+roll unconditionally once attacker and victim share a room: its only pre-roll
+early return is the different-room stop, which also ends the fight
+(`src/fight.c:1774-1780`). The port's round skipped one swing.
+
+The cause is in the combat round's call accounting, not in the carving handler
+and not in a special proc. Owner for the fix: `pkg/combat` round / `hit`
+accounting; `carve-depth` is the vehicle.
+
+### house-depth and the shop rows: the first divergence is inside setup
+
+Both diverge during the setup phase — `Number(0,3)` vs `Number(1,6)` for
+`house-depth`, `Number(0,900)` vs `Number(0,20)` for the shop pair — i.e. before
+the probed commands run. Setup draws are login, room reset and shop stock
+generation, which is the stop tier the brief names (`DP_CLOCK` accounting, login,
+persistence). They are written up here rather than chased, with the exact call
+pairs and stream indices, so the next round can re-run one scenario per pair and
+name the call site.
+
+### Row ownership
+
+| scenario | rows | state | owner |
+|---|---|---|---|
+| `carve-depth` | 5 | open — diagnosed to `hit()`'s attack roll | combat round accounting |
+| `house-depth` | 5 | open — setup-phase draw substitution | setup / login lane |
+| `circle-aware-depth` | 4 | open | to diagnose |
+| `checkload-depth` | 2 | open (index 40, same as circle-aware) | to diagnose |
+| `peek-gates-depth` | 2 | open (index 19) | to diagnose |
+| `sedit-session-depth`, `sedit-entry-depth` | 4 | open (indices 22, 23) | to diagnose |
+| `idlist-depth` | 2 | open (indices 23, 24) | to diagnose |
+| `will-zen-meditation-depth` | 2 | open (index 37) | to diagnose |
+| `mudlog-crash-load-entry` | 2 | open (index 64/65) | to diagnose |
+| `shop-buy-weight-sell-steal`, `shop-live-inventory-gate`, `shop-live-inventory-filters` | 3 | open — setup-phase stock generation | shop stock generation |
+| `spec-proc-key-seller`, `spec-proc-key-seller-non-owner`, `spell-charm-shopkeeper-depth` | 3 | open | to diagnose |
+| `spec-proc-beholder-command` | 1 | open | to diagnose |
+| `spec-proc-cityguard` | 1 | open | to diagnose |
+
+No DRAW row was cleared this round and none was claimed: the one group diagnosed
+to a call site (`carve-depth`) points outside this round's lane, and the two
+setup-phase groups fall in the stop tier.
+
+## Not taken this round
+
+- `receptionist` and `cryogenicist`: stop tier (rent), unchanged.
+- The 32 specials C never assigns: out of scope (R5e).
+
+## Decisions for Zach
+
+- **One PR with two commits instead of one PR per special group.** The twelve
+  lanes share one helper file (`cRoomPeople`, `elementTeleportPerson`) and one
+  scenario family; separate PRs would each carry the same helper and collide on
+  `docs/fidelity/depth/spec-procs.tsv`. Alternative: three stacked PRs.
+- **`start_room` is not given an oracle vehicle.** Alternative: fix the
+  extra-description trailing-space carry-over first, which is an output/render
+  change touching every room with an extra description.
+- **`whirlpool` is unit-proven only.** Alternative: a `set-mob-flag … SENTINEL`
+  fixture directive, which is stop tier.
+- **`dump`'s and `shop_keeper`'s descriptor-facing arms stay blocked** rather
+  than ported partially (R1a for `list`).
