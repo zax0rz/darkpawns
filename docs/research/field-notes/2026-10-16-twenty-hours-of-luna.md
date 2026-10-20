@@ -43,7 +43,7 @@ Separately, #2007's correct fix (smokescreen now really blinds) exposed three ne
 
 ## What made it possible
 
-This run stands on an earlier one. In late August and early September, a single long Luna session (per Zach, more than five days) walked the port from breadth to depth:
+This run stands on an earlier one. In late August and early September, a single Luna session of 5 days 4 hours walked the port from breadth to depth (see *The five-day session's record* below):
 
 - Breadth first: every registered command matched C at least once (PF-004, 2026-08-23).
 - Then depth, in source and command-table order: 43 PRs (#687 to #731) took the modeled depth ledger to 855 of 861 actionable cases (PF-006, MA-005, [2026-08-28 milestone](2026-08-28-fidelity-depth-milestone.md)).
@@ -65,5 +65,38 @@ Two goals also mapped the same C file in parallel PRs twice (#2091 against #2088
 
 ## Open action items
 
-- **Recover the five-day session's own record.** The repository fixes the late-August work by PR range and dates, but not that it was one Luna session lasting more than five days; that comes from Zach. The session has not been deleted. Find it, then cite its start and end times, turn count, and any compaction or handoff points here and in PF-075's evidence, replacing "per Zach".
+- ~~Recover the five-day session's own record.~~ Done 2026-10-20 (below).
 - ~~Amend PF-075 when the current run ends.~~ Done 2026-10-16 (this revision).
+
+## The five-day session's record
+
+Recovered 2026-10-20 from the Codex session log
+`~/.codex/sessions/2026/08/29/rollout-2026-08-29T06-03-35-01a04cf9-824e-7f23-825a-b1189b9e37ba.jsonl.zst`
+(96.6 MB compressed; working directory `/home/zach/darkpawns`):
+
+| | |
+|---|---|
+| First event | 2026-08-29 10:03:44 UTC |
+| Last event | 2026-09-03 14:47:53 UTC |
+| Elapsed | 5 days 4 hours 44 minutes |
+| Human turns | 3 |
+| Context compactions | 206 |
+| Tool calls | about 29,000 |
+| `dp-oracle-diff` invocations | 6,481 |
+| `gh pr create` / `gh pr merge` | 592 / 535 |
+| `git push` | 647 |
+| PRs referenced | #735 to #1311 (567 distinct) |
+
+The three human turns were the opening `/goal` ("Run the depth-fidelity loop per
+docs/briefs/BRIEF-2026-08-25-depth-fidelity-loop.md (as amended 2026-08-27) as a
+standing queue until …"), an apology on day three that another agent had
+disturbed the worktree, and "are you there" at the end. Its branches used the
+brief's `glm/` and `handoff/` prefixes (434 and 134 of the PRs it created), which
+is why GitHub's branch names alone don't identify it as Luna's work. GitHub
+shows 572 PRs opened in that window, 571 merged.
+
+Counts are from a single pass over the log's events: compactions are
+`context_compacted` events, PR and push counts are tool-call arguments
+containing those commands (a retried command counts twice), and human turns are
+user messages excluding injected context.
+
