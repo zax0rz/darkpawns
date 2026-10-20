@@ -21,9 +21,10 @@ import (
 // and draw-observable.
 
 // shopNpcSay is C's do_say(keeper, msg, cmd_tell, 0): the room hears the keeper,
-// who is excluded from the audience (src/act.comm.c do_say → act TO_ROOM).
+// who is excluded from the audience, and the verb follows the final punctuation
+// (src/act.comm.c do_say). npcSay is that same body for a mobile.
 func (w *World) shopNpcSay(keeper *MobInstance, msg string) {
-	Act(w, false, keeper, nil, nil, nil, "$n says, '"+msg+"'", "", ToRoom)
+	w.npcSay(keeper, msg)
 }
 
 // shopNpcTell is C's do_tell(keeper, buf) where buf starts with the actor's
