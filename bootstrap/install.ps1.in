@@ -1,0 +1,115 @@
+# Dark Pawns portable bootstrap. Compatible with Windows PowerShell 5.1.
+param(
+ [string]$InstallDir = (Join-Path $env:LOCALAPPDATA 'darkpawns\releases'),
+ [string]$BinDir = (Join-Path $env:LOCALAPPDATA 'darkpawns\bin'),
+ [string]$SourceDir = '',
+ [switch]$NoSetup,
+ [switch]$NoPath
+)
+$ErrorActionPreference = 'Stop'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$base = 'https://github.com/zax0rz/darkpawns/releases/latest/download'
+$work = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-install-' + [Guid]::NewGuid().ToString('N'))
+[void][IO.Directory]::CreateDirectory($work)
+$stage = $null
+function Fetch([string]$Name, [string]$Base) {
+ $destination = Join-Path $work $Name
+ if ($SourceDir) { Copy-Item -LiteralPath (Join-Path $SourceDir $Name) -Destination $destination }
+ else {
+  Add-Type -AssemblyName System.Net.Http
+  $handler = New-Object Net.Http.HttpClientHandler
+  $handler.AllowAutoRedirect = $false
+  $client = New-Object Net.Http.HttpClient($handler)
+  $client.Timeout = [TimeSpan]::FromSeconds(180)
+  $uri = [Uri]($Base + '/' + $Name)
+  try {
+   for ($redirects=0; $redirects -lt 6; $redirects++) {
+    if ($uri.Scheme -ne 'https' -or $uri.UserInfo) {throw 'Unsafe download redirect.'}
+    $response = $client.GetAsync($uri,[Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+    try {
+     $code = [int]$response.StatusCode
+     if ($code -ge 300 -and $code -lt 400) { $uri = New-Object Uri($uri,$response.Headers.Location); continue }
+     if ($code -ne 200) {throw ('Download returned HTTP ' + $code)}
+     $inputStream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
+     $outputStream = [IO.File]::Create($destination)
+     try {
+      $buffer = New-Object byte[] 65536
+      [long]$total = 0
+      while (($count = $inputStream.Read($buffer,0,$buffer.Length)) -gt 0) {
+       $total += $count
+       if ($total -gt 536870912) {throw 'Download exceeds size limit.'}
+       $outputStream.Write($buffer,0,$count)
+      }
+     } finally {$outputStream.Dispose();$inputStream.Dispose()}
+     return
+    } finally {$response.Dispose()}
+   }
+   throw 'Too many download redirects.'
+  } finally {$client.Dispose();$handler.Dispose()}
+ }
+}
+try {
+ if (![IO.Path]::IsPathRooted($InstallDir) -or ![IO.Path]::IsPathRooted($BinDir)) { throw 'Choose absolute installation and command folders.' }
+ $architecture = $env:PROCESSOR_ARCHITEW6432
+ if (!$architecture) { $architecture = $env:PROCESSOR_ARCHITECTURE }
+ switch ($architecture.ToUpperInvariant()) { 'AMD64' {$arch='amd64'} 'ARM64' {$arch='arm64'} default {throw 'This processor is not supported.'} }
+ Write-Host 'Dark Pawns: checking the publisher signature.'
+ Fetch 'release-manifest.txt' $base
+ Fetch 'release-manifest.sig' $base
+ if ((Get-Item -LiteralPath (Join-Path $work 'release-manifest.txt')).Length -gt 32768 -or (Get-Item -LiteralPath (Join-Path $work 'release-manifest.sig')).Length -gt 1024) {throw 'Release metadata exceeds size limit.'}
+ $rsa = New-Object Security.Cryptography.RSACryptoServiceProvider
+ $rsa.PersistKeyInCsp = $false
+ $rsa.FromXmlString('<RSAKeyValue><Modulus>@@RSA_MODULUS@@</Modulus><Exponent>@@RSA_EXPONENT@@</Exponent></RSAKeyValue>')
+ try {
+  if (!$rsa.VerifyData([IO.File]::ReadAllBytes((Join-Path $work 'release-manifest.txt')), 'SHA256', [IO.File]::ReadAllBytes((Join-Path $work 'release-manifest.sig')))) { throw 'Publisher verification failed. Nothing installed.' }
+ } finally { $rsa.Dispose() }
+ $lines = [IO.File]::ReadAllLines((Join-Path $work 'release-manifest.txt'))
+ if ($lines[0] -ne 'darkpawns-release-v1' -or $lines[1] -notmatch '^version (v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*))$') {throw 'Unsupported stable release metadata.'}
+ $tag = $Matches[1]
+ $version = $tag.Substring(1)
+ $wrapper = 'darkpawns_' + $version + '_windows_' + $arch
+ $name = $wrapper + '.zip'
+ $records = @($lines | Where-Object {$_ -match ('^asset windows ' + $arch + ' ')})
+ if ($records.Count -ne 1) {throw 'No unique signed archive for this platform.'}
+ $fields = $records[0].Split(' ')
+ if ($fields.Count -ne 7 -or $fields[3] -ne $name -or $fields[5] -ne 'sha256' -or $fields[6] -cnotmatch '^[a-f0-9]{64}$' -or $fields[4] -notmatch '^[0-9]+$') {throw 'Invalid signed archive record.'}
+ $expectedSize = [long]$fields[4]
+ if ($expectedSize -lt 1 -or $expectedSize -gt 536870912) {throw 'Archive exceeds size limit.'}
+ Fetch $name ('https://github.com/zax0rz/darkpawns/releases/download/' + $tag)
+ $archive = Join-Path $work $name
+ if ((Get-Item -LiteralPath $archive).Length -ne $expectedSize -or (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -cne $fields[6]) {throw 'Archive verification failed. Nothing installed.'}
+ [void][IO.Directory]::CreateDirectory($InstallDir)
+ [void][IO.Directory]::CreateDirectory($BinDir)
+ $target = Join-Path $InstallDir $wrapper
+ if (Test-Path -LiteralPath $target) {throw "Release already exists at $target. Use its darkpawns update command."}
+ $stage = Join-Path $InstallDir ('.install-' + [Guid]::NewGuid().ToString('N'))
+ [void][IO.Directory]::CreateDirectory($stage)
+ Add-Type -AssemblyName System.IO.Compression.FileSystem
+ $zip = [IO.Compression.ZipFile]::OpenRead($archive)
+ try {
+  foreach ($entry in $zip.Entries) {
+   $parts = $entry.FullName.Split('/')
+   if ($parts[0] -ne $wrapper -or $parts -contains '..' -or $parts -contains '.' -or $entry.FullName.Contains('\') -or $entry.FullName.Contains(':') -or (($entry.ExternalAttributes -shr 16) -band 61440) -eq 40960) {throw 'Unsafe archive entry.'}
+  }
+ } finally {$zip.Dispose()}
+ [IO.Compression.ZipFile]::ExtractToDirectory($archive,$stage)
+ $payload = Join-Path $stage $wrapper
+ if (!(Test-Path -LiteralPath (Join-Path $payload 'darkpawns.exe')) -or !(Test-Path -LiteralPath (Join-Path $payload 'darkpawns-server.exe'))) {throw 'Release executables are missing.'}
+ Move-Item -LiteralPath $payload -Destination $target
+ $launcher = Join-Path $target 'darkpawns.exe'
+ $shim = Join-Path $BinDir 'darkpawns.cmd'
+ if (!(Test-Path -LiteralPath $shim)) {
+  # Batch files expand percent expressions even inside quoted command paths.
+  [IO.File]::WriteAllText($shim, '@chcp 65001 >nul' + "`r`n" + '@"' + $launcher.Replace('%','%%') + '" %*' + "`r`n", (New-Object Text.UTF8Encoding($false)))
+ } else {Write-Host 'Existing darkpawns command preserved.'}
+ if (!$NoPath) {
+  $userPath = [string][Environment]::GetEnvironmentVariable('Path','User')
+  if (@($userPath -split ';') -notcontains $BinDir) { [Environment]::SetEnvironmentVariable('Path',(($userPath.TrimEnd(';') + ';' + $BinDir).TrimStart(';')),'User') }
+ }
+ Write-Host "Installed: $launcher"
+ Write-Host "Command folder: $BinDir. Open a new terminal if PATH changed."
+ if (!$NoSetup) { & $launcher setup; if ($LASTEXITCODE -ne 0) {throw 'Setup did not complete. The installed release is retained.'} }
+} finally {
+ if ($stage -and (Test-Path -LiteralPath $stage)) {Remove-Item -LiteralPath $stage -Recurse -Force}
+ if (Test-Path -LiteralPath $work) {Remove-Item -LiteralPath $work -Recurse -Force}
+}

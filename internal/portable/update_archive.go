@@ -20,6 +20,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/zax0rz/darkpawns/internal/releaseauth"
 )
 
 const (
@@ -129,6 +131,9 @@ func fetchUpdate(ctx context.Context, archive, digest, destination string) (stri
 		defer client.CloseIdleConnections()
 		asset, err := latestAsset(ctx, client, releaseAPI)
 		if err != nil {
+			return "", err
+		}
+		if err := verifyPublishedAsset(ctx, client, asset, releaseauth.TrustedKey); err != nil {
 			return "", err
 		}
 		digest = strings.TrimPrefix(asset.Digest, "sha256:")
@@ -318,4 +323,54 @@ func verifyUpdateBundle(bundle string) (Manifest, error) {
 		}
 	}
 	return manifest, nil
+}
+
+func verifyPublishedAsset(ctx context.Context, client *http.Client, asset releaseAsset, key []byte) error {
+	base := strings.TrimSuffix(asset.URL, asset.Name)
+	fetch := func(name string, limit int64) ([]byte, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+name, nil)
+		if err != nil {
+			return nil, err
+		}
+		response, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer response.Body.Close()
+		if response.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("publisher metadata returned HTTP %d", response.StatusCode)
+		}
+		data, err := io.ReadAll(io.LimitReader(response.Body, limit+1))
+		if err != nil {
+			return nil, err
+		}
+		if int64(len(data)) > limit {
+			return nil, errors.New("publisher metadata exceeds limit")
+		}
+		return data, nil
+	}
+	data, err := fetch("release-manifest.txt", 32768)
+	if err != nil {
+		return err
+	}
+	signature, err := fetch("release-manifest.sig", 1024)
+	if err != nil {
+		return err
+	}
+	manifest, err := releaseauth.Verify(data, signature, key)
+	if err != nil {
+		return err
+	}
+	expectedBase := "https://github.com/zax0rz/darkpawns/releases/download/" + manifest.Tag + "/"
+	if base != expectedBase {
+		return errors.New("signed release identity does not match the selected release")
+	}
+	signed, err := manifest.Asset(runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		return err
+	}
+	if signed.Name != asset.Name || signed.Size != asset.Size || "sha256:"+signed.SHA256 != asset.Digest {
+		return errors.New("GitHub asset does not match the publisher's signed record")
+	}
+	return nil
 }

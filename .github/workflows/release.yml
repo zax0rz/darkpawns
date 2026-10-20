@@ -1,0 +1,135 @@
+name: Publish portable release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing reviewed stable tag (vMAJOR.MINOR.PATCH) on main'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: portable-release-publication
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - id: source
+        name: Resolve an existing stable tag on main
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || { echo 'A stable vMAJOR.MINOR.PATCH tag is required.' >&2; exit 1; }
+          source_sha=$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")
+          git merge-base --is-ancestor "$source_sha" origin/main
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "Release $RELEASE_TAG from $source_sha" >> "$GITHUB_STEP_SUMMARY"
+  native:
+    needs: validate
+    uses: ./.github/workflows/portable.yml
+    with:
+      release_ref: ${{ needs.validate.outputs.sha }}
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Build
+        run: go build ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Tests with race detector
+        run: go test -race ./...
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: v2.18.3
+          args: release --clean --skip=publish
+      - name: Check versioned archive set
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: python
+        run: |
+          import os, pathlib
+          version = os.environ['RELEASE_TAG'][1:]
+          expected = {f'darkpawns_{version}_{system}_{arch}' + ('.zip' if system == 'windows' else '.tar.gz') for system in ('linux', 'darwin', 'windows') for arch in ('amd64', 'arm64')}
+          actual = {p.name for p in pathlib.Path('dist').iterdir() if p.name.endswith(('.tar.gz', '.zip'))}
+          assert actual == expected, (actual, expected)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: publication-archives
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    needs: [validate, native, build]
+    runs-on: ubuntu-latest
+    environment: portable-release
+    permissions:
+      contents: write
+      deployments: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/download-artifact@v4
+        with:
+          name: publication-archives
+          path: dist
+      - name: Verify the protected environment and sign the exact artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          SOURCE_SHA: ${{ needs.validate.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_SIGNING_KEY" || { echo 'Configure RELEASE_SIGNING_KEY in the protected portable-release environment.' >&2; exit 1; }
+          reviewers=$(gh api "repos/$GITHUB_REPOSITORY/environments/portable-release" --jq '[.protection_rules[]? | select(.type == "required_reviewers") | .reviewers[]?] | length')
+          test "$reviewers" -gt 0 || { echo 'portable-release must require human approval.' >&2; exit 1; }
+          umask 077
+          signing_key=$(mktemp "$RUNNER_TEMP/dp-signing.XXXXXXXX")
+          trap 'rm -f "$signing_key"' EXIT
+          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$signing_key"
+          go run ./cmd/dp-release --dir dist --tag "$RELEASE_TAG" --commit "$SOURCE_SHA" --key "$signing_key"
+      - name: Create a complete draft and publish it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          SOURCE_SHA: ${{ needs.validate.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Never overwrite assets or continue a partial draft under the same tag.
+          gh release create "$RELEASE_TAG" dist/*.tar.gz dist/*.zip dist/release-manifest.txt dist/release-manifest.sig dist/install.sh dist/install.ps1 --verify-tag --draft --title "Dark Pawns $RELEASE_TAG" --generate-notes
+          gh release edit "$RELEASE_TAG" --draft=false --latest
+          echo "Published $RELEASE_TAG from $SOURCE_SHA with a signed artifact manifest." >> "$GITHUB_STEP_SUMMARY"
