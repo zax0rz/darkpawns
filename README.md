@@ -1,4 +1,5 @@
 [![CI](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml/badge.svg)](https://github.com/zax0rz/darkpawns/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/zax0rz/darkpawns)](https://github.com/zax0rz/darkpawns/releases/latest)
 [![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
 [![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
 ![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white)
@@ -18,28 +19,127 @@
 # Dark Pawns MUD
 
 **CircleMUD 3.0, rewritten in Go.** Dark Pawns is a multiplayer text RPG in the
-DikuMUD lineage — the classic C server faithfully ported to a single modern Go
-binary, running live today and built so anyone can host their own instance.
+DikuMUD lineage, first opened in 1994. This repository ports its C server to a
+single Go binary that emits the same player-facing bytes as the original. The
+game runs live at [darkpawns.org](https://darkpawns.org), and one command
+installs your own copy on Windows, macOS or Linux.
 
-[Play in your browser](https://darkpawns.org/play) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
+[Play in your browser](https://darkpawns.org/play) · [Install your own](#install) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
-## Host your own world
+## Install
 
-[Download a portable release](https://github.com/zax0rz/darkpawns/releases/latest)
-for Windows, macOS or Linux, extract it, then run `darkpawns setup`
-(`darkpawns.exe setup` on Windows). The wizard starts a local world and opens the
-browser; the first character you create becomes the immortal.
+Linux and macOS:
 
-The [portable guide](docs/portable-release.md) covers one-command installation,
-instance management, updates and the current hosting boundaries. A source
-checkout and developer tools are not required to run a release.
+```sh
+sh -c 'set -e; installer=$(mktemp); trap '\''rm -f "$installer"'\'' EXIT; curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://github.com/zax0rz/darkpawns/releases/latest/download/install.sh -o "$installer"; sh "$installer"'
+```
+
+Windows (PowerShell 5.1 or newer):
+
+```powershell
+$installer = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-' + [Guid]::NewGuid().ToString('N') + '.ps1'); try { Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1' -OutFile $installer; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer; if ($LASTEXITCODE -ne 0) { throw 'Installer did not complete.' } } finally { Remove-Item -LiteralPath $installer -ErrorAction SilentlyContinue }
+```
+
+![Installing Dark Pawns: the installer checks the publisher signature, the setup wizard picks a folder and port, and the world starts in the background](docs/images/install-and-setup.gif)
+
+The installer checks the release's publisher signature and the archive's
+SHA-256 before it extracts anything, installs under your user account, and
+starts the setup wizard. No administrator rights, compiler or language runtime
+are needed. Linux and macOS use the system's `curl`, `openssl` and `tar`;
+Windows uses built-in PowerShell.
+
+The wizard asks three things:
+
+1. **A home for the world.** A new folder that holds your players, world edits
+   and settings, kept apart from the release so updates never touch it.
+2. **Connection and startup.** The local web port (default `4350`), whether to
+   keep running after you close the terminal, whether to start when you sign in,
+   and whether to open a browser.
+3. **Review.** Nothing is created until you choose **Create and launch**. The
+   default answer is Cancel.
+
+When it finishes, open the printed address. **The first character you create
+becomes the immortal** (level 40). Create it before you let anyone else connect;
+every character after it starts as a mortal.
+
+A new world listens on `127.0.0.1` only, for the browser and the admin console.
+Telnet and the public game ports stay off until you configure hosting
+([hosted instances](docs/portable-hosting.md)).
+
+Prefer to do it by hand? Download your platform's archive from the
+[latest release](https://github.com/zax0rz/darkpawns/releases/latest), extract
+it, and run `darkpawns setup` (`darkpawns.exe setup` on Windows). The
+[portable release guide](docs/portable-release.md) covers every option,
+including `setup --plain` for screen readers and `setup --yes` for unattended
+installs.
+
+### If Windows or macOS refuses to open it
+
+Releases carry Dark Pawns' own signature, which the installer verifies. They
+are not signed with a Windows Authenticode certificate or notarized by Apple.
+The installer downloads with `curl` or PowerShell, which don't mark files as
+coming from the internet, so it should not trigger either warning. An archive
+downloaded with a browser can:
+
+- **Windows** shows *"Windows protected your PC"* (SmartScreen). Choose
+  **More info**, then **Run anyway**.
+- **macOS** refuses because it *"cannot check it for malicious software"*
+  (Gatekeeper). Open **System Settings → Privacy & Security**, find the message
+  about `darkpawns`, and choose **Open Anyway**. From a terminal,
+  `xattr -dr com.apple.quarantine <extracted folder>` does the same thing.
+
+If you skipped the installer, check the archive against the signed
+`release-manifest.txt` first. The
+[portable release guide](docs/portable-release.md#manual-updates) shows how.
+
+## Run your world
+
+```sh
+darkpawns status     # is it running, and where
+darkpawns start      # start in the background; returns when it's ready
+darkpawns stop       # save everyone and shut down cleanly
+darkpawns restart    # stop, then start
+darkpawns doctor     # check the release, instance, database and startup
+```
+
+![darkpawns status, doctor and restart in a terminal](docs/images/lifecycle-commands.gif)
+
+Every command takes `--instance <folder>` for a world outside the default
+location. `doctor` exits nonzero when it finds a problem, and `status --json` and
+`doctor --json` give structured output for scripts.
+
+To start the world when you sign in, choose it during setup or run
+`darkpawns service install`. It registers a systemd user unit on Linux, a
+LaunchAgent on macOS, or a Task Scheduler logon task on Windows, for your
+account only. `darkpawns service remove` undoes it without touching the world.
+
+The installer puts `darkpawns` in `~/.local/bin` on Linux and macOS. If your
+shell can't find it, add that folder to your `PATH`. On Windows, open a new
+terminal after installing.
+
+## Update
+
+```sh
+darkpawns update --check    # download and verify the new release; the world keeps running
+darkpawns update            # show the plan, then stop, back up, update and restart
+```
+
+An update verifies the signed release, stops the world, snapshots its data,
+swaps the release and starts again. If the new release doesn't come up healthy,
+the updater restores the previous release and the snapshot by itself.
+`darkpawns update recover` finishes an interrupted update. Offline updates from
+an archive and the recovery details are in the
+[portable release guide](docs/portable-release.md#manual-updates).
+`darkpawns.org` itself updates with the same command.
 
 ## Play
 
-The live game is up now. No account signup, no download: play in the
-browser at [darkpawns.org/play](https://darkpawns.org/play), or connect any MUD
-client to **`darkpawns.org` port `7778` with TLS**, so your password and
-everything you type stay private.
+![The web client: a new character's first moments, from a burning hut to the Temple Infirmary, with hit points, mana and movement below](docs/images/web-client-first-steps.png)
+
+The live game needs no account signup and no download: play in the browser at
+[darkpawns.org/play](https://darkpawns.org/play), or connect any MUD client to
+**`darkpawns.org` port `7778` with TLS**, so your password and everything you
+type stay private.
 
 In [TinTin++](https://tintin.mudhalla.net/):
 
@@ -53,11 +153,9 @@ With no client at all:
 openssl s_client -quiet -connect darkpawns.org:7778
 ```
 
-Port `7777` still answers for clients without TLS, but everything sent there,
+Port `7777` still answers clients without TLS, but everything sent there,
 your password included, crosses the network in the clear. Keep it for a quick
 look as a `guest`.
-
-![The Dark Pawns web client connecting and prompting for a character name](docs/images/darkpawns-play-demo.gif)
 
 ### Mudlet
 
@@ -65,22 +163,75 @@ look as a `guest`.
 for `darkpawns.org`, port `7778`, with **Secure** ticked, and connect: before
 the name prompt it installs a dock with your hit points, mana and movement, a
 map of the whole world that follows you, and a chat window. The game text stays
-byte-for-byte what every other client sees. The
+byte for byte what every other client sees. The
 [Mudlet guide](https://darkpawns.org/connect/#mudlet) covers the rest.
 
 ![Mudlet playing Dark Pawns, with the dock showing vitals, a map of Kir Drax'in and the chat window](docs/images/mudlet-dock.png)
 
 Returning from the 2004 era? The world files are the preserved originals, and
-the port's prime directive is that the game plays byte-for-byte like the C
+the port's prime directive is that the game plays byte for byte like the C
 server did: same commands, same combat, same quirks. See
 [the player guide](docs/player-guide/player-guide.md) for classes, character
 creation, and how to connect.
 
-## Run your own
+## Administer
 
-This is the point of the project: live MUDs out there running Dark Pawns. One
-Go binary, no external services required — persistence is one embedded SQLite
-database. PostgreSQL is not a runtime backend.
+Every world includes an admin console at `/admin/`. Sign in with your
+immortal's name and password.
+
+![The admin dashboard: status, zone and room counts, players online, pending builder work, server metrics and the recent log](docs/images/admin-dashboard.png)
+
+### Players
+
+Edit a saved character's level, experience, vitals and attributes, manage their
+equipment and inventory, or reset their password. The character must be fully
+disconnected first, so an edit never races the live game.
+
+![The player editor open on a level 1 character, showing level, experience, vitals and attributes](docs/images/admin-player-editor.png)
+
+### Build the world (webOLC)
+
+Edit rooms, mobs, objects, shops and zones from the browser. webOLC shares one
+editor core with the classic in-game OLC, so it writes the same Diku-format
+world files the server loads. Edits are drafts, held under a lease until you
+commit them, and the workshop lists the zones with changes waiting to be saved.
+
+![The webOLC room editor on Temple Square in Kir Drax'in, showing the name, description and room flags](docs/images/admin-room-editor.png)
+
+### Notifications
+
+Send game events to **Pushover**, **Discord** or both: character created, login,
+logout, death and level gained. Pick events per destination under **Staff
+tools → Notifications**, paste the provider credentials, and use the test
+button. No restart or environment variables are involved. Credentials are
+encrypted at rest (AES-256-GCM) and never returned by the API.
+
+![The notification settings, with Pushover and Discord columns and a row for each game event](docs/images/admin-notifications.png)
+
+### Health checks
+
+Three layers, from the inside out:
+
+- **`darkpawns doctor`** checks the release files, instance configuration,
+  file permissions, launcher, web client, database and startup registration.
+- **`/health`** answers on the web port. Setup waits for it before it reports
+  the world ready.
+- **An external heartbeat.** Save a [Healthchecks](https://healthchecks.io)
+  ping URL under Notifications and the game pings it while its main loop is
+  making progress. Healthchecks alerts you (by Pushover, email or whatever you
+  connect there) when the pings stop, even if the whole host is down.
+
+**Operations** shows live status, memory and goroutine counts, who is online,
+and the server log.
+
+![The operations page: server status, online players, memory metrics and the server log](docs/images/admin-operations.png)
+
+The [deployment guide](DEPLOYMENT.md#optional-game-notifications) covers key
+storage, backups and outage detection.
+
+## Build from source
+
+The release is all you need to run Dark Pawns. To build the server yourself:
 
 ```sh
 git clone https://github.com/zax0rz/darkpawns.git
@@ -94,60 +245,58 @@ go build -o server ./cmd/server
 
 That's a running MUD. Connect with `telnet localhost 7777` or open
 [http://localhost:4350](http://localhost:4350). On an empty database, the first
-character you create becomes the game administrator — create it before opening
-the instance to other players.
+character you create becomes the immortal.
 
-One binary, three surfaces: telnet (`-telnet-port`, default 7777), HTTP +
+One binary, three surfaces: telnet (`-telnet-port`, default 7777), HTTP and
 WebSocket (`-port`, default 4350, serving the browser client and a
 [Huma](https://huma.rocks)-powered JSON API with OpenAPI at `/openapi.json`),
-and an embedded database. `./server -h` lists every flag.
+and an embedded SQLite database. `./server -h` lists every flag.
+[Running Dark Pawns](DEPLOYMENT.md) covers database paths, reverse proxies,
+backups and building the admin frontend. An operator-only PostgreSQL-to-SQLite
+bridge remains for old instances; it is not part of the shipped server.
 
-For everything beyond the quickstart — database paths, reverse proxies,
-backups, and the admin frontend — see [Running Dark Pawns](DEPLOYMENT.md). An
-operator-only PostgreSQL-to-SQLite bridge remains available for old instances;
-it is not part of the shipped server. Official host
-access and deploy procedures for `darkpawns.org` itself live in a private ops
-repo; the public guide covers operating *your* instance.
+Official host access and deploy procedures for `darkpawns.org` live in a
+private ops repository. The public guides cover operating *your* instance.
 
 ## What it is
 
 - **The game:** combat, spells, skills, equipment, shops, clans, houses,
-  bulletin boards, and Lua scripting — ported from the original C with the
+  bulletin boards and Lua scripting, ported from the original C with the
   original behavior as the reference implementation.
 - **The fidelity contract:** the Go server must emit the same player-facing
   bytes as the C original. The [rulebook](docs/fidelity/RULEBOOK.md) is the
-  law; a C-versus-Go differential harness (`cmd/dp-oracle-diff`) plus scenario
-  fixtures and per-command evidence manifests back it up. Presence of a system
-  here is not a claim that every branch is verified — check the fidelity
-  records for coverage.
-- **The API:** REST endpoints via Huma with generated OpenAPI, WebSocket
-  sessions, Prometheus metrics, audit logging, and a React admin frontend
-  (`admin-ui/`).
-- **webOLC (in development):** a web-based online creator — rooms, mobs,
-  objects, shops, and zones editable from the browser through
-  `/admin/olc/*`, sharing one editor core with the classic telnet OLC so both
-  stay byte-identical. Under active development; see `pkg/olc/` and
-  `admin-ui/src/components/olc/`.
+  law. A C-versus-Go differential harness (`cmd/dp-oracle-diff`) runs both
+  servers through more than five thousand scenario and seed pairs, comparing
+  every byte and every random-number draw, and per-command evidence manifests
+  record what is proven. A system's presence here is not a claim that every
+  branch is verified; check the fidelity records for coverage.
+- **The operator surface:** portable releases with signed updates, the admin
+  console, webOLC, notifications and health checks, a REST API with generated
+  OpenAPI, WebSocket sessions, Prometheus metrics and audit logging.
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `cmd/server/` | Game server entry point (the one binary) |
-| `pkg/` | Game logic, sessions, transports, persistence, OLC, and services |
+| `cmd/server/` | Game server entry point |
+| `cmd/darkpawns/` | Portable launcher: setup, lifecycle, doctor and update |
+| `pkg/` | Game logic, sessions, transports, persistence, OLC and services |
 | `cmd/dp-oracle-diff/` | C-versus-Go differential harness and scenarios |
 | `lib/world/` | Preserved world files and scripts loaded by the server |
 | `lib/text/` | Preserved game text and credits |
-| `src/` | Original C source — read-only reference, never edited |
+| `src/` | Original C source: read-only reference, never edited |
 | `web/` | Browser game client and HTTP handlers |
-| `admin-ui/` | React admin frontend (incl. webOLC components) |
+| `admin-ui/` | React admin frontend, including webOLC |
 | `website-astro/` | Authored Astro website ([darkpawns.org](https://darkpawns.org)) |
-| `docs/` | Guides, fidelity evidence, research, and history |
+| `docs/` | Guides, fidelity evidence, research and history |
 
 ## Develop
 
-Read [AGENTS.md](AGENTS.md) first — repository conventions and required checks. [CONTRIBUTING.md](docs/CONTRIBUTING.md) covers the contribution workflow, the fidelity contract, and where help is wanted.
-Gameplay changes must follow the [fidelity rulebook](docs/fidelity/RULEBOOK.md): player-facing bytes are law, the C source wins disputes, nothing is invented.
+Read [AGENTS.md](AGENTS.md) first for repository conventions and required
+checks. [CONTRIBUTING.md](docs/CONTRIBUTING.md) covers the contribution
+workflow, the fidelity contract and where help is wanted. Gameplay changes must
+follow the [fidelity rulebook](docs/fidelity/RULEBOOK.md): player-facing bytes
+are law, the C source wins disputes, and nothing is invented.
 
 ```sh
 make hooks        # one-time: install the pre-push hook
@@ -169,18 +318,24 @@ evidence.
 
 Start at the [documentation index](docs/README.md). Entry points:
 
-- [Running Dark Pawns](DEPLOYMENT.md) — operate your own instance
-- [Fidelity rulebook](docs/fidelity/RULEBOOK.md) — the port contract
-- [Depth testing](docs/fidelity/DEPTH_TESTING.md) — evidence and remaining work
-- [Development setup](docs/DEV-SETUP.md) — toolchain and oracle
-- [Research notebook](docs/research/README.md) — the open research artifact
+- [Portable releases](docs/portable-release.md): install, run, update and recover
+- [Hosted instances](docs/portable-hosting.md): put a world on a public server
+- [Running Dark Pawns](DEPLOYMENT.md): server flags, proxies, notifications and backups
+- [Fidelity rulebook](docs/fidelity/RULEBOOK.md): the port contract
+- [Depth testing](docs/fidelity/DEPTH_TESTING.md): evidence and remaining work
+- [Development setup](docs/DEV-SETUP.md): toolchain and oracle
+- [Research notebook](docs/research/README.md): the open research artifact
 
 Historical briefs and reports are preserved for context, not as a task queue.
 
 ## Credits and license
 
-Dark Pawns grew from the work of its original developers, world builders, and
-players. The preserved [game credits](lib/text/credits) identify CircleMUD 3.0, Jeremy Elson, and its DikuMUD foundations. The [original C repository](https://github.com/rparet/darkpawns) was published by R.E. Paret (Frontline). The Go port is maintained by [zax0rz](https://github.com/zax0rz) (Aiko/Aidan).
+Dark Pawns grew from the work of its original developers, world builders and
+players. The preserved [game credits](lib/text/credits) identify CircleMUD 3.0,
+Jeremy Elson, and its DikuMUD foundations. The
+[original C repository](https://github.com/rparet/darkpawns) was published by
+R.E. Paret (Frontline). The Go port is maintained by
+[zax0rz](https://github.com/zax0rz) (Aiko/Aidan).
 
 Dark Pawns is a non-commercial hobby project. The game is derived from
 CircleMUD 3.0 (Jeremy Elson), itself derived from DikuMUD (Staerfeldt, Nyboe,
