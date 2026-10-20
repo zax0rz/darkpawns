@@ -34,8 +34,8 @@ honest: the body a pet runs is the body a player runs.
 `pkg/session/character_dispatch.go` recovers the boot-time assignment from the
 world's shop index for an NPC actor exactly as the player lane already did, and
 `pkg/game/actor_specials_shop.go` runs C's gates (shop room, awake keeper,
-`steal`, decline everything else). Evidence: `TestSpecShopKeeperActorPortsC`;
-the transcript cannot distinguish it (see "Unprovable by bytes" below).
+`steal`, the four `shopping_*` bodies, decline everything else). Evidence:
+`spec-npc-shop-keeper-depth@1,2,3,5,8` + `TestSpecShopKeeperActorPortsC`.
 
 ### Reachability: which actor lanes a pet can actually reach
 
@@ -71,6 +71,12 @@ body first. That splits the eleven:
    players only, while C walks `world[room].people`. A pet standing there was
    left behind with no acts. All four now walk one list (`cRoomPeople`), in C's
    front-inserted order.
+4. **`list` dropped a drink container's liquid.** `list_object` appends
+   `" of <drink>"` for an `ITEM_DRINKCON` holding liquid and then CAPs the line
+   (`src/shop.c:858-862`), so C lists `A barrel of beer`; the port listed
+   `A barrel`. Exposed by the shop scenario's final player `list` and fixed in
+   `shopListLine` — the same scenario now pins the corrected bytes.
+
 3. **The people-list order was a Go convenience.** The old player lane forced
    the command actor to the head of the list. C's list is newest-entrant first;
    the oracle vehicles already satisfy that because the peer is teleported in
@@ -97,19 +103,33 @@ body first. That splits the eleven:
   port has no mobile `do_drop` (the `drop` command itself has no NPC actor
   handler). `specDumpActor` returns `SpecialUnsupported` for `drop` — an explicit
   block, never a silent partial run.
-- **`shop_keeper`'s buy/sell/value/list arms stay a gap.** They are
-  descriptor-facing: `shopping_list` ends in `page_string(ch->desc, …)`
-  (`src/shop.c:925`) and a pet has no descriptor, so C dereferences NULL there.
-  That is undefined state (R1a) and is pinned, not copied.
+- **`dump`'s drop arm stays blocked on reachability, not on porting.** C's
+  `do_drop(ch, …)` is descriptor-free, so the arm is portable; the reason it is
+  still blocked is that the only charmed pet the fixture grammar can produce — a
+  bought horse — can never hold the item. The stableboy presets
+  `IS_CARRYING_W(horse) = 1000` / `IS_CARRYING_N(horse) = 100`
+  (`src/spec_procs2.c`, "Be certain that pets can't carry items"), so C answers
+  `give barrel horse` with `It can't carry that much weight.` (oracle run,
+  2026-10-20). The arm needs a mobile `do_drop` **plus** a charmed non-horse pet
+  vehicle; both belong to the NPC item-command surface, which is not ported.
 
-### Unprovable by bytes
+### What the shop lane actually proves
 
-`shop_keeper`'s NPC lane changes no transcript. Every arm writes to the
-descriptor-less pet: `do_tell` reaches nobody, and the `steal` arm's
-`do_action(keeper, GET_NAME(ch), cmd_slap, 0)` parses its target with
-`one_argument`, which truncates `"a horse"` to `"a"`, so the slap resolves to
-nobody in both engines. The lane is pinned by `TestSpecShopKeeperActorPortsC`;
-no scenario is claimed for it.
+The first draft of this round kept `list`/`buy`/`sell`/`value` blocked, claiming
+they were undefined behaviour. Claude's review was right: `page_string` returns
+on a NULL descriptor (`src/modify.c:430-433`), so a pet's `list` is a safe silent
+no-op. The bodies are ported and the lane is proven by **draw parity** rather
+than by transcript bytes: `shopping_list` and `shopping_buy` both call
+`sort_keeper_objs`, whose `slide_obj` burns `number(0,5)` per unsorted item
+(`src/shop.c:679`). The scenario gives the jeweler one unsorted barrel, and with
+the NPC-side shop recovery disabled C is exactly one `Number(0,5)` ahead at the
+pet's `list` step (`draw-parity MISMATCH … c=Number(0,5) … go=Number(0,3)`).
+
+What stays invisible in both engines: `do_tell(keeper, …)` reaches nobody, and
+the `steal` slap resolves `GET_NAME(ch)` through `one_argument`, which truncates
+`"a horse"` to `"a"`. What *is* visible and matched: the keeper's closed-shop
+say, the broke-temper emote, and `$n buys <item>.` (unreachable for the stable
+horse only because of its carry state).
 
 ## Oracle evidence
 
@@ -143,6 +163,11 @@ spec-npc-dump-depth                    seed 2   MATCH  entries=4072 stream=4106
 spec-npc-dump-depth                    seed 3   MATCH  entries=4073 stream=4107
 spec-npc-dump-depth                    seed 5   MATCH  entries=4072 stream=4106
 spec-npc-dump-depth                    seed 8   MATCH  entries=4073 stream=4107
+spec-npc-shop-keeper-depth             seed 1   MATCH  entries=4087 stream=4154
+spec-npc-shop-keeper-depth             seed 2   MATCH  entries=4087 stream=4154
+spec-npc-shop-keeper-depth             seed 3   MATCH  entries=4087 stream=4154
+spec-npc-shop-keeper-depth             seed 5   MATCH  entries=4087 stream=4154
+spec-npc-shop-keeper-depth             seed 8   MATCH  entries=4087 stream=4154
 ```
 
 Targeted census (the smallest census that can fail on this change: the five new
@@ -160,7 +185,7 @@ Revert controls, each run to a red report:
 | control | result |
 |---|---|
 | comment out all eleven `RegisterActorSpec` calls | `spec-npc-quan-lo-depth`, `spec-npc-elements-guardian-depth`, `spec-npc-elements-minion-depth`, `spec-npc-carrion-depth` and `spec-npc-dump-depth` all red |
-| disable the NPC-side shop-index recovery | no transcript change (see "Unprovable by bytes"); `TestSpecShopKeeperActorPortsC` is the proof |
+| disable the NPC-side shop-index recovery | `spec-npc-shop-keeper-depth` red on draw parity: C is one `Number(0,5)` ahead at the pet's `list` |
 
 `make fidelity-depth` passes: 6,708 cases, 6,617 proven/delegated, 0 errors.
 
@@ -259,5 +284,6 @@ setup-phase groups fall in the stop tier.
   change touching every room with an extra description.
 - **`whirlpool` is unit-proven only.** Alternative: a `set-mob-flag … SENTINEL`
   fixture directive, which is stop tier.
-- **`dump`'s and `shop_keeper`'s descriptor-facing arms stay blocked** rather
-  than ported partially (R1a for `list`).
+- **`dump`'s drop arm stays blocked on reachability.** Alternative: port a
+  mobile `do_drop` and add a charmed non-horse pet vehicle (the NPC item-command
+  surface).

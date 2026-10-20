@@ -1,0 +1,72 @@
+# depth-case: obj.npc-shop-keeper-list-sorts-the-stock
+# depth-case: obj.npc-shop-keeper-buys-for-the-pet
+# depth-case: obj.npc-shop-keeper-declines-so-the-pet-obeys
+# depth-case: obj.npc-shop-keeper-values-and-sells-for-the-pet
+# depth-case: shop.list-line-drink-container-suffix
+# SPECIAL(shop_keeper) (src/shop.c:942-1002) is written onto every keeper at
+# boot by assign_the_shopkeepers (src/shop.c:1226-1243), so it is not in any
+# assignment macro and the port's static table cannot hold it. C's special()
+# offers an ordered pet's command to the room's mobiles, keeper included
+# (src/interpreter.c:1452-1463), and nothing in shopping_buy/sell/value/list
+# needs a descriptor: their direct lines reach a mobile nowhere and
+# shopping_list's only output is page_string(ch->desc, …), which returns at its
+# first statement for a NULL descriptor (src/modify.c:430-433).
+#
+# What the room does see: the keeper's stock sort burns number(0,5) per unsorted
+# item (src/shop.c:679, slide_obj), the broke-temper emote/act, and
+# "$n buys <item>." (src/shop.c:577). The fixture gives the jeweler one unsorted
+# barrel and the horse 1,000 coins so both fire.
+#
+# Revert control: dropping the NPC-side shop-index recovery fails this scenario
+# (the pet's list/buy/value/sell are then answered unsupported and dropped).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+spawn-mob 8078 1 8113 80
+give-object 8078 8000 1 80
+replace-room-exits 8105 all 8113 0
+
+[setup:oracle]
+KeeperPet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+KeeperPet
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set KeeperPet gold 1000
+
+[probe]
+buy horse
+north
+set horse gold 1000
+order horse list
+order horse buy barrel
+order horse value barrel
+order horse sell barrel
+order horse emote neighs
+list

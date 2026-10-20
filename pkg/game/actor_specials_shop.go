@@ -43,6 +43,12 @@ func specShopKeeperActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 	if me.GetPosition() <= combat.PosSleeping {
 		return SpecialDeclined
 	}
+	// The shopping_* bodies read the buyer's own gold, carried list and
+	// ability scores; this lane only ever receives a mobile body.
+	customer, isMob := actor.(*MobInstance)
+	if !isMob {
+		return SpecialUnsupported
+	}
 
 	if cmd == "steal" {
 		// GET_RACE for a mobile is mob_specials.race (src/utils.h:347).
@@ -56,16 +62,21 @@ func specShopKeeperActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 		return SpecialHandled
 	}
 	switch cmd {
-	case "buy", "sell", "value":
-		// The shopping_* bodies talk to the actor through do_tell and its own
-		// inventory; they are not ported for an NPC body yet.
-		return SpecialUnsupported
 	case "list":
-		// shopping_list ends in page_string(ch->desc, …) (src/shop.c:925);
-		// a pet has no descriptor, so C dereferences NULL there. That reads
-		// undefined state (R1a) and stays a recorded gap, never a copied
-		// crash.
-		return SpecialUnsupported
+		// shopping_list (src/shop.c:876-925): the gates, then the keeper's
+		// stock sort, then page_string(ch->desc, …), which returns at
+		// src/modify.c:432 for a descriptor-less pet. C still returns TRUE.
+		w.shopNpcList(shop, me, customer)
+		return SpecialHandled
+	case "buy":
+		w.shopNpcBuy(shop, me, customer, arg)
+		return SpecialHandled
+	case "sell":
+		w.shopNpcSell(shop, me, customer, arg)
+		return SpecialHandled
+	case "value":
+		w.shopNpcValue(shop, me, customer, arg)
+		return SpecialHandled
 	}
 	return SpecialDeclined
 }
