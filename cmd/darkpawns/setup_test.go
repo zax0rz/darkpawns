@@ -192,3 +192,17 @@ func TestRestartCommandIncludesLauncherOutsidePath(t *testing.T) {
 		t.Fatal(command)
 	}
 }
+
+// The installer must use the actual login art, including its original alignment,
+// rather than a separately drawn approximation. The same C fixture governs login.
+func TestSetupUsesOriginalLoginArt(t *testing.T) {
+	raw, err := os.ReadFile("../../pkg/session/testdata/c_greetings.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	greeting := strings.TrimLeft(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n")
+	art, _, found := strings.Cut(greeting, "\n\n")
+	if !found || setupLoginArt != art {
+		t.Fatalf("installer splash differs from the original login artwork\ngot: %q\nwant: %q", setupLoginArt, art)
+	}
+}

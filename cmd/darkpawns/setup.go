@@ -153,20 +153,11 @@ func (p setupPlan) summary() string {
 
 func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, out io.Writer) (bool, error) {
 	confirmed := false
-	// Navigation is essential text. Use the operator's default foreground rather
-	// than the library's dim gray, which loses contrast on common dark terminals.
-	theme := huh.ThemeBase()
-	theme.Help.ShortKey = theme.Help.ShortKey.UnsetForeground()
-	theme.Help.ShortDesc = theme.Help.ShortDesc.UnsetForeground()
-	theme.Help.ShortSeparator = theme.Help.ShortSeparator.UnsetForeground()
-	theme.Help.FullKey = theme.Help.FullKey.UnsetForeground()
-	theme.Help.FullDesc = theme.Help.FullDesc.UnsetForeground()
-	theme.Help.FullSeparator = theme.Help.FullSeparator.UnsetForeground()
-	theme.Help.Ellipsis = theme.Help.Ellipsis.UnsetForeground()
+	theme := setupTheme()
 	form := huh.NewForm(
-		huh.NewGroup(huh.NewInput().Title("1. Choose a home").Description("A new folder for your world, players and settings. Keep it outside the release folder.").Value(&p.Instance).Validate(func(value string) error { _, err := resolveDestination(bundle, value); return err })),
+		huh.NewGroup(huh.NewInput().Title("Instance folder").Description("A new folder for your world, players and settings. Keep it outside the release folder.").Value(&p.Instance).Validate(func(value string) error { _, err := resolveDestination(bundle, value); return err })).Title(setupLoginArt+"\n\nSetup | 1 of 3: Choose a home"),
 		huh.NewGroup(
-			huh.NewInput().Title("2. Choose a port").Description("Local browser access only. The default is 4350.").Value(&p.Port).Validate(availablePort),
+			huh.NewInput().Title("Web client port").Description("Local browser access only. The default is 4350.").Value(&p.Port).Validate(availablePort),
 			huh.NewConfirm().Title("Run in the background?").Description("Keep the world running when you close this terminal.").Value(&p.Background),
 			huh.NewConfirm().Title("Start automatically when you sign in?").Description("Register a native startup job for this account.").Value(&p.AutoStart).Validate(func(value bool) error {
 				if value && !p.Background {
@@ -174,11 +165,11 @@ func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, o
 				}
 				return nil
 			}),
-		),
-		huh.NewGroup(
 			huh.NewConfirm().Title("Open your browser after launch?").Value(&p.Browser),
-			huh.NewConfirm().Title("3. Create instance and launch?").Description(p.summary()).DescriptionFunc(func() string { return p.summary() }, p).Affirmative("Create and launch").Negative("Cancel").Value(&confirmed),
-		),
+		).Title("Dark Pawns setup | 2 of 3: Connection and startup"),
+		huh.NewGroup(
+			huh.NewConfirm().Title("Create instance and launch?").Description(p.summary()).DescriptionFunc(func() string { return p.summary() }, p).Affirmative("Create and launch").Negative("Cancel").Value(&confirmed),
+		).Title("Dark Pawns setup | 3 of 3: Review and launch"),
 	).WithInput(in).WithOutput(out).WithTheme(theme).WithAccessible(false)
 	if err := form.RunWithContext(ctx); err != nil {
 		if errors.Is(err, huh.ErrUserAborted) {
@@ -332,9 +323,6 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		}
 		p := setupPlan{Instance: destination, Port: strconv.Itoa(port), Browser: !noBrowser && browserAvailable(), Background: !foreground, AutoStart: autoStart}
 		out := cmd.OutOrStdout()
-		if _, err := fmt.Fprint(out, "Dark Pawns setup\nA local world with its own players and settings.\n\n"); err != nil {
-			return err
-		}
 		if !yes {
 			var confirmed bool
 			file, ok := cmd.InOrStdin().(*os.File)
@@ -344,9 +332,12 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 			compact := false
 			if ok {
 				width, height, sizeErr := term.GetSize(file.Fd())
-				compact = sizeErr == nil && (width < 60 || height < 24)
+				compact = sizeErr == nil && (width < 72 || height < 24)
 			}
 			if plain || compact || os.Getenv("TERM") == "dumb" || os.Getenv("NO_COLOR") != "" {
+				if err := setupPlainHeading(out); err != nil {
+					return err
+				}
 				confirmed, err = setupPlain(cmd.Context(), base, &p, cmd.InOrStdin(), out)
 			} else {
 				confirmed, err = setupForm(cmd.Context(), base, &p, cmd.InOrStdin(), out)
@@ -358,8 +349,13 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 			if err != nil {
 				return err
 			}
-		} else if _, err := fmt.Fprintln(out, p.summary()); err != nil {
-			return err
+		} else {
+			if err := setupPlainHeading(out); err != nil {
+				return err
+			}
+			if _, err := fmt.Fprintln(out, p.summary()); err != nil {
+				return err
+			}
 		}
 		if p.AutoStart && !p.Background {
 			return errors.New("automatic startup requires background mode; omit --foreground")
@@ -413,6 +409,9 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 			}
 		}
 		if p.Background {
+			if _, err := fmt.Fprintln(out, "Starting your world. Waiting for the web client..."); err != nil {
+				return err
+			}
 			status, err := portable.Start(cmd.Context(), base, p.Instance)
 			if err != nil {
 				return err

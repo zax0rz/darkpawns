@@ -23,6 +23,17 @@ binary, running live today and built so anyone can host their own instance.
 
 [Play in your browser](https://darkpawns.org/play) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
 
+## Host your own world
+
+[Download a portable release](https://github.com/zax0rz/darkpawns/releases/latest)
+for Windows, macOS or Linux, extract it, then run `darkpawns setup`
+(`darkpawns.exe setup` on Windows). The wizard starts a local world and opens the
+browser; the first character you create becomes the immortal.
+
+The [portable guide](docs/portable-release.md) covers one-command installation,
+instance management, updates and the current hosting boundaries. A source
+checkout and developer tools are not required to run a release.
+
 ## Play
 
 The live game is up now. No account signup, no download: play in the
