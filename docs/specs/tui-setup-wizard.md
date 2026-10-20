@@ -60,6 +60,12 @@ publication metadata in the protected release environment. No public release is
 created on merge or tag push. The existing wizard stays unchanged; ASCII splash
 art and a design-system terminal pass are queued separately.
 
+**Implementation slice 6 (2026-10-20):** The existing three-step wizard now has a
+stacked ASCII splash, oxblood focus accents and explicit step headings. It keeps
+the operator's terminal foreground/background and retains plain prompts for
+screen readers, small terminals and unattended setup. Versioned release notes
+live under `docs/releases/`; publication uses the reviewed notes for its tag.
+
 ---
 
 ## 1. What This Is

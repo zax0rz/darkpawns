@@ -1,8 +1,10 @@
-# Portable development bundle
+# Portable releases
 
-These are unsigned development snapshots with a guided setup wizard. Background lifecycle commands, doctor and optional per-user automatic startup are
-included, along with manual updates and snapshot recovery. The public release/signing
-workflow is manually approved; see [publishing releases](publishing-releases.md).
+Portable releases include a guided setup wizard, background lifecycle commands,
+doctor, optional per-user automatic startup, manual updates and snapshot recovery.
+Official releases carry signed metadata; locally built snapshots are unsigned
+development artifacts. Publication is manually approved; see
+[publishing releases](publishing-releases.md).
 
 The archive contains `darkpawns`, `darkpawns-server` (both `.exe` on Windows),
 `release-assets/`, and the original license notices. Go, Node, Python and a source
@@ -10,8 +12,8 @@ checkout are not needed to **run** an extracted bundle.
 
 ## Bootstrap installation
 
-After the first stable release is published, Linux/macOS can download and run the
-installer in one shell command:
+Linux/macOS can download and run the installer in one shell command once a
+versioned release is available:
 
 ```sh
 sh -c 'set -e; installer=$(mktemp); trap '\''rm -f "$installer"'\'' EXIT; curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://github.com/zax0rz/darkpawns/releases/latest/download/install.sh -o "$installer"; sh "$installer"'
@@ -90,6 +92,10 @@ than rerunning setup. Cancellation, EOF and an occupied port create no instance.
 Initialization or startup errors retain any created instance for inspection and
 print recovery instructions. Port checks are advisory; another process can take
 the port between the check and the server binding it.
+
+The interactive wizard uses a stacked ASCII wordmark and oxblood focus accents,
+with the terminal's own background and text colors. Step headings show progress
+through the three screens. Small terminals use plain prompts automatically.
 
 For screen readers or a basic terminal, use `setup --plain`: line prompts with an
 explicit yes at review (the default is no). Non-terminal input requires `--plain`
@@ -383,7 +389,6 @@ than certifying desktop browser integration (R5f).
 
 - Windows ACLs, desktop installation checks, real sign-out/reboot verification and crash supervision.
 - macOS notarization, Windows Authenticode and a native Windows installer.
-- ASCII splash art and terminal polish using the established design/voice.
 - A reviewed migration path for existing custom system-daemon deployments.
 - Opt-in scheduled updates using that same engine: notify-only or a maintenance
   window, no connected players, independently delivered success/failure/recovery

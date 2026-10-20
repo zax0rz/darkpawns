@@ -130,6 +130,10 @@ jobs:
         run: |
           set -euo pipefail
           # Never overwrite assets or continue a partial draft under the same tag.
-          gh release create "$RELEASE_TAG" dist/*.tar.gz dist/*.zip dist/release-manifest.txt dist/release-manifest.sig dist/install.sh dist/install.ps1 --verify-tag --draft --title "Dark Pawns $RELEASE_TAG" --generate-notes
+          notes=(--generate-notes)
+          if [[ -f "docs/releases/$RELEASE_TAG.md" ]]; then
+            notes=(--notes-file "docs/releases/$RELEASE_TAG.md")
+          fi
+          gh release create "$RELEASE_TAG" dist/*.tar.gz dist/*.zip dist/release-manifest.txt dist/release-manifest.sig dist/install.sh dist/install.ps1 --verify-tag --draft --title "Dark Pawns $RELEASE_TAG" "${notes[@]}"
           gh release edit "$RELEASE_TAG" --draft=false --latest
           echo "Published $RELEASE_TAG from $SOURCE_SHA with a signed artifact manifest." >> "$GITHUB_STEP_SUMMARY"
