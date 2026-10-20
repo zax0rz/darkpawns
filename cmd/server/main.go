@@ -825,6 +825,7 @@ func main() {
 		}
 	})
 	rootMux.Handle("/admin/", adminRouter)
+	rootMux.Handle("/login", adminLoginPage(adminRouter))
 
 	// Serve admin UI static assets (compiled React app)
 	adminUIDir := os.Getenv("ADMIN_UI_DIR")
