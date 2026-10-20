@@ -113,6 +113,16 @@ jobs:
           bundles = list(pathlib.Path('portable-extracted').iterdir())
           assert len(bundles) == 1, bundles
           subprocess.run(['python', 'scripts/portable_update_smoke.py', '--bundle', str(bundles[0]), '--native-service'], check=True)
+
+      - name: Exercise hosted listeners and persistent system supervision
+        if: runner.os == 'Linux'
+        shell: python
+        run: |
+          import pathlib, subprocess
+          bundles = list(pathlib.Path('portable-extracted').iterdir())
+          assert len(bundles) == 1, bundles
+          subprocess.run(['python', 'scripts/portable_hosting_smoke.py', '--bundle', str(bundles[0])], check=True)
+          subprocess.run(['python', 'scripts/portable_update_smoke.py', '--bundle', str(bundles[0]), '--supervised'], check=True)
       - name: Verify signed native bootstrap installers
         shell: python
         run: |

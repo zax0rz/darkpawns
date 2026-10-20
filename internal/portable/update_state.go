@@ -182,7 +182,7 @@ func stoppedLock(instance string) (func() error, error) {
 // Refuse symlinks/special files anywhere in the stopped instance. Copy the whole
 // regular-file tree, except updater history and ephemeral process ownership.
 func snapshotInstance(instance, destination string) error {
-	skip := map[string]bool{".updates": true, ".run.lock": true, ".lifecycle.lock": true, ".control.json": true, ".last-exit.json": true}
+	skip := map[string]bool{".updates": true, ".run.lock": true, ".lifecycle.lock": true, ".control.json": true, ".last-exit.json": true, ".supervision.lock": true}
 	return copyTree(instance, destination, skip, true)
 }
 

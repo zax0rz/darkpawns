@@ -44,11 +44,13 @@ func instanceLocked(instance string) (locked bool, result error) {
 	return !acquired, err
 }
 
+var errLifecycleBusy = errors.New("another lifecycle operation is in progress; retry after it finishes")
+
 func lifecycleLock(instance string) (func() error, error) {
 	lock := flock.New(filepath.Join(instance, ".lifecycle.lock"))
 	acquired, err := lock.TryLock()
 	if err != nil || !acquired {
-		return nil, errors.Join(errors.New("another lifecycle operation is in progress; retry after it finishes"), err, lock.Close())
+		return nil, errors.Join(errLifecycleBusy, err, lock.Close())
 	}
 	return lock.Close, nil
 }
@@ -63,6 +65,9 @@ func Start(ctx context.Context, bundle, instance string) (status RuntimeStatus, 
 		return status, err
 	}
 	defer func() { result = errors.Join(result, unlock()) }()
+	if err := setSupervisionIntent(instance, true); err != nil {
+		return status, err
+	}
 	return start(ctx, bundle, instance)
 }
 
@@ -173,6 +178,9 @@ func Stop(ctx context.Context, instance string) (result error) {
 		return err
 	}
 	defer func() { result = errors.Join(result, unlock()) }()
+	if err := setSupervisionIntent(instance, false); err != nil {
+		return err
+	}
 	return stopInstance(ctx, instance)
 }
 
@@ -217,6 +225,9 @@ func Restart(ctx context.Context, bundle, instance string) (status RuntimeStatus
 		return status, err
 	}
 	defer func() { result = errors.Join(result, unlock()) }()
+	if err := setSupervisionIntent(instance, true); err != nil {
+		return status, err
+	}
 	if err := stopInstance(ctx, instance); err != nil {
 		return status, err
 	}

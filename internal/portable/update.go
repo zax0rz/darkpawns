@@ -106,6 +106,15 @@ func PrepareUpdate(ctx context.Context, bundle, instance string, options UpdateO
 	if err != nil {
 		return nil, err
 	}
+	cfg, err := Load(instance)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.MudletDirectory != "" {
+		if _, ok := target.Files["mudlet/darkpawns.xml"]; !ok {
+			return nil, errors.New("release lacks the configured hosted Mudlet package; your world was not stopped")
+		}
+	}
 	if err := syncTreeDirectories(destination); err != nil {
 		return nil, err
 	}

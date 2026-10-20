@@ -255,6 +255,9 @@ shortcuts and native sign-in jobs use it as a stable entry point and dispatch to
 the active release. Never extract a release over your instance.
 A partially failed initialization is retained for inspection rather than erased.
 
+For public listeners, external system supervision and existing-world migration,
+see [hosting and adoption](portable-hosting.md). These require v0.1.1 or newer.
+
 ## Manual updates
 
 From an **updater-capable portable release**, run:
@@ -389,7 +392,6 @@ than certifying desktop browser integration (R5f).
 
 - Windows ACLs, desktop installation checks, real sign-out/reboot verification and crash supervision.
 - macOS notarization, Windows Authenticode and a native Windows installer.
-- A reviewed migration path for existing custom system-daemon deployments.
 - Opt-in scheduled updates using that same engine: notify-only or a maintenance
   window, no connected players, independently delivered success/failure/recovery
   notifications from an updater outside the game process. Never promise binary

@@ -14,12 +14,15 @@ import subprocess
 import tarfile
 import tempfile
 import zipfile
+import signal
+import time
 
 import websockets
 from smoke_test_2b import PASSWORD, cmd, create_character, login_existing, send
 
 
-def main(bundle, native_service=False):
+def main(bundle, native_service=False, supervised=False):
+    assert not (native_service and supervised)
     bundle = pathlib.Path(bundle).resolve()
     suffix = '.exe' if os.name == 'nt' else ''
     launcher = bundle / ('darkpawns' + suffix)
@@ -61,6 +64,10 @@ def main(bundle, native_service=False):
             assert seed.is_file()
             seed.write_text('new seed must never overwrite operator files\n')
             manifest['files']['lib/text/motd'] = hashlib.sha256(seed.read_bytes()).hexdigest()
+            if supervised:
+                package = release / 'release-assets/mudlet/darkpawns.xml'
+                package.write_bytes(package.read_bytes() + ('\n<!-- ' + version + ' -->\n').encode())
+                manifest['files']['mudlet/darkpawns.xml'] = hashlib.sha256(package.read_bytes()).hexdigest()
             manifest_path.write_text(json.dumps(manifest))
             if broken:
                 # A native Go executable with valid build information passes the
@@ -78,10 +85,28 @@ def main(bundle, native_service=False):
                     output.add(release, arcname=release.name)
             return destination, hashlib.sha256(destination.read_bytes()).hexdigest()
 
+        monitor = None
+        monitor_log = None
         installed = False
         try:
             run('setup', '--yes', '--no-browser', '--port', str(port))
             asyncio.run(player(create=True))
+
+            if supervised:
+                public_package = root / 'public mudlet'
+                public_package.mkdir()
+                cfg_path = instance / 'instance.json'
+                cfg = json.loads(cfg_path.read_text())
+                cfg['mudlet_directory'] = str(public_package)
+                cfg['server_env'] = {'DP_MUDLET_PACKAGE_URL': 'https://example.invalid/darkpawns.xml'}
+                cfg_path.write_text(json.dumps(cfg))
+                run('restart')
+                monitor_log = (root / 'system-supervision.log').open('w+')
+                monitor = subprocess.Popen(command + ['supervise'], stdout=monitor_log, stderr=monitor_log)
+                deadline = time.monotonic() + 10
+                while not (instance / '.supervision.json').exists():
+                    assert monitor.poll() is None and time.monotonic() < deadline, 'system monitor did not start'
+                    time.sleep(.1)
             config = (instance / 'instance.json').read_bytes()
             heading = b'Mon Jan  2 (Updateowner) :: preserved board\x00'
             message = b'Operator board contents\r\n\x00'
@@ -112,6 +137,8 @@ def main(bundle, native_service=False):
             active = status()
             assert active['run_id'] != before['run_id']
             assert pathlib.Path(active['bundle']).name == 'poc-next', active
+            if supervised:
+                assert (public_package / 'darkpawns.xml').read_bytes().endswith(b'<!-- poc-next -->\n')
             assert (instance / 'instance.json').read_bytes() == config
             for name, data in fixtures.items():
                 assert (instance / name).read_bytes() == data, name
@@ -138,6 +165,8 @@ def main(bundle, native_service=False):
             assert status()['bundle'] == active['bundle']
             transaction = json.loads((instance / '.updates/transaction.json').read_text())
             assert transaction['phase'] == 'rolled-back'
+            if supervised:
+                assert (public_package / 'darkpawns.xml').read_bytes().endswith(b'<!-- poc-next -->\n'), 'failed-start recovery did not restore the matching public package'
             history = instance / '.updates' / transaction['id']
             assert (history / 'failed-lib/data/candidate-only').read_text() == 'retained failed state'
             assert not (instance / 'lib/data/candidate-only').exists()
@@ -153,6 +182,9 @@ def main(bundle, native_service=False):
             # through the original launcher's stable entry point.
             stopped_archive, stopped_digest = archive('poc-stopped')
             run('update', '--archive', str(stopped_archive), '--sha256', stopped_digest, '--yes')
+            if supervised:
+                time.sleep(2.2)
+                assert monitor.poll() is None, 'system monitor exited across update'
             assert status()['state'] == 'stopped'
             noop = run('update', '--archive', str(stopped_archive), '--sha256', stopped_digest, '--yes')
             assert 'Already up to date' in noop.stdout
@@ -165,6 +197,10 @@ def main(bundle, native_service=False):
         finally:
             if (instance / 'instance.json').exists():
                 run('stop')
+                if monitor is not None:
+                    monitor.send_signal(signal.SIGINT)
+                    assert monitor.wait(timeout=85) == 0
+                    monitor_log.close()
                 if installed:
                     run('service', 'remove')
 
@@ -173,5 +209,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--bundle', required=True)
     parser.add_argument('--native-service', action='store_true')
+    parser.add_argument('--supervised', action='store_true')
     options = parser.parse_args()
-    main(options.bundle, options.native_service)
+    main(options.bundle, options.native_service, options.supervised)

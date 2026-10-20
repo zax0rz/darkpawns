@@ -112,6 +112,12 @@ func Doctor(ctx context.Context, bundle, instance string) []Check {
 		detail = "Registered for your account"
 	}
 	add("Automatic startup", err, detail, "Restore any externally changed definition first. To clean up owned registration, use "+OperatorCommand(instance, "service", "remove")+", then install again in a supported user session.")
+	var supervision supervisionState
+	if stateErr := readJSON(filepath.Join(instance, ".supervision.json"), &supervision); !os.IsNotExist(stateErr) {
+		active, activeErr := supervisionActive(instance)
+		detail := fmt.Sprintf("Monitor active: %t; world requested: %t", active, supervision.Wanted)
+		add("System supervision", errors.Join(stateErr, activeErr), detail, "Inspect the external service manager and .supervision.json; keep the original launcher.")
+	}
 	return checks
 }
 

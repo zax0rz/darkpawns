@@ -10,7 +10,7 @@ from stage_portable_release import SEEDS, stage
 class PortableStagingTest(unittest.TestCase):
     def fixture(self, root):
         for path in SEEDS:
-            name = path if path.startswith('lib/misc/') else path + '/index'
+            name = path if path.startswith(('lib/misc/', 'mudlet/')) else path + '/index'
             if path == 'web/public':
                 name = path + '/index.html'
             target = root / name
@@ -37,6 +37,8 @@ class PortableStagingTest(unittest.TestCase):
             files = manifest['files']
             self.assertIn('lib/world/wld/index', files)
             self.assertIn('admin-ui/index.html', files)
+            self.assertIn('mudlet/darkpawns.xml', files)
+            self.assertIn('mudlet/VERSION', files)
             self.assertEqual(files['web/index.html'], hashlib.sha256(b'starter\n').hexdigest())
             self.assertFalse(any('untracked' in p or p.startswith(('lib/etc/', 'lib/plrobjs/', 'lib/world/etc/')) for p in files))
             # A second build replaces only its recognized generated staging tree.

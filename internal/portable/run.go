@@ -78,7 +78,13 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 		suffix = ".exe"
 	}
 	lib := filepath.Join(instance, "lib")
-	cmd := exec.Command(filepath.Join(bundle, "darkpawns-server"+suffix), "-world", filepath.Join(lib, "world"), "-scripts", filepath.Join(lib, "world", "scripts"), "-db", filepath.Join(lib, "data", "darkpawns.db"), "-web", filepath.Join(bundle, "release-assets", "web"), "-http-bind", "127.0.0.1", "-port", strconv.Itoa(cfg.HTTPPort), "-telnet-port", "0", "-whod-port", "0")
+	cmd := exec.Command(filepath.Join(bundle, "darkpawns-server"+suffix), "-world", filepath.Join(lib, "world"), "-scripts", filepath.Join(lib, "world", "scripts"), "-db", filepath.Join(lib, "data", "darkpawns.db"), "-web", filepath.Join(bundle, "release-assets", "web"), "-http-bind", "127.0.0.1", "-port", strconv.Itoa(cfg.HTTPPort), "-telnet-port", strconv.Itoa(cfg.TelnetPort), "-telnet-tls-port", strconv.Itoa(cfg.TelnetTLSPort), "-whod-port", strconv.Itoa(cfg.WhodPort))
+	if err := preflightHosting(cfg); err != nil {
+		return err
+	}
+	if err := publishMudlet(bundle, cfg); err != nil {
+		return err
+	}
 	cmd.Dir = lib
 	cmd.Env = instanceEnv(os.Environ(), bundle, instance, cfg)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = in, out, errOut
@@ -184,6 +190,9 @@ func instanceEnv(inherited []string, bundle, instance string, cfg Config) []stri
 			continue
 		}
 		env = append(env, entry)
+	}
+	for key, value := range cfg.ServerEnv {
+		env = append(env, key+"="+value)
 	}
 	data := filepath.Join(instance, "lib", "data")
 	return append(env, "JWT_SECRET="+cfg.JWTSecret, "ENVIRONMENT=production", "ADMIN_STORE_PATH="+filepath.Join(data, "admin.json"), "ADMIN_UI_DIR="+filepath.Join(bundle, "release-assets", "admin-ui"), "DP_NOTIFICATION_CONFIG_PATH="+filepath.Join(data, "notifications.json"), "DP_NOTIFICATION_KEY_PATH="+filepath.Join(data, "notifications.json.key"))

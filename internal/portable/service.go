@@ -148,6 +148,11 @@ func InstallService(ctx context.Context, instance string) (result error) {
 		return err
 	}
 	defer func() { result = errors.Join(result, unlock()) }()
+	if active, err := supervisionActive(instance); err != nil {
+		return err
+	} else if active {
+		return errors.New("stop system supervision before registering sign-in startup")
+	}
 	if _, err := os.Lstat(filepath.Join(instance, ".service.json")); !os.IsNotExist(err) {
 		return fmt.Errorf("automatic-start registration already exists; remove it with %s before reinstalling", OperatorCommand(instance, "service", "remove"))
 	}

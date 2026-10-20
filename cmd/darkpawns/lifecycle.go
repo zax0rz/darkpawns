@@ -16,10 +16,12 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 		}
 		return defaultInstance()
 	}
-	for _, name := range []string{"start", "stop", "restart", "status", "doctor", "_serve"} {
+	for _, name := range []string{"start", "stop", "restart", "status", "doctor", "_serve", "supervise"} {
 		var asJSON bool
 		cmd := &cobra.Command{Use: name, Args: cobra.NoArgs, Hidden: name == "_serve"}
 		switch name {
+		case "supervise":
+			cmd.Short = "Keep a hosted world running under an external service manager"
 		case "start":
 			cmd.Short = "Start your world in the background and wait until ready"
 		case "stop":
@@ -44,6 +46,8 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 				return err
 			}
 			switch name {
+			case "supervise":
+				return portable.Supervise(cmd.Context(), base, path, cmd.ErrOrStderr())
 			case "_serve":
 				return portable.ServeBackground(cmd.Context(), base, path)
 			case "stop":

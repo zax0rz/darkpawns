@@ -16,6 +16,7 @@ import tempfile
 WORLD_PARTS = ('wld', 'mob', 'obj', 'zon', 'shp', 'movesel', 'scripts')
 SEEDS = [f'lib/world/{part}' for part in WORLD_PARTS] + [
     'lib/text', 'lib/misc/help', 'lib/misc/messages', 'lib/misc/socials', 'web/public',
+    'mudlet/darkpawns.xml', 'mudlet/VERSION',
 ]
 
 
