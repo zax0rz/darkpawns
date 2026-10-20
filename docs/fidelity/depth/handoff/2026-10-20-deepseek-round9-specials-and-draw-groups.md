@@ -249,7 +249,8 @@ setup-phase groups fall in the stop tier.
 
 ## Decisions for Zach
 
-- **One PR with two commits instead of one PR per special group.** The twelve
+- **One PR (three group commits plus the handoff) instead of one PR per special
+  group.** The twelve
   lanes share one helper file (`cRoomPeople`, `elementTeleportPerson`) and one
   scenario family; separate PRs would each carry the same helper and collide on
   `docs/fidelity/depth/spec-procs.tsv`. Alternative: three stacked PRs.
