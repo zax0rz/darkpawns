@@ -89,6 +89,11 @@ mean and how to open software you trust:
   approved under **System Settings → Privacy & Security → Open Anyway**;
   removing its quarantine attribute afterwards did not unblock it.
 - **Windows:** [Microsoft Defender SmartScreen](https://learn.microsoft.com/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen).
+  On Windows 11, the PowerShell installer ran with no prompt. Opening
+  `darkpawns.exe` from a browser-downloaded zip showed *"Windows protected your
+  PC"*; **More info** lists the publisher as unknown and offers **Run anyway**.
+  `darkpawns.exe` is a command-line tool: run `darkpawns.exe setup` from
+  PowerShell rather than double-clicking it.
 
 If you skipped the installer, check the archive against the signed
 `release-manifest.txt` before you open it. The
