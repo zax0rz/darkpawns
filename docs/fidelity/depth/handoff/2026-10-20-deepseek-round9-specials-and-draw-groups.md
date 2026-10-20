@@ -133,9 +133,9 @@ horse only because of its carry state).
 
 ## Oracle evidence
 
-Five scenarios, each diffed against the C oracle with `--draw-parity` on seeds
+Six scenarios, each diffed against the C oracle with `--draw-parity` on seeds
 1, 2, 3, 5 and 8 — all `result: no normalized divergence` and
-`draw-parity MATCH` (25/25):
+`draw-parity MATCH` (30/30):
 
 ```
 spec-npc-quan-lo-depth                 seed 1   MATCH  entries=4082 stream=4139
