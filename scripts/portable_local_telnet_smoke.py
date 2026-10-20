@@ -55,7 +55,8 @@ def main(bundle):
                     assert chunk, greeting
                     greeting += chunk
                 assert b'CircleMUD' in greeting and b'DikuMUD' in greeting
-                assert b'Dark Pawns MUD v' in greeting
+                version = json.loads((bundle / 'release-assets/manifest.json').read_text())['version']
+                assert f'Dark Pawns MUD v{version} - https://darkpawns.org'.encode() in greeting
                 assert b'As of 10-17-2008' not in greeting
             with urllib.request.urlopen(f'http://127.0.0.1:{web_port}/login', timeout=3) as response:
                 assert response.status == 200

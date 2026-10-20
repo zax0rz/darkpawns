@@ -66,7 +66,9 @@ then restart to show the running build version in place of the 2008 pwipe notice
 The logo and CircleMUD/DikuMUD attribution remain intact. Existing configurations
 omit this setting and retain the original greeting. Your existing `lib/text/motd`
 is preserved; edit that ordinary instance file for your own announcements.
-Retain a v0.1.2-or-newer recovery launcher before adding the new fields.
+Retain a v0.1.2-or-newer recovery launcher before adding the new fields. Restart
+an external `supervise` process from the matching launcher before opting in; an
+older running monitor cannot parse the new configuration fields.
 
 ## An external service manager
 
