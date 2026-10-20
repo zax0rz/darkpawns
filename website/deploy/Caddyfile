@@ -37,6 +37,9 @@ darkpawns.org, www.darkpawns.org {
 	handle /openapi.json {
 		reverse_proxy 127.0.0.1:4350
 	}
+	handle /login {
+		reverse_proxy 127.0.0.1:4350
+	}
 	handle /admin {
 		reverse_proxy 127.0.0.1:4350
 	}

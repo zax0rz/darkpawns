@@ -2,7 +2,7 @@ import { showConnections } from './connection-info.js';
 
 (function connectionInfo() {
   function refresh() {
-    fetch('/connection-info', { cache: 'no-store' })
+    fetch(new URL('./connection-info', import.meta.url), { cache: 'no-store' })
       .then(function (res) { if (!res.ok) throw new Error('connection info unavailable'); return res.json(); })
       .then(function (info) { showConnections(info, window.location.hostname, document); })
       .catch(function () { showConnections({}, window.location.hostname, document); });

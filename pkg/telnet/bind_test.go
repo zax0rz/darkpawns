@@ -23,14 +23,35 @@ func nonLoopbackIPv4(t *testing.T) string {
 	return ""
 }
 
+// Wait for this test's accepted descriptors to finish before another test
+// installs the process-wide mudlog provider. Closing a client alone races it.
+func waitForBindingConnections(t *testing.T) {
+	t.Helper()
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		connMu.Lock()
+		remaining := connCount
+		connMu.Unlock()
+		if remaining == 0 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("%d binding-test connections did not close", remaining)
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
 func TestExplicitTelnetBindingConfinesPlainAndTLS(t *testing.T) {
 	external := nonLoopbackIPv4(t)
 	manager, world := newTestManager(t)
 	t.Cleanup(world.StopAITicker)
+	t.Cleanup(func() { waitForBindingConnections(t) })
 	cert, key, pool := writeTestCert(t, t.TempDir(), "bind-", "localhost")
 	for _, encrypted := range []bool{false, true} {
 		t.Run(map[bool]string{false: "plain", true: "TLS"}[encrypted], func(t *testing.T) {
 			defer Stop()
+			t.Cleanup(func() { waitForBindingConnections(t) })
 			var err error
 			if encrypted {
 				err = ListenTLSOn("127.0.0.1", 0, manager, cert, key)
@@ -64,6 +85,9 @@ func TestExplicitTelnetBindingConfinesPlainAndTLS(t *testing.T) {
 				if err := tlsConn.Handshake(); err != nil {
 					t.Fatal(err)
 				}
+				readUntil(t, tlsConn, "By what name")
+			} else {
+				readUntil(t, conn, "By what name")
 			}
 		})
 	}
@@ -83,6 +107,7 @@ func TestExplicitTelnetBindingConfinesPlainAndTLS(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	readUntil(t, conn, "By what name")
 	conn.Close()
 	Stop()
 	plain, secure := ListenerAddresses()
