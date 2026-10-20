@@ -51,7 +51,8 @@ Windows uses built-in PowerShell.
 The wizard asks three things:
 
 1. **A home for the world.** A new folder that holds your players, world edits
-   and settings, kept apart from the release so updates never touch it.
+   and settings, kept apart from the release. Updates preserve it rather than
+   replace it with the starter world.
 2. **Connection and startup.** The local web port (default `4350`), whether to
    keep running after you close the terminal, whether to start when you sign in,
    and whether to open a browser.
@@ -75,21 +76,18 @@ installs.
 
 ### If Windows or macOS refuses to open it
 
-Releases carry Dark Pawns' own signature, which the installer verifies. They
-are not signed with a Windows Authenticode certificate or notarized by Apple.
-The installer downloads with `curl` or PowerShell, which don't mark files as
-coming from the internet, so it should not trigger either warning. An archive
-downloaded with a browser can:
+The installer verifies Dark Pawns' publisher signature and the archive's
+checksum. Releases are not Apple-notarized or Windows Authenticode-signed, so
+your operating system or local policy may still show a warning, particularly
+for an archive downloaded with a browser. The vendors explain what the warnings
+mean and how to open software you trust:
 
-- **Windows** shows *"Windows protected your PC"* (SmartScreen). Choose
-  **More info**, then **Run anyway**.
-- **macOS** refuses because it *"cannot check it for malicious software"*
-  (Gatekeeper). Open **System Settings → Privacy & Security**, find the message
-  about `darkpawns`, and choose **Open Anyway**. From a terminal,
-  `xattr -dr com.apple.quarantine <extracted folder>` does the same thing.
+- **macOS:** [Safely open apps on your Mac](https://support.apple.com/102445)
+  (Gatekeeper).
+- **Windows:** [Microsoft Defender SmartScreen](https://learn.microsoft.com/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen).
 
 If you skipped the installer, check the archive against the signed
-`release-manifest.txt` first. The
+`release-manifest.txt` before you open it. The
 [portable release guide](docs/portable-release.md#manual-updates) shows how.
 
 ## Run your world
@@ -124,11 +122,13 @@ darkpawns update --check    # download and verify the new release; the world kee
 darkpawns update            # show the plan, then stop, back up, update and restart
 ```
 
-An update verifies the signed release, stops the world, snapshots its data,
-swaps the release and starts again. If the new release doesn't come up healthy,
-the updater restores the previous release and the snapshot by itself.
-`darkpawns update recover` finishes an interrupted update. Offline updates from
-an archive and the recovery details are in the
+Every update verifies the signed release first. When a new release is
+available, a running world is stopped, its state is backed up, and it restarts
+on the new release; a stopped world stays stopped, and an up-to-date one isn't
+touched. If applying the update fails, the updater tries to restore the previous
+release and snapshot by itself. If that can't finish, or the update was
+interrupted, `darkpawns update recover` restores the previous snapshot. Offline
+updates from an archive and the recovery details are in the
 [portable release guide](docs/portable-release.md#manual-updates).
 `darkpawns.org` itself updates with the same command.
 
@@ -203,8 +203,8 @@ commit them, and the workshop lists the zones with changes waiting to be saved.
 Send game events to **Pushover**, **Discord** or both: character created, login,
 logout, death and level gained. Pick events per destination under **Staff
 tools → Notifications**, paste the provider credentials, and use the test
-button. No restart or environment variables are involved. Credentials are
-encrypted at rest (AES-256-GCM) and never returned by the API.
+button. Changes take effect without a restart. Credentials are encrypted at
+rest (AES-256-GCM) and never returned by the API. Delivery is best effort.
 
 ![The notification settings, with Pushover and Discord columns and a row for each game event](docs/images/admin-notifications.png)
 
@@ -213,13 +213,15 @@ encrypted at rest (AES-256-GCM) and never returned by the API.
 Three layers, from the inside out:
 
 - **`darkpawns doctor`** checks the release files, instance configuration,
-  file permissions, launcher, web client, database and startup registration.
+  file permissions, launcher, web client and startup registration. It runs the
+  database integrity check only while the world is stopped.
 - **`/health`** answers on the web port. Setup waits for it before it reports
   the world ready.
-- **An external heartbeat.** Save a [Healthchecks](https://healthchecks.io)
-  ping URL under Notifications and the game pings it while its main loop is
-  making progress. Healthchecks alerts you (by Pushover, email or whatever you
-  connect there) when the pings stop, even if the whole host is down.
+- **An external heartbeat.** Save a hosted [Healthchecks](https://healthchecks.io)
+  ping URL (`hc-ping.com`) under Notifications. The game pings it once a minute
+  while its main loop is making progress, and Healthchecks alerts you (by
+  Pushover, email or whatever you connect there) when the pings stop, even if
+  the whole host is down. Your check's period and grace time decide how soon.
 
 **Operations** shows live status, memory and goroutine counts, who is online,
 and the server log.
