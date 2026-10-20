@@ -25,6 +25,7 @@ var rootAllowlist = []struct {
 	{"/api/openapi.json", "spec compatibility alias, served by apidoc.Handler from the generated document"},
 	{"/admin/health", "unauthenticated admin liveness JSON"},
 	{"/admin/", "admin console mount: admin mux plus SPA fallback"},
+	{"/login", "public admin SPA sign-in entry; authentication remains on admin API routes"},
 	{"/assets/", "fingerprinted admin UI static assets"},
 }
 

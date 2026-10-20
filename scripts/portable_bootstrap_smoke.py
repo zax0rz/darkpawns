@@ -93,7 +93,7 @@ def main(bundle):
             probe.bind(('127.0.0.1', 0))
             port = probe.getsockname()[1]
         command = [str(launcher), '--instance', str(instance)]
-        subprocess.run(command + ['init', '--port', str(port)], check=True, capture_output=True)
+        subprocess.run(command + ['init', '--port', str(port), '--telnet-port', '0'], check=True, capture_output=True)
         try:
             subprocess.run(command + ['start'], check=True, capture_output=True, timeout=60)
             assert urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=3).status == 200

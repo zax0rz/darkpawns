@@ -89,7 +89,7 @@ def main(bundle, native_service=False, supervised=False):
         monitor_log = None
         installed = False
         try:
-            run('setup', '--yes', '--no-browser', '--port', str(port))
+            run('setup', '--yes', '--no-browser', '--port', str(port), '--telnet-port', '0')
             asyncio.run(player(create=True))
 
             if supervised:

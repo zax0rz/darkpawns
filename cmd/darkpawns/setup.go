@@ -25,43 +25,13 @@ import (
 type setupPlan struct {
 	Instance   string
 	Port       string
+	TelnetPort string
 	Browser    bool
 	Background bool
 	AutoStart  bool
 }
 
-func defaultInstance() (string, error) {
-	var base string
-	switch runtime.GOOS {
-	case "windows":
-		base = os.Getenv("LOCALAPPDATA")
-		if base == "" {
-			return "", errors.New("LOCALAPPDATA is unset; choose a folder with --instance")
-		}
-	case "darwin":
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		base = filepath.Join(home, "Library", "Application Support")
-	default:
-		base = os.Getenv("XDG_DATA_HOME")
-		if base != "" && !filepath.IsAbs(base) {
-			return "", errors.New("XDG_DATA_HOME must be absolute; choose a folder with --instance")
-		}
-		if base == "" {
-			home, err := os.UserHomeDir()
-			if err != nil {
-				return "", err
-			}
-			base = filepath.Join(home, ".local", "share")
-		}
-	}
-	if !filepath.IsAbs(base) {
-		return "", errors.New("default data folder must be absolute; choose a folder with --instance")
-	}
-	return filepath.Join(base, "darkpawns", "world"), nil
-}
+func defaultInstance() (string, error) { return portable.DefaultInstance() }
 
 // resolveDestination validates without creating anything. Resolve the nearest
 // existing ancestor to detect symlinks into a replaceable release, including
@@ -135,6 +105,21 @@ func availablePort(value string) error {
 	return listener.Close()
 }
 
+func (p setupPlan) validateTelnet(value string) error {
+	port, err := strconv.Atoi(value)
+	if err != nil || port < 0 || port > 65535 {
+		return errors.New("choose 0 to disable telnet, or a port between 1 and 65535")
+	}
+	if port == 0 {
+		return nil
+	}
+	webPort, _ := strconv.Atoi(p.Port)
+	if port == webPort {
+		return errors.New("telnet and web client ports must be different")
+	}
+	return availablePort(value)
+}
+
 func (p setupPlan) summary() string {
 	browser := "No (the address will be printed)"
 	if p.Browser {
@@ -148,7 +133,11 @@ func (p setupPlan) summary() string {
 	if p.AutoStart {
 		auto = "Yes, for this account"
 	}
-	return fmt.Sprintf("Instance: %s\nWeb client: http://127.0.0.1:%s/\nOpen browser: %s\nStart at sign-in: %s\n\nThe first character you create becomes the immortal.\nCreate it before allowing other people to connect.\n%s", p.Instance, p.Port, browser, auto, mode)
+	telnet := "Disabled"
+	if p.TelnetPort != "" && p.TelnetPort != "0" {
+		telnet = "127.0.0.1 port " + p.TelnetPort
+	}
+	return fmt.Sprintf("Instance: %s\nWeb client: http://127.0.0.1:%s/\nTelnet: %s\nOpen browser: %s\nStart at sign-in: %s\n\nThe first character you create becomes the immortal.\nCreate it before allowing other people to connect.\n%s", p.Instance, p.Port, telnet, browser, auto, mode)
 }
 
 func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, out io.Writer) (bool, error) {
@@ -158,6 +147,7 @@ func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, o
 		huh.NewGroup(huh.NewInput().Title("Instance folder").Description("A new folder for your world, players and settings. Keep it outside the release folder.").Value(&p.Instance).Validate(func(value string) error { _, err := resolveDestination(bundle, value); return err })).Title(setupLoginArt+"\n\nSetup | 1 of 3: Choose a home"),
 		huh.NewGroup(
 			huh.NewInput().Title("Web client port").Description("Local browser access only. The default is 4350.").Value(&p.Port).Validate(availablePort),
+			huh.NewInput().Title("Telnet port").Description("This computer only (127.0.0.1). Default 7777; 0 disables it.").Value(&p.TelnetPort).Validate(p.validateTelnet),
 			huh.NewConfirm().Title("Run in the background?").Description("Keep the world running when you close this terminal.").Value(&p.Background),
 			huh.NewConfirm().Title("Start automatically when you sign in?").Description("Register a native startup job for this account.").Value(&p.AutoStart).Validate(func(value bool) error {
 				if value && !p.Background {
@@ -213,7 +203,7 @@ func setupPlain(ctx context.Context, bundle string, p *setupPlan, in io.Reader, 
 			if err := ctx.Err(); err != nil {
 				return "", err
 			}
-			if _, err := fmt.Fprintf(out, "%s [%s]: ", label, fallback); err != nil {
+			if _, err := fmt.Fprintf(out, "\n%s [%s]: ", label, fallback); err != nil {
 				return "", err
 			}
 			var value string
@@ -247,6 +237,13 @@ func setupPlain(ctx context.Context, bundle string, p *setupPlan, in io.Reader, 
 		return false, err
 	}
 	p.Port, err = ask("2. Local web port", p.Port, availablePort)
+	if err != nil {
+		return false, err
+	}
+	if p.TelnetPort == "" {
+		p.TelnetPort = "0"
+	}
+	p.TelnetPort, err = ask("Local telnet port (0 disables it)", p.TelnetPort, p.validateTelnet)
 	if err != nil {
 		return false, err
 	}
@@ -300,10 +297,11 @@ func setupPlain(ctx context.Context, bundle string, p *setupPlan, in io.Reader, 
 }
 
 func setupCommand(instance *string, bundle func() (string, error)) *cobra.Command {
-	var port int
+	var port, telnetPort int
 	var plain, yes, noBrowser, foreground, autoStart bool
 	cmd := &cobra.Command{Use: "setup", Short: "Choose a home and port, then launch your new world", Args: cobra.NoArgs}
 	cmd.Flags().IntVar(&port, "port", 4350, "Initial local web client port")
+	cmd.Flags().IntVar(&telnetPort, "telnet-port", 7777, "Initial loopback telnet port (0 disables it)")
 	cmd.Flags().BoolVar(&plain, "plain", false, "Use line prompts for screen readers or a basic terminal")
 	cmd.Flags().BoolVar(&yes, "yes", false, "Create and launch using the selected values without prompts")
 	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "Print the address without opening a browser")
@@ -321,7 +319,7 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 				return err
 			}
 		}
-		p := setupPlan{Instance: destination, Port: strconv.Itoa(port), Browser: !noBrowser && browserAvailable(), Background: !foreground, AutoStart: autoStart}
+		p := setupPlan{Instance: destination, Port: strconv.Itoa(port), TelnetPort: strconv.Itoa(telnetPort), Browser: !noBrowser && browserAvailable(), Background: !foreground, AutoStart: autoStart}
 		out := cmd.OutOrStdout()
 		if !yes {
 			var confirmed bool
@@ -370,6 +368,9 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		if err := availablePort(p.Port); err != nil {
 			return err
 		}
+		if err := p.validateTelnet(p.TelnetPort); err != nil {
+			return err
+		}
 		m, err := portable.ReadManifest(base)
 		if err != nil {
 			return err
@@ -385,7 +386,11 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		if err != nil {
 			return err
 		}
-		if err := portable.Init(base, p.Instance, port); err != nil {
+		telnetPort, err := strconv.Atoi(p.TelnetPort)
+		if err != nil {
+			return err
+		}
+		if err := portable.InitWithTelnet(base, p.Instance, port, telnetPort); err != nil {
 			return fmt.Errorf("initialize instance: %w", err)
 		}
 		if _, err := fmt.Fprintf(out, "\nInstance created: %s\nRun in the foreground when stopped: %s\n", p.Instance, restartCommand(p.Instance)); err != nil {

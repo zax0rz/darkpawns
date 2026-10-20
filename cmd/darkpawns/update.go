@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -106,7 +107,7 @@ func addUpdate(root *cobra.Command, instance *string, bundle func() (string, err
 // added commands are available through the original PATH/native-job anchor.
 func forwardActive(root *cobra.Command, args []string) (bool, error) {
 	flags := pflag.NewFlagSet("entry", pflag.ContinueOnError)
-	flags.SetOutput(root.ErrOrStderr())
+	flags.SetOutput(io.Discard) // Cobra owns help and usage; this pass only finds dispatch flags.
 	flags.ParseErrorsAllowlist.UnknownFlags = true
 	selected := flags.String("instance", "", "Instance directory")
 	if err := flags.Parse(args); err != nil {

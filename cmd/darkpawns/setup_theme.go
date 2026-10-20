@@ -27,7 +27,7 @@ const setupLoginArt = "         (_____)           (_)    (_____)\n" +
 
 func setupTheme() *huh.Theme {
 	t := huh.ThemeBase()
-	t.FieldSeparator = lipgloss.NewStyle().SetString("\n")
+	t.FieldSeparator = lipgloss.NewStyle().SetString("\n\n")
 	t.Group.Title = lipgloss.NewStyle().Bold(true).MarginBottom(1)
 	t.Group.Description = lipgloss.NewStyle().MarginBottom(1)
 	t.Focused.Base = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).BorderLeft(true).BorderForeground(setupAccent).PaddingLeft(1)

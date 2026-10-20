@@ -13,8 +13,11 @@ Merge only the hosting fields you need, while the instance is stopped:
 ```json
 {
   "telnet_port": 7777,
+  "telnet_bind": "",
   "telnet_tls_port": 7778,
+  "telnet_tls_bind": "",
   "whod_port": 7779,
+  "whod_bind": "",
   "server_env": {
     "TELNET_TLS_CERT_FILE": "/etc/my-mud/tls/fullchain.pem",
     "TELNET_TLS_KEY_FILE": "/etc/my-mud/tls/privkey.pem",
@@ -30,6 +33,15 @@ omitted listener ports disable them. Nonzero ports must be distinct from each
 other and the HTTP port. TLS requires an explicit certificate and key; startup
 checks the pair and listener availability before launching. Availability checks
 are advisory because another process can bind between preflight and launch.
+
+Starting with v0.1.2, `telnet_bind`, `telnet_tls_bind` and `whod_bind` accept
+literal IPv4 or IPv6 addresses. Empty or omitted means all interfaces, preserving
+existing hosted configurations. Fresh v0.1.2 local instances explicitly set
+`telnet_bind` to `127.0.0.1`; set it to `""` deliberately before public hosting.
+`127.0.0.1` exposes a listener only to this machine; `::1` is IPv6 loopback.
+Bind addresses do not configure a firewall or TLS. Plain telnet remains plaintext.
+The standalone server equivalents are `-telnet-bind`, `-telnet-tls-bind` and
+`-whod-bind`; their empty defaults also retain all-interface binding.
 
 HTTP remains on loopback behind your reverse proxy. Only the four documented
 `server_env` keys are accepted. Inherited TLS, Mudlet, database, admin and

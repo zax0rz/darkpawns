@@ -113,7 +113,13 @@ var (
 
 // Listen starts a TCP telnet server on the given port. Returns immediately.
 func Listen(port int, manager *session.Manager) error {
-	addr := fmt.Sprintf(":%d", port)
+	return ListenOn("", port, manager)
+}
+
+// ListenOn selects a bind address without changing the telnet session. Empty
+// preserves the existing all-interface listener; local setup opts into loopback.
+func ListenOn(bind string, port int, manager *session.Manager) error {
+	addr := net.JoinHostPort(bind, strconv.Itoa(port))
 	ln, err := listenTCP("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("telnet listen: %w", err)
@@ -133,6 +139,7 @@ func Listen(port int, manager *session.Manager) error {
 // TLS connection is the same telnet session once its handshake is done.
 func serve(ln net.Listener, manager *session.Manager) {
 	go func() {
+		defer forgetListener(ln)
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
@@ -991,4 +998,29 @@ func Stop() {
 		tlsListener = nil
 	}
 	tlsAdvert.Store(nil)
+}
+
+// ListenerAddresses reports sockets that successfully bound, not requested flags.
+func ListenerAddresses() (plain, encrypted string) {
+	connMu.Lock()
+	defer connMu.Unlock()
+	if listener != nil {
+		plain = listener.Addr().String()
+	}
+	if tlsListener != nil {
+		encrypted = tlsListener.Addr().String()
+	}
+	return plain, encrypted
+}
+
+func forgetListener(ln net.Listener) {
+	connMu.Lock()
+	defer connMu.Unlock()
+	if listener == ln {
+		listener = nil
+	}
+	if tlsListener == ln {
+		tlsListener = nil
+		tlsAdvert.Store(nil)
+	}
 }

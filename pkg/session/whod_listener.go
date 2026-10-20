@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -35,6 +36,7 @@ type whodListener struct {
 	manager *Manager
 	world   *game.World
 	port    int
+	bind    string
 	delay   time.Duration
 
 	mu      sync.Mutex
@@ -47,16 +49,27 @@ type whodListener struct {
 // StartWhodListener opens C's WHOD port and starts the supervisor. It ports
 // init_whod (src/whod.c:246-253), including C's order: log the open, then bind.
 func (m *Manager) StartWhodListener(port int) error {
-	return m.startWhodListener(port, whodDelayTime)
+	return m.StartWhodListenerOn("", port)
+}
+
+// StartWhodListenerOn selects the interface; an empty address preserves the
+// existing daemon binding and all request bytes remain on the same path.
+func (m *Manager) StartWhodListenerOn(bind string, port int) error {
+	return m.startWhodListenerOn(bind, port, whodDelayTime)
 }
 
 // startWhodListener is StartWhodListener with the post-write hold injected
 // (WHOD_DELAY_TIME). Tests bind an ephemeral port and hold for zero.
 func (m *Manager) startWhodListener(port int, delay time.Duration) error {
+	return m.startWhodListenerOn("", port, delay)
+}
+
+func (m *Manager) startWhodListenerOn(bind string, port int, delay time.Duration) error {
 	l := &whodListener{
 		manager: m,
 		world:   m.world,
 		port:    port,
+		bind:    bind,
 		delay:   delay,
 		done:    make(chan struct{}),
 	}
@@ -108,7 +121,7 @@ func (m *Manager) WhodListenerAddr() string {
 
 // listen binds the port and starts the accept loop.
 func (l *whodListener) listen() error {
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", l.port))
+	ln, err := net.Listen("tcp", net.JoinHostPort(l.bind, strconv.Itoa(l.port)))
 	if err != nil {
 		slog.Error("WHOD listener failed", "port", l.port, "error", err)
 		return err

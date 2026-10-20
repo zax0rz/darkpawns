@@ -15,8 +15,8 @@ import (
 	"unicode"
 )
 
-// Hosting is an explicit instance choice. Desktop setup keeps all game listeners
-// disabled and never inherits another installation's TLS or Mudlet settings.
+// Hosting is an explicit instance choice. Fresh local setup binds telnet to
+// loopback and never inherits another installation's TLS or Mudlet settings.
 func (c Config) validateHosting() error {
 	ports := map[int]string{c.HTTPPort: "http_port"}
 	for name, port := range map[string]int{"telnet_port": c.TelnetPort, "telnet_tls_port": c.TelnetTLSPort, "whod_port": c.WhodPort} {
@@ -28,6 +28,11 @@ func (c Config) validateHosting() error {
 				return fmt.Errorf("%s collides with %s", name, previous)
 			}
 			ports[port] = name
+		}
+	}
+	for name, bind := range map[string]string{"telnet_bind": c.TelnetBind, "telnet_tls_bind": c.TelnetTLSBind, "whod_bind": c.WhodBind} {
+		if bind != "" && net.ParseIP(bind) == nil {
+			return fmt.Errorf("%s must be an IP address, or empty for all interfaces", name)
 		}
 	}
 	for key, value := range c.ServerEnv {
@@ -113,11 +118,15 @@ func preflightHosting(c Config) error {
 			return fmt.Errorf("hosted telnet TLS certificate: %w", err)
 		}
 	}
-	for _, port := range []int{c.TelnetPort, c.TelnetTLSPort, c.WhodPort} {
+	for _, endpoint := range []struct {
+		bind string
+		port int
+	}{{c.TelnetBind, c.TelnetPort}, {c.TelnetTLSBind, c.TelnetTLSPort}, {c.WhodBind, c.WhodPort}} {
+		port := endpoint.port
 		if port == 0 {
 			continue
 		}
-		listener, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+		listener, err := net.Listen("tcp", net.JoinHostPort(endpoint.bind, strconv.Itoa(port)))
 		if err != nil {
 			return fmt.Errorf("hosted listener port %d is unavailable: %w", port, err)
 		}

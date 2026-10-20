@@ -1,9 +1,14 @@
-// A self-hoster is not on darkpawns.org, so the landing page names the host
-// they actually reached. Inline script is blocked by the server's CSP, so this
-// lives here, where script-src 'self' allows it.
-(function nameThisHost() {
-  var el = document.getElementById('telnet-host');
-  if (el) el.textContent = window.location.hostname + ' port 7777';
+import { showConnections } from './connection-info.js';
+
+(function connectionInfo() {
+  function refresh() {
+    fetch(new URL('./connection-info', import.meta.url), { cache: 'no-store' })
+      .then(function (res) { if (!res.ok) throw new Error('connection info unavailable'); return res.json(); })
+      .then(function (info) { showConnections(info, window.location.hostname, document); })
+      .catch(function () { showConnections({}, window.location.hostname, document); });
+  }
+  refresh();
+  setInterval(refresh, 15000);
 })();
 
 // Liveness for the page the setup wizard sends people to on success

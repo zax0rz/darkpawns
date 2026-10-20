@@ -38,14 +38,14 @@ def main(bundle):
         # The line-mode wizard is the same reviewed plan used by the TUI.
         # Cancel/EOF/occupied-port paths must not create even the parent folder.
         cancelled = root / 'cancelled parent' / 'world'
-        for answer in ['\n\nno\nno\nno\nno\n', '']:
-            result = subprocess.run(command + ['setup', '--plain', '--no-browser', '--instance', str(cancelled), '--port', str(port)], input=answer, text=True, cwd=unrelated, capture_output=True, timeout=20)
+        for answer in ['\n\n0\nno\nno\nno\nno\n', '']:
+            result = subprocess.run(command + ['setup', '--plain', '--no-browser', '--instance', str(cancelled), '--port', str(port), '--telnet-port', '0'], input=answer, text=True, cwd=unrelated, capture_output=True, timeout=20)
             assert result.returncode == 0 and 'cancelled' in result.stdout, result
             assert not cancelled.parent.exists()
         with socket.socket() as occupied:
             occupied.bind(('127.0.0.1', 0))
             occupied.listen()
-            result = subprocess.run(command + ['setup', '--yes', '--no-browser', '--instance', str(cancelled), '--port', str(occupied.getsockname()[1])], cwd=unrelated, capture_output=True, timeout=20)
+            result = subprocess.run(command + ['setup', '--yes', '--no-browser', '--instance', str(cancelled), '--port', str(occupied.getsockname()[1]), '--telnet-port', '0'], cwd=unrelated, capture_output=True, timeout=20)
             assert result.returncode != 0 and b'unavailable' in result.stderr
             assert not cancelled.parent.exists()
         # A failed child start retains the initialized world and gives a usable
@@ -55,7 +55,7 @@ def main(bundle):
         failed_instance = root / 'retained after failure'
         server.rename(hidden_server)
         try:
-            result = subprocess.run(command + ['setup', '--yes', '--foreground', '--no-browser', '--instance', str(failed_instance), '--port', str(port)], cwd=unrelated, capture_output=True, timeout=20)
+            result = subprocess.run(command + ['setup', '--yes', '--foreground', '--no-browser', '--instance', str(failed_instance), '--port', str(port), '--telnet-port', '0'], cwd=unrelated, capture_output=True, timeout=20)
             assert result.returncode != 0 and b'instance is retained' in result.stderr, result
             assert (failed_instance / 'instance.json').exists()
         finally:
@@ -66,10 +66,10 @@ def main(bundle):
             flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
             args = [str(executable), 'run', '--instance', str(instance)]
             if setup:
-                args = [str(executable), 'setup', '--plain', '--no-browser', '--instance', str(instance), '--port', str(port)]
+                args = [str(executable), 'setup', '--plain', '--no-browser', '--instance', str(instance), '--port', str(port), '--telnet-port', '0']
             process = subprocess.Popen(args, cwd=unrelated, stdin=subprocess.PIPE if setup else None, stdout=log, stderr=log, creationflags=flags)
             if setup:
-                process.stdin.write(b'\n\nno\nno\nno\nyes\n')
+                process.stdin.write(b'\n\n0\nno\nno\nno\nyes\n')
                 process.stdin.close()
             try:
                 deadline = time.monotonic() + 30
