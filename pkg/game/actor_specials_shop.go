@@ -21,7 +21,8 @@ func specShopKeeperActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 	if actor == nil || me == nil {
 		return SpecialUnsupported
 	}
-	if _, ok := w.GetShopByKeeper(me.GetVNum()); !ok {
+	shop, ok := w.GetShopByKeeper(me.GetVNum())
+	if !ok {
 		return SpecialDeclined // C: the keeper matches no shop_nr
 	}
 	// C's `keeper == ch` arm is a switched keeper acting through itself; the
@@ -29,7 +30,6 @@ func specShopKeeperActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 	if Actor(me) == actor {
 		return SpecialDeclined
 	}
-	shop, _ := w.GetShopByKeeper(me.GetVNum())
 	inShopRoom := false
 	for _, room := range shop.Rooms {
 		if room == actor.GetRoom() {
