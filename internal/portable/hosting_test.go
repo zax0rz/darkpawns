@@ -144,7 +144,7 @@ func TestNewLocalConfigAndExistingHostedBindings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.TelnetPort != 7777 || cfg.TelnetBind != "127.0.0.1" {
+	if cfg.TelnetPort != 7777 || cfg.TelnetBind != "127.0.0.1" || !cfg.GreetingOverlay {
 		t.Fatalf("local defaults: %+v", cfg)
 	}
 	old := Config{Format: Format, HTTPPort: 4350, TelnetPort: 7777, JWTSecret: cfg.JWTSecret}
@@ -160,8 +160,8 @@ func TestNewLocalConfigAndExistingHostedBindings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if loaded.TelnetBind != "" {
-		t.Fatal("existing host was rebound")
+	if loaded.TelnetBind != "" || loaded.GreetingOverlay {
+		t.Fatal("existing host configuration changed")
 	}
 	after, err := os.ReadFile(path)
 	if err != nil {

@@ -16,7 +16,7 @@ Linux/macOS can download and run the installer in one shell command once a
 versioned release is available:
 
 ```sh
-sh -c 'set -e; installer=$(mktemp); trap '\''rm -f "$installer"'\'' EXIT; curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://github.com/zax0rz/darkpawns/releases/latest/download/install.sh -o "$installer"; sh "$installer"'
+curl -fsSL https://darkpawns.org/install.sh | bash
 ```
 
 Windows PowerShell 5.1 or newer:
@@ -30,10 +30,22 @@ extracting it, installs under your user account, and opens `darkpawns setup`.
 Linux/macOS require the standard `curl`, OpenSSL and tar utilities; there is no
 compiler or language runtime to install. Windows uses built-in PowerShell/.NET.
 Nothing needs administrator privileges. This is a shell/PowerShell bootstrap,
-not an MSI, macOS application or OS code-signing certificate. The initial script
-itself is delivered using GitHub HTTPS; its pinned publisher key authenticates
+not an MSI, macOS application or OS code-signing certificate. The entry script
+is delivered over HTTPS from darkpawns.org and downloads the release installer
+over GitHub HTTPS. The release installer pins the publisher key that authenticates
 the manifest and bundle. Independently inspecting that script/key is the trust
 boundary for first installation.
+
+To inspect before running, download the entry script first:
+
+```sh
+curl -fsSL https://darkpawns.org/install.sh -o install.sh
+less install.sh
+bash install.sh
+```
+
+The entry script downloads a second script from the latest official release;
+inspect that release's `install.sh` and pinned key too if auditing the bootstrap.
 
 Default release folders are `$XDG_DATA_HOME/darkpawns/releases` (falling back to
 `~/.local/share/darkpawns/releases`) on POSIX and
@@ -403,3 +415,18 @@ than certifying desktop browser integration (R5f).
   window, no connected players, independently delivered success/failure/recovery
   notifications from an updater outside the game process. Never promise binary
   rollback can undo an incompatible database or world migration.
+
+## Release greeting and starter MOTD (v0.1.2)
+
+New instances set `greeting_overlay` to `true`. This replaces only the historical
+pwipe notice with the running server's build version and `https://darkpawns.org`.
+The original logo, attribution and blank lines stay intact. Set it to `false`
+while stopped, then restart to restore C's greeting. Omitted means `false`, so
+an update never silently changes an existing world's greeting. The standalone
+server equivalent is `-greeting-overlay`; it is off by default.
+
+The release starter world receives a short neutral `lib/text/motd`. After
+initialization that file belongs to the operator. Updates preserve it, including
+production's custom MOTD; canonical repository text is not changed. Older
+launchers cannot directly read new configuration fields: use a matching
+v0.1.2-or-newer recovery launcher when adding these fields to an existing world.

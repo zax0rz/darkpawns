@@ -10,12 +10,13 @@ from stage_portable_release import SEEDS, stage
 class PortableStagingTest(unittest.TestCase):
     def fixture(self, root):
         for path in SEEDS:
-            name = path if path.startswith(('lib/misc/', 'mudlet/')) else path + '/index'
+            name = path if path.startswith(('lib/misc/', 'mudlet/', 'bootstrap/')) else path + '/index'
             if path == 'web/public':
                 name = path + '/index.html'
             target = root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(b'starter\n')
+        (root / 'lib/text/motd').write_bytes(b'canonical MOTD\n')
         for name in ['lib/etc/players', 'lib/plrobjs/A-E/alice.objs', 'lib/world/etc/board.mort']:
             target = root / name
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -39,6 +40,9 @@ class PortableStagingTest(unittest.TestCase):
             self.assertIn('admin-ui/index.html', files)
             self.assertIn('mudlet/darkpawns.xml', files)
             self.assertIn('mudlet/VERSION', files)
+            self.assertEqual((root / 'release-assets/lib/text/motd').read_bytes(), b'starter\n')
+            self.assertEqual((root / 'lib/text/motd').read_bytes(), b'canonical MOTD\n')
+            self.assertNotIn('bootstrap/motd', files)
             self.assertEqual(files['web/index.html'], hashlib.sha256(b'starter\n').hexdigest())
             self.assertFalse(any('untracked' in p or p.startswith(('lib/etc/', 'lib/plrobjs/', 'lib/world/etc/')) for p in files))
             # A second build replaces only its recognized generated staging tree.
