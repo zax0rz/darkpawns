@@ -67,9 +67,7 @@ or 4 (died / nothing running). Its one line is the whole result.
 - Don't start a second census. `start` refuses if one is running.
 
 **Choose the smallest census that can fail on your change** (R5h):
-- **Full census**: any change to player-facing output or game behaviour
-  (`pkg/`, `cmd/server/`, `lib/world`), to the harness, or to the scenario corpus
-  as a whole.
+- **Full census**: before every release, on the exact commit being tagged; a release ships only from a CLEAN or CLEAN_AFTER_RECHECK combined census, and any fix after a red census reruns it in full. Between releases, PRs that change player-facing output or game behaviour run a targeted census naming the scenarios that cover the change.
 - **Targeted** (`--scenarios`): changes that touch only tests, comments, docs,
   or one statement whose effect a named set of scenarios covers. Name the
   scenarios and why they cover it. A brief can require more.

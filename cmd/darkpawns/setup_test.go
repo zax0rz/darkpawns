@@ -48,7 +48,7 @@ func TestSetupValidationAndReview(t *testing.T) {
 	var out bytes.Buffer
 	// Existing destination, corrected path, occupied port, corrected port, browser
 	// choice and explicit review approval all pass through the actual line prompts.
-	input := strings.Join([]string{root, destination, occupied, port, "no", "no", "no", "yes"}, "\n") + "\n"
+	input := strings.Join([]string{root, destination, occupied, port, "0", "no", "no", "no", "yes"}, "\n") + "\n"
 	confirmed, err := setupPlain(context.Background(), bundle, &p, strings.NewReader(input), &out)
 	if err != nil || !confirmed {
 		t.Fatalf("%v %v\n%s", confirmed, err, out.String())
@@ -204,5 +204,25 @@ func TestSetupUsesOriginalLoginArt(t *testing.T) {
 	art, _, found := strings.Cut(greeting, "\n\n")
 	if !found || setupLoginArt != art {
 		t.Fatalf("installer splash differs from the original login artwork\ngot: %q\nwant: %q", setupLoginArt, art)
+	}
+}
+
+func TestSetupTelnetValidationRefusesCollisionsAndAllowsDisable(t *testing.T) {
+	p := setupPlan{Port: "4350"}
+	for _, value := range []string{"4350", "04350", "-1", "65536", "no"} {
+		if p.validateTelnet(value) == nil {
+			t.Fatal(value)
+		}
+	}
+	if err := p.validateTelnet("0"); err != nil {
+		t.Fatal(err)
+	}
+	ln, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	if p.validateTelnet(strconv.Itoa(ln.Addr().(*net.TCPAddr).Port)) == nil {
+		t.Fatal("occupied telnet port accepted")
 	}
 }

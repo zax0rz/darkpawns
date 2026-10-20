@@ -1,6 +1,7 @@
 package portable
 
 import (
+	"bytes"
 	"context"
 	"net"
 	"os"
@@ -130,5 +131,48 @@ func TestHostedListenerPreflightRefusesOccupiedPort(t *testing.T) {
 	port := listener.Addr().(*net.TCPAddr).Port
 	if err := preflightHosting(Config{TelnetPort: port}); err == nil {
 		t.Fatal("occupied hosted listener was accepted")
+	}
+}
+
+func TestNewLocalConfigAndExistingHostedBindings(t *testing.T) {
+	bundle := fixture(t)
+	instance := filepath.Join(t.TempDir(), "new-local")
+	if err := Init(bundle, instance, 4350); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(instance)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.TelnetPort != 7777 || cfg.TelnetBind != "127.0.0.1" || !cfg.GreetingOverlay {
+		t.Fatalf("local defaults: %+v", cfg)
+	}
+	old := Config{Format: Format, HTTPPort: 4350, TelnetPort: 7777, JWTSecret: cfg.JWTSecret}
+	path := filepath.Join(instance, "instance.json")
+	if err := updateJSON(path, old); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := Load(instance)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.TelnetBind != "" || loaded.GreetingOverlay {
+		t.Fatal("existing host configuration changed")
+	}
+	after, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(before, after) {
+		t.Fatal("load rewrote existing configuration")
+	}
+	for _, bind := range []string{"localhost", "127.0.0.1:7777", "bad\nbind"} {
+		if err := (Config{HTTPPort: 4350, TelnetBind: bind}).validateHosting(); err == nil {
+			t.Fatal(bind)
+		}
 	}
 }

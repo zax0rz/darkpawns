@@ -75,6 +75,13 @@ names, aliases, minimum positions, minimum levels, subcommands.
   `murder`); the Go registry is exact-match only. Any per-command alias fix is
   a workaround for this class-level gap. Don't close individual instances and
   call the class done.
+- **R2e. A resolved command needs a body for every body type it can reach.** C's
+  `command_interpreter` runs the same `do_*` for players and NPCs. A registry
+  entry with no `ActorHandler` is an unported command for NPCs; add the actor
+  lane with the C body, or record the gap in the depth manifest — never treat
+  `CharacterCommandUnsupported` as parity. Taught by DP-1453 (`order horse rep`
+  logged and dropped while the log claimed the command was unsupported, not
+  the body).
 - **Verify:** `make reachability` — the deterministic C-table-vs-registry diff.
   A command regressing from reachable to unreachable turns the Monday embed red.
 

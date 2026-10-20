@@ -16,7 +16,7 @@ Linux/macOS can download and run the installer in one shell command once a
 versioned release is available:
 
 ```sh
-sh -c 'set -e; installer=$(mktemp); trap '\''rm -f "$installer"'\'' EXIT; curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://github.com/zax0rz/darkpawns/releases/latest/download/install.sh -o "$installer"; sh "$installer"'
+curl -fsSL https://darkpawns.org/install.sh | bash
 ```
 
 Windows PowerShell 5.1 or newer:
@@ -30,10 +30,22 @@ extracting it, installs under your user account, and opens `darkpawns setup`.
 Linux/macOS require the standard `curl`, OpenSSL and tar utilities; there is no
 compiler or language runtime to install. Windows uses built-in PowerShell/.NET.
 Nothing needs administrator privileges. This is a shell/PowerShell bootstrap,
-not an MSI, macOS application or OS code-signing certificate. The initial script
-itself is delivered using GitHub HTTPS; its pinned publisher key authenticates
+not an MSI, macOS application or OS code-signing certificate. The entry script
+is delivered over HTTPS from darkpawns.org and downloads the release installer
+over GitHub HTTPS. The release installer pins the publisher key that authenticates
 the manifest and bundle. Independently inspecting that script/key is the trust
 boundary for first installation.
+
+To inspect before running, download the entry script first:
+
+```sh
+curl -fsSL https://darkpawns.org/install.sh -o install.sh
+less install.sh
+bash install.sh
+```
+
+The entry script downloads a second script from the latest official release;
+inspect that release's `install.sh` and pinned key too if auditing the bootstrap.
 
 Default release folders are `$XDG_DATA_HOME/darkpawns/releases` (falling back to
 `~/.local/share/darkpawns/releases`) on POSIX and
@@ -67,7 +79,9 @@ PowerShell:
 ```
 
 The three-step terminal wizard asks for a new instance folder, a local web port
-(default `4350`), then reviews the settings before creating anything. Use Tab or
+(default `4350`) and a local telnet port (default `7777`, or `0` to disable), then
+reviews the settings before creating anything. Both listeners bind to IPv4
+loopback; other machines cannot connect directly. Use Tab or
 Shift+Tab to move between fields, Enter to continue, and Ctrl+C to cancel. The
 review includes the browser choice and explains that the first character becomes
 the immortal. Background mode is the default: setup returns once the world is ready, and you
@@ -85,7 +99,8 @@ Default instance folders (separate from the extracted release):
 | macOS | `~/Library/Application Support/darkpawns/world` |
 | Windows | `%LOCALAPPDATA%\darkpawns\world` |
 
-`setup --instance <new-folder> --port <number>` preselects different values.
+`setup --instance <new-folder> --port <number> --telnet-port <number>` preselects
+different values. Enabled ports must be available and distinct.
 Missing parent folders are created only after confirmation and bundle verification.
 Existing folders are refused, even when empty; resume a world with `run` rather
 than rerunning setup. Cancellation, EOF and an occupied port create no instance.
@@ -221,8 +236,12 @@ PowerShell:
 
 Run these from any working directory. The foreground server listens on
 `http://127.0.0.1:4350/` (or your chosen port). Open it manually in your browser.
-The admin console is at `/admin/`. Telnet and WHOD are disabled for this first,
-local-only launcher. The existing standalone server flags remain unchanged.
+The admin console is at `/admin/`. New v0.1.2 instances also listen for telnet at
+`127.0.0.1:7777` (or your chosen `--telnet-port`); use `telnet 127.0.0.1 7777`
+or your MUD client. `--telnet-port 0` disables it. TLS telnet and WHOD remain off.
+Updating an existing instance preserves its ports and bind configuration. The
+splash page shows only active listeners and their observed address and port.
+For deliberate public hosting, see [portable-hosting.md](portable-hosting.md).
 
 Create your first character through the existing client to become the immortal;
 the second character is mortal. Ctrl+C stops the launcher and asks the server to
@@ -396,3 +415,18 @@ than certifying desktop browser integration (R5f).
   window, no connected players, independently delivered success/failure/recovery
   notifications from an updater outside the game process. Never promise binary
   rollback can undo an incompatible database or world migration.
+
+## Release greeting and starter MOTD (v0.1.2)
+
+New instances set `greeting_overlay` to `true`. This replaces only the historical
+pwipe notice with the running server's build version and `https://darkpawns.org`.
+The original logo, attribution and blank lines stay intact. Set it to `false`
+while stopped, then restart to restore C's greeting. Omitted means `false`, so
+an update never silently changes an existing world's greeting. The standalone
+server equivalent is `-greeting-overlay`; it is off by default.
+
+The release starter world receives a short neutral `lib/text/motd`. After
+initialization that file belongs to the operator. Updates preserve it, including
+production's custom MOTD; canonical repository text is not changed. Older
+launchers cannot directly read new configuration fields: use a matching
+v0.1.2-or-newer recovery launcher when adding these fields to an existing world.

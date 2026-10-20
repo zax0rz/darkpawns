@@ -233,26 +233,35 @@ func resolveWhodPort(whod, telnet, telnetTLS int) (port int, collision string) {
 	return port, ""
 }
 
+var version = "dev" // Set by the same release build as the portable launcher.
+
 func main() {
 	// Every path has a real default so that `./server`, run from a checkout
 	// root, does something. The world tree is lib/world, not lib/: the parser
 	// reads wld/, mob/, obj/ and zon/ directly out of the directory it is
 	// handed, and handing it lib/ fails with "parse rooms: open lib/wld".
 	var (
-		worldDir   = flag.String("world", defaultWorldDir, "World data directory: the one holding wld/, mob/, obj/, zon/ and shp/")
-		scriptsDir = flag.String("scripts", "", "Lua script directory (defaults to <world>/scripts)")
-		port       = flag.String("port", "4350", "HTTP and WebSocket port")
-		dbURL      = flag.String("db", "", "SQLite database path (or sqlite:// URL); falls back to DP_SQLITE_PATH, then to the embedded default beside the world data")
-		webDir     = flag.String("web", defaultWebDir, "Browser client directory served at / (index.html, client.js, style.css)")
-		staticDir  = flag.String("static", "", "Static site directory served at /, takes precedence over -web")
-		hugoDir    = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
-		telnetPort = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
-		telnetTLS  = flag.Int("telnet-tls-port", 0, "TLS telnet port (0 to disable); needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
-		whodPort   = flag.Int("whod-port", -1, "WHOD listener port (src/whod.c); -1 derives telnet port + 1 (C's rule), 0 disables; refused if the port equals -telnet-port or -telnet-tls-port")
-		httpBind   = flag.String("http-bind", "", "Interface the HTTP/WebSocket server listens on (all interfaces if empty). Behind a same-host reverse proxy, bind 127.0.0.1 so /ws, /api and /admin are reachable only through the proxy")
+		greetingOverlay = flag.Bool("greeting-overlay", false, "Replace only the dated pwipe line with the build version; preserve the original credits")
+		worldDir        = flag.String("world", defaultWorldDir, "World data directory: the one holding wld/, mob/, obj/, zon/ and shp/")
+		scriptsDir      = flag.String("scripts", "", "Lua script directory (defaults to <world>/scripts)")
+		port            = flag.String("port", "4350", "HTTP and WebSocket port")
+		dbURL           = flag.String("db", "", "SQLite database path (or sqlite:// URL); falls back to DP_SQLITE_PATH, then to the embedded default beside the world data")
+		webDir          = flag.String("web", defaultWebDir, "Browser client directory served at / (index.html, client.js, style.css)")
+		staticDir       = flag.String("static", "", "Static site directory served at /, takes precedence over -web")
+		hugoDir         = flag.String("hugo", "", "Deprecated alias for -static; still works, warns")
+		telnetPort      = flag.Int("telnet-port", 7777, "Telnet port (0 to disable)")
+		telnetTLS       = flag.Int("telnet-tls-port", 0, "TLS telnet port (0 to disable); needs TELNET_TLS_CERT_FILE and TELNET_TLS_KEY_FILE")
+		whodPort        = flag.Int("whod-port", -1, "WHOD listener port (src/whod.c); -1 derives telnet port + 1 (C's rule), 0 disables; refused if the port equals -telnet-port or -telnet-tls-port")
+		telnetBind      = flag.String("telnet-bind", "", "Interface for plaintext telnet (all interfaces if empty)")
+		telnetTLSBind   = flag.String("telnet-tls-bind", "", "Interface for TLS telnet (all interfaces if empty)")
+		whodBind        = flag.String("whod-bind", "", "Interface for WHOD (all interfaces if empty)")
+		httpBind        = flag.String("http-bind", "", "Interface the HTTP/WebSocket server listens on (all interfaces if empty). Behind a same-host reverse proxy, bind 127.0.0.1 so /ws, /api and /admin are reachable only through the proxy")
 	)
 	flag.Usage = usage
 	flag.Parse()
+	if *greetingOverlay {
+		session.SetOperatorGreeting(version)
+	}
 	// Hugo was removed from this repository (no config, no content, no themes);
 	// the flag has been a plain file server for a while. Scripts and systemd
 	// units still pass it, so keep honoring it and say once per boot that the
@@ -703,6 +712,10 @@ func main() {
 	apiDoc := apidoc.New()
 	rootAPI := apiDoc.NewAPI(rootMux)
 	apidoc.RegisterHealth(rootAPI)
+	apidoc.RegisterConnections(rootAPI, func() apidoc.ConnectionInfo {
+		plain, encrypted := telnet.ListenerAddresses()
+		return apidoc.ConnectionInfo{Telnet: apidoc.ConnectionAt(plain), TelnetTLS: apidoc.ConnectionAt(encrypted)}
+	})
 
 	rootMux.HandleFunc("/ws", manager.HandleWebSocket)
 	// The Mudlet world map, generated from the live world. Public on purpose:
@@ -825,6 +838,7 @@ func main() {
 		}
 	})
 	rootMux.Handle("/admin/", adminRouter)
+	rootMux.Handle("/login", adminLoginPage(adminRouter))
 
 	// Serve admin UI static assets (compiled React app)
 	adminUIDir := os.Getenv("ADMIN_UI_DIR")
@@ -899,7 +913,7 @@ func main() {
 
 	// Start telnet listener
 	if *telnetPort > 0 {
-		if err := telnet.Listen(*telnetPort, manager); err != nil {
+		if err := telnet.ListenOn(*telnetBind, *telnetPort, manager); err != nil {
 			slog.Error("Telnet listener failed", "error", err)
 		} else {
 			slog.Info("Telnet listening", "port", *telnetPort)
@@ -923,7 +937,7 @@ func main() {
 		slog.Error("WHOD disabled: -whod-port collides with "+whodCollision,
 			"port", whodListenPort)
 	case whodListenPort > 0:
-		if err := manager.StartWhodListener(whodListenPort); err != nil {
+		if err := manager.StartWhodListenerOn(*whodBind, whodListenPort); err != nil {
 			slog.Error("WHOD listener failed", "port", whodListenPort, "error", err)
 		} else {
 			slog.Info("WHOD listening", "port", whodListenPort)
@@ -941,7 +955,7 @@ func main() {
 			gameLoop.Stop()
 			os.Exit(1) //nolint:gocritic // exitAfterDefer: gameLoop.Stop() called explicitly above
 		}
-		if err := telnet.ListenTLS(*telnetTLS, manager, certFile, keyFile); err != nil {
+		if err := telnet.ListenTLSOn(*telnetTLSBind, *telnetTLS, manager, certFile, keyFile); err != nil {
 			slog.Error("Telnet TLS listener failed", "error", err)
 			gameLoop.Stop()
 			os.Exit(1)

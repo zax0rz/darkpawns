@@ -1,0 +1,56 @@
+# depth-case: mob.npc-quan-lo-names-the-pet
+# depth-case: mob.npc-quan-lo-declines-so-the-pet-obeys
+# A bought horse is a charmed NPC follower. C's special() offers every ordered
+# command to the room's mobiles (src/interpreter.c:1452-1463), and
+# SPECIAL(quan_lo) (src/spec_procs3.c:372-397) answers a command by name: its
+# flee arm gossips "What was that, <actor>? ..." and its look arm makes the monk
+# speak to the actor. Both use GET_NAME(ch), so the name in the bytes is the
+# horse's short description when the horse's command reaches the special. Every
+# arm returns FALSE, so the command the horse was given still runs.
+# Before this port the special had no actor lane, so Go reported it unsupported
+# and dropped each ordered command.
+# Revert control: removing the quan_lo actor registration fails this scenario.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+spawn-mob 19405 1 8105 194
+
+[setup:oracle]
+QuanLoPet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+QuanLoPet
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set QuanLoPet gold 1000
+
+[probe]
+buy horse
+order horse flee
+order horse look quan
+order horse emote neighs

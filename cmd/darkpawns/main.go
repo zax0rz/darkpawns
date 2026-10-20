@@ -39,6 +39,7 @@ func command() *cobra.Command {
 	}
 	initCmd := &cobra.Command{Use: "init", Short: "Create a new instance; never overwrite an existing directory", Args: cobra.NoArgs}
 	port := initCmd.Flags().Int("port", 4350, "Local web client port")
+	telnetPort := initCmd.Flags().Int("telnet-port", 7777, "Loopback telnet port (0 disables it)")
 	initCmd.RunE = func(cmd *cobra.Command, _ []string) error {
 		if err := validate(); err != nil {
 			return err
@@ -47,7 +48,7 @@ func command() *cobra.Command {
 		if err != nil {
 			return err
 		}
-		if err := portable.Init(base, instance, *port); err != nil {
+		if err := portable.InitWithTelnet(base, instance, *port, *telnetPort); err != nil {
 			return err
 		}
 		_, err = fmt.Fprintf(cmd.OutOrStdout(), "Instance created. Run %s to start it in the foreground.\n", portable.OperatorCommand(instance, "run"))

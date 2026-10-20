@@ -31,7 +31,7 @@ installs your own copy on Windows, macOS or Linux.
 Linux and macOS:
 
 ```sh
-sh -c 'set -e; installer=$(mktemp); trap '\''rm -f "$installer"'\'' EXIT; curl --fail --show-error --location --proto "=https" --proto-redir "=https" https://github.com/zax0rz/darkpawns/releases/latest/download/install.sh -o "$installer"; sh "$installer"'
+curl -fsSL https://darkpawns.org/install.sh | bash
 ```
 
 Windows (PowerShell 5.1 or newer):
@@ -63,9 +63,10 @@ When it finishes, open the printed address. **The first character you create
 becomes the immortal** (level 40). Create it before you let anyone else connect;
 every character after it starts as a mortal.
 
-A new world listens on `127.0.0.1` only, for the browser and the admin console.
-Telnet and the public game ports stay off until you configure hosting
-([hosted instances](docs/portable-hosting.md)).
+A new world listens on `127.0.0.1` only: the browser and admin console on the
+web port, and telnet on `7777` (`telnet localhost 7777`; the wizard can change or
+disable it). Nothing is reachable from other machines until you configure
+hosting ([hosted instances](docs/portable-hosting.md)).
 
 Prefer to do it by hand? Download your platform's archive from the
 [latest release](https://github.com/zax0rz/darkpawns/releases/latest), extract

@@ -114,7 +114,12 @@ func (w *World) roomCleanup(roomVNum int) int {
 	items := w.GetItemsInRoom(roomVNum)
 	totalVal := 0
 	for _, obj := range items {
-		w.roomMessage(roomVNum, obj.GetShortDesc()+" vanishes in a puff of smoke!")
+		// C: act("$p vanishes in a puff of smoke!", FALSE, 0, k, 0, TO_ROOM)
+		// (src/spec_procs.c:264 and :275). act() renders $p through OBJS and
+		// CAPs the first character, so the line begins with the object's name
+		// capitalised ("A barrel vanishes…"), and with no actor the audience is
+		// the object's own room.
+		Act(w, false, nil, nil, obj, nil, "$p vanishes in a puff of smoke!", "", ToRoom)
 		if err := w.MoveObjectToNowhere(obj); err != nil {
 			slog.Warn("MoveObjectToNowhere failed in room cleanup", "obj_vnum", obj.GetVNum(), "error", err)
 		}

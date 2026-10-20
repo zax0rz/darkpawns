@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,11 +37,16 @@ var tlsAdvert atomic.Pointer[tlsAdvertisement]
 // certFile and keyFile are PEM files; they are re-read when they change on
 // disk, so a certificate renewal needs no restart. Returns immediately.
 func ListenTLS(port int, manager *session.Manager, certFile, keyFile string) error {
+	return ListenTLSOn("", port, manager, certFile, keyFile)
+}
+
+// ListenTLSOn is the explicitly bound form of ListenTLS.
+func ListenTLSOn(bind string, port int, manager *session.Manager, certFile, keyFile string) error {
 	certs, err := newCertReloader(certFile, keyFile)
 	if err != nil {
 		return fmt.Errorf("telnet TLS certificate: %w", err)
 	}
-	addr := fmt.Sprintf(":%d", port)
+	addr := net.JoinHostPort(bind, strconv.Itoa(port))
 	raw, err := listenTCP("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("telnet TLS listen: %w", err)

@@ -1,0 +1,21 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+const source = await readFile(new URL('../web/public/connection-info.js', import.meta.url), 'utf8');
+const { showConnections } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+test('only observed listeners are shown, using bound ports and IPv6 addresses', () => {
+ const fields = new Map(['telnet-connection','telnet-host','telnet-tls-connection','telnet-tls-host'].map(id=>[id,{hidden:true,textContent:''}]));
+ const document={getElementById:id=>fields.get(id)};
+ showConnections({telnet:{bind:'127.0.0.1',port:8123},telnet_tls:{bind:'::1',port:8124}},'example.invalid',document);
+ assert.equal(fields.get('telnet-connection').hidden,false);
+ assert.equal(fields.get('telnet-host').textContent,'127.0.0.1 port 8123');
+ assert.equal(fields.get('telnet-tls-host').textContent,'::1 port 8124');
+ showConnections({telnet:{bind:'0.0.0.0',port:9999}},'example.invalid',document);
+ assert.equal(fields.get('telnet-host').textContent,'example.invalid port 9999');
+ assert.equal(fields.get('telnet-tls-connection').hidden,true);
+ showConnections({},'example.invalid',document);
+ assert.equal(fields.get('telnet-connection').hidden,true);
+ assert.equal(fields.get('telnet-host').textContent,'');
+ showConnections({telnet:{bind:'127.0.0.1',port:0}},'example.invalid',document);
+ assert.equal(fields.get('telnet-connection').hidden,true);
+});

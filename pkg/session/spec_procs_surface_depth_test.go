@@ -71,7 +71,12 @@ func TestDumpOutputGatesMatchCAtRealDispatch(t *testing.T) {
 			if err := ExecuteCommand(actor, "drop", []string{"sword"}); err != nil {
 				t.Fatalf("ExecuteCommand(drop): %v", err)
 			}
-			vanish := "a steel sword vanishes in a puff of smoke!\r\n"
+			// C's line is act("$p vanishes in a puff of smoke!", …): $p renders
+			// through OBJS and act() CAPs the first character, so it reads
+			// "A steel sword vanishes …" (src/spec_procs.c:264, src/comm.c:2477).
+			// The oracle vehicle spec-npc-dump-depth proves the same form with
+			// object 8000.
+			vanish := "A steel sword vanishes in a puff of smoke!\r\n"
 			if got, want := outputs["Tester"], vanish+"You drop a steel sword.\r\n"+vanish+"You are awarded for outstanding performance.\r\n"; got != want {
 				t.Fatalf("actor bytes = %q, want %q", got, want)
 			}

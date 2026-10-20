@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync/atomic"
 )
 
 // The terminal: what a line-oriented client sees and how its input lines are
@@ -32,6 +33,22 @@ const GreetingsLogo = "\r\n\r\n" +
 	"   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!\r\n" +
 	"\r\n\r\n"
 
+// operatorGreeting is configured once at startup. Nil retains the C greeting.
+var operatorGreeting atomic.Pointer[string]
+
+// SetOperatorGreeting enables the explicitly selected operator overlay. Empty
+// version restores C's greeting. Only the dated pwipe line in src/config.c:253
+// is replaceable; logo, attribution, spacing and terminal prompt stay intact.
+func SetOperatorGreeting(version string) {
+	if version == "" {
+		operatorGreeting.Store(nil)
+		return
+	}
+	line := "   Dark Pawns MUD v" + strings.TrimPrefix(version, "v") + " - https://darkpawns.org"
+	greeting := strings.Replace(GreetingsLogo, "   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!", line, 1)
+	operatorGreeting.Store(&greeting)
+}
+
 // TerminalGreeting is what a terminal client receives on connect: the
 // greeting, then the name prompt. C emits one visible line break at the
 // ident-to-name boundary; it is sent as a well-formed CRLF rather than C's
@@ -40,7 +57,11 @@ const GreetingsLogo = "\r\n\r\n" +
 // descriptor before its first flush and process_output sends that first
 // flush with its prepended interruption CRLF (comm.c:645-648, 1621, 1641).
 func TerminalGreeting() string {
-	return "\r\n" + NormalizeCRLF(GreetingsLogo) + NormalizeCRLF("\r\nBy what name do you wish to be known? ")
+	greeting := GreetingsLogo
+	if overlay := operatorGreeting.Load(); overlay != nil {
+		greeting = *overlay
+	}
+	return "\r\n" + NormalizeCRLF(greeting) + NormalizeCRLF("\r\nBy what name do you wish to be known? ")
 }
 
 // TerminalFrameKind says how a transport frames rendered output.

@@ -110,3 +110,42 @@ func TestPromptVitalsUseCCompleteColors(t *testing.T) {
 		t.Fatalf("normal color should not color vitals: %q", got)
 	}
 }
+
+// Zach approved the release-only overlay in the 2026-10-20 v0.1.2 brief.
+// The default remains src/config.c:235-254 (R1); the replacement is one line.
+func TestOperatorGreetingChangesOnlyPwipeLine(t *testing.T) {
+	SetOperatorGreeting("")
+	original := TerminalGreeting()
+	wantDefault := "\r\n" + cGreetingsFixture(t) + "\r\nBy what name do you wish to be known? "
+	if original != wantDefault {
+		t.Fatal("default greeting changed")
+	}
+	t.Cleanup(func() { SetOperatorGreeting("") })
+	SetOperatorGreeting("0.1.2")
+	gotLines := strings.Split(TerminalGreeting(), "\r\n")
+	originalLines := strings.Split(original, "\r\n")
+	if len(gotLines) != len(originalLines) {
+		t.Fatal("overlay changed line count")
+	}
+	changed := 0
+	for i, line := range gotLines {
+		if line == originalLines[i] {
+			continue
+		}
+		changed++
+		if originalLines[i] != "   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!" || line != "   Dark Pawns MUD v0.1.2 - https://darkpawns.org" {
+			t.Fatalf("unexpected changed line %d: %q", i, line)
+		}
+	}
+	if changed != 1 {
+		t.Fatalf("changed %d lines", changed)
+	}
+	SetOperatorGreeting("0.1.3")
+	if !strings.Contains(TerminalGreeting(), "Dark Pawns MUD v0.1.3 - https://darkpawns.org") {
+		t.Fatal("version did not follow build")
+	}
+	SetOperatorGreeting("")
+	if TerminalGreeting() != original {
+		t.Fatal("disabling overlay did not restore C")
+	}
+}
