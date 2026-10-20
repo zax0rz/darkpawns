@@ -119,7 +119,10 @@ func TestSupervisionRespectsStopAndPendingRecovery(t *testing.T) {
 }
 
 func TestHostedListenerPreflightRefusesOccupiedPort(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	// Occupy the same wildcard listener used by the game and its preflight.
+	// On macOS an IPv4-only loopback listener can coexist with the wildcard
+	// IPv6 listener selected by net.Listen("tcp", ":port").
+	listener, err := net.Listen("tcp", ":0")
 	if err != nil {
 		t.Fatal(err)
 	}
