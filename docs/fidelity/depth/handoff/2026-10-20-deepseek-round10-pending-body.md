@@ -169,6 +169,19 @@ Run individually, each checked for its own exit status:
 (6,715 cases, 6,624 proven/delegated), `make fidelity-units`,
 `make string-census`, `gosec -severity=high -quiet ./...`.
 
+All exit 0 on `becab5f0c` (43 packages of `go test ./...`, 0 failures).
+Targeted census — the smallest set that can fail on this change (the death and
+hit surfaces, plus the row's own scenario):
+
+```
+deepseek-r10-pending-body-b @becab5f0c: scenarios=8 passed=8 expected=0
+  unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 verdict=CLEAN
+```
+
+Scenarios: `carve-depth`, `dead-body-hit-depth`, `hit-depth`, `combat-death`,
+`death-followers-depth`, `{bash,backstab,circle}-skill-message-death-depth`.
+Evidence: `~/Archives/darkpawns/oracle-runs/2026-10-20/deepseek-r10-pending-body-b/`.
+
 ## Draw-row state after round 10
 
 | scenario | rows | state |
