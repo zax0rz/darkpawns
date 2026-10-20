@@ -40,12 +40,15 @@ export function ExitEditor({ schema, room, dirty, disabled = false, onOperation 
             <details
               key={direction}
               open={open}
-              onToggle={(event) =>
+              onToggle={(event) => {
+                // Read the DOM state now: React runs the updater after the
+                // event finishes, when currentTarget is already null.
+                const isOpen = event.currentTarget.open;
                 setOpenDirections((current) => ({
                   ...current,
-                  [direction]: event.currentTarget.open,
-                }))
-              }
+                  [direction]: isOpen,
+                }));
+              }}
               className="border border-rule bg-paper"
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
