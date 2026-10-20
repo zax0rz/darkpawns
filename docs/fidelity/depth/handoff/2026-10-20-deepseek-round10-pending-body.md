@@ -190,6 +190,25 @@ Scenarios: `carve-depth`, `dead-body-hit-depth`, `hit-depth`, `combat-death`,
 `death-followers-depth`, `{bash,backstab,circle}-skill-message-death-depth`.
 Evidence: `~/Archives/darkpawns/oracle-runs/2026-10-20/deepseek-r10-pending-body-b/`.
 
+Re-run after the R5c audit (adds the room-lane scenarios, because `cRoomPeople`
+no longer skips flagged bodies):
+
+```
+deepseek-r10-pending-body-c @0f875e7cf: scenarios=8 passed=8 expected=0
+  unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 verdict=CLEAN
+```
+
+Scenarios: `carve-depth`, `dead-body-hit-depth`, `hit-depth`, `combat-death`,
+`death-followers-depth`, `spec-npc-elements-guardian-depth`,
+`spec-proc-elements-platforms`, `spec-proc-elements-master-column-all`.
+Evidence: `~/Archives/darkpawns/oracle-runs/2026-10-20/deepseek-r10-pending-body-c/`.
+
+Pre-existing red, not from this round:
+`spec-proc-elements-galeru-alive-dead` reports one extra blank line in Go's
+`say` block on both `origin/main` (checked in a scratch worktree) and this
+branch, with draw parity matching. Left as a finding.
+
+
 ## Draw-row state after round 10
 
 | scenario | rows | state |
