@@ -1,0 +1,60 @@
+# depth-case: mob.npc-elements-minion-declines-so-the-pet-obeys
+# SPECIAL(elements_minion) (src/spec_procs3.c:1217-1240) scans the minion's own
+# carrying list for talismans on every call and always returns FALSE, so the
+# command it interrupted continues. C's special() offers an ordered pet's
+# command to the room's mobiles (src/interpreter.c:1452-1463). Before this port
+# the special had no actor lane, so Go reported it unsupported and dropped every
+# command the pet was given in the minion's room.
+# The item-destroying arm needs an object inside the minion's inventory, which
+# the fixture grammar cannot place (spawn-obj fills a room); it is pinned by
+# TestSpecElementsMinionActorPortsC in pkg/game.
+# Revert control: removing the elements_minion actor registration fails this
+# scenario.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+spawn-mob 1313 1 8106 13
+replace-room-exits 8105 all 8106 0
+replace-room-exits 8106 none
+
+[setup:oracle]
+MinionPet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+MinionPet
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set MinionPet gold 1000
+
+[probe]
+buy horse
+north
+order horse emote neighs
+order horse say hello
+order horse look minion
+look

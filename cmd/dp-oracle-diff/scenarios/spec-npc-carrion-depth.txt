@@ -1,0 +1,57 @@
+# depth-case: room.npc-carrion-spawns-for-the-pets-command
+# depth-case: room.npc-carrion-attacks-the-pet
+# SPECIAL(carrion) (src/spec_procs2.c:1726-1754) is a room special: when a body
+# in room 14305 issues any command whose argument contains corpse, corpses or
+# pile, C loads mob 14308 at that body's room, gives it the body's level and
+# damage roll, and makes it attack the body. GET_NAME(ch) and ch's room are the
+# actor's, so the pet's own command spawns a second stalker that attacks the
+# horse. Before this port the special had no actor lane, so Go reported it
+# unsupported and dropped the ordered command: one stalker, no second attack.
+# The room's exits are replaced so the fixture walks the horse in from the pet
+# shop instead of crossing the world.
+# Revert control: removing the carrion actor registration fails this scenario.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+replace-room-exits 8105 all 14305 0
+replace-room-exits 14305 all 8105 0
+
+[setup:oracle]
+CarrionPet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CarrionPet
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set CarrionPet gold 1000
+
+[probe]
+buy horse
+north
+order horse look corpse
+order horse emote neighs

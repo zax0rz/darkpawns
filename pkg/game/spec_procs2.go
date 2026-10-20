@@ -218,56 +218,12 @@ func specNinelives(w *World, ch *Player, me *MobInstance, cmd string, arg string
 // an NPC; the destination draw is number(real_room(4600), real_room(4699)) —
 // an integer over the vnum-sorted room-index (rnum) space, NOT over vnums —
 // rejecting PRIVATE/GODROOM/DEATH/NOMOB rooms with an unbounded redraw loop.
+// specWhirlpool is the player lane of SPECIAL(whirlpool), src/spec_procs2.c:244-275.
 func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// C: if (mini_mud || !ch) return FALSE. The Go pulse adapter passes a nil
-	// Player instead of the mob itself (callMobSpecSafely); the pull itself
-	// only depends on the room's victims, so ch is not dereferenced here.
-	if me == nil {
+	if w == nil || ch == nil || me == nil {
 		return false
 	}
-	specOccurred := false
-	for _, pl := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		// C: if (!PRF_FLAGGED(vict,PRF_NOHASSLE) && vict != mobile && !IS_NPC(vict))
-		if pl.GetFlags()&(1<<uint(PrfNohassle)) != 0 {
-			continue
-		}
-		// C: do { to_room = number(real_room(4600), real_room(4699)); }
-		//     while (PRIVATE || GODROOM || DEATH || NOMOB);
-		// One draw per rejection iteration, over the same absolute rnum
-		// bounds C uses, so the shared stream stays aligned (R3a).
-		lo, loOK := w.RealRoomIndex(4600)
-		hi, hiOK := w.RealRoomIndex(4699)
-		if !loOK || !hiOK {
-			// C's real_room would yield NOWHERE here; the stock world always
-			// has both endpoint rooms, so this is unreachable in practice.
-			continue
-		}
-		var toRoom int
-		for {
-			// #nosec G404 — game RNG, not cryptographic
-			idx := dprng.Number(lo, hi)
-			candidate, ok := w.RoomVNumByIndex(idx)
-			if !ok {
-				continue
-			}
-			if w.roomHasFlag(candidate, "private") || w.roomHasFlag(candidate, "godroom") ||
-				w.roomHasFlag(candidate, "death") || w.roomHasFlag(candidate, "nomob") {
-				continue
-			}
-			toRoom = candidate
-			break
-		}
-		pl.SetRoom(toRoom)
-		// C's strings (spec_procs2.c:267-268) carry LFCR framing; the telnet
-		// transport canonicalizes line endings for both engines, so the CRLF
-		// spelling rides the standard pipeline without sendToChar's extra
-		// appended terminator (which doubled the blank lines).
-		pl.SendMessage("A ravaging whirlpool sucks you under!\r\n")
-		pl.SendMessage("You finally surface, sputtering...\r\n\r\n")
-		w.LookAtRoom(pl, false)
-		specOccurred = true
-	}
-	return specOccurred
+	return specWhirlpoolPulls(w, ch.GetRoomVNum())
 }
 
 // ================================================================
@@ -1895,33 +1851,14 @@ func isNightbreed(candidate combat.Combatant) bool {
 // This is a room special, so me is nil on the command-dispatch path.  The
 // spawned stalker's combat opener belongs to the shared mob-hit seam; this
 // handler owns only the C room gate, spawn, room Act, and TRUE return.
+// specCarrion is the player lane of SPECIAL(carrion), src/spec_procs2.c:1726-1754.
+// carrion is a room special (src/spec_assign.c:587): a non-nil receiver means the
+// assignment moved.
 func specCarrion(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || ch == nil || me != nil {
+	if ch == nil || me != nil {
 		return false
 	}
-	if ch.GetPosition() <= combat.PosSleeping && ch.GetHP() > 0 {
-		return false
-	}
-	if cmd == "" {
-		return false
-	}
-	arg = strings.TrimLeft(arg, " \t\r\n\v\f")
-	if arg == "" || (!strings.Contains(arg, "corpse") && !strings.Contains(arg, "corpses") && !strings.Contains(arg, "pile")) {
-		return false
-	}
-
-	stalker, err := w.spawnMobQuiet(14308, ch.GetRoomVNum())
-	if err != nil {
-		return false
-	}
-	stalker.SetLevel(ch.GetLevel())
-	stalker.SetDamroll(ch.GetLevel())
-	Act(w, true, stalker, nil, nil, nil,
-		"Suddenly $n skitters from out of a corpse!", "", ToRoom)
-	if err := w.mobHit(stalker, ch); err != nil {
-		slog.Warn("carrion stalker attack failed", "mob", stalker.GetName(), "error", err)
-	}
-	return true
+	return specCarrionBody(w, ch, cmd, arg)
 }
 
 // ================================================================

@@ -249,7 +249,20 @@ func runCharacterSpecials(ctx characterCommandContext, name, rawArgs string) gam
 		if mob == nil || mob.HasMobFlag(game.MobFlagExtract) {
 			continue
 		}
-		if specName, assigned := game.GetMobSpecName(mob.VNum); assigned {
+		specName, assigned := game.GetMobSpecName(mob.VNum)
+		if !assigned {
+			// src/shop.c:1226-1243 assign_the_shopkeepers writes the native
+			// shop_keeper special onto every keeper loaded from .shp data at
+			// boot, so it never appears in MobSpecAssign. Recover it from the
+			// world's shop index exactly as the player lane does
+			// (pkg/session/commands.go:993-999); without it an ordered pet
+			// beside a keeper had every command blocked, and C's steal arm
+			// (keeper slaps the pet) never ran.
+			if _, isShopKeeper := w.GetShopByKeeper(mob.VNum); isShopKeeper {
+				specName, assigned = "shop_keeper", true
+			}
+		}
+		if assigned {
 			result := game.DispatchCharacterSpecial(specName, w, actorSpecialContext(ctx), mob, name, arg)
 			if result != game.SpecialDeclined {
 				return result

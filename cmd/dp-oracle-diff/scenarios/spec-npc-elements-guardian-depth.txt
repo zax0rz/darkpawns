@@ -1,0 +1,86 @@
+# depth-case: mob.npc-elements-guardian-charms-on-the-pets-command
+# depth-case: mob.npc-elements-guardian-declines-so-the-pet-obeys
+# SPECIAL(elements_guardian) (src/spec_procs3.c:1242-1289) runs for every typed
+# command in mob 1314's room and returns FALSE on both arms: it charms a player
+# into hitting themselves or another player, then lets the command continue.
+# C's special() offers an ordered pet's command to the room's mobiles too
+# (src/interpreter.c:1452-1463), so the guardian runs a second time for the
+# pet's command, drawing number(10,50) again (src/spec_procs3.c:1262) and
+# writing the same acts. Before this port the special had no actor lane, so Go
+# reported it unsupported and dropped the ordered command, losing both the
+# bytes and the draw.
+# Revert control: removing the elements_guardian actor registration fails this
+# scenario and its draw stream.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+spawn-mob 1314 1 8105 13
+
+[setup:oracle]
+GuardianPet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GuardianPet
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+GuardianPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+GuardianPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport GuardianPeer 8105
+set GuardianPeer level 31
+set GuardianPet gold 1000
+
+[probe]
+buy horse
+order horse emote neighs
+order horse say hello
