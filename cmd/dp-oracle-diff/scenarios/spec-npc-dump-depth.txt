@@ -1,0 +1,56 @@
+# depth-case: room.npc-dump-clears-and-declines-for-the-pet
+# SPECIAL(dump) (src/spec_procs.c:254-293) destroys every object in the actor's
+# room before it reads the command at all, then answers 0 for anything that is
+# not a drop. C's special() offers a pet's ordered command to the room special
+# (src/interpreter.c:1414-1416), so the pet's command clears the room a second
+# time and then continues. Before this port the special had no actor lane, so Go
+# reported it unsupported and dropped the ordered command instead of declining
+# it. The drop arm stays a recorded gap: it calls do_drop for the actor and the
+# port has no mobile do_drop (pkg/game/actor_specials_rooms.go specDumpActor).
+# Revert control: removing the dump actor registration fails this scenario.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8022 1 8105 80
+spawn-obj 8000 2 8085 80
+replace-room-exits 8105 all 8085 0
+replace-room-exits 8085 all 8105 0
+
+[setup:oracle]
+DumpPet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DumpPet
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set DumpPet gold 1000
+
+[probe]
+buy horse
+north
+order horse emote neighs
+order horse say hello

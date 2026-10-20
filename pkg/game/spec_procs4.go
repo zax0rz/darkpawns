@@ -489,30 +489,15 @@ func specFearface(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	return false
 }
 
+// specStartRoom is the player lane of SPECIAL(start_room), src/spec_procs.c:2204-2258.
 func specStartRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	_ = me
 	_ = cmd
 	_ = arg
-	if ch == nil {
+	if w == nil || ch == nil {
 		return false
 	}
-
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
-	for _, player := range players {
-		if player.GetLevel() >= lvlImmort {
-			return false
-		}
-	}
-
-	for _, player := range players {
-		player.SendMessage(startRoomBirthMessage(player.GetName()))
-		player.SetRoom(NewbieHometownRoom(player.GetHometown()))
-		// C's do_look renders the fresh mortal's default PRF_AUTOEXIT state,
-		// which is on — the oracle's hometown look carries "[ Exits: … ]".
-		w.lookAtRoom(player, false)
-	}
-
-	return true
+	return specStartRoomBody(w, ch.GetRoomVNum())
 }
 
 func startRoomBirthMessage(name string) string {

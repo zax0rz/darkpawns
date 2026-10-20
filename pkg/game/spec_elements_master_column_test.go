@@ -32,7 +32,11 @@ func newElementsMasterColumnTestWorld(t *testing.T) (*World, *Player, *Player, m
 	peer := NewPlayer(2, "ColumnPeer", elementsMasterColumnRoom)
 	actor.SetAutoExit(false)
 	peer.SetAutoExit(false)
-	for _, player := range []*Player{actor, peer} {
+	// C's world[room].people is front-inserted by char_to_room, so the last
+	// body added to the room is the head of the list. Add the peer first so the
+	// command actor is the newest entrant, matching the oracle vehicle
+	// (scenarios/spec-proc-elements-*.txt: peer teleported, actor walks in).
+	for _, player := range []*Player{peer, actor} {
 		if err := w.AddPlayer(player); err != nil {
 			t.Fatalf("AddPlayer(%s): %v", player.GetName(), err)
 		}

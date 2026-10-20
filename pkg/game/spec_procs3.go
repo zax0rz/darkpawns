@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"sort"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -769,17 +768,9 @@ func specTroll(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 }
 
 // specQuanLo comments on flee/retreat commands and responds to look.
+// specQuanLo is the player lane of SPECIAL(quan_lo) (src/spec_procs3.c:372-397).
 func specQuanLo(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" && me.GetPosition() > combat.PosSleeping {
-		if cmd == "flee" || cmd == "retreat" || cmd == "escape" {
-			w.mobGlobalGossip(me, fmt.Sprintf("What was that, %s? This is not a shawade. Try it again. This time with fewing.", ch.GetName()))
-		}
-		arg = strings.TrimSpace(arg)
-		if (cmd == "look" || cmd == "examine") && arg != "" && isCName(arg, charKeywords(me)) {
-			w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s says, 'What is it you seek, %s? Tell me and be gone.'", mobName(me), ch.GetName()))
-		}
-	}
-	return false
+	return specQuanLoBody(w, ch, me, cmd, arg)
 }
 
 // isCName matches the exact case-insensitive token semantics of C isname(),
@@ -1340,154 +1331,23 @@ func specRecruiter(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	return false
 }
 
-type elementsPlayerTransferPlan struct {
-	destination   int
-	directMessage string
-}
-
-type elementsPlayerTransferSpec struct {
-	prepare       func(*Player) elementsPlayerTransferPlan
-	departure     string
-	arrival       string
-	transferLog   string
-	sendDirect    func(*Player, string)
-	lookAfterMove func(*Player)
-}
-
-// elementsPlayerTransferOrder reconstructs the room-people order used by the
-// element vehicles. C front-inserts room occupants; the Go world uses the
-// command actor first, then stable connection/name order for the remaining
-// players. Every player-only element teleport uses this same snapshot.
-func elementsPlayerTransferOrder(w *World, ch *Player) []*Player {
-	players := w.GetPlayersInRoom(ch.GetRoomVNum())
-	// C walks world[room].people, a front-inserted linked list. Player IDs are
-	// the stable connection-order surrogate used by the Go world. The command
-	// actor is the most recent room entrant in the C vehicle, so keep it first;
-	// use IDs (then names) only to break ties among the remaining players.
-	sort.SliceStable(players, func(i, j int) bool {
-		if players[i] == ch {
-			return true
-		}
-		if players[j] == ch {
-			return false
-		}
-		if players[i].GetID() != players[j].GetID() {
-			return players[i].GetID() < players[j].GetID()
-		}
-		return players[i].GetName() < players[j].GetName()
-	})
-	return players
-}
-
-// transferElementPlayers is the shared player teleport spine for the element
-// vehicles. It preserves the C-visible order of direct text, departure Act,
-// checked transfer, optional destination look, and arrival Act.
-func (w *World) transferElementPlayers(ch *Player, spec elementsPlayerTransferSpec) {
-	for _, ppl := range elementsPlayerTransferOrder(w, ch) {
-		if ppl == nil {
-			continue
-		}
-
-		plan := spec.prepare(ppl)
-		if spec.sendDirect == nil {
-			Act(w, false, ppl, nil, nil, nil, plan.directMessage, "", ToChar)
-		} else {
-			spec.sendDirect(ppl, plan.directMessage)
-		}
-		Act(w, true, ppl, nil, nil, nil, spec.departure, "", ToNotVict)
-
-		if err := w.PlayerTransfer(ppl, plan.destination); err != nil {
-			slog.Warn(spec.transferLog, "player", ppl.GetName(), "room", plan.destination, "error", err)
-			continue
-		}
-		if spec.lookAfterMove != nil {
-			spec.lookAfterMove(ppl)
-		}
-		Act(w, true, ppl, nil, nil, nil, spec.arrival, "", ToNotVict)
-	}
-}
-
-// specElementsMasterColumn teleports players based on which talismans they carry.
+// specElementsMasterColumn is the player lane of SPECIAL(elements_master_column);
+// the shared body walks every occupant (src/spec_procs3.c:936-1002).
 func specElementsMasterColumn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil {
 		return false
 	}
-
-	newLocs := []int{1320, 1331, 1342, 1353, 1372}
-	objNames := []string{"earth", "air", "fire", "water"}
-	hasObject := [4]bool{}
-
-	w.transferElementPlayers(ch, elementsPlayerTransferSpec{
-		prepare: func(ppl *Player) elementsPlayerTransferPlan {
-			for _, obj := range ppl.GetInventory() {
-				if obj == nil {
-					continue
-				}
-				switch obj.GetVNum() {
-				case 1300:
-					hasObject[0] = true
-				case 1301:
-					hasObject[1] = true
-				case 1302:
-					hasObject[2] = true
-				case 1303:
-					hasObject[3] = true
-				}
-			}
-
-			found := 0
-			for i := range hasObject {
-				if !hasObject[i] {
-					break
-				}
-				found++
-				hasObject[i] = false
-			}
-
-			var message string
-			switch found {
-			case 0:
-				message = "You feel a tingling sensation and your vision fades. When you wake...\r\n"
-			case len(objNames):
-				message = "The four talismans glow softly and your vision fades. When you wake...\r\n"
-			default:
-				message = fmt.Sprintf("The talisman of %s glows softly and your vision fades. When you wake...\r\n", objNames[found-1])
-			}
-			return elementsPlayerTransferPlan{destination: newLocs[found], directMessage: message}
-		},
-		departure:   "$n vanishes in a brilliant flash of light.",
-		arrival:     " $n appears in a brilliant flash of light.",
-		transferLog: "elements master column player transfer failed",
-		lookAfterMove: func(ppl *Player) {
-			w.lookAtRoom(ppl, false)
-			// The space before the arrival act is do_description's (the
-			// destination rooms have extra descriptions): with nothing listed
-			// after the description, C's trailing space is still unsent, so
-			// the next act the looker receives begins with it (spec_procs3.c:
-			// 998-1002, act.informative.c:2779). The render drops an unused
-			// prefix, so this act carries it; a general carry-over of the
-			// pending space into the player's next output is not modelled.
-		},
-	})
+	specElementsMasterColumnMoves(w, ch.GetRoomVNum())
 	return true
 }
 
-// specElementsPlatforms sends all players in the room back to the master column (1314).
+// specElementsPlatforms is the player lane of SPECIAL(elements_platforms); the
+// shared body walks every occupant (src/spec_procs3.c:1004-1024).
 func specElementsPlatforms(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil {
 		return false
 	}
-	w.transferElementPlayers(ch, elementsPlayerTransferSpec{
-		prepare: func(*Player) elementsPlayerTransferPlan {
-			return elementsPlayerTransferPlan{
-				destination:   1314,
-				directMessage: "A wave of power surges through you and you feel dizzy.",
-			}
-		},
-		departure:   "$n disappears in a brilliant flash of light.",
-		arrival:     "$n appears in a brilliant flash of light.",
-		transferLog: "elements platforms player transfer failed",
-	})
+	specElementsPlatformsMove(w, ch.GetRoomVNum())
 	return true
 }
 
@@ -1565,181 +1425,29 @@ func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string
 	return true
 }
 
-// specElementsGaleruColumn checks if all four talismans are in their rooms.
+// specElementsGaleruColumn is the player lane of SPECIAL(elements_galeru_column)
+// (src/spec_procs3.c:1137-1182).
 func specElementsGaleruColumn(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil {
 		return false
 	}
-
-	// Check rooms 1360, 1364, 1380, and 1384 for talismans 1300-1303.
-	roomVnums := []int{1360, 1364, 1380, 1384}
-	talVnums := []int{1300, 1301, 1302, 1303}
-	found := 0
-
-	for i := 0; i < 4; i++ {
-		items := w.GetItemsInRoom(roomVnums[i])
-		for _, item := range items {
-			if item == nil {
-				continue
-			}
-			if item.GetVNum() == talVnums[i] {
-				found++
-				break
-			}
-		}
-	}
-
-	if found != 4 {
-		return false
-	}
-
-	w.transferElementPlayers(ch, elementsPlayerTransferSpec{
-		prepare: func(*Player) elementsPlayerTransferPlan {
-			return elementsPlayerTransferPlan{
-				destination:   1389,
-				directMessage: "Four beams of colored light from the corners of the chamber converge around you.\r\n\n",
-			}
-		},
-		departure:   "$n is struck by four beams of colored light and slowly vanishes!",
-		arrival:     " $n materialises from nowhere in a swirl of colors.",
-		transferLog: "elements galeru column player transfer failed",
-		sendDirect: func(ppl *Player, message string) {
-			// C's send_to_char buffer already contains its unusual CRLF/LF spacing;
-			// send the bytes directly instead of letting Act append another line end.
-			ppl.SendMessage(message)
-		},
-		lookAfterMove: func(ppl *Player) {
-			w.lookAtRoom(ppl, false)
-		},
-	})
-	return true
+	return specElementsGaleruColumnMoves(w, ch.GetRoomVNum())
 }
 
-// specElementsGaleruAlive teleports players if Galeru (mob 1315) is dead.
+// specElementsGaleruAlive is the player lane of SPECIAL(elements_galeru_alive)
+// (src/spec_procs3.c:1184-1215).
 func specElementsGaleruAlive(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd == "" || w == nil || ch == nil {
 		return false
 	}
-	roomVNum := ch.GetRoomVNum()
-	// C checks the exact mob VNum, not the mob keyword string.
-	for _, mob := range w.GetMobsInRoom(roomVNum) {
-		if mob != nil && mob.GetVNum() == 1315 {
-			return false
-		}
-	}
-
-	// C walks every character, not just players. The command actor is the
-	// newest room entrant in the normal vehicle; use stable IDs for the rest.
-	players := elementsPlayerTransferOrder(w, ch)
-	characters := make([]Actor, 0, len(players)+len(w.GetMobsInRoom(roomVNum)))
-	for _, player := range players {
-		if player != nil {
-			characters = append(characters, player)
-		}
-	}
-	mobs := w.GetMobsInRoom(roomVNum)
-	sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() < mobs[j].GetID() })
-	for _, mob := range mobs {
-		if mob != nil {
-			characters = append(characters, mob)
-		}
-	}
-
-	for _, target := range characters {
-		if player, ok := target.(*Player); ok {
-			// C's send_to_char buffer already contains CRLF/LF spacing.
-			player.SendMessage("You begin to feel very dizzy and the world around you fades...\r\n\n")
-		}
-		Act(w, true, target, nil, nil, nil, "$n disappears in a brilliant flash of light.", "", ToNotVict)
-
-		var err error
-		switch subject := target.(type) {
-		case *Player:
-			err = w.PlayerTransfer(subject, 1395)
-		case *MobInstance:
-			err = w.MobTransfer(subject, 1395)
-		}
-		if err != nil {
-			slog.Warn("elements galeru alive character transfer failed", "character", target.GetName(), "room", 1395, "error", err)
-			continue
-		}
-		if player, ok := target.(*Player); ok {
-			w.lookAtRoom(player, false) // look_at_room(ch, 0)
-		}
-		Act(w, true, target, nil, nil, nil, "$n appears in a brilliant flash of light.", "", ToNotVict)
-	}
-	return true
+	return specElementsGaleruAliveMoves(w, ch.GetRoomVNum())
 }
 
-// specElementsMinion mirrors SPECIAL(elements_minion) in
-// src/spec_procs3.c:1217-1240. C scans the mob's visible carrying list once
-// for each keyword, in this order, and extracts the first match from each
-// pass. It is command-independent and returns FALSE on both the player-command
-// and autonomous mobile_activity paths.
+// specElementsMinion is the player lane of SPECIAL(elements_minion)
+// (src/spec_procs3.c:1217-1240).
 func specElementsMinion(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || me == nil {
-		return false
-	}
-
-	for _, keyword := range []string{"talisman", "element", "earth", "fire", "water", "air"} {
-		var match *ObjectInstance
-		for _, obj := range me.Inventory {
-			if obj != nil && canSeeObject(me, obj) && isnameWithAbbrevs(keyword, obj.GetKeywords()) {
-				match = obj
-				break
-			}
-		}
-		if match == nil {
-			continue
-		}
-
-		Act(w, true, me, nil, match, nil,
-			"$n utters the words 'eradico paratus' and $p disintegrates.", "", ToRoom)
-		w.ExtractObject(match, me.GetRoomVNum())
-		elementsRemoveCylinders(w, me.GetRoomVNum())
-	}
+	specElementsMinionBody(w, me)
 	return false
-}
-
-// elementsGuardianRoomPeople reconstructs the C room->people walk for this
-// special. C char_to_room() front-inserts occupants; Go stores players and
-// mobs in maps, so newest connection/spawn order provides the corresponding
-// newest-first order used by the depth vehicle.
-func elementsGuardianRoomPeople(w *World, roomVNum int) []Actor {
-	players := w.GetPlayersInRoom(roomVNum)
-	sort.SliceStable(players, func(i, j int) bool {
-		connectedI := elementsGuardianConnectedAt(players[i])
-		connectedJ := elementsGuardianConnectedAt(players[j])
-		if !connectedI.Equal(connectedJ) {
-			return connectedI.After(connectedJ)
-		}
-		if players[i].GetID() != players[j].GetID() {
-			return players[i].GetID() > players[j].GetID()
-		}
-		return players[i].GetName() < players[j].GetName()
-	})
-
-	mobs := w.GetMobsInRoom(roomVNum)
-	sort.SliceStable(mobs, func(i, j int) bool { return mobs[i].GetID() > mobs[j].GetID() })
-
-	people := make([]Actor, 0, len(players)+len(mobs))
-	for _, player := range players {
-		if player != nil {
-			people = append(people, player)
-		}
-	}
-	for _, mob := range mobs {
-		if mob != nil {
-			people = append(people, mob)
-		}
-	}
-	return people
-}
-
-func elementsGuardianConnectedAt(player *Player) time.Time {
-	player.mu.RLock()
-	defer player.mu.RUnlock()
-	return player.ConnectedAt
 }
 
 // elementsGuardianSelfDamage preserves damage(ppl, ppl, dam, TYPE_UNDEFINED):
@@ -1783,44 +1491,13 @@ func elementsGuardianPlayerHit(w *World, attacker, defender *Player) {
 	}
 }
 
-// specElementsGuardian charms players into fighting each other.
+// specElementsGuardian is the player lane of SPECIAL(elements_guardian)
+// (src/spec_procs3.c:1242-1289).
 func specElementsGuardian(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if w == nil || ch == nil || me == nil || cmd == "" {
 		return false
 	}
-
-	people := elementsGuardianRoomPeople(w, ch.GetRoomVNum())
-	for i, person := range people {
-		ppl, ok := person.(*Player)
-		if !ok || ppl.IsNPC() || ppl.GetLevel() > LVL_IMMORT || ppl.GetFightingBody() != nil {
-			continue
-		}
-
-		var next Actor
-		if i+1 < len(people) {
-			next = people[i+1]
-		}
-		nextPlayer, nextIsPlayer := next.(*Player)
-		if !nextIsPlayer || nextPlayer.GetLevel() > LVL_IMMORT || nextPlayer.GetFightingBody() != nil {
-			dam := randRange(10, 50)
-			elementsGuardianSelfDamage(w, ppl, dam)
-			Act(w, true, me, ppl, nil, nil,
-				"$n mumbles softly and $N begins screaming loudly, hitting $Mself.", "", ToNotVict)
-			Act(nil, true, me, ppl, nil, nil,
-				"$n mumbles softly and you begin to scream, involuntarily hitting yourself.", "", ToVict)
-			return false
-		}
-
-		Act(w, true, ppl, nextPlayer, nil, nil,
-			fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking %s!", me.GetName(), ppl.GetName(), nextPlayer.GetName()), "", ToNotVict)
-		Act(nil, true, nextPlayer, nil, nil, nil,
-			fmt.Sprintf("%s mumbles softly and %s screams loudly, attacking you!", me.GetName(), ppl.GetName()), "", ToChar)
-		Act(nil, true, ppl, nil, nil, nil,
-			fmt.Sprintf("%s mumbles softly and you scream loudly, attacking %s!", me.GetName(), nextPlayer.GetName()), "", ToChar)
-		elementsGuardianPlayerHit(w, ppl, nextPlayer)
-		return false
-	}
-
+	specElementsGuardianBody(w, me, ch.GetRoomVNum())
 	return false
 }
 

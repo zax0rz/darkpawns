@@ -291,7 +291,16 @@ func shopListLine(s *Session, shop *game.Shop, obj *game.ObjectInstance, count, 
 	if shopObjectIsProduced(s, shop, obj) {
 		available = "Unlimited   "
 	}
-	description := capitalizeFirstRune(obj.GetShortDesc())
+	// src/shop.c:858-862: a drink container with liquid in it lists " of <drink>"
+	// after its short description, and CAP() then uppercases the whole line.
+	description := obj.GetShortDesc()
+	if obj.GetTypeFlag() == game.ITEM_DRINKCON && obj.GetValue(1) != 0 {
+		liquid := obj.GetValue(2)
+		if liquid >= 0 && liquid < len(game.LiquidNames) {
+			description += " of " + game.LiquidNames[liquid]
+		}
+	}
+	description = capitalizeFirstRune(description)
 	return fmt.Sprintf(" %2d)  %s%-48s %6d\r\n", index, available, description, shop.BuyPrice(obj.GetCost(), s.player.GetCha()))
 }
 
