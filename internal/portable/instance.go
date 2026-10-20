@@ -30,9 +30,14 @@ type Manifest struct {
 }
 
 type Config struct {
-	Format    int    `json:"format"`
-	HTTPPort  int    `json:"http_port"`
-	JWTSecret string `json:"jwt_secret"`
+	Format          int               `json:"format"`
+	HTTPPort        int               `json:"http_port"`
+	JWTSecret       string            `json:"jwt_secret"`
+	TelnetPort      int               `json:"telnet_port,omitempty"`
+	TelnetTLSPort   int               `json:"telnet_tls_port,omitempty"`
+	WhodPort        int               `json:"whod_port,omitempty"`
+	ServerEnv       map[string]string `json:"server_env,omitempty"`
+	MudletDirectory string            `json:"mudlet_directory,omitempty"`
 }
 
 func ReadManifest(bundle string) (Manifest, error) {
@@ -157,6 +162,9 @@ func Load(instance string) (Config, error) {
 	secret, err := hex.DecodeString(c.JWTSecret)
 	if c.Format != Format || c.HTTPPort < 1 || c.HTTPPort > 65535 || err != nil || len(secret) != 32 {
 		return c, errors.New("invalid instance configuration; restore the original instance.json")
+	}
+	if err := c.validateHosting(); err != nil {
+		return c, err
 	}
 	return c, nil
 }

@@ -38,13 +38,19 @@ are not in the repository, so an upgrade that replaces `lib/world/` from a fresh
 checkout, or syncs it with `rsync --delete`, erases every posted message. Keep `etc/`
 out of the sync (`rsync --delete --exclude='etc/' …`) or copy it aside first.
 
-## Portable development bundles
+## Portable releases
 
-The new [portable bundle foundation](docs/portable-release.md) packages the server,
-web client, admin console and a clean starter world for Windows, macOS and Linux.
-It creates a separate private instance and runs on loopback without a source
-checkout or build tools. These are unsigned development snapshots; the public
-installer, wizard, services, signing and update lifecycle are not implemented yet.
+The [portable release guide](docs/portable-release.md) covers signed installers,
+setup, lifecycle commands, manual updates and snapshot recovery on Windows,
+macOS and Linux. Release files include the server, browser and admin assets, a
+starter world, and the Mudlet package. Operators need no source checkout or
+build tools. A private instance holds players, world edits, credentials and logs;
+updates replace the release, not the instance.
+
+The default wizard is local-only. For an existing hosted server, first follow
+[hosted-instance adoption](docs/portable-hosting.md). That procedure preserves
+state and explicitly configures telnet, TLS, WHOD and an external service manager.
+Do not run fresh setup over an existing world.
 
 ## Quickstart
 

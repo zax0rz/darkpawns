@@ -41,6 +41,9 @@ archives:
       - src: docs/portable-release.md
         dst: .
         strip_parent: true
+      - src: docs/portable-hosting.md
+        dst: .
+        strip_parent: true
       - src: docs/publishing-releases.md
         dst: .
         strip_parent: true

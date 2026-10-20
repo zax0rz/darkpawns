@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -59,7 +60,7 @@ func TestInitPreservesInstanceAndSeparatesRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if after != cfg {
+	if !reflect.DeepEqual(after, cfg) {
 		t.Fatal("second init changed signing secret or configuration")
 	}
 	data, err := os.ReadFile(path)
