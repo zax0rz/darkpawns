@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -127,4 +127,14 @@ jobs:
             dist/*.tar.gz
             dist/*.zip
             dist/checksums.txt
+          retention-days: 7
+
+      - name: Retain update timeout diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-update-diagnostics
+          path: .portable-update-diagnostics/
+          include-hidden-files: true
+          if-no-files-found: ignore
           retention-days: 7

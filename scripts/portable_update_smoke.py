@@ -14,6 +14,7 @@ import subprocess
 import tarfile
 import tempfile
 import zipfile
+import time
 
 import websockets
 from smoke_test_2b import PASSWORD, cmd, create_character, login_existing, send
@@ -32,7 +33,34 @@ def main(bundle, native_service=False):
         command = [str(launcher), '--instance', str(instance)]
 
         def run(*args, good=True, answer=None):
-            result = subprocess.run(command + list(args), input=answer, text=True, encoding='utf-8', capture_output=True, timeout=100)
+            started = time.monotonic()
+            print('START:', args, flush=True)
+            evidence = pathlib.Path('.portable-update-diagnostics')
+            evidence.mkdir(exist_ok=True)
+            try:
+                result = subprocess.run(command + list(args), input=answer, text=True, encoding='utf-8', capture_output=True, timeout=100)
+            except subprocess.TimeoutExpired as error:
+                def decoded(value):
+                    return value.decode('utf-8', 'replace') if isinstance(value, bytes) else value or ''
+                print('TIMEOUT STDOUT:', decoded(error.stdout), flush=True)
+                print('TIMEOUT STDERR:', decoded(error.stderr), flush=True)
+                (evidence / 'timeout.stdout').write_text(decoded(error.stdout), encoding='utf-8')
+                (evidence / 'timeout.stderr').write_text(decoded(error.stderr), encoding='utf-8')
+                if os.name == 'nt':
+                    processes = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', "Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'darkpawns*' } | Select-Object ProcessId,ParentProcessId,CommandLine | ConvertTo-Json"], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=15)
+                    (evidence / 'processes.json').write_text(processes.stdout + processes.stderr, encoding='utf-8')
+                    print('PROCESSES:', processes.stdout, flush=True)
+                for name in ['.updates/transaction.json', '.updates/active.json', '.last-exit.json', 'lib/logs/launcher.log']:
+                    source = instance / name
+                    if source.exists():
+                        target = evidence / name.replace('/', '-')
+                        shutil.copyfile(source, target)
+                        if source.suffix == '.json':
+                            print(name, source.read_text(encoding='utf-8'), flush=True)
+                raise
+            print('DONE:', args[0], round(time.monotonic() - started, 2), 'seconds', 'exit', result.returncode, flush=True)
+            with (evidence / 'commands.log').open('a', encoding='utf-8') as log:
+                log.write(str(args) + '\n' + result.stdout + result.stderr + '\n')
             assert (result.returncode == 0) == good, (args, result.stdout, result.stderr)
             return result
 
