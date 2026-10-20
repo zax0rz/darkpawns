@@ -52,3 +52,33 @@ func TestPendingBodyStaysAddressableUntilExtractionPass(t *testing.T) {
 		t.Fatalf("extracted body still has room %d", victim.GetRoomVNum())
 	}
 }
+
+// TestRoomSpecialLoopsIncludePendingBodies pins the other half of C's delayed
+// extraction. Room-special bodies walk world[ch->in_room].people with no
+// MOB_EXTRACT test — start_room (src/spec_procs.c:2209) and the Elemental
+// Temple loops (src/spec_procs3.c:948, 1012, 1164, 1195, 1254) — so a body
+// flagged earlier in the pulse is still an occupant and is moved like any
+// other. Only special()'s room-mobile loop skips flagged bodies
+// (src/interpreter.c:1453).
+func TestRoomSpecialLoopsIncludePendingBodies(t *testing.T) {
+	w, _ := newActorRoomTestWorld(t,
+		parser.Room{VNum: 1326, Name: "Earth Platform"},
+		parser.Room{VNum: 1314, Name: "Column Base"},
+	)
+	pet := newSpecProcTestMob(t, w, 1326, 1)
+	w.RawKillCombatant(pet, combat.TYPE_SLASH)
+	if !pet.HasMobFlag(MobFlagExtract) {
+		t.Fatal("killed mob is not flagged MOB_EXTRACT")
+	}
+
+	people := cRoomPeople(w, 1326)
+	if len(people) != 1 || people[0] != Actor(pet) {
+		t.Fatalf("cRoomPeople = %d occupants, want the pending body", len(people))
+	}
+
+	specElementsPlatformsMove(w, 1326)
+
+	if got := pet.GetRoomVNum(); got != 1314 {
+		t.Fatalf("pending body room = %d, want 1314: C's room-special loops do not skip it", got)
+	}
+}

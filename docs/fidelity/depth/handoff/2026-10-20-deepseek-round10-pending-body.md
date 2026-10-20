@@ -112,14 +112,22 @@ listed, then freed by the pass):
 `TestSendSkillResult_KillHit_DoesNotEnrollCorpse`, `TestInstakillFiresAtImplLevel`
 — plus a new `TestPendingBodyStaysAddressableUntilExtractionPass`.
 
-### Recorded gap
+### Named gap (implementor `kill` only)
 
-When a flagged body's `damage()` gates **pass** (a non-peaceful room), C applies
-damage to a body it has already committed to freeing and can even reach a second
-`raw_kill` on it. The port runs the swing's draws and the gates, then stops
-before applying damage: it does not damage a body the extraction pass is about
-to free (R1a — that path mutates teardown state). Reachable only through the
-implementor `kill` command.
+When a flagged body's `damage()` gates **pass** (a non-peaceful room), C damages
+the body and can reach a second `raw_kill` on it. That is **defined** behaviour,
+not undefined: the second `extract_char` returns early at the already-set flag
+(`src/handler.c:1197`), so nothing is freed twice and nothing is used after
+free; the extraction pass still runs once at the next heartbeat. The observable
+result is a second, empty corpse and a repeated set of death messages.
+
+The port runs the swing's draws and `damage()`'s gates, then stops before
+applying damage to a body awaiting extraction, so that second corpse and its
+messages are not reproduced. Reachable only through the implementor `kill`
+command (`do_kill`'s `raw_kill` is the only path that flags a body while leaving
+it standing). Earlier drafts of this note called it R1a; it is not — it is a
+missing C behaviour with a known C result, recorded here and left to Zach to
+schedule.
 
 ## Part 2 — the index clusters
 
@@ -193,9 +201,43 @@ Evidence: `~/Archives/darkpawns/oracle-runs/2026-10-20/deepseek-r10-pending-body
 
 ## Decisions for Zach
 
-- **The pending-body swing stops before applying damage.** Alternative: let C's
-  `damage()` run on a body flagged for extraction, including its second-death
-  path.
+- **The pending-body swing stops before applying damage**, so the implementor
+  `kill` → `hit` → second-death path (a second empty corpse plus repeated
+  messages) is a named gap, not ported. It is defined C behaviour, not R1a; the
+  port needs a damage path that can carry a flagged body through `die` and
+  `raw_kill` a second time. Alternative: port it now.
 - **`pkg/combat` gained one entry point** (`PerformPendingBodySwing`) plus a
   `CombatPair` flag. Alternative: keep the engine untouched and accept the
   divergence.
+
+## R5c audit — every C `MOB_EXTRACT` check, mapped to Go
+
+`extract_char` leaves the body in `character_list` and `world[room].people`
+for up to one pulse, so every C loop that walks either list had to be checked
+(`grep -rn MOB_EXTRACT src/*.c`):
+
+| C site | what C does | Go | state |
+|---|---|---|---|
+| `src/fight.c:1321` | `damage()` refuses silently when `GET_POS(victim) <= POS_DEAD` **and** the flag is set; otherwise it logs `SYSERR: Attempt to damage a corpse.` | `pkg/game/damage_gate.go` `DamageRefused` refuses silently on `pos <= PosDead` | matches for the player-facing bytes; the `SYSERR` mudlog line is not emitted (invisible, noted) |
+| `src/fight.c:2030` | `perform_violence` runs a mob's special only on `!MOB_EXTRACT` | the round's mob-special seam skips `HasMobFlag(MobFlagExtract)` (`pkg/session/manager.go`, `SetMobSpecialFunc`) | matches |
+| `src/act.informative.c:508` | `list_char_to_char` skips flagged bodies | `pkg/game/look.go` skips `MobFlagExtract` in the room listing | matches (pinned by `dead-body-hit-depth`'s `look`) |
+| `src/db.c:2230` | zone reset `'R'` (remove mobile) skips flagged **and fighting** bodies | `pkg/game/spawner.go` `removeMobFromRoom` skips both | matches (pre-existing) |
+| `src/interpreter.c:1453` | `special()`'s room-mobile loop skips flagged bodies | `pkg/session/character_dispatch.go` (`runCharacterSpecials`) and `pkg/game/flee.go` (`movementSpecialBlocksMob`) skip `MobFlagExtract` | matches |
+| `src/scripts.c:1985` | `table_to_char` writes no field on a flagged body | `pkg/game/world_bridge.go` returns before writing when `!IsAlive() \|\| MobFlagExtract` | matches (pre-existing, cited there) |
+| `src/utils.c:954` | `check_dead()` is true for a flagged mob; `mobile_activity`/`mobact` helpers use it | `pkg/game/mobact.go` gates on `!IsAlive() \|\| MobFlagExtract` before acting | matches |
+| `src/db.c:2108` | `'M'` reset counts `mob_index[].number`, decremented only in `extract_char_final` | `pkg/game/world_player.go` `countMobInstances` counts `activeMobs` **and** queued bodies, flagged included | matches — a pending body still occupies a slot, as in C |
+
+Loops C does **not** guard, checked for the opposite error:
+
+- **Room-special bodies.** `start_room` (`src/spec_procs.c:2209`) and the
+  Elemental Temple loops (`src/spec_procs3.c:948, 1012, 1164, 1195, 1254`) walk
+  `world[ch->in_room].people` with no flag test, so C moves a pending body like
+  any other occupant. `cRoomPeople` used to skip flagged mobs — an extra guard C
+  does not have — and now includes them (`pkg/game/actor_specials_rooms.go`).
+- **Name resolution.** `get_char_room_vis` has no flag test
+  (`src/handler.c:1276-1300`), and Go's `ResolveCharInRoom` matches (no filter).
+  That is what the `hit` in `dead-body-hit-depth` rides on.
+- **`stat room`** lists the body in C (`world[room].people`), and Go's
+  `GetMobsInRoom` includes it — pinned by the scenario.
+- **Aggro, wander and `mobile_activity`** reach a flagged body only through
+  `check_dead`, which returns true, so neither engine acts on it.
