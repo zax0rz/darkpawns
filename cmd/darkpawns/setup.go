@@ -155,7 +155,7 @@ func setupForm(ctx context.Context, bundle string, p *setupPlan, in io.Reader, o
 	confirmed := false
 	theme := setupTheme()
 	form := huh.NewForm(
-		huh.NewGroup(huh.NewInput().Title("Instance folder").Description("A new folder for your world, players and settings. Keep it outside the release folder.").Value(&p.Instance).Validate(func(value string) error { _, err := resolveDestination(bundle, value); return err })).Title(setupWordmark()+"\n\nSetup | 1 of 3: Choose a home"),
+		huh.NewGroup(huh.NewInput().Title("Instance folder").Description("A new folder for your world, players and settings. Keep it outside the release folder.").Value(&p.Instance).Validate(func(value string) error { _, err := resolveDestination(bundle, value); return err })).Title(setupLoginArt+"\n\nSetup | 1 of 3: Choose a home"),
 		huh.NewGroup(
 			huh.NewInput().Title("Web client port").Description("Local browser access only. The default is 4350.").Value(&p.Port).Validate(availablePort),
 			huh.NewConfirm().Title("Run in the background?").Description("Keep the world running when you close this terminal.").Value(&p.Background),
@@ -332,7 +332,7 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 			compact := false
 			if ok {
 				width, height, sizeErr := term.GetSize(file.Fd())
-				compact = sizeErr == nil && (width < 60 || height < 24)
+				compact = sizeErr == nil && (width < 72 || height < 24)
 			}
 			if plain || compact || os.Getenv("TERM") == "dumb" || os.Getenv("NO_COLOR") != "" {
 				if err := setupPlainHeading(out); err != nil {

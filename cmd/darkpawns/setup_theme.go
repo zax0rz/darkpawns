@@ -8,23 +8,22 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// The terminal keeps the operator's font and background. Only PAWNS and active
-// controls take the site's oxblood accent; normal text keeps terminal contrast.
+// The terminal keeps the operator's font and background. Active controls take
+// the site's oxblood accent; normal text and the original art keep terminal contrast.
 var setupAccent = lipgloss.AdaptiveColor{Light: "#A8201A", Dark: "#CF4B42"}
 
-func setupWordmark() string {
-	dark := ` ____    _    ____  _  __
-|  _ \  / \  |  _ \| |/ /
-| | | |/ _ \ | |_) | ' /
-| |_| / ___ \|  _ <| . \
-|____/_/   \_\_| \_\_|\_\`
-	pawns := ` ____   _ __        ___   _ ____
-|  _ \ / \\ \      / / \ | / ___|
-| |_) / _ \\ \ /\ / /|  \| \___ \
-|  __/ ___ \\ V  V / | |\  |___) |
-|_| /_/   \_\\_/\_/  |_| \_|____/`
-	return dark + "\n" + lipgloss.NewStyle().Foreground(setupAccent).Render(pawns)
-}
+// setupLoginArt is the nine-line artwork from GREETINGS (src/config.c:235),
+// also used by session.GreetingsLogo. The source fixture test prevents drift
+// without making the portable launcher depend on the game/session packages.
+const setupLoginArt = "         (_____)           (_)    (_____)\n" +
+	"   _     /  __ \\           | |    |  __ \\                            _\n" +
+	"  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\n" +
+	"   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\n" +
+	" .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\n" +
+	" ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\n" +
+	"                                  |||\n" +
+	"                                  |||\n" +
+	"                                  `.'"
 
 func setupTheme() *huh.Theme {
 	t := huh.ThemeBase()

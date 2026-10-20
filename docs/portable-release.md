@@ -93,7 +93,7 @@ Initialization or startup errors retain any created instance for inspection and
 print recovery instructions. Port checks are advisory; another process can take
 the port between the check and the server binding it.
 
-The interactive wizard uses a stacked ASCII wordmark and oxblood focus accents,
+The interactive wizard uses the original login artwork and oxblood focus accents,
 with the terminal's own background and text colors. Step headings show progress
 through the three screens. Small terminals use plain prompts automatically.
 
