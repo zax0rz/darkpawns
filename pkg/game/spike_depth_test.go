@@ -104,8 +104,15 @@ func TestDoSpike_MobTarget(t *testing.T) {
 	if victim.IsAlive() {
 		t.Fatal("RawKillCombatant left the NPC alive")
 	}
+	// C's extract_char only sets MOB_EXTRACT (src/handler.c:1194-1209); the body
+	// leaves the room in extract_char_final at the next heartbeat's
+	// extract_pending_chars (src/comm.c:805), so the room still holds it here.
+	if mobs := w.GetMobsInRoom(1001); len(mobs) != 1 || !mobs[0].HasMobFlag(MobFlagExtract) {
+		t.Fatalf("RawKillCombatant room state = %#v, want the pending-extract body", mobs)
+	}
+	w.ExtractPendingPlayers()
 	if got := len(w.GetMobsInRoom(1001)); got != 0 {
-		t.Fatalf("RawKillCombatant left %d NPCs in room, want 0", got)
+		t.Fatalf("the extraction pass left %d NPCs in room, want 0", got)
 	}
 }
 

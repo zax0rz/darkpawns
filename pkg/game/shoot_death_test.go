@@ -46,8 +46,19 @@ func TestRangedDeathHasNoKillerBookkeeping(t *testing.T) {
 			}
 			if npc {
 				m := victim.(*MobInstance)
-				if m.GetExp() != 602 || m.IsAlive() || len(w.GetAllMobs()) != 0 {
-					t.Fatal("mob die EXP/extraction boundary wrong")
+				if m.GetExp() != 602 || m.IsAlive() {
+					t.Fatal("mob die EXP/death boundary wrong")
+				}
+				// C's extract_char only sets MOB_EXTRACT and counts the pending
+				// extraction (src/handler.c:1194-1209); the body leaves
+				// character_list in extract_char_final, run by
+				// extract_pending_chars at the next heartbeat (src/comm.c:805).
+				if !m.HasMobFlag(MobFlagExtract) {
+					t.Fatal("dead mob was not flagged MOB_EXTRACT")
+				}
+				w.ExtractPendingPlayers()
+				if len(w.GetAllMobs()) != 0 {
+					t.Fatal("dead mob survived the extraction pass")
 				}
 			}
 			if !npc {

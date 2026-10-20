@@ -129,8 +129,12 @@ func TestSendSkillResult_KillHit_DoesNotEnrollCorpse(t *testing.T) {
 		t.Fatalf("sendSkillResult: %v", err)
 	}
 
+	if mob := ktw.findMob(); mob == nil || mob.IsAlive() {
+		t.Fatalf("1-HP mob should be dead after the hit")
+	}
+	ktw.drainDeaths()
 	if ktw.findMob() != nil {
-		t.Fatalf("1-HP mob should be dead and removed after the hit")
+		t.Fatalf("1-HP mob should be removed after the extraction pass")
 	}
 	if p.GetFighting() != "" {
 		t.Errorf("killing hit must not enroll the attacker (C enrolls no corpse), fighting=%q", p.GetFighting())

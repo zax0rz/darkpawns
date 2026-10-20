@@ -191,6 +191,11 @@ func (ktw *killTestWorld) addPlayer(t *testing.T, id int, name string, level int
 }
 
 // findMob finds the mob in the room by vnum. Returns nil if not found (dead).
+// drainDeaths runs C's pending-extraction pass (extract_pending_chars,
+// src/handler.c:1211-1248). A dead body stays in the room until it runs, because
+// extract_char only flags it (src/handler.c:1194-1209).
+func (ktw *killTestWorld) drainDeaths() { ktw.world.ExtractPendingPlayers() }
+
 func (ktw *killTestWorld) findMob() *game.MobInstance {
 	for _, m := range ktw.world.GetMobsInRoom(testRoomVNum) {
 		if m.VNum == testMobVNum {
@@ -294,8 +299,12 @@ func TestKillPayout_Backstab_MobRemovedFromActiveMobs(t *testing.T) {
 		t.Fatalf("CmdBackstab: %v", err)
 	}
 
+	if mob := ktw.findMob(); mob != nil && !mob.HasMobFlag(game.MobFlagExtract) {
+		t.Error("killed mob should be flagged for extraction")
+	}
+	ktw.drainDeaths()
 	if ktw.findMob() != nil {
-		t.Error("killed mob should not be in activeMobs")
+		t.Error("killed mob should not be in activeMobs after the extraction pass")
 	}
 }
 
@@ -347,8 +356,8 @@ func TestKillPayout_Backstab_CorpseCreated(t *testing.T) {
 		t.Fatalf("CmdBackstab: %v", err)
 	}
 
-	// Mob must be dead
-	if ktw.findMob() != nil {
+	// Mob must be dead (C frees the body at the next extraction pass).
+	if mob := ktw.findMob(); mob == nil || mob.IsAlive() {
 		t.Fatal("mob should be dead after backstab")
 	}
 
@@ -442,6 +451,7 @@ func TestKillPayout_Bash_RemovesMobFromWorld(t *testing.T) {
 		t.Fatalf("CmdBash: %v", err)
 	}
 
+	ktw.drainDeaths()
 	if ktw.findMob() != nil {
 		t.Error("killed mob should be removed from activeMobs after bash kill")
 	}
@@ -561,8 +571,9 @@ func TestKillPayout_HandleDeath_MobRemovedFromActiveMobs(t *testing.T) {
 		t.Error("mob should be dead after HandleDeath")
 	}
 
+	ktw.drainDeaths()
 	if ktw.findMob() != nil {
-		t.Error("killed mob should be removed from activeMobs")
+		t.Error("killed mob should be removed from activeMobs after the extraction pass")
 	}
 }
 
@@ -702,6 +713,7 @@ func TestKillPayout_DoSpellDamage_RemovesMobFromWorld(t *testing.T) {
 	mob := ktw.findMob()
 	ktw.world.DoSpellDamage(p, mob, 999, "fireball")
 
+	ktw.drainDeaths()
 	if ktw.findMob() != nil {
 		t.Error("killed mob should be removed from activeMobs after DoSpellDamage")
 	}
