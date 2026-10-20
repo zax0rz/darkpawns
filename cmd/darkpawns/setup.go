@@ -182,7 +182,7 @@ func setupPlain(ctx context.Context, bundle string, p *setupPlan, in io.Reader, 
 			if err := ctx.Err(); err != nil {
 				return "", err
 			}
-			if _, err := fmt.Fprintf(out, "%s [%s]: ", label, fallback); err != nil {
+			if _, err := fmt.Fprintf(out, "\n%s [%s]: ", label, fallback); err != nil {
 				return "", err
 			}
 			var value string
