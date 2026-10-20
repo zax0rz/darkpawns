@@ -64,6 +64,24 @@ folder and still requires the pinned signature; it is not an unsigned bypass.
 In a headless POSIX session without a controlling terminal, installation prints
 the setup command instead of reading prompts from a download pipe.
 
+## Windows double-click setup (v0.1.3)
+
+After extracting the complete Windows archive, double-click `darkpawns.exe` to
+open the setup wizard in its console. On completion, cancellation or error, the
+console waits for Enter so you can read the result. Setup still requires your
+review before creating a world. It starts in background mode by default, so
+closing the completed setup window leaves the world running.
+
+A second double-click opens setup again. Existing world folders are refused;
+choose a new folder (and available ports) for another world, or cancel. Manage
+your existing world with the lifecycle commands below. Setup does not reset,
+overwrite, or automatically restart an existing world.
+
+Commands launched from an existing terminal keep their usual behavior, without
+the extra pause. Shortcuts with explicit arguments keep those arguments and
+wait before closing when launched through Explorer. This does not change Windows
+SmartScreen or publisher-signing behavior.
+
 ## Guided setup
 
 Extract the whole archive, then run:

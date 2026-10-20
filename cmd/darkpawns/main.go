@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/inconshreveable/mousetrap"
 	"github.com/spf13/cobra"
 	"github.com/zax0rz/darkpawns/internal/portable"
 )
@@ -70,20 +71,23 @@ func command() *cobra.Command {
 	return root
 }
 
-func execute() error {
+func execute(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	root := command()
 	root.SetContext(ctx)
-	if forwarded, err := forwardActive(root, os.Args[1:]); forwarded || err != nil {
+	root.SetArgs(args)
+	if forwarded, err := forwardActive(root, args); forwarded || err != nil {
 		return err
 	}
 	return root.ExecuteContext(ctx)
 }
 
 func main() {
-	if err := execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "darkpawns:", err)
-		os.Exit(1)
+	// Take ownership of Explorer's console before Cobra's Windows pre-exec hook
+	// can print its command-line-only notice and terminate the process.
+	explorer := mousetrap.StartedByExplorer()
+	if code := runLauncher(os.Args[1:], explorer, execute, os.Stdin, os.Stdout, os.Stderr); code != 0 {
+		os.Exit(code)
 	}
 }
