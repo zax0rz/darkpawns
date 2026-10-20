@@ -51,6 +51,7 @@ jobs:
         run: |
           go test ./internal/portable ./internal/releaseauth ./cmd/darkpawns ./cmd/dp-release
           python -m unittest discover -s scripts -p test_stage_portable_release.py
+          node --test scripts/connection-info.test.mjs
           python -m pip install 'websockets>=12,<16'
       - name: Windows editor access adapter
         if: runner.os == 'Windows'
@@ -88,6 +89,7 @@ jobs:
           bundles = list(destination.iterdir())
           assert len(bundles) == 1, bundles
           subprocess.run(['python', 'scripts/portable_smoke.py', '--bundle', str(bundles[0])], check=True)
+          subprocess.run(['python', 'scripts/portable_local_telnet_smoke.py', '--bundle', str(bundles[0])], check=True)
       - name: Ensure the Linux user service manager is available
         if: runner.os == 'Linux'
         shell: bash

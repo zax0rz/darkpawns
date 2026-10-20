@@ -67,7 +67,9 @@ PowerShell:
 ```
 
 The three-step terminal wizard asks for a new instance folder, a local web port
-(default `4350`), then reviews the settings before creating anything. Use Tab or
+(default `4350`) and a local telnet port (default `7777`, or `0` to disable), then
+reviews the settings before creating anything. Both listeners bind to IPv4
+loopback; other machines cannot connect directly. Use Tab or
 Shift+Tab to move between fields, Enter to continue, and Ctrl+C to cancel. The
 review includes the browser choice and explains that the first character becomes
 the immortal. Background mode is the default: setup returns once the world is ready, and you
@@ -85,7 +87,8 @@ Default instance folders (separate from the extracted release):
 | macOS | `~/Library/Application Support/darkpawns/world` |
 | Windows | `%LOCALAPPDATA%\darkpawns\world` |
 
-`setup --instance <new-folder> --port <number>` preselects different values.
+`setup --instance <new-folder> --port <number> --telnet-port <number>` preselects
+different values. Enabled ports must be available and distinct.
 Missing parent folders are created only after confirmation and bundle verification.
 Existing folders are refused, even when empty; resume a world with `run` rather
 than rerunning setup. Cancellation, EOF and an occupied port create no instance.
@@ -221,8 +224,12 @@ PowerShell:
 
 Run these from any working directory. The foreground server listens on
 `http://127.0.0.1:4350/` (or your chosen port). Open it manually in your browser.
-The admin console is at `/admin/`. Telnet and WHOD are disabled for this first,
-local-only launcher. The existing standalone server flags remain unchanged.
+The admin console is at `/admin/`. New v0.1.2 instances also listen for telnet at
+`127.0.0.1:7777` (or your chosen `--telnet-port`); use `telnet 127.0.0.1 7777`
+or your MUD client. `--telnet-port 0` disables it. TLS telnet and WHOD remain off.
+Updating an existing instance preserves its ports and bind configuration. The
+splash page shows only active listeners and their observed address and port.
+For deliberate public hosting, see [portable-hosting.md](portable-hosting.md).
 
 Create your first character through the existing client to become the immortal;
 the second character is mortal. Ctrl+C stops the launcher and asks the server to

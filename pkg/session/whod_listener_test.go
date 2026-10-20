@@ -257,3 +257,54 @@ func TestWhodRequestHostBranches(t *testing.T) {
 		t.Fatalf("nil addr = %q", got)
 	}
 }
+
+func TestWhodBindRetainsWildcardDefaultAndSupportsLoopback(t *testing.T) {
+	manager, _ := whodWorld(t)
+	if err := manager.startWhodListenerOn("127.0.0.1", 0, 0); err != nil {
+		t.Fatal(err)
+	}
+	addr := manager.WhodListenerAddr()
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if host != "127.0.0.1" {
+		t.Fatal(addr)
+	}
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	checked := false
+	for _, a := range addrs {
+		ip, _, parseErr := net.ParseCIDR(a.String())
+		if parseErr != nil || ip.To4() == nil || ip.IsLoopback() || ip.IsUnspecified() {
+			continue
+		}
+		checked = true
+		conn, dialErr := net.DialTimeout("tcp", net.JoinHostPort(ip.String(), port), time.Second)
+		if dialErr == nil {
+			conn.Close()
+			t.Fatal("WHOD escaped loopback")
+		}
+		break
+	}
+	if !checked {
+		t.Log("no non-loopback IPv4 interface; explicit bound address checked")
+	}
+	if response := whodWhoRequest(t, addr); !strings.Contains(response, "A list of active players") {
+		t.Fatal(response)
+	}
+	manager.StopWhodListener()
+	if err := manager.startWhodListener(0, 0); err != nil {
+		t.Fatal(err)
+	}
+	defer manager.StopWhodListener()
+	host, _, err = net.SplitHostPort(manager.WhodListenerAddr())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !net.ParseIP(host).IsUnspecified() {
+		t.Fatal("changed existing wildcard default")
+	}
+}

@@ -70,7 +70,7 @@ def main(bundle, native_service=False, shutdown_failure=False):
             assert recovery('run', failed_registration) in failed.stderr, failed.stderr
 
             # Default setup returns after readiness while the server survives it.
-            run('setup', '--yes', '--no-browser', '--port', str(port))
+            run('setup', '--yes', '--no-browser', '--port', str(port), '--telnet-port', '0')
             cfg = (instance / 'instance.json').read_bytes()
             assert status()['state'] == 'running'
             first_record = (instance / '.control.json').read_bytes()

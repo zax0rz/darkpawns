@@ -55,11 +55,11 @@ def main(bundle):
             raise AssertionError(message)
         cert, key = root / 'localhost.crt', root / 'localhost.key'
         subprocess.run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', str(key), '-out', str(cert), '-subj', '/CN=localhost', '-days', '1'], check=True, capture_output=True)
-        run('init', '--port', str(ports[0]))
+        run('init', '--port', str(ports[0]), '--telnet-port', '0')
         cfg_path = instance / 'instance.json'
         cfg = json.loads(cfg_path.read_text())
         original_secret = cfg['jwt_secret']
-        cfg.update(telnet_port=ports[1], telnet_tls_port=ports[2], whod_port=ports[3], mudlet_directory=str(public), server_env={
+        cfg.update(telnet_bind='', telnet_port=ports[1], telnet_tls_port=ports[2], whod_port=ports[3], mudlet_directory=str(public), server_env={
             'TELNET_TLS_CERT_FILE': str(cert), 'TELNET_TLS_KEY_FILE': str(key),
             'DP_MUDLET_PACKAGE_URL': 'https://example.invalid/darkpawns.xml',
             'DP_MUDLET_MAP_URL': 'https://example.invalid/darkpawns-map.xml',
