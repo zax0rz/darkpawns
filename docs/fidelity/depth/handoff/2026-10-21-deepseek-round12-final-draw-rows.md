@@ -185,3 +185,59 @@ Zach to schedule; nothing in round 12 touches it.
   treat `spell-charm-shopkeeper-depth` seed 1 and `spec-proc-cityguard` seed 5
   as open lane work, say so and I will instrument the pump boundary next round;
   I stopped because the remaining suspects are DP_CLOCK and the harness.
+
+## 7. Add-on: the immortal `version` line
+
+`do_gen_ps`'s SCMD_VERSION arm printed an invented `Built with: <go version>`
+line for immortals (`pkg/session/gen_ps_cmds.go`), where C prints
+`Compile Time: %s` (`src/act.informative.c:2172-2174`). The string is stamped at
+boot by `load_compile_time()` (`src/db.c:313`, `src/version.c:12-62`), which
+assigns `compile_time = time(0)` — boot time, not a build stamp — and formats it
+in local time as `<Month> <day>, <year>   <HH>:<MM>`:
+
+```c
+sprintf(buf, "%s %d, %d   ", mon, now->tm_mday, now->tm_year+1900);
+sprintf(buf, "%s%d:", buf, now->tm_hour);      /* "%s0%d:" under 10 */
+sprintf(buf, "%s%d",  buf, now->tm_min);       /* "%s0%d"  under 10 */
+```
+
+Those calls pass `buf` as both destination and source, which is undefined
+behaviour, so the port renders the intended bytes (R1a) with
+`"January 2, 2006   15:04"`. C's zone/DST `strftime` into `buf1` feeds nothing —
+`buf1` is never sent — so only `compile_time_str` reaches the player.
+
+**Why the census never saw it:** the only version probe in the corpus was
+`mortal-batch12`, and the line is immortal-only. `version-immortal-depth.txt`
+creates the first player (crowned, so LVL_IMMORT is inherited) and probes
+`version` and `version ignored-argument`; seeds 1, 2, 3, 5, 8 are clean on both
+transcript and draw parity.
+
+**The stamp is the real boot clock, deliberately not `DP_FIXED_TIME`.**
+Measured with the pinned game clock:
+
+```
+C : Compile Time: October 21, 2026   09:27   (load_compile_time -> time(0))
+Go: Compile Time: February 11, 2026   14:34   (DP_FIXED_TIME=1770838461)
+```
+
+so `loadCompileTime()` reads `compileTimeNow = time.Now`, and a unit test pins
+that the pinned game clock does not leak into it. Consequence worth knowing: the
+stamp is minute-granular on *each* engine's own boot, so a scenario run whose two
+boots straddle a minute would read as a divergence on that one line. The durable
+fix for that, if it ever bites, is a normalizer mask for `Compile Time:`
+(`internal/oraclediff/normalize.go`, stop tier) — proposed, not made.
+
+Revert control: restoring the invented line reddens the scenario on every seed:
+
+```
+-Compile Time: October 21, 2026   09:30
++Built with: go1.26.10
+```
+
+String ledger: `c-missing.tsv` already named `Compile Time:`
+(`src/act.informative.c:2173`) and `go-only-baseline.json` already reviewed the
+invented string as `bug:paraphrase` citing the same C line — the ledger knew the
+bug before the census could see it. Both rows go in this change; the 36
+pre-existing stale baseline entries are left for a separate
+`make string-census-update` (regenerating now would drag ~1136 unrelated lines
+into the diff).
