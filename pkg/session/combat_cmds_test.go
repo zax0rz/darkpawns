@@ -135,16 +135,25 @@ func TestInstakillFiresAtImplLevel(t *testing.T) {
 		t.Fatalf("cmdKill returned error: %v", err)
 	}
 
-	// The mob must be dead (instakill fired).
-	if m.world.GetMobsInRoom(1001) != nil {
-		found := false
-		for _, mm := range m.world.GetMobsInRoom(1001) {
-			if mm == mob {
-				found = true
+	// The mob must be dead (instakill fired). C only flags the body; it leaves
+	// the room in the next heartbeat's extraction pass (src/handler.c:1194-1248),
+	// so assert the death and then the pass.
+	found := false
+	for _, mm := range m.world.GetMobsInRoom(1001) {
+		if mm == mob {
+			found = true
+			if mm.IsAlive() || !mm.HasMobFlag(game.MobFlagExtract) {
+				t.Error("level 39 immortal should have instakilled the mob (DP-1041)")
 			}
 		}
-		if found {
-			t.Error("level 39 immortal should have instakilled the mob (DP-1041)")
+	}
+	if !found {
+		t.Error("instakilled body vanished before the extraction pass")
+	}
+	m.world.ExtractPendingPlayers()
+	for _, mm := range m.world.GetMobsInRoom(1001) {
+		if mm == mob {
+			t.Error("instakilled body survived the extraction pass")
 		}
 	}
 }

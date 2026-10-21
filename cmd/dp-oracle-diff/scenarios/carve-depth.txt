@@ -1,3 +1,4 @@
+# depth-case: combat.pending-body-keeps-the-swing-draws
 # depth-case: carve.fighting-no-arg
 # depth-case: carve.no-arg
 # depth-case: carve.target-missing

@@ -417,7 +417,17 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 		}
 		deadMob.mu.Unlock()
 		w.pendingMobileExtractions[deadMob] = struct{}{}
-		delete(w.activeMobs, deadMobID)
+		// C's extract_char only sets MOB_EXTRACT and counts the pending
+		// extraction (src/handler.c:1194-1209); the body leaves
+		// character_list and world[room].people in extract_char_final, run by
+		// extract_pending_chars at the start of the next heartbeat
+		// (src/comm.c:805, src/handler.c:1221-1248). The body therefore stays
+		// addressable for the rest of this pulse: room listings hide it
+		// (MOB_EXTRACT), but get_char_room_vis still finds it, which is why C
+		// answers `hit <dead mob>` with a full swing — to-hit and damage draws
+		// included — before damage()'s gates refuse it. Removing it here made
+		// the port answer "They don't seem to be here." and lose that draw
+		// (carve-depth, R1/R3).
 	}
 	w.mu.Unlock()
 
