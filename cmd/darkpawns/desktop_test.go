@@ -84,7 +84,7 @@ func TestDesktopExistingWorldOpensReadyAddressAndWaits(t *testing.T) {
 	cmd.SetErr(&out)
 	cmd.SetArgs([]string{})
 	code := runLauncher(nil, true, func([]string) error { return cmd.ExecuteContext(context.Background()) }, strings.NewReader("\n"), &out, &out)
-	if code != 0 || strings.Join(order, ",") != "start,browse" || !strings.Contains(out.String(), "Press Enter to close") || strings.Contains(out.String(), "Setup |") {
+	if code != 0 || strings.Join(order, ",") != "start,browse" || !strings.Contains(out.String(), "Press Enter to close") || strings.Contains(strings.ToLower(out.String()), "setup") {
 		t.Fatalf("exit=%d calls=%v output=%s", code, order, out.String())
 	}
 	data, err := os.ReadFile(filepath.Join(instance, "instance.json"))

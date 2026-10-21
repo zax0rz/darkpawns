@@ -39,10 +39,7 @@ func desktopCommand(bundle func() (string, error), start func(context.Context, s
 		if err != nil {
 			return err
 		}
-		if err := setupPlainHeading(cmd.OutOrStdout()); err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Opening your world. Waiting for the web client..."); err != nil {
+		if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Dark Pawns\n\nOpening your world. Waiting for the web client..."); err != nil {
 			return err
 		}
 		status, err := start(cmd.Context(), base, instance)
