@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -135,38 +136,96 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	return true
 }
 
-// specBeholder casts spells randomly in combat.
+// beholderNumber is the C number() seam for SPECIAL(beholder)'s pulse draws.
+var beholderNumber = dprng.Number
+
+// specBeholder ports SPECIAL(beholder) (src/new_cmds2.c:328-398).
+//
+// C has three arms in this order:
+//
+//   - cmd: cast and recite are intercepted with the two eyestalk acts;
+//     every other command is declined (:334-343).
+//   - not fighting: count the room's people, return when targets <= 1,
+//     pick one with number(0, targets), skip a zero pick, then cast sleep,
+//     charm or curse on number(0, 2) (:345-373). C returns FALSE, so the
+//     rest of the mobile's pulse still runs.
+//   - fighting: scan the room in people order and take the first body whose
+//     FIGHTING is the beholder and whose !number(0,4) fires; fall back to
+//     FIGHTING(ch), then number(0,10) -> disrupt, else number(0,5) ->
+//     disintegrate (:377-397).
+//
+// The previous Go body invented a five-way randN(5) spell table and an HP
+// gate that C does not have, so it drew nothing in the peaceful arm and the
+// wrong draws in the fighting arm (R4, R3).
 func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	// Block spellcasting in beholder's presence (C: intercepts cast and recite)
-	if cmd == "cast" || cmd == "recite" {
-		Act(w, true, me, ch, nil, nil, "A ray of light shoots out from one of $n's eyestalks, hitting $N!", "", ToNotVict)
-		Act(w, false, me, ch, nil, nil, "A ray of light shoots out from one of $n's eyestalks, breaking your concentration!", "", ToVict)
-		return true
+	if me == nil {
+		return false
 	}
 	if cmd != "" {
-		return false
-	}
-	if me.GetPosition() != combat.PosFighting || me.GetHP() < 0 {
-		return false
-	}
-	melee := mobMeleeTarget(me)
-	if melee == nil {
+		if cmd == "cast" || cmd == "recite" {
+			Act(w, true, me, ch, nil, nil, "A ray of light shoots out from one of $n's eyestalks, hitting $N!", "", ToNotVict)
+			Act(w, false, me, ch, nil, nil, "A ray of light shoots out from one of $n's eyestalks, breaking your concentration!", "", ToVict)
+			return true
+		}
 		return false
 	}
 
-	switch randN(5) {
-	case 0:
-		w.roomMessage(me.RoomVNum, me.GetName()+"'s central eye glows with disintegrating power!")
-		spells.Cast(me, melee, spells.SpellDisintegrate, me.GetLevel(), nil)
-	case 1:
-		w.roomMessage(me.RoomVNum, me.GetName()+" casts a sleep ray at "+melee.GetName()+"!")
-		spells.Cast(me, melee, spells.SpellSleep, me.GetLevel(), nil)
-	case 2:
-		w.roomMessage(me.RoomVNum, me.GetName()+" casts a fear spell on "+melee.GetName()+"!")
-		spells.Cast(me, melee, spells.SpellCurse, me.GetLevel(), nil)
-	case 3:
-		w.roomMessage(me.RoomVNum, me.GetName()+" disrupts "+melee.GetName()+"'s magic!")
-		spells.Cast(me, melee, spells.SpellDisrupt, me.GetLevel(), nil)
+	people := cRoomPeople(w, me.RoomVNum)
+
+	if me.GetPosition() != combat.PosFighting {
+		// C counts every occupant, itself included.
+		if len(people) <= 1 {
+			return false
+		}
+		pick := beholderNumber(0, len(people))
+		if pick <= 0 || pick > len(people) {
+			return false
+		}
+		vict := people[pick-1]
+		if vict == Actor(me) || vict.IsNPC() {
+			return false
+		}
+		switch beholderNumber(0, 2) {
+		case 0:
+			spells.Cast(me, vict, spells.SpellSleep, me.GetLevel(), nil)
+		case 1:
+			spells.Cast(me, vict, spells.SpellCharm, me.GetLevel(), nil)
+		case 2:
+			spells.Cast(me, vict, spells.SpellCurse, me.GetLevel(), nil)
+		}
+		return false
+	}
+
+	var target Actor
+	for _, body := range people {
+		fighter, ok := body.(interface{ GetFightingBody() combat.Combatant })
+		if !ok || fighter.GetFightingBody() != combat.Combatant(me) {
+			continue
+		}
+		if beholderNumber(0, 4) == 0 {
+			target = body
+			break
+		}
+	}
+	if target == nil {
+		if opponent := me.GetFightingBody(); opponent != nil {
+			if actor, ok := opponent.(Actor); ok {
+				target = actor
+			}
+		}
+	}
+	if target == nil {
+		// C would pass a NULL victim to cast_spell here; guard instead of
+		// dereferencing it. The arm is only reachable with POS_FIGHTING and no
+		// opponent, which combat cannot leave behind in practice.
+		return false
+	}
+	if beholderNumber(0, 10) == 0 {
+		spells.Cast(me, target, spells.SpellDisrupt, me.GetLevel(), nil)
+	} else if beholderNumber(0, 5) == 0 {
+		spells.Cast(me, target, spells.SpellDisintegrate, me.GetLevel(), nil)
+	} else {
+		return false
 	}
 	return true
 }
