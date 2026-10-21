@@ -254,7 +254,6 @@ Num Class Name State Idl Login@ Site	src/act.informative.c:2018	buffered:strcpy	
 Switched	src/act.informative.c:2066	buffered:strcpy	do_users
 UNDEFINED	src/act.informative.c:2090	buffered:sprintf	do_users
 [Hostname unknown]	src/act.informative.c:2096	buffered:strcat	do_users
-Compile Time:	src/act.informative.c:2173	buffered:sprintf	do_gen_ps
 carried by	src/act.informative.c:2220	buffered:sprintf	print_object_location
 , which is	src/act.informative.c:2231	buffered:sprintf	print_object_location
 in an unknown location	src/act.informative.c:2237	buffered:sprintf	print_object_location

@@ -9,6 +9,7 @@
 # the same minute for the line to be byte-identical. That is the line's own
 # property, not a port choice.
 #
+# depth-case: version.revision-line
 # depth-case: version.immortal-compile-time
 # depth-case: version.immortal-arguments-ignored
 

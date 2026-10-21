@@ -75,7 +75,6 @@ You write '	pkg/session/comm_cmds.go:256	.Send
 Your message was blocked.	pkg/session/comm_cmds.go:364	.sendText
 Guest accounts are restricted from using this command.	pkg/session/commands.go:680	.sendText
 That information is not available right now.	pkg/session/gen_ps_cmds.go:132	.Send
-Built with:	pkg/session/gen_ps_cmds.go:245	.Send
 !! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!	pkg/session/manager.go:1916	.sendText
 Description not changed.	pkg/session/menu.go:213	.sendText
 Unable to save description.	pkg/session/menu.go:226	.sendText

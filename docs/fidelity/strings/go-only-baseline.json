@@ -65,15 +65,6 @@
       "evidence": "src/act.wizard.c:1697 \"That must be a mistake...\\r\\n\" — C has no broadcast command; its global-message cmd do_gecho prints this for an empty argument",
       "firstSeen": "2026-09-23"
     },
-    "Built with:": {
-      "segment": "Built with:",
-      "file": "pkg/session/gen_ps_cmds.go",
-      "line": 245,
-      "sink": ".Send",
-      "reason": "bug:paraphrase",
-      "evidence": "src/act.informative.c:2173 \"Compile Time: %s\\r\\n\" — same immort-only build-info slot; Go swaps label and datum for the Go runtime version",
-      "firstSeen": "2026-09-23"
-    },
     "Cannot access manager state.": {
       "segment": "Cannot access manager state.",
       "file": "pkg/session/wiz_system.go",
