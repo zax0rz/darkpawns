@@ -22,9 +22,21 @@ Fixed by pinning the draw with the package's existing recorder
 C's behaviour, it just stops depending on which stream position the test lands
 on. Revert control: removing the pin reintroduces the 1-in-6 failure.
 
-**Class sweep.** Every test file in `pkg/game`, `pkg/session`, `pkg/command`,
-`pkg/parser` and `pkg/combat` that does *not* install a roller pin was run 40
-times per test (`-count=40`) and any failure inspected. Result: SWEEP_RESULT
+**Class sweep.** Every test file in the five RNG-carrying packages that does *not*
+install a roller pin (`installDrawRecorder`, `SetRoller`, `ResetStream`,
+`NewScriptedRoller`, `NewSeededRoller`) was run repeatedly per test and any
+failure inspected: `pkg/game` 40 iterations, `pkg/command`, `pkg/parser` and
+`pkg/combat` 40, and `pkg/session` 12 (its tests boot servers, so 40 would have
+cost hours; 12 still catches a 1-in-6 shape with ~89% probability).
+
+Result: **no other instance of the class.** The shop test was the only test whose
+assertion rode an unpinned draw, and it is the one measured at 12 failures in 40.
+Two whole-package runs agreed (`go test -race ./pkg/game -count=10` and
+`-race ./pkg/session -count=6`, both clean).
+
+The detector's sensitivity is the measured signal: the unpinned shop test failed
+12/40 before the pin, and the same harness reports nothing afterwards or
+elsewhere.
 
 ## Part 2 — the 19–24 cluster: it was the race default, not `loud_mobs`
 
