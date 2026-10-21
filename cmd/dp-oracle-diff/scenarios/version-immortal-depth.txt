@@ -1,0 +1,50 @@
+# Immortal `version` output: the Compile Time line (src/act.informative.c:2162-2176).
+# C sends "Dark Pawns 2.3-" SVN_REVISION "\r\n" to everyone and, at LVL_IMMORT
+# and above, a second line "Compile Time: %s\r\n" built at boot by
+# load_compile_time() (src/db.c:313, src/version.c:12-62). The first created
+# player is crowned, so no level promotion is needed.
+#
+# The stamp is C's own boot wall clock (load_compile_time assigns
+# compile_time = time(0)), minute granularity: the two engines must boot inside
+# the same minute for the line to be byte-identical. That is the line's own
+# property, not a port choice.
+#
+# depth-case: version.immortal-compile-time
+# depth-case: version.immortal-arguments-ignored
+
+[fixture]
+empty-players
+
+[setup:oracle]
+Versiongod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Versiongod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+
+[probe]
+version
+version ignored-argument

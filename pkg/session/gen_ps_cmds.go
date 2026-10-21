@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -235,14 +234,24 @@ func cmdClear(s *Session, args []string) error {
 	return nil
 }
 
-// cmdVersion shows the game version, plus build info for immortals.
-// Source: do_gen_ps SCMD_VERSION — C prints the SVN revision and compile
-// timestamp; this port has no equivalent build-time tracking, so the Go
-// runtime version is shown instead as the closest honest substitute.
+// cmdVersion shows the game version, plus the compile-time line for immortals.
+// Source: do_gen_ps SCMD_VERSION (src/act.informative.c:2162-2176):
+//
+//	send_to_char("Dark Pawns 2.3-" SVN_REVISION "\r\n", ch);
+//	if (GET_LEVEL(ch) >= LVL_IMMORT) {
+//	   ... strftime into buf1, which C never sends ...
+//	   if (compile_time_str) send_to_char("Compile Time: %s\r\n", ...);
+//	}
+//
+// SVN_REVISION is empty (src/svn_revision.h:1) and compile_time_str is set at
+// boot by load_compile_time() (src/version.c). The port used to print
+// "Built with: <go version>" here, which C has no such line for (R4).
 func cmdVersion(s *Session, args []string) error {
 	s.Send("Dark Pawns 2.3-")
 	if s.player != nil && s.player.Level >= LVL_IMMORT {
-		s.Send(fmt.Sprintf("Built with: %s", runtime.Version()))
+		if compileTime := game.CompileTimeString(); compileTime != "" {
+			s.Send("Compile Time: " + compileTime)
+		}
 	}
 	return nil
 }

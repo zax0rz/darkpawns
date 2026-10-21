@@ -505,15 +505,51 @@ func TestCmdWhoami(t *testing.T) {
 	}
 }
 
-func TestCmdVersionHidesBuildInfoForMortals(t *testing.T) {
+// TestCmdVersionMortalMatchesC pins SCMD_VERSION's player bytes
+// (src/act.informative.c:2164): "Dark Pawns 2.3-" plus SVN_REVISION, which is
+// empty (src/svn_revision.h:1). The compile-time line is immortal-only.
+func TestCmdVersionMortalMatchesC(t *testing.T) {
 	m := makeTestManager(t)
 	s := makeTestSession(t, m, "Alice", 1001, true)
 
 	if err := cmdVersion(s, nil); err != nil {
 		t.Fatalf("cmdVersion: %v", err)
 	}
-	if msg := readSessionText(t, s); !strings.Contains(msg, "Dark Pawns") {
-		t.Errorf("version message: got %q", msg)
+	if msg := readSessionText(t, s); msg != "Dark Pawns 2.3-" {
+		t.Errorf("version message: got %q, want %q", msg, "Dark Pawns 2.3-")
+	}
+	select {
+	case extra := <-s.send:
+		t.Fatalf("mortal version sent a second line: %s", extra)
+	default:
+	}
+}
+
+// TestCmdVersionImmortalPrintsCompileTime pins the immortal arm
+// (src/act.informative.c:2165-2175): C prints "Compile Time: " plus the string
+// load_compile_time() stamped at boot. The port used to print an invented
+// "Built with: <go version>" line here (R4).
+func TestCmdVersionImmortalPrintsCompileTime(t *testing.T) {
+	m := makeTestManager(t)
+	s := makeTestSession(t, m, "Alice", 1001, true)
+	s.player.Level = LVL_IMMORT
+
+	compileTime := game.CompileTimeString()
+	if compileTime == "" {
+		t.Fatal("the test world booted without a compile-time stamp")
+	}
+
+	if err := cmdVersion(s, nil); err != nil {
+		t.Fatalf("cmdVersion: %v", err)
+	}
+	if msg := readSessionText(t, s); msg != "Dark Pawns 2.3-" {
+		t.Errorf("version message: got %q, want %q", msg, "Dark Pawns 2.3-")
+	}
+	if msg := readSessionText(t, s); msg != "Compile Time: "+compileTime {
+		t.Errorf("compile-time message: got %q, want %q", msg, "Compile Time: "+compileTime)
+	}
+	if strings.Contains(compileTime, "go") {
+		t.Errorf("compile time %q looks like a toolchain version, not C's date stamp", compileTime)
 	}
 }
 
