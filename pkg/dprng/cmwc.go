@@ -166,6 +166,16 @@ func Number(from, to int) int {
 
 // Dice returns one C-compatible dice sum from the process-wide stream.
 func Dice(num, size int) int {
+	// C's dice() returns before its draw-log seam when the roll is empty:
+	// `if (size <= 0 || num <= 0) return 0;` (src/utils.c:109-112 in the
+	// oracle's instrumented copy). An empty roll therefore consumes nothing
+	// AND leaves no DRAW line. Logging it anyway made Go emit a
+	// zero-consumption entry that the parity comparator paired with C's next
+	// real draw, which is exactly what circle-aware-depth reported: an aware
+	// mobile counter-hits with a 0d4 damage roll.
+	if num <= 0 || size <= 0 {
+		return 0
+	}
 	streamMu.Lock()
 	defer streamMu.Unlock()
 	v := stream.Dice(num, size)
