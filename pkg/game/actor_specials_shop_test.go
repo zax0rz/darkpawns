@@ -50,11 +50,18 @@ func TestSpecShopKeeperActorPortsC(t *testing.T) {
 	// C: shopping_list runs is_ok, then sort_keeper_objs, then
 	// page_string(ch->desc, …) — which returns on a NULL descriptor
 	// (src/modify.c:430-433) — and shop_keeper answers TRUE.
+	// slide_obj randomly discards non-produced stock on number(0, 5) == 0
+	// (src/shop.c:678-682). Pin the keep branch; an unseeded draw made this
+	// assertion fail one time in six even when the sort ran correctly (R3/R5h).
+	draws := installDrawRecorder(t, 1)
 	if got := specShopKeeperActor(w, ctx, keeper, "list", ""); got != SpecialHandled {
 		t.Fatalf("list = %v, want SpecialHandled", got)
 	}
 	if shop.LastSort != 1 {
 		t.Fatalf("shop sort = %d, want 1: the list arm must sort the keeper's stock", shop.LastSort)
+	}
+	if draws.count() != 1 || draws.lastBounds() != [2]int{0, 5} {
+		t.Fatalf("shop sort draws = %v, want one number(0, 5)", draws.calls)
 	}
 	// A pet with no gold and no stock match still answers TRUE.
 	if got := specShopKeeperActor(w, ctx, keeper, "buy", " sword"); got != SpecialHandled {
