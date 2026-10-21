@@ -54,6 +54,11 @@ func (lb *lineBuffer) Err() error {
 	return lb.scanner.Err()
 }
 
+// RACE_OTHER is src/structs.h:147. A mobile with no "Race:" line keeps it
+// (src/db.c:1110) and is therefore not in is_intelligent()'s table
+// (src/constants.c:353-373), so can_speak() is false for it.
+const RACE_OTHER = 16
+
 // Mob represents a parsed mobile from a .mob file.
 type Mob struct {
 	VNum           int
@@ -330,9 +335,13 @@ func parseMob(lb *lineBuffer, vnum int) (Mob, string, error) {
 
 	// db.c parse_mobile reads EIGHT flag words, then alignment (t[2]), then
 	// the type letter. Race is NOT on this line: it comes from the "Race:"
-	// extra line (db.c:1201, RANGE 0-99) and defaults to RACE_OTHER (7) in
-	// parse_simple_mob.
-	mob.Race = 7
+	// extra line (db.c:1197-1201, RANGE 0-99), and boot_mobiles seeds every
+	// prototype with RACE_OTHER (src/db.c:1110, src/structs.h:147 = 16). The
+	// default is not a speakable race: can_speak() is is_intelligent()
+	// (src/utils.c:675-688), whose table (src/constants.c:353-373) holds 0-11
+	// and 18-20, 27-30 — so a mob with no Race: line cannot brag, quarrel or
+	// shout, and the number(0,20) draws behind those gates never happen.
+	mob.Race = RACE_OTHER
 	fields := strings.Fields(flagsLine)
 	if len(fields) >= 9 {
 		mob.Alignment, _ = strconv.Atoi(fields[8])

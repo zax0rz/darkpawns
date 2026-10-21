@@ -43,8 +43,8 @@ func TestParseMobFile_SingleBasic(t *testing.T) {
 	if m.Alignment != -100 {
 		t.Errorf("expected alignment -100, got %d", m.Alignment)
 	}
-	if m.Race != 7 {
-		t.Errorf("expected race 7, got %d", m.Race)
+	if m.Race != RACE_OTHER {
+		t.Errorf("expected default race RACE_OTHER (%d), got %d", RACE_OTHER, m.Race)
 	}
 	if m.Level != 1 {
 		t.Errorf("expected level 1, got %d", m.Level)
@@ -146,8 +146,8 @@ func TestParseMobFile_Defaults(t *testing.T) {
 		t.Fatalf("parse error: %v", err)
 	}
 	m := mobs[0]
-	if m.Race != 7 {
-		t.Errorf("expected default race 7, got %d", m.Race)
+	if m.Race != RACE_OTHER {
+		t.Errorf("expected default race RACE_OTHER (%d), got %d", RACE_OTHER, m.Race)
 	}
 	if m.Weight != 200 {
 		t.Errorf("expected default weight 200, got %d", m.Weight)
