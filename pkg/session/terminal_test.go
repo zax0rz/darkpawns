@@ -133,7 +133,7 @@ func TestOperatorGreetingChangesOnlyPwipeLine(t *testing.T) {
 			continue
 		}
 		changed++
-		if originalLines[i] != "   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!" || line != "   Dark Pawns MUD v0.1.2 - https://darkpawns.org" {
+		if originalLines[i] != "   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!" || line != "              Dark Pawns MUD v0.1.2 - https://darkpawns.org" {
 			t.Fatalf("unexpected changed line %d: %q", i, line)
 		}
 	}

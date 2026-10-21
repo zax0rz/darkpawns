@@ -39,12 +39,23 @@ var operatorGreeting atomic.Pointer[string]
 // SetOperatorGreeting enables the explicitly selected operator overlay. Empty
 // version restores C's greeting. Only the dated pwipe line in src/config.c:253
 // is replaceable; logo, attribution, spacing and terminal prompt stay intact.
+// greetingCreditCenter is the shared midpoint column of the three credit
+// lines in C's GREETINGS.
+const greetingCreditCenter = 36
+
 func SetOperatorGreeting(version string) {
 	if version == "" {
 		operatorGreeting.Store(nil)
 		return
 	}
-	line := "   Dark Pawns MUD v" + strings.TrimPrefix(version, "v") + " - https://darkpawns.org"
+	text := "Dark Pawns MUD v" + strings.TrimPrefix(version, "v") + " - https://darkpawns.org"
+	// Center under the CircleMUD/DikuMUD credit lines above it, whose
+	// midpoints sit at column 36 (src/config.c:248-250).
+	pad := (2*greetingCreditCenter - len(text) + 1) / 2
+	if pad < 0 {
+		pad = 0
+	}
+	line := strings.Repeat(" ", pad) + text
 	greeting := strings.Replace(GreetingsLogo, "   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!", line, 1)
 	operatorGreeting.Store(&greeting)
 }
