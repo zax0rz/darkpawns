@@ -60,7 +60,7 @@ seed 1  MATCH entries=4096 stream=4149
 seed 2  MATCH entries=4095 stream=4148
 seed 3  MATCH entries=4098 stream=4130
 seed 5  MATCH entries=4099 stream=4152
-seed 8  MATCH entries=4099 stream=4152
+seed 8  MATCH entries=4098 stream=4151
 ```
 
 Tests: `pkg/game/spec_beholder_test.go` pins all three arms' draw bounds through
