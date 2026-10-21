@@ -12,15 +12,15 @@ the counts below in step with the baseline).
 | reason | count |
 |---|---|
 | `bug:invented` | 50 |
-| `bug:paraphrase` | 44 |
+| `bug:paraphrase` | 43 |
 | `census:composed` | 2 |
 | `data` | 0 |
 | `surface:no-c` | 1 |
 | `unsure` | 0 |
 | `divergence:approved` | 1 |
-| **total** | **98** |
+| **total** | **97** |
 
-`unsure` is 0/98 (0.0%).
+`unsure` is 0/97 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
@@ -149,7 +149,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.informative.c` — `do_gen_ps` (2)
 
-- `bug:paraphrase` — Go `pkg/session/gen_ps_cmds.go:245` — “Built with:” — C src/act.informative.c:2173: "Compile Time: %s\r\n" — same immort-only build-info slot; Go swaps label and datum for the Go runtime version
 - `bug:invented` — Go `pkg/session/gen_ps_cmds.go:132` — “That information is not available right now.” — C src/act.informative.c:2137: nothing — C do_gen_ps pages the boot-loaded file; an unreadable file prints nothing
 
 ### `src/act.item.c` — `get_from_container` (1)
