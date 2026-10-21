@@ -241,6 +241,11 @@ func (w *World) SetCombatEngine(ce CombatEngine) {
 
 // NewWorld creates a new game world from parsed data.
 func NewWorld(parsed *parser.World) (*World, error) {
+	// C's boot_db stamps the compile-time string before it boots the world
+	// (load_compile_time at src/db.c:313, then boot_world), and SCMD_VERSION
+	// never changes it afterwards. NewWorld is the port's boot_world.
+	loadCompileTime()
+
 	shopManager := NewShopManager()
 	w := &World{
 		rooms:                    make(map[int]*parser.Room),
