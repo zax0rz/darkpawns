@@ -223,9 +223,15 @@ Go: Compile Time: February 11, 2026   14:34   (DP_FIXED_TIME=1770838461)
 so `loadCompileTime()` reads `compileTimeNow = time.Now`, and a unit test pins
 that the pinned game clock does not leak into it. Consequence worth knowing: the
 stamp is minute-granular on *each* engine's own boot, so a scenario run whose two
-boots straddle a minute would read as a divergence on that one line. The durable
-fix for that, if it ever bites, is a normalizer mask for `Compile Time:`
-(`internal/oraclediff/normalize.go`, stop tier) — proposed, not made.
+boots straddle a minute would differ on that one line. That exposure is closed by
+a normalizer mask Zach approved for exactly this case: a line matching C's stamp
+shape is masked to `Compile Time: <COMPILE_TIME>`
+(`internal/oraclediff/normalize.go`, with `compile_time_test.go` pinning both the
+masking and the shapes it must *not* hide — abbreviated month, wrong separator
+widths, seconds, invented label). Mask proof: pinning the port's clock back to
+`DP_FIXED_TIME` (Go printing `February 11, 2026   14:34` against C's real
+`October 21, 2026   09:27`) now reports `no normalized divergence`, where it was
+a divergence before the mask.
 
 Revert control: restoring the invented line reddens the scenario on every seed:
 
