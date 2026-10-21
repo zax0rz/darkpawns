@@ -42,8 +42,8 @@ func TestExplorerSetupWaitsAfterSuccessAndError(t *testing.T) {
 					if cobra.MousetrapHelpText != "" {
 						return errors.New("Cobra mousetrap was not disabled before setup")
 					}
-					if !reflect.DeepEqual(args, []string{"setup"}) {
-						return errors.New("Explorer did not select setup")
+					if !reflect.DeepEqual(args, []string{"_open"}) {
+						return errors.New("Explorer did not select desktop launch")
 					}
 					if failure {
 						return errors.New("setup failed")
@@ -109,7 +109,7 @@ func TestExplorerShortcutKeepsExplicitArguments(t *testing.T) {
 	}
 }
 
-func TestExplorerActuallyReachesSetupAndPreservesExistingWorld(t *testing.T) {
+func TestExplorerExplicitSetupPreservesExistingWorld(t *testing.T) {
 	for _, existing := range []bool{false, true} {
 		t.Run(map[bool]string{false: "new world cancelled", true: "existing world refused"}[existing], func(t *testing.T) {
 			destination := filepath.Join(t.TempDir(), "world")
@@ -123,7 +123,7 @@ func TestExplorerActuallyReachesSetupAndPreservesExistingWorld(t *testing.T) {
 				}
 			}
 			var out bytes.Buffer
-			code := runLauncher(nil, true, func(args []string) error {
+			code := runLauncher([]string{"setup"}, true, func(args []string) error {
 				root := command()
 				root.SetArgs(append(args, "--plain", "--instance", destination))
 				root.SetIn(strings.NewReader("\n"))

@@ -17,7 +17,7 @@ func runLauncher(args []string, explorer bool, run func([]string) error, in io.R
 	// Our setup and explicit acknowledgement replace Cobra's timed Windows exit.
 	cobra.MousetrapHelpText = ""
 	if explorer && len(args) == 0 {
-		args = []string{"setup"}
+		args = []string{"_open"}
 	}
 	var result error
 	if err := run(args); err != nil {

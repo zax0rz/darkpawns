@@ -66,6 +66,7 @@ func command() *cobra.Command {
 		return portable.Run(cmd.Context(), base, instance, cmd.InOrStdin(), cmd.OutOrStdout(), cmd.ErrOrStderr())
 	}}
 	root.AddCommand(initCmd, runCmd, setupCommand(&instance, bundle))
+	root.AddCommand(desktopCommand(bundle, portable.Start, openBrowser))
 	addLifecycle(root, &instance, bundle)
 	addUpdate(root, &instance, bundle)
 	return root

@@ -67,15 +67,20 @@ the setup command instead of reading prompts from a download pipe.
 ## Windows double-click setup (v0.1.3)
 
 After extracting the complete Windows archive, double-click `darkpawns.exe` to
-open the setup wizard in its console. On completion, cancellation or error, the
+open your default world. If no world exists at `%LOCALAPPDATA%\darkpawns\world`,
+it opens the setup wizard in its console. On completion, cancellation or error, the
 console waits for Enter so you can read the result. Setup still requires your
 review before creating a world. It starts in background mode by default, so
 closing the completed setup window leaves the world running.
 
-A second double-click opens setup again. Existing world folders are refused;
-choose a new folder (and available ports) for another world, or cancel. Manage
-your existing world with the lifecycle commands below. Setup does not reset,
-overwrite, or automatically restart an existing world.
+A second double-click starts the default world if it is stopped, waits for it to
+be ready, then opens its web address in your browser. A running world stays
+running without a restart. The browser opens the installation's home page,
+including its web client links, using its configured port. The console still
+waits for Enter; closing it leaves the background world running. An incomplete
+or invalid existing world reports an error instead of reopening setup or
+overwriting it. Custom world folders use the lifecycle commands below or an
+explicit shortcut; double-click does not search for other installations.
 
 Commands launched from an existing terminal keep their usual behavior, without
 the extra pause. Shortcuts with explicit arguments keep those arguments and
