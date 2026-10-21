@@ -139,14 +139,6 @@ func (w *World) roomCleanup(roomVNum int) int {
 	return totalVal
 }
 
-// mobMeleeTarget returns the mob's current melee opponent as a MobInstance.
-func mobMeleeTarget(me *MobInstance) *MobInstance {
-	if me.GetTarget() != nil {
-		return me.GetTarget()
-	}
-	return nil
-}
-
 // mobFightingTarget returns the canonical FIGHTING body, independently of
 // the mobile's separate AI/scripting Target relationship.
 func mobFightingTarget(_ *World, me *MobInstance) combat.Combatant {
