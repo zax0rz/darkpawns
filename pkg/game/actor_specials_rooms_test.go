@@ -231,6 +231,32 @@ func TestSpecWhirlpoolActorDeclinesWithoutAVictim(t *testing.T) {
 	}
 }
 
+// TestSpecWhirlpoolPulseCallPullsThePlayer pins the mobile-pulse entry: the Go
+// pulse adapter calls the special with a nil Player (callMobSpecSafely), which
+// is C's ch == mobile case, so the whirlpool must pull the mortal in its room
+// on that pulse (src/spec_procs2.c:244-275). Regression: v0.1.3's candidate
+// declined on nil ch, so the pull slipped a pulse and spec-proc-whirlpool
+// failed on every seed.
+func TestSpecWhirlpoolPulseCallPullsThePlayer(t *testing.T) {
+	rooms := []parser.Room{{VNum: 12200, Name: "Whirlpool"}}
+	for _, vnum := range []int{4600, 4699} {
+		rooms = append(rooms, parser.Room{VNum: vnum, Name: "Water"})
+	}
+	w, _ := newActorRoomTestWorld(t, rooms...)
+	swimmer := NewPlayer(1, "Swimmer", 12200)
+	if err := w.AddPlayer(swimmer); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+	whirlpool := newSpecProcTestMob(t, w, 12200, 1)
+
+	if !specWhirlpool(w, nil, whirlpool, "", "") {
+		t.Fatal("pulse call (nil ch) declined; C pulls the mortal on this pulse")
+	}
+	if room := swimmer.GetRoomVNum(); room != 4600 && room != 4699 {
+		t.Fatalf("swimmer room = %d, want 4600 or 4699", room)
+	}
+}
+
 // TestSpecCarrionActorSpawnsForTheActor pins SPECIAL(carrion) for a mobile
 // actor: the stalker is loaded at the actor's room with the actor's level and
 // damage roll (src/spec_procs2.c:1742-1749), and the command is consumed.

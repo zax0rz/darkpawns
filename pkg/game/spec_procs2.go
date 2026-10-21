@@ -220,10 +220,20 @@ func specNinelives(w *World, ch *Player, me *MobInstance, cmd string, arg string
 // rejecting PRIVATE/GODROOM/DEATH/NOMOB rooms with an unbounded redraw loop.
 // specWhirlpool is the player lane of SPECIAL(whirlpool), src/spec_procs2.c:244-275.
 func specWhirlpool(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if w == nil || ch == nil || me == nil {
+	// C: if (mini_mud || !ch) return FALSE (src/spec_procs2.c:250). On the
+	// mobile pulse C's ch is the whirlpool mob itself, never NULL, but the Go
+	// pulse adapter passes a nil Player (callMobSpecSafely, mobact.go), so a
+	// nil ch here must not decline: it is C's ch == mobile case. C then reads
+	// world[ch->in_room], which is the mob's room on the pulse and the
+	// commanding player's (same) room at command time (R5e).
+	if w == nil || me == nil {
 		return false
 	}
-	return specWhirlpoolPulls(w, ch.GetRoomVNum())
+	room := me.GetRoomVNum()
+	if ch != nil {
+		room = ch.GetRoomVNum()
+	}
+	return specWhirlpoolPulls(w, room)
 }
 
 // ================================================================
