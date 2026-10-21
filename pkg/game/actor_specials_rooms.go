@@ -94,10 +94,18 @@ func specialActor(ctx CharacterSpecialContext) cBody {
 // departure act, the checked char_from_room/char_to_room pair, the optional
 // destination look (players only: look_at_room needs a descriptor) and the
 // arrival act.
-func elementTeleportPerson(w *World, body Actor, destination int, direct, departure, arrival string, look bool, logMsg string) {
+func elementTeleportPerson(w *World, body Actor, destination int, direct, departure, arrival string, look, rawDirect bool, logMsg string) {
 	if direct != "" {
 		if player, ok := body.(*Player); ok {
-			Act(w, false, player, nil, nil, nil, direct, "", ToChar)
+			if rawDirect {
+				// C: send_to_char(buf, ppl) — the buffer carries its own line
+				// endings and nothing appends to it (galeru_alive,
+				// src/spec_procs3.c:1204). act() would add one more line ending
+				// and print an extra blank line before the destination look.
+				player.SendMessage(direct)
+			} else {
+				Act(w, false, player, nil, nil, nil, direct, "", ToChar)
+			}
 		}
 	}
 	Act(w, true, body, nil, nil, nil, departure, "", ToNotVict)
@@ -342,7 +350,7 @@ func specElementsPlatformsMove(w *World, roomVNum int) {
 			"A wave of power surges through you and you feel dizzy.",
 			"$n disappears in a brilliant flash of light.",
 			"$n appears in a brilliant flash of light.",
-			false, "elements platforms character transfer failed")
+			false, false, "elements platforms character transfer failed")
 	}
 }
 
@@ -375,7 +383,7 @@ func specElementsGaleruAliveMoves(w *World, roomVNum int) bool {
 			"You begin to feel very dizzy and the world around you fades...\r\n\n",
 			"$n disappears in a brilliant flash of light.",
 			"$n appears in a brilliant flash of light.",
-			true, "elements galeru alive character transfer failed")
+			true, true, "elements galeru alive character transfer failed")
 	}
 	return true
 }
@@ -603,7 +611,7 @@ func specElementsMasterColumnMoves(w *World, roomVNum int) {
 		elementTeleportPerson(w, body, newLocs[found], message,
 			"$n vanishes in a brilliant flash of light.",
 			" $n appears in a brilliant flash of light.",
-			true, "elements master column character transfer failed")
+			true, false, "elements master column character transfer failed")
 	}
 }
 
