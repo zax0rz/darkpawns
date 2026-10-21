@@ -41,7 +41,15 @@ func cRoomPeople(w *World, roomVNum int) []Actor {
 	}
 	var people []occupant
 	for _, mob := range w.GetMobsInRoom(roomVNum) {
-		if mob == nil || mob.HasMobFlag(MobFlagExtract) {
+		// No MOB_EXTRACT filter: C's room-special bodies walk
+		// world[ch->in_room].people unguarded (start_room,
+		// src/spec_procs.c:2209; the Elemental Temple loops,
+		// src/spec_procs3.c:948, 1012, 1164, 1195, 1254), so a body flagged
+		// for extraction earlier in the same pulse is still an occupant and is
+		// moved like any other. Only the *mob special* call in special() skips
+		// flagged bodies (src/interpreter.c:1453), and that guard lives in
+		// pkg/session/character_dispatch.go and pkg/game/flee.go.
+		if mob == nil {
 			continue
 		}
 		people = append(people, occupant{actor: mob, seq: mob.GetRoomEntrySequence(), name: mob.GetName()})

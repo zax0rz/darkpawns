@@ -163,8 +163,16 @@ func TestDoTurnDisintegratesEligibleUndeadAtFifteenLevelAdvantage(t *testing.T) 
 
 	w.DoTurn(actor)
 
+	// C flags the disintegrated bodies for extraction and only frees them in the
+	// next heartbeat's extract_pending_chars (src/handler.c:1194-1248).
+	for _, mob := range w.GetMobsInRoom(1001) {
+		if !mob.HasMobFlag(MobFlagExtract) {
+			t.Fatalf("disintegrated mob is not flagged for extraction: %v", mob.GetName())
+		}
+	}
+	w.ExtractPendingPlayers()
 	if mobs := w.GetMobsInRoom(1001); len(mobs) != 0 {
-		t.Fatalf("disintegrated mob remains in origin: %#v", mobs)
+		t.Fatalf("disintegrated mob remains in origin after the extraction pass: %#v", mobs)
 	}
 	if objects := w.GetItemsInRoom(1001); len(objects) != 2 || objects[0].GetVNum() != 18 || objects[1].GetVNum() != 18 {
 		t.Fatalf("disintegration dust = %#v, want one standard dust object per target", objects)

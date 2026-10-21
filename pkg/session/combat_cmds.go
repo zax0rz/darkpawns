@@ -146,6 +146,20 @@ func cmdHit(s *Session, args []string) error {
 		s.Send("They don't seem to be here.\r\n")
 		return nil
 	}
+	// C's extract_char only flags a dead body (src/handler.c:1194-1209); it stays
+	// in world[room].people until extract_pending_chars at the next heartbeat
+	// (src/comm.c:805), so get_char_room_vis finds it and hit() still swings.
+	// The swing draws its to-hit and damage rolls and damage()'s protection
+	// block then refuses: silently for a POS_DEAD body (fight.c:1319-1326) or
+	// with the peaceful/newbie/shopkeeper line for a body do_kill's raw_kill left
+	// standing (fight.c:1336-1368).
+	if combat.BodyRetired(victimCombatant) {
+		if err := s.manager.combatEngine.PerformPendingBodySwing(s.player, victimCombatant); err != nil {
+			return err
+		}
+		s.markDirty(VarFighting)
+		return nil
+	}
 	if err := s.manager.combatEngine.PerformDeferredInitialAttack(s.player, victimCombatant); err != nil {
 		return err
 	}

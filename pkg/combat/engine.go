@@ -37,6 +37,13 @@ type CombatPair struct {
 	// DefenderNeedsStand retains the pending posture half of an eager initial
 	// enrollment. C performs both halves in damage(), src/fight.c:1443-1445.
 	DefenderNeedsStand bool
+	// AllowRetiredDefender admits a body C has flagged for extraction but not yet
+	// freed. extract_char only sets MOB_EXTRACT and counts the pending extraction
+	// (src/handler.c:1194-1209); the body stays in world[room].people until
+	// extract_pending_chars at the next heartbeat (src/comm.c:805), so
+	// get_char_room_vis still finds it and hit() still swings. Named bodies are
+	// never enrolled from such a swing.
+	AllowRetiredDefender bool
 }
 
 // CombatEngine manages all active combat in the game
@@ -374,6 +381,28 @@ func (ce *CombatEngine) PerformDeferredInitialAttack(attacker, defender Combatan
 		Defender:                defender,
 		DeferDefenderEnrollment: true,
 		DeferAttackerEnrollment: true,
+	})
+	return nil
+}
+
+// PerformPendingBodySwing runs C's hit() against a body that is flagged for
+// extraction but not yet freed (src/handler.c:1194-1248). The swing consumes
+// hit()'s to-hit and damage draws and then damage()'s protection block decides:
+// the corpse guard refuses a POS_DEAD body silently (fight.c:1319-1326), and a
+// body that is still standing — do_kill's raw_kill never sets POS_DEAD — falls
+// through to the peaceful, newbie and shopkeeper refusals (fight.c:1336-1368).
+// The body is never enrolled: damage() calls set_fighting only after that block,
+// and a body C is tearing down must not re-enter combat.
+func (ce *CombatEngine) PerformPendingBodySwing(attacker, defender Combatant) error {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) {
+		return fmt.Errorf("combat requires concrete bodies")
+	}
+	ce.performOneHit(&CombatPair{
+		Attacker:                attacker,
+		Defender:                defender,
+		DeferDefenderEnrollment: true,
+		DeferAttackerEnrollment: true,
+		AllowRetiredDefender:    true,
 	})
 	return nil
 }
@@ -732,7 +761,7 @@ func (ce *CombatEngine) consumeParried(body Combatant) string {
 func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	attacker := pair.Attacker
 	defender := pair.Defender
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	if BodyRetired(attacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		return true
 	}
 

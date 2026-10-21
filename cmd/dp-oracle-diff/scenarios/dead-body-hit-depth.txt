@@ -1,0 +1,61 @@
+# depth-case: combat.pending-body-swing-refused-by-peaceful-gate
+# depth-case: combat.pending-body-hidden-by-look-but-addressable
+# C's extract_char only sets MOB_EXTRACT and counts the extraction
+# (src/handler.c:1194-1209); the body leaves character_list and
+# world[room].people in extract_char_final, run by extract_pending_chars at the
+# start of the next heartbeat (src/comm.c:805, src/handler.c:1221-1248). Until
+# then the body is still addressable: room listings hide it (MOB_EXTRACT), but
+# get_char_room_vis finds it, so `hit <mob>` swings — hit()'s to-hit and damage
+# draws included — and damage() then refuses. do_kill's raw_kill never sets
+# POS_DEAD, so in this peaceful room the swing reaches the peaceful arm
+# (fight.c:1336-1342) rather than the silent corpse guard (fight.c:1319-1326).
+# Before this port removed the body at death, the second command answered
+# "They don't seem to be here." and lost the swing's draws (carve-depth).
+# Revert control: restoring the eager removal in handleMobDeath fails this
+# scenario and carve-depth.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 1 8162 80
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+DeadBody
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DeadBody
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+get sword
+wield sword
+kill fish
+stat room
+look
+hit fish
+hit fish
