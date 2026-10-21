@@ -15,6 +15,13 @@ import (
 // command declined, and the four shopping arms handled the way C answers TRUE
 // for them.
 func TestSpecShopKeeperActorPortsC(t *testing.T) {
+	// The list arm sorts the keeper's stock, and slide_obj consumes
+	// number(0, 5) per non-produced item (src/shop.c:679): a zero discards the
+	// item instead of sorting it, so the LastSort assertion below rides on that
+	// draw. The process-wide stream is unseeded, which made this test fail about
+	// one run in six; pin the draw with the package's recorder.
+	installDrawRecorder(t, 1) // number(0, 5) != 0: keep the item and sort it
+
 	w, _ := newActorRoomTestWorld(t, parser.Room{VNum: 1001, Name: "Shop"})
 	keeper := newSpecProcTestMob(t, w, 1001, 10)
 	keeper.SetPosition(combat.PosStanding)
