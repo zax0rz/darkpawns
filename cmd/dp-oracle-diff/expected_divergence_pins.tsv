@@ -1,3 +1,4 @@
 scenario	label	sha256	citations
 accuse-depth	accuse Ragnar [actor]	9242b15c4e3726f2eefede496829fb154b99a39e6913820c453f23773deb75f6	accuse.tsv:accuse.one-argument:blocked;accuse.tsv:accuse.target-audience:blocked;accuse.tsv:accuse.target-success:blocked
 accuse-depth	accuse the Ragnar trailing words are ignored [actor]	9242b15c4e3726f2eefede496829fb154b99a39e6913820c453f23773deb75f6	accuse.tsv:accuse.one-argument:blocked;accuse.tsv:accuse.target-audience:blocked;accuse.tsv:accuse.target-success:blocked
+alias-cap	alias c500 look	77b5fd9fd9a232844c4f9bf080aa5e9cd0961c1b72682f40826fa0a0a679640c	alias.tsv:alias.cap-refusal:excluded

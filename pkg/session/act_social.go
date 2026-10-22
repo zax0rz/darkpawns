@@ -95,11 +95,19 @@ func cmdAlias(s *Session, args []string) error {
 		return nil
 	}
 
-	player.Aliases = append([]game.PlayerAlias{{
+	newAliases := append([]game.PlayerAlias{{
 		Alias:       aliasName,
 		Replacement: replacement,
 		Type:        aliasType,
 	}}, player.Aliases...)
+	// Approved divergence (2026-10-22): C has no alias limit; new aliases are
+	// refused past the count/size caps (game.MaxAliasCount, MaxAliasFileBytes).
+	// Redefinitions are count-neutral and never reach this refusal.
+	if len(newAliases) > game.MaxAliasCount || game.AliasFileBytes(newAliases) > game.MaxAliasFileBytes {
+		s.Send("You have too many aliases. Delete one first.\r\n")
+		return nil
+	}
+	player.Aliases = newAliases
 	if err := game.WriteAliases(player.Name, player.Aliases); err != nil {
 		s.Send("Error saving aliases.")
 		return nil
