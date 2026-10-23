@@ -14,6 +14,20 @@ import urllib.request
 import zipfile
 
 
+
+def check_run(args, timeout=None):
+    """subprocess.run(check=True) that prints captured output on failure, so
+    CI logs show the launcher's refusal reason instead of a bare traceback."""
+    result = subprocess.run(args, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=timeout)
+    if result.returncode != 0:
+        print(f'command failed ({result.returncode}): {args}', flush=True)
+        print('--- stdout ---', flush=True)
+        print(result.stdout, flush=True)
+        print('--- stderr ---', flush=True)
+        print(result.stderr, flush=True)
+        raise SystemExit(result.returncode)
+    return result
+
 def main(bundle):
     bundle = pathlib.Path(bundle).resolve()
     system = {'Linux': 'linux', 'Darwin': 'darwin', 'Windows': 'windows'}[platform.system()]
@@ -21,8 +35,14 @@ def main(bundle):
     suffix = '.exe' if os.name == 'nt' else ''
     with tempfile.TemporaryDirectory(prefix='darkpawns bootstrap ') as temporary:
         root = pathlib.Path(temporary).resolve()
-        public, private = root / 'public.pem', root / 'private.pem'
-        subprocess.run(['go', 'run', './cmd/dp-release', '--generate-key', str(private), '--public', str(public)], check=True)
+        # Sign with the snapshot publisher key the CI launcher was linked
+        # against; a fresh disposable key is generated only when absent
+        # (local runs against a launcher linked with that same key).
+        if os.environ.get('SNAPSHOT_PRIVATE_PEM') and os.environ.get('SNAPSHOT_PUBLIC_PEM'):
+            private, public = pathlib.Path(os.environ['SNAPSHOT_PRIVATE_PEM']), pathlib.Path(os.environ['SNAPSHOT_PUBLIC_PEM'])
+        else:
+            public, private = root / 'public.pem', root / 'private.pem'
+            subprocess.run(['go', 'run', './cmd/dp-release', '--generate-key', str(private), '--public', str(public)], check=True)
         signed = root / 'signed'
         signed.mkdir()
         name = f'darkpawns_0.1.0_{system}_{arch}'
@@ -153,7 +173,7 @@ def main(bundle):
             result = subprocess.run([os.environ.get('COMSPEC', 'cmd.exe'), '/d', '/c', 'darkpawns', '--version'], env=environment, capture_output=True, timeout=20)
             assert result.returncode == 0, (result.stdout, result.stderr)
         else:
-            subprocess.run([str(bins / 'darkpawns'), '--version'], check=True, capture_output=True)
+            check_run([str(bins / 'darkpawns'), '--version'])
         # Exercise the installed binary, not the source checkout or staging copy.
         instance = root / 'world'
         import socket
@@ -161,13 +181,30 @@ def main(bundle):
             probe.bind(('127.0.0.1', 0))
             port = probe.getsockname()[1]
         command = [str(launcher), '--instance', str(instance)]
-        subprocess.run(command + ['init', '--port', str(port), '--telnet-port', '0'], check=True, capture_output=True)
+        check_run(command + ['init', '--port', str(port), '--telnet-port', '0'])
         try:
-            subprocess.run(command + ['start'], check=True, capture_output=True, timeout=60)
+            check_run(command + ['start'], timeout=60)
             assert urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=3).status == 200
+            check_run(command + ['stop'], timeout=60)
+            if os.environ.get('SNAPSHOT_PRIVATE_PEM'):
+                # The installed launcher carries the strict bundle gate: a
+                # modified executable in the signed release must be refused
+                # with the publisher checksum message, never started.
+                server = installed / ('darkpawns-server' + suffix)
+                genuine = server.read_bytes()
+                server.write_bytes(genuine + b'tampered')
+                rejected = subprocess.run(command + ['start'], capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=60)
+                assert rejected.returncode != 0, 'tampered bundle was started'
+                # The gate refuses inside the background start; the reason
+                # lands in the instance's launcher log.
+                launcher_log = (instance / 'lib' / 'logs' / 'launcher.log').read_text(encoding='utf-8', errors='replace')
+                assert 'checksum mismatch' in launcher_log, (rejected.stdout, rejected.stderr, launcher_log)
+                server.write_bytes(genuine)
+                check_run(command + ['start'], timeout=60)
+                assert urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=3).status == 200
         finally:
-            subprocess.run(command + ['stop'], check=True, capture_output=True, timeout=60)
-        print('PASS: signed bootstrap, tampered metadata/archive refusal before installation, entry-stub installer-signature verification before execution, native platform selection, existing release preservation, Unicode/percent command path and installed game startup')
+            check_run(command + ['stop'], timeout=60)
+        print('PASS: signed bootstrap, tampered metadata/archive refusal before installation, entry-stub installer-signature verification before execution, tampered-release refusal on the installed launcher, native platform selection, existing release preservation, Unicode/percent command path and installed game startup')
 
 
 if __name__ == '__main__':
