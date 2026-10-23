@@ -130,12 +130,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	clientIP := remoteIP(r)
-	if err := h.verify.Verify(r.Context(), form.Turnstile, clientIP); err != nil {
-		writeJSON(w, http.StatusBadRequest, "The spam check did not pass. Please try again.")
-		return
-	}
+	// L2-031: the cheap local limiter runs before the external verification,
+	// so unbounded requests cannot hammer the verifier.
 	if !h.limit.Allow(clientIP, time.Now()) {
 		writeJSON(w, http.StatusTooManyRequests, "Too many messages have been sent from this connection. Try again later.")
+		return
+	}
+	if err := h.verify.Verify(r.Context(), form.Turnstile, clientIP); err != nil {
+		writeJSON(w, http.StatusBadRequest, "The spam check did not pass. Please try again.")
 		return
 	}
 	if err := h.send.Send(form); err != nil {

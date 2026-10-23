@@ -33,7 +33,7 @@ func TestHandleLogin_PlayerNotFound_Returns401(t *testing.T) {
 	t.Cleanup(tracker.Stop)
 
 	// Simulate GetPlayer returning nil, nil for an unknown player.
-	handler := handleLogin(&fakeLoginDB{rec: nil, err: nil}, tracker)
+	handler := handleLogin(&fakeLoginDB{rec: nil, err: nil}, tracker, auth.NewAccountBudgetTracker(0, 0))
 
 	body := strings.NewReader(`{"player_name":"nobody","password":"secret"}`)
 	req := httptest.NewRequest(http.MethodPost, "/admin/login", body)
@@ -61,7 +61,7 @@ func TestHandleLogin_DatabaseError_Returns401(t *testing.T) {
 	})
 	t.Cleanup(tracker.Stop)
 
-	handler := handleLogin(&fakeLoginDB{rec: nil, err: errors.New("db unavailable")}, tracker)
+	handler := handleLogin(&fakeLoginDB{rec: nil, err: errors.New("db unavailable")}, tracker, auth.NewAccountBudgetTracker(0, 0))
 
 	body := strings.NewReader(`{"player_name":"anyone","password":"anything"}`)
 	req := httptest.NewRequest(http.MethodPost, "/admin/login", body)
@@ -128,7 +128,7 @@ func TestHandleLogin_AuthFailuresAreIndistinguishable(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader(tc.body))
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
-		handleLogin(tc.db, tracker).ServeHTTP(rec, req)
+		handleLogin(tc.db, tracker, auth.NewAccountBudgetTracker(0, 0)).ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusUnauthorized {
 			t.Fatalf("%s: expected 401, got %d (body: %s)", tc.name, rec.Code, rec.Body.String())
@@ -196,7 +196,7 @@ func TestHandleLogin_RolesFollowTheGameLadder(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/admin/login", body)
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
-		handleLogin(database, tracker).ServeHTTP(rec, req)
+		handleLogin(database, tracker, auth.NewAccountBudgetTracker(0, 0)).ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Fatalf("%s (level %d): expected 200, got %d (%s)",

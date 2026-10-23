@@ -831,7 +831,7 @@ func TestHandleLogin_LockoutReturns429(t *testing.T) {
 	}
 
 	// nil database: if lockout fires correctly, handler returns 429 before hitting DB
-	handler := handleLogin(nil, tracker)
+	handler := handleLogin(nil, tracker, auth.NewAccountBudgetTracker(0, 0))
 
 	body := strings.NewReader(`{"player_name":"anyone","password":"anything"}`)
 	req := httptest.NewRequest(http.MethodPost, "/admin/login", body)

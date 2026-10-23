@@ -67,7 +67,7 @@ func TestHumaLoginRoundTrip(t *testing.T) {
 	attempts := auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{Threshold: 10, Lockout: 15 * time.Minute})
 	t.Cleanup(attempts.Stop)
 	mux := http.NewServeMux()
-	registerLoginOperation(apidoc.New().NewInternalAPI(mux), database, attempts)
+	registerLoginOperation(apidoc.New().NewInternalAPI(mux), database, attempts, auth.NewAccountBudgetTracker(0, 0))
 
 	post := func(password string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader(`{"player_name":"Aidan","password":"`+password+`"}`))

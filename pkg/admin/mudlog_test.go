@@ -26,10 +26,14 @@ func newMudlogFeed(t *testing.T) *mudlog.Feed {
 }
 
 func mudlogAPI(t *testing.T, f *mudlog.Feed) *httptest.Server {
+	return mudlogAPIAtLevel(t, f, 40)
+}
+
+func mudlogAPIAtLevel(t *testing.T, f *mudlog.Feed, level int) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
 	api := apidoc.New().NewInternalAPI(mux)
-	registerMudlog(api, f)
+	registerMudlog(api, f, func(context.Context) int { return level })
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 	return srv
@@ -111,7 +115,7 @@ func TestMudlogStreamReplaysAndTails(t *testing.T) {
 	f.Tap("", "history", 1, 31, false)
 	waitForSeq(t, f, 1)
 
-	srv := httptest.NewServer(mudlogStream(f))
+	srv := httptest.NewServer(mudlogStream(f, func(context.Context) int { return 40 }))
 	defer srv.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -189,4 +193,103 @@ func TestMudlogEndToEndUsesTheProcessFeed(t *testing.T) {
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
+}
+
+// L2-022: the query level may narrow visibility, never lift it above the
+// caller's actual immortal level. A level-31 builder asking for level=40
+// must not receive level-35 history.
+func TestMudlogListLevelCeilingIsTheCallers(t *testing.T) {
+	f := newMudlogFeed(t)
+	f.Tap("", "boot line", 1, 31, false)
+	f.Tap("", "level 35 line", 1, 35, false)
+	waitForSeq(t, f, 2)
+	srv := mudlogAPIAtLevel(t, f, 31)
+
+	response, err := http.Get(srv.URL + "/admin/mudlog?level=40")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = response.Body.Close() }()
+	var body struct {
+		Events []mudlog.Event `json:"events"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Events) != 1 || body.Events[0].Text != "boot line" {
+		t.Fatalf("builder ceiling lifted by query: %+v", body.Events)
+	}
+}
+
+// L2-028: the SSE stream delivers only events at or below the caller's
+// immortal level; it was previously unfiltered. A real server is used so
+// assertions can read the open stream concurrently with the handler.
+func TestMudlogStreamLevelCeiling(t *testing.T) {
+	f := newMudlogFeed(t)
+	f.Tap("", "boot line", 1, 31, false)
+	f.Tap("", "level 35 line", 1, 35, false)
+	waitForSeq(t, f, 2)
+
+	handler := mudlogStream(f, func(context.Context) int { return 31 })
+	srv := httptest.NewServer(handler)
+	t.Cleanup(srv.Close)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+"/admin/mudlog/stream?since=0", nil)
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = response.Body.Close() }()
+
+	events := make(chan string, 8)
+	go func() {
+		scanner := bufio.NewScanner(response.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "data: ") {
+				events <- strings.TrimPrefix(line, "data: ")
+			}
+		}
+		close(events)
+	}()
+
+	// The replay's visible event must arrive first.
+	visible := collectMudlogEvents(t, events, 1, func(text string) bool { return strings.Contains(text, "boot line") })
+	// Live events above the ceiling are dropped; below it, delivered.
+	f.Tap("", "live level 35 line", 1, 35, false)
+	f.Tap("", "live boot line", 1, 31, false)
+	waitForSeq(t, f, 4)
+	live := collectMudlogEvents(t, events, 1, func(text string) bool { return strings.Contains(text, "live boot line") })
+	for _, payload := range append(visible, live...) {
+		if strings.Contains(payload, "level 35") {
+			t.Fatalf("level-35 event leaked above the caller ceiling: %s", payload)
+		}
+	}
+	cancel()
+}
+
+// collectMudlogEvents reads delivered events until match finds one, returning
+// everything read (so leaked events are still asserted).
+func collectMudlogEvents(t *testing.T, events <-chan string, want int, match func(string) bool) []string {
+	t.Helper()
+	var read []string
+	deadline := time.After(3 * time.Second)
+	found := 0
+	for found < want {
+		select {
+		case payload, ok := <-events:
+			if !ok {
+				t.Fatalf("stream closed early; read: %v", read)
+			}
+			read = append(read, payload)
+			if match(payload) {
+				found++
+			}
+		case <-deadline:
+			t.Fatalf("timed out waiting for a matching event; read: %v", read)
+		}
+	}
+	return read
 }

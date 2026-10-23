@@ -31,7 +31,7 @@ func TestAdminLoginCookieAttributes(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader(`{"player_name":"Aidan","password":"secret"}`))
 	rec := httptest.NewRecorder()
-	handleLogin(database, tracker).ServeHTTP(rec, req)
+	handleLogin(database, tracker, auth.NewAccountBudgetTracker(0, 0)).ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("login = %d: %s", rec.Code, rec.Body.String())
 	}

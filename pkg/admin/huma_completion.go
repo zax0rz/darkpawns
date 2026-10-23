@@ -18,7 +18,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-func registerLoginOperation(api huma.API, database loginPlayerDB, attempts *auth.LoginAttemptTracker) {
+func registerLoginOperation(api huma.API, database loginPlayerDB, attempts *auth.LoginAttemptTracker, accountBudget *auth.AccountBudgetTracker) {
 	type input struct{ Body loginRequest }
 	type output struct {
 		// The legacy handler sets the HttpOnly cookie on the recorder; the
@@ -34,7 +34,7 @@ func registerLoginOperation(api huma.API, database loginPlayerDB, attempts *auth
 			if err != nil {
 				return nil, apidoc.NewPlainError(http.StatusBadRequest, `{"error":"invalid json"}`)
 			}
-			rec := runLegacy(ctx, handleLogin(database, attempts), http.MethodPost, "/admin/login", body)
+			rec := runLegacy(ctx, handleLogin(database, attempts, accountBudget), http.MethodPost, "/admin/login", body)
 			if rec.Code != http.StatusOK {
 				return nil, recorderError(rec)
 			}
