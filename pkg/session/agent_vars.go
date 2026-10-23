@@ -61,6 +61,12 @@ type RoomItemVar struct {
 
 // handleSubscribe processes a subscribe message from an agent.
 // {"type":"subscribe","data":{"variables":["HEALTH","ROOM_VNUM",...]}}
+// Subscription caps (L2-010).
+const (
+	maxSubscriptions        = 128
+	maxSubscriptionKeyBytes = 128
+)
+
 func (s *Session) handleSubscribe(data json.RawMessage) error {
 	s.agentMu.Lock()
 	allowed := s.wantsStructuredData
@@ -76,7 +82,14 @@ func (s *Session) handleSubscribe(data json.RawMessage) error {
 		return err
 	}
 	s.agentMu.Lock()
+	// L2-010: subscriptions are per-session memory; cap the aggregate so a
+	// client cannot grow the map without bound.
 	for _, v := range sub.Variables {
+		if len(v) > maxSubscriptionKeyBytes || (len(s.subscribedVars) >= maxSubscriptions && !s.subscribedVars[v]) {
+			s.agentMu.Unlock()
+			s.sendError("too many or too large subscriptions")
+			return nil
+		}
 		s.subscribedVars[v] = true
 	}
 	s.agentMu.Unlock()

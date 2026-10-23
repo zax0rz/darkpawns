@@ -1,5 +1,6 @@
 package admin
 
+// Retention caps for the persistent admin store (L2-025/035).
 import (
 	"encoding/json"
 	"fmt"
@@ -67,6 +68,11 @@ type AgentStore struct {
 }
 
 // defaultAgents returns the seeded agent defaults.
+const (
+	maxRetainedFindings        = 500
+	maxRetainedTriageSummaries = 200
+)
+
 func defaultAgents() map[string]*AgentStatus {
 	return map[string]*AgentStatus{
 		"daeron": {
@@ -199,6 +205,11 @@ func (s *AgentStore) AddFinding(source, severity, title, file string, line int, 
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
+	// L2-025: builder findings are persistent state; cap the retained list,
+	// dropping the oldest when full.
+	if len(s.findings) >= maxRetainedFindings {
+		s.findings = s.findings[len(s.findings)-maxRetainedFindings+1:]
+	}
 	s.findings = append(s.findings, f)
 	s.nextFindingID++
 	return f, s.save()
@@ -265,6 +276,10 @@ func (s *AgentStore) AddTriageSummary(date, summary string, confirmed, rejected,
 		Pending:   pending,
 		Summary:   summary,
 		CreatedAt: time.Now(),
+	}
+	// L2-035: triage summaries are persistent state; cap the retained list.
+	if len(s.triages) >= maxRetainedTriageSummaries {
+		s.triages = s.triages[len(s.triages)-maxRetainedTriageSummaries+1:]
 	}
 	s.triages = append(s.triages, t)
 	s.nextTriageID++

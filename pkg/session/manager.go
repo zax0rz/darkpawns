@@ -106,6 +106,8 @@ type Manager struct {
 
 	// Login attempt lockout tracker (H-15)
 	loginAttempts *auth.LoginAttemptTracker
+	// accountBudget bounds wrong passwords per account name across IPs (L2-004); nil-safe no-op when disabled.
+	accountBudget *auth.AccountBudgetTracker
 
 	// Account-level login lockout tracker (DP-592)
 
@@ -290,6 +292,10 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			Threshold: 10,
 			Lockout:   15 * time.Minute,
 		}),
+		// L2-004: opt-in per-account budget across all source IPs; disabled
+		// by default (the renewable per-account lockout was removed by
+		// design in 2c3e269e4, and C has no account lockout).
+		accountBudget:         auth.AccountBudgetFromEnvironment(),
 		ipConnCount:           make(map[string]int),
 		olcRegistry:           olc.NewRegistry(),
 		nextEphemeralPlayerID: 1,

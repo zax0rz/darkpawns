@@ -26,10 +26,14 @@ func newMudlogFeed(t *testing.T) *mudlog.Feed {
 }
 
 func mudlogAPI(t *testing.T, f *mudlog.Feed) *httptest.Server {
+	return mudlogAPIAtLevel(t, f, 40)
+}
+
+func mudlogAPIAtLevel(t *testing.T, f *mudlog.Feed, level int) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
 	api := apidoc.New().NewInternalAPI(mux)
-	registerMudlog(api, f)
+	registerMudlog(api, f, func(context.Context) int { return level })
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 	return srv
@@ -111,7 +115,7 @@ func TestMudlogStreamReplaysAndTails(t *testing.T) {
 	f.Tap("", "history", 1, 31, false)
 	waitForSeq(t, f, 1)
 
-	srv := httptest.NewServer(mudlogStream(f))
+	srv := httptest.NewServer(mudlogStream(f, func(context.Context) int { return 40 }))
 	defer srv.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -188,5 +192,66 @@ func TestMudlogEndToEndUsesTheProcessFeed(t *testing.T) {
 			t.Fatalf("game.MudLog never reached the admin endpoint; body: %s", body)
 		}
 		time.Sleep(5 * time.Millisecond)
+	}
+}
+
+// L2-022: the query level may narrow visibility, never lift it above the
+// caller's actual immortal level. A level-31 builder asking for level=40
+// must not receive level-35 history.
+func TestMudlogListLevelCeilingIsTheCallers(t *testing.T) {
+	f := newMudlogFeed(t)
+	f.Tap("", "boot line", 1, 31, false)
+	f.Tap("", "level 35 line", 1, 35, false)
+	waitForSeq(t, f, 2)
+	srv := mudlogAPIAtLevel(t, f, 31)
+
+	response, err := http.Get(srv.URL + "/admin/mudlog?level=40")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = response.Body.Close() }()
+	var body struct {
+		Events []mudlog.Event `json:"events"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Events) != 1 || body.Events[0].Text != "boot line" {
+		t.Fatalf("builder ceiling lifted by query: %+v", body.Events)
+	}
+}
+
+// L2-028: the SSE stream delivers only events at or below the caller's
+// immortal level; it was previously unfiltered.
+func TestMudlogStreamLevelCeiling(t *testing.T) {
+	f := newMudlogFeed(t)
+	f.Tap("", "boot line", 1, 31, false)
+	f.Tap("", "level 35 line", 1, 35, false)
+	waitForSeq(t, f, 2)
+
+	handler := mudlogStream(f, func(context.Context) int { return 31 })
+	rec := httptest.NewRecorder()
+	done := make(chan struct{})
+	go func() {
+		handler(rec, httptest.NewRequest(http.MethodGet, "/admin/mudlog/stream?since=0", nil))
+		close(done)
+	}()
+	f.Tap("", "live level 35 line", 1, 35, false)
+	f.Tap("", "live boot line", 1, 31, false)
+	waitForSeq(t, f, 4)
+	deadline := time.After(2 * time.Second)
+	for {
+		body := rec.Body.String()
+		if strings.Count(body, "event: mudlog") == 2 && strings.Contains(body, "live boot line") {
+			break
+		}
+		select {
+		case <-deadline:
+			t.Fatalf("stream did not deliver the two visible events: %q", rec.Body.String())
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+	if strings.Contains(rec.Body.String(), "level 35") {
+		t.Fatalf("level-35 events leaked above the caller ceiling: %q", rec.Body.String())
 	}
 }

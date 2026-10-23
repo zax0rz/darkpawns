@@ -43,7 +43,7 @@ const authFailureBody = `{"error":"invalid credentials"}`
 const timingDecoyHash = `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` // #nosec G101 -- not a credential; a fixed decoy hash for constant-time behaviour
 
 // POST /admin/login — authenticates a player and returns a JWT.
-func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker) http.HandlerFunc {
+func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker, accountBudget *auth.AccountBudgetTracker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
@@ -106,12 +106,20 @@ func handleLogin(database loginPlayerDB, loginAttempts *auth.LoginAttemptTracker
 		passwordOK := bcrypt.CompareHashAndPassword([]byte(stored), []byte(req.Password)) == nil
 
 		if err != nil || rec == nil || rec.Password == "" || !passwordOK {
-			loginAttempts.RecordFailure(ip)
+			// L2-024: atomic check-and-record — concurrent guesses cannot
+			// all pass below the threshold. L2-004: the opt-in account
+			// budget spans source IPs.
+			if !loginAttempts.FailAndCheck(ip) || !accountBudget.Fail(req.PlayerName) {
+				http.Error(w, `{"error":"too many failed attempts, try again later"}`, http.StatusTooManyRequests)
+				audit.LogSecurityEvent("login_locked_out", "Failure budget exceeded", req.PlayerName, ip)
+				return
+			}
 			http.Error(w, authFailureBody, http.StatusUnauthorized)
 			return
 		}
 
 		loginAttempts.RecordSuccess(ip)
+		accountBudget.RecordSuccess(req.PlayerName)
 
 		// Panel roles follow the game's own ladder rather than magic numbers.
 		// Level 50 did not exist: LVL_IMPL (40) is the ceiling ported from

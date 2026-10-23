@@ -9,6 +9,11 @@ import (
 	"sync"
 )
 
+// MaxClanPlanBytes bounds a clan plan's size. C enforces the same ceiling
+// on save (CLAN_PLAN_LENGTH, src/clan.h; strncpy at src/clan.c:823), so this
+// is C's own limit applied at input time, not a divergence (L2-005).
+const MaxClanPlanBytes = 1024
+
 // ---------------------------------------------------------------------------
 // Clan constants
 // ---------------------------------------------------------------------------
@@ -285,6 +290,11 @@ func (w *World) HandleClanPlanInput(ch *Player, line string) bool {
 		ch.ClanPlanBuffer = ""
 		ch.SetPlrFlag(PlrWriting, false)
 		return true
+	}
+	// L2-005: the plan is shared memory and persisted state; cap its
+	// aggregate growth so repeated editor lines cannot exhaust either.
+	if len(ch.ClanPlanBuffer) >= MaxClanPlanBytes {
+		return false
 	}
 	if ch.ClanPlanBuffer == "" {
 		ch.ClanPlanBuffer = line + "\r\n"
