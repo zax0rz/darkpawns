@@ -69,7 +69,12 @@ stage=$(mktemp -d "$root/.install.XXXXXXXX")
 trap 'rm -rf "$work" "$stage"' EXIT
 tar -xzf "$work/$name" -C "$stage" --no-same-owner
 [ -x "$stage/$wrapper/darkpawns" ] && [ -x "$stage/$wrapper/darkpawns-server" ] || { echo 'Release executables are missing.' >&2; exit 1; }
-mv "$stage/$wrapper" "$target"
+# L1-001: a shared install directory can race the existence check above and
+# plant a target between check and move. mv -n never clobbers; if the staged
+# copy is still present afterwards, the move was skipped — a planted target —
+# and nothing of ours is used.
+mv -n "$stage/$wrapper" "$target"
+if [ -e "$stage/$wrapper" ]; then echo 'Install target appeared during installation; refusing it. Re-run with a different --install-dir.' >&2; exit 1; fi
 if [ ! -e "$bin/darkpawns" ] && [ ! -L "$bin/darkpawns" ]; then ln -s "$target/darkpawns" "$bin/darkpawns"; else echo 'Existing darkpawns command preserved.'; fi
 printf 'Installed: %s/darkpawns\n' "$target"
 printf 'Command folder: %s (add it to PATH if needed).\n' "$bin"

@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"html"
@@ -94,6 +95,33 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// role applies as before.
 	requireRole := roleGuard(database)
 
+	// L2-022/028: mudlog visibility is capped at the caller's actual immortal
+	// level, resolved per request from the store (the token's role is only a
+	// login-time hint, as in roleGuard). Without a database the panel-role
+	// hierarchy bounds the ceiling: builder means LVL_IMMORT (31), admin
+	// means the implementor ceiling (40).
+	mudlogCaller := func(ctx context.Context) int {
+		claims, ok := auth.GetClaimsFromContext(ctx)
+		if !ok || claims == nil {
+			return 0
+		}
+		if database != nil {
+			rec, err := database.GetPlayer(claims.PlayerName)
+			if err != nil || rec == nil || game.CharacterDataDeleted(rec.CharacterData) {
+				return 0
+			}
+			return rec.Level
+		}
+		switch claims.Role {
+		case "admin":
+			return 40
+		case "builder", "research":
+			return 31
+		default:
+			return 0
+		}
+	}
+
 	// Rate limiter for admin endpoints
 	rateLimiter := auth.NewIPRateLimiter()
 	// adminMaxBodyBytes bounds request-body allocation on every admin route
@@ -179,7 +207,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if database != nil {
 		loginDatabase = database
 	}
-	registerLoginOperation(ri.api, loginDatabase, loginAttempts)
+	registerLoginOperation(ri.api, loginDatabase, loginAttempts, auth.AccountBudgetFromEnvironment())
 	// Public route: rate-limited exactly like the legacy login, but deliberately
 	// outside the JWT/role middleware used by every authenticated operation.
 	track("/admin/login", wrap(withClientIP(humaMux.ServeHTTP)))
@@ -229,7 +257,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	}
 	if cfg.mudlogFeed != nil {
-		registerMudlog(ri.api, cfg.mudlogFeed)
+		registerMudlog(ri.api, cfg.mudlogFeed, mudlogCaller)
 		// Mudlog history and catalog — builder role like the log tail.
 		track("/admin/mudlog", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 		track("/admin/mudlog/catalog", wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
@@ -252,7 +280,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// Mudlog live tail — same builder gate as the log tail. A plain handler,
 	// not a Huma operation: SSE needs http.Flusher (drift-gate allowlisted).
 	if cfg.mudlogFeed != nil {
-		track("/admin/mudlog/stream", wrap(corsMiddleware(requireRole("builder", mudlogStream(cfg.mudlogFeed)))))
+		track("/admin/mudlog/stream", wrap(corsMiddleware(requireRole("builder", mudlogStream(cfg.mudlogFeed, mudlogCaller)))))
 	}
 
 	// Online players — requires builder role

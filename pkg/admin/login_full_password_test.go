@@ -25,7 +25,7 @@ func TestAdminFullPasswordComparison(t *testing.T) {
 		t.Cleanup(tracker.Stop)
 		req := httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader(`{"player_name":"Hero","password":"`+secret+`"}`))
 		out := httptest.NewRecorder()
-		handleLogin(database, tracker).ServeHTTP(out, req)
+		handleLogin(database, tracker, auth.NewAccountBudgetTracker(0, 0)).ServeHTTP(out, req)
 		want := http.StatusUnauthorized
 		if secret == "12345678ab" {
 			want = http.StatusOK

@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -186,10 +189,29 @@ func (i *IPRateLimiter) cleanupOnce() {
 }
 
 func (i *IPRateLimiter) AddIP(ip string) *rate.Limiter {
+	// L2-020: distinct addresses grow the map without bound; once past the
+	// cap, evict arbitrary entries until back under it (sync.Map has no
+	// recency; re-added IPs simply get fresh budgets).
+	size := 0
+	i.ips.Range(func(_, _ any) bool { size++; return true })
+	if size > maxTrackedIPs {
+		i.ips.Range(func(key, _ any) bool {
+			if size <= maxTrackedIPs {
+				return false
+			}
+			i.ips.Delete(key)
+			size--
+			return true
+		})
+	}
 	limiter := rate.NewLimiter(rate.Limit(5), 10) // 5 requests per second, burst of 10
 	actual, _ := i.ips.LoadOrStore(ip, limiter)
 	return actual.(*rate.Limiter)
 }
+
+// maxTrackedIPs caps the per-IP limiter map (L2-020). Eviction is arbitrary
+// (sync.Map has no recency); re-added IPs simply get fresh budgets.
+const maxTrackedIPs = 50000
 
 func (i *IPRateLimiter) GetLimiter(ip string) *rate.Limiter {
 	actual, ok := i.ips.Load(ip)
@@ -303,11 +325,133 @@ func (t *LoginAttemptTracker) RecordFailure(ip string) {
 
 	a, ok := t.attempts[ip]
 	if !ok {
+		// L2-029: distinct failing addresses grow the map without bound;
+		// beyond the cap, drop the stalest entries (lowest failure counts
+		// first are wrong — oldest lastFailAt is the safe eviction).
+		if len(t.attempts) >= maxTrackedLoginIPs {
+			t.evictStaleLoginIPs()
+		}
 		a = &loginAttempts{}
 		t.attempts[ip] = a
 	}
 	a.failures++
 	a.lastFailAt = time.Now()
+}
+
+// maxTrackedLoginIPs caps the failed-login map (L2-029).
+const maxTrackedLoginIPs = 10000
+
+func (t *LoginAttemptTracker) evictStaleLoginIPs() {
+	type aged struct {
+		ip       string
+		lastFail time.Time
+	}
+	entries := make([]aged, 0, len(t.attempts))
+	for ip, a := range t.attempts {
+		entries = append(entries, aged{ip, a.lastFailAt})
+	}
+	sort.Slice(entries, func(x, y int) bool { return entries[x].lastFail.Before(entries[y].lastFail) })
+	for _, e := range entries {
+		if len(t.attempts) < maxTrackedLoginIPs {
+			return
+		}
+		delete(t.attempts, e.ip)
+	}
+}
+
+// FailAndCheck records a failure and reports atomically whether the attempt
+// may still be answered (L2-024): checking IsLocked and recording in
+// separate critical sections let concurrent guesses all pass the check
+// before any of them was counted. A failed return means the source is now
+// locked and the response must be the locked refusal, not the wrong-password
+// one.
+func (t *LoginAttemptTracker) FailAndCheck(ip string) (allowed bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	a, ok := t.attempts[ip]
+	if !ok {
+		a = &loginAttempts{}
+		t.attempts[ip] = a
+	}
+	if a.failures >= t.threshold && t.lockout > time.Since(a.lastFailAt) {
+		a.lastFailAt = time.Now()
+		return false
+	}
+	a.failures++
+	a.lastFailAt = time.Now()
+	return true
+}
+
+// accountBudget is the configurable per-account failure budget (L2-004).
+// Distributed guesses rotate source IPs to escape the per-IP budget, but a
+// hard per-name lockout is itself an attack on known accounts — the
+// renewable per-account lockout was removed for exactly that (2c3e269e4,
+// Zach's Option D), and C has no account lockout at all. The budget is
+// therefore OFF by default: set DP_ACCOUNT_FAILURE_BUDGET to a failure
+// count (and optionally DP_ACCOUNT_FAILURE_WINDOW as a duration, default
+// 1h) to bound total wrong passwords against one name across all sources.
+type accountBudget struct {
+	failures  int
+	firstSeen time.Time
+}
+
+// AccountBudgetTracker bounds failures per account name across all source
+// IPs. A zero threshold disables it entirely.
+type AccountBudgetTracker struct {
+	mu        sync.Mutex
+	threshold int
+	window    time.Duration
+	accounts  map[string]*accountBudget
+}
+
+// NewAccountBudgetTracker builds the tracker; threshold <= 0 disables it.
+func NewAccountBudgetTracker(threshold int, window time.Duration) *AccountBudgetTracker {
+	if window <= 0 {
+		window = time.Hour
+	}
+	return &AccountBudgetTracker{threshold: threshold, window: window, accounts: map[string]*accountBudget{}}
+}
+
+// AccountBudgetFromEnvironment reads the opt-in configuration.
+func AccountBudgetFromEnvironment() *AccountBudgetTracker {
+	count, _ := strconv.Atoi(os.Getenv("DP_ACCOUNT_FAILURE_BUDGET"))
+	if count <= 0 {
+		return NewAccountBudgetTracker(0, 0)
+	}
+	window, err := time.ParseDuration(os.Getenv("DP_ACCOUNT_FAILURE_WINDOW"))
+	if err != nil || window <= 0 {
+		window = time.Hour
+	}
+	return NewAccountBudgetTracker(count, window)
+}
+
+// Fail records a failure against an account and reports whether the attempt
+// may still be answered. Disabled trackers always allow.
+func (t *AccountBudgetTracker) Fail(account string) (allowed bool) {
+	if t.threshold <= 0 {
+		return true
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	a, ok := t.accounts[account]
+	if !ok || time.Since(a.firstSeen) > t.window {
+		a = &accountBudget{firstSeen: time.Now()}
+		t.accounts[account] = a
+	}
+	a.failures++
+	return a.failures < t.threshold
+}
+
+// RecordSuccess clears an account's budget usage after a successful login.
+func (t *AccountBudgetTracker) RecordSuccess(account string) {
+	if t.threshold <= 0 {
+		return
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.accounts, account)
 }
 
 // RecordSuccess resets the failure counter for an IP.

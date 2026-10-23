@@ -511,3 +511,49 @@ func TestLoginAttemptTracker_StopTwice(t *testing.T) {
 	tracker.Stop()
 	tracker.Stop()
 }
+
+// L2-024: the failure record and threshold check are one atomic step, so
+// concurrent guesses cannot all pass below the threshold.
+func TestFailAndCheckBoundsConcurrentOvershoot(t *testing.T) {
+	tracker := NewLoginAttemptTracker(LoginAttemptConfig{Threshold: 10, Lockout: time.Minute})
+	const workers = 50
+	allowed := make(chan bool, workers)
+	for i := 0; i < workers; i++ {
+		go func() { allowed <- tracker.FailAndCheck("10.0.0.9") }()
+	}
+	granted := 0
+	for i := 0; i < workers; i++ {
+		if <-allowed {
+			granted++
+		}
+	}
+	if granted != 10 {
+		t.Fatalf("answered failures = %d, want exactly the threshold 10", granted)
+	}
+}
+
+// L2-004: the opt-in account budget spans source IPs; disabled by default.
+func TestAccountBudgetTracker(t *testing.T) {
+	disabled := NewAccountBudgetTracker(0, 0)
+	for i := 0; i < 100; i++ {
+		if !disabled.Fail("Victim") {
+			t.Fatal("disabled tracker refused a failure")
+		}
+	}
+	enabled := NewAccountBudgetTracker(3, time.Hour)
+	for i := 0; i < 2; i++ {
+		if !enabled.Fail(fmt.Sprintf("attacker-%d.example", i)) {
+			t.Fatal("separate-name failures must not share the budget")
+		}
+		if !enabled.Fail("Victim") {
+			t.Fatal("failure below the budget threshold was refused")
+		}
+	}
+	if enabled.Fail("Victim") {
+		t.Fatal("account budget did not span source IPs: a third failure against the same name was answered")
+	}
+	enabled.RecordSuccess("Victim")
+	if !enabled.Fail("Victim") {
+		t.Fatal("budget did not reset on successful login")
+	}
+}

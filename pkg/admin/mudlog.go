@@ -37,8 +37,14 @@ type mudlogListOutput struct {
 	}
 }
 
+// mudlogCallerLevel resolves the immortal level whose mudlog visibility the
+// current request is entitled to (L2-022/028: the caller's actual level, not
+// a client-chosen query value). The router supplies a claims+store-backed
+// resolver; direct handler tests inject their own.
+type mudlogCallerLevel func(ctx context.Context) int
+
 // registerMudlog registers the read endpoints for the mudlog feed on api.
-func registerMudlog(api huma.API, feed *mudlog.Feed) {
+func registerMudlog(api huma.API, feed *mudlog.Feed, callerLevel mudlogCallerLevel) {
 	huma.Register(api, huma.Operation{
 		OperationID: "list-mudlog-events",
 		Method:      http.MethodGet,
@@ -54,14 +60,20 @@ func registerMudlog(api huma.API, feed *mudlog.Feed) {
 			limit = mudlog.DefaultRingCap
 		}
 		events := feed.Since(in.Since, limit)
+		// The delivery predicate is MudLog's own: an immortal of Level with
+		// syslog Type sees level <= Level and type <= Type. The level ceiling
+		// is the caller's actual level; a query level may only narrow it
+		// further, never lift it above what the caller is entitled to read.
+		ceiling := callerLevel(ctx)
+		if in.Level >= 0 && in.Level < ceiling {
+			ceiling = in.Level
+		}
 		filtered := make([]mudlogEvent, 0, len(events))
 		for _, e := range events {
 			if in.Key != "" && (e.Key == "" || e.Key != in.Key) {
 				continue
 			}
-			// The filter is MudLog's own delivery predicate: an immortal of
-			// Level with syslog Type sees level <= Level and type <= Type.
-			if in.Level >= 0 && in.Level < e.Level {
+			if ceiling < e.Level {
 				continue
 			}
 			if in.Type >= 0 && in.Type < e.Typ {
@@ -98,8 +110,9 @@ func registerMudlog(api huma.API, feed *mudlog.Feed) {
 // mudlogStream serves GET /admin/mudlog/stream as server-sent events. It is
 // a plain handler (not a Huma operation) because SSE needs http.Flusher.
 // Clients resume with the Last-Event-ID header or ?since=; the id of every
-// event is its ring seq.
-func mudlogStream(feed *mudlog.Feed) http.HandlerFunc {
+// event is its ring seq. Every delivered event respects the caller's
+// immortal level (L2-028): the stream was previously unfiltered.
+func mudlogStream(feed *mudlog.Feed, callerLevel mudlogCallerLevel) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -136,8 +149,17 @@ func mudlogStream(feed *mudlog.Feed) http.HandlerFunc {
 			return err
 		}
 
-		var last uint64
+		ceiling := callerLevel(r.Context())
+		visible := func(e mudlogEvent) bool { return e.Level <= ceiling }
+		// `last` starts at the resume point, not zero: an empty replay must
+		// not re-deliver history, and subscribing from the last replayed seq
+		// (not feed.LastSeq()) closes the window where an event tapped
+		// between the replay read and the subscription lands in neither.
+		last := after
 		for _, e := range feed.Since(after, 0) {
+			if !visible(e) {
+				continue
+			}
 			if err := write(e); err != nil {
 				return
 			}
@@ -148,7 +170,7 @@ func mudlogStream(feed *mudlog.Feed) http.HandlerFunc {
 		}
 		flusher.Flush()
 
-		events, kicked, cancel := feed.Subscribe(feed.LastSeq())
+		events, kicked, cancel := feed.Subscribe(last)
 		defer cancel()
 		heartbeat := time.NewTicker(15 * time.Second)
 		defer heartbeat.Stop()
@@ -160,6 +182,10 @@ func mudlogStream(feed *mudlog.Feed) http.HandlerFunc {
 				// Too slow for the live channel: replay the gap from the
 				// ring and re-subscribe from where we got to.
 				for _, e := range feed.Since(last, 0) {
+					if !visible(e) {
+						last = e.Seq
+						continue
+					}
 					if err := write(e); err != nil {
 						return
 					}
@@ -172,12 +198,19 @@ func mudlogStream(feed *mudlog.Feed) http.HandlerFunc {
 				if !ok {
 					return
 				}
+				if !visible(e) {
+					continue
+				}
 				if err := write(e); err != nil {
 					return
 				}
 				last = e.Seq
 				flusher.Flush()
 			case <-heartbeat.C:
+				// Re-resolve the ceiling so a demotion takes effect on an
+				// open stream without waiting for a reconnect (the same
+				// every-request semantics as the role guard).
+				ceiling = callerLevel(r.Context())
 				if err := ping(); err != nil {
 					return
 				}

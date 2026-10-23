@@ -19,7 +19,7 @@ import (
 // normal-sized body still reaches the credential path.
 func TestAdminLoginBodyLimit(t *testing.T) {
 	tracker := auth.NewLoginAttemptTracker(auth.LoginAttemptConfig{Threshold: 1000, Lockout: time.Minute})
-	handler := handleLogin(nil, tracker)
+	handler := handleLogin(nil, tracker, auth.NewAccountBudgetTracker(0, 0))
 
 	// Oversized: 100 KB of JSON padding in the password field.
 	big := []byte(`{"player_name":"a","password":"` + strings.Repeat("x", 100*1024) + `"}`)

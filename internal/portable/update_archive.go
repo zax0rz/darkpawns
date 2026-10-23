@@ -48,6 +48,12 @@ func updateClient() *http.Client {
 		if len(via) >= 5 || req.URL.Scheme != "https" || req.URL.User != nil {
 			return errors.New("unsafe release redirect")
 		}
+		// L1-011: a redirect may only stay on the original host or move to
+		// GitHub's asset CDN — a compromised source must not aim the updater
+		// at an arbitrary HTTPS server.
+		if req.URL.Host != via[0].URL.Host && !strings.HasSuffix(req.URL.Host, ".githubusercontent.com") {
+			return errors.New("release redirect left the allowed hosts")
+		}
 		return nil
 	}}
 }

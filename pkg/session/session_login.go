@@ -215,7 +215,26 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 					// password; only the audit log names the state.
 					audit.LogSecurityEvent("login_failed", "no stored password hash - counted as wrong password", rec.Name, ip)
 				}
-				s.manager.loginAttempts.RecordFailure(ip)
+				// L2-024: recording and the threshold check are one atomic
+				// step, so concurrent guesses cannot all pass below the
+				// threshold. Crossing it turns this response into the locked
+				// refusal instead of the wrong-password one.
+				if !s.manager.loginAttempts.FailAndCheck(ip) {
+					if locked, remaining := s.manager.loginAttempts.IsLocked(ip); locked {
+						mins := int(remaining.Minutes()) + 1
+						s.sendError(fmt.Sprintf("Too many failed login attempts. Try again in %d minutes.", mins))
+						s.CloseSend()
+						audit.LogSecurityEvent("login_locked_out", "Login locked out due to repeated failures", auditSafeName(login.PlayerName), ip)
+						return nil
+					}
+				}
+				// L2-004: the opt-in cross-IP account budget.
+				if !s.manager.accountBudget.Fail(rec.Name) {
+					s.sendError("Too many failed login attempts. Try again later.")
+					s.CloseSend()
+					audit.LogSecurityEvent("login_locked_out", "Account failure budget exceeded", auditSafeName(login.PlayerName), ip)
+					return nil
+				}
 				// Count C bad_pws (GET_BAD_PWS, persisted; feeds the
 				// LOGIN FAILURES warning at menu entry, interpreter.c:1929-1937).
 				// Threshold is max-int with zero duration: pure counting, never
@@ -293,6 +312,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// room entry happen only after option 1 is selected.
 	if s.authenticated && s.player != nil {
 		s.manager.loginAttempts.RecordSuccess(ip)
+		s.manager.accountBudget.RecordSuccess(login.PlayerName)
 		// Reset C bad_pws on successful login (GET_BAD_PWS = 0,
 		// interpreter.c:1933-1935): the LOGIN FAILURES warning counts only
 		// failures since the last success.

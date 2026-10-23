@@ -34,7 +34,7 @@ func TestDeletedAdminLoginDenied(t *testing.T) {
 	t.Cleanup(tracker.Stop)
 	for _, record := range []*db.PlayerRecord{nil, {Name: "TestPlayer", Level: game.LVL_GOD, Password: string(hash), CharacterData: deletedAdminData(t)}} {
 		response := httptest.NewRecorder()
-		handleLogin(&fakeLoginDB{rec: record}, tracker).ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader(`{"player_name":"TestPlayer","password":"correct-password"}`)))
+		handleLogin(&fakeLoginDB{rec: record}, tracker, auth.NewAccountBudgetTracker(0, 0)).ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/admin/login", strings.NewReader(`{"player_name":"TestPlayer","password":"correct-password"}`)))
 		if response.Code != http.StatusUnauthorized || response.Body.String() != authFailureBody+"\n" {
 			t.Fatalf("deleted/missing login = %d %q", response.Code, response.Body.String())
 		}

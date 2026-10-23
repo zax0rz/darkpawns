@@ -180,7 +180,9 @@ func TestTurnstileFailureDoesNotConsumeRateLimit(t *testing.T) {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
 	}
 
-	if len(limiter.entries) != 0 {
-		t.Fatalf("rate limiter entries = %d, want 0 after failed Turnstile", len(limiter.entries))
+	// L2-031 reversed the order: the limiter runs before the verifier, so a
+	// failed Turnstile now CONSUMES a rate slot (the point of the fix).
+	if len(limiter.entries) != 1 {
+		t.Fatalf("rate limiter entries = %d, want 1 after failed Turnstile", len(limiter.entries))
 	}
 }

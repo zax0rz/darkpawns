@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	neturl "net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -446,6 +447,18 @@ func browserAvailable() bool {
 }
 
 func openBrowser(ctx context.Context, url string) error {
+	// L1-010: the URL can originate in locally forged control status; only
+	// plain http(s) to a loopback host is ever handed to the browser.
+	parsed, err := neturl.Parse(url)
+	if err != nil || parsed.Scheme == "" || parsed.Hostname() == "" {
+		return fmt.Errorf("refusing to open a non-web address: %s", url)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fmt.Errorf("refusing to open a non-web address: %s", url)
+	}
+	if host := parsed.Hostname(); host != "localhost" && host != "127.0.0.1" && host != "::1" {
+		return fmt.Errorf("refusing to open a non-loopback address: %s", url)
+	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	var name string
