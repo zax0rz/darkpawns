@@ -203,6 +203,46 @@ func listenAddr(bind, port string) string {
 	return net.JoinHostPort(bind, port)
 }
 
+// isLoopbackBind reports whether a listener bind confines that listener to
+// loopback. The empty bind means all interfaces — public — so it is not
+// loopback.
+func isLoopbackBind(bind string) bool {
+	if ip := net.ParseIP(bind); ip != nil {
+		return ip.IsLoopback()
+	}
+	return strings.EqualFold(bind, "localhost")
+}
+
+// sanitizeBindsForEmptyWorld keeps a characterless world off the internet
+// (L1-005, approved 2026-10-22 option B): with no persisted players, C's
+// first-character-is-Implementor rule (src/db.c:3016 — inherited, unchanged)
+// would crown any stranger who reaches character creation first, so every
+// non-loopback listener bind is downgraded to 127.0.0.1 with the remedy
+// logged. The game itself behaves exactly as C; creating the first character
+// locally and restarting lifts the guard.
+func sanitizeBindsForEmptyWorld(playerCount int, httpBind, telnetBind, telnetTLSBind, whodBind *string) {
+	if playerCount != 0 {
+		return
+	}
+	for _, entry := range []struct {
+		name string
+		bind *string
+	}{
+		{"-http-bind", httpBind},
+		{"-telnet-bind", telnetBind},
+		{"-telnet-tls-bind", telnetTLSBind},
+		{"-whod-bind", whodBind},
+	} {
+		if isLoopbackBind(*entry.bind) {
+			continue
+		}
+		slog.Error("world has no characters: "+entry.name+" downgraded to loopback",
+			"was", *entry.bind,
+			"hint", "create the first character (it becomes the immortal) via the local listener, then restart to expose public binds")
+		*entry.bind = "127.0.0.1"
+	}
+}
+
 // resolveWhodPort applies C's WHOD port rule to the startup flags. C opens the
 // who-daemon one port above the game port (src/whod.c:249, called with the
 // game port at src/comm.c:274), so a -whod-port of -1 derives telnet port + 1
@@ -525,6 +565,19 @@ func main() {
 	}
 
 	manager := session.NewManager(gameWorld, gameStore)
+	// L1-005: guard the empty-world window before any listener uses these
+	// binds. The no-DB development/oracle configuration is exempt — no
+	// persistent store, no first-character race to lose.
+	if database != nil {
+		playerCount, countErr := database.CountPlayers()
+		if countErr != nil {
+			// Fail closed: an unreadable count is an empty world for this
+			// guard's purposes.
+			slog.Error("player count unavailable; treating the world as empty for bind guarding", "error", countErr)
+			playerCount = 0
+		}
+		sanitizeBindsForEmptyWorld(playerCount, httpBind, telnetBind, telnetTLSBind, whodBind)
+	}
 	if database == nil {
 		// The no-DB mode is an explicitly non-persistent development/oracle
 		// configuration. Its process-local IDs cannot safely address mail
