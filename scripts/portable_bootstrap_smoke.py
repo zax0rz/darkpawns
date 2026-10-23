@@ -78,6 +78,53 @@ def main(bundle):
         before = hashlib.sha256(launcher.read_bytes()).hexdigest()
         invoke(good=False, extra='existing release must not be merged or overwritten')
         assert hashlib.sha256(launcher.read_bytes()).hexdigest() == before
+        # L1-003: the public entry stub verifies install.sh.sig before the
+        # installer runs. Drive the real stub hermetically: swap its pinned key
+        # for this run's disposable publisher key, shim curl to serve the local
+        # signed directory, and forward --source-dir so the installer stays
+        # offline. A tampered installer must be refused without executing.
+        if os.name != 'nt':
+            import re
+            stub_text = pathlib.Path('website/static/install.sh').read_text()
+            disposable_key = '\n'.join(public.read_text().strip().splitlines())
+            substituted, count = re.subn(
+                r"cat > \"\$work/publisher\.pem\" <<'PUBLIC_KEY'\n.*?\nPUBLIC_KEY",
+                'cat > "$work/publisher.pem" <<\'PUBLIC_KEY\'\n' + disposable_key + '\nPUBLIC_KEY',
+                stub_text, flags=re.S)
+            assert count == 1, 'stub publisher-key substitution failed'
+            stub = root / 'entry-stub.sh'
+            stub.write_text(substituted)
+            curl_shim = root / 'curl-shim'
+            curl_shim.mkdir()
+            (curl_shim / 'curl').write_text(
+                '#!/bin/sh\n'
+                'url=\ndest=\nprev=\n'
+                'for a in "$@"; do\n'
+                '  case "$a" in http*) url=$a;; esac\n'
+                '  if [ "$prev" = "-o" ]; then dest=$a; fi\n'
+                '  prev=$a\n'
+                'done\n'
+                'case "$url" in\n'
+                f'  http*install.sh.sig) cp "{signed}/install.sh.sig" "$dest"; exit 0;;\n'
+                f'  http*install.sh) cp "{signed}/install.sh" "$dest"; exit 0;;\n'
+                'esac\n'
+                'echo "no fetchable url" >&2; exit 1\n')
+            (curl_shim / 'curl').chmod(0o755)
+            stub_env = dict(os.environ, PATH=f'{curl_shim}{os.pathsep}{os.environ["PATH"]}')
+            stub_args = ['sh', str(stub), '--source-dir', str(signed),
+                         '--install-dir', str(root / 'stubbed-install'),
+                         '--bin-dir', str(root / 'stubbed-bin'), '--no-setup']
+            stubbed = subprocess.run(stub_args, env=stub_env, text=True, capture_output=True, timeout=180)
+            assert stubbed.returncode == 0, (stubbed.stdout, stubbed.stderr)
+            marker = root / 'tampered.marker'
+            installer_path = signed / 'install.sh'
+            genuine = installer_path.read_bytes()
+            installer_path.write_text(f'echo executed-unverified > "{marker}"\n')
+            tampered = subprocess.run(stub_args, env=stub_env, text=True, capture_output=True, timeout=180)
+            assert tampered.returncode != 0, 'stub ran an installer whose signature did not verify'
+            assert 'verification failed' in (tampered.stdout + tampered.stderr).lower(), (tampered.stdout, tampered.stderr)
+            assert not marker.exists(), 'stub executed an unverified installer'
+            installer_path.write_bytes(genuine)
         if os.name == 'nt':
             shim = bins / 'darkpawns.cmd'
             environment = os.environ.copy()
@@ -99,7 +146,7 @@ def main(bundle):
             assert urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=3).status == 200
         finally:
             subprocess.run(command + ['stop'], check=True, capture_output=True, timeout=60)
-        print('PASS: signed bootstrap, tampered metadata/archive refusal before installation, native platform selection, existing release preservation, Unicode/percent command path and installed game startup')
+        print('PASS: signed bootstrap, tampered metadata/archive refusal before installation, entry-stub installer-signature verification before execution, native platform selection, existing release preservation, Unicode/percent command path and installed game startup')
 
 
 if __name__ == '__main__':

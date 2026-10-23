@@ -119,6 +119,19 @@ func run() (result error) {
 		if err := outputRoot.WriteFile(name, []byte(text), 0o600); err != nil {
 			return err
 		}
+		// Sign each rendered installer (L1-003): the public entry stubs verify
+		// <name>.sig — published beside the installer — before executing it.
+		digest := sha256.Sum256([]byte(text))
+		signature, err := rsa.SignPKCS1v15(rand.Reader, private, crypto.SHA256, digest[:])
+		if err != nil {
+			return err
+		}
+		if err := rsa.VerifyPKCS1v15(key, crypto.SHA256, digest[:], signature); err != nil {
+			return fmt.Errorf("installer signature self-verification failed: %s", name)
+		}
+		if err := outputRoot.WriteFile(name+".sig", signature, 0o600); err != nil {
+			return err
+		}
 	}
 	manifest := fmt.Sprintf("darkpawns-release-v1\nversion %s\ncommit %s\n", *tag, *commit)
 	for _, platform := range []string{"linux", "darwin", "windows", "any"} {

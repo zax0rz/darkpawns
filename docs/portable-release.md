@@ -19,14 +19,26 @@ versioned release is available:
 curl -fsSL https://darkpawns.org/install.sh | bash
 ```
 
-Windows PowerShell 5.1 or newer:
+Windows PowerShell 5.1 or newer — the one-liner verifies the installer's
+publisher signature before running it (the key below is the same public key
+the Linux/macOS stub pins; it changes only on a deliberate key rotation):
 
 ```powershell
-$installer = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-' + [Guid]::NewGuid().ToString('N') + '.ps1'); try { Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1' -OutFile $installer; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer; if ($LASTEXITCODE -ne 0) { throw 'Installer did not complete.' } } finally { Remove-Item -LiteralPath $installer -ErrorAction SilentlyContinue }
+$dir = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-' + [Guid]::NewGuid().ToString('N')); try {
+  $installer = Join-Path $dir 'install.ps1'; $signature = "$installer.sig"; New-Item -ItemType Directory -Path $dir | Out-Null
+  Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1' -OutFile $installer
+  Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1.sig' -OutFile $signature
+  $rsa = [System.Security.Cryptography.RSA]::Create(); $rsa.FromXmlString('<RSAKeyValue><Modulus>C85656784CCDA7489A501DC266D234377B847A5CCCF506169ACA9F29FF54A3F4392DF0AD33F93013874329A15867B02763C829DC2AAE054B22E0ADBE3A6F99447793020C1B8D17C10CFF99EDD147AEF4E1F65F5B1FF8315FA42FED6D11AB63DCA20B429994C974E985495310F159C0CC4568E51E59790A327EEC11F5AD96F0C679AFDD65B1F79B493CFEA314A699CC150CD86ADCCE27579988684C2F9F14BD94FBEA8F4CDD7F42FC439010C417781BBB781ADEE2A69FBB87F26B43AC12399BDC342FA5CBA7C832EB30A7BB00C30AEAC1AC219D7FACFD4730D78F0D7A992232567A902177AA035F0DF3EBB44919BC34A31CDDFA33D25012B821C425B5AE0A646E2DFCAABDCCF339BBE1148CE22996E25D1C9C848E2AEB24E8E5A102E4C93973E072483BB50EA5FCB81B6C123B784071391C010C20991D2B7DC8D739F0ECC8B76C2FCEF0E543498AFD14A1D4C1693D873BD3B764E496482CC4582F48C96EBDAC74B65680D32B71A0E6BC74E9D9C912388248E42AB4D8D1C29EB9B92E23B6211405</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>')
+  if (!$rsa.VerifyData([IO.File]::ReadAllBytes($installer), 'SHA256', [IO.File]::ReadAllBytes($signature))) { throw 'Publisher verification failed. Nothing ran.' }
+  & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer
+  if ($LASTEXITCODE -ne 0) { throw 'Installer did not complete.' }
+} finally { Remove-Item -Recurse -LiteralPath $dir -ErrorAction SilentlyContinue }
 ```
 
-The installer checks the signed release manifest and native archive before
-extracting it, installs under your user account, and opens `darkpawns setup`.
+The Linux/macOS stub and the Windows one-liner both verify the installer's
+publisher signature before executing it; the installer then checks the
+signed release manifest and native archive before extracting, installs
+under your user account, and opens `darkpawns setup`.
 Linux/macOS require the standard `curl`, OpenSSL and tar utilities; there is no
 compiler or language runtime to install. Windows uses built-in PowerShell/.NET.
 Nothing needs administrator privileges. This is a shell/PowerShell bootstrap,
