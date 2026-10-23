@@ -125,7 +125,7 @@ func sumBytes(data []byte) []byte {
 func TestVerifyBundlePublisherAcceptsSignedBundle(t *testing.T) {
 	key := generatePublisherKey(t)
 	bundle := writeSignedBundle(t, t.TempDir(), key)
-	if err := verifyBundlePublisherWithKey(bundle, key.public); err != nil {
+	if err := verifyBundlePublisherWithKey(bundle, key.public, nil); err != nil {
 		t.Fatalf("signed bundle rejected: %v", err)
 	}
 }
@@ -136,7 +136,7 @@ func TestVerifyBundlePublisherRefusesUnsignedBundle(t *testing.T) {
 	if err := os.Remove(filepath.Join(bundle, "release-assets", "publisher.json.sig")); err != nil {
 		t.Fatal(err)
 	}
-	if err := verifyBundlePublisherWithKey(bundle, key.public); !errors.Is(err, ErrUnsignedBundle) {
+	if err := verifyBundlePublisherWithKey(bundle, key.public, nil); !errors.Is(err, ErrUnsignedBundle) {
 		t.Fatalf("unsigned bundle = %v, want ErrUnsignedBundle", err)
 	}
 }
@@ -145,7 +145,7 @@ func TestVerifyBundlePublisherRefusesForeignSignature(t *testing.T) {
 	key := generatePublisherKey(t)
 	bundle := writeSignedBundle(t, t.TempDir(), key)
 	other := generatePublisherKey(t)
-	if err := verifyBundlePublisherWithKey(bundle, other.public); err == nil {
+	if err := verifyBundlePublisherWithKey(bundle, other.public, nil); err == nil {
 		t.Fatal("bundle signed by a foreign key accepted")
 	}
 }
@@ -156,7 +156,7 @@ func TestVerifyBundlePublisherRefusesTamperedExecutable(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(bundle, "darkpawns-server"), []byte("#!/bin/sh\nrm -rf /\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := verifyBundlePublisherWithKey(bundle, key.public); err == nil {
+	if err := verifyBundlePublisherWithKey(bundle, key.public, nil); err == nil {
 		t.Fatal("tampered executable accepted")
 	}
 }
@@ -169,7 +169,45 @@ func TestVerifyBundlePublisherRefusesGenuineRecordWithSwappedFiles(t *testing.T)
 	if err := os.WriteFile(filepath.Join(bundle, "release-assets", "web", "index.html"), []byte("<html>swapped</html>\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := verifyBundlePublisherWithKey(bundle, key.public); err == nil {
+	if err := verifyBundlePublisherWithKey(bundle, key.public, nil); err == nil {
 		t.Fatal("genuine record accepted with swapped data files")
+	}
+}
+
+// Defence in depth: the executables an exec path runs must be covered by the
+// publisher record, even when the bundle as a whole verifies.
+func TestVerifyBundlePublisherRequiresListedExecutables(t *testing.T) {
+	key := generatePublisherKey(t)
+	bundle := writeSignedBundle(t, t.TempDir(), key)
+	if err := verifyBundlePublisherWithKey(bundle, key.public, []string{"darkpawns", "darkpawns-server"}); err != nil {
+		t.Fatalf("fully covered bundle rejected: %v", err)
+	}
+	// Strip the server from the record and re-sign: the plain gate passes,
+	// but an exec path requiring the server must refuse.
+	recordPath := filepath.Join(bundle, "release-assets", "publisher.json")
+	var record map[string]any
+	data, err := os.ReadFile(recordPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	delete(record["files"].(map[string]any), "darkpawns-server")
+	data, err = json.MarshalIndent(record, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(recordPath, append(data, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(recordPath+".sig", key.sign(t, append(data, '\n')), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := verifyBundlePublisherWithKey(bundle, key.public, nil); err != nil {
+		t.Fatalf("record without the server should still pass the plain gate: %v", err)
+	}
+	if err := verifyBundlePublisherWithKey(bundle, key.public, []string{"darkpawns-server"}); err == nil {
+		t.Fatal("exec path accepted a bundle whose record does not cover the server executable")
 	}
 }

@@ -50,7 +50,7 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	// the active pointer executes only if its per-file manifest is
 	// publisher-signed and every listed file — the server binary included —
 	// matches.
-	if err := PublisherVerify(bundle); err != nil {
+	if err := PublisherVerifyExecutables(bundle, "darkpawns", "darkpawns-server"); err != nil {
 		return err
 	}
 	lock := flock.New(filepath.Join(instance, ".run.lock"))

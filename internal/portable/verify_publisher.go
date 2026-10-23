@@ -19,6 +19,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/zax0rz/darkpawns/internal/releaseauth"
 )
@@ -37,15 +38,26 @@ type publisherRecord struct {
 // before anything in it is executed: the data manifest's checks, then the
 // publisher record's signature and every hash it lists.
 func VerifyBundlePublisher(bundle string) error {
-	return verifyBundlePublisherWithKey(bundle, releaseauth.TrustedKeyBytes())
+	return verifyBundlePublisherWithKey(bundle, releaseauth.TrustedKeyBytes(), nil)
+}
+
+// VerifyBundlePublisherExecutables additionally requires the named
+// executables to be covered by the publisher record (a ".exe" suffix is
+// tried on Windows): defence in depth, so a record that somehow omitted
+// the binary about to run never passes the gate.
+func VerifyBundlePublisherExecutables(bundle string, names ...string) error {
+	return verifyBundlePublisherWithKey(bundle, releaseauth.TrustedKeyBytes(), names)
 }
 
 // PublisherVerify is the bundle gate every exec path calls; it is a
 // variable so tests can substitute a disposable publisher key (the private
 // release key never exists outside the release environment).
-var PublisherVerify = VerifyBundlePublisher
+var (
+	PublisherVerify            = VerifyBundlePublisher
+	PublisherVerifyExecutables = VerifyBundlePublisherExecutables
+)
 
-func verifyBundlePublisherWithKey(bundle string, key []byte) (result error) {
+func verifyBundlePublisherWithKey(bundle string, key []byte, requiredExecutables []string) (result error) {
 	m, err := ReadManifest(bundle)
 	if err != nil {
 		return err
@@ -71,6 +83,16 @@ func verifyBundlePublisherWithKey(bundle string, key []byte) (result error) {
 	}
 	if record.Format != 1 || record.Version != m.Version || len(record.Files) == 0 {
 		return errors.New("unsupported or incomplete publisher record")
+	}
+	for _, name := range requiredExecutables {
+		if _, ok := record.Files[name]; !ok {
+			if runtime.GOOS != "windows" {
+				return fmt.Errorf("publisher record does not cover %s", name)
+			}
+			if _, ok := record.Files[name+".exe"]; !ok {
+				return fmt.Errorf("publisher record does not cover %s", name)
+			}
+		}
 	}
 	for name, want := range record.Files {
 		// Entries are bundle-relative: the executables at the root, the data

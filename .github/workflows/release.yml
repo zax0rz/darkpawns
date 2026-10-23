@@ -59,6 +59,15 @@ jobs:
         run: go vet ./...
       - name: Tests with race detector
         run: go test -race ./...
+      - name: Assert no snapshot publisher override reaches published builds
+        run: |
+          # A published launcher must trust only the pinned publisher key:
+          # a leaked/linked snapshot key would silently undo strict bundle
+          # authentication for every binary built by this job.
+          if [ -n "${DP_SNAPSHOT_PUBLISHER_KEY:-}" ]; then
+            echo "DP_SNAPSHOT_PUBLISHER_KEY is set in the release environment; refusing to publish." >&2
+            exit 1
+          fi
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12.2

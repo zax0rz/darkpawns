@@ -16,9 +16,10 @@ builds:
     ldflags:
       - -s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}
       # Snapshot/CI builds link a disposable publisher key for the strict
-      # bundle-signature gate; the env is unset in real publishing, so the
-      # pinned key applies there.
-      - -X github.com/zax0rz/darkpawns/internal/releaseauth.linkedKeyOverride={{ .Env.DP_SNAPSHOT_PUBLISHER_KEY }}
+      # bundle-signature gate; `index` yields the empty string when the env
+      # is unset (real publishing), so the pinned key applies there. A bare
+      # `.Env` lookup would make unset-env builds fail.
+      - -X github.com/zax0rz/darkpawns/internal/releaseauth.linkedKeyOverride={{ index .Env "DP_SNAPSHOT_PUBLISHER_KEY" }}
   - id: server
     main: ./cmd/server
     binary: darkpawns-server
