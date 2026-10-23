@@ -138,3 +138,7 @@ docs/fidelity/strings/coverage-summary.txt
 /.goreleaser-native.yaml
 /portable-extracted/
 /dp-release
+
+# Private outreach material lives in the private darkpawns-ops repo, never here.
+docs/outreach/CONTACTS.md
+docs/outreach/private/
