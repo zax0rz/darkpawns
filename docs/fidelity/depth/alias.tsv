@@ -12,3 +12,4 @@ do_alias	alias	alias.complex-positional	D3	command	oracle-green-multiseed	alias-
 do_alias	alias	alias.complex-glob	D3	command	oracle-green-multiseed	alias-depth	interpreter.c:1049-1100	$* substitutes the complete original text after the trigger.
 do_alias	alias	alias.doubled-dollar	D2	state	unit-green	TestCmdAliasDepthManagerBranches	interpreter.c:1011-1014;interpreter.c:1203-1225	Alias creation collapses doubled dollar signs before classifying and persisting the replacement.
 do_alias	alias	alias.length-truncate	D2	command	unit-green	TestCmdAliasDepthManagerBranches	interpreter.c:1015-1021	Replacements longer than 120 bytes emit the warning and store the C-truncated value.
+do_alias	alias	alias.cap-refusal	D2	state	excluded	alias-cap	src/alias.c:40-109	Approved divergence 2026-10-22 (Zach, option B): creation refused past 500 aliases / 64 KiB with a Go-only refusal line; C is unbounded. Loading and all other alias behaviour stay byte-identical.

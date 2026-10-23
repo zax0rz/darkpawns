@@ -125,6 +125,30 @@ func WriteAliases(playerName string, aliases []Alias) error {
 	return w.Flush()
 }
 
+// Caps on a player's alias table. C imposes no limit (src/alias.c writes
+// every alias; there is no MAX_ALIAS anywhere in the C source), so an
+// unbounded table is a slow resource-exhaustion surface for any account.
+// Approved divergence, 2026-10-22: creation is refused past these caps;
+// loading an existing file and every other alias behaviour stay C's.
+const (
+	MaxAliasCount     = 500
+	MaxAliasFileBytes = 64 << 10
+)
+
+// AliasFileBytes returns the exact size WriteAliases emits for aliases, so
+// the creation-time cap measures what actually lands on disk.
+func AliasFileBytes(aliases []Alias) int {
+	var b strings.Builder
+	for _, a := range aliases {
+		trimmed := strings.TrimLeft(a.Replacement, " ")
+		fmt.Fprintf(&b, "%d\n%s\n%d\n%s\n%d\n",
+			len(a.Alias), a.Alias,
+			len(trimmed), trimmed,
+			a.Type)
+	}
+	return b.Len()
+}
+
 // ReadAliases reads a player's alias list from disk.
 // Returns an empty slice (not an error) if no alias file exists.
 // Source: alias.c read_aliases() lines 73–109
