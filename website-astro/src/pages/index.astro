@@ -37,7 +37,7 @@ const [lead, ...morePosts] = postCards;
 
 const facts = [
   { label: 'rooms', figure: count(rooms), detail: 'Every room and connection on the map' },
-  { label: 'creatures', figure: count(mobs), detail: 'City guards, guildmasters, and dungeon bosses' },
+  { label: 'mobs', figure: count(mobs), detail: 'City guards, guildmasters, and dungeon bosses' },
   { label: 'objects', figure: count(objects), detail: '100% rent-free gear saved in your temple' },
   { label: 'help topics', figure: count(helpEntries.length), detail: 'In-game reference files from the server' },
 ];
@@ -45,7 +45,7 @@ const facts = [
 const fieldGuides = [
   { href: '/world/', title: 'The world', meta: `${handbooks.length} handbooks`, text: 'Six starting classes, six remort classes, seven races, vampirism, and the rules of life and death.' },
   { href: '/map/', title: 'Map', meta: `${count(rooms)} rooms`, text: 'Every room and every connection, drawn from the world files.' },
-  { href: '/database/', title: 'Database', meta: `${count(mobs + objects)} records`, text: 'Every creature and object loaded by the current server, indexed by VNUM.' },
+  { href: '/database/', title: 'Database', meta: `${count(mobs + objects)} records`, text: 'Every mob and object loaded by the current server, indexed by VNUM.' },
   { href: '/help/', title: 'Help files', meta: `${count(helpEntries.length)} topics`, text: 'The commands, spells, and reference files used in the game, preserved word for word.' },
 ];
 
@@ -261,12 +261,14 @@ const eras = [
             </li>
           ))}
         </ol>
-        <div class="record-links">
-          <a href="/archive/">Browse all {count(archiveRecords.length)} archive records <span aria-hidden="true">→</span></a>
-          <a href="/about/">Read the full history <span aria-hidden="true">→</span></a>
-          <a href="/about/dpreturns/">DPReturns history <span aria-hidden="true">→</span></a>
-          <a href="/credits/">Original staff &amp; credits <span aria-hidden="true">→</span></a>
-        </div>
+        <nav class="record-links" aria-label="Archive and history">
+          <a href="/archive/"><span>Browse the archive<small>{count(archiveRecords.length)} sourced records</small></span><span aria-hidden="true">→</span></a>
+          <a href="/about/"><span>Read the full history</span><span aria-hidden="true">→</span></a>
+        </nav>
+        <nav class="record-references" aria-label="Related history and credits">
+          <a href="/about/dpreturns/">DPReturns history</a>
+          <a href="/credits/">Original staff &amp; credits</a>
+        </nav>
       </article>
 
       <aside class="restoration-note" aria-labelledby="oracle-heading">
@@ -464,7 +466,12 @@ const eras = [
   }
   .era-ledger div { color: var(--ink-muted); }
   .era-ledger strong { font-family: var(--font-display); font-weight: 400; font-size: 1rem; color: var(--ink); }
-  .record-links { display: flex; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); font-family: var(--font-display); }
+  .record-links { font-family: var(--font-display); font-size: 1.25rem; }
+  .record-links > a { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
+  .record-links small { display: block; margin-top: var(--space-xs); font-family: var(--font-body); font-size: .9rem; color: var(--ink-muted); }
+  .record-references { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xs); margin-top: var(--space-md); }
+  .record-references a { padding-block: var(--space-xs); color: var(--ink-muted); font-size: .95rem; text-decoration: underline; text-underline-offset: .2em; }
+  .record-references a:hover { color: var(--accent); }
 
   .restoration-note {
     align-self: start;
