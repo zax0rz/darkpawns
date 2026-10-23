@@ -40,11 +40,9 @@ func Doctor(ctx context.Context, bundle, instance string) []Check {
 	}
 	add("Active release", resolveErr, bundle, "Inspect .updates/active.json; retain the original launcher at "+originalBundle+" for recovery.")
 	add("Update transaction", pendingUpdate(instance), "No interrupted update", "Use "+OperatorCommand(instance, "update", "recover")+" to recover an interrupted update.")
-	manifest, err := ReadManifest(bundle)
-	if err == nil {
-		err = Verify(bundle, manifest)
-	}
-	add("Release assets", err, "Checksums match", "Extract a complete fresh bundle; keep your instance folder.")
+	// Strict bundle authentication (L1-006/007/021): the publisher signature
+	// and every checksum the signed manifest lists, executables included.
+	add("Release signature", PublisherVerify(bundle), "Publisher-signed, checksums match", "Restore this release from its signed archive; strict mode refuses to run an unsigned or modified bundle.")
 	suffix := ""
 	if runtime.GOOS == "windows" {
 		suffix = ".exe"

@@ -70,6 +70,13 @@ jobs:
           config = config.replace('goos: [linux, darwin, windows]', 'goos: [' + goos + ']')
           config = config.replace('goarch: [amd64, arm64]', 'goarch: [' + goarch + ']')
           pathlib.Path('.goreleaser-native.yaml').write_text(config)
+      - name: Generate the disposable snapshot publisher key
+        run: |
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out "$RUNNER_TEMP/snapshot-private.pem" 2>/dev/null
+          openssl pkey -in "$RUNNER_TEMP/snapshot-private.pem" -pubout -out "$RUNNER_TEMP/snapshot-public.pem"
+          echo "DP_SNAPSHOT_PUBLISHER_KEY=$(base64 -w0 < "$RUNNER_TEMP/snapshot-public.pem")" >> "$GITHUB_ENV"
+          echo "SNAPSHOT_PRIVATE_PEM=$RUNNER_TEMP/snapshot-private.pem" >> "$GITHUB_ENV"
+          echo "SNAPSHOT_PUBLIC_PEM=$RUNNER_TEMP/snapshot-public.pem" >> "$GITHUB_ENV"
       - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
@@ -78,7 +85,7 @@ jobs:
       - name: Extract the generated native archive and exercise the instance journey
         shell: python
         run: |
-          import pathlib, subprocess, tarfile, zipfile
+          import os, pathlib, subprocess, tarfile, zipfile
           archives = list(pathlib.Path('dist').glob('*.tar.gz')) + list(pathlib.Path('dist').glob('*.zip'))
           assert len(archives) == 1, archives
           archive = archives[0]
@@ -92,6 +99,14 @@ jobs:
                   source.extractall(destination, filter='data')
           bundles = list(destination.iterdir())
           assert len(bundles) == 1, bundles
+          # Snapshot bundles are assembled without the release signing flow:
+          # sign each one's per-file manifest with the disposable key the
+          # launcher was linked against, so the strict bundle gate passes and
+          # the smokes exercise it.
+          for bundle in bundles:
+              subprocess.run(['go', 'run', './cmd/dp-release', '--sign-bundle', str(bundle),
+                              '--key', os.path.join(os.environ['RUNNER_TEMP'], 'snapshot-private.pem'),
+                              '--public', os.path.join(os.environ['RUNNER_TEMP'], 'snapshot-public.pem')], check=True)
           subprocess.run(['python', 'scripts/portable_smoke.py', '--bundle', str(bundles[0])], check=True)
           subprocess.run(['python', 'scripts/portable_local_telnet_smoke.py', '--bundle', str(bundles[0])], check=True)
       - name: Ensure the Linux user service manager is available

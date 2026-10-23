@@ -41,11 +41,32 @@ def main(bundle):
         else:
             with tarfile.open(archive, 'w:gz') as output:
                 output.add(payload, arcname=name)
+        def fixture_archive(path):
+            # dp-release post-processes every archive in the directory, so the
+            # unselected-platform fixtures must be valid bundles, not stubs.
+            name = path.stem
+            windows = path.suffix == '.zip'
+            with tempfile.TemporaryDirectory() as temporary:
+                payload = pathlib.Path(temporary) / name
+                (payload / 'release-assets').mkdir(parents=True)
+                (payload / 'release-assets' / 'manifest.json').write_text(json.dumps({'format': 1, 'update_format': 1, 'data_format': 1, 'version': '0.1.0', 'commit': manifest['commit'], 'files': {'web/index.html': '00'}}))
+                for tool in ('darkpawns', 'darkpawns-server'):
+                    executable = payload / (tool + ('.exe' if windows else ''))
+                    executable.write_bytes(b'MZ' if windows else b'#!/bin/sh\nexit 0\n')
+                    if not windows:
+                        executable.chmod(0o755)
+                if windows:
+                    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as output:
+                        for entry in payload.rglob('*'):
+                            output.write(entry, entry.relative_to(pathlib.Path(temporary)))
+                else:
+                    with tarfile.open(path, 'w:gz') as output:
+                        output.add(payload, arcname=name)
         for target in ('linux', 'darwin', 'windows'):
             for architecture in ('amd64', 'arm64'):
                 path = signed / (f'darkpawns_0.1.0_{target}_{architecture}' + ('.zip' if target == 'windows' else '.tar.gz'))
                 if path != archive:
-                    path.write_bytes(b'disposable unselected platform fixture')
+                    fixture_archive(path)
         foreign = subprocess.run(['go', 'run', './cmd/dp-release', '--dir', str(signed), '--tag', 'v0.1.0', '--commit', manifest['commit'], '--key', str(private)], text=True, capture_output=True)
         assert foreign.returncode != 0 and 'does not match the pinned public key' in foreign.stderr
         subprocess.run(['go', 'run', './cmd/dp-release', '--dir', str(signed), '--tag', 'v0.1.0', '--commit', manifest['commit'], '--key', str(private), '--public', str(public)], check=True)

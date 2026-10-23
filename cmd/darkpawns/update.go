@@ -153,6 +153,12 @@ func forwardActive(root *cobra.Command, args []string) (bool, error) {
 	if active == base {
 		return false, nil
 	}
+	// Strict publisher authentication (L1-006/007/021): an attacker-written
+	// active pointer must not select the launcher an ordinary command
+	// forwards into.
+	if err := portable.PublisherVerify(active); err != nil {
+		return false, fmt.Errorf("active release is not publisher-authenticated: %w", err)
+	}
 	executable = filepath.Join(active, "darkpawns")
 	if runtime.GOOS == "windows" {
 		executable += ".exe"
