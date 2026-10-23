@@ -36,7 +36,7 @@ const postCards = posts.map((post) => ({
 const [lead, ...morePosts] = postCards;
 
 const facts = [
-  { label: 'rooms', figure: count(rooms), detail: '95 zones across Aralius, Xixieqi, and Arakon' },
+  { label: 'rooms', figure: count(rooms), detail: 'Every room and connection on the map' },
   { label: 'creatures', figure: count(mobs), detail: 'City guards, guildmasters, and dungeon bosses' },
   { label: 'objects', figure: count(objects), detail: '100% rent-free gear saved in your temple' },
   { label: 'help topics', figure: count(helpEntries.length), detail: 'In-game reference files from the server' },
@@ -44,7 +44,7 @@ const facts = [
 
 const fieldGuides = [
   { href: '/world/', title: 'The world', meta: `${handbooks.length} handbooks`, text: 'Six starting classes, six remort classes, seven races, vampirism, and the rules of life and death.' },
-  { href: '/map/', title: 'Map', meta: `${count(rooms)} rooms`, text: 'Every room and every connection across three continents, drawn from the world files.' },
+  { href: '/map/', title: 'Map', meta: `${count(rooms)} rooms`, text: 'Every room and every connection, drawn from the world files.' },
   { href: '/database/', title: 'Database', meta: `${count(mobs + objects)} records`, text: 'Every creature and object loaded by the current server, indexed by VNUM.' },
   { href: '/help/', title: 'Help files', meta: `${count(helpEntries.length)} topics`, text: 'The commands, spells, and reference files used in the game, preserved word for word.' },
 ];
@@ -73,27 +73,26 @@ const eras = [
         <p class="play-note">Play in your browser.</p>
       </div>
 
-      <section class="host-choice" aria-labelledby="host-heading">
-        <div class="host-introduction">
-          <h2 id="host-heading">Run your own world</h2>
-          <p>Install the game and original world files. The setup wizard takes it from there.</p>
-        </div>
-        <div class="host-command">
-          <CopyCommand command={unixInstall} label="macOS / Linux" id="home-install" />
-          <p class="download-link"><a href="/download/">Windows, all downloads &amp; hosting instructions <span aria-hidden="true">→</span></a></p>
-        </div>
-      </section>
-      <details class="client-connection">
-        <summary>Playing with a MUD client?</summary>
-        <div class="client-connection-body">
+      <div class="entry-options">
+        <section class="client-choice" aria-labelledby="client-heading">
+          <h2 id="client-heading">Play with a MUD client</h2>
+          <p>Connect to the shared game with your own client.</p>
           <dl class="connection-settings">
-            <div><dt>Host</dt><dd>darkpawns.org</dd></div>
+            <div class="connection-host"><dt>Host</dt><dd>darkpawns.org</dd></div>
             <div><dt>TLS port</dt><dd>7778</dd></div>
             <div><dt>Classic telnet</dt><dd>7777</dd></div>
           </dl>
-          <a href="/connect/">MUD client connection guide <span aria-hidden="true">→</span></a>
-        </div>
-      </details>
+          <p class="client-guide"><a href="/connect/">Client setup &amp; connection guide <span aria-hidden="true">→</span></a></p>
+        </section>
+        <section class="host-choice" aria-labelledby="host-heading">
+          <h2 id="host-heading">Run your own world</h2>
+          <p>Install the game and original world files. The setup wizard takes it from there.</p>
+          <div class="host-command">
+            <CopyCommand command={unixInstall} label="macOS / Linux" id="home-install" />
+            <p class="download-link"><a href="/download/">Windows, all downloads &amp; hosting instructions <span aria-hidden="true">→</span></a></p>
+          </div>
+        </section>
+      </div>
     </section>
 
     <section class="world-introduction container" aria-labelledby="world-heading">
@@ -126,6 +125,56 @@ const eras = [
         ))}
       </dl>
     </section>
+
+    {lead && (
+      <section class="dispatch" aria-labelledby="dispatch-heading">
+        <div class="container">
+          <header class="dispatch-head">
+            <div>
+              <h2 id="dispatch-heading">Latest from the restoration</h2>
+              <p class="dispatch-sub">Field notes from the Go port, the C oracle, and the Wayback Machine.</p>
+            </div>
+            <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
+          </header>
+          <div class="dispatch-grid">
+            <article class="dispatch-lead">
+              {lead.id === 'welcome-back-serapis' && (
+                <a class="dispatch-plate" href={lead.href} tabindex="-1" aria-hidden="true">
+                  <img
+                    src="/images/blog/welcome-back-serapis.webp"
+                    width="1500"
+                    height="643"
+                    loading="lazy"
+                    alt=""
+                  />
+                </a>
+              )}
+              <time datetime={lead.isoDate}>
+                {lead.displayDate}
+              </time>
+              <h3>
+                <a href={lead.href}>
+                  {lead.title}
+                </a>
+              </h3>
+              <p>{lead.summary}</p>
+              <a class="dispatch-read" href={lead.href}>Read the post <span aria-hidden="true">→</span></a>
+            </article>
+            {morePosts.length > 0 && (
+              <ol class="dispatch-more">
+                {morePosts.map(({ href, isoDate, displayDate, title, summary }) => (
+                  <li>
+                    <time datetime={isoDate}>{displayDate}</time>
+                    <h3><a href={href}>{title}</a></h3>
+                    <p>{summary}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
 
     <section class="voices" aria-labelledby="voices-heading">
       <div class="container">
@@ -200,7 +249,7 @@ const eras = [
 
     <section class="record container" aria-labelledby="archive-heading">
       <article class="archive-feature">
-        <h2 id="archive-heading">Thirty-two years in the record</h2>
+        <h2 id="archive-heading">Over thirty years in the record</h2>
         <p>Copies of dp-players.com (which I ran as Aidan in 2004) and Frontline&rsquo;s darkpawns.com survived in the Wayback Machine, alongside eighteen threads from rec.games.mud. The archive preserves {count(archiveRecords.length)} sourced records and documents where every page came from.</p>
         <ol class="era-ledger" aria-label="Key dates in Dark Pawns history">
           {eras.map(([year, title, text]) => (
@@ -237,55 +286,6 @@ const eras = [
       </aside>
     </section>
 
-    {lead && (
-      <section class="dispatch" aria-labelledby="dispatch-heading">
-        <div class="container">
-          <header class="dispatch-head">
-            <div>
-              <h2 id="dispatch-heading">Latest from the restoration</h2>
-              <p class="dispatch-sub">Field notes from the Go port, the C oracle, and the Wayback Machine.</p>
-            </div>
-            <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
-          </header>
-          <div class="dispatch-grid">
-            <article class="dispatch-lead">
-              {lead.id === 'welcome-back-serapis' && (
-                <a class="dispatch-plate" href={lead.href} tabindex="-1" aria-hidden="true">
-                  <img
-                    src="/images/blog/welcome-back-serapis.webp"
-                    width="1500"
-                    height="643"
-                    loading="lazy"
-                    alt=""
-                  />
-                </a>
-              )}
-              <time datetime={lead.isoDate}>
-                {lead.displayDate}
-              </time>
-              <h3>
-                <a href={lead.href}>
-                  {lead.title}
-                </a>
-              </h3>
-              <p>{lead.summary}</p>
-              <a class="dispatch-read" href={lead.href}>Read the post <span aria-hidden="true">→</span></a>
-            </article>
-            {morePosts.length > 0 && (
-              <ol class="dispatch-more">
-                {morePosts.map(({ href, isoDate, displayDate, title, summary }) => (
-                  <li>
-                    <time datetime={isoDate}>{displayDate}</time>
-                    <h3><a href={href}>{title}</a></h3>
-                    <p>{summary}</p>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        </div>
-      </section>
-    )}
 
   </div>
 </Base>
@@ -303,19 +303,14 @@ const eras = [
   .btn-primary { display: inline-block; border: 1px solid var(--accent); padding: .7rem 1.4rem; font-family: var(--font-display); font-size: 1.1rem; background: var(--accent); color: var(--paper); }
   .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
   .play-note { color: var(--ink-muted); font-size: .9rem; margin: var(--space-xs) auto 0; }
-  .host-choice { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); column-gap: var(--space-lg); align-items: center; border-block: 1px solid var(--rule); padding-block: var(--space-md); margin-top: 1.5rem; }
-  .host-choice h2 { font-size: 1.25rem; margin-bottom: var(--space-xs); }
-  .host-introduction p { margin: 0; max-width: 40ch; font-size: .95rem; color: var(--ink-muted); }
-  .host-command { min-width: 0; }
+  .entry-options { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--space-xl); align-items: start; border-block: 1px solid var(--rule); padding-block: var(--space-lg); margin-top: 1.5rem; }
+  .entry-options h2 { font-size: 1.25rem; margin-bottom: var(--space-xs); }
+  .entry-options section > p { margin: 0; font-size: .95rem; color: var(--ink-muted); }
+  .host-command { min-width: 0; margin-top: var(--space-md); }
   .download-link { font-size: .95rem; margin: var(--space-sm) 0 0; }
-  .client-connection { margin-top: var(--space-sm); color: var(--ink-muted); font-size: .9rem; }
-  .client-connection summary { width: fit-content; margin-inline: auto; padding-block: var(--space-sm); min-height: 44px; cursor: pointer; }
-  .client-connection summary:hover { color: var(--accent); }
-  .client-connection summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  @media (forced-colors: active) { .client-connection summary:focus-visible { outline-color: Highlight; } }
-  .client-connection-body { max-width: 32rem; margin: var(--space-sm) auto 0; padding: var(--space-md); border: 1px solid var(--rule); }
-  .connection-settings { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: var(--space-md); margin: 0 0 var(--space-md); }
-  .connection-settings dt { font-size: .9rem; }
+  .connection-settings { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm) var(--space-lg); margin: var(--space-md) 0; }
+  .connection-host { grid-column: 1 / -1; }
+  .connection-settings dt { font-size: .9rem; color: var(--ink-muted); }
   .connection-settings dd { margin: var(--space-xs) 0 0; font-family: var(--font-mono); font-size: .9rem; color: var(--ink); }
   .world-introduction { padding-block: var(--space-lg) var(--space-xl); }
   .world-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); }
@@ -506,12 +501,10 @@ const eras = [
     .chapter-vignette { width: 14rem; margin-bottom: var(--space-sm); }
     .lede { font-size: 1rem; margin-bottom: var(--space-md); }
     .lede br { display: none; }
-    .host-choice { grid-template-columns: 1fr; gap: var(--space-md); margin-top: var(--space-md); }
-    .host-introduction p { max-width: none; }
+    .entry-options { grid-template-columns: 1fr; gap: var(--space-lg); margin-top: var(--space-md); padding-block: var(--space-md); }
+    .host-choice { border-top: 1px solid var(--rule); padding-top: var(--space-lg); }
     .cover.container { padding-inline: var(--space-md); }
-    .connection-settings { grid-template-columns: 1fr; gap: var(--space-sm); }
-    .connection-settings > div { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); align-items: baseline; }
-    .connection-settings dd { margin: 0; }
+
     .letter { padding: var(--space-md); }
     .guide-list a { grid-template-columns: 1fr 1rem; gap: var(--space-xs) var(--space-sm); }
     .guide-list h3, .guide-list p, .guide-meta { grid-column: 1; }
