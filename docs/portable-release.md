@@ -41,6 +41,12 @@ signed release manifest and native archive before extracting, installs
 under your user account, and opens `darkpawns setup`.
 Linux/macOS require the standard `curl`, OpenSSL and tar utilities; there is no
 compiler or language runtime to install. Windows uses built-in PowerShell/.NET.
+
+**Release sequencing:** publish the versioned release — which uploads
+`install.sh.sig` and `install.ps1.sig` — *before* deploying a site whose
+`/install.sh` stub verifies those signatures. `make deploy-site` refuses the
+reverse order, and the publisher key is pinned in three places that rotate
+together (the signing key, the website stub, the Windows one-liner above).
 Nothing needs administrator privileges. This is a shell/PowerShell bootstrap,
 not an MSI, macOS application or OS code-signing certificate. The entry script
 is delivered over HTTPS from darkpawns.org and downloads the release installer
