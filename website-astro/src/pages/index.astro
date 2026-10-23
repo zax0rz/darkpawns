@@ -83,28 +83,38 @@ const eras = [
           <p class="download-link"><a href="/download/">Windows, all downloads &amp; hosting instructions <span aria-hidden="true">→</span></a></p>
         </div>
       </section>
-      <aside class="connection-bridge" aria-label="MUD client connection">
-        <a href="/connect/">Play with a MUD client <span aria-hidden="true">→</span></a>
-        <p class="connection-address"><strong>darkpawns.org</strong><span><strong>7778</strong> TLS</span><span><strong>7777</strong> classic telnet</span></p>
-      </aside>
-
-      <div class="world-introduction">
-          <dl class="world-rules" aria-label="Distinctive rules of Dark Pawns">
-            <div>
-              <dt>30 levels + remort</dt>
-              <dd>Six base classes unlock Assassin, Avatar, Magus, Paladin, Ranger, and Mystic.</dd>
-            </div>
-            <div>
-              <dt>Three-character parties</dt>
-              <dd>A solo level 15 character will not survive a level 15 fight; run up to three characters at once.</dd>
-            </div>
-            <div>
-              <dt>Wyldlands &amp; blood</dt>
-              <dd>100% rent-free temples, vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
-            </div>
+      <details class="client-connection">
+        <summary>Playing with a MUD client?</summary>
+        <div class="client-connection-body">
+          <dl class="connection-settings">
+            <div><dt>Host</dt><dd>darkpawns.org</dd></div>
+            <div><dt>TLS port</dt><dd>7778</dd></div>
+            <div><dt>Classic telnet</dt><dd>7777</dd></div>
           </dl>
-        <p><a href="/world/">Explore the world <span aria-hidden="true">→</span></a> · <a href="/about/">Read the history <span aria-hidden="true">→</span></a></p>
-      </div>
+          <a href="/connect/">MUD client connection guide <span aria-hidden="true">→</span></a>
+        </div>
+      </details>
+    </section>
+
+    <section class="world-introduction container" aria-labelledby="world-heading">
+      <header class="world-heading">
+        <h2 id="world-heading">Inside Dark Pawns</h2>
+        <a href="/world/">Explore the world <span aria-hidden="true">→</span></a>
+      </header>
+      <dl class="world-rules" aria-label="Distinctive rules of Dark Pawns">
+        <div>
+          <dt>30 levels + remort</dt>
+          <dd>Six base classes unlock Assassin, Avatar, Magus, Paladin, Ranger, and Mystic.</dd>
+        </div>
+        <div>
+          <dt>Three-character parties</dt>
+          <dd>A solo level 15 character will not survive a level 15 fight; run up to three characters at once.</dd>
+        </div>
+        <div>
+          <dt>Wyldlands &amp; blood</dt>
+          <dd>100% rent-free temples, vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
+        </div>
+      </dl>
 
       <dl class="facts" aria-label="What the world contains">
         {facts.map((fact) => (
@@ -116,56 +126,6 @@ const eras = [
         ))}
       </dl>
     </section>
-
-    {lead && (
-      <section class="dispatch" aria-labelledby="dispatch-heading">
-        <div class="container">
-          <header class="dispatch-head">
-            <div>
-              <h2 id="dispatch-heading">Latest from the restoration</h2>
-              <p class="dispatch-sub">Field notes from the Go port, the C oracle, and the Wayback Machine.</p>
-            </div>
-            <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
-          </header>
-          <div class="dispatch-grid">
-            <article class="dispatch-lead">
-              {lead.id === 'welcome-back-serapis' && (
-                <a class="dispatch-plate" href={lead.href} tabindex="-1" aria-hidden="true">
-                  <img
-                    src="/images/blog/welcome-back-serapis.webp"
-                    width="1500"
-                    height="643"
-                    loading="lazy"
-                    alt=""
-                  />
-                </a>
-              )}
-              <time datetime={lead.isoDate}>
-                {lead.displayDate}
-              </time>
-              <h3>
-                <a href={lead.href}>
-                  {lead.title}
-                </a>
-              </h3>
-              <p>{lead.summary}</p>
-              <a class="dispatch-read" href={lead.href}>Read the post <span aria-hidden="true">→</span></a>
-            </article>
-            {morePosts.length > 0 && (
-              <ol class="dispatch-more">
-                {morePosts.map(({ href, isoDate, displayDate, title, summary }) => (
-                  <li>
-                    <time datetime={isoDate}>{displayDate}</time>
-                    <h3><a href={href}>{title}</a></h3>
-                    <p>{summary}</p>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        </div>
-      </section>
-    )}
 
     <section class="voices" aria-labelledby="voices-heading">
       <div class="container">
@@ -276,6 +236,57 @@ const eras = [
         <p class="restoration-cta"><a href="/about/project/">See the current work and how to help <span aria-hidden="true">→</span></a></p>
       </aside>
     </section>
+
+    {lead && (
+      <section class="dispatch" aria-labelledby="dispatch-heading">
+        <div class="container">
+          <header class="dispatch-head">
+            <div>
+              <h2 id="dispatch-heading">Latest from the restoration</h2>
+              <p class="dispatch-sub">Field notes from the Go port, the C oracle, and the Wayback Machine.</p>
+            </div>
+            <a href="/blog/">All posts <span aria-hidden="true">→</span></a>
+          </header>
+          <div class="dispatch-grid">
+            <article class="dispatch-lead">
+              {lead.id === 'welcome-back-serapis' && (
+                <a class="dispatch-plate" href={lead.href} tabindex="-1" aria-hidden="true">
+                  <img
+                    src="/images/blog/welcome-back-serapis.webp"
+                    width="1500"
+                    height="643"
+                    loading="lazy"
+                    alt=""
+                  />
+                </a>
+              )}
+              <time datetime={lead.isoDate}>
+                {lead.displayDate}
+              </time>
+              <h3>
+                <a href={lead.href}>
+                  {lead.title}
+                </a>
+              </h3>
+              <p>{lead.summary}</p>
+              <a class="dispatch-read" href={lead.href}>Read the post <span aria-hidden="true">→</span></a>
+            </article>
+            {morePosts.length > 0 && (
+              <ol class="dispatch-more">
+                {morePosts.map(({ href, isoDate, displayDate, title, summary }) => (
+                  <li>
+                    <time datetime={isoDate}>{displayDate}</time>
+                    <h3><a href={href}>{title}</a></h3>
+                    <p>{summary}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
+
   </div>
 </Base>
 
@@ -297,12 +308,19 @@ const eras = [
   .host-introduction p { margin: 0; max-width: 40ch; font-size: .95rem; color: var(--ink-muted); }
   .host-command { min-width: 0; }
   .download-link { font-size: .95rem; margin: var(--space-sm) 0 0; }
-  .connection-bridge { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-sm) var(--space-lg); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
-  .connection-bridge > a { font-family: var(--font-display); font-size: 1rem; }
-  .connection-address { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); margin: 0; color: var(--ink-muted); font-size: .9rem; }
-  .connection-address strong { font-family: var(--font-mono); font-size: .85rem; font-weight: 500; color: var(--ink); }
-  .connection-address span { white-space: nowrap; }
-  .world-introduction { margin-top: var(--space-lg); }
+  .client-connection { margin-top: var(--space-sm); color: var(--ink-muted); font-size: .9rem; }
+  .client-connection summary { width: fit-content; margin-inline: auto; padding-block: var(--space-sm); min-height: 44px; cursor: pointer; }
+  .client-connection summary:hover { color: var(--accent); }
+  .client-connection summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  @media (forced-colors: active) { .client-connection summary:focus-visible { outline-color: Highlight; } }
+  .client-connection-body { max-width: 32rem; margin: var(--space-sm) auto 0; padding: var(--space-md); border: 1px solid var(--rule); }
+  .connection-settings { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: var(--space-md); margin: 0 0 var(--space-md); }
+  .connection-settings dt { font-size: .9rem; }
+  .connection-settings dd { margin: var(--space-xs) 0 0; font-family: var(--font-mono); font-size: .9rem; color: var(--ink); }
+  .world-introduction { padding-block: var(--space-lg) var(--space-xl); }
+  .world-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); }
+  .world-heading h2 { margin: 0; }
+  .world-heading > a { font-family: var(--font-display); padding-block: var(--space-sm); }
   .world-rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); margin: var(--space-lg) 0; }
   .world-rules dt { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: .2rem; }
   .world-rules dd { margin: 0; font-size: .95rem; color: var(--ink-muted); }
@@ -491,7 +509,9 @@ const eras = [
     .host-choice { grid-template-columns: 1fr; gap: var(--space-md); margin-top: var(--space-md); }
     .host-introduction p { max-width: none; }
     .cover.container { padding-inline: var(--space-md); }
-    .world-introduction { margin-top: var(--space-lg); }
+    .connection-settings { grid-template-columns: 1fr; gap: var(--space-sm); }
+    .connection-settings > div { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); align-items: baseline; }
+    .connection-settings dd { margin: 0; }
     .letter { padding: var(--space-md); }
     .guide-list a { grid-template-columns: 1fr 1rem; gap: var(--space-xs) var(--space-sm); }
     .guide-list h3, .guide-list p, .guide-meta { grid-column: 1; }
