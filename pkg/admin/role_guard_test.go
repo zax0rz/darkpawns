@@ -8,6 +8,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
 // L2-030: a demotion must take effect on the next authenticated request —
@@ -68,5 +69,43 @@ func TestRoleGuardDemotionTakesEffectImmediately(t *testing.T) {
 	}
 	if rec := request(); rec.Code != http.StatusUnauthorized || called {
 		t.Fatalf("deleted-account request = %d (called=%v), want 401", rec.Code, called)
+	}
+}
+
+// A soft-deleted character's record lingers until purge with its old level;
+// the guard must treat it as gone (the deleted-marker path, not row removal).
+func TestRoleGuardDeletedCharacterLosesPanel(t *testing.T) {
+	setJWTSecret(t)
+	database, err := db.New("sqlite://" + filepath.Join(t.TempDir(), "guard-deleted.db"))
+	if err != nil {
+		t.Fatalf("db.New: %v", err)
+	}
+	defer func() { _ = database.Close() }()
+
+	p := game.NewCharacter(0, "Tombstone", game.ClassThief, game.RaceKender)
+	p.Level = 40
+	p.SetPlrFlag(game.PlrDeleted, true)
+	record, err := db.PlayerToRecord(p, nil)
+	if err != nil {
+		t.Fatalf("PlayerToRecord: %v", err)
+	}
+	record.Password = "x"
+	if err := database.CreatePlayer(record); err != nil {
+		t.Fatalf("CreatePlayer: %v", err)
+	}
+
+	called := false
+	handler := roleGuard(database)("admin", func(w http.ResponseWriter, _ *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	})
+	req := httptest.NewRequest(http.MethodGet, "/admin/mudlog", nil)
+	req.Header.Set(adminCSRFHeader, "1")
+	claims := &auth.Claims{PlayerName: "Tombstone", Role: "admin"}
+	req = req.WithContext(auth.SetClaimsOnContext(req.Context(), claims))
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized || called {
+		t.Fatalf("soft-deleted admin request = %d (called=%v), want 401", rec.Code, called)
 	}
 }

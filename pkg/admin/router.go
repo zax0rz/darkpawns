@@ -501,7 +501,9 @@ func roleGuard(database *db.DB) func(string, http.HandlerFunc) http.HandlerFunc 
 				return
 			}
 			rec, err := database.GetPlayer(claims.PlayerName)
-			if err != nil || rec == nil {
+			if err != nil || rec == nil || game.CharacterDataDeleted(rec.CharacterData) {
+				// A deleted character's record lingers until purge; its old
+				// level must not keep the panel alive.
 				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
