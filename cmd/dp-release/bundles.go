@@ -157,11 +157,15 @@ func hashFile(path string) (string, error) {
 
 // safeEntryName rejects archive entries that would escape the extraction
 // root: absolute paths, parent segments, or empty names never touch disk.
-func safeEntryName(name string) error {
-	if name == "" || strings.HasPrefix(name, "/") || strings.Contains(name, "\\") || !fs.ValidPath(name) {
-		return fmt.Errorf("unsafe archive entry %q", name)
+// Directory entries carry a trailing slash by tar/zip convention (Go's
+// archive writers add it), so it is trimmed before validation and the
+// cleaned name is returned for path joins.
+func safeEntryName(name string) (string, error) {
+	trimmed := strings.TrimSuffix(name, "/")
+	if trimmed == "" || strings.HasPrefix(trimmed, "/") || strings.Contains(trimmed, "\\") || !fs.ValidPath(trimmed) {
+		return "", fmt.Errorf("unsafe archive entry %q", name)
 	}
-	return nil
+	return trimmed, nil
 }
 
 func extractArchive(path, destination string) (map[string]any, []string, error) {
@@ -174,7 +178,7 @@ func extractArchive(path, destination string) (map[string]any, []string, error) 
 		}
 		defer func() { _ = r.Close() }()
 		for _, f := range r.File {
-			if err := safeEntryName(f.Name); err != nil {
+			if _, err := safeEntryName(f.Name); err != nil {
 				return nil, nil, err
 			}
 			headers[f.Name] = f.FileHeader
@@ -206,11 +210,12 @@ func extractArchive(path, destination string) (map[string]any, []string, error) 
 		}
 		headers[h.Name] = *h
 		order = append(order, h.Name)
-		if err := safeEntryName(h.Name); err != nil {
+		entry, err := safeEntryName(h.Name)
+		if err != nil {
 			return nil, nil, err
 		}
 		// The name is validated above; the taint analysis cannot see it.
-		target := filepath.Join(destination, filepath.FromSlash(h.Name)) // #nosec G703 // safeEntryName rejected traversal and absolute names
+		target := filepath.Join(destination, filepath.FromSlash(entry)) // #nosec G703 // safeEntryName rejected traversal and absolute names
 		switch h.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(target, os.FileMode(h.Mode&0o7777)); err != nil {

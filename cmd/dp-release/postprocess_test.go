@@ -99,6 +99,9 @@ func tarBundle(t *testing.T, bundle, archive string) {
 			return herr
 		}
 		header.Name = base + "/" + filepath.ToSlash(rel)
+		if info.IsDir() {
+			header.Name += "/"
+		}
 		if err := w.WriteHeader(header); err != nil {
 			return err
 		}
@@ -241,6 +244,9 @@ func TestPostProcessArchiveZip(t *testing.T) {
 			return herr
 		}
 		header.Name = base + "/" + filepath.ToSlash(rel)
+		if info.IsDir() {
+			header.Name += "/"
+		}
 		entry, werr := w.CreateHeader(header)
 		if werr != nil {
 			return werr
