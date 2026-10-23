@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import CopyCommand from '../components/CopyCommand.astro';
 import bookPaper from '../assets/paper/book-page.jpg';
+import chapterAltar from '../assets/chapter/temple-altar.png';
 import { unixInstall } from '../lib/download';
 import { getCollection } from 'astro:content';
 // Counts come from the same generated assets the map and database pages ship,
@@ -65,6 +66,7 @@ const eras = [
   <div class="home-page" style={{ '--book-paper': `url("${bookPaper.src}")` }}>
     <section class="cover container" aria-labelledby="cover-heading">
       <div class="cover-invitation">
+        <img class="chapter-vignette" src={chapterAltar.src} width={chapterAltar.width} height={chapterAltar.height} alt="" />
         <h1 id="cover-heading">You type and<br />the world answers.</h1>
         <p class="lede">A multiplayer text RPG, first opened in 1994.<br /> Play here, or run a world of your own.</p>
         <a class="btn-primary" href="/play/">Enter the game</a>
@@ -292,6 +294,7 @@ const eras = [
   /* A printed invitation, with the world's own words on the facing margin. */
   .cover { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 1fr); column-gap: clamp(2rem, 5vw, 4rem); padding-block: var(--space-xl) var(--space-lg); }
   .cover-invitation { grid-column: 1; grid-row: 1; align-self: center; padding-block: var(--space-md); }
+  .chapter-vignette { display: block; width: 11.25rem; height: auto; margin-bottom: var(--space-md); }
   .cover h1 { margin-bottom: var(--space-lg); font-size: clamp(2.5rem, 5.2vw, 4.5rem); line-height: 1.04; letter-spacing: -.025em; text-wrap: initial; }
   .lede { max-width: 40ch; font-size: 1.1rem; line-height: 1.6; margin-bottom: var(--space-lg); color: var(--ink-muted); }
   .btn-primary { display: inline-block; border: 1px solid var(--accent); padding: .7rem 1.4rem; font-family: var(--font-display); font-size: 1.1rem; background: var(--accent); color: var(--paper); }
@@ -496,9 +499,10 @@ const eras = [
     .cover { display: flex; flex-direction: column; padding-block: var(--space-lg); }
     .cover h1 { font-size: clamp(2rem, 8.5vw, 3rem); margin-bottom: var(--space-md); }
     .cover-invitation { align-self: stretch; padding: 0; }
+    .chapter-vignette { width: 8.25rem; margin-bottom: var(--space-sm); }
     .lede { font-size: 1rem; margin-bottom: var(--space-md); }
     .lede br { display: none; }
-    .host-choice { grid-template-columns: 1fr; gap: var(--space-md); margin-top: var(--space-lg); }
+    .host-choice { grid-template-columns: 1fr; gap: var(--space-md); margin-top: 1.5rem; }
     .host-introduction p { max-width: none; }
     .cover.container { padding-inline: var(--space-md); }
     .opening-passage { order: 1; max-width: 40ch; margin-block: var(--space-lg) 0; padding: 0 var(--space-md); }
