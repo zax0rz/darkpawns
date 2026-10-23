@@ -88,14 +88,6 @@ const eras = [
         <p class="connection-address"><strong>darkpawns.org</strong><span><strong>7778</strong> TLS</span><span><strong>7777</strong> classic telnet</span></p>
       </aside>
 
-      <figure class="opening-passage" aria-labelledby="passage-title">
-        <h2 id="passage-title">At the Temple Altar</h2>
-        <blockquote>
-          You stand before the temple altar. Carved from a solid block of black marble, it is an exquisite example of dwarven craftsmanship. Black pillars of the same marble hold up the ceiling of this open-aired pavilion, and to the south a narrow aisle runs its way between hard oaken pews. There is a small hand painted sign posted as well.
-        </blockquote>
-        <figcaption>Where new characters begin.<br /><a href="/map/?room=8004">Kir Drax&rsquo;in, room 8004 <span aria-hidden="true">→</span></a></figcaption>
-      </figure>
-
       <div class="world-introduction">
           <dl class="world-rules" aria-label="Distinctive rules of Dark Pawns">
             <div>
@@ -291,30 +283,26 @@ const eras = [
   .home-page { isolation: isolate; }
   .home-page::before { content: ''; position: fixed; inset: 0; z-index: -1; background-image: var(--book-paper); background-size: cover; background-position: center; opacity: .1; pointer-events: none; }
   @media (forced-colors: active) { .home-page::before { display: none; } }
-  /* A printed invitation, with the world's own words on the facing margin. */
-  .cover { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 1fr); column-gap: clamp(2rem, 5vw, 4rem); padding-block: var(--space-xl) var(--space-lg); }
-  .cover-invitation { grid-column: 1; grid-row: 1; align-self: center; padding-block: var(--space-md); }
-  .chapter-vignette { display: block; width: 11.25rem; height: auto; margin-bottom: var(--space-md); }
-  .cover h1 { margin-bottom: var(--space-lg); font-size: clamp(2.5rem, 5.2vw, 4.5rem); line-height: 1.04; letter-spacing: -.025em; text-wrap: initial; }
-  .lede { max-width: 40ch; font-size: 1.1rem; line-height: 1.6; margin-bottom: var(--space-lg); color: var(--ink-muted); }
+  /* A centered chapter opening on worn paper. */
+  .cover { padding-block: var(--space-lg); }
+  .cover-invitation { max-width: 48rem; margin-inline: auto; text-align: center; }
+  .chapter-vignette { display: block; width: min(22.5rem, 72vw); height: auto; margin: 0 auto var(--space-md); }
+  .cover h1 { margin-bottom: var(--space-md); font-size: clamp(2.5rem, 4.6vw, 4rem); line-height: 1.04; letter-spacing: -.025em; text-wrap: initial; }
+  .lede { max-width: 44ch; font-size: 1.05rem; line-height: 1.6; margin: 0 auto var(--space-md); color: var(--ink-muted); }
   .btn-primary { display: inline-block; border: 1px solid var(--accent); padding: .7rem 1.4rem; font-family: var(--font-display); font-size: 1.1rem; background: var(--accent); color: var(--paper); }
   .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
-  .play-note { color: var(--ink-muted); font-size: .9rem; margin: var(--space-xs) 0 0; }
-  .opening-passage { grid-column: 2; grid-row: 1; margin: 0; align-self: center; max-width: 35ch; padding-block: var(--space-md); }
-  .opening-passage h2 { font-size: 1.4rem; margin-bottom: var(--space-md); }
-  .opening-passage blockquote { margin: 0; font-size: 1.05rem; line-height: 1.65; text-indent: 1.25em; }
-  .opening-passage figcaption { margin-top: var(--space-md); font-family: var(--font-body); font-size: .85rem; line-height: 1.5; color: var(--ink-muted); }
-  .host-choice { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); column-gap: var(--space-lg); align-items: center; border-block: 1px solid var(--rule); padding-block: var(--space-md); margin-top: var(--space-lg); }
+  .play-note { color: var(--ink-muted); font-size: .9rem; margin: var(--space-xs) auto 0; }
+  .host-choice { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); column-gap: var(--space-lg); align-items: center; border-block: 1px solid var(--rule); padding-block: var(--space-md); margin-top: 1.5rem; }
   .host-choice h2 { font-size: 1.25rem; margin-bottom: var(--space-xs); }
   .host-introduction p { margin: 0; max-width: 40ch; font-size: .95rem; color: var(--ink-muted); }
   .host-command { min-width: 0; }
   .download-link { font-size: .95rem; margin: var(--space-sm) 0 0; }
-  .connection-bridge { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-sm) var(--space-lg); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
+  .connection-bridge { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-sm) var(--space-lg); padding-block: var(--space-md); border-bottom: 1px solid var(--rule); }
   .connection-bridge > a { font-family: var(--font-display); font-size: 1rem; }
   .connection-address { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); margin: 0; color: var(--ink-muted); font-size: .9rem; }
   .connection-address strong { font-family: var(--font-mono); font-size: .85rem; font-weight: 500; color: var(--ink); }
   .connection-address span { white-space: nowrap; }
-  .world-introduction { grid-column: 1 / -1; margin-top: var(--space-lg); }
+  .world-introduction { margin-top: var(--space-lg); }
   .world-rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); margin: var(--space-lg) 0; }
   .world-rules dt { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: .2rem; }
   .world-rules dd { margin: 0; font-size: .95rem; color: var(--ink-muted); }
@@ -322,7 +310,6 @@ const eras = [
   /* The depth rail: real figures, read from the shipped world data. */
   .facts {
     display: grid;
-    grid-column: 1 / -1;
     grid-template-columns: repeat(4, 1fr);
     margin: var(--space-xl) 0 0;
     border-top: 2px solid var(--rule);
@@ -496,17 +483,14 @@ const eras = [
     .facts > div:nth-child(n + 3) { border-top: 1px solid var(--rule); }
   }
   @media (max-width: 640px) {
-    .cover { display: flex; flex-direction: column; padding-block: var(--space-lg); }
+    .cover { padding-block: 1.5rem; }
     .cover h1 { font-size: clamp(2rem, 8.5vw, 3rem); margin-bottom: var(--space-md); }
-    .cover-invitation { align-self: stretch; padding: 0; }
-    .chapter-vignette { width: 8.25rem; margin-bottom: var(--space-sm); }
+    .chapter-vignette { width: 14rem; margin-bottom: var(--space-sm); }
     .lede { font-size: 1rem; margin-bottom: var(--space-md); }
     .lede br { display: none; }
-    .host-choice { grid-template-columns: 1fr; gap: var(--space-md); margin-top: 1.5rem; }
+    .host-choice { grid-template-columns: 1fr; gap: var(--space-md); margin-top: var(--space-md); }
     .host-introduction p { max-width: none; }
     .cover.container { padding-inline: var(--space-md); }
-    .opening-passage { order: 1; max-width: 40ch; margin-block: var(--space-lg) 0; padding: 0 var(--space-md); }
-    .world-introduction, .facts { order: 2; }
     .world-introduction { margin-top: var(--space-lg); }
     .letter { padding: var(--space-md); }
     .guide-list a { grid-template-columns: 1fr 1rem; gap: var(--space-xs) var(--space-sm); }
