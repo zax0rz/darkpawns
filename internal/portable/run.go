@@ -46,11 +46,11 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	if err != nil {
 		return err
 	}
-	m, err := ReadManifest(bundle)
-	if err != nil {
-		return err
-	}
-	if err := Verify(bundle, m); err != nil {
+	// Strict publisher authentication (L1-006/007/021): a bundle selected by
+	// the active pointer executes only if its per-file manifest is
+	// publisher-signed and every listed file — the server binary included —
+	// matches.
+	if err := PublisherVerifyExecutables(bundle, "darkpawns", "darkpawns-server"); err != nil {
 		return err
 	}
 	lock := flock.New(filepath.Join(instance, ".run.lock"))

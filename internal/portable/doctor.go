@@ -1,8 +1,11 @@
 package portable
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -12,6 +15,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/zax0rz/darkpawns/internal/releaseauth"
 
 	_ "modernc.org/sqlite"
 )
@@ -40,11 +45,19 @@ func Doctor(ctx context.Context, bundle, instance string) []Check {
 	}
 	add("Active release", resolveErr, bundle, "Inspect .updates/active.json; retain the original launcher at "+originalBundle+" for recovery.")
 	add("Update transaction", pendingUpdate(instance), "No interrupted update", "Use "+OperatorCommand(instance, "update", "recover")+" to recover an interrupted update.")
-	manifest, err := ReadManifest(bundle)
-	if err == nil {
-		err = Verify(bundle, manifest)
+	// Which publisher key this build trusts: the pinned key, or the snapshot
+	// override a CI/snapshot launcher was linked with. Published builds must
+	// show the pinned fingerprint.
+	effective := releaseauth.TrustedKeyBytes()
+	fingerprint := sha256.Sum256(effective)
+	if bytes.Equal(effective, releaseauth.TrustedKey) {
+		add("Publisher key", nil, "pinned, sha256:"+hex.EncodeToString(fingerprint[:16]), "")
+	} else {
+		add("Publisher key", nil, "linked override key, sha256:"+hex.EncodeToString(fingerprint[:16]), "Published builds must trust the pinned key, not a linked override.")
 	}
-	add("Release assets", err, "Checksums match", "Extract a complete fresh bundle; keep your instance folder.")
+	// Strict bundle authentication (L1-006/007/021): the publisher signature
+	// and every checksum the signed manifest lists, executables included.
+	add("Release signature", PublisherVerify(bundle), "Publisher-signed, checksums match", "Restore this release from its signed archive; strict mode refuses to run an unsigned or modified bundle.")
 	suffix := ""
 	if runtime.GOOS == "windows" {
 		suffix = ".exe"

@@ -75,6 +75,11 @@ def main(bundle, native_service=False, supervised=False):
                 source = root / 'broken.go'
                 source.write_text('package main\nimport "os"\nfunc main(){if err:=os.WriteFile("data/candidate-only",[]byte("retained failed state"),0600);err!=nil{panic(err)};os.Exit(9)}\n')
                 subprocess.run(['go', 'build', '-o', str(release / ('darkpawns-server' + suffix)), str(source)], check=True)
+            if os.environ.get('SNAPSHOT_PRIVATE_PEM') and os.environ.get('SNAPSHOT_PUBLIC_PEM'):
+                # The strict bundle gate requires a publisher record for the
+                # staged release; sign it with the snapshot disposable key
+                # the launcher under test was linked against.
+                subprocess.run(['go', 'run', './cmd/dp-release', '--sign-bundle', str(release), '--key', os.environ['SNAPSHOT_PRIVATE_PEM'], '--public', os.environ['SNAPSHOT_PUBLIC_PEM']], check=True)
             destination = root / (version + ('.zip' if os.name == 'nt' else '.tar.gz'))
             if os.name == 'nt':
                 with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as output:

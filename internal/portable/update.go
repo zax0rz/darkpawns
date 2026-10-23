@@ -268,6 +268,12 @@ func startUpdateCandidate(ctx context.Context, instance string, record updateRec
 	if runtime.GOOS == "windows" {
 		launcher += ".exe"
 	}
+	// Strict publisher authentication (L1-006/007/021): nothing spawns from
+	// a candidate — a recovery journal's Previous included — whose manifest
+	// is not publisher-signed with matching checksums.
+	if err := PublisherVerifyExecutables(record.Candidate, "darkpawns", "darkpawns-server"); err != nil {
+		return fmt.Errorf("candidate release is not publisher-authenticated: %w", err)
+	}
 	var previousExit exitRecord
 	_ = readJSON(filepath.Join(instance, ".last-exit.json"), &previousExit)
 	if err := spawnSupervisor(launcher, instance, "_serve-update", "--transaction", record.ID); err != nil {

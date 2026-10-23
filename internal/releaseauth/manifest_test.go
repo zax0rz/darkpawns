@@ -1,12 +1,14 @@
 package releaseauth
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
+	"os"
 	"strings"
 	"testing"
 )
@@ -52,5 +54,47 @@ func TestSignedManifestIdentityAndDuplicates(t *testing.T) {
 		if _, err := Parse([]byte(data)); err == nil {
 			t.Fatal("invalid metadata accepted", data)
 		}
+	}
+}
+
+// The compiled-in publisher key is the fourth pinned copy (with the PEM
+// file, the website stub and the docs one-liner); it must be exactly the
+// pinned file's bytes.
+func TestTrustedKeyMatchesPinnedFile(t *testing.T) {
+	data, err := os.ReadFile("trusted-key.pem")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(TrustedKey, data) {
+		t.Fatal("compiled-in TrustedKey differs from trusted-key.pem on disk")
+	}
+	if _, err := PublicKey(TrustedKeyBytes()); err != nil {
+		t.Fatalf("TrustedKeyBytes: %v", err)
+	}
+}
+
+func TestVerifyBytes(t *testing.T) {
+	private, err := rsa.GenerateKey(rand.Reader, 3072)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := x509.MarshalPKIXPublicKey(&private.PublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: encoded})
+	digest := sha256.Sum256([]byte("bundle manifest"))
+	signature, err := rsa.SignPKCS1v15(rand.Reader, private, crypto.SHA256, digest[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := VerifyBytes([]byte("bundle manifest"), signature, key); err != nil {
+		t.Fatalf("valid signature rejected: %v", err)
+	}
+	if err := VerifyBytes([]byte("tampered manifest"), signature, key); err == nil {
+		t.Fatal("tampered data accepted")
+	}
+	if err := VerifyBytes([]byte("bundle manifest"), []byte("junk"), key); err == nil {
+		t.Fatal("junk signature accepted")
 	}
 }

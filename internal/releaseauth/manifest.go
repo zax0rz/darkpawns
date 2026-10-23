@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	_ "embed"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
@@ -18,6 +19,46 @@ import (
 
 //go:embed trusted-key.pem
 var TrustedKey []byte
+
+// linkedKeyOverride is empty in published builds. Snapshot and test builds
+// link a disposable publisher key here (via -ldflags -X, fed from a
+// generated key in CI) so the strict bundle-signature gate can be exercised
+// end-to-end without the private release key. It cannot be changed at
+// runtime: the value is fixed when the binary is linked.
+var linkedKeyOverride string
+
+// TrustedKeyBytes is the pinned publisher key bundle signatures are verified
+// against. The linked override may be the PEM text or its base64 (ldflags -X
+// values are single-line).
+func TrustedKeyBytes() []byte {
+	if linkedKeyOverride != "" {
+		if !strings.Contains(linkedKeyOverride, "BEGIN") {
+			if decoded, err := base64.StdEncoding.DecodeString(linkedKeyOverride); err == nil {
+				return decoded
+			}
+		}
+		return []byte(linkedKeyOverride)
+	}
+	return TrustedKey
+}
+
+// VerifyBytes authenticates publisher-signed data that is not a release
+// manifest — the per-file bundle manifest inside a release archive — against
+// the publisher key.
+func VerifyBytes(data, signature, key []byte) error {
+	if len(data) > 8<<20 || len(signature) > 1024 {
+		return errors.New("signed data exceeds limit")
+	}
+	public, err := PublicKey(key)
+	if err != nil {
+		return err
+	}
+	hash := sha256.Sum256(data)
+	if err := rsa.VerifyPKCS1v15(public, crypto.SHA256, hash[:], signature); err != nil {
+		return errors.New("publisher signature verification failed")
+	}
+	return nil
+}
 
 var (
 	StableTag     = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)

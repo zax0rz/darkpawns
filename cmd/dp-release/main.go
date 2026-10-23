@@ -17,6 +17,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/internal/releaseauth"
@@ -38,6 +39,7 @@ func run() (result error) {
 	keyPath := flags.String("key", "", "Private PEM for signing")
 	publicPath := flags.String("public", "", "Alternate public PEM for disposable tests")
 	templates := flags.String("templates", "bootstrap", "Installer template directory")
+	signBundle := flags.String("sign-bundle", "", "Sign one extracted bundle's per-file manifest and exit (snapshot/dev builds assemble releases without the full flow)")
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
 	}
@@ -101,6 +103,9 @@ func run() (result error) {
 	if !ok || private.N.Cmp(key.N) != 0 || private.E != key.E {
 		return errors.New("signing key does not match the pinned public key")
 	}
+	if *signBundle != "" {
+		return signBundlePublisher(*signBundle, runtime.GOOS == "windows", private, public)
+	}
 	outputRoot, err := os.OpenRoot(*dir)
 	if err != nil {
 		return err
@@ -130,6 +135,23 @@ func run() (result error) {
 			return fmt.Errorf("installer signature self-verification failed: %s", name)
 		}
 		if err := outputRoot.WriteFile(name+".sig", signature, 0o600); err != nil {
+			return err
+		}
+	}
+	// Sign each archive's per-file bundle manifest (L1-006/007/021) BEFORE the
+	// release manifest below hashes the repacked bytes: the executables join
+	// the manifest's file map and the manifest carries a publisher signature
+	// the launcher verifies before executing anything in the bundle.
+	archives, err := filepath.Glob(filepath.Join(*dir, "*.tar.gz"))
+	if err != nil {
+		return err
+	}
+	zips, err := filepath.Glob(filepath.Join(*dir, "*.zip"))
+	if err != nil {
+		return err
+	}
+	for _, path := range append(archives, zips...) {
+		if err := postProcessArchive(path, private, public); err != nil {
 			return err
 		}
 	}

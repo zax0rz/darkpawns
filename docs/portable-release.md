@@ -47,6 +47,24 @@ compiler or language runtime to install. Windows uses built-in PowerShell/.NET.
 `/install.sh` stub verifies those signatures. `make deploy-site` refuses the
 reverse order, and the publisher key is pinned in three places that rotate
 together (the signing key, the website stub, the Windows one-liner above).
+
+**Strict bundle authentication (since the v0.1.4 lineage):** every release
+carries `release-assets/publisher.json` — the publisher-signed hash list for
+the launcher and server executables and the data manifest. Nothing in a
+release executes unless that signature verifies and every hash matches, so a
+compromised instance folder cannot substitute or select code. Releases
+without a publisher record (v0.1.3 and earlier) are refused by newer
+launchers: rolling back to them means installing an older launcher first.
+During the v0.1.3→v0.1.4 transition, an update that fails *before* the new
+launcher becomes active is recovered by the old, gate-free launcher and
+restores v0.1.3; a failure *after* the switch leaves the new launcher
+driving recovery, and it will refuse to restart the unsigned v0.1.3 bundle
+— the world stays down until an older launcher is installed. There is no
+anti-rollback protection: a local writer can point `active.json` at an
+older genuine signed release. Both are accepted for this threat model.
+Production's persistent monitor anchor must be upgraded to the new release
+as part of its rollout — an older anchor has no bundle gate — using the
+anchor upgrade procedure in the operations runbook.
 Nothing needs administrator privileges. This is a shell/PowerShell bootstrap,
 not an MSI, macOS application or OS code-signing certificate. The entry script
 is delivered over HTTPS from darkpawns.org and downloads the release installer
