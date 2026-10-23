@@ -87,6 +87,14 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		mux.HandleFunc(pattern, hf)
 	}
 
+	// L2-030: the panel role is re-resolved from the player record on every
+	// authenticated request, so a demotion takes effect immediately — the
+	// token's role claim is a login-time hint, never the authority. A
+	// promotion needs a fresh login (the outer claim check still applies).
+	// Without a database (harnesses inject their own claims), the claim's own
+	// role applies as before.
+	requireRole := roleGuard(database)
+
 	// L2-022/028: mudlog visibility is capped at the caller's actual immortal
 	// level, resolved per request from the store (the token's role is only a
 	// login-time hint, as in roleGuard). Without a database the panel-role
@@ -500,6 +508,40 @@ func requireRole(role string, next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		next(w, r)
+	}
+}
+
+// roleGuard composes requireRole with a per-request role re-resolution from
+// the player store (L2-030): the outer requireRole still checks the token's
+// claim (so promotions need a fresh login), and this layer demotes or drops
+// access the moment the store says so. Without a database the claim's own
+// role applies, matching the harness path.
+func roleGuard(database *db.DB) func(string, http.HandlerFunc) http.HandlerFunc {
+	return func(role string, next http.HandlerFunc) http.HandlerFunc {
+		return requireRole(role, func(w http.ResponseWriter, r *http.Request) {
+			if database == nil {
+				next(w, r)
+				return
+			}
+			claims, ok := auth.GetClaimsFromContext(r.Context())
+			if !ok || claims == nil {
+				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				return
+			}
+			rec, err := database.GetPlayer(claims.PlayerName)
+			if err != nil || rec == nil || game.CharacterDataDeleted(rec.CharacterData) {
+				// A deleted character's record lingers until purge; its old
+				// level must not keep the panel alive.
+				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				return
+			}
+			current := auth.Claims{PlayerName: claims.PlayerName, Role: auth.PanelRoleForLevel(rec.Level)}
+			if !current.HasRole(role) {
+				http.Error(w, `{"error":"forbidden","required":"`+role+`"}`, http.StatusForbidden)
+				return
+			}
+			next(w, r)
+		})
 	}
 }
 
