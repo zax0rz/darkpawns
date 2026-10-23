@@ -120,6 +120,7 @@ def structural_entries() -> list[Entry]:
         "/contact/": "src/pages/contact.astro",
         "/privacy/": "src/pages/privacy.astro",
         "/play/": "src/pages/play.astro",
+        "/download/": "src/pages/download.astro",
         "/map/": "src/pages/map.astro",
         "/database/": "src/pages/database.astro",
     }
@@ -133,6 +134,8 @@ def structural_entries() -> list[Entry]:
         "/world/": "src/pages/world/index.astro",
     }
     entries.extend(Entry(route, source, "hub", "authored collection framing", 1, "full editorial review") for route, source in hubs.items())
+
+    entries.append(Entry("/download.md", "src/pages/download.md.ts", "agent-markdown", "generated Markdown representation", 3, "schema-and-sample QA"))
 
     agent_resources = {
         "/llms.txt": "../website/static/llms.txt",

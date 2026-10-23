@@ -417,6 +417,15 @@ def index_static_pages():
     """Index primary application and core landing pages."""
     return [
         {
+            "t": "Download & Host Dark Pawns",
+            "c": "pages",
+            "s": "Install",
+            "u": "/download/",
+            "k": "download install host server macos linux windows arm64 x86-64 setup own world",
+            "d": "Install Dark Pawns, download platform archives, and run a world of your own.",
+            "v": 0
+        },
+        {
             "t": "Play in Browser",
             "c": "pages",
             "s": "CRT Terminal",

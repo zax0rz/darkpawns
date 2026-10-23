@@ -1,5 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
+import CopyCommand from '../components/CopyCommand.astro';
+import { unixInstall } from '../lib/download';
 import { getCollection } from 'astro:content';
 // Counts come from the same generated assets the map and database pages ship,
 // resolved at build time. The front page cannot advertise a world the rest of
@@ -57,15 +59,30 @@ const eras = [
 
 <Base
   title="Dark Pawns | A fantasy world from 1994"
-  description="Dark Pawns is a dark-fantasy MUD first opened in September 1994, restored in Go from the surviving C source and world files. Play in your browser or explore all 9,590 rooms."
+  description="Dark Pawns is a dark-fantasy MUD first opened in September 1994, restored in Go from the surviving C source and world files. Play in your browser or download and host a world of your own."
 >
   <div class="home-page">
     <section class="cover container" aria-labelledby="cover-heading">
       <h1 id="cover-heading">A fantasy world first opened in 1994.</h1>
 
+      <p class="lede">Play here, or run a world of your own.</p>
       <div class="cover-deck">
-        <div class="cover-copy">
-          <p class="lede">You type and the world answers. Start at the black marble altar in Kir Drax&rsquo;in in your browser, or explore what survived of the original game.</p>
+        <div class="play-choice">
+          <h2>Play in your browser</h2>
+          <p>You type and the world answers.</p>
+          <a class="btn-primary" href="/play/">Enter the game</a>
+          <p class="client-link"><a href="/connect/">Or connect with a MUD client <span aria-hidden="true">→</span></a></p>
+        </div>
+        <div class="host-choice">
+          <h2>Run your own world</h2>
+          <p>Install the game and original world files. The setup wizard takes it from there.</p>
+          <CopyCommand command={unixInstall} label="macOS / Linux" id="home-install" />
+          <p class="download-link"><a href="/download/">Windows, all downloads &amp; hosting instructions <span aria-hidden="true">→</span></a></p>
+        </div>
+      </div>
+      <p class="connection-line">For MUD clients: <strong>darkpawns.org</strong> · <strong>7778</strong> TLS · <strong>7777</strong> classic telnet</p>
+
+      <div class="world-introduction">
           <p class="cover-story">
             Serapis and Tracer opened Dark Pawns in September 1994, and Frontline, Orodreth, Oddity, and the immortal staff built it over the next sixteen years until the server went dark around 2010. Its C source and 95 zones survived. In 2026 I began porting the engine to Go and recovering the old player sites so the world stays open.
           </p>
@@ -83,28 +100,7 @@ const eras = [
               <dd>100% rent-free temples, vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
             </div>
           </dl>
-          <div class="cover-actions">
-            <a class="btn-primary" href="/play/">Enter the game</a>
-            <a class="btn-secondary" href="/world/">Explore the world</a>
-            <a class="cover-history-link" href="/about/">Read the history <span aria-hidden="true">→</span></a>
-          </div>
-        </div>
-
-        <aside class="connection-slip" aria-labelledby="connect-heading">
-          <div class="slip-header">
-            <p class="slip-label" id="connect-heading">Direct connection</p>
-            <p class="slip-status" id="slip-status" data-server-status aria-live="polite">
-              <span class="dot" aria-hidden="true"></span><span id="slip-status-text" data-server-status-text>status unknown</span>
-            </p>
-          </div>
-          <p class="slip-host">darkpawns.org</p>
-          <dl class="slip-ports">
-            <div><dt>7778</dt><dd>TLS, preferred</dd></div>
-            <div><dt>7777</dt><dd>no TLS (classic telnet)</dd></div>
-          </dl>
-          <p class="slip-note">New characters begin at the Kir Drax&rsquo;in Temple, where quitting saves your equipment rent-free.</p>
-          <p class="slip-foot"><a href="/connect/">Set up Mudlet or another client <span aria-hidden="true">→</span></a></p>
-        </aside>
+        <p><a href="/world/">Explore the world <span aria-hidden="true">→</span></a> · <a href="/about/">Read the history <span aria-hidden="true">→</span></a></p>
       </div>
 
       <dl class="facts" aria-label="What the world contains">
@@ -294,68 +290,25 @@ const eras = [
 </Base>
 
 <style>
-  /* --- Cover: a title page, then a lower deck ---------------------------- */
-  .cover { padding-block: var(--space-xl) var(--space-lg); }
-  .cover h1 { max-width: 20ch; margin-bottom: var(--space-lg); font-size: clamp(3rem, 6.6vw, 6.25rem); line-height: .98; letter-spacing: -.01em; text-wrap: initial; }
-  .cover-deck { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(18rem, .55fr); gap: var(--space-xl); align-items: start; }
-  .lede { max-width: 52ch; color: var(--ink); font-size: 1.25rem; line-height: 1.45; margin-bottom: var(--space-md); }
-  .cover-story { max-width: 60ch; color: var(--ink-muted); font-size: 1rem; margin-bottom: var(--space-lg); }
-
-  .world-rules {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-md);
-    margin: 0 0 var(--space-lg);
-    padding-block: var(--space-md);
-    border-block: 1px solid var(--rule);
-  }
-  .world-rules dt {
-    font-family: var(--font-display);
-    font-size: 1rem;
-    color: var(--ink);
-    margin-bottom: .2rem;
-  }
-  .world-rules dd {
-    margin: 0;
-    font-size: .9rem;
-    line-height: 1.45;
-    color: var(--ink-muted);
-  }
-
-  .cover-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); margin-top: var(--space-md); }
-  .btn-primary, .btn-secondary { display: inline-block; border: 1px solid var(--rule); padding: .7rem 1.15rem; font-family: var(--font-display); font-size: 1rem; color: var(--ink); }
-  .btn-primary { border-color: var(--accent); background: var(--accent); color: var(--paper); }
+  /* The opening offers a shared world and a world of your own. */
+  .cover { padding-block: var(--space-lg); }
+  .cover h1 { max-width: 20ch; margin-bottom: var(--space-md); font-size: clamp(2.5rem, 5.5vw, 5rem); line-height: 1.03; letter-spacing: -.01em; text-wrap: initial; }
+  .lede { font-size: 1.25rem; margin-bottom: var(--space-lg); }
+  .cover-deck { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); border-block: 1px solid var(--rule); }
+  .cover-deck h2 { font-size: 1.65rem; margin-bottom: var(--space-sm); }
+  .cover-deck p { color: var(--ink-muted); }
+  .play-choice { padding: var(--space-lg) var(--space-lg) var(--space-lg) 0; }
+  .host-choice { padding: var(--space-lg); padding-right: 0; border-left: 1px solid var(--rule); }
+  .btn-primary { display: inline-block; border: 1px solid var(--accent); padding: .7rem 1.15rem; font-family: var(--font-display); font-size: 1rem; background: var(--accent); color: var(--paper); }
   .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
-  .btn-secondary:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
-  .cover-history-link { font-family: var(--font-display); font-size: 1rem; padding-inline: var(--space-xs); }
-
-  .connection-slip {
-    border: 1px solid var(--rule);
-    border-top: 3px solid var(--accent);
-    background: var(--paper-deep);
-    padding: var(--space-md);
-  }
-  .slip-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-    border-bottom: 1px solid var(--rule);
-    padding-bottom: var(--space-xs);
-  }
-  .slip-label { font-family: var(--font-display); font-size: 1.25rem; margin: 0; }
-  .slip-status { display: inline-flex; align-items: center; gap: .4rem; margin: 0; font-family: var(--font-mono); font-size: .7rem; color: var(--ink-muted); }
-  .slip-status .dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--ink-muted); flex: none; }
-  .slip-status.online .dot { background: var(--online); }
-  .slip-status.offline .dot { background: var(--accent); }
-  .slip-host { margin: var(--space-sm) 0; font-family: var(--font-mono); font-size: 1rem; font-weight: 500; letter-spacing: .01em; }
-  .slip-ports { margin: 0 0 var(--space-sm); font-variant-numeric: tabular-nums; }
-  .slip-ports div { display: flex; gap: var(--space-sm); align-items: baseline; border-top: 1px solid var(--rule); padding-block: .45rem; }
-  .slip-ports dt { min-width: 3.4rem; font-family: var(--font-mono); font-size: .9rem; font-weight: 500; }
-  .slip-ports dd { margin: 0; color: var(--ink-muted); font-size: .9rem; }
-  .slip-note { margin: 0 0 var(--space-sm); padding-top: var(--space-xs); border-top: 1px solid var(--rule); font-size: .9rem; line-height: 1.45; color: var(--ink-muted); }
-  .slip-foot { margin: 0; font-family: var(--font-display); font-size: 1rem; }
+  .client-link, .download-link { font-size: .95rem; margin: var(--space-sm) 0 0; }
+  .connection-line { max-width: none; margin: var(--space-sm) 0 0; color: var(--ink-muted); font-size: .9rem; }
+  .connection-line strong { font-family: var(--font-mono); font-size: .85rem; font-weight: 500; color: var(--ink); }
+  .world-introduction { margin-top: var(--space-xl); }
+  .cover-story { max-width: 75ch; color: var(--ink-muted); }
+  .world-rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); margin: var(--space-lg) 0; }
+  .world-rules dt { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: .2rem; }
+  .world-rules dd { margin: 0; font-size: .95rem; color: var(--ink-muted); }
 
   /* The depth rail: real figures, read from the shipped world data. */
   .facts {
@@ -526,9 +479,8 @@ const eras = [
     .voices-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
   }
   @media (max-width: 900px) {
-    .cover-deck, .world-grid, .record, .dispatch-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
+    .world-grid, .record, .dispatch-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
     .world-rules { grid-template-columns: 1fr; gap: var(--space-sm); }
-    .connection-slip { max-width: 32rem; }
     .facts { grid-template-columns: 1fr 1fr; padding-block: 0; }
     .facts > div, .facts > div + div { border-left: 0; padding: var(--space-md) var(--space-md) var(--space-md) 0; }
     .facts > div:nth-child(even) { border-left: 1px solid var(--rule); padding-left: var(--space-md); padding-right: 0; }
@@ -536,9 +488,16 @@ const eras = [
   }
   @media (max-width: 640px) {
     .cover { padding-block: var(--space-lg); }
-    .cover h1 { font-size: clamp(2.5rem, 12vw, 3rem); }
-    .cover-actions { gap: var(--space-xs) var(--space-sm); }
-    .btn-primary, .btn-secondary { padding: .65rem .9rem; font-size: 1rem; }
+    .cover h1 { font-size: clamp(2rem, 9vw, 2.5rem); }
+    .cover-deck { grid-template-columns: 1fr; }
+    .play-choice { padding: var(--space-md) 0; }
+    .host-choice { border-left: 0; border-top: 1px solid var(--rule); padding: var(--space-md) 0; }
+    .cover-deck h2 { font-size: 1.4rem; }
+    .cover-deck p { margin-bottom: var(--space-sm); }
+    .lede { margin-bottom: var(--space-md); }
+    .cover h1 { margin-bottom: var(--space-sm); }
+    .cover.container { padding-inline: var(--space-md); }
+    .world-introduction { margin-top: var(--space-lg); }
     .letter { padding: var(--space-md); }
     .guide-list a { grid-template-columns: 1fr 1rem; gap: var(--space-xs) var(--space-sm); }
     .guide-list h3, .guide-list p, .guide-meta { grid-column: 1; }
