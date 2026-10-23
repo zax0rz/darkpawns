@@ -222,7 +222,8 @@ func TestMudlogListLevelCeilingIsTheCallers(t *testing.T) {
 }
 
 // L2-028: the SSE stream delivers only events at or below the caller's
-// immortal level; it was previously unfiltered.
+// immortal level; it was previously unfiltered. A real server is used so
+// assertions can read the open stream concurrently with the handler.
 func TestMudlogStreamLevelCeiling(t *testing.T) {
 	f := newMudlogFeed(t)
 	f.Tap("", "boot line", 1, 31, false)
@@ -230,28 +231,65 @@ func TestMudlogStreamLevelCeiling(t *testing.T) {
 	waitForSeq(t, f, 2)
 
 	handler := mudlogStream(f, func(context.Context) int { return 31 })
-	rec := httptest.NewRecorder()
-	done := make(chan struct{})
+	srv := httptest.NewServer(handler)
+	t.Cleanup(srv.Close)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+"/admin/mudlog/stream?since=0", nil)
+	response, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = response.Body.Close() }()
+
+	events := make(chan string, 8)
 	go func() {
-		handler(rec, httptest.NewRequest(http.MethodGet, "/admin/mudlog/stream?since=0", nil))
-		close(done)
+		scanner := bufio.NewScanner(response.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "data: ") {
+				events <- strings.TrimPrefix(line, "data: ")
+			}
+		}
+		close(events)
 	}()
+
+	// The replay's visible event must arrive first.
+	visible := collectMudlogEvents(t, events, 1, func(text string) bool { return strings.Contains(text, "boot line") })
+	// Live events above the ceiling are dropped; below it, delivered.
 	f.Tap("", "live level 35 line", 1, 35, false)
 	f.Tap("", "live boot line", 1, 31, false)
 	waitForSeq(t, f, 4)
-	deadline := time.After(2 * time.Second)
-	for {
-		body := rec.Body.String()
-		if strings.Count(body, "event: mudlog") == 2 && strings.Contains(body, "live boot line") {
-			break
+	live := collectMudlogEvents(t, events, 1, func(text string) bool { return strings.Contains(text, "live boot line") })
+	for _, payload := range append(visible, live...) {
+		if strings.Contains(payload, "level 35") {
+			t.Fatalf("level-35 event leaked above the caller ceiling: %s", payload)
 		}
+	}
+	cancel()
+}
+
+// collectMudlogEvents reads delivered events until match finds one, returning
+// everything read (so leaked events are still asserted).
+func collectMudlogEvents(t *testing.T, events <-chan string, want int, match func(string) bool) []string {
+	t.Helper()
+	var read []string
+	deadline := time.After(3 * time.Second)
+	found := 0
+	for found < want {
 		select {
+		case payload, ok := <-events:
+			if !ok {
+				t.Fatalf("stream closed early; read: %v", read)
+			}
+			read = append(read, payload)
+			if match(payload) {
+				found++
+			}
 		case <-deadline:
-			t.Fatalf("stream did not deliver the two visible events: %q", rec.Body.String())
-		case <-time.After(10 * time.Millisecond):
+			t.Fatalf("timed out waiting for a matching event; read: %v", read)
 		}
 	}
-	if strings.Contains(rec.Body.String(), "level 35") {
-		t.Fatalf("level-35 events leaked above the caller ceiling: %q", rec.Body.String())
-	}
+	return read
 }

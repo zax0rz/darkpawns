@@ -151,7 +151,11 @@ func mudlogStream(feed *mudlog.Feed, callerLevel mudlogCallerLevel) http.Handler
 
 		ceiling := callerLevel(r.Context())
 		visible := func(e mudlogEvent) bool { return e.Level <= ceiling }
-		var last uint64
+		// `last` starts at the resume point, not zero: an empty replay must
+		// not re-deliver history, and subscribing from the last replayed seq
+		// (not feed.LastSeq()) closes the window where an event tapped
+		// between the replay read and the subscription lands in neither.
+		last := after
 		for _, e := range feed.Since(after, 0) {
 			if !visible(e) {
 				continue
@@ -166,7 +170,7 @@ func mudlogStream(feed *mudlog.Feed, callerLevel mudlogCallerLevel) http.Handler
 		}
 		flusher.Flush()
 
-		events, kicked, cancel := feed.Subscribe(feed.LastSeq())
+		events, kicked, cancel := feed.Subscribe(last)
 		defer cancel()
 		heartbeat := time.NewTicker(15 * time.Second)
 		defer heartbeat.Stop()
@@ -203,6 +207,10 @@ func mudlogStream(feed *mudlog.Feed, callerLevel mudlogCallerLevel) http.Handler
 				last = e.Seq
 				flusher.Flush()
 			case <-heartbeat.C:
+				// Re-resolve the ceiling so a demotion takes effect on an
+				// open stream without waiting for a reconnect (the same
+				// every-request semantics as the role guard).
+				ceiling = callerLevel(r.Context())
 				if err := ping(); err != nil {
 					return
 				}
