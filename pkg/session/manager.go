@@ -1323,6 +1323,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		dirtyVars:           make(map[string]bool),
 		connectedAt:         time.Now(),
 		wantsStructuredData: true,
+		proxied:             forwardedForSomeoneElse(r),
 		sessionCtx:          ctx,
 		cancelFunc:          cancel,
 		transportDone:       make(chan struct{}),
@@ -2119,6 +2120,11 @@ type Session struct {
 	seenObjectIDs       map[*game.ObjectInstance]int
 	localObjectSeq      int
 	wantsStructuredData bool
+	// proxied records that this WebSocket arrived through a reverse proxy
+	// (a loopback peer that named a forwarded client; forwardedForSomeoneElse).
+	// It gates empty-world character creation (L1-005): a proxied stranger
+	// must not win a fresh world's immortal crown. Telnet sessions never set it.
+	proxied bool
 	// gmcp is the telnet GMCP negotiation and change-tracking state; see
 	// gmcp.go. It is independent of wantsStructuredData, which also changes
 	// text delivery (the pager) and so must never follow from GMCP.
@@ -2398,6 +2404,11 @@ var (
 	ErrUnknownMessageType  = fmt.Errorf("unknown message type")
 	ErrInvalidPlayerName   = fmt.Errorf("invalid player name")
 	ErrNotInCharCreation   = fmt.Errorf("not in character creation")
+	// ErrFirstCharacterMustBeLocal refuses proxied character creation on a
+	// world with no characters (L1-005): C crowns the first character
+	// Implementor (src/db.c:3016), so that creation belongs to the local
+	// operator, not to whoever reaches an empty hosted world first.
+	ErrFirstCharacterMustBeLocal = fmt.Errorf("this world has no characters: the first one becomes its immortal, so create it locally before opening remote access")
 )
 
 // Command management methods to implement common.CommandManager interface

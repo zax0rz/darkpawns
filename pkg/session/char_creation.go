@@ -577,6 +577,17 @@ func (s *Session) persistAcceptedCharacter() error {
 		if err != nil {
 			return fmt.Errorf("check character store: %w", err)
 		}
+		// L1-005 (option B, web half): with no characters, whoever creates
+		// first is crowned Implementor (C, src/db.c:3016 — inherited and
+		// unchanged), so a client that arrived through a reverse proxy must
+		// not run that race. The bind guard closes direct public listeners;
+		// this closes the hosted path (loopback HTTP behind a proxy). Local
+		// connections — the setup wizard's browser, local clients — still
+		// create the immortal. The sole-deleted-replacement branch is
+		// accepted C behaviour (ruling 2026-10-22) and is not refused.
+		if count == 0 && s.proxied {
+			return ErrFirstCharacterMustBeLocal
+		}
 		firstDeletedReplacement = count == 1 && s.creationReplacement != nil
 		isGod = count == 0 || firstDeletedReplacement
 	}
