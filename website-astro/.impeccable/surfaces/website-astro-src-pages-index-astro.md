@@ -45,3 +45,10 @@ Evidence checked for this documentation pass:
 - Read-only comparison with `origin/main` confirms no changes to `DESIGN.md`, `.impeccable/design.json`, `PRODUCT.md`, or global CSS. No new global colors, fonts, elevation, shape vocabulary, or motion system were introduced. No new raster artwork requires provenance.
 
 Documentation drift retained: the incumbent `DESIGN.md` front-page description records its earlier title sizing and title/connection composition; the selected surface contract and source now hold the approved opening. The existing sidecar narrative condenses the Markdown narrative rather than copying it verbatim. Neither condition was created as a global system change by this extension. Preserve both global documents for this scope; any later system-document refresh is a separate task.
+
+
+## Homepage refinement
+
+User-directed follow-up: omit the Serapis/Tracer restoration introduction and “at Hero”; use the MUD-client connection as the bridge into world details. The connection guide, host, and ports now share a full-width Paper-Deep strip below the play/install choices. Download page unchanged.
+
+Evidence: production `make site-check`; Go build/vet/test/lint and formatting; fresh visible user-viewport screenshot `website-astro/.impeccable/review/home-bridge-user.png`. Independent follow-up review: **ship**, no material findings. The bridge reuses existing cream, rule, and type tokens, so DESIGN.md and design.json remain unchanged.
