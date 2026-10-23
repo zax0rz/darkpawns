@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -93,7 +94,9 @@ func signBundlePublisher(bundle string, windows bool, private *rsa.PrivateKey, p
 	if err := releaseauth.VerifyBytes(data, signature, public); err != nil {
 		return fmt.Errorf("publisher record self-verification failed: %s: %w", filepath.Base(bundle), err)
 	}
-	return os.WriteFile(filepath.Join(bundle, "release-assets", "publisher.json.sig"), signature, 0o644)
+	// The bundle path is the operator's argument; the signer only ever
+	// writes the publisher record inside it.
+	return os.WriteFile(filepath.Join(bundle, "release-assets", "publisher.json.sig"), signature, 0o644) // #nosec G703 // writes only inside the operator-named bundle
 }
 
 // postProcessArchive adds the publisher signature to one goreleaser archive
@@ -151,6 +154,16 @@ func hashFile(path string) (string, error) {
 // original header (keyed by its archive path, nil for entries the archive
 // did not contain) and their original order, so repacking preserves modes
 // and paths exactly.
+
+// safeEntryName rejects archive entries that would escape the extraction
+// root: absolute paths, parent segments, or empty names never touch disk.
+func safeEntryName(name string) error {
+	if name == "" || strings.HasPrefix(name, "/") || strings.Contains(name, "\\") || !fs.ValidPath(name) {
+		return fmt.Errorf("unsafe archive entry %q", name)
+	}
+	return nil
+}
+
 func extractArchive(path, destination string) (map[string]any, []string, error) {
 	headers := map[string]any{}
 	var order []string
@@ -161,6 +174,9 @@ func extractArchive(path, destination string) (map[string]any, []string, error) 
 		}
 		defer func() { _ = r.Close() }()
 		for _, f := range r.File {
+			if err := safeEntryName(f.Name); err != nil {
+				return nil, nil, err
+			}
 			headers[f.Name] = f.FileHeader
 			order = append(order, f.Name)
 			if err := extractZipEntry(f, destination); err != nil {
@@ -190,17 +206,21 @@ func extractArchive(path, destination string) (map[string]any, []string, error) 
 		}
 		headers[h.Name] = *h
 		order = append(order, h.Name)
-		target := filepath.Join(destination, filepath.FromSlash(h.Name))
+		if err := safeEntryName(h.Name); err != nil {
+			return nil, nil, err
+		}
+		// The name is validated above; the taint analysis cannot see it.
+		target := filepath.Join(destination, filepath.FromSlash(h.Name)) // #nosec G703 // safeEntryName rejected traversal and absolute names
 		switch h.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, os.FileMode(h.Mode)); err != nil {
+			if err := os.MkdirAll(target, os.FileMode(h.Mode&0o7777)); err != nil {
 				return nil, nil, err
 			}
 		case tar.TypeReg:
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return nil, nil, err
 			}
-			out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(h.Mode))
+			out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY, os.FileMode(h.Mode&0o7777))
 			if err != nil {
 				return nil, nil, err
 			}

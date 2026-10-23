@@ -151,6 +151,10 @@ def main(bundle):
             seed.write_bytes(seed.read_bytes() + b'\n\n')
             manifest['files']['lib/world/wld/index'] = hashlib.sha256(seed.read_bytes()).hexdigest()
             (second / 'release-assets/manifest.json').write_text(json.dumps(manifest))
+            if os.environ.get('SNAPSHOT_PRIVATE_PEM') and os.environ.get('SNAPSHOT_PUBLIC_PEM'):
+                # A replacement release is a genuine publisher artifact in
+                # production; stage it signed so the strict bundle gate passes.
+                subprocess.run(['go', 'run', './cmd/dp-release', '--sign-bundle', str(second), '--key', os.environ['SNAPSHOT_PRIVATE_PEM'], '--public', os.environ['SNAPSHOT_PUBLIC_PEM']], check=True)
             process = start(second / ('darkpawns' + suffix))
             asyncio.run(saved_login())
             stop(process)
