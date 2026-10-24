@@ -331,18 +331,22 @@ func (w *World) huntVictim(m *MobInstance) {
 		return
 	}
 
-	// Open doors if intelligent mob
+	// Open doors if intelligent mob. C builds "<keyword> <reverse-dir>" and
+	// calls the real do_gen_door(SCMD_OPEN) (src/graph.c:320-339), whose
+	// NEED_UNLOCKED gate refuses locked doors.
 	mobRoom, ok := w.GetRoom(m.GetRoom())
 	if ok {
 		if exit, exists := mobRoom.Exits[dirKeys[dir]]; exists {
 			if exit.ExitInfo&parser.ExitClosed != 0 && mobIsIntelligent(m) && exit.Keywords != "" {
-				w.mobOpenDoor(m, dir, exit.Keywords)
+				w.mobGenDoor(m, firstWord(exit.Keywords), scmdOpen)
 			}
 		}
 	}
 
-	// Move mob
-	w.mobPerformMove(m, dir)
+	// C moves through perform_move(ch, dir, 1) (src/graph.c:340), which
+	// refuses closed exits and drags followers; mobPerformMove's silent
+	// closed-door crossing let hunters pass locked doors.
+	w.performMoveMob(m, dir, true)
 
 	// Check if arrived
 	if m.GetRoom() == target.GetRoom() {
@@ -411,45 +415,6 @@ func (w *World) findPlayerByName(name string) *Player {
 	return nil
 }
 
-// mobOpenDoor has a mob open a door in a given direction.
-func (w *World) mobOpenDoor(m *MobInstance, dir int, keyword string) {
-	w.mu.Lock()
-	room := w.rooms[m.GetRoom()]
-	if room == nil {
-		w.mu.Unlock()
-		return
-	}
-	dirName := dirKeys[dir]
-	ext, hasExit := room.Exits[dirName]
-	if !hasExit {
-		w.mu.Unlock()
-		return
-	}
-	if ext.ExitInfo&parser.ExitClosed == 0 {
-		w.mu.Unlock()
-		return
-	}
-
-	ext.ExitInfo &^= parser.ExitClosed | parser.ExitLocked
-	room.Exits[dirName] = ext
-
-	// Handle reverse exit
-	otherRoomVNum := ext.ToRoom
-	otherRoom := w.rooms[otherRoomVNum]
-	if otherRoom != nil {
-		backDir := revDir[dir]
-		backExt, hasBack := otherRoom.Exits[dirs[backDir]]
-		if hasBack && backExt.ToRoom == m.GetRoom() {
-			backExt.ExitInfo &^= parser.ExitClosed | parser.ExitLocked
-			otherRoom.Exits[dirs[backDir]] = backExt
-		}
-	}
-	w.mu.Unlock()
-
-	m.SendMessage("You open the door.\r\n")
-	actToRoom(w, m.GetRoom(), fmt.Sprintf("%s opens the door.", m.GetName()), m.GetName())
-}
-
 // mobPerformMove moves a mob in a given direction.
 func (w *World) mobPerformMove(m *MobInstance, dir int) {
 	oldRoom := m.GetRoom()
@@ -476,17 +441,39 @@ func (w *World) mobPerformMove(m *MobInstance, dir int) {
 	}
 }
 
-// mobIsIntelligent checks if a mob is intelligent enough to open doors.
+// intelligentRaces is C's intelligent_races[] (src/constants.c:353-373) as
+// the set actually scanned: is_intelligent iterates i < NUM_INTEL_RACES = 18
+// (src/utils.c:675-682), so the 19th listed entry, RACE_NPCMINOTAUR (30), is
+// past the loop bound and not intelligent in C. Race numbers are the NPC
+// RACE_* defines (src/structs.h:131-161).
+var intelligentRaces = map[int]bool{
+	0: true,  // RACE_NPCHUMAN
+	1: true,  // RACE_NPCELF
+	2: true,  // RACE_NPCDWARF
+	3: true,  // RACE_NPCKENDER
+	4: true,  // RACE_NPCCENTAUR
+	5: true,  // RACE_NPCRAKSHASA
+	6: true,  // RACE_TROLL
+	7: true,  // RACE_LYCANTHROPE
+	8: true,  // RACE_VAMPIRE
+	9: true,  // RACE_UNDEAD
+	10: true, // RACE_DRAGON
+	11: true, // RACE_DEMON
+	18: true, // RACE_GIANT
+	19: true, // RACE_DEMIGOD
+	20: true, // RACE_OGRE
+	27: true, // RACE_HUMANOID
+	28: true, // RACE_FAERY
+	29: true, // RACE_NPCSSAUR
+}
+
+// mobIsIntelligent ports is_intelligent (src/utils.c:675-682): a race check
+// against intelligent_races. It is not an affect flag.
 func mobIsIntelligent(m *MobInstance) bool {
-	// Check mob prototype for intelligence
-	if m.Proto() != nil {
-		for _, f := range m.Proto().AffectFlags {
-			if f == "intelligent" {
-				return true
-			}
-		}
+	if m.Proto() == nil {
+		return false
 	}
-	return false
+	return intelligentRaces[m.Proto().Race]
 }
 
 // attackHuntingPrey ports hunt_victim's arrival attack: C calls

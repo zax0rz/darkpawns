@@ -21,7 +21,6 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
-	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -945,9 +944,12 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	case 'E':
 		w.roomMessage(me.RoomVNum, me.GetName()+" says, 'I hereby declare Bourbon closed!'")
 	case 'O':
-		w.mobOpenDoor(me, 0, "gate") // unlock + open gate to the NORTH
+		// C unlocks with the gate key, then opens (src/spec_procs.c 'O').
+		w.mobGenDoor(me, "gate", scmdUnlock)
+		w.mobGenDoor(me, "gate", scmdOpen)
 	case 'C':
-		mayorMobCloseDoor(w, me, 0, "gate") // close + lock gate to the NORTH
+		w.mobGenDoor(me, "gate", scmdClose)
+		w.mobGenDoor(me, "gate", scmdLock)
 	case '.':
 		mayorMu.Lock()
 		st.path = ""
@@ -956,38 +958,6 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	}
 
 	return true
-}
-
-// mayorMobCloseDoor closes and locks a door for the mayor, matching C do_gen_door(CLOSE+LOCK).
-func mayorMobCloseDoor(w *World, me *MobInstance, dir int, keyword string) {
-	dirName := dirKeys[dir]
-	w.mu.Lock()
-
-	room := w.rooms[me.GetRoom()]
-	if room == nil {
-		w.mu.Unlock()
-		return
-	}
-	ext, hasExit := room.Exits[dirName]
-	if !hasExit {
-		w.mu.Unlock()
-		return
-	}
-
-	ext.ExitInfo |= parser.ExitClosed | parser.ExitLocked
-	room.Exits[dirName] = ext
-
-	otherRoom := w.rooms[ext.ToRoom]
-	if otherRoom != nil {
-		backDir := revDir[dir]
-		backExt, hasBack := otherRoom.Exits[dirs[backDir]]
-		if hasBack && backExt.ToRoom == me.GetRoom() {
-			backExt.ExitInfo |= parser.ExitClosed | parser.ExitLocked
-			otherRoom.Exits[dirs[backDir]] = backExt
-		}
-	}
-	w.mu.Unlock()
-	w.roomMessage(me.GetRoom(), me.GetName()+" closes and locks the gate.")
 }
 
 // dragonBreathSpell returns the spell selected by SPECIAL(dragon_breath)'s

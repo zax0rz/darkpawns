@@ -1,0 +1,185 @@
+package game
+
+// mob_door_hunt_test.go — hunt_victim's door leg (src/graph.c:320-345) and
+// the mob-side do_gen_door lane (src/act.movement.c:605-642): intelligent
+// races open closed-unlocked doors and refuse locked ones, and the hunter
+// moves through perform_move, which cannot cross a closed exit.
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
+
+// doorHuntWorld is 1001 -north(door "gate")-> 1002 -north-> 1003 with a
+// hunting mobile (RACE_NPCELF — intelligent) in 1001, the prey player in
+// 1003, and listeners in 1001 and 1002.
+func doorHuntWorld(t *testing.T, exitInfo int) (*World, *MobInstance, map[string]string) {
+	t.Helper()
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "South of Gate", Zone: 1, Exits: map[string]parser.Exit{
+				"north": {Direction: "north", ToRoom: 1002, Keywords: "gate",
+					DoorState: 1, ExitInfo: exitInfo, Key: 5001},
+			}},
+			{VNum: 1002, Name: "North of Gate", Zone: 1, Exits: map[string]parser.Exit{
+				"south": {Direction: "south", ToRoom: 1001, Keywords: "gate",
+					DoorState: 1, ExitInfo: exitInfo, Key: 5001},
+				"north": {Direction: "north", ToRoom: 1003},
+			}},
+			{VNum: 1003, Name: "Prey Room", Zone: 1, Exits: map[string]parser.Exit{
+				"south": {Direction: "south", ToRoom: 1002},
+			}},
+		},
+		Mobs: []parser.Mob{
+			{VNum: 9701, Keywords: "stalker", ShortDesc: "the dune stalker", Race: 1, Level: 20, Position: 8, DefaultPos: 8},
+			{VNum: 9702, Keywords: "horse", ShortDesc: "a horse", Race: 12, Level: 5, Position: 8, DefaultPos: 8},
+		},
+		Objs:  []parser.Obj{{VNum: 5001, Keywords: "gate key", ShortDesc: "a gate key"}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	out := map[string]string{}
+	w.MessageSink = func(name string, msg []byte) { out[name] += string(msg) }
+
+	mob, err := w.SpawnMob(9701, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	prey := NewPlayer(1, "Prey", 1003)
+	prey.SetPosition(8)
+	if err := w.AddPlayer(prey); err != nil {
+		t.Fatalf("AddPlayer prey: %v", err)
+	}
+	south := NewPlayer(2, "Southwatcher", 1001)
+	south.SetPosition(8)
+	if err := w.AddPlayer(south); err != nil {
+		t.Fatalf("AddPlayer south: %v", err)
+	}
+	north := NewPlayer(3, "Northwatcher", 1002)
+	north.SetPosition(8)
+	if err := w.AddPlayer(north); err != nil {
+		t.Fatalf("AddPlayer north: %v", err)
+	}
+	return w, mob, out
+}
+
+// scriptHuntDraws lives in mob_hunt_voice_depth_test.go.
+
+func TestHuntVictimOpensClosedUnlockedDoor(t *testing.T) {
+	w, mob, out := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+	mob.SetHunting("Prey")
+	// No evasion draw (prey has none); the trash-talk draw lands on the
+	// silent default arm.
+	scriptHuntDraws(t, 150)
+
+	w.huntVictim(mob)
+
+	if got := mob.GetRoom(); got != 1002 {
+		t.Fatalf("hunter room = %d, want 1002 (through the opened gate)", got)
+	}
+	ext, ok := w.GetRoomInWorld(1001).Exits["north"]
+	if !ok || ext.ExitInfo&parser.ExitClosed != 0 {
+		t.Fatalf("gate not left open: %+v", ext)
+	}
+	back, _ := w.GetRoomInWorld(1002).Exits["south"]
+	if back.ExitInfo&parser.ExitClosed != 0 {
+		t.Fatal("back side of the gate was not opened")
+	}
+	if want := "The dune stalker opens the gate.\r\n"; !strings.Contains(out["Southwatcher"], want) {
+		t.Fatalf("south room bytes = %q, want %q among them", out["Southwatcher"], want)
+	}
+	if want := "The gate is opened from the other side.\r\n"; !strings.Contains(out["Northwatcher"], want) {
+		t.Fatalf("north room bytes = %q, want %q among them", out["Northwatcher"], want)
+	}
+	// The mobile's own TO_CHAR lines vanish, as in C.
+	if got := out[mob.GetShortDesc()]; strings.Contains(got, "Okay.") {
+		t.Fatalf("mobile received its own door line: %q", got)
+	}
+}
+
+func TestHuntVictimRefusesLockedDoor(t *testing.T) {
+	w, mob, _ := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed|parser.ExitLocked)
+	mob.SetHunting("Prey")
+	scriptHuntDraws(t, 150)
+
+	w.huntVictim(mob)
+
+	if got := mob.GetRoom(); got != 1001 {
+		t.Fatalf("hunter crossed the locked gate to %d, want it stuck in 1001", got)
+	}
+	ext, _ := w.GetRoomInWorld(1001).Exits["north"]
+	if ext.ExitInfo&(parser.ExitClosed|parser.ExitLocked) != parser.ExitClosed|parser.ExitLocked {
+		t.Fatalf("locked gate state changed: %#x", ext.ExitInfo)
+	}
+}
+
+func TestHuntVictimNonIntelligentRaceDoesNotOpen(t *testing.T) {
+	w, _, out := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+	mob, err := w.SpawnMob(9702, 1001) // RACE_HORSE (12): not intelligent
+	if err != nil {
+		t.Fatalf("SpawnMob horse: %v", err)
+	}
+	mob.SetHunting("Prey")
+	scriptHuntDraws(t, 150)
+
+	w.huntVictim(mob)
+
+	if got := mob.GetRoom(); got != 1001 {
+		t.Fatalf("horse-race hunter crossed the closed gate to %d", got)
+	}
+	if strings.Contains(out["Southwatcher"], "opens the gate") {
+		t.Fatal("non-intelligent hunter attempted to open the gate")
+	}
+}
+
+func TestMobGenDoorUnlockNeedsKey(t *testing.T) {
+	w, mob, _ := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed|parser.ExitLocked)
+
+	// Without the key, the unlock gate refuses (do_gen_door's has_key arm).
+	w.mobGenDoor(mob, "gate", scmdUnlock)
+	ext, _ := w.GetRoomInWorld(1001).Exits["north"]
+	if ext.ExitInfo&parser.ExitLocked == 0 {
+		t.Fatal("keyless mobile unlocked the gate")
+	}
+
+	// With the key held, unlock then open — the mayor's 'O' cycle
+	// (src/spec_procs.c 'O').
+	key, err := w.SpawnObject(5001, -1)
+	if err != nil {
+		t.Fatalf("SpawnObject key: %v", err)
+	}
+	mob.AddToInventory(key)
+	w.mobGenDoor(mob, "gate", scmdUnlock)
+	w.mobGenDoor(mob, "gate", scmdOpen)
+	ext, _ = w.GetRoomInWorld(1001).Exits["north"]
+	if ext.ExitInfo&parser.ExitLocked != 0 || ext.ExitInfo&parser.ExitClosed != 0 {
+		t.Fatalf("keyed unlock+open left the gate shut: %#x", ext.ExitInfo)
+	}
+}
+
+func TestMobIsIntelligentMatchesCRaceTable(t *testing.T) {
+	for _, tc := range []struct {
+		race int
+		want bool
+		why  string
+	}{
+		{0, true, "RACE_NPCHUMAN"},
+		{1, true, "RACE_NPCELF"},
+		{10, true, "RACE_DRAGON"},
+		{11, true, "RACE_DEMON"},
+		{12, false, "RACE_HORSE"},
+		{13, false, "RACE_REPTILE"},
+		{18, true, "RACE_GIANT"},
+		{29, true, "RACE_NPCSSAUR"},
+		{30, false, "RACE_NPCMINOTAUR — the 19th entry sits past NUM_INTEL_RACES=18 (src/utils.c:675-682)"},
+	} {
+		m := NewMob(&parser.Mob{VNum: 9800, Keywords: "x", ShortDesc: "x", Race: tc.race}, 1001)
+		if got := mobIsIntelligent(m); got != tc.want {
+			t.Errorf("race %d (%s): mobIsIntelligent = %v, want %v", tc.race, tc.why, got, tc.want)
+		}
+	}
+}

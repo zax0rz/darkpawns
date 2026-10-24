@@ -968,3 +968,135 @@ func verbIs(s string) string {
 	}
 	return "is"
 }
+
+// hasMobKey is has_key (src/act.movement.c:571-585) for a mobile: the key
+// object anywhere in carrying, or in the hold slot only.
+func hasMobKey(m *MobInstance, key int) bool {
+	if key < 0 {
+		return false
+	}
+	for _, obj := range m.InventorySnapshot() {
+		if obj != nil && obj.VNum == key {
+			return true
+		}
+	}
+	if held, ok := m.EquipmentSnapshot()[int(SlotHold)]; ok && held != nil && held.VNum == key {
+		return true
+	}
+	return false
+}
+
+// mobGenDoor is do_gen_door (src/act.movement.c:605-642) for a descriptor-less
+// mobile: the same find_door keyword scan, the same gate ladder, and the same
+// do_doorcmd mutations and room audiences, with every TO_CHAR line dropped —
+// C's send_to_char has no descriptor to reach on a mobile. hunt_victim's door
+// opening (src/graph.c:327-338) and the mayor's gate cycle (src/spec_procs.c:
+// 'O' unlock+open, 'C' close+lock) both call the real command in C; the mob
+// lane routes through this port instead of the *Player doGenDoor.
+func (w *World) mobGenDoor(m *MobInstance, doorType string, scmd int) {
+	if m == nil || doorType == "" {
+		return
+	}
+	room := w.GetRoomInWorld(m.GetRoom())
+	if room == nil {
+		return
+	}
+
+	// find_door (src/act.movement.c:370-388): first exit whose keyword list
+	// matches the type token; a "secret" keyword hides the exit unless the
+	// room carries ROOM_SECRET_MARK.
+	revealsSecrets := movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark")
+	door := -1
+	for d := 0; d < len(dirs); d++ {
+		ext, ok := room.Exits[dirs[d]]
+		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) &&
+			(!strings.Contains(strings.ToLower(ext.Keywords), "secret") || revealsSecrets) {
+			door = d
+			break
+		}
+	}
+	if door < 0 {
+		return
+	}
+	ext, hasExit := room.Exits[dirs[door]]
+	if !hasExit {
+		return
+	}
+
+	// do_gen_door's exit gate ladder (src/act.movement.c:620-640); the
+	// refusal lines are TO_CHAR and vanish for a mobile.
+	needed := flagsDoor[scmd]
+	openable := ext.ExitInfo&parser.ExitIsDoor != 0
+	open := ext.ExitInfo&parser.ExitClosed == 0
+	unlocked := ext.ExitInfo&parser.ExitLocked == 0
+	switch {
+	case !openable:
+		return
+	case !open && needed&needOpen != 0:
+		return
+	case open && needed&needClosed != 0:
+		return
+	case unlocked && needed&needLocked != 0:
+		return
+	case !unlocked && needed&needUnlocked != 0:
+		return
+	case !hasMobKey(m, ext.Key) && m.GetLevel() < LVL_GOD && (scmd == scmdLock || scmd == scmdUnlock):
+		return
+	}
+
+	// do_doorcmd (src/act.movement.c:479-524) for an exit: resolve the back
+	// exit, toggle this side, toggle the back side.
+	otherRoomVNum := ext.ToRoom
+	hasBack := false
+	var backExt parser.Exit
+	if otherRoom := w.GetRoomInWorld(otherRoomVNum); otherRoom != nil {
+		backDir := revDir[door]
+		if backDir >= 0 && backDir < len(dirs) {
+			backExt, hasBack = otherRoom.Exits[dirs[backDir]]
+			if hasBack && backExt.ToRoom != m.GetRoom() {
+				hasBack = false
+			}
+		}
+	}
+
+	switch scmd {
+	case scmdOpen, scmdClose:
+		ext.ExitInfo ^= parser.ExitClosed
+		w.SetExitInfo(m.GetRoom(), dirs[door], ext.ExitInfo)
+		if hasBack {
+			backExt.ExitInfo ^= parser.ExitClosed
+			w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
+		}
+	case scmdUnlock, scmdLock:
+		ext.ExitInfo ^= parser.ExitLocked
+		w.SetExitInfo(m.GetRoom(), dirs[door], ext.ExitInfo)
+		if hasBack {
+			backExt.ExitInfo ^= parser.ExitLocked
+			w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
+		}
+	}
+
+	// do_doorcmd's audiences: the room act names the exit by its keyword
+	// list ($F) or "door" (src/act.movement.c:524-536); open/close also
+	// notify the far side (src/act.movement.c:543-556).
+	roomFormat := fmt.Sprintf("$n %ss the ", cmdDoor[scmd])
+	if ext.Keywords != "" {
+		Act(w, false, m, nil, nil, nil, roomFormat+"$F.", ext.Keywords, ToRoom)
+	} else {
+		Act(w, false, m, nil, nil, nil, roomFormat+"door.", "", ToRoom)
+	}
+	if (scmd == scmdOpen || scmd == scmdClose) && hasBack {
+		backName := "door"
+		if backExt.Keywords != "" {
+			backName = firstWord(backExt.Keywords)
+		}
+		suffix := "ed"
+		if scmd == scmdClose {
+			suffix = "d"
+		}
+		msg := fmt.Sprintf("The %s %s %s%s from the other side.\r\n", backName, verbIs(backName), cmdDoor[scmd], suffix)
+		for _, actor := range w.actChar(otherRoomVNum) {
+			actor.SendMessage(msg)
+		}
+	}
+}
