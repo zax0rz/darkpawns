@@ -1,0 +1,234 @@
+[
+{
+"t": 0.13,
+"out": "\r\n\r\n\r\n         (_____)           (_)    (_____)\r\n   _     /  __ \\           | |    |  __ \\                            _\r\n  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\r\n   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\r\n .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\r\n ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\r\n                                  |||\r\n                                  |||\r\n                                  `.'\r\n\r\n             Based on CircleMUD 3.0 created by J. Elson and\r\n            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!\r\n\r\n\r\n\u001b[2K\n\rBy what name do you wish to be known? "
+},
+{
+"t": 2.0,
+"in": "Wayne"
+},
+{
+"t": 2.03,
+"out": "Password: "
+},
+{
+"t": 3.0,
+"in": "<password>"
+},
+{
+"t": 3.03,
+"out": "\r\n\r\nWelcome to Dark Pawns: darkpawns.com 4300\r\n\r\nDark Pawns webpage: \u001b[0;36mhttp://www.darkpawns.com\u001b[0m\r\n\r\n**** ATTENTION:  This is now DP Classic\r\n**** Dark Pawns 3.0 beta is live at darkpawns.com 4355\r\n**** So go there immediately, if not sooner.\r\n\r\n\n*** PRESS RETURN: "
+},
+{
+"t": 5.01,
+"in": ""
+},
+{
+"t": 5.03,
+"out": "\n\rWelcome to Dark Pawns!\n\r0) Exit from Dark Pawns.\n\r1) Enter the game.\r\n2) Enter description.\r\n3) Read the background story.\r\n4) Change password.\r\n5) Delete this character.\r\n\r\n   Make your choice: "
+},
+{
+"t": 6.01,
+"in": "1"
+},
+{
+"t": 6.03,
+"out": "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n\u001b[36mAt the Temple Altar\u001b[0m\r\n   You stand before the temple altar. Carved from a solid block of black\r\nmarble, it is an exquisite example of dwarven craftsmanship. Black pillars\r\nof the same marble hold up the ceiling of this open-aired pavilion, and to\r\nthe south a narrow aisle runs its way between hard oaken pews. There is a\r\nsmall hand painted\u001b[0;1m sign \u001b[0mposted as well.\r\n \u001b[36m[ Exits: east south west ]\u001b[0m\r\n\u001b[32m\u001b[33m\u001b[0m\r\n\u001b[31m1\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 8.01,
+"in": "color complete"
+},
+{
+"t": 8.03,
+"out": "Your \u001b[31mcolor\u001b[0m is now complete.\r\n\r\n\u001b[31m1\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 9.01,
+"in": "wear all"
+},
+{
+"t": 9.03,
+"out": "You don't seem to have anything wearable.\r\n\r\n\u001b[31m1\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 10.01,
+"in": ""
+},
+{
+"t": 10.03,
+"out": "\u001b[31m1\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 14.03,
+"out": "\r\nMcclusky appears with an ear-splitting bang.\r\n\r\n\u001b[31m1\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 15.03,
+"out": "\r\nThe hand of Mcclusky touches you, healing your wounds and leaving you refreshed!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 15.53,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nSuddenly the walls run red with blood and a neon '666' sign flashes.\r\nMcclusky has created a long sword!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 15.83,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nA sound not unlike the shriek of a dying dragon fills the room...\r\nMcclusky has created a steel breast plate!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 16.13,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nA sound not unlike the shriek of a dying dragon fills the room...\r\nMcclusky has created a steel helm!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 16.43,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nThe flames of Hell roar up then fade, leaving something behind...\r\nMcclusky has created a pair of steel leggings!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 16.73,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nA sound not unlike the shriek of a dying dragon fills the room...\r\nMcclusky has created a pair of steel boots!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 17.03,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nA sound not unlike the shriek of a dying dragon fills the room...\r\nMcclusky has created a steel buckler!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 17.33,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nSuddenly the walls run red with blood and a neon '666' sign flashes.\r\nMcclusky has created a pair of steel gauntlets!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 17.63,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nThe flames of Hell roar up then fade, leaving something behind...\r\nMcclusky has created a pair of steel sleeves!\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 17.93,
+"out": "\r\nMcclusky gives you a pair of steel sleeves.\r\nMcclusky gives you a pair of steel gauntlets.\r\nMcclusky gives you a steel buckler.\r\nMcclusky gives you a pair of steel boots.\r\nMcclusky gives you a pair of steel leggings.\r\nMcclusky gives you a steel helm.\r\nMcclusky gives you a steel breast plate.\r\nMcclusky gives you a long sword.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 18.93,
+"out": "\r\nMcclusky disappears in a puff of smoke.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 19.43,
+"out": "\r\nMcclusky has transferred you!\r\n\u001b[36mEdge Of A Canyon\u001b[0m\r\n   You stand on the very edge of a canyon.  The horizon on the other side is\r\ndotted with trees and other signs of flourishing life, but the deadly drop to\r\nthe south makes it far out of your reach.\r\n\u001b[36m[ Exits: north east south west ]\u001b[0m\r\n\u001b[32m\u001b[33mMcclusky the Warrior is standing here.\r\n\u001b[0m\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 19.93,
+"out": "\r\nMcclusky disappears in a puff of smoke.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 21.93,
+"out": "\r\nMcclusky appears with an ear-splitting bang.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 22.43,
+"out": "\r\nMallory Knox arrives from a puff of smoke.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 22.93,
+"out": "\r\nMcclusky disappears in a puff of smoke.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 28.02,
+"in": "remove short"
+},
+{
+"t": 28.03,
+"out": "You don't seem to be using a short.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 29.02,
+"in": "wield long"
+},
+{
+"t": 29.03,
+"out": "You wield a long sword.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 30.02,
+"in": "wear all"
+},
+{
+"t": 30.03,
+"out": "You wear a steel breast plate on your body.\r\nYou wear a steel helm on your head.\r\nYou put a pair of steel leggings on your legs.\r\nYou wear a pair of steel boots on your feet.\r\nYou start to use a steel buckler as a shield.\r\nYou put a pair of steel gauntlets on your hands.\r\nYou wear a pair of steel sleeves on your arms.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 31.02,
+"in": "drop short"
+},
+{
+"t": 31.03,
+"out": "You don't seem to have a short.\r\n\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 32.02,
+"in": ""
+},
+{
+"t": 32.03,
+"out": "\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 38.03,
+"in": "look"
+},
+{
+"t": 38.03,
+"out": "\u001b[36mEdge Of A Canyon\u001b[0m\r\n   You stand on the very edge of a canyon.  The horizon on the other side is\r\ndotted with trees and other signs of flourishing life, but the deadly drop to\r\nthe south makes it far out of your reach.\r\n\u001b[36m[ Exits: north east south west ]\u001b[0m\r\n\u001b[32m\u001b[33mMallory Knox is here.\r\n\u001b[0m\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 39.03,
+"in": "kill mallory"
+},
+{
+"t": 39.03,
+"out": "\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[32m262\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 39.23,
+"out": "\r\n\u001b[31mMallory Knox barely hits you.\r\n\u001b[0m\u001b[31mMallory Knox hits you hard.\r\n\u001b[0mMallory Knox says, 'That was the worst head I've ever got.'\r\n\u001b[33mYou barely slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[32m250\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 41.23,
+"out": "\r\n\u001b[31mMallory Knox hits you very hard.\r\n\u001b[0m\u001b[31mMallory Knox hits you hard.\r\n\u001b[0mMallory Knox says, 'That was the worst head I've ever got.'\r\n\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\u001b[33mYou slash Mallory Knox hard.\r\n\u001b[0m\r\n\u001b[32m230\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 43.23,
+"out": "\r\n\u001b[31mMallory Knox hits you hard.\r\n\u001b[0m\u001b[31mYou barely avoid Mallory Knox's fist as she takes a swing at you!\r\n\u001b[0mMallory Knox asks, 'How sexy am i now, fucker?'\r\nMallory Knox asks, 'How sexy am i NOW?'\r\n\u001b[33mYou try to slash Mallory Knox but miss by a mile.\r\n\u001b[0m\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[32m223\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 45.23,
+"out": "\r\nMickey Knox arrives from the west.\r\nMickey Knox starts following you.\r\n\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0mMickey Knox shouts, 'I'll always love you Mal, no matter what!'\r\n\u001b[31mMallory Knox hits you hard.\r\n\u001b[0m\u001b[31mMallory Knox barely hits you.\r\n\u001b[0mMallory Knox giggles madly.\r\n\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\u001b[33mYou barely slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[33m177\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 47.23,
+"out": "\r\n\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mMallory Knox barely hits you.\r\n\u001b[0m\u001b[31mMallory Knox hits you hard.\r\n\u001b[0mMallory Knox shouts, 'You stupid biiitch!'\r\n\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[33m142\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 49.23,
+"out": "\r\n\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mMallory Knox hits you hard.\r\n\u001b[0m\u001b[31mMallory Knox hits you.\r\n\u001b[0mMallory Knox shouts, 'You stupid biiitch!'\r\n\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[33m103\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 51.23,
+"out": "\r\n\u001b[31mMickey Knox hits you hard.\r\n\u001b[0m\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0mMickey Knox shouts, 'I'll always love you Mal, no matter what!'\r\n\u001b[31mMallory Knox hits you.\r\n\u001b[0m\u001b[31mMallory Knox hits you hard.\r\n\u001b[0mMallory Knox shouts, 'You stupid biiitch!'\r\n\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\u001b[33mYou slash Mallory Knox hard.\r\n\u001b[0m\r\n\u001b[31m65\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 53.23,
+"out": "\r\n\u001b[31mMickey Knox hits you hard.\r\n\u001b[0m\u001b[31mMickey Knox hits you hard.\r\n\u001b[0mMickey Knox says, 'You're not centered.'\r\n\u001b[31mMallory Knox hits you hard.\r\n\u001b[0m\u001b[31mYou wish that your wounds would stop BLEEDING so much!\u001b[0m\r\n\u001b[31mMallory Knox hits you hard.\r\n\u001b[0m\u001b[31mYou wish that your wounds would stop BLEEDING so much!\u001b[0m\r\nMallory Knox shouts, 'You stupid biiitch!'\r\n\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\u001b[33mYou barely slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[31m50\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 55.23,
+"out": "\r\n\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mYou wish that your wounds would stop BLEEDING so much!\u001b[0m\r\n\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0m\u001b[31mYou wish that your wounds would stop BLEEDING so much!\u001b[0m\r\n\u001b[31mMallory Knox hits you hard.\r\n\u001b[0m\u001b[31mYou wish that your wounds would stop BLEEDING so much!\u001b[0m\r\n\u001b[31mMallory Knox hits you hard.\r\n\u001b[0m\u001b[31mYou wish that your wounds would stop BLEEDING so much!\u001b[0m\r\nMallory Knox shouts, 'You stupid biiitch!'\r\n\u001b[33mYou slash Mallory Knox hard.\r\n\u001b[0m\u001b[33mYou slash Mallory Knox.\r\n\u001b[0m\r\n\u001b[31m9\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 57.23,
+"out": "\r\n\u001b[31mMickey Knox hits you very hard.\r\n\u001b[0mYou are incapacitated an will slowly die, if not aided.\r\n\u001b[31mMickey Knox hits you with such force that your neck snaps in two!\r\n\u001b[0mYou are dead!  Sorry...\r\n\r\n\u001b[31m-24\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m134\u001b[0mV > "
+},
+{
+"t": 57.33,
+"out": "\r\n\n\rWelcome to Dark Pawns!\n\r0) Exit from Dark Pawns.\n\r1) Enter the game.\r\n2) Enter description.\r\n3) Read the background story.\r\n4) Change password.\r\n5) Delete this character.\r\n\r\n   Make your choice: "
+},
+{
+"t": 79.23,
+"out": "\r\n\r\n\r\nTimed out... goodbye.\r\n"
+}
+]

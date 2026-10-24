@@ -183,6 +183,35 @@ a:active, button:active { transform: translateY(1px); }
   font-size: 0.85rem;
 }
 .prose pre code { background: none; padding: 0; }
+
+/* A recorded game session: real server bytes with their ANSI colours, shown
+   on the /play CRT canvas (the one sanctioned dark surface) in the xterm.js
+   default palette that /play renders them in. Wraps like a MUD client rather
+   than scrolling sideways. */
+.prose pre.mud-log {
+  background: #0a0908;
+  color: #c8b896;
+  border: 2px solid var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  margin: 0;
+}
+.mud-log .c31 { color: #cd3131; }
+.mud-log .c32 { color: #0dbc79; }
+.mud-log .c33 { color: #e5e510; }
+.mud-log .c36 { color: #11a8cd; }
+.mud-log .b { font-weight: 700; }
+.mud-log .in { color: #e5e5e5; }
+.prose figure.session { margin: var(--space-lg) 0; }
+.prose figure.session figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-top: var(--space-sm);
+}
 .prose table {
   width: 100%;
   border-collapse: collapse;
