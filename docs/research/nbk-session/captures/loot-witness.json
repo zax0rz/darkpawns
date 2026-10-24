@@ -1,0 +1,222 @@
+[
+{
+"t": 0.18,
+"out": "\r\n\r\n\r\n         (_____)           (_)    (_____)\r\n   _     /  __ \\           | |    |  __ \\                            _\r\n  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;\r\n   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \\ \\ /\\ / / '_ \\/ __|    =\r\n .***.  /| |__| | (_| | |  |   <  | |  | (_| |\\ V  V /| | | \\__ \\  .***.\r\n ~~~~~  /|_____/ \\__,_|_|  |_|\\_\\ |||   \\__,_| \\_/\\_/ |_| |_|___/  ~~~~~\r\n                                  |||\r\n                                  |||\r\n                                  `.'\r\n\r\n             Based on CircleMUD 3.0 created by J. Elson and\r\n            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,\r\n                H. Staerfeldt, M. Seifert, and S. Hammer\r\n\r\n   As of 10-17-2008 there has been a pwipe.  Enjoy your new adventures!\r\n\r\n\r\n\u001b[2K\n\rBy what name do you wish to be known? "
+},
+{
+"t": 2.0,
+"in": "Scagnetti"
+},
+{
+"t": 2.08,
+"out": "Password: "
+},
+{
+"t": 3.0,
+"in": "<password>"
+},
+{
+"t": 3.08,
+"out": "\r\n\r\nWelcome to Dark Pawns: darkpawns.com 4300\r\n\r\nDark Pawns webpage: \u001b[0;36mhttp://www.darkpawns.com\u001b[0m\r\n\r\n**** ATTENTION:  This is now DP Classic\r\n**** Dark Pawns 3.0 beta is live at darkpawns.com 4355\r\n**** So go there immediately, if not sooner.\r\n\r\n\n*** PRESS RETURN: "
+},
+{
+"t": 5.01,
+"in": ""
+},
+{
+"t": 5.08,
+"out": "\n\rWelcome to Dark Pawns!\n\r0) Exit from Dark Pawns.\n\r1) Enter the game.\r\n2) Enter description.\r\n3) Read the background story.\r\n4) Change password.\r\n5) Delete this character.\r\n\r\n   Make your choice: "
+},
+{
+"t": 6.01,
+"in": "1"
+},
+{
+"t": 6.08,
+"out": "\r\nWelcome to Dark Pawns! May your visit here be... Interesting.\r\n\r\n\u001b[36mAt the Temple Altar\u001b[0m\r\n   You stand before the temple altar. Carved from a solid block of black\r\nmarble, it is an exquisite example of dwarven craftsmanship. Black pillars\r\nof the same marble hold up the ceiling of this open-aired pavilion, and to\r\nthe south a narrow aisle runs its way between hard oaken pews. There is a\r\nsmall hand painted\u001b[0;1m sign \u001b[0mposted as well.\r\n \u001b[36m[ Exits: east south west ]\u001b[0m\r\n\u001b[32m\u001b[33mWayne the Warrior is standing here.\r\n\u001b[0m\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 8.01,
+"in": "color complete"
+},
+{
+"t": 8.08,
+"out": "Your \u001b[31mcolor\u001b[0m is now complete.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 9.01,
+"in": ""
+},
+{
+"t": 9.08,
+"out": "\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 12.08,
+"out": "\r\nMcclusky appears with an ear-splitting bang.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 13.58,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nThe flames of Hell roar up then fade, leaving something behind...\r\nMcclusky has created a lantern!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 13.88,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nThe flames of Hell roar up then fade, leaving something behind...\r\nMcclusky has created a long sword!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 14.18,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nA sound not unlike the shriek of a dying dragon fills the room...\r\nMcclusky has created a steel breast plate!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 14.48,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nSuddenly the walls run red with blood and a neon '666' sign flashes.\r\nMcclusky has created a steel helm!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 14.78,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nA sound not unlike the shriek of a dying dragon fills the room...\r\nMcclusky has created a pair of steel leggings!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 15.08,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nThe flames of Hell roar up then fade, leaving something behind...\r\nMcclusky has created a pair of steel boots!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 15.38,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nA sound not unlike the shriek of a dying dragon fills the room...\r\nMcclusky has created a steel buckler!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 15.68,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nSuddenly the walls run red with blood and a neon '666' sign flashes.\r\nMcclusky has created a pair of steel gauntlets!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 15.98,
+"out": "\r\nMcclusky makes a strange magickal gesture.\r\nSuddenly the walls run red with blood and a neon '666' sign flashes.\r\nMcclusky has created a pair of steel sleeves!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 16.28,
+"out": "\r\nMcclusky gives a pair of steel sleeves to Wayne.\r\nMcclusky gives a pair of steel gauntlets to Wayne.\r\nMcclusky gives a steel buckler to Wayne.\r\nMcclusky gives a pair of steel boots to Wayne.\r\nMcclusky gives a pair of steel leggings to Wayne.\r\nMcclusky gives a steel helm to Wayne.\r\nMcclusky gives a steel breast plate to Wayne.\r\nMcclusky gives a long sword to Wayne.\r\nMcclusky gives a lantern to Wayne.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 17.28,
+"out": "\r\nThe hand of Mcclusky touches you, healing your wounds and leaving you refreshed!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 22.08,
+"out": "\r\nWayne wields a long sword.\r\nWayne wears a steel breast plate on his body.\r\nWayne wears a steel helm on his head.\r\nWayne puts a pair of steel leggings on his legs.\r\nWayne wears a pair of steel boots on his feet.\r\nWayne straps a steel buckler around his arm as a shield.\r\nWayne puts a pair of steel gauntlets on his hands.\r\nWayne wears a pair of steel sleeves on his arms.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 29.28,
+"out": "\r\nMcclusky disappears in a puff of smoke.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 29.78,
+"out": "\r\nWayne disappears in a blaze of hellfire!\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 30.28,
+"out": "\r\nMcclusky appears with an ear-splitting bang.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 30.78,
+"out": "\r\nMcclusky stares at you and utters the words, 'invisibility'.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 32.78,
+"out": "\r\nMcclusky disappears in a puff of smoke.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 32.88,
+"out": "\r\nMcclusky has transferred you!\r\n\u001b[36mEdge Of A Canyon\u001b[0m\r\n   You stand on the very edge of a canyon.  The horizon on the other side is\r\ndotted with trees and other signs of flourishing life, but the deadly drop to\r\nthe south makes it far out of your reach.\r\n\u001b[36m[ Exits: north east south west ]\u001b[0m\r\n\u001b[32m\u001b[33mMcclusky the Warrior is standing here.\r\n\u001b[0m\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 32.98,
+"out": "\r\nMcclusky disappears in a puff of smoke.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 33.28,
+"out": "\r\nMcclusky appears with an ear-splitting bang.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 33.78,
+"out": "\r\nMickey Knox arrives from a puff of smoke.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 34.28,
+"out": "\r\nMcclusky disappears in a puff of smoke.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 41.08,
+"out": "\r\nWayne arrives from the east.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 44.28,
+"out": "\r\nMickey Knox says, 'Wayne, I'm gonna kill you.'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 48.28,
+"out": "\r\nMickey Knox asks, 'And you wanna know why?'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 52.28,
+"out": "\r\nMickey Knox says, 'Shit Wayne, I'm a natural born killer.'.\r\nMickey Knox hits Wayne hard.\r\nWayne barely slashes Mickey Knox.\r\nMickey Knox hits Wayne extremely hard.\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox asks, 'Do you believe in fate?'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 54.28,
+"out": "\r\nWayne barely slashes Mickey Knox.\r\nWayne slashes Mickey Knox hard.\r\nMickey Knox hits Wayne hard.\r\nMickey Knox hits Wayne hard.\r\nMickey Knox shouts, 'I'll always love you Mal, no matter what!'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 56.28,
+"out": "\r\nMickey Knox nimbly avoids Wayne's slash.\r\nWayne slashes Mickey Knox hard.\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox hits Wayne very hard.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 58.28,
+"out": "\r\nWayne's slash at Mickey Knox misses him by a mile.\r\nWayne slashes Mickey Knox hard.\r\nWayne barely avoids a blow from Mickey Knox!\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox shouts, 'I'll always love you Mal, no matter what!'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 60.28,
+"out": "\r\nWayne slashes Mickey Knox hard.\r\nWayne slashes Mickey Knox hard.\r\nMickey Knox hits Wayne extremely hard.\r\nMickey Knox hits Wayne hard.\r\nMickey Knox states, 'It's not nice to point.'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 62.28,
+"out": "\r\nWayne slashes Mickey Knox hard.\r\nWayne's slash at Mickey Knox misses him by a mile.\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox hits Wayne hard.\r\nMickey Knox asks, 'Do you believe in fate?'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 64.28,
+"out": "\r\nWayne's slash at Mickey Knox misses him by a mile.\r\nWayne slashes Mickey Knox hard.\r\nMickey Knox hits Wayne hard.\r\nMickey Knox hits Wayne hard.\r\nMickey Knox shouts, 'When they come and ask you who did this, tell them it was Mickey and Mallory Knox!'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 66.28,
+"out": "\r\nWayne's slash at Mickey Knox misses him by a mile.\r\nWayne slashes Mickey Knox.\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox says, 'You're not centered.'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 68.28,
+"out": "\r\nWayne slashes Mickey Knox.\r\nWayne's slash misses Mickey Knox!\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox hits Wayne extremely hard.\r\nMickey Knox shouts, 'I'll always love you Mal, no matter what!'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 70.28,
+"out": "\r\nWayne barely slashes Mickey Knox.\r\nMickey Knox hits Wayne hard.\r\nMickey Knox hits Wayne very hard.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 72.28,
+"out": "\r\nWayne slashes Mickey Knox.\r\nWayne slashes Mickey Knox hard.\r\nMickey Knox hits Wayne very hard.\r\nMickey Knox hits Wayne hard.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 74.28,
+"out": "\r\nWayne slashes Mickey Knox hard.\r\nWayne barely slashes Mickey Knox.\r\nMickey Knox hits Wayne extremely hard.\r\nMickey Knox hits Wayne hard.\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 76.28,
+"out": "\r\nWayne's slash misses Mickey Knox!\r\nWayne barely avoids a blow from Mickey Knox!\r\nWayne barely avoids a blow from Mickey Knox!\r\nMickey Knox states, 'It's not nice to point.'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 78.28,
+"out": "\r\nWayne barely slashes Mickey Knox.\r\nWayne slashes Mickey Knox hard.\r\nMickey Knox hits Wayne very hard.\r\nWayne is incapacitated and will slowly die, if not aided.\r\nMickey Knox punches Wayne's head so hard that his skull cracks open!\r\nWayne is dead!  R.I.P.\r\nYour blood freezes as you hear Wayne's death cry.\r\nMickey Knox gets a long sword from the corpse of Wayne.\r\nMickey Knox gets a steel buckler from the corpse of Wayne.\r\nMickey Knox gets a pair of steel sleeves from the corpse of Wayne.\r\nMickey Knox gets a pair of steel gauntlets from the corpse of Wayne.\r\nMickey Knox gets a pair of steel boots from the corpse of Wayne.\r\nMickey Knox gets a pair of steel leggings from the corpse of Wayne.\r\nMickey Knox gets a steel helm from the corpse of Wayne.\r\nMickey Knox gets a steel breast plate from the corpse of Wayne.\r\nMickey Knox gets a lantern from the corpse of Wayne.\r\nMickey Knox junks a lantern. It vanishes in a puff of smoke!\r\nMickey Knox junks a long sword. It vanishes in a puff of smoke!\r\nMickey Knox wears a steel breast plate on his body.\r\nMickey Knox wears a steel helm on his head.\r\nMickey Knox puts a pair of steel leggings on his legs.\r\nMickey Knox wears a pair of steel boots on his feet.\r\nMickey Knox puts a pair of steel gauntlets on his hands.\r\nMickey Knox wears a pair of steel sleeves on his arms.\r\nMickey Knox straps a steel buckler around his arm as a shield.\r\n\u001b[33mMickey Knox gossips, 'Wayne was tough, but had good eq...'\r\n\u001b[0mMickey Knox says, 'Wayne, I'm gonna kill you.'\r\n\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+},
+{
+"t": 184.09,
+"in": "look"
+},
+{
+"t": 184.18,
+"out": "\u001b[36mEdge Of A Canyon\u001b[0m\r\n   You stand on the very edge of a canyon.  The horizon on the other side is\r\ndotted with trees and other signs of flourishing life, but the deadly drop to\r\nthe south makes it far out of your reach.\r\n\u001b[36m[ Exits: north east south west ]\u001b[0m\r\n\u001b[32mThe corpse of Wayne is lying here.                             \r\n\u001b[33mMickey Knox is here.\r\n\u001b[0m\r\n\u001b[32m140\u001b[0mH \u001b[32m100\u001b[0mM \u001b[32m99\u001b[0mV > "
+}
+]
