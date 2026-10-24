@@ -1,0 +1,74 @@
+--- a/lib/world/mob/79.mob
++++ b/lib/world/mob/79.mob
+@@ -289,19 +289,17 @@
+ Race: 11
+ E
+ #7969
+-black cloaked wanderer mysterious man~
+-a black-cloaked wanderer~
+-A mysterious man in a long black cloak wanders about.
+-~
+-To say that he is inconspicuous would be an understatement.  You find that if
+-you don't concentrate on following his movements every second, you lose track
+-of exactly what he is doing.
+-~
+-960537 0 0 0 33992 0 0 0 -700 E
+-33 -13 -23 33d5+2163 22d4+22
+-50 180000
++mickey knox~
++Mickey Knox~
++Mickey Knox is here.
++~
++Mickey Knox.  (Stand-in mob: the original entry was not preserved.)
++~
++262219 0 0 0 0 0 0 0 0 E
++20 1 0 20d10+400 3d6+4
++100 20000
+ 8 8 1
+-Race: 19
++Race: 0
+ E
+ #7970
+ unicorn~
+@@ -332,6 +330,19 @@
+ 8 8 1
+ Race: 0
+ E
++#7972
++mallory knox~
++Mallory Knox~
++Mallory Knox is here.
++~
++Mallory Knox.  (Stand-in mob: the original entry was not preserved.)
++~
++11 0 0 0 0 0 0 0 0 E
++18 3 2 18d10+400 2d6+3
++100 20000
++8 8 2
++Race: 0
++E
+ #7979
+ kender thief~
+ a kender~
+--- a/lib/world/zon/79.zon
++++ b/lib/world/zon/79.zon
+@@ -23,6 +23,7 @@
+ M 0 7901 1 7900
+ M 0 7908 1 7900
+ M 0 7969 1 7900
++M 0 7972 1 7900
+ M 0 7979 10 7900
+ M 0 7979 10 7900
+ M 0 7979 10 7900
+--- a/src/spec_assign.c
++++ b/src/spec_assign.c
+@@ -264,7 +264,8 @@
+   ASSIGNMOB(7910, breed_killer);
+   ASSIGNMOB(7915, paladin);
+   ASSIGNMOB(7979, eq_thief);
+-  ASSIGNMOB(7969, magic_user);
++  ASSIGNMOB(7969, mickey);
++  ASSIGNMOB(7972, mallory);
+   ASSIGNMOB(7970, cleric);  /* unicorn */
+ 
+   /* Kir Drax'in */

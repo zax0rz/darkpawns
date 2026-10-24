@@ -1,0 +1,76 @@
+# Mickey and Mallory session capture (2026-10-24)
+
+Evidence for the blog post `website-astro/src/content/blog/mickey-and-mallory.md`.
+The post's three game logs are rendered from the raw captures in `logs/`.
+
+## What ran
+
+The original C server from this repository's `src/` and `lib/` (HEAD
+`29994e5`), copied to a scratch directory and built with gcc 13.3 on x86-64:
+
+```bash
+gcc -g -O0 -fcommon -w -std=gnu89 -Isrc/lua/include -Isrc -c <each libdp source + circle.c>
+gcc -g -O0 -fcommon -o bin/circle obj/*.o src/lua/lib/liblualib.a src/lua/lib/liblua.a -lz -lcrypt -lm
+```
+
+`src/lua/include/` is not in the tree, so `lua-include/` holds minimal Lua 4.0
+declarations written to link against the prebuilt `src/lua/lib/*.a`.
+
+This is **not** the reference oracle binary (`DP_ORACLE_BIN`, built from
+`dp-oracle-seam` with the determinism seam). It is unseeded, so a rerun draws
+different dice. The captures are illustrations, not oracle evidence.
+
+## What was changed (`stand-in.patch`)
+
+`SPECIAL(mickey)` and `SPECIAL(mallory)` (`src/spec_procs.c:1269-1422`) are
+declared in `src/spec_assign.c:102-103` but never assigned to a mob, and no
+world file has a Mickey or Mallory entry. The scratch copy adds:
+
+- Mickey Knox at vnum 7969 (the `MICKEY` define), replacing the black-cloaked
+  wanderer. Flags SPEC, SENTINEL, ISNPC, STAY_ZONE, HUNTER. HUNTER is required
+  for `set_hunting()` from Mallory's proc to move him; SENTINEL kept him in
+  place until the scene began.
+- Mallory Knox at vnum 7972 (unused), flags SPEC, SENTINEL, ISNPC.
+- `ASSIGNMOB(7969, mickey)` and `ASSIGNMOB(7972, mallory)`, and a zone 79
+  load line for 7972. Zone 79 scatters 7900-7998 to random rooms on reset
+  (`src/db.c:2113-2129`), so an implementor `transfer`red both onto the canyon.
+
+Names, levels, hit dice, damage dice and flags are invented stand-ins. Every
+line of output the mobs and the fight produce comes from the unmodified C.
+
+The scratch `lib/etc/players` baseline was removed so the first character
+(Mcclusky) became the implementor that staged each scene; Wayne is a mortal
+advanced to level 20 and given steel plate and a long sword.
+
+## Capturing
+
+`tools/mud.py` drives a telnet session and records raw server bytes, ANSI
+escapes intact, as JSON events (`{"t", "out"}` and `{"t", "in"}` for typed
+lines). `tools/multi.py` runs the implementor and Wayne concurrently;
+`tools/stage.sh` is the implementor's setup script. Passwords in `logs/` are
+replaced with `<password>`.
+
+Each scene ran on a fresh boot:
+
+| Log | Scene | Rendered from |
+|---|---|---|
+| `logs/sceneA.json` | Wayne walks west into Mickey | input 13 (`west`) to "You are dead" |
+| `logs/sceneB.json` | Wayne attacks Mallory; Mickey hunts him | input 12 (`look`) to "You are dead" |
+| `logs/outtake-bulette.json` | a bulette kills Wayne mid-speech | input 14 (`west`) to "You are dead" |
+
+```bash
+python3 tools/ansi2html.py logs/sceneB.json 12 "You are dead"
+```
+
+Earlier takes were discarded: one had Wayne log in beside Mickey, one walked
+past Wayne's own corpse from the previous take, and two were lost to night
+(the canyon is dark, and Mickey's proc needs `CAN_SEE`).
+
+## Related finding (not fixed here)
+
+The Go port's `specMallory` (`pkg/game/spec_procs.go:1256`) diverges from the
+C: it drops the default "You stupid biiitch!" branch (rolls 6-10), replaces
+"giggles madly" with a line that is not in the C source, capitalises "i", and
+omits the `set_hunting(mickey, ...)` call. `specMickey` omits the
+non-combat approach entirely. Both procs are unassigned in Go as in C, so no
+player can reach either divergence today.
