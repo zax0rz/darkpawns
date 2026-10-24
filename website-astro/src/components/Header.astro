@@ -192,6 +192,13 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
     color: var(--ink);
   }
 
+  @media (max-width: 900px), (pointer: coarse) {
+    .nav-primary, .nav-secondary { padding-block: 0; }
+    .sectionbar a { display: flex; align-items: center; min-height: 44px; }
+    .nav-search-btn { min-height: 44px; }
+  }
+  .nav-toggle:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  @media (forced-colors: active) { .nav-toggle:focus-visible { outline-color: Highlight; } }
   @media (max-width: 640px) {
     .masthead-row { flex-direction: column; align-items: flex-start; gap: var(--space-sm); }
     .masthead-meta { text-align: left; flex-direction: row; gap: var(--space-md); }
@@ -200,7 +207,8 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
     .nav-toggle-inner {
       display: flex;
       align-items: center;
-      padding-block: 0.8rem;
+      padding-block: var(--space-sm);
+      min-height: 44px;
       color: var(--ink);
     }
     .nav-toggle:hover .burger { color: var(--accent); }
@@ -232,7 +240,7 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
       width: 100%;
     }
     .nav-primary li, .nav-secondary li { width: 100%; }
-    .sectionbar a { display: block; padding-block: 0.55rem; }
+    .sectionbar a { display: flex; padding-block: var(--space-sm); }
     .nav-search-btn { margin-block: 0.4rem; }
   }
 

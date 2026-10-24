@@ -2,7 +2,7 @@
 version: 1
 slug: "website-astro-src-pages-index-astro"
 primary_target: "website-astro/src/pages/index.astro"
-related_targets: ["website-astro/src/pages/download.astro", "website-astro/src/components/Footer.astro"]
+related_targets: ["website-astro/src/pages/download.astro", "website-astro/src/components/Footer.astro", "website-astro/src/components/Header.astro"]
 ---
 
 # Homepage chapter opening and downloads
@@ -55,3 +55,12 @@ This pass inspected current source plus `.impeccable/review/record-links-user.pn
 The user-requested Discord badge follows GitHub in `Footer.astro`, linking to the exact invite `https://discord.gg/supVzU9yN`. It reuses `footer-social-badge`/`footer-icon`, with a 14×14 monochrome Bootstrap Icons SVG, decorative `aria-hidden`, visible Discord text, and accessible name “Dark Pawns on Discord”. No other UI changes are included in this addition.
 
 Read-only inspection of the source diff and `.impeccable/review/discord-footer-user.png` / `discord-footer-mobile.png` found no material issue; the badge fits the existing footer treatment and wraps on narrow screens. Implementation handoff verifies no overflow at 320px, keyboard reachability, exact href, and passing site-check/formatting/Go build/vet/test/lint. This scoped evidence does not claim broader critique findings were fixed. Global design files remain unchanged; only this surface brief was edited in this documentation pass.
+
+
+## Clarity and touch refinement
+
+The authorized copy pass explains remort as starting again at level 1 in an advanced class while keeping equipment, gold, and statistics; the source is `src/content/help/info/remort-immort-remorting-immorting-immortality.md`. The objects detail now explains quitting in your temple to save gear without rent, supported by `src/content/archive/features.md:22` and `lib/text/help/commands.hlp:1252`; the duplicate rent claim is removed from Wyldlands. The Database guide replaces VNUM with “in-game ID”. This pass inspected those source passages and the implementation diff.
+
+At widths through 900px or with a coarse pointer, homepage standalone actions/blog headlines, footer column links/social badges/license, and header navigation/search have 44px minimum targets. Mobile menu summary has a 44px target and explicit focus treatment. Inline prose links retain reading flow. GitHub and Discord are grouped in the labeled Community and source code navigation, allowing them to wrap as a group. Hero, blog placement, client visibility, download content, assets, and availability/status behavior are unchanged.
+
+Inspected `.impeccable/review/clarity-touch-menu.png`, `clarity-touch-world-mobile.png`, the final unfocused `clarity-touch-world-user.png`, and `clarity-touch-footer-mobile.png`; scaled QA iframe captures include a white parent canvas outside site styling. Implementation handoff reports no overflow at 320/390/640/641/768/900/1440px, measured target groups at least 44px through 900px with fine-pointer desktop density preserved, menu Enter/Space and focus verified, and shared header/footer checks on `/download/` and `/connect/` at 390px. Site-check, formatting, Go build/vet/test/lint pass; one scoped layout detector run reports `[]`. Final site-check after the footer navigation wrapper passed. The final footer capture shows GitHub/Discord side by side; handoff measurements confirm all target groups at least 44px and no overflow at 390px. Fresh independent `clarity_touch_finish_review` verdict: **SHIP**, no material findings, after inspecting the three-file diff, DESIGN.md, primary remort/rent texts, and all four final captures. Final implementation checks confirm no footer-group overflow at 320/1440px and all 22 footer links at least 44px high at 320px. Availability remains untouched; this does not close every earlier critique priority. Global DESIGN.md/design.json/PRODUCT.md remain unchanged, as confirmed by read-only comparison. Only this brief was edited.

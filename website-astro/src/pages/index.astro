@@ -38,14 +38,14 @@ const [lead, ...morePosts] = postCards;
 const facts = [
   { label: 'rooms', figure: count(rooms), detail: 'Every room and connection on the map' },
   { label: 'mobs', figure: count(mobs), detail: 'City guards, guildmasters, and dungeon bosses' },
-  { label: 'objects', figure: count(objects), detail: '100% rent-free gear saved in your temple' },
+  { label: 'objects', figure: count(objects), detail: 'Quit in your temple to save your gear without paying rent' },
   { label: 'help topics', figure: count(helpEntries.length), detail: 'In-game reference files from the server' },
 ];
 
 const fieldGuides = [
   { href: '/world/', title: 'The world', meta: `${handbooks.length} handbooks`, text: 'Six starting classes, six remort classes, seven races, vampirism, and the rules of life and death.' },
   { href: '/map/', title: 'Map', meta: `${count(rooms)} rooms`, text: 'Every room and every connection, drawn from the world files.' },
-  { href: '/database/', title: 'Database', meta: `${count(mobs + objects)} records`, text: 'Every mob and object loaded by the current server, indexed by VNUM.' },
+  { href: '/database/', title: 'Database', meta: `${count(mobs + objects)} records`, text: 'Every mob and object loaded by the current server, indexed by its in-game ID.' },
   { href: '/help/', title: 'Help files', meta: `${count(helpEntries.length)} topics`, text: 'The commands, spells, and reference files used in the game, preserved word for word.' },
 ];
 
@@ -103,7 +103,7 @@ const eras = [
       <dl class="world-rules" aria-label="Distinctive rules of Dark Pawns">
         <div>
           <dt>30 levels + remort</dt>
-          <dd>Six base classes unlock Assassin, Avatar, Magus, Paladin, Ranger, and Mystic.</dd>
+          <dd>Start again at level 1 in an advanced class, keeping your equipment, gold, and statistics.</dd>
         </div>
         <div>
           <dt>Three-character parties</dt>
@@ -111,7 +111,7 @@ const eras = [
         </div>
         <div>
           <dt>Wyldlands &amp; blood</dt>
-          <dd>100% rent-free temples, vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
+          <dd>Vampirism tied to the moon, and dreams in the Wyldlands that become real.</dd>
         </div>
       </dl>
 
@@ -501,6 +501,16 @@ const eras = [
     .facts > div, .facts > div + div { border-left: 0; padding: var(--space-md) var(--space-md) var(--space-md) 0; }
     .facts > div:nth-child(even) { border-left: 1px solid var(--rule); padding-left: var(--space-md); padding-right: 0; }
     .facts > div:nth-child(n + 3) { border-top: 1px solid var(--rule); }
+  }
+  @media (max-width: 900px), (pointer: coarse) {
+    .client-guide a, .download-link a, .world-heading > a,
+    .dispatch-head > a, .dispatch-read, .record-references a, .restoration-cta a {
+      display: inline-block;
+      min-height: 44px;
+      max-width: 100%;
+      padding-block: var(--space-sm);
+    }
+    .dispatch-lead h3 a, .dispatch-more h3 a { display: block; min-height: 44px; }
   }
   @media (max-width: 640px) {
     .cover { padding-block: 1.5rem; }
