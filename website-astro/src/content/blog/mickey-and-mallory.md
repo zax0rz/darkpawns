@@ -307,4 +307,6 @@ You are dead!  Sorry...
 
 That tell comes from [the game's hunting code](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/graph.c#L349-L401), which gives any mob tracking you a small chance of a taunt with every step, from "Run to your momma, pansy!" to putting your corpse up for auction before you're dead.
 
-<!-- Section 5, pending: Close. Anyone who met them, or has a backup with their mob entries. -->
+## Did you meet them?
+
+If you played Dark Pawns and ran into Mickey or Mallory, tell me about it: a story about what they did to you, a log of an actual encounter, an old backup with their mob files in it, anything. [Send it here](https://darkpawns.org/contact/). If their mob files turn up, I'll run all of this again with the real ones.
