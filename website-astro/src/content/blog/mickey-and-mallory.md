@@ -28,7 +28,7 @@ Players put [NBK] in their titles to say they were open to player killing, or ju
 > [ 22 Mu ] Nicolae the village tobacco farmer. [NBK]\
 > [ 30 Th ] Aidan the Mass Murderer [NBK] [!PAW] (invis) (OUTLAW)
 
-author's note: aidan is me
+(Aidan is me.)
 
 So I gave them new bodies on the original server and let them do what the code says they do.
 
