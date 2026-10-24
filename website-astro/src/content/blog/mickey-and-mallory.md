@@ -66,6 +66,245 @@ Spec procs get handed to mobs in `src/spec_assign.c`, and that file [declares bo
 
 Neither proc takes anything off your corpse. Dark Pawns did have a flag for that, [written by Serapis in October 1996](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/fight.c#L1100-L1108): a mob carrying it strips your corpse, puts on your gear and brags about it on gossip ("$N was tough, but had good eq..."). Their flags went with their mob files, so maybe Mickey and Mallory had it. Or maybe I'm misremembering, because it's been 30 years.
 
-<!-- Section 4, pending: Running them again. Stand-in caveat. Takes: Mickey's speech, flee and hunt (wimpy), loot and brag (witness view), the peaceful room at The Dragon's Claw, Mallory plus Mickey hunting in, the bulette outtake, and the side quest: Wayne walking off the edge at 11369, the silent rim, and the imp watching his gear vanish in 11376. -->
+## Running them again
+
+I built the original server from the repository's `src/` and gave it two stand-in mobs, Mickey Knox and Mallory Knox, with two added lines attaching their procs. The bodies are mine: their levels, hit points and damage, and the looting flag from the last section, which is a guess. Everything they say, every hit and miss, and everything after the kill comes from the original game.
+
+My test character is Wayne, a level 20 warrior in steel plate, named after Wayne Gale, the TV host Robert Downey Jr. plays in the movie. An immortal carried everyone into place before each scene and I cut that part. The rest is exactly what the server sent, with Wayne's commands after the prompt where a client would show them.
+
+### Mickey finds Wayne
+
+Mickey waited two rooms west of Wayne on the canyon edge. Wayne's wimpy setting made him flee once he got low on hit points.
+
+<figure class="session">
+<pre class="mud-log"><span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">126</span>V &gt; <span class="in">west</span>
+<span class="c36">Edge Of A Canyon</span>
+   You stand on the very edge of a canyon.  The horizon on the other side is
+dotted with trees and other signs of flourishing life, but the deadly drop to
+the south makes it far out of your reach.
+<span class="c36">[ Exits: north east south west ]</span>
+<span class="c33">Mickey Knox is here.</span>
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">118</span>V &gt; 
+Mickey Knox says, 'Wayne, I'm gonna kill you.'
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">118</span>V &gt; 
+Mickey Knox asks, 'And you wanna know why?'
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">118</span>V &gt; 
+Mickey Knox says, 'Shit Wayne, I'm a natural born killer.'.
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c33">You slash Mickey Knox.</span>
+<span class="c33">You miss Mickey Knox by an inch!</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">Mickey Knox hits you hard.</span>
+Mickey Knox shouts, 'I'll always love you Mal, no matter what!'
+<span></span>
+<span class="c32">221</span>H <span class="c32">100</span>M <span class="c32">118</span>V &gt; 
+<span class="c33">You slash Mickey Knox hard.</span>
+<span class="c33">You slash Mickey Knox.</span>
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">You duck under Mickey Knox's fist as he takes a swing at you.</span>
+Mickey Knox asks, 'Do you believe in fate?'
+<span></span>
+<span class="c32">213</span>H <span class="c32">100</span>M <span class="c32">118</span>V &gt; 
+<span class="c33">You slash Mickey Knox.</span>
+<span class="c33">You slash Mickey Knox.</span>
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span></span>
+<span class="c33">192</span>H <span class="c32">100</span>M <span class="c32">118</span>V &gt; 
+<span class="c33">You slash Mickey Knox hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+Mickey Knox shouts, 'When they come and ask you who did this, tell them it was Mickey and Mallory Knox!'
+<span></span>
+<span class="c33">94</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c33">You barely slash Mickey Knox.</span>
+<span class="c33">Your desperate slash at Mickey Knox is easily avoided by him.</span>
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+Mickey Knox states, 'It's not nice to point.'
+<span></span>
+<span class="c31">74</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c33">You miss Mickey Knox by an inch!</span>
+<span class="c33">You slash Mickey Knox hard.</span>
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+<span></span>
+<span class="c31">26</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c33">You barely slash Mickey Knox.</span>
+<span class="c33">You slash Mickey Knox hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+You wimp out, and attempt to flee!
+<span class="c36">Edge Of A Desert</span>
+   The desert ends here at a canyon to the south that drops thousands of feet
+down into a dried river bed far below.  
+<span class="c36">[ Exits: north east south west ]</span>
+You flee head over heels.
+<span></span>
+<span class="c31">2</span>H <span class="c32">100</span>M <span class="c32">126</span>V &gt; 
+Mickey Knox arrives from the south.
+Mickey Knox starts following you.
+<span class="c31">You barely avoid Mickey Knox's fist as he takes a swing at you!</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+You wimp out, and attempt to flee!
+<span class="c36">Edge Of A Desert</span>
+   The desert ends here at a canyon to the south that drops thousands of feet
+down into a dried river bed far below.  
+<span class="c36">[ Exits: north east south west ]</span>
+You flee head over heels.
+Mickey Knox arrives from the west.
+<span class="c31">Mickey Knox tries to hit you but you easily avoid the blow.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+You wimp out, and attempt to flee!
+<span class="c36">Edge Of A Desert</span>
+   The desert ends here at a canyon to the south that drops thousands of feet
+down into a dried river bed far below.  
+<span class="c36">[ Exits: north east south west ]</span>
+You flee head over heels.
+<span></span>
+<span class="c31">2</span>H <span class="c32">100</span>M <span class="c32">110</span>V &gt; 
+Mickey Knox arrives from the east.
+<span class="c31">You recieve a punch in your kidneys which ends your worldly misery -- R.I.P.!</span>
+You are dead!  Sorry...
+<span class="c33">Mickey Knox gossips, 'Hey Wayne, was that suicide or did you try to fight back?'</span>
+<span></span>
+<span class="c31">-14</span>H <span class="c32">100</span>M <span class="c32">110</span>V &gt; </pre>
+<figcaption>Verbatim server output recorded 2026-10-24, some rounds cut</figcaption>
+</figure>
+
+### The peaceful room
+
+The same speech in [The Dragon's Claw](https://darkpawns.org/rooms/4874/), a weapon shop flagged peaceful:
+
+<figure class="session">
+<pre class="mud-log"><span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; <span class="in">north</span>
+<span class="c36">The Dragon's Claw</span>
+   You stand in an arsenal.  Blades, bows, staves, and other deadly items
+line the walls and rest on the floor as a large yellow-skinned man stares
+cautiously at you from behind the counter against the northern wall.
+<span class="c36">[ Exits: north south ]</span>
+<span class="c33">Mickey Knox is here.</span>
+<span class="c33">The weaponer stands here, chiseling a whetstone from granite.</span>
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">132</span>V &gt; 
+Mickey Knox says, 'Wayne, I'm gonna kill you.'
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">132</span>V &gt; 
+Mickey Knox asks, 'And you wanna know why?'
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">132</span>V &gt; 
+Mickey Knox says, 'I'll tell you later, Wayne'.
+Mickey Knox walks out the door and vanishes.
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">132</span>V &gt; </pre>
+<figcaption>Verbatim server output recorded 2026-10-24</figcaption>
+</figure>
+
+### Mallory
+
+Mallory alone at Mickey's hideout, Mickey three rooms west. Wayne swings first:
+
+<figure class="session">
+<pre class="mud-log"><span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; <span class="in">kill mallory</span>
+<span class="c33">You slash Mallory Knox hard.</span>
+<span></span>
+<span class="c32">262</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+Mallory Knox shouts, 'You stupid biiitch!'
+<span class="c33">You barely slash Mallory Knox.</span>
+<span class="c33">You slash Mallory Knox.</span>
+<span></span>
+<span class="c32">233</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mickey Knox tells you, 'Run to your momma, pansy!'</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+Mallory Knox says, 'That was the worst head I've ever got.'
+<span class="c33">You barely slash Mallory Knox.</span>
+<span class="c33">You slash Mallory Knox hard.</span>
+<span></span>
+<span class="c32">217</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mallory Knox misses a wild punch at you.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+Mallory Knox asks, 'How do you like me now?'
+<span class="c33">You slash Mallory Knox.</span>
+<span class="c33">You slash Mallory Knox hard.</span>
+<span></span>
+<span class="c32">208</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+Mickey Knox arrives from the west.
+Mickey Knox starts following you.
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+Mickey Knox asks, 'Do you believe in fate?'
+<span class="c31">Mallory Knox tries to hit you but you easily avoid the blow.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+Mallory Knox asks, 'How do you like me now?'
+<span class="c33">You scratch Mallory Knox as you slash her.</span>
+<span></span>
+<span class="c33">167</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">Mickey Knox hits you extremely hard.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">Mallory Knox barely hits you.</span>
+Mallory Knox shouts, 'You stupid biiitch!'
+<span class="c33">You slash Mallory Knox hard.</span>
+<span class="c33">You slash Mallory Knox hard.</span>
+<span></span>
+<span class="c33">130</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+Mickey Knox states, 'It's not nice to point.'
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+Mallory Knox asks, 'How sexy am i now, fucker?'
+Mallory Knox asks, 'How sexy am i NOW?'
+<span class="c33">You slash Mallory Knox.</span>
+<span class="c33">You slash Mallory Knox hard.</span>
+<span></span>
+<span class="c33">90</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">Mickey Knox hits you hard.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+Mallory Knox says, 'That was the worst head I've ever got.'
+<span class="c33">You slash Mallory Knox hard.</span>
+<span></span>
+<span class="c31">58</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+Mickey Knox says, 'You're not centered.'
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+<span class="c31">Mallory Knox hits you hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+Mallory Knox giggles madly.
+<span class="c33">You slash Mallory Knox hard.</span>
+<span class="c33">You slash Mallory Knox.</span>
+<span></span>
+<span class="c31">17</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; 
+<span class="c31">Mickey Knox hits you very hard.</span>
+<span class="c31">You wish that your wounds would stop BLEEDING so much!</span>
+<span class="c31">Mickey Knox hits you very hard.</span>
+You are mortally wounded, and will die soon, if not aided.
+<span class="c31">Mallory Knox hits you with such force that your neck snaps in two!</span>
+You are dead!  Sorry...
+<span class="c33">Mallory Knox gossips, 'Hey Wayne, was that suicide or did you try to fight back?'</span>
+<span></span>
+<span class="c31">-21</span>H <span class="c32">100</span>M <span class="c32">134</span>V &gt; </pre>
+<figcaption>Verbatim server output recorded 2026-10-24, some rounds cut</figcaption>
+</figure>
+
+That tell comes from [the game's hunting code](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/graph.c#L349-L401), which gives any mob tracking you a small chance of a taunt with every step, from "Run to your momma, pansy!" to putting your corpse up for auction before you're dead.
 
 <!-- Section 5, pending: Close. Anyone who met them, or has a backup with their mob entries. -->

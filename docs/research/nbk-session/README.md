@@ -77,6 +77,17 @@ witness.
 python3 tools/ansi2html.py captures/sceneB.json 12 "You are dead"
 ```
 
+The post's section 4 logs, as Zach trimmed them (whole rounds only):
+
+```bash
+python3 tools/ansi2html.py captures/hunt-wayne.json 13 "You are dead" > out/hunt.html
+python3 tools/trim_rounds.py out hunt "165H " "164H " "141H " "119H " "53H "
+python3 tools/ansi2html.py captures/peaceful-wayne.json 14 "vanishes." > out/peaceful.html
+python3 tools/trim_rounds.py out peaceful
+python3 tools/ansi2html.py captures/mallory-wayne.json 13 "You are dead" > out/mallory.html
+python3 tools/trim_rounds.py out mallory "248H "
+```
+
 Earlier takes were discarded: one had Wayne log in beside Mickey, one walked
 past Wayne's own corpse from the previous take, and two were lost to night
 (the canyon is dark, and Mickey's proc needs `CAN_SEE`).
