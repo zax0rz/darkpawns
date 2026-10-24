@@ -114,6 +114,12 @@ func cmdVisible(s *Session, args []string) error {
 	return nil
 }
 
+// cmdTrack senses the direction of a tracked target.
+func cmdTrack(s *Session, args []string) error {
+	s.manager.world.ExecTrack(s.player, strings.Join(args, " "))
+	return nil
+}
+
 // cmdInactive toggles inactive status.
 func cmdInactive(s *Session, args []string) error {
 	s.manager.world.ExecInactive(s.player, strings.Join(args, " "))

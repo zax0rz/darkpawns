@@ -429,6 +429,8 @@ func init() {
 	registerCommand("scout", wrapArgs(cmdScout), "Scout ahead for danger.")
 	registerCommand("roll", wrapArgs(cmdRoll), "Roll a random number.")
 	registerCommand("visible", wrapArgs(cmdVisible), "Make yourself visible again.")
+	// do_track lives in graph.c; its class gate is in the handler (graph.go).
+	registerCommand("track", wrapArgs(cmdTrack), "Sense which way a target went.")
 	registerCommand("inactive", wrapArgs(cmdInactive), "Toggle inactive status.")
 	registerCommand("auto", wrapArgs(cmdAuto), "Toggle automatic exits, looting, gold, and split.")
 	// Preference toggles (act.other.c do_gen_tog) — each is its own top-level

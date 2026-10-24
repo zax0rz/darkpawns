@@ -1,0 +1,58 @@
+# C-first depth vehicle for do_track (src/graph.c:187-258) past the entry
+# gates: a warrior at skill 100 tracks from the Street of Wizardry (8105).
+# A beggar spawns one room north (8106, open exit) for the live draw-exposed
+# trail, a citizen shares the tracker's room for the same-room sentinel, the
+# guard trainee (MOB_SENTINEL, mob 16303 act bit 1) exercises the no-trail
+# gate, and self-tracking pins whatever gate C itself reaches first.
+
+# depth-case: track.no-argument
+# depth-case: track.target-not-found
+# depth-case: track.already-there
+# depth-case: track.notrack-sentinel-victim
+# depth-case: track.trail-direction
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8106 163
+spawn-mob 8062 1 8105 80
+spawn-mob 8071 1 8106 80
+
+[setup:oracle]
+Trackgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trackgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+skillset Trackgod track 100
+
+[probe]
+track
+track nobody
+track citizen
+track beggar
+track trainee
