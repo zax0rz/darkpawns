@@ -498,33 +498,10 @@ func main() {
 
 	slog.Info("Dark Pawns Phase 1 Server Starting...")
 
-	// C reset_time() (db.c:415-451) is the first thing boot_db does: it derives
-	// the game calendar from the real-time epoch (beginning_of_time), then
-	// derives sunlight, moon phase, and initial barometric pressure. That
-	// pressure dice roll is the first draw from the process-wide stream,
-	// ahead of mob prototypes and zone resets, so ResetTime must run before
-	// the world is parsed.
-	game.ResetTime()
-
-	// Parse world files
-	slog.Info("Loading world", "path", *worldDir)
-	parsedWorld, err := parser.ParseWorld(*worldDir)
-	if err != nil {
-		slog.Error("Failed to parse world", "error", err)
-		os.Exit(1)
-	}
-	slog.Info(parsedWorld.Stats())
-
-	// Create game world
-	gameWorld, err := game.NewWorld(parsedWorld)
-	if err != nil {
-		slog.Error("Failed to create game world", "error", err)
-		os.Exit(1)
-	}
-	gameWorld.WorldPath = *worldDir
-	gameWorld.PostInit()
-
-	// Connect to database
+	// Connect to database before the world boots: House_boot (inside
+	// game.NewWorld) resolves house owners through the player index, so the
+	// house system's name/id lookups must be registered first (BRIEF-2026-
+	// 10-24 Investigation 4; the C helpers read the player index file).
 	slog.Info("Connecting to database...")
 	database, err := db.New(*dbURL)
 	if err != nil {
@@ -551,6 +528,37 @@ func main() {
 				"path", *dbURL)
 		}
 	}
+	if database != nil {
+		nameByID, idByName := database.HousePlayerLookups()
+		game.RegisterHousePlayerLookup(nameByID, idByName)
+	}
+
+
+	// C reset_time() (db.c:415-451) is the first thing boot_db does: it derives
+	// the game calendar from the real-time epoch (beginning_of_time), then
+	// derives sunlight, moon phase, and initial barometric pressure. That
+	// pressure dice roll is the first draw from the process-wide stream,
+	// ahead of mob prototypes and zone resets, so ResetTime must run before
+	// the world is parsed.
+	game.ResetTime()
+
+	// Parse world files
+	slog.Info("Loading world", "path", *worldDir)
+	parsedWorld, err := parser.ParseWorld(*worldDir)
+	if err != nil {
+		slog.Error("Failed to parse world", "error", err)
+		os.Exit(1)
+	}
+	slog.Info(parsedWorld.Stats())
+
+	// Create game world
+	gameWorld, err := game.NewWorld(parsedWorld)
+	if err != nil {
+		slog.Error("Failed to create game world", "error", err)
+		os.Exit(1)
+	}
+	gameWorld.WorldPath = *worldDir
+	gameWorld.PostInit()
 
 	// Set ban/xnames file paths relative to world directory (DP-421)
 	game.SetBanFilePaths(*worldDir)
