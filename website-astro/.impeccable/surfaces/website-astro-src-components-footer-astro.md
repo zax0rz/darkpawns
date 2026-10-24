@@ -15,7 +15,7 @@ THESIS: End each page with a legible directory and a clear community invitation,
 
 OWN-WORLD: Preserve Haunted Paperback: warm cream, charcoal rules, display/body serifs, rare oxblood social links, and monospace status. Reuse incumbent tokens, flat surfaces, and existing monochrome SVGs; no new raster assets or global design changes.
 
-STORY: Recognize Dark Pawns and its dates, find Discord/GitHub and the existing server status, choose Play/Explore/Archive/Project, then reach privacy and license details.
+STORY: Recognize Dark Pawns and its dates, find Discord/GitHub/Mudverse voting and the existing server status, choose Play/Explore/Archive/Project, then reach privacy and license details.
 
 FIRST VIEWPORT: The footer opens with identity and dates alongside social links/status. Four directory columns on desktop become two at 700px and below. At 480px and below the identity/community header stacks. Legal content ends the footer. Preserve compact scanning without the former long single-column mobile directory.
 
@@ -32,3 +32,10 @@ This documentation pass inspected Footer.astro, incumbent DESIGN.md/PRODUCT.md, 
 Implementation handoff reports old hrefs are a subset of the new hrefs plus `/connect/`; widths 320/390/480/481/700/701/900/1440px have no overflow, links meet 44px through 900px, and exactly one status remains. Site-check, formatting, Go build/vet/test/lint pass; scoped layout scans report `[]` before/after. Five stale voice-baseline findings were removed without adding exceptions. These execution results are handoff evidence, not gates rerun by this documentation pass.
 
 Read-only comparison confirms DESIGN.md, PRODUCT.md, and `.impeccable/design.json` remain unchanged. The footer extends the incumbent system without changing global tokens. Previously noted global-document drift is outside scope. Only this new footer brief was created; reviewer history was not added to the homepage brief.
+
+
+## Mudverse community-link extension
+
+User approved Vote on Mudverse as the third community link after Discord/GitHub, with exact href `https://www.mudverse.com/vote/720` and accessible name “Vote for Dark Pawns on Mudverse”. It reuses the 44px-high social-link treatment and adds a decorative 16px Bootstrap thumbs-up SVG. The wrapping social row uses 4px row/32px column gaps; no other design changes are included.
+
+This pass inspected the source diff and `.impeccable/review/footer-mudverse-user.png` / `footer-mudverse-mobile.png`. The desktop row and narrow wrapped vote link fit the incumbent footer; no material issue was found. Implementation handoff reports exact href and keyboard focus verified, no overflow at 320/481px, a 44×161px vote target, and passing site-check/formatting/Go build/vet/test/lint. The link was never activated; its external destination was user-confirmed, not independently verified. Only this footer brief was edited; global design documents remain unchanged.
