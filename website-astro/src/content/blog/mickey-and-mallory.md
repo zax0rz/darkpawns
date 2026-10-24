@@ -60,7 +60,7 @@ Once the fight starts he has a one in two chance each round of saying something:
 
 ## What the code kept
 
-Spec procs get handed to mobs in `src/spec_assign.c`, and that file [declares both of theirs](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/spec_assign.c#L102-L103) without ever handing them to anyone. The code names 7969 as Mickey's number. Today [mob 7969](https://darkpawns.org/mobs/7969/) is "a black-cloaked wanderer" running the generic spellcaster proc, and Mallory never had a number at all.
+Spec procs get handed to mobs in `src/spec_assign.c`, and that file [declares both of theirs](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/spec_assign.c#L102-L103) without ever handing them to anyone. The code [names 7969 as Mickey's number](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/spec_procs.c#L1267) and never gives Mallory one. Today [mob 7969](https://darkpawns.org/mobs/7969/) is "a black-cloaked wanderer" running the generic spellcaster proc.
 
 7969 sits in zone 79, which its zone file calls "BFM/Random Load/Redferne's". On every reset the game drops each of that zone's mobs into [a random room somewhere in the world](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/db.c#L2113-L2129), so Mickey was written to turn up anywhere. His neighbors in the file are [the Unicorn](https://darkpawns.org/mobs/7970/) ("There is rumored to be only a single one in the entire world") and [Eric Draven](https://darkpawns.org/mobs/7971/), The Crow, "dressed like a mime from hell."
 
@@ -309,4 +309,4 @@ That tell comes from [the game's hunting code](https://github.com/zax0rz/darkpaw
 
 ## Did you meet them?
 
-If you played Dark Pawns and ran into Mickey or Mallory, tell me about it: a story about what they did to you, a log of an actual encounter, an old backup with their mob files in it, anything. [Send it here](https://darkpawns.org/contact/). If their mob files turn up, I'll run all of this again with the real ones.
+If you played Dark Pawns and ran into Mickey or Mallory, tell me about it: a story about what they did to you, a log of an actual encounter, an old backup with their mob files in it, anything. [Send it here](https://darkpawns.org/contact/).

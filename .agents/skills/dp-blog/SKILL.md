@@ -239,6 +239,11 @@ than estimating:
 printf '%s' 'the blurb text' | wc -m
 ```
 
+The same blurb goes to the Dark Pawns Discord's #announcements channel. Zach
+pastes it there by hand after the tweet. Never put a Discord webhook URL in
+this repository: a webhook URL is a credential, and anyone holding it can post
+to the channel.
+
 **Share card.** When the post has header art, give it its own link-preview
 image; otherwise it shares the site-wide `/og-image.png`. The card is a
 1200x630 PNG at `website/static/images/blog/og-<slug>.png`, set in the
