@@ -447,16 +447,16 @@ func (w *World) mobPerformMove(m *MobInstance, dir int) {
 // past the loop bound and not intelligent in C. Race numbers are the NPC
 // RACE_* defines (src/structs.h:131-161).
 var intelligentRaces = map[int]bool{
-	0: true,  // RACE_NPCHUMAN
-	1: true,  // RACE_NPCELF
-	2: true,  // RACE_NPCDWARF
-	3: true,  // RACE_NPCKENDER
-	4: true,  // RACE_NPCCENTAUR
-	5: true,  // RACE_NPCRAKSHASA
-	6: true,  // RACE_TROLL
-	7: true,  // RACE_LYCANTHROPE
-	8: true,  // RACE_VAMPIRE
-	9: true,  // RACE_UNDEAD
+	0:  true, // RACE_NPCHUMAN
+	1:  true, // RACE_NPCELF
+	2:  true, // RACE_NPCDWARF
+	3:  true, // RACE_NPCKENDER
+	4:  true, // RACE_NPCCENTAUR
+	5:  true, // RACE_NPCRAKSHASA
+	6:  true, // RACE_TROLL
+	7:  true, // RACE_LYCANTHROPE
+	8:  true, // RACE_VAMPIRE
+	9:  true, // RACE_UNDEAD
 	10: true, // RACE_DRAGON
 	11: true, // RACE_DEMON
 	18: true, // RACE_GIANT

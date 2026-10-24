@@ -512,11 +512,6 @@ func main() {
 		slog.Warn("Database connection failed, explicitly running without persistence", "error", err)
 		database = nil
 	} else {
-		defer func() {
-			if err := database.Close(); err != nil {
-				slog.Error("database close failed during server shutdown", "error", err)
-			}
-		}()
 		slog.Info("Database connected.", "path", *dbURL)
 		// A first boot and a boot against an existing database otherwise look
 		// identical in the log, and the difference matters: an operator who
@@ -532,7 +527,6 @@ func main() {
 		nameByID, idByName := database.HousePlayerLookups()
 		game.RegisterHousePlayerLookup(nameByID, idByName)
 	}
-
 
 	// C reset_time() (db.c:415-451) is the first thing boot_db does: it derives
 	// the game calendar from the real-time epoch (beginning_of_time), then
@@ -559,6 +553,15 @@ func main() {
 	}
 	gameWorld.WorldPath = *worldDir
 	gameWorld.PostInit()
+	// The close defer sits after the world-boot failure exits (gocritic
+	// exitAfterDefer) at the spot the connection block used to occupy.
+	if database != nil {
+		defer func() {
+			if err := database.Close(); err != nil {
+				slog.Error("database close failed during server shutdown", "error", err)
+			}
+		}()
+	}
 
 	// Set ban/xnames file paths relative to world directory (DP-421)
 	game.SetBanFilePaths(*worldDir)

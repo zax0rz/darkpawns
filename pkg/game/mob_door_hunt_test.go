@@ -20,12 +20,16 @@ func doorHuntWorld(t *testing.T, exitInfo int) (*World, *MobInstance, map[string
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{
 			{VNum: 1001, Name: "South of Gate", Zone: 1, Exits: map[string]parser.Exit{
-				"north": {Direction: "north", ToRoom: 1002, Keywords: "gate",
-					DoorState: 1, ExitInfo: exitInfo, Key: 5001},
+				"north": {
+					Direction: "north", ToRoom: 1002, Keywords: "gate",
+					DoorState: 1, ExitInfo: exitInfo, Key: 5001,
+				},
 			}},
 			{VNum: 1002, Name: "North of Gate", Zone: 1, Exits: map[string]parser.Exit{
-				"south": {Direction: "south", ToRoom: 1001, Keywords: "gate",
-					DoorState: 1, ExitInfo: exitInfo, Key: 5001},
+				"south": {
+					Direction: "south", ToRoom: 1001, Keywords: "gate",
+					DoorState: 1, ExitInfo: exitInfo, Key: 5001,
+				},
 				"north": {Direction: "north", ToRoom: 1003},
 			}},
 			{VNum: 1003, Name: "Prey Room", Zone: 1, Exits: map[string]parser.Exit{
@@ -36,7 +40,7 @@ func doorHuntWorld(t *testing.T, exitInfo int) (*World, *MobInstance, map[string
 			{VNum: 9701, Keywords: "stalker", ShortDesc: "the dune stalker", Race: 1, Level: 20, Position: 8, DefaultPos: 8},
 			{VNum: 9702, Keywords: "horse", ShortDesc: "a horse", Race: 12, Level: 5, Position: 8, DefaultPos: 8},
 		},
-		Objs:  []parser.Obj{{VNum: 5001, Keywords: "gate key", ShortDesc: "a gate key"}},
+		Objs: []parser.Obj{{VNum: 5001, Keywords: "gate key", ShortDesc: "a gate key"}},
 	})
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
@@ -85,7 +89,7 @@ func TestHuntVictimOpensClosedUnlockedDoor(t *testing.T) {
 	if !ok || ext.ExitInfo&parser.ExitClosed != 0 {
 		t.Fatalf("gate not left open: %+v", ext)
 	}
-	back, _ := w.GetRoomInWorld(1002).Exits["south"]
+	back := w.GetRoomInWorld(1002).Exits["south"]
 	if back.ExitInfo&parser.ExitClosed != 0 {
 		t.Fatal("back side of the gate was not opened")
 	}
@@ -111,7 +115,7 @@ func TestHuntVictimRefusesLockedDoor(t *testing.T) {
 	if got := mob.GetRoom(); got != 1001 {
 		t.Fatalf("hunter crossed the locked gate to %d, want it stuck in 1001", got)
 	}
-	ext, _ := w.GetRoomInWorld(1001).Exits["north"]
+	ext := w.GetRoomInWorld(1001).Exits["north"]
 	if ext.ExitInfo&(parser.ExitClosed|parser.ExitLocked) != parser.ExitClosed|parser.ExitLocked {
 		t.Fatalf("locked gate state changed: %#x", ext.ExitInfo)
 	}
@@ -141,7 +145,7 @@ func TestMobGenDoorUnlockNeedsKey(t *testing.T) {
 
 	// Without the key, the unlock gate refuses (do_gen_door's has_key arm).
 	w.mobGenDoor(mob, "gate", scmdUnlock)
-	ext, _ := w.GetRoomInWorld(1001).Exits["north"]
+	ext := w.GetRoomInWorld(1001).Exits["north"]
 	if ext.ExitInfo&parser.ExitLocked == 0 {
 		t.Fatal("keyless mobile unlocked the gate")
 	}
@@ -155,7 +159,7 @@ func TestMobGenDoorUnlockNeedsKey(t *testing.T) {
 	mob.AddToInventory(key)
 	w.mobGenDoor(mob, "gate", scmdUnlock)
 	w.mobGenDoor(mob, "gate", scmdOpen)
-	ext, _ = w.GetRoomInWorld(1001).Exits["north"]
+	ext = w.GetRoomInWorld(1001).Exits["north"]
 	if ext.ExitInfo&parser.ExitLocked != 0 || ext.ExitInfo&parser.ExitClosed != 0 {
 		t.Fatalf("keyed unlock+open left the gate shut: %#x", ext.ExitInfo)
 	}
