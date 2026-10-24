@@ -10,7 +10,7 @@ ogImage: "/images/blog/og-mickey-and-mallory.png"
 ogImageAlt: "And You Wanna Know Why?: Mickey Knox's two lines from the game on a black terminal panel, prompt numbers in green and his hit in red"
 ---
 
-Back in the 90s, I got looted by one of the mobs named either Mickey or Mallory Knox. Their mob files have vanished, but their personalities are still in the code.
+Back in the 90s, I got killed by one of the mobs named either Mickey or Mallory Knox. Their mob files have vanished, but their personalities are still in the code.
 
 The Knoxes came from Oliver Stone's 1994 movie [Natural Born Killers](https://en.wikipedia.org/wiki/Natural_Born_Killers), Woody Harrelson and Juliette Lewis as two lovers on a killing spree that television turns into celebrities. I think I might have had it on VHS. A tag players wore in their titles came from the same movie. Type `help nbk` in Dark Pawns and this is the whole entry ([read it here](https://darkpawns.org/help/socials/nbk/)):
 
