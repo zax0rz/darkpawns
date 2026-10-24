@@ -1,0 +1,116 @@
+---
+import { lineage, lineageSVG, nodeName, sourceFor } from '../lib/lineage';
+---
+<section class="lineage-section container" aria-labelledby="lineage-heading" id="lineage">
+  <div class="lineage-intro">
+    <h2 id="lineage-heading">The DikuMUD family tree</h2>
+    <p>Dark Pawns belongs to the CircleMUD branch. Its surviving C code credits CircleMUD 3.0 and DikuMUD Gamma 0.0. Follow the red line to this Go restoration.</p>
+  </div>
+  <figure>
+    <div class="tree-tools">
+      <p class="tree-legend"><span class="key confirmed">Supported ancestry</span><span class="key unconfirmed">Unconfirmed connection</span><span class="key influence">Design influence</span></p>
+      <a href="/about/lineage.svg">Open full-size tree</a>
+    </div>
+    <div class="tree-scroll" tabindex="0" role="region" aria-label="DikuMUD family tree, scroll horizontally to explore" aria-describedby="lineage-caption">
+      <div class="tree-art" set:html={lineageSVG()} />
+    </div>
+    <figcaption id="lineage-caption">Working reconstruction, reviewed October 23, 2026. This is a selection of the DikuMUD family, not every game or code contribution. Dashed lines preserve connections reported in the earlier chart that this review has not confirmed. On small screens, scroll across the tree or read the text below. <a href="/about/lineage.md">Markdown version</a>.</figcaption>
+  </figure>
+  <div class="lineage-notes">
+    <div>
+      <h3>Dark Pawns changed bases.</h3>
+      <p><a href="/archive/history/">Frontline’s account</a> records CircleMUD 1.7 at the September 1994 founding, 2.2 in December 1995, 3.0pl9 in March 1996, and 3.0pl11 that June. The branch here shows the later C game, not a claim that Dark Pawns began on 3.0.</p>
+    </div>
+    <div>
+      <h3>A tree leaves things out.</h3>
+      <p>Merc’s credits acknowledge Copper, Alfa, and Silly code. ROM 2.4 also uses Merc 2.1. These exchanges do not fit a single-parent tree. SocketMUD sits separately because the earlier chart’s dotted Merc connection is not established by the sources checked here.</p>
+    </div>
+  </div>
+  <details class="lineage-record" id="lineage-record">
+    <summary>Read the relationships and their sources</summary>
+    <p>This chart is a reconstruction. Solid lines mean the cited source supports ancestry or a later version, sometimes with intermediate releases omitted. They do not assert a complete record of code sharing. “Unconfirmed” means the connection needs more evidence, not that it is false.</p>
+    <dl class="relationship-list">
+      {lineage.edges.map((edge) => {
+        const source = sourceFor(edge.source);
+        return <div id={`lineage-${edge.child}`}>
+          <dt>{nodeName(edge.parent)} <span>to</span> {nodeName(edge.child)}</dt>
+          <dd>
+            <span class:list={['evidence-state', edge.state]}>{edge.state === 'influence' ? 'Design influence' : edge.state === 'confirmed' ? 'Supported ancestry' : 'Unconfirmed connection'}.</span>{' '}
+            {source ? <><a href={source.url}>{source.title}</a>. {source.note}</> : 'Reported in the earlier family tree; this review has not established the connection from a primary source.'}
+            {edge.note && <> {edge.note}</>}
+          </dd>
+        </div>;
+      })}
+    </dl>
+    <p id="lineage-socket">SocketMUD is not connected to Merc in this reconstruction. NakedMUD’s maintainer identifies SocketMUD as its foundation; that does not establish SocketMUD’s own ancestry. RocketMUD’s reported placement still needs a primary source.</p>
+  </details>
+</section>
+
+<style>
+  .lineage-section { padding-block: var(--space-xl); border-bottom: 1px solid var(--rule); }
+  .lineage-intro { max-width: var(--content-width); }
+  .lineage-intro h2 { font-size: clamp(1.75rem, 3vw + .5rem, 2rem); }
+  figure { margin: var(--space-lg) 0; }
+  .tree-tools { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap; border-block: 1px solid var(--rule); padding-block: var(--space-sm); }
+  .tree-tools > a { padding-block: .5rem; }
+  .tree-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 0; font-size: .9rem; }
+  .key { display: inline-flex; align-items: center; gap: .5rem; }
+  .key::before { content: ''; width: 1.5rem; border-top: 1px solid var(--ink); }
+  .key.unconfirmed::before { border-top-style: dashed; }
+  .key.influence::before { border-top-style: dotted; }
+  .tree-scroll { overflow-x: auto; scrollbar-color: var(--ink-muted) var(--paper-deep); scrollbar-width: auto; padding-block: var(--space-lg) var(--space-md); }
+  .tree-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .tree-art { min-width: 1060px; }
+  .tree-art :global(svg) { width: 100%; height: auto; display: block; overflow: visible; }
+  .tree-art :global(text) { font-family: var(--font-body); font-size: 23px; text-anchor: middle; fill: var(--ink); }
+  .tree-art :global(.edge) { fill: none; stroke: var(--ink); stroke-width: 1.3; }
+  .tree-art :global(.edge.unconfirmed) { stroke-dasharray: 7 5; }
+  .tree-art :global(.edge.influence) { stroke-dasharray: 2 5; }
+  .tree-art :global(.edge.our-line) { stroke: var(--accent); stroke-width: 2.5; }
+  .tree-art :global(.node rect) { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+  .tree-art :global(.node.ours rect) { stroke: var(--accent); stroke-width: 2; }
+  .tree-art :global(.node.ours text) { fill: var(--accent); font-weight: 700; }
+  .tree-art :global(.node.root text) { font-weight: 700; }
+  .tree-art :global(.node:hover rect), .tree-art :global(.node:focus-visible rect) { fill: var(--paper-deep); stroke-width: 3; }
+  .tree-art :global(.node:focus-visible) { outline: 3px solid var(--accent); outline-offset: 5px; }
+  .tree-art :global(.influence-label), .tree-art :global(.separate-label) { fill: var(--ink-muted); font-size: 20px; font-style: italic; }
+  figcaption { max-width: 85ch; color: var(--ink-muted); font-size: .9rem; margin-top: var(--space-md); }
+  .lineage-notes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl); margin-block: var(--space-lg); }
+  .lineage-notes h3 { font-size: 1.5rem; }
+  .lineage-notes p { margin-bottom: 0; }
+  .lineage-record { border-top: 1px solid var(--rule); }
+  summary { cursor: pointer; padding-block: var(--space-md); font-family: var(--font-display); font-size: 1.25rem; }
+  summary:hover { color: var(--accent); }
+  summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .relationship-list { margin: var(--space-lg) 0 0; }
+  .relationship-list > div { display: grid; grid-template-columns: minmax(12rem, 1fr) 2fr; gap: var(--space-lg); border-top: 1px solid var(--rule); padding-block: var(--space-md); scroll-margin-top: 5rem; }
+  dt { font-weight: 700; }
+  dd { margin: 0; overflow-wrap: anywhere; }
+  .evidence-state { font-style: italic; }
+  @media (max-width: 720px) { .lineage-notes, .relationship-list > div { grid-template-columns: 1fr; gap: var(--space-sm); } .lineage-notes { gap: var(--space-lg); } }
+  @media (max-width: 520px) { .lineage-section { padding-inline: var(--space-md); } .tree-tools { align-items: start; } .tree-legend { flex-direction: column; } }
+</style>
+<script>
+  // Native disclosures remain usable without JavaScript. Reveal a cited row
+  // when a diagram link points into the otherwise collapsed source list.
+  const revealLineageSource = () => {
+    if (!location.hash.startsWith('#lineage-') || location.hash === '#lineage-heading' || location.hash === '#lineage-caption') return;
+    const target = document.getElementById(location.hash.slice(1));
+    const record = target?.closest('details');
+    if (record) { record.open = true; target?.scrollIntoView({ block: 'start' }); }
+  };
+  const tree = document.querySelector<HTMLElement>('.tree-scroll');
+  const ourNode = document.querySelector<SVGGraphicsElement>('.tree-art .node.ours');
+  if (tree && ourNode && tree.scrollWidth > tree.clientWidth) {
+    const region = tree.getBoundingClientRect();
+    const node = ourNode.getBoundingClientRect();
+    tree.scrollLeft = Math.max(0, node.x - region.x + node.width / 2 - tree.clientWidth / 2);
+  }
+  window.addEventListener('hashchange', revealLineageSource);
+  // A fresh visit starts with the long reference list folded, including
+  // browser-restored disclosure state. Deliberate diagram links still open it.
+  window.addEventListener('pageshow', () => {
+    const record = document.querySelector<HTMLDetailsElement>('#lineage-record');
+    if (record) record.open = false;
+  });
+</script>

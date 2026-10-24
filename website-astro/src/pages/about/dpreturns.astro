@@ -43,7 +43,7 @@ const timeline = [
 <Base title="DPReturns: a sourced reconstruction" description="What the public record tells us about the Dark Pawns revival, from its 2019 reopening through the current DPReturns project.">
   <article class="history-page">
     <header class="hero container">
-      <p class="eyebrow"><a href="/about/">About Dark Pawns</a> / DPReturns</p>
+      <nav class="about-back" aria-label="About"><a href="/about/">Back to About Dark Pawns</a></nav>
       <h1>Dark Pawns Returns, 2019 to now.</h1>
       <p class="lede">Dark Pawns closed around 2010. In 2019, former players brought it back. This is what we can document about that revival without pretending the public record is complete.</p>
     </header>
@@ -56,7 +56,7 @@ const timeline = [
         <p>The dates do not line up perfectly. The README calls the version a 2020 fork, while the reopening announcement and first public commit both date to 2019. We have kept that discrepancy visible.</p>
       </div>
       <aside>
-        <p class="aside-label">Current signs of life</p>
+        <h3>Current signs of life</h3>
         <p><a href="https://www.darkpawns.net/">darkpawns.net</a>, the active home of DPReturns, was online when checked. A Dark Pawns server also answered at <code>50.16.123.54:6969</code>, the address in the current Mud Connector listing.</p>
         <p class="checked">Checked August 15, 2026.</p>
       </aside>
@@ -64,7 +64,6 @@ const timeline = [
 
     <section class="record-section">
       <div class="container">
-        <p class="eyebrow">The public record</p>
         <h2>A working chronology</h2>
         <ol class="timeline">
           {timeline.map((event) => (
@@ -83,7 +82,6 @@ const timeline = [
 
     <section class="gaps container">
       <div>
-        <p class="eyebrow">Still missing</p>
         <h2>The parts only the staff and players can tell us</h2>
         <ul>
           <li>Who helped plan and open the revival in 2019</li>
@@ -94,14 +92,13 @@ const timeline = [
         </ul>
       </div>
       <aside>
-        <p class="aside-label">Help correct this account</p>
+        <h3>Help correct this account</h3>
         <p>If you worked on DPReturns or played there, we would like your corrections, missing names, dates, and memories. This page is a starting point for your history, not a claim to own it.</p>
         <p><a href="/credits/">See how contributions are credited</a></p>
       </aside>
     </section>
 
     <section class="sources container">
-      <p class="eyebrow">Sources</p>
       <h2>What this account rests on</h2>
       <ul>
         <li><a href="https://www.reddit.com/r/MUD/comments/dp83z3/">October 2019 reopening announcement</a></li>
@@ -117,15 +114,14 @@ const timeline = [
 </Base>
 
 <style>
-  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
-  .eyebrow a { color: inherit; }
+  .about-back { margin-bottom: var(--space-md); }
+  .about-back a { display: inline-block; padding-block: .65rem; }
   .hero { padding-block: var(--space-xl); }
   .hero h1 { max-width: 14ch; font-size: clamp(3rem, 8vw, 6rem); }
   .lede { max-width: 43rem; color: var(--ink-muted); font-family: var(--font-display); font-size: clamp(1.25rem, 2.5vw, 1.75rem); line-height: 1.4; }
   .summary, .gaps { display: grid; grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); gap: var(--space-xl); padding-bottom: var(--space-xl); }
   .summary > div, .gaps > div { max-width: var(--content-width); }
   aside { align-self: start; border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
-  .aside-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
   .checked { color: var(--ink-muted); font-family: var(--font-mono); font-size: .75rem; }
   code { font-family: var(--font-mono); font-size: .9em; }
   .record-section { background: var(--paper-deep); border-block: 1px solid var(--rule); padding-block: var(--space-xl); }

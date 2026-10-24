@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import LineageTree from '../components/LineageTree.astro';
 
 const timeline = [
   { year: '1994', title: 'Dark Pawns begins', text: 'Serapis and Tracer start the game on CircleMUD 1.7 at knight.ufp.org.' },
@@ -16,7 +17,6 @@ const timeline = [
 <Base title="About Dark Pawns" description="Dark Pawns began in 1994. This is the sourced history of the original MUD, its players, DPReturns, and the modern Go restoration.">
   <article class="about-page">
     <header class="about-hero container">
-      <p class="eyebrow">Recorded by the people who were there</p>
       <h1>Dark Pawns began in 1994.</h1>
       <blockquote>
         “Like a great game of chess, the world has become a board filled with bishops and kings, stately queens, white knights and dark pawns striving to rise through the ranks into godhood.”
@@ -33,7 +33,7 @@ const timeline = [
         <p class="signature">Zach Greene, Aidan and Aiko</p>
       </div>
       <aside>
-        <p class="aside-label">If you were there</p>
+        <h3>If you were there</h3>
         <p>I am trying to recover the parts of the community history that are still worth publishing. I am also trying to find the old crew.</p>
         <p><a href="/archive/">See what has been recovered</a></p>
         <p><a href="/contact/">Send me a private message</a></p>
@@ -43,7 +43,6 @@ const timeline = [
     <section class="history-section">
       <div class="container">
         <div class="section-heading">
-          <p class="eyebrow">The short version</p>
           <h2>The record so far</h2>
           <p>The early chronology comes from Frontline’s history of Dark Pawns, itself an update to an account by Orodreth. Later dates use Frontline’s published repository and contemporary records from the DPReturns revival.</p>
         </div>
@@ -59,9 +58,10 @@ const timeline = [
       </div>
     </section>
 
+    <LineageTree />
+
     <section class="revivals container">
       <article>
-        <p class="eyebrow">The players returned first</p>
         <h2>DPReturns</h2>
         <p>Former players reopened Dark Pawns in late 2019 (originally at <code>dpreturns.com</code>) and expanded the C source through the COVID era. Slayer served as Implementor and webmaster through 2021, and Vintage took over as Implementor in 2022. Though quiet today, it still runs at <a href="https://www.darkpawns.net/">darkpawns.net</a>.</p>
         <p>The public record covers part of the revival. The remaining gaps need to be filled by the people who were there.</p>
@@ -69,7 +69,6 @@ const timeline = [
         <p class="checked">Server last checked August 15, 2026.</p>
       </article>
       <article>
-        <p class="eyebrow">The code returned next</p>
         <h2>The Go port</h2>
         <p>This project rebuilds the server in Go while treating the original C implementation as the oracle. Player-facing behavior is preserved rather than redesigned. The game is the game.</p>
         <p><a href="/docs/research/port-fidelity/">Read the fidelity rules <span aria-hidden="true">→</span></a></p>
@@ -78,7 +77,6 @@ const timeline = [
     </section>
 
     <section class="sources container">
-      <p class="eyebrow">Sources</p>
       <h2>Sources for the history above</h2>
       <ul>
         <li><a href="/archive/history/">Frontline’s preserved history of Dark Pawns</a>, updating Orodreth’s earlier account</li>
@@ -99,7 +97,6 @@ const timeline = [
 </Base>
 
 <style>
-  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
   .about-hero { padding-block: var(--space-xl); }
   .about-hero h1 { max-width: 13ch; font-size: clamp(3rem, 8vw, 6rem); }
   .about-hero blockquote { max-width: 50rem; margin: var(--space-lg) 0 var(--space-sm); padding-left: var(--space-lg); border-left: 4px solid var(--accent); font-family: var(--font-display); font-size: clamp(1.4rem, 3vw, 2.25rem); line-height: 1.25; }
@@ -108,7 +105,6 @@ const timeline = [
   .about-intro > div { max-width: var(--content-width); }
   .signature { font-family: var(--font-mono); font-size: .82rem; color: var(--ink-muted); }
   .about-intro aside { align-self: start; border-top: 2px solid var(--accent); background: var(--paper-deep); padding: var(--space-md); }
-  .aside-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
   .history-section { background: var(--paper-deep); border-block: 1px solid var(--rule); padding-block: var(--space-xl); }
   .section-heading { max-width: var(--content-width); }
   .section-heading > p:last-child { color: var(--ink-muted); }
