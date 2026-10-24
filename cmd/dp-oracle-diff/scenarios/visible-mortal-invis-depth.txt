@@ -1,0 +1,109 @@
+# C-first vehicle for the mortal branch of do_visible (src/act.other.c:
+# 575-580) through the shared appear() helper (src/fight.c:108-121). The
+# implementor warms up by casting SPELL_INVISIBLE on a mortal peer and
+# seating a level-38 actor beside both. The actor forces the mortal to
+# become visible: the forced line and the mortal's own reply are captured
+# on their connections, appear()'s "$n slowly fades into existence." room
+# line reaches the actor, and the follow-up look lists the mortal only when
+# the SPELL_INVISIBLE record is really gone — the shopkeeper-cannot-see-them
+# regression from BRIEF-2026-10-24 Fix 2.
+
+# depth-case: visible.mortal-invis-spell
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Visgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Visgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Viswatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:actor]
+Viswatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Vismortal
+Y
+mortpass
+mortpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Vismortal
+y
+mortpass
+mortpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto Vismortal
+advance Viswatch 38
+force Viswatch goto Vismortal
+cast 'invisibility' Vismortal
+
+[probe:actor]
+force Vismortal visible
+look

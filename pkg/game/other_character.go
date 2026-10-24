@@ -26,7 +26,11 @@ func (w *World) doVisible(ch *Player, me *MobInstance, cmd string, arg string) b
 
 	altered := false
 	if ch.IsAffected(affInvisible) {
-		ch.SetAffect(affInvisible, false)
+		// C do_visible calls appear(ch) (src/act.other.c:577), which removes
+		// the SPELL_INVISIBLE affect record before clearing the AFF bits
+		// (src/fight.c:108-121). Clearing the raw bit alone left the spell
+		// record re-asserting AFF_INVISIBLE through IsAffected.
+		w.appear(ch)
 		ch.SendMessage("You fade into view.\r\n")
 		altered = true
 	}

@@ -10,9 +10,7 @@ import (
 
 // unportedCCommands are C cmd_info rows with no port yet. Each entry cites
 // the issue that tracks it; remove the entry when the command lands.
-var unportedCCommands = map[string]string{
-	"track": "DP-1361",
-}
+var unportedCCommands = map[string]string{}
 
 // TestEveryCCommandRowIsRegistered guards R2: since DP-1336 a special runs only
 // after the typed word resolves to a registered command, so a C cmd_info row

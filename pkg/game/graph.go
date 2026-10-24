@@ -117,6 +117,137 @@ func (w *World) validEdge(exit parser.Exit, marks map[int]bool) bool {
 	return true
 }
 
+// trackNumber is a test seam for doTrack's CMWC draws, mirroring huntNumber.
+// Production always uses the process-wide deterministic stream.
+var trackNumber = dprng.Number
+
+// doTrack ports ACMD(do_track) from src/graph.c:187-258. C registers it for
+// every player at POS_STANDING with no level gate (src/interpreter.c:782);
+// the warrior/paladin/ranger class gate is the command's own first check.
+func (w *World) doTrack(ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if isPlayerNPC(ch, me) {
+		return true
+	}
+
+	// C IS_WARRIOR/IS_PALADIN/IS_RANGER all carry !IS_NPC, so only a player
+	// body can pass (src/utils.h:408-421,578-580).
+	switch ch.GetClass() {
+	case ClassWarrior, ClassPaladin, ClassRanger:
+	default:
+		ch.SendMessage("You have no idea how.\r\n")
+		return true
+	}
+
+	if ch.GetSkill("track") == 0 {
+		ch.SendMessage("You have no idea how.\r\n")
+		return true
+	}
+
+	name, _ := oneArgument(arg)
+	if name == "" {
+		ch.SendMessage("Whom are you trying to track?\r\n")
+		return true
+	}
+
+	// get_char_vis: visible in the room first, then the whole world.
+	target, found := w.ResolveCharWorld(ch, name)
+	if !found {
+		ch.SendMessage("You can't sense a trail to them from here.\r\n")
+		return true
+	}
+
+	notrack := false
+	switch body := target.Combatant.(type) {
+	case *Player:
+		notrack = body.IsAffected(affNoTrack)
+	case *MobInstance:
+		notrack = body.IsAffected(affNoTrack) || body.HasMobFlag(MobFlagSentinel)
+	}
+	if notrack {
+		ch.SendMessage("You sense no trail.\r\n")
+		return true
+	}
+
+	// Only a non-NPC victim can carry SKILL_EVASION (src/graph.c:216).
+	if target.Player != nil {
+		if evasion := target.Player.GetSkill("evasion"); evasion != 0 {
+			// #nosec G404 — game RNG, not cryptographic
+			if trackNumber(1, 151) <= evasion {
+				ch.SendMessage("You sense no trail.\r\n")
+				return true
+			}
+		}
+	}
+
+	dir := w.findFirstStep(ch.GetRoom(), target.Combatant.GetRoom())
+
+	switch dir {
+	case BFS_ERROR:
+		ch.SendMessage("Hmm.. something seems to be wrong.\r\n")
+	case BFS_ALREADY_THERE:
+		ch.SendMessage("You're already in the same room!!\r\n")
+	case BFS_NO_PATH:
+		ch.SendMessage(fmt.Sprintf("You can't sense a trail to %s from here.\r\n", hmhr(asActor(target.Combatant))))
+	default:
+		num := trackNumber(0, 101) // 101% is a complete failure
+		if w.charOutsideC(ch) && weatherInfo.Sky == SkyRaining {
+			num += 35
+		}
+		if num >= ch.GetSkill("track") { // failure
+			// C: do { dir = number(0, NUM_OF_DIRS-1); } while (!CAN_GO(ch,
+			// dir) && --tries); — at most ten draws, and dir may still name
+			// no exit afterwards (src/graph.c:243-245).
+			tries := 10
+			for {
+				dir = trackNumber(0, len(dirKeys)-1)
+				if w.canGoC(ch, dir) {
+					break
+				}
+				tries--
+				if tries == 0 {
+					break
+				}
+			}
+		} else {
+			improveSkill(ch, "track")
+		}
+
+		if w.canGoC(ch, dir) {
+			ch.SendMessage(fmt.Sprintf("You sense a trail %s from here!\r\n", dirKeys[dir]))
+		} else {
+			ch.SendMessage("There doesn't seem to be any way out of here!\r\n")
+		}
+	}
+	return true
+}
+
+// ExecTrack is the session-bridge form of doTrack (the "track" command).
+func (w *World) ExecTrack(ch *Player, arg string) { w.doTrack(ch, nil, "track", arg) }
+
+// canGoC is CAN_GO(ch, door) from src/utils.h:565-567: the exit exists, does
+// not lead to NOWHERE, and is not closed.
+func (w *World) canGoC(ch *Player, dir int) bool {
+	if dir < 0 || dir >= len(dirKeys) {
+		return false
+	}
+	room, ok := w.GetRoom(ch.GetRoom())
+	if !ok {
+		return false
+	}
+	exit, exists := room.Exits[dirKeys[dir]]
+	return exists && exit.ToRoom != -1 && exit.ExitInfo&parser.ExitClosed == 0
+}
+
+// charOutsideC is OUTSIDE(ch) from src/utils.h:581-582: the room is not
+// ROOM_INDOORS-flagged or its sector is not SECT_INSIDE.
+func (w *World) charOutsideC(ch *Player) bool {
+	room, ok := w.GetRoom(ch.GetRoom())
+	if !ok {
+		return false
+	}
+	return !w.roomHasFlag(ch.GetRoom(), "indoors") || room.Sector != SECT_INSIDE
+}
+
 // huntVictim moves a mob toward its hunting target.
 // Handles door opening, evasion, safe-room checks, and trash-talk messages.
 func (w *World) huntVictim(m *MobInstance) {
