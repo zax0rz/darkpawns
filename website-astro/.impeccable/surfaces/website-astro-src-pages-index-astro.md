@@ -2,7 +2,7 @@
 version: 1
 slug: "website-astro-src-pages-index-astro"
 primary_target: "website-astro/src/pages/index.astro"
-related_targets: ["website-astro/src/pages/download.astro"]
+related_targets: ["website-astro/src/pages/download.astro", "website-astro/src/components/Footer.astro"]
 ---
 
 # Homepage chapter opening and downloads
@@ -48,3 +48,10 @@ Read-only comparison with `origin/main` confirms no changes to `DESIGN.md`, `.im
 The world figure now says “mobs”; the Database field guide says “Every mob and object”. Archive navigation uses two stacked primary serif rows, Browse the archive (with the derived record count) and Read the full history. DPReturns history and Original staff & credits remain as smaller muted underlined references without arrows. All four destinations are preserved; other sections, hero assets, and download behavior are unchanged.
 
 This pass inspected current source plus `.impeccable/review/record-links-user.png` and `record-links-mobile.png`; the mobile image is a scaled QA iframe capture. The two primary rows and quieter related references maintain the incumbent type, ink rules, and focus treatment. Implementation handoff reports keyboard focus/order verified, no overflow at 320/390/768/1440px, site-check/formatting/Go build/vet/test/lint passing, and layout detector `[]`. Fresh independent `record_links_finish_review` verdict: **SHIP**, no material findings, after inspecting source and both captures; all four routes and the derived count are preserved, and the hierarchy fits the incumbent system. Earlier captures remain evidence for the unchanged hero. Global design documents and their previously noted drift remain untouched; only this brief was edited.
+
+
+## Discord footer addition
+
+The user-requested Discord badge follows GitHub in `Footer.astro`, linking to the exact invite `https://discord.gg/supVzU9yN`. It reuses `footer-social-badge`/`footer-icon`, with a 14×14 monochrome Bootstrap Icons SVG, decorative `aria-hidden`, visible Discord text, and accessible name “Dark Pawns on Discord”. No other UI changes are included in this addition.
+
+Read-only inspection of the source diff and `.impeccable/review/discord-footer-user.png` / `discord-footer-mobile.png` found no material issue; the badge fits the existing footer treatment and wraps on narrow screens. Implementation handoff verifies no overflow at 320px, keyboard reachability, exact href, and passing site-check/formatting/Go build/vet/test/lint. This scoped evidence does not claim broader critique findings were fixed. Global design files remain unchanged; only this surface brief was edited in this documentation pass.
