@@ -58,7 +58,13 @@ Once the fight starts he has a one in two chance each round of saying something:
 
 [Mallory](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/spec_procs.c#L1374-L1422) has no speech. She only talks once you're fighting her, and then almost every round. Half the time she shouts "You stupid biiitch!" Otherwise it's "How do you like me now?", "That was the worst head I've ever got.", "How sexy am i now, fucker?" (then "How sexy am i NOW?") or a giggle. Then she sets Mickey hunting you, wherever he is. The comment on that line: "if mickey's busy, catch him later :)".
 
-<!-- Section 3, pending: What survived and what didn't. The procs are declared in spec_assign.c and never assigned; 7969 is the black-cloaked wanderer; zone 79 random load and the neighbors (Unicorn, Eric Draven); the attitude flag (AGGR24, attitude_loot) as the likely source of the looting, labeled as inference. -->
+## What the code kept
+
+Spec procs get handed to mobs in `src/spec_assign.c`, and that file [declares both of theirs](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/spec_assign.c#L102-L103) without ever handing them to anyone. The code names 7969 as Mickey's number. Today [mob 7969](https://darkpawns.org/mobs/7969/) is "a black-cloaked wanderer" running the generic spellcaster proc, and Mallory never had a number at all.
+
+7969 sits in zone 79, which its zone file calls "BFM/Random Load/Redferne's". On every reset the game drops each of that zone's mobs into [a random room somewhere in the world](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/db.c#L2113-L2129), so Mickey was written to turn up anywhere. His neighbors in the file are [the Unicorn](https://darkpawns.org/mobs/7970/) ("There is rumored to be only a single one in the entire world") and [Eric Draven](https://darkpawns.org/mobs/7971/), The Crow, "dressed like a mime from hell."
+
+Neither proc takes anything off your corpse. Dark Pawns did have a flag for that, [written by Serapis in October 1996](https://github.com/zax0rz/darkpawns/blob/29994e5c8dc59e8de2cc22e65eb4fd5d172658ce/src/fight.c#L1100-L1108): a mob carrying it strips your corpse, puts on your gear and brags about it on gossip ("$N was tough, but had good eq..."). Their flags went with their mob files, so maybe Mickey and Mallory had it. Or maybe I'm misremembering, because it's been 30 years.
 
 <!-- Section 4, pending: Running them again. Stand-in caveat. Takes: Mickey's speech, flee and hunt (wimpy), loot and brag (witness view), the peaceful room at The Dragon's Claw, Mallory plus Mickey hunting in, the bulette outtake, and the side quest: Wayne walking off the edge at 11369, the silent rim, and the imp watching his gear vanish in 11376. -->
 

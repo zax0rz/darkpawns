@@ -3,19 +3,30 @@
 Server bytes go through a minimal SGR state machine (the codes Dark Pawns
 sends: 0, 1, 31-37). The player's typed command is written after the prompt,
 where a client with local echo shows it. Usage:
-  ansi2html.py log.json START_INPUT END_MARKER > out.html
-START_INPUT: index (0-based) of the input event to start from.
+  ansi2html.py log.json START END_MARKER [--plain] > out.html
+START: index (0-based) of the input event to start from, or text:<words> to
+start at the output chunk that contains <words> (from that line on).
 END_MARKER: stop after the output chunk containing this text.
+--plain: print the excerpt as plain text instead of HTML.
 """
 import html, json, re, sys
 
 events = json.load(open(sys.argv[1]))
-start = int(sys.argv[2]); end_marker = sys.argv[3]
-inputs = [i for i, e in enumerate(events) if 'in' in e]
-# Begin on the prompt the first command was typed at.
-prev = [e for e in events[:inputs[start]] if 'out' in e][-1]['out']
-cut = prev.rfind('\r\n')
-events = [{'out': prev[cut + 2:] if cut >= 0 else prev}] + events[inputs[start]:]
+start = sys.argv[2]; end_marker = sys.argv[3]
+plain = '--plain' in sys.argv[4:]
+if start.startswith('text:'):
+    words = start[5:]
+    i = next(k for k, e in enumerate(events) if words in e.get('out', ''))
+    chunk = events[i]['out']
+    line_start = chunk.rfind('\r\n', 0, chunk.index(words))
+    # Carry any colour set earlier on the line by starting at the line itself.
+    events = [{'out': chunk[line_start + 2 if line_start >= 0 else 0:]}] + events[i + 1:]
+else:
+    inputs = [i for i, e in enumerate(events) if 'in' in e]
+    # Begin on the prompt the first command was typed at.
+    prev = [e for e in events[:inputs[int(start)]] if 'out' in e][-1]['out']
+    cut = prev.rfind('\r\n')
+    events = [{'out': prev[cut + 2:] if cut >= 0 else prev}] + events[inputs[int(start)]:]
 
 out = []; fg = None; bold = False; open_span = False
 def set_style():
@@ -51,4 +62,7 @@ for e in events:
         break
 if open_span: out.append('</span>')
 body = ''.join(out).strip('\n')
-print(f'<pre class="mud-log">{body}</pre>')
+if plain:
+    print(html.unescape(re.sub(r'<[^>]+>', '', body)))
+else:
+    print(f'<pre class="mud-log">{body}</pre>')
