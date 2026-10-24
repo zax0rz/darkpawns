@@ -66,6 +66,7 @@ Each scene ran on a fresh boot:
 | `captures/loot-wayne.json`, `loot-witness.json` | wimpy 0: Mickey kills Wayne, loots, wears his plate, gossips | |
 | `captures/peaceful-wayne.json` | Mickey in a peaceful room (4874, The Dragon's Claw): "I'll tell you later" and vanishes | |
 | `captures/mallory-wayne.json`, `mallory-witness.json` | Wayne attacks Mallory; Mickey hunts in; Mallory gets the kill and loots | |
+| `captures/dt-wayne.json`, `dt-witness.json`, `dt-imp.json` | Wayne walks south off 11369 into the death trap 11376; the witness on the rim hears nothing; the implementor's first command in 11376 fires the `dump` proc (`dts_are_dumps`, `src/config.c:89`) and destroys Wayne's gear (`dt-imp` is from a second boot of the same take) | |
 
 The witness (Scagnetti, a level 10 mortal) was made invisible by the
 implementor so Mickey's `CAN_SEE` would pass him over. `tools/take.sh` boots a
