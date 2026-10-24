@@ -1,0 +1,126 @@
+---
+import Base from '../layouts/Base.astro';
+import CopyCommand from '../components/CopyCommand.astro';
+import { releaseVersion, releaseURL, assetBase, unixInstall, windowsInstall, platforms, archiveURL, portableGuide, hostingGuide } from '../lib/download';
+---
+<Base title="Download & Host Dark Pawns" description="Download Dark Pawns for macOS, Linux, or Windows. Install the game and original world files, create your immortal, and run a world of your own.">
+  <Fragment slot="head"><link rel="alternate" type="text/markdown" href="/download.md" title="Download instructions as Markdown" /></Fragment>
+  <article class="download-page container">
+    <header class="download-heading">
+      <h1>A world of your own.</h1>
+      <p class="lede">Download Dark Pawns, create your immortal, and keep the world running on your own machine.</p>
+      <p class="release-note"><a href={releaseURL}>Release v{releaseVersion}</a> · macOS, Linux &amp; Windows · <a href="/play/">Just want to play here?</a></p>
+    </header>
+
+    <div class="installation-layout">
+      <section class="installation" aria-labelledby="install-heading">
+        <h2 id="install-heading">Install the game</h2>
+        <p>Open a terminal and paste the command. The installer checks the release&rsquo;s publisher signature and archive checksum, then opens the setup wizard.</p>
+        <CopyCommand command={unixInstall} label="macOS / Linux" id="unix-install" />
+        <p class="requirements">Uses curl, OpenSSL, and tar. No administrator rights or compiler needed.</p>
+        <details class="windows-install">
+          <summary>Windows installer (PowerShell 5.1 or newer)</summary>
+          <p>Open PowerShell, then copy and paste the complete command.</p>
+          <CopyCommand command={windowsInstall} label="Windows PowerShell" id="windows-install" multiline />
+        </details>
+        <p class="manual-link">Prefer to install by hand? <a href="#archives">Choose an archive below.</a></p>
+      </section>
+      <section class="setup-note" aria-labelledby="setup-heading">
+        <h2 id="setup-heading">Make it yours</h2>
+        <ol>
+          <li><strong>Choose a home for the world.</strong> The wizard keeps your players, edits, and settings apart from the release.</li>
+          <li><strong>Choose how it runs.</strong> Set the local web port and startup options, review them, then choose Create and launch.</li>
+          <li><strong>Create your immortal.</strong> Open the printed address. The first character becomes the immortal, so create it before inviting anyone else.</li>
+        </ol>
+        <p>A new world listens on this machine only. When you are ready for other players, follow the <a href={hostingGuide}>hosting guide</a>.</p>
+      </section>
+    </div>
+
+    <section class="archives" aria-labelledby="archives">
+      <div class="section-heading">
+        <h2 id="archives">Download an archive</h2>
+        <p>Each archive includes the launcher, server, and starter world. Downloads are hosted on GitHub.</p>
+      </div>
+      <div class="archive-table-wrap">
+        <table>
+          <caption class="visually-hidden">Dark Pawns v{releaseVersion} platform downloads</caption>
+          <thead><tr><th scope="col">System</th><th scope="col">Processor</th><th scope="col">Archive</th></tr></thead>
+          <tbody>
+            {platforms.map((platform) => platform.architectures.map(({ arch, label }) => (
+              <tr>
+                <th scope="row">{platform.name}</th>
+                <td>{label}</td>
+                <td><a href={archiveURL(platform.os, arch, platform.format)} aria-label={`Download Dark Pawns ${releaseVersion} for ${platform.name}, ${label}`}>Download .{platform.format} <span aria-hidden="true">↓</span></a></td>
+              </tr>
+            )))}
+          </tbody>
+        </table>
+      </div>
+      <p class="architecture-note">For Macs, check About This Mac for Apple silicon or Intel. For Linux, <code>uname -m</code> reports <code>x86_64</code> or <code>aarch64</code>. On Windows, check Settings → System → About → System type.</p>
+      <p>Before opening a manually downloaded archive, <a href={`${portableGuide}#manual-updates`}>verify it against the signed release manifest</a>. Then extract it and run <code>darkpawns setup</code>, or <code>.\darkpawns.exe setup</code> in PowerShell. Use <code>setup --plain</code> for screen readers.</p>
+      <p class="manifest-links"><a href={`${assetBase}/release-manifest.txt`}>Release manifest</a> · <a href={`${assetBase}/release-manifest.sig`}>Manifest signature</a> · <a href={releaseURL}>Release notes &amp; all assets</a></p>
+    </section>
+
+    <section class="running-guide" aria-labelledby="running-heading">
+      <div>
+        <h2 id="running-heading">Keep the world running</h2>
+        <p>The launcher handles starting, stopping, and checking your world. Your instance holds the players and world edits; keep a backup of it.</p>
+        <pre><code>{`darkpawns status\ndarkpawns start\ndarkpawns stop\ndarkpawns doctor`}</code></pre>
+        <p><a href={portableGuide}>Read the portable release guide <span aria-hidden="true">→</span></a><br /><a href={hostingGuide}>Host a world for other players <span aria-hidden="true">→</span></a></p>
+      </div>
+      <div class="opening-help">
+        <h2>If your system blocks it</h2>
+        <p>Releases carry a publisher signature checked by the installer. They are not Apple-notarized or Windows Authenticode-signed, so a browser download may still trigger an operating-system warning.</p>
+        <p>On macOS, see Apple&rsquo;s <a href="https://support.apple.com/102445">guide to opening apps safely</a>. On Windows, see Microsoft&rsquo;s <a href="https://learn.microsoft.com/windows/security/operating-system-security/virus-and-threat-protection/microsoft-defender-smartscreen/">SmartScreen guidance</a>.</p>
+        <p>On Windows, run <code>.\darkpawns.exe setup</code> from PowerShell rather than double-clicking the executable. The <a href="https://github.com/zax0rz/darkpawns#install">installation notes</a> describe the platform warnings seen with these releases.</p>
+      </div>
+    </section>
+  </article>
+</Base>
+<style>
+  .download-page { padding-block: var(--space-lg); }
+  .download-heading { max-width: 48rem; margin-bottom: var(--space-lg); }
+  h1 { font-size: clamp(2.5rem, 5vw, 4.5rem); }
+  .lede { font-size: 1.25rem; }
+  .release-note, .requirements, .architecture-note, .manifest-links { font-size: .95rem; color: var(--ink-muted); }
+  .installation-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); border-block: 1px solid var(--rule); }
+  .installation { min-width: 0; padding: var(--space-lg) var(--space-lg) var(--space-lg) 0; }
+  .requirements { margin-top: var(--space-sm); }
+  .windows-install { border-block: 1px solid var(--rule); padding-block: var(--space-sm); }
+  summary { font-family: var(--font-display); cursor: pointer; padding-block: var(--space-xs); }
+  details[open] summary { margin-bottom: var(--space-sm); }
+  .manual-link { margin: var(--space-md) 0 0; }
+  .setup-note { padding: var(--space-lg); border-left: 1px solid var(--rule); background: var(--paper-deep); }
+  .setup-note h2 { font-size: 1.6rem; }
+  ol { padding-left: 1.25rem; margin: 0 0 var(--space-md); }
+  li { padding-left: .25rem; margin-bottom: var(--space-sm); }
+  .setup-note p:last-child { margin-bottom: 0; }
+  .archives { padding-block: var(--space-xl); }
+  .section-heading { margin-bottom: var(--space-lg); }
+  .section-heading h2 { margin-bottom: var(--space-sm); }
+  .archive-table-wrap { overflow-x: auto; margin-bottom: var(--space-md); }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th, td { padding: .8rem var(--space-md); border-bottom: 1px solid var(--rule); }
+  thead { border-top: 2px solid var(--rule); background: var(--paper-deep); }
+  th { font-weight: 600; }
+  tbody th { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; }
+  td a { display: inline-block; padding-block: .25rem; }
+  .archives > p { max-width: 75ch; }
+  .running-guide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xl); border-top: 1px solid var(--rule); padding-top: var(--space-lg); }
+  pre { border: 1px solid var(--rule); background: var(--paper-deep); padding: var(--space-md); overflow-x: auto; font-size: .9rem; }
+  .opening-help p { color: var(--ink-muted); }
+  code { overflow-wrap: anywhere; }
+  @media (max-width: 800px) {
+    .installation-layout, .running-guide { grid-template-columns: 1fr; }
+    .installation { padding-right: 0; }
+    .setup-note { border-left: 0; border-top: 1px solid var(--rule); }
+    .running-guide { gap: var(--space-lg); }
+  }
+  @media (max-width: 640px) {
+    .download-page { padding-inline: var(--space-md); }
+    th, td { padding: .65rem .4rem; font-size: .9rem; }
+    tbody th { font-size: 1rem; }
+    .archives { padding-block: var(--space-lg); }
+    .setup-note { padding: var(--space-md); }
+  }
+</style>

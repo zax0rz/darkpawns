@@ -1,0 +1,30 @@
+---
+interface Props { command: string; label: string; id: string; multiline?: boolean; }
+const { command, label, id, multiline = false } = Astro.props;
+---
+<div class="copy-command" data-copy-command>
+  <label for={id}>{label}</label>
+  <div class="command-row">
+    <textarea id={id} rows={multiline ? 12 : 3} class:list={{ 'long-command': multiline }} readonly spellcheck="false" aria-describedby={`${id}-feedback`}>{command}</textarea>
+    <button type="button" hidden aria-label={`Copy ${label} command`}>Copy</button>
+  </div>
+  <p class="copy-feedback" id={`${id}-feedback`} role="status" aria-live="polite"></p>
+</div>
+<script>
+  import '../scripts/copy-command';
+</script>
+<style>
+  .copy-command { min-width: 0; }
+  label { display: block; margin-bottom: var(--space-xs); font-size: .95rem; }
+  .command-row { display: flex; min-width: 0; border: 1px solid var(--rule); background: var(--paper); }
+  textarea { width: 100%; min-width: 0; border: 0; border-radius: 0; background: transparent; color: var(--ink); padding: .75rem; font-family: var(--font-mono); font-size: .8rem; line-height: 1.5; }
+  textarea { resize: none; overflow-wrap: anywhere; field-sizing: content; min-height: 3.25rem; }
+  textarea.long-command { resize: vertical; min-height: 16rem; max-height: 28rem; }
+
+  button { flex: none; border: 0; border-left: 1px solid var(--rule); border-radius: 0; background: var(--paper-deep); color: var(--ink); padding: .65rem .85rem; font-family: var(--font-display); font-size: 1rem; cursor: pointer; min-height: 44px; align-self: stretch; }
+  button[hidden] { display: none; }
+  button:hover { background: var(--ink); color: var(--paper); }
+  button:disabled { cursor: wait; }
+  .copy-feedback { font-size: .85rem; line-height: 1.4; color: var(--ink-muted); margin: .25rem 0 0; }
+  .copy-feedback:empty { display: none; }
+</style>

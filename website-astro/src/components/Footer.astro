@@ -1,148 +1,116 @@
 ---
-// Footer — kept close to the Hugo version (Zach likes it). The Dark Pawns
-// description will migrate up into the home callout in a later pass.
 const year = new Date().getFullYear();
+const groups = [
+  { title: 'Play', links: [
+    { label: 'Play in your browser', href: '/play/' },
+    { label: 'Connect with a client', href: '/connect/' },
+    { label: 'Download & host', href: '/download/' },
+    { label: 'Mudlet desktop client', href: 'https://www.mudlet.org/' },
+  ] },
+  { title: 'Explore', links: [
+    { label: 'The world', href: '/world/' },
+    { label: 'World map', href: '/map/' },
+    { label: 'Mobs & items', href: '/database/' },
+    { label: 'Zone records', href: '/zones/' },
+    { label: 'Help files', href: '/help/' },
+  ] },
+  { title: 'Archive', links: [
+    { label: 'Community archive', href: '/archive/' },
+    { label: 'Blog', href: '/blog/' },
+    { label: 'dp-players.com (2004)', href: 'https://web.archive.org/web/20040803063038/http://www.dp-players.com/' },
+    { label: 'darkpawns.net (revival)', href: 'https://www.darkpawns.net/' },
+    { label: 'CircleMUD lineage', href: 'https://www.circlemud.org/' },
+  ] },
+  { title: 'Project', links: [
+    { label: 'About', href: '/about/' },
+    { label: 'Developer docs', href: '/docs/' },
+    { label: 'Port research', href: '/docs/research/' },
+    { label: 'Credits & staff', href: '/credits/' },
+  ] },
+];
 ---
 <footer class="footer">
-  <div class="container footer-grid">
-    <div class="footer-col">
-      <h2>Play &amp; Explore</h2>
-      <ul>
-        <li><a href="/play/">Play In-Browser</a></li>
-        <li><a href="/map/">Interactive World Map</a></li>
-        <li><a href="/database/">Mob &amp; Item Database</a></li>
-        <li><a href="/zones/">Zone Records</a></li>
-        <li><a href="/help/">Help Index</a></li>
-        <li><a href="/world/">The World</a></li>
-        <li><a href="https://www.mudlet.org/">Mudlet Desktop Client</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h2>The Archive</h2>
-      <ul>
-        <li><a href="/archive/">Community Archive</a></li>
-        <li><a href="/blog/">Blog</a></li>
-        <li><a href="https://web.archive.org/web/20040803063038/http://www.dp-players.com/">dp-players.com (2004)</a></li>
-        <li><a href="https://www.darkpawns.net/">darkpawns.net (revival)</a></li>
-        <li><a href="https://www.circlemud.org/">CircleMUD Lineage</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h2>About &amp; Code</h2>
-      <ul>
-        <li><a href="/about/">About</a></li>
-        <li><a href="/docs/">Developer Docs</a></li>
-        <li><a href="/docs/research/">Port Research</a></li>
-        <li>
-          <a class="footer-github-link" href="https://github.com/zax0rz/darkpawns">
-            <svg class="footer-icon" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
-              <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
-            </svg>
-            <span>GitHub Repository</span>
+  <div class="container">
+    <div class="footer-head">
+      <div class="footer-identity">
+        <p class="footer-name">Dark Pawns</p>
+        <p class="footer-origin">Est. 1994 &middot; Resurrected 2026</p>
+      </div>
+      <div class="footer-community">
+        <nav class="footer-social-links" aria-label="Community and source code">
+          <a class="footer-social-link" href="https://discord.gg/supVzU9yN" aria-label="Dark Pawns on Discord">
+            <!-- Discord mark: Bootstrap Icons (MIT), matching the GitHub icon family. -->
+            <svg class="footer-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612" /></svg>
+            <span>Discord</span>
           </a>
-        </li>
-        <li><a href="/credits/">Credits &amp; Staff</a></li>
-        <li><a href="/privacy/">Privacy</a></li>
-      </ul>
+          <a class="footer-social-link" href="https://github.com/zax0rz/darkpawns" aria-label="Dark Pawns on GitHub">
+            <svg class="footer-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z" /></svg>
+            <span>GitHub</span>
+          </a>
+          <a class="footer-social-link" href="https://www.mudverse.com/vote/720" aria-label="Vote for Dark Pawns on Mudverse">
+            <!-- Voting icon: Bootstrap Icons (MIT). -->
+            <svg class="footer-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8.864.046C7.908-.193 7.02.53 6.956 1.466c-.072 1.051-.23 2.016-.428 2.59-.125.36-.479 1.013-1.04 1.639-.557.623-1.282 1.178-2.131 1.41C2.685 7.288 2 7.87 2 8.72v4.001c0 .845.682 1.464 1.448 1.545 1.07.114 1.564.415 2.068.723l.048.03c.272.165.578.348.97.484.397.136.861.217 1.466.217h3.5c.937 0 1.599-.477 1.934-1.064a1.86 1.86 0 0 0 .254-.912c0-.152-.023-.312-.077-.464.201-.263.38-.578.488-.901.11-.33.172-.762.004-1.149.069-.13.12-.269.159-.403.077-.27.113-.568.113-.857 0-.288-.036-.585-.113-.856a2 2 0 0 0-.138-.362 1.9 1.9 0 0 0 .234-1.734c-.206-.592-.682-1.1-1.2-1.272-.847-.282-1.803-.276-2.516-.211a10 10 0 0 0-.443.05 9.4 9.4 0 0 0-.062-4.509A1.38 1.38 0 0 0 9.125.111zM11.5 14.721H8c-.51 0-.863-.069-1.14-.164-.281-.097-.506-.228-.776-.393l-.04-.024c-.555-.339-1.198-.731-2.49-.868-.333-.036-.554-.29-.554-.55V8.72c0-.254.226-.543.62-.65 1.095-.3 1.977-.996 2.614-1.708.635-.71 1.064-1.475 1.238-1.978.243-.7.407-1.768.482-2.85.025-.362.36-.594.667-.518l.262.066c.16.04.258.143.288.255a8.34 8.34 0 0 1-.145 4.725.5.5 0 0 0 .595.644l.003-.001.014-.003.058-.014a9 9 0 0 1 1.036-.157c.663-.06 1.457-.054 2.11.164.175.058.45.3.57.65.107.308.087.67-.266 1.022l-.353.353.353.354c.043.043.105.141.154.315.048.167.075.37.075.581 0 .212-.027.414-.075.582-.05.174-.111.272-.154.315l-.353.353.353.354c.047.047.109.177.005.488a2.2 2.2 0 0 1-.505.805l-.353.353.353.354c.006.005.041.05.041.17a.9.9 0 0 1-.121.416c-.165.288-.503.56-1.066.56z" /></svg>
+            <span>Vote on Mudverse</span>
+          </a>
+        </nav>
+        <span class="status" id="footer-status" data-server-status title="MUD server status" aria-live="polite">
+          <span class="dot" aria-hidden="true"></span><span id="footer-status-text" data-server-status-text>status unknown</span>
+        </span>
+      </div>
     </div>
-  </div>
-  <div class="footer-bottom container">
-    <p class="footer-wordmark">DARK PAWNS · EST. 1994 · RESURRECTED 2026</p>
-    <div class="footer-bottom-info">
-      <span class="status" id="footer-status" data-server-status title="MUD server status" aria-live="polite">
-        <span class="dot" aria-hidden="true"></span><span id="footer-status-text" data-server-status-text>status unknown</span>
-      </span>
-      <a class="footer-social-badge" href="https://github.com/zax0rz/darkpawns" aria-label="Dark Pawns on GitHub" title="zax0rz/darkpawns on GitHub">
-        <svg class="footer-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-          <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
-        </svg>
-        <span>GitHub</span>
-      </a>
-      <p>Non-commercial · <a href="https://github.com/zax0rz/darkpawns/blob/main/LICENSE">DikuMUD, CircleMUD &amp; MIT Licenses</a> · &copy; {year}</p>
+    <nav class="footer-directory" aria-label="Footer navigation">
+      {groups.map((group) => (
+        <div class="footer-col">
+          <h2>{group.title}</h2>
+          <ul>{group.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>
+        </div>
+      ))}
+    </nav>
+    <div class="footer-legal">
+      <p>Non-commercial &middot; &copy; {year} Dark Pawns</p>
+      <nav aria-label="Legal">
+        <a href="/privacy/">Privacy</a>
+        <a href="https://github.com/zax0rz/darkpawns/blob/main/LICENSE">DikuMUD, CircleMUD &amp; MIT licenses</a>
+      </nav>
     </div>
   </div>
 </footer>
 
 <style>
-  .footer { border-top: 2px solid var(--rule); margin-top: var(--space-xl); padding-top: var(--space-lg); }
-  .footer-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-lg);
-  }
-  .footer-col h2 {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    margin: 0 0 var(--space-sm);
-  }
-  .footer-col p { color: var(--ink-muted); font-size: 0.95rem; }
+  .footer { border-top: 2px solid var(--rule); margin-top: var(--space-xl); padding-block: var(--space-lg); }
+  .footer-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); margin-bottom: var(--space-lg); }
+  .footer-name { margin: 0; font-family: var(--font-display); font-size: 2rem; line-height: 1.15; }
+  .footer-origin { margin: var(--space-xs) 0 0; font-size: .9rem; color: var(--ink-muted); }
+  .footer-community { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-xs); }
+  .footer-social-links { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); }
+  .footer-social-link { display: inline-flex; align-items: center; gap: var(--space-sm); min-height: 44px; color: var(--accent); font-family: var(--font-display); font-size: 1.1rem; }
+  .footer-icon { flex-shrink: 0; }
+  .footer-directory { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); }
+  .footer-col { min-width: 0; }
+  .footer-col h2 { margin: 0 0 var(--space-sm); font-size: 1.1rem; }
   .footer-col ul { list-style: none; margin: 0; padding: 0; }
-  .footer-col li { padding: 0.15rem 0; }
-  .footer-github-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.42rem;
-  }
-  .footer-icon {
-    flex-shrink: 0;
-    color: var(--ink-muted);
-    transition: color 0.15s ease;
-  }
-  .footer-github-link:hover .footer-icon,
-  .footer-social-badge:hover .footer-icon {
-    color: var(--accent);
-  }
-  .footer-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    flex-wrap: wrap;
-    border-top: 1px solid var(--rule);
-    margin-top: var(--space-lg);
-    padding-block: var(--space-md) var(--space-lg);
-  }
-  .footer-wordmark {
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    letter-spacing: 0.06em;
-    margin: 0;
-  }
-  .footer-bottom-info { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
-  .footer-bottom-info p { margin: 0; color: var(--ink-muted); font-size: 0.85rem; }
-  .footer-social-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--ink);
-    padding: 0.2rem 0.55rem;
-    border: 1px solid var(--rule);
-    background: var(--paper-deep);
-    text-decoration: none;
-  }
-  .footer-social-badge:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    text-decoration: none;
-  }
-  .status {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: var(--ink-muted);
-  }
-  /* Default is the unresolved state: muted until /health answers. Online and
-     offline follow the dot convention the play client already uses. */
-  .status .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--ink-muted); }
+  .footer-col a { display: flex; align-items: center; min-height: 36px; padding-block: var(--space-xs); color: var(--ink-muted); font-size: .95rem; }
+  .footer-col a:hover { color: var(--accent); }
+  .footer-legal { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); border-top: 1px solid var(--rule); margin-top: var(--space-lg); padding-top: var(--space-md); }
+  .footer-legal p { margin: 0; color: var(--ink-muted); font-size: .85rem; }
+  .footer-legal nav { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); min-width: 0; }
+  .footer-legal a { color: var(--ink-muted); font-size: .85rem; padding-block: var(--space-xs); }
+  .footer-legal a:hover { color: var(--accent); }
+  .status { font-family: var(--font-mono); font-size: .8rem; display: inline-flex; align-items: center; gap: .4rem; color: var(--ink-muted); }
+  .status .dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--ink-muted); }
   .status.online .dot { background: var(--online); }
   .status.offline .dot { background: var(--accent); }
-
-  @media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 520px) { .footer-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px), (pointer: coarse) {
+    .footer-col a, .footer-legal a { min-height: 44px; }
+    .footer-legal a { display: inline-flex; align-items: center; max-width: 100%; }
+  }
+  @media (max-width: 700px) {
+    .footer-directory { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+  }
+  @media (max-width: 480px) {
+    .footer-head { flex-direction: column; align-items: flex-start; gap: var(--space-md); }
+    .footer-community { align-items: flex-start; }
+    .footer-directory { column-gap: var(--space-md); }
+    .footer-legal { flex-direction: column; align-items: flex-start; }
+  }
 </style>
