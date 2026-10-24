@@ -16,7 +16,7 @@ const contributionPaths = [
 <Base title="The Dark Pawns restoration" description="Recent work on the open-source Dark Pawns server and ways to contribute to the restoration.">
   <div class="project-page">
     <header class="project-hero container">
-      <p class="eyebrow"><a href="/about/">About Dark Pawns</a> / The restoration</p>
+      <nav class="about-back" aria-label="About"><a href="/about/">Back to About Dark Pawns</a></nav>
       <h1>The restoration is public.</h1>
       <p class="lede">The Go server, tests, documentation, and website are maintained in the open.</p>
       <div class="hero-actions">
@@ -28,7 +28,6 @@ const contributionPaths = [
     <section class="ledger-section">
       <div class="container ledger-grid">
         <div class="activity-copy">
-          <p class="eyebrow">Recent work</p>
           <h2>Twelve weeks in Git</h2>
           <p>This is a count of first-parent commits on the revision used to build the site. It shows when work landed, not how much any commit was worth.</p>
           <p class="provenance">Generated {generatedLabel}. Source: {activity.activitySource}.</p>
@@ -53,7 +52,6 @@ const contributionPaths = [
     <section class="recent container">
       <div class="recent-heading">
         <div>
-          <p class="eyebrow">From the workbench</p>
           <h2>Recently merged</h2>
         </div>
         <p>Pull requests are refreshed from GitHub during an authenticated site build. The last good result remains in the site when GitHub is unavailable.</p>
@@ -73,7 +71,6 @@ const contributionPaths = [
     <section class="contribute-section">
       <div class="container contribute-grid">
         <div>
-          <p class="eyebrow">Contributing</p>
           <h2>There is work for more than programmers.</h2>
           <p>The server follows a strict fidelity rule: player-facing behavior comes from the original C implementation. Historical and editorial work follows the same principle. Find the source, preserve what it says, and document uncertainty.</p>
         </div>
@@ -94,7 +91,8 @@ const contributionPaths = [
 </Base>
 
 <style>
-  .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .75rem; font-weight: 700; letter-spacing: .12em; margin-bottom: var(--space-xs); text-transform: uppercase; }
+  .about-back { margin-bottom: var(--space-md); }
+  .about-back a { display: inline-block; padding-block: .65rem; }
   .project-hero { padding-block: var(--space-xl); }
   .project-hero h1 { max-width: 13ch; font-size: clamp(3rem, 8vw, 6rem); }
   .lede { color: var(--ink-muted); font-size: 1.25rem; }
@@ -105,7 +103,7 @@ const contributionPaths = [
   .btn-secondary:hover { background: var(--ink); color: var(--paper); text-decoration: none; }
   .ledger-section { border-block: 1px solid var(--rule); background: var(--paper-deep); padding-block: var(--space-xl); }
   .ledger-grid { display: grid; grid-template-columns: minmax(16rem, .7fr) minmax(28rem, 1.3fr); gap: var(--space-xl); align-items: end; }
-  .activity-copy p:not(.eyebrow) { color: var(--ink-muted); }
+  .activity-copy p { color: var(--ink-muted); }
   .provenance { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; }
   .commit-chart { margin: 0; min-width: 0; }
   .bars { display: grid; grid-template-columns: repeat(12, minmax(1.5rem, 1fr)); gap: var(--space-sm); height: 18rem; border-bottom: 2px solid var(--rule); }

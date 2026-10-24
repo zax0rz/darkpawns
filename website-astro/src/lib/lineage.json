@@ -1,0 +1,893 @@
+{
+  "title": "The DikuMUD family tree",
+  "reviewed": "2026-10-23",
+  "nodes": [
+    {
+      "id": "aber",
+      "label": "AberMUD",
+      "x": 980,
+      "y": 35
+    },
+    {
+      "id": "diku",
+      "label": "DikuMUD",
+      "x": 980,
+      "y": 130
+    },
+    {
+      "id": "silly",
+      "label": "SillyMUD",
+      "x": 215,
+      "y": 250
+    },
+    {
+      "id": "vie",
+      "label": "VieMUD",
+      "x": 395,
+      "y": 250
+    },
+    {
+      "id": "c1",
+      "label": "CircleMUD 1.x",
+      "x": 685,
+      "y": 250
+    },
+    {
+      "id": "d2",
+      "label": "Diku II",
+      "x": 980,
+      "y": 250
+    },
+    {
+      "id": "seq",
+      "label": "Sequent",
+      "x": 1160,
+      "y": 250
+    },
+    {
+      "id": "elt",
+      "label": "Eltanin",
+      "x": 1340,
+      "y": 250
+    },
+    {
+      "id": "tech",
+      "label": "Techno",
+      "x": 1520,
+      "y": 250
+    },
+    {
+      "id": "crimson",
+      "label": "Crimson",
+      "x": 1700,
+      "y": 250
+    },
+    {
+      "id": "black",
+      "label": "BlackMUD",
+      "x": 125,
+      "y": 365
+    },
+    {
+      "id": "dale",
+      "label": "DaleMUD",
+      "x": 305,
+      "y": 365
+    },
+    {
+      "id": "c2",
+      "label": "CircleMUD 2.x",
+      "x": 685,
+      "y": 365
+    },
+    {
+      "id": "nil",
+      "label": "Nilgiri",
+      "x": 980,
+      "y": 365
+    },
+    {
+      "id": "copper1",
+      "label": "Copper I",
+      "x": 1160,
+      "y": 365
+    },
+    {
+      "id": "fajita",
+      "label": "Fajita",
+      "x": 1340,
+      "y": 365
+    },
+    {
+      "id": "arch",
+      "label": "Archipelago",
+      "x": 485,
+      "y": 480
+    },
+    {
+      "id": "c3",
+      "label": "CircleMUD 3.x",
+      "x": 685,
+      "y": 480
+    },
+    {
+      "id": "copper2",
+      "label": "Copper II",
+      "x": 1160,
+      "y": 480
+    },
+    {
+      "id": "pirate",
+      "label": "Pirate",
+      "x": 1340,
+      "y": 480
+    },
+    {
+      "id": "tba",
+      "label": "tbaMUD",
+      "x": 485,
+      "y": 595
+    },
+    {
+      "id": "dp",
+      "label": "Dark Pawns",
+      "x": 685,
+      "y": 595
+    },
+    {
+      "id": "lost",
+      "label": "Lost Lands",
+      "x": 885,
+      "y": 595
+    },
+    {
+      "id": "merc1",
+      "label": "Merc 1.x",
+      "x": 1060,
+      "y": 595
+    },
+    {
+      "id": "copper3",
+      "label": "Copper III",
+      "x": 1260,
+      "y": 595
+    },
+    {
+      "id": "go",
+      "label": "Go restoration",
+      "x": 585,
+      "y": 710
+    },
+    {
+      "id": "returns",
+      "label": "DPReturns",
+      "x": 785,
+      "y": 710
+    },
+    {
+      "id": "rom1",
+      "label": "ROM 1.0",
+      "x": 285,
+      "y": 710
+    },
+    {
+      "id": "merc2",
+      "label": "Merc 2.x",
+      "x": 1060,
+      "y": 710
+    },
+    {
+      "id": "vego",
+      "label": "Vego",
+      "x": 1260,
+      "y": 710
+    },
+    {
+      "id": "rom23",
+      "label": "ROM 2.3",
+      "x": 285,
+      "y": 825
+    },
+    {
+      "id": "ack",
+      "label": "ACK!MUD",
+      "x": 685,
+      "y": 825
+    },
+    {
+      "id": "envy1",
+      "label": "Envy 1.0",
+      "x": 885,
+      "y": 825
+    },
+    {
+      "id": "smaug",
+      "label": "SMAUG",
+      "x": 1085,
+      "y": 825
+    },
+    {
+      "id": "gw",
+      "label": "GodWars",
+      "x": 1285,
+      "y": 825
+    },
+    {
+      "id": "mr",
+      "label": "MrMud",
+      "x": 1485,
+      "y": 825
+    },
+    {
+      "id": "ni",
+      "label": "NiMUD",
+      "x": 1685,
+      "y": 825
+    },
+    {
+      "id": "sunder",
+      "label": "SunderMUD",
+      "x": 105,
+      "y": 940
+    },
+    {
+      "id": "rom24",
+      "label": "ROM 2.4",
+      "x": 285,
+      "y": 940
+    },
+    {
+      "id": "ember",
+      "label": "EmberMUD",
+      "x": 465,
+      "y": 940
+    },
+    {
+      "id": "assault",
+      "label": "ASSAULT",
+      "x": 685,
+      "y": 940
+    },
+    {
+      "id": "envy2",
+      "label": "Envy 2.x",
+      "x": 885,
+      "y": 940
+    },
+    {
+      "id": "afk",
+      "label": "AFKMud",
+      "x": 1065,
+      "y": 940
+    },
+    {
+      "id": "serf",
+      "label": "SERF",
+      "x": 1225,
+      "y": 940
+    },
+    {
+      "id": "dystopia",
+      "label": "Dystopia",
+      "x": 1385,
+      "y": 940
+    },
+    {
+      "id": "emud",
+      "label": "Emud",
+      "x": 1545,
+      "y": 940
+    },
+    {
+      "id": "emlen",
+      "label": "EmlenMUD",
+      "x": 1705,
+      "y": 940
+    },
+    {
+      "id": "anatolia",
+      "label": "Anatolia",
+      "x": 105,
+      "y": 1055
+    },
+    {
+      "id": "rot",
+      "label": "RoT",
+      "x": 285,
+      "y": 1055
+    },
+    {
+      "id": "oblivion",
+      "label": "Oblivion",
+      "x": 465,
+      "y": 1055
+    },
+    {
+      "id": "mythran",
+      "label": "Mythran",
+      "x": 705,
+      "y": 1055
+    },
+    {
+      "id": "ultra",
+      "label": "UltraEnvy",
+      "x": 885,
+      "y": 1055
+    },
+    {
+      "id": "eos",
+      "label": "EOS",
+      "x": 1065,
+      "y": 1055
+    },
+    {
+      "id": "dawn",
+      "label": "Dawn of Time",
+      "x": 465,
+      "y": 1170
+    },
+    {
+      "id": "socket",
+      "label": "SocketMUD",
+      "x": 1550,
+      "y": 1055
+    },
+    {
+      "id": "rocket",
+      "label": "RocketMUD",
+      "x": 1450,
+      "y": 1170
+    },
+    {
+      "id": "naked",
+      "label": "NakedMUD",
+      "x": 1650,
+      "y": 1170
+    }
+  ],
+  "edges": [
+    {
+      "parent": "aber",
+      "child": "diku",
+      "state": "influence",
+      "source": "diku",
+      "note": "Design influence, not a claim that Diku uses AberMUD source."
+    },
+    {
+      "parent": "diku",
+      "child": "silly",
+      "state": "confirmed",
+      "source": "silly",
+      "note": ""
+    },
+    {
+      "parent": "diku",
+      "child": "vie",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "diku",
+      "child": "c1",
+      "state": "confirmed",
+      "source": "circle",
+      "note": ""
+    },
+    {
+      "parent": "diku",
+      "child": "d2",
+      "state": "confirmed",
+      "source": "diku",
+      "note": ""
+    },
+    {
+      "parent": "diku",
+      "child": "seq",
+      "state": "confirmed",
+      "source": "diku",
+      "note": ""
+    },
+    {
+      "parent": "diku",
+      "child": "elt",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "diku",
+      "child": "tech",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "diku",
+      "child": "crimson",
+      "state": "confirmed",
+      "source": "crimson",
+      "note": ""
+    },
+    {
+      "parent": "silly",
+      "child": "black",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "silly",
+      "child": "dale",
+      "state": "confirmed",
+      "source": "silly",
+      "note": ""
+    },
+    {
+      "parent": "c1",
+      "child": "c2",
+      "state": "confirmed",
+      "source": "circle",
+      "note": ""
+    },
+    {
+      "parent": "c2",
+      "child": "arch",
+      "state": "confirmed",
+      "source": "arch",
+      "note": ""
+    },
+    {
+      "parent": "c2",
+      "child": "c3",
+      "state": "confirmed",
+      "source": "circle",
+      "note": ""
+    },
+    {
+      "parent": "c3",
+      "child": "tba",
+      "state": "confirmed",
+      "source": "tba",
+      "note": "Continuation through CircleMUD 3.1 and later releases; intermediate versions are omitted."
+    },
+    {
+      "parent": "c3",
+      "child": "dp",
+      "state": "confirmed",
+      "source": "dp",
+      "note": "March 1996: 3.0pl9. June 1996: 3.0pl11. Earlier bases were 1.7 and 2.2."
+    },
+    {
+      "parent": "c3",
+      "child": "lost",
+      "state": "confirmed",
+      "source": "lost",
+      "note": "Surviving release credits 3.0; moved here from Circle 2 in the supplied chart. Earlier ancestry is unresolved."
+    },
+    {
+      "parent": "dp",
+      "child": "go",
+      "state": "confirmed",
+      "source": "go",
+      "note": "Port of the surviving original C game, not of DPReturns."
+    },
+    {
+      "parent": "dp",
+      "child": "returns",
+      "state": "confirmed",
+      "source": "returns",
+      "note": "A separate revival of the C game."
+    },
+    {
+      "parent": "seq",
+      "child": "nil",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "seq",
+      "child": "copper1",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "seq",
+      "child": "fajita",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "copper1",
+      "child": "copper2",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "copper1",
+      "child": "pirate",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "copper1",
+      "child": "merc1",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "copper2",
+      "child": "copper3",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "merc1",
+      "child": "rom1",
+      "state": "confirmed",
+      "source": "rom",
+      "note": ""
+    },
+    {
+      "parent": "merc1",
+      "child": "merc2",
+      "state": "confirmed",
+      "source": "merc",
+      "note": ""
+    },
+    {
+      "parent": "merc2",
+      "child": "vego",
+      "state": "unconfirmed",
+      "source": null,
+      "note": "The supplied chart places Vego under Merc 1; a 1996 operator listing describes Merc 2.1 with 2.2 code. Exact early history remains unresolved."
+    },
+    {
+      "parent": "rom1",
+      "child": "rom23",
+      "state": "confirmed",
+      "source": "rom",
+      "note": ""
+    },
+    {
+      "parent": "rom23",
+      "child": "rom24",
+      "state": "confirmed",
+      "source": "rom",
+      "note": ""
+    },
+    {
+      "parent": "rom23",
+      "child": "sunder",
+      "state": "confirmed",
+      "source": "sunder",
+      "note": ""
+    },
+    {
+      "parent": "rom23",
+      "child": "ember",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "rom24",
+      "child": "anatolia",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "rom24",
+      "child": "rot",
+      "state": "confirmed",
+      "source": "rot",
+      "note": ""
+    },
+    {
+      "parent": "rom24",
+      "child": "oblivion",
+      "state": "confirmed",
+      "source": "dawn",
+      "note": ""
+    },
+    {
+      "parent": "oblivion",
+      "child": "dawn",
+      "state": "confirmed",
+      "source": "dawn",
+      "note": ""
+    },
+    {
+      "parent": "merc2",
+      "child": "ack",
+      "state": "confirmed",
+      "source": "ack",
+      "note": ""
+    },
+    {
+      "parent": "merc2",
+      "child": "envy1",
+      "state": "confirmed",
+      "source": "envy",
+      "note": ""
+    },
+    {
+      "parent": "merc2",
+      "child": "smaug",
+      "state": "confirmed",
+      "source": "smaug",
+      "note": ""
+    },
+    {
+      "parent": "merc2",
+      "child": "gw",
+      "state": "confirmed",
+      "source": "gw",
+      "note": ""
+    },
+    {
+      "parent": "merc2",
+      "child": "mr",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "merc2",
+      "child": "ni",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "ack",
+      "child": "assault",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "envy1",
+      "child": "envy2",
+      "state": "confirmed",
+      "source": "envy",
+      "note": ""
+    },
+    {
+      "parent": "envy2",
+      "child": "mythran",
+      "state": "confirmed",
+      "source": "mythran",
+      "note": ""
+    },
+    {
+      "parent": "envy2",
+      "child": "ultra",
+      "state": "confirmed",
+      "source": "ultra",
+      "note": ""
+    },
+    {
+      "parent": "envy2",
+      "child": "eos",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "smaug",
+      "child": "afk",
+      "state": "confirmed",
+      "source": "afk",
+      "note": ""
+    },
+    {
+      "parent": "smaug",
+      "child": "serf",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "gw",
+      "child": "dystopia",
+      "state": "confirmed",
+      "source": "dystopia",
+      "note": ""
+    },
+    {
+      "parent": "mr",
+      "child": "emud",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "ni",
+      "child": "emlen",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "socket",
+      "child": "rocket",
+      "state": "unconfirmed",
+      "source": null,
+      "note": ""
+    },
+    {
+      "parent": "socket",
+      "child": "naked",
+      "state": "confirmed",
+      "source": "naked",
+      "note": ""
+    }
+  ],
+  "sources": [
+    {
+      "id": "diku",
+      "title": "DikuMUD: history",
+      "url": "https://dikumud.com/history/",
+      "note": "The original team\u2019s account of Diku, Sequent, Diku II, and the influences behind the game."
+    },
+    {
+      "id": "circle",
+      "title": "Jeremy Elson: the history of CircleMUD",
+      "url": "https://www.circlemud.org/general.html",
+      "note": "Diku ancestry, the original Circle game, and the first public release, CircleMUD 2.0."
+    },
+    {
+      "id": "dp",
+      "title": "Frontline: a brief history of Dark Pawns",
+      "url": "/archive/history/",
+      "note": "Records CircleMUD 1.7 in 1994, 2.2 in December 1995, 3.0pl9 in March 1996, and 3.0pl11 in June 1996."
+    },
+    {
+      "id": "code",
+      "title": "Dark Pawns: surviving C credits",
+      "url": "https://github.com/zax0rz/darkpawns/blob/42d7252f1722085bea89b5d9ce5e8694d820450f/lib/text/credits",
+      "note": "The surviving game credits CircleMUD 3.0 and DikuMUD Gamma 0.0."
+    },
+    {
+      "id": "tba",
+      "title": "The Builder Academy",
+      "url": "https://www.tbamud.com/",
+      "note": "The project describes tbaMUD as the continued development of CircleMUD."
+    },
+    {
+      "id": "arch",
+      "title": "Archipelago: original README",
+      "url": "https://github.com/DikuMUDOmnibus/Archipelago/blob/e512852b07c894bbea086f79c49dd89b36500808/README",
+      "note": "Explicitly based on CircleMUD 2.2."
+    },
+    {
+      "id": "lost",
+      "title": "Lost Lands: surviving credits",
+      "url": "https://github.com/DikuMUDOmnibus/LostLands/blob/b889e86937e6ebb49abbca5b2c4d286b5e4e158f/lib/text/credits",
+      "note": "This surviving release credits CircleMUD 3.0. Its earliest fork point is not established here."
+    },
+    {
+      "id": "silly",
+      "title": "DaleMUD: surviving credits",
+      "url": "https://github.com/DikuMUDOmnibus/DaleMUD/blob/b92ba1bf4809826c465d774b179f3f856dbf9462/lib/credits",
+      "note": "Preserves the SillyMUD and DikuMUD credits."
+    },
+    {
+      "id": "merc",
+      "title": "Merc 2.2: original README",
+      "url": "https://github.com/DikuMUDOmnibus/Merc/blob/1d2ea7a92f826ca50945622c9df8945eff7d6ae3/README",
+      "note": "Describes Merc as a Diku derivative. The precise Copper fork point in the supplied chart remains unconfirmed."
+    },
+    {
+      "id": "rom",
+      "title": "ROM: original credits in Dawn",
+      "url": "https://github.com/DikuMUDOmnibus/Dawn/blob/127020af06eac484b98da75ab613430cba6affdb/help/credits.txt",
+      "note": "Records ROM beginning on Merc 1.0 and the later ROM 2.3 and 2.4 releases."
+    },
+    {
+      "id": "rom24",
+      "title": "ROM 2.4: original README",
+      "url": "https://github.com/DikuMUDOmnibus/ROM/blob/f03fc881e1b7c9e06465bc61d86d28317fd52a6b/README.rom",
+      "note": "Identifies the release as ROM 2.4 on Merc 2.1 base code."
+    },
+    {
+      "id": "rot",
+      "title": "RoT: preserved credits",
+      "url": "https://wiki.cleftofdimensions.net/index.php?title=Credits&oldid=2375",
+      "note": "The RoT credits identify ROM 2.4 as its base."
+    },
+    {
+      "id": "sunder",
+      "title": "SunderMUD: original credits",
+      "url": "https://github.com/DikuMUDOmnibus/SunderMUD/blob/3dfedeab7e7bf8863d53e2d9d971dbfc0ab1fa0b/doc/SunderMud.credits",
+      "note": "Identifies the ROM 2.3 variant used at Dark Times as its base."
+    },
+    {
+      "id": "dawn",
+      "title": "Dawn: original licenses",
+      "url": "https://github.com/DikuMUDOmnibus/Dawn/blob/127020af06eac484b98da75ab613430cba6affdb/src/docs/licenses.txt",
+      "note": "Names ROM 2.4, Oblivion 2.0, and Dawn of Time in the ancestry."
+    },
+    {
+      "id": "ack",
+      "title": "ACK!MUD: original license and credits",
+      "url": "https://github.com/DikuMUDOmnibus/AckMUD/blob/a2b2e17373b3b95bb8acce747ea1db17afba7bd3/docs/acklicense.txt",
+      "note": "Identifies modified Merc 2.2 and credits Merc 2.0, 2.1, and 2.2 code."
+    },
+    {
+      "id": "envy",
+      "title": "EnvyMUD 2.0: original README",
+      "url": "https://github.com/DikuMUDOmnibus/EnvyMUD/blob/0bab3b701ab23247d2788cf37335106adbedb85c/README.old",
+      "note": "Explicitly traces Envy 1.0 to Merc 2.2 and Envy 2.0 to Envy 1.0."
+    },
+    {
+      "id": "ultra",
+      "title": "UltraEnvy: original license",
+      "url": "https://github.com/DikuMUDOmnibus/Ultra-Envy/blob/240666877f5c616bfbf9af803bd9dbade0f48bd3/doc/license.ue",
+      "note": "The surviving UltraEnvy release traces through Envy 2.2, itself based on Envy 2.0."
+    },
+    {
+      "id": "mythran",
+      "title": "Mythran: original license",
+      "url": "https://github.com/DikuMUDOmnibus/MythranMUD/blob/e45ef5a4500e7d69f25a3502017c3010438732cf/doc/license.myt",
+      "note": "Explicitly based on EnvyMUD 2.0."
+    },
+    {
+      "id": "smaug",
+      "title": "SMAUG: original license",
+      "url": "https://github.com/DikuMUDOmnibus/AFKMud/blob/f2f464c598015c23373775130c3d9f8f1ee80654/doc/license.smaug",
+      "note": "Explicitly based on Merc 2.1."
+    },
+    {
+      "id": "afk",
+      "title": "AFKMud: original README",
+      "url": "https://github.com/DikuMUDOmnibus/AFKMud/blob/f2f464c598015c23373775130c3d9f8f1ee80654/README.AFKMUD",
+      "note": "The release retains the SMAUG licensing and documents changes to the SMAUG engine."
+    },
+    {
+      "id": "gw",
+      "title": "GodWars: original license",
+      "url": "https://github.com/DikuMUDOmnibus/God-Wars/blob/e4cecaf3627f424132b0322f7db6ec0942d8e717/doc/license.gw",
+      "note": "Explicitly based on Merc 2.1."
+    },
+    {
+      "id": "dystopia",
+      "title": "Dystopia: original license",
+      "url": "https://github.com/DikuMUDOmnibus/Dystopia/blob/9b9310d89642a8d0086c4690a03c7e609ec88256/doc/license/license.dystopia",
+      "note": "Explicitly based on God Wars."
+    },
+    {
+      "id": "naked",
+      "title": "NakedMUD: maintainer\u2019s project history",
+      "url": "https://github.com/NakedMud/nakedmud",
+      "note": "Identifies Brian Graversen\u2019s SocketMUD as the foundation. No Merc descent is asserted here."
+    },
+    {
+      "id": "returns",
+      "title": "Dark Pawns Returns: project history",
+      "url": "https://github.com/RustySpeedy/darkpawns-returns/blob/master/README.md",
+      "note": "The C revival of Dark Pawns, distinct from this Go restoration."
+    },
+    {
+      "id": "go",
+      "title": "Dark Pawns: Go restoration",
+      "url": "https://github.com/zax0rz/darkpawns",
+      "note": "The current project ports the surviving C game. It does not descend from DPReturns."
+    },
+    {
+      "id": "crimson",
+      "title": "CrimsonMUD: original credits",
+      "url": "https://github.com/DikuMUDOmnibus/Crimson/blob/fa4486011e7e7fdb4b35fe367093d4959cbb1a65/lib/credits",
+      "note": "Names the original Diku source and CrimsonMUD modifications."
+    }
+  ]
+}
