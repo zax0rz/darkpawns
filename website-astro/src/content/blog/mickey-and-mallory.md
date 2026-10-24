@@ -2,7 +2,7 @@
 title: "And You Wanna Know Why?"
 date: 2026-10-24
 description: "Mickey and Mallory Knox were in Dark Pawns. The source code that survived kept their speeches and lost their bodies, so I gave them new ones on the original server and let them kill a warrior named Wayne."
-draft: true
+draft: false
 textKind: "original"
 source: "src/spec_procs.c, src/spec_assign.c, src/db.c and lib/world/ at commit 29994e5; lib/text/help/socials.hlp; archive record topic-t10; session logs captured 2026-10-24 from a scratch build of src/ with two stand-in mobs (docs/research/nbk-session/)"
 voiceLayer: "mythic-admin"
