@@ -110,7 +110,7 @@ class CombinedTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)/'repo'; (repo/'scripts').mkdir(parents=True)
             source = Path(__file__).resolve().parent
-            for name in ('census.sh', 'census_runner.sh', 'combined_census.py', 'claims_census.py', 'manifest_claims.py', 'fidelity_manifest.py'):
+            for name in ('census.sh', 'census.py', 'census_budget.py', 'census_build.sh', 'oracle_regression.sh', 'census_runner.sh', 'combined_census.py', 'claims_census.py', 'manifest_claims.py', 'fidelity_manifest.py'):
                 shutil.copy2(source/name, repo/'scripts'/name)
             scenarios = repo/'cmd/dp-oracle-diff/scenarios'; scenarios.mkdir(parents=True)
             for name in ('alpha', 'beta'):
@@ -126,18 +126,23 @@ printf 'PASS\\t%s\\t1\\n' "$name" > "$result_dir/$name"
 printf 'PASS %s\\n' "$name"
 ''')
             worker.chmod(0o755)
-            rt = repo/'rt'; rt.mkdir()
-            env = dict(os.environ, XDG_RUNTIME_DIR=str(rt), ORACLE_RUNS_ROOT=str(repo/'runs'),
+            rt = Path(tmp)/'rt'; rt.mkdir()
+            memory = Path(tmp)/'memory'; memory.write_text(str(32*1024*1024))
+            (scenarios.parent/'reference-oracle.sha256').write_text('0'*64)
+            subprocess.run(['git','init','-q',str(repo)],check=True)
+            subprocess.run(['git','-C',str(repo),'add','.'],check=True)
+            subprocess.run(['git','-C',str(repo),'-c','user.email=test@example.org','-c','user.name=Test','commit','-qm','fixture'],check=True)
+            env = dict(os.environ, CENSUS_TESTING='1', CENSUS_TEST_RUNTIME=str(rt/'budget'), CENSUS_TEST_MEMORY=str(memory), XDG_RUNTIME_DIR=str(rt), ORACLE_RUNS_ROOT=str(Path(tmp)/'runs'),
                        DP_ORACLE_BIN=str(stub), ORACLE_REGRESSION_GO=str(stub), CENSUS_ALLOW_NONREFERENCE='1',
-                       CENSUS_MANIFEST_DIR=str(manifests), CENSUS_POLL_SECONDS='.05', CENSUS_CALLS=str(repo/'calls'))
+                       CENSUS_MANIFEST_DIR=str(manifests), CENSUS_POLL_SECONDS='.05', CENSUS_CALLS=str(Path(tmp)/'calls'))
             script = str(repo/'scripts/census.sh')
             start = subprocess.run([script, 'start', '--combined', '--name', 'test', '--jobs', '2'], env=env, capture_output=True, text=True)
             self.assertEqual(start.returncode, 0, start.stderr)
             wait = subprocess.run([script, 'wait', '--max-seconds', '10'], env=env, capture_output=True, text=True)
             self.assertEqual(wait.returncode, 0, wait.stdout + wait.stderr)
             self.assertIn('pairs=3 deduplicated=1 full=CLEAN claims=CLEAN', wait.stdout)
-            self.assertCountEqual((repo/'calls').read_text().splitlines(), ['1 alpha', '1 beta', '2 alpha'])
-            run = next((repo/'runs').glob('*/*'))
+            self.assertCountEqual((Path(tmp)/'calls').read_text().splitlines(), ['1 alpha', '1 beta', '2 alpha'])
+            run = next((Path(tmp)/'runs').glob('*/*'))
             self.assertEqual((run/'full-verdict').read_text(), 'CLEAN\n')
             self.assertEqual((run/'claims-verdict').read_text(), 'CLEAN\n')
             self.assertIn('Combined gate', (run/'MANIFEST.md').read_text())
@@ -157,7 +162,7 @@ printf '%s %s\\n' "$kind" "$name"
             self.assertEqual(start.returncode, 0, start.stderr)
             wait = subprocess.run([script, 'wait', '--max-seconds', '10'], env=env, capture_output=True, text=True)
             self.assertEqual(wait.returncode, 0, wait.stdout + wait.stderr)
-            run = next(p for p in (repo/'runs').glob('*/draws'))
+            run = next(p for p in (Path(tmp)/'runs').glob('*/draws'))
             summary = (run/'summary.txt').read_text()
             self.assertIn('full=CLEAN claims=CLEAN', summary)
             self.assertIn('oracle-draw-parity: full pairs=2 seeds=1 draw_divergent=0 | claims pairs=2 seeds=1,2 draw_divergent=1', summary)

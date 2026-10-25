@@ -118,11 +118,11 @@ trap cleanup EXIT
 # repeated compile-storm memory spikes under the 4-way worker fan-out.
 harness_bin="$log_dir/dp-oracle-diff"
 server_bin="$log_dir/dp-server-prebuilt"
-if ! "$go_bin" build -C "$repo_root" -o "$harness_bin" ./cmd/dp-oracle-diff; then
+if ! "$script_dir/census_build.sh" -C "$repo_root" -o "$harness_bin" ./cmd/dp-oracle-diff; then
 	printf 'oracle-regression: harness build failed\n' >&2
 	exit 2
 fi
-if ! "$go_bin" build -C "$repo_root" -o "$server_bin" ./cmd/server; then
+if ! "$script_dir/census_build.sh" -C "$repo_root" -o "$server_bin" ./cmd/server; then
 	printf 'oracle-regression: server prebuild failed\n' >&2
 	exit 2
 fi

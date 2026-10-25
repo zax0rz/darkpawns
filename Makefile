@@ -177,10 +177,10 @@ census-start:
 	scripts/census.sh start --name $${CENSUS_NAME:?CENSUS_NAME=<run-name> is required}
 
 census-wait:
-	scripts/census.sh wait
+	scripts/census.sh wait --run "$${CENSUS_RUN:?CENSUS_RUN=<returned-run-directory> is required}"
 
 census-status:
-	scripts/census.sh status
+	scripts/census.sh status --run "$${CENSUS_RUN:?CENSUS_RUN=<returned-run-directory> is required}"
 
 census-tool-test:
 	scripts/test_census.sh

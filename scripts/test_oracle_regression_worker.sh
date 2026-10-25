@@ -209,6 +209,7 @@ run_case multiblock-changed "I|D:cast:$two_a,damage:$two_c|D:cast:$two_a,damage:
 aggregate_root=$test_root/aggregate-repo
 mkdir -p "$aggregate_root/scripts" "$aggregate_root/cmd/dp-oracle-diff/scenarios"
 cp "$repo_root/scripts/oracle_regression.sh" "$repo_root/scripts/oracle_regression_worker.sh" \
+	"$repo_root/scripts/census_build.sh" \
 	"$aggregate_root/scripts/"
 cp "$repo_root/cmd/dp-oracle-diff/scenarios/yuball-depth.txt" \
 	"$repo_root/cmd/dp-oracle-diff/scenarios/medit-entry-depth.txt" \

@@ -204,7 +204,7 @@ def main():
     binaries.mkdir()
     go = os.environ.get("ORACLE_REGRESSION_GO", "/usr/local/go/bin/go")
     for package, name in (("./cmd/dp-oracle-diff", "dp-oracle-diff"), ("./cmd/server", "dp-server-prebuilt")):
-        subprocess.run([go, "build", "-C", str(repo), "-o", str(binaries / name), package], check=True)
+        subprocess.run([str(repo / "scripts/census_build.sh"), "-C", str(repo), "-o", str(binaries / name), package], check=True)
     progress = lambda done, total: atomic(run / "claims-progress", f"all\t{done}\t{total}\n")
     initial = execute_pool(ordered, int(os.environ["CENSUS_JOBS"]),
                            lambda pair: run_worker(repo, run, binaries, pair), progress)

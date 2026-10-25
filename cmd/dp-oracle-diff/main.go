@@ -441,22 +441,26 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if err := applyGoHouseControlFixtures(filepath.Dir(goWorld), scenario.HouseControls); err != nil {
 		return fmt.Errorf("apply Go port house-control fixtures: %w", err)
 	}
-	oracleListener, whodListener, goTelnetListener, goHTTPListener, err := allocatePorts()
+	releasePorts, err := bootLease(bootTimeout)
 	if err != nil {
 		return err
 	}
+	oracleListener, whodListener, goTelnetListener, goWHODListener, goHTTPListener, err := allocatePorts()
+	releasePorts()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		for _, ln := range []net.Listener{oracleListener, whodListener, goTelnetListener, goWHODListener, goHTTPListener} {
+			_ = ln.Close()
+		}
+	}()
 	oraclePort := oracleListener.Addr().(*net.TCPAddr).Port
 	goTelnetPort := goTelnetListener.Addr().(*net.TCPAddr).Port
 	goHTTPPort := goHTTPListener.Addr().(*net.TCPAddr).Port
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	// Release the C oracle and WHOD reservations immediately before starting
-	// the oracle; the Go-side listeners stay reserved until just before the
-	// Go port starts below.
-	_ = oracleListener.Close()
-	_ = whodListener.Close()
-
 	// goEnv and goDB are filled in below, before the Go port first starts. The
 	// engine closures read them lazily, so a <RESTART> step reuses the same
 	// environment and the same durable store as the first boot.
@@ -487,6 +491,8 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		oracleEngine.stop()
 	}()
 
+	oracleEngine.start = ownedStart(bootTimeout, []net.Listener{oracleListener, whodListener}, []int{oraclePort, oraclePort + 1}, oracleEngine.start)
+	goEngine.start = ownedStart(bootTimeout, []net.Listener{goTelnetListener, goWHODListener, goHTTPListener}, []int{goTelnetPort, goTelnetPort + 1, goHTTPPort}, goEngine.start)
 	if _, err := oracleEngine.ensure(); err != nil {
 		return err
 	}
@@ -511,9 +517,6 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			return err
 		}
 	}
-	// Release the Go-side reservations immediately before starting the port.
-	_ = goTelnetListener.Close()
-	_ = goHTTPListener.Close()
 	if _, err := goEngine.ensure(); err != nil {
 		return err
 	}
@@ -589,11 +592,18 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	goWSURL := fmt.Sprintf("ws://127.0.0.1:%d/ws", goHTTPPort)
 	dialGo := func() (oraclediff.Conn, error) {
 		if goTransport == "ws" {
+			if err := waitOwnedListener(goEngine.proc, goHTTPPort, bootTimeout); err != nil {
+				return nil, err
+			}
 			c, err := oraclediff.NewWSConn("node",
 				filepath.Join(repoRoot, "internal", "oraclediff", "wsdriver", "driver.mjs"),
 				filepath.Join(repoRoot, "web", "public", "mud-client.js"),
 				goWSURL)
 			if err == nil {
+				if ownErr := waitOwnedListener(goEngine.proc, goHTTPPort, bootTimeout); ownErr != nil {
+					_ = c.Close()
+					return nil, ownErr
+				}
 				c.SetFirstByteWait(firstByteWait)
 			}
 			return c, err
@@ -908,6 +918,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			Go:      goBlock,
 			Diff:    oraclediff.UnifiedDiff("c-oracle", "go-port", oracleBlock, goBlock),
 		})
+	}
+
+	if err := retainEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), cDrawLog, goDrawLog, diffs, oracleEngine.log(), goEngine.log()); err != nil {
+		return err
 	}
 
 	// Per-block divergence fingerprints: the regression driver pins the SHAPE of
@@ -1883,8 +1897,23 @@ func dialWhenReady(p *process, addr string, timeout time.Duration) (net.Conn, er
 			return nil, fmt.Errorf("%s exited before readiness: %w\nserver log:\n%s", p.name, p.waitErr, p.log.String())
 		default:
 		}
+		_, rawPort, splitErr := net.SplitHostPort(addr)
+		if splitErr != nil {
+			return nil, splitErr
+		}
+		port, parseErr := strconv.Atoi(rawPort)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		if ownErr := waitOwnedListener(p, port, time.Until(deadline)); ownErr != nil {
+			return nil, ownErr
+		}
 		conn, err := net.DialTimeout("tcp", addr, time.Second)
 		if err == nil {
+			if ownErr := waitOwnedListener(p, port, time.Until(deadline)); ownErr != nil {
+				_ = conn.Close()
+				return nil, ownErr
+			}
 			return conn, nil
 		}
 		lastErr = err
@@ -1910,45 +1939,41 @@ func waitForLog(p *process, marker string, timeout time.Duration) error {
 	return fmt.Errorf("%s did not log %q within %s\nserver log:\n%s", p.name, marker, timeout, p.log.String())
 }
 
-// allocatePorts accounts for CircleMUD's undocumented second listener: WHOD
-// always binds oraclePort+1. The returned listeners are held open by the
-// caller and closed only immediately before the corresponding engine starts,
-// so the ports cannot be claimed by another process during fixture
-// application. The children re-bind by port number (no FD passing), so a
-// small TOCTOU window remains between Close and each child's bind; a
-// collision there fails the scenario loudly with a bind error in the server
-// log — it cannot produce a wrong verdict.
-func allocatePorts() (oracle, whod, goTelnet, goHTTP net.Listener, err error) {
-	for attempt := 0; attempt < 20; attempt++ {
-		oracleListener, listenErr := net.Listen("tcp", "127.0.0.1:0")
-		if listenErr != nil {
-			return nil, nil, nil, nil, fmt.Errorf("reserve C oracle port: %w", listenErr)
+// allocatePorts reserves all five listeners, including Go WHOD (telnet+1).
+// Callers hold the host boot lease while allocating and during ownedStart.
+func allocatePorts() (oracle, whod, goTelnet, goWHOD, goHTTP net.Listener, err error) {
+	for attempt := 0; attempt < 50; attempt++ {
+		var held []net.Listener
+		listen := func(port int) net.Listener {
+			ln, listenErr := reserveOraclePort(port)
+			if listenErr != nil {
+				err = listenErr
+				return nil
+			}
+			held = append(held, ln)
+			return ln
 		}
-		oracle = oracleListener
-		whodListener, whodErr := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", oracleListener.Addr().(*net.TCPAddr).Port+1))
-		if whodErr != nil {
-			_ = oracleListener.Close()
-			continue
+		if oracle = listen(0); oracle != nil {
+			whod = listen(oracle.Addr().(*net.TCPAddr).Port + 1)
 		}
-		whod = whodListener
-		goTelnetListener, telnetErr := net.Listen("tcp", "127.0.0.1:0")
-		if telnetErr != nil {
-			_ = whodListener.Close()
-			_ = oracleListener.Close()
-			return nil, nil, nil, nil, fmt.Errorf("reserve Go telnet port: %w", telnetErr)
+		if err == nil {
+			goTelnet = listen(0)
 		}
-		goTelnet = goTelnetListener
-		goHTTPListener, httpErr := net.Listen("tcp", "127.0.0.1:0")
-		if httpErr != nil {
-			_ = goTelnetListener.Close()
-			_ = whodListener.Close()
-			_ = oracleListener.Close()
-			return nil, nil, nil, nil, fmt.Errorf("reserve Go HTTP port: %w", httpErr)
+		if err == nil {
+			goWHOD = listen(goTelnet.Addr().(*net.TCPAddr).Port + 1)
 		}
-		goHTTP = goHTTPListener
-		return oracle, whod, goTelnet, goHTTP, nil
+		if err == nil {
+			goHTTP = listen(0)
+		}
+		if err == nil {
+			return
+		}
+		for _, ln := range held {
+			_ = ln.Close()
+		}
+		err = nil
 	}
-	return nil, nil, nil, nil, errors.New("could not reserve adjacent C oracle and WHOD ports")
+	return nil, nil, nil, nil, nil, errors.New("listener ownership: could not reserve five ports")
 }
 
 func findRepoRoot() (string, error) {

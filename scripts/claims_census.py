@@ -67,7 +67,8 @@ def invoke(run, runner, seed, names, jobs, recheck=False):
         env["ORACLE_REGRESSION_DRAW_PARITY"] = "1"
     seen = set()
     with (directory / f"{suffix}.log").open("w") as log:
-        process = subprocess.Popen([runner], env=env, stdout=subprocess.PIPE,
+        command = [runner]
+        process = subprocess.Popen(command, env=env, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT, text=True)
         for line in process.stdout:
             log.write(line)

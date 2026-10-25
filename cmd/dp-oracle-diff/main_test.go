@@ -257,7 +257,7 @@ func (*scriptedTestConn) ReadUntilQuiescent(time.Duration) (string, error) { ret
 func (*scriptedTestConn) Close() error                                     { return nil }
 
 func TestAllocatePortsHoldsReservationsOpen(t *testing.T) {
-	oracle, whod, goTelnet, goHTTP, err := allocatePorts()
+	oracle, whod, goTelnet, goWHOD, goHTTP, err := allocatePorts()
 	if err != nil {
 		t.Fatalf("allocatePorts: %v", err)
 	}
@@ -265,6 +265,7 @@ func TestAllocatePortsHoldsReservationsOpen(t *testing.T) {
 		_ = oracle.Close()
 		_ = whod.Close()
 		_ = goTelnet.Close()
+		_ = goWHOD.Close()
 		_ = goHTTP.Close()
 	})
 
@@ -275,7 +276,7 @@ func TestAllocatePortsHoldsReservationsOpen(t *testing.T) {
 	if whodPort != oraclePort+1 {
 		t.Fatalf("WHOD port = %d, want oracle+1 (%d)", whodPort, oraclePort+1)
 	}
-	for _, port := range []int{oraclePort, whodPort, goTelnet.Addr().(*net.TCPAddr).Port, goHTTP.Addr().(*net.TCPAddr).Port} {
+	for _, port := range []int{oraclePort, whodPort, goWHOD.Addr().(*net.TCPAddr).Port, goTelnet.Addr().(*net.TCPAddr).Port, goHTTP.Addr().(*net.TCPAddr).Port} {
 		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 		if err == nil {
 			_ = ln.Close()

@@ -6,6 +6,12 @@
 # process attempts: recovery and content confirmation share one budget.
 set -u
 
+# Every full/targeted, claims and combined path enters the same host budget.
+# The permit covers all attempts and is acquired before any fixtures or engines.
+if [[ -n "${CENSUS_RUN_DIR:-}" && "${CENSUS_LEASED:-0}" != 1 ]]; then
+ exec python3 "$(dirname -- "${BASH_SOURCE[0]}")/census_budget.py" exec worker -- "$0" "$@"
+fi
+
 main() {
 	local scenario_file=$1
 	local scenario=${scenario_file%.txt}
@@ -67,7 +73,7 @@ main() {
 		# (RO-016; it was scored FAIL before this), and C's perror prints
 		# "SYSERR: bind" (comm.c:357). Either engine failing to bind must reach
 		# the retry path, because FAIL is never retried.
-		grep -Eq 'exited before readiness|did not log .*within|did not accept connections .* within|: EOF|connection (reset|closed)|Telnet listener failed|address already in use|SYSERR: bind' "$1"
+		grep -Eq 'listener ownership|exited before readiness|did not log .*within|did not accept connections .* within|: EOF|connection (reset|closed)|Telnet listener failed|address already in use|SYSERR: bind' "$1"
 	}
 
 	run_attempt() {
@@ -85,7 +91,7 @@ main() {
 		(
 			cd "$repo_root" || exit 125
 			timeout --foreground --signal=TERM --kill-after=10s "$scenario_timeout" \
-				env DP_ORACLE_BIN="$oracle_bin" "$harness_bin" \
+				env DP_ORACLE_BIN="$oracle_bin" DP_ORACLE_EVIDENCE_ROOT="$log_dir" DP_ORACLE_EVIDENCE="$scenario.capture$attempt" "$harness_bin" \
 				--scenario "$scenario" --seed "$seed" "${dump_args[@]}"
 		) >"$attempt_log" 2>&1
 		attempt_status=$?
