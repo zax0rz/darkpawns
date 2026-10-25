@@ -117,7 +117,7 @@ produces a silently different login, not a boot failure.
 **Suspect:** `pkg/telnet/listener.go` `readLineBody()` option handling —
 `case DO` at `:596`, `case OPT_ECHO` at `:602-607`, `case OPT_MSSP` at `:608-610`
 (`sendMSSP()` is `:821`).
-**C reference:** `src/comm.c` `process_input()` (`:1830`) handles exactly two
+**C reference:** `src/comm.c` `process_input()` (`:1828`) handles exactly two
 client negotiations, by substring search: `IAC DO COMPRESS2` (`:1892`) and
 `IAC DONT COMPRESS2` (`:1915`). Every other `WILL`/`WONT`/`DO`/`DONT` is ignored.
 
@@ -197,7 +197,23 @@ accepted here — see Decisions for Zach.**
   `IAC WONT ECHO` followed by two stray option bytes (`TELOPT_NAOFFD`,
   `TELOPT_NAOCRD` = `0x0D 0x0A`) as data (`src/comm.c:954-966`); the port sends
   `IAC WONT ECHO` and the next prompt's own leading CRLF. The two byte streams
-  are identical at that point, verified by dumping both raw streams side by side.
+  are identical at that point, verified by dumping both raw streams side by side
+  (`~/dp-play-lab/sessions/raw-creation-c.txt` vs `raw-creation-go.txt`).
+- **The name prompt's clear-line is a raw difference normalization erases.**
+  C sends `"\x1B[2K\n\rBy what name do you wish to be known? "` (`src/ident.c:240`);
+  the port sends a plain CRLF with no `ESC[2K` (no `2K` literal exists in the Go
+  tree). The streams still normalize equal — Tier-1 strips the escape and its
+  `\r\n`/`\n\r`/`\r` canonicalization makes both sides four newlines — which is
+  why `character-creation` PASSes in the 2026-10-25 full census. Recorded as an
+  observation, not a finding: raw colour bytes at the name prompt are outside what
+  the census certifies, exactly as `docs/fidelity/depth/entry.tsv` already says
+  for `entry.motd-mortal-color-on-normalized`.
+- **A linkless leftover is visible in later sessions' room output.** In the raw
+  dump, C's first room line includes `Rawdump the Warrior (linkless) is standing
+  here.` — a character from an earlier probe that disconnected without quitting.
+  The lab restarts its server before every recorded session for this reason
+  (`scripts/run-session.sh`); a session recorded against a dirty world is not a
+  replayable session.
 - **The MOTD is byte-identical** at the PRESS RETURN step once the lab supplies
   `lib/text` (see §2): `Welcome to Dark Pawns: darkpawns.com 4300` through
   `**** So go there immediately, if not sooner.` plus the bare `\n` before
