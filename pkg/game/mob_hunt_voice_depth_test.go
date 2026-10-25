@@ -129,6 +129,45 @@ func TestHuntVictimTellUsesTheTellPath(t *testing.T) {
 	}
 }
 
+// TestHuntVictim_CommandArgumentsMatchC drives every command call built by
+// hunt_victim and observes the exact command/argument pair at its body
+// boundary (src/graph.c:351-398). This fails if any arm changes its caller-
+// built text even when the shared command path remains correct.
+func TestHuntVictim_CommandArgumentsMatchC(t *testing.T) {
+	tests := []struct {
+		name, cSite, command, argument string
+		extraDraws                     []int
+	}{
+		{name: "case 0 tell", cSite: "src/graph.c:353", command: "tell", argument: "Prey Let's have an ass-kicking contest"},
+		{name: "case 1 auction", cSite: "src/graph.c:357", command: "auction", argument: "Corpse of Prey for sale in a minute.. 1500 coins.", extraDraws: []int{1500}},
+		{name: "case 2 tell", cSite: "src/graph.c:361", command: "tell", argument: "Prey Run to your momma, pansy!"},
+		{name: "case 3 tell", cSite: "src/graph.c:365", command: "tell", argument: "Prey I'm coming to kill you!"},
+		{name: "case 4 gossip", cSite: "src/graph.c:369", command: "gossip", argument: "I hear Prey thinks he's bad."},
+		{name: "case 5 gossip", cSite: "src/graph.c:373", command: "gossip", argument: "Your momma ain't gonna save you this time, Prey."},
+		{name: "case 6 gossip", cSite: "src/graph.c:377", command: "gossip", argument: "Prey flees like a rabbit...", extraDraws: []int{0}},
+		{name: "case 7 tell", cSite: "src/graph.c:380", command: "tell", argument: "Prey Come out and fight!"},
+		{name: "case 8 tell", cSite: "src/graph.c:384", command: "tell", argument: "Prey Watch out! Here I come to get you!"},
+		{name: "case 9 auction", cSite: "src/graph.c:388", command: "auction", argument: "How much will I get for the head of Prey?"},
+		{name: "case 10 gossip", cSite: "src/graph.c:392", command: "gossip", argument: "Where is that little wimp, Prey?"},
+		{name: "case 11 gossip", cSite: "src/graph.c:395", command: "gossip", argument: "Prey, you jerk!"},
+		{name: "case 12 shout", cSite: "src/graph.c:398", command: "shout", argument: "Damn it!"},
+	}
+	for i, tc := range tests {
+		tc := tc
+		roll := i
+		t.Run(tc.name, func(t *testing.T) {
+			w, mob, prey, _, _ := huntVoiceWorld(t)
+			mob.SetHunting(prey.Name)
+			draws := append([]int{roll}, tc.extraDraws...)
+			scriptHuntDraws(t, draws...)
+			assertMobDirectCommandCalls(t, w, tc.cSite, func() bool {
+				w.huntVictim(mob)
+				return true
+			}, mobDirectCommandCall{command: tc.command, argument: tc.argument})
+		})
+	}
+}
+
 // TestHuntVictimGossipIsGlobalAndRecorded covers the gossip arms: C uses
 // do_gen_comm(SCMD_GOSSIP) (src/graph.c:369, :373, :377), which is global and
 // records review (src/act.comm.c:1275-1276). Case 4's text is

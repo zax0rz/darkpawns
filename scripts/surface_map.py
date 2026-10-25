@@ -59,8 +59,9 @@ def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None
             for row in inventory_rows:
                 families[row["family"]] = row
     for path in sorted(surface_dir.glob("*.tsv")):
-        # These inventories are not per-C-file output-site maps; dedicated
-        # validators check their schemas.
+        # The spell matrix has a dedicated schema validator. The mobile-command
+        # TSV is a C-call inventory, not a per-C-file output-site map, and this
+        # script does not validate its schema.
         if path.name in {"spell-matrix.tsv", "mob-command-calls.tsv"}:
             continue
         name = path.relative_to(root) if path.is_relative_to(root) else path

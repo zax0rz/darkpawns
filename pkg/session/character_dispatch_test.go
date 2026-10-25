@@ -46,6 +46,31 @@ func TestResolveCharacterCommandUsesExistingCRegistry(t *testing.T) {
 	}
 }
 
+func TestDispatchCharacterCommandDirectUsesExactCommandBody(t *testing.T) {
+	f := newActorPositionFixture(t, combat.PosSleeping)
+	tell, ok := cmdRegistry.Lookup("tell")
+	if !ok || tell.ActorHandler == nil {
+		t.Fatal("tell has no exact actor command body")
+	}
+	if _, ok := cmdRegistry.Lookup("tel"); ok {
+		t.Fatal("tel unexpectedly has a registered body; the abbreviation control is ambiguous")
+	}
+	ctx := characterCommandContext{actor: f.actor, manager: f.manager}
+	if got := dispatchCharacterCommandDirect(ctx, "tell", "Observer exact body"); got != game.CharacterCommandHandled {
+		t.Fatalf("exact tell dispatch = %v, want handled", got)
+	}
+	if got, want := f.roomOut.String(), "A guard trainee tells you, 'exact body'\r\n"; got != want {
+		t.Fatalf("exact tell body bytes = %q, want %q", got, want)
+	}
+	f.roomOut.Reset()
+	if got := dispatchCharacterCommandDirect(ctx, "tel", "Observer abbreviation must not resolve"); got != game.CharacterCommandUnsupported {
+		t.Fatalf("abbreviated direct dispatch = %v, want unsupported", got)
+	}
+	if got := f.roomOut.String(); got != "" {
+		t.Fatalf("abbreviated direct dispatch produced output %q", got)
+	}
+}
+
 func TestResolveCharacterCommandFiltersBeforeChoosingPrefix(t *testing.T) {
 	mortal := resolveCharacterCommand("go", 1)
 	wantGossip, ok := cmdRegistry.Lookup("gossip")

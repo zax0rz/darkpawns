@@ -642,19 +642,19 @@ func specRemorter(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 
 	switch cmd {
 	case "buy", "list":
-		remorterTell(me, ch, "Type REMORT to remort!")
+		remorterTell(w, me, ch, "Type REMORT to remort!")
 		return true
 	case "remort":
 		if ch.GetLevel() < LVL_IMMORT-1 {
-			remorterTell(me, ch, fmt.Sprintf("You can't remort until level %d!\r\n", LVL_IMMORT-1))
+			remorterTell(w, me, ch, fmt.Sprintf("You can't remort until level %d!\r\n", LVL_IMMORT-1))
 			return true
 		}
 		if ch.GetLevel() >= LVL_IMMORT {
-			remorterTell(me, ch, "Immortals cannot remort!\r\n")
+			remorterTell(w, me, ch, "Immortals cannot remort!\r\n")
 			return true
 		}
 		if ch.GetGold() < 60000 {
-			remorterTell(me, ch, fmt.Sprintf("It costs %d gold to work my magicks.", 60000))
+			remorterTell(w, me, ch, fmt.Sprintf("It costs %d gold to work my magicks.", 60000))
 			return true
 		}
 		if ch.Equipment != nil && len(ch.Equipment.GetEquippedItems()) > 0 {
@@ -663,7 +663,7 @@ func specRemorter(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 
 		remortPlayer(ch)
-		remorterTell(me, ch, "Enjoy your new life...")
+		remorterTell(w, me, ch, "Enjoy your new life...")
 		SendToChar(ch, "The remorter moves his hands over your eyes, closing them with a touch.\r\nColors spiral in your sight... You open your eyes, feeling refreshed.")
 		return true
 	default:
@@ -674,8 +674,8 @@ func specRemorter(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 // remorterTell is the C do_tell(mobile, ...) path used by SPECIAL(remorter).
 // Keeping the mob as the act() actor preserves the player-facing name and
 // punctuation of a native NPC tell while sending only to the command actor.
-func remorterTell(me *MobInstance, ch *Player, msg string) {
-	Act(nil, false, me, ch, nil, nil, "$n tells you, '$T'", msg, ToVict)
+func remorterTell(w *World, me *MobInstance, ch *Player, msg string) {
+	tellFromMob(w, me, ch, msg)
 }
 
 // remortPlayer is the successful body of SPECIAL(remorter), following
@@ -1376,41 +1376,38 @@ func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 }
 
 // ================================================================
-// eviltrade — Trade keys for experience points
+// eviltrade — accepts or refuses player gifts
 // ================================================================
 func specEviltrade(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if ch.IsNPC() {
+	if w == nil || ch == nil || me == nil || ch.IsNPC() || cmd != "give" {
 		return false
 	}
-	if cmd != "trade" && cmd != "give" {
+	if skipSpaces(arg) == "" {
 		return false
 	}
-	if cmd == "trade" {
-		// Check for gold watch (VNum 13111) in inventory
-		if ch.Inventory != nil {
-			var toRemove []*ObjectInstance
-			for _, item := range ch.Inventory.Items {
-				if item.GetVNum() == 13111 {
-					ch.AddExp(ch.GetLevel() * 200)
-					toRemove = append(toRemove, item)
-				}
-			}
-			for _, item := range toRemove {
-				ch.Inventory.removeItem(item)
-				// C's spec takes the traded object with obj_from_char(obj)
-				// (src/spec_procs2.c:1168): PLR_CRASH is set (handler.c:596-598).
-				ch.MarkCrashNeeded()
-			}
-			if len(toRemove) > 0 {
-				ch.SendMessage(fmt.Sprintf("You trade your key for %d experience.\r\n", ch.GetLevel()*200*len(toRemove)))
-				w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s trades in some keys for experience!", ch.GetName()))
-			} else {
-				ch.SendMessage("You don't have anything to trade.\r\n")
-			}
-		}
+	objName, rest := oneArgument(arg)
+	targetName, _ := oneArgument(rest)
+	if objName == "" || targetName == "" || !isCName(targetName, charKeywords(me)) {
+		return false
+	}
+	obj, found := w.ResolveObjectInInventory(ch, objName)
+	if !found {
+		return false
+	}
+	if obj.GetVNum() != 13111 {
+		tellFromMob(w, me, ch, "Don't give me that crap.")
 		return true
 	}
-	return false
+	if ch.GetAlignment() > 0 {
+		tellFromMob(w, me, ch, "Get lost, goody-goody.")
+		return true
+	}
+	if err := w.MoveObjectToMobInventoryFront(obj, me); err != nil {
+		slog.Error("eviltrade could not take the gold watch", "player", ch.GetName(), "mob", me.GetName(), "error", err)
+		return false
+	}
+	tellFromMob(w, me, ch, "eneeswseswseswseswsesw")
+	return true
 }
 
 // ================================================================

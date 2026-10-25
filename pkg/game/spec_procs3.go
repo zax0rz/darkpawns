@@ -679,8 +679,7 @@ func conSellerPersName(w *World, subject, observer Actor) string {
 // reply-target assignment is kept, so reply behaves as C's does
 // (src/act.comm.c:894).
 func conSellerTell(w *World, me *MobInstance, target *Player, msg string) {
-	target.SendMessage(fmt.Sprintf("%s tells you, '%s'\r\n", cap(conSellerPersName(w, me, target)), msg))
-	target.SetLastTeller(me.GetShortDesc())
+	w.NPCCommandDirect(me, "tell", target.GetName()+" "+msg)
 }
 
 // conSellerRoomAct emits the two fixed TO_NOTVICT/TO_ROOM acts without using
