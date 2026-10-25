@@ -66,6 +66,21 @@ func clearRawKillNightbreed(p *Player) {
 	}
 }
 
+// rawKillPreCorpse runs raw_kill's pre-corpse sequence for a player victim,
+// in C's order (src/fight.c:541-572): stop fighting, strip every affect,
+// remove the tattoo, clear the nightbreed forms (vampire clamps mana),
+// unmount, and clear every mob's memory of and hunt for the victim.
+// combat.RawKill runs the same steps through its callback bridge; the
+// game-side death paths share this helper so the order cannot drift.
+func (w *World) rawKillPreCorpse(player *Player) {
+	player.StopFighting()                   // fight.c:541-542
+	player.removeRawKillAffects()           // fight.c:544-545
+	removeRawKillTattoo(player)             // fight.c:547-552
+	clearRawKillNightbreed(player)          // fight.c:554-561
+	w.unmountRawKillBody(player)            // fight.c:562-565
+	w.forgetRawKillVictim(player.GetName()) // fight.c:566-572
+}
+
 // unmountRawKillBody ports src/fight.c:562-565 before memory cleanup and
 // death_cry. MountRider retains Go's rider identity independently of following.
 func (w *World) unmountRawKillBody(body combat.Combatant) {

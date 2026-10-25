@@ -175,11 +175,11 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 		return
 	}
 
-	player.StopFighting()
-	if player.IsAffected(affWerewolf) {
-		player.SetAffect(affWerewolf, false)
-	}
-	w.unmountRawKillBody(player)
+	// raw_kill proper — do_kill calls it directly (src/act.offensive.c →
+	// raw_kill, fight.c:534-577), so the full strip sequence runs here too:
+	// affects, tattoo, nightbreed (not just AFF_WEREWOLF), unmount, and mob
+	// memory/hunting, then the cry.
+	w.rawKillPreCorpse(player)
 
 	w.deathCry(player)
 
@@ -388,6 +388,13 @@ func (w *World) HandleNonCombatDeath(victim combat.Combatant) {
 // Original: make_corpse (transfers inventory+equipment+gold), extract_char.
 func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant, attackType int) {
 	w.unmountRawKillBody(victim)
+	// raw_kill strips a mob victim's affects and clears every mob's memory of
+	// and hunt for it before death_cry (src/fight.c:544-572). RawKillCombatant
+	// runs both on its own path before calling here; they are idempotent.
+	if m, ok := victim.(*MobInstance); ok {
+		m.removeRawKillAffects()
+	}
+	w.forgetRawKillVictim(victim.GetName())
 	// raw_kill cries while the victim is still in the room, then silently
 	// builds the corpse (src/fight.c:573-578, 258-427; R1/R4).
 	combat.DeathCry(victim)
@@ -694,8 +701,11 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 		return
 	}
 
-	w.unmountRawKillBody(player) // src/fight.c:562-565
-	combat.DeathCry(player)      // src/fight.c:573, before make_corpse
+	// raw_kill proper, after die()/die_with_killer's bookkeeping above:
+	// stop fighting, strip affects, tattoo and nightbreed, unmount, clear
+	// mob memory/hunting (src/fight.c:541-572), then cry (fight.c:573).
+	w.rawKillPreCorpse(player)
+	combat.DeathCry(player) // src/fight.c:573, before make_corpse
 
 	// Inventory & Equipment — still needs manual lock (no getters for Inventory/Equipment)
 	var inventoryItems []*ObjectInstance
@@ -757,12 +767,9 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	player.SetPosition(combat.PosDead)
 	w.QueuePlayerExtraction(player)
 
-	// HIGH-016: Remove AFF_WEREWOLF affect on death.
-	// Matches C fight.c:raw_kill — AFF_WEREWOLF (bit 27 / affWerewolf=32) is an
-	// aff_bitvector flag, not a master_affected_type, so affect_remove doesn't touch it.
-	if player.IsAffected(affWerewolf) {
-		player.SetAffect(affWerewolf, false)
-	}
+	// The nightbreed clear (HIGH-016, and AFF_WEREWOLF/AFF_VAMPIRE's vampire
+	// mana clamp) now runs inside rawKillPreCorpse above, at C's position in
+	// the sequence (src/fight.c:554-561), not after the corpse.
 }
 
 // deathCry is fight.c death_cry (558-577): the room hears $n's cry (TO_ROOM,
