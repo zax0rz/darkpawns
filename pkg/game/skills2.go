@@ -94,7 +94,13 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 			return SkillResult{MessageToRoom: roomMessage}
 		}
 		// C's do_scrounge hands the found object over with obj_to_char
-		// (src/new_cmds2.c:119): PLR_CRASH is set (handler.c:569-571).
+		// (src/new_cmds2.c:119): PLR_CRASH is set (handler.c:569-571). The
+		// object joins ch->carrying and is in no room list; NewObjectFromProto
+		// defaults Location to the spawn room, so the inventory location every
+		// other hand-over site sets must be set here too — with a stale room
+		// location the world's inventory detach cannot find the object and a
+		// later corpse move or extraction duplicates it.
+		obj.Location = LocInventoryPlayer(ch.Name)
 		ch.MarkCrashNeeded()
 
 		message := "You capture and kill %s.\r\n"
