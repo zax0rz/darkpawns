@@ -88,4 +88,7 @@ func TestAttackHuntingPreyNormalRoomSwingsAndEnrols(t *testing.T) {
 	if !ce.IsFighting(hound) || p.GetFightingBody() != hound {
 		t.Fatal("hunt strike failed to enrol the pair")
 	}
+	if got := w.FollowingBody(hound); got != p {
+		t.Fatalf("direct do_follow target = %v, want quarry %p", got, p)
+	}
 }
