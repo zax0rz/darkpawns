@@ -10,9 +10,10 @@ Claude's batch review; it has not been merged or deployed.
 |---|---:|---:|
 | Consolidated direct-call rows | 0 | 173 |
 | Fixed | 0 | 127 |
-| Delegated | 0 | 6 |
+| Proven | 0 | 1 |
+| Delegated | 0 | 10 |
 | Unreachable | 0 | 28 |
-| Blocked | 0 | 12 |
+| Blocked | 0 | 7 |
 
 The map records each C file and line, caller, command, exact C-built argument,
 Go route, status, proof and notes in
@@ -22,10 +23,15 @@ mickey, mallory, conductor, fearface, tipster and evillead specials have no
 mob assignment. `kender_steal` has no caller in the audited C sources. The two
 mobile-activity wake/stand sites are behind the asleep guard.
 
-The 12 blocked rows are the 11 door-command calls held for GLM's follow-up
-after #2146 and the `breed_killer` spike/stake call: the shared Go command
-currently has no mobile `SCMD_SPIKE`/`SCMD_STAKE` body. No door helper or
-`src/` file was changed.
+The door review cleared five of the eleven `do_gen_door` rows after #2146 and
+#2147 merged: the hunter call is proven through `mobGenDoor`, and the four mayor
+calls are delegated through the same handler with C's literal `"gate"`. Six
+butler calls remain blocked because Go selects a container and calls
+`butlerDoorToggle` directly instead of passing C's `case`, `cabinet`, or `chest`
+argument through `mobGenDoor`. That R5e mismatch is reported below and was not
+changed here. The seventh blocked row is `breed_killer`: the shared Go command
+currently has no mobile `SCMD_SPIKE`/`SCMD_STAKE` body. No door helper or `src/`
+file was changed.
 
 ## Port and C call paths
 
@@ -95,32 +101,80 @@ The initial 35-scenario seed-1 run `luna-mob-command-lane-seed1` included
 `spec-proc-key-seller`, whose setup has an existing draw mismatch (C
 `Number(0,18)`, Go `Number(1,6)`). Archived runs before this work show the same
 divergence. That case is excluded from the five-seed batch and recorded in the
-key-seller rows' notes; its direct tell argument is covered by
-`TestTellFromMobUsesDirectTellArgument`.
+key-seller rows' notes; its direct tell argument is covered by the
+caller-specific `TestSpecKeySellerTellArgumentsMatchC`.
 
 All census artifacts are retained under
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-25/`.
 
 ## Checks
 
-Passed individually after the code and validator changes: `make fmt`, `go build ./...`,
+Passed individually at the review follow-up commit: `make fmt`, `go build ./...`,
 `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`,
-`golangci-lint run ./...` (0 issues), `make deadcode-ratchet` (52 baselined,
-0 new), `make fidelity-units` (1,949 claims), `make string-census` (ratchet
-passes; generated reports are already stale), `gosec -severity=high -quiet
-./...`, and the proof-token check (no missing scenarios). `make fidelity-depth`
-also passes: 42 maps, 0 errors.
+`golangci-lint run ./...` (0 issues; it printed a warning for an absent sibling
+worktree path), `make deadcode-ratchet` (52 baselined, 0 new),
+`make fidelity-depth` (42 maps, 0 errors), `make fidelity-units` (1,949 claims),
+`make string-census` (ratchet passes; generated reports are already stale),
+`gosec -severity=high -quiet ./...`, and the proof-token check (no missing
+scenarios).
 
 Zach approved a narrow exception in `scripts/surface_map.py`: the custom
 `mob-command-calls.tsv` is skipped with `spell-matrix.tsv` during per-file
 output-map validation and map counting. The comment identifies it as a C-call
-inventory, not a per-file output map; no other tooling was changed.
+inventory, not a per-file output map, and states this script does not validate
+its schema. No validator was added.
+
+## Review follow-up — 2026-10-25
+
+The R5h proof was tightened at commit `915007fe9`. The 56 mapped
+special-procedure tell calls now have caller-specific table tests that record
+the exact command and target-prefixed argument at the direct-command boundary.
+The 13 `hunt_victim` command calls have
+`TestHuntVictim_CommandArgumentsMatchC`; puff's say calls are asserted by the
+complete roll-to-command table and the explicit dead-mobile test. The map names
+each C call line and describes shared literals where separate branches use
+them. A temporary mutation of the recruiter training argument made
+`TestSpecRecruiterTellArgumentsMatchC/training` fail on the exact argument
+mismatch; the C-matching value was restored and the focused and full Go suites
+pass.
+
+The tell-call audit also found three caller paths that did not reach the
+command body as C does. `remorterTell` now routes through `tellFromMob`;
+`conSellerTell` uses `NPCCommandDirect("tell", target + text)`; and
+`specEviltrade` now handles C's `give` path instead of the Go-only `trade`
+behavior. Their exact arguments and caller outcomes are covered by
+`TestSpecRemorterTellArgumentsMatchC`, `TestSpecConSellerTellArgumentsMatchC`,
+`TestSpecEviltradeTellArgumentsMatchC`, and `TestEviltradeSetsFlag`. There is no
+oracle scenario for eviltrade, so that path has unit proof only.
+
+The exact dispatch test confirms `tell` resolves its registered body while
+`tel` is unsupported, matching direct C `ACMD` lookup with no prefix expansion.
+
+The five targeted census runs cover the six remorter/con-seller scenarios on
+each required seed and use `--draw-parity`:
+
+| Seed | Census | Verdict | Draw divergence |
+|---:|---|---|---:|
+| 1 | `luna-mob-command-review-seed1` | CLEAN | 0 |
+| 2 | `luna-mob-command-review-seed2` | CLEAN | 0 |
+| 3 | `luna-mob-command-review-seed3` | CLEAN | 0 |
+| 5 | `luna-mob-command-review-seed5` | CLEAN | 0 |
+| 8 | `luna-mob-command-review-seed8` | CLEAN | 0 |
+
+The merged-door R5e recheck found hunter `src/graph.c:338` builds the same
+`<keyword list> <travel direction>` string that Go passes to `mobGenDoor`;
+the multi-word-keyword test exercises that parse. Mayor lines 906, 907, 911,
+and 912 all pass the same literal `"gate"` to `mobGenDoor`. Butler lines 172,
+178, 183, 190, 191, and 192 do not: `specButler` calls `butlerDoorToggle`
+directly with a selected object. These six rows are marked blocked for this
+separate mismatch and were left untouched as requested.
 
 ## Delivery
 
-Elapsed time at initial handoff: 1h 25m; correction follow-up: about 15m
-(roughly 1h 40m total). PR count: 1 draft (#2148). The draft remains open for
-review; no merge or deploy was performed.
+Elapsed time at initial handoff: 1h 25m; seed-8 correction follow-up: about
+15m; this review follow-up: about 18m (roughly 1h 58m total). PR count: 1 draft
+(#2148). The draft remains open for Claude's re-review; no merge or deploy was
+performed.
 
 ## Draft PR
 
