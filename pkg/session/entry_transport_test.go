@@ -320,6 +320,10 @@ func TestEntryWebSocketSavedIdentityAndMenuResume(t *testing.T) {
 		t.Fatalf("row after world entry stores load room %d, want NOWHERE (%d)",
 			beforeDrop.RoomVNum, game.LoadRoomNowhere)
 	}
+	playing, ok := manager.GetSession("Aiko")
+	if !ok || playing == nil {
+		t.Fatal("playing session was not registered before transport drop")
+	}
 
 	// The transport drops. C close_socket (comm.c:2128-2135) leaves a playing
 	// character in character_list, linkless, for the reaper to extract; DP-1323
@@ -327,7 +331,14 @@ func TestEntryWebSocketSavedIdentityAndMenuResume(t *testing.T) {
 	if err := conn.Close(); err != nil {
 		t.Fatal(err)
 	}
-	linkdead := requireLinkdeadRetained(t, manager, "Aiko")
+	// Wait for the transport's lifecycle signal instead of polling for a
+	// scheduler-dependent interval. It closes after linkless state and the
+	// lost-link save have both completed.
+	<-playing.TransportDone()
+	linkdead, ok := manager.GetSession("Aiko")
+	if !ok || linkdead != playing || linkdead.player == nil || !linkdead.player.IsLinkless() {
+		t.Fatalf("transport completion did not retain Aiko linkdead: session=%p registered=%v", linkdead, ok)
+	}
 	if linkdead.player.GetRoom() != game.MortalStartRoom {
 		t.Errorf("linkdead body stands in room %d, want %d", linkdead.player.GetRoom(), game.MortalStartRoom)
 	}
