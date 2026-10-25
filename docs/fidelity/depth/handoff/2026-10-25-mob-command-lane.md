@@ -37,15 +37,20 @@ actor and argument. The call sites now use this path for communication,
 movement/follow, equipment, combat skills, Lua actions, and room/mobile
 specials; sites already reaching the same command body are marked delegated.
 
-The seed-8 fighter investigation found a missing C refusal at
-`src/new_cmds.c:406-415`: `do_headbutt` checks an immortal player before its
-percent roll, sits the mobile and sends the victim-only line. Go now models
-that gate, and `TestSpecFighterHeadbuttRefusesImmortalDirectTarget` proves the
-direct command, exact line, posture and no-draw return. The live seed-8
-`spec-proc-fighter` transcript still differs: C omits that line while Go emits
-it, even though draw parity matches. The actor/target state behind this
-scenario difference remains unresolved; the map records the red run rather
-than claiming a five-seed byte proof for that case.
+The initial seed-8 mismatch was a Go port error. In the actual
+`do_headbutt` call path, `src/new_cmds.c:413-418`, both `send_to_char` calls
+target `ch`, the attacking mobile. A mobile has no descriptor, so neither
+refusal line reaches the immortal player; the only observable effect is that
+the mobile sits before returning without a percent draw. Go now retains that
+posture and return while emitting no victim line. The regression test asserts
+silence, posture and no draw. Its revert control was exercised: restoring the
+victim `SendMessage` made the test fail on the extra bytes, and removing it
+made the test pass.
+
+The direct dispatch check is exact-name based. `dispatchCharacterCommandDirect`
+passes the normalized full name to `cmdRegistry.Lookup`, whose implementation
+does a case-insensitive map lookup (`pkg/command/registry.go:113-119`); it
+does not resolve prefixes. That matches C's direct `ACMD` call.
 
 The complete C→Go call and proof inventory is the TSV map. It covers at least
 `src/spec_procs.c`, `src/spec_procs2.c`, `src/spec_procs3.c`, `src/mobact.c`,
@@ -53,6 +58,10 @@ The complete C→Go call and proof inventory is the TSV map. It covers at least
 controls for the fixed rows.
 
 ## Retained oracle evidence
+
+The five 34-scenario runs below were captured before the headbutt correction.
+They remain in the archive as the original draft's evidence; the seed-8 red
+was fixed and rechecked in the focused runs that follow.
 
 The five final batches each cover the same 34 targeted scenarios with
 `--draw-parity`:
@@ -66,11 +75,21 @@ The five final batches each cover the same 34 targeted scenarios with
 | 8 | `luna-mob-command-lane-seed8-final` | NOT_CLEAN: `spec-proc-fighter` bytes | 0 |
 
 The seed-8 failure was reproduced twice in
-`luna-mob-command-lane-seed8-fighter-diagnostic`; retained attempt logs are
-under `luna-mob-command-lane-seed8-fighter-diag-logs/`. Its diff is only the
-extra Go immortal-refusal line. The work therefore meets the requested
-zero-draw-divergence condition but does not claim a clean five-seed byte
-batch.
+`luna-mob-command-lane-seed8-fighter-diagnostic`; those retained attempt logs
+describe the pre-fix draft. The source check corrected the diagnosis: C sends
+both refusal strings to the descriptor-less mobile, rather than to the
+immortal player.
+
+After commit `53a751987`, the focused `spec-proc-fighter` scenario ran on each
+required seed with `--draw-parity`:
+
+| Seed | Census | Verdict | Draw divergence |
+|---:|---|---|---:|
+| 1 | `luna-mob-command-fighter-fix-53a751-seed1` | CLEAN | 0 |
+| 2 | `luna-mob-command-fighter-fix-53a751-seed2` | CLEAN | 0 |
+| 3 | `luna-mob-command-fighter-fix-53a751-seed3` | CLEAN | 0 |
+| 5 | `luna-mob-command-fighter-fix-53a751-seed5` | CLEAN | 0 |
+| 8 | `luna-mob-command-fighter-fix-53a751-seed8` | CLEAN | 0 |
 
 The initial 35-scenario seed-1 run `luna-mob-command-lane-seed1` included
 `spec-proc-key-seller`, whose setup has an existing draw mismatch (C
@@ -84,25 +103,24 @@ All census artifacts are retained under
 
 ## Checks
 
-Passed individually after the code change: `make fmt`, `go build ./...`,
+Passed individually after the code and validator changes: `make fmt`, `go build ./...`,
 `go vet ./...`, `go test ./...`, `go test ./pkg/game/...`,
 `golangci-lint run ./...` (0 issues), `make deadcode-ratchet` (52 baselined,
 0 new), `make fidelity-units` (1,949 claims), `make string-census` (ratchet
 passes; generated reports are already stale), `gosec -severity=high -quiet
-./...`, and the proof-token check (no missing scenarios).
+./...`, and the proof-token check (no missing scenarios). `make fidelity-depth`
+also passes: 42 maps, 0 errors.
 
-`make fidelity-depth` fails on the new requested inventory map because its
-generic surface-map validator requires the unrelated header
-`c_site,function,classification,case_ids,notes`, while the goal requires
-columns for C file/line, caller, command, argument, Go site, status, proof and
-notes. The validator reports `43 map(s), 1 error(s)`. Tooling is out of scope
-for this goal, so the map was kept in the specified format and the gate result
-is recorded here and in the PR.
+Zach approved a narrow exception in `scripts/surface_map.py`: the custom
+`mob-command-calls.tsv` is skipped with `spell-matrix.tsv` during per-file
+output-map validation and map counting. The comment identifies it as a C-call
+inventory, not a per-file output map; no other tooling was changed.
 
 ## Delivery
 
-Elapsed time at delivery: 1h 25m. PR count: 1 draft (#2148). The draft
-remains open for review; no merge or deploy was performed.
+Elapsed time at initial handoff: 1h 25m; correction follow-up: about 15m
+(roughly 1h 40m total). PR count: 1 draft (#2148). The draft remains open for
+review; no merge or deploy was performed.
 
 ## Draft PR
 
