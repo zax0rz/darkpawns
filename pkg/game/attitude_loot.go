@@ -2,8 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log/slog"
-	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
@@ -17,24 +15,7 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 	}
 
 	for range 2 {
-		corpse := w.findAttitudeLootCorpse(killer.GetRoom(), victim.GetName())
-		if corpse != nil {
-			items := append([]*ObjectInstance(nil), corpse.Contains...)
-			// C get_from_container walks contains forward (act.item.c:246-253).
-			for _, item := range items {
-				if item == nil || !item.IsTakeable() {
-					continue
-				}
-				if err := w.MoveObjectToMobInventoryFront(item, killer); err != nil {
-					slog.Warn("attitude loot get failed",
-						"mob", killer.GetName(), "victim", victim.GetName(),
-						"obj_vnum", item.GetVNum(), "error", err)
-					continue
-				}
-				Act(w, true, killer, nil, item, corpse,
-					"$n gets $p from $P.", "", ToRoom)
-			}
-		}
+		w.NPCCommandDirect(killer, "get", "all corpse")
 
 		// C's fake junking excludes containers and keys, and does not award
 		// the normal player junk reward.
@@ -47,20 +28,7 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 			w.ExtractObject(item, killer.GetRoom())
 		}
 
-		// do_wear(ch, \"all\") uses find_eq_pos() and emits the ordinary room
-		// wear act. Mob equipment has the same C WEAR_* slot numbering.
-		for _, item := range append([]*ObjectInstance(nil), killer.Inventory...) {
-			if item == nil || item.Prototype == nil {
-				continue
-			}
-			if !CanSeeObject(killer, item) {
-				continue
-			}
-			where := findEqPos(item, "")
-			if where >= 0 {
-				w.performMobileWear(killer, item, where)
-			}
-		}
+		w.NPCCommandDirect(killer, "wear", "all")
 	}
 	if !victim.IsNPC() {
 		MudLog(fmt.Sprintf("(LOOT) %s attitude looted %s.", killer.GetName(), victim.GetName()), MudlogComplete, LVL_IMMORT, true)
@@ -101,19 +69,6 @@ func (w *World) attitudeLootAfterKill(killer, victim combat.Combatant) {
 		return
 	}
 	w.attitudeLootMob(mobKiller, victim)
-}
-
-func (w *World) findAttitudeLootCorpse(roomVNum int, victimName string) *ObjectInstance {
-	victimName = strings.ToLower(victimName)
-	for _, item := range w.GetItemsInRoom(roomVNum) {
-		if item == nil || !item.IsCorpse {
-			continue
-		}
-		if victimName == "" || strings.Contains(strings.ToLower(item.GetShortDesc()), victimName) {
-			return item
-		}
-	}
-	return nil
 }
 
 // performMobileWear mirrors perform_wear for NPC do_wear("all") callers.

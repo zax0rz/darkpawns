@@ -76,6 +76,52 @@ func TestAttitudeLootCorpseOrder(t *testing.T) {
 	}
 }
 
+func TestAttitudeLootGetUsesTheDirectCorpseArgument(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Loot parser proof", Zone: 1}},
+		Mobs:  []parser.Mob{{VNum: 4209, Keywords: "dragon", ShortDesc: "the dragon", Level: 80}},
+		Objs:  []parser.Obj{{VNum: 8037, Keywords: "token", ShortDesc: "a token", TypeFlag: ITEM_WEAPON, WearFlags: [4]int{1}, Cost: 200}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	victim := NewPlayer(1, "Dragonpeer", 1001)
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatal(err)
+	}
+	killer, err := w.SpawnMob(4209, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	makeToken := func() *ObjectInstance {
+		t.Helper()
+		item, e := w.SpawnObject(8037, -1)
+		if e != nil {
+			t.Fatal(e)
+		}
+		return item
+	}
+	victimLoot, earlierLoot := makeToken(), makeToken()
+	victimCorpse := w.makeCorpse(victim.Name, victim.GetSex(), []*ObjectInstance{victimLoot}, nil, 1001, combat.TYPE_UNDEFINED, 0, false)
+	if err := w.MoveObjectToRoomFront(victimCorpse, 1001); err != nil {
+		t.Fatal(err)
+	}
+	earlierCorpse := w.makeCorpse("Earlier", SexMale, []*ObjectInstance{earlierLoot}, nil, 1001, combat.TYPE_UNDEFINED, 0, false)
+	if err := w.MoveObjectToRoomFront(earlierCorpse, 1001); err != nil {
+		t.Fatal(err)
+	}
+
+	w.attitudeLootMob(killer, victim)
+
+	if earlierLoot.Location != LocInventoryMob(killer.ID) || len(earlierCorpse.Contains) != 0 {
+		t.Fatalf("do_get all corpse did not select the first room match: item=%#v corpse=%#v", earlierLoot.Location, earlierCorpse.Contains)
+	}
+	if victimLoot.Location != LocContainer(victimCorpse.ID) || len(victimCorpse.Contains) != 1 {
+		t.Fatalf("do_get all corpse selected by victim identity: item=%#v corpse=%#v", victimLoot.Location, victimCorpse.Contains)
+	}
+}
+
 // The C wear act precedes equip_char's anti-alignment refusal, on both loot
 // passes. Raw standalone mobiles exercise the World-aware caller directly.
 func TestAttitudeLootWearBeforeAlignmentRefusal(t *testing.T) {
