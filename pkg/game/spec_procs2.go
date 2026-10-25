@@ -127,9 +127,10 @@ func isOwnerGrouped(w *World, ch *Player, roomVNum int) bool {
 	return isOwner(w, leader, roomVNum)
 }
 
-// tellFromMob sends a tell-style message from a mob to a player.
-func tellFromMob(me *MobInstance, target *Player, msg string) {
-	target.SendMessage(fmt.Sprintf("%s tells you, '%s'\r\n", cap(me.GetShortDesc()), msg))
+// tellFromMob ports the direct do_tell(mobile, target + message, ...) calls in
+// the mobile specials through the same tell body and argument parser.
+func tellFromMob(w *World, me *MobInstance, target *Player, msg string) {
+	w.NPCCommandDirect(me, "tell", target.GetName()+" "+msg)
 }
 
 // mobName returns the display name for a mob — use ShortDesc for display.
@@ -314,12 +315,12 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 	switch cmd {
 	case "list":
-		tellFromMob(me, ch, "You can buy a horse for 300 gold coins.")
+		tellFromMob(w, me, ch, "You can buy a horse for 300 gold coins.")
 		return true
 
 	case "buy":
 		if a != "horse" {
-			tellFromMob(me, ch, "Buy what, fine adventurer?")
+			tellFromMob(w, me, ch, "Buy what, fine adventurer?")
 			return true
 		}
 		if w.NumFollowers(ch.Name) >= ch.GetCha()/2 {
@@ -327,12 +328,12 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			return true
 		}
 		if ch.GetGold() < 300 {
-			tellFromMob(me, ch, "You can't afford a mount!")
+			tellFromMob(w, me, ch, "You can't afford a mount!")
 			return true
 		}
 		horse, err := w.spawnMobQuiet(horseVnum, ch.GetRoom())
 		if err != nil {
-			tellFromMob(me, ch, "Sorry we are all out of mounts at the moment, try again later.")
+			tellFromMob(w, me, ch, "Sorry we are all out of mounts at the moment, try again later.")
 			return true
 		}
 		horse.SetAffected(affCharm)
@@ -340,7 +341,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		AddFollowerMob(w, horse, ch)
 		applyStableHorseState(horse)
 		ch.SetGold(ch.GetGold() - 300)
-		tellFromMob(me, ch, "That'll be 300 coins, treat'er well")
+		tellFromMob(w, me, ch, "That'll be 300 coins, treat'er well")
 		return true
 
 	case "stable":
@@ -366,7 +367,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			}
 		}
 		if horse == nil {
-			tellFromMob(me, ch, "How do you expect to stable a mount, you don't have a mount!")
+			tellFromMob(w, me, ch, "How do you expect to stable a mount, you don't have a mount!")
 			return true
 		}
 		horse.RemoveAffected(affCharm)
@@ -376,12 +377,12 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		ch.MountCostDay = 5
 		Act(w, false, horse, me, nil, nil, "$N takes $n out back to the stables.", "", ToRoom)
 		w.ExtractMob(horse)
-		tellFromMob(me, ch, fmt.Sprintf("I will take good care of 'em, for %d coins a day.", ch.MountCostDay))
+		tellFromMob(w, me, ch, fmt.Sprintf("I will take good care of 'em, for %d coins a day.", ch.MountCostDay))
 		return true
 
 	case "collect":
 		if ch.MountVNum == 0 {
-			tellFromMob(me, ch, "Hey now, you need to have stabled a mount to pick one up.")
+			tellFromMob(w, me, ch, "Hey now, you need to have stabled a mount to pick one up.")
 			return true
 		}
 		rentDuration := time.Now().Unix() - ch.MountRentTime
@@ -391,12 +392,12 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		}
 		cost := ch.MountCostDay * days
 		if cost > ch.GetGold() {
-			tellFromMob(me, ch, fmt.Sprintf("Hey man, you can't afford the %d gold you need to get your mount outa' hock.", cost))
+			tellFromMob(w, me, ch, fmt.Sprintf("Hey man, you can't afford the %d gold you need to get your mount outa' hock.", cost))
 			return true
 		}
 		horse, err := w.spawnMobQuiet(ch.MountVNum, ch.GetRoom())
 		if err != nil {
-			tellFromMob(me, ch, "Sorry, we are unable to gather your mount, try back later.")
+			tellFromMob(w, me, ch, "Sorry, we are unable to gather your mount, try back later.")
 			MudLog("Mount not loaded in stable", MudlogBrief, LVL_GRGOD, true)
 			return true
 		}
@@ -408,7 +409,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		AddFollowerMob(w, horse, ch)
 		applyStableHorseState(horse)
 		ch.SetGold(ch.GetGold() - cost)
-		tellFromMob(me, ch, fmt.Sprintf("Here ya go pal, all patted down and ready to go... cost ya %d to keep 'em here.", cost))
+		tellFromMob(w, me, ch, fmt.Sprintf("Here ya go pal, all patted down and ready to go... cost ya %d to keep 'em here.", cost))
 		return true
 	}
 	return false
@@ -483,7 +484,7 @@ func specRescuer(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 		// SPECIAL(rescuer) unconditionally returns TRUE after calling
 		// do_rescue(), including when do_rescue rejects its short-description
 		// argument or its 1-in-101 success roll.
-		mobDoRescue(w, me, ally)
+		w.NPCCommandDirect(me, "rescue", ally.GetName())
 		return true
 	}
 	return false
@@ -523,12 +524,7 @@ func mobRescueVictim(w *World, me *MobInstance, shortDesc string) combat.Combata
 	return nil
 }
 
-// mobDoRescue is the subcmd=1 do_rescue() path used by SPECIAL(rescuer).
-// It deliberately does not reuse DoRescue: that API models a player command,
-// while C invokes the command handler with an NPC ch and then immediately
-// calls hit(vict, tmp_ch) after interposing the combat state.
-func mobDoRescue(w *World, me, ally *MobInstance) {
-	victim := mobRescueVictim(w, me, ally.GetName())
+func mobDoRescueResolved(w *World, me *MobInstance, victim combat.Combatant) {
 	if victim == nil || victim == me || me.GetFightingBody() == victim {
 		return
 	}
@@ -598,21 +594,39 @@ func mobDoRescue(w *World, me, ally *MobInstance) {
 }
 
 // ================================================================
-// pissedalchemist — When low on HP, throws a potion healing cloud
+// pissedalchemist — reveals its secret, then attacks nearby players.
+// Source: src/spec_procs2.c:546-590.
 // ================================================================
 func specPissedalchemist(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if !ch.IsNPC() {
+	if me == nil || cmd != "" || me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 || me.GetFightingBody() != nil {
 		return false
 	}
-	if ch.GetFightingBody() == nil || randRange(1, 4) != 1 {
+	players := w.GetPlayersInRoom(me.GetRoomVNum())
+	if len(players) == 0 {
 		return false
 	}
-	if ch.GetHP() > ch.GetMaxHP()/4 {
+	if me.GetAlignment() != -69 {
+		me.SetAlignment(-69)
+		w.NPCCommandDirect(me, "say", "So, finally come to steal my secret!?!")
+		w.NPCCommandDirect(me, "say", "The secret of the Philosopher's Stone!?!")
 		return false
 	}
-	w.roomMessage(me.GetRoomVNum(), fmt.Sprintf("%s throws a potion at the ground, and a large globe of thick black mushroom cloud creeps up toward the heavens!", mobName(me)))
-	ch.SetHP(ch.GetMaxHP())
-	ch.SetMove(ch.GetMaxMove())
+	w.NPCCommandDirect(me, "say", "Well -- Ya can't have it!! Die!!!")
+	for _, player := range players {
+		if player.Class == ClassMageUser {
+			if err := w.mobHit(me, player); err != nil {
+				slog.Warn("Pissed alchemist attack failed", "mob", me.GetName(), "target", player.GetName(), "error", err)
+			}
+			return true
+		}
+	}
+	if len(players) > 0 {
+		if err := w.mobHit(me, players[0]); err != nil {
+			slog.Warn("Pissed alchemist attack failed", "mob", me.GetName(), "target", players[0].GetName(), "error", err)
+		}
+		return true
+	}
+	me.SetMobFlag(MobFlagAggressive)
 	return true
 }
 
@@ -1139,7 +1153,7 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			return false
 		}
 		if ch.Tattoo != TattooNone {
-			tellFromMob(me, ch, "Your magickal center is already tattooed. Get a new arm or get rid of that tattoo then come back.")
+			tellFromMob(w, me, ch, "Your magickal center is already tattooed. Get a new arm or get rid of that tattoo then come back.")
 			return true
 		}
 
@@ -1150,7 +1164,7 @@ func specTattoo1(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 		offer := tattoo1Offers[choice]
 		if ch.GetGold() < offer.price {
-			tellFromMob(me, ch, "You look a little short on the price there, kid.")
+			tellFromMob(w, me, ch, "You look a little short on the price there, kid.")
 			return true
 		}
 
@@ -1210,13 +1224,13 @@ func specTattoo2(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			return false
 		}
 		if ch.Tattoo != TattooNone {
-			tellFromMob(me, ch, "Your magickal center is already tattooed. Your tattoo... is enough magick for such as yourself.")
+			tellFromMob(w, me, ch, "Your magickal center is already tattooed. Your tattoo... is enough magick for such as yourself.")
 			return true
 		}
 
 		offer := tattoo2Offers[choice]
 		if ch.GetGold() < offer.price {
-			tellFromMob(me, ch, "Without more coins, I can give no wisdom.")
+			tellFromMob(w, me, ch, "Without more coins, I can give no wisdom.")
 			return true
 		}
 
@@ -1259,13 +1273,13 @@ func specTattoo3(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			return false
 		}
 		if ch.Tattoo != TattooNone {
-			tellFromMob(me, ch, "Your mathickal thenter is awready tattooed. Your tattoo... ith enough mathick for such as yoursewf.")
+			tellFromMob(w, me, ch, "Your mathickal thenter is awready tattooed. Your tattoo... ith enough mathick for such as yoursewf.")
 			return true
 		}
 
 		offer := tattoo3Offers[choice]
 		if ch.GetGold() < offer.price {
-			tellFromMob(me, ch, "You don't have enough cash, hot stuff.")
+			tellFromMob(w, me, ch, "You don't have enough cash, hot stuff.")
 			return true
 		}
 
@@ -1307,20 +1321,20 @@ func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 
 	switch strings.ToLower(cmd) {
 	case "list":
-		tellFromMob(me, ch, "Just read the sign!")
+		tellFromMob(w, me, ch, "Just read the sign!")
 		return true
 	case "value":
 		arg = skipSpaces(arg)
 		if arg == "" {
-			tellFromMob(me, ch, "Value what?")
+			tellFromMob(w, me, ch, "Value what?")
 			return true
 		}
 		obj, ok := w.ResolveObjectInInventory(ch, arg)
 		if !ok {
-			tellFromMob(me, ch, "You don't seem to have that.")
+			tellFromMob(w, me, ch, "You don't seem to have that.")
 			return true
 		}
-		tellFromMob(me, ch, fmt.Sprintf("I'll identify that fully for about %d coins.", identifierValCost(obj)))
+		tellFromMob(w, me, ch, fmt.Sprintf("I'll identify that fully for about %d coins.", identifierValCost(obj)))
 		return true
 	case "give":
 		if skipSpaces(arg) == "" {
@@ -1338,8 +1352,8 @@ func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 
 		price := identifierValCost(obj)
 		if ch.GetGold() < price {
-			tellFromMob(me, ch, fmt.Sprintf("That's a fine item, but I'll need %d coins from you to id it.. and you're a little short..", price))
-			tellFromMob(me, ch, "Keep it until you get the gold.")
+			tellFromMob(w, me, ch, fmt.Sprintf("That's a fine item, but I'll need %d coins from you to id it.. and you're a little short..", price))
+			tellFromMob(w, me, ch, "Keep it until you get the gold.")
 			return true
 		}
 
@@ -1425,13 +1439,13 @@ func specTattoo4(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 			return true
 		}
 		if ch.Tattoo != TattooNone {
-			tellFromMob(me, ch, "Get outta here, punk, you already have one. ")
+			tellFromMob(w, me, ch, "Get outta here, punk, you already have one. ")
 			return true
 		}
 
 		offer := tattoo4Offers[choice]
 		if ch.GetGold() < offer.price {
-			tellFromMob(me, ch, "You don't have enough gold, get outta here!")
+			tellFromMob(w, me, ch, "You don't have enough gold, get outta here!")
 			return true
 		}
 		giveTattoo(w, ch, me, offer)
@@ -1712,28 +1726,6 @@ func specEqThiefKenderSteal(w *World, thief *MobInstance, victim *Player) {
 	}
 }
 
-// specEqThiefGetBlack mirrors the commandless do_get(ch, "all.black ...")
-// call in SPECIAL(eq_thief). A mob has no descriptor, so its TO_CHAR text is
-// intentionally unobservable; the room Act is retained because players can
-// see the kender retrieving a black item from its container.
-func specEqThiefGetBlack(w *World, thief *MobInstance, container *ObjectInstance) {
-	if container == nil || contIsClosed(container) || mobCarriedItemCount(thief) >= mobMaxCarryCount(thief) {
-		return
-	}
-
-	contents := append([]*ObjectInstance(nil), container.GetContents()...)
-	for _, obj := range contents {
-		if !canSeeObject(thief, obj) || !isnameWithAbbrevs("black", obj.GetKeywords()) {
-			continue
-		}
-		if err := w.MoveObjectToMobInventoryFront(obj, thief); err != nil {
-			slog.Error("eq thief container retrieval failed", "thief", thief.GetName(), "container_vnum", container.GetVNum(), "obj_vnum", obj.GetVNum(), "error", err)
-			continue
-		}
-		Act(w, true, thief, nil, obj, container, "$n gets $p from $P.", "", ToRoom)
-	}
-}
-
 func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	// C receives the mobile as both ch and mob on mobile_activity(). The Go
 	// adapter leaves ch nil for that autonomous call, so me is the authoritative
@@ -1750,7 +1742,7 @@ func specEqThief(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 
 		specEqThiefKenderSteal(w, me, victim)
 		if len(me.Inventory) > 0 && me.Inventory[0].GetTypeFlag() == ITEM_CONTAINER {
-			specEqThiefGetBlack(w, me, me.Inventory[0])
+			w.NPCCommandDirect(me, "get", "all.black "+me.Inventory[0].GetKeywords())
 		}
 		for _, obj := range me.Inventory {
 			if !canSeeObject(me, obj) || !isnameWithAbbrevs("black", obj.GetKeywords()) {
@@ -1980,18 +1972,18 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	}
 	house := w.HouseControl[i]
 	if int64(ch.GetID()) != house.Owner {
-		tellFromMob(me, ch, "Sorry, I only serve the house owner.")
+		tellFromMob(w, me, ch, "Sorry, I only serve the house owner.")
 		return true
 	}
 
 	a := strings.TrimSpace(arg)
 	if cmd == "buy" {
 		if a != "key" {
-			tellFromMob(me, ch, "I only sell keys, currently.")
+			tellFromMob(w, me, ch, "I only sell keys, currently.")
 			return true
 		}
 		if ch.GetGold() < 10000 {
-			tellFromMob(me, ch, "You can't afford a key.")
+			tellFromMob(w, me, ch, "You can't afford a key.")
 			return true
 		}
 		obj, err := w.SpawnObject(house.Key, -1)
@@ -2009,7 +2001,7 @@ func specKeySeller(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 	}
 
-	tellFromMob(me, ch, "You can buy a key for 10,000 gold coins.")
+	tellFromMob(w, me, ch, "You can buy a key for 10,000 gold coins.")
 	return true
 }
 
@@ -2107,19 +2099,7 @@ func specBackstabber(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		// player who is already fighting; do_backstab() owns that later gate
 		// and returns TRUE without consuming the skill rolls.
 		if pl.GetFlags()&(1<<uint(PrfNohassle)) == 0 && canSee(me, pl) {
-			weapon := me.Equipped(mobWearWield)
-			if weapon == nil || weapon.Prototype == nil || weapon.GetValue(3) != 11 {
-				// do_backstab(..., subcmd=1) emits only to the NPC descriptor,
-				// so this failed weapon gate is player-silent and draw-free.
-				return true
-			}
-			if me.IsAffected(affMounted) || pl.GetFightingBody() != nil {
-				return true
-			}
-			w.mobBackstab(me, pl)
-			// do_backstab() applies WAIT_STATE after both the percent-miss and
-			// hit paths, including a damage(0) attempt.
-			me.SetWaitState(engine.PULSE_VIOLENCE)
+			w.NPCCommandDirect(me, "backstab", pl.GetName())
 			return true
 		}
 	}

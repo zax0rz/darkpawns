@@ -124,13 +124,7 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	// Stand up if between stunned and standing (C: AWAKE check + do_stand)
 	if me.GetPosition() != combat.PosFighting {
 		if me.GetPosition() > combat.PosStunned && me.GetPosition() < combat.PosStanding {
-			switch me.GetPosition() {
-			case combat.PosSitting:
-				Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
-			case combat.PosResting:
-				Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
-			}
-			me.SetPosition(combat.PosStanding)
+			w.NPCCommandDirect(me, "stand", "")
 		}
 	}
 
@@ -350,21 +344,21 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	arg = strings.TrimSpace(arg)
 	if cmd == "buy" {
 		if !strings.EqualFold(arg, "citizenship") {
-			tellFromMob(me, ch, "BUY CITIZENSHIP, if you're interested.")
+			tellFromMob(w, me, ch, "BUY CITIZENSHIP, if you're interested.")
 			return true
 		}
 		if ch.GetGold() < 2000 {
-			tellFromMob(me, ch, "You cannot afford it!")
+			tellFromMob(w, me, ch, "You cannot afford it!")
 			return true
 		}
 		if ch.Hometown == homet {
-			tellFromMob(me, ch, "You are already a citizen here!")
+			tellFromMob(w, me, ch, "You are already a citizen here!")
 			return true
 		}
 		ch.Hometown = homet
 		ch.SetGold(ch.GetGold() - 2000)
 		hName := HometownName(homet)
-		tellFromMob(me, ch, fmt.Sprintf("You are now a citizen of %s.", hName))
+		tellFromMob(w, me, ch, fmt.Sprintf("You are now a citizen of %s.", hName))
 		// C's clerk saves after the citizenship purchase
 		// (spec_procs3.c:139).
 		if res := w.SavePlayerRecord(ch, "clerk citizenship", LoadRoomNowhere, SaveCharOnly); res == SaveFailed {
@@ -373,7 +367,7 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		return true
 	}
 	if cmd == "list" {
-		tellFromMob(me, ch, "Citizenship costs 2,000 coins.")
+		tellFromMob(w, me, ch, "Citizenship costs 2,000 coins.")
 		return true
 	}
 	return false
@@ -527,34 +521,8 @@ func specBrainEater(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		return false
 	}
 
-	// do_behead() resolves the first visible room object matching the literal
-	// argument "corpse", which can differ from the qualifying outer-loop
-	// object. Its direct messages target the NPC and are not player-visible;
-	// brain_eater nevertheless continues with its own room Act on failure.
-	var target *ObjectInstance
-	for _, obj := range items {
-		if obj != nil && isnameWithAbbrevs("corpse", obj.GetKeywords()) && canSeeObject(me, obj) {
-			target = obj
-			break
-		}
-	}
-	if target != nil && target.GetTypeFlag() == ITEM_CONTAINER && target.GetValue(3) != 0 && !strings.Contains(target.GetKeywords(), "headless") {
-		wielded := me.Equipped(mobWearWield)
-		slashWeapon := wielded != nil && wielded.GetValue(3) == 3
-		result := performBehead(w, me, target, wielded != nil, slashWeapon,
-			func(headObj *ObjectInstance) bool {
-				return headObj.IsTakeable() && mobCarriedWeight(me)+headObj.GetWeight() <= mobMaxCarryWeight(me) && mobCarriedItemCount(me)+1 <= mobMaxCarryCount(me)
-			},
-			func(headObj *ObjectInstance) error { return w.MoveObjectToMobInventoryFront(headObj, me) },
-		)
-		if result.Success {
-			if slashWeapon {
-				Act(w, true, me, nil, target, nil, "$n beheads $p!", "", ToRoom)
-			} else {
-				Act(w, true, me, nil, target, nil, "$n rips the head off $p!", "", ToRoom)
-			}
-		}
-	}
+	// C calls do_behead(mobile, "corpse", 0, 0) and ignores its result.
+	w.NPCCommandDirect(me, "behead", "corpse")
 
 	// C ignores do_behead's void result and always continues here.
 	Act(w, true, me, nil, nil, nil,
@@ -588,10 +556,9 @@ func specTeleportVictim(w *World, ch *Player, me *MobInstance, cmd string, arg s
 		return false
 	}
 
-	// C do_action("scoff", GET_NAME(FIGHTING(ch))) reaches the no-arg social
-	// arm because scoff has no char_found message. Its room message is exactly
-	// the social's others_no_arg string; the typed target is ignored.
-	Act(w, false, me, nil, nil, nil, "$n scoffs at the idea.", "", ToRoom)
+	// C calls do_action() directly with the fighting target's name; the social
+	// body owns its no-target message and ignores that name for "scoff".
+	w.NPCCommandDirect(me, "scoff", fighting.GetName())
 	if me.CanSpeak() {
 		Act(w, true, me, nil, nil, nil,
 			"$n says, 'You can't harm me, mortal. Begone.'", "", ToRoom)
@@ -1094,10 +1061,10 @@ func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 
 	switch cmd {
 	case "buy":
-		tellFromMob(me, ch, "I ain't for sale, just rent. Give me 5 gold for a good time.")
+		tellFromMob(w, me, ch, "I ain't for sale, just rent. Give me 5 gold for a good time.")
 		return true
 	case "list":
-		tellFromMob(me, ch, "For five coins, I'll show you a good time.")
+		tellFromMob(w, me, ch, "For five coins, I'll show you a good time.")
 		return true
 	default:
 		return false
@@ -1231,12 +1198,12 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	}
 	cost := ch.GetLevel() * 116
 	if cmd == "list" {
-		tellFromMob(me, ch, fmt.Sprintf("It will cost %d coins to retrieve your corpse.", cost))
+		tellFromMob(w, me, ch, fmt.Sprintf("It will cost %d coins to retrieve your corpse.", cost))
 		return true
 	}
 	if cmd == "retrieve" {
 		if ch.GetGold() < cost {
-			tellFromMob(me, ch, "I'm sorry, you can't afford the cost.")
+			tellFromMob(w, me, ch, "I'm sorry, you can't afford the cost.")
 			return true
 		}
 		// Search all rooms for a corpse matching this player
@@ -1262,7 +1229,7 @@ func specMortician(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			ch.SetGold(ch.GetGold() - cost)
 			return true
 		}
-		tellFromMob(me, ch, "I'm sorry, I can't find your corpse anywhere!")
+		tellFromMob(w, me, ch, "I'm sorry, I can't find your corpse anywhere!")
 		return true
 	}
 	return false
@@ -1290,8 +1257,7 @@ func specConjured(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		}
 		Act(w, true, me, nil, nil, nil, "$n returns to its own plane of existence.", "", ToRoom)
 	default:
-		// do_say() selects "states" for a period-terminated utterance.
-		Act(w, false, me, nil, nil, nil, "$n states, 'My work here is done.'", "", ToRoom)
+		w.NPCCommandDirect(me, "say", "My work here is done.")
 		// C sprintf's the vanish line with its own \r\n and act() appends
 		// the second (spec_procs3.c:878-882) — the audience's blank line.
 		Act(w, false, me, nil, nil, nil, fmt.Sprintf("%s disappears in a flash of white light!\r\n", me.GetName()), "", ToRoom)
@@ -1316,16 +1282,11 @@ func specRecruiter(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return false
 	}
 	if cmd == "kill" || cmd == "hit" {
-		// C calls do_tell(mobile, "<player> Why ...") and the target parser
-		// strips the player's name before perform_tell sends the direct
-		// $n-tells-you line (spec_procs3.c:913-918, act.comm.c:905-930).
-		Act(nil, false, me, ch, nil, nil, "$n tells you, 'Why don't you sign up for training?  Just head south through those doors!'", "", ToVict|ToSleep)
+		w.NPCCommandDirect(me, "tell", ch.GetName()+" Why don't you sign up for training?  Just head south through those doors!")
 		return true
 	}
 	if cmd == "cast" || cmd == "will" {
-		// Same direct do_tell path; only the C message body changes
-		// (spec_procs3.c:921-926).
-		Act(nil, false, me, ch, nil, nil, "$n tells you, 'Hey now! None of that voodoo mumbo jumbo in my office!'", "", ToVict|ToSleep)
+		w.NPCCommandDirect(me, "tell", ch.GetName()+" Hey now! None of that voodoo mumbo jumbo in my office!")
 		return true
 	}
 	return false

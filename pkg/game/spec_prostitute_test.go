@@ -136,10 +136,9 @@ func TestSpecProstitute_CanSeeUsesC_LightGate(t *testing.T) {
 	if !specProstitute(w, actor, mob, "list", "") {
 		t.Fatal("dark-room list should be handled")
 	}
-	// C act() drops a hide_invisible act for a recipient who cannot see the
-	// actor (comm.c:2537-2538). In darkness neither the actor nor the peer
-	// can see the prostitute, so the "If I could see you" acts reach no one;
-	// the tell arm never runs because CAN_SEE(mobile, ch) fails first.
+	// The mobile has infravision, so the C CAN_SEE(mobile, ch) gate allows the
+	// tell. Recipients remain unable to see the actor in the dark, so C PERS
+	// renders the direct do_tell speaker as "Someone".
 	if got := messages[actor.Name]; got != "" {
 		t.Fatalf("dark-room output = %q, want none (act hidden by darkness)", got)
 	}
@@ -152,7 +151,7 @@ func TestSpecProstitute_CanSeeUsesC_LightGate(t *testing.T) {
 	if !specProstitute(w, actor, mob, "list", "") {
 		t.Fatal("infravision list should be handled")
 	}
-	if got, want := messages[actor.Name], "A half-elven prostitute tells you, 'For five coins, I'll show you a good time.'\r\n"; got != want {
+	if got, want := messages[actor.Name], "Someone tells you, 'For five coins, I'll show you a good time.'\r\n"; got != want {
 		t.Fatalf("infravision output = %q, want %q", got, want)
 	}
 	if got := messages[peer.Name]; got != "" {
