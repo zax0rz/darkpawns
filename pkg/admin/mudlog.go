@@ -151,27 +151,33 @@ func mudlogStream(feed *mudlog.Feed, callerLevel mudlogCallerLevel) http.Handler
 
 		ceiling := callerLevel(r.Context())
 		visible := func(e mudlogEvent) bool { return e.Level <= ceiling }
-		// `last` starts at the resume point, not zero: an empty replay must
-		// not re-deliver history, and subscribing from the last replayed seq
-		// (not feed.LastSeq()) closes the window where an event tapped
-		// between the replay read and the subscription lands in neither.
+		// Subscribe before reading history so an event tapped during replay is
+		// either in the ring snapshot, the live channel, or both. `last` drops
+		// that overlap and starts at the resume point so history is not
+		// re-delivered.
 		last := after
-		for _, e := range feed.Since(after, 0) {
-			if !visible(e) {
-				continue
-			}
-			if err := write(e); err != nil {
-				return
+		events, kicked, cancel := feed.Subscribe(last)
+		defer func() { cancel() }()
+		process := func(e mudlogEvent) (bool, error) {
+			if e.Seq <= last {
+				return false, nil
 			}
 			last = e.Seq
+			if !visible(e) {
+				return false, nil
+			}
+			return true, write(e)
+		}
+		for _, e := range feed.Since(after, 0) {
+			if _, err := process(e); err != nil {
+				return
+			}
 		}
 		if _, err := fmt.Fprint(w, ": connected\n\n"); err != nil {
 			return
 		}
 		flusher.Flush()
 
-		events, kicked, cancel := feed.Subscribe(last)
-		defer cancel()
 		heartbeat := time.NewTicker(15 * time.Second)
 		defer heartbeat.Stop()
 		for {
@@ -180,32 +186,29 @@ func mudlogStream(feed *mudlog.Feed, callerLevel mudlogCallerLevel) http.Handler
 				return
 			case <-kicked:
 				// Too slow for the live channel: replay the gap from the
-				// ring and re-subscribe from where we got to.
+				// ring. Register the replacement first so taps during the
+				// replay cannot fall between subscriptions.
+				nextEvents, nextKicked, nextCancel := feed.Subscribe(last)
+				oldCancel := cancel
+				events, kicked, cancel = nextEvents, nextKicked, nextCancel
+				oldCancel()
 				for _, e := range feed.Since(last, 0) {
-					if !visible(e) {
-						last = e.Seq
-						continue
-					}
-					if err := write(e); err != nil {
+					if _, err := process(e); err != nil {
 						return
 					}
-					last = e.Seq
 				}
 				flusher.Flush()
-				cancel()
-				events, kicked, cancel = feed.Subscribe(last)
 			case e, ok := <-events:
 				if !ok {
 					return
 				}
-				if !visible(e) {
-					continue
-				}
-				if err := write(e); err != nil {
+				delivered, err := process(e)
+				if err != nil {
 					return
 				}
-				last = e.Seq
-				flusher.Flush()
+				if delivered {
+					flusher.Flush()
+				}
 			case <-heartbeat.C:
 				// Re-resolve the ceiling so a demotion takes effect on an
 				// open stream without waiting for a reconnect (the same
