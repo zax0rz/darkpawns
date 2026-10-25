@@ -43,6 +43,8 @@ func doorHuntWorld(t *testing.T, exitInfo int) (*World, *MobInstance, map[string
 		Objs: []parser.Obj{
 			{VNum: 5001, Keywords: "brass key", ShortDesc: "a brass key"},
 			{VNum: 5002, Keywords: "gate sign", ShortDesc: "a wooden sign"},
+			{VNum: 5003, Keywords: "gate crate", ShortDesc: "a gate crate", TypeFlag: 15, // ITEM_CONTAINER
+				Values: [4]int{0, contCloseable | contClosed, 0, 0}},
 		},
 	})
 	if err != nil {
@@ -270,5 +272,120 @@ func TestHuntVictimKeywordObjectShadowsDoor(t *testing.T) {
 	ext := w.GetRoomInWorld(1001).Exits["north"]
 	if ext.ExitInfo&parser.ExitClosed == 0 {
 		t.Fatal("the shadowed gate was opened")
+	}
+}
+
+// setDoorKeywords rewrites both sides of the fixture gate's keyword list.
+func setDoorKeywords(t *testing.T, w *World, keywords string) {
+	t.Helper()
+	w.mu.Lock()
+	north := w.rooms[1001].Exits["north"]
+	north.Keywords = keywords
+	w.rooms[1001].Exits["north"] = north
+	south := w.rooms[1002].Exits["south"]
+	south.Keywords = keywords
+	w.rooms[1002].Exits["south"] = south
+	w.mu.Unlock()
+}
+
+// TestHuntVictimSecretCaseKeywordIsFindable pins C's case-sensitive
+// strstr(keyword, "secret") (src/act.movement.c:382, 417): a capitalized
+// "Secret door" keyword list does NOT hide the exit, so the hunter opens it;
+// only the lowercase form is hidden.
+func TestHuntVictimSecretCaseKeywordIsFindable(t *testing.T) {
+	t.Run("capital Secret stays findable", func(t *testing.T) {
+		w, mob, _ := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+		// Single-word: a two-word list stops the hunter through the
+		// direction-token rule regardless of case (see the multi-word test).
+		setDoorKeywords(t, w, "Secret")
+		mob.SetHunting("Prey")
+		scriptHuntDraws(t, 150)
+
+		w.huntVictim(mob)
+
+		if got := mob.GetRoom(); got != 1002 {
+			t.Fatalf("hunter stopped by the 'Secret' gate at %d, want it through to 1002", got)
+		}
+	})
+
+	t.Run("lowercase secret stays hidden", func(t *testing.T) {
+		w, mob, _ := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+		setDoorKeywords(t, w, "secret")
+		mob.SetHunting("Prey")
+		scriptHuntDraws(t, 150)
+
+		w.huntVictim(mob)
+
+		if got := mob.GetRoom(); got != 1001 {
+			t.Fatalf("hunter passed the hidden 'secret' gate to %d", got)
+		}
+	})
+}
+
+// TestFindDoorSecretCaseSensitive pins the player lane's copy of the same
+// strstr (src/act.movement.c:382 direction branch, :417 keyword scan).
+func TestFindDoorSecretCaseSensitive(t *testing.T) {
+	for _, tc := range []struct {
+		keywords string
+		want     int
+	}{
+		{"Secret door", 0},
+		{"secret door", -1},
+	} {
+		w, err := NewWorld(&parser.World{Rooms: []parser.Room{
+			{VNum: 1001, Name: "R", Zone: 1, Exits: map[string]parser.Exit{
+				"north": {Direction: "north", ToRoom: 1002, Keywords: tc.keywords},
+			}},
+			{VNum: 1002, Name: "R2", Zone: 1},
+		}})
+		if err != nil {
+			t.Fatalf("NewWorld: %v", err)
+		}
+		t.Cleanup(w.StopAITicker)
+		ch := NewPlayer(1, "Opener", 1001)
+		if err := w.AddPlayer(ch); err != nil {
+			t.Fatalf("AddPlayer: %v", err)
+		}
+
+		if got := findDoor(w, ch, "door", "north", "open"); got != tc.want {
+			t.Errorf("keywords %q direction branch: findDoor = %d, want %d", tc.keywords, got, tc.want)
+		}
+		if got := findDoor(w, ch, "door", "", "open"); got != tc.want {
+			t.Errorf("keywords %q keyword scan: findDoor = %d, want %d", tc.keywords, got, tc.want)
+		}
+	}
+}
+
+// TestHuntVictimOpensMatchingContainer pins generic_find's object arm going
+// all the way through C's ladder into do_doorcmd (src/act.movement.c:
+// 612-635, 484-511): a closed unlocked container matching the door keyword
+// is opened — not the door — and the room sees do_doorcmd's object act.
+func TestHuntVictimOpensMatchingContainer(t *testing.T) {
+	w, mob, out := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+	crate, err := w.SpawnObject(5003, 1001)
+	if err != nil {
+		t.Fatalf("SpawnObject crate: %v", err)
+	}
+	w.AddItemToRoom(crate, 1001)
+	mob.SetHunting("Prey")
+	scriptHuntDraws(t, 150)
+
+	w.huntVictim(mob)
+
+	if flags := crate.GetValue(contFlags); flags&contClosed != 0 {
+		t.Fatalf("container still closed: flags=%#x", flags)
+	}
+	if flags := crate.GetValue(contFlags); flags&contLocked != 0 {
+		t.Fatalf("container locked by the open: flags=%#x", flags)
+	}
+	ext := w.GetRoomInWorld(1001).Exits["north"]
+	if ext.ExitInfo&parser.ExitClosed == 0 {
+		t.Fatal("the door was opened instead of the container")
+	}
+	if got := mob.GetRoom(); got != 1001 {
+		t.Fatalf("hunter passed the still-closed gate to %d", got)
+	}
+	if want := "The dune stalker opens a gate crate.\r\n"; !strings.Contains(out["Southwatcher"], want) {
+		t.Fatalf("south room bytes = %q, want %q among them", out["Southwatcher"], want)
 	}
 }

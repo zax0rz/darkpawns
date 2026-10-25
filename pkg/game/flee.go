@@ -266,7 +266,7 @@ func (w *World) performMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool)
 		if exit.Keywords != "" {
 			// C prints the secret exit as missing unless the room is marked;
 			// otherwise it names the door (src/act.movement.c:326-335).
-			isSecret := strings.Contains(strings.ToLower(exit.Keywords), "secret")
+			isSecret := strings.Contains(exit.Keywords, "secret")
 			if isSecret && !movementRoomHasFlag(fromRoom, roomFlagSecretMark, "secret_mark") {
 				sendBodyMessage(w, ch, "Alas, you cannot go that way...\r\n")
 			} else {
