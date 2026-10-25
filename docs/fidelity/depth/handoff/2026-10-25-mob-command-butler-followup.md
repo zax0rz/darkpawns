@@ -47,5 +47,5 @@ The targeted `spec-proc-butler` census verdicts with `--draw-parity`:
 
 ## Delivery
 
-The follow-up is one PR for Claude review. No full census, merge, or deploy is
-included in this handoff.
+The follow-up is PR #2153 for Claude review. No full census, merge, or deploy
+is included in this handoff.
