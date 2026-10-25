@@ -99,9 +99,82 @@ changed draw rows or changed classifications. A final green cannot erase a red.
 
 ## Oracle proof and controls
 
-Evidence and results will be added after the same frozen 200-case set runs
-alone, then in two simultaneous 36-worker runs through the new wrapper.
-No final full/combined release census is part of this implementation PR.
+On 2026-10-25 the same frozen 200-scenario selection from #2149 ran alone,
+then in two simultaneous 36-worker runs. All used clean implementation commit
+`5e00778e60745f891445297f50366e5a115319d0`, seed 1, `--draw-parity`, the
+reference oracle, and ordinary shared admission. No lock bypass, test namespace,
+custom runner, Go overlay, timing change or pin change was used. The only commit
+after this proof adds this report; executable inputs remain the tested revision.
+
+Evidence root:
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-25/sol-parallel-census-implementation/`.
+`PROTOCOL.md`, `protocol.json`, `scenarios.txt`, `scenario-hashes.tsv`, start
+receipts, scripts, samples, comparisons and controls are retained there. The
+three sibling run directories each retain `MANIFEST.md`, immutable `source/`,
+input hashes, admission events, summaries and every attempt's native captures:
+
+| Run | Result | Driver elapsed |
+|---|---|---:|
+| `sol-parallel-impl-1x-1` | CLEAN, 200 PASS, 0 draw divergences | 159.263 s |
+| `sol-parallel-impl-2x-1` | CLEAN, 200 PASS, 0 draw divergences | 224.426 s |
+| `sol-parallel-impl-2x-2` | CLEAN, 200 PASS, 0 draw divergences | 221.289 s |
+
+`check_census_equivalence.py` compared all classifications, both normalized
+block arrays (including command/audience order), each side's raw DRAW rows and
+draw MATCH reports. All three produce the same digest:
+`39f1d2580071ca249b11953a34e36845730c00ced79c4e106d1c277c27c31211`.
+Each contains 3,317 blocks per engine, including the same 1,497 whitespace-only
+blocks. Reset (`Reset world.`), named-peer and audience witnesses were explicitly
+checked for nonempty output. No attempt retried; no infrastructure recheck,
+boot/bind failure or new flake was observed. All three input-hash files are
+identical: SHA-256
+`045efae8e5c003604b329f1aba08c04a9dcf5d7ea385a3edb9d4278e303107f0`.
+
+| Measured stage | Solo | Two copies |
+|---|---:|---:|
+| End-to-end wall, registration through finalization | 170.18 s | 237.15 s |
+| Scenario executions | 200 | 400 |
+| Aggregate throughput versus solo | 1.00× | 1.44× |
+| Replayed maximum scenario permits | 36 | 72 (36 per run) |
+| Peak sampled process-tree RSS | 4.37 GiB | 8.68 GiB |
+| Minimum host MemAvailable | 7.33 GiB | 4.84 GiB |
+| Average / peak sampled CPU cores | 1.61 / 2.68 | 2.93 / 9.69 |
+
+The implemented ownership checks and supervision cost throughput relative to
+#2149's earlier diagnostic experiment; this proof supports a smaller measured
+speedup, not its earlier 1.94× claim. Memory admission did not pause during this
+sample. The paired stage saw host-wide swap counters rise by 3,854 input pages
+and 41,751 output pages (about 15 MiB / 163 MiB at 4 KiB/page); these are host
+counters, not attribution to census processes. RSS sums include shared pages;
+short-lived peaks and CPU can be missed by the approximately 0.75-second sampler.
+The floor remains admission protection, not a guarantee against host pressure.
+
+Kernel socket/FD samples observed up to 180 solo and 360 concurrent engine
+listeners, including WHOD, without an engine port shared by different PIDs.
+The 200 solo / 400 paired disposable roots had no cross-run owner. No sampled
+process identity survived completion. Snapshot/lease evidence and endpoint
+analysis are in `analysis.json`, `endpoints-analysis.json`, `equivalence.json`
+and the stage sample files. These are sampled observations, complemented by the
+mandatory ownership check before every login; they do not prove every instant.
+
+The deterministic suites passed 50 Python cases and 40 shell classification
+cases, alongside the Go suite and listener fixtures. Four retained mutation
+controls went green → assertion failure → green: bypass ownership, raise the
+host ceiling to 73, remove the memory floor, and remove release draining.
+`revert-controls.json` and each before/broken/restored log retain those results.
+The comparison fixture also rejects a changed Go response, changed draw row,
+retry and foreign-listener log. The initial live smoke failed before executing
+any scenario because the build helper placed Go's global `-C` flag too late;
+that NOT_CLEAN archive is retained as `sol-parallel-ownership-smoke`. After the
+ordering fix, `sol-parallel-ownership-smoke-fixed` completed CLEAN.
+
+This is the requested 200-case solo-then-pair proof, not a universal no-flake
+claim. The design's broader proposed ten-trial, asymmetric, memory-pressure and
+simultaneous full/combined matrix was not run. Release draining, memory admission,
+queue fairness and crash/cancellation paths have isolated fixtures; no live
+release gate or final full/combined census is claimed by this PR. Roll back to
+exclusive admission and retain the red evidence if new concurrent differences
+appear.
 
 ## Exact proposed AGENTS.md replacement (not applied)
 
