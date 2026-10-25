@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# census_runner.sh — the detached half of scripts/census.sh. Launched with
-# setsid/nohup by census.sh start, with the census lock open on the FD named
-# by CENSUS_LOCK_FD. Runs the regression script, rechecks INFRA/TIMEOUT rows,
-# writes summary.txt, MANIFEST.md and exit-code, flips state, releases the
-# lock, and notifies. Never run by hand.
+# census_runner.sh — detached finalization and verdicts, launched by census.py.
+# Inputs are snapshotted before queueing. All builds and scenario/recheck workers
+# use census_budget.py; this shell never owns a global exclusive census lock.
+# Never run by hand.
 set -u
 
 run_dir=${CENSUS_RUN_DIR:?CENSUS_RUN_DIR is required}
@@ -15,34 +14,24 @@ allow_note=${CENSUS_ALLOW_NOTE:-}
 scenarios=${CENSUS_SCENARIOS:-}
 jobs=${CENSUS_JOBS:-36}
 seed=${CENSUS_SEED:-1}
-lock_fd=${CENSUS_LOCK_FD:-9}
-# The regression invocations close FD 9 literally; refuse a mismatched
-# CENSUS_LOCK_FD rather than silently leaving the lock inheritable.
-[[ "$lock_fd" == 9 ]] || {
-	printf 'census-runner: CENSUS_LOCK_FD must be 9 (got %s)\n' "$lock_fd" >&2
-	exit 2
-}
-lock_file=${XDG_RUNTIME_DIR:-/tmp}/dp-census.lock
+budget_tool="$repo_root/scripts/census_budget.py"
+runner_command=("$runner")
 
 pid=$$
 started_iso=$(date '+%Y-%m-%dT%H:%M:%S%z')
 started_s=$(date +%s)
 
-# A killed census must not leave workers running (or holding anything).
-# The runner is its own process-group leader (setsid), so killing the
-# group takes the regression script, xargs, the workers and both servers
-# with it. The EXIT arm also releases the lock for the die-without-trap
-# case.
+# A cancelled runner drains separately leased engine groups through the registry
+# and terminates its own dispatch group. No other run's state/locks are cleared.
 killed() {
-	trap - TERM INT EXIT
-	kill -- "-$pid" 2>/dev/null || true
-	printf 'done verdict=KILLED\n' >"$run_dir/state"
-	flock -u "$lock_fd" 2>/dev/null || true
-	: >"$lock_file" 2>/dev/null || true
-	exit 4
+ trap '' TERM INT
+	python3 "$budget_tool" cancel "$run_dir" || true
+	printf 'died verdict=KILLED\n' >"$run_dir/state"
+ kill -- "-$pid" 2>/dev/null || true
+ exit 4
 }
 trap killed TERM INT
-trap 'flock -u "$lock_fd" 2>/dev/null || true; : >"$lock_file" 2>/dev/null || true' EXIT
+
 
 finish() {
 	local verdict=$1 exit_code=$2
@@ -66,13 +55,16 @@ finish() {
 		# DP-1427: the draw-parity tally is its own line; it never changes the
 		# byte verdict above.
 		grep '^oracle-draw-parity: ' "$run_dir/census.log" | tail -1 || true
-	} >"$run_dir/summary.txt"
-	printf '%s\n' "$exit_code" >"$run_dir/exit-code"
-	printf 'done verdict=%s\n' "$verdict" >"$run_dir/state"
+	} >"$run_dir/summary.pending"
+	printf '%s\n' "$exit_code" >"$run_dir/exit-code.pending"
+
+	printf 'done verdict=%s\n' "$verdict" >"$run_dir/state.pending"
 	write_manifest "$verdict" "$started_iso" "$finished_iso" "$summary_line"
-	# Release the lock and clear its body.
-	flock -u "$lock_fd" 2>/dev/null || true
-	: >"$lock_file" 2>/dev/null || true
+	mv "$run_dir/MANIFEST.pending" "$run_dir/MANIFEST.md"
+	mv "$run_dir/summary.pending" "$run_dir/summary.txt"
+	mv "$run_dir/exit-code.pending" "$run_dir/exit-code"
+	mv "$run_dir/state.pending" "$run_dir/state"
+	python3 "$budget_tool" finish
 	if command -v notify-send >/dev/null 2>&1; then
 		notify-send "DP census ${run_dir##*/}" "$verdict" 2>/dev/null || true
 	fi
@@ -103,6 +95,8 @@ write_manifest() {
 		printf -- '- Tree: %s (see git-status.txt)\n' "$dirty"
 		printf -- '- Oracle: `%s` sha256 `%s`\n' "$oracle_bin" "$oracle_sha"
 		printf -- '- Reference oracle: %s\n' "$([[ -z "$allow_note" ]] && printf yes || printf NO)"
+		printf -- '- Admission: host budget 72; per-run maximum 36; MemAvailable floor 4 GiB; see admission.json and admission-events.jsonl\n'
+		printf -- '- Immutable inputs: source/ and source-hashes.json; captured before queueing\n'
 		printf -- '- Seed: %s · Workers: %s · Selection: %s\n' "$seed" "$jobs" "$selection"
 		printf -- '- Commands: `census.sh start --name %s` → `%s`' "${run_dir##*/}" "$(basename "$runner")"
 		[[ -n "$scenarios" ]] && printf ' with ORACLE_REGRESSION_SCENARIOS=%s' "$scenarios"
@@ -126,12 +120,13 @@ write_manifest() {
 			printf -- '- Claims: `%s` verdict=%s\n' "$(cat "$run_dir/claims-summary.txt")" "$(cat "$run_dir/claims-verdict")"
 		fi
 		printf -- '\n## File sizes (du -b)\n\n'
-		du -b -- "$run_dir"/* 2>/dev/null | sort -k2
+		du -b -- "$run_dir"/* 2>/dev/null | \
+            awk -F '\t' 'BEGIN { OFS="\t" } $2 !~ /\/(MANIFEST.pending|state|admission-events.jsonl)$/ { sub(/summary.pending$/, "summary.txt", $2); sub(/exit-code.pending$/, "exit-code", $2); sub(/state.pending$/, "state", $2); print }' | sort -k2
 		if [[ -d "$run_dir/census-dump" ]]; then
 			printf '\n## census-dump\n\n'
 			du -b -- "$run_dir/census-dump" 2>/dev/null
 		fi
-	} >"$run_dir/MANIFEST.md"
+	} >"$run_dir/MANIFEST.pending"
 }
 
 if [[ "${CENSUS_COMBINED:-0}" == 1 ]]; then
@@ -169,6 +164,7 @@ regression_env=(
 	ORACLE_REGRESSION_JOBS="$jobs"
 	ORACLE_REGRESSION_SEED="$seed"
 	ORACLE_REGRESSION_RESULTS="$run_dir/results.tsv"
+ ORACLE_REGRESSION_LOG_ROOT="$run_dir/initial-logs"
 )
 if [[ -n "$scenarios" ]]; then
 	regression_env+=("ORACLE_REGRESSION_SCENARIOS=$scenarios")
@@ -176,16 +172,9 @@ fi
 if [[ "${CENSUS_DRAW_PARITY:-0}" == 1 ]]; then
 	regression_env+=("ORACLE_REGRESSION_DRAW_PARITY=1")
 fi
-# The regression script must not inherit the lock FD: only the runner
-# holds it, so the kernel frees it the moment the runner dies and a killed
-# census can never leave an orphan holding the lock. (Redirections are
-# literal in bash; census.sh always passes CENSUS_LOCK_FD=9.)
-# Backgrounded + waited (not foreground): bash defers a trap while a
-# foreground child runs, so a TERM would do nothing until the census
-# finished — up to 15 minutes. wait returns when the trap fires, letting
-# the killed() handler act immediately. The 9>&- stays (decision from the
-# PR 1 review): only this runner holds the lock FD.
-"${regression_env[@]}" "$runner" >>"$run_dir/census.log" 2>&1 9>&- &
+# Background + wait lets TERM interrupt immediately. Worker leases supervise
+# their own child groups, including SIGKILL recovery by another registry client.
+"${regression_env[@]}" "${runner_command[@]}" >>"$run_dir/census.log" 2>&1 9>&- &
 child=$!
 wait "$child"
 # Non-zero exit alone doesn't decide the verdict: the summary counts do.
@@ -224,13 +213,15 @@ recheck_env=(
 	ORACLE_REGRESSION_JOBS=1
 	ORACLE_REGRESSION_SEED="$seed"
 	ORACLE_REGRESSION_RESULTS="$run_dir/recheck-results.tsv"
+ ORACLE_REGRESSION_LOG_ROOT="$run_dir/recheck-logs"
+ ORACLE_REGRESSION_DUMP="$run_dir/recheck-dump"
 	ORACLE_REGRESSION_SCENARIOS="$recheck_names"
 )
 if [[ "${CENSUS_DRAW_PARITY:-0}" == 1 ]]; then
 	recheck_env+=("ORACLE_REGRESSION_DRAW_PARITY=1")
 fi
 # Same background+wait discipline as the main invocation.
-"${recheck_env[@]}" "$runner" >"$run_dir/recheck.log" 2>&1 9>&- &
+"${recheck_env[@]}" "${runner_command[@]}" >"$run_dir/recheck.log" 2>&1 9>&- &
 child=$!
 wait "$child"
 :
@@ -238,7 +229,7 @@ if [[ ! -s "$run_dir/recheck-results.tsv" ]]; then
 	finish NOT_CLEAN 1
 fi
 
-recheck_bad=$(awk -F '\t' '$1 != "PASS" && $1 != "EXPECTED" && $1 != "EXPECTED_UNSTABLE" { print; exit }' "$run_dir/recheck-results.tsv")
+recheck_bad=$(awk -F '\t' '$1 != "PASS" && $1 != "EXPECTED" && $1 != "EXPECTED_UNSTABLE" && $1 != "DRAW" { print; exit }' "$run_dir/recheck-results.tsv")
 if [[ -n "$recheck_bad" ]]; then
 	finish NOT_CLEAN 1
 fi
