@@ -1,0 +1,63 @@
+# depth-case: mob.key-seller-non-owner
+# key_seller performs the same house lookup before its owner check
+# (spec_procs2.c:1870-1932). The house record names Testor (player ID 1,
+# present on both engines: shipped in C's lib/etc/players, twinned into the
+# port's store by seed-player), and a mortal peer is teleported into the
+# seller's room to probe the gate, so the non-owner branch is exercised
+# without the retired owner-ID-999 hack: a real store, like C's House_boot,
+# drops records whose owner does not exist.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-mob 19610 2 8162 80
+house-control 8162 8161 north 1 1 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:nonowner]
+Nonowner
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:nonowner]
+Nonowner
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nonowner 8162
+~dpclock pulse 20
+
+[probe:nonowner]
+list
+buy key

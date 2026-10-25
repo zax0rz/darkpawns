@@ -1,6 +1,8 @@
 # C-first house/do_house vehicle (src/interpreter.c:502; src/house.c:603-718).
-# The fixture creates a private house at 8162 with atrium 8161 and maps the
-# seeded C owner ID 1 to the no-DB Go Testor ID 1. The online guest makes
+# The fixture creates a private house at 8162 with atrium 8161 owned by player
+# ID 1. seed-player twins C's shipped lib/etc/players Testor (ID 1) into the
+# port's store, so both engines log in the same existing owner and neither
+# side rolls character-creation draws for the actor. The online guest makes
 # get_id_by_name reachable in both engines.
 
 # depth-case: house.usage
@@ -18,6 +20,7 @@
 
 [fixture]
 quiet-mobs
+seed-player
 house-control 8162 8161 north 1 1 19604
 
 [setup:oracle]
@@ -28,15 +31,7 @@ testpassword
 
 [setup:port]
 Testor
-y
-oraclepass
-oraclepass
-N
-M
-H
-W
-K
-Y
+testpassword
 <ENTER>
 1
 

@@ -48,13 +48,18 @@ type Scenario struct {
 	QuietZones        []int
 	QuietAllMobs      bool
 	EmptyPlayers      bool
-	ScriptlessMobIDs  []int
-	ForceLoadVNums    []int
-	RoomExitFixtures  []RoomExitFixture
-	RoomFlagFixtures  []RoomFlagFixture
-	RoomSectors       []RoomSectorFixture
-	HouseControls     []HouseControlFixture
-	ScriptTwin        *ScriptTwinFixture
+	// SeedPlayer seeds the port's player store with C's shipped first player
+	// (Testor, player ID 1) before boot, so both engines log in an existing
+	// player and neither side rolls character-creation draws. Mutually
+	// exclusive with empty-players.
+	SeedPlayer       bool
+	ScriptlessMobIDs []int
+	ForceLoadVNums   []int
+	RoomExitFixtures []RoomExitFixture
+	RoomFlagFixtures []RoomFlagFixture
+	RoomSectors      []RoomSectorFixture
+	HouseControls    []HouseControlFixture
+	ScriptTwin       *ScriptTwinFixture
 	// LuaScripts are files written into both servers' script trees, and
 	// MobScripts attach a script to a mobile prototype in both worlds. With
 	// them a scenario certifies a Lua binding that no script C ships calls.
@@ -280,6 +285,7 @@ type AudienceProbeBlock struct {
 //	equip-object 18301 12120 1 16 80 # mob, object, max, C wear slot, zone
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
+//	seed-player               # seed the port's store with C's shipped Testor
 //	strip-mob-script 18306    # force native special dispatch in both copies
 //	compare-close             # render a <CLOSE> marker where the server closed the transport
 //	force-load 4903           # rewrite the prototype load percent to 500% in both copies
@@ -613,6 +619,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.EmptyPlayers = true
 				continue
 			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "seed-player") {
+				sc.SeedPlayer = true
+				continue
+			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "no-settle") {
 				sc.SkipSetupSettle = true
 				continue
@@ -684,6 +694,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	}
 	if sc.EntryPromptOnly && (!sc.DiffSetup || !sc.SkipSetupSettle || !sc.KeepPrompts) {
 		return Scenario{}, fmt.Errorf("scenario %q: entry-prompt requires creation, no-settle, and keep-prompts", name)
+	}
+	if sc.SeedPlayer && sc.EmptyPlayers {
+		return Scenario{}, fmt.Errorf("scenario %q: seed-player and empty-players are mutually exclusive", name)
 	}
 	restartCount := 0
 	crashCount := 0
