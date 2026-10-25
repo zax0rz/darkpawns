@@ -144,6 +144,11 @@ Don't put worktrees in `~` itself (230 accumulated there by 2026-10-14) or in
 silently corrupts a long-lived worktree. Taught 2026-10-13, when a
 `git checkout main` in the shared checkout put an agent's commit on local main.
 
+Never run `git stash` in this repository. Stash refs are shared by every worktree, so
+`git stash pop` can apply another agent's stash in your tree. To set work aside, commit it
+to your branch (a `wip:` commit is fine). Taught 2026-10-24, when an agent's revert-proof
+experiment popped a codex agent's stash into its own worktree.
+
 ## Project Overview
 
 Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
