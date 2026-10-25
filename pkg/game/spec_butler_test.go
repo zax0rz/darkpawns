@@ -22,17 +22,17 @@ func newButlerTestWorld(t *testing.T) (*World, *Player, *Player, *MobInstance, m
 		Rooms: []parser.Room{{VNum: butlerTestRoom, Name: "Butler Test Room", Zone: 1}},
 		Objs: []parser.Obj{
 			{
-				VNum: 3000, Keywords: "case display", ShortDesc: "an armor display case",
+				VNum: 3000, Keywords: "case", ShortDesc: "an armor display case",
 				LongDesc: "An armor display case is here.", TypeFlag: ITEM_CONTAINER,
 				Values: [4]int{100, contCloseable, -1, 0},
 			},
 			{
-				VNum: 3001, Keywords: "cabinet weapons", ShortDesc: "a golden weapons cabinet",
+				VNum: 3001, Keywords: "cabinet", ShortDesc: "a golden weapons cabinet",
 				LongDesc: "A golden weapons cabinet is here.", TypeFlag: ITEM_CONTAINER,
 				Values: [4]int{100, contCloseable, -1, 0},
 			},
 			{
-				VNum: 3002, Keywords: "chest runed", ShortDesc: "a runed chest",
+				VNum: 3002, Keywords: "chest", ShortDesc: "a runed chest",
 				LongDesc: "A runed chest is here.", TypeFlag: ITEM_CONTAINER,
 				Values: [4]int{100, contCloseable, -1, 0},
 			},
@@ -250,24 +250,149 @@ func TestSpecButler_GetRoutingAudienceAndClose(t *testing.T) {
 
 	clearButlerMessages(messages)
 	doorDraws = nil
-	butlerDoorToggle(w, mob, cas, true)
+	w.mobGenDoor(mob, "case", scmdOpen)
 	if got, want := messages[peer.Name], "The Servant opens an armor display case.\r\n"; got != want {
 		t.Fatalf("open act = %q, want %q", got, want)
 	}
 	clearButlerMessages(messages)
-	butlerDoorToggle(w, mob, cas, true)
+	w.mobGenDoor(mob, "case", scmdOpen)
 	if got := messages[peer.Name]; got != "" {
 		t.Fatalf("redundant open emitted %q", got)
 	}
 	if len(doorDraws) != 1 {
 		t.Fatalf("door draws after redundant open = %v, want one transition draw", doorDraws)
 	}
-	butlerDoorToggle(w, mob, cas, false)
+	w.mobGenDoor(mob, "case", scmdClose)
 	if got, want := messages[peer.Name], "The Servant closes an armor display case.\r\n"; got != want {
 		t.Fatalf("close act = %q, want %q", got, want)
 	}
 	if len(doorDraws) != 2 {
 		t.Fatalf("door draws after close = %v, want two transition draws", doorDraws)
+	}
+}
+
+func TestSpecButler_GenDoorCallBytesMatchC(t *testing.T) {
+	w, actor, peer, mob, messages := newButlerTestWorld(t)
+	cas, cabinet, chest := setupButlerContainers(t, w)
+	for _, container := range []*ObjectInstance{cas, cabinet, chest} {
+		container.SetValue(contFlags, container.GetValue(contFlags)|contClosed)
+	}
+
+	originalDoorNumber := doorNumber
+	var doorDraws []butlerTestDraw
+	doorNumber = func(from, to int) int {
+		doorDraws = append(doorDraws, butlerTestDraw{from: from, to: to})
+		return from
+	}
+	t.Cleanup(func() { doorNumber = originalDoorNumber })
+
+	// Room-list order is newest first, so these become chest, cabinet, case.
+	spawnButlerTestObject(t, w, 3003)
+	spawnButlerTestObject(t, w, 3004)
+	spawnButlerTestObject(t, w, 3005)
+	if !specButler(w, actor, mob, "", "") {
+		t.Fatal("eligible butler invocation was not handled")
+	}
+
+	want := "The Servant gets a loaf of bread.\r\n" +
+		"The Servant opens a runed chest.\r\n" +
+		"The Servant puts a loaf of bread in a runed chest.\r\n" +
+		"The Servant gets a short sword.\r\n" +
+		"The Servant opens a golden weapons cabinet.\r\n" +
+		"The Servant puts a short sword in a golden weapons cabinet.\r\n" +
+		"The Servant gets a frayed tunic.\r\n" +
+		"The Servant opens an armor display case.\r\n" +
+		"The Servant puts a frayed tunic in an armor display case.\r\n" +
+		"The Servant closes an armor display case.\r\n" +
+		"The Servant closes a golden weapons cabinet.\r\n" +
+		"The Servant closes a runed chest.\r\n"
+	for _, player := range []*Player{actor, peer} {
+		if got := messages[player.Name]; got != want {
+			t.Errorf("%s audience = %q, want %q", player.Name, got, want)
+		}
+	}
+	wantDoorDraws := []butlerTestDraw{
+		{from: 1, to: 101},
+		{from: 1, to: 101},
+		{from: 1, to: 101},
+		{from: 1, to: 101},
+		{from: 1, to: 101},
+		{from: 1, to: 101},
+	}
+	if len(doorDraws) != len(wantDoorDraws) {
+		t.Fatalf("butler door draws = %v, want six transitions %v", doorDraws, wantDoorDraws)
+	}
+	for i, got := range doorDraws {
+		if got != wantDoorDraws[i] {
+			t.Errorf("butler door draw %d = %+v, want %+v", i, got, wantDoorDraws[i])
+		}
+	}
+}
+
+func TestSpecButler_GenDoorUsesGenericFindInventoryFirst(t *testing.T) {
+	tests := []struct {
+		name       string
+		itemVNum   int
+		shadowVNum int
+		roomVNum   int
+		itemName   string
+		container  string
+	}{
+		{name: "case", itemVNum: 3003, shadowVNum: 3000, roomVNum: 3000, itemName: "a frayed tunic", container: "an armor display case"},
+		{name: "cabinet", itemVNum: 3004, shadowVNum: 3001, roomVNum: 3001, itemName: "a short sword", container: "a golden weapons cabinet"},
+		{name: "chest", itemVNum: 3005, shadowVNum: 3002, roomVNum: 3002, itemName: "a loaf of bread", container: "a runed chest"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w, actor, peer, mob, messages := newButlerTestWorld(t)
+			cas, cabinet, chest := setupButlerContainers(t, w)
+			roomTargets := map[int]*ObjectInstance{3000: cas, 3001: cabinet, 3002: chest}
+			for _, target := range roomTargets {
+				target.SetValue(contFlags, target.GetValue(contFlags)|contClosed)
+			}
+
+			shadow, err := w.SpawnObject(test.shadowVNum, -1)
+			if err != nil {
+				t.Fatalf("SpawnObject(%d): %v", test.shadowVNum, err)
+			}
+			shadow.SetValue(contFlags, shadow.GetValue(contFlags)|contClosed)
+			if err := w.MoveObjectToMobInventoryFront(shadow, mob); err != nil {
+				t.Fatalf("move inventory shadow: %v", err)
+			}
+			roomTarget := roomTargets[test.roomVNum]
+			item := spawnButlerTestObject(t, w, test.itemVNum)
+
+			originalDoorNumber := doorNumber
+			var doorDraws []butlerTestDraw
+			doorNumber = func(from, to int) int {
+				doorDraws = append(doorDraws, butlerTestDraw{from: from, to: to})
+				return from
+			}
+			t.Cleanup(func() { doorNumber = originalDoorNumber })
+
+			if !specButler(w, actor, mob, "", "") {
+				t.Fatal("eligible butler invocation was not handled")
+			}
+			want := "The Servant gets " + test.itemName + ".\r\n" +
+				"The Servant puts " + test.itemName + " in " + test.container + ".\r\n"
+			for _, player := range []*Player{actor, peer} {
+				if got := messages[player.Name]; got != want {
+					t.Errorf("%s audience = %q, want %q", player.Name, got, want)
+				}
+			}
+			if len(doorDraws) != 2 || doorDraws[0] != (butlerTestDraw{from: 1, to: 101}) || doorDraws[1] != (butlerTestDraw{from: 1, to: 101}) {
+				t.Errorf("inventory-target open/close draws = %v, want two transition draws", doorDraws)
+			}
+			if shadow.GetValue(contFlags)&contClosed == 0 {
+				t.Errorf("inventory %s remained open", test.name)
+			}
+			if roomTarget.GetValue(contFlags)&contClosed == 0 {
+				t.Errorf("room %s should remain closed", test.name)
+			}
+			if item.Location.Kind != ObjInContainer || item.Location.ContainerObjID != roomTarget.ID {
+				t.Errorf("item location = %+v, want room %s container", item.Location, test.name)
+			}
+		})
 	}
 }
 
