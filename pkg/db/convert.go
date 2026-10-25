@@ -118,6 +118,13 @@ func RecordToPlayer(r *PlayerRecord, world *game.World) (*game.Player, error) {
 				for _, vnum := range invVnums {
 					if proto, ok := world.GetObjPrototype(vnum); ok {
 						obj := world.NewObjectFromProto(proto, -1)
+						// Crash_load's obj_to_char (src/objsave.c:591)
+						// attaches each object to ch->carrying; the
+						// inventory location must be set like the
+						// equipment arm below and restoreSavedItems, or
+						// the restored object's Nowhere location makes a
+						// later corpse move or extraction duplicate it.
+						obj.Location = game.LocInventoryPlayer(p.Name)
 						if p.Inventory.RestoreItem(obj) {
 							slog.Warn("restored item over inventory capacity",
 								"player", p.Name, "vnum", obj.VNum)
