@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/dprng"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/engine"
@@ -2327,15 +2328,9 @@ func specCastleGuardNorth(w *World, ch *Player, me *MobInstance, cmd string, arg
 // Uses package-level state for patrol direction and talk flag.
 // ================================================================
 
-// Direction constants for mob movement specs.
-const (
-	DIR_NORTH = 1
-	DIR_SOUTH = 2
-	DIR_EAST  = 3
-	DIR_WEST  = 4
-	DIR_UP    = 5
-	DIR_DOWN  = 6
-)
+// Wall-guard patrol directions use the canonical dirKeys indices
+// (north=0, south=2): perform_move takes a direction index, and the old
+// bespoke enum (DIR_NORTH=1..) silently mismatched it.
 
 var (
 	wallGuardDirToMove int
@@ -2352,31 +2347,25 @@ func specWallGuardNS(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 		return false
 	}
 
-	_, hasNorth := room.Exits["north"]
-	_, hasSouth := room.Exits["south"]
+	// C picks the direction with CAN_GO — the exit exists, leads somewhere
+	// real, and is not closed (src/spec_procs2.c:2271-2277).
+	canGo := func(dirName string) bool {
+		exit, ok := room.Exits[dirName]
+		return ok && exit.ToRoom != -1 && exit.ExitInfo&parser.ExitClosed == 0
+	}
+	canNorth, canSouth := canGo("north"), canGo("south")
 
-	if hasSouth && !hasNorth {
-		wallGuardDirToMove = DIR_SOUTH
+	if canSouth && !canNorth {
+		wallGuardDirToMove = 2 // south
 	}
-	if hasNorth && !hasSouth {
-		wallGuardDirToMove = DIR_NORTH
+	if canNorth && !canSouth {
+		wallGuardDirToMove = 0 // north
 	}
 
-	// Walk the wall: move the mob
-	switch wallGuardDirToMove {
-	case DIR_NORTH:
-		if exit, ok := room.Exits["north"]; ok {
-			if err := w.MobTransfer(me, exit.ToRoom); err != nil {
-				return false
-			}
-		}
-	case DIR_SOUTH:
-		if exit, ok := room.Exits["south"]; ok {
-			if err := w.MobTransfer(me, exit.ToRoom); err != nil {
-				return false
-			}
-		}
-	}
+	// perform_move(mobile, dir_to_move, 1) (src/spec_procs2.c:2281): the
+	// canonical mover, with its leave/arrive audiences. C ignores the
+	// return and greets the room either way.
+	w.performMoveMob(me, wallGuardDirToMove, true)
 
 	// Greet church guard (VNum 8020) when encountered on patrol
 	for _, mob := range w.GetMobsInRoom(me.GetRoomVNum()) {

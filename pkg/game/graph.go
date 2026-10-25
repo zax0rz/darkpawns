@@ -331,21 +331,20 @@ func (w *World) huntVictim(m *MobInstance) {
 		return
 	}
 
-	// Open doors if intelligent mob. C builds "<keyword> <reverse-dir>" and
-	// calls the real do_gen_door(SCMD_OPEN) (src/graph.c:320-339), whose
-	// NEED_UNLOCKED gate refuses locked doors.
+	// Open doors if intelligent mob. C builds "<keyword list> <direction>"
+	// (the rev_dir switch maps back to the direction of travel) and calls
+	// the real do_gen_door(SCMD_OPEN) (src/graph.c:320-339).
 	mobRoom, ok := w.GetRoom(m.GetRoom())
 	if ok {
 		if exit, exists := mobRoom.Exits[dirKeys[dir]]; exists {
 			if exit.ExitInfo&parser.ExitClosed != 0 && mobIsIntelligent(m) && exit.Keywords != "" {
-				w.mobGenDoor(m, firstWord(exit.Keywords), scmdOpen)
+				w.mobGenDoor(m, fmt.Sprintf("%s %s", exit.Keywords, dirs[dir]), scmdOpen)
 			}
 		}
 	}
 
 	// C moves through perform_move(ch, dir, 1) (src/graph.c:340), which
-	// refuses closed exits and drags followers; mobPerformMove's silent
-	// closed-door crossing let hunters pass locked doors.
+	// refuses closed exits and drags followers.
 	w.performMoveMob(m, dir, true)
 
 	// Check if arrived
@@ -413,32 +412,6 @@ func (w *World) findPlayerByName(name string) *Player {
 		}
 	}
 	return nil
-}
-
-// mobPerformMove moves a mob in a given direction.
-func (w *World) mobPerformMove(m *MobInstance, dir int) {
-	oldRoom := m.GetRoom()
-	toRoomVNum := -1
-	if room, ok := w.GetRoom(oldRoom); ok {
-		if exit, exists := room.Exits[dirKeys[dir]]; exists {
-			toRoomVNum = exit.ToRoom
-		}
-	}
-	if toRoomVNum == -1 {
-		return
-	}
-
-	// Notify old room
-	for _, p := range w.GetPlayersInRoom(oldRoom) {
-		p.SendMessage(fmt.Sprintf("%s leaves %s.\r\n", m.GetName(), dirKeys[dir]))
-	}
-
-	m.SetRoom(toRoomVNum)
-
-	// Notify new room
-	for _, p := range w.GetPlayersInRoom(toRoomVNum) {
-		p.SendMessage(fmt.Sprintf("%s has arrived.\r\n", m.GetName()))
-	}
 }
 
 // intelligentRaces is C's intelligent_races[] (src/constants.c:353-373) as

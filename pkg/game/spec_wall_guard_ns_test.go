@@ -149,8 +149,8 @@ func TestSpecWallGuardNS_PatrolsBothOneWayEnds(t *testing.T) {
 	if got := len(w.GetMobsInRoom(1002)); got != 2 {
 		t.Fatalf("destination room mob count = %d, want wall and church guards", got)
 	}
-	if got := messages["OldRoom"]; got != "" {
-		t.Fatalf("old-room witness saw destination greeting %q", got)
+	if got, want := messages["OldRoom"], "A city guard leaves north.\r\n"; got != want {
+		t.Fatalf("old-room leave line = %q, want %q", got, want)
 	}
 
 	if got := specWallGuardNS(w, nil, guard, "", ""); got {
@@ -167,11 +167,11 @@ func TestSpecWallGuardNS_GreetingAudienceAndPerCallReset(t *testing.T) {
 	if got := specWallGuardNS(w, nil, guard, "", ""); got {
 		t.Fatal("eligible patrol should return false")
 	}
-	if got, want := messages[observer.GetName()], wallGuardGreeting(); got != want {
-		t.Fatalf("destination greeting = %q, want %q", got, want)
+	if got, want := messages[observer.GetName()], "A city guard arrives from the south.\r\n"+wallGuardGreeting(); got != want {
+		t.Fatalf("destination arrival+greeting = %q, want %q", got, want)
 	}
-	if got := messages[oldRoom.GetName()]; got != "" {
-		t.Fatalf("old-room audience received greeting %q", got)
+	if got, want := messages[oldRoom.GetName()], "A city guard leaves north.\r\n"; got != want {
+		t.Fatalf("old-room leave line = %q, want %q", got, want)
 	}
 
 	for name := range messages {

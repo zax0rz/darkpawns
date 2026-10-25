@@ -40,7 +40,10 @@ func doorHuntWorld(t *testing.T, exitInfo int) (*World, *MobInstance, map[string
 			{VNum: 9701, Keywords: "stalker", ShortDesc: "the dune stalker", Race: 1, Level: 20, Position: 8, DefaultPos: 8},
 			{VNum: 9702, Keywords: "horse", ShortDesc: "a horse", Race: 12, Level: 5, Position: 8, DefaultPos: 8},
 		},
-		Objs: []parser.Obj{{VNum: 5001, Keywords: "gate key", ShortDesc: "a gate key"}},
+		Objs: []parser.Obj{
+			{VNum: 5001, Keywords: "brass key", ShortDesc: "a brass key"},
+			{VNum: 5002, Keywords: "gate sign", ShortDesc: "a wooden sign"},
+		},
 	})
 	if err != nil {
 		t.Fatalf("NewWorld: %v", err)
@@ -185,5 +188,87 @@ func TestMobIsIntelligentMatchesCRaceTable(t *testing.T) {
 		if got := mobIsIntelligent(m); got != tc.want {
 			t.Errorf("race %d (%s): mobIsIntelligent = %v, want %v", tc.race, tc.why, got, tc.want)
 		}
+	}
+}
+
+// TestHuntVictimMultiWordKeywordDoesNotOpen pins C's argument quirk: the
+// hunt passes "<keyword list> <direction>", and two_arguments takes the
+// SECOND word of a multi-word list ("gate iron") as the direction token —
+// which is not a direction, so do_gen_door dies at find_door and the hunter
+// is stopped by the closed door. 233 world doors carry multi-word lists.
+func TestHuntVictimMultiWordKeywordDoesNotOpen(t *testing.T) {
+	w, mob, _ := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+	// "gate iron" instead of "gate".
+	w.mu.Lock()
+	north := w.rooms[1001].Exits["north"]
+	north.Keywords = "gate iron"
+	w.rooms[1001].Exits["north"] = north
+	south := w.rooms[1002].Exits["south"]
+	south.Keywords = "gate iron"
+	w.rooms[1002].Exits["south"] = south
+	w.mu.Unlock()
+	mob.SetHunting("Prey")
+	scriptHuntDraws(t, 150)
+
+	w.huntVictim(mob)
+
+	if got := mob.GetRoom(); got != 1001 {
+		t.Fatalf("hunter passed the multi-word-keyword gate to %d, want it stopped in 1001", got)
+	}
+	ext := w.GetRoomInWorld(1001).Exits["north"]
+	if ext.ExitInfo&parser.ExitClosed == 0 {
+		t.Fatal("multi-word-keyword gate was opened")
+	}
+}
+
+// TestHuntVictimSameKeywordOpensOnlyTravelExit pins find_door's direction
+// branch: when the argument carries a direction word, only that exit is
+// considered, so a second keyword-sharing exit in another direction is never
+// touched.
+func TestHuntVictimSameKeywordOpensOnlyTravelExit(t *testing.T) {
+	w, mob, _ := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+	// A second closed, unlocked "gate" door to the east.
+	w.mu.Lock()
+	w.rooms[1001].Exits["east"] = parser.Exit{
+		Direction: "east", ToRoom: 1002, Keywords: "gate",
+		DoorState: 1, ExitInfo: parser.ExitIsDoor | parser.ExitClosed,
+	}
+	w.mu.Unlock()
+	mob.SetHunting("Prey")
+	scriptHuntDraws(t, 150)
+
+	w.huntVictim(mob)
+
+	if got := mob.GetRoom(); got != 1002 {
+		t.Fatalf("hunter room = %d, want 1002 through the north gate", got)
+	}
+	east := w.GetRoomInWorld(1001).Exits["east"]
+	if east.ExitInfo&parser.ExitClosed == 0 {
+		t.Fatal("the east gate sharing the keyword was opened")
+	}
+}
+
+// TestHuntVictimKeywordObjectShadowsDoor pins generic_find running before
+// find_door (src/act.movement.c:612): a visible object matching the keyword
+// diverts the command away from the door — the door stays shut and the
+// hunter is stopped by it.
+func TestHuntVictimKeywordObjectShadowsDoor(t *testing.T) {
+	w, mob, _ := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+	sign, err := w.SpawnObject(5002, 1001) // keywords "gate sign"
+	if err != nil {
+		t.Fatalf("SpawnObject sign: %v", err)
+	}
+	w.AddItemToRoom(sign, 1001) // SpawnObject does not register room items
+	mob.SetHunting("Prey")
+	scriptHuntDraws(t, 150)
+
+	w.huntVictim(mob)
+
+	if got := mob.GetRoom(); got != 1001 {
+		t.Fatalf("hunter passed the shadowed gate to %d, want it stopped in 1001", got)
+	}
+	ext := w.GetRoomInWorld(1001).Exits["north"]
+	if ext.ExitInfo&parser.ExitClosed == 0 {
+		t.Fatal("the shadowed gate was opened")
 	}
 }

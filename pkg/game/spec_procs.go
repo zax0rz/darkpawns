@@ -917,13 +917,13 @@ func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 
 	switch action {
 	case '0':
-		w.mobPerformMove(me, 0) // NORTH
+		w.performMoveMob(me, 0, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
 	case '1':
-		w.mobPerformMove(me, 1) // EAST
+		w.performMoveMob(me, 1, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
 	case '2':
-		w.mobPerformMove(me, 2) // SOUTH
+		w.performMoveMob(me, 2, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
 	case '3':
-		w.mobPerformMove(me, 3) // WEST
+		w.performMoveMob(me, 3, true) // perform_move(ch, path[i]-'0', 1) (src/spec_procs.c:862)
 	case 'W':
 		me.SetPosition(8) // PosStanding
 		w.roomMessage(me.RoomVNum, me.GetName()+" awakens and groans loudly.")
