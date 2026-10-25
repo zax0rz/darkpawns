@@ -197,9 +197,8 @@ func TestNeutralRescueRoomTransfer(t *testing.T) {
 	if !p.HasLight() {
 		t.Fatal("fixture torch is not lit")
 	}
-	w.mu.Lock()
-	w.adjustRoomLight(1001, 1)
-	w.mu.Unlock()
+	// The room counter comes from EquipItem's own accounting
+	// (src/handler.c:737-740); no manual adjustRoomLight here.
 	out := captureOutput(w)
 	spells.MagDamage(30, mob, p, 32, 0, w)
 	if w.GetRoomInWorld(1001).Light != 0 || w.GetRoomInWorld(8004).Light != 1 {
