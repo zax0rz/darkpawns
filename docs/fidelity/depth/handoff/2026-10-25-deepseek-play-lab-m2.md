@@ -113,7 +113,8 @@ C showed the room.
 | `44eb9c360` (post-fix) | identical | `Temple Medical Centre` (the room, matching C) |
 
 The transcript pair is retained in the lab
-(`sessions/m2-lights-prefix.jsonl`, `m2-lights-postfix.jsonl`), and
+(`sessions/m2-lights-prefix.jsonl`, `m2-lights-postfix.jsonl`, with the build of
+each in `sessions/m2-lights-provenance.md`), and
 `cmd/dp-oracle-diff/scenarios/play-lab-lights-dark-room.txt` is the C-vs-Go
 scenario: it is CLEAN on `44eb9c360` and, per the table above, reddens on the
 pre-fix build — so it is a guard that can fail (R5h), not a scenario that passes
