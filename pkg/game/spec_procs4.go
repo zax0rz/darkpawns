@@ -53,12 +53,14 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		walkRoll := randRange(1, 10)
 		switch walkRoll {
 		case 1, 2:
-			// C: perform_move(ch, SCMD_EAST-1, 0) → direction index 1 (east)
-			w.mobPerformMove(me, 1)
+			// C: perform_move(ch, SCMD_EAST-1, 0) → direction index 1 (east),
+			// need_specials_check 0 (src/spec_procs.c:1626).
+			w.performMoveMob(me, 1, false)
 			return true
 		case 9, 10:
-			// C: perform_move(ch, SCMD_WEST-1, 0) → direction index 3 (west)
-			w.mobPerformMove(me, 3)
+			// C: perform_move(ch, SCMD_WEST-1, 0) → direction index 3 (west),
+			// need_specials_check 0 (src/spec_procs.c:1630).
+			w.performMoveMob(me, 3, false)
 			return true
 		}
 	}

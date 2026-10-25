@@ -968,3 +968,201 @@ func verbIs(s string) string {
 	}
 	return "is"
 }
+
+// hasMobKey is has_key (src/act.movement.c:571-585) for a mobile: the key
+// object anywhere in carrying, or in the hold slot only.
+func hasMobKey(m *MobInstance, key int) bool {
+	if key < 0 {
+		return false
+	}
+	for _, obj := range m.InventorySnapshot() {
+		if obj != nil && obj.VNum == key {
+			return true
+		}
+	}
+	if held, ok := m.EquipmentSnapshot()[int(SlotHold)]; ok && held != nil && held.VNum == key {
+		return true
+	}
+	return false
+}
+
+// mobGenDoor is do_gen_door (src/act.movement.c:605-642) for a descriptor-less
+// mobile: the same two_arguments parse, the same generic_find object branch,
+// the same find_door direction/keyword scan, gate ladder, and do_doorcmd
+// mutations and audiences, with every TO_CHAR line dropped — C's
+// send_to_char has no descriptor to reach on a mobile. hunt_victim builds
+// "<keyword list> <direction>" and calls the real command (src/graph.c:
+// 320-338 — the rev_dir switch maps back to the direction of travel); the
+// mayor passes "gate" for its unlock/open/close/lock cycle (src/spec_procs.c:
+// 905-913).
+func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
+	if m == nil {
+		return
+	}
+
+	// two_arguments (src/interpreter.c:1265-1283): the first word is the
+	// object/door type, the second the direction; trailing words are
+	// dropped. A multi-word keyword list therefore puts a keyword word in
+	// the direction slot and the command dies at find_door's direction
+	// parse — 233 world doors carry such lists, and in C they stop hunters.
+	doorType, dir := twoArguments(argument)
+	if doorType == "" {
+		return // "<cmd> what?" is TO_CHAR and dropped
+	}
+
+	// generic_find(type, FIND_OBJ_INV | FIND_OBJ_ROOM) runs before find_door
+	// (src/act.movement.c:612): a visible matching object diverts the
+	// command to the object ("You can't $F that!", TO_CHAR, dropped) and
+	// the door stays shut.
+	if w.mobDoorObjectTarget(m, doorType) != nil {
+		return
+	}
+
+	door := w.findDoorMob(m, doorType, dir)
+	if door < 0 {
+		return
+	}
+	room := w.GetRoomInWorld(m.GetRoom())
+	if room == nil {
+		return
+	}
+	ext, hasExit := room.Exits[dirs[door]]
+	if !hasExit {
+		return
+	}
+
+	// do_gen_door's exit gate ladder (src/act.movement.c:620-640); the
+	// refusal lines are TO_CHAR and vanish for a mobile.
+	needed := flagsDoor[scmd]
+	openable := ext.ExitInfo&parser.ExitIsDoor != 0
+	open := ext.ExitInfo&parser.ExitClosed == 0
+	unlocked := ext.ExitInfo&parser.ExitLocked == 0
+	switch {
+	case !openable:
+		return
+	case !open && needed&needOpen != 0:
+		return
+	case open && needed&needClosed != 0:
+		return
+	case unlocked && needed&needLocked != 0:
+		return
+	case !unlocked && needed&needUnlocked != 0:
+		return
+	case !hasMobKey(m, ext.Key) && m.GetLevel() < LVL_GOD && (scmd == scmdLock || scmd == scmdUnlock):
+		return
+	}
+
+	// do_doorcmd (src/act.movement.c:479-524) for an exit: resolve the back
+	// exit, toggle this side, toggle the back side.
+	otherRoomVNum := ext.ToRoom
+	hasBack := false
+	var backExt parser.Exit
+	if otherRoom := w.GetRoomInWorld(otherRoomVNum); otherRoom != nil {
+		backDir := revDir[door]
+		if backDir >= 0 && backDir < len(dirs) {
+			backExt, hasBack = otherRoom.Exits[dirs[backDir]]
+			if hasBack && backExt.ToRoom != m.GetRoom() {
+				hasBack = false
+			}
+		}
+	}
+
+	switch scmd {
+	case scmdOpen, scmdClose:
+		ext.ExitInfo ^= parser.ExitClosed
+		w.SetExitInfo(m.GetRoom(), dirs[door], ext.ExitInfo)
+		if hasBack {
+			backExt.ExitInfo ^= parser.ExitClosed
+			w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
+		}
+	case scmdUnlock, scmdLock:
+		ext.ExitInfo ^= parser.ExitLocked
+		w.SetExitInfo(m.GetRoom(), dirs[door], ext.ExitInfo)
+		if hasBack {
+			backExt.ExitInfo ^= parser.ExitLocked
+			w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
+		}
+	}
+
+	// do_doorcmd's audiences: the room act names the exit by its keyword
+	// list ($F) or "door" (src/act.movement.c:524-536); open/close also
+	// notify the far side (src/act.movement.c:543-556).
+	roomFormat := fmt.Sprintf("$n %ss the ", cmdDoor[scmd])
+	if ext.Keywords != "" {
+		Act(w, false, m, nil, nil, nil, roomFormat+"$F.", ext.Keywords, ToRoom)
+	} else {
+		Act(w, false, m, nil, nil, nil, roomFormat+"door.", "", ToRoom)
+	}
+	if (scmd == scmdOpen || scmd == scmdClose) && hasBack {
+		backName := "door"
+		if backExt.Keywords != "" {
+			backName = firstWord(backExt.Keywords)
+		}
+		suffix := "ed"
+		if scmd == scmdClose {
+			suffix = "d"
+		}
+		msg := fmt.Sprintf("The %s %s %s%s from the other side.\r\n", backName, verbIs(backName), cmdDoor[scmd], suffix)
+		for _, actor := range w.actChar(otherRoomVNum) {
+			actor.SendMessage(msg)
+		}
+	}
+}
+
+// mobDoorObjectTarget is generic_find's FIND_OBJ_INV | FIND_OBJ_ROOM arm for
+// a mobile (src/act.movement.c:612): the first visible keyword match in the
+// mobile's carrying or the room, through the same CAN_SEE_OBJ the player
+// lane applies.
+func (w *World) mobDoorObjectTarget(m *MobInstance, doorType string) *ObjectInstance {
+	for _, obj := range m.InventorySnapshot() {
+		if obj != nil && canSeeObject(m, obj) && isName(doorType, obj.GetKeywords()) {
+			return obj
+		}
+	}
+	for _, obj := range w.GetItemsInRoom(m.GetRoom()) {
+		if obj != nil && canSeeObject(m, obj) && isName(doorType, obj.GetKeywords()) {
+			return obj
+		}
+	}
+	return nil
+}
+
+// findDoorMob is find_door (src/act.movement.c:370-421) for a mobile: with a
+// direction word, only that exit is considered (an unparsable word is not a
+// direction and stops the command); without one, the first keyword match
+// wins. Refusal lines are TO_CHAR and dropped.
+func (w *World) findDoorMob(m *MobInstance, doorType, dir string) int {
+	room := w.GetRoomInWorld(m.GetRoom())
+	if room == nil {
+		return -1
+	}
+	revealsSecrets := movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark")
+	if dir != "" {
+		door := searchBlock(dir, dirs, false)
+		if door == -1 {
+			return -1 // "That's not a direction."
+		}
+		ext, ok := room.Exits[dirs[door]]
+		if !ok || strings.Contains(strings.ToLower(ext.Keywords), "secret") && !revealsSecrets {
+			return -1 // "I really don't see how you can do anything there."
+		}
+		if ext.Keywords == "" {
+			return door
+		}
+		if isName(doorType, ext.Keywords) {
+			return door
+		}
+		return -1 // "I see no %s there."
+	}
+	if doorType == "" {
+		return -1
+	}
+	for door := 0; door < len(dirs); door++ {
+		ext, ok := room.Exits[dirs[door]]
+		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) &&
+			(!strings.Contains(strings.ToLower(ext.Keywords), "secret") || revealsSecrets) {
+			return door
+		}
+	}
+	return -1 // "There doesn't seem to be %s %s here."
+}

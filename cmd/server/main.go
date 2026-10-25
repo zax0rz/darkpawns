@@ -498,6 +498,36 @@ func main() {
 
 	slog.Info("Dark Pawns Phase 1 Server Starting...")
 
+	// Connect to database before the world boots: House_boot (inside
+	// game.NewWorld) resolves house owners through the player index, so the
+	// house system's name/id lookups must be registered first (BRIEF-2026-
+	// 10-24 Investigation 4; the C helpers read the player index file).
+	slog.Info("Connecting to database...")
+	database, err := db.New(*dbURL)
+	if err != nil {
+		if os.Getenv("DP_ALLOW_NO_DB") != "1" {
+			slog.Error("Database initialization failed; refusing logins without persistence", "error", err)
+			os.Exit(1)
+		}
+		slog.Warn("Database connection failed, explicitly running without persistence", "error", err)
+		database = nil
+	} else {
+		slog.Info("Database connected.", "path", *dbURL)
+		// A first boot and a boot against an existing database otherwise look
+		// identical in the log, and the difference matters: an operator who
+		// expects the migrated database wants to see that it was opened, not that
+		// a new empty one was created beside it. The line is additional, never a
+		// replacement for "connected", which other tooling reads.
+		if database.Created() {
+			slog.Warn("database file did not exist and was created (fresh install); it holds no characters yet",
+				"path", *dbURL)
+		}
+	}
+	if database != nil {
+		nameByID, idByName := database.HousePlayerLookups()
+		game.RegisterHousePlayerLookup(nameByID, idByName)
+	}
+
 	// C reset_time() (db.c:415-451) is the first thing boot_db does: it derives
 	// the game calendar from the real-time epoch (beginning_of_time), then
 	// derives sunlight, moon phase, and initial barometric pressure. That
@@ -523,33 +553,14 @@ func main() {
 	}
 	gameWorld.WorldPath = *worldDir
 	gameWorld.PostInit()
-
-	// Connect to database
-	slog.Info("Connecting to database...")
-	database, err := db.New(*dbURL)
-	if err != nil {
-		if os.Getenv("DP_ALLOW_NO_DB") != "1" {
-			slog.Error("Database initialization failed; refusing logins without persistence", "error", err)
-			os.Exit(1)
-		}
-		slog.Warn("Database connection failed, explicitly running without persistence", "error", err)
-		database = nil
-	} else {
+	// The close defer sits after the world-boot failure exits (gocritic
+	// exitAfterDefer) at the spot the connection block used to occupy.
+	if database != nil {
 		defer func() {
 			if err := database.Close(); err != nil {
 				slog.Error("database close failed during server shutdown", "error", err)
 			}
 		}()
-		slog.Info("Database connected.", "path", *dbURL)
-		// A first boot and a boot against an existing database otherwise look
-		// identical in the log, and the difference matters: an operator who
-		// expects the migrated database wants to see that it was opened, not that
-		// a new empty one was created beside it. The line is additional, never a
-		// replacement for "connected", which other tooling reads.
-		if database.Created() {
-			slog.Warn("database file did not exist and was created (fresh install); it holds no characters yet",
-				"path", *dbURL)
-		}
 	}
 
 	// Set ban/xnames file paths relative to world directory (DP-421)
