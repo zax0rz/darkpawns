@@ -101,10 +101,10 @@ is recorded here and in the PR.
 
 ## Delivery
 
-Elapsed time at handoff: approximately 1h 16m. PR count: 1 draft. The draft
+Elapsed time at delivery: 1h 25m. PR count: 1 draft (#2148). The draft
 remains open for review; no merge or deploy was performed.
 
 ## Draft PR
 
-See the attached draft PR for the grouped C call paths, per-group revert
-controls and **Decisions for Zach**.
+See [draft PR #2148](https://github.com/zax0rz/darkpawns/pull/2148) for the
+grouped C call paths, per-group revert controls and **Decisions for Zach**.
