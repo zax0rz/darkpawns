@@ -469,13 +469,13 @@ func specFighter(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 	switch number(0, 10) {
 	case 1:
-		mobHeadbutt(w, me, melee)
+		w.NPCCommandDirect(me, "headbutt", melee.GetName())
 	case 2:
-		mobParry(w, me, melee)
+		w.NPCCommandDirect(me, "parry", melee.GetName())
 	case 3:
-		mobBash(w, me, melee)
+		w.NPCCommandDirect(me, "bash", melee.GetName())
 	case 4:
-		mobBerserk(me)
+		w.NPCCommandDirect(me, "berserk", "")
 	default:
 		return false
 	}
@@ -490,15 +490,15 @@ func specPaladin(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 	switch number(0, 8) {
 	case 0:
-		mobParry(w, me, melee)
+		w.NPCCommandDirect(me, "parry", melee.GetName())
 	case 1:
-		mobBash(w, me, melee)
+		w.NPCCommandDirect(me, "bash", melee.GetName())
 	case 2:
-		mobCharge(w, me, melee)
+		w.NPCCommandDirect(me, "charge", melee.GetName())
 	case 3:
 		castMobSpell(w, me, melee, paladinDispelSpell(me))
 	case 5:
-		mobDisarm(w, me, melee)
+		w.NPCCommandDirect(me, "disarm", melee.GetName())
 	}
 	return true
 }
@@ -646,18 +646,7 @@ func specPuff(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 }
 
 func puffSay(w *World, me *MobInstance, saying string) {
-	verb := "says"
-	if saying != "" {
-		switch saying[len(saying)-1] {
-		case '!':
-			verb = "exclaims"
-		case '?':
-			verb = "asks"
-		case '.':
-			verb = "states"
-		}
-	}
-	Act(w, false, me, nil, nil, nil, "$n "+verb+", '$T'", saying, ToRoom)
+	w.NPCCommandDirect(me, "say", saying)
 }
 
 func puffEmote(w *World, me *MobInstance, emote string) {
@@ -991,17 +980,7 @@ func specDragonBreath(w *World, ch *Player, me *MobInstance, cmd string, arg str
 	fighting := mobFightingTarget(w, me)
 	if fighting != nil {
 		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
-			// C calls do_stand() here. An NPC has no descriptor, so only its
-			// state transition and the room Act are player-visible.
-			switch me.GetPosition() {
-			case combat.PosSitting:
-				Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
-			case combat.PosResting:
-				Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
-			default:
-				Act(w, true, me, nil, nil, nil, "$n stops floating around, and puts $s feet on the ground.", "", ToRoom)
-			}
-			me.SetPosition(combat.PosStanding)
+			w.NPCCommandDirect(me, "stand", "")
 		} else if number(0, 3) == 0 {
 			spells.CallMagic(me, fighting, nil, spell, me.GetLevel(), spells.CastBreath, w)
 			return specMagicUser(w, nil, me, "", "")
@@ -1037,13 +1016,8 @@ func specCitizen(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	}
 
 	if me.GetFightingBody() != nil {
-		switch me.GetPosition() {
-		case combat.PosSitting:
-			Act(w, true, me, nil, nil, nil, "$n clambers to $s feet.", "", ToRoom)
-			me.SetPosition(combat.PosStanding)
-		case combat.PosResting:
-			Act(w, true, me, nil, nil, nil, "$n stops resting, and clambers on $s feet.", "", ToRoom)
-			me.SetPosition(combat.PosStanding)
+		if me.GetPosition() > combat.PosSleeping && me.GetPosition() < combat.PosFighting {
+			w.NPCCommandDirect(me, "stand", "")
 		}
 		return false
 	}

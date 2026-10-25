@@ -64,6 +64,11 @@ func TestSpecCitizen_StandingRecovery(t *testing.T) {
 			mob.SetPosition(tt.pos)
 			mob.SetFightingBody(NewPlayer(99999, "Tester", 1001))
 			lastMsg()
+			var commandName, commandArg string
+			w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+				commandName, commandArg = command, argument
+				return CharacterCommandUnsupported
+			}
 
 			previous := citizenNumber
 			citizenNumber = func(from, to int) int {
@@ -77,6 +82,9 @@ func TestSpecCitizen_StandingRecovery(t *testing.T) {
 			}
 			if got := mob.GetPosition(); got != combat.PosStanding {
 				t.Fatalf("%s position = %d, want standing", tt.name, got)
+			}
+			if commandName != "stand" || commandArg != "" {
+				t.Fatalf("direct command = %q %q, want stand with empty argument", commandName, commandArg)
 			}
 			if got := lastMsg(); got != tt.want {
 				t.Fatalf("%s output = %q, want %q", tt.name, got, tt.want)

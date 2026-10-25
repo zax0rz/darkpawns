@@ -3,6 +3,7 @@ package game
 import (
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
@@ -20,8 +21,16 @@ func TestSpecPuff_CommandAndDeathGates(t *testing.T) {
 	}
 
 	mob.CurrentHP = -1
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 	if !specPuff(w, nil, mob, "", "") {
 		t.Fatal("dead puff should be handled")
+	}
+	if commandName != "say" || commandArg != "Shit, I'm dead." {
+		t.Fatalf("direct command = %q %q, want say %q", commandName, commandArg, "Shit, I'm dead.")
 	}
 	if got := lastMsg(); got != "A test mob states, 'Shit, I'm dead.'\r\n" {
 		t.Fatalf("dead puff output = %q, want C do_say output", got)
