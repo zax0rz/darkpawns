@@ -81,6 +81,76 @@ func TestNPCCommandSay(t *testing.T) {
 	}
 }
 
+func TestNPCCommandDirectRunsBodyWithoutInterpreterPreamble(t *testing.T) {
+	w, _, mob, out := newNPCCommandWorld(t)
+	mob.SetPosition(combat.PosSleeping)
+	mob.SetAffected(affHide)
+	dprng.ResetStream(8417)
+	wantNext := dprng.Number(0, 100)
+	dprng.ResetStream(8417)
+
+	if got := w.NPCCommandDirect(mob, "say", "   hush now!"); got != CharacterCommandHandled {
+		t.Fatalf("direct say result = %v, want handled", got)
+	}
+	if got := dprng.Number(0, 100); got != wantNext {
+		t.Fatalf("direct command consumed an interpreter draw: next=%d want=%d", got, wantNext)
+	}
+	if mob.IsAffected(affHide) != true {
+		t.Fatal("direct command cleared AFF_HIDE; C's direct ACMD call skips command_interpreter")
+	}
+	if got, want := out.String(), "The healer exclaims, 'hush now!'\r\n"; got != want {
+		t.Fatalf("direct say bytes = %q, want %q", got, want)
+	}
+}
+
+func TestNPCCommandDirectPassesExactKnownBodyAndArgument(t *testing.T) {
+	w, _, mob, _ := newNPCCommandWorld(t)
+	var gotCommand, gotArgument string
+	w.CharacterCommandDirectExecFunc = func(body combat.Combatant, commandName, argument string) CharacterCommandResult {
+		if body != mob {
+			t.Fatalf("direct command body = %p, want mobile %p", body, mob)
+		}
+		gotCommand, gotArgument = commandName, argument
+		return CharacterCommandHandled
+	}
+	const argument = "  2.gate iron north  "
+	if got := w.NPCCommandDirect(mob, "OPEN", argument); got != CharacterCommandHandled {
+		t.Fatalf("direct command result = %v, want handled", got)
+	}
+	if gotCommand != "open" || gotArgument != argument {
+		t.Fatalf("direct dispatch = (%q, %q), want (%q, %q)", gotCommand, gotArgument, "open", argument)
+	}
+}
+
+func TestTellFromMobUsesTellDeliveryGates(t *testing.T) {
+	w, target, mob, out := newNPCCommandWorld(t)
+	target.SetPlrFlag(PrfNotell, true)
+
+	tellFromMob(w, mob, target, "private message")
+
+	if got := out.String(); got != "" {
+		t.Fatalf("do_tell bypassed the target's NOTELL gate: %q", got)
+	}
+}
+
+func TestTellFromMobUsesDirectTellArgument(t *testing.T) {
+	w, player, transcript := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
+
+	tellFromMob(w, mob, player, "The C buffer payload.")
+	if commandName != "tell" || commandArg != player.GetName()+" The C buffer payload." {
+		t.Fatalf("direct command = %q %q, want tell %q", commandName, commandArg, player.GetName()+" The C buffer payload.")
+	}
+	if got := transcript(); !strings.Contains(got, "tells you, 'The C buffer payload.'") {
+		t.Fatalf("tell output = %q, want the command body output", got)
+	}
+}
+
 // A command not ported for mobiles does nothing visible.
 func TestNPCCommandUnportedIsSilent(t *testing.T) {
 	w, _, mob, out := newNPCCommandWorld(t)

@@ -41,6 +41,11 @@ type CommandExecFunc func(ch *Player, command string) bool
 // real character body. A descriptor is discovered by the session manager.
 type CharacterCommandExecFunc func(ch combat.Combatant, command string) CharacterCommandResult
 
+// CharacterCommandDirectExecFunc dispatches a direct C-style ACMD call for an
+// actor. Command is the known command body and argument is the exact C argument
+// string; the callback must not run command_interpreter gates or specials.
+type CharacterCommandDirectExecFunc func(ch combat.Combatant, command, argument string) CharacterCommandResult
+
 // World represents the active game world with runtime state.
 //
 // LOCK ORDERING: w.mu must be acquired BEFORE m.mu (Manager) if both are
@@ -107,6 +112,9 @@ type World struct {
 	// CharacterCommandExecFunc is installed by the session manager for Lua
 	// action() and other direct command_interpreter callers.
 	CharacterCommandExecFunc CharacterCommandExecFunc
+	// CharacterCommandDirectExecFunc is installed by the session manager for
+	// C call sites that invoke an ACMD directly instead of command_interpreter.
+	CharacterCommandDirectExecFunc CharacterCommandDirectExecFunc
 
 	// Runtime state
 	players               map[string]*Player   // keyed by player name

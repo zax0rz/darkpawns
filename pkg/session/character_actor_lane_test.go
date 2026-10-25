@@ -108,3 +108,31 @@ func TestRegisteredNPCActorLanesRunCBody(t *testing.T) {
 		}
 	})
 }
+
+func TestDirectMobileCommandSkipsInterpreterGatesAndUsesActorBody(t *testing.T) {
+	f := newActorPositionFixture(t, combat.PosSleeping)
+	f.actor.SetAffected(game.AffHide)
+	var draws int
+	previous := characterCommandNumber
+	characterCommandNumber = func(int, int) int {
+		draws++
+		return 0
+	}
+	t.Cleanup(func() { characterCommandNumber = previous })
+
+	if got := f.world.NPCCommandDirect(f.actor, "say", "   Go!"); got != game.CharacterCommandHandled {
+		t.Fatalf("direct say result = %v, want handled", got)
+	}
+	if got, want := f.roomOut.String(), "A guard trainee exclaims, 'Go!'\r\n"; got != want {
+		t.Fatalf("room bytes = %q, want %q", got, want)
+	}
+	if f.actor.GetPosition() != combat.PosSleeping {
+		t.Fatalf("direct say changed position to %d", f.actor.GetPosition())
+	}
+	if !f.actor.IsAffected(game.AffHide) {
+		t.Fatal("direct ACMD ran command_interpreter's hide draw")
+	}
+	if draws != 0 {
+		t.Fatalf("direct ACMD consumed %d interpreter draws, want zero", draws)
+	}
+}
