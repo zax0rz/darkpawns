@@ -173,6 +173,13 @@ func mobHeadbutt(w *World, me *MobInstance, vict combat.Combatant) {
 	if w.roomHasFlag(me.GetRoom(), "peaceful") {
 		return
 	}
+	if player, ok := vict.(*Player); ok && player.GetLevel() >= LVL_IMMORT {
+		// new_cmds.c:406-415 refuses an immortal player before the percent
+		// roll, sits the mobile, then sends the victim-only line.
+		me.SetPosition(combat.GetPositionFromHP(me.GetHP(), combat.PosSitting))
+		player.SendMessage("You are thrown across the room...\r\n")
+		return
+	}
 	percent := dprng.Number(1, 121)
 	if vict.GetPosition() <= combat.PosSleeping || me.GetLevel() > LVL_IMMORT {
 		percent = 0
