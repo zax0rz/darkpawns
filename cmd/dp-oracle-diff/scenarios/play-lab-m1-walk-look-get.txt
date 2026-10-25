@@ -1,0 +1,57 @@
+# Play-lab milestone 1 replay: a recorded Go session, reduced to a scenario.
+#
+# Recorded session: 2026-10-25T10-20-m1
+#   server:    127.0.0.1:7797 (a locally started checkout; no player store, which is
+#              how the newbie stays a mortal: init_char crowns the first
+#              player of an empty store Implementor)
+#   character: Playbot
+#   go head:   4fc5c8ab2f1e775fb1893333edc0dda3a72f42ef
+#   seed:      1
+#   steps:     12 creation keystrokes + 8 probe commands
+#
+# The setups are identical keystroke sequences on both sides: the nanny's
+# RNG draws must line up from process start, or every later draw is compared
+# at a different stream position and the byte verdict is a coincidence (R3a).
+
+[fixture]
+quiet-mobs
+
+# Nanny creation flow, byte for byte the sequence character-creation.txt uses.
+
+[setup:oracle]
+Playbot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Playbot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+north
+look
+south
+inventory
+drop sword
+get sword
+inventory
