@@ -1,0 +1,61 @@
+# Play-lab milestone 2 — the lights goal: a held lantern in a dark room.
+#
+# Reduced from the play lab's "hold a lantern in a dark room and look" session.
+# Room 8146 (Temple Medical Centre, two steps north of the newbie start) is made
+# dark, and a lantern is spawned in the start room 8162 (Temple Infirmary): the
+# two patches the lab applies to its disposable world copy, expressed in the
+# harness's own fixture vocabulary.
+#
+# The probe picks the lantern up, holds it while it is still light enough to see
+# the pack (a dark room answers `hold` with "You grab something." — the pack
+# cannot be seen there), walks two steps north into the dark room and looks.
+#
+# C's has_light() (src/handler.c:823-835) counts a held light when
+# GET_OBJ_VAL(obj, 2) != 0 in *any* wear slot; obj 8031's values are 0 0 96 0, so
+# C has a light. The port reads the same object's value[2] in
+# isLitLightSource() (pkg/game/world.go:672-679) but value[1] in
+# Player.HasLight() (pkg/game/char_mgmt.go:25-37), and only the light slot, so
+# its transfer never raises the room's light counter and the room stays dark.
+# Finding PL-003.
+
+[fixture]
+quiet-mobs
+set-room-flag 8146 0 on
+spawn-obj 8031 2 8162 80
+
+[setup:oracle]
+Lanternbot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lanternbot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+get lantern
+hold lantern
+equipment
+north
+north
+look
