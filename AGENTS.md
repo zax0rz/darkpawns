@@ -38,57 +38,80 @@ Breadth coverage proves that a command can match once; it does **not** prove the
 Oracle transcripts, census logs, summaries and manifests are retained research
 evidence. Run every census through `scripts/census.sh`; it writes them to
 `$ORACLE_RUNS_ROOT/YYYY-MM-DD/<run-name>/` (default
-`~/Archives/darkpawns/oracle-runs/`), captures Go HEAD before running, checks
-the reference oracle's sha256, and writes `MANIFEST.md` itself.
+`~/Archives/darkpawns/oracle-runs/`), captures Go HEAD and dirty status, freezes
+source inputs before queueing, checks the reference oracle's sha256, and writes
+`MANIFEST.md` itself. Every attempt retains both engines' normalized blocks,
+draw logs when enabled, and engine logs; retries never overwrite a red attempt.
 
 ```bash
-scripts/census.sh start --name <issue-or-run>            # full census, returns at once
+scripts/census.sh start --name <issue-or-run>            # full census, returns after registration
 scripts/census.sh start --name <run> --scenarios a,b,c   # targeted
-scripts/census.sh start --combined --name <run>          # full seed-1 corpus plus all claimed pairs, deduplicated
-scripts/census.sh wait                                   # blocks <=9 min, prints ONE line
+scripts/census.sh start --combined --name <run>          # full seed-1 corpus plus claimed pairs
+scripts/census.sh start --combined --release --name <run> # exclusive release gate after draining
+scripts/census.sh wait --run <returned-directory>        # bounded wait; ONE line
 ```
 
-When a brief requires both a full census and a claims census, use `--combined`.
-It executes their union once, retains the existing full and claims result files
-and separate verdicts, and is clean only when both verdicts are CLEAN or
-CLEAN_AFTER_RECHECK. Use `--jobs N` to set the global worker limit across all
-seeds. Separate full and `--claims` runs remain available for diagnosis and
-comparisons.
+The host/user shares at most **72 scenario workers**, at most **36 per run**.
+`--jobs N` sets the run's maximum across all seeds; it does not allocate another
+host budget. Registration queues by default. Memory admission stops below
+4 GiB MemAvailable and resumes at 4.5 GiB; a separate serialized build slot
+reserves build headroom. Running scenarios finish without preemption.
+`--release` requires `--combined`, drains active ordinary scenarios/builds,
+then gives the release exclusive use. Ordinary combined runs are not releases.
+`--no-queue` refuses with exit 5 when immediate admission is unavailable.
+`--exclusive` is available for exclusive ordinary diagnosis/rollback.
 
-`wait` exits 0 (clean), 1 (not clean), 3 (still running: call `wait` again),
-or 4 (died / nothing running). Its one line is the whole result.
+When a brief requires both a full census and a claims census, use `--combined`.
+It executes their union once, retains the full and claims result files and
+separate verdicts, and is clean only when both verdicts are CLEAN or
+CLEAN_AFTER_RECHECK. Separate full and `--claims` runs remain available for
+diagnosis and comparisons. A release ships only from its exact-commit clean
+combined gate.
+
+Save the directory printed by `start` and use `--run` for every wait/status or
+cancellation. Bare reports refuse to choose among multiple unfinished runs.
+`wait` exits 0 (clean), 1 (not clean), 3 (queued/running: call `wait` again),
+or 4 (dead/missing/ambiguous). Its one line includes any draw tally.
 
 **Waiting costs tokens; the census does not.** While a census runs:
 - Do not poll in a loop, `sleep`-and-check, or re-run `status` repeatedly. Call
-  `wait` (each call blocks up to 9 minutes), or end your turn and say the census
-  is running; Zach gets a desktop notification when it finishes.
-- Never `cat`, `tail` or `grep` a running `census.log`. When it has finished, read
-  `summary.txt`, and read `results.tsv` only for the rows you need.
-- Don't start a second census. `start` refuses if one is running.
+  `wait --run` (each call blocks up to 9 minutes), or end your turn and say the
+  census is queued/running; Zach gets a desktop notification when it finishes.
+- Never `cat`, `tail` or `grep` a running `census.log`. When it has finished,
+  read `summary.txt`, and read `results.tsv` only for the rows you need.
+- Concurrent registrations are allowed through the updated wrapper. Do not
+  change runtime variables, use test namespaces, launch duplicate jobs, or
+  call the underlying runner directly to evade admission. A queued line with
+  `eta=unknown` is not an instruction to retry start.
+- Cancel only your own run, with `census.sh cancel --run <returned-directory>`.
+  Never delete runtime locks, kill another run, or reclaim a live worker's
+  permit. Upgrade older worktrees before expecting concurrent starts; their
+  legacy exclusive lock remains respected during migration.
 
 **Choose the smallest census that can fail on your change** (R5h):
-- **Full census**: before every release, on the exact commit being tagged; a release ships only from a CLEAN or CLEAN_AFTER_RECHECK combined census, and any fix after a red census reruns it in full. Between releases, PRs that change player-facing output or game behaviour run a targeted census naming the scenarios that cover the change.
-- **Targeted** (`--scenarios`): changes that touch only tests, comments, docs,
-  or one statement whose effect a named set of scenarios covers. Name the
-  scenarios and why they cover it. A brief can require more.
+- **Full census**: before every release, on the exact commit being tagged; a
+  release ships only from a CLEAN or CLEAN_AFTER_RECHECK combined census, and
+  any fix after a red census reruns it in full. Between releases, PRs changing
+  player-facing output or game behavior run targeted scenarios covering it.
+- **Targeted** (`--scenarios`): tests, comments, docs, or one statement whose
+  effect a named set covers. Name the scenarios and why. A brief can require more.
 - **None**: docs-only or website-only changes.
 
 **The final full census is batched, and Claude runs it.** Coding agents run
-targeted censuses while they work and open their PRs without a final full or
-combined census. When several PRs are reviewed and ready, Claude stacks them on
-one scratch branch over current `origin/main` and runs one `--combined` census
-for the batch. A `FAIL` row is attributed by re-running only that scenario
-against each PR. This stops the census queue from serializing every PR, and it
-catches PRs that collide (a duplicate `case_id`, say) before they reach main.
-Don't wait idle while a census runs: start it, then begin the next issue in a
-fresh worktree. Taught 2026-10-14, when four reviewed PRs spent 2¼ hours queued
-for four separate full censuses.
+necessary targeted censuses and open their PRs without a final full/combined
+census. Claude stacks reviewed PRs over current `origin/main` and runs one
+`--combined --release` census for the batch. Attribute a FAIL row by rerunning
+only that scenario against each PR. Do not start a separate full census per PR.
+Start the required target, then continue independent work in another worktree;
+retain the exact run directory instead of waiting idle or following another
+agent's result.
 
-**Infrastructure rows.** The tool re-runs `INFRA`/`TIMEOUT` rows alone once;
-`CLEAN_AFTER_RECHECK` counts as clean. Don't re-run the whole census for them.
-A `FAIL`, `STALE` or `UNPINNABLE` is never retried: investigate it.
-Scenarios listed `EXPECTED` are known divergences with ledger rows
-(`cmd/dp-oracle-diff/expected_divergences.tsv`); they are not new findings.
+**Infrastructure rows.** The tool re-runs INFRA/TIMEOUT rows alone once;
+CLEAN_AFTER_RECHECK counts as clean. Do not rerun the whole census for them.
+FAIL, STALE and UNPINNABLE are never retried by the census wrapper: investigate.
+EXPECTED scenarios remain ledger-backed known divergences. A concurrency
+acceptance proof additionally compares first attempts, both transcripts and
+draw rows: matching final verdicts after new flakes are not sufficient (R3/R5h).
 
 ### Reference Oracle Binary
 
