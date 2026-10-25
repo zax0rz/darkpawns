@@ -212,7 +212,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string, world *World)
 				MessageToCh: stealthActMessage("$E hasn't got that item.", chPronouns, &victPronouns, ""),
 			}
 		}
-		return stealEquippedItem(ch, target, item, slot, percent, chPronouns, victPronouns)
+		return stealEquippedItem(world, ch, target, item, slot, percent, chPronouns, victPronouns)
 	}
 
 	return stealCoins(ch, target, percent, chPronouns, victPronouns)
@@ -267,7 +267,7 @@ func stealInventoryItem(ch *Player, target combat.Combatant, item *ObjectInstanc
 	return SkillResult{Success: true, MessageToCh: message, WaitCh: 1}
 }
 
-func stealEquippedItem(ch *Player, target combat.Combatant, item *ObjectInstance, slot int, percent int, chPronouns, victPronouns Pronouns) SkillResult {
+func stealEquippedItem(world *World, ch *Player, target combat.Combatant, item *ObjectInstance, slot int, percent int, chPronouns, victPronouns Pronouns) SkillResult {
 	if target.GetPosition() > combat.PosSleeping {
 		return SkillResult{Success: false, MessageToCh: "Steal the equipment now?  Impossible!"}
 	}
@@ -282,11 +282,11 @@ func stealEquippedItem(ch *Player, target combat.Combatant, item *ObjectInstance
 	if ok, message := canCarryStolenItem(ch, item); !ok {
 		return SkillResult{Success: false, MessageToCh: message, WaitCh: 1}
 	}
-	if !unequipStolenItem(target, item, slot) {
+	if !unequipStolenItem(world, target, item, slot) {
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
 	if err := ch.Inventory.AddItem(item); err != nil {
-		if !restoreEquippedItem(target, item, slot) {
+		if !restoreEquippedItem(world, target, item, slot) {
 			slog.Error("DoSteal equipment rollback failed", "target", target.GetName(), "item", item.GetShortDesc(), "error", err)
 		}
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
@@ -411,15 +411,24 @@ func restoreCarriedItem(target combat.Combatant, item *ObjectInstance) bool {
 	return true
 }
 
-func unequipStolenItem(target combat.Combatant, item *ObjectInstance, slot int) bool {
+func unequipStolenItem(world *World, target combat.Combatant, item *ObjectInstance, slot int) bool {
 	switch target := target.(type) {
 	case *Player:
 		// UnequipItem normally places the object in its owner's inventory. Stage
 		// it in a temporary inventory so a full victim inventory cannot block the
 		// direct equipment-to-thief transfer performed by C's unequip_char().
 		staging := NewInventory()
+		litLight := isLitLightSource(item)
+		room := target.GetRoom()
 		if !target.Equipment.UnequipItem(item, staging) || !staging.RemoveItem(item) {
 			return false
+		}
+		// unequip_char drops a lit light from the victim's room
+		// (src/act.other.c:429; src/handler.c:779-782).
+		if world != nil && litLight && room >= 0 {
+			world.mu.Lock()
+			world.adjustRoomLight(room, -1)
+			world.mu.Unlock()
 		}
 		item.Location = LocNowhere()
 		return true
@@ -433,13 +442,23 @@ func unequipStolenItem(target combat.Combatant, item *ObjectInstance, slot int) 
 	}
 }
 
-func restoreEquippedItem(target combat.Combatant, item *ObjectInstance, slot int) bool {
+func restoreEquippedItem(world *World, target combat.Combatant, item *ObjectInstance, slot int) bool {
 	switch target := target.(type) {
 	case *Player:
 		if err := target.Equipment.SetSlot(EquipmentSlot(slot), item); err != nil {
 			return false
 		}
 		item.Location = LocEquippedPlayer(target.Name, EquipmentSlot(slot))
+		// Symmetric rollback of unequipStolenItem's light accounting. C checks
+		// the thief's capacity before unequipping (act.other.c:425-428), so it
+		// never reaches this intermediate state.
+		if world != nil && isLitLightSource(item) {
+			if room := target.GetRoom(); room >= 0 {
+				world.mu.Lock()
+				world.adjustRoomLight(room, 1)
+				world.mu.Unlock()
+			}
+		}
 		target.checkEquipmentStats()
 	case *MobInstance:
 		return target.EquipItem(item, slot)

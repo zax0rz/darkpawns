@@ -247,6 +247,13 @@ func (w *World) EquipItem(ch *Player, obj *ObjectInstance, slot int) error {
 	}
 	obj.Location = LocEquippedPlayer(ch.Name, goSlot)
 	NameEquippedObject(ch, obj)
+	// equip_char counts a lit ITEM_LIGHT toward the room's light in any wear
+	// position, while the character is in a room (src/handler.c:737-740).
+	if room := ch.GetRoom(); room >= 0 && isLitLightSource(obj) {
+		w.mu.Lock()
+		w.adjustRoomLight(room, 1)
+		w.mu.Unlock()
+	}
 	ch.checkEquipmentStats()
 	return nil
 }
@@ -260,12 +267,24 @@ func (w *World) UnequipItem(ch *Player, slot int) error {
 	if !ok {
 		return fmt.Errorf("c wear position %d has no Go equipment slot", slot)
 	}
-	if obj, found := ch.Equipment.GetItemInSlot(goSlot); found && obj.HasExtraFlag(0, extraFlagTakeName) {
+	obj, found := ch.Equipment.GetItemInSlot(goSlot)
+	if found && obj.HasExtraFlag(0, extraFlagTakeName) {
 		keywords := obj.GetKeywords()
 		obj.Runtime.ShortDescOverride = an(keywords) + " " + keywords
 	}
+	// unequip_char reads value[2] while the object is still equipped: a light
+	// that already burnt out (value[2] == 0) does not decrement again
+	// (src/handler.c:779-782; burnout's own decrement is at :1061-1064).
+	litLight := found && isLitLightSource(obj)
 	if err := ch.Equipment.Unequip(goSlot, ch.Inventory); err != nil {
 		return err
+	}
+	if litLight {
+		if room := ch.GetRoom(); room >= 0 {
+			w.mu.Lock()
+			w.adjustRoomLight(room, -1)
+			w.mu.Unlock()
+		}
 	}
 	// The remove command's unequip is C's obj_to_char(unequip_char(ch, pos),
 	// ch) (act.item.c:1725): the object re-entered the player's carrying, so

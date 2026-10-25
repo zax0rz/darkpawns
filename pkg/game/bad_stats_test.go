@@ -111,7 +111,7 @@ func TestPlayerEquipmentBadStatEntryPoints(t *testing.T) {
 					t.Fatal(err)
 				}
 			case "restore":
-				if !restoreEquippedItem(p, obj, int(SlotHead)) {
+				if !restoreEquippedItem(w, p, obj, int(SlotHead)) {
 					t.Fatal("equip restore failed")
 				}
 			}

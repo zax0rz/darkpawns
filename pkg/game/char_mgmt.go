@@ -19,19 +19,18 @@ const (
 // has_light — handler.c:823
 // ---------------------------------------------------------------------------
 
-// HasLight checks if the player has a working light source equipped.
-// Source: src/handler.c has_light() lines 823-835.
-// A light source has TypeFlag==ITEM_LIGHT and Values[1] > 0 (hours remaining).
+// HasLight reports a lit ITEM_LIGHT in ANY wear position — normally WEAR_HOLD —
+// reading the runtime fuel value[2]. Source: src/handler.c has_light()
+// lines 823-835: the slot loop covers every position and the light is on
+// exactly when GET_OBJ_VAL(obj, 2) != 0.
 func (p *Player) HasLight() bool {
 	if p.Equipment == nil {
 		return false
 	}
-	item, ok := p.Equipment.GetItemInSlot(SlotLight)
-	if !ok || item == nil || item.Prototype == nil {
-		return false
-	}
-	if item.Prototype.TypeFlag == itemLightTypeFlag {
-		return item.Prototype.Values[1] > 0
+	for _, item := range p.Equipment.GetEquippedItems() {
+		if isLitLightSource(item) {
+			return true
+		}
 	}
 	return false
 }
@@ -269,9 +268,10 @@ func (w *World) ExtractPendingPlayers() []*Player {
 					w.roomItems[roomVNum][0] = item
 					item.Location = LocRoom(roomVNum)
 					item.RoomVNum = roomVNum
-					if isLitLightSource(item) {
-						w.adjustRoomLight(roomVNum, 1)
-					}
+					// obj_to_room does not alter room light
+					// (src/handler.c:901-913): the unequip above already
+					// dropped each lit light from the counter, so a dropped
+					// lit lantern leaves the room dark.
 				} else {
 					item.Location = LocNowhere()
 					item.RoomVNum = -1
