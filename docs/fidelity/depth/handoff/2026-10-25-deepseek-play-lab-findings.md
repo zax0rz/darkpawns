@@ -265,7 +265,16 @@ accepted here — see Decisions for Zach.**
   not built yet, so there is no dataset and no policy mix to report.
 - **Findings by class:** bytes (transport framing) 1; draw 0; state 0; timing 0.
 - **Dataset size:** none yet (milestone 2).
+- **Schema sample:** the session record is already the shape milestone 2 extends
+  — one JSON object per line, `kind` first, `phase` naming `greeting` / `create` /
+  `entry-settle` / `play`, and the play rows ready to carry `policy`, `goal`,
+  `state`, `options`, `choice`, `confidence`, `rationale`, `outcome`:
+
+  ```json
+  {"kind":"step","seq":15,"phase":"play","command":"look","output":"Temple Infirmary\r\n…"}
+  ```
 - **Census:** 5/5 seeds CLEAN with `--draw-parity` (`draw_divergent=0` each).
-- **Lab artifacts:** `~/dp-play-lab` (`0cc5c92` + this round's follow-up commit);
-  sessions under `sessions/`, probe outputs `nego-go.txt` / `nego-c.txt`.
+- **Lab artifacts:** `~/dp-play-lab` (`f362143` and earlier);
+  sessions under `sessions/` (raw C-vs-Go creation dumps, negotiation probe
+  output, recorded sessions).
 
