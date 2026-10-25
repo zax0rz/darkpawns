@@ -108,9 +108,17 @@ func TestSpecStartRoomMovesMobilesUpToTheImmortalStop(t *testing.T) {
 	// before it reaches the immortal and returns FALSE.
 	horse := newSpecProcTestMob(t, w, NewbieStartRoom, 1)
 	horse.SetLiveShortDesc("a horse")
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 
 	if specStartRoomBody(w, NewbieStartRoom) {
 		t.Fatal("start_room consumed the command despite an immortal in the room")
+	}
+	if commandName != "look" || commandArg != "" {
+		t.Fatalf("direct command = %q %q, want look with empty argument", commandName, commandArg)
 	}
 	if got := horse.GetRoomVNum(); got != MortalStartRoom {
 		t.Fatalf("horse room = %d, want %d (read_mobile leaves hometown 0)", got, MortalStartRoom)
