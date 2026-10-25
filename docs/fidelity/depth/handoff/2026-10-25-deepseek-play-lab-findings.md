@@ -140,6 +140,16 @@ gets a `DO ECHO`, which gets another `WILL ECHO`, and so on without bound. The
 same loop runs for MSSP, and MSSP re-sends its whole payload each round, so the
 loop is amplified.
 
+Precision, so the verdict is not overstated: telnet cannot distinguish an
+acknowledgement from a request, so the RFC's answer to this hazard is *state on
+both sides* — a party must not answer an acknowledgement, and must not answer a
+request whose state already matches. A strictly Q-method client would therefore
+not loop, and the trigger is "a client that answers every `WILL`", which is what
+many real clients do and what this probe emulates. The port is nonetheless the
+side that differs from C: C's `process_input()` never re-asserts anything, so it
+is immune by being minimal, and the port's own GMCP guard (`:611-617`) shows the
+non-re-asserting behaviour was the intended one.
+
 Measured with the lab's probe (`~/dp-play-lab/scripts/nego-probe.py`, run at the
 password prompt — the point where the server first sends `WILL ECHO`, C's
 `echo_off()` at `src/comm.c:937`):
