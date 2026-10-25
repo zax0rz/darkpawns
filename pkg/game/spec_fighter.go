@@ -175,9 +175,9 @@ func mobHeadbutt(w *World, me *MobInstance, vict combat.Combatant) {
 	}
 	if player, ok := vict.(*Player); ok && player.GetLevel() >= LVL_IMMORT {
 		// new_cmds.c:406-415 refuses an immortal player before the percent
-		// roll, sits the mobile, then sends the victim-only line.
+		// roll. Both refusal lines target ch (the mobile), which has no
+		// descriptor; the only observable effect is sitting the mobile.
 		me.SetPosition(combat.GetPositionFromHP(me.GetHP(), combat.PosSitting))
-		player.SendMessage("You are thrown across the room...\r\n")
 		return
 	}
 	percent := dprng.Number(1, 121)

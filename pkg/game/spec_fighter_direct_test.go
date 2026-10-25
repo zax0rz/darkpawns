@@ -44,8 +44,9 @@ func TestSpecFighterHeadbuttRefusesImmortalDirectTarget(t *testing.T) {
 	if commandName != "headbutt" || commandArgument != player.GetName() {
 		t.Fatalf("direct command = %q %q, want headbutt %q", commandName, commandArgument, player.GetName())
 	}
-	if got := transcript(); got != "You are thrown across the room...\r\n" {
-		t.Fatalf("immortal headbutt bytes = %q, want victim-only refusal", got)
+	if got := transcript(); got != "" {
+		// Revert control: restoring the Go victim line must fail this assertion.
+		t.Fatalf("immortal headbutt bytes = %q, want no victim output", got)
 	}
 	if got := mob.GetPosition(); got != combat.PosSitting {
 		t.Fatalf("mobile position after refusal = %d, want sitting (%d)", got, combat.PosSitting)
