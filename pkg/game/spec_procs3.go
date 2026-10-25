@@ -397,36 +397,6 @@ func butlerVisibleRoomObject(w *World, me *MobInstance, name string, items []*Ob
 	return nil
 }
 
-// butlerDoorToggle mirrors do_gen_door/do_doorcmd for the object targets used
-// by SPECIAL(butler). C's mob has no descriptor, but the room act is still
-// visible to players in the room.
-func butlerDoorToggle(w *World, me *MobInstance, container *ObjectInstance, open bool) {
-	if container == nil || container.GetTypeFlag() != ITEM_CONTAINER {
-		return
-	}
-	flags := container.GetValue(contFlags)
-	if flags&contCloseable == 0 {
-		return
-	}
-	if open {
-		if flags&contClosed != 0 && flags&contLocked == 0 {
-			// C's do_gen_door reaches ok_pick on each successful state change,
-			// even though the mobile has no descriptor. Preserve its draw.
-			// #nosec G404 — game RNG, not cryptographic
-			_ = doorNumber(1, 101) // src/act.movement.c:541
-			container.SetValue(contFlags, flags&^contClosed)
-			Act(w, false, me, nil, container, nil, "$n opens $p.", "", ToRoom)
-		}
-		return
-	}
-	if flags&contClosed == 0 {
-		// #nosec G404 — game RNG, not cryptographic
-		_ = doorNumber(1, 101) // src/act.movement.c:541
-		container.SetValue(contFlags, flags|contClosed)
-		Act(w, false, me, nil, container, nil, "$n closes $p.", "", ToRoom)
-	}
-}
-
 // butlerPerformPut mirrors perform_put's base-weight capacity check. C uses
 // GET_OBJ_WEIGHT(cont), not the container's recursive contents weight.
 func (w *World) butlerPerformPut(me *MobInstance, obj, container *ObjectInstance) bool {
@@ -478,18 +448,21 @@ func specButler(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 
 		// Sort into case/cabinet/chest by item type, matching the C branches.
 		container := chest
+		argument := "chest"
 		if obj.GetTypeFlag() == ITEM_ARMOR || obj.GetTypeFlag() == ITEM_WORN {
 			container = cas
+			argument = "case"
 		} else if obj.GetTypeFlag() == ITEM_WEAPON || obj.GetTypeFlag() == ITEM_FIRE_WEAPON {
 			container = cabinet
+			argument = "cabinet"
 		}
-		butlerDoorToggle(w, me, container, true)
+		w.mobGenDoor(me, argument, scmdOpen)
 		w.butlerPerformPut(me, obj, container)
 	}
 	if got > 0 {
-		butlerDoorToggle(w, me, cas, false)
-		butlerDoorToggle(w, me, cabinet, false)
-		butlerDoorToggle(w, me, chest, false)
+		w.mobGenDoor(me, "case", scmdClose)
+		w.mobGenDoor(me, "cabinet", scmdClose)
+		w.mobGenDoor(me, "chest", scmdClose)
 		return true
 	}
 	return false

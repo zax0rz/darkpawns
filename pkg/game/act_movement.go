@@ -1068,6 +1068,12 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 		return
 	}
 
+	// do_gen_door calls ok_pick after its gate ladder for every accepted
+	// command, including open/close (src/act.movement.c:634, 536-542).
+	// The mobile has no descriptor, but C still consumes this draw.
+	// #nosec G404 — game RNG, not cryptographic
+	_ = doorNumber(1, 101) // src/act.movement.c:541
+
 	// do_doorcmd's object path (src/act.movement.c:484-511): toggle the
 	// container bits, and the room act fires only for a room-located object
 	// (src/act.movement.c:528-531, obj->in_room != NOWHERE); a carried
