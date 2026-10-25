@@ -93,7 +93,12 @@ release draining/FIFO, immutable queued inputs, duplicate names, legacy guards,
 rechecks, run-bound waits, cancellation and runner SIGKILL recovery.
 
 Every completed attempt retains normalized C/Go blocks, raw draw logs and engine
-logs beside its attempt log. `check_census_equivalence.py` rejects missing/later
+logs beside its attempt log. The worker passes an absolute evidence root separately
+from the relative scenario/attempt name. The harness cleans paths, rejects absolute
+names and parent components, verifies containment with `filepath.Rel`, and uses
+`os.Root` for writes so symlinks cannot escape. Hostile-name and symlink fixtures
+cover this boundary without security suppressions.
+`check_census_equivalence.py` rejects missing/later
 captures, retries/rechecks, surviving listener failures, changed transcripts,
 changed draw rows or changed classifications. A final green cannot erase a red.
 
@@ -103,8 +108,8 @@ On 2026-10-25 the same frozen 200-scenario selection from #2149 ran alone,
 then in two simultaneous 36-worker runs. All used clean implementation commit
 `5e00778e60745f891445297f50366e5a115319d0`, seed 1, `--draw-parity`, the
 reference oracle, and ordinary shared admission. No lock bypass, test namespace,
-custom runner, Go overlay, timing change or pin change was used. The only commit
-after this proof adds this report; executable inputs remain the tested revision.
+custom runner, Go overlay, timing change or pin change was used. Post-proof
+changes add this report and confine evidence output to a validated root; the transcript capture, listener and admission code remain as tested.
 
 Evidence root:
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-25/sol-parallel-census-implementation/`.

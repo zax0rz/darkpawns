@@ -91,7 +91,7 @@ main() {
 		(
 			cd "$repo_root" || exit 125
 			timeout --foreground --signal=TERM --kill-after=10s "$scenario_timeout" \
-				env DP_ORACLE_BIN="$oracle_bin" DP_ORACLE_EVIDENCE="$log_dir/$scenario.capture$attempt" "$harness_bin" \
+				env DP_ORACLE_BIN="$oracle_bin" DP_ORACLE_EVIDENCE_ROOT="$log_dir" DP_ORACLE_EVIDENCE="$scenario.capture$attempt" "$harness_bin" \
 				--scenario "$scenario" --seed "$seed" "${dump_args[@]}"
 		) >"$attempt_log" 2>&1
 		attempt_status=$?

@@ -920,7 +920,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		})
 	}
 
-	if err := retainEvidence(os.Getenv("DP_ORACLE_EVIDENCE"), cDrawLog, goDrawLog, diffs, oracleEngine.log(), goEngine.log()); err != nil {
+	if err := retainEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), cDrawLog, goDrawLog, diffs, oracleEngine.log(), goEngine.log()); err != nil {
 		return err
 	}
 
