@@ -215,3 +215,34 @@ func TestSpecPaladin_DisarmFailure(t *testing.T) {
 		t.Errorf("failed disarm audience = %q", got)
 	}
 }
+
+func TestSpecPaladinDirectDisarmResolvesTheBuiltNameArgument(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := preparePaladinCombat(t, w, player)
+	weapon := NewObjectInstance(w.objs[3001], -1)
+	weapon.Location = LocEquippedPlayer(player.GetName(), SlotWield)
+	if err := player.Equipment.SetSlot(SlotWield, weapon); err != nil {
+		t.Fatal(err)
+	}
+	shadow := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	proto := *shadow.Proto()
+	proto.Keywords = player.GetName()
+	shadow.SetProto(&proto) // newest matching body shadows the player in C's room lookup
+
+	var seed uint32
+	for seed = 1; seed < 10000; seed++ {
+		if dprng.New(seed).Number(0, 8) == 5 {
+			break
+		}
+	}
+	if seed == 10000 {
+		t.Fatal("could not find a seed for paladin's direct disarm arm")
+	}
+	dprng.ResetStream(seed)
+	if !specPaladin(w, nil, mob, "", "") {
+		t.Fatal("paladin special should consume the disarm arm")
+	}
+	if got, ok := player.Equipment.GetItemInSlot(SlotWield); !ok || got != weapon {
+		t.Fatalf("disarm bypassed do_disarm's parsed room target: wield item=%p found=%t", got, ok)
+	}
+}

@@ -334,21 +334,21 @@ func (a *WorldScriptableAdapter) mobFor(ref scripting.CharRef) *MobInstance {
 // Say is lua_say's do_say(me, text).
 func (a *WorldScriptableAdapter) Say(me scripting.CharRef, text string) {
 	if m := a.mobFor(me); m != nil {
-		a.world.npcSay(m, text)
+		a.world.NPCCommandDirect(m, "say", text)
 	}
 }
 
 // Emote is lua_emote's do_echo(me, text, SCMD_EMOTE).
 func (a *WorldScriptableAdapter) Emote(me scripting.CharRef, text string) {
 	if m := a.mobFor(me); m != nil {
-		a.world.npcEmote(m, text)
+		a.world.NPCCommandDirect(m, "emote", text)
 	}
 }
 
 // Tell is lua_tell's do_tell(me, " name message").
 func (a *WorldScriptableAdapter) Tell(me scripting.CharRef, argument string) {
 	if m := a.mobFor(me); m != nil {
-		a.world.npcTell(m, argument)
+		a.world.NPCCommandDirect(m, "tell", argument)
 	}
 }
 
@@ -991,6 +991,14 @@ func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *
 		if actor == nil {
 			return
 		}
+		if mob, ok := actor.(*MobInstance); ok {
+			if kind == "local" {
+				a.world.NPCCommandDirect(mob, "echo", text)
+			} else {
+				a.world.NPCCommandDirect(mob, "gecho", text)
+			}
+			return
+		}
 		text = strings.TrimLeft(text, " \t\r\n\v\f") // skip_spaces
 		if text == "" {
 			if p != nil {
@@ -1033,7 +1041,7 @@ func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *
 // Gossip is lua_gossip's do_gen_comm(me, text, SCMD_GOSSIP).
 func (a *WorldScriptableAdapter) Gossip(me scripting.CharRef, text string) {
 	if m := a.mobFor(me); m != nil {
-		a.world.mobGlobalGossip(m, text)
+		a.world.NPCCommandDirect(m, "gossip", text)
 	}
 }
 
@@ -1046,10 +1054,14 @@ func (a *WorldScriptableAdapter) Social(me, vict scripting.CharRef, social strin
 	if m == nil || target == nil {
 		return false
 	}
+	body, ok := target.(combat.Combatant)
+	if !ok {
+		return false
+	}
 	if _, ok := socialMinPosition[social]; !ok {
 		return false
 	}
-	a.world.npcSocial(m, social, target.GetName())
+	a.world.NPCCommandDirect(m, social, body.GetName())
 	return true
 }
 
@@ -1064,12 +1076,7 @@ func (a *WorldScriptableAdapter) Follow(me, leader scripting.CharRef, charm bool
 	}
 	selected, _, _ := a.resolveChar(leader)
 	if body, ok := selected.(combat.Combatant); ok {
-		argument, _ := oneArgument(charKeywords(body))
-		if argument != "" {
-			if resolved, found := a.world.resolveCharInRoomAt(m, m.GetRoomVNum(), argument); found {
-				followMobBody(a.world, m, resolved.Combatant)
-			}
-		}
+		a.world.NPCCommandDirect(m, "follow", charKeywords(body))
 	}
 	if charm {
 		m.SetAffected(affCharm)
@@ -1295,10 +1302,14 @@ func (a *WorldScriptableAdapter) Mount(rider scripting.CharRef, mount *scripting
 		if p != nil {
 			a.world.doRide(p, nil, "ride", name)
 		} else if m != nil {
-			a.world.doRideMob(m, name)
+			a.world.NPCCommandDirect(m, "ride", name)
 		}
 	case "dismount":
-		a.world.doDismountActor(actor)
+		if m != nil {
+			a.world.NPCCommandDirect(m, "dismount", "")
+		} else {
+			a.world.doDismountActor(actor)
+		}
 	case "unmount":
 		a.world.unmountActor(actor)
 	}

@@ -57,8 +57,17 @@ func TestSpecQuanLo_FleeAliasesUseGlobalMobGossip(t *testing.T) {
 	for _, command := range []string{"flee", "retreat", "escape"} {
 		t.Run(command, func(t *testing.T) {
 			w, mob, actor, peer, messages := newQuanLoTestWorld(t)
+			var directName, directArg string
+			w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, name, argument string) CharacterCommandResult {
+				directName, directArg = name, argument
+				return CharacterCommandUnsupported
+			}
 			if specQuanLo(w, actor, mob, command, "") {
 				t.Fatal("quan_lo should fall through after gossip")
+			}
+			wantArg := "What was that, QuanActor? This is not a shawade. Try it again. This time with fewing."
+			if directName != "gossip" || directArg != wantArg {
+				t.Fatalf("direct command = %q %q, want gossip %q", directName, directArg, wantArg)
 			}
 			want := "Quan Lo gossips, 'What was that, QuanActor? This is not a shawade. Try it again. This time with fewing.'\r\n"
 			if got := messages[actor.Name]; got != want {

@@ -376,6 +376,40 @@ func TestHandleSurvivingVictimState_AutoWimpyFleesAfterBleedingMessage(t *testin
 	}
 }
 
+func TestHandleSurvivingVictimState_MobileWimpyCallsDirectFleeHook(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	attacker := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "a hunter", npc: true, room: 8105, hp: 20, maxHP: 20,
+		position: PosFighting,
+	}}
+	defender := &msgMockCombatant{mockCombatant: mockCombatant{
+		name: "a wounded guard", npc: true, room: 8105, hp: 4, maxHP: 20,
+		position: PosFighting,
+	}}
+	attacker.SetFightingBody(defender)
+	defender.SetFightingBody(attacker)
+	fled := false
+	ce := NewCombatEngine()
+	ce.SetCallbacks(&GameCallbacks{
+		HasMobFlag: func(body Combatant, flag string) bool {
+			return body == defender && flag == "MOB_WIMPY"
+		},
+		DoFlee: func(body Combatant) {
+			fled = body == defender
+			defender.StopFighting()
+		},
+	})
+
+	if ended := ce.handleSurvivingVictimState(attacker, defender, 3, PosFighting); !ended {
+		t.Fatal("mobile flee should end the current exchange")
+	}
+	if !fled {
+		t.Fatal("low-HP MOB_WIMPY did not invoke the direct flee hook")
+	}
+}
+
 func TestHandleSurvivingVictimState_PainAndObserverScream(t *testing.T) {
 	origRoller := GetRoller()
 	origCB := GetCallbacks()

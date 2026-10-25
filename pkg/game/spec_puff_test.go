@@ -1,8 +1,10 @@
 package game
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
@@ -20,8 +22,16 @@ func TestSpecPuff_CommandAndDeathGates(t *testing.T) {
 	}
 
 	mob.CurrentHP = -1
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 	if !specPuff(w, nil, mob, "", "") {
 		t.Fatal("dead puff should be handled")
+	}
+	if commandName != "say" || commandArg != "Shit, I'm dead." {
+		t.Fatalf("direct command = %q %q, want say %q", commandName, commandArg, "Shit, I'm dead.")
 	}
 	if got := lastMsg(); got != "A test mob states, 'Shit, I'm dead.'\r\n" {
 		t.Fatalf("dead puff output = %q, want C do_say output", got)
@@ -84,6 +94,23 @@ func TestSpecPuff_CaseOutputsAndReturnContract(t *testing.T) {
 }
 
 func TestSpecPuff_CompleteCOutcomePartition(t *testing.T) {
+	wantCommandCalls := map[int][]mobDirectCommandCall{
+		0:  {{command: "say", argument: "My god!  It's full of stars!"}},
+		1:  {{command: "say", argument: "How'd all those fish get up here?"}},
+		2:  {{command: "say", argument: "I'm a very female dragon."}},
+		3:  {{command: "say", argument: "I've got this peaceful, easy feeling."}},
+		7:  {{command: "say", argument: "Goddamn, what a trip! Listen to those colors!"}},
+		8:  {{command: "say", argument: "Bring out your dead!"}},
+		9:  {{command: "say", argument: "Rule number 6...there is NO rule number 6."}},
+		10: {{command: "say", argument: "To be rich is no longer a sin...its a MIRACLE!"}},
+		15: {{command: "say", argument: "What is the sound of down?"}},
+		20: {{command: "say", argument: "Do you want to stroke my tail?"}},
+		21: {{command: "say", argument: "Do you want to stroke my tail?"}},
+		27: {{command: "say", argument: "NIH!"}},
+		37: {{command: "say", argument: "I'm gonna kick your ASS!"}},
+		38: {{command: "say", argument: "I'm gonna kick your ASS!"}},
+		39: {{command: "say", argument: "I'm gonna kick your ASS!"}},
+	}
 	wantOutput := map[int]string{
 		0:  "A test mob exclaims, 'My god!  It's full of stars!'\r\n",
 		1:  "A test mob asks, 'How'd all those fish get up here?'\r\n",
@@ -115,6 +142,11 @@ func TestSpecPuff_CompleteCOutcomePartition(t *testing.T) {
 		lastMsg() // discard the spawn announcement
 		seed := seedForPuffRoll(t, roll)
 		dprng.ResetStream(seed)
+		var commandCalls []mobDirectCommandCall
+		w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+			commandCalls = append(commandCalls, mobDirectCommandCall{command: command, argument: argument})
+			return CharacterCommandUnsupported
+		}
 
 		handled := specPuff(w, nil, mob, "", "")
 		output := lastMsg()
@@ -126,6 +158,9 @@ func TestSpecPuff_CompleteCOutcomePartition(t *testing.T) {
 		}
 		if want := wantOutput[roll]; output != want {
 			t.Fatalf("roll %d: output = %q, want %q", roll, output, want)
+		}
+		if want := wantCommandCalls[roll]; !reflect.DeepEqual(commandCalls, want) {
+			t.Fatalf("src/spec_procs.c puff roll %d command calls = %#v, want %#v", roll, commandCalls, want)
 		}
 	}
 }

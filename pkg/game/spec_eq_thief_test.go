@@ -129,10 +129,18 @@ func TestSpecEqThief_GetAndJunkBlackContainerItem(t *testing.T) {
 
 	player.SetLevel(1)
 	player.SetPosition(combat.PosStanding)
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 	seed := eqThiefOuterSuccessSeed(t)
 	dprng.ResetStream(seed)
 	if !specEqThief(w, nil, mob, "", "") {
 		t.Fatal("eligible eq thief tick should be handled")
+	}
+	if commandName != "get" || commandArg != "all.black leather bag" {
+		t.Fatalf("direct command = %q %q, want get %q", commandName, commandArg, "all.black leather bag")
 	}
 	if len(container.GetContents()) != 0 {
 		t.Fatalf("container contents after black retrieval = %#v, want empty", container.GetContents())

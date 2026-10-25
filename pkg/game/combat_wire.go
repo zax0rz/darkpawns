@@ -26,6 +26,13 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			}
 		}
 	}
+	cb.DoFlee = func(body combat.Combatant) {
+		if mob, ok := body.(*MobInstance); ok {
+			// fight.c:1599 calls do_flee(victim) directly for a low-HP
+			// MOB_WIMPY. That ACMD skips command_interpreter's preamble.
+			w.NPCCommandDirect(mob, "flee", "")
+		}
+	}
 
 	// -------------------------------------------------------------------------
 	// Character identity
@@ -243,12 +250,11 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	}
 
 	// The kill brag is do_gen_comm(ch, buf2, 0, SCMD_GOSSIP) (src/fight.c:1246):
-	// the global gossip channel, which also records the line in review
-	// (src/act.comm.c:1275-1276). mobGlobalGossip is that path for an NPC
-	// author -- an NPC has no descriptor, so there is no self echo.
+	// route the built argument through the direct command body; the actor has
+	// no descriptor, so its TO_CHAR echo remains absent.
 	cb.BroadChat = func(chName combat.Combatant, msg string) {
 		if mob := combatMob(chName); mob != nil {
-			w.mobGlobalGossip(mob, msg)
+			w.NPCCommandDirect(mob, "gossip", msg)
 		}
 	}
 

@@ -214,7 +214,7 @@ func specQuanLoBody(w *World, actor cBody, me *MobInstance, cmd, arg string) boo
 	}
 	if cmd != "" && me.GetPosition() > combat.PosSleeping {
 		if cmd == "flee" || cmd == "retreat" || cmd == "escape" {
-			w.mobGlobalGossip(me, "What was that, "+actor.GetName()+
+			w.NPCCommandDirect(me, "gossip", "What was that, "+actor.GetName()+
 				"? This is not a shawade. Try it again. This time with fewing.")
 		}
 		arg = strings.TrimSpace(arg)
@@ -525,10 +525,12 @@ func specStartRoomBody(w *World, roomVNum int) bool {
 			continue
 		}
 		// C's send_to_char and do_look write nothing to a descriptor-less
-		// mobile; the char_from_room/char_to_room pair still moves it.
+		// mobile; preserve the command call after the same room transfer.
 		if err := w.MobTransfer(mob, NewbieHometownRoom(0)); err != nil {
 			slog.Warn("start_room mobile transfer failed", "mob_vnum", mob.GetVNum(), "error", err)
+			continue
 		}
+		w.NPCCommandDirect(mob, "look", "")
 	}
 	return true
 }

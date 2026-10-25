@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
@@ -90,6 +91,98 @@ func (w *World) NPCCommand(me *MobInstance, line string) {
 	}
 }
 
+// NPCCommandDirect ports a direct C ACMD call such as
+// do_tell(mobile, argument, find_command("tell"), 0). The caller supplies the
+// known command body separately from its argument, so the argument reaches the
+// command parser unchanged. This skips command_interpreter's hide draw,
+// position/level/wait gates, and special() pass, all of which C skips for a
+// direct ACMD call. Callers in C commonly ignore the ACMD result, so they may
+// ignore the returned status too.
+func (w *World) NPCCommandDirect(me *MobInstance, commandName, argument string) CharacterCommandResult {
+	if w == nil || me == nil {
+		return CharacterCommandUnsupported
+	}
+	commandName = strings.ToLower(strings.TrimSpace(commandName))
+	if w.CharacterCommandDirectExecFunc != nil {
+		if result := w.CharacterCommandDirectExecFunc(me, commandName, argument); result == CharacterCommandHandled {
+			return result
+		}
+	}
+	return w.npcCommandDirectFallback(me, commandName, argument)
+}
+
+// npcCommandDirectFallback supplies the same actor command bodies when the
+// session-owned registry is not installed (focused game tests and standalone
+// worlds). It deliberately has no interpreter prelude.
+func (w *World) npcCommandDirectFallback(me *MobInstance, commandName, argument string) CharacterCommandResult {
+	switch commandName {
+	case "say", "'":
+		w.NPCSayCommand(me, argument)
+	case "tell":
+		w.NPCTellCommand(me, argument)
+	case "emote", ":":
+		w.NPCEmoteCommand(me, argument)
+	case "echo":
+		w.npcEcho(me, argument)
+	case "gecho":
+		w.npcGlobalEcho(me, argument)
+	case "gossip":
+		w.NPCGossipCommand(me, argument)
+	case "shout":
+		w.NPCShoutCommand(me, argument)
+	case "auction":
+		w.NPCAuctionCommand(me, argument)
+	case "stand":
+		w.doPositionCommand(me, positionCommandSpecs[0], nil)
+	case "sit":
+		w.doPositionCommand(me, positionCommandSpecs[1], nil)
+	case "rest":
+		w.doPositionCommand(me, positionCommandSpecs[2], nil)
+	case "sleep":
+		w.doPositionCommand(me, positionCommandSpecs[3], nil)
+	case "wake":
+		wakeBody(w, me, argument, nil)
+	case "flee":
+		w.DoFlee(me)
+	case "follow":
+		arg := extractArg(argument)
+		if target, found := w.resolveCharInRoomAt(me, me.GetRoomVNum(), arg); found && target.Combatant != nil {
+			followMobBody(w, me, target.Combatant)
+		}
+	case "give":
+		w.NPCGiveCommand(me, argument)
+	case "get":
+		return w.npcGetDirect(me, argument)
+	case "wear":
+		return w.npcWearDirect(me, argument)
+	case "rescue":
+		return w.npcRescueDirect(me, argument)
+	case "assist":
+		w.mobAssist(me, argument)
+	case "look":
+		if strings.TrimSpace(argument) != "" {
+			return CharacterCommandUnsupported
+		}
+		// Direct do_look(mobile, "", ...) has only descriptor output. The
+		// start_room special runs it after moving a descriptor-less mobile.
+	case "behead":
+		return w.npcBeheadDirect(me, argument)
+	case "ride":
+		w.doRideMob(me, extractArg(argument))
+	case "dismount":
+		w.doDismountActor(me)
+	case "headbutt", "parry", "bash", "berserk", "charge", "disarm", "backstab":
+		return w.npcFighterCommand(me, commandName, argument)
+	default:
+		if _, social := socialMinPosition[commandName]; social {
+			w.NPCSocialCommand(me, commandName, argument)
+		} else {
+			return CharacterCommandUnsupported
+		}
+	}
+	return CharacterCommandHandled
+}
+
 // NPCSayCommand, NPCTellCommand, NPCEmoteCommand, NPCGiveCommand, and
 // NPCSocialCommand adapt the existing mobile behavior to the shared command
 // registry. Each is registered against its C command entry by pkg/session.
@@ -105,6 +198,24 @@ func (w *World) NPCSocialCommand(me *MobInstance, cmd, arg string) { w.npcSocial
 func (w *World) NPCGossipCommand(me *MobInstance, arg string)  { w.mobGenComm(me, arg, "gossip") }
 func (w *World) NPCShoutCommand(me *MobInstance, arg string)   { w.mobGenComm(me, arg, "shout") }
 func (w *World) NPCAuctionCommand(me *MobInstance, arg string) { w.mobGenComm(me, arg, "auction") }
+
+func (w *World) npcEcho(me *MobInstance, argument string) {
+	text := strings.TrimLeft(argument, " \t\r\n\v\f")
+	if text != "" {
+		Act(w, false, me, nil, nil, nil, text, "", ToRoom)
+	}
+}
+
+func (w *World) npcGlobalEcho(me *MobInstance, argument string) {
+	text := strings.TrimLeft(argument, " \t\r\n\v\f")
+	if text == "" {
+		return
+	}
+	line := text + "\r\n"
+	for _, player := range w.playingPlayers() {
+		player.SendMessage(line)
+	}
+}
 
 func isASCIIAlpha(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
@@ -169,7 +280,7 @@ func (w *World) npcEmote(me *MobInstance, argument string) {
 // C's delivery gates, then perform_tell. A mobile's GET_IDNUM is not a
 // player's, so the recipient's reply target is not set to it.
 func (w *World) npcTell(me *MobInstance, argument string) {
-	targetName, message := splitDirectedSpeech(argument)
+	targetName, message := splitMobileTellArgument(argument)
 	if targetName == "" || message == "" {
 		return
 	}
@@ -193,6 +304,18 @@ func (w *World) npcTell(me *MobInstance, argument string) {
 	// The player path's own perform_tell carries the color sandwich, the AFK
 	// notice (TO_CHAR, so a mobile's is dropped) and the reply target.
 	w.performTell(me, target, message)
+}
+
+// splitMobileTellArgument is half_chop (interpreter.c:1372-1380): lowercase
+// the first token, skip whitespace before the message, and preserve the
+// message's trailing bytes for perform_tell.
+func splitMobileTellArgument(argument string) (string, string) {
+	argument = strings.TrimLeftFunc(argument, unicode.IsSpace)
+	end := strings.IndexFunc(argument, unicode.IsSpace)
+	if end < 0 {
+		return strings.ToLower(argument), ""
+	}
+	return strings.ToLower(argument[:end]), strings.TrimLeftFunc(argument[end:], unicode.IsSpace)
 }
 
 // npcVisiblePlayer is get_char_vis for a mobile looking for a player to

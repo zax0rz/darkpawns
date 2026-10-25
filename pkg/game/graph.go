@@ -295,7 +295,7 @@ func (w *World) huntVictim(m *MobInstance) {
 	}
 	if target == nil {
 		if m.CanSpeak() {
-			w.npcSay(m, "Damn!  My prey is gone!!")
+			w.NPCCommandDirect(m, "say", "Damn!  My prey is gone!!")
 		}
 		m.SetHunting("")
 		return
@@ -311,9 +311,9 @@ func (w *World) huntVictim(m *MobInstance) {
 	// #nosec G404 — game RNG, not cryptographic
 	if evasion > 0 && dir != BFS_ALREADY_THERE && huntNumber(1, 151) < evasion {
 		if m.CanSpeak() && huntNumber(0, 6) == 0 {
-			w.npcSay(m, "Where the hell did my prey go?!")
+			w.NPCCommandDirect(m, "say", "Where the hell did my prey go?!")
 		} else if m.CanSpeak() && huntNumber(0, 6) == 0 {
-			w.npcSay(m, "Fuck this...")
+			w.NPCCommandDirect(m, "say", "Fuck this...")
 		}
 		return
 	}
@@ -366,37 +366,37 @@ func (w *World) huntTrashTalk(m *MobInstance, victim Actor) {
 	// #nosec G404 — game RNG, not cryptographic
 	switch huntNumber(0, 150) {
 	case 0:
-		w.npcTell(m, victimName+" Let's have an ass-kicking contest")
+		w.NPCCommandDirect(m, "tell", victimName+" Let's have an ass-kicking contest")
 	case 1:
 		// #nosec G404 — game RNG, not cryptographic
-		w.mobGenComm(m, fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, huntNumber(1000, 2000)), "auction")
+		w.NPCCommandDirect(m, "auction", fmt.Sprintf("Corpse of %s for sale in a minute.. %d coins.", victimName, huntNumber(1000, 2000)))
 	case 2:
-		w.npcTell(m, victimName+" Run to your momma, pansy!")
+		w.NPCCommandDirect(m, "tell", victimName+" Run to your momma, pansy!")
 	case 3:
-		w.npcTell(m, victimName+" I'm coming to kill you!")
+		w.NPCCommandDirect(m, "tell", victimName+" I'm coming to kill you!")
 	case 4:
 		// C: sprintf(msg, "I hear %s thinks %s's bad.", GET_NAME(HUNTING(ch)),
 		// HSSH(HUNTING(ch))) (src/graph.c:367-368).
-		w.mobGenComm(m, fmt.Sprintf("I hear %s thinks %s's bad.", victimName, hssh(victim)), "gossip")
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("I hear %s thinks %s's bad.", victimName, hssh(victim)))
 	case 5:
-		w.mobGenComm(m, fmt.Sprintf("Your momma ain't gonna save you this time, %s.", victimName), "gossip")
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("Your momma ain't gonna save you this time, %s.", victimName))
 	case 6:
 		// #nosec G404 — game RNG, not cryptographic
 		if huntNumber(0, 20) == 0 {
-			w.mobGenComm(m, fmt.Sprintf("%s flees like a rabbit...", victimName), "gossip")
+			w.NPCCommandDirect(m, "gossip", fmt.Sprintf("%s flees like a rabbit...", victimName))
 		}
 	case 7:
-		w.npcTell(m, victimName+" Come out and fight!")
+		w.NPCCommandDirect(m, "tell", victimName+" Come out and fight!")
 	case 8:
-		w.npcTell(m, victimName+" Watch out! Here I come to get you!")
+		w.NPCCommandDirect(m, "tell", victimName+" Watch out! Here I come to get you!")
 	case 9:
-		w.mobGenComm(m, fmt.Sprintf("How much will I get for the head of %s?", victimName), "auction")
+		w.NPCCommandDirect(m, "auction", fmt.Sprintf("How much will I get for the head of %s?", victimName))
 	case 10:
-		w.mobGenComm(m, fmt.Sprintf("Where is that little wimp, %s?", victimName), "gossip")
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("Where is that little wimp, %s?", victimName))
 	case 11:
-		w.mobGenComm(m, fmt.Sprintf("%s, you jerk!", victimName), "gossip")
+		w.NPCCommandDirect(m, "gossip", fmt.Sprintf("%s, you jerk!", victimName))
 	case 12:
-		w.mobGenComm(m, "Damn it!", "shout")
+		w.NPCCommandDirect(m, "shout", "Damn it!")
 	}
 }
 
@@ -456,6 +456,9 @@ func mobIsIntelligent(m *MobInstance) bool {
 // before anyone enrols. hunt_victim itself refuses to path into the prey's
 // ROOM_PEACEFUL/ROOM_HOUSE room earlier (graph.c:300-303).
 func (w *World) attackHuntingPrey(m *MobInstance, target combat.Combatant) {
+	// hunt_victim ignores do_follow's return and still swings. This is a direct
+	// ACMD call, so it must skip interpreter gates and keep the raw name arg.
+	w.NPCCommandDirect(m, "follow", target.GetName())
 	if err := w.mobHit(m, target); err != nil {
 		slog.Warn("mobile prey attack failed", "mob", m.GetName(), "target", target.GetName(), "error", err)
 	}

@@ -80,11 +80,19 @@ func TestSpecTeleportVictim_ScoffSpeechTeleportAndLandingLook(t *testing.T) {
 		t.Fatalf("AddPlayer new observer: %v", err)
 	}
 	lastMsg() // discard observer setup output
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 
 	// With two rooms, seed 2 selects the second room in C's stable room order.
 	dprng.ResetStream(2)
 	if !specTeleportVictim(w, nil, mob, "", "") {
 		t.Fatal("standing fighting teleport victim should handle")
+	}
+	if commandName != "scoff" || commandArg != player.GetName() {
+		t.Fatalf("direct command = %q %q, want scoff %q", commandName, commandArg, player.GetName())
 	}
 	if got, want := player.GetRoomVNum(), 1002; got != want {
 		t.Fatalf("victim room = %d, want %d", got, want)

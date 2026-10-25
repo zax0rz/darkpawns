@@ -56,6 +56,9 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 	}
 	if kind == "stable" {
 		minimum = LVL_GRGOD
+		// The command's tell target must be visible to the mobile for C's
+		// direct do_tell call to emit the refusal before its log entry.
+		a.SetInvisLevel(0)
 	}
 	if kind == "loot" {
 		typ = MudlogComplete
@@ -105,8 +108,9 @@ func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
 		a.SetGold(100)
 		payload = "Mount not loaded in stable"
 		at = func() {
-			if !strings.Contains(last(), "Sorry, we are unable to gather your mount") || a.MountVNum != 99999 || a.GetGold() != 100 {
-				t.Error("stable log must follow refusal and retain mount/gold")
+			output := last()
+			if !strings.Contains(output, "Sorry, we are unable to gather your mount") || a.MountVNum != 99999 || a.GetGold() != 100 {
+				t.Errorf("stable log must follow refusal and retain mount/gold: output=%q mount=%d gold=%d target=%v", output, a.MountVNum, a.GetGold(), w.npcVisiblePlayer(roster, a.GetName()))
 			}
 		}
 		invoke = func() { GetSpec("stableboy")(w, a, roster, "collect", "") }

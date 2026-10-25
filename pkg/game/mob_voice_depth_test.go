@@ -90,8 +90,16 @@ func TestMobKillBragReachesGossipAndReview(t *testing.T) {
 	croakPlayer(t, w, "Elsewhere", 1002)
 	victim.SetHP(-1)
 	installBragRoller(t, 0, 3) // case 3: "<name> was easy xp."
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 
 	w.HandleDeath(victim, killer, 0)
+	if commandName != "gossip" || commandArg != "Victim was easy xp." {
+		t.Fatalf("direct command = %q %q, want gossip %q", commandName, commandArg, "Victim was easy xp.")
+	}
 
 	want := "The dune stalker gossips, 'Victim was easy xp.'\r\n"
 	if got := out["Watcher"]; !strings.Contains(got, want) {

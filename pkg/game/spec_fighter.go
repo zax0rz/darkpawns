@@ -173,6 +173,13 @@ func mobHeadbutt(w *World, me *MobInstance, vict combat.Combatant) {
 	if w.roomHasFlag(me.GetRoom(), "peaceful") {
 		return
 	}
+	if player, ok := vict.(*Player); ok && player.GetLevel() >= LVL_IMMORT {
+		// new_cmds.c:406-415 refuses an immortal player before the percent
+		// roll. Both refusal lines target ch (the mobile), which has no
+		// descriptor; the only observable effect is sitting the mobile.
+		me.SetPosition(combat.GetPositionFromHP(me.GetHP(), combat.PosSitting))
+		return
+	}
 	percent := dprng.Number(1, 121)
 	if vict.GetPosition() <= combat.PosSleeping || me.GetLevel() > LVL_IMMORT {
 		percent = 0
@@ -273,4 +280,64 @@ func mobBerserk(me *MobInstance) {
 	me.AddAffect(engine.NewAffectDirect(skillNumBerserk, ApplyHitroll, 1, hitDamMod, engine.AFFBerserk, "berserk"))
 	me.AddAffect(engine.NewAffectDirect(skillNumBerserk, ApplyDamroll, 1, hitDamMod, engine.AFFBerserk, "berserk"))
 	me.AddAffect(engine.NewAffectDirect(skillNumBerserk, ApplyAC, 1, acMod, engine.AFFBerserk, "berserk"))
+}
+
+// npcFighterCommand is the actor-side ACMD body path for direct mobile calls
+// from SPECIAL(fighter), SPECIAL(paladin), and SPECIAL(backstabber). It parses
+// the raw C argument before resolving a visible room target, then enters the
+// same subcmd=1 bodies that own their native draws and effects.
+func (w *World) npcFighterCommand(me *MobInstance, commandName, argument string) CharacterCommandResult {
+	if me == nil {
+		return CharacterCommandUnsupported
+	}
+	if commandName == "berserk" {
+		mobBerserk(me)
+		return CharacterCommandHandled
+	}
+	targetName, _ := oneArgument(argument)
+	if targetName == "" {
+		return CharacterCommandHandled
+	}
+	target, found := w.resolveCharInRoomAt(me, me.GetRoomVNum(), targetName)
+	if !found || target.Combatant == nil {
+		return CharacterCommandHandled
+	}
+	switch commandName {
+	case "headbutt":
+		mobHeadbutt(w, me, target.Combatant)
+	case "parry":
+		mobParry(w, me, target.Combatant)
+	case "bash":
+		mobBash(w, me, target.Combatant)
+	case "charge":
+		mobCharge(w, me, target.Combatant)
+	case "disarm":
+		mobDisarm(w, me, target.Combatant)
+	case "backstab":
+		w.npcBackstabCommand(me, target.Combatant)
+	default:
+		return CharacterCommandUnsupported
+	}
+	return CharacterCommandHandled
+}
+
+// npcBackstabCommand is do_backstab(..., subcmd=1) after the command parser
+// has resolved its first argument. Descriptor-only refusals disappear for a
+// mobile, while the native skill hit and WAIT_STATE remain visible in state.
+func (w *World) npcBackstabCommand(me *MobInstance, target combat.Combatant) {
+	if me == nil || target == nil || target == me || me.Equipped(mobWearWield) == nil || me.IsAffected(affMounted) || target.GetFightingBody() != nil {
+		return
+	}
+	weapon := me.Equipped(mobWearWield)
+	if weapon.GetValue(3) != 11 {
+		return
+	}
+	if victim, ok := target.(*MobInstance); ok && victim.HasMobFlag(MobFlagAware) && victim.GetPosition() > combat.PosSleeping {
+		if err := w.mobHit(victim, me); err != nil {
+			slog.Warn("aware mobile backstab reaction failed", "mob", victim.GetName(), "attacker", me.GetName(), "error", err)
+		}
+		return
+	}
+	w.mobBackstab(me, target)
+	me.SetWaitState(engine.PULSE_VIOLENCE)
 }

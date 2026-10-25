@@ -224,6 +224,11 @@ func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
 	player.SetFightingBody(ally)
 
 	var hit [2]string
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 	ce := combat.NewCombatEngine()
 	ce.MessageFunc = func(attacker, defender combat.Combatant, _, _ int) bool {
 		hit = [2]string{attacker.GetName(), defender.GetName()}
@@ -236,6 +241,9 @@ func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
 
 	if !specRescuer(w, nil, rescuer, "", "") {
 		t.Fatal("expected rescuer to handle the autonomous rescue")
+	}
+	if commandName != "rescue" || commandArg != ally.GetName() {
+		t.Fatalf("direct command = %q %q, want rescue %q", commandName, commandArg, ally.GetName())
 	}
 	if hit != [2]string{ally.GetName(), player.GetName()} {
 		t.Fatalf("canonical hit = %#v, want ally-to-player", hit)

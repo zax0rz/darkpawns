@@ -80,12 +80,20 @@ func TestSpecCleric_EntryGatesAndStand(t *testing.T) {
 	}
 
 	mob.SetPosition(combat.PosSitting)
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 	draws := scriptClericRolls(t, 0, 1) // lspell=2, then the always-offensive full-health gate
 	if got := specCleric(w, nil, mob, "", ""); !got {
 		t.Error("eligible sitting cleric should consume its special tick")
 	}
 	if got := mob.GetPosition(); got != combat.PosStanding {
 		t.Errorf("cleric position after do_stand = %d, want standing", got)
+	}
+	if commandName != "stand" || commandArg != "" {
+		t.Errorf("direct command = %q %q, want stand with empty argument", commandName, commandArg)
 	}
 	wantDraws := []clericTestDraw{{from: 0, to: 10}, {from: 1, to: 2}}
 	if len(*draws) != len(wantDraws) {

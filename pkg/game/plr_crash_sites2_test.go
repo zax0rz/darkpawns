@@ -302,23 +302,36 @@ func TestMobDisarmSetsVictimFlag(t *testing.T) {
 	t.Fatal("no seed made mob disarm fire")
 }
 
-// TestEviltradeSetsFlag drives specEviltrade with a gold watch (vnum 13111)
-// in inventory: C's spec takes the traded object with obj_from_char
-// (src/spec_procs2.c:1168).
+// TestEviltradeSetsFlag drives the accepted gold watch give: C moves the
+// object from the player's inventory to the mobile with obj_from_char and
+// obj_to_char (src/spec_procs2.c:1168-1169).
 func TestEviltradeSetsFlag(t *testing.T) {
-	w, p := newFlagWorld(t)
+	w := newFlagWorldWithMob(t)
+	p := NewPlayer(1, "Flagtest", 1001)
+	if err := w.AddPlayer(p); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+	me, err := w.SpawnMob(2001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
 	watch := newFlagItem(w, 13111, 1)
 	if err := w.MoveObjectToPlayerInventory(watch, p); err != nil {
 		t.Fatalf("carry: %v", err)
 	}
-	me := &MobInstance{VNum: 2001}
-	me.RoomVNum = 1001
+	me.Proto().Keywords = "eviltrade"
+	p.SetAlignment(-1)
 	p.SetPlrFlag(PlrCrash, false)
 
-	specEviltrade(w, p, me, "trade", "")
+	if !specEviltrade(w, p, me, "give", "thing eviltrade") {
+		t.Fatal("eviltrade did not consume the accepted gold watch")
+	}
 
 	if _, ok := p.Inventory.FindItem("thing"); ok {
 		t.Fatal("the watch is still in inventory")
+	}
+	if got := me.InventorySnapshot(); len(got) != 1 || got[0] != watch {
+		t.Fatalf("mobile inventory = %v, want the accepted watch", got)
 	}
 	if !p.NeedsCrashSave() {
 		t.Fatal("eviltrade did not set PLR_CRASH (C spec_procs2.c:1168 obj_from_char)")

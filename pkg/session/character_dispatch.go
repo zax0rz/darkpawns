@@ -88,6 +88,43 @@ func (m *Manager) executeCharacterCommand(actor combat.Combatant, sess *Session,
 	return dispatchCharacterCommand(characterCommandContext{actor: actor, session: sess, manager: m}, line, characterCommandNumber)
 }
 
+// executeCharacterCommandDirect dispatches a direct C ACMD call. The C caller
+// already selected the command body and passed its argument pointer, so this
+// path skips command_interpreter's draw, name resolution, gates, and specials.
+func (m *Manager) executeCharacterCommandDirect(actor combat.Combatant, sess *Session, commandName, rawArgs string) game.CharacterCommandResult {
+	return dispatchCharacterCommandDirect(characterCommandContext{actor: actor, session: sess, manager: m}, commandName, rawArgs)
+}
+
+func dispatchCharacterCommandDirect(ctx characterCommandContext, commandName, rawArgs string) game.CharacterCommandResult {
+	if ctx.actor == nil {
+		return game.CharacterCommandUnsupported
+	}
+	commandName = strings.ToLower(strings.TrimSpace(commandName))
+	if _, isSocial := game.SocialMinPosition(commandName); isSocial {
+		if _, exists := game.Socials[commandName]; !exists || !isCSocial(commandName) {
+			return game.CharacterCommandUnsupported
+		}
+		mob, ok := ctx.actor.(*game.MobInstance)
+		w := characterWorld(ctx)
+		if !ok || w == nil {
+			return game.CharacterCommandUnsupported
+		}
+		w.NPCSocialCommand(mob, commandName, rawArgs)
+		return game.CharacterCommandHandled
+	}
+	entry, found := cmdRegistry.Lookup(commandName)
+	if !found || entry == nil || entry.ActorHandler == nil {
+		return game.CharacterCommandUnsupported
+	}
+	result := entry.ActorHandler(game.CharacterCommandContext{
+		Actor: ctx.actor, World: characterWorld(ctx), PrivateOutput: characterPrivateFunc(ctx), RawArgs: rawArgs,
+	}, commandName, strings.Fields(rawArgs))
+	if result == game.CharacterCommandHandled {
+		return result
+	}
+	return game.CharacterCommandUnsupported
+}
+
 func dispatchCharacterCommand(ctx characterCommandContext, line string, draw func(int, int) int) game.CharacterCommandResult {
 	prepared := prepareCharacterCommand(ctx, line, draw)
 	if ctx.actor == nil {

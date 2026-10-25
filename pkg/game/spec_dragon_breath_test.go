@@ -177,12 +177,20 @@ func TestSpecDragonBreath_StandingRecovery(t *testing.T) {
 	mob.SetFightingBody(player)
 	player.SetFightingBody(mob)
 	lastMsg()
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 
 	if !specDragonBreath(w, nil, mob, "", "") {
 		t.Fatal("standing recovery should consume the special")
 	}
 	if got, want := mob.GetPosition(), combat.PosStanding; got != want {
 		t.Fatalf("dragon position after do_stand = %d, want %d", got, want)
+	}
+	if commandName != "stand" || commandArg != "" {
+		t.Fatalf("direct command = %q %q, want stand with empty argument", commandName, commandArg)
 	}
 	if got, want := lastMsg(), "A test mob clambers to its feet.\r\n"; got != want {
 		t.Fatalf("standing recovery room output = %q, want %q", got, want)
