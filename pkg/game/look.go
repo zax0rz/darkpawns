@@ -762,7 +762,7 @@ func (w *World) DoLookDirection(ch *Player, direction int) ObservationResult {
 		result.literal(ch, exit.Description)
 		return result
 	}
-	secret := strings.Contains(strings.ToLower(exit.Keywords), "secret")
+	secret := strings.Contains(exit.Keywords, "secret")
 	revealSecret := roomHasFlagBit(room.Flags, 20)
 	if exit.ExitInfo&parser.ExitClosed != 0 && exit.Keywords != "" && (revealSecret || !secret) {
 		result.literal(ch, fmt.Sprintf("The %s is closed.", fname(exit.Keywords)))

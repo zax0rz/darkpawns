@@ -525,7 +525,7 @@ func performMoveResult(w *World, ch *Player, dir int, needSpecialsCheck bool, re
 	if ext.ExitInfo&parser.ExitClosed != 0 {
 		if ext.Keywords != "" {
 			room := w.GetRoomInWorld(ch.GetRoom())
-			isSecret := strings.Contains(strings.ToLower(ext.Keywords), "secret")
+			isSecret := strings.Contains(ext.Keywords, "secret")
 			if isSecret && !movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark") {
 				movementSendToChar(ch, "Alas, you cannot go that way...")
 			} else {
@@ -597,7 +597,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 			return -1
 		}
 		ext, ok := getExit(w, ch, door)
-		if !ok || strings.Contains(strings.ToLower(ext.Keywords), "secret") && !revealsSecrets {
+		if !ok || strings.Contains(ext.Keywords, "secret") && !revealsSecrets {
 			ch.SendMessage("I really don't see how you can do anything there.\r\n")
 			return -1
 		}
@@ -625,7 +625,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 	for door := 0; door < len(dirs); door++ {
 		ext, ok := room.Exits[dirs[door]]
 		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) &&
-			(!strings.Contains(strings.ToLower(ext.Keywords), "secret") || revealsSecrets) {
+			(!strings.Contains(ext.Keywords, "secret") || revealsSecrets) {
 			return door
 		}
 	}
@@ -1011,32 +1011,48 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 	}
 
 	// generic_find(type, FIND_OBJ_INV | FIND_OBJ_ROOM) runs before find_door
-	// (src/act.movement.c:612): a visible matching object diverts the
-	// command to the object ("You can't $F that!", TO_CHAR, dropped) and
-	// the door stays shut.
-	if w.mobDoorObjectTarget(m, doorType) != nil {
-		return
+	// (src/act.movement.c:612), and a match does not end the command: C
+	// carries obj through the gate ladder into do_doorcmd
+	// (src/act.movement.c:615-635, 477), so a closed unlocked container
+	// that matches the keyword is opened instead of the door.
+	obj := w.mobDoorObjectTarget(m, doorType)
+	door := -1
+	var ext parser.Exit
+	if obj == nil {
+		door = w.findDoorMob(m, doorType, dir)
+		if door < 0 {
+			return
+		}
+		room := w.GetRoomInWorld(m.GetRoom())
+		if room == nil {
+			return
+		}
+		var hasExit bool
+		ext, hasExit = room.Exits[dirs[door]]
+		if !hasExit {
+			return
+		}
 	}
 
-	door := w.findDoorMob(m, doorType, dir)
-	if door < 0 {
-		return
-	}
-	room := w.GetRoomInWorld(m.GetRoom())
-	if room == nil {
-		return
-	}
-	ext, hasExit := room.Exits[dirs[door]]
-	if !hasExit {
-		return
-	}
-
-	// do_gen_door's exit gate ladder (src/act.movement.c:620-640); the
-	// refusal lines are TO_CHAR and vanish for a mobile.
+	// do_gen_door's gate ladder (src/act.movement.c:620-640) over the
+	// DOOR_* macros' two arms (src/act.movement.c:577-596): container value
+	// bits for an object, EX_* bits for an exit. The refusal lines are
+	// TO_CHAR and vanish for a mobile.
 	needed := flagsDoor[scmd]
-	openable := ext.ExitInfo&parser.ExitIsDoor != 0
-	open := ext.ExitInfo&parser.ExitClosed == 0
-	unlocked := ext.ExitInfo&parser.ExitLocked == 0
+	var openable, open, unlocked bool
+	var keynum int
+	if obj != nil {
+		flags := obj.GetValue(contFlags)
+		keynum = obj.GetValue(contKey)
+		openable = obj.GetTypeFlag() == ITEM_CONTAINER && flags&contCloseable != 0
+		open = flags&contClosed == 0
+		unlocked = flags&contLocked == 0
+	} else {
+		keynum = ext.Key
+		openable = ext.ExitInfo&parser.ExitIsDoor != 0
+		open = ext.ExitInfo&parser.ExitClosed == 0
+		unlocked = ext.ExitInfo&parser.ExitLocked == 0
+	}
 	switch {
 	case !openable:
 		return
@@ -1048,7 +1064,24 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 		return
 	case !unlocked && needed&needUnlocked != 0:
 		return
-	case !hasMobKey(m, ext.Key) && m.GetLevel() < LVL_GOD && (scmd == scmdLock || scmd == scmdUnlock):
+	case !hasMobKey(m, keynum) && m.GetLevel() < LVL_GOD && (scmd == scmdLock || scmd == scmdUnlock):
+		return
+	}
+
+	// do_doorcmd's object path (src/act.movement.c:484-511): toggle the
+	// container bits, and the room act fires only for a room-located object
+	// (src/act.movement.c:528-531, obj->in_room != NOWHERE); a carried
+	// object has no audience and the TO_CHAR "Okay."/"*Click*" is dropped.
+	if obj != nil {
+		switch scmd {
+		case scmdOpen, scmdClose:
+			obj.SetValue(contFlags, obj.GetValue(contFlags)^contClosed)
+		case scmdUnlock, scmdLock:
+			obj.SetValue(contFlags, obj.GetValue(contFlags)^contLocked)
+		}
+		if obj.Location.Kind == ObjInRoom {
+			Act(w, false, m, nil, obj, nil, fmt.Sprintf("$n %ss $p.", cmdDoor[scmd]), "", ToRoom)
+		}
 		return
 	}
 
@@ -1143,7 +1176,7 @@ func (w *World) findDoorMob(m *MobInstance, doorType, dir string) int {
 			return -1 // "That's not a direction."
 		}
 		ext, ok := room.Exits[dirs[door]]
-		if !ok || strings.Contains(strings.ToLower(ext.Keywords), "secret") && !revealsSecrets {
+		if !ok || strings.Contains(ext.Keywords, "secret") && !revealsSecrets {
 			return -1 // "I really don't see how you can do anything there."
 		}
 		if ext.Keywords == "" {
@@ -1160,7 +1193,7 @@ func (w *World) findDoorMob(m *MobInstance, doorType, dir string) int {
 	for door := 0; door < len(dirs); door++ {
 		ext, ok := room.Exits[dirs[door]]
 		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) &&
-			(!strings.Contains(strings.ToLower(ext.Keywords), "secret") || revealsSecrets) {
+			(!strings.Contains(ext.Keywords, "secret") || revealsSecrets) {
 			return door
 		}
 	}
