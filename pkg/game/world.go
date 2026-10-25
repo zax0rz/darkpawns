@@ -569,6 +569,16 @@ func (w *World) AddPlayer(p *Player) error {
 	p.mu.Unlock()
 
 	w.players[p.Name] = p
+	// char_to_room counts the character's lit light when entering the game
+	// (src/interpreter.c:2210; src/handler.c:541-542, has_light at :823-835).
+	// Objects restored by Crash_load were equipped while still NOWHERE —
+	// equip_char's increment is guarded by in_room != NOWHERE
+	// (src/handler.c:737) — so this is the light's only increment on entry.
+	if p.HasLight() {
+		if room := p.GetRoom(); room >= 0 {
+			w.adjustRoomLight(room, 1)
+		}
+	}
 	return nil
 }
 
@@ -1261,6 +1271,13 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 	}
 	if err := p.Equipment.Equip(item, p.Inventory); err != nil {
 		return false
+	}
+	// lua_equip_char goes through equip_char (src/scripts.c:420), which counts
+	// a lit light toward the room's light (src/handler.c:737-740).
+	if room := p.GetRoom(); room >= 0 && isLitLightSource(item) {
+		w.mu.Lock()
+		w.adjustRoomLight(room, 1)
+		w.mu.Unlock()
 	}
 	p.checkEquipmentStats()
 	return true

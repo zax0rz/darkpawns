@@ -128,6 +128,24 @@ func (w *World) RentOut(p *Player) {
 	for _, obj := range held {
 		w.extractNorents(obj, p.GetRoom())
 	}
+	// Crash_rentsave and Crash_idlesave free the kept rent set with
+	// Crash_extract_objs while the character is still in the room
+	// (src/objsave.c:947-955, 996-1004): through extract_obj's unequip_char
+	// each still-lit equipped light leaves the room's counter here
+	// (src/handler.c:1010-1012, 779-782). NORENT lights were accounted by
+	// their extraction above; the extraction pass later skips renters.
+	if p.Equipment != nil {
+		room := p.GetRoom()
+		if room >= 0 {
+			w.mu.Lock()
+			for _, item := range p.Equipment.GetEquippedItems() {
+				if isLitLightSource(item) {
+					w.adjustRoomLight(room, -1)
+				}
+			}
+			w.mu.Unlock()
+		}
+	}
 }
 
 func (w *World) extractNorents(obj *ObjectInstance, roomVNum int) {

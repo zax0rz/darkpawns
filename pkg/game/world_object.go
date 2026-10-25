@@ -119,12 +119,20 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 		switch obj.Location.OwnerKind {
 		case OwnerPlayer:
 			if p, ok := w.players[obj.Location.PlayerName]; ok && p.Equipment != nil {
+				// extract_obj unequips a worn object through unequip_char
+				// (src/handler.c:1010-1012), dropping a lit light from the
+				// owner's room (src/handler.c:779-782).
+				litLight := isLitLightSource(obj)
+				room := p.GetRoom()
 				// UnequipItem transfers the object into inventory. Extraction
 				// must remove that transferred reference too; otherwise an
 				// equipped NORENT object survives Crash_rentsave in the saved
 				// inventory even though its world registration was deleted.
 				if p.Equipment.UnequipItem(obj, p.Inventory) && p.Inventory != nil {
 					p.Inventory.removeItem(obj)
+				}
+				if litLight && room >= 0 {
+					w.adjustRoomLight(room, -1)
 				}
 			}
 		case OwnerMob:

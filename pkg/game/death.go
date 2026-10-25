@@ -203,6 +203,16 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	if len(equipmentItems) > 0 {
 		player.AffectTotal()
 	}
+	// make_corpse takes each worn item through unequip_char, dropping every
+	// lit light from the room's counter before the corpse holds it
+	// (src/fight.c:406-407; src/handler.c:779-782).
+	for _, item := range equipmentItems {
+		if room := player.GetRoom(); room >= 0 && isLitLightSource(item) {
+			w.mu.Lock()
+			w.adjustRoomLight(room, -1)
+			w.mu.Unlock()
+		}
+	}
 	playerGold := player.GetGold()
 	player.SetGold(0)
 
@@ -708,6 +718,15 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	if len(equipmentItems) > 0 {
 		player.AffectTotal()
 	} // make_corpse unequips each worn item
+	// … and each unequip_char drops a lit light from the room's counter
+	// before the corpse takes it (src/fight.c:406-407; src/handler.c:779-782).
+	for _, item := range equipmentItems {
+		if roomVNum >= 0 && isLitLightSource(item) {
+			w.mu.Lock()
+			w.adjustRoomLight(roomVNum, -1)
+			w.mu.Unlock()
+		}
+	}
 
 	// Gold
 	playerGold := player.GetGold()
