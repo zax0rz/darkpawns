@@ -1062,9 +1062,17 @@ func TestMobileActivityCharmedHelperAssistsMaster(t *testing.T) {
 	master.SetFightingBody(foe)
 	foe.SetFightingBody(master)
 
+	var commandName, commandArg string
+	w.CharacterCommandDirectExecFunc = func(_ combat.Combatant, command, argument string) CharacterCommandResult {
+		commandName, commandArg = command, argument
+		return CharacterCommandUnsupported
+	}
 	out := captureOutput(w)
 	pinNorthWanderDraws(t)
 	w.MobileActivity()
+	if commandName != "assist" || commandArg != master.GetName() {
+		t.Fatalf("direct command = %q %q, want assist %q", commandName, commandArg, master.GetName())
+	}
 
 	if got, want := outputOf(out, master.Name), "A helper mob assists you!\r\n"; got != want {
 		t.Fatalf("master output = %q, want %q", got, want)

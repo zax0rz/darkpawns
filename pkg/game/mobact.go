@@ -451,7 +451,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if master := w.followingActor(ch.GetFollowing()); master != nil {
 				if c, ok := master.(combat.Combatant); ok && c.GetFightingBody() != nil {
 					// C: do_assist(ch, GET_NAME(ch->master), 0, 0)
-					w.mobAssist(ch, master.GetName())
+					w.NPCCommandDirect(ch, "assist", master.GetName())
 					return
 				}
 			}
