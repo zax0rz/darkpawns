@@ -111,7 +111,7 @@ func TestShopBuyAndSellCheckOpenHours(t *testing.T) {
 	if err := cmdBuy(buyer, []string{"apple"}); err != nil {
 		t.Fatalf("cmdBuy at closed shop: %v", err)
 	}
-	if got := renderedOutput(buyer); got != "A merchant says, 'Come back later!'\r\n" {
+	if got := renderedOutput(buyer); got != "A merchant exclaims, 'Come back later!'\r\n" {
 		t.Fatalf("closed-shop buy response = %q", got)
 	}
 
@@ -119,7 +119,7 @@ func TestShopBuyAndSellCheckOpenHours(t *testing.T) {
 	if err := cmdSell(seller, []string{"apple"}); err != nil {
 		t.Fatalf("cmdSell at closed shop: %v", err)
 	}
-	if got := renderedOutput(seller); got != "A merchant says, 'Come back later!'\r\n" {
+	if got := renderedOutput(seller); got != "A merchant exclaims, 'Come back later!'\r\n" {
 		t.Fatalf("closed-shop sell response = %q", got)
 	}
 }

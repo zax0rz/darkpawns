@@ -30,14 +30,8 @@ func specShopKeeperActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 	if Actor(me) == actor {
 		return SpecialDeclined
 	}
-	inShopRoom := false
-	for _, room := range shop.Rooms {
-		if room == actor.GetRoom() {
-			inShopRoom = true
-			break
-		}
-	}
-	if !inShopRoom {
+
+	if !w.ShopAllowsRoom(shop, actor.GetRoom()) {
 		return SpecialDeclined
 	}
 	if me.GetPosition() <= combat.PosSleeping {

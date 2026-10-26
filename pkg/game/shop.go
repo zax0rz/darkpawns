@@ -227,3 +227,15 @@ func (s *Shop) WillBuyType(itemType int) bool {
 	}
 	return false
 }
+
+// ShopAllowsRoom mirrors ok_shop_room (src/shop.c:930-939). C compares the
+// configured VNUM to real_room(1) for its wildcard, not to the current room.
+func (w *World) ShopAllowsRoom(shop *Shop, roomVNum int) bool {
+	wildcard, hasWildcard := w.RealRoomIndex(1)
+	for _, room := range shop.Rooms {
+		if room == roomVNum || (hasWildcard && room == wildcard) {
+			return true
+		}
+	}
+	return false
+}

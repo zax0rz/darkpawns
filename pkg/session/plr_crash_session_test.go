@@ -40,7 +40,7 @@ func newFlagShopHarnessWithStore(t *testing.T, store db.GameStore) *flagShopHarn
 		Objs:  []parser.Obj{{VNum: 7101, Keywords: "trinket", ShortDesc: "a trinket", TypeFlag: 1, WearFlags: [4]int{1}, Cost: 10}},
 		Mobs:  []parser.Mob{{VNum: 2001, Keywords: "keeper", ShortDesc: "the keeper"}},
 		Shops: []parser.ShopProto{{
-			VNum: 1, KeeperVNum: 2001,
+			VNum: 1, KeeperVNum: 2001, Rooms: []int{1001},
 			Products:  []int{7101},
 			BuyTypes:  []int{1},
 			BuyProfit: 1.0, SellProfit: 1.0,

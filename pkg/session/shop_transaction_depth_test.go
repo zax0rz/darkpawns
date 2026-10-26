@@ -172,3 +172,47 @@ func TestShopValueQuotesWithoutMutationThroughDispatch(t *testing.T) {
 		t.Fatal("valuation leaked to room")
 	}
 }
+
+func TestShopKeeperGatesThroughDispatch(t *testing.T) {
+	for _, tc := range []string{"closed", "invisible", "sleeping", "wrong room", "god still invisible"} {
+		t.Run(tc, func(t *testing.T) {
+			_, manager, keeper, shop := shopOutputFixture(t, 1)
+			buyer := addShopOutputSession(t, manager, "Gatebuyer")
+			peer := addShopOutputSession(t, manager, "Gatepeer")
+			buyer.player.SetGold(100)
+			want := ""
+			switch tc {
+			case "closed":
+				shop.OpenHour1 = 29
+				want = "A merchant exclaims, 'Come back later!'\r\n"
+			case "invisible", "god still invisible":
+				buyer.player.SetInvisLevel(33)
+				want = "A merchant exclaims, 'I don't trade with someone I can't see!'\r\n"
+				if tc == "god still invisible" {
+					buyer.player.SetLevel(33)
+				}
+			case "sleeping":
+				keeper.SetPosition(4)
+			case "wrong room":
+				shop.Rooms = []int{9999}
+			}
+			shopDispatch(t, buyer, "buy apple")
+			got := renderedOutput(buyer)
+			if want == "" {
+				if got != "Sorry, but you cannot do that here!\r\n" {
+					t.Errorf("fallback=%q", got)
+				}
+				if renderedOutput(peer) != "" {
+					t.Errorf("fallback leaked=%q", renderedOutput(peer))
+				}
+			} else {
+				if got != want || renderedOutput(peer) != want {
+					t.Errorf("actor=%q peer=%q want=%q", got, renderedOutput(peer), want)
+				}
+			}
+			if buyer.player.GetGold() != 100 || buyer.player.Inventory.GetItemCount() != 0 || keeper.GetGold() != 1000 {
+				t.Fatal("keeper refusal mutated transaction state")
+			}
+		})
+	}
+}

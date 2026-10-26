@@ -34,7 +34,7 @@ func findShopKeeperAndMobInRoom(s *Session) (*game.Shop, string, *game.MobInstan
 
 	// Check each mob — if its VNum matches a shop keeper, return that shop
 	for _, mob := range mobs {
-		if shop, ok := s.manager.world.GetShopByKeeper(mob.VNum); ok {
+		if shop, ok := s.manager.world.GetShopByKeeper(mob.VNum); ok && mob.GetPosition() > game.PosSleeping && s.manager.world.ShopAllowsRoom(shop, roomVNum) {
 			name := mob.GetShortDesc()
 			if name == "" {
 				name = "The shopkeeper"
@@ -81,15 +81,6 @@ func shopObjectFirstKeyword(keywords string) string {
 	return keywords
 }
 
-func shopKeeperSay(keeperName, message string) string {
-	if keeperName == "" {
-		keeperName = "The shopkeeper"
-	} else {
-		keeperName = capitalizeFirstRune(keeperName)
-	}
-	return fmt.Sprintf("%s says, '%s'\r\n", keeperName, message)
-}
-
 const (
 	shopTradeNoGood = 1 << iota
 	shopTradeNoEvil
@@ -113,19 +104,19 @@ func shopIsOK(s *Session, shop *game.Shop, keeper *game.MobInstance, keeperName 
 		}
 	}
 	if closedMessage != "" {
-		s.Send(shopKeeperSay(keeperName, closedMessage))
+		s.manager.world.NPCSayCommand(keeper, closedMessage)
 		return false
 	}
 
 	if !game.CanSee(keeper, s.player) {
-		s.Send(shopKeeperSay(keeperName, "I don't trade with someone I can't see!"))
+		s.manager.world.NPCSayCommand(keeper, "I don't trade with someone I can't see!")
 		return false
 	}
 
 	// C is_ok_char lets gods and NPCs bypass the trade restrictions after the
 	// visibility check. The live command has a player actor, but retain the
 	// source ordering at this boundary.
-	if s.player.GetLevel() >= game.LVL_GOD || s.player.IsNPC() {
+	if s.player.GetLevel() >= game.LVL_GOD && !s.player.IsNPC() {
 		return true
 	}
 
@@ -137,6 +128,9 @@ func shopIsOK(s *Session, shop *game.Shop, keeper *game.MobInstance, keeperName 
 		return false
 	}
 
+	if s.player.IsNPC() {
+		return true
+	}
 	if (s.player.GetClass() == game.ClassMageUser && trade&shopTradeNoMage != 0) ||
 		(s.player.GetClass() == game.ClassCleric && trade&shopTradeNoCleric != 0) ||
 		(s.player.GetClass() == game.ClassThief && trade&shopTradeNoThief != 0) ||

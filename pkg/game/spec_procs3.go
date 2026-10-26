@@ -90,14 +90,8 @@ func specShopKeeper(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	if !ok {
 		return false
 	}
-	inShopRoom := false
-	for _, room := range shop.Rooms {
-		if room == ch.GetRoomVNum() {
-			inShopRoom = true
-			break
-		}
-	}
-	if !inShopRoom || me.GetPosition() <= combat.PosSleeping {
+
+	if !w.ShopAllowsRoom(shop, ch.GetRoomVNum()) || me.GetPosition() <= combat.PosSleeping {
 		return false
 	}
 	if ch.GetRace() == RaceKender {
