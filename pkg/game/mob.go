@@ -445,7 +445,7 @@ func (m *MobInstance) Attack(player *Player, world *World) error {
 	// Transition into the wounded band or POS_DEAD from the new HP, and run the
 	// death pipeline at POS_DEAD (HP <= -11) so this path can't leave a player
 	// stranded at negative HP with no death — fight.c update_pos (DP-1021).
-	if combat.UpdatePositionAfterDamage(player, world.woundBroadcast) == combat.PosDead {
+	if combat.UpdatePositionAfterDamage(player, world.woundBroadcast, world.StopFightingBody) == combat.PosDead {
 		world.HandleDeath(player, m, -1)
 	}
 

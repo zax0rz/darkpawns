@@ -389,7 +389,11 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		if b, ok := world.(woundBroadcaster); ok {
 			wb = b.WoundBroadcast
 		}
-		newPos := combat.UpdatePositionAfterDamage(victCombat, wb)
+		var stopFighting func(combat.Combatant)
+		if sfb, ok := world.(interface{ StopFightingBody(combat.Combatant) }); ok {
+			stopFighting = sfb.StopFightingBody
+		}
+		newPos := combat.UpdatePositionAfterDamage(victCombat, wb, stopFighting)
 		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(victCombat, wb)
 

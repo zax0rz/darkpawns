@@ -1,0 +1,83 @@
+# Play-lab milestone 3 replay: the guildmaster's catalog after a mapped skill is
+# learned.
+#
+# Recorded session: m3-ninja (a long-horizon levelling session)
+#   server:    127.0.0.1:7819 (a locally started checkout; no player store, which is
+#              how the newbie stays a mortal: init_char crowns the first
+#              player of an empty store Implementor)
+#   character: Deepninja
+#   go head:   c73e5126a (origin/main when the session was recorded)
+#   seed:      1
+#   steps:     12 creation keystrokes + 9 moves + 7 practice commands
+#
+# What the reduction keeps: the ninja's mapped skill "strike of revenge" is
+# stored by the guildmaster under its handler key (SkillStrike, "strike") while
+# the catalog renders it under its display name, so list_skills reads a skill
+# nothing ever wrote and reports "(not learned)" — even in the same block that
+# says "You are now learned in that area." The C oracle, which stores by skill
+# number and reads by skill number, reports the learned percentage instead.
+#
+# The setups are identical keystroke sequences on both sides: the nanny's
+# RNG draws must line up from process start, or every later draw is compared
+# at a different stream position and the byte verdict is a coincidence (R3a).
+
+[fixture]
+quiet-mobs
+# The ninja guildmaster (SPEC(guild), src/spec_assign.c ASSIGNMOB(8026, guild))
+# belongs to room 8151's reset list, but a scenario must not depend on when the
+# zone reset ran: place it explicitly, as spec-proc-fighter.txt does.
+spawn-mob 8026 1 8151 80
+
+# Nanny creation flow, byte for byte the sequence character-creation.txt uses,
+# with the ninja class letter (N) in the class slot.
+
+[setup:oracle]
+Pracnin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+N
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pracnin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+N
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+# Settle the newbie intro, then walk to the ninja guildmaster's room (8151).
+~dpclock pulse 40
+north
+east
+south
+east
+south
+east
+east
+south
+south
+
+# The catalog, then every practice session spent on the mapped skill.
+practice
+practice strike of revenge
+practice strike of revenge
+practice strike of revenge
+practice strike of revenge
+practice strike of revenge
+practice

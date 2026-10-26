@@ -1,0 +1,67 @@
+# Play-lab milestone 3: attacking a city guard gets you jailed, not killed.
+#
+# Recorded session: m3-ninja spent 473 of its 850 decisions in The Main Holding
+# Cell after attacking a citizen ("A city guard jumps to the aid of the citizen!
+# ... he carts you off to jail..."). This scenario stages the same sequence on
+# purpose: a level-1 warrior swings at a level-20 church guard in the Street of
+# Swords, and the city's justice system takes over. The point is the whole
+# sequence — the guard's assist, the carting, the cell, and the release.
+#
+# A level-20 church guard (mob 8020, lib/world/mob/80.mob) is placed in the
+# Street of Swords (8101, ROOM_PEACEFUL clear), five steps from the start: the
+# newbie infirmary and the whole temple are peace rooms, where `kill` answers
+# "This room just has such a peaceful, easy feeling..." and no death can happen.
+
+[fixture]
+quiet-mobs
+spawn-mob 8020 1 8101 80
+
+[setup:oracle]
+Deadwar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deadwar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+# Settle the newbie intro, walk out of the peace rooms, and pick a fight the
+# character cannot win.
+~dpclock pulse 40
+north
+east
+south
+west
+kill guard
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+score
+equipment
+inventory
+look
+score

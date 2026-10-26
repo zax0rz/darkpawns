@@ -35,7 +35,7 @@ func TestUpdatePositionAfterDamage_WoundedBand(t *testing.T) {
 			var broadcasts []string
 			got := UpdatePositionAfterDamage(v, func(_ int, msg string, _ []Combatant) {
 				broadcasts = append(broadcasts, msg)
-			})
+			}, nil)
 
 			if got != tt.wantPos {
 				t.Errorf("returned pos = %d, want %d", got, tt.wantPos)
@@ -80,7 +80,7 @@ func TestUpdatePositionAfterDamage_IncapExactStrings(t *testing.T) {
 	var broadcasts []string
 	UpdatePositionAfterDamage(v, func(_ int, msg string, _ []Combatant) {
 		broadcasts = append(broadcasts, msg)
-	})
+	}, nil)
 	if len(v.messages) != 1 {
 		t.Fatalf("expected 1 personal message, got %d", len(v.messages))
 	}
@@ -101,7 +101,7 @@ func TestUpdatePositionAfterDamage_IncapExactStrings(t *testing.T) {
 // optional (personal message still fires).
 func TestUpdatePositionAfterDamage_NilBroadcast(t *testing.T) {
 	v := &msgMockCombatant{mockCombatant: mockCombatant{name: "Victim", hp: -4, position: PosFighting}}
-	if got := UpdatePositionAfterDamage(v, nil); got != PosIncap {
+	if got := UpdatePositionAfterDamage(v, nil, nil); got != PosIncap {
 		t.Fatalf("pos = %d, want %d", got, PosIncap)
 	}
 	if len(v.messages) != 1 {
@@ -133,7 +133,7 @@ func TestWoundedBandBroadcastsCapitalizeAndExcludeVictim(t *testing.T) {
 			var roomMsg, exclude string
 			if got := UpdatePositionAfterDamage(v, func(_ int, msg string, ex []Combatant) {
 				roomMsg, exclude = msg, testBodyNames(ex)
-			}); got != tc.wantPos {
+			}, nil); got != tc.wantPos {
 				t.Fatalf("pos = %d, want %d", got, tc.wantPos)
 			}
 			if roomMsg != tc.wantRoom {

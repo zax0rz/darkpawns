@@ -650,6 +650,16 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		if defender.GetPosition() == PosDead {
 			break
 		}
+		// C's per-swing gate (fight.c:2017-2024) re-reads FIGHTING(ch) every
+		// swing: damage()'s mercy stop (fight.c:1491-1494) or the !AWAKE
+		// victim stop (:1630-1632) can clear it MID-LOOP, and C's hit() then
+		// never runs — no draw, no stale-pair swing. PL-005: without this the
+		// second swing of a multi-attack round kept hitting an already-stopped
+		// victim (prone multiplier fight.c:1854-1855), killing characters C
+		// leaves incapacitated, and diverging the shared RNG stream.
+		if fighting := attacker.GetFightingBody(); fighting == nil || fighting != defender {
+			break
+		}
 		if ce.performOneHit(pair) {
 			break
 		}
@@ -945,7 +955,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		return true
 	}
 
-	newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc)
+	newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc, ce.StopCombat)
 	if newPos != PosDead {
 		return ce.handleSurvivingVictimState(attacker, defender, damage, newPos)
 	}

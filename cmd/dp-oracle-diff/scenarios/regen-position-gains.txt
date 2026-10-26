@@ -1,0 +1,78 @@
+# depth-case: regen.sleeping-gains-and-dream
+# depth-case: regen.resting-gains
+# depth-case: regen.sitting-gains
+# depth-case: regen.standing-gains
+# The position ladder of the per-hour gain formulas (src/limits.c:59-243):
+# sleeping adds half again, resting a quarter, sitting an eighth, standing
+# the base. A fresh mortal starts with full pools (do_start), so the seeded
+# Testor peer first drains hit/mana/move to 5 via set player; the actor
+# then takes each position for exactly one pumped hour and scores between,
+# so the compared score bytes carry each position's arithmetic. Sleeping
+# hours also run dream(i) (src/limits.c:489-491), whose lines land in the
+# pump blocks. Conditions (36/36/0, src/class.c:578-580) stay far from the
+# decay messages inside five hours.
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Restful
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Restful
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+score
+send:testor set player Restful hit 5
+send:testor set player Restful mana 5
+send:testor set player Restful move 5
+score
+sleep
+~dpclock pulse 630
+score
+wake
+rest
+~dpclock pulse 630
+score
+stand
+sit
+~dpclock pulse 630
+score
+stand
+~dpclock pulse 630
+score

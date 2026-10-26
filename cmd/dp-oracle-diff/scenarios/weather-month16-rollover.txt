@@ -1,0 +1,36 @@
+# depth-case: weather.month16-to-newyear-rollover
+# Boot pinned one hour before the year-incrementing month boundary:
+# fixed-time 651236292 is hour 23 of day 34, month 16. One pumped hour
+# crosses hours>23 -> day++ -> day>34 -> month=17 -> month>16 -> month=0,
+# year++ (src/weather.c:86-124) into day 0 of month 0 with the year
+# incremented. This is the year EDGE, not the year rollover decision 5
+# excludes: the calendar jump is 630 pulses, not 8,996,400. Month 16 also
+# exercises the seasonal pressure threshold 985 (src/weather.c:132-135),
+# where the month-8 scenarios run the 1015 side.
+
+[fixture]
+quiet-mobs
+seed-player
+fixed-time 651236292
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8001
+
+[probe]
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time

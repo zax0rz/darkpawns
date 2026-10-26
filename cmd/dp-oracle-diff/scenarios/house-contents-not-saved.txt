@@ -1,0 +1,52 @@
+# depth-case: house.contents-not-persisted
+# C never writes house contents: every House_crashsave caller is commented
+# out and House_save_all is a stub (src/house.c:709-721; src/comm.c:836;
+# src/act.other.c:201-202), so house/<vnum>.house exists only if something
+# outside the game wrote it. The port must reproduce that non-persistence,
+# not improve it (R4): the seeded Testor carries an object into the house at
+# 8162, drops it, and the block before <RESTART> shows it lying there. After
+# the restart the same room is empty on both engines — a player-dropped
+# object in a house is per-boot state exactly like any other room's floor.
+# The object spawns at 1204 (the immortal start room Testor enters at), not
+# in the house, so the zone file reload at boot cannot restore it there.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-obj 8010 1 1204 80
+house-control 8162 8161 north 1 1 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[relogin:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[relogin:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+get loaf
+goto 8162
+
+[probe]
+drop loaf
+look
+<RESTART>
+goto 8162
+look

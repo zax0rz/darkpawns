@@ -1,0 +1,63 @@
+# Play-lab milestone 4: a guild practice visit.
+#
+# The route the progression policy walks on every level-up: the warrior guild is
+# nine steps from the newbie start (north, east, south, west, north, north,
+# north, east, north). The guildmaster's catalog, four practice sessions on the
+# class's first unlearned skill, and the catalog again — which is where PL-004
+# lived (a mapped skill reading "(not learned)" after the guildmaster said it was
+# learned; fixed by #2160, and this scenario is the shape that caught it).
+
+[fixture]
+quiet-mobs
+spawn-mob 8012 1 8013 80
+
+[setup:oracle]
+Guildvisit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Guildvisit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+~dpclock pulse 40
+auto exits
+north
+east
+south
+west
+north
+north
+north
+east
+north
+look
+practice
+practice kick
+practice kick
+practice kick
+practice kick
+practice kick
+practice
+score

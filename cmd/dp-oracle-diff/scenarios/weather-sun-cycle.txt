@@ -1,0 +1,72 @@
+# depth-case: weather.sunset-hour-21
+# depth-case: weather.night-hour-22
+# depth-case: weather.sunrise-hour-5
+# depth-case: weather.day-hour-6
+# depth-case: weather.day-rollover-hour-24
+# The sunlight cycle (src/weather.c:40-125) from the harness default pin
+# (hour 14, day 17, month 8). The seeded Testor stands outdoors in 8001, so
+# send_to_outdoor (src/comm.c:2353-2365) delivers each phase line to the
+# actor as its own block: one pumped hour per probe step, time each hour.
+# Sixteen hours cover sunset (21), night (22), the day rollover at 24,
+# sunrise (5) and daybreak (6) of the next day. Immortals never hunger
+# (cond -1, src/db.c:3074), so no decay bytes pollute the weather blocks.
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8001
+
+[probe]
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time

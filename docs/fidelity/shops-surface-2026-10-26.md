@@ -44,6 +44,7 @@ Every individual scenario completed below the 240-second limit.
 
 | Run directories | Selection | Result |
 |---|---|---|
+| `sol-shops-integrated-s{1,2,3,5,8}` | final integrated tree, all 112 shop scenarios | 560/560 PASS, zero draw divergences |
 | `sol-shops-final-s{1,2,3,5,8}` | all 112 shop scenarios | All player bytes matched. Seeds 3/5/8 initially exposed setup-only DRAW rows in six older fixtures. Those rows are superseded below, not counted as passing proof. |
 | `sol-shops-isolated-s{1,2,3,5,8}` | six older fixtures after isolating authored keeper/stock resets with quiet-mobs | 30/30 PASS, zero draw divergences |
 | `sol-shops-dispatch-negative-control` | suppress shop handlers and native specials in a frozen source snapshot | 112/112 FAIL, zero infrastructure rows |
@@ -59,11 +60,11 @@ those setup differences. Old red/DRAW attempts remain retained.
 
 Machine-readable effective results are in
 `sol-shops-work/effective-five-seed-results.tsv`; `source-equivalence.txt` verifies
-all production `pkg/**/*.go` files match every positive immutable snapshot.
+all 412 production `pkg/**/*.go` files match the five final integration snapshots.
 The original final runs captured HEAD `d9c5ff2ce` plus the pending parenthesis
 fix; immutable source, not the abbreviated dirty HEAD alone, identifies the
 executed implementation. The later parenthesis commit contains that same code.
-Only proof metadata/comments and the six fixture corrections changed afterwards.
+Current-main integration later changed shared combat dependencies; the full targeted corpus was rerun against that integrated source as recorded below.
 Each run's generated `MANIFEST.md` retains source hashes, engine logs, normalized
 C/Go blocks and draw logs. Reference oracle SHA-256:
 `bd6c548c6fbc41d35eede384e4ce2c5a858ff2ce0f568a379d7fb366a9051b07`.
@@ -111,7 +112,7 @@ removes a prototype.
 
 All ten gates ran separately and passed. Logs are retained as
 `sol-shops-work/final-{build,vet,test,game-test,lint,deadcode,depth,units,strings}.txt`.
-`make fmt` also passed; `make check-fmt` and `git diff --check` are final checks.
+`make fmt` also passed; `make check-fmt` and `git diff origin/main --check` are final checks.
 
 1. `make fmt`
 2. `go build ./...`
@@ -127,7 +128,7 @@ All ten gates ran separately and passed. Logs are retained as
 A transient unrelated `TestWhodListenerOffClosesAndOnReopens` failure during an
 earlier full-suite run was retained and the suite rerun successfully. No whod
 source change was made. No full/combined census was run: Claude's batch gate and
-review remain the release boundary. This branch is neither merged nor deployed.
+review remain the release boundary. This PR has not been merged to main or deployed.
 
 ## Decisions for Zach
 
@@ -155,3 +156,15 @@ review remain the release boundary. This branch is neither merged nor deployed.
   and replaced the affected fixtures. Recommend making `--draw-parity` fail the
   overall verdict on DRAW in a separate census-tool change; a green label alone
   is insufficient evidence of R3 compliance.
+
+## Integration with current main
+
+The PR initially conflicted with a later lifecycle inventory update. Integrated
+`origin/main` at `e8bdda454`, retaining both audited shop rows and GLM's complete
+rent/storage exclusion verbatim. All other incoming changes are preserved.
+All ten gates passed again on this integrated tree; logs are retained as
+`sol-shops-work/integrated-{build,vet,test,game-test,lint,deadcode,depth,units,strings}.txt`.
+The whole 112-scenario corpus was rerun at all five seeds in
+`sol-shops-integrated-s{1,2,3,5,8}` to validate the final integration rather than
+relying only on the earlier proof. The final effective-result file points at
+those runs; earlier attempts remain retained as development evidence.
