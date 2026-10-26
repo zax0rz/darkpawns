@@ -1,0 +1,117 @@
+# A registered do_cast concentration failure passes zero damage to skill_message
+# for SPELL_CALL_LIGHTNING (6). Level 31 clears C's default immortal minimum;
+# skill 1 makes the concentration branch fail except for rolls 0 or 1. Three
+# attempts expose the miss triplet to caster, target, and room observer.
+# C: src/spell_parser.c:963-975,1098-1101,1250-1251; src/fight.c:1023-1095;
+# lib/misc/messages:45-58.
+# depth-case: fightmsg.6.cast-concentration-miss
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+
+[setup:oracle]
+CallMissActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+CallMissActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+CallMissVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+CallMissVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+CallMissObserver
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+CallMissObserver
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport CallMissVictim 8105
+teleport CallMissObserver 8105
+set player CallMissActor class mage
+skillset CallMissActor 'call lightning' 1
+set player CallMissActor maxmana 5000
+set player CallMissActor mana 5000
+set player CallMissActor level 31
+set player CallMissVictim class mage
+set player CallMissVictim level 20
+set player CallMissVictim maxhit 5000000
+set player CallMissVictim hit 5000000
+
+[probe]
+cast 'call lightning' CallMissVictim
+~dpclock pulse 20
+cast 'call lightning' CallMissVictim
+~dpclock pulse 20
+cast 'call lightning' CallMissVictim

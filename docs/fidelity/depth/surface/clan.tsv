@@ -20,7 +20,7 @@ src/clan.c:141	do_clan_rename	proven	clan.rename-entry-gates	The named proof sce
 src/clan.c:147	do_clan_rename	proven	clan.rename-entry-gates	The named proof scenario executes this C output call.
 src/clan.c:152	do_clan_rename	proven	clan.rename-state	The named proof scenario executes this C output call.
 src/clan.c:170	do_clan_create	proven	clan.create-underpowered	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
-src/clan.c:176	do_clan_create	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
+src/clan.c:176	do_clan_create	proven	clan.create-capacity	clan-capacity-depth@1,2,3,5,8 drives 20 registered creates with one mortal leader, clearing membership through the registered admin set command, then proves the capacity refusal (src/clan.c:168-178; src/clan.h:26; src/act.wizard.c:2600,3033-3038; R1/R2/R3/R5e/R5g/R5h).
 src/clan.c:184	do_clan_create	proven	clan.create-missing-leader;clan.create-leader-gate	The named proof scenario executes this C output call.
 src/clan.c:189	do_clan_create	proven	clan.create-too-long	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:193	do_clan_create	proven	clan.create-immortal-leader	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
@@ -36,7 +36,7 @@ src/clan.c:311	do_clan_enroll	proven	clan.enroll-unknown-clan	The corrected clan
 src/clan.c:317	do_clan_enroll	proven	clan.enroll-low-influence	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:324	do_clan_enroll	proven	clan.enroll-applicant-list	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:334	do_clan_enroll	proven	clan.enroll-applicant-list	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
-src/clan.c:344	do_clan_enroll	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
+src/clan.c:344	do_clan_enroll	proven	clan.enroll-applicant-list-offline	clan-offline-applicant-depth@1,2,3,5,8 quits the saved applicant before a live top-rank member lists applicants (R1/R2/R3/R5e/R5h).
 src/clan.c:353	do_clan_enroll	proven	clan.enroll-target-missing	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:359	do_clan_enroll	proven	clan.enroll-other-clan	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:363	do_clan_enroll	proven	clan.enroll-not-requested	The named proof scenario executes this C output call.

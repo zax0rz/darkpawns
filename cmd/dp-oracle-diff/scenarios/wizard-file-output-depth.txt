@@ -1,0 +1,119 @@
+# C-first saved-file reporting and mutation vehicle. The first character is
+# the bootstrap implementor; peers are saved and disconnected before file
+# access, and the actor is lowered below Setpeer to exercise both refusals.
+# C path: src/act.wizard.c:1027-1044, 2629-2671, 2973-2990, 3063-3071.
+
+# depth-case: stat.file-protected-higher
+# depth-case: set.player-not-found
+# depth-case: set.file-protected-higher
+# depth-case: set.file-missing
+# depth-case: set.file-password
+# depth-case: set.file-saved
+
+[fixture]
+quiet-mobs
+empty-players
+
+[setup:oracle]
+Setadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:high]
+Setpeer
+Y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:high]
+Setpeer
+y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:low]
+Setlow
+Y
+lowpass
+lowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:low]
+Setlow
+y
+lowpass
+lowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Setpeer 8162
+teleport Setlow 8162
+set player Setpeer level 40
+set player Setlow level 1
+send:high quit
+send:high 0
+~dpclock pulse 1
+send:low quit
+send:low 0
+~dpclock pulse 1
+
+[probe]
+set player Nobody level 1
+set file Nobody level 1
+set file Setlow passwd newpassword
+stat file Setpeer
+set file Setpeer level 40

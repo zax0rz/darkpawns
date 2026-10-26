@@ -1,0 +1,49 @@
+# REDIT's existing improved editor clears the live room description, then the
+# registered stat command reaches do_stat_room's NULL-description branch.
+# C path: src/redit.c:721-726; src/improved-edit.c:27-48;
+# src/act.wizard.c:425-450.
+# depth-case: stat.room-null-description
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Reditnull
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reditnull
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+redit
+2
+/c
+/s
+q
+y
+
+[probe]
+stat room

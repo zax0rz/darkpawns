@@ -1,0 +1,99 @@
+# A peer starts a real fight with a guard trainee. Its oncmd script sets the
+# mobile to sitting before the violence pulse; the switched descriptor then
+# receives the NPC dodge and stand-up outputs from perform_violence.
+# C paths: src/interpreter.c:1459; src/scripts.c:1718-1810,2015-2017;
+# src/fight.c:1965-1972,1982-1986; src/act.wizard.c:1175-1200.
+# depth-case: fight.round-dodge
+# depth-case: fight.round-mob-standup
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-aff 16303 131072
+mob-script 16303 oracle/violence.lua 512
+
+[lua-script mob/oracle/violence.lua]
+function oncmd()
+if (argument == "say sit") then
+me.pos = 6
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+Violenceadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Violenceadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Violencepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Violencepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Violencepeer 8105
+set player Violencepeer class warrior
+set player Violencepeer level 80
+set player Violencepeer outlaw on
+set player Violencepeer maxhit 5000000
+set player Violencepeer hit 5000000
+set mob trainee level 101
+set mob trainee maxhit 5000000
+set mob trainee hit 5000000
+
+[probe:peer]
+kill 1.trainee
+say sit
+
+[probe]
+switch 1.trainee
+~dpclock pulse 4

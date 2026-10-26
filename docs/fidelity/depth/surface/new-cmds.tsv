@@ -134,11 +134,11 @@ src/new_cmds.c:1279	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-messag
 src/new_cmds.c:1281	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:1283	do_bite	proven	bite.vampire-sloppy-feeding;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:1288	do_bite	proven	bite.vampire-sloppy-feeding;bite.vampire-fighting-damage;bite.skill-message	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
-src/new_cmds.c:1322	full_moon	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
-src/new_cmds.c:1324	full_moon	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
+src/new_cmds.c:1322	full_moon	gap-blocked		Stop tier: full_moon walks C descriptor_list and transforms only playing descriptors; Go has no ordered descriptor snapshot, so exact connected-session reach and cross-player output order depend on session lifecycle/transport (src/weather.c:72-75; src/comm.c:1591).
+src/new_cmds.c:1324	full_moon	gap-blocked		Stop tier: full_moon walks C descriptor_list and transforms only playing descriptors; Go has no ordered descriptor snapshot, so exact connected-session reach and cross-player output order depend on session lifecycle/transport (src/weather.c:72-75; src/comm.c:1591).
 src/new_cmds.c:1410	do_whois	proven	finger.entry-gate;finger.no-arguments;finger.whois-alias;finger.offline-player	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
-src/new_cmds.c:1415	do_whois	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
-src/new_cmds.c:1421	do_whois	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
+src/new_cmds.c:1415	do_whois	proven	finger.found-player	finger-depth@1,2,3,5,8 reaches the saved-player branch through both registered finger and whois commands (R1/R2/R3/R5e/R5h).
+src/new_cmds.c:1421	do_whois	proven	finger.not-found	finger-depth@1,2,3,5,8 reaches the missing-player branch through the registered command (R1/R2/R3/R5e/R5h).
 src/new_cmds.c:1442	do_strike	proven	strike.no-target;strike.percent-draw	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:1450	do_strike	proven	strike.no-target	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).
 src/new_cmds.c:1455	do_strike	proven	strike.no-target;strike.self	The cited depth proof reaches this C output callsite through its named branch (R1/R5e).

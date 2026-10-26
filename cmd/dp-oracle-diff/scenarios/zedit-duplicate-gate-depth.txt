@@ -1,0 +1,79 @@
+# A second real descriptor requests the same ZEDIT room while the first
+# descriptor owns the editor. This reaches do_olc's duplicate scan.
+# C path: src/olc.c:150-159.
+# depth-case: zedit.duplicate-gate-cleanup
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Zeditadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Zeditadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Zeditpeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Zeditpeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Zeditpeer 8162
+advance Zeditpeer 40
+zedit 8162
+
+[probe:peer]
+zedit 8162
+
+[probe]
+Kir Drax'in
+
+[probe]
+Q

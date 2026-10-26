@@ -42,6 +42,11 @@ func TestWizardSetOutputGates(t *testing.T) {
 			want: "You can't do that.\r\n",
 		},
 		{
+			name: "missing player-only target",
+			args: []string{"player", "Nobody", "level", "1"},
+			want: "There is no such player.\r\n",
+		},
+		{
 			name: "invalid room value",
 			args: []string{"Hero", "room", "999999"},
 			impl: true,

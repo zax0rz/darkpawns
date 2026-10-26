@@ -1,4 +1,4 @@
-# Lifecycle: logging back in to a linkdead character (DP-1325).
+# Linkdead reconnect and a fresh world entry (DP-1325).
 # depth-case: entry.reconnect-linkdead
 #
 # The actor's connection drops without quitting, which leaves the character in
@@ -7,8 +7,13 @@
 # (interpreter.c:1528-1659): no MOTD or menu, "Reconnecting." to the player,
 # "$n has reconnected." to the room, and play resumes in place.
 
+# depth-case: entry.world-entry-welcome
+# depth-case: entry.world-entry-room-act
+
 [fixture]
+empty-players
 quiet-mobs
+spawn-mob 3010 1 8162 27
 
 [setup:oracle]
 Reconnector
@@ -75,14 +80,23 @@ Reconnector
 # src/interpreter.c:1766: saved-name nanny load assigns wait=1, not WAIT_STATE.
 ~dpclock pulse 1
 reconpass
+1
 
 [relogin:port]
 Reconnector
 # src/interpreter.c:1766: saved-name nanny load assigns wait=1, not WAIT_STATE.
 ~dpclock pulse 1
 reconpass
+1
+
+[warmup]
+goto 8162
+teleport Reconwatch 8162
 
 [probe]
 look
 <RELOGIN>
 look
+quit
+<RELOGIN>
+1

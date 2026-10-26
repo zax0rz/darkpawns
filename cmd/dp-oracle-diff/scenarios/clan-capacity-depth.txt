@@ -1,0 +1,115 @@
+# C-first MAX_CLANS capacity proof. A clan god uses the registered create
+# command twenty times with one mortal leader, resetting that leader's clan
+# field through the registered high-level set command between creations. This
+# keeps the scenario within the loopback connection cap while constructing the
+# same C clan-table state. The 21st create reaches the count guard before
+# argument parsing. C guards: src/clan.c:168-178; src/act.wizard.c:2600,3033-3038;
+# limit: src/clan.h:26.
+# depth-case: clan.create-capacity
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clancapgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clancapgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:leader]
+Clanleader
+Y
+leadpass
+leadpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Clanleader
+y
+leadpass
+leadpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set player Clancapgod level 35
+goto 8162
+teleport Clanleader 8162
+clan create Clanleader Clanone
+set player Clanleader clan 0
+clan create Clanleader Clantwo
+set player Clanleader clan 0
+clan create Clanleader Clanthree
+set player Clanleader clan 0
+clan create Clanleader Clanfour
+set player Clanleader clan 0
+clan create Clanleader Clanfive
+set player Clanleader clan 0
+clan create Clanleader Clansix
+set player Clanleader clan 0
+clan create Clanleader Clanseven
+set player Clanleader clan 0
+clan create Clanleader Claneight
+set player Clanleader clan 0
+clan create Clanleader Clannine
+set player Clanleader clan 0
+clan create Clanleader Clanten
+set player Clanleader clan 0
+clan create Clanleader Claneleven
+set player Clanleader clan 0
+clan create Clanleader Clantwelve
+set player Clanleader clan 0
+clan create Clanleader Clanthirteen
+set player Clanleader clan 0
+clan create Clanleader Clanfourteen
+set player Clanleader clan 0
+clan create Clanleader Clanfifteen
+set player Clanleader clan 0
+clan create Clanleader Clansixteen
+set player Clanleader clan 0
+clan create Clanleader Clanseventeen
+set player Clanleader clan 0
+clan create Clanleader Claneighteen
+set player Clanleader clan 0
+clan create Clanleader Clannineteen
+set player Clanleader clan 0
+clan create Clanleader Clantwenty
+
+[probe]
+clan create Overcapacity

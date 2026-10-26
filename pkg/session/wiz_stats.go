@@ -602,6 +602,8 @@ func (s *Session) sendStatRoom() {
 	s.Send("Description:\r\n")
 	if room.Description != "" {
 		s.Send(strings.ReplaceAll(room.Description, "\n", "\r\n"))
+	} else {
+		s.Send("  None.\r\n")
 	}
 	if parsed := w.GetParsedWorld(); parsed != nil {
 		for i := range parsed.Rooms {
@@ -646,7 +648,7 @@ func (s *Session) sendStatRoom() {
 			continue
 		}
 		exitBits := wizardExitFlags(exit.ExitInfo)
-		s.Send(fmt.Sprintf("Exit %s:  To: [%5d], Key: [%5d], Keywrd: %s, Type: %s\r\n", direction, exit.ToRoom, exit.Key, wizardExitKeyword(exit.Keywords), exitBits))
+		s.Send(fmt.Sprintf("Exit %-5s:  To: [%5d], Key: [%5d], Keywrd: %s, Type: %s\r\n", direction, exit.ToRoom, exit.Key, wizardExitKeyword(exit.Keywords), exitBits))
 		if exit.Description != "" {
 			s.Send(strings.ReplaceAll(exit.Description, "\n", "\r\n"))
 		} else {

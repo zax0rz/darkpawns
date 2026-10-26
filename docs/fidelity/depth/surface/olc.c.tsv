@@ -3,7 +3,7 @@ src/olc.c:115	do_olc	proven	oedit.no-argument;medit.no-argument;sedit.no-argumen
 src/olc.c:125	do_olc	proven	oedit.save-message	"The OEDIT save handler's empty-zone request reaches and asserts the exact ""Save which zone?"" bytes (R1/R2/R5h)."
 src/olc.c:138	do_olc	proven	zedit.new-zone-requires-number	The high-god ZEDIT new-zone path with no zone argument reaches the exact prompt (R1/R2/R5e/R5h).
 src/olc.c:143	do_olc	proven	oedit.nonnumeric-argument	Registered OEDIT with a nonnumeric argument reaches C's exact safety refusal across the focused seed matrix (R1/R2/R5e).
-src/olc.c:159	do_olc	gap-reachable	zedit.duplicate-gate-cleanup	Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
+src/olc.c:159	do_olc	proven	zedit.duplicate-gate-cleanup	zedit-duplicate-gate-depth@1,2,3,5,8 reaches the duplicate editor cleanup branch through registered ZEDIT dispatch (R1/R2/R3/R5e/R5h).
 src/olc.c:172	do_olc	proven	oedit.unknown-zone	An out-of-zone OEDIT VNUM reaches and compares C's exact unknown-zone response (R1/R2/R5e).
 src/olc.c:181	do_olc	proven	oedit.zone-permission-refusal	The confined builder reaches the exact zone-permission refusal and releases its object-edit reservation (R1/R2/R5h).
 src/olc.c:189	do_olc	proven	mudlog.olc-disk-redit	The real REDIT save command emits this exact acknowledgement before the writer and log producer (R1/R2/R5e/R5h).

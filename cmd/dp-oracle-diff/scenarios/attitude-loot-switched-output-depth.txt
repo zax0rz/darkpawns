@@ -1,0 +1,80 @@
+# C-first corpse-loot output with the real mobile body carrying a switched
+# player descriptor. Let the aggressive mobile start its own combat after the
+# switch so both engines enter the live NPC death path (src/fight.c:1129,1145,1693-1697).
+# depth-case: mob.attitude-loot-junk-output
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+set-mob-flag 19650 AGGRESSIVE
+
+[setup:oracle]
+Lootadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lootadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Lootvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Lootvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Lootvictim 8105
+set player Lootvictim outlaw on
+set player Lootvictim maxhit 1
+set player Lootvictim hit 1
+load obj 8037
+give sword Lootvictim
+nohassle
+switch watcher
+
+[probe]
+~dpclock pulse 40

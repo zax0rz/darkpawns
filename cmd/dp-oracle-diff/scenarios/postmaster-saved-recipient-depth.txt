@@ -1,0 +1,60 @@
+# C-first postmaster send-to-self vehicle. seed-player gives Testor the shipped
+# registered identity (ID 1). Check and receive first exercise their empty-mail
+# outputs; the send then proves only the pre-store room act and writer prompt.
+# The reference C ABI guard prevents this run from proving durable mail output.
+# C paths: src/spec_assign.c:214; src/mail.c:503-595.
+# depth-case: mail.send-starts-room-message
+# depth-case: mail.send-saved-recipient-prompt
+
+[fixture]
+seed-player
+quiet-mobs
+spawn-mob 3010 1 8162 27
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:observer]
+Mailwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Mailwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Mailwatch 8162
+set player Testor gold 1000
+
+[probe]
+mail Testor

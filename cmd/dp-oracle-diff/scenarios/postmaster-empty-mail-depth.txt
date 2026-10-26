@@ -1,0 +1,58 @@
+# Both registered empty-mail refusals through the assigned postmaster, with a
+# seeded saved character and a connected room peer.
+# C paths: src/spec_assign.c:214; src/mail.c:553-570.
+# depth-case: mail.check-no-mail
+# depth-case: mail.receive-empty-refusal
+
+[fixture]
+seed-player
+quiet-mobs
+spawn-mob 3010 1 8162 27
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:observer]
+Mailwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Mailwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Mailwatch 8162
+
+[probe]
+check
+receive
