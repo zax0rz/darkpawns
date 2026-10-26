@@ -1,0 +1,75 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 10000 121
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 12135
+set Testor gold 100
+set Testor cha 10
+set Testor level 30
+
+[probe]
+list
+buy
+gold
+inventory
+buy 0 gold
+gold
+inventory
+buy -1 gold
+gold
+inventory
+buy nonexistent
+gold
+inventory
+buy 2 gold
+gold
+inventory
+value
+gold
+inventory
+value gold
+gold
+inventory
+sell 2 gold
+gold
+inventory
+sell all
+gold
+inventory
+sell
+gold
+inventory
+sell 0 gold
+gold
+inventory
+sell -1 gold
+gold
+inventory
+sell nonexistent
+gold
+inventory
+buy gold 3
+gold
+inventory
+sell gold
+gold
+inventory
+buy 20 gold
+gold
+inventory

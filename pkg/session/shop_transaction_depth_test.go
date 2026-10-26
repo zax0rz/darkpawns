@@ -142,3 +142,33 @@ func TestShopCountedSaleStateThroughDispatch(t *testing.T) {
 		})
 	}
 }
+
+func TestShopValueQuotesWithoutMutationThroughDispatch(t *testing.T) {
+	w, manager, keeper, _ := shopOutputFixture(t, 1)
+	seller := addShopOutputSession(t, manager, "Valuer")
+	peer := addShopOutputSession(t, manager, "Valuepeer")
+	seller.player.SetGold(17)
+	obj, err := w.SpawnObject(6001, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.MoveObjectToPlayerInventory(obj, seller.player); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ line, want string }{
+		{"value", "What do you want me to valuate??"},
+		{"value apple ignored", "I'll give you 10 gold coins for that!"},
+		{"value nonexistent", "You don't have that."},
+	} {
+		shopDispatch(t, seller, tc.line)
+		if !strings.Contains(renderedOutput(seller), tc.want) {
+			t.Errorf("output lacks %q", tc.want)
+		}
+		if seller.player.GetGold() != 17 || keeper.GetGold() != 1000 || seller.player.Inventory.GetItemCount() != 1 {
+			t.Fatal("valuation mutated money or inventory")
+		}
+	}
+	if renderedOutput(peer) != "" {
+		t.Fatal("valuation leaked to room")
+	}
+}

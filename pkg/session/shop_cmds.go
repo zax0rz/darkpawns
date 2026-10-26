@@ -593,3 +593,25 @@ func cmdSell(s *Session, args []string) error {
 	s.markDirty(VarInventory)
 	return nil
 }
+
+// cmdValue follows shopping_value (src/shop.c:816-841). Object specials such
+// as identifier still run first; ordinary keepers quote without changing state.
+func cmdValue(s *Session, args []string) error {
+	shop, keeperName, keeper := findShopKeeperAndMobInRoom(s)
+	if shop == nil {
+		s.Send("Sorry, but you cannot do that here!\r\n")
+		return nil
+	}
+	if !shopIsOK(s, shop, keeper, keeperName) {
+		return nil
+	}
+	if len(args) == 0 {
+		sendShopKeeperTell(s, keeper, "%s What do you want me to valuate??", s.player.GetName())
+		return nil
+	}
+	name, _ := game.OneArgument(strings.Join(args, " "))
+	if obj := shopSellingObject(s, shop, keeper, name, true); obj != nil {
+		sendShopKeeperTell(s, keeper, "%s I'll give you %d gold coins for that!", s.player.GetName(), shop.SellPrice(obj.GetCost(), s.player.GetCha()))
+	}
+	return nil
+}
