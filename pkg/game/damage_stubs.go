@@ -142,7 +142,7 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam in
 	case *Player:
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
+		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
 		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
 			// C damage() burns the pain/scream number(0,2) draw even when the
 			// victim is an NPC with no descriptor (fight.c:1580-1585). The
@@ -158,7 +158,7 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam in
 	case *MobInstance:
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast)
+		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
 		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
 			// C evaluates this random scream branch for mobs too; act() simply
 			// has no descriptor to deliver the victim-directed output to.
@@ -345,7 +345,7 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 		v.SetFightingBody(killer)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
+		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true
@@ -354,7 +354,7 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 		v.SetFightingBody(killer)
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
-		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast) == combat.PosDead {
+		if combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody) == combat.PosDead {
 			w.HandleDeath(v, killer, attackType)
 		}
 		return true

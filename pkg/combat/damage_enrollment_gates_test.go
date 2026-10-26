@@ -13,7 +13,7 @@ func TestDamageStopsSleepingVictim(t *testing.T) {
 			attacker.SetFightingBody(victim)
 			victim.SetFightingBody(attacker)
 			if seam == "plain" {
-				UpdatePositionAfterDamage(victim, nil)
+				UpdatePositionAfterDamage(victim, nil, nil)
 			} else {
 				TakeDamageAfterGate(attacker, victim, 0, -1, nil)
 			}
