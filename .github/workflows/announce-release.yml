@@ -1,0 +1,64 @@
+name: Announce release on Discord
+# Posts a published release to the Discord #announcements webhook. Called by
+# release.yml after publication; can also be run by hand to retry or preview.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Published release tag (vMAJOR.MINOR.PATCH)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Print the payload instead of posting it'
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+    secrets:
+      DISCORD_ANNOUNCE_WEBHOOK:
+        required: false
+permissions:
+  contents: read
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post the release to Discord
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_ANNOUNCE_WEBHOOK }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Not a stable tag: $RELEASE_TAG" >&2; exit 1; }
+          release=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json url,body,isDraft)
+          if [[ "$(jq -r .isDraft <<<"$release")" == "true" ]]; then
+            echo "$RELEASE_TAG is still a draft; not announcing." >&2
+            exit 1
+          fi
+          url=$(jq -r .url <<<"$release")
+          # Discord embed descriptions hold at most 4096 characters.
+          payload=$(jq -n --arg title "Dark Pawns $RELEASE_TAG" --arg url "$url" \
+            --arg body "$(jq -r .body <<<"$release")" '
+            ($body | if length > 3800 then .[0:3800] + "\n\n…" else . end) as $d
+            | {username: "Dark Pawns",
+               allowed_mentions: {parse: []},
+               embeds: [{title: $title, url: $url, color: 8003359,
+                         description: ($d + "\n\n[Full release notes](" + $url + ")")}]}')
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "Dry run; payload:"
+            jq . <<<"$payload"
+            exit 0
+          fi
+          if [[ -z "${DISCORD_WEBHOOK:-}" ]]; then
+            echo "DISCORD_ANNOUNCE_WEBHOOK is not configured; skipping the announcement."
+            exit 0
+          fi
+          curl -fsS --retry 3 -H 'Content-Type: application/json' -d "$payload" "$DISCORD_WEBHOOK" >/dev/null
+          echo "Announced $RELEASE_TAG on Discord." >> "$GITHUB_STEP_SUMMARY"

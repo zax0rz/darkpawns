@@ -140,9 +140,22 @@ jobs:
           set -euo pipefail
           # Never overwrite assets or continue a partial draft under the same tag.
           notes=(--generate-notes)
-          if [[ -f "docs/releases/$RELEASE_TAG.md" ]]; then
+          # Notes are prose, not build input: prefer main's copy so they can be
+          # written after the census-clean commit is tagged.
+          if gh api "repos/$GITHUB_REPOSITORY/contents/docs/releases/$RELEASE_TAG.md?ref=main" \
+              -H 'Accept: application/vnd.github.raw' > "$RUNNER_TEMP/release-notes.md" 2>/dev/null \
+              && [[ -s "$RUNNER_TEMP/release-notes.md" ]]; then
+            notes=(--notes-file "$RUNNER_TEMP/release-notes.md")
+          elif [[ -f "docs/releases/$RELEASE_TAG.md" ]]; then
             notes=(--notes-file "docs/releases/$RELEASE_TAG.md")
           fi
           gh release create "$RELEASE_TAG" dist/*.tar.gz dist/*.zip dist/release-manifest.txt dist/release-manifest.sig dist/install.sh dist/install.sh.sig dist/install.ps1 dist/install.ps1.sig --verify-tag --draft --title "Dark Pawns $RELEASE_TAG" "${notes[@]}"
           gh release edit "$RELEASE_TAG" --draft=false --latest
           echo "Published $RELEASE_TAG from $SOURCE_SHA with a signed artifact manifest." >> "$GITHUB_STEP_SUMMARY"
+  announce:
+    needs: publish
+    uses: ./.github/workflows/announce-release.yml
+    with:
+      tag: ${{ inputs.tag }}
+    secrets:
+      DISCORD_ANNOUNCE_WEBHOOK: ${{ secrets.DISCORD_ANNOUNCE_WEBHOOK }}
