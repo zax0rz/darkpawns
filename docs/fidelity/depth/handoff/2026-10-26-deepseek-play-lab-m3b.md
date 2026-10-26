@@ -88,14 +88,14 @@ each, target level 3. Same setup as round 3: own server per class, frozen clock,
 `-entry-pulse 40`, a rest pumps 700 pulses (one Mud hour of regeneration) and a
 repopulate wait pumps 6,000.
 
-| class | decisions | experience | level | kills | deaths | exp/hour (modelled) |
+| class | decisions | experience | level | kills | deaths | exp/hour in the centre |
 |---|---:|---:|---:|---:|---:|---:|
-| thief | 213 | 1,033 | 1 | 8 | 0 | 23,774 |
-| psionic | 288 | 761 | 1 | 6 | 0 | 15,926 |
-| cleric | 292 | 732 | 1 | 4 | 0 | 15,198 |
-| ninja | 252 | 670 | 1 | 5 | 0 | 14,711 |
-| mage | 90 | 141 | 1 | 1 | 0 | 3,722 |
-| warrior | 42 | 11 | 1 | 0 | 0 | 821 (stalled, see below) |
+| thief | 213 | 1,033 | 1 | 8 | 0 | 18,412 |
+| psionic | 288 | 761 | 1 | 6 | 0 | 12,557 |
+| cleric | 292 | 732 | 1 | 4 | 0 | 11,315 |
+| ninja | 252 | 670 | 1 | 5 | 0 | 10,978 |
+| mage | 90 | 141 | 1 | 1 | 0 | 2,639 |
+| warrior | 42 | 11 | 1 | 0 | 0 | stalled, see below |
 
 **No class reached level 3 in this budget, and that is the honest headline.** The
 level-2 threshold is 1,500 experience and level 3 is 3,000 (`FindExp`,
@@ -123,24 +123,24 @@ attempt:
 
 ## 4. Experience per hour in the recruit area, and where next
 
-`scripts/recruit-yield.py`, over the decisions whose room was in zone 163:
+`scripts/recruit-yield.py`, over the decisions whose room was in zone 163. Wall
+time is **measured**: the session writes one latency row per send in the same
+order as its step rows, so the rows inside the phase window pair up by index and
+their quiet times sum to the phase's real cost.
 
-| class | kills in the centre | experience | phase wall (modelled) | exp/hour | kills/hour |
+| class | kills in the centre | experience | phase wall | exp/hour | kills/hour |
 |---|---:|---:|---:|---:|---:|
-| thief | 8 | 800 | 121 s | 23,774 | 238 |
-| psionic | 6 | 600 | 136 s | 15,926 | 159 |
-| cleric | 4 | 400 | 95 s | 15,198 | 152 |
-| ninja | 5 | 500 | 122 s | 14,711 | 147 |
-| mage | 1 | 100 | 97 s | 3,722 | 37 |
+| thief | 8 | 800 | 156 s | 18,412 | 184 |
+| psionic | 6 | 600 | 172 s | 12,557 | 126 |
+| cleric | 4 | 545 | 173 s | 11,315 | 83 |
+| ninja | 5 | 500 | 164 s | 10,978 | 110 |
+| mage | 1 | 100 | 136 s | 2,639 | 26 |
 
-Every kill paid exactly the prototype's 100 experience (the "You receive N
-experience" lines and the prototype's gold/exp field agree). The wall figure is
-**modelled**, not measured: these sessions ran without a latency file, so it
-counts every pulse pumped at the measured 6.4 ms per pulse plus every command at
-the driver's 250 ms quiet window. Both terms are conservative, so the exp/hour
-column is a floor. The spread (3.7k–23.8k) is mostly how much of the phase went
-on walking and resting rather than killing: the thief found the room full and
-stayed, the mage spent its phase resting at low health.
+The centre pays the prototype's experience exactly (100 for a recruit; the
+cleric's 545 over four kills includes one 245-experience white trainee). The
+spread (2.6k–18.4k) is mostly how much of the phase went on walking and resting
+rather than killing: the thief found the room full and stayed, the mage spent its
+phase resting at low health with a dagger.
 
 
 
