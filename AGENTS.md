@@ -177,6 +177,11 @@ PIDs you started, or use `census.sh cancel --run <dir>` for your own census.
 Other agents' servers and censuses run on the same host. Taught 2026-10-25,
 when a play-lab cleanup killed servers belonging to the v0.1.5 release census.
 
+**Handoffs.** When a brief says another agent or Zach will review, approve or
+decide something, stop and report to Zach. Never invoke another agent, model or
+paid service yourself (`claude`, `ultrareview`, other CLIs or APIs) to obtain
+it. Taught 2026-10-26, when an agent read "Claude reviews" as a command to run.
+
 ## Project Overview
 
 Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
