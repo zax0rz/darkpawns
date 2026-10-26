@@ -1,0 +1,63 @@
+# Play-lab milestone 4: a shop visit — sell, list, buy, wield.
+#
+# A new character has no gold, so the shop loop starts with a sale: Darek the
+# weaponsmith buys the starting short sword for 23 coins (Darek's Happy House of
+# Cutlery, room 8055, eight steps from the start), the list shows the wares, the
+# wooden club costs 14, and the character wields what it bought. This is the shape
+# the milestone-4 policy takes when it gears up, and it exercises the shop's sell
+# price, its list, the buy and the wield in one visit.
+
+[fixture]
+quiet-mobs
+spawn-mob 8003 1 8055 80
+
+[setup:oracle]
+Shopvisit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shopvisit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+~dpclock pulse 40
+auto exits
+north
+east
+south
+south
+south
+south
+east
+south
+look
+list
+sell sword
+score
+list
+buy club
+inventory
+wield club
+equipment
+score
