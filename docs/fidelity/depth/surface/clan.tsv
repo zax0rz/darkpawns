@@ -20,7 +20,7 @@ src/clan.c:141	do_clan_rename	proven	clan.rename-entry-gates	The named proof sce
 src/clan.c:147	do_clan_rename	proven	clan.rename-entry-gates	The named proof scenario executes this C output call.
 src/clan.c:152	do_clan_rename	proven	clan.rename-state	The named proof scenario executes this C output call.
 src/clan.c:170	do_clan_create	proven	clan.create-underpowered	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
-src/clan.c:176	do_clan_create	gap-blocked		C reaches this refusal only when num_of_clans == MAX_CLANS (20; src/clan.c:174-177; src/clan.h:26). init_clans loads num_of_clans from the binary CLAN_FILE (src/clan.c:836-861); live expansion also requires distinct non-immortal leaders. Full-state proof would need stop-tier persistent clan data or multi-session setup (R1/R2/R5e/R5g).
+src/clan.c:176	do_clan_create	proven	clan.create-capacity	clan-capacity-depth@1,2,3,5,8 drives 20 registered creates with one mortal leader, clearing membership through the registered admin set command, then proves the capacity refusal (src/clan.c:168-178; src/clan.h:26; src/act.wizard.c:2600,3033-3038; R1/R2/R3/R5e/R5g/R5h).
 src/clan.c:184	do_clan_create	proven	clan.create-missing-leader;clan.create-leader-gate	The named proof scenario executes this C output call.
 src/clan.c:189	do_clan_create	proven	clan.create-too-long	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:193	do_clan_create	proven	clan.create-immortal-leader	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
@@ -36,7 +36,7 @@ src/clan.c:311	do_clan_enroll	proven	clan.enroll-unknown-clan	The corrected clan
 src/clan.c:317	do_clan_enroll	proven	clan.enroll-low-influence	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:324	do_clan_enroll	proven	clan.enroll-applicant-list	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:334	do_clan_enroll	proven	clan.enroll-applicant-list	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
-src/clan.c:344	do_clan_enroll	gap-blocked		Stop-tier persistence path: this send is reached only while loading offline applicant records from saved player files (src/clan.c:337-345).
+src/clan.c:344	do_clan_enroll	proven	clan.enroll-applicant-list-offline	clan-offline-applicant-depth@1,2,3,5,8 quits the saved applicant before a live top-rank member lists applicants (R1/R2/R3/R5e/R5h).
 src/clan.c:353	do_clan_enroll	proven	clan.enroll-target-missing	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:359	do_clan_enroll	proven	clan.enroll-other-clan	The corrected clan-callsite-gaps vehicle executes this exact C output branch; seed-1 census dp-1371-clan-gaps-v5 is CLEAN (R1/R5e/R5h).
 src/clan.c:363	do_clan_enroll	proven	clan.enroll-not-requested	The named proof scenario executes this C output call.
@@ -101,7 +101,7 @@ src/clan.c:768	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-de
 src/clan.c:773	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:775	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:777	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
-src/clan.c:779	do_clan_info	gap-blocked		Stop-tier persistence path: the war branch reads at_war from the clan record loaded by init_clans (src/clan.c:846-855); no player command writes a nonzero value (src/clan.c:227,776-779).
+src/clan.c:779	do_clan_info	gap-blocked		Shipped lib/etc/clans is a 4-byte zero-count header; no boot-loaded record has nonzero at_war (src/clan.c:836-861). Remains blocked on clan-state fixture decision (R1/R5e/R5g).
 src/clan.c:781	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:783	do_clan_info	proven	clan.immortal-info-detail;clan.mortal-info-detail;clan.applicant-info	The named proof scenario executes this C output call.
 src/clan.c:900	do_clan_bank	proven	clan.mortal-bank-output-gates	The rank-zero applicant is sent through the live bank command before any bank argument parsing (R1/R2/R5e/R5h).

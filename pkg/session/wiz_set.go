@@ -139,7 +139,7 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 		ok = true
 	}
 	if !ok {
-		if strings.EqualFold(fieldText, "player") {
+		if playerOnly {
 			s.Send("There is no such player.\r\n")
 		} else {
 			s.Send("There is no such creature.\r\n")

@@ -14,9 +14,10 @@ from fidelity_manifest import MANIFEST_DIR, ROOT, load_rows  # noqa: E402
 MATRIX = MANIFEST_DIR / "surface" / "spell-matrix.tsv"
 INVENTORY = MANIFEST_DIR / "surface-inventory.tsv"
 ROUTES = ("spoken", "potion", "scroll", "wand", "staff")
-STATUSES = {"proven", "delegated", "gap-reachable", "gap-blocked", "unreachable"}
-GAP_BLOCKED_CELLS = {
-    (105, "spoken"): (),
+STATUSES = {"proven", "delegated", "divergent-approved", "excluded-with-C-reason",
+            "gap-reachable", "gap-blocked", "unreachable"}
+R1A_EXCLUDED_CELLS = {
+    (105, "spoken"): ("R1a", "src/spells.c:1055"),
     (31, "potion"): (
         "R1a",
         "src/spells.c:361",
@@ -193,20 +194,25 @@ def check(matrix=MATRIX, inventory=INVENTORY, root=ROOT, case_ids=None) -> list[
                 errors.append(f"{where}: {route} gap needs a source-backed reason in notes")
             if status == "unreachable" and not row["notes"].strip():
                 errors.append(f"{where}: {route} unreachable needs a source-backed reason in notes")
-            blocked_citations = GAP_BLOCKED_CELLS.get((spell_id, route))
-            if status == "gap-blocked":
-                if blocked_citations is None:
-                    errors.append(f"{where}: {route} gap-blocked cell is not in the explicit allowlist")
+            excluded_citations = R1A_EXCLUDED_CELLS.get((spell_id, route))
+            if status == "excluded-with-C-reason":
+                if excluded_citations is None:
+                    errors.append(f"{where}: {route} excluded-with-C-reason cell is not in the explicit R1a allowlist")
                 else:
-                    missing_citations = [cite for cite in blocked_citations if cite not in row["notes"]]
+                    missing_citations = [cite for cite in excluded_citations if cite not in row["notes"]]
                     if missing_citations:
                         errors.append(
-                            f"{where}: {route} gap-blocked notes must cite {', '.join(missing_citations)}"
+                            f"{where}: {route} excluded-with-C-reason notes must cite {', '.join(missing_citations)}"
                         )
-                allowed = {"gap-blocked"} if blocked_citations is not None else set()
-            elif route == "spoken":
-                allowed = {"proven", "delegated", "gap-reachable"} if 1 <= spell_id <= 102 else {"unreachable"}
+                allowed = {"excluded-with-C-reason"} if excluded_citations is not None else set()
             else:
+                allowed = None
+            if status == "gap-blocked":
+                errors.append(f"{where}: {route} gap-blocked is not an approved terminal classification")
+                allowed = set()
+            elif allowed is None and route == "spoken":
+                allowed = {"proven", "delegated", "gap-reachable"} if 1 <= spell_id <= 102 else {"unreachable"}
+            elif allowed is None:
                 allowed = {"proven", "delegated", "gap-reachable"} if spell_id <= 103 else {"unreachable"}
             if status not in allowed:
                 errors.append(f"{where}: {route} status {status!r} contradicts the C/OLC route boundary for spell {spell_id}")
@@ -262,10 +268,12 @@ def self_test() -> None:
                 )
             for route in ROUTES:
                 row[f"{route}_status"] = (
-                    "gap-blocked" if (spell_id, route) in GAP_BLOCKED_CELLS else
+                    "excluded-with-C-reason" if (spell_id, route) in R1A_EXCLUDED_CELLS else
                     "gap-reachable" if (route == "spoken" and spell_id <= 102) or (route != "spoken" and spell_id <= 103) else
                     "unreachable"
                 )
+                if row[f"{route}_status"] == "excluded-with-C-reason":
+                    row["notes"] += " R1a src/spells.c:1055 src/spell_parser.c:713 src/spells.c:361 src/spell_parser.c:602 src/spell_parser.c:605 src/spell_parser.c:804 src/spell_parser.c:809"
                 if row[f"{route}_status"].startswith("gap-"):
                     counts[route] += 1
             rows.append(row)
@@ -288,10 +296,10 @@ def self_test() -> None:
             return check(matrix, inventory, root, set())
 
         assert run() == [], run()
-        rows[4]["potion_status"] = "gap-blocked"
+        rows[4]["potion_status"] = "excluded-with-C-reason"
         errors = run()
-        assert any("potion gap-blocked cell is not in the explicit allowlist" in error for error in errors), (
-            "self-test: a third gap-blocked item cell was accepted"
+        assert any("potion excluded-with-C-reason cell is not in the explicit R1a allowlist" in error for error in errors), (
+            "self-test: an unapproved R1a item cell was accepted"
         )
         rows[4]["potion_status"] = "gap-reachable"
         rows[102]["spoken_status"] = "gap-reachable"

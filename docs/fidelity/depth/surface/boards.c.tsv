@@ -8,19 +8,19 @@ src/boards.c:261	Board_write_message	proven	boards.write-headline	The real write
 src/boards.c:263	Board_write_message	proven	boards.write-headline	The paired room probe observes this start-writing act (R1/R5h).
 src/boards.c:290	Board_show_board	proven	boards.immortal-read-mortal-refused	The mortal's read-board command routes through the assigned special to this READ_LVL gate (R1/R2/R5e/R5h).
 src/boards.c:293	Board_show_board	proven	boards.list-empty	The assigned board look executes the study act before rendering the empty listing (R1/R2/R5h).
-src/boards.c:309	Board_show_board	gap-blocked		Requires a persisted board record with a missing heading; stop tier: board save format and load state.
+src/boards.c:309	Board_show_board	gap-blocked		Fault-only corrupt persisted-board guards; remain blocked pending a persisted-state fault-injection fixture that GLM will design (R1/R5g).
 src/boards.c:334	Board_display_msg	proven	boards.read-immortal-numeric-refused	The mortal's numeric read reaches Board_display_msg's READ_LVL gate (R1/R2/R5e/R5h).
 src/boards.c:338	Board_display_msg	proven	boards.read-empty	The real numeric read on an empty board reaches this exact response (R1/R2/R5h).
 src/boards.c:342	Board_display_msg	proven	boards.read-past-end	After the actor posts one message, reading 2 reaches the range refusal (R1/R2/R5e/R5h).
-src/boards.c:349	Board_display_msg	gap-blocked		Requires a persisted message with an invalid slot index; stop tier: board save format and load state.
-src/boards.c:354	Board_display_msg	gap-blocked		Requires a persisted message with a missing heading; stop tier: board save format and load state.
-src/boards.c:358	Board_display_msg	gap-blocked		Requires a persisted message whose slot has no stored body; stop tier: board save format and load state.
+src/boards.c:349	Board_display_msg	gap-blocked		Fault-only corrupt persisted-board guards; remain blocked pending a persisted-state fault-injection fixture that GLM will design (R1/R5g).
+src/boards.c:354	Board_display_msg	gap-blocked		Fault-only corrupt persisted-board guards; remain blocked pending a persisted-state fault-injection fixture that GLM will design (R1/R5g).
+src/boards.c:358	Board_display_msg	gap-blocked		Fault-only corrupt persisted-board guards; remain blocked pending a persisted-state fault-injection fixture that GLM will design (R1/R5g).
 src/boards.c:385	Board_remove_msg	proven	boards.remove-empty	Removing from the empty board reaches this check before message-number validation (R1/R2/R5e/R5h).
 src/boards.c:389	Board_remove_msg	proven	boards.remove-past-end	After one saved post, removing 2 reaches the range refusal (R1/R2/R5e/R5h).
-src/boards.c:394	Board_remove_msg	gap-blocked		Requires a persisted message with a missing heading; stop tier: board save format and load state.
+src/boards.c:394	Board_remove_msg	gap-blocked		Fault-only corrupt persisted-board guards; remain blocked pending a persisted-state fault-injection fixture that GLM will design (R1/R5g).
 src/boards.c:400	Board_remove_msg	proven	boards.remove-immortal-level-refused	A mortal non-author reaches this board's REMOVE_LVL refusal before the post-level gate (R1/R2/R5e/R5h).
 src/boards.c:406	Board_remove_msg	proven	boards.remove-author-level-38	The level-38 actor reaches C's higher-author-level refusal (R1/R2/R5h).
-src/boards.c:414	Board_remove_msg	gap-blocked		Requires a persisted message with an invalid slot index; stop tier: board save format and load state.
+src/boards.c:414	Board_remove_msg	gap-blocked		Fault-only corrupt persisted-board guards; remain blocked pending a persisted-state fault-injection fixture that GLM will design (R1/R5g).
 src/boards.c:419	Board_remove_msg	proven	boards.remove-active	Removing while the author is in the editor reaches this exact live-descriptor refusal (R1/R2/R5h).
 src/boards.c:435	Board_remove_msg	proven	boards.remove-own;boards.remove-author-level-39;boards.remove-author-level-40	Successful removal reaches the exact actor acknowledgement in each proof (R1/R2/R5h).
 src/boards.c:437	Board_remove_msg	proven	boards.remove-own;boards.remove-author-level-39;boards.remove-author-level-40	The room probe receives C's numbered removal act after the saved post is removed (R1/R2/R5h).

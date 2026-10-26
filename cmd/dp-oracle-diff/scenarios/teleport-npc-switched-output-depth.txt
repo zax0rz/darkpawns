@@ -1,0 +1,129 @@
+# C-first NPC-target spell_teleport outputs through a switched descriptor.
+# The assigned level-1 Gil-Glash body casts at the uniquely named postman mobile;
+# equal levels keep the low-level refusal arm reachable whenever the save fails.
+# C path: src/scripts.c:1428-1473; src/spell_parser.c:827-848;
+# src/spells.c:168-194; src/act.wizard.c:1175-1200.
+
+# depth-case: spell.teleport-npc-save-refusal-output
+# depth-case: spell.teleport-npc-level-refusal-output
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14405 1 8105 144
+spawn-mob 3010 1 8105 1
+mob-script 14405 oracle/teleport.lua 512
+
+[lua-script mob/oracle/teleport.lua]
+function oncmd()
+if (argument == "say cast") then
+for i=1,10 do
+if (room.char[i] and room.char[i].name == "postman") then
+spell(room.char[i], nil, SPELL_TELEPORT, 1)
+return TRUE
+end
+end
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+Setadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Setpeer
+Y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Setpeer
+y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Setpeer 8105
+set mob gil-glash level 1
+set mob gil-glash maxhit 5000000
+set mob gil-glash hit 5000000
+set mob postman level 1
+set mob postman maxhit 5000000
+set mob postman hit 5000000
+switch gil-glash
+
+[probe:peer]
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast
+say cast

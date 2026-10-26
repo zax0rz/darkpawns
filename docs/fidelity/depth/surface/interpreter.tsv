@@ -18,10 +18,10 @@ src/interpreter.c:1013	do_alias	proven	alias.delete-existing	The existing-alias 
 src/interpreter.c:1016	do_alias	proven	alias.protect-self	The reserved self-alias case executes this refusal (R1/R2/R5e).
 src/interpreter.c:1025	do_alias	proven	alias.length-truncate	The unit depth case supplies an overlength replacement and executes this warning output (R1/R2/R5e/R5h).
 src/interpreter.c:1036	do_alias	proven	alias.add-simple;alias.redefine;alias.doubled-dollar	These creation cases execute the added acknowledgment after storing the replacement (R1/R2/R5e).
-src/interpreter.c:1638	perform_dupe_check	gap-blocked		Reconnect mail notification belongs to the stop-tier session lifecycle and identity surface; it requires durable reconnect evidence.
-src/interpreter.c:1639	perform_dupe_check	gap-blocked		Reconnect room broadcast belongs to the stop-tier session lifecycle and transport surface; it requires reconnect audience evidence.
-src/interpreter.c:1645	perform_dupe_check	gap-blocked		USURP room broadcast belongs to the stop-tier identity and session lifecycle surface.
-src/interpreter.c:2187	nanny	gap-blocked		Welcome output is part of the stop-tier login and entry surface.
-src/interpreter.c:2211	nanny	gap-blocked		Entered-game room broadcast is part of the stop-tier login and entry lifecycle surface.
-src/interpreter.c:2225	nanny	gap-blocked		Entry mail notification is part of the stop-tier login, persistence, and entry surface.
-src/interpreter.c:2227	nanny	gap-blocked		Rent-loss warning is part of the stop-tier persistence and rent surface.
+src/interpreter.c:1638	perform_dupe_check	gap-blocked	-	Reference x86_64 store_mail computes both C block structs as 104 bytes (BLOCK_SIZE is 100), so src/mail.c:285-289 returns before indexing or writing. A valid preexisting C mail-file/index fixture is needed to enter the positive has_mail branch; owner GLM to design that fixture (R1/R5e/R5g).
+src/interpreter.c:1639	perform_dupe_check	proven	entry.reconnect-linkdead	lifecycle-reconnect-linkdead@1,2,3,5,8 reaches the room reconnect act after a real dropped-link relogin (R1/R2/R3/R5e/R5h).
+src/interpreter.c:1645	perform_dupe_check	proven	entry.reconnect-usurp	entry-usurp-saved-body-depth@1,2,3,5,8 drives a second real login for the seeded identity and asserts the old-body usurp bytes and room audience (src/interpreter.c:1640-1645; R1/R2/R3/R5e/R5g/R5h).
+src/interpreter.c:2187	nanny	proven	entry.world-entry-welcome	lifecycle-reconnect-linkdead@1,2,3,5,8 logs in the seeded player and asserts the welcome block (R1/R2/R3/R5e/R5h).
+src/interpreter.c:2211	nanny	proven	entry.world-entry-room-act	lifecycle-reconnect-linkdead@1,2,3,5,8 logs in with a live peer and asserts the room entry act (R1/R2/R3/R5e/R5h).
+src/interpreter.c:2225	nanny	gap-blocked	-	Reference x86_64 store_mail computes both C block structs as 104 bytes (BLOCK_SIZE is 100), so src/mail.c:285-289 returns before indexing or writing. A valid preexisting C mail-file/index fixture is needed to enter the positive has_mail branch; owner GLM to design that fixture (R1/R5e/R5g).
+src/interpreter.c:2227	nanny	excluded	-	Excluded per #2152 decision 4: free_rent = YES at src/config.c:106, so the normal rent path cannot produce load_result == 2.

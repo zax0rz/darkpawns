@@ -2,17 +2,17 @@
 """Validate the per-site C surface maps in docs/fidelity/depth/surface/.
 
 A surface map lists every act()/send_to_char()/stc() call site of one C file
-and classifies it (proven, gap-reachable, gap-blocked, unreachable). This
-checker proves the map is mechanically sound; it cannot prove the reasoning
-behind a classification (that is review's job, R5e):
+and classifies its proof state. This checker proves the map is mechanically
+sound; it cannot prove the reasoning behind a classification (that is review's
+job, R5e):
 
 - the header is exact and every row has five fields;
 - each c_site is src/<file>.c:<line>, inside src/, and that line is an output
   call (act, send_to_char, stc), so a stale line number fails;
 - no site is listed twice, and every output call in the C file is listed;
-- the classification is one of the four;
-- a proven site cites case_ids, and every cited case_id exists in a depth
-  manifest;
+- the classification is recognized;
+- proven and divergent-approved sites cite case_ids, and every cited case_id
+  exists in a depth manifest;
 - the C file's activity-call-sites row agrees, and any non-activity inventory
   row that explicitly references this map has the same residual count/status.
 """
@@ -30,7 +30,10 @@ from fidelity_manifest import MANIFEST_DIR, ROOT, load_rows  # noqa: E402
 SURFACE_DIR = MANIFEST_DIR / "surface"
 INVENTORY = MANIFEST_DIR / "surface-inventory.tsv"
 HEADER = ["c_site", "function", "classification", "case_ids", "notes"]
-CLASSES = {"proven", "gap-reachable", "gap-blocked", "unreachable"}
+CLASSES = {
+    "proven", "divergent-approved", "excluded", "excluded-with-C-reason",
+    "gap-reachable", "gap-blocked", "unreachable",
+}
 GAPS = {"gap-reachable", "gap-blocked"}
 SITE = re.compile(r"^(src/[A-Za-z0-9_.-]+\.c):([1-9][0-9]*)$")
 # An output call at the start of an expression: act(, send_to_char(, stc(.
@@ -97,8 +100,8 @@ def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None
             if kind in GAPS:
                 gaps += 1
             ids = [part for part in cited.split(";") if part and part != "-"]
-            if kind == "proven" and not ids:
-                errors.append(f"{where}: a proven site must cite the case_ids that execute it")
+            if kind in {"proven", "divergent-approved"} and not ids:
+                errors.append(f"{where}: {kind} site must cite its depth case_ids")
             for case_id in ids:
                 if case_id not in case_ids:
                     errors.append(f"{where}: case_id {case_id!r} is in no depth manifest")
@@ -165,6 +168,12 @@ def self_test() -> None:
             return check(surface, inventory, root, set(ids))
 
         assert run(good) == [], run(good)
+        divergent = good[:]
+        divergent[1] = divergent[1].replace("proven", "divergent-approved")
+        assert run(divergent) == [], run(divergent)
+        excluded = good[:]
+        excluded[1] = excluded[1].replace("proven", "excluded-with-C-reason").replace("case.a", "-")
+        assert run(excluded) == [], run(excluded)
         cases = {
             "header": (["bad"] + good[1:], {}),
             "stale line": (good[:1] + ["src/demo.c:3\tf\tproven\tcase.a\tx"] + good[2:], {}),
@@ -172,6 +181,7 @@ def self_test() -> None:
             "duplicate": (good + [good[1]], {}),
             "class": ([good[0], good[1].replace("proven", "maybe"), good[2]], {}),
             "proven without ids": ([good[0], good[1].replace("case.a", "-"), good[2]], {}),
+            "divergent-approved without ids": ([good[0], good[1].replace("proven", "divergent-approved").replace("case.a", "-"), good[2]], {}),
             "unknown case": ([good[0], good[1].replace("case.a", "case.zz"), good[2]], {}),
             "units": (good, {"units": "2"}),
             "status": (good, {"status": "proven-already"}),

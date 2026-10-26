@@ -1,11 +1,11 @@
 c_site	function	classification	case_ids	notes
-src/graph.c:194	do_track	gap-blocked	-	The C role gate emits this refusal, but the command is a blocked surface: C registers track at src/interpreter.c:782 and Go lists it as unported DP-1361 in pkg/session/c_command_rows_test.go:14 (R1/R2/R4/R5e/R5g).
-src/graph.c:199	do_track	gap-blocked	-	The missing-skill refusal is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:204	do_track	gap-blocked	-	The empty-target prompt is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:208	do_track	gap-blocked	-	The visible-target miss is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:212	do_track	gap-blocked	-	The no-trail gate for no-track and sentinel targets is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:218	do_track	gap-blocked	-	The successful target-evasion roll refusal is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:227	do_track	gap-blocked	-	The BFS_ERROR diagnostic is reachable only through the unported track command; C find_first_step returns it for an invalid room index (src/graph.c:125-128; src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:230	do_track	gap-blocked	-	The same-room response is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:235	do_track	gap-blocked	-	The no-path response is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
-src/graph.c:255	do_track	gap-blocked	-	The path-direction success/failure output is reachable only through the unported track command (src/interpreter.c:782; pkg/session/c_command_rows_test.go:14, DP-1361) (R1/R2/R4/R5e/R5g).
+src/graph.c:194	do_track	proven	track.class-gate	Real registered track dispatch reaches the class gate; TestTrackClassGate asserts the exact refusal. (R1/R2/R5e/R5h).
+src/graph.c:199	do_track	proven	track.no-skill-gate	Real registered track dispatch reaches the learned-skill gate; TestTrackSkillGate asserts the exact refusal. (R1/R2/R5e/R5h).
+src/graph.c:204	do_track	proven	track.no-argument	track-depth@1,2,3,5,8 reaches the empty-argument output through registered dispatch. (R1/R2/R3/R5e/R5h).
+src/graph.c:208	do_track	proven	track.target-not-found	track-depth@1,2,3,5,8 reaches the target lookup miss through registered dispatch. (R1/R2/R3/R5e/R5h).
+src/graph.c:212	do_track	proven	track.notrack-sentinel-victim	track-depth@1,2,3,5,8 reaches the NOTRACK victim branch through registered dispatch. (R1/R2/R3/R5e/R5h).
+src/graph.c:218	do_track	proven	track.evasion-roll	TestTrackEvasionRoll pins the guarded roll path. (R1/R2/R3/R5e/R5h).
+src/graph.c:227	do_track	proven	track.bfs-error	TestTrackBFSSentinels pins the BFS failure arm. (R1/R2/R5e/R5h).
+src/graph.c:230	do_track	proven	track.already-there	track-depth@1,2,3,5,8 reaches the already-there branch through registered dispatch. (R1/R2/R3/R5e/R5h).
+src/graph.c:235	do_track	proven	track.no-path	TestTrackBFSSentinels pins the no-path sentinel. (R1/R2/R3/R5e/R5h).
+src/graph.c:255	do_track	proven	track.trail-direction	track-depth@1,2,3,5,8 reaches the real trail direction output. (R1/R2/R3/R5e/R5h).

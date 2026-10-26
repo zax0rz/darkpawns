@@ -1,0 +1,96 @@
+# A peer's registered say command invokes the attached mobile oncmd script.
+# The script writes me.timer back through save_char and immediately invokes
+# vocal lua_spell while the mobile carries a switched descriptor.
+# This reaches cast_spell's NPC-only GET_MOB_WAIT refusal with player-facing
+# bytes. C path: src/interpreter.c:1459; src/scripts.c:1428-1473,1823-2020;
+# src/spell_parser.c:845-848; src/act.wizard.c:1175-1200.
+# depth-case: spell.mob-wait-cast-refusal
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 14405 1 8105 144
+mob-script 14405 oracle/mob_wait.lua 512
+
+[lua-script mob/oracle/mob_wait.lua]
+function oncmd()
+if (argument == "say wait") then
+me.timer = 5000
+return TRUE
+elseif (argument == "say cast") then
+if (me.timer > 0) then
+tell("Setpeer", "Timer state: " .. me.timer)
+else
+tell("Setpeer", "Timer state: zero")
+end
+spell(me, nil, 1, 1)
+return TRUE
+end
+return FALSE
+end
+
+[setup:oracle]
+Setadmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setadmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Setpeer
+Y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Setpeer
+y
+setpass
+setpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Setpeer 8105
+switch gil-glash
+
+[probe:peer]
+say wait
+say cast

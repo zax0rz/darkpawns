@@ -1,0 +1,106 @@
+# C-first offline applicant listing through do_clan_enroll's player-table
+# fallback after the rank-zero applicant saves and disconnects.
+# depth-case: clan.enroll-applicant-list-offline
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:member]
+Clanmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:member]
+Clanmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:applicant]
+Clanoffline
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:applicant]
+Clanoffline
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+force Clanmate goto 8162
+force Clanoffline goto 8162
+clan create Clanmate Wolves
+clan set ranks 3 Wolves
+clan set applev 1 Wolves
+force Clanoffline clan apply Wolves
+send:applicant quit
+send:applicant 0
+~dpclock pulse 1
+
+[probe]
+force Clanmate clan enroll
