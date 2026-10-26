@@ -24,6 +24,8 @@ func (w *World) attitudeLootMob(killer *MobInstance, victim combat.Combatant) {
 				continue
 			}
 			Act(w, false, killer, nil, item, nil,
+				"You junk $p. It vanishes in a puff of smoke!", "", ToChar)
+			Act(w, false, killer, nil, item, nil,
 				"$n junks $p. It vanishes in a puff of smoke!", "", ToRoom)
 			w.ExtractObject(item, killer.GetRoom())
 		}

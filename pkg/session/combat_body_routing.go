@@ -25,6 +25,23 @@ func (m *Manager) combatSession(body combat.Combatant) *Session {
 	return nil
 }
 
+// mobileDescriptorOwner returns the original player whose descriptor is
+// attached to this NPC body. The player stays in the world registry for
+// identity and persistence, but C detaches its descriptor while switched.
+func (m *Manager) mobileDescriptorOwner(body *game.MobInstance) *game.Player {
+	if body == nil {
+		return nil
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for _, s := range m.sessions {
+		if s.isSwitched && s.switchedMob == body && s.player != nil {
+			return s.player
+		}
+	}
+	return nil
+}
+
 func (m *Manager) combatAudience(room int, exclude []combat.Combatant) []*Session {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

@@ -40,6 +40,57 @@ func TestMailLookupFallbackWithoutInitialization(t *testing.T) {
 	}
 }
 
+func TestHandleMailInputRespectsReferenceMailStoreLayoutGuard(t *testing.T) {
+	if referenceMailStoreLayoutValid() {
+		t.Fatal("reference C mail block sizes unexpectedly pass the store_mail guard")
+	}
+	t.Chdir(t.TempDir())
+	if err := os.Mkdir("data", 0o700); err != nil {
+		t.Fatalf("create mail data directory: %v", err)
+	}
+
+	oldIndex, oldFreeList, oldFileEndPos := mailIndex, freeList, fileEndPos
+	oldDisabled := mailDisabled
+	oldNameFunc, oldIDFunc := worldNameFunc, worldIDFunc
+	mailWriteMu.Lock()
+	oldWriteEntries := mailWriteEntries
+	mailWriteEntries = make(map[int]*mailWriteEntry)
+	mailWriteMu.Unlock()
+	t.Cleanup(func() {
+		mailIndex, freeList, fileEndPos = oldIndex, oldFreeList, oldFileEndPos
+		mailDisabled = oldDisabled
+		worldNameFunc, worldIDFunc = oldNameFunc, oldIDFunc
+		mailWriteMu.Lock()
+		mailWriteEntries = oldWriteEntries
+		mailWriteMu.Unlock()
+	})
+
+	w, sender, postmasterFn, postmasterMob, messages := newMailLifecycleWorld(t)
+	if !InitMailSystem(mailLifecycleNameByID, mailLifecycleIDByName) {
+		t.Fatal("mail initialization failed")
+	}
+	postmasterFn(w, sender, postmasterMob, "mail", "Recipient body")
+	if HandleMailInput(sender, mailLifecycleBody) {
+		t.Fatal("mail body line unexpectedly completed composition")
+	}
+	if !HandleMailInput(sender, "@") {
+		t.Fatal("@ did not complete mail composition")
+	}
+	if HasMail(mailLifecycleRecipientID) {
+		t.Fatal("reference C store_mail guard should leave the recipient without indexed mail")
+	}
+	if got := mailLifecycleLastMessage(messages, sender.Name); got != "Message sent!" {
+		t.Fatalf("mail completion message = %q, want %q", got, "Message sent!")
+	}
+	stat, err := os.Stat(MailFile)
+	if err != nil {
+		t.Fatalf("stat mail file: %v", err)
+	}
+	if stat.Size() != 0 {
+		t.Fatalf("mail file bytes after guarded send = %d, want 0", stat.Size())
+	}
+}
+
 // TestMailLifecycleAcrossProcessRestart_HelperLevel runs the smallest Go-only
 // mail vehicle with explicit InitMailSystem calls. Each phase is a distinct
 // test process, so the restart phase cannot reuse package globals from send.
@@ -89,9 +140,8 @@ func TestMailLifecycleAcrossProcessRestart_HelperLevel(t *testing.T) {
 }
 
 // TestMailHelperLifecycleSameProcess is intentionally separate from the
-// restart test. It proves only the explicit-initialization helper boundary:
-// the assigned postmaster can complete a short message and the same process
-// can check, receive, and consume it once.
+// restart test. It proves the explicit-initialization storage-helper boundary:
+// a preseeded note can be checked, received, and consumed once in one process.
 func TestMailHelperLifecycleSameProcess(t *testing.T) {
 	output := runMailLifecycleHelper(t, t.TempDir(), "same-process")
 	for _, want := range []string{
@@ -172,14 +222,9 @@ func runMailSendPhase(t *testing.T) {
 	if got, want := mailLifecycleLastMessage(messages, observer.Name), "Sender starts to write some mail."; got != want {
 		t.Fatalf("room mail prompt = %q, want %q", got, want)
 	}
-	if !HandleMailInput(sender, mailLifecycleBody) {
-		// Expected: the first body line keeps the editor open.
-	} else {
-		t.Fatal("body line unexpectedly completed mail composition")
-	}
-	if !HandleMailInput(sender, "@") {
-		t.Fatal("@ did not complete mail composition")
-	}
+	// This helper-process test exercises the Go file/index codec directly. The
+	// real @ completion path is covered separately and matches the C size guard.
+	storeMail(mailLifecycleRecipientID, sender.ID, mailLifecycleBody)
 
 	stat, err := os.Stat(MailFile)
 	if err != nil {
@@ -229,10 +274,14 @@ func runMailSameProcessPhase(t *testing.T) {
 	}
 
 	postmasterFn(w, sender, postmasterMob, "mail", "Recipient body")
-	_ = HandleMailInput(sender, mailLifecycleBody)
+	if HandleMailInput(sender, mailLifecycleBody) {
+		t.Fatal("mail body line unexpectedly completed composition")
+	}
 	if !HandleMailInput(sender, "@") {
 		t.Fatal("@ did not complete same-process mail composition")
 	}
+	// Seed the Go storage helper so this test isolates receive/delete behavior.
+	storeMail(mailLifecycleRecipientID, sender.ID, mailLifecycleBody)
 
 	recipient := NewPlayer(mailLifecycleRecipientID, "Recipient", 1001)
 	if err := w.AddPlayer(recipient); err != nil {

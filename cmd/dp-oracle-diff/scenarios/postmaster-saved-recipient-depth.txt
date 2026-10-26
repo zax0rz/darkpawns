@@ -1,10 +1,13 @@
 # C-first postmaster send-to-self vehicle. seed-player gives Testor the shipped
-# registered identity (ID 1). Check and receive first exercise their empty-mail
-# outputs; the send then proves only the pre-store room act and writer prompt.
-# The reference C ABI guard prevents this run from proving durable mail output.
-# C paths: src/spec_assign.c:214; src/mail.c:503-595.
+# registered identity (ID 1). Check and receive cover empty-mail refusals, then
+# the real string writer completes without storing a note because C rejects
+# its 104-byte structs against BLOCK_SIZE 100; subsequent check/receive remain empty.
+# C paths: src/spec_assign.c:214; src/mail.c:277-307,503-595; src/modify.c:211-224.
+# depth-case: mail.receive-empty-refusal
+# depth-case: mail.check-no-mail
 # depth-case: mail.send-starts-room-message
 # depth-case: mail.send-saved-recipient-prompt
+# depth-case: mail.send-completion
 
 [fixture]
 seed-player
@@ -57,4 +60,10 @@ teleport Mailwatch 8162
 set player Testor gold 1000
 
 [probe]
+receive
+check
 mail Testor
+A saved Testor note reaches the mail writer.
+@
+check
+receive

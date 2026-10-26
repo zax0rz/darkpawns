@@ -533,7 +533,9 @@ func performAct(format string, ch, vict Actor, obj, victObj *ObjectInstance, arg
 // --------------------------------------------------------------------------
 
 func Act(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectInstance, format, arg2 string, actType int) {
-	actDeliver(world, hideInvisible, ch, vict, obj, victObj, format, arg2, actType, sendActLine)
+	actDeliver(world, hideInvisible, ch, vict, obj, victObj, format, arg2, actType, func(to Actor, line string) {
+		sendActLineWithWorld(world, to, line)
+	})
 }
 
 // ActWithPrivateSink preserves the supplied actor's identity and body state
@@ -550,13 +552,25 @@ func ActWithPrivateSink(world *World, hideInvisible bool, ch, vict Actor, obj, v
 			privateSink(line)
 			return
 		}
-		sendActLine(to, line)
+		sendActLineWithWorld(world, to, line)
 	})
 }
 
 // sendActLine is Act's delivery: the rendered line goes straight to the
 // recipient's transport.
 func sendActLine(to Actor, line string) { to.SendMessage(line) }
+
+// sendActLineWithWorld routes output to a descriptor attached to an NPC body.
+// A descriptorless NPC keeps SendMessage's no-op behavior.
+func sendActLineWithWorld(world *World, to Actor, line string) {
+	if mob, ok := to.(*MobInstance); ok && world != nil && world.MobileMessageSink != nil && world.MobileDescriptorOwner != nil {
+		if world.MobileDescriptorOwner(mob) != nil {
+			world.MobileMessageSink(mob, []byte(line))
+			return
+		}
+	}
+	sendActLine(to, line)
+}
 
 // actDeliver is act()'s audience and rendering logic with the final write
 // supplied by the caller. Act delivers with sendActLine; channelAct also
@@ -623,6 +637,7 @@ func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *
 
 	// Get all actors in the room
 	actors := world.actChar(roomVNum)
+	detachedOwners := world.mobileDescriptorOwners(roomVNum)
 	for _, to := range actors {
 		if !sendOk(to, toSleep) {
 			continue
@@ -634,6 +649,9 @@ func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *
 		if to == ch {
 			continue
 		}
+		if player, ok := to.(*Player); ok && detachedOwners[player] {
+			continue
+		}
 		// For TO_NOTVICT, also skip vict
 		if actType == ToNotVict && vict != nil && to == vict {
 			continue
@@ -641,6 +659,19 @@ func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *
 		msg := performAct(format, ch, vict, obj, victObj, "", arg2, to)
 		deliver(to, cap(msg)+"\r\n")
 	}
+}
+
+func (w *World) mobileDescriptorOwners(roomVNum int) map[*Player]bool {
+	owners := make(map[*Player]bool)
+	if w == nil || w.MobileDescriptorOwner == nil {
+		return owners
+	}
+	for _, mob := range w.GetMobsInRoom(roomVNum) {
+		if owner := w.MobileDescriptorOwner(mob); owner != nil {
+			owners[owner] = true
+		}
+	}
+	return owners
 }
 
 // actArenaBroadcast ports do_broadcast (src/comm.c:2539-2556). Its format
@@ -654,8 +685,19 @@ func actArenaBroadcast(world *World, hideInvisible bool, ch, vict Actor, obj, vi
 	for _, m := range world.GetAllMobs() {
 		actors = append(actors, m)
 	}
+	detachedOwners := make(map[*Player]bool)
+	if world.MobileDescriptorOwner != nil {
+		for _, mob := range world.GetAllMobs() {
+			if owner := world.MobileDescriptorOwner(mob); owner != nil {
+				detachedOwners[owner] = true
+			}
+		}
+	}
 	for _, to := range actors {
 		if to == ch || !sendOk(to, true) {
+			continue
+		}
+		if player, ok := to.(*Player); ok && detachedOwners[player] {
 			continue
 		}
 		// The live nobroadcast toggle writes PrfNoBroad, not NoBroadcast.

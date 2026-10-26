@@ -66,8 +66,7 @@ func (s *Session) performDupeCheck() bool {
 		// (src/interpreter.c:1573-1576), so close_socket finds no character.
 		old.LoseDescriptorWithoutChar()
 		m.unregister(name)
-		old.CloseSend()
-		old.Close()
+		old.CloseAfterSend()
 		return false
 	}
 	unswitch := old.isSwitched
@@ -89,14 +88,12 @@ func (s *Session) performDupeCheck() bool {
 		// The character is cleared before CON_CLOSE (interpreter.c:1552-1556),
 		// so close_socket has none to name.
 		old.LoseDescriptorWithoutChar()
-		old.CloseSend()
-		old.Close()
+		old.CloseAfterSend()
 	case usurp:
 		old.Send("\r\nThis body has been usurped!\r\n")
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
 		old.LoseDescriptorWithoutChar()
-		old.CloseSend()
-		old.Close()
+		old.CloseAfterSend()
 	case editing:
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")
 		// close_socket's cleanup_olc frees the editor, and with d->character
@@ -109,8 +106,7 @@ func (s *Session) performDupeCheck() bool {
 		old.cancelSedit()
 		// The editor's character is cleared for the same reason (interpreter.c:1573).
 		old.LoseDescriptorWithoutChar()
-		old.CloseSend()
-		old.Close()
+		old.CloseAfterSend()
 	default:
 		// A linkdead session's pumps have already exited; release what is left.
 		old.CloseSend()

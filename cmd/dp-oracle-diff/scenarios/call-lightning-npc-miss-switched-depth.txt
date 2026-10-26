@@ -1,0 +1,112 @@
+# The elemental temple earth elemental is assigned SPECIAL(cleric) in C
+# (src/spec_assign.c:197). Its combat pulse reaches Call Lightning after an
+# outlaw peer starts fighting; Testor switches into that mobile so the M@0045
+# miss reaches a connected descriptor.
+# C paths: src/spec_assign.c:197; src/spec_procs.c:1425-1496;
+# src/magic.c:758-827; src/fight.c:1023-1095; lib/misc/messages:45-58.
+# depth-case: fightmsg.6.npc-miss-switched-actor
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650828871
+spawn-mob 1305 1 8105 80
+
+[setup:oracle]
+Calladmin
+Y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Calladmin
+y
+adminpass
+adminpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Callvictim
+Y
+victimpass
+victimpass
+N
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Callvictim
+y
+victimpass
+victimpass
+N
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Callwatch
+Y
+watchpass
+watchpass
+N
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Callwatch
+y
+watchpass
+watchpass
+N
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Callvictim 8105
+teleport Callwatch 8105
+set player Calladmin level 31
+set player Callvictim outlaw on
+set player Callvictim level 25
+set player Callvictim ac -100
+set player Callvictim maxhit 5000000
+set player Callvictim hit 5000000
+set mob khelereth level 80
+set mob khelereth maxhit 5000000
+set mob khelereth hit 5000000
+force Callvictim kill khelereth
+switch khelereth
+
+[probe]
+~dpclock pulse 2400

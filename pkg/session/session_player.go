@@ -105,6 +105,20 @@ func (s *Session) CloseSend() {
 	s.closeSendNow()
 }
 
+// CloseAfterSend lets a transport writer flush everything already queued
+// before its connection is closed. Reconnect notices are queued immediately
+// before a duplicate descriptor is retired, so closing the socket first loses
+// those bytes.
+func (s *Session) CloseAfterSend() {
+	s.CloseSend()
+	if s.drainBeforeCloseFunc != nil {
+		s.drainBeforeCloseFunc()
+	} else if s.writerDone != nil {
+		<-s.writerDone
+	}
+	s.Close()
+}
+
 func (s *Session) closeSendNow() {
 	s.releaseEntryName()
 	if s.send == nil {
@@ -154,6 +168,13 @@ func (s *Session) Close() {
 // (DP-928).
 func (s *Session) SetCloseFunc(fn func()) {
 	s.closeFunc = fn
+}
+
+// SetDrainBeforeCloseFunc installs a transport-specific wait for queued output
+// to finish. Telnet uses this to join its writer before the raw connection is
+// closed; WebSocket sessions use writerDone.
+func (s *Session) SetDrainBeforeCloseFunc(fn func()) {
+	s.drainBeforeCloseFunc = fn
 }
 
 // DetachTransport stops the transport writer while leaving the authenticated

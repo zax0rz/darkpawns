@@ -1,6 +1,6 @@
-# A peer starts a real fight with a guard trainee. Its oncmd script sets the
-# mobile to sitting before the violence pulse; the switched descriptor then
-# receives the NPC dodge and stand-up outputs from perform_violence.
+# The mortal peer starts a real fight with a guard trainee by forced command.
+# Its oncmd script sets the mobile to sitting; the God switches into that live
+# body before the violence pulse and receives its dodge and stand-up outputs.
 # C paths: src/interpreter.c:1459; src/scripts.c:1718-1810,2015-2017;
 # src/fight.c:1965-1972,1982-1986; src/act.wizard.c:1175-1200.
 # depth-case: fight.round-dodge
@@ -82,18 +82,20 @@ Y
 goto 8105
 teleport Violencepeer 8105
 set player Violencepeer class warrior
-set player Violencepeer level 80
+set player Violencepeer level 1
 set player Violencepeer outlaw on
 set player Violencepeer maxhit 5000000
 set player Violencepeer hit 5000000
-set mob trainee level 101
+set player Violencepeer hitroll -20
+set player Violencepeer damroll -20
+set mob trainee level 80
 set mob trainee maxhit 5000000
 set mob trainee hit 5000000
-
-[probe:peer]
-kill 1.trainee
-say sit
+set mob trainee hitroll -20
+set mob trainee damroll -20
+force Violencepeer kill 1.trainee
+force Violencepeer say sit
+switch 1.trainee
 
 [probe]
-switch 1.trainee
 ~dpclock pulse 4

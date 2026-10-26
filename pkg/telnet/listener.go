@@ -425,6 +425,11 @@ func handleConn(rawConn net.Conn, manager *session.Manager, identity session.Con
 		defer close(done)
 		writeLoop(tc, s)
 	}()
+	s.SetDrainBeforeCloseFunc(func() {
+		// A client that stops reading cannot block the writer join forever.
+		_ = rawConn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		<-done
+	})
 	stopWriter := func() {
 		// A client that stops reading cannot block writeLoop forever and leak
 		// this goroutine/file descriptor.

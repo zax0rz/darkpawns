@@ -1,6 +1,7 @@
-# C-first corpse-loot output with the real mobile body carrying a switched
-# player descriptor. Let the aggressive mobile start its own combat after the
-# switch so both engines enter the live NPC death path (src/fight.c:1129,1145,1693-1697).
+# C-first corpse-loot output with a live descriptor switched onto the
+# aggressive mobile. C removes the descriptor from the wizard body at switch
+# (src/act.wizard.c:1175-1200); actor get/junk/wear output still reaches it via
+# the NPC's descriptor, while room acts reach only the observer.
 # depth-case: mob.attitude-loot-junk-output
 
 [fixture]
@@ -65,9 +66,38 @@ Y
 <ENTER>
 1
 
+[setup:oracle:observer]
+Lootobserver
+Y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Lootobserver
+y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 goto 8105
 teleport Lootvictim 8105
+teleport Lootobserver 8105
 set player Lootvictim outlaw on
 set player Lootvictim maxhit 1
 set player Lootvictim hit 1

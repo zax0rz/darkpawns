@@ -408,6 +408,7 @@ func NewManager(world *game.World, database db.GameStore) *Manager {
 			attached.sendGuarded(wrapped)
 		}
 	}
+	world.MobileDescriptorOwner = m.mobileDescriptorOwner
 
 	// C's do_simple_move calls look_at_room before follower recursion. Keep the
 	// renderer in session while letting the game transaction own that ordering.
@@ -2319,6 +2320,8 @@ type Session struct {
 	// sessions use s.conn directly; telnet/other transports set this so that
 	// s.Close() can tear down the underlying connection (DP-928).
 	closeFunc func()
+	// drainBeforeCloseFunc joins a non-WebSocket output writer after send closes.
+	drainBeforeCloseFunc func()
 
 	// transportDone is closed when a transport disappears while an
 	// authenticated player remains linkdead in the world. The send channel is

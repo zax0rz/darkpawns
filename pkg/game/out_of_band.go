@@ -43,7 +43,7 @@ func (w *World) channelActWrapped(channel string, hideInvisible bool, ch, vict A
 		if wrap != nil {
 			line = wrap(to, line)
 		}
-		to.SendMessage(line)
+		sendActLineWithWorld(w, to, line)
 		if observer != nil {
 			if p, ok := to.(*Player); ok && p != nil {
 				observer.ChannelLine(p, channel, channelTalker(ch, to), line)

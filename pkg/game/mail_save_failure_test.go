@@ -166,8 +166,8 @@ func TestMailReceiveStopsContinuationAtFirstNUL(t *testing.T) {
 	}
 }
 
-// TestMailReceiveProducesSemanticRuntimeText proves the native Go mail path
-// places the C-semantic text in the delivered object before persistence.
+// TestMailReceiveProducesSemanticRuntimeText proves the Go storage helper
+// decodes a seeded mail record into the C-semantic delivered object text.
 func TestMailReceiveProducesSemanticRuntimeText(t *testing.T) {
 	t.Chdir(t.TempDir())
 	if err := os.Mkdir("data", 0o700); err != nil {
@@ -188,13 +188,7 @@ func TestMailReceiveProducesSemanticRuntimeText(t *testing.T) {
 		t.Fatal("mail initialization failed")
 	}
 
-	postmasterFn(w, sender, postmasterMob, "mail", "Recipient body")
-	if HandleMailInput(sender, mailLifecycleBody) {
-		t.Fatal("mail body line unexpectedly completed composition")
-	}
-	if !HandleMailInput(sender, "@") {
-		t.Fatal("@ did not complete mail composition")
-	}
+	storeMail(mailLifecycleRecipientID, sender.ID, mailLifecycleBody)
 
 	recipient := NewPlayer(mailLifecycleRecipientID, "Recipient", 1001)
 	if err := w.AddPlayer(recipient); err != nil {
