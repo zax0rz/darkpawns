@@ -58,12 +58,14 @@ func TestSpecRechargerOutputThroughCharacterDispatch(t *testing.T) {
 		t.Fatalf("list peer bytes = %q, want %q", got, want)
 	}
 
+	s.player.SetPosition(combat.PosResting)
 	reset()
 	issue("help")
 	if got, want := messages[s.player.GetName()], listOutput+"The recharger stares expectantly at you.\r\n"; got != want {
 		t.Fatalf("help actor bytes = %q, want %q", got, want)
 	}
 
+	s.player.SetPosition(combat.PosStanding)
 	reset()
 	issue("recharge")
 	if got, want := messages[s.player.GetName()], "The recharger tells you, 'You don't have that!'\r\nThe recharger whaps you upside the head.\r\n"; got != want {
@@ -117,7 +119,15 @@ func TestSpecRechargerOutputThroughCharacterDispatch(t *testing.T) {
 	}
 
 	full := addObject(991103, "staff", "a full staff", game.ITEM_STAFF, [4]int{5, 10, 10, 0})
-	_ = full
+	reset()
+	issue("recharge", "staff")
+	if got, want := messages[s.player.GetName()], "The recharger tells you, 'You don't have enough gold!'\r\n"; got != want {
+		t.Fatalf("funds precede full check = %q, want %q", got, want)
+	}
+	if s.player.GetGold() != 0 || full.GetValue(1) != 10 || full.GetValue(2) != 10 {
+		t.Fatal("refused recharge mutated money or charges")
+	}
+	s.player.SetGold(500)
 	reset()
 	issue("recharge", "staff")
 	if got, want := messages[s.player.GetName()], "The recharger tells you, 'The item does not need recharging, stop wasting my time!'\r\n"; got != want {

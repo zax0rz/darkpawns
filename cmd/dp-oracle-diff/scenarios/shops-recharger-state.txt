@@ -1,0 +1,110 @@
+[fixture]
+seed-player
+quiet-mobs
+spawn-mob 8 1 12296 122
+spawn-mob 12220 1 12296 122
+mob-script 12220 oracle/recharge.lua 512
+replace-room-exits 12296 none
+
+[lua-script mob/oracle/recharge.lua]
+function oncmd()
+if argument ~= "say gear" then return FALSE end
+local o = oload(ch, 14405, "char")
+o.cost = 900
+o.val[1] = 1
+o.val[2] = 3
+o.val[3] = 1
+save_obj(o)
+local staff = oload(ch, 14408, "char")
+staff.val[1] = 0
+staff.val[2] = 2
+staff.val[3] = 1
+save_obj(staff)
+return TRUE
+end
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12296
+teleport Shopwitness 12296
+say gear
+load obj 12102
+set Testor gold 200
+
+[probe]
+recharge
+gold
+inventory
+stat obj winterwand
+stat obj spectacles
+recharge gold
+gold
+inventory
+stat obj winterwand
+stat obj spectacles
+recharge winterwand
+gold
+inventory
+stat obj winterwand
+stat obj spectacles
+recharge spectacles
+gold
+inventory
+stat obj winterwand
+stat obj spectacles
+set Testor gold 99
+recharge winterwand
+gold
+inventory
+stat obj winterwand
+stat obj spectacles
+set Testor gold 500
+recharge winterwand
+gold
+inventory
+stat obj winterwand
+stat obj spectacles
+recharge spectacles
+gold
+inventory
+stat obj winterwand
+stat obj spectacles
