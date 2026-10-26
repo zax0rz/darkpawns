@@ -46,9 +46,7 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 	if ch == nil || me == nil {
 		return false
 	}
-	if ch.GetPosition() < combat.PosSitting {
-		return false
-	}
+	// C has no position gate here; command dispatch governs each verb.
 	if cmd == "list" || cmd == "help" {
 		Act(w, false, me, ch, nil, nil, "$n sighs loudly.", "", ToRoom)
 		Act(w, false, me, ch, nil, nil, "$n says 'I recharge wands and staves, of course!'", "", ToRoom)
@@ -99,24 +97,19 @@ func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 	}
 
-	maxCharges := item.GetValue(1)
-	currCharges := item.GetValue(2)
-	spellLvl := item.GetValue(0)
-
-	if currCharges >= maxCharges {
-		Act(w, false, me, ch, nil, nil, "$n tells you, 'The item does not need recharging, stop wasting my time!'", "", ToVict)
-		return true
-	}
-
-	cost := spellLvl * 100
-	if cost < 100 {
-		cost = 100
-	}
-
+	// C checks the price before inspecting the charge count (src/new_cmds2.c:463-479).
+	cost := max(100, item.GetValue(0)*100)
 	ch.mu.Lock()
 	if ch.Gold < cost {
 		ch.mu.Unlock()
 		Act(w, false, me, ch, nil, nil, "$n tells you, 'You don't have enough gold!'", "", ToVict)
+		return true
+	}
+	maxCharges := item.GetValue(1)
+	currCharges := item.GetValue(2)
+	if currCharges >= maxCharges {
+		ch.mu.Unlock()
+		Act(w, false, me, ch, nil, nil, "$n tells you, 'The item does not need recharging, stop wasting my time!'", "", ToVict)
 		return true
 	}
 	ch.Gold -= cost

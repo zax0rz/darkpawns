@@ -35,7 +35,7 @@ func TestCmdBuyCapacityRefusalPreservesGold(t *testing.T) {
 	addShopKeeperStock(t, world, keeper, 6001)
 	sm := game.NewShopManager()
 	sm.AddShop(&game.Shop{
-		VNum: 1, KeeperVNum: 5001,
+		VNum: 1, KeeperVNum: 5001, Rooms: []int{1001},
 		SellTypes: []int{6001}, BuyTypes: []int{},
 		ProfitBuy: 1.0, ProfitSell: 1.0,
 		OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28,
@@ -98,7 +98,7 @@ func TestBuyRejectedAtWeightLeavesNoRegisteredObject(t *testing.T) {
 	}
 	addShopKeeperStock(t, world, keeper, 6001)
 	sm := game.NewShopManager()
-	sm.AddShop(&game.Shop{VNum: 1, KeeperVNum: 5001, SellTypes: []int{6001}, BuyTypes: []int{}, ProfitBuy: 1.0, ProfitSell: 1.0, OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28})
+	sm.AddShop(&game.Shop{VNum: 1, KeeperVNum: 5001, Rooms: []int{1001}, SellTypes: []int{6001}, BuyTypes: []int{}, ProfitBuy: 1.0, ProfitSell: 1.0, OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28})
 	world.SetShopManager(sm)
 
 	s := makeTestSession(t, m, "Buyer", 1001, true)

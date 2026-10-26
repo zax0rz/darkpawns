@@ -97,8 +97,8 @@ func TestCmdBuyWithoutArgumentsSortsKeeperStockBeforePrompt(t *testing.T) {
 	if roller.numberCalls != 1 {
 		t.Fatalf("sort draws before empty-argument response = %d, want 1", roller.numberCalls)
 	}
-	if got := renderedOutput(buyer); got != "Buy what?\r\n" {
-		t.Fatalf("empty-argument response = %q, want existing prompt bytes", got)
+	if got := renderedOutput(buyer); got != "A merchant tells you, 'What do you want to buy??'\r\n" {
+		t.Fatalf("empty-argument response = %q, want C keeper prompt", got)
 	}
 }
 
@@ -111,7 +111,7 @@ func TestShopBuyAndSellCheckOpenHours(t *testing.T) {
 	if err := cmdBuy(buyer, []string{"apple"}); err != nil {
 		t.Fatalf("cmdBuy at closed shop: %v", err)
 	}
-	if got := renderedOutput(buyer); got != "A merchant says, 'Come back later!'\r\n" {
+	if got := renderedOutput(buyer); got != "A merchant exclaims, 'Come back later!'\r\n" {
 		t.Fatalf("closed-shop buy response = %q", got)
 	}
 
@@ -119,7 +119,7 @@ func TestShopBuyAndSellCheckOpenHours(t *testing.T) {
 	if err := cmdSell(seller, []string{"apple"}); err != nil {
 		t.Fatalf("cmdSell at closed shop: %v", err)
 	}
-	if got := renderedOutput(seller); got != "A merchant says, 'Come back later!'\r\n" {
+	if got := renderedOutput(seller); got != "A merchant exclaims, 'Come back later!'\r\n" {
 		t.Fatalf("closed-shop sell response = %q", got)
 	}
 }
@@ -136,5 +136,25 @@ func TestSwitchedShopKeeperResetsSortOnCommand(t *testing.T) {
 	}
 	if shop.LastSort != 0 {
 		t.Fatalf("SHOP_SORT after switched keeper command = %d, want 0", shop.LastSort)
+	}
+}
+
+func TestShopPurchaseSelectorsUseCDigits(t *testing.T) {
+	w, _, _, _ := shopOutputFixture(t, 1)
+	proto, ok := w.GetObjPrototype(6001)
+	if !ok {
+		t.Fatal("missing stock")
+	}
+	stock := game.NewObjectInstance(proto, -1)
+	viewer := game.NewPlayer(1, "Selector", 1001)
+	for _, query := range []string{"0.apple", "+1.apple", "-1.apple", "2.", "bad.apple", "#+1", "#-1", "#bad", "#0"} {
+		if got := findShopPurchaseObject(query, []*game.ObjectInstance{stock}, viewer); got != nil {
+			t.Errorf("invalid C selector %q found %v", query, got)
+		}
+	}
+	for _, query := range []string{"1.apple", "#1"} {
+		if got := findShopPurchaseObject(query, []*game.ObjectInstance{stock}, viewer); got != stock {
+			t.Errorf("valid C selector %q missed", query)
+		}
 	}
 }

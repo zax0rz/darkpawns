@@ -934,14 +934,6 @@ func (m *MobInstance) GetName() string {
 	return m.GetShortDesc()
 }
 
-// SetNameOverride mirrors C's per-instance player.name mutation without
-// changing the shared or displayed short description.
-func (m *MobInstance) SetNameOverride(name string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.Runtime.NameOverride = name
-}
-
 // SendMessage sends a message to the mob (no-op for mobs, but needed for interface).
 func (m *MobInstance) SendMessage(msg string) {
 	// Mobs don't receive messages

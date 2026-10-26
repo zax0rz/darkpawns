@@ -52,3 +52,5 @@ list
 buy sword
 buy
 sell tunic
+
+# depth-case: shops.audit.shop-do-not-here

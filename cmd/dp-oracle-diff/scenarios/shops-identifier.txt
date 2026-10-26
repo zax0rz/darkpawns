@@ -1,0 +1,62 @@
+# C-first vehicle for SPECIAL(identifier), src/spec_procs2.c:1193-1280. The
+# real registered Ferrenx identifier is mob vnum 8087 in room 8116; C attaches
+# no script to it (DP-1333). Bread is moved to
+# the actor during drained warmup so value lookup sees ch->carrying.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8087 1 8116 80
+replace-room-exits 8116 none
+spawn-obj 8010 1 8116 80
+
+[setup:oracle]
+IdentifierActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+IdentifierActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8116
+get bread
+
+[probe]
+
+list
+value
+value bread
+value sword
+give
+gold
+inventory
+give bread
+gold
+inventory
+give bread nobody
+gold
+inventory
+xyzzy
+
+# depth-case: shops.audit.shops-identifier

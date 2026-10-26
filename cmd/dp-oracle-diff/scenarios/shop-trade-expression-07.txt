@@ -1,0 +1,74 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+replace-room-exits 12135 none
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+teleport Shopwitness 12135
+buy gold
+sedit 12101
+T
+D
+1
+D
+0
+A
+13
+gold & absent
+Q
+q
+y
+
+[probe]
+value gold
+gold
+inventory
+sell gold
+gold
+inventory
+
+# depth-case: shops.audit.shop-trade-expression-07

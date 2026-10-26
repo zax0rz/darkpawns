@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 )
 
@@ -72,13 +71,7 @@ func (w *World) shopNpcIsOK(shop *Shop, keeper, customer *MobInstance) bool {
 // number is the count and is consumed from the argument, otherwise the count is
 // one and the argument is untouched.
 func shopNpcTransactionAmt(arg string) (int, string) {
-	first, rest := oneArgument(arg)
-	if first != "" {
-		if n, err := strconv.Atoi(first); err == nil {
-			return n, strings.TrimLeft(rest, " ")
-		}
-	}
-	return 1, arg
+	return ShopTransactionAmount(arg)
 }
 
 // shopNpcPurchaseObject ports get_purchase_obj (src/shop.c:424-453), including
@@ -119,8 +112,8 @@ func (w *World) shopNpcPurchaseObject(shop *Shop, keeper *MobInstance, viewer *M
 
 // shopNpcPurchaseByIndex ports get_hash_obj_vis (src/shop.c:402-421).
 func shopNpcPurchaseByIndex(stock []*ObjectInstance, viewer *MobInstance, name string) *ObjectInstance {
-	index, err := strconv.Atoi(strings.TrimPrefix(name, "#"))
-	if err != nil || index < 1 {
+	index, valid := ShopNumber(strings.TrimPrefix(name, "#"))
+	if !valid || index < 1 {
 		return nil
 	}
 	var last *ObjectInstance
@@ -142,14 +135,11 @@ func shopNpcPurchaseByIndex(stock []*ObjectInstance, viewer *MobInstance, name s
 
 // shopNpcPurchaseByName ports get_slide_obj_vis (src/shop.c:344-375).
 func shopNpcPurchaseByName(stock []*ObjectInstance, viewer *MobInstance, name string) *ObjectInstance {
-	ordinal := 1
 	keyword := name
-	if before, after, found := strings.Cut(name, "."); found {
-		if n, err := strconv.Atoi(before); err == nil && n > 0 {
-			ordinal, keyword = n, after
-		}
+	ordinal := GetNumber(&keyword)
+	if ordinal <= 0 || keyword == "" {
+		return nil
 	}
-	keyword = strings.Fields(keyword)[0]
 	var last *ObjectInstance
 	for _, obj := range stock {
 		if obj == nil || !canSeeObject(viewer, obj) || !isCName(keyword, obj.GetKeywords()) {
@@ -170,10 +160,15 @@ func shopNpcPurchaseByName(stock []*ObjectInstance, viewer *MobInstance, name st
 // shopNpcSellingObject ports get_selling_obj (src/shop.c:593-631).
 func (w *World) shopNpcSellingObject(shop *Shop, keeper, customer *MobInstance, name string, msg bool) *ObjectInstance {
 	var found *ObjectInstance
-	for _, obj := range customer.Inventory {
-		if obj != nil && canSeeObject(customer, obj) && isCName(name, obj.GetKeywords()) {
-			found = obj
-			break
+	ordinal := GetNumber(&name)
+	matched := 0
+	for _, obj := range customer.InventorySnapshot() {
+		if ordinal > 0 && obj != nil && (canSeeObject(customer, obj) || obj.GetTypeFlag() == ITEM_LIGHT) && isnameWithAbbrevs(name, obj.GetKeywords()) {
+			matched++
+			if matched == ordinal {
+				found = obj
+				break
+			}
 		}
 	}
 	if found == nil {
@@ -182,11 +177,13 @@ func (w *World) shopNpcSellingObject(shop *Shop, keeper, customer *MobInstance, 
 		}
 		return nil
 	}
-	// trade_with's OBJECT_OK gate: the shop must buy this type, the item must
-	// have value, and ITEM_NOSELL blocks it (src/structs.h:484).
-	if !shop.WillBuyType(found.GetTypeFlag()) || found.GetCost() < 1 || found.HasExtraFlag(0, 16) {
+	if result := shop.TradeWith(found); result != ShopTradeOK {
 		if msg {
-			w.shopNpcTell(keeper, fmt.Sprintf(shop.Messages[ShopMessageDoNotBuy], customer.GetName()))
+			message := shop.Messages[ShopMessageDoNotBuy]
+			if result == ShopTradeDead {
+				message = "%s I don't buy used up wands or staves!"
+			}
+			w.shopNpcTell(keeper, fmt.Sprintf(message, customer.GetName()))
 		}
 		return nil
 	}
@@ -307,7 +304,7 @@ func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string
 		return
 	}
 	cha := customer.GetCha()
-	pays := customer.GetLevel() < LVL_GOD
+	pays := true // C IS_GOD excludes NPCs at every level (src/shop.h:76).
 	if pays && shop.BuyPrice(obj.GetCost(), cha) > customer.GetGold() {
 		w.shopNpcTell(keeper, fmt.Sprintf(shop.Messages[ShopMessageMissingCash2], customer.GetName()))
 		switch shop.Temper {

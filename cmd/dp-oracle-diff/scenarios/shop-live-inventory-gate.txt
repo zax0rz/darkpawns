@@ -1,3 +1,5 @@
+# The disposable reset reproduces authored keeper stock while quiet-mobs
+# removes unrelated living-world setup draws at the five proof seeds.
 # C-first empty-live-inventory vehicle.
 #
 # Shop 12105 is still parsed from lib/world/shp/121.shp and keeper 12100 is
@@ -10,6 +12,7 @@
 # depth-case: shops.live-inventory-gate
 [fixture]
 empty-players
+quiet-mobs
 quiet-zone 80
 quiet-zone 121
 set-room-flag 8162 4 off
@@ -49,3 +52,5 @@ goto 12133
 [probe]
 look
 list
+
+# depth-case: shops.audit.shop-live-inventory-gate

@@ -1,0 +1,78 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+give-object 12102 18211 100000 121
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+teleport Shopwitness 12135
+
+[probe]
+list
+buy 1000 carnation
+gold
+inventory
+list
+
+# depth-case: shops.audit.shop-partial-stock

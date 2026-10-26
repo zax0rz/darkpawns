@@ -1,0 +1,77 @@
+[fixture]
+seed-player
+quiet-mobs
+fixed-time 650337093
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+replace-room-exits 12135 none
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+teleport Shopwitness 12135
+sedit 12101
+1
+6
+2
+10
+3
+14
+4
+18
+q
+y
+
+[probe]
+list
+buy gold
+gold
+inventory
+sell gold
+gold
+inventory
+value gold
+gold
+inventory
+
+# depth-case: shops.audit.shop-hours-06

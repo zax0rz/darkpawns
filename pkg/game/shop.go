@@ -170,7 +170,7 @@ func (sm *ShopManager) GetShopsInRoom(roomVNum int) []interface{} {
 //	if (GET_CHA(ch)) price -= price*(GET_CHA(ch)*.005)
 //	return MAX(MAX(price, 1), GET_OBJ_COST(obj))
 func (s *Shop) BuyPrice(itemCost int, cha int) int {
-	price := int(float64(itemCost) * s.ProfitBuy)
+	price := int(float32(itemCost) * float32(s.ProfitBuy))
 
 	// CHA discount: price -= price * (CHA * 0.005)
 	if cha > 0 {
@@ -195,7 +195,7 @@ func (s *Shop) BuyPrice(itemCost int, cha int) int {
 //	if ((bprice = buy_price(ch, obj, shop_nr)) < price) price = bprice
 //	return MIN(MAX(1, price), GET_OBJ_COST(obj))
 func (s *Shop) SellPrice(itemCost int, cha int) int {
-	price := int(float64(itemCost) * s.ProfitSell)
+	price := int(float32(itemCost) * float32(s.ProfitSell))
 
 	// CHARISMA modifier: price += price * (CHA * 0.005)
 	if cha > 0 {
@@ -222,6 +222,18 @@ func (s *Shop) SellPrice(itemCost int, cha int) int {
 func (s *Shop) WillBuyType(itemType int) bool {
 	for _, t := range s.BuyTypes {
 		if t == itemType {
+			return true
+		}
+	}
+	return false
+}
+
+// ShopAllowsRoom mirrors ok_shop_room (src/shop.c:930-939). C compares the
+// configured VNUM to real_room(1) for its wildcard, not to the current room.
+func (w *World) ShopAllowsRoom(shop *Shop, roomVNum int) bool {
+	wildcard, hasWildcard := w.RealRoomIndex(1)
+	for _, room := range shop.Rooms {
+		if room == roomVNum || (hasWildcard && room == wildcard) {
 			return true
 		}
 	}

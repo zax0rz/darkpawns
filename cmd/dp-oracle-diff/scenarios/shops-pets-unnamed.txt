@@ -1,0 +1,68 @@
+[fixture]
+seed-player
+quiet-mobs
+spawn-mob 21235 1 21236 212
+spawn-mob 21236 1 21236 212
+replace-room-exits 21235 none
+replace-room-exits 21236 none
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21235
+teleport Shopwitness 21235
+set Testor gold 100
+set Testor cha 2
+
+[probe]
+list
+buy nonexistent
+gold
+inventory
+buy puppy
+gold
+inventory
+look puppy
+buy puppy
+gold
+inventory
+
+# depth-case: shops.audit.shops-pets-unnamed

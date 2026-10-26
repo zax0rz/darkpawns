@@ -1,0 +1,104 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12106 1 12137 121
+spawn-mob 12220 1 12137 121
+mob-script 12220 oracle/price.lua 512
+replace-room-exits 12137 none
+
+[lua-script mob/oracle/price.lua]
+function oncmd()
+if argument ~= "say stock" then return FALSE end
+for i = 1, 20 do
+local o = oload(ch, 12102, "char")
+o.cost = 100000
+save_obj(o)
+end
+local boat = oload(ch, 6, "char")
+boat.cost = 90
+save_obj(boat)
+return TRUE
+end
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12137
+teleport Shopwitness 12137
+say stock
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+give gold captain
+set Testor gold 1000000
+set Testor cha 10
+set Testor level 30
+
+[probe]
+list
+buy gold
+gold
+inventory
+value boat
+gold
+inventory
+sell boat
+gold
+inventory
+
+# depth-case: shops.audit.shop-price-float-markup

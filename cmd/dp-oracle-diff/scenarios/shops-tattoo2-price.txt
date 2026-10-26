@@ -1,0 +1,48 @@
+# C-first vehicle for tattoo2's insufficient-gold gate. Gold is configured in
+# drained warmup so the compared transcript contains only the Confucius tell.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18213 1 18252 182
+replace-room-exits 18252 none
+
+[setup:oracle]
+TattooTwoPrice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooTwoPrice
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 18252
+set TattooTwoPrice gold 0
+
+[probe]
+
+buy 0
+gold
+inventory
+
+# depth-case: shops.audit.shops-tattoo2-price

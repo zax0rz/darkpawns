@@ -1,3 +1,5 @@
+# The disposable reset reproduces authored keeper stock while quiet-mobs
+# removes unrelated living-world setup draws at the five proof seeds.
 # A disposable shop-keeper reset carries a boat so the buyer can exercise a
 # produced-item purchase, sell it back to a funded keeper, then accumulate
 # enough boat weight to hit shopping_buy's up-front weight refusal. The first
@@ -9,6 +11,7 @@
 # depth-case: shops.steal-keeper-response
 [fixture]
 empty-players
+quiet-mobs
 quiet-zone 80
 quiet-zone 121
 spawn-mob 12106 1 12137 121
@@ -89,3 +92,5 @@ buy boat
 buy boat
 buy boat
 steal
+
+# depth-case: shops.audit.shop-buy-weight-sell-steal

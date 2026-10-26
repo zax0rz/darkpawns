@@ -192,7 +192,7 @@ func specDracula(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	return true
 }
 
-func petPrice(pet *MobInstance) int {
+func petPrice(pet combat.Combatant) int {
 	return pet.GetLevel() * 25
 }
 
@@ -200,27 +200,27 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if ch == nil {
 		return false
 	}
-	petRoom := ch.GetRoomVNum() + 1
+	roomIndex, ok := w.RealRoomIndex(ch.GetRoomVNum())
+	if !ok {
+		return false
+	}
+	petRoom, ok := w.RoomVNumByIndex(roomIndex + 1)
+	if !ok {
+		return false
+	}
 
 	if cmd == "list" {
 		ch.SendMessage("Available pets are:\r\n")
-		pets := w.COrderedRoomMobs(petRoom)
+		pets := cRoomPeople(w, petRoom)
 		for _, pet := range pets {
-			ch.SendMessage(fmt.Sprintf("%8d - %s\r\n", petPrice(pet), charKeywords(pet)))
+			ch.SendMessage(fmt.Sprintf("%8d - %s\r\n", petPrice(pet.(combat.Combatant)), pet.GetName()))
 		}
 		return true
 	}
 
 	if cmd == "buy" {
-		parts := strings.Fields(arg)
-		petQuery := ""
-		petName := ""
-		if len(parts) > 0 {
-			petQuery = parts[0]
-		}
-		if len(parts) > 1 {
-			petName = parts[1]
-		}
+		petQuery, rest := OneArgument(arg)
+		petName, _ := OneArgument(rest)
 
 		ordinal := GetNumber(&petQuery)
 		var pet *MobInstance
@@ -273,12 +273,10 @@ func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 			if petProto != nil {
 				clone := *petProto
 				clone.Keywords = petNameList + " " + petName
-				clone.LongDesc = fmt.Sprintf("%sA small sign on a chain around the neck says 'My name is %s'\r\n", clone.LongDesc, petName)
+				clone.DetailedDesc = fmt.Sprintf("%sA small sign on a chain around the neck says 'My name is %s'\r\n", clone.DetailedDesc, petName)
 				newPet.SetProto(&clone)
-				petNameList = clone.Keywords
 			}
 		}
-		newPet.SetNameOverride(petNameList)
 		AddFollowerMob(w, newPet, ch)
 
 		ch.SendMessage("May you enjoy your pet.\r\n")
@@ -620,7 +618,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SetGold(ch.GetGold() - amount)
 		ch.SetBankGold(ch.GetBankGold() + amount)
 		sendToChar(ch, fmt.Sprintf("You deposit %d coins.", amount))
-		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
+		Act(w, true, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 
@@ -637,7 +635,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SetGold(ch.GetGold() + amount)
 		ch.SetBankGold(ch.GetBankGold() - amount)
 		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.", amount))
-		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
+		Act(w, true, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 

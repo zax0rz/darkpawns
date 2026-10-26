@@ -1,0 +1,58 @@
+[fixture]
+seed-player
+quiet-mobs
+spawn-mob 19610 1 8162 80
+house-control 8162 8161 north 1 1 999999
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Shopwitness 8162
+set Testor gold 10000
+
+[probe]
+list
+buy key
+gold
+inventory
+
+# depth-case: shops.audit.shops-key-seller-missing-key

@@ -1,0 +1,84 @@
+# C-first vehicle for SPECIAL(prostitute), src/spec_procs3.c:670-705,
+# registered as mob vnum 8023 in src/spec_assign.c:283. C attaches no script
+# to it (DP-1333), so this vehicle isolates the native
+# special. The visible vehicle keeps setup and movement warmup-only so the
+# compared probe contains only native-procedure output.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8023 1 8021 80
+clear-mob-flag 8023 RANDZON
+replace-room-exits 8021 none
+
+[setup:oracle]
+Velvet
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Velvet
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Witness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Witness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Witness 8021
+goto 8021
+list
+buy
+
+[probe]
+
+list
+buy
+gold
+inventory
+say hello
+
+# depth-case: shops.audit.shops-prostitute

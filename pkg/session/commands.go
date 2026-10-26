@@ -217,6 +217,7 @@ func init() {
 	registerCommand("list", wrapArgs(cmdList), "List items for sale at a shop.")
 	registerCommand("buy", wrapArgs(cmdBuy), "Buy an item from a shop.")
 	registerCommand("sell", wrapArgs(cmdSell), "Sell an item to a shop.")
+	registerCommand("value", wrapArgs(cmdValue), "Ask a shopkeeper for an item's sale price.")
 	// C registers these names under do_not_here (act.other.c:208). Room
 	// special procedures intercept them first; these handlers preserve C's
 	// generic fallback when no matching special procedure is present.
@@ -227,7 +228,7 @@ func init() {
 	}
 	registerCommand("offer", wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
 	for _, name := range []string{
-		"recharge", "receive", "remort", "rent", "retrieve", "stable", "value",
+		"recharge", "receive", "remort", "rent", "retrieve", "stable",
 		"withdraw",
 	} {
 		registerCommand(name, wrapArgs(cmdNotHere), "Unavailable outside its special procedure.")
