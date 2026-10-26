@@ -146,6 +146,12 @@ cannot observe them.
   question "what else is in this class?" — answered with a grep/script, not a
   feeling. Prefer making the audit deterministic and rerunnable
   (`scripts/gen_reachability.py` is the model).
+  When a C skill/spell number crosses the Go storage boundary, every read
+  and write uses `SkillStorageName(num)`. `SkillCatalogName` and
+  `GetSpellName` supply display text, not storage keys. Prove a mapped entry
+  through both setter and reader, including its command consumer.
+  (Approved 2026-10-25 after DP-1342 and the Sai/Lucci practice-list report
+  repeated the display-key mistake, #2160.)
 - **R5d. Flag uncertainty at the site.** Low-confidence translations get
   `// TODO(port): <what's unverified>` so later passes can queue them
   mechanically.
