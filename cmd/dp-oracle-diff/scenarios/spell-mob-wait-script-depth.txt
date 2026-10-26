@@ -16,7 +16,8 @@ mob-script 14405 oracle/mob_wait.lua 512
 [lua-script mob/oracle/mob_wait.lua]
 function oncmd()
 if (argument == "say wait") then
-me.timer = 5000
+me.timer = 1000000
+save_char(me)
 return TRUE
 elseif (argument == "say cast") then
 if (me.timer > 0) then

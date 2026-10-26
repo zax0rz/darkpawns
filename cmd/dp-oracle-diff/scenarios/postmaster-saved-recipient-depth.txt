@@ -7,7 +7,6 @@
 # depth-case: mail.check-no-mail
 # depth-case: mail.send-starts-room-message
 # depth-case: mail.send-saved-recipient-prompt
-# depth-case: mail.send-completion
 
 [fixture]
 seed-player
