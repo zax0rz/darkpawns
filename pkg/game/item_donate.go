@@ -23,7 +23,7 @@ func (w *World) performDispose(ch *Player, obj *ObjectInstance, mode int, sname 
 	const vanish = "  It vanishes in a puff of smoke!"
 	w.actToChar(ch, fmt.Sprintf("You %s $p.%s", sname, vanish), obj, nil)
 	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.%s", sname, vanish), obj, nil)
-	ch.Inventory.removeItem(obj)
+	ch.Inventory.RemoveItem(obj)
 
 	// A donated item flagged NODONATE is silently junked instead — act.item.c:498-499.
 	if mode == scmdDonate && obj.HasExtraFlag(0, extraFlagNoDonate) {
@@ -127,8 +127,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 			ch.SendMessage(fmt.Sprintf("What do you want to %s all of?\r\n", sname))
 			return
 		}
-		items := make([]*ObjectInstance, len(ch.Inventory.Items))
-		copy(items, ch.Inventory.Items)
+		items := ch.Inventory.Snapshot()
 		found := false
 		for _, obj := range items {
 			if isnameWithAbbrevs(keyword, obj.GetKeywords()) {
@@ -141,7 +140,7 @@ func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donati
 		}
 	default:
 		var obj *ObjectInstance
-		for _, o := range ch.Inventory.Items {
+		for _, o := range ch.Inventory.Snapshot() {
 			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
@@ -170,8 +169,7 @@ func (w *World) DoJunk(ch *Player, arg string) {
 // junkCheapItems removes inventory items with a base cost of 150 or less,
 // matching the attitude_loot() behavior in src/fight.c:1128.
 func (w *World) junkCheapItems(ch *Player) {
-	items := make([]*ObjectInstance, len(ch.Inventory.Items))
-	copy(items, ch.Inventory.Items)
+	items := ch.Inventory.Snapshot()
 	for _, obj := range items {
 		if obj.GetCost() <= 150 {
 			w.performDispose(ch, obj, scmdJunk, "junk", 0)

@@ -187,8 +187,7 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 	var inventoryItems []*ObjectInstance
 	player.mu.Lock()
 	if player.Inventory != nil {
-		inventoryItems = player.Inventory.FindItems("")
-		player.Inventory.clear()
+		inventoryItems = player.Inventory.TakeAll()
 	}
 	var equipmentItems []*ObjectInstance
 	if player.Equipment != nil {
@@ -712,8 +711,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	var equipmentItems []*ObjectInstance
 	player.mu.Lock()
 	if player.Inventory != nil {
-		inventoryItems = player.Inventory.FindItems("")
-		player.Inventory.clear()
+		inventoryItems = player.Inventory.TakeAll()
 	}
 	if player.Equipment != nil {
 		equipped := player.Equipment.GetEquippedItems()

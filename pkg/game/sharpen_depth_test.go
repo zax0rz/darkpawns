@@ -31,14 +31,14 @@ func TestDoSharpenUsesCObjectGatesAndCarriedOnly(t *testing.T) {
 	}
 
 	nonWeapon := sharpenTestObject(1, "bread", ITEM_FOOD, [4]int{})
-	ch.Inventory.Items = append(ch.Inventory.Items, nonWeapon)
+	ch.Inventory.RestoreItem(nonWeapon)
 	if got := DoSharpen(ch, "bread"); got.MessageToCh != "This weapon can not be sharpened." {
 		t.Fatalf("non-weapon message = %q", got.MessageToCh)
 	}
 
 	magic := sharpenTestObject(2, "magic sword", ITEM_WEAPON, [4]int{0, 0, 0, 3})
 	magic.SetExtraFlag(0, itemExtraMagic)
-	ch.Inventory.Items = append(ch.Inventory.Items, magic)
+	ch.Inventory.RestoreItem(magic)
 	if got := DoSharpen(ch, "magic"); got.MessageToCh != "This weapon can not be sharpened any further." {
 		t.Fatalf("magic weapon message = %q", got.MessageToCh)
 	}
@@ -57,14 +57,14 @@ func TestDoSharpenRejectsNonSlashAndAlreadyAffected(t *testing.T) {
 	ch.SetSkill(SkillSharpen, 100)
 
 	nonSlash := sharpenTestObject(4, "blunt", ITEM_WEAPON, [4]int{0, 0, 0, 11})
-	ch.Inventory.Items = append(ch.Inventory.Items, nonSlash)
+	ch.Inventory.RestoreItem(nonSlash)
 	if got := DoSharpen(ch, "blunt"); got.MessageToCh != "This weapon can not be sharpened." {
 		t.Fatalf("non-slash weapon message = %q", got.MessageToCh)
 	}
 
 	affected := sharpenTestObject(5, "affected", ITEM_WEAPON, [4]int{0, 0, 0, 3})
 	affected.Prototype.Affects = []parser.ObjAffect{{Location: ApplyDamroll, Modifier: 2}}
-	ch.Inventory.Items = append(ch.Inventory.Items, affected)
+	ch.Inventory.RestoreItem(affected)
 	if got := DoSharpen(ch, "affected"); got.MessageToCh != "This weapon can not be sharpened any further." {
 		t.Fatalf("affected weapon message = %q", got.MessageToCh)
 	}
@@ -95,7 +95,7 @@ func TestDoSharpenMutatesAndScalesSuccessfulWeapon(t *testing.T) {
 			ch.SetLevel(test.level)
 			ch.SetSkill(SkillSharpen, 100)
 			weapon := sharpenTestObject(10+test.level, "sword", ITEM_WEAPON, [4]int{0, 0, 0, 3})
-			ch.Inventory.Items = append(ch.Inventory.Items, weapon)
+			ch.Inventory.RestoreItem(weapon)
 
 			dprng.ResetStream(seed)
 			result := DoSharpen(ch, "sword")
@@ -129,7 +129,7 @@ func TestDoSharpenFailureMutatesEvenWithZeroSkill(t *testing.T) {
 
 	ch := NewPlayer(1, "Sharpener", 1001)
 	weapon := sharpenTestObject(20, "sword", ITEM_WEAPON, [4]int{0, 0, 0, 3})
-	ch.Inventory.Items = append(ch.Inventory.Items, weapon)
+	ch.Inventory.RestoreItem(weapon)
 
 	dprng.ResetStream(seed)
 	result := DoSharpen(ch, "sword")
@@ -152,7 +152,7 @@ func TestDoSharpenFightingGateFollowsObjectGates(t *testing.T) {
 	ch.SetPosition(combat.PosFighting)
 	ch.SetFightingBody(NewPlayer(99999, "opponent", 1001))
 	weapon := sharpenTestObject(30, "sword", ITEM_WEAPON, [4]int{0, 0, 0, 3})
-	ch.Inventory.Items = append(ch.Inventory.Items, weapon)
+	ch.Inventory.RestoreItem(weapon)
 
 	result := DoSharpen(ch, "sword")
 	if result.MessageToCh != "You're too busy to be sharpening anything!" {
@@ -171,7 +171,7 @@ func TestDoSharpenConsumesOneCPercentDraw(t *testing.T) {
 
 	ch := NewPlayer(1, "Sharpener", 1001)
 	weapon := sharpenTestObject(40, "sword", ITEM_WEAPON, [4]int{0, 0, 0, 3})
-	ch.Inventory.Items = append(ch.Inventory.Items, weapon)
+	ch.Inventory.RestoreItem(weapon)
 
 	dprng.ResetStream(seed)
 	DoSharpen(ch, "sword")

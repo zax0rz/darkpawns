@@ -136,8 +136,8 @@ func TestSpecElementsLoadCylinders_RejectsWrongTalismanAndExistingCylinder(t *te
 	if cylinder.Location != LocRoom(1364) {
 		t.Fatalf("existing cylinder location = %#v, want room", cylinder.Location)
 	}
-	if len(actor.Inventory.Items) != 1 || actor.Inventory.Items[0].GetVNum() != 1301 {
-		t.Fatalf("blocked drop changed inventory: %#v", actor.Inventory.Items)
+	if actor.Inventory.GetItemCount() != 1 || actor.Inventory.Snapshot()[0].GetVNum() != 1301 {
+		t.Fatalf("blocked drop changed inventory: %#v", actor.Inventory.Snapshot())
 	}
 }
 

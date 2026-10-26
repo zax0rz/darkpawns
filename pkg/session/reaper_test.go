@@ -373,12 +373,12 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 
 	keepsake := game.NewObjectInstance(&parser.Obj{VNum: 4299, ShortDesc: "a worn locket"}, 0)
 	keepsake.Location = game.LocInventoryPlayer(s.player.Name)
-	s.player.Inventory.Items = append(s.player.Inventory.Items, keepsake)
+	s.player.Inventory.RestoreItem(keepsake)
 	norent := game.NewObjectInstance(&parser.Obj{
 		VNum: 4300, ShortDesc: "a melting token", ExtraFlags: [4]int{game.FlagNoRent},
 	}, 0)
 	norent.Location = game.LocInventoryPlayer(s.player.Name)
-	s.player.Inventory.Items = append(s.player.Inventory.Items, norent)
+	s.player.Inventory.RestoreItem(norent)
 	wornKeep := game.NewObjectInstance(&parser.Obj{VNum: 4301, ShortDesc: "a silver helm"}, 0)
 	wornKeep.Location = game.LocEquippedPlayer(s.player.Name, game.SlotHead)
 	if err := s.player.Equipment.SetSlot(game.SlotHead, wornKeep); err != nil {
@@ -403,8 +403,8 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 	if !s.player.RentedOut {
 		t.Error("idle-disconnected character must be marked RentedOut (Crash_rentsave)")
 	}
-	if len(s.player.Inventory.Items) != 0 {
-		t.Errorf("idle-disconnected inventory = %d items, want 0 (saved objects leave the world)", len(s.player.Inventory.Items))
+	if s.player.Inventory.GetItemCount() != 0 {
+		t.Errorf("idle-disconnected inventory = %d items, want 0 (saved objects leave the world)", s.player.Inventory.GetItemCount())
 	}
 	// C saves once at close_socket (comm.c:2130), then writes the rent
 	// objects after Crash_rentsave removes NORENT (limits.c:445-446).

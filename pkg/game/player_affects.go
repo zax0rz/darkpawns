@@ -384,8 +384,8 @@ func (p *Player) SendLiteral(msg string) {
 func (p *Player) GetInventoryItems() []scripting.ScriptableObject {
 	p.Inventory.mu.RLock()
 	defer p.Inventory.mu.RUnlock()
-	result := make([]scripting.ScriptableObject, 0, len(p.Inventory.Items))
-	for _, item := range p.Inventory.Items {
+	result := make([]scripting.ScriptableObject, 0, len(p.Inventory.items))
+	for _, item := range p.Inventory.items {
 		result = append(result, &scriptableObjInstanceWrapper{item: item})
 	}
 	return result

@@ -70,7 +70,7 @@ func TestDoBehead_ContainerValueSuccessAndTransformation(t *testing.T) {
 	}
 
 	var head, corpse *ObjectInstance
-	for _, obj := range ch.Inventory.Items {
+	for _, obj := range ch.Inventory.Snapshot() {
 		if obj.GetVNum() == 16 {
 			head = obj
 		}

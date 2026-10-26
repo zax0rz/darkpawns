@@ -158,7 +158,7 @@ func hasBoat(w *World, ch *Player) bool {
 	}
 	// Check inventory for ITEM_BOAT
 	if ch.Inventory != nil {
-		for _, obj := range ch.Inventory.Items {
+		for _, obj := range ch.Inventory.Snapshot() {
 			if obj != nil && obj.Prototype != nil && obj.Prototype.TypeFlag == ITEM_BOAT {
 				return true
 			}
@@ -181,7 +181,7 @@ func hasKey(ch *Player, key int) bool {
 		return false
 	}
 	if ch.Inventory != nil {
-		for _, obj := range ch.Inventory.Items {
+		for _, obj := range ch.Inventory.Snapshot() {
 			if obj != nil && obj.VNum == key {
 				return true
 			}
@@ -841,7 +841,7 @@ func doGenDoor(w *World, ch *Player, argument string, scmd int) {
 
 	var obj *ObjectInstance
 	if ch.Inventory != nil {
-		for _, item := range ch.Inventory.Items {
+		for _, item := range ch.Inventory.Snapshot() {
 			if item != nil && canSeeObject(ch, item) && isName(doorType, item.GetKeywords()) {
 				obj = item
 				break

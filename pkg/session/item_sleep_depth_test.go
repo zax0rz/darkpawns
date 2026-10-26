@@ -118,7 +118,7 @@ func TestItemSleepEntryDepth(t *testing.T) {
 						if s.player.Inventory.GetItemCount() != 1 || len(s.player.Inventory.FindItems("dose")) != 0 {
 							t.Fatal("potion/component not consumed")
 						}
-						if s.player.Inventory.Items[0].VNum != 1227 {
+						if s.player.Inventory.Snapshot()[0].VNum != 1227 {
 							t.Fatal("keyword counterfeit consumed instead of exact reagent")
 						}
 						wantPos := combat.PosStanding

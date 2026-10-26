@@ -50,7 +50,7 @@ func makeSpikeWeapon(keyword string) *ObjectInstance {
 
 func equipWeapon(t *testing.T, ch *Player, weapon *ObjectInstance) {
 	t.Helper()
-	ch.Inventory.Items = append(ch.Inventory.Items, weapon)
+	ch.Inventory.RestoreItem(weapon)
 	if err := ch.Equipment.Equip(weapon, ch.Inventory); err != nil {
 		t.Fatalf("equip weapon: %v", err)
 	}

@@ -34,7 +34,7 @@ func (p *Player) ConsumeSpellReagentVNum(vnum int) bool {
 	if w == nil {
 		return false
 	}
-	for _, item := range p.Inventory.Items {
+	for _, item := range p.Inventory.Snapshot() {
 		if item != nil && item.VNum == vnum {
 			w.ExtractObject(item, p.GetRoomVNum())
 			return true

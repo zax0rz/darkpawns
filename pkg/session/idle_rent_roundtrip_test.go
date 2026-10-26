@@ -90,7 +90,7 @@ func idleRentRoundtrip(t *testing.T, norent bool) *Session {
 
 func TestIdleRentRoundtripInventory(t *testing.T) {
 	s := idleRentRoundtrip(t, false)
-	items := s.player.Inventory.Items
+	items := s.player.Inventory.Snapshot()
 	if len(items) != 1 || items[0].GetVNum() != 8032 {
 		t.Fatalf("restored inventory=%v, want bag", items)
 	}

@@ -399,7 +399,7 @@ func (w *World) HasItemByVNumScriptable(charName string, vnum int) bool {
 	}
 	p.Inventory.mu.RLock()
 	defer p.Inventory.mu.RUnlock()
-	for _, item := range p.Inventory.Items {
+	for _, item := range p.Inventory.items {
 		if item.VNum == vnum {
 			return true
 		}
@@ -432,7 +432,7 @@ func (w *World) RemoveItemFromCharByVNum(charName string, vnum int) scripting.Sc
 	if !ok {
 		return nil
 	}
-	item, found := p.Inventory.removeItemByVNum(vnum)
+	item, found := p.Inventory.RemoveItemByVNum(vnum)
 	if !found {
 		return nil
 	}
@@ -446,12 +446,17 @@ func (w *World) StealRandomItemFromChar(charName string) scripting.ScriptableObj
 	w.mu.RLock()
 	p, ok := w.players[charName]
 	w.mu.RUnlock()
-	if !ok || len(p.Inventory.Items) == 0 {
+	if !ok {
 		return nil
 	}
-	idx := dprng.Number(0, len(p.Inventory.Items)-1)
-	item := p.Inventory.Items[idx]
-	p.Inventory.Items = append(p.Inventory.Items[:idx], p.Inventory.Items[idx+1:]...)
+	count := p.Inventory.GetItemCount()
+	if count == 0 {
+		return nil
+	}
+	item := p.Inventory.TakeAt(dprng.Number(0, count-1))
+	if item == nil {
+		return nil
+	}
 	return &scriptableObjInstanceWrapper{item: item}
 }
 
@@ -467,7 +472,7 @@ func (w *World) GiveItemToCharScriptable(charName string, obj scripting.Scriptab
 	if item == nil {
 		return fmt.Errorf("GiveItemToChar: object is not an ObjectInstance")
 	}
-	if err := p.Inventory.addItem(item); err != nil {
+	if err := p.Inventory.AddItem(item); err != nil {
 		return err
 	}
 	// The lua objto/oload "char" path is C's obj_to_char: PLR_CRASH is set
@@ -485,9 +490,9 @@ func (w *World) RemoveObjByInstanceID(objInstanceID int) scripting.ScriptableObj
 
 	// Check player inventories
 	for _, p := range w.players {
-		for i, item := range p.Inventory.Items {
+		for _, item := range p.Inventory.Snapshot() {
 			if item.ID == objInstanceID {
-				p.Inventory.Items = append(p.Inventory.Items[:i], p.Inventory.Items[i+1:]...)
+				p.Inventory.RemoveItem(item)
 				item.Location = LocNowhere()
 				return &scriptableObjInstanceWrapper{item: item}
 			}

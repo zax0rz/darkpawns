@@ -514,7 +514,7 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 			return result
 		}
 	}
-	for _, item := range ch.Inventory.Items {
+	for _, item := range ch.Inventory.Snapshot() {
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
@@ -730,7 +730,7 @@ func characterInventory(target Actor) []*ObjectInstance {
 	switch typed := target.(type) {
 	case *Player:
 		if typed.Inventory != nil {
-			return typed.Inventory.Items
+			return typed.Inventory.Snapshot()
 		}
 	case *MobInstance:
 		return typed.Inventory
@@ -1211,7 +1211,7 @@ func (w *World) findObservationObject(ch *Player, name string) *ObjectInstance {
 }
 
 func (w *World) findObservationObjectWithLocation(ch *Player, name string) (*ObjectInstance, observationObjectLocation) {
-	for _, item := range ch.Inventory.Items {
+	for _, item := range ch.Inventory.Snapshot() {
 		if observationObjectMatches(ch, item, name) {
 			return item, observationInventory
 		}

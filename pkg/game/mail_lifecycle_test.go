@@ -203,10 +203,10 @@ func runMailRestartPhase(t *testing.T) {
 	postmasterFn(w, recipient, postmasterMob, "receive", "")
 	receiveOutput := mailLifecycleLastMessage(messages, recipient.Name)
 	receiveRoomOutput := mailLifecycleLastMessage(messages, sender.Name)
-	if len(recipient.Inventory.Items) != 1 {
-		t.Fatalf("restart receive inventory items = %d, want 1", len(recipient.Inventory.Items))
+	if recipient.Inventory.GetItemCount() != 1 {
+		t.Fatalf("restart receive inventory items = %d, want 1", recipient.Inventory.GetItemCount())
 	}
-	receivedBody := strings.Contains(recipient.Inventory.Items[0].Runtime.MailText, mailLifecycleBody)
+	receivedBody := strings.Contains(recipient.Inventory.Snapshot()[0].Runtime.MailText, mailLifecycleBody)
 	postmasterFn(w, recipient, postmasterMob, "check", "")
 	secondCheckOutput := mailLifecycleLastMessage(messages, recipient.Name)
 	postmasterFn(w, recipient, postmasterMob, "receive", "")
@@ -216,7 +216,7 @@ func runMailRestartPhase(t *testing.T) {
 		t.Fatalf("stat mail file after restart: %v", err)
 	}
 	fmt.Printf("phase=restart init_scan=true mail_file_bytes=%d check=%s receive=%s receive_room=%s received_body=%t second_check=%s second_receive=%s receive_inventory_items=%d mail_remaining=%t\n",
-		stat.Size(), checkOutput, receiveOutput, receiveRoomOutput, receivedBody, secondCheckOutput, secondReceiveOutput, len(recipient.Inventory.Items), hasMail(mailLifecycleRecipientID))
+		stat.Size(), checkOutput, receiveOutput, receiveRoomOutput, receivedBody, secondCheckOutput, secondReceiveOutput, recipient.Inventory.GetItemCount(), hasMail(mailLifecycleRecipientID))
 }
 
 func runMailSameProcessPhase(t *testing.T) {
@@ -244,10 +244,10 @@ func runMailSameProcessPhase(t *testing.T) {
 	receiveOutput := mailLifecycleLastMessage(messages, recipient.Name)
 	receiveRoomOutput := mailLifecycleLastMessage(messages, sender.Name)
 
-	if len(recipient.Inventory.Items) != 1 {
-		t.Fatalf("same-process receive inventory items = %d, want 1", len(recipient.Inventory.Items))
+	if recipient.Inventory.GetItemCount() != 1 {
+		t.Fatalf("same-process receive inventory items = %d, want 1", recipient.Inventory.GetItemCount())
 	}
-	receivedBody := strings.Contains(recipient.Inventory.Items[0].Runtime.MailText, mailLifecycleBody)
+	receivedBody := strings.Contains(recipient.Inventory.Snapshot()[0].Runtime.MailText, mailLifecycleBody)
 	consumedOnce := !hasMail(mailLifecycleRecipientID)
 	fmt.Printf("phase=same-process completed=true postmaster_assigned=true check=%s receive=%s receive_room=%s received_body=%t consumed_once=%t\n",
 		checkOutput, receiveOutput, receiveRoomOutput, receivedBody, consumedOnce)

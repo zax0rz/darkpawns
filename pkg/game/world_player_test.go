@@ -111,7 +111,8 @@ func TestInventoryAddItemPrependsLikeObjToChar(t *testing.T) {
 		t.Fatalf("AddItem(second) failed: %v", err)
 	}
 
-	if got := []int{inv.Items[0].VNum, inv.Items[1].VNum}; !slices.Equal(got, []int{2, 1}) {
+	items := inv.Snapshot()
+	if got := []int{items[0].VNum, items[1].VNum}; !slices.Equal(got, []int{2, 1}) {
 		t.Errorf("inventory order = %v, want newest-first [2 1]", got)
 	}
 }
@@ -228,8 +229,8 @@ func TestGiveStartingItems_EmptyWorld(t *testing.T) {
 	// Must not panic — simply skips all items
 	w.GiveStartingItems(player)
 
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("expected empty inventory when world has no items, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("expected empty inventory when world has no items, got %d", player.Inventory.GetItemCount())
 	}
 }
 
@@ -266,8 +267,8 @@ func TestStats_ReturnsNonEmpty(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func collectInventoryVNums(p *Player) []int {
-	vnums := make([]int, 0, len(p.Inventory.Items))
-	for _, item := range p.Inventory.Items {
+	vnums := make([]int, 0, p.Inventory.GetItemCount())
+	for _, item := range p.Inventory.Snapshot() {
 		vnums = append(vnums, item.VNum)
 	}
 	return vnums
@@ -283,7 +284,7 @@ func containsVNum(vnums []int, target int) bool {
 }
 
 func findItemByVNum(p *Player, vnum int) *ObjectInstance {
-	for _, item := range p.Inventory.Items {
+	for _, item := range p.Inventory.Snapshot() {
 		if item.VNum == vnum {
 			return item
 		}

@@ -16,7 +16,7 @@ func TestDonateAppearLinesCapitalized(t *testing.T) {
 	w, ch, lastMsg := newDonateTestWorld(t)
 
 	ch.Inventory.AddItem(newDonatableItem(9101, "a loaf of bread", "loaf bread", 3))
-	w.performDispose(ch, ch.Inventory.Items[0], scmdDonate, "donate", DonationRoom1)
+	w.performDispose(ch, ch.Inventory.Snapshot()[0], scmdDonate, "donate", DonationRoom1)
 	if msg := lastMsg(); !strings.Contains(msg, "You donate a loaf of bread.") {
 		t.Fatalf("donate actor line: got %q", msg)
 	}
@@ -27,7 +27,7 @@ func TestDonateAppearLinesCapitalized(t *testing.T) {
 		t.Fatalf("AddPlayer: %v", err)
 	}
 	ch.Inventory.AddItem(newDonatableItem(9102, "a crusty baguette", "crusty baguette", 4))
-	w.performDispose(ch, ch.Inventory.Items[0], scmdDonate, "donate", DonationRoom1)
+	w.performDispose(ch, ch.Inventory.Snapshot()[0], scmdDonate, "donate", DonationRoom1)
 	if got := lastMsg(); !strings.Contains(got, "A crusty baguette suddenly appears in a puff a smoke!") {
 		t.Fatalf("item appear line must be capitalized: got %q", got)
 	}

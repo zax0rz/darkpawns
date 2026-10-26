@@ -234,10 +234,7 @@ func (w *World) ExtractPendingPlayers() []*Player {
 		if !p.RentedOut {
 			var drops []*ObjectInstance
 			if p.Inventory != nil {
-				p.Inventory.mu.Lock()
-				drops = append(drops, p.Inventory.Items...)
-				p.Inventory.Items = p.Inventory.Items[:0]
-				p.Inventory.mu.Unlock()
+				drops = append(drops, p.Inventory.TakeAll()...)
 			}
 			if p.Equipment != nil {
 				hadEquipment := len(p.Equipment.Snapshot()) > 0

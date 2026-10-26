@@ -140,7 +140,7 @@ func TestRawKillCorpseHoldsInventoryEquipmentAndGold(t *testing.T) {
 	for _, obj := range corpse.Contains {
 		found[obj] = true
 	}
-	if !found[inv] || !found[worn] || len(p.Inventory.Items) != 0 || len(p.Equipment.GetEquippedItems()) != 0 || p.GetGold() != 0 {
+	if !found[inv] || !found[worn] || p.Inventory.GetItemCount() != 0 || len(p.Equipment.GetEquippedItems()) != 0 || p.GetGold() != 0 {
 		t.Error("RawKill did not transfer all possessions into corpse")
 	}
 	w.ExtractPendingPlayers()

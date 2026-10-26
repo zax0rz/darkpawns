@@ -58,8 +58,8 @@ func TestConsumeSpellReagentUsesObjectLocationPipeline(t *testing.T) {
 	if !player.ConsumeSpellReagent("shard of obsidian") {
 		t.Fatal("ConsumeSpellReagent returned false for carried component")
 	}
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("inventory still contains consumed reagent: %+v", player.Inventory.Items)
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("inventory still contains consumed reagent: %+v", player.Inventory.Snapshot())
 	}
 	if !obj.Location.IsNowhere() {
 		t.Errorf("consumed reagent location = %+v, want LocNowhere", obj.Location)
@@ -81,7 +81,7 @@ func TestConsumeSpellReagentVNumUsesExactPrototype(t *testing.T) {
 	if !player.ConsumeSpellReagentVNum(1226) {
 		t.Fatal("ConsumeSpellReagentVNum returned false for exact carried component")
 	}
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("inventory still contains consumed reagent: %+v", player.Inventory.Items)
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("inventory still contains consumed reagent: %+v", player.Inventory.Snapshot())
 	}
 }

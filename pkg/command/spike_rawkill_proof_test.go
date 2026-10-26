@@ -30,7 +30,7 @@ func TestCmdSpike_PlayerRawKillContract(t *testing.T) {
 		VNum: 1, Keywords: "spike weapon", ShortDesc: "a sharp spike",
 		TypeFlag: 5, WearFlags: [4]int{1 << 13}, Values: [4]int{0, 1, 4, 3},
 	}}
-	s.player.Inventory.Items = append(s.player.Inventory.Items, weapon)
+	s.player.Inventory.RestoreItem(weapon)
 	if err := s.player.Equipment.Equip(weapon, s.player.Inventory); err != nil {
 		t.Fatal(err)
 	}

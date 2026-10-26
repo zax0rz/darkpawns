@@ -149,10 +149,10 @@ func TestFidelityStealMobRestrictions(t *testing.T) {
 	if len(mob.Inventory) != 0 {
 		t.Error("Mob inventory should be empty after steal")
 	}
-	if len(thief.Inventory.Items) != 1 {
+	if thief.Inventory.GetItemCount() != 1 {
 		t.Error("Thief should have stolen 1 item")
-	} else if thief.Inventory.Items[0].VNum != 3001 {
-		t.Errorf("Thief inventory has wrong item: %v", thief.Inventory.Items[0])
+	} else if thief.Inventory.Snapshot()[0].VNum != 3001 {
+		t.Errorf("Thief inventory has wrong item: %v", thief.Inventory.Snapshot()[0])
 	}
 }
 

@@ -221,7 +221,7 @@ func roomActivityHasBoat(ch roomActivityChar) bool {
 	switch c := ch.(type) {
 	case *Player:
 		if c.Inventory != nil {
-			for _, obj := range c.Inventory.Items {
+			for _, obj := range c.Inventory.Snapshot() {
 				if obj != nil && obj.Prototype != nil && obj.Prototype.TypeFlag == ITEM_BOAT {
 					return true
 				}
