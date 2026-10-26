@@ -348,11 +348,39 @@ the readers' `RLock` excludes nothing, so any give/put/drop/corpse transfer conc
 locking inventory read is a data race — torn slice headers can drop or duplicate items. The same
 applies to `extractObjectLocked`'s `p.Inventory.removeItem` calls.
 
-This is independent of the 16 findings (it exists on `origin/main` untouched by PR 1) and needs its
-own fix: make the movement path use the locking inventory API (lock order is already
-`w.mu → Equipment.mu → Inventory.mu`), after auditing every `*Locked` caller for a caller that
-already holds `inv.mu`. Filed here as a lead rather than fixed, because the change is broad and
-deadlock-sensitive.
+This is independent of the 16 findings (it exists on `origin/main` untouched by PR 1). It is fixed by
+the two follow-up PRs below, using the technique that makes the compiler enforce the discipline:
+make the collection unexported so every access must name an accessor, then route each site through a
+locked one.
+
+### PR 3 — `pkg/game` inventory lock discipline — [#2180](https://github.com/zax0rz/darkpawns/pull/2180)
+
+Branch `cline/inv-lock`, commit `873a39432`. 53 sites: the movement path (`detachObjectLocked` /
+`attachObjectLocked` / `extractObjectLocked`), the corpse build, the Lua adapters, donate/junk, and
+every raw reader (the `inventory` and `look` commands, `has_boat`, reagents, `findItemByName`).
+New accessors: `RemoveItemByVNum`, `TakeAt`, `TakeAll` (the atomic "snapshot then clear" the corpse
+build needs). Readers use `Snapshot()`/`GetItemCount()`; writers use `AddItem`/`RemoveItem`; the
+handful of sites that already hold `inv.mu` keep raw access so they cannot re-enter the lock.
+
+R5h: with only the movement-path conversions reverted, `-race` reports `Inventory.removeItem`
+(`inventory.go:59`) vs `Inventory.Snapshot` (`inventory.go:195`), `EXIT=1`.
+
+Targeted census `~/Archives/darkpawns/oracle-runs/2026-10-26/cline-inv-lock` @ `873a39432`:
+37 scenarios, 37 passed, 0 failed — **verdict CLEAN** (120 s).
+
+### PR 4 — `pkg/game` equipment lock discipline — [#2181](https://github.com/zax0rz/darkpawns/pull/2181)
+
+Stacked on PR 3. Branch `cline/eq-lock`, commit `2c864949c`. Same class for `Equipment.Slots`: four
+unlocked readers (`hasBoat`, the room-activity boat check, `findItemByName`, the `score` equipment
+count in `pkg/session`). R5h: with only those readers reverted, `-race` reports
+`runtime.mapIterStart` in `hasBoat` (`act_movement.go:169`) vs `runtime.mapdelete_fast64` in
+`(*Equipment).unequip` (`equipment.go:270`), `EXIT=1`.
+
+Note on test quality: the first version of the equipment test called `Player.HasBoat()`, which scans
+only the *inventory* — it passed on the pre-fix code and so proved nothing. It was rewritten to call
+the functions that actually iterate the equipment map. The same discipline applied to the PR 1 steal
+test (a timing-lottery version was replaced with a deterministic one).
+
 
 ### Still open after both PRs
 
