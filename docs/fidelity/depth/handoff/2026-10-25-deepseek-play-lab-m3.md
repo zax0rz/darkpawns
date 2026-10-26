@@ -222,13 +222,13 @@ Added this round (all in `cmd/dp-oracle-diff/scenarios/`):
 | `play-lab-m3-death-in-combat.txt` | a level-1 warrior fights a level-11 Zoomaster to the death | **divergence** (PL-005, open), draw parity MISMATCH |
 | `play-lab-m3-warrior-slice.txt`, `-psionic-slice.txt`, `-ninja-slice.txt` | the first 70–90 play commands of a long-horizon session (creation, travel, kills, loot, rest, practice) | produced by `dp-play scenario`; the warrior slice was still running when this report was written, so its verdict is not claimed here |
 
-The census is registered as `m3-play-lab` (targeted: the practice, jail and death
-scenarios) and saved at
-`~/Archives/darkpawns/oracle-runs/2026-10-25/m3-play-lab/`; the first registration
-was cancelled when #2160 landed, because a census pinned to the pre-fix commit
-would have run the wrong code. `start` reports it queued behind whatever release
-census holds the host. Its verdict is not in this report; the expectation is one
-red row (PL-005) and two green.
+The census is registered as `m3-play-lab-b` (targeted: the practice, jail and death
+scenarios, at `9cb0aca75`) and saved at
+`~/Archives/darkpawns/oracle-runs/2026-10-25/m3-play-lab-b/`; the first
+registration was cancelled when #2160 landed, because a census pinned to the
+pre-fix commit would have run the wrong code. `start` reports it queued behind
+whatever release census holds the host. Its verdict is not in this report; the
+expectation is one red row (PL-005) and two green.
 
 **Lab note (process).** While cleaning up scenario leftovers I ran
 `pkill -x circle` / `pkill -f dp-server-prebuilt`, which also matched servers
