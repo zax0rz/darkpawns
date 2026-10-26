@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -57,7 +58,18 @@ func (s *Session) crashLoadEntry() (loaded bool, err error) {
 	if reader, ok := s.manager.db.(objectSaveReader); ok {
 		snapshot, err := reader.GetObjectSave(name)
 		if err != nil {
-			return false, err
+			// C Crash_load's non-ENOENT arm (src/objsave.c:477-491): a load
+			// failure other than "no crash file" — here any store read or
+			// decode error — logs SYSERR, shows the player the NOTICE block
+			// verbatim, and then enters the game with no equipment exactly
+			// like the ordinary missing-file case; the entry must not abort.
+			// perror's text is the engine log, not player bytes, so the slog
+			// wording is ours.
+			slog.Error("SYSERR: READING OBJECT FILE (5)", "player", name, "error", err)
+			s.sendPlayerText("\r\n********************* NOTICE *********************\r\n" +
+				"There was a problem loading your objects from disk.\r\n" +
+				"Contact a God for assistance.\r\n")
+			snapshot = nil
 		}
 		loaded = snapshot != nil
 		if payload := crashLoadEntryLine(name, snapshot); payload != "" {
