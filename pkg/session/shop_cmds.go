@@ -294,8 +294,11 @@ func shopListLine(s *Session, shop *game.Shop, obj *game.ObjectInstance, count, 
 			description += " of " + game.LiquidNames[liquid]
 		}
 	}
+	if (obj.GetTypeFlag() == game.ITEM_WAND || obj.GetTypeFlag() == game.ITEM_STAFF) && obj.GetValue(2) < obj.GetValue(1) {
+		description += " (partially used)"
+	}
 	description = capitalizeFirstRune(description)
-	return fmt.Sprintf(" %2d)  %s%-48s %6d\r\n", index, available, description, shop.BuyPrice(obj.GetCost(), s.player.GetCha()))
+	return fmt.Sprintf(" %2d)  %s%-48s %6d\n\r", index, available, description, shop.BuyPrice(obj.GetCost(), s.player.GetCha()))
 }
 
 // cmdList lists items for sale at the shop.
@@ -330,8 +333,8 @@ func cmdList(s *Session, args []string) error {
 	count, index := 0, 0
 	found := false
 	var output strings.Builder
-	output.WriteString(" ##   Available   Item                                               Cost\r\n")
-	output.WriteString("-------------------------------------------------------------------------\r\n")
+	output.WriteString(" ##   Available   Item                                               Cost\n\r")
+	output.WriteString("-------------------------------------------------------------------------\n\r")
 
 	flush := func() {
 		if last == nil {
@@ -373,7 +376,7 @@ func cmdList(s *Session, args []string) error {
 		if keyword == "" || shopListKeywordMatches(keyword, last.GetKeywords()) {
 			output.WriteString(shopListLine(s, shop, last, count, index))
 		}
-		s.Send(output.String())
+		pageLiteralString(s, output.String())
 	}
 	return nil
 }

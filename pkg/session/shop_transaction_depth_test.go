@@ -1,8 +1,11 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
 
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -280,5 +283,57 @@ func TestBankHiddenTransactionsThroughDispatch(t *testing.T) {
 	}
 	if actor.player.GetGold() != 80 || actor.player.GetBankGold() != 20 {
 		t.Fatal("visible deposit state")
+	}
+}
+
+func TestShopListMagicAnnotationsAndLineEndingsThroughDispatch(t *testing.T) {
+	for _, kind := range []int{game.ITEM_WAND, game.ITEM_STAFF} {
+		for _, charges := range []int{1, 3} {
+			w, manager, _, _ := shopOutputFixture(t, 1)
+			proto, ok := w.GetObjPrototype(6001)
+			if !ok {
+				t.Fatal("missing prototype")
+			}
+			proto.TypeFlag = kind
+			proto.Values = [4]int{1, 3, charges, 0}
+			viewer := addShopOutputSession(t, manager, "Listreader")
+			shopDispatch(t, viewer, "list")
+			got := renderedOutput(viewer)
+			if strings.Contains(got, "\r\n") || !strings.HasPrefix(got, " ##   Available   Item                                               Cost\n\r") {
+				t.Errorf("C list line endings=%q", got)
+			}
+			if strings.Contains(got, "(partially used)") != (charges < 3) {
+				t.Errorf("type=%d charges=%d list=%q", kind, charges, got)
+			}
+		}
+	}
+}
+
+func TestShopListUsesPagerThroughDispatch(t *testing.T) {
+	w, manager, keeper, _ := shopOutputFixture(t, 1)
+	old := combat.GetRoller()
+	combat.SetRoller(shopStockRoller{})
+	t.Cleanup(func() { combat.SetRoller(old) })
+	for i := 0; i < 30; i++ {
+		obj := game.NewObjectInstance(&parser.Obj{VNum: 7000 + i, Keywords: fmt.Sprintf("stock%d", i), ShortDesc: fmt.Sprintf("a stock object %02d", i), Cost: 10}, -1)
+		if err := w.MoveObjectToMobInventoryFront(obj, keeper); err != nil {
+			t.Fatal(err)
+		}
+	}
+	viewer := addShopOutputSession(t, manager, "Pagereader")
+	shopDispatch(t, viewer, "list")
+	if !viewer.IsPaging() || !viewer.pagerLiteral {
+		t.Fatal("long list did not enter C literal page_string")
+	}
+	first := renderedOutput(viewer)
+	if !strings.HasSuffix(first, "\n") || strings.Contains(first, "\r\n") {
+		t.Errorf("first C page boundary=%q", first)
+	}
+	if strings.Count(first, "stock object") >= 30 {
+		t.Fatal("first page leaked the entire list")
+	}
+	viewer.navigatePager("")
+	if rest := renderedOutput(viewer); !strings.HasPrefix(rest, "\r") || !strings.Contains(rest, "stock object") {
+		t.Errorf("second page=%q", rest)
 	}
 }
