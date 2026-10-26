@@ -172,6 +172,11 @@ Never run `git stash` in this repository. Stash refs are shared by every worktre
 to your branch (a `wip:` commit is fine). Taught 2026-10-24, when an agent's revert-proof
 experiment popped a codex agent's stash into its own worktree.
 
+Never stop processes by name (`pkill`, `killall`, `pkill -f`). Stop only the
+PIDs you started, or use `census.sh cancel --run <dir>` for your own census.
+Other agents' servers and censuses run on the same host. Taught 2026-10-25,
+when a play-lab cleanup killed servers belonging to the v0.1.5 release census.
+
 ## Project Overview
 
 Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
