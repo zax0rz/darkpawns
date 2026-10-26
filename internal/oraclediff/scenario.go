@@ -18,6 +18,9 @@ const enterGameStep = "1"
 
 const pulseControl = "~dpclock pulse "
 
+// beginningOfTime mirrors src/db.c:417 for fixed-time validation.
+const beginningOfTime = 650336715
+
 // Scenario is a split differential script: per-server setup (not diffed) plus
 // a shared probe (diffed block-by-block).
 type Scenario struct {
@@ -52,7 +55,12 @@ type Scenario struct {
 	// (Testor, player ID 1) before boot, so both engines log in an existing
 	// player and neither side rolls character-creation draws. Mutually
 	// exclusive with empty-players.
-	SeedPlayer       bool
+	SeedPlayer bool
+	// FixedTime pins the boot calendar on both engines to this DP_FIXED_TIME
+	// unix timestamp (0 keeps the harness default). Calendar-boundary
+	// scenarios boot one or two mud hours before a rollover instead of
+	// pumping there from the default date.
+	FixedTime        int64
 	ScriptlessMobIDs []int
 	ForceLoadVNums   []int
 	RoomExitFixtures []RoomExitFixture
@@ -286,6 +294,7 @@ type AudienceProbeBlock struct {
 //	quiet-zone 80             # suppress mobile resets in a disposable zone
 //	quiet-mobs                # suppress mobile resets in every disposable zone
 //	seed-player               # seed the port's store with C's shipped Testor
+//	fixed-time 650812932      # pin both engines' boot calendar (DP_FIXED_TIME)
 //	strip-mob-script 18306    # force native special dispatch in both copies
 //	compare-close             # render a <CLOSE> marker where the server closed the transport
 //	force-load 4903           # rewrite the prototype load percent to 500% in both copies
@@ -621,6 +630,17 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "seed-player") {
 				sc.SeedPlayer = true
+				continue
+			}
+			if len(fields) == 2 && strings.EqualFold(fields[0], "fixed-time") {
+				secs, timeErr := strconv.ParseInt(fields[1], 10, 64)
+				// mud_time_passed counts mud hours from beginning_of_time
+				// (src/db.c:417), so an earlier pin yields a negative
+				// calendar no scenario wants.
+				if timeErr != nil || secs < beginningOfTime {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: fixed-time %q is not a unix timestamp at or after %d", name, lineNo, fields[1], beginningOfTime)
+				}
+				sc.FixedTime = secs
 				continue
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "no-settle") {

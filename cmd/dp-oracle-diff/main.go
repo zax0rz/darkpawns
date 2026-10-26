@@ -35,6 +35,7 @@ const (
 	// fixedTime pins the game calendar on both engines (DP_FIXED_TIME seam,
 	// orthogonal to DP_CLOCK's pulse freeze). 1770838461 => 2pm/daytime,
 	// {hours:14,day:17,month:8,year:1245}; both derive an identical calendar.
+	// A scenario's fixed-time fixture overrides it (fixedTimeFor).
 	fixedTime    = "1770838461"
 	settlePulses = 40 // C PULSE_MOBILE: births a newbie exactly once.
 	// deadStorePath names a database under a directory that does not exist, so the
@@ -469,12 +470,13 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	// environment and the same durable store as the first boot.
 	var goEnv []string
 	goDB := deadStorePath
+	pinnedTime := fixedTimeFor(&scenario)
 
 	oracleEngine := &engine{
 		name: "C oracle",
 		start: func() (*process, error) {
 			return startProcess(ctx, "C oracle", oracleRoot,
-				append(append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+fixedTime), oracleDrawEnv...), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
+				append(append(os.Environ(), "DP_SEED="+seed, "DP_CLOCK=1", "DP_FIXED_TIME="+pinnedTime), oracleDrawEnv...), oracleBin, "-d", oracleData, fmt.Sprint(oraclePort))
 		},
 	}
 	goEngine := &engine{
@@ -504,7 +506,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		os.Environ(),
 		"DP_SEED="+seed,
 		"DP_CLOCK=1",
-		"DP_FIXED_TIME="+fixedTime,
+		"DP_FIXED_TIME="+pinnedTime,
 		"JWT_SECRET=oracle-diff-secret-at-least-32-characters-long",
 		"ENVIRONMENT=development",
 	)
@@ -2145,6 +2147,17 @@ func applyMobScriptFixtures(worldDir string, fixtures []oraclediff.MobScriptFixt
 		}
 	}
 	return nil
+}
+
+// fixedTimeFor is the DP_FIXED_TIME value both engines boot with: the
+// scenario's fixed-time fixture when it pins one, the harness default
+// otherwise. Calendar-boundary scenarios use it to boot next to a rollover
+// instead of pumping there from the default date.
+func fixedTimeFor(s *oraclediff.Scenario) string {
+	if s.FixedTime != 0 {
+		return strconv.FormatInt(s.FixedTime, 10)
+	}
+	return fixedTime
 }
 
 func needsPlayerStore(s *oraclediff.Scenario) bool {
