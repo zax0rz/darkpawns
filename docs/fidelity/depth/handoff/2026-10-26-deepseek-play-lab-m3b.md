@@ -193,6 +193,54 @@ design and GLM carries it into the PL-005 fix PR.
    Do you want the next round to measure deaths per 100 kills as a balance
    signal, or is that outside the lab's remit?
 3. **The guild trip costs a round walk from the centre.** Keep visiting on every
+
+## 8. The model's view (policy, 2026-10-26)
+
+Zach set the lab's input policy after this round: **the model sees exactly what a
+Mudlet player sees.** Implemented in the lab, verified against a live server, and
+it changes what the record contains.
+
+* **`auto exits` at creation.** The driver ensures the flag is on as its first act
+  in the game. The port already defaults a new player to on
+  (`pkg/game/player.go:345`, "like PRF_AUTOEXIT in original"), so the step is an
+  *ensure-on*: it reads the answer and toggles back when it finds the flag already
+  set. (`auto` with no argument would be the natural way to ask, but its listing
+  is C's self-aliasing `sprintf` UB and the oracle prints nothing, so the toggle
+  is the safe probe.) Every room description now carries `[ Exits: ... ]`, so the
+  observation is a player's and the mapper has exits to recognise rooms by.
+* **`state` is the player's view**: the text block, the GMCP payloads *as sent
+  with that block* (cleared per observation — a stale `Room.Info` was surviving
+  into dark rooms), and `room` = **the mapper's belief**.
+* **`meta` is analysis-only**: the engine's own account of the room (GMCP
+  `Room.Info`), its name, area and exit destinations. It never enters `state`.
+  The dataset exporter carries it as the row's `engine` field.
+* **Position by movement.** `internal/agent/mapper.go` tracks the room the way a
+  player's mapper does: a walk applies the graph edge from the current belief, a
+  refused walk changes nothing, and the visible room name plus exits snap the
+  belief when they identify a room. With several rooms sharing a name and exits
+  ("Main Street" is the city's whole spine) the walk is the better evidence and
+  the belief stands; the text only moves it when the belief is contradicted.
+* **Dark rooms.** The engine sends no `Room.Info` there and that is correct
+  (PL-002 is pinned, not a bug). The belief carries on by dead reckoning, which is
+  what the record now shows:
+
+| observation | `state.room` (belief) | `state.room_known` | `meta.room` | `meta.room_source` | `Room.Info` sent |
+|---|---|---|---|---|---|
+| lit room, walked in | 8128 | true | 8128 | gmcp | yes |
+| lit room, ambiguous name | 8129 | true | 8129 | gmcp | yes |
+| dark room, walked in | 7002 | true | — | none | **no** |
+
+Belief and truth agreed on every lit observation of the verification walk (20
+decisions, `m3c-dark3`), and in the dark the belief continued to 7002 while the
+engine said nothing at all. The follow-up's own progression session re-ran under
+the new policy unchanged (43 decisions, 133 experience, one belief/truth
+mismatch in 43 rows).
+
+**Note on this round's data.** The six climbs in §3 and round 3's sessions were
+recorded *before* this policy, when `state.room` was the engine's GMCP vnum and no
+`auto exits` step existed. Their datasets stay as recorded; sessions from here on
+carry the belief in `state` and the truth in `meta`.
+
    level-up, or batch practices to every third level?
 4. **Levels 9+ need a new ground** (`calc_level_diff` cuts recruit pay from
    level 9). Should the next round's ladder continue into the menagerie and the
