@@ -216,3 +216,26 @@ func TestShopKeeperGatesThroughDispatch(t *testing.T) {
 		})
 	}
 }
+
+func TestShopTradeExpressionRefusesSaleAndValueThroughDispatch(t *testing.T) {
+	w, manager, keeper, shop := shopOutputFixture(t, 1)
+	seller := addShopOutputSession(t, manager, "Exprseller")
+	shop.BuyWords = []string{"MAGIC"}
+	item, err := w.SpawnObject(6001, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.MoveObjectToPlayerInventory(item, seller.player); err != nil {
+		t.Fatal(err)
+	}
+	seller.player.SetGold(17)
+	for _, cmd := range []string{"sell apple", "value apple"} {
+		shopDispatch(t, seller, cmd)
+		if !strings.Contains(renderedOutput(seller), "I don't buy that.") {
+			t.Errorf("%s did not refuse", cmd)
+		}
+		if seller.player.GetGold() != 17 || seller.player.Inventory.GetItemCount() != 1 || keeper.GetGold() != 1000 {
+			t.Fatal("expression refusal mutated state")
+		}
+	}
+}

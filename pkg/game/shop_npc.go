@@ -182,11 +182,13 @@ func (w *World) shopNpcSellingObject(shop *Shop, keeper, customer *MobInstance, 
 		}
 		return nil
 	}
-	// trade_with's OBJECT_OK gate: the shop must buy this type, the item must
-	// have value, and ITEM_NOSELL blocks it (src/structs.h:484).
-	if !shop.WillBuyType(found.GetTypeFlag()) || found.GetCost() < 1 || found.HasExtraFlag(0, 16) {
+	if result := shop.TradeWith(found); result != ShopTradeOK {
 		if msg {
-			w.shopNpcTell(keeper, fmt.Sprintf(shop.Messages[ShopMessageDoNotBuy], customer.GetName()))
+			message := shop.Messages[ShopMessageDoNotBuy]
+			if result == ShopTradeDead {
+				message = "%s I don't buy used up wands or staves!"
+			}
+			w.shopNpcTell(keeper, fmt.Sprintf(message, customer.GetName()))
 		}
 		return nil
 	}

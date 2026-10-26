@@ -510,9 +510,9 @@ func shopSellingObject(s *Session, shop *game.Shop, keeper *game.MobInstance, na
 	refusal := ""
 	if item == nil {
 		refusal = shop.Messages[game.ShopMessageNoSuchItem2]
-	} else if item.GetCost() < 1 || item.HasExtraFlag(0, 16) || !shop.WillBuyType(item.GetTypeFlag()) {
+	} else if shop.TradeWith(item) == game.ShopTradeNotOK {
 		refusal = shop.Messages[game.ShopMessageDoNotBuy]
-	} else if (item.GetTypeFlag() == game.ITEM_WAND || item.GetTypeFlag() == game.ITEM_STAFF) && item.GetValue(2) == 0 {
+	} else if shop.TradeWith(item) == game.ShopTradeDead {
 		refusal = "%s I don't buy used up wands or staves!"
 	} else {
 		return item
