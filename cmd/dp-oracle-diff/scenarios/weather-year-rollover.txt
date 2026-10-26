@@ -1,0 +1,36 @@
+# depth-case: weather.year-rollover-1245
+# The year rollover the design excluded as unreachable is reachable with a
+# boundary boot after all: fixed-time 1771288092 is hour 23 of day 34,
+# month 16, YEAR 1245 — the harness default calendar's last hour (it is
+# exactly 7,137 mud hours after the default pin 1770838461, the distance
+# from day 17, month 8 to the year's end). One pumped hour crosses
+# hours>23 -> day++ -> day>34 -> month=17 -> month>16 -> month=0, year++
+# (src/weather.c:86-124) into year 1246, closing the weather row's last
+# residual without the 8,996,400-pulse travel decision 5 ruled out.
+
+[fixture]
+quiet-mobs
+seed-player
+fixed-time 1771288092
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8001
+
+[probe]
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time

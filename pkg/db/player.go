@@ -424,6 +424,18 @@ func (db *DB) SetFailedLoginAttempts(playerID, attempts int) error {
 	return err
 }
 
+// SetNextPlayerID moves the players AUTOINCREMENT sequence so the next
+// CreatePlayer takes the given id. C's boot derives top_idnum from the
+// shipped player file and create_entry hands every new mortal ++top_idnum
+// (src/db.c), so a seeded store that skips C's earlier records must advance
+// its sequence to C's next id or fresh characters print the wrong IDNum in
+// stat/set/whois/finger output. The caller seeds the twin first, so the
+// sqlite_sequence row exists by the time this runs.
+func (db *DB) SetNextPlayerID(next int64) error {
+	_, err := db.exec(`UPDATE sqlite_sequence SET seq = ? WHERE name = 'players'`, next-1)
+	return err
+}
+
 // UpdateDescription updates the description displayed when another player looks at this character.
 func (db *DB) UpdateDescription(playerID int, description string) error {
 	_, err := db.exec(`UPDATE players SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, description, playerID)

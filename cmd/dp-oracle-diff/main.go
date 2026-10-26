@@ -517,7 +517,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	// Record consumers need the same real SQLite store as login, including
 	// stat file now that the JSON sidecar is retired.
 	if needsPlayerStore(&scenario) {
-		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers, scenario.SeedPlayer)
+		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers, scenario.SeedPlayer, filepath.Join(oracleRoot, "lib", "etc", "players"))
 		if err != nil {
 			return err
 		}
@@ -1193,7 +1193,7 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 // scenario logs the port in as C's shipped first player instead of creating a
 // fresh character: the store is seeded with the Testor twin below, so neither
 // engine rolls creation draws.
-func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool) (string, error) {
+func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool, shippedPfile string) (string, error) {
 	url := "sqlite://" + filepath.Join(goWork, "relogin.db")
 	if emptyPlayers {
 		return url, nil
@@ -1221,8 +1221,48 @@ func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool) (string, e
 		if err := store.SetFailedLoginAttempts(record.ID, record.FailedLoginAttempts); err != nil {
 			return "", fmt.Errorf("seed relogin store login counter: %w", err)
 		}
+		// C's next fresh mortal takes ++top_idnum from the shipped player
+		// file; without advancing the sequence the port's takes 2, and the
+		// IDNum prints diverge in stat/set/whois/finger output.
+		top, err := topShippedIDNum(shippedPfile)
+		if err != nil {
+			return "", err
+		}
+		if err := store.SetNextPlayerID(top + 1); err != nil {
+			return "", fmt.Errorf("seed relogin store id sequence: %w", err)
+		}
 	}
 	return url, nil
+}
+
+// topShippedIDNum returns C's top_idnum for the shipped player file: the
+// highest idnum any char_file_u record holds. The layout is frozen by the
+// struct's *DO*NOT*CHANGE* warnings (src/structs.h): sizeof 1656, idnum at
+// offset 392 (char_specials_saved.idnum, a 64-bit long on this build).
+// C's boot derives the same value while building the player index
+// (build_player_index, src/db.c), and create_entry assigns ++top_idnum to
+// every new character.
+func topShippedIDNum(pfile string) (int64, error) {
+	const (
+		recordSize  = 1656
+		idnumOffset = 392
+		idnumSize   = 8
+	)
+	data, err := os.ReadFile(pfile)
+	if err != nil {
+		return 0, fmt.Errorf("read shipped player file: %w", err)
+	}
+	if len(data)%recordSize != 0 {
+		return 0, fmt.Errorf("shipped player file %s is %d bytes, not a whole number of %d-byte records", pfile, len(data), recordSize)
+	}
+	var top int64
+	for off := 0; off+recordSize <= len(data); off += recordSize {
+		id := int64(binary.LittleEndian.Uint64(data[off+idnumOffset : off+idnumOffset+idnumSize]))
+		if id > top {
+			top = id
+		}
+	}
+	return top, nil
 }
 
 // testorTwinRecord is the port-side twin of the C checkout's shipped first

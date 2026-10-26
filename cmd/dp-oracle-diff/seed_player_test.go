@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -63,13 +66,50 @@ func TestSeedPlayerRejectsEmptyPlayers(t *testing.T) {
 	}
 }
 
+// writeShippedPfile synthesizes a C player file of char_file_u records
+// carrying the given idnums (sizeof 1656, idnum at offset 392 — the layout
+// topShippedIDNum parses).
+func writeShippedPfile(t *testing.T, idnums ...int64) string {
+	t.Helper()
+	const recordSize, idnumOffset = 1656, 392
+	var buf []byte
+	for _, id := range idnums {
+		record := make([]byte, recordSize)
+		binary.LittleEndian.PutUint64(record[idnumOffset:], uint64(id))
+		buf = append(buf, record...)
+	}
+	path := filepath.Join(t.TempDir(), "players")
+	if err := os.WriteFile(path, buf, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+// topShippedIDNum must return C's top_idnum: the highest idnum the shipped
+// records hold, not the record count.
+func TestTopShippedIDNum(t *testing.T) {
+	top, err := topShippedIDNum(writeShippedPfile(t, 1, 2, 3, 4))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if top != 4 {
+		t.Fatalf("top = %d, want 4", top)
+	}
+	if _, err := topShippedIDNum(writeShippedPfile(t, 7, 2)); err != nil {
+		t.Fatal(err)
+	}
+	if top, _ := topShippedIDNum(writeShippedPfile(t, 7, 2)); top != 7 {
+		t.Fatalf("top = %d, want 7 (highest, not count)", top)
+	}
+}
+
 // The twin must be C's shipped first player (lib/etc/players record 0):
 // init_char's first-player block (BootstrapFirstPlayerGod ports db.c:3014-3074)
 // plus the creation rolls the shipped record kept. Without the store seeded
 // this way the port cannot log Testor in, and every seed-player scenario
 // diverges — the red control in the PR description demonstrates exactly that.
 func TestPrepareGoReloginDBSeedsTestorTwin(t *testing.T) {
-	url, err := prepareGoReloginDB(t.TempDir(), false, true)
+	url, err := prepareGoReloginDB(t.TempDir(), false, true, writeShippedPfile(t, 1, 2, 3, 4))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,12 +179,23 @@ func TestPrepareGoReloginDBSeedsTestorTwin(t *testing.T) {
 	if placeholder != nil {
 		t.Fatal("seed-player store also seeded Zzplaceholder")
 	}
+
+	// C's next fresh mortal takes ++top_idnum from the shipped records (4
+	// here), so the store's sequence must hand the next creation ID 5 — the
+	// IDNum stat/set/whois/finger print (Luna's PR #2167 surface).
+	created := &db.PlayerRecord{Name: "Ident", Password: "x", Level: 1, RoomVNum: 8004}
+	if err := store.CreatePlayer(created); err != nil {
+		t.Fatal(err)
+	}
+	if created.ID != 5 {
+		t.Fatalf("next created player got ID %d, want 5 (C's ++top_idnum)", created.ID)
+	}
 }
 
 // Default off: without the fixture the placeholder path is exactly what it
 // was before seed-player existed.
 func TestPrepareGoReloginDBDefaultSeedsPlaceholder(t *testing.T) {
-	url, err := prepareGoReloginDB(t.TempDir(), false, false)
+	url, err := prepareGoReloginDB(t.TempDir(), false, false, "")
 	if err != nil {
 		t.Fatal(err)
 	}
