@@ -26,10 +26,10 @@ finished level 1 between 275 and 693 experience against a level-2 threshold of
 1,500. Nothing was blocked by a bug in the port: the climb is blocked by the
 game's own arithmetic plus the frozen clock (see §3.3), and the policy's own
 inefficiency (it spends most decisions walking, not fighting). Two divergences
-were reduced and filed: **PL-004** (the practice catalog still reports a learned
-*mapped* skill as "(not learned)") and **PL-005** (the death path: the port kills
-where C leaves the character incapacitated, with a draw-parity mismatch at the
-same step).
+were reduced: **PL-004**, the practice catalog reporting a learned *mapped* skill
+as "(not learned)" — **fixed by #2160 while this round ran, and confirmed green
+on the rebased base** — and **PL-005**, the death path killing where C leaves the
+character incapacitated, which is still open.
 
 ## 1. Routing: the world map the policy plays from
 
@@ -98,19 +98,19 @@ each class get" is the table above, and the reason is in §3.3.
 
 ## 3. Findings
 
-### 3.1 PL-004 — the practice catalog reports a learned *mapped* skill as "(not learned)"
+### 3.1 PL-004 — the practice catalog reports a learned *mapped* skill as "(not learned)" (FIXED, #2160)
 
-`RenderSkillList` (`pkg/game/practice.go`) reads each skill with
+`RenderSkillList` (`pkg/game/practice.go`) read each skill with
 `p.GetSkill(strings.ToLower(name))`, where `name` is the *display* name from the
-spell catalog. `specGuild` (`pkg/game/spec_procs.go`) writes the skill under
+spell catalog. `specGuild` (`pkg/game/spec_procs.go`) wrote the skill under
 `SkillStorageName(skillNum)`, which for the skills in `catalogSkillKeys`
 (`pkg/game/skill_catalog_names.go`) is a *different* key — `strike of revenge` is
 stored as `strike`, `flesh alter` as `flesh_alter`, `pick lock` as `pick_lock`,
-and so on. The catalog therefore reads a skill nothing wrote.
+and so on. The catalog therefore read a skill nothing wrote.
 
 Reproduced on both engines with the same keystrokes
 (`scripts/practice-probe.py`, evidence in `~/dp-play-lab/evidence/pl-004-{c,go}.txt`):
-a ninja spends all four sessions on `strike of revenge`, the guildmaster answers
+a ninja spent all four sessions on `strike of revenge`, the guildmaster answered
 "You are now learned in that area.", and then
 
 ```
@@ -121,14 +121,17 @@ Go port  : strike of revenge     (not learned)
 C stores and reads by skill *number* (`SET_SKILL(ch, skill_num, …)` in
 `SPECIAL(guild)`, `src/spec_procs.c:201-247`; `list_skills` →
 `how_good(GET_SKILL(ch, spells[i].number))`, `src/spec_procs.c:157-195`), so the
-two always agree. This is an R1 divergence in player-facing bytes.
+two always agree. This was an R1 divergence in player-facing bytes.
 
 Reduced to `cmd/dp-oracle-diff/scenarios/play-lab-m3-practice-catalog.txt`
 (`spawn-mob 8026 1 8151 80` places the ninja guildmaster, so the scenario does not
-depend on when the zone reset ran). Verdict today: `normalized divergence
-detected`, `draw-parity MATCH`, exit 3 — the one-line diff is the pair above.
-The fix is PR **#2160** (`codex/fix-practice-storage`), open, not merged: once it
-lands, this scenario is its regression guard.
+depend on when the zone reset ran). **Confirmed fixed**: PR **#2160**
+(`codex/fix-practice-storage`, merged 2026-10-26T01:07Z, with the R5c
+storage-key rule added to `docs/fidelity/RULEBOOK.md` by `dd6662138`) makes the
+scenario green on the rebased base — `no normalized divergence`,
+`draw-parity MATCH entries=4080`, and the catalog now reads
+`strike of revenge     (fair)` on both engines. The scenario is the fix's
+regression guard, exactly as round 2's lantern scenario guards #2151.
 
 ### 3.2 PL-005 — the death path kills where C leaves the character incapacitated
 
@@ -212,19 +215,20 @@ steps from the start) as the primary ground.
 
 Added this round (all in `cmd/dp-oracle-diff/scenarios/`):
 
-| scenario | what it replays | verdict at seed 1 |
+| scenario | what it replays | verdict at seed 1 (rebased on #2160) |
 |---|---|---|
-| `play-lab-m3-practice-catalog.txt` | a ninja learns a mapped skill at the guildmaster, then reads the catalog | **divergence** (PL-004), draw parity MATCH |
-| `play-lab-m3-death-in-combat.txt` | a level-1 warrior fights a level-11 Zoomaster to the death | **divergence** (PL-005), draw parity MISMATCH |
+| `play-lab-m3-practice-catalog.txt` | a ninja learns a mapped skill at the guildmaster, then reads the catalog | **clean**, draw parity MATCH — PL-004's regression guard after #2160 |
 | `play-lab-m3-jail-on-attacking-guard.txt` | a level-1 warrior swings at a church guard; the city jails him and lets him out | clean, draw parity MATCH |
+| `play-lab-m3-death-in-combat.txt` | a level-1 warrior fights a level-11 Zoomaster to the death | **divergence** (PL-005, open), draw parity MISMATCH |
 | `play-lab-m3-warrior-slice.txt`, `-psionic-slice.txt`, `-ninja-slice.txt` | the first 70–90 play commands of a long-horizon session (creation, travel, kills, loot, rest, practice) | produced by `dp-play scenario`; the warrior slice was still running when this report was written, so its verdict is not claimed here |
 
-The census is registered as `m3-play-lab` (targeted, three scenarios) at
-`~/Archives/darkpawns/oracle-runs/2026-10-25/m3-play-lab/`, queued behind the
-`v015-release-90ff38ff7` release census that was running at the time
-(`start` printed `position=2 active=36/72`). Its verdict is not in this report:
-the two finding scenarios are expected to be the only red rows, which is what a
-findings round should show.
+The census is registered as `m3-play-lab` (targeted: the practice, jail and death
+scenarios) and saved at
+`~/Archives/darkpawns/oracle-runs/2026-10-25/m3-play-lab/`; the first registration
+was cancelled when #2160 landed, because a census pinned to the pre-fix commit
+would have run the wrong code. `start` reports it queued behind whatever release
+census holds the host. Its verdict is not in this report; the expectation is one
+red row (PL-005) and two green.
 
 **Lab note (process).** While cleaning up scenario leftovers I ran
 `pkill -x circle` / `pkill -f dp-server-prebuilt`, which also matched servers
@@ -262,24 +266,24 @@ them. This was my error: I should have matched only my own run directories.
 
 ## 8. Decisions for Zach
 
-1. **PL-004's scenario is red by design until #2160 merges.** Do you want it
-   ledgered as an EXPECTED divergence now (with the `#2160` pin), or left out of
-   the census until the fix lands and then used as its regression guard?
-2. **PL-005 needs a second pass on the port side.** I can cite C's incapacitated
-   path but not yet the port's "neck snaps in two" line. Is that worth another
-   round, or should it wait for whoever owns the death path?
-3. **Jail is a play-lab policy problem, not a port bug.** Should the next
+1. **PL-005 needs a second pass on the port side.** I can cite C's incapacitated
+   path (`src/limits.c:507-515`) but not yet the port's "neck snaps in two" line.
+   Is that worth another round, or should it wait for whoever owns the death path?
+2. **Jail is a play-lab policy problem, not a port bug.** Should the next
    round's routing treat the city as off-limits for hunting (menagerie only), or
    also measure how long a sentence costs a session?
-4. **The frozen clock makes each session a finite mob pool.** For a level-3/5/10
+3. **The frozen clock makes each session a finite mob pool.** For a level-3/5/10
    climb, do you want sessions that advance the clock far enough for zone resets
    (a session would need to pump ~25 game-minutes per repopulate), or longer
    wall-clock runs on an unfrozen server?
-5. **Coverage gaps in the sample:** no session produced a shop *purchase* (the
+4. **Coverage gaps in the sample:** no session produced a shop *purchase* (the
    character starts armed and poor) or a spell *cast* (the policy has no cast
    sub-goal). Do you want the next round to add a purse fixture and a cast
    sub-goal so those surfaces are replayed too?
-6. **The two random-play sessions are 150 decisions each.** M2 ran 60 random
+5. **The two random-play sessions are 150 decisions each.** M2 ran 60 random
    rows; is 300 enough for the coverage set, or should random play scale with the
    directed volume?
+6. **The three session slices** (`play-lab-m3-*-slice.txt`) are 70–90 commands of
+   a long-horizon session, replayed as oracle scenarios. Keep them, or drop them
+   in favour of the staged scenarios that isolate one surface each?
 
