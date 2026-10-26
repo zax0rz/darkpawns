@@ -1,0 +1,71 @@
+# Play-lab milestone 5: death and recovery.
+#
+# A path none of the milestone-4 scenarios touch. A level-1 warrior walks into the
+# training centre and attacks the guard initiate (mob 16309, level 5, 5d5+60 hit
+# points, 2d4+2 damage) that the centre's top band spawns. The fight is lost, the
+# character dies, and the block after the death is the point: C runs raw_kill's
+# strip sequence, moves the body to the temple and clears the affects, and the
+# score, equipment and inventory afterwards are what a player sees next.
+
+[fixture]
+quiet-mobs
+spawn-mob 16309 1 16301 163
+
+[setup:oracle]
+Deathrecover
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deathrecover
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+~dpclock pulse 40
+auto exits
+north
+east
+south
+west
+north
+west
+south
+open door
+south
+look
+kill initiate
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+score
+equipment
+inventory
+look
+score
