@@ -37,6 +37,9 @@ blocked in `mail.tsv` pending the same seeded-record fixture.
   CLEAN on every seed: 16/16 rows per run, zero draw divergence, and a maximum
   per-scenario elapsed value of 45 seconds. It includes the corrected
   mob-wait proof and the existing Call Lightning concentration-miss proof.
+  The runs captured Go HEAD `d4110f343` with only the three final scenario-file
+  edits dirty; commit `a180d8edc` records those exact scenario bytes and the
+  handoff/ledger updates, with no Go-source change after the runs.
 - A separate switched-NPC Call Lightning probe was discarded as a proof: its
   target lightning-miss bytes matched, but the 600-pulse combat transcript
   also contained additional C/Go attack-message differences outside those
@@ -87,7 +90,7 @@ The ten gates passed individually on the combined stop-tier tree based on
 `go test ./pkg/game/...`, `golangci-lint run ./...`, `make deadcode-ratchet`,
 `make fidelity-depth`, `make fidelity-units`, and `make string-census`.
 `make fidelity-depth` was rerun after the final proof-fixture edits and reports
-42 maps with zero errors. PR #2177 contains the non-stop changes; a separate
-`[stop tier]` PR contains switched-body delivery and the live mail-store
-correction with regression controls. Neither PR is to be merged or deployed
-before Claude's review.
+42 maps with zero errors. PR #2177 contains the non-stop changes; stacked draft
+PR #2179 contains switched-body delivery and the live mail-store correction
+with regression controls. Neither PR is to be merged or deployed before
+Claude's review.
