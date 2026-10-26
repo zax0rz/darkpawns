@@ -33,7 +33,8 @@ func TestShopTradeExpressionMatchesCStackSemantics(t *testing.T) {
 		{"gold & (MAGIC)", true},
 		{"gold & {MAGIC}", true},
 		{"gold & [MAGIC]", true},
-		{"gold )", false},
+		{"gold )", true},
+		{"gold ] }", true},
 		{"gold ring", false},
 	} {
 		if got := shopEvaluateExpression(item, tc.expression); got != tc.want {

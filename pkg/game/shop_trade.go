@@ -71,7 +71,9 @@ func shopEvaluateExpression(item *ObjectInstance, expression string) bool {
 	}
 	popOperator := func() int {
 		if len(operators) == 0 {
-			return -1
+			// C pop() returns zero on underflow, unlike top()'s NOTHING.
+			// Zero is OPER_OPEN_PAREN, so a stray closing bracket is accepted.
+			return 0
 		}
 		n := len(operators) - 1
 		v := operators[n]
