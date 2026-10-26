@@ -1,0 +1,149 @@
+# depth-case: regen.hunger-growls-and-parched
+# depth-case: regen.hunger-thirst-zero-lines
+# depth-case: regen.quartered-gains-at-zero
+# A fresh mortal (created after the seeded Testor, so neither engine crowns
+# them) pumped one mud hour at a time. do_start sets the conditions
+# THIRST=36 FULL=36 DRUNK=0 at first entry (src/class.c:578-580), so the
+# gain_condition arm (src/limits.c:476-480, -1 per hour) reaches value 1 on
+# pumped hour 35 ("Your stomach growls with hunger." / "You feel a bit
+# parched.") and 0 on hour 36 ("You are hungry." / "You are thirsty."),
+# then stays clamped and silent. Before the threshold hours the seeded
+# Testor peer sets the actor's pools low, so the score probes around zero
+# carry the gain>>=2 quartered recovery (src/limits.c:182-183) while the
+# hours before it carry the unquartered rate. Each step is input, so the
+# idle timer never reaches the void. DRUNK starts at 0 for a fresh
+# character, so the sobering branch is not reachable here.
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Hungryone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hungryone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+score
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
+score
+send:testor set player Hungryone hit 5
+send:testor set player Hungryone mana 5
+send:testor set player Hungryone move 5
+~dpclock pulse 630
+time
+score
+~dpclock pulse 630
+time
+score
+~dpclock pulse 630
+time
+score
+~dpclock pulse 630
+time
+score
+~dpclock pulse 630
+time
+score
