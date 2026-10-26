@@ -1,0 +1,65 @@
+# Play-lab milestone 3: death in combat, and the state the player is left in.
+#
+# Recorded session: none directly — the long-horizon sessions flee at 30% health
+# and never die, so the death path is staged here instead of claimed as observed.
+# The watch item is the death path itself: every death route must run raw_kill's
+# strip sequence, so the blocks after the kill are the point.
+#
+# A level-11 Zoomaster (mob 14516, lib/world/mob/145.mob) is placed in the Street
+# of Swords (8101, ROOM_PEACEFUL clear) five steps from the start. It is a
+# wilderness mob, not a city guard: guards and citizens answer violence with the
+# jail, which is a different scenario (play-lab-m3-jail-on-attacking-guard).
+
+[fixture]
+quiet-mobs
+spawn-mob 14516 1 8101 145
+
+[setup:oracle]
+Deadwar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Deadwar
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+# Settle the newbie intro, walk out of the peace rooms, and pick a fight the
+# character cannot win.
+~dpclock pulse 40
+north
+east
+south
+west
+kill zoomaster
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+score
+equipment
+inventory
+look
+score
