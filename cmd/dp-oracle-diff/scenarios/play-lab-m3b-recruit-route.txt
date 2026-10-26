@@ -1,0 +1,65 @@
+# Play-lab milestone 3 follow-up: the newbie route into the guard training centre.
+#
+# The route Zach gave on 2026-10-25: from the Temple of the Cross (8008) west to
+# the Street of Swords (8101), north (8102), west into the Guard Barracks
+# (16300), open the door, south into The New Recruit Training Area (16301).
+# From the newbie start room (8162) that is: north, east, south, west, north,
+# west, south — and the last step is behind a closed door (the room's D2 exit and
+# the zone's own door reset, lib/world/zon/163.zon line 112).
+#
+# What it pins: the closed-door refusal, the open, the walk through, and the
+# first fight with a level-1 recruit (100 experience, 1d5+20 hit points, 1d4
+# damage) — the ground every class is supposed to start on.
+
+[fixture]
+quiet-mobs
+spawn-mob 16302 1 16301 163
+
+[setup:oracle]
+Recruit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Recruit
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+~dpclock pulse 40
+north
+east
+south
+west
+north
+west
+south
+open door
+south
+look
+kill recruit
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+score
