@@ -13,9 +13,9 @@ milestone 1 merged as #2150 and milestone 2 as #2157). Products this round:
    for gear, and a sub-goal recorded on every decision row.
 2. **Six long sessions**, one per class the creation menu offers, 5,100 directed
    decisions in total, plus two random-play sessions for coverage.
-3. **A differential sample**: session slices, a staged death, a staged jail
-   sequence and the practice catalog, replayed against the C oracle with
-   `--draw-parity`.
+3. **A differential sample**: a staged death, a staged jail sequence and the
+   practice catalog, replayed against the C oracle with `--draw-parity`. (Session
+   slices were cut too and then dropped from the PR: see §5.)
 
 Findings only, no fixes. Local servers only, frozen clock, pulses pumped as in
 milestone 2.
@@ -211,7 +211,7 @@ steps from the start) as the primary ground.
 | mana / hit / move regen by position | functions and gates match C line for line (`ManaGain`/`HitGain`/`MoveGain` vs `src/limits.c:59-253`; `PointUpdate` vs `:495-501`). The measured fact that matters for play: regen runs **once per Mud hour = 630 pulses** (`SECS_PER_MUD_HOUR` 63, `src/utils.h:135`), so a rest must pump a whole hour to recover anything — the driver's `-rest-pulses 700` does. No inversion found in this pass |
 | death (affects must clear) | #2158 landed the `raw_kill` strip; the staged death scenario is **PL-005** (a divergence in the death *path*, not in the strip) |
 | lights | unchanged from round 2: the lantern regression guard (`play-lab-lights-dark-room.txt`) is still green, and the fix for the original finding was **#2151** (`glm/room-light-accounting`, `6e245a2ba`), not #2148 as round 2's report said (see §6) |
-| doors while hunting | exercised: the policy walks through doors, opens a closed one (`open door`), and marks a refused walk as a blocked edge for the rest of the session. The jail scenario and the session slices replay door traversals with no divergence |
+| doors while hunting | exercised: the policy walks through doors, opens a closed one (`open door`), and marks a refused walk as a blocked edge for the rest of the session. The jail scenario replays the door traversal with no divergence |
 | the justice system | the guard-assist → jail → release sequence is byte-identical to C at seed 1 (`play-lab-m3-jail-on-attacking-guard.txt`, `draw-parity MATCH`) |
 
 ## 5. Differential: scenarios and the census
@@ -223,7 +223,18 @@ Added this round (all in `cmd/dp-oracle-diff/scenarios/`):
 | `play-lab-m3-practice-catalog.txt` | a ninja learns a mapped skill at the guildmaster, then reads the catalog | **clean**, draw parity MATCH — PL-004's regression guard after #2160 |
 | `play-lab-m3-jail-on-attacking-guard.txt` | a level-1 warrior swings at a church guard; the city jails him and lets him out | clean, draw parity MATCH |
 | `play-lab-m3-death-in-combat.txt` | a level-1 warrior fights a level-11 Zoomaster to the death | **divergence** (PL-005, open), draw parity MISMATCH — the scenario ships in GLM's PL-005 fix PR, not this one |
-| `play-lab-m3-warrior-slice.txt`, `-psionic-slice.txt`, `-ninja-slice.txt` | the first 70–90 play commands of a long-horizon session (creation, travel, kills, loot, rest, practice) | produced by `dp-play scenario`; the warrior slice was still running when this report was written, so its verdict is not claimed here |
+
+**The session slices are not in this PR.** `dp-play scenario` cut the first 70–90
+play commands of three long-horizon sessions into scenarios of about 880 commands
+each, and the census's per-scenario limit is 240 s: all three TIMED OUT twice,
+which made the batch NOT_CLEAN. They are dropped here, and the full sessions stay
+in `~/dp-play-lab` as evidence: the follow-up's sessions (`sessions/m3b-*.jsonl`,
+90–292 decisions each) and the milestone-3 dataset export (`dataset/m3/`). The
+milestone-3 session *files* themselves were overwritten when the follow-up runner
+reused the `m3-<class>` session id — a lab bug fixed mid-round — so what survives
+of them is that export, the three slice scenarios in this branch's history, and
+the tables in this report. A replay belongs in the corpus only as a reduction of
+at most about 150 commands, proved by its own targeted census — a later PR.
 
 The census is registered as `m3-play-lab-b` (targeted: the practice, jail and death
 scenarios, at `9cb0aca75`) and saved at
@@ -287,7 +298,9 @@ them. This was my error: I should have matched only my own run directories.
 5. **The two random-play sessions are 150 decisions each.** M2 ran 60 random
    rows; is 300 enough for the coverage set, or should random play scale with the
    directed volume?
-6. **The three session slices** (`play-lab-m3-*-slice.txt`) are 70–90 commands of
-   a long-horizon session, replayed as oracle scenarios. Keep them, or drop them
-   in favour of the staged scenarios that isolate one surface each?
+6. **Session replays** will come back as reductions of at most about 150
+   commands each, proved by a targeted census of their own (Zach, 2026-10-26). The
+   open question is which slices are worth cutting: the kill/loot/rest loop, the
+   guild visit, or the jail, given the staged scenarios already isolate the jail
+   and the practice catalog.
 
