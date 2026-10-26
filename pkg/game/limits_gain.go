@@ -33,7 +33,6 @@ func (w *World) ManaGain(p *Player) int {
 	// Equipment mana regen — limits.c:89-95
 	// Positive modifier only applies while sleeping; negative always applies.
 	gain += p.sumEquipAffect(ApplyManaRegen, pos == PosSleeping)
-
 	// Class calculations — limits.c:97-104
 	if class == ClassMageUser || class == ClassCleric {
 		gain <<= 1
@@ -109,7 +108,7 @@ func (w *World) HitGain(p *Player) int {
 	case PosSleeping:
 		gain += gain >> 1 // ×1.5
 		// Equipment hit regen — limits.c:156-162, only while sleeping
-		gain += p.sumEquipAffect(ApplyHitRegen, false)
+		gain += p.sumEquipAffect(ApplyHitRegen, true)
 	case PosResting:
 		gain += gain >> 2 // ×1.25
 	case PosSitting:
@@ -186,7 +185,7 @@ func (w *World) MoveGain(p *Player) int {
 	switch pos {
 	case PosSleeping:
 		// Equipment move regen — limits.c:224-230, applied before position multiplier
-		gain += p.sumEquipAffect(ApplyMoveRegen, false)
+		gain += p.sumEquipAffect(ApplyMoveRegen, true)
 		gain += gain >> 1
 	case PosResting:
 		gain += gain >> 2
