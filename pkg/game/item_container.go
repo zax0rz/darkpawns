@@ -62,7 +62,14 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 	if cont == nil {
 		room := w.GetRoomInWorld(ch.GetRoomVNum())
 		if room != nil {
-			for _, obj := range w.roomItems[ch.RoomVNum] {
+			// GetItemsInRoom snapshots under w.mu. Iterating the live
+			// w.roomItems slice here was an unsynchronized map read against
+			// the w.mu-held writers (drop/give/put, corpse placement, zone
+			// resets): Go reports that as an unrecoverable "concurrent map
+			// read and map write" throw, which no recover guard can contain,
+			// so one player's `put` could kill the whole process (VULN-019
+			// class). GetRoomVNum also replaces the raw RoomVNum field read.
+			for _, obj := range w.GetItemsInRoom(ch.GetRoomVNum()) {
 				if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 					cont = obj
 					break

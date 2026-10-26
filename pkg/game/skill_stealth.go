@@ -202,7 +202,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string, world *World)
 	if !strings.EqualFold(itemName, "coins") && !strings.EqualFold(itemName, "gold") {
 		item, found := findCarriedItem(ch, target, itemName)
 		if found {
-			return stealInventoryItem(ch, target, item, percent, chPronouns, victPronouns)
+			return stealInventoryItem(world, ch, target, item, percent, chPronouns, victPronouns)
 		}
 
 		item, slot, found := findEquippedItem(ch, target, itemName)
@@ -218,7 +218,7 @@ func DoSteal(ch *Player, target combat.Combatant, itemName string, world *World)
 	return stealCoins(ch, target, percent, chPronouns, victPronouns)
 }
 
-func stealInventoryItem(ch *Player, target combat.Combatant, item *ObjectInstance, percent int, chPronouns, victPronouns Pronouns) SkillResult {
+func stealInventoryItem(world *World, ch *Player, target combat.Combatant, item *ObjectInstance, percent int, chPronouns, victPronouns Pronouns) SkillResult {
 	percent += item.GetTotalWeight()
 	if target.GetLevel() > ch.GetLevel() {
 		percent += target.GetLevel() - ch.GetLevel()
@@ -238,27 +238,56 @@ func stealInventoryItem(ch *Player, target combat.Combatant, item *ObjectInstanc
 	if ok, message := canCarryStolenItem(ch, item); !ok {
 		return SkillResult{Success: false, MessageToCh: message, WaitCh: 1}
 	}
-	if !removeCarriedItem(target, item) {
-		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
-	}
-	if err := ch.Inventory.AddItem(item); err != nil {
-		if !restoreCarriedItem(target, item) {
-			slog.Error("DoSteal rollback failed", "target", target.GetName(), "item", item.GetShortDesc(), "error", err)
+	// transfer performs C's carried steal: obj_from_char(obj, victim)
+	// (src/act.other.c:471), which flags the victim (handler.c:596-598), then
+	// obj_to_char(obj, ch) (src/act.other.c:472), which flags the thief
+	// (handler.c:569-571). C checks the thief's capacity BEFORE obj_from_char
+	// (act.other.c:468-470); the port checks it after the removal, so both
+	// flags go after the AddItem succeeds — the failure path, like C's
+	// capacity refusal, flags nobody.
+	//
+	// It mutates two inventories and the object's Location. Every other
+	// transfer (give/put/drop/corpse) does that under w.mu through MoveObject,
+	// so running this sequence unlocked let a concurrent MoveObject detach
+	// through the by-then-stale item.Location (a silent no-op — the victim's
+	// list no longer held it) and attach the same *ObjectInstance to a second
+	// inventory, after which this path added it again: one instance reachable
+	// from two Inventory.Items lists, which the file and DB save seams then
+	// persist as two independent items (CWE-362/CWE-367).
+	transfer := func() bool {
+		if !removeCarriedItem(target, item) {
+			return false
 		}
+		if err := ch.Inventory.AddItem(item); err != nil {
+			if !restoreCarriedItem(target, item) {
+				slog.Error("DoSteal rollback failed", "target", target.GetName(), "item", item.GetShortDesc(), "error", err)
+			}
+			return false
+		}
+		if targetPlayer, ok := target.(*Player); ok {
+			targetPlayer.MarkCrashNeeded()
+		}
+		ch.MarkCrashNeeded()
+		item.Location = LocInventoryPlayer(ch.Name)
+		return true
+	}
+
+	// Holding w.mu across the whole sequence makes it atomic against those
+	// transfers (lock order w.mu -> Equipment.mu -> Inventory.mu). It is
+	// released before the mudlog below, which fans out to session callbacks.
+	var transferred bool
+	if world != nil {
+		world.mu.Lock()
+		transferred = transfer()
+		world.mu.Unlock()
+	} else {
+		// World-less seam: no world means no concurrent transfers to
+		// serialize against.
+		transferred = transfer()
+	}
+	if !transferred {
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
-	// C's carried steal is obj_from_char(obj) (src/act.other.c:471), which
-	// flags the victim (handler.c:596-598), then obj_to_char(obj, ch)
-	// (src/act.other.c:472), which flags the thief (handler.c:569-571). C
-	// checks the thief's capacity BEFORE obj_from_char (act.other.c:468-470);
-	// the port checks it after the removal, so both flags go after the
-	// AddItem succeeds — the port's failure path, like C's capacity refusal,
-	// flags nobody.
-	if targetPlayer, ok := target.(*Player); ok {
-		targetPlayer.MarkCrashNeeded()
-	}
-	ch.MarkCrashNeeded()
-	item.Location = LocInventoryPlayer(ch.Name)
 	if !target.IsNPC() {
 		MudLog(fmt.Sprintf("(PS) %s stole %s from %s.", ch.GetName(), item.GetShortDesc(), target.GetName()), MudlogComplete, LVL_IMMORT, true)
 	}
