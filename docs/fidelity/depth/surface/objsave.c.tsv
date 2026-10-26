@@ -1,6 +1,6 @@
 c_site	function	classification	case_ids	notes
 src/objsave.c:287	Crash_listrent	proven	show.rent-missing	do_show's rent selector calls Crash_listrent; show.rent-missing exercises its failed-open branch and exact response (src/act.wizard.c:2354; show.tsv).
-src/objsave.c:483	Crash_load	gap-blocked	-	This non-ENOENT object-file open failure is reached only while restoring a persisted object save at game entry (stop tier: persistence and save format).
+src/objsave.c:483	Crash_load	gap-blocked	-	Fault-only non-ENOENT Crash_load failure; remains blocked pending a fault-injection fixture that GLM will design (R1/R5g).
 src/objsave.c:1026	Crash_rent_deadline	unreachable	-	Crash_rent_deadline is called only by the receptionist offer path; neither receptionist nor cryogenicist has an active ASSIGNMOB/ASSIGNOBJ/ASSIGNROOM in src/spec_assign.c:85-635, so C's special dispatcher cannot reach it.
 src/objsave.c:1039	Crash_report_unrentables	unreachable	-	Crash_report_unrentables is called only from Crash_offer_rent, which is called only by gen_receptionist; neither receptionist nor cryogenicist has an active ASSIGNMOB/ASSIGNOBJ/ASSIGNROOM in src/spec_assign.c:85-635.
 src/objsave.c:1061	Crash_report_rent	unreachable	-	Crash_report_rent is called only from Crash_offer_rent, which is called only by gen_receptionist; neither receptionist nor cryogenicist has an active ASSIGNMOB/ASSIGNOBJ/ASSIGNROOM in src/spec_assign.c:85-635.

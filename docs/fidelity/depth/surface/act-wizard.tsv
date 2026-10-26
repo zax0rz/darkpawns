@@ -49,7 +49,7 @@ src/act.wizard.c:429	do_stat_room	proven	stat.room-success	The cited manifest pr
 src/act.wizard.c:434	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:436	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:438	do_stat_room	proven	stat.room-success	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:440	do_stat_room	gap-blocked		C's null-description branch is unproven: fread_string() returns NULL for an empty ~ value (src/db.c:2690-2738), and the only blank-description room is unindexed room #18000 in urgats_old.wld; add-wld-index breaks C's zone-order requirement. Blocked by the stop-tier census-harness fixture surface (R1/R5e/R5g).
+src/act.wizard.c:440	do_stat_room	gap-reachable	-	REDIT’s existing improved editor supports /c to clear the description and /s to save; the existing registered REDIT and stat commands reach this NULL-description output (src/redit.c:721-726; src/improved-edit.c:27-48). Five-seed proof pending (R1/R2/R5e/R5h).
 src/act.wizard.c:449	do_stat_room	proven	stat.room-extra-description-census;stat.room-extra-description-output	The isolated live stat command runs in room 8151, whose C prototype has the scrolls extra-description; output matches with C's color gate (R1/R2/R5e/R5h).
 src/act.wizard.c:460	do_stat_room	proven	stat.room-character-list-wrap-census	The live wrapped-room report crosses this intermediate C send with normal color enabled; census proof retains the comma and CRLF bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:462	do_stat_room	proven	stat.room-character-list-wrap-census	The live wrapped-room report crosses this final C send after its final character reaches the 62-byte threshold (R1/R2/R5e/R5h).
@@ -119,7 +119,7 @@ src/act.wizard.c:1016	do_stat	proven	stat.mob-missing	The cited manifest proof e
 src/act.wizard.c:1020	do_stat	proven	stat.player-no-name	The registered stat player command reaches the empty player-name prompt (R1/R2/R5e/R5h).
 src/act.wizard.c:1025	do_stat	proven	stat.player-missing	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:1029	do_stat	proven	stat.file-no-name	The registered stat file command reaches the empty saved-player-name prompt without loading a record (R1/R2/R5e/R5h).
-src/act.wizard.c:1037	do_stat	gap-blocked		identity and persistence/save format: file-report access to a higher-level saved character is unproved.
+src/act.wizard.c:1037	do_stat	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
 src/act.wizard.c:1042	do_stat	proven	stat.file-missing	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:1048	do_stat	proven	stat.object-no-name	The registered stat object command reaches the empty object-name prompt (R1/R2/R5e/R5h).
 src/act.wizard.c:1053	do_stat	proven	stat.object-missing	The cited manifest proof executes this C callsite (R1/R5e).
@@ -286,10 +286,10 @@ src/act.wizard.c:2487	do_show	proven	show.hooks-valid	The cited manifest proof e
 src/act.wizard.c:2498	do_show	proven	show.neutral	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2503	do_show	proven	show.nothing-row	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2626	do_set	proven	set.no-argument	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:2635	do_set	gap-blocked		identity: set player resolves an account name through get_player_vis; the branch has no current depth proof.
+src/act.wizard.c:2635	do_set	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
 src/act.wizard.c:2643	do_set	proven	set.missing-target	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:2661	do_set	gap-blocked		persistence/save format: set file loads and compares a durable character record.
-src/act.wizard.c:2670	do_set	gap-blocked		identity and persistence/save format: set file misses a durable player record.
+src/act.wizard.c:2661	do_set	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
+src/act.wizard.c:2670	do_set	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
 src/act.wizard.c:2678	do_set	proven	set.same-level-refusal	A level-34 actor sets a same-level live PC through dispatch and reaches C's target-authority refusal (R1/R2/R5e/R5h).
 src/act.wizard.c:2688	do_set	proven	set.per-field-level-gate	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2693	do_set	proven	set.pc-field-on-npc;set.npc-pc-field-gate	The real-dispatch unit assertion and targeted oracle transcript reach C's PC-only field refusal for an NPC (R1/R2/R5e/R5h).
@@ -305,10 +305,10 @@ src/act.wizard.c:2907	do_set	proven	set.invalid-room;set.room-invalid	The real-d
 src/act.wizard.c:2936	do_set	proven	set.invalid-class;set.class-invalid	The real-dispatch unit assertion and targeted oracle transcript pin C's invalid class refusal bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:2975	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:2976	do_set	proven	set.special-errors	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:2985	do_set	gap-blocked		persistence/save format: the offline set file password mutation path.
+src/act.wizard.c:2985	do_set	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
 src/act.wizard.c:3007	do_set	proven	set.invalid-race;set.race-invalid	The real-dispatch unit assertion and targeted oracle transcript pin C's invalid race refusal bytes (R1/R2/R5e/R5h).
 src/act.wizard.c:3061	do_set	proven	set.numeric-clamp;set.misc-field;set.binary-field	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:3071	do_set	gap-blocked		persistence/save format: successful set file save acknowledgement.
+src/act.wizard.c:3071	do_set	gap-reachable		Reachability is established by the corrected 2026-10-26 triage; the existing command/session/fixture path is available. Five-seed proof remains pending (R1/R2/R5e/R5g).
 src/act.wizard.c:3089	do_syslog	proven	syslog.query-brief;syslog.query-normal-after-brief;syslog.query-complete;syslog.query-off-again	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3093	do_syslog	proven	syslog.no-argument;syslog.invalid	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3101	do_syslog	proven	syslog.full-brief;syslog.normal-transition;syslog.complete-prefix;syslog.off-prefix	The cited manifest proof executes this C callsite (R1/R5e).
@@ -348,7 +348,7 @@ src/act.wizard.c:3528	do_newbie	proven	wnewbie.target-not-found	The cited manife
 src/act.wizard.c:3536	do_newbie	proven	wnewbie.local-player;wnewbie.global-player	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3537	do_newbie	proven	wnewbie.mob-target	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3571	do_zlist	proven	zlist.missing-file	The cited manifest proof executes this C callsite (R1/R5e).
-src/act.wizard.c:3588	do_idlist	gap-blocked		The failure requires an unwritable object_idlist path; producing that filesystem state would require a census-harness working-directory/permission fixture, which is stop-tier (R1/R5g).
+src/act.wizard.c:3588	do_idlist	gap-blocked		Fault-only object_idlist fopen failure; remains blocked pending a fault-injection fixture that GLM will design (R1/R5g).
 src/act.wizard.c:3670	do_idlist	proven	idlist.success	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3813	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
 src/act.wizard.c:3816	check_load	proven	checkload.object-no-load	The cited manifest proof executes this C callsite (R1/R5e).
