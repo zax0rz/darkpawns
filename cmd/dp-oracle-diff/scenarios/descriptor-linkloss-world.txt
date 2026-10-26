@@ -3,9 +3,15 @@
 # close_socket for a playing character saves, tells the room "$n has lost
 # $s link." (src/comm.c:2129-2134) and leaves the body in the world: C has
 # no link-dead purge timer (the idle force-rent lane owns removal). Both
-# fresh mortals start in the same newbie room (8162); the observer watches
-# the peer's transport drop and then looks, proving the act line and the
-# still-present link-dead body.
+# fresh mortals start in the same creation room; the observer watches the
+# peer's transport drop, pumps one pulse so the link-loss act settles into
+# its own block before the look, and then looks, proving the act line and
+# the still-present link-dead body. The pulse matters: when the act and the
+# observer's next command land in the same C pass, C prompts once at the
+# pass end while Go prompts immediately after the async act — the
+# prompt-coalescing divergence filed separately (see
+# docs/fidelity/depth/handoff/2026-10-26-glm-prompt-coalescing.md); this
+# scenario proves the act and the body, not that race.
 
 [fixture]
 quiet-mobs
@@ -71,4 +77,5 @@ Y
 victim
 
 [probe]
+~dpclock pulse 1
 look
