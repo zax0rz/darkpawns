@@ -1,0 +1,85 @@
+# depth-case: skills.practice-mapped-ninja
+# C list_skills uses GET_SKILL by number (src/spec_procs.c:192).
+# At level 28 a ninja lists only skills, avoiding the separate spell-mana
+# rendering gap. Lua trains mapped arts to 40, C how_good's (poor) band.
+# The first list reads skillset storage; the second reads Lua storage.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 12296 122
+mob-script 12220 oracle/practice.lua 512
+
+[lua-script mob/oracle/practice.lua]
+function oncmd()
+if (argument ~= "say train") then
+return FALSE
+end
+set_skill(ch, 155, 40)
+set_skill(ch, 156, 40)
+set_skill(ch, 189, 40)
+set_skill(ch, 188, 40)
+set_skill(ch, 158, 40)
+set_skill(ch, 159, 40)
+set_skill(ch, 160, 40)
+set_skill(ch, 161, 40)
+set_skill(ch, 162, 40)
+set_skill(ch, 163, 40)
+set_skill(ch, 164, 40)
+set_skill(ch, 165, 40)
+set_skill(ch, 166, 40)
+return TRUE
+end
+
+[setup:oracle]
+Skillninja
+Y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Skillninja
+y
+probepass
+probepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 12296
+set Skillninja class ninja
+skillset Skillninja 'strike of revenge' 40
+skillset Skillninja 'serpent kick' 40
+skillset Skillninja 'tiger punch' 40
+skillset Skillninja 'dragon kick' 0
+skillset Skillninja 'kuji-kiri rin' 40
+skillset Skillninja 'kuji-kiri kyo' 40
+skillset Skillninja 'kuji-kiri toh' 40
+skillset Skillninja 'kuji-kiri kai' 40
+skillset Skillninja 'kuji-kiri jin' 40
+skillset Skillninja 'kuji-kiri retsu' 40
+skillset Skillninja 'kuji-kiri zai' 40
+skillset Skillninja 'kuji-kiri zhen' 40
+skillset Skillninja 'kuji-kiri sha' 40
+set Skillninja level 28
+
+[probe]
+practice
+say train
+practice
+dragon Skillninja

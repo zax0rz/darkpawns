@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -146,5 +147,27 @@ func TestLuaSetSkillDepthModifiers(t *testing.T) {
 	}
 	if p.GetSkill("kick") != 37 || p.GetSkill("bash") != 83 {
 		t.Fatal("NPC call altered PC skills")
+	}
+}
+
+// C lua_set_skill writes SET_SKILL(ch, group_num, skill_lvl), not a display
+// name (src/scripts.c:1376-1379). Exercise the real Lua binding for all mappings.
+func TestLuaSetSkillMappedSkills(t *testing.T) {
+	_, p, _, e, ctx, dir := luaSetSkillFixture(t)
+	for display, key := range catalogSkillKeys {
+		t.Run(display, func(t *testing.T) {
+			runSetSkillScript(t, e, ctx, dir, fmt.Sprintf("set_skill(ch,%d,40)", FindSkillNum(display)))
+			if got := p.GetSkill(key); got != 40 {
+				t.Errorf("command key %q = %d, want 40", key, got)
+			}
+			if got := p.GetSkill(display); got != 0 {
+				t.Errorf("display key %q = %d, want no duplicate", display, got)
+			}
+		})
+	}
+	// The dragon command must pass its learned gate and reach C's self-target
+	// refusal (src/act.offensive.c:646-663), without consuming combat RNG.
+	if got := DoDragonKick(p, p).MessageToCh; got != "Aren't we funny today...\r\n" {
+		t.Errorf("Lua-trained dragon command = %q", got)
 	}
 }

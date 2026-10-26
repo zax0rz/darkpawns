@@ -366,7 +366,7 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 		s.Send(castMessage(power, "You do not know that spell!\r\n", "You are not learned in that power!\r\n"))
 		return nil
 	}
-	canonicalName := strings.ToLower(game.SkillCatalogName(spellNum))
+	canonicalName := game.SkillStorageName(spellNum)
 	proficiency := s.player.GetSkill(canonicalName)
 	if proficiency == 0 {
 		s.Send(castMessage(power, "You are unfamiliar with that spell.\r\n", "You are unfamiliar with that power.\r\n"))

@@ -443,8 +443,7 @@ func cmdSkillset(s *Session, args []string) error {
 		game.MudlogBrief, -1, true)
 
 	// Step 10: SET_SKILL(vict, skill, value). Go stores skills by name string;
-	// use the canonical spells[] display name (lowercased, matching how callers
-	// key GetSkill/SetSkill — see spec_procs.go practice).
+	// use the storage key read by command handlers and guild practice.
 	// SkillStorageName carries C's catalog-to-key translations (DP-1342).
 	canonicalName := game.SkillStorageName(skillNum)
 	vict.SetSkill(canonicalName, value)
