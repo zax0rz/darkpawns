@@ -1,0 +1,66 @@
+# depth-case: saveload.quit-reallyquit-loses-eq
+# quit outside a save room (src/act.other.c:87-182): the first quit answers
+# "Type REALLYQUIT to quit the game and lose your eq." and REALLYQUIT goes
+# through with the equipment dropped to the floor by extract_char
+# (src/handler.c:1133-1142) and the "LOSTEQ" log path. The hometown inn the
+# creation starts in (8162) is a LEGAL quit room, so the seeded Testor peer
+# teleports the actor to 8001 first, then watches the loaf land and the
+# actor leave. compare-close renders the actor's disconnect.
+
+[fixture]
+quiet-mobs
+seed-player
+compare-close
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Reallyq
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Reallyq
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+get loaf
+
+[probe]
+inventory
+send:testor teleport Reallyq 8001
+send:testor goto 8001
+quit
+REALLYQUIT
+send:testor ~dpclock pulse 1
+send:testor look

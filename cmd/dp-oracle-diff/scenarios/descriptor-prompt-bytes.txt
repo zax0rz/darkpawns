@@ -1,0 +1,45 @@
+# depth-case: descriptor.prompt-bytes-color-off
+# make_prompt (src/comm.c:1028-1207) with color off: a playing character's
+# prompt carries the H/M/V vitals gated on the PRF display bits and ends in
+# "> ", while every non-playing state prompts empty. keep-prompts keeps the
+# raw prompt frames in the compared blocks (R5f, DP-1326): the score probes
+# carry the mortal's prompt after each answer, and the toggle report pins
+# the display bits the prompt renders from.
+
+[fixture]
+quiet-mobs
+seed-player
+keep-prompts
+
+[setup:oracle]
+Promptee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Promptee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+score
+toggle
+score

@@ -1,0 +1,66 @@
+# depth-case: saveload.save-command-crashfile
+# depth-case: saveload.crashfile-survives-boot-prune
+# The player save command (src/act.other.c:186-203) writes the pfile and a
+# RENT_CRASH crash file (Crash_crashsave, src/objsave.c:786-824). The mortal
+# picks up a loaf, saves, restarts and re-enters: the crash file is fresh,
+# so the boot prune (update_obj_file, src/objsave.c:263-271) keeps it and
+# Crash_load restores the loaf; inventory proves it came back and score
+# proves the pfile round-trip. The loaf spawns in the newbie room the
+# creation places the actor in (8162), not in a house, so no house fixture
+# is involved.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Saver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Saver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Saver
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Saver
+oraclepass
+<ENTER>
+1
+
+[warmup]
+get loaf
+save
+
+[probe]
+score
+inventory
+<RESTART>
+score
+inventory

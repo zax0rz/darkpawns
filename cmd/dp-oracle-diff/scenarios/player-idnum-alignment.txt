@@ -1,0 +1,57 @@
+# depth-case: stat.fresh-mortal-idnum
+# The seeded store's AUTOINCREMENT sequence must hand a fresh mortal C's
+# next idnum: C's boot builds top_idnum from the shipped player file
+# (Testor 1 through Coracle 4) and create_entry assigns ++top_idnum
+# (src/db.c), so the first character created under seed-player prints
+# IDNum 5 on both engines. stat prints the raw idnum (src/act.wizard.c),
+# which is what Luna's stat/set/whois/finger proofs (#2167) read.
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:ident]
+Ident
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:ident]
+Ident
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+stat Ident
+
+[probe]
+stat Ident

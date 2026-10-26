@@ -1,0 +1,60 @@
+# depth-case: saveload.crash-unsaved-loss
+# No save, no autosave window (autosave is every 600 pulses,
+# src/comm.c:832-838, and getting the loaf sets PLR_CRASH but nothing
+# flushes it): a crash with an unsaved carried object loses it. Crash_load
+# finds no file and restores nothing — the re-entry inventory is empty on
+# both engines. The dropped-equivalence is C's per-boot room/player state,
+# not a port bug (R4).
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Losee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Losee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Losee
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Losee
+oraclepass
+<ENTER>
+1
+
+[warmup]
+get loaf
+
+[probe]
+inventory
+<CRASH>
+inventory
