@@ -165,7 +165,7 @@ func GetPositionFromHP(hp, currentPos int) int {
 // Mirrors update_pos, wound messages and !AWAKE stop (src/fight.c:1489,
 // 1546-1632). broadcast
 // may be nil to suppress the third-person room message.
-func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, message string, exclude []Combatant)) int {
+func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, message string, exclude []Combatant), stopFighting func(Combatant)) int {
 	newPos := GetPositionFromHP(victim.GetHP(), victim.GetPosition())
 	victim.SetPosition(newPos)
 
@@ -192,10 +192,20 @@ func UpdatePositionAfterDamage(victim Combatant, broadcast func(roomVNum int, me
 		}
 	}
 
-	// src/fight.c:1630-1632 — !AWAKE victims can no longer fight back. The attacker
-	// keeps its FIGHTING reference and finishes the victim off next round.
+	// src/fight.c:1630-1632 — !AWAKE victims can no longer fight back. C's
+	// stop_fighting(victim) removes them from the combat list, not just the
+	// field: left enrolled, the round runner's stand-up would raise an
+	// incapacitated PC back to POS_FIGHTING and let it swing (PL-005). The
+	// attacker keeps its FIGHTING reference and finishes the victim off next
+	// round. stopFighting must be the engine-aware stop (ce.StopCombat);
+	// nil falls back to the field-only interface method for engine-less
+	// fixtures.
 	if newPos <= PosSleeping && victim.GetFightingBody() != nil {
-		victim.StopFighting()
+		if stopFighting != nil {
+			stopFighting(victim)
+		} else {
+			victim.StopFighting()
+		}
 	}
 	return newPos
 }

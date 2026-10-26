@@ -18,14 +18,7 @@ func (w *World) damageBeforeMessageCallbacks() *combat.GameCallbacks {
 				w.GainExp(p, amount)
 			}
 		},
-		StopFighting: func(body combat.Combatant) {
-			if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
-				stopper.StopCombat(body)
-			} else {
-				body.StopFighting()
-				body.SetPosition(combat.GetPositionFromHP(body.GetHP(), combat.PosStanding))
-			}
-		},
+		StopFighting: w.StopFightingBody,
 		// R1a: C tests ROOM_FLAGGED(victim->in_room, ROOM_NEUTRAL) here
 		// (src/fight.c:1493). During Crash_load in_room is NOWHERE, so C reads
 		// world[-1].room_flags — an out-of-bounds read whose result decides
@@ -35,6 +28,19 @@ func (w *World) damageBeforeMessageCallbacks() *combat.GameCallbacks {
 		// recorded in the DP-1419 lethal-replay handoff.
 		HasRoomFlag:   func(room int, flag string) bool { return flag == "ROOM_NEUTRAL" && w.RoomHasFlag(room, "neutral") },
 		NeutralRescue: w.neutralRescue,
+	}
+}
+
+// StopFightingBody is C stop_fighting routed through the combat engine: the
+// body leaves the engine's round list and pairs as well as dropping its
+// FIGHTING field (src/fight.c:1630-1632 for the damage-path caller). Without
+// an engine the field-only fallback keeps engine-less fixtures working.
+func (w *World) StopFightingBody(body combat.Combatant) {
+	if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+		stopper.StopCombat(body)
+	} else {
+		body.StopFighting()
+		body.SetPosition(combat.GetPositionFromHP(body.GetHP(), combat.PosStanding))
 	}
 }
 
