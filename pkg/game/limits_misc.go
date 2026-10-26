@@ -114,24 +114,28 @@ func (w *World) CheckIdling(p *Player) {
 	}
 }
 
-// sumEquipAffect sums equipment affect modifiers for a given location.
-// If requireSleeping is true, positive modifiers are only counted when sleeping.
-// Negative modifiers always apply (matching limits.c behavior).
-// Source: limits.c:89-95, 156-162, 224-230
-func (p *Player) sumEquipAffect(location int, requireSleeping bool) int {
+// sumEquipAffect sums the INSTANCE affects of equipped objects for one APPLY
+// location — C reads GET_EQ(ch,i)->affected[j], not the prototype's
+// (src/limits.c:89-95). Positive modifiers count only when applyPositive is
+// set; negative modifiers always apply. mana_gain passes applyPositive =
+// (position == POS_SLEEPING): C adds a positive APPLY_MANA_REGEN only while
+// sleeping and a negative one in every position (limits.c:89-95). hit_gain
+// and move_gain add ANY modifier but only inside their POS_SLEEPING cases
+// (limits.c:152-158, 224-230), so they pass true from there.
+func (p *Player) sumEquipAffect(location int, applyPositive bool) int {
 	if p.Equipment == nil {
 		return 0
 	}
 	total := 0
 	for _, item := range p.Equipment.GetEquippedItems() {
-		if item == nil || item.Prototype == nil {
+		if item == nil {
 			continue
 		}
-		for _, af := range item.Prototype.Affects {
+		for _, af := range item.GetAffects() {
 			if af.Location != location {
 				continue
 			}
-			if requireSleeping && af.Modifier > 0 {
+			if af.Modifier > 0 && !applyPositive {
 				continue
 			}
 			total += af.Modifier
