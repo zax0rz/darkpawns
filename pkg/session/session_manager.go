@@ -73,14 +73,19 @@ func (m *Manager) UnregisterAndClose(playerName string) {
 	// Flush any pending output
 	s.FlushQueues()
 
-	// Decrement per-IP connection count (C5)
+	// Release the per-IP slot and the process-wide total (C5). The same
+	// connCountDecremented latch readPump's teardown uses keeps this exactly
+	// once per accepted connection when this close wins the race.
 	if !s.connCountDecremented && (s.request != nil || s.remoteIP != "") {
 		s.connCountDecremented = true
 		ip := s.RemoteIP()
 		m.ipConnMu.Lock()
-		m.ipConnCount[ip]--
-		if m.ipConnCount[ip] <= 0 {
-			delete(m.ipConnCount, ip)
+		m.totalConnCount--
+		if ip != "" {
+			m.ipConnCount[ip]--
+			if m.ipConnCount[ip] <= 0 {
+				delete(m.ipConnCount, ip)
+			}
 		}
 		m.ipConnMu.Unlock()
 	}

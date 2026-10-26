@@ -47,6 +47,17 @@ const (
 // immortals, not code.
 var webSocketMaxConnsPerIP = 8
 
+// webSocketMaxTotalConns caps simultaneous WebSocket sessions process-wide
+// (WEBSOCKET_MAX_TOTAL_CONNS). Per-IP accounting cannot bound a flood on its
+// own: auth.GetIPFromRequest returns the full-precision source address with no
+// IPv6 /64 aggregation, so a client rotating addresses keeps every per-IP
+// bucket under its limit. This total, like the telnet listener's
+// maxTotalConns pre-handshake limit, is the real protection. The default keeps
+// worst-case descriptor use under a stock 1024 soft RLIMIT_NOFILE even with
+// the 200-connection telnet listener, its reverse-DNS and WHOD sockets, and
+// every listening descriptor.
+var webSocketMaxTotalConns = 500
+
 func init() {
 	if v := os.Getenv("WEBSOCKET_MAX_CONNS_PER_IP"); v != "" {
 		n, err := strconv.Atoi(v)
@@ -54,6 +65,14 @@ func init() {
 			slog.Warn("WEBSOCKET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", webSocketMaxConnsPerIP)
 		} else {
 			webSocketMaxConnsPerIP = n
+		}
+	}
+	if v := os.Getenv("WEBSOCKET_MAX_TOTAL_CONNS"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil || n < 1 {
+			slog.Warn("WEBSOCKET_MAX_TOTAL_CONNS invalid, using default", "value", v, "default", webSocketMaxTotalConns)
+		} else {
+			webSocketMaxTotalConns = n
 		}
 	}
 }
@@ -96,7 +115,10 @@ type Manager struct {
 
 	// Per-IP connection tracking (C5)
 	ipConnCount map[string]int
-	ipConnMu    sync.Mutex
+	// totalConnCount is every accepted WebSocket connection process-wide, the
+	// counterpart of the telnet listener's maxTotalConns. Guarded by ipConnMu.
+	totalConnCount int
+	ipConnMu       sync.Mutex
 
 	// Autosave bookkeeping: C's heartbeat-local mins_since_crashsave
 	// (comm.c:832-837), guarded separately so the autosave slot never
@@ -1308,8 +1330,18 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Per-IP connection limit (C5)
+	// Per-IP and process-wide connection limits (C5). The total cap is checked
+	// first: source rotation keeps every per-IP bucket under its limit, so the
+	// per-IP count alone cannot bound a flood.
 	m.ipConnMu.Lock()
+	if m.totalConnCount >= webSocketMaxTotalConns {
+		atCapacity := m.totalConnCount
+		m.ipConnMu.Unlock()
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "server is at capacity"))
+		_ = conn.Close()
+		slog.Warn("WebSocket connection rejected: server at capacity", "ip", ip, "connections", atCapacity, "limit", webSocketMaxTotalConns)
+		return
+	}
 	if m.ipConnCount[ip] >= webSocketMaxConnsPerIP {
 		m.ipConnMu.Unlock()
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
@@ -1317,6 +1349,7 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m.ipConnCount[ip]++
+	m.totalConnCount++
 	m.ipConnMu.Unlock()
 
 	ctx, cancel := context.WithCancel(context.Background())
