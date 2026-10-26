@@ -189,6 +189,12 @@ type World struct {
 	// Ordinary descriptorless mobiles receive no actor output.
 	MobileMessageSink func(*MobInstance, []byte)
 
+	// MobileDescriptorOwner identifies the player body whose descriptor is
+	// temporarily attached to a switched NPC. C removes that descriptor from
+	// the original player in act.wizard.c:1175-1200, so room acts must not send
+	// to both bodies.
+	MobileDescriptorOwner func(*MobInstance) *Player
+
 	// MovementLook is owned by the session layer because room rendering is a
 	// transport concern, but movement owns its ordering relative to arrivals,
 	// followers, and entry triggers.

@@ -1,0 +1,41 @@
+# C's exit format leaves a space after CRLF; in room 1204's nonempty down-exit
+# description it is the first description byte and survives ordinary normalization.
+# depth-case: stat.room-exit-description-post-newline-space
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Exitbytes
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Exitbytes
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+color normal
+
+[probe]
+stat room

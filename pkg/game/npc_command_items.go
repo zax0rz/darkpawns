@@ -43,11 +43,13 @@ func (w *World) npcGetDirect(me *MobInstance, argument string) CharacterCommandR
 	}
 
 	items := append([]*ObjectInstance(nil), container.Contains...)
+	found := false
 	for _, item := range items {
 		if item == nil || !canSeeObject(me, item) ||
 			(itemFilter != "" && !isnameWithAbbrevs(itemFilter, item.GetKeywords())) {
 			continue
 		}
+		found = true
 		if mobCarriedItemCount(me) >= mobMaxCarryCount(me) ||
 			(!inInventory && (!item.IsTakeable() || mobCarriedWeight(me)+item.GetWeight() > mobMaxCarryWeight(me))) {
 			continue
@@ -55,11 +57,15 @@ func (w *World) npcGetDirect(me *MobInstance, argument string) CharacterCommandR
 		if err := w.MoveObjectToMobInventoryFront(item, me); err != nil {
 			continue
 		}
+		Act(w, false, me, nil, item, container, "You get $p from $P.", "", ToChar)
 		Act(w, true, me, nil, item, container, "$n gets $p from $P.", "", ToRoom)
 		if item.GetTypeFlag() == ITEM_MONEY && item.GetValue(0) > 0 {
 			me.SetGold(me.GetGold() + item.GetValue(0))
 			w.ExtractObject(item, me.GetRoomVNum())
 		}
+	}
+	if !found {
+		Act(w, false, me, nil, container, nil, "$p seems to be empty.", "", ToChar)
 	}
 	return CharacterCommandHandled
 }
@@ -71,13 +77,18 @@ func (w *World) npcWearDirect(me *MobInstance, argument string) CharacterCommand
 	if itemArg != "all" || positionArg != "" {
 		return CharacterCommandUnsupported
 	}
+	itemsWorn := 0
 	for _, item := range append([]*ObjectInstance(nil), me.Inventory...) {
 		if item == nil || item.Prototype == nil || !CanSeeObject(me, item) {
 			continue
 		}
 		if where := findEqPos(item, ""); where >= 0 {
+			itemsWorn++
 			w.performMobileWear(me, item, where)
 		}
+	}
+	if itemsWorn == 0 && w.MobileMessageSink != nil {
+		w.MobileMessageSink(me, []byte("You don't seem to have anything wearable.\r\n"))
 	}
 	return CharacterCommandHandled
 }

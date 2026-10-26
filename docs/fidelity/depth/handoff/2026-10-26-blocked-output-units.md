@@ -3,7 +3,7 @@
 ## Count and triage
 
 The goal note's pre-rebase inventory was 897 proven and 98 blocked. After the
-requested rebase for #2171, `origin/main` at `a5cddbc31` had 897 proven and 114
+requested rebase for #2171, `origin/main` at `748b32b26` had 897 proven and 114
 blocked, including 16 additional residual units. The updated inventory now has
 897 proven and 50 blocked. The map validator reports 42 maps with zero errors.
 
@@ -25,14 +25,35 @@ blocked in `mail.tsv` pending the same seeded-record fixture.
   identity. The targeted runs are `luna-blocked-idnum-rebased-s1/s2/s3/s5/s8`.
 - The non-stop scenarios cover the refreshed track, REDIT null-description,
   ZEDIT duplicate gate, wizard file-output, finger, clan applicant/capacity,
-  mail prechecks and empty mailbox, Call Lightning concentration miss, and Lua
-  mob-wait paths. The clan-capacity reset-leader run and the new M@0045 miss
-  run are CLEAN on seeds 1, 2, 3, 5, and 8 with draw parity.
+  mail prechecks and empty mailbox, the Call Lightning concentration miss,
+  and Lua mob-wait paths. `call-lightning-skill-message-miss-depth` and the
+  clan-capacity reset-leader path are CLEAN on seeds 1, 2, 3, 5, and 8 with
+  draw parity.
+- The mob-wait script now calls `save_char(me)` after setting the Lua timer.
+  Without that write, the diagnostic showed timer zero and never reached
+  `src/spell_parser.c:847`; the corrected seed-1 capture shows timer 1000000
+  and the exact `You can't cast anything yet!` refusal in both engines.
+- The final 16-scenario train, `luna-blocked-final-proof-v2-s1/s2/s3/s5/s8`, is
+  CLEAN on every seed: 16/16 rows per run, zero draw divergence, and a maximum
+  per-scenario elapsed value of 45 seconds. It includes the corrected
+  mob-wait proof and the existing Call Lightning concentration-miss proof.
+  The runs captured Go HEAD `d4110f343` with only the three final scenario-file
+  edits dirty; commit `a180d8edc` records those exact scenario bytes and the
+  handoff/ledger updates, with no Go-source change after the runs.
+- A separate switched-NPC Call Lightning probe was discarded as a proof: its
+  target lightning-miss bytes matched, but the 600-pulse combat transcript
+  also contained additional C/Go attack-message differences outside those
+  target lines. The registered
+  five-seed Call Lightning skill-message scenario remains the proof for that
+  output site; switched-body delivery is covered by the attitude, violence,
+  and Teleport scenarios and `TestActRoutesSwitchedMobileOutputToItsDescriptor`.
 - The switched-combat, Teleport, reconnect, and usurp scenarios use actual
   command/session paths. `entry-usurp-saved-body-depth` is CLEAN for each of
   seeds 1, 2, 3, 5, and 8. The shared `luna-blocked-rebased-stoptier-core`
   attempt had a red violence scenario; that was isolated and the final
-  `luna-blocked-rebased-violence-fixture` is CLEAN.
+  `luna-blocked-rebased-violence-fixture` is CLEAN. The final reconnect runs,
+  `luna-blocked-final-reconnect-s1/s2/s3/s5/s8`, are also CLEAN with zero draw
+  divergence.
 - The postmaster send/prompt scenario is CLEAN on five seeds. For the live
   completion path, `luna-blocked-mail-positive-recipient` is the retained
   pre-fix revert control: C leaves the mailbox empty while Go reported mail.
@@ -64,10 +85,12 @@ blocked in `mail.tsv` pending the same seeded-record fixture.
 
 ## Gates and delivery
 
-On the non-stop branch, all ten gates pass: `make fmt`, `go build ./...`,
-`go vet ./...`, `go test ./...`, `go test ./pkg/game/...`,
-`golangci-lint run ./...`, `make deadcode-ratchet`, `make fidelity-depth`,
-`make fidelity-units`, and `make string-census`. The proof change is in draft
-PR #2177. A separate `[stop tier]` PR will carry the live mail-store correction
-and its regression control. Neither PR is to be merged or deployed before
+The ten gates passed individually on the combined stop-tier tree based on
+`d4110f343`: `make fmt`, `go build ./...`, `go vet ./...`, `go test ./...`,
+`go test ./pkg/game/...`, `golangci-lint run ./...`, `make deadcode-ratchet`,
+`make fidelity-depth`, `make fidelity-units`, and `make string-census`.
+`make fidelity-depth` was rerun after the final proof-fixture edits and reports
+42 maps with zero errors. PR #2177 contains the non-stop changes; stacked draft
+PR #2179 contains switched-body delivery and the live mail-store correction
+with regression controls. Neither PR is to be merged or deployed before
 Claude's review.

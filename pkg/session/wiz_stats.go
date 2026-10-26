@@ -648,11 +648,15 @@ func (s *Session) sendStatRoom() {
 			continue
 		}
 		exitBits := wizardExitFlags(exit.ExitInfo)
-		s.Send(fmt.Sprintf("Exit %-5s:  To: [%5d], Key: [%5d], Keywrd: %s, Type: %s\r\n", direction, exit.ToRoom, exit.Key, wizardExitKeyword(exit.Keywords), exitBits))
+		// C sends this prefix and the description as adjacent write_to_output
+		// calls (act.wizard.c:499-507). Preserve the trailing space as the first
+		// byte of the next line instead of letting the text renderer append a
+		// separate line ending after it.
+		s.sendLiteralText(fmt.Sprintf("Exit %-5s:  To: [%5d], Key: [%5d], Keywrd: %s, Type: %s\r\n ", direction, exit.ToRoom, exit.Key, wizardExitKeyword(exit.Keywords), exitBits))
 		if exit.Description != "" {
 			s.Send(strings.ReplaceAll(exit.Description, "\n", "\r\n"))
 		} else {
-			s.Send("   No exit description.\r\n")
+			s.Send("  No exit description.\r\n")
 		}
 	}
 }

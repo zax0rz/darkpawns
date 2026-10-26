@@ -1,0 +1,79 @@
+# A peer sends a saved note to seeded Testor. <RELOGIN> first reattaches the
+# linkdead body and reaches perform_dupe_check's mail-waiting line; after a
+# normal quit, the second relogin reaches nanny's world-entry mail notice.
+# C paths: src/mail.c:277-307; src/interpreter.c:1528-1659,1638,2187-2225.
+# depth-case: entry.reconnect-mail-notice
+# depth-case: entry.world-entry-mail-notice
+
+[fixture]
+seed-player
+quiet-mobs
+spawn-mob 3010 1 8162 27
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:observer]
+Mailwatch
+Y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Mailwatch
+y
+watchpass
+watchpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Mailwatch 8162
+set player Mailwatch level 5
+set player Mailwatch gold 1000
+
+[relogin:oracle]
+Testor
+~dpclock pulse 1
+testpassword
+1
+
+[relogin:port]
+Testor
+~dpclock pulse 1
+testpassword
+1
+
+[probe]
+send:observer mail Testor
+send:observer A note waiting at reconnect.
+send:observer @
+<RELOGIN>
+look
+quit
+<RELOGIN>
+1

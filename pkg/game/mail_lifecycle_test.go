@@ -180,6 +180,9 @@ func runMailSendPhase(t *testing.T) {
 	if !HandleMailInput(sender, "@") {
 		t.Fatal("@ did not complete mail composition")
 	}
+	if got := mailLifecycleLastMessage(messages, sender.Name); got != "Message sent!" {
+		t.Fatalf("mail completion output = %q, want %q", got, "Message sent!")
+	}
 
 	stat, err := os.Stat(MailFile)
 	if err != nil {

@@ -108,7 +108,7 @@ func TestMailProductionRecipientSave(t *testing.T) {
 	}
 	mustWrite(t, senderConn, mailSaveFailureBody+"\r\n")
 	mustWrite(t, senderConn, "@\r\n")
-	if got := readUntil(t, senderConn, senderReader, "Mail sent.", 5*time.Second); got == "" {
+	if got := readUntil(t, senderConn, senderReader, "Message sent!", 5*time.Second); got == "" {
 		t.Fatal("production message was not completed")
 	}
 

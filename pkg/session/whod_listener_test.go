@@ -198,7 +198,9 @@ func TestWhodListenerOffClosesAndOnReopens(t *testing.T) {
 	}
 
 	w.WhodDisplay.SetMode(game.WhodShowOff)
-	waitFor(t, func() bool { return m.WhodListenerAddr() == "" })
+	waitFor(t, func() bool {
+		return m.WhodListenerAddr() == "" && strings.Count(file.String(), "WHOD port closed.") == 1
+	})
 	if got := strings.Count(file.String(), "WHOD port closed."); got != 1 {
 		t.Fatalf("closed producer count = %d, want 1: %q", got, file.String())
 	}
@@ -207,7 +209,9 @@ func TestWhodListenerOffClosesAndOnReopens(t *testing.T) {
 	}
 
 	w.WhodDisplay.SetMode(game.WhodShowOn)
-	waitFor(t, func() bool { return m.WhodListenerAddr() != "" })
+	waitFor(t, func() bool {
+		return m.WhodListenerAddr() != "" && strings.Count(file.String(), "WHOD port opened.") == 2
+	})
 	if got := strings.Count(file.String(), "WHOD port opened."); got != 2 {
 		t.Fatalf("opened producer count = %d, want 2: %q", got, file.String())
 	}

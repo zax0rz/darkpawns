@@ -591,7 +591,7 @@ func HandleMailInput(ch *Player, line string) bool {
 
 		if ok && state.buffer != "" {
 			storeMail(state.recipientID, ch.ID, state.buffer)
-			ch.SendMessage("Mail sent.\r\n")
+			ch.SendMessage("Message sent!\r\n")
 		} else {
 			ch.SendMessage("Mail aborted (empty message).\r\n")
 		}

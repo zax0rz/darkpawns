@@ -1182,11 +1182,11 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		return false
 	}
 	if me.GetWis() == 0 || me.GetInt() == 0 {
-		me.SendMessage("You're not smart enough to cast!\r\n")
+		sendActLineWithWorld(w, me, "You're not smart enough to cast!\r\n")
 		return false
 	}
 	if me.IsNPC() && body.GetWaitState() > 0 {
-		me.SendMessage("You can't cast anything yet!\r\n")
+		sendActLineWithWorld(w, me, "You can't cast anything yet!\r\n")
 		return false
 	}
 	info := spells.GetSpellInfo(spellNum)
@@ -1207,11 +1207,11 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		default:
 			message = "You can't do much of anything like this!\r\n"
 		}
-		me.SendMessage(message)
+		sendActLineWithWorld(w, me, message)
 		return false
 	}
 	if body.IsAffected(affCharm) && tch != nil && masterRef != nil && victRef != nil && *masterRef == *victRef {
-		me.SendMessage("You are afraid you might hurt your master!\r\n")
+		sendActLineWithWorld(w, me, "You are afraid you might hurt your master!\r\n")
 		return false
 	}
 	self := tch != nil && victRef != nil && *victRef == meRef
@@ -1221,7 +1221,7 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		if power {
 			message = "You can only will this power upon yourself!\r\n"
 		}
-		me.SendMessage(message)
+		sendActLineWithWorld(w, me, message)
 		return false
 	}
 	if self && info.HasTarget(spells.TarNotSelf) {
@@ -1229,7 +1229,7 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		if power {
 			message = "You cannot will this power upon yourself!\r\n"
 		}
-		me.SendMessage(message)
+		sendActLineWithWorld(w, me, message)
 		return false
 	}
 	if info.HasRoutine(spells.RoutineGroups) && !body.IsAffected(affGroup) {
@@ -1237,10 +1237,10 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		if power {
 			message = "You cannot use this power if you are not in a group!\r\n"
 		}
-		me.SendMessage(message)
+		sendActLineWithWorld(w, me, message)
 		return false
 	}
-	me.SendMessage("Okay.\r\n")
+	sendActLineWithWorld(w, me, "Okay.\r\n")
 	spells.SaySpell(me, spellNum, tch, tobj, w)
 	return spells.CastFromSpecialTarget(me, tch, tobj, spellNum, me.GetLevel(), w)
 }
