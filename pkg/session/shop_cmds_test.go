@@ -97,8 +97,8 @@ func TestCmdBuyWithoutArgumentsSortsKeeperStockBeforePrompt(t *testing.T) {
 	if roller.numberCalls != 1 {
 		t.Fatalf("sort draws before empty-argument response = %d, want 1", roller.numberCalls)
 	}
-	if got := renderedOutput(buyer); got != "Buy what?\r\n" {
-		t.Fatalf("empty-argument response = %q, want existing prompt bytes", got)
+	if got := renderedOutput(buyer); got != "A merchant tells you, 'What do you want to buy??'\r\n" {
+		t.Fatalf("empty-argument response = %q, want C keeper prompt", got)
 	}
 }
 
