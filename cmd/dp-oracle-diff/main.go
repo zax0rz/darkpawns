@@ -12,6 +12,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"os/exec"
@@ -1248,7 +1249,7 @@ func topShippedIDNum(pfile string) (int64, error) {
 		idnumOffset = 392
 		idnumSize   = 8
 	)
-	data, err := os.ReadFile(pfile)
+	data, err := os.ReadFile(filepath.Clean(pfile)) // #nosec G703 -- harness-joined path under the C oracle checkout, never request-derived
 	if err != nil {
 		return 0, fmt.Errorf("read shipped player file: %w", err)
 	}
@@ -1257,8 +1258,13 @@ func topShippedIDNum(pfile string) (int64, error) {
 	}
 	var top int64
 	for off := 0; off+recordSize <= len(data); off += recordSize {
-		id := int64(binary.LittleEndian.Uint64(data[off+idnumOffset : off+idnumOffset+idnumSize]))
-		if id > top {
+		raw := binary.LittleEndian.Uint64(data[off+idnumOffset : off+idnumOffset+idnumSize])
+		if raw > math.MaxInt64 {
+			// A shipped idnum is a small positive number; anything that
+			// reinterprets negative is not an id.
+			continue
+		}
+		if id := int64(raw); id > top {
 			top = id
 		}
 	}
