@@ -162,7 +162,7 @@ func TestPetShopOutputGatesMatchCAtRealDispatch(t *testing.T) {
 		if err := ExecuteCommand(fixture.actor, "list", nil); err != nil {
 			t.Fatalf("ExecuteCommand(list): %v", err)
 		}
-		want := "Available pets are:\r\n     100 - wolf\r\n      75 - rottweiler\r\n      50 - beagle\r\n      25 - puppy\r\n"
+		want := "Available pets are:\r\n     100 - the wolf\r\n      75 - the rottweiler\r\n      50 - the beagle\r\n      25 - the puppy\r\n"
 		if got := fixture.outputs["Tester"]; got != want {
 			t.Fatalf("list bytes = %q, want %q", got, want)
 		}
@@ -226,11 +226,11 @@ func TestPetShopOutputGatesMatchCAtRealDispatch(t *testing.T) {
 		if err := ExecuteCommand(fixture.actor, "buy", []string{"puppy", "Milo"}); err != nil {
 			t.Fatalf("ExecuteCommand(buy named pet): %v", err)
 		}
-		actorWant := "Puppy Milo starts following you.\r\nMay you enjoy your pet.\r\n"
+		actorWant := "The puppy starts following you.\r\nMay you enjoy your pet.\r\n"
 		if got := fixture.outputs["Tester"]; got != actorWant {
 			t.Fatalf("buyer bytes = %q, want %q", got, actorWant)
 		}
-		witnessWant := "Puppy Milo starts to follow Tester.\r\nTester buys puppy Milo as a pet.\r\n"
+		witnessWant := "The puppy starts to follow Tester.\r\nTester buys the puppy as a pet.\r\n"
 		if got := fixture.outputs["Witness"]; got != witnessWant {
 			t.Fatalf("witness bytes = %q, want %q", got, witnessWant)
 		}
@@ -244,11 +244,14 @@ func TestPetShopOutputGatesMatchCAtRealDispatch(t *testing.T) {
 		if bought == nil {
 			t.Fatal("successful buy did not create a follower in the shop")
 		}
-		if bought.GetName() != "puppy Milo" || bought.GetShortDesc() != "the puppy" || bought.GetExp() != 0 || !bought.IsAffected(game.AffCharm) {
+		if bought.GetName() != "the puppy" || bought.Proto().Keywords != "puppy milo" || bought.GetShortDesc() != "the puppy" || bought.GetExp() != 0 || !bought.IsAffected(game.AffCharm) {
 			t.Fatalf("bought pet state: name=%q short=%q exp=%d charmed=%v", bought.GetName(), bought.GetShortDesc(), bought.GetExp(), bought.IsAffected(game.AffCharm))
 		}
-		if got, want := bought.GetLongDesc(), "A small loyal puppy is here.\r\nA small sign on a chain around the neck says 'My name is Milo'\r\n"; got != want {
+		if got, want := bought.Proto().DetailedDesc, "A small sign on a chain around the neck says 'My name is milo'\r\n"; got != want {
 			t.Fatalf("named pet description = %q, want %q", got, want)
+		}
+		if got := bought.GetLongDesc(); got != "A small loyal puppy is here.\r\n" {
+			t.Fatalf("named pet changed room description: %q", got)
 		}
 		if got := fixture.actor.player.GetGold(); got != 75 {
 			t.Fatalf("buyer gold = %d, want 75", got)
