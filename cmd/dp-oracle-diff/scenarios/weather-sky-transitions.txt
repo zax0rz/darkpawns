@@ -1,0 +1,89 @@
+# depth-case: weather.sky-transition-strings
+# depth-case: weather.change-pressure-report
+# weather_change (src/weather.c:128-229) draws 5 number() per mud hour
+# (dice(1,4)*diff + dice(2,6) - dice(2,6), src/weather.c:137) plus at most
+# one conditional dice(1,4), then emits the six sky-transition strings to
+# outdoor players. Twenty-four pumped hours with a weather probe per hour
+# compare the sky/pressure report on every engine and the transition lines
+# wherever the seeded pressure path produces them; the draw-parity claim
+# pins the 5-per-hour stream itself (R3a/R5a).
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8001
+
+[probe]
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather

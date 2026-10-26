@@ -1,0 +1,36 @@
+# depth-case: weather.month-rollover-day-34
+# depth-case: weather.moon-set-day-34
+# Boot pinned one hour before the month boundary: fixed-time 650812932 is
+# hour 23 of day 34, month 8 (the month's last hour, computed from
+# beginning_of_time src/db.c:417). One pumped hour crosses hours>23 ->
+# day++ -> day>34 -> month++ (src/weather.c:86-116) into day 0 of month 9;
+# day 34 is also a moon-set day (src/weather.c:91-111), so the time block
+# carries the phase line across the rollover. Reaching this calendar
+# position from the default pin would take ~17 mud days of pumping.
+
+[fixture]
+quiet-mobs
+seed-player
+fixed-time 650812932
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8001
+
+[probe]
+time
+~dpclock pulse 630
+time
+~dpclock pulse 630
+time
