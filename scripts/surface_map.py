@@ -61,8 +61,10 @@ def check(surface_dir=SURFACE_DIR, inventory=INVENTORY, root=ROOT, case_ids=None
     for path in sorted(surface_dir.glob("*.tsv")):
         # The spell matrix has a dedicated schema validator. The mobile-command
         # TSV is a C-call inventory, not a per-C-file output-site map, and this
-        # script does not validate its schema.
-        if path.name in {"spell-matrix.tsv", "mob-command-calls.tsv"}:
+        # script does not validate its schema. shops-behavior.tsv enumerates
+        # cross-file transaction/state branches, not output calls; its dedicated
+        # validator is scripts/shop_surface.py (run by fidelity-depth).
+        if path.name in {"spell-matrix.tsv", "mob-command-calls.tsv", "shops-behavior.tsv"}:
             continue
         name = path.relative_to(root) if path.is_relative_to(root) else path
         with path.open(encoding="utf-8", newline="") as stream:
@@ -187,7 +189,7 @@ def main(argv: list[str]) -> int:
     errors = check()
     for error in errors:
         print(error)
-    maps = len([path for path in SURFACE_DIR.glob("*.tsv") if path.name not in {"spell-matrix.tsv", "mob-command-calls.tsv"}]) if SURFACE_DIR.exists() else 0
+    maps = len([path for path in SURFACE_DIR.glob("*.tsv") if path.name not in {"spell-matrix.tsv", "mob-command-calls.tsv", "shops-behavior.tsv"}]) if SURFACE_DIR.exists() else 0
     print(f"surface-map: {maps} map(s), {len(errors)} error(s)")
     return 1 if errors else 0
 

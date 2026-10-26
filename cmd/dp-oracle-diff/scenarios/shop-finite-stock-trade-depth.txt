@@ -50,3 +50,5 @@ buy gold
 buy carnation
 sell carnation
 list
+
+# depth-case: shops.audit.shop-finite-stock-trade-depth

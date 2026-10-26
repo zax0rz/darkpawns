@@ -49,11 +49,13 @@ Y
 [warmup]
 goto 12135
 teleport Shopwitness 12135
+set Shopwitness class mage
 sedit 12101
 E
 1
 2
 3
+4
 0
 q
 y
@@ -75,3 +77,5 @@ force Shopwitness buy gold
 force Shopwitness gold
 force Shopwitness inventory
 list
+
+# depth-case: shops.audit.shop-customers-alignment

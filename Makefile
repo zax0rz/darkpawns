@@ -136,6 +136,8 @@ fidelity-depth:
 	python3 scripts/spell_matrix.py
 	python3 scripts/surface_map.py --self-test
 	python3 scripts/surface_map.py
+	python3 scripts/shop_surface.py --self-test
+	python3 scripts/shop_surface.py
 
 # Full C-vs-Go scenario regression. The per-scenario timeout is deliberately
 # generous for loaded boxes; timeout-kills are reported separately from

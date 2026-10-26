@@ -1,0 +1,74 @@
+[fixture]
+seed-player
+quiet-mobs
+spawn-obj 8034 99 8056 80
+force-load 8034
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8056
+teleport Shopwitness 8056
+set Testor gold 100
+
+[probe]
+deposit -2
+gold
+inventory
+balance
+deposit +20coins
+gold
+inventory
+balance
+withdraw +10tail
+gold
+inventory
+balance
+deposit 0001
+gold
+inventory
+balance
+withdraw 0
+gold
+inventory
+balance
+
+# depth-case: shops.audit.shops-bank-number-forms

@@ -1,0 +1,56 @@
+# C-first vehicle for SPECIAL(tattoo3), src/spec_procs2.c:1075-1137. The real
+# registered Polywig tattooist is mob vnum 21244 in room 21281. C attaches no
+# script to it (DP-1333).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21244 1 21281 212
+replace-room-exits 21281 none
+
+[setup:oracle]
+TattooThree
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooThree
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21281
+
+[probe]
+
+list
+buy
+gold
+inventory
+buy x
+gold
+inventory
+buy 0
+gold
+inventory
+xyzzy
+
+# depth-case: shops.audit.shops-tattoo3

@@ -108,3 +108,5 @@ gold
 inventory
 stat obj winterwand
 stat obj spectacles
+
+# depth-case: shops.audit.shops-recharger-state

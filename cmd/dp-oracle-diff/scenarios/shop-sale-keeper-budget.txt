@@ -1,0 +1,66 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+replace-room-exits 12135 none
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+teleport Shopwitness 12135
+set Shopwitness gold 1000
+set Shopwitness cha 10
+force Shopwitness buy 3 gold
+set mob Hansen gold 15
+
+[probe]
+force Shopwitness sell 3 gold
+force Shopwitness gold
+force Shopwitness inventory
+show shops .
+force Shopwitness sell gold
+force Shopwitness gold
+force Shopwitness inventory
+
+# depth-case: shops.audit.shop-sale-keeper-budget

@@ -210,3 +210,5 @@ list
 <ENTER>
 gold
 inventory
+
+# depth-case: shops.audit.shop-list-paging

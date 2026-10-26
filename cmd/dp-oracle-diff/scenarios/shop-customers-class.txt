@@ -86,3 +86,5 @@ force Shopwitness buy gold
 force Shopwitness gold
 force Shopwitness inventory
 list
+
+# depth-case: shops.audit.shop-customers-class

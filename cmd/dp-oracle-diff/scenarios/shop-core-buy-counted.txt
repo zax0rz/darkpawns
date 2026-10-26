@@ -45,3 +45,5 @@ inventory
 buy gold
 gold
 inventory
+
+# depth-case: shops.audit.shop-core-buy-counted

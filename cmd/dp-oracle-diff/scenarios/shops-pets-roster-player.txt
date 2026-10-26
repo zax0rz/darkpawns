@@ -54,3 +54,5 @@ teleport Shopwitness 21236
 list
 gold
 inventory
+
+# depth-case: shops.audit.shops-pets-roster-player

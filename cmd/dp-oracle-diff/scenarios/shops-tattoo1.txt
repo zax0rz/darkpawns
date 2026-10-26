@@ -1,0 +1,85 @@
+# C-first vehicle for SPECIAL(tattoo1), src/spec_procs2.c:927-1008. The real
+# registered tattooist is mob vnum 8086 in room 8052. C attaches no script to
+# it (DP-1333), so only the registered C/Go special runs.
+# list exposes all five source-selected tattoo table entries. buy covers the
+# no-argument and non-numeric gates, an already-tattooed actor, insufficient
+# gold, and give_tat's room/direct/shout audiences plus state transition.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8086 1 8052 80
+replace-room-exits 8052 none
+
+[setup:oracle]
+TattooActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+TattooPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+TattooPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8052
+teleport TattooPeer 8052
+
+[probe]
+
+list
+buy
+gold
+inventory
+buy x
+gold
+inventory
+xyzzy
+
+# depth-case: shops.audit.shops-tattoo1

@@ -46,3 +46,5 @@ inventory
 buy #+1
 gold
 inventory
+
+# depth-case: shops.audit.shop-npc-customer-state

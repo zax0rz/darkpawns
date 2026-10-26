@@ -113,3 +113,5 @@ list
 buy winterwand
 gold
 inventory
+
+# depth-case: shops.audit.shop-stock-annotations

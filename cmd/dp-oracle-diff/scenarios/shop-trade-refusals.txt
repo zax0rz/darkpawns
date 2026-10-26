@@ -1,0 +1,117 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+spawn-mob 12220 1 12135 122
+mob-script 12220 oracle/trade.lua 512
+replace-room-exits 12135 none
+
+[lua-script mob/oracle/trade.lua]
+function oncmd()
+if argument ~= "say gear" then return FALSE end
+local zero = oload(ch, 12102, "char")
+zero.cost = 0
+save_obj(zero)
+local nosell = oload(ch, 12102, "char")
+obj_extra(nosell, "set", 16)
+local wand = oload(ch, 14405, "char")
+wand.val[3] = 0
+save_obj(wand)
+local staff = oload(ch, 14408, "char")
+staff.val[3] = 0
+save_obj(staff)
+oload(ch, 6, "char")
+return TRUE
+end
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12135
+teleport Shopwitness 12135
+say gear
+sedit 12101
+T
+A
+3
+<ENTER>
+A
+4
+<ENTER>
+Q
+q
+y
+
+[probe]
+value 1.gold
+gold
+inventory
+sell 1.gold
+gold
+inventory
+value 2.gold
+gold
+inventory
+sell 2.gold
+gold
+inventory
+value winterwand
+gold
+inventory
+sell winterwand
+gold
+inventory
+value spectacles
+gold
+inventory
+sell spectacles
+gold
+inventory
+value boat
+gold
+inventory
+sell boat
+gold
+inventory
+
+# depth-case: shops.audit.shop-trade-refusals

@@ -51,3 +51,5 @@ inventory
 sell 2 gold
 gold
 inventory
+
+# depth-case: shops.audit.shop-core-sell-counted

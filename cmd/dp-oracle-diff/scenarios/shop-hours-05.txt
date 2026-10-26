@@ -73,3 +73,5 @@ inventory
 value gold
 gold
 inventory
+
+# depth-case: shops.audit.shop-hours-05

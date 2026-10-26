@@ -1,0 +1,48 @@
+# C-first vehicle for tattoo3's insufficient-gold gate. Gold is configured in
+# drained warmup so the compared transcript contains only Polywig's tell.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21244 1 21281 212
+replace-room-exits 21281 none
+
+[setup:oracle]
+TattooThreePrice
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+TattooThreePrice
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 21281
+set TattooThreePrice gold 0
+
+[probe]
+
+buy 0
+gold
+inventory
+
+# depth-case: shops.audit.shops-tattoo3-price

@@ -1,0 +1,60 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12106 1 12137 121
+give-object 12106 6 100000 121
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 12137
+teleport Shopwitness 12137
+
+[probe]
+buy 1000 boat
+gold
+inventory
+buy boat
+gold
+inventory
+
+# depth-case: shops.audit.shop-partial-weight

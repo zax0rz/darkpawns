@@ -1,0 +1,109 @@
+# The registered ATM object is #8034 (src/spec_assign.c:535), whose native
+# SPECIAL(bank) body is in src/spec_procs.c:2345-2399. It is placed in the
+# authoritative bank room so object-special dispatch sees it before normal
+# commands.
+# The actor's gold is initialized by the warmup; deposit and withdraw then
+# expose both balances and the C TO_ROOM transaction audience.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs.c:2345-2399 ->
+# act.comm.c act() / do_coins().
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8034 99 8056 80
+force-load 8034
+
+[setup:oracle]
+Bankactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8056
+
+[setup:port]
+Bankactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8056
+
+[setup:oracle:peer]
+Bankpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Bankpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Bankactor gold 100
+goto 8056
+teleport Bankpeer 8056
+
+[probe]
+
+balance
+deposit 0
+gold
+inventory
+deposit nonsense
+gold
+inventory
+deposit 50
+gold
+inventory
+balance
+withdraw 25
+gold
+inventory
+withdraw 100
+gold
+inventory
+deposit 100
+gold
+inventory
+withdraw 0
+gold
+inventory
+withdraw nonsense
+gold
+inventory
+gold
+
+# depth-case: shops.audit.shops-bank

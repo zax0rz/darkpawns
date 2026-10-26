@@ -73,3 +73,5 @@ inventory
 buy 20 gold
 gold
 inventory
+
+# depth-case: shops.audit.shop-core-counted-transactions

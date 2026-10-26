@@ -70,3 +70,5 @@ inventory
 sell gold
 gold
 inventory
+
+# depth-case: shops.audit.shop-trade-expression

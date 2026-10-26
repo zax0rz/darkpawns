@@ -59,3 +59,5 @@ withdraw 10
 gold
 inventory
 balance
+
+# depth-case: shops.audit.shops-bank-hidden

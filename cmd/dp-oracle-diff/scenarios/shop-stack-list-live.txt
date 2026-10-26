@@ -1,3 +1,5 @@
+# The disposable reset reproduces authored keeper stock while quiet-mobs
+# removes unrelated living-world setup draws at the five proof seeds.
 # C-first stocked live-shop vehicle.
 #
 # Mob 12100 is the keeper for shop 12105 in lib/world/shp/121.shp. Zone 121's
@@ -7,7 +9,14 @@
 # depth-case: shops.bridge.stocked-definition
 [fixture]
 empty-players
+quiet-mobs
 quiet-zone 80
+quiet-zone 121
+spawn-mob 12100 1 12133 121
+give-object 12100 12130 100000 121
+give-object 12100 12131 100000 121
+give-object 12100 12132 100000 121
+give-object 12100 12133 100000 121
 set-room-flag 8162 4 off
 
 [setup:oracle]
@@ -44,3 +53,5 @@ goto 12133
 [probe]
 list sword
 buy sword
+
+# depth-case: shops.audit.shop-stack-list-live

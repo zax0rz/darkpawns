@@ -1,0 +1,79 @@
+# Empty players gives the live-stat observer matching persistent IDs.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 21234 0 off
+set-room-flag 21234 3 on
+spawn-mob 21246 1 21234 212
+replace-room-exits 21234 none
+
+[setup:oracle]
+Testor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Testor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Shopwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+goto 21234
+teleport Shopwitness 21234
+set Shopwitness con 1
+set Shopwitness gold 400
+
+[probe]
+force Shopwitness list
+force Shopwitness buy con
+stat mob Shopwitness
+force Shopwitness inventory
+
+# depth-case: shops.audit.shops-con-seller-state

@@ -1,3 +1,5 @@
+# The disposable reset reproduces authored keeper stock while quiet-mobs
+# removes unrelated living-world setup draws at the five proof seeds.
 # C-first live-list filter vehicle.
 #
 # The appended keeper receives one zero-cost object, one positive-cost
@@ -7,6 +9,7 @@
 # depth-case: shops.live-inventory-filters
 [fixture]
 empty-players
+quiet-mobs
 quiet-zone 80
 quiet-zone 121
 add-obj-index 160.obj
@@ -50,3 +53,5 @@ goto 12133
 [probe]
 look
 list
+
+# depth-case: shops.audit.shop-live-inventory-filters

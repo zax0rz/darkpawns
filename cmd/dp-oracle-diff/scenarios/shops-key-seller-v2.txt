@@ -1,0 +1,77 @@
+# C key_seller (spec_procs2.c:1870-1932) first requires a house-control
+# record for the seller's room. Both engines log in the shipped ID-1 Testor
+# (seed-player twins C's lib/etc/players record into the port's store), so
+# the owner gate resolves to the same player ID on each side and neither
+# engine rolls creation draws for the actor. C's immortal moves to room 8162,
+# where the Go actor and both peers start. A real money object crosses the
+# buy threshold after the unaffordable probe.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-mob 19610 2 8162 80
+house-control 8162 8161 north 1 1 19604
+spawn-obj 80 1 8162 80
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+Keypeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Keypeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+
+list
+buy
+gold
+inventory
+buy junk
+gold
+inventory
+buy key
+gold
+inventory
+get coins
+buy key
+gold
+inventory
+gold
+
+# depth-case: shops.audit.shops-key-seller-v2

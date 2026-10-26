@@ -55,3 +55,5 @@ stand
 help
 gold
 inventory
+
+# depth-case: shops.audit.shops-recharger-help-resting

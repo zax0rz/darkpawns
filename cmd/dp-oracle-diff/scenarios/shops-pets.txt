@@ -64,3 +64,5 @@ look puppy
 buy puppy
 gold
 inventory
+
+# depth-case: shops.audit.shops-pets

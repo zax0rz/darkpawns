@@ -1,3 +1,5 @@
+# The disposable reset reproduces authored keeper stock while quiet-mobs
+# removes unrelated living-world setup draws at the five proof seeds.
 # The first empty-player character is C's first-player God, so each one-coin
 # produced pepper purchase bypasses the gold check. Repeated successful buys
 # fill carry count; the final request must reach shopping_buy's early count
@@ -5,7 +7,14 @@
 # depth-case: shops.buy-count-capacity
 [fixture]
 empty-players
+quiet-mobs
 quiet-zone 80
+quiet-zone 121
+spawn-mob 12100 1 12133 121
+give-object 12100 12130 100000 121
+give-object 12100 12131 100000 121
+give-object 12100 12132 100000 121
+give-object 12100 12133 100000 121
 
 [setup:oracle]
 Shopcount
@@ -109,3 +118,5 @@ buy pepper
 buy pepper
 buy pepper
 buy pepper
+
+# depth-case: shops.audit.shop-buy-count-capacity
