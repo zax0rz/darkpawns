@@ -119,8 +119,9 @@ func TestApplicationOpensAndMutatesMigratedDatabase(t *testing.T) {
 	if restored.GetLoadRoom() != 8004 {
 		t.Errorf("restored load room = %d, want 8004", restored.GetLoadRoom())
 	}
-	if len(restored.Inventory.Items) != 1 || restored.Inventory.Items[0].GetVNum() != 8023 {
-		t.Errorf("restored inventory = %v, want the club", restored.Inventory.Items)
+	restoredItems := restored.Inventory.Snapshot()
+	if len(restoredItems) != 1 || restoredItems[0].GetVNum() != 8023 {
+		t.Errorf("restored inventory = %v, want the club", restoredItems)
 	}
 	if wielded, ok := restored.Equipment.Slots[game.SlotWield]; !ok || wielded == nil || wielded.GetVNum() != 8019 {
 		t.Errorf("restored wield slot = %v, want the tunic", restored.Equipment.Slots[game.SlotWield])
