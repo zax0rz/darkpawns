@@ -123,7 +123,7 @@ func TestShopSellSetsCrashFlag(t *testing.T) {
 		t.Fatal("shop sell did not set PLR_CRASH (C shop.c:776 obj_from_char)")
 	}
 
-	// sell all exercises the same C site per object.
+	// A counted sale exercises the same C site per object.
 	obj2, err := h.w.SpawnObject(7101, -1)
 	if err != nil {
 		t.Fatalf("SpawnObject 2: %v", err)
@@ -132,15 +132,11 @@ func TestShopSellSetsCrashFlag(t *testing.T) {
 		t.Fatalf("carry 2: %v", err)
 	}
 	h.s.player.SetPlrFlag(game.PlrCrash, false)
-	shop, keeperName, keeper := findShopKeeperAndMobInRoom(h.s)
-	if shop == nil {
-		t.Fatal("no shop in room")
-	}
-	if err := cmdSellAll(h.s, shop, keeperName, keeper); err != nil {
-		t.Fatalf("cmdSellAll: %v", err)
+	if err := ExecuteCommand(h.s, "sell", []string{"2", "trinket"}); err != nil {
+		t.Fatalf("counted sell: %v", err)
 	}
 	if !h.s.player.NeedsCrashSave() {
-		t.Fatal("shop sell all did not set PLR_CRASH (C shop.c:776 per object)")
+		t.Fatal("counted shop sale did not set PLR_CRASH (C shop.c:776 per object)")
 	}
 }
 
