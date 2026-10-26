@@ -211,7 +211,9 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	item20 := game.NewObjectInstance(proto20, -1)
 	// Equip in slot Wield
 	slot := game.SlotWield
-	p.Equipment.Slots[slot] = item20
+	if err := p.Equipment.SetSlot(slot, item20); err != nil {
+		t.Fatalf("equip fixture: %v", err)
+	}
 
 	// Convert Player to Record
 	rec, err := PlayerToRecord(p, nil)
@@ -281,7 +283,7 @@ func TestPlayerToRecordAndBack(t *testing.T) {
 	}
 
 	// Verify equipment restored
-	eqItem := restored.Equipment.Slots[slot]
+	eqItem := restored.Equipment.Snapshot()[slot]
 	if eqItem == nil {
 		t.Fatal("expected equipped item in slot Wield")
 	}
@@ -457,7 +459,9 @@ func TestContainerContentsSurviveRecordRoundTrip(t *testing.T) {
 	p.Inventory.RestoreItem(backpack)
 	pouch := spawn(8040)
 	pouch.Contains = []*game.ObjectInstance{spawn(8041)}
-	p.Equipment.Slots[game.SlotAbout] = pouch
+	if err := p.Equipment.SetSlot(game.SlotAbout, pouch); err != nil {
+		t.Fatalf("equip fixture: %v", err)
+	}
 
 	rec, err := PlayerToRecord(p, nil)
 	if err != nil {
@@ -483,7 +487,7 @@ func TestContainerContentsSurviveRecordRoundTrip(t *testing.T) {
 	if gotPack.GetTotalWeight() != 14 {
 		t.Fatalf("backpack total weight = %d, want 14", gotPack.GetTotalWeight())
 	}
-	worn := back.Equipment.Slots[game.SlotAbout]
+	worn := back.Equipment.Snapshot()[game.SlotAbout]
 	if worn == nil || worn.VNum != 8040 || len(worn.Contains) != 1 || worn.Contains[0].VNum != 8041 {
 		t.Fatalf("worn pouch = %+v, want pouch holding the ring", worn)
 	}

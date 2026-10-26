@@ -227,7 +227,7 @@ func roomActivityHasBoat(ch roomActivityChar) bool {
 				}
 			}
 		}
-		for _, obj := range c.Equipment.Slots {
+		for _, obj := range c.Equipment.Snapshot() {
 			if obj != nil && obj.Prototype != nil && obj.Prototype.TypeFlag == ITEM_BOAT {
 				return true
 			}

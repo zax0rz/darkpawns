@@ -134,7 +134,7 @@ func (e *recoveryEnv) readback(t *testing.T) {
 		t.Fatal("carried object did not survive: inventory lacks the thing")
 	}
 	equipped := false
-	for _, item := range p.Equipment.Slots {
+	for _, item := range p.Equipment.Snapshot() {
 		if item != nil && item.VNum == 7102 {
 			equipped = true
 		}

@@ -244,11 +244,11 @@ func (w *World) ExtractPendingPlayers() []*Player {
 					if !ok {
 						continue
 					}
-					if item := p.Equipment.Slots[slot]; item != nil {
+					if item := p.Equipment.slots[slot]; item != nil {
 						if isLitLightSource(item) {
 							w.adjustRoomLight(roomVNum, -1)
 						}
-						delete(p.Equipment.Slots, slot)
+						delete(p.Equipment.slots, slot)
 						drops = append(drops, item)
 					}
 				}

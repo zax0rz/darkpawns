@@ -166,7 +166,7 @@ func hasBoat(w *World, ch *Player) bool {
 	}
 	// Check equipment for ITEM_BOAT
 	if ch.Equipment != nil {
-		for _, obj := range ch.Equipment.Slots {
+		for _, obj := range ch.Equipment.Snapshot() {
 			if obj != nil && obj.Prototype != nil && obj.Prototype.TypeFlag == ITEM_BOAT {
 				return true
 			}

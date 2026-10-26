@@ -60,7 +60,9 @@ func TestApplicationOpensAndMutatesMigratedDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("spawn tunic: %v", err)
 	}
-	player.Equipment.Slots[game.SlotWield] = tunic
+	if err := player.Equipment.SetSlot(game.SlotWield, tunic); err != nil {
+		t.Fatalf("equip fixture tunic: %v", err)
+	}
 	tunic.Location = game.LocEquippedPlayer(player.Name, game.SlotWield)
 
 	encoded, err := db.PlayerToRecord(player, nil)
@@ -123,8 +125,9 @@ func TestApplicationOpensAndMutatesMigratedDatabase(t *testing.T) {
 	if len(restoredItems) != 1 || restoredItems[0].GetVNum() != 8023 {
 		t.Errorf("restored inventory = %v, want the club", restoredItems)
 	}
-	if wielded, ok := restored.Equipment.Slots[game.SlotWield]; !ok || wielded == nil || wielded.GetVNum() != 8019 {
-		t.Errorf("restored wield slot = %v, want the tunic", restored.Equipment.Slots[game.SlotWield])
+	restoredSlots := restored.Equipment.Snapshot()
+	if wielded, ok := restoredSlots[game.SlotWield]; !ok || wielded == nil || wielded.GetVNum() != 8019 {
+		t.Errorf("restored wield slot = %v, want the tunic", restoredSlots[game.SlotWield])
 	}
 	if restored.Gold != 4242 || restored.BankGold != 99 || restored.Alignment != -250 ||
 		restored.Practices != 7 || restored.PlayedDuration != 3600 {
