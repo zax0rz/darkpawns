@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -150,4 +151,29 @@ func shopEvaluateExpression(item *ObjectInstance, expression string) bool {
 	}
 	result := popValue()
 	return len(values) == 0 && result
+}
+
+// ShopTransactionAmount is transaction_amt's shared player/NPC boundary
+// (src/shop.c:337-350; digit-only is_number at src/interpreter.c:1175-1182).
+func ShopTransactionAmount(argument string) (int, string) {
+	first, rest := oneArgument(argument)
+	if count, ok := ShopNumber(first); ok {
+		return count, rest
+	}
+	return 1, argument
+}
+
+// ShopNumber mirrors C is_number followed by atoi for shop selectors. A sign
+// is not a digit (src/interpreter.c:1175-1182; src/shop.c:403-412).
+func ShopNumber(token string) (int, bool) {
+	if token == "" {
+		return 0, false
+	}
+	for _, c := range token {
+		if c < '0' || c > '9' {
+			return 0, false
+		}
+	}
+	n, err := strconv.Atoi(token)
+	return n, err == nil
 }

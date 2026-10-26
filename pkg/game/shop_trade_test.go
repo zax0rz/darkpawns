@@ -68,3 +68,71 @@ func TestShopTradeWithMatchesCRefusalOrder(t *testing.T) {
 		})
 	}
 }
+
+func TestShopTransactionAmountUsesDigitOnlyLeadingCount(t *testing.T) {
+	for _, tc := range []struct {
+		arg   string
+		count int
+		name  string
+	}{
+		{"", 1, ""},
+		{"2 gold", 2, "gold"},
+		{"0 gold", 0, "gold"},
+		{"gold 3", 1, "gold 3"},
+		{"-1 gold", 1, "-1 gold"},
+		{"+2 gold", 1, "+2 gold"},
+		{"0002 gold", 2, "gold"},
+	} {
+		if n, name := shopNpcTransactionAmt(tc.arg); n != tc.count || name != tc.name {
+			t.Errorf("NPC amount(%q)=%d,%q", tc.arg, n, name)
+		}
+		if n, name := ShopTransactionAmount(tc.arg); n != tc.count || name != tc.name {
+			t.Errorf("amount(%q)=%d,%q", tc.arg, n, name)
+		}
+	}
+}
+
+func TestShopNPCGodLevelPaysAndPrefixSale(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001}},
+		Mobs:  []parser.Mob{{VNum: 5001, Keywords: "keeper", ShortDesc: "a keeper", Level: 10}, {VNum: 5002, Keywords: "customer", ShortDesc: "a customer", Level: LVL_GOD, Str: 10, Dex: 10, Cha: 10}},
+		Objs:  []parser.Obj{{VNum: 6001, Keywords: "apple", ShortDesc: "an apple", Cost: 20, TypeFlag: 13, Weight: 1}},
+		Shops: []parser.ShopProto{{VNum: 1, KeeperVNum: 5001, Rooms: []int{1001}, Products: []int{6001}, BuyTypes: []int{13}, BuyProfit: 1, SellProfit: 1, OpenHour1: 0, CloseHour1: 28, OpenHour2: 0, CloseHour2: 28}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	keeper, err := w.SpawnMob(5001, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	customer, err := w.SpawnMob(5002, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keeper.SetPosition(8)
+	customer.SetPosition(8)
+	keeper.SetGold(1000)
+	customer.SetGold(100)
+	obj, err := w.SpawnObject(6001, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.MoveObjectToMobInventoryFront(obj, keeper); err != nil {
+		t.Fatal(err)
+	}
+	ctx := CharacterSpecialContext{Actor: customer}
+	if got := DispatchCharacterSpecial("shop_keeper", w, ctx, keeper, "buy", "2 apple"); got != SpecialHandled {
+		t.Fatalf("buy dispatch=%v", got)
+	}
+	if customer.GetGold() != 60 || keeper.GetGold() != 1040 || len(customer.InventorySnapshot()) != 2 {
+		t.Fatalf("NPC buy: coins=%d keeper=%d items=%d", customer.GetGold(), keeper.GetGold(), len(customer.InventorySnapshot()))
+	}
+	if got := DispatchCharacterSpecial("shop_keeper", w, ctx, keeper, "sell", "ap"); got != SpecialHandled {
+		t.Fatalf("sale dispatch=%v", got)
+	}
+	if customer.GetGold() != 80 || keeper.GetGold() != 1020 || len(customer.InventorySnapshot()) != 1 {
+		t.Fatalf("NPC prefix sale: coins=%d keeper=%d items=%d", customer.GetGold(), keeper.GetGold(), len(customer.InventorySnapshot()))
+	}
+}

@@ -1,0 +1,48 @@
+[fixture]
+seed-player
+quiet-mobs
+quiet-zone 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+spawn-mob 12220 1 12135 122
+strip-mob-script 12220
+replace-room-exits 12135 none
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 12135
+force healer stand
+set mob healer level 35
+set mob healer gold 1000
+set mob healer cha 10
+
+[probe]
+force healer buy 2 gold
+stat mob healer
+force healer sell go
+stat mob healer
+force healer sell 0 gold
+stat mob healer
+force healer buy -1 gold
+stat mob healer
+force healer buy #+1
+stat mob healer
+force healer buy 2.
+stat mob healer
+buy +1.gold
+gold
+inventory
+buy #+1
+gold
+inventory

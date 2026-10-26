@@ -2,7 +2,6 @@ package session
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -201,8 +200,8 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 	// syntax, so a trailing word after a hash selector is ignored by C.
 	name = strings.Fields(name)[0]
 	if strings.HasPrefix(name, "#") {
-		index, err := strconv.Atoi(strings.TrimPrefix(name, "#"))
-		if err != nil || index < 1 {
+		index, valid := game.ShopNumber(strings.TrimPrefix(name, "#"))
+		if !valid || index < 1 {
 			return nil
 		}
 		last, group := (*game.ObjectInstance)(nil), 0
@@ -222,12 +221,10 @@ func findShopPurchaseObject(name string, inventory []*game.ObjectInstance, viewe
 		return nil
 	}
 
-	ordinal := 1
 	keyword := name
-	if before, after, found := strings.Cut(name, "."); found {
-		if n, err := strconv.Atoi(before); err == nil && n > 0 {
-			ordinal, keyword = n, after
-		}
+	ordinal := game.GetNumber(&keyword)
+	if ordinal <= 0 {
+		return nil
 	}
 	fields := strings.Fields(keyword)
 	if len(fields) == 0 {
@@ -386,20 +383,7 @@ func cmdList(s *Session, args []string) error {
 // token remains an item name. Counts precede the name; trailing words do not
 // supply a count.
 func shopTransactionAmount(argument string) (int, string) {
-	first, rest := game.OneArgument(argument)
-	if first == "" {
-		return 1, argument
-	}
-	for _, c := range first {
-		if c < '0' || c > '9' {
-			return 1, argument
-		}
-	}
-	count, err := strconv.Atoi(first)
-	if err != nil {
-		return 1, argument
-	}
-	return count, rest
+	return game.ShopTransactionAmount(argument)
 }
 
 // cmdBuy follows shopping_buy, src/shop.c:472-590. Every hand-over checks the

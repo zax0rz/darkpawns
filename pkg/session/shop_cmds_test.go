@@ -138,3 +138,23 @@ func TestSwitchedShopKeeperResetsSortOnCommand(t *testing.T) {
 		t.Fatalf("SHOP_SORT after switched keeper command = %d, want 0", shop.LastSort)
 	}
 }
+
+func TestShopPurchaseSelectorsUseCDigits(t *testing.T) {
+	w, _, _, _ := shopOutputFixture(t, 1)
+	proto, ok := w.GetObjPrototype(6001)
+	if !ok {
+		t.Fatal("missing stock")
+	}
+	stock := game.NewObjectInstance(proto, -1)
+	viewer := game.NewPlayer(1, "Selector", 1001)
+	for _, query := range []string{"0.apple", "+1.apple", "-1.apple", "2.", "bad.apple", "#+1", "#-1", "#bad", "#0"} {
+		if got := findShopPurchaseObject(query, []*game.ObjectInstance{stock}, viewer); got != nil {
+			t.Errorf("invalid C selector %q found %v", query, got)
+		}
+	}
+	for _, query := range []string{"1.apple", "#1"} {
+		if got := findShopPurchaseObject(query, []*game.ObjectInstance{stock}, viewer); got != stock {
+			t.Errorf("valid C selector %q missed", query)
+		}
+	}
+}
