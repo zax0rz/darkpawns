@@ -135,9 +135,12 @@ regression guard, exactly as round 2's lantern scenario guards #2151.
 
 ### 3.2 PL-005 — the death path kills where C leaves the character incapacitated
 
-Staged in `play-lab-m3-death-in-combat.txt`: a level-11 Zoomaster (mob 14516,
-placed with `spawn-mob … 8101 145`) fights a level-1 warrior in the Street of
-Swords. The same probe step (`~dpclock pulse 100`, step 7) diverges:
+Staged as a scenario during this round: a level-11 Zoomaster (mob 14516, placed
+with `spawn-mob … 8101 145`) fights a level-1 warrior in the Street of Swords.
+That scenario file is **not** in this PR — it is the PL-005 reproduction, it is
+red by design, and GLM carries it into the PL-005 fix PR. The finding and its
+evidence stay here so the fix has a reference point. The same probe step
+(`~dpclock pulse 100`, step 7) diverges:
 
 ```
 --- c-oracle
@@ -219,16 +222,17 @@ Added this round (all in `cmd/dp-oracle-diff/scenarios/`):
 |---|---|---|
 | `play-lab-m3-practice-catalog.txt` | a ninja learns a mapped skill at the guildmaster, then reads the catalog | **clean**, draw parity MATCH — PL-004's regression guard after #2160 |
 | `play-lab-m3-jail-on-attacking-guard.txt` | a level-1 warrior swings at a church guard; the city jails him and lets him out | clean, draw parity MATCH |
-| `play-lab-m3-death-in-combat.txt` | a level-1 warrior fights a level-11 Zoomaster to the death | **divergence** (PL-005, open), draw parity MISMATCH |
+| `play-lab-m3-death-in-combat.txt` | a level-1 warrior fights a level-11 Zoomaster to the death | **divergence** (PL-005, open), draw parity MISMATCH — the scenario ships in GLM's PL-005 fix PR, not this one |
 | `play-lab-m3-warrior-slice.txt`, `-psionic-slice.txt`, `-ninja-slice.txt` | the first 70–90 play commands of a long-horizon session (creation, travel, kills, loot, rest, practice) | produced by `dp-play scenario`; the warrior slice was still running when this report was written, so its verdict is not claimed here |
 
 The census is registered as `m3-play-lab-b` (targeted: the practice, jail and death
 scenarios, at `9cb0aca75`) and saved at
 `~/Archives/darkpawns/oracle-runs/2026-10-25/m3-play-lab-b/`; the first
 registration was cancelled when #2160 landed, because a census pinned to the
-pre-fix commit would have run the wrong code. `start` reports it queued behind
-whatever release census holds the host. Its verdict is not in this report; the
-expectation is one red row (PL-005) and two green.
+pre-fix commit would have run the wrong code. It was registered while a release
+census held the host, so its verdict is not in this report. The follow-up's own
+targeted census (`m3b-play-lab`, the recruit route alone) is **CLEAN** — see
+`2026-10-26-deepseek-play-lab-m3b.md`.
 
 **Lab note (process).** While cleaning up scenario leftovers I ran
 `pkill -x circle` / `pkill -f dp-server-prebuilt`, which also matched servers

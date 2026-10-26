@@ -178,8 +178,9 @@ for practices (the warrior's guild is nine steps away, in the city).
 | `play-lab-m3b-recruit-route.txt` | the newbie route: the closed door, `open door`, the walk in, the first recruit fight | **clean**, `draw-parity MATCH entries=4081` |
 
 Round 3's scenarios are unchanged: `play-lab-m3-practice-catalog.txt` clean
-(fixed by #2160), `play-lab-m3-jail-on-attacking-guard.txt` clean,
-`play-lab-m3-death-in-combat.txt` still red (PL-005, another agent's).
+(fixed by #2160), `play-lab-m3-jail-on-attacking-guard.txt` clean. The PL-005
+reproduction (`play-lab-m3-death-in-combat.txt`) is not in this PR: it is red by
+design and GLM carries it into the PL-005 fix PR.
 
 ## 7. Decisions for Zach
 
