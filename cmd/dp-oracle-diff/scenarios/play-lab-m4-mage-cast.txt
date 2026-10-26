@@ -1,0 +1,71 @@
+# Play-lab milestone 4: a spellcaster casting in combat.
+#
+# The mage fights with flame arrow (the class's level-1 offensive spell,
+# pkg/game/class_spells.go). This is the shape the milestone-4 policy uses when a
+# class has spells: cast at the target, let the round pass, and fall back to the
+# dagger when the mana runs out. It also covers the refusal path — casting a spell
+# the character has not learned answers "You do not know that spell!", which is
+# how the policy learns which spells it has.
+
+[fixture]
+quiet-mobs
+spawn-mob 16302 1 16301 163
+
+[setup:oracle]
+Magecast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Magecast
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+~dpclock pulse 40
+auto exits
+north
+east
+south
+west
+north
+west
+south
+open door
+south
+cast 'chill touch' recruit
+cast 'flame arrow' recruit
+~dpclock pulse 10
+cast 'flame arrow' recruit
+~dpclock pulse 10
+cast 'flame arrow' recruit
+~dpclock pulse 10
+cast 'flame arrow' recruit
+~dpclock pulse 10
+cast 'flame arrow' recruit
+~dpclock pulse 10
+score
+kill recruit
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+score

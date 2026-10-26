@@ -1,0 +1,74 @@
+# Play-lab milestone 4: the recruit loop — kill, loot, rest.
+#
+# The loop every class climbs on. From the newbie start (8162) to the guard
+# training centre: north, east, south, west, north, west, south (through the
+# closed door at 16300, which `open door` opens), then a fight with a level-1
+# recruit (100 experience), the corpse, and a rest.
+#
+# Reduced from the milestone-4 climb sessions: the decision sequence is the same
+# one the progression policy takes, trimmed to a single loop so it finishes in
+# seconds rather than minutes.
+
+[fixture]
+quiet-mobs
+spawn-mob 16302 1 16301 163
+
+[setup:oracle]
+Recruitloop
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Recruitloop
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+~dpclock pulse 40
+auto exits
+north
+east
+south
+west
+north
+west
+south
+open door
+south
+look
+kill recruit
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+score
+get all corpse
+inventory
+rest
+~dpclock pulse 700
+stand
+look
+score
