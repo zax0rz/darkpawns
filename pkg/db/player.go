@@ -415,6 +415,15 @@ func (db *DB) UpdatePassword(playerID int, hash string) error {
 	return err
 }
 
+// SetFailedLoginAttempts overwrites the failed-login counter. Seeding a
+// player from C's char_file_u uses it to carry the shipped record's bad_pws
+// (player_special_data_saved.bad_pws) so the login warning matches C
+// (src/interpreter.c:1929-1937).
+func (db *DB) SetFailedLoginAttempts(playerID, attempts int) error {
+	_, err := db.exec(`UPDATE players SET failed_login_attempts = ? WHERE id = ?`, attempts, playerID)
+	return err
+}
+
 // UpdateDescription updates the description displayed when another player looks at this character.
 func (db *DB) UpdateDescription(playerID int, description string) error {
 	_, err := db.exec(`UPDATE players SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, description, playerID)

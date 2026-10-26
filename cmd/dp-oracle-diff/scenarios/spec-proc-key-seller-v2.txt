@@ -4,14 +4,16 @@
 # depth-case: mob.key-seller-owner-buy-unaffordable
 # depth-case: mob.key-seller-owner-buy-success-audience
 # C key_seller (spec_procs2.c:1870-1932) first requires a house-control
-# record for the seller's room. C needs its seeded Testor (owner ID 1) present
-# when House_boot validates the record; the Go fixture maps that owner to its
-# first new Testor (ID 1). C's immortal moves to room 8162, where the Go actor
-# and both peers start. A real money object crosses the buy threshold after
-# the unaffordable probe.
+# record for the seller's room. Both engines log in the shipped ID-1 Testor
+# (seed-player twins C's lib/etc/players record into the port's store), so
+# the owner gate resolves to the same player ID on each side and neither
+# engine rolls creation draws for the actor. C's immortal moves to room 8162,
+# where the Go actor and both peers start. A real money object crosses the
+# buy threshold after the unaffordable probe.
 
 [fixture]
 quiet-mobs
+seed-player
 spawn-mob 19610 2 8162 80
 house-control 8162 8161 north 1 1 19604
 spawn-obj 80 1 8162 80
@@ -24,15 +26,7 @@ testpassword
 
 [setup:port]
 Testor
-y
-oraclepass
-oraclepass
-N
-M
-H
-W
-K
-Y
+testpassword
 <ENTER>
 1
 

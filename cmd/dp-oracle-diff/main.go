@@ -26,6 +26,9 @@ import (
 	"github.com/zax0rz/darkpawns/internal/bootmarker"
 	"github.com/zax0rz/darkpawns/internal/oraclediff"
 	"github.com/zax0rz/darkpawns/pkg/db"
+	"github.com/zax0rz/darkpawns/pkg/game"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -512,7 +515,7 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	// Record consumers need the same real SQLite store as login, including
 	// stat file now that the JSON sidecar is retired.
 	if needsPlayerStore(&scenario) {
-		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers)
+		goDB, err = prepareGoReloginDB(goWork, scenario.EmptyPlayers, scenario.SeedPlayer)
 		if err != nil {
 			return err
 		}
@@ -1184,8 +1187,11 @@ func applyGoHouseControlFixtures(goWork string, fixtures []oraclediff.HouseContr
 // scenario empties it, so its new character is an ordinary mortal; an empty Go
 // store would crown that character God instead (init_char's first-player rule),
 // so the store is seeded with one placeholder player to match. An
-// empty-players scenario keeps the store empty on both sides.
-func prepareGoReloginDB(goWork string, emptyPlayers bool) (string, error) {
+// empty-players scenario keeps the store empty on both sides. A seed-player
+// scenario logs the port in as C's shipped first player instead of creating a
+// fresh character: the store is seeded with the Testor twin below, so neither
+// engine rolls creation draws.
+func prepareGoReloginDB(goWork string, emptyPlayers, seedPlayer bool) (string, error) {
 	url := "sqlite://" + filepath.Join(goWork, "relogin.db")
 	if emptyPlayers {
 		return url, nil
@@ -1195,11 +1201,64 @@ func prepareGoReloginDB(goWork string, emptyPlayers bool) (string, error) {
 		return "", fmt.Errorf("create relogin store: %w", err)
 	}
 	defer func() { _ = store.Close() }()
-	placeholder := &db.PlayerRecord{Name: "Zzplaceholder", Password: "x", Level: 1, RoomVNum: 8004}
-	if err := store.CreatePlayer(placeholder); err != nil {
+	var record *db.PlayerRecord
+	if seedPlayer {
+		record, err = testorTwinRecord()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		record = &db.PlayerRecord{Name: "Zzplaceholder", Password: "x", Level: 1, RoomVNum: 8004}
+	}
+	if err := store.CreatePlayer(record); err != nil {
 		return "", fmt.Errorf("seed relogin store: %w", err)
 	}
+	if seedPlayer {
+		// The insert statement does not carry the failed-login counter; the
+		// twin's shipped bad_pws would otherwise be lost.
+		if err := store.SetFailedLoginAttempts(record.ID, record.FailedLoginAttempts); err != nil {
+			return "", fmt.Errorf("seed relogin store login counter: %w", err)
+		}
+	}
 	return url, nil
+}
+
+// testorTwinRecord is the port-side twin of the C checkout's shipped first
+// player: record 0 of lib/etc/players, decoded from C's char_file_u (name
+// Testor, Warrior, sex male, str 17 / int 9 / wis 13 / dex 16 / con 13 /
+// cha 8, weight 159, height 175, hometown 1, played 14s, last_logon
+// 1783904500, bad_pws 1). BootstrapFirstPlayerGod ports the same init_char
+// block that wrote C's record — level LVL_IMPL (40), exp 7,000,000,
+// 500/100/82 points, every skill at 100, conditions -1, no display
+// preferences — so those fields match by construction, as do the Warrior
+// class title and the constructor's AC default. C's load_room is -1 and its
+// level is LVL_IMPL, so C's nanny '1' places the body at immort_start_room
+// (src/config.c:149); the twin seeds that effective room. The shipped
+// record's bad_pws is 1, so both engines print the LOGIN FAILURES line at
+// login (src/interpreter.c:1929-1937). The password is the one the C record
+// has verified since the pfile shipped: "testpassword".
+func testorTwinRecord() (*db.PlayerRecord, error) {
+	p := game.NewCharacterWithStats(1, "Testor", game.ClassWarrior, game.RaceHuman, game.SexMale,
+		game.CharStats{Str: 17, Int: 9, Wis: 13, Dex: 16, Con: 13, Cha: 8})
+	game.BootstrapFirstPlayerGod(p)
+	p.Hometown = 1
+	p.Height = 175
+	p.Weight = 159
+	p.Birth = 1783904463
+	p.PlayedDuration = 14
+	p.SetRoom(1204)
+	record, err := db.PlayerToRecord(p, nil)
+	if err != nil {
+		return nil, fmt.Errorf("encode Testor twin: %w", err)
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.MinCost)
+	if err != nil {
+		return nil, fmt.Errorf("hash Testor twin password: %w", err)
+	}
+	record.Password = string(hash)
+	record.FailedLoginAttempts = 1
+	record.LastLogon = 1783904500
+	return record, nil
 }
 
 func withFreshMUDEnv(env []string, enabled bool) []string {
@@ -2089,6 +2148,9 @@ func applyMobScriptFixtures(worldDir string, fixtures []oraclediff.MobScriptFixt
 }
 
 func needsPlayerStore(s *oraclediff.Scenario) bool {
+	if s.SeedPlayer {
+		return true
+	}
 	if len(s.ReloginPort) > 0 {
 		return true
 	}
