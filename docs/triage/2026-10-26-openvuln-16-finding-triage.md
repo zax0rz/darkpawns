@@ -311,6 +311,11 @@ The steal test is deterministic rather than a timing lottery: it holds `w.mu` it
 the steal cannot complete until the lock is released. A concurrent give/steal race test was
 discarded because it passed both before and after the fix — too narrow to be a real gate.
 
+Targeted census `~/Archives/darkpawns/oracle-runs/2026-10-26/cline-vuln-races` @ `ffc6181ae`
+(19 economy scenarios — `spec-proc-bank*`, `steal-depth`, `mudlog-steal-*`, `shop-buy-weight-sell-steal`,
+`put-*`, `get-*`, `*-gold`, `combat-group-gold-depth`): 19 passed, 0 failed, 0 infra —
+**verdict CLEAN** (58 s).
+
 ### PR 2 — `pkg/session` WebSocket resources — [#2176](https://github.com/zax0rz/darkpawns/pull/2176)
 
 Branch `cline/vuln-ws-resources`, worktree `~/wt/cline-vuln-ws-resources`, commit `ebe6fc88e`.
