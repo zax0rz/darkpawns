@@ -1,0 +1,62 @@
+# depth-case: saveload.crash-restore-from-save
+# <CRASH> kills both engines without the graceful shutdown saves: the only
+# durable state is what the explicit save command already wrote. The loaf
+# was on the actor and saved (RENT_CRASH), so the crash boot restores it
+# exactly like the graceful case — the difference between this scenario and
+# saveload-save-restart is which code path last wrote the file, not the
+# restore bytes.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-obj 8010 1 8162 80
+
+[setup:oracle]
+Crashie
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Crashie
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Crashie
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Crashie
+oraclepass
+<ENTER>
+1
+
+[warmup]
+get loaf
+save
+
+[probe]
+inventory
+<CRASH>
+score
+inventory

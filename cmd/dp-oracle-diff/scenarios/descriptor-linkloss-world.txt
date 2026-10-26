@@ -1,0 +1,74 @@
+# depth-case: descriptor.linkloss-room-act
+# depth-case: descriptor.linkdead-body-persists
+# close_socket for a playing character saves, tells the room "$n has lost
+# $s link." (src/comm.c:2129-2134) and leaves the body in the world: C has
+# no link-dead purge timer (the idle force-rent lane owns removal). Both
+# fresh mortals start in the same newbie room (8162); the observer watches
+# the peer's transport drop and then looks, proving the act line and the
+# still-present link-dead body.
+
+[fixture]
+quiet-mobs
+seed-player
+
+[setup:oracle]
+Watcher
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Watcher
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Victim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Victim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[peer-drop]
+victim
+
+[probe]
+look

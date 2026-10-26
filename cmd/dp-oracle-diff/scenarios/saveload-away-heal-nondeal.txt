@@ -1,0 +1,59 @@
+# depth-case: saveload.away-heal-short-gap-keeps-hp
+# store_to_char full-heals only when the character was away >= 1 real hour
+# (src/db.c:2487-2493). The seam freezes pulses, not time(0), and a restart
+# relogin follows boot by seconds, so the short-gap branch is deterministic
+# in the oracle: the crowned first player (empty-players) drains itself to
+# 5 hit with set player, saves and restarts, and the re-entry score still
+# shows the drained value. The >= 1 hour heal branch stays a unit-tested
+# boundary (R5f): no oracle scenario can wait an hour.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Woundee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Woundee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Woundee
+oraclepass
+<ENTER>
+1
+
+[relogin:port]
+Woundee
+oraclepass
+<ENTER>
+1
+
+[probe]
+set player Woundee hit 5
+score
+save
+<RESTART>
+score
