@@ -181,7 +181,15 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	s.sendStatMobLine(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]",
 		wizardPositionName(proto.DefaultPos), 0))
 	s.sendStatMobLine("NPC flags: " + wizardMobFlags(mob.GetMobFlags()))
-	s.sendStatMobLine(fmt.Sprintf("Mob Spec-Proc: None, NPC Bare Hand Dam: %dd%d", proto.Damage.Num, proto.Damage.Sides))
+	// C reports the installed prototype callback, including shop_keeper.
+	// src/act.wizard.c:908-910; src/shop.c:1224-1238.
+	_, nativeSpecial := game.GetMobSpecName(mob.GetVNum())
+	_, shopSpecial := s.manager.world.GetShopByKeeper(mob.GetVNum())
+	special := "None"
+	if nativeSpecial || shopSpecial {
+		special = "Exists"
+	}
+	s.sendStatMobLine(fmt.Sprintf("Mob Spec-Proc: %s, NPC Bare Hand Dam: %dd%d", special, proto.Damage.Num, proto.Damage.Sides))
 	carriedWeight := 0
 	for _, item := range mob.Inventory {
 		carriedWeight += item.GetTotalWeight()

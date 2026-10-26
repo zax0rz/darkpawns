@@ -337,3 +337,15 @@ func TestShopListUsesPagerThroughDispatch(t *testing.T) {
 		t.Errorf("second page=%q", rest)
 	}
 }
+
+// The observer must report the callback C installs at shop boot, rather than
+// hiding it while money/object state is inspected (src/act.wizard.c:908-910).
+func TestShopStatReportsInstalledSpecialThroughDispatch(t *testing.T) {
+	_, manager, _, _ := shopOutputFixture(t, 1)
+	observer := addShopOutputSession(t, manager, "Shopobserver")
+	observer.player.SetLevel(40)
+	shopDispatch(t, observer, "stat mob keeper")
+	if got := renderedOutput(observer); !strings.Contains(got, "Mob Spec-Proc: Exists,") {
+		t.Fatalf("shop observer = %q", got)
+	}
+}
