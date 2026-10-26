@@ -1,0 +1,51 @@
+# depth-case: death.neutral-room-divine-save
+# The neutral-room pre-death save (src/fight.c:1496-1519): a PC victim at
+# POS <= STUNNED inside a ROOM_NEUTRAL room cannot die - the hit is reset to
+# 1, the body moves to the mortal start room 8004 with "You are saved by the
+# gods!" and no corpse exists. The staged fight happens in a Street of
+# Swords flagged neutral by fixture (ROOM_NEUTRAL is bit 16, src/structs.h:72).
+
+[fixture]
+quiet-mobs
+seed-player
+set-room-flag 8101 16 on
+spawn-mob 14516 1 8101 145
+
+[setup:oracle]
+Savedone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Savedone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+north
+east
+south
+west
+kill zoomaster
+~dpclock pulse 100
+~dpclock pulse 630
+look
+score

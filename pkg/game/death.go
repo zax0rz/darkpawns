@@ -1043,6 +1043,10 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 	money.Runtime.Keywords = name
 	money.Runtime.ShortDesc = shortDesc
 	money.Runtime.LongDesc = longDesc
+	// C's create_money never assigns a weight: create_obj zeroes the object
+	// and every money pile weighs 0 (handler.c:1440-1488). The
+	// prototype-less fallback in GetWeight would otherwise report 1.
+	money.SetWeight(0)
 
 	w.mu.Lock()
 	money.ID = w.nextObjID

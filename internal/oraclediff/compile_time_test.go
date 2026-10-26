@@ -93,3 +93,24 @@ func TestCompileTimeStampLeavesSurroundingText(t *testing.T) {
 		t.Fatal("mask swallowed the revision line")
 	}
 }
+
+// The short wall-clock form (no seconds or year) appears in stat's Last
+// Death line; a minute boundary between the two engines' deaths must not
+// redden otherwise-identical blocks. Shapes it must NOT hide stay raw.
+func TestWallClockShortMask(t *testing.T) {
+	in := "Last Death: [Mon Oct 26 18:07]"
+	want := "Last Death: [<WALL_CLOCK>]\n"
+	if got := Normalize(in); got != want {
+		t.Fatalf("Normalize(Last Death) = %q, want %q", got, want)
+	}
+	// Ordinary text quoting the same short date stays raw: the mask is
+	// anchored to the stat line.
+	if text := "say Last Death: Mon Oct 26 18:07 done"; Normalize(text) != text+"\n" {
+		t.Fatalf("masked ordinary text: %q", Normalize(text))
+	}
+	// Mud-calendar dates are game bytes and never match the ctime shape.
+	calendar := "The 18th Day of the Month of the Dragon, Year 1245."
+	if got := Normalize(calendar); got != calendar+"\n" {
+		t.Fatalf("Normalize mud calendar = %q, want it unchanged", got)
+	}
+}

@@ -155,8 +155,13 @@ func setRoomFlag(record string, fixture oraclediff.RoomFlagFixture) (string, err
 	if len(fields) < 6 {
 		return "", fmt.Errorf("room header has %d fields, want at least 6", len(fields))
 	}
-	word := fixture.Bit / 16
-	bit := uint(fixture.Bit % 16)
+	// C's bitarray words are 32-bit: Q_FIELD is bit>>5 and Q_BIT is
+	// 1<<(bit&31) (src/utils.h:208-209). The old /16 split put bit 16 and
+	// up into the wrong word - a set-room-flag 16 "neutral" never reached
+	// ROOM_FLAGGED, and death-neutral-room-save was green about an unflagged
+	// room.
+	word := fixture.Bit / 32
+	bit := uint(fixture.Bit % 32)
 	value, parseErr := strconv.ParseUint(fields[word+1], 10, 64)
 	if parseErr != nil {
 		return "", fmt.Errorf("parse flag word %q: %w", fields[word+1], parseErr)

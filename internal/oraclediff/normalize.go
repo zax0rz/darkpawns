@@ -23,6 +23,12 @@ var (
 	playerSavedDatesMultiline = regexp.MustCompile(`(?m)^((?:\x1b\[[0-?]*[ -/]*[@-~])*[\t ]*Started: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Last: )(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}( +Played:.*)$`)
 	ansiEscape                = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]`)
 	wallClock                 = regexp.MustCompile(`\b(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}:\d{2} \d{4}\b`)
+	// The short ctime form (no seconds or year) stat prints inside the Last
+	// Death bracket: a wall-clock minute boundary between the two engines'
+	// deaths reddens otherwise-identical stat blocks. Anchored to the stat
+	// line so ordinary text quoting a date stays raw, like the Started/Last
+	// report anchors above.
+	lastDeathStamp = regexp.MustCompile(`(Last Death: \[)(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) +\d{1,2} \d{2}:\d{2}(\])`)
 	// SCMD_VERSION's immortal line (src/act.informative.c:2165-2175) carries
 	// load_compile_time()'s stamp (src/version.c:12-62), which is each engine's
 	// own process wall clock at boot — "Month D, YYYY   HH:MM", minute
@@ -115,6 +121,7 @@ func normalize(raw string, keepANSI bool) string {
 		// metadata, not game bytes. The deterministic harness freezes the
 		// game clock but intentionally does not freeze process wall time.
 		lines[i] = wallClock.ReplaceAllString(lines[i], "<WALL_CLOCK>")
+		lines[i] = lastDeathStamp.ReplaceAllString(lines[i], "${1}<WALL_CLOCK>${2}")
 		lines[i] = compileTimeStamp.ReplaceAllString(lines[i], "Compile Time: <COMPILE_TIME>")
 		lines[i] = playerSavedDates.ReplaceAllString(lines[i], "${1}<WALL_CLOCK>${2}<WALL_CLOCK>${3}")
 		lines[i] = vitalsPrompt.ReplaceAllString(lines[i], "<PROMPT>")
