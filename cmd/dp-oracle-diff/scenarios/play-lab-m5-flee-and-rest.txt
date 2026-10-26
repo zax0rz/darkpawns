@@ -1,0 +1,69 @@
+# Play-lab milestone 5: flee and rest.
+#
+# The other path the milestone-4 four do not touch. A level-1 warrior picks a
+# fight it cannot win (a level-2 white trainee: 2d5+30 hit points, 1d4+1 damage
+# against 21), breaks it off with `flee`, and recovers by resting — which is the
+# only way a character gets hit points back, because C regenerates once per Mud
+# hour (63 seconds, `SECS_PER_MUD_HOUR` in src/utils.h). The pulse after the rest
+# is one whole hour on the frozen clock.
+
+[fixture]
+quiet-mobs
+spawn-mob 16305 1 16301 163
+
+[setup:oracle]
+Fleerest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleerest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+
+~dpclock pulse 40
+auto exits
+north
+east
+south
+west
+north
+west
+south
+open door
+south
+look
+kill trainee
+~dpclock pulse 10
+~dpclock pulse 10
+~dpclock pulse 10
+score
+flee
+look
+score
+rest
+~dpclock pulse 700
+score
+stand
+look
+score
