@@ -1,0 +1,43 @@
+# Fault fixture: one row whose heading is a single NUL byte. C stores a
+# non-null pointer to an empty string, lists the row with empty heading
+# text (src/boards.c:305-306) and displays it on read (:361-363); no board
+# guard fires.
+
+[fixture]
+quiet-mobs
+empty-players
+spawn-obj 19652 2 8004 196
+fault-board 19652 nul-heading
+
+[setup:oracle]
+Boardnul
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardnul
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8004
+look board
+read 1

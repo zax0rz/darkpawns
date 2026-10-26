@@ -37,9 +37,14 @@ type Scenario struct {
 	// PeerDrop names one passive peer whose TCP connection is closed after
 	// setup/warmup and before the compared probe. The character remains in the
 	// live-world lifecycle, which exposes C's linkless descriptor branches.
-	PeerDrop          string
-	Peers             map[string]*PeerSetup
-	MiscFiles         []MiscFileFixture
+	PeerDrop      string
+	Peers         map[string]*PeerSetup
+	MiscFiles     []MiscFileFixture
+	FaultFixtures []FaultFixture
+	// LiveStore boots the Go port with a real SQLite store instead of the
+	// deliberately unreachable no-DB path. Fault scenarios whose player bytes
+	// depend on persistent identity (mail send/receive) opt in.
+	LiveStore         bool
 	Fixtures          []ObjectFixture
 	ObjectSpawns      []ObjectSpawnFixture
 	MobFixtures       []MobFixture
@@ -117,6 +122,16 @@ type MiscFileFixture struct {
 	Name  string
 	Lines int
 	Text  string
+}
+
+// FaultFixture is one opt-in fault-injection verb
+// (docs/design/fault-injection-fixture.md). It mutates both engines'
+// disposable harness trees so the C oracle and the Go port observe the same
+// unreadable or corrupt state.
+type FaultFixture struct {
+	Verb   string // fault-dir, fault-corrupt-mail, fault-board, fault-crash-file
+	Target string // logical path (dir), corruption mode (mail), player (crash)
+	Detail string // malformation (board)
 }
 
 // ScriptTwinFixture describes a direct on-disk twin for a live editor save.
@@ -436,6 +451,15 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 		}
 		if fixtureSection {
 			fields := strings.Fields(line)
+			if ff, ok := parseFaultFixture(fields); ok {
+				sc.FaultFixtures = append(sc.FaultFixtures, ff)
+				continue
+			} else if len(fields) > 0 && strings.EqualFold(fields[0], "fault-dir") ||
+				strings.EqualFold(fields[0], "fault-corrupt-mail") ||
+				strings.EqualFold(fields[0], "fault-board") ||
+				strings.EqualFold(fields[0], "fault-crash-file") {
+				return Scenario{}, fmt.Errorf("scenario %q line %d: invalid fault fixture", name, lineNo)
+			}
 			if len(fields) >= 4 && fields[0] == "misc-file" {
 				count, err := strconv.Atoi(fields[2])
 				fileName := fields[1]
@@ -620,6 +644,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					continue
 				}
 			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "live-store") {
+				sc.LiveStore = true
+				continue
+			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "quiet-mobs") {
 				sc.QuietAllMobs = true
 				continue
@@ -800,6 +828,46 @@ func parseFixtureToggle(value string) (bool, bool) {
 	}
 }
 
+// FaultControlPrefix marks a probe step as a harness-only fault verb: the
+// driver applies it to both engines' trees and never sends it to an engine.
+const FaultControlPrefix = "~fault"
+
+// parseFaultFixture recognizes the opt-in fault verbs:
+//
+//	fault-dir <logical>                     (object_idlist | mail)
+//	fault-corrupt-mail <unaligned|bad-header>
+//	fault-board <object-vnum> <malformation>
+//	fault-crash-file <player>
+func parseFaultFixture(fields []string) (FaultFixture, bool) {
+	if len(fields) < 2 {
+		return FaultFixture{}, false
+	}
+	switch strings.ToLower(fields[0]) {
+	case "fault-dir":
+		if len(fields) == 2 && (fields[1] == "object_idlist" || fields[1] == "mail") {
+			return FaultFixture{Verb: "fault-dir", Target: fields[1]}, true
+		}
+	case "fault-corrupt-mail":
+		if len(fields) == 2 && (fields[1] == "unaligned" || fields[1] == "bad-header") {
+			return FaultFixture{Verb: "fault-corrupt-mail", Target: fields[1]}, true
+		}
+	case "fault-board":
+		if len(fields) == 3 {
+			if _, err := strconv.Atoi(fields[1]); err == nil {
+				switch fields[2] {
+				case "empty-message-valid-slot", "empty-message-huge-slot", "nul-heading":
+					return FaultFixture{Verb: "fault-board", Target: fields[1], Detail: fields[2]}, true
+				}
+			}
+		}
+	case "fault-crash-file":
+		if len(fields) == 2 {
+			return FaultFixture{Verb: "fault-crash-file", Target: fields[1]}, true
+		}
+	}
+	return FaultFixture{}, false
+}
+
 // RunWarmup plays shared commands after every client has completed setup and
 // discards their output. It is useful for acquiring disposable fixtures before
 // the first compared probe command.
@@ -825,8 +893,29 @@ func RunAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quies
 // runs after each probe step's output (actor and audience) has been read. The
 // draw-parity mode uses it to record how many RNG draws each step consumed.
 func RunAudienceProbeHooked(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, afterStep func(index int, step string)) ([]AudienceProbeBlock, error) {
+	return runAudienceProbe(primary, peers, probe, quiescence, afterStep, nil)
+}
+
+// RunAudienceProbeWithFault is RunAudienceProbeHooked whose probe may carry
+// "~fault ..." control steps: the handler applies the fault to both engines'
+// trees; the step is never sent to an engine and produces an empty block.
+func RunAudienceProbeWithFault(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, afterStep func(index int, step string), fault func(step string) error) ([]AudienceProbeBlock, error) {
+	return runAudienceProbe(primary, peers, probe, quiescence, afterStep, fault)
+}
+
+func runAudienceProbe(primary Conn, peers map[string]Conn, probe []string, quiescence time.Duration, afterStep func(index int, step string), fault func(step string) error) ([]AudienceProbeBlock, error) {
 	blocks := make([]AudienceProbeBlock, 0, len(probe)*(len(peers)+1))
 	for i, step := range probe {
+		if fault != nil && strings.HasPrefix(step, FaultControlPrefix+" ") {
+			if err := fault(step); err != nil {
+				return blocks, fmt.Errorf("probe step %d %q: %w", i+1, step, err)
+			}
+			blocks = append(blocks, AudienceProbeBlock{Command: step})
+			if afterStep != nil {
+				afterStep(i, step)
+			}
+			continue
+		}
 		// The connection may close at the last step, or just before a relogin
 		// or restart (a quit that ends the session); either is the scenario's
 		// intent.
