@@ -63,6 +63,11 @@ func listenerEntryPort(t *testing.T) int {
 }
 
 func readTelnetUntil(t *testing.T, conn net.Conn, needle string) string {
+	visible, _ := readTelnetUntilRaw(t, conn, needle)
+	return visible
+}
+
+func readTelnetUntilRaw(t *testing.T, conn net.Conn, needle string) (string, []byte) {
 	t.Helper()
 	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	var raw bytes.Buffer
@@ -75,7 +80,7 @@ func readTelnetUntil(t *testing.T, conn net.Conn, needle string) string {
 		raw.Write(buf[:n])
 		visible := string(stripTelnetCommands(raw.Bytes()))
 		if strings.Contains(visible, needle) {
-			return visible
+			return visible, append([]byte(nil), raw.Bytes()...)
 		}
 	}
 }

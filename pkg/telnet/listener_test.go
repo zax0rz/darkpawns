@@ -775,6 +775,8 @@ func TestMCCP2CompressionStartsOnDO(t *testing.T) {
 		}
 		readCh <- buf.Bytes()
 	}()
+	// The production listener offers COMPRESS2 before reading the client's DO.
+	tc.requestLocalOption(OPT_COMPRESS2, true)
 
 	// Run readLine in a goroutine; feed it DO COMPRESS2 then a newline so it
 	// returns after enabling compression.

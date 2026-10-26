@@ -337,7 +337,12 @@ type telnetConn struct {
 	br      *bufio.Reader
 	wmu     chan struct{} // buffered(1) acts as a write mutex
 	manager *session.Manager
-	hasGMCP atomic.Bool
+	// localOptions tracks the server's WILL/WONT state; remoteOptions tracks
+	// the client's WILL/WONT state. WANT states remember an outstanding offer
+	// so its acknowledgement is consumed without echoing the same command.
+	localOptions  [256]atomic.Uint32
+	remoteOptions [256]atomic.Uint32
+	hasGMCP       atomic.Bool
 	// hasEOR is set once the client agrees (DO EOR) to have prompts marked
 	// with IAC EOR, which is how Mudlet and similar clients tell a prompt
 	// from a partial line. Clients that never agree see no EOR bytes.
@@ -345,6 +350,13 @@ type telnetConn struct {
 	sess           *session.Session
 	compressWriter *zlib.Writer
 }
+
+const (
+	optionDisabled uint32 = iota
+	optionWantEnabled
+	optionEnabled
+	optionWantDisabled
+)
 
 func handleConn(rawConn net.Conn, manager *session.Manager, identity session.ConnectionIdentity) {
 	tc := &telnetConn{
@@ -377,10 +389,9 @@ func handleConn(rawConn net.Conn, manager *session.Manager, identity session.Con
 	// signature that makes line-mode clients (e.g. Mudlet) warn and mishandle
 	// input. Password echo-off works without it.
 	tc.write([]byte{IAC, WONT, OPT_ECHO})
-	tc.write([]byte{IAC, WILL, OPT_MSSP})
-	tc.write([]byte{IAC, WILL, OPT_GMCP})
-	tc.write([]byte{IAC, WILL, OPT_COMPRESS2})
-	tc.write([]byte{IAC, WILL, OPT_EOR})
+	for _, opt := range []byte{OPT_MSSP, OPT_GMCP, OPT_COMPRESS2, OPT_EOR} {
+		tc.requestLocalOption(opt, true)
+	}
 
 	s := manager.NewSession()
 	tc.sess = s
@@ -504,11 +515,7 @@ func writeLoop(tc *telnetConn, s *session.Session) {
 		case session.FramePrompt:
 			tc.writePrompt(f.Text)
 		case session.FrameEntryPrompt:
-			if f.Secret {
-				tc.write([]byte{IAC, WILL, OPT_ECHO})
-			} else {
-				tc.write([]byte{IAC, WONT, OPT_ECHO})
-			}
+			tc.requestLocalOption(OPT_ECHO, f.Secret)
 			if f.Text != "" {
 				tc.write(tc.markPrompt(escapeIAC([]byte(f.Text))))
 			}
@@ -580,57 +587,19 @@ func (tc *telnetConn) readLineBody() (string, bool) {
 				if err != nil {
 					return "", false
 				}
-				// Respond: DO for ECHO/SGA/GMCP, DONT for everything else
-				switch opt {
-				case OPT_ECHO, OPT_SGA:
-					tc.write([]byte{IAC, DO, opt})
-				case OPT_GMCP:
-					tc.write([]byte{IAC, DO, OPT_GMCP})
-					tc.enableGMCP()
-				default:
-					tc.write([]byte{IAC, DONT, opt})
-				}
+				tc.receiveWILL(opt)
 			case WONT:
 				opt, _ := tc.br.ReadByte()
-				tc.write([]byte{IAC, DONT, opt})
+				tc.receiveWONT(opt)
 			case DO:
 				opt, err := tc.br.ReadByte()
 				if err != nil {
 					return "", false
 				}
-				switch opt {
-				case OPT_ECHO:
-					// Server manages ECHO explicitly (password masking).
-					// Never assert WILL SGA (see connect negotiation) — a
-					// client's DO SGA gets WONT via default, so the server
-					// never enters the character-at-a-time signature.
-					tc.write([]byte{IAC, WILL, opt})
-				case OPT_MSSP:
-					tc.write([]byte{IAC, WILL, OPT_MSSP})
-					tc.sendMSSP()
-				case OPT_GMCP:
-					// Answer only a DO the server has not already agreed to: the
-					// WILL sent at connect is the offer, and re-asserting it on the
-					// client's DO would start a negotiation loop.
-					if !tc.hasGMCP.Load() {
-						tc.enableGMCP()
-					}
-				case OPT_EOR:
-					tc.hasEOR.Store(true)
-				case OPT_COMPRESS2:
-					tc.enableCompression()
-				default:
-					tc.write([]byte{IAC, WONT, opt})
-				}
+				tc.receiveDO(opt)
 			case DONT:
 				opt, _ := tc.br.ReadByte()
-				if opt == OPT_COMPRESS2 {
-					break
-				}
-				if opt == OPT_EOR {
-					tc.hasEOR.Store(false)
-				}
-				tc.write([]byte{IAC, WONT, opt})
+				tc.receiveDONT(opt)
 			case SB:
 				opt, err := tc.br.ReadByte()
 				if err != nil {
@@ -734,6 +703,184 @@ func (tc *telnetConn) readLineBody() (string, bool) {
 			}
 		}
 		line = append(line, b)
+	}
+}
+
+// requestLocalOption changes the server's desired state for one option. The
+// WILL/WONT state is recorded before writing, so a client acknowledgement or a
+// duplicate prompt cannot cause the same negotiation command to be emitted
+// again.
+func (tc *telnetConn) requestLocalOption(opt byte, enable bool) {
+	state := &tc.localOptions[opt]
+	if enable {
+		for {
+			current := state.Load()
+			if current == optionWantEnabled || current == optionEnabled {
+				return
+			}
+			if state.CompareAndSwap(current, optionWantEnabled) {
+				tc.write([]byte{IAC, WILL, opt})
+				return
+			}
+		}
+	}
+
+	for {
+		current := state.Load()
+		if current == optionDisabled || current == optionWantDisabled {
+			return
+		}
+		if state.CompareAndSwap(current, optionWantDisabled) {
+			tc.write([]byte{IAC, WONT, opt})
+			return
+		}
+	}
+}
+
+// receiveDO consumes the client's acknowledgement of a server WILL, or starts
+// a new supported local negotiation. Side effects run only on the transition
+// to enabled, so duplicate DO frames cannot resend MSSP or restart MCCP2.
+func (tc *telnetConn) receiveDO(opt byte) {
+	state := &tc.localOptions[opt]
+	for {
+		current := state.Load()
+		switch current {
+		case optionWantEnabled:
+			if state.CompareAndSwap(current, optionEnabled) {
+				tc.localOptionEnabled(opt)
+				return
+			}
+		case optionEnabled:
+			return
+		case optionWantDisabled:
+			return
+		case optionDisabled:
+			if !supportsLocalOption(opt) {
+				if state.CompareAndSwap(current, optionWantDisabled) {
+					tc.write([]byte{IAC, WONT, opt})
+					return
+				}
+				continue
+			}
+			if state.CompareAndSwap(current, optionWantEnabled) {
+				tc.write([]byte{IAC, WILL, opt})
+				return
+			}
+		}
+	}
+}
+
+func supportsLocalOption(opt byte) bool {
+	switch opt {
+	case OPT_ECHO, OPT_MSSP, OPT_GMCP, OPT_EOR, OPT_COMPRESS2:
+		return true
+	default:
+		return false
+	}
+}
+
+func (tc *telnetConn) localOptionEnabled(opt byte) {
+	switch opt {
+	case OPT_MSSP:
+		tc.sendMSSP()
+	case OPT_GMCP:
+		tc.enableGMCP()
+	case OPT_EOR:
+		tc.hasEOR.Store(true)
+	case OPT_COMPRESS2:
+		tc.enableCompression()
+	}
+}
+
+// receiveDONT handles the client declining or disabling a server option. A
+// refusal to an outstanding WILL is terminal and needs no WONT echo; an
+// established option is disabled once. COMPRESS2 cannot be safely turned off
+// after its stream has changed to zlib, matching the existing transport rule.
+func (tc *telnetConn) receiveDONT(opt byte) {
+	state := &tc.localOptions[opt]
+	for {
+		current := state.Load()
+		switch current {
+		case optionDisabled:
+			return
+		case optionWantEnabled:
+			if state.CompareAndSwap(current, optionDisabled) {
+				return
+			}
+		case optionEnabled:
+			if opt == OPT_COMPRESS2 {
+				return
+			}
+			if state.CompareAndSwap(current, optionWantDisabled) {
+				if opt == OPT_EOR {
+					tc.hasEOR.Store(false)
+				}
+				tc.write([]byte{IAC, WONT, opt})
+				return
+			}
+		case optionWantDisabled:
+			if state.CompareAndSwap(current, optionDisabled) {
+				return
+			}
+		}
+	}
+}
+
+// receiveWILL accepts a supported client option once. WONT acknowledges a
+// prior DONT and settles the state without another response; repeated WONT
+// frames are ignored instead of producing an unbounded DONT stream.
+func (tc *telnetConn) receiveWILL(opt byte) {
+	state := &tc.remoteOptions[opt]
+	for {
+		current := state.Load()
+		switch current {
+		case optionEnabled, optionWantEnabled, optionWantDisabled:
+			return
+		case optionDisabled:
+			if !supportsRemoteOption(opt) {
+				if state.CompareAndSwap(current, optionWantDisabled) {
+					tc.write([]byte{IAC, DONT, opt})
+					return
+				}
+				continue
+			}
+			if state.CompareAndSwap(current, optionEnabled) {
+				tc.write([]byte{IAC, DO, opt})
+				if opt == OPT_GMCP {
+					tc.enableGMCP()
+				}
+				return
+			}
+		}
+	}
+}
+
+func supportsRemoteOption(opt byte) bool {
+	switch opt {
+	case OPT_ECHO, OPT_SGA, OPT_GMCP:
+		return true
+	default:
+		return false
+	}
+}
+
+func (tc *telnetConn) receiveWONT(opt byte) {
+	state := &tc.remoteOptions[opt]
+	for {
+		current := state.Load()
+		switch current {
+		case optionEnabled:
+			if state.CompareAndSwap(current, optionDisabled) {
+				tc.write([]byte{IAC, DONT, opt})
+				return
+			}
+		case optionWantDisabled:
+			if state.CompareAndSwap(current, optionDisabled) {
+				return
+			}
+		case optionDisabled, optionWantEnabled:
+			return
+		}
 	}
 }
 
