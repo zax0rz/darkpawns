@@ -40,3 +40,19 @@ func TestShopRoomWildcardUsesCRealRoomIndex(t *testing.T) {
 		}
 	}
 }
+
+// The profit fields are C floats (src/shop.h:46-47), and multiplication
+// rounds to float before the int cast (src/shop.c:462,641).
+func TestShopPricesUseCFloatMarkup(t *testing.T) {
+	shop := &Shop{ProfitBuy: 1.3, ProfitSell: 0.7}
+	for _, tc := range []struct{ cost, cha, buy, sell int }{
+		{90, 0, 116, 63}, {90, 10, 110, 66}, {100000, 10, 123499, 73500},
+	} {
+		if got := shop.BuyPrice(tc.cost, tc.cha); got != tc.buy {
+			t.Errorf("buy(%d,%d)=%d want %d", tc.cost, tc.cha, got, tc.buy)
+		}
+		if got := shop.SellPrice(tc.cost, tc.cha); got != tc.sell {
+			t.Errorf("sell(%d,%d)=%d want %d", tc.cost, tc.cha, got, tc.sell)
+		}
+	}
+}

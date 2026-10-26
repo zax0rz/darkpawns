@@ -170,7 +170,7 @@ func (sm *ShopManager) GetShopsInRoom(roomVNum int) []interface{} {
 //	if (GET_CHA(ch)) price -= price*(GET_CHA(ch)*.005)
 //	return MAX(MAX(price, 1), GET_OBJ_COST(obj))
 func (s *Shop) BuyPrice(itemCost int, cha int) int {
-	price := int(float64(itemCost) * s.ProfitBuy)
+	price := int(float32(itemCost) * float32(s.ProfitBuy))
 
 	// CHA discount: price -= price * (CHA * 0.005)
 	if cha > 0 {
@@ -195,7 +195,7 @@ func (s *Shop) BuyPrice(itemCost int, cha int) int {
 //	if ((bprice = buy_price(ch, obj, shop_nr)) < price) price = bprice
 //	return MIN(MAX(1, price), GET_OBJ_COST(obj))
 func (s *Shop) SellPrice(itemCost int, cha int) int {
-	price := int(float64(itemCost) * s.ProfitSell)
+	price := int(float32(itemCost) * float32(s.ProfitSell))
 
 	// CHARISMA modifier: price += price * (CHA * 0.005)
 	if cha > 0 {
