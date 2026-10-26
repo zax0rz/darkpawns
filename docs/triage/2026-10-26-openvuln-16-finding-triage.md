@@ -353,9 +353,29 @@ the two follow-up PRs below, using the technique that makes the compiler enforce
 make the collection unexported so every access must name an accessor, then route each site through a
 locked one.
 
+### Process gap found while landing PR 3: the second Go module
+
+`tools/db-migrate/` is a **separate Go module** (`tools/db-migrate/go.mod`), so the gate list in
+AGENTS.md — `go build ./...`, `go vet ./...`, `go test ./...` — never compiles it. CI does, though:
+`ci.yml` has a migration job and `db-migrate.yml` has `convert`/`test` jobs, and `db-migrate.yml`'s
+`pull_request` trigger includes `pkg/**` precisely because the bridge imports the runtime. Renaming
+`Inventory.Items` broke `internal/dbmigrate/appcompat_test.go:122` and turned CI red while every
+local gate was green.
+
+Proposed AGENTS.md text (for Zach to approve; not edited here):
+
+> **Build & Verify** — add `make db-migrate-test`. `tools/db-migrate` is a second Go module, so the
+> root `go build ./...` / `go vet ./...` / `go test ./...` do not compile it. Any change to an
+> exported symbol in `pkg/game` (or the other packages the bridge imports) must run it.
+>
+> Its appcompat tests **skip** without `DP_MIGRATE_TEST_DB_URL`, so a green `make db-migrate-test`
+> proves compilation only. Point that variable at a disposable PostgreSQL to exercise the
+> migrated-database path for real.
+
 ### PR 3 — `pkg/game` inventory lock discipline — [#2180](https://github.com/zax0rz/darkpawns/pull/2180)
 
-Branch `cline/inv-lock`, commit `873a39432`. 53 sites: the movement path (`detachObjectLocked` /
+Branch `cline/inv-lock`, commits `873a39432` + `b38049441` (the second fixes the second module's
+appcompat test). 53 sites: the movement path (`detachObjectLocked` /
 `attachObjectLocked` / `extractObjectLocked`), the corpse build, the Lua adapters, donate/junk, and
 every raw reader (the `inventory` and `look` commands, `has_boat`, reagents, `findItemByName`).
 New accessors: `RemoveItemByVNum`, `TakeAt`, `TakeAll` (the atomic "snapshot then clear" the corpse
