@@ -618,7 +618,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SetGold(ch.GetGold() - amount)
 		ch.SetBankGold(ch.GetBankGold() + amount)
 		sendToChar(ch, fmt.Sprintf("You deposit %d coins.", amount))
-		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
+		Act(w, true, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 
@@ -635,7 +635,7 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 		ch.SetGold(ch.GetGold() + amount)
 		ch.SetBankGold(ch.GetBankGold() - amount)
 		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.", amount))
-		Act(w, false, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
+		Act(w, true, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
 	}
 

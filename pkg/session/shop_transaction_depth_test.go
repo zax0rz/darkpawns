@@ -3,6 +3,9 @@ package session
 import (
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // Exercise registered buy dispatch, preserving C's leading-count syntax and
@@ -237,5 +240,45 @@ func TestShopTradeExpressionRefusesSaleAndValueThroughDispatch(t *testing.T) {
 		if seller.player.GetGold() != 17 || seller.player.Inventory.GetItemCount() != 1 || keeper.GetGold() != 1000 {
 			t.Fatal("expression refusal mutated state")
 		}
+	}
+}
+
+func TestBankHiddenTransactionsThroughDispatch(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 1001}}, Objs: []parser.Obj{{VNum: 8034, Keywords: "atm", ShortDesc: "an ATM"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	atm, err := w.SpawnObject(8034, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.MoveObjectToRoom(atm, 1001); err != nil {
+		t.Fatal(err)
+	}
+	actor := addShopOutputSession(t, manager, "Banker")
+	peer := addShopOutputSession(t, manager, "Bankpeer")
+	actor.player.SetGold(100)
+	actor.player.SetLevel(33)
+	actor.player.SetInvisLevel(33)
+	shopDispatch(t, actor, "deposit 20")
+	if actor.player.GetGold() != 80 || actor.player.GetBankGold() != 20 {
+		t.Fatal("deposit state")
+	}
+	shopDispatch(t, actor, "withdraw 10")
+	if actor.player.GetGold() != 90 || actor.player.GetBankGold() != 10 {
+		t.Fatal("withdraw state")
+	}
+	if got := renderedOutput(peer); got != "" {
+		t.Errorf("hidden transactions leaked=%q", got)
+	}
+	actor.player.SetInvisLevel(0)
+	shopDispatch(t, actor, "deposit 10")
+	if got := renderedOutput(peer); got != "Banker makes a bank transaction.\r\n" {
+		t.Errorf("visible transaction control=%q", got)
+	}
+	if actor.player.GetGold() != 80 || actor.player.GetBankGold() != 20 {
+		t.Fatal("visible deposit state")
 	}
 }
