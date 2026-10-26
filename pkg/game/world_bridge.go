@@ -421,7 +421,7 @@ func (a *WorldScriptableAdapter) LoadObjToRoom(vnum int, roomVNum int) (scriptin
 func (a *WorldScriptableAdapter) SetSkill(ref scripting.CharRef, skill, level int) {
 	_, p, m := a.resolveChar(ref)
 	if p != nil {
-		if name := spells.GetSpellName(skill); name != "" {
+		if name := SkillStorageName(skill); name != "" {
 			p.SetSkill(name, level)
 		}
 		p.AffectTotal()

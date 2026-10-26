@@ -120,7 +120,7 @@ func RenderSkillList(p *Player) string {
 			if name == "" {
 				continue
 			}
-			entries = append(entries, entry{name: name, pct: p.GetSkill(strings.ToLower(name))})
+			entries = append(entries, entry{name: name, pct: p.GetSkill(SkillStorageName(e.Num))})
 		}
 	}
 	// C displays in spell_sort_info order = alphabetical by name.

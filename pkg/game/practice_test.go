@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -123,4 +124,65 @@ func firstLine(s string) string {
 		return s[:i+2]
 	}
 	return s
+}
+
+// C list_skills reads GET_SKILL(ch, i), independently of the display name
+// (src/spec_procs.c:192). Cover every translated key at each how_good band.
+func TestRenderSkillListMappedSkills(t *testing.T) {
+	for display, key := range catalogSkillKeys {
+		num := FindSkillNum(display)
+		class := -1
+		for c, entries := range ClassSpells {
+			for _, entry := range entries {
+				if entry.Num == num {
+					class = c
+				}
+			}
+		}
+		if class < 0 {
+			t.Fatalf("mapped skill %q has no class", display)
+		}
+		for _, band := range []struct {
+			pct   int
+			label string
+		}{
+			{0, "not learned"},
+			{1, "awful"},
+			{11, "bad"},
+			{40, "poor"},
+			{41, "average"},
+			{56, "fair"},
+			{71, "good"},
+			{81, "very good"},
+			{86, "superb"},
+			{100, "MASTER"},
+		} {
+			t.Run(fmt.Sprintf("%s/%d", display, band.pct), func(t *testing.T) {
+				p := NewPlayer(1, "Practiceprobe", 1001)
+				p.Class = class
+				p.Level = 30
+				p.SetSkill(key, band.pct)
+				want := fmt.Sprintf("%-20s  (%s) \r\n", display, band.label)
+				if got := RenderSkillList(p); !strings.Contains(got, want) {
+					t.Errorf("missing C practice line %q in:\n%s", want, got)
+				}
+			})
+		}
+	}
+}
+
+func TestRenderSkillListNinjaLearnedArts(t *testing.T) {
+	p := NewPlayer(1, "Sai", 1001)
+	p.Class = ClassNinja
+	p.Level = 28
+	for _, key := range []string{SkillStrike, SkillSerpentKick, SkillTigerPunch, SkillKkRin, SkillKkKyo, SkillKkToh, SkillKkKai, SkillKkJin, SkillKkRetsu, SkillKkZai, SkillKkZhen, SkillKkSha} {
+		p.SetSkill(key, 40)
+	}
+	got := RenderSkillList(p)
+	for _, display := range []string{"strike of revenge", "serpent kick", "tiger punch", "kuji-kiri rin", "kuji-kiri kyo", "kuji-kiri toh", "kuji-kiri kai", "kuji-kiri jin", "kuji-kiri retsu", "kuji-kiri zai", "kuji-kiri zhen", "kuji-kiri sha"} {
+		want := fmt.Sprintf("%-20s  (poor) \r\n", display)
+		if !strings.Contains(got, want) {
+			t.Errorf("missing C practice line %q in:\n%s", want, got)
+		}
+	}
 }
