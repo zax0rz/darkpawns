@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -51,6 +52,47 @@ func TestStatRoomIncludesExtraDescriptionKeywordsAtCColorLevel(t *testing.T) {
 				t.Fatalf("stat room output lacks %q: %q", test.want, got)
 			}
 		})
+	}
+}
+
+// C sends the exit format with a literal space after CRLF (src/act.wizard.c:499).
+// With a description following, that byte becomes its leading space; ordinary
+// normalization preserves it, while this test pins the raw player bytes.
+func TestStatRoomExitPreservesCPostNewlineSpace(t *testing.T) {
+	parsed := &parser.World{Rooms: []parser.Room{
+		{VNum: 1001, Name: "Exit Room", Exits: map[string]parser.Exit{
+			"north": {Direction: "north", ToRoom: 1002, Key: 7, Keywords: "secret", Description: "The Great Doors\n"},
+		}},
+		{VNum: 1002, Name: "Destination"},
+	}}
+	world, err := game.NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { world.StopAITicker() })
+	manager := newTestManager(t, world, nil)
+	session := makeTestSession(t, manager, "Statgod", 1001, true)
+	if err := world.AddPlayer(session.player); err != nil {
+		t.Fatalf("AddPlayer: %v", err)
+	}
+
+	session.sendStatRoom()
+	var output strings.Builder
+	for len(session.send) > 0 {
+		msg := <-session.send
+		if IsInputMarkFrame(msg) {
+			continue
+		}
+		frame, ok := RenderTerminalFrame(msg)
+		if !ok || frame.Kind != FrameText {
+			t.Fatalf("stat room emitted a non-text terminal frame: %s", msg)
+		}
+		output.WriteString(frame.Text)
+	}
+	exitLine := fmt.Sprintf("Exit %-5s:  To: [%5d], Key: [%5d], Keywrd: %s, Type: %s\r\n ", "north", 1002, 7, "secret", wizardExitFlags(0))
+	want := exitLine + "The Great Doors\r\n"
+	if got := output.String(); !strings.Contains(got, want) {
+		t.Fatalf("stat room exit bytes do not match C's post-newline space before the description: missing %q in %q", want, got)
 	}
 }
 

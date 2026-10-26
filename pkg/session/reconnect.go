@@ -66,6 +66,8 @@ func (s *Session) performDupeCheck() bool {
 		// (src/interpreter.c:1573-1576), so close_socket finds no character.
 		old.LoseDescriptorWithoutChar()
 		m.unregister(name)
+		// CloseAfterSend can wait for the telnet writer's deadline. This call is
+		// outside m.mu and any world lock; keep socket draining out of those locks.
 		old.CloseAfterSend()
 		return false
 	}
@@ -82,6 +84,8 @@ func (s *Session) performDupeCheck() bool {
 	m.sessions[name] = s
 	m.mu.Unlock()
 
+	// Every CloseAfterSend below is outside m.mu and any world lock. The
+	// transport drain may wait until its write deadline, so keep it outside both.
 	switch {
 	case unswitch:
 		old.Send("\r\nMultiple login detected -- disconnecting.\r\n")

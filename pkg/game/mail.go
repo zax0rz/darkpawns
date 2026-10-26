@@ -394,27 +394,6 @@ func storeMail(to, from int, message string) { //nolint:unused // mail helper
 	}
 }
 
-// referenceMailStoreLayoutValid mirrors the reference C build's store_mail
-// size guard. On the reference x86_64 ABI, sizeof(long) and sizeof(time_t) are
-// 8, so header_data_type is 32 bytes. mail.c's two block structs each total
-// 100 bytes before 8-byte struct padding and therefore have sizeof 104; the
-// C guard at src/mail.c:285-289 returns before indexing or writing the note.
-func referenceMailStoreLayoutValid() bool {
-	const (
-		blockSize = 100
-		longSize  = 8
-		timeTSize = 8
-		alignment = 8
-	)
-	headerDataSize := 3*longSize + timeTSize
-	headerDataTextSize := blockSize - longSize - headerDataSize - 1
-	headerBlockSize := longSize + headerDataSize + headerDataTextSize + 1
-	dataTextSize := blockSize - longSize - 1
-	dataBlockSize := longSize + dataTextSize + 1
-	align := func(size int) int { return (size + alignment - 1) / alignment * alignment }
-	return align(headerBlockSize) == blockSize && align(dataBlockSize) == blockSize
-}
-
 func readDelete(recipient int) string {
 	mailGlobalMu.Lock()
 	defer mailGlobalMu.Unlock()
@@ -611,9 +590,7 @@ func HandleMailInput(ch *Player, line string) bool {
 		ch.SetPlrFlag(PlrMailing, false)
 
 		if ok && state.buffer != "" {
-			if referenceMailStoreLayoutValid() {
-				storeMail(state.recipientID, ch.ID, state.buffer)
-			}
+			storeMail(state.recipientID, ch.ID, state.buffer)
 			ch.SendMessage("Message sent!\r\n")
 		} else {
 			ch.SendMessage("Mail aborted (empty message).\r\n")
