@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/gorilla/websocket"
 	"github.com/zax0rz/darkpawns/pkg/game"
@@ -103,16 +104,24 @@ const maxMessageSize = 16384
 
 // stripControlChars removes terminal control characters from relay text
 // before it reaches player terminals. Peer-MUD players author broadcast
-// content; the shared relay authenticates connections, not content. The
-// session package applies the identical rule to every local speech path
-// (sanitize.go) — this brings the one inbound remote path to parity.
+// content; the shared relay authenticates connections, not content.
+//
+// It drops the C0 and C1 control blocks, DEL, and the Unicode format and
+// line/paragraph-separator characters. C0 carries the CR/LF line breaks and
+// ESC sequences used for line forgery and screen rewriting; the C1 block
+// carries the same power (U+0085 NEL and U+009B CSI are terminal controls);
+// and the format characters can reorder or hide text (bidi overrides,
+// zero-width joiners, U+2028/U+2029). Printable text, including multi-byte
+// runes, is preserved.
 func stripControlChars(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
 	for _, r := range s {
-		if r >= 0x20 && r != 0x7f {
-			b.WriteRune(r)
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) ||
+			unicode.Is(unicode.Zl, r) || unicode.Is(unicode.Zp, r) {
+			continue
 		}
+		b.WriteRune(r)
 	}
 	return b.String()
 }
