@@ -1,4 +1,4 @@
-# depth-case: retreat.closed-door-skip
+# depth-case: escape.closed-door-skip
 # CAN_GO's third clause skips closed doors (src/utils.h:565-567), so C's
 # do_retreat never attempts a closed exit (src/act.offensive.c:1056-1076)
 # even though do_simple_move has no door check of its own. The mortal fights
