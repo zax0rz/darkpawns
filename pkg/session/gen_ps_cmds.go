@@ -31,7 +31,7 @@ func loginTextForFile(s *Session, filename string) string {
 		slog.Error("could not read static login text", "file", filename, "error", err)
 		return ""
 	}
-	return text
+	return s.gossipMOTDOverlay(filename, text)
 }
 
 const (
@@ -131,7 +131,7 @@ func sendCachedText(s *Session, filename string) {
 		s.Send("That information is not available right now.")
 		return
 	}
-	PageString(s, text)
+	PageString(s, s.gossipMOTDOverlay(filename, text))
 }
 
 // reloadCachedText refreshes the boot-cached static text used by the C
@@ -307,4 +307,13 @@ func cmdPlayers(s *Session, args []string) error {
 	buf.WriteString("\r\n")
 	s.Send(buf.String())
 	return nil
+}
+
+// The Go-only operations notice is appended at rendering time, never written
+// into C's text files or cache. Disabled instances retain the exact C bytes.
+func (s *Session) gossipMOTDOverlay(filename, text string) string {
+	if (filename == "motd" || filename == "imotd") && s.manager.notifications != nil && s.manager.notifications.GossipEnabled() {
+		return text + "\r\nGossip is mirrored to Discord #gossip. Messages sent there do not return to the game.\r\n"
+	}
+	return text
 }

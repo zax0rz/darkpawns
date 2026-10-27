@@ -69,7 +69,7 @@ func registerNotifications(api huma.API, database *db.DB, logger *audit.AuditLog
 	// RawBody plus explicit schema retains Huma/OpenAPI documentation while
 	// validating secrets ourselves: generic schema errors may echo bad input values.
 	type credentialInput struct {
-		Provider string `path:"provider" enum:"pushover,discord,heartbeat"`
+		Provider string `path:"provider" enum:"pushover,discord,heartbeat,gossip"`
 		RawBody  []byte `contentType:"application/json"`
 	}
 	for _, method := range []string{http.MethodPut, http.MethodDelete} {

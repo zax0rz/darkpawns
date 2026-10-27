@@ -3,7 +3,7 @@ import { ApiError, notifications, type CredentialProvider, type NotificationCred
 
 const button = 'border border-rule px-4 py-2 text-sm hover:bg-paper-deep focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed';
 const field = 'block mt-2 w-full border border-rule bg-paper px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50';
-const names = { pushover: 'Pushover', discord: 'Discord', heartbeat: 'Healthchecks' };
+const names = { pushover: 'Pushover', discord: 'Discord', heartbeat: 'Healthchecks', gossip: 'Discord gossip' };
 
 export function NotificationCredentialsForm({ provider, revision, status, busy, onSaved, onDirty, onBusy }: {
   provider: CredentialProvider;
@@ -48,14 +48,14 @@ export function NotificationCredentialsForm({ provider, revision, status, busy, 
     <p className="text-sm">{status.ready ? <><span className="font-semibold">Configured</span> <span className="font-mono" aria-label="Saved credentials are hidden">••••••••</span></> : 'Not configured'}</p>
     {status.ready && status.source === 'environment' && <p className="text-sm text-ink-muted">Using server environment credentials. Replace them here to manage this destination in admin.</p>}
     {(!status.ready || editing || dirty) && <form className="space-y-4 max-w-xl" onSubmit={(event) => { event.preventDefault(); void submit(false); }}>
-      {provider === 'pushover' ? <>{input('token', 'Application API token', 30)}{input('user', 'User or group key', 30)}<p className="text-sm text-ink-muted">Use the token from your Pushover application and the user or group key that should receive alerts.</p></> : <>{input('url', provider === 'discord' ? 'Webhook URL' : 'Ping URL', 2000)}<p className="text-sm text-ink-muted">{provider === 'discord' ? 'Paste the channel webhook URL from Discord. Use discord.com without a query string.' : 'Paste the hosted Healthchecks ping URL beginning with https://hc-ping.com/.'}</p></>}
+      {provider === 'pushover' ? <>{input('token', 'Application API token', 30)}{input('user', 'User or group key', 30)}<p className="text-sm text-ink-muted">Use the token from your Pushover application and the user or group key that should receive alerts.</p></> : <>{input('url', (provider === 'discord' || provider === 'gossip') ? 'Webhook URL' : 'Ping URL', 2000)}<p className="text-sm text-ink-muted">{(provider === 'discord' || provider === 'gossip') ? 'Paste the channel webhook URL from Discord. Use discord.com without a query string.' : 'Paste the hosted Healthchecks ping URL beginning with https://hc-ping.com/.'}</p></>}
       <div className="flex flex-wrap gap-3"><button className={button} type="submit" disabled={busy || pending || !dirty}>{pending ? 'Saving…' : `Save ${names[provider]} credentials`}</button>{(editing || dirty) && <button type="button" className={button} disabled={busy || pending} onClick={close}>{status.ready ? 'Cancel' : 'Clear fields'}</button>}</div>
     </form>}
     {status.ready && !editing && !removing && !dirty && <div className="flex flex-wrap gap-3">
       <button type="button" className={button} disabled={busy || pending} onClick={() => { setNotice(''); setEditing(true); }}>Replace {names[provider]} credentials</button>
       <button type="button" className={button} disabled={busy || pending} onClick={() => { setNotice(''); setRemoving(true); }}>Remove {names[provider]} credentials</button>
     </div>}
-    {removing && <div className="border-y border-rule py-3 space-y-3"><p className="text-sm">Remove {names[provider]} credentials and disable this destination? Event selections will be kept.</p><div className="flex flex-wrap gap-3"><button type="button" className={`${button} text-accent`} disabled={busy || pending} onClick={() => void submit(true)}>{pending ? 'Removing…' : `Confirm remove ${names[provider]}`}</button><button type="button" className={button} disabled={busy || pending} onClick={close}>Cancel</button></div></div>}
+    {removing && <div className="border-y border-rule py-3 space-y-3"><p className="text-sm">Remove {names[provider]} credentials and disable this destination? {provider === 'gossip' ? 'Previously queued gossip will be discarded.' : 'Event selections will be kept.'}</p><div className="flex flex-wrap gap-3"><button type="button" className={`${button} text-accent`} disabled={busy || pending} onClick={() => void submit(true)}>{pending ? 'Removing…' : `Confirm remove ${names[provider]}`}</button><button type="button" className={button} disabled={busy || pending} onClick={close}>Cancel</button></div></div>}
     {error && <p role="alert" className="text-sm text-accent">{error}</p>}
     {notice && <p role="status" className="text-sm">{notice}</p>}
   </div>;

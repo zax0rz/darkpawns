@@ -680,6 +680,7 @@ func main() {
 		fatal("Initialize notifications: %v", err)
 	}
 	manager.SetNotifications(notifications)
+	gameWorld.SetGossipObserver(notifications.PublishGossip)
 	var lastCompletedPulse atomic.Int64
 	notificationCtx, stopNotifications := context.WithCancel(context.Background())
 	defer stopNotifications()

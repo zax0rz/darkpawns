@@ -9,7 +9,7 @@ import { Skeleton } from '../components/Skeleton';
 const button = 'border border-rule px-4 py-2 text-sm hover:bg-paper-deep focus-visible:outline-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed';
 const checkbox = 'size-5 shrink-0 accent-accent focus-visible:outline-2 focus-visible:outline-accent';
 const providers: NotificationProvider[] = ['pushover', 'discord'];
-const names = { pushover: 'Pushover', discord: 'Discord', heartbeat: 'Healthchecks' };
+const names = { pushover: 'Pushover', discord: 'Discord', heartbeat: 'Healthchecks', gossip: 'Discord gossip' };
 const events = [
   { id: 'player.created', name: 'Character created', description: 'After a new character is saved.', example: 'Avery created a character.' },
   { id: 'player.login', name: 'Login', description: 'When a character enters the world.', example: 'Avery entered the game.' },
@@ -59,7 +59,7 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
   } });
   const onCredentialSaved = (view: NotificationView, provider: CredentialProvider, removed: boolean) => {
     setSaved(view.config);
-    setConfig((current) => ({ ...current, revision: view.config.revision, ...(removed ? provider === 'heartbeat' ? { heartbeat: false } : { [provider]: { ...current[provider], enabled: false } } : {}) }));
+    setConfig((current) => ({ ...current, revision: view.config.revision, ...(removed ? provider === 'heartbeat' ? { heartbeat: false } : provider === 'gossip' ? { gossip: false } : { [provider]: { ...current[provider], enabled: false } } : {}) }));
     onCredentialDirty(provider, false);
     cache.setQueryData(['notifications'], view);
   };
@@ -95,6 +95,12 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
           <ul className="list-disc pl-5 mt-3 space-y-2">{events.map((item) => <li key={item.id}><span className="font-semibold">{item.name}:</span> {item.example}</li>)}</ul>
         </details>
       </section>
+      <section aria-labelledby="gossip-heading" className="border-y border-rule py-5 space-y-3">
+        <h2 id="gossip-heading" className="text-xl">Discord gossip</h2>
+        <p className="text-sm text-ink-muted max-w-prose">Mirror public gossip to a separate Discord #gossip webhook. Names appear as a level-1 mortal would see them. Discord messages do not return to the game.</p>
+        <label className="flex items-center gap-3 min-h-11 text-sm"><input className={checkbox} type="checkbox" checked={config.gossip ?? false} disabled={save.isPending || credentialBusy} onChange={(event) => { setNotice(''); setConfig({ ...config, gossip: event.target.checked }); }} />Enable gossip mirroring</label>
+        {!latest.status.gossip.ready && <p className="text-sm text-ink-muted">Configure the Discord gossip destination below before enabling.</p>}
+      </section>
       <section aria-labelledby="heartbeat-heading" className="border-y border-rule py-5">
         <h2 id="heartbeat-heading" className="text-xl">External monitoring</h2>
         <label className="flex items-start gap-3 mt-4 cursor-pointer"><input className={`${checkbox} mt-0.5`} type="checkbox" checked={config.heartbeat} disabled={save.isPending || credentialBusy} onChange={(event) => { setNotice(''); setConfig({ ...config, heartbeat: event.target.checked }); }} /><span><span className="font-semibold">Enable Healthchecks heartbeat</span><span className="block text-sm text-ink-muted mt-1 max-w-prose">Check in every minute while the game loop is progressing. Configure outage and recovery alerts in Healthchecks so they can reach you when this server is down.</span></span></label>
@@ -114,6 +120,7 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
     <section aria-labelledby="destinations-heading" className="space-y-5">
       <div><h2 id="destinations-heading" className="text-xl">Destinations & delivery</h2><p className="mt-2 text-sm text-ink-muted max-w-prose">Paste credentials here to connect a destination. Saved values are encrypted and hidden; changes take effect immediately. Tests work even when a destination is disabled. Use Discord for a community channel or a private staff channel.</p></div>
       {providers.map((provider) => <DestinationDelivery key={provider} provider={provider} status={latest.status[provider]} dirty={Boolean(secretDirty[provider])} busy={save.isPending || credentialBusy} credentials={credentialForm(provider)} />)}
+      <div className="border-t border-rule pt-5 space-y-3"><h3 className="text-lg">Discord gossip</h3>{credentialForm('gossip')}<DeliveryStatus status={latest.status.gossip} /></div>
       <div id="heartbeat-credentials" className="border-t border-rule pt-5 space-y-3"><h3 className="text-lg">Healthchecks</h3>{credentialForm('heartbeat')}</div>
       <p className="text-sm text-ink-muted max-w-prose">Delivery is best effort. Events are not replayed after an outage or restart. Queues and rate limits protect the game; skipped messages are counted below each destination.</p>
     </section>
@@ -137,6 +144,6 @@ function DeliveryStatus({ status }: { status: NotificationStatus }) {
   return <div className="text-sm space-y-1 mt-3">
     <p>Last accepted by provider: {status.last_success ? <time dateTime={status.last_success}>{new Date(status.last_success).toLocaleString()}</time> : 'No successful delivery this session'}</p>
     {status.last_failure && <p className={status.last_error ? 'text-accent' : 'text-ink-muted'}>Last failure: {new Date(status.last_failure).toLocaleString()}{status.last_error ? `: ${status.last_error}` : ': recovered'}</p>}
-    {status.dropped > 0 && <p className="text-ink-muted">Skipped by queue or rate limit: {status.dropped}</p>}
+    {status.dropped > 0 && <p className="text-ink-muted">Messages dropped: {status.dropped}</p>}
   </div>;
 }

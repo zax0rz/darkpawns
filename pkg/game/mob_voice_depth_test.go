@@ -185,6 +185,8 @@ func TestMobKillBragGates(t *testing.T) {
 // player-victim branch, so mob-on-mob kills were silent.
 func TestMobOnMobKillLootsAndBrags(t *testing.T) {
 	w, out := croakTestWorld(t)
+	var mirrored []string
+	w.SetGossipObserver(func(line string) { mirrored = append(mirrored, line) })
 	killer := voiceMob(t, w, 9605, 1001, "the dune stalker", 1, 20, -500, "AGGR24")
 	prey := voiceMob(t, w, 9606, 1001, "a sand crawler", 1, 5, 0)
 	croakPlayer(t, w, "Watcher", 1001)
@@ -209,6 +211,9 @@ func TestMobOnMobKillLootsAndBrags(t *testing.T) {
 		t.Fatalf("room bytes = %q, want the loot line %q among them", got, wantLoot)
 	}
 	wantBrag := "The dune stalker gossips, 'a sand crawler was easy xp.'\r\n"
+	if len(mirrored) != 1 || mirrored[0] != wantBrag {
+		t.Fatalf("kill brag mirror = %q", mirrored)
+	}
 	if got := out["Watcher"]; !strings.Contains(got, wantBrag) {
 		t.Fatalf("room bytes = %q, want the mob-victim brag %q among them", got, wantBrag)
 	}
