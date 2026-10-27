@@ -510,16 +510,11 @@ func (w *World) DoTurn(ch *Player) {
 	ch.SendMessage("You attempt to turn away the unholy presence in this room.\r\n")
 	Act(w, false, ch, nil, nil, nil, "$n's eyes are suddenly filled with blinding white light!", "", ToRoom)
 	needMana := ch.GetLevel()*3 + dprng.Number(1, 55)
-	if needMana > ch.GetMana() {
+	if !ch.TrySpendMana(needMana) {
 		ch.SendMessage("You fail to summon enough energy to dispel the darkness!\r\n")
-		mana := ch.GetMana() - needMana/4
-		if mana < 0 {
-			mana = 0
-		}
-		ch.SetMana(mana)
+		ch.SpendManaUpTo(needMana / 4)
 		return
 	}
-	ch.SetMana(ch.GetMana() - needMana)
 
 	for _, body := range w.GetAllCharsInRoom(ch.GetRoom()) {
 		target, ok := body.(combat.Combatant)

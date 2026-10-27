@@ -1602,8 +1602,10 @@ func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int 
 		found = consumer.ConsumeSpellReagent(reagentName)
 	} else if holder, ok := ch.(InventoryHolder); ok {
 		if item, ok := holder.GetInventory().FindItem(reagentName); ok {
-			holder.GetInventory().RemoveItem(item)
-			found = true
+			// Honour the remove's result: FindItem is a snapshot lookup, so
+			// two concurrent casts can both find the same item and only the
+			// one whose atomic remove succeeds has consumed it.
+			found = holder.GetInventory().RemoveItem(item)
 		}
 	}
 

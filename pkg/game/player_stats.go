@@ -249,6 +249,74 @@ func (p *Player) SpendMove(n int) bool {
 	return true
 }
 
+// TrySpendMana atomically checks and deducts mana, following SpendMove's shape.
+// A separate GetMana() check followed by SetMana(GetMana()-n) is a
+// check-then-act: two commands executing on different lanes (the heartbeat
+// drain and a connection's readPump, or an ordered/forced command racing the
+// victim's own) both pass the check and both deduct, so one cost buys two
+// spells (CWE-367). Returns true when the deduction succeeded.
+func (p *Player) TrySpendMana(n int) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if n <= 0 {
+		return true
+	}
+	if p.Mana < n {
+		return false
+	}
+	p.Mana -= n
+	return true
+}
+
+// SpendManaUpTo atomically deducts min(n, Mana) and returns the amount taken.
+// It is the faithful form of C's unconditional GET_MANA(ch) -= cost that
+// follows do_cast's sufficiency check: single-threaded it deducts exactly n,
+// while a concurrent double-cast can no longer drive mana negative.
+func (p *Player) SpendManaUpTo(n int) int {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if n <= 0 || p.Mana <= 0 {
+		return 0
+	}
+	if n > p.Mana {
+		n = p.Mana
+	}
+	p.Mana -= n
+	return n
+}
+
+// AddMana atomically credits mana.
+func (p *Player) AddMana(n int) {
+	p.mu.Lock()
+	p.Mana += n
+	p.mu.Unlock()
+}
+
+// TrySpendPractices atomically checks and deducts practice sessions. The
+// guildmaster special checked GetPractices() and deducted it several branches
+// later, so two concurrent practices both passed the check and one session
+// bought two practices (CWE-367). Returns true when the deduction succeeded.
+func (p *Player) TrySpendPractices(n int) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if n <= 0 {
+		return true
+	}
+	if p.Practices < n {
+		return false
+	}
+	p.Practices -= n
+	return true
+}
+
+// AddPractices atomically credits practice sessions (the reservation refund
+// path of the practice special).
+func (p *Player) AddPractices(n int) {
+	p.mu.Lock()
+	p.Practices += n
+	p.mu.Unlock()
+}
+
 // GetMaxMove returns the player's maximum movement points.
 func (p *Player) GetMaxMove() int {
 	p.mu.RLock()

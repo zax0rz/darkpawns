@@ -67,6 +67,12 @@ var clanPrivileges = [NumCP + 1]string{
 // ---------------------------------------------------------------------------
 
 type Clan struct {
+	// mu guards Treasure. The clan bank checked the balance and then
+	// subtracted it, and the application fee read-modified-wrote it, so two
+	// concurrent clan commands — or an ordered one racing the member's own —
+	// could both pass the check or lose an update (CWE-367). Clan values are
+	// held by pointer and never copied, so the lock cannot be duplicated.
+	mu          sync.Mutex
 	ID          int        `json:"id"`
 	Name        string     `json:"name"`
 	Ranks       int        `json:"ranks"`
@@ -83,6 +89,38 @@ type Clan struct {
 	Plan        string     `json:"plan"`
 	Description string     `json:"description"`
 	Private     int        `json:"private"`
+}
+
+// SpendTreasure atomically debits the clan treasury, returning false when the
+// balance is short. The withdraw path read Treasure, compared it, and then
+// subtracted it, so two concurrent withdrawals could both pass the check and
+// pay out of an empty treasury (CWE-367).
+func (c *Clan) SpendTreasure(n int64) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if n <= 0 {
+		return true
+	}
+	if c.Treasure < n {
+		return false
+	}
+	c.Treasure -= n
+	return true
+}
+
+// AddTreasure atomically credits the clan treasury. The previous
+// `c.Treasure += n` was a lost-update against any concurrent credit.
+func (c *Clan) AddTreasure(n int64) {
+	c.mu.Lock()
+	c.Treasure += n
+	c.mu.Unlock()
+}
+
+// TreasureBalance reads the treasury under the lock.
+func (c *Clan) TreasureBalance() int64 {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.Treasure
 }
 
 // ---------------------------------------------------------------------------

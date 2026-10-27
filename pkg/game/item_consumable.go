@@ -76,7 +76,13 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 		return
 	}
 
-	if item.GetValue(1) == 0 {
+	// Claim one dose now and keep the level it came from. C checks emptiness
+	// here and depletes at the end of the flow, so two concurrent drinks both
+	// passed the check and both received the effect for a single dose
+	// (CWE-362/CWE-367). The claim is folded back into the depletion below, so
+	// the arithmetic is unchanged.
+	level, claimed := w.claimDrinkDose(item)
+	if !claimed {
 		ch.SendMessage("It's empty.\r\n")
 		return
 	}
@@ -100,7 +106,7 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 	}
 
 	// Clamp amount to available liquid and weight.
-	amount = min(amount, item.GetValue(1))
+	amount = min(amount, level)
 	weight := min(amount, item.GetWeight())
 	if weight > 0 {
 		item.SetWeight(item.GetWeight() - weight)
@@ -135,17 +141,43 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 	}
 
 	// Deplete the container. C decrements val1 unconditionally for both
-	// drinkcons and fountains (fountains simply have a very large val1).
-	item.SetValue(1, item.GetValue(1)-amount)
-	if item.GetValue(1) <= 0 {
+	// drinkcons and fountains (fountains simply have a very large val1); the
+	// unit claimed at the emptiness check is already off, so the rest is
+	// amount-1. ExtractObject takes the world lock, so it follows the take.
+	if w.depleteDrink(item, amount-1) && item.VNum == 20 {
+		w.ExtractObject(item, ch.GetRoomVNum())
+	}
+}
+
+// claimDrinkDose atomically takes one dose from a drink container and returns
+// the level it came from, or ok=false when the container is empty.
+func (w *World) claimDrinkDose(item *ObjectInstance) (level int, ok bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	level = item.GetValue(1)
+	if level <= 0 {
+		return 0, false
+	}
+	item.SetValue(1, level-1)
+	return level, true
+}
+
+// depleteDrink atomically applies the rest of a drink's depletion, mirroring
+// C's unconditional val1 -= amount plus the empty-container zeroing, and
+// reports whether the container ran out.
+func (w *World) depleteDrink(item *ObjectInstance, n int) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	left := item.GetValue(1) - n
+	if left <= 0 {
 		item.SetValue(1, 0)
 		item.SetValue(2, 0)
 		item.SetValue(3, 0)
 		clearDrinkconName(item)
-		if item.VNum == 20 {
-			w.ExtractObject(item, ch.GetRoomVNum())
-		}
+		return true
 	}
+	item.SetValue(1, left)
+	return false
 }
 
 // DoEat implements C do_eat (src/act.item.c:1035-1156) for both eat and taste.

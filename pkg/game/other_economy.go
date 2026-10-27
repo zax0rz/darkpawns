@@ -315,6 +315,24 @@ func (w tattooSpellWorld) ForEachPlayerInRoomInterface(room int, fn func(interfa
 // (src/spell_parser.c:754-783). In C, equipd is compared against the second
 // half_chop token, so an ordinary `use wand target` takes this branch even when
 // the wand is held; the source call path and its bytes are the authority here.
+// takeMagicItemCharge atomically consumes one charge from a wand or staff,
+// returning false when the item is out.
+//
+// The caller checked item.GetValue(2) and then decremented it, so two
+// concurrent uses of a one-charge item both fired and the decrement was lost
+// — the same charge bought two spells (CWE-362/CWE-367). ObjectInstance has no
+// lock of its own and cannot gain one (house_save.go copies it by value), so
+// charges serialize on the world lock, which already guards object state.
+func (w *World) takeMagicItemCharge(item *ObjectInstance) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if item.GetValue(2) <= 0 {
+		return false
+	}
+	item.SetValue(2, item.GetValue(2)-1)
+	return true
+}
+
 func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spellNum, spellLevel int) {
 	spellArgument, _ := OneArgument(targetArg)
 	target, targetObj, found := w.resolveMagicItemTarget(ch, targetArg, spellNum)
@@ -356,12 +374,11 @@ func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spel
 		Act(w, hideInvisible, ch, nil, item, targetObj, roomAct, "", ToRoom)
 	}
 
-	if item.GetValue(2) <= 0 {
+	if !w.takeMagicItemCharge(item) {
 		Act(nil, false, ch, nil, item, nil, "It seems powerless.", "", ToChar)
 		Act(w, false, ch, nil, item, nil, "Nothing seems to happen.", "", ToRoom)
 		return
 	}
-	item.SetValue(2, item.GetValue(2)-1)
 	ch.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
 	level := spellLevel
 	if level == 0 {
@@ -396,12 +413,11 @@ func (w *World) useStaff(ch *Player, item *ObjectInstance, targetArg string, spe
 	Act(nil, false, ch, nil, item, nil,
 		"Your $p radiates an ethereal glow that lights the room.", "", ToChar)
 
-	if item.GetValue(2) <= 0 {
+	if !w.takeMagicItemCharge(item) {
 		Act(nil, false, ch, nil, item, nil, "It seems powerless.", "", ToChar)
 		Act(w, false, ch, nil, item, nil, "Nothing seems to happen.", "", ToRoom)
 		return
 	}
-	item.SetValue(2, item.GetValue(2)-1)
 	ch.SetWaitState(1) // C: WAIT_STATE(ch, PULSE_VIOLENCE)
 	level := spellLevel
 	if level == 0 {

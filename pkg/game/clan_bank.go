@@ -56,23 +56,19 @@ func (w *World) doClanBank(ch *Player, arg string, action int) {
 
 	switch action {
 	case CBWithdraw:
-		if c.Treasure < int64(amount) {
+		if !c.SpendTreasure(int64(amount)) {
 			ch.SendMessage("The clan is not wealthy enough for your needs!\r\n")
 			return
 		}
-		ch.SetGold(ch.GetGold() + amount)
-		c.Treasure -= int64(amount)
+		ch.AddGold(amount)
 		ch.SendMessage("You withdraw from the clan's treasure.\r\n")
 		MudLog(fmt.Sprintf("%s withdraws %d coins from %s clan account.", ch.GetName(), amount, hshr(ch)), MudlogBrief, LVL_IMMORT, true)
 	case CBDeposit:
-		if !immcom && ch.GetGold() < amount {
+		if !immcom && !ch.SpendGold(amount) {
 			ch.SendMessage("You do not have that kind of money!\r\n")
 			return
 		}
-		if !immcom {
-			ch.SetGold(ch.GetGold() - amount)
-		}
-		c.Treasure += int64(amount)
+		c.AddTreasure(int64(amount))
 		ch.SendMessage("You add to the clan's treasure.\r\n")
 		MudLog(fmt.Sprintf("%s adds %d coins to %s clan account.", ch.GetName(), amount, hshr(ch)), MudlogBrief, LVL_IMMORT, true)
 	}

@@ -365,8 +365,14 @@ func stealCoins(ch *Player, target combat.Combatant, percent int, chPronouns, vi
 	gold := targetGold(target) * dprng.Number(1, 10) / 100
 	gold = min(1782, gold)
 	if gold > 0 {
-		setTargetGold(target, targetGold(target)-gold)
-		ch.SetGold(ch.GetGold() + gold)
+		// Take the haul atomically. C sizes it from the victim's balance and
+		// then subtracts unconditionally; doing that as a read-then-write pair
+		// let two concurrent steals both size from the same balance and both
+		// credit a thief, minting the difference (CWE-362/CWE-367).
+		if !spendTargetGold(target, gold) {
+			return SkillResult{Success: true, MessageToCh: "You couldn't get any gold...", WaitCh: 1}
+		}
+		ch.AddGold(gold)
 		if gold > 1 {
 			message := appendImprovementMessage(
 				fmt.Sprintf("Bingo!  You got %d gold coins.", gold),
@@ -674,12 +680,19 @@ func targetGold(target combat.Combatant) int {
 	}
 }
 
-func setTargetGold(target combat.Combatant, gold int) {
+// spendTargetGold atomically debits gold from a Player or Mob victim,
+// returning false when the purse is short. The coin steal read the victim's
+// balance to size its haul and then subtracted it through separate accessors,
+// so two concurrent steals both passed the sizing read and both credited a
+// thief (CWE-362/CWE-367).
+func spendTargetGold(target combat.Combatant, gold int) bool {
 	switch target := target.(type) {
 	case *Player:
-		target.SetGold(gold)
+		return target.SpendGold(gold)
 	case *MobInstance:
-		target.SetGold(gold)
+		return target.SpendGold(gold)
+	default:
+		return false
 	}
 }
 

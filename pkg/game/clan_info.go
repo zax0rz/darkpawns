@@ -62,13 +62,12 @@ func (w *World) doClanApply(ch *Player, arg string) {
 		ch.SendMessage("You are not mighty enough to apply to this clan.\r\n")
 		return
 	}
-	if ch.GetGold() < c.AppFee {
+	if !ch.SpendGold(c.AppFee) {
 		ch.SendMessage("You cannot afford the application fee!\r\n")
 		return
 	}
 
-	ch.SetGold(ch.GetGold() - c.AppFee)
-	c.Treasure += int64(c.AppFee)
+	c.AddTreasure(int64(c.AppFee))
 	w.SaveClans()
 
 	ch.ClanID = c.ID
@@ -122,7 +121,7 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 		fmt.Fprintf(&msg, "%s ", c.RankName[j])
 	}
 	fmt.Fprintf(&msg, "\r\nMembers    : %d\r\nPower      : %d\t\nTreasure   : %d\r\nSpells     : ",
-		c.Members, c.Power, c.Treasure)
+		c.Members, c.Power, c.TreasureBalance())
 	for _, spell := range c.Spells {
 		if spell != 0 {
 			fmt.Fprintf(&msg, "%d ", spell)
