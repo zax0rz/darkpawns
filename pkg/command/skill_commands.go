@@ -1682,12 +1682,6 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	if result.TargetFalls && target != nil && damageEffects {
 		target.SetPosition(combat.PosSitting)
 	}
-	if result.SleepTarget && target != nil {
-		target.SetPosition(combat.PosSleeping)
-		if p, ok := target.(*game.Player); ok {
-			p.SetAffect(game.AffSleep, true)
-		}
-	}
 
 	// Send to victim
 	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && result.MessageToVict != "" && target != nil {
@@ -1722,6 +1716,16 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 		sendRoom(result.MessageToRoom)
 		sendRoom(result.MessageToRoomSecond)
+	}
+	// C do_sleeper sends all four acts while the victim is still awake, then
+	// sets GET_POS(vict) = POS_SLEEPING (src/act.offensive.c, do_sleeper
+	// success arm). Sleeping first would let SENDOK drop the victim's copies
+	// of the two TO_ROOM lines.
+	if result.SleepTarget && target != nil {
+		target.SetPosition(combat.PosSleeping)
+		if p, ok := target.(*game.Player); ok {
+			p.SetAffect(game.AffSleep, true)
+		}
 	}
 
 	if result.SpawnPuke {
