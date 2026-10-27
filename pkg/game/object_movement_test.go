@@ -808,7 +808,7 @@ func TestExtractObjectFromPlayerEquipment(t *testing.T) {
 
 	// Item must be removed from equipment
 	if _, ok := player.Equipment.GetItemInSlot(SlotWield); ok {
-		t.Error("BUG: equipped item still in Equipment.Slots after ExtractObject")
+		t.Error("BUG: equipped item still in the equipment slots after ExtractObject")
 	}
 
 	// Item must be removed from global instance map

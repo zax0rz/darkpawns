@@ -195,7 +195,7 @@ func (w *World) Instakill(victim, killer combat.Combatant, attackType int) {
 			equipmentItems = append(equipmentItems, item)
 		}
 		player.Equipment.mu.Lock()
-		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+		player.Equipment.slots = make(map[EquipmentSlot]*ObjectInstance)
 		player.Equipment.mu.Unlock()
 	}
 	player.mu.Unlock()
@@ -719,7 +719,7 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 			equipmentItems = append(equipmentItems, item)
 		}
 		player.Equipment.mu.Lock()
-		player.Equipment.Slots = make(map[EquipmentSlot]*ObjectInstance)
+		player.Equipment.slots = make(map[EquipmentSlot]*ObjectInstance)
 		player.Equipment.mu.Unlock()
 	}
 	player.mu.Unlock()

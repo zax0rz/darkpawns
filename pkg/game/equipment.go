@@ -112,7 +112,7 @@ func ParseEquipmentSlot(s string) (EquipmentSlot, bool) {
 // Equipment represents a player's equipped items.
 type Equipment struct {
 	mu          sync.RWMutex
-	Slots       map[EquipmentSlot]*ObjectInstance
+	slots       map[EquipmentSlot]*ObjectInstance
 	OwnerName   string
 	afterChange func()
 }
@@ -120,18 +120,18 @@ type Equipment struct {
 // NewEquipment creates a new empty equipment set.
 func NewEquipment() *Equipment {
 	return &Equipment{
-		Slots: make(map[EquipmentSlot]*ObjectInstance),
+		slots: make(map[EquipmentSlot]*ObjectInstance),
 	}
 }
 
 // Snapshot returns a copy of the currently equipped slots. Safe for
-// concurrent use; iterating eq.Slots without holding eq.mu races with
+// concurrent use; iterating eq.slots without holding eq.mu races with
 // Equip/Unequip (DP-1247).
 func (eq *Equipment) Snapshot() map[EquipmentSlot]*ObjectInstance {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
-	slots := make(map[EquipmentSlot]*ObjectInstance, len(eq.Slots))
-	for k, v := range eq.Slots {
+	slots := make(map[EquipmentSlot]*ObjectInstance, len(eq.slots))
+	for k, v := range eq.slots {
 		slots[k] = v
 	}
 	return slots
@@ -152,13 +152,13 @@ func (eq *Equipment) SetSlot(slot EquipmentSlot, item *ObjectInstance) (err erro
 			eq.afterChange()
 		}
 	}()
-	if eq.Slots == nil {
-		eq.Slots = make(map[EquipmentSlot]*ObjectInstance)
+	if eq.slots == nil {
+		eq.slots = make(map[EquipmentSlot]*ObjectInstance)
 	}
-	if _, occupied := eq.Slots[slot]; occupied {
+	if _, occupied := eq.slots[slot]; occupied {
 		return fmt.Errorf("slot %s is already occupied", slot)
 	}
-	eq.Slots[slot] = item
+	eq.slots[slot] = item
 	return nil
 }
 
@@ -203,10 +203,10 @@ func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 		if group, isDual := dualSlotGroups[slot]; isDual {
 			// Try each slot in the group in order
 			for _, trySlot := range group {
-				if _, occupied := eq.Slots[trySlot]; !occupied {
+				if _, occupied := eq.slots[trySlot]; !occupied {
 					// Found empty slot
 					item.Location = LocEquippedPlayer(eq.OwnerName, trySlot)
-					eq.Slots[trySlot] = item
+					eq.slots[trySlot] = item
 					return nil
 				}
 			}
@@ -216,12 +216,12 @@ func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 			}
 			// Now equip in first slot
 			item.Location = LocEquippedPlayer(eq.OwnerName, group[0])
-			eq.Slots[group[0]] = item
+			eq.slots[group[0]] = item
 			return nil
 		}
 
 		// Non-dual slot
-		if _, ok := eq.Slots[slot]; ok {
+		if _, ok := eq.slots[slot]; ok {
 			// Unequip existing item first
 			if err := eq.unequip(slot, inv); err != nil {
 				return fmt.Errorf("cannot unequip existing %s: %v", slot, err)
@@ -229,7 +229,7 @@ func (eq *Equipment) equip(item *ObjectInstance, inv *Inventory) error {
 		}
 		// Set equipment state
 		item.Location = LocEquippedPlayer(eq.OwnerName, slot)
-		eq.Slots[slot] = item
+		eq.slots[slot] = item
 		return nil
 	}
 
@@ -250,7 +250,7 @@ func (eq *Equipment) Unequip(slot EquipmentSlot, inv *Inventory) (err error) {
 
 // unequip is the internal implementation without locking.
 func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
-	item, ok := eq.Slots[slot]
+	item, ok := eq.slots[slot]
 	if !ok {
 		return fmt.Errorf("slot %s is empty", slot)
 	}
@@ -267,7 +267,7 @@ func (eq *Equipment) unequip(slot EquipmentSlot, inv *Inventory) error {
 
 	item.Location = LocInventoryPlayer(eq.OwnerName)
 
-	delete(eq.Slots, slot)
+	delete(eq.slots, slot)
 	return nil
 }
 
@@ -281,7 +281,7 @@ func (eq *Equipment) UnequipItem(item *ObjectInstance, inv *Inventory) (removed 
 		}
 	}()
 
-	for slot, eqItem := range eq.Slots {
+	for slot, eqItem := range eq.slots {
 		if eqItem == item {
 			if err := eq.unequip(slot, inv); err == nil {
 				return true
@@ -297,7 +297,7 @@ func (eq *Equipment) GetItemInSlot(slot EquipmentSlot) (*ObjectInstance, bool) {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
 
-	item, ok := eq.Slots[slot]
+	item, ok := eq.slots[slot]
 	return item, ok
 }
 
@@ -310,7 +310,7 @@ func (eq *Equipment) GetArmorClass() int {
 	defer eq.mu.RUnlock()
 
 	ac := 0
-	for slot, item := range eq.Slots {
+	for slot, item := range eq.slots {
 		if item == nil || item.GetTypeFlag() != ITEM_ARMOR {
 			continue
 		}
@@ -341,7 +341,7 @@ func (eq *Equipment) GetWornAffectAC() int {
 	defer eq.mu.RUnlock()
 
 	total := 0
-	for _, item := range eq.Slots {
+	for _, item := range eq.slots {
 		if item == nil {
 			continue
 		}
@@ -359,7 +359,7 @@ func (eq *Equipment) GetWeaponDamage() (numDice, diceType int) {
 	eq.mu.RLock()
 	defer eq.mu.RUnlock()
 
-	if weapon, ok := eq.Slots[SlotWield]; ok {
+	if weapon, ok := eq.slots[SlotWield]; ok {
 		// Check if item is a weapon (type 5 is ITEM_WEAPON in CircleMUD)
 		if weapon.GetTypeFlag() == 5 {
 			// Values[1] is number of dice, Values[2] is dice type
@@ -460,7 +460,7 @@ func (eq *Equipment) GetEquippedItems() map[EquipmentSlot]*ObjectInstance {
 
 	// Return a copy to prevent external modification
 	result := make(map[EquipmentSlot]*ObjectInstance)
-	for k, v := range eq.Slots {
+	for k, v := range eq.slots {
 		result[k] = v
 	}
 	return result

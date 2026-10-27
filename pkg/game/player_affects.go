@@ -46,7 +46,7 @@ func (p *Player) sumEquipAffectModsLocked(location int) int {
 	defer p.Equipment.mu.RUnlock()
 
 	total := 0
-	for _, item := range p.Equipment.Slots {
+	for _, item := range p.Equipment.slots {
 		if item == nil {
 			continue
 		}

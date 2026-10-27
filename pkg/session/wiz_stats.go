@@ -329,7 +329,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	}
 	eqCount := 0
 	if p.Equipment != nil {
-		for _, item := range p.Equipment.Slots {
+		for _, item := range p.Equipment.Snapshot() {
 			if item != nil {
 				eqCount++
 			}
