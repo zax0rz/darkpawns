@@ -14,12 +14,23 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/internal/oraclediff"
+)
+
+// mailFaultMode is a validated corruption mode: parseFaultFixture and
+// parseFaultStep accept only the two spelling constants, so no scenario
+// text reaches the filesystem layer as a string.
+type mailFaultMode int
+
+const (
+	mailFaultUnaligned mailFaultMode = iota + 1
+	mailFaultBadHeader
 )
 
 // faultTrees are the two disposable roots the harness mutates.
@@ -128,7 +139,11 @@ func applyFaultVerb(t faultTrees, ff oraclediff.FaultFixture) error {
 		}
 		return nil
 	case "fault-corrupt-mail":
-		return corruptMail(t, ff.Target)
+		mode, err := parseMailFaultMode(ff.Target)
+		if err != nil {
+			return err
+		}
+		return corruptMail(t, mode)
 	case "fault-board":
 		return corruptBoard(t, ff)
 	case "fault-crash-file":
@@ -147,7 +162,8 @@ func applyFaultVerb(t faultTrees, ff oraclediff.FaultFixture) error {
 	return fmt.Errorf("fault fixture %v: unknown verb", ff)
 }
 
-// corruptMail plants the mail store with the requested fault.
+// corruptMail plants the mail store with the requested fault. The mode is a
+// validated constant, not scenario text (gosec G703 taint boundary).
 //
 // unaligned: one stray byte. C's scan_file fails the BLOCK_SIZE alignment
 // check (src/mail.c:241-244) and db.c:365-370 disables mail at boot; Go's
@@ -156,7 +172,7 @@ func applyFaultVerb(t faultTrees, ff oraclediff.FaultFixture) error {
 // bad-header: overwrite the first block's block_type with known garbage so
 // the next read_delete deterministically fails the header check
 // (src/mail.c:423-427). block_type is the first field on both engines.
-func corruptMail(t faultTrees, mode string) error {
+func corruptMail(t faultTrees, mode mailFaultMode) error {
 	cPath := filepath.Join(t.oracleLib, "etc", "plrmail")
 	goPath := filepath.Join(t.goRoot, "data", "mail")
 	if err := os.MkdirAll(filepath.Dir(cPath), 0o750); err != nil {
@@ -166,12 +182,12 @@ func corruptMail(t faultTrees, mode string) error {
 		return err
 	}
 	switch mode {
-	case "unaligned":
+	case mailFaultUnaligned:
 		if err := os.WriteFile(cPath, []byte{0x7f}, 0o600); err != nil {
 			return err
 		}
 		return os.WriteFile(goPath, []byte{0x7f}, 0o600)
-	case "bad-header":
+	case mailFaultBadHeader:
 		for _, p := range []string{cPath, goPath} {
 			data, err := os.ReadFile(p)
 			if err != nil || len(data) == 0 {
@@ -184,13 +200,14 @@ func corruptMail(t faultTrees, mode string) error {
 			}
 			garbage := []byte{0x64, 0x00, 0x00, 0x00} // 100: neither HEADER(-1) nor DELETED(-3)
 			copy(data[:len(garbage)], garbage)
+			// #nosec G703 -- disposable oracle fixture path resolved from the trusted harness scratch tree (same class as room_fixtures.go's walk); the mode is a validated constant and p derives from faultTrees, not scenario text.
 			if err := os.WriteFile(p, data, 0o600); err != nil {
 				return err
 			}
 		}
 		return nil
 	}
-	return fmt.Errorf("fault-corrupt-mail: unknown mode %q", mode)
+	return fmt.Errorf("fault-corrupt-mail: unknown mode %d", mode)
 }
 
 // corruptBoard writes a crafted one-message board file per engine with the
@@ -223,12 +240,27 @@ func corruptBoard(t faultTrees, ff oraclediff.FaultFixture) error {
 	// heading_len 12, message_len 16. C's struct board_msginfo is 32 bytes
 	// with an 8-byte heading pointer and 4-byte tail padding
 	// (src/boards.h:40-46): slot 0, level 16, heading_len 20, message_len 24.
-	writeRow := func(rowLen int, levelOff int, slot int32) []byte {
+	// Every field passes through checkedUint32 first: the values are harness
+	// constants and small lengths, and an out-of-range value is a writer bug
+	// to surface, not to truncate.
+	slotU, cerr := checkedUint32(slot, "slot_num")
+	if cerr != nil {
+		return cerr
+	}
+	headingLenU, cerr := checkedUint32(len(heading), "heading_len")
+	if cerr != nil {
+		return cerr
+	}
+	messageLenU, cerr := checkedUint32(int(messageLen), "message_len")
+	if cerr != nil {
+		return cerr
+	}
+	writeRow := func(rowLen int, levelOff int) []byte {
 		row := make([]byte, rowLen)
-		binary.LittleEndian.PutUint32(row[0:4], uint32(int32u(int(slot)))) // slot_num
-		binary.LittleEndian.PutUint32(row[levelOff:levelOff+4], 1)         // level
-		binary.LittleEndian.PutUint32(row[levelOff+4:levelOff+8], int32u(len(heading)))
-		binary.LittleEndian.PutUint32(row[levelOff+8:levelOff+12], uint32(messageLen))
+		binary.LittleEndian.PutUint32(row[0:4], slotU)
+		binary.LittleEndian.PutUint32(row[levelOff:levelOff+4], 1) // level
+		binary.LittleEndian.PutUint32(row[levelOff+4:levelOff+8], headingLenU)
+		binary.LittleEndian.PutUint32(row[levelOff+8:levelOff+12], messageLenU)
 		return row
 	}
 
@@ -249,9 +281,9 @@ func corruptBoard(t faultTrees, ff oraclediff.FaultFixture) error {
 		msg  string
 	}{
 		// C: slot(4) pad(4) pointer(8) level(4) heading_len(4) message_len(4) tail pad(4) = 32.
-		{cPath, writeRow(32, 16, int32(slot)), pickMsg(ff.Detail, "planted body")},
+		{cPath, writeRow(32, 16), pickMsg(ff.Detail, "planted body")},
 		// Go: slot(4) pad(4) level(4) heading_len(4) message_len(4) = 20.
-		{goPath, writeRow(20, 8, int32(slot)), pickMsg(ff.Detail, "planted body")},
+		{goPath, writeRow(20, 8), pickMsg(ff.Detail, "planted body")},
 	} {
 		if err := os.MkdirAll(filepath.Dir(side.path), 0o750); err != nil {
 			return err
@@ -261,6 +293,19 @@ func corruptBoard(t faultTrees, ff oraclediff.FaultFixture) error {
 		}
 	}
 	return nil
+}
+
+// parseMailFaultMode validates a scenario-supplied corruption mode into a
+// typed constant. It is the taint boundary between scenario text and the
+// filesystem layer.
+func parseMailFaultMode(name string) (mailFaultMode, error) {
+	switch name {
+	case "unaligned":
+		return mailFaultUnaligned, nil
+	case "bad-header":
+		return mailFaultBadHeader, nil
+	}
+	return 0, fmt.Errorf("fault-corrupt-mail: unknown mode %q", name)
 }
 
 // crashFileBucket is C's first-letter player-file bucket (src/utils.c:555-578).
@@ -290,9 +335,12 @@ func pickMsg(detail, body string) string {
 	return ""
 }
 
-func int32u(v int) uint32 {
-	if v < 0 {
-		return 0
+// checkedUint32 converts a harness-controlled value for serialization,
+// refusing anything negative: the engines' 32-bit on-disk fields are all
+// non-negative counts and ids.
+func checkedUint32(v int, field string) (uint32, error) {
+	if v < 0 || v > math.MaxInt32 {
+		return 0, fmt.Errorf("fault-board: %s %d out of 32-bit range", field, v)
 	}
-	return uint32(v)
+	return uint32(v), nil
 }

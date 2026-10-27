@@ -1,2 +1,6 @@
 scenario	manifest	case_id	status	stability
 alias-cap	alias.tsv	alias.cap-refusal	excluded	
+clan-member-depth	clan.tsv	clan.mortal-membership-gates	blocked	
+fault-mail-runtime	mail.tsv	mail.send-store-inert	excluded	
+force-mob-flee	turn.tsv	turn.npc-flee-special-lane	blocked	
+wizard-unaffect-depth	wizard.tsv	wizutil.unaffect-vampire	blocked	
