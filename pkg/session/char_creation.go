@@ -15,6 +15,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/notify"
+	"github.com/zax0rz/darkpawns/pkg/telemetry"
 )
 
 // C source race help constants from src/constants.c
@@ -639,6 +640,7 @@ func (s *Session) persistAcceptedCharacter() error {
 	s.authenticated = true
 	s.manager.mu.Unlock()
 	s.manager.mu.Lock()
+	telemetry.Character()
 	s.creationSaved = true
 	s.manager.mu.Unlock()
 	s.playerName = s.charName

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/telemetry"
 )
 
 // LogBuffer is a simple ring buffer that captures slog output while the server is running.
@@ -76,6 +78,11 @@ func (h *logBufferHandler) Handle(ctx context.Context, record slog.Record) error
 	err := h.base.Handle(ctx, record)
 	if err != nil {
 		return err
+	}
+	if record.Level >= slog.LevelError {
+		telemetry.Error()
+	} else if record.Level >= slog.LevelWarn {
+		telemetry.Warning()
 	}
 	// Build a one-line entry: LEVEL time message [attrs]
 	var sb strings.Builder

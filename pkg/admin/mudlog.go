@@ -73,7 +73,7 @@ func registerMudlog(api huma.API, feed *mudlog.Feed, callerLevel mudlogCallerLev
 			if in.Key != "" && (e.Key == "" || e.Key != in.Key) {
 				continue
 			}
-			if ceiling < e.Level {
+			if e.Level < 0 || ceiling < e.Level {
 				continue
 			}
 			if in.Type >= 0 && in.Type < e.Typ {
@@ -101,7 +101,28 @@ func registerMudlog(api huma.API, feed *mudlog.Feed, callerLevel mudlogCallerLev
 		Description: "Keys observed in the live ring. The static C-site catalog (labels, payload templates, privacy flags) arrives with the slice-2 key sweep.",
 	}, func(ctx context.Context, in *struct{}) (*mudlogCatalogOutput, error) {
 		out := &mudlogCatalogOutput{}
-		out.Body.Keys = feed.Catalog()
+		out.Body.Keys = []mudlog.KeyStat{}
+		byKey := map[string]int{}
+		ceiling := callerLevel(ctx)
+		for _, e := range feed.Since(0, 0) {
+			if e.Level < 0 || e.Level > ceiling {
+				continue
+			}
+			key := e.Key
+			if key == "" {
+				key = "unkeyed"
+			}
+			idx, ok := byKey[key]
+			if !ok {
+				idx = len(out.Body.Keys)
+				byKey[key] = idx
+				out.Body.Keys = append(out.Body.Keys, mudlog.KeyStat{Key: key})
+			}
+			st := &out.Body.Keys[idx]
+			st.Count++
+			st.Level = e.Level
+			st.Type = e.Typ
+		}
 		out.Body.Note = "live keys from the ring; static catalog lands with the key sweep"
 		return out, nil
 	})
@@ -150,7 +171,7 @@ func mudlogStream(feed *mudlog.Feed, callerLevel mudlogCallerLevel) http.Handler
 		}
 
 		ceiling := callerLevel(r.Context())
-		visible := func(e mudlogEvent) bool { return e.Level <= ceiling }
+		visible := func(e mudlogEvent) bool { return e.Level >= 0 && e.Level <= ceiling }
 		// Subscribe before reading history so an event tapped during replay is
 		// either in the ring snapshot, the live channel, or both. `last` drops
 		// that overlap and starts at the resume point so history is not

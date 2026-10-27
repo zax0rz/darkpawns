@@ -107,6 +107,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retained dashboard observations */
+        get: operations["get-dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/files/lua/resolve": {
         parameters: {
             query?: never;
@@ -211,6 +228,40 @@ export interface paths {
         get?: never;
         /** Update an agent finding */
         put: operations["update-finding"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/logbook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Filtered retained server log or visible mudlog */
+        get: operations["get-logbook"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/logbook/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download currently filtered retained logs */
+        get: operations["export-logbook"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1128,6 +1179,42 @@ export interface components {
             source: string;
             title: string;
         };
+        DashboardPoint: {
+            /** Format: int64 */
+            characters: number;
+            /** Format: int64 */
+            deaths: number;
+            /** Format: int64 */
+            errors: number;
+            /** Format: int64 */
+            logins: number;
+            /** Format: int64 */
+            online: number | null;
+            /** Format: int64 */
+            peak: number | null;
+            /** Format: int64 */
+            samples: number;
+            /** Format: date-time */
+            time: string;
+            /** Format: int64 */
+            warnings: number;
+        };
+        DashboardResponse: {
+            /** Format: date-time */
+            now: string;
+            /** Format: int64 */
+            online: number;
+            persistence_error?: string;
+            points: components["schemas"]["DashboardPoint"][] | null;
+            recording: boolean;
+            /** Format: date-time */
+            recording_since?: string;
+            release: components["schemas"]["Release"];
+            /** Format: date-time */
+            started_at: string;
+            /** Format: int64 */
+            uptime_seconds: number;
+        };
         Destination: {
             enabled: boolean;
             events: string[] | null;
@@ -1364,6 +1451,24 @@ export interface components {
             last_level: number;
             /** Format: int64 */
             last_type: number;
+        };
+        LogEntry: {
+            level: string;
+            message: string;
+            raw: string;
+            /** Format: int64 */
+            seq?: number;
+            time: string;
+            type: string;
+        };
+        LogbookOutputBody: {
+            /** Format: int64 */
+            dropped: number;
+            entries: components["schemas"]["LogEntry"][] | null;
+            /** Format: int64 */
+            last_seq: number;
+            /** Format: int64 */
+            retained: number;
         };
         LoginRequest: {
             password: string;
@@ -1723,6 +1828,15 @@ export interface components {
             /** Format: int64 */
             locate: number;
             name: string;
+        };
+        Release: {
+            commit: string;
+            identity: string;
+            /** Format: date-time */
+            observed_at: string;
+            /** Format: date-time */
+            updated_at?: string;
+            version: string;
         };
         ResetAllOutputBody: {
             errors?: string[] | null;
@@ -2285,6 +2399,37 @@ export interface operations {
             };
         };
     };
+    "get-dashboard": {
+        parameters: {
+            query?: {
+                range?: "24h" | "7d";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "resolve-script-name": {
         parameters: {
             query: {
@@ -2579,6 +2724,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Finding"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-logbook": {
+        parameters: {
+            query?: {
+                source?: "server" | "mudlog";
+                severity?: "" | "INFO" | "WARN" | "ERROR" | "DEBUG";
+                type?: number;
+                level?: number;
+                key?: string;
+                search?: string;
+                /** @description Inclusive RFC3339 timestamp. */
+                after?: string;
+                /** @description Inclusive RFC3339 timestamp. */
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogbookOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "export-logbook": {
+        parameters: {
+            query?: {
+                source?: "server" | "mudlog";
+                severity?: "" | "INFO" | "WARN" | "ERROR" | "DEBUG";
+                type?: number;
+                level?: number;
+                key?: string;
+                search?: string;
+                /** @description Inclusive RFC3339 timestamp. */
+                after?: string;
+                /** @description Inclusive RFC3339 timestamp. */
+                before?: string;
+                format?: "log" | "csv";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "Cache-Control"?: string;
+                    "Content-Disposition"?: string;
+                    "Content-Type"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
             /** @description Error */

@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/telemetry"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -209,6 +211,7 @@ func DamageTaken(victimType string, amount int) {
 }
 
 func Death() {
+	telemetry.Death()
 	deathsTotal.Inc()
 }
 

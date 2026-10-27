@@ -31,6 +31,7 @@ const navItems: NavItem[] = [
   { to: '/admin/workshop/help', label: 'Builder guide', icon: 'guide', role: 'builder', group: 'Build the world' },
   { to: '/admin/staff/players', label: 'Players', icon: 'players', role: 'admin', group: 'Staff tools' },
   { to: '/admin/staff/notifications', label: 'Notifications', icon: 'notifications', role: 'admin', group: 'Staff tools' },
+  { to: '/admin/operations/logs', label: 'Logs', icon: 'terminal', role: 'builder', group: 'Staff tools' },
   { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder', group: 'Staff tools' },
 ];
 
@@ -168,7 +169,7 @@ export function Layout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === '/admin/'}
+                end={item.to === '/admin/' || item.to === '/admin/operations'}
                 className={({ isActive }) =>
                   `flex-1 flex flex-col items-center py-2 text-[10px] font-mono uppercase tracking-wider transition-colors ${
                     isActive
@@ -234,7 +235,7 @@ function SidebarContent({
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/admin/'}
+            end={item.to === '/admin/' || item.to === '/admin/operations'}
             onClick={onNavigate}
             className={({ isActive }) =>
               `flex items-center gap-2.5 px-3.5 py-2 rounded-none text-sm border transition-colors focus-visible:outline-2 focus-visible:outline-accent ${

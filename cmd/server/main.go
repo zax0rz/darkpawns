@@ -74,6 +74,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/session"
+	"github.com/zax0rz/darkpawns/pkg/telemetry"
 	"github.com/zax0rz/darkpawns/pkg/telnet"
 	"github.com/zax0rz/darkpawns/web"
 )
@@ -809,7 +810,7 @@ func main() {
 			case <-loopCtx.Done():
 				return
 			case <-ticker.C:
-				metrics.SetPlayersOnline(manager.SessionCount())
+				metrics.SetPlayersOnline(gameWorld.GetPlayerCount())
 				metrics.SetRoomsActive(len(gameWorld.Rooms()))
 				metrics.SetMobsActive(len(gameWorld.GetAllMobs()))
 			}
@@ -896,7 +897,16 @@ func main() {
 	mudlogFeed := mudlog.StartDefault(context.Background(), nil)
 	defer mudlogFeed.Stop()
 
-	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications))
+	history := telemetry.New(time.Now())
+	historyPath := filepath.Join(os.Getenv("DARKPAWNS_DATA_DIR"), "admin-history.json")
+	if err := history.Load(historyPath); err != nil {
+		slog.Error("load admin history", "error", err)
+	}
+	history.ObserveRelease(telemetry.CurrentRelease(), time.Now())
+	historyDone := make(chan struct{})
+	go func() { defer close(historyDone); history.Run(loopCtx, historyPath, gameWorld.GetPlayerCount) }()
+	defer func() { loopCancel(); <-historyDone }()
+	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications), admin.WithHistory(history))
 	if err != nil {
 		fatal("failed to init admin router: %v", err)
 	}
