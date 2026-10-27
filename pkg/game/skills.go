@@ -539,7 +539,7 @@ func findItemByName(ch *Player, name string) (*ObjectInstance, bool) {
 	}
 
 	// Check equipment
-	for _, obj := range ch.Equipment.Slots {
+	for _, obj := range ch.Equipment.Snapshot() {
 		if obj != nil && strings.Contains(strings.ToLower(obj.GetShortDesc()), name) {
 			return obj, true
 		}

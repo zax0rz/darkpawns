@@ -47,7 +47,7 @@ func equipHuntItem(t *testing.T, player *Player, vnum int, slot EquipmentSlot, s
 		player.Equipment = NewEquipment()
 	}
 	player.Equipment.mu.Lock()
-	player.Equipment.Slots[slot] = item
+	player.Equipment.slots[slot] = item
 	player.Equipment.mu.Unlock()
 }
 
@@ -134,7 +134,7 @@ func TestHuntItemsConsumesDrawBeforeHunterEligibility(t *testing.T) {
 			}
 			item := NewObjectInstance(&parser.Obj{VNum: 14223, ShortDesc: "a suit of spiked, black armor"}, -1)
 			player.Equipment.mu.Lock()
-			player.Equipment.Slots[SlotBody] = item
+			player.Equipment.slots[SlotBody] = item
 			player.Equipment.mu.Unlock()
 			tc.gate(hunter, player)
 			calls := setHuntItemsDraws(t, 0)

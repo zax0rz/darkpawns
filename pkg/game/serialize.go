@@ -44,7 +44,7 @@ func SerializeEquipment(eq *Equipment, worldObjs map[int]*parser.Obj) ([]byte, e
 	}
 
 	// Store slot -> VNum mapping
-	for slot, item := range eq.Slots {
+	for slot, item := range eq.slots {
 		data.Slots[slot.String()] = item.VNum
 	}
 
