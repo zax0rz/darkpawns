@@ -1,0 +1,88 @@
+# C-first NINJA escape vehicle, the in-combat half (src/act.offensive.c:
+# 1039-1076): the ninja class selects the escape spelling for every message
+# and SKILL_ESCAPE for the probability draw. The actor walks to the trainee
+# and fights in setup, exactly like escape-cornered; the probe's escape runs
+# the full draw sequence with no usable exits, reaching the cornered branch
+# with the class-local spelling.
+
+# depth-case: escape.ninja-combat-escape
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Escgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Escgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:actor]
+Escninja
+Y
+oraclepass
+oraclepass
+N
+M
+H
+N
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[setup:port:actor]
+Escninja
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+N
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+hit trainee
+
+[warmup]
+skillset Escninja 'escape' 100
+goto 8105
+~dpclock pulse 60
+
+[probe:actor]
+escape
