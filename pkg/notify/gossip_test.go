@@ -287,3 +287,40 @@ func TestGossipOverflowLogsOnlyAggregateCounts(t *testing.T) {
 		t.Fatalf("unsafe or missing drop log: %q", got)
 	}
 }
+
+func TestGossipNoticeDefaultsAndPersistence(t *testing.T) {
+	emptyEnv(t)
+	for _, legacy := range []bool{false, true} {
+		name := "fresh"
+		if legacy {
+			name = "existing settings without notice field"
+		}
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "notifications.json")
+			if legacy {
+				if err := os.WriteFile(path, []byte(`{"revision":1,"gossip":false}`), 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			s, err := New(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			config := s.View().Config
+			if !config.GossipNotice || config.Gossip || s.GossipNoticeEnabled() {
+				t.Fatalf("notice must default on without enabling mirroring: %+v", config)
+			}
+			config.GossipNotice = false
+			if err := s.Save(config); err != nil {
+				t.Fatal(err)
+			}
+			reloaded, err := New(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if reloaded.View().Config.GossipNotice {
+				t.Fatal("explicit notice opt-out did not survive reload")
+			}
+		})
+	}
+}

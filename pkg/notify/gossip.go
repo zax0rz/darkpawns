@@ -16,7 +16,7 @@ import (
 
 var gossipANSI = regexp.MustCompile("\x1b(?:\\[[0-?]*[ -/]*[@-~]|\\][^\x07\x1b]*(?:\x07|\x1b\\\\)|[@-_])")
 
-// GossipEnabled also governs the MOTD operations overlay. Credentials alone
+// GossipEnabled reports whether the mirror is active. Credentials alone
 // never enable the mirror, and the event-alert Discord destination is separate.
 func (s *Service) GossipEnabled() bool {
 	if s == nil {
@@ -25,6 +25,16 @@ func (s *Service) GossipEnabled() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.cfg.Gossip && s.ready(Gossip)
+}
+
+// GossipNoticeEnabled reports whether the active mirror needs an automatic MOTD notice.
+func (s *Service) GossipNoticeEnabled() bool {
+	if s == nil {
+		return false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.cfg.Gossip && s.cfg.GossipNotice && s.ready(Gossip)
 }
 
 // PublishGossip accepts only the game's already rendered public observer line.

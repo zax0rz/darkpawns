@@ -43,11 +43,12 @@ type Destination struct {
 	Events  []string `json:"events"`
 }
 type Config struct {
-	Revision  int64       `json:"revision"`
-	Pushover  Destination `json:"pushover"`
-	Discord   Destination `json:"discord"`
-	Heartbeat bool        `json:"heartbeat"`
-	Gossip    bool        `json:"gossip"`
+	Revision     int64       `json:"revision"`
+	Pushover     Destination `json:"pushover"`
+	Discord      Destination `json:"discord"`
+	Heartbeat    bool        `json:"heartbeat"`
+	Gossip       bool        `json:"gossip"`
+	GossipNotice bool        `json:"gossip_notice"`
 }
 type Status struct {
 	Queued uint64 `json:"queued"`
@@ -101,8 +102,8 @@ type Service struct {
 // New loads settings; malformed files fail closed instead of silently enabling
 // defaults or discarding an operator's selections. Credentials are loaded from encrypted storage or legacy environment settings.
 func New(path string) (*Service, error) {
-	s := &Service{path: filepath.Clean(path), cfg: Config{Revision: 1, Pushover: Destination{Events: []string{}}, Discord: Destination{Events: []string{}}}, status: map[string]Status{}, workers: map[string]*worker{}}
-	var stored diskConfig
+	s := &Service{path: filepath.Clean(path), cfg: Config{Revision: 1, GossipNotice: true, Pushover: Destination{Events: []string{}}, Discord: Destination{Events: []string{}}}, status: map[string]Status{}, workers: map[string]*worker{}}
+	stored := diskConfig{Config: Config{GossipNotice: true}}
 	data, err := os.ReadFile(s.path) // #nosec G703 -- path comes only from server configuration
 	if err == nil {
 		if err = json.Unmarshal(data, &stored); err != nil {

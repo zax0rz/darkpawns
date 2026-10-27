@@ -330,6 +330,7 @@ export interface NotificationConfig {
   discord: NotificationDestination;
   heartbeat: boolean;
   gossip: boolean;
+  gossip_notice: boolean;
 }
 export interface NotificationStatus {
   source: 'admin' | 'environment' | 'none';

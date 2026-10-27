@@ -33,7 +33,7 @@ func TestGossipMOTDOverlayIsOptInAndDoesNotEditCText(t *testing.T) {
 	if err = service.Save(config); err != nil {
 		t.Fatal(err)
 	}
-	const notice = "\r\nGossip is mirrored to Discord #gossip. Messages sent there do not return to the game.\r\n"
+	const notice = "\r\nWhat's said on gossip echoes to our Discord.\r\n"
 	for _, file := range []string{"motd", "imotd"} {
 		if got := loginTextForFile(s, file); got != original+notice {
 			t.Fatalf("%s overlay=%q", file, got)
@@ -45,10 +45,24 @@ func TestGossipMOTDOverlayIsOptInAndDoesNotEditCText(t *testing.T) {
 	// Returning-menu rendering uses the same overlay, including immortal MOTD.
 	s.startReturningMenu("")
 	_, prompt := unmarshalCharCreate(t, drainMsg(t, s))
-	if !strings.Contains(prompt.Prompt, "Gossip is mirrored to Discord #gossip.") {
+	if !strings.Contains(prompt.Prompt, "What's said on gossip echoes to our Discord.") {
 		t.Fatal("login omitted gossip notice", prompt.Prompt)
 	}
 	config = service.View().Config
+	config.GossipNotice = false
+	if err = service.Save(config); err != nil {
+		t.Fatal(err)
+	}
+	if !service.GossipEnabled() {
+		t.Fatal("disabling the notice disabled the mirror")
+	}
+	for _, file := range []string{"motd", "imotd"} {
+		if got := loginTextForFile(s, file); got != original {
+			t.Fatalf("%s notice toggle left bytes behind: %q", file, got)
+		}
+	}
+	config = service.View().Config
+	config.GossipNotice = true
 	config.Gossip = false
 	if err = service.Save(config); err != nil {
 		t.Fatal(err)
