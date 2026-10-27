@@ -46,8 +46,16 @@ type UpdateStatus struct {
 }
 
 // updateCheckEndpoint is a seam so tests can point the check at a fixture
-// server instead of GitHub.
+// server instead of GitHub. DP_RELEASE_ENDPOINT takes precedence over it, so
+// a mirror or rehearsal feed governs both the check and the transaction.
 var updateCheckEndpoint = releaseAPI
+
+func checkEndpoint() string {
+	if endpoint := releaseEndpoint(); endpoint != "" {
+		return endpoint + "/releases/latest"
+	}
+	return updateCheckEndpoint
+}
 
 // browserUpdateMarker records that the console asked for an update while the
 // CLI was still staging (the durable journal only appears once Apply begins).
@@ -116,7 +124,7 @@ func controlAdminHandlers(instance, bundle string, state func() RuntimeStatus) m
 			ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 			defer cancel()
 			current := bundleVersion(bundle)
-			release, err := fetchLatestRelease(ctx, updateClient(), updateCheckEndpoint)
+			release, err := fetchLatestRelease(ctx, updateClient(), checkEndpoint())
 			if err != nil {
 				writeJSON(w, map[string]any{"error": fmt.Sprintf("release lookup failed: %v", err), "current_version": current})
 				return

@@ -205,3 +205,38 @@ func TestUpdateCheckIsReadOnlyAndReportsDrift(t *testing.T) {
 		t.Fatal("fixture bundle has no manifest; current version must be empty, not invented")
 	}
 }
+
+func TestReleaseEndpointOverrideFeedsCheckAndDownloadBase(t *testing.T) {
+	if endpoint := releaseEndpoint(); endpoint != "" {
+		t.Fatal("without the environment set there is no override")
+	}
+	if got := effectiveReleaseAPI(); got != releaseAPI {
+		t.Fatalf("default endpoint changed: %s", got)
+	}
+	t.Setenv("DP_RELEASE_ENDPOINT", "http://127.0.0.1:8399")
+	if got := effectiveReleaseAPI(); got != "http://127.0.0.1:8399/releases/latest" {
+		t.Fatalf("override endpoint wrong: %s", got)
+	}
+	if got := downloadBaseFor("v9.9.9"); got != "http://127.0.0.1:8399/releases/download/v9.9.9/" {
+		t.Fatalf("override download base wrong: %s", got)
+	}
+	// A mirror-hosted asset passes selection only under the override.
+	tag := "v9.9.9"
+	name := "darkpawns_9.9.9_" + runtime.GOOS + "_" + runtime.GOARCH + ".tar.gz"
+	asset := releaseAsset{Name: name, URL: downloadBaseFor(tag) + name, Digest: "sha256:" + strings.Repeat("0", 64), Size: 42}
+	if _, err := selectAsset(githubRelease{Tag: tag, Assets: []releaseAsset{asset}}); err != nil {
+		t.Fatalf("mirror asset rejected under override: %v", err)
+	}
+	// Without the override the same local URL must be refused.
+	t.Setenv("DP_RELEASE_ENDPOINT", "")
+	if _, err := selectAsset(githubRelease{Tag: tag, Assets: []releaseAsset{asset}}); err == nil {
+		t.Fatal("non-GitHub asset accepted without the override")
+	}
+	// Malformed overrides are ignored, never guessed.
+	for _, bad := range []string{"ftp://example.com", "http://example.com/path", "http://user@example.com", "http://example.com/?q=1"} {
+		t.Setenv("DP_RELEASE_ENDPOINT", bad)
+		if got := releaseEndpoint(); got != "" {
+			t.Fatalf("accepted malformed override %q", bad)
+		}
+	}
+}
