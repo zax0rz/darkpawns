@@ -1271,8 +1271,16 @@ func fingerprinted(h http.Handler) http.Handler {
 // overridden field writes its own value back and nothing flips.
 func applySettingsEnvironment(manager *settings.Manager) {
 	effective := manager.Effective()
-	set := func(name, value string) {
-		if value == "" {
+	// Install only real file changes: a value equal to the compiled-in
+	// default would otherwise manufacture a phantom environment override
+	// (the first boot writing GRAPEVINE_MODE=off pinned mode off forever),
+	// and an inherited exported variable stays authoritative as it always
+	// was. The console badges whatever still wins.
+	install := func(name, value, defaultValue string) {
+		if value == "" || value == defaultValue {
+			return
+		}
+		if _, inherited := os.LookupEnv(name); inherited {
 			return
 		}
 		if err := os.Setenv(name, value); err != nil {
@@ -1282,19 +1290,19 @@ func applySettingsEnvironment(manager *settings.Manager) {
 		}
 	}
 	join := func(values []string) string { return strings.Join(values, ",") }
-	set("TRUSTED_PROXIES", join(effective.Access.TrustedProxies))
-	set("GRAPEVINE_MODE", effective.Grapevine.Mode)
-	set("GRAPEVINE_URL", effective.Grapevine.URL)
-	set("GRAPEVINE_CLIENT_ID", effective.Grapevine.ClientID)
-	set("DP_MUDLOG_NTFY_URL", effective.StaffPush.URL)
-	set("DP_MUDLOG_NTFY_LEVEL", strconv.Itoa(effective.StaffPush.MinLevel))
-	set("DP_MUDLOG_NTFY_TYPE", strconv.Itoa(effective.StaffPush.MinType))
-	set("DP_MUDLOG_NTFY_RATE", strconv.Itoa(effective.StaffPush.RatePerMinute))
-	set("CONTACT_TO", effective.Contact.To)
-	set("CONTACT_SMTP_HOST", effective.Contact.SMTPHost)
-	set("CONTACT_SMTP_PORT", strconv.Itoa(effective.Contact.SMTPPort))
-	set("CONTACT_SMTP_USER", effective.Contact.SMTPUser)
-	set("CONTACT_TURNSTILE_HOSTNAMES", join(effective.Contact.TurnstileHostnames))
+	install("TRUSTED_PROXIES", join(effective.Access.TrustedProxies), "")
+	install("GRAPEVINE_MODE", effective.Grapevine.Mode, "off")
+	install("GRAPEVINE_URL", effective.Grapevine.URL, "wss://grapevine.haus/socket")
+	install("GRAPEVINE_CLIENT_ID", effective.Grapevine.ClientID, "")
+	install("DP_MUDLOG_NTFY_URL", effective.StaffPush.URL, "")
+	install("DP_MUDLOG_NTFY_LEVEL", strconv.Itoa(effective.StaffPush.MinLevel), "31")
+	install("DP_MUDLOG_NTFY_TYPE", strconv.Itoa(effective.StaffPush.MinType), "1")
+	install("DP_MUDLOG_NTFY_RATE", strconv.Itoa(effective.StaffPush.RatePerMinute), "30")
+	install("CONTACT_TO", effective.Contact.To, "")
+	install("CONTACT_SMTP_HOST", effective.Contact.SMTPHost, "")
+	install("CONTACT_SMTP_PORT", strconv.Itoa(effective.Contact.SMTPPort), "0")
+	install("CONTACT_SMTP_USER", effective.Contact.SMTPUser, "")
+	install("CONTACT_TURNSTILE_HOSTNAMES", join(effective.Contact.TurnstileHostnames), "")
 	setSecret := func(name string, kind string) {
 		value, ok := manager.SecretValue(kind)
 		if !ok {
