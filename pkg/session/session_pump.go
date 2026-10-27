@@ -92,18 +92,22 @@ func (s *Session) readPump() {
 			s.sendError("An internal server error occurred. Your connection has been reset.")
 			s.manager.UnregisterSession(s)
 		}
-		// Always decrement IP connection count (C5 leak fix)
+		// Always release this connection's admission slots (C5 leak fix): the
+		// per-IP bucket and the process-wide total HandleWebSocket incremented.
+		// The connCountDecremented latch keeps it exactly once per accepted
+		// connection.
 		if !s.connCountDecremented && (s.request != nil || s.remoteIP != "") {
 			s.connCountDecremented = true
 			ip := s.RemoteIP()
+			s.manager.ipConnMu.Lock()
+			s.manager.totalConnCount--
 			if ip != "" {
-				s.manager.ipConnMu.Lock()
 				s.manager.ipConnCount[ip]--
 				if s.manager.ipConnCount[ip] <= 0 {
 					delete(s.manager.ipConnCount, ip)
 				}
-				s.manager.ipConnMu.Unlock()
 			}
+			s.manager.ipConnMu.Unlock()
 		}
 		// A playing character whose connection drops stays in the world,
 		// linkdead, as C's close_socket leaves it and as telnet does
@@ -257,6 +261,23 @@ func (s *Session) finishWebSocketTransport() {
 		s.releaseEntryName()
 		if !s.manager.HandleTransportDisconnect(s) {
 			s.manager.UnregisterSession(s)
+			// Nothing else can wake writePump for a session that will never be
+			// reattached. It selects only on s.send, s.TransportDone() and its
+			// 54 s ping ticker, and DetachTransport (the sole closer of
+			// transportDone) is reached only inside the retained linkdead arm
+			// above — HandleTransportDisconnect returns false for
+			// !s.authenticated, and unregisterSession's map-miss branch only
+			// calls cancelFunc. Without this close every abruptly-closed
+			// non-retained socket (pre-auth, refused login, char-creation,
+			// menu) parks one goroutine, this Session's 256-slot send buffer
+			// and its retained *http.Request until the ping tick, 54 s later;
+			// a connect/upgrade/disconnect churn loop never trips the per-IP
+			// cap, which counts simultaneous connections only. CloseSend is the
+			// waker the telnet and menu teardown callers already use
+			// (pkg/telnet/listener.go, pkg/session/menu.go) and stays inside
+			// this branch: a retained linkdead session needs its channel for
+			// reattach.
+			s.CloseSend()
 		}
 	})
 }
