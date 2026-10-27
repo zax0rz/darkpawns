@@ -151,12 +151,20 @@ export function SettingsPage() {
       };
       let last: { result: SaveResult } | undefined;
       let restart: string[] = [];
+      // View-only decorations (secret presence, contact effectiveness) are
+      // not input-schema fields; sending them would make the strict body
+      // validation reject the save. Keep exactly the editable fields.
+      const viewOnlyFields = new Set(['client_secret_set', 'token_set', 'smtp_password_set', 'turnstile_secret_set', 'effective']);
       for (const group of Object.keys(drafts)) {
         if (!(group in savers)) continue;
         const groupDraft = drafts[group] as Record<string, unknown> | undefined;
         if (!groupDraft) continue;
         const current = (view as unknown as Record<string, unknown>)[group] as Record<string, unknown> | undefined;
-        const body: Record<string, unknown> = { ...(current ?? {}), ...groupDraft };
+        const base: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(current ?? {})) {
+          if (!viewOnlyFields.has(key)) base[key] = value;
+        }
+        const body: Record<string, unknown> = { ...base, ...groupDraft };
         if (group === 'grapevine' || group === 'staff_push' || group === 'contact') {
           for (const [field, value] of Object.entries(secretUpdates.current)) {
             if (field.startsWith(group + '.')) body[field.slice(group.length + 1)] = value;
