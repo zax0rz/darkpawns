@@ -321,7 +321,7 @@ export const playerEditor = {
 };
 
 export type NotificationProvider = 'pushover' | 'discord';
-export type CredentialProvider = NotificationProvider | 'heartbeat';
+export type CredentialProvider = NotificationProvider | 'heartbeat' | 'gossip';
 export interface NotificationCredentials { token?: string; user?: string; url?: string }
 export interface NotificationDestination { enabled: boolean; events: string[] }
 export interface NotificationConfig {
@@ -329,6 +329,7 @@ export interface NotificationConfig {
   pushover: NotificationDestination;
   discord: NotificationDestination;
   heartbeat: boolean;
+  gossip: boolean;
 }
 export interface NotificationStatus {
   source: 'admin' | 'environment' | 'none';
@@ -340,7 +341,7 @@ export interface NotificationStatus {
 }
 export interface NotificationView {
   config: NotificationConfig;
-  status: Record<NotificationProvider | 'heartbeat', NotificationStatus>;
+  status: Record<NotificationProvider | 'heartbeat' | 'gossip', NotificationStatus>;
 }
 export const notifications = {
   get: () => request<NotificationView>('/notifications'),

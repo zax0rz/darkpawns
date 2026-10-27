@@ -96,98 +96,106 @@ func TestNotificationAPI(t *testing.T) {
 }
 
 func TestWriteOnlyNotificationCredentials(t *testing.T) {
-	setJWTSecret(t)
-	t.Setenv("ADMIN_STORE_PATH", filepath.Join(t.TempDir(), "admin.json"))
-	t.Setenv("DP_NOTIFICATION_KEY_PATH", "")
-	database := newOLCTestDatabase(t, game.LVL_IMPL, 1)
-	path := filepath.Join(t.TempDir(), "notifications.json")
-	service, err := notify.New(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	router, err := newRouter(newOLCTestWorld(t), nil, NewLogBuffer(10), database, nil, WithNotifications(service))
-	if err != nil {
-		t.Fatal(err)
-	}
-	token := generateTestToken(t, "admin")
-	calls := 0
-	request := func(method, path, body, credential string, csrf bool) *httptest.ResponseRecorder {
-		t.Helper()
-		req := httptest.NewRequest(method, path, strings.NewReader(body))
-		calls++
-		req.RemoteAddr = fmt.Sprintf("192.0.2.%d:1234", calls)
-		req.Header.Set("Content-Type", "application/json")
-		if credential != "" {
-			req.Header.Set("Authorization", "Bearer "+credential)
-		}
-		if csrf {
-			req.Header.Set("X-Requested-With", "darkpawns-admin")
-		}
-		out := httptest.NewRecorder()
-		router.handler.ServeHTTP(out, req)
-		if strings.Contains(out.Body.String(), "secret-marker") {
-			t.Fatal("credential echoed by response", out.Code)
-		}
-		return out
-	}
-	endpoint := "/admin/notifications/discord/credentials"
-	secret := "https://discord.com/api/webhooks/123/secret-marker"
-	body := fmt.Sprintf(`{"revision":1,"url":%q}`, secret)
-	for _, method := range []string{"PUT", "DELETE"} {
-		if out := request(method, endpoint, body, "", true); out.Code != 401 {
-			t.Fatal("unauthenticated credential mutation", out.Code)
-		}
-		if out := request(method, endpoint, body, token, false); out.Code != 401 {
-			t.Fatal("credential mutation without CSRF", out.Code)
-		}
-		if out := request(method, endpoint, body, generateTestToken(t, "builder"), true); out.Code != 403 {
-			t.Fatal("builder credential mutation", out.Code)
-		}
-	}
-	for _, bad := range []string{
-		`{"revision":"secret-marker","url":"secret-marker"}`,
-		`{"revision":1,"url":{"secret-marker":true}}`,
-		`{"revision":1,"unknown":"secret-marker"}`,
-		`{"revision":1,"url":"secret-marker"}`,
-		`{"revision":1,"url":"secret-marker"} trailing`,
-	} {
-		if out := request("PUT", endpoint, bad, token, true); out.Code != 422 {
-			t.Fatalf("invalid credential input %d %s", out.Code, out.Body.String())
-		}
-	}
-	if out := request("PUT", endpoint, body, token, true); out.Code != 200 {
-		t.Fatalf("credential save %d %s", out.Code, out.Body.String())
-	}
-	raw, err := os.ReadFile(path)
-	if err != nil || strings.Contains(string(raw), "secret-marker") {
-		t.Fatal("plaintext credential storage", err)
-	}
-	if out := request("GET", "/admin/notifications", "", token, true); out.Code != 200 {
-		t.Fatal("credential status unavailable", out.Code)
-	}
-	// Stale writes and malformed types never return secret values.
-	if out := request("PUT", endpoint, body, token, true); out.Code != 409 {
-		t.Fatal("stale credential write", out.Code)
-	}
-	current := service.View().Config
-	current.Discord = notify.Destination{Enabled: true, Events: []string{notify.Login}}
-	if err := service.Save(current); err != nil {
-		t.Fatal(err)
-	}
-	out := request("DELETE", endpoint, fmt.Sprintf(`{"revision":%d}`, service.View().Config.Revision), token, true)
-	if out.Code != 200 || service.View().Status[notify.Discord].Ready || service.View().Config.Discord.Enabled {
-		t.Fatal("credential removal failed", out.Code)
-	}
-	// The documented schema is JSON with write-only secret fields, not RawBody's
-	// default binary schema; responses contain only Config/Status.
-	schema := router.api.OpenAPI().Paths["/admin/notifications/{provider}/credentials"].Put.RequestBody.Content["application/json"].Schema
-	if schema.Type != "object" || !schema.Properties["url"].WriteOnly || !schema.Properties["token"].WriteOnly || !schema.Properties["user"].WriteOnly {
-		t.Fatal("missing write-only OpenAPI contract")
-	}
-	if _, err := database.Exec("UPDATE players SET level=? WHERE name=?", game.LVL_GOD, "TestPlayer"); err != nil {
-		t.Fatal(err)
-	}
-	if out := request("PUT", endpoint, body, token, true); out.Code != 403 {
-		t.Fatal("demoted staff retained credential access", out.Code)
+	for _, provider := range []string{notify.Discord, notify.Gossip} {
+		t.Run(provider, func(t *testing.T) {
+			setJWTSecret(t)
+			t.Setenv("ADMIN_STORE_PATH", filepath.Join(t.TempDir(), "admin.json"))
+			t.Setenv("DP_NOTIFICATION_KEY_PATH", "")
+			database := newOLCTestDatabase(t, game.LVL_IMPL, 1)
+			path := filepath.Join(t.TempDir(), "notifications.json")
+			service, err := notify.New(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			router, err := newRouter(newOLCTestWorld(t), nil, NewLogBuffer(10), database, nil, WithNotifications(service))
+			if err != nil {
+				t.Fatal(err)
+			}
+			token := generateTestToken(t, "admin")
+			calls := 0
+			request := func(method, path, body, credential string, csrf bool) *httptest.ResponseRecorder {
+				t.Helper()
+				req := httptest.NewRequest(method, path, strings.NewReader(body))
+				calls++
+				req.RemoteAddr = fmt.Sprintf("192.0.2.%d:1234", calls)
+				req.Header.Set("Content-Type", "application/json")
+				if credential != "" {
+					req.Header.Set("Authorization", "Bearer "+credential)
+				}
+				if csrf {
+					req.Header.Set("X-Requested-With", "darkpawns-admin")
+				}
+				out := httptest.NewRecorder()
+				router.handler.ServeHTTP(out, req)
+				if strings.Contains(out.Body.String(), "secret-marker") {
+					t.Fatal("credential echoed by response", out.Code)
+				}
+				return out
+			}
+			endpoint := "/admin/notifications/" + provider + "/credentials"
+			secret := "https://discord.com/api/webhooks/123/secret-marker"
+			body := fmt.Sprintf(`{"revision":1,"url":%q}`, secret)
+			for _, method := range []string{"PUT", "DELETE"} {
+				if out := request(method, endpoint, body, "", true); out.Code != 401 {
+					t.Fatal("unauthenticated credential mutation", out.Code)
+				}
+				if out := request(method, endpoint, body, token, false); out.Code != 401 {
+					t.Fatal("credential mutation without CSRF", out.Code)
+				}
+				if out := request(method, endpoint, body, generateTestToken(t, "builder"), true); out.Code != 403 {
+					t.Fatal("builder credential mutation", out.Code)
+				}
+			}
+			for _, bad := range []string{
+				`{"revision":"secret-marker","url":"secret-marker"}`,
+				`{"revision":1,"url":{"secret-marker":true}}`,
+				`{"revision":1,"unknown":"secret-marker"}`,
+				`{"revision":1,"url":"secret-marker"}`,
+				`{"revision":1,"url":"secret-marker"} trailing`,
+			} {
+				if out := request("PUT", endpoint, bad, token, true); out.Code != 422 {
+					t.Fatalf("invalid credential input %d %s", out.Code, out.Body.String())
+				}
+			}
+			if out := request("PUT", endpoint, body, token, true); out.Code != 200 {
+				t.Fatalf("credential save %d %s", out.Code, out.Body.String())
+			}
+			raw, err := os.ReadFile(path)
+			if err != nil || strings.Contains(string(raw), "secret-marker") {
+				t.Fatal("plaintext credential storage", err)
+			}
+			if out := request("GET", "/admin/notifications", "", token, true); out.Code != 200 {
+				t.Fatal("credential status unavailable", out.Code)
+			}
+			// Stale writes and malformed types never return secret values.
+			if out := request("PUT", endpoint, body, token, true); out.Code != 409 {
+				t.Fatal("stale credential write", out.Code)
+			}
+			current := service.View().Config
+			if provider == notify.Gossip {
+				current.Gossip = true
+			} else {
+				current.Discord = notify.Destination{Enabled: true, Events: []string{notify.Login}}
+			}
+			if err := service.Save(current); err != nil {
+				t.Fatal(err)
+			}
+			out := request("DELETE", endpoint, fmt.Sprintf(`{"revision":%d}`, service.View().Config.Revision), token, true)
+			if out.Code != 200 || service.View().Status[provider].Ready || (provider == notify.Gossip && service.View().Config.Gossip) || (provider == notify.Discord && service.View().Config.Discord.Enabled) {
+				t.Fatal("credential removal failed", out.Code)
+			}
+			// The documented schema is JSON with write-only secret fields, not RawBody's
+			// default binary schema; responses contain only Config/Status.
+			schema := router.api.OpenAPI().Paths["/admin/notifications/{provider}/credentials"].Put.RequestBody.Content["application/json"].Schema
+			if schema.Type != "object" || !schema.Properties["url"].WriteOnly || !schema.Properties["token"].WriteOnly || !schema.Properties["user"].WriteOnly {
+				t.Fatal("missing write-only OpenAPI contract")
+			}
+			if _, err := database.Exec("UPDATE players SET level=? WHERE name=?", game.LVL_GOD, "TestPlayer"); err != nil {
+				t.Fatal(err)
+			}
+			if out := request("PUT", endpoint, body, token, true); out.Code != 403 {
+				t.Fatal("demoted staff retained credential access", out.Code)
+			}
+		})
 	}
 }

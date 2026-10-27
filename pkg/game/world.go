@@ -233,6 +233,10 @@ type World struct {
 	// OnGossip is a callback triggered when a human player gossips.
 	OnGossip func(senderName string, message string)
 
+	// gossipObserver receives only the public mortal rendering, never raw identity.
+	// Protected by gossipMu; independent of the Grapevine callback.
+	gossipObserver func(line string)
+
 	// OutOfBand mirrors room renders, channel lines, and regen ticks to the
 	// session layer's structured-client protocols (GMCP). Set once by the
 	// session manager before the world starts ticking; nil disables it.
@@ -1516,4 +1520,12 @@ func (w *World) IsHunting(charName string, isMob bool) bool {
 		}
 	}
 	return false
+}
+
+// SetGossipObserver installs an optional outbound observer. The callback must
+// only enqueue: no network/disk I/O, game output or RNG. Nil disables it.
+func (w *World) SetGossipObserver(fn func(string)) {
+	w.gossipMu.Lock()
+	w.gossipObserver = fn
+	w.gossipMu.Unlock()
 }

@@ -432,7 +432,8 @@ fallback, including after restart.
 |---|---|
 | `DP_NOTIFY_PUSHOVER_TOKEN` | Pushover application's API token |
 | `DP_NOTIFY_PUSHOVER_USER` | Pushover user or group key |
-| `DP_NOTIFY_DISCORD_WEBHOOK` | `https://discord.com/api/webhooks/<id>/<token>` |
+| `DP_NOTIFY_DISCORD_WEBHOOK` | `https://discord.com/api/webhooks/<id>/<token>` for event alerts |
+| `DP_NOTIFY_GOSSIP_WEBHOOK` | Separate Discord webhook for the public gossip mirror |
 | `DP_NOTIFY_HEARTBEAT_URL` | Hosted Healthchecks `https://hc-ping.com/<uuid>` URL |
 
 Discord URLs must use the canonical host and contain no query string. Heartbeat
@@ -445,6 +446,56 @@ Paste its value into the Discord destination form (or migrate it to
 The old all-events behavior is not enabled automatically. The separate
 `DP_MUDLOG_NTFY_*` staff-log observer is unchanged and is not a public announcement
 feed.
+
+### Optional Discord gossip mirror
+
+Create a Discord text channel named **#gossip**, then create an incoming webhook
+for that channel. In **Staff tools → Notifications → Discord gossip**, save that
+webhook as the separate gossip destination. Enable **gossip mirroring** and save
+settings. This starts off, even when credentials are present. It does not use the
+event-alert webhook. There is no inbound Discord connection or synthetic gossip
+test message; check delivery with an ordinary public in-game gossip after enabling.
+No Discord bot token is needed.
+
+The encrypted credential provider is `gossip`; its environment fallback is
+`DP_NOTIFY_GOSSIP_WEBHOOK`. The instance notification setting is `gossip: true`
+(a boolean), independent of Discord event subscriptions. Admin credential changes
+use the same private encryption key and write-only API as other destinations.
+Removing gossip credentials disables mirroring and suppresses the environment
+fallback. Older settings without the `gossip` field remain disabled.
+For rollback, retain a pre-feature settings backup and its original encryption
+key: older server builds reject the new `gossip` credential-provider entry, even
+after it has been removed in admin (the removal tombstone is intentional).
+
+The relay receives only accepted gossip at the common player/NPC review-update
+boundary, including Lua gossip and kill brags. It uses the game's `act` renderer
+for an unaided level-1 mortal in a lit room: invisible authors appear as
+"Someone", not their staff-visible names. A neutral hypothetical recipient named
+"Someone" supplies any recipient-specific `$N` substitutions. It does not inspect
+other channels, tells, prompts or logs. ANSI escapes and built-in MUD color markers are removed; message text
+(including literal mention syntax) otherwise stays intact. `allowed_mentions`
+has an empty `parse` list, disabling everyone, role and user notifications.
+
+One asynchronous worker consumes a 16-message bounded queue. Ingress also uses
+the existing notification limiter (five-message burst, one token per two seconds).
+Discord response headers and 429 `retry_after` determine cooldown; rejected lines
+and subsequent lines during cooldown are dropped rather than retried. Malformed
+rate-limit responses conservatively pause requests for one minute. Overflow and
+cooldown drops are counted and logged in aggregate by the worker, without message
+text or credentials. Lines above 2000 UTF-16 code units or invalid UTF-8 are
+dropped whole, never truncated. Delivery is best effort: no replay after outages,
+settings changes or restarts; an already in-flight request can still finish.
+
+While mirroring is configured and enabled, the Go MOTD overlay appends:
+
+> Gossip is mirrored to Discord #gossip. Messages sent there do not return to the game.
+
+This is rendered on new/returning login and the `motd`/`imotd` commands, without
+editing C's text/help files or cached text. With mirroring off, those bytes remain
+unchanged. The exact notice wording is proposed for Zach's review in the PR.
+
+Discord protocol references: [webhook payloads](https://docs.discord.com/developers/resources/webhook#execute-webhook)
+and [response-driven rate limits](https://docs.discord.com/developers/topics/rate-limits).
 
 ### Outage detection
 

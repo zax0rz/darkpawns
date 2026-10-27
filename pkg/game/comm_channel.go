@@ -208,7 +208,7 @@ func (w *World) DoChannel(ch *Player, argument, subcmd string) {
 	}
 
 	if spec.verb == "gossip" {
-		w.updateGossipHistory(ch.Name, argument, 0)
+		w.recordGossip(ch, ch.Name, argument)
 		// The grapevine client swaps/clears this callback on its reconnect
 		// goroutine; read it under the gossip lock, call it outside (VULN-040).
 		w.gossipMu.RLock()
@@ -257,7 +257,7 @@ func (w *World) mobGenComm(me *MobInstance, argument, channel string) {
 	argument = deleteANSIControls(argument)
 	// C: if (subcmd == SCMD_GOSSIP) update_review(ch, argument); (:1275-1276)
 	if channel == "gossip" {
-		w.updateGossipHistory(mobName(me), argument, 0)
+		w.recordGossip(me, mobName(me), argument)
 	}
 	format := deleteANSIControls(fmt.Sprintf("$n %ss, '%s'", spec.verb, argument))
 	senderRoom := w.GetRoomInWorld(me.GetRoom())
@@ -432,4 +432,24 @@ func (w *World) ReviewGossip(ch *Player) string {
 	}
 
 	return buf.String()
+}
+
+// recordGossip is the shared player/NPC update_review boundary
+// (src/act.comm.c:1273-1276). The history and all game bytes remain unchanged.
+// The optional operational mirror gets act()'s rendering for an unaided level-1
+// mortal in a lit room, regardless of whether a mortal happens to be connected.
+func (w *World) recordGossip(speaker Actor, name, message string) {
+	w.updateGossipHistory(name, message, 0)
+	w.gossipMu.RLock()
+	observe := w.gossipObserver
+	w.gossipMu.RUnlock()
+	if observe == nil {
+		return
+	}
+	// No world attachment, registration, descriptor or RNG. "Someone" also
+	// supplies a neutral public recipient name for act's $N substitutions.
+	viewer := &Player{Name: "Someone", Level: 1, Position: combat.PosStanding}
+	format := deleteANSIControls(fmt.Sprintf("$n gossips, '%s'", message))
+	actDeliver(nil, false, speaker, viewer, nil, nil, format, "", ToVict|ToSleep,
+		func(_ Actor, line string) { observe(line) })
 }

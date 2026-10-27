@@ -22,6 +22,7 @@ import (
 const (
 	Pushover = "pushover"
 	Discord  = "discord"
+	Gossip   = "gossip"
 	Created  = "player.created"
 	Login    = "player.login"
 	Logout   = "player.logout"
@@ -46,6 +47,7 @@ type Config struct {
 	Pushover  Destination `json:"pushover"`
 	Discord   Destination `json:"discord"`
 	Heartbeat bool        `json:"heartbeat"`
+	Gossip    bool        `json:"gossip"`
 }
 type Status struct {
 	Queued uint64 `json:"queued"`
@@ -119,7 +121,7 @@ func New(path string) (*Service, error) {
 	}
 	s.send = credentialSender(s.vault.snapshot.Load())
 	s.ready = func(id string) bool { return validCredentials(id, s.vault.snapshot.Load().values[id]) }
-	for _, id := range []string{Pushover, Discord, "heartbeat"} {
+	for _, id := range []string{Pushover, Discord, "heartbeat", Gossip} {
 		s.workers[id] = &worker{jobs: make(chan job, 16), limiter: rate.NewLimiter(rate.Every(2*time.Second), 5)}
 	}
 	return s, nil
@@ -178,7 +180,7 @@ func (s *Service) Save(c Config) error {
 	if c.Revision != revision {
 		return ErrConflict
 	}
-	for id, enabled := range map[string]bool{Pushover: c.Pushover.Enabled, Discord: c.Discord.Enabled, "heartbeat": c.Heartbeat} {
+	for id, enabled := range map[string]bool{Pushover: c.Pushover.Enabled, Discord: c.Discord.Enabled, "heartbeat": c.Heartbeat, Gossip: c.Gossip} {
 		if enabled && !s.ready(id) {
 			return ErrNotReady
 		}
@@ -292,6 +294,10 @@ func (s *Service) Test(id string) error {
 // progressed must read a timestamp from the completed game-loop callback.
 func (s *Service) Run(ctx context.Context, progressed func() time.Time) {
 	for id, w := range s.workers {
+		if id == Gossip {
+			go s.runGossipWorker(ctx, w)
+			continue
+		}
 		go s.runWorker(ctx, id, w)
 	}
 	if progressed != nil {
