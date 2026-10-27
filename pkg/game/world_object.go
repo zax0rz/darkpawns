@@ -104,7 +104,7 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 		switch obj.Location.OwnerKind {
 		case OwnerPlayer:
 			if p, ok := w.players[obj.Location.PlayerName]; ok {
-				p.Inventory.removeItem(obj)
+				p.Inventory.RemoveItem(obj)
 				// C's extract_obj removes a carried object through
 				// obj_from_char (handler.c:1016-1017), which sets PLR_CRASH
 				// for non-NPCs (handler.c:596-598).
@@ -129,7 +129,7 @@ func (w *World) extractObjectLocked(obj *ObjectInstance) {
 				// equipped NORENT object survives Crash_rentsave in the saved
 				// inventory even though its world registration was deleted.
 				if p.Equipment.UnequipItem(obj, p.Inventory) && p.Inventory != nil {
-					p.Inventory.removeItem(obj)
+					p.Inventory.RemoveItem(obj)
 				}
 				if litLight && room >= 0 {
 					w.adjustRoomLight(room, -1)

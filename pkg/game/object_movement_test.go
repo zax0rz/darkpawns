@@ -96,8 +96,8 @@ func TestRoomToPlayerInventory(t *testing.T) {
 	_ = w.MoveObject(obj, LocInventoryPlayer(player.Name))
 
 	// Assert: item in inventory, not in room
-	if len(player.Inventory.Items) != 1 {
-		t.Errorf("expected 1 item in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 1 {
+		t.Errorf("expected 1 item in inventory, got %d", player.Inventory.GetItemCount())
 	}
 
 	roomItems = w.GetItemsInRoom(1001)
@@ -138,8 +138,8 @@ func TestPlayerInventoryToRoom(t *testing.T) {
 		t.Errorf("expected 1 item in room, got %d", len(roomItems))
 	}
 
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", player.Inventory.GetItemCount())
 	}
 
 	// Location should be in room after drop
@@ -172,8 +172,8 @@ func TestPlayerInventoryToEquipment(t *testing.T) {
 	}
 
 	// Assert: item in equipment, not in inventory
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", player.Inventory.GetItemCount())
 	}
 
 	wieldItem, ok := player.Equipment.GetItemInSlot(SlotWield)
@@ -216,8 +216,8 @@ func TestEquipmentToInventory(t *testing.T) {
 	}
 
 	// Assert: item back in inventory, not in equipment
-	if len(player.Inventory.Items) != 1 {
-		t.Errorf("expected 1 item in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 1 {
+		t.Errorf("expected 1 item in inventory, got %d", player.Inventory.GetItemCount())
 	}
 
 	_, ok := player.Equipment.GetItemInSlot(SlotWield)
@@ -341,7 +341,7 @@ func TestExtractObjectFromInventory(t *testing.T) {
 	_ = w.MoveObject(obj, LocInventoryPlayer(player.Name))
 
 	// Verify in inventory
-	if len(player.Inventory.Items) != 1 {
+	if player.Inventory.GetItemCount() != 1 {
 		t.Fatal("expected item in player inventory before extract")
 	}
 
@@ -356,7 +356,7 @@ func TestExtractObjectFromInventory(t *testing.T) {
 	w.ExtractObject(obj, 1001)
 
 	// Assert: not in inventory, not in objectInstances
-	if len(player.Inventory.Items) != 0 {
+	if player.Inventory.GetItemCount() != 0 {
 		t.Error("expected 0 items in inventory after extract")
 	}
 
@@ -395,8 +395,8 @@ func TestInventoryFull(t *testing.T) {
 	if !player.Inventory.IsFull() {
 		t.Fatal("expected inventory to be full")
 	}
-	if len(player.Inventory.Items) != capacity {
-		t.Fatalf("expected %d items, got %d", capacity, len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != capacity {
+		t.Fatalf("expected %d items, got %d", capacity, player.Inventory.GetItemCount())
 	}
 
 	// Try to add one more — should fail with ErrInventoryFull
@@ -435,8 +435,8 @@ func TestMoveObjectRoomToInventory(t *testing.T) {
 	if len(w.GetItemsInRoom(1001)) != 0 {
 		t.Error("item should be removed from room")
 	}
-	if len(player.Inventory.Items) != 1 {
-		t.Errorf("expected 1 item in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 1 {
+		t.Errorf("expected 1 item in inventory, got %d", player.Inventory.GetItemCount())
 	}
 	if err := obj.Location.Validate(); err != nil {
 		t.Errorf("location invalid: %v", err)
@@ -458,8 +458,8 @@ func TestMoveObjectInventoryToRoom(t *testing.T) {
 	if !obj.Location.IsInRoom() {
 		t.Error("expected ObjInRoom")
 	}
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", player.Inventory.GetItemCount())
 	}
 	if len(w.GetItemsInRoom(1001)) != 1 {
 		t.Errorf("expected 1 item in room, got %d", len(w.GetItemsInRoom(1001)))
@@ -481,8 +481,8 @@ func TestMoveObjectInventoryToEquipment(t *testing.T) {
 	if !obj.Location.IsEquipped() {
 		t.Error("expected ObjEquipped")
 	}
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", player.Inventory.GetItemCount())
 	}
 }
 
@@ -501,8 +501,8 @@ func TestMoveObjectToNowhere(t *testing.T) {
 	if !obj.Location.IsNowhere() {
 		t.Error("expected ObjNowhere")
 	}
-	if len(player.Inventory.Items) != 0 {
-		t.Errorf("expected 0 items in inventory, got %d", len(player.Inventory.Items))
+	if player.Inventory.GetItemCount() != 0 {
+		t.Errorf("expected 0 items in inventory, got %d", player.Inventory.GetItemCount())
 	}
 }
 
@@ -753,7 +753,7 @@ func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 	// After detach, playerB will again be exactly at capacity, so the rollback
 	// addItem will also return ErrInventoryFull — stranding the item.
 	target, _ := w.SpawnObject(3001, 1001)
-	playerB.Inventory.Items = append(playerB.Inventory.Items, target)
+	playerB.Inventory.RestoreItem(target)
 	target.Location = LocInventoryPlayer(playerB.Name)
 
 	// Attempt move: detach from B (succeeds), attach to A (fails: full),
@@ -764,12 +764,12 @@ func TestMoveObjectRollbackStrandedLocation(t *testing.T) {
 	}
 
 	// Confirm item is in neither inventory
-	for _, item := range playerA.Inventory.Items {
+	for _, item := range playerA.Inventory.Snapshot() {
 		if item == target {
 			t.Error("target should not be in playerA inventory")
 		}
 	}
-	for _, item := range playerB.Inventory.Items {
+	for _, item := range playerB.Inventory.Snapshot() {
 		if item == target {
 			t.Error("target should not be in playerB inventory after failed rollback")
 		}

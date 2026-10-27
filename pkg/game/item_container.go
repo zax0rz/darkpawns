@@ -53,7 +53,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 	// Find container in inventory or room
 	var cont *ObjectInstance
-	for _, obj := range ch.Inventory.Items {
+	for _, obj := range ch.Inventory.Snapshot() {
 		if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 			cont = obj
 			break
@@ -85,7 +85,7 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 	if objDotmode == findIndiv {
 		var obj *ObjectInstance
-		for _, o := range ch.Inventory.Items {
+		for _, o := range ch.Inventory.Snapshot() {
 			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
@@ -104,10 +104,9 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 		keyword := strings.TrimPrefix(arg1, "all.")
 		found := false
 		// Snapshot the inventory first: performPut removes items from
-		// ch.Inventory.Items, and ranging the live slice would skip elements.
+		// the inventory, and ranging the live slice would skip elements.
 		// C captures next_content before perform_put for the same reason.
-		items := make([]*ObjectInstance, len(ch.Inventory.Items))
-		copy(items, ch.Inventory.Items)
+		items := ch.Inventory.Snapshot()
 		for _, obj := range items {
 			if obj == cont {
 				continue

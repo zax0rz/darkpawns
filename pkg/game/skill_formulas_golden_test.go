@@ -203,7 +203,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 
 	// Setup a piercing weapon for Backstab/Circle/Disembowel
 	piercing := makeFidelityWeapon(9001, 11) // TYPE_PIERCE = 11
-	ch.Inventory.Items = append(ch.Inventory.Items, piercing)
+	ch.Inventory.RestoreItem(piercing)
 	if err := ch.Equipment.Equip(piercing, ch.Inventory); err != nil {
 		t.Fatalf("Failed to equip piercing weapon: %v", err)
 	}
@@ -294,7 +294,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 	// Wield a sword/lance for Charge
 	_ = ch.Equipment.Unequip(SlotWield, ch.Inventory)
 	sword := makeFidelityWeapon(9002, 3) // TYPE_SLASH = 3 (sword)
-	ch.Inventory.Items = append(ch.Inventory.Items, sword)
+	ch.Inventory.RestoreItem(sword)
 	if err := ch.Equipment.Equip(sword, ch.Inventory); err != nil {
 		t.Fatalf("Failed to equip sword: %v", err)
 	}
@@ -330,7 +330,7 @@ func TestSkillFormulas_Statistical(t *testing.T) {
 
 	// Wield piercing weapon back for Disembowel
 	_ = ch.Equipment.Unequip(SlotWield, ch.Inventory)
-	ch.Inventory.Items = append(ch.Inventory.Items, piercing)
+	ch.Inventory.RestoreItem(piercing)
 	if err := ch.Equipment.Equip(piercing, ch.Inventory); err != nil {
 		t.Fatalf("Failed to equip piercing weapon: %v", err)
 	}

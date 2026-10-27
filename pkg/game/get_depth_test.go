@@ -177,7 +177,7 @@ func TestGetFromInvContainerArmsFull(t *testing.T) {
 	}
 	// Fill remaining inventory slots to the carry cap (the container already
 	// occupies one slot).
-	for i := len(ch.Inventory.Items); i < ch.MaxCarryItems(); i++ {
+	for i := ch.Inventory.GetItemCount(); i < ch.MaxCarryItems(); i++ {
 		pebble := newTransferItem(6600+i, "a pebble", "pebble", 1)
 		pebble.SetWeight(0)
 		registerTransferObject(w, pebble)

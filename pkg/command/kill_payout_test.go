@@ -219,7 +219,7 @@ func equipPiercingWeapon(t *testing.T, p *game.Player) {
 			Values:    [4]int{3, 5, 8, 11},      // Values[3]=11 → TYPE_PIERCE
 		},
 	}
-	p.Inventory.Items = append(p.Inventory.Items, weapon)
+	p.Inventory.RestoreItem(weapon)
 	if err := p.Equipment.Equip(weapon, p.Inventory); err != nil {
 		t.Fatalf("equip piercing weapon: %v", err)
 	}
@@ -239,7 +239,7 @@ func equipSwordWeapon(t *testing.T, p *game.Player) {
 			Values:    [4]int{3, 6, 4, 3},       // Values[3]=3 → TYPE_SLASH
 		},
 	}
-	p.Inventory.Items = append(p.Inventory.Items, weapon)
+	p.Inventory.RestoreItem(weapon)
 	if err := p.Equipment.Equip(weapon, p.Inventory); err != nil {
 		t.Fatalf("equip sword: %v", err)
 	}

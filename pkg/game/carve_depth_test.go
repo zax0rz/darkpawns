@@ -196,7 +196,7 @@ func TestDoCarveFoodMappings(t *testing.T) {
 			if result := DoCarve(ch, "corpse", w); !result.Success {
 				t.Fatal("DoCarve reported failure")
 			}
-			if got := ch.Inventory.Items[len(ch.Inventory.Items)-1].GetVNum(); got != tt.wantVNum {
+			if got := ch.Inventory.Snapshot()[ch.Inventory.GetItemCount()-1].GetVNum(); got != tt.wantVNum {
 				t.Fatalf("food vnum = %d, want %d", got, tt.wantVNum)
 			}
 		})

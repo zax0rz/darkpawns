@@ -11,7 +11,7 @@ import (
 // Inventory represents a player's inventory.
 type Inventory struct {
 	mu    sync.RWMutex
-	Items []*ObjectInstance
+	items []*ObjectInstance
 	// Capacity is the item count limit (CAN_CARRY_N).
 	Capacity int
 	// MaxWeight is the carry weight limit (CAN_CARRY_W). 0 = unenforced.
@@ -21,7 +21,7 @@ type Inventory struct {
 // NewInventory creates a new inventory with default capacity.
 func NewInventory() *Inventory {
 	return &Inventory{
-		Items:    make([]*ObjectInstance, 0),
+		items:    make([]*ObjectInstance, 0),
 		Capacity: 20, // Default base capacity
 	}
 }
@@ -34,29 +34,29 @@ func (inv *Inventory) addItem(item *ObjectInstance) error {
 		// Compute weight inline — caller already holds the lock, so we can't
 		// call the locking GetWeight() (re-entrant RLock under Lock deadlocks).
 		weight := 0
-		for _, o := range inv.Items {
+		for _, o := range inv.items {
 			weight += o.GetTotalWeight()
 		}
 		if weight+item.GetTotalWeight() > inv.MaxWeight {
 			return ErrInventoryTooHeavy
 		}
 	}
-	if len(inv.Items) >= inv.Capacity {
+	if len(inv.items) >= inv.Capacity {
 		return ErrInventoryFull
 	}
 	// C obj_to_char() links each acquired object at the head of carrying.
 	// Keep the same newest-first order; object list rendering reverses it.
-	inv.Items = append(inv.Items, nil)
-	copy(inv.Items[1:], inv.Items[:len(inv.Items)-1])
-	inv.Items[0] = item
+	inv.items = append(inv.items, nil)
+	copy(inv.items[1:], inv.items[:len(inv.items)-1])
+	inv.items[0] = item
 	return nil
 }
 
 // removeItem removes an item from the inventory by reference (internal — no lock).
 func (inv *Inventory) removeItem(item *ObjectInstance) bool {
-	for i, invItem := range inv.Items {
+	for i, invItem := range inv.items {
 		if invItem == item {
-			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
+			inv.items = append(inv.items[:i], inv.items[i+1:]...)
 			return true
 		}
 	}
@@ -65,9 +65,9 @@ func (inv *Inventory) removeItem(item *ObjectInstance) bool {
 
 // removeItemByVNum removes an item from the inventory by VNum (internal — no lock).
 func (inv *Inventory) removeItemByVNum(vnum int) (*ObjectInstance, bool) {
-	for i, item := range inv.Items {
+	for i, item := range inv.items {
 		if item.VNum == vnum {
-			inv.Items = append(inv.Items[:i], inv.Items[i+1:]...)
+			inv.items = append(inv.items[:i], inv.items[i+1:]...)
 			return item, true
 		}
 	}
@@ -80,7 +80,7 @@ func (inv *Inventory) FindItem(name string) (*ObjectInstance, bool) {
 	defer inv.mu.RUnlock()
 
 	lowerName := strings.ToLower(name)
-	for _, item := range inv.Items {
+	for _, item := range inv.items {
 		// Check keywords
 		keywords := strings.ToLower(item.GetKeywords())
 		if strings.Contains(keywords, lowerName) {
@@ -103,14 +103,14 @@ func (inv *Inventory) FindItems(name string) []*ObjectInstance {
 
 	if name == "" {
 		// Return a copy of all items
-		allItems := make([]*ObjectInstance, len(inv.Items))
-		copy(allItems, inv.Items)
+		allItems := make([]*ObjectInstance, len(inv.items))
+		copy(allItems, inv.items)
 		return allItems
 	}
 
 	lowerName := strings.ToLower(name)
 	var matches []*ObjectInstance
-	for _, item := range inv.Items {
+	for _, item := range inv.items {
 		// Check keywords
 		keywords := strings.ToLower(item.GetKeywords())
 		if strings.Contains(keywords, lowerName) {
@@ -130,14 +130,14 @@ func (inv *Inventory) FindItems(name string) []*ObjectInstance {
 func (inv *Inventory) GetItemCount() int {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
-	return len(inv.Items)
+	return len(inv.items)
 }
 
 // IsFull returns true if inventory is at capacity.
 func (inv *Inventory) IsFull() bool {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
-	return len(inv.Items) >= inv.Capacity
+	return len(inv.items) >= inv.Capacity
 }
 
 // GetCapacity returns the inventory capacity.
@@ -153,7 +153,7 @@ func (inv *Inventory) GetWeight() int {
 	defer inv.mu.RUnlock()
 
 	total := 0
-	for _, item := range inv.Items {
+	for _, item := range inv.items {
 		total += item.GetTotalWeight()
 	}
 	return total
@@ -176,7 +176,7 @@ func (inv *Inventory) SetCapacity(str, strAdd, dex, level int) {
 
 // clear removes all items from inventory (internal — no lock).
 func (inv *Inventory) clear() {
-	inv.Items = make([]*ObjectInstance, 0)
+	inv.items = make([]*ObjectInstance, 0)
 }
 
 // Deprecated: Use MoveObject helpers instead. These exported wrappers exist for
@@ -192,7 +192,7 @@ func (inv *Inventory) AddItem(item *ObjectInstance) error {
 func (inv *Inventory) Snapshot() []*ObjectInstance {
 	inv.mu.RLock()
 	defer inv.mu.RUnlock()
-	return append([]*ObjectInstance(nil), inv.Items...)
+	return append([]*ObjectInstance(nil), inv.items...)
 }
 
 // RestoreItem adds an item to the inventory ignoring the capacity limit. It is
@@ -204,8 +204,8 @@ func (inv *Inventory) Snapshot() []*ObjectInstance {
 func (inv *Inventory) RestoreItem(item *ObjectInstance) (overCapacity bool) {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
-	over := len(inv.Items) >= inv.Capacity
-	inv.Items = append(inv.Items, item)
+	over := len(inv.items) >= inv.Capacity
+	inv.items = append(inv.items, item)
 	return over
 }
 
@@ -219,6 +219,39 @@ func (inv *Inventory) Clear() {
 	inv.mu.Lock()
 	defer inv.mu.Unlock()
 	inv.clear()
+}
+
+// RemoveItemByVNum removes and returns the first item with this vnum.
+func (inv *Inventory) RemoveItemByVNum(vnum int) (*ObjectInstance, bool) {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
+	return inv.removeItemByVNum(vnum)
+}
+
+// TakeAt removes and returns the item at index idx, or nil when idx is out of
+// range. Callers that pick an item by position (a random carried item, a
+// snapshot index) must use this rather than indexing Items: the slice is
+// guarded by mu, so a raw index can straddle a concurrent writer.
+func (inv *Inventory) TakeAt(idx int) *ObjectInstance {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
+	if idx < 0 || idx >= len(inv.items) {
+		return nil
+	}
+	item := inv.items[idx]
+	inv.items = append(inv.items[:idx], inv.items[idx+1:]...)
+	return item
+}
+
+// TakeAll removes every item and returns them in order. It is the atomic form
+// of "snapshot then clear", which a corpse build needs: two separate calls can
+// interleave with a concurrent add and lose or duplicate an item.
+func (inv *Inventory) TakeAll() []*ObjectInstance {
+	inv.mu.Lock()
+	defer inv.mu.Unlock()
+	items := append([]*ObjectInstance(nil), inv.items...)
+	inv.clear()
+	return items
 }
 
 // ==========================================================================

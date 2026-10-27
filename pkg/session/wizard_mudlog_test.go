@@ -167,7 +167,7 @@ func TestWizardMudlogThresholdAndOrder(t *testing.T) {
 		_, a, v, _ := wizardLogFixture(t)
 		file := captureMudlogFile(t)
 		ready := false
-		game.SetLogWriter(&flagProbe{buf: file, when: func() { ready = len(v.player.Inventory.Items) == 4 && len(a.send) > 0 && len(v.send) > 0 }})
+		game.SetLogWriter(&flagProbe{buf: file, when: func() { ready = v.player.Inventory.GetItemCount() == 4 && len(a.send) > 0 && len(v.send) > 0 }})
 		if err := cmdNewbie(a, []string{"Logvictim"}); err != nil {
 			t.Fatal(err)
 		}

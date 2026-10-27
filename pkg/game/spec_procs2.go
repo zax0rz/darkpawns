@@ -1490,7 +1490,7 @@ func specLittleBoy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		ch.SendMessage("The boy smiles and hands you a small note.\r\n")
 		if obj, err := w.SpawnObject(7107, ch.GetRoom()); err == nil {
 			if ch.Inventory != nil {
-				if err := ch.Inventory.addItem(obj); err != nil {
+				if err := ch.Inventory.AddItem(obj); err != nil {
 					slog.Warn("spec proc item grant failed", "vnum", 7107, "player", ch.Name, "error", err)
 				}
 			}

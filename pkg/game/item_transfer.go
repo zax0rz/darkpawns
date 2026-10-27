@@ -10,7 +10,7 @@ import (
 
 // canTakeObj checks if a player can take an object
 func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
-	if len(ch.Inventory.Items) >= ch.MaxCarryItems() {
+	if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
 		w.actToChar(ch, "$p: you can't carry that many items.", obj, nil)
 		return false
 	}
@@ -51,7 +51,7 @@ func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {
 // performGetFromContainer gets an item from a container
 func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, mode int) {
 	if mode == findObjInv || w.canTakeObj(ch, obj) {
-		if len(ch.Inventory.Items) >= ch.MaxCarryItems() {
+		if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
 			w.actToChar(ch, "$p: you can't hold any more items.", obj, nil)
 			return
 		}
@@ -210,7 +210,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 	// words ("get in pack" -> "get pack") and lowercases each argument.
 	arg1, arg2 := twoArguments(arg)
 
-	if len(ch.Inventory.Items) >= ch.MaxCarryItems() {
+	if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
 		ch.SendMessage("Your arms are already full!\r\n")
 		return true
 	}
@@ -231,7 +231,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 			return true
 		}
 		found := false
-		containers := append([]*ObjectInstance(nil), ch.Inventory.Items...)
+		containers := ch.Inventory.Snapshot()
 		containers = append(containers, w.GetItemsInRoom(ch.GetRoom())...) // snapshot (VULN-019)
 		for _, cont := range containers {
 			if !canSeeObject(ch, cont) || (contDotmode == findAlldot && !isnameWithAbbrevs(keyword, cont.GetKeywords())) {
@@ -263,7 +263,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 	var cont *ObjectInstance
 	mode := findObjRoom
-	for _, obj := range ch.Inventory.Items {
+	for _, obj := range ch.Inventory.Snapshot() {
 		if isnameWithAbbrevs(arg2, obj.GetKeywords()) {
 			cont = obj
 			mode = findObjInv
@@ -362,12 +362,11 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 	dotmode := findAllDots(arg1)
 
 	if dotmode == findAll {
-		if len(ch.Inventory.Items) == 0 {
+		if ch.Inventory.GetItemCount() == 0 {
 			ch.SendMessage("You don't seem to be carrying anything.\r\n")
 			return true
 		}
-		items := make([]*ObjectInstance, len(ch.Inventory.Items))
-		copy(items, ch.Inventory.Items)
+		items := ch.Inventory.Snapshot()
 		for _, obj := range items {
 			w.performDropNamed(ch, obj, sname)
 		}
@@ -380,8 +379,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage(fmt.Sprintf("What do you want to %s all of?\r\n", sname))
 			return true
 		}
-		items := make([]*ObjectInstance, len(ch.Inventory.Items))
-		copy(items, ch.Inventory.Items)
+		items := ch.Inventory.Snapshot()
 		found := false
 		for _, obj := range items {
 			if isnameWithAbbrevs(keyword, obj.GetKeywords()) {
@@ -397,7 +395,7 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 	// Individual drop
 	var obj *ObjectInstance
-	for _, o := range ch.Inventory.Items {
+	for _, o := range ch.Inventory.Snapshot() {
 		if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 			obj = o
 			break
@@ -581,7 +579,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
 	if mob != nil {
 		var obj *ObjectInstance
-		for _, o := range ch.Inventory.Items {
+		for _, o := range ch.Inventory.Snapshot() {
 			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
@@ -604,7 +602,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 
 	if dotmode == findIndiv {
 		var obj *ObjectInstance
-		for _, o := range ch.Inventory.Items {
+		for _, o := range ch.Inventory.Snapshot() {
 			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
 				obj = o
 				break
@@ -623,12 +621,11 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage("All of what?\r\n")
 			return true
 		}
-		if len(ch.Inventory.Items) == 0 {
+		if ch.Inventory.GetItemCount() == 0 {
 			ch.SendMessage("You don't seem to be holding anything.\r\n")
 			return true
 		}
-		items := make([]*ObjectInstance, len(ch.Inventory.Items))
-		copy(items, ch.Inventory.Items)
+		items := ch.Inventory.Snapshot()
 		for _, obj := range items {
 			// CAN_SEE_OBJ(ch, obj) — act.item.c:824. The C give-all loop skips
 			// items the giver can't see; it has no extra-flags bit check.

@@ -50,7 +50,7 @@ func (p *Player) GetInventory() []*ObjectInstance {
 	if p.Inventory == nil {
 		return nil
 	}
-	return p.Inventory.Items
+	return p.Inventory.Snapshot()
 }
 
 func (p *Player) SetGold(gold int) {

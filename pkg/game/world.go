@@ -1279,7 +1279,7 @@ func (w *World) EquipChar(charName string, isMob bool, objVNum int) bool {
 	if p == nil || p.Inventory == nil {
 		return false
 	}
-	item, found := p.Inventory.removeItemByVNum(objVNum)
+	item, found := p.Inventory.RemoveItemByVNum(objVNum)
 	if !found {
 		return false
 	}

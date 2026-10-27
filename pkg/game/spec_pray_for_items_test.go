@@ -63,7 +63,7 @@ func TestSpecPrayForItems_FallsThroughOrdinarySocial(t *testing.T) {
 				t.Errorf("non-pray output = %q, want empty", got)
 			}
 			items := w.GetItemsInRoom(1001)
-			if player.GetLevel() != level || player.GetExp() != exp || player.GetFlags() != flags || player.GetGold() != 50 || len(items) != 1 || items[0] != altar || len(player.Inventory.Items) != 0 {
+			if player.GetLevel() != level || player.GetExp() != exp || player.GetFlags() != flags || player.GetGold() != 50 || len(items) != 1 || items[0] != altar || player.Inventory.GetItemCount() != 0 {
 				t.Error("non-pray command changed player or room state")
 			}
 		})

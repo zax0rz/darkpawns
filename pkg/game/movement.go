@@ -30,7 +30,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 		switch old.OwnerKind {
 		case OwnerPlayer:
 			if p, ok := w.players[old.PlayerName]; ok {
-				p.Inventory.removeItem(obj)
+				p.Inventory.RemoveItem(obj)
 				// C obj_from_char sets PLR_CRASH after the removal
 				// (handler.c:596-598).
 				p.MarkCrashNeeded()
@@ -54,7 +54,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				} else {
 					// unequip adds to inventory; this move owns the next destination.
 					// C unequip_char returns the object without obj_to_char (:754-783).
-					p.Inventory.removeItem(obj)
+					p.Inventory.RemoveItem(obj)
 				}
 				// No PLR_CRASH here: C's unequip_char only clears the eq
 				// link (handler.c:754-783); the flag is obj_to_char's /
@@ -106,7 +106,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 		switch dst.OwnerKind {
 		case OwnerPlayer:
 			if p, ok := w.players[dst.PlayerName]; ok {
-				if err := p.Inventory.addItem(obj); err != nil {
+				if err := p.Inventory.AddItem(obj); err != nil {
 					return fmt.Errorf("attach to player %s inventory: %w", dst.PlayerName, err)
 				}
 				// C obj_to_char sets PLR_CRASH after the attach
@@ -128,7 +128,7 @@ func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) erro
 					w.adjustRoomLight(p.RoomVNum, 1)
 				}
 				// Remove from inventory first if it's there
-				p.Inventory.removeItem(obj)
+				p.Inventory.RemoveItem(obj)
 				if err := p.Equipment.Equip(obj, p.Inventory); err != nil {
 					return fmt.Errorf("equip on player %s: %w", dst.PlayerName, err)
 				}
@@ -300,9 +300,9 @@ func (w *World) PlaceObjectInPlayerInventory(obj *ObjectInstance, p *Player) err
 		return fmt.Errorf("detach loaded object: %w", err)
 	}
 	p.Inventory.mu.Lock()
-	p.Inventory.Items = append(p.Inventory.Items, nil)
-	copy(p.Inventory.Items[1:], p.Inventory.Items[:len(p.Inventory.Items)-1])
-	p.Inventory.Items[0] = obj
+	p.Inventory.items = append(p.Inventory.items, nil)
+	copy(p.Inventory.items[1:], p.Inventory.items[:len(p.Inventory.items)-1])
+	p.Inventory.items[0] = obj
 	p.Inventory.mu.Unlock()
 	obj.RoomVNum = -1
 	obj.Location = LocInventoryPlayer(p.Name)

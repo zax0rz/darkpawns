@@ -176,7 +176,7 @@ func (w *World) DoInventory(ch *Player) {
 
 	var items []*ObjectInstance
 	if ch.Inventory != nil {
-		items = ch.Inventory.Items
+		items = ch.Inventory.Snapshot()
 	}
 	b.WriteString(w.renderObjectListMode15(ch, items))
 	ch.SendMessage(b.String())

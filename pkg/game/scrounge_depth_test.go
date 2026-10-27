@@ -68,8 +68,8 @@ func TestDoScroungeDepthSectorMapAndMessages(t *testing.T) {
 			if len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillScrounge {
 				t.Fatalf("deferred improvement = %v, want [%q]", result.DeferredImprove, SkillScrounge)
 			}
-			if len(ch.Inventory.Items) != 1 || ch.Inventory.Items[0].VNum != test.vnum {
-				t.Fatalf("inventory = %#v, want object vnum %d", ch.Inventory.Items, test.vnum)
+			if ch.Inventory.GetItemCount() != 1 || ch.Inventory.Snapshot()[0].VNum != test.vnum {
+				t.Fatalf("inventory = %#v, want object vnum %d", ch.Inventory.Snapshot(), test.vnum)
 			}
 			if test.find && result.MessageToCh != "You find some edible berries.\r\n" {
 				t.Fatal("mountain must use the find wording")

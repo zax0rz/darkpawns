@@ -532,7 +532,7 @@ func findItemByName(ch *Player, name string) (*ObjectInstance, bool) {
 	name = strings.ToLower(name)
 
 	// Check inventory
-	for _, obj := range ch.Inventory.Items {
+	for _, obj := range ch.Inventory.Snapshot() {
 		if obj != nil && strings.Contains(strings.ToLower(obj.GetShortDesc()), name) {
 			return obj, true
 		}

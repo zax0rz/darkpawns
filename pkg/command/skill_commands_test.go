@@ -877,7 +877,7 @@ func TestCmdSharpen_Fighting(t *testing.T) {
 	session := newSkillCommandSession(t)
 	session.player.SetPosition(combat.PosFighting)
 	session.player.SetFightingBody(game.NewPlayer(99999, "opponent", 1001))
-	session.player.Inventory.Items = append(session.player.Inventory.Items, game.NewObjectInstance(&parser.Obj{
+	session.player.Inventory.RestoreItem(game.NewObjectInstance(&parser.Obj{
 		VNum:      9001,
 		Keywords:  "sword",
 		ShortDesc: "a test sword",

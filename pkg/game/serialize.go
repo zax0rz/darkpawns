@@ -27,7 +27,7 @@ func SerializeInventory(inv *Inventory, worldObjs map[int]*parser.Obj) ([]byte, 
 	}
 
 	// Store only VNums to save space
-	for _, item := range inv.Items {
+	for _, item := range inv.items {
 		data.ItemVnums = append(data.ItemVnums, item.VNum)
 	}
 

@@ -80,7 +80,7 @@ func TestCmdLoadObjectNameUsesCPlacementAndAudiences(t *testing.T) {
 	if strings.Contains(observerText, "appears") {
 		t.Fatalf("observer output = %q, must not contain ordinary spawn announcement", observerText)
 	}
-	if got := len(actor.player.Inventory.Items); got != 1 {
+	if got := actor.player.Inventory.GetItemCount(); got != 1 {
 		t.Fatalf("actor inventory length = %d, want one loaded object", got)
 	}
 }
