@@ -26,6 +26,7 @@ func newConPlayingFixture(t *testing.T) conPlayingFixture {
 	nextPlayerID := 1
 	newSession := func(name string, level int) *Session {
 		s := makeCommandTestSession(t, m, name, level, 1001)
+		s.player.SetPosition(game.PosStanding)
 		s.player.ID = nextPlayerID
 		nextPlayerID++
 		s.player.Stats.Int, s.player.Stats.Wis = 10, 10
