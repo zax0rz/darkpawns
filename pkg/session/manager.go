@@ -2092,6 +2092,9 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 			continue
 		}
 		if s.player != nil && s.player.GetRoom() == roomVNum {
+			if !game.CanReceiveAct(s.player) {
+				continue
+			}
 			if s.stageHeartbeat(message, "", false) {
 				continue
 			}

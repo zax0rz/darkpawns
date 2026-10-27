@@ -409,6 +409,28 @@ func TestQuitBroadcastsOneLeaveAndTurnsOffInfobar(t *testing.T) {
 	}
 }
 
+func TestQuitDepartureActSkipsSleepingAndWritingObservers(t *testing.T) {
+	m := makeQuitTestManager(t, nil)
+	quitter := makeQuitSession(t, m, 1, "Leaver", 10, 8004)
+	sleeping := makeQuitSession(t, m, 2, "Sleeper", 10, 8004)
+	awake := makeQuitSession(t, m, 3, "Awake", 10, 8004)
+	writer := makeQuitSession(t, m, 4, "Writer", 10, 8004)
+	sleeping.player.SetPosition(combat.PosSleeping)
+	writer.player.SetPlrFlag(game.PlrWriting, true)
+
+	if err := ExecuteCommand(quitter, "quit", nil); err != nil {
+		t.Fatalf("ExecuteCommand quit: %v", err)
+	}
+	if got := readMsgText(t, awake); got != "Leaver has left the game." {
+		t.Fatalf("awake observer message = %q", got)
+	}
+	for label, sess := range map[string]*Session{"sleeping": sleeping, "writing": writer} {
+		if len(sess.send) != 0 {
+			t.Errorf("%s observer received %d leave frames", label, len(sess.send))
+		}
+	}
+}
+
 // C registers reallyquit as its own do_quit subcmd (src/interpreter.c:657);
 // it must not collapse into a bare alias of quit.
 func TestReallyQuitIsNotABareAlias(t *testing.T) {

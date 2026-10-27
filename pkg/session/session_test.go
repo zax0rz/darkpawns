@@ -211,6 +211,37 @@ func TestManager_BroadcastToRoom(t *testing.T) {
 	}
 }
 
+func TestManager_BroadcastToRoomActGate(t *testing.T) {
+	m := makeTestManager(t)
+	sleeping := makeTestSession(t, m, "Sleeping", 1001, true)
+	awake := makeTestSession(t, m, "Awake", 1001, true)
+	writer := makeTestSession(t, m, "Writer", 1001, true)
+	sleeping.player.SetPosition(combat.PosSleeping)
+	writer.player.SetPlrFlag(game.PlrWriting, true)
+
+	m.mu.Lock()
+	m.sessions["sleeping"] = sleeping
+	m.sessions["awake"] = awake
+	m.sessions["writer"] = writer
+	m.mu.Unlock()
+
+	msg := []byte(`{"type":"event","data":{"type":"leave","text":"Roomactor has left the game."}}`)
+	m.BroadcastToRoom(1001, msg, "Roomactor")
+
+	for label, sess := range map[string]*Session{"sleeping": sleeping, "writer": writer} {
+		select {
+		case got := <-sess.send:
+			t.Errorf("%s observer received act-equivalent frame %s", label, got)
+		default:
+		}
+	}
+	select {
+	case <-awake.send:
+	default:
+		t.Fatal("awake observer did not receive act-equivalent frame")
+	}
+}
+
 // ---------------------------------------------------------------------------
 // TestManager_BroadcastToRoom_Exclude — excluded player doesn't get message
 // ---------------------------------------------------------------------------
