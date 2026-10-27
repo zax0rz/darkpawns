@@ -45,17 +45,17 @@ func TestWebSocketPerIPLimitCountsRealClientsBehindProxy(t *testing.T) {
 	}
 
 	const household = "203.0.113.20"
-	for i := 0; i < webSocketMaxConnsPerIP; i++ {
+	for i := 0; i < int(webSocketMaxConnsPerIP.Load()); i++ {
 		conn, admitted := dial(household)
 		t.Cleanup(func() { _ = conn.Close() })
 		if !admitted {
-			t.Fatalf("connection %d from one household refused below the cap of %d", i+1, webSocketMaxConnsPerIP)
+			t.Fatalf("connection %d from one household refused below the cap of %d", i+1, webSocketMaxConnsPerIP.Load())
 		}
 	}
 	conn, admitted := dial(household)
 	t.Cleanup(func() { _ = conn.Close() })
 	if admitted {
-		t.Fatalf("connection %d from one household admitted past the cap", webSocketMaxConnsPerIP+1)
+		t.Fatalf("connection %d from one household admitted past the cap", int(webSocketMaxConnsPerIP.Load())+1)
 	}
 	other, admitted := dial("198.51.100.44")
 	t.Cleanup(func() { _ = other.Close() })
@@ -75,7 +75,7 @@ func asCloseError(err error, target **websocket.CloseError) bool {
 // TestMultiplayLimitsFitTwoPlayers pins the sizing rationale: two players on
 // one connection, each at the three-character allowance.
 func TestMultiplayLimitsFitTwoPlayers(t *testing.T) {
-	if webSocketMaxConnsPerIP < 2*3 {
-		t.Fatalf("webSocketMaxConnsPerIP = %d, below two players' multiplay allowance", webSocketMaxConnsPerIP)
+	if int(webSocketMaxConnsPerIP.Load()) < 2*3 {
+		t.Fatalf("webSocketMaxConnsPerIP = %d, below two players' multiplay allowance", webSocketMaxConnsPerIP.Load())
 	}
 }

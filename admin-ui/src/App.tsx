@@ -23,6 +23,8 @@ import { TerminalPage } from './pages/TerminalPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { OperationsPage } from './pages/OperationsPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { UpdatesPage } from './pages/UpdatesPage';
 import { WorkshopPage } from './pages/WorkshopPage';
 import { OlcHelpPage } from './pages/OlcHelpPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -59,6 +61,8 @@ export default function App() {
             <Route path="/admin/staff/notifications" element={<ErrorBoundary><NotificationsPage /></ErrorBoundary>} />
             <Route path="/admin/staff/players" element={<ErrorBoundary><PlayersPage /></ErrorBoundary>} />
             <Route path="/admin/operations" element={<ErrorBoundary><OperationsPage /></ErrorBoundary>} />
+            <Route path="/admin/staff/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
+            <Route path="/admin/staff/updates" element={<ErrorBoundary><UpdatesPage /></ErrorBoundary>} />
             <Route path="/admin/workshop" element={<ErrorBoundary><WorkshopPage /></ErrorBoundary>} />
             <Route path="/admin/workshop/help" element={<ErrorBoundary><OlcHelpPage /></ErrorBoundary>} />
             <Route path="/admin/workshop/scripts" element={<ErrorBoundary><Suspense fallback={fileEditorFallback}><FileEditorPage root="lua" /></Suspense></ErrorBoundary>} />

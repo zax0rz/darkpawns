@@ -549,9 +549,9 @@ func TestReadLinePreAuthIdleTimeout(t *testing.T) {
 	}
 
 	// Shorten the idle timeout for a deterministic, fast test.
-	prev := loginIdleTimeout
-	loginIdleTimeout = 100 * time.Millisecond
-	t.Cleanup(func() { loginIdleTimeout = prev })
+	prev := loginIdleTimeout()
+	loginIdleNanos.Store(int64(100 * time.Millisecond))
+	t.Cleanup(func() { loginIdleNanos.Store(int64(prev)) })
 
 	// net.Pipe writes block until read; drain the client side in a goroutine so
 	// readLinePreAuth's goodbye write doesn't deadlock.
@@ -570,7 +570,7 @@ func TestReadLinePreAuthIdleTimeout(t *testing.T) {
 		t.Fatal("readLinePreAuth returned ok=true on an idle connection, want timeout")
 	}
 	if elapsed > 2*time.Second {
-		t.Errorf("readLinePreAuth took %v, want it to time out within ~%v", elapsed, loginIdleTimeout)
+		t.Errorf("readLinePreAuth took %v, want it to time out within ~%v", elapsed, loginIdleTimeout())
 	}
 
 	// Closing the server side (via defer) lets the drain goroutine finish.
@@ -598,7 +598,7 @@ func TestReadLinePreAuthSuccess(t *testing.T) {
 		br:   bufio.NewReader(server),
 		wmu:  make(chan struct{}, 1),
 	}
-	loginIdleTimeout = 5 * time.Second
+	loginIdleNanos.Store(int64(5 * time.Second))
 
 	go func() {
 		_, _ = client.Write([]byte("bob\r\n"))
@@ -631,20 +631,20 @@ func TestReadLinePlayingClearsPreLoginDeadline(t *testing.T) {
 		wmu:  make(chan struct{}, 1),
 	}
 
-	prev := loginIdleTimeout
-	loginIdleTimeout = 50 * time.Millisecond
-	t.Cleanup(func() { loginIdleTimeout = prev })
+	prev := loginIdleTimeout()
+	loginIdleNanos.Store(int64(50 * time.Millisecond))
+	t.Cleanup(func() { loginIdleNanos.Store(int64(prev)) })
 
 	// Arm a short deadline exactly as the login reader would have left it
 	// armed when the character entered the world.
-	if err := tc.SetReadDeadline(time.Now().Add(loginIdleTimeout)); err != nil {
+	if err := tc.SetReadDeadline(time.Now().Add(loginIdleTimeout())); err != nil {
 		t.Fatal(err)
 	}
 
 	// Deliver a line well past that deadline. readLine must have cleared the
 	// deadline, so it is still waiting and returns the line, not a timeout.
 	go func() {
-		time.Sleep(4 * loginIdleTimeout)
+		time.Sleep(4 * loginIdleTimeout())
 		_, _ = client.Write([]byte("score\r\n"))
 		go drain(client)
 	}()
@@ -873,15 +873,15 @@ func TestMCCP2DONTKeepsPlaintext(t *testing.T) {
 // TestConfigurableConnectionLimits verifies that TELNET_MAX_CONNS and
 // TELNET_MAX_CONNS_PER_IP are read from the environment (DP-556).
 func TestConfigurableConnectionLimits(t *testing.T) {
-	origMaxTotal := maxTotalConns
-	origMaxPerIP := maxConnsPerIP
+	origMaxTotal := maxTotalConns.Load()
+	origMaxPerIP := maxConnsPerIP.Load()
 	defer func() {
-		maxTotalConns = origMaxTotal
-		maxConnsPerIP = origMaxPerIP
+		maxTotalConns.Store(origMaxTotal)
+		maxConnsPerIP.Store(origMaxPerIP)
 	}()
 
-	maxTotalConns = 5
-	maxConnsPerIP = 2
+	maxTotalConns.Store(5)
+	maxConnsPerIP.Store(2)
 
 	manager, world := newTestManager(t)
 	defer world.StopAITicker()

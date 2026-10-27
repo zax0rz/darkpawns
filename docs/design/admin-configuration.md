@@ -1,8 +1,9 @@
 # Configuration and updates in the admin console
 
-Status: design only (v0.1.7 stage D). Nothing here is implemented by this
-document, and nothing in it changes telnet dialogue, game rules, or draw
-parity (R1–R4). The design stops at the transport, lifecycle and persistence
+Status: implemented for v0.1.7 (game-owned settings, typed pages, backup and
+restore, audit history, and the launcher update handoff). Listener editing
+stays with the network settings design. Nothing here changes telnet
+dialogue, game rules, or draw parity (R1–R4). The design stops at the transport, lifecycle and persistence
 decisions Zach asked for; implementation briefs follow approval, and assume
 stage A landed: every admin endpoint typed in Huma, the UI client generated
 from `/openapi.json`. It extends

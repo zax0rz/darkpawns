@@ -27,7 +27,7 @@ builds:
     goos: [linux, darwin, windows]
     goarch: [amd64, arm64]
     flags: [-trimpath]
-    ldflags: ['-s -w -X main.version={{ .Version }}']
+    ldflags: ['-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}']
 archives:
   - id: portable
     ids: [launcher, server]

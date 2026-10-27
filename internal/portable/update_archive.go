@@ -38,6 +38,7 @@ type releaseAsset struct {
 }
 type githubRelease struct {
 	Tag        string         `json:"tag_name"`
+	HTMLURL    string         `json:"html_url"`
 	Draft      bool           `json:"draft"`
 	Prerelease bool           `json:"prerelease"`
 	Assets     []releaseAsset `json:"assets"`
@@ -58,26 +59,36 @@ func updateClient() *http.Client {
 	}}
 }
 
-func latestAsset(ctx context.Context, client *http.Client, endpoint string) (releaseAsset, error) {
+// fetchLatestRelease performs the read-only release lookup shared by staging
+// and the console's update check. It downloads nothing.
+func fetchLatestRelease(ctx context.Context, client *http.Client, endpoint string) (githubRelease, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return releaseAsset{}, err
+		return githubRelease{}, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "darkpawns-updater")
 	response, err := client.Do(req)
 	if err != nil {
-		return releaseAsset{}, err
+		return githubRelease{}, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode == http.StatusNotFound {
-		return releaseAsset{}, errors.New("no published stable portable release is available yet; your world was not stopped")
+		return githubRelease{}, errors.New("no published stable portable release is available yet; your world was not stopped")
 	}
 	if response.StatusCode != http.StatusOK {
-		return releaseAsset{}, fmt.Errorf("release lookup returned HTTP %d; your world was not stopped", response.StatusCode)
+		return githubRelease{}, fmt.Errorf("release lookup returned HTTP %d; your world was not stopped", response.StatusCode)
 	}
 	var release githubRelease
 	if err := json.NewDecoder(io.LimitReader(response.Body, 2<<20)).Decode(&release); err != nil {
+		return githubRelease{}, err
+	}
+	return release, nil
+}
+
+func latestAsset(ctx context.Context, client *http.Client, endpoint string) (releaseAsset, error) {
+	release, err := fetchLatestRelease(ctx, client, endpoint)
+	if err != nil {
 		return releaseAsset{}, err
 	}
 	return selectAsset(release)

@@ -48,6 +48,9 @@ type serverInfoResponse struct {
 	RoomCount   int    `json:"room_count"`
 	PlayerCount int    `json:"player_count"`
 	ZoneCount   int    `json:"zone_count"`
+	Version     string `json:"version,omitempty"`
+	Commit      string `json:"commit,omitempty"`
+	Managed     bool   `json:"managed"`
 }
 
 // mobResponse is the JSON shape returned by mob endpoints.
