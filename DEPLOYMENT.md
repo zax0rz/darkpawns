@@ -486,13 +486,17 @@ text or credentials. Lines above 2000 UTF-16 code units or invalid UTF-8 are
 dropped whole, never truncated. Delivery is best effort: no replay after outages,
 settings changes or restarts; an already in-flight request can still finish.
 
-While mirroring is configured and enabled, the Go MOTD overlay appends:
+The **Show automatic gossip notice in the MOTD** checkbox sits alongside
+mirroring. It defaults on, including for older settings files without the
+`gossip_notice` field. While mirroring is configured and enabled, it appends:
 
-> Gossip is mirrored to Discord #gossip. Messages sent there do not return to the game.
+> What's said on gossip echoes to our Discord.
 
 This is rendered on new/returning login and the `motd`/`imotd` commands, without
 editing C's text/help files or cached text. With mirroring off, those bytes remain
-unchanged. The exact notice wording is proposed for Zach's review in the PR.
+unchanged. Turn the checkbox off (instance setting `gossip_notice: false`) when
+your own MOTD already discloses the mirror; production uses its own disclosure.
+This suppresses only the automatic line, leaving mirroring active.
 
 Discord protocol references: [webhook payloads](https://docs.discord.com/developers/resources/webhook#execute-webhook)
 and [response-driven rate limits](https://docs.discord.com/developers/topics/rate-limits).

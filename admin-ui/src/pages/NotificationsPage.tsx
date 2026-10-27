@@ -99,6 +99,8 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
         <h2 id="gossip-heading" className="text-xl">Discord gossip</h2>
         <p className="text-sm text-ink-muted max-w-prose">Mirror public gossip to a separate Discord #gossip webhook. Names appear as a level-1 mortal would see them. Discord messages do not return to the game.</p>
         <label className="flex items-center gap-3 min-h-11 text-sm"><input className={checkbox} type="checkbox" checked={config.gossip ?? false} disabled={save.isPending || credentialBusy} onChange={(event) => { setNotice(''); setConfig({ ...config, gossip: event.target.checked }); }} />Enable gossip mirroring</label>
+        <label className="flex items-center gap-3 min-h-11 text-sm"><input className={checkbox} type="checkbox" checked={config.gossip_notice ?? true} disabled={save.isPending || credentialBusy} onChange={(event) => { setNotice(''); setConfig({ ...config, gossip_notice: event.target.checked }); }} />Show automatic gossip notice in the MOTD</label>
+        <p className="text-sm text-ink-muted max-w-prose">On by default while mirroring is active: “What's said on gossip echoes to our Discord.” Turn this off if your own MOTD already discloses the mirror.</p>
         {!latest.status.gossip.ready && <p className="text-sm text-ink-muted">Configure the Discord gossip destination below before enabling.</p>}
       </section>
       <section aria-labelledby="heartbeat-heading" className="border-y border-rule py-5">

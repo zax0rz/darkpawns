@@ -312,8 +312,8 @@ func cmdPlayers(s *Session, args []string) error {
 // The Go-only operations notice is appended at rendering time, never written
 // into C's text files or cache. Disabled instances retain the exact C bytes.
 func (s *Session) gossipMOTDOverlay(filename, text string) string {
-	if (filename == "motd" || filename == "imotd") && s.manager.notifications != nil && s.manager.notifications.GossipEnabled() {
-		return text + "\r\nGossip is mirrored to Discord #gossip. Messages sent there do not return to the game.\r\n"
+	if (filename == "motd" || filename == "imotd") && s.manager.notifications != nil && s.manager.notifications.GossipNoticeEnabled() {
+		return text + "\r\nWhat's said on gossip echoes to our Discord.\r\n"
 	}
 	return text
 }
