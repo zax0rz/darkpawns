@@ -206,7 +206,7 @@ func TestStealCarriedLeavesOneCopy(t *testing.T) {
 // Keyword lookup is not usable here: rounds reuse item names, and a duplicate
 // is precisely a second list naming the same pointer.
 func holdsObject(p *Player, obj *ObjectInstance) bool {
-	for _, it := range p.Inventory.Items {
+	for _, it := range p.Inventory.Snapshot() {
 		if it == obj {
 			return true
 		}
