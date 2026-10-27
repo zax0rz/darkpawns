@@ -95,7 +95,15 @@ func TestScopedCapabilityCannotStopButReachesTransactions(t *testing.T) {
 }
 
 func journalRecord(instance, id, phase string) updateRecord {
-	return updateRecord{ID: id, Phase: phase, Previous: instance, Candidate: filepath.Join(updatePath(instance), id, "release")}
+	// readUpdate canonicalizes the instance before validating the journal's
+	// paths, and CI temp dirs are symlinks (/var -> /private/var on macOS,
+	// short names on Windows); build the fixture from the canonical path or
+	// the candidate looks like it sits outside its transaction directory.
+	canonical, err := canonicalInstance(instance)
+	if err != nil {
+		canonical = instance
+	}
+	return updateRecord{ID: id, Phase: phase, Previous: canonical, Candidate: filepath.Join(updatePath(canonical), id, "release")}
 }
 
 func writeJournal(t *testing.T, instance string, record updateRecord) {
