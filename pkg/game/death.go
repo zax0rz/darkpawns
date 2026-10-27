@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/parser"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/events"
 	"github.com/zax0rz/darkpawns/pkg/spells"
@@ -777,7 +779,11 @@ func (w *World) deathCry(player *Player) {
 		"Your blood freezes as you hear $n's death cry.", "", ToRoom)
 	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
 		for _, dir := range dirs {
-			if exit, exists := room.Exits[dir]; exists && exit.ToRoom > 0 {
+			// CAN_GO (src/utils.h:565-567): C's death_cry repoints ch into
+			// adjacent rooms through CAN_GO, so a closed door muffles the
+			// cry (src/fight.c:520-527).
+			if exit, exists := room.Exits[dir]; exists && exit.ToRoom > 0 &&
+				exit.ExitInfo&parser.ExitClosed == 0 {
 				w.roomMessage(exit.ToRoom,
 					"Your blood freezes as you hear someone's death cry.")
 			}

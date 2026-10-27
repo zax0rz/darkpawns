@@ -1,0 +1,110 @@
+# depth-case: fight.death-cry-closed-door
+# C's death_cry walks adjacent rooms through CAN_GO (src/fight.c:520-527),
+# whose third clause skips closed doors (src/utils.h:565-567). A mob dies at
+# 8040: the peer on the open north side (8029) hears "someone's death cry",
+# the god listening beyond the west gate (closed in warmup, room 8087) hears
+# nothing. The directed send: step drives the killer peer; the primary god
+# never leaves 8087.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14500 1 8040 145
+
+[setup:oracle]
+Crygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Crygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:killer]
+Crykill
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:killer]
+Crykill
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:north]
+Crynorth
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:north]
+Crynorth
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8040
+close gate
+teleport Crykill 8040
+teleport Crynorth 8029
+goto 8087
+
+[probe]
+send:killer kill zookeeper
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+score
