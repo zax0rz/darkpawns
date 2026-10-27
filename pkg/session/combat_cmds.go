@@ -366,7 +366,10 @@ func cmdRetreat(s *Session) error {
 			return fmt.Errorf("invalid room")
 		}
 		exit, ok := room.Exits[direction]
-		if !ok || exit.ToRoom == -1 {
+		// CAN_GO's third clause skips closed doors (src/utils.h:565-567):
+		// C's retreat never even attempts a closed exit, so do_simple_move's
+		// doorless move cannot slip the player through one.
+		if !ok || exit.ToRoom == -1 || exit.ExitInfo&parser.ExitClosed != 0 {
 			continue
 		}
 		destination, ok := s.manager.world.GetRoom(exit.ToRoom)
