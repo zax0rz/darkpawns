@@ -61,7 +61,7 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 		ch.SendMessage("Heh heh heh.. we are jolly funny today, eh?\r\n")
 		return
 	}
-	if ch.GetGold() < amount {
+	if !ch.SpendGold(amount) {
 		ch.SendMessage("You don't have that many coins!\r\n")
 		return
 	}
@@ -78,13 +78,13 @@ func (w *World) performDisposeGold(ch *Player, amount int, mode int, donationRoo
 		if err := w.MoveObjectToRoomFront(moneyObj, donationRoom); err != nil {
 			slog.Error("donation gold move failed",
 				"player", ch.GetName(), "error", err)
+			// The reservation is returned: the donation never landed.
+			ch.AddGold(amount)
 			ch.SendMessage("Something went wrong. Your gold was not donated.\r\n")
 			return
 		}
 		w.roomMessage(donationRoom, capitalize(strings.ReplaceAll("$p suddenly appears in a puff of orange smoke!", "$p", moneyObj.GetShortDesc())))
 	}
-
-	ch.SetGold(ch.GetGold() - amount)
 }
 
 // doDispose implements the shared argument handling of ACMD(do_drop) for

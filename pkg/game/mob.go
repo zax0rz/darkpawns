@@ -1156,6 +1156,19 @@ func (m *MobInstance) SetGold(gold int) {
 	m.Gold = gold
 }
 
+// SpendGold atomically checks and deducts the mob's gold, mirroring
+// Player.SpendGold. A separate GetGold check followed by SetGold(GetGold()-n)
+// is a check-then-act that two concurrent commands both pass (CWE-367).
+func (m *MobInstance) SpendGold(amount int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if amount > 0 && m.Gold < amount {
+		return false
+	}
+	m.Gold -= amount
+	return true
+}
+
 // updateGold applies a balance change while holding the mob lock. The callback
 // returns the replacement balance and whether the operation was accepted.
 func (m *MobInstance) updateGold(change func(int) (int, bool)) bool {

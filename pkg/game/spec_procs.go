@@ -170,13 +170,18 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		ch.SendMessage(RenderSkillList(ch))
 		return true
 	}
-	if ch.GetPractices() <= 0 {
+	// Reserve the session up front. The check and the deduction were separated
+	// by the skill/level/learned branches, so two concurrent practices both
+	// passed the check and one session bought two practices (CWE-367). The
+	// intervening refusals refund it, so the byte flow is unchanged.
+	if !ch.TrySpendPractices(1) {
 		sendToChar(ch, "You do not seem to be able to practice now.")
 		return true
 	}
 
 	skillNum := FindSkillNum(arg)
 	if skillNum < 1 || ch.GetLevel() < ClassSkillMinLevel(class, skillNum) {
+		ch.AddPractices(1)
 		sendToChar(ch, fmt.Sprintf("You do not know of that %s.", SplSkl(class)))
 		return true
 	}
@@ -184,12 +189,12 @@ func specGuild(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 	name := SkillStorageName(skillNum)
 	learned := pracLearned(class)
 	if ch.GetSkill(name) >= learned {
+		ch.AddPractices(1)
 		sendToChar(ch, "You are already learned in that area.")
 		return true
 	}
 
 	sendToChar(ch, "You practice for a while...")
-	ch.SetPractices(ch.GetPractices() - 1)
 
 	// percent += MIN(MAXGAIN, MAX(MINGAIN, int_app[GET_INT].learn)) (spec_procs.c:242)
 	gain := intAppLearn(ch.GetInt())

@@ -17,6 +17,14 @@ func (p *Player) ConsumeSpellReagent(name string) bool {
 	if w == nil {
 		return false
 	}
+	// Consume-once: FindItem works from a snapshot, so two concurrent casts
+	// both find the same reagent. Claiming it with the atomic remove is what
+	// makes the check-and-take one step — otherwise one reagent buys two
+	// spells, because ExtractObject is idempotent and both calls would report
+	// success (CWE-362/CWE-367).
+	if !p.Inventory.RemoveItem(item) {
+		return false
+	}
 	w.ExtractObject(item, p.GetRoomVNum())
 	return true
 }
@@ -36,6 +44,11 @@ func (p *Player) ConsumeSpellReagentVNum(vnum int) bool {
 	}
 	for _, item := range p.Inventory.Snapshot() {
 		if item != nil && item.VNum == vnum {
+			// Consume-once: the snapshot above is stale for a concurrent cast,
+			// so the atomic remove decides the winner (CWE-362/CWE-367).
+			if !p.Inventory.RemoveItem(item) {
+				return false
+			}
 			w.ExtractObject(item, p.GetRoomVNum())
 			return true
 		}

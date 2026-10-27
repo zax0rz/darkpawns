@@ -399,10 +399,24 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 
 	casterLevel := s.player.GetLevel()
 	cost := manaCost(sd, casterLevel, s.player.GetClass())
+	mortal := casterLevel < LVL_IMMORT
 
-	if cost > 0 && s.player.GetMana() < cost && s.player.GetLevel() < LVL_IMMORT {
+	// Reserve the mana here. C checks sufficiency at this point and deducts
+	// after the concentration roll, so two concurrent casts both passed the
+	// check and one cost bought two spells (CWE-367). Immortals skip the
+	// sufficiency check but still pay, exactly as C does, so their deduction
+	// stays at the success site.
+	if cost > 0 && mortal && !s.player.TrySpendMana(cost) {
 		s.Send(castMessage(power, "You haven't the energy to cast that spell!\r\n", "You haven't the energy to will that power!\r\n"))
 		return nil
+	}
+	// refund releases whatever part of the reservation this path did not spend.
+	// Every exit before the spell resolves must call it, or a cast that C never
+	// charged for would still cost mana.
+	refund := func(keep int) {
+		if cost > 0 && mortal && keep < cost {
+			s.player.AddMana(cost - keep)
+		}
 	}
 
 	weightAdd := castWeightPenalty(s.player)
@@ -418,7 +432,13 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 			s.Send("You lost your concentration!\r\n")
 		}
 		if cost > 0 {
-			s.player.SetMana(max(0, s.player.GetMana()-(cost>>1)))
+			if mortal {
+				// C's failed concentration leaves half the cost spent; the
+				// reservation already paid the full amount.
+				refund(cost >> 1)
+			} else {
+				s.player.SpendManaUpTo(cost >> 1)
+			}
 		}
 		if info.IsViolent() {
 			if mob, ok := target.character.(*game.MobInstance); ok && mob.GetFightingBody() == nil && s.manager.combatEngine != nil {
@@ -435,6 +455,8 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 	}
 
 	if !checkCastSpellContract(s, info, target) {
+		// The spell never resolves, so C charges nothing for it.
+		refund(0)
 		return nil
 	}
 
@@ -442,9 +464,13 @@ func cmdCastCommand(s *Session, args []string, commandName string) error {
 	spells.SaySpell(s.player, spellNum, target.character, target.object, s.manager.world)
 	if spells.CallMagicWithArgument(s.player, target.character, target.object, spellNum, casterLevel, spells.CastSpell, s.manager.world, spellArgument) {
 		s.player.SetWaitState(1)
-		if cost > 0 {
-			s.player.SetMana(max(0, s.player.GetMana()-cost))
+		if cost > 0 && !mortal {
+			// Mortals already paid at the sufficiency check.
+			s.player.SpendManaUpTo(cost)
 		}
+	} else {
+		// The spell did not resolve, so the reservation is returned.
+		refund(0)
 	}
 
 	return nil
