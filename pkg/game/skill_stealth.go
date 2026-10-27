@@ -311,20 +311,27 @@ func stealEquippedItem(world *World, ch *Player, target combat.Combatant, item *
 	if ok, message := canCarryStolenItem(ch, item); !ok {
 		return SkillResult{Success: false, MessageToCh: message, WaitCh: 1}
 	}
-	if !unequipStolenItem(world, target, item, slot) {
+	// The transfer mutates the victim's equipment, both inventories and the
+	// object's Location, so it runs under w.mu as one step — the discipline
+	// every other object transfer already uses through MoveObject. finish must
+	// run after the lock is released: checkEquipmentStats and
+	// finishMobileEquipment both reach back into the World (GetAllMobs,
+	// selfDamage, Act) and would deadlock under it.
+	var transferred bool
+	var finish func()
+	if world != nil {
+		world.mu.Lock()
+		transferred, finish = stealEquippedTransferLocked(world, ch, target, item, slot)
+		world.mu.Unlock()
+	} else {
+		transferred, finish = stealEquippedTransferLocked(world, ch, target, item, slot)
+	}
+	if finish != nil {
+		finish()
+	}
+	if !transferred {
 		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
 	}
-	if err := ch.Inventory.AddItem(item); err != nil {
-		if !restoreEquippedItem(world, target, item, slot) {
-			slog.Error("DoSteal equipment rollback failed", "target", target.GetName(), "item", item.GetShortDesc(), "error", err)
-		}
-		return SkillResult{Success: false, MessageToCh: "You cannot carry that much.", WaitCh: 1}
-	}
-	// C's equipment steal is obj_to_char(unequip_char(vict, eq_pos), ch)
-	// (src/act.other.c:429): only the thief is flagged — unequip_char never
-	// sets PLR_CRASH.
-	ch.MarkCrashNeeded()
-	item.Location = LocInventoryPlayer(ch.Name)
 	if !target.IsNPC() {
 		MudLog(fmt.Sprintf("(PS) %s stole %s from %s.", ch.GetName(), item.GetShortDesc(), target.GetName()), MudlogComplete, LVL_IMMORT, true)
 	}
@@ -440,7 +447,42 @@ func restoreCarriedItem(target combat.Combatant, item *ObjectInstance) bool {
 	return true
 }
 
-func unequipStolenItem(world *World, target combat.Combatant, item *ObjectInstance, slot int) bool {
+// stealEquippedTransferLocked performs C's equipped steal,
+// obj_to_char(unequip_char(vict, eq_pos), ch) (src/act.other.c:429), assuming
+// the caller holds w.mu.
+//
+// It changes the victim's equipment slot, both inventories and the object's
+// Location, so it must be atomic against every other object transfer — those
+// all run under w.mu through MoveObject. Running it unlocked let a concurrent
+// MoveObject detach through the by-then-stale Location (a silent no-op — the
+// victim's equipment no longer held it) and attach the same *ObjectInstance to
+// a second inventory, after which this path added it again: one instance
+// reachable from two lists, which the save seams then persist as two
+// independent items (CWE-362/CWE-367).
+//
+// It returns (transferred, finish); finish must run after w.mu is released.
+func stealEquippedTransferLocked(world *World, ch *Player, target combat.Combatant, item *ObjectInstance, slot int) (bool, func()) {
+	if !unequipStolenItemLocked(world, target, item, slot) {
+		return false, nil
+	}
+	if err := ch.Inventory.AddItem(item); err != nil {
+		restored, finish := restoreEquippedItemLocked(world, target, item, slot)
+		if !restored {
+			slog.Error("DoSteal equipment rollback failed", "target", target.GetName(), "item", item.GetShortDesc(), "error", err)
+		}
+		return false, finish
+	}
+	// C's equipment steal is obj_to_char(unequip_char(vict, eq_pos), ch)
+	// (src/act.other.c:429): only the thief is flagged — unequip_char never
+	// sets PLR_CRASH.
+	ch.MarkCrashNeeded()
+	item.Location = LocInventoryPlayer(ch.Name)
+	return true, nil
+}
+
+// unequipStolenItemLocked takes the item out of the victim's equipment and
+// parks it nowhere, assuming the caller holds w.mu.
+func unequipStolenItemLocked(world *World, target combat.Combatant, item *ObjectInstance, slot int) bool {
 	switch target := target.(type) {
 	case *Player:
 		// UnequipItem normally places the object in its owner's inventory. Stage
@@ -453,48 +495,83 @@ func unequipStolenItem(world *World, target combat.Combatant, item *ObjectInstan
 			return false
 		}
 		// unequip_char drops a lit light from the victim's room
-		// (src/act.other.c:429; src/handler.c:779-782).
+		// (src/act.other.c:429; src/handler.c:779-782). adjustRoomLight is the
+		// locked-internal form, so the caller's w.mu is the lock it needs.
 		if world != nil && litLight && room >= 0 {
-			world.mu.Lock()
 			world.adjustRoomLight(room, -1)
-			world.mu.Unlock()
 		}
 		item.Location = LocNowhere()
 		return true
 	case *MobInstance:
-		if target.UnequipItem(slot) != item {
-			return false
-		}
-		return target.RemoveFromInventory(item)
+		// The public UnequipItem routes through MoveObjectToMobInventoryFront,
+		// which takes w.mu; re-entering it under the caller's lock would
+		// deadlock. unequipMobileLocked is the form that assumes w.mu.
+		target.mu.Lock()
+		removed := target.unequipMobileLocked(world, slot)
+		target.mu.Unlock()
+		return removed == item
 	default:
 		return false
 	}
 }
 
-func restoreEquippedItem(world *World, target combat.Combatant, item *ObjectInstance, slot int) bool {
+// restoreEquippedItemLocked puts the item back in the victim's slot after a
+// failed transfer, assuming the caller holds w.mu. It returns
+// (restored, finish); finish must run after w.mu is released.
+func restoreEquippedItemLocked(world *World, target combat.Combatant, item *ObjectInstance, slot int) (bool, func()) {
 	switch target := target.(type) {
 	case *Player:
 		if err := target.Equipment.SetSlot(EquipmentSlot(slot), item); err != nil {
-			return false
+			return false, nil
 		}
 		item.Location = LocEquippedPlayer(target.Name, EquipmentSlot(slot))
-		// Symmetric rollback of unequipStolenItem's light accounting. C checks
-		// the thief's capacity before unequipping (act.other.c:425-428), so it
-		// never reaches this intermediate state.
+		// Symmetric rollback of unequipStolenItemLocked's light accounting. C
+		// checks the thief's capacity before unequipping (act.other.c:425-428),
+		// so it never reaches this intermediate state.
 		if world != nil && isLitLightSource(item) {
 			if room := target.GetRoom(); room >= 0 {
-				world.mu.Lock()
 				world.adjustRoomLight(room, 1)
-				world.mu.Unlock()
 			}
 		}
-		target.checkEquipmentStats()
+		// Deferred: checkEquipmentStats reaches applyBadStat, which calls
+		// GetAllMobs/selfDamage and would deadlock under w.mu.
+		return true, target.checkEquipmentStats
 	case *MobInstance:
-		return target.EquipItem(item, slot)
+		// equipMobileLocked assumes w.mu; the Act/self-damage half of equipping
+		// runs in finishMobileEquipment, which must follow the release.
+		target.mu.Lock()
+		effects, err := target.equipMobileLocked(world, item, slot)
+		equipped := target.Equipment[slot] == item
+		target.mu.Unlock()
+		if err != nil || !equipped {
+			return false, nil
+		}
+		return true, func() {
+			if world != nil {
+				world.finishMobileEquipment(target, item, effects)
+			}
+		}
 	default:
-		return false
+		return false, nil
 	}
-	return true
+}
+
+// restoreEquippedItem is the non-locked entry point for callers that do not
+// already hold w.mu. The steal path uses restoreEquippedItemLocked directly.
+func restoreEquippedItem(world *World, target combat.Combatant, item *ObjectInstance, slot int) bool {
+	var restored bool
+	var finish func()
+	if world != nil {
+		world.mu.Lock()
+		restored, finish = restoreEquippedItemLocked(world, target, item, slot)
+		world.mu.Unlock()
+	} else {
+		restored, finish = restoreEquippedItemLocked(world, target, item, slot)
+	}
+	if finish != nil {
+		finish()
+	}
+	return restored
 }
 
 func canCarryStolenItem(ch *Player, item *ObjectInstance) (bool, string) {
