@@ -1,0 +1,77 @@
+# depth-case: death.pc-corpse-decay-flavor
+# depth-case: death.pc-corpse-decay-dumps-contents
+# A PC corpse decays after max_pc_corpse_time mud hours (10, src/config.c:86).
+# The mortal carries a loaf to the staged Zoomaster fight, dies, and answers
+# the menu immediately (a menu left unanswered times out under
+# check_idle_passwords, src/comm.c:2170-2187, closing the connection
+# mid-probe). The seeded Testor - teleported into the same room - pumps the
+# ten hours: the number(0,6) decay flavor line (src/limits.c:600-641)
+# reaches the observing peer, and the survivor's look finds the loaf the
+# corpse dumped on the floor.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-obj 8010 1 8162 80
+spawn-mob 14516 1 8101 145
+
+[setup:oracle]
+Corpseee
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Corpseee
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+get loaf
+send:testor teleport Corpseee 8101
+send:testor goto 8101
+send:testor set player Corpseee hit 1
+kill zoomaster
+~dpclock pulse 200
+1
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor ~dpclock pulse 630
+send:testor look
+look

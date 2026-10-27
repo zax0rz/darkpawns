@@ -1,0 +1,40 @@
+# depth-case: death.npc-corpse-decay-flavor
+# depth-case: death.npc-corpse-decay-dumps-contents
+# An NPC corpse decays after max_npc_corpse_time mud hours (5, src/config.c:85)
+# on the hourly point_update pass (src/limits.c:590-650): the number(0,6)
+# draw picks one of four flavor lines and the contents land on the floor.
+# The seeded Testor kills the loaf-carrying initiate, pumps five hours, and
+# the room look finds the decay line's audience block plus the loaf (and the
+# gold pile) lying where the corpse was.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-mob 16309 1 16301 163
+give-object 16309 8010 1 163
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 16301
+
+[probe]
+kill initiate
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+look

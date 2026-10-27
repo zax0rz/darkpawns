@@ -1,0 +1,41 @@
+# depth-case: death.mob-corpse-loot
+# depth-case: death.money-object-zero-weight
+# A killed mobile's corpse (make_corpse, src/fight.c:258-428) carries its
+# inventory, equipment and gold; the money object is created by create_money
+# (src/handler.c:1440-1488), which never assigns a weight - every pile
+# weighs 0. The seeded Testor (autogold and autoloot off, like C's shipped
+# preference bits) kills a guard initiate that the corrected give-object
+# fixture armed with a loaf; the corpse look-in lists loaf and coins with
+# C's encumbrance bytes, and get from the corpse moves both across with the
+# "There were %d coins." conversion (src/act.item.c:180-193).
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-mob 16309 1 16301 163
+give-object 16309 8010 1 163
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 16301
+
+[probe]
+kill initiate
+~dpclock pulse 40
+~dpclock pulse 40
+look in corpse
+get loaf corpse
+get coins corpse
+inventory
+look

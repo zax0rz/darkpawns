@@ -1,0 +1,75 @@
+# depth-case: death.player-death-bytes
+# depth-case: death.con-loss-roll
+# depth-case: death.menu-invalid-choice
+# depth-case: death.menu-reentry
+# The player death arc (src/fight.c:1483-1713, src/handler.c:1160-1174,
+# src/interpreter.c:2173-2222): a level-6 mortal (level > 5 so die_with_killer
+# rolls the number(0,3) con-loss arm, fight.c:603-610) with known exp fights
+# a staged level-11 Zoomaster and dies. The pump block carries "$n is dead!
+# R.I.P.", "You are dead!  Sorry...", the death cry and the CON_MENU bytes
+# (config.c:209-219); an invalid menu choice re-prints the menu with
+# "That's not a menu choice!" (interpreter.c:2284-2285); option 1 re-enters
+# with WELC_MESSG, "$n has entered the game." and the load-room look, and
+# the paired score shows the exp/37 loss (fight.c:589) with hit points
+# floored at 1 and position standing (db.c:2951-2961).
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-obj 8010 1 8162 80
+spawn-mob 14516 1 8101 145
+
+[setup:oracle]
+Corpass
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Corpass
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port:testor]
+Testor
+testpassword
+<ENTER>
+1
+
+[probe]
+send:testor set player Corpass level 6
+send:testor set player Corpass exp 37000
+send:testor stat Corpass
+north
+east
+south
+west
+kill zoomaster
+~dpclock pulse 100
+9
+1
+score
+send:testor stat Corpass

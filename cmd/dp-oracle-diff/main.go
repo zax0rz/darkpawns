@@ -1444,6 +1444,30 @@ func applyMobObjectFixtures(worldDir string, fixtures []oraclediff.MobObjectFixt
 		if !bytes.Contains(data[:index], mobPrefix) {
 			return fmt.Errorf("zone %d has no preceding mob fixture for mob %d", fixture.ZoneNumber, fixture.MobVNum)
 		}
+		// A G command attaches to the most recently executed M command, and a
+		// G before the terminal S therefore attaches to whatever mob the zone
+		// loads last (Sol, #2174: zone 121's last M loads mob 8, so
+		// keeper-directed G lines were silently re-gifted). Insert the G
+		// directly after the requested mob's own M line, the way an authored
+		// zone writes it, so the fixture attaches to the requested mob by
+		// construction.
+		mobLine := bytes.LastIndex(data[:index], mobPrefix)
+		// mobLine points at the prefix's leading newline; the M line ends at
+		// the next one. Keep walking past the G/E lines already following
+		// that M (authored or from earlier fixtures) so multiple objects for
+		// one mob land in fixture order.
+		insertAt := mobLine + 1 + bytes.IndexByte(data[mobLine+1:], '\n')
+		for {
+			rest := data[insertAt+1:]
+			if len(rest) == 0 || (rest[0] != 'G' && rest[0] != 'E') {
+				break
+			}
+			next := bytes.IndexByte(rest, '\n')
+			if next < 0 {
+				break
+			}
+			insertAt += 1 + next
+		}
 		command := fmt.Sprintf("\nG 1 %d %d -1", fixture.ObjectVNum, fixture.MaxExisting)
 		if fixture.WearPosition != nil {
 			if *fixture.WearPosition < 0 || *fixture.WearPosition >= 22 {
@@ -1462,9 +1486,9 @@ func applyMobObjectFixtures(worldDir string, fixtures []oraclediff.MobObjectFixt
 			command = fmt.Sprintf("\nE 1 %d %d %d", fixture.ObjectVNum, fixture.MaxExisting, *fixture.WearPosition)
 		}
 		updated := make([]byte, 0, len(data)+len(command))
-		updated = append(updated, data[:index]...)
+		updated = append(updated, data[:insertAt]...)
 		updated = append(updated, command...)
-		updated = append(updated, data[index:]...)
+		updated = append(updated, data[insertAt:]...)
 		info, err := os.Stat(path)
 		if err != nil {
 			return fmt.Errorf("stat zone %d: %w", fixture.ZoneNumber, err)
