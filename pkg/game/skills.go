@@ -389,11 +389,12 @@ func ActMessage(msg string, chPronouns Pronouns, victPronouns *Pronouns, itemNam
 
 // SkillResult holds the outcome of a skill use.
 type SkillResult struct {
-	Success       bool
-	Damage        int
-	MessageToCh   string
-	MessageToVict string
-	MessageToRoom string
+	Success          bool
+	Damage           int
+	MessageToCh      string
+	MessageToVict    string
+	VictimMessageAct bool
+	MessageToRoom    string
 	// Targets carries the ordered target list for a multi-target skill. The
 	// ordinary result path uses the first target; additional targets receive
 	// the same damage and combat enrollment in C call order.

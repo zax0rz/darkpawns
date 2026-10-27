@@ -252,8 +252,9 @@ func (w *World) findSocialTarget(observer *Player, name string) socialTarget {
 // roomMessageExcludeTwo sends a message to all players in a room except two named ones.
 func (w *World) roomMessageExcludeTwo(vnum int, msg string, exclude1, exclude2 string) {
 	for _, p := range w.GetPlayersInRoom(vnum) {
-		if p.Name != exclude1 && p.Name != exclude2 {
-			p.SendMessage(msg + "\r\n")
+		if p.Name == exclude1 || p.Name == exclude2 || !sendOk(p, false) {
+			continue
 		}
+		p.SendMessage(msg + "\r\n")
 	}
 }

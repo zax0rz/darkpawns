@@ -80,6 +80,17 @@ func doorHuntWorld(t *testing.T, exitInfo int) (*World, *MobInstance, map[string
 
 func TestHuntVictimOpensClosedUnlockedDoor(t *testing.T) {
 	w, mob, out := doorHuntWorld(t, parser.ExitIsDoor|parser.ExitClosed)
+	northSleeper := NewPlayer(4, "Northsleeper", 1002)
+	northSleeper.SetPosition(0)
+	if err := w.AddPlayer(northSleeper); err != nil {
+		t.Fatalf("AddPlayer sleeping north observer: %v", err)
+	}
+	northWriter := NewPlayer(5, "Northwriter", 1002)
+	northWriter.SetPosition(8)
+	northWriter.SetPlrFlag(PlrWriting, true)
+	if err := w.AddPlayer(northWriter); err != nil {
+		t.Fatalf("AddPlayer writing north observer: %v", err)
+	}
 	mob.SetHunting("Prey")
 	// No evasion draw (prey has none); the trash-talk draw lands on the
 	// silent default arm.
@@ -103,6 +114,12 @@ func TestHuntVictimOpensClosedUnlockedDoor(t *testing.T) {
 	}
 	if want := "The gate is opened from the other side.\r\n"; !strings.Contains(out["Northwatcher"], want) {
 		t.Fatalf("north room bytes = %q, want %q among them", out["Northwatcher"], want)
+	}
+	if got := out[northSleeper.Name]; strings.Contains(got, "from the other side") {
+		t.Fatalf("sleeping north observer received C room act: %q", got)
+	}
+	if got := out[northWriter.Name]; strings.Contains(got, "from the other side") {
+		t.Fatalf("writing north observer received C room act: %q", got)
 	}
 	// The mobile's own TO_CHAR lines vanish, as in C.
 	if got := out[mob.GetShortDesc()]; strings.Contains(got, "Okay.") {

@@ -559,10 +559,11 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 	// victim for two violence pulses (new_cmds.c:2258-2264).
 	victim.SetWaitState(2)
 	return SkillResult{
-		Success:       true,
-		MessageToCh:   fmt.Sprintf("You tap %s and scream, 'TAG! You're it!'\r\n", target.GetName()),
-		MessageToVict: fmt.Sprintf("%s taps you and screams, 'TAG! You're it!'", ch.Name),
-		MessageToRoom: fmt.Sprintf("%s taps %s and screams, 'TAG! You're it!'", ch.Name, target.GetName()),
+		Success:          true,
+		MessageToCh:      fmt.Sprintf("You tap %s and scream, 'TAG! You're it!'\r\n", target.GetName()),
+		MessageToVict:    fmt.Sprintf("%s taps you and screams, 'TAG! You're it!'", ch.Name),
+		VictimMessageAct: true,
+		MessageToRoom:    fmt.Sprintf("%s taps %s and screams, 'TAG! You're it!'", ch.Name, target.GetName()),
 	}
 }
 

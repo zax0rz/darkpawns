@@ -367,6 +367,9 @@ func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
 // combat.UpdatePositionAfterDamage expects (roomVNum, message, exclude).
 func (w *World) woundBroadcast(roomVNum int, message string, exclude []combat.Combatant) {
 	for _, p := range w.GetPlayersInRoom(roomVNum) {
+		if !sendOk(p, false) {
+			continue
+		}
 		excluded := false
 		for _, body := range exclude {
 			if body == p {

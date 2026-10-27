@@ -1161,7 +1161,11 @@ func MagCreations(level int, ch interface{}, spellNum int, world interface{}) {
 		if !ok {
 			return
 		}
-		sendCreatedObjectRoom(ch, obj, world)
+		if roomAct, ok := world.(interface {
+			SpellCreatedObjectAct(ch, obj interface{}) bool
+		}); !ok || !roomAct.SpellCreatedObjectAct(ch, obj) {
+			sendCreatedObjectRoom(ch, obj, world)
+		}
 		sendToCaster(ch, "You create "+desc.GetShortDesc()+".\r\n")
 	}
 }
@@ -1182,6 +1186,9 @@ func sendCreatedObjectRoom(ch, obj, world interface{}) {
 	msg := capitalizeActMessage(actor.GetName() + " creates " + object.GetShortDesc() + ".\r\n")
 	w.ForEachPlayerInRoomInterface(room.GetRoomVNum(), func(p interface{}) {
 		if selfTarget(ch, p) {
+			return
+		}
+		if !canReceiveAct(p) {
 			return
 		}
 		if s, ok := p.(sender); ok {
@@ -1500,6 +1507,9 @@ func sendAffectRoomFallback(actor, target, extraExclude interface{}, format stri
 	}
 	w.ForEachPlayerInRoomInterface(ar.GetRoomVNum(), func(p interface{}) {
 		if selfTarget(actor, p) || (extraExclude != nil && selfTarget(extraExclude, p)) {
+			return
+		}
+		if !canReceiveAct(p) {
 			return
 		}
 		if s, ok := p.(sender); ok {

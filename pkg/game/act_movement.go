@@ -770,6 +770,9 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 		msg := fmt.Sprintf("The %s %s %s%s from the other side.\r\n",
 			backName, verbIs(backName), cmdDoor[scmd], suffix)
 		for _, actor := range w.actChar(otherRoomVNum) {
+			if !sendOk(actor, false) {
+				continue
+			}
 			actor.SendMessage(msg)
 		}
 	}
@@ -1143,6 +1146,9 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 		}
 		msg := fmt.Sprintf("The %s %s %s%s from the other side.\r\n", backName, verbIs(backName), cmdDoor[scmd], suffix)
 		for _, actor := range w.actChar(otherRoomVNum) {
+			if !sendOk(actor, false) {
+				continue
+			}
 			actor.SendMessage(msg)
 		}
 	}

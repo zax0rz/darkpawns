@@ -149,14 +149,13 @@ func TestTagDescriptorSearchAndLinklessGateMatchC(t *testing.T) {
 	if got, want := strings.Join(drainSessionText(t, f.playing), ""), "Actor taps you and screams, 'TAG! You're it!'\r\n"; got != want {
 		t.Fatalf("tag target output = %q, want %q", got, want)
 	}
-	roomTag := "Actor taps Playing and screams, 'TAG! You're it!'\r\n"
 	for _, observer := range []*Session{f.mailing, f.noteWrite} {
-		if got := strings.Join(drainSessionText(t, observer), ""); got != roomTag {
-			t.Errorf("%s room tag output = %q, want %q", observer.playerName, got, roomTag)
+		if got := strings.Join(drainSessionText(t, observer), ""); got != "" {
+			t.Errorf("%s PLR_WRITING observer received act output %q", observer.playerName, got)
 		}
 	}
-	if got := strings.Join(drainSessionText(t, f.editing), ""); got != roomTag {
-		t.Errorf("OLC room tag output = %q, want %q", got, roomTag)
+	if got := strings.Join(drainSessionText(t, f.editing), ""); got != "" {
+		t.Errorf("PLR_WRITING OLC observer received act output %q", got)
 	}
 	for _, observer := range []*Session{f.menu, f.creating, f.textEditing, f.linkless} {
 		drainSessionText(t, observer)
@@ -187,8 +186,8 @@ func TestTagDescriptorSearchAndLinklessGateMatchC(t *testing.T) {
 	if got, want := strings.Join(drainSessionText(t, f.playing), ""), "You tap Editing and scream, 'TAG! You're it!'\r\n"; got != want {
 		t.Fatalf("actor tag-to-editor output = %q, want %q", got, want)
 	}
-	if got, want := strings.Join(drainSessionText(t, f.editing), ""), "Playing taps you and screams, 'TAG! You're it!'\r\n"; got != want {
-		t.Fatalf("editor target output = %q, want %q", got, want)
+	if got := strings.Join(drainSessionText(t, f.editing), ""); got != "" {
+		t.Fatalf("PLR_WRITING editor target received act output %q", got)
 	}
 	if got, want := strings.Join(drainSessionText(t, f.actor), ""), "Playing taps Editing and screams, 'TAG! You're it!'\r\n"; got != want {
 		t.Fatalf("tag room output = %q, want %q", got, want)

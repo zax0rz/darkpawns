@@ -120,10 +120,13 @@ func (w *World) RealRoom(vnum int) int {
 
 // SendToRoom sends a message to all players in a room.
 func (w *World) SendToRoom(rnum int, msg string) {
-	// C's send_to_room transmits the caller's bytes as-is. roomMessage is a
-	// convenience for newline-terminated prose and appends its own CRLF, which
-	// would insert a blank line before the spell's following caster message.
+	// C comm.c:2366-2372 sends only to players with descriptors and position
+	// above POS_SLEEPING. Unlike act()/SENDOK, send_to_room does not suppress
+	// PLR_WRITING recipients. Preserve the caller's bytes exactly.
 	for _, player := range w.GetPlayersInRoom(rnum) {
+		if player.GetPosition() <= combat.PosSleeping {
+			continue
+		}
 		player.SendMessage(msg)
 	}
 }

@@ -6,10 +6,11 @@
 # depth-case: magic.animate-dead-message-pair
 # depth-case: magic.animate-dead-invalid-target
 # Real player-command dispatch for four shared magic.c output paths. The good
-# target drives SPELL_DISPEL_EVIL's protected-target act; create food exercises
-# object-description substitution and its room audience; smokescreen exercises
-# MAG_MASSES' caster/room pair; cure light exercises MAG_POINTS' victim and
-# TO_NOTVICT room output. C paths: spell_parser.c:1040-1110; magic.c:735,
+# target drives SPELL_DISPEL_EVIL's protected-target act; the sleeping observer
+# proves say_spell and Create Food room acts are suppressed while the awake
+# target receives them. Smokescreen exercises MAG_MASSES' caster/room pair;
+# cure light exercises MAG_POINTS' victim and TO_NOTVICT room output. C paths:
+# spell_parser.c:325-343,1040-1110; magic.c:735,
 # 752, 1527-1529, 1729-1736, 1767-1769, 1997-1998.
 
 [fixture]
@@ -87,6 +88,7 @@ K
 Y
 <ENTER>
 1
+sleep
 
 [setup:port:Castobserve]
 Castobserve
@@ -101,6 +103,7 @@ K
 Y
 <ENTER>
 1
+sleep
 
 [warmup]
 goto 8105

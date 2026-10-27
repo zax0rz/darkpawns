@@ -84,8 +84,8 @@ func TestSummonSuccessTransfersPlayerBeforeArrivalAct(t *testing.T) {
 	circle := &summonTestObject{vnum: CocVnum, timer: 2}
 	caster := &mockSpellsChar{name: "Mage", level: combat.LVL_IMMORT, roomVNum: 1001, position: int(PosStanding)}
 	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, position: int(PosStanding)}
-	originPeer := &mockSpellsChar{name: "Originpeer", roomVNum: 1001}
-	targetPeer := &mockSpellsChar{name: "Targetpeer", roomVNum: 1002}
+	originPeer := &mockSpellsChar{name: "Originpeer", roomVNum: 1001, position: int(PosStanding)}
+	targetPeer := &mockSpellsChar{name: "Targetpeer", roomVNum: 1002, position: int(PosStanding)}
 	world := &summonBackfireWorld{
 		summonTestWorld: summonTestWorld{
 			items: []interface{}{circle},
@@ -145,8 +145,8 @@ func TestSummonBackfireDispatchesCOutputsAndNPCRetaliation(t *testing.T) {
 		name: "Guard", npc: true, level: 10, roomVNum: 1002, position: int(PosStanding),
 		hp: 100, maxHP: 100, mobFlags: uint64(1) << mobNoCharmBit,
 	}}
-	oldPeer := &mockSpellsChar{name: "Old room watcher", roomVNum: 1001}
-	newPeer := &mockSpellsChar{name: "New room watcher", roomVNum: 1002}
+	oldPeer := &mockSpellsChar{name: "Old room watcher", roomVNum: 1001, position: int(PosStanding)}
+	newPeer := &mockSpellsChar{name: "New room watcher", roomVNum: 1002, position: int(PosStanding)}
 	world := &summonBackfireWorld{
 		summonTestWorld: summonTestWorld{
 			items: []interface{}{circle},
