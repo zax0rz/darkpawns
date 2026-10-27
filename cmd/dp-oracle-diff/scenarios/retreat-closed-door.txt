@@ -1,0 +1,79 @@
+# depth-case: escape.closed-door-skip
+# CAN_GO's third clause skips closed doors (src/utils.h:565-567), so C's
+# do_retreat never attempts a closed exit (src/act.offensive.c:1056-1076)
+# even though do_simple_move has no door check of its own. The mortal fights
+# a zookeeper at 8040, whose west gate is closed: the six direction draws
+# must skip it, and whichever open exit is drawn, both engines take the same
+# one.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14500 1 8040 145
+
+[setup:oracle]
+Retgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Retmort
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Retmort
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Retmort 8040
+goto 8040
+skillset Retmort retreat 100
+
+[probe:mortal]
+kill zookeeper
+retreat
+look
+score

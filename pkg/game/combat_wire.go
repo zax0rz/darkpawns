@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/parser"
+
 	"github.com/zax0rz/darkpawns/pkg/combat"
 )
 
@@ -454,7 +456,11 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			return -1
 		}
 		exit, ok := room.Exits[dirs[door]]
-		if !ok {
+		// CAN_GO (src/utils.h:565-567): the exit exists, leads somewhere,
+		// and is not closed. combat.DeathCry walks every direction through
+		// this callback, and C's death_cry muffles the cry behind closed
+		// doors (src/fight.c:520-527).
+		if !ok || exit.ToRoom <= 0 || exit.ExitInfo&parser.ExitClosed != 0 {
 			return -1
 		}
 		return exit.ToRoom

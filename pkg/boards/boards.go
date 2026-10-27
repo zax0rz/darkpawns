@@ -55,6 +55,12 @@ type BoardMsgInfo struct {
 	Level      int    `json:"level"`   // level of poster
 	HeadingLen int    `json:"-"`       // serialization helper
 	MessageLen int    `json:"-"`       // serialization helper
+	// HasHeading models C's heading POINTER being non-null (src/boards.h:42).
+	// A heading_len of 1 loads an empty string on a non-null pointer, so an
+	// empty heading is a valid row C lists and displays; only a null pointer
+	// (loader reset or in-memory decay) is corruption. Heading == "" cannot
+	// distinguish the two.
+	HasHeading bool `json:"-"`
 }
 
 // BoardInfo describes one board definition.
@@ -198,7 +204,16 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 			Level:      int(info.Level),
 			HeadingLen: int(info.HeadingLen),
 			MessageLen: int(info.MessageLen),
-			SlotNum:    -1,
+			HasHeading: true,
+			// C boards.c:502 keeps the file's slot_num; :517 overwrites it
+			// with a fresh find_slot() only for message rows. An
+			// empty-message row therefore reads whatever slot the file
+			// declares — in range reaches the null-storage guard
+			// (boards.c:357-359, "seems to be empty"); out of range reaches
+			// the slot guards (:347-348, :412-415). For message rows the
+			// fresh slot stays mandatory: trusting the file's slot there
+			// lets two boards claim one msgStorage entry (DP-1242).
+			SlotNum: int(info.SlotNum),
 		}
 
 		if info.MessageLen > 0 {
@@ -207,10 +222,6 @@ func (bs *BoardSystem) loadBoard(boardType int) {
 				bs.resetBoard(boardType)
 				return
 			}
-			// C boards.c:517 — the file's slot number is discarded and a fresh
-			// globally-unique slot is allocated via find_slot(). Trusting the
-			// file's slot lets two boards claim the same msgStorage entry and
-			// silently overwrite each other (DP-1242).
 			slot := bs.findSlot()
 			if slot == -1 {
 				bs.resetBoard(boardType)
@@ -418,9 +429,10 @@ func (bs *BoardSystem) WriteMessage(boardType int, ch BoardPlayer, arg string) i
 
 	idx := bs.numOfMsgs[boardType]
 	bs.msgIndex[boardType][idx] = BoardMsgInfo{
-		SlotNum: slot,
-		Heading: heading,
-		Level:   ch.GetLevel(),
+		SlotNum:    slot,
+		Heading:    heading,
+		Level:      ch.GetLevel(),
+		HasHeading: true,
 	}
 	bs.msgStorage[slot] = ""
 	bs.numOfMsgs[boardType]++
@@ -468,7 +480,7 @@ func (bs *BoardSystem) ShowBoard(boardType int, ch BoardPlayer) bool {
 	} else {
 		fmt.Fprintf(&buf, "There are %d messages on the board.\r\n", bs.numOfMsgs[boardType])
 		for i := 0; i < bs.numOfMsgs[boardType]; i++ {
-			if bs.msgIndex[boardType][i].Heading != "" {
+			if bs.msgIndex[boardType][i].HasHeading {
 				fmt.Fprintf(&buf, "%-2d : %s\r\n", i+1, bs.msgIndex[boardType][i].Heading)
 			} else {
 				slog.Error("SYSERR: The board is fubar'd.")
@@ -528,7 +540,7 @@ func (bs *BoardSystem) DisplayMsg(boardType int, ch BoardPlayer, arg string) boo
 		slog.Error("SYSERR: Board is screwed up.")
 		return true
 	}
-	if mi.Heading == "" {
+	if !mi.HasHeading {
 		ch.SendMessage("That message appears to be screwed up.\r\n")
 		return true
 	}
@@ -581,7 +593,7 @@ func (bs *BoardSystem) RemoveMsg(boardType int, ch BoardPlayer, arg string) bool
 
 	ind := msg - 1
 	mi := bs.msgIndex[boardType][ind]
-	if mi.Heading == "" {
+	if !mi.HasHeading {
 		ch.SendMessage("That message appears to be screwed up.\r\n")
 		return true
 	}

@@ -595,6 +595,11 @@ func main() {
 		// across an offline login and restart, so do not wire an incomplete
 		// online-only identity lookup.
 		slog.Warn("Mail disabled: persistent player identity requires a database")
+		// C's boot still scans the mail store regardless of the player index
+		// (src/db.c:363-371): a corrupt or unreadable file disables mail even
+		// here, so run the scan with no identity hooks — an intact store
+		// leaves behavior unchanged.
+		game.InitMailSystem(nil, nil)
 	} else if err := initializePersistentMail(gameStore); err != nil {
 		// C's boot_db() sets no_mail and continues when scan_file() fails.
 		// Mail is optional; do not make an unavailable mail store take down

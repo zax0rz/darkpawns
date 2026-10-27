@@ -48,7 +48,13 @@ def main() -> int:
             for row in reader:
                 status = (row.get("status") or "").strip()
                 proof = (row.get("proof") or "").strip()
-                if status not in ("blocked", "excluded") or not proof or proof == "-":
+                # Only Zach-approved exclusions become baseline rows. A
+                # "blocked" row is analytical debt -- gates a probe has not
+                # exercised yet -- and its scenario is usually green; baselining
+                # it would flip the census row to STALE (taught by #2178: three
+                # blocked rows swept in by a regeneration, all three scenarios
+                # green on the branch).
+                if status != "excluded" or not proof or proof == "-":
                     continue
                 # stability is the optional divergence-shape class: "" (default)
                 # pins a stable shape; "run-varying" marks a C-side divergence

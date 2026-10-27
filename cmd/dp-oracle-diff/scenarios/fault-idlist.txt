@@ -1,0 +1,40 @@
+# Fault fixture: object_idlist is a directory in both engines' working
+# directories, so the wizard idlist command cannot open its report file and
+# prints the refusal line (src/act.wizard.c:3582-3589). The first character
+# is the implementor, above the command's LVL_GRGOD gate.
+
+[fixture]
+quiet-mobs
+empty-players
+fault-dir object_idlist
+
+[setup:oracle]
+Idlister
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Idlister
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+idlist

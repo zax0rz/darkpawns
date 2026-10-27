@@ -1,0 +1,53 @@
+# Mail round-trip across the postmaster. This scenario is a pinned EXPECTED
+# divergence (Zach's ruling 2026-10-26, option b; PF-066): on the 32-bit
+# original, store_mail's header block was exactly BLOCK_SIZE (100) bytes and
+# mail was stored (src/mail.h:50, 84-104); on the 64-bit reference the same
+# struct is 104 bytes, so store_mail's size guard (src/mail.c:258-263) hits
+# core_dump_real (utils.c:929-948), C stores nothing, and check reports "no
+# mail waiting" — while the port's block file stores and delivers the mail.
+# The completion lines themselves ("Message sent!") are compared byte-exact;
+# the store/delivery blocks are the pinned divergence.
+
+[fixture]
+quiet-mobs
+empty-players
+live-store
+spawn-mob 21225 1 21262 212
+
+[setup:oracle]
+Mailrun
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mailrun
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 21262
+set Mailrun gold 100
+mail Mailrun
+Planted mail body.
+@
+check
+receive
+look

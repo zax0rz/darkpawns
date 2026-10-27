@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -94,14 +95,15 @@ type mailWriteEntry struct {
 	buffer      string
 }
 
-// mailDisabled is configured during boot, before sessions are accepted.
-var mailDisabled bool
+// mailDisabled is configured during boot, before sessions are accepted, and
+// set at runtime by the block faults (C's no_mail, src/mail.c:425).
+var mailDisabled atomic.Bool
 
 // DisableMailSystem clears the mail index, free list, and identity hooks.
 // The C boot path keeps the server running with no_mail set when mail storage
 // is unusable; this is the Go equivalent of that explicit availability policy.
 func DisableMailSystem() {
-	mailDisabled = true
+	mailDisabled.Store(true)
 	mailGlobalMu.Lock()
 	mailIndex = nil
 	freeList = nil
@@ -121,7 +123,7 @@ func InitMailSystem(nameFunc func(id int) string, idFunc func(name string) int) 
 	worldNameFunc = nameFunc
 	worldIDFunc = idFunc
 	if scanFile() {
-		mailDisabled = false
+		mailDisabled.Store(false)
 		return true
 	}
 	DisableMailSystem()
@@ -445,6 +447,10 @@ func readDelete(recipient int) string {
 	if header.BlockType != MailBlockHeader {
 		log.Printf("SYSERR: Oh dear. (Header block %d != %d)", header.BlockType, MailBlockHeader)
 		log.Print("SYSERR: Mail system disabled!  -- Error #9.")
+		// C sets no_mail here (src/mail.c:425): the next postmaster command
+		// shows the technical-difficulties line instead of touching the file
+		// again.
+		mailDisabled.Store(true)
 		return ""
 	}
 
@@ -589,11 +595,13 @@ func HandleMailInput(ch *Player, line string) bool {
 		ch.SetPlrFlag(PlrWriting, false)
 		ch.SetPlrFlag(PlrMailing, false)
 
+		// modify.c:218-227: STRINGADD_SAVE with text sends "Message sent!";
+		// every other editor exit sends "Mail aborted.".
 		if ok && state.buffer != "" {
 			storeMail(state.recipientID, ch.ID, state.buffer)
 			ch.SendMessage("Message sent!\r\n")
 		} else {
-			ch.SendMessage("Mail aborted (empty message).\r\n")
+			ch.SendMessage("Mail aborted.\r\n")
 		}
 		return true
 	}

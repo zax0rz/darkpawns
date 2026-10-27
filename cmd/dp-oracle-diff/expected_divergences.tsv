@@ -1,2 +1,5 @@
 scenario	manifest	case_id	status	stability
 alias-cap	alias.tsv	alias.cap-refusal	excluded	
+fault-mail-runtime	mail.tsv	mail.send-store-inert	excluded	
+postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	
+postmaster-saved-recipient-depth	mail.tsv	mail.send-store-inert-saved-recipient	excluded	

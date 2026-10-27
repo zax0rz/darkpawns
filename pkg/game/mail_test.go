@@ -65,11 +65,11 @@ func TestMailInitializationFailsClosedWithoutOverwritingUnusableStore(t *testing
 		t.Fatalf("mkdir mail directory: %v", err)
 	}
 
-	oldDisabled := mailDisabled
+	oldDisabled := mailDisabled.Load()
 	oldNameFunc, oldIDFunc := worldNameFunc, worldIDFunc
 	t.Cleanup(func() {
 		worldNameFunc, worldIDFunc = oldNameFunc, oldIDFunc
-		mailDisabled = oldDisabled
+		mailDisabled.Store(oldDisabled)
 	})
 	worldNameFunc = func(int) string { return "unexpected" }
 	worldIDFunc = func(string) int { return 999 }
@@ -93,9 +93,9 @@ func TestMailInitializationFailsClosedWithoutOverwritingUnusableStore(t *testing
 
 // C mail.c:484-487: all three commands emit the same bytes and fall through.
 func TestPostmasterDisabledDispatch(t *testing.T) {
-	oldDisabled := mailDisabled
-	t.Cleanup(func() { mailDisabled = oldDisabled })
-	mailDisabled = true
+	oldDisabled := mailDisabled.Load()
+	t.Cleanup(func() { mailDisabled.Store(oldDisabled) })
+	mailDisabled.Store(true)
 	w, sender, fn, mob, messages := newMailLifecycleWorld(t)
 	for _, cmd := range []string{"mail", "check", "receive", "look"} {
 		messages[sender.Name] = nil

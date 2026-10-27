@@ -1,0 +1,45 @@
+# Fault fixture: the trinity board's save file holds one empty-message row
+# whose persisted slot_num is 99999. C's loader keeps the file's slot for
+# message-less rows (src/boards.c:502, :516 gates the overwrite), so read 1
+# hits the slot guard (src/boards.c:347-351) and remove 1 the major one
+# (:412-415).
+
+[fixture]
+quiet-mobs
+empty-players
+spawn-obj 19652 2 8004 196
+fault-board 19652 empty-message-huge-slot
+
+[setup:oracle]
+Boardhuge
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardhuge
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8004
+look board
+read 1
+remove 1
