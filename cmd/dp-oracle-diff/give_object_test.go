@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,7 +52,7 @@ func TestGiveObjectAttachesToRequestedMob(t *testing.T) {
 		t.Fatal(err)
 	}
 	lines := strings.Split(string(data), "\n")
-	var gAt, mobAt, lastMAt int = -1, -1, -1
+	gAt, mobAt, lastMAt := -1, -1, -1
 	for i, line := range lines {
 		switch {
 		case line == "M 0 12100 1 12133":
@@ -76,7 +77,7 @@ func TestGiveObjectAttachesToRequestedMob(t *testing.T) {
 			break
 		}
 	}
-	if !(mobAt < gAt && gAt < nextM) {
+	if mobAt >= gAt || gAt >= nextM {
 		t.Fatalf("G for mob 12100 at line %d must sit between the mob's M (line %d) and the next M (line %d)", gAt, mobAt, nextM)
 	}
 }
@@ -96,7 +97,7 @@ func TestGiveObjectStacksAfterMobLine(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	first := strings.Index(string(data), "M 0 12100 1 12133\n")
+	first := bytes.Index(data, []byte("M 0 12100 1 12133\n"))
 	window := string(data[first : first+90])
 	// Authored cluster first, then fixture objects in fixture order, then
 	// the next mob's M: everything after the 12100 M and before the 12116 M
