@@ -188,7 +188,12 @@ func fetchUpdate(ctx context.Context, archive, digest, destination string) (stri
 		if err != nil {
 			return "", err
 		}
-		if err := verifyPublishedAsset(ctx, client, asset, releaseauth.TrustedKey); err != nil {
+		// TrustedKeyBytes() equals the pinned production key in published
+		// builds; snapshot-linked builds verify against their linked key so
+		// the whole pipeline stays exercisable. An override endpoint cannot
+		// bypass this: whatever key is in force still has to have signed the
+		// release manifest.
+		if err := verifyPublishedAsset(ctx, client, asset, releaseauth.TrustedKeyBytes()); err != nil {
 			return "", err
 		}
 		digest = strings.TrimPrefix(asset.Digest, "sha256:")

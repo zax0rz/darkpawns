@@ -42,7 +42,12 @@ interface CheckBody {
   error?: string;
 }
 
-const ACTIVE_STATES = new Set(['staging', 'applying', 'testing', 'recovering']);
+// Journal-backed phases disable the Update button: the launcher's own locks
+// serialize transactions, and a staging marker alone (the CLI is still
+// running, or died before writing a journal) must not wedge the page — the
+// button stays available and the launcher refuses a true double-run.
+const ACTIVE_STATES = new Set(['applying', 'testing', 'recovering']);
+const FAST_POLL_STATES = new Set(['staging', 'applying', 'testing', 'recovering']);
 
 function stateText(state: UpdateState | undefined): { title: string; detail?: string; tone: 'idle' | 'busy' | 'good' | 'bad' } {
   switch (state?.state) {
@@ -73,7 +78,7 @@ export function UpdatesPage() {
     retry: false,
     refetchInterval: (query) => {
       const state = (query.state.data as StatusBody | undefined)?.update?.state;
-      return state && ACTIVE_STATES.has(state) ? 2000 : 15000;
+      return state && FAST_POLL_STATES.has(state) ? 2000 : 15000;
     },
   });
 
