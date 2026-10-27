@@ -1,3 +1,5 @@
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -45,7 +47,8 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
 
   const requestedFile = searchParams.get('file') || '';
   const requestedScript = isLua ? searchParams.get('script') || '' : '';
-  const requestedKind = searchParams.get('kind') || '';
+  const rawKind = searchParams.get('kind');
+  const requestedKind = rawKind === 'room' || rawKind === 'mob' || rawKind === 'obj' ? rawKind : undefined;
 
   const listing = useQuery({
     queryKey: ['file-listing', root, directory],
@@ -90,8 +93,8 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
     setDraft('');
   }
 
-  const writeAction: FileAction | undefined = listing.data?.actions.find((action) => action.key === 'write');
-  const openEntry: FileEntry | undefined = listing.data?.entries.find((entry) => entry.path === open?.path);
+  const writeAction: FileAction | undefined = listing.data?.actions?.find((action) => action.key === 'write');
+  const openEntry: FileEntry | undefined = listing.data?.entries?.find((entry) => entry.path === open?.path);
   // Tedit rows carry their own level (credits sits above the web door); Lua files share the
   // write action's level.
   const canWrite = isLua ? writeAction?.allowed ?? false : openEntry?.allowed ?? false;
@@ -221,7 +224,7 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
         <aside className="border border-rule bg-paper-deep p-3">
           <div className="flex items-center justify-between border-b border-rule pb-3">
             <h2 className="text-sm font-semibold text-ink">Files</h2>
-            {isLua && directory && <button type="button" className="text-xs text-accent hover:underline" onClick={() => setDirectory(parentDirectory(directory))}>Up</button>}
+            {isLua && directory && <Button variant="ghost" size="plain" type="button" className="text-xs text-accent hover:underline" onClick={() => setDirectory(parentDirectory(directory))}>Up</Button>}
           </div>
           {isLua && <p className="mt-2 break-all font-mono text-[11px] text-ink-muted">scripts/{directory}</p>}
           {listing.isLoading ? <Skeleton className="mt-3 h-40 w-full" /> : listing.error ? (
@@ -230,7 +233,7 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
             <ul className="mt-3 max-h-[60vh] space-y-1 overflow-y-auto">
               {entries.map((entry) => (
                 <li key={entry.path}>
-                  <button
+                  <Button variant="ghost" size="plain"
                     type="button"
                     onClick={() => entry.directory ? setDirectory(entry.path) : selectFile(entry.path)}
                     aria-current={open?.path === entry.path ? 'true' : undefined}
@@ -242,7 +245,7 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
                         {entry.max_bytes?.toLocaleString()} bytes{entry.allowed ? '' : ` · ${entry.required_label} to edit`}
                       </span>
                     )}
-                  </button>
+                  </Button>
                 </li>
               ))}
               {!entries.length && <li className="py-4 text-sm text-ink-muted">No scripts here.</li>}
@@ -252,15 +255,15 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
             <form onSubmit={startNewScript} className="mt-4 border-t border-rule pt-3">
               <label htmlFor="new-script" className="block text-xs font-semibold text-ink">New script here</label>
               <div className="mt-2 flex gap-2">
-                <input id="new-script" value={newName} onChange={(event) => setNewName(event.target.value)} disabled={!writeAction?.allowed} placeholder="name.lua" className="min-w-0 flex-1 border border-rule bg-paper px-2 py-1 font-mono text-xs text-ink disabled:opacity-50" />
-                <button type="submit" disabled={!writeAction?.allowed || !newName.trim()} className="border border-rule bg-paper px-2 py-1 text-xs font-semibold text-ink hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40">Open</button>
+                <Input id="new-script" value={newName} onChange={(event) => setNewName(event.target.value)} disabled={!writeAction?.allowed} placeholder="name.lua" className="min-w-0 flex-1 border border-rule bg-paper px-2 py-1 font-mono text-xs text-ink disabled:opacity-50" />
+                <Button variant="ghost" size="plain" type="submit" disabled={!writeAction?.allowed || !newName.trim()} className="border border-rule bg-paper px-2 py-1 text-xs font-semibold text-ink hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40">Open</Button>
               </div>
               {writeAction && !writeAction.allowed && <p className="mt-2 text-[11px] text-ink-muted">Requires {writeRequirement}.</p>}
             </form>
           )}
         </aside>
 
-        <main className="min-w-0">
+        <section aria-label="File editor" className="min-w-0">
           {loadError ? (
             <div className="border border-accent bg-paper-deep p-4 text-sm text-accent" role="alert">Could not open {selectedPath || requestedScript}: {(loadError as Error).message}</div>
           ) : (file.isLoading || resolution.isLoading) && !open ? (
@@ -275,8 +278,8 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
                   <p className="mt-1 text-xs text-ink-muted">{isNew ? 'New file; saving creates it' : dirty ? 'Unsaved changes' : 'Matches the server copy'}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" disabled={!canWrite || (!dirty && !isNew) || save.isPending} title={canWrite ? undefined : `Requires ${writeRequirement}`} onClick={() => save.mutate()} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-40">{save.isPending ? 'Saving…' : isNew ? 'Create' : 'Save'}</button>
-                  {isLua && !isNew && <button type="button" disabled={!canWrite || remove.isPending} title={canWrite ? undefined : `Requires ${writeRequirement}`} onClick={() => window.confirm(`Delete scripts/${open.path}? Anything that runs it will fail to load.`) && remove.mutate()} className="border border-rule bg-paper px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40">Delete</button>}
+                  <Button variant="ghost" size="plain" type="button" disabled={!canWrite || (!dirty && !isNew) || save.isPending} title={canWrite ? undefined : `Requires ${writeRequirement}`} onClick={() => save.mutate()} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-40">{save.isPending ? 'Saving…' : isNew ? 'Create' : 'Save'}</Button>
+                  {isLua && !isNew && <Button variant="ghost" size="plain" type="button" disabled={!canWrite || remove.isPending} title={canWrite ? undefined : `Requires ${writeRequirement}`} onClick={() => window.confirm(`Delete scripts/${open.path}? Anything that runs it will fail to load.`) && remove.mutate()} className="border border-rule bg-paper px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-40">Delete</Button>}
                 </div>
               </div>
               {!canWrite && <div className="mb-3 border border-rule bg-paper-deep px-4 py-3 text-sm text-ink-muted">Read only. Editing this file requires <strong className="text-ink">{writeRequirement}</strong>.</div>}
@@ -285,7 +288,7 @@ export function FileEditorPage({ root }: { root: FileRoot }) {
               <CodeEditor key={`${root}:${open.path}`} label={open.path} value={draft} language={isLua ? 'lua' : 'text'} readOnly={!canWrite} onChange={setDraft} />
             </>
           )}
-        </main>
+        </section>
 
         <aside className="space-y-4">
           {isLua && open && !isNew && (
@@ -338,7 +341,7 @@ function ConflictPanel({ conflict, onReload }: { conflict: Conflict; onReload: (
         </div>
       ))}
       {conflict.server && diff && <p className="mt-2 text-xs text-ink-muted"><span className="line-through">Struck lines</span> are only on the server; <span className="text-accent">+ lines</span> are only in your draft.</p>}
-      <button type="button" onClick={onReload} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">{conflict.server ? 'Load server copy' : 'Close file'}</button>
+      <Button variant="ghost" size="plain" type="button" onClick={onReload} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">{conflict.server ? 'Load server copy' : 'Close file'}</Button>
     </section>
   );
 }

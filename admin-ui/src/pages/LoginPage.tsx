@@ -1,3 +1,5 @@
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, type LoginError } from '../hooks/useAuth';
@@ -94,7 +96,7 @@ export function LoginPage() {
               >
                 Character name
               </label>
-              <input
+              <Input
                 id="playerName"
                 type="text"
                 value={playerName}
@@ -113,7 +115,7 @@ export function LoginPage() {
               >
                 Password
               </label>
-              <input
+              <Input
                 id="password"
                 type="password"
                 value={password}
@@ -129,7 +131,7 @@ export function LoginPage() {
               </div>
             )}
 
-            <button
+            <Button variant="ghost" size="plain"
               type="submit"
               disabled={loading || !playerName || !password}
               className="w-full bg-accent hover:bg-accent-deep disabled:bg-paper-deep disabled:text-ink-muted disabled:border-rule disabled:cursor-not-allowed text-paper font-display tracking-wide py-3 border-2 border-accent-deep transition-all flex items-center justify-center gap-2 rounded-none"
@@ -141,7 +143,7 @@ export function LoginPage() {
               ) : (
                 'Sign in'
               )}
-            </button>
+            </Button>
           </form>
         </div>
 

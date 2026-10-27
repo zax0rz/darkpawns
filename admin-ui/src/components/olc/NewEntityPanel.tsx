@@ -1,3 +1,4 @@
+import { NativeSelect } from '../ui/select';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -24,7 +25,7 @@ export function NewEntityPanel({ kind }: { kind: NewKind }) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div><h2 className="text-lg text-ink">New {label}</h2><p className="mt-1 text-sm text-ink-muted">Choose a zone to get the next advisory free VNUM. The picker never claims it.</p></div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Zone</span><select value={zone === null ? '' : String(zone)} onChange={(event) => setZone(event.currentTarget.value ? Number(event.currentTarget.value) : null)} className="border border-rule bg-paper px-3 py-2 text-sm text-ink"><option value="">Choose a zone</option>{(zonesQuery.data || []).map((candidate) => <option key={candidate.number} value={candidate.number}>{candidate.number} — {candidate.name}</option>)}</select></label>
+          <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-muted">Zone</span><NativeSelect value={zone === null ? '' : String(zone)} onChange={(event) => setZone(event.currentTarget.value ? Number(event.currentTarget.value) : null)} className="border border-rule bg-paper px-3 py-2 text-sm text-ink"><option value="">Choose a zone</option>{(zonesQuery.data || []).map((candidate) => <option key={candidate.number} value={candidate.number}>{candidate.number} — {candidate.name}</option>)}</NativeSelect></label>
           {entry && entry.suggested > 0 && action?.allowed ? <Link to={editorPaths[kind] + entry.suggested + '/edit'} className="border border-accent bg-accent px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">{action.label} · #{entry.suggested}</Link> : <span className="border border-rule px-3 py-2 text-xs text-ink-muted">{action && !action.allowed ? 'Requires ' + action.requiredLabel + ' (level ' + action.requiredLevel + ')' : entry ? 'No free VNUM' : 'Select a zone'}</span>}
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { Card } from '../components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { StatCardSkeleton } from '../components/Skeleton';
@@ -45,7 +46,6 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-mono text-xs uppercase tracking-widest text-accent">World desk</p>
         <h1 className="mt-1 text-2xl font-bold text-ink">Dashboard</h1>
         <p className="mt-2 text-sm text-ink-muted">Find what needs attention, then open the world search to jump straight into an editor.</p>
       </div>
@@ -88,7 +88,7 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="border border-rule bg-paper-deep p-4">
+        <Card className="gap-0 p-4">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-lg text-ink">Builder work</h2>
             <Link to="/admin/workshop" className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Open workshop →</Link>
@@ -96,8 +96,8 @@ export function DashboardPage() {
           <p className="mt-2 text-sm text-ink-muted">Committed edits waiting for their zone files to be saved.</p>
           <div className="mt-4 font-mono text-3xl text-ink">{pending ? pendingZones.length : '—'}<span className="ml-2 text-sm text-ink-muted">zones pending</span></div>
           {pendingZones.length > 0 && <p className="mt-2 text-xs text-accent">Zones {pendingZones.slice(0, 6).join(', ')}{pendingZones.length > 6 ? '…' : ''}</p>}
-        </section>
-        <section className="border border-rule bg-paper-deep p-4">
+        </Card>
+        <Card className="gap-0 p-4">
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-lg text-ink">Server pulse</h2>
             <Link to="/admin/operations" className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Operations →</Link>
@@ -110,13 +110,13 @@ export function DashboardPage() {
             <div><span className="block text-xs text-ink-muted">Connection errors</span><strong className="font-mono font-normal text-ink">{counterTotal(exposition, 'darkpawns_connection_errors_total') ?? '—'}</strong></div>
           </div>
           <p className="mt-3 text-xs text-ink-muted">Prometheus counters since server start{prometheusError ? ' · telemetry unavailable' : ''}.</p>
-        </section>
+        </Card>
       </div>
 
-      <section className="border border-rule bg-paper-deep p-4">
+      <Card className="gap-0 p-4">
         <div className="flex items-baseline justify-between gap-3"><h2 className="text-lg text-ink">Recent server log</h2><Link to="/admin/operations" className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Full log →</Link></div>
         {logsError ? <p className="mt-3 text-sm text-accent">Log unavailable</p> : recentLog.length === 0 ? <p className="mt-3 text-sm text-ink-muted">No entries yet.</p> : <div className="mt-3 space-y-1">{recentLog.map((line, index) => <p key={`${index}-${line}`} className="truncate border-t border-rule pt-2 font-mono text-xs text-ink-muted" title={line}>{line}</p>)}</div>}
-      </section>
+      </Card>
 
       {serverError && (
         <div className="bg-paper-deep border border-accent p-4 text-sm text-ink" role="status">
@@ -142,7 +142,7 @@ function StatCard({
   color?: 'green' | 'slate';
 }) {
   return (
-    <div className="bg-paper-deep rounded-none border border-rule p-4">
+    <Card className="gap-0 p-4">
       <div className="text-xs text-ink-muted mb-1">{label}</div>
       <div
         className={`text-2xl font-bold ${
@@ -158,6 +158,6 @@ function StatCard({
       {detail && !error && (
         <div className="text-xs text-ink-muted font-mono mt-1">{detail}</div>
       )}
-    </div>
+    </Card>
   );
 }

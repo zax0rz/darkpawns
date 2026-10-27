@@ -1,3 +1,5 @@
+import { Button } from '../ui/button';
+import { NativeSelect } from '../ui/select';
 import type { OlcObject, OlcPatchOperation, OlcSchema } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
 
@@ -35,7 +37,7 @@ export function ObjectAppliesEditor({ schema, object, disabled = false, onOperat
           <article key={`${index}:${affect.location}:${affect.modifier}`} className="grid gap-3 border border-rule bg-paper p-4 md:grid-cols-[1fr_10rem_auto] md:items-end">
             <div>
               <label htmlFor={`apply-${index}-location`} className="mb-2 block text-sm font-semibold text-ink">Apply type</label>
-              <select
+              <NativeSelect
                 id={`apply-${index}-location`}
                 value={String(affect.location)}
                 disabled={disabled}
@@ -43,7 +45,7 @@ export function ObjectAppliesEditor({ schema, object, disabled = false, onOperat
                 className="w-full border border-rule bg-paper-deep px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {descriptor.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
+              </NativeSelect>
             </div>
             <div>
               <label htmlFor={`apply-${index}-modifier`} className="mb-2 block text-sm font-semibold text-ink">Modifier</label>
@@ -54,25 +56,25 @@ export function ObjectAppliesEditor({ schema, object, disabled = false, onOperat
                 onCommit={(value) => replace(index, affect.location, Number(value))}
               />
             </div>
-            <button
+            <Button variant="ghost" size="plain"
               type="button"
               disabled={disabled}
               onClick={() => onOperation([{ kind: descriptor.removeOperation, index }])}
               className="border border-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent hover:bg-accent hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
             >
               Remove
-            </button>
+            </Button>
           </article>
         ))}
       </div>
-      <button
+      <Button variant="ghost" size="plain"
         type="button"
         disabled={disabled}
         onClick={() => onOperation([{ kind: descriptor.addOperation, location: firstApply, modifier: 0 }])}
         className="mt-4 border border-rule bg-paper-deep px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
       >
         Add apply
-      </button>
+      </Button>
     </section>
   );
 }

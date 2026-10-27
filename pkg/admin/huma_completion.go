@@ -186,8 +186,8 @@ func registerAgentStoreCompletion(api huma.API, store *AgentStore) {
 	type findingIDInput struct {
 		ID   string `path:"id"`
 		Body struct {
-			Status        string `json:"status"`
-			LinearIssueID string `json:"linear_issue_id"`
+			Status        string `json:"status,omitempty"`
+			LinearIssueID string `json:"linear_issue_id,omitempty"`
 		}
 	}
 	huma.Register(api, huma.Operation{OperationID: "update-finding", Method: http.MethodPut, Path: "/admin/findings/{id}", Summary: "Update an agent finding"},

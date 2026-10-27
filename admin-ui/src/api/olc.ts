@@ -1,4 +1,4 @@
-import { request } from './client';
+import { http, read } from './http';
 
 export interface OlcBounds {
   min: number;
@@ -806,18 +806,15 @@ function normalizeClaim(raw: unknown): OlcClaimEntry {
 }
 
 export const olcApi = {
-  schema: async (kind: string) => normalizeSchema(await request<unknown>(`/olc/schema/${kind}`)),
-  preview: async (kind: string, vnum: number) => normalizePreview(await request<unknown>(`/olc/${kind}/${vnum}/preview`)),
-  vnumMap: async (zone: number) => normalizeVNumMap(await request<unknown>(`/olc/zones/${zone}/vnums`)),
-  lookup: async (kind: string, vnum: number) => normalizeVNumLookup(await request<unknown>(`/olc/lookup/${kind}/${vnum}/name`)),
-  openRoomDraft: async (vnum: number) => normalizeDraft(await request<unknown>(`/olc/room/${vnum}`, { method: 'POST' })),
-  getRoomDraft: async (vnum: number) => normalizeDraft(await request<unknown>(`/olc/room/${vnum}/draft`)),
+  schema: async (kind: string) => normalizeSchema(await read(http.GET('/admin/olc/schema/{kind}', { params: { path: { kind: kind } } }))),
+  preview: async (kind: string, vnum: number) => normalizePreview(await read(http.GET('/admin/olc/{kind}/{vnum}/preview', { params: { path: { kind: kind, vnum: vnum } } }))),
+  vnumMap: async (zone: number) => normalizeVNumMap(await read(http.GET('/admin/olc/zones/{zone}/vnums', { params: { path: { zone: String(zone) } } }))),
+  lookup: async (kind: string, vnum: number) => normalizeVNumLookup(await read(http.GET('/admin/olc/lookup/{kind}/{vnum}/name', { params: { path: { kind: kind, vnum: String(vnum) } } }))),
+  openRoomDraft: async (vnum: number) => normalizeDraft(await read(http.POST('/admin/olc/room/{vnum}', { params: { path: { vnum: String(vnum) } } }))),
+  getRoomDraft: async (vnum: number) => normalizeDraft(await read(http.GET('/admin/olc/room/{vnum}/draft', { params: { path: { vnum: String(vnum) } } }))),
   patchRoomDraft: async (vnum: number, operations: RoomPatchOperation[]) =>
     normalizeDraft(
-      await request<unknown>(`/olc/room/${vnum}/draft`, {
-        method: 'PATCH',
-        body: JSON.stringify(operations),
-      }),
+      await read(http.PATCH('/admin/olc/room/{vnum}/draft', { params: { path: { vnum: String(vnum) } }, body: operations })),
     ),
   // P7 transports these operation kinds through the draft route, but the
   // server applies them directly to the live prototype and does not add them
@@ -828,24 +825,21 @@ export const olcApi = {
   setRoomScriptFlag: async (vnum: number, bit: number, enabled: boolean) =>
     olcApi.patchRoomDraft(vnum, [{ kind: 'set_script_flag', bit, enabled }]),
   commitRoomDraft: async (vnum: number) =>
-    normalizeDraft(await request<unknown>(`/olc/room/${vnum}/draft/commit`, { method: 'POST' })),
+    normalizeDraft(await read(http.POST('/admin/olc/room/{vnum}/draft/commit', { params: { path: { vnum: String(vnum) } } }))),
   discardRoomDraft: (vnum: number) =>
-    request<void>(`/olc/room/${vnum}/draft`, { method: 'DELETE' }),
+    read(http.DELETE('/admin/olc/room/{vnum}/draft', { params: { path: { vnum: String(vnum) } } })),
   openEntityDraft: async (kind: OlcEntityKind, vnum: number) =>
-    normalizeEntityDraft(await request<unknown>(`/olc/${kind}/${vnum}`, { method: 'POST' })),
+    normalizeEntityDraft(await read(http.POST('/admin/olc/{kind}/{vnum}', { params: { path: { kind: kind, vnum: String(vnum) } } }))),
   getEntityDraft: async (kind: OlcEntityKind, vnum: number) =>
-    normalizeEntityDraft(await request<unknown>(`/olc/${kind}/${vnum}/draft`)),
+    normalizeEntityDraft(await read(http.GET('/admin/olc/{kind}/{vnum}/draft', { params: { path: { kind: kind, vnum: String(vnum) } } }))),
   patchEntityDraft: async (kind: OlcEntityKind, vnum: number, operations: OlcPatchOperation[]) =>
     normalizeEntityDraft(
-      await request<unknown>(`/olc/${kind}/${vnum}/draft`, {
-        method: 'PATCH',
-        body: JSON.stringify(operations),
-      }),
+      await read(http.PATCH('/admin/olc/{kind}/{vnum}/draft', { params: { path: { kind: kind, vnum: String(vnum) } }, body: operations })),
     ),
   commitEntityDraft: async (kind: OlcEntityKind, vnum: number) =>
-    normalizeEntityDraft(await request<unknown>(`/olc/${kind}/${vnum}/draft/commit`, { method: 'POST' })),
+    normalizeEntityDraft(await read(http.POST('/admin/olc/{kind}/{vnum}/draft/commit', { params: { path: { kind: kind, vnum: String(vnum) } } }))),
   discardEntityDraft: (kind: OlcEntityKind, vnum: number) =>
-    request<void>(`/olc/${kind}/${vnum}/draft`, { method: 'DELETE' }),
+    read(http.DELETE('/admin/olc/{kind}/{vnum}/draft', { params: { path: { kind: kind, vnum: String(vnum) } } })),
   setMobScriptName: async (vnum: number, text: string) =>
     olcApi.patchEntityDraft('mob', vnum, [{ kind: 'set_script_name', text }]),
   setMobScriptFlag: async (vnum: number, bit: number, enabled: boolean) =>
@@ -855,15 +849,15 @@ export const olcApi = {
   setObjectScriptFlag: async (vnum: number, bit: number, enabled: boolean) =>
     olcApi.patchEntityDraft('obj', vnum, [{ kind: 'set_script_flag', bit, enabled }]),
   createZone: async (zone: number) =>
-    (await request<{ zone: number; name: string; top_room: number; lifespan: number; reset_mode: number; created: boolean }>(`/olc/zones/${zone}`, { method: 'POST' })),
+    (await read(http.POST('/admin/olc/zones/{zone}', { params: { path: { zone: String(zone) } } }))),
   saveZone: (zone: number) =>
-    request<{ zone: number; saved: boolean }>(`/olc/zones/${zone}/save`, { method: 'POST' }),
+    read(http.POST('/admin/olc/zones/{zone}/save', { params: { path: { zone: zone } } })),
   held: async () => {
-    const raw = await request<unknown[]>(`/olc/held`);
+    const raw = await read(http.GET('/admin/olc/held'));
     return Array.isArray(raw) ? raw.map(normalizeClaim) : [];
   },
   pending: async () => {
-    const raw = await request<unknown[]>(`/olc/pending`);
+    const raw = await read(http.GET('/admin/olc/pending'));
     return Array.isArray(raw)
       ? raw.map((entry) => {
           const source = record(entry);

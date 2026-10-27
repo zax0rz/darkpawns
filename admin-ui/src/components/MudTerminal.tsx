@@ -1,3 +1,4 @@
+import { Button } from './ui/button';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -63,7 +64,7 @@ function StatusRow({
   return (
     <div className="flex items-center gap-1.5 min-w-[140px]">
       <span className="text-[11px] text-ink-muted w-10 shrink-0">{label}</span>
-      <div className="flex-1 h-3 bg-paper-deep rounded overflow-hidden">
+      <div className="flex-1 h-3 bg-paper-deep rounded-[2px] overflow-hidden">
         <div
           className="h-full transition-all duration-300"
           style={{
@@ -182,12 +183,12 @@ export function MudTerminal({ className = '' }: MudTerminalProps) {
           {connected ? 'Connected' : 'Disconnected'}
         </span>
         {!connected && (
-          <button
+          <Button variant="ghost" size="plain"
             onClick={reconnect}
             className="text-accent hover:text-accent transition-colors"
           >
             Reconnect
-          </button>
+          </Button>
         )}
       </div>
     </div>

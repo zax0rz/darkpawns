@@ -1,3 +1,7 @@
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { NativeSelect } from '../components/ui/select';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type AgentStatus, type Finding } from '../api/client';
@@ -53,9 +57,9 @@ function AgentCard({ agent, onStatus }: { agent: AgentStatus; onStatus: (agentID
       </div>
       <label className="mt-4 block text-xs text-ink-muted">
         Set status
-        <select value={agent.status} onChange={(event) => onStatus(agent.agent_id, event.target.value)} className="mt-1 block w-full border border-rule bg-paper px-2 py-2 text-xs text-ink">
+        <NativeSelect value={agent.status} onChange={(event) => onStatus(agent.agent_id, event.target.value)} className="mt-1 block w-full border border-rule bg-paper px-2 py-2 text-xs text-ink">
           {AGENT_STATUSES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
+        </NativeSelect>
       </label>
     </div>
   );
@@ -77,26 +81,26 @@ const statusStyles: Record<string, string> = {
 
 function FindingRow({ finding, onStatus }: { finding: Finding; onStatus: (id: number, status: string) => void }) {
   return (
-    <tr className="border-b border-rule hover:bg-paper transition-colors">
-      <td className="px-4 py-3">
-        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium border ${severityStyles[finding.severity] || 'bg-paper text-ink-muted'}`}>
+    <TableRow className="border-b border-rule hover:bg-paper transition-colors">
+      <TableCell className="px-4 py-3">
+        <span className={`inline-block px-2 py-0.5 rounded-[2px] text-xs font-medium border ${severityStyles[finding.severity] || 'bg-paper text-ink-muted'}`}>
           {finding.severity.toUpperCase()}
         </span>
-      </td>
-      <td className="px-4 py-3 text-ink font-mono text-sm">{finding.title}</td>
-      <td className="px-4 py-3 text-ink-muted font-mono text-xs">{finding.file}:{finding.line}</td>
-      <td className="px-4 py-3">
-        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${statusStyles[finding.status] || 'bg-paper text-ink-muted'}`}>
+      </TableCell>
+      <TableCell className="px-4 py-3 text-ink font-mono text-sm">{finding.title}</TableCell>
+      <TableCell className="px-4 py-3 text-ink-muted font-mono text-xs">{finding.file}:{finding.line}</TableCell>
+      <TableCell className="px-4 py-3">
+        <span className={`inline-block px-2 py-0.5 rounded-[2px] text-xs font-medium ${statusStyles[finding.status] || 'bg-paper text-ink-muted'}`}>
           {finding.status}
         </span>
-      </td>
-      <td className="px-4 py-3 text-ink-muted text-xs">{finding.source}</td>
-      <td className="px-4 py-3">
-        <select aria-label={`Status for ${finding.title}`} value={finding.status} onChange={(event) => onStatus(finding.id, event.target.value)} className="border border-rule bg-paper px-2 py-1 text-xs text-ink">
+      </TableCell>
+      <TableCell className="px-4 py-3 text-ink-muted text-xs">{finding.source}</TableCell>
+      <TableCell className="px-4 py-3">
+        <NativeSelect aria-label={`Status for ${finding.title}`} value={finding.status} onChange={(event) => onStatus(finding.id, event.target.value)} className="border border-rule bg-paper px-2 py-1 text-xs text-ink">
           {FINDING_STATUSES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
-      </td>
-    </tr>
+        </NativeSelect>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -165,17 +169,17 @@ export function AgentsPage() {
         {agentsLoading ? (
           <>
             <div className="bg-paper-deep rounded-none border border-rule p-5 animate-pulse">
-              <div className="h-6 w-32 bg-paper rounded mb-3" />
+              <div className="h-6 w-32 bg-paper rounded-[2px] mb-3" />
               <div className="space-y-2">
-                <div className="h-4 w-48 bg-paper rounded" />
-                <div className="h-4 w-40 bg-paper rounded" />
+                <div className="h-4 w-48 bg-paper rounded-[2px]" />
+                <div className="h-4 w-40 bg-paper rounded-[2px]" />
               </div>
             </div>
             <div className="bg-paper-deep rounded-none border border-rule p-5 animate-pulse">
-              <div className="h-6 w-24 bg-paper rounded mb-3" />
+              <div className="h-6 w-24 bg-paper rounded-[2px] mb-3" />
               <div className="space-y-2">
-                <div className="h-4 w-44 bg-paper rounded" />
-                <div className="h-4 w-36 bg-paper rounded" />
+                <div className="h-4 w-44 bg-paper rounded-[2px]" />
+                <div className="h-4 w-36 bg-paper rounded-[2px]" />
               </div>
             </div>
           </>
@@ -191,43 +195,43 @@ export function AgentsPage() {
         <div className="px-4 py-3 border-b border-rule flex items-center justify-between">
           <h2 className="text-sm font-medium text-ink-muted">Findings Feed</h2>
           <div className="flex gap-2">
-            <select
+            <NativeSelect
               value={filterSource}
               onChange={(e) => setFilterSource(e.target.value)}
-              className="bg-paper text-ink-muted text-xs rounded px-2 py-1 border border-rule"
+              className="bg-paper text-ink-muted text-xs rounded-[2px] px-2 py-1 border border-rule"
             >
               <option value="">Source: All</option>
               {FINDING_SOURCES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <select
+            </NativeSelect>
+            <NativeSelect
               value={filterSeverity}
               onChange={(e) => setFilterSeverity(e.target.value)}
-              className="bg-paper text-ink-muted text-xs rounded px-2 py-1 border border-rule"
+              className="bg-paper text-ink-muted text-xs rounded-[2px] px-2 py-1 border border-rule"
             >
               <option value="">Severity: All</option>
               {FINDING_SEVERITIES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-            <select
+            </NativeSelect>
+            <NativeSelect
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="bg-paper text-ink-muted text-xs rounded px-2 py-1 border border-rule"
+              className="bg-paper text-ink-muted text-xs rounded-[2px] px-2 py-1 border border-rule"
             >
               <option value="">Status: All</option>
               {FINDING_STATUSES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
+            </NativeSelect>
           </div>
         </div>
         <form onSubmit={(event) => { event.preventDefault(); findingCreateMutation.mutate(); }} className="grid gap-2 border-b border-rule bg-paper p-3 md:grid-cols-[8rem_8rem_1fr_1fr_6rem_auto]" aria-label="Add a finding">
-          <select aria-label="Source" value={newFinding.source} onChange={(event) => setNewFinding({ ...newFinding, source: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink">
+          <NativeSelect aria-label="Source" value={newFinding.source} onChange={(event) => setNewFinding({ ...newFinding, source: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink">
             {FINDING_SOURCES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-          <select aria-label="Severity" value={newFinding.severity} onChange={(event) => setNewFinding({ ...newFinding, severity: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink">
+          </NativeSelect>
+          <NativeSelect aria-label="Severity" value={newFinding.severity} onChange={(event) => setNewFinding({ ...newFinding, severity: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink">
             {FINDING_SEVERITIES.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
-          <input required aria-label="Title" placeholder="Finding title" value={newFinding.title} onChange={(event) => setNewFinding({ ...newFinding, title: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
-          <input aria-label="File" placeholder="pkg/path/file.go" value={newFinding.file} onChange={(event) => setNewFinding({ ...newFinding, file: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 font-mono text-xs text-ink" />
-          <input type="number" min="0" aria-label="Line" value={newFinding.line} onChange={(event) => setNewFinding({ ...newFinding, line: Number(event.target.value) })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
-          <button type="submit" disabled={findingCreateMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-40">Add finding</button>
+          </NativeSelect>
+          <Input required aria-label="Title" placeholder="Finding title" value={newFinding.title} onChange={(event) => setNewFinding({ ...newFinding, title: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          <Input aria-label="File" placeholder="pkg/path/file.go" value={newFinding.file} onChange={(event) => setNewFinding({ ...newFinding, file: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 font-mono text-xs text-ink" />
+          <Input type="number" min="0" aria-label="Line" value={newFinding.line} onChange={(event) => setNewFinding({ ...newFinding, line: Number(event.target.value) })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          <Button variant="ghost" size="plain" type="submit" disabled={findingCreateMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-40">Add finding</Button>
         </form>
 
         {findingsLoading ? (
@@ -237,23 +241,23 @@ export function AgentsPage() {
             Failed to load findings
           </div>
         ) : findings && findings.length > 0 ? (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
-                <th className="text-left px-4 py-3">Severity</th>
-                <th className="text-left px-4 py-3">Title</th>
-                <th className="text-left px-4 py-3">Location</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-left px-4 py-3">Source</th>
-                <th className="text-left px-4 py-3">Set status</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="w-full">
+            <TableHeader>
+              <TableRow className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
+                <TableHead className="text-left px-4 py-3">Severity</TableHead>
+                <TableHead className="text-left px-4 py-3">Title</TableHead>
+                <TableHead className="text-left px-4 py-3">Location</TableHead>
+                <TableHead className="text-left px-4 py-3">Status</TableHead>
+                <TableHead className="text-left px-4 py-3">Source</TableHead>
+                <TableHead className="text-left px-4 py-3">Set status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {findings.map((finding) => (
                 <FindingRow key={finding.id} finding={finding} onStatus={(id, status) => findingStatusMutation.mutate({ id, status })} />
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         ) : (
           <div className="p-6 text-center text-ink-muted text-sm">
             No findings yet. Reek and Daeron will populate these via API.
@@ -267,12 +271,12 @@ export function AgentsPage() {
           <h2 className="text-sm font-medium text-ink-muted">Triage Summaries</h2>
         </div>
         <form onSubmit={(event) => { event.preventDefault(); triageCreateMutation.mutate(); }} className="grid gap-2 border-b border-rule bg-paper p-3 md:grid-cols-[10rem_6rem_6rem_6rem_1fr_auto]" aria-label="Add a triage summary">
-          <input type="date" required aria-label="Date" value={newTriage.date} onChange={(event) => setNewTriage({ ...newTriage, date: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          <Input type="date" required aria-label="Date" value={newTriage.date} onChange={(event) => setNewTriage({ ...newTriage, date: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
           {(['confirmed', 'rejected', 'pending'] as const).map((field) => (
-            <input key={field} type="number" min="0" aria-label={field} placeholder={field} value={newTriage[field]} onChange={(event) => setNewTriage({ ...newTriage, [field]: Number(event.target.value) })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+            <Input key={field} type="number" min="0" aria-label={field} placeholder={field} value={newTriage[field]} onChange={(event) => setNewTriage({ ...newTriage, [field]: Number(event.target.value) })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
           ))}
-          <input aria-label="Summary" placeholder="Summary" value={newTriage.summary} onChange={(event) => setNewTriage({ ...newTriage, summary: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
-          <button type="submit" disabled={triageCreateMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-40">Add summary</button>
+          <Input aria-label="Summary" placeholder="Summary" value={newTriage.summary} onChange={(event) => setNewTriage({ ...newTriage, summary: event.target.value })} className="border border-rule bg-paper-deep px-2 py-2 text-xs text-ink" />
+          <Button variant="ghost" size="plain" type="submit" disabled={triageCreateMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-40">Add summary</Button>
         </form>
 
         {triagesLoading ? (

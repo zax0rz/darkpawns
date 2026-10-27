@@ -1,3 +1,9 @@
+import { ConfirmDialog } from './ConfirmDialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
+import type { ReactNode } from 'react';
+import { Button } from './ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui/table';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
@@ -43,6 +49,7 @@ function ProgressBar({ current, max, label, color }: { current: number; max: num
 }
 
 export function PlayerDetailModal({ playerName, onClose }: PlayerDetailModalProps) {
+  const [kickOpen, setKickOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('stats');
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -76,39 +83,36 @@ export function PlayerDetailModal({ playerName, onClose }: PlayerDetailModalProp
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 bg-ink/60 flex items-center justify-center z-50">
+      <PlayerDialogFrame title={playerName} onClose={onClose}>
         <div className="bg-paper-deep rounded-none border border-rule p-6 w-full max-w-2xl max-h-[80vh]">
           <div className="text-sm text-ink-muted animate-pulse">Loading player data...</div>
         </div>
-      </div>
+      </PlayerDialogFrame>
     );
   }
 
   if (error || !player) {
     return (
-      <div className="fixed inset-0 bg-ink/60 flex items-center justify-center z-50">
+      <PlayerDialogFrame title={playerName} onClose={onClose}>
         <div className="bg-paper-deep rounded-none border border-rule p-6 w-full max-w-2xl max-h-[80vh]">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-sm font-medium text-ink-muted">Player: {playerName}</h2>
-            <button onClick={onClose} className="text-ink-muted hover:text-ink text-lg">&times;</button>
+            <Button variant="ghost" size="plain" onClick={onClose} aria-label="Close player details" className="text-ink-muted hover:text-ink text-lg">&times;</Button>
           </div>
           <div className="text-sm text-accent">Failed to load player details.</div>
           <div className="mt-1 text-xs text-accent">{(error as Error)?.message || 'Not found'}</div>
         </div>
-      </div>
+      </PlayerDialogFrame>
     );
   }
 
-  const handleKick = () => {
-    if (window.confirm(`Are you sure you want to kick ${playerName}?`)) {
-      kickMutation.mutate();
-    }
-  };
+  const handleKick = () => setKickOpen(true);
 
   return (
-    <div className="fixed inset-0 bg-ink/60 flex items-center justify-center z-50" onClick={onClose}>
-      <div
-        className="bg-paper-deep rounded-none border border-rule w-full max-w-2xl max-h-[80vh] flex flex-col"
+    <PlayerDialogFrame title={playerName} onClose={onClose}>
+      <ConfirmDialog open={kickOpen} onOpenChange={setKickOpen} title={`Kick ${playerName}?`} description="Disconnect this character from the game." action="Kick player" onConfirm={() => kickMutation.mutate()} />
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Tab)}
+        className="bg-paper-deep w-full max-w-2xl max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -119,15 +123,14 @@ export function PlayerDetailModal({ playerName, onClose }: PlayerDetailModalProp
               Lv.{player.level} {classNames[player.class] || `Class ${player.class}`} · {raceNames[player.race] || `Race ${player.race}`} · {sexLabel(player.sex)}
             </p>
           </div>
-          <button onClick={onClose} className="text-ink-muted hover:text-ink text-xl leading-none">&times;</button>
+          <Button variant="ghost" size="plain" onClick={onClose} aria-label="Close player details" className="text-ink-muted hover:text-ink text-xl leading-none">&times;</Button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-rule">
+        <TabsList className="w-full justify-start" aria-label="Player details">
           {(['stats', 'inventory', 'equipment'] as Tab[]).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+            <TabsTrigger
+              value={tab} key={tab}
               className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
                 activeTab === tab
                   ? 'text-accent border-b-2 border-accent'
@@ -135,13 +138,13 @@ export function PlayerDetailModal({ playerName, onClose }: PlayerDetailModalProp
               }`}
             >
               {tab}
-            </button>
+            </TabsTrigger>
           ))}
-        </div>
+        </TabsList>
 
         {/* Content */}
         <div className="overflow-y-auto flex-1 p-4 space-y-4">
-          {activeTab === 'stats' && (
+          <TabsContent value="stats">
             <div className="space-y-4">
               {/* HP/Mana/Move Bars */}
               <div className="space-y-2">
@@ -213,90 +216,100 @@ export function PlayerDetailModal({ playerName, onClose }: PlayerDetailModalProp
 
               {/* Actions */}
               <div className="flex gap-2 pt-2">
-                <button
+                <Button variant="ghost" size="plain"
                   onClick={() => saveMutation.mutate()}
                   disabled={saveMutation.isPending}
-                  className="bg-paper-deep hover:bg-paper-deep disabled:bg-paper-deep disabled:text-ink-muted text-ink text-sm px-4 py-2 rounded transition-colors"
+                  className="bg-paper-deep hover:bg-paper-deep disabled:bg-paper-deep disabled:text-ink-muted text-paper text-sm px-4 py-2 rounded-[2px] transition-colors"
                 >
                   {saveMutation.isPending ? 'Saving...' : 'Save'}
-                </button>
-                <button
+                </Button>
+                <Button variant="ghost" size="plain"
                   onClick={handleKick}
                   disabled={kickMutation.isPending}
-                  className="bg-accent hover:bg-accent disabled:bg-paper-deep disabled:text-accent text-ink text-sm px-4 py-2 rounded transition-colors"
+                  className="bg-accent hover:bg-accent disabled:bg-paper-deep disabled:text-accent text-paper text-sm px-4 py-2 rounded-[2px] transition-colors"
                 >
                   {kickMutation.isPending ? 'Kicking...' : 'Kick'}
-                </button>
+                </Button>
               </div>
             </div>
-          )}
+          </TabsContent>
 
-          {activeTab === 'inventory' && (
+          <TabsContent value="inventory">
             <div>
               {player.inventory && player.inventory.length > 0 ? (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-ink-muted border-b border-rule">
-                      <th className="text-left py-1 pr-2">#</th>
-                      <th className="text-left py-1 pr-2">Name</th>
-                      <th className="text-left py-1">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table className="w-full text-sm">
+                  <TableHeader>
+                    <TableRow className="text-xs text-ink-muted border-b border-rule">
+                      <TableHead className="text-left py-1 pr-2">#</TableHead>
+                      <TableHead className="text-left py-1 pr-2">Name</TableHead>
+                      <TableHead className="text-left py-1">Description</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {player.inventory.map((item, i) => (
-                      <tr key={i} className="border-b border-rule text-ink">
-                        <td className="py-1.5 pr-2 font-mono text-accent">{item.vnum}</td>
-                        <td className="py-1.5 pr-2">{item.name}</td>
-                        <td className="py-1.5 text-ink-muted">{item.short_desc}</td>
-                      </tr>
+                      <TableRow key={i} className="border-b border-rule text-ink">
+                        <TableCell className="py-1.5 pr-2 font-mono text-accent">{item.vnum}</TableCell>
+                        <TableCell className="py-1.5 pr-2">{item.name}</TableCell>
+                        <TableCell className="py-1.5 text-ink-muted">{item.name}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               ) : (
                 <p className="text-sm text-ink-muted">No items in inventory.</p>
               )}
             </div>
-          )}
+          </TabsContent>
 
-          {activeTab === 'equipment' && (
+          <TabsContent value="equipment">
             <div>
               {player.equipment && player.equipment.length > 0 ? (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-ink-muted border-b border-rule">
-                      <th className="text-left py-1 pr-3">Slot</th>
-                      <th className="text-left py-1 pr-2">#</th>
-                      <th className="text-left py-1 pr-2">Name</th>
-                      <th className="text-left py-1">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table className="w-full text-sm">
+                  <TableHeader>
+                    <TableRow className="text-xs text-ink-muted border-b border-rule">
+                      <TableHead className="text-left py-1 pr-3">Slot</TableHead>
+                      <TableHead className="text-left py-1 pr-2">#</TableHead>
+                      <TableHead className="text-left py-1 pr-2">Name</TableHead>
+                      <TableHead className="text-left py-1">Description</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {player.equipment.map((item, i) => (
-                      <tr key={i} className="border-b border-rule text-ink">
-                        <td className="py-1.5 pr-3 text-xs text-ink-muted font-mono">{item.wear_location}</td>
-                        <td className="py-1.5 pr-2 font-mono text-accent">{item.vnum}</td>
-                        <td className="py-1.5 pr-2">{item.name}</td>
-                        <td className="py-1.5 text-ink-muted">{item.short_desc}</td>
-                      </tr>
+                      <TableRow key={i} className="border-b border-rule text-ink">
+                        <TableCell className="py-1.5 pr-3 text-xs text-ink-muted font-mono">{item.slot || '—'}</TableCell>
+                        <TableCell className="py-1.5 pr-2 font-mono text-accent">{item.vnum}</TableCell>
+                        <TableCell className="py-1.5 pr-2">{item.name}</TableCell>
+                        <TableCell className="py-1.5 text-ink-muted">{item.name}</TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               ) : (
                 <p className="text-sm text-ink-muted">No equipment worn.</p>
               )}
             </div>
-          )}
+          </TabsContent>
         </div>
-      </div>
-    </div>
+      </Tabs>
+    </PlayerDialogFrame>
   );
 }
 
 function StatItem({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="bg-paper rounded p-2">
+    <div className="bg-paper rounded-[2px] p-2">
       <div className="text-xs text-ink-muted">{label}</div>
       <div className="text-sm text-ink font-mono">{value}</div>
     </div>
   );
+}
+
+function PlayerDialogFrame({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <DialogContent showCloseButton={false} className="block max-h-[85dvh] overflow-y-auto p-0 sm:max-w-2xl">
+      <DialogTitle className="sr-only">Player: {title}</DialogTitle>
+      <DialogDescription className="sr-only">Inspect online character statistics, inventory and equipment.</DialogDescription>
+      {children}
+    </DialogContent>
+  </Dialog>;
 }

@@ -1,3 +1,7 @@
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction } from '../ui/alert-dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { NativeSelect } from '../ui/select';
 import { useMemo, useState } from 'react';
 import type { OlcPatchOperation, OlcSchema, OlcZoneCommand, OlcZoneCommandArgument } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
@@ -70,9 +74,9 @@ function ReorderConfirmation({
   const removed = before.filter((edge) => !after.includes(edge));
   const added = after.filter((edge) => !before.includes(edge));
   return (
-    <div className="border border-accent bg-paper-deep px-4 py-4" role="dialog" aria-label="Confirm command reorder">
-      <p className="font-semibold text-ink">Reorder changes dependency edges</p>
-      <p className="mt-1 text-sm text-ink-muted">IfFlag follows the command it is attached to, but its previous command changes when the order moves.</p>
+    <AlertDialog open onOpenChange={(open) => { if (!open && !disabled) onCancel(); }}><AlertDialogContent>
+      <AlertDialogTitle>Reorder changes dependency edges</AlertDialogTitle>
+      <AlertDialogDescription>IfFlag follows the command it is attached to, but its previous command changes when the order moves.</AlertDialogDescription>
       <div className="mt-3 grid gap-3 text-xs md:grid-cols-2">
         <div>
           <p className="font-semibold uppercase tracking-wider text-ink-muted">Edges removed</p>
@@ -84,10 +88,10 @@ function ReorderConfirmation({
         </div>
       </div>
       <div className="mt-4 flex gap-2">
-        <button type="button" disabled={disabled} onClick={onCancel} className="border border-rule px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:opacity-50">Cancel</button>
-        <button type="button" disabled={disabled} onClick={onConfirm} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-50">Apply reorder</button>
+        <AlertDialogCancel disabled={disabled} onClick={onCancel} className="border border-rule px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:opacity-50">Cancel</AlertDialogCancel>
+        <AlertDialogAction disabled={disabled} onClick={onConfirm} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-50">Apply reorder</AlertDialogAction>
       </div>
-    </div>
+    </AlertDialogContent></AlertDialog>
   );
 }
 
@@ -111,9 +115,9 @@ function CommandArgument({
     return (
       <label className="block">
         <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{argument.label}</span>
-        <select value={String(value)} disabled={disabled} onChange={(event) => onValue(Number(event.currentTarget.value))} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
+        <NativeSelect value={String(value)} disabled={disabled} onChange={(event) => onValue(Number(event.currentTarget.value))} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
           {argument.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
+        </NativeSelect>
       </label>
     );
   }
@@ -190,9 +194,9 @@ export function ZoneCommandTimeline({ schema, commands, disabled = false, readOn
                   {command.ifFlag !== 0 && <span className="border border-accent px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-accent">if previous succeeds</span>}
                 </div>
                 <div className="flex gap-2">
-                  {!readOnly && index > 0 && <button type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index - 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↑ Move</button>}
-                  {!readOnly && index < commands.length - 1 && <button type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index + 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↓ Move</button>}
-                  {!readOnly && <button type="button" disabled={disabled} onClick={() => onOperation([{ kind: 'remove_command', index: command.position }])} className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</button>}
+                  {!readOnly && index > 0 && <Button variant="ghost" size="plain" type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index - 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↑ Move</Button>}
+                  {!readOnly && index < commands.length - 1 && <Button variant="ghost" size="plain" type="button" disabled={disabled} onClick={() => setReorder({ from: index, to: index + 1 })} className="border border-rule px-2 py-1 text-xs text-ink hover:bg-paper-deep disabled:opacity-50">↓ Move</Button>}
+                  {!readOnly && <Button variant="ghost" size="plain" type="button" disabled={disabled} onClick={() => onOperation([{ kind: 'remove_command', index: command.position }])} className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</Button>}
                 </div>
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -259,18 +263,18 @@ function AddCommandForm({ descriptor, disabled, onOperation }: { descriptor: Olc
           <label key={argument.key} className={argument.visible ? 'block' : 'hidden'}>
             <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-muted">{argument.label}</span>
             {argument.control === 'select' ? (
-              <select name={'arg' + (index + 1)} disabled={disabled} defaultValue={argument.options[0]?.value ?? 0} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
+              <NativeSelect name={'arg' + (index + 1)} disabled={disabled} defaultValue={argument.options[0]?.value ?? 0} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
                 {argument.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
+              </NativeSelect>
             ) : (
-              <input name={'arg' + (index + 1)} type="number" min={argument.bounds?.min} max={argument.bounds?.max} disabled={disabled} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink" />
+              <Input name={'arg' + (index + 1)} type="number" min={argument.bounds?.min} max={argument.bounds?.max} disabled={disabled} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink" />
             )}
           </label>
         ))}
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <label className="flex items-center gap-2 text-sm text-ink"><input name="if_flag" type="checkbox" value="1" disabled={disabled} className="h-4 w-4 accent-accent" /> Depends on previous success</label>
-        <button type="submit" disabled={disabled} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-50">Add command</button>
+        <Button variant="ghost" size="plain" type="submit" disabled={disabled} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:opacity-50">Add command</Button>
       </div>
     </form>
   );

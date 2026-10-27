@@ -303,3 +303,9 @@ endif
 .PHONY: portable-snapshot
 portable-snapshot:
 	goreleaser release --snapshot --clean
+
+.PHONY: admin-api
+# Generate the console contract from the registered Huma operations, offline.
+# ADMIN_OPENAPI_URL=http://localhost:4350/api/openapi.json uses a running server.
+admin-api:
+	cd admin-ui && node scripts/generate-api.mjs

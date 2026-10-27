@@ -1,3 +1,4 @@
+import { NativeSelect } from '../ui/select';
 import type { OlcRoom, OlcSchema, OlcSchemaField, RoomPatchOperation } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
 
@@ -129,7 +130,7 @@ export function SchemaFields({ schema, room, dirty, disabled = false, onOperatio
             return (
               <div key={field.key}>
                 <FieldLabel field={field} dirty={dirty.includes(field.key)} />
-                <select
+                <NativeSelect
                   id={`olc-${field.key}`}
                   name={`olc-${field.key}`}
                   value={String(current)}
@@ -144,7 +145,7 @@ export function SchemaFields({ schema, room, dirty, disabled = false, onOperatio
                       {option.label}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             );
           }

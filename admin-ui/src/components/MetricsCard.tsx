@@ -1,3 +1,4 @@
+import { Card } from './ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 
@@ -21,19 +22,19 @@ export function MetricsCard() {
 
   if (isLoading) {
     return (
-      <div className="bg-paper-deep rounded-none border border-rule p-4">
+      <Card className="gap-0 p-4">
         <h2 className="text-sm font-medium text-ink-muted mb-3">Server Metrics</h2>
         <div className="text-sm text-ink-muted animate-pulse">Loading metrics...</div>
-      </div>
+      </Card>
     );
   }
 
   if (error || !metrics) {
     return (
-      <div className="bg-paper-deep rounded-none border border-rule p-4">
+      <Card className="gap-0 p-4">
         <h2 className="text-sm font-medium text-ink-muted mb-3">Server Metrics</h2>
         <div className="text-sm text-accent">Failed to load metrics</div>
-      </div>
+      </Card>
     );
   }
 
@@ -42,7 +43,7 @@ export function MetricsCard() {
     : 0;
 
   return (
-    <div className="bg-paper-deep rounded-none border border-rule p-4">
+    <Card className="gap-0 p-4">
       <h2 className="text-sm font-medium text-ink-muted mb-3">Server Metrics</h2>
 
       {/* Memory */}
@@ -78,7 +79,7 @@ export function MetricsCard() {
         <MetricItem label="GC Pause" value={formatDuration(metrics.pause_total_ns)} />
         <MetricItem label="Last GC" value={metrics.last_gc} />
       </div>
-    </div>
+    </Card>
   );
 }
 

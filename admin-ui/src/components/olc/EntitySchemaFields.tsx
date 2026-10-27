@@ -1,3 +1,4 @@
+import { NativeSelect } from '../ui/select';
 import type {
   OlcMob,
   OlcObject,
@@ -224,7 +225,7 @@ export function EntitySchemaFields({ schema, kind, entity, dirty, disabled = fal
             return (
               <div key={field.key}>
                 <FieldLabel field={field} dirty={dirty.includes(field.key)} />
-                <select
+                <NativeSelect
                   id={`olc-${field.key}`}
                   value={String(current)}
                   disabled={disabled}
@@ -232,7 +233,7 @@ export function EntitySchemaFields({ schema, kind, entity, dirty, disabled = fal
                   className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {(field.options || []).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
+                </NativeSelect>
               </div>
             );
           }

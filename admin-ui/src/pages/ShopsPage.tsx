@@ -1,3 +1,5 @@
+import { Input } from '../components/ui/input';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -27,7 +29,7 @@ export function ShopsPage() {
 
       <NewEntityPanel kind="shop" />
 
-      <input
+      <Input
         type="search"
         value={search}
         onChange={(event) => setSearch(event.currentTarget.value)}
@@ -42,21 +44,21 @@ export function ShopsPage() {
       {shops && filtered.length > 0 && (
         <div className="overflow-hidden border border-rule bg-paper-deep">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-rule text-left text-xs uppercase tracking-wider text-ink-muted">
-                  <th className="px-4 py-3">Shop #</th>
-                  <th className="px-4 py-3">Keeper</th>
-                  <th className="px-4 py-3">Room</th>
-                  <th className="px-4 py-3">Buy rate</th>
-                  <th className="px-4 py-3">Sell rate</th>
-                  <th className="px-4 py-3">Edit</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow className="border-b border-rule text-left text-xs uppercase tracking-wider text-ink-muted">
+                  <TableHead className="px-4 py-3">Shop #</TableHead>
+                  <TableHead className="px-4 py-3">Keeper</TableHead>
+                  <TableHead className="px-4 py-3">Room</TableHead>
+                  <TableHead className="px-4 py-3">Buy rate</TableHead>
+                  <TableHead className="px-4 py-3">Sell rate</TableHead>
+                  <TableHead className="px-4 py-3">Edit</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filtered.map((shop) => <ShopRow key={`${shop.vnum}-${shop.keeper_vnum}`} shop={shop} />)}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -67,13 +69,13 @@ export function ShopsPage() {
 
 function ShopRow({ shop }: { shop: Shop }) {
   return (
-    <tr className="border-b border-rule hover:bg-paper-deep">
-      <td className="px-4 py-3 font-mono text-accent">{shop.vnum || '—'}</td>
-      <td className="px-4 py-3 text-ink">#{shop.keeper_vnum} {shop.keeper_name || 'Unknown keeper'}</td>
-      <td className="px-4 py-3 font-mono text-ink-muted">{shop.room_vnum || '—'}</td>
-      <td className="px-4 py-3 font-mono text-ink-muted">{shop.profit_buy.toFixed(2)}×</td>
-      <td className="px-4 py-3 font-mono text-ink-muted">{shop.profit_sell.toFixed(2)}×</td>
-      <td className="px-4 py-3"><Link to={`/admin/game/shops/${shop.vnum}/edit`} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Edit</Link></td>
-    </tr>
+    <TableRow className="border-b border-rule hover:bg-paper-deep">
+      <TableCell className="px-4 py-3 font-mono text-accent">{shop.vnum || '—'}</TableCell>
+      <TableCell className="px-4 py-3 text-ink">#{shop.keeper_vnum} {shop.keeper_name || 'Unknown keeper'}</TableCell>
+      <TableCell className="px-4 py-3 font-mono text-ink-muted">{shop.room_vnum || '—'}</TableCell>
+      <TableCell className="px-4 py-3 font-mono text-ink-muted">{shop.profit_buy.toFixed(2)}×</TableCell>
+      <TableCell className="px-4 py-3 font-mono text-ink-muted">{shop.profit_sell.toFixed(2)}×</TableCell>
+      <TableCell className="px-4 py-3"><Link to={`/admin/game/shops/${shop.vnum}/edit`} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Edit</Link></TableCell>
+    </TableRow>
   );
 }

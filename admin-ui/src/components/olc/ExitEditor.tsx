@@ -1,3 +1,5 @@
+import { Button } from '../ui/button';
+import { NativeSelect } from '../ui/select';
 import { useState } from 'react';
 import type { OlcExit, OlcRoom, RoomPatchOperation } from '../../api/olc';
 import type { OlcSchema } from '../../api/olc';
@@ -59,14 +61,14 @@ export function ExitEditor({ schema, room, dirty, disabled = false, onOperation 
               </summary>
               <div className="border-t border-rule px-4 py-4">
                 {!exit ? (
-                  <button
+                  <Button variant="ghost" size="plain"
                     type="button"
                     disabled={disabled}
                     onClick={() => onOperation({ kind: 'ensure_exit', direction, value: -1 })}
                     className="border border-rule bg-paper-deep px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Add exit
-                  </button>
+                  </Button>
                 ) : (
                   <ExitFields
                     exit={exit}
@@ -157,7 +159,7 @@ function ExitFields({
 
       <div>
         <label htmlFor={`exit-${direction}-door`} className="mb-2 block text-sm font-semibold text-ink">Door flags</label>
-        <select
+        <NativeSelect
           id={`exit-${direction}-door`}
           value={exit.doorState}
           disabled={disabled}
@@ -167,14 +169,14 @@ function ExitFields({
           {doorOptions.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
-        </select>
+        </NativeSelect>
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-rule pt-3">
         <span className="font-mono text-[11px] uppercase tracking-wider text-ink-muted">
           {[dirtyFor(dirty, direction, 'target') && 'target', dirtyFor(dirty, direction, 'description') && 'description', dirtyFor(dirty, direction, 'keywords') && 'keywords', dirtyFor(dirty, direction, 'key') && 'key', dirtyFor(dirty, direction, 'door_flags') && 'door flags'].filter(Boolean).join(' · ') || 'unchanged'}
         </span>
-        <button
+        <Button variant="ghost" size="plain"
           type="button"
           disabled={disabled}
           onClick={() => {
@@ -183,7 +185,7 @@ function ExitFields({
           className="border border-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-accent hover:bg-accent hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
         >
           Purge exit
-        </button>
+        </Button>
       </div>
     </div>
   );

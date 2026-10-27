@@ -1,12 +1,15 @@
+import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
     proxy: {
+      '/health': { target: 'http://localhost:4350', changeOrigin: true },
       '/admin': {
         target: 'http://localhost:4350',
         changeOrigin: true,

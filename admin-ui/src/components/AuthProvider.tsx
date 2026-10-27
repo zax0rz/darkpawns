@@ -1,10 +1,6 @@
+import { http, read, ApiError } from '../api/http';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AuthContext, type AuthContextValue, type AuthState, type LoginError } from '../hooks/useAuth';
-
-const sessionHeaders = {
-  'Content-Type': 'application/json',
-  'X-Requested-With': 'darkpawns-admin',
-} as const;
 
 // The auth provider lives apart from the useAuth hook so react-refresh keeps
 // working (components and hooks cannot share a file).
@@ -21,22 +17,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/admin/session', {
-          credentials: 'same-origin',
-          headers: sessionHeaders,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) {
-            setState({
-              ready: true,
-              authenticated: true,
-              role: data.role ?? 'player',
-              playerName: data.player_name,
-            });
-          }
-          return;
-        }
+        const data = await read(http.GET('/admin/session'));
+        if (!cancelled) setState({ ready: true, authenticated: true, role: data.role ?? 'player', playerName: data.player_name });
+        return;
       } catch {
         /* Network failure or signed out — both mean the login page. */
       }
@@ -50,26 +33,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (playerName: string, password: string) => {
-    const res = await fetch('/admin/login', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: sessionHeaders,
-      body: JSON.stringify({ player_name: playerName, password }),
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({ error: 'Login failed' }));
-      // The caller decides the wording. Relaying the server's text verbatim is
-      // what leaked "invalid password" versus "invalid credentials" to the
-      // screen, which tells a stranger whether a character name exists.
-      const err = new Error(body.error || `Login failed (${res.status})`) as LoginError;
-      err.status = res.status;
+    let data;
+    try { data = await read(http.POST('/admin/login', { body: { player_name: playerName, password } })); }
+    catch (error) {
+      const err = new Error(error instanceof Error ? error.message : 'Login failed') as LoginError;
+      err.status = error instanceof ApiError ? error.status : 0;
       throw err;
     }
-
-    // The token itself arrives only in the HttpOnly cookie; the body carries
-    // the display identity.
-    const data = await res.json();
     setState({
       ready: true,
       authenticated: true,
@@ -81,11 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/admin/logout', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: sessionHeaders,
-      });
+      await http.POST('/admin/logout');
     } catch {
       /* The server cookie clear is best-effort; local state clears regardless. */
     }
