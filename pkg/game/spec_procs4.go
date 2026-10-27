@@ -611,12 +611,14 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			sendToChar(ch, "How much do you want to deposit?")
 			return true
 		}
-		if ch.GetGold() < amount {
+		// Atomic check-and-move: a separate GetGold check followed by
+		// SetGold/SetBankGold read-modify-writes lets two concurrent deposits
+		// (heartbeat drain lane vs readPump fast lane) both pass the check and
+		// both credit the bank (CWE-367).
+		if ch.DepositGold(amount) == 0 {
 			sendToChar(ch, "You don't have that many coins!")
 			return true
 		}
-		ch.SetGold(ch.GetGold() - amount)
-		ch.SetBankGold(ch.GetBankGold() + amount)
 		sendToChar(ch, fmt.Sprintf("You deposit %d coins.", amount))
 		Act(w, true, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true
@@ -628,12 +630,12 @@ func specBank(w *World, ch *Player, me *MobInstance, cmd string, arg string) boo
 			sendToChar(ch, "How much do you want to withdraw?")
 			return true
 		}
-		if ch.GetBankGold() < amount {
+		// Mirror of the deposit arm: one p.mu hold covers the check and both
+		// writes, so two concurrent withdrawals cannot both pay out (CWE-367).
+		if ch.WithdrawBankGold(amount) == 0 {
 			sendToChar(ch, "You don't have that many coins deposited!")
 			return true
 		}
-		ch.SetGold(ch.GetGold() + amount)
-		ch.SetBankGold(ch.GetBankGold() - amount)
 		sendToChar(ch, fmt.Sprintf("You withdraw %d coins.", amount))
 		Act(w, true, ch, nil, nil, nil, "$n makes a bank transaction.", "", ToRoom)
 		return true

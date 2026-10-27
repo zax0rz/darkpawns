@@ -94,6 +94,48 @@ func (p *Player) SetBankGold(gold int) {
 	p.BankGold = gold
 }
 
+// DepositGold atomically moves amount from carried gold into the bank account.
+// The sufficiency check and both writes share a single p.mu hold, because the
+// port's two command lanes (the 100ms heartbeat drain and the connection's
+// readPump fast path) can interleave a check-then-mutate sequence that C's
+// single-threaded interpreter serialized: two deposits or a deposit and a
+// withdraw could both pass the check and both apply their credit (CWE-367).
+// Raw fields are used deliberately, like SpendGold/AddGold — the locking
+// accessors must never be nested under p.mu. Returns the amount moved, or 0
+// when amount is non-positive or carried gold is short.
+func (p *Player) DepositGold(amount int) int {
+	if amount <= 0 {
+		return 0
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.Gold < amount {
+		return 0
+	}
+	p.Gold -= amount
+	p.BankGold += amount
+	return amount
+}
+
+// WithdrawBankGold is DepositGold's mirror: it atomically moves amount from the
+// bank account to carried gold under one p.mu hold, so two concurrent
+// withdrawals cannot both pass the balance check and both pay out (CWE-367).
+// Returns the amount moved, or 0 when amount is non-positive or the balance is
+// short.
+func (p *Player) WithdrawBankGold(amount int) int {
+	if amount <= 0 {
+		return 0
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.BankGold < amount {
+		return 0
+	}
+	p.Gold += amount
+	p.BankGold -= amount
+	return amount
+}
+
 // GetExp returns the player's experience points.
 func (p *Player) GetExp() int {
 	p.mu.RLock()

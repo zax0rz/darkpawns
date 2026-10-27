@@ -39,13 +39,27 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 // getCheckMoney handles auto-conversion of money items on pickup
 func (w *World) getCheckMoney(ch *Player, obj *ObjectInstance) {
 	amount := obj.GetValue(0)
-	if obj.GetTypeFlag() == ITEM_MONEY && amount > 0 {
-		w.ExtractObject(obj, ch.GetRoomVNum())
-		if amount > 1 {
-			ch.SendMessage(fmt.Sprintf("There were %d coins.\r\n", amount))
-		}
-		ch.SetGold(ch.GetGold() + amount)
+	if obj.GetTypeFlag() != ITEM_MONEY || amount <= 0 {
+		return
 	}
+	// Consume-once: extraction and the credit must be one critical section.
+	// getFromRoom picks the object out of a snapshot copy, so two concurrent
+	// getters can both still hold the same pile; ExtractObject is idempotent
+	// (it no-ops once Location is nowhere), so without this guard each getter
+	// would be credited the full amount and one pile would be minted twice
+	// (CWE-362/CWE-367).
+	w.mu.Lock()
+	if obj.Location.Kind == ObjNowhere {
+		w.mu.Unlock()
+		return
+	}
+	w.extractObjectLocked(obj)
+	w.mu.Unlock()
+
+	if amount > 1 {
+		ch.SendMessage(fmt.Sprintf("There were %d coins.\r\n", amount))
+	}
+	ch.AddGold(amount)
 }
 
 // performGetFromContainer gets an item from a container
@@ -134,6 +148,12 @@ func (w *World) getFromContainer(ch *Player, cont *ObjectInstance, arg string, m
 
 // performGetFromRoom picks up an item from the room floor
 func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
+	// The room snapshot is stale: a concurrent getter may already have taken
+	// this object. Re-moving an extracted object would resurrect it, and for a
+	// money pile it would re-credit the amount (CWE-362/CWE-367).
+	if obj.Location.Kind == ObjNowhere {
+		return
+	}
 	if w.canTakeObj(ch, obj) {
 		if err := w.MoveObjectToPlayerInventory(obj, ch); err != nil {
 			w.actToChar(ch, "You can't carry that much.\n", nil, nil)
