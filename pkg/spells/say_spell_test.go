@@ -28,6 +28,29 @@ func newSayChar(name string, class int, room int) *mockSpellsChar {
 		name:     name,
 		class:    class,
 		roomVNum: room,
+		position: int(PosStanding),
+	}
+}
+
+func TestSaySpell_FallbackUsesActRecipientGate(t *testing.T) {
+	caster := newSayChar("Alice", 0, 100)
+	sleeping := newSayChar("Sleeper", 0, 100)
+	sleeping.position = int(PosSleeping)
+	writer := newSayChar("Writer", 0, 100)
+	writer.flags = 1 << 4 // PLR_WRITING (src/structs.h:225).
+	awake := newSayChar("Awake", 0, 100)
+	world := &mockSayWorld{players: []interface{}{caster, sleeping, writer, awake}}
+
+	SaySpell(caster, 1, nil, nil, world)
+
+	if len(sleeping.messages) != 0 {
+		t.Fatalf("sleeping fallback observer received chant %q", sleeping.messages)
+	}
+	if len(writer.messages) != 0 {
+		t.Fatalf("writing fallback observer received chant %q", writer.messages)
+	}
+	if len(awake.messages) != 1 || !strings.Contains(awake.messages[0], "Alice") {
+		t.Fatalf("awake fallback observer output = %q, want caster chant", awake.messages)
 	}
 }
 

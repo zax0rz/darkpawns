@@ -302,6 +302,49 @@ func TestMagCreations_CreateFood(t *testing.T) {
 	}
 }
 
+func TestMagCreationsCreateFoodRoomFallbackUsesActGate(t *testing.T) {
+	caster := newAffectMale("Castero", 1001)
+	sleeping := newAffectMale("Sleeper", 1001)
+	sleeping.position = int(PosSleeping)
+	writer := newAffectMale("Writer", 1001)
+	writer.affectedBits = 1 << 4 // PLR_WRITING (src/structs.h:225).
+	awake := newAffectMale("Awake", 1001)
+	world := &spawnWorldMock{players: []interface{}{caster, sleeping, writer, awake}}
+
+	MagCreations(10, caster, SpellCreateFood, world)
+
+	if len(sleeping.messages) != 0 {
+		t.Fatalf("sleeping observer received Create Food room act %q", sleeping.messages)
+	}
+	if len(writer.messages) != 0 {
+		t.Fatalf("writing observer received Create Food room act %q", writer.messages)
+	}
+	if got, want := awake.messages, []string{"Castero creates a Magic Mushroom.\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("awake observer output = %q, want %q", got, want)
+	}
+}
+
+type createFoodActWorld struct {
+	*spawnWorldMock
+	actCalled bool
+}
+
+func (w *createFoodActWorld) SpellCreatedObjectAct(interface{}, interface{}) bool {
+	w.actCalled = true
+	return true
+}
+
+func TestMagCreationsCreateFoodUsesLiveActAdapter(t *testing.T) {
+	caster := newAffectMale("Castero", 1001)
+	world := &createFoodActWorld{spawnWorldMock: &spawnWorldMock{players: []interface{}{caster}}}
+
+	MagCreations(10, caster, SpellCreateFood, world)
+
+	if !world.actCalled {
+		t.Fatal("Create Food did not route its room output through SpellCreatedObjectAct")
+	}
+}
+
 func TestMagCreations_NilCaster(t *testing.T) {
 	world := &spawnWorldMock{}
 	MagCreations(10, nil, SpellCreateFood, world)

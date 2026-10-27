@@ -251,6 +251,14 @@ func sendOk(to Actor, toSleep bool) bool {
 	return true
 }
 
+// CanReceiveAct reports whether a player recipient passes C's SENDOK gate for
+// an ordinary act() message. Session-owned event broadcasters use the same
+// position and writing checks as Act; their session membership supplies the
+// connected-descriptor part of SENDOK.
+func CanReceiveAct(to *Player) bool {
+	return to != nil && sendOk(to, false)
+}
+
 // fname returns the first word of a keywords string.
 // C: fname() from utils.c
 func fname(keywords string) string {

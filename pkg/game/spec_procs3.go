@@ -653,7 +653,7 @@ func conSellerTell(w *World, me *MobInstance, target *Player, msg string) {
 // roomMessage, preserving C's actor/victim exclusion and PERS substitutions.
 func conSellerRoomAct(w *World, me *MobInstance, victim *Player, hideInvisible bool, render func(Actor) string) {
 	for _, to := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if victim != nil && to == victim {
+		if (victim != nil && to == victim) || !sendOk(to, false) {
 			continue
 		}
 		if hideInvisible && !conSellerCanSee(w, to, me) {
@@ -728,17 +728,20 @@ func specAlienElevator(w *World, ch *Player, me *MobInstance, cmd string, arg st
 	}
 	arg = strings.TrimSpace(arg)
 	if cmd == "close" && strings.EqualFold(arg, "door") {
-		w.roomMessage(ch.GetRoomVNum(), "The room starts to move!")
-		// Move players between the two elevator rooms
+		// C moves each occupant before sending the line directly to that
+		// character (src/spec_procs3.c:401-419). This is not an act() or
+		// send_to_room() broadcast, so sleeping occupants still receive it.
 		const roomA = 19551
 		const roomB = 19599
 		playersA := w.GetPlayersInRoom(roomA)
 		playersB := w.GetPlayersInRoom(roomB)
 		for _, p := range playersA {
 			p.SetRoom(roomB)
+			p.SendMessage("The room starts to move!\r\n")
 		}
 		for _, p := range playersB {
 			p.SetRoom(roomA)
+			p.SendMessage("The room starts to move!\r\n")
 		}
 		return true
 	}
@@ -1341,7 +1344,7 @@ func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string
 	}
 
 	msg := fmt.Sprintf("A %s cylinder of light extends upwards from the pillar.", entry.color)
-	w.roomMessage(ch.GetRoomVNum(), msg)
+	w.SendToRoom(ch.GetRoomVNum(), msg+"\r\n")
 	obj, err := w.SpawnObject(entry.cylVNum, ch.GetRoomVNum())
 	if err == nil {
 		if err2 := w.MoveObjectToRoomFront(obj, ch.GetRoomVNum()); err2 != nil {
@@ -1468,7 +1471,7 @@ func elementsRemoveCylinders(w *World, roomVNum int) {
 		if cylinder == nil {
 			continue
 		}
-		w.roomMessage(roomVNum, fmt.Sprintf("The %s cylinder of light slowly sinks back into the pillar.", colors[i]))
+		w.SendToRoom(roomVNum, fmt.Sprintf("The %s cylinder of light slowly sinks back into the pillar.\r\n", colors[i]))
 		w.ExtractObject(cylinder, roomVNum)
 	}
 }

@@ -1,7 +1,9 @@
 # depth-case: gate.spell.collision-spacing
+# depth-case: gate.spell.send-to-room-sleeping-recipient
 # C-first live manual cast -> spell_gate collision proof. A loaded blue portal
 # shares the grove with the caster; its room bytes must abut the caster's final
 # moments output exactly as send_to_room emits them in src/comm.c:2366-2373.
+# An awake witness and sleeping peer prove C send_to_room skips the sleeper.
 
 [fixture]
 empty-players
@@ -63,9 +65,40 @@ Y
 <ENTER>
 1
 
+[setup:oracle:sleeper]
+Gatesleeper
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Gatesleeper
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
 [warmup]
 goto 4002
 teleport Gatewitness 4002
+teleport Gatesleeper 4002
 
 [probe]
 cast 'gate'

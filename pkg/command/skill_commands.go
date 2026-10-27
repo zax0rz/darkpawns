@@ -1083,13 +1083,7 @@ func CmdStrike(s SessionInterface, args []string) error {
 
 	if target == ch {
 		ch.SendMessage("You beat yourself about the face and neck.\r\n")
-		// act("$n slaps $mself around a little.", FALSE, ch, 0, vict, TO_ROOM)
-		for _, p := range world.GetPlayersInRoom(ch.GetRoom()) {
-			if p.Name != ch.Name {
-				p.SendMessage(fmt.Sprintf("%s slaps %s around a little.\r\n",
-					ch.Name, genderPronoun(ch.Sex)))
-			}
-		}
+		game.Act(world, false, ch, nil, nil, nil, "$n slaps $mself around a little.", "", game.ToRoom)
 		return nil
 	}
 
@@ -1329,19 +1323,6 @@ func CmdTurn(s SessionInterface, _ []string) error {
 	return nil
 }
 
-// genderPronoun returns the appropriate "himself" / "herself" / "itself" pronoun.
-// Go encoding: 0=male, 1=female, 2=neutral.
-func genderPronoun(sex int) string {
-	switch sex {
-	case game.SexMale:
-		return "himself"
-	case game.SexFemale:
-		return "herself"
-	default:
-		return "itself"
-	}
-}
-
 // ---------------------------------------------------------------------------
 // Helper: send skill result to player, victim, and room
 // ---------------------------------------------------------------------------
@@ -1438,7 +1419,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 		if result.MessageToVict != "" && target != nil {
 			if p, ok := target.(*game.Player); ok {
-				p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToVict)))
+				if !result.VictimMessageAct || game.CanReceiveAct(p) {
+					p.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToVict)))
+				}
 			}
 		}
 		if result.MessageToRoom != "" {
@@ -1446,6 +1429,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			world := s.GetWorld()
 			players := world.GetPlayersInRoom(roomVNum)
 			for _, p := range players {
+				if !game.CanReceiveAct(p) {
+					continue
+				}
 				if p == ch && !result.RoomIncludesActor {
 					continue
 				}
@@ -1460,6 +1446,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			world := s.GetWorld()
 			players := world.GetPlayersInRoom(roomVNum)
 			for _, p := range players {
+				if !game.CanReceiveAct(p) {
+					continue
+				}
 				if p == ch && !result.RoomIncludesActor {
 					continue
 				}
@@ -1703,7 +1692,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	// Send to victim
 	if !result.SkillMsgAfterDamage && !result.RetaliateHitAfterMessages && result.MessageToVict != "" && target != nil {
 		if p, ok := target.(*game.Player); ok {
-			p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
+			if !result.VictimMessageAct || game.CanReceiveAct(p) {
+				p.SendMessage(game.CapitalizeSentence(result.MessageToVict) + "\r\n")
+			}
 		}
 	}
 
@@ -1717,6 +1708,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				return
 			}
 			for _, p := range players {
+				if !game.CanReceiveAct(p) {
+					continue
+				}
 				if p == ch && !result.RoomIncludesActor {
 					continue
 				}

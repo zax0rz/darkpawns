@@ -779,7 +779,7 @@ func ghostShipDisappearForWorld(w *World) {
 }
 
 // sendWeatherRoom mirrors comm.c:send_to_room's awake-recipient gate for the
-// dusk events. World.SendToRoom does not filter players by position.
+// dusk events. C send_to_room excludes positions at or below POS_SLEEPING.
 func sendWeatherRoom(w *World, room int, message string) {
 	for _, player := range w.GetPlayersInRoom(room) {
 		if player.GetPosition() > combat.PosSleeping {

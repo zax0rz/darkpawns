@@ -317,6 +317,9 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 		if selfTarget(ch, p) || (tch != nil && selfTarget(tch, p)) {
 			return
 		}
+		if !canReceiveAct(p) {
+			return
+		}
 		rp, ok := p.(msgSender)
 		if !ok {
 			return

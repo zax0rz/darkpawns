@@ -1090,7 +1090,7 @@ func TestMagSummons_AnimateDead_Success(t *testing.T) {
 	forceAnimateDeadRoll(t, 101) // pass the pfail so the spawn path runs
 	caster := &mockSpellsChar{name: "Necro", level: 10, class: 0, roomVNum: 100}
 	corpse := &mockCorpse{keywords: "corpse", objType: 15, values: [4]int{0, 0, 0, 1}}
-	observer := &mockSpellsChar{name: "Observer", roomVNum: 100}
+	observer := &mockSpellsChar{name: "Observer", roomVNum: 100, position: int(PosStanding)}
 	world := &mockAnimateWorld{
 		items:    []interface{}{corpse},
 		players:  []interface{}{caster, observer},

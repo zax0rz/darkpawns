@@ -437,9 +437,10 @@ func (m *MobInstance) Attack(player *Player, world *World) error {
 	// Notify other players in the room
 	players := world.GetPlayersInRoom(m.RoomVNum)
 	for _, p := range players {
-		if p != player {
-			p.SendMessage(fmt.Sprintf("%s attacks %s!\n", m.GetShortDesc(), player.Name))
+		if p == player || !sendOk(p, false) {
+			continue
 		}
+		p.SendMessage(fmt.Sprintf("%s attacks %s!\n", m.GetShortDesc(), player.Name))
 	}
 
 	// Transition into the wounded band or POS_DEAD from the new HP, and run the

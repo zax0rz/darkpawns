@@ -970,6 +970,9 @@ func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *
 	case "room":
 		if room != nil {
 			for _, p := range w.GetPlayersInRoom(room.VNum) {
+				if p.GetPosition() <= combat.PosSleeping {
+					continue
+				}
 				p.SendMessage(text)
 			}
 		}

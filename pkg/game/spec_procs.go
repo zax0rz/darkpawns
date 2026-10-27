@@ -49,9 +49,15 @@ func randN(n int) int {
 	return dprng.Number(0, n-1)
 }
 
+// roomMessage delivers pre-rendered text from C act()-equivalent room paths.
+// Callers that replace C send_to_room() must use World.SendToRoom instead,
+// whose recipient rule differs by allowing PLR_WRITING recipients.
 func (w *World) roomMessage(roomVNum int, msg string) {
 	players := w.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
+		if !sendOk(p, false) {
+			continue
+		}
 		p.SendMessage(msg + "\r\n")
 	}
 }
@@ -63,6 +69,9 @@ func (w *World) roomMessage(roomVNum int, msg string) {
 func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar, toVict, toRoom string) {
 	players := w.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
+		if !sendOk(p, false) {
+			continue
+		}
 		if actor != nil && p == actor {
 			if toChar != "" {
 				p.SendMessage(toChar + "\r\n")

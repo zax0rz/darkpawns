@@ -133,6 +133,43 @@ func TestDoGenDoorExactPreconditionMessages(t *testing.T) {
 	}
 }
 
+func TestDoGenDoorFarSideActSkipsSleepingAndWritingObservers(t *testing.T) {
+	w, p, messages := newDoorHandlerTestWorld(t)
+	sleeper := NewPlayer(2, "Farsleeper", 101)
+	sleeper.SetPosition(0)
+	if err := w.AddPlayer(sleeper); err != nil {
+		t.Fatalf("AddPlayer sleeping observer: %v", err)
+	}
+	writer := NewPlayer(3, "Farwriter", 101)
+	writer.SetPosition(8)
+	writer.SetPlrFlag(PlrWriting, true)
+	if err := w.AddPlayer(writer); err != nil {
+		t.Fatalf("AddPlayer writing observer: %v", err)
+	}
+	awake := NewPlayer(4, "Farawake", 101)
+	awake.SetPosition(8)
+	if err := w.AddPlayer(awake); err != nil {
+		t.Fatalf("AddPlayer awake observer: %v", err)
+	}
+	giveDoorTestObject(t, w, p, 900)
+	w.DoUnlock(p, "door north")
+	for name := range messages {
+		messages[name] = nil
+	}
+	w.DoOpen(p, "door north")
+
+	const want = "The iron is opened from the other side.\r\n"
+	if got := joinedDoorMessages(messages, awake.Name); !strings.Contains(got, want) {
+		t.Fatalf("awake far observer = %q, want %q", got, want)
+	}
+	if got := joinedDoorMessages(messages, sleeper.Name); strings.Contains(got, "from the other side") {
+		t.Fatalf("sleeping far observer received C room act: %q", got)
+	}
+	if got := joinedDoorMessages(messages, writer.Name); strings.Contains(got, "from the other side") {
+		t.Fatalf("writing far observer received C room act: %q", got)
+	}
+}
+
 func TestDoorExitMutationIsReciprocal(t *testing.T) {
 	w, p, _ := newDoorHandlerTestWorld(t)
 	giveDoorTestObject(t, w, p, 900)

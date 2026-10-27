@@ -86,6 +86,20 @@ func (w *World) SpellActToRoom(ch, vict interface{}, format string, hideInvisibl
 	return true
 }
 
+// SpellCreatedObjectAct is magic.c:1997's act("$n creates $p.", FALSE,
+// ch, tobj, 0, TO_ROOM) used by MagCreations. Returning true means the live
+// game's Act renderer handled the room line, including SENDOK and per-viewer
+// object visibility.
+func (w *World) SpellCreatedObjectAct(ch, obj interface{}) bool {
+	actor, actorOK := ch.(Actor)
+	object, objectOK := obj.(*ObjectInstance)
+	if !actorOK || actor == nil || !objectOK || object == nil || w == nil {
+		return false
+	}
+	Act(w, false, actor, nil, object, nil, "$n creates $p.", "", ToRoom)
+	return true
+}
+
 // SpellActToVictim is act(format, FALSE, caster, 0, victim, TO_VICT) for
 // manual spells. The target observes $n through C's PERS visibility rules.
 func (w *World) SpellActToVictim(ch, vict interface{}, format string) bool {
