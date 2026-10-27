@@ -2993,7 +2993,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                provider: "pushover" | "discord";
+                provider: "pushover" | "discord" | "gossip" | "heartbeat";
             };
             cookie?: never;
         };

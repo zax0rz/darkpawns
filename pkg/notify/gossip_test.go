@@ -95,8 +95,10 @@ func TestGossipOptInCredentialsAndBoundedQueue(t *testing.T) {
 	if len(s.workers[Discord].jobs) != 0 {
 		t.Fatal("gossip reached event-alert destination")
 	}
-	if err := s.Test(Gossip); !errors.Is(err, ErrInvalid) {
-		t.Fatal("non-channel test message allowed in gossip feed")
+	// The console tests every channel it can configure, but a saturated queue
+	// still refuses: a test never jumps the mirror's backlog or its rate limit.
+	if err := s.Test(Gossip); !errors.Is(err, ErrBusy) {
+		t.Fatalf("saturated queue accepted a test: %v", err)
 	}
 	if err := s.SaveCredentials(Gossip, s.View().Config.Revision, nil); err != nil {
 		t.Fatal(err)
@@ -322,5 +324,54 @@ func TestGossipNoticeDefaultsAndPersistence(t *testing.T) {
 				t.Fatal("explicit notice opt-out did not survive reload")
 			}
 		})
+	}
+}
+
+// A new webhook is unverified and the mirror is off, which is exactly when an
+// operator presses the console's test button. The line is labelled, so it does
+// not read as somebody's gossip.
+func TestGossipTestSendDeliversWhileMirroringIsOff(t *testing.T) {
+	s := gossipService(t)
+	requests := make(chan string, 1)
+	gossipTransport(t, func(r *http.Request) (*http.Response, error) {
+		var payload struct {
+			Content string `json:"content"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			return nil, err
+		}
+		requests <- payload.Content
+		return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("{}"))}, nil
+	})
+	if err := s.Test(Gossip); err != nil {
+		t.Fatalf("test on a disabled mirror refused: %v", err)
+	}
+	gossipWorker(t, s)
+	select {
+	case got := <-requests:
+		if got != testMessage(Gossip) {
+			t.Fatalf("test line = %q", got)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("test line not delivered")
+	}
+	awaitGossipStatus(t, s, func(st Status) bool { return st.LastSuccess != nil && st.LastError == "" })
+}
+
+func awaitGossipStatus(t *testing.T, s *Service, ready func(Status) bool) {
+	t.Helper()
+	deadline := time.NewTimer(time.Second)
+	defer deadline.Stop()
+	tick := time.NewTicker(time.Millisecond)
+	defer tick.Stop()
+	for {
+		if ready(s.View().Status[Gossip]) {
+			return
+		}
+		select {
+		case <-deadline.C:
+			t.Fatalf("status = %+v", s.View().Status[Gossip])
+		case <-tick.C:
+		}
 	}
 }

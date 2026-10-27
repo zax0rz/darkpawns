@@ -43,3 +43,16 @@ desktop browser pass. Browser settings use a disposable database/config director
 Healthchecks. Password-masked inputs use existing paper/ink fields; inline removal
 confirmation avoids a modal. Saving credentials preserves event drafts. Secrets
 never appear in saved values or screenshots; review uses disposable fake values.
+
+2026-10-27 rebuild (v0.1.7 plan F): one page, one layout, plan A's components.
+Every outbound channel is a stacked ruled block: Discord alerts, Pushover, the
+gossip mirror, the Healthchecks heartbeat, and the CI-side Discord release
+announcement, which links to the operator reference instead of offering controls
+it cannot honor. Each block carries its own enable switch, its settings, its
+write-only credentials, its delivery evidence and its test send, so the event
+matrix and the separate "Destinations & delivery" section are gone. The revisioned
+routing settings keep one explicit save, pinned at the top of the working area
+rather than the bottom of the viewport: with five blocks, a bottom bar sat where no
+block was being edited, which is part of what made the old page read as bolted
+together. Credential removal now confirms in the shared AlertDialog. Evidence:
+~/Archives/darkpawns/admin-ui/2026-10-27/notifications-rebuild/.

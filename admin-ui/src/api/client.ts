@@ -24,8 +24,10 @@ export type NotificationConfig = components['schemas']['Config'];
 export type NotificationStatus = components['schemas']['Status'];
 export type NotificationView = components['schemas']['View'];
 export type NotificationDestination = components['schemas']['Destination'];
-export type NotificationProvider = 'pushover' | 'discord';
-export type CredentialProvider = NotificationProvider | 'heartbeat' | 'gossip';
+// One identifier per outbound channel: the two event destinations, the public
+// gossip mirror, and the hosted heartbeat. It is the path parameter of the
+// credential and test operations, so it stays a single name everywhere.
+export type NotificationChannel = 'pushover' | 'discord' | 'gossip' | 'heartbeat';
 export interface NotificationCredentials { token?: string; user?: string; url?: string }
 
 export const api = {
@@ -92,7 +94,7 @@ export const playerEditor = {
 export const notifications = {
   get: () => read(http.GET('/admin/notifications')),
   save: (config: NotificationConfig) => read(http.PUT('/admin/notifications', { body: config })),
-  credentials: (provider: CredentialProvider, revision: number, values: NotificationCredentials) => read(http.PUT('/admin/notifications/{provider}/credentials', { params: { path: { provider: provider } }, body: { revision, ...values } })),
-  removeCredentials: (provider: CredentialProvider, revision: number) => read(http.DELETE('/admin/notifications/{provider}/credentials', { params: { path: { provider: provider } }, body: { revision } })),
-  test: (provider: NotificationProvider) => read(http.POST('/admin/notifications/{provider}/test', { params: { path: { provider: provider } } })),
+  credentials: (channel: NotificationChannel, revision: number, values: NotificationCredentials) => read(http.PUT('/admin/notifications/{provider}/credentials', { params: { path: { provider: channel } }, body: { revision, ...values } })),
+  removeCredentials: (channel: NotificationChannel, revision: number) => read(http.DELETE('/admin/notifications/{provider}/credentials', { params: { path: { provider: channel } }, body: { revision } })),
+  test: (channel: NotificationChannel) => read(http.POST('/admin/notifications/{provider}/test', { params: { path: { provider: channel } } })),
 };

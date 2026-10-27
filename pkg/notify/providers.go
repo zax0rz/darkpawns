@@ -65,7 +65,7 @@ func deliverProvider(ctx context.Context, id, message string, credentials Creden
 		}
 		body = bytes.NewReader(data)
 		contentType = "application/json"
-	case "heartbeat":
+	case Heartbeat:
 		target, _ = providerURL(credentials.URL, "hc-ping.com", heartbeatPattern)
 		method = http.MethodGet
 	default:

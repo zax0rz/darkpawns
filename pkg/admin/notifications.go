@@ -24,7 +24,7 @@ func registerNotifications(api huma.API, database *db.DB, logger *audit.AuditLog
 	type output struct{ Body notify.View }
 	type saveInput struct{ Body notify.Config }
 	type testInput struct {
-		Provider string `path:"provider" enum:"pushover,discord"`
+		Provider string `path:"provider" enum:"pushover,discord,gossip,heartbeat"`
 	}
 	available := func() error {
 		if service == nil {

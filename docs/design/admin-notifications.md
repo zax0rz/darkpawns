@@ -123,6 +123,33 @@ These are captured ideas, not promises or automatic additions to v1.
 - **Provider-neutral heartbeats:** support other hosted/self-hosted heartbeat
   destinations with the same outbound URL protections as generic webhooks.
 
+## 2026-10-27: console rebuild (v0.1.7 plan F)
+
+The staff page is one surface for every outbound channel, on plan A's components:
+a stacked block per channel (Discord alerts, Pushover, the gossip mirror, the
+Healthchecks heartbeat, and the CI-side release announcement) with the same parts
+in the same order, an enable switch in the block header, and one sticky save bar
+for the revisioned routing settings. The event matrix and the separate
+"Destinations & delivery" section are gone: each channel's credentials, its
+settings, its delivery evidence and its test send live in its own block.
+
+Three behaviour changes ship with it:
+
+- `notify.Service.Test` accepts every configurable channel, not only Pushover and
+  Discord, and the console offers a test per block. A test still uses the saved
+  credentials and still works while the channel is disabled. The gossip test posts
+  one labelled line, because the mirror's channel is public; the heartbeat test
+  sends one check-in. The gossip worker delivers a test job while mirroring is off,
+  matching the event destinations' `enabled || test` rule, and a saturated queue
+  still refuses a test rather than jumping the mirror's backlog.
+- `notify.Heartbeat` replaces the bare `"heartbeat"` provider literal in the paths
+  this work touched.
+- Credential removal is confirmed in the shared `AlertDialog`, which exists now;
+  the inline confirmation block was written before those primitives landed.
+
+Evidence: `~/Archives/darkpawns/admin-ui/2026-10-27/notifications-rebuild/`.
+Operator documentation: `website-astro/src/content/docs/server/notifications.md`.
+
 ## Validation boundaries
 
 Unit and API tests cover opt-in routing, persistence/revisions, authentication,

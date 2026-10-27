@@ -227,6 +227,34 @@ func waitStatus(t *testing.T, s *Service, predicate func(Status) bool) {
 	}
 }
 
+// The console tests every channel it can configure. A heartbeat test sends one
+// check-in now and does not turn the heartbeat on.
+func TestHeartbeatTestSendWhileDisabled(t *testing.T) {
+	s := testService(t)
+	delivered := make(chan string, 1)
+	s.send = func(_ context.Context, id, _ string) error { delivered <- id; return nil }
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s.Run(ctx, nil)
+	if err := s.Test(Heartbeat); err != nil {
+		t.Fatalf("heartbeat test refused: %v", err)
+	}
+	select {
+	case id := <-delivered:
+		if id != Heartbeat {
+			t.Fatalf("delivered to %q", id)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("heartbeat test not delivered")
+	}
+	if s.View().Config.Heartbeat {
+		t.Fatal("a test enabled the heartbeat")
+	}
+	if !errors.Is(s.Test("ntfy"), ErrInvalid) {
+		t.Fatal("unknown destination accepted a test")
+	}
+}
+
 func TestHeartbeatRequiresRecentProgress(t *testing.T) {
 	s := testService(t)
 	c := s.View().Config
