@@ -145,6 +145,12 @@ golangci-lint run ./... # Full lint (uses .golangci.yml)
 make deadcode-ratchet   # CI enforces it; the baseline only shrinks
 ```
 
+`tools/db-migrate` is a separate Go module: the root `go build ./...`, `go vet ./...`
+and `go test ./...` don't compile it. Any change to an exported symbol in a package it
+imports (such as `pkg/game`) must also pass `make db-migrate-test`. Its appcompat tests
+skip unless `DP_MIGRATE_TEST_DB_URL` points at a disposable PostgreSQL, so a green run
+without it proves compilation only.
+
 **NEVER commit without running all four.** Subagents that self-report passing builds have lied before.
 
 Run each gate on its own and check its exit status. Never chain them with `;` or
