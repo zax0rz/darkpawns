@@ -17,6 +17,8 @@ func TestNotificationAPI(t *testing.T) {
 	setJWTSecret(t)
 	t.Setenv("ADMIN_STORE_PATH", filepath.Join(t.TempDir(), "admin.json"))
 	t.Setenv("DP_NOTIFY_DISCORD_WEBHOOK", "https://discord.com/api/webhooks/123/never-return-this-secret")
+	t.Setenv("DP_NOTIFY_GOSSIP_WEBHOOK", "https://discord.com/api/webhooks/456/gossip-mirror-secret")
+	t.Setenv("DP_NOTIFY_HEARTBEAT_URL", "https://hc-ping.com/12345678-1234-1234-1234-123456789012")
 	database := newOLCTestDatabase(t, game.LVL_IMPL, 1)
 	service, err := notify.New(filepath.Join(t.TempDir(), "notifications.json"))
 	if err != nil {
@@ -54,7 +56,7 @@ func TestNotificationAPI(t *testing.T) {
 		csrf   bool
 		status int
 	}{{"", true, 401}, {admin, false, 401}, {builder, true, 403}} {
-		for _, op := range []struct{ method, path string }{{"GET", "/admin/notifications"}, {"PUT", "/admin/notifications"}, {"POST", "/admin/notifications/discord/test"}} {
+		for _, op := range []struct{ method, path string }{{"GET", "/admin/notifications"}, {"PUT", "/admin/notifications"}, {"POST", "/admin/notifications/discord/test"}, {"POST", "/admin/notifications/gossip/test"}, {"POST", "/admin/notifications/heartbeat/test"}} {
 			out := request(op.method, op.path, nil, tc.token, tc.csrf)
 			if out.Code != tc.status {
 				t.Fatalf("auth %s: %d %s", op.method, out.Code, out.Body.String())
@@ -78,6 +80,18 @@ func TestNotificationAPI(t *testing.T) {
 	out = request("POST", "/admin/notifications/discord/test", nil, admin, true)
 	if out.Code != 202 {
 		t.Fatalf("test %d %s", out.Code, out.Body.String())
+	}
+	// The console tests every channel it can configure. A provider outside the
+	// enum is refused before it reaches the service.
+	for _, provider := range []string{notify.Gossip, notify.Heartbeat} {
+		out = request("POST", "/admin/notifications/"+provider+"/test", nil, admin, true)
+		if out.Code != 202 {
+			t.Fatalf("%s test %d %s", provider, out.Code, out.Body.String())
+		}
+	}
+	out = request("POST", "/admin/notifications/ntfy/test", nil, admin, true)
+	if out.Code != 422 {
+		t.Fatalf("unknown provider test %d %s", out.Code, out.Body.String())
 	}
 	c = service.View().Config
 	c.Discord.Events = []string{"mudlog.raw"}

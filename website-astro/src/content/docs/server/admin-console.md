@@ -25,12 +25,15 @@ HTTPS proxy. The session uses an HttpOnly cookie and a CSRF header.
 | Workshop & saves | Inspect editing claims and changes waiting to be saved to zone files |
 | Builder guide | Read the claim, draft, commit, and save workflow |
 | Players | Edit a disconnected character's saved stats, equipment, inventory, or password; HIGOD access required |
-| Notifications | Configure outbound event subscriptions and credentials; HIGOD access required |
+| Notifications | Configure every outbound channel: event subscriptions, the gossip mirror, the Healthchecks heartbeat, credentials and test sends; HIGOD access required |
 | Operations | Inspect process metrics, online players, and recent logs; reset actions require their server-side permission |
 
 Use the search button or `Ctrl+K` (`⌘K` on macOS) to find a page or world record.
 The account menu contains the builder guide and sign-out action. Narrow screens
 provide a menu button for the full navigation.
+
+Notifications has its own reference page: [Notifications](/docs/server/notifications/)
+lists the events, the credential model, delivery semantics and troubleshooting.
 
 ## Save deliberately
 

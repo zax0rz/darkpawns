@@ -20,14 +20,15 @@ import (
 )
 
 const (
-	Pushover = "pushover"
-	Discord  = "discord"
-	Gossip   = "gossip"
-	Created  = "player.created"
-	Login    = "player.login"
-	Logout   = "player.logout"
-	Death    = "player.death"
-	Level    = "player.level"
+	Pushover  = "pushover"
+	Discord   = "discord"
+	Gossip    = "gossip"
+	Heartbeat = "heartbeat"
+	Created   = "player.created"
+	Login     = "player.login"
+	Logout    = "player.logout"
+	Death     = "player.death"
+	Level     = "player.level"
 )
 
 var eventIDs = []string{Created, Login, Logout, Death, Level}
@@ -122,7 +123,7 @@ func New(path string) (*Service, error) {
 	}
 	s.send = credentialSender(s.vault.snapshot.Load())
 	s.ready = func(id string) bool { return validCredentials(id, s.vault.snapshot.Load().values[id]) }
-	for _, id := range []string{Pushover, Discord, "heartbeat", Gossip} {
+	for _, id := range []string{Pushover, Discord, Heartbeat, Gossip} {
 		s.workers[id] = &worker{jobs: make(chan job, 16), limiter: rate.NewLimiter(rate.Every(2*time.Second), 5)}
 	}
 	return s, nil
@@ -181,7 +182,7 @@ func (s *Service) Save(c Config) error {
 	if c.Revision != revision {
 		return ErrConflict
 	}
-	for id, enabled := range map[string]bool{Pushover: c.Pushover.Enabled, Discord: c.Discord.Enabled, "heartbeat": c.Heartbeat, Gossip: c.Gossip} {
+	for id, enabled := range map[string]bool{Pushover: c.Pushover.Enabled, Discord: c.Discord.Enabled, Heartbeat: c.Heartbeat, Gossip: c.Gossip} {
 		if enabled && !s.ready(id) {
 			return ErrNotReady
 		}
@@ -279,16 +280,32 @@ func (s *Service) enqueue(id string, j job) error {
 func (s *Service) drop(id string) { st := s.status[id]; st.Dropped++; s.status[id] = st }
 
 // Test uses the saved configuration and can test a disabled destination.
+// Every channel the console can configure accepts a test, including the gossip
+// mirror and the heartbeat: unverified credentials are exactly what an operator
+// needs to prove before enabling a channel.
 func (s *Service) Test(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if id != Pushover && id != Discord {
+	if id != Pushover && id != Discord && id != Gossip && id != Heartbeat {
 		return ErrInvalid
 	}
 	if !s.ready(id) {
 		return ErrNotReady
 	}
-	return s.enqueue(id, job{message: "Test notification. This destination is ready to receive selected game events.", revision: s.cfg.Revision, test: true})
+	return s.enqueue(id, job{message: testMessage(id), revision: s.cfg.Revision, test: true})
+}
+
+// A gossip test is a real line in a public channel, so it names itself instead
+// of claiming an event subscription. A heartbeat test carries no message: the
+// check-in is the request.
+func testMessage(id string) string {
+	switch id {
+	case Gossip:
+		return "Test line from Dark Pawns. Public gossip echoes here while the mirror is on."
+	case Heartbeat:
+		return ""
+	}
+	return "Test notification. This destination is ready to receive selected game events."
 }
 
 // Run starts delivery workers and optionally an outbound Healthchecks heartbeat.
@@ -321,7 +338,7 @@ func (s *Service) heartbeat(now, last time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.cfg.Heartbeat && !last.IsZero() && !last.After(now) && now.Sub(last) < 30*time.Second {
-		_ = s.enqueue("heartbeat", job{revision: s.cfg.Revision})
+		_ = s.enqueue(Heartbeat, job{revision: s.cfg.Revision})
 	}
 }
 
@@ -333,7 +350,7 @@ func (s *Service) runWorker(ctx context.Context, id string, w *worker) {
 		case j := <-w.jobs:
 			s.mu.Lock()
 			enabled := s.cfg.Heartbeat
-			if id != "heartbeat" {
+			if id != Heartbeat {
 				enabled = s.destination(id).Enabled
 			}
 			allowed := j.revision == s.cfg.Revision && (enabled || j.test)

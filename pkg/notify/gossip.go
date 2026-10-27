@@ -94,7 +94,9 @@ func (s *Service) runGossipWorker(ctx context.Context, w *worker) {
 			logDrops()
 		case j := <-w.jobs:
 			s.mu.Lock()
-			allowed := j.revision == s.cfg.Revision && s.cfg.Gossip
+			// A test is delivered while the mirror is off, matching the event
+			// destinations: the point of a test is an unverified channel.
+			allowed := j.revision == s.cfg.Revision && (s.cfg.Gossip || j.test)
 			credentials := s.vault.snapshot.Load().values[Gossip]
 			s.mu.Unlock()
 			if !allowed || ctx.Err() != nil {

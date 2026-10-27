@@ -98,5 +98,11 @@ func TestConsolePreview(t *testing.T) {
 		w.WriteHeader(204)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { active.Load().(http.Handler).ServeHTTP(w, r) })
-	t.Fatal(http.ListenAndServe("127.0.0.1:4350", mux))
+	// Parallel agents each need their own fixture: 4350 stays the default, and
+	// ADMIN_PREVIEW_PORT lets a second run take another port.
+	port := os.Getenv("ADMIN_PREVIEW_PORT")
+	if port == "" {
+		port = "4350"
+	}
+	t.Fatal(http.ListenAndServe("127.0.0.1:"+port, mux))
 }
