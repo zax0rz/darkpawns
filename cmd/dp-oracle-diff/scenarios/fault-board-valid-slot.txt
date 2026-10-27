@@ -1,0 +1,45 @@
+# Fault fixture: one empty-message row with a VALID persisted slot. C's
+# loader keeps the slot (src/boards.c:502) but never assigns its storage,
+# so read 1 hits the null-storage guard (src/boards.c:357-359) and remove 1
+# proceeds to a successful "Message removed." (:422-438).
+
+[fixture]
+quiet-mobs
+empty-players
+spawn-obj 19652 2 8004 196
+fault-board 19652 empty-message-valid-slot
+
+[setup:oracle]
+Boardempty
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Boardempty
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8004
+look board
+read 1
+remove 1
+look board

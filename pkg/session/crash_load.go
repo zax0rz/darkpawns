@@ -1,12 +1,17 @@
 package session
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
+
+// errFaultObjectSave backs the DP_FAULT_OBJECT_SAVE harness seam.
+var errFaultObjectSave = errors.New("fault-injected object-save read failure")
 
 // crash_load.go — DP-1404. C stores a rent code in the crash file's header and
 // Crash_load selects one of seven entry mudlogs from it (src/objsave.c:459-663).
@@ -55,8 +60,17 @@ func (s *Session) crashLoadEntry() (loaded bool, err error) {
 		return false, nil
 	}
 	name := s.player.GetName()
+	// DP_FAULT_OBJECT_SAVE is the oracle harness's fault seam for C's
+	// unreadable crash file (docs/design/fault-injection-fixture.md): the
+	// named player's store read is forced into Crash_load's non-ENOENT arm.
+	// It is set only by dp-oracle-diff and never read on any player-facing
+	// path outside it.
+	faultObjectSave := os.Getenv("DP_FAULT_OBJECT_SAVE") == name
 	if reader, ok := s.manager.db.(objectSaveReader); ok {
 		snapshot, err := reader.GetObjectSave(name)
+		if faultObjectSave {
+			err = errFaultObjectSave
+		}
 		if err != nil {
 			// C Crash_load's non-ENOENT arm (src/objsave.c:477-491): a load
 			// failure other than "no crash file" — here any store read or

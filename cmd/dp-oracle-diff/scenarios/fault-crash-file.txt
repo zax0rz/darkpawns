@@ -1,0 +1,58 @@
+# Fault fixture: the character's crash file cannot be opened for any reason
+# other than absence — C's is a directory (non-ENOENT fopen, src/objsave.c:
+# 477-491), Go's store read is faulted through the DP_FAULT_OBJECT_SAVE
+# seam. Entry "1" is a probe step so the NOTICE block is compared: the
+# player receives C's NOTICE verbatim, the immortal mudlog fires, and the
+# character still enters the game. The compared entry is the <RELOGIN>
+# probe step: a fresh boot ends the live body and the restart login
+# goes through the menu, so Crash_load runs again, putting the NOTICE
+# block in the compared transcript
+# part of the compared transcript (the setup entry's copy is discarded
+# like all setup output).
+
+[fixture]
+quiet-mobs
+empty-players
+fault-crash-file Unlucky
+
+[setup:oracle]
+Unlucky
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Unlucky
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[relogin:oracle]
+Unlucky
+oraclepass
+1
+
+[relogin:port]
+Unlucky
+oraclepass
+1
+
+[probe]
+<RESTART>
+look

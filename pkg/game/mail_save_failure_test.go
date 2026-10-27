@@ -175,11 +175,11 @@ func TestMailReceiveProducesSemanticRuntimeText(t *testing.T) {
 	}
 
 	oldIndex, oldFreeList, oldFileEndPos := mailIndex, freeList, fileEndPos
-	oldDisabled := mailDisabled
+	oldDisabled := mailDisabled.Load()
 	oldNameFunc, oldIDFunc := worldNameFunc, worldIDFunc
 	t.Cleanup(func() {
 		mailIndex, freeList, fileEndPos = oldIndex, oldFreeList, oldFileEndPos
-		mailDisabled = oldDisabled
+		mailDisabled.Store(oldDisabled)
 		worldNameFunc, worldIDFunc = oldNameFunc, oldIDFunc
 	})
 
@@ -224,14 +224,14 @@ func setupNativeMailReadFixture(t *testing.T) {
 	}
 
 	oldIndex, oldFreeList, oldFileEndPos := mailIndex, freeList, fileEndPos
-	oldDisabled := mailDisabled
+	oldDisabled := mailDisabled.Load()
 	oldNameFunc, oldIDFunc := worldNameFunc, worldIDFunc
 	mailIndex, freeList, fileEndPos = nil, nil, 0
-	mailDisabled = false
+	mailDisabled.Store(false)
 	worldNameFunc, worldIDFunc = nil, nil
 	t.Cleanup(func() {
 		mailIndex, freeList, fileEndPos = oldIndex, oldFreeList, oldFileEndPos
-		mailDisabled = oldDisabled
+		mailDisabled.Store(oldDisabled)
 		worldNameFunc, worldIDFunc = oldNameFunc, oldIDFunc
 	})
 }

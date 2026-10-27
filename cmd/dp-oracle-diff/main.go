@@ -443,6 +443,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	if err := os.MkdirAll(filepath.Join(goWork, "data"), 0o750); err != nil {
 		return fmt.Errorf("create Go runtime directory: %w", err)
 	}
+	faults := faultTrees{oracleLib: oracleData, goRoot: filepath.Dir(goWorld), goWorld: goWorld}
+	if err := applyFaultFixtures(faults, scenario.FaultFixtures); err != nil {
+		return fmt.Errorf("apply fault fixtures: %w", err)
+	}
 	if err := applyGoHouseControlFixtures(filepath.Dir(goWorld), scenario.HouseControls); err != nil {
 		return fmt.Errorf("apply Go port house-control fixtures: %w", err)
 	}
@@ -471,6 +475,14 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 	// environment and the same durable store as the first boot.
 	var goEnv []string
 	goDB := deadStorePath
+	for _, ff := range scenario.FaultFixtures {
+		if ff.Verb == "fault-crash-file" {
+			// Go's twin of C's unreadable crash file: the session layer turns
+			// the store read into Crash_load's failure arm for this player
+			// (docs/design/fault-injection-fixture.md).
+			goEnv = append(goEnv, "DP_FAULT_OBJECT_SAVE="+ff.Target)
+		}
+	}
 	pinnedTime := fixedTimeFor(&scenario)
 
 	oracleEngine := &engine{
@@ -766,9 +778,9 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		}
 		actor, audience := probeClients(oraclePrimary, peers, scenario.ProbeActor)
 		markDraws(&res, cDrawLog, "warmup")
-		blocks, probeErr := oraclediff.RunAudienceProbeHooked(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
+		blocks, probeErr := oraclediff.RunAudienceProbeWithFault(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
 			markDraws(&res, cDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
-		})
+		}, func(step string) error { return applyFaultStep(faults, step) })
 		if probeErr != nil {
 			return res, fmt.Errorf("run C oracle probe: %w\nserver log:\n%s", probeErr, oracleEngine.log())
 		}
@@ -823,9 +835,9 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		}
 		actor, audience := probeClients(goPrimary, peers, scenario.ProbeActor)
 		markDraws(&res, goDrawLog, "warmup")
-		blocks, probeErr := oraclediff.RunAudienceProbeHooked(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
+		blocks, probeErr := oraclediff.RunAudienceProbeWithFault(actor, audience, scenario.Probe, quiescence, func(i int, step string) {
 			markDraws(&res, goDrawLog, fmt.Sprintf("probe step %d: %s", i+1, step))
-		})
+		}, func(step string) error { return applyFaultStep(faults, step) })
 		if probeErr != nil {
 			return res, fmt.Errorf("run Go port probe: %w\nserver log:\n%s", probeErr, goEngine.log())
 		}
@@ -2231,7 +2243,7 @@ func fixedTimeFor(s *oraclediff.Scenario) string {
 }
 
 func needsPlayerStore(s *oraclediff.Scenario) bool {
-	if s.SeedPlayer {
+	if s.SeedPlayer || s.LiveStore {
 		return true
 	}
 	if len(s.ReloginPort) > 0 {

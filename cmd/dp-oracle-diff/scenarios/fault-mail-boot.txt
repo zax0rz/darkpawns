@@ -1,0 +1,41 @@
+# Fault fixture: the mail store is unaligned at boot, so both engines fail
+# the block scan (src/mail.c:241-244; db.c:365-370) and the postmaster's
+# first command prints the technical-difficulties line (src/mail.c:484-486).
+
+[fixture]
+quiet-mobs
+empty-players
+spawn-mob 21225 1 21262 212
+fault-corrupt-mail unaligned
+
+[setup:oracle]
+Mailboot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mailboot
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 21262
+check
