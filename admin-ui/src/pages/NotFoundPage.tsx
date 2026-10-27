@@ -11,7 +11,7 @@ export function NotFoundPage() {
       </p>
       <Link
         to="/admin/"
-        className="bg-accent hover:bg-accent text-ink px-4 py-2 rounded transition-colors text-sm"
+        className="bg-accent hover:bg-accent-deep text-paper px-4 py-2 rounded-[2px] transition-colors text-sm"
       >
         Return to Dashboard
       </Link>

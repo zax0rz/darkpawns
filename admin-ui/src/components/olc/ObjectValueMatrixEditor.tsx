@@ -1,3 +1,5 @@
+import { Input } from '../ui/input';
+import { NativeSelect } from '../ui/select';
 import { useState } from 'react';
 import type { OlcObject, OlcPatchOperation, OlcSchema } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
@@ -55,14 +57,14 @@ function ValueSlot({
       {field.control === 'spell_picker' ? (
         <SpellPicker field={field} current={current} disabled={disabled} onCommit={commit} />
       ) : field.control === 'select' ? (
-        <select
+        <NativeSelect
           value={String(current)}
           disabled={disabled}
           onChange={(event) => commit(event.currentTarget.value)}
           className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
         >
           {(field.options || []).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
+        </NativeSelect>
       ) : field.control === 'checkbox_group' ? (
         <div className="grid gap-2 sm:grid-cols-2">
           {(field.options || []).map((option) => (
@@ -103,7 +105,7 @@ function SpellPicker({
   const options = (field.options || []).filter((option) => option.label.toLowerCase().includes(search.toLowerCase()));
   return (
     <div className="space-y-2">
-      <input
+      <Input
         type="search"
         value={search}
         disabled={disabled}
@@ -112,14 +114,14 @@ function SpellPicker({
         aria-label="Search spells"
         className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
       />
-      <select
+      <NativeSelect
         value={String(current)}
         disabled={disabled}
         onChange={(event) => onCommit(event.currentTarget.value)}
         className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
       >
         {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
+      </NativeSelect>
     </div>
   );
 }

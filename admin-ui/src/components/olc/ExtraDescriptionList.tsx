@@ -1,3 +1,4 @@
+import { Button } from '../ui/button';
 import type { OlcExtraDescription, OlcPatchOperation } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
 
@@ -19,14 +20,14 @@ export function ExtraDescriptionList({ entries, kind = 'room', dirty, disabled =
     <section className="border-t border-rule pt-5">
       <div className="mb-4 flex items-baseline justify-between gap-3">
         <h2 className="text-lg text-ink">Extra descriptions</h2>
-        <button
+        <Button variant="ghost" size="plain"
           type="button"
           disabled={disabled}
           onClick={() => onOperation({ kind: 'add_extra_description', keywords: '', text: '' })}
           className="border border-rule bg-paper-deep px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
         >
           Add block
-        </button>
+        </Button>
       </div>
       {entries.length === 0 ? (
         <p className="border border-dashed border-rule px-4 py-5 text-sm text-ink-muted">
@@ -70,14 +71,14 @@ function ExtraDescription({
     <article className="border border-rule bg-paper p-4">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h3 className="text-base text-ink">Block {index + 1}</h3>
-        <button
+        <Button variant="ghost" size="plain"
           type="button"
           disabled={disabled}
           onClick={() => onOperation({ kind: 'remove_extra_description', index })}
           className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:cursor-not-allowed disabled:opacity-50"
         >
           Remove
-        </button>
+        </Button>
       </div>
       <div className="grid gap-4">
         <div>

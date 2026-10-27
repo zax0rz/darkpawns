@@ -1,3 +1,6 @@
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import { Button } from '../components/ui/button';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
@@ -19,6 +22,7 @@ function logLineClass(line: string): string {
 }
 
 export function OperationsPage() {
+  const [resetOpen, setResetOpen] = useState(false);
   const [logLines, setLogLines] = useState(50);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const { showToast } = useToast();
@@ -62,14 +66,11 @@ export function OperationsPage() {
     },
   });
 
-  const handleResetZones = () => {
-    if (window.confirm('Reset all zones? This will respawn all mobs and objects.')) {
-      resetZonesMutation.mutate();
-    }
-  };
+  const handleResetZones = () => setResetOpen(true);
 
   return (
     <div className="space-y-6">
+      <ConfirmDialog open={resetOpen} onOpenChange={setResetOpen} title="Reset all zones?" description="This will respawn all mobs and objects." action="Reset all zones" onConfirm={() => resetZonesMutation.mutate()} />
       <h1 className="text-2xl font-bold text-ink">Operations</h1>
 
       {/* Server Status + Online Players */}
@@ -115,16 +116,16 @@ export function OperationsPage() {
           ) : (
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {players.map((p) => (
-                <button
+                <Button variant="ghost" size="plain"
                   key={p.name}
                   onClick={() => setSelectedPlayer(p.name)}
-                  className="w-full flex justify-between text-sm py-1 border-b border-rule last:border-0 hover:bg-paper transition-colors rounded px-1 text-left"
+                  className="w-full flex justify-between text-sm py-1 border-b border-rule last:border-0 hover:bg-paper transition-colors rounded-[2px] px-1 text-left"
                 >
                   <span className="text-accent hover:text-accent">{p.name}</span>
                   <span className="text-ink-muted">
                     Lv.{p.level} · Room {p.room}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -141,25 +142,16 @@ export function OperationsPage() {
             Server Log (last {logLines} lines)
           </h2>
           <div className="flex gap-2">
-            <select
-              value={logLines}
-              onChange={(e) => setLogLines(Number(e.target.value))}
-              className="bg-paper text-ink-muted text-xs rounded px-2 py-1 border border-rule"
-            >
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-            </select>
-            <button
+            <Select value={String(logLines)} onValueChange={(value) => setLogLines(Number(value))}><SelectTrigger aria-label="Log lines"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="25">25</SelectItem><SelectItem value="50">50</SelectItem><SelectItem value="100">100</SelectItem><SelectItem value="200">200</SelectItem></SelectContent></Select>
+            <Button variant="ghost" size="plain"
               onClick={() => refetchLogs()}
-              className="bg-paper text-ink-muted text-xs rounded px-3 py-1 border border-rule hover:bg-paper transition-colors"
+              className="bg-paper text-ink-muted text-xs rounded-[2px] px-3 py-1 border border-rule hover:bg-paper transition-colors"
             >
               Refresh
-            </button>
+            </Button>
           </div>
         </div>
-        <div className="bg-paper rounded border border-rule p-3 max-h-96 overflow-y-auto">
+        <div className="bg-paper rounded-[2px] border border-rule p-3 max-h-96 overflow-y-auto">
           {logsLoading ? (
             <div className="text-sm text-ink-muted animate-pulse">Loading logs...</div>
           ) : !logs || logs.length === 0 ? (
@@ -180,13 +172,13 @@ export function OperationsPage() {
       <div className="bg-paper-deep rounded-none border border-rule p-4">
         <h2 className="text-sm font-medium text-ink-muted mb-3">Quick Actions</h2>
         <div className="flex gap-3">
-          <button
+          <Button variant="ghost" size="plain"
             onClick={handleResetZones}
             disabled={resetZonesMutation.isPending}
-            className="bg-accent hover:bg-accent disabled:bg-paper disabled:text-ink-muted text-ink text-sm rounded px-4 py-2 border border-accent disabled:border-rule transition-colors"
+            className="bg-accent hover:bg-accent-deep disabled:bg-paper disabled:text-ink-muted text-paper text-sm rounded-[2px] px-4 py-2 border border-accent disabled:border-rule transition-colors"
           >
             {resetZonesMutation.isPending ? 'Resetting...' : 'Zone Reset All'}
-          </button>
+          </Button>
         </div>
       </div>
 

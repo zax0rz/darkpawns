@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T21:03:44.944570+00:00",
+  "title": "Design System: Dark Pawns Admin",
+  "extensions": {
+    "colorMeta": {
+      "oxblood": {
+        "role": "primary",
+        "displayName": "Oxblood",
+        "canonical": "#A8201A",
+        "tonalRamp": [
+          "#2c0a07",
+          "#4a0f0b",
+          "#7A1812",
+          "#94201a",
+          "#A8201A",
+          "#c24339",
+          "#d98b83",
+          "#f0cfca"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Cream Paper",
+        "canonical": "#EFE7D6",
+        "tonalRamp": [
+          "#2a271f",
+          "#4a4536",
+          "#6e6850",
+          "#948c6f",
+          "#b8ae90",
+          "#d3c8ac",
+          "#E5DAC1",
+          "#EFE7D6"
+        ]
+      },
+      "paper-deep": {
+        "role": "neutral",
+        "displayName": "Deep Cream",
+        "canonical": "#E5DAC1",
+        "tonalRamp": [
+          "#26231b",
+          "#443f31",
+          "#645d48",
+          "#897f63",
+          "#ab9f7d",
+          "#c9bd9c",
+          "#E5DAC1",
+          "#f1e9d6"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Charcoal Ink",
+        "canonical": "#1A1614",
+        "tonalRamp": [
+          "#1A1614",
+          "#2e2823",
+          "#463e37",
+          "#63584e",
+          "#847668",
+          "#a89787",
+          "#ccbbaa",
+          "#e8ddd0"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#56504A",
+        "tonalRamp": [
+          "#211e1b",
+          "#37322d",
+          "#56504A",
+          "#726a61",
+          "#928a7e",
+          "#b2aa9d",
+          "#d1cabd",
+          "#ebe5da"
+        ]
+      },
+      "online": {
+        "role": "tertiary",
+        "displayName": "Signal Green",
+        "canonical": "#3A8A3A",
+        "tonalRamp": [
+          "#0f2610",
+          "#1a441b",
+          "#276628",
+          "#318031",
+          "#3A8A3A",
+          "#5aa85a",
+          "#8fc98f",
+          "#c6e6c6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Console page headings; fixed size rather than the public site clamp."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Subsection headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading and form copy."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Dense controls and navigation."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Identifiers, commands, timestamps and measurements."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "200ms",
+        "purpose": "Existing layout color transitions; reduced-motion preferences shorten animation and transition durations to .01ms."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary shared action variant; destructive shares primary styling.",
+      "html": "<button class=\"ds-button-primary\">Save changes</button>",
+      "css": ".ds-button-primary{border-radius:2px;font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.25rem;padding:.5rem 1rem;border:1px solid transparent;cursor:pointer;transition:background-color .15s;background:var(--color-accent);color:var(--color-paper);}.ds-button-primary:hover{background:var(--color-accent-deep);}.ds-button-primary:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}.ds-button-primary:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Outline button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Outline shared action variant; destructive shares primary styling.",
+      "html": "<button class=\"ds-button-outline\">Outline action</button>",
+      "css": ".ds-button-outline{border-radius:2px;font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.25rem;padding:.5rem 1rem;border:1px solid transparent;cursor:pointer;transition:background-color .15s;border-color:var(--color-rule);background:var(--color-paper);color:var(--color-ink);}.ds-button-outline:hover{background:var(--color-ink);color:var(--color-paper);}.ds-button-outline:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}.ds-button-outline:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary shared action variant; destructive shares primary styling.",
+      "html": "<button class=\"ds-button-secondary\">Secondary action</button>",
+      "css": ".ds-button-secondary{border-radius:2px;font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.25rem;padding:.5rem 1rem;border:1px solid transparent;cursor:pointer;transition:background-color .15s;background:var(--color-paper-deep);color:var(--color-ink);}.ds-button-secondary:hover{background:color-mix(in srgb,var(--color-paper-deep) 80%,transparent);}.ds-button-secondary:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}.ds-button-secondary:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Ghost button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Ghost shared action variant; destructive shares primary styling.",
+      "html": "<button class=\"ds-button-ghost\">Ghost action</button>",
+      "css": ".ds-button-ghost{border-radius:2px;font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.25rem;padding:.5rem 1rem;border:1px solid transparent;cursor:pointer;transition:background-color .15s;background:transparent;color:var(--color-ink);}.ds-button-ghost:hover{background:var(--color-paper-deep);}.ds-button-ghost:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}.ds-button-ghost:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Link button",
+      "kind": "button",
+      "refersTo": "button-link",
+      "description": "Link shared action variant; destructive shares primary styling.",
+      "html": "<button class=\"ds-button-link\">Link action</button>",
+      "css": ".ds-button-link{border-radius:2px;font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.25rem;padding:.5rem 1rem;border:1px solid transparent;cursor:pointer;transition:background-color .15s;background:transparent;color:var(--color-accent);text-underline-offset:4px;}.ds-button-link:hover{text-decoration:underline;}.ds-button-link:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}.ds-button-link:disabled{opacity:.5;pointer-events:none;}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Paper field with explicit label and oxblood focus; search fields may override the fill.",
+      "html": "<label class=\"ds-field\">Room name<input class=\"ds-input\" value=\"The Temple\" /></label>",
+      "css": ".ds-field{display:grid;gap:.5rem;color:var(--color-ink);font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;}.ds-input{border-radius:2px;font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;height:2.25rem;padding:.25rem .75rem;border:1px solid var(--color-rule);background:var(--color-paper);color:var(--color-ink);}.ds-input:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;border-color:var(--color-accent);}.ds-input:disabled{opacity:.5;}"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Active destination has both ink rule and oxblood text; hover is tonal only.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item\" aria-current=\"page\" href=\"#dashboard\">Dashboard</a><a class=\"ds-nav-item\" href=\"#zones\">Zones &amp; rooms</a></nav>",
+      "css": ".ds-nav{background:var(--color-paper-deep);padding:.75rem;}.ds-nav-item{font-family:var(--font-serif,'Source Serif 4',Georgia,serif);font-size:.875rem;display:block;padding:.5rem .875rem;border:1px solid transparent;color:var(--color-ink);text-decoration:none;}.ds-nav-item[aria-current=\"page\"]{border-color:var(--color-rule);color:var(--color-accent);font-weight:600;}.ds-nav-item:hover{background:var(--color-paper-deep);}.ds-nav-item:focus-visible{outline:2px solid var(--color-accent);outline-offset:3px;}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat ruled working unit with a deeper-paper surface; no decorative hover.",
+      "html": "<section class=\"ds-card\"><h3 class=\"ds-card-title\">Builder work</h3><p class=\"ds-card-copy\">Committed edits waiting for their zone files to be saved.</p></section>",
+      "css": ".ds-card{border:1px solid var(--color-rule);border-radius:2px;background:var(--color-paper-deep);color:var(--color-ink);padding:1.5rem;}.ds-card-title{font-family:var(--font-display,\"DM Serif Display\",Georgia,serif);font-size:1.25rem;font-weight:400;margin:0 0 .5rem;}.ds-card-copy{font-family:var(--font-serif,\"Source Serif 4\",Georgia,serif);color:var(--color-ink-muted);margin:0;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Haunted Paperback",
+    "overview": "The console extends [Haunted Paperback](../website-astro/DESIGN.md): wordmark at\ntop left, static desktop sidebar, main working area, and one light theme. The\noperator's job is to inspect records, edit safely, and understand save and\nvalidation states. Use [brand voice Layer 1](../docs/brand-voice.md): direct,\ntechnical, specific.",
+    "keyCharacteristics": [
+      "Cream surfaces, charcoal rules, sparse oxblood.",
+      "Flat controls, serif reading, machine-only monospace.",
+      "Existing permissions and save boundaries remain visible."
+    ],
+    "rules": [
+      {
+        "name": "The One Oxblood Rule",
+        "body": "Keep the accent sparse; status also needs words or icons.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat-Ink Rule",
+        "body": "Separate surfaces with ink rules and the two paper tones. No shadows, gradients, glass or blur. Modal scrims use ink at 45% opacity. State transitions are brief; reduced-motion preferences shorten them.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep labels explicit and validation, errors and unsaved state visible.",
+      "Do verify routed pages, narrow layouts, focus, overlays and save boundaries.",
+      "Do keep screenshots as local evidence; this foundation ships no raster assets."
+    ],
+    "donts": [
+      "Don't introduce a second theme or decorative status colors.",
+      "Don't turn synthetic chart fixtures into operational claims."
+    ]
+  }
+}

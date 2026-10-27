@@ -1,3 +1,5 @@
+import { Input } from '../components/ui/input';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -63,7 +65,7 @@ export function MobsPage() {
       <NewEntityPanel kind="mob" />
 
       {/* Search */}
-      <input
+      <Input
         type="text"
         placeholder="Filter by vnum, name, or keywords..."
         value={search}
@@ -74,7 +76,7 @@ export function MobsPage() {
       {isLoading && <TableSkeleton rows={6} cols={6} />}
 
       {error && (
-        <div className="bg-paper-deep border border-accent rounded p-4 text-sm text-accent">
+        <div className="bg-paper-deep border border-accent rounded-[2px] p-4 text-sm text-accent">
           Failed to load mobs.
           <div className="mt-1 text-accent text-xs">
             {(error as Error).message}
@@ -85,52 +87,52 @@ export function MobsPage() {
       {filtered.length > 0 && (
         <div className="bg-paper-deep rounded-none border border-rule overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
                   <SortHeader label="VNum" field="vnum" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="Name" field="short_desc" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="Level" field="level" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="AC" field="ac" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="Gold" field="gold" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
                   <SortHeader label="EXP" field="exp" sortKey={sortKey} sortAsc={sortAsc} onSort={toggleSort} />
-                  <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-ink-muted">Edit</th>
-                </tr>
-              </thead>
-              <tbody>
+                  <TableHead className="px-4 py-3 text-left text-xs uppercase tracking-wider text-ink-muted">Edit</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filtered.map((mob) => (
-                  <tr
+                  <TableRow
                     key={mob.vnum}
                     className="border-b border-rule hover:bg-paper-deep transition-colors"
                   >
-                    <td className="px-4 py-3">
+                    <TableCell className="px-4 py-3">
                       <Link
                         to={`/admin/game/mobs/${mob.vnum}`}
                         className="text-accent hover:text-accent font-mono"
                       >
                         {mob.vnum}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3 text-ink">{mob.short_desc}</td>
-                    <td className="px-4 py-3 text-ink-muted font-mono">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-ink">{mob.short_desc}</TableCell>
+                    <TableCell className="px-4 py-3 text-ink-muted font-mono">
                       {mob.level}
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted font-mono">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-ink-muted font-mono">
                       {mob.ac}
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted font-mono">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-ink-muted font-mono">
                       {mob.gold.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-ink-muted font-mono">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-ink-muted font-mono">
                       {mob.exp.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <Link to={`/admin/game/mobs/${mob.vnum}/edit`} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep">Edit</Link>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -158,12 +160,12 @@ function SortHeader({
   onSort: (field: keyof Mob) => void;
 }) {
   return (
-    <th
+    <TableHead
       className="cursor-pointer select-none px-4 py-3 text-left hover:text-accent"
       onClick={() => onSort(field)}
     >
       {label}
       {sortKey === field && <span className="ml-1 text-accent">{sortAsc ? '↑' : '↓'}</span>}
-    </th>
+    </TableHead>
   );
 }

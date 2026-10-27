@@ -1,3 +1,7 @@
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { NativeSelect } from '../components/ui/select';
 import { useEffect, useState } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -38,18 +42,18 @@ export function PlayersPage() {
     </header>
     <div className="grid gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
       <aside aria-label="Saved characters" className="space-y-3">
-        {selected && <button type="button" className={`${buttonClass} lg:hidden`} aria-expanded={listOpen} aria-controls="saved-player-list" onClick={() => setListOpen(!listOpen)}>{listOpen ? 'Close character list' : 'Find another character'}</button>}
+        {selected && <Button variant="ghost" size="plain" type="button" className={`${buttonClass} lg:hidden`} aria-expanded={listOpen} aria-controls="saved-player-list" onClick={() => setListOpen(!listOpen)}>{listOpen ? 'Close character list' : 'Find another character'}</Button>}
         <div id="saved-player-list" className={`space-y-3 ${selected && !listOpen ? 'hidden lg:block' : ''}`}>
         <label className="block text-sm" htmlFor="player-search">Find a character</label>
-        <input id="player-search" type="search" placeholder="Search by name" value={search} onChange={(event) => setSearch(event.target.value)} className={fieldClass} />
+        <Input id="player-search" type="search" placeholder="Search by name" value={search} onChange={(event) => setSearch(event.target.value)} className={fieldClass} />
         {names.isLoading && <p role="status" className="animate-pulse text-sm">Loading characters…</p>}
-        {names.error && <div role="alert"><p>{names.error.message}</p><button className={buttonClass} onClick={() => names.refetch()}>Try again</button></div>}
+        {names.error && <div role="alert"><p>{names.error.message}</p><Button variant="ghost" size="plain" className={buttonClass} onClick={() => names.refetch()}>Try again</Button></div>}
         {names.data && <p className="text-xs text-ink-muted">{search ? `${visible.length} of ${names.data.length}` : names.data.length} saved {names.data.length === 1 ? 'character' : 'characters'}</p>}
         <div className="max-h-64 lg:max-h-[65vh] overflow-y-auto border-t border-rule">
-          {visible.map((name) => <button key={name} aria-pressed={name === selected} onClick={() => {
+          {visible.map((name) => <Button variant="ghost" size="plain" key={name} aria-pressed={name === selected} onClick={() => {
             if (name === selected || (dirty && !window.confirm('Discard unsaved stat changes?'))) return;
             setDirty(false); setSelected(name); setListOpen(false);
-          }} className={`block w-full text-left px-3 py-3 border-b border-rule focus-visible:outline-2 focus-visible:outline-accent ${name === selected ? 'bg-paper-deep text-accent font-semibold' : 'hover:bg-paper-deep'}`}>{name}</button>)}
+          }} className={`block w-full text-left px-3 py-3 border-b border-rule focus-visible:outline-2 focus-visible:outline-accent ${name === selected ? 'bg-paper-deep text-accent font-semibold' : 'hover:bg-paper-deep'}`}>{name}</Button>)}
         </div>
         {names.data && !visible.length && <p className="text-sm text-ink-muted">No characters match. Try a different name.</p>}
         </div>
@@ -57,7 +61,7 @@ export function PlayersPage() {
       <section aria-label="Character editor" className="min-w-0">
         {!selected && <div className="py-10 border-y border-rule"><h2 className="text-2xl">Choose a character</h2><p className="text-ink-muted mt-2">Search the saved-player list to open their record.</p></div>}
         {selected && player.isLoading && <p role="status" className="animate-pulse py-8">Loading {selected}…</p>}
-        {player.error && <div role="alert" className="border-y border-rule py-6 space-y-3"><h2 className="text-xl">Cannot open {selected}</h2><p>{player.error.message}</p><button className={buttonClass} onClick={() => player.refetch()}>Reload character</button></div>}
+        {player.error && <div role="alert" className="border-y border-rule py-6 space-y-3"><h2 className="text-xl">Cannot open {selected}</h2><p>{player.error.message}</p><Button variant="ghost" size="plain" className={buttonClass} onClick={() => player.refetch()}>Reload character</Button></div>}
         {player.data && !player.error && <CharacterEditor key={selected} player={player.data} onDirty={setDirty} />}
       </section>
     </div>
@@ -96,37 +100,37 @@ function CharacterEditor({ player, onDirty }: { player: SavedPlayer; onDirty: (d
     run(() => playerEditor.items(player.name, player.revision, { action, source, index, locate, vnum: Number(vnum) || 0 }), 'Equipment and inventory saved.');
   };
 
-  return <div className="space-y-5" aria-busy={mutation.isPending}>
+  return <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-5" aria-busy={mutation.isPending}>
     <div className="flex flex-wrap gap-3 items-baseline justify-between"><div><h2 className="text-2xl">{player.name}</h2><LastSaved timestamp={player.last_saved_at} /></div><span className="text-sm text-ink-muted">Saved character · Level {player.values.level}</span></div>
-    <div className="flex flex-wrap gap-1 border-b border-rule" aria-label="Editor sections">
-      {(['stats', 'items', 'password'] as const).map((key) => <button key={key} type="button" aria-pressed={tab === key} disabled={mutation.isPending} onClick={() => setTab(key)} className={`px-4 py-3 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-accent ${tab === key ? 'border-accent text-accent' : 'border-transparent hover:bg-paper-deep'}`}>{key === 'stats' ? 'Character stats' : key === 'items' ? 'Equipment & inventory' : 'Password'}</button>)}
-    </div>
+    <TabsList className="flex h-auto w-full flex-wrap justify-start" aria-label="Editor sections">
+      {(['stats', 'items', 'password'] as const).map((key) => <TabsTrigger value={key} key={key} disabled={mutation.isPending} className={`px-4 py-3 text-sm border-b-2 focus-visible:outline-2 focus-visible:outline-accent ${tab === key ? 'border-accent text-accent' : 'border-transparent hover:bg-paper-deep'}`}>{key === 'stats' ? 'Character stats' : key === 'items' ? 'Equipment & inventory' : 'Password'}</TabsTrigger>)}
+    </TabsList>
     {notice && <p role="status" className="border border-rule bg-paper-deep p-3">{notice}</p>}
     {actionError && <div role="alert" className="text-accent border border-accent p-3"><p>{actionError}</p><p className="mt-2 text-sm">Stat drafts stay here; password fields are cleared after submission. If the record changed, reload before trying again.</p></div>}
-    {tab === 'stats' && <form onSubmit={(event) => { event.preventDefault(); run(() => playerEditor.stats(player.name, player.revision, changes), 'Character stats saved.'); }} className="space-y-6">
+    <TabsContent value="stats"><form onSubmit={(event) => { event.preventDefault(); run(() => playerEditor.stats(player.name, player.revision, changes), 'Character stats saved.'); }} className="space-y-6">
       {['Character', 'Vitals', 'Attributes'].map((group) => <fieldset key={group} disabled={mutation.isPending} className="border-t border-rule pt-3"><legend className="text-lg pr-3">{group}</legend><div className={`grid grid-cols-2 ${group === 'Attributes' ? 'sm:grid-cols-3' : ''} gap-4 mt-2`}>
-        {player.fields.filter((field) => field.group === group).map((field) => <label key={field.key} className="block text-sm">{field.label}<input className={`${fieldClass} mt-1`} type="number" required min={field.min} max={field.max} step="1" value={values[field.key]} onChange={(event) => {
+        {(player.fields ?? []).filter((field) => field.group === group).map((field) => <label key={field.key} className="block text-sm">{field.label}<Input className={`${fieldClass} mt-1`} type="number" required min={field.min} max={field.max} step="1" value={values[field.key]} onChange={(event) => {
           const next = { ...values, [field.key]: event.target.valueAsNumber };
           setValues(next); onDirty(Object.keys(next).some((key) => next[key] !== player.values[key]));
         }} /></label>)}
       </div></fieldset>)}
       <div className="flex flex-wrap gap-3 items-center border-t border-rule pt-4">
-        <button type="submit" disabled={!dirty || mutation.isPending} className={`${buttonClass} bg-accent text-paper hover:bg-accent-deep`}>{mutation.isPending ? 'Saving…' : 'Save stat changes'}</button>
-        <button type="button" disabled={!dirty || mutation.isPending} className={buttonClass} onClick={() => { setValues(player.values); onDirty(false); }}>Discard changes</button>
+        <Button variant="ghost" size="plain" type="submit" disabled={!dirty || mutation.isPending} className={`${buttonClass} bg-accent text-paper hover:bg-accent-deep`}>{mutation.isPending ? 'Saving…' : 'Save stat changes'}</Button>
+        <Button variant="ghost" size="plain" type="button" disabled={!dirty || mutation.isPending} className={buttonClass} onClick={() => { setValues(player.values); onDirty(false); }}>Discard changes</Button>
         <span className="text-sm text-ink-muted">{dirty ? `${Object.keys(changes).length} unsaved fields` : 'No unsaved stat changes'}</span>
       </div>
-    </form>}
-    {tab === 'items' && <div className="space-y-6">
+    </form></TabsContent>
+    <TabsContent value="items"><div className="space-y-6">
       <p className="text-sm text-ink-muted">Each action saves immediately. Containers travel with their contents. Equipment slots are staff assignments; choose a suitable object for the slot.</p>
       {dirty && <p role="status" className="text-accent">Save or discard stat changes before editing items.</p>}
       <fieldset disabled={mutation.isPending || dirty} className="space-y-6">
-        <form onSubmit={(event) => { event.preventDefault(); itemAction('grant', 'inventory', 0, 0); }} className="flex flex-wrap gap-3 items-end border-b border-rule pb-5"><label className="text-sm">Object vnum<input type="number" min="1" step="1" required value={vnum} onChange={(event) => setVnum(event.target.value)} className={`${fieldClass} mt-1 max-w-48`} /></label><button className={buttonClass}>Grant to inventory</button></form>
+        <form onSubmit={(event) => { event.preventDefault(); itemAction('grant', 'inventory', 0, 0); }} className="flex flex-wrap gap-3 items-end border-b border-rule pb-5"><label className="text-sm">Object vnum<Input type="number" min="1" step="1" required value={vnum} onChange={(event) => setVnum(event.target.value)} className={`${fieldClass} mt-1 max-w-48`} /></label><Button variant="ghost" size="plain" className={buttonClass}>Grant to inventory</Button></form>
         {(['equipment', 'inventory'] as const).map((source) => <section key={source}><h3 className="text-xl mb-3 capitalize">{source}</h3>
-          {!player[source].length ? <p className="text-sm text-ink-muted">{source === 'equipment' ? 'Nothing equipped. Move an inventory item into a slot below.' : 'Inventory is empty. Grant an object by vnum above.'}</p> : <ul className="border-t border-rule">{player[source].map((item) => <ItemRow key={item.index} item={item} player={player} source={source} onAction={(action, locate) => itemAction(action, source, item.index, locate)} />)}</ul>}
+          {!(player[source] ?? []).length ? <p className="text-sm text-ink-muted">{source === 'equipment' ? 'Nothing equipped. Move an inventory item into a slot below.' : 'Inventory is empty. Grant an object by vnum above.'}</p> : <ul className="border-t border-rule">{(player[source] ?? []).map((item) => <ItemRow key={item.index} item={item} player={player} source={source} onAction={(action, locate) => itemAction(action, source, item.index, locate)} />)}</ul>}
         </section>)}
       </fieldset>
-    </div>}
-    {tab === 'password' && <form className="space-y-4 max-w-md" onSubmit={(event) => {
+    </div></TabsContent>
+    <TabsContent value="password"><form className="space-y-4 max-w-md" onSubmit={(event) => {
       event.preventDefault();
       if (password !== confirmPassword) { setActionError('Passwords do not match.'); return; }
       const secret = password;
@@ -135,22 +139,22 @@ function CharacterEditor({ player, onDirty }: { player: SavedPlayer; onDirty: (d
     }}>
       <h3 className="text-xl">Reset password</h3><p className="text-sm text-ink-muted">Set a new password of 8 to 72 bytes. This also clears failed login attempts and the account lockout.</p>
       {dirty && <p role="status" className="text-accent">Save or discard stat changes before resetting the password.</p>}
-      <label className="block text-sm">New password<input type="password" autoComplete="new-password" minLength={8} maxLength={72} required value={password} onChange={(event) => setPassword(event.target.value)} className={`${fieldClass} mt-1`} /></label>
-      <label className="block text-sm">Confirm new password<input type="password" autoComplete="new-password" minLength={8} maxLength={72} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className={`${fieldClass} mt-1`} /></label>
-      <button disabled={dirty || mutation.isPending} className={`${buttonClass} bg-accent text-paper hover:bg-accent-deep`}>{mutation.isPending ? 'Resetting…' : 'Reset password'}</button>
-    </form>}
-    <button type="button" disabled={mutation.isPending} className={`${buttonClass} text-ink-muted`} onClick={() => {
+      <label className="block text-sm">New password<Input type="password" autoComplete="new-password" minLength={8} maxLength={72} required value={password} onChange={(event) => setPassword(event.target.value)} className={`${fieldClass} mt-1`} /></label>
+      <label className="block text-sm">Confirm new password<Input type="password" autoComplete="new-password" minLength={8} maxLength={72} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className={`${fieldClass} mt-1`} /></label>
+      <Button variant="ghost" size="plain" disabled={dirty || mutation.isPending} className={`${buttonClass} bg-accent text-paper hover:bg-accent-deep`}>{mutation.isPending ? 'Resetting…' : 'Reset password'}</Button>
+    </form></TabsContent>
+    <Button variant="ghost" size="plain" type="button" disabled={mutation.isPending} className={`${buttonClass} text-ink-muted`} onClick={() => {
       if (dirty && !window.confirm('Discard stat changes and reload this character?')) return;
       setValues(player.values); onDirty(false); cache.invalidateQueries({ queryKey: ['saved-player', player.name] });
-    }}>Reload saved record</button>
-  </div>;
+    }}>Reload saved record</Button>
+  </Tabs>;
 }
 
 function ItemRow({ item, player, source, onAction }: { item: SavedPlayerItem; player: SavedPlayer; source: 'inventory' | 'equipment'; onAction: (action: 'move' | 'remove', locate: number) => void }) {
   const [locate, setLocate] = useState(0);
   return <li className="border-b border-rule py-4 space-y-3">
-    <div className="flex flex-wrap justify-between gap-2"><div><span className="font-medium">{item.name}</span><span className="font-mono text-xs text-ink-muted ml-2">#{item.vnum}{item.count > 1 ? ` × ${item.count}` : ''}</span></div><span className="text-sm text-ink-muted">{item.parent ? 'Inside container' : source === 'equipment' ? player.slots.find((slot) => slot.locate === item.locate)?.name ?? 'Unknown slot' : 'Carried'}</span></div>
-    <div className="flex flex-wrap gap-2"><select aria-label={`Destination for ${item.name} ${item.index + 1}`} className={`${fieldClass} sm:max-w-52`} value={locate} onChange={(event) => setLocate(Number(event.target.value))}><option value={0}>Inventory</option>{player.slots.map((slot) => <option key={slot.locate} value={slot.locate}>{slot.name}</option>)}</select><button type="button" className={buttonClass} onClick={() => onAction('move', locate)}>Move item</button><button type="button" className={`${buttonClass} text-accent`} onClick={() => { if (window.confirm(`Remove ${item.name} and anything inside it from ${player.name}?`)) onAction('remove', 0); }}>Remove</button></div>
+    <div className="flex flex-wrap justify-between gap-2"><div><span className="font-medium">{item.name}</span><span className="font-mono text-xs text-ink-muted ml-2">#{item.vnum}{item.count > 1 ? ` × ${item.count}` : ''}</span></div><span className="text-sm text-ink-muted">{item.parent ? 'Inside container' : source === 'equipment' ? (player.slots ?? []).find((slot) => slot.locate === item.locate)?.name ?? 'Unknown slot' : 'Carried'}</span></div>
+    <div className="flex flex-wrap gap-2"><NativeSelect aria-label={`Destination for ${item.name} ${item.index + 1}`} className={`${fieldClass} sm:max-w-52`} value={locate} onChange={(event) => setLocate(Number(event.target.value))}><option value={0}>Inventory</option>{(player.slots ?? []).map((slot) => <option key={slot.locate} value={slot.locate}>{slot.name}</option>)}</NativeSelect><Button variant="ghost" size="plain" type="button" className={buttonClass} onClick={() => onAction('move', locate)}>Move item</Button><Button variant="ghost" size="plain" type="button" className={`${buttonClass} text-accent`} onClick={() => { if (window.confirm(`Remove ${item.name} and anything inside it from ${player.name}?`)) onAction('remove', 0); }}>Remove</Button></div>
   </li>;
 }
 

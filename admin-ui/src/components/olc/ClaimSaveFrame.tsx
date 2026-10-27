@@ -1,3 +1,4 @@
+import { Button } from '../ui/button';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import type { ApiError } from '../../api/client';
@@ -82,22 +83,22 @@ export function ClaimSaveFrame({
           <div className="flex flex-wrap gap-2">
             {!committed && (
               <>
-                <button
+                <Button variant="ghost" size="plain"
                   type="button"
                   disabled={busy}
                   onClick={onDiscard}
                   className="border border-rule bg-paper px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Discard
-                </button>
-                <button
+                </Button>
+                <Button variant="ghost" size="plain"
                   type="button"
                   disabled={busy}
                   onClick={onCommit}
                   className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Commit draft
-                </button>
+                </Button>
               </>
             )}
             {committed && (
@@ -150,14 +151,14 @@ export function ClaimSaveFrame({
         <p className="text-sm text-ink-muted">
               {zoneDirty ? `Zone ${zone} has committed changes waiting for a file save.` : 'Commit changes before saving the zone file.'}
         </p>
-        <button
+        <Button variant="ghost" size="plain"
           type="button"
           disabled={busy || !zoneDirty || !committed}
           onClick={onSave}
           className="border border-accent bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50"
         >
           Save zone file
-        </button>
+        </Button>
       </div>
     </div>
   );

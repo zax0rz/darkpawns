@@ -1,3 +1,5 @@
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import type { OlcPatchOperation, OlcSchema, OlcSchemaField, OlcShop } from '../../api/olc';
 import { ServerProposal } from './ServerProposal';
 import { VNumPicker } from './VNumPicker';
@@ -97,8 +99,8 @@ function AddNumberForm({
         form.reset();
       }}
     >
-      <input name="value" type="number" aria-label={label} disabled={disabled} className="min-w-0 flex-1 border border-rule bg-paper px-3 py-2 text-sm text-ink" />
-      <button type="submit" disabled={disabled} className="border border-rule px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50">Add</button>
+      <Input name="value" type="number" aria-label={label} disabled={disabled} className="min-w-0 flex-1 border border-rule bg-paper px-3 py-2 text-sm text-ink" />
+      <Button variant="ghost" size="plain" type="submit" disabled={disabled} className="border border-rule px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50">Add</Button>
     </form>
   );
 }
@@ -125,7 +127,7 @@ function NumberList({
         {values.map((value, index) => (
           <div key={`${value}-${index}`} className="flex items-center justify-between border border-rule bg-paper px-3 py-2">
             <span className="font-mono text-sm text-ink">{value}</span>
-            <button type="button" disabled={disabled} onClick={() => onOperation([{ kind: removeOperation, index }])} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</button>
+            <Button variant="ghost" size="plain" type="button" disabled={disabled} onClick={() => onOperation([{ kind: removeOperation, index }])} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</Button>
           </div>
         ))}
         <AddNumberForm name={label} label={`Add ${label}`} operation={operation} disabled={disabled} onOperation={onOperation} />
@@ -225,7 +227,7 @@ export function ShopEditorFields({ schema, shop, dirty, disabled = false, onOper
           {shop.buyWords.map((word, index) => (
             <div key={`${word}-${index}`} className="flex items-center justify-between border border-rule bg-paper px-3 py-2">
               <span className="text-sm text-ink"><span className="font-mono text-ink-muted">{shop.buyTypes[index] ?? 0}</span> {word}</span>
-              <button type="button" disabled={disabled} onClick={() => onOperation([{ kind: 'remove_namelist', index }])} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</button>
+              <Button variant="ghost" size="plain" type="button" disabled={disabled} onClick={() => onOperation([{ kind: 'remove_namelist', index }])} className="text-xs font-semibold uppercase tracking-wider text-accent hover:text-accent-deep disabled:opacity-50">Remove</Button>
             </div>
           ))}
           <form
@@ -241,9 +243,9 @@ export function ShopEditorFields({ schema, shop, dirty, disabled = false, onOper
               form.reset();
             }}
           >
-            <input name="type" type="number" aria-label="Trade type number" disabled={disabled} placeholder="Type" className="border border-rule bg-paper px-3 py-2 text-sm text-ink" />
-            <input name="word" type="text" aria-label="Trade namelist word" disabled={disabled} placeholder="Namelist word" className="border border-rule bg-paper px-3 py-2 text-sm text-ink" />
-            <button type="submit" disabled={disabled} className="border border-rule px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50">Add</button>
+            <Input name="type" type="number" aria-label="Trade type number" disabled={disabled} placeholder="Type" className="border border-rule bg-paper px-3 py-2 text-sm text-ink" />
+            <Input name="word" type="text" aria-label="Trade namelist word" disabled={disabled} placeholder="Namelist word" className="border border-rule bg-paper px-3 py-2 text-sm text-ink" />
+            <Button variant="ghost" size="plain" type="submit" disabled={disabled} className="border border-rule px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-ink hover:text-paper disabled:cursor-not-allowed disabled:opacity-50">Add</Button>
           </form>
         </div>
       </section>

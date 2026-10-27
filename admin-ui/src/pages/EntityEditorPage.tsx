@@ -1,3 +1,4 @@
+import { Button } from '../components/ui/button';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -166,7 +167,7 @@ export function EntityEditorPage({ kind }: EntityEditorPageProps) {
         <div className="border border-accent bg-paper-deep px-5 py-5" role="alert">
           <h1 className="text-xl text-ink">{title} unavailable</h1>
           <p className="mt-2 text-sm text-ink">{conflictSummary(openMutation.error)}</p>
-          <button type="button" onClick={retryClaim} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">Try again</button>
+          <Button variant="ghost" size="plain" type="button" onClick={retryClaim} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">Try again</Button>
         </div>
       </div>
     );

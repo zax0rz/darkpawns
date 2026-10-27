@@ -1,3 +1,8 @@
+import { ChevronUp } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from './ui/dropdown-menu';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './ui/tooltip';
+import { Button } from './ui/button';
 import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -21,11 +26,11 @@ const navItems: NavItem[] = [
   { to: '/admin/game/zones', label: 'Zones & rooms', icon: 'zones', role: 'player', group: 'Build the world' },
   { to: '/admin/game/mobs', label: 'Mobs', icon: 'mobs', role: 'player', group: 'Build the world' },
   { to: '/admin/game/objects', label: 'Objects', icon: 'objects', role: 'player', group: 'Build the world' },
-  { to: '/admin/game/shops', label: 'Shops', icon: 'objects', role: 'player', group: 'Build the world' },
+  { to: '/admin/game/shops', label: 'Shops', icon: 'shops', role: 'player', group: 'Build the world' },
   { to: '/admin/workshop', label: 'Workshop & saves', icon: 'operations', role: 'builder', group: 'Build the world' },
-  { to: '/admin/workshop/help', label: 'Builder guide', icon: 'info', role: 'builder', group: 'Build the world' },
-  { to: '/admin/staff/players', label: 'Players', icon: 'operations', role: 'admin', group: 'Staff tools' },
-  { to: '/admin/staff/notifications', label: 'Notifications', icon: 'operations', role: 'admin', group: 'Staff tools' },
+  { to: '/admin/workshop/help', label: 'Builder guide', icon: 'guide', role: 'builder', group: 'Build the world' },
+  { to: '/admin/staff/players', label: 'Players', icon: 'players', role: 'admin', group: 'Staff tools' },
+  { to: '/admin/staff/notifications', label: 'Notifications', icon: 'notifications', role: 'admin', group: 'Staff tools' },
   { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder', group: 'Staff tools' },
 ];
 
@@ -84,13 +89,12 @@ export function Layout() {
 
   const isMobile = breakpoint === 'mobile';
   const isTablet = breakpoint === 'tablet';
-  const showSidebar = breakpoint === 'desktop' || sidebarOpen;
 
   return (
     <div className="flex h-screen bg-paper text-ink font-serif transition-colors duration-200">
       {/* Desktop sidebar */}
       {breakpoint === 'desktop' && (
-        <aside className="w-64 bg-paper border-r border-rule flex flex-col shrink-0">
+        <aside className="w-64 bg-paper-deep border-r border-rule flex flex-col shrink-0">
           <SidebarContent
             navItems={visibleNavItems}
             playerName={playerName}
@@ -101,34 +105,23 @@ export function Layout() {
       )}
 
       {/* Mobile/Tablet sidebar overlay */}
-      {(isMobile || isTablet) && showSidebar && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-ink/60 z-40 transition-opacity"
-            onClick={closeSidebar}
-          />
-          {/* Sidebar */}
-          <aside className="fixed inset-y-0 left-0 w-64 bg-paper border-r border-rule flex flex-col z-50 animate-[slideInLeft_0.2s_ease-out]">
-            <SidebarContent
-              navItems={visibleNavItems}
-              playerName={playerName}
-              role={role}
-              onLogout={handleLogout}
-              onClose={closeSidebar}
-              onNavigate={closeSidebar}
-            />
-          </aside>
-        </>
+      {(isMobile || isTablet) && (
+        <Dialog open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <DialogContent showCloseButton={false} className="top-0 left-0 flex h-dvh w-64 max-w-[85vw] translate-x-0 translate-y-0 flex-col gap-0 rounded-none bg-paper-deep p-0 sm:max-w-64">
+            <DialogTitle className="sr-only">Admin navigation</DialogTitle>
+            <DialogDescription className="sr-only">Choose a console page.</DialogDescription>
+            <SidebarContent navItems={visibleNavItems} playerName={playerName} role={role} onLogout={handleLogout} onClose={closeSidebar} onNavigate={closeSidebar}/>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="h-12 border-b border-rule flex items-center px-4 md:px-6 bg-paper-deep/40 backdrop-blur shrink-0">
+        <header className="h-12 border-b border-rule flex items-center px-4 md:px-6 bg-paper-deep/40 shrink-0">
           {/* Hamburger (mobile/tablet) */}
           {(isMobile || isTablet) && (
-            <button
+            <Button variant="ghost" size="plain"
               onClick={toggleSidebar}
               className="mr-3 p-1.5 rounded-none border border-rule hover:bg-paper-deep transition-colors"
               aria-label="Toggle menu"
@@ -136,7 +129,7 @@ export function Layout() {
               <svg className="w-5 h-5 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
-            </button>
+            </Button>
           )}
 
           <h2 className="text-xs uppercase tracking-widest text-ink-muted font-mono hidden sm:block">
@@ -145,13 +138,13 @@ export function Layout() {
 
           <div className="ml-auto flex items-center gap-3">
             {/* Command palette trigger */}
-            <button
+            <TooltipProvider><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="plain"
               onClick={openPalette}
               className="hidden sm:flex items-center gap-1.5 text-xs font-mono text-ink bg-paper hover:bg-paper-deep px-2.5 py-1 rounded-none border border-rule transition-colors"
             >
               <span className="opacity-70">SEARCH</span>
               <kbd className="bg-paper-deep px-1 border border-rule/50 rounded-none text-[10px]">⌘K</kbd>
-            </button>
+            </Button></TooltipTrigger><TooltipContent>Search pages and world records (⌘K or Ctrl+K)</TooltipContent></Tooltip></TooltipProvider>
 
             {/* Connection status */}
             <span className="flex items-center gap-1.5 text-xs font-mono font-bold" title={connectionIndicator.label}>
@@ -213,7 +206,6 @@ function SidebarContent({
   onClose?: () => void;
   onNavigate?: () => void;
 }) {
-  const [accountOpen, setAccountOpen] = useState(false);
   return (
     <>
       {/* Logo / Title */}
@@ -222,17 +214,17 @@ function SidebarContent({
           <Wordmark pawnClass="h-8" textClass="text-[1.15rem]" />
         </h1>
         {onClose && (
-          <button
+          <Button variant="ghost" size="plain"
             onClick={onClose}
-            className="mt-2 text-xs font-mono uppercase text-ink-muted hover:text-accent sm:hidden border border-rule px-2 py-0.5"
+            className="mt-2 text-xs font-mono uppercase text-ink-muted hover:text-accent border border-rule px-2 py-0.5"
           >
             Close
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto bg-paper" aria-label="Admin navigation">
+      <nav className="flex-1 p-3 overflow-y-auto bg-paper-deep" aria-label="Admin navigation">
         {(['Overview', 'Staff tools', 'Build the world'] as const).map((group) => {
           const items = navItems.filter((item) => item.group === group);
           if (items.length === 0) return null;
@@ -266,33 +258,19 @@ function SidebarContent({
 
       {/* User info */}
       <div className="p-3 border-t border-rule bg-paper-deep/30">
-        <button type="button" aria-expanded={accountOpen} aria-controls="admin-account-actions" onClick={() => setAccountOpen((value) => !value)} className="flex w-full items-center justify-between gap-2 p-1 text-left hover:bg-paper-deep focus-visible:outline-2 focus-visible:outline-accent">
-          <div className="min-w-0">
-            <div className="text-xs font-extrabold text-ink font-mono truncate uppercase tracking-wider">
-              {playerName || 'Unknown Operator'}
-            </div>
-            <div className="text-[10px] mt-1">
-              <span
-                className={`inline-block px-2 py-0.5 rounded-none text-[9px] font-bold uppercase tracking-wider border ${
-                  role === 'admin'
-                    ? 'bg-accent text-paper border-accent-deep'
-                    : role === 'builder'
-                      ? 'bg-paper-deep text-ink border-rule'
-                      : role === 'research'
-                        ? 'bg-paper text-accent border-accent'
-                        : 'bg-paper text-ink-muted border-rule/50'
-                }`}
-              >
-                {role || 'player'}
-              </span>
-            </div>
-          </div>
-          <span className="text-xs text-ink-muted" aria-hidden="true">{accountOpen ? '−' : '+'}</span>
-        </button>
-        {accountOpen && <div id="admin-account-actions" className="mt-2 border-t border-rule pt-2 space-y-1">
-          <NavLink to="/admin/workshop/help" onClick={onNavigate} className="block px-2 py-1 text-sm text-ink hover:text-accent">Builder guide</NavLink>
-          <button type="button" onClick={onLogout} className="w-full px-2 py-1 text-left text-sm text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">Sign out</button>
-        </div>}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="plain" className="flex w-full items-center justify-between px-2 py-2 text-left" aria-label="Account menu">
+              <span className="min-w-0"><span className="block truncate text-sm font-semibold">{playerName || 'Unknown operator'}</span><span className="block text-xs text-ink-muted">{role || 'player'}</span></span>
+              <ChevronUp className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="min-w-52">
+            <DropdownMenuLabel>Account</DropdownMenuLabel><DropdownMenuSeparator />
+            <DropdownMenuItem asChild><NavLink to="/admin/workshop/help" onClick={onNavigate}>Builder guide</NavLink></DropdownMenuItem>
+            <DropdownMenuItem onSelect={onLogout}>Sign out</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </>
   );

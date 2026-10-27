@@ -1,3 +1,4 @@
+import { Button } from '../components/ui/button';
 import { useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
@@ -59,7 +60,7 @@ export function ZoneDetailPage() {
         >
           ← Back to Zones
         </Link>
-        <div className="bg-paper-deep border border-accent rounded p-4 text-sm text-accent">
+        <div className="bg-paper-deep border border-accent rounded-[2px] p-4 text-sm text-accent">
           Zone not found or failed to load.
           <div className="mt-1 text-accent text-xs">
             {(error as Error)?.message || 'Not found'}
@@ -116,13 +117,13 @@ export function ZoneDetailPage() {
         <h2 className="text-sm font-medium text-ink-muted mb-3">
           Zone Reset
         </h2>
-        <button
+        <Button variant="ghost" size="plain"
           onClick={handleReset}
           disabled={resetting}
-          className="bg-accent hover:bg-accent disabled:opacity-50 text-ink px-4 py-2 rounded text-sm font-medium"
+          className="bg-accent hover:bg-accent-deep disabled:opacity-50 text-paper px-4 py-2 rounded-[2px] text-sm font-medium"
         >
           {resetting ? 'Resetting...' : 'Reset Zone'}
-        </button>
+        </Button>
         {resetResult && (
           <div className="mt-2 text-sm text-ink-muted">{resetResult}</div>
         )}

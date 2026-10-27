@@ -1,3 +1,5 @@
+import { Button } from '../components/ui/button';
+import { NativeSelect } from '../components/ui/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -42,9 +44,9 @@ function ZoneSettings({ schema, zone, dirty, disabled, onOperation }: { schema: 
             return (
               <div key={field.key}>
                 {label(field, dirty.includes(field.key))}
-                <select id={'zone-' + field.key} value={String(current)} disabled={disabled} onChange={(event) => onOperation([{ kind: op, value: Number(event.currentTarget.value) }])} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
+                <NativeSelect id={'zone-' + field.key} value={String(current)} disabled={disabled} onChange={(event) => onOperation([{ kind: op, value: Number(event.currentTarget.value) }])} className="w-full border border-rule bg-paper px-3 py-2 text-sm text-ink">
                   {(field.options || []).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
+                </NativeSelect>
               </div>
             );
           }
@@ -143,7 +145,7 @@ export function ZoneEditorPage() {
         <div className="border border-accent bg-paper-deep px-5 py-5" role="alert">
           <h1 className="text-xl text-ink">Zone unavailable</h1>
           <p className="mt-2 text-sm text-ink">{conflictSummary(openMutation.error)}</p>
-          <button type="button" onClick={retryClaim} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">Try again</button>
+          <Button variant="ghost" size="plain" type="button" onClick={retryClaim} className="mt-4 border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep">Try again</Button>
         </div>
       </div>
     );

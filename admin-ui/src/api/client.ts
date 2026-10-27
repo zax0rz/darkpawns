@@ -1,353 +1,98 @@
-const API_BASE = '/admin';
+import { http, read, prometheus } from './http';
+import type { components } from './schema';
+export { ApiError } from './http';
 
-export class ApiError extends Error {
-  readonly status: number;
-  readonly payload: unknown;
-
-  constructor(status: number, payload: unknown, message: string) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.payload = payload;
-  }
-}
-
-export async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await requestResponse(path, options);
-  if (res.status === 204) return undefined as T;
-  return res.json();
-}
-
-export async function requestResponse(path: string, options?: RequestInit): Promise<Response> {
-  // The credential is the HttpOnly /admin cookie (VULN-043); it rides the
-  // same-origin request automatically. X-Requested-With accompanies every
-  // authenticated admin request — the server rejects its absence, and a
-  // cross-site page cannot add a custom header without a preflight the admin
-  // router never approves.
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'darkpawns-admin',
-      ...options?.headers,
-    },
-  });
-  if (res.status === 401) {
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
-  }
-  if (!res.ok) {
-    const body = await res.text();
-    let payload: unknown = body;
-    try {
-      payload = body ? JSON.parse(body) : null;
-    } catch {
-      /* Keep the original text when the server did not return JSON. */
-    }
-    // Legacy handlers answer {error}; Huma operations answer RFC 9457 {detail}.
-    const message =
-      typeof payload === 'object' && payload !== null && 'error' in payload &&
-      typeof payload.error === 'string'
-        ? payload.error
-        : typeof payload === 'object' && payload !== null && 'detail' in payload &&
-            typeof payload.detail === 'string'
-          ? payload.detail
-          : `API error ${res.status}: ${body}`;
-    throw new ApiError(res.status, payload, message);
-  }
-  return res;
-}
-
-export interface Zone {
-  number: number;
-  name: string;
-  top_room: number;
-  lifespan: number;
-  reset_mode: number;
-}
-
-export interface ServerInfo {
-  uptime: string;
-  room_count: number;
-  player_count: number;
-  zone_count: number;
-}
-
-export interface Health {
-  status: string;
-}
-
-export interface Mob {
-  vnum: number;
-  keywords: string;
-  short_desc: string;
-  long_desc: string;
-  level: number;
-  alignment: number;
-  ac: number;
-  hp: string;
-  gold: number;
-  exp: number;
-  position: number;
-  default_pos: number;
-  sex: number;
-  race: number;
-  action_flags: string[];
-  affect_flags: string[];
-  script_name: string;
-  str: number;
-  int: number;
-  wis: number;
-  dex: number;
-  con: number;
-  cha: number;
-}
-
-export interface Obj {
-  vnum: number;
-  keywords: string;
-  short_desc: string;
-  long_desc: string;
-  type_flag: number;
-  weight: number;
-  cost: number;
-  extra_flags: number[];
-  wear_flags: number[];
-  values: number[];
-  script_name: string;
-}
-
-export interface Room {
-  vnum: number;
-  name: string;
-  description: string;
-  zone: number;
-  sector: number;
-  flags: string[];
-}
-
-export interface AgentStatus {
-  agent_id: string;
-  name: string;
-  status: string;
-  last_run: string;
-  model: string;
-  description: string;
-}
-
-export interface Finding {
-  id: number;
-  source: string;
-  severity: string;
-  status: string;
-  title: string;
-  file: string;
-  line: number;
-  description: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TriageSummary {
-  id: number;
-  date: string;
-  confirmed: number;
-  rejected: number;
-  pending: number;
-  summary: string;
-  created_at: string;
-}
-
-export interface PlayerInfo {
-  name: string;
-  level: number;
-  room: number;
-}
-
-export interface PlayerItem {
-  vnum: number;
-  name: string;
-  short_desc: string;
-  type: number;
-  wear_location: string;
-}
-
-export interface PlayerDetail {
-  name: string;
-  level: number;
-  class: number;
-  race: number;
-  sex: number;
-  health: number;
-  max_health: number;
-  mana: number;
-  max_mana: number;
-  move: number;
-  max_move: number;
-  alignment: number;
-  gold: number;
-  bank_gold: number;
-  exp: number;
-  room: number;
-  ac: number;
-  thac0: number;
-  hitroll: number;
-  damroll: number;
-  stats: Record<string, number>;
-  affects: number;
-  connected_at: string;
-  last_active: string;
-  inventory: PlayerItem[];
-  equipment: PlayerItem[];
-}
-
-export interface ServerMetrics {
-  memory_alloc: number;
-  memory_sys: number;
-  memory_heap: number;
-  goroutines: number;
-  gc_cycles: number;
-  last_gc: string;
-  pause_total_ns: number;
-  uptime: string;
-  player_count: number;
-  room_count: number;
-  zone_count: number;
-}
-
-export interface Shop {
-  vnum: number;
-  keeper_vnum: number;
-  keeper_name?: string;
-  room_vnum?: number;
-  buy_types: number[];
-  sell_types: number[];
-  profit_buy: number;
-  profit_sell: number;
-}
-
-export interface WorldSearchHit {
-  kind: 'zone' | 'room' | 'mob' | 'object' | 'shop';
-  vnum: number;
-  name: string;
-  zone: number;
-}
-
-export interface WorldSearchResponse {
-  total: number;
-  results: WorldSearchHit[];
-}
-
-export const api = {
-  health: () => request<Health>('/health'),
-  zones: () => request<Zone[]>('/zones'),
-  zone: (id: number) => request<Zone>(`/zones/${id}`),
-  server: () => request<ServerInfo>('/server'),
-  mobs: () => request<Mob[]>('/mobs'),
-  mob: (vnum: number) => request<Mob>(`/mobs/${vnum}`),
-  objects: () => request<Obj[]>('/objects'),
-  object: (vnum: number) => request<Obj>(`/objects/${vnum}`),
-  room: (vnum: number) => request<Room>(`/rooms/${vnum}`),
-
-  searchWorld: (query: string) => request<WorldSearchResponse>(`/search?q=${encodeURIComponent(query)}`),
-
-
-
-
-  logs: (lines?: number) => request<string[]>(`/logs?lines=${lines || 50}`),
-  players: () => request<PlayerInfo[]>('/players'),
-  agents: () => request<AgentStatus[]>('/agents'),
-  updateAgentStatus: (data: { agent_id: string; status: string }) =>
-    request<AgentStatus>('/agents/status', { method: 'POST', body: JSON.stringify(data) }),
-  findings: (params?: { status?: string; severity?: string; source?: string }) => {
-    const qs = new URLSearchParams(params).toString();
-    return request<Finding[]>(`/findings${qs ? '?' + qs : ''}`);
-  },
-  createFinding: (data: Pick<Finding, 'source' | 'severity' | 'title' | 'file' | 'line' | 'description'>) =>
-    request<Finding>('/findings', { method: 'POST', body: JSON.stringify(data) }),
-  updateFinding: (id: number, data: { status: string }) =>
-    request<Finding>(`/findings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  triageSummaries: () => request<TriageSummary[]>('/triage/summaries'),
-  createTriageSummary: (data: Omit<TriageSummary, 'id' | 'created_at'>) =>
-    request<TriageSummary>('/triage/summaries', { method: 'POST', body: JSON.stringify(data) }),
-
-  // Shops (Phase 4)
-  shops: () => request<Shop[]>('/shops'),
-  shop: (keeperVnum: number) => request<Shop>(`/shops/${keeperVnum}`),
-  updateShop: (keeperVnum: number, data: Record<string, unknown>) =>
-    request<Shop>(`/shops/${keeperVnum}`, { method: 'PUT', body: JSON.stringify(data) }),
-
-  // Zone reset
-  resetZone: (zoneNumber: number) =>
-    request<void>(`/zones/${zoneNumber}/reset`, { method: 'POST' }),
-
-  // Phase 5 — Operations
-  playerDetail: (name: string) => request<PlayerDetail>(`/players/${encodeURIComponent(name)}`),
-  savePlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/save`, { method: 'POST' }),
-  kickPlayer: (name: string) => request<{ status: string }>(`/players/${encodeURIComponent(name)}/kick`, { method: 'POST' }),
-  metrics: () => request<ServerMetrics>('/metrics'),
-  prometheus: async () => (await requestResponse('/prometheus')).text(),
-  resetAllZones: () => request<{ status: string; zones_reset: number; zones_total: number; errors?: string[] }>('/reset-all-zones', { method: 'POST' }),
-};
-
-export interface SavedPlayerItem {
-  index: number;
-  vnum: number;
-  name: string;
-  count: number;
-  locate: number;
-  parent: number;
-}
-export interface SavedPlayer {
-  name: string;
-  last_saved_at: string | null;
-  revision: string;
-  values: Record<string, number>;
-  fields: { key: string; label: string; min: number; max: number; group: string }[];
-  inventory: SavedPlayerItem[];
-  equipment: SavedPlayerItem[];
-  slots: { locate: number; name: string }[];
-}
-export const playerEditor = {
-  list: (q: string) => request<string[]>(`/characters?q=${encodeURIComponent(q)}`),
-  get: (name: string) => request<SavedPlayer>(`/characters/${encodeURIComponent(name)}`),
-  stats: (name: string, revision: string, values: Record<string, number>) =>
-    request<SavedPlayer>(`/characters/${encodeURIComponent(name)}`, { method: 'PATCH', body: JSON.stringify({ revision, values }) }),
-  password: (name: string, revision: string, password: string) =>
-    request<SavedPlayer>(`/characters/${encodeURIComponent(name)}/password`, { method: 'POST', body: JSON.stringify({ revision, password }) }),
-  items: (name: string, revision: string, data: { action: 'grant' | 'move' | 'remove'; source: 'inventory' | 'equipment'; index: number; vnum: number; locate: number }) =>
-    request<SavedPlayer>(`/characters/${encodeURIComponent(name)}/items`, { method: 'POST', body: JSON.stringify({ revision, ...data }) }),
-};
-
+export type Zone = components['schemas']['ZoneResponse'];
+export type ServerInfo = components['schemas']['ServerInfoResponse'];
+export interface Health { status: 'ok' | 'unknown' }
+export type Mob = components['schemas']['MobResponse'];
+export type Obj = components['schemas']['ObjResponse'];
+export type Room = components['schemas']['RoomResponse'];
+export type AgentStatus = components['schemas']['AgentStatus'];
+export type Finding = components['schemas']['Finding'];
+export type TriageSummary = components['schemas']['TriageSummary'];
+export type PlayerInfo = components['schemas']['PlayerResponse'];
+export type PlayerItem = components['schemas']['PlayerItemResponse'];
+export type PlayerDetail = components['schemas']['PlayerDetailResponse'];
+export type ServerMetrics = components['schemas']['MetricsResponse'];
+export type Shop = components['schemas']['ShopResponse'];
+export type WorldSearchHit = components['schemas']['WorldSearchHit'];
+export type WorldSearchResponse = components['schemas']['WorldSearchResponse'];
+export type SavedPlayerItem = components['schemas']['SavedPlayerItem'];
+export type SavedPlayer = components['schemas']['SavedPlayerResponse'];
+export type NotificationConfig = components['schemas']['Config'];
+export type NotificationStatus = components['schemas']['Status'];
+export type NotificationView = components['schemas']['View'];
+export type NotificationDestination = components['schemas']['Destination'];
 export type NotificationProvider = 'pushover' | 'discord';
 export type CredentialProvider = NotificationProvider | 'heartbeat' | 'gossip';
 export interface NotificationCredentials { token?: string; user?: string; url?: string }
-export interface NotificationDestination { enabled: boolean; events: string[] }
-export interface NotificationConfig {
-  revision: number;
-  pushover: NotificationDestination;
-  discord: NotificationDestination;
-  heartbeat: boolean;
-  gossip: boolean;
-  gossip_notice: boolean;
-}
-export interface NotificationStatus {
-  source: 'admin' | 'environment' | 'none';
-  ready: boolean;
-  last_success: string | null;
-  last_failure: string | null;
-  last_error: string;
-  dropped: number;
-}
-export interface NotificationView {
-  config: NotificationConfig;
-  status: Record<NotificationProvider | 'heartbeat' | 'gossip', NotificationStatus>;
-}
+
+export const api = {
+  health: async (): Promise<Health> => ({ status: (await read(http.GET('/health', { parseAs: 'text' }))).trim() === 'OK' ? 'ok' : 'unknown' }),
+  zones: () => read(http.GET('/admin/zones')),
+  zone: (id: number) => read(http.GET('/admin/zones/{number}', { params: { path: { number: String(id) } } })),
+  server: () => read(http.GET('/admin/server')),
+  mobs: () => read(http.GET('/admin/mobs')),
+  mob: (vnum: number) => read(http.GET('/admin/mobs/{vnum}', { params: { path: { vnum: String(vnum) } } })),
+  objects: () => read(http.GET('/admin/objects')),
+  object: (vnum: number) => read(http.GET('/admin/objects/{vnum}', { params: { path: { vnum: String(vnum) } } })),
+  room: (vnum: number) => read(http.GET('/admin/rooms/{vnum}', { params: { path: { vnum: String(vnum) } } })),
+
+  searchWorld: (query: string) => read(http.GET('/admin/search', { params: { query: { q: query } } })),
+
+
+
+
+  logs: (lines?: number) => read(http.GET('/admin/logs', { params: { query: { lines: String(lines || 50) } } })),
+  players: () => read(http.GET('/admin/players')),
+  agents: () => read(http.GET('/admin/agents')),
+  updateAgentStatus: (data: { agent_id: string; status: string }) =>
+    read(http.POST('/admin/agents/status', { body: data })),
+  findings: (params?: { status?: string; severity?: string; source?: string }) => {
+    return read(http.GET('/admin/findings', { params: { query: params } }));
+  },
+  createFinding: (data: Pick<Finding, 'source' | 'severity' | 'title' | 'file' | 'line' | 'description'>) =>
+    read(http.POST('/admin/findings', { body: data })),
+  updateFinding: (id: number, data: { status: string }) =>
+    read(http.PUT('/admin/findings/{id}', { params: { path: { id: String(id) } }, body: data })),
+  triageSummaries: () => read(http.GET('/admin/triage/summaries')),
+  createTriageSummary: (data: Omit<TriageSummary, 'id' | 'created_at'>) =>
+    read(http.POST('/admin/triage/summaries', { body: data })),
+
+  // Shops (Phase 4)
+  shops: () => read(http.GET('/admin/shops')),
+  shop: (keeperVnum: number) => read(http.GET('/admin/shops/{keeper}', { params: { path: { keeper: String(keeperVnum) } } })),
+  // Zone reset
+  resetZone: (zoneNumber: number) =>
+    read(http.POST('/admin/zones/{number}/reset', { params: { path: { number: String(zoneNumber) } } })),
+
+  // Phase 5 — Operations
+  playerDetail: (name: string) => read(http.GET('/admin/players/{name}', { params: { path: { name: name } } })),
+  savePlayer: (name: string) => read(http.POST('/admin/players/{name}/save', { params: { path: { name: name } } })),
+  kickPlayer: (name: string) => read(http.POST('/admin/players/{name}/kick', { params: { path: { name: name } } })),
+  metrics: () => read(http.GET('/admin/metrics')),
+  prometheus,
+  resetAllZones: () => read(http.POST('/admin/reset-all-zones')),
+};
+
+
+export const playerEditor = {
+  list: (q: string) => read(http.GET('/admin/characters', { params: { query: { q } } })),
+  get: (name: string) => read(http.GET('/admin/characters/{name}', { params: { path: { name: name } } })),
+  stats: (name: string, revision: string, values: Record<string, number>) =>
+    read(http.PATCH('/admin/characters/{name}', { params: { path: { name: name } }, body: { revision, values } })),
+  password: (name: string, revision: string, password: string) =>
+    read(http.POST('/admin/characters/{name}/password', { params: { path: { name: name } }, body: { revision, password } })),
+  items: (name: string, revision: string, data: { action: 'grant' | 'move' | 'remove'; source: 'inventory' | 'equipment'; index: number; vnum: number; locate: number }) =>
+    read(http.POST('/admin/characters/{name}/items', { params: { path: { name: name } }, body: { revision, ...data } })),
+};
+
+
 export const notifications = {
-  get: () => request<NotificationView>('/notifications'),
-  save: (config: NotificationConfig) => request<NotificationView>('/notifications', { method: 'PUT', body: JSON.stringify(config) }),
-  credentials: (provider: CredentialProvider, revision: number, values: NotificationCredentials) => request<NotificationView>(`/notifications/${provider}/credentials`, { method: 'PUT', body: JSON.stringify({ revision, ...values }) }),
-  removeCredentials: (provider: CredentialProvider, revision: number) => request<NotificationView>(`/notifications/${provider}/credentials`, { method: 'DELETE', body: JSON.stringify({ revision }) }),
-  test: (provider: NotificationProvider) => request<{ status: string }>(`/notifications/${provider}/test`, { method: 'POST' }),
+  get: () => read(http.GET('/admin/notifications')),
+  save: (config: NotificationConfig) => read(http.PUT('/admin/notifications', { body: config })),
+  credentials: (provider: CredentialProvider, revision: number, values: NotificationCredentials) => read(http.PUT('/admin/notifications/{provider}/credentials', { params: { path: { provider: provider } }, body: { revision, ...values } })),
+  removeCredentials: (provider: CredentialProvider, revision: number) => read(http.DELETE('/admin/notifications/{provider}/credentials', { params: { path: { provider: provider } }, body: { revision } })),
+  test: (provider: NotificationProvider) => read(http.POST('/admin/notifications/{provider}/test', { params: { path: { provider: provider } } })),
 };

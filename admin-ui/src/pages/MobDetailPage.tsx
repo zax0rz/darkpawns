@@ -17,7 +17,7 @@ export function MobDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-4 w-24 animate-pulse bg-paper-deep rounded" />
+        <div className="h-4 w-24 animate-pulse bg-paper-deep rounded-[2px]" />
         <CardSkeleton />
         <CardSkeleton />
       </div>
@@ -30,7 +30,7 @@ export function MobDetailPage() {
         <Link to="/admin/game/mobs" className="text-accent hover:text-accent text-sm">
           ← Back to Mobs
         </Link>
-        <div className="bg-paper-deep border border-accent rounded p-4 text-sm text-accent">
+        <div className="bg-paper-deep border border-accent rounded-[2px] p-4 text-sm text-accent">
           Mob not found or failed to load.
           <div className="mt-1 text-accent text-xs">
             {(error as Error)?.message || 'Not found'}
@@ -86,24 +86,24 @@ export function MobDetailPage() {
       </div>
 
       {/* Flags */}
-      {(mob.action_flags.length > 0 || mob.affect_flags.length > 0) && (
+      {((mob.action_flags ?? []).length > 0 || (mob.affect_flags ?? []).length > 0) && (
         <div className="bg-paper-deep rounded-none border border-rule p-6">
           <h2 className="text-sm font-medium text-ink-muted mb-4">Flags</h2>
-          {mob.action_flags.length > 0 && (
+          {(mob.action_flags ?? []).length > 0 && (
             <div className="mb-3">
               <span className="text-xs text-ink-muted mr-2">Action:</span>
               <div className="inline-flex flex-wrap gap-1">
-                {mob.action_flags.map((flag) => (
+                {(mob.action_flags ?? []).map((flag) => (
                   <Badge key={flag} text={flag} color="red" />
                 ))}
               </div>
             </div>
           )}
-          {mob.affect_flags.length > 0 && (
+          {(mob.affect_flags ?? []).length > 0 && (
             <div>
               <span className="text-xs text-ink-muted mr-2">Affect:</span>
               <div className="inline-flex flex-wrap gap-1">
-                {mob.affect_flags.map((flag) => (
+                {(mob.affect_flags ?? []).map((flag) => (
                   <Badge key={flag} text={flag} color="blue" />
                 ))}
               </div>
@@ -142,7 +142,7 @@ function StatBlock({ label, value }: { label: string; value: string | number }) 
 
 function Badge({ text, color }: { text: string; color: 'red' | 'blue' }) {
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+    <span className={`inline-block px-2 py-0.5 rounded-[2px] text-xs font-medium ${
       color === 'red'
         ? 'bg-paper-deep text-accent'
         : 'bg-paper-deep text-ink-muted'

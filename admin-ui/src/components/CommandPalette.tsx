@@ -1,3 +1,6 @@
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { useEffect, useRef, useState } from 'react';
 import { Icon, type IconName } from './Icon';
 import { useNavigate } from 'react-router-dom';
@@ -162,16 +165,14 @@ export function CommandPalette({
   let flatIndex = 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-ink/60" onClick={handleClose} />
-
-      {/* Palette */}
-      <div className="relative w-full max-w-lg bg-paper-deep border border-rule rounded-none shadow-2xl overflow-hidden">
+    <Dialog open={open} onOpenChange={(value) => { if (!value) handleClose(); }}>
+      <DialogContent showCloseButton={false} className="gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <DialogTitle className="sr-only">Search the world</DialogTitle>
+        <DialogDescription className="sr-only">Find a world record or jump to a console page.</DialogDescription>
         {/* Search input */}
         <div className="flex items-center border-b border-rule px-4">
           <Icon name="search" className="h-4 w-4 text-ink-muted mr-2 shrink-0" />
-          <input
+          <Input
             ref={inputRef}
             type="text"
             value={query}
@@ -180,10 +181,11 @@ export function CommandPalette({
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
+            aria-label="Search the world"
             placeholder="Search the world or jump to a page..."
             className="flex-1 bg-transparent py-3 text-sm text-ink placeholder-slate-400 focus:outline-none"
           />
-          <kbd className="text-[10px] text-ink-muted bg-paper px-1.5 py-0.5 rounded border border-rule">
+          <kbd className="text-[10px] text-ink-muted bg-paper px-1.5 py-0.5 rounded-[2px] border border-rule">
             ESC
           </kbd>
         </div>
@@ -204,7 +206,7 @@ export function CommandPalette({
                   const idx = flatIndex++;
                   const isSelected = idx === selectedIndex;
                   return (
-                    <button
+                    <Button variant="ghost" size="plain"
                       key={item.id}
                       onClick={() => execute(item)}
                       onMouseEnter={() => setSelectedIndex(idx)}
@@ -217,7 +219,7 @@ export function CommandPalette({
                       {item.icon && <Icon name={item.icon} className="h-4 w-4 shrink-0 text-ink-muted" />}
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       {item.id.startsWith('world-') && <span className="shrink-0 text-[10px] uppercase tracking-wider opacity-70">{item.group}</span>}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -233,7 +235,7 @@ export function CommandPalette({
           {worldSearch.isError && query.trim().length >= 2 && <span className="text-accent">World search unavailable</span>}
           {worldSearch.data && query.trim().length >= 2 && <span className="ml-auto">{worldSearch.data.total} world matches{worldSearch.data.total > 100 ? ' · first 100 shown' : ''}</span>}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

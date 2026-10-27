@@ -27,7 +27,7 @@ export function RoomDetailPage() {
         >
           ← Back to Zones
         </Link>
-        <div className="bg-paper-deep border border-accent rounded p-4 text-sm text-accent">
+        <div className="bg-paper-deep border border-accent rounded-[2px] p-4 text-sm text-accent">
           Room not found or failed to load.
           <div className="mt-1 text-accent text-xs">
             {(error as Error)?.message || 'Not found'}
@@ -74,7 +74,7 @@ export function RoomDetailPage() {
           <StatBlock label="Sector" value={sectorLabel(room.sector)} />
           <StatBlock
             label="Flags"
-            value={room.flags.join(', ') || 'None'}
+            value={(room.flags ?? []).join(', ') || 'None'}
           />
         </div>
       </div>

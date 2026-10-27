@@ -1,3 +1,4 @@
+import { Button } from './ui/button';
 import { Icon } from './Icon';
 import { Component, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -40,15 +41,15 @@ export class ErrorBoundary extends Component<Props, State> {
             {this.state.error?.message || 'An unexpected error occurred.'}
           </p>
           <div className="flex gap-3 mt-4">
-            <button
+            <Button variant="ghost" size="plain"
               onClick={this.handleReset}
-              className="bg-accent hover:bg-accent text-ink px-4 py-2 rounded text-sm font-medium transition-colors"
+              className="bg-accent hover:bg-accent-deep text-paper px-4 py-2 rounded-[2px] text-sm font-medium transition-colors"
             >
               Try Again
-            </button>
+            </Button>
             <Link
               to="/admin/"
-              className="bg-paper-deep hover:bg-paper-deep text-ink px-4 py-2 rounded text-sm transition-colors"
+              className="bg-paper-deep hover:bg-paper-deep text-ink px-4 py-2 rounded-[2px] text-sm transition-colors"
             >
               Go Home
             </Link>

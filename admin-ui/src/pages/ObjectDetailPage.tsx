@@ -24,7 +24,7 @@ export function ObjectDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="h-4 w-24 animate-pulse bg-paper-deep rounded" />
+        <div className="h-4 w-24 animate-pulse bg-paper-deep rounded-[2px]" />
         <CardSkeleton />
         <CardSkeleton />
       </div>
@@ -37,7 +37,7 @@ export function ObjectDetailPage() {
         <Link to="/admin/game/objects" className="text-accent hover:text-accent text-sm">
           ← Back to Objects
         </Link>
-        <div className="bg-paper-deep border border-accent rounded p-4 text-sm text-accent">
+        <div className="bg-paper-deep border border-accent rounded-[2px] p-4 text-sm text-accent">
           Object not found or failed to load.
           <div className="mt-1 text-accent text-xs">
             {(error as Error)?.message || 'Not found'}
@@ -47,8 +47,8 @@ export function ObjectDetailPage() {
     );
   }
 
-  const extraBits = obj.extra_flags.flatMap((v, i) => flagBits(v).map((b) => `${i}:${b}`));
-  const wearBits = obj.wear_flags.flatMap((v, i) => flagBits(v).map((b) => `${i}:${b}`));
+  const extraBits = (obj.extra_flags ?? []).flatMap((v, i) => flagBits(v).map((b) => `${i}:${b}`));
+  const wearBits = (obj.wear_flags ?? []).flatMap((v, i) => flagBits(v).map((b) => `${i}:${b}`));
 
   return (
     <div className="space-y-6">
@@ -73,10 +73,10 @@ export function ObjectDetailPage() {
           <StatBlock label="Type" value={itemTypeLabel(obj.type_flag)} />
           <StatBlock label="Weight" value={`${obj.weight} lbs`} />
           <StatBlock label="Cost" value={`${obj.cost.toLocaleString()} gold`} />
-          <StatBlock label="Value[0]" value={obj.values[0]} />
-          <StatBlock label="Value[1]" value={obj.values[1]} />
-          <StatBlock label="Value[2]" value={obj.values[2]} />
-          <StatBlock label="Value[3]" value={obj.values[3]} />
+          <StatBlock label="Value[0]" value={(obj.values ?? [])[0]} />
+          <StatBlock label="Value[1]" value={(obj.values ?? [])[1]} />
+          <StatBlock label="Value[2]" value={(obj.values ?? [])[2]} />
+          <StatBlock label="Value[3]" value={(obj.values ?? [])[3]} />
         </div>
       </div>
 
@@ -86,7 +86,7 @@ export function ObjectDetailPage() {
           <h2 className="text-sm font-medium text-ink-muted mb-4">Flags</h2>
           {extraBits.length > 0 && (
             <div className="mb-3">
-              <span className="text-xs text-ink-muted mr-2">Extra Flags ({obj.extra_flags.join(', ')}):</span>
+              <span className="text-xs text-ink-muted mr-2">Extra Flags ({(obj.extra_flags ?? []).join(', ')}):</span>
               <div className="inline-flex flex-wrap gap-1">
                 {extraBits.map((b) => <Badge key={`e-${b}`} text={b} color="amber" />)}
               </div>
@@ -94,7 +94,7 @@ export function ObjectDetailPage() {
           )}
           {wearBits.length > 0 && (
             <div>
-              <span className="text-xs text-ink-muted mr-2">Wear Flags ({obj.wear_flags.join(', ')}):</span>
+              <span className="text-xs text-ink-muted mr-2">Wear Flags ({(obj.wear_flags ?? []).join(', ')}):</span>
               <div className="inline-flex flex-wrap gap-1">
                 {wearBits.map((b) => <Badge key={`w-${b}`} text={b} color="blue" />)}
               </div>
@@ -133,7 +133,7 @@ function StatBlock({ label, value }: { label: string; value: string | number }) 
 
 function Badge({ text, color }: { text: string; color: 'amber' | 'blue' }) {
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+    <span className={`inline-block px-2 py-0.5 rounded-[2px] text-xs font-medium ${
       color === 'amber'
         ? 'bg-paper-deep text-accent'
         : 'bg-paper-deep text-ink-muted'

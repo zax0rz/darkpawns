@@ -182,3 +182,51 @@ input::placeholder, select::placeholder { color: var(--color-ink-muted); opacity
 .text-red-400, .text-red-300 {
   color: var(--color-accent) !important;
 }
+
+/* shadcn semantic roles inherit the single Haunted Paperback theme. */
+@theme inline {
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-paper-deep);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-paper);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--color-paper);
+  --color-secondary: var(--color-paper-deep);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-paper-deep);
+  --color-muted-foreground: var(--color-ink-muted);
+  --color-accent-foreground: var(--color-paper);
+  --color-destructive: var(--color-accent);
+  --color-border: var(--color-rule);
+  --color-input: var(--color-rule);
+  --color-ring: var(--color-accent);
+  --color-chart-1: var(--color-accent);
+  --color-chart-2: var(--color-ink);
+  --color-chart-3: var(--color-ink-muted);
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+}
+:root { color-scheme: light; }
+::selection { background: var(--color-accent); color: var(--color-paper); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+input, textarea { caret-color: var(--color-accent); }
+button, [role="button"], select { cursor: pointer; }
+button:disabled, select:disabled { cursor: not-allowed; }
+input::placeholder { color: var(--color-ink-muted); opacity: 1; }
+[data-slot="dialog-content"], [data-slot="alert-dialog-content"],
+[data-slot="select-content"], [data-slot="dropdown-menu-content"] { border-color: var(--color-rule); }
+[data-slot="tabs-list"] { background: transparent; border-bottom: 1px solid var(--color-rule); border-radius: 0; }
+[data-slot="tabs-trigger"][data-state="active"] { color: var(--color-accent); background: var(--color-paper-deep); box-shadow: none; }
+[data-slot="switch"] { border: 1px solid var(--color-rule); border-radius: 2px; }
+[data-slot="switch-thumb"] { border-radius: 0; background: var(--color-paper); }
+[data-slot="chart"] { font-family: var(--font-serif); }
+[data-slot="chart"] .recharts-cartesian-axis-tick text { fill: var(--color-ink-muted); }
+[data-slot="chart"] .recharts-cartesian-grid line { stroke: var(--color-ink); stroke-opacity: .15; }
+[data-slot="chart"] .recharts-tooltip-cursor { stroke: var(--color-ink-muted); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

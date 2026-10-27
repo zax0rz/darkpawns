@@ -1,3 +1,6 @@
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api, type Zone } from '../api/client';
@@ -44,8 +47,8 @@ export function ZonesPage() {
           </div>
           <form className="flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); setCreateMessage(''); createMutation.mutate(); }}>
             <label className="sr-only" htmlFor="new-zone-number">Zone number</label>
-            <input id="new-zone-number" type="number" min="0" max="326" value={newZone} onChange={(event) => setNewZone(event.currentTarget.value)} placeholder="Zone number" disabled={!createAllowed || createMutation.isPending} className="border border-rule bg-paper px-3 py-2 text-sm text-ink placeholder-ink-muted disabled:cursor-not-allowed disabled:opacity-50" />
-            <button type="submit" disabled={!createAllowed || !newZone || createMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50">{createMutation.isPending ? 'Creating…' : 'Create zone'}</button>
+            <Input id="new-zone-number" type="number" min="0" max="326" value={newZone} onChange={(event) => setNewZone(event.currentTarget.value)} placeholder="Zone number" disabled={!createAllowed || createMutation.isPending} className="border border-rule bg-paper px-3 py-2 text-sm text-ink placeholder-ink-muted disabled:cursor-not-allowed disabled:opacity-50" />
+            <Button variant="ghost" size="plain" type="submit" disabled={!createAllowed || !newZone || createMutation.isPending} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50">{createMutation.isPending ? 'Creating…' : 'Create zone'}</Button>
           </form>
         </div>
         {!createAllowed && createAction && <p className="mt-3 text-xs text-accent">Requires {createAction.requiredLabel} (level {createAction.requiredLevel}).</p>}
@@ -55,7 +58,7 @@ export function ZonesPage() {
       {isLoading && <TableSkeleton rows={8} cols={5} />}
 
       {error && (
-        <div className="bg-paper-deep border border-accent rounded p-4 text-sm text-accent">
+        <div className="bg-paper-deep border border-accent rounded-[2px] p-4 text-sm text-accent">
           Failed to load zones. Is the server running on port 4350?
           <div className="mt-1 text-accent text-xs">
             {(error as Error).message}
@@ -66,44 +69,44 @@ export function ZonesPage() {
       {zones && (
         <div className="bg-paper-deep rounded-none border border-rule overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
-                  <th className="text-left px-4 py-3">Zone #</th>
-                  <th className="text-left px-4 py-3">Name</th>
-                  <th className="text-right px-4 py-3">Top Room</th>
-                  <th className="text-right px-4 py-3">Lifespan</th>
-                  <th className="text-right px-4 py-3">Reset Mode</th>
-                </tr>
-              </thead>
-              <tbody>
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow className="border-b border-rule text-xs text-ink-muted uppercase tracking-wider">
+                  <TableHead className="text-left px-4 py-3">Zone #</TableHead>
+                  <TableHead className="text-left px-4 py-3">Name</TableHead>
+                  <TableHead className="text-right px-4 py-3">Top Room</TableHead>
+                  <TableHead className="text-right px-4 py-3">Lifespan</TableHead>
+                  <TableHead className="text-right px-4 py-3">Reset Mode</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {zones.map((zone: Zone) => (
-                  <tr
+                  <TableRow
                     key={zone.number}
                     className="border-b border-rule hover:bg-paper-deep transition-colors"
                   >
-                    <td className="px-4 py-3">
+                    <TableCell className="px-4 py-3">
                       <Link
                         to={`/admin/game/zones/${zone.number}`}
                         className="text-accent hover:text-accent font-mono"
                       >
                         {zone.number}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3 text-ink">{zone.name}</td>
-                    <td className="px-4 py-3 text-right text-ink-muted font-mono">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-ink">{zone.name}</TableCell>
+                    <TableCell className="px-4 py-3 text-right text-ink-muted font-mono">
                       {zone.top_room}
-                    </td>
-                    <td className="px-4 py-3 text-right text-ink-muted font-mono">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right text-ink-muted font-mono">
                       {zone.lifespan}
-                    </td>
-                    <td className="px-4 py-3 text-right text-ink-muted">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right text-ink-muted">
                       {resetModeLabel(zone.reset_mode, schemaQuery.data)}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}

@@ -1,3 +1,5 @@
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { useEffect, useState } from 'react';
 import { ApiError, notifications, type CredentialProvider, type NotificationCredentials, type NotificationStatus, type NotificationView } from '../api/client';
 
@@ -42,20 +44,20 @@ export function NotificationCredentialsForm({ provider, revision, status, busy, 
   };
   const input = (key: keyof NotificationCredentials, label: string, maxLength: number) => <label className="block text-sm" key={key}>
     {label}
-    <input className={field} type="password" inputMode={key === 'url' ? 'url' : 'text'} name={`notification-${provider}-${key}`} autoComplete="new-password" autoCapitalize="none" spellCheck={false} maxLength={maxLength} required value={values[key] ?? ''} disabled={busy || pending} onChange={(event) => { setError(''); setValues({ ...values, [key]: event.target.value.trim() }); }} />
+    <Input className={field} type="password" inputMode={key === 'url' ? 'url' : 'text'} name={`notification-${provider}-${key}`} autoComplete="new-password" autoCapitalize="none" spellCheck={false} maxLength={maxLength} required value={values[key] ?? ''} disabled={busy || pending} onChange={(event) => { setError(''); setValues({ ...values, [key]: event.target.value.trim() }); }} />
   </label>;
   return <div className="space-y-3">
     <p className="text-sm">{status.ready ? <><span className="font-semibold">Configured</span> <span className="font-mono" aria-label="Saved credentials are hidden">••••••••</span></> : 'Not configured'}</p>
     {status.ready && status.source === 'environment' && <p className="text-sm text-ink-muted">Using server environment credentials. Replace them here to manage this destination in admin.</p>}
     {(!status.ready || editing || dirty) && <form className="space-y-4 max-w-xl" onSubmit={(event) => { event.preventDefault(); void submit(false); }}>
       {provider === 'pushover' ? <>{input('token', 'Application API token', 30)}{input('user', 'User or group key', 30)}<p className="text-sm text-ink-muted">Use the token from your Pushover application and the user or group key that should receive alerts.</p></> : <>{input('url', (provider === 'discord' || provider === 'gossip') ? 'Webhook URL' : 'Ping URL', 2000)}<p className="text-sm text-ink-muted">{(provider === 'discord' || provider === 'gossip') ? 'Paste the channel webhook URL from Discord. Use discord.com without a query string.' : 'Paste the hosted Healthchecks ping URL beginning with https://hc-ping.com/.'}</p></>}
-      <div className="flex flex-wrap gap-3"><button className={button} type="submit" disabled={busy || pending || !dirty}>{pending ? 'Saving…' : `Save ${names[provider]} credentials`}</button>{(editing || dirty) && <button type="button" className={button} disabled={busy || pending} onClick={close}>{status.ready ? 'Cancel' : 'Clear fields'}</button>}</div>
+      <div className="flex flex-wrap gap-3"><Button variant="ghost" size="plain" className={button} type="submit" disabled={busy || pending || !dirty}>{pending ? 'Saving…' : `Save ${names[provider]} credentials`}</Button>{(editing || dirty) && <Button variant="ghost" size="plain" type="button" className={button} disabled={busy || pending} onClick={close}>{status.ready ? 'Cancel' : 'Clear fields'}</Button>}</div>
     </form>}
     {status.ready && !editing && !removing && !dirty && <div className="flex flex-wrap gap-3">
-      <button type="button" className={button} disabled={busy || pending} onClick={() => { setNotice(''); setEditing(true); }}>Replace {names[provider]} credentials</button>
-      <button type="button" className={button} disabled={busy || pending} onClick={() => { setNotice(''); setRemoving(true); }}>Remove {names[provider]} credentials</button>
+      <Button variant="ghost" size="plain" type="button" className={button} disabled={busy || pending} onClick={() => { setNotice(''); setEditing(true); }}>Replace {names[provider]} credentials</Button>
+      <Button variant="ghost" size="plain" type="button" className={button} disabled={busy || pending} onClick={() => { setNotice(''); setRemoving(true); }}>Remove {names[provider]} credentials</Button>
     </div>}
-    {removing && <div className="border-y border-rule py-3 space-y-3"><p className="text-sm">Remove {names[provider]} credentials and disable this destination? {provider === 'gossip' ? 'Previously queued gossip will be discarded.' : 'Event selections will be kept.'}</p><div className="flex flex-wrap gap-3"><button type="button" className={`${button} text-accent`} disabled={busy || pending} onClick={() => void submit(true)}>{pending ? 'Removing…' : `Confirm remove ${names[provider]}`}</button><button type="button" className={button} disabled={busy || pending} onClick={close}>Cancel</button></div></div>}
+    {removing && <div className="border-y border-rule py-3 space-y-3"><p className="text-sm">Remove {names[provider]} credentials and disable this destination? {provider === 'gossip' ? 'Previously queued gossip will be discarded.' : 'Event selections will be kept.'}</p><div className="flex flex-wrap gap-3"><Button variant="ghost" size="plain" type="button" className={`${button} text-accent`} disabled={busy || pending} onClick={() => void submit(true)}>{pending ? 'Removing…' : `Confirm remove ${names[provider]}`}</Button><Button variant="ghost" size="plain" type="button" className={button} disabled={busy || pending} onClick={close}>Cancel</Button></div></div>}
     {error && <p role="alert" className="text-sm text-accent">{error}</p>}
     {notice && <p role="status" className="text-sm">{notice}</p>}
   </div>;

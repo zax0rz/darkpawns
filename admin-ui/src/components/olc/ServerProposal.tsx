@@ -1,3 +1,4 @@
+import { Input } from '../ui/input';
 interface ServerProposalProps {
   value: string | number;
   identity: string;
@@ -34,7 +35,7 @@ export function ServerProposal({
   if (multiline) return <textarea {...commonProps} rows={6} />;
 
   return (
-    <input
+    <Input
       {...commonProps}
       type={typeof value === 'number' ? 'number' : 'text'}
       min={min}

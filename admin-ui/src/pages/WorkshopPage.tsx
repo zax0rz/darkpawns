@@ -1,3 +1,5 @@
+import { Button } from '../components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/table';
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -71,17 +73,17 @@ export function WorkshopPage() {
           <p className="mt-4 border-t border-rule pt-4 text-sm text-ink-muted">No active claims.</p>
         ) : (
           <div className="mt-4 overflow-x-auto border-t border-rule">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="border-b border-rule text-[11px] uppercase tracking-wider text-ink-muted">
-                <tr><th className="px-2 py-3">Resource</th><th className="px-2 py-3">Holder</th><th className="px-2 py-3">Frontend</th><th className="px-2 py-3 text-right">Idle</th></tr>
-              </thead>
-              <tbody>
+            <Table className="w-full min-w-[640px] text-left text-sm">
+              <TableHeader className="border-b border-rule text-[11px] uppercase tracking-wider text-ink-muted">
+                <TableRow><TableHead className="px-2 py-3">Resource</TableHead><TableHead className="px-2 py-3">Holder</TableHead><TableHead className="px-2 py-3">Frontend</TableHead><TableHead className="px-2 py-3 text-right">Idle</TableHead></TableRow>
+              </TableHeader>
+              <TableBody>
                 {(heldQuery.data || []).map((entry) => {
                   const idle = Math.max(0, Math.floor((now - Date.parse(entry.claimedAt)) / 1000));
-                  return <tr key={entry.kind + '-' + entry.number} className="border-b border-rule last:border-b-0"><td className="px-2 py-3 font-mono text-accent">{entry.kind} #{entry.number}</td><td className="px-2 py-3 text-ink">{entry.ownerDisplayName}</td><td className="px-2 py-3 text-ink-muted">{entry.ownerFrontend}</td><td className="px-2 py-3 text-right font-mono text-ink-muted">{formatIdle(idle)}</td></tr>;
+                  return <TableRow key={entry.kind + '-' + entry.number} className="border-b border-rule last:border-b-0"><TableCell className="px-2 py-3 font-mono text-accent">{entry.kind} #{entry.number}</TableCell><TableCell className="px-2 py-3 text-ink">{entry.ownerDisplayName}</TableCell><TableCell className="px-2 py-3 text-ink-muted">{entry.ownerFrontend}</TableCell><TableCell className="px-2 py-3 text-right font-mono text-ink-muted">{formatIdle(idle)}</TableCell></TableRow>;
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </section>
@@ -101,7 +103,7 @@ export function WorkshopPage() {
             {pendingZones.map((zone) => (
               <div key={zone} className="flex flex-wrap items-center justify-between gap-3 border border-rule bg-paper px-3 py-3">
                 <div><Link to={'/admin/game/zones/' + zone} className="font-mono text-accent hover:text-accent-deep">Zone #{zone}</Link><p className="mt-1 text-xs text-ink-muted">{(pendingQuery.data || []).filter((entry) => entry.zone === zone).map((entry) => entry.kind).join(', ')} dirty</p></div>
-                <button type="button" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate(zone)} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50">{saveMutation.isPending && saveMutation.variables === zone ? 'Saving…' : 'Save zone file'}</button>
+                <Button variant="ghost" size="plain" type="button" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate(zone)} className="border border-accent bg-accent px-3 py-2 text-xs font-semibold uppercase tracking-wider text-paper hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50">{saveMutation.isPending && saveMutation.variables === zone ? 'Saving…' : 'Save zone file'}</Button>
               </div>
             ))}
           </div>
