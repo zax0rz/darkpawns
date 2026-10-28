@@ -5,7 +5,7 @@ section: "server"
 audience: "operator"
 order: 15
 sourcePath: "website-astro/src/content/docs/server/admin-console.md"
-updated: 2026-10-27
+updated: 2026-10-28
 draft: false
 ---
 
@@ -28,6 +28,7 @@ metric definitions, live logs and filtered downloads.
 | Workshop & saves | Inspect editing claims and changes waiting to be saved to zone files |
 | Builder guide | Read the claim, draft, commit, and save workflow |
 | Players | Edit a disconnected character's saved stats, equipment, inventory, password, flags, and identity; HIGOD access required |
+| [MOTD](/docs/server/motd-editor/) | Edit mortal and immortal welcome messages with a terminal preview; builders can read, GRGOD (level 38) can save |
 | Notifications | Configure every outbound channel: event subscriptions, the gossip mirror, the Healthchecks heartbeat, credentials and test sends; HIGOD access required |
 | Operations | Inspect process metrics, online players, and recent logs; reset actions require their server-side permission |
 | Configuration | Edit every runtime setting with live/restart marking, backup and restore, and change history; implementor access required |

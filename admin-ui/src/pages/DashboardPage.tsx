@@ -1,3 +1,4 @@
+import { useAuth } from '../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, CircleCheck, RefreshCw } from 'lucide-react';
@@ -14,6 +15,7 @@ export function RangeControl({ value, onChange }: { value: '24h' | '7d'; onChang
   return <div className="flex gap-1" aria-label="History window">{(['24h', '7d'] as const).map(v => <Button key={v} variant={v === value ? 'default' : 'outline'} aria-pressed={v === value} onClick={() => onChange(v)}>{v === '24h' ? '24 hours' : '7 days'}</Button>)}</div>;
 }
 export function DashboardPage() {
+  const { hasRole } = useAuth();
   const [params, setParams] = useSearchParams(); const range = params.get('range') === '7d' ? '7d' : '24h';
   const query = useQuery({ queryKey: ['dashboard', range], queryFn: () => dashboard(range), refetchInterval: 10000 });
   const daily = useQuery({ queryKey: ['dashboard', '7d'], queryFn: () => dashboard('7d'), refetchInterval: 10000 });
@@ -50,6 +52,7 @@ export function DashboardPage() {
         <p className="text-xs text-ink-muted">{daily.isError ? 'Daily history unavailable. Retry by refreshing the page.' : 'Only observed periods count. Partial days are not full-day totals.'}</p>
       </Card>
     </div>
+    {hasRole('builder') && <Link to="/admin/staff/motd" className="group flex items-center justify-between gap-4 border border-rule bg-paper-deep p-5 hover:bg-paper focus-visible:outline-2 focus-visible:outline-accent"><div><h2 className="text-xl">MOTD</h2><p className="mt-1 text-sm text-ink-muted">Edit the welcome messages players see at login. Preview colours and line wrapping before saving.</p></div><ArrowUpRight aria-hidden className="size-5 shrink-0 text-accent" /></Link>}
     <div className="flex flex-wrap justify-between gap-3 border-t border-rule pt-4 text-sm text-ink-muted"><p>{data?.recording_since ? `Recording since ${dateTime(data.recording_since)} UTC. Retains 7 days.` : data ? 'Historical recording is not configured.' : query.isError ? 'Recording status unknown while the dashboard is unavailable.' : 'Loading recording status…'}</p><Link to={activity} className="text-accent underline underline-offset-4">Inspect coverage and activity</Link></div>
     {data?.persistence_error && <p role="alert" className="text-accent">History is recording in memory but cannot be saved. Check server storage permissions.</p>}
   </div>;

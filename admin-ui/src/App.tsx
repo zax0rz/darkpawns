@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
+import { MotdPage } from './pages/MotdPage';
 import { LoginPage } from './pages/LoginPage';
 import { LogsPage } from './pages/LogsPage';
 import { ActivityPage } from './pages/ActivityPage';
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="/admin/game/objects/:vnum/edit" element={<ErrorBoundary><ObjectEditorPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum" element={<ErrorBoundary><RoomDetailPage /></ErrorBoundary>} />
             <Route path="/admin/game/rooms/:vnum/edit" element={<ErrorBoundary><RoomEditorPage /></ErrorBoundary>} />
+            <Route path="/admin/staff/motd" element={<ErrorBoundary><MotdPage /></ErrorBoundary>} />
             <Route path="/admin/staff/notifications" element={<ErrorBoundary><NotificationsPage /></ErrorBoundary>} />
             <Route path="/admin/staff/players" element={<ErrorBoundary><PlayersPage /></ErrorBoundary>} />
             <Route path="/admin/operations" element={<ErrorBoundary><OperationsPage /></ErrorBoundary>} />

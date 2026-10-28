@@ -57,7 +57,7 @@ func TestConsolePreview(t *testing.T) {
 	}
 	world.ScriptsDir = t.TempDir()
 	world.LibTextDir = t.TempDir()
-	for path, body := range map[string]string{filepath.Join(world.ScriptsDir, "guard.lua"): "return true\n", filepath.Join(world.LibTextDir, "news"): "Local console preview. Synthetic test world.\n", filepath.Join(world.LibTextDir, "credits"): "Dark Pawns console fixture.\n"} {
+	for path, body := range map[string]string{filepath.Join(world.ScriptsDir, "guard.lua"): "return true\n", filepath.Join(world.LibTextDir, "news"): "Local console preview. Synthetic test world.\n", filepath.Join(world.LibTextDir, "motd"): "&WWelcome to the Wyldlands&n\n\n&cA synthetic welcome for a disposable preview world.&n\n\nRead NEWS for the latest changes. Type HELP to find your feet.\n", filepath.Join(world.LibTextDir, "imotd"): "&YWelcome back, immortals.&n\n\nA synthetic staff welcome. Check the logs before opening the world.\n", filepath.Join(world.LibTextDir, "credits"): "Dark Pawns console fixture.\n"} {
 		if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
 			t.Fatal(err)
 		}
