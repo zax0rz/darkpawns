@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T22:55:12-04:00",
+  "generatedAt": "2026-10-27T23:11:38-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,10 +49,16 @@
     },
     {
       "week": "2026-10-26",
-      "commits": 40
+      "commits": 41
     }
   ],
   "recentCommits": [
+    {
+      "sha": "ab10d0d564bbd592676c91a2573c065d06604f77",
+      "date": "2026-10-27",
+      "title": "feat(admin): add saved character identity controls",
+      "url": "https://github.com/zax0rz/darkpawns/commit/ab10d0d564bbd592676c91a2573c065d06604f77"
+    },
     {
       "sha": "44d9c0955d25ca79b205de0d7e527996b36524f8",
       "date": "2026-10-27",
@@ -76,12 +82,6 @@
       "date": "2026-10-27",
       "title": "Merge pull request #2197 from zax0rz/codex/admin-dashboard-logs",
       "url": "https://github.com/zax0rz/darkpawns/commit/8dda7d6b55209c7542a44e020f8dad06f796a450"
-    },
-    {
-      "sha": "45002c6a99ac5f9035ff4c4607a84c3fc9fb927a",
-      "date": "2026-10-27",
-      "title": "Merge pull request #2199 from zax0rz/glm/v017-admin-config-build",
-      "url": "https://github.com/zax0rz/darkpawns/commit/45002c6a99ac5f9035ff4c4607a84c3fc9fb927a"
     }
   ],
   "pullRequests": [

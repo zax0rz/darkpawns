@@ -35,14 +35,14 @@ type routerConfig struct {
 	// are registered into. main passes it so the admin operations appear in
 	// the server-wide spec served at /openapi.json. Tests leave it nil and get
 	// a private document per router.
-	sharedDoc     *apidoc.Doc
-	mudlogFeed    *mudlog.Feed
-	notifications *notify.Service
-	settings      *settings.Manager
-	launchctl     *launchctl.Client
-	buildVersion  string
-	buildCommit   string
-	accountBudget *auth.AccountBudgetTracker
+	sharedDoc            *apidoc.Doc
+	mudlogFeed           *mudlog.Feed
+	notifications        *notify.Service
+	settings             *settings.Manager
+	launchctl            *launchctl.Client
+	buildVersion         string
+	buildCommit          string
+	accountBudget        *auth.AccountBudgetTracker
 	playerRenameObserver PlayerRenameObserver
 }
 

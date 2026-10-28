@@ -50,6 +50,7 @@ try {
   await expect(deleteButton).toBeDisabled();
   await page.getByLabel('Type Returner').fill('Returner');
   await expect(deleteButton).toBeEnabled();
+  await expect(deleteButton).toHaveCSS('opacity', '1');
   await blurActiveElement(page);
   await page.screenshot({ path: resolve(out, 'player-management-delete-confirm.png'), fullPage: true });
 
