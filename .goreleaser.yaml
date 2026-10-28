@@ -29,7 +29,7 @@ builds:
         # checksums, Homebrew, Scoop, winget, Docker — sees the final signed
         # bytes. The script no-ops until both executables of the platform
         # exist; the archive stage starts only after all builds finish.
-        - cmd: ./scripts/sign-bundle-content.sh {{ .Os }} {{ .Arch }}
+        - cmd: go run ./cmd/dp-release --stage-bundle {{ .Os }} --stage-arch {{ .Arch }}
   - id: server
     main: ./cmd/server
     binary: darkpawns-server
@@ -40,7 +40,7 @@ builds:
     ldflags: ['-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}']
     hooks:
       post:
-        - cmd: ./scripts/sign-bundle-content.sh {{ .Os }} {{ .Arch }}
+        - cmd: go run ./cmd/dp-release --stage-bundle {{ .Os }} --stage-arch {{ .Arch }}
 archives:
   - id: portable
     ids: [launcher, server]

@@ -41,9 +41,17 @@ func run() (result error) {
 	templates := flags.String("templates", "bootstrap", "Installer template directory")
 	signBundle := flags.String("sign-bundle", "", "Sign one extracted bundle's per-file manifest and exit (snapshot/dev builds assemble releases without the full flow)")
 	postArchive := flags.String("post-archive", "", "Sign one release archive in place (the goreleaser after-archive hook; adds the publisher record and repacks)")
+	stageBundle := flags.String("stage-bundle", "", "Stage (and sign, when a key is configured) one platform's bundle contents for the archives; requires --stage-arch")
 	manifestOnly := flags.Bool("manifest-only", false, "With --dir: archives are already publisher-signed; render only installers and the release manifest")
+	stageArch := flags.String("stage-arch", "", "Architecture for --stage-bundle")
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
+	}
+	if *stageBundle != "" {
+		if *stageArch == "" {
+			return errors.New("--stage-bundle requires --stage-arch")
+		}
+		return stageBundleContents(*stageBundle, *stageArch)
 	}
 	if *generate != "" {
 		if *publicPath == "" {
