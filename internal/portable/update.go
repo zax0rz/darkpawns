@@ -14,7 +14,10 @@ import (
 )
 
 type (
-	UpdateOptions struct{ Archive, SHA256 string }
+	UpdateOptions struct {
+		Archive, SHA256 string
+		AllowDowngrade  bool
+	}
 	// UpdatePlan is staged and verified without stopping or changing the active world.
 	UpdatePlan struct {
 		Version                                 string
@@ -104,6 +107,9 @@ func PrepareUpdate(ctx context.Context, bundle, instance string, options UpdateO
 	}
 	target, err := verifyUpdateBundle(candidate)
 	if err != nil {
+		return nil, err
+	}
+	if err := versionChangeDecision(current, target, options.AllowDowngrade); err != nil {
 		return nil, err
 	}
 	cfg, err := Load(instance)

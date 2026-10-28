@@ -268,7 +268,7 @@ export function SettingsPage() {
       {pendingRestart.length > 0 && (
         <div className="border border-ink bg-paper p-3 text-sm" role="status">
           <p className="mb-2"><strong>Restart required</strong> for: <span className="font-mono">{pendingRestart.join(', ')}</span></p>
-          <p className="mb-2 text-ink-muted">{players?.length ?? 0} player(s) online will be disconnected; every character is saved first.</p>
+          <p className="mb-2 text-ink-muted">{players?.length ? `${players.length} player${players.length === 1 ? '' : 's'} online will be disconnected; every character is saved first.` : 'No one is online.'}</p>
           <Button onClick={() => setRestartOpen(true)}><Icon name="refresh" /> Apply and restart</Button>
         </div>
       )}
@@ -277,7 +277,7 @@ export function SettingsPage() {
         open={restartOpen}
         onOpenChange={setRestartOpen}
         title="Apply and restart?"
-        description={`The launcher restarts the world gracefully. ${players?.length ?? 0} player(s) online will be disconnected after a forced save.`}
+        description={`The launcher restarts the world gracefully. ${players?.length ? `${players.length} player${players.length === 1 ? '' : 's'} online will be disconnected after a forced save.` : 'No one is online; the restart proceeds after a forced save.'}`}
         action="Restart now"
         onConfirm={() => restartMutation.mutate()}
       />

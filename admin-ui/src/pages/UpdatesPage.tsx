@@ -37,6 +37,7 @@ interface CheckBody {
   current_version: string;
   latest_version?: string;
   up_to_date: boolean;
+  downgrade?: boolean;
   release_url?: string;
   asset_size?: number;
   error?: string;
@@ -47,6 +48,17 @@ interface CheckBody {
 // running, or died before writing a journal) must not wedge the page — the
 // button stays available and the launcher refuses a true double-run.
 const ACTIVE_STATES = new Set(['applying', 'testing', 'recovering']);
+const DOCS_URL = 'https://darkpawns.org/docs/server/admin-configuration/';
+
+// "Alaric, Morgan and 2 more" for a lobby; "No one is online." for a quiet
+// world. Names, not counts, are what an implementor actually needs before
+// disconnecting people.
+function playerSummary(names: string[] | undefined): string {
+  if (!names || names.length === 0) return 'No one is online.';
+  const shown = names.slice(0, 5).join(', ');
+  const rest = names.length - Math.min(5, names.length);
+  return rest > 0 ? `${shown} and ${rest} more` : shown;
+}
 const FAST_POLL_STATES = new Set(['staging', 'applying', 'testing', 'recovering']);
 
 function stateText(state: UpdateState | undefined): { title: string; detail?: string; tone: 'idle' | 'busy' | 'good' | 'bad' } {
@@ -69,6 +81,7 @@ export function UpdatesPage() {
   const { showToast } = useToast();
   const [check, setCheck] = useState<CheckBody | null>(null);
   const [applyOpen, setApplyOpen] = useState(false);
+  const [retryOpen, setRetryOpen] = useState(false);
   const [requested, setRequested] = useState(() => sessionStorage.getItem('dp-update-requested'));
 
   const { data: status, error: statusError } = useQuery({
@@ -114,6 +127,10 @@ export function UpdatesPage() {
   const waiting = requested !== null && statusError !== null;
   const state = body?.update;
   const info = stateText(state);
+  // After a rollback, the failed release must not come back as a plain
+  // Update now: name it, offer an explicit retry, and point at the docs.
+  const failedVersion = state?.state === 'rolled-back' && state.candidate_version ? state.candidate_version : undefined;
+  const retryOnly = failedVersion !== undefined && (!check || check.latest_version === failedVersion);
 
   return (
     <div className="space-y-6">
@@ -141,7 +158,7 @@ export function UpdatesPage() {
           <p className="text-sm text-ink" role="status">Server unreachable: applying the update. This page reconnects automatically; a refresh is safe.</p>
         ) : (
           <div className="text-sm">
-            <p className={info.tone === 'bad' ? 'text-accent' : 'text-ink'}>{info.title}{state?.phase ? ` (${state.phase})` : ''}</p>
+            <p className={info.tone === 'bad' ? 'text-accent' : 'text-ink'}>{info.title}</p>
             {info.detail && <p className="text-ink-muted">{info.detail}</p>}
             {state?.previous_version && state?.candidate_version && (
               <p className="text-ink-muted">{state.previous_version} → {state.candidate_version}</p>
@@ -156,15 +173,32 @@ export function UpdatesPage() {
             <Button variant="outline" onClick={() => checkMutation.mutate()} disabled={checkMutation.isPending}>
               <Icon name="refresh" /> Check for updates
             </Button>
-            <Button onClick={() => setApplyOpen(true)} disabled={!state || ACTIVE_STATES.has(state.state)}>
-              Update now
-            </Button>
+            {!retryOnly && !check?.downgrade && (
+              <Button onClick={() => setApplyOpen(true)} disabled={!state || ACTIVE_STATES.has(state.state)}>
+                Update now
+              </Button>
+            )}
+            {retryOnly && (
+              <Button variant="outline" onClick={() => setRetryOpen(true)}>
+                Retry {failedVersion} anyway
+              </Button>
+            )}
           </div>
+        )}
+        {retryOnly && (
+          <p className="mt-2 text-xs text-ink-muted">
+            The journal for this transaction is on the server under <span className="font-mono">.updates/</span>;
+            see the <a className="underline" href={DOCS_URL} target="_blank" rel="noreferrer">updates documentation</a> for recovery.
+          </p>
         )}
         {check && (
           <div className="mt-3 border-t border-rule pt-3 text-sm" role="status">
             {check.error ? (
               <p className="text-accent">{check.error}</p>
+            ) : check.downgrade ? (
+              <p className="text-accent">
+                The published release {check.latest_version} is older than the running {check.current_version}. Updates never install an older release; if you really mean it, run <span className="bg-paper px-1 font-mono">darkpawns update --allow-downgrade</span> on the server.
+              </p>
             ) : check.up_to_date ? (
               <p className="text-ink">Up to date ({check.current_version}).</p>
             ) : (
@@ -180,19 +214,42 @@ export function UpdatesPage() {
         )}
       </section>
 
-      <ConfirmDialog
-        open={applyOpen}
-        onOpenChange={setApplyOpen}
-        title="Update now?"
-        description={[
-          `${players?.length ?? 0} player(s) online will be disconnected; every character is saved first.`,
-          'The launcher stages and verifies first (the world keeps running), then stops, snapshots, swaps and health-checks the new release.',
-          'A failed health check rolls back to the previous release automatically.',
-          'Local success says nothing about LAN/WAN reachability; that stays your reverse proxy and firewall.',
-        ].join(' ')}
-        action="Update now"
-        onConfirm={() => applyMutation.mutate()}
-      />
+      {(() => {
+        const online = (players as { name: string }[] | undefined) ?? [];
+        const bullets = (
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              {playerSummary(online.map((p) => p.name))}
+              {online.length > 0 && `. They'll be disconnected; ${online.length === 1 ? 'the character is' : 'characters are'} saved first.`}
+            </li>
+            <li>The new release is downloaded and verified before your world stops.</li>
+            <li>If it fails its health check, the current release comes back automatically.</li>
+          </ul>
+        );
+        const target = check?.latest_version;
+        return (
+          <>
+            <ConfirmDialog
+              open={applyOpen}
+              onOpenChange={setApplyOpen}
+              title={target ? `Update to ${target}?` : 'Update now?'}
+              description={bullets}
+              action="Update now"
+              onConfirm={() => applyMutation.mutate()}
+            />
+            {failedVersion !== undefined && (
+              <ConfirmDialog
+                open={retryOpen}
+                onOpenChange={setRetryOpen}
+                title={`Retry update to ${failedVersion}?`}
+                description={bullets}
+                action={`Retry ${failedVersion}`}
+                onConfirm={() => applyMutation.mutate()}
+              />
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }

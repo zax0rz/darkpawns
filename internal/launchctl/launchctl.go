@@ -81,6 +81,7 @@ type UpdateCheck struct {
 	CurrentVersion string `json:"current_version"`
 	LatestVersion  string `json:"latest_version,omitempty"`
 	UpToDate       bool   `json:"up_to_date"`
+	Downgrade      bool   `json:"downgrade"`
 	ReleaseURL     string `json:"release_url,omitempty"`
 	AssetSize      int64  `json:"asset_size,omitempty"`
 	Error          string `json:"error,omitempty"`

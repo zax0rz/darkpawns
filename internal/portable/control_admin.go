@@ -24,8 +24,12 @@ type UpdateCheckResult struct {
 	CurrentVersion string `json:"current_version"`
 	LatestVersion  string `json:"latest_version"`
 	UpToDate       bool   `json:"up_to_date"`
-	ReleaseURL     string `json:"release_url,omitempty"`
-	AssetSize      int64  `json:"asset_size,omitempty"`
+	// Downgrade marks a feed whose latest release is older than the running
+	// one; the console refuses to offer it as a plain update and the updater
+	// refuses to install it without --allow-downgrade.
+	Downgrade  bool   `json:"downgrade"`
+	ReleaseURL string `json:"release_url,omitempty"`
+	AssetSize  int64  `json:"asset_size,omitempty"`
 }
 
 // UpdateStatus is the journal-backed state the console polls across a
@@ -134,10 +138,15 @@ func controlAdminHandlers(instance, bundle string, state func() RuntimeStatus) m
 				writeJSON(w, map[string]any{"error": err.Error(), "current_version": current})
 				return
 			}
+			downgrade := false
+			if direction, err := compareReleaseVersions(current, release.Tag); err == nil && direction > 0 {
+				downgrade = true
+			}
 			writeJSON(w, UpdateCheckResult{
 				CurrentVersion: current,
 				LatestVersion:  release.Tag,
 				UpToDate:       current == release.Tag,
+				Downgrade:      downgrade,
 				ReleaseURL:     release.HTMLURL,
 				AssetSize:      asset.Size,
 			})
