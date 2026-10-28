@@ -38,7 +38,9 @@ func run() (runErr error) {
 	}
 	defer world.StopAITicker()
 	doc := apidoc.New()
-	apidoc.RegisterHealth(doc.NewAPI(http.NewServeMux()))
+	rootAPI := doc.NewAPI(http.NewServeMux())
+	apidoc.RegisterHealth(rootAPI)
+	apidoc.RegisterSetupStatus(rootAPI, func() (int, error) { return 0, nil }, false)
 	feed := mudlog.NewFeed(mudlog.DefaultQueue, mudlog.DefaultRingCap)
 	defer feed.Stop()
 	if _, err := admin.NewRouter(world, nil, admin.NewLogBuffer(1), nil, nil, admin.WithSharedSpec(doc), admin.WithMudlogFeed(feed)); err != nil {

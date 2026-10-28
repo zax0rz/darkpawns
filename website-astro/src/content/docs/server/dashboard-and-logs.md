@@ -6,7 +6,7 @@ audience: operator
 order: 16
 sourcePath: website-astro/src/content/docs/server/dashboard-and-logs.md
 draft: false
-updated: 2026-10-27
+updated: 2026-10-28
 ---
 
 The admin dashboard opens at `/admin/`. It puts server health and player
@@ -75,3 +75,9 @@ on-disk log archive. Live events can arrive between viewing and downloading.
 The mudlog observer reports dropped events; a nonzero count means the record is
 partial. Daily dashboard error counts can exceed the available error log lines
 because history outlives the log ring. No endpoint reads arbitrary server files.
+
+### Which log should I read?
+
+**Server log** shows startup, connections, storage and service errors.
+**Mudlog** shows in-game events recorded for staff, limited to your immortal
+level. They are separate sources, so the same lines need not appear in both.

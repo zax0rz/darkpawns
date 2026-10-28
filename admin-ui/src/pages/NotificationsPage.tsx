@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Activity, Megaphone, MessageSquare, Radio, Smartphone, type LucideIcon } from 'lucide-react';
+import { Activity, MessageSquare, Radio, Smartphone, type LucideIcon } from 'lucide-react';
 import { notifications, type NotificationChannel, type NotificationConfig, type NotificationDestination, type NotificationStatus, type NotificationView } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -11,9 +11,7 @@ import { Switch } from '../components/ui/switch';
 import { ChannelCredentials } from '../components/NotificationCredentials';
 import { Skeleton } from '../components/Skeleton';
 
-// The console keeps one operator reference for the whole outbound surface. The
-// release announcement is the one channel this server does not own, so its block
-// links there instead of offering controls it could not honor.
+// Operator reference for the channels this server can configure.
 const DOCS_URL = 'https://darkpawns.org/docs/server/notifications/';
 
 const channelNames: Record<NotificationChannel, string> = {
@@ -163,12 +161,11 @@ function NotificationSettings({ initial, latest, refreshError }: { initial: Noti
     </ChannelBlock>
     <ChannelBlock channel="heartbeat" icon={Activity} description="Checks in with Healthchecks once a minute while the game loop is progressing, and stops checking in when it stalls or the process dies." enabled={config.heartbeat} onEnabled={(value) => setConfig({ ...config, heartbeat: value })} status={latest.status.heartbeat} controlsDisabled={controlsDisabled}>
       <Group title="Check-in">
-        <p className="max-w-prose text-sm text-ink-muted">Healthchecks notices the missing check-ins. Configure its outage and recovery alerts so they can reach you when this server is down: a crashed process cannot send its own alert.</p>
+        <p className="max-w-prose text-sm text-ink-muted"><a className="text-accent underline underline-offset-2" href="https://healthchecks.io/" target="_blank" rel="noreferrer">Healthchecks.io</a> alerts you when this server stops checking in.</p>
       </Group>
       {credentials('heartbeat')}
       <Delivery channel="heartbeat" status={latest.status.heartbeat} disabled={controlsDisabled} />
     </ChannelBlock>
-    <ReleaseAnnouncements />
     <p className="max-w-prose text-sm text-ink-muted">Tests use the saved credentials and run even while a channel is disabled. Delivery is best effort: nothing is replayed after an outage or restart, and anything a queue or rate limit skipped is counted under that channel. <a className="text-accent underline underline-offset-2" href={DOCS_URL}>Notification reference</a></p>
   </div>;
 }
@@ -257,20 +254,4 @@ function TestSend({ channel, ready, disabled }: { channel: NotificationChannel; 
     {test.error && <p role="alert" className="text-sm text-accent">{test.error.message}</p>}
     {notice && <p role="status" className="text-sm text-ink-muted">{notice}</p>}
   </div>;
-}
-
-// The release announcement is the one channel with no controls here: CI posts it.
-function ReleaseAnnouncements() {
-  return <Card className="gap-0 py-0">
-    <CardHeader className="py-4">
-      <h2 className="flex items-center gap-2 font-display text-lg">
-        <Megaphone className="size-4 shrink-0 text-ink-muted" strokeWidth={1.5} aria-hidden="true" />
-        Discord release announcements
-      </h2>
-      <p className="max-w-prose text-sm text-ink-muted">Each published release is announced in Discord by the release workflow, not by this server, so there is nothing to configure or test here.</p>
-    </CardHeader>
-    <CardContent className="pb-5">
-      <p className="max-w-prose text-sm">The <span className="font-mono text-xs">announce-release</span> workflow posts the release notes to the webhook in the <span className="font-mono text-xs">DISCORD_ANNOUNCE_WEBHOOK</span> repository secret. <a className="text-accent underline underline-offset-2" href={DOCS_URL}>Notification reference</a></p>
-    </CardContent>
-  </Card>;
 }

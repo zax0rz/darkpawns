@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -127,7 +128,15 @@ func TestConsolePreview(t *testing.T) {
 	}
 	token := generateTestToken(t, "admin")
 	mux := http.NewServeMux()
-	apidoc.RegisterHealth(doc.NewAPI(mux))
+	previewAPI := doc.NewAPI(mux)
+	apidoc.RegisterHealth(previewAPI)
+	setupCount := database.CountPlayers
+	setupState := os.Getenv("ADMIN_PREVIEW_SETUP_STATE")
+	if setupState == "fresh" {
+		// Synthetic empty-world status for landing-page screenshots only.
+		setupCount = func() (int, error) { return 0, nil }
+	}
+	apidoc.RegisterSetupStatus(previewAPI, setupCount, setupState == "fresh" || setupState == "restart")
 	mux.HandleFunc("/api/openapi.json", doc.Handler())
 	mux.HandleFunc("/preview-session", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "admin_token", Value: token, Path: "/admin", HttpOnly: true, SameSite: http.SameSiteStrictMode})
@@ -144,7 +153,18 @@ func TestConsolePreview(t *testing.T) {
 		active.Store(next)
 		w.WriteHeader(204)
 	})
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { active.Load().(http.Handler).ServeHTTP(w, r) })
+	if webDir := os.Getenv("ADMIN_PREVIEW_WEB_DIR"); webDir != "" {
+		files := http.FileServer(http.Dir(webDir))
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, "/admin/") || r.URL.Path == "/login" {
+				active.Load().(http.Handler).ServeHTTP(w, r)
+				return
+			}
+			files.ServeHTTP(w, r)
+		})
+	} else {
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { active.Load().(http.Handler).ServeHTTP(w, r) })
+	}
 	// Parallel agents each need their own fixture: 4350 stays the default, and
 	// ADMIN_PREVIEW_PORT lets a second run take another port.
 	port := os.Getenv("ADMIN_PREVIEW_PORT")

@@ -12,6 +12,15 @@ For the portable launcher, see [portable releases and manual updates](docs/porta
 service must first be migrated with its full configuration and state; running the
 portable updater does not adopt a checkout deployment or replace this runbook.
 
+## Claim a fresh world
+
+Open the server's landing page and choose **Play in this browser**. The first
+character you create becomes the immortal (level 40). Create yours before you
+let anyone else connect, then use **Admin console** to sign in with that character.
+A server that starts without characters keeps public listeners on loopback;
+restart it after creating yours to use the public addresses you configured.
+The landing page shows whether this first-character step is still needed.
+
 ## What you're running
 
 A single Go binary (`cmd/server`) that serves three surfaces:

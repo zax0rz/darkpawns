@@ -256,6 +256,7 @@ check-wordmark:
 	python3 scripts/check_wordmark.py
 
 check-palette:
+	python3 -m unittest scripts/test_check_palette.py
 	python3 scripts/check_palette.py
 
 generate-caddy-redirects:

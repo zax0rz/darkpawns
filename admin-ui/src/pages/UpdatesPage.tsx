@@ -141,13 +141,13 @@ export function UpdatesPage() {
         <p className="text-sm text-ink">
           <span className="font-mono">{body?.server_version ?? '…'}</span>
           {body?.commit ? <span className="text-ink-muted"> ({body.commit.slice(0, 7)})</span> : null}
-          <span className="text-ink-muted"> · {body?.managed ? 'managed instance' : 'unmanaged (checkout deployment)'}</span>
+          <span className="text-ink-muted"> · {body?.managed ? 'launcher-managed' : 'checkout install'}</span>
           <span className="text-ink-muted"> · {body?.online_players ?? 0} online</span>
         </p>
-        {!body?.managed && (
+        {body && !body.managed && (
           <p className="mt-2 text-sm text-ink-muted">
-            This server runs outside the portable launcher, so browser updates are unavailable.
-            Deploy with <span className="font-mono">darkpawns</span> or your existing procedure (DEPLOYMENT.md).
+            Update buttons are hidden because this server was started from a checkout, rather than by the Dark Pawns launcher.
+            Update the checkout, rebuild the server and admin console, then restart using your usual deployment steps. <a className="text-accent underline underline-offset-2" href="https://darkpawns.org/docs/server/admin-configuration/#checkout-installs" target="_blank" rel="noreferrer">Read the deployment guide</a>.
           </p>
         )}
       </section>

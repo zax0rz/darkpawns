@@ -11,7 +11,7 @@
 </head>
 <body>
 
-  <!-- Landing. Paper, like every surface but the terminal below. -->
+  <!-- The first screen is for playing and setting up this instance. -->
   <section class="landing" id="top">
     <a class="brand" href="#top" aria-label="Dark Pawns">
       <svg class="pawn" viewBox="24 8 52 88" aria-hidden="true" focusable="false">
@@ -26,22 +26,21 @@
       <span class="wordmark">DARK<br><span class="accent">PAWNS</span></span>
     </a>
 
+    <nav class="ctas" aria-label="Server actions">
+      <a href="#terminal-section" class="btn btn-primary">Play in this browser</a>
+      <a href="/admin/" class="btn btn-secondary">Admin console</a>
+    </nav>
+
+    <section class="setup-notice" id="setup-notice" aria-labelledby="setup-heading">
+      <h1 id="setup-heading">Claim your new world first</h1>
+      <p id="setup-message">On a fresh world, the first character you create becomes the immortal (level 40) and unlocks public access. Create yours before you let anyone else in.</p>
+      <p id="setup-next">Play locally to create your character, then restart the server to use the public addresses you configured.</p>
+    </section>
+
     <p class="lore">
       A text world first opened in 1994, rebuilt in Go and running on this server.
     </p>
 
-    <div class="ctas">
-      <a href="#terminal-section" class="btn btn-primary">Play in this browser</a>
-      <a href="https://darkpawns.org/" class="btn btn-secondary">The archive and handbooks</a>
-    </div>
-
-    <!-- Liveness, from /health, which is unauthenticated on this server.
-         Player and world figures belong here too, but /metrics currently
-         reports zeros for every gauge: the collectors are registered and
-         nothing in cmd/server writes them, so the only code that has ever
-         populated them is examples/metrics_integration.go. Showing those
-         zeros would be worse than showing nothing, so this says the one
-         thing the server can actually answer. -->
     <section class="status" aria-label="Server status">
       <p class="status-line">
         <span class="dot" id="status-dot" aria-hidden="true"></span>
@@ -52,6 +51,7 @@
     <dl class="connection" aria-label="Direct connection">
       <div id="telnet-connection" hidden><dt>Telnet</dt><dd id="telnet-host"></dd></div>
       <div id="telnet-tls-connection" hidden><dt>Telnet (TLS)</dt><dd id="telnet-tls-host"></dd></div>
+      <div><dt>Handbook</dt><dd><a href="https://darkpawns.org/">The archive and handbooks</a></dd></div>
       <div><dt>Source</dt><dd><a href="https://github.com/zax0rz/darkpawns">github.com/zax0rz/darkpawns</a></dd></div>
       <div><dt>Docs</dt><dd><a href="https://darkpawns.org/docs/">darkpawns.org/docs</a></dd></div>
     </dl>
