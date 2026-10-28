@@ -39,7 +39,7 @@ jobs:
     uses: ./.github/workflows/portable.yml
     with:
       release_ref: ${{ needs.validate.outputs.sha }}
-  build:
+  verify:
     needs: validate
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +63,7 @@ jobs:
         run: |
           # A published launcher must trust only the pinned publisher key:
           # a leaked/linked snapshot key would silently undo strict bundle
-          # authentication for every binary built by this job.
+          # authentication for every binary built by this pipeline.
           if [ -n "${DP_SNAPSHOT_PUBLISHER_KEY:-}" ]; then
             echo "DP_SNAPSHOT_PUBLISHER_KEY is set in the release environment; refusing to publish." >&2
             exit 1
@@ -71,31 +71,20 @@ jobs:
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12.2
-      - uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: v2.18.3
-          args: release --clean --skip=publish
-      - name: Check versioned archive set
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
-        shell: python
+      - name: Build the admin UI (install scripts disabled)
         run: |
-          import os, pathlib
-          version = os.environ['RELEASE_TAG'][1:]
-          expected = {f'darkpawns_{version}_{system}_{arch}' + ('.zip' if system == 'windows' else '.tar.gz') for system in ('linux', 'darwin', 'windows') for arch in ('amd64', 'arm64')}
-          actual = {p.name for p in pathlib.Path('dist').iterdir() if p.name.endswith(('.tar.gz', '.zip'))}
-          assert actual == expected, (actual, expected)
+          npm --prefix admin-ui ci --ignore-scripts
+          npm --prefix admin-ui run build
+      - name: Check the UI build is wired into the console spec
+        run: test -f admin-ui/dist/index.html
       - uses: actions/upload-artifact@v4
         with:
-          name: publication-archives
-          path: |
-            dist/*.tar.gz
-            dist/*.zip
+          name: admin-ui-dist
+          path: admin-ui/dist
           if-no-files-found: error
           retention-days: 7
   publish:
-    needs: [validate, native, build]
+    needs: [validate, native, verify]
     runs-on: ubuntu-latest
     environment: portable-release
     permissions:
@@ -109,27 +98,81 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+      # No Node here on purpose: nothing in this job may run npm, whose
+      # install scripts are third-party code (internal/releaseguard fails
+      # the build if a step tries).
       - uses: actions/download-artifact@v4
         with:
-          name: publication-archives
-          path: dist
-      - name: Verify the protected environment and sign the exact artifacts
+          name: admin-ui-dist
+          path: admin-ui/dist
+      - name: Verify the protected environment
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${{ secrets.RELEASE_SIGNING_KEY }}" || { echo 'Configure RELEASE_SIGNING_KEY in the protected portable-release environment.' >&2; exit 1; }
+          test -n "${{ secrets.PACKAGES_GITHUB_TOKEN }}" || { echo 'Configure PACKAGES_GITHUB_TOKEN in the protected portable-release environment (package-manager channels; see docs/publishing-releases.md).' >&2; exit 1; }
+          reviewers=$(gh api "repos/$GITHUB_REPOSITORY/environments/portable-release" --jq '[.protection_rules[]? | select(.type == "required_reviewers") | .reviewers[]?] | length')
+          test "$reviewers" -gt 0 || { echo 'portable-release must require human approval.' >&2; exit 1; }
+      - name: Build, sign and publish the archives and package manifests
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          DP_PREBUILT_UI: "1"
           RELEASE_TAG: ${{ inputs.tag }}
           SOURCE_SHA: ${{ needs.validate.outputs.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$RELEASE_SIGNING_KEY" || { echo 'Configure RELEASE_SIGNING_KEY in the protected portable-release environment.' >&2; exit 1; }
-          reviewers=$(gh api "repos/$GITHUB_REPOSITORY/environments/portable-release" --jq '[.protection_rules[]? | select(.type == "required_reviewers") | .reviewers[]?] | length')
-          test "$reviewers" -gt 0 || { echo 'portable-release must require human approval.' >&2; exit 1; }
+          # The exact source revision is built and signed in one protected
+          # run: the build post-hook signs each platform's bundle contents
+          # with the production key, so GoReleaser's checksums, the release
+          # assets, and every package channel pin the same signed bytes.
+          # The admin UI is prebuilt (DP_PREBUILT_UI skips both npm hooks);
+          # the only commands here are the pinned GoReleaser binary, go
+          # build of this repository, and our own cmd/dp-release. The key
+          # file exists only inside this step and the trap deletes it.
           umask 077
           signing_key=$(mktemp "$RUNNER_TEMP/dp-signing.XXXXXXXX")
           trap 'rm -f "$signing_key"' EXIT
           printf '%s\n' "$RELEASE_SIGNING_KEY" > "$signing_key"
-          go run ./cmd/dp-release --dir dist --tag "$RELEASE_TAG" --commit "$SOURCE_SHA" --key "$signing_key"
+          export DP_RELEASE_KEY_PATH="$signing_key"
+          goreleaser release --clean
+          # Archives are already publisher-signed from inside the pipeline;
+          # render only the installers and the release manifest.
+          go run ./cmd/dp-release --dir dist --tag "$RELEASE_TAG" --commit "$SOURCE_SHA" --manifest-only --key "$signing_key"
+          unset DP_RELEASE_KEY_PATH
+      - name: Check versioned archive set
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: python
+        run: |
+          import os, pathlib
+          version = os.environ['RELEASE_TAG'][1:]
+          expected = {f'darkpawns_{version}_{system}_{arch}' + ('.zip' if system == 'windows' else '.tar.gz') for system in ('linux', 'darwin', 'windows') for arch in ('amd64', 'arm64')}
+          actual = {p.name for p in pathlib.Path('dist').iterdir() if p.name.endswith(('.tar.gz', '.zip'))}
+          assert actual == expected, (actual, expected)
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and push the container image
+        env:
+          PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Runs after the signing step: no key file exists any more. The
+          # login exists only for this step and is dropped immediately after.
+          echo "$PACKAGES_GITHUB_TOKEN" | docker login ghcr.io -u darkpawns --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --pull \
+            -t "ghcr.io/darkpawns/darkpawns:${RELEASE_TAG}" \
+            -t "ghcr.io/darkpawns/darkpawns:latest" \
+            -f docker/Dockerfile --push .
       - name: Create a complete draft and publish it
         env:
           GH_TOKEN: ${{ github.token }}
@@ -149,9 +192,23 @@ jobs:
           elif [[ -f "docs/releases/$RELEASE_TAG.md" ]]; then
             notes=(--notes-file "docs/releases/$RELEASE_TAG.md")
           fi
-          gh release create "$RELEASE_TAG" dist/*.tar.gz dist/*.zip dist/release-manifest.txt dist/release-manifest.sig dist/install.sh dist/install.sh.sig dist/install.ps1 dist/install.ps1.sig --verify-tag --draft --title "Dark Pawns $RELEASE_TAG" "${notes[@]}"
+          gh release create "$RELEASE_TAG" dist/*.tar.gz dist/*.zip dist/checksums.txt dist/release-manifest.txt dist/release-manifest.sig dist/install.sh dist/install.sh.sig dist/install.ps1 dist/install.ps1.sig --verify-tag --draft --title "Dark Pawns $RELEASE_TAG" "${notes[@]}"
           gh release edit "$RELEASE_TAG" --draft=false --latest
-          echo "Published $RELEASE_TAG from $SOURCE_SHA with a signed artifact manifest." >> "$GITHUB_STEP_SUMMARY"
+          echo "Published $RELEASE_TAG from $SOURCE_SHA." >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish the package channels
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only now do the Homebrew formula, the Scoop manifest and the
+          # winget submission go out: the release and its download URLs are
+          # already live, so no channel ever points at a 404. A failure here
+          # leaves a complete release and is retryable by rerunning the step:
+          # every push is idempotent (blob shas, branch reuse, open PR reuse).
+          ./scripts/publish-package-channels.sh
+          echo "Channels published for $RELEASE_TAG: Homebrew, Scoop, winget." >> "$GITHUB_STEP_SUMMARY"
   announce:
     needs: publish
     uses: ./.github/workflows/announce-release.yml

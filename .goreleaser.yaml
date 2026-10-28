@@ -2,8 +2,14 @@ version: 2
 project_name: darkpawns
 before:
   hooks:
-    - npm --prefix admin-ui ci
-    - npm --prefix admin-ui run build
+    # npm install scripts are arbitrary third-party code: they must never run
+    # where the signing key or the package token is present. The protected
+    # publish job builds the admin UI in a secret-less job and sets
+    # DP_PREBUILT_UI, so both npm steps collapse to a no-op there; dev and
+    # native-CI snapshots build the UI here (a test in internal/releaseguard
+    # pins that every npm hook stays inside this conditional).
+    - '{{ if index .Env "DP_PREBUILT_UI" }}true{{ else }}npm --prefix admin-ui ci --ignore-scripts{{ end }}'
+    - '{{ if index .Env "DP_PREBUILT_UI" }}true{{ else }}npm --prefix admin-ui run build{{ end }}'
     - python3 scripts/stage_portable_release.py --version {{ .Version }}
 builds:
   - id: launcher
@@ -20,6 +26,16 @@ builds:
       # is unset (real publishing), so the pinned key applies there. A bare
       # `.Env` lookup would make unset-env builds fail.
       - -X github.com/zax0rz/darkpawns/internal/releaseauth.linkedKeyOverride={{ index .Env "DP_SNAPSHOT_PUBLISHER_KEY" }}
+    hooks:
+      post:
+        # Stage (and sign, when a key is configured) this platform's bundle
+        # content: both executables plus the staged release-assets manifest.
+        # GoReleaser OSS has no archive hook, so the publisher record is
+        # signed over the contents here and every stage that follows —
+        # checksums, Homebrew, Scoop, winget, Docker — sees the final signed
+        # bytes. The script no-ops until both executables of the platform
+        # exist; the archive stage starts only after all builds finish.
+        - cmd: go run ./cmd/dp-release --stage-bundle {{ .Os }} --stage-arch {{ .Arch }}
   - id: server
     main: ./cmd/server
     binary: darkpawns-server
@@ -28,6 +44,9 @@ builds:
     goarch: [amd64, arm64]
     flags: [-trimpath]
     ldflags: ['-s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}']
+    hooks:
+      post:
+        - cmd: go run ./cmd/dp-release --stage-bundle {{ .Os }} --stage-arch {{ .Arch }}
 archives:
   - id: portable
     ids: [launcher, server]
@@ -38,8 +57,10 @@ archives:
       - goos: windows
         formats: [zip]
     files:
-      - release-assets/**/*
-      - release-assets/manifest.json
+      # The signed per-platform staging tree written by the build post-hook;
+      # release-assets lands at the archive root with its publisher record.
+      - src: 'dist/signed-bundles/{{ .Os }}_{{ .Arch }}/release-assets/**'
+        dst: 'release-assets'
       - LICENSE
       - LICENSE.CircleMUD
       - LICENSE.DikuMUD
@@ -52,6 +73,87 @@ archives:
       - src: docs/publishing-releases.md
         dst: .
         strip_parent: true
+# Package-manager channels. Every channel pins the SHA-256 of the exact
+# signed archive goreleaser produced in this run: the publisher record is
+# already inside the archive (build post-hook), so package installs and the
+# launcher's own strict bundle gate verify the same bytes. Publishing needs
+# PACKAGES_GITHUB_TOKEN (contents:write on the tap and bucket repositories,
+# packages:write on ghcr.io/darkpawns, and fork+PR rights for winget); the
+# token lives only in the protected portable-release environment.
+# skip_upload/push: auto keeps dry runs (prerelease-looking tags) local.
+brews:
+  - name: darkpawns
+    repository:
+      owner: darkpawns
+      name: homebrew-tap
+      token: "{{ .Env.PACKAGES_GITHUB_TOKEN }}"
+    directory: Formula
+    commit_author:
+      name: darkpawns-release
+      email: release@darkpawns.org
+    homepage: https://darkpawns.org
+    description: Self-hostable Dark Pawns MUD server (portable launcher, DikuMUD lineage).
+    license: Nonstandard
+    url_template: "https://github.com/zax0rz/darkpawns/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    # Generated here, pushed by the publish workflow AFTER the GitHub release
+    # is live: a formula must never point at a download URL that 404s.
+    skip_upload: true
+    caveats: |
+      The formula installs the portable bundle (launcher plus release
+      assets). First run creates an instance; see the self-hosting guide at
+      darkpawns.org.
+    install: |
+      libexec.install Dir["*"]
+      bin.install_symlink "#{libexec}/darkpawns"
+    test: |
+      system "#{bin}/darkpawns", "version"
+scoops:
+  - name: darkpawns
+    repository:
+      owner: darkpawns
+      name: scoop-bucket
+      token: "{{ .Env.PACKAGES_GITHUB_TOKEN }}"
+    commit_author:
+      name: darkpawns-release
+      email: release@darkpawns.org
+    homepage: https://darkpawns.org
+    description: Self-hostable Dark Pawns MUD server (portable launcher, DikuMUD lineage).
+    license: https://github.com/zax0rz/darkpawns/blob/main/LICENSE
+    url_template: "https://github.com/zax0rz/darkpawns/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    # Generated here, pushed by the publish workflow after the release is live.
+    skip_upload: true
+# winget (this GoReleaser version commits manifests to a repository we own;
+# the publish workflow opens the pull request to microsoft/winget-pkgs from
+# it, where the first submission is expected to need human review).
+winget:
+  - name: darkpawns
+    publisher: Dark Pawns
+    package_identifier: DarkPawns.DarkPawns
+    short_description: Self-hostable Dark Pawns MUD server (portable launcher).
+    license: Nonstandard
+    license_url: https://github.com/zax0rz/darkpawns/blob/main/LICENSE
+    homepage: https://darkpawns.org
+    publisher_url: https://darkpawns.org
+    url_template: "https://github.com/zax0rz/darkpawns/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    repository:
+      owner: darkpawns
+      name: winget-pkgs
+      # A versioned branch: pull requests cannot be opened from a fork's
+      # default branch.
+      branch: "{{ .Tag }}"
+      token: "{{ .Env.PACKAGES_GITHUB_TOKEN }}"
+    commit_author:
+      name: darkpawns-release
+      email: release@darkpawns.org
+    path: manifests/d/DarkPawns
+    # Generated here; the workflow commits these to the fork branch and opens
+    # the microsoft/winget-pkgs pull request once the release is live.
+    skip_upload: true
+# The container image is built by an explicit buildx step in the publish
+# workflow, after the signing key is deleted: goreleaser's docker pipe would
+# run the image build (third-party base images) while the key file exists.
+# The step reproduces this same build from the same signed dist/ context
+# (see .github/workflows/release.yml and docker/Dockerfile).
 checksum:
   name_template: checksums.txt
 # Snapshot builds are unsigned development artifacts. Publishing/signing is a

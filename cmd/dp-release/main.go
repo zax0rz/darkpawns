@@ -40,8 +40,18 @@ func run() (result error) {
 	publicPath := flags.String("public", "", "Alternate public PEM for disposable tests")
 	templates := flags.String("templates", "bootstrap", "Installer template directory")
 	signBundle := flags.String("sign-bundle", "", "Sign one extracted bundle's per-file manifest and exit (snapshot/dev builds assemble releases without the full flow)")
+	postArchive := flags.String("post-archive", "", "Sign one release archive in place (the goreleaser after-archive hook; adds the publisher record and repacks)")
+	stageBundle := flags.String("stage-bundle", "", "Stage (and sign, when a key is configured) one platform's bundle contents for the archives; requires --stage-arch")
+	manifestOnly := flags.Bool("manifest-only", false, "With --dir: archives are already publisher-signed; render only installers and the release manifest")
+	stageArch := flags.String("stage-arch", "", "Architecture for --stage-bundle")
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
+	}
+	if *stageBundle != "" {
+		if *stageArch == "" {
+			return errors.New("--stage-bundle requires --stage-arch")
+		}
+		return stageBundleContents(*stageBundle, *stageArch)
 	}
 	if *generate != "" {
 		if *publicPath == "" {
@@ -106,6 +116,9 @@ func run() (result error) {
 	if *signBundle != "" {
 		return signBundlePublisher(*signBundle, runtime.GOOS == "windows", private, public)
 	}
+	if *postArchive != "" {
+		return postProcessArchive(*postArchive, private, public)
+	}
 	outputRoot, err := os.OpenRoot(*dir)
 	if err != nil {
 		return err
@@ -142,17 +155,23 @@ func run() (result error) {
 	// release manifest below hashes the repacked bytes: the executables join
 	// the manifest's file map and the manifest carries a publisher signature
 	// the launcher verifies before executing anything in the bundle.
-	archives, err := filepath.Glob(filepath.Join(*dir, "*.tar.gz"))
-	if err != nil {
-		return err
-	}
-	zips, err := filepath.Glob(filepath.Join(*dir, "*.zip"))
-	if err != nil {
-		return err
-	}
-	for _, path := range append(archives, zips...) {
-		if err := postProcessArchive(path, private, public); err != nil {
+	// The publish pipeline signs each archive in place through the goreleaser
+	// after-archive hook (--post-archive) so that checksums and package
+	// publishers all see the signed bytes; --manifest-only renders just the
+	// installers and the release manifest over those already-signed archives.
+	if !*manifestOnly {
+		archives, err := filepath.Glob(filepath.Join(*dir, "*.tar.gz"))
+		if err != nil {
 			return err
+		}
+		zips, err := filepath.Glob(filepath.Join(*dir, "*.zip"))
+		if err != nil {
+			return err
+		}
+		for _, path := range append(archives, zips...) {
+			if err := postProcessArchive(path, private, public); err != nil {
+				return err
+			}
 		}
 	}
 	manifest := fmt.Sprintf("darkpawns-release-v1\nversion %s\ncommit %s\n", *tag, *commit)
