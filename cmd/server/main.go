@@ -1301,7 +1301,10 @@ func fingerprinted(h http.Handler) http.Handler {
 // the process environment for the boot-time integrations that still read
 // env (Grapevine, the ntfy pusher, the contact form, proxy trust). It is
 // idempotent: effective already prefers an exported variable, so an
-// overridden field writes its own value back and nothing flips.
+// overridden field writes its own value back and nothing flips. Installs go
+// through the manager, which remembers what it wrote: a boot-installed
+// variable is not an operator export, so later console saves are never
+// masked or badged by the values this function put there.
 func applySettingsEnvironment(manager *settings.Manager) {
 	effective := manager.Effective()
 	// Install only real file changes: a value equal to the compiled-in
@@ -1313,10 +1316,7 @@ func applySettingsEnvironment(manager *settings.Manager) {
 		if value == "" || value == defaultValue {
 			return
 		}
-		if _, inherited := os.LookupEnv(name); inherited {
-			return
-		}
-		if err := os.Setenv(name, value); err != nil {
+		if _, err := manager.InstallEnv(name, value); err != nil {
 			// A failed write only means the inherited environment value (or
 			// the integration's default) still applies; say so and continue.
 			slog.Warn("could not install settings value into environment", "name", name, "error", err)
@@ -1341,7 +1341,7 @@ func applySettingsEnvironment(manager *settings.Manager) {
 		if !ok {
 			return
 		}
-		if err := os.Setenv(name, value); err != nil {
+		if _, err := manager.InstallEnv(name, value); err != nil {
 			slog.Warn("could not install settings secret into environment", "name", name, "error", err)
 		}
 	}

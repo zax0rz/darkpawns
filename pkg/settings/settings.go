@@ -16,7 +16,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -342,18 +341,4 @@ func liveFrom(c Config) *Live {
 		CORSAllowedOrigins:     c.Access.CORSAllowedOrigins,
 		AdminCORSOrigin:        c.Access.AdminCORSOrigin,
 	}
-}
-
-// parseEnvInt reads an environment integer, returning ok only for values the
-// original init() blocks would have accepted (positive, in range here).
-func parseEnvInt(name string, lo, hi int) (int, bool) {
-	raw, set := lookupEnv(name)
-	if !set || raw == "" {
-		return 0, false
-	}
-	n, err := strconv.Atoi(raw)
-	if err != nil || n < lo || n > hi {
-		return 0, false
-	}
-	return n, true
 }
