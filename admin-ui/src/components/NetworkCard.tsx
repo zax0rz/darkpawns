@@ -129,6 +129,7 @@ export function NetworkCard() {
     onSuccess: (result) => {
       setSaved(result as SaveResult);
       setDrafts(null);
+      queryClient.invalidateQueries({ queryKey: ['network'] });
       showToast('Saved as a draft. Nothing changes until you apply and restart.', 'success');
     },
     onError: (err: { status?: number; message?: string }) => {
@@ -206,7 +207,7 @@ export function NetworkCard() {
     <section className="border border-rule bg-paper-deep p-4">
       <header className="mb-2 flex items-baseline justify-between gap-2">
         <h2 className="text-base font-semibold text-ink">Network</h2>
-        <span className="text-xs text-ink-muted">{view.managed ? 'Owned by the launcher; changes apply on restart' : 'Read-only on this server'}</span>
+        <span className="text-xs text-ink-muted">{view.managed ? 'Changes apply after a restart.' : 'Read-only on this server'}</span>
       </header>
 
       <div className="flex items-center justify-between gap-4 border-b border-rule py-2">
@@ -223,8 +224,8 @@ export function NetworkCard() {
 
       {!view.managed && (
         <p className="mt-3 text-sm text-ink-muted">
-          This server runs outside the portable launcher. To change listeners, stop the server and adjust the
-          -telnet-port, -telnet-bind and -whod flags, or edit instance.json while the world is stopped.
+          These settings are read only on this server. Change listeners by stopping the server and starting
+          it again with different -telnet-port, -telnet-bind or -whod flags.
         </p>
       )}
 
@@ -301,7 +302,7 @@ export function NetworkCard() {
             ))}
             <p className="text-xs text-ink-muted">
               The web console at its current address keeps working through the restart. If any requested
-              listener fails to bind, the launcher puts the previous settings back automatically.
+              listener fails to bind, the previous settings come back automatically.
             </p>
           </div>
         }

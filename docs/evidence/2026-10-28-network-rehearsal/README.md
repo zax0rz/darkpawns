@@ -9,7 +9,8 @@ through the Configuration page's Network card.
 
 `network-card.png` (the card: HTTP read-only with its how-to-change
 explanation, observed listener beside each toggle), `network-draft-banner.png`
-(save-as-draft banner: the exposure diff table, revision, who-is-online line),
+(save-as-draft banner: the port field shows the saved draft while observed
+still names the running listener, the exposure diff table, who-is-online),
 `network-confirm.png` (the confirm dialog: players by name, the diff, the
 recovery-path sentence), `network-committed.png` (Committed; the page survived
 the restart and reconnected by itself).
