@@ -393,7 +393,7 @@ func settingsAuditHistory(logger *audit.AuditLogger) ([]audit.AuditEvent, error)
 		if event.EventType != "administration" {
 			continue
 		}
-		if !strings.HasPrefix(event.Action, "settings.") && !strings.HasPrefix(event.Action, "update.") {
+		if !strings.HasPrefix(event.Action, "settings.") && !strings.HasPrefix(event.Action, "update.") && !strings.HasPrefix(event.Action, "network.") {
 			continue
 		}
 		events = append(events, event)

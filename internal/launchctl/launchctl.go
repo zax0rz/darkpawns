@@ -8,6 +8,7 @@
 package launchctl
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -102,6 +103,45 @@ type UpdateState struct {
 	RequestedAt      string `json:"requested_at,omitempty"`
 }
 
+func (c *Client) postJSON(ctx context.Context, path string, body []byte, out any) error {
+	if c == nil {
+		return ErrUnavailable
+	}
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+c.address+path, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{Timeout: 5 * time.Second, Transport: &http.Transport{Proxy: nil}, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
+	defer client.CloseIdleConnections()
+	response, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("launcher control endpoint unreachable: %w", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode == http.StatusConflict {
+		return ErrConfigConflict
+	}
+	if response.StatusCode == http.StatusUnprocessableEntity || response.StatusCode == http.StatusBadRequest {
+		var rejected struct{ Error string }
+		_ = json.NewDecoder(io.LimitReader(response.Body, 8192)).Decode(&rejected)
+		if rejected.Error == "" {
+			rejected.Error = "the launcher refused the proposal"
+		}
+		return errors.New(rejected.Error)
+	}
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("launcher control returned HTTP %d", response.StatusCode)
+	}
+	if out == nil {
+		return nil
+	}
+	return json.NewDecoder(io.LimitReader(response.Body, 1<<20)).Decode(out)
+}
+
 func (c *Client) call(ctx context.Context, method, path string, timeout time.Duration, out any) error {
 	if c == nil {
 		return ErrUnavailable
@@ -171,6 +211,101 @@ func (c *Client) UpdateStatus(ctx context.Context) (UpdateState, error) {
 	var state UpdateState
 	err := c.call(ctx, http.MethodGet, "/update-status", 3*time.Second, &state)
 	return state, err
+}
+
+// NetworkConfig is the launcher's view of the network fields plus the
+// proposal revision and TLS certificate availability.
+type NetworkConfig struct {
+	Revision                 int64    `json:"revision"`
+	HTTPPort                 int      `json:"http_port"`
+	TLSCertificateConfigured bool     `json:"tls_certificate_configured"`
+	Telnet                   Listener `json:"telnet"`
+	TelnetTLS                Listener `json:"telnet_tls"`
+	Whod                     Listener `json:"whod"`
+}
+
+// Listener is one configured listener.
+type Listener struct {
+	Enabled bool   `json:"enabled"`
+	Port    int    `json:"port"`
+	Scope   string `json:"scope"`
+	Address string `json:"address,omitempty"`
+}
+
+// NetworkProposal is the console's typed change: enable, port and exposure
+// for each of the three editable listeners.
+type NetworkProposal struct {
+	Revision  int64          `json:"revision"`
+	Telnet    ListenerChange `json:"telnet"`
+	TelnetTLS ListenerChange `json:"telnet_tls"`
+	Whod      ListenerChange `json:"whod"`
+}
+
+// ListenerChange is one listener as proposed.
+type ListenerChange struct {
+	Enabled bool `json:"enabled"`
+	Port    int  `json:"port"`
+	Public  bool `json:"public"`
+}
+
+// SaveNetworkResult reports an accepted draft.
+type SaveNetworkResult struct {
+	Config          NetworkConfig `json:"config"`
+	Diff            []NetworkDiff `json:"diff"`
+	Warnings        []string      `json:"warnings"`
+	RestartRequired bool          `json:"restart_required"`
+}
+
+// NetworkDiff is one exposure change.
+type NetworkDiff struct {
+	Field string `json:"field"`
+	From  string `json:"from"`
+	To    string `json:"to"`
+}
+
+// ConfigApplyStatus is the network transaction receipt.
+type ConfigApplyStatus struct {
+	State          string `json:"state"`
+	StartedAt      string `json:"started_at"`
+	WasRunning     bool   `json:"was_running"`
+	Error          string `json:"error,omitempty"`
+	FailedListener string `json:"failed_listener,omitempty"`
+}
+
+// ErrConfigConflict is a stale revision: reload before proposing again.
+var ErrConfigConflict = errors.New("configuration changed; reload before saving")
+
+// GetNetworkConfig reads the configured network fields.
+func (c *Client) GetNetworkConfig(ctx context.Context) (NetworkConfig, error) {
+	var config NetworkConfig
+	err := c.call(ctx, http.MethodGet, "/config", 5*time.Second, &config)
+	return config, err
+}
+
+// SaveNetworkConfig submits a draft. Nothing restarts: the response carries
+// the exposure diff and the warnings for the operator to review.
+func (c *Client) SaveNetworkConfig(ctx context.Context, proposal NetworkProposal) (SaveNetworkResult, error) {
+	var result SaveNetworkResult
+	body, err := json.Marshal(proposal)
+	if err != nil {
+		return result, err
+	}
+	err = c.postJSON(ctx, "/config", body, &result)
+	return result, err
+}
+
+// ApplyNetworkConfig asks the launcher to run the restart transaction: the
+// request returns before the world stops, and the console polls
+// ConfigApplyStatus across the restart.
+func (c *Client) ApplyNetworkConfig(ctx context.Context) error {
+	return c.call(ctx, http.MethodPost, "/config-apply", 5*time.Second, nil)
+}
+
+// ConfigApplyStatus reads the transaction receipt.
+func (c *Client) ConfigApplyStatus(ctx context.Context) (ConfigApplyStatus, error) {
+	var status ConfigApplyStatus
+	err := c.call(ctx, http.MethodGet, "/config-status", 3*time.Second, &status)
+	return status, err
 }
 
 // Restart asks the launcher to run the restart transaction.

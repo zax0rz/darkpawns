@@ -9,6 +9,7 @@ import { Input } from '../components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Icon } from '../components/Icon';
+import { NetworkCard } from '../components/NetworkCard';
 
 // Configuration (admin-configuration design): every game-owned runtime
 // setting, typed end to end. Secrets are write-only (empty keeps the sealed
@@ -281,6 +282,8 @@ export function SettingsPage() {
         action="Restart now"
         onConfirm={() => restartMutation.mutate()}
       />
+
+      <NetworkCard />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <GroupCard title="Sessions & limits" subtitle="Applies live: the next connection sees the new limits." envOverridden={view.meta.sessions?.env_overridden ?? undefined}>

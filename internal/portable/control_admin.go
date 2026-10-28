@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -228,6 +229,76 @@ func controlAdminHandlers(instance, bundle string, state func() RuntimeStatus) m
 			}
 			writeJSON(w, status)
 		},
+		"/config": func(w http.ResponseWriter, r *http.Request) {
+			writeJSONHeader(w)
+			switch r.Method {
+			case http.MethodGet:
+				config, err := ReadNetworkConfig(instance)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+					return
+				}
+				_ = json.NewEncoder(w).Encode(config)
+			case http.MethodPost:
+				var proposal NetworkProposal
+				if err := json.NewDecoder(io.LimitReader(r.Body, 64<<10)).Decode(&proposal); err != nil {
+					w.WriteHeader(http.StatusBadRequest)
+					_ = json.NewEncoder(w).Encode(map[string]string{"error": "the proposal is not valid JSON"})
+					return
+				}
+				result, err := SaveNetworkConfig(instance, proposal)
+				if err != nil {
+					writeConfigError(w, err)
+					return
+				}
+				_ = json.NewEncoder(w).Encode(result)
+			default:
+				w.WriteHeader(http.StatusMethodNotAllowed)
+			}
+		},
+		"/config-apply": func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+			if err := pendingUpdate(instance); err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+				return
+			}
+			self, err := os.Executable()
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			// Detached like the update and restart spawns: the control
+			// server answering this request belongs to a world that is
+			// about to stop, and the transaction must survive it.
+			if err := spawnSupervisor(self, instance, "_apply-config"); err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("could not start the apply command: %v", err)})
+				return
+			}
+			w.WriteHeader(http.StatusAccepted)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "apply requested"})
+		},
+		"/config-status": func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				w.WriteHeader(http.StatusMethodNotAllowed)
+				return
+			}
+			writeJSONHeader(w)
+			receipt, err := ReadConfigApplyStatus(instance)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+				return
+			}
+			_ = json.NewEncoder(w).Encode(receipt)
+		},
 		"/restart": func(w http.ResponseWriter, r *http.Request) {
 			if r.Method != http.MethodPost {
 				w.WriteHeader(http.StatusMethodNotAllowed)
@@ -263,6 +334,22 @@ func controlAdminHandlers(instance, bundle string, state func() RuntimeStatus) m
 	}
 }
 
+func writeJSONHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+}
+
+func writeConfigError(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	switch {
+	case errors.Is(err, ErrConfigConflict):
+		w.WriteHeader(http.StatusConflict)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "configuration changed; reload before saving"})
+	default:
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	}
+}
+
 // scopedControlPaths are the operations the game process's scoped capability
 // may reach. Raw /stop is deliberately absent: the admin console triggers
 // lifecycle changes as transactions (restart, update), never a bare stop.
@@ -272,4 +359,7 @@ var scopedControlPaths = map[string]bool{
 	"/update":        true,
 	"/update-status": true,
 	"/restart":       true,
+	"/config":        true,
+	"/config-apply":  true,
+	"/config-status": true,
 }

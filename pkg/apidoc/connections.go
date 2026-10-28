@@ -17,6 +17,7 @@ type ConnectionListener struct {
 type ConnectionInfo struct {
 	Telnet    *ConnectionListener `json:"telnet,omitempty"`
 	TelnetTLS *ConnectionListener `json:"telnet_tls,omitempty"`
+	Whod      *ConnectionListener `json:"whod,omitempty"`
 }
 
 // ConnectionAt accepts only an observed listener address; no requested defaults

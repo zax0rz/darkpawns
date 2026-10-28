@@ -11,10 +11,26 @@ draft: false
 
 The Configuration and Updates pages sit under Staff tools and require
 implementor access (level 40). Configuration edits the game-owned settings
-file (`lib/data/settings.json` on a portable instance); Updates drives the
-portable launcher's update transaction. Listener ports and bind addresses
-remain launcher-owned: change them in `instance.json` while the world is
-stopped, as the network settings design describes.
+file (`lib/data/settings.json` on a portable instance) and, on a managed
+instance, the **Network** card at the top of the page; Updates drives the
+portable launcher's update transaction.
+
+## The Network card
+
+The card edits plaintext telnet, TLS telnet and WHOD: enable or disable,
+port, and reachability of This computer (loopback only) or Public (every
+interface). The web console's HTTP address and port are shown read-only,
+because that listener is the management route itself; the card explains how
+to change it while the world is stopped. Saving is a draft in the launcher's
+configuration: nothing changes until you choose **Apply and restart**, which
+disconnects any players (characters are saved first), restarts the world, and
+verifies every requested listener actually answered. If one fails to bind,
+the launcher restores the previous settings and restarts those instead; the
+page reports what happened and survives the restart. Saving refuses port
+collisions across HTTP, telnet, TLS telnet and WHOD, warns in plain words
+about ports below 1024 and about public plaintext telnet carrying passwords
+in the clear, and shows the exposure diff before you apply. On a checkout
+deployment the card is read-only and points at the command-line flags.
 
 ## What is a setting
 
