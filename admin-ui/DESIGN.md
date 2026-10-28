@@ -161,8 +161,23 @@ portalled overlays, restyled with the paperback tokens.
 - **Card:** flat ruled grouping for a distinct working unit. Avoid nesting.
 - **Chart:** Recharts through shadcn's container, paper tooltip, serif labels.
   Oxblood, ink and muted-ink series; explicit legends and dash patterns distinguish
-  series. Only the development preview has a chart with clearly synthetic data.
-  Dashboard histories and chart pages are deferred to plan B.
+  series. Dashboard and activity charts use recorded telemetry: latest online and
+  observed peak, daily logins and accepted characters, and selectable activity
+  counts. Unobserved intervals remain gaps; adjacent aggregated observations do
+  not prove continuous coverage within an interval. State sample coverage beside
+  charts and in detail tables; partial periods are never presented as full-period
+  totals. Preserve explicit first-observation, unknown and unavailable states.
+  Operational charts have no synthetic fallback. Development fixtures remain
+  explicitly synthetic and separate from operational claims.
+- **Operational drilldowns and logs:** linked measurements open operations or
+  UTC activity detail; error and warning detail links open filtered retained logs.
+  Keep filters, live/paused/error status and raw .log/CSV actions visible above
+  the dense table. Downloads apply the filters to the retained ring of at most
+  1,000 entries, not a full-file archive; live arrivals can change the export
+  between viewing and downloading. Mudlog type and immortal visibility remain
+  distinct from server severity, with the caller's access ceiling preserved.
+  Retention and dropped-event notices explain why historical totals can exceed
+  the available log rows.
 - **Icons:** Lucide navigation icons use a consistent 1.5 stroke, usually 16px.
   Restrained linework stays legible beside dense serif copy and reads as ink.
   Phosphor offers more weight variants; one quiet stroke suits this console better.

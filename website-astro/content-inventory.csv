@@ -147,12 +147,14 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/server/,src/pages/docs/[section]/index.astro,docs-hub,generated section index,3,template review,,,,
 /docs/server/admin-configuration.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,686,,,website-astro/src/content/docs/server/admin-configuration.md
 /docs/server/admin-configuration/,src/content/docs/server/admin-configuration.md,docs,authored technical documentation,3,technical accuracy review,686,,,website-astro/src/content/docs/server/admin-configuration.md
-/docs/server/admin-console.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,499,,,website-astro/src/content/docs/server/admin-console.md
-/docs/server/admin-console/,src/content/docs/server/admin-console.md,docs,authored technical documentation,3,technical accuracy review,499,,,website-astro/src/content/docs/server/admin-console.md
+/docs/server/admin-console.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,516,,,website-astro/src/content/docs/server/admin-console.md
+/docs/server/admin-console/,src/content/docs/server/admin-console.md,docs,authored technical documentation,3,technical accuracy review,516,,,website-astro/src/content/docs/server/admin-console.md
 /docs/server/architecture.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,236,,,website-astro/src/content/docs/server/architecture.md
 /docs/server/architecture/,src/content/docs/server/architecture.md,docs,authored technical documentation,3,technical accuracy review,236,,,website-astro/src/content/docs/server/architecture.md
 /docs/server/contributing.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,138,,,website-astro/src/content/docs/server/contributing.md
 /docs/server/contributing/,src/content/docs/server/contributing.md,docs,authored technical documentation,3,technical accuracy review,138,,,website-astro/src/content/docs/server/contributing.md
+/docs/server/dashboard-and-logs.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,598,,,website-astro/src/content/docs/server/dashboard-and-logs.md
+/docs/server/dashboard-and-logs/,src/content/docs/server/dashboard-and-logs.md,docs,authored technical documentation,3,technical accuracy review,598,,,website-astro/src/content/docs/server/dashboard-and-logs.md
 /docs/server/notifications.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1109,,,website-astro/src/content/docs/server/notifications.md
 /docs/server/notifications/,src/content/docs/server/notifications.md,docs,authored technical documentation,3,technical accuracy review,1109,,,website-astro/src/content/docs/server/notifications.md
 /download.md,src/pages/download.md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,,,,

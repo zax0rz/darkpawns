@@ -9,6 +9,10 @@ import (
 	"path/filepath"
 	"sync/atomic"
 	"testing"
+	"time"
+
+	"github.com/zax0rz/darkpawns/pkg/mudlog"
+	"github.com/zax0rz/darkpawns/pkg/telemetry"
 
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -69,16 +73,53 @@ func TestConsolePreview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	historyStart := time.Now()
+	if os.Getenv("ADMIN_PREVIEW_EMPTY") != "1" {
+		historyStart = historyStart.Add(-6 * 24 * time.Hour)
+	}
+	history := telemetry.New(historyStart)
+	if os.Getenv("ADMIN_PREVIEW_EMPTY") != "1" {
+		// Explicitly synthetic history, confined to this opt-in test harness.
+		for i := 0; i < 6*24*60; i++ {
+			for j := 0; j < (i % 5); j++ {
+				telemetry.Login()
+			}
+			if i%20 == 0 {
+				telemetry.Character()
+			}
+			if i%7 == 0 {
+				telemetry.Death()
+			}
+			if i%131 == 0 {
+				telemetry.Error()
+			}
+			if i%37 == 0 {
+				telemetry.Warning()
+			}
+			history.Sample(time.Now().Add(time.Duration(i-6*24*60)*time.Minute), i%12)
+		}
+	}
+	history.ObserveRelease(telemetry.Release{Version: "synthetic preview", Commit: "fixture", Identity: "fixture"}, time.Now())
+	feed := mudlog.NewFeed(64, 1000)
+	feed.Start()
+	defer feed.Stop()
+	feed.Tap("preview", "Synthetic visible mudlog event", 1, 31, true)
+	feed.Tap("preview", "Synthetic implementor-only event", 1, 40, true)
 	logs := NewLogBuffer(20)
 	if _, err := fmt.Fprintln(logs, "INFO 2026-10-27T12:00:00-04:00 Local console preview started (synthetic fixture)"); err != nil {
 		t.Fatal(err)
+	}
+	for _, line := range []string{"WARN " + time.Now().UTC().Format(time.RFC3339) + " Synthetic warning: history write retried", "ERROR " + time.Now().UTC().Format(time.RFC3339) + " Synthetic error: test database unavailable"} {
+		if _, err := logs.Write([]byte(line)); err != nil {
+			t.Fatal(err)
+		}
 	}
 	doc := apidoc.New()
 	previewSettings, err := settings.New(filepath.Join(t.TempDir(), "settings.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithSharedSpec(doc), WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"))
+	handler, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithSharedSpec(doc), WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"), WithHistory(history), WithMudlogFeed(feed))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,12 +129,12 @@ func TestConsolePreview(t *testing.T) {
 	mux.HandleFunc("/api/openapi.json", doc.Handler())
 	mux.HandleFunc("/preview-session", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "admin_token", Value: token, Path: "/admin", HttpOnly: true, SameSite: http.SameSiteStrictMode})
-		w.WriteHeader(http.StatusNoContent)
+		_, _ = w.Write([]byte("Local synthetic fixture session ready"))
 	})
 	var active atomic.Value
 	active.Store(handler)
 	mux.HandleFunc("/preview-reset", func(w http.ResponseWriter, r *http.Request) {
-		next, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"))
+		next, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"), WithHistory(history), WithMudlogFeed(feed))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return

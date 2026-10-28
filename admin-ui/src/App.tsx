@@ -5,6 +5,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
 import { LoginPage } from './pages/LoginPage';
+import { LogsPage } from './pages/LogsPage';
+import { ActivityPage } from './pages/ActivityPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ZonesPage } from './pages/ZonesPage';
 import { ZoneDetailPage } from './pages/ZoneDetailPage';
@@ -44,6 +46,8 @@ export default function App() {
         {/* Protected admin routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
+            <Route path="/admin/operations/logs" element={<ErrorBoundary><LogsPage /></ErrorBoundary>} />
+            <Route path="/admin/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
             <Route path="/admin/" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
             <Route path="/admin/game/zones" element={<ErrorBoundary><ZonesPage /></ErrorBoundary>} />
             <Route path="/admin/game/zones/:id" element={<ErrorBoundary><ZoneDetailPage /></ErrorBoundary>} />

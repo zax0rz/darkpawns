@@ -23,12 +23,14 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/notify"
 	"github.com/zax0rz/darkpawns/pkg/olc"
 	"github.com/zax0rz/darkpawns/pkg/settings"
+	"github.com/zax0rz/darkpawns/pkg/telemetry"
 )
 
 // RouterOption configures NewRouter.
 type RouterOption func(*routerConfig)
 
 type routerConfig struct {
+	history *telemetry.History
 	// sharedDoc, when set, is the apidoc document the router's Huma operations
 	// are registered into. main passes it so the admin operations appear in
 	// the server-wide spec served at /openapi.json. Tests leave it nil and get
@@ -47,6 +49,11 @@ type routerConfig struct {
 // server-wide OpenAPI document, instead of a private one.
 func WithSharedSpec(doc *apidoc.Doc) RouterOption {
 	return func(c *routerConfig) { c.sharedDoc = doc }
+}
+
+// WithHistory supplies retained operator telemetry; absence is reported explicitly.
+func WithHistory(history *telemetry.History) RouterOption {
+	return func(c *routerConfig) { c.history = history }
 }
 
 // WithMudlogFeed serves the mudlog observer's endpoints: the Huma list and
@@ -265,6 +272,11 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerUpdates(ri.api, auditLogger, cfg.launchctl, world, cfg.buildVersion, cfg.buildCommit)
 	for _, path := range []string{"/admin/notifications", "/admin/notifications/{provider}/test", "/admin/notifications/{provider}/credentials"} {
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
+	}
+	registerDashboard(ri.api, world, cfg.history)
+	registerLogbook(ri.api, logBuffer, cfg.mudlogFeed, mudlogCaller)
+	for _, path := range []string{"/admin/dashboard", "/admin/logbook", "/admin/logbook/export"} {
+		track(path, wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	}
 	for _, path := range []string{
 		"/admin/settings", "/admin/settings/export", "/admin/settings/audit",

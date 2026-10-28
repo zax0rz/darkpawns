@@ -14,6 +14,9 @@ immortal character's name and password. The server checks the character's curren
 access level on authenticated requests. Keep this listener behind your configured
 HTTPS proxy. The session uses an HttpOnly cookie and a CSRF header.
 
+See [Dashboard and logs](/docs/server/dashboard-and-logs/) for history coverage,
+metric definitions, live logs and filtered downloads.
+
 ## Find the right tool
 
 | Page | Use |

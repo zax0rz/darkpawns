@@ -15,6 +15,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/telemetry"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -311,6 +312,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// Returning characters stop at the post-MOTD menu. World registration and
 	// room entry happen only after option 1 is selected.
 	if s.authenticated && s.player != nil {
+		telemetry.Login()
 		s.manager.loginAttempts.RecordSuccess(ip)
 		s.manager.accountBudget.RecordSuccess(login.PlayerName)
 		// Reset C bad_pws on successful login (GET_BAD_PWS = 0,
