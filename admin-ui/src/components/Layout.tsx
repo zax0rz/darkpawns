@@ -199,7 +199,10 @@ function SidebarContent({
       {/* Logo / Title */}
       <div className="p-4 border-b border-rule bg-paper-deep/20">
         <h1>
-          <Wordmark pawnClass="h-8" textClass="text-[1.15rem]" />
+          <NavLink to="/admin/" end aria-label="Dark Pawns admin home" onClick={onNavigate}
+            className="inline-flex focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+            <Wordmark pawnClass="h-8" textClass="text-[1.15rem]" />
+          </NavLink>
         </h1>
         {onClose && (
           <Button variant="ghost" size="plain"

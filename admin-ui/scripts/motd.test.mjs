@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { motdTerminalText, motdBytes, discordSnippet, gossipNotice } from '../src/lib/motd.ts';
 
-test('game colours use the C mappings, not CSS word wrapping', () => {
+test('game colors use the C mappings, not CSS word wrapping', () => {
   assert.equal(motdTerminalText('&rred&n && &x unknown &'), '\x1b[0;31mred\x1b[0m & &x unknown &');
   assert.equal(motdTerminalText('&d&b&g&c&r&m&y&w&D&B&G&C&R&M&Y&W'),
     '\x1b[0;30m\x1b[0;34m\x1b[0;32m\x1b[0;36m\x1b[0;31m\x1b[0;35m\x1b[0;33m\x1b[0;37m\x1b[1;30m\x1b[1;34m\x1b[1;32m\x1b[1;36m\x1b[1;31m\x1b[1;35m\x1b[1;33m\x1b[1;37m');

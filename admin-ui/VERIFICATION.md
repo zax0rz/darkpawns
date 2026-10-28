@@ -37,7 +37,7 @@ toast. Terminal rendering is verified; this fixture does not run a game WebSocke
 
 Manual Chrome checks: saved a character stat and restored it, switched editor
 and online-player tabs, toggled and discarded a notification switch draft, opened
-and cancelled the reset confirmation (Cancel received focus), opened the account
+and canceled the reset confirmation (Cancel received focus), opened the account
 and log-line menus, dismissed the player dialog with Escape, and observed the
 server's failed-save response as a dismissible error toast. No outbound test
 notifications or production actions were performed.

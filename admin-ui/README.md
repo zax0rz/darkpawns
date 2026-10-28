@@ -49,7 +49,7 @@ requirements reported by the server schema for the signed-in character.
 
 Open **Staff tools → MOTD** or the dashboard's **MOTD** card. Builders can read;
 GRGOD staff (level 38) can save. Choose **MOTD** or **Immortal MOTD**, edit the
-draft, then check colours and wrapping at 40, 80 or 100 columns before saving.
+draft, then check colors and wrapping at 40, 80 or 100 columns before saving.
 Each tab keeps its draft. Saves take effect at once and are audited; a conflict
 keeps your draft for comparison with the saved copy. No reboot is needed.
 
@@ -58,7 +58,7 @@ the draft. Check Notifications before inserting the gossip notice: an automatic
 notice may already be enabled, and the preview does not include it. Each message
 has a 2,400-byte limit, including UTF-8 characters and two-byte line breaks.
 See the [MOTD operator guide](../website-astro/src/content/docs/server/motd-editor.md)
-for colour codes, draft recovery and save conflicts.
+for color codes, draft recovery and save conflicts.
 
 ## Development
 

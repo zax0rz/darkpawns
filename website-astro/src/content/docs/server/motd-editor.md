@@ -1,6 +1,6 @@
 ---
 title: "MOTD editor"
-description: "Edit the welcome messages, preview terminal colours and wrapping, and save without overwriting another editor."
+description: "Edit the welcome messages, preview terminal colors and wrapping, and save without overwriting another editor."
 section: "server"
 audience: "operator"
 order: 17
@@ -21,8 +21,8 @@ the dashboard. Builders can read both messages. Saving requires GRGOD access
 3. Check the **Telnet preview**. Choose **40**, **80**, or **100 columns** to
    see where a terminal wraps each line, including long words. On a narrow
    screen, scroll sideways inside the preview.
-4. Toggle **Colour** to compare rendered colours with the text containing the
-   colour codes. Preview controls do not change your draft.
+4. Toggle **Color** to compare rendered colors with the text containing the
+   color codes. Preview controls do not change your draft.
 5. Choose **Save MOTD** or **Save Immortal MOTD**. Save each message separately.
    The saved message takes effect at once. Players see it at their next login;
    no reboot is needed.
@@ -31,8 +31,8 @@ Each message allows **2,400 bytes**. The counter includes two bytes for each
 line break and counts text as UTF-8, so some characters take more than one byte.
 Shorten an over-limit message before saving.
 
-Open **Colour codes** for the available markers. Lowercase codes use ordinary
-colours, uppercase codes use bright colours, `&n` resets the colour, and `&&`
+Open **Color codes** for the available markers. Lowercase codes use ordinary
+colors, uppercase codes use bright colors, `&n` resets the color, and `&&`
 prints an ampersand.
 
 ## Insert a snippet
@@ -81,6 +81,6 @@ The shared web `tedit` save floor is GRGOD (38), matching the command gate in
 requirement. Lua file writes still require HIGOD (36). Builder reads remain
 available. The byte limit counts CRLF line endings; saved text uses LF endings.
 
-The preview uses xterm with the game's ampersand colour markers. It changes
+The preview uses xterm with the game's ampersand color markers. It changes
 neither saved text nor game output. This editor adds no default player text and
 does not change existing login behaviour (R1/R4).
