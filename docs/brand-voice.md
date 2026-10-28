@@ -569,6 +569,31 @@ The voice compresses for short-form:
 
 ---
 
+## 8.5 Product Copy: Admin Console, CLI, Operator Docs
+
+The tools speak to the person running the server, usually in a hurry. Write like a capable friend leaning over their shoulder, not a manual.
+
+**Rules**
+
+- **Say what happens, not how it works.** "Deletes this character. Their items and aliases go with them." Not "Applies self-delete semantics; object saves are removed."
+- **Never expose internals.** No C, `PLR_*` flags, row/store/index, function names or file paths in UI text. Those belong in a docs page's "How it works" section.
+- **One idea per sentence, one sentence per control** where possible. Dialogs get at most three short bullets.
+- **Lead with what the operator cares about:** who is affected, what they lose, whether it can be undone. "2 players online: Egon, Sai."
+- **Plain verbs:** saved, deleted, restored. Not retained, persisted, applied, staged.
+- **Real plurals:** "1 player", "3 players". Never "player(s)".
+- **Errors say what to do next:** "Couldn't reach the server. Check that it's running, then try again." Not "Request failed (502)."
+- **Personality is seasoning.** One dry line is welcome on an empty state or a success message ("Nothing on fire."). Never in a warning, a destructive confirm or an error.
+
+**Before and after**
+
+| Before | After |
+| --- | --- |
+| The player row is retained; object saves and aliases are removed. | Their saved items and aliases are deleted. |
+| If startup fails, portable restores the previous snapshot and retains attempted state. | If it fails its health check, the current release comes back automatically. |
+| Save or discard stat changes before renaming. | Save or discard your changes first. |
+
+Every admin-ui, CLI and operator-docs brief should say "follow brand-voice §8.5". If the same offenders keep slipping through (`player(s)`, `PLR_`, "retained"), extend voice-lint to scan admin-ui and CLI strings.
+
 ## 9. Quick Reference Card
 
 ### The framework at a glance
