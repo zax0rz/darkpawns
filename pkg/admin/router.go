@@ -284,8 +284,9 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	}
 	registerDashboard(ri.api, world, cfg.history)
+	registerActivity(ri.api, cfg.history, mudlogCaller)
 	registerLogbook(ri.api, logBuffer, cfg.mudlogFeed, mudlogCaller)
-	for _, path := range []string{"/admin/dashboard", "/admin/logbook", "/admin/logbook/export"} {
+	for _, path := range []string{"/admin/dashboard", "/admin/activity/events", "/admin/logbook", "/admin/logbook/export"} {
 		track(path, wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
 	}
 	for _, path := range []string{

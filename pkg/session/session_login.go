@@ -312,7 +312,6 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 	// Returning characters stop at the post-MOTD menu. World registration and
 	// room entry happen only after option 1 is selected.
 	if s.authenticated && s.player != nil {
-		telemetry.Login()
 		s.manager.loginAttempts.RecordSuccess(ip)
 		s.manager.accountBudget.RecordSuccess(login.PlayerName)
 		// Reset C bad_pws on successful login (GET_BAD_PWS = 0,
@@ -321,6 +320,7 @@ func (s *Session) handleLogin(data json.RawMessage) error {
 		if err := s.manager.db.RecordLoginSuccess(login.PlayerName); err != nil {
 			return s.abortEntry(fmt.Errorf("clear wrong passwords: %w", err))
 		}
+		telemetry.RecordLogin(game.ActivityForPlayer(s.player))
 		// C checks for another copy of the character before the MOTD
 		// (interpreter.c:1914-1916). The reconnect branch ports
 		// CON_PASSWORD's echo_on bytes itself; a fresh login emits them here,

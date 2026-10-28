@@ -153,8 +153,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/server/architecture/,src/content/docs/server/architecture.md,docs,authored technical documentation,3,technical accuracy review,236,,,website-astro/src/content/docs/server/architecture.md
 /docs/server/contributing.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,138,,,website-astro/src/content/docs/server/contributing.md
 /docs/server/contributing/,src/content/docs/server/contributing.md,docs,authored technical documentation,3,technical accuracy review,138,,,website-astro/src/content/docs/server/contributing.md
-/docs/server/dashboard-and-logs.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,637,,,website-astro/src/content/docs/server/dashboard-and-logs.md
-/docs/server/dashboard-and-logs/,src/content/docs/server/dashboard-and-logs.md,docs,authored technical documentation,3,technical accuracy review,637,,,website-astro/src/content/docs/server/dashboard-and-logs.md
+/docs/server/dashboard-and-logs.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,883,,,website-astro/src/content/docs/server/dashboard-and-logs.md
+/docs/server/dashboard-and-logs/,src/content/docs/server/dashboard-and-logs.md,docs,authored technical documentation,3,technical accuracy review,883,,,website-astro/src/content/docs/server/dashboard-and-logs.md
 /docs/server/install.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,233,,,website-astro/src/content/docs/server/install.md
 /docs/server/install/,src/content/docs/server/install.md,docs,authored technical documentation,3,technical accuracy review,233,,,website-astro/src/content/docs/server/install.md
 /docs/server/motd-editor.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,624,,,website-astro/src/content/docs/server/motd-editor.md

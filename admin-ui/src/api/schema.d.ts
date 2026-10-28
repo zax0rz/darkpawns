@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/admin/activity/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recorded character activity */
+        get: operations["get-activity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/agents": {
         parameters: {
             query?: never;
@@ -1493,6 +1510,42 @@ export interface components {
             /** @description CIDRs whose X-Forwarded-For names the client; empty means the loopback default (restart required) */
             trusted_proxies: string[] | null;
         };
+        Activity: {
+            /** @enum {string} */
+            cause?: "mob" | "player" | "trap" | "other" | "unknown";
+            class: string;
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            kind: "login" | "character" | "death";
+            /** Format: int64 */
+            level: number;
+            /** Format: int64 */
+            min_level: number;
+            mob_name: string;
+            /** Format: int64 */
+            mob_vnum: number;
+            player: string;
+            room_name: string;
+            /** Format: int64 */
+            room_vnum: number;
+            /** Format: date-time */
+            time: string;
+        };
+        ActivityResponse: {
+            /** Format: int64 */
+            dropped: number;
+            entries: components["schemas"]["Activity"][] | null;
+            /** Format: int64 */
+            next_before: number;
+            recording: boolean;
+            /** Format: date-time */
+            since?: string;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            trimmed: number;
+        };
         AgentStatus: {
             agent_id: string;
             description: string;
@@ -1649,6 +1702,8 @@ export interface components {
             /** Format: int64 */
             peak: number | null;
             /** Format: int64 */
+            player_deaths: number;
+            /** Format: int64 */
             samples: number;
             /** Format: date-time */
             time: string;
@@ -1656,6 +1711,8 @@ export interface components {
             warnings: number;
         };
         DashboardResponse: {
+            /** Format: date-time */
+            activity_since?: string;
             /** Format: date-time */
             now: string;
             /** Format: int64 */
@@ -2908,6 +2965,42 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "get-activity": {
+        parameters: {
+            query?: {
+                range?: "24h" | "7d";
+                kind?: "login" | "character" | "death";
+                search?: string;
+                before?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "list-agents": {
         parameters: {
             query?: never;

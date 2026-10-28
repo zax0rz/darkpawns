@@ -640,7 +640,9 @@ func (s *Session) persistAcceptedCharacter() error {
 	s.authenticated = true
 	s.manager.mu.Unlock()
 	s.manager.mu.Lock()
-	telemetry.Character()
+	if !s.isGuest {
+		telemetry.RecordCharacter(game.ActivityForPlayer(p))
+	}
 	s.creationSaved = true
 	s.manager.mu.Unlock()
 	s.playerName = s.charName

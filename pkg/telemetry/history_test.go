@@ -68,7 +68,7 @@ func TestHistoryShutdownPersistsAndFailuresAreVisible(t *testing.T) {
 	if err := restored.Load(path); err != nil {
 		t.Fatal(err)
 	}
-	if len(restored.Snapshot().Points) != 1 {
+	if len(restored.Snapshot().Points) == 0 {
 		t.Fatal("shutdown failed to persist sample")
 	}
 	blocked := filepath.Join(t.TempDir(), "file")

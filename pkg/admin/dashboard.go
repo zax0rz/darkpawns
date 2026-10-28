@@ -33,6 +33,7 @@ type dashboardResponse struct {
 	PersistenceError string            `json:"persistence_error,omitempty"`
 	Release          telemetry.Release `json:"release"`
 	Points           []dashboardPoint  `json:"points"`
+	ActivitySince    *time.Time        `json:"activity_since,omitempty"`
 }
 type dashboardOutput struct{ Body dashboardResponse }
 
@@ -46,6 +47,7 @@ func dashboardSnapshot(world *game.World, h *telemetry.History, span string, now
 	out.RecordingSince = &s.StartedAt
 	out.Release = s.Release
 	out.PersistenceError = s.PersistenceError
+	out.ActivitySince = &s.ActivitySince
 	width := time.Hour
 	bins := 24
 	if span == "7d" {
@@ -72,6 +74,7 @@ func dashboardSnapshot(world *game.World, h *telemetry.History, span string, now
 		b.Logins += p.Logins
 		b.Characters += p.Characters
 		b.Deaths += p.Deaths
+		b.PlayerDeaths += p.PlayerDeaths
 		b.Warnings += p.Warnings
 		b.Errors += p.Errors
 	}

@@ -1,6 +1,9 @@
-# Dashboard data audit, 2026-10-27
+# Dashboard data audit, 2026-10-28
 
-Audited before B+C UI implementation against origin/main `4fb40c8f0`.
+Initial audit before the dashboard implementation: `4fb40c8f0`. Eyeballs B
+re-audited producers against `0fdf05bfc`, including entry, guarded death, raw kill
+and death traps. The table records the earlier baseline; the correction below
+supersedes its death definition and anonymous-only recording policy.
 
 | Signal | Existing producer and exposure | Limitation / B+C action |
 | --- | --- | --- |
@@ -20,10 +23,63 @@ Audited before B+C UI implementation against origin/main `4fb40c8f0`.
 | Server log | `LogBuffer`, `/admin/logs`, 1000-line volatile ring | No full-file archive. Downloads cover the retained filtered ring only; .log preserves stored lines, CSV has time/level/type/message. |
 | Mudlog | Tap → feed queue/ring → `/admin/mudlog`, catalog, SSE | 1000 events, nonblocking and potentially dropped. Type is OFF/BRF/NRM/CMP, level is minimum immortal visibility, neither is WARN/ERROR. Preserve actual-caller ceiling in list and exports. |
 
-B+C records no player identities in telemetry. Counters are observed every ten
+The original dashboard recorded no player identities in telemetry. Counters are observed every ten
 seconds; event deltas belong to the observation interval ending at that sample,
 so an event near midnight can land in the next UTC day. Minute buckets persist
 once a minute and on context shutdown; abrupt termination can lose the latest
 minute. Offline intervals are gaps, not zero traffic. Coverage is explicit.
-All event hooks perform atomic increments only, without changing game output,
+Its original event hooks performed atomic increments only, without changing game output,
 random draws, persistence formats or command decisions (R1/R3/R4).
+
+
+## Eyeballs B: character activity and player deaths
+
+| Signal | Confirmed producer before this change | Corrected recording and detail |
+| --- | --- | --- |
+| Returning logins | Atomic increment before clearing saved wrong-password state; no names | After authentication, restrictions and successful wrong-password reset, record character name, class, level, time and minimum staff visibility. Reconnect/duplicate authentication counts; guests, failed authentication and creation do not. This is authentication, not world entry. |
+| New characters | Atomic increment after an accepted character is saved | Same accepted-save seam, once per successful creation, with name/class/level/time. Failed saves and repeated acceptance do not add entries. |
+| Deaths | `metrics.Death` includes mobs and sits before player idempotency/HP guards; traps bypass it | Keep that legacy Prometheus/telemetry total intact. New `player_deaths` counts only actual player deaths after the guarded handler, raw-kill extraction and death-trap seams. Record name/class/level/time, room name/vnum, mob name/vnum or cause category. |
+
+### Coverage and fidelity
+
+`game/death.go` records accepted player deaths after extraction/CAS/HP guards.
+The raw-kill bridge observes immediately before extraction, after the existing
+body handling; the killer body is carried through solely for this observation.
+Death traps are observed before their existing extraction. Guest deaths count,
+with a generic Guest label. No game output, decisions, save format or random draws
+change (R1/R3/R4). Source boundaries read during implementation:
+`src/fight.c:534-581`, `src/fight.c:586-629`, and
+`src/act.movement.c:288-301`.
+
+Actual killer bodies distinguish mobs from players even when their names collide.
+Player killers are labeled “another player”; their identity is not copied. Raw
+kills and older spell adapters that supply no killer say “cause not recorded”;
+self-inflicted damage says “other damage”. Current spell damage already routes
+through `HandleDeath` with the caster; the older `HandleSpellDeath` bridge is
+retired from that call path (`pkg/spells/damage_spells.go`). No guessed killer or trap label fills
+missing context. The Lua raw-kill adapter preserves a supplied killer body.
+
+### Storage, limits and authorization
+
+A nonblocking 4,096-entry journal copies observations to the history sampler.
+Game writers never wait for the sampler or storage. Contention/overrun increments
+an explicit dropped-detail count; the aggregate counters still advance. History
+saves at most 20,000 detail entries for seven days alongside existing minute
+buckets. Capacity removals are reported separately. Detail loss and hidden names
+can make aggregate totals exceed visible rows. Abrupt termination can still lose
+the latest unsaved minute. Normal shutdown takes a final sample before saving.
+
+The Huma `GET /admin/activity/events` operation uses the existing builder gate
+and resolves the caller's current immortal level per request. Visibility follows
+the recorded name's minimum level; no token role can raise it. It supports the
+same UTC hour/day windows as the dashboard, event-kind and name filters, and
+stable before-ID pagination. Responses are no-store. Events contain no host,
+IP, credentials, account data, chat or arbitrary log fields. Character names and
+world metadata are the only identities/details added.
+
+`activity_since` marks the real start of named detail and separate player-death
+recording. Loading an old file keeps its combined death counts in `deaths` and
+starts the new coverage at upgrade time. The dashboard reads `player_deaths`;
+it never relabels old mob-inclusive data or reconstructs names from logs. Aggregate
+counts are assigned to the sample interval; details preserve observation time,
+so events near an interval boundary can appear in adjacent bins/list windows.

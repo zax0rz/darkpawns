@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,7 @@ func TestDashboardEndpointRecordedHistoryAndGaps(t *testing.T) {
 	telemetry.Login()
 	telemetry.Character()
 	telemetry.Death()
+	telemetry.RecordPlayerDeath(telemetry.Activity{Player: "Avery", MinLevel: 31})
 	h.Sample(now, 2)
 	mux := http.NewServeMux()
 	api := apidoc.New().NewInternalAPI(mux)
@@ -35,7 +37,7 @@ func TestDashboardEndpointRecordedHistoryAndGaps(t *testing.T) {
 	if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if !body.Recording || len(body.Points) != 24 || body.Points[22].Online != nil || body.Points[23].Logins != 1 || body.Points[23].Characters != 1 || body.Points[23].Deaths != 1 {
+	if !body.Recording || len(body.Points) != 24 || body.Points[22].Online != nil || body.Points[23].Logins != 1 || body.Points[23].Characters != 1 || body.Points[23].Deaths != 1 || body.Points[23].PlayerDeaths != 1 || body.ActivitySince == nil {
 		t.Fatalf("wrong observed history: %+v", body)
 	}
 	rr = httptest.NewRecorder()
@@ -109,9 +111,10 @@ func TestObservabilityRoutesRequireBuilder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, path := range []string{"/admin/dashboard", "/admin/logbook", "/admin/logbook/export"} {
+	for i, path := range []string{"/admin/activity/events", "/admin/dashboard", "/admin/logbook", "/admin/logbook/export"} {
 		for _, role := range []string{"", "player", "builder"} {
 			req := httptest.NewRequest(http.MethodGet, path, nil)
+			req.RemoteAddr = fmt.Sprintf("192.0.2.%d:1234", i+1)
 			req.Header.Set("X-Requested-With", "darkpawns-admin")
 			if role != "" {
 				req.Header.Set("Authorization", "Bearer "+generateTestToken(t, role))

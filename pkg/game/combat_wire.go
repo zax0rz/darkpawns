@@ -567,6 +567,11 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// path. The active engine path still uses CombatEngine.DeathFunc.
 	// -------------------------------------------------------------------------
 	cb.RawKillNPC = w.RawKillCombatant
+	cb.ObserveDeath = func(victim, killer combat.Combatant) {
+		if p, ok := combatPlayer(victim); ok && p.GetFlags()&(1<<uint(plrExtractBit)) == 0 {
+			w.recordPlayerDeath(p, killer, "unknown")
+		}
+	}
 	// C's death syslog runs inside damage()'s tail (fight.c:1681). Combat has no
 	// MudLog of its own, so wire both halves: the level string maps to the game's
 	// MudLog type, and the room vnum resolves to the name C prints.
