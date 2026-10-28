@@ -47,7 +47,9 @@ func fileEditRequirement(level int) string {
 
 // teditWriteLevel is the web write threshold for one tedit field.
 func teditWriteLevel(field fileedit.TextField) int {
-	return max(fileEditWriteLevel, field.MinLevel)
+	// C src/interpreter.c:764 gates tedit at GRGOD before src/tedit.c:47-58 checks
+	// each field. Keep the same gate through the web editor.
+	return max(game.LVL_GRGOD, field.MinLevel)
 }
 
 type fileRootInput struct {

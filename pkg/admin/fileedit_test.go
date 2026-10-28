@@ -144,7 +144,7 @@ func TestFileEditRoundTripsAndConflicts(t *testing.T) {
 // A web tedit save must refresh the live text exactly like the telnet save;
 // otherwise players read the old MOTD until reboot.
 func TestTeditSaveStripsCRAndRefreshesLiveText(t *testing.T) {
-	f := newFileEditFixture(t, game.LVL_HIGOD)
+	f := newFileEditFixture(t, game.LVL_GRGOD)
 	var gotFile, gotText string
 	fileedit.RegisterTextSavedHook(func(_ *game.World, filename, text string) { gotFile, gotText = filename, text })
 	t.Cleanup(func() { fileedit.RegisterTextSavedHook(nil) })
@@ -170,10 +170,10 @@ func TestTeditSaveStripsCRAndRefreshesLiveText(t *testing.T) {
 	}
 }
 
-// credits is LVL_IMPL in C's tedit table. The web door is HIGOD, but a HIGOD
-// must not reach a file the telnet command would refuse them.
+// credits is LVL_IMPL in C's tedit table. Even a GRGOD who can use tedit
+// must not reach a field the C table reserves for IMPL.
 func TestTeditKeepsCFieldLevelAboveTheWebDoor(t *testing.T) {
-	f := newFileEditFixture(t, game.LVL_HIGOD)
+	f := newFileEditFixture(t, game.LVL_GRGOD)
 	listing := f.do(http.MethodGet, "/admin/files/tedit/listing", nil, nil)
 	var body fileListingResponse
 	if err := json.Unmarshal(listing.Body.Bytes(), &body); err != nil {
@@ -184,13 +184,13 @@ func TestTeditKeepsCFieldLevelAboveTheWebDoor(t *testing.T) {
 			t.Fatalf("credits entry = %+v; want grayed at IMPL", e)
 		}
 		if e.Name == "news" && !e.Allowed {
-			t.Fatalf("news entry = %+v; want writable at HIGOD", e)
+			t.Fatalf("news entry = %+v; want writable at GRGOD", e)
 		}
 	}
 	read := f.do(http.MethodGet, contentURL("tedit", "credits"), nil, nil)
 	rec := f.do(http.MethodPut, contentURL("tedit", "credits"), map[string]string{"If-Match": read.Header().Get("ETag")}, ptr("mine now\n"))
 	if rec.Code != http.StatusForbidden || !strings.Contains(rec.Body.String(), "IMPL (40)") {
-		t.Fatalf("HIGOD credits write = %d %q", rec.Code, rec.Body.String())
+		t.Fatalf("GRGOD credits write = %d %q", rec.Code, rec.Body.String())
 	}
 }
 

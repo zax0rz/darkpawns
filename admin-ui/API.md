@@ -67,7 +67,7 @@ origin. `ADMIN_PREVIEW_URL` selects the fixture address the smoke script calls
 (default `http://127.0.0.1:4350`).
 
 The development-only `/admin/component-preview.html` displays the chart foundation with
-labelled synthetic data. It is excluded from the production build. Set
+labeled synthetic data. It is excluded from the production build. Set
 `ADMIN_COMPONENT_PREVIEW=1` when running the smoke script to retain that proof.
 
 Install Playwright's Chromium if needed, or set `CHROMIUM_PATH` to an existing
