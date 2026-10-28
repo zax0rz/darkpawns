@@ -154,7 +154,7 @@ portalled overlays, restyled with the paperback tokens.
   remain to preserve existing behavior.
 - **Tabs:** ruled navigation, oxblood selection and keyboard arrow navigation.
   Preserve existing content and save boundaries.
-- **Toast:** paper-deep, status icon, readable message, labelled dismissal; errors
+- **Toast:** paper-deep, status icon, readable message, labeled dismissal; errors
   use oxblood. No shadow. Status never depends on color alone.
 - **Tooltip and DropdownMenu:** portalled paper panels, ink rules; supplement
   accessible labels rather than replace them.
