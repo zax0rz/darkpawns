@@ -197,7 +197,7 @@ func loadCostLimit(level int) (int, bool) {
 func sendLoadNarration(s *Session, roomVNum int, roomCreation, actorCreation string) {
 	gesture := fmt.Sprintf("%s makes a strange magickal gesture.\r\n", s.player.Name)
 	s.manager.BroadcastToRoom(roomVNum, []byte(gesture), s.playerName)
-	message := loadMessages[dprng.Number(0, len(loadMessages)-1)]
+	message := loadMessages[dprng.Index(dprng.Number(0, len(loadMessages)-1), len(loadMessages))]
 	s.manager.BroadcastToRoom(roomVNum, []byte(message+"\r\n"), s.playerName)
 	s.Send(message + "\r\n")
 	s.manager.BroadcastToRoom(roomVNum, []byte(roomCreation+"\r\n"), s.playerName)

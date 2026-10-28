@@ -269,7 +269,7 @@ func cmdFlee(s *Session) error {
 	newRoomVNum := -1
 	for range 6 {
 		// #nosec G404 — game RNG, not cryptographic
-		dir := allDirs[dprng.Number(0, len(allDirs)-1)]
+		dir := allDirs[dprng.Index(dprng.Number(0, len(allDirs)-1), len(allDirs))]
 		exit, hasExit := room.Exits[dir]
 		if !hasExit || exit.ToRoom == -1 {
 			continue

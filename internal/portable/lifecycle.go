@@ -14,6 +14,11 @@ import (
 	"github.com/gofrs/flock"
 )
 
+// errStartupWindow marks the instant in which a supervisor owns the run lock
+// but has not published its operator record yet. It is not a failure by
+// itself: Start waits it out (see startStatus).
+var errStartupWindow = errors.New("instance lock is held but its operator endpoint is unavailable")
+
 // Status never infers ownership from a PID or an arbitrary healthy game port.
 func Status(ctx context.Context, instance string) (RuntimeStatus, error) {
 	instance, err := canonicalInstance(instance)
@@ -32,9 +37,44 @@ func Status(ctx context.Context, instance string) (RuntimeStatus, error) {
 		return status, lockErr
 	}
 	if running {
-		return status, fmt.Errorf("instance lock is held but its operator endpoint is unavailable; inspect lib/logs/launcher.log: %w", err)
+		return status, fmt.Errorf("%w; inspect lib/logs/launcher.log: %w", errStartupWindow, err)
 	}
 	return RuntimeStatus{State: "stopped", Instance: instance}, nil
+}
+
+// startupWindowWait bounds how long Start waits for a supervisor that is still
+// starting to publish its operator record. A variable so tests need not wait
+// the full window out.
+var startupWindowWait = 5 * time.Second
+
+// startStatus reads the instance state, tolerating a supervisor that is still
+// starting. Registration can begin the instance itself — launchd's RunAtLoad
+// job boots it the moment `service install` bootstraps it, where systemd only
+// enables the unit — so for the instant between taking the run lock and
+// publishing the operator record the lock is held with no endpoint to ask.
+// Start is idempotent, so it waits for that record instead of reporting a
+// spurious failure (PR #2197). A lock that never publishes a record still fails
+// with Status's own diagnosis once the window expires.
+func startStatus(ctx context.Context, instance string) (RuntimeStatus, error) {
+	status, err := Status(ctx, instance)
+	if err == nil || !errors.Is(err, errStartupWindow) {
+		return status, err
+	}
+	wait, cancel := context.WithTimeout(ctx, startupWindowWait)
+	defer cancel()
+	tick := time.NewTicker(100 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		select {
+		case <-wait.Done():
+			return status, err
+		case <-tick.C:
+			status, err = Status(ctx, instance)
+			if err == nil || !errors.Is(err, errStartupWindow) {
+				return status, err
+			}
+		}
+	}
 }
 
 func instanceLocked(instance string) (locked bool, result error) {
@@ -80,7 +120,7 @@ func start(ctx context.Context, bundle, instance string) (RuntimeStatus, error) 
 	if resolveErr != nil {
 		return RuntimeStatus{}, resolveErr
 	}
-	status, err := Status(ctx, instance)
+	status, err := startStatus(ctx, instance)
 	if err != nil {
 		return status, err
 	}

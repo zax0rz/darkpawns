@@ -71,11 +71,38 @@ func (g *Generator) Uniform() float32 {
 
 // Number returns one random integer in the inclusive range [from, to]. It
 // consumes exactly one generator draw, including when from equals to.
+//
+// C (src/utils.c:53-63) computes (int)(uniform() * (to - from + 1)) + from with
+// uniform() = (float)cmwc_next() * 2.328306437e-10. float32 rounds the top 128
+// raw draws (0xFFFFFF80 and up) up to 2^32, so uniform() is exactly 1.0 for
+// them and C returns to+1. That value is C's, and the port keeps it — draw logs
+// and dice() stay byte-identical (R1, R3). Callers that index a slice with the
+// result must convert it with Index, because C's own callers read out of bounds
+// at that draw (world[to_room], src/db.c:2119 and 2135): undefined behaviour,
+// not the game (R1a). Taught by the macOS CI panic "index out of range [8218]
+// with length 8218" in pickRandomZoneRoom (PR #2195).
 func (g *Generator) Number(from, to int) int {
 	if from > to {
 		from, to = to, from
 	}
 	return int(g.Uniform()*float32(to-from+1)) + from
+}
+
+// Index turns a Number draw into a valid zero-based index for size entries.
+// C's callers index straight into an array with the draw, so the draw that lands
+// one past the inclusive maximum reads past the end of it (R1a). The source
+// intends a valid index, and clamping keeps the draw stream identical to C's
+// instead of spending a second draw on a retry. Callers must have rejected an
+// empty slice first.
+func Index(draw, size int) int {
+	switch {
+	case size < 1, draw < 0:
+		return 0
+	case draw >= size:
+		return size - 1
+	default:
+		return draw
+	}
 }
 
 // Dice returns the sum of num rolls in [1, size], consuming exactly num draws.

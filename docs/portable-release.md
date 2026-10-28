@@ -222,6 +222,13 @@ exit, then terminates a stuck child and reports failure. Inspect the log and dat
 before restarting after that failure. `status --json` and `doctor --json` provide
 structured output; doctor exits nonzero when it finds a problem.
 
+A stop that arrives before the bundled server has finished loading its world is
+still the stop the operator asked for. Until then the server has not installed its
+signal handler — as in C, where `signal_setup()` follows `boot_db()` — so the
+launcher's interrupt ends it with the default action, and that is recorded as a
+completed stop. A signal death after readiness means the game died without running
+its shutdown path and is still reported as a failed shutdown.
+
 Background output goes to `lib/logs/launcher.log`. Keep the extracted release
 in place while it is running. Foreground `run` instances can also be inspected
 and stopped by these commands. Stopped worlds keep all their data and secrets.
@@ -250,6 +257,11 @@ without deleting the world. Registration names derive from the canonical instanc
 path, so multiple worlds stay separate. Existing definitions are refused. Changes to owned Linux/macOS files or the
 Windows launch action are refused. A failed registration retains owned files for diagnosis and cleanup;
 Windows rolls back its local record if task creation fails.
+
+Linux and Windows registration only schedules the world for the next sign-in, while
+macOS `launchctl bootstrap` starts the registered job at once. `start` waits for a
+registration that is already starting the world and then reports readiness, so
+`service install` followed by `start` works on every platform.
 
 | Platform | Current-user startup mechanism | Requirements |
 |---|---|---|

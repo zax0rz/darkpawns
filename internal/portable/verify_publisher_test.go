@@ -64,6 +64,14 @@ func hashPath(t *testing.T, path string) string {
 // root, and a signed publisher record covering both.
 func writeSignedBundle(t *testing.T, dir string, key publisherKey) string {
 	t.Helper()
+	return writeSignedBundleWithServer(t, dir, key, "#!/bin/sh\nexit 0\n")
+}
+
+// writeSignedBundleWithServer is writeSignedBundle with an explicit
+// darkpawns-server body, so lifecycle tests can run a stand-in for the bundled
+// game binary and still pass the real publisher gate.
+func writeSignedBundleWithServer(t *testing.T, dir string, key publisherKey, server string) string {
+	t.Helper()
 	assets := filepath.Join(dir, "release-assets")
 	dataFiles := map[string]string{
 		"lib/world/wld/index":      "index\n",
@@ -80,8 +88,8 @@ func writeSignedBundle(t *testing.T, dir string, key publisherKey) string {
 			t.Fatal(err)
 		}
 	}
-	for _, name := range []string{"darkpawns", "darkpawns-server"} {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+	for name, body := range map[string]string{"darkpawns": "#!/bin/sh\nexit 0\n", "darkpawns-server": server} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o755); err != nil {
 			t.Fatal(err)
 		}
 	}

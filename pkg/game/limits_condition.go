@@ -475,7 +475,7 @@ func (w *World) decayCorpse(obj *ObjectInstance, location ObjectLocation, roomVN
 			}
 			// #nosec G404 — game RNG, not cryptographic
 			// #nosec G404
-			message := messages[dprng.Number(0, len(messages)-1)]
+			message := messages[dprng.Index(dprng.Number(0, len(messages)-1), len(messages))]
 			Act(w, true, actors[0], nil, obj, nil, message, "", ToRoom)
 			Act(w, true, actors[0], nil, obj, nil, message, "", ToChar)
 		}

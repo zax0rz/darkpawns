@@ -19,3 +19,7 @@ func interruptProcess(process *os.Process) error {
 	}
 	return windows.GenerateConsoleCtrlEvent(windows.CTRL_BREAK_EVENT, uint32(process.Pid))
 }
+
+// interruptedByRequest is POSIX-only: a console control event is not reported
+// as a wait status, so a Windows child always leaves a normal exit code.
+func interruptedByRequest(error) bool { return false }
