@@ -23,6 +23,7 @@ var (
 func command() *cobra.Command {
 	root := &cobra.Command{Use: "darkpawns", Short: "Run a private Dark Pawns instance from a portable release", SilenceUsage: true, SilenceErrors: true, Version: version + " (" + commit + ")"}
 	var instance string
+	root.PersistentFlags().Bool("plain", false, "Keep legacy plain output; disable interactive presentation")
 	root.PersistentFlags().StringVar(&instance, "instance", "", "Instance directory outside the release (required for init/run)")
 	bundle := func() (string, error) {
 		path, err := os.Executable()
@@ -69,6 +70,7 @@ func command() *cobra.Command {
 	root.AddCommand(desktopCommand(bundle, portable.Start, openBrowser))
 	addLifecycle(root, &instance, bundle)
 	addUpdate(root, &instance, bundle)
+	addInstances(root)
 	return root
 }
 
