@@ -17,12 +17,19 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/auth"
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
+	"github.com/zax0rz/darkpawns/pkg/validation"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // OfflinePlayerReserver holds the same name reservation as character entry.
 // A missing provider disables edits instead of racing a login.
 type OfflinePlayerReserver interface{ ReserveOfflinePlayer(string) (func(), bool) }
+
+type OfflinePlayerRenameReserver interface {
+	ReserveOfflineRename(oldName, newName string) (func(), bool)
+}
+
+type PlayerRenameObserver interface{ PlayerRenamed(oldName, newName string) }
 
 type playerField struct {
 	Key   string `json:"key"`
@@ -50,6 +57,44 @@ var playerFields = []playerField{
 	{"cha", "Charisma", 1, 25, "Attributes"},
 }
 
+type playerFlagField struct {
+	Key         string `json:"key"`
+	Label       string `json:"label"`
+	Description string `json:"description"`
+	MinLevel    int    `json:"min_level"`
+	Enabled     bool   `json:"enabled"`
+	Editable    bool   `json:"editable"`
+}
+
+type playerFlagSpec struct {
+	Key, Label, Description string
+	Bit                     int
+	MinLevel                int
+	Inverted                bool
+	ColorPair               bool
+}
+
+// These are the PC BINARY fields from the do_set field table
+// (src/act.wizard.c:2547-2597), plus CRYO from src/constants.c's player_bits[]
+// table. CRYO has no do_set field; its HIGOD toggle is an explicit admin
+// extension. DELETED is read-only here and changed by the admin delete action.
+var playerFlagSpecs = []playerFlagSpec{
+	{"brief", "Brief descriptions", "Shows shorter room descriptions.", game.PrfBrief, game.LVL_GOD, false, false},
+	{"invstart", "Start invisible", "Starts the character unseen.", game.PlrInvstart, game.LVL_GOD, false, false},
+	{"can_be_summoned", "Can be summoned", "Allows other characters to summon this character.", game.PrfSummonable, game.LVL_GRGOD, false, false},
+	{"nohassle", "No hassle", "Turns off many interruptions for this character.", game.PrfNohassle, game.LVL_GRGOD, false, false},
+	{"frozen", "Frozen", "Stops this character from entering the game.", game.PlrFrozen, game.LVL_GRGOD, false, false},
+	{"outlaw", "Outlaw", "Marks this character as an outlaw.", game.PlrOutlaw, game.LVL_GOD, false, false},
+	{"roomflag", "Show room flags", "Shows room details in room descriptions.", game.PrfRoomFlags, game.LVL_GRGOD, false, false},
+	{"siteok", "Site-cleared", "Allows this character to enter from a normally blocked site.", game.PlrSiteok, game.LVL_GRGOD, false, false},
+	{"nowizlist", "Hidden from staff list", "Hides this character from the staff list.", game.PlrNowizlist, game.LVL_GOD, false, false},
+	{"quest", "Questing", "Marks this character as taking part in a quest.", game.PrfQuest, game.LVL_GOD, false, false},
+	{"color", "Color", "Shows colored text for this character.", game.PrfColor1, game.LVL_GOD, false, true},
+	{"nodelete", "Protected from deletion", "Stops the player from deleting this character in game.", game.PlrNODELETE, game.LVL_GOD, false, false},
+	{"chosen", "Chosen", "Allows this character to use extra staff actions.", game.PlrChosen, game.LVL_GRGOD, false, false},
+	{"cryo", "Cryo-saved", "Marks this character for cryogenic storage.", game.PlrCRYO, game.LVL_GRGOD, false, false},
+}
+
 type savedPlayerItem struct {
 	Index  int    `json:"index"`
 	VNum   int    `json:"vnum"`
@@ -57,6 +102,7 @@ type savedPlayerItem struct {
 	Count  int    `json:"count"`
 	Locate int    `json:"locate"`
 	Parent int    `json:"parent"`
+	NoRent bool   `json:"no_rent"`
 }
 type savedPlayerResponse struct {
 	Name        string            `json:"name"`
@@ -64,6 +110,7 @@ type savedPlayerResponse struct {
 	Revision    string            `json:"revision"`
 	Values      map[string]int    `json:"values"`
 	Fields      []playerField     `json:"fields"`
+	Flags       []playerFlagField `json:"flags"`
 	Inventory   []savedPlayerItem `json:"inventory"`
 	Equipment   []savedPlayerItem `json:"equipment"`
 	Slots       []playerSlot      `json:"slots"`
@@ -84,6 +131,34 @@ type (
 			Values   map[string]int `json:"values" doc:"Changed numeric fields from the field catalog"`
 		}
 	}
+	editSavedPlayerFlagsInput struct {
+		Name string `path:"name"`
+		Body struct {
+			Revision string          `json:"revision" minLength:"64" maxLength:"64"`
+			Flags    map[string]bool `json:"flags"`
+		}
+	}
+	renameSavedPlayerInput struct {
+		Name string `path:"name"`
+		Body struct {
+			Revision string `json:"revision" minLength:"64" maxLength:"64"`
+			NewName  string `json:"new_name" minLength:"2" maxLength:"80"`
+		}
+	}
+	deleteSavedPlayerInput struct {
+		Name string `path:"name"`
+		Body struct {
+			Revision    string `json:"revision" minLength:"64" maxLength:"64"`
+			ConfirmName string `json:"confirm_name,omitempty" maxLength:"80"`
+		}
+	}
+	deleteSavedPlayerResponse struct {
+		Name           string `json:"name"`
+		MarkedDeleted  bool   `json:"marked_deleted"`
+		AliasesRemoved bool   `json:"aliases_removed"`
+		ClanCleared    bool   `json:"clan_cleared"`
+	}
+	deleteSavedPlayerOutput struct{ Body deleteSavedPlayerResponse }
 )
 
 type resetSavedPasswordInput struct {
@@ -115,9 +190,45 @@ func playerValues(r *db.PlayerRecord) map[string]*int {
 	return map[string]*int{"level": &r.Level, "exp": &r.Exp, "health": &r.Health, "max_health": &r.MaxHealth, "mana": &r.Mana, "max_mana": &r.MaxMana, "move": &r.Move, "max_move": &r.MaxMove, "str": &r.StatStr, "str_add": &r.StatStrAdd, "int": &r.StatInt, "wis": &r.StatWis, "dex": &r.StatDex, "con": &r.StatCon, "cha": &r.StatCha}
 }
 
-func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sessions any, logger *audit.AuditLogger) {
+func playerFlagCatalog(raw []byte, actorLevel, targetLevel int) ([]playerFlagField, error) {
+	flags, err := game.CharacterDataFlags(raw)
+	if err != nil {
+		return nil, err
+	}
+	fields := make([]playerFlagField, 0, len(playerFlagSpecs)+1)
+	for _, spec := range playerFlagSpecs {
+		enabled := flags&(uint64(1)<<uint(spec.Bit)) != 0
+		if spec.ColorPair {
+			enabled = enabled && flags&(uint64(1)<<uint(game.PrfColor2)) != 0
+		}
+		fields = append(fields, playerFlagField{
+			Key: spec.Key, Label: spec.Label, Description: spec.Description,
+			MinLevel: spec.MinLevel, Enabled: enabled,
+			Editable: actorLevel >= spec.MinLevel && (actorLevel >= game.LVL_IMPL || targetLevel < actorLevel),
+		})
+	}
+	fields = append(fields, playerFlagField{
+		Key: "deleted", Label: "Deleted", Description: "Use Delete on the Identity tab to remove this character and free the name.",
+		MinLevel: game.LVL_GRGOD, Enabled: flags&(uint64(1)<<uint(game.PlrDeleted)) != 0,
+		Editable: false,
+	})
+	return fields, nil
+}
+
+func playerFlagSpecByKey(key string) (playerFlagSpec, bool) {
+	for _, spec := range playerFlagSpecs {
+		if spec.Key == key {
+			return spec, true
+		}
+	}
+	return playerFlagSpec{}, false
+}
+
+func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sessions any, logger *audit.AuditLogger, externalRenameObserver PlayerRenameObserver) {
 	gate := playerEditorGate(database)
 	reserver, _ := sessions.(OfflinePlayerReserver)
+	renameReserver, _ := sessions.(OfflinePlayerRenameReserver)
+	renameObserver, _ := sessions.(PlayerRenameObserver)
 	// Reserve before reading the character, and keep it through commit. Even a
 	// descriptor waiting at the menu owns the identity and blocks this editor.
 	load := func(ctx context.Context, name, revision string) (*db.PlayerRecord, func(), error) {
@@ -156,7 +267,7 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 			updated.FailedLoginAttempts = 0
 			updated.LockedUntil = nil
 		}
-		out, err := savedPlayerView(world, updated)
+		out, err := savedPlayerView(world, updated, fileEditLevel(ctx))
 		if err != nil {
 			return nil, err
 		}
@@ -179,8 +290,8 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 		Query string `query:"q" maxLength:"80"`
 	}
 	type listOutput struct{ Body []string }
-	huma.Register(api, huma.Operation{OperationID: "list-saved-players", Method: http.MethodGet, Path: "/admin/characters", Summary: "Search saved characters (HIGOD)", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *listInput) (*listOutput, error) {
-		names, err := database.ListPlayerNames()
+	huma.Register(api, huma.Operation{OperationID: "list-saved-players", Method: http.MethodGet, Path: "/admin/characters", Summary: "Find saved characters", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *listInput) (*listOutput, error) {
+		names, err := database.ListActivePlayerNames()
 		if err != nil {
 			return nil, huma.Error500InternalServerError("Could not list characters")
 		}
@@ -192,15 +303,15 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 		}
 		return &listOutput{Body: found}, nil
 	})
-	huma.Register(api, huma.Operation{OperationID: "get-saved-player", Method: http.MethodGet, Path: "/admin/characters/{name}", Summary: "Read a disconnected saved character (HIGOD)", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *savedPlayerInput) (*savedPlayerOutput, error) {
+	huma.Register(api, huma.Operation{OperationID: "get-saved-player", Method: http.MethodGet, Path: "/admin/characters/{name}", Summary: "Open a disconnected character", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *savedPlayerInput) (*savedPlayerOutput, error) {
 		r, release, err := load(ctx, in.Name, "")
 		if err != nil {
 			return nil, err
 		}
 		defer release()
-		return savedPlayerView(world, r)
+		return savedPlayerView(world, r, fileEditLevel(ctx))
 	})
-	huma.Register(api, huma.Operation{OperationID: "edit-saved-player", Method: http.MethodPatch, Path: "/admin/characters/{name}", Summary: "Update disconnected character stats with revision check", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *editSavedPlayerInput) (*savedPlayerOutput, error) {
+	huma.Register(api, huma.Operation{OperationID: "edit-saved-player", Method: http.MethodPatch, Path: "/admin/characters/{name}", Summary: "Update a disconnected character's details", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *editSavedPlayerInput) (*savedPlayerOutput, error) {
 		r, release, err := load(ctx, in.Name, in.Body.Revision)
 		if err != nil {
 			return nil, err
@@ -231,9 +342,217 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 		}
 		return save(ctx, &updated, r, nil, false, "admin_character_stats")
 	})
-	huma.Register(api, huma.Operation{OperationID: "reset-saved-player-password", Method: http.MethodPost, Path: "/admin/characters/{name}/password", Summary: "Set a disconnected character password and clear login lockout", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *resetSavedPasswordInput) (*savedPlayerOutput, error) {
+	huma.Register(api, huma.Operation{OperationID: "edit-saved-player-flags", Method: http.MethodPatch, Path: "/admin/characters/{name}/flags", Summary: "Update disconnected character flags with level gates", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *editSavedPlayerFlagsInput) (*savedPlayerOutput, error) {
+		r, release, err := load(ctx, in.Name, in.Body.Revision)
+		if err != nil {
+			return nil, err
+		}
+		defer release()
+		actorLevel := fileEditLevel(ctx)
+		flags, err := game.CharacterDataFlags(r.CharacterData)
+		if err != nil {
+			return nil, huma.Error409Conflict("Character flags are malformed; no changes were applied")
+		}
+		for key, enabled := range in.Body.Flags {
+			spec, ok := playerFlagSpecByKey(key)
+			if !ok {
+				return nil, huma.Error400BadRequest("Unknown or read-only character flag: " + key)
+			}
+			if actorLevel < spec.MinLevel || (actorLevel < game.LVL_IMPL && r.Level >= actorLevel) {
+				return nil, huma.Error403Forbidden("Your staff level cannot change " + spec.Label)
+			}
+			mask := uint64(1) << uint(spec.Bit)
+			if enabled {
+				flags |= mask
+			} else {
+				flags &^= mask
+			}
+			if spec.ColorPair {
+				color2 := uint64(1) << uint(game.PrfColor2)
+				if enabled {
+					flags |= color2
+				} else {
+					flags &^= color2
+				}
+			}
+		}
+		updated := *r
+		updated.CharacterData, err = game.SetCharacterDataFlags(r.CharacterData, flags)
+		if err != nil {
+			return nil, huma.Error409Conflict("Character flags are malformed; no changes were applied")
+		}
+		return save(ctx, &updated, r, nil, false, "admin_character_flags")
+	})
+	huma.Register(api, huma.Operation{OperationID: "rename-saved-player", Method: http.MethodPost, Path: "/admin/characters/{name}/rename", Summary: "Rename a disconnected character and its references", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *renameSavedPlayerInput) (*savedPlayerOutput, error) {
+		if renameReserver == nil {
+			return nil, huma.Error503ServiceUnavailable("Offline rename is unavailable on this server")
+		}
+		newName := strings.TrimLeft(in.Body.NewName, " \t\n\r\v\f")
+		if !validation.IsCharacterCreationNameSyntax(newName) {
+			return nil, huma.Error400BadRequest("Use a 2 to 20 letter name allowed at character creation")
+		}
+		if validation.IsReservedPlayerName(newName) {
+			return nil, huma.Error400BadRequest("That name cannot be used")
+		}
+		if !game.ValidNameNoActive(newName) {
+			return nil, huma.Error400BadRequest("That name cannot be used")
+		}
+		release, ok := renameReserver.ReserveOfflineRename(in.Name, newName)
+		if !ok {
+			return nil, huma.Error409Conflict("Player is connected, linkdead, entering, or writing. Disconnect fully, then reload.")
+		}
+		defer release()
+		original, err := database.GetPlayer(in.Name)
+		if err != nil {
+			return nil, huma.Error500InternalServerError("Could not read saved character")
+		}
+		if original == nil || game.CharacterDataDeleted(original.CharacterData) {
+			return nil, huma.Error404NotFound("Saved character not found")
+		}
+		actorLevel := fileEditLevel(ctx)
+		if actorLevel < game.LVL_IMPL && original.Level >= actorLevel {
+			return nil, huma.Error403Forbidden("You can edit only characters below your level")
+		}
+		if in.Body.Revision != playerRevision(original) {
+			return nil, huma.Error409Conflict("Character changed. Reload before renaming.")
+		}
+		if newName == original.Name {
+			return savedPlayerView(world, original, actorLevel)
+		}
+		if collision, err := database.GetPlayer(newName); err != nil {
+			return nil, huma.Error500InternalServerError("Could not check the requested name")
+		} else if collision != nil && collision.ID != original.ID {
+			return nil, huma.Error409Conflict("That name already belongs to another character")
+		}
+		updated := *original
+		updated.Name = newName
+		updated.CharacterData, err = game.RenameCharacterData(original.CharacterData, newName)
+		if err != nil {
+			return nil, huma.Error409Conflict("Character data is malformed; no changes were applied")
+		}
+		out, err := savedPlayerView(world, &updated, actorLevel)
+		if err != nil {
+			return nil, err
+		}
+		if err := game.ValidateAliasRename(original.Name, newName); err != nil {
+			return nil, huma.Error409Conflict("Could not move the character's alias file; no changes were applied")
+		}
+		prepareRename := func(snapshot []byte) error {
+			return database.PrepareCharacterRename(original.Name, newName, snapshot)
+		}
+		if world != nil && world.Boards != nil {
+			_, err = world.Boards.RenameAuthorWithPrepare(original.Name, newName, prepareRename)
+			if err != nil {
+				if recoveryErr := recoverPendingCharacterRenames(world, database); recoveryErr != nil {
+					slog.Error("recover character references after board rename failure", "player", original.Name, "error", recoveryErr)
+				}
+				return nil, huma.Error409Conflict("Could not update the character's board headings; no changes were applied")
+			}
+		} else if err := prepareRename(nil); err != nil {
+			return nil, huma.Error500InternalServerError("Could not prepare character rename; no changes were applied")
+		}
+		if _, err := game.RenameAliases(original.Name, newName); err != nil {
+			if recoveryErr := recoverPendingCharacterRenames(world, database); recoveryErr != nil {
+				slog.Error("recover character references after alias rename failure", "player", original.Name, "error", recoveryErr)
+			}
+			return nil, huma.Error409Conflict("Could not move the character's alias file; no changes were applied")
+		}
+		if err := database.RenamePlayerIfCurrent(&updated, original); err != nil {
+			if recoveryErr := recoverPendingCharacterRenames(world, database); recoveryErr != nil {
+				slog.Error("recover character references after database rename failure", "player", original.Name, "error", recoveryErr)
+			}
+			switch {
+			case errors.Is(err, db.ErrPlayerRecordChanged):
+				return nil, huma.Error409Conflict("Character changed. Reload before renaming.")
+			case errors.Is(err, db.ErrPlayerNameTaken), errors.Is(err, db.ErrRenameReferenceConflict):
+				return nil, huma.Error409Conflict("That name or one of its saved references is already in use")
+			default:
+				slog.Error("admin saved character rename failed", "player", original.Name, "new_name", newName, "error", err)
+				return nil, huma.Error500InternalServerError("Could not rename character; no changes were applied")
+			}
+		}
+		if renameObserver != nil {
+			renameObserver.PlayerRenamed(original.Name, newName)
+		}
+		if externalRenameObserver != nil {
+			externalRenameObserver.PlayerRenamed(original.Name, newName)
+		}
+		auditAdmin(ctx, logger, "admin_character_rename", fmt.Sprintf("renamed character %s to %s", original.Name, newName), true)
+		return out, nil
+	})
+	huma.Register(api, huma.Operation{OperationID: "delete-saved-player", Method: http.MethodPost, Path: "/admin/characters/{name}/delete", Summary: "Delete an offline character from the admin console", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *deleteSavedPlayerInput) (*deleteSavedPlayerOutput, error) {
+		claims, ok := auth.GetClaimsFromContext(ctx)
+		if ok && strings.EqualFold(claims.PlayerName, in.Name) {
+			return nil, huma.Error403Forbidden("You cannot delete your own character")
+		}
+		if reserver == nil {
+			return nil, huma.Error503ServiceUnavailable("Offline editing is unavailable on this server")
+		}
+		release, ok := reserver.ReserveOfflinePlayer(in.Name)
+		if !ok {
+			return nil, huma.Error409Conflict("Character is connected or entering the game. Disconnect fully, then reload.")
+		}
+		defer release()
+		r, err := database.GetPlayer(in.Name)
+		if err != nil {
+			return nil, huma.Error500InternalServerError("Could not read saved character")
+		}
+		if r == nil || game.CharacterDataDeleted(r.CharacterData) {
+			return nil, huma.Error404NotFound("Saved character not found")
+		}
+		if r.Level >= game.LVL_IMPL {
+			return nil, huma.Error403Forbidden("Level 40 characters cannot be deleted")
+		}
+		if in.Body.Revision != playerRevision(r) {
+			return nil, huma.Error409Conflict("Character changed. Reload before deleting.")
+		}
+		if r.Level >= game.LVL_IMMORT && strings.TrimSpace(in.Body.ConfirmName) != r.Name {
+			return nil, huma.Error400BadRequest("Type the character's full name to confirm deletion")
+		}
+		flags, err := game.CharacterDataFlags(r.CharacterData)
+		if err != nil {
+			return nil, huma.Error409Conflict("Character data is malformed; no changes were applied")
+		}
+		clanID, clanRank, err := game.CharacterDataClan(r.CharacterData)
+		if err != nil {
+			return nil, huma.Error409Conflict("Character data is malformed; no changes were applied")
+		}
+		clearClan := clanID != 0 || clanRank != 0
+		updated := *r
+		flags |= uint64(1) << uint(game.PlrDeleted)
+		updated.CharacterData, err = game.SetCharacterDataFlags(updated.CharacterData, flags)
+		if err != nil {
+			return nil, huma.Error409Conflict("Character data is malformed; no changes were applied")
+		}
+		if clearClan {
+			updated.CharacterData, err = game.SetCharacterDataClan(updated.CharacterData, 0, 0)
+			if err != nil {
+				return nil, huma.Error409Conflict("Character data is malformed; no changes were applied")
+			}
+		}
+		updated.Inventory, updated.Equipment = []byte("[]"), []byte("{}")
+		if err := database.DeleteCharacterAdminIfCurrent(&updated, r); err != nil {
+			if errors.Is(err, db.ErrPlayerRecordChanged) {
+				return nil, huma.Error409Conflict("Character changed. Reload before deleting.")
+			}
+			slog.Error("admin saved character deletion failed", "player", r.Name, "error", err)
+			return nil, huma.Error500InternalServerError("Could not delete character; no changes were applied")
+		}
+		if clearClan && world != nil && world.Clans != nil {
+			world.Clans.RemoveAdminDeletedMember(clanID, clanRank, r.Level)
+		}
+		aliasesRemoved := true
+		if err := game.DeleteAliases(r.Name); err != nil {
+			aliasesRemoved = false
+			slog.Error("admin delete character aliases failed", "player", r.Name, "error", err)
+		}
+		markedDeleted := true
+		auditAdmin(ctx, logger, "admin_character_delete", fmt.Sprintf("deleted character %s (level %d)", r.Name, r.Level), true)
+		return &deleteSavedPlayerOutput{Body: deleteSavedPlayerResponse{Name: r.Name, MarkedDeleted: markedDeleted, AliasesRemoved: aliasesRemoved, ClanCleared: clearClan}}, nil
+	})
+	huma.Register(api, huma.Operation{OperationID: "reset-saved-player-password", Method: http.MethodPost, Path: "/admin/characters/{name}/password", Summary: "Change a disconnected character's password", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *resetSavedPasswordInput) (*savedPlayerOutput, error) {
 		if len(in.Body.Password) < 8 || len(in.Body.Password) > 72 {
-			return nil, huma.Error400BadRequest("Use a password of 8 to 72 bytes")
+			return nil, huma.Error400BadRequest("Use a password from 8 to 72 characters long")
 		}
 		hash, err := bcrypt.GenerateFromPassword([]byte(in.Body.Password), bcrypt.DefaultCost)
 		if err != nil {
@@ -248,7 +567,7 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 		secret := string(hash)
 		return save(ctx, &updated, r, &secret, false, "admin_character_password")
 	})
-	huma.Register(api, huma.Operation{OperationID: "edit-saved-player-items", Method: http.MethodPost, Path: "/admin/characters/{name}/items", Summary: "Grant, remove or relocate saved objects with revision check", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *editPlayerItemsInput) (*savedPlayerOutput, error) {
+	huma.Register(api, huma.Operation{OperationID: "edit-saved-player-items", Method: http.MethodPost, Path: "/admin/characters/{name}/items", Summary: "Add, remove, or move a character's items", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *editPlayerItemsInput) (*savedPlayerOutput, error) {
 		r, release, err := load(ctx, in.Name, in.Body.Revision)
 		if err != nil {
 			return nil, err
@@ -263,7 +582,7 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 }
 
 func playerEditorGate(database *db.DB) func(huma.Context, func(huma.Context)) {
-	return staffAdminGate(database, "Player editing requires HIGOD")
+	return staffAdminGate(database, "Player editing requires admin access")
 }
 
 func staffAdminGate(database *db.DB, denied string) func(huma.Context, func(huma.Context)) {
@@ -312,13 +631,18 @@ func decodeEditorItems(raw []byte) ([]game.SaveItemData, error) {
 	return items, nil
 }
 
-func savedPlayerView(world *game.World, r *db.PlayerRecord) (*savedPlayerOutput, error) {
+func savedPlayerView(world *game.World, r *db.PlayerRecord, actorLevel int) (*savedPlayerOutput, error) {
 	var lastSaved *time.Time
 	if r.LastLogon > 0 {
 		timestamp := time.Unix(r.LastLogon, 0).UTC()
 		lastSaved = &timestamp
 	}
 	out := savedPlayerResponse{Name: r.Name, LastSavedAt: lastSaved, Revision: playerRevision(r), Fields: playerFields, Values: map[string]int{}, Inventory: []savedPlayerItem{}, Equipment: []savedPlayerItem{}, Slots: []playerSlot{}}
+	flags, err := playerFlagCatalog(r.CharacterData, actorLevel, r.Level)
+	if err != nil {
+		return nil, huma.Error409Conflict("Character flags are malformed")
+	}
+	out.Flags = flags
 	for key, value := range playerValues(r) {
 		out.Values[key] = *value
 	}
@@ -337,10 +661,12 @@ func savedPlayerView(world *game.World, r *db.PlayerRecord) (*savedPlayerOutput,
 		}
 		for i, item := range items {
 			name := "Unknown object"
+			noRent := false
 			if proto, ok := world.GetObjPrototype(item.VNum); ok {
 				name = proto.ShortDesc
+				noRent = proto.ExtraFlags[0]&game.FlagNoRent != 0
 			}
-			row := savedPlayerItem{i, item.VNum, name, max(1, item.Count), item.Locate, item.ContainerIndex}
+			row := savedPlayerItem{Index: i, VNum: item.VNum, Name: name, Count: max(1, item.Count), Locate: item.Locate, Parent: item.ContainerIndex, NoRent: noRent}
 			if equipped {
 				out.Equipment = append(out.Equipment, row)
 			} else {

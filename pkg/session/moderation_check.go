@@ -15,6 +15,14 @@ func NewModerationAdapter(mod *moderation.Manager) *ModerationAdapter {
 	return &ModerationAdapter{mod: mod}
 }
 
+// RenamePlayerName refreshes the moderation caches after the caller commits
+// the corresponding player_name rows in the shared database transaction.
+func (a *ModerationAdapter) RenamePlayerName(oldName, newName string) {
+	if a != nil && a.mod != nil {
+		a.mod.RenamePlayerName(oldName, newName)
+	}
+}
+
 // CheckPreCommand checks if a player is muted or banned before executing a command.
 // Only blocks for non-communication commands (let communication flow through CheckMessage).
 func (a *ModerationAdapter) CheckPreCommand(playerName string, command string) (string, bool) {

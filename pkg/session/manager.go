@@ -292,6 +292,20 @@ func (m *Manager) SetModerationChecker(mc ModerationChecker) {
 	m.modChecker = mc
 }
 
+// PlayerRenamed moves ephemeral account throttles and moderation caches after
+// the admin editor commits the durable character rename.
+func (m *Manager) PlayerRenamed(oldName, newName string) {
+	if m == nil || strings.EqualFold(oldName, newName) {
+		return
+	}
+	if m.accountBudget != nil {
+		m.accountBudget.Rename(oldName, newName)
+	}
+	if renamed, ok := m.modChecker.(interface{ RenamePlayerName(string, string) }); ok {
+		renamed.RenamePlayerName(oldName, newName)
+	}
+}
+
 // NewManager creates a new session manager.
 func NewManager(world *game.World, database db.GameStore) *Manager {
 	ce := combat.NewCombatEngine()

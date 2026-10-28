@@ -20,6 +20,8 @@ export type WorldSearchHit = components['schemas']['WorldSearchHit'];
 export type WorldSearchResponse = components['schemas']['WorldSearchResponse'];
 export type SavedPlayerItem = components['schemas']['SavedPlayerItem'];
 export type SavedPlayer = components['schemas']['SavedPlayerResponse'];
+export type SavedPlayerFlag = components['schemas']['PlayerFlagField'];
+export type SavedPlayerDeletion = components['schemas']['DeleteSavedPlayerResponse'];
 export type NotificationConfig = components['schemas']['Config'];
 export type NotificationStatus = components['schemas']['Status'];
 export type NotificationView = components['schemas']['View'];
@@ -84,6 +86,12 @@ export const playerEditor = {
   get: (name: string) => read(http.GET('/admin/characters/{name}', { params: { path: { name: name } } })),
   stats: (name: string, revision: string, values: Record<string, number>) =>
     read(http.PATCH('/admin/characters/{name}', { params: { path: { name: name } }, body: { revision, values } })),
+  flags: (name: string, revision: string, flags: Record<string, boolean>) =>
+    read(http.PATCH('/admin/characters/{name}/flags', { params: { path: { name: name } }, body: { revision, flags } })),
+  rename: (name: string, revision: string, newName: string) =>
+    read(http.POST('/admin/characters/{name}/rename', { params: { path: { name: name } }, body: { revision, new_name: newName } })),
+  delete: (name: string, revision: string, confirmName = '') =>
+    read(http.POST('/admin/characters/{name}/delete', { params: { path: { name: name } }, body: { revision, confirm_name: confirmName } })),
   password: (name: string, revision: string, password: string) =>
     read(http.POST('/admin/characters/{name}/password', { params: { path: { name: name } }, body: { revision, password } })),
   items: (name: string, revision: string, data: { action: 'grant' | 'move' | 'remove'; source: 'inventory' | 'equipment'; index: number; vnum: number; locate: number }) =>

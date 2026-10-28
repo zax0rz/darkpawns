@@ -43,6 +43,7 @@ type routerConfig struct {
 	buildVersion  string
 	buildCommit   string
 	accountBudget *auth.AccountBudgetTracker
+	playerRenameObserver PlayerRenameObserver
 }
 
 // WithSharedSpec registers the router's Huma operations into doc, the
@@ -61,6 +62,12 @@ func WithHistory(history *telemetry.History) RouterOption {
 // it the admin surface is unchanged.
 func WithMudlogFeed(feed *mudlog.Feed) RouterOption {
 	return func(c *routerConfig) { c.mudlogFeed = feed }
+}
+
+// WithPlayerRenameObserver registers a cache that stores the stable player ID
+// under a character name. It is notified after the rename transaction commits.
+func WithPlayerRenameObserver(observer PlayerRenameObserver) RouterOption {
+	return func(c *routerConfig) { c.playerRenameObserver = observer }
 }
 
 // routerInternal is the full router construction result. NewRouter returns
@@ -89,6 +96,9 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	var cfg routerConfig
 	for _, opt := range opts {
 		opt(&cfg)
+	}
+	if err := recoverPendingCharacterRenames(world, database); err != nil {
+		return nil, fmt.Errorf("recover interrupted character rename before starting admin router: %w", err)
 	}
 
 	mux := http.NewServeMux()
@@ -290,8 +300,8 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 		// design fixed for deployment-level settings.
 		track(path, wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
 	}
-	registerPlayerEditor(ri.api, world, database, liveSessions, auditLogger)
-	for _, path := range []string{"/admin/characters", "/admin/characters/{name}", "/admin/characters/{name}/password", "/admin/characters/{name}/items"} {
+	registerPlayerEditor(ri.api, world, database, liveSessions, auditLogger, cfg.playerRenameObserver)
+	for _, path := range []string{"/admin/characters", "/admin/characters/{name}", "/admin/characters/{name}/flags", "/admin/characters/{name}/rename", "/admin/characters/{name}/delete", "/admin/characters/{name}/password", "/admin/characters/{name}/items"} {
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	}
 	if cfg.mudlogFeed != nil {

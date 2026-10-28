@@ -113,6 +113,100 @@ func CharacterDataDeleted(raw []byte) bool {
 	return migrateFlags(data.SaveVersion, data.Flags)&(1<<uint(PlrDeleted)) != 0
 }
 
+// CharacterDataFlags returns the player's current PLR/PRF flag layout from a
+// persisted character record, including migrations for older save versions.
+func CharacterDataFlags(raw []byte) (uint64, error) {
+	data, err := decodeCharacterData(raw)
+	if err != nil || data == nil {
+		return 0, err
+	}
+	return migrateFlags(data.SaveVersion, data.Flags), nil
+}
+
+// SetCharacterDataFlags writes current-layout flags while retaining all other
+// known and unknown character fields. Normalizing save_version prevents an old
+// preference layout from being migrated a second time on the next load.
+func SetCharacterDataFlags(raw []byte, flags uint64) ([]byte, error) {
+	fields := make(map[string]json.RawMessage)
+	if len(raw) != 0 {
+		if err := json.Unmarshal(raw, &fields); err != nil {
+			return nil, fmt.Errorf("decode character data: %w", err)
+		}
+	}
+	version, err := json.Marshal(CurrentSaveVersion)
+	if err != nil {
+		return nil, fmt.Errorf("encode save version: %w", err)
+	}
+	encodedFlags, err := json.Marshal(flags)
+	if err != nil {
+		return nil, fmt.Errorf("encode character flags: %w", err)
+	}
+	fields["save_version"] = version
+	fields["flags"] = encodedFlags
+	data, err := json.Marshal(fields)
+	if err != nil {
+		return nil, fmt.Errorf("encode character data: %w", err)
+	}
+	return data, nil
+}
+
+// CharacterDataClan returns the saved clan id and rank without constructing a
+// live player or restoring any saved objects.
+func CharacterDataClan(raw []byte) (int, int, error) {
+	data, err := decodeCharacterData(raw)
+	if err != nil || data == nil {
+		return 0, 0, err
+	}
+	return data.ClanID, data.ClanRank, nil
+}
+
+// SetCharacterDataClan updates only the saved clan fields and preserves other
+// character JSON fields. The caller decides whether C's clan-index rule says
+// those fields should be cleared.
+func SetCharacterDataClan(raw []byte, clanID, clanRank int) ([]byte, error) {
+	fields := make(map[string]json.RawMessage)
+	if len(raw) != 0 {
+		if err := json.Unmarshal(raw, &fields); err != nil {
+			return nil, fmt.Errorf("decode character data: %w", err)
+		}
+	}
+	encodedID, err := json.Marshal(clanID)
+	if err != nil {
+		return nil, fmt.Errorf("encode clan id: %w", err)
+	}
+	encodedRank, err := json.Marshal(clanRank)
+	if err != nil {
+		return nil, fmt.Errorf("encode clan rank: %w", err)
+	}
+	fields["clan_id"], fields["clan_rank"] = encodedID, encodedRank
+	data, err := json.Marshal(fields)
+	if err != nil {
+		return nil, fmt.Errorf("encode character data: %w", err)
+	}
+	return data, nil
+}
+
+// RenameCharacterData updates the persisted copy of ch->player.name while
+// preserving unknown JSON fields from older or newer save writers.
+func RenameCharacterData(raw []byte, name string) ([]byte, error) {
+	fields := make(map[string]json.RawMessage)
+	if len(raw) != 0 {
+		if err := json.Unmarshal(raw, &fields); err != nil {
+			return nil, fmt.Errorf("decode character data: %w", err)
+		}
+	}
+	encodedName, err := json.Marshal(name)
+	if err != nil {
+		return nil, fmt.Errorf("encode character name: %w", err)
+	}
+	fields["name"] = encodedName
+	data, err := json.Marshal(fields)
+	if err != nil {
+		return nil, fmt.Errorf("encode character data: %w", err)
+	}
+	return data, nil
+}
+
 // CharacterDataSiteOK reads the saved C PLR_SITEOK bit before object restoration.
 func CharacterDataSiteOK(raw []byte) bool {
 	var data savePlayerData

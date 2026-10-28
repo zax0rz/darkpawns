@@ -470,6 +470,35 @@ func (t *AccountBudgetTracker) RecordSuccess(account string) {
 	delete(t.accounts, account)
 }
 
+// Rename moves a pending account failure budget with the character. When the
+// new spelling already has process-local history, preserve the stricter count
+// and oldest active window instead of letting a rename reset the budget.
+func (t *AccountBudgetTracker) Rename(oldName, newName string) {
+	if t == nil || t.threshold <= 0 || strings.EqualFold(oldName, newName) {
+		return
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	var moved *accountBudget
+	for name, budget := range t.accounts {
+		if !strings.EqualFold(name, oldName) && !strings.EqualFold(name, newName) {
+			continue
+		}
+		delete(t.accounts, name)
+		if moved == nil {
+			moved = &accountBudget{failures: budget.failures, firstSeen: budget.firstSeen}
+			continue
+		}
+		moved.failures = max(moved.failures, budget.failures)
+		if budget.firstSeen.Before(moved.firstSeen) {
+			moved.firstSeen = budget.firstSeen
+		}
+	}
+	if moved != nil && time.Since(moved.firstSeen) <= t.window {
+		t.accounts[newName] = moved
+	}
+}
+
 // RecordSuccess resets the failure counter for an IP.
 func (t *LoginAttemptTracker) RecordSuccess(ip string) {
 	t.mu.Lock()

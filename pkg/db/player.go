@@ -26,6 +26,14 @@ import (
 // ErrAmbiguousPlayerName refuses legacy case-colliding rows rather than selecting an account.
 var ErrAmbiguousPlayerName = errors.New("ambiguous character name; saved records require administrator review")
 
+// ErrPlayerNameTaken is returned when either the character key or another
+// name-keyed save already belongs to the requested identity.
+var ErrPlayerNameTaken = errors.New("character name is already in use")
+
+// ErrRenameReferenceConflict is returned when another player-owned record is
+// already keyed by the requested name and cannot be moved without overwriting it.
+var ErrRenameReferenceConflict = errors.New("character rename conflicts with an existing reference")
+
 // DB wraps the database connection.
 type DB struct {
 	conn *sql.DB
@@ -308,7 +316,21 @@ func (db *DB) createTables() error {
 		}
 	}
 
-	return db.execDDL(`CREATE TABLE IF NOT EXISTS object_saves(identity TEXT PRIMARY KEY,kind INTEGER NOT NULL,objects JSON NOT NULL)`)
+	if err := db.execDDL(`CREATE TABLE IF NOT EXISTS object_saves(identity TEXT PRIMARY KEY,kind INTEGER NOT NULL,objects JSON NOT NULL)`); err != nil {
+		return err
+	}
+	if err := db.execDDL(`CREATE TABLE IF NOT EXISTS admin_character_rename_journal (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		old_name TEXT NOT NULL,
+		new_name TEXT NOT NULL,
+		board_snapshot BLOB NOT NULL DEFAULT X''
+	)`); err != nil {
+		return err
+	}
+	if err := db.execDDL(`CREATE UNIQUE INDEX IF NOT EXISTS admin_character_rename_old_key ON admin_character_rename_journal(lower(old_name))`); err != nil {
+		return err
+	}
+	return db.execDDL(`CREATE UNIQUE INDEX IF NOT EXISTS admin_character_rename_new_key ON admin_character_rename_journal(lower(new_name))`)
 }
 
 // addColumnIfNotExists applies one migration column to the players table
@@ -369,6 +391,29 @@ func (db *DB) ListPlayerNames() ([]string, error) {
 			return nil, err
 		}
 		names = append(names, name)
+	}
+	return names, rows.Err()
+}
+
+// ListActivePlayerNames returns only character rows that are not marked with
+// C's retained PLR_DELETED bit. Self-deleted records remain in players so
+// accepted creation can replace the same name with a new player ID.
+func (db *DB) ListActivePlayerNames() ([]string, error) {
+	rows, err := db.query(`SELECT name, COALESCE(character_data,'{}') FROM players ORDER BY name`)
+	if err != nil {
+		return nil, err
+	}
+	defer errlog.Close(rows, "close active player-name listing rows")
+	var names []string
+	for rows.Next() {
+		var name string
+		var characterData []byte
+		if err := rows.Scan(&name, &characterData); err != nil {
+			return nil, err
+		}
+		if !game.CharacterDataDeleted(characterData) {
+			names = append(names, name)
+		}
 	}
 	return names, rows.Err()
 }
@@ -546,6 +591,183 @@ func SavePlayerIfCurrent(store GameStore, updated, original *PlayerRecord) error
 		return ErrPlayerRecordChanged
 	}
 	return nil
+}
+
+// RenamePlayerIfCurrent updates the character row, crash/rent identity and
+// active moderation keys as one SQLite transaction. Filesystem references are
+// staged by the caller and rolled back if this transaction fails.
+func (db *DB) RenamePlayerIfCurrent(updated, original *PlayerRecord) error {
+	if updated == nil || original == nil || updated.ID != original.ID || updated.Name == original.Name {
+		return ErrPlayerRecordChanged
+	}
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
+			slog.Error("rollback player rename", "error", rollbackErr)
+		}
+	}()
+	var journalRows int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM admin_character_rename_journal WHERE lower(old_name)=lower(?) AND lower(new_name)=lower(?)`, original.Name, updated.Name).Scan(&journalRows); err != nil {
+		return err
+	}
+	if journalRows != 1 {
+		return ErrPlayerRecordChanged
+	}
+
+	query, args := playerCompareUpdate(updated, original)
+	result, err := tx.Exec(query, args...)
+	if err != nil {
+		if isUniqueConstraintError(err) {
+			return ErrPlayerNameTaken
+		}
+		return err
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrPlayerRecordChanged
+	}
+
+	oldIdentity, newIdentity := ObjectSaveIdentity(original.Name), ObjectSaveIdentity(updated.Name)
+	if oldIdentity != newIdentity {
+		var exists int
+		if err := tx.QueryRow("SELECT COUNT(*) FROM object_saves WHERE identity=?", newIdentity).Scan(&exists); err != nil {
+			return err
+		}
+		if exists != 0 {
+			return ErrRenameReferenceConflict
+		}
+		if _, err := tx.Exec("UPDATE object_saves SET identity=? WHERE identity=?", newIdentity, oldIdentity); err != nil {
+			return err
+		}
+	}
+
+	// Moderation penalties are active policy keyed by name, so they follow the
+	// character. Reports and admin logs remain historical records.
+	var hasPenaltyTable int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='player_penalties'`).Scan(&hasPenaltyTable); err != nil {
+		return err
+	}
+	if hasPenaltyTable != 0 {
+		if _, err := tx.Exec(`UPDATE player_penalties SET player_name=lower(?) WHERE lower(player_name)=lower(?)`, updated.Name, original.Name); err != nil {
+			if isUniqueConstraintError(err) {
+				return ErrRenameReferenceConflict
+			}
+			return err
+		}
+	}
+	if _, err := tx.Exec(`DELETE FROM admin_character_rename_journal WHERE lower(old_name)=lower(?) AND lower(new_name)=lower(?)`, original.Name, updated.Name); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// PendingCharacterRename is the durable recovery record for filesystem
+// references staged before RenamePlayerIfCurrent commits the relational update.
+type PendingCharacterRename struct {
+	OldName       string
+	NewName       string
+	BoardSnapshot []byte
+}
+
+// PrepareCharacterRename records enough information to restore non-SQLite
+// references if the process stops before the player transaction commits.
+func (db *DB) PrepareCharacterRename(oldName, newName string, boardSnapshot []byte) error {
+	if boardSnapshot == nil {
+		boardSnapshot = []byte{}
+	}
+	_, err := db.exec(`INSERT INTO admin_character_rename_journal (old_name,new_name,board_snapshot) VALUES (?,?,?)`, oldName, newName, boardSnapshot)
+	return err
+}
+
+// ListPendingCharacterRenames returns rename intents left by an interrupted
+// request. Startup recovery restores their external references before serving.
+func (db *DB) ListPendingCharacterRenames() ([]PendingCharacterRename, error) {
+	rows, err := db.query(`SELECT old_name,new_name,board_snapshot FROM admin_character_rename_journal ORDER BY id`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil {
+			slog.Error("close pending character renames", "error", closeErr)
+		}
+	}()
+	pending := make([]PendingCharacterRename, 0)
+	for rows.Next() {
+		var rename PendingCharacterRename
+		if err := rows.Scan(&rename.OldName, &rename.NewName, &rename.BoardSnapshot); err != nil {
+			return nil, err
+		}
+		pending = append(pending, rename)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return pending, nil
+}
+
+// ClearPendingCharacterRename removes a journal row after recovery has restored
+// every external reference. It intentionally does not hide delete failures.
+func (db *DB) ClearPendingCharacterRename(oldName, newName string) error {
+	_, err := db.exec(`DELETE FROM admin_character_rename_journal WHERE lower(old_name)=lower(?) AND lower(new_name)=lower(?)`, oldName, newName)
+	return err
+}
+
+// DeleteCharacterSelfIfCurrent preserves the persistent behavior used by the
+// in-game self-delete path.
+func (db *DB) DeleteCharacterSelfIfCurrent(updated, original *PlayerRecord) error {
+	return db.saveDeletedCharacterAndRemoveItems(updated, original)
+}
+
+// DeleteCharacterAdminIfCurrent applies the admin editor's persistent delete
+// step without changing the in-game self-delete policy.
+func (db *DB) DeleteCharacterAdminIfCurrent(updated, original *PlayerRecord) error {
+	return db.saveDeletedCharacterAndRemoveItems(updated, original)
+}
+
+func (db *DB) saveDeletedCharacterAndRemoveItems(updated, original *PlayerRecord) error {
+	if updated == nil || original == nil || updated.ID != original.ID || updated.Name != original.Name {
+		return ErrPlayerRecordChanged
+	}
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil && !errors.Is(rollbackErr, sql.ErrTxDone) {
+			slog.Error("rollback self-delete save", "error", rollbackErr)
+		}
+	}()
+	query, args := playerCompareUpdate(updated, original)
+	result, err := tx.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	count, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrPlayerRecordChanged
+	}
+	if _, err := tx.Exec("DELETE FROM object_saves WHERE identity=?", ObjectSaveIdentity(original.Name)); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func isUniqueConstraintError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "unique constraint") || strings.Contains(message, "constraint violation")
 }
 
 func playerCompareUpdate(updated, original *PlayerRecord) (string, []any) {

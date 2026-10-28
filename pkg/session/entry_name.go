@@ -11,21 +11,8 @@ import (
 // C nanny skips leading spaces before checking for the empty-name close.
 func parseEntryName(raw string) (name string, valid bool) {
 	name = strings.TrimLeft(raw, " \t\n\r\v\f")
-	if len(name) < 2 || len(name) > 20 {
-		return name, false
-	}
-	for i := 0; i < len(name); i++ {
-		letter := name[i]
-		if (letter < 'a' || letter > 'z') && (letter < 'A' || letter > 'Z') {
-			return name, false
-		}
-	}
-	switch strings.ToLower(name) {
 	// C src/interpreter.c:853-876, fill_word/reserved_word exact matches.
-	case "in", "from", "with", "the", "on", "at", "to", "a", "an", "self", "me", "all", "room", "someone", "something":
-		return name, false
-	}
-	return name, true
+	return name, validation.IsCharacterCreationNameSyntax(name)
 }
 
 // claimEntryName mirrors src/ban.c:257-291 before saved lookup. Entry names
@@ -152,4 +139,10 @@ func (m *Manager) reserveOfflineRename(oldName, newName string) (release func(),
 // while a web administrator reads and commits a saved-character edit.
 func (m *Manager) ReserveOfflinePlayer(name string) (func(), bool) {
 	return m.reserveOfflineRename(name, name)
+}
+
+// ReserveOfflineRename excludes both identities from entry while a stored
+// character and its name-keyed references are moved.
+func (m *Manager) ReserveOfflineRename(oldName, newName string) (func(), bool) {
+	return m.reserveOfflineRename(oldName, newName)
 }

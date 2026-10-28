@@ -1,12 +1,8 @@
 {
-  "generatedAt": "2026-10-18T13:50:11-04:00",
+  "generatedAt": "2026-10-27T22:55:12-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
-    {
-      "week": "2026-08-03",
-      "commits": 0
-    },
     {
       "week": "2026-08-10",
       "commits": 100
@@ -45,43 +41,47 @@
     },
     {
       "week": "2026-10-12",
-      "commits": 243
+      "commits": 245
     },
     {
       "week": "2026-10-19",
-      "commits": 0
+      "commits": 68
+    },
+    {
+      "week": "2026-10-26",
+      "commits": 40
     }
   ],
   "recentCommits": [
     {
-      "sha": "d81fbb59017369d499473437e0b952e605fa408a",
-      "date": "2026-10-18",
-      "title": "Merge remote-tracking branch 'origin/cline/dp1452-1453' into claude/batch-z",
-      "url": "https://github.com/zax0rz/darkpawns/commit/d81fbb59017369d499473437e0b952e605fa408a"
+      "sha": "44d9c0955d25ca79b205de0d7e527996b36524f8",
+      "date": "2026-10-27",
+      "title": "Merge pull request #2201 from zax0rz/codex/cli-polish",
+      "url": "https://github.com/zax0rz/darkpawns/commit/44d9c0955d25ca79b205de0d7e527996b36524f8"
     },
     {
-      "sha": "351418e8770aa09aa6bbeeb47b421cd4c626d4fd",
-      "date": "2026-10-18",
-      "title": "test: close reachable spell item-route matrix",
-      "url": "https://github.com/zax0rz/darkpawns/commit/351418e8770aa09aa6bbeeb47b421cd4c626d4fd"
+      "sha": "fab1b2f0c978331c075787180ce8a5377a1999f8",
+      "date": "2026-10-27",
+      "title": "docs(brand-voice): \u00a78.5 product copy for the admin console, CLI and operator docs (approved by Zach 2026-10-27)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/fab1b2f0c978331c075787180ce8a5377a1999f8"
     },
     {
-      "sha": "8f32edface91f6c25e0bda697492297267994e73",
-      "date": "2026-10-18",
-      "title": "fix: preserve inactive in-range spell no-op returns",
-      "url": "https://github.com/zax0rz/darkpawns/commit/8f32edface91f6c25e0bda697492297267994e73"
+      "sha": "950fef576c09afdf09d9a911f63a76e5925547cb",
+      "date": "2026-10-27",
+      "title": "Merge pull request #2200 from zax0rz/claude/admin-sidebar-header",
+      "url": "https://github.com/zax0rz/darkpawns/commit/950fef576c09afdf09d9a911f63a76e5925547cb"
     },
     {
-      "sha": "750b5c9c70b47f7b29cac1bb1d12ff0724f589fc",
-      "date": "2026-10-18",
-      "title": "fix: allow the two R1a Locate Object cells",
-      "url": "https://github.com/zax0rz/darkpawns/commit/750b5c9c70b47f7b29cac1bb1d12ff0724f589fc"
+      "sha": "8dda7d6b55209c7542a44e020f8dad06f796a450",
+      "date": "2026-10-27",
+      "title": "Merge pull request #2197 from zax0rz/codex/admin-dashboard-logs",
+      "url": "https://github.com/zax0rz/darkpawns/commit/8dda7d6b55209c7542a44e020f8dad06f796a450"
     },
     {
-      "sha": "de3ab7340cc70a9b09a9bad593416369f825a456",
-      "date": "2026-10-18",
-      "title": "Merge remote-tracking branch 'origin/codex/luna-dp1371-spell-matrix' into claude/batch-x",
-      "url": "https://github.com/zax0rz/darkpawns/commit/de3ab7340cc70a9b09a9bad593416369f825a456"
+      "sha": "45002c6a99ac5f9035ff4c4607a84c3fc9fb927a",
+      "date": "2026-10-27",
+      "title": "Merge pull request #2199 from zax0rz/glm/v017-admin-config-build",
+      "url": "https://github.com/zax0rz/darkpawns/commit/45002c6a99ac5f9035ff4c4607a84c3fc9fb927a"
     }
   ],
   "pullRequests": [

@@ -486,7 +486,7 @@ func TestMailBootFailureIsNonFatalAndDisablesMail(t *testing.T) {
 		t.Fatalf("create unusable mail store: %v", err)
 	}
 
-	err := initializePersistentMail(testutil.NewMockDatabase())
+	_, err := initializePersistentMail(testutil.NewMockDatabase())
 	if err == nil {
 		t.Fatal("mail boot unexpectedly succeeded with a directory mail store")
 	}

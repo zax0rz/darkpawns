@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -611,6 +612,37 @@ func (m *Manager) GetPlayerPenalties(playerName string) []PlayerPenalty {
 		}
 	}
 	return active
+}
+
+// RenamePlayerName updates only in-memory name keys after the shared database
+// transaction has moved active penalty rows to the new character name.
+func (m *Manager) RenamePlayerName(oldName, newName string) {
+	if m == nil || strings.EqualFold(oldName, newName) {
+		return
+	}
+	oldKey, newKey := strings.ToLower(oldName), strings.ToLower(newName)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if penalties := m.activePenalties[oldKey]; len(penalties) > 0 {
+		for i := range penalties {
+			penalties[i].PlayerName = newName
+		}
+		m.activePenalties[newKey] = append(m.activePenalties[newKey], penalties...)
+	}
+	delete(m.activePenalties, oldKey)
+
+	var history []time.Time
+	for name, timestamps := range m.messageHistory {
+		if !strings.EqualFold(name, oldName) && !strings.EqualFold(name, newName) {
+			continue
+		}
+		history = append(history, timestamps...)
+		delete(m.messageHistory, name)
+	}
+	if len(history) > 0 {
+		sort.Slice(history, func(i, j int) bool { return history[i].Before(history[j]) })
+		m.messageHistory[newName] = history
+	}
 }
 
 // GetAllActivePenalties returns all current active penalties across all players.
