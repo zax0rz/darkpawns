@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T23:11:38-04:00",
+  "generatedAt": "2026-10-27T23:18:53-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,39 +49,39 @@
     },
     {
       "week": "2026-10-26",
-      "commits": 41
+      "commits": 45
     }
   ],
   "recentCommits": [
     {
-      "sha": "ab10d0d564bbd592676c91a2573c065d06604f77",
+      "sha": "57ff22576183ebfbd8af92e340e8eeb8a7cc7e96",
+      "date": "2026-10-27",
+      "title": "fix(admin): verify delete confirmation state",
+      "url": "https://github.com/zax0rz/darkpawns/commit/57ff22576183ebfbd8af92e340e8eeb8a7cc7e96"
+    },
+    {
+      "sha": "b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4",
       "date": "2026-10-27",
       "title": "feat(admin): add saved character identity controls",
-      "url": "https://github.com/zax0rz/darkpawns/commit/ab10d0d564bbd592676c91a2573c065d06604f77"
+      "url": "https://github.com/zax0rz/darkpawns/commit/b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4"
     },
     {
-      "sha": "44d9c0955d25ca79b205de0d7e527996b36524f8",
+      "sha": "8ea60c05d0350f0fd111f5c079720afbed082cfa",
       "date": "2026-10-27",
-      "title": "Merge pull request #2201 from zax0rz/codex/cli-polish",
-      "url": "https://github.com/zax0rz/darkpawns/commit/44d9c0955d25ca79b205de0d7e527996b36524f8"
+      "title": "docs(research): number the flaky-CI ledger row PF-090",
+      "url": "https://github.com/zax0rz/darkpawns/commit/8ea60c05d0350f0fd111f5c079720afbed082cfa"
     },
     {
-      "sha": "fab1b2f0c978331c075787180ce8a5377a1999f8",
+      "sha": "1b86692e49a1d924127ea28bc9be2c2b4d68985e",
       "date": "2026-10-27",
-      "title": "docs(brand-voice): \u00a78.5 product copy for the admin console, CLI and operator docs (approved by Zach 2026-10-27)",
-      "url": "https://github.com/zax0rz/darkpawns/commit/fab1b2f0c978331c075787180ce8a5377a1999f8"
+      "title": "docs(research): the flaky CI test was a crash (PF-)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/1b86692e49a1d924127ea28bc9be2c2b4d68985e"
     },
     {
-      "sha": "950fef576c09afdf09d9a911f63a76e5925547cb",
+      "sha": "5324dc1f37a67cabc68ba4eddbdbe12f36ac3707",
       "date": "2026-10-27",
-      "title": "Merge pull request #2200 from zax0rz/claude/admin-sidebar-header",
-      "url": "https://github.com/zax0rz/darkpawns/commit/950fef576c09afdf09d9a911f63a76e5925547cb"
-    },
-    {
-      "sha": "8dda7d6b55209c7542a44e020f8dad06f796a450",
-      "date": "2026-10-27",
-      "title": "Merge pull request #2197 from zax0rz/codex/admin-dashboard-logs",
-      "url": "https://github.com/zax0rz/darkpawns/commit/8dda7d6b55209c7542a44e020f8dad06f796a450"
+      "title": "Merge pull request #2202 from zax0rz/cline/portable-shutdown-race",
+      "url": "https://github.com/zax0rz/darkpawns/commit/5324dc1f37a67cabc68ba4eddbdbe12f36ac3707"
     }
   ],
   "pullRequests": [
