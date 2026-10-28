@@ -51,13 +51,17 @@ switching publishers. There is no silent key download or trust-on-first-use path
    commits outside main's history.
 3. Dispatch `Publish portable release` from main with that tag. It independently
    runs native instance/lifecycle/update/bootstrap journeys and full build, vet,
-   race tests and lint. GoReleaser builds Linux/macOS/Windows amd64 and arm64 archives
-   from the tagged tree, preserving the runtime licenses. A cross-build is not
-   runtime proof for all six architectures.
+   race tests and lint. A cross-build is not runtime proof for all six architectures.
 4. Review the source commit, tag, CI and generated artifacts, then approve the
-   protected publication job. It renders installers, signs the complete manifest,
-   creates a draft with all artifacts and publishes only after upload succeeds.
-   It refuses existing releases/assets; no `--clobber` or silent draft reuse.
+   protected publication job. It builds the six archives from the tagged tree
+   inside the protected environment, and a GoReleaser build post-hook signs each
+   platform's bundle contents (both executables plus the data manifest) with
+   `RELEASE_SIGNING_KEY` as the archives are assembled — so GoReleaser's
+   `checksums.txt`, the release assets, and every package channel pin the exact
+   signed bytes. The job then renders installers, signs the release manifest
+   (`dp-release --manifest-only`; the archives are already signed), creates a
+   draft with all artifacts and publishes only after upload succeeds. It refuses
+   existing releases/assets; no `--clobber` or silent draft reuse.
 5. Check the public assets, signature and manifest against the retained build
    receipt. Test a fresh bootstrap and the installed wizard. For the second
    release, exercise a real published version-to-version update with saved login
@@ -68,6 +72,52 @@ Inspect it and preserve evidence. Delete or repair that draft only through a
 separate deliberate operator action, then rerun; the workflow does not guess that
 an existing draft belongs to its attempt. The release environment serializes
 publication runs. This workflow does not create tags or migrate/deploy production.
+
+## Package-manager channels
+
+The same protected publication job feeds four package channels, using
+GoReleaser's built-in publishers against the signed archives:
+
+- **Homebrew tap** `darkpawns/homebrew-tap` (formula, macOS and Linux),
+- **Scoop bucket** `darkpawns/scoop-bucket` (Windows manifest),
+- **winget**: manifests committed to a versioned branch of
+  `darkpawns/winget-pkgs` (a fork of `microsoft/winget-pkgs`); the job then
+  opens the pull request (`scripts/winget-pull-request.sh`). The first
+  submission of a new package identifier is reviewed by the winget team, so
+  expect a human delay there.
+- **Docker** `ghcr.io/darkpawns/darkpawns`, a multi-arch image
+  (linux/amd64, linux/arm64) built from the signed archives with this run's
+  checksum verification, tagged `vX.Y.Z` and `latest`, running as a
+  non-root user with the instance in `/data`.
+
+All four pin per-release checksums of the signed archives; none bypasses the
+signed-bundle trust model, and the launcher re-verifies the publisher
+signature at first run regardless of channel.
+
+These channels need `PACKAGES_GITHUB_TOKEN` in the protected
+`portable-release` environment (created by the maintainer, never committed).
+Minimal fine-grained token permissions: **contents: write** on
+`darkpawns/homebrew-tap` and `darkpawns/scoop-bucket`; **contents: write**
+and **pull requests: write** on `darkpawns/winget-pkgs`; **packages: write**
+on the `darkpawns` organization for GHCR. No other scopes.
+
+### Dry run (no publishing)
+
+Every channel generates its artifacts locally under a prerelease-looking tag,
+because `skip_upload`/`skip_push` are set to `auto`:
+
+```sh
+export DP_SNAPSHOT_PUBLISHER_KEY=$(base64 -w0 snapshot-public.pem)
+export SNAPSHOT_PRIVATE_PEM=…snapshot-private.pem SNAPSHOT_PUBLIC_PEM=…snapshot-public.pem
+export PACKAGES_GITHUB_TOKEN=dry-run-token GITHUB_TOKEN=dry-run-token
+git tag -f v0.1.7-rc.0
+goreleaser release --clean --skip=validate     # add --skip=docker to skip the image build
+```
+
+`dist/homebrew/Formula/darkpawns.rb`, `dist/scoop/darkpawns.json`,
+`dist/winget/manifests/**` and `dist/checksums.txt` can then be inspected;
+nothing is pushed (prerelease tag, and no real token). The retained example
+output lives in `docs/evidence/2026-10-28-packaging-dryrun/`.
 
 ## Verification boundaries
 

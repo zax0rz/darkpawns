@@ -1,0 +1,23 @@
+Docker dry run (local, goreleaser buildx multi-arch, tag v0.1.7-rc.0 with
+skip_push: auto, so nothing was published)
+
+  $ goreleaser release --clean --skip=validate
+  release succeeded after 22s
+  ghcr.io/darkpawns/darkpawns:v0.1.7-rc.0   (built with --platform=linux/amd64,linux/arm64)
+  ghcr.io/darkpawns/darkpawns:latest
+
+  $ docker run -d --network host -v dp-dryrun-data:/data ghcr.io/darkpawns/darkpawns:v0.1.7-rc.0
+  entrypoint: initializing instance in /data (http 4350, telnet 7777)
+  GET /health -> 200
+  PID 1 Uid: 65532 65532 65532 65532        (non-root: the entrypoint drops
+                                             privileges before exec)
+  /data after first boot: instance.json lib  (the instance lives in the
+                                             volume and survives)
+  $ docker restart ...
+  GET /health -> 200                          (instance persisted across the
+                                             restart)
+
+The bundle stage verified the per-arch checksum from this run's
+checksums.txt before extraction, and the launcher's publisher gate verified
+the snapshot-signed bundle at boot (an image built without the key linked
+into the launcher was refused: "publisher signature verification failed").

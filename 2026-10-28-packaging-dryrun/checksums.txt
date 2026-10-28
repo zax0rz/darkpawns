@@ -1,0 +1,6 @@
+3dae721a276f2e30a27a765d3cb02d02123f5dc71f4fd18dc8df29d2717fc7f8  darkpawns_0.1.7-rc.0_darwin_amd64.tar.gz
+134445ccd18794a89832a03092f3cec65e86f33e3833ee2f31e18eac7b95000b  darkpawns_0.1.7-rc.0_darwin_arm64.tar.gz
+c23c9eb343003894e869bf9f00fa05bc62c217c688ecade9cc01a60e8b2c5485  darkpawns_0.1.7-rc.0_linux_amd64.tar.gz
+a7580baf8543776ac0f2d538c703c0f4f841cfc392a1337e5370fdc78ac41b11  darkpawns_0.1.7-rc.0_linux_arm64.tar.gz
+27002fc0224ca7696f6be97183876c25e54701ce059bea5d6c5ffcfe27c4392a  darkpawns_0.1.7-rc.0_windows_amd64.zip
+4c040a29e9cc33dee56e40a179e565e27fd3a4f61c68a0882558c1c641bf82bd  darkpawns_0.1.7-rc.0_windows_arm64.zip
