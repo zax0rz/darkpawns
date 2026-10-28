@@ -71,6 +71,18 @@ jobs:
       - uses: golangci/golangci-lint-action@v9
         with:
           version: v2.12.2
+      - name: Build the admin UI (install scripts disabled)
+        run: |
+          npm --prefix admin-ui ci --ignore-scripts
+          npm --prefix admin-ui run build
+      - name: Check the UI build is wired into the console spec
+        run: test -f admin-ui/dist/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-ui-dist
+          path: admin-ui/dist
+          if-no-files-found: error
+          retention-days: 7
   publish:
     needs: [validate, native, verify]
     runs-on: ubuntu-latest
@@ -86,11 +98,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - uses: actions/setup-node@v4
+      # No Node here on purpose: nothing in this job may run npm, whose
+      # install scripts are third-party code (internal/releaseguard fails
+      # the build if a step tries).
+      - uses: actions/download-artifact@v4
         with:
-          node-version: 24
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+          name: admin-ui-dist
+          path: admin-ui/dist
       - name: Verify the protected environment
         env:
           GH_TOKEN: ${{ github.token }}
@@ -101,11 +115,12 @@ jobs:
           test -n "${{ secrets.PACKAGES_GITHUB_TOKEN }}" || { echo 'Configure PACKAGES_GITHUB_TOKEN in the protected portable-release environment (package-manager channels; see docs/publishing-releases.md).' >&2; exit 1; }
           reviewers=$(gh api "repos/$GITHUB_REPOSITORY/environments/portable-release" --jq '[.protection_rules[]? | select(.type == "required_reviewers") | .reviewers[]?] | length')
           test "$reviewers" -gt 0 || { echo 'portable-release must require human approval.' >&2; exit 1; }
-      - name: Build, sign and publish every channel
+      - name: Build, sign and publish the archives and package manifests
         env:
           GITHUB_TOKEN: ${{ github.token }}
           PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+          DP_PREBUILT_UI: "1"
           RELEASE_TAG: ${{ inputs.tag }}
           SOURCE_SHA: ${{ needs.validate.outputs.sha }}
         shell: bash
@@ -115,16 +130,20 @@ jobs:
           # run: the build post-hook signs each platform's bundle contents
           # with the production key, so GoReleaser's checksums, the release
           # assets, and every package channel pin the same signed bytes.
+          # The admin UI is prebuilt (DP_PREBUILT_UI skips both npm hooks);
+          # the only commands here are the pinned GoReleaser binary, go
+          # build of this repository, and our own cmd/dp-release. The key
+          # file exists only inside this step and the trap deletes it.
           umask 077
           signing_key=$(mktemp "$RUNNER_TEMP/dp-signing.XXXXXXXX")
           trap 'rm -f "$signing_key"' EXIT
           printf '%s\n' "$RELEASE_SIGNING_KEY" > "$signing_key"
           export DP_RELEASE_KEY_PATH="$signing_key"
-          echo "$PACKAGES_GITHUB_TOKEN" | docker login ghcr.io -u darkpawns --password-stdin
           goreleaser release --clean
           # Archives are already publisher-signed from inside the pipeline;
           # render only the installers and the release manifest.
           go run ./cmd/dp-release --dir dist --tag "$RELEASE_TAG" --commit "$SOURCE_SHA" --manifest-only --key "$signing_key"
+          unset DP_RELEASE_KEY_PATH
       - name: Check versioned archive set
         env:
           RELEASE_TAG: ${{ inputs.tag }}
@@ -135,6 +154,25 @@ jobs:
           expected = {f'darkpawns_{version}_{system}_{arch}' + ('.zip' if system == 'windows' else '.tar.gz') for system in ('linux', 'darwin', 'windows') for arch in ('amd64', 'arm64')}
           actual = {p.name for p in pathlib.Path('dist').iterdir() if p.name.endswith(('.tar.gz', '.zip'))}
           assert actual == expected, (actual, expected)
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and push the container image
+        env:
+          PACKAGES_GITHUB_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Runs after the signing step: no key file exists any more. The
+          # login exists only for this step and is dropped immediately after.
+          echo "$PACKAGES_GITHUB_TOKEN" | docker login ghcr.io -u darkpawns --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --pull \
+            -t "ghcr.io/darkpawns/darkpawns:${RELEASE_TAG}" \
+            -t "ghcr.io/darkpawns/darkpawns:latest" \
+            -f docker/Dockerfile --push .
       - name: Open the winget pull request
         env:
           GH_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}

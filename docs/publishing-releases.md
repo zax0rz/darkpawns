@@ -88,11 +88,28 @@ GoReleaser's built-in publishers against the signed archives:
 - **Docker** `ghcr.io/darkpawns/darkpawns`, a multi-arch image
   (linux/amd64, linux/arm64) built from the signed archives with this run's
   checksum verification, tagged `vX.Y.Z` and `latest`, running as a
-  non-root user with the instance in `/data`.
+  non-root user with the instance in `/data`. The image is built by an
+  explicit buildx step **after** the signing step, so no key file exists
+  while third-party base images execute during the build.
 
 All four pin per-release checksums of the signed archives; none bypasses the
 signed-bundle trust model, and the launcher re-verifies the publisher
 signature at first run regardless of channel.
+
+### Code-execution boundary in the publish job
+
+No third-party code may run where the signing key or the package token is
+present. The admin UI (whose `npm ci` install scripts are third-party
+code) is built by the secret-less verify job and passed as an artifact;
+`DP_PREBUILT_UI` collapses the goreleaser npm before-hooks to no-ops. The
+signing and publishing step runs only the pinned GoReleaser binary, `go
+build` of this repository, our `cmd/dp-release`, and our staging script —
+never `go generate`, third-party `go run`, or npm. The key file is created
+immediately before that step and deleted by its exit trap; the GHCR login
+exists only inside the container-image step, which runs after the key is
+gone. `npm ci --ignore-scripts` everywhere npm does run is defence in
+depth, and `internal/releaseguard` fails the build if a publish-job step
+ever references npm, pnpm or yarn again.
 
 These channels need `PACKAGES_GITHUB_TOKEN` in the protected
 `portable-release` environment (created by the maintainer, never committed).

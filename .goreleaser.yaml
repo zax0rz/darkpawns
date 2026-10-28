@@ -2,8 +2,14 @@ version: 2
 project_name: darkpawns
 before:
   hooks:
-    - npm --prefix admin-ui ci
-    - npm --prefix admin-ui run build
+    # npm install scripts are arbitrary third-party code: they must never run
+    # where the signing key or the package token is present. The protected
+    # publish job builds the admin UI in a secret-less job and sets
+    # DP_PREBUILT_UI, so both npm steps collapse to a no-op there; dev and
+    # native-CI snapshots build the UI here (a test in internal/releaseguard
+    # pins that every npm hook stays inside this conditional).
+    - '{{ if index .Env "DP_PREBUILT_UI" }}true{{ else }}npm --prefix admin-ui ci --ignore-scripts{{ end }}'
+    - '{{ if index .Env "DP_PREBUILT_UI" }}true{{ else }}npm --prefix admin-ui run build{{ end }}'
     - python3 scripts/stage_portable_release.py --version {{ .Version }}
 builds:
   - id: launcher
@@ -138,27 +144,11 @@ winget:
       email: release@darkpawns.org
     path: manifests/d/DarkPawns
     skip_upload: auto
-dockers:
-  - id: darkpawns
-    use: buildx
-    goos: linux
-    image_templates:
-      - "ghcr.io/darkpawns/darkpawns:{{ .Tag }}"
-      - "ghcr.io/darkpawns/darkpawns:latest"
-    dockerfile: docker/Dockerfile
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/amd64,linux/arm64"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-    # The signed release archives and this run's checksums enter the build
-    # context; the image build verifies the checksum and the launcher's own
-    # publisher gate verifies the bundle at run time.
-    extra_files:
-      - dist
-      - docker/entrypoint.sh
-    skip_push: auto
+# The container image is built by an explicit buildx step in the publish
+# workflow, after the signing key is deleted: goreleaser's docker pipe would
+# run the image build (third-party base images) while the key file exists.
+# The step reproduces this same build from the same signed dist/ context
+# (see .github/workflows/release.yml and docker/Dockerfile).
 checksum:
   name_template: checksums.txt
 # Snapshot builds are unsigned development artifacts. Publishing/signing is a
