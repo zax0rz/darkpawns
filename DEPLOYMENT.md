@@ -266,9 +266,27 @@ the top leaves every superseded `index-*.js` and `index-*.css` behind. Two
 builds are enough to start serving a directory of orphans, and a stale
 bundle sitting next to a live one is easy to read by mistake.
 
-Then restart the server and visit `/admin/`. Both the admin router and `/assets/`
-expect this layout by default. The frontend build is verified; administrative
-authentication and operations are outside the installation check.
+Then restart the server and visit `/admin/`. The build puts asset URLs under
+`/admin/`, so the console does not need a root `/assets/` route. No extra build
+flags are needed.
+
+To serve the build from another directory, set `ADMIN_UI_DIR` to the directory
+containing `index.html` and `assets/`. For example:
+
+```bash
+ADMIN_UI_DIR="$PWD/admin-ui/dist" ./darkpawns-server
+```
+
+Portable releases use the same build command and ship the result under
+`release-assets/admin-ui`. The launcher selects that directory for you.
+
+For development, run `npm --prefix admin-ui run dev` and open
+`http://localhost:5173/admin/`. Vite serves the console and sends API requests
+to the Go server on port 4350. Set `ADMIN_API_TARGET` if your server uses another
+address. Vite serves its own modules and public files locally.
+
+The installation check covers loading the frontend. Sign-in and administrative
+operations need a running server and a staff account.
 
 ## Supported deployment model
 

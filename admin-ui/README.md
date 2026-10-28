@@ -57,9 +57,13 @@ npm run build
 
 Vite serves the UI at `http://127.0.0.1:5173/admin/` in development. API
 requests need a Go server on port 4350; without one, the login page still
-renders but authenticated editor work is unavailable. The Go admin router serves the production
-build from `admin-ui/dist`; see `pkg/admin/router.go` and the root Makefile for
-the build integration. The editor API is implemented in `pkg/admin/olc*.go`,
+renders but authenticated editor work is unavailable. Set `ADMIN_API_TARGET` to
+use another Go server address. The same `/admin/` asset base is used in development
+and production; no `--base` build flag is needed.
+
+The Go server loads the production build from `ADMIN_UI_DIR`, or from
+`admin-ui-dist` in its working directory. See [DEPLOYMENT.md](../DEPLOYMENT.md#optional-admin-interface)
+for the build and copy commands. The editor API is implemented in `pkg/admin/olc*.go`,
 with shared OLC behavior in `pkg/olc/`.
 
 ## Edit a saved player
