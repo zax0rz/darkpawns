@@ -65,7 +65,7 @@ func TestCLIPreview(t *testing.T) {
 			t.Fatal(err)
 		}
 	case "confirm":
-		_, err := confirmAction(cmd, "Restart this synthetic instance?", "Online players: 3\nFrontline, Aiko, Adventurer\nThis rehearsal never starts or stops a world.")
+		_, err := confirmAction(cmd, "Update to v0.1.7?", "SYNTHETIC REHEARSAL\n"+updateConfirmation(cliSnapshot{onlineKnown: true, online: []onlinePlayer{{Name: "Frontline"}, {Name: "Aiko"}, {Name: "Adventurer"}}}))
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -66,3 +66,16 @@ owns the final v0.1.7 combined release gate.
 
 Decisions for Zach: none blocking. Finer verify/stage percentages would require
 future progress telemetry from GLM's updater. This PR keeps that boundary intact.
+
+## Review copy pass
+
+The update confirmation matches the approved console wording: target version,
+online names (up to five, then “and N more”), singular/plural character saving,
+preparation before stopping, and automatic recovery after a failed health check.
+Unknown player data stays explicitly unknown. Restart shares the same player
+impact line. Rich progress, sign-in, log-empty and completion messages use plain
+words rather than updater implementation terms. Copy tests cover zero, one, five,
+six and seven players, unknown data and terminal-control stripping.
+
+No plain-output expectations changed. The same seven exact stdout/stderr/exit
+comparisons still match the original launcher; all edited copy is in rich views.

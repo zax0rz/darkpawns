@@ -66,7 +66,7 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 					defer reader.client.CloseIdleConnections()
 				}
 				snapshot := readCLISnapshot(cmd.Context(), path, base, reader)
-				approved, confirmErr := confirmAction(cmd, "Restart this instance?", onlineSummary(snapshot)+"\nThis saves and stops the world, disconnecting its players.")
+				approved, confirmErr := confirmAction(cmd, "Restart this instance?", onlineImpact(snapshot)+"\nYour world will stop and start again.")
 				if confirmErr != nil {
 					return confirmErr
 				}

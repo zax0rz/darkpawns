@@ -64,9 +64,9 @@ func (m waitModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m waitModel) View() string {
 	s := cliTitle.Render(terminalText(m.title)) + "\n\n"
-	detail := "Waiting for the operation"
+	detail := "Working…"
 	if m.finished {
-		detail = "Operation returned"
+		detail = "Finished"
 	}
 	phases := []phaseView{{name: "Working", detail: detail}}
 	if m.phases != nil {
@@ -99,9 +99,9 @@ func (m waitModel) View() string {
 		s += lipgloss.NewStyle().Width(max(16, m.width-4)).PaddingLeft(2).Render(terminalText(p.detail)) + "\n"
 	}
 	if m.cancelling && !m.finished {
-		s += "\nCancelling. Waiting for the operation and recovery to finish.\n"
+		s += "\nCancelling. Waiting for the current step to finish safely.\n"
 	} else if !m.finished {
-		s += "\nCtrl+C cancel · waiting for confirmed results\n"
+		s += "\nCtrl+C cancel\n"
 	}
 	if m.err != nil {
 		s += "\n" + cliRule.Render(terminalText(m.err.Error())) + "\n"

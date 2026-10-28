@@ -111,10 +111,10 @@ func newUpdateObserver(path string, size int64) *updateObserver {
 }
 
 func (o *updateObserver) phases() []phaseView {
-	download := phaseView{name: "Download", detail: "Waiting for the verified archive; no guessed percentage"}
-	verify := phaseView{name: "Verify", detail: "Publisher and bundle verification must return successfully"}
-	stage := phaseView{name: "Stage", detail: "Waiting for the existing staging operation"}
-	health := phaseView{name: "Health gate", detail: "Not started; the world keeps running during preparation", skip: !o.applying.Load()}
+	download := phaseView{name: "Download", detail: "Waiting for the download to start"}
+	verify := phaseView{name: "Verify", detail: "Checking the release signature and files"}
+	stage := phaseView{name: "Stage", detail: "Getting the new release ready"}
+	health := phaseView{name: "Health gate", detail: "Your world keeps running while we prepare the update", skip: !o.applying.Load()}
 	entries, _ := os.ReadDir(filepath.Join(o.instance, ".updates"))
 	for _, e := range entries {
 		if !e.IsDir() || o.before[e.Name()] {
@@ -132,7 +132,7 @@ func (o *updateObserver) phases() []phaseView {
 		if _, err := os.Stat(filepath.Join(work, "release")); err == nil {
 			download.complete = true
 			download.detail = "Archive received; checking extracted content"
-			verify.detail = "Extraction, signature checks and staging in progress"
+			verify.detail = "Unpacking and checking the new release"
 		}
 	}
 	if o.prepared.Load() {
@@ -140,8 +140,8 @@ func (o *updateObserver) phases() []phaseView {
 		verify.complete = true
 		stage.complete = true
 		download.detail = "Archive received"
-		verify.detail = "Portable verification succeeded"
-		stage.detail = "Candidate is ready; active world unchanged"
+		verify.detail = "Release signature and files verified"
+		stage.detail = "New release ready; your world is still running"
 	}
 	if o.applying.Load() {
 		health.skip = false
@@ -151,16 +151,16 @@ func (o *updateObserver) phases() []phaseView {
 			Phase string `json:"phase"`
 		}
 		if readPresentationJSON(filepath.Join(o.instance, ".updates", "transaction.json"), &journal) == nil && journal.Phase != "" && journal.ID != "" && !o.before[journal.ID] {
-			health.detail = "Transaction: " + journal.Phase + " · waiting for portable.Apply"
+			health.detail = updatePhaseMessage(journal.Phase)
 		}
 	}
 	if o.applied.Load() {
 		if o.wasRunning.Load() {
 			health.complete = true
-			health.detail = "Portable startup health gate passed"
+			health.detail = "The new release passed its health check"
 		} else {
 			health.skip = true
-			health.detail = "Not run: the instance was stopped before this update"
+			health.detail = "Not checked: this world was already stopped"
 		}
 	}
 	return []phaseView{download, verify, stage, health}
@@ -222,7 +222,7 @@ func runInteractiveUpdate(cmd *cobra.Command, path, base, archive, digest string
 		return err
 	}
 	defer func() { result = errors.Join(result, plan.Close()) }()
-	checks := []portable.Check{{Name: "Release " + plan.PreviousVersion + " → " + plan.Version, OK: true, Detail: "Verified candidate"}, {Name: "Archive SHA-256", OK: true, Detail: plan.SHA256}, {Name: "Active world", OK: true, Detail: "Not stopped during preparation"}}
+	checks := []portable.Check{{Name: "Release " + plan.PreviousVersion + " → " + plan.Version, OK: true, Detail: "New release verified"}, {Name: "Archive SHA-256", OK: true, Detail: plan.SHA256}, {Name: "Active world", OK: true, Detail: "Not stopped during preparation"}}
 	if err := checklist(cmd.OutOrStdout(), "Dark Pawns · release check", checks, cliWidth(cmd)); err != nil {
 		return err
 	}
@@ -251,7 +251,7 @@ func runInteractiveUpdate(cmd *cobra.Command, path, base, archive, digest string
 			defer reader.client.CloseIdleConnections()
 		}
 		snapshot := readCLISnapshot(cmd.Context(), path, base, reader)
-		approved, err := confirmAction(cmd, "Apply this update?", onlineSummary(snapshot)+"\nThis disconnects players. A private backup is retained. If startup fails, portable restores the previous snapshot and retains attempted state.")
+		approved, err := confirmAction(cmd, "Update to "+terminalText(plan.Version)+"?", updateConfirmation(snapshot))
 		if err != nil {
 			return err
 		}
@@ -271,6 +271,31 @@ func runInteractiveUpdate(cmd *cobra.Command, path, base, archive, digest string
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintln(cmd.OutOrStdout(), "Update complete. Release and backup are retained in your instance's .updates folder.")
+	_, err = fmt.Fprintln(cmd.OutOrStdout(), "Update complete. Your release files and backup are in this instance's .updates folder.")
 	return err
+}
+
+func updateConfirmation(snapshot cliSnapshot) string {
+	return onlineImpact(snapshot) + "\nThe new release is downloaded and verified before your world stops.\nIf it fails its health check, the current release comes back automatically."
+}
+
+func updatePhaseMessage(phase string) string {
+	switch phase {
+	case "prepared":
+		return "Ready to update your world"
+	case "backing-up":
+		return "Saving a backup of your world"
+	case "backed-up":
+		return "Backup saved; getting ready to start the new release"
+	case "testing":
+		return "Checking that the new release starts correctly"
+	case "recovering":
+		return "Bringing the previous release back"
+	case "committed":
+		return "Finishing the update"
+	case "rolled-back":
+		return "The previous release is back"
+	default:
+		return "Updating your world"
+	}
 }

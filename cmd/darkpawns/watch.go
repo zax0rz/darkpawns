@@ -90,7 +90,7 @@ func signInAdmin(cmd *cobra.Command, path string, status portable.RuntimeStatus)
 	if err != nil {
 		return nil, err
 	}
-	approved, err := confirmAction(cmd, "Read live player details?", "Sign in to this instance with an immortal account. The session stays in memory; nothing is saved. Cancel keeps process status and local logs available.")
+	approved, err := confirmAction(cmd, "Read live player details?", "Sign in to this instance with an immortal account. Your sign-in lasts only until you close this view. Cancel to continue with process status and local logs.")
 	if err != nil || !approved {
 		return nil, err
 	}
@@ -218,16 +218,38 @@ func readCLISnapshot(ctx context.Context, path, base string, reader *adminReader
 
 func onlineSummary(s cliSnapshot) string {
 	if !s.onlineKnown {
-		return "Online players: unknown. " + s.playerError
+		return "Couldn't check who's online. " + s.playerError
 	}
 	if len(s.online) == 0 {
-		return "Online players: 0"
+		return "No one is online."
 	}
-	names := make([]string, 0, len(s.online))
-	for _, p := range s.online {
+	names := make([]string, 0, min(5, len(s.online)))
+	for _, p := range s.online[:min(5, len(s.online))] {
 		names = append(names, terminalText(p.Name))
 	}
-	return fmt.Sprintf("Online players: %d\n%s", len(names), strings.Join(names, ", "))
+	shown := strings.Join(names, ", ")
+	if rest := len(s.online) - len(names); rest > 0 {
+		shown += fmt.Sprintf(" and %d more", rest)
+	}
+	plural := "players"
+	if len(s.online) == 1 {
+		plural = "player"
+	}
+	return fmt.Sprintf("%d %s online: %s", len(s.online), plural, shown)
+}
+
+func onlineImpact(s cliSnapshot) string {
+	if s.onlineKnown && len(s.online) == 0 {
+		return onlineSummary(s)
+	}
+	if !s.onlineKnown {
+		return onlineSummary(s) + " Anyone online will be disconnected; characters are saved first."
+	}
+	saved := "characters are"
+	if len(s.online) == 1 {
+		saved = "the character is"
+	}
+	return onlineSummary(s) + ". They'll be disconnected; " + saved + " saved first."
 }
 
 type (
@@ -386,7 +408,7 @@ func (m watchModel) View() string {
 	}
 	body += "\n" + lipgloss.NewStyle().Bold(true).Render("Recent errors") + "\n"
 	if len(m.data.errors) == 0 {
-		body += "No ERROR records in the retained log tail.\n"
+		body += "No errors in the recent logs.\n"
 	} else {
 		body += lipgloss.NewStyle().Width(w).Foreground(setupAccent).Render(ansi.Truncate(m.data.errors[len(m.data.errors)-1], w, "…")) + "\n"
 	}

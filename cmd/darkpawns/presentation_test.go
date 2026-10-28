@@ -304,3 +304,35 @@ func TestWaitDoesNotReturnBeforeCancelledWorkFinishes(t *testing.T) {
 		t.Fatal("terminal did not finish after work returned")
 	}
 }
+
+func TestUpdateConfirmationCopy(t *testing.T) {
+	const closing = "\nThe new release is downloaded and verified before your world stops.\nIf it fails its health check, the current release comes back automatically."
+	for _, tc := range []struct {
+		name  string
+		names []string
+		want  string
+	}{
+		{"empty", nil, "No one is online."},
+		{"one", []string{"Aiko"}, "1 player online: Aiko. They'll be disconnected; the character is saved first."},
+		{"two", []string{"Aiko", "Frontline"}, "2 players online: Aiko, Frontline. They'll be disconnected; characters are saved first."},
+		{"five", []string{"A", "B", "C", "D", "E"}, "5 players online: A, B, C, D, E. They'll be disconnected; characters are saved first."},
+		{"six", []string{"A", "B", "C", "D", "E", "F"}, "6 players online: A, B, C, D, E and 1 more. They'll be disconnected; characters are saved first."},
+		{"seven", []string{"A", "B", "C", "D", "E", "F", "G"}, "7 players online: A, B, C, D, E and 2 more. They'll be disconnected; characters are saved first."},
+		{"terminal controls", []string{"\x1b[31mAiko\x1b[0m"}, "1 player online: Aiko. They'll be disconnected; the character is saved first."},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := cliSnapshot{onlineKnown: true}
+			for _, name := range tc.names {
+				s.online = append(s.online, onlinePlayer{Name: name})
+			}
+			if got := updateConfirmation(s); got != tc.want+closing {
+				t.Fatalf("confirmation = %q, want %q", got, tc.want+closing)
+			}
+		})
+	}
+	s := cliSnapshot{playerError: "Sign-in skipped."}
+	want := "Couldn't check who's online. Sign-in skipped. Anyone online will be disconnected; characters are saved first." + closing
+	if got := updateConfirmation(s); got != want {
+		t.Fatalf("unknown players confirmation = %q, want %q", got, want)
+	}
+}
