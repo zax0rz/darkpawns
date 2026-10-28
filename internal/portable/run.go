@@ -119,6 +119,7 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 		go func() { ch <- waitForHTTP(monitorCtx, url+"/health", 30*time.Second) }()
 	}
 	var startupErr error
+	var becameReady bool
 	for {
 		select {
 		case err := <-done:
@@ -136,6 +137,7 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 			}
 			if err == nil {
 				markReady()
+				becameReady = true
 				err = ready(url)
 			}
 			ready = nil
@@ -151,13 +153,30 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 		defer timer.Stop()
 		select {
 		case err := <-done:
-			return errors.Join(startupErr, signalErr, err)
+			return errors.Join(startupErr, signalErr, stopOutcome(becameReady, signalErr, err))
 		case <-timer.C:
 			killErr := cmd.Process.Kill()
 			waitErr := <-done
 			return errors.Join(startupErr, errors.New("server did not stop within 30 seconds"), signalErr, killErr, waitErr)
 		}
 	}
+}
+
+// stopOutcome classifies the child's exit that followed the launcher's own
+// graceful-stop interrupt. A child that has not reached readiness has not
+// installed its signal handler yet: the bundled server installs one only after
+// its boot, exactly as C does (boot_db() at src/comm.c:269 precedes
+// signal_setup() at src/comm.c:277), so the launcher's interrupt kills it with
+// the default action and wait(2) reports "signal: interrupt". That is the stop
+// the operator asked for, and the instance is down, so it is not a shutdown
+// failure (PR #2197). Once the child has answered readiness the same death
+// means it died without running its shutdown path — losing saves — so it stays
+// an error, and so does a death the launcher never asked for.
+func stopOutcome(becameReady bool, signalErr, waitErr error) error {
+	if becameReady || signalErr != nil || !interruptedByRequest(waitErr) {
+		return waitErr
+	}
+	return nil
 }
 
 func waitForHTTP(ctx context.Context, url string, timeout time.Duration) error {
