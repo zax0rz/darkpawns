@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -67,8 +68,8 @@ func loginIdleTimeout() time.Duration { return time.Duration(loginIdleNanos.Load
 // non-positive idle timeout) are refused; the caller validates ranges, this
 // guards the hot path against a zero cap that would reject everyone.
 func ApplyLimits(perIP, total int, idle time.Duration) error {
-	if perIP < 1 || total < 1 || idle <= 0 {
-		return fmt.Errorf("telnet limits must be positive: perIP=%d total=%d idle=%s", perIP, total, idle)
+	if perIP < 1 || total < 1 || perIP > math.MaxInt32 || total > math.MaxInt32 || idle <= 0 {
+		return fmt.Errorf("telnet limits must be positive and within int32: perIP=%d total=%d idle=%s", perIP, total, idle)
 	}
 	maxConnsPerIP.Store(int32(perIP))
 	maxTotalConns.Store(int32(total))
@@ -82,7 +83,7 @@ func init() {
 	loginIdleNanos.Store(int64(120 * time.Second)) // DP-912: drop parked pre-auth connections
 	if v := os.Getenv("TELNET_MAX_CONNS"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
+		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("TELNET_MAX_CONNS invalid, using default", "value", v, "default", maxTotalConns.Load())
 		} else {
 			maxTotalConns.Store(int32(n))
@@ -90,7 +91,7 @@ func init() {
 	}
 	if v := os.Getenv("TELNET_MAX_CONNS_PER_IP"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
+		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("TELNET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", maxConnsPerIP.Load())
 		} else {
 			maxConnsPerIP.Store(int32(n))

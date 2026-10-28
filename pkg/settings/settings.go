@@ -39,7 +39,7 @@ const (
 const (
 	SecretGrapevineClient  = "grapevine_client_secret"
 	SecretStaffPushToken   = "staff_push_token"
-	SecretContactSMTP      = "contact_smtp_password"
+	SecretContactSMTP      = "contact_smtp_password" // #nosec G101 -- field identifier, not a credential value
 	SecretContactTurnstile = "contact_turnstile_secret"
 )
 

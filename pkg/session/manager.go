@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -67,7 +68,7 @@ func init() {
 	webSocketMaxTotalConns.Store(500)
 	if v := os.Getenv("WEBSOCKET_MAX_CONNS_PER_IP"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
+		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("WEBSOCKET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", webSocketMaxConnsPerIP.Load())
 		} else {
 			webSocketMaxConnsPerIP.Store(int32(n))
@@ -75,7 +76,7 @@ func init() {
 	}
 	if v := os.Getenv("WEBSOCKET_MAX_TOTAL_CONNS"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
+		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("WEBSOCKET_MAX_TOTAL_CONNS invalid, using default", "value", v, "default", webSocketMaxTotalConns.Load())
 		} else {
 			webSocketMaxTotalConns.Store(int32(n))
@@ -87,8 +88,8 @@ func init() {
 // idle deadline (which mirrors the telnet listener's). Values below 1 (and a
 // non-positive idle) are refused so a bad save cannot reject everyone.
 func ApplyWebSocketLimits(perIP, total int, idle time.Duration) error {
-	if perIP < 1 || total < 1 || idle <= 0 {
-		return fmt.Errorf("websocket limits must be positive: perIP=%d total=%d idle=%s", perIP, total, idle)
+	if perIP < 1 || total < 1 || perIP > math.MaxInt32 || total > math.MaxInt32 || idle <= 0 {
+		return fmt.Errorf("websocket limits must be positive and within int32: perIP=%d total=%d idle=%s", perIP, total, idle)
 	}
 	webSocketMaxConnsPerIP.Store(int32(perIP))
 	webSocketMaxTotalConns.Store(int32(total))

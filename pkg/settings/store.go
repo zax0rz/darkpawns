@@ -198,6 +198,10 @@ func (m *Manager) secretLocked(name string) (string, bool) {
 	return plain, true
 }
 
+// The map values name environment variables that HOLD secrets at boot; the
+// identifiers themselves are not credentials.
+//
+// #nosec G101 -- identifiers, not credential material
 func envSecretNames(name string) []string {
 	switch name {
 	case SecretGrapevineClient:
@@ -736,7 +740,7 @@ func (m *Manager) persistLocked(cfg Config) error {
 		return fmt.Errorf("create settings directory: %w", err)
 	}
 	if previous, err := os.ReadFile(m.path); err == nil {
-		if writeErr := os.WriteFile(m.path+".previous", previous, 0o600); writeErr != nil {
+		if writeErr := os.WriteFile(m.path+".previous", previous, 0o600); writeErr != nil { // #nosec G703 -- operator-configured settings path, never request-derived
 			return fmt.Errorf("retain previous settings: %w", writeErr)
 		}
 	} else if !errors.Is(err, os.ErrNotExist) {
