@@ -74,7 +74,11 @@ func TestConsolePreview(t *testing.T) {
 		t.Fatal(err)
 	}
 	doc := apidoc.New()
-	handler, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithSharedSpec(doc), WithNotifications(service))
+	previewSettings, err := settings.New(filepath.Join(t.TempDir(), "settings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithSharedSpec(doc), WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +93,7 @@ func TestConsolePreview(t *testing.T) {
 	var active atomic.Value
 	active.Store(handler)
 	mux.HandleFunc("/preview-reset", func(w http.ResponseWriter, r *http.Request) {
-		next, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithNotifications(service))
+		next, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return

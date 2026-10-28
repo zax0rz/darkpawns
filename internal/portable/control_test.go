@@ -17,7 +17,7 @@ func TestControlOwnershipAuthenticationAndStop(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	mark, closeControl, err := serveControl(instance, "release", 4350, cancel)
+	mark, closeControl, _, err := serveControl(instance, "release", 4350, cancel)
 	if err != nil {
 		t.Fatal(err)
 	}

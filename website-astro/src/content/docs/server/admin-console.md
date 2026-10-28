@@ -27,6 +27,8 @@ HTTPS proxy. The session uses an HttpOnly cookie and a CSRF header.
 | Players | Edit a disconnected character's saved stats, equipment, inventory, or password; HIGOD access required |
 | Notifications | Configure every outbound channel: event subscriptions, the gossip mirror, the Healthchecks heartbeat, credentials and test sends; HIGOD access required |
 | Operations | Inspect process metrics, online players, and recent logs; reset actions require their server-side permission |
+| Configuration | Edit every runtime setting with live/restart marking, backup and restore, and change history; implementor access required |
+| Updates | Check for releases and run the launcher's update transaction with automatic rollback; implementor access required |
 
 Use the search button or `Ctrl+K` (`⌘K` on macOS) to find a page or world record.
 The account menu contains the builder guide and sign-out action. Narrow screens

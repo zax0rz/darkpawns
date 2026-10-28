@@ -1,3 +1,6 @@
+//go:build ignore
+
+// Fixture source for the census tools: parsed with go/parser, never built.
 package game
 
 // The Go port prints this same sentence. It must not make the C site look

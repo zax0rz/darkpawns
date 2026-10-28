@@ -30,6 +30,41 @@ const (
 	releaseAPI  = "https://api.github.com/repos/zax0rz/darkpawns/releases/latest"
 )
 
+// releaseEndpoint returns DP_RELEASE_ENDPOINT when it names a valid http(s)
+// base, else "". It points the updater at a private mirror or a local
+// rehearsal feed; the signed publisher manifest still gates every byte, so
+// an overridden endpoint cannot deliver anything the pinned (or linked)
+// publisher key did not sign. Empty path only — the download base below
+// derives its own path segments.
+func releaseEndpoint() string {
+	endpoint := strings.TrimSpace(os.Getenv("DP_RELEASE_ENDPOINT"))
+	if endpoint == "" {
+		return ""
+	}
+	u, err := url.Parse(endpoint)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || u.User != nil {
+		return ""
+	}
+	return strings.TrimSuffix(endpoint, "/")
+}
+
+// effectiveReleaseAPI is the release lookup endpoint in force.
+func effectiveReleaseAPI() string {
+	if endpoint := releaseEndpoint(); endpoint != "" {
+		return endpoint + "/releases/latest"
+	}
+	return releaseAPI
+}
+
+// downloadBaseFor is where a release's assets are served from. A mirror
+// serves them under its own origin; GitHub keeps its dedicated download host.
+func downloadBaseFor(tag string) string {
+	if endpoint := releaseEndpoint(); endpoint != "" {
+		return endpoint + "/releases/download/" + tag + "/"
+	}
+	return "https://github.com/zax0rz/darkpawns/releases/download/" + tag + "/"
+}
+
 type releaseAsset struct {
 	Name   string `json:"name"`
 	URL    string `json:"browser_download_url"`
@@ -38,6 +73,7 @@ type releaseAsset struct {
 }
 type githubRelease struct {
 	Tag        string         `json:"tag_name"`
+	HTMLURL    string         `json:"html_url"`
 	Draft      bool           `json:"draft"`
 	Prerelease bool           `json:"prerelease"`
 	Assets     []releaseAsset `json:"assets"`
@@ -58,26 +94,36 @@ func updateClient() *http.Client {
 	}}
 }
 
-func latestAsset(ctx context.Context, client *http.Client, endpoint string) (releaseAsset, error) {
+// fetchLatestRelease performs the read-only release lookup shared by staging
+// and the console's update check. It downloads nothing.
+func fetchLatestRelease(ctx context.Context, client *http.Client, endpoint string) (githubRelease, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return releaseAsset{}, err
+		return githubRelease{}, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "darkpawns-updater")
 	response, err := client.Do(req)
 	if err != nil {
-		return releaseAsset{}, err
+		return githubRelease{}, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode == http.StatusNotFound {
-		return releaseAsset{}, errors.New("no published stable portable release is available yet; your world was not stopped")
+		return githubRelease{}, errors.New("no published stable portable release is available yet; your world was not stopped")
 	}
 	if response.StatusCode != http.StatusOK {
-		return releaseAsset{}, fmt.Errorf("release lookup returned HTTP %d; your world was not stopped", response.StatusCode)
+		return githubRelease{}, fmt.Errorf("release lookup returned HTTP %d; your world was not stopped", response.StatusCode)
 	}
 	var release githubRelease
 	if err := json.NewDecoder(io.LimitReader(response.Body, 2<<20)).Decode(&release); err != nil {
+		return githubRelease{}, err
+	}
+	return release, nil
+}
+
+func latestAsset(ctx context.Context, client *http.Client, endpoint string) (releaseAsset, error) {
+	release, err := fetchLatestRelease(ctx, client, endpoint)
+	if err != nil {
 		return releaseAsset{}, err
 	}
 	return selectAsset(release)
@@ -103,8 +149,11 @@ func selectAsset(release githubRelease) (releaseAsset, error) {
 	}
 	asset := found[0]
 	u, err := url.Parse(asset.URL)
-	prefix := "https://github.com/zax0rz/darkpawns/releases/download/" + release.Tag + "/"
-	if err != nil || u.Scheme != "https" || u.User != nil || !strings.HasPrefix(asset.URL, prefix) || u.RawQuery != "" || u.Fragment != "" || !strings.HasSuffix(asset.URL, "/"+name) || asset.Size <= 0 || asset.Size > maxArchive {
+	prefix := downloadBaseFor(release.Tag)
+	// Plain http is only ever acceptable to a loopback mirror (a local
+	// rehearsal feed); anything remote must be https.
+	loopbackMirror := u.Scheme == "http" && (u.Hostname() == "127.0.0.1" || u.Hostname() == "localhost" || u.Hostname() == "::1")
+	if err != nil || (u.Scheme != "https" && !loopbackMirror) || u.User != nil || !strings.HasPrefix(asset.URL, prefix) || u.RawQuery != "" || u.Fragment != "" || !strings.HasSuffix(asset.URL, "/"+name) || asset.Size <= 0 || asset.Size > maxArchive {
 		return asset, errors.New("invalid official release asset")
 	}
 	if !strings.HasPrefix(asset.Digest, "sha256:") {
@@ -135,11 +184,16 @@ func fetchUpdate(ctx context.Context, archive, digest, destination string) (stri
 	if archive == "" {
 		client := updateClient()
 		defer client.CloseIdleConnections()
-		asset, err := latestAsset(ctx, client, releaseAPI)
+		asset, err := latestAsset(ctx, client, effectiveReleaseAPI())
 		if err != nil {
 			return "", err
 		}
-		if err := verifyPublishedAsset(ctx, client, asset, releaseauth.TrustedKey); err != nil {
+		// TrustedKeyBytes() equals the pinned production key in published
+		// builds; snapshot-linked builds verify against their linked key so
+		// the whole pipeline stays exercisable. An override endpoint cannot
+		// bypass this: whatever key is in force still has to have signed the
+		// release manifest.
+		if err := verifyPublishedAsset(ctx, client, asset, releaseauth.TrustedKeyBytes()); err != nil {
 			return "", err
 		}
 		digest = strings.TrimPrefix(asset.Digest, "sha256:")
@@ -367,7 +421,7 @@ func verifyPublishedAsset(ctx context.Context, client *http.Client, asset releas
 	if err != nil {
 		return err
 	}
-	expectedBase := "https://github.com/zax0rz/darkpawns/releases/download/" + manifest.Tag + "/"
+	expectedBase := downloadBaseFor(manifest.Tag)
 	if base != expectedBase {
 		return errors.New("signed release identity does not match the selected release")
 	}

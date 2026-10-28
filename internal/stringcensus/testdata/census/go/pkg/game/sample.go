@@ -1,3 +1,6 @@
+//go:build ignore
+
+// Fixture source for the census tools: parsed with go/parser, never built.
 package game
 
 import (

@@ -98,3 +98,32 @@ export const notifications = {
   removeCredentials: (channel: NotificationChannel, revision: number) => read(http.DELETE('/admin/notifications/{provider}/credentials', { params: { path: { provider: channel } }, body: { revision } })),
   test: (channel: NotificationChannel) => read(http.POST('/admin/notifications/{provider}/test', { params: { path: { provider: channel } } })),
 };
+
+// Settings and updates (admin-configuration design): typed end to end. Secret
+// fields travel only in PUT bodies — nil keeps the sealed value, '' clears.
+export const settingsApi = {
+  get: () => read(http.GET('/admin/settings')),
+  saveSessions: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/sessions', { body: body as never })),
+  saveAccess: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/access', { body: body as never })),
+  saveGrapevine: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/grapevine', { body: body as never })),
+  saveStaffPush: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/staff_push', { body: body as never })),
+  saveContact: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/contact', { body: body as never })),
+  exportUrl: '/admin/settings/export',
+  restoreValidate: (bundle: unknown) =>
+    read(http.POST('/admin/settings/restore/validate', { body: bundle as never })),
+  restoreApply: (revision: number, bundle: unknown) =>
+    read(http.POST('/admin/settings/restore/apply', { body: { revision, bundle } as never })),
+  audit: () => read(http.GET('/admin/settings/audit')),
+  restart: () => read(http.POST('/admin/restart')),
+};
+
+export const updatesApi = {
+  status: () => read(http.GET('/admin/updates/status')),
+  check: () => read(http.POST('/admin/updates/check')),
+  apply: () => read(http.POST('/admin/updates/apply')),
+};

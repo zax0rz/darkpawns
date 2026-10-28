@@ -67,7 +67,7 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	}
 	ctx, stop := context.WithCancel(ctx)
 	defer stop()
-	markReady, closeControl, err := serveControl(instance, bundle, cfg.HTTPPort, stop)
+	markReady, closeControl, scopedControl, err := serveControl(instance, bundle, cfg.HTTPPort, stop)
 	if err != nil {
 		return err
 	}
@@ -90,6 +90,15 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	}
 	cmd.Dir = lib
 	cmd.Env = instanceEnv(os.Environ(), bundle, instance, cfg)
+	// The settings file and the scoped launcher capability are the console's
+	// two bridges: settings.json is the game-owned config this run reads, and
+	// the scoped token reaches only update/restart transactions — never a
+	// bare stop, never the launcher's file/process operations.
+	data := filepath.Join(instance, "lib", "data")
+	cmd.Env = append(cmd.Env, "DP_SETTINGS_PATH="+filepath.Join(data, "settings.json"))
+	if scopedControl.Token != "" {
+		cmd.Env = append(cmd.Env, "DP_CONTROL_ADDR="+scopedControl.Address, "DP_CONTROL_TOKEN="+scopedControl.Token)
+	}
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = in, out, errOut
 	prepareProcess(cmd)
 	if err := cmd.Start(); err != nil {

@@ -2,4 +2,4 @@
 # Go sink arguments whose value the extractor could not resolve to literals.
 # Leads for tightening the sink table, not ratchet failures.
 # columns: expression	file:line	sink
-body	go/pkg/game/sample.go:33	.SendMessage
+body	go/pkg/game/sample.go:36	.SendMessage

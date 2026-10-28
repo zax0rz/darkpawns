@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -45,7 +46,9 @@ const (
 // two players sharing a home connection, with room to reconnect. The
 // three-character rule itself stays what it was in C: policy, enforced by
 // immortals, not code.
-var webSocketMaxConnsPerIP = 8
+// webSocketMaxConnsPerIP is atomic: the admin console's settings manager
+// swaps it live, so a saved change applies to the next upgrade request.
+var webSocketMaxConnsPerIP atomic.Int32
 
 // webSocketMaxTotalConns caps simultaneous WebSocket sessions process-wide
 // (WEBSOCKET_MAX_TOTAL_CONNS). Per-IP accounting cannot bound a flood on its
@@ -56,25 +59,42 @@ var webSocketMaxConnsPerIP = 8
 // worst-case descriptor use under a stock 1024 soft RLIMIT_NOFILE even with
 // the 200-connection telnet listener, its reverse-DNS and WHOD sockets, and
 // every listening descriptor.
-var webSocketMaxTotalConns = 500
+// webSocketMaxTotalConns is atomic for the same live-swap reason as the
+// per-IP cap above.
+var webSocketMaxTotalConns atomic.Int32
 
 func init() {
+	webSocketMaxConnsPerIP.Store(8)
+	webSocketMaxTotalConns.Store(500)
 	if v := os.Getenv("WEBSOCKET_MAX_CONNS_PER_IP"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
-			slog.Warn("WEBSOCKET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", webSocketMaxConnsPerIP)
+		if err != nil || n < 1 || n > math.MaxInt32 {
+			slog.Warn("WEBSOCKET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", webSocketMaxConnsPerIP.Load())
 		} else {
-			webSocketMaxConnsPerIP = n
+			webSocketMaxConnsPerIP.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
 	if v := os.Getenv("WEBSOCKET_MAX_TOTAL_CONNS"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
-			slog.Warn("WEBSOCKET_MAX_TOTAL_CONNS invalid, using default", "value", v, "default", webSocketMaxTotalConns)
+		if err != nil || n < 1 || n > math.MaxInt32 {
+			slog.Warn("WEBSOCKET_MAX_TOTAL_CONNS invalid, using default", "value", v, "default", webSocketMaxTotalConns.Load())
 		} else {
-			webSocketMaxTotalConns = n
+			webSocketMaxTotalConns.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
+}
+
+// ApplyWebSocketLimits replaces the live WebSocket caps and the pre-auth
+// idle deadline (which mirrors the telnet listener's). Values below 1 (and a
+// non-positive idle) are refused so a bad save cannot reject everyone.
+func ApplyWebSocketLimits(perIP, total int, idle time.Duration) error {
+	if perIP < 1 || total < 1 || perIP > math.MaxInt32 || total > math.MaxInt32 || idle <= 0 {
+		return fmt.Errorf("websocket limits must be positive and within int32: perIP=%d total=%d idle=%s", perIP, total, idle)
+	}
+	webSocketMaxConnsPerIP.Store(int32(perIP))
+	webSocketMaxTotalConns.Store(int32(total))
+	preAuthIdleTimeoutNanos.Store(int64(idle))
+	return nil
 }
 
 // allowedWebSocketOrigins lists the public origins that may connect.
@@ -1335,15 +1355,15 @@ func (m *Manager) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// first: source rotation keeps every per-IP bucket under its limit, so the
 	// per-IP count alone cannot bound a flood.
 	m.ipConnMu.Lock()
-	if m.totalConnCount >= webSocketMaxTotalConns {
+	if m.totalConnCount >= int(webSocketMaxTotalConns.Load()) {
 		atCapacity := m.totalConnCount
 		m.ipConnMu.Unlock()
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "server is at capacity"))
 		_ = conn.Close()
-		slog.Warn("WebSocket connection rejected: server at capacity", "ip", ip, "connections", atCapacity, "limit", webSocketMaxTotalConns)
+		slog.Warn("WebSocket connection rejected: server at capacity", "ip", ip, "connections", atCapacity, "limit", webSocketMaxTotalConns.Load())
 		return
 	}
-	if m.ipConnCount[ip] >= webSocketMaxConnsPerIP {
+	if m.ipConnCount[ip] >= int(webSocketMaxConnsPerIP.Load()) {
 		m.ipConnMu.Unlock()
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "too many connections from your IP"))
 		_ = conn.Close()

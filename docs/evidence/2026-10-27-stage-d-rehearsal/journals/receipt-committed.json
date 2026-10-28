@@ -1,0 +1,8 @@
+{
+  "id": "5783c24984e738defdd5b550259fb83e",
+  "phase": "committed",
+  "previous": "/home/zach/rehearsal-stage-d/bundles/darkpawns_v0.1.7-local.1_linux_amd64",
+  "candidate": "/home/zach/rehearsal-stage-d/instance/.updates/5783c24984e738defdd5b550259fb83e/release/darkpawns_v0.1.8_linux_amd64",
+  "sha256": "8fe665646b380e78b804333a20587d0c1259e6e955f6120fe41cef5d91a96c96",
+  "was_running": true
+}

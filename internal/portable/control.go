@@ -33,22 +33,43 @@ type controlRecord struct {
 	Token   string `json:"token"`
 }
 
+// ScopedCapability is the reduced control capability handed to the game
+// process. It reaches the console's update and restart transactions, never a
+// bare stop, and it never appears in .control.json.
+type ScopedCapability struct {
+	Address string
+	Token   string
+}
+
 // The local operator endpoint is separate from the game's HTTP/admin surface.
 // Its per-run capability is written only inside the private instance directory.
-func serveControl(instance, bundle string, port int, stop context.CancelFunc) (markReady func(), closeControl func(error) error, err error) {
+func serveControl(instance, bundle string, port int, stop context.CancelFunc) (markReady func(), closeControl func(error) error, scoped ScopedCapability, err error) {
 	listener, err := net.Listen("tcp4", "127.0.0.1:0")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, ScopedCapability{}, err
 	}
 	secret := make([]byte, 32)
 	if _, err := rand.Read(secret); err != nil {
-		return nil, nil, errors.Join(err, listener.Close())
+		return nil, nil, ScopedCapability{}, errors.Join(err, listener.Close())
 	}
 	record := controlRecord{Address: listener.Addr().String(), Token: hex.EncodeToString(secret)}
+	scopedSecret := make([]byte, 32)
+	if _, randErr := rand.Read(scopedSecret); randErr != nil {
+		return nil, nil, ScopedCapability{}, randErr
+	}
+	scoped = ScopedCapability{Address: record.Address, Token: hex.EncodeToString(scopedSecret)}
 	digest := sha256.Sum256(secret)
 	state := RuntimeStatus{RunID: hex.EncodeToString(digest[:]), State: "starting", Instance: instance, Bundle: bundle, PID: os.Getpid(), URL: "http://127.0.0.1:" + strconv.Itoa(port) + "/"}
 	var mu sync.Mutex
+	snapshot := func() RuntimeStatus {
+		mu.Lock()
+		defer mu.Unlock()
+		return state
+	}
 	mux := http.NewServeMux()
+	for path, handler := range controlAdminHandlers(instance, bundle, snapshot) {
+		mux.HandleFunc(path, handler)
+	}
 	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -73,7 +94,18 @@ func serveControl(instance, bundle string, port int, stop context.CancelFunc) (m
 		stop()
 	})
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Origin") != "" || subtle.ConstantTimeCompare([]byte(r.Header.Get("Authorization")), []byte("Bearer "+record.Token)) != 1 {
+		// The full capability comes from .control.json (launcher processes).
+		// The scoped capability reaches only the console's transactions; it
+		// must never invoke a bare stop. Any Origin header is still a
+		// browser, not a local operator, and is refused for both scopes.
+		authorization := r.Header.Get("Authorization")
+		full := subtle.ConstantTimeCompare([]byte(authorization), []byte("Bearer "+record.Token)) == 1
+		limited := !full && subtle.ConstantTimeCompare([]byte(authorization), []byte("Bearer "+scoped.Token)) == 1
+		if r.Header.Get("Origin") != "" || (!full && !limited) {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		if limited && !scopedControlPaths[r.URL.Path] {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
@@ -86,7 +118,7 @@ func serveControl(instance, bundle string, port int, stop context.CancelFunc) (m
 		err = writePrivate(path, data)
 	}
 	if err != nil {
-		return nil, nil, errors.Join(err, listener.Close())
+		return nil, nil, scoped, errors.Join(err, listener.Close())
 	}
 	go func() {
 		if err := server.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -120,7 +152,7 @@ func serveControl(instance, bundle string, port int, stop context.CancelFunc) (m
 				encodeErr = writePrivate(filepath.Join(instance, ".last-exit.json"), data)
 			}
 			return errors.Join(closeErr, removeErr, encodeErr)
-		}, nil
+		}, scoped, nil
 }
 
 func writePrivate(path string, data []byte) (result error) {

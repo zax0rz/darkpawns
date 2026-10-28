@@ -55,6 +55,15 @@ func NewAuditLogger(filename string) (*AuditLogger, error) {
 
 // Log writes an AuditEvent to the log file, pseudonymising the IP address: a
 // truncated, unsalted SHA-256 is pseudonymous, not anonymous.
+// Filename returns the audit log's path for read-only views (the settings
+// history). It reports an empty string before the file is opened.
+func (a *AuditLogger) Filename() string {
+	if a == nil || a.file == nil {
+		return ""
+	}
+	return a.file.Name()
+}
+
 func (a *AuditLogger) Log(event AuditEvent) {
 	event.Timestamp = time.Now()
 

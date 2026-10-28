@@ -1,0 +1,9 @@
+{
+  "id": "5c566df45c39bc0a66a4b446d995777c",
+  "phase": "rolled-back",
+  "previous": "/home/zach/rehearsal-stage-d/instance/.updates/0b6b5c7ea391133675c23c4e857ba286/release/darkpawns_v0.1.8_linux_amd64",
+  "candidate": "/home/zach/rehearsal-stage-d/instance/.updates/5c566df45c39bc0a66a4b446d995777c/release/darkpawns_v0.1.9_linux_amd64",
+  "sha256": "574a53f84446469c2e3b721494bd6e40d27a40d106ba0d0890e21e4073b7e42e",
+  "was_running": true,
+  "error": "new release exited before readiness: server exited before becoming ready\nexit status 9"
+}

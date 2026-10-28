@@ -426,6 +426,22 @@ func AccountBudgetFromEnvironment() *AccountBudgetTracker {
 	return NewAccountBudgetTracker(count, window)
 }
 
+// Configure replaces the budget live (the admin console's settings manager
+// calls it on save). Disabling clears the recorded failures so re-enabling
+// starts from a clean slate.
+func (t *AccountBudgetTracker) Configure(threshold int, window time.Duration) {
+	if window <= 0 {
+		window = time.Hour
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.threshold = threshold
+	t.window = window
+	if threshold <= 0 {
+		t.accounts = map[string]*accountBudget{}
+	}
+}
+
 // Fail records a failure against an account and reports whether the attempt
 // may still be answered. Disabled trackers always allow.
 func (t *AccountBudgetTracker) Fail(account string) (allowed bool) {

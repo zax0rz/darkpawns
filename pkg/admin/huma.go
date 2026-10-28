@@ -110,7 +110,7 @@ func clientIPFrom(ctx context.Context) string {
 
 // registerServerInfo registers GET /admin/server on api. The admin-access
 // audit event carries over from the old handler, client IP included.
-func registerServerInfo(api huma.API, world *game.World, auditLogger *audit.AuditLogger) {
+func registerServerInfo(api huma.API, world *game.World, auditLogger *audit.AuditLogger, buildVersion, buildCommit string, managed bool) {
 	huma.Register(api, huma.Operation{
 		OperationID: "get-server-info",
 		Method:      http.MethodGet,
@@ -132,7 +132,11 @@ func registerServerInfo(api huma.API, world *game.World, auditLogger *audit.Audi
 				Success:   true,
 			})
 		}
-		return &serverInfoOutput{Body: serverInfo(world)}, nil
+		info := serverInfo(world)
+		info.Version = buildVersion
+		info.Commit = buildCommit
+		info.Managed = managed
+		return &serverInfoOutput{Body: info}, nil
 	})
 }
 
