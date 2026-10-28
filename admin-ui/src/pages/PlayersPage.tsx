@@ -1,11 +1,12 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { NativeSelect } from '../components/ui/select';
+import { PlayerItemsEditor } from '../components/PlayerItemsEditor';
+import { changeItems, freshItems } from '../lib/playerItems';
 import { useEffect, useState } from 'react';
-import { Link, useBlocker } from 'react-router-dom';
+import { useBlocker } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { playerEditor, type SavedPlayer, type SavedPlayerDeletion, type SavedPlayerItem } from '../api/client';
+import { playerEditor, type SavedPlayer, type SavedPlayerDeletion } from '../api/client';
 import { useAuth } from '../hooks/useAuth';
 import { Switch } from '../components/ui/switch';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -83,26 +84,29 @@ function CharacterEditor({ player, onDirty, onRenamed, onDeleted }: { player: Sa
   const cache = useQueryClient();
   const [tab, setTab] = useState<'stats' | 'items' | 'password' | 'flags' | 'identity'>('stats');
   const [values, setValues] = useState(player.values);
+  const [items, setItems] = useState(() => freshItems(player));
   const [loadedRevision, setLoadedRevision] = useState(player.revision);
   if (loadedRevision !== player.revision) {
     setLoadedRevision(player.revision);
     setValues(player.values);
+    setItems(freshItems(player));
   }
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [vnum, setVnum] = useState('');
   const [notice, setNotice] = useState('');
   const [actionError, setActionError] = useState('');
   const [newName, setNewName] = useState(player.name);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [reloadOpen, setReloadOpen] = useState(false);
   const [confirmName, setConfirmName] = useState('');
   const needsNameConfirmation = player.values.level >= 31;
   const changes = Object.fromEntries(Object.entries(values).filter(([key, value]) => value !== player.values[key]));
-  const dirty = Object.keys(changes).length > 0;
+  const dirty = Object.keys(changes).length > 0 || items.changes.length > 0;
   const mutation = useMutation({
     mutationFn: (action: () => Promise<SavedPlayer>) => action(),
     onSuccess: (next) => {
       onDirty(false);
+      setValues(next.values); setItems(freshItems(next)); setLoadedRevision(next.revision);
       cache.setQueryData(['saved-player', player.name], next);
     },
     onError: (error: Error) => { setActionError(error.message); setNotice(''); },
@@ -133,8 +137,11 @@ function CharacterEditor({ player, onDirty, onRenamed, onDeleted }: { player: Sa
     setActionError(''); setNotice('');
     mutation.mutate(async () => { const next = await action(); setNotice(success); return next; });
   };
-  const itemAction = (action: 'grant' | 'move' | 'remove', source: 'inventory' | 'equipment', index: number, locate: number) => {
-    run(() => playerEditor.items(player.name, player.revision, { action, source, index, locate, vnum: Number(vnum) || 0 }), 'Equipment and inventory saved.');
+  const discard = () => { setValues(player.values); setItems(freshItems(player)); onDirty(false); setActionError(''); setNotice(''); };
+  const saveChanges = () => {
+    const invalid = (player.fields ?? []).find(field => !Number.isInteger(values[field.key]) || values[field.key] < field.min || values[field.key] > field.max);
+    if (invalid) { setActionError(`Check ${invalid.label.toLowerCase()} on Character stats. Enter a whole number from ${invalid.min} to ${invalid.max}.`); return; }
+    run(() => playerEditor.stats(player.name, player.revision, changes, items.changes), 'Character changes saved.');
   };
 
   return <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="space-y-5" aria-busy={mutation.isPending || renameMutation.isPending || deleteMutation.isPending}>
@@ -144,29 +151,28 @@ function CharacterEditor({ player, onDirty, onRenamed, onDeleted }: { player: Sa
     </TabsList>
     {notice && <p role="status" className="border border-rule bg-paper-deep p-3">{notice}</p>}
     {actionError && <div role="alert" className="text-accent border border-accent p-3"><p>{actionError}</p><p className="mt-2 text-sm">If someone changed this character, reload before trying again.</p></div>}
-    <TabsContent value="stats"><form onSubmit={(event) => { event.preventDefault(); run(() => playerEditor.stats(player.name, player.revision, changes), 'Character stats saved.'); }} className="space-y-6">
+    {(tab === 'stats' || tab === 'items') && <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 border-y border-rule bg-paper-deep p-3">
+      <Button disabled={!dirty || mutation.isPending} onClick={saveChanges}>{mutation.isPending ? 'Saving…' : 'Save changes'}</Button>
+      <Button variant="outline" disabled={!dirty || mutation.isPending} onClick={discard}>Discard changes</Button>
+      <p role="status" className="text-sm text-ink-muted">{dirty ? `${Object.keys(changes).length} stat ${Object.keys(changes).length === 1 ? 'edit' : 'edits'}, ${items.changes.length} item ${items.changes.length === 1 ? 'edit' : 'edits'} waiting to save` : 'No unsaved changes'}</p>
+    </div>}
+    <TabsContent value="stats"><form onSubmit={(event) => { event.preventDefault(); saveChanges(); }} className="space-y-6">
       {['Character', 'Vitals', 'Attributes'].map((group) => <fieldset key={group} disabled={mutation.isPending} className="border-t border-rule pt-3"><legend className="text-lg pr-3">{group}</legend><div className={`grid grid-cols-2 ${group === 'Attributes' ? 'sm:grid-cols-3' : ''} gap-4 mt-2`}>
         {(player.fields ?? []).filter((field) => field.group === group).map((field) => <label key={field.key} className="block text-sm">{field.label}<Input className={`${fieldClass} mt-1`} type="number" required min={field.min} max={field.max} step="1" value={values[field.key]} onChange={(event) => {
           const next = { ...values, [field.key]: event.target.valueAsNumber };
-          setValues(next); onDirty(Object.keys(next).some((key) => next[key] !== player.values[key]));
+          setValues(next); onDirty(items.changes.length > 0 || Object.keys(next).some((key) => next[key] !== player.values[key]));
         }} /></label>)}
       </div></fieldset>)}
-      <div className="flex flex-wrap gap-3 items-center border-t border-rule pt-4">
-        <Button variant="ghost" size="plain" type="submit" disabled={!dirty || mutation.isPending} className={`${buttonClass} bg-accent text-paper hover:bg-accent-deep`}>{mutation.isPending ? 'Saving…' : 'Save stat changes'}</Button>
-        <Button variant="ghost" size="plain" type="button" disabled={!dirty || mutation.isPending} className={buttonClass} onClick={() => { setValues(player.values); onDirty(false); }}>Discard changes</Button>
-        <span className="text-sm text-ink-muted">{dirty ? `${Object.keys(changes).length} unsaved fields` : 'No unsaved stat changes'}</span>
-      </div>
     </form></TabsContent>
-    <TabsContent value="items"><div className="space-y-6">
-      <p className="text-sm text-ink-muted">Each change saves right away. Containers keep their contents. Equipment slots are staff assignments; choose a suitable item for each slot. The save setting is shared by every copy of an item.</p>
-      {dirty && <p role="status" className="text-accent">Save or discard stat changes before editing items.</p>}
-      <fieldset disabled={mutation.isPending || dirty} className="space-y-6">
-        <form onSubmit={(event) => { event.preventDefault(); itemAction('grant', 'inventory', 0, 0); }} className="flex flex-wrap gap-3 items-end border-b border-rule pb-5"><label className="text-sm">Item number<Input type="number" min="1" step="1" required value={vnum} onChange={(event) => setVnum(event.target.value)} className={`${fieldClass} mt-1 max-w-48`} /></label><Button variant="ghost" size="plain" className={buttonClass}>Add item</Button></form>
-        {(['equipment', 'inventory'] as const).map((source) => <section key={source}><h3 className="text-xl mb-3 capitalize">{source}</h3>
-          {!(player[source] ?? []).length ? <p className="text-sm text-ink-muted">{source === 'equipment' ? 'Nothing equipped. Move an item into a slot below.' : 'No items carried. Add one by item number above.'}</p> : <ul className="border-t border-rule">{(player[source] ?? []).map((item) => <ItemRow key={item.index} item={item} player={player} source={source} onAction={(action, locate) => itemAction(action, source, item.index, locate)} />)}</ul>}
-        </section>)}
-      </fieldset>
-    </div></TabsContent>
+    <TabsContent value="items">
+      {items.changes.length >= 100 && <p role="status" className="text-accent mb-3">Save or discard these 100 item edits before making more.</p>}
+      <PlayerItemsEditor player={player} draft={items} disabled={mutation.isPending || items.changes.length >= 100} onChange={(change, granted) => {
+        try {
+          const next = changeItems(items, change, granted);
+          setItems(next); onDirty(true); setNotice(''); setActionError('');
+        } catch (error) { setActionError((error as Error).message); }
+      }} />
+    </TabsContent>
     <TabsContent value="flags"><div className="space-y-5">
       <p className="text-sm text-ink-muted max-w-prose">Each switch saves right away. Your staff level controls which switches you can change.</p>
       <ul className="divide-y divide-rule border-y border-rule">
@@ -175,8 +181,8 @@ function CharacterEditor({ player, onDirty, onRenamed, onDeleted }: { player: Sa
           <label className="flex min-h-11 items-center gap-3 text-sm"><span>{flag.enabled ? 'On' : 'Off'}<span className="sr-only"> {flag.label}</span></span><Switch checked={flag.enabled} disabled={!flag.editable || mutation.isPending || dirty} aria-label={flag.label} onCheckedChange={(enabled) => run(() => playerEditor.flags(player.name, player.revision, { [flag.key]: enabled }), `${flag.label} ${enabled ? 'enabled' : 'disabled'}.`)} /></label>
         </li>)}
       </ul>
-      <p className="text-sm text-ink-muted max-w-prose">Item save settings are changed on the Items tab and affect every copy.</p>
-      {dirty && <p role="status" className="text-accent">Save or discard stat changes before editing flags.</p>}
+      <p className="text-sm text-ink-muted max-w-prose">Item save settings are changed on the Equipment & inventory tab and affect every copy.</p>
+      {dirty && <p role="status" className="text-accent">Save or discard changes before editing flags.</p>}
     </div></TabsContent>
     <TabsContent value="identity"><div className="space-y-8">
       <section className="max-w-xl space-y-3">
@@ -186,12 +192,12 @@ function CharacterEditor({ player, onDirty, onRenamed, onDeleted }: { player: Sa
           <label htmlFor="player-new-name" className="block flex-1 text-sm">New name<Input id="player-new-name" autoComplete="off" required minLength={2} maxLength={20} pattern="[A-Za-z]{2,20}" value={newName} onChange={(event) => setNewName(event.target.value)} className={`${fieldClass} mt-1`} /></label>
           <Button variant="ghost" size="plain" type="submit" disabled={dirty || renameMutation.isPending || newName === player.name || !newName.trim()} className={`${buttonClass} bg-accent text-paper hover:bg-accent-deep`}>{renameMutation.isPending ? 'Renaming…' : 'Rename character'}</Button>
         </form>
-        {dirty && <p role="status" className="text-accent">Save or discard stat changes before renaming.</p>}
+        {dirty && <p role="status" className="text-accent">Save or discard changes before renaming.</p>}
       </section>
       <section className="max-w-xl border-t border-rule pt-5 space-y-3">
         <h3 className="text-xl">Delete character</h3>
         <p className="text-sm text-ink-muted">Deletes this character. Their saved items and aliases are removed, and the name becomes available again. This can't be undone.</p>
-        {dirty && <p role="status" className="text-accent">Save or discard stat changes before deleting.</p>}
+        {dirty && <p role="status" className="text-accent">Save or discard changes before deleting.</p>}
         <Button variant="ghost" size="plain" type="button" disabled={dirty || deleteMutation.isPending || renameMutation.isPending} className={`${buttonClass} text-accent border-accent`} onClick={() => { setConfirmName(''); setDeleteOpen(true); }}>Delete character…</Button>
       </section>
       <ConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} title={`Delete ${player.name}?`}
@@ -208,24 +214,18 @@ function CharacterEditor({ player, onDirty, onRenamed, onDeleted }: { player: Sa
       setPassword(''); setConfirmPassword('');
     }}>
       <h3 className="text-xl">Reset password</h3><p className="text-sm text-ink-muted">Set a new password from 8 to 72 characters. This also clears failed login attempts and the account lockout.</p>
-      {dirty && <p role="status" className="text-accent">Save or discard stat changes before resetting the password.</p>}
+      {dirty && <p role="status" className="text-accent">Save or discard changes before resetting the password.</p>}
       <label className="block text-sm">New password<Input type="password" autoComplete="new-password" minLength={8} maxLength={72} required value={password} onChange={(event) => setPassword(event.target.value)} className={`${fieldClass} mt-1`} /></label>
       <label className="block text-sm">Confirm new password<Input type="password" autoComplete="new-password" minLength={8} maxLength={72} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className={`${fieldClass} mt-1`} /></label>
       <Button variant="ghost" size="plain" disabled={dirty || mutation.isPending} className={`${buttonClass} bg-accent text-paper hover:bg-accent-deep`}>{mutation.isPending ? 'Resetting…' : 'Reset password'}</Button>
     </form></TabsContent>
     <Button variant="ghost" size="plain" type="button" disabled={mutation.isPending} className={`${buttonClass} text-ink-muted`} onClick={() => {
-    if (dirty && !window.confirm('Discard character changes and reload?')) return;
-      setValues(player.values); onDirty(false); cache.invalidateQueries({ queryKey: ['saved-player', player.name] });
+      if (dirty) setReloadOpen(true);
+      else { discard(); void cache.invalidateQueries({ queryKey: ['saved-player', player.name] }); }
     }}>Reload character</Button>
-  </Tabs>;
-}
+    <ConfirmDialog open={reloadOpen} onOpenChange={setReloadOpen} title="Discard changes and reload?" description="Your unsaved stat and item edits will be lost. The latest saved character will open." action="Discard and reload" onConfirm={() => { discard(); void cache.invalidateQueries({ queryKey: ['saved-player', player.name] }); }} />
 
-function ItemRow({ item, player, source, onAction }: { item: SavedPlayerItem; player: SavedPlayer; source: 'inventory' | 'equipment'; onAction: (action: 'move' | 'remove', locate: number) => void }) {
-  const [locate, setLocate] = useState(0);
-  return <li className="border-b border-rule py-4 space-y-3">
-    <div className="flex flex-wrap justify-between gap-2"><div><span className="font-medium">{item.name}</span><span className="font-mono text-xs text-ink-muted ml-2">#{item.vnum}{item.count > 1 ? ` × ${item.count}` : ''}</span><p className="text-xs text-ink-muted mt-1">Kept after logout: {item.no_rent ? 'No' : 'Yes'}</p>{item.vnum > 0 && <Link className="text-xs text-accent underline underline-offset-2" to={`/admin/game/objects/${item.vnum}/edit`}>Change setting for all copies</Link>}</div><span className="text-sm text-ink-muted">{item.parent ? 'Inside container' : source === 'equipment' ? (player.slots ?? []).find((slot) => slot.locate === item.locate)?.name ?? 'Unknown slot' : 'Carried'}</span></div>
-    <div className="flex flex-wrap gap-2"><NativeSelect aria-label={`Destination for ${item.name} ${item.index + 1}`} className={`${fieldClass} sm:max-w-52`} value={locate} onChange={(event) => setLocate(Number(event.target.value))}><option value={0}>Inventory</option>{(player.slots ?? []).map((slot) => <option key={slot.locate} value={slot.locate}>{slot.name}</option>)}</NativeSelect><Button variant="ghost" size="plain" type="button" className={buttonClass} onClick={() => onAction('move', locate)}>Move item</Button><Button variant="ghost" size="plain" type="button" className={`${buttonClass} text-accent`} onClick={() => { if (window.confirm(`Remove ${item.name} and anything inside it from ${player.name}?`)) onAction('remove', 0); }}>Remove</Button></div>
-  </li>;
+  </Tabs>;
 }
 
 function LastSaved({ timestamp }: { timestamp: string | null }) {

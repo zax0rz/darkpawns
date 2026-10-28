@@ -1,11 +1,11 @@
 ---
 title: "Saved character management"
-description: "Rename, delete, and manage flags on disconnected saved characters in the admin console."
+description: "Manage saved characters, equipment, inventory, flags, names, and passwords in the admin console."
 section: "server"
 audience: "operator"
 order: 16
 sourcePath: "website-astro/src/content/docs/server/player-management.md"
-updated: 2026-10-27
+updated: 2026-10-28
 draft: false
 ---
 
@@ -13,6 +13,38 @@ The **Players** page manages saved characters. A character must be fully
 disconnected before you can edit it. This includes linkdead characters and
 characters at the login screen. The editor refuses online changes so a late
 save cannot overwrite them.
+
+## Equipment and inventory
+
+Choose a character and open **Equipment & inventory**. Every wear slot appears,
+including empty ones. Choose **Equip** beside an empty slot to move a carried
+item there or add a **New copy**. Search by name, keywords, or vnum. Choose
+**Give item** to add a new copy to carried inventory.
+
+Carried containers show their contents underneath. **Hide contents** folds a bag;
+**Show contents** opens it again. A container and everything inside it travel
+together when you equip or unequip it. To take one item out, choose **Carried
+inventory** from that item's destination menu and choose **Take out**.
+
+**Unequip** moves an item back to carried inventory. **Remove** queues deletion
+of the item and anything inside it. Removing an item can be undone with
+**Discard changes** until you save. After saving, it cannot be undone here.
+
+Stat and item edits wait for **Save changes**. You can switch between those two
+tabs and save them together. The save bar shows how many edits are waiting.
+**Discard changes** restores both tabs to the last loaded character. Save or
+discard first before changing flags, names, or passwords.
+
+If the character changed elsewhere or connected while you were editing, Save
+refuses the whole change and keeps your draft open. Review it before choosing
+**Reload character**; reloading discards the draft after confirmation. A failed
+item edit never leaves some stat or item changes saved and others unsaved.
+
+Staff assignments do not check whether a character could wear the item in game.
+Choose suitable items for each slot. A stack cannot fill a single slot; a filled
+slot must be unequipped first. You can queue up to 100 item edits per save, with
+at most 2,000 saved item entries per character. **Not saved after logout** is a
+shared item definition, changed from **Objects**, rather than a per-copy switch.
 
 ## Rename
 
@@ -48,8 +80,8 @@ it. The **Deleted** status is read-only; use **Delete** on the **Identity** tab
 to remove a character.
 
 The **Cryo-saved** switch changes the character's cryo marker only. It does not
-store or restore saved items. An item's **Kept after logout** setting is shared
-by every copy; choose **Change setting for all copies** to edit it.
+store or restore saved items. An item's save setting is shared
+by every copy; open **Objects** to change its definition.
 
 ## Screenshots
 
@@ -62,6 +94,15 @@ These screenshots use the synthetic local preview character `Returner`.
 ![Character deletion confirmation](./images/player-management-delete-confirm.png)
 
 ## How it works
+
+Stat and item edits use one revision-checked request under the existing offline
+name reservation. The server applies ordered operations to a copy of the saved
+record, preserving original per-instance state and container references, then
+writes character and object saves in one SQLite transaction. Clients send
+operations, not replacement item snapshots. The admin audit records the save.
+The existing single-item endpoint remains available. No game command, wear rule,
+random draw, or save format changes.
+
 
 The table records whether each store follows the character's name or its stable
 ID, and what the admin actions change.

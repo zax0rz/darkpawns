@@ -1783,6 +1783,8 @@ export interface components {
             revision: string;
         };
         EditSavedPlayerInputBody: {
+            /** @description Ordered item edits, committed with the numeric fields in one transaction */
+            item_changes?: components["schemas"]["PlayerItemChange"][] | null;
             revision: string;
             /** @description Changed numeric fields from the field catalog */
             values: {
@@ -2393,6 +2395,18 @@ export interface components {
             /** Format: int64 */
             min_level: number;
         };
+        PlayerItemChange: {
+            /** @enum {string} */
+            action: "grant" | "remove" | "move";
+            /** Format: int64 */
+            index: number;
+            /** Format: int64 */
+            locate: number;
+            /** @enum {string} */
+            source: "inventory" | "equipment";
+            /** Format: int64 */
+            vnum: number;
+        };
         PlayerItemResponse: {
             /** Format: int64 */
             count: number;
@@ -2519,6 +2533,7 @@ export interface components {
             warning?: string;
         };
         SavedPlayerItem: {
+            container: boolean;
             /** Format: int64 */
             count: number;
             /** Format: int64 */

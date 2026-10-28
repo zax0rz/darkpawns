@@ -161,8 +161,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/server/motd-editor/,src/content/docs/server/motd-editor.md,docs,authored technical documentation,3,technical accuracy review,624,,,website-astro/src/content/docs/server/motd-editor.md
 /docs/server/notifications.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1110,,,website-astro/src/content/docs/server/notifications.md
 /docs/server/notifications/,src/content/docs/server/notifications.md,docs,authored technical documentation,3,technical accuracy review,1110,,,website-astro/src/content/docs/server/notifications.md
-/docs/server/player-management.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1015,,,website-astro/src/content/docs/server/player-management.md
-/docs/server/player-management/,src/content/docs/server/player-management.md,docs,authored technical documentation,3,technical accuracy review,1015,,,website-astro/src/content/docs/server/player-management.md
+/docs/server/player-management.md,src/pages/docs/[...slug].md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1385,,,website-astro/src/content/docs/server/player-management.md
+/docs/server/player-management/,src/content/docs/server/player-management.md,docs,authored technical documentation,3,technical accuracy review,1385,,,website-astro/src/content/docs/server/player-management.md
 /download.md,src/pages/download.md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,,,,
 /download/,src/pages/download.astro,core,authored static page,1,full editorial review,,,,
 /help/,src/pages/help/index.astro,hub,authored collection framing,1,full editorial review,,,,
