@@ -16,8 +16,8 @@ exports cover only the filtered retained ring, up to 1,000 entries. Synthetic
 fixtures are development evidence and never substitute for operational history.
 
 Observability supports the faithful game without changing its player-facing
-bytes, random draws, commands or decisions (R1–R4). Telemetry stores no player
-identities. Existing authorization and mudlog visibility still govern inspection
+bytes, random draws, commands or decisions (R1–R4). Telemetry stores character names and world metadata for operator activity
+details, with no hosts, addresses, credentials or chat. Existing authorization and mudlog visibility still govern inspection
 and exports.
 
 Confirmed scope: B+C retained telemetry, charts, drilldowns and filtered raw/CSV

@@ -105,6 +105,7 @@ func TestAPIRouteDriftGate(t *testing.T) {
 		"GET /setup-status",
 		"GET /admin/zones",
 		"GET /admin/server",
+		"GET /admin/activity/events",
 		"GET /admin/logs",
 		"GET /admin/players",
 		"GET /admin/mobs",

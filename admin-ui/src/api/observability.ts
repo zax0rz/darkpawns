@@ -27,3 +27,6 @@ export async function observeMudlog(signal: AbortSignal, connected: () => void, 
     }
   } finally { reader.releaseLock(); }
 }
+
+export type ActivityFilters = NonNullable<paths['/admin/activity/events']['get']['parameters']['query']>;
+export const activityEvents = (filters: ActivityFilters) => read(http.GET('/admin/activity/events', { params: { query: filters } }));

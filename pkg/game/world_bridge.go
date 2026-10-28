@@ -467,9 +467,11 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 			roomName = room.Name
 		}
 		killerName := ""
+		var killerBody combat.Combatant
 		if killer != nil {
 			if k := a.actorFor(killer); k != nil {
 				killerName = k.GetName()
+				killerBody, _ = k.(combat.Combatant)
 			}
 		}
 		if killerName != "" {
@@ -477,7 +479,7 @@ func (a *WorldScriptableAdapter) RawKill(vict scripting.CharRef, killer *scripti
 		} else {
 			MudLog(fmt.Sprintf("%s killed at %s.", p.GetName(), roomName), MudlogBrief, lvlImmort, false)
 		}
-		a.world.RawKillCombatant(p, attackType)
+		a.world.rawKillCombatant(p, attackType, killerBody)
 		return
 	}
 	a.world.RawKillCombatant(m, attackType)

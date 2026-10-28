@@ -944,7 +944,7 @@ func GroupGain(ch, victim Combatant) {
 // 8. rawKill()
 // **********************************
 
-func RawKill(ch Combatant, attackType int) {
+func RawKill(ch Combatant, attackType int, killers ...Combatant) {
 	if cb := GetCallbacks(); ch.IsNPC() && cb != nil && cb.RawKillNPC != nil {
 		cb.RawKillNPC(ch, attackType)
 		return
@@ -978,6 +978,13 @@ func RawKill(ch Combatant, attackType int) {
 	} else {
 		cbMakeCorpse(ch, attackType)
 	}
+	if cb := GetCallbacks(); cb != nil && cb.ObserveDeath != nil {
+		var killer Combatant
+		if len(killers) != 0 {
+			killer = killers[0]
+		}
+		cb.ObserveDeath(ch, killer)
+	}
 	cbExtractChar(ch)
 }
 
@@ -1007,7 +1014,7 @@ func DieWithKiller(ch, killer Combatant, attackType int) {
 		cbRunDeathScript(killer, ch, roomVNum)
 	}
 
-	RawKill(ch, attackType)
+	RawKill(ch, attackType, killer)
 }
 
 // **********************************

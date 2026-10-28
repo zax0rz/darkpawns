@@ -1,0 +1,2 @@
+oracle-regression: scenarios=9 passed=9 expected=0 unpinnable=0 stale=0 failed=0 infra=0 timed_out=0 unstable=0 elapsed=137.946s started=2026-10-28T13:15:30-0400 finished=2026-10-28T13:17:48-0400 verdict=CLEAN
+oracle-draw-parity: scenarios=9 draw_divergent=0

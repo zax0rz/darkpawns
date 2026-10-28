@@ -194,3 +194,19 @@ portalled overlays, restyled with the paperback tokens.
 - **Do** keep screenshots as local evidence; this foundation ships no raster assets.
 - **Don't** introduce a second theme or decorative status colors.
 - **Don't** turn synthetic chart fixtures into operational claims.
+
+
+## Character activity detail
+
+The activity page keeps the dashboard shell and selected 24-hour/7-day window.
+For logins, accepted creations and player deaths, show the named evidence before
+the aggregate chart. Search by character name; page older records with a stable
+cursor. Keep recording start, visibility, missing details and retention visible.
+Death rows show room name/vnum and a supplied cause; unknown stays unknown.
+
+Desktop uses the shared ruled table. Below 768px each record stacks its name,
+class, time, room and cause so the operator never needs to pan sideways to learn
+what killed a character. The chart stays below the records. The coverage table
+is a native disclosure, and release/uptime has its own selected detail view.
+Use the existing flat buttons, inputs, charts and focus treatment. Product copy
+follows brand-voice §8.5.

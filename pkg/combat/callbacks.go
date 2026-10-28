@@ -108,6 +108,7 @@ type GameCallbacks struct {
 
 	// Corpse & extraction
 	RawKillNPC     func(victim Combatant, attackType int)
+	ObserveDeath   func(victim, killer Combatant)
 	MakeCorpse     func(victim Combatant, attackType int)
 	MakeDust       func(victim Combatant, attackType int)
 	ExtractChar    func(name Combatant)

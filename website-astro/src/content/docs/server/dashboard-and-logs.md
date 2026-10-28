@@ -27,7 +27,8 @@ with sample coverage. Dates and daily boundaries use UTC.
   authenticated duplicate/reconnect attempts. Guests and new characters are
   excluded. It is not a count of unique people.
 - **New characters** counts accepted character creation after persistence succeeds.
-- **Deaths** includes both players and mobs through the existing death counter.
+- **Player deaths** counts players, including death traps. Mob deaths do not
+  count in this tile. Guest deaths use a generic Guest name.
 - **Errors and warnings** count emitted structured server log records. Mudlog's
   OFF/BRF/NRM/CMP settings are visibility types, not severity levels.
 - **Uptime** belongs to the current process. **Current release** comes from the
@@ -50,6 +51,32 @@ The last update time is recorded when a startup observes a changed executable
 identity. The first observation has no evidence of a previous update, so it
 shows unknown. Restarting the same executable does not count as an update.
 A build timestamp is never presented as a deployment timestamp.
+
+## Follow character activity
+
+Open **Logins**, **New characters** or **Player deaths** to see the characters
+behind the count. Find a character by name, choose a time window, or use
+**Older entries** to page back. Each entry shows its time and class. Deaths also
+show the room and what killed the character: a mob name and vnum, another player,
+or a trap. If the game supplied no cause, the page says so.
+
+Names of hidden staff follow your current immortal level. Counts can include
+activity whose names you cannot see. Player killers are labeled **Another player**.
+The list saves character names and game details, with no addresses, credentials
+or chat. Guests do not count as returning-character sign-ins.
+
+Details are saved for seven days, up to 20,000 entries. The page shows when this
+recording began. Older releases saved counts without names and included mobs in
+the death total; those totals are not reused as player deaths. A full recorder
+can miss details while keeping the count. The page warns when entries were
+missed or removed at the limit. Totals can therefore exceed the visible list.
+
+### How it works
+
+Activity details and separate player-death counts share the existing history
+file and save schedule. Detail timestamps mark the observation; count buckets
+mark the next sample. An event close to an hour or day boundary can fall into
+adjacent chart and list windows. Normal shutdown samples once more before saving.
 
 ## Inspect and export logs
 

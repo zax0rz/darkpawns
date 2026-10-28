@@ -540,6 +540,10 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 // bridge; NPCs use the game death path so their corpse and active-mob removal
 // are performed without combat XP/kills bookkeeping (R1/R3/R5e).
 func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
+	w.rawKillCombatant(victim, attackType, nil)
+}
+
+func (w *World) rawKillCombatant(victim combat.Combatant, attackType int, killer combat.Combatant) {
 	if victim == nil || victim.GetRoom() < 0 {
 		return
 	}
@@ -560,7 +564,7 @@ func (w *World) RawKillCombatant(victim combat.Combatant, attackType int) {
 		w.handleMobDeath(victim, nil, attackType)
 		return
 	}
-	combat.RawKill(victim, attackType)
+	combat.RawKill(victim, attackType, killer)
 }
 
 // handlePlayerDeath implements die()/die_with_killer() + raw_kill() for players.
@@ -651,6 +655,11 @@ func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, a
 	}
 
 	w.observePlayerDeath(player)
+	var observedKiller combat.Combatant
+	if len(killerBodies) != 0 {
+		observedKiller = killerBodies[0]
+	}
+	w.recordPlayerDeath(player, observedKiller, "unknown")
 
 	// Death counter — fight.c:1689. GET_DEATHS(victim)++ is unconditional.
 	player.Deaths++
@@ -797,6 +806,9 @@ func (w *World) deathCry(player *Player) {
 // carried in the trap room and returns the descriptor to the menu, as for
 // any extraction. Called from MovePlayer, OUTSIDE w.mu.
 func (w *World) deathTrap(player *Player) {
+	if player.GetFlags()&(1<<uint(plrExtractBit)) == 0 {
+		w.recordPlayerDeath(player, nil, "trap")
+	}
 	// src/act.movement.c:291; src/utils.c:145-148.
 	if room := w.GetRoomInWorld(player.GetRoom()); room != nil {
 		LogDeathTrap(player.GetName(), room.VNum, room.Name)

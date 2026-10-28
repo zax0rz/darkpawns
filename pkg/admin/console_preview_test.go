@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
 	"github.com/zax0rz/darkpawns/pkg/telemetry"
 
@@ -72,6 +74,21 @@ func TestConsolePreview(t *testing.T) {
 	if err := database.CreatePlayer(record); err != nil {
 		t.Fatal(err)
 	}
+	if os.Getenv("ADMIN_PREVIEW_LOGIN") == "1" {
+		hash, err := bcrypt.GenerateFromPassword([]byte("previewpass"), bcrypt.MinCost)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, name := range []string{"TestPlayer", "Returner"} {
+			rec, err := database.GetPlayer(name)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := database.UpdatePassword(rec.ID, string(hash)); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 	service, err := notify.New(filepath.Join(t.TempDir(), "notifications.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -101,6 +118,23 @@ func TestConsolePreview(t *testing.T) {
 			}
 			history.Sample(time.Now().Add(time.Duration(i-6*24*60)*time.Minute), i%12)
 		}
+	}
+	if os.Getenv("ADMIN_PREVIEW_EMPTY") != "1" {
+		for _, e := range []telemetry.Activity{{Player: "Avery", Class: "Ranger", MinLevel: 31}, {Player: "Mira", Class: "Mage", MinLevel: 31}} {
+			telemetry.RecordCharacter(e)
+			telemetry.RecordLogin(e)
+		}
+		for _, e := range []telemetry.Activity{
+			{Player: "Avery", Class: "Ranger", RoomVNum: 1001, RoomName: "The Eastern Road", Cause: "mob", MobName: "a watchful guard", MobVNum: 2001, MinLevel: 31},
+			{Player: "Mira", Class: "Mage", RoomVNum: 1002, RoomName: "The Old Arena", Cause: "player", MinLevel: 31},
+			{Player: "Egon", Class: "Thief", RoomVNum: 3100, RoomName: "A Crumbling Ledge", Cause: "trap", MinLevel: 31},
+		} {
+			telemetry.RecordPlayerDeath(e)
+		}
+		if os.Getenv("ADMIN_PREVIEW_LOGIN") == "1" {
+			telemetry.RecordLogin(telemetry.Activity{Player: "Hiddenstaff", Class: "Mage", MinLevel: 40})
+		}
+		history.Sample(time.Now(), 1)
 	}
 	history.ObserveRelease(telemetry.Release{Version: "synthetic preview", Commit: "fixture", Identity: "fixture"}, time.Now())
 	feed := mudlog.NewFeed(64, 1000)
