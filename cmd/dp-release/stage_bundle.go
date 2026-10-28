@@ -18,6 +18,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/zax0rz/darkpawns/internal/releaseauth"
 )
@@ -32,6 +33,17 @@ func stageBundleContents(goos, goarch string) error {
 		suffix = ".exe"
 	}
 	out := filepath.Join(root, "dist", "signed-bundles", goos+"_"+goarch)
+	lockPath := filepath.Join(root, "dist", "signed-bundles", goos+"_"+goarch+".lock")
+	// Both build hooks of this platform run concurrently; an exclusive lock
+	// picks one to stage while the other waits for the done marker.
+	if _, lockErr := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600); lockErr != nil {
+		return waitForStaging(out, lockPath)
+	}
+	defer func() { _ = os.Remove(lockPath) }()
+	if _, err := os.Lstat(filepath.Join(out, ".done")); err == nil {
+		fmt.Fprintf(os.Stderr, "stage-bundle: %s_%s already staged\n", goos, goarch)
+		return nil
+	}
 	binaries := make([]string, 0, 2)
 	for _, name := range []string{"darkpawns", "darkpawns-server"} {
 		matches, globErr := filepath.Glob(filepath.Join(root, "dist", "*_"+goos+"_"+goarch+"*", name+suffix))
@@ -68,6 +80,9 @@ func stageBundleContents(goos, goarch string) error {
 		keyPath = os.Getenv("SNAPSHOT_PRIVATE_PEM")
 	}
 	if keyPath == "" {
+		if err := markStaged(out); err != nil {
+			return err
+		}
 		fmt.Fprintf(os.Stderr, "stage-bundle: no signing key configured; %s_%s staged unsigned (dev snapshot)\n", goos, goarch)
 		return nil
 	}
@@ -78,8 +93,39 @@ func stageBundleContents(goos, goarch string) error {
 	if err := signBundlePublisher(out, goos == "windows", private, public); err != nil {
 		return err
 	}
+	if err := markStaged(out); err != nil {
+		return err
+	}
 	fmt.Fprintf(os.Stderr, "stage-bundle: staged and signed %s_%s\n", goos, goarch)
 	return nil
+}
+
+func markStaged(out string) error {
+	marker, err := os.OpenFile(filepath.Join(out, ".done"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+	return marker.Close()
+}
+
+// waitForStaging polls until the winning hook leaves its done marker. If the
+// lock disappears without one (the winner failed), waiting ends so a retry
+// can take the lock cleanly; the archive stage starts only after every hook
+// returns, and identical inputs make a late double-staging harmless.
+func waitForStaging(out, lockPath string) error {
+	deadline := time.Now().Add(10 * time.Minute)
+	for time.Now().Before(deadline) {
+		if _, err := os.Lstat(filepath.Join(out, ".done")); err == nil {
+			fmt.Fprintf(os.Stderr, "stage-bundle: %s staged by a concurrent hook\n", filepath.Base(out))
+			return nil
+		}
+		if _, err := os.Lstat(lockPath); os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "stage-bundle: previous staging of %s did not complete; continuing\n", filepath.Base(out))
+			return nil
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	return errors.New("timed out waiting for concurrent bundle staging")
 }
 
 // loadSigningKeyPair loads the private signing key and its public PEM. A
@@ -88,7 +134,7 @@ func stageBundleContents(goos, goarch string) error {
 func loadSigningKeyPair(keyPath, publicPath string) (*rsa.PrivateKey, []byte, error) {
 	public := releaseauth.TrustedKey
 	if publicPath != "" {
-		data, err := os.ReadFile(publicPath) // #nosec G304 -- operator-configured path
+		data, err := os.ReadFile(publicPath) // #nosec G304,G703 -- operator-configured path, never request-derived
 		if err != nil {
 			return nil, nil, err
 		}
@@ -98,7 +144,7 @@ func loadSigningKeyPair(keyPath, publicPath string) (*rsa.PrivateKey, []byte, er
 	if err != nil {
 		return nil, nil, err
 	}
-	data, err := os.ReadFile(keyPath) // #nosec G304 -- operator-configured path
+	data, err := os.ReadFile(keyPath) // #nosec G304,G703 -- operator-configured path, never request-derived
 	if err != nil {
 		return nil, nil, err
 	}
