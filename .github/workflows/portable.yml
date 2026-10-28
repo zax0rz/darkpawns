@@ -85,7 +85,9 @@ jobs:
         with:
           distribution: goreleaser
           version: v2.18.3
-          args: release --snapshot --clean --config .goreleaser-native.yaml
+          # A native snapshot builds one platform only; the package channels
+          # need the full archive set and never publish from snapshots.
+          args: release --snapshot --clean --skip=homebrew,scoop,winget,docker --config .goreleaser-native.yaml
       - name: Extract the generated native archive and exercise the instance journey
         shell: python
         run: |

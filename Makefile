@@ -303,7 +303,7 @@ endif
 # Unsigned portable development artifacts; needs GoReleaser v2.18.3 + Go/Node/Python.
 .PHONY: portable-snapshot
 portable-snapshot:
-	goreleaser release --snapshot --clean
+	goreleaser release --snapshot --clean --skip=homebrew,scoop,winget,docker
 
 .PHONY: admin-api
 # Generate the console contract from the registered Huma operations, offline.
