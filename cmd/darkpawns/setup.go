@@ -323,10 +323,15 @@ func setupCommand(instance *string, bundle func() (string, error)) *cobra.Comman
 		p := setupPlan{Instance: destination, Port: strconv.Itoa(port), TelnetPort: strconv.Itoa(telnetPort), Browser: !noBrowser && browserAvailable(), Background: !foreground, AutoStart: autoStart}
 		out := cmd.OutOrStdout()
 		if !yes {
+			plain = plain || plainRequested(cmd)
 			var confirmed bool
 			file, ok := cmd.InOrStdin().(*os.File)
 			if !plain && (!ok || !term.IsTerminal(file.Fd())) {
 				return errors.New("setup needs a terminal; use --plain for line prompts or --yes for explicit unattended setup")
+			}
+			// Preserve the existing input guard; redirected output uses line prompts.
+			if !outputTerminal(cmd) {
+				plain = true
 			}
 			compact := false
 			if ok {

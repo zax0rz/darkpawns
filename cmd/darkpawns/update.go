@@ -16,12 +16,7 @@ import (
 )
 
 func addUpdate(root *cobra.Command, instance *string, bundle func() (string, error)) {
-	choose := func() (string, error) {
-		if *instance != "" {
-			return *instance, nil
-		}
-		return defaultInstance()
-	}
+	choose := func(cmd *cobra.Command) (string, error) { return chooseInstance(cmd, *instance) }
 	var archive, digest string
 	var yes, check, allowDowngrade bool
 	cmd := &cobra.Command{Use: "update", Short: "Verify, back up and update your portable instance", Args: cobra.NoArgs}
@@ -32,13 +27,19 @@ func addUpdate(root *cobra.Command, instance *string, bundle func() (string, err
 	cmd.Flags().BoolVar(&allowDowngrade, "allow-downgrade", false, "Permit installing an older release, or the same version built from a different commit")
 	cmd.MarkFlagsRequiredTogether("archive", "sha256")
 	cmd.RunE = func(cmd *cobra.Command, _ []string) (result error) {
-		path, err := choose()
+		path, err := choose(cmd)
+		if errors.Is(err, errCancelled) {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
 		base, err := bundle()
 		if err != nil {
 			return err
+		}
+		if interactiveOutput(cmd) {
+			return runInteractiveUpdate(cmd, path, base, archive, digest, yes, check, allowDowngrade)
 		}
 		if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Checking and staging the release. Your world keeps running during verification."); err != nil {
 			return err
@@ -76,7 +77,10 @@ func addUpdate(root *cobra.Command, instance *string, bundle func() (string, err
 		return err
 	}
 	recoverCmd := &cobra.Command{Use: "recover", Short: "Restore the previous snapshot after an interrupted update", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
-		path, err := choose()
+		path, err := choose(cmd)
+		if errors.Is(err, errCancelled) {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -90,7 +94,10 @@ func addUpdate(root *cobra.Command, instance *string, bundle func() (string, err
 	root.AddCommand(cmd)
 	var transaction string
 	serve := &cobra.Command{Use: "_serve-update", Hidden: true, Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
-		path, err := choose()
+		path, err := choose(cmd)
+		if errors.Is(err, errCancelled) {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
@@ -111,6 +118,7 @@ func forwardActive(root *cobra.Command, args []string) (bool, error) {
 	flags.SetOutput(io.Discard) // Cobra owns help and usage; this pass only finds dispatch flags.
 	flags.ParseErrorsAllowlist.UnknownFlags = true
 	selected := flags.String("instance", "", "Instance directory")
+	flags.Bool("plain", false, "Plain presentation")
 	if err := flags.Parse(args); err != nil {
 		return false, nil
 	} // Cobra owns usage errors.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,14 +11,9 @@ import (
 )
 
 func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, error)) {
-	choose := func() (string, error) {
-		if *instance != "" {
-			return *instance, nil
-		}
-		return defaultInstance()
-	}
+	choose := func(cmd *cobra.Command) (string, error) { return chooseInstance(cmd, *instance) }
 	for _, name := range []string{"start", "stop", "restart", "status", "doctor", "_serve", "supervise"} {
-		var asJSON bool
+		var asJSON, watch, yes bool
 		cmd := &cobra.Command{Use: name, Args: cobra.NoArgs, Hidden: name == "_serve"}
 		switch name {
 		case "supervise":
@@ -36,8 +32,17 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 		if name == "doctor" || name == "status" {
 			cmd.Flags().BoolVar(&asJSON, "json", false, "Print structured output")
 		}
+		if name == "status" {
+			cmd.Flags().BoolVar(&watch, "watch", false, "Watch live status, players and the launcher log (TTY only)")
+		}
+		if name == "restart" {
+			cmd.Flags().BoolVar(&yes, "yes", false, "Restart without interactive confirmation")
+		}
 		cmd.RunE = func(cmd *cobra.Command, _ []string) error {
-			path, err := choose()
+			path, err := choose(cmd)
+			if errors.Is(err, errCancelled) {
+				return nil
+			}
 			if err != nil {
 				return err
 			}
@@ -45,19 +50,58 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 			if err != nil {
 				return err
 			}
+			if name == "status" && watch && !asJSON && interactiveOutput(cmd) {
+				return watchStatus(cmd, path, base)
+			}
+			if name == "restart" && !yes && interactiveOutput(cmd) {
+				status, statusErr := portable.Status(cmd.Context(), path)
+				if statusErr != nil {
+					return statusErr
+				}
+				reader, loginErr := signInAdmin(cmd, path, status)
+				if loginErr != nil {
+					return loginErr
+				}
+				if reader != nil {
+					defer reader.client.CloseIdleConnections()
+				}
+				snapshot := readCLISnapshot(cmd.Context(), path, base, reader)
+				approved, confirmErr := confirmAction(cmd, "Restart this instance?", onlineSummary(snapshot)+"\nThis saves and stops the world, disconnecting its players.")
+				if confirmErr != nil {
+					return confirmErr
+				}
+				if !approved {
+					_, err := fmt.Fprintln(cmd.OutOrStdout(), "Restart cancelled. Your world was not stopped.")
+					return err
+				}
+			}
 			switch name {
 			case "supervise":
 				return portable.Supervise(cmd.Context(), base, path, cmd.ErrOrStderr())
 			case "_serve":
 				return portable.ServeBackground(cmd.Context(), base, path)
 			case "stop":
-				if err := portable.Stop(cmd.Context(), path); err != nil {
+				stop := func(ctx context.Context) (struct{}, error) { return struct{}{}, portable.Stop(ctx, path) }
+				if interactiveOutput(cmd) {
+					_, err = runWait(cmd, "Saving and stopping the world", nil, stop)
+				} else {
+					_, err = stop(cmd.Context())
+				}
+				if err != nil {
 					return err
 				}
 				_, err := fmt.Fprintln(cmd.OutOrStdout(), "Stopped.")
 				return err
 			case "doctor":
-				checks := portable.Doctor(cmd.Context(), base, path)
+				var checks []portable.Check
+				if interactiveOutput(cmd) && !asJSON {
+					checks, err = runWait(cmd, "Checking this instance", nil, func(ctx context.Context) ([]portable.Check, error) { return portable.Doctor(ctx, base, path), nil })
+					if err != nil {
+						return err
+					}
+				} else {
+					checks = portable.Doctor(cmd.Context(), base, path)
+				}
 				failed := false
 				for _, check := range checks {
 					if !check.OK {
@@ -66,6 +110,8 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 				}
 				if asJSON {
 					err = json.NewEncoder(cmd.OutOrStdout()).Encode(checks)
+				} else if richOutput(cmd) {
+					err = checklist(cmd.OutOrStdout(), "Dark Pawns · diagnostics", checks, cliWidth(cmd))
 				} else {
 					for _, check := range checks {
 						label := "OK"
@@ -88,9 +134,17 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 			var status portable.RuntimeStatus
 			switch name {
 			case "start":
-				status, err = portable.Start(cmd.Context(), base, path)
+				if interactiveOutput(cmd) {
+					status, err = runWait(cmd, "Starting the world", nil, func(ctx context.Context) (portable.RuntimeStatus, error) { return portable.Start(ctx, base, path) })
+				} else {
+					status, err = portable.Start(cmd.Context(), base, path)
+				}
 			case "restart":
-				status, err = portable.Restart(cmd.Context(), base, path)
+				if interactiveOutput(cmd) {
+					status, err = runWait(cmd, "Restarting the world", nil, func(ctx context.Context) (portable.RuntimeStatus, error) { return portable.Restart(ctx, base, path) })
+				} else {
+					status, err = portable.Restart(cmd.Context(), base, path)
+				}
 			default:
 				status, err = portable.Status(cmd.Context(), path)
 			}
@@ -111,7 +165,7 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 	service := &cobra.Command{Use: "service", Short: "Configure automatic startup for your current user"}
 	for _, name := range []string{"install", "remove"} {
 		cmd := &cobra.Command{Use: name, Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
-			path, err := choose()
+			path, err := choose(cmd)
 			if err != nil {
 				return err
 			}
