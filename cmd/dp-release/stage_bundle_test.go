@@ -40,6 +40,7 @@ func TestStageBundleLockSerializesConcurrentStaging(t *testing.T) {
 
 	// A vanished lock without a marker also releases the waiter.
 	os.Remove(filepath.Join(bundle, ".done"))
+	os.Remove(lockPath)
 	lock2, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		t.Fatal(err)
