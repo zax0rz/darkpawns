@@ -29,8 +29,9 @@ health gate and the automatic rollback.
 ## Success case: v0.1.7-local.1 → v0.1.8
 
 `updates-check-desktop.png` (check result), `updates-confirm-desktop.png`
-(confirm dialog: who is online, forced save, snapshot/swap/health-check,
-automatic rollback, the LAN/WAN honesty line), `updates-inprogress-desktop.png`
+(confirm dialog "Update to v0.1.8?": who is online by name, verification
+before the world stops, automatic return of the current release),
+`updates-inprogress-desktop.png`
 (staging, captured after a mid-transaction page refresh — the refresh landed
 back on the status view), `updates-committed-desktop.png` (same browser tab
 across the restart, reporting v0.1.8 and "Committed").
@@ -66,6 +67,28 @@ The journal recorded the exact failure and outcome
 The transaction directory retained `backup/`, `backup-manifest.json` and
 `failed-lib/` for inspection.
 
+## Downgrade refusal (review polish)
+
+With v0.1.8 running and the feed offering the older v0.1.7: the console's
+check names the direction and offers no plain update
+(`updates-downgrade-refused-desktop.png`); the CLI refuses with
+`refusing to downgrade from v0.1.8 to v0.1.7; your world was not stopped;
+rerun with --allow-downgrade to force`, and `--allow-downgrade` stages it
+(`cli-downgrade-refusal.txt`). This closes the hostile-mirror case for
+`DP_RELEASE_ENDPOINT` feeds: a mirror cannot walk an instance backwards
+without the operator's explicit flag, which the console never sends. An
+equal version carrying a different commit is refused the same way
+(unit-tested in `internal/portable/version_guard_test.go`).
+
+## Retry after rollback (review polish)
+
+After the broken v0.1.9 was rolled back a second time, the page names the
+failed release, hides the plain Update now, offers **Retry v0.1.9 anyway**
+with the same confirm dialog (titled "Retry update to v0.1.9?"), and links
+the updates documentation (`updates-rolledback-retry-desktop.png`,
+`updates-retry-confirm-desktop.png`). Retrying re-ran the transaction, failed
+the same health gate, and restored v0.1.8 again.
+
 ## Configuration page
 
 `settings-default-desktop.png` (all groups; the access card carries the
@@ -80,6 +103,11 @@ secrets-untouched note). Mobile: `settings-mobile.png`,
 `updates-mobile.png` (390×844, bottom tab bar layout).
 
 ## Bugs the rehearsal caught (all fixed in this PR)
+
+(Polish round notes: the first update click after the rebuild surfaced the
+one-slot journal showing the previous transaction's terminal state while the
+new one staged — pre-existing single-journal behavior; the page reports the
+new transaction as soon as its journal is written.)
 
 1. **Snapshot-linked builds could not verify a release feed** — the feed
    path pinned the production key directly instead of `TrustedKeyBytes()`

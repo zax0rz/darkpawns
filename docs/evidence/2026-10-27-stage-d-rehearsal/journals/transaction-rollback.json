@@ -1,9 +1,9 @@
 {
-  "id": "3a334ab87f4e910331e87eac7c75446c",
+  "id": "5c566df45c39bc0a66a4b446d995777c",
   "phase": "rolled-back",
-  "previous": "/home/zach/rehearsal-stage-d/instance/.updates/5783c24984e738defdd5b550259fb83e/release/darkpawns_v0.1.8_linux_amd64",
-  "candidate": "/home/zach/rehearsal-stage-d/instance/.updates/3a334ab87f4e910331e87eac7c75446c/release/darkpawns_v0.1.9_linux_amd64",
-  "sha256": "86bd52817df78cdffe24fb1f7f23edd05ab5c4d4ff4f30c56daf0d661a05afbe",
+  "previous": "/home/zach/rehearsal-stage-d/instance/.updates/0b6b5c7ea391133675c23c4e857ba286/release/darkpawns_v0.1.8_linux_amd64",
+  "candidate": "/home/zach/rehearsal-stage-d/instance/.updates/5c566df45c39bc0a66a4b446d995777c/release/darkpawns_v0.1.9_linux_amd64",
+  "sha256": "574a53f84446469c2e3b721494bd6e40d27a40d106ba0d0890e21e4073b7e42e",
   "was_running": true,
   "error": "new release exited before readiness: server exited before becoming ready\nexit status 9"
 }

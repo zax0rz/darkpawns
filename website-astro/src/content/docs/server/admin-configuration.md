@@ -82,7 +82,9 @@ stopped, and publisher verification still happens at staging time.
    update. The page polls the launcher's journal-backed status, which
    survives both the restart and a browser refresh.
 3. Status reads staging → applying → testing → committed (or rolled back).
-   If a transaction was interrupted (the machine died mid-update), the page
+   After a rollback the page names the release that failed its health
+   check and offers an explicit **Retry** of that same release rather than
+   a plain update button. If a transaction was interrupted (the machine died mid-update), the page
    says recovery is needed and prints the exact `darkpawns update recover`
    command. Recovery stays single-sourced in the CLI; the browser never
    invents its own updater.
