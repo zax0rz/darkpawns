@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -51,27 +52,49 @@ const (
 // reconnect. At 3 it equalled one player's allowance, so a second player in
 // the house (or on a carrier that puts many phones behind one address) was
 // refused.
+//
+// All three limits are atomics: the admin console's settings manager swaps
+// them live (ApplyLimits), so a saved change applies to the next connection
+// without a restart.
 var (
-	maxConnsPerIP    = 8
-	maxTotalConns    = 200
-	loginIdleTimeout = 120 * time.Second // DP-912: drop parked pre-auth connections
+	maxConnsPerIP  atomic.Int32
+	maxTotalConns  atomic.Int32
+	loginIdleNanos atomic.Int64
 )
 
+func loginIdleTimeout() time.Duration { return time.Duration(loginIdleNanos.Load()) }
+
+// ApplyLimits replaces the live connection limits. Values below 1 (and a
+// non-positive idle timeout) are refused; the caller validates ranges, this
+// guards the hot path against a zero cap that would reject everyone.
+func ApplyLimits(perIP, total int, idle time.Duration) error {
+	if perIP < 1 || total < 1 || perIP > math.MaxInt32 || total > math.MaxInt32 || idle <= 0 {
+		return fmt.Errorf("telnet limits must be positive and within int32: perIP=%d total=%d idle=%s", perIP, total, idle)
+	}
+	maxConnsPerIP.Store(int32(perIP))
+	maxTotalConns.Store(int32(total))
+	loginIdleNanos.Store(int64(idle))
+	return nil
+}
+
 func init() {
+	maxConnsPerIP.Store(8)
+	maxTotalConns.Store(200)
+	loginIdleNanos.Store(int64(120 * time.Second)) // DP-912: drop parked pre-auth connections
 	if v := os.Getenv("TELNET_MAX_CONNS"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
-			slog.Warn("TELNET_MAX_CONNS invalid, using default", "value", v, "default", maxTotalConns)
+		if err != nil || n < 1 || n > math.MaxInt32 {
+			slog.Warn("TELNET_MAX_CONNS invalid, using default", "value", v, "default", maxTotalConns.Load())
 		} else {
-			maxTotalConns = n
+			maxTotalConns.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
 	if v := os.Getenv("TELNET_MAX_CONNS_PER_IP"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil || n < 1 {
-			slog.Warn("TELNET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", maxConnsPerIP)
+		if err != nil || n < 1 || n > math.MaxInt32 {
+			slog.Warn("TELNET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", maxConnsPerIP.Load())
 		} else {
-			maxConnsPerIP = n
+			maxConnsPerIP.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
 	// DP-912: idle timeout for pre-auth (banner/login/char-create) reads.
@@ -80,9 +103,9 @@ func init() {
 	if v := os.Getenv("LOGIN_IDLE_TIMEOUT"); v != "" {
 		n, err := strconv.Atoi(v)
 		if err != nil || n < 1 {
-			slog.Warn("LOGIN_IDLE_TIMEOUT invalid, using default", "value", v, "default", loginIdleTimeout)
+			slog.Warn("LOGIN_IDLE_TIMEOUT invalid, using default", "value", v, "default", loginIdleTimeout())
 		} else {
-			loginIdleTimeout = time.Duration(n) * time.Second
+			loginIdleNanos.Store(int64(time.Duration(n) * time.Second))
 		}
 	}
 }
@@ -156,13 +179,13 @@ func serve(ln net.Listener, manager *session.Manager) {
 			remoteIP := ipFromAddr(conn.RemoteAddr().String())
 
 			connMu.Lock()
-			if connCount >= maxTotalConns {
+			if connCount >= int(maxTotalConns.Load()) {
 				connMu.Unlock()
 				_ = conn.Close() //nolint:errcheck // best-effort cleanup
 				slog.Warn("Telnet: max total connections reached, rejecting", "remote_addr", conn.RemoteAddr())
 				continue
 			}
-			if connPerIP[remoteIP] >= maxConnsPerIP {
+			if connPerIP[remoteIP] >= int(maxConnsPerIP.Load()) {
 				connMu.Unlock()
 				_ = conn.Close() //nolint:errcheck // best-effort cleanup
 				slog.Warn("Telnet: max per-IP connections reached, rejecting", "remote_addr", conn.RemoteAddr())
@@ -896,7 +919,7 @@ func (tc *telnetConn) receiveWONT(opt byte) {
 // caller treats the (false) return as "disconnect now".
 func (tc *telnetConn) readLinePreAuth() (string, bool) {
 	//nolint:errcheck // best-effort deadline; a failure here means the conn is dead anyway
-	tc.SetReadDeadline(time.Now().Add(loginIdleTimeout))
+	tc.SetReadDeadline(time.Now().Add(loginIdleTimeout()))
 	line, ok := tc.readLineBody()
 	if !ok {
 		// Best-effort goodbye. Write errors on a closed/timed-out conn are

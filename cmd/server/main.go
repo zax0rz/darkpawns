@@ -48,6 +48,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -56,6 +57,7 @@ import (
 
 	"github.com/zax0rz/darkpawns/internal/bootmarker"
 	"github.com/zax0rz/darkpawns/internal/dpclock"
+	"github.com/zax0rz/darkpawns/internal/launchctl"
 	"github.com/zax0rz/darkpawns/mudlet"
 	"github.com/zax0rz/darkpawns/pkg/admin"
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
@@ -74,6 +76,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/session"
+	"github.com/zax0rz/darkpawns/pkg/settings"
 	"github.com/zax0rz/darkpawns/pkg/telemetry"
 	"github.com/zax0rz/darkpawns/pkg/telnet"
 	"github.com/zax0rz/darkpawns/web"
@@ -274,7 +277,10 @@ func resolveWhodPort(whod, telnet, telnetTLS int) (port int, collision string) {
 	return port, ""
 }
 
-var version = "dev" // Set by the same release build as the portable launcher.
+var (
+	version = "dev"  // Set by the same release build as the portable launcher.
+	commit  = "none" // Ditto; checkout builds keep these sentinels.
+)
 
 func main() {
 	// Every path has a real default so that `./server`, run from a checkout
@@ -467,6 +473,46 @@ func main() {
 	// one shared per-IP connection cap, one shared login rate limit, and IP
 	// bans that can't single anyone out. Unset means the loopback defaults;
 	// set but empty means trust no proxy.
+	// Operator settings (admin-configuration design): the launcher passes
+	// DP_SETTINGS_PATH; a checkout defaults beside the world data like the
+	// notification store. The file is authoritative — exported variables
+	// remain a checkout override the console badges — and a damaged file
+	// degrades to defaults instead of wedging boot, refusing saves until
+	// repaired.
+	settingsPath := os.Getenv("DP_SETTINGS_PATH")
+	if settingsPath == "" {
+		settingsPath = "data/settings.json"
+	}
+	settingsManager, settingsErr := settings.New(settingsPath)
+	if settingsErr != nil {
+		slog.Error("settings store unusable; running on defaults until repaired",
+			"path", settingsPath, "error", settingsErr)
+	}
+	for _, note := range settingsManager.Notes() {
+		slog.Info("settings", "note", note)
+	}
+	applySettingsEnvironment(settingsManager)
+	settingsLive := settingsManager.Effective()
+	loginBudget := auth.NewAccountBudgetTracker(settingsLive.Sessions.AccountFailureBudget, time.Duration(settingsLive.Sessions.AccountFailureWindowMinutes)*time.Minute)
+	settingsManager.SetOnLive(func(live *settings.Live) {
+		if err := telnet.ApplyLimits(live.TelnetMaxConnsPerIP, live.TelnetMaxConns, live.LoginIdleTimeout); err != nil {
+			slog.Error("live telnet limits refused", "error", err)
+		}
+		if err := session.ApplyWebSocketLimits(live.WebSocketMaxConnsPerIP, live.WebSocketMaxTotalConns, live.LoginIdleTimeout); err != nil {
+			slog.Error("live WebSocket limits refused", "error", err)
+		}
+		web.SetCORSOrigins(live.CORSAllowedOrigins)
+		admin.SetAdminCORSOrigin(live.AdminCORSOrigin)
+		loginBudget.Configure(live.AccountFailureBudget, live.AccountFailureWindow)
+	})
+	settingsManager.ApplyLive()
+	// The launcher's scoped capability: update and restart transactions for
+	// the console. Nil on a checkout deployment, which the console reports.
+	controlClient := launchctl.FromEnvironment()
+	if controlClient != nil {
+		slog.Info("Managed instance: launcher control available for updates and restarts")
+	}
+
 	proxies := auth.DefaultTrustedProxies
 	if value, set := os.LookupEnv("TRUSTED_PROXIES"); set {
 		proxies = strings.FieldsFunc(value, func(r rune) bool { return r == ',' || r == ' ' })
@@ -906,7 +952,7 @@ func main() {
 	historyDone := make(chan struct{})
 	go func() { defer close(historyDone); history.Run(loopCtx, historyPath, gameWorld.GetPlayerCount) }()
 	defer func() { loopCancel(); <-historyDone }()
-	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications), admin.WithHistory(history))
+	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications), admin.WithSettings(settingsManager), admin.WithLaunchctl(controlClient), admin.WithBuildInfo(version, commit), admin.WithAccountBudget(loginBudget), admin.WithHistory(history))
 	if err != nil {
 		fatal("failed to init admin router: %v", err)
 	}
@@ -1226,4 +1272,58 @@ func fingerprinted(h http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
 		h.ServeHTTP(w, r)
 	})
+}
+
+// applySettingsEnvironment installs the settings file's effective values into
+// the process environment for the boot-time integrations that still read
+// env (Grapevine, the ntfy pusher, the contact form, proxy trust). It is
+// idempotent: effective already prefers an exported variable, so an
+// overridden field writes its own value back and nothing flips.
+func applySettingsEnvironment(manager *settings.Manager) {
+	effective := manager.Effective()
+	// Install only real file changes: a value equal to the compiled-in
+	// default would otherwise manufacture a phantom environment override
+	// (the first boot writing GRAPEVINE_MODE=off pinned mode off forever),
+	// and an inherited exported variable stays authoritative as it always
+	// was. The console badges whatever still wins.
+	install := func(name, value, defaultValue string) {
+		if value == "" || value == defaultValue {
+			return
+		}
+		if _, inherited := os.LookupEnv(name); inherited {
+			return
+		}
+		if err := os.Setenv(name, value); err != nil {
+			// A failed write only means the inherited environment value (or
+			// the integration's default) still applies; say so and continue.
+			slog.Warn("could not install settings value into environment", "name", name, "error", err)
+		}
+	}
+	join := func(values []string) string { return strings.Join(values, ",") }
+	install("TRUSTED_PROXIES", join(effective.Access.TrustedProxies), "")
+	install("GRAPEVINE_MODE", effective.Grapevine.Mode, "off")
+	install("GRAPEVINE_URL", effective.Grapevine.URL, "wss://grapevine.haus/socket")
+	install("GRAPEVINE_CLIENT_ID", effective.Grapevine.ClientID, "")
+	install("DP_MUDLOG_NTFY_URL", effective.StaffPush.URL, "")
+	install("DP_MUDLOG_NTFY_LEVEL", strconv.Itoa(effective.StaffPush.MinLevel), "31")
+	install("DP_MUDLOG_NTFY_TYPE", strconv.Itoa(effective.StaffPush.MinType), "1")
+	install("DP_MUDLOG_NTFY_RATE", strconv.Itoa(effective.StaffPush.RatePerMinute), "30")
+	install("CONTACT_TO", effective.Contact.To, "")
+	install("CONTACT_SMTP_HOST", effective.Contact.SMTPHost, "")
+	install("CONTACT_SMTP_PORT", strconv.Itoa(effective.Contact.SMTPPort), "0")
+	install("CONTACT_SMTP_USER", effective.Contact.SMTPUser, "")
+	install("CONTACT_TURNSTILE_HOSTNAMES", join(effective.Contact.TurnstileHostnames), "")
+	setSecret := func(name string, kind string) {
+		value, ok := manager.SecretValue(kind)
+		if !ok {
+			return
+		}
+		if err := os.Setenv(name, value); err != nil {
+			slog.Warn("could not install settings secret into environment", "name", name, "error", err)
+		}
+	}
+	setSecret("GRAPEVINE_CLIENT_SECRET", settings.SecretGrapevineClient)
+	setSecret("DP_MUDLOG_NTFY_TOKEN", settings.SecretStaffPushToken)
+	setSecret("CONTACT_SMTP_PASSWORD", settings.SecretContactSMTP)
+	setSecret("CONTACT_TURNSTILE_SECRET", settings.SecretContactTurnstile)
 }

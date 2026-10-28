@@ -900,6 +900,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply pending restart-marked settings (implementor)
+         * @description Hands the restart to the launcher's transaction: graceful stop, fresh start, health-gated. Only on managed instances.
+         */
+        post: operations["post-restart"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/rooms/{vnum}": {
         parameters: {
             query?: never;
@@ -977,6 +997,206 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read every settings group with restart and override metadata (implementor)
+         * @description The game-owned settings document: session limits, access, integrations. Secret fields report presence only; meta lists restart-marked fields and environment overrides.
+         */
+        get: operations["get-settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update proxy trust and CORS origins (implementor)
+         * @description CORS origins apply live; trusted proxies are read at boot, so changing them marks a restart.
+         */
+        put: operations["put-settings-access"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Settings and update change history (implementor)
+         * @description The settings-relevant tail of the audit log: every settings save, restore, restart and update action.
+         */
+        get: operations["get-settings-audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the contact form delivery (implementor)
+         * @description Every field needs a restart; the form stays disabled until the whole set is present. Both secrets are write-only.
+         */
+        put: operations["put-settings-contact"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download the settings bundle (implementor)
+         * @description Every group with its revision and server version. Secrets are never part of an export.
+         */
+        get: operations["get-settings-export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/grapevine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the Grapevine intermud relay (implementor)
+         * @description Every field needs a restart; the relay connects at boot. The client secret is write-only.
+         */
+        put: operations["put-settings-grapevine"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/restore/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply a validated bundle (implementor)
+         * @description Replaces the bundle's groups wholesale, keeping secrets. The previewed revision must still be current.
+         */
+        post: operations["post-settings-restore-apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/restore/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validate an uploaded bundle and preview its diff (implementor)
+         * @description Parses and validates the bundle server-side, then reports the field-level diff, unknown keys, untouched secrets and restart requirements. Nothing is applied.
+         */
+        post: operations["post-settings-restore-validate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update session and connection limits (implementor)
+         * @description All fields apply live: the next connection sees the new limits. Revision must match the loaded one.
+         */
+        put: operations["put-settings-sessions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings/staff_push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the staff-log ntfy push (implementor)
+         * @description Every field needs a restart; the pusher starts at boot. The token is write-only.
+         */
+        put: operations["put-settings-staff-push"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/shops": {
         parameters: {
             query?: never;
@@ -1026,6 +1246,66 @@ export interface paths {
         put?: never;
         /** Create a triage summary */
         post: operations["create-triage-summary"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start the update transaction now (implementor)
+         * @description The launcher stages and verifies while the world runs, then stops, snapshots, swaps and health-checks the candidate with automatic rollback. The request returns 202 before the world stops; poll /admin/updates/status.
+         */
+        post: operations["post-updates-apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check for a newer release, read-only (implementor)
+         * @description The launcher performs the lookup; nothing is downloaded, staged or stopped. Publisher verification happens at staging time, as always.
+         */
+        post: operations["post-updates-check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Release state and update transaction status (implementor)
+         * @description On a managed instance, the launcher's journal-backed status: staging, applying, testing, committed, rolled back or pending recovery. Refresh-safe across the restart.
+         */
+        get: operations["get-updates-status"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1127,6 +1407,24 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Access: {
+            /** @description Origin allowed to call the admin API; empty means the built-in default */
+            admin_cors_origin: string;
+            /** @description Browser origins allowed across the game API; empty means the built-in defaults */
+            cors_allowed_origins: string[] | null;
+            /** @description CIDRs whose X-Forwarded-For names the client; empty means the loopback default (restart required) */
+            trusted_proxies: string[] | null;
+        };
+        AccessInputBody: {
+            /** @description Origin allowed to call the admin API; empty means the built-in default */
+            admin_cors_origin: string;
+            /** @description Browser origins allowed across the game API; empty means the built-in defaults */
+            cors_allowed_origins: string[] | null;
+            /** Format: int64 */
+            revision: number;
+            /** @description CIDRs whose X-Forwarded-For names the client; empty means the loopback default (restart required) */
+            trusted_proxies: string[] | null;
+        };
         AgentStatus: {
             agent_id: string;
             description: string;
@@ -1143,11 +1441,48 @@ export interface components {
             options: components["schemas"]["VocabularyEntry"][] | null;
             remove_operation: string;
         };
+        ApplyBody: {
+            status: string;
+        };
+        AuditEvent: {
+            action: string;
+            details?: string;
+            event_type: string;
+            ip_address?: string;
+            success: boolean;
+            /** Format: date-time */
+            timestamp: string;
+            user?: string;
+        };
         Bounds: {
             /** Format: int64 */
             max: number;
             /** Format: int64 */
             min: number;
+        };
+        Bundle: {
+            access: components["schemas"]["Access"];
+            contact: components["schemas"]["Contact"];
+            /** Format: int64 */
+            format: number;
+            /** Format: date-time */
+            generated_at: string;
+            grapevine: components["schemas"]["Grapevine"];
+            /** Format: int64 */
+            revision: number;
+            server_version: string;
+            sessions: components["schemas"]["Sessions"];
+            staff_push: components["schemas"]["StaffPush"];
+        };
+        CheckBody: {
+            /** Format: int64 */
+            asset_size?: number;
+            current_version: string;
+            error?: string;
+            latest_version?: string;
+            managed: boolean;
+            release_url?: string;
+            up_to_date: boolean;
         };
         ClaimEntry: {
             /** Format: date-time */
@@ -1169,6 +1504,58 @@ export interface components {
             pushover: components["schemas"]["Destination"];
             /** Format: int64 */
             revision: number;
+        };
+        Contact: {
+            /** @description SMTP host (restart required) */
+            smtp_host: string;
+            /**
+             * Format: int64
+             * @description SMTP port (restart required)
+             */
+            smtp_port: number;
+            /** @description SMTP user (restart required) */
+            smtp_user: string;
+            /** @description Recipient address (restart required) */
+            to: string;
+            /** @description Hostnames the Turnstile widget may serve (restart required) */
+            turnstile_hostnames: string[] | null;
+        };
+        ContactInputBody: {
+            /** Format: int64 */
+            revision: number;
+            /** @description SMTP host (restart required) */
+            smtp_host: string;
+            smtp_password?: string;
+            /**
+             * Format: int64
+             * @description SMTP port (restart required)
+             */
+            smtp_port: number;
+            /** @description SMTP user (restart required) */
+            smtp_user: string;
+            /** @description Recipient address (restart required) */
+            to: string;
+            /** @description Hostnames the Turnstile widget may serve (restart required) */
+            turnstile_hostnames: string[] | null;
+            turnstile_secret?: string;
+        };
+        ContactView: {
+            effective: boolean;
+            /** @description SMTP host (restart required) */
+            smtp_host: string;
+            smtp_password_set: boolean;
+            /**
+             * Format: int64
+             * @description SMTP port (restart required)
+             */
+            smtp_port: number;
+            /** @description SMTP user (restart required) */
+            smtp_user: string;
+            /** @description Recipient address (restart required) */
+            to: string;
+            /** @description Hostnames the Turnstile widget may serve (restart required) */
+            turnstile_hostnames: string[] | null;
+            turnstile_secret_set: boolean;
         };
         CreateFindingInputBody: {
             description: string;
@@ -1226,6 +1613,11 @@ export interface components {
             Plus: number;
             /** Format: int64 */
             Sides: number;
+        };
+        DiffEntry: {
+            current: unknown;
+            field: string;
+            incoming: unknown;
         };
         DirtyEntry: {
             kind: string;
@@ -1442,6 +1834,47 @@ export interface components {
         FindingIDInputBody: {
             linear_issue_id?: string;
             status?: string;
+        };
+        Grapevine: {
+            /** @description Relay client id (restart required) */
+            client_id: string;
+            /**
+             * @description Grapevine intermud mode (restart required)
+             * @enum {string}
+             */
+            mode: "off" | "presence" | "full";
+            /** @description Relay endpoint (restart required) */
+            url: string;
+        };
+        GrapevineInputBody: {
+            /** @description Relay client id (restart required) */
+            client_id: string;
+            client_secret?: string;
+            /**
+             * @description Grapevine intermud mode (restart required)
+             * @enum {string}
+             */
+            mode: "off" | "presence" | "full";
+            /** Format: int64 */
+            revision: number;
+            /** @description Relay endpoint (restart required) */
+            url: string;
+        };
+        GrapevineView: {
+            /** @description Relay client id (restart required) */
+            client_id: string;
+            client_secret_set: boolean;
+            /**
+             * @description Grapevine intermud mode (restart required)
+             * @enum {string}
+             */
+            mode: "off" | "presence" | "full";
+            /** @description Relay endpoint (restart required) */
+            url: string;
+        };
+        GroupMeta: {
+            env_overridden?: string[] | null;
+            restart_fields: string[] | null;
         };
         KeyStat: {
             /** Format: int64 */
@@ -1850,6 +2283,21 @@ export interface components {
             password: string;
             revision: string;
         };
+        RestartOutputBody: {
+            status: string;
+        };
+        RestoreApplyInputBody: {
+            bundle: unknown;
+            /** Format: int64 */
+            revision: number;
+        };
+        RestorePreview: {
+            diff: components["schemas"]["DiffEntry"][] | null;
+            restart_required?: string[] | null;
+            secrets_untouched?: string[] | null;
+            unknown_keys?: string[] | null;
+            warning?: string;
+        };
         Room: {
             Description: string;
             Exits: {
@@ -1907,6 +2355,13 @@ export interface components {
             vnum: number;
             /** Format: int64 */
             zone: number;
+        };
+        SaveResult: {
+            env_overridden?: string[] | null;
+            restart_required?: string[] | null;
+            /** Format: int64 */
+            revision: number;
+            warning?: string;
         };
         SavedPlayerItem: {
             /** Format: int64 */
@@ -1971,17 +2426,114 @@ export interface components {
             vnum: number;
         };
         ServerInfoResponse: {
+            commit?: string;
+            managed: boolean;
             /** Format: int64 */
             player_count: number;
             /** Format: int64 */
             room_count: number;
             uptime: string;
+            version?: string;
             /** Format: int64 */
             zone_count: number;
         };
         SessionResponse: {
             player_name: string;
             role: string;
+        };
+        Sessions: {
+            /**
+             * Format: int64
+             * @description Wrong-password attempts per account across IPs before refusal; 0 disables
+             */
+            account_failure_budget: number;
+            /**
+             * Format: int64
+             * @description Window for the account failure budget
+             */
+            account_failure_window_minutes: number;
+            /**
+             * Format: int64
+             * @description Pre-auth idle drop for telnet and WebSocket (DP-912)
+             */
+            login_idle_timeout_seconds: number;
+            /**
+             * Format: int64
+             * @description Total simultaneous telnet connections
+             */
+            telnet_max_conns: number;
+            /**
+             * Format: int64
+             * @description Simultaneous telnet connections from one address
+             */
+            telnet_max_conns_per_ip: number;
+            /**
+             * Format: int64
+             * @description Simultaneous WebSocket sessions from one address
+             */
+            websocket_max_conns_per_ip: number;
+            /**
+             * Format: int64
+             * @description Process-wide WebSocket session cap
+             */
+            websocket_max_total_conns: number;
+        };
+        SessionsInputBody: {
+            /**
+             * Format: int64
+             * @description Wrong-password attempts per account across IPs before refusal; 0 disables
+             */
+            account_failure_budget: number;
+            /**
+             * Format: int64
+             * @description Window for the account failure budget
+             */
+            account_failure_window_minutes: number;
+            /**
+             * Format: int64
+             * @description Pre-auth idle drop for telnet and WebSocket (DP-912)
+             */
+            login_idle_timeout_seconds: number;
+            /** Format: int64 */
+            revision: number;
+            /**
+             * Format: int64
+             * @description Total simultaneous telnet connections
+             */
+            telnet_max_conns: number;
+            /**
+             * Format: int64
+             * @description Simultaneous telnet connections from one address
+             */
+            telnet_max_conns_per_ip: number;
+            /**
+             * Format: int64
+             * @description Simultaneous WebSocket sessions from one address
+             */
+            websocket_max_conns_per_ip: number;
+            /**
+             * Format: int64
+             * @description Process-wide WebSocket session cap
+             */
+            websocket_max_total_conns: number;
+        };
+        SettingsSaveResponse: {
+            result: components["schemas"]["SaveResult"];
+            view: components["schemas"]["SettingsView"];
+        };
+        SettingsView: {
+            access: components["schemas"]["Access"];
+            contact: components["schemas"]["ContactView"];
+            /** Format: int64 */
+            format: number;
+            grapevine: components["schemas"]["GrapevineView"];
+            meta: {
+                [key: string]: components["schemas"]["GroupMeta"];
+            };
+            /** Format: int64 */
+            revision: number;
+            sessions: components["schemas"]["Sessions"];
+            staff_push: components["schemas"]["StaffPushView"];
         };
         Shop: {
             /** Format: int64 */
@@ -2065,6 +2617,67 @@ export interface components {
             /** Format: int64 */
             vnum: number;
         };
+        StaffPush: {
+            /**
+             * Format: int64
+             * @description Minimum immortal level pushed (restart required)
+             */
+            min_level: number;
+            /**
+             * Format: int64
+             * @description Minimum syslog type pushed (restart required)
+             */
+            min_type: number;
+            /**
+             * Format: int64
+             * @description Push rate cap (restart required)
+             */
+            rate_per_minute: number;
+            /** @description ntfy topic URL; empty disables staff-log push (restart required) */
+            url: string;
+        };
+        StaffPushInputBody: {
+            /**
+             * Format: int64
+             * @description Minimum immortal level pushed (restart required)
+             */
+            min_level: number;
+            /**
+             * Format: int64
+             * @description Minimum syslog type pushed (restart required)
+             */
+            min_type: number;
+            /**
+             * Format: int64
+             * @description Push rate cap (restart required)
+             */
+            rate_per_minute: number;
+            /** Format: int64 */
+            revision: number;
+            token?: string;
+            /** @description ntfy topic URL; empty disables staff-log push (restart required) */
+            url: string;
+        };
+        StaffPushView: {
+            /**
+             * Format: int64
+             * @description Minimum immortal level pushed (restart required)
+             */
+            min_level: number;
+            /**
+             * Format: int64
+             * @description Minimum syslog type pushed (restart required)
+             */
+            min_type: number;
+            /**
+             * Format: int64
+             * @description Push rate cap (restart required)
+             */
+            rate_per_minute: number;
+            token_set: boolean;
+            /** @description ntfy topic URL; empty disables staff-log push (restart required) */
+            url: string;
+        };
         Status: {
             /** Format: int64 */
             dropped: number;
@@ -2077,6 +2690,14 @@ export interface components {
             queued: number;
             ready: boolean;
             source: string;
+        };
+        StatusBody: {
+            commit?: string;
+            managed: boolean;
+            /** Format: int64 */
+            online_players: number;
+            server_version: string;
+            update?: components["schemas"]["UpdateState"];
         };
         StatusInputBody: {
             agent_id: string;
@@ -2111,6 +2732,19 @@ export interface components {
             /** Format: int64 */
             rejected: number;
             summary: string;
+        };
+        UpdateState: {
+            candidate_version?: string;
+            current_version?: string;
+            error?: string;
+            phase?: string;
+            previous_version?: string;
+            recover_command?: string;
+            requested_at?: string;
+            run_id?: string;
+            runtime_state?: string;
+            state: string;
+            transaction_id?: string;
         };
         View: {
             config: components["schemas"]["Config"];
@@ -3222,7 +3856,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                provider: "pushover" | "discord";
+                provider: "pushover" | "discord" | "gossip" | "heartbeat";
             };
             cookie?: never;
         };
@@ -4046,6 +4680,35 @@ export interface operations {
             };
         };
     };
+    "post-restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestartOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "get-room": {
         parameters: {
             query?: never;
@@ -4168,6 +4831,324 @@ export interface operations {
             };
         };
     };
+    "get-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "put-settings-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsSaveResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-settings-audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEvent"][] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "put-settings-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsSaveResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-settings-export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Bundle"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "put-settings-grapevine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrapevineInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsSaveResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-settings-restore-apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreApplyInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsSaveResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-settings-restore-validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestorePreview"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "put-settings-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionsInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsSaveResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "put-settings-staff-push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffPushInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsSaveResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "list-shops": {
         parameters: {
             query?: never;
@@ -4277,6 +5258,93 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TriageSummary"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-updates-apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplyBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-updates-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-updates-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusBody"];
                 };
             };
             /** @description Error */

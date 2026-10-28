@@ -24,8 +24,10 @@ export type NotificationConfig = components['schemas']['Config'];
 export type NotificationStatus = components['schemas']['Status'];
 export type NotificationView = components['schemas']['View'];
 export type NotificationDestination = components['schemas']['Destination'];
-export type NotificationProvider = 'pushover' | 'discord';
-export type CredentialProvider = NotificationProvider | 'heartbeat' | 'gossip';
+// One identifier per outbound channel: the two event destinations, the public
+// gossip mirror, and the hosted heartbeat. It is the path parameter of the
+// credential and test operations, so it stays a single name everywhere.
+export type NotificationChannel = 'pushover' | 'discord' | 'gossip' | 'heartbeat';
 export interface NotificationCredentials { token?: string; user?: string; url?: string }
 
 export const api = {
@@ -92,7 +94,36 @@ export const playerEditor = {
 export const notifications = {
   get: () => read(http.GET('/admin/notifications')),
   save: (config: NotificationConfig) => read(http.PUT('/admin/notifications', { body: config })),
-  credentials: (provider: CredentialProvider, revision: number, values: NotificationCredentials) => read(http.PUT('/admin/notifications/{provider}/credentials', { params: { path: { provider: provider } }, body: { revision, ...values } })),
-  removeCredentials: (provider: CredentialProvider, revision: number) => read(http.DELETE('/admin/notifications/{provider}/credentials', { params: { path: { provider: provider } }, body: { revision } })),
-  test: (provider: NotificationProvider) => read(http.POST('/admin/notifications/{provider}/test', { params: { path: { provider: provider } } })),
+  credentials: (channel: NotificationChannel, revision: number, values: NotificationCredentials) => read(http.PUT('/admin/notifications/{provider}/credentials', { params: { path: { provider: channel } }, body: { revision, ...values } })),
+  removeCredentials: (channel: NotificationChannel, revision: number) => read(http.DELETE('/admin/notifications/{provider}/credentials', { params: { path: { provider: channel } }, body: { revision } })),
+  test: (channel: NotificationChannel) => read(http.POST('/admin/notifications/{provider}/test', { params: { path: { provider: channel } } })),
+};
+
+// Settings and updates (admin-configuration design): typed end to end. Secret
+// fields travel only in PUT bodies — nil keeps the sealed value, '' clears.
+export const settingsApi = {
+  get: () => read(http.GET('/admin/settings')),
+  saveSessions: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/sessions', { body: body as never })),
+  saveAccess: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/access', { body: body as never })),
+  saveGrapevine: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/grapevine', { body: body as never })),
+  saveStaffPush: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/staff_push', { body: body as never })),
+  saveContact: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/settings/contact', { body: body as never })),
+  exportUrl: '/admin/settings/export',
+  restoreValidate: (bundle: unknown) =>
+    read(http.POST('/admin/settings/restore/validate', { body: bundle as never })),
+  restoreApply: (revision: number, bundle: unknown) =>
+    read(http.POST('/admin/settings/restore/apply', { body: { revision, bundle } as never })),
+  audit: () => read(http.GET('/admin/settings/audit')),
+  restart: () => read(http.POST('/admin/restart')),
+};
+
+export const updatesApi = {
+  status: () => read(http.GET('/admin/updates/status')),
+  check: () => read(http.POST('/admin/updates/check')),
+  apply: () => read(http.POST('/admin/updates/apply')),
 };

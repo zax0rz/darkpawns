@@ -23,12 +23,13 @@ func addUpdate(root *cobra.Command, instance *string, bundle func() (string, err
 		return defaultInstance()
 	}
 	var archive, digest string
-	var yes, check bool
+	var yes, check, allowDowngrade bool
 	cmd := &cobra.Command{Use: "update", Short: "Verify, back up and update your portable instance", Args: cobra.NoArgs}
 	cmd.Flags().StringVar(&archive, "archive", "", "Use a local release archive instead of the latest stable GitHub release")
 	cmd.Flags().StringVar(&digest, "sha256", "", "Expected SHA-256 for a local archive (required with --archive)")
 	cmd.Flags().BoolVar(&yes, "yes", false, "Approve the update and graceful restart without prompting")
 	cmd.Flags().BoolVar(&check, "check", false, "Verify the available release without stopping or updating your world")
+	cmd.Flags().BoolVar(&allowDowngrade, "allow-downgrade", false, "Permit installing an older release, or the same version built from a different commit")
 	cmd.MarkFlagsRequiredTogether("archive", "sha256")
 	cmd.RunE = func(cmd *cobra.Command, _ []string) (result error) {
 		path, err := choose()
@@ -42,7 +43,7 @@ func addUpdate(root *cobra.Command, instance *string, bundle func() (string, err
 		if _, err := fmt.Fprintln(cmd.OutOrStdout(), "Checking and staging the release. Your world keeps running during verification."); err != nil {
 			return err
 		}
-		plan, err := portable.PrepareUpdate(cmd.Context(), base, path, portable.UpdateOptions{Archive: archive, SHA256: digest})
+		plan, err := portable.PrepareUpdate(cmd.Context(), base, path, portable.UpdateOptions{Archive: archive, SHA256: digest, AllowDowngrade: allowDowngrade})
 		if err != nil {
 			return err
 		}

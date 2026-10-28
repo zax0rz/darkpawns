@@ -8,9 +8,11 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/zax0rz/darkpawns/internal/launchctl"
 	"github.com/zax0rz/darkpawns/pkg/apidoc"
 	"github.com/zax0rz/darkpawns/pkg/audit"
 	"github.com/zax0rz/darkpawns/pkg/auth"
@@ -20,6 +22,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
 	"github.com/zax0rz/darkpawns/pkg/notify"
 	"github.com/zax0rz/darkpawns/pkg/olc"
+	"github.com/zax0rz/darkpawns/pkg/settings"
 	"github.com/zax0rz/darkpawns/pkg/telemetry"
 )
 
@@ -35,6 +38,11 @@ type routerConfig struct {
 	sharedDoc     *apidoc.Doc
 	mudlogFeed    *mudlog.Feed
 	notifications *notify.Service
+	settings      *settings.Manager
+	launchctl     *launchctl.Client
+	buildVersion  string
+	buildCommit   string
+	accountBudget *auth.AccountBudgetTracker
 }
 
 // WithSharedSpec registers the router's Huma operations into doc, the
@@ -214,7 +222,11 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	if database != nil {
 		loginDatabase = database
 	}
-	registerLoginOperation(ri.api, loginDatabase, loginAttempts, auth.AccountBudgetFromEnvironment())
+	loginBudget := cfg.accountBudget
+	if loginBudget == nil {
+		loginBudget = auth.AccountBudgetFromEnvironment()
+	}
+	registerLoginOperation(ri.api, loginDatabase, loginAttempts, loginBudget)
 	// Public route: rate-limited exactly like the legacy login, but deliberately
 	// outside the JWT/role middleware used by every authenticated operation.
 	track("/admin/login", wrap(withClientIP(humaMux.ServeHTTP)))
@@ -227,7 +239,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	// gate is the lowest role rather than builder.
 	track("/admin/session", wrap(corsMiddleware(requireRole("player", requireMethod(http.MethodGet, withClientIP(humaMux.ServeHTTP))))))
 	registerZones(ri.api, world)
-	registerServerInfo(ri.api, world, auditLogger)
+	registerServerInfo(ri.api, world, auditLogger, cfg.buildVersion, cfg.buildCommit, cfg.launchctl != nil)
 	registerLogs(ri.api, logBuffer)
 	registerPlayers(ri.api, world)
 	registerMobs(ri.api, world)
@@ -256,6 +268,8 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerOLC(ri.api, world, database, olcState, olcWrites, olcPresence, auditLogger, olc.NewDraftStore())
 	registerFileEdit(ri.api, world, database, auditLogger)
 	registerNotifications(ri.api, database, auditLogger, cfg.notifications)
+	registerSettings(ri.api, auditLogger, cfg.settings, cfg.launchctl, cfg.buildVersion)
+	registerUpdates(ri.api, auditLogger, cfg.launchctl, world, cfg.buildVersion, cfg.buildCommit)
 	for _, path := range []string{"/admin/notifications", "/admin/notifications/{provider}/test", "/admin/notifications/{provider}/credentials"} {
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
 	}
@@ -263,6 +277,18 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerLogbook(ri.api, logBuffer, cfg.mudlogFeed, mudlogCaller)
 	for _, path := range []string{"/admin/dashboard", "/admin/logbook", "/admin/logbook/export"} {
 		track(path, wrap(corsMiddleware(requireRole("builder", humaMux.ServeHTTP))))
+	}
+	for _, path := range []string{
+		"/admin/settings", "/admin/settings/export", "/admin/settings/audit",
+		"/admin/settings/sessions", "/admin/settings/access", "/admin/settings/grapevine",
+		"/admin/settings/staff_push", "/admin/settings/contact",
+		"/admin/settings/restore/validate", "/admin/settings/restore/apply",
+		"/admin/restart",
+		"/admin/updates/status", "/admin/updates/check", "/admin/updates/apply",
+	} {
+		// The implementor tier (role admin == level 40) the configuration
+		// design fixed for deployment-level settings.
+		track(path, wrap(corsMiddleware(requireRole("admin", withClientIP(humaMux.ServeHTTP)))))
 	}
 	registerPlayerEditor(ri.api, world, database, liveSessions, auditLogger)
 	for _, path := range []string{"/admin/characters", "/admin/characters/{name}", "/admin/characters/{name}/password", "/admin/characters/{name}/items"} {
@@ -575,6 +601,20 @@ func claimsFromBearerHeader(authHeader string) (*auth.Claims, error) {
 // usable Bearer token (and no valid admin cookie). Callers map this to a 401.
 var errNoBearerToken = errors.New("missing or malformed Authorization header")
 
+// adminCORSOverride holds the console-saved SPA origin (empty means the
+// environment decides). Swapped atomically when settings save.
+var adminCORSOverride atomic.Value
+
+// SetAdminCORSOrigin installs the console-managed SPA origin; an empty value
+// clears the override and restores ADMIN_CORS_ORIGIN behavior.
+func SetAdminCORSOrigin(origin string) {
+	if origin == "" {
+		adminCORSOverride.Store("")
+		return
+	}
+	adminCORSOverride.Store(origin)
+}
+
 // corsMiddleware adds CORS headers for allowed origins.
 // Production: set ADMIN_CORS_ORIGIN env var to the SPA origin.
 // Development: localhost:5173 and localhost:4350 are allowed only when
@@ -588,8 +628,13 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		allowed := false
-		if envOrigin := os.Getenv("ADMIN_CORS_ORIGIN"); envOrigin != "" && origin == envOrigin {
+		if envOrigin := adminCORSOverride.Load(); envOrigin != "" && origin == envOrigin {
 			allowed = true
+		}
+		if !allowed {
+			if envOrigin := os.Getenv("ADMIN_CORS_ORIGIN"); envOrigin != "" && origin == envOrigin {
+				allowed = true
+			}
 		}
 		if !allowed && os.Getenv("ENVIRONMENT") == "development" {
 			allowed = origin == "http://localhost:5173" || origin == "http://localhost:4350" ||

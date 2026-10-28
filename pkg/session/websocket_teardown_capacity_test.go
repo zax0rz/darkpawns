@@ -74,9 +74,9 @@ func TestFinishWebSocketTransport_RetainedLinkdeadSessionKeepsSend(t *testing.T)
 // cap must reject an over-cap connection with a policy-violation close and
 // admit one again once the accepted connections release their slots.
 func TestHandleWebSocket_TotalConnectionCap(t *testing.T) {
-	origMax := webSocketMaxTotalConns
-	webSocketMaxTotalConns = 2
-	t.Cleanup(func() { webSocketMaxTotalConns = origMax })
+	origMax := webSocketMaxTotalConns.Load()
+	webSocketMaxTotalConns.Store(2)
+	t.Cleanup(func() { webSocketMaxTotalConns.Store(origMax) })
 
 	m := makeTestManager(t)
 	srv := httptest.NewServer(http.HandlerFunc(m.HandleWebSocket))
@@ -125,7 +125,7 @@ func TestHandleWebSocket_TotalConnectionCap(t *testing.T) {
 	total := m.totalConnCount
 	m.ipConnMu.Unlock()
 	for ip, n := range perIP {
-		if n >= webSocketMaxConnsPerIP {
+		if n >= int(webSocketMaxConnsPerIP.Load()) {
 			t.Fatalf("test invalid: per-IP bucket %s = %d is already at its own cap", ip, n)
 		}
 	}

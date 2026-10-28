@@ -33,6 +33,8 @@ const navItems: NavItem[] = [
   { to: '/admin/staff/notifications', label: 'Notifications', icon: 'notifications', role: 'admin', group: 'Staff tools' },
   { to: '/admin/operations/logs', label: 'Logs', icon: 'terminal', role: 'builder', group: 'Staff tools' },
   { to: '/admin/operations', label: 'Operations', icon: 'operations', role: 'builder', group: 'Staff tools' },
+  { to: '/admin/staff/settings', label: 'Configuration', icon: 'settings', role: 'admin', group: 'Staff tools' },
+  { to: '/admin/staff/updates', label: 'Updates', icon: 'updates', role: 'admin', group: 'Staff tools' },
 ];
 
 // Bottom tab items for mobile

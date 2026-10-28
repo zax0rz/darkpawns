@@ -51,12 +51,20 @@ ADMIN_PREVIEW=1 go test -tags adminpreview ./pkg/admin -run '^TestConsolePreview
 ```
 
 All mutable fixture data uses temporary directories. It binds only to
-`127.0.0.1:4350`. Run Vite separately, then capture and smoke-test every route:
+`127.0.0.1:4350`, or to `ADMIN_PREVIEW_PORT` when that is set, so a second agent
+can run its own fixture beside a first. Run Vite separately, then capture and
+smoke-test every route:
 
 ```sh
 npm run dev --prefix admin-ui -- --host 127.0.0.1 --port 5187
 cd admin-ui && node scripts/smoke.mjs
 ```
+
+The dev server proxies `/admin`, `/health`, `/ws`, `/preview-session` and
+`/preview-reset` to `ADMIN_API_TARGET` (default `http://localhost:4350`), so
+pointing it at a fixture on another port keeps cookies, session and reset on one
+origin. `ADMIN_PREVIEW_URL` selects the fixture address the smoke script calls
+(default `http://127.0.0.1:4350`).
 
 The development-only `/component-preview.html` displays the chart foundation with
 labelled synthetic data. It is excluded from the production build. Set

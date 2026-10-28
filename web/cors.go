@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync/atomic"
 )
 
 // CORSMiddleware provides configurable CORS headers for HTTP requests
@@ -35,7 +36,24 @@ func CORSMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// corsOverride holds the admin console's saved origin list (empty means the
+// environment/defaults decide). It is swapped atomically when settings save.
+var corsOverride atomic.Pointer[[]string]
+
+// SetCORSOrigins installs the console-managed origin list. An empty list
+// clears the override and restores the environment/default behavior.
+func SetCORSOrigins(origins []string) {
+	if len(origins) == 0 {
+		corsOverride.Store(nil)
+		return
+	}
+	corsOverride.Store(&origins)
+}
+
 func getAllowedOrigins() []string {
+	if override := corsOverride.Load(); override != nil {
+		return *override
+	}
 	// Read from environment variable
 	if envOrigins := os.Getenv("CORS_ALLOWED_ORIGINS"); envOrigins != "" {
 		parts := strings.Split(envOrigins, ",")

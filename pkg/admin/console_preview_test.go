@@ -115,7 +115,11 @@ func TestConsolePreview(t *testing.T) {
 		}
 	}
 	doc := apidoc.New()
-	handler, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithSharedSpec(doc), WithNotifications(service), WithHistory(history), WithMudlogFeed(feed))
+	previewSettings, err := settings.New(filepath.Join(t.TempDir(), "settings.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithSharedSpec(doc), WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"), WithHistory(history), WithMudlogFeed(feed))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,7 +134,7 @@ func TestConsolePreview(t *testing.T) {
 	var active atomic.Value
 	active.Store(handler)
 	mux.HandleFunc("/preview-reset", func(w http.ResponseWriter, r *http.Request) {
-		next, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithNotifications(service), WithHistory(history), WithMudlogFeed(feed))
+		next, err := NewRouter(world, nil, logs, database, &consolePreviewSessions{newFakeOLCWriteStateProvider()}, WithNotifications(service), WithSettings(previewSettings), WithBuildInfo("v0.1.7-preview", "preview"), WithHistory(history), WithMudlogFeed(feed))
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -139,5 +143,11 @@ func TestConsolePreview(t *testing.T) {
 		w.WriteHeader(204)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { active.Load().(http.Handler).ServeHTTP(w, r) })
-	t.Fatal(http.ListenAndServe("127.0.0.1:4350", mux))
+	// Parallel agents each need their own fixture: 4350 stays the default, and
+	// ADMIN_PREVIEW_PORT lets a second run take another port.
+	port := os.Getenv("ADMIN_PREVIEW_PORT")
+	if port == "" {
+		port = "4350"
+	}
+	t.Fatal(http.ListenAndServe("127.0.0.1:"+port, mux))
 }

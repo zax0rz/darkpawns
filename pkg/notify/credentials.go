@@ -51,7 +51,7 @@ func validCredentials(id string, c Credentials) bool {
 	case Discord, Gossip:
 		_, ok := providerURL(c.URL, "discord.com", webhookPattern)
 		return ok && c.Token == "" && c.User == ""
-	case "heartbeat":
+	case Heartbeat:
 		_, ok := providerURL(c.URL, "hc-ping.com", heartbeatPattern)
 		return ok && c.Token == "" && c.User == ""
 	}
@@ -66,7 +66,7 @@ func envCredentials(id string) Credentials {
 		return Credentials{URL: os.Getenv("DP_NOTIFY_DISCORD_WEBHOOK")}
 	case Gossip:
 		return Credentials{URL: os.Getenv("DP_NOTIFY_GOSSIP_WEBHOOK")}
-	case "heartbeat":
+	case Heartbeat:
 		return Credentials{URL: os.Getenv("DP_NOTIFY_HEARTBEAT_URL")}
 	}
 	return Credentials{}
@@ -79,12 +79,12 @@ func newCredentialVault(path string, encrypted map[string]string) (*credentialVa
 	}
 	v := &credentialVault{keyPath: filepath.Clean(keyPath), encrypted: map[string]string{}}
 	state := &credentialSnapshot{values: map[string]Credentials{}, sources: map[string]string{}}
-	for _, id := range []string{Pushover, Discord, "heartbeat", Gossip} {
+	for _, id := range []string{Pushover, Discord, Heartbeat, Gossip} {
 		state.values[id] = envCredentials(id)
 		state.sources[id] = "environment"
 	}
 	for id, encoded := range encrypted {
-		if id != Pushover && id != Discord && id != "heartbeat" && id != Gossip {
+		if id != Pushover && id != Discord && id != Heartbeat && id != Gossip {
 			return nil, ErrCredentials
 		}
 		v.encrypted[id] = encoded
@@ -187,7 +187,7 @@ func (v *credentialVault) seal(id string, c Credentials) (string, error) {
 // disables that destination, preserves event choices, and suppresses env fallback.
 // Disk/encryption operations never hold the game publisher's mutex.
 func (s *Service) SaveCredentials(id string, revision int64, c *Credentials) error {
-	if id != Pushover && id != Discord && id != "heartbeat" && id != Gossip {
+	if id != Pushover && id != Discord && id != Heartbeat && id != Gossip {
 		return ErrCredentials
 	}
 	if c != nil && !validCredentials(id, *c) {
@@ -223,7 +223,7 @@ func (s *Service) SaveCredentials(id string, revision int64, c *Credentials) err
 			cfg.Discord.Enabled = false
 		case Gossip:
 			cfg.Gossip = false
-		case "heartbeat":
+		case Heartbeat:
 			cfg.Heartbeat = false
 		}
 	} else {
