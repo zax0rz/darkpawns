@@ -15,6 +15,11 @@ The final source passed each gate individually, in order:
 Additional checks: `go test -race ./cmd/darkpawns`, `make deadcode-ratchet`,
 `git diff --check`, and the opt-in `clipreview` executable build.
 
+Security checks: `govulncheck ./...` and `gosec -severity=high -quiet ./...`.
+Goldmark is explicitly pinned to patched v1.7.17 for
+[GO-2026-5320](https://pkg.go.dev/vuln/GO-2026-5320); the initial CI scan caught
+the older transitive version supplied by Glamour. No exception suppresses it.
+
 `scripts/cli_plain_compare.py` compares old/new launchers at the same executable
 and instance paths. Seven cases match exact stdout, stderr and exit code: status,
 status JSON, doctor, doctor JSON, update check, local-archive check and setup plain.

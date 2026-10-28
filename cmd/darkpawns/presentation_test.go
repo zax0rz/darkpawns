@@ -32,7 +32,11 @@ func cliInstance(t *testing.T, port int) string {
 	if err = os.WriteFile(filepath.Join(p, "instance.json"), b, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	return p
+	canonical, err := filepath.EvalSymlinks(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return canonical
 }
 
 func TestNonTerminalWatchAndPlainStatusKeepLegacyBytes(t *testing.T) {

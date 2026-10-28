@@ -32,7 +32,9 @@ come from the existing portable doctor. `update --check` prepares and verifies
 through the existing updater, displays a checklist and renders matching release
 notes with Glamour. A missing/mismatched notes response is reported separately;
 release prose never supplies trusted update inputs. Local archives remain offline
-and report unavailable notes rather than contacting GitHub for them.
+and report unavailable notes rather than contacting GitHub for them. Private
+release feeds also skip the optional public notes lookup; portable alone owns
+their configured endpoint.
 
 `update` shows download, verify, stage and health-gate tracks. Local-archive byte
 counts have an exact total; remote downloads show observed bytes without an

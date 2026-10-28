@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,13 +30,7 @@ type releaseNotes struct {
 }
 
 func presentationRelease(ctx context.Context) (releaseNotes, error) {
-	endpoint := "https://api.github.com/repos/zax0rz/darkpawns/releases/latest"
-	if mirror := strings.TrimSuffix(os.Getenv("DP_RELEASE_ENDPOINT"), "/"); mirror != "" {
-		u, err := url.Parse(mirror)
-		if err == nil && (u.Scheme == "https" || (u.Scheme == "http" && (u.Hostname() == "127.0.0.1" || u.Hostname() == "localhost" || u.Hostname() == "::1"))) && u.Host != "" && u.User == nil && u.Path == "" && u.RawQuery == "" && u.Fragment == "" {
-			endpoint = mirror + "/releases/latest"
-		}
-	}
+	const endpoint = "https://api.github.com/repos/zax0rz/darkpawns/releases/latest"
 	var notes releaseNotes
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
@@ -196,7 +189,8 @@ func runInteractiveUpdate(cmd *cobra.Command, path, base, archive, digest string
 		if info, err := os.Stat(archive); err == nil {
 			size = info.Size()
 		}
-	} else {
+	} else if os.Getenv("DP_RELEASE_ENDPOINT") == "" {
+		// Private feeds remain entirely owned by portable; optional notes use only GitHub.
 		// Notes and sizes are presentation hints, never inputs to trusted verification.
 		var infoErr error
 		notes, infoErr = runWait(cmd, "Reading release information", nil, func(ctx context.Context) (releaseNotes, error) {
