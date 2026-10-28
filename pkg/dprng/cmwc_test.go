@@ -101,6 +101,59 @@ func TestNumberRangeSwapAndDiceDrawCount(t *testing.T) {
 	}
 }
 
+// boundaryGenerator returns a generator whose next raw draw is 0xFFFFFFFF, the
+// largest value the CMWC stream can produce. C's (float) cast rounds it up to
+// 2^32, so prng_uniform() returns exactly 1.0 and number() overflows by one.
+func boundaryGenerator() *Generator {
+	generator := New(1)
+	generator.index = 1023
+	generator.q[0] = 0
+	generator.carry = 0xFFFFFFFF
+	return generator
+}
+
+// TestNumberKeepsCValueAtTheRoundingBoundary pins the parity half of R1a. C's
+// number() returns to+1 when float32 rounds a raw draw up to 2^32 and uniform()
+// is exactly 1.0, and draw logs and dice() must keep matching it, so Number is
+// deliberately left alone. The macOS portable job caught the consequence of that
+// value at an index site as a real panic — "index out of range [8218] with
+// length 8218" in pickRandomZoneRoom (PR #2195) — which Index now prevents.
+func TestNumberKeepsCValueAtTheRoundingBoundary(t *testing.T) {
+	if got := boundaryGenerator().Uniform(); got != 1 {
+		t.Fatalf("boundary draw uniform() = %v, want 1: C rounds the top 128 raw draws up to 2^32", got)
+	}
+	for _, to := range []int{8217, 99, 3, 1} {
+		if got := boundaryGenerator().Number(0, to); got != to+1 {
+			t.Fatalf("Number(0,%d) = %d, want C's %d at this draw", to, got, to+1)
+		}
+	}
+	if got := boundaryGenerator().Dice(1, 4); got != 5 {
+		t.Fatalf("Dice(1,4) at the boundary draw = %d, want C's 5", got)
+	}
+}
+
+// TestIndexClampsTheOverflowingDraw covers the R1a conversion every caller that
+// indexes with a draw needs, including C's to+1.
+func TestIndexClampsTheOverflowingDraw(t *testing.T) {
+	for _, test := range []struct {
+		draw int
+		size int
+		want int
+	}{
+		{draw: 8218, size: 8218, want: 8217},
+		{draw: 8217, size: 8218, want: 8217},
+		{draw: 0, size: 8218, want: 0},
+		{draw: 3, size: 3, want: 2},
+		{draw: 2, size: 3, want: 2},
+		{draw: -1, size: 4, want: 0},
+		{draw: 0, size: 0, want: 0},
+	} {
+		if got := Index(test.draw, test.size); got != test.want {
+			t.Fatalf("Index(%d, %d) = %d, want %d", test.draw, test.size, got, test.want)
+		}
+	}
+}
+
 func TestSeedFromEnvironment(t *testing.T) {
 	fixedTime := func() time.Time { return time.Unix(123456789, 0) }
 

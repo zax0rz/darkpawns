@@ -141,6 +141,9 @@ func isRoomValidForRandZon(room *parser.Room, zone int) bool {
 }
 
 // pickRandomRoom selects a random valid room from all world rooms (zone79 style).
+// The draw is converted with dprng.Index: C's number(0, top_of_world) returns
+// top_of_world+1 at the float32 rounding boundary and then reads world[...] out
+// of bounds (src/db.c:2119; R1a).
 func (s *Spawner) pickRandomRoom() *parser.Room {
 	rooms := s.world.Rooms()
 	if len(rooms) == 0 {
@@ -152,7 +155,7 @@ func (s *Spawner) pickRandomRoom() *parser.Room {
 	for {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		idx := zoneRoomNumber(0, len(rooms)-1)
+		idx := dprng.Index(zoneRoomNumber(0, len(rooms)-1), len(rooms))
 		if isRoomValidForSpawn(&rooms[idx]) {
 			return &rooms[idx]
 		}
@@ -160,6 +163,9 @@ func (s *Spawner) pickRandomRoom() *parser.Room {
 }
 
 // pickRandomZoneRoom selects a random valid room in the given zone (RANDZON style).
+// The draw is converted with dprng.Index: C's number(0, top_of_world) returns
+// top_of_world+1 at the float32 rounding boundary and then reads world[...] out
+// of bounds (src/db.c:2135; R1a).
 func (s *Spawner) pickRandomZoneRoom(zone int) *parser.Room {
 	rooms := s.world.Rooms()
 	if len(rooms) == 0 {
@@ -171,7 +177,7 @@ func (s *Spawner) pickRandomZoneRoom(zone int) *parser.Room {
 	for {
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		idx := zoneRoomNumber(0, len(rooms)-1)
+		idx := dprng.Index(zoneRoomNumber(0, len(rooms)-1), len(rooms))
 		if isRoomValidForRandZon(&rooms[idx], zone) {
 			return &rooms[idx]
 		}

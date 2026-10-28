@@ -351,6 +351,54 @@ func TestPickRandomRoomRetriesPastFiveRejections(t *testing.T) {
 	}
 }
 
+// installOverflowingZoneRoomNumbers makes the placement draw return C's
+// number(from, to) overflow value, to+1: float32 rounds the top 128 raw draws
+// (0xFFFFFF80 and up) up to 2^32, so uniform() is exactly 1.0 there and C's
+// number() returns one past its inclusive maximum. C's own callers then index an
+// array with it (src/db.c:2119 and 2135), which is undefined behaviour (R1a), so
+// the port converts the draw with dprng.Index instead of clamping the draw
+// itself — the draw stream and its logged values stay C's.
+func installOverflowingZoneRoomNumbers(t *testing.T) {
+	t.Helper()
+	previous := zoneRoomNumber
+	zoneRoomNumber = func(_ int, to int) int { return to + 1 }
+	t.Cleanup(func() { zoneRoomNumber = previous })
+}
+
+// TestPlacementDrawsSurviveCNumberOverflow is the macOS portable job's panic
+// (run 40584077842, PR #2195):
+//
+//	panic: runtime error: index out of range [8218] with length 8218
+//	pkg/game.(*Spawner).pickRandomZoneRoom  pkg/game/spawner.go:175
+func TestPlacementDrawsSurviveCNumberOverflow(t *testing.T) {
+	placements := []struct {
+		name string
+		pick func(*Spawner) *parser.Room
+	}{
+		{name: "zone79", pick: func(s *Spawner) *parser.Room { return s.pickRandomRoom() }},
+		{name: "randzon", pick: func(s *Spawner) *parser.Room { return s.pickRandomZoneRoom(1) }},
+	}
+	for _, placement := range placements {
+		t.Run(placement.name, func(t *testing.T) {
+			world, err := NewWorld(&parser.World{Rooms: []parser.Room{{VNum: 100, Zone: 1}, {VNum: 200, Zone: 1}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(world.StopAITicker)
+			spawner := NewSpawner(world)
+			installOverflowingZoneRoomNumbers(t)
+
+			room := placement.pick(spawner)
+			if room == nil {
+				t.Fatal("an overflowing placement draw produced no room")
+			}
+			if room.VNum != 200 {
+				t.Fatalf("overflowing placement picked vnum %d, want the clamped last room 200", room.VNum)
+			}
+		})
+	}
+}
+
 func TestRandZonAcceptsCitySectorRoom(t *testing.T) {
 	room := &parser.Room{VNum: 100, Zone: 1, Sector: sectCity}
 	if !isRoomValidForRandZon(room, 1) {

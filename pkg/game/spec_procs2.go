@@ -1768,7 +1768,7 @@ func specPortalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			if len(rooms) > 0 {
 				// #nosec G404 — game RNG, not cryptographic
 				// #nosec G404
-				target := rooms[dprng.Number(0, len(rooms)-1)]
+				target := rooms[dprng.Index(dprng.Number(0, len(rooms)-1), len(rooms))]
 				ch.SetRoom(target.VNum)
 			}
 			ch.SendMessage("You tumble out into a strange place...\r\n")
