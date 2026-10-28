@@ -86,7 +86,7 @@ func init() {
 		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("TELNET_MAX_CONNS invalid, using default", "value", v, "default", maxTotalConns.Load())
 		} else {
-			maxTotalConns.Store(int32(n))
+			maxTotalConns.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
 	if v := os.Getenv("TELNET_MAX_CONNS_PER_IP"); v != "" {
@@ -94,7 +94,7 @@ func init() {
 		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("TELNET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", maxConnsPerIP.Load())
 		} else {
-			maxConnsPerIP.Store(int32(n))
+			maxConnsPerIP.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
 	// DP-912: idle timeout for pre-auth (banner/login/char-create) reads.

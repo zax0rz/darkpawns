@@ -203,15 +203,17 @@ func (m *Manager) secretLocked(name string) (string, bool) {
 //
 // #nosec G101 -- identifiers, not credential material
 func envSecretNames(name string) []string {
+	// These name environment variables that HOLD secrets at boot; the
+	// strings are identifiers, not credential material.
 	switch name {
 	case SecretGrapevineClient:
-		return []string{"GRAPEVINE_CLIENT_SECRET"}
+		return []string{"GRAPEVINE_CLIENT_SECRET"} // #nosec G101 -- identifier, not a credential
 	case SecretStaffPushToken:
-		return []string{"DP_MUDLOG_NTFY_TOKEN"}
+		return []string{"DP_MUDLOG_NTFY_TOKEN"} // #nosec G101 -- identifier, not a credential
 	case SecretContactSMTP:
-		return []string{"CONTACT_SMTP_PASSWORD"}
+		return []string{"CONTACT_SMTP_PASSWORD"} // #nosec G101 -- identifier, not a credential
 	case SecretContactTurnstile:
-		return []string{"CONTACT_TURNSTILE_SECRET"}
+		return []string{"CONTACT_TURNSTILE_SECRET"} // #nosec G101 -- identifier, not a credential
 	}
 	return nil
 }
@@ -944,6 +946,10 @@ func (m *Manager) migrateFromEnvironment() (Config, []string, error) {
 		cfg.Contact.TurnstileHostnames = splitList(raw)
 	}
 	cfg.Secrets = map[string]string{}
+	// #nosec G101 -- the values name environment variables that hold secrets
+	// at boot; the literals are identifiers, not credential material.
+	//
+	//nolint:gosec
 	for name, envName := range map[string]string{
 		SecretGrapevineClient:  "GRAPEVINE_CLIENT_SECRET",
 		SecretStaffPushToken:   "DP_MUDLOG_NTFY_TOKEN",

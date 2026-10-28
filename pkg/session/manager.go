@@ -71,7 +71,7 @@ func init() {
 		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("WEBSOCKET_MAX_CONNS_PER_IP invalid, using default", "value", v, "default", webSocketMaxConnsPerIP.Load())
 		} else {
-			webSocketMaxConnsPerIP.Store(int32(n))
+			webSocketMaxConnsPerIP.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
 	if v := os.Getenv("WEBSOCKET_MAX_TOTAL_CONNS"); v != "" {
@@ -79,7 +79,7 @@ func init() {
 		if err != nil || n < 1 || n > math.MaxInt32 {
 			slog.Warn("WEBSOCKET_MAX_TOTAL_CONNS invalid, using default", "value", v, "default", webSocketMaxTotalConns.Load())
 		} else {
-			webSocketMaxTotalConns.Store(int32(n))
+			webSocketMaxTotalConns.Store(int32(n)) // #nosec G109 -- n bounds-checked against math.MaxInt32 above
 		}
 	}
 }
