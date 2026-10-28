@@ -111,6 +111,15 @@ gone. `npm ci --ignore-scripts` everywhere npm does run is defence in
 depth, and `internal/releaseguard` fails the build if a publish-job step
 ever references npm, pnpm or yarn again.
 
+The channels are generated into `dist/` by GoReleaser (`skip_upload: true`)
+and pushed by `scripts/publish-package-channels.sh` only **after** the
+GitHub release and its download URLs are live, so no formula, bucket entry
+or winget manifest ever points at a URL that 404s. Every push is
+idempotent (blob shas, winget branch reuse, open pull request reuse), so a
+failed channel step is retriable against a complete release. A test in
+`internal/releaseguard` fails the build if the channel step ever moves
+ahead of the release publication.
+
 These channels need `PACKAGES_GITHUB_TOKEN` in the protected
 `portable-release` environment (created by the maintainer, never committed).
 Minimal fine-grained token permissions: **contents: write** on

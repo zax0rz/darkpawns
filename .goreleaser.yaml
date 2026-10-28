@@ -95,7 +95,9 @@ brews:
     description: Self-hostable Dark Pawns MUD server (portable launcher, DikuMUD lineage).
     license: Nonstandard
     url_template: "https://github.com/zax0rz/darkpawns/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    skip_upload: auto
+    # Generated here, pushed by the publish workflow AFTER the GitHub release
+    # is live: a formula must never point at a download URL that 404s.
+    skip_upload: true
     caveats: |
       The formula installs the portable bundle (launcher plus release
       assets). First run creates an instance; see the self-hosting guide at
@@ -118,7 +120,8 @@ scoops:
     description: Self-hostable Dark Pawns MUD server (portable launcher, DikuMUD lineage).
     license: https://github.com/zax0rz/darkpawns/blob/main/LICENSE
     url_template: "https://github.com/zax0rz/darkpawns/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    skip_upload: auto
+    # Generated here, pushed by the publish workflow after the release is live.
+    skip_upload: true
 # winget (this GoReleaser version commits manifests to a repository we own;
 # the publish workflow opens the pull request to microsoft/winget-pkgs from
 # it, where the first submission is expected to need human review).
@@ -143,7 +146,9 @@ winget:
       name: darkpawns-release
       email: release@darkpawns.org
     path: manifests/d/DarkPawns
-    skip_upload: auto
+    # Generated here; the workflow commits these to the fork branch and opens
+    # the microsoft/winget-pkgs pull request once the release is live.
+    skip_upload: true
 # The container image is built by an explicit buildx step in the publish
 # workflow, after the signing key is deleted: goreleaser's docker pipe would
 # run the image build (third-party base images) while the key file exists.

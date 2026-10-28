@@ -173,12 +173,6 @@ jobs:
             -t "ghcr.io/darkpawns/darkpawns:${RELEASE_TAG}" \
             -t "ghcr.io/darkpawns/darkpawns:latest" \
             -f docker/Dockerfile --push .
-      - name: Open the winget pull request
-        env:
-          GH_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ inputs.tag }}
-        shell: bash
-        run: ./scripts/winget-pull-request.sh
       - name: Create a complete draft and publish it
         env:
           GH_TOKEN: ${{ github.token }}
@@ -200,7 +194,21 @@ jobs:
           fi
           gh release create "$RELEASE_TAG" dist/*.tar.gz dist/*.zip dist/checksums.txt dist/release-manifest.txt dist/release-manifest.sig dist/install.sh dist/install.sh.sig dist/install.ps1 dist/install.ps1.sig --verify-tag --draft --title "Dark Pawns $RELEASE_TAG" "${notes[@]}"
           gh release edit "$RELEASE_TAG" --draft=false --latest
-          echo "Published $RELEASE_TAG from $SOURCE_SHA across the release, Homebrew, Scoop, winget and GHCR." >> "$GITHUB_STEP_SUMMARY"
+          echo "Published $RELEASE_TAG from $SOURCE_SHA." >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish the package channels
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGES_GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only now do the Homebrew formula, the Scoop manifest and the
+          # winget submission go out: the release and its download URLs are
+          # already live, so no channel ever points at a 404. A failure here
+          # leaves a complete release and is retryable by rerunning the step:
+          # every push is idempotent (blob shas, branch reuse, open PR reuse).
+          ./scripts/publish-package-channels.sh
+          echo "Channels published for $RELEASE_TAG: Homebrew, Scoop, winget." >> "$GITHUB_STEP_SUMMARY"
   announce:
     needs: publish
     uses: ./.github/workflows/announce-release.yml

@@ -52,6 +52,13 @@ func TestPublishJobRunsNoPackageManager(t *testing.T) {
 	if strings.Contains(rest, "setup-node") {
 		t.Fatal("publish job must not set up Node: nothing there may run npm")
 	}
+	// Package channels must go out only after the GitHub release is live,
+	// so no formula or manifest ever points at a URL that 404s.
+	releaseLive := strings.Index(rest, "gh release edit")
+	channels := strings.Index(rest, "publish-package-channels.sh")
+	if releaseLive < 0 || channels < 0 || channels < releaseLive {
+		t.Fatal("the package channels must be published after gh release edit publishes the release")
+	}
 }
 
 func TestGoreleaserNpmHooksAreConditional(t *testing.T) {
