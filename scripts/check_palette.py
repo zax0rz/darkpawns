@@ -83,6 +83,10 @@ def offenders_in(text: str) -> list[str]:
     found: list[str] = []
     for match in UTILITY.finditer(text):
         prefix, value = match.group(1), match.group(2)
+        # outline-offset-* is spacing, never an outline colour. Single-digit
+        # offsets are matched as just "offset" by the shade-oriented regex.
+        if prefix == "outline" and (value == "offset" or value.startswith("offset-")):
+            continue
         if value in NON_COLOUR_VALUES or value in ALLOWED_TOKENS:
             continue
         # Arbitrary values (bg-[#fff]) are caught by the bracket, not here.

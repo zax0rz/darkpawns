@@ -5,7 +5,7 @@ section: "server"
 audience: "operator"
 order: 16
 sourcePath: "website-astro/src/content/docs/server/admin-configuration.md"
-updated: 2026-10-27
+updated: 2026-10-28
 draft: false
 ---
 
@@ -94,3 +94,12 @@ operations and an external `supervise` monitor defers to an update
 transaction. A successful local update says nothing about LAN or WAN
 reachability: firewall, proxy, NAT, and DNS remain operator
 responsibilities.
+
+## Checkout installs
+
+Update buttons appear only when the Dark Pawns launcher started this server.
+If you started it from a source checkout, update your checkout, rebuild the
+server and admin console, then restart using your usual deployment steps.
+The browser cannot replace that running server for you. Follow the
+[deployment guide](https://github.com/zax0rz/darkpawns/blob/main/DEPLOYMENT.md)
+for build commands and the admin console files.

@@ -1,3 +1,4 @@
+import { showSetupStatus } from './setup-status.js';
 import { showConnections } from './connection-info.js';
 
 (function connectionInfo() {
@@ -15,10 +16,7 @@ import { showConnections } from './connection-info.js';
 // (docs/specs/tui-setup-wizard.md). /health is unauthenticated on this server
 // and answers the one question a self-hoster has just opened the page to ask.
 //
-// Player and world counts are deliberately absent. /metrics exposes them, but
-// every gauge reads zero: the collectors are registered and cmd/server wires
-// only the handler, never a writer, so the numbers would be honest-looking
-// zeros rather than readings. Nothing here is invented.
+// The landing page reports liveness, not operational counts; those belong in admin.
 (function serverStatus() {
   var section = document.querySelector('.status');
   var text = document.getElementById('status-text');
@@ -98,3 +96,21 @@ import { createMudClient } from './mud-client.js';
   // and the status bar and skips the rest. Nothing to configure for that.
   createMudClient({ terminal: term });
 })();
+
+// This status is read-only and never changes first-character or listener behavior.
+(function setupStatus() {
+  function refresh() {
+    fetch('/setup-status', { cache: 'no-store' })
+      .then(res => { if (!res.ok) throw new Error('setup status unavailable'); return res.json(); })
+      .then(info => showSetupStatus(info, document))
+      .catch(() => { /* Keep the conditional first-character warning visible. */ });
+  }
+  refresh();
+  setInterval(refresh, 15000);
+})();
+
+// The terminal may be below the fold on a small screen. One click brings its
+// input into view and gives it keyboard focus without inserting game input.
+document.querySelector('a[href="#terminal-section"]')?.addEventListener('click', () => {
+  requestAnimationFrame(() => document.querySelector('#terminal textarea')?.focus({ preventScroll: true }));
+});

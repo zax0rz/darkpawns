@@ -49,11 +49,10 @@ a { color: var(--accent); }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  justify-content: center;
-  min-height: 100vh;
-  max-width: 46rem;
+  justify-content: flex-start;
+  max-width: 64rem;
   margin-inline: auto;
-  padding: 3rem 2rem;
+  padding: 2rem;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -83,7 +82,7 @@ a { color: var(--accent); }
   color: var(--ink-muted);
 }
 
-.ctas { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+.ctas { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
 
 /* Flat by physical law: no shadow, no radius, a hairline or a fill. */
 .btn {
@@ -178,7 +177,7 @@ a { color: var(--accent); }
   font-family: var(--font-display);
   font-size: 0.75rem;
   letter-spacing: 0.1em;
-  color: #5a5245;
+  color: #c4b89a;
   text-transform: uppercase;
 }
 
@@ -289,3 +288,16 @@ a { color: var(--accent); }
 
 /* Hide unavailable listeners even when connection rows use an authored layout. */
 .connection > div[hidden] { display: none; }
+
+/* Setup is an operator warning, not game prose or a change to character creation. */
+.setup-notice { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--accent); background: var(--paper-deep); max-width: 65ch; }
+.setup-notice h1 { font: 1.4rem/1.2 var(--font-display); color: var(--accent); margin-bottom: .6rem; }
+.setup-notice p + p { margin-top: .7rem; }
+.setup-notice[hidden] { display: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+#terminal-section { scroll-margin-top: 1rem; }
+@media (max-width: 600px) {
+ .landing { padding: 1.5rem 1rem; }
+ .ctas { gap: .5rem; }
+ .connection dd { overflow-wrap: anywhere; min-width: 0; }
+}

@@ -626,6 +626,7 @@ func main() {
 	// L1-005: guard the empty-world window before any listener uses these
 	// binds. The no-DB development/oracle configuration is exempt — no
 	// persistent store, no first-character race to lose.
+	startedWithoutCharacters := false
 	if database != nil {
 		playerCount, countErr := database.CountPlayers()
 		if countErr != nil {
@@ -634,6 +635,7 @@ func main() {
 			slog.Error("player count unavailable; treating the world as empty for bind guarding", "error", countErr)
 			playerCount = 0
 		}
+		startedWithoutCharacters = playerCount == 0
 		sanitizeBindsForEmptyWorld(playerCount, httpBind, telnetBind, telnetTLSBind, whodBind)
 	}
 	var mailIdentityCache *mailIdentity
@@ -834,6 +836,12 @@ func main() {
 	apiDoc := apidoc.New()
 	rootAPI := apiDoc.NewAPI(rootMux)
 	apidoc.RegisterHealth(rootAPI)
+	apidoc.RegisterSetupStatus(rootAPI, func() (int, error) {
+		if database == nil {
+			return 0, fmt.Errorf("persistent player store unavailable")
+		}
+		return database.CountPlayers()
+	}, startedWithoutCharacters)
 	apidoc.RegisterConnections(rootAPI, func() apidoc.ConnectionInfo {
 		plain, encrypted := telnet.ListenerAddresses()
 		return apidoc.ConnectionInfo{Telnet: apidoc.ConnectionAt(plain), TelnetTLS: apidoc.ConnectionAt(encrypted)}

@@ -102,6 +102,7 @@ func TestAPIRouteDriftGate(t *testing.T) {
 	// the spec no longer describes the running server.
 	for _, want := range []string{
 		"GET /health",
+		"GET /setup-status",
 		"GET /admin/zones",
 		"GET /admin/server",
 		"GET /admin/logs",

@@ -5,7 +5,7 @@ section: "server"
 audience: "operator"
 order: 16
 sourcePath: "website-astro/src/content/docs/server/notifications.md"
-updated: 2026-10-27
+updated: 2026-10-28
 draft: false
 ---
 
@@ -113,7 +113,7 @@ already discloses the mirror.
 ## Healthchecks heartbeat
 
 The heartbeat sends one request a minute while the game loop is progressing, and
-stops when the loop stalls or the process dies. Healthchecks notices the missing
+stops when the loop stalls or the process dies. [Healthchecks.io](https://healthchecks.io/) notices the missing
 check-ins. Configure outage and recovery alerts in Healthchecks so they can reach
 you when this server is down: a crashed process cannot send its own alert.
 
