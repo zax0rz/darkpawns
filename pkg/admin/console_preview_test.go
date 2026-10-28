@@ -18,6 +18,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/notify"
+	"github.com/zax0rz/darkpawns/pkg/settings"
 )
 
 type consolePreviewSessions struct{ *fakeOLCWriteStateProvider }
