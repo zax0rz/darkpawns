@@ -21,6 +21,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/db"
 	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/notify"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/settings"
 )
 
@@ -52,6 +53,17 @@ func TestConsolePreview(t *testing.T) {
 		obj.LongDesc = "A steel sword lies here."
 		obj.ExtraFlags[0] |= game.FlagNoRent
 	}
+	if os.Getenv("ADMIN_PREVIEW_ITEMS") == "1" {
+		for _, obj := range []parser.Obj{
+			{VNum: 3002, Keywords: "leather satchel bag", ShortDesc: "a weathered leather satchel", TypeFlag: game.ITEM_CONTAINER},
+			{VNum: 3003, Keywords: "silver ring", ShortDesc: "a tarnished silver ring", TypeFlag: 9},
+			{VNum: 3004, Keywords: "linen cloak", ShortDesc: "a travel-stained linen cloak", TypeFlag: 9},
+			{VNum: 3005, Keywords: "pouch bag", ShortDesc: "a small drawstring pouch", TypeFlag: game.ITEM_CONTAINER},
+			{VNum: 3006, Keywords: "blue stone gem", ShortDesc: "a blue river stone", TypeFlag: 8},
+		} {
+			world.CommitEditedObj(obj)
+		}
+	}
 	for _, vnum := range []int{1001, 1002} {
 		if room := world.GetRoomInWorld(vnum); room != nil {
 			room.Flags = []string{"0", "0", "0", "0"}
@@ -71,6 +83,10 @@ func TestConsolePreview(t *testing.T) {
 		t.Fatal(err)
 	}
 	record := &db.PlayerRecord{Name: "Returner", Level: game.LVL_IMMORT, Health: 10, MaxHealth: 20, Mana: 10, MaxMana: 20, Move: 10, MaxMove: 20, StatStr: 15, StatCon: 15, StatInt: 15, StatWis: 15, StatDex: 15, StatCha: 15, Inventory: []byte(`[{"vnum":3001,"count":1}]`), Equipment: []byte(`[]`), CharacterData: []byte(`{"save_version":2}`)}
+	if os.Getenv("ADMIN_PREVIEW_ITEMS") == "1" {
+		record.Inventory = []byte(`[{"vnum":3001,"count":1,"state":{"timer":7}},{"vnum":3002,"count":1},{"vnum":3005,"count":1,"container_index":2},{"vnum":3006,"count":3,"container_index":3}]`)
+		record.Equipment = []byte(`[{"vnum":3003,"count":1,"locate":2},{"vnum":3004,"count":1,"locate":13}]`)
+	}
 	if err := database.CreatePlayer(record); err != nil {
 		t.Fatal(err)
 	}

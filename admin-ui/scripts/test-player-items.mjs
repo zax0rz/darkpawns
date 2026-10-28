@@ -1,0 +1,26 @@
+// Verify ordered draft operations target the same instances after reindexing.
+import { strict as assert } from 'node:assert';
+import { changeItems, itemSearch } from '../src/lib/playerItems.ts';
+const item = (index, parent = 0, count = 1) => ({ index, parent, count, vnum: 3001, name: `item ${index}`, locate: 0, container: false, no_rent: false });
+const original = { inventory: [item(0), item(1, 1), item(2, 2), item(3, 0, 2)], equipment: [], changes: [] };
+const frozen = JSON.stringify(original);
+const move = { action: 'move', source: 'inventory', index: 0, locate: 17, vnum: 0 };
+let draft = changeItems(original, move);
+assert.equal(JSON.stringify(original), frozen);
+assert.deepEqual(draft.equipment.map(i => [i.index, i.parent, i.locate]), [[0, 0, 17], [1, 1, 0], [2, 2, 0]]);
+assert.deepEqual(draft.inventory.map(i => [i.index, i.parent, i.count]), [[0, 0, 2]]);
+assert.throws(() => changeItems(draft, { ...move, locate: 1 }), /stack/);
+assert.throws(() => changeItems(draft, { ...move, action: 'grant' }, item(0)), /Unequip/);
+draft = changeItems(draft, { ...move, action: 'grant', locate: 0 }, item(0));
+draft = changeItems(draft, { ...move, index: 1, locate: 1 });
+assert.equal(draft.equipment[3].locate, 1);
+draft = changeItems(draft, { ...move, source: 'equipment', locate: 0 });
+assert.deepEqual(draft.inventory.map(i => [i.index, i.parent]), [[0, 0], [1, 0], [2, 2], [3, 3]]);
+draft = changeItems(draft, { ...move, action: 'remove', index: 1, locate: 0 });
+assert.equal(draft.inventory.length, 1);
+assert.equal(draft.equipment.length, 1);
+assert.equal(draft.equipment[0].index, 0);
+assert.equal(draft.changes.length, 5);
+assert.ok(itemSearch('a steel sword', 3001, 'blade steel', 'STEEL #3001'));
+assert.ok(!itemSearch('a steel sword', 3001, 'blade steel', 'bronze'));
+console.log('player item projection: passed');

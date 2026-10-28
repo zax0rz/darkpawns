@@ -96,13 +96,14 @@ var playerFlagSpecs = []playerFlagSpec{
 }
 
 type savedPlayerItem struct {
-	Index  int    `json:"index"`
-	VNum   int    `json:"vnum"`
-	Name   string `json:"name"`
-	Count  int    `json:"count"`
-	Locate int    `json:"locate"`
-	Parent int    `json:"parent"`
-	NoRent bool   `json:"no_rent"`
+	Index     int    `json:"index"`
+	VNum      int    `json:"vnum"`
+	Name      string `json:"name"`
+	Count     int    `json:"count"`
+	Locate    int    `json:"locate"`
+	Parent    int    `json:"parent"`
+	NoRent    bool   `json:"no_rent"`
+	Container bool   `json:"container"`
 }
 type savedPlayerResponse struct {
 	Name        string            `json:"name"`
@@ -127,8 +128,9 @@ type (
 	editSavedPlayerInput struct {
 		Name string `path:"name"`
 		Body struct {
-			Revision string         `json:"revision" minLength:"64" maxLength:"64"`
-			Values   map[string]int `json:"values" doc:"Changed numeric fields from the field catalog"`
+			Revision    string             `json:"revision" minLength:"64" maxLength:"64"`
+			Values      map[string]int     `json:"values" doc:"Changed numeric fields from the field catalog"`
+			ItemChanges []playerItemChange `json:"item_changes,omitempty" maxItems:"100" doc:"Ordered item edits, committed with the numeric fields in one transaction"`
 		}
 	}
 	editSavedPlayerFlagsInput struct {
@@ -168,6 +170,17 @@ type resetSavedPasswordInput struct {
 		Password string `json:"password" minLength:"8" maxLength:"72" writeOnly:"true"`
 	}
 }
+
+// playerItemChange addresses indices in the result of the preceding change.
+// Only operations cross the API; original saved instance state stays server-side.
+type playerItemChange struct {
+	Action string `json:"action" enum:"grant,remove,move"`
+	Source string `json:"source" enum:"inventory,equipment"`
+	Index  int    `json:"index" minimum:"0"`
+	VNum   int    `json:"vnum" minimum:"0"`
+	Locate int    `json:"locate" minimum:"0" maximum:"22"`
+}
+
 type editPlayerItemsInput struct {
 	Name string `path:"name"`
 	Body struct {
@@ -340,7 +353,16 @@ func registerPlayerEditor(api huma.API, world *game.World, database *db.DB, sess
 		if _, changed := in.Body.Values["str"]; changed {
 			updated.Strength = updated.StatStr
 		}
-		return save(ctx, &updated, r, nil, false, "admin_character_stats")
+		for _, change := range in.Body.ItemChanges {
+			if err := editSavedItemChange(world, &updated, change); err != nil {
+				return nil, huma.Error400BadRequest(err.Error())
+			}
+		}
+		action := "admin_character_stats"
+		if len(in.Body.ItemChanges) > 0 {
+			action = "admin_character_items"
+		}
+		return save(ctx, &updated, r, nil, len(in.Body.ItemChanges) > 0, action)
 	})
 	huma.Register(api, huma.Operation{OperationID: "edit-saved-player-flags", Method: http.MethodPatch, Path: "/admin/characters/{name}/flags", Summary: "Update disconnected character flags with level gates", Middlewares: huma.Middlewares{gate}}, func(ctx context.Context, in *editSavedPlayerFlagsInput) (*savedPlayerOutput, error) {
 		r, release, err := load(ctx, in.Name, in.Body.Revision)
@@ -662,11 +684,13 @@ func savedPlayerView(world *game.World, r *db.PlayerRecord, actorLevel int) (*sa
 		for i, item := range items {
 			name := "Unknown object"
 			noRent := false
+			container := false
 			if proto, ok := world.GetObjPrototype(item.VNum); ok {
 				name = proto.ShortDesc
+				container = proto.TypeFlag == game.ITEM_CONTAINER
 				noRent = proto.ExtraFlags[0]&game.FlagNoRent != 0
 			}
-			row := savedPlayerItem{Index: i, VNum: item.VNum, Name: name, Count: max(1, item.Count), Locate: item.Locate, Parent: item.ContainerIndex, NoRent: noRent}
+			row := savedPlayerItem{Index: i, VNum: item.VNum, Name: name, Count: max(1, item.Count), Locate: item.Locate, Parent: item.ContainerIndex, NoRent: noRent, Container: container}
 			if equipped {
 				out.Equipment = append(out.Equipment, row)
 			} else {
@@ -705,6 +729,10 @@ func splitSavedTree(items []game.SaveItemData, index int) ([]game.SaveItemData, 
 }
 
 func editSavedItems(world *game.World, r *db.PlayerRecord, in *editPlayerItemsInput) error {
+	return editSavedItemChange(world, r, playerItemChange{Action: in.Body.Action, Source: in.Body.Source, Index: in.Body.Index, VNum: in.Body.VNum, Locate: in.Body.Locate})
+}
+
+func editSavedItemChange(world *game.World, r *db.PlayerRecord, change playerItemChange) error {
 	inv, err := decodeEditorItems(r.Inventory)
 	if err != nil {
 		return err
@@ -714,33 +742,33 @@ func editSavedItems(world *game.World, r *db.PlayerRecord, in *editPlayerItemsIn
 		return err
 	}
 	var tree []game.SaveItemData
-	if in.Body.Action == "grant" {
-		if _, ok := world.GetObjPrototype(in.Body.VNum); !ok {
+	if change.Action == "grant" {
+		if _, ok := world.GetObjPrototype(change.VNum); !ok {
 			return fmt.Errorf("object prototype not found")
 		}
-		tree = []game.SaveItemData{{VNum: in.Body.VNum, Count: 1}}
+		tree = []game.SaveItemData{{VNum: change.VNum, Count: 1}}
 	} else {
 		source := &inv
-		if in.Body.Source == "equipment" {
+		if change.Source == "equipment" {
 			source = &eq
 		}
-		if in.Body.Index < 0 || in.Body.Index >= len(*source) {
+		if change.Index < 0 || change.Index >= len(*source) {
 			return fmt.Errorf("saved object not found")
 		}
-		if in.Body.Action == "move" && (*source)[in.Body.Index].Count > 1 && in.Body.Locate > 0 {
+		if change.Action == "move" && (*source)[change.Index].Count > 1 && change.Locate > 0 {
 			return fmt.Errorf("a stacked object cannot occupy one equipment slot")
 		}
-		*source, tree = splitSavedTree(*source, in.Body.Index)
+		*source, tree = splitSavedTree(*source, change.Index)
 	}
-	if in.Body.Action != "remove" {
-		if in.Body.Locate < 0 || in.Body.Locate > 22 {
+	if change.Action != "remove" {
+		if change.Locate < 0 || change.Locate > 22 {
 			return fmt.Errorf("unknown equipment slot")
 		}
 		target := &inv
-		if in.Body.Locate > 0 {
+		if change.Locate > 0 {
 			target = &eq
 			for _, item := range eq {
-				if item.ContainerIndex == 0 && item.Locate == in.Body.Locate {
+				if item.ContainerIndex == 0 && item.Locate == change.Locate {
 					return fmt.Errorf("slot occupied; move its item to inventory first")
 				}
 			}
@@ -749,7 +777,7 @@ func editSavedItems(world *game.World, r *db.PlayerRecord, in *editPlayerItemsIn
 			return fmt.Errorf("saved object limit reached")
 		}
 		offset := len(*target)
-		tree[0].Locate = in.Body.Locate
+		tree[0].Locate = change.Locate
 		for i := range tree {
 			if tree[i].ContainerIndex > 0 {
 				tree[i].ContainerIndex += offset

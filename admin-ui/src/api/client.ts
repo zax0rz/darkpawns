@@ -18,6 +18,7 @@ export type ServerMetrics = components['schemas']['MetricsResponse'];
 export type Shop = components['schemas']['ShopResponse'];
 export type WorldSearchHit = components['schemas']['WorldSearchHit'];
 export type WorldSearchResponse = components['schemas']['WorldSearchResponse'];
+export type PlayerItemChange = components['schemas']['PlayerItemChange'];
 export type SavedPlayerItem = components['schemas']['SavedPlayerItem'];
 export type SavedPlayer = components['schemas']['SavedPlayerResponse'];
 export type SavedPlayerFlag = components['schemas']['PlayerFlagField'];
@@ -84,8 +85,8 @@ export const api = {
 export const playerEditor = {
   list: (q: string) => read(http.GET('/admin/characters', { params: { query: { q } } })),
   get: (name: string) => read(http.GET('/admin/characters/{name}', { params: { path: { name: name } } })),
-  stats: (name: string, revision: string, values: Record<string, number>) =>
-    read(http.PATCH('/admin/characters/{name}', { params: { path: { name: name } }, body: { revision, values } })),
+  stats: (name: string, revision: string, values: Record<string, number>, item_changes: PlayerItemChange[] = []) =>
+    read(http.PATCH('/admin/characters/{name}', { params: { path: { name: name } }, body: { revision, values, item_changes } })),
   flags: (name: string, revision: string, flags: Record<string, boolean>) =>
     read(http.PATCH('/admin/characters/{name}/flags', { params: { path: { name: name } }, body: { revision, flags } })),
   rename: (name: string, revision: string, newName: string) =>
