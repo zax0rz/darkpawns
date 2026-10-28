@@ -47,6 +47,7 @@ func TestConsolePreview(t *testing.T) {
 	if obj, ok := world.GetObjPrototype(3001); ok {
 		obj.ShortDesc = "a steel sword"
 		obj.LongDesc = "A steel sword lies here."
+		obj.ExtraFlags[0] |= game.FlagNoRent
 	}
 	for _, vnum := range []int{1001, 1002} {
 		if room := world.GetRoomInWorld(vnum); room != nil {
@@ -66,7 +67,7 @@ func TestConsolePreview(t *testing.T) {
 	if err := world.AddPlayer(online); err != nil {
 		t.Fatal(err)
 	}
-	record := &db.PlayerRecord{Name: "Returner", Level: 10, Health: 10, MaxHealth: 20, Mana: 10, MaxMana: 20, Move: 10, MaxMove: 20, StatStr: 15, StatCon: 15, StatInt: 15, StatWis: 15, StatDex: 15, StatCha: 15, Inventory: []byte(`[]`), Equipment: []byte(`[]`), CharacterData: []byte(`{"save_version":2}`)}
+	record := &db.PlayerRecord{Name: "Returner", Level: game.LVL_IMMORT, Health: 10, MaxHealth: 20, Mana: 10, MaxMana: 20, Move: 10, MaxMove: 20, StatStr: 15, StatCon: 15, StatInt: 15, StatWis: 15, StatDex: 15, StatCha: 15, Inventory: []byte(`[{"vnum":3001,"count":1}]`), Equipment: []byte(`[]`), CharacterData: []byte(`{"save_version":2}`)}
 	if err := database.CreatePlayer(record); err != nil {
 		t.Fatal(err)
 	}

@@ -60,6 +60,92 @@ func DeleteAliases(playerName string) error {
 	return nil
 }
 
+// RenameAliases moves the saved alias file with its character. The returned
+// function restores the old path if a later part of the rename transaction
+// cannot commit. An orphan file at the destination is never overwritten.
+func RenameAliases(oldName, newName string) (func() error, error) {
+	oldPath, newPath := aliasFilePath(oldName), aliasFilePath(newName)
+	if err := ValidateAliasRename(oldName, newName); err != nil {
+		return nil, err
+	}
+	if oldPath == newPath {
+		return func() error { return nil }, nil
+	}
+	if _, err := os.Stat(oldPath); err != nil {
+		if os.IsNotExist(err) {
+			return func() error { return nil }, nil
+		}
+		return nil, fmt.Errorf("inspect old aliases: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(newPath), 0o750); err != nil {
+		return nil, fmt.Errorf("create alias directory: %w", err)
+	}
+	if err := os.Rename(filepath.Clean(oldPath), filepath.Clean(newPath)); err != nil {
+		return nil, fmt.Errorf("move aliases: %w", err)
+	}
+	return func() error {
+		if err := os.MkdirAll(filepath.Dir(oldPath), 0o750); err != nil {
+			return fmt.Errorf("restore alias directory: %w", err)
+		}
+		if err := os.Rename(filepath.Clean(newPath), filepath.Clean(oldPath)); err != nil {
+			return fmt.Errorf("restore aliases: %w", err)
+		}
+		return nil
+	}, nil
+}
+
+// ValidateAliasRename checks both identities without mutating either path.
+// Call it before writing a rename journal so an unrelated destination alias
+// can never be mistaken for a partially moved source during recovery.
+func ValidateAliasRename(oldName, newName string) error {
+	oldPath, newPath := aliasFilePath(oldName), aliasFilePath(newName)
+	if oldPath == "" || newPath == "" {
+		return fmt.Errorf("rename aliases: unsafe character name")
+	}
+	if oldPath == newPath {
+		return nil
+	}
+	if _, err := os.Lstat(newPath); err == nil {
+		return fmt.Errorf("rename aliases: destination already exists")
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect new aliases: %w", err)
+	}
+	if _, err := os.Stat(oldPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("inspect old aliases: %w", err)
+	}
+	return nil
+}
+
+// RestoreAliasRename rolls back a journaled old-to-new alias move. It is safe
+// to retry: an absent new file already means the previous identity is restored.
+func RestoreAliasRename(oldName, newName string) error {
+	oldPath, newPath := aliasFilePath(oldName), aliasFilePath(newName)
+	if oldPath == "" || newPath == "" {
+		return fmt.Errorf("restore aliases: unsafe character name")
+	}
+	if oldPath == newPath {
+		return nil
+	}
+	if _, err := os.Lstat(newPath); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("inspect renamed aliases: %w", err)
+	}
+	if _, err := os.Lstat(oldPath); err == nil {
+		return fmt.Errorf("restore aliases: old and new files both exist")
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect original aliases: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(oldPath), 0o750); err != nil {
+		return fmt.Errorf("create original alias directory: %w", err)
+	}
+	if err := os.Rename(filepath.Clean(newPath), filepath.Clean(oldPath)); err != nil {
+		return fmt.Errorf("restore aliases: %w", err)
+	}
+	return nil
+}
+
 // safeAliasOwner admits only names made of ASCII letters, digits and '_'
 // (C player names are letters only; generated guest names add digits and '_').
 func safeAliasOwner(name string) bool {

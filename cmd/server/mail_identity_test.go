@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/db"
@@ -38,6 +39,32 @@ func TestMailIdentityUsesPersistentRecordsForOfflineAndRestartLookups(t *testing
 	}
 	if got := identity.nameByID(late.ID); got != late.Name {
 		t.Fatalf("post-boot persistent name = %q, want %q", got, late.Name)
+	}
+}
+
+func TestMailIdentityRenameRefreshesStableIDNameCache(t *testing.T) {
+	database, err := db.New(filepath.Join(t.TempDir(), "players.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = database.Close() })
+	player := &db.PlayerRecord{Name: "Oldname"}
+	if err := database.CreatePlayer(player); err != nil {
+		t.Fatal(err)
+	}
+	identity, err := newMailIdentity(database)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := identity.nameByID(player.ID); got != "Oldname" {
+		t.Fatalf("cached pre-rename name = %q", got)
+	}
+	if _, err := database.Exec("UPDATE players SET name=? WHERE id=?", "Newname", player.ID); err != nil {
+		t.Fatal(err)
+	}
+	identity.PlayerRenamed("Oldname", "Newname")
+	if got := identity.nameByID(player.ID); got != "Newname" {
+		t.Fatalf("mail sender/recipient name after rename = %q, want Newname", got)
 	}
 }
 

@@ -636,6 +636,7 @@ func main() {
 		}
 		sanitizeBindsForEmptyWorld(playerCount, httpBind, telnetBind, telnetTLSBind, whodBind)
 	}
+	var mailIdentityCache *mailIdentity
 	if database == nil {
 		// The no-DB mode is an explicitly non-persistent development/oracle
 		// configuration. Its process-local IDs cannot safely address mail
@@ -647,13 +648,17 @@ func main() {
 		// here, so run the scan with no identity hooks — an intact store
 		// leaves behavior unchanged.
 		game.InitMailSystem(nil, nil)
-	} else if err := initializePersistentMail(gameStore); err != nil {
-		// C's boot_db() sets no_mail and continues when scan_file() fails.
-		// Mail is optional; do not make an unavailable mail store take down
-		// the world, listener, or unrelated player sessions.
-		slog.Error("Mail disabled; continuing server boot", "error", err)
 	} else {
-		slog.Info("Mail system initialized with persistent player identity")
+		var mailErr error
+		mailIdentityCache, mailErr = initializePersistentMail(gameStore)
+		if mailErr != nil {
+			// C's boot_db() sets no_mail and continues when scan_file() fails.
+			// Mail is optional; do not make an unavailable mail store take down
+			// the world, listener, or unrelated player sessions.
+			slog.Error("Mail disabled; continuing server boot", "error", mailErr)
+		} else {
+			slog.Info("Mail system initialized with persistent player identity")
+		}
 	}
 	gameWorld.SetShopManager(manager.GetShopManager()) // Wire shop system to world
 	game.SetWeatherWorld(gameWorld)                    // Wire world for weather broadcasts
@@ -952,7 +957,7 @@ func main() {
 	historyDone := make(chan struct{})
 	go func() { defer close(historyDone); history.Run(loopCtx, historyPath, gameWorld.GetPlayerCount) }()
 	defer func() { loopCancel(); <-historyDone }()
-	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications), admin.WithSettings(settingsManager), admin.WithLaunchctl(controlClient), admin.WithBuildInfo(version, commit), admin.WithAccountBudget(loginBudget), admin.WithHistory(history))
+	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications), admin.WithSettings(settingsManager), admin.WithLaunchctl(controlClient), admin.WithBuildInfo(version, commit), admin.WithAccountBudget(loginBudget), admin.WithHistory(history), admin.WithPlayerRenameObserver(mailIdentityCache))
 	if err != nil {
 		fatal("failed to init admin router: %v", err)
 	}

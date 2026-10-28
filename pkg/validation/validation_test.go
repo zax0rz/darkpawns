@@ -28,6 +28,22 @@ func TestIsValidPlayerName_ValidNames(t *testing.T) {
 	}
 }
 
+func TestIsCharacterCreationNameSyntax(t *testing.T) {
+	for _, name := range []string{"Al", "A" + strings.Repeat("b", 19)} {
+		if !IsCharacterCreationNameSyntax(name) {
+			t.Errorf("creation syntax rejected %q", name)
+		}
+	}
+	for _, name := range []string{"", "A", strings.Repeat("b", 21), "a_b", "a1", "two words", "the", "SELF", "from"} {
+		if IsCharacterCreationNameSyntax(name) {
+			t.Errorf("creation syntax accepted %q", name)
+		}
+	}
+	if !IsReservedPlayerName("Admin") {
+		t.Fatal("staff-reserved overlay not detected")
+	}
+}
+
 func TestIsValidPlayerName_TooShort(t *testing.T) {
 	tests := []struct {
 		name  string

@@ -118,6 +118,51 @@ func TestBoardSystem_InitAndWrite(t *testing.T) {
 	}
 }
 
+func TestRenameAuthorUpdatesAndRollsBackSavedHeading(t *testing.T) {
+	base := t.TempDir()
+	bs := InitBoards(base)
+	author := newMockBoardPlayer("Oldname", 10, 1001)
+	magic := bs.WriteMessage(0, author, "A saved heading")
+	if magic != BoardMagic {
+		t.Fatalf("WriteMessage = %d", magic)
+	}
+	bs.AppendBoardLine(magic, author, "Body survives")
+	bs.FinalizeBoardWrite(magic, author)
+
+	undo, err := bs.RenameAuthor("Oldname", "Newname")
+	if err != nil {
+		t.Fatal(err)
+	}
+	checkHeading := func(want string) {
+		t.Helper()
+		reader := newMockBoardPlayer("Reader", 10, 1001)
+		reloaded := InitBoards(base)
+		if !reloaded.DisplayMsg(0, reader, "1") {
+			t.Fatal("renamed board message could not be read")
+		}
+		got := reader.lastMessage()
+		if !strings.Contains(got, want) || !strings.Contains(got, "Body survives") {
+			t.Fatalf("displayed board message = %q, want heading %q and body", got, want)
+		}
+	}
+	checkHeading("(Newname)")
+	if err := undo(); err != nil {
+		t.Fatal(err)
+	}
+	checkHeading("(Oldname)")
+}
+
+func TestRenameAuthorRefusesInFlightWriter(t *testing.T) {
+	bs := InitBoards(t.TempDir())
+	author := newMockBoardPlayer("Oldname", 10, 1001)
+	if bs.WriteMessage(0, author, "Pending") != BoardMagic {
+		t.Fatal("failed to reserve board writer")
+	}
+	if _, err := bs.RenameAuthor("Oldname", "Newname"); err == nil {
+		t.Fatal("renamed a player with an in-flight board post")
+	}
+}
+
 func TestBoardSystem_ShowBoard_Empty(t *testing.T) {
 	bs := InitBoards(t.TempDir())
 	ch := newMockBoardPlayer("Carol", 1, 3001)

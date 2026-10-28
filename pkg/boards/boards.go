@@ -8,11 +8,13 @@ package boards
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -318,6 +320,233 @@ func (bs *BoardSystem) saveBoard(boardType int) error {
 	if err := os.Rename(tmpName, filepath.Clean(path)); err != nil {
 		slog.Error("SYSERR: Board save rename failed", "path", path, "error", err)
 		return err
+	}
+	return nil
+}
+
+type boardAuthorChange struct {
+	board int
+	index int
+	old   string
+	new   string
+}
+
+type boardSnapshotFile struct {
+	Filename string
+	Data     []byte
+	Existed  bool
+}
+
+type boardSnapshot struct {
+	Files []boardSnapshotFile
+}
+
+// RenameAuthor updates the exact author tag in saved board headings. The
+// returned undo function restores those headings if the character database
+// transaction later fails. Message bodies and other headings are untouched.
+func (bs *BoardSystem) RenameAuthor(oldName, newName string) (func() error, error) {
+	return bs.RenameAuthorWithPrepare(oldName, newName, nil)
+}
+
+// RenameAuthorWithPrepare takes a durable snapshot while holding the board
+// lock, invokes prepare before changing a heading, then updates the saved
+// headings. The callback records the snapshot in the character rename journal.
+func (bs *BoardSystem) RenameAuthorWithPrepare(oldName, newName string, prepare func([]byte) error) (func() error, error) {
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+	for writer := range bs.writerSlots {
+		if strings.EqualFold(writer, oldName) || strings.EqualFold(writer, newName) {
+			return nil, fmt.Errorf("boards: character is writing a message")
+		}
+	}
+	if prepare != nil {
+		snapshot, err := bs.snapshotFilesLocked()
+		if err != nil {
+			return nil, err
+		}
+		if err := prepare(snapshot); err != nil {
+			return nil, fmt.Errorf("prepare board rename recovery: %w", err)
+		}
+	}
+
+	changes := make([]boardAuthorChange, 0)
+	boards := make(map[int]struct{})
+	for boardType := range bs.boards {
+		for index := 0; index < bs.numOfMsgs[boardType]; index++ {
+			info := bs.msgIndex[boardType][index]
+			rewritten, ok := renameBoardHeadingAuthor(info.Heading, oldName, newName)
+			if !ok {
+				continue
+			}
+			changes = append(changes, boardAuthorChange{board: boardType, index: index, old: info.Heading, new: rewritten})
+			boards[boardType] = struct{}{}
+			bs.msgIndex[boardType][index].Heading = rewritten
+		}
+	}
+	if len(changes) == 0 {
+		return func() error { return nil }, nil
+	}
+
+	orderedBoards := make([]int, 0, len(boards))
+	for boardType := range boards {
+		orderedBoards = append(orderedBoards, boardType)
+	}
+	sort.Ints(orderedBoards)
+	if err := bs.persistRenamedBoards(orderedBoards); err != nil {
+		bs.applyBoardAuthorChanges(changes, false)
+		if rollbackErr := bs.persistRenamedBoards(orderedBoards); rollbackErr != nil {
+			return nil, fmt.Errorf("save renamed board author: %v; rollback: %w", err, rollbackErr)
+		}
+		return nil, fmt.Errorf("save renamed board author: %w", err)
+	}
+
+	return func() error {
+		bs.mu.Lock()
+		defer bs.mu.Unlock()
+		bs.applyBoardAuthorChanges(changes, false)
+		if err := bs.persistRenamedBoards(orderedBoards); err != nil {
+			// Keep the in-memory view aligned with the committed character name;
+			// the caller logs this rollback failure for operator repair.
+			bs.applyBoardAuthorChanges(changes, true)
+			return fmt.Errorf("restore board author: %w", err)
+		}
+		return nil
+	}, nil
+}
+
+func (bs *BoardSystem) snapshotFilesLocked() ([]byte, error) {
+	snapshot := boardSnapshot{Files: make([]boardSnapshotFile, 0, len(bs.boards))}
+	for _, board := range bs.boards {
+		path := filepath.Join(bs.BasePath, board.Filename)
+		data, err := os.ReadFile(filepath.Clean(path))
+		file := boardSnapshotFile{Filename: board.Filename}
+		if err == nil {
+			file.Data, file.Existed = data, true
+		} else if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("read board file %s for rename recovery: %w", path, err)
+		}
+		snapshot.Files = append(snapshot.Files, file)
+	}
+	data, err := json.Marshal(snapshot)
+	if err != nil {
+		return nil, fmt.Errorf("encode board rename snapshot: %w", err)
+	}
+	return data, nil
+}
+
+// RestoreSnapshot puts board files and their loaded in-memory view back at a
+// pre-rename snapshot. It is idempotent so startup can retry a partial recovery.
+func (bs *BoardSystem) RestoreSnapshot(raw []byte) error {
+	var snapshot boardSnapshot
+	if err := json.Unmarshal(raw, &snapshot); err != nil {
+		return fmt.Errorf("decode board rename snapshot: %w", err)
+	}
+	bs.mu.Lock()
+	for _, file := range snapshot.Files {
+		known := false
+		for _, board := range bs.boards {
+			if file.Filename == board.Filename {
+				known = true
+				break
+			}
+		}
+		if !known {
+			bs.mu.Unlock()
+			return fmt.Errorf("invalid board filename in rename snapshot")
+		}
+		path := filepath.Join(bs.BasePath, file.Filename)
+		if !file.Existed {
+			if err := os.Remove(filepath.Clean(path)); err != nil && !os.IsNotExist(err) {
+				bs.mu.Unlock()
+				return fmt.Errorf("remove board file during rename recovery: %w", err)
+			}
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			bs.mu.Unlock()
+			return fmt.Errorf("create board directory during rename recovery: %w", err)
+		}
+		if err := writeBoardSnapshot(path, file.Data); err != nil {
+			bs.mu.Unlock()
+			return fmt.Errorf("restore board file during rename recovery: %w", err)
+		}
+	}
+	for boardType := range bs.boards {
+		bs.numOfMsgs[boardType] = 0
+		for i := range bs.msgIndex[boardType] {
+			bs.msgIndex[boardType][i] = BoardMsgInfo{SlotNum: -1}
+		}
+	}
+	for i := range bs.msgStorage {
+		bs.msgStorage[i] = ""
+		bs.msgStorageTaken[i] = false
+	}
+	bs.writingSlots = make(map[int]bool)
+	bs.writerSlots = make(map[string]int)
+	bs.mu.Unlock()
+	bs.load()
+	return nil
+}
+
+func writeBoardSnapshot(path string, data []byte) error {
+	f, err := os.CreateTemp(filepath.Dir(path), "board-recovery-*.tmp")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	defer func() {
+		_ = f.Close()
+		_ = os.Remove(tmp)
+	}()
+	if _, err := f.Write(data); err != nil {
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp, filepath.Clean(path))
+}
+
+func renameBoardHeadingAuthor(heading, oldName, newName string) (string, bool) {
+	separator := strings.Index(heading, " :: ")
+	if separator < 0 {
+		return "", false
+	}
+	prefix := heading[:separator]
+	trimmed := strings.TrimRight(prefix, " ")
+	open := strings.LastIndex(trimmed, " (")
+	if open < 0 || !strings.HasSuffix(trimmed, ")") {
+		return "", false
+	}
+	if !strings.EqualFold(trimmed[open+2:len(trimmed)-1], oldName) {
+		return "", false
+	}
+	fieldWidth := len(prefix) - open - 1
+	author := "(" + newName + ")"
+	if len(author) < fieldWidth {
+		author += strings.Repeat(" ", fieldWidth-len(author))
+	}
+	return prefix[:open+1] + author + heading[separator:], true
+}
+
+func (bs *BoardSystem) applyBoardAuthorChanges(changes []boardAuthorChange, useNew bool) {
+	for _, change := range changes {
+		heading := change.old
+		if useNew {
+			heading = change.new
+		}
+		bs.msgIndex[change.board][change.index].Heading = heading
+	}
+}
+
+func (bs *BoardSystem) persistRenamedBoards(boardTypes []int) error {
+	for _, boardType := range boardTypes {
+		if err := bs.saveBoard(boardType); err != nil {
+			return err
+		}
 	}
 	return nil
 }

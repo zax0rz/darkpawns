@@ -510,3 +510,20 @@ func (m *ClanManager) RemoveDeletedMember(id, level int) {
 		}
 	}
 }
+
+// RemoveAdminDeletedMember removes an operator-deleted character from any
+// clan slot, including the first one. Applicants do not count toward member
+// totals or clan power.
+func (m *ClanManager) RemoveAdminDeletedMember(id, rank, level int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, c := range m.Clans {
+		if c.ID == id {
+			if rank != 0 {
+				c.Members--
+				c.Power -= level
+			}
+			return
+		}
+	}
+}

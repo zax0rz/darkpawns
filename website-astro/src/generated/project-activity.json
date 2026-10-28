@@ -1,12 +1,8 @@
 {
-  "generatedAt": "2026-10-18T13:50:11-04:00",
+  "generatedAt": "2026-10-27T23:18:53-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
-    {
-      "week": "2026-08-03",
-      "commits": 0
-    },
     {
       "week": "2026-08-10",
       "commits": 100
@@ -45,43 +41,47 @@
     },
     {
       "week": "2026-10-12",
-      "commits": 243
+      "commits": 245
     },
     {
       "week": "2026-10-19",
-      "commits": 0
+      "commits": 68
+    },
+    {
+      "week": "2026-10-26",
+      "commits": 45
     }
   ],
   "recentCommits": [
     {
-      "sha": "d81fbb59017369d499473437e0b952e605fa408a",
-      "date": "2026-10-18",
-      "title": "Merge remote-tracking branch 'origin/cline/dp1452-1453' into claude/batch-z",
-      "url": "https://github.com/zax0rz/darkpawns/commit/d81fbb59017369d499473437e0b952e605fa408a"
+      "sha": "57ff22576183ebfbd8af92e340e8eeb8a7cc7e96",
+      "date": "2026-10-27",
+      "title": "fix(admin): verify delete confirmation state",
+      "url": "https://github.com/zax0rz/darkpawns/commit/57ff22576183ebfbd8af92e340e8eeb8a7cc7e96"
     },
     {
-      "sha": "351418e8770aa09aa6bbeeb47b421cd4c626d4fd",
-      "date": "2026-10-18",
-      "title": "test: close reachable spell item-route matrix",
-      "url": "https://github.com/zax0rz/darkpawns/commit/351418e8770aa09aa6bbeeb47b421cd4c626d4fd"
+      "sha": "b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4",
+      "date": "2026-10-27",
+      "title": "feat(admin): add saved character identity controls",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4"
     },
     {
-      "sha": "8f32edface91f6c25e0bda697492297267994e73",
-      "date": "2026-10-18",
-      "title": "fix: preserve inactive in-range spell no-op returns",
-      "url": "https://github.com/zax0rz/darkpawns/commit/8f32edface91f6c25e0bda697492297267994e73"
+      "sha": "8ea60c05d0350f0fd111f5c079720afbed082cfa",
+      "date": "2026-10-27",
+      "title": "docs(research): number the flaky-CI ledger row PF-090",
+      "url": "https://github.com/zax0rz/darkpawns/commit/8ea60c05d0350f0fd111f5c079720afbed082cfa"
     },
     {
-      "sha": "750b5c9c70b47f7b29cac1bb1d12ff0724f589fc",
-      "date": "2026-10-18",
-      "title": "fix: allow the two R1a Locate Object cells",
-      "url": "https://github.com/zax0rz/darkpawns/commit/750b5c9c70b47f7b29cac1bb1d12ff0724f589fc"
+      "sha": "1b86692e49a1d924127ea28bc9be2c2b4d68985e",
+      "date": "2026-10-27",
+      "title": "docs(research): the flaky CI test was a crash (PF-)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/1b86692e49a1d924127ea28bc9be2c2b4d68985e"
     },
     {
-      "sha": "de3ab7340cc70a9b09a9bad593416369f825a456",
-      "date": "2026-10-18",
-      "title": "Merge remote-tracking branch 'origin/codex/luna-dp1371-spell-matrix' into claude/batch-x",
-      "url": "https://github.com/zax0rz/darkpawns/commit/de3ab7340cc70a9b09a9bad593416369f825a456"
+      "sha": "5324dc1f37a67cabc68ba4eddbdbe12f36ac3707",
+      "date": "2026-10-27",
+      "title": "Merge pull request #2202 from zax0rz/cline/portable-shutdown-race",
+      "url": "https://github.com/zax0rz/darkpawns/commit/5324dc1f37a67cabc68ba4eddbdbe12f36ac3707"
     }
   ],
   "pullRequests": [

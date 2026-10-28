@@ -81,6 +81,27 @@ func (m *mailIdentity) remember(record *db.PlayerRecord) error {
 	return nil
 }
 
+// PlayerRenamed refreshes the cached reverse lookup after the character row's
+// name changes. Mail headers resolve their sender and recipient names by ID,
+// so the same stable ID must immediately display the new spelling.
+func (m *mailIdentity) PlayerRenamed(oldName, newName string) {
+	if m == nil || m.database == nil || oldName == "" || newName == "" || oldName == newName {
+		return
+	}
+	record, err := m.database.GetPlayer(newName)
+	if err != nil {
+		slog.Error("mail identity cache could not follow character rename", "old_name", oldName, "new_name", newName, "error", err)
+		return
+	}
+	if record == nil || record.ID <= 0 {
+		slog.Error("mail identity cache could not follow character rename", "old_name", oldName, "new_name", newName, "error", "renamed player record not found")
+		return
+	}
+	m.mu.Lock()
+	m.byID[record.ID] = record.Name
+	m.mu.Unlock()
+}
+
 func (m *mailIdentity) idByName(name string) int {
 	record, err := m.database.GetPlayer(name)
 	if err != nil {

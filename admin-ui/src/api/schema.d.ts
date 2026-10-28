@@ -45,7 +45,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search saved characters (HIGOD) */
+        /** Find saved characters */
         get: operations["list-saved-players"];
         put?: never;
         post?: never;
@@ -62,15 +62,49 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Read a disconnected saved character (HIGOD) */
+        /** Open a disconnected character */
         get: operations["get-saved-player"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Update disconnected character stats with revision check */
+        /** Update a disconnected character's details */
         patch: operations["edit-saved-player"];
+        trace?: never;
+    };
+    "/admin/characters/{name}/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete an offline character from the admin console */
+        post: operations["delete-saved-player"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/characters/{name}/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update disconnected character flags with level gates */
+        patch: operations["edit-saved-player-flags"];
         trace?: never;
     };
     "/admin/characters/{name}/items": {
@@ -82,7 +116,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Grant, remove or relocate saved objects with revision check */
+        /** Add, remove, or move a character's items */
         post: operations["edit-saved-player-items"];
         delete?: never;
         options?: never;
@@ -99,8 +133,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Set a disconnected character password and clear login lockout */
+        /** Change a disconnected character's password */
         post: operations["reset-saved-player-password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/characters/{name}/rename": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rename a disconnected character and its references */
+        post: operations["rename-saved-player"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1478,6 +1529,7 @@ export interface components {
             /** Format: int64 */
             asset_size?: number;
             current_version: string;
+            downgrade: boolean;
             error?: string;
             latest_version?: string;
             managed: boolean;
@@ -1602,6 +1654,16 @@ export interface components {
             /** Format: int64 */
             uptime_seconds: number;
         };
+        DeleteSavedPlayerInputBody: {
+            confirm_name?: string;
+            revision: string;
+        };
+        DeleteSavedPlayerResponse: {
+            aliases_removed: boolean;
+            clan_cleared: boolean;
+            marked_deleted: boolean;
+            name: string;
+        };
         Destination: {
             enabled: boolean;
             events: string[] | null;
@@ -1639,6 +1701,12 @@ export interface components {
             source: "inventory" | "equipment";
             /** Format: int64 */
             vnum: number;
+        };
+        EditSavedPlayerFlagsInputBody: {
+            flags: {
+                [key: string]: boolean;
+            };
+            revision: string;
         };
         EditSavedPlayerInputBody: {
             revision: string;
@@ -2242,6 +2310,15 @@ export interface components {
             /** Format: int64 */
             min: number;
         };
+        PlayerFlagField: {
+            description: string;
+            editable: boolean;
+            enabled: boolean;
+            key: string;
+            label: string;
+            /** Format: int64 */
+            min_level: number;
+        };
         PlayerItemResponse: {
             /** Format: int64 */
             count: number;
@@ -2270,6 +2347,10 @@ export interface components {
             /** Format: date-time */
             updated_at?: string;
             version: string;
+        };
+        RenameSavedPlayerInputBody: {
+            new_name: string;
+            revision: string;
         };
         ResetAllOutputBody: {
             errors?: string[] | null;
@@ -2371,6 +2452,7 @@ export interface components {
             /** Format: int64 */
             locate: number;
             name: string;
+            no_rent: boolean;
             /** Format: int64 */
             parent: number;
             /** Format: int64 */
@@ -2379,6 +2461,7 @@ export interface components {
         SavedPlayerResponse: {
             equipment: components["schemas"]["SavedPlayerItem"][] | null;
             fields: components["schemas"]["PlayerField"][] | null;
+            flags: components["schemas"]["PlayerFlagField"][] | null;
             inventory: components["schemas"]["SavedPlayerItem"][] | null;
             /** Format: date-time */
             last_saved_at: string | null;
@@ -2963,6 +3046,76 @@ export interface operations {
             };
         };
     };
+    "delete-saved-player": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteSavedPlayerInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteSavedPlayerResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "edit-saved-player-flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditSavedPlayerFlagsInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPlayerResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     "edit-saved-player-items": {
         parameters: {
             query?: never;
@@ -3010,6 +3163,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ResetSavedPasswordInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedPlayerResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "rename-saved-player": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameSavedPlayerInputBody"];
             };
         };
         responses: {

@@ -12,15 +12,15 @@ import (
 // mail scan fails; the Go server keeps that availability boundary explicit by
 // returning an error for the caller to log while leaving the rest of boot
 // independent of mail.
-func initializePersistentMail(database db.GameStore) error {
+func initializePersistentMail(database db.GameStore) (*mailIdentity, error) {
 	game.DisableMailSystem()
 
 	identity, err := newMailIdentity(database)
 	if err != nil {
-		return fmt.Errorf("mail identity initialization: %w", err)
+		return nil, fmt.Errorf("mail identity initialization: %w", err)
 	}
 	if !game.InitMailSystem(identity.nameByID, identity.idByName) {
-		return fmt.Errorf("mail storage initialization failed")
+		return nil, fmt.Errorf("mail storage initialization failed")
 	}
-	return nil
+	return identity, nil
 }

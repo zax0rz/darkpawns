@@ -27,7 +27,7 @@ metric definitions, live logs and filtered downloads.
 | Mobs, Objects, Shops | Search prototypes and open their editors |
 | Workshop & saves | Inspect editing claims and changes waiting to be saved to zone files |
 | Builder guide | Read the claim, draft, commit, and save workflow |
-| Players | Edit a disconnected character's saved stats, equipment, inventory, or password; HIGOD access required |
+| Players | Edit a disconnected character's saved stats, equipment, inventory, password, flags, and identity; HIGOD access required |
 | Notifications | Configure every outbound channel: event subscriptions, the gossip mirror, the Healthchecks heartbeat, credentials and test sends; HIGOD access required |
 | Operations | Inspect process metrics, online players, and recent logs; reset actions require their server-side permission |
 | Configuration | Edit every runtime setting with live/restart marking, backup and restore, and change history; implementor access required |
@@ -51,6 +51,9 @@ Saved-player editing requires the character to be fully disconnected. Stat,
 item, and password actions have separate save boundaries. A stale record is
 rejected: reload it before trying again. File editors also use conditional writes
 with ETags so another editor's changes cannot be silently overwritten.
+
+For the rename audit, C-compatible deletion behavior, and flag level gates, see
+[Saved character management](/docs/server/player-management/).
 
 ## Read status accurately
 
