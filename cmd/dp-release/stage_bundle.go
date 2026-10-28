@@ -33,13 +33,21 @@ func stageBundleContents(goos, goarch string) error {
 		suffix = ".exe"
 	}
 	out := filepath.Join(root, "dist", "signed-bundles", goos+"_"+goarch)
+	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+		return err
+	}
 	lockPath := filepath.Join(root, "dist", "signed-bundles", goos+"_"+goarch+".lock")
 	// Both build hooks of this platform run concurrently; an exclusive lock
-	// picks one to stage while the other waits for the done marker.
-	if _, lockErr := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600); lockErr != nil {
+	// picks one to stage while the other waits for the done marker. Only an
+	// EEXIST means contention — any other failure creating the lock is real.
+	lock, lockErr := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	if lockErr != nil {
+		if !os.IsExist(lockErr) {
+			return lockErr
+		}
 		return waitForStaging(out, lockPath)
 	}
-	defer func() { _ = os.Remove(lockPath) }()
+	defer func() { _ = os.Remove(lockPath); _ = lock.Close() }()
 	if _, err := os.Lstat(filepath.Join(out, ".done")); err == nil {
 		fmt.Fprintf(os.Stderr, "stage-bundle: %s_%s already staged\n", goos, goarch)
 		return nil
