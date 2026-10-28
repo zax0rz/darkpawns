@@ -73,6 +73,21 @@ func (s *stubNetworkLauncher) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	case "/config-apply":
+		// Mirrors the launcher: the reviewed revision must travel with the
+		// request and must still be current.
+		var request struct {
+			Revision *int64 `json:"revision"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil || request.Revision == nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "the revision of the configuration you reviewed is required"})
+			return
+		}
+		if *request.Revision != s.revision.Load() {
+			w.WriteHeader(http.StatusConflict)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "configuration changed; reload before saving"})
+			return
+		}
 		s.applied.Add(1)
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte(`{"status":"apply requested"}`))
@@ -217,12 +232,20 @@ func TestNetworkApplyAndStatus(t *testing.T) {
 	handler := newNetworkTestRouter(t, control)
 	adminToken := generateTestToken(t, "admin")
 
-	out := networkRequest(handler, "POST", "/admin/network/apply", nil, adminToken)
+	out := networkRequest(handler, "POST", "/admin/network/apply", map[string]any{"revision": 2}, adminToken)
 	if out.Code != 202 {
 		t.Fatalf("apply: %d %s", out.Code, out.Body.String())
 	}
 	if stub.applied.Load() != 1 {
 		t.Fatal("apply did not reach the launcher")
+	}
+	// An apply bound to a stale revision conflicts and restarts nothing.
+	out = networkRequest(handler, "POST", "/admin/network/apply", map[string]any{"revision": 1}, adminToken)
+	if out.Code != 409 || !strings.Contains(out.Body.String(), "reload before applying") {
+		t.Fatalf("stale apply: %d %s", out.Code, out.Body.String())
+	}
+	if stub.applied.Load() != 1 {
+		t.Fatal("a refused apply reached the launcher")
 	}
 	out = networkRequest(handler, "GET", "/admin/network/status", nil, adminToken)
 	if out.Code != 200 || !strings.Contains(out.Body.String(), `"state":"committed"`) {
@@ -243,7 +266,7 @@ func TestNetworkNonManagedIsReadOnly(t *testing.T) {
 	if out.Code != 503 || !strings.Contains(out.Body.String(), "managed instance") {
 		t.Fatalf("non-managed save: %d %s", out.Code, out.Body.String())
 	}
-	out = networkRequest(handler, "POST", "/admin/network/apply", nil, adminToken)
+	out = networkRequest(handler, "POST", "/admin/network/apply", map[string]any{"revision": 0}, adminToken)
 	if out.Code != 503 {
 		t.Fatalf("non-managed apply: %d", out.Code)
 	}

@@ -64,6 +64,7 @@ function stateText(state: string, error?: string, failed?: string): { title: str
     case 'verifying': return { title: 'Verifying. Checking that every requested listener answered.', tone: 'busy' };
     case 'committed': return { title: 'Committed. The new settings are live.', tone: 'good' };
     case 'rolled-back': return { title: `Rolled back. ${failed ? 'The ' + failed + ' listener' : 'A listener'} failed, and the previous settings were restored. ${error ?? ''}`, tone: 'bad' };
+    case 'refused': return { title: `Not applied. ${error ?? 'The settings changed first. Reload and apply again.'}`, tone: 'bad' };
     default: return { title: '', tone: 'busy' };
   }
 }
@@ -143,12 +144,23 @@ export function NetworkCard() {
   });
 
   const applyMutation = useMutation({
-    mutationFn: networkApi.apply,
+    mutationFn: () => {
+      if (!view) throw new Error('network not loaded');
+      return networkApi.apply(view.revision);
+    },
     onSuccess: () => {
       setApplySent(true);
       showToast('Applying. The world restarts; this page reconnects by itself.', 'success');
     },
-    onError: (err: Error) => showToast(`Apply failed: ${err.message}`, 'error'),
+    onError: (err: { status?: number; message?: string }) => {
+      if (err.status === 409) {
+        setConflict(true);
+        queryClient.invalidateQueries({ queryKey: ['network'] });
+        showToast('The configuration changed underneath you. Reload before applying.', 'error');
+      } else {
+        showToast(`Apply failed: ${err.message ?? 'unknown error'}`, 'error');
+      }
+    },
   });
 
   if (!hasRole('admin')) return null;

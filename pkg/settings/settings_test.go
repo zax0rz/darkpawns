@@ -11,14 +11,18 @@ import (
 
 func withEnv(t *testing.T, env map[string]string) {
 	t.Helper()
-	original := lookupEnv
+	originalLookup, originalSet := lookupEnv, setEnv
 	lookupEnv = func(name string) (string, bool) {
 		if value, ok := env[name]; ok {
 			return value, true
 		}
 		return "", false
 	}
-	t.Cleanup(func() { lookupEnv = original })
+	setEnv = func(name, value string) error {
+		env[name] = value
+		return nil
+	}
+	t.Cleanup(func() { lookupEnv, setEnv = originalLookup, originalSet })
 }
 
 func newManager(t *testing.T, env map[string]string) *Manager {
@@ -324,5 +328,129 @@ func TestCorruptFileDegradesInsteadOfFailing(t *testing.T) {
 	data, readErr := os.ReadFile(path)
 	if readErr != nil || !strings.Contains(string(data), `"revision": 1`) {
 		t.Fatal("corrupt file was overwritten or altered")
+	}
+}
+
+// A value the boot installer wrote into the environment is not an operator
+// export: a console save of that field must take effect and carry no override
+// badge (DP-V017-01). These tests fail if the install stops being tracked.
+func TestBootInstalledEnvDoesNotMaskConsoleSaves(t *testing.T) {
+	env := map[string]string{}
+	withEnv(t, env)
+	m, err := New(filepath.Join(t.TempDir(), "settings.json"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	g := Defaults().Grapevine
+	g.Mode = "presence"
+	g.ClientID = "test-client"
+	secret := "relay-secret"
+	if _, err := m.SaveGrapevine(m.Revision(), g, SecretUpdate{SecretGrapevineClient: &secret}); err != nil {
+		t.Fatalf("save presence: %v", err)
+	}
+	// Boot installs the non-default file value, exactly like the server does.
+	if installed, err := m.InstallEnv("GRAPEVINE_MODE", "presence"); err != nil || !installed {
+		t.Fatalf("InstallEnv: installed=%v err=%v", installed, err)
+	}
+	// The operator reverts the field in the console.
+	g.Mode = "off"
+	result, err := m.SaveGrapevine(m.Revision(), g, nil)
+	if err != nil {
+		t.Fatalf("save off: %v", err)
+	}
+	if len(result.EnvOverridden) != 0 {
+		t.Fatalf("boot-installed variable masked the save: %v", result.EnvOverridden)
+	}
+	view := m.SettingsView()
+	if view.Grapevine.Mode != "off" {
+		t.Fatalf("effective mode = %q; the boot-installed copy masks the console", view.Grapevine.Mode)
+	}
+	if fields := view.Meta[GroupGrapevine].EnvOverridden; len(fields) != 0 {
+		t.Fatalf("boot-installed variable badged as an override: %v", fields)
+	}
+}
+
+// A genuinely inherited export keeps winning and keeps its badge, including
+// against an install attempt for the same variable.
+func TestInheritedExportStillBadgesAndWins(t *testing.T) {
+	env := map[string]string{"GRAPEVINE_MODE": "presence"}
+	withEnv(t, env)
+	m, err := New(filepath.Join(t.TempDir(), "settings.json"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if installed, err := m.InstallEnv("GRAPEVINE_MODE", "off"); err != nil || installed {
+		t.Fatalf("an inherited export was overwritten: installed=%v err=%v", installed, err)
+	}
+	if env["GRAPEVINE_MODE"] != "presence" {
+		t.Fatalf("inherited export changed to %q", env["GRAPEVINE_MODE"])
+	}
+	g := Defaults().Grapevine
+	if _, err := m.SaveGrapevine(m.Revision(), g, nil); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	view := m.SettingsView()
+	if view.Grapevine.Mode != "presence" {
+		t.Fatalf("inherited export must keep winning, got %q", view.Grapevine.Mode)
+	}
+	if fields := view.Meta[GroupGrapevine].EnvOverridden; len(fields) != 1 || fields[0] != "mode" {
+		t.Fatalf("inherited export not badged: %v", fields)
+	}
+}
+
+// The boot-installed copy of a secret must not keep a cleared or rotated
+// secret alive for the life of the process.
+func TestBootInstalledSecretDoesNotMaskConsoleChanges(t *testing.T) {
+	env := map[string]string{}
+	withEnv(t, env)
+	m, err := New(filepath.Join(t.TempDir(), "settings.json"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	secret := "relay-secret"
+	g := Defaults().Grapevine
+	if _, err := m.SaveGrapevine(m.Revision(), g, SecretUpdate{SecretGrapevineClient: &secret}); err != nil {
+		t.Fatalf("save secret: %v", err)
+	}
+	// Boot resolves the sealed value and installs it, as setSecret does.
+	value, ok := m.SecretValue(SecretGrapevineClient)
+	if !ok || value != "relay-secret" {
+		t.Fatalf("secret not resolvable: %q %v", value, ok)
+	}
+	if installed, err := m.InstallEnv("GRAPEVINE_CLIENT_SECRET", value); err != nil || !installed {
+		t.Fatalf("InstallEnv: installed=%v err=%v", installed, err)
+	}
+	empty := ""
+	if _, err := m.SaveGrapevine(m.Revision(), g, SecretUpdate{SecretGrapevineClient: &empty}); err != nil {
+		t.Fatalf("clear secret: %v", err)
+	}
+	if view := m.SettingsView(); view.Grapevine.ClientSecretSet {
+		t.Fatal("cleared secret still reported set; the boot-installed copy masks the console")
+	}
+}
+
+// A genuinely inherited secret export keeps winning after the operator clears
+// the sealed copy in the console.
+func TestInheritedSecretExportStillWins(t *testing.T) {
+	env := map[string]string{"DP_MUDLOG_NTFY_TOKEN": "inherited-token"}
+	withEnv(t, env)
+	m, err := New(filepath.Join(t.TempDir(), "settings.json"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	// Boot reads the secret (the export wins) and must not install over it.
+	value, ok := m.SecretValue(SecretStaffPushToken)
+	if !ok || value != "inherited-token" {
+		t.Fatalf("exported secret not resolvable: %q %v", value, ok)
+	}
+	if installed, err := m.InstallEnv("DP_MUDLOG_NTFY_TOKEN", value); err != nil || installed {
+		t.Fatalf("an inherited secret export was overwritten: installed=%v err=%v", installed, err)
+	}
+	empty := ""
+	if _, err := m.SaveStaffPush(m.Revision(), Defaults().StaffPush, SecretUpdate{SecretStaffPushToken: &empty}); err != nil {
+		t.Fatalf("clear secret: %v", err)
+	}
+	if view := m.SettingsView(); !view.StaffPush.TokenSet {
+		t.Fatal("inherited secret export no longer wins after the console cleared the sealed copy")
 	}
 }

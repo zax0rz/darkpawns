@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/gofrs/flock"
@@ -262,6 +263,33 @@ func controlAdminHandlers(instance, bundle string, state func() RuntimeStatus) m
 				w.WriteHeader(http.StatusMethodNotAllowed)
 				return
 			}
+			// The revision the operator reviewed travels with the request:
+			// an apply must never restart onto a configuration that changed
+			// underneath the operator who approved it. Refuse here so the
+			// console sees the conflict directly; the detached transaction
+			// re-checks under the lifecycle lock.
+			var request struct {
+				Revision *int64 `json:"revision"`
+			}
+			if err := json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&request); err != nil || request.Revision == nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "the revision of the configuration you reviewed is required"})
+				return
+			}
+			cfg, err := Load(instance)
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+				return
+			}
+			if cfg.ConfigRevision != *request.Revision {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": ErrConfigConflict.Error()})
+				return
+			}
 			if err := pendingUpdate(instance); err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict)
@@ -276,7 +304,7 @@ func controlAdminHandlers(instance, bundle string, state func() RuntimeStatus) m
 			// Detached like the update and restart spawns: the control
 			// server answering this request belongs to a world that is
 			// about to stop, and the transaction must survive it.
-			if err := spawnSupervisor(self, instance, "_apply-config"); err != nil {
+			if err := spawnSupervisor(self, instance, "_apply-config", "--revision", strconv.FormatInt(*request.Revision, 10)); err != nil {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("could not start the apply command: %v", err)})

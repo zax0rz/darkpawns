@@ -165,19 +165,26 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 	// The network apply transaction spawned by the control server: the
 	// console saves a configuration draft, and this command restarts the
 	// world on it, verifies every requested listener bound, and restores
-	// the previous configuration when one did not.
+	// the previous configuration when one did not. It carries the revision
+	// the operator reviewed and refuses to run if the configuration changed
+	// underneath it.
+	var applyRevision int64
 	applyConfig := &cobra.Command{
 		Use:    "_apply-config",
 		Hidden: true,
 		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if !cmd.Flags().Changed("revision") {
+				return errors.New("--revision is required: the revision of the configuration the operator reviewed")
+			}
 			path, err := choose(cmd)
 			if err != nil {
 				return err
 			}
-			return portable.ApplyNetworkConfig(cmd.Context(), path)
+			return portable.ApplyNetworkConfig(cmd.Context(), path, applyRevision)
 		},
 	}
+	applyConfig.Flags().Int64Var(&applyRevision, "revision", 0, "the configuration revision the operator reviewed")
 	root.AddCommand(applyConfig)
 
 	service := &cobra.Command{Use: "service", Short: "Configure automatic startup for your current user"}

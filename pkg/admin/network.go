@@ -69,6 +69,15 @@ type networkSaveInput struct {
 	}
 }
 
+// The apply transaction is bound to the revision the operator reviewed: a
+// save by anyone else makes the apply conflict instead of silently running
+// (or rolling back) onto a configuration nobody approved.
+type networkApplyInput struct {
+	Body struct {
+		Revision int64 `json:"revision" doc:"The configuration revision the operator reviewed and is approving"`
+	}
+}
+
 type networkListenerChangeBody struct {
 	Enabled bool `json:"enabled"`
 	Port    int  `json:"port"`
@@ -194,8 +203,8 @@ func registerNetwork(api huma.API, logger *audit.AuditLogger, control *launchctl
 		Path:          "/admin/network/apply",
 		Summary:       "Apply the saved network configuration and restart (implementor)",
 		DefaultStatus: http.StatusAccepted,
-		Description:   "The launcher stops the world gracefully, starts it on the saved configuration, and verifies every requested listener bound. A failed bind restores the previous configuration automatically. The request returns before the world stops; poll /admin/network/status.",
-	}, func(ctx context.Context, _ *struct{}) (*networkApplyOutput, error) {
+		Description:   "The launcher stops the world gracefully, starts it on the saved configuration, and verifies every requested listener bound. A failed bind restores the previous configuration automatically. The apply is bound to the revision the operator reviewed: if the configuration changed since, the request conflicts and nothing restarts. The request returns before the world stops; poll /admin/network/status.",
+	}, func(ctx context.Context, in *networkApplyInput) (*networkApplyOutput, error) {
 		if control == nil {
 			return nil, nonManaged
 		}
@@ -203,10 +212,13 @@ func registerNetwork(api huma.API, logger *audit.AuditLogger, control *launchctl
 		if world != nil {
 			online = world.GetPlayerCount()
 		}
-		if err := control.ApplyNetworkConfig(ctx); err != nil {
+		if err := control.ApplyNetworkConfig(ctx, in.Body.Revision); err != nil {
+			if errors.Is(err, launchctl.ErrConfigConflict) {
+				return nil, huma.Error409Conflict("configuration changed; reload before applying")
+			}
 			return nil, networkError(err)
 		}
-		auditAdmin(ctx, logger, "network.apply", strconv.Itoa(online)+" players online at apply", true)
+		auditAdmin(ctx, logger, "network.apply", "revision "+strconv.FormatInt(in.Body.Revision, 10)+"; "+strconv.Itoa(online)+" players online at apply", true)
 		out := &networkApplyOutput{}
 		out.Body.Status = "apply requested"
 		return out, nil

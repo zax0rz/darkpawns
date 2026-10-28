@@ -18,9 +18,12 @@ import (
 	"time"
 )
 
-// lookupEnv is a seam so tests can simulate a checkout deployment's exported
-// variables without mutating the real environment.
-var lookupEnv = os.LookupEnv
+// lookupEnv and setEnv are seams so tests can simulate a checkout deployment's
+// exported variables without mutating the real environment.
+var (
+	lookupEnv = os.LookupEnv
+	setEnv    = os.Setenv
+)
 
 // ErrStorage mirrors notify.ErrCredentialStorage: the sealed settings exist
 // but their key is missing or unreadable, and guessing would destroy data.
@@ -34,11 +37,12 @@ type Manager struct {
 	keyPath string
 
 	mu            sync.Mutex
-	cfg           Config   // file truth; secrets sealed
-	effective     Config   // file truth with environment overrides applied
-	envOverridden []string // "group.field" paths an exported variable still wins
-	notes         []string // migration/override notes for the boot log
-	degraded      error    // set when the file on disk is unusable; saves refuse
+	cfg           Config            // file truth; secrets sealed
+	effective     Config            // file truth with environment overrides applied
+	envOverridden []string          // "group.field" paths an exported variable still wins
+	installedEnv  map[string]string // env names this process installed at boot, with the value written
+	notes         []string          // migration/override notes for the boot log
+	degraded      error             // set when the file on disk is unusable; saves refuse
 
 	aead   cipher.AEAD
 	onLive func(*Live)
@@ -181,9 +185,31 @@ func (m *Manager) SecretValue(name string) (string, bool) {
 	return m.secretLocked(name)
 }
 
+// InstallEnv publishes a boot-time settings value into the process
+// environment for the integrations that still read env. An inherited export
+// is never overwritten and is reported as not installed, so it keeps winning
+// as a genuine operator override; a variable this method does install is
+// remembered, and override detection stops treating it as an export for the
+// life of the process. Only the boot installer may call it.
+func (m *Manager) InstallEnv(name, value string) (installed bool, err error) {
+	if _, inherited := lookupEnv(name); inherited {
+		return false, nil
+	}
+	if err := setEnv(name, value); err != nil {
+		return false, err
+	}
+	m.mu.Lock()
+	if m.installedEnv == nil {
+		m.installedEnv = make(map[string]string)
+	}
+	m.installedEnv[name] = value
+	m.mu.Unlock()
+	return true, nil
+}
+
 func (m *Manager) secretLocked(name string) (string, bool) {
 	for _, field := range envSecretNames(name) {
-		if value, set := lookupEnv(field); set && value != "" {
+		if value, set := m.envLookup(field); set && value != "" {
 			return value, true
 		}
 	}
@@ -449,7 +475,7 @@ func (m *Manager) validateLocked(cfg Config) error {
 
 func (m *Manager) secretIn(cfg Config, name string) bool {
 	for _, field := range envSecretNames(name) {
-		if value, set := lookupEnv(field); set && value != "" {
+		if value, set := m.envLookup(field); set && value != "" {
 			return true
 		}
 	}
@@ -796,11 +822,40 @@ func (m *Manager) applyEnvironmentOverrides() {
 	m.applyEnvironmentOverridesLocked()
 }
 
+// envLookup is lookupEnv minus this process's own boot writes: a variable the
+// boot installer set is not an operator export, so the file value wins and no
+// badge is reported. A value that no longer matches what was installed could
+// only have been changed from outside this map, so it is honoured as an export
+// rather than silently dropped. Callers hold m.mu.
+func (m *Manager) envLookup(name string) (string, bool) {
+	value, set := lookupEnv(name)
+	if set {
+		if installed, ok := m.installedEnv[name]; ok && installed == value {
+			return "", false
+		}
+	}
+	return value, set
+}
+
+// envParseInt is parseEnvInt on envLookup: boot-installed variables do not
+// count as exports. Callers hold m.mu.
+func (m *Manager) envParseInt(name string, lo, hi int) (int, bool) {
+	raw, set := m.envLookup(name)
+	if !set || raw == "" {
+		return 0, false
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < lo || n > hi {
+		return 0, false
+	}
+	return n, true
+}
+
 func (m *Manager) applyEnvironmentOverridesLocked() {
 	effective := cloneConfig(m.cfg)
 	var overridden []string
 	applyInt := func(field string, envName string, lo, hi int, target *int) {
-		if value, ok := parseEnvInt(envName, lo, hi); ok && value != *target {
+		if value, ok := m.envParseInt(envName, lo, hi); ok && value != *target {
 			*target = value
 			overridden = append(overridden, field)
 		}
@@ -811,7 +866,7 @@ func (m *Manager) applyEnvironmentOverridesLocked() {
 	applyInt("sessions.websocket_max_conns_per_ip", "WEBSOCKET_MAX_CONNS_PER_IP", 1, 10000, &effective.Sessions.WebSocketMaxConnsPerIP)
 	applyInt("sessions.websocket_max_total_conns", "WEBSOCKET_MAX_TOTAL_CONNS", 1, 100000, &effective.Sessions.WebSocketMaxTotalConns)
 	applyInt("sessions.account_failure_budget", "DP_ACCOUNT_FAILURE_BUDGET", 0, 10000, &effective.Sessions.AccountFailureBudget)
-	if raw, set := lookupEnv("DP_ACCOUNT_FAILURE_WINDOW"); set && raw != "" {
+	if raw, set := m.envLookup("DP_ACCOUNT_FAILURE_WINDOW"); set && raw != "" {
 		if duration, err := time.ParseDuration(raw); err == nil && duration > 0 && duration <= 7*24*time.Hour {
 			minutes := int(duration / time.Minute)
 			if minutes != effective.Sessions.AccountFailureWindowMinutes {
@@ -820,21 +875,21 @@ func (m *Manager) applyEnvironmentOverridesLocked() {
 			}
 		}
 	}
-	if raw, set := lookupEnv("TRUSTED_PROXIES"); set && raw != "" {
+	if raw, set := m.envLookup("TRUSTED_PROXIES"); set && raw != "" {
 		proxies := strings.FieldsFunc(raw, func(r rune) bool { return r == ',' || r == ' ' })
 		effective.Access.TrustedProxies = proxies
 		overridden = append(overridden, "access.trusted_proxies")
 	}
-	if raw, set := lookupEnv("CORS_ALLOWED_ORIGINS"); set && raw != "" {
+	if raw, set := m.envLookup("CORS_ALLOWED_ORIGINS"); set && raw != "" {
 		effective.Access.CORSAllowedOrigins = splitList(raw)
 		overridden = append(overridden, "access.cors_allowed_origins")
 	}
-	if raw, set := lookupEnv("ADMIN_CORS_ORIGIN"); set && raw != "" {
+	if raw, set := m.envLookup("ADMIN_CORS_ORIGIN"); set && raw != "" {
 		effective.Access.AdminCORSOrigin = raw
 		overridden = append(overridden, "access.admin_cors_origin")
 	}
 	applyString := func(field, envName string, target *string) {
-		if raw, set := lookupEnv(envName); set && raw != "" && raw != *target {
+		if raw, set := m.envLookup(envName); set && raw != "" && raw != *target {
 			*target = raw
 			overridden = append(overridden, field)
 		}
@@ -851,7 +906,7 @@ func (m *Manager) applyEnvironmentOverridesLocked() {
 	applyInt("contact.smtp_port", "CONTACT_SMTP_PORT", 1, 65535, &effective.Contact.SMTPPort)
 	applyString("contact.smtp_user", "CONTACT_SMTP_USER", &effective.Contact.SMTPUser)
 	applyList := func(field, envName string, target *[]string) {
-		if raw, set := lookupEnv(envName); set && raw != "" {
+		if raw, set := m.envLookup(envName); set && raw != "" {
 			*target = splitList(raw)
 			overridden = append(overridden, field)
 		}
@@ -859,7 +914,7 @@ func (m *Manager) applyEnvironmentOverridesLocked() {
 	applyList("contact.turnstile_hostnames", "CONTACT_TURNSTILE_HOSTNAMES", &effective.Contact.TurnstileHostnames)
 	for _, name := range []string{SecretGrapevineClient, SecretStaffPushToken, SecretContactSMTP, SecretContactTurnstile} {
 		for _, field := range envSecretNames(name) {
-			if value, set := lookupEnv(field); set && value != "" {
+			if value, set := m.envLookup(field); set && value != "" {
 				overridden = append(overridden, secretGroup(name)+"."+secretFieldName(name))
 			}
 		}

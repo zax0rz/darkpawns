@@ -526,7 +526,7 @@ export interface paths {
         put?: never;
         /**
          * Apply the saved network configuration and restart (implementor)
-         * @description The launcher stops the world gracefully, starts it on the saved configuration, and verifies every requested listener bound. A failed bind restores the previous configuration automatically. The request returns before the world stops; poll /admin/network/status.
+         * @description The launcher stops the world gracefully, starts it on the saved configuration, and verifies every requested listener bound. A failed bind restores the previous configuration automatically. The apply is bound to the revision the operator reviewed: if the configuration changed since, the request conflicts and nothing restarts. The request returns before the world stops; poll /admin/network/status.
          */
         post: operations["post-network-apply"];
         delete?: never;
@@ -2247,6 +2247,13 @@ export interface components {
             events: components["schemas"]["Event"][] | null;
             /** Format: int64 */
             last_seq: number;
+        };
+        NetworkApplyInputBody: {
+            /**
+             * Format: int64
+             * @description The configuration revision the operator reviewed and is approving
+             */
+            revision: number;
         };
         NetworkApplyOutputBody: {
             status: string;
@@ -4223,7 +4230,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkApplyInputBody"];
+            };
+        };
         responses: {
             /** @description Accepted */
             202: {
