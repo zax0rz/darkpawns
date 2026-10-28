@@ -135,3 +135,14 @@ export const updatesApi = {
   check: () => read(http.POST('/admin/updates/check')),
   apply: () => read(http.POST('/admin/updates/apply')),
 };
+
+// The Network card (admin-network-settings design): drafts go to the
+// launcher through the game; applying runs the restart transaction whose
+// receipt the console polls across the downtime.
+export const networkApi = {
+  get: () => read(http.GET('/admin/network')),
+  save: (body: Record<string, unknown>) =>
+    read(http.PUT('/admin/network', { body: body as never })),
+  apply: () => read(http.POST('/admin/network/apply')),
+  status: () => read(http.GET('/admin/network/status')),
+};

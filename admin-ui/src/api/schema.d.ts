@@ -491,6 +491,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/network": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read configured and observed listeners (implementor)
+         * @description Configured values come from the launcher's instance configuration on a managed instance; observed values are the sockets the game actually bound. HTTP is read-only: it is the management route itself.
+         */
+        get: operations["get-network"];
+        /**
+         * Save a network change as a draft (implementor)
+         * @description Validates enable, port and exposure for plaintext telnet, TLS telnet and WHOD. Saving changes nothing live: the response carries the exposure diff and warnings, and the change becomes real only through the apply-and-restart transaction.
+         */
+        put: operations["put-network"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/network/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply the saved network configuration and restart (implementor)
+         * @description The launcher stops the world gracefully, starts it on the saved configuration, and verifies every requested listener bound. A failed bind restores the previous configuration automatically. The request returns before the world stops; poll /admin/network/status.
+         */
+        post: operations["post-network-apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/network/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Network apply transaction status (implementor)
+         * @description The launcher's receipt: applying, verifying, committed or rolled-back. Survives the restart; refresh-safe.
+         */
+        get: operations["get-network-status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/notifications": {
         parameters: {
             query?: never;
@@ -2181,6 +2245,69 @@ export interface components {
             events: components["schemas"]["Event"][] | null;
             /** Format: int64 */
             last_seq: number;
+        };
+        NetworkApplyOutputBody: {
+            status: string;
+        };
+        NetworkConfigResponse: {
+            /** Format: int64 */
+            revision: number;
+        };
+        NetworkDiffResponse: {
+            field: string;
+            from: string;
+            to: string;
+        };
+        NetworkHTTPResponse: {
+            bind: string;
+            how_to_change: string;
+            /** Format: int64 */
+            port: number;
+            read_only: boolean;
+        };
+        NetworkListenerChangeBody: {
+            enabled: boolean;
+            /** Format: int64 */
+            port: number;
+            public: boolean;
+        };
+        NetworkListenerResponse: {
+            address?: string;
+            enabled: boolean;
+            observed?: string;
+            /** Format: int64 */
+            port: number;
+            scope: string;
+        };
+        NetworkSaveInputBody: {
+            /** Format: int64 */
+            revision: number;
+            telnet: components["schemas"]["NetworkListenerChangeBody"];
+            telnet_tls: components["schemas"]["NetworkListenerChangeBody"];
+            whod: components["schemas"]["NetworkListenerChangeBody"];
+        };
+        NetworkSaveResponse: {
+            config: components["schemas"]["NetworkConfigResponse"];
+            diff: components["schemas"]["NetworkDiffResponse"][] | null;
+            restart_required: boolean;
+            warnings: string[] | null;
+        };
+        NetworkStatusResponse: {
+            error?: string;
+            failed_listener?: string;
+            managed: boolean;
+            started_at?: string;
+            state: string;
+        };
+        NetworkView: {
+            http: components["schemas"]["NetworkHTTPResponse"];
+            managed: boolean;
+            /** Format: int64 */
+            revision: number;
+            telnet: components["schemas"]["NetworkListenerResponse"];
+            telnet_tls: components["schemas"]["NetworkListenerResponse"];
+            tls_certificate_configured: boolean;
+            whod: components["schemas"]["NetworkListenerResponse"];
         };
         NewZoneBody: {
             created: boolean;
@@ -3999,6 +4126,126 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MudlogCatalogOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-network": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "put-network": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkSaveInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkSaveResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "post-network-apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkApplyOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    "get-network-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkStatusResponse"];
                 };
             };
             /** @description Error */

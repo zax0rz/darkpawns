@@ -40,6 +40,7 @@ type routerConfig struct {
 	notifications        *notify.Service
 	settings             *settings.Manager
 	launchctl            *launchctl.Client
+	networkObserved      func() NetworkObserved
 	buildVersion         string
 	buildCommit          string
 	accountBudget        *auth.AccountBudgetTracker
@@ -279,6 +280,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	registerFileEdit(ri.api, world, database, auditLogger)
 	registerNotifications(ri.api, database, auditLogger, cfg.notifications)
 	registerSettings(ri.api, auditLogger, cfg.settings, cfg.launchctl, cfg.buildVersion)
+	registerNetwork(ri.api, auditLogger, cfg.launchctl, cfg.networkObserved, world)
 	registerUpdates(ri.api, auditLogger, cfg.launchctl, world, cfg.buildVersion, cfg.buildCommit)
 	for _, path := range []string{"/admin/notifications", "/admin/notifications/{provider}/test", "/admin/notifications/{provider}/credentials"} {
 		track(path, wrap(corsMiddleware(withClientIP(humaMux.ServeHTTP))))
@@ -291,6 +293,7 @@ func newRouter(world *game.World, auditLogger *audit.AuditLogger, logBuffer *Log
 	}
 	for _, path := range []string{
 		"/admin/settings", "/admin/settings/export", "/admin/settings/audit",
+		"/admin/network", "/admin/network/apply", "/admin/network/status",
 		"/admin/settings/sessions", "/admin/settings/access", "/admin/settings/grapevine",
 		"/admin/settings/staff_push", "/admin/settings/contact",
 		"/admin/settings/restore/validate", "/admin/settings/restore/apply",
