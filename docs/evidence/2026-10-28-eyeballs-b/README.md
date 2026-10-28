@@ -82,13 +82,13 @@ A separate test requires arrivals after the last regular sample to survive shutd
 ## Fidelity evidence (R1/R3/R4/R5f)
 
 Final run:
-`/home/zach/Archives/darkpawns/oracle-runs/2026-10-28/v017-eyeballs-b-snapshot-final/`
+`/home/zach/Archives/darkpawns/oracle-runs/2026-10-28/v017-eyeballs-b-security-final/`
 
 [Summary](census-summary.txt): **9/9 CLEAN, zero draw divergences**, seed 1.
 The wrapper retains both engines' blocks, draws, logs, frozen source inputs and
 its own MANIFEST.md in that directory. All 13 changed production Go files were
 compared byte-for-byte with that final run's frozen source after the run and
-matched. Later feature changes affect tests, browser cache isolation, UI copy and evidence only. The
+matched. The
 branch was rebased over the reviewed packaging PR #2205; that changed no game
 call paths. Generated docs inventory/search data were rebuilt to include both
 changes, and the full local gates were rerun on the rebased tree.
@@ -103,8 +103,9 @@ persistence semantics are proved separately by endpoint and SQLite/session tests
 Earlier development runs are also retained at
 `/home/zach/Archives/darkpawns/oracle-runs/2026-10-28/v017-eyeballs-b-activity/`.
 That run and `v017-eyeballs-b-final/` were each 9/9 CLEAN with zero draw
-divergences; the final snapshot run follows retention buffer cleanup and use
-of the room snapshot getter. No full or combined release census was started; Claude owns that
+divergences. The later `v017-eyeballs-b-snapshot-final/` run was also clean,
+after retention buffer cleanup and use of the room snapshot getter. The final
+security run includes the explicit unsigned count conversion. No full or combined release census was started; Claude owns that
 gate for the reviewed batch.
 
 
@@ -120,3 +121,12 @@ Impeccable reported older product/schema and sidecar metadata, plus surface-path
 resolution drift. The actual target files exist; this scoped pass preserved the
 incumbent design. A separate `init`/`document` refresh can reconcile that metadata;
 no unrelated metadata migration or visual-world replacement was performed.
+
+
+## CI security correction
+
+The first PR security run flagged the signed subtraction inside an otherwise
+guarded `int`→`uint64` detail-removal count (G115). The length is now widened
+before subtracting the capacity, which makes the nonnegative range explicit.
+The pinned gosec v2.29.0 HIGH scan passes locally with no suppression. No game
+or observation decision changed; the final retained census includes this form.

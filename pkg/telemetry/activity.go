@@ -109,7 +109,7 @@ func (h *History) sampleActivity(now time.Time) {
 		}
 	}
 	if len(kept) > ActivityCapacity {
-		h.state.ActivityTrimmed += uint64(len(kept) - ActivityCapacity)
+		h.state.ActivityTrimmed += uint64(len(kept)) - ActivityCapacity
 		copy(kept, kept[len(kept)-ActivityCapacity:])
 		kept = kept[:ActivityCapacity]
 	}
