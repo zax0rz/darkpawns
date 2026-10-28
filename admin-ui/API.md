@@ -66,7 +66,7 @@ pointing it at a fixture on another port keeps cookies, session and reset on one
 origin. `ADMIN_PREVIEW_URL` selects the fixture address the smoke script calls
 (default `http://127.0.0.1:4350`).
 
-The development-only `/component-preview.html` displays the chart foundation with
+The development-only `/admin/component-preview.html` displays the chart foundation with
 labelled synthetic data. It is excluded from the production build. Set
 `ADMIN_COMPONENT_PREVIEW=1` when running the smoke script to retain that proof.
 
@@ -75,3 +75,15 @@ Chromium executable. `ADMIN_UI_URL` selects another local baseline preview;
 `ADMIN_EVIDENCE_DIR` selects the output directory. Captures use synthetic world
 records and real API handlers. They do not test a live game connection or send
 outbound notifications. Never point this fixture workflow at production.
+
+### Check asset serving
+
+Run `node scripts/asset-smoke.mjs` from `admin-ui` against the disposable preview
+server above. Set `ADMIN_ASSET_ORIGIN` to its address. For a built console, set
+`ADMIN_UI_DIST` to the same directory as the preview server's `ADMIN_UI_DIR`.
+The check compares every asset's bytes and loads the dashboard and file editor
+in a browser. Root `/assets/` requests fail the check.
+
+Run it again with `ADMIN_ASSET_MODE=dev` and `ADMIN_ASSET_ORIGIN` pointing at
+Vite. This also checks API forwarding, hot reload's connection, the component
+preview and refreshing the sign-in page.

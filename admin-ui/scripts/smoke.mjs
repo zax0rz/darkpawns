@@ -46,12 +46,12 @@ try {
   }
   const publicContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light' });
   const publicPage = await publicContext.newPage();
-  for (const [name, path] of [['login','/login'],['not-found','/missing-page']]) { await publicPage.goto(base+path); await expect(publicPage.locator('#root')).not.toBeEmpty(); await publicPage.evaluate(()=>document.fonts.ready); await publicPage.screenshot({path:resolve(out,name+'.png'),fullPage:true}); }
+  for (const [name, path] of [['login','/login'],['not-found','/admin/missing-page']]) { await publicPage.goto(base+path); await expect(publicPage.locator('#root')).not.toBeEmpty(); await publicPage.evaluate(()=>document.fonts.ready); await publicPage.screenshot({path:resolve(out,name+'.png'),fullPage:true}); }
   await page.setViewportSize({width:390,height:844});
   for (const [name,path] of routes.filter(([name])=>['dashboard','players','notifications','mobs'].includes(name))) { await context.request.get(fixture + '/preview-reset'); await page.goto(base+path); await expect(page.locator('main').first()).not.toBeEmpty(); await page.waitForLoadState('networkidle'); await page.screenshot({path:resolve(out,name+'-mobile.png'),fullPage:true}); }
   if (process.env.ADMIN_COMPONENT_PREVIEW === '1') {
     await page.setViewportSize({width:1440,height:1000});
-    await page.goto(base+'/component-preview.html');
+    await page.goto(base+'/admin/component-preview.html');
     await expect(page.locator('.recharts-line-curve')).toHaveCount(2);
     await page.screenshot({path:resolve(out,'chart-foundation.png'),fullPage:true});
     await page.setViewportSize({width:2123,height:790});
