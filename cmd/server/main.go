@@ -844,7 +844,7 @@ func main() {
 	}, startedWithoutCharacters)
 	apidoc.RegisterConnections(rootAPI, func() apidoc.ConnectionInfo {
 		plain, encrypted := telnet.ListenerAddresses()
-		return apidoc.ConnectionInfo{Telnet: apidoc.ConnectionAt(plain), TelnetTLS: apidoc.ConnectionAt(encrypted)}
+		return apidoc.ConnectionInfo{Telnet: apidoc.ConnectionAt(plain), TelnetTLS: apidoc.ConnectionAt(encrypted), Whod: apidoc.ConnectionAt(manager.WhodListenerAddr())}
 	})
 
 	rootMux.HandleFunc("/ws", manager.HandleWebSocket)
@@ -965,7 +965,17 @@ func main() {
 	historyDone := make(chan struct{})
 	go func() { defer close(historyDone); history.Run(loopCtx, historyPath, gameWorld.GetPlayerCount) }()
 	defer func() { loopCancel(); <-historyDone }()
-	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications), admin.WithSettings(settingsManager), admin.WithLaunchctl(controlClient), admin.WithBuildInfo(version, commit), admin.WithAccountBudget(loginBudget), admin.WithHistory(history), admin.WithPlayerRenameObserver(mailIdentityCache))
+	adminRouter, err := admin.NewRouter(gameWorld, auditLogger, logBuffer, database, manager, admin.WithSharedSpec(apiDoc), admin.WithMudlogFeed(mudlogFeed), admin.WithNotifications(notifications), admin.WithSettings(settingsManager), admin.WithLaunchctl(controlClient), admin.WithNetworkObserved(func() admin.NetworkObserved {
+		plain, encrypted := telnet.ListenerAddresses()
+		httpNumber, _ := strconv.Atoi(*port)
+		return admin.NetworkObserved{
+			HTTPPort:  httpNumber,
+			HTTPBind:  *httpBind,
+			Telnet:    plain,
+			TelnetTLS: encrypted,
+			Whod:      manager.WhodListenerAddr(),
+		}
+	}), admin.WithBuildInfo(version, commit), admin.WithAccountBudget(loginBudget), admin.WithHistory(history), admin.WithPlayerRenameObserver(mailIdentityCache))
 	if err != nil {
 		fatal("failed to init admin router: %v", err)
 	}

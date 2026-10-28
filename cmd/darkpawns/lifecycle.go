@@ -162,6 +162,24 @@ func addLifecycle(root *cobra.Command, instance *string, bundle func() (string, 
 		}
 		root.AddCommand(cmd)
 	}
+	// The network apply transaction spawned by the control server: the
+	// console saves a configuration draft, and this command restarts the
+	// world on it, verifies every requested listener bound, and restores
+	// the previous configuration when one did not.
+	applyConfig := &cobra.Command{
+		Use:    "_apply-config",
+		Hidden: true,
+		Args:   cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			path, err := choose(cmd)
+			if err != nil {
+				return err
+			}
+			return portable.ApplyNetworkConfig(cmd.Context(), path)
+		},
+	}
+	root.AddCommand(applyConfig)
+
 	service := &cobra.Command{Use: "service", Short: "Configure automatic startup for your current user"}
 	for _, name := range []string{"install", "remove"} {
 		cmd := &cobra.Command{Use: name, Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {

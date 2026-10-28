@@ -127,7 +127,7 @@ func forwardActive(root *cobra.Command, args []string) (bool, error) {
 		first := operations[0]
 		// The anchor owns Explorer dispatch, including for older active releases
 		// which do not know _open. Start still resolves the world's active bundle.
-		if first == "init" || first == "setup" || first == "_open" || first == "_serve-update" || (first == "update" && len(operations) > 1 && operations[1] == "recover") {
+		if first == "init" || first == "setup" || first == "_open" || first == "_serve-update" || first == "_apply-config" || (first == "update" && len(operations) > 1 && operations[1] == "recover") {
 			return false, nil
 		}
 	}

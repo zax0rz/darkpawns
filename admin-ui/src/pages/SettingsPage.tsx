@@ -9,6 +9,7 @@ import { Input } from '../components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Icon } from '../components/Icon';
+import { NetworkCard } from '../components/NetworkCard';
 
 // Configuration (admin-configuration design): every game-owned runtime
 // setting, typed end to end. Secrets are write-only (empty keeps the sealed
@@ -86,7 +87,7 @@ function GroupCard({ title, subtitle, children, envOverridden }: { title: string
       <header className="mb-2 flex items-baseline justify-between gap-2">
         <h2 className="text-base font-semibold text-ink">{title}</h2>
         {envOverridden && envOverridden.length > 0 && (
-          <span className="border border-ink-muted/40 px-2 py-0.5 text-xs text-ink-muted" title="An exported environment variable still wins over the file for these fields.">
+          <span className="border border-ink-muted/40 px-2 py-0.5 text-xs text-ink-muted" title="These fields are set in the server's environment and take priority over this page.">
             env overrides: {envOverridden.join(', ')}
           </span>
         )}
@@ -256,7 +257,7 @@ export function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-ink">Configuration</h1>
-      <p className="text-sm text-ink-muted">Revision {view.revision}. Engine rules stay code (R4); everything here is operator surface. Secrets are stored encrypted and never returned.</p>
+      <p className="text-sm text-ink-muted">Server settings. Secrets are stored encrypted and never shown again.</p>
 
       {conflict && (
         <div className="border border-accent bg-accent/5 p-3 text-sm text-ink" role="alert">
@@ -281,6 +282,8 @@ export function SettingsPage() {
         action="Restart now"
         onConfirm={() => restartMutation.mutate()}
       />
+
+      <NetworkCard />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <GroupCard title="Sessions & limits" subtitle="Applies live: the next connection sees the new limits." envOverridden={view.meta.sessions?.env_overridden ?? undefined}>

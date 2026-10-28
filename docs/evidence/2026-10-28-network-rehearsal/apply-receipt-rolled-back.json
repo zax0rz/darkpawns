@@ -1,0 +1,7 @@
+{
+  "state": "rolled-back",
+  "started_at": "2026-10-28T17:51:57Z",
+  "was_running": true,
+  "error": "the world did not come back with the new settings: background start did not become ready; inspect /home/zach/rehearsal-stage-d/network-instance/lib/logs/launcher.log: context deadline exceeded",
+  "failed_listener": "server"
+}

@@ -30,7 +30,11 @@ type Manifest struct {
 }
 
 type Config struct {
-	Format          int               `json:"format"`
+	Format int `json:"format"`
+	// ConfigRevision guards console network proposals: each accepted save
+	// bumps it, and a stale proposal is refused instead of overwriting
+	// another operator's change.
+	ConfigRevision  int64             `json:"config_revision,omitempty"`
 	HTTPPort        int               `json:"http_port"`
 	JWTSecret       string            `json:"jwt_secret"`
 	GreetingOverlay bool              `json:"greeting_overlay,omitempty"`
