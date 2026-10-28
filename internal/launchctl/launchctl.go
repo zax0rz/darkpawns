@@ -123,7 +123,15 @@ func (c *Client) postJSON(ctx context.Context, path string, body []byte, out any
 	}
 	defer response.Body.Close()
 	if response.StatusCode == http.StatusConflict {
-		return ErrConfigConflict
+		var conflict struct{ Error string }
+		_ = json.NewDecoder(io.LimitReader(response.Body, 8192)).Decode(&conflict)
+		// The revision guard writes ErrConfigConflict's own text verbatim, so
+		// the identity survives; any other conflict (a pending update, a
+		// running transaction) keeps its operator-facing message.
+		if conflict.Error == "" || conflict.Error == ErrConfigConflict.Error() {
+			return ErrConfigConflict
+		}
+		return errors.New(conflict.Error)
 	}
 	if response.StatusCode == http.StatusUnprocessableEntity || response.StatusCode == http.StatusBadRequest {
 		var rejected struct{ Error string }
@@ -133,7 +141,7 @@ func (c *Client) postJSON(ctx context.Context, path string, body []byte, out any
 		}
 		return errors.New(rejected.Error)
 	}
-	if response.StatusCode != http.StatusOK {
+	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusAccepted {
 		return fmt.Errorf("launcher control returned HTTP %d", response.StatusCode)
 	}
 	if out == nil {
@@ -294,11 +302,19 @@ func (c *Client) SaveNetworkConfig(ctx context.Context, proposal NetworkProposal
 	return result, err
 }
 
-// ApplyNetworkConfig asks the launcher to run the restart transaction: the
-// request returns before the world stops, and the console polls
-// ConfigApplyStatus across the restart.
-func (c *Client) ApplyNetworkConfig(ctx context.Context) error {
-	return c.call(ctx, http.MethodPost, "/config-apply", 5*time.Second, nil)
+// ApplyNetworkConfig asks the launcher to run the restart transaction on the
+// revision the operator reviewed. The launcher refuses with
+// ErrConfigConflict when the configuration changed since; the request
+// returns before the world stops, and the console polls ConfigApplyStatus
+// across the restart.
+func (c *Client) ApplyNetworkConfig(ctx context.Context, revision int64) error {
+	body, err := json.Marshal(struct {
+		Revision int64 `json:"revision"`
+	}{Revision: revision})
+	if err != nil {
+		return err
+	}
+	return c.postJSON(ctx, "/config-apply", body, nil)
 }
 
 // ConfigApplyStatus reads the transaction receipt.

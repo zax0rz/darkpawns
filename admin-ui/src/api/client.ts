@@ -144,6 +144,9 @@ export const networkApi = {
   get: () => read(http.GET('/admin/network')),
   save: (body: Record<string, unknown>) =>
     read(http.PUT('/admin/network', { body: body as never })),
-  apply: () => read(http.POST('/admin/network/apply')),
+  // The apply is bound to the revision the operator reviewed; the server
+  // refuses with 409 if the configuration changed underneath it.
+  apply: (revision: number) =>
+    read(http.POST('/admin/network/apply', { body: { revision } as never })),
   status: () => read(http.GET('/admin/network/status')),
 };

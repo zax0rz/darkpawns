@@ -248,3 +248,36 @@ func TestReleaseEndpointOverrideFeedsCheckAndDownloadBase(t *testing.T) {
 		}
 	}
 }
+
+// The apply endpoint is bound to the reviewed revision: a stale revision is
+// refused before anything is spawned, and the revision must travel with the
+// request at all (DP-V017-02).
+func TestConfigApplyRequiresMatchingRevision(t *testing.T) {
+	instance := configFixture(t, func(c *Config) { c.ConfigRevision = 7 })
+	_, record := startControl(t, instance)
+	post := func(body string) *http.Response {
+		t.Helper()
+		req, err := http.NewRequest(http.MethodPost, "http://"+record.Address+"/config-apply", strings.NewReader(body))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+record.Token)
+		req.Header.Set("Content-Type", "application/json")
+		response, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = response.Body.Close() })
+		return response
+	}
+	if response := post(`{}`); response.StatusCode != http.StatusBadRequest {
+		t.Fatalf("apply without a revision: HTTP %d, want 400", response.StatusCode)
+	}
+	if response := post(`{"revision": 6}`); response.StatusCode != http.StatusConflict {
+		t.Fatalf("apply with a stale revision: HTTP %d, want 409", response.StatusCode)
+	}
+	// The refused apply left the configuration and its revision untouched.
+	if got := revisionOf(t, instance); got != 7 {
+		t.Fatalf("refused apply changed the configuration: revision %d, want 7", got)
+	}
+}

@@ -167,19 +167,37 @@ func TestSaveNetworkConfigSnapshotsPreviousForRollback(t *testing.T) {
 	if err := json.Unmarshal(snapshot, &before); err != nil || before.TelnetPort != 7777 {
 		t.Fatalf("rollback snapshot is not the previous configuration: %v %d", err, before.TelnetPort)
 	}
-	restored, err := restoreRollbackConfig(instance)
+	// The apply transaction owns its rollback target from the moment it
+	// starts: a second save rewrites the save-time snapshot, but the copy
+	// the transaction took still restores the configuration that was live
+	// before the reviewed proposal (DP-V017-02).
+	if err := takeApplySnapshot(instance); err != nil {
+		t.Fatal(err)
+	}
+	second, err := SaveNetworkConfig(instance, NetworkProposal{
+		Revision: 1,
+		Telnet:   ListenerProposal{Enabled: true, Port: 42069},
+		Whod:     ListenerProposal{Enabled: true, Port: 42070},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.Config.Revision != 2 {
+		t.Fatalf("second save revision = %d, want 2", second.Config.Revision)
+	}
+	restored, err := restoreApplyRollback(instance)
 	if err != nil || !restored {
 		t.Fatalf("restore failed: %v %v", restored, err)
 	}
 	cfg, err := Load(instance)
-	if err != nil || cfg.TelnetPort != 7777 || cfg.ConfigRevision != 0 {
-		t.Fatalf("rollback did not restore byte-identical config: %+v %v", cfg, err)
+	if err != nil || cfg.TelnetPort != 7777 || cfg.WhodPort != 0 || cfg.ConfigRevision != 0 {
+		t.Fatalf("rollback did not restore the configuration live before the apply: %+v %v", cfg, err)
 	}
-	// Restoring without a snapshot reports nothing to restore.
-	os.Remove(filepath.Join(instance, configRollbackFile))
-	restored, err = restoreRollbackConfig(instance)
+	// Restoring without a transaction snapshot reports nothing to restore.
+	discardApplySnapshot(instance)
+	restored, err = restoreApplyRollback(instance)
 	if err != nil || restored {
-		t.Fatalf("restore without snapshot: %v %v", restored, err)
+		t.Fatalf("restore without the transaction snapshot: %v %v", restored, err)
 	}
 }
 
@@ -214,5 +232,35 @@ func TestCurrentNetworkMapsScopes(t *testing.T) {
 	}
 	if view.TelnetTLS.Enabled || view.Whod.Scope != "public" {
 		t.Fatalf("scope mapping wrong: %+v", view)
+	}
+}
+
+// The apply transaction is bound to the revision the operator reviewed: a
+// configuration that changed underneath the request is refused before the
+// world is touched, and the receipt says so (DP-V017-02).
+func TestApplyNetworkConfigStaleRevisionRefused(t *testing.T) {
+	instance := configFixture(t, func(c *Config) { c.ConfigRevision = 4 })
+	if _, err := SaveNetworkConfig(instance, NetworkProposal{
+		Revision: 4,
+		Telnet:   ListenerProposal{Enabled: true, Port: 42069},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ApplyNetworkConfig(t.Context(), instance, 4); !errors.Is(err, ErrConfigConflict) {
+		t.Fatalf("stale revision accepted: %v", err)
+	}
+	receipt, err := ReadConfigApplyStatus(instance)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if receipt.State != "refused" || receipt.Error == "" {
+		t.Fatalf("refusal not recorded in the receipt: %+v", receipt)
+	}
+	// A second operator's newer save must survive an older apply attempt.
+	if got := revisionOf(t, instance); got != 5 {
+		t.Fatalf("refused apply changed the configuration: revision %d, want 5", got)
+	}
+	if _, err := os.Stat(filepath.Join(instance, applyRollbackFile)); !os.IsNotExist(err) {
+		t.Fatalf("refused apply left a transaction snapshot behind: %v", err)
 	}
 }

@@ -245,7 +245,9 @@ func ReadNetworkConfig(instance string) (NetworkConfig, error) {
 
 // SaveNetworkConfig validates and atomically saves only the network fields,
 // keeping a snapshot of the previous configuration for the apply
-// transaction's rollback. The live world is untouched: instance.json is read
+// transaction: apply copies that snapshot into its own private rollback
+// file when it starts, so later saves cannot replace what a rollback
+// restores. The live world is untouched: instance.json is read
 // at start, so the change becomes real on the next restart.
 func SaveNetworkConfig(instance string, proposal NetworkProposal) (SaveNetworkResult, error) {
 	instance, err := canonicalInstance(instance)
@@ -330,31 +332,4 @@ func writeConfigAtomic(instance string, cfg Config) error {
 		return err
 	}
 	return updateBytes(filepath.Join(instance, "instance.json"), append(data, '\n'))
-}
-
-// restoreRollbackConfig puts the snapshot written at proposal time back as
-// the live configuration, byte-identical to what ran before the failed
-// change. A missing snapshot means nothing was ever proposed; the caller
-// treats that as "nothing to restore".
-func restoreRollbackConfig(instance string) (restored bool, err error) {
-	path := filepath.Join(instance, configRollbackFile)
-	data, err := os.ReadFile(path)
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	// Prove the snapshot is a configuration before installing it.
-	if _, err := Load(instance); err != nil {
-		return false, err
-	}
-	var check Config
-	if err := json.Unmarshal(data, &check); err != nil || check.Format != Format {
-		return false, errors.New("rollback snapshot is not a valid configuration; it is retained for manual recovery")
-	}
-	if err := updateBytes(filepath.Join(instance, "instance.json"), data); err != nil {
-		return false, err
-	}
-	return true, nil
 }
