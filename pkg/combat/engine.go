@@ -926,7 +926,20 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 			return true
 		}
 		ce.sendMissMessage(attacker, defender, msgAttackType)
-		return false
+		// C's miss still calls damage(ch, victim, 0, attacktype), so the whole
+		// tail runs after the message: update_pos, the position-state bytes,
+		// the !AWAKE stop_fighting, and the default arm's bleed check with the
+		// victim's MOB_WIMPY flee / player wimpy retreat (fight.c:1568-1614).
+		// Skipping it dropped those draws and bytes: the werewolf diagnostic
+		// lost the victim's failed-flee draws, which shifted the dice stream
+		// and changed a later claw's damage (R1/R3).
+		newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc, ce.StopCombat)
+		if newPos == PosDead {
+			EmitDeathPositionMessage(defender, ce.BroadcastFunc)
+			ce.handleDeath(defender, attacker)
+			return true
+		}
+		return ce.handleSurvivingVictimState(attacker, defender, 0, newPos)
 	}
 
 	// fight.c:1792-1806 derives one_hit's w_type (the TYPE_* constant handed to
