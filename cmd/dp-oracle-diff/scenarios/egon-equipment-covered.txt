@@ -1,0 +1,91 @@
+# depth-case: equipment.look.covered-items
+# The actor wears the starter body tunic, then adds a cloak, gloves and ring.
+# The observer's look-at-character output must omit the items hidden by C's
+# IS_COVERED while retaining the outer garments.
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 58.obj
+spawn-obj 5800 1 8004 80
+force-load 5800
+spawn-obj 14534 1 8004 80
+force-load 14534
+spawn-obj 20301 1 8004 80
+force-load 20301
+spawn-obj 18602 2 8004 80
+spawn-obj 18602 2 8004 80
+force-load 18602
+
+[setup:oracle]
+Egonwearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Egonwearer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Egonlook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Egonlook
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Egonlook 8004
+remove all
+get breast
+wear breast
+get cape
+wear cape
+get gauntlets
+wear gauntlets
+get ring
+wear ring
+get ring
+wear ring
+
+[probe:observer]
+look Egonwearer

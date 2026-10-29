@@ -75,6 +75,11 @@ type Player struct {
 	// Bit 11 = AFF_POISON, bit 25 = AFF_CUTTHROAT, bit 31 = AFF_FLAMING
 	// Source: structs.h:321,335,341
 	Affects uint64
+	// Equipment affect overlays APPLY_SPELL flags on the saved/base affect
+	// vector. They are rebuilt from currently worn objects at affect_total
+	// boundaries and are never serialized as character-owned flags.
+	equipmentAffectSet   uint64
+	equipmentAffectClear uint64
 
 	// InvisLevel is C's player_specials.saved.invis_level for immortal
 	// wizinvis. It is runtime-only until the player save format has a faithful

@@ -292,7 +292,7 @@ func (a *PlayerDreamAdapter) HasAffect(bitNum int) bool {
 	if bitNum < 0 || bitNum >= 64 {
 		return false
 	}
-	return a.p.Affects&(1<<uint(bitNum)) != 0
+	return a.p.IsAffected(bitNum)
 }
 
 func (a *PlayerDreamAdapter) RemoveAffect(bitNum int) { a.p.RemoveAffectBit(bitNum) }

@@ -1,4 +1,6 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_look	look	equipment.look.covered-items	D3	command	oracle-green	egon-equipment-covered	src/act.informative.c:449-460; src/utils.h:397-400	Mortal observer omits body armor hidden by about-body and rings hidden by gloves; outer pieces remain visible.
+do_look	look	equipment.look-character.c-slot-order	D3	command	oracle-green	egon-equipment-look-order	src/act.informative.c:449-460	Character equipment is emitted by the C NUM_WEARS index; ring precedes body armor in the fixture.
 do_look	look	look.position-gate	D1	command	unit-green	TestLookGates	act.informative.c:1105-1108	Position below sleeping yields "You can't see anything but stars!".
 do_look	look	look.blind-gate	D1	command	unit-green	TestLookGates	act.informative.c:1109-1113	Blindness yields "You can't see a damned thing, you're blind!".
 do_look	look	look.room	D2	command	oracle-green	look-basic	act.informative.c:1122-1123	"look" alone observes the room.

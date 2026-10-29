@@ -305,7 +305,7 @@ func (w *World) FindEquippedVis(ch *Player, arg string) *ObjectInstance {
 		return held
 	}
 	var match *ObjectInstance
-	for _, item := range ch.Equipment.GetEquippedItems() {
+	for _, item := range COrderedWorn(ch) {
 		if item != nil && canSeeObject(ch, item) && isnameWithAbbrevs(arg, item.GetKeywords()) {
 			match = item // last match wins, per C's slot loop
 		}

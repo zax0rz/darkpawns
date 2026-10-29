@@ -503,7 +503,7 @@ func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
 		result.literal(ch, desc)
 		return result
 	}
-	for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
+	for _, slot := range cWearToGoSlot {
 		item, ok := ch.Equipment.GetItemInSlot(slot)
 		if !ok || !chCanSeeObj(ch, item) {
 			continue
@@ -1137,17 +1137,19 @@ func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
 	if target.Equipment == nil {
 		return
 	}
-	items := target.Equipment.GetEquippedItems()
-	if len(items) == 0 {
+	if len(target.Equipment.GetEquippedItems()) == 0 {
 		return
 	}
 	result.act(ch, target, nil, "\r\n$N is using:")
-	for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
-		item := items[slot]
+	for cPos, slot := range cWearToGoSlot {
+		item, _ := target.Equipment.GetItemInSlot(slot)
 		if item == nil || !chCanSeeObj(ch, item) {
 			continue
 		}
-		result.literal(ch, equipmentWhere(slot)+item.GetShortDesc()+coloredObjectVisibleFlags(ch, item))
+		if equipmentPositionCovered(target, cPos) && ch != target && ch.GetLevel() <= LVL_IMMORT {
+			continue
+		}
+		result.literal(ch, cWearWhere[cPos]+item.GetShortDesc()+coloredEquipmentObjectFlags(ch, target, item, cPos))
 	}
 }
 
@@ -1175,27 +1177,6 @@ func appendMobEquipment(result *ObservationResult, ch *Player, target *MobInstan
 	}
 }
 
-func equipmentWhere(slot EquipmentSlot) string {
-	if position, ok := equipmentWherePositions[slot]; ok {
-		return cWearWhere[position]
-	}
-	return "<used>               "
-}
-
-// equipmentWherePositions maps Go's stored equipment slots to the C wear
-// positions used by show_char_to_char_1(). Slots sharing a C position retain
-// C's identical labels.
-var equipmentWherePositions = map[EquipmentSlot]int{
-	SlotLight:  0,
-	SlotFinger: 1, SlotFingerR: 1, SlotFingerL: 1,
-	SlotNeck: 3, SlotNeck1: 3, SlotNeck2: 3,
-	SlotBody: 5, SlotHead: 6, SlotLegs: 7, SlotFeet: 8,
-	SlotHands: 9, SlotArms: 10, SlotShield: 11, SlotAbout: 12,
-	SlotWaist: 13, SlotWrist: 14, SlotWristR: 14, SlotWristL: 14,
-	SlotWield: 16, SlotHold: 17, SlotThrow: 18, SlotAblegs: 19,
-	SlotFace: 20, SlotHover: 21,
-}
-
 type observationObjectLocation int
 
 const (
@@ -1221,7 +1202,7 @@ func (w *World) findObservationObjectWithLocation(ch *Player, name string) (*Obj
 			return item, observationRoom
 		}
 	}
-	for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
+	for _, slot := range cWearToGoSlot {
 		item, ok := ch.Equipment.GetItemInSlot(slot)
 		if ok && observationObjectMatches(ch, item, name) {
 			return item, observationEquipment

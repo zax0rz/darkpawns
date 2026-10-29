@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // TestTakeDamageMatchesCHitPoints is the DP-1429 regression: C applies
@@ -131,5 +132,39 @@ func TestDoDamage_SanctuaryHalvesLiveSkillDamage(t *testing.T) {
 	w.doDamage(player, mob, 100, "bash")
 	if got := mob.GetHP(); got != 50 {
 		t.Errorf("sanctuary: mob HP = %d, want 50 (took halved 50)", got)
+	}
+}
+
+func TestDoDamage_WornApplySpellProvidesSanctuary(t *testing.T) {
+	w, attacker := newCombatTestWorld(t)
+	victim := NewPlayer(2, "Wearing", 1001)
+	victim.Health = 200
+	if err := w.AddPlayer(victim); err != nil {
+		t.Fatal(err)
+	}
+	item := NewObjectInstance(&parser.Obj{
+		VNum: 9001, Keywords: "sanctuary staff", ShortDesc: "a sanctuary staff",
+		Affects: []parser.ObjAffect{{Location: ApplySpell, Modifier: affSanctuary}},
+	}, -1)
+	if err := victim.Equipment.SetSlot(SlotWield, item); err != nil {
+		t.Fatal(err)
+	}
+	victim.AffectTotal()
+
+	orig := combat.GetCallbacks()
+	defer combat.SetCallbacks(orig)
+	combat.SetCallbacks(w.WireCombatCallbacks())
+	w.doDamage(attacker, victim, 100, "bash")
+	if got := victim.GetHP(); got != 150 {
+		t.Fatalf("worn sanctuary HP = %d, want 150", got)
+	}
+
+	if err := victim.Equipment.Unequip(SlotWield, victim.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	victim.AffectTotal()
+	w.doDamage(attacker, victim, 100, "bash")
+	if got := victim.GetHP(); got != 50 {
+		t.Fatalf("HP after removing worn sanctuary = %d, want 50", got)
 	}
 }

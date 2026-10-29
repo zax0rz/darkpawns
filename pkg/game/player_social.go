@@ -280,7 +280,7 @@ func (p *Player) isAffectedLocked(affBit int) bool {
 	if affBit < 0 || affBit >= 64 {
 		return false
 	}
-	if p.Affects&(1<<uint(affBit)) != 0 {
+	if p.effectiveAffectBitsLocked()&(1<<uint(affBit)) != 0 {
 		return true
 	}
 	if engFlag, ok := AffBitToEngineFlag[affBit]; ok {
