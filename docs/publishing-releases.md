@@ -122,10 +122,15 @@ ahead of the release publication.
 
 These channels need `PACKAGES_GITHUB_TOKEN` in the protected
 `portable-release` environment (created by the maintainer, never committed).
-Minimal fine-grained token permissions: **contents: write** on
-`darkpawns/homebrew-tap` and `darkpawns/scoop-bucket`; **contents: write**
-and **pull requests: write** on `darkpawns/winget-pkgs`; **packages: write**
-on the `darkpawns` organization for GHCR. No other scopes.
+It must be a **classic** personal access token with exactly two scopes,
+**`public_repo`** and **`write:packages`**. A fine-grained token can't do
+this job: the GitHub container registry accepts only classic tokens, and a
+fine-grained token can't open the pull request on `microsoft/winget-pkgs`,
+which the organization doesn't own. `public_repo` reaches every public
+repository the token's owner can push to, so the token lives only in the
+protected environment and expires after 90 days; a dedicated account that
+belongs only to the `darkpawns` organization would narrow it further. The
+organization must allow classic tokens (Settings → Personal access tokens).
 
 ### Dry run (no publishing)
 
