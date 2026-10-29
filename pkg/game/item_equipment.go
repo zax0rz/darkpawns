@@ -86,10 +86,7 @@ func canWearAtPosition(obj *ObjectInstance, where int) bool {
 		if obj.CanPickUp {
 			return true
 		}
-		if obj.Prototype == nil {
-			return false
-		}
-		for _, flags := range obj.Prototype.WearFlags {
+		for _, flags := range obj.GetWearFlags() {
 			if flags&1 != 0 { // ITEM_WEAR_TAKE
 				return true
 			}

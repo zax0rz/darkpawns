@@ -571,7 +571,8 @@ func (p *Player) HasBoat() bool {
 		return false
 	}
 	for _, obj := range p.Inventory.Snapshot() {
-		if obj.Prototype != nil && hasWearFlag(obj.Prototype.WearFlags, 15) { // ITEM_WEAR_BOAT = bit 15
+		wear := obj.GetWearFlags()
+		if hasWearFlag(wear, 15) { // ITEM_WEAR_BOAT = bit 15
 			return true
 		}
 	}

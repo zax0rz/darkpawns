@@ -60,6 +60,29 @@ type ObjectInstance struct {
 	// to carry a type flag. When non-nil, overrides Prototype.TypeFlag.
 	// Source: src/fight.c make_corpse() — GET_OBJ_TYPE(corpse) = ITEM_CONTAINER
 	TypeFlagOverride *int
+
+	// WearFlagsOverride is the instance's own C obj_flags.wear_flags. C stores
+	// wear flags per object (read_object copies the prototype's array into each
+	// instance), and create_money writes ITEM_WEAR_TAKE into a prototype-less
+	// money object (src/handler.c:1484-1486). Without it a synthetic money pile
+	// reports CAN_WEAR(ITEM_WEAR_TAKE) == false, which is what refused the mob
+	// get in attitude_loot (R1/R5c). Nil means "the prototype's flags".
+	WearFlagsOverride *[4]int
+}
+
+// GetWearFlags returns the object's C obj_flags.wear_flags: its own override
+// when set, otherwise the prototype's.
+func (o *ObjectInstance) GetWearFlags() [4]int {
+	if o == nil {
+		return [4]int{}
+	}
+	if o.WearFlagsOverride != nil {
+		return *o.WearFlagsOverride
+	}
+	if o.Prototype == nil {
+		return [4]int{}
+	}
+	return o.Prototype.WearFlags
 }
 
 // NewObjectInstance creates a new object instance from a prototype.
@@ -177,13 +200,8 @@ func (o *ObjectInstance) IsContainer() bool {
 
 // IsWearable returns true if the object can be worn.
 func (o *ObjectInstance) IsWearable() bool {
-	// Check wear flags
-	if o.Prototype == nil {
-		return false
-	}
-
 	// If any wear flag is non-zero, it's wearable
-	for _, flag := range o.Prototype.WearFlags {
+	for _, flag := range o.GetWearFlags() {
 		if flag != 0 {
 			return true
 		}

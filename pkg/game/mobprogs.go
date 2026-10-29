@@ -628,12 +628,15 @@ func hasPlrFlag(p *Player, flag string) bool {
 }
 
 // IsTakeable returns true if the object has ITEM_WEAR_TAKE flag.
+// C reads the object's own wear flags (CAN_WEAR(obj, ITEM_WEAR_TAKE));
+// GetWearFlags covers both a prototype's flags and an instance override such
+// as the one create_money writes (src/handler.c:1484-1486).
 func (o *ObjectInstance) IsTakeable() bool {
-	if o.Prototype == nil || len(o.Prototype.WearFlags) == 0 {
+	if o == nil {
 		return false
 	}
-	// WearFlag 1 = ITEM_TAKE (from CircleMUD item wear bits)
-	return o.Prototype.WearFlags[0]&1 != 0
+	wear := o.GetWearFlags()
+	return wear[0]&1 != 0
 }
 
 // IsDrinkContainer returns true if the object is a drink container.
