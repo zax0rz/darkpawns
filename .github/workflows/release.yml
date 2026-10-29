@@ -105,6 +105,20 @@ jobs:
         with:
           name: admin-ui-dist
           path: admin-ui/dist
+      - name: Install the pinned GoReleaser
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A plain download checked against a pinned checksum: no third-party
+          # action runs in this job. Bump the version and the sha256 together.
+          version=v2.18.3
+          sha256=b8dee4728bca1aba0d71a832a17cd0a3799f75372878e7ffa36aef2343bce0bc
+          archive="$RUNNER_TEMP/goreleaser.tar.gz"
+          curl -fsSL -o "$archive" "https://github.com/goreleaser/goreleaser/releases/download/$version/goreleaser_Linux_x86_64.tar.gz"
+          echo "$sha256  $archive" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/goreleaser-bin"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/goreleaser-bin" goreleaser
+          echo "$RUNNER_TEMP/goreleaser-bin" >> "$GITHUB_PATH"
       - name: Verify the protected environment
         env:
           GH_TOKEN: ${{ github.token }}

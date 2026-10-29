@@ -78,3 +78,24 @@ func TestGoreleaserNpmHooksAreConditional(t *testing.T) {
 		}
 	}
 }
+
+// v0.1.7's first publish died with "goreleaser: command not found": the
+// install step had been removed with the third-party action. The publish job
+// must install the pinned binary, checksum-verified, before it runs it.
+func TestPublishJobInstallsPinnedGoReleaserFirst(t *testing.T) {
+	workflow := repoFile(t, ".github", "workflows", "release.yml")
+	start := strings.Index(workflow, "\n  publish:")
+	if start < 0 {
+		t.Fatal("publish job not found in release.yml")
+	}
+	rest := workflow[start:]
+	install := strings.Index(rest, "goreleaser_Linux_x86_64.tar.gz")
+	verify := strings.Index(rest, "sha256sum -c")
+	run := strings.Index(rest, "goreleaser release")
+	if install < 0 || verify < 0 || run < 0 || install > run || verify > run {
+		t.Fatal("publish job must download and checksum-verify the pinned GoReleaser before running goreleaser release")
+	}
+	if strings.Contains(rest, "goreleaser-action") {
+		t.Fatal("publish job must not run the third-party goreleaser action")
+	}
+}
