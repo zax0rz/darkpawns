@@ -204,9 +204,24 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 			if totMembers > 1 {
 				goldPerMember := goldLooted / totMembers
 
+				// The leader share has no AFF_GROUP check in C: k receives
+				// gold_per_member whenever k != ch and shares the room
+				// (src/fight.c:768-781), even though tot_members did not
+				// count an ungrouped leader and the XP loop skips them.
+				// `group <follower>` leaves the leader ungrouped
+				// (src/act.other.c:726-727), so this is the ordinary case.
+				if leader != killer && goldPerMember > 0 && leader.GetRoom() == killerRoom {
+					combatSendMessage(leader, fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
+						kp.Name, goldPerMember))
+					kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
+						goldPerMember, leader.GetName()))
+					combatAddGold(leader, goldPerMember)
+					goldLooted -= goldPerMember
+				}
+
 				for _, m := range inRoom {
-					if m == killer {
-						continue // the killer's own share is paid below (fight.c:814-823)
+					if m == killer || m == leader {
+						continue // killer's share below (fight.c:814-823); the leader was paid above
 					}
 					if goldPerMember > 0 {
 						combatSendMessage(m, fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
@@ -215,10 +230,9 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 							goldPerMember, m.GetName()))
 						combatAddGold(m, goldPerMember)
 						goldLooted -= goldPerMember
-					} else if m != leader {
-						// The leader's share block exists only while
-						// gold_per_member > 0; the none-to-split notice is a
-						// follower-loop arm (fight.c:768-811).
+					} else {
+						// The none-to-split notice is a follower-loop arm
+						// (fight.c:801-811); the leader block has no else.
 						kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
 							m.GetName()))
 						combatSendMessage(m, fmt.Sprintf("%s would have shared some gold with you but there was none to split!\r\n",
@@ -309,7 +323,10 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 	// base = MAX(1, base)
 	base := victimExp / totMembers
 	if base > 100 {
-		base -= int(float64(base) * 0.01)
+		// C subtracts in floating point and truncates once on assignment:
+		// base = (int)(base - base*0.01), so 150 becomes 148, not 149
+		// (src/fight.c:731-732).
+		base = int(float64(base) - float64(base)*0.01)
 	}
 	if base < 1 {
 		base = 1

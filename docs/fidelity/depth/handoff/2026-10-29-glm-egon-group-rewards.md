@@ -64,6 +64,33 @@ four of these tests (`unit-red.log`) and makes the npc-kill scenario
 transcript-red; restoring fails nothing (`unit-green.log`). Both are retained
 under `/home/zach/Archives/darkpawns/oracle-runs/2026-10-29/glm-egon-group-rewards/gates/`.
 
+## Review follow-ups (same day, Claude's review)
+
+Two further C corrections landed with review round 1:
+
+- **Group penalty rounding.** C computes `base -= base*.01` in floating
+  point and truncates once on assignment (`src/fight.c:731-732`): base 150
+  becomes 148. The port pre-truncated the one percent
+  (`base -= int(base*0.01)` → 149). Fixed in the live path and the engine
+  fallback. `death-group-xp-penalty-rounding` (victim exp set to 300) is the
+  first oracle fixture whose divided base exceeds the 100 gate: red on main
+  with 149 versus C's 148. Why nothing caught this before: every prior group
+  scenario killed the 100-experience trainee, whose divided base is 50 — the
+  `if (base > 100)` branch never ran at all, so the penalty (let alone its
+  rounding) had zero oracle coverage. Building the fixture also found that
+  Go's `set <mob> exp` was a silent no-op (the field is BOTH in C's table,
+  `src/act.wizard.c:2838`); fixed with C's RANGE(0, 50000000).
+- **Ungrouped leader still receives the autosplit share.** C's leader-share
+  block checks only `k != ch` and the room, never AFF_GROUP
+  (`src/fight.c:768-781`), and the leader is ungrouped in the ordinary
+  `group <follower>` formation (`src/act.other.c:726-727`; `group <self>`
+  can also toggle the leader back out). The leader now receives
+  gold_per_member with the share messages while the divisor and the XP loop
+  still skip them; three shares of 101 coins drop the negative leftover
+  silently. `death-group-ungrouped-leader-gold` drives the formation through
+  the group command and is red on main and on this branch pre-fix; its
+  `group` probe also pins the headless listing an ungrouped leader produces.
+
 ## Disclosed baseline draw divergence (not caused by this round)
 
 `death-mixed-group-npc-kill` matches transcripts but diverges draw streams at

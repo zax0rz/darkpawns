@@ -593,8 +593,13 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 	case "bank":
 		p.SetBankGold(valueInt)
 	case "exp":
+		// C assigns vict->points.exp = RANGE(0, 50000000) for players and
+		// mobiles alike (src/act.wizard.c:2838).
+		valueInt = max(0, min(valueInt, 50000000))
 		if p != nil {
 			p.SetExp(valueInt)
+		} else {
+			m.Runtime.ExpOverride = &valueInt
 		}
 	case "hitroll":
 		if p != nil {

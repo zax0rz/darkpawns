@@ -305,3 +305,86 @@ func (p *Player) setFollowingSequenceForTest(seq uint64) {
 	p.followingSequence = seq
 	p.mu.Unlock()
 }
+
+// C subtracts the 1% group penalty in floating point and truncates once on
+// assignment: base = (int)(base - base*0.01) (src/fight.c:731-732). 300
+// experience over two members is base 150, which becomes 148 — not the 149
+// a pre-truncated int(base*0.01) gives.
+func TestGroupPenaltyRoundsAfterSubtraction(t *testing.T) {
+	w := newMixedGroupWorld(t)
+	leader := NewPlayer(1, "Leader", 1001)
+	leader.SetLevel(10)
+	second := NewPlayer(2, "Second", 1001)
+	second.SetLevel(10)
+	second.SetFollowingBody(leader)
+	second.SetInGroup(true)
+	leader.SetInGroup(true)
+	for _, p := range []*Player{leader, second} {
+		if err := w.AddPlayer(p); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", p.Name, err)
+		}
+	}
+
+	w.AwardMobKillXP(leader, nil, 300, 0, 10, 0)
+
+	for _, p := range []*Player{leader, second} {
+		if got, want := p.GetExp(), 148; got != want {
+			t.Fatalf("%s XP = %d, want %d ((int)(150 - 150*0.01))", p.Name, got, want)
+		}
+	}
+}
+
+// An ungrouped leader still receives gold_per_member: C's leader-share block
+// checks only k != ch and the room, never AFF_GROUP (src/fight.c:768-781),
+// while tot_members and the XP loop skip the ungrouped leader. This is the
+// ordinary `group <follower>` state (src/act.other.c:726-727).
+func TestUngroupedLeaderStillReceivesAutosplitGold(t *testing.T) {
+	w := newMixedGroupWorld(t)
+	leader := NewPlayer(1, "Leader", 1001)
+	leader.SetLevel(10)
+	killer := NewPlayer(2, "Killer", 1001)
+	killer.SetLevel(10)
+	killer.AutoGold = true
+	killer.AutoSplit = true
+	second := NewPlayer(3, "Second", 1001)
+	second.SetLevel(10)
+	killer.SetFollowingBody(leader)
+	second.SetFollowingBody(leader)
+	killer.SetInGroup(true)
+	second.SetInGroup(true)
+	for _, p := range []*Player{leader, killer, second} {
+		if err := w.AddPlayer(p); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", p.Name, err)
+		}
+	}
+	output := captureMovementOutput(w)
+
+	w.AwardMobKillXP(killer, nil, 1000, 101, 10, 0)
+
+	// Divisor counts only the grouped pair; the ungrouped leader takes a
+	// full member share of gold but no experience.
+	if got, want := leader.GetGold(), 50; got != want {
+		t.Fatalf("ungrouped leader gold = %d, want %d (src/fight.c:768-781)", got, want)
+	}
+	if got, want := second.GetGold(), 50; got != want {
+		t.Fatalf("grouped follower gold = %d, want %d", got, want)
+	}
+	// The leader is an extra share beyond the divisor, so the leftover goes
+	// negative and C drops it silently: three 50s from 101, no leftover line.
+	if got, want := killer.GetGold(), 50; got != want {
+		t.Fatalf("killer gold = %d, want %d (no leftover: 3 shares exceed 101)", got, want)
+	}
+	if msg := output[killer.Name].String(); strings.Contains(msg, "leftover") {
+		t.Errorf("killer output has a leftover line; got %q", msg)
+	}
+	if got := leader.GetExp(); got != 0 {
+		t.Fatalf("ungrouped leader XP = %d, want 0 (XP loop requires AFF_GROUP)", got)
+	}
+	msg := output[killer.Name].String()
+	if !strings.Contains(msg, "You share 50 gold with Leader.\r\n") {
+		t.Errorf("killer output missing the leader share; got %q", msg)
+	}
+	if strings.Contains(output[leader.Name].String(), "experience") {
+		t.Errorf("ungrouped leader received an XP line; got %q", output[leader.Name].String())
+	}
+}
