@@ -1,0 +1,52 @@
+import { execFileSync } from 'node:child_process';
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, cpSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { latestRelease } from './docs-navigation.mjs';
+const root = fileURLToPath(new URL('../../', import.meta.url));
+const web = join(root, 'website-astro');
+mkdirSync(join(web,'.generated'),{recursive:true});
+writeFileSync(join(web,'.generated/release.json'), JSON.stringify({ version: latestRelease })+'\n');
+const out = join(web, '.generated/docs');
+rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
+const write = (slug, title, description, body, source, type = 'reference', audience = 'developers') => {
+  const path = join(out, slug + '.md'); mkdirSync(resolve(path, '..'), { recursive: true });
+  writeFileSync(path, `---\ntitle: ${JSON.stringify(title)}\ndescription: ${JSON.stringify(description)}\ntype: ${type}\naudience: ${audience}\nverified: ${latestRelease}\nsourcePath: ${JSON.stringify(source)}\n---\n\n${body.trim()}\n`);
+};
+const releases = readdirSync(join(root, 'docs/releases')).filter((f) => /^v\d+\.\d+\.\d+\.md$/.test(f)).sort((a,b) => b.localeCompare(a, undefined, {numeric:true}));
+for (const file of releases) {
+  const version = file.slice(0,-3);
+  write('releases/'+version.replaceAll('.','-'), 'Dark Pawns '+version, `Changes shipped in Dark Pawns ${version}, reproduced from the release notes used by the release workflow. Read fixes, operator changes and install details.`, readFileSync(join(root,'docs/releases',file),'utf8'), 'docs/releases/'+file, 'release');
+}
+write('releases', 'Releases', 'Read the Dark Pawns release notes, newest first. Each page comes from the same source file used to publish the signed server release and its announcement.', releases.map((f) => `- [${f.slice(0,-3)}](/docs/releases/${f.slice(0,-3).replaceAll('.','-')}/)`).join('\n'), 'docs/releases/');
+// Reuse the already-parsed help archive, which is generated from lib/text/help.
+const commandRoot = join(web,'src/content/help/commands');
+const commandFiles = readdirSync(commandRoot).filter((f) => f.endsWith('.md') && !f.startsWith('_')).sort();
+const links = [];
+for (const file of commandFiles) {
+  const raw = readFileSync(join(commandRoot,file),'utf8');
+  const title = raw.match(/^title:\s*["']?(.*?)["']?\s*$/m)?.[1] ?? file.slice(0,-3);
+  const body = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+  const slug = file.slice(0,-3);
+  links.push(`| [${title.replaceAll('|','\\|')}](/docs/reference/commands/${slug}/) | [In-game help](/help/commands/${slug}/) |`);
+  write('reference/commands/'+slug, title.length < 60 ? title : title.split(' ')[0], `Read the original Dark Pawns command syntax and help text. This reference is generated from the game's help archive and preserves its instructions.`, body, 'website-astro/src/content/help/commands/'+file, 'reference', 'players');
+}
+write('reference/commands', 'Commands', 'Look up Dark Pawns command syntax in the original help files. These pages reproduce the game help, with links back to the full searchable help archive.', '| Command | Source |\n| --- | --- |\n'+links.join('\n'), 'lib/text/help/commands.hlp');
+const apiOut = join(web,'.generated/api'); mkdirSync(apiOut,{recursive:true});
+const spec = JSON.parse(execFileSync('go',['run','./cmd/admin-openapi'],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024}));
+writeFileSync(join(apiOut,'openapi.json'),JSON.stringify(spec,null,2)+'\n');
+for (const [kind, pred] of [['public',p => !p.startsWith('/admin')], ['admin',p => p.startsWith('/admin')]]) {
+  const part = {...spec, info:{...spec.info,title:`Dark Pawns ${kind} API`,description:kind === 'admin' ? 'Sign in through POST /admin/login with a level 40 implementor character. The admin console and API share the authenticated session. Read each operation for its request and response contract.' : 'Unauthenticated HTTP endpoints for server health, first-character setup status, and observed game listeners. For a playable session, see the client connection guide.'},paths:Object.fromEntries(Object.entries(spec.paths).filter(([p]) => pred(p)))};
+  // Keep display titles concise while preserving the full registered summary.
+  for (const path of Object.values(part.paths)) for (const operation of Object.values(path)) {
+    if (operation && typeof operation === 'object' && operation.summary?.length > 59) {
+      operation.description = operation.summary + '\n\n' + (operation.description ?? '');
+      operation.summary = operation.operationId.replaceAll('-', ' ');
+    }
+  }
+  writeFileSync(join(apiOut,kind+'.json'),JSON.stringify(part,null,2)+'\n');
+}
+// One canonical output tree serves the README and the site.
+const media = join(root,'docs/images/generated'); const publicMedia = join(root,'website/static/media/docs');
+if(existsSync(media)){ rmSync(publicMedia,{recursive:true,force:true}); mkdirSync(publicMedia,{recursive:true}); cpSync(media,publicMedia,{recursive:true}); }
+console.log(`docs: ${releases.length} release pages, ${commandFiles.length} verbatim command pages, offline public/admin OpenAPI export`);

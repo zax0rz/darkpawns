@@ -18,8 +18,8 @@ test('links an author wrote keep working', () => {
   assert.match(html, /<a href="https:\/\/darkpawns\.org\/">/);
 });
 
-test('byte offsets hold after non-ASCII text', () => {
-  // Sätteri reports offsets in UTF-8 bytes; a string index check misses this.
+test('explicit links survive after non-ASCII text', () => {
+  // Sätteri 0.10 positions use string offsets, including after Unicode.
   const html = render('Fäncy “quotes” first.\n\nThen www.topmudsites.com/vote and [kept](https://darkpawns.org/).');
   assert.doesNotMatch(html, /topmudsites\.com\/vote<\/a>/);
   assert.match(html, /<a href="https:\/\/darkpawns\.org\/">kept<\/a>/);

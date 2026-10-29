@@ -1,0 +1,116 @@
+/* Starlight supplies the reading mechanics. Dark Pawns supplies the paper. */
+@import './global.css';
+:root, :root[data-theme='light'] {
+  --sl-font: var(--font-body);
+  --sl-font-mono: var(--font-mono);
+  --sl-color-white: var(--ink);
+  --sl-color-black: var(--paper);
+  --sl-color-gray-1: var(--ink);
+  --sl-color-gray-2: var(--ink);
+  --sl-color-gray-3: var(--ink-muted);
+  --sl-color-gray-4: var(--ink-muted);
+  --sl-color-gray-5: var(--paper-deep);
+  --sl-color-gray-6: var(--paper-deep);
+  --sl-color-gray-7: var(--paper);
+  --sl-color-accent-low: var(--paper-deep);
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-high: var(--accent-deep);
+  --sl-color-text: var(--ink);
+  --sl-color-text-accent: var(--accent-deep);
+  --sl-color-bg: var(--paper);
+  --sl-color-bg-nav: var(--paper);
+  --sl-color-bg-sidebar: var(--paper-deep);
+  --sl-color-hairline: var(--ink);
+  --sl-color-hairline-light: var(--paper-deep);
+  --sl-color-hairline-shade: var(--ink);
+  --sl-content-width: 45rem;
+  --sl-sidebar-width: 17rem;
+  --sl-nav-height: 7.5rem;
+  --sl-text-h1: clamp(2.5rem, 5vw + 1rem, 3rem);
+  --sl-line-height: 1.65;
+  --sl-shadow-sm: none;
+  --sl-shadow-md: none;
+  --sl-shadow-lg: none;
+}
+.docs-masthead { position: relative; width: 100%; }
+.docs-masthead .masthead-row { padding-block: .7rem; }
+.docs-masthead .masthead-meta { margin-inline-end: 22rem; }
+.docs-search { position: absolute; right: max(1rem, calc((100vw - 72rem) / 2)); top: .9rem; width: 20rem; }
+.docs-masthead .nav-search-btn { display: none; }
+header.header { padding: 0 !important; border: 0 !important; }
+.docs-breadcrumb { font-size: .9rem; margin-block: 0 1rem; color: var(--ink-muted); }
+.docs-breadcrumb a { color: var(--ink-muted); }
+.docs-summary { color: var(--ink-muted); font-size: 1rem; max-width: 55ch; margin-block: 1rem 0; }
+.sl-markdown-content { font-size: 1rem; }
+.sl-markdown-content :is(h1,h2,h3,h4), .sidebar :is(summary,a), .pagination-links a { font-family: var(--font-display); font-weight: 400; }
+.sl-markdown-content h2 { margin-top: 2.5rem; padding-top: .6rem; }
+.sl-markdown-content :is(pre, table, details) { border: 1px solid var(--ink); border-radius: 2px; box-shadow: none; }
+.sl-markdown-content table { display: block; overflow-x: auto; font-size: .9rem; }
+.sl-markdown-content code { color: var(--ink); background: var(--paper-deep); }
+.sidebar-pane { border-inline-end: 1px solid var(--ink) !important; }
+.sidebar-content { padding-top: 1.5rem; }
+.sidebar-content a[aria-current='page'] { background: transparent; color: var(--accent-deep); font-weight: 600; text-decoration: underline; text-underline-offset: .3em; border-radius: 0; }
+.sidebar-content ul.top-level > li { border-bottom: 1px solid var(--ink); padding-bottom: .75rem; margin-bottom: .75rem; }
+.sidebar-content .top-level > li > details > summary { font-size: 1rem; }
+.right-sidebar { border-color: var(--paper-deep) !important; }
+.pagination-links a { border-radius: 0; border-color: var(--ink); box-shadow: none; }
+.pagination-links .link-title { font-size: 1.25rem; font-weight: 400; }
+.last-verified { font-size: .8rem; }
+.starlight-aside { background: var(--paper-deep); border: 1px solid var(--ink); border-radius: 0; color: var(--ink); }
+.starlight-aside__title { color: var(--ink); font-family: var(--font-display); }
+.starlight-aside .starlight-aside__icon { color: var(--accent); }
+.expressive-code, .expressive-code pre { --ec-brdRad: 2px; --ec-brdCol: var(--ink); --ec-frm-edBg: var(--paper-deep); --ec-codeBg: var(--paper-deep); box-shadow: none !important; }
+button, input, select { border-radius: 2px !important; font-family: var(--font-body); }
+dialog, [data-pagefind-ui] { border-radius: 2px !important; box-shadow: none !important; }
+::-webkit-scrollbar-thumb { background: var(--ink-muted); }
+* { scrollbar-color: var(--ink-muted) var(--paper-deep); }
+.mermaid-diagram { margin-block: 1.5rem; overflow-x: auto; }
+.mermaid-diagram svg { max-width: 100%; height: auto; }
+.docs-paths { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; margin-block: 2rem; }
+.docs-paths > section { margin-top: 0; border-top: 1px solid var(--ink); padding-block: 1rem; }
+.docs-paths h2 { margin: 0 0 .5rem; }
+@media (max-width: 799px) {
+  :root, :root[data-theme='light'] { --sl-nav-height: 8rem; }
+  .docs-masthead .masthead-meta { display: none; }
+  .docs-masthead .brand { transform-origin: left center; transform: scale(.8); }
+  .docs-masthead .masthead-row { min-height: 4rem; }
+  .docs-search { width: 2.5rem; right: 4.2rem; top: 1.15rem; }
+  .docs-masthead .sectionbar { margin-top: -.2rem; }
+  .docs-paths { grid-template-columns: 1fr; }
+}
+@media print { .docs-masthead, .sidebar { display: none; } }
+
+@media (max-width: 799px) {
+  .sl-menu-button { position: fixed; z-index: var(--sl-z-index-navbar); top: 5.1rem; right: 1rem; min-height: 44px; padding: .4rem .6rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
+  .docs-masthead .nav-toggle-inner { gap: .5rem; font-size: .9rem; }
+}
+
+.right-sidebar h2 { font-size: 1rem; }
+/* Machine examples keep the same flat paper and ink as the surrounding page. */
+.expressive-code {
+  --ec-frm-frameBoxShdCssVal: none;
+  --ec-frm-trmTtbBg: var(--paper-deep);
+  --ec-frm-trmTtbFg: var(--ink);
+  --ec-frm-trmTtbBrdBtmCol: var(--ink);
+  --ec-frm-trmTtbDotsFg: var(--ink-muted);
+  --ec-frm-edActTabBg: var(--paper-deep);
+  --ec-frm-edActTabFg: var(--ink);
+  --ec-frm-edTabBarBg: var(--paper-deep);
+  --ec-frm-edTabBarBrdCol: var(--ink);
+  --ec-frm-edTabBarBrdBtmCol: var(--ink);
+  --ec-frm-tooltipSuccessBg: var(--ink);
+  --ec-frm-tooltipSuccessFg: var(--paper);
+  --ec-focusBrd: var(--accent);
+  --ec-codeSelBg: var(--accent);
+}
+.expressive-code .frame { box-shadow: none; }
+.expressive-code .ec-line span { color: var(--ink); }
+.docs-search dialog::backdrop { backdrop-filter: none; background: color-mix(in srgb, var(--ink) 40%, transparent); }
+.docs-search .pagefind-ui__result, .docs-search .pagefind-ui__result-title { border-radius: 2px; }
+:root[data-theme='light'] .sl-openapi-operation-method-badge {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+}
+.mermaid-diagram svg * { filter: none !important; }

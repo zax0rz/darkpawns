@@ -40,6 +40,14 @@ class TestSearchIndexGenerator(unittest.TestCase):
             self.assertTrue(required_keys.issubset(item.keys()), f"Missing keys in item: {item}")
             self.assertTrue(item["u"].startswith("/"), f"URL must be absolute path: {item['u']}")
 
+    def test_docs_hubs_use_canonical_routes(self):
+        data = json.loads(INDEX_FILE.read_text(encoding="utf-8"))
+        docs = {item["u"] for item in data if item["c"] == "docs"}
+        self.assertIn("/docs/", docs)
+        self.assertIn("/docs/host/", docs)
+        self.assertIn("/docs/play/first-hour/", docs)
+        self.assertFalse(any("/index/" in url for url in docs))
+
     def test_categories_represented(self):
         with open(INDEX_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)

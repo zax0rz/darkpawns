@@ -4,7 +4,7 @@ Dark Pawns Unified Search Index Generator (Astro version)
 Parses:
   1. Astro Content Collections (src/content/):
      - help/ (commands, spells, socials, info, wizhelp)
-     - docs/ (agents, getting-started, research, server)
+     - docs/ (Play, Host, Build, Reference, Project)
      - world/
      - blog/
      - archive/
@@ -173,7 +173,9 @@ def index_markdown_content():
             parts = rel_path.parts
             section = parts[0] if len(parts) > 1 else ""
             slug = md_file.stem
-            url = f"/docs/{section}/{slug}/" if section else f"/docs/{slug}/"
+            doc_path = rel_path.with_suffix("").as_posix()
+            doc_path = re.sub(r"(^|/)index$", "", doc_path).strip("/")
+            url = f"/docs/{doc_path}/" if doc_path else "/docs/"
             
             try:
                 content = md_file.read_text(encoding='utf-8', errors='ignore')

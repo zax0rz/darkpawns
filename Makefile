@@ -272,10 +272,14 @@ check-palette:
 generate-caddy-redirects:
 	python3 website-astro/scripts/caddy_redirects.py
 
+.PHONY: test-search
+test-search:
+	cd website-astro && npm run test:search
+
 test-markdown:
 	cd website-astro && npm run test:markdown
 
-site-check: voice-lint test-voice-lint test-markdown check-content-inventory check-wordmark check-palette
+site-check: voice-lint test-voice-lint test-markdown test-search check-content-inventory check-wordmark check-palette
 	cd website-astro && npm run build
 
 parse-world-json:

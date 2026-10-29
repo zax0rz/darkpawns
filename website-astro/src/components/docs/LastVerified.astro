@@ -1,0 +1,7 @@
+---
+import { latestRelease } from '../../lib/docs-release.mjs';
+const entry = Astro.locals.starlightRoute.entry;
+const data = entry.data;
+const verified = data.verified ?? latestRelease;
+---
+<p class="last-verified">Last verified <a href={`/docs/releases/${verified.replaceAll('.', '-')}/`}>{verified}</a></p>

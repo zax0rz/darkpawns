@@ -13,6 +13,7 @@ import argparse
 import io
 import json
 import re
+import subprocess
 from collections import Counter
 from pathlib import Path
 
@@ -66,6 +67,8 @@ def content_entries() -> list[Entry]:
         data, body = frontmatter_and_body(path)
         slug = path.relative_to(SITE / "src/content" / collection).with_suffix("").as_posix()
         route = f"/{collection}/{slug}/"
+        if collection == "docs" and (slug == "index" or slug.endswith("/index")):
+            route = "/docs/" if slug == "index" else f"/docs/{slug[:-6]}/"
 
         if collection == "help":
             mode, tier, status = "fidelity-protected reference", 4, "template-and-sample QA"
@@ -96,7 +99,7 @@ def content_entries() -> list[Entry]:
         entries.append(
             Entry(
                 route.removesuffix("/") + ".md",
-                f"src/pages/{collection}/[...slug].md.ts",
+                ("scripts/markdown-twins.mjs" if collection == "docs" else f"src/pages/{collection}/[...slug].md.ts"),
                 "agent-markdown",
                 "generated Markdown representation",
                 3,
@@ -107,6 +110,168 @@ def content_entries() -> list[Entry]:
                 data.get("source", data.get("sourcePath", data.get("captureUrl", ""))),
             )
         )
+    return entries
+
+
+def generated_docs_entries() -> list[Entry]:
+    """Inventory release and command docs from the files the generator reads."""
+    entries: list[Entry] = []
+    release_root = ROOT / "docs/releases"
+    release_files = sorted(
+        (path for path in release_root.iterdir() if re.fullmatch(r"v\d+\.\d+\.\d+\.md", path.name)),
+        key=lambda path: tuple(int(part) for part in path.stem[1:].split(".")),
+        reverse=True,
+    )
+    release_body_lines = []
+    for path in release_files:
+        version = path.stem
+        slug = version.replace(".", "-")
+        body = path.read_text(encoding="utf-8").strip()
+        source = path.relative_to(ROOT).as_posix()
+        route = f"/docs/releases/{slug}/"
+        entries.extend(_generated_doc_pair(
+            route,
+            source,
+            "generated release reference",
+            body,
+            source,
+        ))
+        release_body_lines.append(f"- [{version}](/docs/releases/{slug}/)")
+
+    release_index_body = "\n".join(release_body_lines)
+    entries.extend(_generated_doc_pair(
+        "/docs/releases/",
+        "docs/releases/",
+        "generated release index",
+        release_index_body,
+        "docs/releases/",
+    ))
+
+    command_root = SITE / "src/content/help/commands"
+    command_files = sorted(
+        path for path in command_root.glob("*.md")
+        if not path.name.startswith("_")
+    )
+    command_links = []
+    for path in command_files:
+        raw = path.read_text(encoding="utf-8")
+        match = re.search(r"^title:\s*[\"']?(.*?)[\"']?\s*$", raw, flags=re.MULTILINE)
+        title = match.group(1) if match else path.stem
+        body = re.sub(r"^---\r?\n[\s\S]*?\r?\n---\r?\n", "", raw, count=1)
+        slug = path.stem
+        source = path.relative_to(SITE).as_posix()
+        provenance = path.relative_to(ROOT).as_posix()
+        command_links.append(
+            f"| [{title.replace('|', r'\|')}](/docs/reference/commands/{slug}/) "
+            f"| [In-game help](/help/commands/{slug}/) |"
+        )
+        entries.extend(_generated_doc_pair(
+            f"/docs/reference/commands/{slug}/",
+            source,
+            "generated command reference",
+            body,
+            provenance,
+            text_kind="verbatim",
+            voice_layer="engine",
+        ))
+
+    command_index_body = (
+        "| Command | Source |\n| --- | --- |\n" + "\n".join(command_links)
+    )
+    entries.extend(_generated_doc_pair(
+        "/docs/reference/commands/",
+        "lib/text/help/commands.hlp",
+        "generated command index",
+        command_index_body,
+        "lib/text/help/commands.hlp",
+        text_kind="verbatim",
+        voice_layer="engine",
+    ))
+    return entries
+
+
+def _generated_doc_pair(
+    route: str,
+    source_file: str,
+    content_mode: str,
+    body: str,
+    source: str,
+    *,
+    text_kind: str = "",
+    voice_layer: str = "",
+) -> list[Entry]:
+    """Return a generated docs route and its Markdown twin ledger row."""
+    return [
+        Entry(
+            route,
+            source_file,
+            "docs",
+            content_mode,
+            3,
+            "verify generated source and representative output",
+            word_count(body),
+            text_kind,
+            voice_layer,
+            source,
+        ),
+        Entry(
+            route.removesuffix("/") + ".md",
+            "scripts/markdown-twins.mjs",
+            "agent-markdown",
+            "generated Markdown representation",
+            3,
+            "schema-and-sample QA",
+            word_count(body),
+            text_kind,
+            voice_layer,
+            source,
+        ),
+    ]
+
+
+def api_entries() -> list[Entry]:
+    """Inventory OpenAPI pages from the Go exporter, without generated files."""
+    result = subprocess.run(
+        ["go", "run", "./cmd/admin-openapi"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    spec = json.loads(result.stdout)
+    entries: list[Entry] = []
+    methods = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+    for kind, paths in (
+        ("public", {path: item for path, item in spec.get("paths", {}).items() if not path.startswith("/admin")}),
+        ("admin", {path: item for path, item in spec.get("paths", {}).items() if path.startswith("/admin")}),
+    ):
+        base = f"/docs/reference/api/{kind}"
+        source_file = "cmd/admin-openapi/main.go"
+        pointer = "cmd/admin-openapi/main.go#/OpenAPI"
+        entries.extend(_generated_doc_pair(
+            base + "/",
+            source_file,
+            "generated OpenAPI reference index",
+            "",
+            pointer,
+        ))
+        for path, path_item in paths.items():
+            for method, operation in path_item.items():
+                method = method.lower()
+                if method not in methods or not isinstance(operation, dict):
+                    continue
+                operation_id = operation.get("operationId")
+                if not operation_id:
+                    continue
+                pointer = f"cmd/admin-openapi/main.go#/paths/{path}/{method}"
+                entries.extend(_generated_doc_pair(
+                    f"{base}/operations/{operation_id}/",
+                    source_file,
+                    "generated OpenAPI operation reference",
+                    "",
+                    pointer,
+                ))
     return entries
 
 
@@ -129,7 +294,6 @@ def structural_entries() -> list[Entry]:
     hubs = {
         "/archive/": "src/pages/archive/index.astro",
         "/blog/": "src/pages/blog/index.astro",
-        "/docs/": "src/pages/docs/index.astro",
         "/help/": "src/pages/help/index.astro",
         "/world/": "src/pages/world/index.astro",
     }
@@ -146,8 +310,6 @@ def structural_entries() -> list[Entry]:
     }
     entries.extend(Entry(route, source, "agent-discovery", "machine-readable discovery", 3, "schema-and-link QA") for route, source in agent_resources.items())
 
-    for section in ("getting-started", "server", "research"):
-        entries.append(Entry(f"/docs/{section}/", "src/pages/docs/[section]/index.astro", "docs-hub", "generated section index", 3, "template review"))
     for category in ("commands", "info", "socials", "spells", "wizhelp"):
         entries.append(Entry(f"/help/{category}/", "src/pages/help/[category]/index.astro", "help-hub", "generated section index", 3, "template review"))
     return entries
@@ -183,7 +345,8 @@ def database_entries() -> list[Entry]:
 def redirect_entries() -> list[Entry]:
     config = (SITE / "astro.config.mjs").read_text(encoding="utf-8")
     matches = re.findall(r"^\s*'(/[^']*)':\s*'([^']+)'", config, flags=re.MULTILINE)
-    redirects = {source: target for source, target in matches}
+    redirects = json.loads((SITE / "scripts/docs-redirects.json").read_text(encoding="utf-8"))
+    redirects.update({source: target for source, target in matches})
     help_categories = {"commands", "info", "socials", "spells", "wizhelp"}
     for path in sorted((SITE / "src/content/help").glob("*/*.md")):
         category, filename = path.relative_to(SITE / "src/content/help").parts
@@ -277,7 +440,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="fail when generated inventory is stale")
     args = parser.parse_args()
-    public = sorted(content_entries() + structural_entries() + database_entries(), key=lambda entry: entry.route)
+    public = sorted(content_entries() + generated_docs_entries() + api_entries() + structural_entries() + database_entries(), key=lambda entry: entry.route)
     redirects = sorted(redirect_entries(), key=lambda entry: entry.route)
     routes = [entry.route for entry in public]
     if len(routes) != len(set(routes)):

@@ -1,6 +1,7 @@
 ---
 // Masthead + the one persistent section bar.
 // Nav encodes priority by position: player content left, utility right.
+const { mobileNavLabel = 'Menu', showMobileNavLabel = false } = Astro.props;
 const path = Astro.url.pathname;
 const primary = [
   { name: 'Play', href: '/play/' },
@@ -46,7 +47,7 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
             <line class="bar-mid" x1="1" y1="8" x2="19" y2="8" />
             <line class="bar-bot" x1="1" y1="13" x2="19" y2="13" />
           </svg>
-          <span class="visually-hidden">Menu</span>
+          <span class:list={{ "visually-hidden": !showMobileNavLabel }}>{mobileNavLabel}</span>
         </span>
       </summary>
       <div class="container sectionbar-inner">
