@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -117,5 +118,51 @@ func TestAliasedLineKeepsPromptState(t *testing.T) {
 	}
 	if got := textAfter(s.MarkAliasedInput); got != "\r\noutput\r\n" {
 		t.Fatalf("aliased line output = %q, want the interruption CR LF", got)
+	}
+}
+
+// A room broadcast must enter the same output bookkeeping whether it happens
+// inside a heartbeat transaction or during another descriptor's command.
+func TestRoomBroadcastPromptsAcceptedText(t *testing.T) {
+	for _, batched := range []bool{false, true} {
+		t.Run(fmt.Sprintf("heartbeat=%t", batched), func(t *testing.T) {
+			m := makeTestManagerWithVoidRooms(t)
+			s := makeTestSession(t, m, "Listener", 1001, true)
+			registerTestSession(t, m, s, "Listener")
+			if batched {
+				m.BeginHeartbeatOutput()
+			}
+			m.BroadcastToRoom(1001, []byte("Leaver has left the game."), "Leaver")
+			if batched {
+				m.EndHeartbeatOutput()
+			} else {
+				m.FlushAsyncPrompts()
+			}
+			got := drainFrames(s)
+			if !strings.Contains(got, "Leaver has left the game.\r\n") || !strings.HasSuffix(got, "> ") {
+				t.Fatalf("broadcast output = %q, want leave line followed by prompt", got)
+			}
+			m.FlushAsyncPrompts()
+			if got := drainFrames(s); got != "" {
+				t.Fatalf("duplicate prompt after broadcast: %q", got)
+			}
+		})
+	}
+}
+
+func TestGuardedControlDoesNotRequestAsyncPrompt(t *testing.T) {
+	m := makeTestManagerWithVoidRooms(t)
+	s := makeTestSession(t, m, "Listener", 1001, true)
+	registerTestSession(t, m, s, "Listener")
+	for _, message := range []string{
+		`{"type":"event","data":{"type":"raw","text":"control"}}`,
+		`{"type":"gmcp","data":{"package":"Room.Info","json":"{}"}}`,
+	} {
+		s.sendGuarded([]byte(message))
+		drainFrames(s)
+		m.FlushAsyncPrompts()
+		if got := drainFrames(s); got != "" {
+			t.Fatalf("control frame requested prompt: %q", got)
+		}
 	}
 }

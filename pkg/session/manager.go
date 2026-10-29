@@ -2121,19 +2121,7 @@ func (m *Manager) BroadcastToRoom(roomVNum int, message []byte, excludePlayer st
 			if !game.CanReceiveAct(s.player) {
 				continue
 			}
-			if s.stageHeartbeat(message, "", false) {
-				continue
-			}
-			select {
-			case s.send <- message:
-			default:
-				// Channel full, drop message
-				slog.Warn(
-					"dropping broadcast: channel full",
-					"player", name,
-					"room", roomVNum,
-				)
-			}
+			s.sendGuarded(message)
 		}
 	}
 }

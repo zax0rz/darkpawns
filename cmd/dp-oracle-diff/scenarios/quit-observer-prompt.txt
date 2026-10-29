@@ -1,0 +1,108 @@
+# C-first quit safe-room vehicle (src/interpreter.c:630;
+# src/act.other.c:72-181). An immortal moves a normal mortal peer to
+# temple 8004 during warmup; the peer quits while the immortal watches. A sleeping
+# peer receives nothing, exposing act()'s SENDOK audience gate.
+
+# depth-case: async-output.quit-observer
+# keep-prompts is required: ordinary normalization hides the missing prompt.
+# depth-case: quit.safe-logout
+# depth-case: quit.safe-audience
+
+[fixture]
+empty-players
+quiet-mobs
+keep-prompts
+
+[setup:oracle]
+Quitadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Quitadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Quitpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Quitpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:sleeper]
+Quitsleeper
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[setup:port:sleeper]
+Quitsleeper
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+sleep
+
+[warmup]
+goto 8004
+teleport Quitpeer 8004
+teleport Quitsleeper 8004
+
+[probe:peer]
+quit
