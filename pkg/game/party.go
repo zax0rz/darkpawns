@@ -135,30 +135,28 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 	return members
 }
 
-// combatIsInGroup mirrors fight.c:is_in_group(). A follow relation alone is
-// not enough: the killer itself must be grouped and another grouped member of
-// that leader's group must be in the killer's room.
+// combatIsInGroup mirrors fight.c:is_in_group() (src/fight.c:637-657) for any
+// character body, player or mobile. A follow relation alone is not enough: the
+// actor itself must carry AFF_GROUP, and another grouped member of that
+// leader's group — the master, or any fellow follower in the C follower list —
+// must be in the actor's room. An ungrouped killer following a grouped leader
+// therefore stays on the solo path (retained #2215 regression).
 func (w *World) combatIsInGroup(body combat.Combatant) bool {
-	killer, ok := combatPlayer(body)
-	if !ok || !killer.IsInGroup() {
+	if !combatGroupedBody(body) {
 		return false
 	}
 
-	room := killer.GetRoom()
-	leader := killer
+	room := body.GetRoom()
+	leader := body
 	if master := w.combatFollowingBody(body); master != nil {
-		masterPlayer, ok := combatPlayer(master)
-		if !ok {
-			return false
-		}
-		leader = masterPlayer
-		if leader.GetRoom() == room && leader.IsInGroup() {
+		leader = master
+		if combatGroupedBody(leader) && leader.GetRoom() == room {
 			return true
 		}
 	}
 
 	for _, follower := range w.combatFollowersInRoom(leader, room) {
-		if follower != killer && follower.IsInGroup() {
+		if follower != body && combatGroupedBody(follower) {
 			return true
 		}
 	}
@@ -170,7 +168,7 @@ func (w *World) combatIsInGroup(body combat.Combatant) bool {
 // higher-level penalties apply.
 // If victimGold > 0 and the killer has AutoGold enabled, gold is looted/split
 // according to the autosplit preference.
-// Source: fight.c group_gain() lines 708–745, called at die_with_killer() line 1638
+// Source: fight.c group_gain() lines 708–848, called at die_with_killer() line 1638
 func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp int, victimGold int, victimLevel int, victimAlign int) {
 	killerRoom := killer.GetRoom()
 	victimName := ""
@@ -178,108 +176,87 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 		victimName = victim.GetName()
 	}
 
-	// Look up the killer as a Player for preference flags
+	// Look up the killer as a Player for preference flags. C reads the
+	// killer's own PRF bits (src/fight.c:747, 1654); a mobile killer has none,
+	// so it loots nothing and its group's gold stays on the corpse.
 	kp, isPlayer := combatPlayer(killer)
 
-	awardGroupGold := func() {
-		// --- Gold handling (fight.c group_gain() lines 747+) ---
-		// Source: fight.c lines 747-830
-		if isPlayer && victimGold > 0 && kp.AutoGold {
-			// Base gold for distribution — fight.c: gold_looted = GET_GOLD(victim); GET_GOLD(victim) = 0
-			goldLooted := victimGold
+	// awardGroupGold ports the autogold/autosplit tail of group_gain()
+	// (src/fight.c:747-846). The divisor and every gold transfer include the
+	// in-room group members C counts — mobiles included.
+	awardGroupGold := func(inRoom []combat.Combatant, totMembers int, leader combat.Combatant) {
+		if !isPlayer || victimGold <= 0 || !kp.AutoGold {
+			return
+		}
+		goldLooted := victimGold
 
-			if kp.AutoSplit {
-				// Autosplit path — fight.c lines 756-830
-				// Announce the loot to killer
-				kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
-					goldLooted, victimName))
-				if victim != nil {
-					Act(w, false, kp, nil, nil, nil,
-						fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
-				}
-
-				// Get group members in the room
-				members := w.combatGroupMembers(killer)
-				var inRoom []*Player
-				for _, m := range members {
-					if m.GetRoom() == killerRoom {
-						inRoom = append(inRoom, m)
-					}
-				}
-				totMembers := len(inRoom)
-
-				// If we have group members, distribute
-				if totMembers > 1 {
-					goldPerMember := goldLooted / totMembers
-					remaining := goldLooted
-
-					for _, m := range inRoom {
-						if m == kp {
-							continue // handle leader last
-						}
-						if goldPerMember > 0 {
-							m.SendMessage(fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
-								kp.Name, goldPerMember))
-							kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
-								goldPerMember, m.Name))
-							// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
-							m.mu.Lock()
-							m.Gold += goldPerMember
-							m.mu.Unlock()
-							remaining -= goldPerMember
-						} else {
-							kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
-								m.Name))
-							m.SendMessage(fmt.Sprintf("%s would have shared some gold with you but there was none to split!\r\n",
-								kp.Name))
-						}
-					}
-
-					if goldPerMember > 0 {
-						kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", goldPerMember))
-						// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
-						kp.mu.Lock()
-						kp.Gold += goldPerMember
-						kp.mu.Unlock()
-						remaining -= goldPerMember
-					} else {
-						kp.SendMessage("When you split no gold, you got none.\r\n")
-					}
-					if remaining > 0 {
-						kp.SendMessage(fmt.Sprintf("You keep %d gold leftover.\r\n", remaining))
-						kp.mu.Lock()
-						kp.Gold += remaining
-						kp.mu.Unlock()
-					}
-				} else {
-					// Solo kill with autogold+autosplit but no group — just take all
-					// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
-					kp.mu.Lock()
-					kp.Gold += goldLooted
-					kp.mu.Unlock()
-					kp.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", goldLooted))
-				}
-			} else {
-				// AutoGold without AutoSplit — fight.c:835-845 also notifies the room.
-				kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
-					goldLooted, victimName))
-				if victim != nil {
-					Act(w, false, kp, nil, nil, nil,
-						fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
-				}
-				// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
-				kp.mu.Lock()
-				kp.Gold += goldLooted
-				kp.mu.Unlock()
+		if kp.AutoSplit {
+			// Autosplit path — fight.c lines 756-830
+			// Announce the loot to killer
+			kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
+				goldLooted, victimName))
+			if victim != nil {
+				Act(w, false, kp, nil, nil, nil,
+					fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
 			}
+
+			// If we have group members, distribute
+			if totMembers > 1 {
+				goldPerMember := goldLooted / totMembers
+
+				for _, m := range inRoom {
+					if m == killer {
+						continue // the killer's own share is paid below (fight.c:814-823)
+					}
+					if goldPerMember > 0 {
+						combatSendMessage(m, fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
+							kp.Name, goldPerMember))
+						kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
+							goldPerMember, m.GetName()))
+						combatAddGold(m, goldPerMember)
+						goldLooted -= goldPerMember
+					} else if m != leader {
+						// The leader's share block exists only while
+						// gold_per_member > 0; the none-to-split notice is a
+						// follower-loop arm (fight.c:768-811).
+						kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
+							m.GetName()))
+						combatSendMessage(m, fmt.Sprintf("%s would have shared some gold with you but there was none to split!\r\n",
+							kp.Name))
+					}
+				}
+
+				if goldPerMember > 0 {
+					kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", goldPerMember))
+					combatAddGold(kp, goldPerMember)
+					goldLooted -= goldPerMember
+				} else {
+					kp.SendMessage("When you split no gold, you got none.\r\n")
+				}
+				if goldLooted > 0 {
+					kp.SendMessage(fmt.Sprintf("You keep %d gold leftover.\r\n", goldLooted))
+					combatAddGold(kp, goldLooted)
+				}
+			}
+		} else {
+			// AutoGold without AutoSplit — fight.c:836-845 also notifies the room.
+			kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
+				goldLooted, victimName))
+			if victim != nil {
+				Act(w, false, kp, nil, nil, nil,
+					fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
+			}
+			combatAddGold(kp, goldLooted)
 		}
 	}
 
 	// --- Experience handling ---
 	grouped := w.combatIsInGroup(killer)
-	members := w.combatGroupMembers(killer)
 
-	// Solo kill (not in any group) — fight.c group_gain() totMembers==1 path
+	// Solo kill (not in any group) — fight.c damage() lines 1639-1667. A
+	// mobile killer on this path produces nothing observable: C's
+	// send_to_char no-ops, gain_exp skips NPCs, its PRF bits are clear, and
+	// change_alignment returns for NPCs (src/fight.c:486-489).
 	if !grouped {
 		p, ok := combatPlayer(killer)
 		if !ok {
@@ -306,8 +283,16 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 		return
 	}
 
+	// The leader group_gain() splits around (src/fight.c:716-717), including
+	// mobiles in both the divisor and the recipient list.
+	leader := killer
+	if master := w.combatFollowingBody(killer); master != nil {
+		leader = master
+	}
+	members := w.combatGroupMembers(killer)
+
 	// Count members in killer's room — fight.c group_gain() lines 719–727
-	var inRoom []*Player
+	var inRoom []combat.Combatant
 	for _, m := range members {
 		if m.GetRoom() == killerRoom {
 			inRoom = append(inRoom, m)
@@ -330,19 +315,50 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 		base = 1
 	}
 
-	// perform_group_gain() for each member — fight.c lines 688–705
+	// perform_group_gain() for each member — fight.c lines 688-705 and
+	// 739-745. Mobile members receive the C no-op message send, skip
+	// gain_exp, and skip change_alignment (which itself returns for NPCs,
+	// src/fight.c:486-489). Every counted member shares a room with another
+	// grouped member of the same leader, so is_in_group(member) is true for
+	// each and calc_level_diff applies its group slack.
 	for _, m := range inRoom {
-		xp := combat.CalcXPShare(m.GetLevel(), victimLevel, base, true, maxExpGain)
-		if xp > 1 {
-			m.SendMessage(fmt.Sprintf("You receive your share of experience -- %d points.\r\n", xp))
+		share := combat.CalcXPShare(m.GetLevel(), victimLevel, base, true, maxExpGain)
+		if share > 1 {
+			combatSendMessage(m, fmt.Sprintf("You receive your share of experience -- %d points.\r\n", share))
 		} else {
-			m.SendMessage("You receive your share of experience -- one measly little point!\r\n")
+			combatSendMessage(m, "You receive your share of experience -- one measly little point!\r\n")
 		}
-		// C perform_group_gain emits the share before gain_exp can announce a
-		// level transition (src/fight.c:688-705).
-		w.GainExp(m, xp)
-		// Alignment shift for every group member — fight.c:704 change_alignment(ch, victim).
-		changeAlignment(m, victimAlign)
+		if p, ok := m.(*Player); ok {
+			// C perform_group_gain emits the share before gain_exp can announce a
+			// level transition (src/fight.c:688-705).
+			w.GainExp(p, share)
+			changeAlignment(p, victimAlign)
+		}
 	}
-	awardGroupGold() // src/fight.c:739-747: XP shares precede autogold.
+	awardGroupGold(inRoom, totMembers, leader) // src/fight.c:747-846: XP shares precede autogold.
+}
+
+// combatSendMessage delivers a C send_to_char to any character body. Mobiles
+// have no descriptor, so their copy is the C no-op.
+func combatSendMessage(body combat.Combatant, msg string) {
+	switch b := body.(type) {
+	case *Player:
+		b.SendMessage(msg)
+	case *MobInstance:
+		b.SendMessage(msg)
+	}
+}
+
+// combatAddGold applies a C GET_GOLD(ch) += n to any character body; mobile
+// group members really receive their autosplit share (src/fight.c:779, 798).
+func combatAddGold(body combat.Combatant, amount int) {
+	switch b := body.(type) {
+	case *Player:
+		// Lock across GetGold+SetGold to prevent read-modify-write race (DP-347)
+		b.mu.Lock()
+		b.Gold += amount
+		b.mu.Unlock()
+	case *MobInstance:
+		b.updateGold(func(gold int) (int, bool) { return gold + amount, true })
+	}
 }
