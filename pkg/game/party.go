@@ -139,41 +139,30 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 // not enough: the killer itself must be grouped and another grouped member of
 // that leader's group must be in the killer's room.
 func (w *World) combatIsInGroup(body combat.Combatant) bool {
-	killer, ok := body.(Actor)
-	if !ok || !actorIsGrouped(killer) {
+	killer, ok := combatPlayer(body)
+	if !ok || !killer.IsInGroup() {
 		return false
 	}
 
 	room := killer.GetRoom()
 	leader := killer
 	if master := w.combatFollowingBody(body); master != nil {
-		masterActor, ok := master.(Actor)
+		masterPlayer, ok := combatPlayer(master)
 		if !ok {
 			return false
 		}
-		leader = masterActor
-		if leader.GetRoom() == room && actorIsGrouped(leader) {
+		leader = masterPlayer
+		if leader.GetRoom() == room && leader.IsInGroup() {
 			return true
 		}
 	}
 
-	for _, follower := range w.GetFollowerActors(leader.GetName()) {
-		if follower.GetName() != killer.GetName() && follower.GetRoom() == room && actorIsGrouped(follower) {
+	for _, follower := range w.combatFollowersInRoom(leader, room) {
+		if follower != killer && follower.IsInGroup() {
 			return true
 		}
 	}
 	return false
-}
-
-func actorIsGrouped(actor Actor) bool {
-	switch member := actor.(type) {
-	case *Player:
-		return member.IsInGroup()
-	case *MobInstance:
-		return member.IsInGroup()
-	default:
-		return false
-	}
 }
 
 // AwardMobKillXP distributes experience to the killer and all grouped members in the same room.
