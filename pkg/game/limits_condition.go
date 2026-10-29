@@ -238,7 +238,7 @@ func (w *World) PointUpdate() {
 		if pos >= PosStunned {
 			// HP regen — limits.c:498-501
 			if m.GetHP() < m.GetMaxHP() {
-				gain := MobHitGain(m)
+				gain := w.MobHitGain(m)
 				m.SetHealth(m.GetHP() + gain)
 				if m.GetHP() > m.GetMaxHP() {
 					m.SetHealth(m.GetMaxHP())

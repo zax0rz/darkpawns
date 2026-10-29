@@ -1,0 +1,44 @@
+# depth-case: regen.mob-regenroom-tail
+# C runs the shared gain tail for every character: ROOM_REGENROOM adds half
+# the gain again after the NPC branch (src/limits.c:176-192,120-122), and a
+# mobile's stat report shows it. The trainee's hit gain becomes 2.5*1 + 1.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-room-flag 8105 18 on
+
+[setup:oracle]
+Regenroomact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Regenroomact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+stat trainee
+score

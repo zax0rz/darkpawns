@@ -1,0 +1,62 @@
+# depth-case: regen.equipment-tick-deltas
+# Explicit per-game-hour resource deltas over controlled DP_CLOCK ticks with
+# object 1317's +3 HIT/MANA/MOVE regen worn: point_update applies each gain
+# once per game hour and caps at max (src/limits.c:495-501,
+# src/comm.c:827-831). 700 pulses cross one game-hour boundary
+# (SECS_PER_MUD_HOUR 63 * PASSES_PER_SEC 10).
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 1317 1 8105 80
+force-load 1317
+
+[setup:oracle]
+Regentick
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Regentick
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Regentick mana 10
+set Regentick maxmana 100
+set Regentick hit 100
+set Regentick maxhit 500
+set Regentick move 20
+set Regentick maxmove 82
+get eye
+wear eye
+sleep
+
+[probe]
+score
+~dpclock pulse 700
+score
+~dpclock pulse 700
+score
+wake
+stand
+~dpclock pulse 700
+score
