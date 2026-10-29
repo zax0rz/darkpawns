@@ -182,7 +182,7 @@ func (w *World) junkCheapItems(ch *Player) {
 // everything in the command (act.item.c:551-567): 25% chance (case 0) the
 // donation secretly destroys the item/gold instead — mode silently becomes
 // junk, but messages still say "donate" and no exp is granted; otherwise
-// the destination room is picked 50/50 between donation_room_1 (8053) and
+// draws 1/2 select donation_room_1 (8053), and draw 3 selects
 // donation_room_2 (18204). These donation rooms intentionally don't match
 // the dump-spec rooms (8085/21223) — a pre-existing inconsistency in the
 // original game, preserved here rather than "fixed".

@@ -198,9 +198,31 @@ func (s *Session) sendGuarded(message []byte) {
 	}
 	select {
 	case s.send <- message:
+		if text, ok := promptableMessageText(message); ok && text != "" {
+			s.notePlayerOutput()
+		}
 	default:
 		slog.Warn("session send channel full — dropping message", "player", s.playerName)
 	}
+}
+
+// promptableMessageText recognizes the output that C process_output would
+// append a prompt to (src/comm.c:1634-1635). Raw control events manage their
+// own prompt state; structured state and entry frames contain no playing text.
+func promptableMessageText(message []byte) (string, bool) {
+	frame, ok := RenderTerminalFrame(message)
+	if !ok || frame.Kind != FrameText {
+		return "", false
+	}
+	var sm struct {
+		Data struct {
+			Type string `json:"type"`
+		} `json:"data"`
+	}
+	if json.Unmarshal(message, &sm) != nil || sm.Data.Type == "raw" {
+		return "", false
+	}
+	return frame.Text, true
 }
 
 // sendPlayerText queues one player-facing text frame with the same envelope,

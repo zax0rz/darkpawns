@@ -1,0 +1,4 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+process_output	quit	async-output.quit-observer	D3	audience	oracle-green	quit-observer-prompt@1	src/comm.c:633-648,1611-1644; src/act.other.c:133-134	Passive awake observer receives the leave act and a prompt; sleeper receives nothing. Reverted source is oracle-red. R1/R5h.
+process_output	broadcast	async-output.room-sink	D3	audience	unit-green	TestRoomBroadcastPromptsAcceptedText	src/comm.c:633-648,1634-1635	Direct and heartbeat room broadcasts prompt exactly once; raw controls do not request a prompt.
+do_drop	donate	async-output.donation-outcomes	D5	rng	oracle-green-multiseed	donate-outcomes-audience@1,2	src/act.item.c:529-575; src/config.c:159-160	Twelve actual donations with observers in 8053 and 18204 cover junk and both destinations; full draw streams match at seeds 1/2. Donation behavior was already faithful.
