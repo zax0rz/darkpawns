@@ -337,7 +337,39 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			mob.Runtime.ExpOverride = &drained
 			mob.mu.Unlock()
 		}
+		// die_with_killer's dying spec arm (src/fight.c:590-594): a
+		// spec-flagged victim's own special runs once more, with FIGHTING set
+		// to the killer. The special is dispatched with cmd 0 against the
+		// dying body's own state (POS_DEAD, HP below zero); gates written
+		// against that state act — puff says "Shit, I'm dead."
+		// (src/spec_procs.c:619-623), never_die fully heals and cancels the
+		// death tail below (src/spec_procs2.c:2075-2090).
+		if killer != nil {
+			if mob, ok := victim.(*MobInstance); ok && mob.HasMobFlag(MobFlagSpec) {
+				if spec := GetMobSpec(mob.GetVNum()); spec != nil {
+					mob.SetFightingBody(killer)
+					spec(w, nil, mob, "", "")
+				}
+			}
+		}
+		if mob, ok := victim.(*MobInstance); ok && mob.GetHP() >= 0 {
+			// never_die-style cancel: die_with_killer's HP<0 tail never runs
+			// (src/fight.c:599) — no stop_fighting, no POS_DEAD, no raw_kill —
+			// but damage()'s attitude-loot and autoloot tail still does
+			// (src/fight.c:1693-1712), against the still-standing body. The
+			// body stays in the world, so undo the death guard's latch.
+			mob.SetAlive(true)
+			w.attitudeLootAfterKill(killer, victim)
+			if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
+				w.DoGet(playerKiller, "all corpse")
+			}
+			return
+		}
 		w.handleMobDeath(victim, killer, attackType)
+		// die_with_killer's stop_fighting(killer) (src/fight.c:615-616): the
+		// killer leaves the fight its lethal blow ended; other combatants
+		// still fighting the flagged body do not (src/handler.c:1147-1151).
+		w.stopKillerAfterDie(killer)
 		w.attitudeLootAfterKill(killer, victim)
 		if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
 			// C damage() runs the ordinary do_get only after die_with_killer
@@ -347,6 +379,8 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 	} else {
 		w.recordKill(killer)
 		w.handlePlayerDeath(victim, true, attackType, killerName, killer) // combat death with killer
+		// die_with_killer's stop_fighting(killer) (src/fight.c:615-616).
+		w.stopKillerAfterDie(killer)
 		w.attitudeLootAfterKill(killer, victim)
 		// Publish typed event bus event
 		if w.Events != nil {
@@ -467,7 +501,12 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 	if deadMob == nil {
 		return
 	}
-	w.retireCombatBody(deadMob)
+	// raw_kill's own stop (src/fight.c:541-542): only the dying body leaves
+	// combat here. Survivors still fighting it keep their FIGHTING pointer at
+	// the flagged corpse and keep swinging at it until extract_char_final
+	// (src/handler.c:1147-1151); sweeping them here would end their turns a
+	// heartbeat early and drop those draws.
+	w.stopRawKillBody(deadMob)
 
 	// Cancel all pending events for this mob.
 	// Source: events.c event_cancel() — in original, extract_char would

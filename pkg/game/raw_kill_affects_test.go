@@ -159,6 +159,8 @@ func TestHandleMobDeathClearsMemoryAndHunting(t *testing.T) {
 	hunter.SetMobFlag(MobFlagMemory)
 	hunter.Remember(prey.GetName())
 	hunter.SetHunting(prey.GetName())
+	// Pending death for die_with_killer's HP gate (src/fight.c:599).
+	prey.SetHealth(-1)
 
 	w.HandleDeath(prey, nil, 0)
 

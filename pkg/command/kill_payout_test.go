@@ -565,6 +565,9 @@ func TestKillPayout_HandleDeath_MobRemovedFromActiveMobs(t *testing.T) {
 		t.Fatal("mob should be alive before HandleDeath")
 	}
 
+	// die_with_killer only runs its death tail for GET_HIT(ch) < 0
+	// (src/fight.c:599); a direct HandleDeath caller must stage that.
+	mob.SetHealth(-1)
 	ktw.world.HandleDeath(mob, p, game.TypeSlash)
 
 	if mob.IsAlive() {
@@ -610,6 +613,9 @@ func TestKillPayout_HandleDeath_IdempotentMobDeath(t *testing.T) {
 	preKills := p.Kills
 
 	mob := ktw.findMob()
+	// die_with_killer only runs its death tail for GET_HIT(ch) < 0
+	// (src/fight.c:599); a direct HandleDeath caller must stage that.
+	mob.SetHealth(-1)
 	ktw.world.HandleDeath(mob, p, game.TypeSlash)
 	killsAfterFirst := p.Kills
 
