@@ -165,7 +165,7 @@ jobs:
           set -euo pipefail
           # Runs after the signing step: no key file exists any more. The
           # login exists only for this step and is dropped immediately after.
-          echo "$PACKAGES_GITHUB_TOKEN" | docker login ghcr.io -u darkpawns --password-stdin
+          echo "$PACKAGES_GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           trap 'docker logout ghcr.io' EXIT
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
