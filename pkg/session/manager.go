@@ -951,18 +951,10 @@ func (m *Manager) SetDeathFunc() {
 			return
 		}
 
-		// Auto-loot: if killer has autoloot enabled, loot the corpse
+		// HandleDeath already routed autoloot through the game's ordinary get
+		// path. Mark the derived inventory and room views dirty for the session.
 		if killer != nil && !killer.IsNPC() {
 			if player, ok := killer.(*game.Player); ok && IsAutoLootEnabled(player) {
-				// Use doGet to transfer items from corpse to player inventory
-				items := m.world.GetItemsInRoom(victim.GetRoom())
-				for _, item := range items {
-					if item.IsCorpse && len(item.Contains) > 0 {
-						m.world.DoGet(player, "all "+item.GetShortDesc())
-						break
-					}
-				}
-				// Refresh killer's UI
 				if s := m.combatSession(killer); s != nil {
 					s.markDirty(VarInventory, VarRoomItems)
 				}

@@ -135,6 +135,36 @@ func (w *World) GetGroupMembers(playerName string) []*Player {
 	return members
 }
 
+// combatIsInGroup mirrors fight.c:is_in_group(). A follow relation alone is
+// not enough: the killer itself must be grouped and another grouped member of
+// that leader's group must be in the killer's room.
+func (w *World) combatIsInGroup(body combat.Combatant) bool {
+	killer, ok := combatPlayer(body)
+	if !ok || !killer.IsInGroup() {
+		return false
+	}
+
+	room := killer.GetRoom()
+	leader := killer
+	if master := w.combatFollowingBody(body); master != nil {
+		masterPlayer, ok := combatPlayer(master)
+		if !ok {
+			return false
+		}
+		leader = masterPlayer
+		if leader.GetRoom() == room && leader.IsInGroup() {
+			return true
+		}
+	}
+
+	for _, follower := range w.combatFollowersInRoom(leader, room) {
+		if follower != killer && follower.IsInGroup() {
+			return true
+		}
+	}
+	return false
+}
+
 // AwardMobKillXP distributes experience to the killer and all grouped members in the same room.
 // Solo kills use the C calc_level_diff() path with two levels of slack before
 // higher-level penalties apply.
@@ -246,10 +276,11 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 	}
 
 	// --- Experience handling ---
+	grouped := w.combatIsInGroup(killer)
 	members := w.combatGroupMembers(killer)
 
 	// Solo kill (not in any group) — fight.c group_gain() totMembers==1 path
-	if len(members) == 0 {
+	if !grouped {
 		p, ok := combatPlayer(killer)
 		if !ok {
 			return

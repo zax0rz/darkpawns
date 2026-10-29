@@ -17,7 +17,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -317,7 +316,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		if killer != nil {
 			victimActor, _ := victim.(Actor)
 			w.AwardMobKillXP(killer, victimActor, mobExp, mobGold, mobLevel, victimAlign)
-			if kp, ok := killer.(*Player); ok && kp.AutoGold && mobGold != 0 && len(w.GetGroupMembers(killerName)) == 0 {
+			if kp, ok := killer.(*Player); ok && kp.AutoGold && mobGold != 0 && !w.combatIsInGroup(killer) {
 				if mob, ok := victim.(*MobInstance); ok {
 					Act(w, false, kp, mob, nil, nil, "$n loots some gold from the corpse of $N.", "", ToRoom)
 					mob.SetGold(0)
@@ -340,6 +339,11 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		}
 		w.handleMobDeath(victim, killer, attackType)
 		w.attitudeLootAfterKill(killer, victim)
+		if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
+			// C damage() runs the ordinary do_get only after die_with_killer
+			// and its attitude-loot tail have returned (src/fight.c:1691-1712).
+			w.DoGet(playerKiller, "all corpse")
+		}
 	} else {
 		w.recordKill(killer)
 		w.handlePlayerDeath(victim, true, attackType, killerName, killer) // combat death with killer
@@ -501,29 +505,6 @@ func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant,
 		// C make_corpse ends with obj_to_room(corpse, ...) (fight.c:423-427).
 		if err := w.MoveObjectToRoomFront(corpse, roomVNum); err != nil {
 			slog.Warn("MoveObjectToRoomFront failed in mob death", "corpse_vnum", corpse.GetVNum(), "room", roomVNum, "error", err)
-		} else {
-			// Autoloot: if killer is a player with PRF_AUTOLOOT, loot all takeable items
-			if killer != nil && !killer.IsNPC() {
-				if playerKiller, ok := killer.(*Player); ok {
-					if playerKiller.Flags&(1<<PrfAutoLoot) != 0 {
-						var lootedNames []string
-						itemsCopy := make([]*ObjectInstance, len(corpse.Contains))
-						copy(itemsCopy, corpse.Contains)
-						for _, item := range itemsCopy {
-							if item != nil && item.IsTakeable() {
-								if err := w.MoveObjectToPlayerInventory(item, playerKiller); err == nil {
-									lootedNames = append(lootedNames, item.GetShortDesc())
-								}
-							}
-						}
-						if len(lootedNames) > 0 {
-							playerKiller.SendMessage(fmt.Sprintf("You autoloot: %s.\r\n", strings.Join(lootedNames, ", ")))
-						} else {
-							playerKiller.SendMessage("You autoloot the corpse but find nothing of value.\r\n")
-						}
-					}
-				}
-			}
 		}
 	}
 

@@ -869,7 +869,6 @@ func (w *World) combatGroupMembers(body combat.Combatant) []*Player {
 	}
 	leader := p
 	if master := w.combatFollowingBody(p); master != nil {
-		var ok bool
 		leader, ok = combatPlayer(master)
 		if !ok {
 			return nil

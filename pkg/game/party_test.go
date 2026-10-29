@@ -77,6 +77,35 @@ func TestAwardMobKillXPUsesGainExpCap(t *testing.T) {
 	}
 }
 
+func TestUngroupedFollowerKillUsesSoloXP(t *testing.T) {
+	w := newXPTestWorld(t)
+	leader := NewPlayer(1, "Leader", 1001)
+	killer := NewPlayer(2, "Killer", 1001)
+	leader.SetInGroup(true)
+	killer.SetFollowingBody(leader)
+	for _, player := range []*Player{leader, killer} {
+		if err := w.AddPlayer(player); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", player.Name, err)
+		}
+	}
+	output := captureMovementOutput(w)
+
+	w.AwardMobKillXP(killer, nil, 1000, 0, killer.GetLevel(), 0)
+
+	if got := killer.GetExp(); got != 1000 {
+		t.Fatalf("ungrouped killer XP = %d, want solo share 1000", got)
+	}
+	if got := leader.GetExp(); got != 0 {
+		t.Fatalf("grouped leader XP = %d, want 0 for an ungrouped killer", got)
+	}
+	if got := output[killer.Name].String(); !strings.Contains(got, "You receive 1000 experience points.\r\n") {
+		t.Fatalf("killer output = %q, want solo XP message", got)
+	}
+	if got := output[leader.Name]; got != nil && got.String() != "" {
+		t.Fatalf("leader output = %q, want no XP message", got.String())
+	}
+}
+
 func TestAwardMobKillXPCanAdvanceOneLevel(t *testing.T) {
 	w := newXPTestWorld(t)
 	killer := NewPlayer(1, "Hero", 1001)
