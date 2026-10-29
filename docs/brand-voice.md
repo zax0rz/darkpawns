@@ -594,6 +594,23 @@ The tools speak to the person running the server, usually in a hurry. Write like
 
 Every admin-ui, CLI and operator-docs brief should say "follow brand-voice §8.5". If the same offenders keep slipping through (`player(s)`, `PLR_`, "retained"), extend voice-lint to scan admin-ui and CLI strings.
 
+## 8.6 Docs Pages
+
+The docs at darkpawns.org/docs follow [`docs-style.md`](docs-style.md) for structure, formatting, words, images and diagrams. Voice works like this:
+
+| Section | Layer | Attitude |
+| --- | --- | --- |
+| **Play** | 2 + 3 | The most spice. Help-file energy: the useful thing first, then one dry aside. The world is dangerous and the page doesn't pretend otherwise. |
+| **Host** | §8.5 | Clear first, candid about the software, never about the reader. Touchstone, from Frontline's 3.0 changelog: "blew away clan.c to get the damn thing to compile correctly." A wry line in the summary or at the end, never inside steps, warnings or errors. |
+| **Build** | 1 + 2 | Wizard-doc register: you're competent, here's the sharp edge. |
+| **Reference** | 1 | Dry. Tables and exact values, no jokes. It's looked up, not read. |
+| **Project** | 1 + 3 | Plain technical prose. Precise, not cute. |
+| **Releases** | 3 | Warm and concrete. What changed for players first, then the plumbing. |
+
+**Humor may go** in a title (sparingly), the summary's last sentence, a Note aside, an empty state, the closing line, or a sourced epigraph. **It never goes** in numbered steps, Caution or Danger asides, error text, or anything about deleting, restoring or security. One joke per section at most; if it needs explaining, cut it.
+
+**Business language is banned** unless the page is mocking it (the list is in `docs-style.md` §5).
+
 ## 9. Quick Reference Card
 
 ### The framework at a glance
