@@ -1,0 +1,54 @@
+# depth-case: set.hitroll-damroll-sbyte-wrap
+# C's do_set clamps hitroll/damroll with RANGE(-20, 200) and then assigns the
+# int to points.hitroll/points.damroll, which are declared sbyte
+# (src/act.wizard.c:2836-2840; src/structs.h:916-917). The assignment truncates,
+# so 128..200 wrap into -128..-56 and stat's Hitroll/Damroll columns show the
+# wrapped value. The port stored the wide int.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18305 1 8162 183
+
+[setup:oracle]
+Setbyte
+Y
+bytepass
+bytepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Setbyte
+y
+bytepass
+bytepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+set mob cleaner damroll 200
+stat cleaner
+set mob cleaner damroll 128
+stat cleaner
+set mob cleaner damroll -20
+stat cleaner
+set mob cleaner hitroll 200
+stat cleaner
+set mob cleaner hitroll -99
+stat cleaner

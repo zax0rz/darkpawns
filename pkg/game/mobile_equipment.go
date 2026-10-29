@@ -260,6 +260,20 @@ func (w *World) equipMobileFromInventory(m *MobInstance, obj *ObjectInstance, po
 
 // C points use signed bytes/shorts; preserve assignment wrap without an
 // unchecked narrowing cast (src/structs.h:903-917,935; R1a).
+// sbyteValue truncates value to C's `sbyte` (signed char) storage width, the
+// type C gives points.hitroll and points.damroll (src/structs.h:916-917) and
+// every ability score. C assigns a widened expression back into the narrow
+// field, so an out-of-range value wraps instead of clamping: `set <victim>
+// damroll 200` stores -56 (RANGE(-20,200) is applied to the int first,
+// src/act.wizard.c:2836-2840).
+func sbyteValue(value int) int {
+	return mobileSignedPoint(value, 8)
+}
+
+// SByteValue is sbyteValue for callers outside this package (the `set`
+// command's clamp), so the C storage width is applied at one place.
+func SByteValue(value int) int { return sbyteValue(value) }
+
 func mobileSignedPoint(value, width int) int {
 	mask := (1 << uint(width)) - 1
 	value &= mask

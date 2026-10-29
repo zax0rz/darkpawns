@@ -84,10 +84,11 @@ func (p *Player) GetWis() int {
 // Source: fight.c uses GET_HITROLL(ch) macro
 // Sums APPLY_HITROLL from all equipped items PLUS affect-modified hitroll.
 // In the original C code, GET_HITROLL is a field that aggregates both equipment and spell-based modifiers.
+// That field is an sbyte (src/structs.h:916), so the aggregate wraps to it.
 func (p *Player) GetHitroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Hitroll + p.sumAffectModsLocked(ApplyHitroll) + p.sumEquipAffectModsLocked(ApplyHitroll)
+	return sbyteValue(p.Hitroll + p.sumAffectModsLocked(ApplyHitroll) + p.sumEquipAffectModsLocked(ApplyHitroll))
 }
 
 // SetHitroll sets the player's affect-modified hitroll bonus.
@@ -109,10 +110,11 @@ func (p *Player) AdjustHitroll(delta int) {
 // Source: fight.c uses GET_DAMROLL(ch) macro
 // Sums APPLY_DAMROLL from all equipped items PLUS affect-modified damroll.
 // In the original C code, GET_DAMROLL is a field that aggregates both equipment and spell-based modifiers.
+// That field is an sbyte (src/structs.h:917), so the aggregate wraps to it.
 func (p *Player) GetDamroll() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Damroll + p.sumAffectModsLocked(ApplyDamroll) + p.sumEquipAffectModsLocked(ApplyDamroll)
+	return sbyteValue(p.Damroll + p.sumAffectModsLocked(ApplyDamroll) + p.sumEquipAffectModsLocked(ApplyDamroll))
 }
 
 // SetDamroll sets the player's affect-modified damroll bonus.
