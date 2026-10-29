@@ -70,10 +70,37 @@ func (w *World) ManaGain(p *Player) int {
 }
 
 // ---------------------------------------------------------------------------
-// ManaGainNPC — from limits.c mana_gain() NPC branch
+// ManaGainNPC — from limits.c mana_gain() NPC branch plus the shared tail C
+// applies to every character: each of AFF_POISON/AFF_FLAMING/AFF_CUTTHROAT
+// quarters the gain and ROOM_REGENROOM adds half again (src/limits.c:61-125).
+// Mobiles carry conditions of -1 (src/db.c:1098-1101), so the hunger/thirst
+// shift never applies to them.
 // ---------------------------------------------------------------------------
-func ManaGainNPC(m *MobInstance) int {
-	return m.GetLevel()
+func (w *World) ManaGainNPC(m *MobInstance) int {
+	gain := m.GetLevel()
+	gain = w.applySharedGainTail(m, gain)
+	return gain
+}
+
+// applySharedGainTail ports the skill/room section that C runs after the
+// PC/NPC branches of mana_gain and hit_gain (src/limits.c:107-125, 176-192).
+// The poison/flaming/cutthroat quarters apply to every character; the
+// hunger/thirst quarter never fires for mobiles because read_mobile sets
+// their conditions to -1 (src/db.c:1098-1101).
+func (w *World) applySharedGainTail(m *MobInstance, gain int) int {
+	if m.HasAffect(AffPoison) {
+		gain >>= 2
+	}
+	if m.HasAffect(AffFlaming) {
+		gain >>= 2
+	}
+	if m.HasAffect(AffCutthroat) {
+		gain >>= 2
+	}
+	if roomVNum := m.GetRoom(); roomVNum > 0 && w.roomHasFlag(roomVNum, "regenroom") {
+		gain += gain >> 1
+	}
+	return gain
 }
 
 // ---------------------------------------------------------------------------
@@ -145,14 +172,21 @@ func (w *World) HitGain(p *Player) int {
 }
 
 // ---------------------------------------------------------------------------
-// MobHitGain — from limits.c hit_gain() NPC branch (lines 133-137)
+// MobHitGain — from limits.c hit_gain() NPC branch (lines 133-137) plus the
+// shared tail every character runs (src/limits.c:176-192): each of
+// AFF_POISON/AFF_FLAMING/AFF_CUTTHROAT quarters the gain and ROOM_REGENROOM
+// adds half again. Mobile conditions are -1, so hunger/thirst never shifts a
+// mobile's gain (src/db.c:1098-1101).
 // ---------------------------------------------------------------------------
-func MobHitGain(m *MobInstance) int {
+func (w *World) MobHitGain(m *MobInstance) int {
 	lvl := m.GetLevel()
+	var gain int
 	if lvl < 23 {
-		return lvl * 5 / 2 // integer approximation of 2.5×level (truncates, matching C)
+		gain = lvl * 5 / 2 // integer approximation of 2.5×level (truncates, matching C)
+	} else {
+		gain = 4 * lvl
 	}
-	return 4 * lvl
+	return w.applySharedGainTail(m, gain)
 }
 
 // ---------------------------------------------------------------------------
