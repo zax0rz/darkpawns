@@ -176,26 +176,35 @@ func (p *Player) GetMana() int {
 	return p.Mana
 }
 
-// GetHeight returns the player's height in centimeters.
+// GetHeight returns the player's effective height: the stored base plus every
+// current APPLY_CHAR_HEIGHT modifier (worn, timed, tattoo), wrapped to C's
+// unsigned byte (src/handler.c:165; src/structs.h:885-886).
 func (p *Player) GetHeight() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Height
+	_, heightMod, _ := p.physicalDeltaLocked()
+	return ubyteWrap(p.Height + heightMod)
 }
 
-// GetWeight returns the player's stored weight value, as exposed by C GET_WEIGHT.
+// GetWeight returns the player's effective weight: the stored base plus every
+// current APPLY_CHAR_WEIGHT modifier, wrapped to C's unsigned byte
+// (src/handler.c:162-163; src/structs.h:885-886).
 func (p *Player) GetWeight() int {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Weight
+	weightMod, _, _ := p.physicalDeltaLocked()
+	return ubyteWrap(p.Weight + weightMod)
 }
 
-// GetAgeParts returns the current MUD age components used by spell_identify.
+// GetAgeParts returns the current MUD age components used by spell_identify,
+// with every current APPLY_AGE modifier applied to the birth timestamp
+// (src/handler.c:160-161).
 func (p *Player) GetAgeParts() (years, months, days, hours int) {
 	p.mu.RLock()
 	birth := p.Birth
+	_, _, birthShift := p.physicalDeltaLocked()
 	p.mu.RUnlock()
-	age := Age(birth)
+	age := Age(birth - birthShift)
 	return age.Year, age.Month, age.Day, age.Hours
 }
 
