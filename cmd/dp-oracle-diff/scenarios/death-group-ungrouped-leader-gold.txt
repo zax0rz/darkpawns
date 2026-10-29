@@ -1,0 +1,122 @@
+# depth-case: death-rewards.ungrouped-leader-gold
+# C's autosplit leader-share block has no AFF_GROUP check (src/fight.c:768-
+# 781): a leader left ungrouped by `group <follower>` (src/act.other.c:726-
+# 727) still receives gold_per_member — the killer announces the share —
+# even though tot_members did not count the leader and the XP loop skips
+# them. The 101-coin split pays the leader and both grouped members 50 each
+# and drops the negative leftover.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Uleadkill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Uleadkill
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Uleader
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Uleader
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:third]
+Usecond
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:third]
+Usecond
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Uleader 8105
+teleport Usecond 8105
+follow Uleader
+send:third follow Uleader
+send:peer group Uleadkill
+send:peer group Usecond
+auto gold
+auto split
+set mob trainee hit 1
+set mob trainee gold 101
+set Uleadkill damroll 50
+set Uleadkill hitroll 50
+set Uleadkill level 10
+
+[probe]
+group
+hit trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+gold
+send:peer gold
+send:peer score
+send:third gold

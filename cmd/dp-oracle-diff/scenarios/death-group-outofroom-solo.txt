@@ -1,0 +1,83 @@
+# depth-case: death-rewards.group-outofroom-solo
+# A grouped member in another room neither counts in the divisor nor receives
+# a share: is_in_group(ch) needs another grouped member in the killer's room
+# (src/fight.c:637-657), so the leader's kill takes the solo wording and the
+# away member receives nothing (src/fight.c:1639-1667). The actor drops to
+# level 30 last so gain_exp still applies.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Oroomkiller
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Oroomkiller
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Oroompeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Oroompeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Oroompeer 8105
+send:peer follow Oroomkiller
+group all
+teleport Oroompeer 8106
+set mob trainee hit 1
+set Oroomkiller level 30
+
+[probe]
+hit trainee
+~dpclock pulse 20
+~dpclock pulse 20
+gold
+send:peer gold

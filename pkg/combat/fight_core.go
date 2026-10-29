@@ -929,7 +929,9 @@ func GroupGain(ch, victim Combatant) {
 	victimExp := cbGetExp(victim)
 	base := victimExp / numMembers
 	if base > 100 {
-		base -= int(float64(base) * 0.01)
+		// C subtracts in floating point and truncates once on assignment
+		// (src/fight.c:731-732).
+		base = int(float64(base) - float64(base)*0.01)
 	}
 	if base < 1 {
 		base = 1

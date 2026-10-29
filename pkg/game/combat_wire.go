@@ -852,38 +852,66 @@ func (w *World) combatFollowingBody(body combat.Combatant) combat.Combatant {
 	return nil
 }
 
-func (w *World) combatFollowersInRoom(body combat.Combatant, room int) []*Player {
-	var followers []*Player
+func (w *World) combatFollowersInRoom(body combat.Combatant, room int) []combat.Combatant {
+	var followers []combat.Combatant
 	for _, p := range w.GetAllPlayers() {
 		if p.GetRoom() == room && w.combatFollowingBody(p) == body {
 			followers = append(followers, p)
 		}
 	}
+	for _, m := range w.GetAllMobs() {
+		if m.GetRoom() == room && w.combatFollowingBody(m) == body {
+			followers = append(followers, m)
+		}
+	}
 	return followers
 }
 
-func (w *World) combatGroupMembers(body combat.Combatant) []*Player {
-	p, ok := combatPlayer(body)
-	if !ok {
-		return nil
+// combatGroupedBody reports a body's AFF_GROUP state for players and mobiles
+// alike. C's group code never filters on IS_NPC (src/fight.c:637-657, 708-848).
+func combatGroupedBody(body combat.Combatant) bool {
+	switch b := body.(type) {
+	case *Player:
+		return b.IsInGroup()
+	case *MobInstance:
+		return b.IsInGroup()
 	}
-	leader := p
-	if master := w.combatFollowingBody(p); master != nil {
-		leader, ok = combatPlayer(master)
-		if !ok {
-			return nil
-		}
+	return false
+}
+
+// combatGroupMembers returns body's group the way group_gain() builds it
+// (src/fight.c:716-727): the leader first, then every grouped follower. C
+// counts players and mobiles identically here, so the list holds both; the
+// caller applies C's in-room filter. Followers keep C's follower-list order
+// (newest first; add_follower prepends, src/utils.c).
+func (w *World) combatGroupMembers(body combat.Combatant) []combat.Combatant {
+	leader := body
+	if master := w.combatFollowingBody(body); master != nil {
+		leader = master
 	}
-	var members []*Player
-	if leader.IsInGroup() {
+	var members []combat.Combatant
+	if combatGroupedBody(leader) {
 		members = append(members, leader)
 	}
-	for _, follower := range w.GetAllPlayers() {
-		if follower != leader && w.combatFollowingBody(follower) == leader && follower.IsInGroup() {
-			members = append(members, follower)
+	followers := make([]combat.Combatant, 0, 4)
+	for _, p := range w.GetAllPlayers() {
+		if p != leader && w.combatFollowingBody(p) == leader && combatGroupedBody(p) {
+			followers = append(followers, p)
 		}
 	}
-	return members
+	for _, m := range w.GetAllMobs() {
+		if m != leader && w.combatFollowingBody(m) == leader && combatGroupedBody(m) {
+			followers = append(followers, m)
+		}
+	}
+	sort.SliceStable(followers, func(i, j int) bool {
+		left, right := actorFollowingSequence(followers[i]), actorFollowingSequence(followers[j])
+		if left != right {
+			return left > right
+		}
+		return strings.ToLower(followers[i].GetName()) < strings.ToLower(followers[j].GetName())
+	})
+	return append(members, followers...)
 }
 
 // FollowingBody returns the retained master or the unique player-name fallback.

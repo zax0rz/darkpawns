@@ -1515,8 +1515,9 @@ func applyMobObjectFixtures(worldDir string, fixtures []oraclediff.MobObjectFixt
 // applyMobFlagFixtures sets or clears action flags on authoritative mob
 // prototypes in disposable worlds. The fixture is intentionally restricted to
 // the flags needed by focused vehicles: AGGRESSIVE/RANDZON for controlled
-// placement and combat, and SPEC for a registered native procedure whose
-// authored mob is dormant.
+// placement and combat, SPEC for a registered native procedure whose
+// authored mob is dormant, and HELPER for the mobile_activity assist arms
+// (src/mobact.c:284-302).
 func applyMobFlagFixtures(worldDir string, fixtures []oraclediff.MobFlagFixture) error {
 	for _, fixture := range fixtures {
 		bit, ok := map[string]uint{"AGGRESSIVE": 5, "SPEC": 0, "RANDZON": 20, "HELPER": 12, "AGGR24": 19}[strings.ToUpper(fixture.Flag)]

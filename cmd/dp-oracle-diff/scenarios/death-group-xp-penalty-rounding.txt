@@ -1,0 +1,84 @@
+# depth-case: death-rewards.group-penalty-rounding
+# C subtracts the 1% group penalty in floating point and truncates once on
+# assignment: base = (int)(base - base*0.01) (src/fight.c:731-732). A
+# 300-experience trainee over two members is base 150, and each share is
+# 148 — not the 149 a pre-truncated int(base*0.01) produces. Level-matched
+# killer and victim keep every calc_level_diff penalty off the share.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Roundkill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Roundkill
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Roundpart
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Roundpart
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Roundpart 8105
+send:peer follow Roundkill
+group all
+set mob trainee hit 1
+set mob trainee gold 0
+set mob trainee level 10
+set mob trainee exp 300
+set Roundkill damroll 50
+set Roundkill hitroll 50
+set Roundkill level 10
+
+[probe]
+hit trainee
+~dpclock pulse 20
+~dpclock pulse 20

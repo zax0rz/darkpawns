@@ -1,0 +1,77 @@
+# depth-case: death-rewards.mixed-group-npc-kill
+# The grouped charmed mobile lands the killing blow. C runs group_gain with
+# ch = the mobile killer: the grouped player leader still receives a share
+# (src/fight.c:1637-1638, 708-745), while the mobile's own perform_group_gain
+# send and gain_exp are skipped and change_alignment returns for NPCs
+# (src/fight.c:486-489, 702). The leader's bare fists cannot kill the
+# 2000-hit recruit; the pet's one-shot damage does. The pet's assist arm
+# needs MOB_HELPER (src/mobact.c:284-302).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-mob 16302 1 8105 80
+set-mob-flag 16303 HELPER
+
+[setup:oracle]
+Mixednpckill
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mixednpckill
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob recruit maxhit 1000
+set mob recruit hit 1000
+set mob recruit hitroll -20
+set mob recruit damroll -20
+set mob trainee level 1
+set Mixednpckill mana 5000
+set Mixednpckill maxmana 5000
+look
+cast 'charm' trainee
+~dpclock pulse 20
+group all
+set mob trainee hitroll 100
+set mob trainee damroll 100
+set Mixednpckill level 30
+
+[probe]
+group
+hit recruit
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+score
