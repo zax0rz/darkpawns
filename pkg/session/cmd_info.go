@@ -190,10 +190,11 @@ func cmdScore(s *Session) error {
 	var buf strings.Builder
 
 	// 1. Name + Age (from C line 1185)
-	// GET_AGE(ch) calculation
-	age := game.Age(p.Birth)
-	fmt.Fprintf(&buf, "%s                           Age: %d years", p.Name, age.Year)
-	if age.Month == 0 && age.Day == 0 {
+	// GET_AGE(ch) over the affected birth timestamp: worn/timed/tattoo
+	// APPLY_AGE modifiers shift birth (src/handler.c:160-161).
+	years, months, days, _ := p.GetAgeParts()
+	fmt.Fprintf(&buf, "%s                           Age: %d years", p.Name, years)
+	if months == 0 && days == 0 {
 		buf.WriteString(" (It's your birthday today.)")
 	}
 	buf.WriteString("\r\n")
