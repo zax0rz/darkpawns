@@ -787,14 +787,35 @@ func specWerewolf(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	if werewolfNumber(0, 3) == 0 && vict.GetRoom() == me.GetRoomVNum() && me.GetHP() > 0 {
 		Act(w, true, me, vict, nil, nil, "$n tears into your leg with $s huge fangs!", "", ToVict)
 		Act(w, true, me, vict, nil, nil, "$n rips apart $N's leg with $s fangs!", "", ToNotVict)
-		combat.TakeDamage(me, vict, combat.RollDice(me.GetLevel(), 2), combat.TYPE_BITE)
-		if player, ok := vict.(*Player); ok {
-			moveReduction := me.GetLevel() * 3 / 2
-			newMove := player.GetMove() - moveReduction
+		dam := combat.RollDice(me.GetLevel(), 2)
+		if vict.IsNPC() {
+			// The bite is an ordinary damage() call (src/spec_procs3.c:446):
+			// its lethal tail is the same reward/extraction seam as any
+			// combat kill, and die_with_killer's MS_DEATH arm fires the
+			// victim's death script before the bookkeeping
+			// (src/fight.c:588-593).
+			combat.TakeDamageWithDeath(me, vict, dam, combat.TYPE_BITE, func() {
+				w.FireMobDeathScript(vict, me, me.GetRoomVNum())
+				w.HandleDeath(vict, me, combat.TYPE_BITE)
+			})
+		} else {
+			combat.TakeDamage(me, vict, dam, combat.TYPE_BITE)
+		}
+		// C subtracts level*1.5 as floating point and truncates the stored
+		// result, for any victim (src/spec_procs3.c:447-449).
+		switch v := vict.(type) {
+		case *Player:
+			newMove := int(float64(v.GetMove()) - float64(me.GetLevel())*1.5)
 			if newMove < 0 {
 				newMove = 0
 			}
-			player.SetMove(newMove)
+			v.SetMove(newMove)
+		case *MobInstance:
+			newMove := int(float64(v.GetMove()) - float64(me.GetLevel())*1.5)
+			if newMove < 0 {
+				newMove = 0
+			}
+			v.SetMove(newMove)
 		}
 	}
 	return true

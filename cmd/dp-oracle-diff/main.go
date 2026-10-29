@@ -1519,7 +1519,7 @@ func applyMobObjectFixtures(worldDir string, fixtures []oraclediff.MobObjectFixt
 // authored mob is dormant.
 func applyMobFlagFixtures(worldDir string, fixtures []oraclediff.MobFlagFixture) error {
 	for _, fixture := range fixtures {
-		bit, ok := map[string]uint{"AGGRESSIVE": 5, "SPEC": 0, "RANDZON": 20}[strings.ToUpper(fixture.Flag)]
+		bit, ok := map[string]uint{"AGGRESSIVE": 5, "SPEC": 0, "RANDZON": 20, "HELPER": 12, "AGGR24": 19}[strings.ToUpper(fixture.Flag)]
 		if !ok {
 			return fmt.Errorf("unsupported mob flag %q", fixture.Flag)
 		}
