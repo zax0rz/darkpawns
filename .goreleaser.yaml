@@ -145,7 +145,8 @@ winget:
     commit_author:
       name: darkpawns-release
       email: release@darkpawns.org
-    path: manifests/d/DarkPawns
+    # winget requires manifests/<letter>/<Publisher>/<Package>/<version>/.
+    path: "manifests/d/DarkPawns/DarkPawns/{{ .Version }}"
     # Generated here; the workflow commits these to the fork branch and opens
     # the microsoft/winget-pkgs pull request once the release is live.
     skip_upload: true

@@ -408,10 +408,9 @@ func findCarriedItem(ch *Player, target combat.Combatant, itemName string) (*Obj
 func findEquippedItem(ch *Player, target combat.Combatant, itemName string) (*ObjectInstance, int, bool) {
 	switch target := target.(type) {
 	case *Player:
-		for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
-			item, ok := target.Equipment.GetItemInSlot(slot)
-			if ok && item != nil && isName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
-				return item, int(slot), true
+		for _, item := range COrderedWorn(target) {
+			if item != nil && isName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
+				return item, int(item.Location.Slot), true
 			}
 		}
 	case *MobInstance:

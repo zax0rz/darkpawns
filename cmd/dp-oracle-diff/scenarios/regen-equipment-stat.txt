@@ -1,0 +1,57 @@
+# depth-case: regen.equipment-stat-display
+# Object 1317 carries APPLY_HIT_REGEN/MANA_REGEN/MOVE_REGEN +3. The stat
+# report's per-hour gain fields prove C's ordering and gates: a positive
+# MANA_REGEN applies only while sleeping and before the class multipliers;
+# HIT_REGEN applies inside the sleeping case after the half bonus;
+# MOVE_REGEN applies inside the sleeping case before the half bonus
+# (src/limits.c:89-95,152-158,224-235; src/act.wizard.c:802-821).
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 1317 1 8105 80
+force-load 1317
+
+[setup:oracle]
+Regenact
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Regenact
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+stat Regenact
+get eye
+wear eye
+stat Regenact
+sleep
+stat Regenact
+wake
+stand
+stat Regenact
+remove eye
+sleep
+stat Regenact

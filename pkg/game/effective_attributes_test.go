@@ -81,6 +81,52 @@ func attrItem(location, modifier int) *ObjectInstance {
 	return NewObjectInstance(&parser.Obj{VNum: 14425, Keywords: "vest", WearFlags: [4]int{9}, Weight: 1, Affects: []parser.ObjAffect{{Location: location, Modifier: modifier}}}, -1)
 }
 
+func TestEquipmentApplySpellAffectSetRemoveAndTimedPrecedence(t *testing.T) {
+	p := attrPlayer()
+	const sanctuary = uint64(1) << affSanctuary
+	item := attrItem(ApplySpell, affSanctuary)
+	if err := p.Equipment.Equip(item, p.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	p.AffectTotal()
+	if !p.IsAffected(affSanctuary) || p.GetAffectBitVector()&sanctuary == 0 {
+		t.Fatal("worn APPLY_SPELL did not set its AFF bit")
+	}
+	if err := p.Equipment.Unequip(SlotBody, p.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	p.AffectTotal()
+	if p.IsAffected(affSanctuary) {
+		t.Fatal("removing the last APPLY_SPELL item left its AFF bit set")
+	}
+
+	// A timed affect with the same bitvector owns the bit across equipment
+	// removal, matching affect_modify_ar's exact bitvector comparison.
+	p.AddAffect(engine.NewAffectDirect(1, ApplyNone, 3, 0, engine.AFFSanctuary, "sanctuary"))
+	item = attrItem(ApplySpell, affSanctuary)
+	if err := p.Equipment.Equip(item, p.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	p.AffectTotal()
+	if err := p.Equipment.Unequip(SlotBody, p.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	p.AffectTotal()
+	if !p.IsAffected(affSanctuary) {
+		t.Fatal("removing APPLY_SPELL cleared a bit still supplied by a timed affect")
+	}
+}
+
+func TestEngineApplyLocationsMatchDarkPawns(t *testing.T) {
+	got := []int{engine.ApplyCha, engine.ApplyMana, engine.ApplyHit, engine.ApplyMove, engine.ApplyHitRegen, engine.ApplyManaRegen, engine.ApplyMoveRegen, engine.ApplySpell}
+	want := []int{6, 12, 13, 14, 26, 27, 28, 29}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("apply location %d = %d, want %d", i, got[i], want[i])
+		}
+	}
+}
+
 // Each public equipment entry point must notify after releasing eq.mu.
 // src/handler.c:748,792. A failed equip does not total restored stats.
 

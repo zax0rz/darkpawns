@@ -1,6 +1,10 @@
 package game
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
 
 // Tier-2 fidelity golden test (deterministic — no RNG, no game-code change).
 //
@@ -30,7 +34,7 @@ func TestHitGainNPC_Golden(t *testing.T) {
 	}
 	for _, tt := range tests {
 		m := &MobInstance{Level: tt.level}
-		got := MobHitGain(m)
+		got := (&World{}).MobHitGain(m)
 		if got != tt.want {
 			t.Errorf("MobHitGain(level=%d) = %d, want %d (per src/limits.c)", tt.level, got, tt.want)
 		}
@@ -150,7 +154,7 @@ func TestHitGain_PoisonPenalty(t *testing.T) {
 // NPC mana regen: gain = GET_LEVEL(ch)
 func TestManaGainNPC_Golden(t *testing.T) {
 	m := &MobInstance{Level: 25}
-	got := ManaGainNPC(m)
+	got := (&World{}).ManaGainNPC(m)
 	if got != 25 {
 		t.Errorf("ManaGainNPC(level=25) = %d, want 25 (per src/limits.c)", got)
 	}
@@ -388,5 +392,57 @@ func TestMoveGain_HungerPenalty(t *testing.T) {
 	want := 5
 	if got != want {
 		t.Errorf("MoveGain(hungry) = %d, want %d (per src/limits.c hunger penalty)", got, want)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// NPC shared tail — src/limits.c:176-192,107-125
+// ---------------------------------------------------------------------------
+
+// C runs the poison/flaming/cutthroat quarters and the ROOM_REGENROOM bonus
+// after the NPC branch too; mobiles carry conditions of -1 so hunger and
+// thirst never shift a mobile's gain (src/db.c:1098-1101).
+func TestMobGainSharedTail(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{
+			{VNum: 1001, Name: "Plain", Zone: 1},
+			// ROOM_REGENROOM is bit 18 (src/constants.c room list).
+			{VNum: 1002, Name: "Regen", Zone: 1, Flags: []string{"262144", "0", "0", "0"}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	base := &MobInstance{Level: 10, RoomVNum: 1001}
+	if got, want := w.MobHitGain(base), 25; got != want {
+		t.Fatalf("plain MobHitGain = %d, want %d", got, want)
+	}
+	if got, want := w.ManaGainNPC(base), 10; got != want {
+		t.Fatalf("plain ManaGainNPC = %d, want %d", got, want)
+	}
+
+	poisoned := &MobInstance{Level: 10, RoomVNum: 1001}
+	poisoned.SetAffected(AffPoison)
+	if got, want := w.MobHitGain(poisoned), 6; got != want {
+		t.Fatalf("poisoned MobHitGain = %d, want %d (25>>2)", got, want)
+	}
+	if got, want := w.ManaGainNPC(poisoned), 2; got != want {
+		t.Fatalf("poisoned ManaGainNPC = %d, want %d (10>>2)", got, want)
+	}
+
+	inRegen := &MobInstance{Level: 10, RoomVNum: 1002}
+	if got, want := w.MobHitGain(inRegen), 37; got != want {
+		t.Fatalf("regenroom MobHitGain = %d, want %d (25+12)", got, want)
+	}
+	if got, want := w.ManaGainNPC(inRegen), 15; got != want {
+		t.Fatalf("regenroom ManaGainNPC = %d, want %d (10+5)", got, want)
+	}
+
+	both := &MobInstance{Level: 10, RoomVNum: 1002}
+	both.SetAffected(AffPoison)
+	if got, want := w.MobHitGain(both), 9; got != want {
+		t.Fatalf("poisoned regenroom MobHitGain = %d, want %d ((25>>2)+1)", got, want)
 	}
 }

@@ -1,0 +1,65 @@
+# depth-case: equipment.physical-affects.worn
+# APPLY_AGE (obj 3126 medallion), APPLY_CHAR_WEIGHT (obj 19515 bow), and
+# APPLY_CHAR_HEIGHT (obj 20301 gauntlets) fold into the score age line and
+# spell_identify's age/height/weight report while worn, and unwind on removal
+# (src/handler.c:160-166; src/spells.c:594-605; src/act.informative.c:1185).
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 3126 1 8004 80
+force-load 3126
+spawn-obj 19515 1 8004 80
+force-load 19515
+spawn-obj 20301 1 8004 80
+force-load 20301
+
+[setup:oracle]
+Physactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Physactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+remove all
+
+[probe]
+score
+get medallion
+wear medallion
+score
+get gauntlets
+wear gauntlets
+get bow
+wear bow
+score
+remove medallion
+score
+wear medallion
+~dpclock pulse 20
+cast 'identify' Physactor
+~dpclock pulse 20
+remove all
+score

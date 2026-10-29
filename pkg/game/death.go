@@ -326,6 +326,17 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		// damage() awards XP/autogold before raw_kill's cry and corpse
 		// (src/fight.c:1644-1667, 1691, 573-578).
 		w.recordKill(killer)
+		// die_with_killer's first line drains the victim's experience by
+		// 1/37 for every character — mobiles included, because gain_exp's
+		// immortal guard only skips PCs (src/fight.c:588;
+		// src/limits.c:287-291). The drained value stays visible through
+		// the deferred-extraction window.
+		if mob, ok := victim.(*MobInstance); ok {
+			drained := max(0, mob.GetExp()-mob.GetExp()/37)
+			mob.mu.Lock()
+			mob.Runtime.ExpOverride = &drained
+			mob.mu.Unlock()
+		}
 		w.handleMobDeath(victim, killer, attackType)
 		w.attitudeLootAfterKill(killer, victim)
 		if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {

@@ -1,0 +1,79 @@
+# depth-case: equipment.look-character.c-slot-order
+# The target starts in body armor and adds a ring. C lists the ring before the
+# body item regardless of Go's internal EquipmentSlot numbering.
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 58.obj
+spawn-obj 5800 1 8004 80
+force-load 5800
+spawn-obj 18602 1 8004 80
+force-load 18602
+
+[setup:oracle]
+Egonwearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Egonwearer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Egonlook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Egonlook
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Egonlook 8004
+remove all
+get breast
+wear breast
+get ring
+wear ring
+
+[probe:observer]
+look Egonwearer

@@ -155,9 +155,9 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	s.sendStatMobLine(fmt.Sprintf("Race: [%d] %s", race, wizardMobRaceName(race)))
 	s.sendStatMobLine("*************-------------*************-------------*************")
 	s.sendStatMobLine(fmt.Sprintf("Str: [%d/%d]\tInt: [%d]\t*\tHit p.:  [%d/%d+%d]",
-		mob.GetStr(), mob.GetStrAdd(), mob.GetInt(), mob.GetHP(), mob.GetMaxHP(), game.MobHitGain(mob)))
+		mob.GetStr(), mob.GetStrAdd(), mob.GetInt(), mob.GetHP(), mob.GetMaxHP(), s.manager.world.MobHitGain(mob)))
 	s.sendStatMobLine(fmt.Sprintf("Dex: [%d]\tWis: [%d]\t*\tMana p.: [%d/%d+%d]",
-		mob.GetDex(), mob.GetWis(), mob.GetMana(), mob.GetMaxMana(), game.ManaGainNPC(mob)))
+		mob.GetDex(), mob.GetWis(), mob.GetMana(), mob.GetMaxMana(), s.manager.world.ManaGainNPC(mob)))
 	s.sendStatMobLine(fmt.Sprintf("Con: [%d/%d]\tCha: [%d]\t*\tMove p.: [%d/%d+%d]",
 		mob.GetCon(), mob.GetCon(), mob.GetCha(), mob.GetMove(), mob.GetMaxMove(), game.MoveGainNPC(mob)))
 	s.sendStatMobLine("*************-------------*************-------------*************")

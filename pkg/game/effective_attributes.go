@@ -63,9 +63,54 @@ func (p *Player) CopyBaseAttributes() {
 func (p *Player) affectTotalLocked() {
 	worn := COrderedWorn(p)
 	p.RaceHates = raceHateSlotsForItems(worn)
+	p.equipmentAffectSet, p.equipmentAffectClear = equipmentSpellAffectOverlay(worn, p.ActiveAffects)
 	stats := p.affectTotalForItemsLocked(worn)
 	p.effectiveAttributes = &stats
 	p.Alignment = max(-1000, min(p.Alignment, 1000))
+}
+
+// equipmentSpellAffectOverlay mirrors the APPLY_SPELL arm of
+// affect_modify_ar (src/handler.c:240-262). C stores the modifier as an AFF
+// bit number, and a timed affect whose bitvector is exactly that bit suppresses
+// the equipment operation in either direction.
+func equipmentSpellAffectOverlay(items []*ObjectInstance, active []*engine.Affect) (set, clear uint64) {
+	for _, item := range items {
+		if item == nil {
+			continue
+		}
+		for _, affect := range item.GetAffects() {
+			if affect.Location != ApplySpell || affect.Modifier == 0 {
+				continue
+			}
+			bit := affect.Modifier
+			if bit < 0 {
+				bit = -bit
+			}
+			if bit >= 64 {
+				continue
+			}
+			mask := uint64(1) << uint(bit)
+			timedFlag := AffBitToEngineFlag[bit]
+			providedByTimedAffect := false
+			for _, current := range active {
+				if current != nil && timedFlag != 0 && current.Flags == timedFlag {
+					providedByTimedAffect = true
+					break
+				}
+			}
+			if providedByTimedAffect {
+				continue
+			}
+			if affect.Modifier > 0 {
+				set |= mask
+				clear &^= mask
+			} else {
+				clear |= mask
+				set &^= mask
+			}
+		}
+	}
+	return set, clear
 }
 
 // affectTotalForItemsLocked is affect_total's ability pass over an explicit

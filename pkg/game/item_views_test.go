@@ -181,6 +181,86 @@ func TestDoEquipmentRendersEveryCWearSlot(t *testing.T) {
 	}
 }
 
+func TestCharacterLookHidesCoveredEquipmentFromOtherPlayers(t *testing.T) {
+	_, viewer, _ := newViewTestWorld(t)
+	viewer.SetLevel(1)
+	target := NewPlayer(2, "Wearer", 100)
+	for _, item := range []struct {
+		slot EquipmentSlot
+		name string
+	}{
+		{SlotBody, "armor"},
+		{SlotAbout, "cloak"},
+		{SlotFingerR, "right ring"},
+		{SlotFingerL, "left ring"},
+		{SlotHands, "gloves"},
+	} {
+		obj := NewObjectInstance(&parser.Obj{ShortDesc: "a " + item.name, Keywords: item.name}, -1)
+		if err := target.Equipment.SetSlot(item.slot, obj); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var result ObservationResult
+	appendPlayerEquipment(&result, viewer, target)
+	var onlooker strings.Builder
+	for _, message := range result.Messages {
+		onlooker.WriteString(message.Format)
+	}
+	for _, covered := range []string{"a armor", "a right ring", "a left ring"} {
+		if strings.Contains(onlooker.String(), covered) {
+			t.Fatalf("covered item %q visible to another player: %q", covered, onlooker.String())
+		}
+	}
+	for _, cover := range []string{"a cloak", "a gloves"} {
+		if !strings.Contains(onlooker.String(), cover) {
+			t.Fatalf("covering item %q missing from look: %q", cover, onlooker.String())
+		}
+	}
+
+	var selfView ObservationResult
+	appendPlayerEquipment(&selfView, target, target)
+	var selfOutput strings.Builder
+	for _, message := range selfView.Messages {
+		selfOutput.WriteString(message.Format)
+	}
+	if !strings.Contains(selfOutput.String(), "a armor (covered)") || !strings.Contains(selfOutput.String(), "a right ring (covered)") {
+		t.Fatalf("wearer's own view lacks covered annotations: %q", selfOutput.String())
+	}
+}
+
+func TestCharacterLookListsEverySlotInCOrder(t *testing.T) {
+	_, viewer, _ := newViewTestWorld(t)
+	viewer.SetLevel(LVL_IMPL)
+	target := NewPlayer(2, "Wearer", 100)
+	for cPos, slot := range cWearToGoSlot {
+		item := NewObjectInstance(&parser.Obj{
+			VNum: 3300 + cPos, ShortDesc: fmt.Sprintf("slot-%02d", cPos),
+		}, -1)
+		if err := target.Equipment.SetSlot(slot, item); err != nil {
+			t.Fatalf("set slot %d: %v", cPos, err)
+		}
+	}
+
+	var result ObservationResult
+	appendPlayerEquipment(&result, viewer, target)
+	last := -1
+	for cPos := range cWearToGoSlot {
+		needle := fmt.Sprintf("slot-%02d", cPos)
+		found := -1
+		for i, message := range result.Messages {
+			if strings.Contains(message.Format, needle) {
+				found = i
+				break
+			}
+		}
+		if found <= last {
+			t.Fatalf("character look slot %d was missing or out of C order: messages=%+v", cPos, result.Messages)
+		}
+		last = found
+	}
+}
+
 // ---------------------------------------------------------------------------
 // DP-1133: object-flag color parity with C show_obj_to_char / oc_show_list
 // ---------------------------------------------------------------------------

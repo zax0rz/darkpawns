@@ -1,0 +1,80 @@
+# depth-case: equipment.apply-spell.worn-bit
+# Object 20016 has APPLY_SPELL 7 (sanctuary) and 4. Exercise both equip and
+# removal while checking the character equipment-affect report, score and the
+# observer's room list sanctuary aura.
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 20016 1 8004 80
+force-load 20016
+
+[setup:oracle]
+Egonmage
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Egonmage
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Egonlook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Egonlook
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Egonlook 8004
+remove all
+
+[probe]
+look
+get staff
+wield staff
+send:observer look
+score
+remove staff
+send:observer look
+score
