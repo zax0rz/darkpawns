@@ -99,3 +99,13 @@ func TestPublishJobInstallsPinnedGoReleaserFirst(t *testing.T) {
 		t.Fatal("publish job must not run the third-party goreleaser action")
 	}
 }
+
+// v0.1.7's winget submission failed validation because the manifests sat in
+// manifests/d/DarkPawns/ instead of the package/version folder winget-pkgs
+// requires.
+func TestWingetManifestsUsePackageVersionFolder(t *testing.T) {
+	config := repoFile(t, ".goreleaser.yaml")
+	if !strings.Contains(config, `path: "manifests/d/DarkPawns/DarkPawns/{{ .Version }}"`) {
+		t.Fatal("winget manifests must go to manifests/d/DarkPawns/DarkPawns/<version>/")
+	}
+}
