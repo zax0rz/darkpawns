@@ -503,7 +503,11 @@ func (p *Player) SetSavingThrow(idx int, val int) {
 func (p *Player) GetAffectBitVector() uint64 {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	return p.Affects
+	return p.effectiveAffectBitsLocked()
+}
+
+func (p *Player) effectiveAffectBitsLocked() uint64 {
+	return (p.Affects | p.equipmentAffectSet) &^ p.equipmentAffectClear
 }
 
 // SetAffectBitVector sets the affect bitmask.

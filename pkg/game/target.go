@@ -249,9 +249,8 @@ func (w *World) ResolveObjectInEquipment(ch *Player, name string) (*ObjectInstan
 	if ch == nil || ch.Equipment == nil {
 		return nil, false
 	}
-	equipped := ch.Equipment.GetEquippedItems()
-	for slot := EquipmentSlot(0); slot < SlotMax; slot++ {
-		if object := equipped[slot]; object != nil && isCompleteName(name, object.GetKeywords()) {
+	for _, object := range COrderedWorn(ch) {
+		if object != nil && isCompleteName(name, object.GetKeywords()) {
 			return object, true
 		}
 	}

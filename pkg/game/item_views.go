@@ -122,7 +122,7 @@ func (w *World) DoEquipment(ch *Player) {
 		b.WriteString(cWearWhere[i])
 		if chCanSeeObj(ch, item) {
 			b.WriteString(item.GetShortDesc())
-			b.WriteString(coloredEquipmentObjectFlags(ch, item, i))
+			b.WriteString(coloredEquipmentObjectFlags(ch, ch, item, i))
 			b.WriteString("\r\n")
 		} else {
 			b.WriteString("Something.\r\n")
@@ -138,9 +138,9 @@ func (w *World) DoEquipment(ch *Player) {
 // coloredEquipmentObjectFlags adds the equipment-only covered annotation.
 // C's show_obj_to_char receives the wearer's worn_on position and marks an
 // item covered when another equipped item hides that position.
-func coloredEquipmentObjectFlags(ch *Player, object *ObjectInstance, cPos int) string {
-	flags := coloredObjectVisibleFlags(ch, object)
-	if !equipmentPositionCovered(ch, cPos) {
+func coloredEquipmentObjectFlags(viewer, wearer *Player, object *ObjectInstance, cPos int) string {
+	flags := coloredObjectVisibleFlags(viewer, object)
+	if !equipmentPositionCovered(wearer, cPos) {
 		return flags
 	}
 	if flags == "" {

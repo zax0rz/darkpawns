@@ -180,7 +180,7 @@ func generateAffectID() string {
 	return fmt.Sprintf("aff_%s_%d", time.Now().Format("20060102150405.000000000"), affectIDSequence.Add(1))
 }
 
-// --- APPLY_* location constants (from CircleMUD structs.h) ---
+// --- APPLY_* location constants (from Dark Pawns src/structs.h) ---
 
 const (
 	ApplyNone         = 0
@@ -189,12 +189,17 @@ const (
 	ApplyInt          = 3  // APPLY_INT
 	ApplyWis          = 4  // APPLY_WIS
 	ApplyCon          = 5  // APPLY_CON
-	ApplyCha          = 7  // APPLY_CHA
+	ApplyCha          = 6  // APPLY_CHA
+	ApplyClass        = 7  // APPLY_CLASS
 	ApplyLevel        = 8  // APPLY_LEVEL
 	ApplyAge          = 9  // APPLY_AGE
-	ApplyMana         = 10 // APPLY_MANA
-	ApplyHit          = 11 // APPLY_HIT
-	ApplyMove         = 12 // APPLY_MOVE
+	ApplyCharWeight   = 10 // APPLY_CHAR_WEIGHT
+	ApplyCharHeight   = 11 // APPLY_CHAR_HEIGHT
+	ApplyMana         = 12 // APPLY_MANA
+	ApplyHit          = 13 // APPLY_HIT
+	ApplyMove         = 14 // APPLY_MOVE
+	ApplyGold         = 15 // APPLY_GOLD
+	ApplyExp          = 16 // APPLY_EXP
 	ApplyAC           = 17 // APPLY_AC
 	ApplyHitroll      = 18 // APPLY_HITROLL
 	ApplyDamroll      = 19 // APPLY_DAMROLL
@@ -203,12 +208,11 @@ const (
 	ApplySavingPetri  = 22 // APPLY_SAVING_PETRI
 	ApplySavingBreath = 23 // APPLY_SAVING_BREATH
 	ApplySavingSpell  = 24 // APPLY_SAVING_SPELL
-	ApplySpell        = 26 // APPLY_SPELL
-
-	// Regen locations (extended from C for item affects)
-	ApplyManaRegen = 27
-	ApplyHitRegen  = 28
-	ApplyMoveRegen = 29
+	ApplyRaceHate     = 25 // APPLY_RACE_HATE
+	ApplyHitRegen     = 26 // APPLY_HIT_REGEN
+	ApplyManaRegen    = 27 // APPLY_MANA_REGEN
+	ApplyMoveRegen    = 28 // APPLY_MOVE_REGEN
+	ApplySpell        = 29 // APPLY_SPELL
 )
 
 // --- AFF_* status flag bit positions (from CircleMUD structs.h) ---
