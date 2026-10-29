@@ -1,0 +1,82 @@
+# depth-case: death-rewards.autoloot-audience
+# Autoloot uses the ordinary get all corpse path for actor and room audiences.
+# C source: src/fight.c:1708-1712; src/act.item.c do_get/perform_get_from_container.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+give-object 16303 8010 1 80
+
+[setup:oracle]
+Lootgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lootgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Lootsee
+Y
+seeitpass
+seeitpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Lootsee
+y
+seeitpass
+seeitpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Lootsee 8105
+set mob trainee hit 1
+
+[probe]
+auto loot
+kick trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+inventory
+

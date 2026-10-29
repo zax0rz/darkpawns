@@ -351,8 +351,13 @@ func saveDataToPlayer(data savePlayerData) *Player {
 		p.Kills, p.PKs, p.Deaths, p.OrigCon = data.Kills, data.PKs, data.Deaths, data.OrigCon
 		p.SavingThrows, p.Tattoo, p.TatTimer = data.SavingThrows, data.Tattoo, data.TatTimer
 		p.MountVNum, p.MountCostDay, p.MountRentTime, p.LastDeath = data.MountVNum, data.MountCostDay, data.MountRentTime, data.LastDeath
-		p.HolyLight, p.AutoGold, p.AutoSplit, p.NoBroadcast = data.HolyLight, data.AutoGold, data.AutoSplit, data.NoBroadcast
+		p.HolyLight, p.NoBroadcast = data.HolyLight, data.NoBroadcast
 	}
+	// Preference flag bits are the serialized C source of truth. The bools are
+	// runtime mirrors; older saves have no reliable mirrors and modern saves can
+	// contain stale values from before the flag/mirror synchronization.
+	p.AutoGold = p.Flags&(1<<uint(PrfAutoGold)) != 0
+	p.AutoSplit = p.Flags&(1<<uint(PrfAutoSplit)) != 0
 	// The skills were saved and never read back.
 	restoreSkills(p, data.Skills)
 	p.RestoreEffectiveAttributes()

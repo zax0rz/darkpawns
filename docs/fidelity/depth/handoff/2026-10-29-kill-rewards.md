@@ -1,0 +1,11 @@
+# Kill reward follow-up — 2026-10-29
+
+The kill reward follow-up traced the live C `damage()` tail (`src/fight.c:1630-1712`) and the Go `HandleDeath` path. Three targeted scenarios were added for the reported recipient, autoloot-audience, and autogold cases. A fourth unit case exercises the durable save hydration boundary.
+
+The ungrouped follower proof uses a passive grouped leader and a second passive grouped follower. With the fix, the ungrouped killer receives the solo XP line. Reverting `combatIsInGroup` routing to the `origin/main` member-count branch removes XP from the killer and awards shares to the grouped players, a repeatable R5h red. The autoloot proof kills through `kick`, observes the bystander, and matches the ordinary C `get all corpse` path. God `kill` was rejected as a fixture because C routes implementor kills through `raw_kill` and bypasses `damage()`.
+
+The auto-gold command path itself already matches C on the current runtime fixture. The reachable defect is persisted preference hydration: V1 saves migrate `PRF_AUTOGOLD` and `PRF_AUTOSPLIT` bits, but the Go runtime mirrors were only restored from newer bool fields; contradictory V2 flags and bools also left the flags ignored. The focused `DeserializePlayer` regression test fails on `origin/main` and passes when the mirrors are rederived from migrated flags. No save fields or format changed.
+
+Class audit: `src/fight.c:1630-1712` is the common player attack damage tail, so melee, `kick`, and spell damage that call the common damage routine inherit rewards. Go `World.HandleDeath` is registered as the session death callback and also receives damage kills reached through the spells package. The common tail now owns autoloot after `attitudeLootAfterKill`; `RawKill` paths remain separate, matching C paths which do not call `damage()`. The group check now follows `is_in_group(ch)` rather than treating any follow edge as membership. `AwardMobKillXP` still distributes only to player recipients; grouped NPC killer rewards are outside the existing award function's implemented scope and are not claimed by this proof.
+
+The 102-scenario targeted census was started on 2026-10-29 with `--draw-parity`; its retained directory and the gate logs are linked in the PR description. No full or release census was run, per the repository batch policy.

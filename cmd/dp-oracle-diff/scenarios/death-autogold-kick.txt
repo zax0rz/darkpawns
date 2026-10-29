@@ -1,0 +1,82 @@
+# depth-case: death-rewards.autogold-damage-tail
+# A skill damage kill receives the same autogold tail as melee damage.
+# C source: src/fight.c:1534-1712, especially 1636-1667; src/act.offensive.c do_kick.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Goldkick
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Goldkick
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Goldsee
+Y
+seeitpass
+seeitpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Goldsee
+y
+seeitpass
+seeitpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Goldsee 8105
+auto gold
+set mob trainee hit 1
+set mob trainee gold 101
+
+[probe]
+kick trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+gold
+

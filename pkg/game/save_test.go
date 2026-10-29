@@ -242,6 +242,30 @@ func TestSavePlayer_IncludesVersion(t *testing.T) {
 	}
 }
 
+func TestSaveDataToPlayerHydratesAutoGoldMirrorsFromFlags(t *testing.T) {
+	t.Run("version one migrated preferences", func(t *testing.T) {
+		// V1 saved PRF_AUTOGOLD and PRF_AUTOSPLIT in legacy positions 42/43.
+		p, err := DeserializePlayer(`{"save_version":1,"id":1,"name":"LegacyPrefs","flags":13194139533312}`)
+		if err != nil {
+			t.Fatalf("DeserializePlayer: %v", err)
+		}
+		if !p.AutoGold || !p.AutoSplit {
+			t.Fatalf("legacy flags did not hydrate mirrors: AutoGold=%t AutoSplit=%t", p.AutoGold, p.AutoSplit)
+		}
+	})
+
+	t.Run("version two flags win over stale mirrors", func(t *testing.T) {
+		flags := uint64(1 << uint(PrfAutoGold))
+		p, err := DeserializePlayer(fmt.Sprintf(`{"save_version":2,"id":1,"name":"CurrentPrefs","flags":%d,"auto_gold":false,"auto_split":true}`, flags))
+		if err != nil {
+			t.Fatalf("DeserializePlayer: %v", err)
+		}
+		if !p.AutoGold || p.AutoSplit {
+			t.Fatalf("current flags did not override stale mirrors: AutoGold=%t AutoSplit=%t", p.AutoGold, p.AutoSplit)
+		}
+	})
+}
+
 // jsonUnmarshal is a test helper that calls json.Unmarshal.
 func jsonUnmarshal(data []byte, v interface{}) error {
 	return json.Unmarshal(data, v)

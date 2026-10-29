@@ -863,21 +863,19 @@ func (w *World) combatFollowersInRoom(body combat.Combatant, room int) []*Player
 }
 
 func (w *World) combatGroupMembers(body combat.Combatant) []*Player {
-	p, ok := combatPlayer(body)
+	leader, ok := body.(Actor)
 	if !ok {
 		return nil
 	}
-	leader := p
-	if master := w.combatFollowingBody(p); master != nil {
-		var ok bool
-		leader, ok = combatPlayer(master)
+	if master := w.combatFollowingBody(body); master != nil {
+		leader, ok = master.(Actor)
 		if !ok {
 			return nil
 		}
 	}
 	var members []*Player
-	if leader.IsInGroup() {
-		members = append(members, leader)
+	if player, ok := leader.(*Player); ok && player.IsInGroup() {
+		members = append(members, player)
 	}
 	for _, follower := range w.GetAllPlayers() {
 		if follower != leader && w.combatFollowingBody(follower) == leader && follower.IsInGroup() {

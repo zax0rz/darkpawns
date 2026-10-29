@@ -1,0 +1,116 @@
+# depth-case: death-rewards.ungrouped-follower-xp
+# Ungrouped killer follows a grouped leader; C is_in_group(ch) rejects group_gain.
+# C source: src/fight.c:637-654,1636-1667.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Killleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Killleader
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Killfollow
+Y
+killerpass
+killerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Killfollow
+y
+killerpass
+killerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+
+[setup:oracle:observer]
+Rewardsee
+Y
+seeitpass
+seeitpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Rewardsee
+y
+seeitpass
+seeitpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Killfollow 8105
+teleport Rewardsee 8105
+force Killfollow follow Killleader
+force Rewardsee follow Killleader
+group all
+group Killfollow
+set mob trainee hit 1
+set Killfollow level 30
+set Killfollow hitroll 100
+
+[probe:peer]
+group
+kill trainee
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+
+
