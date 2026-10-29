@@ -602,12 +602,17 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 			m.Runtime.ExpOverride = &valueInt
 		}
 	case "hitroll":
+		// points.hitroll is sbyte (src/structs.h:916); RANGE(-20,200) runs on
+		// the int and the assignment then truncates.
+		valueInt = game.SByteValue(valueInt)
 		if p != nil {
 			p.SetHitroll(valueInt)
 		} else {
 			m.Runtime.HitrollOverride = &valueInt
 		}
 	case "damroll":
+		// points.damroll is sbyte (src/structs.h:917), same as hitroll.
+		valueInt = game.SByteValue(valueInt)
 		if p != nil {
 			p.SetDamroll(valueInt)
 		} else {
@@ -830,6 +835,12 @@ func clampSetValue(field string, value int, p *game.Player, m *game.MobInstance)
 	case "exp":
 		return clamp(value, 0, 50000000)
 	case "hitroll", "damroll":
+		// C clamps the int with RANGE(-20, 200) and then assigns it to the
+		// sbyte points.hitroll/points.damroll field, so 128..200 wrap into
+		// -128..-56 (src/act.wizard.c:2836-2840; src/structs.h:916-917).
+		// The wrap belongs at the assignment, not here: C's acknowledgement
+		// prints the clamped `value`, so `set x damroll 200` answers "set to
+		// 200." while stat shows -56.
 		return clamp(value, -20, 200)
 	case "invis":
 		return clamp(value, 0, level)
