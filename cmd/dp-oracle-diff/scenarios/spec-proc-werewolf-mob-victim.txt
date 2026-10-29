@@ -1,0 +1,64 @@
+# depth-case: mob.werewolf-bite-mob-victim
+# The bite is an ordinary damage() call (src/spec_procs3.c:446), and the leg
+# tear subtracts level*1.5 from ANY victim's move as floating point before
+# truncation (src/spec_procs3.c:447-449) — a mobile victim's stat report
+# shows the reduced Move pool. The AGGR24+AGGRESSIVE full-HP arm makes the
+# level-8 werewolf attack the level-1 trainee (src/mobact.c:326-338) while
+# the nohassle implementor watches.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 5510 999 5510 55
+clear-mob-flag 5510 RANDZON
+set-mob-flag 5510 SPEC
+set-mob-flag 5510 AGGR24
+set-mob-flag 5510 AGGRESSIVE
+spawn-mob 16303 1 5510 80
+replace-room-exits 5510 none
+
+[setup:oracle]
+Wolfwatcher
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wolfwatcher
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 5510
+set Wolfwatcher nohassle on
+set mob trainee level 1
+set mob trainee maxhit 5000
+set mob trainee hit 5000
+set werewolf hit 5000
+set werewolf maxhit 5000
+
+[probe]
+look
+~dpclock pulse 20
+stat trainee
+~dpclock pulse 20
+stat trainee
+~dpclock pulse 20
+stat trainee
+look
