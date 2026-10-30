@@ -1,0 +1,99 @@
+# C-first raw-byte proof for the room-content list colour framing.
+#
+# look_at_room brackets the two lists once each (src/act.informative.c:823-833):
+#
+#	send_to_char(CCGRN(ch, C_NRM), ch);          /* once, before the objects  */
+#	list_obj_to_char(world[ch->in_room].contents, ch, 20, FALSE);
+#	send_to_char(CCYEL(ch, C_NRM), ch);          /* once, before the people   */
+#	list_char_to_char(world[ch->in_room].people, ch);
+#	send_to_char(CCNRM(ch, C_NRM), ch);          /* once, after both          */
+#
+# The three are direct writes with no line ending, so the byte stream is
+# ESC[32m, the object lines, ESC[33m, the character lines, ESC[0m. The port
+# wrapped each entry instead, which closed the colour per line and never
+# emitted the trailing reset. keep-ansi compares the escapes raw (R1b).
+#
+# The looker is the primary and sets its own level with `color complete`; the
+# gate is C_NRM, so the same look at `color normal` below carries no escapes at
+# all. An object on the floor plus a peer in the room exercises both lists.
+#
+# depth-case: room.list-colour-framing
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 1 8105 80
+keep-ansi
+
+# PRIMARY = first player => God, and the viewer.
+[setup:oracle]
+RoomLooker
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RoomLooker
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+RoomPeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+RoomPeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+color complete
+teleport RoomPeer 8105
+
+[probe]
+look

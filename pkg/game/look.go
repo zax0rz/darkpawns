@@ -38,11 +38,15 @@ func (r *ObservationResult) takeLinePrefix() string {
 
 // ObservationMessage is a deferred act() call. Literal marks world-authored
 // descriptions whose '$' bytes must not be interpreted as act substitutions.
-// Observation is single-viewer, so every message is routed ToChar.
+// Bare marks control bytes C wrote with no line ending — the escapes that open
+// and close the room-content lists (src/act.informative.c:823-833) — so they
+// reach the terminal untouched and unframed. Observation is single-viewer, so
+// every message is routed ToChar.
 type ObservationMessage struct {
 	Format        string
 	Literal       bool
 	Raw           bool
+	Bare          bool
 	HideInvisible bool
 	Actor         Actor
 	Target        Actor
@@ -85,6 +89,22 @@ func (r *ObservationResult) literal(ch *Player, text string) {
 	})
 }
 
+// bare queues control bytes with no line ending and no act() formatting,
+// mirroring C's send_to_char(CCxxx(ch, C_NRM), ch) writes that bracket the
+// room-content lists (src/act.informative.c:823-833). It deliberately does not
+// consume the pending line prefix: C's list write is not a line of its own, so
+// the prefix still belongs to the next line that is.
+func (r *ObservationResult) bare(ch *Player, text string) {
+	if text == "" {
+		return
+	}
+	r.Messages = append(r.Messages, ObservationMessage{
+		Format: text,
+		Bare:   true,
+		Actor:  ch,
+	})
+}
+
 // raw queues a block sent verbatim via SendMessage — bypassing act(), so it is
 // neither capitalized nor $-substituted. Mirrors C send_to_char for list output
 // (inventory / look-in container). Ordering is preserved with other messages.
@@ -110,6 +130,16 @@ func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, f
 // canonical act() delivery path.
 func (w *World) RenderObservationMessages(result ObservationResult) {
 	for _, message := range result.Messages {
+		if message.Bare {
+			// C's bare send_to_char writes carry no line ending, so they go
+			// through the literal sink: Player.SendLiteral → a "raw" event,
+			// which RenderTerminalFrame passes to the terminal untouched
+			// (pkg/session/terminal.go:123-127).
+			if p, ok := message.Actor.(*Player); ok && p != nil {
+				p.SendLiteral(message.Format)
+			}
+			continue
+		}
 		if message.Raw {
 			if p, ok := message.Actor.(*Player); ok && p != nil {
 				p.SendMessage(message.Format)
@@ -255,13 +285,23 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 		result.literal(ch, w.autoExitsText(ch, room))
 	}
 
+	// C brackets each room-content list once: CCGRN before the object list,
+	// CCYEL before the character list, and one CCNRM after both
+	// (src/act.informative.c:823-833). Those three are direct writes with no
+	// line ending, so the lists' own lines carry the terminators; wrapping
+	// each entry instead closed the colour per line and dropped C's trailing
+	// reset. The escapes are sent unconditionally, as C sends them, and each
+	// is empty below the C_NRM gate.
 	green, yellow := observationColors(ch, "\x1b[32m"), observationColors(ch, "\x1b[33m")
+	result.bare(ch, green)
 	for _, line := range w.roomObjectLines(ch, room) {
-		result.literal(ch, green+line+normal)
+		result.literal(ch, line)
 	}
+	result.bare(ch, yellow)
 	for _, line := range w.roomCharacterLines(ch, room, &view) {
-		result.literal(ch, yellow+line+normal)
+		result.literal(ch, line)
 	}
+	result.bare(ch, normal)
 	return result
 }
 
