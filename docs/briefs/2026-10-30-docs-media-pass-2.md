@@ -9,3 +9,5 @@ The native Mudlet capture profile disables the Short map-information contributor
 The CLI capture now rebuilds the admin UI even when dist already exists, so the portable bundle can't silently retain earlier product copy. The checker requires all 19 outputs. The complete capture was regenerated after these changes.
 
 Validation logs and mutation proof are retained under `/home/zach/Archives/darkpawns/docs-pass-2/`; native comparison pairs are under `/home/zach/Archives/docs-pass-2/`. Build, vet, tests, lint, formatting and deadcode gates passed independently. No game behavior changes; no oracle census or deployment.
+
+After restacking onto `ee12a71c2`, all build/vet/test/lint/format/deadcode gates passed again. A complete regeneration also passed, with all 15 PNGs unchanged and expected live-terminal GIF timing differences. `make media-check` reports “media sources are current.” One earlier attempt received a failed preview-reset response before capture; its failure log is retained, and reset assertions now include HTTP status and response text. No game retry or census result was hidden.

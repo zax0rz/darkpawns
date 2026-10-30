@@ -112,7 +112,7 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light', deviceScaleFactor: 1, reducedMotion: 'reduce' });
   await context.request.get(`${ui}/preview-session`);
   const reset = await context.request.post(`${ui}/preview-reset`);
-  expect(reset.ok()).toBeTruthy();
+  expect(reset.ok(), `preview reset ${reset.status()}: ${await reset.text()}`).toBeTruthy();
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -138,7 +138,7 @@ try {
       await page.getByRole('button', { name: 'Discard', exact: true }).click();
       await closed;
       const reset = await context.request.post(`${ui}/preview-reset`);
-      expect(reset.ok()).toBeTruthy();
+      expect(reset.ok(), `preview reset ${reset.status()}: ${await reset.text()}`).toBeTruthy();
     }
   manifest.push({ path: `docs/images/generated/${capture.output}`, alt: capture.alt, sources: [...capture.sources, 'admin-ui/scripts/media-capture.mjs', 'website-astro/DESIGN.md'], release });
   }
