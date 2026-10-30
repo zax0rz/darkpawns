@@ -26,7 +26,9 @@ Setup prints the local web client address when the world is ready. The default i
 1. Open the web client at the local address printed by setup.
 2. Create the first character. This character becomes the Implementor (level 40).
 
-TODO(media): show the setup wizard reaching its completion message and the local web client ready to connect.
+![Portable bundle setup starts an isolated local world.](/media/docs/install-and-setup.gif)
+
+Setup prints the local web address and the first-character warning.
 
 ## Open the admin console
 

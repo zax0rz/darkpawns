@@ -21,7 +21,7 @@ Use the web client for a connection with no client setup. It connects when the p
 
 The **Reconnect** button appears after the connection drops. Choose it to reconnect.
 
-TODO(media): show the web client connected at character entry, with the transcript and connection control visible.
+![A new Guest at the Temple Altar in the web client, with the connection status and vitals below the game text.](/media/docs/web-client-first-steps.png)
 
 ## Connect with Mudlet
 
@@ -30,7 +30,9 @@ TODO(media): show the web client connected at character entry, with the transcri
 3. Enter the raw telnet port supplied by the operator.
 4. Connect, then enter your character name and password.
 
-TODO(media): show the Mudlet connection profile fields for a Dark Pawns server.
+![Mudlet connected to a disposable local Dark Pawns world, showing the player dock, vitals, and Temple Altar map.](/media/docs/mudlet-dock.png)
+
+The dock and world map appear after the server sends the Dark Pawns package.
 
 ## Connect with telnet
 

@@ -22,6 +22,8 @@ evidence, and a test send.
 Nothing is sent until a channel is enabled, and a channel cannot be enabled
 without credentials. Subscriptions start off.
 
+![Notification settings with event rows and disabled delivery channels in the local preview.](/media/docs/admin-notifications.png)
+
 ## Events
 
 Only **Discord alerts** and **Pushover** let you select events. Guests and

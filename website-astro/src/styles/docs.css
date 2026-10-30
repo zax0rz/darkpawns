@@ -15,6 +15,15 @@
   --sl-color-accent-low: var(--paper-deep);
   --sl-color-accent: var(--accent);
   --sl-color-accent-high: var(--accent-deep);
+  --sl-color-red: var(--accent);
+  --sl-color-red-high: var(--accent-deep);
+  --sl-color-red-low: var(--paper-deep);
+  --sl-color-blue: var(--ink);
+  --sl-color-blue-high: var(--ink);
+  --sl-color-blue-low: var(--paper-deep);
+  --sl-color-green: var(--ink);
+  --sl-color-orange: var(--ink);
+  --sl-color-purple: var(--ink);
   --sl-color-text: var(--ink);
   --sl-color-text-accent: var(--accent-deep);
   --sl-color-bg: var(--paper);

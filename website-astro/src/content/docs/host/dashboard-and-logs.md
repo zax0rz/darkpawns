@@ -10,6 +10,8 @@ The admin dashboard opens at `/admin/`. It puts server health and player
 activity first. Every tile opens operations, an activity detail, or filtered logs.
 The console requires a builder role for telemetry and logs.
 
+![The dashboard charts show synthetic players online and daily arrivals.](/media/docs/admin-dashboard.png)
+
 ## Read the dashboard
 
 Choose **24 hours** or **7 days** for online history and the count tiles. The

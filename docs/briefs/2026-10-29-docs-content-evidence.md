@@ -44,9 +44,9 @@ This note records the prose-only content migration and reader-driven corrections
 - `project/architecture`: startup/package map from the original page. Sources: `cmd/server/main.go`, the listed `pkg/` packages, and `docs/fidelity/RULEBOOK.md`.
 - `project/contributing`: formatter, gate, and read-only oracle requirements from the original page and repository instructions. Adds the enforced `make deadcode-ratchet` gate and links setup/process material. Sources: `AGENTS.md`, `Makefile`, `.golangci.yml`, and fidelity docs.
 
-## Media still needed
+## Media integration
 
-The Play client, Mudlet, setup, and saved-character editor pages contain explicit `TODO(media)` notes. The media agent is producing captures for the web client and setup, but there is no committed generated asset for the exact Mudlet profile or character flags/identity view in this content branch yet. Existing player-editor screenshots were removed from the page because they are not tied to the required capture pipeline.
+The client guide uses the real web-client and Mudlet captures; setup uses the terminal recording showing the ready address and first-character warning; saved-character management uses the player-editor interaction recording. Dashboard, notification and MOTD pages use focused captures from the same canonical manifest. All published images come from `make media`. Room identifiers remain in the source evidence and reader review; player-facing route steps use the names players see.
 
 ## Integrated review
 

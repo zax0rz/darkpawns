@@ -29,21 +29,21 @@ Start by putting on your equipment, finding the guild for your hometown and clas
 
 ## Start in Kir Drax'in
 
-The FAQ directs new players in Kir Drax'in to the Guard Barracks on the Street of Swords, then recommends staying in its training area and the other Kir Drax'in newbie areas while leveling. This route follows the room exits in zones 80 and 163. If your hometown is elsewhere, use its local training area instead; this route does not lead there.
+The FAQ directs new players in Kir Drax'in to the Guard Barracks on the Street of Swords, then recommends staying in its training area and the other Kir Drax'in newbie areas while leveling. If your hometown is elsewhere, use its local training area instead; this route does not lead there.
 
-1. If you are at the Temple Altar, go south to the Temple of the Cross, room 8008.
-2. Go south to Temple Square, room 8021.
-3. Go west to the Avenue of the Gods, room 8074.
-4. Go north twice along the Street of Swords, through rooms 8101 and 8102.
-5. Go west into the Guard Barracks, room 16300.
-6. Open the door south and go south into the New Recruit Training Area, room 16301.
+1. If you are at the Temple Altar, go south to the Temple of the Cross.
+2. Go south to Temple Square.
+3. Go west to the Avenue of the Gods.
+4. Go north twice along the Street of Swords.
+5. Go west into the Guard Barracks.
+6. Open the door south and go south into the New Recruit Training Area.
 
-The room files name the destination New Recruit Training Area; the help file calls it the Guard Training Centre. If you lose your way, type `recall` to return to your hometown temple. Kir Drax'in's map is available with `help map`.
+The game names the entrance New Recruit Training Area; the help file calls it the Guard Training Centre. If you lose your way, type `recall` to return to your hometown temple. Kir Drax'in's map is available with `help map`.
 
 ## Try your first fight
 
-1. From the New Recruit Training Area, go east into the next part of the New Recruit Training Area, room 16302.
-2. Go north into room 16303, still the New Recruit Training Area, then down to Kir Drax'in Guard Basic Training - Level One, room 16304.
+1. From the New Recruit Training Area, go east into the next part of the New Recruit Training Area.
+2. Go north through the New Recruit Training Area, then down to Kir Drax'in Guard Basic Training - Level One.
 3. Type `look`. This floor has grey guard trainees; their short description is “a guard trainee”.
 4. Type `consider trainee` for a rough estimate of the fight. The estimate is not a promise.
 5. If it looks manageable, type `kill trainee`. Watch your health while combat runs.

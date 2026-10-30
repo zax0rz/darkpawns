@@ -40,5 +40,5 @@ Editorial warnings remain visible in voice lint. The baseline only removes 25 ob
 - Review the visual captures and the small amount of personality in Play/overview prose. Instructions and recovery paths stay plain.
 - The first-hour route covers Kir Drax'in. Other hometowns need their own source-checked routes in later guides.
 - Long API property names wrap on mobile; they remain readable. Registered API summaries with no longer description include `reset-zone` ("Reset one zone"), `reset-all-zones` ("Reset every zone"), and `list-triage-summaries` ("List triage summaries"); these deserve a follow-up explaining scope and consequences. Contract generation stays automatic.
-- Published media comes from the separate reproducible media pipeline brief. Any remaining explicit media markers are listed in the content evidence note until those assets are integrated.
+- Published media comes from the stacked reproducible media pipeline PR. The docs use its canonical manifest assets; no TODO(media) markers remain.
 - No production deployment was performed. Claude can review and stack the PRs in Zach's session.

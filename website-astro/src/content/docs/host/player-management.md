@@ -80,7 +80,7 @@ The **Cryo-saved** switch changes the character's cryo marker only. It does not
 store or restore saved items. An item's save setting is shared
 by every copy; open **Objects** to change its definition.
 
-TODO(media): show a disconnected character in the Players editor with the Flags and Identity tabs visible, using a synthetic local preview character.
+![The player editor moves from character stats to equipment and flags.](/media/docs/admin-player-editor.gif)
 
 ## How it works
 

@@ -10,6 +10,8 @@ Choose **Staff tools → MOTD** in the admin console, or open the **MOTD** card 
 the dashboard. Builders can open the page and read both messages. Only staff at
 GRGOD (level 38) or higher can save; other staff see read-only text.
 
+![The welcome message editor with synthetic login text and its preview.](/media/docs/admin-motd.png)
+
 ## Edit a welcome message
 
 1. Choose **MOTD** for mortal characters or **Immortal MOTD** for immortal
