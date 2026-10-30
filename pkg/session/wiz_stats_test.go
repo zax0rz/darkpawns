@@ -390,7 +390,9 @@ func TestStatCharacterAffectFlagsAndSpellLinesMatchC(t *testing.T) {
 
 	s.sendStatPlayerReport(s.player, 1001, true, 0)
 	out := drainSessionOutput(t, s)
-	if !strings.Contains(out, "AFF: SANCT NOTHING\r\n") {
+	// sprintbitarray leaves a trailing space after the last flag (src/utils.c:825-843),
+	// and C prints it straight into the line (src/act.wizard.c:968).
+	if !strings.Contains(out, "AFF: SANCT NOTHING \r\n") {
 		t.Fatalf("player stat AFF: line missing active spell bits SANCT NOTHING:\n%s", out)
 	}
 	wantSPL := "SPL: (  4hr) sanctuary             sets SANCT\r\n" +
@@ -427,7 +429,7 @@ func TestStatCharacterAffectFlagsAndSpellLinesMatchC(t *testing.T) {
 
 	s.sendStatMob(mob)
 	mobOut := drainSessionOutput(t, s)
-	if !strings.Contains(mobOut, "AFF: BLIND\r\n") {
+	if !strings.Contains(mobOut, "AFF: BLIND \r\n") {
 		t.Fatalf("mob stat AFF: line missing BLIND:\n%s", mobOut)
 	}
 	wantMobSPL := "SPL: (  2hr) smokescreen           +40 to ARMOR\r\n" +
