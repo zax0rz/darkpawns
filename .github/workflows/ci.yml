@@ -19,6 +19,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Warn about stale docs media
+      run: make media-check
+
     - name: Set up Go
       uses: actions/setup-go@v5
       with:

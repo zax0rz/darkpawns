@@ -238,7 +238,17 @@ test-parse:
 DEPLOY_PATH ?= /srv/darkpawns/
 
 # Website commands
-.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint test-markdown content-inventory check-content-inventory check-wordmark generate-caddy-redirects site-check
+.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint test-markdown content-inventory check-content-inventory check-wordmark generate-caddy-redirects site-check media media-check
+
+# Rebuild docs/README screenshots and recordings from disposable admin, game,
+# Mudlet, and portable CLI fixtures; the scripts clean up only their own PIDs.
+media:
+	bash scripts/bootstrap_media_deps.sh
+	python3 scripts/media_pipeline.py
+
+# Advisory freshness check: UI changes warn in CI and locally, never block it.
+media-check:
+	python3 scripts/media_check.py
 
 voice-lint:
 	python3 website-astro/scripts/voice_lint.py

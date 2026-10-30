@@ -43,7 +43,7 @@ Windows (PowerShell 5.1 or newer):
 $installer = Join-Path ([IO.Path]::GetTempPath()) ('darkpawns-' + [Guid]::NewGuid().ToString('N') + '.ps1'); try { Invoke-WebRequest -UseBasicParsing 'https://github.com/zax0rz/darkpawns/releases/latest/download/install.ps1' -OutFile $installer; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $installer; if ($LASTEXITCODE -ne 0) { throw 'Installer did not complete.' } } finally { Remove-Item -LiteralPath $installer -ErrorAction SilentlyContinue }
 ```
 
-![Installing Dark Pawns: the installer checks the publisher signature, the setup wizard picks a folder and port, and the world starts in the background](docs/images/install-and-setup.gif)
+![Portable bundle setup starts an isolated local world](docs/images/generated/install-and-setup.gif)
 
 The installer checks the release's publisher signature and the archive's
 SHA-256 before it extracts anything, installs under your user account, and
@@ -112,7 +112,7 @@ darkpawns restart    # stop, then start
 darkpawns doctor     # check the release, instance, database and startup
 ```
 
-![darkpawns status, doctor and restart in a terminal](docs/images/lifecycle-commands.gif)
+![Status reports the local world, and doctor checks its release, instance, and services](docs/images/generated/lifecycle-commands.gif)
 
 Every command takes `--instance <folder>` for a world outside the default
 location. `doctor` exits nonzero when it finds a problem, and `status --json` and
@@ -144,9 +144,11 @@ updates from an archive and the recovery details are in the
 [portable release guide](docs/portable-release.md#manual-updates).
 `darkpawns.org` itself updates with the same command.
 
+![An offline candidate release passes verification; --check leaves the running world untouched](docs/images/generated/update-check.gif)
+
 ## Play
 
-![The web client: a new character's first moments, from a burning hut to the Temple Infirmary, with hit points, mana and movement below](docs/images/web-client-first-steps.png)
+![A new Guest at the Temple Altar in the web client, with the connection status and vitals below the game text](docs/images/generated/web-client-first-steps.png)
 
 The live game needs no account signup and no download: play in the browser at
 [darkpawns.org/play](https://darkpawns.org/play), or connect any MUD client to
@@ -178,7 +180,7 @@ map of the whole world that follows you, and a chat window. The game text stays
 byte for byte what every other client sees. The
 [Mudlet guide](https://darkpawns.org/connect/#mudlet) covers the rest.
 
-![Mudlet playing Dark Pawns, with the dock showing vitals, a map of Kir Drax'in and the chat window](docs/images/mudlet-dock.png)
+![Mudlet connected to a disposable local Dark Pawns world, showing the player dock, vitals, and Temple Altar map](docs/images/generated/mudlet-dock.png)
 
 Returning from the 2004 era? The world files are the preserved originals, and
 the port's prime directive is that the game plays byte for byte like the C
@@ -191,7 +193,7 @@ creation, and how to connect.
 Every world includes an admin console at `/admin/`. Sign in with your
 immortal's name and password.
 
-![The admin dashboard: status, zone and room counts, players online, pending builder work, server metrics and the recent log](docs/images/admin-dashboard.png)
+![The dashboard charts show synthetic players online and daily arrivals](docs/images/generated/admin-dashboard.png)
 
 ### Players
 
@@ -199,7 +201,7 @@ Edit a saved character's level, experience, vitals and attributes, manage their
 equipment and inventory, or reset their password. The character must be fully
 disconnected first, so an edit never races the live game.
 
-![The player editor open on a level 1 character, showing level, experience, vitals and attributes](docs/images/admin-player-editor.png)
+![The player editor showing a synthetic character’s level, vitals and attributes](docs/images/generated/admin-player-editor.png)
 
 ### Build the world (webOLC)
 
@@ -208,7 +210,7 @@ editor core with the classic in-game OLC, so it writes the same Diku-format
 world files the server loads. Edits are drafts, held under a lease until you
 commit them, and the workshop lists the zones with changes waiting to be saved.
 
-![The webOLC room editor on Temple Square in Kir Drax'in, showing the name, description and room flags](docs/images/admin-room-editor.png)
+![The room editor for a synthetic test room, with its description and room flags](docs/images/generated/admin-room-editor.png)
 
 ### Notifications
 
@@ -218,7 +220,7 @@ tools → Notifications**, paste the provider credentials, and use the test
 button. Changes take effect without a restart. Credentials are encrypted at
 rest (AES-256-GCM) and never returned by the API. Delivery is best effort.
 
-![The notification settings, with Pushover and Discord columns and a row for each game event](docs/images/admin-notifications.png)
+![Notification settings with event rows and disabled delivery channels in the local preview](docs/images/generated/admin-notifications.png)
 
 ### Health checks
 
@@ -238,7 +240,7 @@ Three layers, from the inside out:
 **Operations** shows live status, memory and goroutine counts, who is online,
 and the server log.
 
-![The operations page: server status, online players, memory metrics and the server log](docs/images/admin-operations.png)
+![The operations log with synthetic warning and error entries from the local preview](docs/images/generated/admin-operations.png)
 
 The [deployment guide](DEPLOYMENT.md#optional-game-notifications) covers key
 storage, backups and outage detection.

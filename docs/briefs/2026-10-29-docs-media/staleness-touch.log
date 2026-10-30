@@ -1,0 +1,2 @@
+python3 scripts/media_check.py
+::warning file=docs/images/generated/admin-dashboard.png::newer source admin-ui/src/pages/DashboardPage.tsx; run make media

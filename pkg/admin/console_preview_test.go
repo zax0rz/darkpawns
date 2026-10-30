@@ -37,6 +37,14 @@ func TestConsolePreview(t *testing.T) {
 		t.Skip("set ADMIN_PREVIEW=1 to serve the fixture console")
 	}
 	setJWTSecret(t)
+	fixedNow, err := time.Parse(time.RFC3339, "2026-10-29T20:00:00Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+	previousDashboardClock := dashboardClock
+	dashboardClock = func() time.Time { return fixedNow }
+	t.Cleanup(func() { dashboardClock = previousDashboardClock })
+	processStartTime = fixedNow.Add(-3 * time.Hour)
 	t.Setenv("ADMIN_STORE_PATH", filepath.Join(t.TempDir(), "admin.json"))
 	database := newOLCTestDatabase(t, game.LVL_IMPL, 1)
 	world := newOLCTestWorld(t)
@@ -109,7 +117,7 @@ func TestConsolePreview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	historyStart := time.Now()
+	historyStart := fixedNow
 	if os.Getenv("ADMIN_PREVIEW_EMPTY") != "1" {
 		historyStart = historyStart.Add(-6 * 24 * time.Hour)
 	}
@@ -132,27 +140,27 @@ func TestConsolePreview(t *testing.T) {
 			if i%37 == 0 {
 				telemetry.Warning()
 			}
-			history.Sample(time.Now().Add(time.Duration(i-6*24*60)*time.Minute), i%12)
+			history.Sample(fixedNow.Add(time.Duration(i-6*24*60)*time.Minute), i%12)
 		}
 	}
 	if os.Getenv("ADMIN_PREVIEW_EMPTY") != "1" {
-		for _, e := range []telemetry.Activity{{Player: "Avery", Class: "Ranger", MinLevel: 31}, {Player: "Mira", Class: "Mage", MinLevel: 31}} {
+		for _, e := range []telemetry.Activity{{Player: "DemoScout", Class: "Ranger", MinLevel: 31}, {Player: "DemoMage", Class: "Mage", MinLevel: 31}} {
 			telemetry.RecordCharacter(e)
 			telemetry.RecordLogin(e)
 		}
 		for _, e := range []telemetry.Activity{
-			{Player: "Avery", Class: "Ranger", RoomVNum: 1001, RoomName: "The Eastern Road", Cause: "mob", MobName: "a watchful guard", MobVNum: 2001, MinLevel: 31},
-			{Player: "Mira", Class: "Mage", RoomVNum: 1002, RoomName: "The Old Arena", Cause: "player", MinLevel: 31},
-			{Player: "Egon", Class: "Thief", RoomVNum: 3100, RoomName: "A Crumbling Ledge", Cause: "trap", MinLevel: 31},
+			{Player: "DemoScout", Class: "Ranger", RoomVNum: 1001, RoomName: "The Eastern Road", Cause: "mob", MobName: "a watchful guard", MobVNum: 2001, MinLevel: 31},
+			{Player: "DemoMage", Class: "Mage", RoomVNum: 1002, RoomName: "The Old Arena", Cause: "player", MinLevel: 31},
+			{Player: "DemoThief", Class: "Thief", RoomVNum: 3100, RoomName: "A Crumbling Ledge", Cause: "trap", MinLevel: 31},
 		} {
 			telemetry.RecordPlayerDeath(e)
 		}
 		if os.Getenv("ADMIN_PREVIEW_LOGIN") == "1" {
-			telemetry.RecordLogin(telemetry.Activity{Player: "Hiddenstaff", Class: "Mage", MinLevel: 40})
+			telemetry.RecordLogin(telemetry.Activity{Player: "DemoWarden", Class: "Mage", MinLevel: 40})
 		}
-		history.Sample(time.Now(), 1)
+		history.Sample(fixedNow, 1)
 	}
-	history.ObserveRelease(telemetry.Release{Version: "synthetic preview", Commit: "fixture", Identity: "fixture"}, time.Now())
+	history.ObserveRelease(telemetry.Release{Version: "synthetic preview", Commit: "fixture", Identity: "fixture"}, fixedNow)
 	feed := mudlog.NewFeed(64, 1000)
 	feed.Start()
 	defer feed.Stop()
@@ -162,7 +170,7 @@ func TestConsolePreview(t *testing.T) {
 	if _, err := fmt.Fprintln(logs, "INFO 2026-10-27T12:00:00-04:00 Local console preview started (synthetic fixture)"); err != nil {
 		t.Fatal(err)
 	}
-	for _, line := range []string{"WARN " + time.Now().UTC().Format(time.RFC3339) + " Synthetic warning: history write retried", "ERROR " + time.Now().UTC().Format(time.RFC3339) + " Synthetic error: test database unavailable"} {
+	for _, line := range []string{"WARN " + fixedNow.Format(time.RFC3339) + " Synthetic warning: history write retried", "ERROR " + fixedNow.Format(time.RFC3339) + " Synthetic error: test database unavailable"} {
 		if _, err := logs.Write([]byte(line)); err != nil {
 			t.Fatal(err)
 		}
