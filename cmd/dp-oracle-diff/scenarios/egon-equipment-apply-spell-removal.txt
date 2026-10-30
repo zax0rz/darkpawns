@@ -1,0 +1,93 @@
+# depth-case: equipment.apply-spell.removal-arms
+# C's APPLY_SPELL arm (src/handler.c:240-270) mutates the persistent AFF flags
+# at equip AND unequip: removing an item clears its bit unless a timed affect
+# provides it. Object 4331 (the dragon Emperor robes) applies AFF_WEREWOLF (27)
+# and AFF_VAMPIRE (28) (lib/world/obj/43.obj; src/structs.h:337-338), and the
+# room list prints both nightbreed form lines (src/act.informative.c:420-427).
+# After `transform` sets a REAL vampire's persistent AFF_VAMPIRE (no timed
+# record; src/act.other.c:1503), removing the robes runs the remove arm, finds
+# no timed bitvector 28, and wipes the real vampire's form bit with it. The
+# vampiric cape #7901 (APPLY_SPELL 19, hide) is the same class but is
+# ITEM_INVIS and unwearable by keyword, so the robes are the vehicle.
+# fixed-time 650353221 boots hour 22 (SUN_DARK) day 10, so `transform` passes
+# its night gate for the vampire arm (src/act.other.c:1490-1494).
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650353221
+
+[setup:oracle]
+Robebearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Robebearer
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Robedealer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Robedealer
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+teleport Robedealer 8004
+remove all
+load obj 4331
+set Robebearer vampire on
+
+[probe]
+wear robes
+score
+send:observer look Robebearer
+remove robes
+score
+send:observer look Robebearer
+wear robes
+score
+remove robes
+score
