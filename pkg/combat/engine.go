@@ -263,12 +263,23 @@ func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bo
 }
 
 func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment, afterDamage bool) error {
-	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
+	return ce.startCombatOpt(attacker, defender, deferDefenderEnrollment, afterDamage, false)
+}
+
+// startCombatOpt's allowRetiredDefender arm is C damage()'s set_fighting on a
+// body do_kill's raw_kill flagged while leaving it standing (src/fight.c:1404-
+// 1408): extract_char only queues the body (src/handler.c:1194-1209), so a
+// swing whose protection gates pass enrolls the killer against the flagged
+// body exactly as against a live one. Every other caller keeps the refusal —
+// no C path enrolls a corpse that damage()'s POS_DEAD guard already refused
+// (src/fight.c:1319-1326).
+func (ce *CombatEngine) startCombatOpt(attacker, defender Combatant, deferDefenderEnrollment, afterDamage, allowRetiredDefender bool) error {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || (BodyRetired(defender) && !allowRetiredDefender) {
 		return fmt.Errorf("combat requires concrete bodies")
 	}
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	if BodyRetired(attacker) || (BodyRetired(defender) && !allowRetiredDefender) {
 		return fmt.Errorf("combat requires live bodies")
 	}
 
@@ -337,6 +348,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 		Started:                 time.Now(),
 		DeferDefenderEnrollment: deferDefenderEnrollment,
 		DefenderNeedsStand:      defenderNeedsStand,
+		AllowRetiredDefender:    allowRetiredDefender,
 	}
 
 	return nil
@@ -881,7 +893,7 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 			if attacker.GetPosition() <= PosStunned || attacker.GetFightingBody() != nil {
 				return true
 			}
-			if err := ce.startCombat(attacker, defender, true, true); err != nil {
+			if err := ce.startCombatOpt(attacker, defender, true, true, pair.AllowRetiredDefender); err != nil {
 				return false
 			}
 			attacker.SetPosition(PosFighting)
@@ -903,9 +915,12 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 
 	// C damage() enrolls the victim after the NPC switcheroo scan.  Do this
 	// before the remaining damage-side effects, including stop_follower and
-	// the hit/miss message path.
+	// the hit/miss message path. A defender do_kill's raw_kill left standing
+	// is enrolled too (set_fighting has no extraction check,
+	// src/fight.c:1441-1445); the extraction pass retires the flagged body
+	// before the next violence pulse, so it never swings.
 	ce.mu.Lock()
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	if BodyRetired(attacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		ce.mu.Unlock()
 		return true
 	}
@@ -997,14 +1012,17 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		ce.DamageFunc(defender)
 	}
 
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	// A body flagged before this swing (do_kill's raw_kill) keeps flowing
+	// through damage()'s tail under AllowRetiredDefender; the retirement here
+	// only ends exchanges whose damage callbacks retired a body mid-swing.
+	if BodyRetired(attacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		return true
 	}
 	if rescued {
 		return true
 	}
 	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	if BodyRetired(attacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		return true
 	}
 

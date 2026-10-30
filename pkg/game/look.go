@@ -366,12 +366,14 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 		order = append(order, key)
 	}
 	// C's oc_add_front builds this display list in reverse discovery order.
+	// The room listing's count>1 marker is oc_show_list's no-indent prefix
+	// "[%2d] " (src/oc.c:123; mode 20 has no show_indent), not a suffix.
 	lines := make([]string, 0, len(order))
 	for i := len(order) - 1; i >= 0; i-- {
 		entry := groups[order[i]]
 		line := entry.line
 		if entry.count > 1 {
-			line += fmt.Sprintf("[%d]", entry.count)
+			line = fmt.Sprintf("[%2d] %s", entry.count, line)
 		}
 		lines = append(lines, line)
 		if flags := roomObjectVisibleFlags(ch, entry.item); flags != "" {
