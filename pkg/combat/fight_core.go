@@ -511,7 +511,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 			}
 		}
 		if victim.GetHP() < victim.GetMaxHP()/4 {
-			sendCombatMessage(victim, "You wish that your wounds would stop BLEEDING so much!\r\n")
+			sendCombatMessage(victim, BleedLine(victim))
 			if cbHasMobFlag(victim, "MOB_WIMPY") && ch != victim {
 				cbDoFlee(victim)
 			}
@@ -783,10 +783,11 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 
 	cbBroadcast(ch.GetRoom(), roomMsg, []Combatant{ch, victim})
 
-	// CRIT-010: Send attacker and victim their own messages.
-	// In C, act() sent to TO_CHAR and TO_VICT separately.
-	cbSendToChar(ch, charMsg)
-	cbSendToChar(victim, victimMsg)
+	// src/fight.c:995-1015: the room act() above carries no color, while the
+	// attacker's TO_CHAR line is bracketed by CCYEL(ch, C_CMP)/CCNRM and the
+	// victim's TO_VICT|TO_SLEEP line by CCRED(victim, C_CMP)/CCNRM.
+	sendColorBracketed(ch, skillColorYellow, charMsg, false, cbGetColorLevel(ch) >= colorLevelCMP)
+	sendColorBracketed(victim, skillColorRed, victimMsg, true, cbGetColorLevel(victim) >= colorLevelCMP)
 }
 
 // replaceMessageTokens applies the character and weapon substitutions used by

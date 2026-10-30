@@ -1,0 +1,87 @@
+# C-first keep-ansi proof that damage()'s wounded-band line carries color.
+# src/fight.c:1593-1597 builds one string:
+#   sprintf(buf2, "%sYou wish that your wounds would stop BLEEDING so much!%s\r\n",
+#           CCRED(victim, C_SPR), CCNRM(victim, C_SPR));
+# so the sandwich opens before "You wish" and closes after the CRLF. The gate is
+# C_SPR (1), one level below the C_CMP damage-message gate, so any colored
+# player sees it. The vehicle is the poison tick (src/limits.c:503-504 ->
+# damage(i, i, 10, SPELL_POISON)), which runs at every position and leaves the
+# victim standing: maxhit 500 with hit 30 leaves HP under max_hit/4 while
+# GET_POS stays POS_STANDING, so damage()'s default arm is the one taken.
+#
+# depth-case: damage.bleed-line-color
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8004 4 off
+set-room-sector 8163 7
+keep-ansi
+
+[setup:oracle]
+Bleedgod
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Bleedgod
+y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:peer]
+Bleedpeer
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Bleedpeer
+y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Bleedpeer 8004
+set player Bleedpeer level 1
+set Bleedpeer maxhit 500
+set Bleedpeer hit 30
+cast 'poison' Bleedpeer
+
+[probe]
+~dpclock pulse 630

@@ -1009,7 +1009,7 @@ func (ce *CombatEngine) handleSurvivingVictimState(attacker, defender Combatant,
 	}
 
 	if defender.GetHP() < defender.GetMaxHP()/4 {
-		sendCombatMessage(defender, "You wish that your wounds would stop BLEEDING so much!\r\n")
+		sendCombatMessage(defender, BleedLine(defender))
 		if cbHasMobFlag(defender, "MOB_WIMPY") && attacker != defender {
 			cbDoFlee(defender)
 		}

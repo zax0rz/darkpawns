@@ -1,0 +1,98 @@
+# C-first keep-ansi proof that damage_message()'s weapon-hit color is
+# player-facing law (src/fight.c:995-1015). On a damaging weapon swing C sends
+# the attacker's TO_CHAR line bracketed by CCYEL(ch, C_CMP)/CCNRM(ch, C_CMP) and
+# the victim's TO_VICT line by CCRED(victim, C_CMP)/CCNRM(victim, C_CMP); the
+# room act() carries no color. Creation answers Y to "Do you want ANSI color"
+# (src/interpreter.c:1992-1998 sets both PRF_COLOR bits), so both players sit at
+# COLOR_LEV C_CMP (3). The victim is a descriptor-less mob, whose body reports
+# color level 0, so only the attacker's line carries the yellow sandwich.
+#
+# A miss (dam == 0) is NOT the vehicle: fight.c:1534-1541 tries skill_message
+# first, and lib/misc/messages has a TYPE_HIT record whose miss line the port
+# already colors. An ordinary damaging hit takes the unconditional
+# dam_message() arm instead.
+#
+# depth-case: damage-message.color-cmp
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+keep-ansi
+
+# PRIMARY = first player => God (the set/skillset configurator).
+[setup:oracle]
+Dmggod
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dmggod
+y
+oraclepass
+oraclepass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# PEER = the mortal attacker, at complete color, who walks the newbie path to
+# the non-peaceful Street of Wizardry (8105) where the trainee guard spawns.
+[setup:oracle:attacker]
+Dmgatt
+Y
+attpass
+attpass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Dmgatt
+y
+attpass
+attpass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+teleport Dmgatt 8105
+set Dmgatt level 30
+set trainee ac 80
+set trainee maxhit 500
+set trainee hit 500
+
+[probe:attacker]
+hit trainee
