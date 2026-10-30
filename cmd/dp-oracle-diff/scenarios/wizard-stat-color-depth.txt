@@ -1,0 +1,76 @@
+# C-first raw-byte proof for the stat surface's colour, at every level that
+# changes it.
+#
+# do_stat_room, do_stat_character and do_stat_object carry 66 color sites
+# (src/act.wizard.c:422-976). All of them are C_NRM except the
+# kills/pkills/deaths row, which is the one C_CMP site (src/act.wizard.c:831-835),
+# so `color complete` is the only level that shows every site: at `color normal`
+# the rest of the report is colored and that row stays plain, and below C_NRM the
+# whole report is byte-identical to the uncolored one.
+# src/screen.h:45-56 defines the gates: _clrlevel() is PRF_COLOR_1 (1) plus
+# PRF_COLOR_2 (2), clr(ch, C_NRM) is >= 2 and clr(ch, C_CMP) is >= 3.
+#
+# keep-ansi compares the escapes raw (R1b). The viewer walks all four levels in
+# one probe: `color` reports the new level, then each report re-renders. Room 8162
+# carries a spawned mobile and a spawned object so one probe reaches all three
+# report bodies.
+#
+# depth-case: stat.color-levels-raw
+# depth-case: stat.flag-list-trailing-space
+# depth-case: stat.plr-line-verbatim
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+spawn-mob 2109 1 8162 80
+spawn-obj 14533 1 8162 80
+force-load 14533
+
+[setup:oracle]
+Statcolor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Statcolor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+color sparse
+stat player Statcolor
+color normal
+stat player Statcolor
+stat room
+stat object morion
+stat mob orc
+color complete
+stat player Statcolor
+stat room
+stat object morion
+stat mob orc
+color off
+stat player Statcolor
+stat room

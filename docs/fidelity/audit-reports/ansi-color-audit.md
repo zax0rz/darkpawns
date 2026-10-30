@@ -231,7 +231,7 @@ this audit.
 | `do_report` | 18 | C_NRM | `pkg/session/act_informative.go` | none |
 | `print_group` | 16 | C_CMP | `pkg/session` group | none |
 | `damage_message` | 16 | C_CMP | `pkg/combat/fight_core.go` | **keep-ansi (new)** |
-| `do_stat_character` | 42 | C_NRM 36, C_CMP 6 | `pkg/session/wiz_stats.go` | none |
+| `do_stat_character` | 42 | C_NRM 36, C_CMP 6 | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
 | `make_prompt` | 42 | C_CMP | `pkg/session/terminal_colors.go`, prompt | indirect |
 | `do_exits`/`do_auto_exits` | 13 | C_NRM 12, C_CMP 1 | `pkg/game/look.go` (`autoExitsText`) | none |
 | `do_gsay` | 6 | C_CMP 4, C_SPR 1, C_NRM 1 | `pkg/game/comm_channel.go` | **keep-ansi** |
@@ -241,8 +241,8 @@ this audit.
 | `do_ctell` | 4 | C_CMP | `pkg/game/comm_channel.go` | **keep-ansi** |
 | `do_where` | 4 | C_CMP | `pkg/session` | none |
 | `get_char_cols` | 4 | C_NRM | OLC editors | **keep-ansi** (10 scenarios) |
-| `do_stat_room` | 16 | C_NRM | `pkg/session/wiz_stats.go` | none |
-| `do_stat_object` | 8 | C_NRM | `pkg/session/wiz_stats.go` | none |
+| `do_stat_room` | 16 | C_NRM | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
+| `do_stat_object` | 8 | C_NRM | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
 | `do_users` | 2 | C_SPR | `pkg/session` who/users | none |
 | `do_color` | 2 | C_SPR 1, C_OFF 1 | `pkg/session/act_informative.go` | unit |
 | `look_at_char` | 2 | C_CMP | `pkg/game/look.go` | none |
@@ -332,8 +332,10 @@ Ordered by player exposure. Each row needs a `keep-ansi` scenario; a row is
 2. `do_infobar` — 80 sites, the densest colored output in the game.
 3. `do_who` / `do_users` — 23 sites at C_SPR; the only C_SPR commands a mortal
    sees constantly.
-4. `do_stat_character` / `do_stat_room` / `do_stat_object` — 66 sites; also the
-   wizard surface where a gate error is least likely to be reported.
+4. ~~`do_stat_character` / `do_stat_room` / `do_stat_object` — 66 sites; also the
+   wizard surface where a gate error is least likely to be reported.~~
+   **Done — `wizard-stat-color-depth`, §11.** It also found two text-level
+   inventions the normalizer had been hiding (**F7**, **F8**).
 5. `do_report` / `print_group` — 34 sites.
 6. `do_exits` / `do_auto_exits` / `look_at_char` / `list_char_to_char`.
 7. `do_help` / `do_skills` / `do_where` / `do_review` / `list_skills` / `do_wiznet`.
@@ -449,4 +451,85 @@ Both are targeted single-scenario probes; neither is a release gate. The full
 combined census remains Claude's pre-release step (AGENTS.md).
 
 
+
+
+## 11. The stat surface (2026-10-30)
+
+Queue item 4: `do_stat_character` (42 sites), `do_stat_room` (16) and
+`do_stat_object` (8) — 66 sites in `pkg/session/wiz_stats.go`, the largest
+coloured surface after `do_infobar`, and the wizard command where a wrong gate is
+least likely to be reported. **All 66 now match C**, proved by
+`wizard-stat-color-depth`, which walks the viewer through every level
+(`color sparse` → `normal` → `complete` → `off`) and re-renders all three report
+bodies at each, raw escapes intact.
+
+The gates are C's own. Everything is C_NRM (`clr(ch, C_NRM)` is `_clrlevel >= 2`,
+so PRF_COLOR_2 alone is enough) except the kills/pkills/deaths row, the one C_CMP
+site (`src/act.wizard.c:831-835`), which needs both bits. `color normal` is
+therefore the discriminating level: the rest of the report is coloured and that
+row is plain. Before this work `wiz_stats.go` emitted **no** colour at all in
+`do_stat_character` and `do_stat_room`, and only the room/object extra-description
+and contents lists in `do_stat_object`.
+
+Two things came out of it that are not about colour at all.
+
+**F7 — the stat flag lists dropped `sprintbitarray`'s trailing space (FIXED, R4).**
+C's `sprintbitarray` appends `"NAME "` per set bit and `"NOBITS "` when none are
+set, and never trims (`src/utils.c:825-843`); `sprintbit` behaves the same way
+(`src/utils.c:243-267`). C prints the result straight into the report
+(`src/act.wizard.c:879, 885, 888, 894, 968`), so the trailing space is part of the
+line. The port's `wiz_stats.go` wrapped nine call sites in `strings.TrimSpace`,
+which C does not do:
+
+```
+ C: NPC flags: ^[[36mSCAVENGER ISNPC AGGR STAY-ZONE ^[[0m
+Go: NPC flags: ^[[36mSCAVENGER ISNPC AGGR STAY-ZONE^[[0m
+```
+
+**Why no census had ever seen it.** Uncoloured, the space sits directly before
+the CRLF, and the oracle normalizer strips trailing whitespace — both engines
+normalized to the same line, so `stat.player-success` was green on a divergence
+that had been there since the port was written. Colour moves `CCNRM` after the
+space, which puts it **mid-line**, where the trailing-whitespace rule cannot reach
+it. This is the same failure shape as R1b: a normalizer rule that is right for its
+own purpose silently made a byte class unprovable. Fix: delete the nine
+`TrimSpace` wrappers.
+
+**F8 — the PLR line fabricated a `CSH` marker (FIXED, R4).** `wizardPlayerFlags`
+masked the PLR half of the merged flag word and then, when that half was empty but
+any other bit was set, **invented** `PLR_CRASH` to "preserve the visible CSH
+marker". C prints `PLR_FLAGS(k)` verbatim (`src/act.wizard.c:884-886`), so a player
+whose only flags are the two colour preferences reads `NOBITS`, not `CSH`:
+
+```
+ C: PLR: ^[[36mNOBITS ^[[0m
+Go: PLR: ^[[36mCSH ^[[0m
+```
+
+The fallback is not needed for what it claimed: the runtime already models
+PLR_CRASH as bit 6 of that half and sets it through `MarkCrashNeeded`
+(`pkg/game/persistence_seam.go:104-109`) exactly where C sets it on inventory
+movement. Deleting it is safe, and the proof is that all eleven stat scenarios —
+including the eight that predate this work — stay green without it, so it was not
+covering a missing flag-set anywhere.
+
+### Evidence
+
+- `wizard-stat-color-depth` (new, `keep-ansi`): one viewer, four levels, three
+  report bodies per level. Targeted census `stat-color3` over every
+  `wizard-stat*` and `wizard-valid-reports*` scenario at `8624f88b7`:
+  `scenarios=11 passed=11 failed=0 verdict=CLEAN`.
+- Both findings were found by the scenario, not by reading: the first run failed
+  on F7, the second on F8, and each fix turned exactly those rows green.
+- Unit proofs (R5h): `TestStatPlayerColorLevelsMatchC`,
+  `TestStatRoomColorLevelsMatchC`, `TestStatObjectColorLevelsMatchC`,
+  `TestStatMobColorLevelsMatchC` (each a four-level table that also asserts the
+  report is escape-free below C_NRM), `TestStatPlayerSpellLineColorMatchesC`, and
+  `TestStatFlagListsKeepSprintbitarrayTrailingSpace` for F7. Expected bytes are
+  built from the literal codes in `src/screen.h:34-41`, never from the production
+  constants, so a drift in either the constants or the gates fails the test. Both
+  fixes were scratch-broken and the tests failed as intended.
+- Two pre-existing unit assertions encoded the F7 bug
+  (`wiz_stats_test.go`: `"AFF: SANCT NOTHING\r\n"`, `"AFF: BLIND\r\n"`) and were
+  corrected to C's bytes.
 
