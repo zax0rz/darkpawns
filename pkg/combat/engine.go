@@ -638,30 +638,54 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 		ce.StopCombat(attacker)
 		return
 	}
-	if defender.GetPosition() == PosDead {
-		return // defender extracted; nothing to hit
-	}
 	if attacker.GetRoom() != defender.GetRoom() {
 		ce.StopCombat(attacker)
 		return
 	}
-
-	for i := 0; i < numAttacks; i++ {
-		if defender.GetPosition() == PosDead {
-			break
+	if BodyRetired(defender) {
+		// Deferred extraction (src/handler.c:1194-1209): a body killed this
+		// pulse is flagged MOB_EXTRACT but still in the room, and survivors
+		// whose FIGHTING names it keep swinging until extract_pending_chars
+		// stops them at the next heartbeat (src/handler.c:1147-1151), which
+		// runs before the next violence pulse (src/comm.c:805). C's own loop
+		// never revisits the dead body — stop_fighting patches the cursor
+		// past it (src/fight.c:245-246) — but every LATER combatant in the
+		// pass swings. Each swing consumes hit()'s to-hit and damage draws;
+		// damage() then refuses the flagged corpse after its position gate
+		// (src/fight.c:1319-1326). AllowRetiredDefender performs exactly
+		// those draws and that refusal; a body that already left the room
+		// (extracted) failed the same-room gate above instead.
+		corpsePair := &CombatPair{
+			Attacker:                attacker,
+			Defender:                defender,
+			DeferDefenderEnrollment: true,
+			DeferAttackerEnrollment: true,
+			AllowRetiredDefender:    true,
 		}
-		// C's per-swing gate (fight.c:2017-2024) re-reads FIGHTING(ch) every
-		// swing: damage()'s mercy stop (fight.c:1491-1494) or the !AWAKE
-		// victim stop (:1630-1632) can clear it MID-LOOP, and C's hit() then
-		// never runs — no draw, no stale-pair swing. PL-005: without this the
-		// second swing of a multi-attack round kept hitting an already-stopped
-		// victim (prone multiplier fight.c:1854-1855), killing characters C
-		// leaves incapacitated, and diverging the shared RNG stream.
-		if fighting := attacker.GetFightingBody(); fighting == nil || fighting != defender {
-			break
+		for i := 0; i < numAttacks; i++ {
+			if fighting := attacker.GetFightingBody(); fighting == nil || fighting != defender {
+				break
+			}
+			ce.performOneHit(corpsePair)
 		}
-		if ce.performOneHit(pair) {
-			break
+	} else {
+		for i := 0; i < numAttacks; i++ {
+			if defender.GetPosition() == PosDead {
+				break
+			}
+			// C's per-swing gate (fight.c:2017-2024) re-reads FIGHTING(ch) every
+			// swing: damage()'s mercy stop (fight.c:1491-1494) or the !AWAKE
+			// victim stop (:1630-1632) can clear it MID-LOOP, and C's hit() then
+			// never runs — no draw, no stale-pair swing. PL-005: without this the
+			// second swing of a multi-attack round kept hitting an already-stopped
+			// victim (prone multiplier fight.c:1854-1855), killing characters C
+			// leaves incapacitated, and diverging the shared RNG stream.
+			if fighting := attacker.GetFightingBody(); fighting == nil || fighting != defender {
+				break
+			}
+			if ce.performOneHit(pair) {
+				break
+			}
 		}
 	}
 
@@ -984,9 +1008,10 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// damage() emits its POS_DEAD bytes, then the death callback owns XP,
 	// autogold, death_cry and the silent corpse (src/fight.c:1644-1691, 573-578).
 	EmitDeathPositionMessage(defender, ce.BroadcastFunc)
-	// The death callback owns XP/autogold before raw_kill's cry/corpse.
-	ce.handleDeath(defender, attacker)
-	return true
+	// The death callback owns XP/autogold before raw_kill's cry/corpse. A
+	// false return is die_with_killer's canceled tail (fight.c:599): the
+	// healed body keeps fighting, so this exchange has not ended.
+	return ce.handleDeath(defender, attacker)
 }
 
 // handleSurvivingVictimState mirrors damage()'s default position branch after
@@ -1171,7 +1196,13 @@ func (ce *CombatEngine) sendMissMessage(attacker, defender Combatant, attackType
 //   - Player: lose EXP/3, create corpse with inventory+equipment+gold, send to room 8004
 //   - Mob: create corpse, remove from world
 //   - Corpse creation is delegated via DeathFunc callback (set by game layer)
-func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
+//
+// The death callback runs die_with_killer's bookkeeping AND its dying spec arm
+// (src/fight.c:586-597). The HP<0 tail that follows (fight.c:599-621) is gated
+// here on the callback's return state: a special that healed the body —
+// never_die (src/spec_procs2.c:2075-2090) — cancels stop_fighting, POS_DEAD
+// and raw_kill, and the exchange reports itself as continuing.
+func (ce *CombatEngine) handleDeath(victim, killer Combatant) bool {
 	roomVNum := victim.GetRoom()
 
 	// Fire death script trigger on victim mob (before DeathFunc removes it)
@@ -1189,9 +1220,39 @@ func (ce *CombatEngine) handleDeath(victim, killer Combatant) {
 		}
 	}
 	ce.mu.RUnlock()
-	ce.RetireCombatant(victim)
 	if ce.DeathFunc != nil {
 		ce.DeathFunc(victim, killer, attackType)
+	}
+	// die_with_killer's HP<0 tail (fight.c:599-621). The dying spec arm ran
+	// inside the callback; a healed body fails C's `if (GET_HIT(ch)<0)` gate,
+	// so neither stop_fighting, nor POS_DEAD, nor raw_kill runs, and every
+	// FIGHTING pointer the arm set stays for the continuing fight.
+	if victim.GetHP() >= 0 {
+		return false
+	}
+	ce.retireDeathVictim(victim, killer)
+	return true
+}
+
+// retireDeathVictim is die_with_killer's two stop_fighting calls
+// (src/fight.c:612-616): the dead body and its killer leave combat; nobody
+// else does. Survivors still fighting the body keep their FIGHTING pointer at
+// the flagged corpse — extract_char only queues the body (src/handler.c:1194-
+// 1209) — and their swings land on it until extract_char_final stops them at
+// the next heartbeat (src/handler.c:1147-1151), mirrored by RetireCombatant
+// through the extraction pass.
+func (ce *CombatEngine) retireDeathVictim(victim, killer Combatant) {
+	if !ValidBody(victim) {
+		return
+	}
+	ce.mu.Lock()
+	defer ce.mu.Unlock()
+	if marker, ok := victim.(interface{ SetCombatRetired(bool) }); ok {
+		marker.SetCombatRetired(true)
+	}
+	ce.stopCombatLocked(victim, true)
+	if killer != nil && killer != victim && ValidBody(killer) && killer.GetFightingBody() != nil {
+		ce.stopCombatLocked(killer, false)
 	}
 }
 

@@ -2161,6 +2161,12 @@ func specNeverDie(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	}
 	if me.GetHP() < me.GetMaxHP() {
 		me.SetHealth(me.GetMaxHP())
+		// C update_pos after the heal (src/spec_procs2.c:2085): a body at
+		// POS_DEAD or below stands back up, so the fight continues instead of
+		// leaving a "standing" corpse that nothing can hit.
+		if me.GetPosition() <= combat.PosStunned {
+			me.SetPosition(combat.PosStanding)
+		}
 		return true
 	}
 	return false

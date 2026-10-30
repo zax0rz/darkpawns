@@ -265,6 +265,9 @@ func TestHandleDeath_Mob(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob failed: %v", err)
 	}
+	// die_with_killer only runs its death tail for GET_HIT(ch) < 0
+	// (src/fight.c:599); a direct HandleDeath caller must stage that.
+	mob.SetHealth(-1)
 
 	// Create killer player
 	killer := NewPlayer(99, "Hero", 1001)
@@ -581,6 +584,9 @@ func TestHandleMobDeath_ConcurrentKills(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SpawnMob failed: %v", err)
 	}
+	// Pending death, as combat guarantees and die_with_killer's HP gate
+	// requires (src/fight.c:599).
+	mob.SetHealth(-1)
 
 	// Create the killer player
 	killer := NewPlayer(99, "Hero", 1001)

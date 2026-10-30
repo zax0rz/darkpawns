@@ -27,6 +27,7 @@ type mockCombatant struct {
 	damroll    int
 	sex        int
 	fighting   Combatant
+	retired    bool
 	messages   []string
 }
 
@@ -53,6 +54,8 @@ func (m *mockCombatant) GetSex() int                      { return m.sex }
 func (m *mockCombatant) TakeDamage(amount int)            { m.hp -= amount }
 func (m *mockCombatant) Heal(amount int)                  { m.hp += amount }
 func (m *mockCombatant) SetFightingBody(target Combatant) { m.fighting = target }
+func (m *mockCombatant) CombatRetired() bool              { return m.retired }
+func (m *mockCombatant) SetCombatRetired(r bool)          { m.retired = r }
 func (m *mockCombatant) GetFightingBody() Combatant       { return m.fighting }
 func (m *mockCombatant) StopFighting()                    { m.fighting = nil }
 func (m *mockCombatant) GetFighting() string {

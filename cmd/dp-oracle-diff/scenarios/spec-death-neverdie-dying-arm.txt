@@ -1,0 +1,59 @@
+# depth-case: spec.dying-arm-neverdie-cancel
+# die_with_killer runs a spec-flagged victim's own special once more, with
+# FIGHTING set to the killer (src/fight.c:590-594), before the HP<0 death
+# tail. The demon gatekeeper (14401) carries never_die: its special heals the
+# body to full, so die_with_killer's `if (GET_HIT(ch)<0)` gate (src/fight.c:
+# 599) fails and the death tail is canceled — the room still sees the
+# "is dead! R.I.P." position line and the killer's experience award from
+# damage(), but no death cry, no corpse, and the gatekeeper keeps fighting.
+# The first player is the implementor; the staged 1-HP victim dies to the
+# opener's first violence round. Puff's own HP<0 say line
+# (src/spec_procs.c:619-623) is the other dying-arm spec, but shopkeeper
+# protection makes her undamageable, so this vehicle is the reachable one.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14401 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Gatebane
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gatebane
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set mob gatekeeper hit 1
+set mob gatekeeper hitroll -20
+set mob gatekeeper damroll -20
+
+[probe]
+hit gatekeeper
+~dpclock pulse 20
+~dpclock pulse 20
+~dpclock pulse 20
+look

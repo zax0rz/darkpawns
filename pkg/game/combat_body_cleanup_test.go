@@ -92,8 +92,22 @@ func TestCombatBodyWorldCleanup(t *testing.T) {
 					t.Fatal("removed body admitted a stale direct hit")
 				}
 			}
-			if one.GetFightingBody() != nil || p.GetFightingBody() != nil {
-				t.Fatalf("stale retired/departed references %p/%p", one.GetFightingBody(), p.GetFightingBody())
+			if one.GetFightingBody() != nil {
+				t.Fatalf("dead body still fighting: %p", one.GetFightingBody())
+			}
+			if kind == "raw-kill" {
+				// raw_kill stops only the victim (src/fight.c:541-542); the
+				// killer's FIGHTING stays on the flagged body for the
+				// deferred-extraction window — it keeps swinging at the corpse
+				// — and extract_char_final clears it at the next heartbeat
+				// (src/handler.c:1147-1151).
+				if p.GetFightingBody() != one {
+					t.Fatalf("raw-kill cleared the killer's window reference: %p", p.GetFightingBody())
+				}
+				w.ExtractPendingChars()
+			}
+			if p.GetFightingBody() != nil {
+				t.Fatalf("stale retired/departed reference %p", p.GetFightingBody())
 			}
 			if two.GetFightingBody() != q || q.GetFightingBody() != two || !ce.IsFighting(two) {
 				t.Fatal("duplicate survivor lost fight")

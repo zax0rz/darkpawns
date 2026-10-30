@@ -830,6 +830,18 @@ func (w *World) mobHit(attacker *MobInstance, defender combat.Combatant) error {
 		}
 		return attacker.Attack(player, w)
 	}
+	// A special that swings at a body C has flagged for extraction but not yet
+	// freed (src/handler.c:1194-1209) still runs hit(): the to-hit and damage
+	// draws happen and damage() then refuses the flagged corpse (src/fight.c:
+	// 1319-1326). cityguard's outlaw scan reaches this every time it kills its
+	// outlaw in the same pass it re-scans the room (src/spec_procs.c:785-793).
+	if combat.BodyRetired(defender) {
+		if swinger, ok := w.combatEngine.(interface {
+			PerformPendingBodySwing(combat.Combatant, combat.Combatant) error
+		}); ok {
+			return swinger.PerformPendingBodySwing(attacker, defender)
+		}
+	}
 	if hitter, ok := w.combatEngine.(interface {
 		PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
 	}); ok {
