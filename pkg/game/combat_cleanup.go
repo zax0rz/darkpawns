@@ -72,3 +72,39 @@ func (w *World) retireCombatBody(body combat.Combatant) {
 		}
 	}
 }
+
+// stopRawKillBody is raw_kill's own fighting stop (src/fight.c:541-542): the
+// dying body leaves combat, and nobody else's fighting is touched. extract_char
+// only flags the body (src/handler.c:1194-1209), so survivors keep pointing at
+// it — and keep swinging at the flagged corpse — until extract_char_final at
+// the next heartbeat (src/handler.c:1147-1151), which the extraction pass's
+// retireCombatBody mirrors.
+func (w *World) stopRawKillBody(body combat.Combatant) {
+	if body == nil {
+		return
+	}
+	if ce, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+		ce.StopCombat(body)
+	} else {
+		body.StopFighting()
+	}
+	if marker, ok := body.(interface{ SetCombatRetired(bool) }); ok {
+		marker.SetCombatRetired(true)
+	}
+}
+
+// stopKillerAfterDie is die_with_killer's stop_fighting(killer) (src/fight.c:
+// 615-616): the killer leaves combat when its victim dies, retargeting through
+// C's dead-opponent scan when another fighter names it. raw_kill-only paths
+// (do_kill's instakill) never stop the killer — its FIGHTING stays on the
+// flagged corpse until the extraction pass.
+func (w *World) stopKillerAfterDie(killer combat.Combatant) {
+	if killer == nil {
+		return
+	}
+	if ce, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+		ce.StopCombat(killer)
+	} else {
+		killer.StopFighting()
+	}
+}
