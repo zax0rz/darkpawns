@@ -1,7 +1,7 @@
 # Go-only string triage (the R4 review queue)
 
 Every go-only segment in [`go-only.tsv`](go-only.tsv) classified, each with evidence a
-reviewer can check in a minute. Generated from the census at `b75852523`. Segments are the
+reviewer can check in a minute. Generated from the census at `1d4702dde`; pruned to the live baseline on 2026-10-30. Segments are the
 key, not file:line, because lines move.
 
 Reproduce the queue with `make string-census-update`; the ratchet baseline
@@ -11,16 +11,16 @@ the counts below in step with the baseline).
 
 | reason | count |
 |---|---|
-| `bug:invented` | 50 |
-| `bug:paraphrase` | 43 |
-| `census:composed` | 2 |
+| `bug:invented` | 34 |
+| `bug:paraphrase` | 14 |
+| `census:composed` | 1 |
 | `data` | 0 |
-| `surface:no-c` | 1 |
+| `surface:no-c` | 0 |
 | `unsure` | 0 |
 | `divergence:approved` | 1 |
-| **total** | **97** |
+| **total** | **50** |
 
-`unsure` is 0/97 (0.0%).
+`unsure` is 0/50 (0.0%).
 
 **This document classifies; it changes no game code.** Fix work is Claude's.
 
@@ -119,8 +119,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `lib/world/shp/42.shp` — `(no function)` (2)
 
-- `bug:paraphrase` — Go `pkg/session/shop_cmds.go:407` — “The shopkeeper doesn't want that.” — C lib/world/shp/42.shp:14: "%s Hmmm, nah, I don't want one of those.~" — C tells the shop's configured do_not_buy line (lib/world/shp/42.shp:14), not a fixed sentence; C prints the shop's do_not_buy line via src/shop.c:616 + do_tell, so the bytes are data-driven, not the fixed string Go prints
-- `bug:paraphrase` — Go `pkg/session/shop_cmds.go:365, pkg/session/shop_cmds.go:367, pkg/session/shop_cmds.go:417, pkg/session/shop_cmds.go:458, pkg/session/shop_cmds.go:460` — “gold pieces.” — C lib/world/shp/42.shp:18: "%s I'll give you %d coins for that.~" — C's shop tells the keeper's coins line (lib/world/shp/42.shp:18); Go says "gold pieces"; C prints the shop's message_sell line via src/shop.c:800 + do_tell; Go says "gold pieces" where the data and C say "coins", at five sites
 
 ### `src/act.comm.c` — `do_gen_comm` (1)
 
@@ -128,7 +126,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.comm.c` — `do_qcomm` (1)
 
-- `bug:paraphrase` — Go `pkg/session/act_comm.go:42` — “What is your question?” — C src/act.comm.c:1321: "%s?  Yes, fine, %s we must, but WHAT??\r\n" — Go already has qcommEmptyMsg (act_comm.go:139) for these bytes; cmdQcomm prints its own prompt
 
 ### `src/act.comm.c` — `do_tell` (2)
 
@@ -137,7 +134,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.comm.c` — `do_think` (1)
 
-- `bug:paraphrase` — Go `pkg/game/comm_channel.go:223` — “You think: '” — C src/act.comm.c:1380: "You think . o O ( %s )\n\r" — do_think's self line; Go prints "You think: '%s'"
 
 ### `src/act.comm.c` — `do_write` (1)
 
@@ -145,7 +141,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.informative.c` — `do_color` (1)
 
-- `bug:paraphrase` — Go `pkg/session/act_informative.go:40` — “Your color is now” — C src/act.informative.c:2494: "Your %scolor%s is now %s.\r\n" — C wraps "color" in CCRED/CCNRM escapes; Go drops them
 
 ### `src/act.informative.c` — `do_gen_ps` (2)
 
@@ -153,7 +148,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.item.c` — `get_from_container` (1)
 
-- `bug:paraphrase` — Go `pkg/game/death.go:455` — “You autoloot the corpse but find nothing of value.” — C src/act.item.c:259: "$p seems to be empty." — C autoloot runs do_get all corpse; its empty-container line reworded
 
 ### `src/act.item.c` — `perform_drop` (1)
 
@@ -165,11 +159,9 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.item.c` — `perform_get_from_container` (1)
 
-- `bug:paraphrase` — Go `pkg/game/death.go:453` — “You autoloot:” — C src/act.item.c:208: "You get $p from $P." — C autoloot prints this per item via do_get; Go says "You autoloot: <names>."
 
 ### `src/act.movement.c` — `(no function)` (1)
 
-- `bug:paraphrase` — Go `pkg/game/ai.go:172, pkg/game/graph.go:343` — “has arrived.” — C src/act.movement.c:238: "$n arrives from the %s." — C do_move direction-specific arrival line; Go substitutes a generic has-arrived line
 
 ### `src/act.movement.c` — `do_gen_door` (1)
 
@@ -177,9 +169,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.offensive.c` — `do_flee` (3)
 
-- `bug:paraphrase` — Go `pkg/session/movement_cmds.go:68` — “There's nowhere to flee!” — C src/act.offensive.c:415: "PANIC!  You couldn't escape!\r\n" — C's no-exit branch of do_flee prints the PANIC line; Go rewrote it; unreachable: cmdFleeMovement is not registered (only cmdFlee is, commands.go:94); the live path already prints C's PANIC line at combat_cmds.go:406
-- `bug:invented` — Go `pkg/session/movement_cmds.go:50` — “You're not fighting anyone!” — C src/act.offensive.c:365: nothing — C do_flee has no fighting gate and prints nothing; string lives in an unregistered stub; unreachable: same unregistered cmdFleeMovement stub; the live flee path is cmdFlee (pkg/session/combat_cmds.go:335)
-- `bug:invented` — Go `pkg/session/movement_cmds.go:122` — “experience points for fleeing.” — C src/act.offensive.c:405: nothing — C do_flee calls gain_exp silently; C has no flee XP-loss message; unreachable: same unregistered cmdFleeMovement stub
 
 ### `src/act.other.c` — `do_auto` (2)
 
@@ -195,7 +184,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.other.c` — `do_sneak` (1)
 
-- `bug:paraphrase` — Go `pkg/session/movement_cmds.go:171` — “You attempt to move silently.” — C src/act.other.c:225: "Okay, you'll try to move silently for a while.\r\n" — Unwired movement stub rewrites C do_sneak's line; unreachable stub: the live sneaking path is the skill command; C's line is act.other.c:225
 
 ### `src/act.other.c` — `do_use` (2)
 
@@ -246,8 +234,6 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/act.wizard.c` — `do_wizutil` (3)
 
-- `bug:invented` — Go `pkg/session/wiz_system.go:463` — “Unknown sub-command. Options: reroll, pardon, notitle, squelch, freeze, thaw, unaffect” — C src/act.wizard.c:2214: nothing — C has no wizutil command; the unknown-subcmd branch only logs, no player text
-- `bug:paraphrase` — Go `pkg/session/wiz_system.go:447` — “Usage: reroll|pardon|notitle|squelch|freeze|thaw|unaffect <player>” — C src/act.wizard.c:2091: "Yes, but for whom?!?\r\n" — C do_wizutil's missing-argument line for reroll/pardon/notitle/etc.
 - `bug:paraphrase` — Go `pkg/session/wiz_system.go:640` — “Usage: unaffect <player>” — C src/act.wizard.c:2091: "Yes, but for whom?!?\r\n" — C unaffect with no target prints this; Go prints a usage line instead
 
 ### `src/clan.c` — `do_clan_demote` (1)
@@ -264,14 +250,12 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/config.c` — `(no function)` (3)
 
-- `bug:paraphrase` — Go `pkg/session/cmd_info.go:1067, pkg/session/wiz_player.go:26` — “No one by that name online.” — C src/config.c:93: "No-one by that name here.\r\n" — NOPERSON, C's wizard target-not-found line, reworded
 - `bug:invented` — Go `pkg/session/wiz_info.go:580, pkg/session/wiz_info.go:585` — “Usage: poofset <in|out> [message]” — C src/config.c:92: "Okay.\r\n" — no C poofset command; do_poofset (poofin/poofout) only replies OK
 - `bug:invented` — Go `pkg/session/wiz_player.go:31` — “You heal” — C src/config.c:92: "Okay.\r\n" — C do_restore replies OK to the healer; Go adds a You heal <name>. line instead
 
 ### `src/fight.c` — `dam_message` (3)
 
 - `bug:paraphrase` — Go `pkg/game/mob.go:364` — “attacks you for” — C src/fight.c:931: "$n #W you hard." — C dam_message victim line for 7-10 damage, #W from attack type; Go prints a damage count
-- `bug:invented` — Go `pkg/combat/engine.go:971` — “hits you for” — C src/fight.c:925: "$n #W you." — C dam_message uses its weapon-verb table, never for-N-damage; MessageFunc already wired (main.go:561); C's damage text is the dam_message verb table (src/fight.c:919-960), banded by damage; it never prints a damage number, which is the invented part
 - `bug:paraphrase` — Go `pkg/game/damage_stubs.go:256` — “hits you, but it doesn't hurt!” — C src/fight.c:907: "$n tries to #w you, but misses." — C dam_message dam==0 victim line; Go re-words it as a hit that does not hurt
 
 ### `src/fight.c` — `damage` (1)
@@ -280,11 +264,9 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/fight.c` — `make_dust` (1)
 
-- `bug:invented` — Go `pkg/game/death.go:1194` — “is disintegrated! Equipment lies scattered on the ground.” — C src/fight.c:433: nothing — C make_dust only moves gear and loads dust; there is no disintegrate room message
 
 ### `src/gate.c` — `SPECIAL` (1)
 
-- `bug:paraphrase` — Go `pkg/game/spec_procs_missing.go:198` — “arrives through a shimmering moon gate!” — C src/gate.c:283: "With a sound like a raging river, a hole in space opens up " — C continues and $n steps out.; Go re-words the gate arrival message
 
 ### `src/gate.c` — `load_night_gate` (1)
 
@@ -296,14 +278,9 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/handler.c` — `check_for_bad_stats` (2)
 
-- `bug:paraphrase` — Go `pkg/game/char_mgmt.go:59` — “Your light source flickers and sputters.” — C src/handler.c:1057: "Your light begins to flicker and fade." — update_char_objects' value==1 line; Go rewrites it
-- `bug:paraphrase` — Go `pkg/game/char_mgmt.go:61` — “Your light source has gone out.” — C src/handler.c:1062: "Your light sputters out and dies." — update_char_objects' value==0 line; Go rewrites it
 
 ### `src/house.c` — `(no function)` (3)
 
-- `bug:invented` — Go `pkg/game/house_rent.go:23, pkg/game/house_rent.go:49` — “Error reading house file.” — C src/house.c:215: nothing — C House_listrent returns silently on ferror; no read-error text
-- `bug:invented` — Go `pkg/game/house_rent.go:13` — “Invalid house vnum.” — C src/house.c:205: nothing — C House_get_filename failure returns silently; no invalid-vnum text
-- `bug:invented` — Go `pkg/game/house_rent.go:46` — “Objects stored for house #” — C src/house.c:220: nothing — C sends only concatenated per-item lines; it has no Objects-stored header
 
 ### `src/house.c` — `do_house` (1)
 
@@ -335,14 +312,8 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/modify.c` — `string_write` (9)
 
-- `bug:paraphrase` — Go `pkg/session/menu.go:212` — “Description is too long; type @ or /s to save, /a to abort.” — C src/modify.c:147: "String too long.  Last line skipped.\r\n" — C string_add's over-length notice in the CON_EXDESC editor; Go rewords it
-- `bug:paraphrase` — Go `pkg/session/menu.go:185` — “Description not changed.” — C src/modify.c:245: "Description aborted.\r\n" — C exdesc cleanup's abort line; Go rewords it as not changed
-- `bug:invented` — Go `pkg/session/menu.go:205` — “Description saved.” — C src/modify.c:247: nothing — C exdesc cleanup on save writes only MENU; there is no confirmation line
-- `bug:paraphrase` — Go `pkg/game/mail.go:594` — “Mail aborted (empty message).” — C src/modify.c:225: "Mail aborted.\r\n" — playing_string_cleanup's mail-abort line; Go appends "(empty message)"
-- `bug:paraphrase` — Go `pkg/game/mail.go:592` — “Mail sent.” — C src/modify.c:223: "Message sent!\r\n" — C's mail-editor save line; Go says "Mail sent."
 - `bug:paraphrase` — Go `pkg/game/note_write.go:86` — “Note limit reached. Type '@' on a new line to save.” — C src/modify.c:147: "String too long.  Last line skipped.\r\n" — C's note-editor over-length line; Go rewords it, calling C silent
 - `bug:invented` — Go `pkg/game/note_write.go:67` — “Note recorded.” — C src/modify.c:218: nothing — C playing_string_cleanup speaks only for mail; a finished note prints nothing
-- `bug:invented` — Go `pkg/session/menu.go:198` — “Unable to save description.” — C src/modify.c:240: nothing — C keeps the description in memory; no save-failure branch here
 - `bug:invented` — Go `pkg/game/note_write.go:58` — “Your note was lost. (internal error)” — C src/modify.c:173: nothing — C's unknown-origin write abort is a SYSERR log, never player text
 
 ### `src/new_cmds.c` — `do_whois` (1)
@@ -359,23 +330,15 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/new_cmds2.c` — `SPECIAL` (5)
 
-- `bug:paraphrase` — Go `pkg/game/spec_procs_missing.go:83` — “That is not a wand or staff.” — C src/new_cmds2.c:455: "$n tells you, 'Ummm... does that look like a wand or staff to you?'" — C recharger sends a $n-prefixed tell; Go prints a bare descriptive line
-- `bug:paraphrase` — Go `pkg/game/spec_procs_missing.go:92` — “That item is already fully charged.” — C src/new_cmds2.c:481: "$n tells you, 'The item does not need recharging, stop wasting " — C refusal continues "my time!"; Go re-words it as already fully charged
-- `bug:paraphrase` — Go `pkg/game/spec_procs_missing.go:120` — “The recharger works their magic on” — C src/new_cmds2.c:476: "The item now has %d charges remaining.\r\n" — C sends only the charge count here; Go prepends invented works-their-magic/cost text
-- `bug:paraphrase` — Go `pkg/game/spec_procs_missing.go:128` — “You feel your magic dissipate in the beholder's presence!” — C src/new_cmds2.c:338: "A ray of light shoots out from one of $n's eyestalks, breaking" — C beholder breaks the caster's concentration; Go re-words the spell-block line
-- `bug:paraphrase` — Go `pkg/game/spec_procs_missing.go:104` — “gold to recharge that, which you cannot afford.” — C src/new_cmds2.c:462: "$n tells you, 'You don't have enough gold!'" — C recharger affordability tell; Go re-words it as a computed cost you cannot afford
 
 ### `src/shop.c` — `get_selling_obj` (1)
 
-- `bug:invented` — Go `pkg/session/shop_cmds.go:453` — “The shopkeeper doesn't want anything you have.” — C src/shop.c:616: nothing — C has no sell-all; its per-item refusal is the shop's data do_not_buy line told by the keeper
 
 ### `src/shop.c` — `shopping_sell` (1)
 
-- `bug:paraphrase` — Go `pkg/session/shop_cmds.go:387` — “Sell what?” — C src/shop.c:753: "%s What do you want to sell??" — C tells "<name> What do you want to sell??" via the keeper; Go prints a bare fixed prompt
 
 ### `src/spec_procs.c` — `SPECIAL` (1)
 
-- `bug:invented` — Go `pkg/game/spec_procs4.go:246` — “Something went wrong.” — C src/spec_procs.c:1901: "May you enjoy your pet.\r\n" — C pet_shops buys the pet unconditionally; the SpawnMob failure branch is Go-only
 
 ### `src/spec_procs2.c` — `SPECIAL` (11)
 
@@ -385,9 +348,7 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 - `bug:invented` — Go `pkg/game/spec_procs2.go:1913` — “The bats swarm around you, blocking your escape!” — C src/spec_procs2.c:1756: nothing — C bat_room only wakes sleeping bats (Your movements wake up $n!); no blocking branch
 - `bug:invented` — Go `pkg/game/spec_procs2.go:1504` — “The boy smiles and hands you a small note.” — C src/spec_procs2.c:1398: "$n exclaims, 'Don't let the bad man hurt me, mommy!" — C little_boy only exclaims this at random; the give-flower-for-note exchange is Go-only
 - `bug:invented` — Go `pkg/game/spec_procs2.go:1512` — “The little boy runs off!” — C src/spec_procs2.c:1398: "$n exclaims, 'Don't let the bad man hurt me, mommy!" — C little_boy never gives a note or leaves; the runs-off line is Go-only
-- `bug:invented` — Go `pkg/game/spec_procs2.go:1416` — “You trade your key for” — C src/spec_procs2.c:1171: "%s eneeswseswseswseswsesw" — C eviltrade only answers a give of gold watch 13111 with this; Go invents trade/exp
 - `bug:invented` — Go `pkg/game/spec_procs2.go:1789` — “You tumble out into a strange place...” — C src/spec_procs2.c:1672: "\r\nWith a blinding flash of light and a crack of thunder, $n " — C tells only the room $n appears and gives the victim do_look; tumble line is Go-only
-- `bug:paraphrase` — Go `pkg/game/limits_condition.go:133` — “Your jail sentence is served. You are free!” — C src/spec_procs2.c:1485: "The guard throws you out of the cell!\r\n" — C limits.c tick only decrements; release text is SPECIAL(jail)'s, reworded by Go
 - `bug:paraphrase` — Go `pkg/game/spec_procs2.go:1546` — “says 'I don't like you, and you'd better leave before I make you!'” — C src/spec_procs2.c:1417: "$n exclaims, 'Dirty Orange Scum!'" — C ira exclaims this before hit(); Go substitutes a leave-or-I-attack line
 - `bug:invented` — Go `pkg/game/spec_procs2.go:1483` — “says 'You're an evil one! That won't be allowed here!'” — C src/spec_procs2.c:1342: nothing — C evillead only handles a give of cheese 13100 and teleports the giver; no alignment attack
 
@@ -401,16 +362,10 @@ One line each: Go site, the Go text, the C text (`nothing` when C prints nothing
 
 ### `src/spells.c` — `ASPELL` (5)
 
-- `bug:invented` — Go `pkg/session/cmd_info.go:1048` — “Summon who?” — C src/spells.c:218: nothing — C has no summon command (summon is a spell needing a cast target); no such prompt
-- `bug:paraphrase` — Go `pkg/spells/affect_spells.go:2793` — “The force of the blast knocks you off your feet!” — C src/spells.c:739: "The fires of hell bring you to your knees!\r\n" — spell_hellfire's DEX-knockdown TO_VICT line; Go rewords it as a blast
-- `bug:paraphrase` — Go `pkg/session/cmd_info.go:1062` — “You are summoned by” — C src/spells.c:345: "$n has summoned you!" — C spell_summon's victim line; Go rewords it for its own teleport command
 - `bug:invented` — Go `pkg/game/world.go:1292` — “You see nothing but void.” — C src/spells.c:935: nothing — spell_mindsight returns silently on a bad location; look_at_room (act.informative.c:725) has no void branch
-- `bug:paraphrase` — Go `pkg/spells/affect_spells.go:2964, pkg/spells/affect_spells.go:3044` — “just tried to summon you but failed.” — C src/spells.c:246: "%s just tried to summon you to: %s.\r\n%s failed.\r\n" — spell_summon's victim line (adjacent literals); Go drops room name and failed line
 
 ### `src/tattoo.c` — `use_tattoo` (2)
 
-- `bug:invented` — Go `pkg/game/other_economy.go:140` — “Your tattoo fizzles...” — C src/tattoo.c:50: nothing — use_tattoo's TATTOO_SKULL case has no failure branch; read_mobile always succeeds
-- `bug:invented` — Go `pkg/session/tattoo.go:79` — “Your tattoo flickers but nothing happens.” — C src/tattoo.c:50: nothing — C's TATTOO_SKULL case always emits the glow act; only Go has this failure branch
 
 ## census:composed (5)
 
