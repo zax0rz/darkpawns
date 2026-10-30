@@ -376,7 +376,8 @@ func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
 	var slots []EquipmentSlot
 
 	// Check each wear flag position
-	for i, flag := range item.Prototype.WearFlags {
+	wear := item.GetWearFlags()
+	for i, flag := range wear {
 		if flag == 0 {
 			continue
 		}

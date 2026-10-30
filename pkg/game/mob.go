@@ -1070,22 +1070,26 @@ func (m *MobInstance) GetCha() int {
 
 // GetHitroll returns the mob's file-derived hitroll plus equipment bonuses.
 // C parses the mob-file THAC0 field as points.hitroll = 20 - thac0
-// (src/db.c:1064), while hit() itself always starts NPCs at THAC0 20.
+// (src/db.c:1064), while hit() itself always starts NPCs at THAC0 20. The
+// field is an sbyte (src/structs.h:916), so both the file-derived value and
+// any later write wrap to it.
 func (m *MobInstance) GetHitroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.Runtime.HitrollOverride != nil {
-		return *m.Runtime.HitrollOverride
+		return sbyteValue(*m.Runtime.HitrollOverride)
 	}
 	total := 0
 	if m.Proto() != nil {
 		total = 20 - m.Proto().THAC0
 	}
-	return total
+	return sbyteValue(total)
 }
 
 // GetDamroll returns the mob's damroll bonus from equipment
-// Sums APPLY_DAMROLL (location 19) from all equipped items.
+// Sums APPLY_DAMROLL (location 19) from all equipped items. C's GET_DAMROLL is
+// points.damroll, an sbyte (src/structs.h:917), so the accumulated value wraps
+// to it exactly as affect_total's add/remove cycles do.
 func (m *MobInstance) GetDamroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -1094,7 +1098,7 @@ func (m *MobInstance) GetDamroll() int {
 		total = *m.Runtime.DamrollOverride
 	}
 	total += m.Runtime.DamrollBonus
-	return total
+	return sbyteValue(total)
 }
 
 // GetStrAdd returns the mob's strength add

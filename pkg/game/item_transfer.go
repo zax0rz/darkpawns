@@ -19,14 +19,14 @@ func (w *World) canTakeObj(ch *Player, obj *ObjectInstance) bool {
 		return false
 	}
 	// CAN_WEAR(obj, ITEM_WEAR_TAKE): WearFlags stores bitmasks, not one
-	// flag value per array element.
-	hasTake := obj.GetTypeFlag() == ITEM_MONEY
-	if obj.Prototype != nil {
-		for _, wf := range obj.Prototype.WearFlags {
-			if wf&1 != 0 {
-				hasTake = true
-				break
-			}
+	// flag value per array element. C reads the object's own flags; the
+	// synthetic money pile carries ITEM_WEAR_TAKE through the instance
+	// override create_money sets (src/handler.c:1484-1486).
+	hasTake := false
+	for _, wf := range obj.GetWearFlags() {
+		if wf&1 != 0 {
+			hasTake = true
+			break
 		}
 	}
 	if !hasTake {

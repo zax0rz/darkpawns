@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import CopyCommand from '../components/CopyCommand.astro';
+import SocialLinks from '../components/SocialLinks.astro';
 import bookPaper from '../assets/paper/book-page.jpg';
 import chapterAltar from '../assets/chapter/temple-altar.png';
 import { unixInstall } from '../lib/download';
@@ -71,6 +72,7 @@ const eras = [
         <p class="lede">A multiplayer text RPG, first opened in 1994.<br /> Play here, or run a world of your own.</p>
         <a class="btn-primary" href="/play/">Enter the game</a>
         <p class="play-note">Play in your browser.</p>
+        <SocialLinks links={['discord', 'github']} variant="hero" label="Dark Pawns on Discord and GitHub" />
       </div>
 
       <div class="entry-options">

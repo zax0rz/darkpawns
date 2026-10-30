@@ -950,11 +950,32 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 			return true
 		}
 		ce.sendMissMessage(attacker, defender, msgAttackType)
-		return false
+		// C's miss still calls damage(ch, victim, 0, attacktype), so the whole
+		// tail runs after the message: update_pos, the position-state bytes,
+		// the !AWAKE stop_fighting, and the default arm's bleed check with the
+		// victim's MOB_WIMPY flee / player wimpy retreat (fight.c:1568-1614).
+		// Skipping it dropped those draws and bytes: the werewolf diagnostic
+		// lost the victim's failed-flee draws, which shifted the dice stream
+		// and changed a later claw's damage (R1/R3).
+		newPos := UpdatePositionAfterDamage(defender, ce.BroadcastFunc, ce.StopCombat)
+		if newPos == PosDead {
+			EmitDeathPositionMessage(defender, ce.BroadcastFunc)
+			ce.handleDeath(defender, attacker)
+			return true
+		}
+		return ce.handleSurvivingVictimState(attacker, defender, 0, newPos)
 	}
 
+	// fight.c:1792-1806 derives one_hit's w_type (the TYPE_* constant handed to
+	// damage(), then to die_with_killer -> raw_kill -> make_corpse) from the
+	// wielded weapon's val3, the mob's attack_type, or bare hands, always as
+	// TYPE_HIT + offset. make_corpse selects the corpse's long description from
+	// exactly that value (fight.c:283-370), so the death callback must receive
+	// TYPE_HIT+msgAttackType. It used to receive AttackNormal (0), which is not
+	// a TYPE_* constant at all: every weapon and claw kill built the generic
+	// "The corpse of X is lying here." instead of C's wording (R1/R3).
 	ce.mu.Lock()
-	pair.LastAttackType = int(AttackNormal)
+	pair.LastAttackType = TYPE_HIT + msgAttackType
 	ce.mu.Unlock()
 	damage = ApplyDamageModifiers(attacker, defender, damage)
 

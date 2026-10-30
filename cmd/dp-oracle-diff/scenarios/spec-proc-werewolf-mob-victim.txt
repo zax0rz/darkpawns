@@ -1,4 +1,6 @@
 # depth-case: mob.werewolf-bite-mob-victim
+# depth-case: fight.damage-miss-tail
+# depth-case: death.corpse-claw-wording
 # The bite is an ordinary damage() call (src/spec_procs3.c:446), and the leg
 # tear subtracts level*1.5 from ANY victim's move as floating point before
 # truncation (src/spec_procs3.c:447-449) — a mobile victim's stat report

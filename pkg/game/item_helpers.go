@@ -304,7 +304,8 @@ func canWearObject(obj *ObjectInstance, where int) bool {
 	}
 	// WearFlags stores bitmasks; OR all slots together and check for bit.
 	var wearMask int
-	for _, wf := range obj.Prototype.WearFlags {
+	wear := obj.GetWearFlags()
+	for _, wf := range wear {
 		wearMask |= wf
 	}
 	return wearMask&bit != 0

@@ -1074,13 +1074,18 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 
 	typeFlag := ITEM_MONEY
 	values := [4]int{amount, 0, 0, 0}
+	// src/handler.c:1484-1486 — create_money zeroes the wear flags and then
+	// SET_BIT_AR(GET_OBJ_WEAR(obj), ITEM_WEAR_TAKE), so every money object is
+	// takeable. The prototype-less pile cannot carry that bit on a prototype.
+	wearFlags := [4]int{1, 0, 0, 0} // ITEM_WEAR_TAKE = bit 0
 	money := &ObjectInstance{
-		Prototype:        nil, // synthetic object, no prototype
-		VNum:             -1,
-		RoomVNum:         -1,
-		Contains:         make([]*ObjectInstance, 0),
-		TypeFlagOverride: &typeFlag,
-		ValuesOverride:   &values,
+		Prototype:         nil, // synthetic object, no prototype
+		VNum:              -1,
+		RoomVNum:          -1,
+		Contains:          make([]*ObjectInstance, 0),
+		TypeFlagOverride:  &typeFlag,
+		ValuesOverride:    &values,
+		WearFlagsOverride: &wearFlags,
 		CustomData: map[string]interface{}{
 			"is_money":     true,
 			"money_amount": amount,

@@ -748,6 +748,20 @@ func TestHandleDeath_PassesAttackType(t *testing.T) {
 	// deterministic instead of a ~0.5% flake.
 	dprng.ResetStream(1)
 
+	// The death callback must receive C's w_type: TYPE_HIT + the weapon's
+	// val3 offset (fight.c:1792-1806), because make_corpse selects the
+	// corpse's long description from that TYPE_* constant (fight.c:283-370).
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+	cb := defaultCombatCallbacks()
+	cb.GetWeaponInfo = func(chName Combatant) (wType, damDice, damSize int, isBlessed bool) {
+		if chName.GetName() == "Attacker" {
+			return 3, 1, 8, false // slash
+		}
+		return 0, 0, 0, false
+	}
+	SetCallbacks(cb)
+
 	attacker := &mockCombatant{
 		name:     "Attacker",
 		npc:      false,
@@ -795,8 +809,12 @@ func TestHandleDeath_PassesAttackType(t *testing.T) {
 		t.Fatal("DeathFunc was not called")
 	}
 
-	if receivedAttackType != int(AttackNormal) {
-		t.Errorf("expected attackType %d, got %d", int(AttackNormal), receivedAttackType)
+	// C passes one_hit's w_type (TYPE_HIT + weapon offset) to damage(), which
+	// hands it to die_with_killer -> raw_kill -> make_corpse. Slash's offset is
+	// 3, so the callback must see TYPE_SLASH, not AttackNormal.
+	if receivedAttackType != TYPE_SLASH {
+		t.Errorf("expected attackType %d (TYPE_HIT+3, TYPE_SLASH), got %d; the death "+
+			"callback feeds make_corpse's corpse wording", TYPE_SLASH, receivedAttackType)
 	}
 }
 
