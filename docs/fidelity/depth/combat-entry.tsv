@@ -1,4 +1,5 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
+perform_violence	combat	combat.round-continues-after-switcheroo	D5	shared	unit-green	TestRoundContinuesAfterSameTargetSwitcheroo	src/fight.c:2017-2024,1413-1440	C's attack loop never exits on damage()'s return: every iteration re-reads FIGHTING(ch). A switcheroo whose scan picks the current defender (a duel) re-enrolls the same target and the round keeps its remaining attacks. The port broke the loop on the redirect's return and ended the whole round after one swing - exposed as a draw-stream split on the teleport vehicle's second violence round (seeds 3 and 8). A redirect to a DIFFERENT target still stops early in the port; C would keep swinging at the new FIGHTING (named narrower gap).
 do_hit	hit	hit.no-arg	D1	command	oracle-green	combat-entry-gates	act.offensive.c:108-109	"Hit who?"
 do_hit	hit	hit.not-found	D1	command	oracle-green	combat-entry-gates	act.offensive.c:110-111	do_hit has its own "They don't seem to be here." — NOT NOPERSON (contrast assist/rescue).
 do_hit	hit	hit.self	D2	command	oracle-green	combat-entry-gates	act.offensive.c:112-116	"You hit yourself...OUCH!." self pair.

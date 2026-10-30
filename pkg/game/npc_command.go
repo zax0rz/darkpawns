@@ -445,7 +445,14 @@ func (w *World) npcSocial(me *MobInstance, cmd, argument string) {
 	if !ok {
 		return
 	}
+	// do_action's char-directed lines run through send_to_char/act TO_CHAR
+	// (src/act.social.c:35-73): a descriptorless mobile stays silent, and a
+	// switched body delivers to its wizard's connection through
+	// MobInstance.SendMessage's descriptor routing.
 	if _, ok := socialMessage(social, socCharFound); !ok {
+		if message, ok := socialMessage(social, socCharNoArg); ok {
+			me.SendMessage(message + "\r\n")
+		}
 		if message, ok := socialMessage(social, socOthersNoArg); ok {
 			Act(w, social.hidesInvisibleActor(), me, nil, nil, nil, message, "", ToRoom)
 		}
@@ -453,6 +460,9 @@ func (w *World) npcSocial(me *MobInstance, cmd, argument string) {
 	}
 	targetName := extractArg(argument)
 	if targetName == "" {
+		if message, ok := socialMessage(social, socCharNoArg); ok {
+			me.SendMessage(message + "\r\n")
+		}
 		if message, ok := socialMessage(social, socOthersNoArg); ok {
 			Act(w, social.hidesInvisibleActor(), me, nil, nil, nil, message, "", ToRoom)
 		}
@@ -464,17 +474,27 @@ func (w *World) npcSocial(me *MobInstance, cmd, argument string) {
 	// name.
 	target, ok := w.resolveCharInRoomAt(me, me.GetRoomVNum(), targetName)
 	if !ok {
-		return // action->not_found to the mobile
+		if message, ok := socialMessage(social, socNotFound); ok {
+			me.SendMessage(message + "\r\n")
+		}
+		return
 	}
 	targetActor, _ := target.Combatant.(Actor)
 	if target.Combatant == me {
+		if message, ok := socialMessage(social, socCharAuto); ok {
+			me.SendMessage(message + "\r\n")
+		}
 		if message, ok := socialMessage(social, socOthersAuto); ok {
 			Act(w, social.hidesInvisibleActor(), me, nil, nil, nil, message, "", ToRoom)
 		}
 		return
 	}
 	if minimum := social.minimumVictimPosition(); minimum > 0 && targetActor.GetPosition() < minimum {
+		Act(nil, false, me, targetActor, nil, nil, "$N is not in a proper position for that.", "", ToChar)
 		return
+	}
+	if message, ok := socialMessage(social, socCharFound); ok {
+		Act(nil, false, me, targetActor, nil, nil, message, "", ToChar)
 	}
 	if message, ok := socialMessage(social, socOthersFound); ok {
 		Act(w, social.hidesInvisibleActor(), me, targetActor, nil, nil, message, "", ToNotVict)

@@ -1,0 +1,62 @@
+# depth-case: combat.pending-body-second-death-path
+# depth-case: look.room-stacked-object-count
+# C's do_kill -> raw_kill flags a body without setting POS_DEAD
+# (src/act.offensive.c:155-161), so in a NON-peaceful room damage()'s gates
+# pass on the next swing and the damage applies (src/fight.c:1318-1368): the
+# killer and the queued body enroll, and when the swing drives HP <= -11
+# update_pos makes the body POS_DEAD and damage()'s death branch runs
+# die_with_killer -> raw_kill a SECOND time (src/fight.c:610-622) - a second,
+# empty corpse (make_corpse again, src/fight.c:258-427) and the death
+# messages again. The second extract_char returns early on the already-set
+# flag (src/handler.c:1197), so the body is queued once and freed once by
+# extract_pending_chars. The room has no exits so both death_crys are silent.
+# The fish (4350) has 1d1+0 HP and Brunhild (4360) rolls 20d20 with +60
+# damroll, so any hit that is not a natural miss drives the body to POS_DEAD.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 1 8105 80
+force-load 4360
+spawn-obj 4360 1 8105 43
+replace-room-exits 8105 none
+
+[setup:oracle]
+Twodiegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Twodiegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+get sword
+wield sword
+kill fish
+look
+hit fish
+~dpclock pulse 24
+look

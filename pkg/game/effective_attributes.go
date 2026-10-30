@@ -260,3 +260,35 @@ func (p *Player) LoginConstitution() int {
 	}
 	return con
 }
+
+// applySpellUnequipWipe is the unequip half of C's APPLY_SPELL arm
+// (src/handler.c:749-782, 240-270): unequip_char runs affect_modify with the
+// item's modifiers negated, so a positive spell bit leaves the PERSISTENT AFF
+// flags unless a timed affect provides the same bitvector — even when
+// something else, such as transform's form bit (src/act.other.c:1441, 1503),
+// had set it independently. The worn-set overlay alone left the persistent
+// bit standing after the unequip; this write reproduces C's event semantics
+// for every unequip site (remove, disarm, steal, movement light-drop, quit
+// rental).
+func (p *Player) applySpellUnequipWipe(obj *ObjectInstance) {
+	if p == nil || obj == nil {
+		return
+	}
+	for _, affect := range obj.GetAffects() {
+		if affect.Location != ApplySpell || affect.Modifier <= 0 || affect.Modifier >= 64 {
+			continue
+		}
+		bit := affect.Modifier
+		timedFlag := AffBitToEngineFlag[bit]
+		provided := false
+		for _, current := range p.ActiveAffects {
+			if current != nil && timedFlag != 0 && current.Flags == timedFlag {
+				provided = true
+				break
+			}
+		}
+		if !provided {
+			p.SetAffect(bit, false)
+		}
+	}
+}

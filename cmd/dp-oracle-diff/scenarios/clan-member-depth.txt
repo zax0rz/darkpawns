@@ -16,6 +16,9 @@
 # depth-case: clan.mortal-title
 # depth-case: clan.mortal-privilege
 # depth-case: clan.mortal-membership-success
+# membership-gates tail: already-in-your-clan, already-in-a-clan, cannot-kick,
+# promote-over-your-rank; the promote/demote ceiling lines are unit-proven by
+# TestClanPromote/DemoteOutputGates.
 # depth-case: clan.mortal-membership-gates
 # depth-case: clan.mortal-applev-range
 # depth-case: clan.quit-disbands
@@ -112,9 +115,38 @@ Y
 <ENTER>
 1
 
+[setup:oracle:wolf]
+Wolffang
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wolf]
+Wolffang
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
 clan create Clanmate Wolves
 clan enroll Clanmate Wolves
+clan create Wolffang Fangs
 clan set applev 1 Wolves
 force Clanapply clan apply Wolves
 set player Clanmate gold 0
@@ -154,4 +186,8 @@ clan promote Clanapply
 clan promote Clanapply
 clan promote Clanapply
 clan expel Clanapply
+clan enroll Clanmate
+clan enroll Wolffang
+clan expel Clanmate
+clan promote Clanmate
 clan quit

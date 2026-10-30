@@ -209,7 +209,9 @@ func TestZenMasterOutputThroughCombatSpecialDispatch(t *testing.T) {
 
 			m.WireCombatCallbacks()
 			m.SetCombatBroadcastFunc()
-			m.SetCombatMessageFunc()
+			if err := m.SetCombatMessageFunc(); err != nil {
+				t.Fatalf("SetCombatMessageFunc: %v", err)
+			}
 			m.SetMobSpecialFunc()
 			dprng.ResetStream(tt.seed)
 			t.Cleanup(func() { dprng.ResetStream(1) })

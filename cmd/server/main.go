@@ -675,8 +675,12 @@ func main() {
 	manager.SetCommandExecFunc()                         // Wire doOrder command dispatch for charmed followers
 	gameWorld.SetCombatEngine(manager.GetCombatEngine()) // Enable AI to use combat
 	manager.WireCombatCallbacks()                        // Wire PR2/PR3 character-state hooks into combat engine
-	manager.SetCombatMessageFunc()                       // Wire DamMessage() and GameCallbacks for live combat
-	manager.SetFleeHooks()                               // Wire wimpy auto-flee after callback replacement (DP-389)
+	// C's load_messages() exits(1) if the corpus cannot be read (src/fight.c:133-137),
+	// so a load failure stops boot here too.
+	if err := manager.SetCombatMessageFunc(); err != nil {
+		fatal("combat messages did not load — refusing to start: %v", err)
+	}
+	manager.SetFleeHooks() // Wire wimpy auto-flee after callback replacement (DP-389)
 
 	// Verify critical combat hooks are wired (DP-952).
 	// This check is placed before any long-lived resource with a defer so that

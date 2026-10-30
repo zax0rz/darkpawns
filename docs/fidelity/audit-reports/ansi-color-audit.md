@@ -379,6 +379,66 @@ amendment lands.
 ### How to re-run the two proofs
 
 ```bash
+## 10. Fireball raw-byte follow-up (2026-10-30)
+
+Egon's report pointed at fireball. Its text in `lib/misc/messages` (set 26) carries
+no colour codes, so every escape around it comes from `skill_message`'s delivery.
+Eight `keep-ansi` scenarios now cover it — `fireball-color-{off,sparse,normal,complete}-hit`,
+plus `{off,complete}-{miss,kill}` — with the caster setting its own level by
+`color` and the peers taking theirs from the creation ANSI answer, so the
+transcript also proves the two gates are per-recipient (at sparse/normal the
+caster's line is plain while the victim's is still red).
+
+**Result: the fireball colour bytes match C exactly.** Telnet: targeted census
+`deepseek-fireball-color-telnet`, 8 scenarios, `passed=8 failed=0
+draw_divergent=0 verdict=CLEAN`. WebSocket: all eight run through
+`--go-transport ws` with the same verdicts. So the escapes are ordered as C
+orders them, the reset lands where C lands it, and Go does not split a C write
+across frames in a way the browser client shows differently.
+
+**F6 — the room-contents list colours each entry instead of the list (OPEN).**
+The one divergence the fireball work did surface is not in the fireball path.
+C's `look_at_room` brackets the two room-content lists once each
+(`src/act.informative.c:823-833`):
+
+```c
+  send_to_char(CCGRN(ch, C_NRM), ch);      /* once, before the object list  */
+  list_obj_to_char(world[ch->in_room].contents, ch, 20, FALSE);
+  send_to_char(CCYEL(ch, C_NRM), ch);      /* once, before the character list */
+  list_char_to_char(world[ch->in_room].people, ch);
+  send_to_char(CCNRM(ch, C_NRM), ch);      /* once, after it                 */
+```
+
+`pkg/game/look.go`'s `observeRoom` wraps **each line** (`green+line+normal`,
+`yellow+line+normal`), so it opens and closes the colour per entry and never
+emits C's trailing bare reset. A kill-then-look transcript, identical on telnet
+and WebSocket:
+
+```
+ C: ^[[32mThe charred corpse of FireVictim is lying here, still smoking.
+    ^[[33mFireWatch the Warrior is standing here.
+    ^[[0m
+Go: ^[[32mThe charred corpse of FireVictim is lying here, still smoking.^[[0m
+    ^[[33mFireWatch the Warrior is standing here.^[[0m
+```
+
+The corpse **text** is right — C's `The charred corpse of %s is lying here, still
+smoking.` (`src/fight.c:286-290`) is what both engines print. What differs is the
+colour framing around the list, and it affects every room look that has objects
+or characters in it, not just fireball kills.
+
+Fixing it needs a no-line-ending write on the observation path: `Raw` messages
+currently go through `Player.SendMessage`, which adds the line ending C's
+`send_to_char(CCGRN(ch, C_NRM), ch)` does not have. That is new plumbing through
+`ObservationMessage` → `RenderObservationMessages` → the session frame, on the
+game's most-used output path, so it wants its own change and vehicle rather than
+a rushed edit. The kill-then-look vehicle above is red on `main` and is the
+starting point.
+
+This also closes a row from §7's work queue: `look_at_char` / `list_char_to_char`
+were listed as having no colour proof, and now have one — which is how the
+divergence was found.
+
 DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle \
   go run ./cmd/dp-oracle-diff --scenario damage-message-color-depth --seed 1 --show-oracle
 DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle \

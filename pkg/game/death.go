@@ -276,9 +276,25 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 		// both delivering lethal damage). Only the first caller proceeds;
 		// the second finds alive already false and returns immediately.
 		// Without this guard, AwardMobKillXP and Kills++ would fire twice.
+		//
+		// One C death legitimately reaches here with alive already false:
+		// do_kill's raw_kill flags a body without setting POS_DEAD and
+		// without a death branch (src/act.offensive.c:155-161;
+		// src/fight.c:534-578), so a later swing whose damage() gates pass
+		// on the standing body runs the full death branch again — exp,
+		// kills, die_with_killer and a second raw_kill (src/fight.c:1634-
+		// 1691, 610-622). A flagged body distinguishes the two cases here:
+		// MobFlagExtract is set only after a death branch claimed (program
+		// order below), so an unclaimed flagged body is exactly raw_kill's
+		// leftover. Its re-death is single-shot — C refuses a third at
+		// POS_DEAD (src/fight.c:617), which redeathClaim holds atomically.
 		if mob, ok := victim.(*MobInstance); ok {
 			if !mob.alive.CompareAndSwap(true, false) {
-				return
+				if !mob.HasMobFlag(MobFlagExtract) || !mob.redeathClaim.CompareAndSwap(false, true) {
+					return
+				}
+			} else {
+				mob.redeathClaim.Store(true)
 			}
 		}
 

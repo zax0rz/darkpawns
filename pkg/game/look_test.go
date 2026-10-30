@@ -254,3 +254,32 @@ func TestLookTargetRoomExtraDescriptionPrecedesObjectExtraDescription(t *testing
 		t.Fatalf("first target match = %q, want room extra description", got)
 	}
 }
+
+// oc_show_list's room mode prefixes stacked objects with "[%2d] "
+// (src/oc.c:123; mode 20 has no show_indent), so two identical objects in a
+// room render as "[ 2] <description>" — never a suffixed count. Taught by
+// kill-body-second-death-depth: the second corpse made the room hold two
+// identical corpse objects and the census had never compared a stacked room
+// line before (R1/R5h).
+func TestRoomObjectLinesStackIdenticalObjectsWithCountPrefix(t *testing.T) {
+	for _, tc := range []struct {
+		count int
+		want  string
+	}{
+		{2, "[ 2] A runed orb has been left here."},
+		{12, "[12] A runed orb has been left here."},
+	} {
+		w, p, _ := newViewTestWorld(t)
+		for i := 0; i < tc.count; i++ {
+			w.AddItemToRoom(newGlowFlaggedObject(5104), 100)
+		}
+		room := w.GetRoomInWorld(100)
+		if room == nil {
+			t.Fatalf("expected room 100 to exist")
+		}
+		got := strings.Join(w.roomObjectLines(p, room), "\n")
+		if !strings.Contains(got, tc.want) {
+			t.Fatalf("count %d: room object lines = %q, want line %q", tc.count, got, tc.want)
+		}
+	}
+}

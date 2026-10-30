@@ -241,10 +241,12 @@ func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
 		if targetMob, ok := target.(*MobInstance); ok {
 			targetMob.UnequipItem(mobWearWield)
 		} else if targetPlayer, ok := target.(*Player); ok {
+			disarmed, _ := targetPlayer.Equipment.GetItemInSlot(SlotWield)
 			if err := targetPlayer.Equipment.Unequip(SlotWield, targetPlayer.Inventory); err != nil {
 				slog.Error("disarm failed to move weapon to player inventory", "actor", ch.GetName(), "target", target.GetName(), "error", err)
 				return SkillResult{Success: false}
 			}
+			targetPlayer.applySpellUnequipWipe(disarmed)
 			// C's disarm hands the weapon back to the victim —
 			// obj_to_char(unequip_char(vict, WEAR_WIELD), vict) flags the
 			// victim, not the actor (new_cmds2.c:236, handler.c:569-571).

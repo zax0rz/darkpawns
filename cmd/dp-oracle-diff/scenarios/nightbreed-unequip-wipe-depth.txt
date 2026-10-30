@@ -1,0 +1,60 @@
+# depth-case: equipment.apply-spell.nightbreed-unequip-wipe
+# The real-nightbreed arm of C's APPLY_SPELL removal (src/handler.c:240-270):
+# transform sets the persistent AFF_VAMPIRE with no timed record
+# (src/act.other.c:1496-1503), and removing an item whose APPLY_SPELL carries
+# the same bit runs the negative arm, finds no timed provider, and wipes the
+# real form with it. The reachable grant chain: Lothar (14110) runs
+# SPECIAL(dracula) (src/spec_procs.c:1798-1836), whose `look lothar` bites
+# PLR_VAMPIRE onto the viewer; fixed-time 650353221 boots hour 22 (SUN_DARK),
+# so `transform` passes its night gate (src/act.other.c:1490-1494). The robes
+# (4331) carry APPLY_SPELL 28 and 27 (lib/world/obj/43.obj).
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650353221
+spawn-mob 14110 1 8004 141
+
+[setup:oracle]
+Fangbearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fangbearer
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8004
+look lothar
+transform
+load obj 4331
+
+[probe]
+score
+wear robes
+score
+remove robes
+score
+wear robes
+score
+remove robes
+score
