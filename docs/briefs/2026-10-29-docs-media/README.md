@@ -28,3 +28,5 @@ No census or deployment was run: this changes documentation, capture tooling and
 | install-and-setup.gif | 198 / 196 | 7920 / 7840 |
 | lifecycle-commands.gif | 166 / 166 | 6640 / 6640 |
 | update-check.gif | 171 / 171 | 6840 / 6840 |
+
+VHS GIFs can differ even when their total frame counts match: command-output scheduling, cursor phase and each recording’s palette quantization change sampled frames and edge colors. The measured durations above are 6.64–7.92 seconds, with at most 80 ms between the paired durations. The candidate archive SHA-256 printed in both retained logs is identical. Exact GIF equality is claimed only for the explicitly sequenced editor recording.
