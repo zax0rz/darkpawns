@@ -221,3 +221,11 @@ func TestMobSendMessageSilentWithoutDescriptor(t *testing.T) {
 		t.Fatalf("descriptorless mobile delivered %d messages", delivered)
 	}
 }
+
+// TestSpellCounterattackSeamContract is the loud half of the retaliation
+// wiring: the production world MUST satisfy the counterattack seam, or every
+// spell save-refusal hit() silently vanishes again (the npcRetaliate class
+// bug this contract guards against).
+var _ interface {
+	ExecuteSpellCounterattack(victim, caster interface{})
+} = (*World)(nil)

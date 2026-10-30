@@ -36,6 +36,14 @@ func (w *charmDispatchWorld) MobFirstHit(attacker, defender combat.Combatant) {
 	w.firstHits = append(w.firstHits, [2]combat.Combatant{attacker, defender})
 }
 
+// ExecuteSpellCounterattack is the unified retaliation seam (npcRetaliate);
+// MobFirstHit keeps its recording shape for the assertions below.
+func (w *charmDispatchWorld) ExecuteSpellCounterattack(victim, caster interface{}) {
+	a, _ := victim.(combat.Combatant)
+	d, _ := caster.(combat.Combatant)
+	w.firstHits = append(w.firstHits, [2]combat.Combatant{a, d})
+}
+
 func TestCharmManualDispatchMatchesCOutputGates(t *testing.T) {
 	tests := []struct {
 		name           string

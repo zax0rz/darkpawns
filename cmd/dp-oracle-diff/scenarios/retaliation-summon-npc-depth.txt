@@ -1,0 +1,48 @@
+# depth-case: spell.retaliation-summon-npc
+# spell_summon's two retaliation arms (src/spells.c:317, 348): the dragged-in
+# awake NPC victim attacks the caster after its arrival look, and the 10%
+# backfire drags the caster to the victim with the same retaliation.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 9922 1 8105 99
+
+[setup:oracle]
+Retalgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retalgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Retalgod class mage
+skillset Retalgod 'summon' 100
+set Retalgod maxmana 5000
+set Retalgod mana 5000
+
+[probe]
+cast 'summon' incubus
+~dpclock pulse 20
+
