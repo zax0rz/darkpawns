@@ -181,6 +181,21 @@ func scorePositionText(player *game.Player) string {
 	return positionText(game.PosFighting)
 }
 
+// colorCMP returns code when the viewer sits at C_CMP — both colour bits, the
+// level C's do_score and do_stat_character gate their escapes on
+// (src/act.informative.c:1184-1275, 2013-2140). Below it every macro expands to
+// the empty string, so the caller concatenates the result unconditionally.
+func colorCMP(p *game.Player, code string) string {
+	if p == nil {
+		return ""
+	}
+	flags := p.GetFlags()
+	if flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0 {
+		return code
+	}
+	return ""
+}
+
 func cmdScore(s *Session) error {
 	p := s.player
 	if p == nil {
@@ -189,20 +204,32 @@ func cmdScore(s *Session) error {
 
 	var buf strings.Builder
 
-	// 1. Name + Age (from C line 1185)
+	// C brackets these fields with CCxxx(ch, C_CMP)/CCNRM at the complete-colour
+	// level only (src/act.informative.c:1184-1275); below it every macro expands
+	// to the empty string.
+	green := colorCMP(p, "\x1b[32m")
+	red := colorCMP(p, "\x1b[31m")
+	normal := colorCMP(p, "\x1b[0m")
+
+	// 1. Name + Age (from C line 1184)
 	// GET_AGE(ch) over the affected birth timestamp: worn/timed/tattoo
 	// APPLY_AGE modifiers shift birth (src/handler.c:160-161).
 	years, months, days, _ := p.GetAgeParts()
-	fmt.Fprintf(&buf, "%s                           Age: %d years", p.Name, years)
+	fmt.Fprintf(&buf, "%s%s%s                           Age: %d years", green, p.Name, normal, years)
 	if months == 0 && days == 0 {
 		buf.WriteString(" (It's your birthday today.)")
 	}
 	buf.WriteString("\r\n")
 
-	// 2. HP/Mana/Move (from C line 1196)
+	// 2. HP/Mana/Move (from C lines 1195-1201). The current value is green and
+	// the maximum red, each closed before the next.
 	manaLabel := scoreManaLabel(p.Class)
-	fmt.Fprintf(&buf, "Hit points: %d(%d)  %s points: %d(%d)  Movement points: %d(%d)\r\n",
-		p.GetHP(), p.GetMaxHP(), manaLabel, p.GetMana(), p.GetMaxMana(), p.GetMove(), p.GetMaxMove())
+	fmt.Fprintf(&buf,
+		"Hit points: %s%d%s(%s%d%s)  %s points: %s%d%s(%s%d%s)  Movement points: %s%d%s(%s%d%s)\r\n",
+		green, p.GetHP(), normal, red, p.GetMaxHP(), normal,
+		manaLabel,
+		green, p.GetMana(), normal, red, p.GetMaxMana(), normal,
+		green, p.GetMove(), normal, red, p.GetMaxMove(), normal)
 
 	// 3. Alignment text (from C lines 1213-1238)
 	buf.WriteString(alignmentText(p.Alignment))
@@ -213,20 +240,20 @@ func cmdScore(s *Session) error {
 	buf.WriteString(acText(p.GetAC()))
 	buf.WriteString("\r\n")
 
-	// 5. Experience (from C line 1267)
-	fmt.Fprintf(&buf, "Experience:    %d points\r\n", p.Exp)
+	// 5. Experience (from C line 1262)
+	fmt.Fprintf(&buf, "Experience:    %s%d%s points\r\n", green, p.Exp, normal)
 
-	// 6. Gold (from C lines 1268-1269)
-	fmt.Fprintf(&buf, "Coins carried: %d gold coins    ", p.Gold)
-	fmt.Fprintf(&buf, "Coins in bank: %d gold coins\r\n", p.BankGold)
+	// 6. Gold (from C lines 1264-1266)
+	fmt.Fprintf(&buf, "Coins carried: %s%d%s gold coins    ", green, p.Gold, normal)
+	fmt.Fprintf(&buf, "Coins in bank: %s%d%s gold coins\r\n", green, p.BankGold, normal)
 
-	// 7. Kills/PKs/Deaths (from C line 1270)
+	// 7. Kills/PKs/Deaths (from C line 1270) — uncoloured in C
 	fmt.Fprintf(&buf, "Kills: %d  Pks: %d  Deaths: %d\r\n", p.Kills, p.PKs, p.Deaths)
 
-	// 8. XP to next level (from C line 1275)
+	// 8. XP to next level (from C lines 1274-1275)
 	if p.Level < game.LVL_IMMORT-1 {
 		needed := game.FindExp(p.Class, p.Level) - p.Exp
-		fmt.Fprintf(&buf, "You need %d exp to reach your next level.\r\n", needed)
+		fmt.Fprintf(&buf, "You need %s%d%s exp to reach your next level.\r\n", green, needed, normal)
 	}
 
 	// 9. Play time (from C line 1279)
@@ -965,25 +992,26 @@ func renderWhoLong(viewer, player *game.Player) string {
 	level := player.GetLevel()
 	name, title := player.GetName(), player.GetTitle()
 	var line string
-	var color string
+	// C writes these two ranks with literal &r / &y codes rather than the
+	// CCxxx ANSI macros (src/act.informative.c:1841,1870) and closes the line
+	// with "&n" (src/act.informative.c:1923). The codes are expanded per
+	// recipient by color_expansion at output time, so a viewer with colour off
+	// sees them raw — which is what C shows such a viewer. Emitting the escape
+	// directly here instead made the line plain at colour off, where C prints
+	// the codes.
+	closeCode := ""
 	switch {
 	case level >= LVL_IMMORT:
-		line = fmt.Sprintf("[ Wizard ] %s %s", name, title)
-		if whoColorEnabled(viewer) {
-			color = "\x1b[0;31m"
-		}
+		line = fmt.Sprintf("&r[ Wizard ] %s %s", name, title)
+		closeCode = "&n"
 	case whoHasFlag(player, game.PlrChosen):
-		line = fmt.Sprintf("[ Chosen ] %s %s", name, title)
-		if whoColorEnabled(viewer) {
-			color = "\x1b[0;33m"
-		}
+		line = fmt.Sprintf("&y[ Chosen ] %s %s", name, title)
+		closeCode = "&n"
 	default:
 		line = fmt.Sprintf("[ %2d  %s ] %s %s", level, whoClassAbbrev(player.GetClass()), name, title)
 	}
 	line += whoStatus(player)
-	if color != "" {
-		line = color + line + "\x1b[0m"
-	}
+	line += closeCode
 	return line + "\r\n"
 }
 

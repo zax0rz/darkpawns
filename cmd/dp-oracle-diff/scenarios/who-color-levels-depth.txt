@@ -1,0 +1,91 @@
+# C-first raw-byte proof for who's colour, at every level that changes it.
+#
+# do_who's rank and title names use CCYEL(ch, C_SPR) at all 21 sites (src/act.informative.c:1780-1865), so sparse colour already shows them.
+# keep-ansi compares the escapes raw (R1b). The viewer walks all four levels in
+# one probe: `color` reports the new level, then the command re-renders.
+#
+# depth-case: who.colour-levels
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Whocolor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Whocolor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Whopeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Whopeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Whopeer 8105
+set player Whopeer level 20
+
+[probe]
+color complete
+who
+color normal
+who
+color sparse
+who
+color off
+who

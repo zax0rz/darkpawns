@@ -328,19 +328,44 @@ changed their corpse wording.
 Ordered by player exposure. Each row needs a `keep-ansi` scenario; a row is
 "done" when it has one that can fail.
 
-1. `do_score` — 26 sites, mixed C_CMP/C_NRM in one function.
-2. `do_infobar` — 80 sites, the densest colored output in the game.
-3. `do_who` / `do_users` — 23 sites at C_SPR; the only C_SPR commands a mortal
-   sees constantly.
+1. ~~`do_score` — 26 sites, mixed C_CMP/C_NRM in one function.~~ **Done —
+   `score-color-levels-depth`.** The real surface is 11 C_CMP field pairs
+   (`src/act.informative.c:1184-1275`), and the port emitted no colour at all.
+2. `do_infobar` — 80 sites, the densest colored output in the game. **Not
+   coverable by `keep-ansi` alone:** the sites live in the `IB_*` renderers,
+   which draw with `VT_CURSPOS` cursor addressing from the prompt, so their
+   escapes are interleaved with cursor moves that a transcript comparison cannot
+   isolate.
+3. ~~`do_who` / `do_users` — 23 sites at C_SPR; the only C_SPR commands a mortal
+   sees constantly.~~ **`do_who` done — `who-color-levels-depth` is green at all
+   four levels.** The port replaced C's literal `&r`/`&y`/`&n` codes with a
+   conditional ANSI escape, which differs at colour off. `do_users` is still owed.
 4. ~~`do_stat_character` / `do_stat_room` / `do_stat_object` — 66 sites; also the
    wizard surface where a gate error is least likely to be reported.~~
    **Done — `wizard-stat-color-depth`, §11.** It also found two text-level
    inventions the normalizer had been hiding (**F7**, **F8**).
 5. `do_report` / `print_group` — 34 sites.
-6. `do_exits` / `do_auto_exits` / `look_at_char` / `list_char_to_char`.
+6. `do_exits` / `do_auto_exits` — 13 sites; `look_at_char` /
+   `list_char_to_char` were **done with F6** (#2244).
 7. `do_help` / `do_skills` / `do_where` / `do_review` / `list_skills` / `do_wiznet`.
 8. `nanny`'s login load-result line (C_SPR).
 9. F4 disposition (delete the invented fallback or scope it to tests).
+
+**Inventory defect found while building these proofs.** `ansi-color-c-inventory.tsv`
+attributes each site to the last function-like line before it, and that pattern
+only matched lowercase signatures, so it filed the capitalised `IB_*` infobar
+renderers under `do_infobar`, and gave `do_score` 26 sites when four of them
+(`src/act.informative.c:1406,1441`, `CCCYN` at `C_NRM`) belong to a later
+function. `do_score`'s real surface is the 11 C_CMP field pairs in
+`src/act.informative.c:1184-1275`; `do_stat_character`'s is
+`src/act.wizard.c:746-968`. Re-derive the table with a corrected pattern before
+trusting its per-function counts.
+
+**`stat`'s fix was subtler than `score`'s.** C's `sprintbit` leaves a trailing
+space after each flag list and the port's `wizardPlayerFlags` /
+`wizardPreferenceFlags` / `wizardAffectFlags` trimmed it, so wrapping those lines
+in colour put the space on the wrong side of the reset. That is **F7 in §11**,
+fixed with the whole stat surface in #2247.
 
 ## 8. Proposed rulebook amendment (for Zach — not applied)
 
