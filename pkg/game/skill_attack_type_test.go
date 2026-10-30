@@ -48,7 +48,7 @@ func TestSkillDamageAttackTypeMatchesC(t *testing.T) {
 		{SkillCutthroat, SkillCutthroatNum, plain},
 		{SkillGroinrip, SkillGroinripNum, plain},
 		{SkillCharge, SkillChargeNum, plain},
-		{"punch", SkillPunchNum, bruised},
+		{SkillPunch, SkillPunchNum, bruised},
 	}
 	for _, tc := range cases {
 		gotType := skillToAttackType(tc.skill)

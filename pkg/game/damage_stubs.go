@@ -59,8 +59,8 @@ func skillToAttackType(skill string) int {
 		return SkillBashNum // 132 SKILL_BASH
 	case SkillKick:
 		return SkillKickNum // 134 SKILL_KICK
-	case "punch": // SKILL_PUNCH (136): no Go skill-name constant exists
-		return SkillPunchNum
+	case SkillPunch:
+		return SkillPunchNum // 136 SKILL_PUNCH
 	case SkillHeadbutt:
 		return SkillHeadbuttNum // 141 SKILL_HEADBUTT
 	case SkillBearhug:
