@@ -814,6 +814,7 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 			slog.Error("unequip ruined lockpicks", "player", ch.GetName(), "error", err)
 			return false
 		}
+		ch.applySpellUnequipWipe(picks)
 		w.ExtractObject(picks, ch.GetRoom())
 		broken, err := w.SpawnObject(8028, -1)
 		if err != nil {
