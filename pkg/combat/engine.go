@@ -681,31 +681,51 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			ce.performOneHit(corpsePair)
 		}
 	} else {
+		current, def := pair, defender
 		for i := 0; i < numAttacks; i++ {
-			if defender.GetPosition() == PosDead {
+			if def.GetPosition() == PosDead {
 				break
 			}
 			// C's per-swing gate (fight.c:2017-2024) re-reads FIGHTING(ch) every
-			// swing: damage()'s mercy stop (fight.c:1491-1494) or the !AWAKE
-			// victim stop (:1630-1632) can clear it MID-LOOP, and C's hit() then
-			// never runs — no draw, no stale-pair swing. PL-005: without this the
-			// second swing of a multi-attack round kept hitting an already-stopped
-			// victim (prone multiplier fight.c:1854-1855), killing characters C
-			// leaves incapacitated, and diverging the shared RNG stream.
-			if fighting := attacker.GetFightingBody(); fighting == nil || fighting != defender {
-				break
+			// swing and swings at whoever it names: damage()'s mercy stop
+			// (fight.c:1491-1494) or the !AWAKE victim stop (:1630-1632) can
+			// clear it MID-LOOP, and C's hit() then never runs — no draw, no
+			// stale-pair swing. PL-005: without this the second swing of a
+			// multi-attack round kept hitting an already-stopped victim (prone
+			// multiplier fight.c:1854-1855), killing characters C leaves
+			// incapacitated, and diverging the shared RNG stream.
+			fighting := attacker.GetFightingBody()
+			if fighting == nil || fighting == attacker {
+				break // stopped (or self-fighting, which C's loop also stops)
+			}
+			if fighting != def {
+				if i == 0 {
+					// The round began aimed elsewhere (a prior redirect or a
+					// concurrent retarget); C's loop still swings at the
+					// CURRENT FIGHTING, but the pair under iteration was
+					// built for this defender, so keep the historical gate.
+					break
+				}
+				// A switcheroo redirected MID-ROUND (fight.c:1413-1440): the
+				// scan picked a different room fighter. C keeps the round's
+				// remaining attacks at the NEW FIGHTING (fight.c:2017-2024);
+				// re-resolve the pair around it. The switcheroo's own
+				// enrollment created the (attacker, newTarget) pair.
+				key := CombatPairKey{Attacker: attacker, Target: fighting}
+				ce.mu.RLock()
+				next := ce.combatPairs[key]
+				ce.mu.RUnlock()
+				if next == nil {
+					break
+				}
+				current, def = next, fighting
 			}
 			// C's while loop never exits on damage()'s return value: every
-			// iteration re-reads FIGHTING(ch) (fight.c:2017-2024). A
-			// switcheroo redirect that re-enrolled the same target
-			// (fight.c:1413-1440 — vict is whoever FIGHTINGs ch, the same
-			// opponent in a duel) keeps swinging; a stop (mercy, shopkeeper,
-			// jail) leaves FIGHTING nil and the gate above ends the round
-			// with no further draws. Breaking here ended a switcheroo
-			// victim's whole round after one swing. A redirect to a
-			// DIFFERENT target still breaks at the gate above — C would
-			// swing at the new FIGHTING, a named narrower gap.
-			ce.performOneHit(pair)
+			// iteration re-reads FIGHTING(ch). A stop (mercy, shopkeeper,
+			// jail) leaves FIGHTING nil and the next gate ends the round with
+			// no further draws; a redirect re-enrolling the same target keeps
+			// swinging.
+			ce.performOneHit(current)
 		}
 	}
 

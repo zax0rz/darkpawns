@@ -70,3 +70,57 @@ func TestRoundContinuesAfterSameTargetSwitcheroo(t *testing.T) {
 		t.Fatalf("duel switcheroo lost its target: fighting=%v", dragon.GetFightingBody())
 	}
 }
+
+// TestRoundRetargetKeepsRemainingAttacks pins C's mid-round retarget
+// (src/fight.c:2017-2024): a switcheroo that picks a DIFFERENT opponent
+// (src/fight.c:1413-1440) does not end the round — the remaining attacks
+// swing at the new FIGHTING. The dragon redirects from the tank to the rogue
+// on the first swing; the round's later swings must land on the rogue.
+func TestRoundRetargetKeepsRemainingAttacks(t *testing.T) {
+	orig := GetCallbacks()
+	defer SetCallbacks(orig)
+
+	dragon := &mockCombatant{name: "dragon", npc: true, room: 20, level: 30, hp: 200, maxHP: 200, position: PosFighting}
+	tank := &mockCombatant{name: "Tank", room: 20, level: 20, hp: 500, maxHP: 500, position: PosFighting}
+	rogue := &mockCombatant{name: "Rogue", room: 20, level: 20, hp: 500, maxHP: 500, position: PosFighting}
+
+	ce := NewCombatEngine()
+	swings := map[string]int{}
+	ce.MessageFunc = func(_, defender Combatant, _, _ int) bool {
+		swings[defender.GetName()]++
+		return true
+	}
+	ce.SetCallbacks(&GameCallbacks{
+		GetRoomCombatants: func(room int) []Combatant {
+			// The scan sees the tank first; the scripted zero picks the tank's
+			// OWN switcheroo roll... order the rogue FIRST so the redirect
+			// lands on the rogue (fight.c iterates the room's people list).
+			return []Combatant{rogue, dragon, tank}
+		},
+	})
+	if err := ce.StartCombat(dragon, tank); err != nil {
+		t.Fatalf("StartCombat failed: %v", err)
+	}
+	rogue.SetFightingBody(dragon)
+
+	// Leading zeros: attacks bonus (0,900), first swing's to-hit, first
+	// switcheroo scan roll (0,80 -> the redirect fires to the rogue). Then
+	// 1s: to-hits that land and scans that decline, so the round's later
+	// swings stay on the rogue.
+	roller := &countingThenOneRoller{lead: []int{0, 0, 0}}
+	WithRoller(roller, func() {
+		ce.processCombatPair(ce.combatPairs[CombatPairKey{Attacker: dragon, Target: tank}])
+	})
+
+	if dragon.GetFightingBody() != rogue {
+		t.Fatalf("dragon fighting = %v, want the rogue after the redirect", dragon.GetFightingBody())
+	}
+	// A level-30 NPC round is 4 attacks (+1 from the zero bonus draw). The
+	// redirect consumed the first; the remaining swings belong to the rogue.
+	if swings["Rogue"] < 3 {
+		t.Fatalf("rogue took %d swings after the redirect, want >= 3: the retarget ended the round", swings["Rogue"])
+	}
+	if swings["Tank"] > 2 {
+		t.Fatalf("tank took %d swings, want only the pre-redirect ones", swings["Tank"])
+	}
+}
