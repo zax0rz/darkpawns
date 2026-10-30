@@ -150,15 +150,14 @@ func (w *World) emitMobSkillSurvival(ch combat.Combatant, vict combat.Combatant,
 		Act(w, false, vict, nil, nil, nil, "$n is dead!  R.I.P.", "", ToRoom)
 		vict.SendMessage("You are dead!  Sorry...\r\n")
 	default:
-		if dam > vict.GetMaxHP()/4 {
-			Act(w, false, vict, nil, nil, nil, "That really did HURT!", "", ToChar)
-			if dprng.Number(0, 2) == 0 {
-				Act(w, false, ch, vict, nil, nil, "$N screams in pain!", "", ToNotVict)
-			}
-		}
-		if vict.GetHP() < vict.GetMaxHP()/4 {
-			vict.SendMessage(combat.BleedLine(vict))
-		}
+		// damage()'s default arm for a victim that survived above POS_STUNNED:
+		// the pain line and its number(0,2) scream draw, the wounded-band line,
+		// the MOB_WIMPY flee and the player wimpy block
+		// (src/fight.c:1587-1614). It lives in one place because C runs it for
+		// every attack type; this seam used to print the wounded-band line but
+		// neither wimpy block, so a mob-skill victim never wimped out and the
+		// flee's draws were missing from the shared stream (R1/R3).
+		combat.ApplySurvivingVictimDefaultArm(ch, vict, dam, pos)
 	}
 
 	if pos < combat.PosSleeping && vict.GetFightingBody() != nil {
