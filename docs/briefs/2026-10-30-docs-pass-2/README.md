@@ -56,3 +56,5 @@ AssertionError [ERR_ASSERTION]: /home/zach/wt/codex-docs-starlight/website-astro
 - [Media and key guard](../2026-10-30-docs-media-pass-2.md)
 
 The hosting resource figures are one measured idle local run; planning headroom is labeled as an estimate. Only the Kir Drax'in player route is covered. Linux capture dependencies and live terminal timing limits remain documented. Existing editorial lint warnings remain visible; 22 obsolete baseline entries were removed, with no new suppression.
+
+Final stacked verification: the positive site gate passed again after the final media restack. All 19 consumed media files match the freshly regenerated canonical media branch byte-for-byte. The timestamp-only advisory checker warns after Git rewrites source mtimes during restacking; the canonical capture worktree reports current sources. This checkout limitation is documented in `docs/MEDIA.md`; no timestamp warnings were suppressed. Browser checks and all 12 screenshots were rerun against the final built stack.
