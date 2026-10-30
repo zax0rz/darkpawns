@@ -1,0 +1,130 @@
+# C-first raw-byte proof for do_report's colour, and for the fact that C formats
+# the line once per *recipient* rather than once per room.
+#
+# src/act.other.c:799-819:
+#   act("$n reports:", FALSE, ch, 0, 0, TO_ROOM);
+#   send_to_char("You report:\r\n", ch);
+#   for (tch = world[ch->in_room].people; tch; tch = tch->next_in_room) {
+#     sprintf(buf, "    [%s%d%s/%s%d%s]H ...", CCGRN(tch, C_NRM), GET_HIT(ch), ...);
+#     act(buf, FALSE, tch, 0, 0, TO_CHAR);
+#   }
+# The wrappers take `tch`, the recipient, while the numbers are always the
+# reporter's, and every wrapper is C_NRM (src/screen.h:45-49). So the same line
+# is coloured for a complete-colour occupant and plain for one at colour off,
+# and the audience for that difference is observable: the actor reads its own
+# TO_CHAR line, each peer reads theirs.
+#
+# keep-ansi compares the escapes raw (R1b). The probe walks the actor through all
+# four levels, then moves a peer to complete and back to off while the actor
+# stays complete, so the per-recipient branch is exercised in both directions.
+#
+# depth-case: report.color-levels-raw
+# depth-case: report.color-audience-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Qreportactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Qreportactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Qreportpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Qreportpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Qreportobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Qreportobserver
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Qreportpeer 8162
+teleport Qreportobserver 8162
+
+[probe]
+color sparse
+report
+color normal
+report
+color complete
+report
+force Qreportpeer color complete
+report
+force Qreportpeer color off
+report
+color off
+report
