@@ -52,3 +52,7 @@ The index and Port Fidelity route are otherwise direct and make the read-only or
 Reviewed `Build`, `Run a local server`, `Edit rooms`, `Edit objects`, `Edit mobs`, `Edit zones`, and `Edit Lua scripts`.
 
 **Actionable issues:** The local-server wording and alternate database directory permission issue are listed under Host because they appear on that shared Build page. The Build index is sparse but its task links are clear. Edit pages consistently distinguish committing a draft to the running world from saving the underlying zone data, which is the distinction a new builder needs.
+
+## Resolution after the independent read
+
+The Play route now explicitly applies only to Kir Drax'in. Install points Windows readers to signed bootstrap instructions before the tabs and explains Docker host-network prerequisites. The contributing page distinguishes build/vet/test/lint from formatting and deadcode. The local-server guide names the Go version source and creates a writable alternate database directory. It also pairs its architecture diagram with the resulting web-client capture. Configuration now has a dedicated capture with an explicit checkout-preview caption.

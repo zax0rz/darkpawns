@@ -14,6 +14,8 @@ try {
     for (const [name, route] of routes) {
       await page.goto(base + route);
       await page.evaluate(() => document.fonts.ready);
+      await page.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+      if (await page.locator('img[src$=".gif"]').count()) await page.waitForTimeout(8000);
       await page.screenshot({ path: resolve(output, `${name}-${size}.png`), fullPage: true });
       const details = await page.evaluate(() => ({ overflow: document.documentElement.scrollWidth > innerWidth, title: document.querySelector('h1')?.textContent, edit: [...document.querySelectorAll('a[href]')].find((a) => a.href.includes('/edit/main/'))?.href }));
       if (details.overflow || !details.title || !details.edit) throw new Error(`${size} ${route}: invalid rendered page`);

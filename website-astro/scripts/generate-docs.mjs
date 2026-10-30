@@ -34,10 +34,10 @@ for (const group of helpGroups) {
     const fence = fenceFor(topic.body);
     return `<a id="${topic.anchor}"></a>\n## ${topic.title}\n\n**Verbatim in-game help.**\n\n${fence}\n${topic.body}${topic.body.endsWith('\n') ? '' : '\n'}${fence}`;
   });
-  const intro = `It's the original Dark Pawns ${group.title.toLowerCase()} help, grouped by topic.`;
-  const description = `It's the original Dark Pawns ${group.title.toLowerCase()} help, grouped by topic. Each source entry stays verbatim and gets a stable anchor for direct links.`;
+  const intro = "Look up a command or topic below. The help text keeps the game's wording, including its examples and warnings.";
+  const description = `Look up Dark Pawns ${group.title.toLowerCase()} commands and topics in the game's original help text, with the wording, examples and warnings kept intact.`;
   const audience = group.slug === 'immortal-commands' ? 'operators' : 'players';
-  write(`reference/commands/${group.slug}`, group.title, description, `${intro}\n\n${sections.join('\n\n')}`, 'website-astro/src/content/help/', 'reference', audience);
+  write(`reference/commands/${group.slug}`, group.title, description, `${intro}\n\n${sections.join('\n\n')}`, 'lib/text/help/', 'reference', audience);
   groupLinks.push(`- [${group.title}](/docs/reference/commands/${group.slug}/) (${group.topics.length} topics)`);
 }
 write('reference/commands', 'Commands', "It's the Dark Pawns command index, with topics grouped by task. Every page keeps the original help text and gives each topic a stable anchor.", groupLinks.join('\n'), 'lib/text/help/commands.hlp', 'reference', 'players');

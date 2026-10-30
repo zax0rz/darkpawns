@@ -235,7 +235,9 @@ a:active, button:active { transform: translateY(1px); }
   --header-control-tracking: .08em;
 }
 :is(.nav-search-btn, .docs-search button[data-open-modal]) {
+  height: var(--header-control-height);
   min-height: var(--header-control-height);
+  box-sizing: border-box;
   width: auto;
   gap: .35rem;
   padding: var(--header-control-padding);
@@ -255,5 +257,5 @@ a:active, button:active { transform: translateY(1px); }
   color: var(--paper);
 }
 @media (max-width: 799px) {
-  :is(.nav-search-btn, .docs-search button[data-open-modal]) { min-width: 44px; min-height: 44px; }
+  :is(.nav-search-btn, .docs-search button[data-open-modal]) { min-width: 44px; height: 44px; min-height: 44px; }
 }

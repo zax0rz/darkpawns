@@ -1,0 +1,98 @@
+[
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/",
+    "overflow": false,
+    "title": "Documentation",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/index.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/play/first-hour/",
+    "overflow": false,
+    "title": "Your first hour",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/first-hour.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/host/install/",
+    "overflow": false,
+    "title": "Install Dark Pawns",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/install.mdx"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/play/connect-client/",
+    "overflow": false,
+    "title": "Connect a client",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/connect-client.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/build/edit-rooms/",
+    "overflow": false,
+    "title": "Edit rooms",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/build/edit-rooms.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/reference/commands/combat/",
+    "overflow": false,
+    "title": "Combat",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/scripts/generate-docs.mjs"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/",
+    "overflow": false,
+    "title": "Documentation",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/index.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/play/first-hour/",
+    "overflow": false,
+    "title": "Your first hour",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/first-hour.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/host/install/",
+    "overflow": false,
+    "title": "Install Dark Pawns",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/install.mdx"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/play/connect-client/",
+    "overflow": false,
+    "title": "Connect a client",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/connect-client.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/build/edit-rooms/",
+    "overflow": false,
+    "title": "Edit rooms",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/build/edit-rooms.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/reference/commands/combat/",
+    "overflow": false,
+    "title": "Combat",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/scripts/generate-docs.mjs"
+  }
+]
