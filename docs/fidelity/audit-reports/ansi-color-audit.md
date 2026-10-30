@@ -228,8 +228,8 @@ this audit.
 | `do_infobar` | 80 | C_NRM | `pkg/session/infobar` | none |
 | `do_score` | 26 | C_CMP 22, C_NRM 4 | `pkg/session` score | none |
 | `do_who` | 21 | C_SPR 21 | `pkg/session/cmd_info.go` (`whoColorEnabled`, ≥1) | none |
-| `do_report` | 18 | C_NRM | `pkg/session/act_informative.go` | none |
-| `print_group` | 16 | C_CMP | `pkg/session` group | none |
+| `do_report` | 18 | C_NRM | `pkg/game/other_character.go` (`doReport`) | **keep-ansi (new)** |
+| `print_group` | 16 | C_CMP | `pkg/session/cmd_group.go` (`printGroup`) | **keep-ansi (new)** |
 | `damage_message` | 16 | C_CMP | `pkg/combat/fight_core.go` | **keep-ansi (new)** |
 | `do_stat_character` | 42 | C_NRM 36, C_CMP 6 | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
 | `make_prompt` | 42 | C_CMP | `pkg/session/terminal_colors.go`, prompt | indirect |
@@ -336,7 +336,9 @@ Ordered by player exposure. Each row needs a `keep-ansi` scenario; a row is
    wizard surface where a gate error is least likely to be reported.~~
    **Done — `wizard-stat-color-depth`, §11.** It also found two text-level
    inventions the normalizer had been hiding (**F7**, **F8**).
-5. `do_report` / `print_group` — 34 sites.
+5. ~~`do_report` / `print_group` — 34 sites.~~ **Done — `report-color-levels-depth`
+   and `group-color-levels-depth`, §12.** `do_report` was already correct but had
+   no proof that could fail on colour; `print_group` emitted no colour at all.
 6. `do_exits` / `do_auto_exits` / `look_at_char` / `list_char_to_char`.
 7. `do_help` / `do_skills` / `do_where` / `do_review` / `list_skills` / `do_wiznet`.
 8. `nanny`'s login load-result line (C_SPR).
@@ -532,4 +534,75 @@ covering a missing flag-set anywhere.
 - Two pre-existing unit assertions encoded the F7 bug
   (`wiz_stats_test.go`: `"AFF: SANCT NOTHING\r\n"`, `"AFF: BLIND\r\n"`) and were
   corrected to C's bytes.
+
+
+## 12. `do_report` and `print_group` (2026-10-30)
+
+Queue item 5. The two commands share a shape — a per-field coloured stats line —
+but they turned out to be at opposite ends of the problem.
+
+**`print_group` emitted no colour at all (FIXED).** C wraps every stat at
+`C_CMP` against the **viewer** and prints two row shapes
+(`src/act.other.c:638-681`):
+
+```
+head      [%s%3d%sH %s%3d%sM %s%3d%sV] [%2d %s%s%s] $N (Head of group)
+          CCGRN on each stat, CCCYN on CLASS_ABBR                (line 659)
+follower  [%s%3d%sH %s%3d%sM %s%3d%sV] [%2d %s%s%s] $N
+          CCGRN on each stat, CCGRN on CLASS_ABBR                (line 676)
+mob       [---H ---M ---V] [-- --] $N   — uncoloured            (line 669)
+```
+
+`pkg/session/cmd_group.go` printed the same fields plain. Two details are easy to
+get wrong and are now pinned: the **class abbreviation is cyan on the head row
+and green on a follower's row** — a genuine asymmetry in C, not a typo — and the
+mobile row stays uncoloured at every level.
+
+`C_CMP` is `_clrlevel >= 3` (`src/screen.h:45-49`), so this is the first command
+in the audit whose discriminating level is `complete`: at `color normal` every
+other coloured surface in this report is live and this listing must still be
+plain. `group-color-levels-depth` walks all four levels and would fail a port
+that reused the `C_NRM` gate.
+
+**`do_report` was already correct — but nothing could prove it.** `pkg/game`'s
+`doReport` (not `pkg/session/act_informative.go`, which is what §4's table
+claimed) already formats the line once per recipient through that recipient's own
+`C_NRM` wrappers while printing the reporter's numbers, exactly as C does
+(`src/act.other.c:806-818`).
+
+The problem was the proof. `docs/fidelity/depth/report.tsv` carried a
+`report.color-audience` row claiming that "color-enabled peer and observer
+descriptors cover this audience-dependent branch", proved by `report-depth` — a
+scenario that does **not** set `keep-ansi`. Ordinary normalization strips ANSI by
+design (`internal/oraclediff/normalize.go:64-67`: "the ordinary mode strips ANSI
+and therefore cannot see a missing-color port"), so that row was green no matter
+what the port emitted. It is an R5h violation in the manifest: a green that could
+not fail on the thing it claimed to cover. The row's note is corrected to say it
+covers the audience and the numbers only, and `report-color-levels-raw` is now
+the raw-byte proof. This is the second manifest claim this audit has found that
+could not fail (the first was `score`'s, which showed no escapes at all).
+
+### Evidence
+
+- `report-color-levels-depth` (new, `keep-ansi`): an actor walks all four levels,
+  then a peer is forced to `complete` and back to `off` under a complete actor,
+  so both directions of the per-recipient branch appear in one transcript.
+- `group-color-levels-depth` (new, `keep-ansi`): leader + player follower + mobile
+  follower, four levels. `group all` in warmup builds the group, so the transcript
+  carries the head, follower and mobile rows.
+- Targeted census `report-group-color` at `8a052ba1e`, `--draw-parity`, seven
+  scenarios (the two new ones plus `report-depth`, `group-depth`,
+  `group-gates-depth`, `group-mob-depth`, `group-room-depth` to catch regressions
+  in the code being changed): `passed=7 failed=0 verdict=CLEAN`,
+  `draw_divergent=0`.
+- Unit proofs (R5h): `TestGroupListColorLevelsMatchC` (four-level table asserting
+  the head row's cyan class, the follower row's green class, the uncoloured mobile
+  row, and that the whole listing is escape-free below `C_CMP`) and
+  `TestReportColorUsesCNRMNotCMP` (a `PRF_COLOR_2`-only viewer must still get the
+  escapes, which a port reusing the `C_CMP` gate would fail). Both were
+  scratch-broken — reverting the gate failed the `normal` subtest, dropping the
+  head cyan failed the `complete` subtest.
+- The stat surface's `statGreen`/`statCyan`/… constants and `wizardTint` are now
+  shared by this code, so they are renamed to `ansiGreen`/`ansiCyan`/… and
+  `colorWrap`. Mechanical, one file, no behaviour change.
 

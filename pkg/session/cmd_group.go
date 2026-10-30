@@ -201,6 +201,8 @@ func printGroup(s *Session) error {
 
 func sendGroupMemberLine(s *Session, member game.Actor, head bool) {
 	if mob, ok := member.(*game.MobInstance); ok {
+		// C prints the mobile row uncoloured (src/act.other.c:668-669): the
+		// dashes stand in for stats the group view must not reveal.
 		game.Act(s.manager.world, false, s.player, mob, nil, nil,
 			"     [---H ---M ---V] [-- --] $N", "", game.ToChar)
 		return
@@ -213,8 +215,21 @@ func sendGroupMemberLine(s *Session, member game.Actor, head bool) {
 	if n := player.GetClass(); n >= 0 && n < len(game.ClassAbbrevs) {
 		class = game.ClassAbbrevs[n]
 	}
-	format := fmt.Sprintf("     [%3dH %3dM %3dV] [%2d %s] $N",
-		player.GetHealth(), player.GetMana(), player.GetMove(), player.GetLevel(), class)
+	// C print_group wraps each stat at C_CMP against the *viewer* (src/act.other.c:653-676),
+	// closing every field with CCNRM before the next, so the H/M/V letters sit
+	// after the reset. The class abbreviation is the one asymmetry: the head row
+	// uses CCCYN (line 659) and a follower's row uses CCGRN (line 676).
+	complete := wizardHasCompleteColor(s.player.GetFlags())
+	classColor := ansiGreen
+	if head {
+		classColor = ansiCyan
+	}
+	format := fmt.Sprintf("     [%sH %sM %sV] [%2d %s] $N",
+		colorWrap(fmt.Sprintf("%3d", player.GetHealth()), ansiGreen, complete),
+		colorWrap(fmt.Sprintf("%3d", player.GetMana()), ansiGreen, complete),
+		colorWrap(fmt.Sprintf("%3d", player.GetMove()), ansiGreen, complete),
+		player.GetLevel(),
+		colorWrap(class, classColor, complete))
 	if head {
 		format += " (Head of group)"
 	}
