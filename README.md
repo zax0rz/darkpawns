@@ -3,6 +3,7 @@
 [![Go version](https://img.shields.io/github/go-mod/go-version/zax0rz/darkpawns)](go.mod)
 [![HUMA Powered](https://img.shields.io/badge/Powered%20By-HUMA-f40273)](https://huma.rocks/)
 ![Lua](https://img.shields.io/badge/Lua-2C2D72?style=flat&logo=lua&logoColor=white)
+[![Discord](https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white)](https://discord.gg/supVzU9yN)
 [![License: DikuMUD/CircleMUD + MIT](https://img.shields.io/badge/License-DikuMUD%20%2F%20CircleMUD%20%2B%20MIT-yellow.svg)](LICENSE)
 
 ```
@@ -25,6 +26,8 @@ game runs live at [darkpawns.org](https://darkpawns.org), and one command
 installs your own copy on Windows, macOS or Linux.
 
 [Play in your browser](https://darkpawns.org/play) · [Install your own](#install) · [Website](https://darkpawns.org) · [Player guide](docs/player-guide/player-guide.md) · [Report a bug](https://github.com/zax0rz/darkpawns/issues)
+
+The [Dark Pawns Discord](https://discord.gg/supVzU9yN) is where players ask questions; its #gossip channel mirrors the live game.
 
 ## Install
 
