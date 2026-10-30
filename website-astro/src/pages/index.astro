@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import CopyCommand from '../components/CopyCommand.astro';
+import SocialLinks from '../components/SocialLinks.astro';
 import bookPaper from '../assets/paper/book-page.jpg';
 import chapterAltar from '../assets/chapter/temple-altar.png';
 import { unixInstall } from '../lib/download';
@@ -71,7 +72,7 @@ const eras = [
         <p class="lede">A multiplayer text RPG, first opened in 1994.<br /> Play here, or run a world of your own.</p>
         <a class="btn-primary" href="/play/">Enter the game</a>
         <p class="play-note">Play in your browser.</p>
-        <p class="discord-note">Questions and war stories live on the <a href="https://discord.gg/supVzU9yN">Dark Pawns Discord</a>, along with the game's own #gossip channel.</p>
+        <SocialLinks links={['discord', 'github']} variant="hero" label="Dark Pawns on Discord and GitHub" />
       </div>
 
       <div class="entry-options">
@@ -306,8 +307,6 @@ const eras = [
   .btn-primary { display: inline-block; border: 1px solid var(--accent); padding: .7rem 1.4rem; font-family: var(--font-display); font-size: 1.1rem; background: var(--accent); color: var(--paper); }
   .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); text-decoration: none; }
   .play-note { color: var(--ink-muted); font-size: .9rem; margin: var(--space-xs) auto 0; }
-  .discord-note { color: var(--ink-muted); font-size: .9rem; margin: var(--space-xs) auto 0; max-width: 44ch; }
-  .discord-note a { color: var(--accent); }
   .entry-options { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--space-xl); align-items: start; border-block: 1px solid var(--rule); padding-block: var(--space-lg); margin-top: 1.5rem; }
   .entry-options h2 { font-size: 1.25rem; margin-bottom: var(--space-xs); }
   .entry-options section > p { margin: 0; font-size: .95rem; color: var(--ink-muted); }
