@@ -283,3 +283,47 @@ func TestRoomObjectLinesStackIdenticalObjectsWithCountPrefix(t *testing.T) {
 		}
 	}
 }
+
+// oc_show_list's room mode pads every line's text to 63 bytes after the
+// prefix (src/oc.c:111-124: bare %-63s for a single object, "[%2d] " then
+// %-63s for a stack). The trailing spaces are player-facing bytes the census
+// normalizer trims (R1b) — this byte-level check is the proof mode for them.
+func TestRoomObjectLinesPadToC63Bytes(t *testing.T) {
+	w, p, _ := newViewTestWorld(t)
+
+	one := newGlowFlaggedObject(5104)
+	w.AddItemToRoom(one, 100)
+	room := w.GetRoomInWorld(100)
+	single := w.roomObjectLines(p, room)
+	if len(single) == 0 {
+		t.Fatal("no room object lines")
+	}
+	got := single[0]
+	if len(got) != 63 {
+		t.Fatalf("single-object line is %d bytes, want C's 63-byte pad: %q", len(got), got)
+	}
+	if !strings.HasPrefix(got, "A runed orb has been left here.") {
+		t.Fatalf("single-object line text misplaced: %q", got)
+	}
+
+	for i := 0; i < 2; i++ {
+		w.AddItemToRoom(newGlowFlaggedObject(5105), 100)
+	}
+	stacked := w.roomObjectLines(p, room)
+	var stackLine string
+	for _, l := range stacked {
+		if strings.HasPrefix(l, "[ 2]") {
+			stackLine = l
+		}
+	}
+	if stackLine == "" {
+		t.Fatalf("no stacked line in %q", stacked)
+	}
+	// "[ 2] " is 5 bytes + 63 padded = 68.
+	if len(stackLine) != 68 {
+		t.Fatalf("stacked line is %d bytes, want 5 + C's 63-byte pad: %q", len(stackLine), stackLine)
+	}
+	if !strings.HasPrefix(stackLine, "[ 2] A runed orb has been left here.") || strings.TrimRight(stackLine, " ") != "[ 2] A runed orb has been left here." {
+		t.Fatalf("stacked line text misplaced: %q", stackLine)
+	}
+}

@@ -406,14 +406,17 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 		order = append(order, key)
 	}
 	// C's oc_add_front builds this display list in reverse discovery order.
-	// The room listing's count>1 marker is oc_show_list's no-indent prefix
-	// "[%2d] " (src/oc.c:123; mode 20 has no show_indent), not a suffix.
+	// Mode 20 (room) is the wide variant with no indent and no weight: every
+	// line's text is padded to 63 bytes - "[%2d] " then %-63s for a stack
+	// (src/oc.c:122-124), a bare %-63s for a single object (:111-112). The
+	// trailing spaces are player-facing bytes the census normalizer trims
+	// (R1b); the padding is pinned by TestRoomObjectLinesPadToC63Bytes.
 	lines := make([]string, 0, len(order))
 	for i := len(order) - 1; i >= 0; i-- {
 		entry := groups[order[i]]
-		line := entry.line
+		line := fmt.Sprintf("%-63s", entry.line)
 		if entry.count > 1 {
-			line = fmt.Sprintf("[%2d] %s", entry.count, line)
+			line = fmt.Sprintf("[%2d] %-63s", entry.count, entry.line)
 		}
 		lines = append(lines, line)
 		if flags := roomObjectVisibleFlags(ch, entry.item); flags != "" {
