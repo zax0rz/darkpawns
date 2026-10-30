@@ -27,7 +27,9 @@ func TestPointUpdatePoisonWireMatchesC(t *testing.T) {
 		_ = captureWire(s)
 	}
 	m.WireCombatCallbacks()
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 	victim.player.SetAffect(game.AffPoison, true)
 	m.world.PointUpdate()
 	if got := captureWire(victim); got != "You feel burning poison in your blood, and suffer.\r\n" {
@@ -47,7 +49,9 @@ func TestPointUpdatePoisonShopkeeperWire(t *testing.T) {
 	// them here, as TestPointUpdatePoisonWireMatchesC does, so the claim cannot
 	// depend on whatever package-level callback set another test left behind.
 	m.WireCombatCallbacks()
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 	keeper.VNum = 8003 // C's is_shopkeeper hardcoded protector.
 	keeper.SetHealth(keeper.GetMaxHP())
 	keeper.SetAffected(game.AffPoison)

@@ -698,7 +698,9 @@ func TestCastFailureConsumesOneDrawHalfManaAndNoIncantation(t *testing.T) {
 
 func TestCastConcentrationFailureEmitsSpellSkillMessage(t *testing.T) {
 	m := makeGateTestManager(t, false)
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 	caster := makeGateSession(t, m, 1, "FireActor", 15)
 	victim := makeGateSession(t, m, 2, "FireVictim", 30)
 	observer := makeGateSession(t, m, 3, "FireWatch", 1)

@@ -43,7 +43,9 @@ func combatDescriptorFixture(t *testing.T) (*Manager, *Session, *Session, *Sessi
 	wizard.switchedMob = second
 	m.mu.Unlock()
 	m.WireCombatCallbacks()
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 	return m, wizard, peer, sleeper, first, second
 }
 
@@ -113,7 +115,9 @@ func TestCombatBodyMessageColorsAndDraw(t *testing.T) {
 func TestCombatBodyPCSwitchRouting(t *testing.T) {
 	m, s, h, original := switchedPCFixture(t)
 	m.WireCombatCallbacks()
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 	cb := m.combatEngine.Callbacks
 	cb.SendToChar(original, "original has no descriptor")
 	if got := renderedOutput(s); got != "" {
