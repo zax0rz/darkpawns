@@ -362,7 +362,7 @@ func (s *Session) SendPrompt() {
 func (s *Session) sendPromptNow() {
 	if s.IsPaging() {
 		flags := s.player.GetFlags()
-		color := flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0
+		color := hasCompleteColor(flags)
 		text := pagerPrompt(s.pagerPage, s.pagerCount, color)
 		if s.outputSincePrompt.Swap(0) > 0 && flags&(1<<uint(game.PrfCompact)) == 0 {
 			text = "\r\n" + text
@@ -487,7 +487,7 @@ func (s *Session) promptText() string {
 	// C's make_prompt playing branch renders the vitals fields (HP/mana/move)
 	// only when the infobar is off (comm.c:1064-1105); the VT100 infobar owns
 	// that data otherwise. src/comm.c:1083-1121 colors each vital at C_CMP.
-	color := flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0
+	color := hasCompleteColor(flags)
 	if s.infobarMode != InfobarOn {
 		if flags&(1<<uint(game.PrfDisphp)) != 0 {
 			prefix.WriteString(promptVital(s.player.GetHP(), s.player.GetMaxHP(), "H", color))

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/screen"
 )
 
 // gossipHistory is a circular buffer of the last 25 gossip messages.
@@ -19,17 +20,19 @@ type gossipEntry struct {
 const maxGossipHistory = 25
 
 // C's raw color bytes and the COLOR_LEV thresholds do_gen_comm gates on
-// (src/screen.h:32-46). com_msgs[subcmd][3] carries one per channel.
+// (src/screen.h:32-46). com_msgs[subcmd][3] carries one per channel. The codes
+// and levels are defined once in pkg/screen; these names are this package's
+// aliases so existing call sites stay readable.
 const (
-	ansiReset   = "\x1b[0m"  // KNRM
-	ansiRed     = "\x1b[31m" // KRED — perform_tell's CCRED sandwich
-	ansiYellow  = "\x1b[33m" // KYEL
-	ansiGreen   = "\x1b[32m" // KGRN
-	ansiMagenta = "\x1b[35m" // KMAG
-	ansiCyan    = "\x1b[36m" // KCYN
+	ansiReset   = screen.KNRM
+	ansiRed     = screen.KRED
+	ansiYellow  = screen.KYEL
+	ansiGreen   = screen.KGRN
+	ansiMagenta = screen.KMAG
+	ansiCyan    = screen.KCYN
 
-	colorNormal   = 2 // C_NRM
-	colorComplete = 3 // C_CMP
+	colorNormal   = screen.Normal   // C_NRM
+	colorComplete = screen.Complete // C_CMP
 )
 
 type channelSpec struct {

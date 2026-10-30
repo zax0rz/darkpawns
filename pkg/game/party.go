@@ -54,6 +54,9 @@ func (w *World) GetFollowersInRoom(leaderName string, roomVNum int) []*Player {
 // GetFollowerActors returns every character following leaderName, including
 // charmed mobs. The C do_group path walks ch->followers, not just the player
 // table; keep that distinction at the world boundary for group commands.
+//
+// Prefer FollowersOf when the leader's body is known: this name form cannot tell
+// two same-named NPCs apart (R3).
 func (w *World) GetFollowerActors(leaderName string) []Actor {
 	var followers []Actor
 	for _, player := range w.GetAllPlayers() {
@@ -66,8 +69,37 @@ func (w *World) GetFollowerActors(leaderName string) []Actor {
 			followers = append(followers, mob)
 		}
 	}
-	// C prepends each new follower to the leader's linked list (utils.c:add_follower).
-	// SetFollowing records that insertion order so this traversal matches C.
+	sortFollowerOrder(followers)
+	return followers
+}
+
+// FollowersOf returns every character following the given leader body, in C's
+// add_follower prepend order. The match is by body identity, not name: C walks
+// k->followers, so two same-named NPCs keep separate lists and a name match would
+// merge them (R3).
+func (w *World) FollowersOf(leader Actor) []Actor {
+	if leader == nil {
+		return nil
+	}
+	var followers []Actor
+	for _, player := range w.GetAllPlayers() {
+		if w.FollowingActor(player) == leader {
+			followers = append(followers, player)
+		}
+	}
+	for _, mob := range w.GetAllMobs() {
+		if w.FollowingActor(mob) == leader {
+			followers = append(followers, mob)
+		}
+	}
+	sortFollowerOrder(followers)
+	return followers
+}
+
+// sortFollowerOrder puts a follower slice into C's list order: C prepends each
+// new follower to the leader's linked list (utils.c:add_follower), and
+// SetFollowing records that insertion sequence so this traversal matches.
+func sortFollowerOrder(followers []Actor) {
 	sort.SliceStable(followers, func(i, j int) bool {
 		left, right := actorFollowingSequence(followers[i]), actorFollowingSequence(followers[j])
 		if left != right {
@@ -75,7 +107,6 @@ func (w *World) GetFollowerActors(leaderName string) []Actor {
 		}
 		return strings.ToLower(followers[i].GetName()) < strings.ToLower(followers[j].GetName())
 	})
-	return followers
 }
 
 func actorFollowingSequence(actor Actor) uint64 {

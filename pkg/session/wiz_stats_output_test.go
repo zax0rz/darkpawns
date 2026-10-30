@@ -109,7 +109,7 @@ func TestWizardObjectExtraDescriptionUsesCColorLevel(t *testing.T) {
 		{name: "complete (both)", flags: 1<<uint(game.PrfColor1) | 1<<uint(game.PrfColor2), want: "Extra descs:\x1b[36m oak chest\x1b[0m\r\n"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			got := wizardExtraDescriptionLine([]string{"oak chest"}, wizardHasNormalColor(test.flags))
+			got := wizardExtraDescriptionLine([]string{"oak chest"}, hasNormalColor(test.flags))
 			if got != test.want {
 				t.Fatalf("wizardExtraDescriptionLine() = %q, want %q", got, test.want)
 			}

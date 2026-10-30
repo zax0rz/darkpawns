@@ -735,4 +735,121 @@ belongs with it.
   `TestAutoExitsEmptyListKeepsCTrailingSpace` (C's literal `"None! "`). The first
   was scratch-broken — disabling the `C_CMP` gate failed the `immortal complete`
   case with exactly the old bytes.
+## 14. Colour-level consolidation, and a mobile group leader (2026-10-30)
+
+Two follow-ups from the `print_group` work, plus what chasing the second one
+found.
+
+**One definition per colour level.** After §11 and §12 the package held seven
+copies of C's level arithmetic: `colorCMP` and `wizardHasCompleteColor` (both
+`C_CMP`), `wizardHasNormalColor`, `whoColorEnabled` (written as "either bit"),
+and inline `flags&(1<<PrfColorN)` expressions in the infobar state, the prompt's
+two `C_CMP` sites and `reditCols`. C defines `_clrlevel`, `clr` and the eight
+`CC*` macros once (`src/screen.h:34-56`) and every command reaches for them; the
+port had re-derived the arithmetic per command, which is how §11's and §12's
+gate mistakes survived review.
+
+They now live in `pkg/session/color_levels.go`: `colorLevel` (C's `_clrlevel`),
+`hasSparseColor`/`hasNormalColor`/`hasCompleteColor` (`clr` at C_SPR/C_NRM/C_CMP),
+`colorWrap` (a `CCxxx … CCNRM` pair) and `colorCMP` (the `C_CMP` code-or-empty
+form). Every site above now calls one of them. Behaviour is unchanged — the
+predicates are the same arithmetic — which the targeted census confirms by
+re-running the scenarios for every rewired surface.
+
+**A grouped mobile can lead a group, and the port rendered it as a follower.**
+`print_group`'s head arm has no `IS_NPC` check (`src/act.other.c:651-660`): it
+prints `k`'s real stats and `CLASS_ABBR(k)`, which is the literal `"--"` for an
+NPC (`src/utils.h:570`). The dashes row (line 669) is inside the **follower**
+loop only. The port's `sendGroupMemberLine` showed dashes for any mobile,
+including a leader, and `printGroup` bailed before that with an invented
+`Your group leader is not online.` — a string C does not have anywhere, already
+recorded in the triage baseline as `bug:invented`.
+
+The fix resolves the leader to either body type and gives a mobile leader C's
+head row; the unresolvable-name case now falls back to the viewer, which is C's
+`k = (ch->master ? ch->master : ch)` null arm, instead of the invented message.
+Proof: `TestGroupListMobileLeaderShowsRealStats`, scratch-broken to confirm it
+fails (R5h) — restoring the dashes row produced
+`     [---H ---M ---V] [-- --] a guard` where C prints
+`     [ 40H   5M  12V] [ 9 --] a guard (Head of group)`.
+
+**F9 — the port cannot run `group` as a mobile, and `force` hides it (OPEN, R1/R4).**
+Reaching the mobile-leader state needs `do_group` to run as the mobile, because
+`perform_group` is the only thing in the tree that sets `AFF_GROUP`
+(`src/act.other.c:629`; no mobprog or spec proc sets it) and the viewer has to be
+enrolled by its own master. C reaches that through `do_force`, which resolves its
+target with `get_char_vis` — mobiles included — and hands the command to
+`command_interpreter(vict, to_force)` (`src/act.wizard.c:1869-1880`). The port's
+`cmdForceText` resolves mobiles too, but dispatches through
+`executeCharacterCommand`, whose surface has no `group`; an unsupported command is
+dropped with a `slog.Warn` after the forcer has already been told `Okay.`
+(`pkg/session/wiz_communication.go:221-223`).
+
+A `keep-ansi` scenario built exactly as C's transcript requires
+(`force Grouppeer follow generic`, `force generic group Grouppeer`) proves the
+gap: C answers the follower's `group` with
+`Your group consists of:` and a row, while the port answers
+`But you are not the member of a group!` because the mobile's `group` never ran.
+The scenario is **not** committed — it cannot go green, and a full census would
+fail on it — but the run is retained as evidence:
+`oracle-runs/2026-10-30/group-mobile-leader`, whose `census-dump/` carries the
+scenario. The general shape of F9 is larger than `group`: C's `do_force` runs
+*any* command as a mobile, and the port's mobile command surface is a partial
+registry that fails silently behind a success message. That needs its own issue
+and its own audit, not a fix smuggled into a colour PR.
+
+So this row's coverage is unit-level on purpose: the state is reachable in C but
+not currently reachable in the port, which is exactly why the port's wrong branch
+had gone unnoticed. It is latent, not dead — the moment `group` joins the mobile
+command surface, the head row must already be right.
+### The leader lookup is a body, not a name (R3)
+
+`groupLeaderActor` resolved the leader with `GetMobByName`, which matches a
+**substring** over a map-ordered slice: with two NPCs sharing a name it could pick
+the wrong one, and the pick changed from run to run. C never resolves `ch->master`
+that way — it is a live pointer — and `k->followers` is that body's own list.
+`printGroup` now uses two exported body-identity accessors: `World.FollowingActor`
+(the retained leader, via `combatFollowingBody`, falling back to a uniquely named
+player) and `World.FollowersOf`. The follower list had the same defect —
+`GetFollowerActors` matches by name, so two duplicates' lists merged — and
+`FollowersOf` fixes it for this command; the other name-based callers still need
+their own audit.
+
+`TestGroupListResolvesTheFollowedDuplicateNpc` spawns two guards with the same
+name and different stats, has an unrelated player follow the first and the viewer
+follow the second, and asserts the head row is the *second* guard's and that the
+first guard's follower is absent. Run against the pre-fix resolution it fails all
+three assertions at once:
+
+```
+head row is not the followed duplicate: "…[ 10H   1M   2V] [ 3 --] a guard (Head of group)…"
+head row resolved the other same-named guard: "…[ 10H   1M   2V] …"
+follower list merged both same-named guards: "…[100H 100M   0V] [ 5 Mu] Bystander…"
+```
+
+### One colour definition, now across packages too (R5c)
+
+§14 above folded the seven copies *inside* `pkg/session`, but `pkg/game` kept its
+own `colorLevel`, `observationColors` and `completeObservationColor`, plus its own
+copy of the K* codes — so the same thresholds were still defined twice, one
+package apart, and neither could see the other drift. The gate bugs in §11 and §12
+came from exactly that re-derivation.
+
+The definitions now live in a new leaf package, **`pkg/screen`** (named for
+`src/screen.h`): the K* codes, C's four levels, `Level`/`LevelFromFlags`, the
+`SparseOn`/`NormalOn`/`CompleteOn` predicates and `Wrap`. `pkg/session` and
+`pkg/game` each keep a one-line adapter for their own flag word or `*Player`, so
+call sites did not move, but there is now **one** place where C's arithmetic is
+written down. `pkg/game`'s ANSI names alias `pkg/screen`'s constants rather than
+repeating the bytes.
+
+### Evidence
+
+- Full `go test ./...`, `go vet ./...`, `golangci-lint` (0 issues), gofumpt,
+  deadcode ratchet and `make fidelity-depth` on the rebased commit.
+- Targeted census re-running every surface either package colours: 13 scenarios
+  (stat, score, who, report, group, infobar, prompt/pager, redit, display,
+  terminal colours), `verdict=CLEAN`, `draw_divergent=0`.
+- The duplicate-NPC test above, scratch-broken against the pre-fix resolution.
+
 

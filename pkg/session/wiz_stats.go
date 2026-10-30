@@ -1026,51 +1026,16 @@ func wizardExtraDescriptionLine(keywords []string, colored bool) string {
 	return line.String()
 }
 
-// ANSI codes from src/screen.h:34-41, shared by the colored player-facing
-// surfaces (stat, report, group).
-const (
-	ansiNormal = "\x1b[0m"  // KNRM
-	ansiRed    = "\x1b[31m" // KRED
-	ansiGreen  = "\x1b[32m" // KGRN
-	ansiYellow = "\x1b[33m" // KYEL
-	ansiCyan   = "\x1b[36m" // KCYN
-)
-
-func wizardHasNormalColor(flags uint64) bool {
-	// C's clr(ch, C_NRM) is _clrlevel(ch) >= 2, where PRF_COLOR_1 counts 1 and
-	// PRF_COLOR_2 counts 2 (src/screen.h:45-49): PRF_COLOR_2 alone ("color
-	// normal") is enough.
-	return flags&(1<<uint(game.PrfColor2)) != 0
-}
-
-// wizardHasCompleteColor is C's clr(ch, C_CMP): _clrlevel(ch) >= 3, so both
-// colour bits must be set (src/screen.h:45-49). do_stat_character's
-// kills/pkills/deaths row is the only stat site at this level.
-func wizardHasCompleteColor(flags uint64) bool {
-	return flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0
-}
-
 // statColorGates reports the two colour levels the stat surface gates on,
 // measured against the viewer. C passes the viewing character to every CC
 // macro (src/act.wizard.c:422-976), so the gates are the viewer's flags, never
-// the target's.
+// the target's. The levels themselves live in color_levels.go.
 func (s *Session) statColorGates() (normal, complete bool) {
 	if s.player == nil {
 		return false, false
 	}
 	flags := s.player.GetFlags()
-	return wizardHasNormalColor(flags), wizardHasCompleteColor(flags)
-}
-
-// colorWrap wraps value in C's colour macro pair — CCCYN(ch, C_NRM) value
-// CCNRM(ch, C_NRM) — or returns it untouched when the viewer's level gate is
-// closed (src/screen.h:45-56). Callers format padding before the call so the
-// field width lands inside the colour, exactly as C's sprintf does.
-func colorWrap(value, ansi string, colored bool) string {
-	if !colored {
-		return value
-	}
-	return ansi + value + ansiNormal
+	return hasNormalColor(flags), hasCompleteColor(flags)
 }
 
 // wizardFollowerListOutput mirrors do_stat_character's follower buffer and
