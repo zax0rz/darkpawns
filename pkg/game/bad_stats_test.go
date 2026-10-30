@@ -209,6 +209,26 @@ func TestReplayCrashLoadBadStatsFiresPerEquippedItem(t *testing.T) {
 	}
 }
 
+// The same replay with one color bit set. damage()'s wounded-band line is a
+// single sprintf carrying CCRED(victim, C_SPR)/CCNRM with the reset before the
+// CRLF (src/fight.c:1593-1597), and its gate is C_SPR (1), not the C_CMP (3)
+// that the damage-message sandwich needs. The pre-audit port emitted the bare
+// literal, so this fails on a revert of the color fix.
+func TestReplayCrashLoadBadStatsBleedingLineIsRedAtSparseColor(t *testing.T) {
+	w, p, _ := replayWorld(t, ApplyDex)
+	p.SetPlrFlag(PrfColor1, true) // COLOR_LEV 1 = C_SPR
+	var lines []string
+	w.ReplayCrashLoadBadStats(p, func(text string) { lines = append(lines, text) })
+
+	want := "\x1b[31mYou wish that your wounds would stop BLEEDING so much!\x1b[0m\r\n"
+	for _, line := range lines {
+		if line == want {
+			return
+		}
+	}
+	t.Fatalf("replay lines = %q, want the C_SPR red sandwich %q", lines, want)
+}
+
 // C's do_set tail saves a live player target — save_char(vict, NOWHERE)
 // (src/act.wizard.c:3064) — and the file path calls char_to_store (:3067).
 // char_to_store unequips every worn item and equips them all again

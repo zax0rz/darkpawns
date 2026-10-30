@@ -1,0 +1,356 @@
+c_site	c_macro	c_level	c_function	c_source_line
+src/act.comm.c:848	CCWHT	C_CMP	ACMD(do_gsay)	send_to_char(CCWHT(k, C_CMP), k);
+src/act.comm.c:850	CCNRM	C_CMP	ACMD(do_gsay)	send_to_char(CCNRM(k, C_CMP), k);
+src/act.comm.c:855	CCWHT	C_CMP	ACMD(do_gsay)	send_to_char(CCWHT(f->follower, C_CMP), f->follower);
+src/act.comm.c:857	CCNRM	C_CMP	ACMD(do_gsay)	send_to_char(CCNRM(f->follower, C_CMP), f->follower);
+src/act.comm.c:865	CCWHT	C_SPR	ACMD(do_gsay)	send_to_char(CCWHT(ch, C_SPR), ch);
+src/act.comm.c:867	CCNRM	C_NRM	ACMD(do_gsay)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.comm.c:875	CCRED	C_NRM	void perform_tell(struct char_data *ch, struct char_data *vict, char *	send_to_char(CCRED(vict, C_NRM), vict);
+src/act.comm.c:879	CCNRM	C_NRM	void perform_tell(struct char_data *ch, struct char_data *vict, char *	send_to_char(CCNRM(vict, C_NRM), vict);
+src/act.comm.c:887	CCRED	C_CMP	void perform_tell(struct char_data *ch, struct char_data *vict, char *	send_to_char(CCRED(ch, C_CMP), ch);
+src/act.comm.c:891	CCNRM	C_CMP	void perform_tell(struct char_data *ch, struct char_data *vict, char *	send_to_char(CCNRM(ch, C_CMP), ch);
+src/act.comm.c:1535	CCCYN	C_CMP	ACMD (do_ctell)	stc(CCCYN(ch, C_CMP), ch);
+src/act.comm.c:1537	CCNRM	C_CMP	ACMD (do_ctell)	stc(CCNRM(ch, C_CMP), ch);
+src/act.comm.c:1556	CCCYN	C_CMP	ACMD (do_ctell)	stc(CCCYN(i->character, C_CMP), i->character);
+src/act.comm.c:1558	CCNRM	C_CMP	ACMD (do_ctell)	stc(CCNRM(i->character, C_CMP),i->character);
+src/act.display.c:324	CCGRN	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCGRN(ch, C_NRM), count,
+src/act.display.c:325	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:325	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:326	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:328	CCYEL	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCYEL(ch, C_NRM), count,
+src/act.display.c:329	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:329	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:330	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:332	CCRED	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCRED(ch, C_NRM), count,
+src/act.display.c:333	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:333	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:334	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:352	CCGRN	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCGRN(ch, C_NRM), count,
+src/act.display.c:353	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:353	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:354	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:356	CCYEL	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCYEL(ch, C_NRM), count,
+src/act.display.c:357	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:357	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:358	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:360	CCRED	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCRED(ch, C_NRM), count,
+src/act.display.c:361	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:361	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:362	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:402	CCGRN	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCGRN(ch, C_NRM), count,
+src/act.display.c:403	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:403	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:404	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:406	CCYEL	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCYEL(ch, C_NRM), count,
+src/act.display.c:407	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:407	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:408	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:410	CCRED	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCRED(ch, C_NRM), count,
+src/act.display.c:411	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:411	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:412	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:429	CCGRN	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCGRN(ch, C_NRM), count,
+src/act.display.c:430	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:430	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:431	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:433	CCYEL	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCYEL(ch, C_NRM), count,
+src/act.display.c:434	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:434	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:435	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:437	CCRED	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCRED(ch, C_NRM), count,
+src/act.display.c:438	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:438	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:439	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:479	CCGRN	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCGRN(ch, C_NRM), count,
+src/act.display.c:480	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:480	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:481	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:483	CCYEL	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCYEL(ch, C_NRM), count,
+src/act.display.c:484	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:484	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:485	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:487	CCRED	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCRED(ch, C_NRM), count,
+src/act.display.c:488	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:488	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:489	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:509	CCGRN	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCGRN(ch, C_NRM), count,
+src/act.display.c:510	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:510	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:511	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:513	CCYEL	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCYEL(ch, C_NRM), count,
+src/act.display.c:514	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:514	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:515	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:517	CCRED	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s(%s%d%s)", CCRED(ch, C_NRM), count,
+src/act.display.c:518	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:518	CCGRN	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM), CCGRN(ch, C_NRM),
+src/act.display.c:519	CCNRM	C_NRM	ACMD(do_infobar)	maxcount, CCNRM(ch, C_NRM));
+src/act.display.c:552	CCBLU	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s", CCBLU(ch, C_NRM), GET_EXP(ch),
+src/act.display.c:553	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM));
+src/act.display.c:564	CCBLU	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s", CCBLU(ch, C_NRM), GET_EXP(ch),
+src/act.display.c:565	CCNRM	C_NRM	ACMD(do_infobar)	CCNRM(ch, C_NRM));
+src/act.display.c:690	CCMAG	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s",  CCMAG(ch, C_NRM), GET_GOLD(ch), CCNRM(ch, C_NRM));
+src/act.display.c:690	CCNRM	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s",  CCMAG(ch, C_NRM), GET_GOLD(ch), CCNRM(ch, C_NRM));
+src/act.display.c:701	CCMAG	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s",  CCMAG(ch, C_NRM), GET_GOLD(ch), CCNRM(ch, C_NRM));
+src/act.display.c:701	CCNRM	C_NRM	ACMD(do_infobar)	sprintf(buf, "%s%d%s",  CCMAG(ch, C_NRM), GET_GOLD(ch), CCNRM(ch, C_NRM));
+src/act.informative.c:417	CCWHT	C_CMP	look_at_char(struct char_data *i, struct char_data *ch)	CCWHT(ch, C_CMP), CCNRM(ch, C_CMP));
+src/act.informative.c:417	CCNRM	C_CMP	look_at_char(struct char_data *i, struct char_data *ch)	CCWHT(ch, C_CMP), CCNRM(ch, C_CMP));
+src/act.informative.c:647	CCRED	C_CMP	list_char_to_char(struct char_data * list, struct char_data * ch)	stc(CCRED(ch, C_CMP), ch);
+src/act.informative.c:649	CCNRM	C_CMP	list_char_to_char(struct char_data * list, struct char_data * ch)	stc(CCNRM(ch, C_CMP), ch);
+src/act.informative.c:671	CCRED	C_CMP	do_auto_exits(struct char_data * ch)	io?CCRED(ch, C_CMP):"",
+src/act.informative.c:673	CCCYN	C_NRM	do_auto_exits(struct char_data * ch)	io?CCCYN(ch, C_NRM):"");
+src/act.informative.c:676	CCCYN	C_NRM	do_auto_exits(struct char_data * ch)	sprintf(buf2, "%s[ Exits: %s]%s\r\n", CCCYN(ch, C_NRM),
+src/act.informative.c:677	CCNRM	C_NRM	do_auto_exits(struct char_data * ch)	*buf ? buf : "None! ", CCNRM(ch, C_NRM));
+src/act.informative.c:736	CCCYN	C_NRM	ACMD(do_exits)	send_to_char(CCCYN(ch, C_NRM), ch);
+src/act.informative.c:738	CCNRM	C_NRM	ACMD(do_exits)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.informative.c:742	CCCYN	C_NRM	ACMD(do_exits)	send_to_char(CCCYN(ch, C_NRM), ch);
+src/act.informative.c:744	CCNRM	C_NRM	ACMD(do_exits)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.informative.c:765	CCCYN	C_NRM	ACMD(do_exits)	send_to_char(CCCYN(ch, C_NRM), ch);
+src/act.informative.c:810	CCNRM	C_NRM	ACMD(do_exits)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.informative.c:824	CCGRN	C_NRM	ACMD(do_exits)	send_to_char(CCGRN(ch, C_NRM), ch);
+src/act.informative.c:834	CCYEL	C_NRM	ACMD(do_exits)	send_to_char(CCYEL(ch, C_NRM), ch);
+src/act.informative.c:836	CCNRM	C_NRM	ACMD(do_exits)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.informative.c:1184	CCGRN	C_CMP	ACMD(do_score)	CCGRN(ch, C_CMP),GET_NAME(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1184	CCNRM	C_CMP	ACMD(do_score)	CCGRN(ch, C_CMP),GET_NAME(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1195	CCGRN	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP), GET_HIT(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1195	CCNRM	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP), GET_HIT(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1196	CCRED	C_CMP	ACMD(do_score)	CCRED(ch, C_CMP), GET_MAX_HIT(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1196	CCNRM	C_CMP	ACMD(do_score)	CCRED(ch, C_CMP), GET_MAX_HIT(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1198	CCGRN	C_CMP	ACMD(do_score)	CCGRN(ch, C_CMP), GET_MANA(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1198	CCNRM	C_CMP	ACMD(do_score)	CCGRN(ch, C_CMP), GET_MANA(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1199	CCRED	C_CMP	ACMD(do_score)	CCRED(ch, C_CMP), GET_MAX_MANA(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1199	CCNRM	C_CMP	ACMD(do_score)	CCRED(ch, C_CMP), GET_MAX_MANA(ch), CCNRM(ch, C_CMP),
+src/act.informative.c:1200	CCGRN	C_CMP	ACMD(do_score)	CCGRN(ch, C_CMP), GET_MOVE(ch),CCNRM(ch, C_CMP),
+src/act.informative.c:1200	CCNRM	C_CMP	ACMD(do_score)	CCGRN(ch, C_CMP), GET_MOVE(ch),CCNRM(ch, C_CMP),
+src/act.informative.c:1201	CCRED	C_CMP	ACMD(do_score)	CCRED(ch, C_CMP), GET_MAX_MOVE(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1201	CCNRM	C_CMP	ACMD(do_score)	CCRED(ch, C_CMP), GET_MAX_MOVE(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1262	CCGRN	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP), GET_EXP(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1262	CCNRM	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP), GET_EXP(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1264	CCGRN	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP), GET_GOLD(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1264	CCNRM	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP), GET_GOLD(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1266	CCGRN	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP),GET_BANK_GOLD(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1266	CCNRM	C_CMP	ACMD(do_score)	buf, CCGRN(ch, C_CMP),GET_BANK_GOLD(ch), CCNRM(ch, C_CMP));
+src/act.informative.c:1274	CCGRN	C_CMP	ACMD(do_score)	CCGRN(ch, C_CMP),(exp_needed_for_level(ch)-GET_EXP(ch)),
+src/act.informative.c:1275	CCNRM	C_CMP	ACMD(do_score)	CCNRM(ch, C_CMP));
+src/act.informative.c:1406	CCCYN	C_NRM	ACMD(do_score)	CCCYN(ch, C_NRM), spells[aff->type], CCNRM(ch, C_NRM));
+src/act.informative.c:1406	CCNRM	C_NRM	ACMD(do_score)	CCCYN(ch, C_NRM), spells[aff->type], CCNRM(ch, C_NRM));
+src/act.informative.c:1441	CCCYN	C_NRM	ACMD(do_score)	sprintf(buf, "%s\r\n%s%s%s", buf, CCCYN(ch, C_NRM),
+src/act.informative.c:1442	CCNRM	C_NRM	ACMD(do_score)	affected_names[(teller*32)+nr], CCNRM(ch, C_NRM));
+src/act.informative.c:1649	CCGRN	C_CMP	ACMD(do_help)	stc(CCGRN(ch, C_CMP), ch);
+src/act.informative.c:1651	CCCYN	C_CMP	ACMD(do_help)	stc(CCCYN(ch, C_CMP), ch);
+src/act.informative.c:1653	CCGRN	C_CMP	ACMD(do_help)	stc(CCGRN(ch, C_CMP), ch);
+src/act.informative.c:1655	CCNRM	C_CMP	ACMD(do_help)	stc(CCNRM(ch, C_CMP), ch);
+src/act.informative.c:1659	CCRED	C_CMP	ACMD(do_help)	stc(CCRED(ch, C_CMP), ch);
+src/act.informative.c:1662	CCNRM	C_CMP	ACMD(do_help)	stc(CCNRM(ch, C_CMP), ch);
+src/act.informative.c:1780	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1780	CCNRM	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1787	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1787	CCNRM	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1794	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1794	CCNRM	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1801	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1801	CCNRM	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1808	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1808	CCNRM	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1815	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1815	CCNRM	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1822	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1822	CCNRM	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1829	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_LEVEL(tch), CLASS_ABBR(tch),
+src/act.informative.c:1830	CCNRM	C_SPR	ACMD(do_who)	GET_NAME(tch), CCNRM(ch, C_SPR),
+src/act.informative.c:1845	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), GET_TITLE(tch));
+src/act.informative.c:1850	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), GET_TITLE(tch));
+src/act.informative.c:1855	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), GET_TITLE(tch));
+src/act.informative.c:1860	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), GET_TITLE(tch));
+src/act.informative.c:1865	CCYEL	C_SPR	ACMD(do_who)	CCYEL(ch, C_SPR), GET_NAME(tch), GET_TITLE(tch));
+src/act.informative.c:2100	CCGRN	C_SPR	ACMD(do_users)	sprintf(line2, "%s%s%s", CCGRN(ch, C_SPR), line, CCNRM(ch, C_SPR));
+src/act.informative.c:2100	CCNRM	C_SPR	ACMD(do_users)	sprintf(line2, "%s%s%s", CCGRN(ch, C_SPR), line, CCNRM(ch, C_SPR));
+src/act.informative.c:2266	CCGRN	C_CMP	ACMD(do_where)	CCGRN(ch, C_CMP),
+src/act.informative.c:2268	CCNRM	C_CMP	ACMD(do_where)	CCNRM(ch, C_CMP),
+src/act.informative.c:2273	CCGRN	C_CMP	ACMD(do_where)	CCGRN(ch, C_CMP),
+src/act.informative.c:2275	CCNRM	C_CMP	ACMD(do_where)	CCNRM(ch, C_CMP),
+src/act.informative.c:2494	CCRED	C_SPR	ACMD(do_color)	sprintf(buf, "Your %scolor%s is now %s.\r\n", CCRED(ch, C_SPR),
+src/act.informative.c:2495	CCNRM	C_OFF	ACMD(do_color)	CCNRM(ch, C_OFF), ctypes[tp]);
+src/act.informative.c:2719	CCYEL	C_CMP	ACMD(do_skills)	CCYEL(ch, C_CMP), pc_class_types[i], CCNRM(ch, C_CMP),
+src/act.informative.c:2719	CCNRM	C_CMP	ACMD(do_skills)	CCYEL(ch, C_CMP), pc_class_types[i], CCNRM(ch, C_CMP),
+src/act.informative.c:2720	CCRED	C_CMP	ACMD(do_skills)	CCRED(ch, C_CMP), CCNRM(ch, C_CMP));
+src/act.informative.c:2720	CCNRM	C_CMP	ACMD(do_skills)	CCRED(ch, C_CMP), CCNRM(ch, C_CMP));
+src/act.informative.c:2730	CCRED	C_CMP	ACMD(do_skills)	mybuf, CCRED(ch, C_CMP), level, CCNRM(ch, C_CMP));
+src/act.informative.c:2730	CCNRM	C_CMP	ACMD(do_skills)	mybuf, CCRED(ch, C_CMP), level, CCNRM(ch, C_CMP));
+src/act.other.c:655	CCGRN	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_HIT(k), CCNRM(ch, C_CMP),
+src/act.other.c:655	CCNRM	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_HIT(k), CCNRM(ch, C_CMP),
+src/act.other.c:656	CCGRN	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MANA(k), CCNRM(ch, C_CMP),
+src/act.other.c:656	CCNRM	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MANA(k), CCNRM(ch, C_CMP),
+src/act.other.c:657	CCGRN	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MOVE(k), CCNRM(ch, C_CMP),
+src/act.other.c:657	CCNRM	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MOVE(k), CCNRM(ch, C_CMP),
+src/act.other.c:659	CCCYN	C_CMP	print_group(struct char_data *ch)	CCCYN(ch, C_CMP),CLASS_ABBR(k), CCNRM(ch, C_CMP));
+src/act.other.c:659	CCNRM	C_CMP	print_group(struct char_data *ch)	CCCYN(ch, C_CMP),CLASS_ABBR(k), CCNRM(ch, C_CMP));
+src/act.other.c:672	CCGRN	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_HIT(f->follower), CCNRM(ch, C_CMP),
+src/act.other.c:672	CCNRM	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_HIT(f->follower), CCNRM(ch, C_CMP),
+src/act.other.c:673	CCGRN	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MANA(f->follower), CCNRM(ch, C_CMP),
+src/act.other.c:673	CCNRM	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MANA(f->follower), CCNRM(ch, C_CMP),
+src/act.other.c:674	CCGRN	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MOVE(f->follower), CCNRM(ch, C_CMP),
+src/act.other.c:674	CCNRM	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), GET_MOVE(f->follower), CCNRM(ch, C_CMP),
+src/act.other.c:676	CCGRN	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), CLASS_ABBR(f->follower), CCNRM(ch, C_CMP));
+src/act.other.c:676	CCNRM	C_CMP	print_group(struct char_data *ch)	CCGRN(ch, C_CMP), CLASS_ABBR(f->follower), CCNRM(ch, C_CMP));
+src/act.other.c:808	CCGRN	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_HIT(ch),CCNRM(tch, C_NRM),
+src/act.other.c:808	CCNRM	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_HIT(ch),CCNRM(tch, C_NRM),
+src/act.other.c:809	CCGRN	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MAX_HIT(ch),CCNRM(tch, C_NRM),
+src/act.other.c:809	CCNRM	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MAX_HIT(ch),CCNRM(tch, C_NRM),
+src/act.other.c:810	CCGRN	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MANA(ch),CCNRM(tch, C_NRM),
+src/act.other.c:810	CCNRM	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MANA(ch),CCNRM(tch, C_NRM),
+src/act.other.c:811	CCGRN	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MAX_MANA(ch),CCNRM(tch, C_NRM),
+src/act.other.c:811	CCNRM	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MAX_MANA(ch),CCNRM(tch, C_NRM),
+src/act.other.c:812	CCGRN	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MOVE(ch),CCNRM(tch, C_NRM),
+src/act.other.c:812	CCNRM	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MOVE(ch),CCNRM(tch, C_NRM),
+src/act.other.c:813	CCGRN	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MAX_MOVE(ch),CCNRM(tch, C_NRM),
+src/act.other.c:813	CCNRM	C_NRM	ACMD(do_report)	CCGRN(tch, C_NRM),GET_MAX_MOVE(ch),CCNRM(tch, C_NRM),
+src/act.other.c:814	CCRED	C_NRM	ACMD(do_report)	CCRED(tch, C_NRM),(int)GET_KILLS(ch),CCNRM(tch, C_NRM),
+src/act.other.c:814	CCNRM	C_NRM	ACMD(do_report)	CCRED(tch, C_NRM),(int)GET_KILLS(ch),CCNRM(tch, C_NRM),
+src/act.other.c:815	CCRED	C_NRM	ACMD(do_report)	CCRED(tch, C_NRM),(int)GET_PKS(ch),CCNRM(tch, C_NRM),
+src/act.other.c:815	CCNRM	C_NRM	ACMD(do_report)	CCRED(tch, C_NRM),(int)GET_PKS(ch),CCNRM(tch, C_NRM),
+src/act.other.c:816	CCRED	C_NRM	ACMD(do_report)	CCRED(tch, C_NRM),(int)GET_DEATHS(ch),CCNRM(tch, C_NRM) );
+src/act.other.c:816	CCNRM	C_NRM	ACMD(do_report)	CCRED(tch, C_NRM),(int)GET_DEATHS(ch),CCNRM(tch, C_NRM) );
+src/act.wizard.c:422	CCCYN	C_NRM	void do_stat_room(struct char_data * ch)	sprintf(buf, "Room name: %s%s%s\r\n", CCCYN(ch, C_NRM), rm->name,
+src/act.wizard.c:423	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	CCNRM(ch, C_NRM));
+src/act.wizard.c:428	CCGRN	C_NRM	void do_stat_room(struct char_data * ch)	rm->zone, CCGRN(ch, C_NRM), rm->number, CCNRM(ch, C_NRM), ch->in_room, buf2);
+src/act.wizard.c:428	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	rm->zone, CCGRN(ch, C_NRM), rm->number, CCNRM(ch, C_NRM), ch->in_room, buf2);
+src/act.wizard.c:443	CCCYN	C_NRM	void do_stat_room(struct char_data * ch)	sprintf(buf, "Extra descs:%s", CCCYN(ch, C_NRM));
+src/act.wizard.c:448	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	strcat(buf, CCNRM(ch, C_NRM));
+src/act.wizard.c:451	CCYEL	C_NRM	void do_stat_room(struct char_data * ch)	sprintf(buf, "Chars present:%s", CCYEL(ch, C_NRM));
+src/act.wizard.c:469	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.wizard.c:472	CCGRN	C_NRM	void do_stat_room(struct char_data * ch)	sprintf(buf, "Contents:%s", CCGRN(ch, C_NRM));
+src/act.wizard.c:489	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.wizard.c:494	CCCYN	C_NRM	void do_stat_room(struct char_data * ch)	sprintf(buf1, " %sNONE%s", CCCYN(ch, C_NRM), CCNRM(ch, C_NRM));
+src/act.wizard.c:494	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	sprintf(buf1, " %sNONE%s", CCCYN(ch, C_NRM), CCNRM(ch, C_NRM));
+src/act.wizard.c:496	CCCYN	C_NRM	void do_stat_room(struct char_data * ch)	sprintf(buf1, "%s%5d%s", CCCYN(ch, C_NRM),
+src/act.wizard.c:497	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	world[rm->dir_option[i]->to_room].number, CCNRM(ch, C_NRM));
+src/act.wizard.c:500	CCCYN	C_NRM	void do_stat_room(struct char_data * ch)	CCCYN(ch, C_NRM), dirs[i], CCNRM(ch, C_NRM), buf1, rm->dir_option[i]->key,
+src/act.wizard.c:500	CCNRM	C_NRM	void do_stat_room(struct char_data * ch)	CCCYN(ch, C_NRM), dirs[i], CCNRM(ch, C_NRM), buf1, rm->dir_option[i]->key,
+src/act.wizard.c:522	CCYEL	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	sprintf(buf, "Name: '%s%s%s', Aliases: %s\r\n", CCYEL(ch, C_NRM),
+src/act.wizard.c:524	CCNRM	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	CCNRM(ch, C_NRM), j->name);
+src/act.wizard.c:532	CCGRN	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	CCGRN(ch, C_NRM), virtual, CCNRM(ch, C_NRM), GET_OBJ_RNUM(j), buf1, buf2);
+src/act.wizard.c:532	CCNRM	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	CCGRN(ch, C_NRM), virtual, CCNRM(ch, C_NRM), GET_OBJ_RNUM(j), buf1, buf2);
+src/act.wizard.c:538	CCCYN	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	sprintf(buf, "Extra descs:%s", CCCYN(ch, C_NRM));
+src/act.wizard.c:543	CCNRM	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	strcat(buf, CCNRM(ch, C_NRM));
+src/act.wizard.c:652	CCGRN	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	sprintf(buf, "\r\nContents:%s", CCGRN(ch, C_NRM));
+src/act.wizard.c:667	CCNRM	C_NRM	void do_stat_object(struct char_data * ch, struct obj_data * j)	send_to_char(CCNRM(ch, C_NRM), ch);
+src/act.wizard.c:746	CCYEL	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCYEL(ch, C_NRM), GET_LEVEL(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:746	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCYEL(ch, C_NRM), GET_LEVEL(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:747	CCYEL	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCYEL(ch, C_NRM), (long)GET_EXP(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:747	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCYEL(ch, C_NRM), (long)GET_EXP(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:800	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_STR(k), GET_ADD(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:800	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_STR(k), GET_ADD(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:801	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_INT(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:801	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_INT(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:802	CCGRN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCGRN(ch, C_NRM), GET_HIT(k), GET_MAX_HIT(k), hit_gain(k),
+src/act.wizard.c:803	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCNRM(ch, C_NRM)
+src/act.wizard.c:809	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_DEX(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:809	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_DEX(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:810	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_WIS(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:810	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_WIS(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:811	CCGRN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCGRN(ch, C_NRM), GET_MANA(k), GET_MAX_MANA(k), mana_gain(k),
+src/act.wizard.c:812	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCNRM(ch, C_NRM)
+src/act.wizard.c:818	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_CON(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:818	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_CON(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:820	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_CHA(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:820	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), GET_CHA(k), CCNRM(ch, C_NRM),
+src/act.wizard.c:821	CCGRN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCGRN(ch, C_NRM), GET_MOVE(k), GET_MAX_MOVE(k), move_gain(k),
+src/act.wizard.c:822	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCNRM(ch, C_NRM)
+src/act.wizard.c:832	CCRED	C_CMP	do_stat_character(struct char_data * ch, struct char_data * k)	CCRED(ch, C_CMP), GET_KILLS(k), CCNRM(ch, C_CMP),
+src/act.wizard.c:832	CCNRM	C_CMP	do_stat_character(struct char_data * ch, struct char_data * k)	CCRED(ch, C_CMP), GET_KILLS(k), CCNRM(ch, C_CMP),
+src/act.wizard.c:833	CCRED	C_CMP	do_stat_character(struct char_data * ch, struct char_data * k)	CCRED(ch, C_CMP), GET_PKS(k), CCNRM(ch, C_CMP),
+src/act.wizard.c:833	CCNRM	C_CMP	do_stat_character(struct char_data * ch, struct char_data * k)	CCRED(ch, C_CMP), GET_PKS(k), CCNRM(ch, C_CMP),
+src/act.wizard.c:834	CCRED	C_CMP	do_stat_character(struct char_data * ch, struct char_data * k)	CCRED(ch, C_CMP), GET_DEATHS(k), CCNRM(ch, C_CMP));
+src/act.wizard.c:834	CCNRM	C_CMP	do_stat_character(struct char_data * ch, struct char_data * k)	CCRED(ch, C_CMP), GET_DEATHS(k), CCNRM(ch, C_CMP));
+src/act.wizard.c:864	CCYEL	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "Noise: %s%s%s\r\n", CCYEL(ch, C_NRM), GET_NOISE(k),
+src/act.wizard.c:865	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCNRM(ch, C_NRM));
+src/act.wizard.c:879	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "NPC flags: %s%s%s\r\n", CCCYN(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:879	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "NPC flags: %s%s%s\r\n", CCCYN(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:885	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "PLR: %s%s%s\r\n", CCCYN(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:885	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "PLR: %s%s%s\r\n", CCCYN(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:888	CCGRN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "PRF: %s%s%s\r\n", CCGRN(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:888	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "PRF: %s%s%s\r\n", CCGRN(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:895	CCGRN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCGRN(ch, C_NRM),
+src/act.wizard.c:897	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCNRM(ch, C_NRM));
+src/act.wizard.c:968	CCYEL	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "AFF: %s%s%s\r\n", CCYEL(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:968	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	sprintf(buf, "AFF: %s%s%s\r\n", CCYEL(ch, C_NRM), buf2, CCNRM(ch, C_NRM));
+src/act.wizard.c:976	CCCYN	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), spells[aff->type], CCNRM(ch, C_NRM));
+src/act.wizard.c:976	CCNRM	C_NRM	do_stat_character(struct char_data * ch, struct char_data * k)	CCCYN(ch, C_NRM), spells[aff->type], CCNRM(ch, C_NRM));
+src/act.wizard.c:2020	CCCYN	C_NRM	ACMD(do_wiznet)	send_to_char(CCCYN(d->character, C_NRM), d->character);
+src/act.wizard.c:2025	CCNRM	C_NRM	ACMD(do_wiznet)	send_to_char(CCNRM(d->character, C_NRM), d->character);
+src/comm.c:1047	CCCYN	C_CMP	char *make_prompt(struct descriptor_data *d)	CCCYN(d->character, C_CMP),
+src/comm.c:1048	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1048	CCCYN	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1049	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1049	CCCYN	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1050	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1050	CCCYN	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1051	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1051	CCCYN	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), CCCYN(d->character, C_CMP),
+src/comm.c:1052	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), d->showstr_page,
+src/comm.c:1053	CCCYN	C_CMP	char *make_prompt(struct descriptor_data *d)	CCCYN(d->character, C_CMP),
+src/comm.c:1054	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP), d->showstr_count,
+src/comm.c:1055	CCCYN	C_CMP	char *make_prompt(struct descriptor_data *d)	CCCYN(d->character, C_CMP),
+src/comm.c:1056	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	CCNRM(d->character, C_CMP));
+src/comm.c:1071	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s%d%sH ", prompt, CCRED(d->character, C_CMP),
+src/comm.c:1072	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	GET_HIT(d->character), CCNRM(d->character, C_CMP));
+src/comm.c:1075	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s%d%sM ", prompt, CCRED(d->character, C_CMP),
+src/comm.c:1076	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	GET_MANA(d->character), CCNRM(d->character, C_CMP));
+src/comm.c:1079	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s%d%sV ", prompt, CCRED(d->character, C_CMP),
+src/comm.c:1080	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	GET_MOVE(d->character), CCNRM(d->character, C_CMP));
+src/comm.c:1088	CCGRN	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCGRN(ch, C_CMP));
+src/comm.c:1090	CCYEL	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCYEL(ch, C_CMP));
+src/comm.c:1092	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCRED(ch, C_CMP));
+src/comm.c:1093	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%d%sH ", prompt, count, CCNRM(ch, C_CMP));
+src/comm.c:1100	CCGRN	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCGRN(ch, C_CMP));
+src/comm.c:1102	CCYEL	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCYEL(ch, C_CMP));
+src/comm.c:1104	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCRED(ch, C_CMP));
+src/comm.c:1105	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%d%sM ", prompt, count, CCNRM(ch, C_CMP));
+src/comm.c:1112	CCGRN	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCGRN(ch, C_CMP));
+src/comm.c:1114	CCYEL	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCYEL(ch, C_CMP));
+src/comm.c:1116	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%s", prompt, CCRED(ch, C_CMP));
+src/comm.c:1117	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%s%d%sV ", prompt, count, CCNRM(ch, C_CMP));
+src/comm.c:1129	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP),
+src/comm.c:1131	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	CCNRM(d->character, C_CMP));
+src/comm.c:1141	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	CCRED(d->character, C_CMP),
+src/comm.c:1144	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	CCNRM(d->character, C_CMP));
+src/comm.c:1149	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%sAFK%s ", CCRED(d->character, C_CMP),
+src/comm.c:1150	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	CCNRM(d->character, C_CMP));
+src/comm.c:1153	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%sINACTIVE%s ", CCRED(d->character, C_CMP),
+src/comm.c:1154	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	CCNRM(d->character, C_CMP));
+src/comm.c:1196	CCRED	C_CMP	char *make_prompt(struct descriptor_data *d)	sprintf(prompt, "%sAFK%s ", CCRED(d->character, C_CMP),
+src/comm.c:1197	CCNRM	C_CMP	char *make_prompt(struct descriptor_data *d)	CCNRM(d->character, C_CMP));
+src/fight.c:1001	CCYEL	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCYEL(ch, C_CMP), ch);
+src/fight.c:1006	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(ch, C_CMP), ch);
+src/fight.c:1009	CCRED	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCRED(victim, C_CMP), victim);
+src/fight.c:1014	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(victim, C_CMP), victim);
+src/fight.c:1049	CCYEL	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCYEL(ch, C_CMP), ch);
+src/fight.c:1052	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(ch, C_CMP), ch);
+src/fight.c:1054	CCRED	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCRED(vict, C_CMP), vict);
+src/fight.c:1057	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(vict, C_CMP), vict);
+src/fight.c:1064	CCYEL	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCYEL(ch, C_CMP), ch);
+src/fight.c:1067	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(ch, C_CMP), ch);
+src/fight.c:1069	CCRED	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCRED(vict, C_CMP), vict);
+src/fight.c:1072	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(vict, C_CMP), vict);
+src/fight.c:1080	CCYEL	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCYEL(ch, C_CMP), ch);
+src/fight.c:1082	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(ch, C_CMP), ch);
+src/fight.c:1084	CCRED	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCRED(vict, C_CMP), vict);
+src/fight.c:1087	CCNRM	C_CMP	replace_string(char *str, char *weapon_singular, char *weapon_plural)	send_to_char(CCNRM(vict, C_CMP), vict);
+src/fight.c:1596	CCRED	C_SPR	damage(struct char_data *ch, struct char_data *victim, int dam, int at	"so much!%s\r\n", CCRED(victim, C_SPR), CCNRM(victim, C_SPR));
+src/fight.c:1596	CCNRM	C_SPR	damage(struct char_data *ch, struct char_data *victim, int dam, int at	"so much!%s\r\n", CCRED(victim, C_SPR), CCNRM(victim, C_SPR));
+src/interpreter.c:1932	CCRED	C_SPR	nanny(struct descriptor_data *d, char *arg)	CCRED(d->character, C_SPR), load_result,
+src/interpreter.c:1933	CCNRM	C_SPR	nanny(struct descriptor_data *d, char *arg)	(load_result > 1) ? "S" : "", CCNRM(d->character, C_SPR));
+src/limits.c:311	CCCYN	C_CMP	gain_exp(struct char_data * ch, int gain)	send_to_char(CCCYN(ch, C_CMP), ch);
+src/limits.c:314	CCNRM	C_CMP	gain_exp(struct char_data * ch, int gain)	send_to_char(CCNRM(ch, C_CMP), ch);
+src/new_cmds.c:1378	CCCYN	C_CMP	ACMD(do_review)	strcat(buf, CCCYN(ch, C_CMP));
+src/new_cmds.c:1384	CCYEL	C_CMP	ACMD(do_review)	strcat(buf, CCYEL(ch, C_CMP));
+src/new_cmds.c:1386	CCNRM	C_CMP	ACMD(do_review)	strcat(buf, CCNRM(ch, C_CMP));
+src/olc.c:417	CCNRM	C_NRM	void get_char_cols(struct char_data *ch)	{ nrm = CCNRM(ch, C_NRM);
+src/olc.c:418	CCGRN	C_NRM	void get_char_cols(struct char_data *ch)	grn = CCGRN(ch, C_NRM);
+src/olc.c:419	CCCYN	C_NRM	void get_char_cols(struct char_data *ch)	cyn = CCCYN(ch, C_NRM);
+src/olc.c:420	CCYEL	C_NRM	void get_char_cols(struct char_data *ch)	yel = CCYEL(ch, C_NRM);
+src/spec_procs.c:188	CCRED	C_CMP	list_skills(struct char_data * ch)	CCRED(ch, C_CMP), mana,
+src/spec_procs.c:190	CCNRM	C_CMP	list_skills(struct char_data * ch)	CCNRM(ch, C_CMP));
+src/utils.c:236	CCGRN	C_NRM	void mudlog(char *str, char type, int level, byte file)	send_to_char(CCGRN(i->character, C_NRM), i->character);
+src/utils.c:238	CCNRM	C_NRM	void mudlog(char *str, char type, int level, byte file)	send_to_char(CCNRM(i->character, C_NRM), i->character);

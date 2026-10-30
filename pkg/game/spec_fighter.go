@@ -157,7 +157,7 @@ func (w *World) emitMobSkillSurvival(ch combat.Combatant, vict combat.Combatant,
 			}
 		}
 		if vict.GetHP() < vict.GetMaxHP()/4 {
-			vict.SendMessage("You wish that your wounds would stop BLEEDING so much!\r\n")
+			vict.SendMessage(combat.BleedLine(vict))
 		}
 	}
 
