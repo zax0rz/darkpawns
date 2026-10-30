@@ -1,0 +1,56 @@
+# depth-case: mob.fighter-round-draw-parity
+# DeepSeek's #2243 note: in a SPECIAL(fighter) round (mob 20020, the trollish
+# dungeon guard's sibling), C draws Number(0,13) where Go draws Dice(1,4),
+# between a to-hit roll and the damage dice, flipping the God's next swing
+# between the scratch hit variant and the avoided-blow miss. The God's wimpy
+# level is set above its hit points so every exchange lands in the wimpy
+# window and the fighter special's subcmd skills run every round they fire.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 20020 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Wimpfightgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wimpfightgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Wimpfightgod maxhit 400
+set Wimpfightgod hit 100
+set Wimpfightgod wimpy 350
+hit guard
+
+[probe]
+~dpclock pulse 22
+~dpclock pulse 22
+~dpclock pulse 22
+~dpclock pulse 22
+~dpclock pulse 22
+~dpclock pulse 22
+score
