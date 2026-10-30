@@ -190,12 +190,12 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam, a
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
-		if attackType == SkillChargeNum && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
-			// C damage() burns the pain/scream number(0,2) draw even when the
-			// victim is an NPC with no descriptor (fight.c:1580-1585). The
-			// charge vehicle reaches this branch and relies on its draw order.
-			_ = dprng.Number(0, 2)
-		}
+		// C's default arm: the pain line, the number(0,2) scream draw, the
+		// wounded-band line and the wimpy block (src/fight.c:1587-1614). The
+		// draw is unconditional whenever the blow exceeds a quarter of the
+		// victim's maximum hit points, whatever the attack type; burning it
+		// only for charge left every later draw in the round one early.
+		combat.ApplySurvivingVictimDefaultArm(killer, v, dam, newPos)
 		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
 
@@ -206,11 +206,7 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam, a
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
-		if attackType == SkillChargeNum && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
-			// C evaluates this random scream branch for mobs too; act() simply
-			// has no descriptor to deliver the victim-directed output to.
-			_ = dprng.Number(0, 2)
-		}
+		combat.ApplySurvivingVictimDefaultArm(killer, v, dam, newPos)
 		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(v, w.woundBroadcast)
 
