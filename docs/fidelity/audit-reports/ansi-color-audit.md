@@ -233,7 +233,7 @@ this audit.
 | `damage_message` | 16 | C_CMP | `pkg/combat/fight_core.go` | **keep-ansi (new)** |
 | `do_stat_character` | 42 | C_NRM 36, C_CMP 6 | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
 | `make_prompt` | 42 | C_CMP | `pkg/session/terminal_colors.go`, prompt | indirect |
-| `do_exits`/`do_auto_exits` | 13 | C_NRM 12, C_CMP 1 | `pkg/game/look.go` (`autoExitsText`) | none |
+| `do_exits`/`do_auto_exits` | 13 | C_NRM 12, C_CMP 1 | `pkg/game/look.go` (`autoExitsText`) | **keep-ansi (new)** |
 | `do_gsay` | 6 | C_CMP 4, C_SPR 1, C_NRM 1 | `pkg/game/comm_channel.go` | **keep-ansi** |
 | `do_help` | 6 | C_CMP | `pkg/session/pager.go` | none |
 | `do_skills` | 6 | C_CMP | `pkg/session` | none |
@@ -347,8 +347,12 @@ Ordered by player exposure. Each row needs a `keep-ansi` scenario; a row is
 5. ~~`do_report` / `print_group` — 34 sites.~~ **Done — `report-color-levels-depth`
    and `group-color-levels-depth`, §12.** `do_report` was already correct but had
    no proof that could fail on colour; `print_group` emitted no colour at all.
-6. `do_exits` / `do_auto_exits` — 13 sites; `look_at_char` /
-   `list_char_to_char` were **done with F6** (#2244).
+6. ~~`do_exits` / `do_auto_exits` — 13 sites; `look_at_char` /
+   `list_char_to_char` were **done with F6** (#2244).~~ **Done —
+   `exits-auto-exits-color-depth`, §13.** `do_exits` itself is uncoloured; all 13
+   sites are in `do_auto_exits`. §13 also records **F10** (the harness cannot
+   build a closed door), **F11** (`exits.closed-filter` claims a filter it does
+   not build) and **F12** (the character list gains a leading space).
 7. `do_help` / `do_skills` / `do_where` / `do_review` / `list_skills` / `do_wiznet`.
 8. `nanny`'s login load-result line (C_SPR).
 9. F4 disposition (delete the invented fallback or scope it to tests).
@@ -630,4 +634,105 @@ could not fail (the first was `score`'s, which showed no escapes at all).
 - The stat surface's `statGreen`/`statCyan`/… constants and `wizardTint` are now
   shared by this code, so they are renamed to `ansiGreen`/`ansiCyan`/… and
   `colorWrap`. Mechanical, one file, no behaviour change.
+
+
+## 13. `do_auto_exits`, and two claims the harness could not make (2026-10-30)
+
+Queue item 6, the exits half. `do_exits` itself is **uncoloured** in C — all 13
+sites of the pair are in `do_auto_exits`, the `[ Exits: ... ]` line `look` prints
+under `PRF_AUTOEXIT` (`src/act.informative.c:657-680`).
+
+C builds the list one direction at a time and appends a trailing space after
+**every** entry, wrapping an imm-only closed door:
+
+```c
+sprintf(buf, "%s%s%s%s%s%s ", buf,
+  io ? CCRED(ch, C_CMP) : "", io ? "(" : "", dirs[door], io ? ")" : "",
+  io ? CCCYN(ch, C_NRM) : "");
+...
+sprintf(buf2, "%s[ Exits: %s]%s\r\n", CCCYN(ch, C_NRM), *buf ? buf : "None! ", CCNRM(ch, C_NRM));
+```
+
+Three things follow that the port had wrong. The port joined entries with a
+single space, so the trailing space was gone; it printed the imm-only door as a
+bare `(east)` with no red sandwich; and it wrote `[ Exits: %s ]` with its own
+space before the bracket. The last two cancel out while colour is off — the space
+that C puts inside each entry is the one the port put before `]` — which is
+exactly why **no scenario had ever seen the missing C_CMP sandwich**: the only
+uncoloured difference is where the space lives, and it lands in the same column.
+Note also that C re-emits `CCCYN(ch, C_NRM)` after the `)` whenever the door is
+imm-only, *even when the red is empty* (line 673), so the escape is present at
+`color normal` too. The unit test caught that detail by disagreeing with my first
+expectation.
+
+### F10 — the harness cannot build a closed door (OPEN, tooling)
+
+Getting a closed door into a scenario turned out to be impossible with the
+fixture set. `replace-room-exits <room> <dir|all> <to> <DoorState>` writes the
+**.wld door *capability* code**, which `pkg/parser/wld.go:83-92` maps to
+`ExitIsDoor` (1) and `ExitIsDoor|ExitPickproof` (2) only — and its `DoorState` is
+validated to 0..2 (`internal/oraclediff/scenario.go:485`), so `3`
+(`EX_ISDOOR|EX_CLOSED`) is rejected outright. The closed state is applied at
+runtime by a zone **D reset** (`ApplyDoorReset`), and the fixture list has no
+door-reset directive. `replace-room-exits` also **replaces the whole exit list**,
+so a second directive for the same room silently discards the first.
+
+The vehicle therefore uses a corpus room that already has a runtime-closed door:
+`D 0 11269 1 1` closes room 11269's east exit, and `look` under autoexit renders
+it. That is the first time this branch has been exercised at all, which is why the
+C_CMP site had gone unnoticed — it needs an immortal, a closed door, and colour at
+`complete`, and two of the three were not reachable.
+
+**F11 — `exits.closed-filter` claims a filter it does not build (OPEN, R5h).**
+That row in `docs/fidelity/depth/exits.tsv` says "An open north exit is rendered
+while an east exit marked EX_CLOSED is omitted", proved by `exits-filtering`. Its
+fixture is `replace-room-exits 8105 north 8161 0` followed by
+`replace-room-exits 8105 east 8161 1 gate` — which, per F10, (a) discards the
+north exit entirely and (b) sets `exit_info = 1`, a door that is **not** closed.
+The retained transcript agrees: the command prints
+`Obvious exits:` / `East  - Western Vestibule` — east is *shown* and north is
+*absent*, the exact opposite of the row's description. The scenario is green
+because both engines agree on what it actually builds, so this is the **third
+manifest claim in this audit that cannot fail** (after `report.color-audience` and
+`score`'s), and the first where the row describes a state the fixture cannot
+express.
+
+**F12 — the character list gains a leading space when it follows a room
+description (OPEN, R1).** Found while building the vehicle above, and not fixed
+here. With a peer in the room, the peer's `look` diverged:
+
+```
+ C: \x1b[32m\x1b[33mExitsautoconfig the Warrior is standing here.
+Go: \x1b[32m\x1b[33m Exitsautoconfig the Warrior is standing here.
+```
+
+C's `linePrefix` space belongs to the room description's trailing position; the
+port applies it to the first character-list entry instead. The scenario was
+narrowed to an empty room to isolate the exit line (the retained v7 run is the
+evidence: `oracle-runs/2026-10-30/exits-auto-v7`), so the exit proof stands on its
+own, and F12 needs its own investigation — it is in the F6 room-list area and
+belongs with it.
+
+### Evidence
+
+- `exits-auto-exits-color-depth` (new, `keep-ansi`): the God walks
+  `complete`/`normal`/`sparse`/`off` in room 11269 (closed east door) and then in
+  8162 (open exits). The captured bytes are C's exactly, including the redundant
+  cyan: `\x1b[36m[ Exits: \x1b[31m(east)\x1b[36m ]\x1b[0m` at `complete`,
+  `\x1b[36m[ Exits: (east)\x1b[36m ]\x1b[0m` at `normal`, and
+  `[ Exits: (east) ]` below C_NRM. I checked the captured blocks rather than
+  trusting the verdict: an earlier version of this scenario passed **with the fix
+  deliberately broken**, because its fixture never produced a closed door. A green
+  that cannot fail is the failure mode this audit exists to find, so the
+  non-vacuity check is part of the proof here.
+- Targeted census `exits-regress` at `a98263eec`, nine scenarios (the new one plus
+  `exits-depth`, `exits-filtering`, `exits-no-open`, `exits-immortal`,
+  `exits-dark`, `room-desc-exits`, `observation-roomflags`,
+  `player-state-toggles`): `passed=9 failed=0 verdict=CLEAN`.
+- Unit proofs (R5h): `TestAutoExitsColorLevelsMatchC` (a seven-case table over
+  mortal/immortal × the four levels, asserting the imm-only sandwich, the
+  redundant cyan, and the plain forms) and
+  `TestAutoExitsEmptyListKeepsCTrailingSpace` (C's literal `"None! "`). The first
+  was scratch-broken — disabling the `C_CMP` gate failed the `immortal complete`
+  case with exactly the old bytes.
 

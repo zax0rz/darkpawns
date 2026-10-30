@@ -1,0 +1,72 @@
+# C-first raw-byte proof for do_auto_exits, the `[ Exits: ... ]` line that look
+# prints under PRF_AUTOEXIT.
+#
+# src/act.informative.c:663-676 appends a trailing space after every entry and
+# wraps an imm-only closed door in CCRED(ch, C_CMP) "(" dir ")" CCCYN(ch, C_NRM),
+# then brackets the list in CCCYN(ch, C_NRM) ... CCNRM(ch, C_NRM) with no space
+# before the closing bracket. Because the space lives inside the entries, the
+# uncoloured bytes are the same either way — which is why no scenario had ever
+# seen the missing red sandwich — and `color complete` is the only level that
+# shows it, since CCRED here is C_CMP while the list itself is C_NRM.
+#
+# A closed door cannot be built by the fixture set: `replace-room-exits` writes
+# the .wld door *capability* code, which pkg/parser/wld.go:83-92 maps to
+# door/pickproof only, and the closed state comes from a zone D reset at runtime.
+# So this vehicle uses a corpus room that already has one: `D 0 11269 1 1` closes
+# room 11269's east door, and 8162 has ordinary open exits. The primary is the
+# bootstrap God, so it sees the closed door parenthesised; the peer is a mortal,
+# so the same room renders without it.
+#
+# depth-case: exits.auto-exits-color-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Exitsautoconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Exitsautoconfig
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 11269
+auto exits
+
+[probe]
+color complete
+look
+color normal
+look
+color sparse
+look
+color off
+look
+goto 8162
+color complete
+look
+color off
+look
