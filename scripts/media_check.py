@@ -7,6 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs/images/generated/manifest.json"
 REQUIRED_OUTPUTS = {
+    "admin-configuration.png", "admin-object-editor.png", "admin-mob-editor.png",
+    "admin-zone-editor.png", "admin-lua-scripts.png",
     "admin-dashboard.png", "admin-player-editor.png", "admin-player-editor.gif",
     "admin-room-editor.png", "admin-notifications.png", "admin-operations.png",
     "admin-zones.png", "admin-updates.png", "admin-motd.png", "web-client-first-steps.png",

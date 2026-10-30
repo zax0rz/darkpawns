@@ -69,7 +69,6 @@
 			<mSpellDic>en_US</mSpellDic>
 			<mLineSize>10.0</mLineSize>
 			<mRoomSize>0.5</mRoomSize>
-			<mapInfoContributor>Short</mapInfoContributor>
 			<profileShortcut key="Script editor">Alt+E</profileShortcut>
 			<profileShortcut key="Show Map">Alt+M</profileShortcut>
 			<profileShortcut key="Compact input line">Alt+L</profileShortcut>

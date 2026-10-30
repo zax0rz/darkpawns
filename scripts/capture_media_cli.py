@@ -88,11 +88,10 @@ def prepare_bundle() -> tuple[Path, Path, str]:
     release.mkdir(parents=True)
     assets.mkdir()
 
-    # The current admin UI is part of the portable release. Build only when the
-    # shared media workflow has not already produced it.
+    # The portable bundle must contain the current UI, including product-copy edits.
+    # An existing dist directory can belong to an earlier capture.
     ui = ROOT / "admin-ui" / "dist"
-    if not (ui / "index.html").is_file():
-        run(["npm", "run", "build"], cwd=ROOT / "admin-ui")
+    run(["npm", "run", "build"], cwd=ROOT / "admin-ui")
     if not (ui / "index.html").is_file():
         raise RuntimeError("admin-ui build did not create dist/index.html")
 

@@ -29,14 +29,14 @@ export async function chromiumPath() {
   return undefined;
 }
 
-export async function crop(page, locator, padding = 24) {
+export async function crop(page, locator, padding = 24, maxHeight) {
   const box = await locator.boundingBox();
   if (!box) throw new Error('capture crop target is not visible');
   const viewport = page.viewportSize();
   const x = Math.max(0, Math.floor(box.x - padding));
   const y = Math.max(0, Math.floor(box.y - padding));
   const right = Math.min(viewport.width, Math.ceil(box.x + box.width + padding));
-  const bottom = Math.min(viewport.height, Math.ceil(box.y + box.height + padding));
+  const bottom = Math.min(viewport.height, maxHeight ? y + maxHeight : Math.ceil(box.y + box.height + padding));
   return { x, y, width: right - x, height: bottom - y };
 }
 
@@ -94,8 +94,13 @@ async function captureAdmin() {
 const captures = [
   { padding: -2, highlightInset: 6, output: 'admin-dashboard.png', alt: 'The dashboard charts show synthetic players online and daily arrivals.', route: '/admin/', target: 'main > div > div:nth-of-type(4)', sources: ['admin-ui/src/pages/DashboardPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
   { output: 'admin-player-editor.png', alt: 'The player editor showing a synthetic character’s level, vitals and attributes.', route: '/admin/staff/players', action: async page => { const row = page.getByRole('button', { name: 'Returner', exact: true }); if (await row.count() && await row.getAttribute('aria-pressed') !== 'true') await row.click(); await expect(page.getByRole('heading', { name: 'Returner', exact: true })).toBeVisible(); }, target: 'section[aria-label="Character editor"]', sources: ['admin-ui/src/pages/PlayersPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
-  { output: 'admin-room-editor.png', alt: 'The room editor for a synthetic test room, with its description and room flags.', route: '/admin/game/rooms/1001/edit', scrollTarget: true, target: 'section:has(> h2:text-is("Room fields"))', sources: ['admin-ui/src/pages/RoomEditorPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
+  { output: 'admin-room-editor.png', alt: 'The room editor for a synthetic test room, with its description and room flags.', route: '/admin/game/rooms/1001/edit', scrollTarget: true, releaseDraft: true, target: 'section:has(> h2:text-is("Room fields"))', sources: ['admin-ui/src/pages/RoomEditorPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
+  { output: 'admin-object-editor.png', alt: 'Object fields for a synthetic steel sword, with Item type highlighted.', route: '/admin/game/objects/3001/edit', releaseDraft: true, cropTarget: 'section:has(> h2:text-is("Object fields"))', cropHeight: 620, target: 'section:has(> h2:text-is("Object fields")) > div.grid > div:nth-child(5)', sources: ['admin-ui/src/pages/EntityEditorPage.tsx', 'admin-ui/src/components/olc/EntitySchemaFields.tsx', 'admin-ui/src/components/olc/ClaimSaveFrame.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
+  { output: 'admin-mob-editor.png', alt: 'Mob fields for a synthetic guard, with its alias highlighted.', route: '/admin/game/mobs/2001/edit', releaseDraft: true, cropTarget: 'section:has(> h2:text-is("Mob fields"))', cropHeight: 620, target: 'section:has(> h2:text-is("Mob fields")) > div.grid > div:nth-child(1)', sources: ['admin-ui/src/pages/EntityEditorPage.tsx', 'admin-ui/src/components/olc/EntitySchemaFields.tsx', 'admin-ui/src/components/olc/ClaimSaveFrame.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
+  { output: 'admin-zone-editor.png', alt: 'Zone name, lifespan, reset mode, and top-room controls in the zone editor.', route: '/admin/game/zones/1/edit', releaseDraft: true, target: 'section:has(> h2:text-is("Zone settings"))', sources: ['admin-ui/src/pages/ZoneEditorPage.tsx', 'admin-ui/src/components/olc/ClaimSaveFrame.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
+  { output: 'admin-lua-scripts.png', alt: 'The selected guard.lua file with Save, Delete, and the live-apply notice.', route: '/admin/workshop/scripts?file=guard.lua', target: 'section[aria-label="File editor"]', sources: ['admin-ui/src/pages/FileEditorPage.tsx', 'admin-ui/src/components/olc/CodeEditor.tsx', 'admin-ui/src/components/Layout.tsx', 'admin-ui/src/index.css', 'pkg/admin/fileedit.go', 'pkg/admin/console_preview_test.go'] },
   { output: 'admin-notifications.png', alt: 'Notification settings with event rows and disabled delivery channels in the local preview.', route: '/admin/staff/notifications', target: 'main', sources: ['admin-ui/src/pages/NotificationsPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
+  { output: 'admin-configuration.png', alt: 'The Sessions & limits configuration card in the local checkout preview, with editable login and connection limits.', route: '/admin/staff/settings', target: 'section:has(> header > h2:text-is("Sessions & limits"))', verify: async page => { await expect(page.getByText('Read-only on this server', { exact: true })).toBeVisible(); await expect(page.getByLabel('Login idle timeout (s)')).toBeEnabled(); }, sources: ['admin-ui/src/pages/SettingsPage.tsx', 'admin-ui/src/components/NetworkCard.tsx', 'admin-ui/src/components/ui/input.tsx', 'admin-ui/src/components/Layout.tsx', 'admin-ui/src/index.css', 'pkg/admin/settings.go', 'pkg/admin/console_preview_test.go', 'pkg/settings/settings.go'] },
   { padding: 8, output: 'admin-operations.png', alt: 'The operations log with synthetic warning and error entries from the local preview.', route: '/admin/operations', target: 'main > div > div:nth-of-type(3)', sources: ['admin-ui/src/pages/OperationsPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
   { output: 'admin-zones.png', alt: 'The zones list for the synthetic world used by the admin console preview.', route: '/admin/game/zones', padding: 8, scrollTarget: true, target: 'table', sources: ['admin-ui/src/pages/ZonesPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
   { output: 'admin-updates.png', alt: 'The Updates page showing the available local release controls.', route: '/admin/staff/updates', target: 'main', sources: ['admin-ui/src/pages/UpdatesPage.tsx', 'admin-ui/src/index.css', 'admin-ui/src/components/Layout.tsx', 'pkg/admin/console_preview_test.go'] },
@@ -106,6 +111,8 @@ const browser = await chromium.launch({ executablePath: await chromiumPath(), ar
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, colorScheme: 'light', deviceScaleFactor: 1, reducedMotion: 'reduce' });
   await context.request.get(`${ui}/preview-session`);
+  const reset = await context.request.post(`${ui}/preview-reset`);
+  expect(reset.ok()).toBeTruthy();
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -116,14 +123,23 @@ try {
     await page.waitForLoadState('networkidle');
     await page.evaluate(() => document.fonts.ready);
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    if (capture.verify) await capture.verify(page);
     if (capture.action) await capture.action(page);
     const target = page.locator(capture.target).first();
     await expect(target).toBeVisible();
     if (capture.scrollTarget) await target.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
     await highlight(page, target, capture.highlightInset ?? -3);
-    const clip = await crop(page, target, capture.padding ?? 28);
+    const cropTarget = capture.cropTarget ? page.locator(capture.cropTarget).first() : target;
+    const clip = await crop(page, cropTarget, capture.padding ?? 28, capture.cropHeight);
     await page.screenshot({ path: resolve(out, capture.output), clip, animations: 'disabled' });
     await page.locator('[data-media-ring]').evaluate(el => el.remove());
+    if (capture.releaseDraft) {
+      const closed = page.waitForURL(url => !url.pathname.endsWith('/edit'));
+      await page.getByRole('button', { name: 'Discard', exact: true }).click();
+      await closed;
+      const reset = await context.request.post(`${ui}/preview-reset`);
+      expect(reset.ok()).toBeTruthy();
+    }
   manifest.push({ path: `docs/images/generated/${capture.output}`, alt: capture.alt, sources: [...capture.sources, 'admin-ui/scripts/media-capture.mjs', 'website-astro/DESIGN.md'], release });
   }
   await page.goto(`${ui}/admin/staff/players`);

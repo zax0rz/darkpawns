@@ -45,6 +45,69 @@
       "release": "v0.1.7"
     },
     {
+      "path": "docs/images/generated/admin-object-editor.png",
+      "alt": "Object fields for a synthetic steel sword, with Item type highlighted.",
+      "sources": [
+        "admin-ui/src/pages/EntityEditorPage.tsx",
+        "admin-ui/src/components/olc/EntitySchemaFields.tsx",
+        "admin-ui/src/components/olc/ClaimSaveFrame.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-mob-editor.png",
+      "alt": "Mob fields for a synthetic guard, with its alias highlighted.",
+      "sources": [
+        "admin-ui/src/pages/EntityEditorPage.tsx",
+        "admin-ui/src/components/olc/EntitySchemaFields.tsx",
+        "admin-ui/src/components/olc/ClaimSaveFrame.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-zone-editor.png",
+      "alt": "Zone name, lifespan, reset mode, and top-room controls in the zone editor.",
+      "sources": [
+        "admin-ui/src/pages/ZoneEditorPage.tsx",
+        "admin-ui/src/components/olc/ClaimSaveFrame.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-lua-scripts.png",
+      "alt": "The selected guard.lua file with Save, Delete, and the live-apply notice.",
+      "sources": [
+        "admin-ui/src/pages/FileEditorPage.tsx",
+        "admin-ui/src/components/olc/CodeEditor.tsx",
+        "admin-ui/src/components/Layout.tsx",
+        "admin-ui/src/index.css",
+        "pkg/admin/fileedit.go",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
       "path": "docs/images/generated/admin-notifications.png",
       "alt": "Notification settings with event rows and disabled delivery channels in the local preview.",
       "sources": [
@@ -52,6 +115,24 @@
         "admin-ui/src/index.css",
         "admin-ui/src/components/Layout.tsx",
         "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-configuration.png",
+      "alt": "The Sessions & limits configuration card in the local checkout preview, with editable login and connection limits.",
+      "sources": [
+        "admin-ui/src/pages/SettingsPage.tsx",
+        "admin-ui/src/components/NetworkCard.tsx",
+        "admin-ui/src/components/ui/input.tsx",
+        "admin-ui/src/components/Layout.tsx",
+        "admin-ui/src/index.css",
+        "pkg/admin/settings.go",
+        "pkg/admin/console_preview_test.go",
+        "pkg/settings/settings.go",
         "admin-ui/scripts/media-capture.mjs",
         "website-astro/DESIGN.md",
         "scripts/media_pipeline.py"
@@ -209,6 +290,6 @@
       "release": "v0.1.7"
     }
   ],
-  "git_head": "6301a2c236ce0682f50f642a5bfc58a7889b89e1",
+  "git_head": "fa040d49f3326f4195058d1c789eb6b609cfb55a",
   "working_tree_dirty": true
 }

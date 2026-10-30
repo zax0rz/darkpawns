@@ -31,11 +31,11 @@ const testLabels: Record<NotificationChannel, string> = {
 // A character name and, for level gains, the new level. The example is the whole
 // payload, so an operator sees what a public channel would receive.
 const events = [
-  { id: 'player.created', name: 'Character created', example: 'DemoScout created a character.' },
-  { id: 'player.login', name: 'Login', example: 'DemoScout entered the game.' },
-  { id: 'player.logout', name: 'Logout', example: 'DemoScout left the game.' },
-  { id: 'player.death', name: 'Death', example: 'DemoScout died.' },
-  { id: 'player.level', name: 'Level gained', example: 'DemoScout reached level 20.' },
+  { id: 'player.created', name: 'Character created', example: 'Avery created a character.' },
+  { id: 'player.login', name: 'Login', example: 'Avery entered the game.' },
+  { id: 'player.logout', name: 'Logout', example: 'Avery left the game.' },
+  { id: 'player.death', name: 'Death', example: 'Avery died.' },
+  { id: 'player.level', name: 'Level gained', example: 'Avery reached level 20.' },
 ];
 
 function sameEvents(left: string[] | null, right: string[] | null) {
