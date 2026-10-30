@@ -852,6 +852,22 @@ func (w *World) combatFollowingBody(body combat.Combatant) combat.Combatant {
 	return nil
 }
 
+// FollowingActor returns the body that actor follows, as an Actor: the exact
+// retained leader when the follow link carries one — SetFollowingBody keeps
+// duplicate NPCs apart (pkg/game/follow.go:395) — and otherwise the uniquely
+// named player.
+//
+// C holds a live ch->master pointer, so a name is never how the leader is
+// resolved. Resolving a mobile by name would match a substring over a
+// map-ordered slice and could pick a different duplicate from run to run (R3).
+// Returns nil when nothing is followed.
+func (w *World) FollowingActor(body combat.Combatant) Actor {
+	if body == nil {
+		return nil
+	}
+	return asActor(w.combatFollowingBody(body))
+}
+
 func (w *World) combatFollowersInRoom(body combat.Combatant, room int) []combat.Combatant {
 	var followers []combat.Combatant
 	for _, p := range w.GetAllPlayers() {

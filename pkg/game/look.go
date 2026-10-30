@@ -8,6 +8,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/screen"
 )
 
 // ObservationResult is the game-owned boundary for look-family commands.
@@ -1189,14 +1190,13 @@ func glowAnnotation(color, phrase string, colorize bool) string {
 	return "(" + phrase + ")"
 }
 
-// completeObservationColor reports whether the viewer's color level is exactly
-// C's C_CMP (3): both PRF_COLOR bits set. C gates show_obj_to_char's flag
-// colors on COLOR_LEV(ch)==C_CMP, so levels 0-2 must stay plain here; this is
+// completeObservationColor reports whether the viewer's color level reaches
+// C's C_CMP (3): both PRF_COLOR bits set. C gates show_obj_to_char's flag colors
+// on COLOR_LEV(ch)==C_CMP, so levels 0-2 must stay plain here; this is
 // deliberately stricter than observationColors, which colors other views at
-// level >= 2.
+// level >= 2. The level itself comes from pkg/screen.
 func completeObservationColor(ch *Player) bool {
-	flags := ch.GetFlags()
-	return flags&(1<<uint(PrfColor1)) != 0 && flags&(1<<uint(PrfColor2)) != 0
+	return screen.CompleteOn(colorLevel(ch))
 }
 
 func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
@@ -1471,23 +1471,16 @@ func formatRoomFlags(room *parser.Room) string {
 }
 
 func observationColors(ch *Player, code string) string {
-	if colorLevel(ch) < 2 {
+	if !screen.NormalOn(colorLevel(ch)) {
 		return ""
 	}
 	return code
 }
 
-// colorLevel is COLOR_LEV(ch): PRF_COLOR_1 counts 1 and PRF_COLOR_2 counts 2.
+// colorLevel is C's COLOR_LEV(ch), defined once in pkg/screen so this package and
+// pkg/session cannot drift apart on the thresholds again.
 func colorLevel(ch *Player) int {
-	flags := ch.GetFlags()
-	level := 0
-	if flags&(1<<uint(PrfColor1)) != 0 {
-		level++
-	}
-	if flags&(1<<uint(PrfColor2)) != 0 {
-		level += 2
-	}
-	return level
+	return screen.LevelFromFlags(ch.GetFlags(), uint(PrfColor1), uint(PrfColor2))
 }
 
 // doDescription is do_description (act.informative.c:2757-2803), which

@@ -181,21 +181,6 @@ func scorePositionText(player *game.Player) string {
 	return positionText(game.PosFighting)
 }
 
-// colorCMP returns code when the viewer sits at C_CMP — both colour bits, the
-// level C's do_score and do_stat_character gate their escapes on
-// (src/act.informative.c:1184-1275, 2013-2140). Below it every macro expands to
-// the empty string, so the caller concatenates the result unconditionally.
-func colorCMP(p *game.Player, code string) string {
-	if p == nil {
-		return ""
-	}
-	flags := p.GetFlags()
-	if flags&(1<<uint(game.PrfColor1)) != 0 && flags&(1<<uint(game.PrfColor2)) != 0 {
-		return code
-	}
-	return ""
-}
-
 func cmdScore(s *Session) error {
 	p := s.player
 	if p == nil {
@@ -985,7 +970,7 @@ func whoColorEnabled(viewer *game.Player) bool {
 		return false
 	}
 	flags := viewer.GetFlags()
-	return flags&(1<<uint(game.PrfColor1)) != 0 || flags&(1<<uint(game.PrfColor2)) != 0
+	return hasSparseColor(flags)
 }
 
 func renderWhoLong(viewer, player *game.Player) string {

@@ -176,22 +176,29 @@ func printGroup(s *Session) error {
 		return nil
 	}
 
-	leaderName := s.player.Name
-	if s.player.GetFollowing() != "" {
-		leaderName = s.player.GetFollowing()
-	}
-
-	leader, ok := s.manager.world.GetPlayer(leaderName)
-	if !ok {
-		s.player.SendMessage("Your group leader is not online.\r\n")
-		return nil
+	// C: k = (ch->master ? ch->master : ch) — the head is whoever the viewer
+	// follows, and the viewer otherwise. The followed body is resolved by
+	// identity, never by name: two NPCs can share a name, and a name lookup
+	// (GetMobByName matches a substring over a map-ordered slice) could pick a
+	// different duplicate from run to run (R3). Nothing in C requires ch->master
+	// to be a player either — do_follow reaches mobiles through get_char_room_vis
+	// with no IS_NPC gate (src/act.movement.c:895) and perform_group sets
+	// AFF_GROUP with no gate (src/act.other.c:624-635) — so the head may be a
+	// mobile, and a viewer following a name that no longer resolves falls back to
+	// itself, which is C's null-master arm rather than an invented message.
+	leader := s.manager.world.FollowingActor(s.player)
+	if leader == nil {
+		leader = s.player
 	}
 
 	s.player.SendMessage("Your group consists of:\r\n")
 	if isGrouped(leader) {
 		sendGroupMemberLine(s, leader, true)
 	}
-	for _, follower := range s.manager.world.GetFollowerActors(leaderName) {
+	// C walks k->followers, so the list belongs to the leader *body*: two
+	// same-named NPCs keep separate follower lists and a name match would merge
+	// them (R3).
+	for _, follower := range s.manager.world.FollowersOf(leader) {
 		if isGrouped(follower) {
 			sendGroupMemberLine(s, follower, false)
 		}
@@ -200,40 +207,50 @@ func printGroup(s *Session) error {
 }
 
 func sendGroupMemberLine(s *Session, member game.Actor, head bool) {
-	if mob, ok := member.(*game.MobInstance); ok {
-		// C prints the mobile row uncoloured (src/act.other.c:668-669): the
-		// dashes stand in for stats the group view must not reveal.
-		game.Act(s.manager.world, false, s.player, mob, nil, nil,
-			"     [---H ---M ---V] [-- --] $N", "", game.ToChar)
-		return
-	}
-	player, ok := member.(*game.Player)
-	if !ok {
-		return
-	}
-	class := "??"
-	if n := player.GetClass(); n >= 0 && n < len(game.ClassAbbrevs) {
-		class = game.ClassAbbrevs[n]
-	}
 	// C print_group wraps each stat at C_CMP against the *viewer* (src/act.other.c:653-676),
 	// closing every field with CCNRM before the next, so the H/M/V letters sit
 	// after the reset. The class abbreviation is the one asymmetry: the head row
 	// uses CCCYN (line 659) and a follower's row uses CCGRN (line 676).
-	complete := wizardHasCompleteColor(s.player.GetFlags())
+	complete := hasCompleteColor(s.player.GetFlags())
 	classColor := ansiGreen
 	if head {
 		classColor = ansiCyan
 	}
+
+	var hp, mana, move, level int
+	class := "??"
+	switch actor := member.(type) {
+	case *game.Player:
+		hp, mana, move, level = actor.GetHealth(), actor.GetMana(), actor.GetMove(), actor.GetLevel()
+		if n := actor.GetClass(); n >= 0 && n < len(game.ClassAbbrevs) {
+			class = game.ClassAbbrevs[n]
+		}
+	case *game.MobInstance:
+		if !head {
+			// C prints the dashes row for a grouped mobile *follower*
+			// (src/act.other.c:668-669): checking out mob stats via group is bad.
+			game.Act(s.manager.world, false, s.player, actor, nil, nil,
+				"     [---H ---M ---V] [-- --] $N", "", game.ToChar)
+			return
+		}
+		// The head arm has no IS_NPC check, so a mobile leader reports its real
+		// stats; CLASS_ABBR is the literal "--" for an NPC (src/utils.h:570).
+		hp, mana, move, level = actor.GetHealth(), actor.GetMana(), actor.GetMove(), actor.GetLevel()
+		class = "--"
+	default:
+		return
+	}
+
 	format := fmt.Sprintf("     [%sH %sM %sV] [%2d %s] $N",
-		colorWrap(fmt.Sprintf("%3d", player.GetHealth()), ansiGreen, complete),
-		colorWrap(fmt.Sprintf("%3d", player.GetMana()), ansiGreen, complete),
-		colorWrap(fmt.Sprintf("%3d", player.GetMove()), ansiGreen, complete),
-		player.GetLevel(),
+		colorWrap(fmt.Sprintf("%3d", hp), ansiGreen, complete),
+		colorWrap(fmt.Sprintf("%3d", mana), ansiGreen, complete),
+		colorWrap(fmt.Sprintf("%3d", move), ansiGreen, complete),
+		level,
 		colorWrap(class, classColor, complete))
 	if head {
 		format += " (Head of group)"
 	}
-	game.Act(s.manager.world, false, s.player, player, nil, nil, format, "", game.ToChar)
+	game.Act(s.manager.world, false, s.player, member, nil, nil, format, "", game.ToChar)
 }
 
 // cmdUngroup removes a player from the group or disbands the entire group.
