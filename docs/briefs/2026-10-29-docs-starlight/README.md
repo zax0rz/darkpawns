@@ -24,7 +24,7 @@ Editorial warnings remain visible in voice lint. The baseline only removes 25 ob
 
 [Independent reader answers for every authored page](reader-review.md) include prerequisites, expected results, and recovery/next steps. The first-hour route and first fight were checked against rooms 8004–8102 and 16300–16304, trainee-guard resets, and command help. It is explicitly scoped to Kir Drax'in.
 
-[Independent visual review](ui-review.md) covers the shared site identity, navigation, reading hierarchy and 375px layout. [Capture checks](screenshots/checks.json) record dimensions and route/edit-link checks. Regenerate the review images with `website-astro/scripts/capture-docs-review.mjs` against a served build.
+[Independent visual review](ui-review.md) covers the shared site identity, navigation, reading hierarchy and 375px layout. [Capture checks](screenshots/checks.json) record dimensions and route/edit-link checks. [Media integration checks](media-checks.json) verify six illustrated pages at both widths: images decode, alt text is present, and there is no horizontal overflow. All 14 built media files match the canonical source hashes. Regenerate the review images with `website-astro/scripts/capture-docs-review.mjs` against a served build.
 
 | Page | Desktop, 1440px | Mobile, 375px |
 | --- | --- | --- |
