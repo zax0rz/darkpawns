@@ -568,11 +568,6 @@ func (m *Manager) SetCombatBroadcastFunc() {
 	})
 }
 
-// SetCombatMessageFunc wires the golden-tested DamMessage() path into the live
-// combat engine. It builds a combat.GameCallbacks struct with the game-layer
-// broadcast/send implementations, wires it into the engine, and keeps the legacy
-// package-level hooks as aliases so existing tests continue to pass during the
-// multi-PR migration.
 // WireCombatCallbacks wires the game-layer character-state callbacks into the
 // combat engine. Called once during initialization before SetCombatMessageFunc.
 func (m *Manager) WireCombatCallbacks() {
@@ -580,7 +575,17 @@ func (m *Manager) WireCombatCallbacks() {
 	m.combatEngine.SetCallbacks(cb)
 }
 
-func (m *Manager) SetCombatMessageFunc() {
+// loadCombatMessages is the boot-time combat-message corpus load. It is a var so
+// a test can drive the failure path: C's load_messages() exits(1) when the file
+// cannot be read (src/fight.c:133-137), so the port must stop startup rather
+// than substitute invented text (R4).
+var loadCombatMessages = combat.InitEmbeddedFightMessages
+
+// SetCombatMessageFunc wires the golden-tested DamMessage() path into the live
+// combat engine. It builds a combat.GameCallbacks struct with the game-layer
+// broadcast/send implementations and wires it into the engine. A corpus load
+// failure is returned so boot can stop, as C does.
+func (m *Manager) SetCombatMessageFunc() error {
 	wrap := func(text string) []byte {
 		msg, err := json.Marshal(ServerMessage{
 			Type: MsgEvent,
@@ -657,9 +662,13 @@ func (m *Manager) SetCombatMessageFunc() {
 		}
 	}
 	cb.SendRaw = sendRaw
-	if err := combat.InitEmbeddedFightMessages(cb); err != nil {
-		slog.Error("loading combat messages", "error", err)
-		combat.InitSkillMessages(cb)
+	if err := loadCombatMessages(cb); err != nil {
+		// C cannot run without the corpus: load_messages() prints
+		// "Error reading combat message file %s" and exit(1)
+		// (src/fight.c:133-137). The port embeds the corpus, so this fires only
+		// on corrupt embedded data, and it still stops startup rather than
+		// falling back to invented skill text (R4).
+		return fmt.Errorf("loading combat messages (src/fight.c:133-137 exits here): %w", err)
 	}
 	m.combatEngine.SetCallbacks(cb)
 
@@ -667,6 +676,7 @@ func (m *Manager) SetCombatMessageFunc() {
 		combat.SendWeaponMessage(dam, attacker, defender, attackType)
 		return true
 	}
+	return nil
 }
 
 // GetCombatEngine returns the combat engine for AI integration.

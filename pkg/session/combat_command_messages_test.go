@@ -24,7 +24,9 @@ func TestCombatMessageDoesNotCarryStalePulsePrefix(t *testing.T) {
 	m := makeGateTestManager(t, false)
 	s := makeGateSession(t, m, 1, "Hero", 20)
 	m.WireCombatCallbacks()
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 
 	m.combatEngine.Callbacks.Broadcast(1001, "A combat line.", nil)
 	if got, want := readSendText(t, s), "A combat line."; got != want {
@@ -139,7 +141,9 @@ func TestCmdHitResolvesFirstSwingSynchronouslyWithoutInventedAttackLine(t *testi
 	m := makeGateTestManager(t, false)
 	defer m.combatEngine.Stop()
 	m.WireCombatCallbacks()
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 	if _, err := m.world.SpawnMob(5000, 1001); err != nil {
 		t.Fatalf("SpawnMob failed: %v", err)
 	}
