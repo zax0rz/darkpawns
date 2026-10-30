@@ -40,39 +40,85 @@ import (
 // These match the CircleMUD fight.c patterns: damage() and hit_skill()
 // ---------------------------------------------------------------------------
 
-// skillToAttackType maps a skill/spell name to the C numeric attack type passed
-// to damage(), which also selects its fight-message record and corpse wording.
-// Unknown skills fall back to TYPE_SLASH (303) to preserve legacy behavior.
+// skillToAttackType maps a skill/spell name to the C numeric attack type that C
+// passes to damage(). That single value selects the fight-message set, the
+// corpse wording (fight.c make_corpse) and the SPELL_DISINTEGRATE dust check, so
+// every damaging skill must carry its own C SKILL_* constant: make_corpse
+// groups SKILL_* and TYPE_* values into different descriptions, and a
+// substituted TYPE_* value silently changes the corpse bytes (bash/kick/headbutt
+// are the "bruised, battered" group, while trip/bearhug/strike have no group at
+// all and take the plain default).
+//
+// Unknown names take TYPE_UNDEFINED, C's own "no specific attack type" value:
+// make_corpse's TYPE_UNDEFINED case and its default case print the same line.
 func skillToAttackType(skill string) int {
 	switch skill {
-	case "backstab":
-		return SkillBackstabNum
-	case "circle":
-		return SkillCircleNum
-	case "bash", "kick", "punch", "tiger_punch", "headbutt",
-		"smackheads", "slug", "serpent_kick":
-		return TypeBludgeon // 305
-	case "dragon_kick":
-		return SkillDragonKickNum
-	case "bite":
-		return SkillBiteNum // SKILL_BITE (150)
-	case "groinrip":
-		return SkillGroinripNum // SKILL_GROINRIP (174)
-	case "charge":
-		return SkillChargeNum // SKILL_CHARGE (147), default corpse wording
-	case "cutthroat":
-		return SkillCutthroatNum // SKILL_CUTTHROAT (143)
-	case "disembowel":
-		return SkillDisembowelNum // 184
-	case "neckbreak":
-		return SkillNeckbreakNum // 190
+	case SkillBackstab:
+		return SkillBackstabNum // 131 SKILL_BACKSTAB
+	case SkillBash:
+		return SkillBashNum // 132 SKILL_BASH
+	case SkillKick:
+		return SkillKickNum // 134 SKILL_KICK
+	case SkillPunch:
+		return SkillPunchNum // 136 SKILL_PUNCH
+	case SkillHeadbutt:
+		return SkillHeadbuttNum // 141 SKILL_HEADBUTT
+	case SkillBearhug:
+		return SkillBearhugNum // 142 SKILL_BEARHUG
+	case SkillCutthroat:
+		return SkillCutthroatNum // 143 SKILL_CUTTHROAT
+	case SkillTrip:
+		return SkillTripNum // 144 SKILL_TRIP
+	case SkillSmackheads:
+		return SkillSmackheadsNum // 145 SKILL_SMACKHEADS
+	case SkillSlug:
+		return SkillSlugNum // 146 SKILL_SLUG
+	case SkillCharge:
+		return SkillChargeNum // 147 SKILL_CHARGE
+	case SkillBite:
+		return SkillBiteNum // 150 SKILL_BITE
+	case SkillStrike:
+		return SkillStrikeNum // 155 SKILL_STRIKE
+	case SkillSerpentKick:
+		return SkillSerpentKickNum // 156 SKILL_SERPENT_KICK
+	case SkillCircle:
+		return SkillCircleNum // 173 SKILL_CIRCLE
+	case SkillGroinrip:
+		return SkillGroinripNum // 174 SKILL_GROINRIP
+	case SkillDisembowel:
+		return SkillDisembowelNum // 184 SKILL_DISEMBOWEL
+	case SkillDragonKick:
+		return SkillDragonKickNum // 188 SKILL_DRAGON_KICK
+	case SkillTigerPunch:
+		return SkillTigerPunchNum // 189 SKILL_TIGER_PUNCH
+	case SkillNeckbreak:
+		return SkillNeckbreakNum // 190 SKILL_NECKBREAK
+	case SkillAmbush:
+		return SkillAmbushNum // 191 SKILL_AMBUSH
 	case "meteor swarm":
 		return spells.SpellMeteorSwarm
 	case "hellfire":
 		return spells.SpellHellfire
 	default:
-		return TypeSlash // 303 fallback
+		return TypeUndefined
 	}
+}
+
+// DamageAttackType is C's numeric attack type for this result's damage() call.
+//
+// C passes one value — the skill's own constant (SKILL_BASH for do_bash,
+// spellnum for a damage spell) — and derives everything from it, so the number
+// the port hands to the damage pipeline is the same one skill_message keys on.
+// SkillMsgType already carries it for every result that emits a skill_message
+// set; DamageSkill names the skill for results whose dispatch the command tail
+// switches on. Preferring SkillMsgType keeps the two from drifting, which is how
+// bash, kick, headbutt, trip, bearhug and strike reached the wrong corpse
+// wording while their messages stayed right.
+func (r SkillResult) DamageAttackType() int {
+	if r.SkillMsgType != 0 {
+		return r.SkillMsgType
+	}
+	return skillToAttackType(r.DamageSkill)
 }
 
 // combatantFromInterface converts an interface{} attacker to a combat.Combatant.
@@ -96,7 +142,7 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 		return false
 	}
 	if killer == nil || victimC == nil {
-		return w.ApplySkillDamage(attacker, victim, dam, skill)
+		return w.ApplySkillDamage(attacker, victim, dam, skillToAttackType(skill))
 	}
 	attackType := skillToAttackType(skill)
 	return combat.TakeDamageAfterGate(killer, victimC, dam, attackType, func() {
@@ -106,16 +152,17 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 
 // ApplySkillDamage is DoSpellDamage for a caller that has already asked
 // DamageRefused where C calls damage(): the skill command tail, which emits
-// skill_message itself between the gate and the damage.
-func (w *World) ApplySkillDamage(attacker, victim interface{}, dam int, skill string) bool {
-	return w.ApplySkillDamageWithMessage(attacker, victim, dam, skill, nil)
+// skill_message itself between the gate and the damage. attackType is C's own
+// damage() argument (SkillResult.DamageAttackType), so it carries the corpse
+// wording as well as the message set.
+func (w *World) ApplySkillDamage(attacker, victim interface{}, dam, attackType int) bool {
+	return w.ApplySkillDamageWithMessage(attacker, victim, dam, attackType, nil)
 }
 
 // ApplySkillDamageWithMessage places a command-owned skill message after
 // damage()'s HP/position/rescue block (src/fight.c:1484-1535).
-func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam int, skill string, message func(int)) bool {
+func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam, attackType int, message func(int)) bool {
 	killer := combatantFromInterface(attacker)
-	attackType := skillToAttackType(skill)
 	combat.EnterDamageFighting(killer, combatantFromInterface(victim))
 
 	// Route the computed damage through the shared damage() modifier block
@@ -143,7 +190,7 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam in
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
-		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
+		if attackType == SkillChargeNum && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
 			// C damage() burns the pain/scream number(0,2) draw even when the
 			// victim is an NPC with no descriptor (fight.c:1580-1585). The
 			// charge vehicle reaches this branch and relies on its draw order.
@@ -159,7 +206,7 @@ func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam in
 		// Enter the wounded band or POS_DEAD from the new HP; only run the
 		// death pipeline at POS_DEAD (HP <= -11) — fight.c update_pos (DP-1021).
 		newPos := combat.UpdatePositionAfterDamage(v, w.woundBroadcast, w.StopFightingBody)
-		if skill == SkillCharge && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
+		if attackType == SkillChargeNum && newPos > combat.PosStunned && dam > v.GetMaxHP()/4 {
 			// C evaluates this random scream branch for mobs too; act() simply
 			// has no descriptor to deliver the victim-directed output to.
 			_ = dprng.Number(0, 2)

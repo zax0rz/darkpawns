@@ -45,7 +45,9 @@ func TestSkillDeathOrderExactBytes(t *testing.T) {
 		{"tiger", (*World).DoTigerPunchDamage},
 		{"strike", (*World).DoStrikeDamage},
 		{"cutthroat", (*World).DoCutthroatDamage},
-		{"plain", func(w *World, ch, v combat.Combatant, dam int) bool { return w.ApplySkillDamage(ch, v, dam, SkillKick) }},
+		{"plain", func(w *World, ch, v combat.Combatant, dam int) bool {
+			return w.ApplySkillDamage(ch, v, dam, SkillKickNum)
+		}},
 	} {
 		for _, exp := range []int{0, 100} {
 			variant := "one_lousy"

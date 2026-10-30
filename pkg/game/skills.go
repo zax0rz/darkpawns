@@ -16,6 +16,7 @@ const (
 	SkillFlee      = "flee"
 	SkillBash      = "bash"
 	SkillKick      = "kick"
+	SkillPunch     = "punch" // SKILL_PUNCH (136, spells.h:183)
 	SkillTrip      = "trip"
 	SkillHeadbutt  = "headbutt"
 	SkillRescue    = "rescue"

@@ -939,6 +939,11 @@ const (
 	SkillNeckbreakNum   = 190
 	SkillDragonKickNum  = 188
 	SkillStrikeNum      = 155
+	// SkillAmbushNum is C's SKILL_AMBUSH (spells.h:239). do_ambush passes it to
+	// damage(), so it selects both the Ambush message set (191 in
+	// lib/misc/messages) and the corpse wording (fight.c make_corpse: no group,
+	// the plain default line).
+	SkillAmbushNum = 191
 	// SkillTigerPunchNum is C's SKILL_TIGER_PUNCH (spells.h:237) and the
 	// lib/misc/messages set key the skill_message path looks up. It is also the
 	// value fight.c:321 maps to the bruised corpse wording.
