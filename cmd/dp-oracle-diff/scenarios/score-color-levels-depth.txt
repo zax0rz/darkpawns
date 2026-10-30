@@ -1,0 +1,91 @@
+# C-first raw-byte proof for score's colour, at every level that changes it.
+#
+# score carries 22 C_CMP sites and 4 C_NRM ones (src/act.informative.c:1184-1274), so complete colour is the only level that shows all of them.
+# keep-ansi compares the escapes raw (R1b). The viewer walks all four levels in
+# one probe: `color` reports the new level, then the command re-renders.
+#
+# depth-case: score.colour-levels
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Scorecolor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Scorecolor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Scorepeer
+Y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:peer]
+Scorepeer
+y
+peerpass
+peerpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+goto 8105
+teleport Scorepeer 8105
+set player Scorepeer level 20
+
+[probe]
+color complete
+score
+color normal
+score
+color sparse
+score
+color off
+score

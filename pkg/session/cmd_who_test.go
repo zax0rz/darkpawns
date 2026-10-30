@@ -177,8 +177,15 @@ func TestWhoImmortalRanksAndShortColor(t *testing.T) {
 	if got, want := renderWhoShort(viewer, immortal), "\x1b[33m[ IMMORT ] Immortal    \x1b[0m"; got != want {
 		t.Errorf("colored short who = %q, want %q", got, want)
 	}
-	if got := renderWhoLong(nil, immortal); !strings.HasPrefix(got, "[ Wizard ] Immortal ") {
-		t.Errorf("non-short immortal should use executable C's Wizard label, got %q", got)
+	// C writes the long-list rank with a literal &r code and closes the line
+	// with "&n" (src/act.informative.c:1841,1923); color_expansion resolves
+	// both per recipient, so a colour-off viewer sees them raw exactly as C
+	// shows them.
+	if got := renderWhoLong(nil, immortal); !strings.HasPrefix(got, "&r[ Wizard ] Immortal ") {
+		t.Errorf("non-short immortal should use executable C's Wizard label with C's literal &r code, got %q", got)
+	}
+	if got := renderWhoLong(nil, immortal); !strings.HasSuffix(got, "&n\r\n") {
+		t.Errorf("the long list closes with C's &n, got %q", got)
 	}
 }
 
