@@ -1022,25 +1022,46 @@ func (w *World) getExitForDirection(room *parser.Room, direction int) (parser.Ex
 }
 
 func (w *World) autoExitsText(ch *Player, room *parser.Room) string {
-	var exits []string
+	// C builds the list one direction at a time, appending a trailing space after
+	// every entry, and wraps an imm-only closed door in
+	// CCRED(ch, C_CMP) "(" dir ")" CCCYN(ch, C_NRM) (src/act.informative.c:663-674).
+	// The whole list is then bracketed by CCCYN(ch, C_NRM) ... CCNRM(ch, C_NRM)
+	// with no space before the closing bracket (line 676), and the empty fallback
+	// is C's literal "None! " — trailing space included.
+	cyan := observationColors(ch, "\x1b[36m")
+	normal := observationColors(ch, "\x1b[0m")
+	immOnlyRed := ""
+	if completeObservationColor(ch) {
+		immOnlyRed = "\x1b[31m"
+	}
+
+	var list strings.Builder
 	for _, direction := range dirList {
 		exit, ok := room.Exits[direction]
 		if !ok || exit.ToRoom <= 0 {
 			continue
 		}
-		if exit.ExitInfo&parser.ExitClosed != 0 {
-			if ch.GetLevel() >= LVL_IMMORT {
-				exits = append(exits, "("+direction+")")
-			}
+		closed := exit.ExitInfo&parser.ExitClosed != 0
+		if closed && ch.GetLevel() < LVL_IMMORT {
 			continue
 		}
-		exits = append(exits, direction)
+		if closed {
+			// Imm-only closed door: red parentheses, then back to the list's cyan.
+			list.WriteString(immOnlyRed)
+			list.WriteString("(")
+			list.WriteString(direction)
+			list.WriteString(")")
+			list.WriteString(cyan)
+		} else {
+			list.WriteString(direction)
+		}
+		list.WriteString(" ")
 	}
-	if len(exits) == 0 {
-		exits = append(exits, "None!")
+	entries := list.String()
+	if entries == "" {
+		entries = "None! "
 	}
-	cyan, normal := observationColors(ch, "\x1b[36m"), observationColors(ch, "\x1b[0m")
-	return fmt.Sprintf("%s[ Exits: %s ]%s", cyan, strings.Join(exits, " "), normal)
+	return fmt.Sprintf("%s[ Exits: %s]%s", cyan, entries, normal)
 }
 
 // DiagCondition is the exported diag_char_to_char condition sentence
