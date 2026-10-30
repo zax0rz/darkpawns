@@ -33,8 +33,14 @@ type MobInstance struct {
 	ID        int // World-assigned instance ID
 
 	// Current state
-	alive    atomic.Bool // CRIT-004: fast alive check without acquiring mu
-	RoomVNum int         // -1 if not in a room (carried, etc.)
+	alive atomic.Bool // CRIT-004: fast alive check without acquiring mu
+	// redeathClaim keeps do_kill's second death single-shot under concurrent
+	// swings (DP-963 discipline): a body raw_kill flagged while still standing
+	// dies once more through damage() (src/fight.c:1318-1345, 1634-1691), and
+	// C's own gate — POS_DEAD set by the second die_with_killer
+	// (src/fight.c:617) — is not atomic here.
+	redeathClaim atomic.Bool
+	RoomVNum     int // -1 if not in a room (carried, etc.)
 	// RoomEntrySequence mirrors char_to_room's prepend order for room looks.
 	// Higher values are newer arrivals and therefore appear first.
 	RoomEntrySequence uint64
