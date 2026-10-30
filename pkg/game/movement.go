@@ -52,6 +52,7 @@ func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) 
 				if err := p.Equipment.Unequip(old.Slot, p.Inventory); err != nil {
 					slog.Warn("unequip failed in detachObject", "player", p.Name, "slot", old.Slot, "error", err)
 				} else {
+					p.applySpellUnequipWipe(obj)
 					// unequip adds to inventory; this move owns the next destination.
 					// C unequip_char returns the object without obj_to_char (:754-783).
 					p.Inventory.RemoveItem(obj)

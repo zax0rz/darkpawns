@@ -499,6 +499,7 @@ func unequipStolenItemLocked(world *World, target combat.Combatant, item *Object
 		if !target.Equipment.UnequipItem(item, staging) || !staging.RemoveItem(item) {
 			return false
 		}
+		target.applySpellUnequipWipe(item)
 		// unequip_char drops a lit light from the victim's room
 		// (src/act.other.c:429; src/handler.c:779-782). adjustRoomLight is the
 		// locked-internal form, so the caller's w.mu is the lock it needs.
