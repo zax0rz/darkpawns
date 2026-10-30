@@ -937,7 +937,16 @@ func (m *MobInstance) GetName() string {
 
 // SendMessage sends a message to the mob (no-op for mobs, but needed for interface).
 func (m *MobInstance) SendMessage(msg string) {
-	// Mobs don't receive messages
+	// C send_to_char writes to ch->desc (comm.c): a descriptorless mobile is
+	// a silent no-op, and a mobile a wizard SWITCHed onto delivers to that
+	// wizard's connection. Descriptor ownership is only ever non-nil for a
+	// switched body, so this stays a no-op for every ordinary mobile.
+	if m.world == nil || m.world.MobileMessageSink == nil || m.world.MobileDescriptorOwner == nil {
+		return
+	}
+	if m.world.MobileDescriptorOwner(m) != nil {
+		m.world.MobileMessageSink(m, []byte(msg))
+	}
 }
 
 // GetWaitState returns the mob's remaining wait state in PULSE_VIOLENCE ticks.

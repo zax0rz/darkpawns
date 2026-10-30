@@ -1,6 +1,7 @@
 package game
 
 import (
+	"log/slog"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -208,4 +209,89 @@ func wakeSelfLine(w *World, actor Actor, message string, private func(string)) {
 		return
 	}
 	ActWithPrivateSink(w, false, actor, nil, nil, nil, message, "", ToChar|ToSleep, actor, private)
+}
+
+// CharacterHit ports the actor body of do_hit (src/act.offensive.c:101-129)
+// for a mobile dispatched through the command interpreter — force, order and
+// the switched-descriptor lane all reach it, because C's command_interpreter
+// runs the same do_* for NPCs (R2e). The gates run in C's order: empty
+// argument, room-visible target, self, a charmed follower's master, then the
+// standing-and-not-already-fighting swing gate. WAIT_STATE(PULSE_VIOLENCE+2)
+// at the end writes ch->wait (utils.h:462-464) — the descriptor-command
+// field, not mob_specials.wait_state, which perform_violence reads
+// (fight.c:1977) — so it is inert for a forced, descriptorless mobile and is
+// not modeled here.
+func CharacterHit(ctx CharacterCommandContext) CharacterCommandResult {
+	mob, ok := ctx.Actor.(*MobInstance)
+	if !ok || ctx.World == nil {
+		return CharacterCommandUnsupported
+	}
+	send := func(msg string) {
+		if ctx.PrivateOutput != nil {
+			ctx.PrivateOutput(msg)
+		}
+	}
+	arg := extractArg(ctx.RawArgs)
+	if arg == "" {
+		send("Hit who?\r\n")
+		return CharacterCommandHandled
+	}
+	resolved, found := ctx.World.resolveCharInRoomAt(mob, mob.GetRoomVNum(), arg)
+	if !found || resolved.Combatant == nil {
+		send("They don't seem to be here.\r\n")
+		return CharacterCommandHandled
+	}
+	victim := resolved.Combatant
+	if victim == mob {
+		ActWithPrivateSink(ctx.World, false, mob, nil, nil, nil,
+			"You hit yourself...OUCH!.", "", ToChar, mob, ctx.PrivateOutput)
+		Act(ctx.World, false, mob, nil, nil, nil,
+			"$n hits $mself, and says OUCH!", "", ToRoom)
+		return CharacterCommandHandled
+	}
+	if ctx.World.IsCharmedI(mob) && ctx.World.FollowingBody(mob) == victim {
+		ActWithPrivateSink(ctx.World, false, mob, victim, nil, nil,
+			"$N is just such a good friend, you simply can't hit $M.", "", ToChar, mob, ctx.PrivateOutput)
+		return CharacterCommandHandled
+	}
+	// C only starts a hit while standing and when the requested victim is not
+	// already FIGHTING(ch); otherwise the refusal line with no swing.
+	if mob.GetPosition() != combat.PosStanding || mob.GetFightingBody() == victim {
+		send("You do the best you can!\r\n")
+		return CharacterCommandHandled
+	}
+	// C dismounts only on the branch that is about to call hit().
+	if mob.IsMountedMob() {
+		ctx.World.doDismountActor(mob)
+	}
+	// hit(ch, vict, TYPE_UNDEFINED): the first swing consumes hit()'s to-hit
+	// and damage draws and damage()'s protection block decides, enrolling at
+	// the damage point. A body flagged for extraction but still standing —
+	// do_kill's raw_kill — swings through the pending-body lane
+	// (src/handler.c:1194-1209).
+	if ctx.World.combatEngine == nil {
+		return CharacterCommandHandled
+	}
+	if combat.BodyRetired(victim) {
+		if swinger, ok := ctx.World.combatEngine.(interface {
+			PerformPendingBodySwing(combat.Combatant, combat.Combatant) error
+		}); ok {
+			if err := swinger.PerformPendingBodySwing(mob, victim); err != nil {
+				slog.Error("forced mobile hit failed", "mob", mob.GetName(), "victim", victim.GetName(), "error", err)
+			}
+		}
+		return CharacterCommandHandled
+	}
+	if hitter, ok := ctx.World.combatEngine.(interface {
+		PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
+	}); ok {
+		if err := hitter.PerformDeferredInitialAttack(mob, victim); err != nil {
+			slog.Error("forced mobile hit failed", "mob", mob.GetName(), "victim", victim.GetName(), "error", err)
+		}
+		return CharacterCommandHandled
+	}
+	if err := ctx.World.combatEngine.StartCombat(mob, victim); err != nil {
+		slog.Error("forced mobile hit failed", "mob", mob.GetName(), "victim", victim.GetName(), "error", err)
+	}
+	return CharacterCommandHandled
 }

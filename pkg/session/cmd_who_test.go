@@ -109,8 +109,15 @@ func TestCmdWhoVisibilityAndNoWhoRoom(t *testing.T) {
 		hidden.player.SetAffectBit(19, true) // AFF_HIDE
 
 		got := runWho(t, viewer)
-		if strings.Contains(got, "Invisible") || strings.Contains(got, "Hidden") {
-			t.Fatalf("mortal saw invisible/hidden players: %q", got)
+		if strings.Contains(got, "Invisible") {
+			t.Fatalf("mortal saw an invisible player: %q", got)
+		}
+		// C's do_who filters on CAN_SEE alone (src/act.informative.c:2119),
+		// and CAN_SEE does not test AFF_HIDE (src/utils.h:521-530): a hidden
+		// player stays listed. The port's shared-canSee hide arm used to drop
+		// them - invented behavior this round removed.
+		if !strings.Contains(got, "Hidden") {
+			t.Fatalf("mortal did not see the hidden player in who: %q", got)
 		}
 	})
 

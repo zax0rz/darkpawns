@@ -482,3 +482,34 @@ func cUnsignedToInt(value uint32) int {
 	}
 	return int(signed)
 }
+
+// ExecuteSpellCounterattack runs C hit(victim, ch, TYPE_UNDEFINED) for spell
+// refusal sites outside pkg/game (src/spells.c:186, 192; the same pattern at
+// :317, :348, :590). The victim's first swing consumes hit()'s to-hit and
+// damage draws and damage()'s protection block decides, enrolling at the
+// damage point. A body flagged for extraction but still standing — do_kill's
+// raw_kill — swings through the pending-body lane (src/handler.c:1194-1209).
+func (w *World) ExecuteSpellCounterattack(victim, caster interface{}) {
+	v, okV := victim.(combat.Combatant)
+	c, okC := caster.(combat.Combatant)
+	if !okV || !okC || w.combatEngine == nil {
+		return
+	}
+	if combat.BodyRetired(v) {
+		if swinger, ok := w.combatEngine.(interface {
+			PerformPendingBodySwing(combat.Combatant, combat.Combatant) error
+		}); ok {
+			if err := swinger.PerformPendingBodySwing(v, c); err != nil {
+				slog.Error("spell counterattack failed", "victim", v.GetName(), "caster", c.GetName(), "error", err)
+			}
+		}
+		return
+	}
+	if hitter, ok := w.combatEngine.(interface {
+		PerformDeferredInitialAttack(combat.Combatant, combat.Combatant) error
+	}); ok {
+		if err := hitter.PerformDeferredInitialAttack(v, c); err != nil {
+			slog.Error("spell counterattack failed", "victim", v.GetName(), "caster", c.GetName(), "error", err)
+		}
+	}
+}
