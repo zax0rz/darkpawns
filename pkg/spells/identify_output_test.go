@@ -178,9 +178,16 @@ type identifyHitSpy struct {
 	defender combat.Combatant
 }
 
-func (s *identifyHitSpy) MobFirstHit(attacker, defender combat.Combatant) {
-	s.attacker = attacker
-	s.defender = defender
+// ExecuteSpellCounterattack is the retaliation seam every spell refusal site
+// routes through now (npcRetaliate); MobFirstHit was the older name-based
+// lane this spy watched before the unification.
+func (s *identifyHitSpy) ExecuteSpellCounterattack(victim, caster interface{}) {
+	if a, ok := victim.(combat.Combatant); ok {
+		s.attacker = a
+	}
+	if d, ok := caster.(combat.Combatant); ok {
+		s.defender = d
+	}
 }
 
 func TestCastIdentifyNPCRefusalMakesCOpeningHit(t *testing.T) {

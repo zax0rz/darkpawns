@@ -105,7 +105,23 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 	// Benign affects such as infravision consume no gameplay RNG.
 	saved := false
 	switch spellNum {
-	case SpellChillTouch, SpellBlindness, SpellSmokescreen, SpellCurse, SpellSleep, SpellFlameStrike, SpellPoison:
+	case SpellBlindness, SpellSmokescreen:
+		// magic.c:938's first disjunct short-circuits the save roll: a
+		// MOB_NOBLIND victim (action flag bit 17) refuses without drawing.
+		if hasSummonMobFlag(victim, 17) {
+			saved = true
+		} else {
+			saved = magAffectsSaveRoll(victim, savetype)
+		}
+	case SpellSleep:
+		// magic.c:1227's first disjunct short-circuits the save roll: a
+		// MOB_NOSLEEP victim (action flag bit 15) refuses without drawing.
+		if hasSummonMobFlag(victim, 15) {
+			saved = true
+		} else {
+			saved = magAffectsSaveRoll(victim, savetype)
+		}
+	case SpellChillTouch, SpellCurse, SpellFlameStrike, SpellPoison:
 		saved = magAffectsSaveRoll(victim, savetype)
 	}
 	// C magic.c:967-982 checks CURSE's save before consuming its mage reagent.
@@ -130,6 +146,10 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	var aff *engine.Affect
 	var toVictim, toRoom, toSelf string
 	var pending []*engine.Affect
+	// C magic.c:1421's aggro tail: an applied hostile affect whose case set
+	// aggro=TRUE (poison, flamestrike) makes an NPC victim attack the caster
+	// after the message block.
+	aggroSpell := false
 
 	switch spellNum {
 	case SpellChillTouch:
@@ -153,7 +173,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 			if spellNum == SpellBlindness {
 				sendToCaster(ch, "Your magic fades, then dies out totally.\r\n")
 			}
-			npcRetaliate(victim, ch)
+			npcRetaliate(world, victim, ch)
 			return
 		}
 		// C types both affects with spellnum and gives both AFF_BLIND:
@@ -171,7 +191,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 	case SpellCurse:
 		if saved {
 			sendToCaster(ch, "Nothing seems to happen.\r\n")
-			npcRetaliate(victim, ch)
+			npcRetaliate(world, victim, ch)
 			return
 		}
 		curseDur := 1 + (getLevel(ch) >> 1)
@@ -185,6 +205,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		toVictim = "You feel very uncomfortable.\r\n"
 		toRoom = "$n briefly glows red!\r\n"
 		toSelf = "A streak of red light courses from your hand!\r\n"
+		aggroSpell = true
 	case SpellInvisible, SpellTransparency:
 		name := "invisibility"
 		if spellNum == SpellTransparency {
@@ -220,7 +241,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		}
 		if nosleep || saved {
 			sendAffectRoom(victim, nil, "$n shakes his head wearily, but then snaps out of it!\r\n", true, world)
-			npcRetaliate(victim, ch)
+			npcRetaliate(world, victim, ch)
 			return
 		}
 		pending = append(pending, engine.NewAffectDirect(SpellSleep, engine.ApplyNone, 4+getLevel(ch)/4+reag, 0, engine.AFFSleep, "sleep"))
@@ -238,6 +259,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		// C source: magic.c:1109-1129 — outdoor-only DOT with saving throw
 		if saved {
 			sendToCaster(ch, "Nothing seems to happen.\r\n")
+			npcRetaliate(world, victim, ch)
 			return
 		}
 		// Must be outdoors
@@ -261,10 +283,11 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		toVictim = "A bolt of flame shoots down from the heavens and engulfs you!\r\n"
 		toRoom = "A bolt of flame shoots down from the heavens and engulfs $n!\r\n"
 		toSelf = "You call down a bolt of flame on $M!\r\n"
+		aggroSpell = true
 	case SpellPoison:
 		if saved {
 			sendToCaster(ch, "Nothing seems to happen.\r\n")
-			npcRetaliate(victim, ch)
+			npcRetaliate(world, victim, ch)
 			return
 		}
 		dur := (level / 2) - 2
@@ -279,6 +302,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		toVictim = "You feel very sick.\r\n"
 		toRoom = "$n gets violently ill!\r\n"
 		toSelf = "Your tainted magick pulses towards $M.\r\n"
+		aggroSpell = true
 	case SpellHaste:
 		aff = engine.NewAffectDirect(SpellHaste, engine.ApplyNone, level, 0, engine.AFFHaste, "haste")
 		// C quirk (magic.c:1046): "You feel your movement quicken!" is a
@@ -467,6 +491,9 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		// C magic.c:1421 executes act(to_room, TRUE, victim, 0, ch, TO_ROOM).
 		// The wand caster is the substitution target, not an excluded recipient.
 		sendAffectRoom(victim, ch, toRoom, true, world)
+	}
+	if aggroSpell {
+		npcRetaliate(world, victim, ch)
 	}
 }
 
@@ -1553,18 +1580,28 @@ func healHP(victim interface{}, amount int) {
 	}
 }
 
-// npcRetaliate makes an NPC victim auto-attack the caster on a failed spell save.
-// Matches C: if (IS_NPC(victim)) hit(victim, ch, TYPE_UNDEFINED);
-func npcRetaliate(victim, ch interface{}) {
+// npcRetaliate is C's hit(victim, ch, TYPE_UNDEFINED) at every spell
+// save-refusal, summon and aggro site (src/spells.c:186,192,317,348,432,590;
+// src/magic.c:945,972,1091,1114,1234,1421): the victim's first swing consumes
+// hit()'s to-hit and damage draws and damage()'s protection block decides,
+// enrolling at the damage point (the pending-body lane for a flagged standing
+// body). C gates the call on IS_NPC(victim); a PC victim never retaliates.
+// The seam goes through the game world's ExecuteSpellCounterattack — the old
+// StartCombatWith name-based assertion had no implementation anywhere and
+// silently no-opped every caller.
+func npcRetaliate(world, victim, ch interface{}) {
 	type npcCheck interface{ IsNPC() bool }
-	type attacker interface{ StartCombatWith(target string) }
-	type namer interface{ GetName() string }
-	if nc, ok := victim.(npcCheck); ok && nc.IsNPC() {
-		if a, ok := victim.(attacker); ok {
-			if n, ok := ch.(namer); ok {
-				a.StartCombatWith(n.GetName())
-			}
-		}
+	if nc, ok := victim.(npcCheck); !ok || !nc.IsNPC() {
+		return
+	}
+	if w, ok := world.(interface {
+		ExecuteSpellCounterattack(victim, caster interface{})
+	}); !ok {
+		// No silent no-op: a world that cannot run hit() is a broken seam,
+		// and every caller of this class once vanished here quietly.
+		panic("spells: npcRetaliate world lacks ExecuteSpellCounterattack")
+	} else {
+		w.ExecuteSpellCounterattack(victim, ch)
 	}
 }
 
@@ -2666,15 +2703,7 @@ func castIdentifyCharacter(level int, ch, cvict, world interface{}) {
 	// C: identify on NPCs fails and aggros
 	if nc, ok := cvict.(npcChecker); ok && nc.IsNPC() {
 		sendToCaster(ch, "The magicks fail horribly!\r\n")
-		if attacker, ok := cvict.(combat.Combatant); ok {
-			if defender, ok := ch.(combat.Combatant); ok {
-				if hitter, ok := world.(interface {
-					MobFirstHit(combat.Combatant, combat.Combatant)
-				}); ok {
-					hitter.MobFirstHit(attacker, defender)
-				}
-			}
-		}
+		npcRetaliate(world, cvict, ch)
 		return
 	}
 
@@ -3225,17 +3254,7 @@ func castCharm(level int, ch, cvict, world interface{}) {
 	if magCharmSaveRoll(cvict, int(SaveParalysis)) {
 		sendToCaster(ch, "Your victim resists!\r\n")
 		// C: spells.c:430-433 — a resisting NPC immediately attacks the caster.
-		if victIsNPC {
-			if attacker, ok := cvict.(combat.Combatant); ok {
-				if defender, ok := ch.(combat.Combatant); ok {
-					if hitter, ok := world.(interface {
-						MobFirstHit(combat.Combatant, combat.Combatant)
-					}); ok {
-						hitter.MobFirstHit(attacker, defender)
-					}
-				}
-			}
-		}
+		npcRetaliate(world, cvict, ch)
 		return
 	}
 
@@ -3431,15 +3450,7 @@ func castSummon(level int, ch, cvict, world interface{}) {
 				looker.LookAtRoomForSpell(ch)
 			}
 			if victIsNPC && getPos(cvict) > int(PosSleeping) {
-				if attacker, ok := cvict.(combat.Combatant); ok {
-					if defender, ok := ch.(combat.Combatant); ok {
-						if hitter, ok := world.(interface {
-							MobFirstHit(attacker, defender combat.Combatant)
-						}); ok {
-							hitter.MobFirstHit(attacker, defender)
-						}
-					}
-				}
+				npcRetaliate(world, cvict, ch)
 			}
 			return
 		}
@@ -3465,6 +3476,9 @@ func castSummon(level int, ch, cvict, world interface{}) {
 		if looker, ok := world.(interface{ LookAtRoomForSpell(victim interface{}) }); ok {
 			looker.LookAtRoomForSpell(cvict)
 		}
+		// spells.c:347-349: an awake NPC victim attacks the caster right
+		// after its arrival look.
+		npcRetaliate(world, cvict, ch)
 	} else {
 		sendToVictim(cvict, "You have a strange dream about falling...\r\n")
 	}
