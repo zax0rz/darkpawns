@@ -320,6 +320,11 @@ exclusive, so no single audience's transcript can observe the relative order.
 
 ## 7. Work queue (color proof still owed)
 
+Companion class audit for the same surface:
+[`skills-spells-attacktype-audit.md`](skills-spells-attacktype-audit.md) — the
+attack type every skill passes to `damage()` was wrong for six skills and
+changed their corpse wording.
+
 Ordered by player exposure. Each row needs a `keep-ansi` scenario; a row is
 "done" when it has one that can fail.
 

@@ -1,0 +1,105 @@
+# C-first proof that a skill's own attack type reaches make_corpse (do_headbutt).
+#
+# C's do_bash calls damage(ch, vict, (GET_LEVEL/2)+1, SKILL_BASH)
+# (src/act.offensive.c:489). damage() hands that value to die_with_killer ->
+# raw_kill -> make_corpse (src/fight.c:1650-1670, 1593-1600), whose switch turns
+# SKILL_BASH (132) into the "bruised, battered" corpse description
+# (src/fight.c:305-323). The pre-audit port re-derived the type from a skill name
+# in pkg/game/damage_stubs.go, found no entry for the empty name, and fell to
+# TYPE_SLASH (303) -- the "hacked up, bloody" group -- so the bash message
+# matched byte for byte while the corpse bytes did not.
+#
+# depth-case: fight.skill-corpse-attack-type
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+# PRIMARY = first player => God (the configurator).
+[setup:oracle]
+Bashcorgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bashcorgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# The attacker walks the newbie path to non-peaceful 8105 where the trainee
+# guard is spawned. A mob victim keeps the vehicle inside the same
+# make_corpse() switch, with no death menu to perturb the block boundaries.
+[setup:oracle:attacker]
+Corpseatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Corpseatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+set player Corpseatt level 15
+skillset Corpseatt 'headbutt' 75
+set trainee maxhit 500
+set trainee hit 1
+
+# do_headbutt passes SKILL_HEADBUTT (141) to damage() (src/new_cmds.c:449) and
+# its damage is GET_LEVEL(ch) = 15, which kills a 1-HP victim outright, so the
+# exchange ends with the corpse in the room. The attacker then looks: the room's
+# object list carries the corpse's long description, which is the byte under
+# test. The pulses clear the post-headbutt wait before `look` drains, and no
+# combat remains for them to advance.
+[probe:attacker]
+headbutt trainee
+~dpclock pulse 20
+~dpclock pulse 20
+look
+~dpclock pulse 20
+look
