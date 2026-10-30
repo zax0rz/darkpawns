@@ -683,9 +683,17 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			if fighting := attacker.GetFightingBody(); fighting == nil || fighting != defender {
 				break
 			}
-			if ce.performOneHit(pair) {
-				break
-			}
+			// C's while loop never exits on damage()'s return value: every
+			// iteration re-reads FIGHTING(ch) (fight.c:2017-2024). A
+			// switcheroo redirect that re-enrolled the same target
+			// (fight.c:1413-1440 — vict is whoever FIGHTINGs ch, the same
+			// opponent in a duel) keeps swinging; a stop (mercy, shopkeeper,
+			// jail) leaves FIGHTING nil and the gate above ends the round
+			// with no further draws. Breaking here ended a switcheroo
+			// victim's whole round after one swing. A redirect to a
+			// DIFFERENT target still breaks at the gate above — C would
+			// swing at the new FIGHTING, a named narrower gap.
+			ce.performOneHit(pair)
 		}
 	}
 

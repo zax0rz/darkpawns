@@ -1568,6 +1568,19 @@ func npcRetaliate(victim, ch interface{}) {
 	}
 }
 
+// spellCounterattack is C's hit(victim, ch, TYPE_UNDEFINED) at the spell
+// refusal sites (src/spells.c:186, 192): the victim's first swing consumes
+// hit()'s draws and damage()'s gates, delivered through the game world's
+// counterattack seam. npcRetaliate above documents the older name-based
+// no-op lane its callers still carry.
+func spellCounterattack(world, victim, ch interface{}) {
+	if w, ok := world.(interface {
+		ExecuteSpellCounterattack(victim, caster interface{})
+	}); ok {
+		w.ExecuteSpellCounterattack(victim, ch)
+	}
+}
+
 // ReagentItem is the interface a reagent object must satisfy.
 // Extracted from function-local to package scope for testability.
 type ReagentItem interface {
@@ -2868,12 +2881,22 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 		}
 	}
 
-	// NPC victims other than the caster get a saving throw. C's teleporter
-	// special passes the same NPC as caster and victim, so that path skips this
-	// branch (src/spells.c:191-198).
+	// NPC victims other than the caster get a saving throw; a made save
+	// refuses the teleport and the victim counterattacks
+	// (src/spells.c:183-187). C's self-teleporting special passes the same
+	// NPC as caster and victim, so that path skips this branch.
 	if vNPC, ok := cvict.(npcChecker); ok && vNPC.IsNPC() && !selfTarget(ch, cvict) {
 		if magSavingThrow(cvict, int(SaveSpell)) {
 			sendToCaster(ch, "The magic words fail to form properly.\r\n")
+			spellCounterattack(world, cvict, ch)
+			return
+		}
+		// A below-immortal caster whose NPC victim is within two levels of
+		// it fails utterly (src/spells.c:189-194): the refusal line to the
+		// caster and the same victim counterattack, never the teleport.
+		if getLevel(ch) < combat.LVL_IMMORT && (getLevel(ch)-getLevel(cvict)) < 3 {
+			sendToCaster(ch, "The magic fails utterly!\r\n")
+			spellCounterattack(world, cvict, ch)
 			return
 		}
 	}

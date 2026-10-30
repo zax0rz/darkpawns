@@ -194,13 +194,14 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 		}
 	}
 
-	// 4. Hiding check — this is a Go room-visibility extension and is not part
-	// of C's CAN_SEE macro, so PERS() opts out via canSeeForPers.
-	if hide && sbjSub.IsAffected(affHide) {
-		if !obsSub.IsAffected(affSenseLife) {
-			return false
-		}
-	}
+	// AFF_HIDE is NOT part of C's CAN_SEE (src/utils.h:521-530): a hidden
+	// character is targetable, act()-visible and pursuable — only
+	// list_char_to_char suppresses it (src/act.informative.c:637-643), and
+	// that filter lives at the listing sites. The hide arm that used to live
+	// here made every hidden body untargetable in the port (a hidden
+	// prototype mob could not be forced, statted or hit while C's
+	// get_char_room_vis found it, src/handler.c:1277-1300).
+	_ = hide
 
 	return true
 }

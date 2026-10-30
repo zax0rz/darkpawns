@@ -105,9 +105,20 @@ func init() {
 
 	// Combat
 	registerCommand("hit", wrapArgs(cmdHit), "Attack a target.")
+	// C's command_interpreter runs the same do_hit body for NPCs under "hit"
+	// and its "murder" alias, and do_kill delegates to do_hit for every NPC
+	// (src/act.offensive.c:134-137), so force/order reach the actor lane for
+	// all three names (R2e; taught by the teleport_victim NPC-refusal probe,
+	// whose forced stalker swing was dropped as unsupported).
+	hitActor := func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterHit(ctx)
+	}
+	registerActorCommand("hit", hitActor)
 	registerCommand("murder", wrapArgs(cmdHit), "Attack a target (C alias of hit).")
+	registerActorCommand("murder", hitActor)
 	registerCommand("parry", wrapArgs(cmdParry), "Enter a defensive parry position.")
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
+	registerActorCommand("kill", hitActor)
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
 	registerActorCommand("flee", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		return game.CharacterFlee(ctx)
