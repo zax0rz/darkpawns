@@ -29,6 +29,8 @@ A reader should know in five seconds whether this is their page, and find their 
 
 **Play opens with "Your first hour":** what to type first (`wear all`), how to get from the temple to the newbie zones, what to do there and what kills new characters. Every direction, room and zone name is checked against the world files (`lib/world/`) and the help text, never written from memory (R4).
 
+**No room numbers on player pages, ever.** Mortals can't see them in the game, so Play pages never show one. Give directions the way a player would: start from a landmark the player can see, then list the exits. For example: "From the temple cross, where the bulletin board is: west, north, west." Check every route against `lib/world/`. Room numbers stay in source evidence and review notes, never on the page.
+
 ## 3. Page types
 
 Every page has front matter:
@@ -50,8 +52,8 @@ Title starts with a verb: "Install Dark Pawns", "Back up your world".
 3. **Before you start**: what you need, as a short list.
 4. **One aside** if it's earned (a Caution before step 1 for anything risky).
 5. **Steps**, split into sub-task sections when long.
-6. **Check it worked**: how the reader knows.
-7. **If it went wrong**: the two or three likely failures, each with its fix. Link to Troubleshooting for the rest.
+6. **Did it work?**: how the reader knows.
+7. **If it didn't work**: the two or three likely failures, each with its fix. Link to Troubleshooting for the rest.
 8. **Related**
 
 ### Explainer: understand something
@@ -100,6 +102,8 @@ One page per release at `/releases/v0-1-7/`, generated from `docs/releases/vX.Y.
 | world (the game data and players on one server) | instance, except in CLI flag names |
 | admin console | dashboard (that's one page), admin panel, backend |
 | web client | web player, browser client |
+
+**Contractions.** Write like a person talking: "don't", "you'll", "it's". It's a MUD; keep it relaxed and conversational. At most one exclamation point per page, and never in steps or warnings.
 
 ## 6. Callouts (Starlight asides)
 
@@ -154,6 +158,7 @@ An image exists to illustrate an idea, point or step. If it doesn't, cut it.
 - **GIFs:** under 15 seconds, no audio, loop, and a first frame that makes sense on its own.
 - **Freshness:** the capture manifest records each image's source files and release; CI warns when a source changed after its image.
 - One theme (the site's), so no light/dark variants.
+- **Media minimum:** every guide with more than three steps on a screen gets at least one focused image or recording, and every Host and Build page gets one unless text really is clearer.
 
 ## 10. Diagrams and data
 
