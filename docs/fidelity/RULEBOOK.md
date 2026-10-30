@@ -57,6 +57,17 @@ the C server exactly. Not "equivalent." Not "improved." Identical.
   (`show`, `stat`, `mlist`, `home`, `hcontrol`, clan info, the practice list,
   the start-room vision, the editor's numbered listing, the infobar); all
   were restored to the intended bytes against the `-O0` build.
+- **R1b. Normalization may not erase a player-facing byte class.** A
+  normalization rule that removes or rewrites bytes in the compared transcript
+  (ANSI color, line terminators, trailing whitespace) claims those bytes are
+  transport, not game. A class it erases needs its own proof mode and at least
+  one scenario per surface that can fail. A green census says nothing about
+  color or terminators; color is proved with `keep-ansi` fixtures, and
+  terminators by byte-checking the C. Taught by the 2026-10-29 ANSI audit
+  (combat's yellow/red and the BLEEDING red were missing, and only 17 of 1,801
+  scenarios kept ANSI, none of them combat) and by cutthroat's `\n\r`
+  terminator (#532 to #537), which passed green because the normalizer folds
+  line endings.
 
 ## R2. The command surface is part of the game
 
@@ -225,3 +236,4 @@ cannot observe them.
 | 2026-09-28 | R5h added; R1a extended | PR #1682: the shared reference oracle was an `-O2` build and the port had copied its truncations; restored reports then went green on fixtures that could not fail (second instance after DP-1212's coincidence greens, so R5b) |
 | 2026-09-29 | R3c extended (raw-pulse `WAIT_STATE`) | DP-1368 / PR #1705: `PULSE_VIOLENCE + N` waits stored as whole rounds (hit 60 vs C's 22 pulses, plus kick, circle, strike and retreat's failure arm). Added by the implementing agent under the old R5b wording; Zach reviewed and kept it |
 | 2026-09-29 | *Who amends* added; R5b reworded | The R3c edit above: the agent followed R5b's "amend this rulebook" literally, and read authorization for the fix as authorization for the rule. The instruction was ambiguous, so it's clarified: agents propose, Zach approves the text |
+| 2026-10-30 | R1b added | DeepSeek ANSI audit (PR #2231): the census strips ANSI and folds terminators, so combat color was never compared; same class as cutthroat #532/#537. Proposed by the auditing agent, wording widened by Claude, approved by Zach |
