@@ -147,8 +147,8 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	// C act.wizard.c:736-750 prints "Monster Class: " for an NPC and colours
 	// the level and experience exactly as it does for a PC.
 	s.sendStatMobLine(fmt.Sprintf("Monster Class: Normal, Lev: [%s], XP: [%s], Align: [%4d]",
-		wizardTint(fmt.Sprintf("%2d", mob.GetLevel()), statYellow, normal),
-		wizardTint(fmt.Sprintf("%7d", proto.Exp), statYellow, normal),
+		colorWrap(fmt.Sprintf("%2d", mob.GetLevel()), ansiYellow, normal),
+		colorWrap(fmt.Sprintf("%7d", proto.Exp), ansiYellow, normal),
 		mob.GetAlignment()))
 	race := proto.Race
 	if proto.RaceStr == "" {
@@ -160,17 +160,17 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	s.sendStatMobLine(fmt.Sprintf("Race: [%d] %s", race, wizardMobRaceName(race)))
 	s.sendStatMobLine("*************-------------*************-------------*************")
 	s.sendStatMobLine(fmt.Sprintf("Str: [%s]\tInt: [%s]\t*\tHit p.:  [%s]",
-		wizardTint(fmt.Sprintf("%d/%d", mob.GetStr(), mob.GetStrAdd()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d", mob.GetInt()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d/%d+%d", mob.GetHP(), mob.GetMaxHP(), s.manager.world.MobHitGain(mob)), statGreen, normal)))
+		colorWrap(fmt.Sprintf("%d/%d", mob.GetStr(), mob.GetStrAdd()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d", mob.GetInt()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d/%d+%d", mob.GetHP(), mob.GetMaxHP(), s.manager.world.MobHitGain(mob)), ansiGreen, normal)))
 	s.sendStatMobLine(fmt.Sprintf("Dex: [%s]\tWis: [%s]\t*\tMana p.: [%s]",
-		wizardTint(fmt.Sprintf("%d", mob.GetDex()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d", mob.GetWis()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d/%d+%d", mob.GetMana(), mob.GetMaxMana(), s.manager.world.ManaGainNPC(mob)), statGreen, normal)))
+		colorWrap(fmt.Sprintf("%d", mob.GetDex()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d", mob.GetWis()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d/%d+%d", mob.GetMana(), mob.GetMaxMana(), s.manager.world.ManaGainNPC(mob)), ansiGreen, normal)))
 	s.sendStatMobLine(fmt.Sprintf("Con: [%s/%d]\tCha: [%s]\t*\tMove p.: [%s]",
-		wizardTint(fmt.Sprintf("%d", mob.GetCon()), statCyan, normal), mob.GetCon(),
-		wizardTint(fmt.Sprintf("%d", mob.GetCha()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d/%d+%d", mob.GetMove(), mob.GetMaxMove(), game.MoveGainNPC(mob)), statGreen, normal)))
+		colorWrap(fmt.Sprintf("%d", mob.GetCon()), ansiCyan, normal), mob.GetCon(),
+		colorWrap(fmt.Sprintf("%d", mob.GetCha()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d/%d+%d", mob.GetMove(), mob.GetMaxMove(), game.MoveGainNPC(mob)), ansiGreen, normal)))
 	s.sendStatMobLine("*************-------------*************-------------*************")
 	s.sendStatMobLine(fmt.Sprintf("Coins: [%9d], Bank: [%9d] (Total: %d)", mob.GetGold(), 0, mob.GetGold()))
 	s.sendStatMobLine(fmt.Sprintf("AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [%d/%d/%d/%d/%d]",
@@ -184,12 +184,12 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 		wizardPositionName(mob.GetPosition()), wizardFightingName(mob.GetFighting()), attackName))
 	if proto.Noise != "" {
 		// C act.wizard.c:863-866: CCYEL around the noise text.
-		s.sendStatMobLine("Noise: " + wizardTint(proto.Noise, statYellow, normal))
+		s.sendStatMobLine("Noise: " + colorWrap(proto.Noise, ansiYellow, normal))
 	}
 	s.sendStatMobLine(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]",
 		wizardPositionName(proto.DefaultPos), 0))
 	// C act.wizard.c:877-880: CCCYN around the NPC flag list.
-	s.sendStatMobLine("NPC flags: " + wizardTint(wizardMobFlags(mob.GetMobFlags()), statCyan, normal))
+	s.sendStatMobLine("NPC flags: " + colorWrap(wizardMobFlags(mob.GetMobFlags()), ansiCyan, normal))
 	// C reports the installed prototype callback, including shop_keeper.
 	// src/act.wizard.c:908-910; src/shop.c:1224-1238.
 	_, nativeSpecial := game.GetMobSpecName(mob.GetVNum())
@@ -209,7 +209,7 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 		s.sendStatMobLine("Hunting: " + hunting)
 	}
 	s.Send(s.statFollowerListOutput(mob.GetFollowing(), mob.GetName(), true))
-	s.sendStatMobLine("AFF: " + wizardTint(wizardAffectFlags(mobEffectiveAffectBits(mob)), statYellow, normal))
+	s.sendStatMobLine("AFF: " + colorWrap(wizardAffectFlags(mobEffectiveAffectBits(mob)), ansiYellow, normal))
 	s.sendStatAffectLines(mob.OrderedAffects())
 }
 
@@ -272,8 +272,8 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	// experience, each closed by CCNRM(ch, C_NRM).
 	s.Send(fmt.Sprintf("Class: %s, Lev: [%s], XP: [%s], Align: [%4d]\r\n",
 		wizardClassName(p.GetClass()),
-		wizardTint(fmt.Sprintf("%2d", p.GetLevel()), statYellow, normal),
-		wizardTint(fmt.Sprintf("%7d", p.GetExp()), statYellow, normal),
+		colorWrap(fmt.Sprintf("%2d", p.GetLevel()), ansiYellow, normal),
+		colorWrap(fmt.Sprintf("%7d", p.GetExp()), ansiYellow, normal),
 		p.GetAlignment()))
 	pt := p.PlayingTime()
 	age := game.Age(p.Birth).Year
@@ -308,24 +308,24 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	// C act.wizard.c:797-823: CCCYN wraps each stat, CCGRN wraps each
 	// points field, CCNRM closes each. Padding stays inside the colour.
 	s.Send(fmt.Sprintf("Str: [%s]\tInt: [%s]\t*\tHit p.:  [%s]\r\n",
-		wizardTint(fmt.Sprintf("%d/%d", p.GetStr(), p.GetStrAdd()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d", p.GetInt()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d/%d+%d", hitPoints, p.GetMaxHP(), s.manager.world.HitGain(p)), statGreen, normal)))
+		colorWrap(fmt.Sprintf("%d/%d", p.GetStr(), p.GetStrAdd()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d", p.GetInt()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d/%d+%d", hitPoints, p.GetMaxHP(), s.manager.world.HitGain(p)), ansiGreen, normal)))
 	s.Send(fmt.Sprintf("Dex: [%s]\tWis: [%s]\t*\tMana p.: [%s]\r\n",
-		wizardTint(fmt.Sprintf("%d", p.GetDex()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d", p.GetWis()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d/%d+%d", p.GetMana(), p.GetMaxMana(), s.manager.world.ManaGain(p)), statGreen, normal)))
+		colorWrap(fmt.Sprintf("%d", p.GetDex()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d", p.GetWis()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d/%d+%d", p.GetMana(), p.GetMaxMana(), s.manager.world.ManaGain(p)), ansiGreen, normal)))
 	s.Send(fmt.Sprintf("Con: [%s/%d]\tCha: [%s]\t*\tMove p.: [%s]\r\n",
-		wizardTint(fmt.Sprintf("%d", p.GetCon()), statCyan, normal), originalCon,
-		wizardTint(fmt.Sprintf("%d", p.GetCha()), statCyan, normal),
-		wizardTint(fmt.Sprintf("%d/%d+%d", p.GetMove(), p.GetMaxMove(), s.manager.world.MoveGain(p)), statGreen, normal)))
+		colorWrap(fmt.Sprintf("%d", p.GetCon()), ansiCyan, normal), originalCon,
+		colorWrap(fmt.Sprintf("%d", p.GetCha()), ansiCyan, normal),
+		colorWrap(fmt.Sprintf("%d/%d+%d", p.GetMove(), p.GetMaxMove(), s.manager.world.MoveGain(p)), ansiGreen, normal)))
 	s.Send("*************-------------*************-------------*************\r\n")
 	// C act.wizard.c:831-835: the only C_CMP site in do_stat_character —
 	// CCRED(ch, C_CMP) around each count, so both colour bits are required.
 	s.Send(fmt.Sprintf("Kills: [%s], PKills: [%s], Deaths: [%s]\r\n",
-		wizardTint(fmt.Sprintf("%9d", p.Kills), statRed, complete),
-		wizardTint(fmt.Sprintf("%9d", p.PKs), statRed, complete),
-		wizardTint(fmt.Sprintf("%9d", p.Deaths), statRed, complete)))
+		colorWrap(fmt.Sprintf("%9d", p.Kills), ansiRed, complete),
+		colorWrap(fmt.Sprintf("%9d", p.PKs), ansiRed, complete),
+		colorWrap(fmt.Sprintf("%9d", p.Deaths), ansiRed, complete)))
 	s.Send(fmt.Sprintf("Coins: [%9d], Bank: [%9d] (Total: %d)\r\n", p.GetGold(), p.GetBankGold(), p.GetGold()+p.GetBankGold()))
 	s.Send(fmt.Sprintf("AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [%d/%d/%d/%d/%d]\r\n",
 		p.GetAC(), p.GetHitroll(), p.GetDamroll(), p.GetSavingThrow(0), p.GetSavingThrow(1), p.GetSavingThrow(2), p.GetSavingThrow(3), p.GetSavingThrow(4)))
@@ -338,12 +338,12 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 	s.Send(line + "\r\n")
 	s.Send(fmt.Sprintf("Default position: %s, Idle Timer (in tics) [%d]\r\n", wizardPositionName(combat.PosStanding), p.GetIdleTimer()))
 	// C act.wizard.c:884-898: PLR cyan, PRF and Racial Hatreds green.
-	s.Send("PLR: " + wizardTint(wizardPlayerFlags(p, flags), statCyan, normal) + "\r\n")
+	s.Send("PLR: " + colorWrap(wizardPlayerFlags(p, flags), ansiCyan, normal) + "\r\n")
 	preferenceFlags := flags
 	autoExit := p.GetAutoExit()
 
-	s.Send("PRF: " + wizardTint(wizardPreferenceFlags(preferenceFlags, autoExit), statGreen, normal) + "\r\n")
-	s.Send("Racial Hatreds: " + wizardTint("None None None None None", statGreen, normal) + "\r\n")
+	s.Send("PRF: " + colorWrap(wizardPreferenceFlags(preferenceFlags, autoExit), ansiGreen, normal) + "\r\n")
+	s.Send("Racial Hatreds: " + colorWrap("None None None None None", ansiGreen, normal) + "\r\n")
 	if p.GetLevel() >= LVL_IMMORT {
 		poofIn, poofOut := p.PoofIn, p.PoofOut
 		if poofIn == "" {
@@ -383,7 +383,7 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 		master = p.GetFollowing()
 	}
 	s.Send(s.statFollowerListOutput(master, p.GetName(), connected))
-	s.Send("AFF: " + wizardTint(wizardAffectFlags(playerEffectiveAffectBits(p)), statYellow, normal) + "\r\n")
+	s.Send("AFF: " + colorWrap(wizardAffectFlags(playerEffectiveAffectBits(p)), ansiYellow, normal) + "\r\n")
 	// C affect_to_char/affect_to_char2 prepends to ch->affected (src/handler.c:391,415),
 	// whereas Go appends to p.ActiveAffects (pkg/game/player_affects.go:405).
 	ordered := make([]*engine.Affect, 0, len(p.ActiveAffects))
@@ -450,7 +450,7 @@ func (s *Session) sendStatAffectLines(affects []*engine.Affect) {
 		// C act.wizard.c:975-976: CCCYN wraps the %-21s spell name, so the
 		// padding and the CCNRM both sit inside the field.
 		line := fmt.Sprintf("SPL: (%3dhr) %s ", aff.Duration+1,
-			wizardTint(fmt.Sprintf("%-21s", spellName), statCyan, normal))
+			colorWrap(fmt.Sprintf("%-21s", spellName), ansiCyan, normal))
 		hasMod := false
 		if aff.Magnitude != 0 {
 			line += fmt.Sprintf("%+d to %s", aff.Magnitude, wizardApplyTypeName(aff.Location))
@@ -640,9 +640,9 @@ func (s *Session) sendStatRoom() {
 	normal, _ := s.statColorGates()
 	// C act.wizard.c:422-429: CCCYN wraps the room name; only the VNum is
 	// green on the zone row, the zone number and RNum stay plain.
-	s.Send(fmt.Sprintf("Room name: %s\r\n", wizardTint(room.Name, statCyan, normal)))
+	s.Send(fmt.Sprintf("Room name: %s\r\n", colorWrap(room.Name, ansiCyan, normal)))
 	s.Send(fmt.Sprintf("Zone: [%3d], VNum: [%s], RNum: [%5d], Type: %s\r\n",
-		zoneIndex, wizardTint(fmt.Sprintf("%5d", room.VNum), statGreen, normal), rnum, wizardSectorName(room.Sector)))
+		zoneIndex, colorWrap(fmt.Sprintf("%5d", room.VNum), ansiGreen, normal), rnum, wizardSectorName(room.Sector)))
 	s.Send(fmt.Sprintf("SpecProc: None, Flags: %s\r\n", wizardRoomFlags(room.Flags)))
 	s.Send("Description:\r\n")
 	if room.Description != "" {
@@ -676,7 +676,7 @@ func (s *Session) sendStatRoom() {
 	for _, mob := range mobs {
 		chars = append(chars, fmt.Sprintf("%s(MOB)", mob.GetName()))
 	}
-	s.Send(wizardWrappedListOutput("Chars present:", chars, statYellow, normal))
+	s.Send(wizardWrappedListOutput("Chars present:", chars, ansiYellow, normal))
 
 	items := w.GetItemsInRoom(room.VNum)
 	var itemNames []string
@@ -684,7 +684,7 @@ func (s *Session) sendStatRoom() {
 		itemNames = append(itemNames, item.GetShortDesc())
 	}
 	if len(itemNames) > 0 {
-		s.Send(wizardWrappedListOutput("Contents:", itemNames, statGreen, normal))
+		s.Send(wizardWrappedListOutput("Contents:", itemNames, ansiGreen, normal))
 	}
 	for _, direction := range []string{"north", "east", "south", "west", "up", "down"} {
 		exit, ok := room.Exits[direction]
@@ -695,16 +695,16 @@ func (s *Session) sendStatRoom() {
 		// C act.wizard.c:491-500: CCCYN wraps the direction and the target
 		// room. A NOWHERE exit (src/structs.h:34) prints " NONE" with the
 		// leading space outside the colour.
-		target := " " + wizardTint("NONE", statCyan, normal)
+		target := " " + colorWrap("NONE", ansiCyan, normal)
 		if exit.ToRoom > -1 {
-			target = wizardTint(fmt.Sprintf("%5d", exit.ToRoom), statCyan, normal)
+			target = colorWrap(fmt.Sprintf("%5d", exit.ToRoom), ansiCyan, normal)
 		}
 		// C sends this prefix and the description as adjacent write_to_output
 		// calls (act.wizard.c:499-507). Preserve the trailing space as the first
 		// byte of the next line instead of letting the text renderer append a
 		// separate line ending after it.
 		s.sendLiteralText(fmt.Sprintf("Exit %s:  To: [%s], Key: [%5d], Keywrd: %s, Type: %s\r\n ",
-			wizardTint(fmt.Sprintf("%-5s", direction), statCyan, normal), target,
+			colorWrap(fmt.Sprintf("%-5s", direction), ansiCyan, normal), target,
 			exit.Key, wizardExitKeyword(exit.Keywords), exitBits))
 		if exit.Description != "" {
 			s.Send(strings.ReplaceAll(exit.Description, "\n", "\r\n"))
@@ -813,9 +813,9 @@ func (s *Session) sendStatObjectInstance(object *game.ObjectInstance) {
 	// C act.wizard.c:522-533: CCYEL wraps the short description, CCGRN wraps
 	// the VNum; the aliases and RNum stay plain.
 	s.Send(fmt.Sprintf("Name: '%s', Aliases: %s\r\n",
-		wizardTint(object.GetShortDesc(), statYellow, normal), object.GetKeywords()))
+		colorWrap(object.GetShortDesc(), ansiYellow, normal), object.GetKeywords()))
 	s.Send(fmt.Sprintf("VNum: [%s], RNum: [%5d], Type: %s, SpecProc: None\r\n",
-		wizardTint(fmt.Sprintf("%5d", object.GetVNum()), statGreen, normal), rnum, wizardItemTypeName(object.GetTypeFlag())))
+		colorWrap(fmt.Sprintf("%5d", object.GetVNum()), ansiGreen, normal), rnum, wizardItemTypeName(object.GetTypeFlag())))
 	s.Send(fmt.Sprintf("L-Des: %s\r\n", object.GetLongDesc()))
 	if extra := object.GetExtraDescs(); len(extra) > 0 {
 		var names []string
@@ -1013,26 +1013,27 @@ func wizardExtraDescriptionLine(keywords []string, colored bool) string {
 	var line strings.Builder
 	line.WriteString("Extra descs:")
 	if colored {
-		line.WriteString(statCyan)
+		line.WriteString(ansiCyan)
 	}
 	for _, keyword := range keywords {
 		line.WriteByte(' ')
 		line.WriteString(keyword)
 	}
 	if colored {
-		line.WriteString(statNormal)
+		line.WriteString(ansiNormal)
 	}
 	line.WriteString("\r\n")
 	return line.String()
 }
 
-// ANSI codes the stat surface uses, from src/screen.h:34-41.
+// ANSI codes from src/screen.h:34-41, shared by the colored player-facing
+// surfaces (stat, report, group).
 const (
-	statNormal = "\x1b[0m"  // KNRM
-	statRed    = "\x1b[31m" // KRED
-	statGreen  = "\x1b[32m" // KGRN
-	statYellow = "\x1b[33m" // KYEL
-	statCyan   = "\x1b[36m" // KCYN
+	ansiNormal = "\x1b[0m"  // KNRM
+	ansiRed    = "\x1b[31m" // KRED
+	ansiGreen  = "\x1b[32m" // KGRN
+	ansiYellow = "\x1b[33m" // KYEL
+	ansiCyan   = "\x1b[36m" // KCYN
 )
 
 func wizardHasNormalColor(flags uint64) bool {
@@ -1061,15 +1062,15 @@ func (s *Session) statColorGates() (normal, complete bool) {
 	return wizardHasNormalColor(flags), wizardHasCompleteColor(flags)
 }
 
-// wizardTint wraps value in C's colour macro pair — CCCYN(ch, C_NRM) value
+// colorWrap wraps value in C's colour macro pair — CCCYN(ch, C_NRM) value
 // CCNRM(ch, C_NRM) — or returns it untouched when the viewer's level gate is
 // closed (src/screen.h:45-56). Callers format padding before the call so the
 // field width lands inside the colour, exactly as C's sprintf does.
-func wizardTint(value, ansi string, colored bool) string {
+func colorWrap(value, ansi string, colored bool) string {
 	if !colored {
 		return value
 	}
-	return ansi + value + statNormal
+	return ansi + value + ansiNormal
 }
 
 // wizardFollowerListOutput mirrors do_stat_character's follower buffer and
@@ -1147,7 +1148,7 @@ func wizardWrappedListOutput(label string, entries []string, colorCode string, c
 		output.WriteString(line.String())
 	}
 	if colored {
-		output.WriteString(statNormal)
+		output.WriteString(ansiNormal)
 	}
 	return output.String()
 }
@@ -1160,7 +1161,7 @@ func wizardObjectContentsOutput(contents []*game.ObjectInstance, colored bool) s
 	var output, line strings.Builder
 	line.WriteString("\r\nContents:")
 	if colored {
-		line.WriteString(statGreen)
+		line.WriteString(ansiGreen)
 	}
 	found := 0
 	for i, child := range contents {
@@ -1186,7 +1187,7 @@ func wizardObjectContentsOutput(contents []*game.ObjectInstance, colored bool) s
 		output.WriteString(line.String())
 	}
 	if colored {
-		output.WriteString(statNormal) // CCNRM(ch, C_NRM), src/screen.h:45-56.
+		output.WriteString(ansiNormal) // CCNRM(ch, C_NRM), src/screen.h:45-56.
 	}
 	return output.String()
 }
