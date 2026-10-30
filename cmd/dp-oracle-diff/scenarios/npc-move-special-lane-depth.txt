@@ -1,0 +1,56 @@
+# NPC movement's special lane: a live movement-reactive special both blocks
+# the move and declines for other directions. The elven sentinel (19510)
+# carries SPECIAL(castle_guard_north) (src/spec_assign.c:447,
+# src/spec_procs2.c:2218-2258): a mortal mover's 'north' is blocked with the
+# TO_NOTVICT/TO_ROOM acts the observer sees, while 'south' (and any other
+# command) declines and the move runs through C's ordinary do_simple_move. C
+# declares the no_move_* family (spec_procs2.c:2054-2124) with no ASSIGNMOB
+# row, so no live mobile carries it; the sentinel is the reachable blocker.
+# The ogre (14300, no special, no noise, no AFF_HIDE; aggressive but the
+# implementor runs nohassle) is the mover.
+# depth-case: turn.npc-flee-special-lane
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19510 1 8105 195
+spawn-mob 14300 1 8105 143
+
+[setup:oracle]
+Movewitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Movewitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+nohassle
+look
+
+[probe]
+force ogre north
+look
+force ogre south
+look
