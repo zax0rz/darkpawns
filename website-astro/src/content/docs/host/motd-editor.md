@@ -21,7 +21,7 @@ GRGOD (level 38) or higher can save; other staff see read-only text.
    see where a terminal wraps each line, including long words. On a narrow
    screen, scroll sideways inside the preview.
 4. Toggle **Color** to compare rendered colors with the text containing the
-   color codes. Preview controls do not change your draft.
+   color codes. Preview controls don't change your draft.
 5. Choose **Save MOTD** or **Save Immortal MOTD**. Save each message separately.
    The saved message takes effect at once. Players see it at their next login;
    no reboot is needed.
@@ -43,14 +43,14 @@ Place the cursor where you want the snippet, or select text to replace.
   There is no preset invite. Check the address before saving.
 - **Gossip notice** inserts: “What's said on gossip echoes to our Discord.”
 
-Snippets only change your draft. They do not save it or change Notifications.
+Snippets only change your draft. They don't save it or change Notifications.
 
 Check [Notifications](/docs/host/notifications/) before inserting the gossip
 notice. Its **Show the automatic gossip notice in the MOTD** option can already
 add that sentence while the gossip mirror is active and ready. Automatic notices
 are absent from the preview. Leave the snippet out if Notifications adds it, or
 turn the automatic notice off if your own message already explains the mirror.
-The game does not remove duplicate notices for you.
+The game doesn't remove duplicate notices for you.
 
 ## Keep or discard a draft
 
@@ -58,7 +58,7 @@ The game does not remove duplicate notices for you.
 If that tab has unsaved changes, confirm before discarding them.
 
 Leaving the page or closing the browser warns about unsaved changes in either
-tab. Drafts last while this editor stays open; they are not a backup. Copy any
+tab. Drafts last while this editor stays open; they aren't a backup. Copy any
 text you need before leaving.
 
 If someone else saves first, your save stops and your draft stays here. The
@@ -82,4 +82,4 @@ available. The byte limit counts CRLF line endings; saved text uses LF endings.
 
 The preview uses xterm with the game's ampersand color markers. It changes
 neither saved text nor game output. This editor adds no default player text and
-does not change existing login behaviour (R1/R4).
+doesn't change existing login behaviour (R1/R4).

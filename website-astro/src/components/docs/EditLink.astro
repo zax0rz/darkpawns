@@ -1,0 +1,14 @@
+---
+import { Icon } from '@astrojs/starlight/components';
+const { editUrl } = Astro.locals.starlightRoute;
+const markdownUrl = Astro.url.pathname.replace(/\/$/, '') + '.md';
+---
+<div class="docs-edit-links print:hidden">
+  {editUrl && <a href={editUrl}><Icon name="pencil" size="1.2em" />Edit on GitHub</a>}
+  <a href={markdownUrl} type="text/markdown">View as Markdown</a>
+</div>
+<style>
+  .docs-edit-links { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.5rem; }
+  a { display: inline-flex; gap: .4rem; align-items: center; min-height: 44px; color: var(--accent); text-underline-offset: .2em; }
+  a:hover { color: var(--accent-deep); }
+</style>

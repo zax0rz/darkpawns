@@ -1,3 +1,4 @@
+import { docsHelpRedirects } from './scripts/command-taxonomy.mjs';
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
@@ -9,26 +10,9 @@ import { satteri } from '@astrojs/markdown-satteri';
 import { noLiteralAutolinks } from './src/lib/no-literal-autolinks.mjs';
 import { readdirSync } from 'node:fs';
 
-const helpRoot = new URL('./src/content/help/', import.meta.url);
-const helpCategories = new Set(['commands', 'info', 'socials', 'spells', 'wizhelp']);
-const helpRedirects = Object.fromEntries(
-  readdirSync(helpRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .flatMap((category) =>
-      readdirSync(new URL(`./${category.name}/`, helpRoot), { withFileTypes: true })
-        .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-        .map((entry) => {
-          const slug = entry.name.slice(0, -3);
-          return [`/help/${slug}`, `/help/${category.name}/${slug}/`];
-        })
-        .filter(([source]) => !helpCategories.has(source.slice('/help/'.length))),
-    ),
-);
-
-const redirects = {
+const redirects = Object.fromEntries(Object.entries({
   ...docsRedirects,
-  ...helpRedirects,
-  '/help/!': '/help/commands/bang-caret/',
+  ...docsHelpRedirects(),
   '/mudlet': '/connect/#mudlet',
   '/connect/client-downloads': '/connect/',
   '/connect/connection-instructions': '/connect/',
@@ -88,7 +72,7 @@ const redirects = {
   '/tags/world': '/world/',
   '/pawn-lab.html': '/docs/project/',
   '/status': '/about/project/',
-};
+}).map(([from, to]) => [from.replace(/\/$/, '') || '/', to]));
 
 // Dark Pawns — Astro migration (replaces the Hugo site in ../website).
 export default defineConfig({
@@ -119,6 +103,8 @@ export default defineConfig({
       components: {
         Header: './src/components/docs/Header.astro', MobileMenuToggle: './src/components/docs/MobileMenuToggle.astro',
         Head: './src/components/docs/Head.astro',
+        EditLink: './src/components/docs/EditLink.astro',
+        Footer: './src/components/docs/Footer.astro',
         ThemeProvider: './src/components/docs/Theme.astro',
         ThemeSelect: './src/components/docs/Empty.astro',
         PageTitle: './src/components/docs/PageTitle.astro',

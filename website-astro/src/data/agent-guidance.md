@@ -11,7 +11,6 @@ The canonical site is https://darkpawns.org/. Source code is maintained at https
 
 ## Game reference
 
-- [Help files](https://darkpawns.org/help/): In-game commands, spells, socials, and reference text.
 - [World handbook](https://darkpawns.org/world/): Classes, races, systems, lore, and other player-facing material.
 - [World map](https://darkpawns.org/map/): Interactive map generated from the active world files.
 - [Database codex](https://darkpawns.org/database/): Searchable mobs and items from the active world files.
@@ -37,7 +36,7 @@ The canonical site is https://darkpawns.org/. Source code is maintained at https
 - [Map index](https://darkpawns.org/map/map-index.json): Generated map metadata and zone files.
 - [OpenAPI specification](https://darkpawns.org/openapi.json): Game server HTTP API, also at /api/openapi.json.
 
-Most documentation, help, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended: `/docs/project/architecture.md` is the Markdown form of `/docs/project/architecture/`. Requesting the canonical URL with `Accept: text/markdown` returns the same document.
+Most documentation, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended: `/docs/project/architecture.md` is the Markdown form of `/docs/project/architecture/`. Requesting the canonical URL with `Accept: text/markdown` returns the same document.
 
 ## Notes
 
@@ -45,36 +44,3 @@ Most documentation, help, world, blog, and archive entries have a Markdown repre
 - Community archive pages identify their original source and Wayback Machine capture, in the page text and in schema.org JSON-LD (isBasedOn is the original URL, citation is the archived copy). Records whose capture carries no timestamp are labelled "Date not recorded" and deliberately assert no publication date.
 - Archive transcripts are verbatim: their spelling, punctuation and formatting are the 2004 authors' own and should not be corrected when quoted.
 - The C source under `src/` is the behavioral oracle for the Go port. See the repository fidelity rulebook before proposing gameplay changes.
-
-## Documentation paths
-
-- [Build](https://darkpawns.org/docs/build/)
-- [Run a local server](https://darkpawns.org/docs/build/local-server/)
-- [Configuration settings](https://darkpawns.org/docs/host/admin-configuration/)
-- [The admin console](https://darkpawns.org/docs/host/admin-console/)
-- [Dashboard and logs](https://darkpawns.org/docs/host/dashboard-and-logs/)
-- [Your first login](https://darkpawns.org/docs/host/first-login/)
-- [Host](https://darkpawns.org/docs/host/)
-- [Install Dark Pawns](https://darkpawns.org/docs/host/install/)
-- [Edit the welcome messages](https://darkpawns.org/docs/host/motd-editor/)
-- [Notifications](https://darkpawns.org/docs/host/notifications/)
-- [Saved character management](https://darkpawns.org/docs/host/player-management/)
-- [Players can't connect](https://darkpawns.org/docs/host/players-cannot-connect/)
-- [Update your server](https://darkpawns.org/docs/host/update-server/)
-- [Documentation](https://darkpawns.org/docs/)
-- [Connect a client](https://darkpawns.org/docs/play/connect-client/)
-- [Your first hour](https://darkpawns.org/docs/play/first-hour/)
-- [Play](https://darkpawns.org/docs/play/)
-- [Server architecture](https://darkpawns.org/docs/project/architecture/)
-- [Contribute to Dark Pawns](https://darkpawns.org/docs/project/contributing/)
-- [Project](https://darkpawns.org/docs/project/)
-- [Port fidelity workflow](https://darkpawns.org/docs/project/port-fidelity/)
-- [Release announcements](https://darkpawns.org/docs/project/release-announcements/)
-- [Glossary](https://darkpawns.org/docs/reference/glossary/)
-- [Reference](https://darkpawns.org/docs/reference/)
-- [Commands](https://darkpawns.org/docs/reference/commands/)
-- [Public API](https://darkpawns.org/docs/reference/api/public/)
-- [Admin API](https://darkpawns.org/docs/reference/api/admin/)
-- [Releases](https://darkpawns.org/docs/releases/)
-
-Every documentation page, including generated API and release pages, has a Markdown twin at its canonical path without the trailing slash followed by `.md`.

@@ -1,5 +1,5 @@
 import { defineCollection, z } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { glob, file } from 'astro/loaders';
 import { docsSchema, i18nSchema } from '@astrojs/starlight/schema';
 import { i18nLoader } from '@astrojs/starlight/loaders';
 import release from '../.generated/release.json';
@@ -149,4 +149,6 @@ const generatedDocs = defineCollection({
 
 const i18n = defineCollection({ loader: i18nLoader(), schema: i18nSchema() });
 
-export const collections = { blog, world, help, archive, docs, generatedDocs, i18n };
+const docsApiCatalogue = defineCollection({ loader: file('./.generated/api/catalogue.json'), schema: docsFields });
+
+export const collections = { docsApiCatalogue, blog, world, help, archive, docs, generatedDocs, i18n };

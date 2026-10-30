@@ -1,15 +1,20 @@
 ---
-title: Host
-description: Install and run your Dark Pawns server, manage characters and settings, and diagnose connection problems with guides checked against the current release.
+title: "Host"
+description: "Install and operate a Dark Pawns server, create a world, manage its settings and players, and learn what public hosting requires before players connect."
 type: reference
 audience: operators
 verified: v0.1.7
 ---
 
-[Install Dark Pawns](/docs/host/install/)
+Start with [Hosting at a glance](/docs/host/hosting-overview/) for the machine, network, cost, and setup facts. Then follow the install and first-login guides.
 
-[Your first login](/docs/host/first-login/)
+- [Install Dark Pawns](/docs/host/install/)
+- [Your first login](/docs/host/first-login/)
+- [The admin console](/docs/host/admin-console/)
+- [Dashboard and logs](/docs/host/dashboard-and-logs/)
+- [Saved character management](/docs/host/player-management/)
+- [Configuration settings](/docs/host/admin-configuration/)
+- [Update your server](/docs/host/update-server/)
+- [Players can't connect](/docs/host/players-cannot-connect/)
 
-[The admin console](/docs/host/admin-console/)
-
-[Update your server](/docs/host/update-server/)
+![Portable bundle setup starts an isolated local world.](/media/docs/install-and-setup.gif)

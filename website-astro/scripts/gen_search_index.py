@@ -24,6 +24,7 @@ import os
 import re
 import json
 import sys
+import subprocess
 from pathlib import Path
 
 # Base paths
@@ -107,6 +108,18 @@ def parse_frontmatter(content: str):
 def index_markdown_content():
     """Index help, docs, world, blog, and archive content."""
     entries = []
+
+    taxonomy = json.loads(subprocess.run(
+        ["node", str(ASTRO_ROOT / "scripts" / "command-taxonomy.mjs")],
+        cwd=ASTRO_ROOT, check=True, capture_output=True, text=True,
+    ).stdout)
+    help_targets = {
+        (topic["category"], topic["slug"]): (
+            f"/docs/reference/commands/{group['slug']}/#{topic['anchor']}"
+        )
+        for group in taxonomy["groups"]
+        for topic in group["topics"]
+    }
     
     # 1. Help Collection
     help_dir = CONTENT_DIR / "help"
@@ -137,6 +150,9 @@ def index_markdown_content():
                 title = meta.get("title", slug.replace("-", " ").upper())
                 desc = meta.get("description", clean_text(body, 160))
                 subtype = category_map.get(cat, cat.title())
+                target = help_targets.get((cat, slug))
+                if target is None:
+                    raise ValueError(f"help topic has no grouped reference target: {cat}/{slug}")
                 
                 # Help keyword aliases
                 keywords = [slug.replace("-", " ")]
@@ -149,7 +165,7 @@ def index_markdown_content():
                     "t": title,
                     "c": "help",
                     "s": subtype,
-                    "u": f"/help/{cat}/{slug}/",
+                    "u": target,
                     # Deduplicated but order-stable. A bare set reorders on
                     # every run, because Python randomises string hashing per
                     # process, so 261 entries changed on every regeneration

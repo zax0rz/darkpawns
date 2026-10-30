@@ -1,6 +1,6 @@
 ---
-title: Glossary
-description: Look up the game terms and abbreviations used in Dark Pawns help, player guides, and server documentation, from AC to vnum.
+title: "Glossary"
+description: "Look up the game terms and abbreviations used in Dark Pawns help, player guides, and server documentation, from AC to vnum."
 type: reference
 audience: players
 verified: v0.1.7

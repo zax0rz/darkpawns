@@ -3,10 +3,10 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 const base = process.env.DOCS_REVIEW_URL ?? 'http://127.0.0.1:4389';
-const output = resolve(process.env.DOCS_REVIEW_DIR ?? '../docs/briefs/2026-10-29-docs-starlight/screenshots');
+const output = resolve(process.env.DOCS_REVIEW_DIR ?? '../docs/briefs/2026-10-30-docs-pass-2/screenshots');
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
-const routes = [['index','/docs/'],['first-hour','/docs/play/first-hour/'],['install','/docs/host/install/'],['admin-console','/docs/host/admin-console/'],['update-server','/docs/host/update-server/'],['api','/docs/reference/api/admin/operations/get-dashboard/']];
+const routes = [['index','/docs/'],['first-hour','/docs/play/first-hour/'],['install','/docs/host/install/'],['connect-client','/docs/play/connect-client/'],['edit-rooms','/docs/build/edit-rooms/'],['combat','/docs/reference/commands/combat/']];
 const results = [];
 try {
   for (const [size, width] of [['desktop',1440],['mobile',375]]) {

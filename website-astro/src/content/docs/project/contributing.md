@@ -20,18 +20,28 @@ Before editing, read the [development setup guide](https://github.com/zax0rz/dar
 
 ## Format and verify
 
-Run the repository formatter and all four required checks before committing:
+First format the repository:
 
 ```bash
 make fmt
+```
+
+Then run the four required Go checks separately, and check each exit status:
+
+```bash
 go build ./...
 go vet ./...
 go test ./...
 golangci-lint run ./...
+```
+
+Also run the dead-code ratchet before committing:
+
+```bash
 make deadcode-ratchet
 ```
 
-Run each Go command separately and check its exit status. If a change exports a
+If a change exports a
 symbol used by `tools/db-migrate`, also run `make db-migrate-test`.
 
 For website changes, run the site's content and build checks from the repository

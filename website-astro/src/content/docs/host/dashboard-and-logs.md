@@ -21,35 +21,36 @@ Activity detail includes charts for deaths, errors and warnings, plus a table
 with sample coverage. Dates and daily boundaries use UTC.
 
 - **Players online** counts characters registered in the world, including bodies
-  still present after a connection loss. Login screens are not players online.
+  still present after a connection loss. Login screens aren't players online.
 - **Logins** counts successful returning-character authentication, including
   authenticated duplicate/reconnect attempts. Guests and new characters are
-  excluded. It is not a count of unique people.
+  excluded. It isn't a count of unique people.
 - **New characters** counts accepted character creation after persistence succeeds.
-- **Player deaths** counts players, including death traps. Mob deaths do not
+- **Player deaths** counts players, including death traps. Mob deaths don't
   count in this tile. Guest deaths use a generic Guest name.
-- **Errors and warnings** count emitted structured server log records. Mudlog's
-  OFF/BRF/NRM/CMP settings are visibility types, not severity levels.
+- **Errors and warnings** count emitted structured server log records. Mudlog,
+  the in-game staff activity log, uses OFF/BRF/NRM/CMP visibility types; those
+  aren't severity levels.
 - **Uptime** belongs to the current process. **Current release** comes from the
   running portable bundle manifest or available Go build metadata. Development
   executables identify themselves as development builds.
 
 The server samples every ten seconds, stores minute buckets, and retains seven
 days in `DARKPAWNS_DATA_DIR/admin-history.json`. This file is separate from player
-saves. It is written once a minute and during normal context shutdown. An abrupt
+saves. It's written once a minute and during normal context shutdown. An abrupt
 termination can lose the latest minute. The chart assigns an event to the
 observation interval ending at its next sample; the activity list keeps its event
 time. Near an hour or midnight, the chart and list can place the same event in
 neighboring buckets or dates.
 
-A fresh installation has no historical data. Gaps are not zeroes. Totals cover
-observed periods only; partial days do not imply full-day traffic. The detail
+A fresh installation has no historical data. Gaps aren't zeroes. Totals cover
+observed periods only; partial days don't imply full-day traffic. The detail
 table shows sampling coverage. A storage failure is visible on the dashboard.
 Preserve the history file across upgrades if you want continuity.
 
 The last update time is recorded when a startup observes a changed executable
 identity. The first observation has no evidence of a previous update, so it
-shows unknown. Restarting the same executable does not count as an update.
+shows unknown. Restarting the same executable doesn't count as an update.
 A build timestamp is never presented as a deployment timestamp.
 
 ## Follow character activity
@@ -61,13 +62,13 @@ show the room and what killed the character: a mob name and vnum, another player
 or a trap. If the game supplied no cause, the page says so.
 
 Names of hidden staff follow your current immortal level. Counts can include
-activity whose names you cannot see. Player killers are labeled **Another player**.
+activity whose names you can't see. Player killers are labeled **Another player**.
 The list saves character names and game details, with no addresses, credentials
-or chat. Guests do not count as returning-character sign-ins.
+or chat. Guests don't count as returning-character sign-ins.
 
 Details are saved for seven days, up to 20,000 entries. The page shows when this
 recording began. Older releases saved counts without names and included mobs in
-the death total; those totals are not reused as player deaths. A full recorder
+the death total; those totals aren't reused as player deaths. A full recorder
 can miss details while keeping the count. The page warns when entries were
 missed or removed at the limit. Totals can therefore exceed the visible list.
 
@@ -87,7 +88,7 @@ with periodic refresh as recovery. Pause and resume affect live refresh.
 Choose **Server log** or **Mudlog**, then filter messages and UTC time bounds.
 Server logs also filter by severity. Mudlog filters by syslog type, minimum
 immortal level ceiling and exact site key. A requested level can narrow access;
-it cannot grant access above the caller's actual immortal level. Negative-level
+it can't grant access above the caller's actual immortal level. Negative-level
 file-only mudlog events are excluded from the operator view and exports.
 
 **Raw .log** downloads stored server lines or mudlog message text, followed by

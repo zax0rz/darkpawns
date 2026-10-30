@@ -15,7 +15,7 @@
     "test:search": "python3 -m unittest scripts/test_gen_search_index.py",
     "test:markdown": "node --test src/lib/no-literal-autolinks.test.mjs src/lib/world-text.test.mjs",
     "generate:docs": "node scripts/generate-docs.mjs",
-    "test:docs": "node scripts/check-docs.mjs"
+    "test:docs": "node scripts/check-docs.mjs && node scripts/check-command-docs.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "7.3.0",

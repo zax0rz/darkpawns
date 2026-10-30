@@ -1,5 +1,6 @@
 ---
 import SocialLinks from './SocialLinks.astro';
+const { compact = false } = Astro.props;
 const year = new Date().getFullYear();
 const groups = [
   { title: 'Play', links: [
@@ -30,7 +31,7 @@ const groups = [
   ] },
 ];
 ---
-<footer class="footer">
+<footer class:list={["footer", { "footer-compact": compact }]}>
   <div class="container">
     <div class="footer-head">
       <div class="footer-identity">
@@ -44,14 +45,14 @@ const groups = [
         </span>
       </div>
     </div>
-    <nav class="footer-directory" aria-label="Footer navigation">
+    {!compact && <nav class="footer-directory" aria-label="Footer navigation">
       {groups.map((group) => (
         <div class="footer-col">
           <h2>{group.title}</h2>
           <ul>{group.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>
         </div>
       ))}
-    </nav>
+    </nav>}
     <div class="footer-legal">
       <p>Non-commercial &middot; &copy; {year} Dark Pawns</p>
       <nav aria-label="Legal">
@@ -64,6 +65,9 @@ const groups = [
 
 <style>
   .footer { border-top: 2px solid var(--rule); margin-top: var(--space-xl); padding-block: var(--space-lg); }
+  .footer-compact .container { padding-inline: 0; }
+  .footer-compact .footer-head { margin-bottom: 0; }
+  .footer-compact .footer-name { font-size: 1.5rem; }
   .footer-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); margin-bottom: var(--space-lg); }
   .footer-name { margin: 0; font-family: var(--font-display); font-size: 2rem; line-height: 1.15; }
   .footer-origin { margin: var(--space-xs) 0 0; font-size: .9rem; color: var(--ink-muted); }

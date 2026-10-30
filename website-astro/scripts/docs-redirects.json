@@ -23,5 +23,7 @@
   "/docs/server/notifications.md": "/docs/host/notifications.md",
   "/docs/server/motd-editor.md": "/docs/host/motd-editor.md",
   "/docs/server/architecture.md": "/docs/project/architecture.md",
-  "/docs/server/contributing.md": "/docs/project/contributing.md"
+  "/docs/server/contributing.md": "/docs/project/contributing.md",
+  "/docs/project/release-announcements": "https://github.com/zax0rz/darkpawns/blob/main/docs/publishing-releases.md",
+  "/docs/project/release-announcements.md": "https://github.com/zax0rz/darkpawns/blob/main/docs/publishing-releases.md"
 }

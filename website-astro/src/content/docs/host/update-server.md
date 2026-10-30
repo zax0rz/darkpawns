@@ -1,12 +1,14 @@
 ---
-title: Update your server
-description: Update a managed Dark Pawns instance from the admin console or command line, and understand the automatic rollback after a failed health check.
+title: "Update your server"
+description: "Update a managed Dark Pawns instance from the admin console or command line, and understand the automatic rollback after a failed health check."
 type: guide
 audience: operators
 verified: v0.1.7
 ---
 
 Update a managed instance with `darkpawns update` or **Admin → Updates**. The launcher stages and verifies a release while the world runs, then restarts into it. If its health check fails, the previous release is restored automatically.
+
+![An offline candidate release passes verification; --check leaves the running world untouched.](/media/docs/update-check.gif)
 
 ## Before you start
 
@@ -46,11 +48,11 @@ flowchart TD
   I --> J[Start previous release]
 ```
 
-## Check it worked
+## Did it work?
 
 The status is **Committed**, and the running release shown in **Admin → Updates** matches the release you selected.
 
-## If it went wrong
+## If it didn't work
 
 - **The check finds no release.** The server may already be current. Check the running version on the Updates page.
 - **The candidate fails its health check.** The launcher restores the previous release. Read the transaction detail and server log before retrying.

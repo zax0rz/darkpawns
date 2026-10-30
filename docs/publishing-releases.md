@@ -165,3 +165,21 @@ The `.goreleaser.yaml` default still disables publication; the approved workflow
 owns signing and upload. Snapshot archives from PR jobs remain unsigned developer
 artifacts. Explicit `update --archive --sha256` remains an operator-trusted local
 mode; it does not turn unsigned files into authenticated official releases.
+
+
+## Release announcements
+
+The `announce-release.yml` workflow posts a published release's title, URL and
+notes to Discord after publication, through `workflow_call` or a manual
+`workflow_dispatch`. It truncates notes that exceed Discord's embed limit and
+links to the full release. Mentions are disabled. The game's Notifications page
+doesn't control these announcements.
+
+The destination is the repository secret `DISCORD_ANNOUNCE_WEBHOOK`. An absent
+secret skips the announcement. To preview or retry it:
+
+1. Open **Announce release on Discord** in GitHub Actions.
+2. Choose **Run workflow** and enter the published stable tag, such as `v0.1.7`.
+3. Leave `dry_run` enabled to print the payload. Disable it to retry the post.
+
+The workflow refuses unstable version tags and draft releases.

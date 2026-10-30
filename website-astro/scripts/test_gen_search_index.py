@@ -59,5 +59,24 @@ class TestSearchIndexGenerator(unittest.TestCase):
         self.assertIn("docs", categories)
         self.assertIn("pages", categories)
 
+    def test_help_results_use_taxonomy_anchors(self):
+        taxonomy = json.loads(subprocess.run(
+            ["node", str(SCRIPTS_DIR / "command-taxonomy.mjs")],
+            cwd=ASTRO_ROOT, check=True, capture_output=True, text=True,
+        ).stdout)
+        expected = {
+            (topic["category"], topic["slug"]):
+                f"/docs/reference/commands/{group['slug']}/#{topic['anchor']}"
+            for group in taxonomy["groups"]
+            for topic in group["topics"]
+        }
+        data = json.loads(INDEX_FILE.read_text(encoding="utf-8"))
+        help_entries = [entry for entry in data if entry["c"] == "help"]
+        self.assertEqual(len(help_entries), len(expected))
+        self.assertEqual(
+            {entry["u"] for entry in help_entries}, set(expected.values()),
+        )
+        self.assertTrue(all("#help-" in entry["u"] for entry in help_entries))
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 ---
-title: Documentation
-description: Find your way into Dark Pawns, run a server, or work on the world. Start with the player guide, operator steps, or references drawn from the game files.
+title: "Documentation"
+description: "Find your way into Dark Pawns, run a server, or work on the world. Start with the player guide, operator steps, or references drawn from the game files."
 type: reference
 audience: players
 verified: v0.1.7

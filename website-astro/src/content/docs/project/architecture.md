@@ -35,4 +35,4 @@ Dark Pawns is a Go server that loads the original Diku-format world, exposes tel
 
 ## Behavioral authority
 
-The Go implementation is not the authority for game behavior. The reachable C path in `src/` and the read-only oracle determine player-facing behavior. Architecture changes must preserve that boundary; see [Port Fidelity Workflow](/docs/project/port-fidelity/).
+The Go implementation isn't the authority for game behavior. The reachable C path in `src/` and the read-only oracle determine player-facing behavior. Architecture changes must preserve that boundary; see [Port Fidelity Workflow](/docs/project/port-fidelity/).

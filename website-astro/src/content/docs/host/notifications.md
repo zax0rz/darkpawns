@@ -19,7 +19,7 @@ evidence, and a test send.
 | Gossip mirror | Every public gossip line | A second Discord channel webhook |
 | Healthchecks heartbeat | One check-in a minute | A hosted Healthchecks ping URL |
 
-Nothing is sent until a channel is enabled, and a channel cannot be enabled
+Nothing is sent until a channel is enabled, and a channel can't be enabled
 without credentials. Subscriptions start off.
 
 ![Notification settings with event rows and disabled delivery channels in the local preview.](/media/docs/admin-notifications.png)
@@ -39,11 +39,11 @@ public gossip lines; the heartbeat sends its timed check-in.
 | `player.level` | Each level gained through play | Avery reached level 20. |
 
 A login is world entry, not authentication at the menu. A logout is world
-departure, so a linkdead character that stays in the game has not logged out.
+departure, so a linkdead character that stays in the game hasn't logged out.
 Creation never announces a host, an email address, a password or a location. A
 message carries a character name and, for level gains, the new level: no mudlog
 free text, no room detail, no IP address. Discord mentions are disabled in the
-request payload, so a character named `everyone` cannot ping a channel.
+request payload, so a character named `everyone` can't ping a channel.
 
 ## Credentials
 
@@ -67,7 +67,8 @@ errors or the log.
 ## Where the settings live
 
 `lib/data/notifications.json` holds the routing configuration and the credential
-ciphertexts, written atomically with mode 0600. Each credential is stored as
+ciphertexts, written atomically with mode `0600` (owner read/write only on
+Unix-like systems). Each credential is stored as
 AES-256-GCM ciphertext with a per-channel authenticated context and a fresh
 nonce. The master key is a random 32-byte file created on the first credential
 save, mode 0600, at `<config-path>.key` unless `DP_NOTIFICATION_KEY_PATH` names
@@ -81,7 +82,7 @@ want to know it works. A test uses the saved credentials, so save or discard a
 pending credential change first.
 
 A test reports **queued**, not delivered. The provider's answer appears under
-Delivery once the request completes, and a provider accepting a request is not
+Delivery once the request completes, and a provider accepting a request isn't
 proof that a phone displayed it. The Discord alerts, Pushover and Healthchecks
 tests send the usual payload. The gossip test posts one labelled line to the
 gossip channel, because that channel is public and a bare test would read as
@@ -89,7 +90,7 @@ somebody's gossip.
 
 ## Delivery
 
-Delivery is best effort. Events are not replayed after an outage or a restart, and
+Delivery is best effort. Events aren't replayed after an outage or a restart, and
 a test that arrives during a queue or rate-limit window is skipped rather than
 queued behind a backlog. Each block counts what it skipped and shows the last
 provider answer, so a silent channel is visible rather than assumed healthy.
@@ -101,12 +102,12 @@ cooldown. Nothing from Discord returns to the game.
 ## Gossip mirror
 
 The mirror carries every public gossip line to its own Discord webhook, rendered
-the way a level one mortal sees the channel. Nothing is selected: it is not an
-event destination. Mirroring is off until it is enabled, credentials alone never
+the way a level one mortal sees the channel. Nothing is selected: it isn't an
+event destination. Mirroring is off until it's enabled, credentials alone never
 enable it, and removing the credentials disables it and discards queued lines.
 
 While the mirror is active, the automatic MOTD notice tells players that gossip
-echoes to Discord. It is on by default and can be turned off when your own MOTD
+echoes to Discord. It's on by default and can be turned off when your own MOTD
 already discloses the mirror.
 
 ## Healthchecks heartbeat
@@ -114,7 +115,7 @@ already discloses the mirror.
 The heartbeat sends one request a minute while the game loop is progressing, and
 stops when the loop stalls or the process dies. [Healthchecks.io](https://healthchecks.io/) notices the missing
 check-ins. Configure outage and recovery alerts in Healthchecks so they can reach
-you when this server is down: a crashed process cannot send its own alert.
+you when this server is down: a crashed process can't send its own alert.
 
 ## Troubleshooting
 
@@ -122,9 +123,9 @@ you when this server is down: a crashed process cannot send its own alert.
 | --- | --- |
 | Setup needed, switch disabled | No usable credentials. Paste them in that channel's Credentials group, then enable the channel. |
 | Save refused after another admin edited the page | The settings revision moved. Reload settings and reapply your change. |
-| Credential save fails with a storage message | The master key is missing, replaced or unreadable, or the settings directory is not writable. Restore the matching key file from the same backup as the settings file, then check permissions. |
+| Credential save fails with a storage message | The master key is missing, replaced or unreadable, or the settings directory isn't writable by the server account. Restore the matching key file from the same backup as the settings file, then check its access permissions. |
 | Test queued but nothing arrives | Check Delivery for the provider's answer. A rejected request records the failure and increments the skipped count. |
-| Healthchecks reports an outage while the game is running | The loop has not progressed for over 30 seconds, or the heartbeat is disabled. Check the game's own logs before the ping URL. |
+| Healthchecks reports an outage while the game is running | The loop hasn't progressed for over 30 seconds, or the heartbeat is disabled. Check the game's own logs before the ping URL. |
 | Gossip lines missing from Discord | The mirror is disabled, its credentials were removed, or Discord asked for a cooldown. Delivery shows the last failure and the skipped count. |
 
 Keep the settings file and its key together in protected backups. Losing the key

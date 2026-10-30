@@ -15,7 +15,7 @@ The full [Port Rulebook](https://github.com/zax0rz/darkpawns/blob/main/docs/fide
 - **R1:** player-facing bytes are law.
 - **R2:** command names, aliases, gates, and positions are part of the game.
 - **R3:** random draw counts, time, and operation order must match.
-- **R4:** do not invent player-observable behavior.
+- **R4:** don't invent player-observable behavior.
 - **R5:** verify the reachable call path, prove fixes, and audit repeated failure classes.
 
 ## Set up the oracle
@@ -34,4 +34,4 @@ Read the reported `result:` line, not only the process exit status; the harness 
 
 ## Preserve the authority boundary
 
-Never edit `src/` or the oracle to make Go pass. A confirmed repeated pattern changes the rulebook and triggers a class-wide audit. A suspected mismatch is not confirmed until its real call path is shown to be reachable.
+Never edit `src/` or the oracle to make Go pass. A confirmed repeated pattern changes the rulebook and triggers a class-wide audit. A suspected mismatch isn't confirmed until its real call path is shown to be reachable.

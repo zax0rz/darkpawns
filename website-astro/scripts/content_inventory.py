@@ -64,6 +64,10 @@ def content_entries() -> list[Entry]:
         collection = path.relative_to(SITE / "src/content").parts[0]
         if path.name == "_index.md":
             continue
+        if path.relative_to(SITE / "src/content").parts[0] == "help":
+            # Help files remain source data; the generated grouped reference
+            # pages below are their only published routes.
+            continue
         data, body = frontmatter_and_body(path)
         slug = path.relative_to(SITE / "src/content" / collection).with_suffix("").as_posix()
         route = f"/{collection}/{slug}/"
@@ -147,43 +151,32 @@ def generated_docs_entries() -> list[Entry]:
         "docs/releases/",
     ))
 
-    command_root = SITE / "src/content/help/commands"
-    command_files = sorted(
-        path for path in command_root.glob("*.md")
-        if not path.name.startswith("_")
-    )
-    command_links = []
-    for path in command_files:
-        raw = path.read_text(encoding="utf-8")
-        match = re.search(r"^title:\s*[\"']?(.*?)[\"']?\s*$", raw, flags=re.MULTILINE)
-        title = match.group(1) if match else path.stem
-        body = re.sub(r"^---\r?\n[\s\S]*?\r?\n---\r?\n", "", raw, count=1)
-        slug = path.stem
-        source = path.relative_to(SITE).as_posix()
-        provenance = path.relative_to(ROOT).as_posix()
-        command_links.append(
-            f"| [{title.replace('|', r'\|')}](/docs/reference/commands/{slug}/) "
-            f"| [In-game help](/help/commands/{slug}/) |"
-        )
+    helper = SITE / "scripts/command-taxonomy.mjs"
+    data = json.loads(subprocess.run(
+        ["node", str(helper)], cwd=SITE, check=True, capture_output=True, text=True,
+    ).stdout)
+    group_links = []
+    for group in data["groups"]:
+        topics = group["topics"]
+        source = "website-astro/src/content/help/"
+        body = "\n".join(f"- {topic['title']}" for topic in topics)
+        group_links.append(f"- [{group['title']}](/docs/reference/commands/{group['slug']}/)")
         entries.extend(_generated_doc_pair(
-            f"/docs/reference/commands/{slug}/",
+            f"/docs/reference/commands/{group['slug']}/",
             source,
-            "generated command reference",
+            "generated grouped help reference",
             body,
-            provenance,
+            source,
             text_kind="verbatim",
             voice_layer="engine",
         ))
 
-    command_index_body = (
-        "| Command | Source |\n| --- | --- |\n" + "\n".join(command_links)
-    )
     entries.extend(_generated_doc_pair(
         "/docs/reference/commands/",
         "lib/text/help/commands.hlp",
-        "generated command index",
-        command_index_body,
-        "lib/text/help/commands.hlp",
+        "generated grouped command index",
+        "\n".join(group_links),
+        "lib/text/help",
         text_kind="verbatim",
         voice_layer="engine",
     ))
@@ -294,7 +287,6 @@ def structural_entries() -> list[Entry]:
     hubs = {
         "/archive/": "src/pages/archive/index.astro",
         "/blog/": "src/pages/blog/index.astro",
-        "/help/": "src/pages/help/index.astro",
         "/world/": "src/pages/world/index.astro",
     }
     entries.extend(Entry(route, source, "hub", "authored collection framing", 1, "full editorial review") for route, source in hubs.items())
@@ -302,7 +294,8 @@ def structural_entries() -> list[Entry]:
     entries.append(Entry("/download.md", "src/pages/download.md.ts", "agent-markdown", "generated Markdown representation", 3, "schema-and-sample QA"))
 
     agent_resources = {
-        "/llms.txt": "../website/static/llms.txt",
+        "/llms.txt": "src/pages/llms.txt.ts",
+        "/llms-full.txt": "scripts/markdown-twins.mjs",
         "/.well-known/agent-skills/index.json": "../website/static/.well-known/agent-skills/index.json",
         "/.well-known/agent-skills/darkpawns/SKILL.md": "../website/static/.well-known/agent-skills/darkpawns/SKILL.md",
         "/.well-known/security.txt": "../website/static/.well-known/security.txt",
@@ -310,8 +303,6 @@ def structural_entries() -> list[Entry]:
     }
     entries.extend(Entry(route, source, "agent-discovery", "machine-readable discovery", 3, "schema-and-link QA") for route, source in agent_resources.items())
 
-    for category in ("commands", "info", "socials", "spells", "wizhelp"):
-        entries.append(Entry(f"/help/{category}/", "src/pages/help/[category]/index.astro", "help-hub", "generated section index", 3, "template review"))
     return entries
 
 
@@ -347,13 +338,11 @@ def redirect_entries() -> list[Entry]:
     matches = re.findall(r"^\s*'(/[^']*)':\s*'([^']+)'", config, flags=re.MULTILINE)
     redirects = json.loads((SITE / "scripts/docs-redirects.json").read_text(encoding="utf-8"))
     redirects.update({source: target for source, target in matches})
-    help_categories = {"commands", "info", "socials", "spells", "wizhelp"}
-    for path in sorted((SITE / "src/content/help").glob("*/*.md")):
-        category, filename = path.relative_to(SITE / "src/content/help").parts
-        slug = Path(filename).stem
-        if slug in help_categories:
-            continue
-        redirects.setdefault(f"/help/{slug}", f"/help/{category}/{slug}/")
+    helper = SITE / "scripts/command-taxonomy.mjs"
+    generated = json.loads(subprocess.run(
+        ["node", str(helper)], cwd=SITE, check=True, capture_output=True, text=True,
+    ).stdout)
+    redirects.update(generated["redirects"])
     return [
         Entry(source, "astro.config.mjs", "redirect", f"redirect to {target}", 5, "no copy review")
         for source, target in redirects.items()

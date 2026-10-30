@@ -1,0 +1,94 @@
+---
+title: "Install Dark Pawns"
+description: "Install the signed portable release with the bootstrap command, then create your first server instance and open the setup wizard."
+type: guide
+audience: operators
+verified: v0.1.7
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Install Dark Pawns, then run `darkpawns setup` to create an instance and open the setup wizard. On Linux or macOS, start with the command from the [Dark Pawns home page](/):
+
+```sh
+curl -fsSL https://darkpawns.org/install.sh | bash
+```
+
+**On Windows:** use PowerShell 5.1 or newer and follow the [signed Windows bootstrap instructions](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-release.md#bootstrap-installation). The instructions verify the installer's publisher signature before running it.
+
+![Portable bundle setup starts an isolated local world.](/media/docs/install-and-setup.gif)
+
+## Before you start
+
+- A Linux, macOS, or Windows machine for the server.
+- Network access to download a release.
+- A folder for the instance data.
+
+## Finish setup
+
+The installer verifies the publisher signature, installs the launcher under your user account, and opens `darkpawns setup`. The wizard asks where the instance belongs and which local ports to use. Review its settings before it creates the instance.
+
+## Choose another install method
+
+<Tabs>
+  <TabItem label="Homebrew">
+
+    On macOS or Linux, install the launcher from the Dark Pawns tap:
+
+    ```sh
+    brew install darkpawns/tap/darkpawns
+    darkpawns setup
+    ```
+
+    Update it with `brew upgrade`.
+
+  </TabItem>
+  <TabItem label="Scoop">
+
+    On Windows, add the Dark Pawns bucket and install the launcher:
+
+    ```powershell
+    scoop bucket add darkpawns https://github.com/darkpawns/scoop-bucket
+    scoop install darkpawns
+    darkpawns setup
+    ```
+
+  </TabItem>
+  <TabItem label="Docker">
+
+    Docker runs the launcher and keeps the instance in a named volume. This command uses host networking, which the current web listener needs. It works with Docker Engine on Linux. With Docker Desktop 4.34 or newer, first enable host networking under **Settings → Resources → Network**; Windows containers aren't supported by Docker's host network mode. See [Docker's host-networking documentation](https://docs.docker.com/engine/network/drivers/host/) for platform support and limitations.
+
+    ```sh
+    docker run -d --name darkpawns \
+      --network host \
+      -v darkpawns-data:/data \
+      ghcr.io/darkpawns/darkpawns:v0.1.7
+    ```
+
+    Pin a version tag for a world players depend on. The `latest` tag follows the newest release.
+
+  </TabItem>
+  <TabItem label="Manual archive">
+
+    Download the archive for your operating system and CPU from the [Dark Pawns releases](https://github.com/zax0rz/darkpawns/releases). Follow the archive verification and setup steps in the [portable release guide](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-release.md).
+
+  </TabItem>
+</Tabs>
+
+Winget is awaiting Microsoft's package review, so it isn't available as an install path yet. The latest release notes list its current status.
+
+## Did it work?
+
+Open a new terminal and run `darkpawns status`. The launcher should report the instance state and release. Then open the local web client address printed by setup.
+
+## If it didn't work
+
+- **The `darkpawns` command isn't found.** Open a new terminal so it reads the updated PATH, or add the command directory printed by the installer.
+- **Setup says a port is unavailable.** Choose another unused local port in the setup review.
+- **The server starts but remote players can't connect.** Setup binds to loopback by default. Read [Hosting and adoption](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-hosting.md) before opening access beyond this machine.
+
+## Related
+
+- [Your first login](/docs/host/first-login/)
+- [Hosting at a glance](/docs/host/hosting-overview/)
+- [Players can't connect](/docs/host/players-cannot-connect/)

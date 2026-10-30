@@ -226,3 +226,34 @@ a:active, button:active { transform: translateY(1px); }
 @media (max-width: 768px) {
   input, select, textarea { font-size: 1rem; }
 }
+
+/* Shared header controls: the docs search uses the site's control tokens. */
+:root {
+  --header-control-height: 2.25rem;
+  --header-control-font-size: .75rem;
+  --header-control-padding: .2rem .5rem;
+  --header-control-tracking: .08em;
+}
+:is(.nav-search-btn, .docs-search button[data-open-modal]) {
+  min-height: var(--header-control-height);
+  width: auto;
+  gap: .35rem;
+  padding: var(--header-control-padding);
+  border: 1px solid var(--ink);
+  border-radius: var(--rounded-micro, 2px);
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--header-control-font-size);
+  letter-spacing: var(--header-control-tracking);
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: none;
+}
+:is(.nav-search-btn, .docs-search button[data-open-modal]):hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+@media (max-width: 799px) {
+  :is(.nav-search-btn, .docs-search button[data-open-modal]) { min-width: 44px; min-height: 44px; }
+}

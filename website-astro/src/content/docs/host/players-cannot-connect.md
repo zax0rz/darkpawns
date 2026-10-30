@@ -1,12 +1,14 @@
 ---
-title: Players can't connect
-description: Find whether a connection failure comes from the world, the listening address, a firewall, or the client, then choose the next check.
+title: "Players can't connect"
+description: "Find whether a connection failure comes from the world, the listening address, a firewall, or the client, then choose the next check."
 type: troubleshooting
 audience: operators
 verified: v0.1.7
 ---
 
-Use this page when a player cannot reach a running Dark Pawns server. Start with the address and port the server actually reports, then check the path from the player's network.
+Use this page when a player can't reach a running Dark Pawns server. Start with the address and port the server actually reports, then check the path from the player's network.
+
+![The operations log with synthetic warning and error entries from the local preview.](/media/docs/admin-operations.png)
 
 ## The player gets a timeout
 
@@ -19,7 +21,7 @@ Use this page when a player cannot reach a running Dark Pawns server. Start with
 3. Check the listener's bind address in **Staff tools → Configuration**. A loopback-only bind accepts connections from the server machine, not remote players.
 4. If public access is intended, first choose the listener and interface you mean to expose. Then follow [Portable hosting and adoption](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-hosting.md) to configure the host firewall and router for that listener.
 
-## The web client opens, but cannot reach the game
+## The web client opens, but can't reach the game
 
 **Why it happens:** The HTTP page is available while the game's web socket or its configured origin is unreachable.
 
@@ -30,7 +32,7 @@ Use this page when a player cannot reach a running Dark Pawns server. Start with
 3. Check browser origins in **Staff tools → Configuration** if the web client is hosted at a different address.
 4. Check the server log for a listener or connection error.
 
-## A telnet client cannot connect
+## A telnet client can't connect
 
 **Why it happens:** Telnet may be disabled, bound to loopback, or configured on a different port.
 
