@@ -95,6 +95,10 @@ func TestPendingBodySecondDeathRunsFullDeathBranch(t *testing.T) {
 	// A seed whose first to-hit roll is not a natural 1; the assertions below
 	// pin the death branch, so a miss seed would fail loudly instead of
 	// silently passing.
+	// Save the real roller first: the helper's own cleanup restores whatever
+	// roller is current when it runs, which would otherwise be this seeded one.
+	origRoller := combat.GetRoller()
+	t.Cleanup(func() { combat.SetRoller(origRoller) })
 	combat.SetRoller(combat.NewSeededRoller(3))
 	w, god, mob, room, messages := secondDeathWorld(t)
 
@@ -155,6 +159,10 @@ func TestPendingBodySecondDeathRunsFullDeathBranch(t *testing.T) {
 // enrolled, no damage lands, and no second corpse appears. The relaxation
 // that admits the non-peaceful second death must not widen this refusal.
 func TestPendingBodyPeacefulRefusalStillSkipsEnrollment(t *testing.T) {
+	// Save the real roller first: the helper's own cleanup restores whatever
+	// roller is current when it runs, which would otherwise be this seeded one.
+	origRoller := combat.GetRoller()
+	t.Cleanup(func() { combat.SetRoller(origRoller) })
 	combat.SetRoller(combat.NewSeededRoller(3))
 	w, god, mob, _, _ := secondDeathWorld(t)
 	w.mu.Lock()
