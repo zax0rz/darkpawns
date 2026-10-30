@@ -348,7 +348,8 @@ func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
 // (note WIELD is last even though its bit is lower than ABLEGS/FACE/HOVER).
 // ITEM_WEAR_* bits and WEAR_* slots from structs.h:446-464 / 391-411.
 func armorWearSlot(obj *ObjectInstance) int {
-	wf := obj.Prototype.WearFlags[0]
+	wear := obj.GetWearFlags()
+	wf := wear[0]
 	where := 0
 	if wf&(1<<1) != 0 { // ITEM_WEAR_FINGER  → WEAR_FINGER_R
 		where = 1

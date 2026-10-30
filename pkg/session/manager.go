@@ -1305,8 +1305,17 @@ func (m *Manager) SetFleeHooks() {
 		m.combatEngine.SetCallbacks(cb)
 	}
 	cb.DoFlee = func(body combat.Combatant) {
-		if body.IsNPC() {
-			return // NPC command dispatch remains the C1 frontier.
+		if mob, ok := body.(*game.MobInstance); ok {
+			// C's damage() calls do_flee(victim) directly for a low-HP
+			// MOB_WIMPY (src/fight.c:1599). That ACMD skips
+			// command_interpreter's preamble, so the direct NPC lane is the
+			// faithful call. This hook used to drop mobs, which meant a wimpy
+			// mob never fled and do_flee's six direction draws
+			// (src/act.offensive.c:392-393) never happened — the RNG stream
+			// drift behind the werewolf diagnostic's claw-damage report
+			// (R1/R3/R5e).
+			m.world.NPCCommandDirect(mob, "flee", "")
+			return
 		}
 		s := m.combatSession(body)
 		if s == nil {
@@ -1318,7 +1327,12 @@ func (m *Manager) SetFleeHooks() {
 	}
 	cb.DoRetreat = func(body combat.Combatant) {
 		if body.IsNPC() {
-			return // NPC command dispatch remains the C1 frontier.
+			// Unreachable in C: the retreat arm is gated on
+			// GET_SKILL(victim, SKILL_RETREAT/ESCAPE), and a mobile's skills
+			// live in the shared dummy_mob record, whose entries are all zero
+			// (src/utils.h:343; src/fight.c:1606-1618). A mobile therefore
+			// always takes do_flee above.
+			return
 		}
 		s := m.combatSession(body)
 		if s == nil {

@@ -1,0 +1,111 @@
+# depth-case: mob.attitude-loot-gold-line
+# depth-case: death.money-wear-take
+# attitude_loot runs do_get(ch, "all corpse") (src/fight.c:1120). The corpse
+# carries the victim's gold as a create_money pile (src/fight.c:406-413), and
+# create_money sets ITEM_WEAR_TAKE on it (src/handler.c:1484-1486), so
+# can_take_obj passes and the room sees "$n gets $p from $P."
+# (src/act.item.c:197-212) before get_check_money converts the pile to gold.
+# The looted mobile is vnum 19650, one of attitude_loot's three gate vnums.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+set-mob-flag 19650 AGGRESSIVE
+
+[setup:oracle]
+Lootgold
+Y
+goldpass
+goldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lootgold
+y
+goldpass
+goldpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Goldvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Goldvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Goldwatch
+Y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Goldwatch
+y
+obsrpass
+obsrpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Goldvictim 8105
+teleport Goldwatch 8105
+set player Goldvictim outlaw on
+set player Goldvictim maxhit 1
+set player Goldvictim hit 1
+set player Goldvictim gold 5
+nohassle
+
+[probe:observer]
+~dpclock pulse 40
