@@ -1,0 +1,124 @@
+# C-first raw-byte proof for a fireball's colour delivery, hit arm, caster at complete.
+#
+# skill_message brackets the caster's line with CCYEL/CCNRM and the victim's line
+# with CCRED/CCNRM, but only at C_CMP (both PRF_COLOR bits); the room line carries
+# no colour (src/fight.c:1049-1087). Fireball's own text in lib/misc/messages
+# (set 26) has no colour codes, so every escape here comes from that delivery.
+# keep-ansi compares the escapes raw (R1b).
+#
+# The caster sets its own level with `color`; the peers are created with the ANSI
+# answer that gives them complete. That also proves the two gates are per-recipient:
+# at sparse/normal the caster's own line is plain while the victim's is still red.
+#
+# depth-case: spell.fireball.color-complete-hit
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+keep-ansi
+
+# PRIMARY = first player => God, and the caster.
+[setup:oracle]
+FireActor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+FireActor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+FireVictim
+Y
+victimpass
+victimpass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+FireVictim
+y
+victimpass
+victimpass
+y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watch]
+FireWatch
+Y
+watchpass
+watchpass
+Y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watch]
+FireWatch
+y
+watchpass
+watchpass
+y
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+color complete
+teleport FireVictim 8105
+teleport FireWatch 8105
+set player FireActor class mage
+skillset FireActor 'fireball' 100
+set player FireActor maxmana 5000
+set player FireActor mana 5000
+set player FireActor align 1000
+set player FireVictim align 0
+set player FireVictim class mage
+set player FireVictim level 20
+set player FireVictim maxhit 1000
+set player FireVictim hit 1000
+set player FireActor level 31
+
+[probe]
+cast 'fireball' FireVictim
