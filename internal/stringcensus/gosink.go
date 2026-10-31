@@ -53,7 +53,7 @@ var goSinks = []goSink{
 	{Name: "SendToOutdoor", Kind: goSinkMethod, Why: "SessionManager.SendToOutdoor, weather broadcast"},
 	{Name: "channelAct", Kind: goSinkMethod, Why: "pkg/game/out_of_band.go channelAct(): channel lines"},
 	{Name: "channelSend", Kind: goSinkMethod, Why: "pkg/game/out_of_band.go channelSend(): the sender's own channel echo"},
-	{Name: "SendToChar", Kind: goSinkFunc, Why: "act.go:600 SendToChar(): one-line Act(ToChar) wrapper"},
+	{Name: "SendToChar", Kind: goSinkFunc, Why: "act.go:744 SendToChar(): C send_to_char, a direct descriptor write with no SENDOK gate; callers supply their own line ending"},
 	{Name: "SendToVict", Kind: goSinkFunc, Why: "act.go:605 SendToVict(): one-line Act(ToVict) wrapper"},
 	{Name: "sendToChar", Kind: goSinkFunc, Why: "spec_procs.go:85 sendToChar(): one-line SendMessage wrapper"},
 	{Name: "movementSendToChar", Kind: goSinkFunc, Why: "movement_commands.go:12: one-line Act(ToChar|ToSleep) wrapper"},

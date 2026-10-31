@@ -658,13 +658,13 @@ func specRemorter(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 			return true
 		}
 		if ch.Equipment != nil && len(ch.Equipment.GetEquippedItems()) > 0 {
-			SendToChar(ch, "You must come unto me naked, wearing only thy old body.")
+			SendToChar(ch, "You must come unto me naked, wearing only thy old body.\r\n")
 			return true
 		}
 
 		remortPlayer(ch)
 		remorterTell(w, me, ch, "Enjoy your new life...")
-		SendToChar(ch, "The remorter moves his hands over your eyes, closing them with a touch.\r\nColors spiral in your sight... You open your eyes, feeling refreshed.")
+		SendToChar(ch, "The remorter moves his hands over your eyes, closing them with a touch.\r\nColors spiral in your sight... You open your eyes, feeling refreshed.\r\n")
 		return true
 	default:
 		return false

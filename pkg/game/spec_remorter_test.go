@@ -142,3 +142,40 @@ func TestSpecRemorterRejectsPlayerCommandsAtTheCorrectGates(t *testing.T) {
 		t.Error("nil autonomous actor should fall through")
 	}
 }
+
+// C's remorter refuses a dressed player with one write that ends in CRLF:
+//
+//	send_to_char("You must come unto me naked, wearing only thy old "
+//	    "body.\r\n", ch);
+//
+// (src/spec_procs2.c:727-729). The port carried the text without the ending and
+// relied on SendToChar being an Act(ToChar) wrapper to add it, so making
+// SendToChar C's direct write left this line short of a CRLF. Same for the two
+// lines of the success path (src/spec_procs2.c:838-840).
+func TestRemorterRefusalCarriesCsLineEnding(t *testing.T) {
+	w, player := newCombatTestWorld(t)
+	mob := spawnTargetMob(t, w)
+	{
+		p := *mob.Proto()
+		p.ShortDesc = "the remorter"
+		mob.SetProto(&p)
+	}
+
+	var output strings.Builder
+	w.MessageSink = func(_ string, msg []byte) { output.Write(msg) }
+
+	// The equipment gate sits after level and gold, so both must pass first.
+	player.SetLevel(LVL_IMMORT - 1)
+	player.SetGold(60000)
+	vest := NewObjectInstance(&parser.Obj{VNum: 14425, Keywords: "vest", WearFlags: [4]int{9}, Weight: 1}, -1)
+	if err := player.Equipment.Equip(vest, player.Inventory); err != nil {
+		t.Fatalf("equip vest: %v", err)
+	}
+
+	if !specRemorter(w, player, mob, "remort", "") {
+		t.Fatal("a dressed player should be refused by the equipment gate")
+	}
+	if got := output.String(); !strings.HasSuffix(got, "You must come unto me naked, wearing only thy old body.\r\n") {
+		t.Fatalf("remorter refusal = %q, want C's exact bytes ending in CRLF", got)
+	}
+}

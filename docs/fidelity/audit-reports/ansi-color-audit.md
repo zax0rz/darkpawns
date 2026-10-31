@@ -1035,3 +1035,51 @@ implementation onto the mobile side:
 - A regression census over the group and force scenarios, because the player
   command now runs through the shared body.
 
+### Review follow-ups: two send gates and the shadowing arm (2026-10-31)
+
+Two more divergences in the same command, found in review after §17 landed.
+
+**Two of `do_group`'s answers are `send_to_char`, not `act()`.** `group` is a
+`POS_SLEEPING` command (`src/interpreter.c:471`), and C answers two of its cases
+with a direct write — the `NOPERSON` line and `"Everyone following you here is
+already in your group."` (`src/act.other.c:714-720`). `send_to_char` writes
+straight to the descriptor (`src/comm.c:2335-2339`), so **a sleeping leader reads
+both**; the port sent them with `Act(...ToChar)`, whose `SENDOK` gate drops a
+recipient at or below `POS_SLEEPING`.
+
+The primitive itself was the problem: `game.SendToChar` was implemented as
+`Act(nil, false, ch, nil, nil, nil, format, "", ToChar)`, so it carried the very
+gate its name says it does not. It is now C's `send_to_char` — a direct write,
+with the empty/absent-recipient guard C has — and `GroupCommand` uses it for both
+sites. The other callers (`spec_procs2.go`'s remorter, whose C source is
+`send_to_char` at `src/spec_procs2.c:728`; the two anti-abuse notices in
+`act_comm.go`) get the same treatment.
+
+**The single-target gate was missing its shadowing arm.** C's gate is
+`((vict->master != ch) && (vict != ch)) || IS_SHADOWING(vict)`
+(`src/act.other.c:721`). A shadowing follower still has the master link, so only
+the `IS_SHADOWING` arm refuses it — `AFF_DODGE`, which `do_follow`'s quiet path
+sets. The session-era implementation checked the master link alone and enrolled
+the shadowing follower anyway. This is the second time in this command that a
+name-or-link test stood in for C's pointer semantics (the first was the leader
+lookup in §14).
+
+### Evidence
+
+- `group-sleeping-send-to-char-depth` (new, `keep-ansi`): a player enrols itself
+  with `group all`, repeats it with nothing left to enrol, asks for a name that
+  does not resolve, then `sleep`s and repeats both. The captured bytes show C
+  answering all four, including the two from the sleeping position.
+  **Verified both ways**: with `SendToChar` gated again the census is RED with
+  exactly those two lines missing from the transcript, and with the fix it is
+  CLEAN.
+- Unit proofs (R5h): `TestGroupSleepingLeaderReadsTheSendToCharAnswers` (both
+  `send_to_char` answers read by a `POS_SLEEPING` leader) and
+  `TestGroupRefusesAShadowingFollowerByName` (a shadowing follower is refused and
+  stays ungrouped). **Both were run against a pristine `origin/main` worktree and
+  fail there**: the sleeping leader reads `""` in both cases, and the shadowing
+  follower is told `"Shadower is now a member of your group."` instead of the
+  refusal.
+- Targeted census over the group and force set — sixteen scenarios, the fifteen
+  from §17 plus the new one: `passed=16 failed=0 verdict=CLEAN`.
+
