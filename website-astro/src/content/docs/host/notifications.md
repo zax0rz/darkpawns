@@ -3,7 +3,7 @@ title: "Notifications"
 description: "Configure outbound game events, gossip mirroring, and health checks, then inspect delivery evidence and troubleshoot common failures."
 type: reference
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 The Notifications page at `/admin/staff/notifications` is the single place for

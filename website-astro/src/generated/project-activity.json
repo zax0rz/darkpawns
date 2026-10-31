@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T12:49:32-04:00",
+  "generatedAt": "2026-10-31T14:27:08-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,39 +49,39 @@
     },
     {
       "week": "2026-10-26",
-      "commits": 84
+      "commits": 88
     }
   ],
   "recentCommits": [
+    {
+      "sha": "ace2c23568ac054ed38bd1062a8f08a0197b83d4",
+      "date": "2026-10-31",
+      "title": "Merge remote-tracking branch 'origin/main' into codex/docs-starlight",
+      "url": "https://github.com/zax0rz/darkpawns/commit/ace2c23568ac054ed38bd1062a8f08a0197b83d4"
+    },
+    {
+      "sha": "a35c47eb4c19e75201d5a8f6ae8794176048eea5",
+      "date": "2026-10-31",
+      "title": "docs: sharpen Dark Pawns voice, help epigraphs, and Starlight callouts (R1/R4)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/a35c47eb4c19e75201d5a8f6ae8794176048eea5"
+    },
+    {
+      "sha": "104099b8f1898a2723c6c040bc967dfdb7d1cdd4",
+      "date": "2026-10-31",
+      "title": "chore(site): refresh generated project activity",
+      "url": "https://github.com/zax0rz/darkpawns/commit/104099b8f1898a2723c6c040bc967dfdb7d1cdd4"
+    },
+    {
+      "sha": "b2a5c3089604f2071e671f5a9f4ed4983f0bf6a6",
+      "date": "2026-10-31",
+      "title": "docs: convert guide and hub pages to Starlight components",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b2a5c3089604f2071e671f5a9f4ed4983f0bf6a6"
+    },
     {
       "sha": "1d82cae02abe4d1ad8e858b8181ced212af0013e",
       "date": "2026-10-31",
       "title": "docs(play): voice pass on Your first hour and Connect a client",
       "url": "https://github.com/zax0rz/darkpawns/commit/1d82cae02abe4d1ad8e858b8181ced212af0013e"
-    },
-    {
-      "sha": "f0d09d3d21823afefd015aa7ab9277f9f5f3e757",
-      "date": "2026-10-31",
-      "title": "docs: retain final stacked screenshots and verification",
-      "url": "https://github.com/zax0rz/darkpawns/commit/f0d09d3d21823afefd015aa7ab9277f9f5f3e757"
-    },
-    {
-      "sha": "85249032ca5856a00f6abeee11e947808b83cee9",
-      "date": "2026-10-31",
-      "title": "docs: verify discovery gates and desktop/mobile review",
-      "url": "https://github.com/zax0rz/darkpawns/commit/85249032ca5856a00f6abeee11e947808b83cee9"
-    },
-    {
-      "sha": "86f1b31122ce2d48a5a4a1248c5a144a8408405d",
-      "date": "2026-10-31",
-      "title": "docs: add webOLC guides, verbatim help and generated agent indexes (R1/R4)",
-      "url": "https://github.com/zax0rz/darkpawns/commit/86f1b31122ce2d48a5a4a1248c5a144a8408405d"
-    },
-    {
-      "sha": "d639fa27a246981c88b176ffeec74539b021acc8",
-      "date": "2026-10-31",
-      "title": "docs: retain final stacked media integration checks",
-      "url": "https://github.com/zax0rz/darkpawns/commit/d639fa27a246981c88b176ffeec74539b021acc8"
     }
   ],
   "pullRequests": [

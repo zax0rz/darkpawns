@@ -3,7 +3,7 @@ title: "Port fidelity workflow"
 description: "Use the read-only C oracle, deterministic seams, and five governing rules to prove that the Go server preserves the original game behavior."
 type: explainer
 audience: developers
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Dark Pawns is a faithful port, not a reinterpretation. The original reachable C path decides game behavior; differential scenarios prove the Go server against it.

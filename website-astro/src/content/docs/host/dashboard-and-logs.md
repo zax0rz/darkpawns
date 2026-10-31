@@ -3,7 +3,7 @@ title: "Dashboard and logs"
 description: "Read server health and recorded player activity, inspect the separate server and game logs, and export the retained log entries."
 type: reference
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 The admin dashboard opens at `/admin/`. It puts server health and player

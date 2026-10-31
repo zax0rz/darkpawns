@@ -3,7 +3,7 @@ title: "Your first hour"
 description: "Your first hour in Dark Pawns: gear up, find your guild, walk to the Guard Barracks in Kir Drax'in, win a first fight, and keep your stuff when you quit."
 type: guide
 audience: players
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 You've made a character and you're standing in a temple with a pack full of starter gear and zero skills practiced. Everything outside the city walls wants you dead, and half the things inside the walls aren't fond of you either. Here's how to survive your first hour.
@@ -26,7 +26,7 @@ You've made a character and you're standing in a temple with a pack full of star
    You equip everything in your inventory that fits a body slot. Some things don't belong on your head: you can't wear bread, so the game leaves it in your pack for later.
 
 :::tip[Turn on the survival switches]
-Type `auto` to see your automatic combat toggles. Turning on `autoexit`, `autoloot`, and `autogold` saves you from typing `look` in every room and `get all corpse` after every kill.
+Type `auto` to see your automatic exploration and combat toggles. Turning on `auto exits`, `auto loot`, and `auto gold` prints the room's exits under every room description (saving you from typing `exits`) and loots coins and gear from corpses automatically after every kill.
 :::
 
 ## Find your guild and practice
@@ -52,16 +52,15 @@ flowchart LR
 
 1. Go south into the Temple of the Cross, then south again to Temple Square.
 2. Go west to the Avenue of the Gods, then north onto the Street of Swords.
-3. Keep walking north up the Street of Swords until the Guard Barracks entrance opens to the west.
-4. Go west into the Guard Barracks.
-5. Open the south door (`open door south`) and go south into the New Recruit Training Area.
+3. Go west into the Guard Barracks.
+4. Open the south door (`open door south`) and go south into the New Recruit Training Area.
 
 Started in Kir-Oshi or Alaozar instead? Your city has its own guilds and training grounds. `help map` and the `newbie` channel will point you there.
 
 ## Win your first fight
 
-1. From the New Recruit Training Area, go east, then north up the stairs.
-2. Go down into **Kir Drax'in Guard Basic Training - Level One**.
+1. From the New Recruit Training Area, go east, then north to the stairway.
+2. Go down the stairs into **Kir Drax'in Guard Basic Training - Level One**.
 3. Type `look` and spot a grey guard trainee.
 4. Type `consider trainee` to size up its strength, health, and level before swinging.
 5. If you like your odds, type `kill trainee` and watch your hit points.
@@ -109,5 +108,6 @@ Dark Pawns lets you run up to three characters at once so you can field your own
 ## Related
 
 - [Connect a client](/docs/play/connect-client/)
+- [Color](/docs/play/color/)
 - [Commands](/docs/reference/commands/)
 - [Glossary](/docs/reference/glossary/)

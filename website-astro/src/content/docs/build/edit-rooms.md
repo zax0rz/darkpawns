@@ -3,7 +3,7 @@ title: "Edit rooms"
 description: "Edit a room in your building zone with the admin console: change fields in a draft, commit to the running world, and save the zone file."
 type: guide
 audience: builders
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Use webOLC in the admin console to reshape a room in your assigned building zone. You edit a private draft first, commit it to the live world when it looks right, and then write the zone file to disk so your work survives the next reboot.

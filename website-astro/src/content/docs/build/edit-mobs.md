@@ -3,7 +3,7 @@ title: "Edit mobs"
 description: "Edit a mob prototype in your building zone with the admin console, commit it to the running world, and save the zone file."
 type: guide
 audience: builders
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Use webOLC in the admin console to edit a [mob](/docs/reference/glossary/#mob) prototype in your assigned building zone. Your changes stay in a draft until you commit them to the running world and write the zone file.

@@ -3,7 +3,7 @@ title: "Edit the welcome messages"
 description: "Change the mortal or immortal welcome message, preview terminal colors, and save without overwriting another operator’s changes."
 type: guide
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Choose **Staff tools → MOTD** in the admin console, or open the **MOTD** card on

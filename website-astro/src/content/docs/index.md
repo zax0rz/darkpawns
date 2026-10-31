@@ -3,7 +3,7 @@ title: "Documentation"
 description: "Find your way into Dark Pawns, run a server, or work on the world. Start with the player guide, operator steps, or references drawn from the game files."
 type: reference
 audience: players
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Dark Pawns is a 1994 text MUD where the cities have guildmasters, the wilderness has teeth, and the manual was mostly written at 2 AM. Pick what you're here to do.

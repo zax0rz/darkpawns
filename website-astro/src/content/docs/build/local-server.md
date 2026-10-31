@@ -3,7 +3,7 @@ title: "Run a local server"
 description: "Build Dark Pawns from a checkout, point it at the original world files, and connect through telnet or the local web client."
 type: guide
 audience: developers
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Build a disposable server from a Git checkout when you're working on the Go engine or testing world files. Unlike the 1999 C tree, you won't have to blow away `clan.c` to get the damn thing to compile: one `go build` gives you a self-contained binary with embedded SQLite, the original Diku world files, and the web client.

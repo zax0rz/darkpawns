@@ -3,7 +3,7 @@ title: "The admin console"
 description: "Find the admin console page for each task, understand its access gates, and save world or character changes without losing another operator’s work."
 type: explainer
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 The admin console runs at `/admin/` on the game's HTTP listener. Sign in with an

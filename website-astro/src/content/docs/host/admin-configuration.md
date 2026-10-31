@@ -3,7 +3,7 @@ title: "Configuration settings"
 description: "Change operator settings, back up or restore their bundle, and understand which changes need a restart on a managed or checkout server."
 type: explainer
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Configuration is under **Staff tools** and requires implementor access

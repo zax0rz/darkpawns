@@ -3,7 +3,7 @@ title: "Saved character management"
 description: "Edit a disconnected character’s equipment, inventory, flags, name, and password in the admin console, with clear save and delete boundaries."
 type: guide
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 The **Players** page (`HIGOD`, level 36 or higher) edits saved characters in SQLite. A character must be completely offline before you can touch their record, including linkdead sessions and characters sitting at the login prompt, so a late game save can't clobber your edits.

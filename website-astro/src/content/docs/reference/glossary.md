@@ -3,7 +3,7 @@ title: "Glossary"
 description: "Look up the game terms and abbreviations used in Dark Pawns help, player guides, and server documentation, from AC to vnum."
 type: reference
 audience: players
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Short definitions for the terms and abbreviations that show up in the game and these docs. When a term has its own in-game help entry, you can type `help <term>` inside the world for the full original text.
@@ -16,10 +16,10 @@ Short definitions for the terms and abbreviations that show up in the game and t
 | **GRGOD** | Greater God, staff level 38. Minimum rank to save welcome messages (`tedit`) and manage most player flags. |
 | **guild** | A class-restricted training hall where your guildmaster lets you `practice` skills and spells (`help GUILD`). |
 | **HIGOD** | High God, staff level 36. Minimum rank to edit saved characters, Lua scripts, and outbound notifications. |
-| **HP** | Hit points. When they hit zero, your equipment stays on the floor in your corpse and you wake up at the temple altar. |
+| **HP** | Hit points. Dropping to `0` through `-10` leaves you stunned, incapacitated, or mortally wounded on the floor; at `-11` you die, your equipment stays in your corpse, and you wake up at the temple altar. |
 | **immortal** | Any staff character at level 31 or higher. |
 | **implementor** | Staff level 40 (`IMPL`), the highest rank on a server. |
-| **linkdead** | Still standing in the room after your connection dropped. If your link breaks mid-fight, your character automatically tries to `flee` every round (`help LINK`), and still counts toward your 3-character limit until they leave the world. |
+| **linkdead** | Still standing in the room after your connection dropped. `help LINK` promises you'll auto-flee if attacked, but staff commented that out in 1999 because players abused it (`src/fight.c`). You just stand there taking hits, and you still count toward your 3-character limit (`help MULTI`). |
 | **mob** | A mobile non-player monster or citizen roaming the world. At level 24, some high-level mobs cop an `attitude` and attack on sight (`help ATTITUDE`). |
 | **MOTD** | Message of the day, the welcome screen shown when a mortal or immortal enters the game. |
 | **MP** | Mana points, spent when casting spells. |

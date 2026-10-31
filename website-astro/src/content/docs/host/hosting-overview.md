@@ -3,7 +3,7 @@ title: "Hosting at a glance"
 description: "See the supported systems, host requirements, listeners, costs, setup steps, and operator guides for running a Dark Pawns world on your machine."
 type: explainer
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 A Dark Pawns host runs the game server, the web client, and the admin console from a single bundle, backed by embedded SQLite. A fresh server starts in under half a second and idles around 85 MiB of RAM. Any spare Linux, macOS, or Windows machine with 1 GiB of memory and 2 GiB of disk can run a world without breaking a sweat.

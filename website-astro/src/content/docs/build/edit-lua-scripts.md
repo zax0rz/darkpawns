@@ -3,7 +3,7 @@ title: "Edit Lua scripts"
 description: "Edit a Lua script in the builder workshop, let the server parse-check the file, then publish it for the next game trigger."
 type: guide
 audience: builders
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Unlike room, mob, and object drafts, Lua scripts in the builder workshop have no staging step. When you click **Save**, the server syntax-checks your code and writes the file to disk, and the new script runs the very next time its trigger fires.

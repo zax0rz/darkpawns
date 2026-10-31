@@ -3,7 +3,7 @@ title: "Your first login"
 description: "Finish first-run setup, connect to your new Dark Pawns server, create the Implementor character, and open the admin console."
 type: guide
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 A fresh portable instance needs one game character before you can sign in to the admin console. The first character successfully created becomes the Implementor (level 40); setup doesn't create a separate admin account.

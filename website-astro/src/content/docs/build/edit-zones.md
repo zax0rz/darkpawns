@@ -3,7 +3,7 @@ title: "Edit zones"
 description: "Edit zone settings or room reset commands with the admin console, then commit each draft and save the zone file that stores it."
 type: guide
 audience: builders
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Use webOLC in the admin console to adjust a zone's reset timer and boundaries or to edit the reset commands for a specific room. Zone-wide settings and per-room reset commands have separate editor views so two builders don't step on each other.

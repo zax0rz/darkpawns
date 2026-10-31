@@ -3,7 +3,7 @@ title: "Contribute to Dark Pawns"
 description: "Read the fidelity rules, format your changes, and run the required build, static analysis, and test checks before committing."
 type: guide
 audience: developers
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 ## Read the governing rulebook

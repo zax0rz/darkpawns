@@ -179,10 +179,12 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/host/update-server/,src/content/docs/host/update-server.mdx,docs,authored technical documentation,3,technical accuracy review,325,,,
 /docs/play.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,52,,,
 /docs/play/,src/content/docs/play/index.mdx,docs,authored technical documentation,3,technical accuracy review,52,,,
-/docs/play/connect-client.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,718,,,
-/docs/play/connect-client/,src/content/docs/play/connect-client.mdx,docs,authored technical documentation,3,technical accuracy review,718,,,
-/docs/play/first-hour.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1029,,,
-/docs/play/first-hour/,src/content/docs/play/first-hour.md,docs,authored technical documentation,3,technical accuracy review,1029,,,
+/docs/play/color.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,671,,,
+/docs/play/color/,src/content/docs/play/color.md,docs,authored technical documentation,3,technical accuracy review,671,,,
+/docs/play/connect-client.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,745,,,
+/docs/play/connect-client/,src/content/docs/play/connect-client.mdx,docs,authored technical documentation,3,technical accuracy review,745,,,
+/docs/play/first-hour.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,1031,,,
+/docs/play/first-hour/,src/content/docs/play/first-hour.md,docs,authored technical documentation,3,technical accuracy review,1031,,,
 /docs/project.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,99,,,
 /docs/project/,src/content/docs/project/index.mdx,docs,authored technical documentation,3,technical accuracy review,99,,,
 /docs/project/architecture.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,235,,,
@@ -411,8 +413,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/reference/commands/spells/,website-astro/src/content/help/,docs,generated grouped help reference,3,verify generated source and representative output,202,verbatim,engine,website-astro/src/content/help/
 /docs/reference/commands/system.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,2,verbatim,engine,website-astro/src/content/help/
 /docs/reference/commands/system/,website-astro/src/content/help/,docs,generated grouped help reference,3,verify generated source and representative output,2,verbatim,engine,website-astro/src/content/help/
-/docs/reference/glossary.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,572,,,
-/docs/reference/glossary/,src/content/docs/reference/glossary.md,docs,authored technical documentation,3,technical accuracy review,572,,,
+/docs/reference/glossary.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,594,,,
+/docs/reference/glossary/,src/content/docs/reference/glossary.md,docs,authored technical documentation,3,technical accuracy review,594,,,
 /docs/releases.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,42,,,docs/releases/
 /docs/releases/,docs/releases/,docs,generated release index,3,verify generated source and representative output,42,,,docs/releases/
 /docs/releases/v0-1-0.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,398,,,docs/releases/v0.1.0.md
@@ -427,8 +429,8 @@ route,source_file,surface,content_mode,review_tier,review_status,words,text_kind
 /docs/releases/v0-1-6/,docs/releases/v0.1.6.md,docs,generated release reference,3,verify generated source and representative output,420,,,docs/releases/v0.1.6.md
 /docs/releases/v0-1-7.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,393,,,docs/releases/v0.1.7.md
 /docs/releases/v0-1-7/,docs/releases/v0.1.7.md,docs,generated release reference,3,verify generated source and representative output,393,,,docs/releases/v0.1.7.md
-/docs/releases/v0-1-8.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,16,,,docs/releases/v0.1.8.md
-/docs/releases/v0-1-8/,docs/releases/v0.1.8.md,docs,generated release reference,3,verify generated source and representative output,16,,,docs/releases/v0.1.8.md
+/docs/releases/v0-1-8.md,scripts/markdown-twins.mjs,agent-markdown,generated Markdown representation,3,schema-and-sample QA,690,,,docs/releases/v0.1.8.md
+/docs/releases/v0-1-8/,docs/releases/v0.1.8.md,docs,generated release reference,3,verify generated source and representative output,690,,,docs/releases/v0.1.8.md
 /download.md,src/pages/download.md.ts,agent-markdown,generated Markdown representation,3,schema-and-sample QA,,,,
 /download/,src/pages/download.astro,core,authored static page,1,full editorial review,,,,
 /items/,src/pages/items/index.astro,items-index,generated database index,3,template-and-sample QA,,,,

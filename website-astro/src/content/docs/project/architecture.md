@@ -3,7 +3,7 @@ title: "Server architecture"
 description: "Trace startup from the server entrypoint through world loading, persistence, sessions, network listeners, and the shared game engine."
 type: explainer
 audience: developers
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Dark Pawns is a Go server that loads the original Diku-format world, exposes telnet and WebSocket sessions, and runs the game through a shared world and combat engine.

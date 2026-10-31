@@ -3,7 +3,7 @@ title: "Players can't connect"
 description: "Find whether a connection failure comes from the world, the listening address, a firewall, or the client, then choose the next check."
 type: troubleshooting
 audience: operators
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Use this page when a player can't reach a running Dark Pawns server. Start with the address and port the server actually reports, then check the path from the player's network.

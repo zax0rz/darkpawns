@@ -3,7 +3,7 @@ title: "Edit objects"
 description: "Edit an object prototype in your building zone with the admin console, commit it to the running world, and save the zone file."
 type: guide
 audience: builders
-verified: v0.1.7
+verified: v0.1.8
 ---
 
 Use webOLC in the admin console to build or tune an object prototype in your assigned zone. Changes stay in your draft until you commit them to the live world and write the zone's `.obj` file.
