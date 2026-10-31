@@ -276,8 +276,19 @@ func (s *Session) sendStatPlayerReport(p *game.Player, room int, connected bool,
 		colorWrap(fmt.Sprintf("%7d", p.GetExp()), ansiYellow, normal),
 		p.GetAlignment()))
 	pt := p.PlayingTime()
-	age := game.Age(p.Birth).Year
-	created := time.Unix(p.Birth, 0).Format("Mon Jan _2 15:04:05 2006")
+	// C's do_stat_character reads k->player.time.birth after affect_modify has
+	// already shifted it for APPLY_AGE (src/handler.c:160-161), so both the
+	// Created stamp and age() see the affected timestamp (src/act.wizard.c:754,
+	// 764; src/utils.c:333). The port keeps Birth raw and derives the shift, so
+	// both lines ask for the effective value.
+	//
+	// Save deliberately stays on the raw field (pkg/game/save.go:158), which is a
+	// model difference rather than parity: C's char_to_store copies
+	// ch->player.time.birth (src/db.c:2589), and that field is already shifted
+	// while an APPLY_AGE item is worn. Flagged in the PR rather than changed here.
+	effectiveBirth := p.EffectiveBirth()
+	age := game.Age(effectiveBirth).Year
+	created := time.Unix(effectiveBirth, 0).Format("Mon Jan _2 15:04:05 2006")
 	lastLogon := p.ConnectedAt.Format("Mon Jan _2 15:04:05 2006")
 	s.Send(fmt.Sprintf("Created: [%s], Last Logon: [%s]\r\n", created, lastLogon))
 	s.Send(fmt.Sprintf("Played [%dd %dh], Age [%d]\r\n", pt.Day, pt.Hours, age))

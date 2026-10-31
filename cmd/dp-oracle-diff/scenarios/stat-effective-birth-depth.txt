@@ -1,0 +1,100 @@
+# C-first proof that stat's Created and Age lines read the *affected* birth.
+#
+# APPLY_AGE shifts the stored timestamp in place (src/handler.c:160-161):
+#
+#   case APPLY_AGE:  ch->player.time.birth -= (mod * SECS_PER_MUD_YEAR);
+#
+# and do_stat_character prints that field for both lines — asctime over
+# k->player.time.birth (src/act.wizard.c:754) and age(), which is
+# mud_time_passed(time(0), ch->player.time.birth) (src/utils.c:333; act.wizard.c:764).
+#
+# Object 19404 is "some dark robes" whose `A 9 10` is APPLY_AGE +10
+# (lib/world/obj/194.obj), so wearing them makes the wearer ten years older on
+# both lines. The port printed the raw Birth for both, which is the age the
+# character would have without them.
+#
+# The peer is a magic-user on purpose: the robes' extra flags set anti-class bits
+# for thief, warrior, ninja, paladin, assassin and ranger (src/structs.h:482-493),
+# so a warrior is refused by invalid_class ("You cannot use $p.",
+# src/handler.c:714-717) and can never carry the affect. Mage and cleric are not
+# on that list. The peer must also wear nothing else: an APPLY_RACE_HATE item
+# would trip the separate, still-open Racial Hatreds divergence in this same
+# report (see docs/fidelity/depth/handoff/2026-10-31-stat-effective-birth.md).
+#
+# The normalizer masks the Created stamp as <WALL_CLOCK>, so the Age line is the
+# observable here.
+#
+# depth-case: stat.effective-birth-raw
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 19404 99 8162 194
+
+[setup:oracle]
+Ageconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ageconfig
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Agepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Agepeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Agepeer 8162
+
+[probe]
+stat player Agepeer
+force Agepeer get robes
+force Agepeer wear robes
+stat player Agepeer
+force Agepeer remove robes
+stat player Agepeer
