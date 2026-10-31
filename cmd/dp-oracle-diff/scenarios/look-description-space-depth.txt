@@ -1,0 +1,100 @@
+# C-first raw-byte proof for do_description's trailing space.
+#
+# When a room has extra descriptions, C sends the description with a space
+# appended, as one write (src/act.informative.c:2773-2804):
+#
+#   if (num_extras == 0) { send_to_char(description, ch); return; }
+#   sprintf(buf2, "%s ", description);
+#   send_to_char(buf2, ch);
+#
+# The description ends with a newline, so that space is the first byte of the
+# next line, and the next write is whatever look_at_room sends next: the
+# auto-exit line when PRF_AUTOEXIT is on, otherwise the CCGRN bracket that opens
+# the object list. The port carried the space forward but let the bracket writes
+# pass it by, so it landed on the first character-list entry instead.
+#
+# Room 11269 has an extra description ("A large sign hangs on the wall"), so the
+# space exists. The actor has autoexit on, which puts the space in front of the
+# exit line; the peer has it off, which puts the space in front of the green
+# bracket. One probe therefore pins both placements.
+#
+# depth-case: look.description-space-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Spaceconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spaceconfig
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Spacepeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Spacepeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 11269
+teleport Spacepeer 11269
+# Autoexit is on by default, so the actor keeps its exit line and the space
+# lands in front of it; the peer's is toggled off, which leaves the CCGRN
+# bracket as the next write after the description.
+force Spacepeer auto exits
+
+[probe]
+color complete
+look
+force Spacepeer color complete
+force Spacepeer look
+color normal
+look
+color off
+look
