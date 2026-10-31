@@ -607,12 +607,15 @@ func specElementsMasterColumnMoves(w *World, roomVNum int) {
 			message = "The talisman of " + objNames[found-1] + " glows softly and your vision fades. When you wake...\r\n"
 		}
 
-		// The space before the arrival act belongs to do_description's trailing
-		// space when the destination room lists extra descriptions
-		// (src/spec_procs3.c:998-1002, src/act.informative.c:2779).
+		// C's act format has no leading space (src/spec_procs3.c:998): the space
+		// that appears before this line is do_description's trailing space,
+		// written as the first byte of the next line when the destination room
+		// lists extra descriptions (src/act.informative.c:2779). The port's
+		// ObservationResult carries that byte itself and now emits it with the
+		// bracket write, so the act must not add a second one.
 		elementTeleportPerson(w, body, newLocs[found], message,
 			"$n vanishes in a brilliant flash of light.",
-			" $n appears in a brilliant flash of light.",
+			"$n appears in a brilliant flash of light.",
 			true, false, "elements master column character transfer failed")
 	}
 }
@@ -671,8 +674,12 @@ func specElementsGaleruColumnMoves(w *World, roomVNum int) bool {
 			continue
 		}
 		w.lookAtRoom(player, false)
+		// C: act("$n materialises from nowhere in a swirl of colors.", ...)
+		// with no leading space (src/spec_procs3.c:1181); the space in front of
+		// it is do_description's trailing space arriving as the first byte of
+		// this line, which the look above now emits itself.
 		Act(w, true, player, nil, nil, nil,
-			" $n materialises from nowhere in a swirl of colors.", "", ToNotVict)
+			"$n materialises from nowhere in a swirl of colors.", "", ToNotVict)
 	}
 	return true
 }
