@@ -420,6 +420,15 @@ func init() {
 	registerCommand("save", wrapArgs(cmdSave), "Save your character.")
 	registerCommand("report", wrapArgs(cmdReport), "Show report of your surroundings.")
 	registerActorCommand("report", npcActorHandler(func(w *game.World, mob *game.MobInstance, _ string) { w.NPCReportCommand(mob) }))
+	// C's do_force hands the line to command_interpreter for any body, so a
+	// mobile can be forced or ordered to run group exactly as a player can
+	// (src/act.wizard.c:1869-1880; src/act.other.c:685-740). The port's mobile
+	// surface had no group, so the command was accepted and then dropped (F9).
+	// The bool is C's print_group branch, whose output is TO_CHAR to the mobile
+	// and therefore has no descriptor to reach.
+	registerActorCommand("group", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) {
+		w.GroupCommand(mob, arg)
+	}))
 	registerCommand("split", wrapArgs(cmdSplit), "Split gold with your group.")
 	registerCommand("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.")
 	registerCommand("display", wrapArgs(cmdDisplay), "Set display preferences.")
