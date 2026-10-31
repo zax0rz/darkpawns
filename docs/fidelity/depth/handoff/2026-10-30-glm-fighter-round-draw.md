@@ -63,3 +63,17 @@ order. Next step: dump both engines' guard-AC series across the six pulses
       --scenario fighter-wimpy-window-depth --seed 5 --draw-parity
 
     draw-parity MISMATCH stream=4178 c=Number(0,13) go=Dice(1,4)
+
+## Resolution (2026-10-30, same day)
+
+The prescribed AC-series dump found it in one step: interleaving `stat guard`
+between the pulses (the diagnostic variant) showed C's guard at AC -75 /
+hitroll 22 / damroll 15 while Go's stayed at the prototype's -100 / 20 / 13 —
+exactly berserk's three records (`src/new_cmds.c:2146-2160`). The getters read
+only the override/prototype; C's `affect_total` (`src/handler.c:337-372`)
+recomputes a mobile's combat points from every timed affect record.
+`mobilePointTotalsLocked` now folds the timed records into GetAC/GetHitroll/
+GetDamroll (equipment affects stay in the equip pipeline's Runtime overrides —
+the first draft re-added them and double-counted, caught by the
+mobile-equipment tests). The vehicle is green with draw parity on
+1,2,3,5,8,11,13,17,21 (5/11/17 red on main), and the row is promoted.
