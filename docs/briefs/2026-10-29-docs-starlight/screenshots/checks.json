@@ -1,0 +1,98 @@
+[
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/",
+    "overflow": false,
+    "title": "Documentation",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/index.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/play/first-hour/",
+    "overflow": false,
+    "title": "Your first hour",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/first-hour.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/host/install/",
+    "overflow": false,
+    "title": "Install Dark Pawns",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/install.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/host/admin-console/",
+    "overflow": false,
+    "title": "The admin console",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/admin-console.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/host/update-server/",
+    "overflow": false,
+    "title": "Update your server",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/update-server.md"
+  },
+  {
+    "size": "desktop",
+    "width": 1440,
+    "route": "/docs/reference/api/admin/operations/get-dashboard/",
+    "overflow": false,
+    "title": "Retained dashboard observations",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/cmd/admin-openapi/main.go"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/",
+    "overflow": false,
+    "title": "Documentation",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/index.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/play/first-hour/",
+    "overflow": false,
+    "title": "Your first hour",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/first-hour.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/host/install/",
+    "overflow": false,
+    "title": "Install Dark Pawns",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/install.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/host/admin-console/",
+    "overflow": false,
+    "title": "The admin console",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/admin-console.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/host/update-server/",
+    "overflow": false,
+    "title": "Update your server",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/host/update-server.md"
+  },
+  {
+    "size": "mobile",
+    "width": 375,
+    "route": "/docs/reference/api/admin/operations/get-dashboard/",
+    "overflow": false,
+    "title": "Retained dashboard observations",
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/cmd/admin-openapi/main.go"
+  }
+]

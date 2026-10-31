@@ -1,11 +1,11 @@
 ---
 // Masthead + the one persistent section bar.
 // Nav encodes priority by position: player content left, utility right.
+const { mobileNavLabel = 'Menu', showMobileNavLabel = false } = Astro.props;
 const path = Astro.url.pathname;
 const primary = [
   { name: 'Play', href: '/play/' },
   { name: 'World', href: '/world/' },
-  { name: 'Help', href: '/help/' },
   { name: 'Map', href: '/map/' },
   { name: 'Database', href: '/database/' },
   { name: 'Archive', href: '/archive/' },
@@ -46,7 +46,7 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
             <line class="bar-mid" x1="1" y1="8" x2="19" y2="8" />
             <line class="bar-bot" x1="1" y1="13" x2="19" y2="13" />
           </svg>
-          <span class="visually-hidden">Menu</span>
+          <span class:list={{ "visually-hidden": !showMobileNavLabel }}>{mobileNavLabel}</span>
         </span>
       </summary>
       <div class="container sectionbar-inner">
@@ -160,17 +160,6 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   .nav-search-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    background: var(--paper-deep);
-    border: 1px solid var(--ink);
-    border-radius: 2px;
-    color: var(--ink);
-    font-family: var(--font-display);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 0.2rem 0.5rem;
-    cursor: pointer;
     vertical-align: middle;
   }
   .nav-search-btn:hover {

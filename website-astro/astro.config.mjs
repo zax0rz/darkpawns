@@ -1,28 +1,18 @@
+import { docsHelpRedirects } from './scripts/command-taxonomy.mjs';
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import starlight from '@astrojs/starlight';
+import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
+import mermaidBuild from './src/lib/mermaid-build.mjs';
+import { sidebar, docsRedirects } from './scripts/docs-navigation.mjs';
+import { markdownTwins } from './scripts/markdown-twins.mjs';
 import { satteri } from '@astrojs/markdown-satteri';
 import { noLiteralAutolinks } from './src/lib/no-literal-autolinks.mjs';
 import { readdirSync } from 'node:fs';
 
-const helpRoot = new URL('./src/content/help/', import.meta.url);
-const helpCategories = new Set(['commands', 'info', 'socials', 'spells', 'wizhelp']);
-const helpRedirects = Object.fromEntries(
-  readdirSync(helpRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .flatMap((category) =>
-      readdirSync(new URL(`./${category.name}/`, helpRoot), { withFileTypes: true })
-        .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-        .map((entry) => {
-          const slug = entry.name.slice(0, -3);
-          return [`/help/${slug}`, `/help/${category.name}/${slug}/`];
-        })
-        .filter(([source]) => !helpCategories.has(source.slice('/help/'.length))),
-    ),
-);
-
-const redirects = {
-  ...helpRedirects,
-  '/help/!': '/help/commands/bang-caret/',
+const redirects = Object.fromEntries(Object.entries({
+  ...docsRedirects,
+  ...docsHelpRedirects(),
   '/mudlet': '/connect/#mudlet',
   '/connect/client-downloads': '/connect/',
   '/connect/connection-instructions': '/connect/',
@@ -34,12 +24,12 @@ const redirects = {
   '/about/archive-index': '/archive/',
   '/credits/wizlist': '/credits/#archived-staff-list',
   '/credits/player-roster': '/archive/',
-  '/docs/getting-started/quick-start': '/docs/getting-started/local-server',
-  '/docs/getting-started/installation': '/docs/getting-started/local-server',
-  '/docs/development': '/docs/server',
-  '/docs/development/architecture': '/docs/server/architecture',
-  '/research': '/docs/research',
-  '/research/port-fidelity': '/docs/research/port-fidelity/',
+  '/docs/getting-started/quick-start': '/docs/build/local-server/',
+  '/docs/getting-started/installation': '/docs/host/install/',
+  '/docs/development': '/docs/project/',
+  '/docs/development/architecture': '/docs/project/architecture/',
+  '/research': '/docs/project/',
+  '/research/port-fidelity': '/docs/project/port-fidelity/',
   '/docs/game': '/world/',
   '/docs/game/commands': '/world/commands/',
   '/docs/game/mechanics': '/world/mechanics/',
@@ -80,9 +70,9 @@ const redirects = {
   '/tags/interactive': '/map/',
   '/tags/map': '/map/',
   '/tags/world': '/world/',
-  '/pawn-lab.html': '/docs/research/',
+  '/pawn-lab.html': '/docs/project/',
   '/status': '/about/project/',
-};
+}).map(([from, to]) => [from.replace(/\/$/, '') || '/', to]));
 
 // Dark Pawns — Astro migration (replaces the Hugo site in ../website).
 export default defineConfig({
@@ -99,10 +89,36 @@ export default defineConfig({
     // src/lib/no-literal-autolinks.mjs.
     processor: satteri({
       features: { smartPunctuation: false },
-      mdastPlugins: [noLiteralAutolinks],
+      mdastPlugins: [noLiteralAutolinks, mermaidBuild],
     }),
   },
   integrations: [
+    starlight({
+      title: 'Dark Pawns',
+      description: 'The field guide for playing, hosting and building Dark Pawns.',
+      disable404Route: true,
+      routeMiddleware: './src/docs-route-data.ts',
+      sidebar: sidebar(openAPISidebarGroups),
+      customCss: ['./src/styles/docs.css'],
+      components: {
+        Header: './src/components/docs/Header.astro', MobileMenuToggle: './src/components/docs/MobileMenuToggle.astro',
+        Head: './src/components/docs/Head.astro',
+        EditLink: './src/components/docs/EditLink.astro',
+        Footer: './src/components/docs/Footer.astro',
+        ThemeProvider: './src/components/docs/Theme.astro',
+        ThemeSelect: './src/components/docs/Empty.astro',
+        PageTitle: './src/components/docs/PageTitle.astro',
+        LastUpdated: './src/components/docs/LastVerified.astro',
+      },
+      editLink: { baseUrl: 'https://github.com/zax0rz/darkpawns/edit/main/website-astro/' },
+      credits: false,
+      expressiveCode: { themes: ['github-light'], styleOverrides: { borderRadius: '2px', codeBackground: '#E5DAC1', codeFontFamily: 'JetBrains Mono, monospace' } },
+      plugins: [starlightOpenAPI([
+        { base: 'docs/reference/api/public', schema: './.generated/api/public.json', sidebar: { label: 'Public API' } },
+        { base: 'docs/reference/api/admin', schema: './.generated/api/admin.json', sidebar: { label: 'Admin API' } },
+      ])],
+    }),
+    markdownTwins(),
     sitemap({
       filter: (page) => {
         const path = new URL(page).pathname;

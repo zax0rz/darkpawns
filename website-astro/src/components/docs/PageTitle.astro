@@ -1,0 +1,8 @@
+---
+const data = Astro.locals.starlightRoute.entry.data;
+const section = Astro.url.pathname.split('/')[2];
+const labels = { play: 'Play', host: 'Host', build: 'Build', reference: 'Reference', project: 'Project', releases: 'Releases' };
+---
+{section && <nav aria-label="Breadcrumb" class="docs-breadcrumb"><a href="/docs/">Documentation</a> <span aria-hidden="true"> / </span> <a href={`/docs/${section}/`}>{labels[section] ?? 'Reference'}</a></nav>}
+<h1 id="_top">{data.title}</h1>
+{data.description && <p class="docs-summary">{data.description}</p>}

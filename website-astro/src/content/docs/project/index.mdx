@@ -1,0 +1,33 @@
+---
+title: "Project"
+description: "Read the source, follow the C-to-Go fidelity rules, find research notes, learn how to contribute, and browse the Dark Pawns project history."
+type: reference
+audience: developers
+verified: v0.1.8
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+[Dark Pawns on GitHub](https://github.com/zax0rz/darkpawns) is the source repository for the Go server, website, world files, and research record.
+
+## How the port preserves the game
+
+Dark Pawns is a 1:1 port of the original C game; the Go server doesn't reinterpret it. The [Port Rulebook](https://github.com/zax0rz/darkpawns/blob/main/docs/fidelity/RULEBOOK.md) defines the five rules for player-facing bytes, commands, random draws, behavior, and verification. [Port fidelity workflow](/docs/project/port-fidelity/) explains how the read-only C oracle is used to check changes.
+
+## Code and research
+
+<CardGrid>
+  <LinkCard title="Server architecture" href="/docs/project/architecture/" description="Trace startup from the server entrypoint through world loading, persistence, sessions, network listeners, and the shared game engine." />
+  <LinkCard title="Contribute to Dark Pawns" href="/docs/project/contributing/" description="Read the fidelity rules, format your changes, and run the required build, static analysis, and test checks before committing." />
+  <LinkCard title="Port fidelity workflow" href="/docs/project/port-fidelity/" description="Use the read-only C oracle, deterministic seams, and five governing rules to prove that the Go server preserves the original game behavior." />
+</CardGrid>
+
+[Research notes](https://github.com/zax0rz/darkpawns/tree/main/docs/research) link the project README, dated evidence, and current research record.
+
+## Project records
+
+<CardGrid>
+  <LinkCard title="About Dark Pawns" href="/about/" description="Dark Pawns began in 1994. This is the sourced history of the original MUD, its players, DPReturns, and the modern Go restoration." />
+  <LinkCard title="Dark Pawns Credits" href="/credits/" description="The creators, builders, players, and free-software projects behind Dark Pawns." />
+  <LinkCard title="A Brief History of Dark Pawns" href="/archive/history/" description="Frontline's record of Dark Pawns from its 1994 founding through the loss and recovery of the game in 2001." />
+</CardGrid>

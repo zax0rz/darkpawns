@@ -1,0 +1,46 @@
+# Dark Pawns
+
+> Dark Pawns is a text-based multiplayer game first opened in 1994. The current project preserves the original game while maintaining a Go server, documentation, world reference, and community archive.
+
+The canonical site is https://darkpawns.org/. Source code is maintained at https://github.com/zax0rz/darkpawns.
+
+## Start here
+
+- [Play Dark Pawns](https://darkpawns.org/play/): Browser client and connection details for human players.
+- [Documentation](https://darkpawns.org/docs/): Play, Host, Build, Reference, Project, and Releases.
+
+## Game reference
+
+- [World handbook](https://darkpawns.org/world/): Classes, races, systems, lore, and other player-facing material.
+- [World map](https://darkpawns.org/map/): Interactive map generated from the active world files.
+- [Database codex](https://darkpawns.org/database/): Searchable mobs and items from the active world files.
+- [Mob index](https://darkpawns.org/mobs/): Permanent HTML records for every mob. Append `.json` to a mob number for JSON, such as `/mobs/1.json`.
+- [Item index](https://darkpawns.org/items/): Permanent HTML records for every item. Append `.json` to an item number for JSON, such as `/items/30305.json`.
+- [Zone index](https://darkpawns.org/zones/): Permanent HTML records for every zone — rooms, mobs, items, shops, and connected zones. Append `.json` to a zone number for JSON, such as `/zones/132.json`.
+- [Room records](https://darkpawns.org/zones/): Every room has a permanent page at `/rooms/{vnum}/` — description, exits, inhabitants — reachable from its zone page. Append `.json` to a room number for JSON, such as `/rooms/8004.json`.
+
+## Project and history
+
+- [About Dark Pawns](https://darkpawns.org/about/): Project history and links to the active DarkPawns Returns community.
+- [Project activity](https://darkpawns.org/about/project/): Repository activity and contribution information.
+- [Community archive](https://darkpawns.org/archive/): 37 records recovered from dp-players.com (2004) and darkpawns.com (2002-2005): 19 forum threads, site pages, guides, a text map, and a board index listing topics whose pages were never archived. Every record cites its original URL and its Wayback capture, states whether it is complete or partial, and is marked verbatim or edited-excerpt.
+- [Blog](https://darkpawns.org/blog/): Current project writing and clearly labelled historical reconstructions.
+- [Credits](https://darkpawns.org/credits/): Contributors and the archived staff list.
+- [Contact](https://darkpawns.org/contact/): Private contact form for former players and contributors.
+
+## Machine-readable resources
+
+- [Sitemap](https://darkpawns.org/sitemap-index.xml): Index of canonical HTML pages.
+- [RSS feed](https://darkpawns.org/rss.xml): Project notes from the restoration.
+- [Database JSON](https://darkpawns.org/data/database.json): Complete mob and item dataset.
+- [Map index](https://darkpawns.org/map/map-index.json): Generated map metadata and zone files.
+- [OpenAPI specification](https://darkpawns.org/openapi.json): Game server HTTP API, also at /api/openapi.json.
+
+Most documentation, world, blog, and archive entries have a Markdown representation at the canonical path with `.md` appended: `/docs/project/architecture.md` is the Markdown form of `/docs/project/architecture/`. Requesting the canonical URL with `Accept: text/markdown` returns the same document.
+
+## Notes
+
+- Player-facing game text may be historical, terse, or deliberately stylized. Preserve it when quoting game behavior.
+- Community archive pages identify their original source and Wayback Machine capture, in the page text and in schema.org JSON-LD (isBasedOn is the original URL, citation is the archived copy). Records whose capture carries no timestamp are labelled "Date not recorded" and deliberately assert no publication date.
+- Archive transcripts are verbatim: their spelling, punctuation and formatting are the 2004 authors' own and should not be corrected when quoted.
+- The C source under `src/` is the behavioral oracle for the Go port. See the repository fidelity rulebook before proposing gameplay changes.

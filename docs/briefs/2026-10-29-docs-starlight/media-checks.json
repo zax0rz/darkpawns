@@ -1,0 +1,156 @@
+[
+  {
+    "width": 1440,
+    "route": "play/connect-client",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/web-client-first-steps.png",
+        "width": 1016,
+        "alt": "A new Guest at the Temple Altar in the web client, with the connection status and vitals below the game text."
+      },
+      {
+        "src": "/media/docs/mudlet-dock.png",
+        "width": 450,
+        "alt": "Mudlet connected to a disposable local Dark Pawns world, showing the player dock, vitals, and Temple Altar map."
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "host/first-login",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/install-and-setup.gif",
+        "width": 1200,
+        "alt": "Portable bundle setup starts an isolated local world."
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "host/player-management",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-player-editor.gif",
+        "width": 920,
+        "alt": "The player editor moves from character stats to equipment and flags."
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "host/dashboard-and-logs",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-dashboard.png",
+        "width": 1132,
+        "alt": "The dashboard charts show synthetic players online and daily arrivals."
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "host/notifications",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-notifications.png",
+        "width": 1212,
+        "alt": "Notification settings with event rows and disabled delivery channels in the local preview."
+      }
+    ]
+  },
+  {
+    "width": 1440,
+    "route": "host/motd-editor",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-motd.png",
+        "width": 564,
+        "alt": "The welcome message editor with synthetic login text and its preview."
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "play/connect-client",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/web-client-first-steps.png",
+        "width": 1016,
+        "alt": "A new Guest at the Temple Altar in the web client, with the connection status and vitals below the game text."
+      },
+      {
+        "src": "/media/docs/mudlet-dock.png",
+        "width": 450,
+        "alt": "Mudlet connected to a disposable local Dark Pawns world, showing the player dock, vitals, and Temple Altar map."
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "host/first-login",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/install-and-setup.gif",
+        "width": 1200,
+        "alt": "Portable bundle setup starts an isolated local world."
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "host/player-management",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-player-editor.gif",
+        "width": 920,
+        "alt": "The player editor moves from character stats to equipment and flags."
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "host/dashboard-and-logs",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-dashboard.png",
+        "width": 1132,
+        "alt": "The dashboard charts show synthetic players online and daily arrivals."
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "host/notifications",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-notifications.png",
+        "width": 1212,
+        "alt": "Notification settings with event rows and disabled delivery channels in the local preview."
+      }
+    ]
+  },
+  {
+    "width": 375,
+    "route": "host/motd-editor",
+    "overflow": false,
+    "images": [
+      {
+        "src": "/media/docs/admin-motd.png",
+        "width": 564,
+        "alt": "The welcome message editor with synthetic login text and its preview."
+      }
+    ]
+  }
+]

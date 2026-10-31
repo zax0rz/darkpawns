@@ -5,17 +5,18 @@
 //
 // A link an author wrote, [text](url) or <url>, starts at its bracket. A GFM
 // autolink literal starts at its first letter, so that is the one this plugin
-// turns back into plain text. Sätteri reports offsets in UTF-8 bytes, not
-// JavaScript string indexes, so the check reads the source as bytes.
-const OPEN_BRACKET = 0x5b; // [
-const OPEN_ANGLE = 0x3c; // <
+// turns back into plain text. Sätteri 0.10 reports JavaScript string offsets;
+// positions must be enabled explicitly for this visitor.
+const OPEN_BRACKET = '[';
+const OPEN_ANGLE = '<';
 
 export const noLiteralAutolinks = {
   name: 'no-literal-autolinks',
+  options: { position: true },
   link(node, ctx) {
     const start = node.position?.start?.offset;
     if (start === undefined) return;
-    const first = Buffer.from(ctx.source, 'utf8')[start];
+    const first = ctx.source[start];
     if (first === OPEN_BRACKET || first === OPEN_ANGLE) return;
     ctx.replaceNode(node, {
       type: 'text',

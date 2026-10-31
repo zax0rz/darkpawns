@@ -40,6 +40,7 @@ func run() (runErr error) {
 	doc := apidoc.New()
 	rootAPI := doc.NewAPI(http.NewServeMux())
 	apidoc.RegisterHealth(rootAPI)
+	apidoc.RegisterConnections(rootAPI, func() apidoc.ConnectionInfo { return apidoc.ConnectionInfo{} })
 	apidoc.RegisterSetupStatus(rootAPI, func() (int, error) { return 0, nil }, false)
 	feed := mudlog.NewFeed(mudlog.DefaultQueue, mudlog.DefaultRingCap)
 	defer feed.Stop()

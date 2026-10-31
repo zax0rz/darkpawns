@@ -4,7 +4,7 @@ Dark Pawns Unified Search Index Generator (Astro version)
 Parses:
   1. Astro Content Collections (src/content/):
      - help/ (commands, spells, socials, info, wizhelp)
-     - docs/ (agents, getting-started, research, server)
+     - docs/ (Play, Host, Build, Reference, Project)
      - world/
      - blog/
      - archive/
@@ -24,6 +24,7 @@ import os
 import re
 import json
 import sys
+import subprocess
 from pathlib import Path
 
 # Base paths
@@ -45,6 +46,8 @@ def searchable_body(text: str) -> str:
     the description is still what a result shows.
     """
     text = re.sub(r'^---.*?^---', ' ', text, flags=re.S | re.M)
+    # MDX component imports are build instructions, not page prose.
+    text = re.sub(r'^import\s+.*$', ' ', text, flags=re.M)
     text = re.sub(r'`{1,3}[^`]*`{1,3}', ' ', text)
     text = re.sub(r'!?\[([^\]]*)\]\([^)]*\)', r'\1', text)
     text = re.sub(r'<[^>]+>', ' ', text)
@@ -107,6 +110,18 @@ def parse_frontmatter(content: str):
 def index_markdown_content():
     """Index help, docs, world, blog, and archive content."""
     entries = []
+
+    taxonomy = json.loads(subprocess.run(
+        ["node", str(ASTRO_ROOT / "scripts" / "command-taxonomy.mjs")],
+        cwd=ASTRO_ROOT, check=True, capture_output=True, text=True,
+    ).stdout)
+    help_targets = {
+        (topic["category"], topic["slug"]): (
+            f"/docs/reference/commands/{group['slug']}/#{topic['anchor']}"
+        )
+        for group in taxonomy["groups"]
+        for topic in group["topics"]
+    }
     
     # 1. Help Collection
     help_dir = CONTENT_DIR / "help"
@@ -137,6 +152,9 @@ def index_markdown_content():
                 title = meta.get("title", slug.replace("-", " ").upper())
                 desc = meta.get("description", clean_text(body, 160))
                 subtype = category_map.get(cat, cat.title())
+                target = help_targets.get((cat, slug))
+                if target is None:
+                    raise ValueError(f"help topic has no grouped reference target: {cat}/{slug}")
                 
                 # Help keyword aliases
                 keywords = [slug.replace("-", " ")]
@@ -149,7 +167,7 @@ def index_markdown_content():
                     "t": title,
                     "c": "help",
                     "s": subtype,
-                    "u": f"/help/{cat}/{slug}/",
+                    "u": target,
                     # Deduplicated but order-stable. A bare set reorders on
                     # every run, because Python randomises string hashing per
                     # process, so 261 entries changed on every regeneration
@@ -166,14 +184,22 @@ def index_markdown_content():
     # 2. Docs Collection
     docs_dir = CONTENT_DIR / "docs"
     if docs_dir.exists():
-        for md_file in docs_dir.rglob("*.md"):
+        # Docs pages may be .md or .mdx; both publish the same routes.
+        doc_files = sorted(
+            path
+            for pattern in ("*.md", "*.mdx")
+            for path in docs_dir.rglob(pattern)
+        )
+        for md_file in doc_files:
             if md_file.name.startswith("_"):
                 continue
             rel_path = md_file.relative_to(docs_dir)
             parts = rel_path.parts
             section = parts[0] if len(parts) > 1 else ""
             slug = md_file.stem
-            url = f"/docs/{section}/{slug}/" if section else f"/docs/{slug}/"
+            doc_path = rel_path.with_suffix("").as_posix()
+            doc_path = re.sub(r"(^|/)index$", "", doc_path).strip("/")
+            url = f"/docs/{doc_path}/" if doc_path else "/docs/"
             
             try:
                 content = md_file.read_text(encoding='utf-8', errors='ignore')

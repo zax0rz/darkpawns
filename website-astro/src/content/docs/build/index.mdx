@@ -1,0 +1,29 @@
+---
+title: "Build"
+description: "Build Dark Pawns from source and run a local world for development. Start with the checkout, required tools, and the repository verification commands."
+type: reference
+audience: developers
+verified: v0.1.8
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Build Dark Pawns from source or reshape a running world through webOLC. In the original C server, builders edited zones over telnet menus that happily let you crash the MUD if you typed the wrong flag:
+
+> WARNING: This OLC will let you set values to values that shouldn't be set. ... This is good in the sense that it allows you to test anything you please, but bad in the sense that builders can crash the mud with ease. (Hey, that rhymes!).
+>
+> `help OLC`
+
+webOLC replaces the numbered telnet prompts with draft locks and syntax checks, while writing the same Diku world files underneath.
+
+<LinkCard title="Run a local server" href="/docs/build/local-server/" description="Build Dark Pawns from a checkout, point it at the original world files, and connect through telnet or the local web client." />
+
+## Edit the world
+
+<CardGrid>
+  <LinkCard title="Edit rooms" href="/docs/build/edit-rooms/" description="Edit a room in your building zone with the admin console: change fields in a draft, commit to the running world, and save the zone file." />
+  <LinkCard title="Edit objects" href="/docs/build/edit-objects/" description="Edit an object prototype in your building zone with the admin console, commit it to the running world, and save the zone file." />
+  <LinkCard title="Edit mobs" href="/docs/build/edit-mobs/" description="Edit a mob prototype in your building zone with the admin console, commit it to the running world, and save the zone file." />
+  <LinkCard title="Edit zones" href="/docs/build/edit-zones/" description="Edit zone settings or room reset commands with the admin console, then commit each draft and save the zone file that stores it." />
+  <LinkCard title="Edit Lua scripts" href="/docs/build/edit-lua-scripts/" description="Edit a Lua script in the builder workshop, let the server parse-check the file, then publish it for the next game trigger." />
+</CardGrid>

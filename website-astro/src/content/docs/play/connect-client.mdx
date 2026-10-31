@@ -1,0 +1,122 @@
+---
+title: "Connect a client"
+description: "Dark Pawns lets you run up to three characters at once. Set up TinTin++, Mudlet, MUSHclient, the web client, or telnet to run your party."
+type: guide
+audience: players
+verified: v0.1.8
+---
+
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
+
+Dark Pawns is tuned for a party. You can run up to three characters at once, and past the starter rooms you'll want them: a level 1 character can trade punches with a level 1 mob, but by level 15 a solo adventurer is mostly dragon food. A real MUD client keeps all three sessions open so you can lead with your tank and heal from another tab without losing your scrollback.
+
+> Each player may have a Total of 3 characters at any given time. ... Please note, linkdead characters that are still in game count towards your three multis. Log 'em out if you aren't using them.
+>
+> `help MULTI`
+
+## Before you start
+
+- **The server address.** For darkpawns.org it's `darkpawns.org`, port **7778** (TLS encrypted) or **7777** (classic telnet). Playing on a private world? Ask its operator for the host and port.
+- **Up to three character names.** You can roll the characters as you connect.
+
+:::tip[Group your three characters together]
+Once all three characters are standing in the same room, have the second and third type `follow <leader>`, then have the leader type `group all`. Now when the leader moves, the whole party walks together.
+:::
+
+## Choose a client
+
+<Tabs>
+  <TabItem label="TinTin++">
+    TinTin++ calls each connection a session, and you switch between them by name. Type the commands below exactly as shown, curly braces included: TinTin++ uses them to group each argument.
+
+    <Steps>
+
+    1. Start TinTin++.
+    2. Open your first character's session: `#ssl {first} {darkpawns.org} {7778}`.
+    3. Log in, or create the character.
+    4. Open the second and third the same way: `#ssl {second} {darkpawns.org} {7778}`, then `#ssl {third} {darkpawns.org} {7778}`.
+    5. Type `#first`, `#second` or `#third` to switch.
+
+    </Steps>
+
+    No encryption support in your build? Use `#session` instead of `#ssl`, with port 7777. The [TinTin++ session manual](https://tintin.mudhalla.net/manual/session.php) covers the rest.
+  </TabItem>
+  <TabItem label="Mudlet">
+    Mudlet saves each connection as a profile, so make one per character.
+
+    <Steps>
+
+    1. In Mudlet's connection window, choose **New**.
+    2. Name the profile after the character. Enter `darkpawns.org` and port `7778`, and tick **Secure**.
+    3. Connect, then log in or create the character.
+    4. Repeat for the other two.
+    5. Switch between profiles, or turn on MultiView to see them side by side.
+
+    </Steps>
+
+    Mudlet's [connection window manual](https://wiki.mudlet.org/w/Manual%3AConnection_Window) covers profiles; its [profile preferences manual](https://wiki.mudlet.org/w/Manual%3AProfile_Preferences) covers MultiView.
+
+    ![Mudlet connected to Dark Pawns, with the player dock, vitals and the Temple Altar map.](/media/docs/mudlet-dock.png)
+  </TabItem>
+  <TabItem label="MUSHclient">
+    MUSHclient saves each connection as a world, one per character.
+
+    <Steps>
+
+    1. Open **Connection → Quick Connect**.
+    2. Enter a world name, `darkpawns.org` and the classic port, `7777`. (Use 7778 instead if your MUSHclient setup supports encrypted connections.)
+    3. Choose **OK**, then log in or create the character.
+    4. Repeat for the other two, with a different world name each time.
+
+    </Steps>
+
+    Each world opens in its own window. The [getting started guide](https://www.mushclient.com/mushclient/doc/general/starting.html) walks through Quick Connect.
+  </TabItem>
+  <TabItem label="Web client">
+    No install needed. Each browser tab is one character.
+
+    <Steps>
+
+    1. Open the [web client](/play/).
+    2. At the login prompt, enter a character name and password, or type `guest` to look around without making one.
+    3. Open two more tabs at the same address for the rest of the party.
+
+    </Steps>
+
+    ![A new character at the Temple Altar in the web client, with vitals below the game text.](/media/docs/web-client-first-steps.png)
+  </TabItem>
+  <TabItem label="Plain telnet">
+    It works, it's everywhere, and it does one character per window.
+
+    :::caution
+    Telnet sends your password unencrypted. Use port 7778 with a client that supports encryption when you can.
+    :::
+
+    <Steps>
+
+    1. Open a terminal.
+    2. Run `telnet darkpawns.org 7777`.
+    3. Log in, or create the character.
+    4. Do the same in two more windows.
+
+    </Steps>
+
+    No `telnet` command on your system? Any of the clients above will do.
+  </TabItem>
+</Tabs>
+
+## Did it work?
+
+Each character has its own window, tab or session, and each one shows its own prompt. You can switch between them without anyone logging out.
+
+## If it didn't work
+
+- **The connection times out.** Check the address and port, then see [Players can't connect](/docs/host/players-cannot-connect/).
+- **You connect but never get a login prompt.** Disconnect and try again. If it keeps happening, tell us in the [Discord](https://discord.gg/supVzU9yN) which client you used and when.
+- **A second tab or session kicks out the first.** You logged in with the same character name twice, which takes over that character's active body and disconnects the old session. Log each tab in as a different character.
+
+## Related
+
+- [Your first hour](/docs/play/first-hour/)
+- [Color](/docs/play/color/)
+- [Players can't connect](/docs/host/players-cannot-connect/)

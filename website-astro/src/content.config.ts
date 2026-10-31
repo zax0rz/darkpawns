@@ -1,5 +1,8 @@
 import { defineCollection, z } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { glob, file } from 'astro/loaders';
+import { docsSchema, i18nSchema } from '@astrojs/starlight/schema';
+import { i18nLoader } from '@astrojs/starlight/loaders';
+import release from '../.generated/release.json';
 
 // The blog collection. This schema is enforced at build time: a post missing a
 // title, a bad date, or a wrong type FAILS the build. That is the frontmatter
@@ -111,18 +114,41 @@ const archive = defineCollection({
 
 // Technical manuals for operators, contributors, and agent authors. Player
 // commands belong in /help; world material belongs in /world.
+// Validate authored source before Starlight supplies defaults to plugin pages.
+// OpenAPI's StarlightPage component passes only its generated title.
+const docsFields = z.object({
+  title: z.string().min(1).max(59),
+  description: z.string().min(120).max(160),
+  type: z.enum(['guide', 'explainer', 'reference', 'troubleshooting', 'release']),
+  audience: z.enum(['players', 'operators', 'builders', 'developers']),
+  verified: z.string().regex(/^v\d+\.\d+\.\d+$/),
+  sourcePath: z.string().optional(),
+});
+const authoredDocs = glob({
+  pattern: '**/*.{md,mdx}', base: './src/content/docs',
+  generateId: ({ entry }) => ('docs/' + entry.replace(/\.(md|mdx)$/, '').replace(/(^|\/)index$/, '')).replace(/\/$/, ''),
+});
 const docs = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/docs' }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    section: z.enum(['getting-started', 'server', 'research']),
-    audience: z.enum(['operator', 'developer', 'agent-author', 'researcher']),
-    order: z.number().int().nonnegative(),
-    sourcePath: z.string(),
-    updated: z.coerce.date(),
-    draft: z.boolean().default(false),
-  }),
+  loader: { ...authoredDocs, name: 'strict-authored-docs', async load(context) {
+    return authoredDocs.load({ ...context, parseData: async (entry) => {
+      docsFields.parse(entry.data);
+      return context.parseData(entry);
+    } });
+  } },
+  schema: docsSchema({ extend: docsFields.extend({
+    description: docsFields.shape.description.default('Look up the Dark Pawns HTTP API request and response contract. This reference is generated from the same registered operations as the running server.'),
+    type: docsFields.shape.type.default('reference'),
+    audience: docsFields.shape.audience.default('developers'),
+    verified: docsFields.shape.verified.default(release.version),
+  }) }),
+});
+const generatedDocs = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './.generated/docs' }),
+  schema: z.object({ title: z.string().min(1).max(59), description: z.string().min(120).max(160), type: z.enum(['reference','release']), audience: z.enum(['players','operators','developers']), verified: z.string().regex(/^v\d+\.\d+\.\d+$/), sourcePath: z.string() }),
 });
 
-export const collections = { blog, world, help, archive, docs };
+const i18n = defineCollection({ loader: i18nLoader(), schema: i18nSchema() });
+
+const docsApiCatalogue = defineCollection({ loader: file('./.generated/api/catalogue.json'), schema: docsFields });
+
+export const collections = { docsApiCatalogue, blog, world, help, archive, docs, generatedDocs, i18n };

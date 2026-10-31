@@ -40,6 +40,14 @@ class TestSearchIndexGenerator(unittest.TestCase):
             self.assertTrue(required_keys.issubset(item.keys()), f"Missing keys in item: {item}")
             self.assertTrue(item["u"].startswith("/"), f"URL must be absolute path: {item['u']}")
 
+    def test_docs_hubs_use_canonical_routes(self):
+        data = json.loads(INDEX_FILE.read_text(encoding="utf-8"))
+        docs = {item["u"] for item in data if item["c"] == "docs"}
+        self.assertIn("/docs/", docs)
+        self.assertIn("/docs/host/", docs)
+        self.assertIn("/docs/play/first-hour/", docs)
+        self.assertFalse(any("/index/" in url for url in docs))
+
     def test_categories_represented(self):
         with open(INDEX_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -50,6 +58,25 @@ class TestSearchIndexGenerator(unittest.TestCase):
         self.assertIn("world", categories)
         self.assertIn("docs", categories)
         self.assertIn("pages", categories)
+
+    def test_help_results_use_taxonomy_anchors(self):
+        taxonomy = json.loads(subprocess.run(
+            ["node", str(SCRIPTS_DIR / "command-taxonomy.mjs")],
+            cwd=ASTRO_ROOT, check=True, capture_output=True, text=True,
+        ).stdout)
+        expected = {
+            (topic["category"], topic["slug"]):
+                f"/docs/reference/commands/{group['slug']}/#{topic['anchor']}"
+            for group in taxonomy["groups"]
+            for topic in group["topics"]
+        }
+        data = json.loads(INDEX_FILE.read_text(encoding="utf-8"))
+        help_entries = [entry for entry in data if entry["c"] == "help"]
+        self.assertEqual(len(help_entries), len(expected))
+        self.assertEqual(
+            {entry["u"] for entry in help_entries}, set(expected.values()),
+        )
+        self.assertTrue(all("#help-" in entry["u"] for entry in help_entries))
 
 if __name__ == "__main__":
     unittest.main()

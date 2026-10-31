@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T23:18:53-04:00",
+  "generatedAt": "2026-10-31T14:27:08-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,39 +49,39 @@
     },
     {
       "week": "2026-10-26",
-      "commits": 45
+      "commits": 88
     }
   ],
   "recentCommits": [
     {
-      "sha": "57ff22576183ebfbd8af92e340e8eeb8a7cc7e96",
-      "date": "2026-10-27",
-      "title": "fix(admin): verify delete confirmation state",
-      "url": "https://github.com/zax0rz/darkpawns/commit/57ff22576183ebfbd8af92e340e8eeb8a7cc7e96"
+      "sha": "ace2c23568ac054ed38bd1062a8f08a0197b83d4",
+      "date": "2026-10-31",
+      "title": "Merge remote-tracking branch 'origin/main' into codex/docs-starlight",
+      "url": "https://github.com/zax0rz/darkpawns/commit/ace2c23568ac054ed38bd1062a8f08a0197b83d4"
     },
     {
-      "sha": "b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4",
-      "date": "2026-10-27",
-      "title": "feat(admin): add saved character identity controls",
-      "url": "https://github.com/zax0rz/darkpawns/commit/b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4"
+      "sha": "a35c47eb4c19e75201d5a8f6ae8794176048eea5",
+      "date": "2026-10-31",
+      "title": "docs: sharpen Dark Pawns voice, help epigraphs, and Starlight callouts (R1/R4)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/a35c47eb4c19e75201d5a8f6ae8794176048eea5"
     },
     {
-      "sha": "8ea60c05d0350f0fd111f5c079720afbed082cfa",
-      "date": "2026-10-27",
-      "title": "docs(research): number the flaky-CI ledger row PF-090",
-      "url": "https://github.com/zax0rz/darkpawns/commit/8ea60c05d0350f0fd111f5c079720afbed082cfa"
+      "sha": "104099b8f1898a2723c6c040bc967dfdb7d1cdd4",
+      "date": "2026-10-31",
+      "title": "chore(site): refresh generated project activity",
+      "url": "https://github.com/zax0rz/darkpawns/commit/104099b8f1898a2723c6c040bc967dfdb7d1cdd4"
     },
     {
-      "sha": "1b86692e49a1d924127ea28bc9be2c2b4d68985e",
-      "date": "2026-10-27",
-      "title": "docs(research): the flaky CI test was a crash (PF-)",
-      "url": "https://github.com/zax0rz/darkpawns/commit/1b86692e49a1d924127ea28bc9be2c2b4d68985e"
+      "sha": "b2a5c3089604f2071e671f5a9f4ed4983f0bf6a6",
+      "date": "2026-10-31",
+      "title": "docs: convert guide and hub pages to Starlight components",
+      "url": "https://github.com/zax0rz/darkpawns/commit/b2a5c3089604f2071e671f5a9f4ed4983f0bf6a6"
     },
     {
-      "sha": "5324dc1f37a67cabc68ba4eddbdbe12f36ac3707",
-      "date": "2026-10-27",
-      "title": "Merge pull request #2202 from zax0rz/cline/portable-shutdown-race",
-      "url": "https://github.com/zax0rz/darkpawns/commit/5324dc1f37a67cabc68ba4eddbdbe12f36ac3707"
+      "sha": "1d82cae02abe4d1ad8e858b8181ced212af0013e",
+      "date": "2026-10-31",
+      "title": "docs(play): voice pass on Your first hour and Connect a client",
+      "url": "https://github.com/zax0rz/darkpawns/commit/1d82cae02abe4d1ad8e858b8181ced212af0013e"
     }
   ],
   "pullRequests": [
