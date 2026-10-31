@@ -276,8 +276,11 @@ func startUpdateCandidate(ctx context.Context, instance string, record updateRec
 	}
 	// Strict publisher authentication (L1-006/007/021): nothing spawns from
 	// a candidate — a recovery journal's Previous included — whose manifest
-	// is not publisher-signed with matching checksums.
-	if err := PublisherVerifyExecutables(record.Candidate, "darkpawns", "darkpawns-server"); err != nil {
+	// is not publisher-signed with matching checksums. The candidate tree was
+	// extracted moments ago; publisherVerifyForLaunch retries a transient
+	// open of a still-scanned file exactly once and never a verification
+	// verdict.
+	if err := publisherVerifyForLaunch(record.Candidate, "darkpawns", "darkpawns-server"); err != nil {
 		return fmt.Errorf("candidate release is not publisher-authenticated: %w", err)
 	}
 	var previousExit exitRecord
