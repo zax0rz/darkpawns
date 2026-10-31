@@ -245,8 +245,8 @@ this audit.
 | `do_stat_object` | 8 | C_NRM | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
 | `do_users` | 2 | C_SPR | `pkg/session` who/users | none |
 | `do_color` | 2 | C_SPR 1, C_OFF 1 | `pkg/session/act_informative.go` | unit |
-| `look_at_char` | 2 | C_CMP | `pkg/game/look.go` | none |
-| `list_char_to_char` | 2 | C_CMP | `pkg/game/look.go` | none |
+| `look_at_char` | 2 | C_CMP | `pkg/game/look.go` | **keep-ansi (new)** |
+| `list_char_to_char` | 2 | C_CMP | dead in C (§15) | n/a — unreachable |
 | `damage` (wounded band) | 2 | **C_SPR** | `pkg/combat` `BleedLine` | **keep-ansi (new)** |
 | `nanny` | 2 | C_SPR | `pkg/session` login | none |
 | `gain_exp` | 2 | C_CMP | `pkg/game` level-up | **keep-ansi** |
@@ -353,6 +353,8 @@ Ordered by player exposure. Each row needs a `keep-ansi` scenario; a row is
    sites are in `do_auto_exits`. §13 also records **F10** (the harness cannot
    build a closed door), **F11** (`exits.closed-filter` claims a filter it does
    not build) and **F12** (the character list gains a leading space).
+   `look_at_char`'s tattoo sites are **done — `look-char-color-depth`, §15**,
+   and `list_char_to_char`'s are **dead in C** (§15).
 7. `do_help` / `do_skills` / `do_where` / `do_review` / `list_skills` / `do_wiznet`.
 8. `nanny`'s login load-result line (C_SPR).
 9. F4 disposition (delete the invented fallback or scope it to tests).
@@ -852,4 +854,67 @@ repeating the bytes.
   terminal colours), `verdict=CLEAN`, `draw_divergent=0`.
 - The duplicate-NPC test above, scratch-broken against the pre-fix resolution.
 
+
+
+## 15. `look`'s own colour, and two sites that are dead in C (2026-10-30)
+
+Queue item 6's last piece. The inventory attributes **four** C_CMP sites to
+`look`, split across two functions. Two are reachable, two are not.
+
+**`look_at_char`'s tattoo line (reachable, already correct).** C wraps the word
+"glows" in `CCWHT(ch, C_CMP)` … `CCNRM(ch, C_CMP)`
+(`src/act.informative.c:415-417`). The port already emitted `KWHT` and `KNRM` at
+exactly that gate, so the bytes were right; what was wrong was the *spelling* — a
+raw `"\x1b[37m"` and a hand-rolled reset, from before §14 gave the port one place
+to name these. It now reads `screen.Wrap("glows", screen.KWHT, screen.CompleteOn(...))`.
+Byte-identical, and `look-char-color-depth` proves it raw:
+
+```
+complete  On her right arm is a tattoo of a green dragon... it \x1b[37mglows\x1b[0m softly.
+off/sparse/normal  On her right arm is a tattoo of a green dragon... it glows softly.
+```
+
+**`list_char_to_char`'s infravision line is dead in C.** Its two sites wrap "red"
+in `CCRED(ch, C_CMP)` … `CCNRM(ch, C_CMP)` (`src/act.informative.c:646-650`), and
+the port has no equivalent. It does not need one:
+
+```c
+/* look_at_room, src/act.informative.c:731-732 */
+if ((IS_DARK(ch->in_room) && !CAN_SEE_IN_DARK(ch)) || (IS_AFFECTED(ch, AFF_BLIND)))
+    ... send the dark/blind message and return ...
+...
+list_char_to_char(world[ch->in_room].people, ch);   /* line 835, the only call */
+```
+
+The branch requires `IS_DARK(ch->in_room) && !CAN_SEE_IN_DARK(ch)`
+(lines 643-644), which is precisely the condition that returns before line 835,
+and line 835 is `list_char_to_char`'s **only** caller in the tree. So those two
+C_CMP sites can never reach a player, and R4 forbids inventing output for them.
+
+The **reachable** eyes line is a different one — `look_at_room`'s dark branch at
+line 755, `"You see a pair of glowing red eyes.\r\n"`, which is **uncoloured** in
+C — and `appendDarkOccupants` already matches it, including the
+`"You hear someone or something moving around nearby."` fallback at line 759.
+This is the first pair of sites in the audit whose disposition is *unreachable*
+rather than "unproven": the distinction matters, because the port would have to
+add colour to reproduce them, and adding colour C never emits is exactly the
+class R4 exists to stop.
+
+### Evidence
+
+- `look-char-color-depth` (new, `keep-ansi`): the God walks all four levels in
+  room 8162, looking at the room and at a tattooed peer (`set <peer> tattoo 1`).
+  Room 8162 was chosen because it has **no extra descriptions**: C's
+  `do_description` linePrefix space only appears in rooms that have them, and
+  keeping it out of this transcript leaves the exit-line proof in
+  `exits-auto-exits-color-depth` to stand on its own. Targeted census
+  `look-char-color` at `08782cf9b`: `passed=1 failed=0 verdict=CLEAN`.
+- I checked the captured blocks rather than trusting the verdict — the white
+  sandwich is present at `complete` and absent at the other three levels. The
+  exits vehicle had passed once while deliberately broken, so a green alone is
+  not evidence here.
+- Unit proof (R5h): `TestLookAtCharTattooColorLevelsMatchC`, a four-level table
+  that also asserts no `KWHT` appears below C_CMP.
+- The dead-branch claim was verified by reading `look_at_room`'s early return and
+  grepping `list_char_to_char`'s call sites, not by trusting the inventory (R5e).
 

@@ -1,0 +1,101 @@
+# C-first raw-byte proof for look's colour, at the levels that change it.
+#
+# The inventory attributes four C_CMP sites to look. Two are reachable and two
+# are not:
+#
+#   look_at_char's tattoo line (src/act.informative.c:415-417) wraps "glows" in
+#   CCWHT(ch, C_CMP) ... CCNRM(ch, C_CMP), so `color complete` is the only level
+#   that shows the sandwich.
+#
+#   list_char_to_char's infravision line (lines 646-650) is dead: look_at_room
+#   returns at 731-732 whenever `IS_DARK(ch->in_room) && !CAN_SEE_IN_DARK(ch)`,
+#   which is exactly that branch's condition, and look_at_room:835 is
+#   list_char_to_char's only caller. The reachable dark-room eyes line (755) is
+#   uncoloured, and appendDarkOccupants already matches it.
+#
+# So this vehicle walks the viewer through all four levels in room 8162, looking
+# at the room and at a tattooed peer. Room 8162 has no extra descriptions, which
+# keeps C's do_description linePrefix space out of the transcript and leaves the
+# exit-line proof in exits-auto-exits-color-depth to stand on its own.
+#
+# depth-case: look.char-color-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Lookcharconfig
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Lookcharconfig
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Lookcharpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Lookcharpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Lookcharpeer 8162
+set Lookcharpeer tattoo 1
+
+[probe]
+color complete
+look
+look Lookcharpeer
+color normal
+look
+look Lookcharpeer
+color sparse
+look
+look Lookcharpeer
+color off
+look
+look Lookcharpeer
