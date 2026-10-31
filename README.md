@@ -75,8 +75,11 @@ brew install darkpawns/tap/darkpawns && darkpawns setup
 # Scoop (Windows)
 scoop bucket add darkpawns https://github.com/darkpawns/scoop-bucket && scoop install darkpawns && darkpawns setup
 
-# Docker
-docker run --rm -it -p 127.0.0.1:4350:4350 -p 127.0.0.1:7777:7777 ghcr.io/darkpawns/darkpawns:latest
+# Docker (Linux, or Docker Desktop 4.34+ with host networking enabled; see Install guide)
+docker run -d --name darkpawns \
+  --network host \
+  -v darkpawns-data:/data \
+  ghcr.io/darkpawns/darkpawns:v0.1.8
 ```
 
 ![Terminal recording of darkpawns setup creating a local world and starting the server.](docs/images/generated/install-and-setup.gif)
@@ -125,7 +128,7 @@ flowchart LR
 
 Most ports "fix" the old game on the way over. Dark Pawns treats any change to player-observable behavior as a bug.
 
-The original C source in [`src/`](src/) is our read-only oracle. Under the [Fidelity Rulebook](https://darkpawns.org/docs/project/port-fidelity/) (R1 through R5), the Go server must emit the exact same bytes, preserve every command and quirk (down to `who` printing raw `&r` tags when ANSI color is off, and `DEATH` rooms wiping your inventory without a saving throw), and advance the random number generator in lockstep with the C binary.
+The original C source in [`src/`](src/) is our read-only oracle. Under the [Fidelity Rulebook](https://darkpawns.org/docs/project/port-fidelity/) (R1 through R5), the Go server must emit the exact same bytes, preserve every command and quirk (down to `who` printing raw `&r` tags when ANSI color is off, and `DEATH` rooms killing you without a saving throw and leaving your gear where nobody can reach it), and advance the random number generator in lockstep with the C binary.
 
 ```mermaid
 flowchart LR
