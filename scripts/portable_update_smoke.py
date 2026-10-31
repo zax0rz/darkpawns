@@ -173,23 +173,15 @@ def main(bundle, native_service=False, supervised=False):
             if supervised:
                 assert (public_package / 'darkpawns.xml').read_bytes().endswith(b'<!-- poc-next -->\n'), 'failed-start recovery did not restore the matching public package'
             history = instance / '.updates' / transaction['id']
-            marker = history / 'failed-lib/data/candidate-only'
-            if marker.exists():
-                assert marker.read_text() == 'retained failed state'
-            else:
-                # The broken candidate's launcher can die BEFORE spawning its
-                # server (a transient open of a just-extracted executable on
-                # windows is the observed case): no receipt is written, the
-                # updater fails its readiness deadline, and the rollback —
-                # which is correct — retains the previous lib as failed-lib
-                # with no candidate marker in it. That infrastructure failure
-                # is not a retention bug: accept it only when the failure
-                # cause is the pre-start signature, and keep the evidence.
-                assert 'did not become ready' in failed.stderr, (
-                    'failed-lib lost the candidate marker without a pre-start failure',
-                    failed.stdout, failed.stderr)
-                print('NOTE: broken update failed before its server started; '
-                      'no candidate marker was retained. Cause:', failed.stderr.strip())
+            # The marker MUST be retained: the candidate server writes it
+            # before its exit, and recovery renames the whole lib. If it is
+            # missing the retention is broken or the candidate never started
+            # — either way this must go red, with the update's own stderr to
+            # say which (a pre-start launcher failure names its cause there;
+            # the pre-spawn publisher-verification retry logs its own line).
+            assert (history / 'failed-lib/data/candidate-only').read_text() == 'retained failed state', (
+                'failed candidate state was not retained in failed-lib',
+                failed.stdout, failed.stderr)
             assert not (instance / 'lib/data/candidate-only').exists()
             assert (instance / 'instance.json').read_bytes() == config
             for name, data in fixtures.items():
