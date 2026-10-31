@@ -699,15 +699,11 @@ func appendCharacterAffectLook(result *ObservationResult, ch *Player, target *Pl
 	if target.Tattoo != TattooNone {
 		tattoo := tattooDescription(target.Tattoo)
 		if tattoo != "" {
-			glow := ""
-			if completeObservationColor(ch) {
-				glow = "\x1b[37m"
-			}
-			reset := ""
-			if glow != "" {
-				reset = "\x1b[0m"
-			}
-			result.literal(ch, fmt.Sprintf("On %s right arm is a tattoo %s... it %sglows%s softly.", hshr(target), tattoo, glow, reset))
+			// C wraps the word "glows" in CCWHT(ch, C_CMP) ... CCNRM(ch, C_CMP)
+			// (src/act.informative.c:415-417), so the sandwich appears only at
+			// complete colour.
+			glow := screen.Wrap("glows", screen.KWHT, screen.CompleteOn(colorLevel(ch)))
+			result.literal(ch, fmt.Sprintf("On %s right arm is a tattoo %s... it %s softly.", hshr(target), tattoo, glow))
 		}
 	}
 	if target.IsAffected(affVampire) {
