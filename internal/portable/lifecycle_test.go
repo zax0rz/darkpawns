@@ -117,3 +117,59 @@ func TestStartStillFailsWhenTheRunLockNeverPublishesAnEndpoint(t *testing.T) {
 		t.Fatalf("start with a run lock that never publishes an endpoint = %v, want the startup-window diagnosis", err)
 	}
 }
+
+// TestStartRetriesTheReadinessWaitOnce covers the CI flake shape: a
+// supervisor that publishes its operator record just after the first
+// readiness attempt expires. Start must retry the wait once, succeed, and
+// log that the first attempt failed (the recovered path stays visible).
+func TestStartRetriesTheReadinessWaitOnce(t *testing.T) {
+	defer func(previous time.Duration) { readinessFirstWait = previous }(readinessFirstWait)
+	readinessFirstWait = 150 * time.Millisecond
+	instance := t.TempDir()
+	writeInstanceConfig(t, instance, freePort(t))
+	holdRunLock(t, instance)
+	endpoint := runningEndpoint(t, instance)
+
+	go func() {
+		// Publish after the first attempt has expired but well before the
+		// second gives up: the window only the retry covers.
+		time.Sleep(500 * time.Millisecond)
+		_ = publishControlRecord(instance, endpoint.URL)
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	status, err := Start(ctx, "unused-bundle", instance)
+	if err != nil {
+		t.Fatalf("start with a late publisher = %v, want the retry to succeed", err)
+	}
+	if status.State != "running" {
+		t.Fatalf("start reported state %q, want running", status.State)
+	}
+}
+
+// TestWaitReadyWithRetryFailsAfterBothAttempts keeps real failures loud: an
+// instance that never reaches running must fail, with the error naming both
+// attempts and the launcher log to inspect.
+func TestWaitReadyWithRetryFailsAfterBothAttempts(t *testing.T) {
+	defer func(ready, retry time.Duration) { readinessFirstWait, readinessRetryWait = ready, retry }(readinessFirstWait, readinessRetryWait)
+	readinessFirstWait, readinessRetryWait = 100*time.Millisecond, 100*time.Millisecond
+	instance := t.TempDir()
+	writeInstanceConfig(t, instance, freePort(t))
+	// A held run lock with no published record keeps Status in the
+	// startup-window error state: never running, without launching anything.
+	holdRunLock(t, instance)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	_, err := waitReadyWithRetry(ctx, instance)
+	if err == nil {
+		t.Fatal("readiness retry succeeded against an instance that never runs, want a loud failure")
+	}
+	if !strings.Contains(err.Error(), "two attempts") {
+		t.Fatalf("error = %v, want the two-attempt diagnosis", err)
+	}
+	if !strings.Contains(err.Error(), "launcher.log") {
+		t.Fatalf("error = %v, want the launcher.log pointer", err)
+	}
+}
