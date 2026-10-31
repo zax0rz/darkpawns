@@ -699,21 +699,20 @@ manifest claim in this audit that cannot fail** (after `report.color-audience` a
 `score`'s), and the first where the row describes a state the fixture cannot
 express.
 
-**F12 — the character list gains a leading space when it follows a room
-description (OPEN, R1).** Found while building the vehicle above, and not fixed
-here. With a peer in the room, the peer's `look` diverged:
+**F12 — the character list gained a leading space when it followed a room
+description (FIXED in §16, R1).** Found while building the vehicle above. With a
+peer in the room, the peer's `look` diverged:
 
 ```
  C: \x1b[32m\x1b[33mExitsautoconfig the Warrior is standing here.
 Go: \x1b[32m\x1b[33m Exitsautoconfig the Warrior is standing here.
 ```
 
-C's `linePrefix` space belongs to the room description's trailing position; the
-port applies it to the first character-list entry instead. The scenario was
-narrowed to an empty room to isolate the exit line (the retained v7 run is the
-evidence: `oracle-runs/2026-10-30/exits-auto-v7`), so the exit proof stands on its
-own, and F12 needs its own investigation — it is in the F6 room-list area and
-belongs with it.
+C's `do_description` space belongs immediately after the description; the port
+applied it to the first character-list entry instead. The scenario was narrowed
+to an empty room to isolate the exit line (the retained v7 run is the evidence:
+`oracle-runs/2026-10-30/exits-auto-v7`), so the exit proof stands on its own. The
+cause and fix are §16.
 
 ### Evidence
 
@@ -918,3 +917,60 @@ class R4 exists to stop.
 - The dead-branch claim was verified by reading `look_at_room`'s early return and
   grepping `list_char_to_char`'s call sites, not by trusting the inventory (R5e).
 
+
+
+## 16. F12 — where `do_description`'s trailing space actually goes (2026-10-30)
+
+C's `do_description` sends the room description **with a space appended**, as one
+write, whenever the room has extra descriptions
+(`src/act.informative.c:2773-2804`):
+
+```c
+if (num_extras == 0) { send_to_char(description, ch); return; }
+sprintf(buf2, "%s ", description);
+...
+send_to_char(buf2, ch);
+```
+
+The description ends with a newline, so that space is the first byte of the **next
+line**, and the next thing `look_at_room` writes is whichever comes first: the
+auto-exit line when `PRF_AUTOEXIT` is on (line 820), or the `CCGRN` bracket that
+opens the object list (line 823). Two consequences the port had wrong:
+
+- It modelled the space as a `linePrefix` carried onto "the next line", but
+  `ObservationResult.bare` — the bracket write — deliberately did **not** consume
+  it, so it survived past the green and yellow brackets and landed on the first
+  character-list entry. That is F12.
+- With colour off the brackets are empty strings, so the port queued nothing and
+  the space was carried even further. C's `send_to_char("")` writes nothing and
+  the space simply stands alone.
+
+The fix makes `bare` consume the prefix like `literal` and `raw` already did, and
+emit it even when its own text is empty. `look-char-color-depth`'s sibling,
+`look-description-space-depth`, pins both placements in one probe: the actor keeps
+its exit line (space before the exits line) and the peer's autoexit is toggled off
+(space before the green bracket).
+
+### Evidence
+
+- `look-description-space-depth` (new, `keep-ansi`) in room 11269, which has an
+  extra description and therefore a space to place. **The vehicle was verified
+  both ways**: with `bare` reverted to its pre-fix form the census goes RED with
+  exactly F12's divergence, three times over (one per colour level) —
+
+  ```
+   C: \x1b[32m\x1b[33mSpacepeer the Warrior is standing here.
+  Go: \x1b[32m\x1b[33m Spacepeer the Warrior is standing here.
+  ```
+
+  — and with the fix it is CLEAN. Two earlier versions of this scenario passed
+  while broken, which is why the can-fail run is part of the record rather than an
+  afterthought.
+- Unit proof (R5h): `TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets`, four
+  subtests — complete colour (space before the green bracket), colour off (the lone
+  space, list lines clean), autoexit on (space before the exit line), and a room
+  with no extra descriptions (no space at all, matching C's early return).
+- The first attempt at the scenario was an infrastructure failure, not a signal:
+  the character name `F12config` contains digits, which C's creation rejects
+  (`setup step 11 read after "": EOF`). Worth recording because the wrapper
+  reports it as `infra=1`, and an infra row is not a divergence.

@@ -92,15 +92,23 @@ func (r *ObservationResult) literal(ch *Player, text string) {
 
 // bare queues control bytes with no line ending and no act() formatting,
 // mirroring C's send_to_char(CCxxx(ch, C_NRM), ch) writes that bracket the
-// room-content lists (src/act.informative.c:823-833). It deliberately does not
-// consume the pending line prefix: C's list write is not a line of its own, so
-// the prefix still belongs to the next line that is.
+// room-content lists (src/act.informative.c:823-833).
+//
+// It consumes the pending line prefix. C has already written that byte:
+// do_description's `sprintf(buf2, "%s ", description)` puts the space
+// immediately before the next send_to_char, whatever kind it is
+// (src/act.informative.c:2773-2804), so the bracket that follows a room
+// description is prefixed by it. Leaving it for "the next line" carried it past
+// the brackets and onto the first character-list entry instead, which is a
+// different byte stream from C's. An empty bare write still consumes it: with
+// colour off C's send_to_char("") writes nothing and the space stands alone.
 func (r *ObservationResult) bare(ch *Player, text string) {
-	if text == "" {
+	prefix := r.takeLinePrefix()
+	if text == "" && prefix == "" {
 		return
 	}
 	r.Messages = append(r.Messages, ObservationMessage{
-		Format: text,
+		Format: prefix + text,
 		Bare:   true,
 		Actor:  ch,
 	})
