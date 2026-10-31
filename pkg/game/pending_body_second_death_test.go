@@ -195,3 +195,46 @@ func TestPendingBodyPeacefulRefusalStillSkipsEnrollment(t *testing.T) {
 		t.Fatalf("peaceful refusal counted a kill: %d", god.Kills)
 	}
 }
+
+// TestPendingAttackerSwingsWithoutEnrolling pins C's hit() for a FLAGGED
+// attacker (src/fight.c:1763-1779 has no extraction guard): a body do_kill's
+// raw_kill left standing still draws and swings when a spell refusal makes it
+// attack the caster (src/spells.c:581-591 — identify on a just-killed mob,
+// Luna's release-review finding). The swing must not re-enroll the body: it is
+// extracted at the next heartbeat before any violence pass.
+func TestPendingAttackerSwingsWithoutEnrolling(t *testing.T) {
+	w, god, mob, room, _ := secondDeathWorld(t)
+
+	// do_kill's raw_kill: flagged, still standing, not enrolled.
+	w.Instakill(mob, god, combat.TYPE_SLASH)
+	if mob.IsAlive() || !mob.HasMobFlag(MobFlagExtract) {
+		t.Fatal("instakill did not flag the body")
+	}
+	if mob.GetFightingBody() != nil {
+		t.Fatal("flagged body starts enrolled")
+	}
+
+	swing, ok := w.combatEngine.(interface {
+		PerformPendingBodySwing(attacker, defender combat.Combatant) error
+	})
+	if !ok {
+		t.Fatal("engine lacks PerformPendingBodySwing")
+	}
+	if err := swing.PerformPendingBodySwing(mob, god); err != nil {
+		t.Fatalf("pending-attacker swing: %v", err)
+	}
+
+	// The swing ran: the flagged attacker's message reached the room (the
+	// implementor's damage is zeroed, so the bytes are the proof the draws
+	// flowed), and the ATTACKER was not re-enrolled by its own swing — it is
+	// extracted before any violence pass. The defender's enrolment against
+	// the flagged body IS C's set_fighting(victim, ch) (fight.c:1441-1445);
+	// the extraction pass stops it, as extract_char_final does
+	// (src/handler.c:1147-1151).
+	if !strings.Contains(room.String(), "fish") && !strings.Contains(room.String(), "testmob") {
+		t.Fatalf("pending attacker's swing produced no room bytes: %q", room.String())
+	}
+	if mob.GetFightingBody() != nil {
+		t.Fatal("pending attacker was re-enrolled by its swing")
+	}
+}
