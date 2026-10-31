@@ -1,0 +1,295 @@
+{
+  "schema": 1,
+  "release": "v0.1.7",
+  "media": [
+    {
+      "path": "docs/images/generated/admin-dashboard.png",
+      "alt": "The dashboard charts show synthetic players online and daily arrivals.",
+      "sources": [
+        "admin-ui/src/pages/DashboardPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-player-editor.png",
+      "alt": "The player editor showing a synthetic character\u2019s level, vitals and attributes.",
+      "sources": [
+        "admin-ui/src/pages/PlayersPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-room-editor.png",
+      "alt": "The room editor for a synthetic test room, with its description and room flags.",
+      "sources": [
+        "admin-ui/src/pages/RoomEditorPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-object-editor.png",
+      "alt": "Object fields for a synthetic steel sword, with Item type highlighted.",
+      "sources": [
+        "admin-ui/src/pages/EntityEditorPage.tsx",
+        "admin-ui/src/components/olc/EntitySchemaFields.tsx",
+        "admin-ui/src/components/olc/ClaimSaveFrame.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-mob-editor.png",
+      "alt": "Mob fields for a synthetic guard, with its alias highlighted.",
+      "sources": [
+        "admin-ui/src/pages/EntityEditorPage.tsx",
+        "admin-ui/src/components/olc/EntitySchemaFields.tsx",
+        "admin-ui/src/components/olc/ClaimSaveFrame.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-zone-editor.png",
+      "alt": "Zone name, lifespan, reset mode, and top-room controls in the zone editor.",
+      "sources": [
+        "admin-ui/src/pages/ZoneEditorPage.tsx",
+        "admin-ui/src/components/olc/ClaimSaveFrame.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-lua-scripts.png",
+      "alt": "The selected guard.lua file with Save, Delete, and the live-apply notice.",
+      "sources": [
+        "admin-ui/src/pages/FileEditorPage.tsx",
+        "admin-ui/src/components/olc/CodeEditor.tsx",
+        "admin-ui/src/components/Layout.tsx",
+        "admin-ui/src/index.css",
+        "pkg/admin/fileedit.go",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-notifications.png",
+      "alt": "Notification settings with event rows and disabled delivery channels in the local preview.",
+      "sources": [
+        "admin-ui/src/pages/NotificationsPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-configuration.png",
+      "alt": "The Sessions & limits configuration card in the local checkout preview, with editable login and connection limits.",
+      "sources": [
+        "admin-ui/src/pages/SettingsPage.tsx",
+        "admin-ui/src/components/NetworkCard.tsx",
+        "admin-ui/src/components/ui/input.tsx",
+        "admin-ui/src/components/Layout.tsx",
+        "admin-ui/src/index.css",
+        "pkg/admin/settings.go",
+        "pkg/admin/console_preview_test.go",
+        "pkg/settings/settings.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-operations.png",
+      "alt": "The operations log with synthetic warning and error entries from the local preview.",
+      "sources": [
+        "admin-ui/src/pages/OperationsPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-zones.png",
+      "alt": "The zones list for the synthetic world used by the admin console preview.",
+      "sources": [
+        "admin-ui/src/pages/ZonesPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-updates.png",
+      "alt": "The Updates page showing the available local release controls.",
+      "sources": [
+        "admin-ui/src/pages/UpdatesPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-motd.png",
+      "alt": "The welcome message editor with synthetic login text and its preview.",
+      "sources": [
+        "admin-ui/src/pages/MotdPage.tsx",
+        "admin-ui/src/components/MotdPreview.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/admin-player-editor.gif",
+      "alt": "The player editor moves from character stats to equipment and flags.",
+      "sources": [
+        "admin-ui/src/pages/PlayersPage.tsx",
+        "admin-ui/src/index.css",
+        "admin-ui/src/components/Layout.tsx",
+        "pkg/admin/console_preview_test.go",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/mudlet-dock.png",
+      "alt": "Mudlet connected to a disposable local Dark Pawns world, showing the player dock, vitals, and Temple Altar map.",
+      "sources": [
+        "mudlet/src/00-core.lua",
+        "mudlet/src/10-ui.lua",
+        "mudlet/src/20-mapper.lua",
+        "mudlet/darkpawns.xml",
+        "pkg/session/gmcp.go",
+        "scripts/fixtures/mudlet-host.xml",
+        "scripts/bootstrap_media_deps.sh",
+        "scripts/capture_mudlet.py",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/web-client-first-steps.png",
+      "alt": "A new Guest at the Temple Altar in the web client, with the connection status and vitals below the game text.",
+      "sources": [
+        "web/public/index.html",
+        "web/public/client.js",
+        "web/public/mud-client.js",
+        "web/public/style.css",
+        "lib/world/wld/80.wld",
+        "scripts/capture_mudlet.py",
+        "admin-ui/scripts/capture-web-client.mjs",
+        "admin-ui/scripts/media-capture.mjs",
+        "website-astro/DESIGN.md",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/install-and-setup.gif",
+      "alt": "Portable bundle setup starts an isolated local world.",
+      "sources": [
+        "cmd/darkpawns/setup.go",
+        "cmd/darkpawns/main.go",
+        "internal/portable/instance.go",
+        "scripts/capture_media_cli.py",
+        "scripts/fixtures/docs-capture-test-private.pem",
+        "scripts/fixtures/docs-capture-test-public.pem",
+        "scripts/vhs/install-and-setup.tape",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/lifecycle-commands.gif",
+      "alt": "Status reports the local world, and doctor checks its release, instance, and services.",
+      "sources": [
+        "cmd/darkpawns/lifecycle.go",
+        "cmd/darkpawns/presentation.go",
+        "internal/portable/doctor.go",
+        "scripts/capture_media_cli.py",
+        "scripts/fixtures/docs-capture-test-private.pem",
+        "scripts/fixtures/docs-capture-test-public.pem",
+        "scripts/vhs/lifecycle-commands.tape",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    },
+    {
+      "path": "docs/images/generated/update-check.gif",
+      "alt": "An offline candidate release passes verification; --check leaves the running world untouched.",
+      "sources": [
+        "cmd/darkpawns/update.go",
+        "cmd/darkpawns/update_presentation.go",
+        "internal/portable/update.go",
+        "internal/portable/update_archive.go",
+        "scripts/capture_media_cli.py",
+        "scripts/fixtures/docs-capture-test-private.pem",
+        "scripts/fixtures/docs-capture-test-public.pem",
+        "scripts/vhs/update-check.tape",
+        "scripts/media_pipeline.py"
+      ],
+      "release": "v0.1.7"
+    }
+  ],
+  "git_head": "c52182ed2f23b1c3109471fb9b3361a6ba474953",
+  "working_tree_dirty": true
+}

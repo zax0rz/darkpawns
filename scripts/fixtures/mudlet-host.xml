@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE MudletPackage>
+<MudletPackage version="1.001">
+	<HostPackage>
+		<Host autoClearCommandLineAfterSend="no" disablePasswordMasking="no" HighlightHistory="yes" commandEchoMode="1" printCommand="yes" USE_IRE_DRIVER_BUGFIX="no" mUSE_FORCE_LF_AFTER_PROMPT="no" mUSE_UNIX_EOL="no" mNoAntiAlias="no" mEchoLuaErrors="no" runAllKeyMatches="no" AmbigousWidthGlyphsToBeWide="auto" mEnableBlinkText="no" mRawStreamDump="no" mIsLoggingTimestamps="no" logDirectory="" logFileName="" logFileNameFormat="yyyy-MM-dd#HH-mm-ss" mAlertOnNewData="yes" mFORCE_NO_COMPRESSION="no" mFORCE_GA_OFF="no" mFORCE_SAVE_ON_EXIT="yes" mEnableGMCP="yes" mEnableMSSP="yes" mEnableMSDP="yes" mEnableMSP="yes" mEnableMTTS="yes" mEnableMNES="no" mEnableMXP="yes" mEnableNAWS="yes" mUndoServerWrap="no" mEnableCHARSET="yes" mEnableNEWENVIRON="yes" mMapStrongHighlight="no" mEnableSpellCheck="yes" mEnableUserDictionary="yes" mUseSharedDictionary="no" mShowInfo="no" mAcceptServerGUI="yes" mAcceptServerMedia="yes" mMapperUseAntiAlias="yes" mMapperShowGrid="no" mMapperShowRoomBorders="yes" mVersionInTTYPE="no" mPromptedForVersionInTTYPE="no" mForceMXPProcessorOn="no" mPromptedForMXPProcessorOn="no" enableTextAnalyzer="no" mRoomSize="0.5" mLineSize="10.0" mRoomBorderSize="10.0" mMapGridLineSize="0.5" mBubbleMode="no" mMapViewOnly="yes" mShowRoomIDs="no" mShowPanel="yes" mShow3DView="no" mHaveMapperScript="no" mEditorAutoComplete="yes" mEditorShowBidi="yes" mEditorTheme="Mudlet" mEditorThemeFile="Mudlet.tmTheme" mEditorThemeDark="" mEditorThemeFileDark="" mThemePreviewItemID="-1" mThemePreviewType="" mSearchEngineName="" mTimerSupressionInterval="" mUseProxy="no" mProxyAddress="" mProxyPort="0" mProxyUsername="" mProxyPassword="" mSslTsl="no" mSslIgnoreExpired="no" mSslIgnoreSelfSigned="no" mSslIgnoreAll="no" mAskTlsAvailable="yes" mDiscordAccessFlags="1023" mDiscordMode="2" mRequiredDiscordUserName="" mSGRCodeHasColSpaceId="no" mServerMayRedefineColors="no" playerRoomPrimaryColor="#ffff0000" playerRoomSecondaryColor="#ffffffff" playerRoomStyle="0" playerRoomOuterDiameter="120" playerRoomInnerDiameter="70" CompactInputLine="no" CommandLineHistorySaveSize="500" mDoubleClickIgnore="'&quot;" EditorSearchOptions="0" DebugShowAllProblemCodepoints="no" announceIncomingText="yes" advertiseScreenReader="no" enableOSC8Hyperlinks="yes" f3SearchEnabled="no" enableClosedCaption="no" caretShortcut="None" blankLineBehaviour="Show" NetworkPacketTimeout="300" ShowIDsInEditor="no">
+			<name>Dark Pawns Media</name>
+			<url>127.0.0.1</url>
+			<port>7780</port>
+			<borderTopHeight>0</borderTopHeight>
+			<borderBottomHeight>0</borderBottomHeight>
+			<borderLeftWidth>0</borderLeftWidth>
+			<borderRightWidth>240</borderRightWidth>
+			<wrapAt>100</wrapAt>
+			<wrapIndentCount>0</wrapIndentCount>
+			<wrapHangingIndentCount>0</wrapHangingIndentCount>
+			<undoServerWrapWidth>80</undoServerWrapWidth>
+			<consoleBufferSize>100000</consoleBufferSize>
+			<useMaxConsoleBufferSize>no</useMaxConsoleBufferSize>
+			<mFgColor>#c0c0c0</mFgColor>
+			<mBgColor alpha="255">#000000</mBgColor>
+			<mCommandFgColor>#717100</mCommandFgColor>
+			<mCommandBgColor>#000000</mCommandBgColor>
+			<mCommandLineFgColor>#808080</mCommandLineFgColor>
+			<mCommandLineBgColor>#000000</mCommandLineBgColor>
+			<mBlack>#000000</mBlack>
+			<mLightBlack>#808080</mLightBlack>
+			<mRed>#800000</mRed>
+			<mLightRed>#ff0000</mLightRed>
+			<mBlue>#000080</mBlue>
+			<mLightBlue>#0000ff</mLightBlue>
+			<mGreen>#008000</mGreen>
+			<mLightGreen>#00ff00</mLightGreen>
+			<mYellow>#808000</mYellow>
+			<mLightYellow>#ffff00</mLightYellow>
+			<mCyan>#008080</mCyan>
+			<mLightCyan>#00ffff</mLightCyan>
+			<mMagenta>#800080</mMagenta>
+			<mLightMagenta>#ff00ff</mLightMagenta>
+			<mWhite>#c0c0c0</mWhite>
+			<mLightWhite>#ffffff</mLightWhite>
+			<mDisplayFont>Bitstream Vera Sans Mono,14,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0</mDisplayFont>
+			<mCommandLineFont>Bitstream Vera Sans Mono,14,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0</mCommandLineFont>
+			<mCommandSeparator>;;</mCommandSeparator>
+			<commandLineMinimumHeight>30</commandLineMinimumHeight>
+			<mFgColor2>#c0c0c0</mFgColor2>
+			<mBgColor2 alpha="255">#000000</mBgColor2>
+			<mLowerLevelColor>#808080</mLowerLevelColor>
+			<mUpperLevelColor>#ffffff</mUpperLevelColor>
+			<mRoomBorderColor>#c0c0c0</mRoomBorderColor>
+			<mRoomCollisionBorderColor>#ffff00</mRoomCollisionBorderColor>
+			<mMapGridColor alpha="64">#d3d3d3</mMapGridColor>
+			<mMapInfoBg alpha="120">#969696</mMapInfoBg>
+			<mBlack2>#325096</mBlack2>
+			<mLightBlack2>#5a5a5a</mLightBlack2>
+			<mRed2>#6e645a</mRed2>
+			<mLightRed2>#1e326e</mLightRed2>
+			<mBlue2>#3c6e3c</mBlue2>
+			<mLightBlue2>#cf4b42</mLightBlue2>
+			<mGreen2>#968c7d</mGreen2>
+			<mLightGreen2>#aabed2</mLightGreen2>
+			<mYellow2>#7d9650</mYellow2>
+			<mLightYellow2>#c8aa64</mLightYellow2>
+			<mCyan2>#786e69</mCyan2>
+			<mLightCyan2>#bec8c8</mLightCyan2>
+			<mMagenta2>#8c7846</mMagenta2>
+			<mLightMagenta2>#6e553c</mLightMagenta2>
+			<mWhite2>#5078aa</mWhite2>
+			<mLightWhite2>#466ea0</mLightWhite2>
+			<mSpellDic>en_US</mSpellDic>
+			<mLineSize>10.0</mLineSize>
+			<mRoomSize>0.5</mRoomSize>
+			<profileShortcut key="Script editor">Alt+E</profileShortcut>
+			<profileShortcut key="Show Map">Alt+M</profileShortcut>
+			<profileShortcut key="Compact input line">Alt+L</profileShortcut>
+			<profileShortcut key="Preferences">Alt+P</profileShortcut>
+			<profileShortcut key="Notepad">Alt+N</profileShortcut>
+			<profileShortcut key="Package manager">Alt+O</profileShortcut>
+			<profileShortcut key="Module manager">Alt+I</profileShortcut>
+			<profileShortcut key="MultiView">Alt+V</profileShortcut>
+			<profileShortcut key="Mute all media">Alt+K</profileShortcut>
+			<profileShortcut key="Play">Alt+C</profileShortcut>
+			<profileShortcut key="Disconnect">Alt+D</profileShortcut>
+			<profileShortcut key="Reconnect">Alt+R</profileShortcut>
+			<profileShortcut key="Close profile">Alt+W</profileShortcut>
+			<profileShortcut key="Toggle Time Stamps">Ctrl+Alt+T</profileShortcut>
+			<profileShortcut key="Toggle Replay">Ctrl+Alt+R</profileShortcut>
+			<profileShortcut key="Toggle Logging">Ctrl+Alt+L</profileShortcut>
+			<profileShortcut key="Toggle Emergency Stop">Ctrl+Alt+S</profileShortcut>
+			<profileShortcut key="Next profile">Ctrl+Tab</profileShortcut>
+			<profileShortcut key="Previous profile">Ctrl+Shift+Tab</profileShortcut>
+			<profileShortcut key="Switch to profile 1">Ctrl+1</profileShortcut>
+			<profileShortcut key="Switch to profile 2">Ctrl+2</profileShortcut>
+			<profileShortcut key="Switch to profile 3">Ctrl+3</profileShortcut>
+			<profileShortcut key="Switch to profile 4">Ctrl+4</profileShortcut>
+			<profileShortcut key="Switch to profile 5">Ctrl+5</profileShortcut>
+			<profileShortcut key="Switch to profile 6">Ctrl+6</profileShortcut>
+			<profileShortcut key="Switch to profile 7">Ctrl+7</profileShortcut>
+			<profileShortcut key="Switch to profile 8">Ctrl+8</profileShortcut>
+			<profileShortcut key="Switch to profile 9">Ctrl+9</profileShortcut>
+			<stopwatches />
+			<MMCP chatName="" chatPort="4050" chatPrefix="&lt;CHAT&gt;" autostartServer="no" allowPeekRequests="no" prefixEmotes="no" chatMessageNewline="yes" autoAcceptCalls="yes" snoopInMain="yes" />
+		</Host>
+	</HostPackage>
+</MudletPackage>

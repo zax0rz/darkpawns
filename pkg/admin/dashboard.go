@@ -37,6 +37,8 @@ type dashboardResponse struct {
 }
 type dashboardOutput struct{ Body dashboardResponse }
 
+var dashboardClock = func() time.Time { return time.Now().UTC() }
+
 func dashboardSnapshot(world *game.World, h *telemetry.History, span string, now time.Time) dashboardResponse {
 	out := dashboardResponse{Now: now, StartedAt: processStartTime, UptimeSeconds: int64(now.Sub(processStartTime).Seconds()), Online: world.GetPlayerCount(), Points: []dashboardPoint{}}
 	if h == nil {
@@ -83,6 +85,6 @@ func dashboardSnapshot(world *game.World, h *telemetry.History, span string, now
 
 func registerDashboard(api huma.API, world *game.World, h *telemetry.History) {
 	huma.Register(api, huma.Operation{OperationID: "get-dashboard", Method: http.MethodGet, Path: "/admin/dashboard", Summary: "Retained dashboard observations"}, func(ctx context.Context, in *dashboardInput) (*dashboardOutput, error) {
-		return &dashboardOutput{Body: dashboardSnapshot(world, h, in.Range, time.Now().UTC())}, nil
+		return &dashboardOutput{Body: dashboardSnapshot(world, h, in.Range, dashboardClock())}, nil
 	})
 }

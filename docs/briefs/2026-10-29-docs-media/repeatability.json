@@ -1,0 +1,138 @@
+{
+  "runs": [
+    "run-a",
+    "run-b"
+  ],
+  "pngs": {
+    "admin-dashboard.png": {
+      "sha256_a": "69e93f454de132b698c2b1ce64a70518ca73560dc789073efd61cdcbcd08dc53",
+      "sha256_b": "69e93f454de132b698c2b1ce64a70518ca73560dc789073efd61cdcbcd08dc53",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "admin-motd.png": {
+      "sha256_a": "dfcb67ce97e4ac2470c09dba825521b457e2ce58b6f2784984ce89ad864b719d",
+      "sha256_b": "dfcb67ce97e4ac2470c09dba825521b457e2ce58b6f2784984ce89ad864b719d",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "admin-notifications.png": {
+      "sha256_a": "f3e81f0e06bfc34eb3459b35f02eae05d6c50d62f18bf89c40da4b90ba0eec91",
+      "sha256_b": "f3e81f0e06bfc34eb3459b35f02eae05d6c50d62f18bf89c40da4b90ba0eec91",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "admin-operations.png": {
+      "sha256_a": "738ab3ff41405d735ee2ebbc46853160711a44d5d5ab3bff1304d21457b7b48c",
+      "sha256_b": "738ab3ff41405d735ee2ebbc46853160711a44d5d5ab3bff1304d21457b7b48c",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "admin-player-editor.png": {
+      "sha256_a": "a611d045bf5cda5b7fb9b470ed27d10cd643b26c3a82c4791600a1e300f5f553",
+      "sha256_b": "a611d045bf5cda5b7fb9b470ed27d10cd643b26c3a82c4791600a1e300f5f553",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "admin-room-editor.png": {
+      "sha256_a": "da6d47df4c675ad00cdcf7f1e3956e5ac30dc6053d54f250fb8d51a1adf9bcdd",
+      "sha256_b": "da6d47df4c675ad00cdcf7f1e3956e5ac30dc6053d54f250fb8d51a1adf9bcdd",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "admin-updates.png": {
+      "sha256_a": "8e7e98520f9245bd30b732f7c1e1343cdb9c10e6cffbd852f33371aff7472888",
+      "sha256_b": "8e7e98520f9245bd30b732f7c1e1343cdb9c10e6cffbd852f33371aff7472888",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "admin-zones.png": {
+      "sha256_a": "d2af5f0547d3ac55fdcb0f48f6d25e8842655a90267ad2b90b483d0bd282dc3a",
+      "sha256_b": "d2af5f0547d3ac55fdcb0f48f6d25e8842655a90267ad2b90b483d0bd282dc3a",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "mudlet-dock.png": {
+      "sha256_a": "c3605fa5b7bf8cf250051706b484cec705262e2920c079fae2077200b6a71abd",
+      "sha256_b": "c3605fa5b7bf8cf250051706b484cec705262e2920c079fae2077200b6a71abd",
+      "pixels_identical": true,
+      "bytes_identical": true
+    },
+    "web-client-first-steps.png": {
+      "sha256_a": "53646551f2f23101eb008963fa78be0b40386b549acff934caab44d29c6a31db",
+      "sha256_b": "53646551f2f23101eb008963fa78be0b40386b549acff934caab44d29c6a31db",
+      "pixels_identical": true,
+      "bytes_identical": true
+    }
+  },
+  "gifs": {
+    "admin-player-editor.gif": {
+      "bytes_identical": true,
+      "runs": {
+        "a": {
+          "sha256": "ce260df52397aed2d8182fe4d7097f229ec9b399e61e0dafa8c2ab0eb0f31d13",
+          "frames": 18,
+          "duration_ms": 3000,
+          "loop": 0
+        },
+        "b": {
+          "sha256": "ce260df52397aed2d8182fe4d7097f229ec9b399e61e0dafa8c2ab0eb0f31d13",
+          "frames": 18,
+          "duration_ms": 3000,
+          "loop": 0
+        }
+      }
+    },
+    "install-and-setup.gif": {
+      "bytes_identical": false,
+      "runs": {
+        "a": {
+          "sha256": "3dd205aec667b52dd99a1a0927ba0ca1e8ee187855e14e73144a943aeec7df0f",
+          "frames": 198,
+          "duration_ms": 7920,
+          "loop": 0
+        },
+        "b": {
+          "sha256": "dd96a031a817e5fa53b4409623db0d1faf49b1df8d81b05b5a05f773317d3819",
+          "frames": 196,
+          "duration_ms": 7840,
+          "loop": 0
+        }
+      }
+    },
+    "lifecycle-commands.gif": {
+      "bytes_identical": false,
+      "runs": {
+        "a": {
+          "sha256": "c8774591d366d7da4cff4d04b204674049b706edc783486f1b0f2f159953f2a7",
+          "frames": 166,
+          "duration_ms": 6640,
+          "loop": 0
+        },
+        "b": {
+          "sha256": "4023e70892ccf1cb165b695e98d2996ab2c81dc396d6dbf5a111a1ef6995dbc3",
+          "frames": 166,
+          "duration_ms": 6640,
+          "loop": 0
+        }
+      }
+    },
+    "update-check.gif": {
+      "bytes_identical": false,
+      "runs": {
+        "a": {
+          "sha256": "07bf521e38eef81ebb8c9f169e5cebf12737972fc5260efbea7d9418cedafcd9",
+          "frames": 171,
+          "duration_ms": 6840,
+          "loop": 0
+        },
+        "b": {
+          "sha256": "1ead91340e1a278bdead431e736b25c60a9c2d30d553119ccf511532cf1660f5",
+          "frames": 171,
+          "duration_ms": 6840,
+          "loop": 0
+        }
+      }
+    }
+  }
+}
