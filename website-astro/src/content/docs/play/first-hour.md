@@ -39,6 +39,13 @@ Lost? Type `recall` to go back to your temple, or ask for directions with `newbi
 
 `help newbie` calls the Guard Barracks in Kir Drax'in "one of the best places to start". From the Temple Altar:
 
+This map traces the walk from the Kir Drax'in Temple Altar to the basic training stairs.
+
+```mermaid
+flowchart LR
+  A["Temple Altar"] -->|South| B["Temple of the Cross"] -->|South| C["Temple Square"] -->|West| D["Avenue of the Gods"] -->|North| E["Street of Swords"] -->|West| F["Guard Barracks"] -->|South door| G["New Recruit Training Area"]
+```
+
 1. Go south into the Temple of the Cross, then south again to Temple Square.
 2. Go west to the Avenue of the Gods, then north onto the Street of Swords.
 3. Keep going north up the Street of Swords until the Guard Barracks entrance opens to the west.

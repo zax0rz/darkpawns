@@ -46,6 +46,8 @@ def searchable_body(text: str) -> str:
     the description is still what a result shows.
     """
     text = re.sub(r'^---.*?^---', ' ', text, flags=re.S | re.M)
+    # MDX component imports are build instructions, not page prose.
+    text = re.sub(r'^import\s+.*$', ' ', text, flags=re.M)
     text = re.sub(r'`{1,3}[^`]*`{1,3}', ' ', text)
     text = re.sub(r'!?\[([^\]]*)\]\([^)]*\)', r'\1', text)
     text = re.sub(r'<[^>]+>', ' ', text)
@@ -182,7 +184,13 @@ def index_markdown_content():
     # 2. Docs Collection
     docs_dir = CONTENT_DIR / "docs"
     if docs_dir.exists():
-        for md_file in docs_dir.rglob("*.md"):
+        # Docs pages may be .md or .mdx; both publish the same routes.
+        doc_files = sorted(
+            path
+            for pattern in ("*.md", "*.mdx")
+            for path in docs_dir.rglob(pattern)
+        )
+        for md_file in doc_files:
             if md_file.name.startswith("_"):
                 continue
             rel_path = md_file.relative_to(docs_dir)

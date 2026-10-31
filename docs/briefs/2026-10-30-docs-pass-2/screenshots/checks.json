@@ -29,7 +29,7 @@
     "route": "/docs/play/connect-client/",
     "overflow": false,
     "title": "Connect a client",
-    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/connect-client.md"
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/connect-client.mdx"
   },
   {
     "size": "desktop",
@@ -77,7 +77,7 @@
     "route": "/docs/play/connect-client/",
     "overflow": false,
     "title": "Connect a client",
-    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/connect-client.md"
+    "edit": "https://github.com/zax0rz/darkpawns/edit/main/website-astro/src/content/docs/play/connect-client.mdx"
   },
   {
     "size": "mobile",

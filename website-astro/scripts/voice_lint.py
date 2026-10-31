@@ -32,6 +32,7 @@ SCAN_ROOTS = (
     ("website-astro", "src/layouts/**/*.astro"),
     ("website-astro", "src/pages/**/*.astro"),
     ("website-astro", "src/content/**/*.md"),
+    ("website-astro", "src/content/**/*.mdx"),
     ("admin-ui", "src/**/*.tsx"),
     ("admin-ui", "index.html"),
     ("web/public", "*.html"),

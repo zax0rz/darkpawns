@@ -17,6 +17,13 @@ Create the first character before you let other people connect. That character r
 - [Install Dark Pawns](/docs/host/install/).
 - A terminal on the machine that will run the instance.
 
+This flow shows how the first character created on a new world unlocks the admin console.
+
+```mermaid
+flowchart LR
+  A["Run darkpawns setup"] --> B["Open local web client"] --> C["Create first character"] --> D["Granted implementor (level 40)"] --> E["Sign in at /admin/"]
+```
+
 ## Create an instance
 
 1. Run `darkpawns setup`.
@@ -25,7 +32,7 @@ Create the first character before you let other people connect. That character r
 
 Setup prints the local web client address when the world is ready. The default is `http://127.0.0.1:4350/`; the default telnet listener is `127.0.0.1:7777`. Both bind to loopback, so another machine can't connect directly.
 
-![Portable bundle setup starts an isolated local world.](/media/docs/install-and-setup.gif)
+![Running status and doctor on a local Dark Pawns world.](/media/docs/lifecycle-commands.gif)
 
 ## Connect to the game
 

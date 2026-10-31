@@ -56,5 +56,3 @@ For a local install, the bootstrap command is:
 ```sh
 curl -fsSL https://darkpawns.org/install.sh | bash
 ```
-
-![Portable bundle setup starts an isolated local world.](/media/docs/install-and-setup.gif)

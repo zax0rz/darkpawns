@@ -6,9 +6,9 @@ audience: operators
 verified: v0.1.7
 ---
 
-Update a managed instance with `darkpawns update` or **Admin → Updates**. The launcher stages and verifies a release while the world runs, then restarts into it. If its health check fails, the previous release is restored automatically.
+import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-![An offline candidate release passes verification; --check leaves the running world untouched.](/media/docs/update-check.gif)
+Update a managed instance with `darkpawns update` or **Admin → Updates**. The launcher stages and verifies a release while the world runs, then restarts into it. If its health check fails, the previous release is restored automatically.
 
 ## Before you start
 
@@ -16,22 +16,39 @@ Update a managed instance with `darkpawns update` or **Admin → Updates**. The 
 - Implementor access (level 40) for the admin console.
 - A maintenance window if players are online. The world stops during the switch.
 
-## Update from the admin console
+## Run the update
 
-1. Open **Admin → Updates**.
-2. Choose **Check for updates**.
-3. Review the available release and online players.
-4. Choose **Update now** and confirm.
-5. Return to the page later to read the transaction status. You can close the browser while the update runs.
+<Tabs>
+  <TabItem label="Admin console">
+    <Steps>
 
-The page reports staging, applying, testing, then committed or rolled back. A browser refresh can resume reading status from the launcher's journal.
+    1. Open **Admin → Updates**.
+    2. Choose **Check for updates**.
+    3. Review the available release and online players.
+    4. Choose **Update now** and confirm.
+    5. Return to the page later to read the transaction status. You can close the browser while the update runs.
 
-## Update from the command line
+    </Steps>
 
-1. Run `darkpawns update` from the instance's launcher environment.
-2. Follow the printed status until the command reports completion or failure.
+    The page reports staging, applying, testing, then committed or rolled back. A browser refresh can resume reading status from the launcher's journal.
 
-If the machine stopped during an update, run the recovery command printed by the admin console or `darkpawns update recover`.
+    ![The Updates page showing the available local release controls.](/media/docs/admin-updates.png)
+  </TabItem>
+  <TabItem label="Command line">
+    <Steps>
+
+    1. Run `darkpawns update` from the instance's launcher environment.
+    2. Follow the printed status until the command reports completion or failure.
+
+    </Steps>
+
+    If the machine stopped during an update, run the recovery command printed by the admin console or `darkpawns update recover`.
+
+    ![An offline candidate release passes verification; --check leaves the running world untouched.](/media/docs/update-check.gif)
+  </TabItem>
+</Tabs>
+
+## How rollback works
 
 The diagram shows the launcher's update transaction and its rollback path.
 

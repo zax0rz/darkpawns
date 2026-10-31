@@ -18,6 +18,8 @@ including empty ones. Choose **Equip** beside an empty slot to move a carried
 item there or add a **New copy**. Search by name, keywords, or vnum. Choose
 **Give item** to add a new copy to carried inventory.
 
+![The player editor showing a synthetic character's level, vitals and attributes.](/media/docs/admin-player-editor.png)
+
 Carried containers show their contents underneath. **Hide contents** folds a bag;
 **Show contents** opens it again. A container and everything inside it travel
 together when you equip or unequip it. To take one item out, choose **Carried

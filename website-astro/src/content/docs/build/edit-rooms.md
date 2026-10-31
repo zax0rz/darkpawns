@@ -21,6 +21,13 @@ step that keeps the change across a server restart. The room’s **Live script
 controls** apply at once, and **Discard** won’t undo them.
 :::
 
+This flow shows how webOLC separates live world commits from disk saves.
+
+```mermaid
+flowchart LR
+  A["Open editor and claim record"] --> B["Edit fields in draft"] --> C["Commit draft to live world"] --> D["Save zone file to disk"]
+```
+
 ## Edit a room
 
 1. Open **Zones & rooms** and select your zone.

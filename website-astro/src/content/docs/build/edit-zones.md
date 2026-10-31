@@ -21,6 +21,8 @@ changes to the running world; save the file before you finish. Script controls
 on a room editor page apply at once, and **Discard** won’t undo them.
 :::
 
+![The zones list for the synthetic world used by the admin console preview.](/media/docs/admin-zones.png)
+
 ## Change zone settings
 
 1. Open the zone and choose **Edit zone**.

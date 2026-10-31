@@ -65,6 +65,10 @@ for (const [from, to] of Object.entries(redirects)) {
 const update = readFileSync(join(dist, 'docs/host/update-server/index.html'), 'utf8');
 assert(update.includes('class="mermaid-diagram"') && update.includes('<svg'), 'Update guide: missing build-time diagram');
 assert(!/<script[^>]+src=["'][^"']*mermaid/.test(update), 'Mermaid must not ship as a browser runtime');
+for (const page of ['play/first-hour', 'host/first-login', 'build/edit-rooms', 'project/port-fidelity']) {
+  const html = readFileSync(join(dist, 'docs', page, 'index.html'), 'utf8');
+  assert(html.includes('class="mermaid-diagram"') && html.includes('<svg'), `${page}: missing build-time diagram`);
+}
 assert(existsSync(join(dist, 'pagefind/pagefind.js')), 'Missing Pagefind index');
 assert(readFileSync(join(dist, '404.html'), 'utf8').includes('data-search-trigger'), '404 needs a search action');
 console.log(`docs-check: ${pages} pages have titles, descriptions, Markdown twins, verification lines, valid source edit links and docs links; ${Object.keys(redirects).length} redirects; llms indexes, Markdown discovery, search and diagram present`);

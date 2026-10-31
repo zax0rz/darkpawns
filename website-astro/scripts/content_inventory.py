@@ -59,7 +59,13 @@ def word_count(body: str) -> int:
 
 def content_entries() -> list[Entry]:
     entries: list[Entry] = []
-    for path in sorted((SITE / "src/content").glob("**/*.md")):
+    # .mdx pages publish the same routes as .md; the ledger must list both.
+    paths = sorted(
+        path
+        for pattern in ("**/*.md", "**/*.mdx")
+        for path in (SITE / "src/content").glob(pattern)
+    )
+    for path in paths:
         relative = path.relative_to(SITE).as_posix()
         collection = path.relative_to(SITE / "src/content").parts[0]
         if path.name == "_index.md":

@@ -1,0 +1,16 @@
+---
+title: "Reference"
+description: "Look up Dark Pawns commands, terminology, and HTTP operations. The command help and API pages come from the same sources used by the running server."
+type: reference
+audience: developers
+verified: v0.1.7
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+<CardGrid>
+  <LinkCard title="Glossary" href="/docs/reference/glossary/" description="Look up the game terms and abbreviations used in Dark Pawns help, player guides, and server documentation, from AC to vnum." />
+  <LinkCard title="Commands" href="/docs/reference/commands/" description="It's the Dark Pawns command index, with topics grouped by task. Every page keeps the original help text and gives each topic a stable anchor." />
+  <LinkCard title="Dark Pawns public API" href="/docs/reference/api/public/" description="Look up the Dark Pawns public HTTP API request and response contract for health checks, initial server setup, and currently active game listeners." />
+  <LinkCard title="Dark Pawns admin API" href="/docs/reference/api/admin/" description="Look up the Dark Pawns admin API request and response contract. Sign in with a level 40 character and use the authenticated admin console session." />
+</CardGrid>

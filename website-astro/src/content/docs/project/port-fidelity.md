@@ -32,6 +32,13 @@ go run ./cmd/dp-oracle-diff --scenario mortal-batch14
 
 Read the reported `result:` line, not only the process exit status; the harness may exit successfully even when it reports a divergence. This command illustrates one scenario, not proof that a command or feature is complete. Random outcomes require validation of underlying rolls or multiple samples, not a single coincidentally matching result.
 
+This diagram shows how a differential scenario compares the C oracle and Go server.
+
+```mermaid
+flowchart LR
+  A["Scenario fixture and seed"] --> B["C oracle (src/)"] & C["Go server"] --> D["Normalize transcripts and draw logs"] --> E["Byte-for-byte comparison"]
+```
+
 ## Preserve the authority boundary
 
 Never edit `src/` or the oracle to make Go pass. A confirmed repeated pattern changes the rulebook and triggers a class-wide audit. A suspected mismatch isn't confirmed until its real call path is shown to be reachable.

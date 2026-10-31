@@ -1,0 +1,23 @@
+---
+title: "Host"
+description: "Install and operate a Dark Pawns server, create a world, manage its settings and players, and learn what public hosting requires before players connect."
+type: reference
+audience: operators
+verified: v0.1.7
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Start with [Hosting at a glance](/docs/host/hosting-overview/) for the machine, network, cost, and setup facts. Then follow the install and first-login guides.
+
+<CardGrid>
+  <LinkCard title="Hosting at a glance" href="/docs/host/hosting-overview/" description="See the supported systems, host requirements, listeners, costs, setup steps, and operator guides for running a Dark Pawns world on your machine." />
+  <LinkCard title="Install Dark Pawns" href="/docs/host/install/" description="Install the signed portable release with the bootstrap command, then create your first server instance and open the setup wizard." />
+  <LinkCard title="Your first login" href="/docs/host/first-login/" description="Finish first-run setup, connect to your new Dark Pawns server, create the Implementor character, and open the admin console." />
+  <LinkCard title="The admin console" href="/docs/host/admin-console/" description="Find the admin console page for each task, understand its access gates, and save world or character changes without losing another operator's work." />
+  <LinkCard title="Dashboard and logs" href="/docs/host/dashboard-and-logs/" description="Read server health and recorded player activity, inspect the separate server and game logs, and export the retained log entries." />
+  <LinkCard title="Saved character management" href="/docs/host/player-management/" description="Edit a disconnected character's equipment, inventory, flags, name, and password in the admin console, with clear save and delete boundaries." />
+  <LinkCard title="Configuration settings" href="/docs/host/admin-configuration/" description="Change operator settings, back up or restore their bundle, and understand which changes need a restart on a managed or checkout server." />
+  <LinkCard title="Update your server" href="/docs/host/update-server/" description="Update a managed Dark Pawns instance from the admin console or command line, and understand the automatic rollback after a failed health check." />
+  <LinkCard title="Players can't connect" href="/docs/host/players-cannot-connect/" description="Find whether a connection failure comes from the world, the listening address, a firewall, or the client, then choose the next check." />
+</CardGrid>
