@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -160,9 +161,9 @@ func TestLaunchAgentReloadFailureRemainsAnError(t *testing.T) {
 }
 
 func TestQueryStartupTaskActionRetriesTransientExecFailureOnce(t *testing.T) {
-	defer func(prev func(string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+	defer func(prev func(context.Context, string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
 	calls := 0
-	runWindowsTaskQuery = func(_ string) ([]byte, error) {
+	runWindowsTaskQuery = func(_ context.Context, _ string) ([]byte, error) {
 		calls++
 		if calls == 1 {
 			return nil, errors.New(`query owned startup task: exec: canceling Cmd: TerminateProcess: Access is denied.: {"Command":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","Arguments":"-NoProfile"}`)
@@ -182,20 +183,31 @@ func TestQueryStartupTaskActionRetriesTransientExecFailureOnce(t *testing.T) {
 	}
 }
 
-func TestQueryStartupTaskActionFailsAfterTwoExecAttempts(t *testing.T) {
-	defer func(prev func(string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+func TestQueryStartupTaskActionFailsAfterTwoExecAttemptsWithinSharedBudget(t *testing.T) {
+	defer func(budget, first time.Duration, prev func(context.Context, string) ([]byte, error)) {
+		windowsTaskQueryBudget, windowsTaskQueryFirstWait, runWindowsTaskQuery = budget, first, prev
+	}(windowsTaskQueryBudget, windowsTaskQueryFirstWait, runWindowsTaskQuery)
+	windowsTaskQueryBudget = 150 * time.Millisecond
+	windowsTaskQueryFirstWait = 100 * time.Millisecond
+
 	calls := 0
-	runWindowsTaskQuery = func(_ string) ([]byte, error) {
+	runWindowsTaskQuery = func(ctx context.Context, _ string) ([]byte, error) {
 		calls++
-		return nil, errors.New("query owned startup task: exit status 1:")
+		<-ctx.Done()
+		return nil, fmt.Errorf("query owned startup task: %w", ctx.Err())
 	}
 
+	start := time.Now()
 	_, err := queryStartupTaskActionWithRetry("darkpawns-test")
+	elapsed := time.Since(start)
 	if err == nil {
-		t.Fatal("queryStartupTaskActionWithRetry succeeded when both attempts failed")
+		t.Fatal("queryStartupTaskActionWithRetry succeeded when both attempts timed out")
 	}
 	if calls != 2 {
 		t.Fatalf("calls = %d, want 2", calls)
+	}
+	if elapsed >= 250*time.Millisecond {
+		t.Fatalf("elapsed = %s, want shared 150ms budget instead of two independent timeouts", elapsed)
 	}
 	if !strings.Contains(err.Error(), "two attempts") {
 		t.Fatalf("error = %v, want two-attempt diagnosis", err)
@@ -203,9 +215,9 @@ func TestQueryStartupTaskActionFailsAfterTwoExecAttempts(t *testing.T) {
 }
 
 func TestQueryStartupTaskActionDoesNotRetryMalformedJSON(t *testing.T) {
-	defer func(prev func(string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+	defer func(prev func(context.Context, string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
 	calls := 0
-	runWindowsTaskQuery = func(_ string) ([]byte, error) {
+	runWindowsTaskQuery = func(_ context.Context, _ string) ([]byte, error) {
 		calls++
 		return []byte("not-json"), nil
 	}
