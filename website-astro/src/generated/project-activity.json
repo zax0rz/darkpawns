@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T23:18:53-04:00",
+  "generatedAt": "2026-10-31T12:49:32-04:00",
   "repository": "https://github.com/zax0rz/darkpawns",
   "activitySource": "local Git history, first-parent commits on the build revision",
   "weeks": [
@@ -49,39 +49,39 @@
     },
     {
       "week": "2026-10-26",
-      "commits": 45
+      "commits": 84
     }
   ],
   "recentCommits": [
     {
-      "sha": "57ff22576183ebfbd8af92e340e8eeb8a7cc7e96",
-      "date": "2026-10-27",
-      "title": "fix(admin): verify delete confirmation state",
-      "url": "https://github.com/zax0rz/darkpawns/commit/57ff22576183ebfbd8af92e340e8eeb8a7cc7e96"
+      "sha": "1d82cae02abe4d1ad8e858b8181ced212af0013e",
+      "date": "2026-10-31",
+      "title": "docs(play): voice pass on Your first hour and Connect a client",
+      "url": "https://github.com/zax0rz/darkpawns/commit/1d82cae02abe4d1ad8e858b8181ced212af0013e"
     },
     {
-      "sha": "b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4",
-      "date": "2026-10-27",
-      "title": "feat(admin): add saved character identity controls",
-      "url": "https://github.com/zax0rz/darkpawns/commit/b9fd16502fb8fbc5e9bd58153ce18bddea0d04e4"
+      "sha": "f0d09d3d21823afefd015aa7ab9277f9f5f3e757",
+      "date": "2026-10-31",
+      "title": "docs: retain final stacked screenshots and verification",
+      "url": "https://github.com/zax0rz/darkpawns/commit/f0d09d3d21823afefd015aa7ab9277f9f5f3e757"
     },
     {
-      "sha": "8ea60c05d0350f0fd111f5c079720afbed082cfa",
-      "date": "2026-10-27",
-      "title": "docs(research): number the flaky-CI ledger row PF-090",
-      "url": "https://github.com/zax0rz/darkpawns/commit/8ea60c05d0350f0fd111f5c079720afbed082cfa"
+      "sha": "85249032ca5856a00f6abeee11e947808b83cee9",
+      "date": "2026-10-31",
+      "title": "docs: verify discovery gates and desktop/mobile review",
+      "url": "https://github.com/zax0rz/darkpawns/commit/85249032ca5856a00f6abeee11e947808b83cee9"
     },
     {
-      "sha": "1b86692e49a1d924127ea28bc9be2c2b4d68985e",
-      "date": "2026-10-27",
-      "title": "docs(research): the flaky CI test was a crash (PF-)",
-      "url": "https://github.com/zax0rz/darkpawns/commit/1b86692e49a1d924127ea28bc9be2c2b4d68985e"
+      "sha": "86f1b31122ce2d48a5a4a1248c5a144a8408405d",
+      "date": "2026-10-31",
+      "title": "docs: add webOLC guides, verbatim help and generated agent indexes (R1/R4)",
+      "url": "https://github.com/zax0rz/darkpawns/commit/86f1b31122ce2d48a5a4a1248c5a144a8408405d"
     },
     {
-      "sha": "5324dc1f37a67cabc68ba4eddbdbe12f36ac3707",
-      "date": "2026-10-27",
-      "title": "Merge pull request #2202 from zax0rz/cline/portable-shutdown-race",
-      "url": "https://github.com/zax0rz/darkpawns/commit/5324dc1f37a67cabc68ba4eddbdbe12f36ac3707"
+      "sha": "d639fa27a246981c88b176ffeec74539b021acc8",
+      "date": "2026-10-31",
+      "title": "docs: retain final stacked media integration checks",
+      "url": "https://github.com/zax0rz/darkpawns/commit/d639fa27a246981c88b176ffeec74539b021acc8"
     }
   ],
   "pullRequests": [
