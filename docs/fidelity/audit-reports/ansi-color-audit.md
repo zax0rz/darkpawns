@@ -774,30 +774,30 @@ fails (R5h) — restoring the dashes row produced
 `     [---H ---M ---V] [-- --] a guard` where C prints
 `     [ 40H   5M  12V] [ 9 --] a guard (Head of group)`.
 
-**F9 — the port cannot run `group` as a mobile, and `force` hides it (OPEN, R1/R4).**
+**F9 — the port could not run `group` as a mobile, and `force` hid it (FIXED in §17, R1/R4).**
 Reaching the mobile-leader state needs `do_group` to run as the mobile, because
 `perform_group` is the only thing in the tree that sets `AFF_GROUP`
 (`src/act.other.c:629`; no mobprog or spec proc sets it) and the viewer has to be
 enrolled by its own master. C reaches that through `do_force`, which resolves its
 target with `get_char_vis` — mobiles included — and hands the command to
 `command_interpreter(vict, to_force)` (`src/act.wizard.c:1869-1880`). The port's
-`cmdForceText` resolves mobiles too, but dispatches through
-`executeCharacterCommand`, whose surface has no `group`; an unsupported command is
-dropped with a `slog.Warn` after the forcer has already been told `Okay.`
+`cmdForceText` resolved mobiles too, but dispatched through
+`executeCharacterCommand`, whose surface had no `group`; an unsupported command was
+dropped with a `slog.Warn` after the forcer had already been told `Okay.`
 (`pkg/session/wiz_communication.go:221-223`).
 
 A `keep-ansi` scenario built exactly as C's transcript requires
-(`force Grouppeer follow generic`, `force generic group Grouppeer`) proves the
-gap: C answers the follower's `group` with
-`Your group consists of:` and a row, while the port answers
+(`force Grouppeer follow generic`, `force generic group Grouppeer`) proved the
+gap: C answered the follower's `group` with
+`Your group consists of:` and a row, while the port answered
 `But you are not the member of a group!` because the mobile's `group` never ran.
-The scenario is **not** committed — it cannot go green, and a full census would
-fail on it — but the run is retained as evidence:
-`oracle-runs/2026-10-30/group-mobile-leader`, whose `census-dump/` carries the
-scenario. The general shape of F9 is larger than `group`: C's `do_force` runs
-*any* command as a mobile, and the port's mobile command surface is a partial
-registry that fails silently behind a success message. That needs its own issue
-and its own audit, not a fix smuggled into a colour PR.
+The run is retained at `oracle-runs/2026-10-30/group-mobile-leader`, whose
+`census-dump/` carries the scenario; it is now committed as
+`group-mobile-run-group-depth` and green (§17). The general shape of F9 is larger
+than `group` — C's `do_force` runs *any* command as a mobile, and the port's mobile
+command surface is a partial registry that fails silently behind a success
+message — and the rest of that class is recorded in
+`docs/fidelity/depth/handoff/2026-10-31-force-mobile-command-surface.md`.
 
 So this row's coverage is unit-level on purpose: the state is reachable in C but
 not currently reachable in the port, which is exactly why the port's wrong branch
@@ -974,3 +974,64 @@ its exit line (space before the exits line) and the peer's autoexit is toggled o
   the character name `F12config` contains digits, which C's creation rejects
   (`setup step 11 read after "": EOF`). Worth recording because the wrapper
   reports it as `infra=1`, and an infra row is not a divergence.
+
+## 17. F9 — a mobile can run `group`, and one implementation does it (2026-10-31)
+
+C's `do_force` hands the line to `command_interpreter` for **any** body
+(`src/act.wizard.c:1869-1880`), so `force <mob> group <player>` runs `do_group` as
+that mobile. That is the only route to a mobile-leader group: `perform_group` is
+the only thing in the tree that sets `AFF_GROUP` (`src/act.other.c:629`) and a
+follower's enrolment has to come from its own master.
+
+The port resolved the mobile fine and then dispatched through
+`executeCharacterCommand`, whose registry had no `group`; an unsupported command
+was dropped with a `slog.Warn` **after** the forcer had already been told `Okay.`
+(`pkg/session/wiz_communication.go:221-223`). The forcer had no way to tell a
+command that ran from one that did not, and the follower's own `group` answered
+`But you are not the member of a group!` where C answers with its listing.
+
+### The fix
+
+`pkg/game/group.go` now holds the body-agnostic implementation:
+`PerformGroup` (C's `perform_group`), `GroupCommand` (C's `do_group`, returning
+`false` for the empty argument so the caller can render the session-owned
+listing), plus `GroupedActor`/`SetGroupedActor`, `FollowsBody`,
+`followersOfInRoom` and `resolveRoomActor`. `pkg/session`'s `cmdGroup` and the
+`do_ungroup` paths delegate to them, and a new `registerActorCommand("group", …)`
+puts the command on the mobile surface next to `report`.
+
+Two things fell out of doing it that way rather than bolting a second
+implementation onto the mobile side:
+
+- **One `do_group`, not two.** The player command was a session-shaped port of
+  the same C function; leaving it in place and adding a mobile copy would have
+  re-created the split this audit keeps finding. The session handler is now a
+  four-line delegation.
+- **The follower gate is identity-based.** `do_group`'s `vict->master != ch` test
+  is a pointer comparison in C, so it now uses `World.FollowsBody` (the retained
+  body) instead of the name comparison the player path had, which two same-named
+  NPCs could satisfy for each other (R3).
+
+### Evidence
+
+- `group-mobile-run-group-depth` (new, `keep-ansi`): the exact transcript the F9
+  evidence was found with — `force Grouppeer follow generic` then
+  `force generic group Grouppeer`, and the follower's `group` at three colour
+  levels. **Verified both ways**: with the mobile registration removed the census
+  is RED with exactly F9's divergence —
+
+  ```
+   C: Your group consists of:
+        [\x1b[32m 22\x1b[0mH \x1b[32m100\x1b[0mM \x1b[32m 86\x1b[0mV] [ 1 \x1b[32mWa\x1b[0m] Grouppeer
+  Go: But you are not the member of a group!
+  ```
+
+  — and with the fix it is CLEAN.
+- Unit proof (R5h): `TestForceMobileRunsGroupAndEnrolsTheFollower` drives
+  `cmdForce(actor, {"guard", "group Follower"})`, asserts C's `Okay.`, the
+  follower's `AFF_GROUP`, `perform_group`'s TO_VICT line, and the follower's own
+  listing. With the registration removed it fails at the first assertion:
+  "the mobile's group did not enrol the follower: the forced command was dropped".
+- A regression census over the group and force scenarios, because the player
+  command now runs through the shared body.
+
