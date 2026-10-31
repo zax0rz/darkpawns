@@ -86,8 +86,9 @@ func (w *World) GroupCommand(leader Actor, argument string) bool {
 			found += w.PerformGroup(leader, follower)
 		}
 		if found == 0 {
-			Act(nil, false, leader, nil, nil, nil,
-				"Everyone following you here is already in your group.", "", ToChar)
+			// C send_to_char, not act(): a sleeping leader still reads this
+			// (src/act.other.c:714-716).
+			SendToChar(leader, "Everyone following you here is already in your group.\r\n")
 		}
 		return true
 	}
@@ -95,11 +96,15 @@ func (w *World) GroupCommand(leader Actor, argument string) bool {
 	// Single target — src/act.other.c:719-738.
 	victim := w.resolveRoomActor(leader, arg)
 	if victim == nil {
-		Act(nil, false, leader, nil, nil, nil, NoPersonHere, "", ToChar)
+		// C send_to_char again: NOPERSON reaches a sleeping leader
+		// (src/act.other.c:719-720).
+		SendToChar(leader, NoPersonHere)
 		return true
 	}
-	// vict->master != ch: identity, not a name, because two NPCs can share one.
-	if !w.FollowsBody(victim, leader) && victim != leader {
+	// C: ((vict->master != ch) && (vict != ch)) || IS_SHADOWING(vict). The master
+	// test is identity, not a name, because two NPCs can share one; the shadowing
+	// arm is AFF_DODGE, which do_follow's quiet path sets (src/act.other.c:721-723).
+	if (!w.FollowsBody(victim, leader) && victim != leader) || isShadowingBody(victim) {
 		Act(nil, false, leader, victim, nil, nil,
 			"$N must follow you to enter your group.", "", ToChar)
 		return true
