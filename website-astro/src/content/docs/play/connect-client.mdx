@@ -8,19 +8,19 @@ verified: v0.1.7
 
 import { Tabs, TabItem, Steps } from '@astrojs/starlight/components';
 
-Dark Pawns is played as a party. You can run up to three characters at once, and you'll want all three: by the mid levels, a character on their own has a rough time. A MUD client keeps every character connected and lets you hop between them.
+Dark Pawns is tuned for a party. You can run up to three characters at once, and you'll want all three: a level 1 character can trade punches with a level 1 mob, but by level 15 a solo adventurer is mostly dragon food. A real MUD client keeps all three sessions open so you can lead with your tank and heal from another tab without losing your scrollback.
 
-> Each player may have a Total of 3 characters at any given time.
+> Each player may have a Total of 3 characters at any given time. ... Please note, linkdead characters that are still in game count towards your three multis. Log 'em out if you aren't using them.
 >
-> `help multi`
+> `help MULTI`
 
 ## Before you start
 
-- **The address.** For darkpawns.org it's `darkpawns.org`, port **7778** (encrypted) or **7777** (classic telnet). Playing on someone else's server? Ask its operator.
-- **Three character names.** You can create the characters as you connect.
+- **The server address.** For darkpawns.org it's `darkpawns.org`, port **7778** (TLS encrypted) or **7777** (classic telnet). Playing on a private world? Ask its operator for the host and port.
+- **Up to three character names.** You can roll the characters as you connect.
 
-:::note
-Characters that lose their connection stay in the game for a while, and they still count toward your three. Log them out if you aren't using them.
+:::tip[Group your three characters together]
+Once all three characters are standing in the same room, have the second and third type `follow <leader>`, then have the leader type `group all`. Now when the leader moves, the whole party walks together.
 :::
 
 ## Choose a client

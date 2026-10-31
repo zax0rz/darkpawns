@@ -8,6 +8,14 @@ verified: v0.1.7
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
+Build Dark Pawns from source or reshape a running world through webOLC. In the original C server, builders edited zones over telnet menus that happily let you crash the MUD if you typed the wrong flag:
+
+> WARNING: This OLC will let you set values to values that shouldn't be set. ... This is good in the sense that it allows you to test anything you please, but bad in the sense that builders can crash the mud with ease. (Hey, that rhymes!).
+>
+> `help OLC`
+
+webOLC replaces the numbered telnet prompts with draft locks and syntax checks, while writing the same Diku world files underneath.
+
 <LinkCard title="Run a local server" href="/docs/build/local-server/" description="Build Dark Pawns from a checkout, point it at the original world files, and connect through telnet or the local web client." />
 
 ## Edit the world

@@ -128,6 +128,6 @@ you when this server is down: a crashed process can't send its own alert.
 | Healthchecks reports an outage while the game is running | The loop hasn't progressed for over 30 seconds, or the heartbeat is disabled. Check the game's own logs before the ping URL. |
 | Gossip lines missing from Discord | The mirror is disabled, its credentials were removed, or Discord asked for a cooldown. Delivery shows the last failure and the skipped count. |
 
-Keep the settings file and its key together in protected backups. Losing the key
-loses the credentials; exposing both exposes them. This protects a leaked
-settings file, not a compromised host or a full backup.
+:::caution[Back up the key beside the settings file]
+Keep `lib/data/notifications.json` and its `.key` file together in protected backups. Losing the key file makes your saved webhook credentials unreadable; leaking both exposes them. The split protects a leaked config file on its own, not a compromised host or a full backup archive.
+:::

@@ -15,6 +15,7 @@ A reader should know in five seconds whether this is their page, and find their 
 - **Progressive disclosure.** Edge cases, internals and long examples go in a collapsed `<details>` block or a "How it works" section at the end, never in the main path.
 - **One purpose per page.** If a page needs two "Before you start" lists, it's two pages.
 - **Tables for comparisons, lists for options, steps for order, prose for why, diagrams for flow.**
+- **Keep lab notes out of the reader's face.** "Source or silence" means every number has a real measurement behind it; it does not mean reading the methodology aloud in the opening paragraph. State the practical fact up front ("An idle server uses under 90 MiB of RAM and starts in under half a second"), and put the exact sample environment in a "How it works" section or `<details>` block. Never explain that electricity and internet service cost money.
 
 ## 2. Sections
 
@@ -86,7 +87,7 @@ One page per release at `/releases/v0-1-7/`, generated from `docs/releases/vX.Y.
 
 ## 5. Words
 
-**Banned:** simply, just (as in "just run"), easy, easily, obviously, of course, quick (unless timed), "click here", "please" in instructions, "e.g." and "i.e." (write "for example", "that is"), and "etc." closing a list (finish the list or say "and more").
+**Banned in step instructions:** simply, just (as in "just run"), easy, easily, obviously, of course, quick (unless timed), "click here", "please" in instructions, "e.g." and "i.e." (write "for example", "that is"), and "etc." closing a list (finish the list or say "and more"). Never tell a reader a step is "simple" or "easy". Deadpan asides in Play or Build prose and verbatim help-file quotes may still use "simply", "of course" or "obviously" when the situation is the joke.
 
 **SaaS and business jargon is banned unless the page is mocking it:** solution, leverage, utilize, empower, unlock, seamless, robust, powerful, streamline, best-in-class, world-class, cutting-edge, game-changer, synergy, ecosystem, stakeholder, onboarding, user journey, use case, value, deliverable, out of the box, at scale.
 

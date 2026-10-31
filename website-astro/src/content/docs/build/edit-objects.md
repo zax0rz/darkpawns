@@ -6,48 +6,44 @@ audience: builders
 verified: v0.1.7
 ---
 
-Use webOLC in the admin console to change an object prototype in your assigned
-building zone. The editor keeps your changes in a draft until you commit them.
+Use webOLC in the admin console to build or tune an object prototype in your assigned zone. Changes stay in your draft until you commit them to the live world and write the zone's `.obj` file.
 
 ## Before you start
 
-- Sign in at `/admin/` with a character that can build in the zone.
-- Find the object in **Objects**, or use the free VNUM on its zone page.
+- Sign in at `/admin/` with a character assigned to build in the zone.
+- Find the item in **Objects**, or grab the next free [vnum](/docs/reference/glossary/#vnum) on its zone page.
 
 :::caution
-Committing changes the running world. Save the zone file afterward to keep the
-change across a server restart. The **Live script controls** apply at once, and
-**Discard** won’t undo them.
+**Commit draft** updates the prototype in the running world. **Save zone file** writes that change to disk so it survives a restart. The **Live script controls** apply immediately, and **Discard** won't undo them.
 :::
 
 ## Edit an object
 
-1. Open **Objects** and choose the object you need to change.
-2. Choose **Edit**. For a new object, open its free [vnum](/docs/reference/glossary/#vnum) from the zone page.
-   Opening the editor claims the object and starts or restores its draft.
-3. Change its keywords, descriptions, item type, flags, wear slots, weight,
-   cost, values, applies, or extra descriptions.
+1. Open **Objects** and select the item you want to change.
+2. Choose **Edit** (or open a free [vnum](/docs/reference/glossary/#vnum) from the zone page to create a new item). Opening the editor claims the object and starts your draft.
+3. Edit its keywords, short and long descriptions, action description, item type, flags, wear slots, weight, cost, values, stat applies, or extra descriptions.
 
-![The object editor’s fields for a synthetic steel sword.](/media/docs/admin-object-editor.png)
+![The object editor's fields for a synthetic steel sword.](/media/docs/admin-object-editor.png)
 
-4. Review the changes and choose **Commit draft**.
+4. Review your changes and choose **Commit draft**.
 
-The object is updated in the running world, and its claim is released.
+The object prototype updates in the running world and releases your claim.
 
-5. Choose **Save zone file**. You can also save the zone from
-   [Workshop & saves](/admin/workshop).
+5. Choose **Save zone file**, or save from [Workshop & saves](/admin/workshop).
+
+:::tip[Load chances and weapon rules from help OEDIT]
+In Dark Pawns, `cost-per-day` controls how often an item loads on zone reset (`help OEDIT`). If `cost-per-day` is above `10000`, the amount over `10000` is its percentage chance to load: `10100` loads 100% of the time (use `10100` for shopkeeper stock like bread so the baker never runs dry), while `10050` loads 50% of the time. For weapons, backstabbing requires type `pierce`, and clerics cannot wield slashing weapons even without a `!CLERIC` flag.
+:::
 
 ## Did it work?
 
-The object detail page shows the committed values. After the file save, the
-zone disappears from pending saves in Workshop & saves.
+The object detail page shows your committed values, and saving the zone file clears the zone from pending saves in **Workshop & saves**.
 
-## If it didn’t work
+## If it didn't work
 
-- If the object is already claimed, wait for its current editor to finish.
-- If **Save zone file** is disabled, commit the object draft first.
-- If a control is unavailable, check the account’s actions in the
-  [builder guide](/admin/workshop/help).
+- **The object is already claimed.** Another builder has a draft open; wait for them to finish.
+- **Save zone file is disabled.** Commit your object draft first.
+- **Edit buttons are unavailable.** Check your zone permissions in the [builder guide](/admin/workshop/help).
 
 ## Related
 

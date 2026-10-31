@@ -41,16 +41,13 @@ Place the cursor where you want the snippet, or select text to replace.
 - **Discord block** asks for an invite. Enter your own HTTPS invite from
   `discord.gg` or `discord.com/invite`, then choose **Insert Discord block**.
   There is no preset invite. Check the address before saving.
-- **Gossip notice** inserts: “What's said on gossip echoes to our Discord.”
+- **Gossip notice** inserts: "What's said on gossip echoes to our Discord."
 
 Snippets only change your draft. They don't save it or change Notifications.
 
-Check [Notifications](/docs/host/notifications/) before inserting the gossip
-notice. Its **Show the automatic gossip notice in the MOTD** option can already
-add that sentence while the gossip mirror is active and ready. Automatic notices
-are absent from the preview. Leave the snippet out if Notifications adds it, or
-turn the automatic notice off if your own message already explains the mirror.
-The game doesn't remove duplicate notices for you.
+:::note[Avoid duplicate gossip notices]
+Check [Notifications](/docs/host/notifications/) before inserting the gossip snippet. Its **Show the automatic gossip notice in the MOTD** toggle already appends that line at login whenever the Discord gossip mirror is active. Leave the manual snippet out unless you've turned the automatic notice off, because the server won't deduplicate them for you.
+:::
 
 ## Keep or discard a draft
 

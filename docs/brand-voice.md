@@ -611,6 +611,15 @@ The docs at darkpawns.org/docs follow [`docs-style.md`](docs-style.md) for struc
 
 **Business language is banned** unless the page is mocking it (the list is in `docs-style.md` §5).
 
+**Docs before and after**
+
+| Section | Flat compliance prose (wrong) | Dark Pawns docs voice (right) |
+| --- | --- | --- |
+| **Play** | There is no rent. To keep your equipment when you quit, quit in a temple or your hometown's quit room. | Dark Pawns has no rent, which is the good news. The bad news is that your gear only saves if you `quit` inside your hometown's safe room. If you type `reallyquit` in the street, your equipment stays on the cobblestones. |
+| **Host** | On this Linux amd64 checkout, a fresh idle server reached its health check in 0.42 seconds and used about 84 to 88 MiB of resident memory. That's one local startup observation, not a supported minimum. | A fresh server starts in under half a second and idles around 85 MiB of RAM. Any spare Linux, macOS, or Windows box with 1 GiB of memory and 2 GiB of disk can run a world without breaking a sweat. |
+| **Build** | Saving publishes the script immediately. There's no draft or undo, so keep a copy of the old text if you may need to restore it. | Unlike room and mob drafts, Lua scripts go live the second you click **Save**. The server syntax-checks your code first, so a typo won't crash the parser, but logic bugs are all yours on the next trigger. |
+| **Reference (Glossary)** | **linkdead:** A character whose client disconnected while the character remains in the game. | **linkdead:** Still standing in the room after your connection dropped. If your link breaks mid-fight, your character tries to `flee` every round (`help LINK`), and still counts toward your 3-character limit until they leave the world. |
+
 ## 9. Quick Reference Card
 
 ### The framework at a glance

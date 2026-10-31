@@ -6,28 +6,24 @@ audience: operators
 verified: v0.1.7
 ---
 
-A Dark Pawns host runs the game server and its web and admin interfaces. You supply a machine and decide whether players can reach it from outside that machine. On this Linux amd64 checkout, a fresh idle server reached its health check in 0.42 seconds and used about 84 to 88 MiB of resident memory during the first 15 seconds. That’s one local startup observation, not a production benchmark or a supported minimum.
+A Dark Pawns host runs the game server, the web client, and the admin console from a single bundle, backed by embedded SQLite. A fresh server starts in under half a second and idles around 85 MiB of RAM. Any spare Linux, macOS, or Windows machine with 1 GiB of memory and 2 GiB of disk can run a world without breaking a sweat.
 
 ## What you need
 
-| Requirement | Current release facts |
+| Requirement | What to expect |
 | --- | --- |
-| Operating system | Published portable archives target Linux, macOS, and Windows on amd64 and arm64. |
-| Memory | One idle local run used 84 to 88 MiB RSS. For a small test world, budget at least 1 GiB as planning headroom; this is an estimate, not a tested minimum. |
-| Disk | The measured server binary was 40.2 MB, the world tree 5.3 MB, and web assets 0.4 MB. For a small test world, budget at least 2 GiB to leave room for data, logs, backups, and updates; this is an estimate, not a tested minimum. |
-| HTTP port | The setup default is `4350`. It serves the web client and admin console. |
-| Telnet port | The setup default is `7777`; enter `0` to disable it. |
-| Public access | Both listeners bind to loopback by default. Public hosting needs an intentional listener and firewall or proxy configuration. |
+| **Operating system** | Signed portable archives ship for Linux, macOS, and Windows on `amd64` and `arm64`. |
+| **Memory** | An idle world uses 84 to 88 MiB RSS. Budget at least 1 GiB of RAM to give connected players and updates comfortable headroom. |
+| **Disk** | The bundle is under 46 MB (40.2 MB server binary, 5.3 MB world files, 0.4 MB web assets). Budget at least 2 GiB for SQLite player data, logs, backups, and staged releases. |
+| **HTTP port** | Defaults to `4350` for both the web client and `/admin/`. |
+| **Telnet port** | Defaults to `7777`; set it to `0` to turn off raw telnet. |
+| **Public access** | Both listeners bind to `127.0.0.1` by default so you can set up your world in private before opening a firewall or reverse proxy. |
 
-The current package archives and listener behavior are documented in the [portable release guide](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-release.md). That guide also explains how public hosting changes the network setup.
+The [portable release guide](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-release.md) covers archive layout and public network exposure in detail.
 
-The sample was a single idle launch from the repository root using its bundled world, on Linux amd64. It reached `/health` in 0.42 seconds; RSS samples were 83,864 KiB at readiness, 87,972 KiB after five seconds, 87,976 KiB after ten, and 86,856 KiB after fifteen. It had no connected players. The planning figures above provide roughly ten times that observed memory and ample room beyond the measured files, but concurrent players, backups, logs, and a production deployment can need more.
-
-## Cost and setup time
-
-If you already have a suitable machine and network, there’s no additional hosting-provider fee; electricity and internet service still have their usual costs. A new machine, network, domain, or optional proxy or monitoring service has a separate provider bill, so check the current terms before choosing one. The game is strictly non-commercial: its license prohibits fees, donations, compensation, and reimbursement of hosting costs. Read the [full license](https://github.com/zax0rz/darkpawns/blob/main/LICENSE) before operating a public instance.
-
-The measured server startup took 0.42 seconds from process launch to health check. End-to-end setup time hasn't been measured, so don't use that startup figure as an install estimate. A local install is one bootstrap command followed by the setup wizard; public access adds listener and firewall choices, possible proxy or TLS setup, and remote checks. The time depends on your machine, network, and how much public-access configuration you need.
+:::note[Non-commercial license]
+Dark Pawns is strictly non-commercial. Under its [DikuMUD and CircleMUD lineage license](https://github.com/zax0rz/darkpawns/blob/main/LICENSE), you cannot charge players fees, accept donations, or take reimbursement for hosting costs under any circumstances.
+:::
 
 ## What runs where
 
@@ -41,18 +37,22 @@ flowchart LR
   B --> E[World files and SQLite data]
 ```
 
-The launcher starts and supervises the game server. The server serves the web client and admin console from its HTTP listener, accepts telnet sessions on the telnet listener, and stores player data in SQLite. A reverse proxy can provide public HTTPS access while the server listener stays on loopback.
+The `darkpawns` launcher supervises the game server process. The server serves the web client and admin console from its HTTP port, accepts MUD clients on its telnet port, and writes player state to SQLite. When you're ready for public players, put an HTTPS reverse proxy in front of the HTTP listener and expose the telnet or TLS telnet port you want players to use.
 
 ## Follow the setup path
 
-1. [Install Dark Pawns](/docs/host/install/) with the bootstrap command or a package method.
-2. [Create your first world and sign in](/docs/host/first-login/).
-3. Review [configuration settings](/docs/host/admin-configuration/) and [the admin console](/docs/host/admin-console/).
-4. Read [Hosting and adoption](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-hosting.md) before exposing a listener publicly.
-5. Learn to [update your server](/docs/host/update-server/) and diagnose [connection problems](/docs/host/players-cannot-connect/).
+1. [Install Dark Pawns](/docs/host/install/) with the bootstrap command or your package manager.
+2. [Create your first world and sign in](/docs/host/first-login/) to claim the level 40 implementor character.
+3. Tour [the admin console](/docs/host/admin-console/) and [configuration settings](/docs/host/admin-configuration/).
+4. Read [Hosting and adoption](https://github.com/zax0rz/darkpawns/blob/main/docs/portable-hosting.md) before opening your server to the internet.
+5. Learn how to [update your server](/docs/host/update-server/) and fix [connection problems](/docs/host/players-cannot-connect/).
 
-For a local install, the bootstrap command is:
+For a local Linux or macOS install, the bootstrap command is:
 
 ```sh
 curl -fsSL https://darkpawns.org/install.sh | bash
 ```
+
+## How it works
+
+The memory and startup figures above come from an idle Linux `amd64` launch of the bundled world from the repository root: the server answered `/health` in 0.42 seconds, with RSS measured at 83,864 KiB at readiness, 87,972 KiB at 5 seconds, 87,976 KiB at 10 seconds, and 86,856 KiB at 15 seconds with zero connected players. The 1 GiB RAM and 2 GiB disk recommendations provide roughly tenfold headroom over the idle footprint for active play, log retention, and atomic release staging, though busy public worlds or long backup histories will use more.

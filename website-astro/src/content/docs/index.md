@@ -6,49 +6,49 @@ audience: players
 verified: v0.1.7
 ---
 
-Dark Pawns has a world to get lost in. This is where you find the instructions.
+Dark Pawns is a 1994 text MUD where the cities have guildmasters, the wilderness has teeth, and the manual was mostly written at 2 AM. Pick what you're here to do.
 
 <div class="docs-paths">
 <section>
 
 ## Play
 
-Start with [Your first hour](/docs/play/first-hour/), or [connect a client](/docs/play/connect-client/). The temple is a better place to learn the controls than a fight.
+Start with [Your first hour](/docs/play/first-hour/) before the city guards teach you the hard way, or [connect a client](/docs/play/connect-client/) to run the three-character party the game expects.
 
 </section>
 <section>
 
 ## Host
 
-[Install Dark Pawns](/docs/host/install/), make [your first login](/docs/host/first-login/), and get your bearings in [the admin console](/docs/host/admin-console/).
+[Install Dark Pawns](/docs/host/install/), claim [your first login](/docs/host/first-login/) as the level 40 implementor, and run your world from [the admin console](/docs/host/admin-console/).
 
 </section>
 <section>
 
 ## Build
 
-[Run a local server](/docs/build/local-server/) from source. The world files are here too, along with a few decades of decisions.
+[Run a local server](/docs/build/local-server/) from source, or reshape [rooms](/docs/build/edit-rooms/), [mobs](/docs/build/edit-mobs/), [objects](/docs/build/edit-objects/), [zones](/docs/build/edit-zones/), and [Lua scripts](/docs/build/edit-lua-scripts/) with webOLC.
 
 </section>
 <section>
 
 ## Reference
 
-Look up [commands](/docs/reference/commands/), [MUD terms](/docs/reference/glossary/), or the [API](/docs/reference/api/public/).
+Look up [in-game commands](/docs/reference/commands/) straight from the original help files, decode [MUD terms](/docs/reference/glossary/) from AC to THAC0, or inspect the [HTTP API](/docs/reference/api/public/).
 
 </section>
 <section>
 
 ## Project
 
-Read about [the architecture](/docs/project/architecture/), [contributing](/docs/project/contributing/), and [the faithful port](/docs/project/port-fidelity/).
+Read how [the server architecture](/docs/project/architecture/) fits together, check [the contributing rules](/docs/project/contributing/), and see how [port fidelity](/docs/project/port-fidelity/) proves the Go server against the 1999 C oracle.
 
 </section>
 <section>
 
 ## Releases
 
-[Read the release notes](/docs/releases/). One source for what shipped, from the first release to the current server.
+[Read the release notes](/docs/releases/). Every signed portable release, what changed for players first, and the operator plumbing underneath.
 
 </section>
 </div>

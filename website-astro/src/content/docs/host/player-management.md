@@ -6,94 +6,52 @@ audience: operators
 verified: v0.1.7
 ---
 
-The **Players** page manages saved characters. A character must be fully
-disconnected before you can edit it. This includes linkdead characters and
-characters at the login screen. The editor refuses online changes so a late
-save can't overwrite them.
+The **Players** page (`HIGOD`, level 36 or higher) edits saved characters in SQLite. A character must be completely offline before you can touch their record, including linkdead sessions and characters sitting at the login prompt, so a late game save can't clobber your edits.
 
 ## Equipment and inventory
 
-Choose a character and open **Equipment & inventory**. Every wear slot appears,
-including empty ones. Choose **Equip** beside an empty slot to move a carried
-item there or add a **New copy**. Search by name, keywords, or vnum. Choose
-**Give item** to add a new copy to carried inventory.
+Choose a character and open **Equipment & inventory**. Every wear slot is listed, including empty ones. Click **Equip** beside an empty slot to move a carried item into it or spawn a **New copy** by name, keyword, or [vnum](/docs/reference/glossary/#vnum). Choose **Give item** to drop a new copy into carried inventory.
 
 ![The player editor showing a synthetic character's level, vitals and attributes.](/media/docs/admin-player-editor.png)
 
-Carried containers show their contents underneath. **Hide contents** folds a bag;
-**Show contents** opens it again. A container and everything inside it travel
-together when you equip or unequip it. To take one item out, choose **Carried
-inventory** from that item's destination menu and choose **Take out**.
+Carried containers show their contents nested underneath. **Hide contents** folds a bag; **Show contents** opens it back up. A container and everything inside it move together when you equip or unequip it. To pull one item out of a bag, choose **Carried inventory** from that item's destination menu and click **Take out**.
 
-**Unequip** moves an item back to carried inventory. **Remove** queues deletion
-of the item and anything inside it. Removing an item can be undone with
-**Discard changes** until you save. After saving, it can't be undone here.
+**Unequip** moves a worn item back to carried inventory. **Remove** queues deletion of the item and anything inside it. You can undo a queued removal with **Discard changes** until you click **Save changes**.
 
-Stat and item edits wait for **Save changes**. You can switch between those two
-tabs and save them together. The save bar shows how many edits are waiting.
-**Discard changes** restores both tabs to the last loaded character. Save or
-discard first before changing flags, names, or passwords.
+Stat and item edits share a single save bar so you can adjust both tabs and commit them in one transaction. Save or discard those edits before switching to flags, names, or passwords. If the character logged in while you had the editor open, **Save changes** refuses the write and keeps your draft open so nothing is partially overwritten.
 
-If the character changed elsewhere or connected while you were editing, Save
-refuses the whole change and keeps your draft open. Review it before choosing
-**Reload character**; reloading discards the draft after confirmation. A failed
-item edit never leaves some stat or item changes saved and others unsaved.
-
-Staff assignments don't check whether a character could wear the item in game.
-Choose suitable items for each slot. A stack can't fill a single slot; a filled
-slot must be unequipped first. You can queue up to 100 item edits per save, with
-at most 2,000 saved item entries per character. **Not saved after logout** is a
-shared item definition, changed from **Objects**, rather than a per-copy switch.
+:::note[God hands ignore mortal wear rules]
+The admin editor does not check whether a mortal class or alignment could legally wear an item in game. If you strap a two-handed sword to a mage's wrist slot, the database will let you. You can queue up to 100 item edits per save (up to 2,000 total items on a character). Whether an item disappears on logout (`!RENT`) is defined on the prototype in **Objects**, not on individual copies.
+:::
 
 ## Rename
 
-Open **Players**, choose a character, and select **Identity**. Enter a new name
-that follows the character creation rules. Names already in use, reserved for
-staff, or blocked by the invalid-name list are rejected.
+Open **Players**, choose a character, and select **Identity**. Enter a new name that follows the standard character creation rules. Names already taken, reserved for staff, or listed in the invalid-name filter are rejected.
 
-The player must be offline, including from linkdead sessions and the login
-screen. The rename changes the name throughout the character's saved records
-and board posts. Mail, clan membership, and house access stay with the same
-character.
+Renaming updates the character's name across their saved record, aliases, and bulletin board headings, while keeping their mudmail, clan membership, and house access attached to their underlying character ID.
 
 ## Delete
 
-Choose **Delete character…** on the **Identity** tab and review the confirmation.
-For characters at level 31 or higher, type the character's name to confirm.
-You can't delete your own character or a level 40 character. The delete action
-works at every other level, including for frozen characters. The character must
-be fully disconnected.
+Choose **Delete character…** on the **Identity** tab and review the confirmation dialog. For immortal characters (level 31 or higher), type the character's name to confirm. You cannot delete your own account or a level 40 implementor.
 
-Deletes this character. Their saved items and aliases are removed, and the name
-becomes available again. This can't be undone.
+:::danger[Permanent deletion]
+Deleting a character removes their record, saved equipment, inventory, and aliases, and frees the name for anyone to register again. This cannot be undone.
+:::
 
-Old mail and house access stay with the old character. Clan membership is
-cleared, and old board posts remain as history. A new character using the same
-name starts fresh and doesn't inherit the old mail or house.
+Old mail and house access remain tied to the deleted character's numeric ID, clan membership is cleared, and old board posts stay on the boards as history. If someone creates a new character with the same name later, they start fresh and do not inherit the old character's mail or house.
 
 ## Flags
 
-Open **Flags** to turn character switches on or off. Each switch saves right
-away, and the level shown beside it's the minimum staff level needed to change
-it. The **Deleted** status is read-only; use **Delete** on the **Identity** tab
-to remove a character.
+Open **Flags** to toggle character switches (`Brief descriptions`, `Start invisible`, `Can be summoned`, `No hassle`, `Frozen`, `Outlaw`, `Show room flags`, `Site-cleared`, `Hidden from staff list`). Each switch saves immediately, and the badge beside it shows the minimum staff level required to flip it.
 
-The **Cryo-saved** switch changes the character's cryo marker only. It doesn't
-store or restore saved items. An item's save setting is shared
-by every copy; open **Objects** to change its definition.
+> FREEZE, originally invented here at CircleMUD (we think), is used to prevent a player from playing. If frozen, the game will ignore all commands entered by the player, including QUIT, until the player is unfrozen with THAW. Obviously, this command should only be used in extreme disciplinary circumstances.
+>
+> `help FREEZE`
+
+The **Cryo-saved** switch changes the character's cryo marker only; it does not create or restore saved items.
 
 ![The player editor moves from character stats to equipment and flags.](/media/docs/admin-player-editor.gif)
 
 ## How it works
 
-Stat and item edits are revision-checked and saved together. The server writes
-the updated character and item records in one SQLite transaction. Renaming
-preserves the character's stable ID; mail and house access are attached to that
-ID, while board headings and aliases are updated with the new name. The admin
-delete action is separate from the in-game self-delete command. It doesn't
-change game commands, wear rules, random draws, or the save format.
-
-For the original character creation and self-delete rules, see
-[`src/interpreter.c`](https://github.com/zax0rz/darkpawns/blob/main/src/interpreter.c).
-Mail and house ownership use character IDs in [`src/mail.h`](https://github.com/zax0rz/darkpawns/blob/main/src/mail.h)
-and [`src/house.h`](https://github.com/zax0rz/darkpawns/blob/main/src/house.h).
+Stat and item edits are revision-checked and written in one SQLite transaction. Renaming preserves the character's stable ID (`src/mail.h` and `src/house.h` attach mail and house ownership to that ID), while board headings and aliases are updated with the new name. The admin delete action is separate from the in-game self-delete command (`src/interpreter.c`) and does not alter game commands, wear checks, random draws, or the save format.
