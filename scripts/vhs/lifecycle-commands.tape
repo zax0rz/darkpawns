@@ -14,8 +14,10 @@ Type "unset NO_COLOR"
 Enter
 Type "clear"
 Enter
-Show
+Sleep 200ms
 Type "./darkpawns --instance ../world status"
+Show
+Sleep 400ms
 Enter
 Sleep 1s
 Type "./darkpawns --instance ../world doctor"

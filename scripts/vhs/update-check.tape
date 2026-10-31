@@ -14,7 +14,9 @@ Type "unset NO_COLOR"
 Enter
 Type "clear"
 Enter
-Show
+Sleep 200ms
 Type "./darkpawns --instance ../world update --archive ../candidate.tar.gz --sha256 {{SHA256}} --check"
+Show
+Sleep 400ms
 Enter
 Sleep 3s

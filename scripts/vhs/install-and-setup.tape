@@ -14,7 +14,9 @@ Type "cd bundle"
 Enter
 Type "clear"
 Enter
-Show
+Sleep 200ms
 Type "./darkpawns setup --yes --no-browser --instance ../world --port 4371 --telnet-port 0"
+Show
+Sleep 400ms
 Enter
 Sleep 5s
