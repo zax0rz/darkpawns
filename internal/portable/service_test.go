@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -156,5 +157,76 @@ func TestLaunchAgentReloadFailureRemainsAnError(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("failed native manager transition reported success")
+	}
+}
+
+func TestQueryStartupTaskActionRetriesTransientExecFailureOnce(t *testing.T) {
+	defer func(prev func(context.Context, string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+	calls := 0
+	runWindowsTaskQuery = func(_ context.Context, _ string) ([]byte, error) {
+		calls++
+		if calls == 1 {
+			return nil, errors.New(`query owned startup task: exec: canceling Cmd: TerminateProcess: Access is denied.: {"Command":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","Arguments":"-NoProfile"}`)
+		}
+		return []byte("\xef\xbb\xbf" + `{"Command":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","Arguments":"-NoProfile -NonInteractive"}`), nil
+	}
+
+	action, err := queryStartupTaskActionWithRetry("darkpawns-test")
+	if err != nil {
+		t.Fatalf("queryStartupTaskActionWithRetry = %v, want success on retry", err)
+	}
+	if calls != 2 {
+		t.Fatalf("calls = %d, want 2", calls)
+	}
+	if !strings.HasSuffix(action.Command, `\powershell.exe`) || action.Arguments != "-NoProfile -NonInteractive" {
+		t.Fatalf("unexpected action: %+v", action)
+	}
+}
+
+func TestQueryStartupTaskActionFailsAfterTwoExecAttemptsWithinSharedBudget(t *testing.T) {
+	defer func(budget, first time.Duration, prev func(context.Context, string) ([]byte, error)) {
+		windowsTaskQueryBudget, windowsTaskQueryFirstWait, runWindowsTaskQuery = budget, first, prev
+	}(windowsTaskQueryBudget, windowsTaskQueryFirstWait, runWindowsTaskQuery)
+	windowsTaskQueryBudget = 150 * time.Millisecond
+	windowsTaskQueryFirstWait = 100 * time.Millisecond
+
+	calls := 0
+	runWindowsTaskQuery = func(ctx context.Context, _ string) ([]byte, error) {
+		calls++
+		<-ctx.Done()
+		return nil, fmt.Errorf("query owned startup task: %w", ctx.Err())
+	}
+
+	start := time.Now()
+	_, err := queryStartupTaskActionWithRetry("darkpawns-test")
+	elapsed := time.Since(start)
+	if err == nil {
+		t.Fatal("queryStartupTaskActionWithRetry succeeded when both attempts timed out")
+	}
+	if calls != 2 {
+		t.Fatalf("calls = %d, want 2", calls)
+	}
+	if elapsed >= 250*time.Millisecond {
+		t.Fatalf("elapsed = %s, want shared 150ms budget instead of two independent timeouts", elapsed)
+	}
+	if !strings.Contains(err.Error(), "two attempts") {
+		t.Fatalf("error = %v, want two-attempt diagnosis", err)
+	}
+}
+
+func TestQueryStartupTaskActionDoesNotRetryMalformedJSON(t *testing.T) {
+	defer func(prev func(context.Context, string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+	calls := 0
+	runWindowsTaskQuery = func(_ context.Context, _ string) ([]byte, error) {
+		calls++
+		return []byte("not-json"), nil
+	}
+
+	_, err := queryStartupTaskActionWithRetry("darkpawns-test")
+	if err == nil {
+		t.Fatal("queryStartupTaskActionWithRetry succeeded on malformed JSON")
+	}
+	if calls != 1 {
+		t.Fatalf("calls = %d, want 1 (malformed JSON must not retry)", calls)
 	}
 }

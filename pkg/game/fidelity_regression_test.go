@@ -50,10 +50,14 @@ func TestFidelityCanSeeBlindnessAndInvis(t *testing.T) {
 	subject.SetAffect(affInvisible, false)
 	observer.SetAffect(affDetectInvisible, false)
 
-	// 3. Hiding check — observer without sense life cannot see hidden subject
+	// 3. Hiding is NOT part of C's CAN_SEE (src/utils.h:521-530): a hidden
+	// body stays visible and targetable to every CAN_SEE caller; only
+	// list_char_to_char suppresses it (src/act.informative.c:637-643). The
+	// hide arm that used to live here dropped hidden bodies from targeting
+	// and who alike.
 	subject.SetAffect(affHide, true)
-	if canSee(observer, subject) {
-		t.Error("Observer without sense life should NOT see hidden subject")
+	if !canSee(observer, subject) {
+		t.Error("Observer should see a hidden subject; C's CAN_SEE does not test AFF_HIDE")
 	}
 
 	// Add sense life to observer

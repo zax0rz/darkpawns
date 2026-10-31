@@ -1403,7 +1403,7 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 				message(result.Damage)
 			} else if !damageApplied[skillTarget] {
 				room := skillTarget.GetRoom()
-				damageReturns[skillTarget] = s.GetWorld().ApplySkillDamageWithMessage(ch, skillTarget, result.Damage, result.DamageSkill, message)
+				damageReturns[skillTarget] = s.GetWorld().ApplySkillDamageWithMessage(ch, skillTarget, result.Damage, result.DamageAttackType(), message)
 				damageApplied[skillTarget] = true
 				if skillTarget.GetRoom() != room {
 					refusals[skillTarget] = true
@@ -1569,7 +1569,9 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 			case game.SkillSmackheads:
 				applyDamage(damageTarget, func() bool { return s.GetWorld().DoSmackheadsDamage(ch, damageTarget, result.Damage) })
 			default:
-				applyDamage(damageTarget, func() bool { return s.GetWorld().ApplySkillDamage(ch, damageTarget, result.Damage, result.DamageSkill) })
+				applyDamage(damageTarget, func() bool {
+					return s.GetWorld().ApplySkillDamage(ch, damageTarget, result.Damage, result.DamageAttackType())
+				})
 			}
 		}
 	}

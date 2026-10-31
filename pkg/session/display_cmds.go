@@ -202,7 +202,7 @@ func newInfobarState(s *Session) *infobarState {
 	expNeeded := game.FindExp(v.Class, v.Level)
 
 	return &infobarState{
-		colorNormal:       p.GetFlags()&(1<<uint(game.PrfColor2)) != 0,
+		colorNormal:       hasNormalColor(p.GetFlags()),
 		screenSize:        s.screenSize,
 		lastHit:           v.Health,
 		lastMaxHit:        v.MaxHealth,

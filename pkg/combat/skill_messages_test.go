@@ -4,59 +4,9 @@ import (
 	"testing"
 )
 
-func TestBasicTokenReplace(t *testing.T) {
-	got := basicTokenReplace("$n hits $N.", testCombatBody("Alice"), testCombatBody("Bob"))
-	if got != "Alice hits Bob." {
-		t.Errorf("basicTokenReplace() = %q, want %q", got, "Alice hits Bob.")
-	}
-
-	got = basicTokenReplace("no tokens here", testCombatBody("Alice"), testCombatBody("Bob"))
-	if got != "No tokens here" {
-		t.Errorf("basicTokenReplace() = %q, want %q", got, "No tokens here")
-	}
-
-	got = basicTokenReplace("$n hits $N, then $n hits $N again.", testCombatBody("A"), testCombatBody("B"))
-	if got != "A hits B, then A hits B again." {
-		t.Errorf("basicTokenReplace() = %q, want %q", got, "A hits B, then A hits B again.")
-	}
-}
-
-func TestBasicTokenReplace_Pronouns(t *testing.T) {
-	// Default (GetSex callback nil) → male pronouns
-	got := basicTokenReplace("$n raises $s blade.", testCombatBody("Warrior"), testCombatBody("Enemy"))
-	if got != "Warrior raises his blade." {
-		t.Errorf("male pronouns: got %q, want %q", got, "Warrior raises his blade.")
-	}
-
-	// Wire GetSex through callbacks.
-	orig := callbacks
-	defer func() { callbacks = orig }()
-	callbacks = &GameCallbacks{
-		GetSex: func(bodyname Combatant) int {
-			name := bodyname.GetName()
-
-			if name == "Alice" {
-				return 1 // female
-			}
-			if name == "Golem" {
-				return 2 // neuter
-			}
-			return 0 // male
-		},
-	}
-
-	got = basicTokenReplace("$n raises $s blade.", testCombatBody("Alice"), testCombatBody("Enemy"))
-	if got != "Alice raises her blade." {
-		t.Errorf("female pronouns: got %q, want %q", got, "Alice raises her blade.")
-	}
-
-	// Neuter (sex=2)
-	got = basicTokenReplace("$e attacks $N.", testCombatBody("Golem"), testCombatBody("Enemy"))
-	if got != "It attacks Enemy." {
-		t.Errorf("neuter pronouns: got %q, want %q", got, "It attacks Enemy.")
-	}
-}
-
+// sexPronouns is the pronoun table replaceMessageTokens uses. The token and
+// #w/#W substitutions themselves are covered by TestReplaceMessageTokens in
+// fight_core_test.go, which exercises the same production function.
 func TestSexPronouns(t *testing.T) {
 	tests := []struct {
 		name string
@@ -75,21 +25,5 @@ func TestSexPronouns(t *testing.T) {
 				t.Errorf("sexPronouns(%d) = %v, want %v", tt.sex, got, tt.want)
 			}
 		})
-	}
-}
-
-func TestInitSkillMessages(t *testing.T) {
-	cb := &GameCallbacks{}
-
-	InitSkillMessages(cb)
-
-	if cb.SkillMessage == nil {
-		t.Fatal("InitSkillMessages(cb) did not set cb.SkillMessage")
-	}
-
-	// Unknown attack type → no match
-	result := cb.SkillMessage(10, testCombatBody("Alice"), testCombatBody("Bob"), 9999, 100)
-	if result != false {
-		t.Errorf("SkillMessage for unknown type = %v, want false", result)
 	}
 }

@@ -199,7 +199,9 @@ func (w *World) DiscardLoadedPlayerObjects(p *Player) {
 		for _, obj := range p.Equipment.GetEquippedItems() {
 			if !p.Equipment.UnequipItem(obj, scratch) {
 				slog.Error("could not detach disposable login equipment", "player", p.Name, "object", obj.ID)
+				continue
 			}
+			p.applySpellUnequipWipe(obj)
 		}
 	}
 	if p.Inventory != nil {

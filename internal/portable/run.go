@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -12,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gofrs/flock"
@@ -49,8 +52,11 @@ func run(ctx context.Context, bundle, instance string, in io.Reader, out, errOut
 	// Strict publisher authentication (L1-006/007/021): a bundle selected by
 	// the active pointer executes only if its per-file manifest is
 	// publisher-signed and every listed file — the server binary included —
-	// matches.
-	if err := PublisherVerifyExecutables(bundle, "darkpawns", "darkpawns-server"); err != nil {
+	// matches. The executables were written moments earlier by install or an
+	// update extraction, and on Windows a real-time scanner can hold one open
+	// for a moment; only a transient OPEN error is retried — a checksum or
+	// signature mismatch is a real verification failure and never is.
+	if err := publisherVerifyForLaunch(bundle, "darkpawns", "darkpawns-server"); err != nil {
 		return err
 	}
 	lock := flock.New(filepath.Join(instance, ".run.lock"))
@@ -227,4 +233,49 @@ func instanceEnv(inherited []string, bundle, instance string, cfg Config) []stri
 	}
 	data := filepath.Join(instance, "lib", "data")
 	return append(env, "JWT_SECRET="+cfg.JWTSecret, "ENVIRONMENT=production", "ADMIN_STORE_PATH="+filepath.Join(data, "admin.json"), "ADMIN_UI_DIR="+filepath.Join(bundle, "release-assets", "admin-ui"), "DP_NOTIFICATION_CONFIG_PATH="+filepath.Join(data, "notifications.json"), "DP_NOTIFICATION_KEY_PATH="+filepath.Join(data, "notifications.json.key"))
+}
+
+// publisherVerifyForLaunch runs PublisherVerifyExecutables for a launch that
+// is about to execute just-written files, retrying exactly once when the
+// first attempt failed to OPEN one of them (fs.ErrPermission, or Windows
+// ERROR_SHARING_VIOLATION while a real-time scanner still holds the file).
+// The CI windows runner flaked exactly here: the candidate update launcher
+// died before spawning its server, the rollback correctly retained the old
+// lib as failed-lib with no candidate marker in it, and the update smoke
+// raised FileNotFoundError on the marker it assumed must exist. Checksum and
+// signature failures are verification verdicts, not races, and surface
+// unchanged.
+func publisherVerifyForLaunch(bundle string, names ...string) error {
+	err := PublisherVerifyExecutables(bundle, names...)
+	if err == nil || !transientOpenError(err) {
+		return err
+	}
+	first := err
+	slog.Warn("publisher verification could not open a release file; retrying once",
+		"bundle", bundle,
+		"error", first.Error())
+	time.Sleep(time.Second)
+	if err = PublisherVerifyExecutables(bundle, names...); err == nil {
+		slog.Warn("publisher verification succeeded on the retry; the first attempt failed",
+			"bundle", bundle,
+			"first_error", first.Error())
+		return nil
+	}
+	return fmt.Errorf("publisher verification failed after retry (first: %v; second: %w)", first, err)
+}
+
+// transientOpenError reports whether err is a failure to open a file that a
+// momentarily busy filesystem can produce: a permission/sharing denial. A
+// missing file is a real verdict, not a race.
+func transientOpenError(err error) bool {
+	if errors.Is(err, fs.ErrPermission) {
+		return true
+	}
+	if runtime.GOOS == "windows" {
+		var errno syscall.Errno
+		if errors.As(err, &errno) && errno == 32 { // ERROR_SHARING_VIOLATION
+			return true
+		}
+	}
+	return false
 }

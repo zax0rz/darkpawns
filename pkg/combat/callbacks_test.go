@@ -102,36 +102,6 @@ func TestGameCallbacks_DamMessage(t *testing.T) {
 	}
 }
 
-func TestGameCallbacks_InitSkillMessages(t *testing.T) {
-	cb, log := mockCallbacks()
-	InitSkillMessages(cb)
-
-	if cb.SkillMessage == nil {
-		t.Fatal("InitSkillMessages did not set cb.SkillMessage")
-	}
-
-	// Use a known skill from the table (BACKSTAB = 131).
-	alice := &mockCombatant{name: "Alice", position: PosStanding}
-	bob := &mockCombatant{name: "Bob", position: PosStanding}
-	sent := cb.SkillMessage(50, alice, bob, 131, 200)
-	if !sent {
-		t.Fatal("expected SkillMessage to return true for a known skill")
-	}
-
-	if len(log.broadcasts) != 1 {
-		t.Fatalf("expected 1 broadcast, got %d", len(log.broadcasts))
-	}
-	if log.broadcasts[0].room != 200 {
-		t.Errorf("broadcast room = %d, want 200", log.broadcasts[0].room)
-	}
-	if len(log.sendToChar) != 2 {
-		t.Fatalf("expected 2 sendToChar calls, got %d", len(log.sendToChar))
-	}
-	if log.sendToChar[0].target != "Alice" || log.sendToChar[1].target != "Bob" {
-		t.Errorf("sendToChar targets = %v, want [Alice Bob]", []string{log.sendToChar[0].target, log.sendToChar[1].target})
-	}
-}
-
 func TestGameCallbacks_LogAndBroadChatHelpers(t *testing.T) {
 	cb, log := mockCallbacks()
 

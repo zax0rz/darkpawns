@@ -8,6 +8,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/screen"
 )
 
 // ObservationResult is the game-owned boundary for look-family commands.
@@ -38,11 +39,15 @@ func (r *ObservationResult) takeLinePrefix() string {
 
 // ObservationMessage is a deferred act() call. Literal marks world-authored
 // descriptions whose '$' bytes must not be interpreted as act substitutions.
-// Observation is single-viewer, so every message is routed ToChar.
+// Bare marks control bytes C wrote with no line ending — the escapes that open
+// and close the room-content lists (src/act.informative.c:823-833) — so they
+// reach the terminal untouched and unframed. Observation is single-viewer, so
+// every message is routed ToChar.
 type ObservationMessage struct {
 	Format        string
 	Literal       bool
 	Raw           bool
+	Bare          bool
 	HideInvisible bool
 	Actor         Actor
 	Target        Actor
@@ -85,6 +90,30 @@ func (r *ObservationResult) literal(ch *Player, text string) {
 	})
 }
 
+// bare queues control bytes with no line ending and no act() formatting,
+// mirroring C's send_to_char(CCxxx(ch, C_NRM), ch) writes that bracket the
+// room-content lists (src/act.informative.c:823-833).
+//
+// It consumes the pending line prefix. C has already written that byte:
+// do_description's `sprintf(buf2, "%s ", description)` puts the space
+// immediately before the next send_to_char, whatever kind it is
+// (src/act.informative.c:2773-2804), so the bracket that follows a room
+// description is prefixed by it. Leaving it for "the next line" carried it past
+// the brackets and onto the first character-list entry instead, which is a
+// different byte stream from C's. An empty bare write still consumes it: with
+// colour off C's send_to_char("") writes nothing and the space stands alone.
+func (r *ObservationResult) bare(ch *Player, text string) {
+	prefix := r.takeLinePrefix()
+	if text == "" && prefix == "" {
+		return
+	}
+	r.Messages = append(r.Messages, ObservationMessage{
+		Format: prefix + text,
+		Bare:   true,
+		Actor:  ch,
+	})
+}
+
 // raw queues a block sent verbatim via SendMessage — bypassing act(), so it is
 // neither capitalized nor $-substituted. Mirrors C send_to_char for list output
 // (inventory / look-in container). Ordering is preserved with other messages.
@@ -110,6 +139,16 @@ func (r *ObservationResult) act(ch *Player, target Actor, obj *ObjectInstance, f
 // canonical act() delivery path.
 func (w *World) RenderObservationMessages(result ObservationResult) {
 	for _, message := range result.Messages {
+		if message.Bare {
+			// C's bare send_to_char writes carry no line ending, so they go
+			// through the literal sink: Player.SendLiteral → a "raw" event,
+			// which RenderTerminalFrame passes to the terminal untouched
+			// (pkg/session/terminal.go:123-127).
+			if p, ok := message.Actor.(*Player); ok && p != nil {
+				p.SendLiteral(message.Format)
+			}
+			continue
+		}
 		if message.Raw {
 			if p, ok := message.Actor.(*Player); ok && p != nil {
 				p.SendMessage(message.Format)
@@ -255,13 +294,23 @@ func (w *World) observeRoom(ch *Player, room *parser.Room, ignoreBrief, includeV
 		result.literal(ch, w.autoExitsText(ch, room))
 	}
 
+	// C brackets each room-content list once: CCGRN before the object list,
+	// CCYEL before the character list, and one CCNRM after both
+	// (src/act.informative.c:823-833). Those three are direct writes with no
+	// line ending, so the lists' own lines carry the terminators; wrapping
+	// each entry instead closed the colour per line and dropped C's trailing
+	// reset. The escapes are sent unconditionally, as C sends them, and each
+	// is empty below the C_NRM gate.
 	green, yellow := observationColors(ch, "\x1b[32m"), observationColors(ch, "\x1b[33m")
+	result.bare(ch, green)
 	for _, line := range w.roomObjectLines(ch, room) {
-		result.literal(ch, green+line+normal)
+		result.literal(ch, line)
 	}
+	result.bare(ch, yellow)
 	for _, line := range w.roomCharacterLines(ch, room, &view) {
-		result.literal(ch, yellow+line+normal)
+		result.literal(ch, line)
 	}
+	result.bare(ch, normal)
 	return result
 }
 
@@ -366,12 +415,17 @@ func (w *World) roomObjectLines(ch *Player, room *parser.Room) []string {
 		order = append(order, key)
 	}
 	// C's oc_add_front builds this display list in reverse discovery order.
+	// Mode 20 (room) is the wide variant with no indent and no weight: every
+	// line's text is padded to 63 bytes - "[%2d] " then %-63s for a stack
+	// (src/oc.c:122-124), a bare %-63s for a single object (:111-112). The
+	// trailing spaces are player-facing bytes the census normalizer trims
+	// (R1b); the padding is pinned by TestRoomObjectLinesPadToC63Bytes.
 	lines := make([]string, 0, len(order))
 	for i := len(order) - 1; i >= 0; i-- {
 		entry := groups[order[i]]
-		line := entry.line
+		line := fmt.Sprintf("%-63s", entry.line)
 		if entry.count > 1 {
-			line += fmt.Sprintf("[%d]", entry.count)
+			line = fmt.Sprintf("[%2d] %-63s", entry.count, entry.line)
 		}
 		lines = append(lines, line)
 		if flags := roomObjectVisibleFlags(ch, entry.item); flags != "" {
@@ -653,15 +707,11 @@ func appendCharacterAffectLook(result *ObservationResult, ch *Player, target *Pl
 	if target.Tattoo != TattooNone {
 		tattoo := tattooDescription(target.Tattoo)
 		if tattoo != "" {
-			glow := ""
-			if completeObservationColor(ch) {
-				glow = "\x1b[37m"
-			}
-			reset := ""
-			if glow != "" {
-				reset = "\x1b[0m"
-			}
-			result.literal(ch, fmt.Sprintf("On %s right arm is a tattoo %s... it %sglows%s softly.", hshr(target), tattoo, glow, reset))
+			// C wraps the word "glows" in CCWHT(ch, C_CMP) ... CCNRM(ch, C_CMP)
+			// (src/act.informative.c:415-417), so the sandwich appears only at
+			// complete colour.
+			glow := screen.Wrap("glows", screen.KWHT, screen.CompleteOn(colorLevel(ch)))
+			result.literal(ch, fmt.Sprintf("On %s right arm is a tattoo %s... it %s softly.", hshr(target), tattoo, glow))
 		}
 	}
 	if target.IsAffected(affVampire) {
@@ -980,25 +1030,46 @@ func (w *World) getExitForDirection(room *parser.Room, direction int) (parser.Ex
 }
 
 func (w *World) autoExitsText(ch *Player, room *parser.Room) string {
-	var exits []string
+	// C builds the list one direction at a time, appending a trailing space after
+	// every entry, and wraps an imm-only closed door in
+	// CCRED(ch, C_CMP) "(" dir ")" CCCYN(ch, C_NRM) (src/act.informative.c:663-674).
+	// The whole list is then bracketed by CCCYN(ch, C_NRM) ... CCNRM(ch, C_NRM)
+	// with no space before the closing bracket (line 676), and the empty fallback
+	// is C's literal "None! " — trailing space included.
+	cyan := observationColors(ch, "\x1b[36m")
+	normal := observationColors(ch, "\x1b[0m")
+	immOnlyRed := ""
+	if completeObservationColor(ch) {
+		immOnlyRed = "\x1b[31m"
+	}
+
+	var list strings.Builder
 	for _, direction := range dirList {
 		exit, ok := room.Exits[direction]
 		if !ok || exit.ToRoom <= 0 {
 			continue
 		}
-		if exit.ExitInfo&parser.ExitClosed != 0 {
-			if ch.GetLevel() >= LVL_IMMORT {
-				exits = append(exits, "("+direction+")")
-			}
+		closed := exit.ExitInfo&parser.ExitClosed != 0
+		if closed && ch.GetLevel() < LVL_IMMORT {
 			continue
 		}
-		exits = append(exits, direction)
+		if closed {
+			// Imm-only closed door: red parentheses, then back to the list's cyan.
+			list.WriteString(immOnlyRed)
+			list.WriteString("(")
+			list.WriteString(direction)
+			list.WriteString(")")
+			list.WriteString(cyan)
+		} else {
+			list.WriteString(direction)
+		}
+		list.WriteString(" ")
 	}
-	if len(exits) == 0 {
-		exits = append(exits, "None!")
+	entries := list.String()
+	if entries == "" {
+		entries = "None! "
 	}
-	cyan, normal := observationColors(ch, "\x1b[36m"), observationColors(ch, "\x1b[0m")
-	return fmt.Sprintf("%s[ Exits: %s ]%s", cyan, strings.Join(exits, " "), normal)
+	return fmt.Sprintf("%s[ Exits: %s]%s", cyan, entries, normal)
 }
 
 // DiagCondition is the exported diag_char_to_char condition sentence
@@ -1123,14 +1194,13 @@ func glowAnnotation(color, phrase string, colorize bool) string {
 	return "(" + phrase + ")"
 }
 
-// completeObservationColor reports whether the viewer's color level is exactly
-// C's C_CMP (3): both PRF_COLOR bits set. C gates show_obj_to_char's flag
-// colors on COLOR_LEV(ch)==C_CMP, so levels 0-2 must stay plain here; this is
+// completeObservationColor reports whether the viewer's color level reaches
+// C's C_CMP (3): both PRF_COLOR bits set. C gates show_obj_to_char's flag colors
+// on COLOR_LEV(ch)==C_CMP, so levels 0-2 must stay plain here; this is
 // deliberately stricter than observationColors, which colors other views at
-// level >= 2.
+// level >= 2. The level itself comes from pkg/screen.
 func completeObservationColor(ch *Player) bool {
-	flags := ch.GetFlags()
-	return flags&(1<<uint(PrfColor1)) != 0 && flags&(1<<uint(PrfColor2)) != 0
+	return screen.CompleteOn(colorLevel(ch))
 }
 
 func appendPlayerEquipment(result *ObservationResult, ch, target *Player) {
@@ -1405,23 +1475,16 @@ func formatRoomFlags(room *parser.Room) string {
 }
 
 func observationColors(ch *Player, code string) string {
-	if colorLevel(ch) < 2 {
+	if !screen.NormalOn(colorLevel(ch)) {
 		return ""
 	}
 	return code
 }
 
-// colorLevel is COLOR_LEV(ch): PRF_COLOR_1 counts 1 and PRF_COLOR_2 counts 2.
+// colorLevel is C's COLOR_LEV(ch), defined once in pkg/screen so this package and
+// pkg/session cannot drift apart on the thresholds again.
 func colorLevel(ch *Player) int {
-	flags := ch.GetFlags()
-	level := 0
-	if flags&(1<<uint(PrfColor1)) != 0 {
-		level++
-	}
-	if flags&(1<<uint(PrfColor2)) != 0 {
-		level += 2
-	}
-	return level
+	return screen.LevelFromFlags(ch.GetFlags(), uint(PrfColor1), uint(PrfColor2))
 }
 
 // doDescription is do_description (act.informative.c:2757-2803), which

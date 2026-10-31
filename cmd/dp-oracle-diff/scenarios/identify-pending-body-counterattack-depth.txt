@@ -1,0 +1,56 @@
+# depth-case: spell.retaliation-identify-pending-attacker
+# Luna's release-review finding: identify on an NPC that an implementor
+# killed in the same pulse (src/spells.c:581-591) refuses with "The magicks
+# fail horribly!" and hit(victim, ch, TYPE_UNDEFINED) — and C's hit() has no
+# extraction guard on the attacker (src/fight.c:1763-1779), so the flagged,
+# still-standing body (do_kill's raw_kill never sets POS_DEAD,
+# src/act.offensive.c:155-161) draws its to-hit and damage and swings. The
+# port's PerformPendingBodySwing rejected BodyRetired(attacker), so the
+# counterattack was logged as an error and skipped. The God needs identify:
+# class mage, skill 100, mana.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Identifail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Identifail
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Identifail class mage
+skillset Identifail 'identify' 100
+set Identifail maxmana 5000
+set Identifail mana 5000
+
+[probe]
+kill fish
+cast 'identify' fish
+~dpclock pulse 24
+look

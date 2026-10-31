@@ -378,6 +378,67 @@ func takeDamage(ch, victim Combatant, dam int, attackType int, onDeath func()) b
 	return takeDamageFrom(ch, victim, dam, attackType, onDeath, true)
 }
 
+// ApplySurvivingVictimDefaultArm runs damage()'s default arm — the
+// `default: /* >= POSITION SLEEPING */` case of the position switch — for a
+// victim that survived the blow above POS_STUNNED (src/fight.c:1587-1614):
+//
+//	if (dam > (GET_MAX_HIT(victim) / 4)) {
+//	    act("That really did HURT!", FALSE, victim, 0, 0, TO_CHAR);
+//	    if (!number(0,2))
+//	        act("$N screams in pain!", FALSE, ch, 0, victim, TO_NOTVICT);
+//	}
+//	if (GET_HIT(victim) < (GET_MAX_HIT(victim) / 4)) {
+//	    sprintf(buf2, "%sYou wish that your wounds would stop BLEEDING so much!%s\r\n",
+//	            CCRED(victim, C_SPR), CCNRM(victim, C_SPR));
+//	    send_to_char(buf2, victim);
+//	    if (MOB_FLAGGED(victim, MOB_WIMPY) && (ch != victim))
+//	        do_flee(victim, "", 0, 0);
+//	}
+//	if (!IS_NPC(victim) && GET_WIMP_LEV(victim) && (victim != ch) &&
+//	    GET_POS(victim) >= POS_FIGHTING && GET_HIT(victim) < GET_WIMP_LEV(victim)) {
+//	    send_to_char("You wimp out, and attempt to flee!\r\n", victim);
+//	    ...do_retreat or do_flee...
+//	}
+//
+// C runs this arm for EVERY attack type — a melee round, a skill command, a mob
+// special, a spell — so it belongs to one implementation rather than one per
+// caller. The number(0,2) scream draw is taken whenever dam exceeds a quarter of
+// the victim's maximum hit points, even when the victim is an NPC with no
+// descriptor to receive the line: the shared stream must advance either way (R3).
+//
+// Callers own their position-specific arms (mortally / incap / stunned / dead)
+// and call this only for the surviving case.
+func ApplySurvivingVictimDefaultArm(ch, victim Combatant, dam, newPos int) {
+	if ch == nil || victim == nil || newPos <= PosStunned {
+		return
+	}
+	roomVNum := ch.GetRoom()
+	if dam > victim.GetMaxHP()/4 {
+		sendCombatMessage(victim, "That really did HURT!\r\n")
+		if GetRoller().Number(0, 2) == 0 {
+			cbBroadcast(roomVNum,
+				capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", victim.GetName())),
+				[]Combatant{ch, victim})
+		}
+	}
+	if victim.GetHP() < victim.GetMaxHP()/4 {
+		sendCombatMessage(victim, BleedLine(victim))
+		if cbHasMobFlag(victim, "MOB_WIMPY") && ch != victim {
+			cbDoFlee(victim)
+		}
+	}
+	if !victim.IsNPC() && cbGetWimpyLev(victim) > 0 &&
+		victim != ch && newPos >= PosFighting &&
+		victim.GetHP() < cbGetWimpyLev(victim) {
+		sendCombatMessage(victim, "You wimp out, and attempt to flee!\r\n")
+		if cbGetSkill(victim, SKILL_RETREAT) > 0 || cbGetSkill(victim, SKILL_ESCAPE) > 0 {
+			cbDoRetreat(victim)
+		} else {
+			cbDoFlee(victim)
+		}
+	}
+}
+
 func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(), gate bool) bool {
 	if victim.GetPosition() <= PosDead {
 		return false
@@ -498,36 +559,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		// act(..., TO_ROOM) excludes the victim (fight.c:1582).
 		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), []Combatant{victim})
 	default:
-		if dam > victim.GetMaxHP()/4 {
-			sendCombatMessage(victim, "That really did HURT!\r\n")
-			// C burns number(0,2) for the optional room scream even when the
-			// victim is an NPC; TO_NOTVICT excludes both combatants
-			// (fight.c:1580-1585). Keep the draw before the caller's
-			// post-damage improve_skill (R3/R5e).
-			if GetRoller().Number(0, 2) == 0 {
-				cbBroadcast(roomVNum,
-					capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", victimName)),
-					[]Combatant{ch, victim})
-			}
-		}
-		if victim.GetHP() < victim.GetMaxHP()/4 {
-			sendCombatMessage(victim, BleedLine(victim))
-			if cbHasMobFlag(victim, "MOB_WIMPY") && ch != victim {
-				cbDoFlee(victim)
-			}
-		}
-		if !victim.IsNPC() && cbGetWimpyLev(victim) > 0 &&
-			victim != ch && newPos >= PosFighting &&
-			victim.GetHP() < cbGetWimpyLev(victim) {
-			sendCombatMessage(victim, "You wimp out, and attempt to flee!\r\n")
-			hasRetreat := cbGetSkill(victim, SKILL_RETREAT) > 0
-			hasEscape := cbGetSkill(victim, SKILL_ESCAPE) > 0
-			if hasRetreat || hasEscape {
-				cbDoRetreat(victim)
-			} else {
-				cbDoFlee(victim)
-			}
-		}
+		ApplySurvivingVictimDefaultArm(ch, victim, dam, newPos)
 	}
 
 	if newPos <= PosSleeping && victim.GetFightingBody() != nil {

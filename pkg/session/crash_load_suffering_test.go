@@ -26,7 +26,9 @@ func enterWithZeroDex(t *testing.T, name string, complete bool) string {
 	m, _, s := crashBadStatsEnv(t, name, 200, game.ApplyDex, []savedWornItem{{201, crashWearHead}})
 	m.SetCombatBroadcastFunc()
 	m.WireCombatCallbacks()
-	m.SetCombatMessageFunc()
+	if err := m.SetCombatMessageFunc(); err != nil {
+		t.Fatalf("SetCombatMessageFunc: %v", err)
+	}
 	if complete {
 		s.player.SetPlrFlag(game.PrfColor1, true)
 		s.player.SetPlrFlag(game.PrfColor2, true)

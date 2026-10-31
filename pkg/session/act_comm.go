@@ -146,7 +146,7 @@ func cmdWhisper(s *Session, args []string) error {
 		message := sanitizeMessage(strings.Join(args[1:], " "))
 		filtered, block := filterCommMessage(s, message)
 		if block {
-			game.SendToChar(s.player, "Your message was blocked.")
+			game.SendToChar(s.player, "Your message was blocked.\r\n")
 			return nil
 		}
 		argument = args[0] + " " + filtered
@@ -166,7 +166,7 @@ func cmdAsk(s *Session, args []string) error {
 		message := sanitizeMessage(strings.Join(args[1:], " "))
 		filtered, block := filterCommMessage(s, message)
 		if block {
-			game.SendToChar(s.player, "Your message was blocked.")
+			game.SendToChar(s.player, "Your message was blocked.\r\n")
 			return nil
 		}
 		argument = args[0] + " " + filtered

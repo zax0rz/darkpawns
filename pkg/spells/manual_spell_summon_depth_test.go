@@ -135,6 +135,14 @@ func (w *summonBackfireWorld) MobFirstHit(attacker, defender combat.Combatant) {
 	w.hits = append(w.hits, [2]combat.Combatant{attacker, defender})
 }
 
+// ExecuteSpellCounterattack is the unified retaliation seam (npcRetaliate);
+// MobFirstHit keeps its recording shape for the assertions below.
+func (w *summonBackfireWorld) ExecuteSpellCounterattack(victim, caster interface{}) {
+	a, _ := victim.(combat.Combatant)
+	d, _ := caster.(combat.Combatant)
+	w.hits = append(w.hits, [2]combat.Combatant{a, d})
+}
+
 func TestSummonBackfireDispatchesCOutputsAndNPCRetaliation(t *testing.T) {
 	circle := &summonTestObject{vnum: CocVnum, timer: 2}
 	caster := &breathCombatant{mockSpellsChar: mockSpellsChar{

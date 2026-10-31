@@ -25,6 +25,7 @@ func (p *manualProbe) SendMessage(m string) { p.msgs = append(p.msgs, m) }
 
 // manualWorld satisfies followerWorld, the charm path's world seam.
 type manualWorld struct {
+	counterattackSpy
 	follows []string
 }
 

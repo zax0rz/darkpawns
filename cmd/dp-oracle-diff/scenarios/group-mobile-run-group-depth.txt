@@ -1,0 +1,92 @@
+# C-first proof that a mobile can run `group`, which C reaches through force.
+#
+# C's do_force resolves its target with get_char_vis — mobiles included — and
+# hands the command straight to command_interpreter (src/act.wizard.c:1869-1880),
+# so `force <mob> group <player>` runs do_group as that mobile. do_group has no
+# IS_NPC gate (src/act.other.c:685-740) and perform_group is the only thing in
+# the tree that sets AFF_GROUP (line 629), so a mobile is the only way to enrol a
+# player whose master is a mobile.
+#
+# The port's mobile command surface had no group, so the forced command was
+# accepted — the forcer is told "Okay." — and then dropped with a server-side
+# warning (pkg/session/wiz_communication.go:221-223). The follower's own `group`
+# therefore answered "But you are not the member of a group!" where C answers
+# with its listing.
+#
+# depth-case: group.mobile-run-group-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+spawn-mob 5 1 8162 80
+
+[setup:oracle]
+Groupleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groupleader
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Grouppeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Grouppeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Grouppeer 8162
+force Grouppeer follow generic
+force generic group Grouppeer
+
+[probe]
+force Grouppeer color complete
+force Grouppeer group
+force Grouppeer color normal
+force Grouppeer group
+force Grouppeer color off
+force Grouppeer group

@@ -851,8 +851,8 @@ func reditScriptFlagsText(flags int) string {
 // (2), i.e. exactly when the PRF_COLOR_2 bit is set; creation's single Y sets
 // both bits (interpreter.c CON_COLOR).
 func (s *Session) reditCols() (nrm, grn, cyn, yel string) {
-	if s.player != nil && s.player.GetFlags()&(1<<uint(game.PrfColor2)) != 0 {
-		return "\x1b[0m", "\x1b[32m", "\x1b[36m", "\x1b[33m"
+	if s.player != nil && hasNormalColor(s.player.GetFlags()) {
+		return ansiNormal, ansiGreen, ansiCyan, ansiYellow
 	}
 	return "", "", "", ""
 }

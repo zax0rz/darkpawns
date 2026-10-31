@@ -10,6 +10,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"os/user"
@@ -58,6 +59,72 @@ func servicePath(name string) (string, error) {
 	}
 }
 
+type windowsTaskActionRecord struct {
+	Command   string
+	Arguments string
+}
+
+// The Windows startup-task query runs inside `start` before the 40-second
+// readiness wait, and `scripts/portable_lifecycle_smoke.py` caps the whole
+// `start` subprocess at 60 seconds. Both attempts therefore share one 15-second
+// budget (10s first attempt + the remaining budget for the retry) so the first
+// attempt has enough headroom to avoid the 5s PowerShell/COM teardown race
+// while a double failure still exits and prints the two-attempt error well
+// before the 60-second caller cap.
+var (
+	windowsTaskQueryBudget    = 15 * time.Second
+	windowsTaskQueryFirstWait = 10 * time.Second
+	runWindowsTaskQuery       = execWindowsTaskQuery
+)
+
+func execWindowsTaskQuery(ctx context.Context, name string) ([]byte, error) {
+	script := "[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $ErrorActionPreference='Stop'; $s=New-Object -ComObject Schedule.Service; $s.Connect(); $t=$s.GetFolder('\\').GetTask('" + name + "'); $a=$t.Definition.Actions.Item(1); [pscustomobject]@{Command=$a.Path; Arguments=$a.Arguments} | ConvertTo-Json -Compress"
+	data, err := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script).CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("query owned startup task: %w: %s", err, strings.TrimSpace(string(data)))
+	}
+	return data, nil
+}
+
+// queryStartupTaskActionWithRetry reads the owned scheduled task's action
+// through the Schedule.Service COM API. Loaded Windows CI runners can stall
+// PowerShell/COM teardown past a 5-second deadline (causing context
+// cancellation to race process exit with `TerminateProcess: Access is denied.`)
+// or fail a single COM query transiently (`exit status 1` with empty output).
+// Both attempts share one 15-second budget so the two-attempt error can print
+// within the smoke test's 60-second cap on `start`; JSON decode errors and
+// action mismatches surface immediately without retry.
+func queryStartupTaskActionWithRetry(name string) (windowsTaskActionRecord, error) {
+	budgetCtx, cancelBudget := context.WithTimeout(context.Background(), windowsTaskQueryBudget)
+	defer cancelBudget()
+
+	firstWait := windowsTaskQueryFirstWait
+	if firstWait > windowsTaskQueryBudget {
+		firstWait = windowsTaskQueryBudget
+	}
+	firstCtx, cancelFirst := context.WithTimeout(budgetCtx, firstWait)
+	data, err := runWindowsTaskQuery(firstCtx, name)
+	cancelFirst()
+	if err != nil {
+		firstErr := err
+		slog.Warn("startup task query failed; retrying once",
+			"task", name,
+			"error", firstErr.Error())
+		data, err = runWindowsTaskQuery(budgetCtx, name)
+		if err != nil {
+			return windowsTaskActionRecord{}, fmt.Errorf("query owned startup task after two attempts (first: %v; second: %w)", firstErr, err)
+		}
+		slog.Warn("startup task query succeeded on the retry; the first attempt failed",
+			"task", name,
+			"first_error", firstErr.Error())
+	}
+	var action windowsTaskActionRecord
+	if err := json.Unmarshal(bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}), &action); err != nil {
+		return windowsTaskActionRecord{}, err
+	}
+	return action, nil
+}
+
 func readService(instance string) (serviceRecord, error) {
 	var record serviceRecord
 	if err := readJSON(filepath.Join(instance, ".service.json"), &record); err != nil {
@@ -91,18 +158,8 @@ func readService(instance string) (serviceRecord, error) {
 		}
 	}
 	if runtime.GOOS == "windows" {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		script := "[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $ErrorActionPreference='Stop'; $s=New-Object -ComObject Schedule.Service; $s.Connect(); $t=$s.GetFolder('\\').GetTask('" + record.Name + "'); $a=$t.Definition.Actions.Item(1); [pscustomobject]@{Command=$a.Path; Arguments=$a.Arguments} | ConvertTo-Json -Compress"
-		data, err := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script).CombinedOutput()
+		action, err := queryStartupTaskActionWithRetry(record.Name)
 		if err != nil {
-			return record, fmt.Errorf("query owned startup task: %w: %s", err, strings.TrimSpace(string(data)))
-		}
-		var action struct {
-			Command   string
-			Arguments string
-		}
-		if err := json.Unmarshal(bytes.TrimPrefix(data, []byte{0xef, 0xbb, 0xbf}), &action); err != nil {
 			return record, err
 		}
 		expectedCommand, expectedArgs := windowsTaskAction(record.Launcher, instance)

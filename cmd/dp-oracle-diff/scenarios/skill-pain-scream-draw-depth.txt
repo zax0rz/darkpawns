@@ -1,0 +1,105 @@
+# C-first proof for damage()'s pain/scream arm on the skill path.
+#
+# damage()'s default arm (position >= POS_SLEEPING) runs
+#
+#	if (dam > (GET_MAX_HIT(victim) / 4)) {
+#	    act("That really did HURT!", FALSE, victim, 0, 0, TO_CHAR);
+#	    if (!number(0,2))
+#	        act("$N screams in pain!", FALSE, ch, 0, victim, TO_NOTVICT);
+#	}
+#
+# (src/fight.c:1587-1592) for EVERY attack type. do_headbutt passes
+# SKILL_HEADBUTT to damage(ch, victim, GET_LEVEL(ch), SKILL_HEADBUTT)
+# (src/new_cmds.c:449), so a headbutt that does more than a quarter of the
+# victim's maximum hit points must print the HURT line and burn one number(0,2)
+# draw. The port's skill seam burned that draw only for charge, and never
+# printed the line, so every later draw in the round sat one position early.
+#
+# depth-case: damage.skill-pain-scream-arm
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+# PRIMARY = first player => God (the set/skillset configurator).
+[setup:oracle]
+Headdrawgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Headdrawgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+# The attacker walks the newbie path to non-peaceful 8105 where the trainee
+# guard is spawned.
+[setup:oracle:attacker]
+Headdrawatt
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:attacker]
+Headdrawatt
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+# Headbutt damage is GET_LEVEL(ch) = 15; the trainee is capped at 20 hit points
+# and left at 20, so the blow takes it to 5 — above POS_STUNNED, i.e. damage()'s
+# default arm — while 15 is more than a quarter of 20. The two pulses then carry
+# the round whose draws depend on whether the scream draw was consumed.
+[warmup]
+set player Headdrawatt level 15
+skillset Headdrawatt 'headbutt' 100
+set trainee maxhit 20
+set trainee hit 20
+
+[probe:attacker]
+headbutt trainee
+~dpclock pulse 20
+~dpclock pulse 20

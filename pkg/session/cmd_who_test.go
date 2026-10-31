@@ -109,8 +109,15 @@ func TestCmdWhoVisibilityAndNoWhoRoom(t *testing.T) {
 		hidden.player.SetAffectBit(19, true) // AFF_HIDE
 
 		got := runWho(t, viewer)
-		if strings.Contains(got, "Invisible") || strings.Contains(got, "Hidden") {
-			t.Fatalf("mortal saw invisible/hidden players: %q", got)
+		if strings.Contains(got, "Invisible") {
+			t.Fatalf("mortal saw an invisible player: %q", got)
+		}
+		// C's do_who filters on CAN_SEE alone (src/act.informative.c:2119),
+		// and CAN_SEE does not test AFF_HIDE (src/utils.h:521-530): a hidden
+		// player stays listed. The port's shared-canSee hide arm used to drop
+		// them - invented behavior this round removed.
+		if !strings.Contains(got, "Hidden") {
+			t.Fatalf("mortal did not see the hidden player in who: %q", got)
 		}
 	})
 
@@ -170,8 +177,15 @@ func TestWhoImmortalRanksAndShortColor(t *testing.T) {
 	if got, want := renderWhoShort(viewer, immortal), "\x1b[33m[ IMMORT ] Immortal    \x1b[0m"; got != want {
 		t.Errorf("colored short who = %q, want %q", got, want)
 	}
-	if got := renderWhoLong(nil, immortal); !strings.HasPrefix(got, "[ Wizard ] Immortal ") {
-		t.Errorf("non-short immortal should use executable C's Wizard label, got %q", got)
+	// C writes the long-list rank with a literal &r code and closes the line
+	// with "&n" (src/act.informative.c:1841,1923); color_expansion resolves
+	// both per recipient, so a colour-off viewer sees them raw exactly as C
+	// shows them.
+	if got := renderWhoLong(nil, immortal); !strings.HasPrefix(got, "&r[ Wizard ] Immortal ") {
+		t.Errorf("non-short immortal should use executable C's Wizard label with C's literal &r code, got %q", got)
+	}
+	if got := renderWhoLong(nil, immortal); !strings.HasSuffix(got, "&n\r\n") {
+		t.Errorf("the long list closes with C's &n, got %q", got)
 	}
 }
 

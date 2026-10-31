@@ -44,6 +44,13 @@ type CombatPair struct {
 	// get_char_room_vis still finds it and hit() still swings. Named bodies are
 	// never enrolled from such a swing.
 	AllowRetiredDefender bool
+	// AllowRetiredAttacker admits a FLAGGED body as the attacker of one swing:
+	// C's hit() has no extraction guard on the attacker (src/fight.c:1763-1779),
+	// so a body do_kill's raw_kill left standing still draws and swings when a
+	// spell refusal or forced command makes it attack (src/spells.c:581-591).
+	// The swing runs without re-enrolling the body (the DeferAttackerEnrollment
+	// closure skips startCombat): it is extracted before any violence pass.
+	AllowRetiredAttacker bool
 }
 
 // CombatEngine manages all active combat in the game
@@ -263,12 +270,23 @@ func (ce *CombatEngine) ApplyMobDamageRedirects(attacker, defender Combatant) bo
 }
 
 func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderEnrollment, afterDamage bool) error {
-	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || BodyRetired(defender) {
+	return ce.startCombatOpt(attacker, defender, deferDefenderEnrollment, afterDamage, false)
+}
+
+// startCombatOpt's allowRetiredDefender arm is C damage()'s set_fighting on a
+// body do_kill's raw_kill flagged while leaving it standing (src/fight.c:1404-
+// 1408): extract_char only queues the body (src/handler.c:1194-1209), so a
+// swing whose protection gates pass enrolls the killer against the flagged
+// body exactly as against a live one. Every other caller keeps the refusal —
+// no C path enrolls a corpse that damage()'s POS_DEAD guard already refused
+// (src/fight.c:1319-1326).
+func (ce *CombatEngine) startCombatOpt(attacker, defender Combatant, deferDefenderEnrollment, afterDamage, allowRetiredDefender bool) error {
+	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) || (BodyRetired(defender) && !allowRetiredDefender) {
 		return fmt.Errorf("combat requires concrete bodies")
 	}
 	ce.mu.Lock()
 	defer ce.mu.Unlock()
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	if BodyRetired(attacker) || (BodyRetired(defender) && !allowRetiredDefender) {
 		return fmt.Errorf("combat requires live bodies")
 	}
 
@@ -337,6 +355,7 @@ func (ce *CombatEngine) startCombat(attacker, defender Combatant, deferDefenderE
 		Started:                 time.Now(),
 		DeferDefenderEnrollment: deferDefenderEnrollment,
 		DefenderNeedsStand:      defenderNeedsStand,
+		AllowRetiredDefender:    allowRetiredDefender,
 	}
 
 	return nil
@@ -385,16 +404,21 @@ func (ce *CombatEngine) PerformDeferredInitialAttack(attacker, defender Combatan
 	return nil
 }
 
-// PerformPendingBodySwing runs C's hit() against a body that is flagged for
-// extraction but not yet freed (src/handler.c:1194-1248). The swing consumes
-// hit()'s to-hit and damage draws and then damage()'s protection block decides:
-// the corpse guard refuses a POS_DEAD body silently (fight.c:1319-1326), and a
-// body that is still standing — do_kill's raw_kill never sets POS_DEAD — falls
-// through to the peaceful, newbie and shopkeeper refusals (fight.c:1336-1368).
-// The body is never enrolled: damage() calls set_fighting only after that block,
-// and a body C is tearing down must not re-enter combat.
+// PerformPendingBodySwing runs C's hit() when either side may be a body
+// flagged for extraction but not yet freed (src/handler.c:1194-1248). C's
+// hit() has no extraction guard on the attacker (src/fight.c:1763-1779): a
+// body do_kill's raw_kill left standing still draws its to-hit and damage
+// and swings — identify on a just-killed mob is the reachable case
+// (src/spells.c:581-591, hit(victim, ch, TYPE_UNDEFINED)). The swing consumes
+// hit()'s draws and damage()'s protection block decides for the DEFENDER: the
+// corpse guard refuses a POS_DEAD body silently (fight.c:1319-1326), and a
+// body that is still standing falls through to the peaceful, newbie and
+// shopkeeper refusals (fight.c:1336-1368). A pending ATTACKER swings without
+// re-enrolling (see the DeferAttackerEnrollment closure): it is extracted at
+// the next heartbeat before any violence pass, so enrolment has no
+// observable consequence and must not refuse the swing.
 func (ce *CombatEngine) PerformPendingBodySwing(attacker, defender Combatant) error {
-	if !ValidBody(attacker) || !ValidBody(defender) || BodyRetired(attacker) {
+	if !ValidBody(attacker) || !ValidBody(defender) {
 		return fmt.Errorf("combat requires concrete bodies")
 	}
 	ce.performOneHit(&CombatPair{
@@ -403,6 +427,7 @@ func (ce *CombatEngine) PerformPendingBodySwing(attacker, defender Combatant) er
 		DeferDefenderEnrollment: true,
 		DeferAttackerEnrollment: true,
 		AllowRetiredDefender:    true,
+		AllowRetiredAttacker:    true,
 	})
 	return nil
 }
@@ -669,23 +694,51 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 			ce.performOneHit(corpsePair)
 		}
 	} else {
+		current, def := pair, defender
 		for i := 0; i < numAttacks; i++ {
-			if defender.GetPosition() == PosDead {
+			if def.GetPosition() == PosDead {
 				break
 			}
 			// C's per-swing gate (fight.c:2017-2024) re-reads FIGHTING(ch) every
-			// swing: damage()'s mercy stop (fight.c:1491-1494) or the !AWAKE
-			// victim stop (:1630-1632) can clear it MID-LOOP, and C's hit() then
-			// never runs — no draw, no stale-pair swing. PL-005: without this the
-			// second swing of a multi-attack round kept hitting an already-stopped
-			// victim (prone multiplier fight.c:1854-1855), killing characters C
-			// leaves incapacitated, and diverging the shared RNG stream.
-			if fighting := attacker.GetFightingBody(); fighting == nil || fighting != defender {
-				break
+			// swing and swings at whoever it names: damage()'s mercy stop
+			// (fight.c:1491-1494) or the !AWAKE victim stop (:1630-1632) can
+			// clear it MID-LOOP, and C's hit() then never runs — no draw, no
+			// stale-pair swing. PL-005: without this the second swing of a
+			// multi-attack round kept hitting an already-stopped victim (prone
+			// multiplier fight.c:1854-1855), killing characters C leaves
+			// incapacitated, and diverging the shared RNG stream.
+			fighting := attacker.GetFightingBody()
+			if fighting == nil || fighting == attacker {
+				break // stopped (or self-fighting, which C's loop also stops)
 			}
-			if ce.performOneHit(pair) {
-				break
+			if fighting != def {
+				if i == 0 {
+					// The round began aimed elsewhere (a prior redirect or a
+					// concurrent retarget); C's loop still swings at the
+					// CURRENT FIGHTING, but the pair under iteration was
+					// built for this defender, so keep the historical gate.
+					break
+				}
+				// A switcheroo redirected MID-ROUND (fight.c:1413-1440): the
+				// scan picked a different room fighter. C keeps the round's
+				// remaining attacks at the NEW FIGHTING (fight.c:2017-2024);
+				// re-resolve the pair around it. The switcheroo's own
+				// enrollment created the (attacker, newTarget) pair.
+				key := CombatPairKey{Attacker: attacker, Target: fighting}
+				ce.mu.RLock()
+				next := ce.combatPairs[key]
+				ce.mu.RUnlock()
+				if next == nil {
+					break
+				}
+				current, def = next, fighting
 			}
+			// C's while loop never exits on damage()'s return value: every
+			// iteration re-reads FIGHTING(ch). A stop (mercy, shopkeeper,
+			// jail) leaves FIGHTING nil and the next gate ends the round with
+			// no further draws; a redirect re-enrolling the same target keeps
+			// swinging.
+			ce.performOneHit(current)
 		}
 	}
 
@@ -795,7 +848,7 @@ func (ce *CombatEngine) consumeParried(body Combatant) string {
 func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	attacker := pair.Attacker
 	defender := pair.Defender
-	if BodyRetired(attacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
+	if (BodyRetired(attacker) && !pair.AllowRetiredAttacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		return true
 	}
 
@@ -870,10 +923,19 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		// player attacker enrols before the redirect call and an NPC attacker
 		// enrols inside it — both between C's jail and charm arms.
 		deferred := func() bool {
+			if BodyRetired(attacker) {
+				// A pending attacker (do_kill's raw_kill left it standing)
+				// swings WITHOUT re-enrolling: C's hit() has no extraction
+				// guard (src/fight.c:1763-1779), and the body is extracted at
+				// the next heartbeat before any violence pass, so set_fighting
+				// has no observable consequence — refusing here killed the
+				// whole swing instead.
+				return true
+			}
 			if attacker.GetPosition() <= PosStunned || attacker.GetFightingBody() != nil {
 				return true
 			}
-			if err := ce.startCombat(attacker, defender, true, true); err != nil {
+			if err := ce.startCombatOpt(attacker, defender, true, true, pair.AllowRetiredDefender); err != nil {
 				return false
 			}
 			attacker.SetPosition(PosFighting)
@@ -895,9 +957,12 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 
 	// C damage() enrolls the victim after the NPC switcheroo scan.  Do this
 	// before the remaining damage-side effects, including stop_follower and
-	// the hit/miss message path.
+	// the hit/miss message path. A defender do_kill's raw_kill left standing
+	// is enrolled too (set_fighting has no extraction check,
+	// src/fight.c:1441-1445); the extraction pass retires the flagged body
+	// before the next violence pulse, so it never swings.
 	ce.mu.Lock()
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	if (BodyRetired(attacker) && !pair.AllowRetiredAttacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		ce.mu.Unlock()
 		return true
 	}
@@ -989,14 +1054,18 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		ce.DamageFunc(defender)
 	}
 
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	// A body flagged before this swing (do_kill's raw_kill) keeps flowing
+	// through damage()'s tail under AllowRetiredDefender, and a pending
+	// ATTACKER flows the same way under AllowRetiredAttacker; the retirement
+	// here only ends exchanges whose damage callbacks retired a body mid-swing.
+	if (BodyRetired(attacker) && !pair.AllowRetiredAttacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		return true
 	}
 	if rescued {
 		return true
 	}
 	ce.sendHitMessage(attacker, defender, damage, msgAttackType)
-	if BodyRetired(attacker) || BodyRetired(defender) {
+	if (BodyRetired(attacker) && !pair.AllowRetiredAttacker) || (BodyRetired(defender) && !pair.AllowRetiredDefender) {
 		return true
 	}
 

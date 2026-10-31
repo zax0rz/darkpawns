@@ -1,0 +1,94 @@
+# C-first raw-byte proof for print_group's colour, at the one level that shows it.
+#
+# src/act.other.c:638-681 builds two row shapes, both at C_CMP against the
+# *viewer* `ch`:
+#   head     "     [%s%3d%sH %s%3d%sM %s%3d%sV] [%2d %s%s%s] $N (Head of group)"
+#            with CCGRN around each stat and CCCYN around CLASS_ABBR (line 659)
+#   follower "     [%s%3d%sH %s%3d%sM %s%3d%sV] [%2d %s%s%s] $N"
+#            with CCGRN around each stat and CCGRN around CLASS_ABBR (line 676)
+#   mob      "     [---H ---M ---V] [-- --] $N"   (line 669, uncoloured)
+# C_CMP is _clrlevel(ch) >= 3 (src/screen.h:45-49), so `color normal` is the
+# discriminating level: every stat is still coloured in the reports that use
+# C_NRM, and the whole group listing stays plain here. The head/follower class
+# colour asymmetry and the uncoloured mob row are both in this transcript.
+#
+# depth-case: group.print-members-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+spawn-mob 5 1 8162 80
+
+[setup:oracle]
+Groupleader
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Groupleader
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Grouppeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Grouppeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Grouppeer 8162
+force Grouppeer follow Groupleader
+force generic follow Groupleader
+group all
+
+[probe]
+color complete
+group
+color normal
+group
+color sparse
+group
+color off
+group

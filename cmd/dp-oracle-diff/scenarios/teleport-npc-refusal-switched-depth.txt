@@ -1,0 +1,67 @@
+# C-first vehicle for the two NPC-on-NPC refusal arms of spell_teleport
+# (src/spells.c:183-194), reached through SPECIAL(teleport_victim)
+# (src/spec_procs3.c:225-237, assigned to 14405 at src/spec_assign.c:377).
+# The special runs from perform_violence() after Gil-Glash's ordinary swing,
+# and its send_to_char refusal lines reach the switched implementor through
+# the NPC's descriptor (src/act.wizard.c:1175-1190). Gil-Glash is set to
+# level 30 (below LVL_IMMORT) so the level gate is armed, and the dune
+# stalker victim (11036, level 30, no special, no noise) is buffered with a
+# large HP pool so the first 39d5+5661 swing does not end the fight before
+# the special runs. A stalker save takes spells.c:183-187 ("The magic words
+# fail to form properly."); a failed save falls through to spells.c:189-194
+# with caster level 30 - victim level 30 < 3 ("The magic fails utterly!").
+# Either refusal counterattacks with hit(victim, ch, TYPE_UNDEFINED).
+# depth-case: spell.teleport-npc-save-refusal-output
+# depth-case: spell.teleport-npc-level-refusal-output
+# depth-case: interpreter.npc-hit-actor-lane
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14405 1 8105 144
+spawn-mob 11036 1 8105 110
+# Gil-Glash's native AFF_DODGE is cleared (copied from
+# spec-proc-teleport-victim) so the shared combat defense transcript stays
+# out of this vehicle's scope.
+set-mob-aff 14405 1082504
+replace-room-exits 8105 none
+
+[setup:oracle]
+Teleportgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Teleportgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set gil-glash level 30
+set stalker maxhit 99999
+set stalker hit 99999
+force stalker hit gil-glash
+switch gil-glash
+
+[probe]
+~dpclock pulse 22
+~dpclock pulse 22

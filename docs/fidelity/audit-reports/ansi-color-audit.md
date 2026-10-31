@@ -228,12 +228,12 @@ this audit.
 | `do_infobar` | 80 | C_NRM | `pkg/session/infobar` | none |
 | `do_score` | 26 | C_CMP 22, C_NRM 4 | `pkg/session` score | none |
 | `do_who` | 21 | C_SPR 21 | `pkg/session/cmd_info.go` (`whoColorEnabled`, ≥1) | none |
-| `do_report` | 18 | C_NRM | `pkg/session/act_informative.go` | none |
-| `print_group` | 16 | C_CMP | `pkg/session` group | none |
+| `do_report` | 18 | C_NRM | `pkg/game/other_character.go` (`doReport`) | **keep-ansi (new)** |
+| `print_group` | 16 | C_CMP | `pkg/session/cmd_group.go` (`printGroup`) | **keep-ansi (new)** |
 | `damage_message` | 16 | C_CMP | `pkg/combat/fight_core.go` | **keep-ansi (new)** |
-| `do_stat_character` | 42 | C_NRM 36, C_CMP 6 | `pkg/session/wiz_stats.go` | none |
+| `do_stat_character` | 42 | C_NRM 36, C_CMP 6 | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
 | `make_prompt` | 42 | C_CMP | `pkg/session/terminal_colors.go`, prompt | indirect |
-| `do_exits`/`do_auto_exits` | 13 | C_NRM 12, C_CMP 1 | `pkg/game/look.go` (`autoExitsText`) | none |
+| `do_exits`/`do_auto_exits` | 13 | C_NRM 12, C_CMP 1 | `pkg/game/look.go` (`autoExitsText`) | **keep-ansi (new)** |
 | `do_gsay` | 6 | C_CMP 4, C_SPR 1, C_NRM 1 | `pkg/game/comm_channel.go` | **keep-ansi** |
 | `do_help` | 6 | C_CMP | `pkg/session/pager.go` | none |
 | `do_skills` | 6 | C_CMP | `pkg/session` | none |
@@ -241,12 +241,12 @@ this audit.
 | `do_ctell` | 4 | C_CMP | `pkg/game/comm_channel.go` | **keep-ansi** |
 | `do_where` | 4 | C_CMP | `pkg/session` | none |
 | `get_char_cols` | 4 | C_NRM | OLC editors | **keep-ansi** (10 scenarios) |
-| `do_stat_room` | 16 | C_NRM | `pkg/session/wiz_stats.go` | none |
-| `do_stat_object` | 8 | C_NRM | `pkg/session/wiz_stats.go` | none |
+| `do_stat_room` | 16 | C_NRM | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
+| `do_stat_object` | 8 | C_NRM | `pkg/session/wiz_stats.go` | **keep-ansi (new)** |
 | `do_users` | 2 | C_SPR | `pkg/session` who/users | none |
 | `do_color` | 2 | C_SPR 1, C_OFF 1 | `pkg/session/act_informative.go` | unit |
-| `look_at_char` | 2 | C_CMP | `pkg/game/look.go` | none |
-| `list_char_to_char` | 2 | C_CMP | `pkg/game/look.go` | none |
+| `look_at_char` | 2 | C_CMP | `pkg/game/look.go` | **keep-ansi (new)** |
+| `list_char_to_char` | 2 | C_CMP | dead in C (§15) | n/a — unreachable |
 | `damage` (wounded band) | 2 | **C_SPR** | `pkg/combat` `BleedLine` | **keep-ansi (new)** |
 | `nanny` | 2 | C_SPR | `pkg/session` login | none |
 | `gain_exp` | 2 | C_CMP | `pkg/game` level-up | **keep-ansi** |
@@ -320,20 +320,60 @@ exclusive, so no single audience's transcript can observe the relative order.
 
 ## 7. Work queue (color proof still owed)
 
+Companion class audit for the same surface:
+[`skills-spells-attacktype-audit.md`](skills-spells-attacktype-audit.md) — the
+attack type every skill passes to `damage()` was wrong for six skills and
+changed their corpse wording.
+
 Ordered by player exposure. Each row needs a `keep-ansi` scenario; a row is
 "done" when it has one that can fail.
 
-1. `do_score` — 26 sites, mixed C_CMP/C_NRM in one function.
-2. `do_infobar` — 80 sites, the densest colored output in the game.
-3. `do_who` / `do_users` — 23 sites at C_SPR; the only C_SPR commands a mortal
-   sees constantly.
-4. `do_stat_character` / `do_stat_room` / `do_stat_object` — 66 sites; also the
-   wizard surface where a gate error is least likely to be reported.
-5. `do_report` / `print_group` — 34 sites.
-6. `do_exits` / `do_auto_exits` / `look_at_char` / `list_char_to_char`.
+1. ~~`do_score` — 26 sites, mixed C_CMP/C_NRM in one function.~~ **Done —
+   `score-color-levels-depth`.** The real surface is 11 C_CMP field pairs
+   (`src/act.informative.c:1184-1275`), and the port emitted no colour at all.
+2. `do_infobar` — 80 sites, the densest colored output in the game. **Not
+   coverable by `keep-ansi` alone:** the sites live in the `IB_*` renderers,
+   which draw with `VT_CURSPOS` cursor addressing from the prompt, so their
+   escapes are interleaved with cursor moves that a transcript comparison cannot
+   isolate.
+3. ~~`do_who` / `do_users` — 23 sites at C_SPR; the only C_SPR commands a mortal
+   sees constantly.~~ **`do_who` done — `who-color-levels-depth` is green at all
+   four levels.** The port replaced C's literal `&r`/`&y`/`&n` codes with a
+   conditional ANSI escape, which differs at colour off. `do_users` is still owed.
+4. ~~`do_stat_character` / `do_stat_room` / `do_stat_object` — 66 sites; also the
+   wizard surface where a gate error is least likely to be reported.~~
+   **Done — `wizard-stat-color-depth`, §11.** It also found two text-level
+   inventions the normalizer had been hiding (**F7**, **F8**).
+5. ~~`do_report` / `print_group` — 34 sites.~~ **Done — `report-color-levels-depth`
+   and `group-color-levels-depth`, §12.** `do_report` was already correct but had
+   no proof that could fail on colour; `print_group` emitted no colour at all.
+6. ~~`do_exits` / `do_auto_exits` — 13 sites; `look_at_char` /
+   `list_char_to_char` were **done with F6** (#2244).~~ **Done —
+   `exits-auto-exits-color-depth`, §13.** `do_exits` itself is uncoloured; all 13
+   sites are in `do_auto_exits`. §13 also records **F10** (the harness cannot
+   build a closed door), **F11** (`exits.closed-filter` claims a filter it does
+   not build) and **F12** (the character list gains a leading space).
+   `look_at_char`'s tattoo sites are **done — `look-char-color-depth`, §15**,
+   and `list_char_to_char`'s are **dead in C** (§15).
 7. `do_help` / `do_skills` / `do_where` / `do_review` / `list_skills` / `do_wiznet`.
 8. `nanny`'s login load-result line (C_SPR).
 9. F4 disposition (delete the invented fallback or scope it to tests).
+
+**Inventory defect found while building these proofs.** `ansi-color-c-inventory.tsv`
+attributes each site to the last function-like line before it, and that pattern
+only matched lowercase signatures, so it filed the capitalised `IB_*` infobar
+renderers under `do_infobar`, and gave `do_score` 26 sites when four of them
+(`src/act.informative.c:1406,1441`, `CCCYN` at `C_NRM`) belong to a later
+function. `do_score`'s real surface is the 11 C_CMP field pairs in
+`src/act.informative.c:1184-1275`; `do_stat_character`'s is
+`src/act.wizard.c:746-968`. Re-derive the table with a corrected pattern before
+trusting its per-function counts.
+
+**`stat`'s fix was subtler than `score`'s.** C's `sprintbit` leaves a trailing
+space after each flag list and the port's `wizardPlayerFlags` /
+`wizardPreferenceFlags` / `wizardAffectFlags` trimmed it, so wrapping those lines
+in colour put the space on the wrong side of the reset. That is **F7 in §11**,
+fixed with the whole stat surface in #2247.
 
 ## 8. Proposed rulebook amendment (for Zach — not applied)
 
@@ -374,6 +414,66 @@ amendment lands.
 ### How to re-run the two proofs
 
 ```bash
+## 10. Fireball raw-byte follow-up (2026-10-30)
+
+Egon's report pointed at fireball. Its text in `lib/misc/messages` (set 26) carries
+no colour codes, so every escape around it comes from `skill_message`'s delivery.
+Eight `keep-ansi` scenarios now cover it — `fireball-color-{off,sparse,normal,complete}-hit`,
+plus `{off,complete}-{miss,kill}` — with the caster setting its own level by
+`color` and the peers taking theirs from the creation ANSI answer, so the
+transcript also proves the two gates are per-recipient (at sparse/normal the
+caster's line is plain while the victim's is still red).
+
+**Result: the fireball colour bytes match C exactly.** Telnet: targeted census
+`deepseek-fireball-color-telnet`, 8 scenarios, `passed=8 failed=0
+draw_divergent=0 verdict=CLEAN`. WebSocket: all eight run through
+`--go-transport ws` with the same verdicts. So the escapes are ordered as C
+orders them, the reset lands where C lands it, and Go does not split a C write
+across frames in a way the browser client shows differently.
+
+**F6 — the room-contents list colours each entry instead of the list (OPEN).**
+The one divergence the fireball work did surface is not in the fireball path.
+C's `look_at_room` brackets the two room-content lists once each
+(`src/act.informative.c:823-833`):
+
+```c
+  send_to_char(CCGRN(ch, C_NRM), ch);      /* once, before the object list  */
+  list_obj_to_char(world[ch->in_room].contents, ch, 20, FALSE);
+  send_to_char(CCYEL(ch, C_NRM), ch);      /* once, before the character list */
+  list_char_to_char(world[ch->in_room].people, ch);
+  send_to_char(CCNRM(ch, C_NRM), ch);      /* once, after it                 */
+```
+
+`pkg/game/look.go`'s `observeRoom` wraps **each line** (`green+line+normal`,
+`yellow+line+normal`), so it opens and closes the colour per entry and never
+emits C's trailing bare reset. A kill-then-look transcript, identical on telnet
+and WebSocket:
+
+```
+ C: ^[[32mThe charred corpse of FireVictim is lying here, still smoking.
+    ^[[33mFireWatch the Warrior is standing here.
+    ^[[0m
+Go: ^[[32mThe charred corpse of FireVictim is lying here, still smoking.^[[0m
+    ^[[33mFireWatch the Warrior is standing here.^[[0m
+```
+
+The corpse **text** is right — C's `The charred corpse of %s is lying here, still
+smoking.` (`src/fight.c:286-290`) is what both engines print. What differs is the
+colour framing around the list, and it affects every room look that has objects
+or characters in it, not just fireball kills.
+
+Fixing it needs a no-line-ending write on the observation path: `Raw` messages
+currently go through `Player.SendMessage`, which adds the line ending C's
+`send_to_char(CCGRN(ch, C_NRM), ch)` does not have. That is new plumbing through
+`ObservationMessage` → `RenderObservationMessages` → the session frame, on the
+game's most-used output path, so it wants its own change and vehicle rather than
+a rushed edit. The kill-then-look vehicle above is red on `main` and is the
+starting point.
+
+This also closes a row from §7's work queue: `look_at_char` / `list_char_to_char`
+were listed as having no colour proof, and now have one — which is how the
+divergence was found.
+
 DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle \
   go run ./cmd/dp-oracle-diff --scenario damage-message-color-depth --seed 1 --show-oracle
 DP_ORACLE_BIN=/home/zach/darkpawns-c-oracle/bin/circle \
@@ -384,4 +484,602 @@ Both are targeted single-scenario probes; neither is a release gate. The full
 combined census remains Claude's pre-release step (AGENTS.md).
 
 
+
+
+## 11. The stat surface (2026-10-30)
+
+Queue item 4: `do_stat_character` (42 sites), `do_stat_room` (16) and
+`do_stat_object` (8) — 66 sites in `pkg/session/wiz_stats.go`, the largest
+coloured surface after `do_infobar`, and the wizard command where a wrong gate is
+least likely to be reported. **All 66 now match C**, proved by
+`wizard-stat-color-depth`, which walks the viewer through every level
+(`color sparse` → `normal` → `complete` → `off`) and re-renders all three report
+bodies at each, raw escapes intact.
+
+The gates are C's own. Everything is C_NRM (`clr(ch, C_NRM)` is `_clrlevel >= 2`,
+so PRF_COLOR_2 alone is enough) except the kills/pkills/deaths row, the one C_CMP
+site (`src/act.wizard.c:831-835`), which needs both bits. `color normal` is
+therefore the discriminating level: the rest of the report is coloured and that
+row is plain. Before this work `wiz_stats.go` emitted **no** colour at all in
+`do_stat_character` and `do_stat_room`, and only the room/object extra-description
+and contents lists in `do_stat_object`.
+
+Two things came out of it that are not about colour at all.
+
+**F7 — the stat flag lists dropped `sprintbitarray`'s trailing space (FIXED, R4).**
+C's `sprintbitarray` appends `"NAME "` per set bit and `"NOBITS "` when none are
+set, and never trims (`src/utils.c:825-843`); `sprintbit` behaves the same way
+(`src/utils.c:243-267`). C prints the result straight into the report
+(`src/act.wizard.c:879, 885, 888, 894, 968`), so the trailing space is part of the
+line. The port's `wiz_stats.go` wrapped nine call sites in `strings.TrimSpace`,
+which C does not do:
+
+```
+ C: NPC flags: ^[[36mSCAVENGER ISNPC AGGR STAY-ZONE ^[[0m
+Go: NPC flags: ^[[36mSCAVENGER ISNPC AGGR STAY-ZONE^[[0m
+```
+
+**Why no census had ever seen it.** Uncoloured, the space sits directly before
+the CRLF, and the oracle normalizer strips trailing whitespace — both engines
+normalized to the same line, so `stat.player-success` was green on a divergence
+that had been there since the port was written. Colour moves `CCNRM` after the
+space, which puts it **mid-line**, where the trailing-whitespace rule cannot reach
+it. This is the same failure shape as R1b: a normalizer rule that is right for its
+own purpose silently made a byte class unprovable. Fix: delete the nine
+`TrimSpace` wrappers.
+
+**F8 — the PLR line fabricated a `CSH` marker (FIXED, R4).** `wizardPlayerFlags`
+masked the PLR half of the merged flag word and then, when that half was empty but
+any other bit was set, **invented** `PLR_CRASH` to "preserve the visible CSH
+marker". C prints `PLR_FLAGS(k)` verbatim (`src/act.wizard.c:884-886`), so a player
+whose only flags are the two colour preferences reads `NOBITS`, not `CSH`:
+
+```
+ C: PLR: ^[[36mNOBITS ^[[0m
+Go: PLR: ^[[36mCSH ^[[0m
+```
+
+The fallback is not needed for what it claimed: the runtime already models
+PLR_CRASH as bit 6 of that half and sets it through `MarkCrashNeeded`
+(`pkg/game/persistence_seam.go:104-109`) exactly where C sets it on inventory
+movement. Deleting it is safe, and the proof is that all eleven stat scenarios —
+including the eight that predate this work — stay green without it, so it was not
+covering a missing flag-set anywhere.
+
+### Evidence
+
+- `wizard-stat-color-depth` (new, `keep-ansi`): one viewer, four levels, three
+  report bodies per level. Targeted census `stat-color3` over every
+  `wizard-stat*` and `wizard-valid-reports*` scenario at `8624f88b7`:
+  `scenarios=11 passed=11 failed=0 verdict=CLEAN`.
+- Both findings were found by the scenario, not by reading: the first run failed
+  on F7, the second on F8, and each fix turned exactly those rows green.
+- Unit proofs (R5h): `TestStatPlayerColorLevelsMatchC`,
+  `TestStatRoomColorLevelsMatchC`, `TestStatObjectColorLevelsMatchC`,
+  `TestStatMobColorLevelsMatchC` (each a four-level table that also asserts the
+  report is escape-free below C_NRM), `TestStatPlayerSpellLineColorMatchesC`, and
+  `TestStatFlagListsKeepSprintbitarrayTrailingSpace` for F7. Expected bytes are
+  built from the literal codes in `src/screen.h:34-41`, never from the production
+  constants, so a drift in either the constants or the gates fails the test. Both
+  fixes were scratch-broken and the tests failed as intended.
+- Two pre-existing unit assertions encoded the F7 bug
+  (`wiz_stats_test.go`: `"AFF: SANCT NOTHING\r\n"`, `"AFF: BLIND\r\n"`) and were
+  corrected to C's bytes.
+
+
+## 12. `do_report` and `print_group` (2026-10-30)
+
+Queue item 5. The two commands share a shape — a per-field coloured stats line —
+but they turned out to be at opposite ends of the problem.
+
+**`print_group` emitted no colour at all (FIXED).** C wraps every stat at
+`C_CMP` against the **viewer** and prints two row shapes
+(`src/act.other.c:638-681`):
+
+```
+head      [%s%3d%sH %s%3d%sM %s%3d%sV] [%2d %s%s%s] $N (Head of group)
+          CCGRN on each stat, CCCYN on CLASS_ABBR                (line 659)
+follower  [%s%3d%sH %s%3d%sM %s%3d%sV] [%2d %s%s%s] $N
+          CCGRN on each stat, CCGRN on CLASS_ABBR                (line 676)
+mob       [---H ---M ---V] [-- --] $N   — uncoloured            (line 669)
+```
+
+`pkg/session/cmd_group.go` printed the same fields plain. Two details are easy to
+get wrong and are now pinned: the **class abbreviation is cyan on the head row
+and green on a follower's row** — a genuine asymmetry in C, not a typo — and the
+mobile row stays uncoloured at every level.
+
+`C_CMP` is `_clrlevel >= 3` (`src/screen.h:45-49`), so this is the first command
+in the audit whose discriminating level is `complete`: at `color normal` every
+other coloured surface in this report is live and this listing must still be
+plain. `group-color-levels-depth` walks all four levels and would fail a port
+that reused the `C_NRM` gate.
+
+**`do_report` was already correct — but nothing could prove it.** `pkg/game`'s
+`doReport` (not `pkg/session/act_informative.go`, which is what §4's table
+claimed) already formats the line once per recipient through that recipient's own
+`C_NRM` wrappers while printing the reporter's numbers, exactly as C does
+(`src/act.other.c:806-818`).
+
+The problem was the proof. `docs/fidelity/depth/report.tsv` carried a
+`report.color-audience` row claiming that "color-enabled peer and observer
+descriptors cover this audience-dependent branch", proved by `report-depth` — a
+scenario that does **not** set `keep-ansi`. Ordinary normalization strips ANSI by
+design (`internal/oraclediff/normalize.go:64-67`: "the ordinary mode strips ANSI
+and therefore cannot see a missing-color port"), so that row was green no matter
+what the port emitted. It is an R5h violation in the manifest: a green that could
+not fail on the thing it claimed to cover. The row's note is corrected to say it
+covers the audience and the numbers only, and `report-color-levels-raw` is now
+the raw-byte proof. This is the second manifest claim this audit has found that
+could not fail (the first was `score`'s, which showed no escapes at all).
+
+### Evidence
+
+- `report-color-levels-depth` (new, `keep-ansi`): an actor walks all four levels,
+  then a peer is forced to `complete` and back to `off` under a complete actor,
+  so both directions of the per-recipient branch appear in one transcript.
+- `group-color-levels-depth` (new, `keep-ansi`): leader + player follower + mobile
+  follower, four levels. `group all` in warmup builds the group, so the transcript
+  carries the head, follower and mobile rows.
+- Targeted census `report-group-color` at `8a052ba1e`, `--draw-parity`, seven
+  scenarios (the two new ones plus `report-depth`, `group-depth`,
+  `group-gates-depth`, `group-mob-depth`, `group-room-depth` to catch regressions
+  in the code being changed): `passed=7 failed=0 verdict=CLEAN`,
+  `draw_divergent=0`.
+- Unit proofs (R5h): `TestGroupListColorLevelsMatchC` (four-level table asserting
+  the head row's cyan class, the follower row's green class, the uncoloured mobile
+  row, and that the whole listing is escape-free below `C_CMP`) and
+  `TestReportColorUsesCNRMNotCMP` (a `PRF_COLOR_2`-only viewer must still get the
+  escapes, which a port reusing the `C_CMP` gate would fail). Both were
+  scratch-broken — reverting the gate failed the `normal` subtest, dropping the
+  head cyan failed the `complete` subtest.
+- The stat surface's `statGreen`/`statCyan`/… constants and `wizardTint` are now
+  shared by this code, so they are renamed to `ansiGreen`/`ansiCyan`/… and
+  `colorWrap`. Mechanical, one file, no behaviour change.
+
+
+## 13. `do_auto_exits`, and two claims the harness could not make (2026-10-30)
+
+Queue item 6, the exits half. `do_exits` itself is **uncoloured** in C — all 13
+sites of the pair are in `do_auto_exits`, the `[ Exits: ... ]` line `look` prints
+under `PRF_AUTOEXIT` (`src/act.informative.c:657-680`).
+
+C builds the list one direction at a time and appends a trailing space after
+**every** entry, wrapping an imm-only closed door:
+
+```c
+sprintf(buf, "%s%s%s%s%s%s ", buf,
+  io ? CCRED(ch, C_CMP) : "", io ? "(" : "", dirs[door], io ? ")" : "",
+  io ? CCCYN(ch, C_NRM) : "");
+...
+sprintf(buf2, "%s[ Exits: %s]%s\r\n", CCCYN(ch, C_NRM), *buf ? buf : "None! ", CCNRM(ch, C_NRM));
+```
+
+Three things follow that the port had wrong. The port joined entries with a
+single space, so the trailing space was gone; it printed the imm-only door as a
+bare `(east)` with no red sandwich; and it wrote `[ Exits: %s ]` with its own
+space before the bracket. The last two cancel out while colour is off — the space
+that C puts inside each entry is the one the port put before `]` — which is
+exactly why **no scenario had ever seen the missing C_CMP sandwich**: the only
+uncoloured difference is where the space lives, and it lands in the same column.
+Note also that C re-emits `CCCYN(ch, C_NRM)` after the `)` whenever the door is
+imm-only, *even when the red is empty* (line 673), so the escape is present at
+`color normal` too. The unit test caught that detail by disagreeing with my first
+expectation.
+
+### F10 — the harness cannot build a closed door (OPEN, tooling)
+
+Getting a closed door into a scenario turned out to be impossible with the
+fixture set. `replace-room-exits <room> <dir|all> <to> <DoorState>` writes the
+**.wld door *capability* code**, which `pkg/parser/wld.go:83-92` maps to
+`ExitIsDoor` (1) and `ExitIsDoor|ExitPickproof` (2) only — and its `DoorState` is
+validated to 0..2 (`internal/oraclediff/scenario.go:485`), so `3`
+(`EX_ISDOOR|EX_CLOSED`) is rejected outright. The closed state is applied at
+runtime by a zone **D reset** (`ApplyDoorReset`), and the fixture list has no
+door-reset directive. `replace-room-exits` also **replaces the whole exit list**,
+so a second directive for the same room silently discards the first.
+
+The vehicle therefore uses a corpus room that already has a runtime-closed door:
+`D 0 11269 1 1` closes room 11269's east exit, and `look` under autoexit renders
+it. That is the first time this branch has been exercised at all, which is why the
+C_CMP site had gone unnoticed — it needs an immortal, a closed door, and colour at
+`complete`, and two of the three were not reachable.
+
+**F11 — `exits.closed-filter` claims a filter it does not build (OPEN, R5h).**
+That row in `docs/fidelity/depth/exits.tsv` says "An open north exit is rendered
+while an east exit marked EX_CLOSED is omitted", proved by `exits-filtering`. Its
+fixture is `replace-room-exits 8105 north 8161 0` followed by
+`replace-room-exits 8105 east 8161 1 gate` — which, per F10, (a) discards the
+north exit entirely and (b) sets `exit_info = 1`, a door that is **not** closed.
+The retained transcript agrees: the command prints
+`Obvious exits:` / `East  - Western Vestibule` — east is *shown* and north is
+*absent*, the exact opposite of the row's description. The scenario is green
+because both engines agree on what it actually builds, so this is the **third
+manifest claim in this audit that cannot fail** (after `report.color-audience` and
+`score`'s), and the first where the row describes a state the fixture cannot
+express.
+
+**F12 — the character list gained a leading space when it followed a room
+description (FIXED in §16, R1).** Found while building the vehicle above. With a
+peer in the room, the peer's `look` diverged:
+
+```
+ C: \x1b[32m\x1b[33mExitsautoconfig the Warrior is standing here.
+Go: \x1b[32m\x1b[33m Exitsautoconfig the Warrior is standing here.
+```
+
+C's `do_description` space belongs immediately after the description; the port
+applied it to the first character-list entry instead. The scenario was narrowed
+to an empty room to isolate the exit line (the retained v7 run is the evidence:
+`oracle-runs/2026-10-30/exits-auto-v7`), so the exit proof stands on its own. The
+cause and fix are §16.
+
+### Evidence
+
+- `exits-auto-exits-color-depth` (new, `keep-ansi`): the God walks
+  `complete`/`normal`/`sparse`/`off` in room 11269 (closed east door) and then in
+  8162 (open exits). The captured bytes are C's exactly, including the redundant
+  cyan: `\x1b[36m[ Exits: \x1b[31m(east)\x1b[36m ]\x1b[0m` at `complete`,
+  `\x1b[36m[ Exits: (east)\x1b[36m ]\x1b[0m` at `normal`, and
+  `[ Exits: (east) ]` below C_NRM. I checked the captured blocks rather than
+  trusting the verdict: an earlier version of this scenario passed **with the fix
+  deliberately broken**, because its fixture never produced a closed door. A green
+  that cannot fail is the failure mode this audit exists to find, so the
+  non-vacuity check is part of the proof here.
+- Targeted census `exits-regress` at `a98263eec`, nine scenarios (the new one plus
+  `exits-depth`, `exits-filtering`, `exits-no-open`, `exits-immortal`,
+  `exits-dark`, `room-desc-exits`, `observation-roomflags`,
+  `player-state-toggles`): `passed=9 failed=0 verdict=CLEAN`.
+- Unit proofs (R5h): `TestAutoExitsColorLevelsMatchC` (a seven-case table over
+  mortal/immortal × the four levels, asserting the imm-only sandwich, the
+  redundant cyan, and the plain forms) and
+  `TestAutoExitsEmptyListKeepsCTrailingSpace` (C's literal `"None! "`). The first
+  was scratch-broken — disabling the `C_CMP` gate failed the `immortal complete`
+  case with exactly the old bytes.
+## 14. Colour-level consolidation, and a mobile group leader (2026-10-30)
+
+Two follow-ups from the `print_group` work, plus what chasing the second one
+found.
+
+**One definition per colour level.** After §11 and §12 the package held seven
+copies of C's level arithmetic: `colorCMP` and `wizardHasCompleteColor` (both
+`C_CMP`), `wizardHasNormalColor`, `whoColorEnabled` (written as "either bit"),
+and inline `flags&(1<<PrfColorN)` expressions in the infobar state, the prompt's
+two `C_CMP` sites and `reditCols`. C defines `_clrlevel`, `clr` and the eight
+`CC*` macros once (`src/screen.h:34-56`) and every command reaches for them; the
+port had re-derived the arithmetic per command, which is how §11's and §12's
+gate mistakes survived review.
+
+They now live in `pkg/session/color_levels.go`: `colorLevel` (C's `_clrlevel`),
+`hasSparseColor`/`hasNormalColor`/`hasCompleteColor` (`clr` at C_SPR/C_NRM/C_CMP),
+`colorWrap` (a `CCxxx … CCNRM` pair) and `colorCMP` (the `C_CMP` code-or-empty
+form). Every site above now calls one of them. Behaviour is unchanged — the
+predicates are the same arithmetic — which the targeted census confirms by
+re-running the scenarios for every rewired surface.
+
+**A grouped mobile can lead a group, and the port rendered it as a follower.**
+`print_group`'s head arm has no `IS_NPC` check (`src/act.other.c:651-660`): it
+prints `k`'s real stats and `CLASS_ABBR(k)`, which is the literal `"--"` for an
+NPC (`src/utils.h:570`). The dashes row (line 669) is inside the **follower**
+loop only. The port's `sendGroupMemberLine` showed dashes for any mobile,
+including a leader, and `printGroup` bailed before that with an invented
+`Your group leader is not online.` — a string C does not have anywhere, already
+recorded in the triage baseline as `bug:invented`.
+
+The fix resolves the leader to either body type and gives a mobile leader C's
+head row; the unresolvable-name case now falls back to the viewer, which is C's
+`k = (ch->master ? ch->master : ch)` null arm, instead of the invented message.
+Proof: `TestGroupListMobileLeaderShowsRealStats`, scratch-broken to confirm it
+fails (R5h) — restoring the dashes row produced
+`     [---H ---M ---V] [-- --] a guard` where C prints
+`     [ 40H   5M  12V] [ 9 --] a guard (Head of group)`.
+
+**F9 — the port could not run `group` as a mobile, and `force` hid it (FIXED in §17, R1/R4).**
+Reaching the mobile-leader state needs `do_group` to run as the mobile, because
+`perform_group` is the only thing in the tree that sets `AFF_GROUP`
+(`src/act.other.c:629`; no mobprog or spec proc sets it) and the viewer has to be
+enrolled by its own master. C reaches that through `do_force`, which resolves its
+target with `get_char_vis` — mobiles included — and hands the command to
+`command_interpreter(vict, to_force)` (`src/act.wizard.c:1869-1880`). The port's
+`cmdForceText` resolved mobiles too, but dispatched through
+`executeCharacterCommand`, whose surface had no `group`; an unsupported command was
+dropped with a `slog.Warn` after the forcer had already been told `Okay.`
+(`pkg/session/wiz_communication.go:221-223`).
+
+A `keep-ansi` scenario built exactly as C's transcript requires
+(`force Grouppeer follow generic`, `force generic group Grouppeer`) proved the
+gap: C answered the follower's `group` with
+`Your group consists of:` and a row, while the port answered
+`But you are not the member of a group!` because the mobile's `group` never ran.
+The run is retained at `oracle-runs/2026-10-30/group-mobile-leader`, whose
+`census-dump/` carries the scenario; it is now committed as
+`group-mobile-run-group-depth` and green (§17). The general shape of F9 is larger
+than `group` — C's `do_force` runs *any* command as a mobile, and the port's mobile
+command surface is a partial registry that fails silently behind a success
+message — and the rest of that class is recorded in
+`docs/fidelity/depth/handoff/2026-10-31-force-mobile-command-surface.md`.
+
+So this row's coverage is unit-level on purpose: the state is reachable in C but
+not currently reachable in the port, which is exactly why the port's wrong branch
+had gone unnoticed. It is latent, not dead — the moment `group` joins the mobile
+command surface, the head row must already be right.
+### The leader lookup is a body, not a name (R3)
+
+`groupLeaderActor` resolved the leader with `GetMobByName`, which matches a
+**substring** over a map-ordered slice: with two NPCs sharing a name it could pick
+the wrong one, and the pick changed from run to run. C never resolves `ch->master`
+that way — it is a live pointer — and `k->followers` is that body's own list.
+`printGroup` now uses two exported body-identity accessors: `World.FollowingActor`
+(the retained leader, via `combatFollowingBody`, falling back to a uniquely named
+player) and `World.FollowersOf`. The follower list had the same defect —
+`GetFollowerActors` matches by name, so two duplicates' lists merged — and
+`FollowersOf` fixes it for this command; the other name-based callers still need
+their own audit.
+
+`TestGroupListResolvesTheFollowedDuplicateNpc` spawns two guards with the same
+name and different stats, has an unrelated player follow the first and the viewer
+follow the second, and asserts the head row is the *second* guard's and that the
+first guard's follower is absent. Run against the pre-fix resolution it fails all
+three assertions at once:
+
+```
+head row is not the followed duplicate: "…[ 10H   1M   2V] [ 3 --] a guard (Head of group)…"
+head row resolved the other same-named guard: "…[ 10H   1M   2V] …"
+follower list merged both same-named guards: "…[100H 100M   0V] [ 5 Mu] Bystander…"
+```
+
+### One colour definition, now across packages too (R5c)
+
+§14 above folded the seven copies *inside* `pkg/session`, but `pkg/game` kept its
+own `colorLevel`, `observationColors` and `completeObservationColor`, plus its own
+copy of the K* codes — so the same thresholds were still defined twice, one
+package apart, and neither could see the other drift. The gate bugs in §11 and §12
+came from exactly that re-derivation.
+
+The definitions now live in a new leaf package, **`pkg/screen`** (named for
+`src/screen.h`): the K* codes, C's four levels, `Level`/`LevelFromFlags`, the
+`SparseOn`/`NormalOn`/`CompleteOn` predicates and `Wrap`. `pkg/session` and
+`pkg/game` each keep a one-line adapter for their own flag word or `*Player`, so
+call sites did not move, but there is now **one** place where C's arithmetic is
+written down. `pkg/game`'s ANSI names alias `pkg/screen`'s constants rather than
+repeating the bytes.
+
+### Evidence
+
+- Full `go test ./...`, `go vet ./...`, `golangci-lint` (0 issues), gofumpt,
+  deadcode ratchet and `make fidelity-depth` on the rebased commit.
+- Targeted census re-running every surface either package colours: 13 scenarios
+  (stat, score, who, report, group, infobar, prompt/pager, redit, display,
+  terminal colours), `verdict=CLEAN`, `draw_divergent=0`.
+- The duplicate-NPC test above, scratch-broken against the pre-fix resolution.
+
+
+
+## 15. `look`'s own colour, and two sites that are dead in C (2026-10-30)
+
+Queue item 6's last piece. The inventory attributes **four** C_CMP sites to
+`look`, split across two functions. Two are reachable, two are not.
+
+**`look_at_char`'s tattoo line (reachable, already correct).** C wraps the word
+"glows" in `CCWHT(ch, C_CMP)` … `CCNRM(ch, C_CMP)`
+(`src/act.informative.c:415-417`). The port already emitted `KWHT` and `KNRM` at
+exactly that gate, so the bytes were right; what was wrong was the *spelling* — a
+raw `"\x1b[37m"` and a hand-rolled reset, from before §14 gave the port one place
+to name these. It now reads `screen.Wrap("glows", screen.KWHT, screen.CompleteOn(...))`.
+Byte-identical, and `look-char-color-depth` proves it raw:
+
+```
+complete  On her right arm is a tattoo of a green dragon... it \x1b[37mglows\x1b[0m softly.
+off/sparse/normal  On her right arm is a tattoo of a green dragon... it glows softly.
+```
+
+**`list_char_to_char`'s infravision line is dead in C.** Its two sites wrap "red"
+in `CCRED(ch, C_CMP)` … `CCNRM(ch, C_CMP)` (`src/act.informative.c:646-650`), and
+the port has no equivalent. It does not need one:
+
+```c
+/* look_at_room, src/act.informative.c:731-732 */
+if ((IS_DARK(ch->in_room) && !CAN_SEE_IN_DARK(ch)) || (IS_AFFECTED(ch, AFF_BLIND)))
+    ... send the dark/blind message and return ...
+...
+list_char_to_char(world[ch->in_room].people, ch);   /* line 835, the only call */
+```
+
+The branch requires `IS_DARK(ch->in_room) && !CAN_SEE_IN_DARK(ch)`
+(lines 643-644), which is precisely the condition that returns before line 835,
+and line 835 is `list_char_to_char`'s **only** caller in the tree. So those two
+C_CMP sites can never reach a player, and R4 forbids inventing output for them.
+
+The **reachable** eyes line is a different one — `look_at_room`'s dark branch at
+line 755, `"You see a pair of glowing red eyes.\r\n"`, which is **uncoloured** in
+C — and `appendDarkOccupants` already matches it, including the
+`"You hear someone or something moving around nearby."` fallback at line 759.
+This is the first pair of sites in the audit whose disposition is *unreachable*
+rather than "unproven": the distinction matters, because the port would have to
+add colour to reproduce them, and adding colour C never emits is exactly the
+class R4 exists to stop.
+
+### Evidence
+
+- `look-char-color-depth` (new, `keep-ansi`): the God walks all four levels in
+  room 8162, looking at the room and at a tattooed peer (`set <peer> tattoo 1`).
+  Room 8162 was chosen because it has **no extra descriptions**: C's
+  `do_description` linePrefix space only appears in rooms that have them, and
+  keeping it out of this transcript leaves the exit-line proof in
+  `exits-auto-exits-color-depth` to stand on its own. Targeted census
+  `look-char-color` at `08782cf9b`: `passed=1 failed=0 verdict=CLEAN`.
+- I checked the captured blocks rather than trusting the verdict — the white
+  sandwich is present at `complete` and absent at the other three levels. The
+  exits vehicle had passed once while deliberately broken, so a green alone is
+  not evidence here.
+- Unit proof (R5h): `TestLookAtCharTattooColorLevelsMatchC`, a four-level table
+  that also asserts no `KWHT` appears below C_CMP.
+- The dead-branch claim was verified by reading `look_at_room`'s early return and
+  grepping `list_char_to_char`'s call sites, not by trusting the inventory (R5e).
+
+
+
+## 16. F12 — where `do_description`'s trailing space actually goes (2026-10-30)
+
+C's `do_description` sends the room description **with a space appended**, as one
+write, whenever the room has extra descriptions
+(`src/act.informative.c:2773-2804`):
+
+```c
+if (num_extras == 0) { send_to_char(description, ch); return; }
+sprintf(buf2, "%s ", description);
+...
+send_to_char(buf2, ch);
+```
+
+The description ends with a newline, so that space is the first byte of the **next
+line**, and the next thing `look_at_room` writes is whichever comes first: the
+auto-exit line when `PRF_AUTOEXIT` is on (line 820), or the `CCGRN` bracket that
+opens the object list (line 823). Two consequences the port had wrong:
+
+- It modelled the space as a `linePrefix` carried onto "the next line", but
+  `ObservationResult.bare` — the bracket write — deliberately did **not** consume
+  it, so it survived past the green and yellow brackets and landed on the first
+  character-list entry. That is F12.
+- With colour off the brackets are empty strings, so the port queued nothing and
+  the space was carried even further. C's `send_to_char("")` writes nothing and
+  the space simply stands alone.
+
+The fix makes `bare` consume the prefix like `literal` and `raw` already did, and
+emit it even when its own text is empty. `look-char-color-depth`'s sibling,
+`look-description-space-depth`, pins both placements in one probe: the actor keeps
+its exit line (space before the exits line) and the peer's autoexit is toggled off
+(space before the green bracket).
+
+### Evidence
+
+- `look-description-space-depth` (new, `keep-ansi`) in room 11269, which has an
+  extra description and therefore a space to place. **The vehicle was verified
+  both ways**: with `bare` reverted to its pre-fix form the census goes RED with
+  exactly F12's divergence, three times over (one per colour level) —
+
+  ```
+   C: \x1b[32m\x1b[33mSpacepeer the Warrior is standing here.
+  Go: \x1b[32m\x1b[33m Spacepeer the Warrior is standing here.
+  ```
+
+  — and with the fix it is CLEAN. Two earlier versions of this scenario passed
+  while broken, which is why the can-fail run is part of the record rather than an
+  afterthought.
+- Unit proof (R5h): `TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets`, four
+  subtests — complete colour (space before the green bracket), colour off (the lone
+  space, list lines clean), autoexit on (space before the exit line), and a room
+  with no extra descriptions (no space at all, matching C's early return).
+- The first attempt at the scenario was an infrastructure failure, not a signal:
+  the character name `F12config` contains digits, which C's creation rejects
+  (`setup step 11 read after "": EOF`). Worth recording because the wrapper
+  reports it as `infra=1`, and an infra row is not a divergence.
+
+## 17. F9 — a mobile can run `group`, and one implementation does it (2026-10-31)
+
+C's `do_force` hands the line to `command_interpreter` for **any** body
+(`src/act.wizard.c:1869-1880`), so `force <mob> group <player>` runs `do_group` as
+that mobile. That is the only route to a mobile-leader group: `perform_group` is
+the only thing in the tree that sets `AFF_GROUP` (`src/act.other.c:629`) and a
+follower's enrolment has to come from its own master.
+
+The port resolved the mobile fine and then dispatched through
+`executeCharacterCommand`, whose registry had no `group`; an unsupported command
+was dropped with a `slog.Warn` **after** the forcer had already been told `Okay.`
+(`pkg/session/wiz_communication.go:221-223`). The forcer had no way to tell a
+command that ran from one that did not, and the follower's own `group` answered
+`But you are not the member of a group!` where C answers with its listing.
+
+### The fix
+
+`pkg/game/group.go` now holds the body-agnostic implementation:
+`PerformGroup` (C's `perform_group`), `GroupCommand` (C's `do_group`, returning
+`false` for the empty argument so the caller can render the session-owned
+listing), plus `GroupedActor`/`SetGroupedActor`, `FollowsBody`,
+`followersOfInRoom` and `resolveRoomActor`. `pkg/session`'s `cmdGroup` and the
+`do_ungroup` paths delegate to them, and a new `registerActorCommand("group", …)`
+puts the command on the mobile surface next to `report`.
+
+Two things fell out of doing it that way rather than bolting a second
+implementation onto the mobile side:
+
+- **One `do_group`, not two.** The player command was a session-shaped port of
+  the same C function; leaving it in place and adding a mobile copy would have
+  re-created the split this audit keeps finding. The session handler is now a
+  four-line delegation.
+- **The follower gate is identity-based.** `do_group`'s `vict->master != ch` test
+  is a pointer comparison in C, so it now uses `World.FollowsBody` (the retained
+  body) instead of the name comparison the player path had, which two same-named
+  NPCs could satisfy for each other (R3).
+
+### Evidence
+
+- `group-mobile-run-group-depth` (new, `keep-ansi`): the exact transcript the F9
+  evidence was found with — `force Grouppeer follow generic` then
+  `force generic group Grouppeer`, and the follower's `group` at three colour
+  levels. **Verified both ways**: with the mobile registration removed the census
+  is RED with exactly F9's divergence —
+
+  ```
+   C: Your group consists of:
+        [\x1b[32m 22\x1b[0mH \x1b[32m100\x1b[0mM \x1b[32m 86\x1b[0mV] [ 1 \x1b[32mWa\x1b[0m] Grouppeer
+  Go: But you are not the member of a group!
+  ```
+
+  — and with the fix it is CLEAN.
+- Unit proof (R5h): `TestForceMobileRunsGroupAndEnrolsTheFollower` drives
+  `cmdForce(actor, {"guard", "group Follower"})`, asserts C's `Okay.`, the
+  follower's `AFF_GROUP`, `perform_group`'s TO_VICT line, and the follower's own
+  listing. With the registration removed it fails at the first assertion:
+  "the mobile's group did not enrol the follower: the forced command was dropped".
+- A regression census over the group and force scenarios, because the player
+  command now runs through the shared body.
+
+### Review follow-ups: two send gates and the shadowing arm (2026-10-31)
+
+Two more divergences in the same command, found in review after §17 landed.
+
+**Two of `do_group`'s answers are `send_to_char`, not `act()`.** `group` is a
+`POS_SLEEPING` command (`src/interpreter.c:471`), and C answers two of its cases
+with a direct write — the `NOPERSON` line and `"Everyone following you here is
+already in your group."` (`src/act.other.c:714-720`). `send_to_char` writes
+straight to the descriptor (`src/comm.c:2335-2339`), so **a sleeping leader reads
+both**; the port sent them with `Act(...ToChar)`, whose `SENDOK` gate drops a
+recipient at or below `POS_SLEEPING`.
+
+The primitive itself was the problem: `game.SendToChar` was implemented as
+`Act(nil, false, ch, nil, nil, nil, format, "", ToChar)`, so it carried the very
+gate its name says it does not. It is now C's `send_to_char` — a direct write,
+with the empty/absent-recipient guard C has — and `GroupCommand` uses it for both
+sites. The other callers (`spec_procs2.go`'s remorter, whose C source is
+`send_to_char` at `src/spec_procs2.c:728`; the two anti-abuse notices in
+`act_comm.go`) get the same treatment.
+
+**The single-target gate was missing its shadowing arm.** C's gate is
+`((vict->master != ch) && (vict != ch)) || IS_SHADOWING(vict)`
+(`src/act.other.c:721`). A shadowing follower still has the master link, so only
+the `IS_SHADOWING` arm refuses it — `AFF_DODGE`, which `do_follow`'s quiet path
+sets. The session-era implementation checked the master link alone and enrolled
+the shadowing follower anyway. This is the second time in this command that a
+name-or-link test stood in for C's pointer semantics (the first was the leader
+lookup in §14).
+
+### Evidence
+
+- `group-sleeping-send-to-char-depth` (new, `keep-ansi`): a player enrols itself
+  with `group all`, repeats it with nothing left to enrol, asks for a name that
+  does not resolve, then `sleep`s and repeats both. The captured bytes show C
+  answering all four, including the two from the sleeping position.
+  **Verified both ways**: with `SendToChar` gated again the census is RED with
+  exactly those two lines missing from the transcript, and with the fix it is
+  CLEAN.
+- Unit proofs (R5h): `TestGroupSleepingLeaderReadsTheSendToCharAnswers` (both
+  `send_to_char` answers read by a `POS_SLEEPING` leader) and
+  `TestGroupRefusesAShadowingFollowerByName` (a shadowing follower is refused and
+  stays ungrouped). **Both were run against a pristine `origin/main` worktree and
+  fail there**: the sleeping leader reads `""` in both cases, and the shadowing
+  follower is told `"Shadower is now a member of your group."` instead of the
+  refusal.
+- Targeted census over the group and force set — sixteen scenarios, the fifteen
+  from §17 plus the new one: `passed=16 failed=0 verdict=CLEAN`.
 

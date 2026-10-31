@@ -73,6 +73,14 @@ jobs:
     - name: String census ratchet
       run: make string-census
 
+    # Ignored-Go-files gate (R5h): `go list` drops a file whose name ends in a
+    # GOOS/GOARCH token — x_arm_test.go reads as GOARCH=arm and is excluded on
+    # amd64 — so the tests inside it never run and nothing fails. Every ignored
+    # file must be allowlisted in scripts/check_ignored_go_files.py with the tag
+    # that justifies it. Stdlib-only, about half a second.
+    - name: Ignored Go files
+      run: make check-ignored-go
+
     # Deadcode ratchet (R5b): the unreachable-from-everything set only
     # shrinks; a new entry must be wired, deleted, or baselined with a
     # class (d) reason. Whole-module invocation with deadcode pinned in the

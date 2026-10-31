@@ -194,13 +194,14 @@ func canSeeWithHide(observer, subject Actor, hide bool) bool {
 		}
 	}
 
-	// 4. Hiding check — this is a Go room-visibility extension and is not part
-	// of C's CAN_SEE macro, so PERS() opts out via canSeeForPers.
-	if hide && sbjSub.IsAffected(affHide) {
-		if !obsSub.IsAffected(affSenseLife) {
-			return false
-		}
-	}
+	// AFF_HIDE is NOT part of C's CAN_SEE (src/utils.h:521-530): a hidden
+	// character is targetable, act()-visible and pursuable — only
+	// list_char_to_char suppresses it (src/act.informative.c:637-643), and
+	// that filter lives at the listing sites. The hide arm that used to live
+	// here made every hidden body untargetable in the port (a hidden
+	// prototype mob could not be forced, statted or hit while C's
+	// get_char_room_vis found it, src/handler.c:1277-1300).
+	_ = hide
 
 	return true
 }
@@ -736,7 +737,13 @@ func (w *World) actChar(roomVNum int) []Actor {
 // Convenience wrappers
 // --------------------------------------------------------------------------
 
-// SendToChar sends a formatted message to just ch.
-func SendToChar(ch Actor, format string) {
-	Act(nil, false, ch, nil, nil, nil, format, "", ToChar)
+// SendToChar is C's send_to_char (src/comm.c:2335-2339): a direct write to the
+// character's descriptor, with no act() substitution and no SENDOK gate, so it
+// reaches a sleeping or writing recipient. Callers that want C's act() gate use
+// Act(...ToChar) instead.
+func SendToChar(ch Actor, messg string) {
+	if ch == nil || messg == "" {
+		return
+	}
+	ch.SendMessage(messg)
 }

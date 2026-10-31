@@ -1,0 +1,65 @@
+# C-first raw-byte proof that do_group's two send_to_char answers reach a sleeping
+# leader.
+#
+# group is a POS_SLEEPING command (src/interpreter.c:471), and do_group answers
+# two of its cases with send_to_char rather than act():
+#
+#   if (!found)
+#     send_to_char("Everyone following you here is already in your group.\r\n", ch);
+#   ...
+#   if (!(vict = get_char_room_vis(ch, buf)))
+#     send_to_char(NOPERSON, ch);
+#
+# (src/act.other.c:714-720). send_to_char writes straight to the descriptor
+# (src/comm.c:2335-2339), so a sleeping leader reads both; act(...TO_CHAR) would
+# drop them through SENDOK's position gate, which is what the port did.
+#
+# The probe enrols the leader with the first "all" (no message), then repeats it
+# with nothing left to enrol, then asks for a name that does not resolve — awake,
+# then asleep, so the transcript pins the gate in both states.
+#
+# depth-case: group.sleeping-send-to-char-raw
+
+[fixture]
+empty-players
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Sleepgroup
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sleepgroup
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+group all
+group all
+group Nobody
+sleep
+group all
+group Nobody

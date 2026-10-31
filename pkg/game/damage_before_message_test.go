@@ -49,7 +49,7 @@ func TestDamageNewbieExperienceBeforeMessage(t *testing.T) {
 	mob.SetLevel(5)
 	before := p.GetExp()
 	seen := false
-	w.ApplySkillDamageWithMessage(p, mob, 3, SkillKick, func(int) {
+	w.ApplySkillDamageWithMessage(p, mob, 3, SkillKickNum, func(int) {
 		seen = true
 		if got := p.GetExp() - before; got != 15 {
 			t.Fatalf("newbie XP before message=%d want 15", got)
@@ -61,13 +61,13 @@ func TestDamageNewbieExperienceBeforeMessage(t *testing.T) {
 	// The source condition excludes level 2 and self-damage.
 	p.SetLevel(2)
 	before = p.GetExp()
-	w.ApplySkillDamage(p, mob, 3, SkillKick)
+	w.ApplySkillDamage(p, mob, 3, SkillKickNum)
 	if p.GetExp() != before {
 		t.Fatal("level 2 got newbie XP")
 	}
 	p.SetLevel(1)
 	p.SetHP(100)
-	w.ApplySkillDamage(p, p, 3, SkillKick)
+	w.ApplySkillDamage(p, p, 3, SkillKickNum)
 	if p.GetExp() != before {
 		t.Fatal("self-damage got newbie XP")
 	}
@@ -140,7 +140,7 @@ func TestNeutralRescueDamageTailClass(t *testing.T) {
 				p.SetPosition(combat.PosStunned)
 				spells.MagDamage(30, mob, p, spells.SpellFrostBreath, 0, w)
 			case "numbered skill":
-				if w.ApplySkillDamageWithMessage(mob, p, 40, SkillKick, func(int) { messages++ }) {
+				if w.ApplySkillDamageWithMessage(mob, p, 40, SkillKickNum, func(int) { messages++ }) {
 					t.Fatal("rescue returned TRUE")
 				}
 			}
@@ -164,7 +164,7 @@ func TestNeutralRescueActorAndMount(t *testing.T) {
 	mount.SetFollowing(p.Name)
 	mount.SetAffected(affMounted)
 	out := captureOutput(w)
-	if w.ApplySkillDamageWithMessage(caster, p, 40, SkillKick, func(int) { t.Fatal("skill message after rescue") }) {
+	if w.ApplySkillDamageWithMessage(caster, p, 40, SkillKickNum, func(int) { t.Fatal("skill message after rescue") }) {
 		t.Fatal("rescue returned TRUE")
 	}
 	if got := outputOf(out, caster.Name); got != "Victim is saved by the powers of the gods!\r\n" {
@@ -219,7 +219,7 @@ func TestSkillDamageNilAttacker(t *testing.T) {
 	w, p, _ := damageRescueWorld(t)
 	p.SetRoom(8004)
 	p.SetHP(100)
-	if !w.ApplySkillDamage(nil, p, 3, SkillKick) || p.GetHP() != 97 {
+	if !w.ApplySkillDamage(nil, p, 3, SkillKickNum) || p.GetHP() != 97 {
 		t.Fatalf("source-less skill HP = %d, want 97", p.GetHP())
 	}
 }

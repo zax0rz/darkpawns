@@ -33,8 +33,14 @@ type MobInstance struct {
 	ID        int // World-assigned instance ID
 
 	// Current state
-	alive    atomic.Bool // CRIT-004: fast alive check without acquiring mu
-	RoomVNum int         // -1 if not in a room (carried, etc.)
+	alive atomic.Bool // CRIT-004: fast alive check without acquiring mu
+	// redeathClaim keeps do_kill's second death single-shot under concurrent
+	// swings (DP-963 discipline): a body raw_kill flagged while still standing
+	// dies once more through damage() (src/fight.c:1318-1345, 1634-1691), and
+	// C's own gate — POS_DEAD set by the second die_with_killer
+	// (src/fight.c:617) — is not atomic here.
+	redeathClaim atomic.Bool
+	RoomVNum     int // -1 if not in a room (carried, etc.)
 	// RoomEntrySequence mirrors char_to_room's prepend order for room looks.
 	// Higher values are newer arrivals and therefore appear first.
 	RoomEntrySequence uint64
@@ -608,13 +614,56 @@ func (m *MobInstance) UnequipItem(position int) *ObjectInstance {
 func (m *MobInstance) GetAC() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+	ac, _, _ := m.mobilePointTotalsLocked()
+	return ac
+}
+
+// mobilePointTotalsLocked computes C's aff_abils points for a mobile: the
+// base (wizard-set override or prototype) plus every equipment affect and
+// every timed affect record with APPLY_AC / APPLY_HITROLL / APPLY_DAMROLL.
+// C's affect_modify and affect_total run for NPCs exactly as for players
+// (src/handler.c:289-335, :337-372) — affect_to_char's berserk records are
+// what move a berserked mobile's GET_AC/GET_HITROLL/GET_DAMROLL, and a
+// cursed or poisoned mobile's hit/dam rolls shift the same way. The port's
+// getters used to read only the override/prototype, so every such affect
+// was inert in a mobile's combat math (the fighter-round draw split).
+func (m *MobInstance) mobilePointTotalsLocked() (ac, hitroll, damroll int) {
 	if m.Runtime.ACOverride != nil {
-		return *m.Runtime.ACOverride
+		ac = *m.Runtime.ACOverride
+	} else if m.Proto() != nil {
+		ac = m.Proto().AC
 	}
-	if m.Proto() != nil {
-		return m.Proto().AC
+	if m.Runtime.HitrollOverride != nil {
+		hitroll = *m.Runtime.HitrollOverride
+	} else if m.Proto() != nil {
+		hitroll = 20 - m.Proto().THAC0
 	}
-	return 0
+	damroll = m.Runtime.DamrollBonus
+	if m.Runtime.DamrollOverride != nil {
+		damroll += *m.Runtime.DamrollOverride
+	}
+	add := func(location, modifier int) {
+		switch location {
+		case ApplyAC:
+			ac += modifier
+		case ApplyHitroll:
+			hitroll += modifier
+		case ApplyDamroll:
+			damroll += modifier
+		}
+	}
+	// Equipment affects are already folded into the Runtime overrides by the
+	// equip pipeline (mobile_equipment.go refreshes HitrollOverride and
+	// DamrollBonus on every change); re-adding them here would double-count.
+	// Only the timed affect records were missing from the getters.
+	for _, value := range m.CustomData {
+		if af, ok := value.(*engine.Affect); ok {
+			add(af.Location, af.Magnitude)
+		}
+	}
+	// C stores hit and dam rolls as sbytes (structs.h:917); the accumulated
+	// total wraps exactly as affect_total's add/remove cycles do.
+	return ac, sbyteValue(hitroll), sbyteValue(damroll)
 }
 
 // GetLevel returns the mob's effective level (override or prototype).
@@ -937,7 +986,16 @@ func (m *MobInstance) GetName() string {
 
 // SendMessage sends a message to the mob (no-op for mobs, but needed for interface).
 func (m *MobInstance) SendMessage(msg string) {
-	// Mobs don't receive messages
+	// C send_to_char writes to ch->desc (comm.c): a descriptorless mobile is
+	// a silent no-op, and a mobile a wizard SWITCHed onto delivers to that
+	// wizard's connection. Descriptor ownership is only ever non-nil for a
+	// switched body, so this stays a no-op for every ordinary mobile.
+	if m.world == nil || m.world.MobileMessageSink == nil || m.world.MobileDescriptorOwner == nil {
+		return
+	}
+	if m.world.MobileDescriptorOwner(m) != nil {
+		m.world.MobileMessageSink(m, []byte(msg))
+	}
 }
 
 // GetWaitState returns the mob's remaining wait state in PULSE_VIOLENCE ticks.
@@ -1076,29 +1134,20 @@ func (m *MobInstance) GetCha() int {
 func (m *MobInstance) GetHitroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	if m.Runtime.HitrollOverride != nil {
-		return sbyteValue(*m.Runtime.HitrollOverride)
-	}
-	total := 0
-	if m.Proto() != nil {
-		total = 20 - m.Proto().THAC0
-	}
-	return sbyteValue(total)
+	_, hitroll, _ := m.mobilePointTotalsLocked()
+	return hitroll
 }
 
-// GetDamroll returns the mob's damroll bonus from equipment
-// Sums APPLY_DAMROLL (location 19) from all equipped items. C's GET_DAMROLL is
-// points.damroll, an sbyte (src/structs.h:917), so the accumulated value wraps
-// to it exactly as affect_total's add/remove cycles do.
+// GetDamroll returns the mob's damroll: base (override + equip bonus) plus
+// every APPLY_DAMROLL affect record, as C's affect_total recomputes it
+// (src/handler.c:337-372). GET_DAMROLL is points.damroll, an sbyte
+// (src/structs.h:917), so the accumulated value wraps exactly as
+// affect_total's add/remove cycles do.
 func (m *MobInstance) GetDamroll() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	total := 0
-	if m.Runtime.DamrollOverride != nil {
-		total = *m.Runtime.DamrollOverride
-	}
-	total += m.Runtime.DamrollBonus
-	return sbyteValue(total)
+	_, _, damroll := m.mobilePointTotalsLocked()
+	return damroll
 }
 
 // GetStrAdd returns the mob's strength add

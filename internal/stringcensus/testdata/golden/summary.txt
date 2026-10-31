@@ -18,7 +18,7 @@ BroadcastToRoom	0	SessionManager.BroadcastToRoom, socket-level room broadcast (2
 Send	2	Session.Send and wrapper sessions (679 call sites)
 SendMessage	4	Player/MobInstance.SendMessage (599 call sites)
 SendToAll	0	World.SendToAll and SessionManager.SendToAll (10 call sites)
-SendToChar	0	act.go:600 SendToChar(): one-line Act(ToChar) wrapper
+SendToChar	0	act.go:744 SendToChar(): C send_to_char, a direct descriptor write with no SENDOK gate; callers supply their own line ending
 SendToOutdoor	0	SessionManager.SendToOutdoor, weather broadcast
 SendToRoom	0	World.SendToRoom and act.go SendToRoom(): room broadcast (24 call sites)
 SendToVict	0	act.go:605 SendToVict(): one-line Act(ToVict) wrapper

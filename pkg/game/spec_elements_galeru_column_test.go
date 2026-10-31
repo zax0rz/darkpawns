@@ -18,7 +18,13 @@ func newGaleruColumnTestWorld(t *testing.T) (*World, *Player, *Player, *MobInsta
 		{VNum: 1380, Name: "Fire Corner"},
 		{VNum: 1384, Name: "Water Corner"},
 		{VNum: 1372, Name: "Galeru Column", Description: "The four corners surround the column."},
-		{VNum: 1389, Name: "Temple of Elements", Description: "The altar of elements stands here."},
+		// 1389 carries an extra description in the shipped world (lib/world/wld/13.wld),
+		// which is what makes do_description append its trailing space — the byte
+		// that ends up in front of the peer's arrival line.
+		{
+			VNum: 1389, Name: "Temple of Elements", Description: "The altar of elements stands here.",
+			ExtraDescs: []parser.ExtraDesc{{Keywords: "altar", Description: "A great altar to the elements."}},
+		},
 		{VNum: 1395, Name: "Tropical Island", Description: "A tropical island surrounds you."},
 	}
 	objs := make([]parser.Obj, 0, 4)
@@ -104,6 +110,10 @@ func TestSpecElementsGaleruColumn_RequiresAllExactTalismans(t *testing.T) {
 func TestSpecElementsGaleruColumn_AudienceLookAndRelocation(t *testing.T) {
 	w, actor, peer, npc, messages := newGaleruColumnTestWorld(t)
 	placeAllGaleruTalismans(t, w)
+	// The look's bare bracket writes (which carry do_description's trailing
+	// space) go to a separate sink from act() output; capture both.
+	literal := make(map[string]string)
+	w.LiteralMessageSink = func(name string, msg []byte) { literal[name] += string(msg) }
 
 	if !specElementsGaleruColumn(w, actor, nil, "say", "hello") {
 		t.Fatal("complete talisman set should be consumed")
@@ -123,9 +133,16 @@ func TestSpecElementsGaleruColumn_AudienceLookAndRelocation(t *testing.T) {
 	if got := messages[actor.GetName()]; strings.Contains(got, "GaleruCarrier is struck") {
 		t.Errorf("actor received own departure: %q", got)
 	}
-	if !strings.Contains(messages[actor.GetName()], "GaleruPeer materialises from nowhere in a swirl of colors.") {
-		t.Errorf("actor missing peer arrival: %q", messages[actor.GetName()])
+	if got := messages[actor.GetName()]; !strings.Contains(got, "GaleruPeer materialises from nowhere in a swirl of colors.") {
+		t.Errorf("actor missing peer arrival: %q", got)
 	}
+	// The arrival act is C's exact format, with no leading space
+	// (src/spec_procs3.c:1181). The one space in front of it is do_description's
+	// trailing space, written as the first byte of the next line when the
+	// destination room lists extra descriptions (src/act.informative.c:2779), and
+	// the look emits it through its bare bracket write. A second space means the
+	// act re-added a byte the look already wrote.
+	assertPeerArrivalLine(t, literal[actor.GetName()], messages[actor.GetName()])
 	if !strings.Contains(messages[peer.GetName()], "GaleruCarrier is struck by four beams of colored light and slowly vanishes!") {
 		t.Errorf("peer missing actor departure: %q", messages[peer.GetName()])
 	}
@@ -135,6 +152,29 @@ func TestSpecElementsGaleruColumn_AudienceLookAndRelocation(t *testing.T) {
 	if got := npc.GetRoom(); got != 1372 {
 		t.Errorf("NPC room = %d, want 1372", got)
 	}
+}
+
+// assertPeerArrivalLine pins both halves of C's byte stream: the destination
+// look writes do_description's trailing space as the first byte of the next line
+// (src/act.informative.c:2779), and the arrival act that follows carries no
+// leading space of its own (src/spec_procs3.c:1181). Exactly one space, from
+// exactly one writer.
+func assertPeerArrivalLine(t *testing.T, literal, messages string) {
+	t.Helper()
+	const arrival = "GaleruPeer materialises from nowhere in a swirl of colors."
+	if got := strings.Count(literal, " "); got != 1 {
+		t.Errorf("look's bare writes = %q, want exactly one space (do_description's trailing space)", literal)
+	}
+	for _, line := range strings.Split(messages, "\n") {
+		if !strings.Contains(line, "materialises from nowhere") {
+			continue
+		}
+		if got := strings.TrimRight(line, "\r"); got != arrival {
+			t.Errorf("peer arrival line = %q, want %q — the space belongs to the look, not the act", got, arrival)
+		}
+		return
+	}
+	t.Errorf("no peer arrival line in %q", messages)
 }
 
 func TestSpecElementsGaleruColumn_RejectsNilActor(t *testing.T) {

@@ -1,0 +1,49 @@
+# depth-case: spell.retaliation-poison-aggro
+# Both poison arms: a made save refuses with NOEFFECT + hit(victim, ch)
+# (src/magic.c:1091); a failed save applies the affect and the aggro tail
+# hits after the message block (src/magic.c:1106, 1421). Saving seeds prove
+# the refusal arm, failing seeds the applied arm.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 9922 1 8105 99
+
+[setup:oracle]
+Retalgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retalgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Retalgod class mage
+skillset Retalgod 'poison' 100
+set Retalgod maxmana 5000
+set Retalgod mana 5000
+
+[probe]
+cast 'poison' incubus
+~dpclock pulse 20
+

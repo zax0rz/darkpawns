@@ -1,0 +1,49 @@
+# depth-case: spell.retaliation-blindness-save
+# A saving NPC victim retaliates: C magic.c:938-948 refuses a made blindness
+# save with 'Your magic fades, then dies out totally.' and hit(victim, ch)
+# (src/magic.c:945). The incubus (9922, level 28) saves on most seeds; the
+# retaliation's swing and its violence rounds follow.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 9922 1 8105 99
+
+[setup:oracle]
+Retalgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retalgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Retalgod class mage
+skillset Retalgod 'blindness' 100
+set Retalgod maxmana 5000
+set Retalgod mana 5000
+
+[probe]
+cast 'blindness' incubus
+~dpclock pulse 20
+

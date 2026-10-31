@@ -105,9 +105,20 @@ func init() {
 
 	// Combat
 	registerCommand("hit", wrapArgs(cmdHit), "Attack a target.")
+	// C's command_interpreter runs the same do_hit body for NPCs under "hit"
+	// and its "murder" alias, and do_kill delegates to do_hit for every NPC
+	// (src/act.offensive.c:134-137), so force/order reach the actor lane for
+	// all three names (R2e; taught by the teleport_victim NPC-refusal probe,
+	// whose forced stalker swing was dropped as unsupported).
+	hitActor := func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
+		return game.CharacterHit(ctx)
+	}
+	registerActorCommand("hit", hitActor)
 	registerCommand("murder", wrapArgs(cmdHit), "Attack a target (C alias of hit).")
+	registerActorCommand("murder", hitActor)
 	registerCommand("parry", wrapArgs(cmdParry), "Enter a defensive parry position.")
 	registerCommand("kill", wrapArgs(cmdKill), "Kill a target (immortal instakill).")
+	registerActorCommand("kill", hitActor)
 	registerCommand("flee", wrapNoArgs(cmdFlee), "Attempt to flee from combat.")
 	registerActorCommand("flee", func(ctx game.CharacterCommandContext, _ string, _ []string) game.CharacterCommandResult {
 		return game.CharacterFlee(ctx)
@@ -409,6 +420,15 @@ func init() {
 	registerCommand("save", wrapArgs(cmdSave), "Save your character.")
 	registerCommand("report", wrapArgs(cmdReport), "Show report of your surroundings.")
 	registerActorCommand("report", npcActorHandler(func(w *game.World, mob *game.MobInstance, _ string) { w.NPCReportCommand(mob) }))
+	// C's do_force hands the line to command_interpreter for any body, so a
+	// mobile can be forced or ordered to run group exactly as a player can
+	// (src/act.wizard.c:1869-1880; src/act.other.c:685-740). The port's mobile
+	// surface had no group, so the command was accepted and then dropped (F9).
+	// The bool is C's print_group branch, whose output is TO_CHAR to the mobile
+	// and therefore has no descriptor to reach.
+	registerActorCommand("group", npcActorHandler(func(w *game.World, mob *game.MobInstance, arg string) {
+		w.GroupCommand(mob, arg)
+	}))
 	registerCommand("split", wrapArgs(cmdSplit), "Split gold with your group.")
 	registerCommand("wimpy", wrapArgs(cmdWimpy), "Set your wimpy threshold.")
 	registerCommand("display", wrapArgs(cmdDisplay), "Set display preferences.")

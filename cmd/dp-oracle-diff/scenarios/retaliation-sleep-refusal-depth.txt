@@ -1,0 +1,47 @@
+# depth-case: spell.retaliation-sleep-refusal
+# A saving (or NOSLEEP) NPC victim snaps out and retaliates: 'shakes his head
+# wearily' + hit(victim, ch) (src/magic.c:1227-1237).
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 9922 1 8105 99
+
+[setup:oracle]
+Retalgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retalgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Retalgod class mage
+skillset Retalgod 'sleep' 100
+set Retalgod maxmana 5000
+set Retalgod mana 5000
+
+[probe]
+cast 'sleep' incubus
+~dpclock pulse 20
+

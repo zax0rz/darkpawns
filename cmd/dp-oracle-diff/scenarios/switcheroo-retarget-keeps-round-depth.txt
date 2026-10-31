@@ -1,0 +1,114 @@
+# depth-case: combat.round-continues-after-switcheroo
+# C's perform_violence re-reads FIGHTING(ch) every swing (src/fight.c:2017-
+# 2024): a switcheroo redirect mid-round (src/fight.c:1413-1440, scan order
+# picks whichever room fighter FIGHTINGs ch and rolls 0 on number(0,80)) keeps
+# the round's remaining attacks at the NEW target. The port ended the round
+# after the redirect swing. Two mortal fighters (HP-buffered) on the incubus
+# (9922, level 28 > 20 so the switcheroo scans); redirect rounds appear across
+# seeds, and the rounds after them show whether the attacks continued.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 9922 1 8105 99
+
+[setup:oracle]
+Switchgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Switchgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:alpha]
+Swalpha
+Y
+alphapass
+alphapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:alpha]
+Swalpha
+y
+alphapass
+alphapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:beta]
+Swbeta
+Y
+betapass
+betapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:beta]
+Swbeta
+y
+betapass
+betapass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Swalpha 8105
+teleport Swbeta 8105
+set Swalpha maxhit 99999
+set Swalpha hit 99999
+set Swbeta maxhit 99999
+set Swbeta hit 99999
+set Swalpha level 5
+set Swbeta level 5
+
+[probe]
+send:alpha hit incubus
+send:beta hit incubus
+~dpclock pulse 22
+~dpclock pulse 22
+~dpclock pulse 22

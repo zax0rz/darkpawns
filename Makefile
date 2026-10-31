@@ -1,4 +1,4 @@
-.PHONY: world-fidelity world-manifest expected-divergences build test run clean install test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update deadcode-ratchet deadcode-ratchet-update deadcode-ratchet-test census-coverage db-migrate-build db-migrate-test
+.PHONY: world-fidelity world-manifest expected-divergences build test run clean install test-all test-unit test-integration test-e2e test-performance test-security test-report hooks fmt check-fmt vet lint lint-fix test-parse reachability reachability-weekly scenario-coverage scenario-coverage-weekly oracle-regression oracle-regression-worker-test census-start census-wait census-status census-tool-test string-census string-census-update deadcode-ratchet deadcode-ratchet-update deadcode-ratchet-test check-ignored-go census-coverage db-migrate-build db-migrate-test
 
 # Regenerate the port reachability report (C command table vs Go registry).
 # Deterministic; output is dated by run date. See docs/port-reachability-map.md
@@ -46,6 +46,13 @@ deadcode-ratchet-update:
 
 deadcode-ratchet-test:
 	scripts/test_deadcode_ratchet.sh
+
+# Ignored-Go-files gate (R5h): every file `go list` refuses to compile must be
+# named in scripts/check_ignored_go_files.py with the tag that justifies it. A
+# file whose NAME carries a GOOS/GOARCH token — x_arm_test.go reads as
+# GOARCH=arm — is dropped silently, so its tests never run and nothing fails.
+check-ignored-go:
+	python3 scripts/check_ignored_go_files.py
 
 # Coverage of the C surface by the scenarios that ran. It reads an EXISTING
 # census dump and never starts its own census: coverage is a claim about the

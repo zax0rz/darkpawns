@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/gofrs/flock"
@@ -46,6 +49,24 @@ func Status(ctx context.Context, instance string) (RuntimeStatus, error) {
 // starting to publish its operator record. A variable so tests need not wait
 // the full window out.
 var startupWindowWait = 5 * time.Second
+
+// The readiness budget keeps the launcher's historical 40-second WORST CASE:
+// a first attempt of readinessFirstWait, then diagnostics, then one retry of
+// readinessRetryWait. Callers time `start` against that budget (the smokes
+// cap the subprocess at 60s and one of them asserts a REFUSED start returns
+// within it), so the retry must split the budget, not double it: an instance
+// that never becomes ready still fails by the same wall-clock bound as
+// before. A slow-but-successful supervisor is covered either way — the retry
+// polls the same live status, so a record published at any point inside the
+// budget is seen immediately.
+var (
+	readinessFirstWait = 30 * time.Second
+	readinessRetryWait = 10 * time.Second
+)
+
+// readinessDiagnosticLines is how many trailing lines of the launcher log the
+// retry diagnostics capture. A variable so tests can shrink the capture.
+var readinessDiagnosticLines = 20
 
 // startStatus reads the instance state, tolerating a supervisor that is still
 // starting. Registration can begin the instance itself — launchd's RunAtLoad
@@ -171,10 +192,45 @@ func start(ctx context.Context, bundle, instance string) (RuntimeStatus, error) 
 			}
 		}
 	}
-	timeout, cancel := context.WithTimeout(ctx, 40*time.Second)
+	return waitReadyWithRetry(ctx, instance)
+}
+
+// waitReadyWithRetry runs the readiness wait with exactly one retry. CI
+// runners have shown transient first-attempt failures (a supervisor that
+// publishes its record late on loaded macos/windows runners, a startup-task
+// query that exits 1 once). Before retrying, the failure is logged with the
+// evidence a diagnosis needs — process state, the launcher log tail, and the
+// automatic-start task's query output — so a real failure never passes
+// silently: the retry only re-runs the WAIT, and a second failure returns an
+// error carrying both attempts' terminal state.
+func waitReadyWithRetry(ctx context.Context, instance string) (RuntimeStatus, error) {
+	status, waitErr := waitReady(ctx, instance, readinessFirstWait)
+	if waitErr == nil {
+		return status, nil
+	}
+	firstStatus, firstErr := status, waitErr
+	logReadinessFailure(instance, "first readiness attempt failed", firstStatus, firstErr)
+
+	status, waitErr = waitReady(ctx, instance, readinessRetryWait)
+	if waitErr == nil {
+		slog.Warn("background start became ready on the retry; the first attempt failed",
+			"instance", instance,
+			"first_state", firstStatus.State,
+			"first_error", firstErr.Error())
+		return status, nil
+	}
+	return status, fmt.Errorf("background start did not become ready after two attempts (first: %v; second: %w); inspect %s",
+		firstErr, waitErr, filepath.Join(instance, "lib", "logs", "launcher.log"))
+}
+
+// waitReady polls the instance status until it reports running.
+func waitReady(ctx context.Context, instance string, wait time.Duration) (RuntimeStatus, error) {
+	timeout, cancel := context.WithTimeout(ctx, wait)
 	defer cancel()
 	tick := time.NewTicker(100 * time.Millisecond)
 	defer tick.Stop()
+	var status RuntimeStatus
+	var err error
 	for {
 		status, err = Status(timeout, instance)
 		if err == nil && status.State == "running" {
@@ -182,10 +238,90 @@ func start(ctx context.Context, bundle, instance string) (RuntimeStatus, error) 
 		}
 		select {
 		case <-timeout.Done():
-			return status, fmt.Errorf("background start did not become ready; inspect %s: %w", filepath.Join(instance, "lib", "logs", "launcher.log"), timeout.Err())
+			return status, fmt.Errorf("did not become ready within %s: %w", wait, timeout.Err())
 		case <-tick.C:
 		}
 	}
+}
+
+// logReadinessFailure records why a readiness attempt failed: the process
+// state Status reports, the tail of the launcher log, and the automatic-start
+// task's query output where the platform has one. Evidence only — the caller
+// decides whether to retry.
+func logReadinessFailure(instance, reason string, status RuntimeStatus, waitErr error) {
+	attrs := []any{
+		"instance", instance,
+		"reason", reason,
+		"state", status.State,
+		"wait_error", waitErr.Error(),
+	}
+	if locked, lockErr := instanceLocked(instance); lockErr != nil {
+		attrs = append(attrs, "run_lock", fmt.Sprintf("error: %v", lockErr))
+	} else {
+		attrs = append(attrs, "run_lock", locked)
+	}
+	if tail, err := tailLauncherLog(instance); err != nil {
+		attrs = append(attrs, "launcher_log_tail", fmt.Sprintf("unavailable: %v", err))
+	} else {
+		attrs = append(attrs, "launcher_log_tail", tail)
+	}
+	attrs = append(attrs, "startup_task_query", startupTaskQueryOutput(instance))
+	slog.Warn("readiness attempt failed", attrs...)
+}
+
+// tailLauncherLog returns the last readinessDiagnosticLines lines of the
+// instance's launcher log, the file Start's own errors point at.
+func tailLauncherLog(instance string) (string, error) {
+	path := filepath.Join(instance, "lib", "logs", "launcher.log")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	lines := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+	if len(lines) > readinessDiagnosticLines {
+		lines = lines[len(lines)-readinessDiagnosticLines:]
+	}
+	return strings.Join(lines, "\n"), nil
+}
+
+// startupTaskQueryOutput runs the platform's automatic-start task query and
+// returns its output, for diagnostics only: failures are reported, never
+// acted on.
+func startupTaskQueryOutput(instance string) string {
+	record, err := readService(instance)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "no automatic-start record"
+		}
+		return fmt.Sprintf("record unavailable: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	switch runtime.GOOS {
+	case "windows":
+		out, err := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-NonInteractive",
+			"-Command", "[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); $s=New-Object -ComObject Schedule.Service; $s.Connect(); $t=$s.GetFolder('\\').GetTask('"+record.Name+"'); $t | Select-Object State,LastRunTime,LastTaskResult | ConvertTo-Json -Compress").CombinedOutput()
+		return describeQueryOutput(out, err)
+	case "darwin":
+		out, err := exec.CommandContext(ctx, "launchctl", "print", "gui/"+fmt.Sprint(os.Getuid())+"/"+record.Name).CombinedOutput()
+		return describeQueryOutput(out, err)
+	case "linux":
+		out, err := exec.CommandContext(ctx, "systemctl", "--user", "status", record.Name+".service", "--no-pager", "--lines=20").CombinedOutput()
+		return describeQueryOutput(out, err)
+	default:
+		return "no query on " + runtime.GOOS
+	}
+}
+
+func describeQueryOutput(out []byte, err error) string {
+	text := strings.TrimSpace(string(out))
+	if len(text) > 2048 {
+		text = text[len(text)-2048:]
+	}
+	if err != nil {
+		return fmt.Sprintf("error: %v; output: %s", err, text)
+	}
+	return text
 }
 
 func spawnSupervisor(launcher, instance string, arguments ...string) (result error) {

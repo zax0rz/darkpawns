@@ -1,0 +1,48 @@
+# depth-case: spell.retaliation-charm-resist
+# A resisting NPC victim attacks the caster: 'Your victim resists!' +
+# hit(victim, ch) (src/spells.c:430-433). Regression vehicle for the seam
+# unification - the port wired this one through MobFirstHit before.
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 9922 1 8105 99
+
+[setup:oracle]
+Retalgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Retalgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set Retalgod class mage
+skillset Retalgod 'charm person' 100
+set Retalgod maxmana 5000
+set Retalgod mana 5000
+
+[probe]
+cast 'charm person' incubus
+~dpclock pulse 20
+
