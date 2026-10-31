@@ -158,3 +158,63 @@ func TestLaunchAgentReloadFailureRemainsAnError(t *testing.T) {
 		t.Fatal("failed native manager transition reported success")
 	}
 }
+
+func TestQueryStartupTaskActionRetriesTransientExecFailureOnce(t *testing.T) {
+	defer func(prev func(string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+	calls := 0
+	runWindowsTaskQuery = func(_ string) ([]byte, error) {
+		calls++
+		if calls == 1 {
+			return nil, errors.New(`query owned startup task: exec: canceling Cmd: TerminateProcess: Access is denied.: {"Command":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","Arguments":"-NoProfile"}`)
+		}
+		return []byte("\xef\xbb\xbf" + `{"Command":"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe","Arguments":"-NoProfile -NonInteractive"}`), nil
+	}
+
+	action, err := queryStartupTaskActionWithRetry("darkpawns-test")
+	if err != nil {
+		t.Fatalf("queryStartupTaskActionWithRetry = %v, want success on retry", err)
+	}
+	if calls != 2 {
+		t.Fatalf("calls = %d, want 2", calls)
+	}
+	if !strings.HasSuffix(action.Command, `\powershell.exe`) || action.Arguments != "-NoProfile -NonInteractive" {
+		t.Fatalf("unexpected action: %+v", action)
+	}
+}
+
+func TestQueryStartupTaskActionFailsAfterTwoExecAttempts(t *testing.T) {
+	defer func(prev func(string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+	calls := 0
+	runWindowsTaskQuery = func(_ string) ([]byte, error) {
+		calls++
+		return nil, errors.New("query owned startup task: exit status 1:")
+	}
+
+	_, err := queryStartupTaskActionWithRetry("darkpawns-test")
+	if err == nil {
+		t.Fatal("queryStartupTaskActionWithRetry succeeded when both attempts failed")
+	}
+	if calls != 2 {
+		t.Fatalf("calls = %d, want 2", calls)
+	}
+	if !strings.Contains(err.Error(), "two attempts") {
+		t.Fatalf("error = %v, want two-attempt diagnosis", err)
+	}
+}
+
+func TestQueryStartupTaskActionDoesNotRetryMalformedJSON(t *testing.T) {
+	defer func(prev func(string) ([]byte, error)) { runWindowsTaskQuery = prev }(runWindowsTaskQuery)
+	calls := 0
+	runWindowsTaskQuery = func(_ string) ([]byte, error) {
+		calls++
+		return []byte("not-json"), nil
+	}
+
+	_, err := queryStartupTaskActionWithRetry("darkpawns-test")
+	if err == nil {
+		t.Fatal("queryStartupTaskActionWithRetry succeeded on malformed JSON")
+	}
+	if calls != 1 {
+		t.Fatalf("calls = %d, want 1 (malformed JSON must not retry)", calls)
+	}
+}
