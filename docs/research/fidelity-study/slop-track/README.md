@@ -9,7 +9,7 @@ The second study: what kinds of mistakes AI agents introduced while porting Dark
 - **Pan et al.'s syntactic categories (A1, A2, B1, B2) and model-constraint group (D) don't appear** among committed mistakes. That's partly the compiler and partly method: a mistake fixed before it was committed never reaches git, while Pan et al. measured raw one-pass translations.
 - **"None fits":** semantic paraphrase (yank PF-002, the couch PF-010), a scenario-fitted special case (PF-040), and correcting the source's typo (PF-011). These are candidate new categories.
 - **Born before the oracle (2026-07-12): at least 46.8%** (72 of 154 rows with a birth). Median lifetime **at least 80.5 days**. Both are lower bounds, because 97 birth dates are "no later than" dates.
-- **Who introduced them**, from the birth commit only: unknown 118, GLM 26, Codex 17, Claude 8, Cline 5, DeepSeek 3, Sol 1. **Who fixed them** is a separate column (Sol 53, DeepSeek 11, ...). Report attribution descriptively; it shows six agent families introducing mistakes, not a ranking.
+- **Who introduced them**, from the birth commit only: unknown 118, GLM 26, Codex 17, Claude 8, DeepSeek 8 (5 through the Cline harness, which Zach used only for DeepSeek, plus 3 direct), Sol 1. **Who fixed them** is a separate column (Sol 53, DeepSeek 11, ...). Report attribution descriptively; it shows five agents, built on models from four companies (Codex and Sol both run OpenAI models), introducing mistakes, not a ranking.
 
 ## What the review checked
 
