@@ -1,0 +1,11 @@
+{
+  "commit": "56571bbc606c43a3ca9c23d817cabfd3607272a8",
+  "repository_path": "docs/research/fidelity-study/STUDY.md",
+  "source_url": "https://github.com/zax0rz/darkpawns/blob/56571bbc606c43a3ca9c23d817cabfd3607272a8/docs/research/fidelity-study/STUDY.md",
+  "sha256": "99a2a4e72a2f83ae02f0c7e0d0a7545f88adf00b9d18571fbea260425335ca05",
+  "rules_verbatim": [
+    "**A requires a named check that claimed the behaviour:** a scenario name or comment, a manifest row, a proof status, or a test name. The check ran, but stopped short of what it claimed.",
+    "**A bug no check claimed to cover is \"uncovered\"**, not A. Record it, with what found it (playtest, returning player, later depth work), but keep it out of the A/B/C tallies.",
+    "**Uncovered bugs and excluded inventions feed the slop track.** Tag them so the second study can pick them up; an exclusion from the checking study is not a discard."
+  ]
+}

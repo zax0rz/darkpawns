@@ -1,0 +1,34 @@
+{
+  "core_incidents": 38,
+  "core_by_primary_group": {
+    "A": 16,
+    "B": 17,
+    "C": 5
+  },
+  "core_by_membership_nonexclusive": {
+    "A": 16,
+    "B": 17,
+    "C": 7
+  },
+  "supporting_evidence": 6,
+  "uncovered_records": 43,
+  "excluded_canonical_records": 68,
+  "unresolved_register_records": 5,
+  "aggregate_or_parent_contexts": 4,
+  "canonical_records": 164,
+  "explicit_duplicate_records_merged": 5,
+  "additional_unresolved_git_source_leads": 306,
+  "git_only_slop_tags": {
+    "yes": 260,
+    "no": 46
+  },
+  "register_slop_tags": {
+    "yes": 101,
+    "no": 16,
+    "not-assessed": 47
+  },
+  "v1_A_records_reassessed": 57,
+  "v1_A_retained": 15,
+  "v1_A_moved_uncovered": 42,
+  "new_A_from_prefix_proof": 1
+}

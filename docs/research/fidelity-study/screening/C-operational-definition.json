@@ -1,0 +1,19 @@
+{
+  "authority": "Zach, committed shared study brief",
+  "commit": "56571bbc606c43a3ca9c23d817cabfd3607272a8",
+  "repository_path": "docs/research/fidelity-study/STUDY.md",
+  "source_url": "https://github.com/zax0rz/darkpawns/blob/56571bbc606c43a3ca9c23d817cabfd3607272a8/docs/research/fidelity-study/STUDY.md",
+  "sha256": "99a2a4e72a2f83ae02f0c7e0d0a7545f88adf00b9d18571fbea260425335ca05",
+  "rules_verbatim": [
+    "**A check** is any step whose result the project used as evidence: a scenario verdict, a test exit code, a CI job, or a manifest or proof status.",
+    "**Group C** applies when that step failed, never ran, or produced known-bad output, and it was recorded as a non-failure (pass, expected, INFRA, flake, blocked) without its cause being resolved.",
+    "**Not C:** the step ran properly but watched too little (A), or ran against a wrong reference or erased bytes (B).",
+    "**Setup is part of the check.** A scenario whose required setup was refused, yet still recorded PASS, is C.",
+    "**A false green withdrawn before anyone relied on it is not C.** The process caught it; code it as a detection, in the project's favour.",
+    "**\"Relied on\" means the claim reached main, a release, a report to Zach, or a decision** (Zach, 2026-11-01). A claim credited and withdrawn on an unmerged branch was not relied on, even if an agent's working handoff counted it."
+  ],
+  "reliance_definition": "The claim reached main, a release, a report to Zach, or a decision.",
+  "not_reliance": "A claim credited and withdrawn on an unmerged branch, even if counted in an agent working handoff.",
+  "supersedes": "v0.4 incorrectly treated working-branch proof credit/reporting totals as qualifying reliance.",
+  "ambiguity": "Boundary permitted only with a stated reason and missing evidence; never infer publication from eventual Git ancestry."
+}
