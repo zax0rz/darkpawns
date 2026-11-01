@@ -49,6 +49,11 @@ These cases suggest group C may be broader than the oracle: **a check that faile
 - **A false green withdrawn before anyone relied on it is not C.** The process caught it; code it as a detection, in the project's favour.
 - **"Relied on" means the claim reached main, a release, a report to Zach, or a decision** (Zach, 2026-11-01). A claim credited and withdrawn on an unmerged branch was not relied on, even if an agent's working handoff counted it.
 
+**What counts as A, and "uncovered" (Zach, 2026-11-01).**
+- **A requires a named check that claimed the behaviour:** a scenario name or comment, a manifest row, a proof status, or a test name. The check ran, but stopped short of what it claimed.
+- **A bug no check claimed to cover is "uncovered"**, not A. Record it, with what found it (playtest, returning player, later depth work), but keep it out of the A/B/C tallies.
+- **Uncovered bugs and excluded inventions feed the slop track.** Tag them so the second study can pick them up; an exclusion from the checking study is not a discard.
+
 Code against this definition; a case it leaves ambiguous stays boundary, with the reason.
 
 **Next to it, not inside it:** the slop-squash thread. AI-introduced plausible-but-wrong code (yank PF-002, the couch PF-010, foreign level scale PF-055, scenario-fitted special cases PF-040) is what weak checking let survive. Label these with Pan et al.'s taxonomy later; cases outside it are candidate new categories.
