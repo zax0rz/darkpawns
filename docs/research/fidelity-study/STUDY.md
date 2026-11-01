@@ -38,6 +38,7 @@ These cases suggest group C may be broader than the oracle: **a check that faile
 - **Not C:** the step ran properly but watched too little (A), or ran against a wrong reference or erased bytes (B).
 - **Setup is part of the check.** A scenario whose required setup was refused, yet still recorded PASS, is C.
 - **A false green withdrawn before anyone relied on it is not C.** The process caught it; code it as a detection, in the project's favour.
+- **"Relied on" means the claim reached main, a release, a report to Zach, or a decision** (Zach, 2026-11-01). A claim credited and withdrawn on an unmerged branch was not relied on, even if an agent's working handoff counted it.
 
 Code against this definition; a case it leaves ambiguous stays boundary, with the reason.
 
