@@ -27,6 +27,10 @@ The stages overlap rather than follow one another, and the later stages stopped 
 
 C stands only if the wider inventory supports it. Code *concealment* (what hid the defect) separately from *cause*, and record whether the defect was recognized at the time: accepting a known anomaly by policy is different from misreading it as noise.
 
+**Scope ruling (Zach, 2026-10-31): supporting evidence.** Incidents outside the game port that show one of the groups' mechanisms count as *supporting* evidence: cited to show the mechanism recurs, but kept out of the core incident count and out of any group's core tally. This covers CI and test tooling (the deadcode ratchet that read a crash as no findings, `6ecba615f`; ARM-suffixed tests that never ran on amd64, `ca6deb315`) and test stubs built from an implementer's assumption (the Mudlet stub, MA-006). Revisit before drafting; cutting them later is cheap.
+
+These cases suggest group C may be broader than the oracle: **a check that failed or never ran was recorded as something other than a failure** (a crashed reference as INFRA, a known anomaly as EXPECTED_UNSTABLE, a crashed tool as green, absent tests as passing). Test that wording during screening; it stays provisional.
+
 **Next to it, not inside it:** the slop-squash thread. AI-introduced plausible-but-wrong code (yank PF-002, the couch PF-010, foreign level scale PF-055, scenario-fitted special cases PF-040) is what weak checking let survive. Label these with Pan et al.'s taxonomy later; cases outside it are candidate new categories.
 
 **Out of scope for this paper:** agents playing the MUD. That's the next paper, and this one is its foundation.
@@ -72,6 +76,6 @@ Agents don't invoke each other. Results come back to Zach, and Claude reviews th
 
 ## Decisions waiting on Zach
 
-- Whether group C is promoted, once screening is done.
+- Whether group C is promoted, once screening is done, and whether in its broader wording.
 - Whether to ask Egon and Lucci for permission to mention them by handle (Sai is Zach).
 - When to start outreach, and to whom.
