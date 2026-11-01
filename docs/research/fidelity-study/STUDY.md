@@ -20,25 +20,27 @@ The stages overlap rather than follow one another, and the later stages stopped 
 **Draft research questions (Zach, 2026-11-01).** Framed as an extension of Pan et al., "Lost in Translation" (ICSE 2024): three of their four questions transfer to a 2026 agent-driven migration of a real system, and the fourth is replaced by the checking study. In story order:
 
 1. **"Working" vs "faithful"** *(their RQ1)*: what did each claim of completion miss? Answered descriptively from the timeline's done/disproved pairs; no success-rate percentages.
-2. **The mistakes** *(their RQ2)*: what kinds of mistakes did agents introduce, labelled with Pan et al.'s categories, and how do they compare to 2024: which categories disappeared, and what is new? This is the slop track, which starts after screening. Prevalence covers caught mistakes only, and the paper says so.
+2. **The mistakes** *(their RQ2)*: what kinds of mistakes did agents introduce, labelled with Pan et al.'s categories, and how do they compare to 2024: which categories disappeared, and what is new? This is the slop track ([`BRIEF-2026-11-01-slop-track.md`](BRIEF-2026-11-01-slop-track.md)). Prevalence covers caught mistakes only, and the paper says so.
 3. **The checks** *(new)*: how did the checking itself mislead? Groups A, B and C; the study above.
 4. **The fixes** *(their RQ4, reshaped)*: did each process change (rulebook amendments, R5h, playtesting) stop its class of mistake from recurring? Answered from the rulebook amendment log and the timeline.
 
 Their RQ3 (non-LLM translators) is dropped: no traditional translator was run. Where git shows which agent introduced a mistake, record it, and report it descriptively only: tasks weren't randomized, the harness is a confound, and model versions changed.
 
-**The groups, provisional:**
+**The groups (definitions below; screening results in [`screening/`](screening/README.md)):**
 
-| Group | Meaning | Pilot cases |
-|---|---|---|
-| **A. The test stopped short** | The comparison was right about what it saw, but it didn't watch long enough or require the event it claimed | logout menu, combat-death |
-| **B. The comparison was wrong** | The reference binary or the normalization was itself defective | `load mob`, accuse, gsay color, the `-O2` build |
-| **C. Verdicts assume a healthy oracle** *(candidate)* | The harness had no verdict for "the reference is broken", so a reference defect, recognized or not, was routed into a non-failing verdict (INFRA, blocked, EXPECTED_UNSTABLE) | `load mob` (unrecognized: INFRA and empty C blocks, Oct 6-13); accuse (recognized as a C anomaly on 2026-09-18, `d7e816b03`, and accepted green by verdict policy until the root cause on Oct 11) |
+| Group | Meaning | Examples | Core count (screening v2) |
+|---|---|---|---:|
+| **A. The test stopped short** | A named check claimed a behaviour, ran, and didn't reach it | logout menu, combat-death | 16 |
+| **B. The comparison was wrong** | The reference binary or the normalization was itself defective | `load mob`, accuse, gsay color, the `-O2` build | 17 |
+| **C. A failure recorded as a non-failure** | A check failed, never ran or gave known-bad output, and was recorded as pass, expected, INFRA, flake or blocked without its cause resolved | container-save, peer-login, the CI panic called a flake; `load mob` and accuse as secondary C | 5 (7 with secondary codes) |
 
-C stands only if the wider inventory supports it. Code *concealment* (what hid the defect) separately from *cause*, and record whether the defect was recognized at the time: accepting a known anomaly by policy is different from misreading it as noise.
+Another 43 bugs were **uncovered** (no check claimed them), and they feed the slop track. Code *concealment* (what hid a defect) separately from *cause*, and record whether it was recognized at the time: accepting a known anomaly by policy is different from misreading it as noise.
+
+**Group C adopted (Zach, 2026-10-31 and 2026-11-01)** in its broader wording: it covers any check, not only the oracle. The definitions below govern.
 
 **Scope ruling (Zach, 2026-10-31): supporting evidence.** Incidents outside the game port that show one of the groups' mechanisms count as *supporting* evidence: cited to show the mechanism recurs, but kept out of the core incident count and out of any group's core tally. This covers CI and test tooling (the deadcode ratchet that read a crash as no findings, `6ecba615f`; ARM-suffixed tests that never ran on amd64, `ca6deb315`) and test stubs built from an implementer's assumption (the Mudlet stub, MA-006). Revisit before drafting; cutting them later is cheap.
 
-These cases suggest group C may be broader than the oracle: **a check that failed or never ran was recorded as something other than a failure** (a crashed reference as INFRA, a known anomaly as EXPECTED_UNSTABLE, a crashed tool as green, absent tests as passing). Test that wording during screening; it stays provisional.
+**Noticed vs unnoticed.** The screening register counts what the project noticed. The audits ([`BRIEF-2026-11-01-audits.md`](BRIEF-2026-11-01-audits.md)) looked for what it didn't, and found a 52-scenario C cluster (269 spell-item manifest rows, refused setup since 2026-10-18, shipped in v0.1.8; PF-095) and a scenario hollowed by a newer test (transfer, PF-096). Report the two separately: the gap between them is a finding. Port fix tracked in DP-1456.
 
 **What counts as "the check" (Zach, 2026-10-31).** Use this when coding group C:
 
@@ -56,7 +58,7 @@ These cases suggest group C may be broader than the oracle: **a check that faile
 
 Code against this definition; a case it leaves ambiguous stays boundary, with the reason.
 
-**Next to it, not inside it:** the slop-squash thread. AI-introduced plausible-but-wrong code (yank PF-002, the couch PF-010, foreign level scale PF-055, scenario-fitted special cases PF-040) is what weak checking let survive. Label these with Pan et al.'s taxonomy later; cases outside it are candidate new categories.
+**The second study: the slop track.** AI-introduced plausible-but-wrong code (yank PF-002, the couch PF-010, foreign level scale PF-055, scenario-fitted special cases PF-040) is what weak checking let survive. It answers research question 2, labelled with Pan et al.'s taxonomy; cases outside it are candidate new categories. Its starting list is the slop-tagged screening records and git leads.
 
 **Out of scope for this paper:** agents playing the MUD. That's the next paper, and this one is its foundation.
 
@@ -68,7 +70,9 @@ Code against this definition; a case it leaves ambiguous stays boundary, with th
 | Field notes | `docs/research/field-notes/` |
 | Timeline | `docs/research/timeline/` |
 | Incident records already written up | `docs/research/field-notes/2026-10-31-incident-records-oracle-validity.md` (PF-091, PF-092) |
-| The five reproductions (Sol) | `~/.local/share/openresearch/files/darkpawns/research-scoping/` (protocol, inventory, evidence packets) |
+| Screening register (reviewed, frozen) | `docs/research/fidelity-study/screening/` (PF-094) |
+| Audit findings | `docs/research/field-notes/2026-11-01-witness-audit-hollow-proofs.md` (PF-095, PF-096) |
+| Sol's working packets (reproductions, screening versions, audits) | `~/.local/share/openresearch/files/darkpawns/research-scoping/` |
 | Oracle run archives | `~/Archives/darkpawns/oracle-runs/` |
 | Related work | Zach's Zotero library |
 
@@ -91,16 +95,20 @@ Agents don't invoke each other. Results come back to Zach, and Claude reviews th
 - **No new writes to the shared checkout** at `/home/zach/darkpawns`. Use a worktree under `~/wt/`. Census only through `scripts/census.sh`. Never edit `docs/fidelity/RULEBOOK.md`, `docs/fidelity/north-star-1to1.md` or `AGENTS.md`.
 - **Nothing counts until reviewed.** Output goes into the agent's own folder or `~/dp-research/`; Claude reviews it, and Zach approves it before it lands in `docs/research/`.
 
+## Done so far
+
+- **Sol:** the five pilot reproductions, the incident inventory, screening (v2 frozen and reviewed, PF-094), and the witness and normalization audits (PF-095, PF-096).
+- **DeepSeek:** the dated timeline (PF-093).
+- **Zach:** the definitions of the check, reliance, A and uncovered; the draft research questions.
+
 ## Next steps, in order
 
-1. **Sol:** rebase onto main, re-freeze the inventory, drop its own research-operations rows, and add source batches: the RULEBOOK amendment log, the timeline, field notes, and commits citing R5h or "coincidence green". Code concealment separately from cause.
-2. **Sol:** screen and deduplicate the inventory under the protocol. Claude reviews the inclusions and a sample of exclusions.
-3. **Audits that test the groups:** a witness audit (does each scenario reach what its name or comment claims?) and a normalization audit (does every erased byte class have a scenario that can fail?). Brief to be written.
-4. **Zach:** read Pan et al. (the taxonomy section), McKeeman, and the Anthropic migration post.
-5. **One-page research brief**, after the audits, for outreach.
+1. **DeepSeek: the slop track** ([`BRIEF-2026-11-01-slop-track.md`](BRIEF-2026-11-01-slop-track.md)). Claude reviews the result.
+2. **Zach:** read Pan et al. (the taxonomy section), McKeeman, and the Anthropic migration post.
+3. **One-page research brief** for outreach, once the slop track has first numbers, so it shows both studies.
+4. **Later:** after DP-1456 lands, check whether its class fix stops refused-setup passes (research question 4).
 
 ## Decisions waiting on Zach
 
-- Whether group C is promoted, once screening is done, and whether in its broader wording.
 - Whether to ask Egon and Lucci for permission to mention them by handle (Sai is Zach).
 - When to start outreach, and to whom.
