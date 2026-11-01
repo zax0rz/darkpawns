@@ -31,6 +31,16 @@ C stands only if the wider inventory supports it. Code *concealment* (what hid t
 
 These cases suggest group C may be broader than the oracle: **a check that failed or never ran was recorded as something other than a failure** (a crashed reference as INFRA, a known anomaly as EXPECTED_UNSTABLE, a crashed tool as green, absent tests as passing). Test that wording during screening; it stays provisional.
 
+**What counts as "the check" (Zach, 2026-10-31).** Use this when coding group C:
+
+- **A check** is any step whose result the project used as evidence: a scenario verdict, a test exit code, a CI job, or a manifest or proof status.
+- **Group C** applies when that step failed, never ran, or produced known-bad output, and it was recorded as a non-failure (pass, expected, INFRA, flake, blocked) without its cause being resolved.
+- **Not C:** the step ran properly but watched too little (A), or ran against a wrong reference or erased bytes (B).
+- **Setup is part of the check.** A scenario whose required setup was refused, yet still recorded PASS, is C.
+- **A false green withdrawn before anyone relied on it is not C.** The process caught it; code it as a detection, in the project's favour.
+
+Code against this definition; a case it leaves ambiguous stays boundary, with the reason.
+
 **Next to it, not inside it:** the slop-squash thread. AI-introduced plausible-but-wrong code (yank PF-002, the couch PF-010, foreign level scale PF-055, scenario-fitted special cases PF-040) is what weak checking let survive. Label these with Pan et al.'s taxonomy later; cases outside it are candidate new categories.
 
 **Out of scope for this paper:** agents playing the MUD. That's the next paper, and this one is its foundation.
