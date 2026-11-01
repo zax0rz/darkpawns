@@ -17,6 +17,15 @@ The stages overlap rather than follow one another, and the later stages stopped 
 
 **The question (the study's core).** How did faults in test design and in the reference execution limit differential validation during the migration, and what evidence exposed them? (Sol's protocol v0.1.)
 
+**Draft research questions (Zach, 2026-11-01).** Framed as an extension of Pan et al., "Lost in Translation" (ICSE 2024): three of their four questions transfer to a 2026 agent-driven migration of a real system, and the fourth is replaced by the checking study. In story order:
+
+1. **"Working" vs "faithful"** *(their RQ1)*: what did each claim of completion miss? Answered descriptively from the timeline's done/disproved pairs; no success-rate percentages.
+2. **The mistakes** *(their RQ2)*: what kinds of mistakes did agents introduce, labelled with Pan et al.'s categories, and how do they compare to 2024: which categories disappeared, and what is new? This is the slop track, which starts after screening. Prevalence covers caught mistakes only, and the paper says so.
+3. **The checks** *(new)*: how did the checking itself mislead? Groups A, B and C; the study above.
+4. **The fixes** *(their RQ4, reshaped)*: did each process change (rulebook amendments, R5h, playtesting) stop its class of mistake from recurring? Answered from the rulebook amendment log and the timeline.
+
+Their RQ3 (non-LLM translators) is dropped: no traditional translator was run. Where git shows which agent introduced a mistake, record it, and report it descriptively only: tasks weren't randomized, the harness is a confound, and model versions changed.
+
 **The groups, provisional:**
 
 | Group | Meaning | Pilot cases |
