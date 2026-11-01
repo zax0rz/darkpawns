@@ -23,9 +23,9 @@ The stages overlap rather than follow one another, and the later stages stopped 
 |---|---|---|
 | **A. The test stopped short** | The comparison was right about what it saw, but it didn't watch long enough or require the event it claimed | logout menu, combat-death |
 | **B. The comparison was wrong** | The reference binary or the normalization was itself defective | `load mob`, accuse, gsay color, the `-O2` build |
-| **C. Verdicts assume a healthy oracle** *(candidate)* | The harness had no verdict for "the reference is broken", so a broken reference was filed as noise (INFRA, blocked, EXPECTED_UNSTABLE) | `load mob` (INFRA, Oct 6-13), accuse (EXPECTED_UNSTABLE from 2026-09-18) |
+| **C. Verdicts assume a healthy oracle** *(candidate)* | The harness had no verdict for "the reference is broken", so a reference defect, recognized or not, was routed into a non-failing verdict (INFRA, blocked, EXPECTED_UNSTABLE) | `load mob` (unrecognized: INFRA and empty C blocks, Oct 6-13); accuse (recognized as a C anomaly on 2026-09-18, `d7e816b03`, and accepted green by verdict policy until the root cause on Oct 11) |
 
-C stands only if the wider inventory supports it. Code *concealment* (what hid the defect) separately from *cause*.
+C stands only if the wider inventory supports it. Code *concealment* (what hid the defect) separately from *cause*, and record whether the defect was recognized at the time: accepting a known anomaly by policy is different from misreading it as noise.
 
 **Next to it, not inside it:** the slop-squash thread. AI-introduced plausible-but-wrong code (yank PF-002, the couch PF-010, foreign level scale PF-055, scenario-fitted special cases PF-040) is what weak checking let survive. Label these with Pan et al.'s taxonomy later; cases outside it are candidate new categories.
 
