@@ -204,3 +204,64 @@ literally true for the builders, as Zach said. The finding stops at
 
 **To close it:** recover the NUC's `~/.openclaw` (agents' sessions and
 workspace) for 2026-04-17 to 2026-04-26, and repeat this scan.
+
+## The NUC, same day: the session that wrote `yank`
+
+Zach reconnected `karl-havoc` (192.168.1.106). Its OpenClaw gateway
+(v2026.5.2) had exited on a config error at boot (status 78, no restarts),
+so no old bot or cron came back. The build-agent transcripts (`main`,
+`claude-sonnet`, `gemini`, `opus-reviewer`, `janitor`; 1,928 files, 1.1 GB)
+were copied read-only to a private local archive,
+`~/Archives/openclaw-nuc-2026-11-02/` (not in any repository; it holds
+unrelated personal material).
+
+**Coverage.** Dark Pawns build transcripts on the NUC start 2026-04-22.
+2026-04-17 to 2026-04-21 (CLAUDE.md, Phases 0–2) were not found.
+
+**Models, 2026-04-22 to 2026-05-04** (unique sessions mentioning `darkpawns`
+at least five times, dated by start in UTC):
+- **Orchestrator:** `glm-5-turbo`.
+- **Workers:**
+  - `deepseek-chat` (via litellm), `deepseek-v4-flash` and `deepseek-v4-pro`;
+  - `glm-5.1` from 2026-04-26;
+  - `kimi-k2.6` from 2026-04-26, heavy on 2026-05-01 and -03;
+  - `mimo-v2.5-pro` (2026-05-02, -03) and `mimo-v2.5-base` (2026-05-04);
+  - `claude-opus-4-6` (2026-04-23 to -27), `claude-opus-4-7` (2026-05-03);
+  - Sonnet 4.6 (2026-04-29 to -30).
+- **How often sessions read `CLAUDE.md`** (file-read tool or `cat`): 2 of 4
+  sessions on 2026-04-24, and 0 or 1 a day after that. Sessions with hundreds
+  of mentions never opened it.
+
+**The `yank` port.**
+- `doYank` first appears in OpenClaw `main` session `8e4697db`, written by
+  **`deepseek-chat`** in an assistant tool call at 2026-04-24 22:42 UTC (18:42
+  ET).
+- It was committed as `070dfe54e` at 19:53 ET.
+- Wave 6.5 (`2098e2cce`, 21:15 ET, session `6d338c07`, also deepseek-chat)
+  only wired it to the command table.
+- The session began with OpenClaw's stock `/new` startup prompt (read the
+  workspace files, greet the user in persona); it contains no fidelity
+  instruction.
+- It never opened `CLAUDE.md`, though the name appears 19 times.
+- **It did open the C:** 38 file-read calls on `src/act.other.c`.
+
+The port, against `src/act.other.c` (`do_yank` at :1620):
+
+| C | deepseek-chat's Go |
+|---|---|
+| `"That's wierd."` (:1633) | `"That's weird."` |
+| `"$N is is no position to be yanked around!"` (:1652) | `"%s is in no position to be yanked around!"` |
+| `"That probably wouldn't be appreciated."` branch (:1638) | absent |
+| `NOPERSON` | a literal `"I see no one here by that name."` |
+
+The model had the source in context and still produced a corrected,
+plausible paraphrase. The typos are the tell (see the AI-slop-squash notes).
+
+**What this does to the hypothesis.** It sharpens it. For the session that
+wrote the canonical slop specimen:
+- **The rule was not loaded:** "no rules" is literally true.
+- **The source was loaded:** reading the C is not enough on its own.
+- **The definition of done was a compile.**
+
+The behaviour changed only once something could fail a paraphrase: the oracle
+(R1) and a rule naming bytes, not intent.
