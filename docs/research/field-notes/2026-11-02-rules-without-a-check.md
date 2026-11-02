@@ -70,3 +70,44 @@ notes) and is ledgered as PF-098.
 ## Status
 
 The dates and commits are verified from Git. The causal claim is a hypothesis.
+
+## Correction, same day (Zach)
+
+The note above read the day-two `CLAUDE.md` as the rule the early builders
+worked under. That is unverified. Zach: the first building happened in
+OpenClaw, from a Telegram window, with about half a dozen mostly open-weight
+models. An OpenClaw agent loads its own workspace instruction files, not
+necessarily a repo's `CLAUDE.md`, so whether those models ever saw the
+"stay true" rule is unknown.
+
+What Git shows for 2026-04-17 to 2026-07-12 (before the oracle):
+
+- 590 commits authored `BRENDA69` (the OpenClaw agent identity), from
+  2026-04-20 to 2026-07-12, mostly with no model trailer;
+- the rest authored `zach` from several hosts (`karl-havoc`, `mac-mini`,
+  gmail), with trailers naming:
+  - Claude Opus 4.8 (119), Claude Sonnet 4.6 (65), Claude Sonnet 5 (12);
+  - GLM (17), Gemini Antigravity (3), Kimi (1).
+- `070dfe54e` (Wave 4b, the yank line) was committed as `zach` from
+  `karl-havoc` with no trailer, so its model and harness are unknown.
+- `design-research-log.md` places the OpenClaw-era agents on minimax-m2.7,
+  Z.AI and Ollama, but that log is about the BRENDA player bot, not the port
+  builders.
+
+So the claim "the slop was written under a rule that forbade it" is downgraded
+to: **a rule existed in the repository; whether the agents that wrote the slop
+loaded it is unknown.** For most of the early commits, the unit of analysis is
+the harness and its instruction files, not the repository. The corrected
+hypothesis is unchanged in shape: rules count only where the agent actually
+loads them *and* a tool can check them. "No rules" may be literally true for
+the OpenClaw builders.
+
+To verify, each needs Zach or the Mac:
+
+- the OpenClaw workspace instruction files as of April–July 2026
+  (`~/.openclaw/workspace*` on `mac-mini`, ideally their Git history);
+- the model routing per agent in that period;
+- whether Telegram exports exist for the build chats.
+
+Then re-bucket the PF-097 births by harness (OpenClaw vs. Claude Code vs.
+others) as well as by date.
