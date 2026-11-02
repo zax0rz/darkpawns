@@ -403,13 +403,13 @@ func TestCastInsufficientManaDrawsNothingAndSpendsNothing(t *testing.T) {
 }
 
 func TestManaCostUsesClassMinimumLevel(t *testing.T) {
-	if got := manaCost(spellDB[spells.SpellMagicMissile], 1, game.ClassMageUser); got != 30 {
+	if got := game.ManaCost(spells.SpellMagicMissile, game.ClassMageUser, 1); got != 30 {
 		t.Errorf("L1 flame arrow mana = %d, want 30", got)
 	}
-	if got := manaCost(spellDB[spells.SpellCureLight], 1, game.ClassCleric); got != 30 {
+	if got := game.ManaCost(spells.SpellCureLight, game.ClassCleric, 1); got != 30 {
 		t.Errorf("L1 cure light mana = %d, want 30", got)
 	}
-	if got := manaCost(spellDB[spells.SpellInfravision], 1, game.ClassMageUser); got != 25 {
+	if got := game.ManaCost(spells.SpellInfravision, game.ClassMageUser, 1); got != 25 {
 		t.Errorf("L1 infravision mana = %d, want 25", got)
 	}
 }

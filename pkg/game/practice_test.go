@@ -186,3 +186,65 @@ func TestRenderSkillListNinjaLearnedArts(t *testing.T) {
 		}
 	}
 }
+
+// TestRenderSkillListManaColumn pins C's cost column (src/spec_procs.c:185-192):
+// every entry whose mag_manacost is non-zero prints "( %d mana )" — "psi pts"
+// for psionics and mystics — and zero-cost entries (skills) keep the bare
+// trailing space. Reverting the column fails every case here (R5h).
+func TestRenderSkillListManaColumn(t *testing.T) {
+	line := func(name, goodness, manastring string) string {
+		return fmt.Sprintf("%-20s %s %s\r\n", name, goodness, manastring)
+	}
+
+	t.Run("mage spells carry mana", func(t *testing.T) {
+		p := NewPlayer(1, "Pracmage", 1001)
+		p.Class = ClassMageUser
+		p.Level = 1
+		got := RenderSkillList(p)
+		for _, want := range []string{
+			line("flame arrow", " (not learned)", "( 30 mana )"),
+			line("infravision", " (not learned)", "( 25 mana )"),
+		} {
+			if !strings.Contains(got, want) {
+				t.Errorf("missing C practice line %q in:\n%s", want, got)
+			}
+		}
+	})
+
+	t.Run("psionic art carries psi pts and the skill stays bare", func(t *testing.T) {
+		p := NewPlayer(1, "Pracpsion", 1001)
+		p.Class = ClassPsionic
+		p.Level = 1
+		got := RenderSkillList(p)
+		for _, want := range []string{
+			line("mind poke", " (not learned)", "( 30 psi pts )"),
+			line("flesh alter", " (not learned)", ""), // skill: no spello record, trailing space kept
+		} {
+			if !strings.Contains(got, want) {
+				t.Errorf("missing C practice line %q in:\n%s", want, got)
+			}
+		}
+	})
+
+	t.Run("colour gates on C_CMP", func(t *testing.T) {
+		complete := NewPlayer(1, "Praccolor", 1001)
+		complete.Class = ClassMageUser
+		complete.Level = 1
+		complete.SetPlrFlag(PrfColor1, true)
+		complete.SetPlrFlag(PrfColor2, true)
+		want := line("flame arrow", " (not learned)", "( \x1b[31m30 mana\x1b[0m )")
+		if got := RenderSkillList(complete); !strings.Contains(got, want) {
+			t.Errorf("missing colour-complete practice line %q in:\n%s", want, got)
+		}
+
+		// C_NRM (2) is below C_CMP (3): CCRED/CCNRM emit KNUL (screen.h:49-51).
+		normal := NewPlayer(1, "Pracnorm", 1001)
+		normal.Class = ClassMageUser
+		normal.Level = 1
+		normal.SetPlrFlag(PrfColor2, true)
+		want = line("flame arrow", " (not learned)", "( 30 mana )")
+		if got := RenderSkillList(normal); !strings.Contains(got, want) {
+			t.Errorf("missing C_NRM plain practice line %q in:\n%s", want, got)
+		}
+	})
+}

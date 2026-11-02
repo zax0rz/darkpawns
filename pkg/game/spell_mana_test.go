@@ -1,10 +1,12 @@
-package session
+package game
 
 import "testing"
 
-// spellDBBaselineEntry is independent of spellData so this fixture remains a
-// pre-keying comparison rather than a restatement of the production literal.
-// It was captured from origin/main e961be906 before the representation change.
+// spellDBBaselineEntry is independent of SpellManaData so this fixture
+// remains a pre-keying comparison rather than a restatement of the production
+// literal. It was captured from origin/main e961be906 before the
+// representation change, and moved from pkg/session with the table when the
+// practice catalog began sharing mag_manacost.
 type spellDBBaselineEntry struct {
 	SpellNum   int
 	Name       string
@@ -124,27 +126,25 @@ var spellDBBeforeKeying = map[int]spellDBBaselineEntry{
 }
 
 func TestSpellDBPreservesCompletePreKeyingTable(t *testing.T) {
+	// C spells.h MAX_SPELLS; pkg/session's cast gate keeps the same bound.
 	const baselineMaxCastSpell = 130
 
-	if maxCastSpell != baselineMaxCastSpell {
-		t.Fatalf("maxCastSpell = %d, want unchanged C MAX_SPELLS range %d", maxCastSpell, baselineMaxCastSpell)
-	}
-	if len(spellDB) != len(spellDBBeforeKeying) {
-		t.Fatalf("spellDB length = %d, want pre-keying length %d", len(spellDB), len(spellDBBeforeKeying))
+	if len(SpellManaTable) != len(spellDBBeforeKeying) {
+		t.Fatalf("SpellManaTable length = %d, want pre-keying length %d", len(SpellManaTable), len(spellDBBeforeKeying))
 	}
 
 	for spellNum := 0; spellNum <= baselineMaxCastSpell; spellNum++ {
 		want, wantPresent := spellDBBeforeKeying[spellNum]
-		got, gotPresent := spellDB[spellNum]
+		got, gotPresent := SpellManaTable[spellNum]
 		if gotPresent != wantPresent {
-			t.Errorf("spellDB[%d] presence = %v, want %v", spellNum, gotPresent, wantPresent)
+			t.Errorf("SpellManaTable[%d] presence = %v, want %v", spellNum, gotPresent, wantPresent)
 			continue
 		}
 		if !gotPresent {
 			continue
 		}
 		if got == nil {
-			t.Errorf("spellDB[%d] = nil, want complete record", spellNum)
+			t.Errorf("SpellManaTable[%d] = nil, want complete record", spellNum)
 			continue
 		}
 		gotSnapshot := spellDBBaselineEntry{
@@ -156,13 +156,13 @@ func TestSpellDBPreservesCompletePreKeyingTable(t *testing.T) {
 			MinLevel:   got.MinLevel,
 		}
 		if gotSnapshot != want {
-			t.Errorf("spellDB[%d] changed: got %#v, want %#v", spellNum, gotSnapshot, want)
+			t.Errorf("SpellManaTable[%d] changed: got %#v, want %#v", spellNum, gotSnapshot, want)
 		}
 	}
 
-	for spellNum := range spellDB {
+	for spellNum := range SpellManaTable {
 		if spellNum < 0 || spellNum > baselineMaxCastSpell {
-			t.Errorf("spellDB contains out-of-range key %d", spellNum)
+			t.Errorf("SpellManaTable contains out-of-range key %d", spellNum)
 		}
 	}
 }

@@ -87,8 +87,9 @@ func howGood(percent int) string {
 // how_good(GET_SKILL). The practice-count prelude follows
 // spec_procs.c:164-168 exactly: no sessions, one session, or a plural count.
 // list_skills was not patched in the oracle; the reference oracle is simply
-// built at -O0, where the prelude survives its own appends. Mana rendering for
-// spells is a follow-on (DP-1166 spell-name/number work).
+// built at -O0, where the prelude survives its own appends. Every entry with
+// a non-zero mag_manacost carries C's cost column (spec_procs.c:185-192),
+// through the same ManaCost formula cast uses.
 func RenderSkillList(p *Player) string {
 	class := p.GetClass()
 	level := p.GetLevel()
@@ -128,8 +129,23 @@ func RenderSkillList(p *Player) string {
 
 	for _, e := range entries {
 		// C: sprintf("%-20s %s %s\r\n", spells[i], how_good(pct), mana?manastring:"")
-		// Skills have no mana → the final %s is empty (leaving a trailing space).
-		fmt.Fprintf(&b, "%-20s %s \r\n", e.name, howGood(e.pct))
+		// spec_procs.c:185-192: the cost comes from mag_manacost over
+		// find_skill_num(spells[i]) — the same formula cast uses — and prints
+		// "( CCRED %d mana|psi pts CCNRM )" only when non-zero. Skills have
+		// no mana → the final %s is empty (leaving a trailing space).
+		manastring := ""
+		if mana := ManaCost(FindSkillNum(e.name), class, level); mana != 0 {
+			red, nrm := "", ""
+			if colorLevel(p) >= colorComplete {
+				red, nrm = ansiRed, ansiReset // CCRED/CCNRM at C_CMP (screen.h:50-51)
+			}
+			unit := "mana"
+			if class == ClassPsionic || class == ClassMystic {
+				unit = "psi pts" // IS_PSIONIC || IS_MYSTIC (utils.h:366,418)
+			}
+			manastring = fmt.Sprintf("( %s%d %s%s )", red, mana, unit, nrm)
+		}
+		fmt.Fprintf(&b, "%-20s %s %s\r\n", e.name, howGood(e.pct), manastring)
 	}
 
 	return b.String()
