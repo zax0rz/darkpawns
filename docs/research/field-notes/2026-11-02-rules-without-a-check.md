@@ -111,3 +111,58 @@ To verify, each needs Zach or the Mac:
 
 Then re-bucket the PF-097 births by harness (OpenClaw vs. Claude Code vs.
 others) as well as by date.
+
+## Evidence from the OpenClaw workspace, same day
+
+Checked read-only on `mac-mini` (`~/.openclaw/workspace`, a Git repository
+with 766 commits since 2026-03-08). Zach: OpenClaw first ran on a 2017 NUC named
+`karl-havoc`, which is no longer on the network.
+
+**The `karl-havoc` commits are the OpenClaw NUC era.** In `darkpawns`, the
+`zach@karl-havoc.labz0rz.com` identity spans 2026-04-17 to 2026-05-04 (284
+commits). `zach@mac-mini.local` starts on 2026-05-24, after the migration
+planned in the workspace's `KARL-HAVOC-MIGRATION.md` (dated 2026-04-28). So the
+earlier count, which treated `karl-havoc` commits as Zach's, understates the
+agent share. Most of the "zach" commits before May are OpenClaw.
+
+**The OpenClaw agents wrote the rule themselves.**
+- `CLAUDE.md` was added from `karl-havoc` (`f725fd017`, 2026-04-18).
+- It was updated from there and by `brenda@labz0rz.com` on 2026-04-20
+  (`2e7d42bac`, `1b0ec63fe`).
+- The agents knew it existed and edited it.
+- The workspace's own `AGENTS.md` and `SOUL.md` at the 2026-04-23 commit
+  (`2f42129e6`) contain no Dark Pawns or fidelity rule.
+- The daily notes for 2026-04-23 to 2026-05-08 never mention `CLAUDE.md`.
+- Whether a building session loaded it is still unknown.
+
+**The models.**
+- The 2026-04-23 note: GLM-5-turbo was the main orchestrator ("barely
+  distinguishable from Sonnet for orchestration"), the fallback when Anthropic
+  was rate-limited.
+- The 2026-04-24 note delegates Wave 8 to "deepseek-v4-pro subagent (auth failed
+  for Anthropic API, fell back to deepseek-chat via litellm)" and Wave 9 to
+  deepseek-v4-flash.
+- `DARK_PAWNS_SUBAGENT_SWARM_PLAN.md` (added 2026-04-28) allocates GLM-5.1,
+  DeepSeek Chat, MiniMax M2.7 and Claude Sonnet.
+- Model routing changed mid-session on auth failures, so the model behind any
+  one commit is often not recoverable from Git.
+
+**The definition of done was a compile.**
+- The 2026-04-24 note records Wave 6.5 (`2098e2cce`): 22 act.other.c commands,
+  `yank` among them, "now registered and usable", "All registered at level 0
+  (any player can use)".
+- Its check was "`go build ./... && go vet ./...` clean".
+- The same day reports Wave 7 as "~4,843 C lines → 1,846 Go lines" and Wave 9
+  as "4,203 C lines → 559 Go lines", each "complete".
+
+**What this changes.** The rule was present, written by the same agents, and
+sometimes edited by them; the "done" check they actually ran was build and vet.
+That fits the corrected hypothesis better than "no rules": an aspirational rule
+coexisted with an operational definition of done that could not fail on a
+paraphrase. A 4:1 to 7:1 line compression reported as "complete" was the visible
+symptom, and nothing in the loop could question it.
+
+**Still open.**
+- Which model ran each wave; the workspace logs and transcripts may hold it.
+- Whether any session transcript shows `CLAUDE.md` being read.
+- What remains on the NUC itself.
