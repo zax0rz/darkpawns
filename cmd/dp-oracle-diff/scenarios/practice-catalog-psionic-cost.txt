@@ -1,0 +1,41 @@
+# A level-1 psionic reads its own practice catalog. list_skills prints a cost
+# column for every entry whose mag_manacost is non-zero
+# (src/spec_procs.c:185-191: "( %d mana )", or "psi pts" for psionics and
+# mystics). The existing practice scenarios all use a warrior (kick has no
+# mana), so this line was never compared. Found by the play lab: 0 of 33
+# recorded caster catalogs carried a cost.
+
+[fixture]
+quiet-mobs
+
+[setup:oracle]
+Pracpsio
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pracpsio
+Y
+oraclepass
+oraclepass
+N
+M
+H
+I
+K
+Y
+<ENTER>
+1
+
+[probe]
+~dpclock pulse 40
+practice
