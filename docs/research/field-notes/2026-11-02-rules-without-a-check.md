@@ -166,3 +166,41 @@ symptom, and nothing in the loop could question it.
 - Which model ran each wave; the workspace logs and transcripts may hold it.
 - Whether any session transcript shows `CLAUDE.md` being read.
 - What remains on the NUC itself.
+
+## The surviving transcripts, same day
+
+Scanned read-only on `mac-mini`: `~/.openclaw/agents/*/sessions` (including
+`.bak` and `.deleted` copies) and `~/.openclaw/backups/orphan-transcripts-20260711`.
+
+**Coverage.**
+- The earliest surviving Dark Pawns build transcript is from 2026-04-27.
+- Nothing survives for 2026-04-17 to 2026-04-26, the window that produced
+  `CLAUDE.md`, Waves 1–9 and the `yank` port.
+- Those sessions ran on the NUC (`karl-havoc`) and were not migrated. So
+  waves cannot yet be tied to models.
+
+**Models, 2026-04-27 to 2026-05-24.** 88 sessions mention `darkpawns` at least
+five times (largest copy per session id; the `brenda` persona sessions excluded
+by that threshold).
+- **Orchestrator:** `glm-5-turbo` in nearly all of them.
+- **Subagents:** `deepseek-v4-flash` (and `deepseek-chat`).
+- **From 2026-05-07:** `minimax-m2.7` sessions.
+- **Occasional:** `claude-sonnet-4-6`/`sonnet-payg` (2026-04-29, -04-30, -05-06);
+  `mimo-v2.5-base` (2026-05-04, -05-13, -05-19).
+
+**Did they read the rule?**
+- Of the 88 sessions, **2** read `CLAUDE.md` (a file-read tool call or `cat`;
+  2026-04-27 and 2026-04-28).
+- **2** spawned the Claude Code CLI (2026-04-28 and -29), which loads
+  `CLAUDE.md` automatically.
+- Most other mentions are directory listings or doc reviews. Those reviews filed
+  it as "AI agent context, separate concern" and under "Files to NOT touch".
+- The rule was an artifact the agents catalogued, not one they consulted.
+
+This supports the corrected hypothesis directly: for the surviving OpenClaw
+period, the fidelity rule was effectively unloaded, and "no rules" is close to
+literally true for the builders, as Zach said. The finding stops at
+2026-04-27. The decisive window is on the NUC.
+
+**To close it:** recover the NUC's `~/.openclaw` (agents' sessions and
+workspace) for 2026-04-17 to 2026-04-26, and repeat this scan.
