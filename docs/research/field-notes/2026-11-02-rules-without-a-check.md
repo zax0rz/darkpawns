@@ -265,3 +265,24 @@ wrote the canonical slop specimen:
 
 The behaviour changed only once something could fail a paraphrase: the oracle
 (R1) and a rule naming bytes, not intent.
+
+## Zach's account of the conditions, same day
+
+Zach, after reading the `yank` session: "no rules, it was the wild west of agent
+swarms and waves of work largely unseen to me and not really directed and
+orchestrated very well from me either."
+
+This is first-person testimony about the human side of the early harness, and
+it matches the transcripts:
+- the work came from a Telegram window;
+- waves were dispatched by a GLM orchestrator to whichever model the routing
+  and auth fallbacks produced;
+- results were reported back as "complete" on a compile.
+
+So in April the missing check was not only the oracle; there was no human
+reviewer either. For the paper the early condition is three absences at once:
+- no rule the builders loaded;
+- no tool that could fail a paraphrase;
+- no human reading the diffs.
+
+Separating their effects needs the PF-097 births bucketed by all three.
