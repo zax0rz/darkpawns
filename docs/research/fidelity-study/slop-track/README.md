@@ -8,7 +8,7 @@ The second study: what kinds of mistakes AI agents introduced while porting Dark
 - **Top categories:** B5 Removal of logic (86), B3 Incorrect loop and conditional statements (40), B4 Inclusion of logic not in the source (21).
 - **Pan et al.'s syntactic categories (A1, A2, B1, B2) and model-constraint group (D) don't appear** among committed mistakes. That's partly the compiler and partly method: a mistake fixed before it was committed never reaches git, while Pan et al. measured raw one-pass translations.
 - **"None fits":** semantic paraphrase (yank PF-002, the couch PF-010), a scenario-fitted special case (PF-040), and correcting the source's typo (PF-011). These are candidate new categories.
-- **Born before the oracle (2026-07-12): at least 46.8%** (72 of 154 rows with a birth). Median lifetime **at least 80.5 days**. Both are lower bounds, because 97 birth dates are "no later than" dates.
+- **Born before the oracle (2026-07-12): at least 46.8%** (72 of 154 rows with a birth). Median lifetime **at least 80.5 days**. Both are lower bounds, because 99 birth dates are "no later than" dates.
 - **Who introduced them**, from the birth commit only: unknown 118, GLM 26, Codex 17, Claude 8, DeepSeek 8 (5 through the Cline harness, which Zach used only for DeepSeek, plus 3 direct), Sol 1. **Who fixed them** is a separate column (Sol 53, DeepSeek 11, ...). Report attribution descriptively; it shows five agents, built on models from four companies (Codex and Sol both run OpenAI models), introducing mistakes, not a ranking.
 
 ## What the review checked
@@ -27,6 +27,8 @@ The second study: what kinds of mistakes AI agents introduced while porting Dark
 - Only mistakes someone caught are visible, so category shares describe caught mistakes, not all of them.
 
 ## Changes from DeepSeek's copy
+
+Corrected 2026-11-02: S001 (yank) was dated to `f00c268c3`, a refactor that only moved the code; its paraphrased messages first appear in `070dfe54e` (2026-04-24). OpenClaw transcripts recovered that day attribute that session to deepseek-chat (PF-098); `author_agent` stays git-only, so the attribution is in the row's notes. Three other births that are refactor commits (G007, G059, S007) are relabelled `lower-bound`. Headline numbers are unchanged.
 
 Two notes naming a returning player by handle now say "Returning-player report" (`slop.tsv` S067, S069, and the matching lines in `build.py`), pending that player's permission. `check.py` reads the `slop.tsv` beside it. Source: `~/dp-research/slop-track/v2/` (`slop.tsv` sha256 `31e895b915b58d8803f3a222c269725b8bbde5fd0ff5e84fed24a8c8a474fe8c` before those edits).
 
