@@ -79,11 +79,15 @@ def content_entries() -> list[Entry]:
         route = f"/{collection}/{slug}/"
         if collection == "docs" and (slug == "index" or slug.endswith("/index")):
             route = "/docs/" if slug == "index" else f"/docs/{slug[:-6]}/"
+        if collection == "logs":
+            route = f"/archive/logs/{slug}/"
 
         if collection == "help":
             mode, tier, status = "fidelity-protected reference", 4, "template-and-sample QA"
         elif collection == "archive":
             mode, tier, status = "preserved community artifact", 2, "verify against capture"
+        elif collection == "logs":
+            mode, tier, status = "preserved game capture", 2, "verify redactions and dates"
         elif collection == "blog":
             mode, tier = "authored editorial", 1
             status = "replace or remove" if path.name == "historical-posts.md" else "rewrite and source review"
@@ -109,7 +113,9 @@ def content_entries() -> list[Entry]:
         entries.append(
             Entry(
                 route.removesuffix("/") + ".md",
-                ("scripts/markdown-twins.mjs" if collection == "docs" else f"src/pages/{collection}/[...slug].md.ts"),
+                ("scripts/markdown-twins.mjs" if collection == "docs" else
+                 "src/pages/archive/logs/[slug].md.ts" if collection == "logs" else
+                 f"src/pages/{collection}/[...slug].md.ts"),
                 "agent-markdown",
                 "generated Markdown representation",
                 3,

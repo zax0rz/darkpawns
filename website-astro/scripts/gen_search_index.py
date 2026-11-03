@@ -55,6 +55,36 @@ def searchable_body(text: str) -> str:
     return re.sub(r'\s+', ' ', text).strip().lower()
 
 
+def yaml_list(content: str, key: str) -> list[str]:
+    """Read a YAML block list of scalars, e.g.
+
+        cast:
+          - "Aiko"
+          - "Vargus"
+
+    The generic frontmatter parser only collects `- key: value` pairs, so the
+    logs collection's plain string lists need their own reader."""
+    m = re.search(rf"^{re.escape(key)}:\s*(.*)$", content, re.M)
+    if not m:
+        return []
+    inline = m.group(1).strip()
+    if inline.startswith('[') and inline.endswith(']'):
+        inner = inline[1:-1].strip()
+        return [item.strip().strip('"\'') for item in inner.split(',') if item.strip()]
+    items: list[str] = []
+    for line in content[m.end():].splitlines():
+        if not line.strip():
+            continue
+        if not line[:1].isspace():
+            break
+        stripped = line.strip()
+        if stripped.startswith('- '):
+            items.append(stripped[2:].strip().strip('"\''))
+        else:
+            break
+    return items
+
+
 def clean_text(text: str, max_len: int = 200) -> str:
     """Strip markdown, html, newlines, and truncate."""
     if not text:
@@ -315,7 +345,60 @@ def index_markdown_content():
             except Exception as e:
                 print(f"Warning parsing archive file {md_file}: {e}", file=sys.stderr)
 
+    # 6. Logs Collection
+    logs_dir = CONTENT_DIR / "logs"
+    if logs_dir.exists():
+        characters: dict[str, dict] = {}
+        for md_file in sorted(logs_dir.glob("*.md")):
+            if md_file.name.startswith("_"):
+                continue
+            slug = md_file.stem
+            try:
+                content = md_file.read_text(encoding='utf-8', errors='ignore')
+                meta, body = parse_frontmatter(content)
+                if meta.get("draft") is True:
+                    continue
+                title = meta.get("title", slug.replace("-", " ").title())
+                desc = meta.get("description", clean_text(body, 160))
+                recorded_by = meta.get("recordedBy", "")
+                source_file = meta.get("sourceFile", "")
+                # The cast is what a returning player types into the search box,
+                # and it exists nowhere in the prose, so it becomes keywords.
+                cast = yaml_list(content, "cast")
+                for name in cast:
+                    key = name.lower()
+                    row = characters.setdefault(key, {"name": name, "sessions": []})
+                    row["sessions"].append((title, slug))
+
+                entries.append({
+                    "t": title,
+                    "c": "logs",
+                    "s": f"Logs · {recorded_by}" if recorded_by else "Game logs",
+                    "u": f"/archive/logs/{slug}/",
+                    "k": f"log logs archive vargus {recorded_by} {' '.join(cast)} {source_file}".strip(),
+                    "d": desc,
+                    "b": searchable_body(body),
+                    "v": 0
+                })
+            except Exception as e:
+                print(f"Warning parsing log file {md_file}: {e}", file=sys.stderr)
+
+        # One entry per character so a name search lands on the character page.
+        for key, row in sorted(characters.items()):
+            count = len(row["sessions"])
+            entries.append({
+                "t": row["name"],
+                "c": "logs",
+                "s": "Character in the logs",
+                "u": f"/archive/logs/characters/{key}/",
+                "k": f"character log logs archive {row['name']}",
+                "d": f"{row['name']} appears in {count} {'session' if count == 1 else 'sessions'} of the Dark Pawns logs.",
+                "b": searchable_body(" ".join(title for title, _ in row["sessions"])),
+                "v": 0
+            })
+
     return entries
+
 
 def index_database():
     """Index mobs and items from database.json."""

@@ -1,0 +1,2500 @@
+758H 1085M 287V > look
+[ 4800] The Docks of XiXieqi [ NOBITS ] [ City ]
+   You are standing on the docks of an active seaside village. Fishmongers and
+fishermen haggle over the prices of the seafood in their junks as they inhale
+the saline stench of the ocean and the sea life. Everywhere, citizens rush to
+make purchases of fresh food and imported goods to take home to their awaiting
+families.
+   To the south and east the docks continue, while to the north and west, the
+open sea invites you for a long sea journey.
+[ Exits: north east south west ]
+[ 4] A crate rests here.                                            
+
+758H 1085M 287V > east
+[12713] On the Dock [ NOBITS ] [ Field ]
+   You stand on small floating dock, a narrow extension of the main pier
+to the west.
+[ Exits: east west ]
+
+758H 1085M 287V > west
+[ 4800] The Docks of XiXieqi [ NOBITS ] [ City ]
+   You are standing on the docks of an active seaside village. Fishmongers and
+fishermen haggle over the prices of the seafood in their junks as they inhale
+the saline stench of the ocean and the sea life. Everywhere, citizens rush to
+make purchases of fresh food and imported goods to take home to their awaiting
+families.
+   To the south and east the docks continue, while to the north and west, the
+open sea invites you for a long sea journey.
+[ Exits: north east south west ]
+[ 4] A crate rests here.                                            
+
+758H 1085M 287V > south
+[ 4801] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in the midst of a busy dockyard. Burly men carry barrels
+and crates about the yard, while both loading and unloading cargo from incoming
+ships and junks. The scent of fish and seafood is overwhelming here, making the
+dockside shops to the east seem very inviting. To the north, the docks of
+Xixieqi meet the open sea, as ships sail past to dock immediately to the west,
+where the sea foam comes up over the open pier.
+   To the south, the street continues, toward the heart of Xixieqi city.
+[ Exits: north east south west ]
+A crate rests here.                                            
+
+758H 1085M 287V > east
+[ 4811] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east seem very inviting. To the north, the docks of Xixieqi meet
+the open sea, prohibiting your travel as there is no dock to greet you, while
+the dockyard continues to both the west and south.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4821] Lin Chao's Brine Delights [ NOBITS ] [ Inside ]
+   You are standing in a marvelous inn and restaurant. Tables and benches line
+the walls and surround the tables, which are covered with fine seafoods,
+dumplings, and goblets of wine.
+   To the west, you can see the dockyard, while to the east and south, the
+restaurant continues.
+[ Exits: east south west ]
+A tired sailor stands here, leaning wearily on a crate.
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > east
+[ 4831] Lin Chao's Brine Delights Common Room [ INDOORS ] [ Inside ]
+   All around you, yellow-skinned men and women partake in the feast which is
+spread across each table. To the east, a set of stairs leads upwards to the
+sleeping rooms, while to the west, the inn continues.
+[ Exits: south west up ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15332 ]
+
+758H 1085M 287V > up
+[ 4841] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing on the landing of the inn's stairwell. The hall extends on
+wooden floors to the east, where many doors can be seen lining its southern
+wall. Below you, you can see the main room of the inn, and smell the crispness
+of chilled and frozen sushi, as well as the steam rising from the shellfish in
+the kitchen below.
+[ Exits: east down ]
+
+758H 1085M 287V > east
+[ 4851] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4861] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4871] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > east
+[ 4881] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4891] The End Of The Hall [ INDOORS ] [ Inside ]
+   You are standing at the end of the upstairs hall. A door in the south wall
+stands opposite the open window to the north, when a warm, briny breeze blows
+in. An additional window looks over the rest of the city to the east.
+   To the west, the hall continues back toward the stairs.
+[ Exits: south west ]
+
+758H 1085M 287V > south
+[ 4892] A Rented Room [ INDOORS ] [ Inside ]
+   You are standing in a rented room in the upper floor of the inn. Through the
+southern and eastern windows, you can see into the city, while to the north, a
+bamboo door provides the only exit to the room. You look around at the
+furnishings with satisfaction. The straw and burlap mattress appears to have
+been recently stuffed, while the hooded lantern and table appear well-polished
+and sturdy.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4891] The End Of The Hall [ INDOORS ] [ Inside ]
+   You are standing at the end of the upstairs hall. A door in the south wall
+stands opposite the open window to the north, when a warm, briny breeze blows
+in. An additional window looks over the rest of the city to the east.
+   To the west, the hall continues back toward the stairs.
+[ Exits: south west ]
+
+758H 1085M 287V > west
+[ 4881] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > south
+[ 4882] A Rented Room [ INDOORS ] [ Inside ]
+   You are standing in a rented room in the upper floor of the inn. Through the
+southern and eastern windows, you can see into the city, while to the north, a
+bamboo door provides the only exit to the room. You look around at the
+furnishings with satisfaction. The straw and burlap mattress appears to have
+been recently stuffed, while the hooded lantern and table appear well-polished
+and sturdy.
+[ Exits: north ]
+A lodger has rented this room and is resting here.
+
+758H 1085M 287V > north
+west
+[ 4881] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > [ 4871] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > south
+[ 4872] A Rented Room [ INDOORS ] [ City ]
+   You are standing in a rented room in the upper floor of the inn. Through the
+southern and eastern windows, you can see into the city, while to the north, a
+bamboo door provides the only exit to the room. You look around at the
+furnishings with satisfaction. The straw and burlap mattress appears to have
+been recently stuffed, while the hooded lantern and table appear well-polished
+and sturdy.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4871] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > west
+[ 4861] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > south
+[ 4862] A Rented Room [ INDOORS ] [ Inside ]
+   You are standing in a rented room in the upper floor of the inn. Through the
+southern and eastern windows, you can see into the city, while to the north, a
+bamboo door provides the only exit to the room. You look around at the
+furnishings with satisfaction. The straw and burlap mattress appears to have
+been recently stuffed, while the hooded lantern and table appear well-polished
+and sturdy.
+[ Exits: north ]
+A lodger has rented this room and is resting here.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15333 ]
+
+758H 1085M 287V > north
+[ 4861] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+[ 4851] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > south
+[ 4852] A Rented Room [ INDOORS ] [ Inside ]
+   You are standing in a rented room in the upper floor of the inn. Through the
+southern and eastern windows, you can see into the city, while to the north, a
+bamboo door provides the only exit to the room. You look around at the
+furnishings with satisfaction. The straw and burlap mattress appears to have
+been recently stuffed, while the hooded lantern and table appear well-polished
+and sturdy.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4851] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing in the inn's upstairs hall. Doors to each of the available
+rooms line the southern wall. To the north, the windows look out upon the sea
+and the trade ships which ceaselessly enter and exit the harbour below.
+   The hall continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+
+[ OLC: Azriel edits room 18313 ]
+
+758H 1085M 287V > [ 4841] An Upstairs Hallway [ INDOORS ] [ Inside ]
+   You are standing on the landing of the inn's stairwell. The hall extends on
+wooden floors to the east, where many doors can be seen lining its southern
+wall. Below you, you can see the main room of the inn, and smell the crispness
+of chilled and frozen sushi, as well as the steam rising from the shellfish in
+the kitchen below.
+[ Exits: east down ]
+
+758H 1085M 287V > down
+[ 4831] Lin Chao's Brine Delights Common Room [ INDOORS ] [ Inside ]
+   All around you, yellow-skinned men and women partake in the feast which is
+spread across each table. To the east, a set of stairs leads upwards to the
+sleeping rooms, while to the west, the inn continues.
+[ Exits: south west up ]
+
+758H 1085M 287V > south
+[ 4832] Lin Chao's Brine Delights Bar [ INDOORS ] [ Inside ]
+   Before you stands the bar. A lanky, yellow-skinned man stands behind the
+bar, pouring rice and wheat whiskey into a small class. On the bar is a
+registry book. It appears that the barman is also the innkeeper here.
+   To the north and west, the inn continues, while to the east, behind the bar,
+you can hear the sounds of sizzling food and clanging pots. The southern wall
+is solid, but boasts an elegant, if not tattered, silk tapestry.
+ [ Exits: north east west ]
+Lin Chao stands here, tending the bar.
+
+758H 1085M 287V > east
+[ 4842] Kitchen [ INDOORS ] [ Inside ]
+   You are standing in the midst of a busy kitchen. Yellow-skinned men and
+women shout at each other in this crowded room, demanding more space for their
+dishes and more wood to keep the cooking pots and fires hot. All in the kitchen
+notice your presence, and none appear to be happy with you for adding yet
+another body to the crowd.
+[ Exits: west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15334 ]
+
+758H 1085M 287V > west
+[ 4832] Lin Chao's Brine Delights Bar [ INDOORS ] [ Inside ]
+   Before you stands the bar. A lanky, yellow-skinned man stands behind the
+bar, pouring rice and wheat whiskey into a small class. On the bar is a
+registry book. It appears that the barman is also the innkeeper here.
+   To the north and west, the inn continues, while to the east, behind the bar,
+you can hear the sounds of sizzling food and clanging pots. The southern wall
+is solid, but boasts an elegant, if not tattered, silk tapestry.
+ [ Exits: north east west ]
+Lin Chao stands here, tending the bar.
+
+758H 1085M 287V > 
+[ OLC: Azriel edits room 18315 ]
+
+758H 1085M 287V > west
+[ 4822] Lin Chao's Brine Delights [ INDOORS ] [ Inside ]
+   You are standing in a marvelous inn and restaurant. Tables and benches line
+the walls and surround the tables which are covered with fine seafoods, cold
+sushi, and bottles of fine brews. To the west and south, you can see paintings
+and tapestries covering the walls, while to the north and east, the inn and
+restaurant continues.
+[ Exits: north east ]
+A tired sailor stands here, leaning wearily on a crate.
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > 
+[ OLC: Azriel saves rooms for zone 182 ]
+
+758H 1085M 287V > north
+[ 4821] Lin Chao's Brine Delights [ NOBITS ] [ Inside ]
+   You are standing in a marvelous inn and restaurant. Tables and benches line
+the walls and surround the tables, which are covered with fine seafoods,
+dumplings, and goblets of wine.
+   To the west, you can see the dockyard, while to the east and south, the
+restaurant continues.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4831] Lin Chao's Brine Delights Common Room [ INDOORS ] [ Inside ]
+   All around you, yellow-skinned men and women partake in the feast which is
+spread across each table. To the east, a set of stairs leads upwards to the
+sleeping rooms, while to the west, the inn continues.
+[ Exits: south west up ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15335 ]
+
+758H 1085M 287V > west
+[ 4821] Lin Chao's Brine Delights [ NOBITS ] [ Inside ]
+   You are standing in a marvelous inn and restaurant. Tables and benches line
+the walls and surround the tables, which are covered with fine seafoods,
+dumplings, and goblets of wine.
+   To the west, you can see the dockyard, while to the east and south, the
+restaurant continues.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+[ 4811] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east seem very inviting. To the north, the docks of Xixieqi meet
+the open sea, prohibiting your travel as there is no dock to greet you, while
+the dockyard continues to both the west and south.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+[ 4801] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in the midst of a busy dockyard. Burly men carry barrels
+and crates about the yard, while both loading and unloading cargo from incoming
+ships and junks. The scent of fish and seafood is overwhelming here, making the
+dockside shops to the east seem very inviting. To the north, the docks of
+Xixieqi meet the open sea, as ships sail past to dock immediately to the west,
+where the sea foam comes up over the open pier.
+   To the south, the street continues, toward the heart of Xixieqi city.
+[ Exits: north east south west ]
+A crate rests here.                                            
+
+758H 1085M 287V > west
+[21842] On the Ocean [ NOBITS ] [ Water Noswim ]
+   You are floating without direction on the surface of the ocean. As you float
+above the surface, waves crash into you, forcing you to pay attention to the
+water's motion as it crashes into the man-made barriers and breakwaters that
+form the foundation of the city to the east.
+   Though you can see little over the city walls that rise over the breakwater,
+the sounds of squeaky wheels and shouts of alarm and activity tell you that the
+place is heavily populated. The pier seems to be to the northeast from here,
+while ocean waters continue to the west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4801] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in the midst of a busy dockyard. Burly men carry barrels
+and crates about the yard, while both loading and unloading cargo from incoming
+ships and junks. The scent of fish and seafood is overwhelming here, making the
+dockside shops to the east seem very inviting. To the north, the docks of
+Xixieqi meet the open sea, as ships sail past to dock immediately to the west,
+where the sea foam comes up over the open pier.
+   To the south, the street continues, toward the heart of Xixieqi city.
+[ Exits: north east south west ]
+A crate rests here.                                            
+
+758H 1085M 287V > east
+[ 4811] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east seem very inviting. To the north, the docks of Xixieqi meet
+the open sea, prohibiting your travel as there is no dock to greet you, while
+the dockyard continues to both the west and south.
+[ Exits: east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15336 ]
+
+758H 1085M 287V > south
+[ 4812] Xixieqi Dockyard [ NOBITS ] [ Inside ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east and south seem very inviting.
+   To the north, the docks of Xixieqi meet the dockyard, while to the west, you
+see a main street enter the dock area.
+[ Exits: north south west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > north
+[ 4811] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east seem very inviting. To the north, the docks of Xixieqi meet
+the open sea, prohibiting your travel as there is no dock to greet you, while
+the dockyard continues to both the west and south.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4821] Lin Chao's Brine Delights [ NOBITS ] [ Inside ]
+   You are standing in a marvelous inn and restaurant. Tables and benches line
+the walls and surround the tables, which are covered with fine seafoods,
+dumplings, and goblets of wine.
+   To the west, you can see the dockyard, while to the east and south, the
+restaurant continues.
+[ Exits: east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > south
+[ 4822] Lin Chao's Brine Delights [ INDOORS ] [ Inside ]
+   You are standing in a marvelous inn and restaurant. Tables and benches line
+the walls and surround the tables which are covered with fine seafoods, cold
+sushi, and bottles of fine brews. To the west and south, you can see paintings
+and tapestries covering the walls, while to the north and east, the inn and
+restaurant continues.
+[ Exits: north east ]
+A tired sailor stands here, leaning wearily on a crate.
+
+758H 1085M 287V > north
+[ 4821] Lin Chao's Brine Delights [ NOBITS ] [ Inside ]
+   You are standing in a marvelous inn and restaurant. Tables and benches line
+the walls and surround the tables, which are covered with fine seafoods,
+dumplings, and goblets of wine.
+   To the west, you can see the dockyard, while to the east and south, the
+restaurant continues.
+[ Exits: east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > west
+[ 4811] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east seem very inviting. To the north, the docks of Xixieqi meet
+the open sea, prohibiting your travel as there is no dock to greet you, while
+the dockyard continues to both the west and south.
+[ Exits: east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > south
+[ 4812] Xixieqi Dockyard [ NOBITS ] [ Inside ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east and south seem very inviting.
+   To the north, the docks of Xixieqi meet the dockyard, while to the west, you
+see a main street enter the dock area.
+[ Exits: north south west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+
+758H 1085M 287V > south
+[ 4813] Soo Lin Tao's Distillery [ INDOORS ] [ Inside ]
+   All around you, bottles of distilled water, brewed rice wines and whiskeys,
+and fermenting fruit juices rest in barrels and kegs which line the walls.
+   A single proprietor, Soo Lin Tao, looks at you as you enter and inspect the
+bottles of alcoholic items he has stored on his shelves.
+[ Exits: north east west ]
+Soo Lin Tao stands here, tapping a cork into a cask of wine.
+
+758H 1085M 287V > east
+
+The elven forger arrives from the north.
+
+758H 1085M 287V > [ 4823] Distillery Storeroom [ DARK INDOORS ] [ Inside ]
+   You are standing in the back room of a distillery. Here, barrels of wine and
+casks of ale stand open, ready to fill glass bottles for sales to common
+patrons. An enormous crate of bottles stands open, corks resting in a small box
+beside them.
+   There are no windows here, and the only exit you see lies to the west.
+[ Exits: west ]
+[ 2] A crate rests here.                                            
+[ 3] A barrel rests here.                                           
+
+758H 1085M 287V > west
+[ 4813] Soo Lin Tao's Distillery [ INDOORS ] [ Inside ]
+   All around you, bottles of distilled water, brewed rice wines and whiskeys,
+and fermenting fruit juices rest in barrels and kegs which line the walls.
+   A single proprietor, Soo Lin Tao, looks at you as you enter and inspect the
+bottles of alcoholic items he has stored on his shelves.
+[ Exits: north east west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+Soo Lin Tao stands here, tapping a cork into a cask of wine.
+
+758H 1085M 287V > west
+
+[ OLC: Alta edits room 15337 ]
+
+758H 1085M 287V > [ 4803] Qitiexi Street [ NOBITS ] [ City ]
+   You are dodging fast-moving people and carts in the middle of a busy street.
+Beneath you, the gravel is worn into depressions where many years of travel
+along this lane have left their indentations. To the west, a few fishing stalls
+up along the seaside.
+   The street continues to the north and south, while shops line the eastern
+side of the road.
+[ Exits: north east south ]
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > north
+[ 4802] Qitiexi Street At The Dockyard [ NOBITS ] [ City ]
+   You are standing in the southern end of a dockyard. Horsedrawn carriages
+trot past you as their yellow-skinned drivers scream at you to get out of the
+way. Beneath your feet, you can see where the street that creeps in from the
+south disseminates into the common dockyard around you. To the north and east,
+the dockyard surrounds you, You notice the dock end just footsteps away to your
+west, and opt not to go for a swim in the churning waters.
+   A street leads southward into the city.
+[ Exits: north east south ]
+
+758H 1085M 287V > 
+Azriel: alta I'm going to need your help soon
+
+758H 1085M 287V > south
+[ 4803] Qitiexi Street [ NOBITS ] [ City ]
+   You are dodging fast-moving people and carts in the middle of a busy street.
+Beneath you, the gravel is worn into depressions where many years of travel
+along this lane have left their indentations. To the west, a few fishing stalls
+up along the seaside.
+   The street continues to the north and south, while shops line the eastern
+side of the road.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4813] Soo Lin Tao's Distillery [ INDOORS ] [ Inside ]
+   All around you, bottles of distilled water, brewed rice wines and whiskeys,
+and fermenting fruit juices rest in barrels and kegs which line the walls.
+   A single proprietor, Soo Lin Tao, looks at you as you enter and inspect the
+bottles of alcoholic items he has stored on his shelves.
+[ Exits: north east west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+Soo Lin Tao stands here, tapping a cork into a cask of wine.
+
+758H 1085M 287V > north
+[ 4812] Xixieqi Dockyard [ NOBITS ] [ Inside ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east and south seem very inviting.
+   To the north, the docks of Xixieqi meet the dockyard, while to the west, you
+see a main street enter the dock area.
+[ Exits: north south west ]
+
+758H 1085M 287V > west
+[ 4802] Qitiexi Street At The Dockyard [ NOBITS ] [ City ]
+   You are standing in the southern end of a dockyard. Horsedrawn carriages
+trot past you as their yellow-skinned drivers scream at you to get out of the
+way. Beneath your feet, you can see where the street that creeps in from the
+south disseminates into the common dockyard around you. To the north and east,
+the dockyard surrounds you, You notice the dock end just footsteps away to your
+west, and opt not to go for a swim in the churning waters.
+   A street leads southward into the city.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4812] Xixieqi Dockyard [ NOBITS ] [ Inside ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east and south seem very inviting.
+   To the north, the docks of Xixieqi meet the dockyard, while to the west, you
+see a main street enter the dock area.
+[ Exits: north south west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+
+758H 1085M 287V > 
+Someone: now?
+
+758H 1085M 287V > north
+[ 4811] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east seem very inviting. To the north, the docks of Xixieqi meet
+the open sea, prohibiting your travel as there is no dock to greet you, while
+the dockyard continues to both the west and south.
+[ Exits: east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > west
+[ 4801] Xixieqi Dockyard [ NOBITS ] [ City ]
+   You are standing in the midst of a busy dockyard. Burly men carry barrels
+and crates about the yard, while both loading and unloading cargo from incoming
+ships and junks. The scent of fish and seafood is overwhelming here, making the
+dockside shops to the east seem very inviting. To the north, the docks of
+Xixieqi meet the open sea, as ships sail past to dock immediately to the west,
+where the sea foam comes up over the open pier.
+   To the south, the street continues, toward the heart of Xixieqi city.
+[ Exits: north east south west ]
+A crate rests here.                                            
+
+758H 1085M 287V > south
+
+Azriel: no not now
+
+758H 1085M 287V > [ 4802] Qitiexi Street At The Dockyard [ NOBITS ] [ City ]
+   You are standing in the southern end of a dockyard. Horsedrawn carriages
+trot past you as their yellow-skinned drivers scream at you to get out of the
+way. Beneath your feet, you can see where the street that creeps in from the
+south disseminates into the common dockyard around you. To the north and east,
+the dockyard surrounds you, You notice the dock end just footsteps away to your
+west, and opt not to go for a swim in the churning waters.
+   A street leads southward into the city.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4812] Xixieqi Dockyard [ NOBITS ] [ Inside ]
+   You are standing in a busy dockyard. Burly men carry barrels and crates
+about the yard, while both loading and unloading cargo from incoming ships and
+junks. The scent of fish and seafood is overwhelming here, making the dockside
+shops to the east and south seem very inviting.
+   To the north, the docks of Xixieqi meet the dockyard, while to the west, you
+see a main street enter the dock area.
+[ Exits: north south west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+
+758H 1085M 287V > west
+[ 4802] Qitiexi Street At The Dockyard [ NOBITS ] [ City ]
+   You are standing in the southern end of a dockyard. Horsedrawn carriages
+trot past you as their yellow-skinned drivers scream at you to get out of the
+way. Beneath your feet, you can see where the street that creeps in from the
+south disseminates into the common dockyard around you. To the north and east,
+the dockyard surrounds you, You notice the dock end just footsteps away to your
+west, and opt not to go for a swim in the churning waters.
+   A street leads southward into the city.
+[ Exits: north east south ]
+
+758H 1085M 287V > south
+[ 4803] Qitiexi Street [ NOBITS ] [ City ]
+   You are dodging fast-moving people and carts in the middle of a busy street.
+Beneath you, the gravel is worn into depressions where many years of travel
+along this lane have left their indentations. To the west, a few fishing stalls
+up along the seaside.
+   The street continues to the north and south, while shops line the eastern
+side of the road.
+[ Exits: north east south ]
+
+758H 1085M 287V > 
+Someone: nod
+
+758H 1085M 287V > east
+[ 4813] Soo Lin Tao's Distillery [ INDOORS ] [ Inside ]
+   All around you, bottles of distilled water, brewed rice wines and whiskeys,
+and fermenting fruit juices rest in barrels and kegs which line the walls.
+   A single proprietor, Soo Lin Tao, looks at you as you enter and inspect the
+bottles of alcoholic items he has stored on his shelves.
+[ Exits: north east west ]
+Soo Lin Tao stands here, tapping a cork into a cask of wine.
+
+758H 1085M 287V > west
+[ 4803] Qitiexi Street [ NOBITS ] [ City ]
+   You are dodging fast-moving people and carts in the middle of a busy street.
+Beneath you, the gravel is worn into depressions where many years of travel
+along this lane have left their indentations. To the west, a few fishing stalls
+up along the seaside.
+   The street continues to the north and south, while shops line the eastern
+side of the road.
+[ Exits: north east south ]
+
+758H 1085M 287V > south
+[ 4804] Qitiexi Street [ NOBITS ] [ City ]
+   You are standing just north of a populated city square. All around you,
+yellow-skinned men and women bustle about their daily duties, scrambling about
+their business. The street to each side of you is lined with busy venders; each
+trying to hawk his valuables on passers-by.
+   The street continues to the north, while to the east and west, an herbalist
+and a fishmonger's stall invite you to examine their wares.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > east
+[ 4824] The Herbalist's Back Room [ DARK INDOORS ] [ Inside ]
+   Here, herbs and plants hang in clusters from the ceiling. Bitter and foul-
+smelling roots and garlic seem to overwhelm the more pleasing scents of ginseng
+and powdered orangeseed which occupy bottles on the floor.
+   The only apparent exit from this room is back to the west.
+[ Exits: west down ]
+
+758H 1085M 287V > west
+
+Azriel: I have two rooms to do and I'll icq or something
+
+758H 1085M 287V > [ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > west
+[ 4804] Qitiexi Street [ NOBITS ] [ City ]
+   You are standing just north of a populated city square. All around you,
+yellow-skinned men and women bustle about their daily duties, scrambling about
+their business. The street to each side of you is lined with busy venders; each
+trying to hawk his valuables on passers-by.
+   The street continues to the north, while to the east and west, an herbalist
+and a fishmonger's stall invite you to examine their wares.
+[ Exits: north east south ]
+
+758H 1085M 287V > north
+[ 4803] Qitiexi Street [ NOBITS ] [ City ]
+   You are dodging fast-moving people and carts in the middle of a busy street.
+Beneath you, the gravel is worn into depressions where many years of travel
+along this lane have left their indentations. To the west, a few fishing stalls
+up along the seaside.
+   The street continues to the north and south, while shops line the eastern
+side of the road.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4813] Soo Lin Tao's Distillery [ INDOORS ] [ Inside ]
+   All around you, bottles of distilled water, brewed rice wines and whiskeys,
+and fermenting fruit juices rest in barrels and kegs which line the walls.
+   A single proprietor, Soo Lin Tao, looks at you as you enter and inspect the
+bottles of alcoholic items he has stored on his shelves.
+[ Exits: north east west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+Soo Lin Tao stands here, tapping a cork into a cask of wine.
+
+758H 1085M 287V > east
+[ 4823] Distillery Storeroom [ DARK INDOORS ] [ Inside ]
+   You are standing in the back room of a distillery. Here, barrels of wine and
+casks of ale stand open, ready to fill glass bottles for sales to common
+patrons. An enormous crate of bottles stands open, corks resting in a small box
+beside them.
+   There are no windows here, and the only exit you see lies to the west.
+[ Exits: west ]
+[ 2] A crate rests here.                                            
+[ 3] A barrel rests here.                                           
+
+758H 1085M 287V > west
+west
+[ 4813] Soo Lin Tao's Distillery [ INDOORS ] [ Inside ]
+   All around you, bottles of distilled water, brewed rice wines and whiskeys,
+and fermenting fruit juices rest in barrels and kegs which line the walls.
+   A single proprietor, Soo Lin Tao, looks at you as you enter and inspect the
+bottles of alcoholic items he has stored on his shelves.
+[ Exits: north east west ]
+A wise, old elf smiles warmly as he passes you by.
+...he glows with a bright light!
+Soo Lin Tao stands here, tapping a cork into a cask of wine.
+
+758H 1085M 287V > [ 4803] Qitiexi Street [ NOBITS ] [ City ]
+   You are dodging fast-moving people and carts in the middle of a busy street.
+Beneath you, the gravel is worn into depressions where many years of travel
+along this lane have left their indentations. To the west, a few fishing stalls
+up along the seaside.
+   The street continues to the north and south, while shops line the eastern
+side of the road.
+[ Exits: north east south ]
+
+758H 1085M 287V > south
+[ 4804] Qitiexi Street [ NOBITS ] [ City ]
+   You are standing just north of a populated city square. All around you,
+yellow-skinned men and women bustle about their daily duties, scrambling about
+their business. The street to each side of you is lined with busy venders; each
+trying to hawk his valuables on passers-by.
+   The street continues to the north, while to the east and west, an herbalist
+and a fishmonger's stall invite you to examine their wares.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > east
+[ 4824] The Herbalist's Back Room [ DARK INDOORS ] [ Inside ]
+   Here, herbs and plants hang in clusters from the ceiling. Bitter and foul-
+smelling roots and garlic seem to overwhelm the more pleasing scents of ginseng
+and powdered orangeseed which occupy bottles on the floor.
+   The only apparent exit from this room is back to the west.
+[ Exits: west down ]
+
+758H 1085M 287V > 
+Someone: k
+
+758H 1085M 287V > down
+[ 4834] Below The Herbalist Shop [ DARK INDOORS TUNNEL ** ] [ Inside ]
+   You are standing below the herbalist's back staircase. Here, mushrooms grow
+in herb-treated compost, adding potency to the fungus, which appears to be
+ready for picking. You can feel a cold draft coming from somewhere, as though
+you were standing in a cave, and not a basement.
+   The stairs you came down are above you, while the mushroom chamber continues
+to the north and east.
+[ Exits: north east up ]
+[ 2] There is a huge mushroom growing here.                         
+
+758H 1085M 287V > north
+[ 4833] Below The Herbalist Shop [ DARK INDOORS TUNNEL ] [ Inside ]
+   You are standing in a damp, musty chamber below the herbalist's shop. Here,
+mushrooms grow in herb-treated compost, adding potency to the fungus which
+appears to be ready for picking. You feel a cold draft coming from somewhere,
+as though you were standing in a cave, and not a basement.
+   To your west, you can see a stone wall whose bricks are stacked in columns,
+and not the usual center-on-edge form. To the south and east, the basement of
+the shop continues.
+[ Exits: east south ]
+There is a huge mushroom growing here.                         
+
+758H 1085M 287V > east
+[ 4843] Below The Herbalist Shop [ DARK INDOORS TUNNEL ] [ Inside ]
+   You are standing in a damp, musty chamber below the herbalist's shop. Here,
+mushrooms grow in herb-treated compost, adding potency to the fungus which
+appears to be ready for picking. You feel a cold draft coming from somewhere,
+as though you were standing in a cave, and not a basement.
+   To your east, you can see a stone wall whose bricks are stacked in columns,
+and not the usual center-on-edge form. To the south and west, the basement of
+the shop continues.
+[ Exits: south west ]
+
+758H 1085M 287V > south
+[ 4844] Below The Herbalist Shop [ DARK INDOORS TUNNEL ] [ Inside ]
+   You are standing in a damp, musty chamber below the herbalist's shop. Here,
+mushrooms grow in herb-treated compost, adding potency to the fungus, which
+appears to be ready for picking. You feel a cold draft coming from somewhere,
+as though you were standing in a cave, and not a basement.
+   To your east, you can see a stone wall whose bricks are stacked in columns,
+and not the usual center-on-edge form. To the north and west, the basement of
+the shop continues.
+[ Exits: north west ]
+
+758H 1085M 287V > west
+[ 4834] Below The Herbalist Shop [ DARK INDOORS TUNNEL ** ] [ Inside ]
+   You are standing below the herbalist's back staircase. Here, mushrooms grow
+in herb-treated compost, adding potency to the fungus, which appears to be
+ready for picking. You can feel a cold draft coming from somewhere, as though
+you were standing in a cave, and not a basement.
+   The stairs you came down are above you, while the mushroom chamber continues
+to the north and east.
+[ Exits: north east up ]
+[ 2] There is a huge mushroom growing here.                         
+
+758H 1085M 287V > up
+[ 4824] The Herbalist's Back Room [ DARK INDOORS ] [ Inside ]
+   Here, herbs and plants hang in clusters from the ceiling. Bitter and foul-
+smelling roots and garlic seem to overwhelm the more pleasing scents of ginseng
+and powdered orangeseed which occupy bottles on the floor.
+   The only apparent exit from this room is back to the west.
+[ Exits: west down ]
+
+758H 1085M 287V > west
+[ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > west
+[ 4804] Qitiexi Street [ NOBITS ] [ City ]
+   You are standing just north of a populated city square. All around you,
+yellow-skinned men and women bustle about their daily duties, scrambling about
+their business. The street to each side of you is lined with busy venders; each
+trying to hawk his valuables on passers-by.
+   The street continues to the north, while to the east and west, an herbalist
+and a fishmonger's stall invite you to examine their wares.
+[ Exits: north east south ]
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > south
+[ 4805] Maoqi Square [ REGENROOM ] [ City ]
+   You stand before an enormous monolith. Here, three streets converge as if to
+pay homage to the black spire which seems to stab at the sky. Oddly enough, you
+feel a rhythmic pulsing coming from the spire. As you look up at it, you notice
+thick grey clouds gathering at its tip, as though they were being drawn into
+its peak.
+   To the north, south, and east, shop-lined streets and shacks invite you to
+explore this city.
+[ Exits: north east south ]
+A fountain of bubbling water burbles here.                     
+
+758H 1085M 287V > east
+[ 4815] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business. You can see an herbalist shop to the north, as it evidenced by
+the sign which bears a twisted ginseng root resting against a pale blue bottle
+of liquid. To the south, you see the wall of someone's two-level home.
+   The street continues to the east, and terminates to your west, where a tall
+monolith springs from the junction of three streets.
+[ Exits: north east west ]
+
+758H 1085M 287V > north
+[ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > east
+[ 4824] The Herbalist's Back Room [ DARK INDOORS ] [ Inside ]
+   Here, herbs and plants hang in clusters from the ceiling. Bitter and foul-
+smelling roots and garlic seem to overwhelm the more pleasing scents of ginseng
+and powdered orangeseed which occupy bottles on the floor.
+   The only apparent exit from this room is back to the west.
+[ Exits: west down ]
+
+758H 1085M 287V > west
+[ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > south
+[ 4815] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business. You can see an herbalist shop to the north, as it evidenced by
+the sign which bears a twisted ginseng root resting against a pale blue bottle
+of liquid. To the south, you see the wall of someone's two-level home.
+   The street continues to the east, and terminates to your west, where a tall
+monolith springs from the junction of three streets.
+[ Exits: north east west ]
+
+758H 1085M 287V > east
+[ 4825] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see the wall of an herbalist's shop to the north, as it evident by
+sign off to the west by its door. To the south, you see the entrance to
+someone's home, while the street continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4835] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see a wall to the north, probably part of a house. To the south, you
+see a newly-renovated home, perhaps that of a merchant. The street continues to
+the east and west along this cobbled lane.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4865] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window boasts stained-glass depictions of dragons, and its
+sign appears to bear some sort of compact bottle. To the south, a tall
+establishment boasts a wide set of wooden, not bamboo, doors. No signs appear
+near, nor on the door itself, to offer a clue as to what the place is.
+   The street continues to the east, where it offers more shops, and west,
+where it appears to meet a junction.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4875] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows two hanging daggers, and its sign bears a small
+wooden shield. To the south, you notice a windowless warehouse with a sturdy,
+locking door.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4885] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows nothing, but its sign bears a bobtail cat
+playing with some yarn. To the south, you notice a small temple of some kind,
+though to which deity it may be dedicated to is beyond you.
+   The street continues to the east and west, though you notice a sharp
+southward bend to it in the east.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4895] Corner Of Chiang And Misa [ NOBITS ] [ City ]
+   You are standing at the corner of two streets. To your east, you see the
+city wall rising high before you. To the north, you see a shop of some kind,
+judging by the sign and the backpacks hanging in the glass window.
+   The streets split off to the south and west from here.
+[ Exits: north south west ]
+
+758H 1085M 287V > east
+Alas, you cannot go that way...
+
+758H 1085M 287V > 
+The sky starts to get cloudy.
+
+758H 1085M 287V > west
+[ 4885] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows nothing, but its sign bears a bobtail cat
+playing with some yarn. To the south, you notice a small temple of some kind,
+though to which deity it may be dedicated to is beyond you.
+   The street continues to the east and west, though you notice a sharp
+southward bend to it in the east.
+[ Exits: north east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > west
+west
+[ 4875] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows two hanging daggers, and its sign bears a small
+wooden shield. To the south, you notice a windowless warehouse with a sturdy,
+locking door.
+[ Exits: north east south west ]
+
+758H 1085M 287V > west
+west
+[ 4865] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window boasts stained-glass depictions of dragons, and its
+sign appears to bear some sort of compact bottle. To the south, a tall
+establishment boasts a wide set of wooden, not bamboo, doors. No signs appear
+near, nor on the door itself, to offer a clue as to what the place is.
+   The street continues to the east, where it offers more shops, and west,
+where it appears to meet a junction.
+[ Exits: north east south west ]
+
+758H 1085M 287V > west
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > [ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+[ 4835] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see a wall to the north, probably part of a house. To the south, you
+see a newly-renovated home, perhaps that of a merchant. The street continues to
+the east and west along this cobbled lane.
+[ Exits: east south west ]
+
+758H 1085M 287V > [ 4825] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see the wall of an herbalist's shop to the north, as it evident by
+sign off to the west by its door. To the south, you see the entrance to
+someone's home, while the street continues to the east and west.
+[ Exits: east south west ]
+[ OLC: Alta edits room 15338 ]
+
+758H 1085M 287V > west
+[ 4815] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business. You can see an herbalist shop to the north, as it evidenced by
+the sign which bears a twisted ginseng root resting against a pale blue bottle
+of liquid. To the south, you see the wall of someone's two-level home.
+   The street continues to the east, and terminates to your west, where a tall
+monolith springs from the junction of three streets.
+[ Exits: north east west ]
+
+758H 1085M 287V > west
+[ 4805] Maoqi Square [ REGENROOM ] [ City ]
+   You stand before an enormous monolith. Here, three streets converge as if to
+pay homage to the black spire which seems to stab at the sky. Oddly enough, you
+feel a rhythmic pulsing coming from the spire. As you look up at it, you notice
+thick grey clouds gathering at its tip, as though they were being drawn into
+its peak.
+   To the north, south, and east, shop-lined streets and shacks invite you to
+explore this city.
+[ Exits: north east south ]
+A fountain of bubbling water burbles here.                     
+
+758H 1085M 287V > west
+west
+Alas, you cannot go that way...
+
+758H 1085M 287V > Alas, you cannot go that way...
+
+758H 1085M 287V > south
+[ 4806] Dinxi Street [ NOBITS ] [ City ]
+   You seem to be standing in the residential section of the city. Here, older
+ladies and children converse and play, discussing complaints of their daily
+lives and plans for the future. To the east and west, shacks and other small
+dwellings which house the population line the streets.
+   To the north, a city square hosts an enormous black monolith, while to the
+south, the street continues further into the residential part of the city.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4816] A City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into four small rooms, each separated by bamboo walls and tapestry door
+curtains. The door to the west is the only exit to the outside, and appears to
+be made of fire-hardened bamboo shoots.
+[ Exits: west ]
+
+758H 1085M 287V > west
+[ 4806] Dinxi Street [ NOBITS ] [ City ]
+   You seem to be standing in the residential section of the city. Here, older
+ladies and children converse and play, discussing complaints of their daily
+lives and plans for the future. To the east and west, shacks and other small
+dwellings which house the population line the streets.
+   To the north, a city square hosts an enormous black monolith, while to the
+south, the street continues further into the residential part of the city.
+[ Exits: north east south ]
+
+758H 1085M 287V > south
+[ 4807] Dinxi Street [ NOBITS ] [ City ]
+   You are standing in the middle of a garbage-strewn street. It appears as
+though the residents of this city care little for the conditions of the city
+outside their homes, as is evident by the amount of old cloth, crumpled paper,
+parchment, and other garbage which lines the streets on both sides.
+   To the east and west, you can see homes, while to the north and south, the
+street continues.
+[ Exits: north east south ]
+
+758H 1085M 287V > east
+[ 4817] A City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into four small rooms, each separated by bamboo walls and tapestry door
+curtains. The door to the west is the only exit to the outside, and appears to
+be made of fire-hardened bamboo shoots.
+[ Exits: west ]
+
+758H 1085M 287V > west
+[ 4807] Dinxi Street [ NOBITS ] [ City ]
+   You are standing in the middle of a garbage-strewn street. It appears as
+though the residents of this city care little for the conditions of the city
+outside their homes, as is evident by the amount of old cloth, crumpled paper,
+parchment, and other garbage which lines the streets on both sides.
+   To the east and west, you can see homes, while to the north and south, the
+street continues.
+[ Exits: north east south ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15339 ]
+
+758H 1085M 287V > south
+[ 4808] Dinxi Street [ NOBITS ] [ City ]
+   You are standing in the middle of a garbage-strewn street. It appears as
+though the residents of this city care little for the conditions of the city
+outside their homes, as is evident by the amount of old cloth, crumpled paper,
+parchment, and other garbage which lines the streets on both sides.
+   To the east and west, you can see homes, while to the north and south, the
+street continues.
+[ Exits: north east south ]
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > east
+[ 4818] A City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into four small rooms, each separated by bamboo walls and tapestry door
+curtains. The door to the west is the only exit to the outside, and appears to
+be made of fire-hardened bamboo shoots.
+[ Exits: west ]
+
+758H 1085M 287V > west
+south
+[ 4808] Dinxi Street [ NOBITS ] [ City ]
+   You are standing in the middle of a garbage-strewn street. It appears as
+though the residents of this city care little for the conditions of the city
+outside their homes, as is evident by the amount of old cloth, crumpled paper,
+parchment, and other garbage which lines the streets on both sides.
+   To the east and west, you can see homes, while to the north and south, the
+street continues.
+[ Exits: north east south ]
+
+758H 1085M 287V > [ 4809] The Corner Of Dinxi And Maojeng [ NOBITS ] [ City ]
+   Here, the residential district of the city of Xixieqi ends at a sharp
+corner. All around you, you hear the noise of screaming mothers and wailing
+children.
+   No alleys provide any space to the west and south, though the streets
+continue to the north and east.
+[ Exits: north east south ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15340 ]
+
+758H 1085M 287V > east
+[ 4819] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To your south, a locked wooden gate prevents you from
+entering what appears to be a ruined temple of some kind.
+   This east-west street appears to turn sharply to the west, around the side
+of the home to the north.
+[ Exits: east (south) west ]
+
+758H 1085M 287V > south
+The gate seems to be closed.
+
+758H 1085M 287V > west
+[ 4809] The Corner Of Dinxi And Maojeng [ NOBITS ] [ City ]
+   Here, the residential district of the city of Xixieqi ends at a sharp
+corner. All around you, you hear the noise of screaming mothers and wailing
+children.
+   No alleys provide any space to the west and south, though the streets
+continue to the north and east.
+[ Exits: north east south ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > east
+[ 4819] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To your south, a locked wooden gate prevents you from
+entering what appears to be a ruined temple of some kind.
+   This east-west street appears to turn sharply to the west, around the side
+of the home to the north.
+[ Exits: east (south) west ]
+
+758H 1085M 287V > op gate s
+It seems to be locked.
+
+758H 1085M 287V > s
+The gate seems to be closed.
+
+758H 1085M 287V > l e
+You look eastwards.
+The street continues to the east.
+
+758H 1085M 287V > l w
+You look westwards.
+The street bends sharply northward in that direction.
+
+758H 1085M 287V > stat room
+Room name: Maojeng Lane
+Zone: [ 17], VNum: [ 4819], RNum: [ 1694], Type: City
+SpecProc: None, Flags: NOBITS 
+Description:
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To your south, a locked wooden gate prevents you from
+entering what appears to be a ruined temple of some kind.
+   This east-west street appears to turn sharply to the west, around the side
+of the home to the north.
+Chars present: Dexyl(PC)
+Exit east :  To: [ 4829], Key: [    0], Keywrd: None, Type: NOBITS 
+ The street continues to the east.
+Exit south:  To: [ 4820], Key: [    0], Keywrd: gate wooden, Type: DOOR CLOSED LOCKED PICKPROOF 
+ You see a locked wooden gate to the south.
+Exit west :  To: [ 4809], Key: [    0], Keywrd: None, Type: NOBITS 
+ The street bends sharply northward in that direction.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15341 ]
+
+758H 1085M 287V > goto 4820
+[ 4820] Temple Of The Sands [ DARK INDOORS PEACEFUL ] [ Inside ]
+   You are standing in a ruined temple. A cracked statue lies sideways on a
+perched and diased marble altar against the southern wall, while threadbare
+tapestries lie half-eaten by insects on the floor.
+   There is an exit to the north.
+[ Exits: (north) ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15342 ]
+
+758H 1085M 287V > search
+You carefully check the room...
+
+758H 1085M 287V > l altar
+You do not see that here.
+
+758H 1085M 287V > l statue
+You do not see that here.
+
+758H 1085M 287V > l temple
+You do not see that here.
+
+758H 1085M 287V > l
+[ 4820] Temple Of The Sands [ DARK INDOORS PEACEFUL ] [ Inside ]
+   You are standing in a ruined temple. A cracked statue lies sideways on a
+perched and diased marble altar against the southern wall, while threadbare
+tapestries lie half-eaten by insects on the floor.
+   There is an exit to the north.
+[ Exits: (north) ]
+
+758H 1085M 287V > l temple
+You do not see that here.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15343 ]
+
+758H 1085M 287V > l nixith
+You do not see that here.
+
+758H 1085M 287V > l
+[ 4820] Temple Of The Sands [ DARK INDOORS PEACEFUL ] [ Inside ]
+   You are standing in a ruined temple. A cracked statue lies sideways on a
+perched and diased marble altar against the southern wall, while threadbare
+tapestries lie half-eaten by insects on the floor.
+   There is an exit to the north.
+[ Exits: (north) ]
+
+758H 1085M 287V > goto 4819
+[ 4819] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To your south, a locked wooden gate prevents you from
+entering what appears to be a ruined temple of some kind.
+   This east-west street appears to turn sharply to the west, around the side
+of the home to the north.
+[ Exits: east (south) west ]
+
+758H 1085M 287V > west
+[ 4809] The Corner Of Dinxi And Maojeng [ NOBITS ] [ City ]
+   Here, the residential district of the city of Xixieqi ends at a sharp
+corner. All around you, you hear the noise of screaming mothers and wailing
+children.
+   No alleys provide any space to the west and south, though the streets
+continue to the north and east.
+[ Exits: north east south ]
+
+758H 1085M 287V > 
+A woman arrives from the south.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15344 ]
+
+758H 1085M 287V > south
+[ 4810] A City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into four small rooms, each separated by bamboo walls and tapestry door
+curtains. The door to the north is the only exit to the outside, and appears to
+be made of fire-hardened bamboo shoots.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4809] The Corner Of Dinxi And Maojeng [ NOBITS ] [ City ]
+   Here, the residential district of the city of Xixieqi ends at a sharp
+corner. All around you, you hear the noise of screaming mothers and wailing
+children.
+   No alleys provide any space to the west and south, though the streets
+continue to the north and east.
+[ Exits: north east south ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > east
+[ 4819] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To your south, a locked wooden gate prevents you from
+entering what appears to be a ruined temple of some kind.
+   This east-west street appears to turn sharply to the west, around the side
+of the home to the north.
+[ Exits: east (south) west ]
+
+758H 1085M 287V > east
+[ 4829] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a stout, solid house of wood
+and bamboo. The place appears to be well-tended and is obviously more than just
+a home. To the south, a warehouse blocks most of the street in shadow, through
+as you try the door, you find it solid, as if the door was false.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15345 ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15346 ]
+
+758H 1085M 287V > south
+[ 4830] A Warehouse [ DARK INDOORS ] [ Inside ]
+   You are standing in an enormous square room. All around you, mouse droppings
+and rats scuttle about the bare wooden floor, seeking out any available tidbit
+of food.
+   There are no windows here, and only the solid door to the north provides any
+exit.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4829] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a stout, solid house of wood
+and bamboo. The place appears to be well-tended and is obviously more than just
+a home. To the south, a warehouse blocks most of the street in shadow, through
+as you try the door, you find it solid, as if the door was false.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > north
+[ 4828] A Sage's Home [ INDOORS ] [ Inside ]
+   You are standing comfortably in the house of a kindly, old man. Around you,
+wicker and reed furniture invites you to relax and listen to the wise one's
+legends and tales. Smoke from his pipe fills the room with a thick, almost
+nectar-like armoa.
+   You notice an open doorway to the north, while the exit lies to the south.
+[ Exits: north south ]
+
+758H 1085M 287V > north
+[ 4827] A Sage's Home [ DARK INDOORS SOUNDPROOF ] [ Inside ]
+   You are standing in the house of a kindly, old man. Around you, wicker and
+reed furniture invites you to relax and read the tomes of lore on the shelves
+of this room. An ashtray on a central table shows evidence of burnt opium and
+a pale green tobacco.
+   The exit is to the south.
+[ Exits: south ]
+
+758H 1085M 287V > 
+[ OLC: Alta saves rooms for zone 151 ]
+
+758H 1085M 287V > mlist 48
+  1. [ 4800] a sailor
+  2. [ 4801] a waiter
+  3. [ 4802] a citizen
+  4. [ 4804] a dock worker
+  5. [ 4805] a lodger
+  6. [ 4806] a woman
+  7. [ 4807] a Xixieqian child
+  8. [ 4808] Soo Lin Tao
+  9. [ 4809] Hrenchao
+ 10. [ 4811] Lin Chao
+ 11. [ 4812] a sage
+ 12. [ 4813] the channeler
+ 13. [ 4814] the constable
+ 14. [ 4815] a legal scribe
+ 15. [ 4816] a cook
+ 16. [ 4817] Nijen
+ 17. [ 4818] a gate guard
+ 18. [ 4819] Ping Xiao
+ 19. [ 4820] Ta'lon Chao
+ 20. [ 4821] the master warrior
+ 21. [ 4822] Moo Shi
+ 22. [ 4823] Yui Gui Pan
+
+[ Return to continue, (q)uit, (r)efresh, (b)ack, or page number (1/2) ]
+ 23. [ 4824] the weaponer
+ 24. [ 4825] Fang
+ 25. [ 4826] Yuang Li Tao
+ 26. [ 4827] a cult priest
+ 27. [ 4828] Meng
+ 28. [ 4836] a merchant
+ 28 Mobiles found in Zone 48
+
+758H 1085M 287V > 
+758H 1085M 287V > 
+[ OLC: Alta edits room 15365 ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15364 ]
+
+758H 1085M 287V > look
+[ 4827] A Sage's Home [ DARK INDOORS SOUNDPROOF ] [ Inside ]
+   You are standing in the house of a kindly, old man. Around you, wicker and
+reed furniture invites you to relax and read the tomes of lore on the shelves
+of this room. An ashtray on a central table shows evidence of burnt opium and
+a pale green tobacco.
+   The exit is to the south.
+[ Exits: south ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15363 ]
+
+758H 1085M 287V > south
+[ 4828] A Sage's Home [ INDOORS ] [ Inside ]
+   You are standing comfortably in the house of a kindly, old man. Around you,
+wicker and reed furniture invites you to relax and listen to the wise one's
+legends and tales. Smoke from his pipe fills the room with a thick, almost
+nectar-like armoa.
+   You notice an open doorway to the north, while the exit lies to the south.
+[ Exits: north south ]
+
+758H 1085M 287V > south
+[ 4829] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a stout, solid house of wood
+and bamboo. The place appears to be well-tended and is obviously more than just
+a home. To the south, a warehouse blocks most of the street in shadow, through
+as you try the door, you find it solid, as if the door was false.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4839] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a decrepit house, while to the
+south, you see the local law enforcement facility.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > south
+[ 4840] The Constable's Office [ !MOB INDOORS ] [ Inside ]
+   You have just entered a busy room. Here, clerks and other petty beaurocrats
+issue and stamp licenses, keys, and permits to foreigners, tradesmen, and
+nomads who wish to peddle their wares within the city. The constable, himself,
+is in the back of the room, mercilessly berating one of his underlings for some
+infraction.
+   The only exit is to the north.
+[ Exits: north ]
+A scribe sits here, scribbling out passes and permits.
+A scribe sits here, scribbling out passes and permits.
+A scribe sits here, scribbling out passes and permits.
+A scribe sits here, scribbling out passes and permits.
+The constable stands here, surrounded by parchments and scribes.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15362 ]
+
+758H 1085M 287V > l const
+This tall man appears to be a well-trained warrior. His biceps and pectorals
+bulge though his silken shirt, while his abdominals muscles appear to be
+trying to thrust his belt dagger through its scabbard within his waistband.
+The constable is in excellent condition.
+
+the constable is using:
+<worn about body>    a Xixieqian scale mail vest
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > l scribe
+This young, yellow-skinned man appears to be well-suited to the life of a
+scribe. His long, dextrous fingers quickly scribble down orders and
+requisitions for those who pay the necessary fees. His hawkish nose is
+windburned and peeling. Sweat pours off his lithe frame, drenching his stained
+white scribe's robes.
+A legal scribe is in excellent condition.
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > l 2.scribe
+This young, yellow-skinned man appears to be well-suited to the life of a
+scribe. His long, dextrous fingers quickly scribble down orders and
+requisitions for those who pay the necessary fees. His hawkish nose is
+windburned and peeling. Sweat pours off his lithe frame, drenching his stained
+white scribe's robes.
+A legal scribe is in excellent condition.
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > l 3.scribe
+This young, yellow-skinned man appears to be well-suited to the life of a
+scribe. His long, dextrous fingers quickly scribble down orders and
+requisitions for those who pay the necessary fees. His hawkish nose is
+windburned and peeling. Sweat pours off his lithe frame, drenching his stained
+white scribe's robes.
+A legal scribe is in excellent condition.
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > l 4.scribe
+This young, yellow-skinned man appears to be well-suited to the life of a
+scribe. His long, dextrous fingers quickly scribble down orders and
+requisitions for those who pay the necessary fees. His hawkish nose is
+windburned and peeling. Sweat pours off his lithe frame, drenching his stained
+white scribe's robes.
+A legal scribe is in excellent condition.
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > l
+[ 4840] The Constable's Office [ !MOB INDOORS ] [ Inside ]
+   You have just entered a busy room. Here, clerks and other petty beaurocrats
+issue and stamp licenses, keys, and permits to foreigners, tradesmen, and
+nomads who wish to peddle their wares within the city. The constable, himself,
+is in the back of the room, mercilessly berating one of his underlings for some
+infraction.
+   The only exit is to the north.
+[ Exits: north ]
+A scribe sits here, scribbling out passes and permits.
+A scribe sits here, scribbling out passes and permits.
+A scribe sits here, scribbling out passes and permits.
+A scribe sits here, scribbling out passes and permits.
+The constable stands here, surrounded by parchments and scribes.
+
+758H 1085M 287V > north
+[ 4839] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a decrepit house, while to the
+south, you see the local law enforcement facility.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4849] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely gravelled-road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a shop of some sort, perhaps a
+glassblower's shop, judging by the amounts of stained glass and windchimes in
+the front. To the south, you see a guardhouse, obviously used to monitor
+traffic in and out of the southern gates of the city just to the southeast.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15361 ]
+
+758H 1085M 287V > south
+[ 4850] Guardhouse [ INDOORS ] [ Inside ]
+   You are standing in a guardhouse. Through the eastern window, you see
+yellow-skinned guards inspect and question those who enter and exit the city.
+   Here, in the shade of the guardhouse, guards sit around a table, playing
+bones, polishing weapons, and swearing as they gamble and lose to their
+comerades.
+   The only exit is to the north.
+[ Exits: north ]
+A gate guard stands here, monitoring the passers-by.
+A gate guard stands here, monitoring the passers-by.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15360 ]
+
+758H 1085M 287V > south
+Alas, you cannot go that way...
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > east
+Alas, you cannot go that way...
+
+758H 1085M 287V > north
+[ 4849] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely gravelled-road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a shop of some sort, perhaps a
+glassblower's shop, judging by the amounts of stained glass and windchimes in
+the front. To the south, you see a guardhouse, obviously used to monitor
+traffic in and out of the southern gates of the city just to the southeast.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > north
+[ 4848] Nijen's Glass and Lamps [ INDOORS PEACEFUL ] [ Inside ]
+   You are standing in the middle of a glassblowers shop. Piles of white sand
+occupy most of the floor, as it spills from holes in burlap sacks onto the
+ground. A broad chimney in the northern wall apparently houses the molten glass
+which the master craftsman blows into bulbs for lamps and fashions into various
+other glassware.
+   The exit to this shop is to the south.
+[ Exits: south ]
+A middle-aged man is here, polishing a snuff bottle.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15359 ]
+
+758H 1085M 287V > south
+[ 4849] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely gravelled-road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a shop of some sort, perhaps a
+glassblower's shop, judging by the amounts of stained glass and windchimes in
+the front. To the south, you see a guardhouse, obviously used to monitor
+traffic in and out of the southern gates of the city just to the southeast.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > south
+[ 4850] Guardhouse [ INDOORS ] [ Inside ]
+   You are standing in a guardhouse. Through the eastern window, you see
+yellow-skinned guards inspect and question those who enter and exit the city.
+   Here, in the shade of the guardhouse, guards sit around a table, playing
+bones, polishing weapons, and swearing as they gamble and lose to their
+comerades.
+   The only exit is to the north.
+[ Exits: north ]
+A gate guard stands here, monitoring the passers-by.
+A gate guard stands here, monitoring the passers-by.
+
+758H 1085M 287V > north
+east
+[ 4849] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely gravelled-road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a shop of some sort, perhaps a
+glassblower's shop, judging by the amounts of stained glass and windchimes in
+the front. To the south, you see a guardhouse, obviously used to monitor
+traffic in and out of the southern gates of the city just to the southeast.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > [ 4859] Maojeng At Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing at a busy intersection. Caravans from the desert and dry
+plains to the south come northward from the city gates, and back to the south,
+laden with goods from distant lands and the desert itself.
+   Streets lead off in all directions, though the gate to the grasslands and
+the desert lies to the south.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15358 ]
+
+758H 1085M 287V > south
+[ 4860] Xixieqi City Gate [ NOBITS ] [ City ]
+   You are standing among a crowd of people. Merchant caravans and nomads speak
+to the gateguards, occasionally slipping them a few coins as they pass into the
+city from the south.
+   Just outside the southern gate, you see a lush grassland, but the dry wind
+that blows through the gate tells you that the desert is not far beyond.
+   To the north, you see an intersection, while you notice you are flanked by
+guardhouses to the east and west.
+[ Exits: north south ]
+A tired sailor stands here, leaning wearily on a crate.
+
+758H 1085M 287V > south
+[ 5040] Outside The City Gates [ NOBITS ] [ Desert ]
+   You stand just outside the gates of an enormous desert city.  Tall,
+sand-blasted walls rise high above you, sloping gently and slightly
+inward to deflect the sand from settling within.
+   Tanned guards patrol around you as they inspect desert caravans
+that come in from the south, occasionally taking a bribe as they allow
+a few black-market items into the city.
+   All around you, the desert spans as far as you can see, an errant
+whirlwind or dust devil whipping about the sand.
+   To the east and west, the desert stretches without limit, while
+to the south, a worn caravan road leads into the desert.
+[ Exits: north east south west ]
+
+758H 1085M 287V > north
+[ 4860] Xixieqi City Gate [ NOBITS ] [ City ]
+   You are standing among a crowd of people. Merchant caravans and nomads speak
+to the gateguards, occasionally slipping them a few coins as they pass into the
+city from the south.
+   Just outside the southern gate, you see a lush grassland, but the dry wind
+that blows through the gate tells you that the desert is not far beyond.
+   To the north, you see an intersection, while you notice you are flanked by
+guardhouses to the east and west.
+[ Exits: north south ]
+A tired sailor stands here, leaning wearily on a crate.
+
+758H 1085M 287V > north
+[ 4859] Maojeng At Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing at a busy intersection. Caravans from the desert and dry
+plains to the south come northward from the city gates, and back to the south,
+laden with goods from distant lands and the desert itself.
+   Streets lead off in all directions, though the gate to the grasslands and
+the desert lies to the south.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15357 ]
+
+758H 1085M 287V > east
+[ 4869] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you see some type of shop, a cold smithy
+or leatherworker's place, perhaps, judging from the yakhide on the sign in
+front. To the south, you see a guardhouse, obviously used to monitor traffic in
+and out of the southern gates of the city just to the southwest.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+A gate guard stands here, monitoring the passers-by.
+
+758H 1085M 287V > south
+[ 4870] Guardhouse [ INDOORS ] [ Inside ]
+   You are standing in a guardhouse. Through the western window, you see
+yellow-skinned guards inspect and question those who enter and exit the city.
+Here, in the shade of the guardhouse, guards sit around a table, playing bones,
+polishing weapons, and swearing as they gamble and lose to their companions.
+   The only exit is to the north.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4869] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you see some type of shop, a cold smithy
+or leatherworker's place, perhaps, judging from the yakhide on the sign in
+front. To the south, you see a guardhouse, obviously used to monitor traffic in
+and out of the southern gates of the city just to the southwest.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+A gate guard stands here, monitoring the passers-by.
+
+758H 1085M 287V > east
+[ 4879] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a warehouse, though it could
+easily be an enclosed stadium, so high are the walls. To the south, you see a
+very old hut.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15356 ]
+
+758H 1085M 287V > south
+[ 4880] An Old City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into two small rooms, both separated by bamboo walls and tapestry door
+curtains. The door to the north is the only exit to the outside, and appears to
+be made of rotted bamboo stalks.
+[ Exits: north ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > north
+[ 4879] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a warehouse, though it could
+easily be an enclosed stadium, so high are the walls. To the south, you see a
+very old hut.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > north
+[ 4878] Grain Storage [ DARK INDOORS ] [ Inside ]
+   You have entered a grain warehouse. Sacks of grains, both local and
+imported, lie in large sacks here, awaiting the owner of the warehouse to pick
+them up.
+   You see little of value here, and the exit to the south looks like it's
+about to collapse.
+[ Exits: south ]
+
+758H 1085M 287V > south
+[ 4879] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a warehouse, though it could
+easily be an enclosed stadium, so high are the walls. To the south, you see a
+very old hut.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4889] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you see a stone structure. Stone. In a
+city of bamboo and reeds, you question the origin of such a building. To the
+south, you see an old building.
+   The street continues east and west, turning sharply north as you go east.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15355 ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15354 ]
+
+758H 1085M 287V > north
+[ 4888] A Monument [ INDOORS ] [ Inside ]
+   When the first nomads settled this town, they were victims to heavy winds
+which toppled their homes, and salty breezes which rusted their equipment. To
+prevent these losses, this stone house was constructed of sea-stone and clay.
+   Currently, there are no doors on this building, a monument open to all who
+reside in Xixieqi City.
+[ Exits: east south ]
+
+758H 1085M 287V > east
+[ 4898] Misa Street [ NOBITS ] [ City ]
+   You are standing along the eastern wall of the city. You can hear strong
+winds whistling across the desert and dry plains just outside the wall.
+   To the north and south, this lane continues. A stone home is to the west,
+and the east is blocked by a city wall.
+[ Exits: north south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15353 ]
+
+758H 1085M 287V > south
+[ 4899] Corner of Maojeng and Misa [ NOBITS ] [ City ]
+   You are standing on the corner of two streets. To the east, the city wall
+protects you against the heavy winds that whip about outside town, while to the
+south, a large home, obviously in disrepair, slowly falls to pieces. You notice
+with dismay that most of the roof has collapsed, blocking the front door with
+tons of broken reeds and bamboo.
+   The street continues to the north and west.
+[ Exits: north west ]
+
+758H 1085M 287V > north
+[ 4898] Misa Street [ NOBITS ] [ City ]
+   You are standing along the eastern wall of the city. You can hear strong
+winds whistling across the desert and dry plains just outside the wall.
+   To the north and south, this lane continues. A stone home is to the west,
+and the east is blocked by a city wall.
+[ Exits: north south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15352 ]
+
+758H 1085M 287V > north
+[ 4897] Misa Street [ NOBITS ] [ City ]
+   You are standing along the eastern wall of the city. You can hear strong
+winds whistling across the desert and dry plains just outside the wall.
+   To the north and south, this lane continues. A small home is to the west,
+and the east is blocked by a city wall.
+[ Exits: north south west ]
+
+758H 1085M 287V > west
+[ 4887] A City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into four small rooms, each separated by bamboo walls and tapestry door
+curtains. The door to the east is the only exit to the outside, and appears to
+be made of fire-hardened bamboo shoots.
+[ Exits: east ]
+
+758H 1085M 287V > north
+south
+Alas, you cannot go that way...
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > Alas, you cannot go that way...
+
+758H 1085M 287V > east
+[ 4897] Misa Street [ NOBITS ] [ City ]
+   You are standing along the eastern wall of the city. You can hear strong
+winds whistling across the desert and dry plains just outside the wall.
+   To the north and south, this lane continues. A small home is to the west,
+and the east is blocked by a city wall.
+[ Exits: north south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15351 ]
+
+758H 1085M 287V > north
+[ 4896] Misa Street [ NOBITS ] [ City ]
+   You are standing along the eastern wall of the city. You can hear strong
+winds whistling across the desert and dry plains just outside the wall.
+   To the north and south, this lane continues, blocked to the east and west by
+both a city wall and a temple's courtyard fence.
+[ Exits: north south ]
+
+758H 1085M 287V > north
+[ 4895] Corner Of Chiang And Misa [ NOBITS ] [ City ]
+   You are standing at the corner of two streets. To your east, you see the
+city wall rising high before you. To the north, you see a shop of some kind,
+judging by the sign and the backpacks hanging in the glass window.
+   The streets split off to the south and west from here.
+[ Exits: north south west ]
+
+758H 1085M 287V > west
+[ 4885] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows nothing, but its sign bears a bobtail cat
+playing with some yarn. To the south, you notice a small temple of some kind,
+though to which deity it may be dedicated to is beyond you.
+   The street continues to the east and west, though you notice a sharp
+southward bend to it in the east.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4895] Corner Of Chiang And Misa [ NOBITS ] [ City ]
+   You are standing at the corner of two streets. To your east, you see the
+city wall rising high before you. To the north, you see a shop of some kind,
+judging by the sign and the backpacks hanging in the glass window.
+   The streets split off to the south and west from here.
+[ Exits: north south west ]
+
+758H 1085M 287V > north
+[ 4894] Meng's General Wares [ INDOORS PEACEFUL ] [ Inside ]
+   You are standing in a room full of boxes. Backpacks, large sacks, chests,
+beltpouches, and torches fill the crates and shelves of this little shop.
+   To the north, you see a set of curtains leading to another room, but it
+appears to be off-limits to patrons. To the south, you see the entrance to the
+shop.
+[ Exits: north south ]
+Meng stand here, trying to interest you in provisions.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15350 ]
+
+758H 1085M 287V > north
+[ 4893] A Storeroom [ DARK INDOORS ] [ Inside ]
+   You are standing in a dark, cramped room. Crates of common items such as
+torches, waterskins, and sacks rests here, stacked to the ceiling, while
+lanterns hang from dozens of hooks high on the walls.
+   There is an exit to the south.
+[ Exits: south ]
+
+758H 1085M 287V > south
+[ 4894] Meng's General Wares [ INDOORS PEACEFUL ] [ Inside ]
+   You are standing in a room full of boxes. Backpacks, large sacks, chests,
+beltpouches, and torches fill the crates and shelves of this little shop.
+   To the north, you see a set of curtains leading to another room, but it
+appears to be off-limits to patrons. To the south, you see the entrance to the
+shop.
+[ Exits: north south ]
+Meng stand here, trying to interest you in provisions.
+
+758H 1085M 287V > l meng
+This man appears to be the classic Xixieqian. Yellow skin, brown eyes, short
+black hair, and almond-shaped eyes clearly show his heritage.
+Meng is in excellent condition.
+
+You attempt to peek at his inventory:
+a set of lockpicks
+a pitch torch
+a beltpouch
+a backpack
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15349 ]
+
+758H 1085M 287V > south
+[ 4895] Corner Of Chiang And Misa [ NOBITS ] [ City ]
+   You are standing at the corner of two streets. To your east, you see the
+city wall rising high before you. To the north, you see a shop of some kind,
+judging by the sign and the backpacks hanging in the glass window.
+   The streets split off to the south and west from here.
+[ Exits: north south west ]
+
+758H 1085M 287V > west
+[ 4885] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows nothing, but its sign bears a bobtail cat
+playing with some yarn. To the south, you notice a small temple of some kind,
+though to which deity it may be dedicated to is beyond you.
+   The street continues to the east and west, though you notice a sharp
+southward bend to it in the east.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15348 ]
+
+758H 1085M 287V > south
+[ 4886] Temple of the Ice Dragon [ INDOORS PEACEFUL SOUNDPROOF ] [ Inside ]
+   You appear to be standing in a cult temple.  Here, yellow-skinned men
+kneel, cloaked in white robes, bowing before an obsidian altar.  The room
+is domed, clearly showing constellations of the familiar summer sky on
+its curved ceiling.  
+   You notice one constellation in particular: that of the Ice Dragon, a
+mythological beast that swallows worlds with hellish flames and searing
+gases.
+   All around you, carving and statues of Pan-Lung, the fabled dragon
+adorn the statues, walls, and even the exit door to the north.
+[ Exits: north ]
+A priest of the cult bows low, welcoming you.
+A priest of the cult bows low, welcoming you.
+A priest of the cult bows low, welcoming you.
+A priest of the cult bows low, welcoming you.
+
+758H 1085M 287V > 
+[ OLC: Alta saves rooms for zone 151 ]
+
+758H 1085M 287V > l statues
+You do not see that here.
+
+758H 1085M 287V > l pri
+Cloaked in thick white robes, you can make out no facial features. His hands
+are smooth, with long, tapered fingers betraying his youth.
+A cult priest is in excellent condition.
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > n
+[ 4885] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows nothing, but its sign bears a bobtail cat
+playing with some yarn. To the south, you notice a small temple of some kind,
+though to which deity it may be dedicated to is beyond you.
+   The street continues to the east and west, though you notice a sharp
+southward bend to it in the east.
+[ Exits: north east south west ]
+
+758H 1085M 287V > n
+[ 4884] Yuang Li Tao's Fine Silks and Yarns [ INDOORS ] [ Inside ]
+   You are standing in a clothing store. Kimonos, vests, robes, hose, and
+slippers adorn wooden models and shelves in an attempt to catch your eye. A
+haggard old woman sits at a large loom, making fine silk cloth. She smiles a
+gap-toothed grin at you, gesturing to the wares around her.
+   A dark doorway opens to the north, while the city street lies to the south.
+[ Exits: north south ]
+Yuang Li Tao, the weaver, is here, weaving fine sliken fabric.
+
+758H 1085M 287V > list
+ ##   Available   Item                                               Cost
+-------------------------------------------------------------------------
+  1)  Unlimited   A silken vest                                       512
+  2)  Unlimited   A silken robe                                       455
+
+758H 1085M 287V > north
+[ 4883] A Storeroom [ DARK INDOORS ] [ Inside ]
+   You are standing in a dark, cramped room. Crates of imported threads rest
+here, stacked to the ceiling, while bolts of silk and other cloth are neatly
+stacked upon the shelves.
+   There is an exit to the south.
+[ Exits: south ]
+
+758H 1085M 287V > south
+south
+[ 4884] Yuang Li Tao's Fine Silks and Yarns [ INDOORS ] [ Inside ]
+   You are standing in a clothing store. Kimonos, vests, robes, hose, and
+slippers adorn wooden models and shelves in an attempt to catch your eye. A
+haggard old woman sits at a large loom, making fine silk cloth. She smiles a
+gap-toothed grin at you, gesturing to the wares around her.
+   A dark doorway opens to the north, while the city street lies to the south.
+[ Exits: north south ]
+Yuang Li Tao, the weaver, is here, weaving fine sliken fabric.
+
+758H 1085M 287V > [ 4885] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows nothing, but its sign bears a bobtail cat
+playing with some yarn. To the south, you notice a small temple of some kind,
+though to which deity it may be dedicated to is beyond you.
+   The street continues to the east and west, though you notice a sharp
+southward bend to it in the east.
+[ Exits: north east south west ]
+
+758H 1085M 287V > west
+[ 4875] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows two hanging daggers, and its sign bears a small
+wooden shield. To the south, you notice a windowless warehouse with a sturdy,
+locking door.
+[ Exits: north east south west ]
+
+758H 1085M 287V > north
+[ 4874] The Dragon's Claw [ INDOORS PEACEFUL ] [ Inside ]
+   You stand in an arsenal. Blades, staves, and other deadly items line the
+walls and rest on the floor, as a large yellow-skinned man stares cautiously at
+you from behind the counter.
+   The doorway to the north appears to lead to a storeroom, while the city
+street lies to the south.
+[ Exits: north south ]
+The weaponer stands here, chiseling a whetstone from granite.
+
+758H 1085M 287V > list
+ ##   Available   Item                                               Cost
+-------------------------------------------------------------------------
+  1)  Unlimited   A short staff                                        56
+  2)      1       A no-dachi                                          569
+
+758H 1085M 287V > north
+[ 4873] A Storeroom [ DARK INDOORS ] [ Inside ]
+   You are standing in a dark, cramped room. Crates of daggers, darts, and
+similar weapons rest here, stacked to the ceiling, while bundles of bamboo
+staves lean against the wall in the corner of the room.
+   There is an exit to the south.
+[ Exits: south ]
+
+758H 1085M 287V > south
+[ 4874] The Dragon's Claw [ INDOORS PEACEFUL ] [ Inside ]
+   You stand in an arsenal. Blades, staves, and other deadly items line the
+walls and rest on the floor, as a large yellow-skinned man stares cautiously at
+you from behind the counter.
+   The doorway to the north appears to lead to a storeroom, while the city
+street lies to the south.
+[ Exits: north south ]
+The weaponer stands here, chiseling a whetstone from granite.
+
+758H 1085M 287V > south
+[ 4875] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows two hanging daggers, and its sign bears a small
+wooden shield. To the south, you notice a windowless warehouse with a sturdy,
+locking door.
+[ Exits: north east south west ]
+
+758H 1085M 287V > south
+[ 4876] A Dark Warehouse [ DARK INDOORS PEACEFUL !MAGIC NO_WHO_ROOM ] [ Inside ]
+   At first, you think this is nothing more than an old warehouse with
+forgotten crates of mouldy goods.  As you look further, though, you notice
+that the crates are stacked in defensive positions, to give both seclusion
+and secrecy for those behind them.
+   In the blink of an eye, a cutthroat appraches you, dagger in reach and
+asks you what you are doing here.
+[ Exits: north south ]
+
+758H 1085M 287V > south
+[ 4877] Guild Of The Katana [ DARK INDOORS PEACEFUL NO_WHO_ROOM ] [ Inside ]
+   This is a featureless room with no windows.  You suspect that there
+are secret panels among the wooden walls and floors, but can see nothing
+other than the woman standing before you.
+   As you look at the woman, you know immediately that she is a thief. A
+small knife rests comfortably in her belt while a small set of darts
+protrude from the side of her high boots.
+[ Exits: north ]
+A common citizen is here, walking down the street.
+A lithe, almost cat-like woman stands here, examining documents.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15367 ]
+
+758H 1085M 287V > l  cit
+This man is little more than a common laborer. Adjusting his torn, cloth
+shirt, he ignores you and continues walking down the street.
+A citizen is in excellent condition.
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > l woman
+If it weren't for her yellow skin - that of a native - you would think this
+slender woman was an elf. With feline movements and grace, she looks you over,
+in apparent disapproval.
+Fang is in excellent condition.
+
+You attempt to peek at her inventory:
+You can't see anything.
+
+758H 1085M 287V > n
+
+[ OLC: Alta edits room 15368 ]
+
+758H 1085M 287V > [ 4876] A Dark Warehouse [ DARK INDOORS PEACEFUL !MAGIC NO_WHO_ROOM ] [ Inside ]
+   At first, you think this is nothing more than an old warehouse with
+forgotten crates of mouldy goods.  As you look further, though, you notice
+that the crates are stacked in defensive positions, to give both seclusion
+and secrecy for those behind them.
+   In the blink of an eye, a cutthroat appraches you, dagger in reach and
+asks you what you are doing here.
+[ Exits: north south ]
+
+758H 1085M 287V > n
+[ 4875] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window shows two hanging daggers, and its sign bears a small
+wooden shield. To the south, you notice a windowless warehouse with a sturdy,
+locking door.
+[ Exits: north east south west ]
+
+758H 1085M 287V > west
+[ 4865] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window boasts stained-glass depictions of dragons, and its
+sign appears to bear some sort of compact bottle. To the south, a tall
+establishment boasts a wide set of wooden, not bamboo, doors. No signs appear
+near, nor on the door itself, to offer a clue as to what the place is.
+   The street continues to the east, where it offers more shops, and west,
+where it appears to meet a junction.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15369 ]
+
+758H 1085M 287V > south
+[ 4866] Martial Artists Training Facility [ INDOORS SOUNDPROOF !MAGIC ] [ Inside ]
+   You are standing in an enormous square hall.  Yellow-skinned men as
+well as a few women and feisty children spar here with staves, blades,
+and bare hands.  All seem to be advancing their level of fitness rather
+than their combat abilities, however, as only a few of the fighters
+appear to be true masters of combat.
+   There are exits to both the west and north.
+[ Exits: north west ]
+A master warrior stands here, training those of lesser skills.
+
+758H 1085M 287V > north
+[ 4865] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window boasts stained-glass depictions of dragons, and its
+sign appears to bear some sort of compact bottle. To the south, a tall
+establishment boasts a wide set of wooden, not bamboo, doors. No signs appear
+near, nor on the door itself, to offer a clue as to what the place is.
+   The street continues to the east, where it offers more shops, and west,
+where it appears to meet a junction.
+[ Exits: north east south west ]
+
+758H 1085M 287V > north
+[ 4864] Ta'lon Chao's Mystic Marvels [ INDOORS ] [ Inside ]
+   You are standing in a foul-smelling shop. The shelves on the walls boast a
+variety of snuff bottles, each containing some powdery substance, while the
+wooden counter to the north boasts several shoots of new bamboo and various
+hardwoods.
+   There is a door to the north, probably a storage room, while the exit lies
+to the south.
+[ Exits: north south ]
+Ta'lon Chao sits here, mixing reagents.
+
+758H 1085M 287V > list
+ ##   Available   Item                                               Cost
+-------------------------------------------------------------------------
+  1)  Unlimited   A driftwood wand                                    522
+  2)      1       A clear potion                                      470
+  3)      1       A bamboo staff                                     1044
+  4)      1       An amulet                                           731
+
+758H 1085M 287V > north
+[ 4863] A Storeroom [ DARK INDOORS ] [ Inside ]
+   You are standing in a dark, foul-smelling room. Crates of bone lie beside
+sacks of pestels used for crushing bone shards into powder. The stench in here
+is overpowering and reeks of decay.
+   There is an exit to the south.
+[ Exits: south ]
+
+758H 1085M 287V > south
+[ 4864] Ta'lon Chao's Mystic Marvels [ INDOORS ] [ Inside ]
+   You are standing in a foul-smelling shop. The shelves on the walls boast a
+variety of snuff bottles, each containing some powdery substance, while the
+wooden counter to the north boasts several shoots of new bamboo and various
+hardwoods.
+   There is a door to the north, probably a storage room, while the exit lies
+to the south.
+[ Exits: north south ]
+Ta'lon Chao sits here, mixing reagents.
+
+758H 1085M 287V > south
+[ 4865] Chiang Street [ NOBITS ] [ City ]
+   You are standing on crude cobblestones in the middle of the street. A few
+people ignore you as you walk by, though most look upon your odd skin colour
+and wonder about your origins. To the north, you can see the entrance to some
+sort of shop. Its window boasts stained-glass depictions of dragons, and its
+sign appears to bear some sort of compact bottle. To the south, a tall
+establishment boasts a wide set of wooden, not bamboo, doors. No signs appear
+near, nor on the door itself, to offer a clue as to what the place is.
+   The street continues to the east, where it offers more shops, and west,
+where it appears to meet a junction.
+[ Exits: north east south west ]
+
+758H 1085M 287V > west
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15370 ]
+
+758H 1085M 287V > west
+[ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > east
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15371 ]
+
+758H 1085M 287V > north
+[ 4854] Ping Xiao's House Of Pleasure [ INDOORS ] [ Inside ]
+   You stand amidst a crowd in this busy tavern.  All around you, yellow-
+skinned men serve food, drink, and hot, moist towels to the seated patrons
+while avoiding the occasional trip from a stray foot or outset chair.
+   To the north, you can see tables, rowdy people, and gamblers playing
+around a bar, each here to enjoy themselves in whatever activity they can
+participate in.
+[ Exits: north south ]
+
+758H 1085M 287V > north
+[ 4853] Ping Xiao's House Of Pleasure [ INDOORS ] [ Inside ]

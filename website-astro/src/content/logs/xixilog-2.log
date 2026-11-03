@@ -1,0 +1,806 @@
+   You are being pushed around in this massive crowd of drinkers. Around you,
+yellow-skinned men serve food, drink, and hot, moist towels to the seated
+patrons who anxiously await their meals. Before you is a polished bar. Spilled
+rice whiskey and wine add spots of discolour to the otherwise well-maintained
+serving area.
+   As you look around, you see that the only way out of this place is to the
+south.
+[ Exits: south ]
+Ping Xiao stands here, overseeing the gaming, gambling, and bartending.
+
+758H 1085M 287V > l ping
+Marred with pockmarks from oversampling of his stock, this slender man leans
+over a game of bones, wary of any cheaters.
+Ping Xiao is in excellent condition.
+
+You attempt to peek at his inventory:
+a small bottle
+a jug
+a bottle
+a crystal bottle
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15372 ]
+
+758H 1085M 287V > list
+ ##   Available   Item                                               Cost
+-------------------------------------------------------------------------
+  1)  Unlimited   A small bottle of whiskey                            50
+  2)  Unlimited   A jug of beer                                        30
+  3)  Unlimited   A bottle of wine                                     30
+  4)  Unlimited   A crystal bottle of clear water                      20
+
+758H 1085M 287V > south
+[ 4854] Ping Xiao's House Of Pleasure [ INDOORS ] [ Inside ]
+   You stand amidst a crowd in this busy tavern.  All around you, yellow-
+skinned men serve food, drink, and hot, moist towels to the seated patrons
+while avoiding the occasional trip from a stray foot or outset chair.
+   To the north, you can see tables, rowdy people, and gamblers playing
+around a bar, each here to enjoy themselves in whatever activity they can
+participate in.
+[ Exits: north south ]
+
+758H 1085M 287V > south
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > south
+[ 4856] Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing on the crude cobbles of a well-travelled street. All around
+you, burly men seem to be coming from alleys and side streets to enter and exit
+the building to your east. Judging by the number of sweaty, yellow-skinned men
+leaving the place, and the sheer size of those who do, it appears to be some
+sort of sparring hall or arena.
+   The street continues to the north, where it neets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates. To
+the west, you see a sturdy fence separate you from an old hut.
+[ Exits: north east south ]
+
+758H 1085M 287V > north
+west
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > [ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15373 ]
+
+758H 1085M 287V > east
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > west
+[ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > south
+[ 4846] An Unkempt Home [ NOBITS ] [ Inside ]
+   You stand in a small wooden hut. Only one large room comprises this simple
+structure. It houses a sleeping pad, a small coal-burning brazier, and a dry
+larder. Dust is everywhere, and it appears that no one has been in this place
+for a very long time.
+   The only exit is to the north.
+[ Exits: north ]
+
+758H 1085M 287V > north
+west
+[ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > [ 4835] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see a wall to the north, probably part of a house. To the south, you
+see a newly-renovated home, perhaps that of a merchant. The street continues to
+the east and west along this cobbled lane.
+[ Exits: east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > south
+[ 4836] An Elegant Home [ INDOORS ] [ Inside ]
+   Unlike much of the bamboo city around you, you stand in a home of wood,
+brick, and mortar. Apparently, the owner of this place is sufficiently wealthy
+to invest in better, longer-lasting materials.
+   A lone fireplace rests against the southern wall, and as you investigate the
+home, you find similar hearths in each of the rooms, all apparently connected
+to a central chimney, overhead.
+   The only exit appears to be to the north, the way you came in.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4835] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see a wall to the north, probably part of a house. To the south, you
+see a newly-renovated home, perhaps that of a merchant. The street continues to
+the east and west along this cobbled lane.
+[ Exits: east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > west
+[ 4825] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see the wall of an herbalist's shop to the north, as it evident by
+sign off to the west by its door. To the south, you see the entrance to
+someone's home, while the street continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > south
+[ 4826] A City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into four small rooms, each separated by bamboo walls and tapestry door
+curtains.
+   The door to the north is the only exit to the outside, and appears to be
+made of fire-hardened bamboo stalks.
+[ Exits: north ]
+
+758H 1085M 287V > north
+[ 4825] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see the wall of an herbalist's shop to the north, as it evident by
+sign off to the west by its door. To the south, you see the entrance to
+someone's home, while the street continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > north
+Alas, you cannot go that way...
+
+758H 1085M 287V > west
+[ 4815] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business. You can see an herbalist shop to the north, as it evidenced by
+the sign which bears a twisted ginseng root resting against a pale blue bottle
+of liquid. To the south, you see the wall of someone's two-level home.
+   The street continues to the east, and terminates to your west, where a tall
+monolith springs from the junction of three streets.
+[ Exits: north east west ]
+
+758H 1085M 287V > north
+[ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > east
+[ 4824] The Herbalist's Back Room [ DARK INDOORS ] [ Inside ]
+   Here, herbs and plants hang in clusters from the ceiling. Bitter and foul-
+smelling roots and garlic seem to overwhelm the more pleasing scents of ginseng
+and powdered orangeseed which occupy bottles on the floor.
+   The only apparent exit from this room is back to the west.
+[ Exits: west down ]
+
+758H 1085M 287V > west
+[ 4814] Hrenchao's Herbs And Potions [ !MOB PEACEFUL !MAGIC ] [ Inside ]
+   You stand dizzily as this room's powerful scent of cloying herbs and sweet
+roots assail your senses. All around you, flowers, pollen, odd leaves, and
+vapourous potions line shelves and fill open crates that occupy this tiny shop.
+   There is a door to the west, leading to the street, and a smaller one to the
+east, most likely leading to this shop's storeroom or second floor.
+[ Exits: east south west ]
+Hrenchao sits here, mixing a poultice.
+
+758H 1085M 287V > down
+Alas, you cannot go that way...
+
+758H 1085M 287V > south
+[ 4815] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business. You can see an herbalist shop to the north, as it evidenced by
+the sign which bears a twisted ginseng root resting against a pale blue bottle
+of liquid. To the south, you see the wall of someone's two-level home.
+   The street continues to the east, and terminates to your west, where a tall
+monolith springs from the junction of three streets.
+[ Exits: north east west ]
+
+758H 1085M 287V > east
+[ 4825] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see the wall of an herbalist's shop to the north, as it evident by
+sign off to the west by its door. To the south, you see the entrance to
+someone's home, while the street continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > south
+[ 4826] A City Home [ INDOORS ] [ Inside ]
+   You are standing in the main room of a typical city dwelling. The place is
+divided into four small rooms, each separated by bamboo walls and tapestry door
+curtains.
+   The door to the north is the only exit to the outside, and appears to be
+made of fire-hardened bamboo stalks.
+[ Exits: north ]
+
+758H 1085M 287V > north
+east
+[ 4825] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see the wall of an herbalist's shop to the north, as it evident by
+sign off to the west by its door. To the south, you see the entrance to
+someone's home, while the street continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > [ 4835] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see a wall to the north, probably part of a house. To the south, you
+see a newly-renovated home, perhaps that of a merchant. The street continues to
+the east and west along this cobbled lane.
+[ Exits: east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > south
+[ 4836] An Elegant Home [ INDOORS ] [ Inside ]
+   Unlike much of the bamboo city around you, you stand in a home of wood,
+brick, and mortar. Apparently, the owner of this place is sufficiently wealthy
+to invest in better, longer-lasting materials.
+   A lone fireplace rests against the southern wall, and as you investigate the
+home, you find similar hearths in each of the rooms, all apparently connected
+to a central chimney, overhead.
+   The only exit appears to be to the north, the way you came in.
+[ Exits: north ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15374 ]
+
+758H 1085M 287V > north
+east
+[ 4835] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see a wall to the north, probably part of a house. To the south, you
+see a newly-renovated home, perhaps that of a merchant. The street continues to
+the east and west along this cobbled lane.
+[ Exits: east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > [ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > south
+[ 4846] An Unkempt Home [ NOBITS ] [ Inside ]
+   You stand in a small wooden hut. Only one large room comprises this simple
+structure. It houses a sleeping pad, a small coal-burning brazier, and a dry
+larder. Dust is everywhere, and it appears that no one has been in this place
+for a very long time.
+   The only exit is to the north.
+[ Exits: north ]
+
+758H 1085M 287V > north
+east
+[ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > [ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+
+758H 1085M 287V > south
+[ 4856] Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing on the crude cobbles of a well-travelled street. All around
+you, burly men seem to be coming from alleys and side streets to enter and exit
+the building to your east. Judging by the number of sweaty, yellow-skinned men
+leaving the place, and the sheer size of those who do, it appears to be some
+sort of sparring hall or arena.
+   The street continues to the north, where it neets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates. To
+the west, you see a sturdy fence separate you from an old hut.
+[ Exits: north east south ]
+
+758H 1085M 287V > west
+east
+Alas, you cannot go that way...
+
+758H 1085M 287V > [ 4866] Martial Artists Training Facility [ INDOORS SOUNDPROOF !MAGIC ] [ Inside ]
+   You are standing in an enormous square hall.  Yellow-skinned men as
+well as a few women and feisty children spar here with staves, blades,
+and bare hands.  All seem to be advancing their level of fitness rather
+than their combat abilities, however, as only a few of the fighters
+appear to be true masters of combat.
+   There are exits to both the west and north.
+[ Exits: north west ]
+A master warrior stands here, training those of lesser skills.
+
+758H 1085M 287V > west
+[ 4856] Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing on the crude cobbles of a well-travelled street. All around
+you, burly men seem to be coming from alleys and side streets to enter and exit
+the building to your east. Judging by the number of sweaty, yellow-skinned men
+leaving the place, and the sheer size of those who do, it appears to be some
+sort of sparring hall or arena.
+   The street continues to the north, where it neets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates. To
+the west, you see a sturdy fence separate you from an old hut.
+[ Exits: north east south ]
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > south
+[ 4857] Wen Tan Lane [ NOBITS ] [ City ]
+   You stand on the crude cobbles of a well-travelled street. All around you,
+burly men seem to be coming from alleys and side streets to enter and exit the
+to your northeast. To the east and west, you see shops, though barred and
+closed windows offer no information as to what they may be.
+   The street continues to the north, where it meets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates
+[ Exits: north east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > east
+[ 4867] Moo Shi's Banded Scales and Armours [ !MOB INDOORS PEACEFUL !MAGIC ] [ Inside ]
+   You have entered a well-lit workshop.  All around you, suits of armour
+made from sewn metal scales rest on wooden dummies, while scale gloves and
+bootcovers hang from strong iron hooks on the walls.
+   There is a counter against the eastern wall, where a powerfully built,
+yellow-skinned man hammers and shapes tiny metal plates into shape.
+[ Exits: west ]
+Moo Shi, the armourer, stands here, hammering metal on an anvil.
+
+758H 1085M 287V > list
+Currently, there is nothing for sale.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15375 ]
+
+758H 1085M 287V > l moo
+Powerfully built, this man appears to be working on fashioning a new set of
+scale armour. His face is hairless, as are his muscled arms, evidence of many
+hours working with hot steel and iron.
+Moo Shi is in excellent condition.
+
+You attempt to peek at his inventory:
+You can't see anything.
+
+758H 1085M 287V > west
+[ 4857] Wen Tan Lane [ NOBITS ] [ City ]
+   You stand on the crude cobbles of a well-travelled street. All around you,
+burly men seem to be coming from alleys and side streets to enter and exit the
+to your northeast. To the east and west, you see shops, though barred and
+closed windows offer no information as to what they may be.
+   The street continues to the north, where it meets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates
+[ Exits: north east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > west
+[ 4847] Yao Tai's House of Channeling [ INDOORS PEACEFUL SOUNDPROOF !MAGIC ] [ Inside ]
+   You appear to be standing in an antechamber. A lone woman is here, staring
+at the ceiling, as if she hears voices coming from it. As you cast your gaze
+upon her, you notice that she seems to exist in some different place - as
+though she were really a projection of the person she appears to be.
+   The room is spartan, with only eastern and western doors.
+[ Exits: east west ]
+A tired sailor stands here, leaning wearily on a crate.
+
+758H 1085M 287V > west
+[ 4837] The Channeling Room [ DARK INDOORS SOUNDPROOF !MAGIC ] [ Inside ]
+   You stand in a dark room whose shelves are lined with ancient tomes and
+bottles of trapped wispy gases. In the center of the room, an old, wrinkled man
+in stained robes sits at the head of a wooden table. Suddenly, the table begins
+to rattle, as though it was being lifted by an unseen force.
+   The only exit is to the east.
+[ Exits: east ]
+A channeler of spirits and ghosts is here, casting his eyes upward.
+...he glows with a bright light!
+
+758H 1085M 287V > east
+[ 4847] Yao Tai's House of Channeling [ INDOORS PEACEFUL SOUNDPROOF !MAGIC ] [ Inside ]
+   You appear to be standing in an antechamber. A lone woman is here, staring
+at the ceiling, as if she hears voices coming from it. As you cast your gaze
+upon her, you notice that she seems to exist in some different place - as
+though she were really a projection of the person she appears to be.
+   The room is spartan, with only eastern and western doors.
+[ Exits: east west ]
+A tired sailor stands here, leaning wearily on a crate.
+
+758H 1085M 287V > east
+[ 4857] Wen Tan Lane [ NOBITS ] [ City ]
+   You stand on the crude cobbles of a well-travelled street. All around you,
+burly men seem to be coming from alleys and side streets to enter and exit the
+to your northeast. To the east and west, you see shops, though barred and
+closed windows offer no information as to what they may be.
+   The street continues to the north, where it meets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates
+[ Exits: north east south west ]
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15376 ]
+
+758H 1085M 287V > south
+[ 4858] Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing on the crude cobbles of a well-travelled street. All around
+you, yellow-skinned men and women walk with their sacks and goods, each eyeing
+the other suspiciously, as if their wares were prizes worthy of jealous
+guarding.
+   The street continues to the north and south, while the walls of buildings
+prevent travel to the immediate east and west.
+[ Exits: north south ]
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > east
+Alas, you cannot go that way...
+
+758H 1085M 287V > south
+[ 4859] Maojeng At Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing at a busy intersection. Caravans from the desert and dry
+plains to the south come northward from the city gates, and back to the south,
+laden with goods from distant lands and the desert itself.
+   Streets lead off in all directions, though the gate to the grasslands and
+the desert lies to the south.
+[ Exits: north east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15377 ]
+
+758H 1085M 287V > 
+[ OLC: Alta saves rooms for zone 151 ]
+
+758H 1085M 287V > l woman
+She looks very, very tired, this poor woman. Lines of fatigue and toil mar her
+face as she stands, leaning against a wall of a building for a rest.
+A woman is in excellent condition.
+
+You attempt to peek at her inventory:
+You can't see anything.
+
+758H 1085M 287V > east
+[ 4869] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you see some type of shop, a cold smithy
+or leatherworker's place, perhaps, judging from the yakhide on the sign in
+front. To the south, you see a guardhouse, obviously used to monitor traffic in
+and out of the southern gates of the city just to the southwest.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+A gate guard stands here, monitoring the passers-by.
+
+758H 1085M 287V > west
+[ 4859] Maojeng At Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing at a busy intersection. Caravans from the desert and dry
+plains to the south come northward from the city gates, and back to the south,
+laden with goods from distant lands and the desert itself.
+   Streets lead off in all directions, though the gate to the grasslands and
+the desert lies to the south.
+[ Exits: north east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > east
+[ 4869] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely-gravelled road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you see some type of shop, a cold smithy
+or leatherworker's place, perhaps, judging from the yakhide on the sign in
+front. To the south, you see a guardhouse, obviously used to monitor traffic in
+and out of the southern gates of the city just to the southwest.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+A gate guard stands here, monitoring the passers-by.
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15378 ]
+
+758H 1085M 287V > west
+[ 4859] Maojeng At Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing at a busy intersection. Caravans from the desert and dry
+plains to the south come northward from the city gates, and back to the south,
+laden with goods from distant lands and the desert itself.
+   Streets lead off in all directions, though the gate to the grasslands and
+the desert lies to the south.
+[ Exits: north east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > south
+[ 4860] Xixieqi City Gate [ NOBITS ] [ City ]
+   You are standing among a crowd of people. Merchant caravans and nomads speak
+to the gateguards, occasionally slipping them a few coins as they pass into the
+city from the south.
+   Just outside the southern gate, you see a lush grassland, but the dry wind
+that blows through the gate tells you that the desert is not far beyond.
+   To the north, you see an intersection, while you notice you are flanked by
+guardhouses to the east and west.
+[ Exits: north south ]
+
+758H 1085M 287V > north
+[ 4859] Maojeng At Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing at a busy intersection. Caravans from the desert and dry
+plains to the south come northward from the city gates, and back to the south,
+laden with goods from distant lands and the desert itself.
+   Streets lead off in all directions, though the gate to the grasslands and
+the desert lies to the south.
+[ Exits: north east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > west
+[ 4849] Maojeng Lane [ NOBITS ] [ City ]
+   This is little more than a crudely gravelled-road which runs toward the
+seedier section of town. Homes continue to line the streets, though here and
+there, a warehouse appears between them, throwing shadows on the smaller
+dwellings around them. To the north, you can see a shop of some sort, perhaps a
+glassblower's shop, judging by the amounts of stained glass and windchimes in
+the front. To the south, you see a guardhouse, obviously used to monitor
+traffic in and out of the southern gates of the city just to the southeast.
+   The street continues to the east and west.
+[ Exits: north east south west ]
+
+758H 1085M 287V > east
+[ 4859] Maojeng At Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing at a busy intersection. Caravans from the desert and dry
+plains to the south come northward from the city gates, and back to the south,
+laden with goods from distant lands and the desert itself.
+   Streets lead off in all directions, though the gate to the grasslands and
+the desert lies to the south.
+[ Exits: north east south west ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > north
+
+A woman leaves north.
+
+758H 1085M 287V > [ 4858] Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing on the crude cobbles of a well-travelled street. All around
+you, yellow-skinned men and women walk with their sacks and goods, each eyeing
+the other suspiciously, as if their wares were prizes worthy of jealous
+guarding.
+   The street continues to the north and south, while the walls of buildings
+prevent travel to the immediate east and west.
+[ Exits: north south ]
+A haggard woman, perhaps the mother of a young child, stands here.
+
+758H 1085M 287V > north
+[ 4857] Wen Tan Lane [ NOBITS ] [ City ]
+   You stand on the crude cobbles of a well-travelled street. All around you,
+burly men seem to be coming from alleys and side streets to enter and exit the
+to your northeast. To the east and west, you see shops, though barred and
+closed windows offer no information as to what they may be.
+   The street continues to the north, where it meets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates
+[ Exits: north east south west ]
+
+758H 1085M 287V > west
+[ 4847] Yao Tai's House of Channeling [ INDOORS PEACEFUL SOUNDPROOF !MAGIC ] [ Inside ]
+   You appear to be standing in an antechamber. A lone woman is here, staring
+at the ceiling, as if she hears voices coming from it. As you cast your gaze
+upon her, you notice that she seems to exist in some different place - as
+though she were really a projection of the person she appears to be.
+   The room is spartan, with only eastern and western doors.
+[ Exits: east west ]
+A tired sailor stands here, leaning wearily on a crate.
+
+758H 1085M 287V > west
+[ 4837] The Channeling Room [ DARK INDOORS SOUNDPROOF !MAGIC ] [ Inside ]
+   You stand in a dark room whose shelves are lined with ancient tomes and
+bottles of trapped wispy gases. In the center of the room, an old, wrinkled man
+in stained robes sits at the head of a wooden table. Suddenly, the table begins
+to rattle, as though it was being lifted by an unseen force.
+   The only exit is to the east.
+[ Exits: east ]
+A channeler of spirits and ghosts is here, casting his eyes upward.
+...he glows with a bright light!
+
+758H 1085M 287V > east
+[ 4847] Yao Tai's House of Channeling [ INDOORS PEACEFUL SOUNDPROOF !MAGIC ] [ Inside ]
+   You appear to be standing in an antechamber. A lone woman is here, staring
+at the ceiling, as if she hears voices coming from it. As you cast your gaze
+upon her, you notice that she seems to exist in some different place - as
+though she were really a projection of the person she appears to be.
+   The room is spartan, with only eastern and western doors.
+[ Exits: east west ]
+A tired sailor stands here, leaning wearily on a crate.
+
+758H 1085M 287V > east
+
+A sailor leaves west.
+
+758H 1085M 287V > north
+[ 4857] Wen Tan Lane [ NOBITS ] [ City ]
+   You stand on the crude cobbles of a well-travelled street. All around you,
+burly men seem to be coming from alleys and side streets to enter and exit the
+to your northeast. To the east and west, you see shops, though barred and
+closed windows offer no information as to what they may be.
+   The street continues to the north, where it meets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates
+[ Exits: north east south west ]
+
+758H 1085M 287V > [ 4856] Wen Tan Lane [ NOBITS ] [ City ]
+   You are standing on the crude cobbles of a well-travelled street. All around
+you, burly men seem to be coming from alleys and side streets to enter and exit
+the building to your east. Judging by the number of sweaty, yellow-skinned men
+leaving the place, and the sheer size of those who do, it appears to be some
+sort of sparring hall or arena.
+   The street continues to the north, where it neets a junction at an odd brick
+building, and to the south, where it extends toward the southern city gates. To
+the west, you see a sturdy fence separate you from an old hut.
+[ Exits: north east south ]
+
+758H 1085M 287V > north
+west
+[ 4855] Qing Crossing [ NOBITS ] [ City ]
+   You stand at the junction of three streets. Here, a strange red-brick tavern
+greets you with the sounds of fluted songs and the clinking of glasses coming
+through its door to the north.
+   To the east and south, roughly cobbled streets extend into city, while to
+to the west, the street runs smoothly on crushed gravel and well-maintained
+cobblestone slabs.
+[ Exits: north east south west ]
+A common citizen is here, walking down the street.
+
+758H 1085M 287V > [ 4845] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and crates as they rush about
+their business. To the north, you can see a red-brick wall, which strikes you
+quite out-of-place in this city of mortar and bamboo. The brick seems to extend
+to the building to the northeast. To the south, a small, modest home bears the
+signs of neglect, as though the owner had died or been too old to tend it.
+   The street continues to the east and west, meeting a junction of three
+streets just off to the east.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+[ 4835] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see a wall to the north, probably part of a house. To the south, you
+see a newly-renovated home, perhaps that of a merchant. The street continues to
+the east and west along this cobbled lane.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+[ 4825] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business.
+   You can see the wall of an herbalist's shop to the north, as it evident by
+sign off to the west by its door. To the south, you see the entrance to
+someone's home, while the street continues to the east and west.
+[ Exits: east south west ]
+
+758H 1085M 287V > west
+[ 4815] Mito Avenue [ NOBITS ] [ City ]
+   You are standing on a busy street. Around you, people, mules, horses, and
+some strange six-legged pack animals bear boxes and sacks as they rush about
+their business. You can see an herbalist shop to the north, as it evidenced by
+the sign which bears a twisted ginseng root resting against a pale blue bottle
+of liquid. To the south, you see the wall of someone's two-level home.
+   The street continues to the east, and terminates to your west, where a tall
+monolith springs from the junction of three streets.
+[ Exits: north east west ]
+
+758H 1085M 287V > west
+[ 4805] Maoqi Square [ REGENROOM ] [ City ]
+   You stand before an enormous monolith. Here, three streets converge as if to
+pay homage to the black spire which seems to stab at the sky. Oddly enough, you
+feel a rhythmic pulsing coming from the spire. As you look up at it, you notice
+thick grey clouds gathering at its tip, as though they were being drawn into
+its peak.
+   To the north, south, and east, shop-lined streets and shacks invite you to
+explore this city.
+[ Exits: north east south ]
+A fountain of bubbling water burbles here.                     
+
+758H 1085M 287V > south
+[ 4806] Dinxi Street [ NOBITS ] [ City ]
+   You seem to be standing in the residential section of the city. Here, older
+ladies and children converse and play, discussing complaints of their daily
+lives and plans for the future. To the east and west, shacks and other small
+dwellings which house the population line the streets.
+   To the north, a city square hosts an enormous black monolith, while to the
+south, the street continues further into the residential part of the city.
+[ Exits: north east south ]
+
+758H 1085M 287V > north
+[ 4805] Maoqi Square [ REGENROOM ] [ City ]
+   You stand before an enormous monolith. Here, three streets converge as if to
+pay homage to the black spire which seems to stab at the sky. Oddly enough, you
+feel a rhythmic pulsing coming from the spire. As you look up at it, you notice
+thick grey clouds gathering at its tip, as though they were being drawn into
+its peak.
+   To the north, south, and east, shop-lined streets and shacks invite you to
+explore this city.
+[ Exits: north east south ]
+A fountain of bubbling water burbles here.                     
+
+758H 1085M 287V > 
+[ OLC: Alta edits room 15379 ]
+
+758H 1085M 287V > west
+Alas, you cannot go that way...
+
+758H 1085M 287V > south
+[ 4806] Dinxi Street [ NOBITS ] [ City ]
+   You seem to be standing in the residential section of the city. Here, older
+ladies and children converse and play, discussing complaints of their daily
+lives and plans for the future. To the east and west, shacks and other small
+dwellings which house the population line the streets.
+   To the north, a city square hosts an enormous black monolith, while to the
+south, the street continues further into the residential part of the city.
+[ Exits: north east south ]
+
