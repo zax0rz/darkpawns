@@ -1,0 +1,70 @@
+id	birth_commit	birth_date	window	status	session_id	transcript_file	tool_call_utc	model	match_type	matched_line	other_writers	read_claude_md	notes	match_strength
+G016	121c5dce01bd6db5e1e31febf70d673b82fd2df2	2026-04-17	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G019	e490ef05fee79b8fac92a35807c765f3753b4717	2026-04-20	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G020	121c5dce01bd6db5e1e31febf70d673b82fd2df2	2026-04-17	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G027	004329481afd1f7d448638a16a8b4e0dabc4f309	2026-04-18	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G033	121c5dce01bd6db5e1e31febf70d673b82fd2df2	2026-04-17	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G055	121c5dce01bd6db5e1e31febf70d673b82fd2df2	2026-04-17	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G076	599ef96f2f54d6d6c783a5c3e5b43d455fd38053	2026-04-18	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G081	830d2506fc67441498f9c89c53b195fa800955c3	2026-04-20	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G097	31869bcbf4a439a1893676818b65f1bd8ee58730	2026-04-18	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+S003	31869bcbf4a439a1893676818b65f1bd8ee58730	2026-04-18	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+S016	1b66294b549937c1a9f1188b41415276d88b4ca8	2026-04-18	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+S018	1b66294b549937c1a9f1188b41415276d88b4ca8	2026-04-18	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+S058	830d2506fc67441498f9c89c53b195fa800955c3	2026-04-20	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+S059	e613fb849423c07273c37bf0716f5441a8801e41	2026-04-20	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+S093	219989035c7b4f5a539c4a1153d481cc5bf0a9c8	2026-04-20	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+S094	599ef96f2f54d6d6c783a5c3e5b43d455fd38053	2026-04-18	no-transcripts	not-found								not-checked	birth precedes the surviving transcripts (they start 2026-04-22)	
+G000	bbfc471aef08800c04280ef39ba5871e9ff98227	2026-05-01	nuc	not-found								not-checked	no analyst key chosen	
+G003	963684a50ff08770a0f4920261ac49cc83b2d150	2026-04-25	nuc	not-found								not-checked	no analyst key chosen	
+G006	983a4575d6a2fde9cb8c4b6a31e10cc74c76a430	2026-04-26	nuc	matched	9927d65c-a28e-4d67-964c-58cd63f39653	main/sessions/9927d65c-a28e-4d67-964c-58cd63f39653.jsonl.reset.2026-04-26T20-35-06.153Z	2026-04-26T20:19:34Z	glm-5-turbo	verbatim	castIdentify(level, ch, cvict, ovict)		no	retried for the mistake's own line and kept the stronger match	function-created
+G008	53de4a405583113640f1619ab486f68376170878	2026-04-25	nuc	not-found								not-checked	searched: stableboy	
+G010	189043bb3e75b7dc92521a0d598867ded5e610b4	2026-04-25	nuc	not-found								not-checked	no analyst key chosen	
+G013	6d280468ecb68a4c5fd056b7da835386ce64fddc	2026-04-25	nuc	matched	a3299772-16d9-44c7-94ee-1f085d02c2be	main/sessions/a3299772-16d9-44c7-94ee-1f085d02c2be.jsonl.reset.2026-04-25T12-32-44.164Z	2026-04-25T05:28:16Z	deepseek-chat	verbatim	if hasMobFlag(ch, "aggr24") {		no		function-created
+G015	7a9da711f3eab81cfd6c4b5b97888c74595fdb15	2026-05-13	mac-mini	not-found								not-checked	no analyst key chosen	
+G023	ae245dd0bfd1744054cae6b92d5ec001b3ca182d	2026-04-23	nuc	not-found								not-checked	searched: PointUpdate	
+G032	682ea59adce887171a09cb7e0df7aea4b562cc65	2026-04-24	nuc	matched	089773c9-e88e-4d06-93dc-6397b8eedecc	main/sessions/089773c9-e88e-4d06-93dc-6397b8eedecc.jsonl.reset.2026-04-25T01-59-41.841Z	2026-04-25T01:41:00Z	deepseek-chat	verbatim	reag := checkReagents(ch, SpellMagicMissile, level, "shard of obsidian",		no		function-created
+G036	5a47d88c834a9e04b2cdc7b1e0bfd3b3f633490d	2026-05-01	nuc	not-found								not-checked	searched: // force — force command on another character (LVL_GRGOD)	
+G044	5e01b189f127c85da1aabc0f1e80d70183114c36	2026-04-26	nuc	matched	4ebfc03b-234c-4c0f-a59f-8a39e3e1e797	main/sessions/4ebfc03b-234c-4c0f-a59f-8a39e3e1e797.jsonl	2026-04-26T17:36:49Z	deepseek-chat	verbatim	player.Stats.Con = 1		no		mistake-line
+G046	189043bb3e75b7dc92521a0d598867ded5e610b4	2026-04-25	nuc	matched	fb63d15c-935d-4306-940f-7aafb5b61b94	main/sessions/fb63d15c-935d-4306-940f-7aafb5b61b94.jsonl.reset.2026-04-25T04-15-16.477Z	2026-04-25T04:00:40Z	deepseek-chat	verbatim	ch.StopFighting()		no		function-created
+G057	c8223abbcdea0c1d9d93b43ed8aae4d46ff34d28	2026-05-15	mac-mini	not-found								not-checked	searched: Wander	
+G059	5a47d88c834a9e04b2cdc7b1e0bfd3b3f633490d	2026-05-01	nuc	not-found								not-checked	no analyst key chosen	
+G060	b1369b91a324817530e62e7fa1b75436543c1a35	2026-04-26	nuc	not-found								not-checked	no analyst key chosen	
+G066	fe2847dea578507977065eb0dd7bd17fcfb0a104	2026-04-24	nuc	not-found								not-checked	searched: guard	
+G067	4c4d2ee2ac38ee51d6415e5094bd5577380890b9	2026-04-25	nuc	matched	e805c210-db3a-42fd-bb3e-3429136bab2c	main/sessions/e805c210-db3a-42fd-bb3e-3429136bab2c.jsonl.reset.2026-04-25T13-20-48.307Z	2026-04-25T12:55:34Z	deepseek-chat	verbatim	line := strings.TrimSpace(scanner.Text())		no		generic
+G077	9d4e95072e801a05d9378d91e139b930f8cf6e40	2026-05-03	nuc	matched	7f68ec07-7123-4525-bb6d-7bb62eeec9f1	main/sessions/7f68ec07-7123-4525-bb6d-7bb62eeec9f1.jsonl.bak-3069282-1777834376456	2026-05-03T18:46:01Z	glm-5-turbo	verbatim	buf.WriteString("Someone invisible: ")		no		mistake-line
+G083	d57df81cf084f065ae2e4cd7874607049fed470e	2026-04-23	nuc	not-found								not-checked	searched: pet	
+G084	682ea59adce887171a09cb7e0df7aea4b562cc65	2026-04-24	nuc	matched	089773c9-e88e-4d06-93dc-6397b8eedecc	main/sessions/089773c9-e88e-4d06-93dc-6397b8eedecc.jsonl.reset.2026-04-25T01-59-41.841Z	2026-04-25T01:39:19Z	deepseek-chat	verbatim	func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interface{}) {		no		function-created
+G091	a80e0fed96b42b38ff0c8b055cf2deaa28769e51	2026-04-24	nuc	not-found								not-checked	no analyst key chosen	
+S001	070dfe54ead55d476ef9d24dbe9928425a18301b	2026-04-24	nuc	matched	8e4697db-74af-409e-bd59-293e5cc5514c	main/sessions/8e4697db-74af-409e-bd59-293e5cc5514c.jsonl.reset.2026-04-25T00-35-02.200Z	2026-04-24T22:42:11Z	deepseek-chat	verbatim	func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool {		no		function-created
+S007	bbfc471aef08800c04280ef39ba5871e9ff98227	2026-05-01	nuc	not-found								not-checked	no analyst key chosen	
+S010	189043bb3e75b7dc92521a0d598867ded5e610b4	2026-04-25	nuc	not-found								not-checked	searched: slowly die	
+S011	f00c268c3a1d5bd281df58a787aaaa849086f2ce	2026-04-25	nuc	not-found								not-checked	searched: PLR	
+S012	f00c268c3a1d5bd281df58a787aaaa849086f2ce	2026-04-25	nuc	not-found								not-checked	searched: PLR	
+S015	158a0dd2ccb369f7fa0260373b829ff4c3ba7762	2026-05-20	mac-mini	not-found								not-checked	no analyst key chosen	
+S028	de3b019c34e83a3afe2127bffc9b86cc8deaaaff	2026-04-26	nuc	matched	9927d65c-a28e-4d67-964c-58cd63f39653	main/sessions/9927d65c-a28e-4d67-964c-58cd63f39653.jsonl.reset.2026-04-26T20-35-06.153Z	2026-04-26T20:25:07Z	glm-5-turbo	verbatim	ValuesOverride     *[4]int // copy-on-write override of prototype Values		no	matched on a line the birth added and the fix removed	generic
+S029	de3b019c34e83a3afe2127bffc9b86cc8deaaaff	2026-04-26	nuc	matched	9927d65c-a28e-4d67-964c-58cd63f39653	main/sessions/9927d65c-a28e-4d67-964c-58cd63f39653.jsonl.reset.2026-04-26T20-35-06.153Z	2026-04-26T20:25:01Z	glm-5-turbo	verbatim	// GetValue returns the object's Values[idx], preferring instance override.		no		function-created
+S030	d57df81cf084f065ae2e4cd7874607049fed470e	2026-04-23	nuc	not-found								not-checked	no analyst key chosen	
+S031	d57df81cf084f065ae2e4cd7874607049fed470e	2026-04-23	nuc	not-found								not-checked	no analyst key chosen	
+S032	d57df81cf084f065ae2e4cd7874607049fed470e	2026-04-23	nuc	not-found								not-checked	no analyst key chosen	
+S033	d57df81cf084f065ae2e4cd7874607049fed470e	2026-04-23	nuc	matched	b46661ce-35c2-47d3-afc7-edbd1abe9f5d	main/sessions/b46661ce-35c2-47d3-afc7-edbd1abe9f5d.jsonl.reset.2026-04-24T13-55-55.360Z	2026-04-23T15:47:53Z	deepseek-chat	verbatim	func (e *Engine) LState() *lua.LState {		yes		function-created
+S034	d57df81cf084f065ae2e4cd7874607049fed470e	2026-04-23	nuc	not-found								not-checked	searched: gossip	
+S036	e4871925d61214a095a63128ff727c83d4112a96	2026-04-24	nuc	not-found								not-checked	searched: MudLog	
+S040	d9417751b63cb0e0ed0d4ac268e8f9dac3bb9500	2026-04-23	nuc	not-found								not-checked	searched: WaitState	
+S041	d9417751b63cb0e0ed0d4ac268e8f9dac3bb9500	2026-04-23	nuc	not-found								not-checked	searched: PosStanding	
+S042	d495a96f8fa359c549e08f1060d6d3d89c2186bc	2026-04-26	nuc	matched	b6442111-b1e9-4384-9056-a8b37fb63910	main/sessions/b6442111-b1e9-4384-9056-a8b37fb63910.jsonl.reset.2026-04-26T19-59-11.324Z	2026-04-26T19:01:10Z	glm-5-turbo	verbatim	delta := PosFighting - defPos		no		mistake-line
+S053	5e01b189f127c85da1aabc0f1e80d70183114c36	2026-04-26	nuc	not-found								not-checked	no analyst key chosen	
+S054	5e01b189f127c85da1aabc0f1e80d70183114c36	2026-04-26	nuc	matched	e01dcd7e-4995-41b7-b4f4-3cd61bcb7b45	main/sessions/e01dcd7e-4995-41b7-b4f4-3cd61bcb7b45.jsonl	2026-04-26T17:37:38Z	deepseek-chat	verbatim	victim.StopFighting()		no		function-created
+S055	5e67ee016a83efdb99c6e581eb9b5987c46cfb14	2026-04-23	nuc	not-found								not-checked	searched: Restore	
+S057	c37d9d6d5e136298dd2a2ce1d832c76a0e30bf61	2026-04-26	nuc	matched	9927d65c-a28e-4d67-964c-58cd63f39653	main/sessions/9927d65c-a28e-4d67-964c-58cd63f39653.jsonl.reset.2026-04-26T20-35-06.153Z	2026-04-26T20:07:56Z	glm-5-turbo	verbatim	sendToCaster(ch, "Spell not yet implemented.\r\n")		no	matched on a line the birth added and the fix removed	mistake-line
+S062	6d280468ecb68a4c5fd056b7da835386ce64fddc	2026-04-25	nuc	not-found								not-checked	no analyst key chosen	
+S064	6d280468ecb68a4c5fd056b7da835386ce64fddc	2026-04-25	nuc	not-found								not-checked	searched: SayTo	
+S067	feb02658549e914cf23b0aa7875d30e418f1bf0e	2026-04-25	nuc	not-found								not-checked	no analyst key chosen	
+S068	e2aa5a6da41d88eb1647e8f2ba635abeaab9ae08	2026-04-24	nuc	matched	8e4697db-74af-409e-bd59-293e5cc5514c	main/sessions/8e4697db-74af-409e-bd59-293e5cc5514c.jsonl.reset.2026-04-25T00-35-02.200Z	2026-04-25T00:06:30Z	deepseek-chat	verbatim	item, ok := p.Equipment.GetItemInSlot(SlotLight)		no	retried for the mistake's own line and kept the stronger match	mistake-line
+S069	b588c79da836f82e7b472433c6940106fa74eb22	2026-05-12	mac-mini	not-found								not-checked	no analyst key chosen	
+S078	983a4575d6a2fde9cb8c4b6a31e10cc74c76a430	2026-04-26	nuc	matched	9927d65c-a28e-4d67-964c-58cd63f39653	main/sessions/9927d65c-a28e-4d67-964c-58cd63f39653.jsonl.reset.2026-04-26T20-35-06.153Z	2026-04-26T20:21:07Z	glm-5-turbo	verbatim	sendToCaster(ch, "You feel informed:\r\n")		no	retried for the mistake's own line and kept the stronger match	mistake-line
+S079	357b88b31f1076ddc0ee287ac7ef71bb3cd3131f	2026-04-25	nuc	not-found								not-checked	no analyst key chosen	
+S083	e2aa5a6da41d88eb1647e8f2ba635abeaab9ae08	2026-04-24	nuc	matched	8e4697db-74af-409e-bd59-293e5cc5514c	main/sessions/8e4697db-74af-409e-bd59-293e5cc5514c.jsonl.reset.2026-04-25T00-35-02.200Z	2026-04-25T00:12:20Z	deepseek-chat	verbatim	item.Prototype.Values[1]--		no	retried for the mistake's own line and kept the stronger match	mistake-line
+S087	87410e6f4b8042d743a73df95f3c9193a2c88dcc	2026-05-15	mac-mini	not-found								not-checked	no analyst key chosen	
+S097	585eefab04a211fd46833de2fc07f9c7ac12454b	2026-04-23	nuc	not-found								not-checked	searched: Fields	
+S098	585eefab04a211fd46833de2fc07f9c7ac12454b	2026-04-23	nuc	not-found								not-checked	searched: func cmdEmote(s *Session, args []string) error {	
