@@ -2,418 +2,138 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import Base from '../../../layouts/Base.astro';
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import { Colorizer, loadWorldText, type Line } from '../../../lib/mudlog/colorize';
-import { extractLogStats } from '../../../lib/mudlog/events';
+import { describeLog, others, recorders, redactionSummary } from '../../../lib/mudlog/entry';
 
 export async function getStaticPaths() {
-  const entries = await getCollection('logs', ({ data }) => !data.draft);
-  const bySource = new Map<string, typeof entries>();
-  for (const e of entries) {
-    const list = bySource.get(e.data.sourceFile) ?? [];
-    list.push(e);
-    bySource.set(e.data.sourceFile, list);
-  }
-  for (const list of bySource.values()) {
-    list.sort((a, b) => a.data.sourceStart - b.data.sourceStart);
-  }
-  const partNumber = (id: string, title: string, fallback: number) => {
-    const mt = /\(part (\d+)\)\s*$/i.exec(title);
-    if (mt) return Number(mt[1]);
-    const mi = /-(\d+)$/.exec(id);
-    if (mi) return Number(mi[1]);
-    return fallback;
-  };
-  return entries.map((entry) => {
-    const siblings = bySource.get(entry.data.sourceFile) ?? [entry];
-    const partIndex = siblings.findIndex((s) => s.id === entry.id);
-    return {
-      params: { slug: entry.id },
-      props: {
-        entry,
-        siblings: siblings.map((s, idx) => ({
-          id: s.id,
-          title: s.data.title,
-          part: partNumber(s.id, s.data.title, idx + 1),
-          sourceLines: s.data.sourceLines,
-        })),
-        partIndex,
-      },
-    };
-  });
+  const entries = await getCollection('logs');
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 
-const { entry, siblings, partIndex } = Astro.props;
-const { Content } = await render(entry);
+const { entry } = Astro.props;
 const data = entry.data;
-const currentPart = siblings[partIndex]?.part ?? partIndex + 1;
-const prevPart = partIndex > 0 ? siblings[partIndex - 1] : null;
-const nextPart = partIndex < siblings.length - 1 ? siblings[partIndex + 1] : null;
 
-const raw = readFileSync(resolve(dirname(resolve(entry.filePath!)), entry.data.log), 'latin1');
+const raw = readFileSync(resolve(dirname(resolve(entry.filePath!)), data.log), 'utf8');
 const lines = new Colorizer(loadWorldText()).colorize(raw);
-const stats = extractLogStats(raw, data.sourceStart);
-
-// Anchors carry the capture's own line numbers: excerpt line 1 is line
-// `sourceStart` of the raw file, so #L2501 still finds line 2,501.
-const start = data.sourceStart;
-const endLine = start + lines.length - 1;
 
 const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const eventLines = new Set(stats.events.filter((e) => e.kind === 'kill' || e.kind === 'death').map((e) => e.line));
-
 // One span per line so any line can be cited by its number (#L650). Coloured
 // runs carry their colour and the `color` level the server gated them on.
-// The line number gutter is rendered via CSS `counter(ln)` on `::before`
-// so it is never copied when selecting text and adds zero HTML weight.
-const renderLine = (runs: Line, n: number) => {
-  const cls = eventLines.has(n) ? 'ln ln-kill' : 'ln';
-  const body = runs.map((run) => run.color
+const renderLine = (runs: Line, n: number) =>
+  `<span class="ln" id="L${n}">${runs.map((run) => run.color
     ? `<span class="c-${run.color}" data-l="${run.level}">${escape(run.text)}</span>`
-    : escape(run.text)).join('');
-  return `<span class="${cls}" id="L${n}">${body}</span>`;
-};
+    : escape(run.text)).join('')}</span>`;
 // Lines are blocks, so they are joined without newlines; an empty line keeps
-// one space so it still holds its height.
-const logHtml = lines.map((runs, i) => renderLine(runs.length === 1 && !runs[0].text ? [{ text: ' ' }] : runs, i + start)).join('');
+// one space so it still holds its height. A long capture is grouped into
+// chunks the browser can skip drawing until they scroll near.
+const CHUNK = 400;
+const rendered = lines.map((runs, i) => renderLine(runs.length === 1 && !runs[0].text ? [{ text: ' ' }] : runs, i + 1));
+const logHtml = Array.from({ length: Math.ceil(rendered.length / CHUNK) }, (_, c) =>
+  `<span class="chunk">${rendered.slice(c * CHUNK, (c + 1) * CHUNK).join('')}</span>`).join('');
 
 // The four settings of the in-game `color` command (screen.h C_OFF..C_CMP).
 const LEVELS = ['off', 'sparse', 'normal', 'complete'];
 
-// The main characters, by first appearance, for the page title. Kept short so
-// the <title> stays near 65 characters.
-const named = data.cast.slice(0, 3).join(', ');
-const pageTitle = data.cast.length > 1
-  ? `${data.title}, with ${named} | Dark Pawns Logs`
-  : `${data.title} | Dark Pawns Logs`;
+const onScreen = others(data);
+const removed = redactionSummary(data.redactions);
+const description = describeLog(data);
+const pageTitle = `${data.title}${data.cast.length ? `, with ${data.cast.slice(0, 3).join(', ')}` : ''} | Dark Pawns logs`;
+const characterUrl = (name: string) => `/archive/logs/characters/${encodeURIComponent(name.toLowerCase())}/`;
 
 const site = 'https://darkpawns.org';
 const jsonLd = JSON.stringify({
   '@context': 'https://schema.org',
   '@type': 'Article',
   headline: data.title,
-  description: data.description,
-  // A date is asserted only when the log records one; dateLabel says "Date not
-  // recorded" otherwise, and the JSON-LD stays silent to match.
-  ...(data.sortDate && data.dateLabel !== 'Date not recorded'
-    ? { datePublished: data.sortDate.toISOString().slice(0, 10) }
-    : {}),
+  description,
   inLanguage: 'en',
   url: `${site}/archive/logs/${entry.id}/`,
-  isPartOf: { '@type': 'CollectionPage', name: 'Dark Pawns logs', url: `${site}/archive/logs/` },
-  ...(data.cast.length
-    ? { character: data.cast.map((name) => ({ '@type': 'Person', name })) }
-    : {}),
+  isPartOf: { '@type': 'CollectionPage', name: 'Dark Pawns game logs', url: `${site}/archive/logs/` },
+  ...(data.cast.length ? { character: data.cast.map((name) => ({ '@type': 'Person', name })) } : {}),
   publisher: { '@type': 'Organization', name: 'Dark Pawns', url: site },
 });
-
-// What was taken out of the capture, said plainly in the provenance.
-const r = data.redactions;
-const redactedTotal = r.emails + r.ips + r.passwords + r.tells + r.mail;
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-const redactionSummary = [
-  r.tells ? plural(r.tells, 'private tell', 'private tells') : '',
-  r.mail ? plural(r.mail, 'mail line', 'mail lines') : '',
-  r.emails ? plural(r.emails, 'email address', 'email addresses') : '',
-  r.ips ? plural(r.ips, 'IP address', 'IP addresses') : '',
-  r.passwords ? plural(r.passwords, 'typed password', 'typed passwords') : '',
-].filter(Boolean).join(', ');
 ---
-<Base title={pageTitle} description={entry.data.description}>
-  <link slot="head" rel="alternate" type="text/markdown" href={`/archive/logs/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
+<Base title={pageTitle} description={description}>
+  <link slot="head" rel="alternate" type="text/markdown" href={`/archive/logs/${entry.id}.md`} title={`${data.title} as Markdown`} />
   <script slot="head" type="application/ld+json" set:html={jsonLd} />
   <article class="entry">
     <nav class="crumb" aria-label="Breadcrumb">
-      <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a> » <span>{entry.data.sourceFile}</span>
+      <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a>
     </nav>
-    <h1>{entry.data.title}</h1>
+    <h1>{data.title}</h1>
     <p class="dateline">
-      <span>{entry.data.dateLabel}</span>
-      <span class="dateline-site"> · {entry.data.collection} · lines {start.toLocaleString('en-US')} to {endLine.toLocaleString('en-US')} ({lines.length.toLocaleString('en-US')} lines)</span>
+      Recorded by {data.recordedBy.length
+        ? data.recordedBy.map((name, i) => <>{i > 0 && ' and '}<a href={characterUrl(name)}>{name}</a></>)
+        : 'a player the capture never names'}
+      · {data.lines.toLocaleString('en-US')} lines
     </p>
-    {entry.data.contentWarning && (
-      <p class="note-partial"><strong>Content note.</strong> {entry.data.contentWarning}</p>
-    )}
-
-    {siblings.length > 1 && (
-      <nav class="parts-bar" aria-label={`Parts of ${entry.data.sourceFile}`}>
-        <div class="parts-head">
-          <span class="parts-label">
-            Part {currentPart} ({ siblings.length } published from <code>{entry.data.sourceFile}</code>)
-          </span>
-          <span class="parts-step">
-            {prevPart && <a href={`/archive/logs/${prevPart.id}/`}>« Part {prevPart.part}</a>}
-            {prevPart && nextPart && <span aria-hidden="true"> · </span>}
-            {nextPart && <a href={`/archive/logs/${nextPart.id}/`}>Part {nextPart.part} »</a>}
-          </span>
-        </div>
-        <ol class="parts-list">
-          {siblings.map((s) => (
-            <li>
-              {s.id === entry.id ? (
-                <span class="part-pill current" aria-current="page">Part {s.part}</span>
-              ) : (
-                <a class="part-pill" href={`/archive/logs/${s.id}/`} title={`${s.title} (lines ${s.sourceLines})`}>Part {s.part}</a>
-              )}
-            </li>
-          ))}
-        </ol>
-      </nav>
-    )}
-
-    <div class="lede"><Content /></div>
-
-    <section class="people" aria-labelledby="people-h">
-      <div class="people-head">
-        <h2 id="people-h">In the group ({entry.data.cast.length})</h2>
-        <span class="people-hint">Click a name for all sessions, or the line number for first appearance</span>
-      </div>
-      <ul>
-        {entry.data.cast.map((name) => {
-          const firstLine = entry.data.appearances[name] ?? start;
-          return (
-            <li>
-              <a class="who" href={`/archive/logs/characters/${encodeURIComponent(name.toLowerCase())}/`}>{name}</a>
-              {name === entry.data.recordedBy ? (
-                <span class="rank">recording</span>
-              ) : (
-                <a class="first-line" href={`#L${firstLine}`} title={`Jump to ${name}'s first appearance at line ${firstLine}`}>L{firstLine}</a>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-
-    {stats.events.length > 0 && (
-      <section class="events" aria-labelledby="events-h">
-        <h2 id="events-h">Jump to line in this capture</h2>
-        <ol class="events-list">
-          {stats.events.map((ev) => (
-            <li class={`ev ev-${ev.kind}`}>
-              <a href={`#L${ev.line}`}>
-                <span class="ev-line">L{ev.line}</span>
-                <span class="ev-label">{ev.label}</span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      </section>
-    )}
   </article>
 
-  <figure class="screen" id="screen-top" aria-labelledby="screen-caption">
-    <form class="screen-bar" aria-label="Terminal display controls" onsubmit="return false;">
-      <div class="screen-status">
-        <span class="screen-file">{entry.data.sourceFile}</span>
-        <span class="screen-meta">
-          pov: <strong>{entry.data.recordedBy || 'not identified'}</strong>{stats.maxHp > 0 && <span class="screen-vitals" title="Highest prompt vitals seen in this session"> · peak {stats.maxHp}H {stats.maxMana}M {stats.maxMove}V</span>}
-        </span>
-      </div>
-      <div class="screen-controls">
-        <fieldset class="levels">
-          <legend>color</legend>
-          {LEVELS.map((name, level) => (
-            <label>
-              <input type="radio" name="color" value={level} checked={level === 3} />
-              <span>{name}</span>
-            </label>
-          ))}
-        </fieldset>
-        <label class="toggle-chip">
-          <input type="checkbox" name="wrap" class="wrap-toggle" />
-          <span>wrap</span>
-        </label>
-        <label class="toggle-chip">
-          <input type="checkbox" name="numbers" class="num-toggle" checked />
-          <span>lines</span>
-        </label>
-      </div>
+  <figure class="screen" aria-labelledby="screen-caption">
+    <form class="screen-bar" aria-label="Color setting">
+      <span class="screen-file">{data.title}</span>
+      <fieldset class="levels">
+        <legend>color</legend>
+        {LEVELS.map((name, level) => (
+          <label>
+            <input type="radio" name="color" value={level} checked={level === 3} />
+            <span>{name}</span>
+          </label>
+        ))}
+      </fieldset>
     </form>
-    <pre class="log" style={`counter-reset: ln ${start - 1}`} tabindex="0" aria-label={`Game log, ${lines.length} lines`}><code set:html={logHtml} /></pre>
-    <div class="screen-foot">
-      <span>Lines {start.toLocaleString('en-US')} to {endLine.toLocaleString('en-US')} of {entry.data.sourceFile}</span>
-      <span class="screen-foot-links">
-        <a href="#screen-top">↑ Top of terminal</a>
-        {prevPart && (
-          <>
-            <span aria-hidden="true"> · </span>
-            <a href={`/archive/logs/${prevPart.id}/`}>« Part {prevPart.part}</a>
-          </>
-        )}
-        {nextPart && (
-          <>
-            <span aria-hidden="true"> · </span>
-            <a href={`/archive/logs/${nextPart.id}/`}>Continue to Part {nextPart.part} »</a>
-          </>
-        )}
-      </span>
-    </div>
+    <pre class="log" tabindex="0" aria-label={`Game log, ${lines.length} lines`}><code set:html={logHtml} /></pre>
     <figcaption id="screen-caption">
       The capture is plain text. The color is rebuilt from the game's source
       code: each kind of message takes the color the server gave it at the
-      setting chosen above. The log never shows the recorder's maximums, so
-      prompt numbers are judged against the highest the log reaches.
+      setting chosen above. Prompt numbers are colored against the highest the
+      capture reaches, since it never shows the character's maximums.
     </figcaption>
   </figure>
 
   <article class="entry">
-    {siblings.length > 1 && (
-      <nav class="parts-bar parts-bar-bottom" aria-label={`More parts of ${entry.data.sourceFile}`}>
-        <div class="parts-head">
-          <span class="parts-label">
-            Part {currentPart} ({siblings.length} published from <code>{entry.data.sourceFile}</code>)
-          </span>
-          <span class="parts-step">
-            {prevPart && <a href={`/archive/logs/${prevPart.id}/`}>« Previous: {prevPart.title}</a>}
-            {prevPart && nextPart && <span aria-hidden="true"> · </span>}
-            {nextPart && <a href={`/archive/logs/${nextPart.id}/`}>Next: {nextPart.title} »</a>}
-          </span>
-        </div>
-      </nav>
+    {onScreen.length > 0 && (
+      <section class="people" aria-labelledby="people-h">
+        <h2 id="people-h">On screen</h2>
+        <ul>
+          {onScreen.map((name) => <li><a href={characterUrl(name)}>{name}</a></li>)}
+        </ul>
+      </section>
     )}
-
     <section class="provenance" aria-labelledby="provenance-h">
       <h2 id="provenance-h">Provenance</h2>
       <dl>
-        <div><dt>Collection</dt><dd>{entry.data.collection}, donated by Vargus</dd></div>
-        <div><dt>File</dt><dd>{entry.data.sourceFile}</dd></div>
-        <div><dt>Lines</dt><dd>{entry.data.sourceLines} ({lines.length.toLocaleString('en-US')} lines)</dd></div>
-        <div><dt>Recorded by</dt><dd>{entry.data.recordedBy
-          ? <a href={`/archive/logs/characters/${encodeURIComponent(entry.data.recordedBy.toLowerCase())}/`}>{entry.data.recordedBy}</a>
-          : 'Not identified: the log never shows whose screen it was'}</dd></div>
-        <div><dt>Date</dt><dd>{entry.data.dateLabel} <span class="source">({entry.data.dateSource})</span></dd></div>
-        {redactedTotal > 0 && (
-          <div><dt>Redacted</dt><dd>{redactionSummary}</dd></div>
-        )}
-        <div><dt>Plain text</dt><dd><a href={`/archive/logs/${entry.id}.md`}>/archive/logs/{entry.id}.md</a></dd></div>
+        <div><dt>Collection</dt><dd>The Vargus logs, donated by Vargus</dd></div>
+        <div><dt>File</dt><dd>{data.nameWithheld ? 'Name withheld: it contains a slur' : data.title}</dd></div>
+        <div><dt>Recorded by</dt><dd>{recorders(data)}</dd></div>
+        <div><dt>Date</dt><dd>Not recorded</dd></div>
+        <div><dt>Removed</dt><dd>{removed ? `${removed}, each replaced by a marker so line numbers still match` : 'Nothing'}</dd></div>
+        <div><dt>Plain text</dt><dd><a href={`/archive/logs/${entry.id}.md`}>{entry.id}.md</a></dd></div>
       </dl>
     </section>
   </article>
 </Base>
 
 <style>
-  .entry {
-    --t-sub: 0.75rem;
-    --t-label: 0.8rem;
-    --t-lede: 1.15rem;
-    max-width: 56rem;
-    margin-inline: auto;
-    padding-inline: var(--space-md);
-    padding-block: var(--space-lg) 0;
-  }
+  .entry { --t-label: 0.8rem; max-width: 46rem; margin-inline: auto; padding-inline: var(--space-md); padding-block: var(--space-lg) 0; }
   .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: var(--t-label); color: var(--ink-muted); }
   .crumb a { color: var(--ink-muted); }
   .crumb a:hover { color: var(--accent); }
+  h1 { font-family: var(--font-mono); font-size: clamp(1.6rem, 3vw + 0.8rem, 2.4rem); font-weight: 400; overflow-wrap: anywhere; }
   .dateline { margin: 0 0 var(--space-md); color: var(--ink-muted); }
-  .dateline-site { font-family: var(--font-mono); font-size: var(--t-label); }
-  .note-partial { border-left: 2px solid var(--accent); padding: 0.2rem 0 0.2rem var(--space-md); color: var(--ink-muted); }
-  .lede :global(p) { max-width: 65ch; font-size: var(--t-lede); }
 
-  /* Multi-part capture navigation */
-  .parts-bar {
-    margin-block: var(--space-md);
-    border: 1px solid var(--rule);
-    background: var(--paper-deep);
-    padding: var(--space-sm) var(--space-md);
-    font-family: var(--font-mono);
-    font-size: var(--t-label);
-  }
-  .parts-bar-bottom { margin-top: var(--space-lg); }
-  .parts-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-xs) var(--space-md);
-  }
-  .parts-label { color: var(--ink-muted); }
-  .parts-label code { font-size: inherit; background: transparent; padding: 0; color: var(--ink); }
-  .parts-step a { color: var(--accent); text-decoration: none; }
-  .parts-step a:hover { text-decoration: underline; }
-  .parts-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    list-style: none;
-    margin: var(--space-xs) 0 0;
-    padding: 0;
-  }
-  .part-pill {
-    display: inline-block;
-    border: 1px solid var(--rule);
-    background: var(--paper);
-    padding: 0.1rem 0.45rem;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .part-pill:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
-  .part-pill.current { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-
-  .people { margin-block: var(--space-md); border-block: 1px solid var(--rule); padding-block: var(--space-sm); }
-  .people-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-xs) var(--space-md);
-    margin-bottom: var(--space-xs);
-  }
-  .people h2, .events h2, .provenance h2 { margin: 0; font-family: var(--font-mono); font-size: var(--t-label); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
-  .people-hint { font-family: var(--font-mono); font-size: var(--t-sub); color: var(--ink-muted); }
+  .people { margin-block: var(--space-lg) 0; border-top: 1px solid var(--rule); padding-top: var(--space-sm); }
+  .people h2, .provenance h2 { margin: 0 0 var(--space-xs); font-family: var(--font-mono); font-size: var(--t-label); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
   .people ul { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); margin: 0; padding: 0; list-style: none; }
-  .people li { display: flex; align-items: baseline; gap: 0.35rem; }
-  .people .who { font-family: var(--font-display); font-size: var(--t-lede); color: var(--ink); text-decoration: none; }
-  .people a.who:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 0.18em; }
-  .people .rank { color: var(--accent); font-family: var(--font-mono); font-size: var(--t-label); }
-  .people .rank::before { content: '·'; margin-right: 0.35rem; color: var(--ink-muted); }
-  .people .first-line {
-    font-family: var(--font-mono);
-    font-size: var(--t-sub);
-    color: var(--ink-muted);
-    text-decoration: none;
-  }
-  .people .first-line:hover { color: var(--accent); text-decoration: underline; }
-
-  /* Event timeline / jump strip */
-  .events { margin-block: 0 var(--space-md); padding-bottom: var(--space-sm); }
-  .events h2 { margin-bottom: var(--space-xs); }
-  .events-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    font-family: var(--font-mono);
-    font-size: var(--t-sub);
-  }
-  .ev a {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.35rem;
-    border: 1px solid var(--rule);
-    background: var(--paper-deep);
-    padding: 0.18rem 0.5rem;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .ev a:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
-  .ev-line { color: var(--ink-muted); }
-  .ev-kill a, .ev-death a { border-color: var(--accent); background: var(--paper); }
-  .ev-kill .ev-label, .ev-death .ev-label { color: var(--accent); font-weight: 600; }
+  .people a { font-family: var(--font-display); font-size: 1.1rem; }
 
   /* The screen. The log is the game's own output, so it gets the CRT canvas
      /play uses, under a paper control bar, with the eight ANSI colours tuned
      for that canvas. The figure is wider than the reading column: an
-     80-column screen plus line-number gutter needs the room. */
+     80-column screen needs the room. */
   .screen {
-    --t-bar: 0.72rem;
-    --t-mobile-log: 0.75rem;
     --crt: #0a0908;
-    --crt-select: #3a2a1a;
-    --crt-target: #2a1d12;
-    --crt-kill: #1b110e;
     --ansi-fg: #b8b1a3;
     --ansi-red: #cf4b42;
     --ansi-green: #82a86c;
@@ -422,33 +142,27 @@ const redactionSummary = [
     --ansi-magenta: #b98bbf;
     --ansi-cyan: #72b6b0;
     --ansi-white: #ede5d3;
-    max-width: 62rem;
+    max-width: 56rem;
     margin: 0 auto;
     padding-inline: var(--space-md);
   }
   .screen-bar {
-    position: sticky; top: 0; z-index: 2;
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md);
+    position: sticky; top: 0; z-index: 1;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm) var(--space-md);
     border: 2px solid var(--rule); border-bottom: 0;
     background: var(--paper-deep);
     padding: var(--space-xs) var(--space-sm);
-    font-family: var(--font-mono); font-size: var(--t-bar);
+    font-family: var(--font-mono); font-size: 0.7rem;
   }
-  .screen-status { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem var(--space-sm); }
-  .screen-file { color: var(--ink); font-weight: 600; }
-  .screen-meta { color: var(--ink-muted); }
-  .screen-meta strong { color: var(--ink); font-weight: 600; }
-  .screen-vitals { color: var(--ink-muted); }
-
-  .screen-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); }
+  .screen-file { color: var(--ink-muted); }
   .levels { display: flex; align-items: center; gap: 0.15rem; margin: 0; border: 0; padding: 0; }
-  .levels legend { float: left; margin-right: 0.35rem; padding: 0; color: var(--ink-muted); }
-  .levels label, .toggle-chip { position: relative; cursor: pointer; }
-  .levels input, .toggle-chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-  .levels span, .toggle-chip span { display: block; border: 1px solid var(--rule); background: var(--paper); padding: 0.12rem 0.45rem; color: var(--ink); }
-  .levels label:hover span, .toggle-chip:hover span { border-color: var(--ink); }
-  .levels input:checked + span, .toggle-chip input:checked + span { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-  .levels input:focus-visible + span, .toggle-chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .levels legend { float: left; margin-right: var(--space-sm); padding: 0; color: var(--ink-muted); }
+  .levels label { position: relative; cursor: pointer; }
+  .levels input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .levels span { display: block; border: 1px solid transparent; padding: 0.15rem 0.5rem; color: var(--ink); }
+  .levels label:hover span { border-color: var(--rule); }
+  .levels input:checked + span { background: var(--ink); color: var(--paper); }
+  .levels input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .log {
     margin: 0;
@@ -457,45 +171,16 @@ const redactionSummary = [
     color: var(--ansi-fg);
     padding: var(--space-md) var(--space-md) var(--space-lg);
     overflow-x: auto;
-    font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.45;
+    font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.45;
     tab-size: 8;
-    scrollbar-color: var(--crt-select) var(--crt);
+    scrollbar-color: #3a2a1a var(--crt);
   }
   .log:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .log ::selection { background: var(--crt-select); color: var(--ansi-white); }
-  .log :global(.ln) {
-    counter-increment: ln;
-    display: block;
-    position: relative;
-    padding-left: 7ch;
-    scroll-margin-top: 4.5rem;
-  }
-  .log :global(.ln::before) {
-    content: counter(ln);
-    position: absolute;
-    left: 0;
-    width: 5.5ch;
-    text-align: right;
-    color: var(--ink-muted);
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  .log :global(.ln:hover::before) { color: var(--ansi-yellow); }
-  .log :global(.ln-kill) {
-    background: var(--crt-kill);
-  }
-  .log :global(.ln-kill::before) {
-    color: var(--ansi-red);
-  }
-  .log :global(.ln:target) {
-    background: var(--crt-target);
-    outline: 1px solid var(--ansi-yellow);
-  }
-  .log :global(.ln:target::before) {
-    color: var(--ansi-yellow);
-    font-weight: 700;
-  }
+  .log ::selection { background: #3a2a1a; color: var(--ansi-white); }
+  /* 400 lines at 0.9rem x 1.45; "auto" keeps the real height once drawn. */
+  .log :global(.chunk) { display: block; content-visibility: auto; contain-intrinsic-size: auto 522rem; }
+  .log :global(.ln) { display: block; scroll-margin-top: 5rem; }
+  .log :global(.ln:target) { background: #2a1d12; }
 
   .log :global(.c-red) { color: var(--ansi-red); }
   .log :global(.c-green) { color: var(--ansi-green); }
@@ -511,61 +196,21 @@ const redactionSummary = [
   .screen:has(input[value="1"]:checked) .log :global([data-l="2"], [data-l="3"]) { color: inherit; }
   .screen:has(input[value="2"]:checked) .log :global([data-l="3"]) { color: inherit; }
 
-  /* Optional line wrap and line-number gutter toggles via CSS :has() */
-  .screen:has(.wrap-toggle:checked) .log { white-space: pre-wrap; overflow-wrap: anywhere; }
-  .screen:has(.num-toggle:not(:checked)) .log :global(.ln) { padding-left: 0; }
-  .screen:has(.num-toggle:not(:checked)) .log :global(.ln::before) { display: none; }
+  figcaption { max-width: 62ch; margin-top: var(--space-sm); color: var(--ink-muted); font-size: 0.9rem; }
 
-  .screen-foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-xs) var(--space-md);
-    border: 2px solid var(--rule);
-    border-top: 0;
-    background: var(--paper-deep);
-    padding: var(--space-xs) var(--space-sm);
-    font-family: var(--font-mono);
-    font-size: var(--t-bar);
-    color: var(--ink-muted);
-  }
-  .screen-foot a { color: var(--ink); text-decoration: none; }
-  .screen-foot a:hover { color: var(--accent); text-decoration: underline; }
-
-  figcaption { max-width: 65ch; margin-top: var(--space-sm); color: var(--ink-muted); font-size: 0.9rem; }
-
-  .provenance { margin-block: var(--space-lg) var(--space-xl); border-top: 1px solid var(--rule); padding-top: var(--space-md); }
-  .provenance h2 { margin-bottom: var(--space-xs); }
+  .provenance { margin-block: var(--space-lg) var(--space-xl); border-top: 1px solid var(--rule); padding-top: var(--space-sm); }
   .provenance dl { margin: 0; font-family: var(--font-mono); font-size: var(--t-label); }
   .provenance div { display: grid; grid-template-columns: 9rem 1fr; gap: var(--space-md); padding: 0.15rem 0; }
   .provenance dt { color: var(--ink-muted); }
   .provenance dd { margin: 0; }
-  .provenance .source { color: var(--ink-muted); }
 
   @media (max-width: 640px) {
     .screen { padding-inline: 0; }
-    .screen-bar, .log, .screen-foot { border-inline: 0; }
+    .screen-bar, .log { border-inline: 0; }
     /* A phone cannot hold 80 columns. Wrap, and hang the continuation so
        each line of the capture still starts at the left edge. */
-    .log { font-size: var(--t-mobile-log); padding-inline: var(--space-xs); white-space: pre-wrap; overflow-wrap: anywhere; }
-    .log :global(.ln) { padding-left: 5.5ch; }
-    .log :global(.ln::before) { width: 4.5ch; }
+    .log { font-size: 0.75rem; padding-inline: var(--space-sm); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .log :global(.ln) { padding-left: 2ch; text-indent: -2ch; }
     .provenance div { grid-template-columns: 1fr; gap: 0; }
   }
 </style>
-
-<script>
-  const logEl = document.querySelector<HTMLElement>('.log');
-  logEl?.addEventListener('click', (ev) => {
-    const sel = window.getSelection();
-    if (sel && !sel.isCollapsed) return;
-    const ln = (ev.target as HTMLElement | null)?.closest<HTMLElement>('.ln');
-    if (!ln || !ln.id) return;
-    const rect = ln.getBoundingClientRect();
-    if (ev.clientX - rect.left <= 64) {
-      history.replaceState(null, '', `#${ln.id}`);
-      location.hash = `#${ln.id}`;
-    }
-  });
-</script>

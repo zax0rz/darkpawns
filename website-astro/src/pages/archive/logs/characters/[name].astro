@@ -1,63 +1,30 @@
 ---
 import Base from '../../../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
-
-const entries = await getCollection('logs', ({ data }) => !data.draft);
+import { appearancesOf, characterKeys } from '../../../../lib/mudlog/entry';
 
 export async function getStaticPaths() {
-  const all = await getCollection('logs', ({ data }) => !data.draft);
-  const keys = new Set<string>();
-  for (const entry of all) for (const name of entry.data.cast) keys.add(name.toLowerCase());
-  return [...keys].map((key) => ({ params: { name: key } }));
+  return characterKeys(await getCollection('logs')).map((name) => ({ params: { name } }));
 }
 
 const key = Astro.params.name!;
-const appears = entries
-  .filter((entry) => entry.data.cast.some((name) => name.toLowerCase() === key))
-  .map((entry) => {
-    const name = entry.data.cast.find((n) => n.toLowerCase() === key)!;
-    return {
-      entry,
-      name,
-      line: entry.data.appearances[name] ?? entry.data.sourceStart,
-      isRecorder: entry.data.recordedBy.toLowerCase() === key,
-    };
-  })
-  .sort((a, b) => (a.entry.data.sortDate?.getTime() ?? 0) - (b.entry.data.sortDate?.getTime() ?? 0) || a.entry.data.title.localeCompare(b.entry.data.title));
-
-if (!appears.length) return Astro.redirect('/archive/logs/characters/');
-
+const appears = appearancesOf(await getCollection('logs'), key);
 const display = appears[0].name;
-const recordedCount = appears.filter((a) => a.isRecorder).length;
-const description = `${display} appears in ${appears.length} ${appears.length === 1 ? 'session' : 'sessions'} of the Dark Pawns logs captured on the original server.`;
+const description = `${display} appears in ${appears.length} ${appears.length === 1 ? 'log' : 'logs'} from the original Dark Pawns server.`;
 ---
-<Base title={`${display} in the logs | Dark Pawns Logs`} description={description}>
+<Base title={`${display} in the logs | Dark Pawns`} description={description}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/archive/logs/characters/${encodeURIComponent(key)}.md`} title={`${display} in the logs as Markdown`} />
   <article class="entry">
     <nav class="crumb" aria-label="Breadcrumb">
       <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a> » <a href="/archive/logs/characters/">Characters</a>
     </nav>
     <h1>{display}</h1>
-    <p class="lede">
-      {description}
-      {recordedCount > 0 && ` Recorded ${recordedCount} of those from ${display}'s own client.`}
-      {' '}A name here is a character in the game, never a person. Each link jumps straight to the line where {display} first appears in that capture.
-    </p>
+    <p class="lede">{description} A name here is a character in the game.</p>
     <ul class="rows">
-      {appears.map(({ entry, line, isRecorder }) => (
+      {appears.map(({ entry, line, recorded }) => (
         <li>
-          <a href={`/archive/logs/${entry.id}/#L${line}`}>
-            <div class="row-top">
-              <span class="row-title">{entry.data.title}</span>
-              <span class="row-jump">Jump to L{line.toLocaleString('en-US')} »</span>
-            </div>
-            <span class="row-desc">{entry.data.description}</span>
-          </a>
-          <span class="row-meta">
-            <code>{entry.data.sourceFile}</code>
-            · {entry.data.dateLabel}
-            · {isRecorder ? 'recorded by ' + display : `first seen at line ${line.toLocaleString('en-US')}`}
-          </span>
+          <a href={`/archive/logs/${entry.id}/#L${line}`}>{entry.data.title}</a>
+          <span class="row-meta">{recorded ? `recorded by ${display}` : `first on screen at line ${line.toLocaleString('en-US')}`}</span>
         </li>
       ))}
     </ul>
@@ -65,19 +32,13 @@ const description = `${display} appears in ${appears.length} ${appears.length ==
 </Base>
 
 <style>
-  .entry { --t-label: 0.8rem; --t-lede: 1.15rem; max-width: 52rem; margin-inline: auto; padding: var(--space-lg) var(--space-md) var(--space-xl); }
-  .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: var(--t-label); color: var(--ink-muted); }
+  .entry { max-width: 46rem; margin-inline: auto; padding: var(--space-lg) var(--space-md) var(--space-xl); }
+  .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-muted); }
   .crumb a { color: var(--ink-muted); }
   .crumb a:hover { color: var(--accent); }
-  .lede { max-width: 62ch; font-size: var(--t-lede); color: var(--ink-muted); }
-  .rows { margin: var(--space-lg) 0 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule); }
-  .rows li { display: grid; gap: 0.2rem; border-top: 1px solid var(--rule); padding: var(--space-sm) 0; }
-  .rows a { display: grid; gap: 0.15rem; color: var(--ink); text-decoration: none; }
-  .row-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-xs) var(--space-md); }
-  .row-title { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.2; }
-  .rows a:hover .row-title { color: var(--accent); text-decoration: underline; text-underline-offset: 0.18em; }
-  .row-jump { font-family: var(--font-mono); font-size: var(--t-label); color: var(--accent); }
-  .row-desc { max-width: 65ch; color: var(--ink-muted); }
-  .row-meta { color: var(--ink-muted); font-family: var(--font-mono); font-size: var(--t-label); }
-  .row-meta code { font-size: inherit; background: transparent; padding: 0; color: var(--ink); }
+  .lede { max-width: 62ch; color: var(--ink-muted); }
+  .rows { margin: var(--space-md) 0 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule); }
+  .rows li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--space-md); border-top: 1px solid var(--rule); padding: var(--space-xs) 0; }
+  .rows a { font-family: var(--font-mono); }
+  .row-meta { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.8rem; }
 </style>

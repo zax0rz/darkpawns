@@ -4,10 +4,8 @@ import { getCollection } from 'astro:content';
 
 const entries = (await getCollection('archive', ({ data }) => !data.draft))
   .sort((a, b) => a.data.sortDate.getTime() - b.data.sortDate.getTime());
-const logEntries = await getCollection('logs', ({ data }) => !data.draft);
-const logSessions = logEntries.length;
+const logEntries = await getCollection('logs');
 const logCharacters = new Set(logEntries.flatMap((e) => e.data.cast.map((n) => n.toLowerCase()))).size;
-const logFiles = new Set(logEntries.map((e) => e.data.sourceFile)).size;
 const byId = new Map(entries.map((entry) => [entry.id, entry]));
 
 const isForumThread = (entry) => entry.data.kind === 'forum-thread';
@@ -200,15 +198,13 @@ const missing = [
     <section class="site" id="logs" aria-labelledby="h-logs">
       <header class="band">
         <h2 id="h-logs">Game logs</h2>
-        <p class="band-count">{logSessions} sessions · {logCharacters} characters</p>
+        <p class="band-count">{logEntries.length} logs · {logCharacters} characters</p>
       </header>
       <p class="site-note">
-        {logSessions} sessions across {logFiles} capture files from the original server,
-        donated by Vargus and shown in rebuilt ANSI color. Private tells and whispers,
-        mudmail, email addresses, IP addresses and passwords are removed; every redaction
-        is counted on the page it came from.
+        Sessions captured on the original server by the players who were there,
+        donated by Vargus, shown as they looked on screen.
       </p>
-      <p><a class="start-title" href="/archive/logs/">Browse all {logSessions} game logs</a> · <a class="start-title" href="/archive/logs/characters/">All {logCharacters} characters in the logs</a></p>
+      <p><a class="start-title" href="/archive/logs/">Read the logs</a> · <a class="start-title" href="/archive/logs/characters/">Characters in the logs</a></p>
     </section>
 
     <section class="gaps" id="missing" aria-labelledby="h-missing">

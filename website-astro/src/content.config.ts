@@ -152,49 +152,36 @@ const i18n = defineCollection({ loader: i18nLoader(), schema: i18nSchema() });
 const docsApiCatalogue = defineCollection({ loader: file('./.generated/api/catalogue.json'), schema: docsFields });
 
 // Game logs from the original server, donated by the players who captured
-// them. A log is the capture's own words; the Markdown entry carries what the
-// capture cannot say about itself: who recorded it, which file, which lines,
-// and when, if anyone knows.
+// them, one entry per capture file.
 const logs = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/logs' }),
+  // One entry per capture file, written by scripts/vargus_logs.py. Every
+  // field is read from the capture; nothing is written by us.
   schema: z.object({
+    // The file name the recorder gave the capture.
     title: z.string(),
-    description: z.string(),
-    // The character whose screen this was.
-    recordedBy: z.string(),
-    dateLabel: z.string(),
-    // Where the date label came from: a timestamp in the log, the filename as
-    // an inference, or nothing. A date is never asserted without a source.
-    dateSource: z.string().default('not recorded in the log or the filename'),
-    // Present only when the date is known, for ordering the index. The page
-    // shows dateLabel, which carries the evidence.
-    sortDate: z.coerce.date().optional(),
-    collection: z.string(),
-    sourceFile: z.string(),
-    sourceLines: z.string(),
-    // The raw line the excerpt starts at. Page anchors use raw line numbers,
-    // so #L2501 still points at line 2,501 of the capture.
-    sourceStart: z.number().int().positive().default(1),
-    // The text file beside this entry that holds the excerpt.
+    // True when the file name itself is a slur and the title stands in for it.
+    nameWithheld: z.boolean().default(false),
+    lines: z.number().int().positive(),
+    // The text file beside this entry that holds the capture.
     log: z.string(),
-    // What was removed from the capture before it was published: private tells
-    // and whispers in both directions, mudmail, email addresses, IP addresses
-    // and typed passwords. The line
-    // count is unchanged, so a line number still points at the raw file.
+    // Whose screen it was: every name the score command ranked the recorder
+    // as. Empty when the capture never shows it.
+    recordedBy: z.array(z.string()).default([]),
+    // What was removed before publishing. Every removed line is replaced by a
+    // marker, so a line number still points at the same line of the capture.
     redactions: z.object({
-      emails: z.number().int().nonnegative().default(0),
-      ips: z.number().int().nonnegative().default(0),
-      passwords: z.number().int().nonnegative().default(0),
-      tells: z.number().int().nonnegative().default(0),
-      mail: z.number().int().nonnegative().default(0),
-    }).default({}),
-    // Who appears, in order of first appearance, for the people strip.
+      emails: z.number().int().nonnegative(),
+      ips: z.number().int().nonnegative(),
+      passwords: z.number().int().nonnegative(),
+      tells: z.number().int().nonnegative(),
+      mail: z.number().int().nonnegative(),
+      lines: z.number().int().nonnegative(),
+    }),
+    // Who appears, in order of first appearance, and the line each first
+    // appears on, so a character page can link straight to it.
     cast: z.array(z.string()).default([]),
-    // Where each name on the strip first appears in the capture, as a raw line
-    // number, so a character page can link straight to it.
     appearances: z.record(z.string(), z.number().int().positive()).default({}),
-    contentWarning: z.string().optional(),
-    draft: z.boolean().default(false),
   }),
 });
 

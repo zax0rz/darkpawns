@@ -3,39 +3,28 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { getCollection } from 'astro:content';
 import { markdownResponse } from '../../../lib/markdown';
+import { describeLog, recorders, redactionSummary } from '../../../lib/mudlog/entry';
 
 export async function getStaticPaths() {
-  const entries = await getCollection('logs', ({ data }) => !data.draft);
+  const entries = await getCollection('logs');
   return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 
-// The Markdown twin carries the entry's own words and the plain scrubbed
-// capture, so an agent or a reader gets the same text the page shows without
-// the rebuilt color.
+// The Markdown twin carries the plain scrubbed capture, so an agent or a
+// reader gets the same text the page shows without the rebuilt color.
 export const GET: APIRoute = ({ props }) => {
   const { entry } = props;
   const data = entry.data;
-  const capture = readFileSync(resolve(dirname(resolve(entry.filePath!)), data.log), 'latin1').replace(/\r\n?/g, '\n').trimEnd();
-  const body = [
-    entry.body.trim(),
-    '',
-    '## The capture',
-    '',
-    `\`\`\``,
-    capture,
-    `\`\`\``,
-  ].join('\n');
+  const capture = readFileSync(resolve(dirname(resolve(entry.filePath!)), data.log), 'utf8').trimEnd();
+  const body = [describeLog(data, Infinity), '', '```', capture, '```'].join('\n');
 
   return markdownResponse(body, {
     title: data.title,
-    description: data.description,
-    recordedBy: data.recordedBy || 'not identified',
-    dateLabel: data.dateLabel,
-    dateSource: data.dateSource,
-    collection: data.collection,
-    sourceFile: data.sourceFile,
-    sourceLines: data.sourceLines,
+    description: describeLog(data),
+    recordedBy: recorders(data),
+    lines: String(data.lines),
+    collection: 'The Vargus logs, donated by Vargus',
     cast: data.cast.join(', '),
-    redactions: Object.entries(data.redactions).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`).join(', ') || 'none',
+    removed: redactionSummary(data.redactions) || 'nothing',
   }, `/archive/logs/${entry.id}/`);
 };

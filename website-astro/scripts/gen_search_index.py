@@ -355,29 +355,35 @@ def index_markdown_content():
             slug = md_file.stem
             try:
                 content = md_file.read_text(encoding='utf-8', errors='ignore')
-                meta, body = parse_frontmatter(content)
-                if meta.get("draft") is True:
-                    continue
-                title = meta.get("title", slug.replace("-", " ").title())
-                desc = meta.get("description", clean_text(body, 160))
-                recorded_by = meta.get("recordedBy", "")
-                source_file = meta.get("sourceFile", "")
+                meta, _ = parse_frontmatter(content)
+                title = meta.get("title", slug)
+                recorded_by = yaml_list(content, "recordedBy")
                 # The cast is what a returning player types into the search box,
-                # and it exists nowhere in the prose, so it becomes keywords.
+                # so it becomes keywords and the description. Mirrors
+                # describeLog in src/lib/mudlog/entry.ts.
                 cast = yaml_list(content, "cast")
                 for name in cast:
                     key = name.lower()
-                    row = characters.setdefault(key, {"name": name, "sessions": []})
-                    row["sessions"].append((title, slug))
+                    row = characters.setdefault(key, {"name": name, "logs": []})
+                    row["logs"].append(title)
+                on_screen = [n for n in cast if n not in recorded_by]
+                lines = int(meta.get("lines", "0") or 0)
+                desc = f"{title}, a {lines:,}-line game log from the original Dark Pawns server"
+                if recorded_by:
+                    desc += f", recorded by {' and '.join(recorded_by)}"
+                desc += "."
+                if on_screen:
+                    more = f" and {len(on_screen) - 12} more" if len(on_screen) > 12 else ""
+                    desc += f" On screen: {', '.join(on_screen[:12])}{more}."
 
                 entries.append({
                     "t": title,
                     "c": "logs",
-                    "s": f"Logs · {recorded_by}" if recorded_by else "Game logs",
+                    "s": f"Log · {' and '.join(recorded_by)}" if recorded_by else "Game log",
                     "u": f"/archive/logs/{slug}/",
-                    "k": f"log logs archive vargus {recorded_by} {' '.join(cast)} {source_file}".strip(),
+                    "k": f"log logs archive {' '.join(cast)}".strip(),
                     "d": desc,
-                    "b": searchable_body(body),
+                    "b": "",
                     "v": 0
                 })
             except Exception as e:
@@ -385,15 +391,15 @@ def index_markdown_content():
 
         # One entry per character so a name search lands on the character page.
         for key, row in sorted(characters.items()):
-            count = len(row["sessions"])
+            count = len(row["logs"])
             entries.append({
                 "t": row["name"],
                 "c": "logs",
                 "s": "Character in the logs",
                 "u": f"/archive/logs/characters/{key}/",
                 "k": f"character log logs archive {row['name']}",
-                "d": f"{row['name']} appears in {count} {'session' if count == 1 else 'sessions'} of the Dark Pawns logs.",
-                "b": searchable_body(" ".join(title for title, _ in row["sessions"])),
+                "d": f"{row['name']} appears in {count} {'log' if count == 1 else 'logs'} from the original Dark Pawns server.",
+                "b": searchable_body(" ".join(row["logs"])),
                 "v": 0
             })
 

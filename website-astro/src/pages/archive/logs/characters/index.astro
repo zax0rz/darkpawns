@@ -1,98 +1,42 @@
 ---
 import Base from '../../../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import { appearancesOf, characterKeys } from '../../../../lib/mudlog/entry';
 
-const entries = await getCollection('logs', ({ data }) => !data.draft);
-
-// Every character named in a log, with how many scenes they appear in and how
-// many they recorded. Names are counted case-insensitively but shown as most
-// often captured.
-const characters = new Map<string, { name: string; scenes: number; recorded: number; counts: Map<string, number> }>();
-for (const entry of entries) {
-  const recKey = entry.data.recordedBy.toLowerCase();
-  const seenInEntry = new Set<string>();
-  for (const name of entry.data.cast) {
-    const key = name.toLowerCase();
-    seenInEntry.add(key);
-    const row = characters.get(key) ?? { name, scenes: 0, recorded: 0, counts: new Map() };
-    row.scenes += 1;
-    if (recKey === key) row.recorded += 1;
-    row.counts.set(name, (row.counts.get(name) ?? 0) + 1);
-    characters.set(key, row);
-  }
-  if (!seenInEntry.has(recKey)) {
-    const row = characters.get(recKey);
-    if (row) row.recorded += 1;
-  }
-}
-const people = [...characters.entries()]
-  .map(([key, row]) => ({
-    key,
-    name: [...row.counts.entries()].sort((a, b) => b[1] - a[1])[0][0],
-    scenes: row.scenes,
-    recorded: row.recorded,
-  }))
+const entries = await getCollection('logs');
+const people = characterKeys(entries)
+  .map((key) => {
+    const rows = appearancesOf(entries, key);
+    return { key, name: rows[0].name, logs: rows.length };
+  })
   .sort((a, b) => a.name.localeCompare(b.name, 'en'));
-
-const topActive = [...people]
-  .filter((p) => p.key !== 'someone')
-  .sort((a, b) => b.scenes - a.scenes || a.name.localeCompare(b.name, 'en'))
-  .slice(0, 12);
 ---
-<Base title="Characters in the logs | Dark Pawns Logs" description="Every character named in the Dark Pawns logs captured on the original server, with the sessions each one appears in.">
+<Base title="Characters in the logs | Dark Pawns" description="Every character named in the Dark Pawns game logs from the original server, with the logs each one appears in.">
   <article class="entry">
     <nav class="crumb" aria-label="Breadcrumb">
-      <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a> » <span>Characters</span>
+      <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a>
     </nav>
     <h1>Characters in the logs</h1>
     <p class="lede">
       Every character named in a capture from the original server, as the logs
-      spell them. A name is only a character in the game; it is never linked to
-      a person.
+      spell them. A name here is a character in the game.
     </p>
-
-    <section class="leaders" aria-labelledby="leaders-h">
-      <header class="band">
-        <h2 id="leaders-h">Most active on screen</h2>
-        <p class="band-count">Top {topActive.length} of {people.length}</p>
-      </header>
-      <ol class="leader-grid">
-        {topActive.map((person) => (
-          <li>
-            <a href={`/archive/logs/characters/${encodeURIComponent(person.key)}/`}>
-              <span class="leader-name">{person.name}</span>
-              <span class="leader-meta">
-                {person.scenes} {person.scenes === 1 ? 'session' : 'sessions'}
-                {person.recorded > 0 && ` · ${person.recorded} recorded`}
-              </span>
-            </a>
-          </li>
-        ))}
-      </ol>
-    </section>
 
     <section class="roster" aria-labelledby="roster-h">
       <header class="band">
-        <h2 id="roster-h">All characters (A to Z)</h2>
-        <p class="band-count" id="char-count">{people.length} characters across {entries.length} sessions</p>
+        <h2 id="roster-h" class="visually-hidden">All characters</h2>
+        <p class="band-count" id="char-count">{people.length} characters</p>
       </header>
       <div class="char-filter" role="search" aria-label="Filter characters">
         <label for="char-filter-input" class="visually-hidden">Filter character names</label>
-        <input
-          id="char-filter-input"
-          type="search"
-          placeholder="Find a character name (e.g. Vargus, Farius, Jyan, Pickle)..."
-          autocomplete="off"
-        />
+        <input id="char-filter-input" type="search" placeholder="Find a character" autocomplete="off" />
       </div>
       <ul class="rows" id="char-rows">
         {people.map((person) => (
           <li data-name={person.key}>
             <a href={`/archive/logs/characters/${encodeURIComponent(person.key)}/`}>
               <span class="row-title">{person.name}</span>
-              <span class="row-meta">
-                {person.scenes} {person.scenes === 1 ? 'session' : 'sessions'}
-              </span>
+              <span class="row-meta">{person.logs} {person.logs === 1 ? 'log' : 'logs'}</span>
             </a>
           </li>
         ))}
@@ -146,31 +90,6 @@ const topActive = [...people]
   }
   .band h2 { margin: 0; font-size: var(--t-section); }
   .band-count { margin: 0; font-family: var(--font-mono); font-size: var(--t-label); color: var(--ink-muted); }
-
-  .leaders { margin-bottom: var(--space-xl); }
-  .leader-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: var(--space-xs);
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .leader-grid a {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    border: 1px solid var(--rule);
-    background: var(--paper-deep);
-    padding: 0.4rem 0.65rem;
-    color: var(--ink);
-    text-decoration: none;
-  }
-  .leader-grid a:hover { border-color: var(--accent); }
-  .leader-grid a:hover .leader-name { color: var(--accent); }
-  .leader-name { font-family: var(--font-display); font-size: var(--t-lede); }
-  .leader-meta { font-family: var(--font-mono); font-size: var(--t-label); color: var(--ink-muted); }
 
   .char-filter { margin-bottom: var(--space-md); }
   .char-filter input {
