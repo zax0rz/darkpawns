@@ -13,8 +13,9 @@ import (
 //
 // It is additive and idempotent: safe to call on character creation, on login,
 // and after leveling up. Entries whose number is not a castable spell (i.e. the
-// class's combat/utility skills, which have no spellDB entry) are skipped here —
-// those are gated separately by CanUseSkill / the guild practice proc.
+// class's combat/utility skills, which have no SpellManaTable entry) are
+// skipped here — those are gated separately by CanUseSkill / the guild
+// practice proc.
 //
 // The class→skill catalog now lives in game.ClassSpells (canonical layer).
 func grantClassSpells(p *game.Player) {
@@ -32,7 +33,7 @@ func grantClassSpells(p *game.Player) {
 		if entry.Level > p.Level {
 			continue
 		}
-		sd, ok := spellDB[entry.Num]
+		sd, ok := game.SpellManaTable[entry.Num]
 		if !ok {
 			continue // a skill, not a castable spell
 		}

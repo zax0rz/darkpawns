@@ -1,0 +1,43 @@
+# The practice catalog's cost column in colour. list_skills brackets each cost
+# with CCRED/CCNRM at C_CMP (src/spec_procs.c:187-190), which emit KRED/KNRM
+# only when both PRF_COLOR bits are set (src/screen.h:49-51). Creation answers
+# Y to the ANSI question, setting both bits, so the catalog line is
+# 'flame arrow           (not learned) ( <KRED>30 mana<KNRM> )'. The ordinary
+# census normalizer strips ANSI, and practice-catalog-mage-cost therefore
+# cannot see these bytes; keep-ansi compares them raw (R1b).
+
+[fixture]
+quiet-mobs
+keep-ansi
+
+[setup:oracle]
+Praccolor
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Praccolor
+Y
+oraclepass
+oraclepass
+Y
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+~dpclock pulse 40
+practice
