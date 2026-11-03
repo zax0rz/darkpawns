@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/dprng"
 )
 
 const (
@@ -16,6 +17,11 @@ const (
 	newbieLevel    = 11
 	lvlImmort      = LVL_IMMORT
 )
+
+// conductorNumber is the C conductor special's RNG seam, kept separate from
+// randRange for the same reason as citizenNumber (spec_procs.go): focused
+// tests pin the fight-line draw without moving the process-wide stream.
+var conductorNumber = dprng.Number
 
 func init() {
 	RegisterSpec("conductor", specConductor)
@@ -67,7 +73,7 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 
 	if me.IsFighting() {
 		if me.GetPosition() <= combat.PosSleeping || me.GetPosition() >= combat.PosFighting {
-			r := randRange(1, 10)
+			r := conductorNumber(1, 10)
 			msg := ""
 			switch r {
 			case 1:
@@ -77,12 +83,14 @@ func specConductor(w *World, ch *Player, me *MobInstance, cmd string, arg string
 			case 3:
 				msg = "$n shouts 'Get off my train you trash!'"
 			case 4:
-				msg = "$n shouts 'Security! Help me with this piece of garbage!'"
+				msg = "$n shouts 'Security!  Help me with this piece of garbage!'"
 			case 5:
 				msg = "$n asks, 'Why wouldn't you just give me your ticket?'"
 			}
 			if msg != "" {
-				w.roomMessage(me.GetRoom(), msg)
+				// C routes every fight line through act(..., TO_ROOM)
+				// (src/spec_procs.c:1643-1663; case 4's double space is C's).
+				Act(w, false, me, nil, nil, nil, msg, "", ToRoom)
 			}
 		}
 		return true
@@ -97,8 +105,10 @@ func specBrassDragon(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 	}
 
 	if me.GetRoom() == 5065 && cmd == "west" {
-		w.roomMessage(me.GetRoom(), "The brass dragon humiliates $n, and blocks $s way.")
-		ch.SendMessage("The brass dragon humiliates you, and blocks your way.\r\n")
+		// C: act(buf2, FALSE, ch, 0, 0, TO_ROOM) then send_to_char(buf) with
+		// C's reversed \n\r terminator (src/spec_procs.c:1750-1753).
+		Act(w, false, ch, nil, nil, nil, "The brass dragon humiliates $n, and blocks $s way.", "", ToRoom)
+		ch.SendMessage("The brass dragon humiliates you, and blocks your way.\n\r")
 		return true
 	}
 
@@ -302,12 +312,13 @@ func specEnterCircle(w *World, ch *Player, me *MobInstance, cmd string, arg stri
 
 		portalMobs := w.GetMobsInRoom(portalRoom)
 		if len(portalMobs) >= 2 {
-			ch.SendMessage("You can't fit on the portal, it's too crowded.\r\n")
+			ch.SendMessage("You can't fit on the portal, it's too crowded.\n\r")
 			return true
 		}
 
-		ch.SendMessage("You stand in the circle.\r\n")
-		w.roomMessage(me.GetRoom(), "$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!")
+		ch.SendMessage("You stand in the circle.\n\r")
+		// C: act(..., 1, ch, 0, 0, TO_ROOM) — hide_invisible (src/spec_procs.c:1947).
+		Act(w, true, ch, nil, nil, nil, "$n enters the circle which suddenly starts glowing brightly, obscuring your view of $m!", "", ToRoom)
 		ch.SetRoom(portalRoom)
 		w.doLook(ch, nil, "look", "")
 		return true
@@ -344,8 +355,10 @@ func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 		return false
 	}
 
-	ch.SendMessage("The portal begins to rise, lifted by the air elemental summoned by your rune!\r\n\r\n")
-	w.roomMessage(me.GetRoom(), "The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n")
+	// C's strings end \n\r\n\r; the room line keeps that in the act() format,
+	// which appends its own terminator (src/spec_procs.c:2000-2003).
+	ch.SendMessage("The portal begins to rise, lifted by the air elemental summoned by your rune!\n\r\n\r")
+	Act(w, false, ch, nil, nil, nil, "The portal begins to rise, lifted by the air elemental summoned by $n!\r\n\r\n", "", ToRoom)
 
 	players := w.GetPlayersInRoom(portalRoom)
 	for _, p := range players {
@@ -366,6 +379,15 @@ func specElevator(w *World, ch *Player, me *MobInstance, cmd string, arg string)
 	return true
 }
 
+// specElementalRoom ports SPECIAL(elemental_room) (src/spec_procs.c:2021-2065).
+// Dead code in both engines: C declares the special but never assigns it
+// (src/spec_assign.c declares it in assign_rooms and has no ASSIGNROOM for it),
+// so these bytes are pinned by unit test, not the census.
+// TODO(port): the loop below diverges from C, which iterates every character
+// in the room below LVL_IMMORT (people, PCs and NPCs alike), damages each by
+// 100 per pulse, and raw_kills on <= 0 (src/spec_procs.c:2029-2058); this
+// version iterates room mobs and inverts IsNPC, so its body never runs.
+// Unreachable in both engines — fix only if the special is ever assigned.
 func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
 	if cmd != "" {
 		return false
@@ -382,25 +404,30 @@ func specElementalRoom(w *World, ch *Player, me *MobInstance, cmd string, arg st
 			sector = room.Sector
 		}
 
+		// C's strings carry reversed \n\r terminators, and its wind line
+		// concatenates "the forces" and "of air" into "the forcesof air"
+		// (src/spec_procs.c:2041-2052).
 		msg := ""
 		switch sector {
 		case 0: // SECT_FIRE
-			msg = "Your skin blackens as fire burns you alive..."
+			msg = "Your skin blackens as fire burns you alive...\n\r"
 		case 1: // SECT_EARTH
-			msg = "Your skin is pummeled by the forces of earth, breaking your bones..."
+			msg = "Your skin is pummeled by the forces of earth, breaking your bones...\n\r"
 		case 2: // SECT_WIND
-			msg = "Your flesh is peeled from your bones as the forces of air pummel you..."
+			msg = "Your flesh is peeled from your bones as the forcesof air pummel you...\n\r"
 		case 3: // SECT_WATER
-			msg = "You struggle for air as your lungs fill with water..."
+			msg = "You struggle for air as your lungs fill with water...\n\r"
 		default:
-			msg = "The forces of nature slowly rip you apart..."
+			msg = "The forces of nature slowly rip you apart...\n\r"
 		}
-		ch.SendMessage(msg + "\r\n")
-		ch.SendMessage("\r\nYou are DYING!\r\n")
+		ch.SendMessage(msg)
+		ch.SendMessage("\n\rYou are DYING!\n\r")
 
 		m.SetHealth(m.GetHP() - 100)
 		if m.GetHP() <= 0 {
-			w.roomMessage(me.GetRoom(), "The forces of nature slowly rip $N to shreds.")
+			// C: act(..., TRUE, tmp_char, 0, tmp_char, TO_NOTVICT)
+			// (src/spec_procs.c:2054).
+			Act(w, true, m, m, nil, nil, "The forces of nature slowly rip $N to shreds.", "", ToNotVict)
 			w.HandleDeath(m, nil, -1)
 		}
 	}

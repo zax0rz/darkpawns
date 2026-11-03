@@ -1,0 +1,46 @@
+# depth-case: mob.mp-sound-say-line
+# The say arm of mp_sound (src/mobprog.c:604) delivered through C's do_say: the zealot's 'Repent sinners! The end time is near!' renders as "The zealot exclaims, '...'" — $n substituted and the verb picked from the line's final punctuation (src/act.comm.c:787-802). The port sent the raw "$n says, '%s'" template through roomMessage, so every ambient mob in the city literally said "$n" (found live, all mobs). The zealot is the coin-less MP_SPEAK case: its line is fixed, so the transcript proves the rendering, not a 50/50 draw.
+#
+# quiet-mobs empties the world; one ambient mob is spawned into the sealed
+# infirmary the new character starts in, so the only draws in the pulse window
+# belong to it. ~dpclock pulse 2000 twice spans enough mobile passes for the
+# 1-in-16 sound trigger (PULSE_MOBILE = 4 RL_SEC, src/structs.h:633).
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 8069 1 8162 80
+
+[setup:oracle]
+Sounprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sounprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+~dpclock pulse 2000
+~dpclock pulse 2000
+look
