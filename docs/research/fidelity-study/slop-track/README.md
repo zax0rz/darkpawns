@@ -28,7 +28,7 @@ The second study: what kinds of mistakes AI agents introduced while porting Dark
 
 ## Changes from DeepSeek's copy
 
-Corrected 2026-11-02: S001 (yank) was dated to `f00c268c3`, a refactor that only moved the code; its paraphrased messages first appear in `070dfe54e` (2026-04-24). OpenClaw transcripts recovered that day attribute that session to deepseek-chat (PF-098); `author_agent` stays git-only, so the attribution is in the row's notes. Three other births that are refactor commits (G007, G059, S007) are relabelled `lower-bound`. Headline numbers are unchanged.
+Corrected 2026-11-02: S001 (yank) was dated to `f00c268c3`, a refactor that only moved the code; its paraphrased messages first appear in `070dfe54e` (2026-04-24). The OpenClaw transcripts show deepseek-chat wrote an earlier, different paraphrase that never reached git; the committed revision has no surviving transcript, so it stays unattributed (PF-098, corrected 2026-11-03). Three other births that are refactor commits (G007, G059, S007) are relabelled `lower-bound`. Headline numbers are unchanged.
 
 Two notes naming a returning player by handle now say "Returning-player report" (`slop.tsv` S067, S069, and the matching lines in `build.py`), pending that player's permission. `check.py` reads the `slop.tsv` beside it. Source: `~/dp-research/slop-track/v2/` (`slop.tsv` sha256 `31e895b915b58d8803f3a222c269725b8bbde5fd0ff5e84fed24a8c8a474fe8c` before those edits).
 

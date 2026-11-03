@@ -205,7 +205,7 @@ literally true for the builders, as Zach said. The finding stops at
 **To close it:** recover the NUC's `~/.openclaw` (agents' sessions and
 workspace) for 2026-04-17 to 2026-04-26, and repeat this scan.
 
-## The NUC, same day: the session that wrote `yank`
+## The NUC, same day: the session that wrote `yank` (corrected 2026-11-03, below)
 
 Zach reconnected `karl-havoc` (192.168.1.106). Its OpenClaw gateway
 (v2026.5.2) had exited on a config error at boot (status 78, no restarts),
@@ -236,7 +236,7 @@ at least five times, dated by start in UTC):
 - `doYank` first appears in OpenClaw `main` session `8e4697db`, written by
   **`deepseek-chat`** in an assistant tool call at 2026-04-24 22:42 UTC (18:42
   ET).
-- It was committed as `070dfe54e` at 19:53 ET.
+- A *different* revision of `doYank` was committed as `070dfe54e` at 19:53 ET; this session's text never reached git (see the correction below).
 - Wave 6.5 (`2098e2cce`, 21:15 ET, session `6d338c07`, also deepseek-chat)
   only wired it to the command table.
 - The session began with OpenClaw's stock `/new` startup prompt (read the
@@ -258,7 +258,7 @@ The model had the source in context and still produced a corrected,
 plausible paraphrase. The typos are the tell (see the AI-slop-squash notes).
 
 **What this does to the hypothesis.** It sharpens it. For the session that
-wrote the canonical slop specimen:
+wrote the first yank paraphrase:
 - **The rule was not loaded:** "no rules" is literally true.
 - **The source was loaded:** reading the C is not enough on its own.
 - **The definition of done was a compile.**
@@ -286,3 +286,20 @@ reviewer either. For the paper the early condition is three absences at once:
 - no human reading the diffs.
 
 Separating their effects needs the PF-097 births bucketed by all three.
+
+## Correction, 2026-11-03: two paraphrases, not one
+
+DeepSeek's transcript-attribution pass (`BRIEF-2026-11-02-transcript-attribution.md`) found that the `doYank` committed in `070dfe54e` is not the one `deepseek-chat` wrote in session `8e4697db`. The two share only the function signature.
+
+| C (`src/act.other.c`) | deepseek-chat's write (22:42 UTC) | Committed in `070dfe54e` |
+|---|---|---|
+| `"Who do you wish to yank?"` (:1629) | kept | `"Yank whom from what?"` |
+| `NOPERSON` (:1631) | `"I see no one here by that name."` | `"They aren't here."` |
+| `"That's wierd."` (:1633) | `"That's weird."` | absent |
+| none | none | `"They aren't following you!"`: an invented rule that the target must be a follower |
+| `"$N is is no position to be yanked around!"` (:1652) | `"%s is in no position to be yanked around!"` | absent |
+
+deepseek-chat's strings (`"That's weird."`, `"…yanked around!"`, `"I see no one here by that name."`) appear in no committed game code (`git log -S` finds them only in research docs). Its version was written in the OpenClaw workspace copy and replaced before the commit. **Who wrote the committed revision is unknown:** no surviving transcript contains it, and the NUC's `claude-sonnet` and `gemini` agents kept no session files.
+
+**What changes.** The PF-002 specimen, the yank that shipped and was later fixed in `980560edb`, can't be attributed to a model. What the transcripts do show is stronger for the hypothesis: two agents ported the same 40-line C function on the same evening, and neither was faithful. deepseek-chat had the C open and corrected its typos. The committed revision went further and invented a rule. Neither session's definition of done could fail either one.
+
