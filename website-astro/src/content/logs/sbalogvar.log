@@ -1,0 +1,1061 @@
+544H 272M 376V > l
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 376V > ct ok ready?
+You tell your clan, 'ok ready?'
+
+544H 272M 376V > inv
+You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   a scroll of recall                                              2 pts
+  1   some black gauntlets                                            2 pts
+          ...it is humming
+  1   some black steel boots                                          5 pts
+          ...it is humming
+  1   a black-banded haute                                            2 pts
+          ...it is humming
+  1   some black armlets                                              5 pts
+          ...it is humming
+  1   a black visored helmet                                          5 pts
+          ...it is humming
+  1   a black lower coif                                              4 pts
+          ...it is humming
+  1   some black ringlets                                             5 pts
+          ...it is humming
+  1   a black leather belt                                            2 pts
+          ...it is humming
+  1   a set of black vambraces                                        4 pts
+          ...it is humming
+  1   a pitch black helmet                                            7 pts
+          ...it is humming
+  1   some black shinguards                                           3 pts
+          ...it is humming
+  1   a black bracer                                                  4 pts
+          ...it is humming
+  1   some black kneeguards                                           3 pts
+          ...it is humming
+  1   a black haute                                                   3 pts
+          ...it is humming
+  1   a black scabbard                                                5 pts
+          ...it is humming
+  1   a black cloth cloak                                             3 pts
+          ...it is humming
+  1   a black silk set of sleeves                                     3 pts
+          ...it is humming
+  1   a black breast plate                                           13 pts
+          ...it is humming
+  1   some black gloves                                               2 pts
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+
+544H 272M 376V > 
+The day has begun.
+
+544H 272M 376V > give recall jyan
+You give a scroll of recall to Jyan.
+
+544H 272M 376V > l s
+You look southwards.
+Perimeter Road.
+
+544H 272M 376V > s
+n
+South Perimeter Road
+This is Perimeter Road, a cobblestone avenue that runs parallel to the town
+walls around the entire city. You can continue to the east or west on
+Perimeter Road; a small workshop lies to the north.
+[ Exits: north east west ]
+
+544H 272M 374V > Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 372V > inv
+You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   some black gauntlets                                            2 pts
+          ...it is humming
+  1   some black steel boots                                          5 pts
+          ...it is humming
+  1   a black-banded haute                                            2 pts
+          ...it is humming
+  1   some black armlets                                              5 pts
+          ...it is humming
+  1   a black visored helmet                                          5 pts
+          ...it is humming
+  1   a black lower coif                                              4 pts
+          ...it is humming
+  1   some black ringlets                                             5 pts
+          ...it is humming
+  1   a black leather belt                                            2 pts
+          ...it is humming
+  1   a set of black vambraces                                        4 pts
+          ...it is humming
+  1   a pitch black helmet                                            7 pts
+          ...it is humming
+  1   some black shinguards                                           3 pts
+          ...it is humming
+  1   a black bracer                                                  4 pts
+          ...it is humming
+  1   some black kneeguards                                           3 pts
+          ...it is humming
+  1   a black haute                                                   3 pts
+          ...it is humming
+  1   a black scabbard                                                5 pts
+          ...it is humming
+  1   a black cloth cloak                                             3 pts
+          ...it is humming
+  1   a black silk set of sleeves                                     3 pts
+          ...it is humming
+  1   a black breast plate                                           13 pts
+          ...it is humming
+  1   some black gloves                                               2 pts
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+
+544H 272M 372V > who
+Players
+-------
+[ 30  Av ] Lucy is either plagiarism or revolution. (quest)
+[ 30  As ] Jyan stares at you in horror (OUTLAW)
+[ 30  Av ] Farius the Dancing Cleric
+[ 30  Pa ] Vargus says, "I'm not a lunatic, I'm a sane man fighting for his soul!" (quest)
+[ 15  Wa ] Shenalia Child of Darkness. (AFK)
+[ Chosen ] Whistler .        - Dragon Child -        (quest)
+[ 30  Av ] Angelfire .      - Guardian Angel -       (quest)
+[ 30  Ma ] Targhee .          - Holy Magus -         (invis) (quest)
+[ 30  Pa ] Malasand Daughter of Cornelious the Green Wizard  -==Trinity==- (quest) (AFK)
+[ 30  Av ] Cornelious the Green Wizard of antiquity.  -=Trinity=- (invis) (quest) (AFK)
+[ 30  As ] Hatsumi Maasaki Silent Shadow  --=Trinity=-- (quest) (AFK)
+
+11 characters displayed.
+
+544H 272M 372V > wink hash
+You wink suggestively at Hashkar the blacksmith.
+
+544H 272M 372V > 
+Hashkar the blacksmith states, 'I seek the humming black armor; a complete set is my life goal.'
+
+544H 272M 372V > ct redy???
+You tell your clan, 'redy???'
+
+544H 272M 372V > inv
+You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   some black gauntlets                                            2 pts
+          ...it is humming
+  1   some black steel boots                                          5 pts
+          ...it is humming
+  1   a black-banded haute                                            2 pts
+          ...it is humming
+  1   some black armlets                                              5 pts
+          ...it is humming
+  1   a black visored helmet                                          5 pts
+          ...it is humming
+  1   a black lower coif                                              4 pts
+          ...it is humming
+  1   some black ringlets                                             5 pts
+          ...it is humming
+  1   a black leather belt                                            2 pts
+          ...it is humming
+  1   a set of black vambraces                                        4 pts
+          ...it is humming
+  1   a pitch black helmet                                            7 pts
+          ...it is humming
+  1   some black shinguards                                           3 pts
+          ...it is humming
+  1   a black bracer                                                  4 pts
+          ...it is humming
+  1   some black kneeguards                                           3 pts
+          ...it is humming
+  1   a black haute                                                   3 pts
+          ...it is humming
+  1   a black scabbard                                                5 pts
+          ...it is humming
+  1   a black cloth cloak                                             3 pts
+          ...it is humming
+  1   a black silk set of sleeves                                     3 pts
+          ...it is humming
+  1   a black breast plate                                           13 pts
+          ...it is humming
+  1   some black gloves                                               2 pts
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+
+544H 272M 372V > look
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 372V > ct yo
+You tell your clan, 'yo'
+
+544H 272M 372V > l s
+You look southwards.
+Perimeter Road.
+
+544H 272M 372V > 
+Jyan leaves south.
+
+544H 272M 372V > 
+Lucy suddenly keels over in pain, surrounded by a white aura...
+Lucy's body has been taken over by a new spirit!
+
+544H 272M 372V > 
+Your blood freezes as you hear someone's death cry.
+
+544H 272M 376V > 
+Jyan arrives from the south.
+
+544H 272M 376V > ct ready ?
+You tell your clan, 'ready ?'
+
+544H 272M 376V > 
+Lucy tells your clan, 'sure.'
+
+544H 272M 376V > inv
+You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   some black gauntlets                                            2 pts
+          ...it is humming
+  1   some black steel boots                                          5 pts
+          ...it is humming
+  1   a black-banded haute                                            2 pts
+          ...it is humming
+  1   some black armlets                                              5 pts
+          ...it is humming
+  1   a black visored helmet                                          5 pts
+          ...it is humming
+  1   a black lower coif                                              4 pts
+          ...it is humming
+  1   some black ringlets                                             5 pts
+          ...it is humming
+  1   a black leather belt                                            2 pts
+          ...it is humming
+  1   a set of black vambraces                                        4 pts
+          ...it is humming
+  1   a pitch black helmet                                            7 pts
+          ...it is humming
+  1   some black shinguards                                           3 pts
+          ...it is humming
+  1   a black bracer                                                  4 pts
+          ...it is humming
+  1   some black kneeguards                                           3 pts
+          ...it is humming
+  1   a black haute                                                   3 pts
+          ...it is humming
+  1   a black scabbard                                                5 pts
+          ...it is humming
+  1   a black cloth cloak                                             3 pts
+          ...it is humming
+  1   a black silk set of sleeves                                     3 pts
+          ...it is humming
+  1   a black breast plate                                           13 pts
+          ...it is humming
+  1   some black gloves                                               2 pts
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+
+544H 272M 376V > 
+Lucy rubs her hands together.
+
+544H 272M 376V > 
+Hashkar the blacksmith states, 'There are twenty-two pieces and fear they shall never be found.'
+
+544H 272M 376V > 
+Lucy utters the words, 'qfoi yaam'.
+Lucy creates a Magic Mushroom.
+
+544H 272M 376V > 
+Lucy utters the words, 'qfoi yaam'.
+Lucy creates a Magic Mushroom.
+
+544H 272M 376V > 
+Lucy utters the words, 'qfoi yaam'.
+Lucy creates a Magic Mushroom.
+
+544H 272M 376V > 
+Lucy utters the words, 'qfoi yaam'.
+Lucy creates a Magic Mushroom.
+
+544H 272M 376V > 
+Lucy asks, 'shteven?'
+
+544H 272M 376V > l
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Lucy is either plagiarism or revolution. is standing here.
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 376V > 'sitebanned
+You say 'sitebanned'
+
+544H 272M 376V > 'k here goes
+Lucy hehs.
+You say 'k here goes'
+
+544H 272M 376V > inv
+You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   some black gauntlets                                            2 pts
+          ...it is humming
+  1   some black steel boots                                          5 pts
+          ...it is humming
+  1   a black-banded haute                                            2 pts
+          ...it is humming
+  1   some black armlets                                              5 pts
+          ...it is humming
+  1   a black visored helmet                                          5 pts
+          ...it is humming
+  1   a black lower coif                                              4 pts
+          ...it is humming
+  1   some black ringlets                                             5 pts
+          ...it is humming
+  1   a black leather belt                                            2 pts
+          ...it is humming
+  1   a set of black vambraces                                        4 pts
+          ...it is humming
+  1   a pitch black helmet                                            7 pts
+          ...it is humming
+  1   some black shinguards                                           3 pts
+          ...it is humming
+  1   a black bracer                                                  4 pts
+          ...it is humming
+  1   some black kneeguards                                           3 pts
+          ...it is humming
+  1   a black haute                                                   3 pts
+          ...it is humming
+  1   a black scabbard                                                5 pts
+          ...it is humming
+  1   a black cloth cloak                                             3 pts
+          ...it is humming
+  1   a black silk set of sleeves                                     3 pts
+          ...it is humming
+  1   a black breast plate                                           13 pts
+          ...it is humming
+  1   some black gloves                                               2 pts
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  1   some black steel greaves                                        5 pts
+          ...it is humming
+
+544H 272M 376V > give all hash
+You give some black steel greaves to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give spiked thumbguards to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'Hrmm, that's part of it. Still missing some though.'
+You give some black steel greaves to Hashkar the blacksmith.
+Hashkar the blacksmith states, 'I don't want this extra one.'
+Hashkar the blacksmith drops some black steel greaves.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give some black gloves to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black breast plate to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black silk set of sleeves to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black cloth cloak to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black scabbard to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'Hrmm, that's part of it. Still missing some though.'
+You give a black haute to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give some black kneeguards to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black bracer to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give some black shinguards to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a pitch black helmet to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'Hrmm, that's part of it. Still missing some though.'
+You give a set of black vambraces to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black leather belt to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give some black ringlets to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black lower coif to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black visored helmet to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give some black armlets to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give a black-banded haute to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give some black steel boots to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+You give some black gauntlets to Hashkar the blacksmith.
+Hashkar the blacksmith says, 'That's a piece of it. Not all, though.'
+
+544H 272M 376V > inv
+You are carrying:
+Nothing.
+
+544H 272M 376V > 
+Hashkar the blacksmith gets some black steel greaves.
+
+544H 272M 376V > l
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Lucy is either plagiarism or revolution. is standing here.
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 376V > inv
+
+The clouds disappear.
+
+544H 272M 376V > You are carrying:
+Nothing.
+
+544H 272M 376V > 'hmm
+You say 'hmm'
+
+544H 272M 376V > inv
+You are carrying:
+Nothing.
+
+544H 272M 376V > 
+Lucy scratches her head in puzzlement.
+
+544H 272M 376V > 'he has all 22 pieces..
+You state 'he has all 22 pieces..'
+
+544H 272M 376V > inv
+You are carrying:
+Nothing.
+
+544H 272M 376V > 'erm
+You say 'erm'
+
+544H 272M 376V > who
+Players
+-------
+[ 30  Av ] Lucy is either plagiarism or revolution. (quest)
+[ 30  As ] Jyan stares at you in horror (OUTLAW)
+[ 30  Av ] Farius the Dancing Cleric
+[ 30  Pa ] Vargus says, "I'm not a lunatic, I'm a sane man fighting for his soul!" (quest)
+[ 15  Wa ] Shenalia Child of Darkness. (AFK)
+[ Chosen ] Whistler .        - Dragon Child -        (quest)
+[ 30  Av ] Angelfire .      - Guardian Angel -       (quest)
+[ 30  Ma ] Targhee .          - Holy Magus -         (invis) (quest)
+[ 30  Pa ] Malasand Daughter of Cornelious the Green Wizard  -==Trinity==- (quest) (AFK)
+[ 30  Av ] Cornelious the Green Wizard of antiquity.  -=Trinity=- (invis) (quest) (AFK)
+[ 30  As ] Hatsumi Maasaki Silent Shadow  --=Trinity=-- (quest) (AFK)
+
+11 characters displayed.
+
+544H 272M 376V > l
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Lucy is either plagiarism or revolution. is standing here.
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 376V > l
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Lucy is either plagiarism or revolution. is standing here.
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 376V > 
+Your eyes stop tingling.
+
+544H 272M 376V > 
+Jyan states, 'oh no...'
+
+544H 272M 376V > 
+Lucy raises one of her eyebrows in question.
+
+544H 272M 376V > 
+Nonesuch gossips, 'I hear Vargus thinks he's bad.'
+Hashkar the blacksmith states, 'There are twenty-two pieces and fear they shall never be found.'
+
+544H 272M 376V > 
+Nonesuch auctions, 'Corpse of Vargus for sale in a minute.. 1094 coins.'
+
+544H 272M 376V > 
+[private tell removed]
+
+544H 272M 376V > 
+Lucy closes her eyes and utters the words, 'gibqheabral'.
+Lucy is surrounded by a white aura.
+
+544H 272M 376V > 
+Lucy hehs.
+
+544H 272M 376V > look
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Lucy is either plagiarism or revolution. is standing here.
+...she glows with a bright light!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 376V > 'doh
+You say 'doh'
+
+544H 272M 376V > 
+Lucy closes her eyes and utters the words, 'parl xabram'.
+
+544H 272M 376V > 
+[private tell removed]
+
+544H 272M 376V > 
+Lucy raises one of her eyebrows in question.
+
+544H 272M 376V > 'i had 2 black steel greaves
+You say 'i had 2 black steel greaves'
+
+544H 272M 376V > 'im missing 1 thing..
+You state 'im missing 1 thing..'
+
+544H 272M 376V > 'let me check
+You say 'let me check'
+
+544H 272M 376V > 
+Lucy states, 'you have all rare shit. i probably have.'
+
+544H 272M 376V > 
+Lucy will be right back!
+
+544H 272M 376V > 
+Lucy leaves south.
+
+544H 272M 376V > 
+[private tell removed]
+Hashkar the blacksmith states, 'There are twenty-two pieces and fear they shall never be found.'
+
+544H 272M 376V > 
+Hashkar the blacksmith states, 'I seek the humming black armor; a complete set is my life goal.'
+
+544H 272M 376V > 
+Lucy arrives from the south.
+
+544H 272M 376V > 
+[private tell removed]
+
+544H 272M 376V > s
+e
+South Perimeter Road
+This is Perimeter Road, a cobblestone avenue that runs parallel to the town
+walls around the entire city. You can continue to the east or west on
+Perimeter Road; a small workshop lies to the north.
+[ Exits: north east west ]
+The well-ventilated corpse of a cityguard is lying here.       
+
+544H 272M 374V > e
+South Perimeter Road
+You are on South Perimeter Road, just north of the huge town wall at the
+southern edge of the city.  The road itself leads east-west while to the
+north is the entrance to the library.
+[ Exits: north east west ]
+
+544H 272M 372V > Intersection of Main Street and South Perimeter Road
+   You are standing at the intersection of two major streets. You may
+continue in any cardinal direction as Perimeter Road leads east-west
+along the town walls. Main Street leads north-south, running through
+the center of town.  The massive southern gate is just south of this
+point.
+[ Exits: north east south west ]
+
+544H 272M 370V > e
+South Perimeter Road
+You are on Perimeter Road, just east of Main Street.  An exclusive court is
+just north of here while to the west Perimeter Road intersects with Main
+Street.  Perimeter Road also runs to the east towards the corner of town.
+[ Exits: north east west ]
+A messenger is running along here, delivering a message.
+
+544H 272M 368V > w
+n
+Intersection of Main Street and South Perimeter Road
+   You are standing at the intersection of two major streets. You may
+continue in any cardinal direction as Perimeter Road leads east-west
+along the town walls. Main Street leads north-south, running through
+the center of town.  The massive southern gate is just south of this
+point.
+[ Exits: north east south west ]
+
+544H 272M 366V > n
+Main Street
+This is Main Street, the main road through town.  Just west of here is a small
+Post Office while to the east is a strange, stone building that houses the
+portals where you can travel to distant places magically.  Main Street runs
+north-south.                                                              
+[ Exits: north east south west ]
+
+544H 272M 364V > n
+Main Street
+You are standing on Main Street, just south of Ardyn Park. To the west you see
+the small but elegant building that houses the bank. East of here the huge
+Temple of Djin looms above you. Main Street itself continues to the south.
+[ Exits: north east south west ]
+A cityguard is here, searching the town for wrongdoers.
+A large man is here, checking out the town.
+
+544H 272M 362V > e
+Southern End of the Ardyn Park.
+You are standing in a large, beautiful park.  Large trees with leaves of
+silver tower high above you and several benches and tables have been spread
+around the area.  A large bronze statue stands here, pointing northward.  Just
+south of here, through golden gates, Main Street continues towards the southern
+edge of town.  To the north, the immense park continues and to the west a
+narrow roadway called Guild Street West leads into the distance.
+[ Exits: north south west ]
+A cityguard stands here, patrolling the streets and looking for trouble.
+An over-worked lackey passes by here, doing things for his master.
+
+544H 272M 360V > Alas, you cannot go that way...
+
+544H 272M 360V > s
+e
+Main Street
+You are standing on Main Street, just south of Ardyn Park. To the west you see
+the small but elegant building that houses the bank. East of here the huge
+Temple of Djin looms above you. Main Street itself continues to the south.
+[ Exits: north east south west ]
+A cityguard is here, searching the town for wrongdoers.
+A large man is here, checking out the town.
+
+544H 272M 358V > e
+Inside the Temple of Djin
+You are standing in the world-famous Temple of Djin. Before you, to the east,
+are rows and rows of wooden pews all facing the high altar. To the west,
+through huge wooden doors, is Main Street.
+[ Exits: east west ]
+A large bulletin board is mounted on a wall here.              
+
+544H 272M 356V > By the Altar
+You are standing before a large, golden altar. The ever-lit candles that sit
+upon the altar and hang from mounts near the high ceiling flicker and cause
+the polished gold to take on an almost surreal appearance. There is a long,
+wooden railing which separates the main floor of the cathedral from the area
+behind the altar, which is considered too holy for unordained worshipers to go.
+To the west, row after row of wooden pews face the altar and, far in the
+distance, there is a large double door leading to the road.
+[ Exits: west ]
+The High Priest of Alaozar is here, preparing his next sermon.
+
+544H 272M 354V > 
+Lucy tells your clan, 'don't you have egg?'
+
+544H 272M 354V > wake
+stand
+You are already awake...
+
+544H 272M 354V > You are already standing.
+
+544H 272M 354V > ct ah found it
+You tell your clan, 'ah found it'
+
+544H 272M 354V > w
+w
+Inside the Temple of Djin
+You are standing in the world-famous Temple of Djin. Before you, to the east,
+are rows and rows of wooden pews all facing the high altar. To the west,
+through huge wooden doors, is Main Street.
+[ Exits: east west ]
+A large bulletin board is mounted on a wall here.              
+
+544H 272M 352V > Main Street
+You are standing on Main Street, just south of Ardyn Park. To the west you see
+the small but elegant building that houses the bank. East of here the huge
+Temple of Djin looms above you. Main Street itself continues to the south.
+[ Exits: north east south west ]
+A cityguard is here, searching the town for wrongdoers.
+A large man is here, checking out the town.
+
+544H 272M 350V > s
+Main Street
+This is Main Street, the main road through town.  Just west of here is a small
+Post Office while to the east is a strange, stone building that houses the
+portals where you can travel to distant places magically.  Main Street runs
+north-south.                                                              
+[ Exits: north east south west ]
+A cityguard stands here, patrolling the streets and looking for trouble.
+
+544H 272M 348V > s
+Intersection of Main Street and South Perimeter Road
+   You are standing at the intersection of two major streets. You may
+continue in any cardinal direction as Perimeter Road leads east-west
+along the town walls. Main Street leads north-south, running through
+the center of town.  The massive southern gate is just south of this
+point.
+[ Exits: north east south west ]
+
+544H 272M 346V > w
+w
+South Perimeter Road
+You are on South Perimeter Road, just north of the huge town wall at the
+southern edge of the city.  The road itself leads east-west while to the
+north is the entrance to the library.
+[ Exits: north east west ]
+
+544H 272M 344V > South Perimeter Road
+This is Perimeter Road, a cobblestone avenue that runs parallel to the town
+walls around the entire city. You can continue to the east or west on
+Perimeter Road; a small workshop lies to the north.
+[ Exits: north east west ]
+The well-ventilated corpse of a cityguard is lying here.       
+
+544H 272M 342V > 
+Lucy tells your clan, 'what is it?'
+
+544H 272M 342V > ct tasset
+n
+You tell your clan, 'tasset'
+
+544H 272M 342V > Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+...she glows with a bright light!
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 340V > inv
+You are carrying:
+Nothing.
+
+544H 272M 340V > ct please say you have it..
+You tell your clan, 'please say you have it..'
+
+544H 272M 358V > sc
+Vargus                           Age: 53 years
+Hit points: 544(544)  Mana points: 272(272)  Movement points: 358(376)
+You are so evil it hurts.
+You are armored like a wyvern!
+Experience:    13609998 points
+Coins carried: 3284 gold coins    Coins in bank: 129500 gold coins
+Kills: 14462  Pks: 9  Deaths: 76
+You have been playing for 50 days and 0 hours.
+You are a citizen of Kir Drax'in.
+You are a (5)Revenant of Arithrix.
+This ranks you as Vargus says, "I'm not a lunatic, I'm a sane man fighting for his soul!" (level 30).
+You are a Human Paladin.
+Your pack is empty.
+You are standing.
+You are summonable by other players.
+Spells affecting you:
+     sanctuary               
+Equipment spells affecting you:
+protection from good
+
+544H 272M 358V > l
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+...she glows with a bright light!
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 358V > 
+[private tell removed]
+
+544H 272M 358V > look
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+...she glows with a bright light!
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 358V > 
+Lucy utters the words, 'trlsp ay gewbarubt'.
+Lucy draws a magic circle on the ground.
+
+544H 272M 358V > look
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 3] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+...she glows with a bright light!
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 358V > 
+Lucy utters the words, 'gewbar'.
+
+544H 272M 358V > 
+[private tell removed]
+
+544H 272M 358V > 
+Someone states, 'let me check.'
+
+544H 272M 358V > 'k
+You say 'k'
+
+544H 272M 358V > look
+You see someone smack her hand to her head exclaiming, 'DOH!'
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 3] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+...she glows with a bright light!
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 358V > 
+Someone states, 'sorry.'
+
+544H 272M 358V > inv
+You are carrying:
+Nothing.
+
+544H 272M 358V > 
+Someone exclaims, 'hah!'
+
+544H 272M 358V > l in robe
+There doesn't seem to be a robe here.
+
+544H 272M 358V > 
+Someone gives you a black tasset.
+
+544H 272M 358V > 
+Hashkar the blacksmith states, 'I seek the humming black armor; a complete set is my life goal.'
+
+544H 272M 358V > cheer
+You cheer wildly!
+
+544H 272M 358V > l
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 3] A mystical circle has been drawn on the ground here.           
+Lucy is either plagiarism or revolution. is standing here.
+...she glows with a bright light!
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 358V > give tasset hash
+You give a black tasset to Hashkar the blacksmith.
+Hashkar the blacksmith states, 'I don't want this extra one.'
+Hashkar the blacksmith drops some black steel greaves.
+Taking the pieces, Hashkar the blacksmith forges them together.
+Magick rumbles through the smithy, and finally the armor is done.
+
+The blacksmith hands you a nearly weightless suit of armor.
+
+544H 272M 358V > 
+Someone snickers softly.
+
+544H 272M 358V > 'woohoo
+inv
+You say 'woohoo'
+
+544H 272M 358V > You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   a suit of spiked, black armor                                  30 pts
+          ...it is humming
+
+544H 272M 358V > 
+Someone cheers you on. You RULE in her eyes!
+
+544H 272M 358V > give suit jyan
+You give a suit of spiked, black armor to Jyan.
+
+544H 272M 358V > shake lucy
+You shake her hand.
+
+544H 272M 358V > 
+Nonesuch gossips, 'Your momma ain't gonna save you this time, Vargus.'
+Hashkar the blacksmith gets some black steel greaves.
+The circle on the ground slowly fades away.
+
+544H 272M 376V > 
+Lucy stares at someone and utters the words, 'inset candusqirr'.
+
+544H 272M 376V > 
+Lucy shakes your hand.
+
+544H 272M 376V > 
+Lucy closes her eyes and utters the words, 'inset candusqirr'.
+Lucy disappears.
+
+544H 272M 376V > 
+Jyan stops using some burnt armor.
+
+544H 272M 376V > 
+Jyan wears a suit of spiked, black armor on his body.
+
+544H 272M 376V > look
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+
+544H 272M 376V > list
+Sorry, but you cannot do that here!
+
+544H 272M 376V > ct did he drop the greaves?
+You tell your clan, 'did he drop the greaves?'
+
+544H 272M 376V > look
+Blacksmith's Workshop
+   This is the shop of a skilled blacksmith.  A large furnace burns hotter
+than dragon fire and makes the whole room very warm.  Over in one corner is
+an anvil and next to it a large iron bucket of water.  A huge hammer
+hangs on one wall.  You can leave back through the door to the south.
+[ Exits: south ]
+[ 2] A mystical circle has been drawn on the ground here.           
+Jyan stares at you in horror is standing here.
+...he is surrounded by a black aura!
+Farius the Dancing Cleric is standing here.
+...she glows with a bright light!
+Hashkar the blacksmith is here, hammering a glowing hot bit of iron.
+

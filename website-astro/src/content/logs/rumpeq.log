@@ -1,0 +1,686 @@
+Connected to host talon.wolfpaw.net
+Farius
+[password removed]
+ack
+1
+
+
+
+         (_____)           (_)    (_____)
+   _     /  __ \           | |    |  __ \                            _
+  ;*;   /| |  | | __ _ _ __| | __ | |__) |_ _(_      _)_ __ (___)   ;*;
+   =    /| |  | |/ _` | '__| |/ / |  ___/ _` \ \ /\ / / '_ \/ __|    =
+ .***.  /| |__| | (_| | |  |   <  | |  | (_| |\ V  V /| | | \__ \  .***.
+ ~~~~~  /|_____/ \__,_|_|  |_|\_\ |||   \__,_| \_/\_/ |_| |_|___/  ~~~~~
+                                  |||
+                                  |||
+                                  `.'
+
+             Based on CircleMUD 3.0 created by J. Elson and
+            DikuMUD Gamma 0.0 created by K. Nyboe, T. Madsen,
+                H. Staerfeldt, M. Seifert, and S. Hammer
+
+      Dark Pawns is graciously hosted by Wolfpaw Internet Services
+
+
+
+By what name do you wish to be known? Password: 
+
+Welcome to Dark Pawns: pawns.darkrune.org 4300
+
+There is a WHOdaemon port at pawns.darkrune.org 4301 that
+shows who is playing.
+
+Dark Pawns webpage: http://pawns.darkrune.org/
+
+Dark Pawns is proud to be listed on the Mud Connector's Top Twenty Muds.
+Check it out: http://www.mudconnect.com/
+
+All players please read POLICY and check out NEWS for new changes.
+Last NEWS update: August 17, 2000    Updated POLICY:  February 27, 2000
+
+New players be sure to read HELP FAQ and HELP NEWBIE.
+
+
+
+*** PRESS RETURN: 
+Welcome to Dark Pawns!
+0) Exit from Dark Pawns.
+1) Enter the game.
+2) Enter description.
+3) Read the background story.
+4) Change password.
+5) Delete this character.
+
+   Make your choice: 
+Welcome to Dark Pawns! May your visit here be... Interesting.
+
+A Shrine to the Goddess
+   This room is a shrine to a goddess. By looking around the room, you can't
+tell exactly what kind of goddess she is, though. There is a sacred feel about
+the room, or maybe it's just the blasted green smoke. An altar is here, and a
+golden apple is smoldering on it. The smoke is apparently coming from there.
+   There is a glowing hole in the northern wall that reflects all of your
+light and yet, it has no surface that you can see.
+[ Exits: north east south west ]
+A finely crafted bulletin board hangs from the wall.           
+A dragon-shaped fountain spurts cool water into the air.       
+[ 5] A kind bat has left a present of its droppings here for you!   
+[37] A beautiful multicolored mushroom has been left on the ground. 
+A twisted stick sits abandoned here.                           
+          ...it glows white
+A vial of blood lies here.                                     
+          ...it glows white
+Darkness the Junk Dealer (invisible) is standing here.
+
+369H 397M 211V > 
+Enx arrives from the south.
+
+369H 397M 211V > cast 'glyph of summoning'
+Okay.
+You draw a magic circle on the ground.
+
+369H 327M 211V > cast 'summon' vargus
+Okay.
+Vargus arrives suddenly.
+
+369H 257M 211V > cast 'invigorate' va
+Okay.
+
+369H 152M 211V > 
+Enx utters the words, 'trlsp ay gewbarubt'.
+Enx draws a magic circle on the ground.
+
+369H 152M 211V > 
+You see Enx smack his hand to his head exclaiming, 'DOH!'
+
+369H 152M 211V > wake
+stand
+You are already awake...
+
+369H 152M 211V > You are already standing.
+
+369H 152M 211V > fol va
+You now follow Vargus.
+
+369H 152M 211V > 
+Enx utters the words, 'gewbar'.
+Sparx arrives suddenly.
+
+369H 152M 211V > 
+Vargus is now a member of Vargus's group.
+You are now a member of Vargus's group.
+
+369H 152M 211V > 
+Enx stares at Darkness and utters the words, 'gewbar'.
+Darkness disappears suddenly.
+Darkness arrives suddenly.
+
+369H 152M 211V > 
+Vargus asks, 'here you want dlich claws?'
+
+369H 152M 211V > 
+Sparx nods.
+
+369H 152M 211V > 
+Sparx says, 'Was just about to say that'
+
+369H 152M 211V > 
+Vargus gives the wickedly-sharp claws of a dracolich to Sparx.
+
+369H 152M 211V > 
+You are hungry.
+
+375H 162M 211V > 
+Sparx will be right back!
+
+375H 162M 211V > 
+Sparx leaves north.
+
+375H 162M 211V > 
+Vargus tells your clan, 'i was wonderin if you would make a trade for em'
+
+375H 162M 211V > 
+Vargus sits down and rests.
+
+375H 162M 211V > 
+Vargus stops resting, and clambers on his feet.
+
+375H 162M 211V > 
+Vargus wears an unholy mask on his face.
+Vargus is zapped by an unholy mask and instantly lets go of it.
+Vargus wears a demonic helm on his head.
+Vargus is zapped by a demonic helm and instantly lets go of it.
+Vargus wears a suit of spiked, black armor on his body.
+Vargus is zapped by a suit of spiked, black armor and instantly lets go of it.
+
+375H 162M 211V > 
+375H 162M 211V > sc
+Farius                           Age: 60 years
+Hit points: 375(384)  Mana points: 162(514)  Movement points: 211(211)
+You are little more evil than neutral, but not very exciting.
+You are lightly armored.
+Experience:    5009306 points
+Coins carried: 23063 gold coins    Coins in bank: 506900 gold coins
+Kills: 2199  Pks: 0  Deaths: 96
+You have been playing for 67 days and 9 hours.
+You are a citizen of Kir Drax'in.
+You are a (5)Revenant of Arithrix.
+This ranks you as Farius the Dancing Cleric (level 30).
+You are a Human Avatar.
+Your pack is fairly heavy.
+You are standing.
+You are hungry.
+You are summonable by other players.
+Spells affecting you:
+     sanctuary                    holy ward               
+     detect invisibility     
+375H 162M 211V > sleep
+You go to sleep.
+
+375H 162M 211V > wake
+stand
+You awaken, and sit up.
+
+375H 162M 211V > You stand up.
+
+375H 162M 211V > drink fou
+drink fou
+You drink the clear water.
+You are hungry.
+You don't feel thirsty any more.
+
+375H 162M 211V > drink fou
+drink fou
+If you drink any more, you'll explode!
+
+375H 162M 211V > drink fou
+If you drink any more, you'll explode!
+
+375H 162M 211V > If you drink any more, you'll explode!
+
+375H 162M 211V > If you drink any more, you'll explode!
+
+375H 162M 211V > iunv
+Huh?!?
+
+375H 162M 211V > ivn
+Huh?!?
+
+375H 162M 211V > inv
+You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   a scroll of recall                                              2 pts
+  1   a breastplate made of blackened crystal                        55 pts
+  1   a scourge                                                      10 pts
+  1   a disk of pure amber                                            1 pt
+          ...it is humming
+  1   a rakshasa bracelet                                             1 pt
+  1   a wide golden belt                                              6 pts
+  1   a pair of mithril chain sleeves                                 3 pts
+  2   a necklace made of bones                                        1 pt ea.
+  1   a glittering diamond ring                                       1 pt
+          ...it glows white
+  1   an onyx ring                                                    1 pt
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  2   a necklace made of bones                                        1 pt ea.
+  1   a set of sharp steel claws                                      6 pts
+  1   a golden shield                                                 6 pts
+          ...it glows white
+
+375H 162M 211V > cast 'create food'
+You lost your concentration!
+
+375H 157M 211V > cast 'create food'
+cast 'create food'
+cast 'create food'
+cast 'create food'
+Okay.
+You create a Magic Mushroom.
+
+375H 147M 211V > eat mush
+eat mush
+eat mush
+eat mush
+eat mush
+eat mush
+You lost your concentration!
+
+375H 142M 211V > sleep
+
+Sparx tells your clan, 'Wow, these are awesome'
+
+375H 142M 211V > Okay.
+You create a Magic Mushroom.
+
+375H 132M 211V > Okay.
+You create a Magic Mushroom.
+
+375H 122M 211V > You eat a Magic Mushroom.
+
+375H 122M 211V > You eat a Magic Mushroom.
+You are full.
+
+375H 122M 211V > You eat a Magic Mushroom.
+You are full.
+
+375H 122M 211V > You don't seem to have a mush.
+
+375H 122M 211V > You don't seem to have a mush.
+
+375H 122M 211V > You don't seem to have a mush.
+
+375H 122M 211V > You go to sleep.
+
+375H 122M 211V > 
+Vargus tells your clan, 'aye'
+
+375H 122M 211V > wake
+stand
+You awaken, and sit up.
+
+375H 122M 211V > cast 'create food'
+You stand up.
+
+375H 122M 211V > Okay.
+You create a Magic Mushroom.
+
+375H 112M 211V > eat mush
+
+Masamune gossips, 'can i get a summon'
+
+375H 112M 211V > eat mush
+You eat a Magic Mushroom.
+You are full.
+
+375H 112M 211V > You don't seem to have a mush.
+
+375H 112M 211V > 
+Infidel gossips, 'I hear Masamune thinks he's bad.'
+
+375H 112M 211V > sleep
+You go to sleep.
+
+375H 112M 211V > 
+Masamune gossips, 'grrr '
+
+375H 112M 211V > 
+Vargus tells your clan, 'the ac is nice'
+
+375H 112M 211V > 
+Sparx tells your clan, 'How about I let you borrow them for a while?'
+
+375H 112M 211V > 
+Vargus tells your clan, 'sure'
+
+384H 295M 211V > 
+Nonesuch gossips, 'Vargus, you jerk!'
+
+384H 295M 211V > 
+Masamune gossips, 'may i please get a summon'
+
+384H 295M 211V > 
+Masamune gossips, 'onimaru'
+
+384H 295M 211V > wake
+stand
+You awaken, and sit up.
+
+384H 295M 211V > You stand up.
+
+384H 295M 211V > l
+A Shrine to the Goddess
+   This room is a shrine to a goddess. By looking around the room, you can't
+tell exactly what kind of goddess she is, though. There is a sacred feel about
+the room, or maybe it's just the blasted green smoke. An altar is here, and a
+golden apple is smoldering on it. The smoke is apparently coming from there.
+   There is a glowing hole in the northern wall that reflects all of your
+light and yet, it has no surface that you can see.
+[ Exits: north east south west ]
+A finely crafted bulletin board hangs from the wall.           
+A dragon-shaped fountain spurts cool water into the air.       
+[ 5] A kind bat has left a present of its droppings here for you!   
+[37] A beautiful multicolored mushroom has been left on the ground. 
+A twisted stick sits abandoned here.                           
+          ...it glows white
+A vial of blood lies here.                                     
+          ...it glows white
+[ 2] A mystical circle has been drawn on the ground here.           
+Darkness the Junk Dealer (invisible) is standing here.
+Enx makes the world a better place for all Kenderkind (invisible) is standing here.
+
+384H 295M 211V > cast 'summon' vargus
+Okay.
+Vargus arrives suddenly.
+
+384H 225M 211V > cast 'invigorate' va
+You lost your concentration!
+
+384H 173M 211V > cast 'invigorate' va
+inv
+Okay.
+
+384H 68M 211V > You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   a scroll of recall                                              2 pts
+  1   a breastplate made of blackened crystal                        55 pts
+  1   a scourge                                                      10 pts
+  1   a disk of pure amber                                            1 pt
+          ...it is humming
+  1   a rakshasa bracelet                                             1 pt
+  1   a wide golden belt                                              6 pts
+  1   a pair of mithril chain sleeves                                 3 pts
+  2   a necklace made of bones                                        1 pt ea.
+  1   a glittering diamond ring                                       1 pt
+          ...it glows white
+  1   an onyx ring                                                    1 pt
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  2   a necklace made of bones                                        1 pt ea.
+  1   a set of sharp steel claws                                      6 pts
+  1   a golden shield                                                 6 pts
+          ...it glows white
+
+384H 68M 211V > who
+Players
+-------
+[ 23  Cl ] Orchid Want's you for PRES!!
+[ 18  Cl ] Ertai  (deaf) (notell)
+[ 18  Mu ] Vizzerdrix The twin mage of Mhoram
+[ 30  Av ] Farius the Dancing Cleric
+[ 27  Th ] Viashino ,younger brother of Crowley (quest)
+[ 11  Mu ] Kasumi Kagero, the Azura Wizard
+[ 18  Cl ] Onimaru Masanari, the Azura Monk
+[ 25  Mu ] Darkness the Junk Dealer (invis)
+[ 29  Cl ] Enx makes the world a better place for all Kenderkind (invis)
+[ 30  My ] Sparx the Heartless Mystic (invis) (quest)
+[ 30  Pa ] Steelwolf It's not to late to turn back!!
+[ 30  Pa ] Vargus - i take a brain to another dimension (quest)
+[ 30  Av ] Lucy . get back, there's one coming . _!Hypocrites_      (quest) (INACTIVE)
+[ 30  As ] Aiko says, 'I am the fulfillment and I shall from this moment on be the cause...' (INACTIVE) (OUTLAW)
+[ 24  Cl ] Aphrael 
+[ 30  Pa ] Sparahawk needs an object update (writing) (quest)
+[ 11  Ra ] Andros Kiwi...{SS}
+[ 29  Ni ] Masamune Would like to talk to a god, (quest) (OUTLAW)
+[  5  Wa ] Kevin the Warrior
+[ 30  Pa ] Ziradon {DOM}
+
+[ Return to continue, (q)uit, (r)efresh, (b)ack, or page number (1/2) ]
+[ 24  Cl ] Tyra says, "OH Billy, not the ugly stick!"
+[  1  Th ] Ninjahor the Thief
+[  1  Mu ] Willow the Mage
+[  1  Ps ] Wimateeka the Psionic
+[ 21  Cl ] Slave  (quest)
+[ 20  Mu ] Magura 
+[ 24  Th ] Sodina  (quest)
+[ 30  Th ] Icarus says..."sounds great now how 'bout a nice tall glass of shut the hell up! (OUTLAW)
+[ 27  Cl ] Hydro Heero's **Sanctuary**
+[  6  Th ] Pub the Beer Drinker
+[  8  Pa ] Heero ***Unleashes The Dragon*** ~*Q-TE*~ (quest)
+[ 11  Cl ] Mug The little VooDoo cleric!!!
+[  5  Mu ] Thug Fat Chics Need Lovin 2!!! {DOM}
+[ 14  Wa ] Lug The Ladies Man of Domination!!!
+
+34 characters displayed.
+
+384H 68M 211V > who
+Players
+-------
+[ 23  Cl ] Orchid Want's you for PRES!!
+[ 18  Cl ] Ertai  (deaf) (notell)
+[ 18  Mu ] Vizzerdrix The twin mage of Mhoram
+[ 30  Av ] Farius the Dancing Cleric
+[ 27  Th ] Viashino ,younger brother of Crowley (quest)
+[ 11  Mu ] Kasumi Kagero, the Azura Wizard
+[ 18  Cl ] Onimaru Masanari, the Azura Monk
+[ 25  Mu ] Darkness the Junk Dealer (invis)
+[ 29  Cl ] Enx makes the world a better place for all Kenderkind (invis)
+[ 30  My ] Sparx the Heartless Mystic (invis) (quest)
+[ 30  Pa ] Steelwolf It's not to late to turn back!!
+[ 30  Pa ] Vargus - i take a brain to another dimension (quest)
+[ 30  Av ] Lucy . get back, there's one coming . _!Hypocrites_      (quest) (INACTIVE)
+[ 30  As ] Aiko says, 'I am the fulfillment and I shall from this moment on be the cause...' (INACTIVE) (OUTLAW)
+[ 24  Cl ] Aphrael 
+[ 30  Pa ] Sparahawk needs an object update (writing) (quest)
+[ 11  Ra ] Andros Kiwi...{SS}
+[ 29  Ni ] Masamune Would like to talk to a god, (quest) (OUTLAW)
+[  5  Wa ] Kevin the Warrior
+[ 30  Pa ] Ziradon {DOM}
+
+[ Return to continue, (q)uit, (r)efresh, (b)ack, or page number (1/2) ]
+[ 24  Cl ] Tyra says, "OH Billy, not the ugly stick!"
+[  1  Th ] Ninjahor the Thief
+[  1  Mu ] Willow the Mage
+[  1  Ps ] Wimateeka the Psionic
+[ 21  Cl ] Slave  (quest)
+[ 20  Mu ] Magura 
+[ 24  Th ] Sodina  (quest)
+[ 30  Th ] Icarus says..."sounds great now how 'bout a nice tall glass of shut the hell up! (OUTLAW)
+[ 27  Cl ] Hydro Heero's **Sanctuary**
+[  6  Th ] Pub the Beer Drinker
+[  8  Pa ] Heero ***Unleashes The Dragon*** ~*Q-TE*~ (quest)
+[ 11  Cl ] Mug The little VooDoo cleric!!!
+[  5  Mu ] Thug Fat Chics Need Lovin 2!!! {DOM}
+[ 14  Wa ] Lug The Ladies Man of Domination!!!
+
+34 characters displayed.
+
+384H 68M 211V > 
+The circle on the ground slowly fades away.
+
+384H 110M 211V > 
+Masamune gossips, 'no'
+
+384H 110M 211V > sleep
+You go to sleep.
+
+384H 110M 211V > sc
+Farius                           Age: 60 years
+Hit points: 384(384)  Mana points: 110(514)  Movement points: 211(211)
+You are little more evil than neutral, but not very exciting.
+You are lightly armored.
+Experience:    5009306 points
+Coins carried: 23063 gold coins    Coins in bank: 506900 gold coins
+Kills: 2199  Pks: 0  Deaths: 96
+You have been playing for 67 days and 9 hours.
+You are a citizen of Kir Drax'in.
+You are a (5)Revenant of Arithrix.
+This ranks you as Farius the Dancing Cleric (level 30).
+You are a Human Avatar.
+Your pack is fairly heavy.
+You are sleeping.
+You are summonable by other players.
+Spells affecting you:
+     sanctuary                    holy ward               
+     detect invisibility     
+384H 110M 211V > 
+Vargus tells your clan, 'think its safe if i dump all this eq in the pyramid'
+
+384H 110M 211V > 
+Vargus gossips, 'all the crap i got off of dag'
+
+384H 110M 211V > 
+Infidel gossips, 'Your momma ain't gonna save you this time, Masamune.'
+
+384H 110M 211V > 
+Sparx tells your clan, 'I won't take it'
+
+384H 110M 211V > 
+Masamune gossips, 'nm'
+
+384H 110M 211V > 
+Vargus tells your clan, 'i need to stop doing that'
+
+384H 110M 211V > 
+Masamune gossips, 'i got lucky dammit'
+
+384H 110M 211V > 
+Vargus tells your clan, 'well if theres a crash or something'
+
+384H 110M 211V > 
+Sparx tells your clan, 'But it's been crashing a lot'
+
+384H 110M 211V > 
+Vargus tells your clan, 'yeah..'
+
+384H 110M 211V > 
+Sparx tells your clan, 'Aye'
+
+384H 110M 211V > wake
+stand
+You awaken, and sit up.
+
+384H 110M 211V > You stand up.
+
+384H 110M 211V > cast 'bless' va
+You lost your concentration!
+
+384H 105M 211V > cast 'holy ward' va
+Okay.
+The magick protects him.
+
+384H 90M 211V > cast 'bless' va
+You lost your concentration!
+
+384H 85M 211V > cast 'bless' va
+
+Enx utters the words, 'trlsp ay gewbarubt'.
+Enx draws a magic circle on the ground.
+
+384H 85M 211V > inv
+Okay.
+You bestow the blessing of your gods on him.
+
+384H 75M 211V > e
+s
+
+You feel less protected.
+
+384H 117M 211V > 
+Enx utters the words, 'gewbar'.
+Sparx arrives suddenly.
+
+384H 117M 211V > You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   a scroll of recall                                              2 pts
+  1   a breastplate made of blackened crystal                        55 pts
+  1   a scourge                                                      10 pts
+  1   a disk of pure amber                                            1 pt
+          ...it is humming
+  1   a rakshasa bracelet                                             1 pt
+  1   a wide golden belt                                              6 pts
+  1   a pair of mithril chain sleeves                                 3 pts
+  2   a necklace made of bones                                        1 pt ea.
+  1   a glittering diamond ring                                       1 pt
+          ...it glows white
+  1   an onyx ring                                                    1 pt
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  2   a necklace made of bones                                        1 pt ea.
+  1   a set of sharp steel claws                                      6 pts
+  1   a golden shield                                                 6 pts
+          ...it glows white
+
+384H 117M 211V > A Peaceful Sanctum
+   In the center of this room, painted onto the floor is a large white peace
+sign. The walls are lined with cabinets containing valuable weapons and armors.
+From here you can walk west into the shrine, south into a room that appears
+to be the site of a party or down a set of stairs. There is a large, wooden
+door inset into the eastern wall.
+[ Exits: south west down ]
+
+384H 117M 209V > The Rumpus Room
+   Apparently the crew that runs this place takes nothing seriously. The green
+smoke you noticed upstairs is now almost impossibly thick down here. You'd be
+coughing and choking right now, if you hadn't started to like the way it's
+making you feel. Bunks and couches are strewn everywhere, and half-naked men
+stroke half-naked women to ecstasy on all of them, except of course the ones
+where the half-naked women are stroking the half-naked men. Some of them are
+singing, and all of them seem happy.
+[ Exits: north west ]
+An automatic teller machine has been installed in the wall here.
+A bloody head ripped from the corpse of Meredydd the Sorceress has been left here.
+
+384H 117M 207V > inv
+You are carrying:
+
+ Num  Item                                                      Encumbrance
+-------------------------------------------------------------------------------
+  1   a scroll of recall                                              2 pts
+  1   a breastplate made of blackened crystal                        55 pts
+  1   a scourge                                                      10 pts
+  1   a disk of pure amber                                            1 pt
+          ...it is humming
+  1   a rakshasa bracelet                                             1 pt
+  1   a wide golden belt                                              6 pts
+  1   a pair of mithril chain sleeves                                 3 pts
+  2   a necklace made of bones                                        1 pt ea.
+  1   a glittering diamond ring                                       1 pt
+          ...it glows white
+  1   an onyx ring                                                    1 pt
+  1   spiked thumbguards                                              1 pt
+          ...it is humming
+  2   a necklace made of bones                                        1 pt ea.
+  1   a set of sharp steel claws                                      6 pts
+  1   a golden shield                                                 6 pts
+          ...it glows white
+
+384H 117M 207V > drop all
+You drop a golden shield.
+You drop a set of sharp steel claws.
+You drop a necklace made of bones.
+You drop a necklace made of bones.
+You drop spiked thumbguards.
+You drop an onyx ring.
+You drop a glittering diamond ring.
+You drop a necklace made of bones.
+You drop a necklace made of bones.
+You drop a pair of mithril chain sleeves.
+You drop a wide golden belt.
+You drop a rakshasa bracelet.
+You drop a disk of pure amber.
+You drop a scourge.
+You drop a breastplate made of blackened crystal.
+You drop a scroll of recall.
+
+384H 117M 207V > get recall
+You get a scroll of recall.
+
+384H 117M 207V > l
+The Rumpus Room
+   Apparently the crew that runs this place takes nothing seriously. The green
+smoke you noticed upstairs is now almost impossibly thick down here. You'd be
+coughing and choking right now, if you hadn't started to like the way it's
+making you feel. Bunks and couches are strewn everywhere, and half-naked men
+stroke half-naked women to ecstasy on all of them, except of course the ones
+where the half-naked women are stroking the half-naked men. Some of them are
+singing, and all of them seem happy.
+[ Exits: north west ]
+An automatic teller machine has been installed in the wall here.
+A bloody head ripped from the corpse of Meredydd the Sorceress has been left here.
+Some idiot left a shield made of solid gold lying here.        
+          ...it glows white
+Some long, sharp claws made of steel lie on the ground.        
+[ 2] A necklace, cunningly made from hundreds of bone fragments lies here.
+A scaled black thumbguard lies here, its point glistening with poison.
+          ...it is humming
+A ring made of onyx lies here.                                 
+Your eye lights upon a glittering diamond ring!                
+          ...it glows white
+[ 2] A necklace, cunningly made from hundreds of bone fragments lies here.
+A pair of mithril chain sleeves lies here.                     
+A belt made of solid gold has been left here.                  
+A thin metal bracelet lies here.                               
+A disk of amber lies here.                                     
+          ...it is humming
+A nasty looking whip with metal thorns is lying here.          
+A heavy breastplate made of blackened crystal is lying on the floor here.
+
+384H 117M 207V > 

@@ -245,7 +245,7 @@ test-parse:
 DEPLOY_PATH ?= /srv/darkpawns/
 
 # Website commands
-.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint test-markdown content-inventory check-content-inventory check-wordmark generate-caddy-redirects site-check media media-check
+.PHONY: parse-world-json build-site deploy-site new-post voice-lint test-voice-lint test-markdown test-colorize content-inventory check-content-inventory check-wordmark generate-caddy-redirects site-check media media-check
 
 # Rebuild docs/README screenshots and recordings from disposable admin, game,
 # Mudlet, and portable CLI fixtures; the scripts clean up only their own PIDs.
@@ -286,7 +286,12 @@ test-search:
 test-markdown:
 	cd website-astro && npm run test:markdown
 
-site-check: voice-lint test-voice-lint test-markdown test-search check-content-inventory check-wordmark check-palette
+# The log colorizer reproduces the colour the C server gave each message. One
+# test per rule, each asserting the `color` level the C gates it on.
+test-colorize:
+	cd website-astro && npm run test:colorize
+
+site-check: voice-lint test-voice-lint test-markdown test-colorize test-search check-content-inventory check-wordmark check-palette
 	cd website-astro && npm run build
 
 parse-world-json:

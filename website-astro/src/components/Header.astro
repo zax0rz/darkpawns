@@ -9,13 +9,18 @@ const primary = [
   { name: 'Map', href: '/map/' },
   { name: 'Database', href: '/database/' },
   { name: 'Archive', href: '/archive/' },
+  { name: 'Logs', href: '/archive/logs/' },
   { name: 'Blog', href: '/blog/' },
 ];
 const secondary = [
   { name: 'Docs', href: '/docs/' },
   { name: 'About', href: '/about/' },
 ];
-const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href));
+const isActive = (href: string) => {
+  if (href === '/') return path === '/';
+  if (href === '/archive/') return path.startsWith('/archive/') && !path.startsWith('/archive/logs/');
+  return path.startsWith(href);
+};
 ---
 <header class="masthead">
   <div class="container masthead-row">
