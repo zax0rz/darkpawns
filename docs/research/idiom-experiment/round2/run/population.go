@@ -1,17 +1,18 @@
 // Population rule (round two): inspect every non-test Go function, method,
 // and function literal under pkg/game, pkg/combat, and pkg/command. A function
-// is in the population when a string literal is (a) nested in an argument to
-// one of the player-output calls listed in outputCalls, including the named
-// output callbacks private, output, ack, and sendToOutdoor, (b) in a local value
-// assigned to an identifier referenced by such an argument, or (c) written
-// to a local value with String() whose WriteString/Write or fmt.Fprintf output
-// is passed to such an argument in that same function. The output-call catalog is explicit
-// and includes the project send, Act, tell, echo, room, channel, combat, and
-// notification APIs and their in-scope player-output wrappers. For (b), local
-// assignments are followed transitively by identifier; literals used only in
-// unrelated arguments, comments, tests, or functions that merely return a
-// message are excluded. Each source string token is counted once per function.
-// This is a syntactic census, not whole-program or interprocedural dataflow.
+// is in the population when a string literal is in one of the message
+// argument positions listed in outputArguments, including the named output
+// callbacks private, output, ack, and sendToOutdoor; assigned to a local string
+// expression that is referenced by one of those arguments; or written to a
+// local value with String() whose WriteString/Write or fmt.Fprintf output is
+// passed to one of those arguments in that same function. The map below gives
+// explicit zero-based argument positions for every recognized send, Act,
+// tell, echo, room, channel, combat, notification, and message callback API.
+// Only string-like local assignment expressions are followed transitively.
+// Literals used only in non-message arguments, comments, tests, or functions
+// that merely return a message are excluded. Each source string token is
+// counted once per function. This is syntactic, same-function dataflow, not
+// whole-program or interprocedural analysis.
 //
 // Run from the repository root: go run ./docs/research/idiom-experiment/round2/run/population.go
 // It writes population.tsv and population-literals.tsv beside this file.
@@ -45,33 +46,28 @@ type row struct {
 	Literals []literal
 }
 
-var outputCalls = stringSet(
-	"Act", "ActActor", "ActFlagged", "ActMessage", "ActWithPrivateSink",
-	"Broadcast", "RoomEcho", "Echo", "PrivateOutput",
-	"Send", "SendLiteral", "SendMessage", "SendRaw", "SendTell", "SendText",
-	"SendToAll", "SendToChar", "SendToRoom", "SendToZone", "SendWeaponMessage",
-	"SpellActNotVict", "SpellActToChar", "SpellActToRoom", "SpellActToVictim", "SpellCreatedObjectAct", "SpellObjectAct",
-	"act", "actArenaBroadcast", "actChar", "actDeliver", "actForPrivateBody", "actInRoom", "actMessage",
-	"actToChar", "actToRoom", "actToRoomExclude", "actToVictim", "actorAct",
-	"ack", "broadcast", "cbBroadcast", "cbSendRaw", "cbSendToChar", "channelAct", "channelActWrapped", "channelSend",
-	"combatSendMessage", "communicationSend", "conSellerRoomAct", "conSellerTell", "damageGateAct",
-	"do_echo", "do_tell", "message", "mobSendToZone", "mobileEquipmentAct", "movementSendToChar",
-	"npcEcho", "npcGlobalEcho", "npcTell", "notifyAdmins", "notifyPlayer", "output", "performTell", "private",
-	"roomMessage", "roomMessageExcludeTwo", "send", "sendActLine", "sendActLineWithWorld", "sendBodyMessage",
-	"sendClanFormat", "sendColorBracketed", "sendColored", "sendCombatMessage", "sendDefenseObserverMessage",
-	"sendHitMessage", "sendLiteralMessages", "sendMissMessage", "sendOk", "sendRoom", "sendSkillMessage",
-	"sendSkillResult", "sendToChar", "sendToOutdoor", "sendToRoomExact", "sendToZoneExceptRoom",
-	"sendWeatherRoom", "send_to_all", "send_to_char", "send_to_room", "send_to_zone", "shopNpcTell",
-	"skillActSendOK", "tellFromMob", "tellVictim", "tattooRoomAct", "woundBroadcast",
-	"Tell", "positionSelfLine", "wakeSelfLine",
-)
-
-func stringSet(values ...string) map[string]bool {
-	result := make(map[string]bool, len(values))
-	for _, value := range values {
-		result[value] = true
-	}
-	return result
+var outputArguments = map[string][]int{
+	"Act": {0, 6, 7}, "ActWithPrivateSink": {6, 7}, "Echo": {3}, "PrivateOutput": {0},
+	"RoomEcho": {1}, "Send": {0}, "SendLiteral": {0}, "SendMessage": {0}, "SendRaw": {0},
+	"SendTell": {1}, "SendText": {0}, "SendToAll": {0}, "SendToChar": {1}, "SendToRoom": {1},
+	"SendToZone": {1}, "SpellActNotVict": {2}, "SpellActToChar": {3}, "SpellActToRoom": {2},
+	"SpellActToVictim": {2}, "SpellObjectAct": {2}, "Tell": {1},
+	"ack": {0}, "act": {3}, "actArenaBroadcast": {6, 7}, "actDeliver": {6, 7},
+	"actForPrivateBody": {6, 7}, "actInRoom": {2}, "actMessage": {3, 4, 5},
+	"actToChar": {1}, "actToRoom": {1, 2}, "actToRoomExclude": {2}, "actToVictim": {2},
+	"actorAct": {0}, "broadcast": {1}, "cbBroadcast": {1}, "cbSendRaw": {1}, "cbSendToChar": {1},
+	"channelAct": {4}, "channelActWrapped": {4}, "channelSend": {2}, "combatSendMessage": {1},
+	"communicationSend": {1}, "conSellerRoomAct": {4}, "conSellerTell": {3}, "damageGateAct": {2}, "mobSendToZone": {1},
+	"mobileEquipmentAct": {2}, "movementSendToChar": {1}, "npcEcho": {1}, "npcGlobalEcho": {1},
+	"npcTell": {1}, "notifyAdmins": {0}, "notifyPlayer": {1}, "output": {0}, "performTell": {2},
+	"positionSelfLine": {2}, "private": {0}, "roomMessage": {1}, "roomMessageExcludeTwo": {1},
+	"send": {0}, "sendActLine": {1}, "sendActLineWithWorld": {2}, "sendBodyMessage": {2},
+	"sendColorBracketed": {2}, "sendColored": {2}, "sendCombatMessage": {1},
+	"sendDefenseObserverMessage": {2}, "sendRoom": {0},
+	"sendToChar": {0, 1}, "sendToOutdoor": {0}, "sendToRoomExact": {1}, "sendToZoneExceptRoom": {1},
+	"sendWeatherRoom": {2}, "send_to_all": {0}, "send_to_char": {1}, "send_to_room": {1},
+	"send_to_zone": {1}, "shopNpcTell": {1}, "tellFromMob": {3}, "tellVictim": {0},
+	"tattooRoomAct": {2}, "wakeSelfLine": {2}, "woundBroadcast": {1},
 }
 
 func main() {
@@ -148,14 +144,14 @@ func analyzeFunction(fset *token.FileSet, file, name string, line int, body *ast
 		switch n := node.(type) {
 		case *ast.ValueSpec:
 			for i, ident := range n.Names {
-				if i < len(n.Values) {
+				if i < len(n.Values) && isStringMessageExpr(n.Values[i]) {
 					locals[ident.Name] = append(locals[ident.Name], n.Values[i])
 				}
 			}
 		case *ast.AssignStmt:
 			for i, lhs := range n.Lhs {
 				ident, ok := lhs.(*ast.Ident)
-				if ok && i < len(n.Rhs) {
+				if ok && i < len(n.Rhs) && isStringMessageExpr(n.Rhs[i]) {
 					locals[ident.Name] = append(locals[ident.Name], n.Rhs[i])
 				}
 			}
@@ -169,11 +165,19 @@ func analyzeFunction(fset *token.FileSet, file, name string, line int, body *ast
 	usedNames := map[string]bool{}
 	stringBuffers := map[string]bool{}
 	for _, call := range calls {
-		if !outputCalls[callName(call.Fun)] {
+		indices, ok := outputArguments[callName(call.Fun)]
+		if !ok {
 			continue
 		}
-		for _, arg := range call.Args {
-			for _, ident := range identifiers(arg) {
+		for _, index := range indices {
+			if index >= len(call.Args) {
+				continue
+			}
+			arg := call.Args[index]
+			if isEmptyStringLiteral(arg) {
+				continue
+			}
+			for _, ident := range messageIdentifiers(arg) {
 				usedNames[ident] = true
 			}
 			ast.Inspect(arg, func(node ast.Node) bool {
@@ -204,8 +208,12 @@ func analyzeFunction(fset *token.FileSet, file, name string, line int, body *ast
 		}
 		seenNames[ident] = true
 		for _, value := range locals[ident] {
+			if !isStringMessageExpr(value) {
+				continue
+			}
+			markStringBuffers(value, stringBuffers)
 			collectLiterals(fset, file, value, used)
-			for _, dependency := range identifiers(value) {
+			for _, dependency := range messageIdentifiers(value) {
 				if !seenNames[dependency] {
 					queue = append(queue, dependency)
 				}
@@ -270,19 +278,83 @@ func callName(expr ast.Expr) string {
 	}
 }
 
-func identifiers(expr ast.Expr) []string {
+func messageIdentifiers(expr ast.Expr) []string {
 	set := map[string]bool{}
-	ast.Inspect(expr, func(node ast.Node) bool {
-		if ident, ok := node.(*ast.Ident); ok {
-			set[ident.Name] = true
+	var visit func(ast.Expr)
+	visit = func(value ast.Expr) {
+		switch node := value.(type) {
+		case *ast.Ident:
+			set[node.Name] = true
+		case *ast.BinaryExpr:
+			if node.Op == token.ADD {
+				visit(node.X)
+				visit(node.Y)
+			}
+		case *ast.CallExpr:
+			if isStringMessageExpr(node) {
+				for _, arg := range node.Args {
+					visit(arg)
+				}
+				if selector, ok := node.Fun.(*ast.SelectorExpr); ok && selector.Sel.Name == "String" {
+					if receiver, ok := selector.X.(*ast.Ident); ok {
+						set[receiver.Name] = true
+					}
+				}
+			}
+		case *ast.SelectorExpr:
+			visit(node.X)
 		}
-		return true
-	})
+	}
+	visit(expr)
 	var result []string
 	for ident := range set {
 		result = append(result, ident)
 	}
 	return result
+}
+
+func isStringMessageExpr(expr ast.Expr) bool {
+	switch node := expr.(type) {
+	case *ast.BasicLit:
+		return node.Kind == token.STRING
+	case *ast.Ident:
+		return true
+	case *ast.BinaryExpr:
+		return node.Op == token.ADD && (isStringMessageExpr(node.X) || isStringMessageExpr(node.Y))
+	case *ast.CallExpr:
+		switch callName(node.Fun) {
+		case "Sprintf", "Sprintln", "Sprint", "Join", "Repeat", "Replace", "ReplaceAll", "TrimSpace", "ToLower", "ToUpper", "Title", "CapitalizeSentence", "ActMessage", "DeleteANSIControls", "String":
+			return true
+		}
+	}
+	return false
+}
+
+func isEmptyStringLiteral(expr ast.Expr) bool {
+	lit, ok := expr.(*ast.BasicLit)
+	if !ok || lit.Kind != token.STRING {
+		return false
+	}
+	value, err := strconv.Unquote(lit.Value)
+	return err == nil && value == ""
+}
+
+func markStringBuffers(expr ast.Expr, buffers map[string]bool) {
+	ast.Inspect(expr, func(node ast.Node) bool {
+		call, ok := node.(*ast.CallExpr)
+		if !ok || callName(call.Fun) != "String" {
+			return true
+		}
+		selector, ok := call.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		receiver, ok := selector.X.(*ast.Ident)
+		if ok {
+			buffers[receiver.Name] = true
+		}
+		return true
+	})
 }
 
 func collectLiterals(fset *token.FileSet, file string, expr ast.Expr, into map[token.Pos]literal) {
@@ -292,7 +364,7 @@ func collectLiterals(fset *token.FileSet, file string, expr ast.Expr, into map[t
 			return true
 		}
 		value, err := strconv.Unquote(lit.Value)
-		if err != nil {
+		if err != nil || value == "" {
 			return true
 		}
 		pos := fset.Position(lit.Pos())
