@@ -46,6 +46,7 @@ const websiteJsonLd = JSON.stringify({
   },
 });
 const socialImage = new URL(ogImage, Astro.site);
+import Analytics from '../components/Analytics.astro';
 ---
 <!doctype html>
 <html lang="en">
@@ -81,6 +82,7 @@ const socialImage = new URL(ogImage, Astro.site);
       rel="stylesheet"
     />
     <script type="application/ld+json" set:html={websiteJsonLd.replaceAll('<', '\\u003c')}></script>
+    <Analytics />
     <slot name="head" />
   </head>
   <body>
