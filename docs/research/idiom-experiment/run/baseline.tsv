@@ -1,0 +1,5 @@
+pkg	files	lines	funcs	median_func	p90_func	funcs_over_100	funcs_over_200	max_func	nest_ge_5	snake_idents	empty_iface	pkg_vars	customdata_refs
+pkg/game	197	65406	2434	10	46	41	6	747	19	71	83	194	41
+pkg/combat	10	4606	193	6	32	4	2	237	2	55	1	8	0
+pkg/command	6	3545	96	19	65	3	1	446	1	0	4	3	0
+TOTAL	213	73557	2723	10	47	48	9	747	22	126	88	205	41
