@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -72,11 +73,11 @@ const KIND_LABEL = {
   map: 'Map', guide: 'Guide', history: 'History', quote: 'Quotes', roster: 'Staff list',
 };
 ---
-<Base title={`${entry.data.title} | Dark Pawns Archive`} description={entry.data.description}>
+<Base title={`${entry.data.title} | Dark Pawns`} description={entry.data.description}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/archive/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
   <script slot="head" type="application/ld+json" set:html={jsonLd} />
   <article class="entry">
-    <nav class="crumb" aria-label="Breadcrumb"><a href="/archive/">The Archive</a></nav>
+    <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: entry.data.title }]} />
     <h1>{entry.data.title}</h1>
 
     <p class="dateline">
@@ -214,9 +215,6 @@ const KIND_LABEL = {
   --t-section: 1.375rem;
   --t-figure: 1.75rem; /* the tally numerals */
  max-width: var(--entry-width); margin-inline: auto; padding-inline: var(--space-md); padding-block: var(--space-lg) var(--space-xl); }
-  .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: var(--t-label); }
-  .crumb a { color: var(--ink-muted); }
-  .crumb a:hover { color: var(--accent); }
 
   /* The date the thing was written reads at reading size. Everything else about
      the capture is verifiable in the footer, where it does not gate the words. */

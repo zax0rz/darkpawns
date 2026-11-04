@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
 import { getCollection } from 'astro:content';
 import { Colorizer, loadWorldText, type Line } from '../../../lib/mudlog/colorize';
 import { describeLog, others, recorders, redactionSummary } from '../../../lib/mudlog/entry';
@@ -34,7 +35,7 @@ const LEVELS = ['off', 'sparse', 'normal', 'complete'];
 const onScreen = others(data);
 const removed = redactionSummary(data.redactions);
 const description = describeLog(data);
-const pageTitle = `${data.title}${data.cast.length ? `, with ${data.cast.slice(0, 3).join(', ')}` : ''} | Dark Pawns logs`;
+const pageTitle = `${data.title}${data.cast.length ? `, with ${data.cast.slice(0, 3).join(', ')}` : ''} | Dark Pawns`;
 const characterUrl = (name: string) => `/archive/logs/characters/${encodeURIComponent(name.toLowerCase())}/`;
 
 const site = 'https://darkpawns.org';
@@ -59,9 +60,7 @@ const jsonLd = JSON.stringify({
        capture scrolls, the way it did in the client that recorded it. -->
   <section class="log-shell" aria-labelledby="log-heading">
     <div class="log-intro container">
-      <nav class="crumb" aria-label="Breadcrumb">
-        <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a> »
-      </nav>
+      <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Logs', href: '/archive/logs/' }]} />
       <h1 id="log-heading">{data.title}</h1>
       <p>
         Recorded by {data.recordedBy.length
@@ -148,9 +147,6 @@ const jsonLd = JSON.stringify({
   .log-shell { --crt: #0a0908; display: flex; flex-direction: column; height: calc(100dvh - var(--masthead-h, 8rem)); min-height: 32rem; border-bottom: 1px solid var(--rule); }
   .log-intro { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem var(--space-md); padding-block: var(--space-sm); }
   .log-wrapper.container, .log-intro.container { width: 100%; }
-  .crumb { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-muted); }
-  .crumb a { color: var(--ink-muted); }
-  .crumb a:hover { color: var(--accent); }
   .log-intro h1 { margin: 0; font-family: var(--font-mono); font-size: clamp(1.4rem, 2.2vw, 1.85rem); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
   .log-intro p { margin: 0; color: var(--ink-muted); font-size: .95rem; }
 
@@ -161,7 +157,7 @@ const jsonLd = JSON.stringify({
      the eight ANSI colours tuned for that canvas. */
   .screen {
     --ansi-fg: #b8b1a3;
-    --ansi-red: #cf4b42;
+    --ansi-red: #d24e45;
     --ansi-green: #82a86c;
     --ansi-yellow: #e3b94a;
     --ansi-blue: #7f9bd0;

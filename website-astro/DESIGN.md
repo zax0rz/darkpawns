@@ -246,7 +246,7 @@ two different lockups at once.
 
 ### Navigation
 - **Section bar:** one shared, ruled bar (hairline top and bottom, newspaper style). The player spine is Play · World · Help · Map · Database · Archive · Logs · Blog; the utility cluster follows as Search · Docs · About. All-caps, letter-spaced; active section marked in Oxblood. Mobile: the bar collapses behind the `<details>` hamburger described under Layout, not a scrolling row.
-- **Breadcrumbs:** one shared partial, `Section » Subsection » Page`; ancestors are oxblood links, current page plain. Not shown on section indexes or top-level leaves.
+- **Breadcrumbs:** one shared partial, `Section » Subsection » Page`; ancestors are Ink-Muted links that turn oxblood on hover, current page plain. Not shown on section indexes or top-level leaves.
 - **Section card grid:** one shared card-grid pattern for all section indexes (title, description, meta count, oxblood hover) from a single partial and CSS block. **MUST** extend these shared patterns — no bespoke per-section nav, breadcrumbs, or index layouts.
 
 ### The Web Client (`/play`) — signature component

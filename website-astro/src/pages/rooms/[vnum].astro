@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import { rooms, roomById, type RoomRecord } from '../../lib/rooms';
 import { sectorName } from '../../lib/zones';
 import WorldText from '../../components/WorldText.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
 
 export function getStaticPaths() {
   return rooms.map((room) => ({ params: { vnum: String(room.id) }, props: { room } }));
@@ -26,18 +27,13 @@ const jsonLd = {
     { '@type': 'PropertyValue', name: 'Exits', value: room.exits.map((exit) => exit.direction).join(', ') || 'none' },
   ],
 };
-const breadcrumbLd = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Map', item: new URL('/map/', Astro.site) },
-    { '@type': 'ListItem', position: 2, name: 'Zones', item: new URL('/zones/', Astro.site) },
-    { '@type': 'ListItem', position: 3, name: room.zoneName, item: new URL(`/zones/${room.zoneId}/`, Astro.site) },
-    { '@type': 'ListItem', position: 4, name: room.name, item: new URL(`/rooms/${room.id}/`, Astro.site) },
-  ],
-};
 const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
-const safeBreadcrumbLd = JSON.stringify(breadcrumbLd).replace(/</g, '\\u003c');
+const trail = [
+  { label: 'Map', href: '/map/' },
+  { label: 'Zones', href: '/zones/' },
+  { label: room.zoneName, href: `/zones/${room.zoneId}/` },
+  { label: String(room.id), sdName: room.name },
+];
 const targetName = (vnum: number) => roomById.get(vnum)?.name ?? null;
 ---
 
@@ -45,13 +41,10 @@ const targetName = (vnum: number) => roomById.get(vnum)?.name ?? null;
   <Fragment slot="head">
     <link rel="alternate" type="application/json" href={jsonUrl} title={`${room.name} as JSON`} />
     <script type="application/ld+json" set:html={safeJsonLd}></script>
-    <script type="application/ld+json" set:html={safeBreadcrumbLd}></script>
   </Fragment>
 
   <article class="record-page container">
-    <nav class="crumb" aria-label="Breadcrumb">
-      <a href="/map/">Map</a> / <a href="/zones/">Zones</a> / <a href={`/zones/${room.zoneId}/`}>{room.zoneName}</a> / {room.id}
-    </nav>
+    <Breadcrumb trail={trail} />
     <header class="record-header">
       <p class="eyebrow">Room record / VNUM {room.id}</p>
       <h1>{room.name}</h1>
@@ -131,7 +124,6 @@ const targetName = (vnum: number) => roomById.get(vnum)?.name ?? null;
 
 <style>
   .record-page { max-width: 68rem; padding-block: var(--space-lg) var(--space-xl); }
-  .crumb { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; margin-bottom: var(--space-lg); }
   .record-header { border-top: 4px solid var(--accent); padding-top: var(--space-md); }
   .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: .72rem; font-weight: 700; letter-spacing: .1em; margin-bottom: var(--space-xs); text-transform: uppercase; }
   .record-header h1 { max-width: 24ch; font-size: clamp(2rem, 4.5vw, 3.5rem); overflow-wrap: anywhere; }

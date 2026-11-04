@@ -1,0 +1,15 @@
+{
+  "name": "Dark Pawns",
+  "short_name": "Dark Pawns",
+  "description": "A dark-fantasy MUD first opened in 1994, restored as an open-source Go engine.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#EFE7D6",
+  "theme_color": "#EFE7D6",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}
