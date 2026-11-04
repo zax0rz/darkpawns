@@ -114,7 +114,25 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 
 	drunkAff, fullAff, thirstAff := GetDrinkAffects(liqIndex)
 	GainCondition(ch, CondDrunk, (drunkAff*amount)/4)
+	applyDrinkSustenance(ch, liqIndex, liqName, amount, fullAff, thirstAff)
 
+	// Poison handling.
+	if item.GetValue(3) != 0 {
+		ch.SendMessage("Oops, it tasted rather strange!\r\n")
+		Act(w, true, ch, nil, nil, nil, "$n chokes and utters some strange sounds.", "", ToRoom)
+		applyPoison(ch, amount*3, "poisoned drink")
+	}
+
+	// Deplete the container. C decrements val1 unconditionally for both
+	// drinkcons and fountains (fountains simply have a very large val1); the
+	// unit claimed at the emptiness check is already off, so the rest is
+	// amount-1. ExtractObject takes the world lock, so it follows the take.
+	if w.depleteDrink(item, amount-1) && item.VNum == 20 {
+		w.ExtractObject(item, ch.GetRoomVNum())
+	}
+}
+
+func applyDrinkSustenance(ch *Player, liqIndex int, liqName string, amount, fullAff, thirstAff int) {
 	// Vampire branch: blood is the only sustenance at night.
 	if ch.HasPLRFlag(PlrVampire) && liqIndex != LiqBlood && (GetSunlight() == SunSet || GetSunlight() == SunDark) {
 		ch.SendMessage(fmt.Sprintf("The vampirism in your body is not satiated by mere %s...\r\n", liqName))
@@ -131,21 +149,6 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 	}
 	if ch.GetCondition(CondFull) > 20 {
 		ch.SendMessage("You are full.\r\n")
-	}
-
-	// Poison handling.
-	if item.GetValue(3) != 0 {
-		ch.SendMessage("Oops, it tasted rather strange!\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n chokes and utters some strange sounds.", "", ToRoom)
-		applyPoison(ch, amount*3, "poisoned drink")
-	}
-
-	// Deplete the container. C decrements val1 unconditionally for both
-	// drinkcons and fountains (fountains simply have a very large val1); the
-	// unit claimed at the emptiness check is already off, so the rest is
-	// amount-1. ExtractObject takes the world lock, so it follows the take.
-	if w.depleteDrink(item, amount-1) && item.VNum == 20 {
-		w.ExtractObject(item, ch.GetRoomVNum())
 	}
 }
 
