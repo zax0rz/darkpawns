@@ -4,6 +4,9 @@ nameWithheld: false
 lines: 4908
 log: "waytobarrows.log"
 recordedBy: ["Vargus"]
+date:
+  text: "About 1 September 2000"
+  basis: "Vargus's play time against dated logs, an estimate"
 redactions:
   emails: 0
   ips: 0

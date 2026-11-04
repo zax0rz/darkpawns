@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 4252
 log: "random11801.log"
 recordedBy: ["Farius"]
+date:
+  text: "18 January 2001"
+  iso: "2001-01-18"
+  basis: "the recorder's filename (11801), read against Farius's play time"
 redactions:
   emails: 0
   ips: 0

@@ -4,6 +4,9 @@ nameWithheld: false
 lines: 4594
 log: "mage.log"
 recordedBy: ["Vargus"]
+date:
+  text: "Between 15 and 27 October 2000"
+  basis: "Vargus's play time against dated logs, an estimate"
 redactions:
   emails: 0
   ips: 0

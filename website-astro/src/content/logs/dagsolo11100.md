@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 981
 log: "dagsolo11100.log"
 recordedBy: ["Jyan"]
+date:
+  text: "1 November 2000"
+  iso: "2000-11-01"
+  basis: "the recorder's filename (11100), read against Jyan's play time"
 redactions:
   emails: 0
   ips: 0

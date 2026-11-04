@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 18985
 log: "searchforcyralpovj11100.log"
 recordedBy: ["Jyan"]
+date:
+  text: "11 January 2001"
+  iso: "2001-01-11"
+  basis: "the recorder's filename (11100), read against Jyan's play time, and the same session's other captures"
 redactions:
   emails: 0
   ips: 0

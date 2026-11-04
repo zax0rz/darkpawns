@@ -1,0 +1,10 @@
+---
+// Cookieless visit counts (Cloudflare Web Analytics): no cookies, no local
+// storage, no consent banner. Renders nothing until the site token is set in
+// src/lib/analytics.ts. The beacon also needs the server CSP to allow
+// static.cloudflareinsights.com (script) and cloudflareinsights.com (connect).
+import { CLOUDFLARE_BEACON_TOKEN } from '../lib/analytics';
+---
+{CLOUDFLARE_BEACON_TOKEN && (
+  <script is:inline type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: CLOUDFLARE_BEACON_TOKEN })}></script>
+)}

@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 3560
 log: "nimoslady-solo-102600.log"
 recordedBy: ["Jyan"]
+date:
+  text: "26 October 2000"
+  iso: "2000-10-26"
+  basis: "a note the recorder typed at the top of the file"
 redactions:
   emails: 0
   ips: 0

@@ -38,6 +38,7 @@ const collectionLd = JSON.stringify({
           <span class="row-meta">
             {entry.data.recordedBy.length ? entry.data.recordedBy.join(' and ') : 'recorder not shown'}
             · {entry.data.lines.toLocaleString('en-US')} lines
+            {entry.data.date && <>· {entry.data.date.text}</>}
           </span>
         </li>
       ))}

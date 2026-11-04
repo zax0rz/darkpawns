@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 1270
 log: "random83100.log"
 recordedBy: ["Vargus"]
+date:
+  text: "31 August 2000"
+  iso: "2000-08-31"
+  basis: "the recorder's filename (83100)"
 redactions:
   emails: 0
   ips: 0

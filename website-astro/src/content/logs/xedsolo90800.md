@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 863
 log: "xedsolo90800.log"
 recordedBy: ["Vargus"]
+date:
+  text: "8 September 2000"
+  iso: "2000-09-08"
+  basis: "the recorder's filename (90800)"
 redactions:
   emails: 0
   ips: 0

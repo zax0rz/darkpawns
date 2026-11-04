@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 939
 log: "corwinloads111200.log"
 recordedBy: ["Vargus"]
+date:
+  text: "12 November 2000"
+  iso: "2000-11-12"
+  basis: "the recorder's filename (111200)"
 redactions:
   emails: 0
   ips: 0

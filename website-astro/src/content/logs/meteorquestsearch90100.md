@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 5198
 log: "meteorquestsearch90100.log"
 recordedBy: ["Vargus"]
+date:
+  text: "1 September 2000"
+  iso: "2000-09-01"
+  basis: "the recorder's filename (90100)"
 redactions:
   emails: 0
   ips: 0

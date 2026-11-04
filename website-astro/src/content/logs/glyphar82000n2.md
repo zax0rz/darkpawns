@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 1776
 log: "glyphar82000n2.log"
 recordedBy: ["Vargus"]
+date:
+  text: "20 August 2000"
+  iso: "2000-08-20"
+  basis: "the recorder's filename (82000)"
 redactions:
   emails: 0
   ips: 0

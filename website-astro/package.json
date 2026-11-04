@@ -16,7 +16,7 @@
     "test:markdown": "node --test src/lib/no-literal-autolinks.test.mjs src/lib/world-text.test.mjs",
     "test:colorize": "node --experimental-strip-types --test src/lib/mudlog/colorize.test.ts",
     "generate:docs": "node scripts/generate-docs.mjs",
-    "test:docs": "node scripts/check-docs.mjs && node scripts/check-command-docs.mjs"
+    "test:docs": "node scripts/check-docs.mjs && node scripts/check-command-docs.mjs && node scripts/check-sitemap.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "7.3.0",

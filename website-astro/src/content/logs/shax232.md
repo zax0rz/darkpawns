@@ -4,6 +4,9 @@ nameWithheld: false
 lines: 5574
 log: "shax232.log"
 recordedBy: ["Farius"]
+date:
+  text: "Between 26 and 29 January 2001"
+  basis: "Farius's play time against dated logs, an estimate"
 redactions:
   emails: 0
   ips: 0

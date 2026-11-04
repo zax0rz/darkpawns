@@ -371,6 +371,10 @@ def index_markdown_content():
                 desc = f"{title}, a {lines:,}-line game log from the original Dark Pawns server"
                 if recorded_by:
                     desc += f", recorded by {' and '.join(recorded_by)}"
+                when = re.search(r'^date:\n  text: "([^"]+)"', content, re.M)
+                if when:
+                    text = when.group(1)
+                    desc += f", played {'on ' + text if text[0].isdigit() else text[0].lower() + text[1:]}"
                 desc += "."
                 if on_screen:
                     more = f" and {len(on_screen) - 12} more" if len(on_screen) > 12 else ""

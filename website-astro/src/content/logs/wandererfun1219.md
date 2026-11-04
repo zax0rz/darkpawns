@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 7893
 log: "wandererfun1219.log"
 recordedBy: ["Farius"]
+date:
+  text: "19 December 2000"
+  iso: "2000-12-19"
+  basis: "the recorder's filename (1219), with the year from Farius's play time"
 redactions:
   emails: 0
   ips: 0

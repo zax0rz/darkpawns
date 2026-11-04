@@ -28,6 +28,7 @@ differ, which is the proof that this script reproduces them exactly.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import hashlib
 import json
 import os
@@ -216,6 +217,156 @@ def recorders_for(lines: list[str]) -> list[str]:
     return [] if third_person >= 3 else ["Vargus"]
 
 
+# ------------------------------------------------------------------- dates
+# The files lost their timestamps before the donation, so a date comes only
+# from what the files say. Three witnesses, in order of trust:
+#   1. a note the recorder typed at the top ("Date: 10/26/2000",
+#      nimoslady-solo-102600.txt:1), or the date on a mail the capture shows
+#      (Hatsumi Bounty.txt:2), which the session can only follow;
+#   2. the date the recorder put in the filename, month-day-year with the
+#      month unpadded ("amber121200" is 12/12/00, "xedsolo90800" 9/08/00);
+#   3. the score screen's "You have been playing for N days and M hours"
+#      (do_score). It only climbs, and never faster than the clock, so one
+#      character's dated logs settle which reading of an ambiguous filename
+#      is possible ("11100" is 11/1/00 for Jyan's 2d22h, dagsolo11100.txt:127,
+#      but 1/11/01 for Farius, who is past his 12/12/00 time, and the year
+#      typed in January can lag), and bracket an undated log between two.
+
+HEADER_DATE = re.compile(r"^Date: (\d{1,2})/(\d{1,2})/(\d{4})\s*$")
+MAIL_DATE = re.compile(r"^Date: \w{3} (\w{3}) +(\d{1,2}) [\d:]+ (\d{4})\s*$")
+PLAYED = re.compile(r"^You have been playing for (\d+) days? and (\d+) hours?\.")
+FILENAME_DIGITS = re.compile(r"(\d{3,6})")
+SAME_SESSION = re.compile(r"pov[a-z]$")   # searchforcyral, ...povj, ...povv: one search, three screens
+MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
+YEARS = (2000, 2001)                       # every dated file falls in these
+BRACKET_DAYS = 14                          # widest range worth printing as an estimate
+
+
+def filename_readings(name: str) -> tuple[str, bool, list[dt.date]]:
+    """Every date the filename's number can mean: (digits, year written?, dates)."""
+    m = FILENAME_DIGITS.search(name)
+    if not m:
+        return "", False, []
+    digits, out = m.group(1), set()
+    for i in (1, 2):
+        month = digits[:i]
+        for j in (i + 1, i + 2):
+            day, year = digits[i:j], digits[j:]
+            if month[0] == "0" or not day or year not in ("", "00", "01"):
+                continue
+            for y in ([2000 + int(year)] if year else YEARS):
+                try:
+                    out.add(dt.date(y, int(month), int(day)))
+                except ValueError:
+                    pass
+    written = len(digits) >= 5
+    if written:   # a January session can carry last year's number
+        out |= {d.replace(year=d.year + 1) for d in out if d.month == 1 and d.year + 1 in YEARS}
+    return digits, written, sorted(out)
+
+
+def played_hours(lines: list[str]) -> int | None:
+    for line in lines:
+        m = PLAYED.match(line)
+        if m:
+            return int(m.group(1)) * 24 + int(m.group(2))
+    return None
+
+
+def long_date(d: dt.date) -> str:
+    return f"{d.day} {d.strftime('%B')} {d.year}"
+
+
+def date_range(lo: dt.date, hi: dt.date) -> str:
+    if lo.year != hi.year:
+        return f"Between {long_date(lo)} and {long_date(hi)}"
+    if lo.month != hi.month:
+        return f"Between {lo.day} {lo.strftime('%B')} and {long_date(hi)}"
+    return f"Between {lo.day} and {long_date(hi)}"
+
+
+def date_files(files: list[RawFile]) -> dict[str, dict]:
+    """raw path -> {text, basis, iso?} for every capture the files can date."""
+    played, who, readings, out = {}, {}, {}, {}
+    for f in files:
+        rec = recorders_for(f.lines)
+        hours = played_hours(f.lines)
+        if len(rec) == 1 and hours is not None and any(SCORE_RANK.match(line) for line in f.lines):
+            played[f.rel], who[f.rel] = hours, rec[0]
+        readings[f.rel] = filename_readings(f.name)
+        for line in f.lines[:5]:
+            m = HEADER_DATE.match(line)
+            if m:
+                d = dt.date(int(m.group(3)), int(m.group(1)), int(m.group(2)))
+                out[f.rel] = {"text": long_date(d), "iso": d.isoformat(),
+                              "basis": "a note the recorder typed at the top of the file"}
+            m = MAIL_DATE.match(line)
+            if m and f.rel not in out:
+                d = dt.date(int(m.group(3)), MONTHS.index(m.group(1)) + 1, int(m.group(2)))
+                out[f.rel] = {"text": f"On or after {long_date(d)}",
+                              "basis": "the date on a mail in the capture, which itself is private"}
+
+    def session(rel):
+        digits = readings[rel][0]
+        return (SAME_SESSION.sub("", re.sub(r"\d+.*$", "", Path(rel).stem.lower())), digits) if digits else rel
+
+    def possible(rel, day):
+        """No dated log of the same character contradicts `day`: play time
+        runs forward, a day of label slack either side, and never faster
+        than the clock."""
+        if rel not in played:
+            return True
+        p = played[rel]
+        for r, d in out.items():
+            if r == rel or "iso" not in d or r not in played or who[r] != who[rel]:
+                continue
+            a, q = dt.date.fromisoformat(d["iso"]), played[r]
+            gap = (a - day).days
+            if (gap < -1 and q > p) or (gap > 1 and q < p) or abs(q - p) > (abs(gap) + 1) * 24:
+                return False
+        return True
+
+    changed = True
+    while changed:
+        changed = False
+        fits = {rel: [d for d in dates if possible(rel, d)]
+                for rel, (_, _, dates) in readings.items() if rel not in out and dates}
+        groups: dict = {}
+        for rel, days in fits.items():
+            groups.setdefault(session(rel), []).append(rel)
+        for members in groups.values():
+            common = set.intersection(*(set(fits[r]) for r in members))
+            if len(common) != 1:
+                continue
+            (d,) = common
+            for rel in members:
+                digits, written, dates = readings[rel]
+                basis = f"the recorder's filename ({digits})"
+                if len(dates) > 1:
+                    basis += (f", with the year from {who[rel]}'s play time" if not written and rel in played
+                              else f", read against {who[rel]}'s play time" if rel in played else "")
+                    if len(members) > 1:
+                        basis += ", and the same session's other captures"
+                out[rel] = {"text": long_date(d), "iso": d.isoformat(), "basis": basis}
+                changed = True
+
+    for rel, p in played.items():
+        if rel in out:
+            continue
+        mine = [(dt.date.fromisoformat(d["iso"]), played[r]) for r, d in out.items()
+                if "iso" in d and r in played and who[r] == who[rel]]
+        before = [d for d, q in mine if q <= p]
+        after = [d for d, q in mine if q >= p]
+        if before and after:
+            lo, hi = max(before), min(after)
+            basis = f"{who[rel]}'s play time against dated logs, an estimate"
+            if lo == hi:
+                out[rel] = {"text": f"About {long_date(lo)}", "basis": basis}
+            elif lo < hi and (hi - lo).days <= BRACKET_DAYS:
+                out[rel] = {"text": date_range(lo, hi), "basis": basis}
+    return out
+
+
 # ------------------------------------------------------------------- model
 
 class RawFile:
@@ -256,7 +407,7 @@ def yaml_scalar(value) -> str:
 
 
 def render_entry(f: RawFile, slug: str, title: str, recorders: list[str],
-                 cast: list[tuple[str, int]], tally: dict) -> str:
+                 cast: list[tuple[str, int]], tally: dict, date: dict | None) -> str:
     first_line = dict(cast)
     ordered = [r for r in recorders if r in first_line] + [n for n, _ in cast if n not in recorders]
     lines = [
@@ -266,6 +417,7 @@ def render_entry(f: RawFile, slug: str, title: str, recorders: list[str],
         f"lines: {f.total}",
         f"log: {yaml_scalar(slug + '.log')}",
         "recordedBy: [" + ", ".join(yaml_scalar(r) for r in recorders) + "]",
+        *(["date:", *[f"  {k}: {yaml_scalar(date[k])}" for k in ("text", "iso", "basis") if k in date]] if date else []),
         "redactions:",
         *[f"  {key}: {tally[key]}" for key in COUNTS],
         "cast: [" + ", ".join(yaml_scalar(n) for n in ordered) + "]",
@@ -291,6 +443,7 @@ def build(check_only: bool = False) -> int:
         if rel not in known:
             raise SystemExit(f"vargus-logs: unknown file {rel!r}")
 
+    dates = date_files([f for f in files if f.rel not in EXCLUDE])
     expected: dict[str, str] = {}
     rows = []
     for f in files:
@@ -300,7 +453,7 @@ def build(check_only: bool = False) -> int:
         slug, title = slug_and_title(f)
         text, tally = scrub(f, secrets)
         expected[f"{slug}.log"] = text
-        expected[f"{slug}.md"] = render_entry(f, slug, title, recorders_for(f.lines), cast_for(f.lines, mobs), tally)
+        expected[f"{slug}.md"] = render_entry(f, slug, title, recorders_for(f.lines), cast_for(f.lines, mobs), tally, dates.get(f.rel))
         rows.append([f.rel, str(len(f.data)), str(f.total), f.sha, slug, "-", *[str(tally[k]) for k in COUNTS]])
     expected["MANIFEST.tsv"] = "\t".join(MANIFEST_COLUMNS) + "\n" + "\n".join("\t".join(r) for r in rows) + "\n"
 

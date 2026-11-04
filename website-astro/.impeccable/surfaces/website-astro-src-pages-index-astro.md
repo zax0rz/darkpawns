@@ -1,8 +1,8 @@
 ---
 version: 1
 slug: "website-astro-src-pages-index-astro"
-primary_target: "website-astro/src/pages/index.astro"
-related_targets: ["website-astro/src/pages/download.astro", "website-astro/src/components/Footer.astro", "website-astro/src/components/Header.astro"]
+primary_target: "src/pages/index.astro"
+related_targets: ["src/pages/download.astro", "src/components/Footer.astro", "src/components/Header.astro"]
 ---
 
 # Homepage chapter opening and downloads
