@@ -328,7 +328,6 @@
     "website-astro/src/pages/map.astro|trailer-rhythm|04362dffc32c5324": 1,
     "website-astro/src/pages/map.astro|trailer-rhythm|1ddecd528d583724": 1,
     "website-astro/src/pages/map.astro|trailer-rhythm|a1061f3f82f7792a": 1,
-    "website-astro/src/pages/map.astro|trailer-rhythm|ed10e1f89df5a659": 1,
     "website-astro/src/pages/mobs/[vnum].astro|trailer-rhythm|046d8d8b42a959cb": 1,
     "website-astro/src/pages/mobs/[vnum].astro|trailer-rhythm|05aa0b0b76d683fc": 1,
     "website-astro/src/pages/mobs/[vnum].astro|trailer-rhythm|0ac6b7e91aa9a2cc": 1,
@@ -411,6 +410,7 @@
     "website-astro/src/pages/zones/index.astro|trailer-rhythm|744ccfc0ca4dae9f": 1,
     "website-astro/src/pages/zones/index.astro|trailer-rhythm|a12254ed1ae5b480": 1,
     "website-astro/src/pages/zones/index.astro|trailer-rhythm|b04c7aadc31a3c5c": 1,
-    "website-astro/src/pages/zones/index.astro|trailer-rhythm|b3ea16707519c301": 1
+    "website-astro/src/pages/zones/index.astro|trailer-rhythm|b3ea16707519c301": 1,
+    "website-astro/src/pages/map.astro|trailer-rhythm|741f43b52857f003": 1
   }
 }
