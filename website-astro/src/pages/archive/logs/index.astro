@@ -1,5 +1,6 @@
 ---
 import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
 import { getCollection } from 'astro:content';
 import { characterKeys } from '../../../lib/mudlog/entry';
 
@@ -19,10 +20,10 @@ const collectionLd = JSON.stringify({
   isPartOf: { '@type': 'WebSite', name: 'Dark Pawns', url: site },
 });
 ---
-<Base title="Game logs | Dark Pawns Archive" description={description}>
+<Base title="Game logs | Dark Pawns" description={description}>
   <script slot="head" type="application/ld+json" set:html={collectionLd} />
   <article class="entry">
-    <nav class="crumb" aria-label="Breadcrumb"><a href="/archive/">The Archive</a></nav>
+    <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Game logs' }]} />
     <h1>Game logs</h1>
     <p class="lede">
       Sessions captured on the original server by the players who were there,
@@ -48,9 +49,6 @@ const collectionLd = JSON.stringify({
 
 <style>
   .entry { max-width: 46rem; margin-inline: auto; padding: var(--space-lg) var(--space-md) var(--space-xl); }
-  .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: 0.8rem; }
-  .crumb a { color: var(--ink-muted); }
-  .crumb a:hover { color: var(--accent); }
   .lede { max-width: 58ch; font-size: 1.15rem; }
   .characters { margin-block: var(--space-md) var(--space-lg); font-family: var(--font-mono); }
   .rows { margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule); }

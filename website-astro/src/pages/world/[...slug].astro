@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -13,7 +14,7 @@ const { Content } = await render(entry);
 <Base title={`${entry.data.title} | Dark Pawns`} description={entry.data.description} canonicalPath={entry.data.canonicalPath}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/world/${entry.id}.md`} title={`${entry.data.title} as Markdown`} />
   <article class="container world-article">
-    <p class="crumb"><a href="/world/">World</a> &raquo; {entry.data.title}</p>
+    <Breadcrumb trail={[{ label: 'World', href: '/world/' }, { label: entry.data.title }]} />
     <h1>{entry.data.title}</h1>
     {entry.data.canonicalPath && (
       <p class="primary-source">
@@ -32,14 +33,6 @@ const { Content } = await render(entry);
     border-left: 2px solid var(--accent);
     padding: 0.2rem 0 0.2rem var(--space-md);
     color: var(--ink-muted);
-  }
-  .crumb {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--ink-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: var(--space-sm);
   }
   .world-article > h1 { margin-bottom: var(--space-lg); }
 </style>

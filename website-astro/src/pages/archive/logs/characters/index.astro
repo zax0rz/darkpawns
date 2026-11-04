@@ -1,5 +1,6 @@
 ---
 import Base from '../../../../layouts/Base.astro';
+import Breadcrumb from '../../../../components/Breadcrumb.astro';
 import { getCollection } from 'astro:content';
 import { appearancesOf, characterKeys } from '../../../../lib/mudlog/entry';
 
@@ -13,9 +14,7 @@ const people = characterKeys(entries)
 ---
 <Base title="Characters in the logs | Dark Pawns" description="Every character named in the Dark Pawns game logs from the original server, with the logs each one appears in.">
   <article class="entry">
-    <nav class="crumb" aria-label="Breadcrumb">
-      <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a>
-    </nav>
+    <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Logs', href: '/archive/logs/' }, { label: 'Characters' }]} />
     <h1>Characters in the logs</h1>
     <p class="lede">
       Every character named in a capture from the original server, as the logs
@@ -74,9 +73,6 @@ const people = characterKeys(entries)
     margin-inline: auto;
     padding: var(--space-lg) var(--space-md) var(--space-xl);
   }
-  .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: var(--t-label); color: var(--ink-muted); }
-  .crumb a { color: var(--ink-muted); }
-  .crumb a:hover { color: var(--accent); }
   .lede { max-width: 60ch; font-size: var(--t-lede); color: var(--ink-muted); margin-bottom: var(--space-lg); }
 
   .band {

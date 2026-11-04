@@ -1,5 +1,6 @@
 ---
 import Base from '../../../../layouts/Base.astro';
+import Breadcrumb from '../../../../components/Breadcrumb.astro';
 import { getCollection } from 'astro:content';
 import { appearancesOf, characterKeys } from '../../../../lib/mudlog/entry';
 
@@ -15,9 +16,7 @@ const description = `${display} appears in ${appears.length} ${appears.length ==
 <Base title={`${display} in the logs | Dark Pawns`} description={description}>
   <link slot="head" rel="alternate" type="text/markdown" href={`/archive/logs/characters/${encodeURIComponent(key)}.md`} title={`${display} in the logs as Markdown`} />
   <article class="entry">
-    <nav class="crumb" aria-label="Breadcrumb">
-      <a href="/archive/">The Archive</a> » <a href="/archive/logs/">Logs</a> » <a href="/archive/logs/characters/">Characters</a>
-    </nav>
+    <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Logs', href: '/archive/logs/' }, { label: 'Characters', href: '/archive/logs/characters/' }, { label: display }]} />
     <h1>{display}</h1>
     <p class="lede">{description} A name here is a character in the game.</p>
     <ul class="rows">
@@ -33,9 +32,6 @@ const description = `${display} appears in ${appears.length} ${appears.length ==
 
 <style>
   .entry { max-width: 46rem; margin-inline: auto; padding: var(--space-lg) var(--space-md) var(--space-xl); }
-  .crumb { margin-bottom: var(--space-sm); font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-muted); }
-  .crumb a { color: var(--ink-muted); }
-  .crumb a:hover { color: var(--accent); }
   .lede { max-width: 62ch; color: var(--ink-muted); }
   .rows { margin: var(--space-md) 0 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule); }
   .rows li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--space-md); border-top: 1px solid var(--rule); padding: var(--space-xs) 0; }

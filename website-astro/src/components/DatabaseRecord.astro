@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import Breadcrumb from './Breadcrumb.astro';
 
 interface Props {
   kind: 'Mob' | 'Item';
@@ -23,9 +24,7 @@ const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
   </Fragment>
 
   <article class="record-page container" data-record-kind={kind.toLowerCase()} data-vnum={vnum}>
-    <nav class="crumb" aria-label="Breadcrumb">
-      <a href="/database/">Database</a> / <a href={`/${section}/`}>{kind === 'Mob' ? 'Mobs' : 'Items'}</a> / {vnum}
-    </nav>
+    <Breadcrumb trail={[{ label: 'Database', href: '/database/' }, { label: kind === 'Mob' ? 'Mobs' : 'Items', href: `/${section}/` }, { label: String(vnum) }]} />
     <header class="record-header">
       <p class="eyebrow">{kind} record / VNUM {vnum}</p>
       <h1>{name}</h1>
@@ -48,7 +47,6 @@ const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 
 <style>
   .record-page { max-width: 68rem; padding-block: var(--space-lg) var(--space-xl); }
-  .crumb { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: var(--space-lg); }
   .record-header { border-top: 4px solid var(--accent); padding-top: var(--space-md); }
   .eyebrow { color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; letter-spacing: .1em; margin-bottom: var(--space-xs); text-transform: uppercase; }
   .record-header h1 { max-width: 20ch; font-size: clamp(2.5rem, 5vw + 1rem, 3rem); overflow-wrap: anywhere; }
