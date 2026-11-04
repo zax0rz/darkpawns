@@ -24,7 +24,7 @@ const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
   </Fragment>
 
   <article class="record-page container" data-record-kind={kind.toLowerCase()} data-vnum={vnum}>
-    <Breadcrumb trail={[{ label: 'Database', href: '/database/' }, { label: kind === 'Mob' ? 'Mobs' : 'Items', href: `/${section}/` }, { label: String(vnum) }]} />
+    <Breadcrumb trail={[{ label: 'Database', href: '/database/' }, { label: kind === 'Mob' ? 'Mobs' : 'Items', href: `/${section}/` }, { label: String(vnum), sdName: name }]} />
     <header class="record-header">
       <p class="eyebrow">{kind} record / VNUM {vnum}</p>
       <h1>{name}</h1>

@@ -1,11 +1,16 @@
 ---
-// The one breadcrumb partial (DESIGN.md → Navigation). Every hierarchical page
+// The one breadcrumb partial (DESIGN.md -> Navigation). Every hierarchical page
 // uses it, so there is no bespoke per-section crumb. It renders the visible
 // trail and its BreadcrumbList JSON-LD together, so a page can never ship the
 // trail without the structured data (or the other way round). Ancestors are
-// oxblood links (the site's default link colour); the current page is plain.
+// Ink-Muted links that turn oxblood on hover; the current page is plain.
+//
+// A crumb whose visible label is an identifier (a room's vnum, a zone's
+// number) can carry the subject's real name in `sdName`, so the JSON-LD still
+// names the page while the visible crumb stays short.
+//
 // "Not shown on section indexes or top-level leaves": callers decide that.
-interface Crumb { label: string; href?: string }
+interface Crumb { label: string; href?: string; sdName?: string }
 interface Props { trail: Crumb[] }
 const { trail } = Astro.props;
 const jsonLd = JSON.stringify({
@@ -14,7 +19,7 @@ const jsonLd = JSON.stringify({
   itemListElement: trail.map((crumb, index) => ({
     '@type': 'ListItem',
     position: index + 1,
-    name: crumb.label,
+    name: crumb.sdName ?? crumb.label,
     ...(crumb.href ? { item: new URL(crumb.href, Astro.site).href } : {}),
   })),
 }).replace(/</g, '\\u003c');
@@ -33,7 +38,7 @@ const jsonLd = JSON.stringify({
 
 <style>
   .crumb { color: var(--ink-muted); font-family: var(--font-mono); font-size: .72rem; margin-bottom: var(--space-lg); }
-  .crumb a { color: var(--accent); }
-  .crumb a:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .crumb a { color: var(--ink-muted); }
+  .crumb a:hover { color: var(--accent); }
   .crumb-sep { color: var(--ink-muted); margin-inline: .35em; }
 </style>

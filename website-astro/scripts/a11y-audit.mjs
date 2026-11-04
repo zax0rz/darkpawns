@@ -5,8 +5,13 @@
 // proxy for Largest Contentful Paint and Cumulative Layout Shift.
 //
 //   npm run build
-//   npx astro preview            # serves ./dist on http://localhost:4321
-//   node scripts/a11y-audit.mjs http://localhost:4321 [paths...]
+//   npx playwright install chromium   # once, if the browser is not cached
+//   npx astro preview                 # serves ./dist on http://localhost:4321
+//   node scripts/a11y-audit.mjs http://localhost:4321
+//
+// Playwright is already a dependency of this package (the build's Mermaid
+// renderer uses it too), so only the Chromium binary may need installing.
+// Optional extra arguments are paths to probe instead of the default set.
 //
 // Contrast is measured on the desktop pass; touch targets on a 390px
 // coarse-pointer pass, so the site's own mobile rules are the ones in play.

@@ -108,6 +108,11 @@ import '@xterm/xterm/css/xterm.css';
         cursor: '#8b0000',
         selectionBackground: '#3a2a1a',
       },
+      // xterm lightens any foreground that falls below this ratio against the
+      // background, so the dim status lines and the ANSI-red connection errors
+      // stay readable on the canvas. It changes only how the text is drawn,
+      // never the bytes the game sends.
+      minimumContrastRatio: 4.5,
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
@@ -176,6 +181,12 @@ import '@xterm/xterm/css/xterm.css';
      one. Space left under the last whole row shows the terminal background. */
   #terminal { flex: 1; min-height: 0; overflow: hidden; padding: .5rem; background: #0a0908; box-shadow: inset 0 0 0 2px var(--rule); }
   #terminal-screen { height: 100%; background: #0a0908; }
+  /* xterm's DOM renderer paints DIM as the foreground at 50% alpha, which
+     measures 3.23:1 on the canvas, below AA, and sits outside
+     minimumContrastRatio's reach (that option adjusts the palette, not the DIM
+     attribute). Pin DIM to a warm grey that still reads quieter than the
+     foreground but keeps 5.4:1 against #0a0908. */
+  :global(#terminal .xterm-dim) { color: #8d8474; }
   /* Dock: character, target (in a fight), map, then chat taking the rest. */
   /* The dock never scrolls: Character and Target keep their height, and Map
      and Chat share what is left, each with a floor. */

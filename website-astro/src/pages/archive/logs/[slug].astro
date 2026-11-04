@@ -60,7 +60,7 @@ const jsonLd = JSON.stringify({
        capture scrolls, the way it did in the client that recorded it. -->
   <section class="log-shell" aria-labelledby="log-heading">
     <div class="log-intro container">
-      <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Logs', href: '/archive/logs/' }, { label: data.title }]} />
+      <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Logs', href: '/archive/logs/' }]} />
       <h1 id="log-heading">{data.title}</h1>
       <p>
         Recorded by {data.recordedBy.length
@@ -157,7 +157,7 @@ const jsonLd = JSON.stringify({
      the eight ANSI colours tuned for that canvas. */
   .screen {
     --ansi-fg: #b8b1a3;
-    --ansi-red: #cf4b42;
+    --ansi-red: #d24e45;
     --ansi-green: #82a86c;
     --ansi-yellow: #e3b94a;
     --ansi-blue: #7f9bd0;

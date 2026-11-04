@@ -32,7 +32,7 @@ const trail = [
   { label: 'Map', href: '/map/' },
   { label: 'Zones', href: '/zones/' },
   { label: room.zoneName, href: `/zones/${room.zoneId}/` },
-  { label: String(room.id) },
+  { label: String(room.id), sdName: room.name },
 ];
 const targetName = (vnum: number) => roomById.get(vnum)?.name ?? null;
 ---

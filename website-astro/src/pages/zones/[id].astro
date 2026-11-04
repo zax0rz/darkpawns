@@ -29,7 +29,7 @@ const safeJsonLd = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 const trail = [
   { label: 'Map', href: '/map/' },
   { label: 'Zones', href: '/zones/' },
-  { label: String(zone.id) },
+  { label: String(zone.id), sdName: zone.name },
 ];
 const zoneName = (id: number) => zoneById.get(id)?.name ?? `Zone ${id}`;
 const roomChunks = zone.rooms;
