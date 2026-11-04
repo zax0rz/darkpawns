@@ -1,7 +1,8 @@
 // Population rule (round two): inspect every non-test Go function, method,
 // and function literal under pkg/game, pkg/combat, and pkg/command. A function
-// is in the population when a string literal is in one of the message
-// argument positions listed in outputArguments, including the named output
+// is in the population when a string literal containing at least one ASCII
+// letter is in a message argument position listed in outputArguments,
+// including the named output
 // callbacks private, output, ack, and sendToOutdoor; assigned to a local string
 // expression that is referenced by one of those arguments; or written to a
 // local value with String() whose WriteString/Write or fmt.Fprintf output is
@@ -364,13 +365,22 @@ func collectLiterals(fset *token.FileSet, file string, expr ast.Expr, into map[t
 			return true
 		}
 		value, err := strconv.Unquote(lit.Value)
-		if err != nil || value == "" {
+		if err != nil || !hasASCIILetter(value) {
 			return true
 		}
 		pos := fset.Position(lit.Pos())
 		into[lit.Pos()] = literal{File: file, Line: pos.Line, Raw: lit.Value, Value: value, Offset: pos.Offset}
 		return true
 	})
+}
+
+func hasASCIILetter(value string) bool {
+	for _, r := range value {
+		if r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' {
+			return true
+		}
+	}
+	return false
 }
 
 func isLocalBufferAddress(expr ast.Expr, buffers map[string]bool) bool {
