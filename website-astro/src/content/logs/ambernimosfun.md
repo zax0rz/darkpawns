@@ -4,6 +4,9 @@ nameWithheld: false
 lines: 2681
 log: "ambernimosfun.log"
 recordedBy: ["Vargus"]
+date:
+  text: "Between 20 and 29 August 2000"
+  basis: "Vargus's play time against dated logs, an estimate"
 redactions:
   emails: 0
   ips: 0

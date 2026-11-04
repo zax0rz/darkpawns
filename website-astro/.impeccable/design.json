@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-17T00:00:00Z",
+  "generatedAt": "2026-11-04T00:44:52Z",
   "title": "Design System: Dark Pawns",
   "extensions": {
     "colorMeta": {
@@ -122,7 +122,7 @@
     ],
     "rules": [
       { "name": "The One Oxblood Rule", "body": "Oxblood is the only accent and appears on roughly 10% or less of any screen. Its rarity is the point; a second accent or an oxblood fill breaks the system.", "section": "colors" },
-      { "name": "The Paper-Not-White Rule", "body": "Pure #FFFFFF and #000000 never appear except the CRT canvas at /play (#0a0908). Every surface is Paper or Paper-Deep; every black is Ink.", "section": "colors" },
+      { "name": "The Paper-Not-White Rule", "body": "Pure #FFFFFF and #000000 never appear except the CRT canvas (#0a0908), at /play and in the log screen at /archive/logs/. Every surface is Paper or Paper-Deep; every black is Ink.", "section": "colors" },
       { "name": "The Two-Serif-and-a-Terminal Rule", "body": "Display serif for headings and wordmark, body serif for reading, monospace only for game and machine chrome. No sans-serif, and no font loaded that isn't used.", "section": "typography" },
       { "name": "The Flat-Ink Rule", "body": "Surfaces are flat at rest and on interaction. Raised elements get a rule or a shift to Paper-Deep, never a shadow.", "section": "elevation" },
       { "name": "The 2px Rule", "body": "Nothing is rounder than 2px, except a true circle for a genuine status dot or avatar.", "section": "shapes" },
@@ -144,9 +144,9 @@
       "Don't use section-numbering eyebrows or decorative colophons; the FILED UNDER line is banned",
       "Don't put a kicker above a heading that repeats it; a kicker must carry a fact the heading cannot",
       "Don't build three-equal-card feature rows; use asymmetric or two-column editorial layouts",
-      "Don't build fake terminal or dashboard UIs; the only real terminal is the game client at /play",
+      "Don't build fake terminal or dashboard UIs; the only real terminal is the game client at /play, and the log screen replays the game's own output without invented terminal chrome",
       "Don't use gradients, box-shadows, glows, or any border radius over 2px",
-      "Don't use pure white/black (except the CRT canvas), sans-serif fonts, or any color outside the palette",
+      "Don't use pure white/black (except the CRT canvas and its ANSI colors), sans-serif fonts, or any color outside the palette",
       "Don't use gimmicky spooky assets (bats, cobwebs, dripping-blood text, flaming dividers)",
       "Don't adopt SaaS marketing patterns: hero-with-gradient, Get-Started funnels, pills-on-images, testimonial carousels",
       "Don't assert any fact, stat, or lore without a primary source"

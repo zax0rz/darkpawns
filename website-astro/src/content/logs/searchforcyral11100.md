@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 3017
 log: "searchforcyral11100.log"
 recordedBy: ["Farius"]
+date:
+  text: "11 January 2001"
+  iso: "2001-01-11"
+  basis: "the recorder's filename (11100), read against Farius's play time, and the same session's other captures"
 redactions:
   emails: 0
   ips: 0

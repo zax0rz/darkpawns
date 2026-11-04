@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 737
 log: "nimosladysolo1026002.log"
 recordedBy: []
+date:
+  text: "26 October 2000"
+  iso: "2000-10-26"
+  basis: "the recorder's filename (102600)"
 redactions:
   emails: 0
   ips: 0

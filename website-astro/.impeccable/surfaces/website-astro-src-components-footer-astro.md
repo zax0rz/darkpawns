@@ -1,8 +1,8 @@
 ---
 version: 1
 slug: "website-astro-src-components-footer-astro"
-primary_target: "website-astro/src/components/Footer.astro"
-related_targets: ["website-astro/src/pages/index.astro", "website-astro/src/pages/download.astro", "website-astro/src/pages/connect.astro"]
+primary_target: "src/components/Footer.astro"
+related_targets: ["src/pages/index.astro", "src/pages/download.astro", "src/pages/connect.astro"]
 ---
 
 # Footer directory and community

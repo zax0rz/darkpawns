@@ -45,6 +45,7 @@ const jsonLd = JSON.stringify({
   description,
   inLanguage: 'en',
   url: `${site}/archive/logs/${entry.id}/`,
+  ...(data.date?.iso ? { dateCreated: data.date.iso } : {}),
   isPartOf: { '@type': 'CollectionPage', name: 'Dark Pawns game logs', url: `${site}/archive/logs/` },
   ...(data.cast.length ? { character: data.cast.map((name) => ({ '@type': 'Person', name })) } : {}),
   publisher: { '@type': 'Organization', name: 'Dark Pawns', url: site },
@@ -102,7 +103,7 @@ const jsonLd = JSON.stringify({
           <dl class="provenance">
             <div><dt>Collection</dt><dd>The Vargus logs, donated by Vargus</dd></div>
             {data.nameWithheld && <div><dt>File</dt><dd>Name withheld: it contains a slur</dd></div>}
-            <div><dt>Date</dt><dd>Not recorded</dd></div>
+            <div><dt>Date</dt><dd>{data.date ? <>{data.date.text}<span class="basis">Source: {data.date.basis}</span></> : 'Nothing in the file dates it'}</dd></div>
             <div><dt>Removed</dt><dd>{removed ? `${removed}, each replaced by a marker so line numbers still match` : 'Nothing'}</dd></div>
             <div><dt>Plain text</dt><dd><a href={`/archive/logs/${entry.id}.md`}>{entry.id}.md</a></dd></div>
           </dl>
@@ -226,6 +227,7 @@ const jsonLd = JSON.stringify({
   .provenance div { padding: .2rem 0; border-top: 1px solid var(--rule); }
   .provenance dt { color: var(--ink-muted); }
   .provenance dd { margin: 0; }
+  .provenance .basis { display: block; color: var(--ink-muted); }
   .note { margin: var(--space-sm) 0 0; color: var(--ink-muted); font-size: .85rem; line-height: 1.45; }
 
   @media (max-width: 900px) {

@@ -23,6 +23,7 @@ export const GET: APIRoute = ({ props }) => {
     description: describeLog(data),
     recordedBy: recorders(data),
     lines: String(data.lines),
+    ...(data.date ? { date: `${data.date.text}, from ${data.date.basis}` } : {}),
     collection: 'The Vargus logs, donated by Vargus',
     cast: data.cast.join(', '),
     removed: redactionSummary(data.redactions) || 'nothing',

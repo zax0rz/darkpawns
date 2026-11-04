@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 4675
 log: "ghostwheel8800.log"
 recordedBy: ["Vargus"]
+date:
+  text: "8 August 2000"
+  iso: "2000-08-08"
+  basis: "the recorder's filename (8800)"
 redactions:
   emails: 0
   ips: 0

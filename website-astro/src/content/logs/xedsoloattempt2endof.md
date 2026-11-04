@@ -4,6 +4,9 @@ nameWithheld: false
 lines: 995
 log: "xedsoloattempt2endof.log"
 recordedBy: ["Vargus"]
+date:
+  text: "Between 8 and 14 September 2000"
+  basis: "Vargus's play time against dated logs, an estimate"
 redactions:
   emails: 0
   ips: 0

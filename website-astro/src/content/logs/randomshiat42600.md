@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 6230
 log: "randomshiat42600.log"
 recordedBy: ["Vargus"]
+date:
+  text: "26 April 2000"
+  iso: "2000-04-26"
+  basis: "the recorder's filename (42600)"
 redactions:
   emails: 0
   ips: 0

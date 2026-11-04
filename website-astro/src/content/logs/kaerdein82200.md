@@ -4,6 +4,10 @@ nameWithheld: false
 lines: 1151
 log: "kaerdein82200.log"
 recordedBy: ["Vargus"]
+date:
+  text: "22 August 2000"
+  iso: "2000-08-22"
+  basis: "the recorder's filename (82200)"
 redactions:
   emails: 0
   ips: 0

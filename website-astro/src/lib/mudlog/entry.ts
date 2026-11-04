@@ -2,7 +2,12 @@
 // (scripts/vargus_logs.py). Shared by the page, its Markdown twin, llms.txt
 // and the character pages, so every place says the same thing.
 
-type LogData = { title: string; lines: number; recordedBy: string[]; cast: string[] };
+type LogDate = { text: string; iso?: string; basis: string };
+type LogData = { title: string; lines: number; recordedBy: string[]; cast: string[]; date?: LogDate };
+
+/** "on 12 December 2000", "between 15 and 27 October 2000", "about 1 September 2000". */
+export const whenPlayed = (date: LogDate) =>
+  /^\d/.test(date.text) ? `on ${date.text}` : date.text[0].toLowerCase() + date.text.slice(1);
 
 export const recorders = (data: LogData) =>
   data.recordedBy.length ? data.recordedBy.join(' and ') : 'not shown in the capture';
@@ -15,6 +20,7 @@ export function describeLog(data: LogData, maxNames = 12) {
   const shown = names.slice(0, maxNames).join(', ') + (names.length > maxNames ? ` and ${names.length - maxNames} more` : '');
   return `${data.title}, a ${data.lines.toLocaleString('en-US')}-line game log from the original Dark Pawns server`
     + (data.recordedBy.length ? `, recorded by ${recorders(data)}` : '')
+    + (data.date ? `, played ${whenPlayed(data.date)}` : '')
     + '.'
     + (names.length ? ` On screen: ${shown}.` : '');
 }

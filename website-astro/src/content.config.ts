@@ -168,6 +168,9 @@ const logs = defineCollection({
     // Whose screen it was: every name the score command ranked the recorder
     // as. Empty when the capture never shows it.
     recordedBy: z.array(z.string()).default([]),
+    // When it was played, and what says so. Absent when nothing in the files
+    // dates it; iso only for a single day.
+    date: z.object({ text: z.string(), iso: z.string().optional(), basis: z.string() }).optional(),
     // What was removed before publishing. Every removed line is replaced by a
     // marker, so a line number still points at the same line of the capture.
     redactions: z.object({
