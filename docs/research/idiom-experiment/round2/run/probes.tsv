@@ -1,41 +1,41 @@
 i	func	file	line	literal	predicted_scenarios	census_dir	verdict	failed_scenarios	caught	agent_predicted_correctly
-0	findDoor	pkg/game/act_movement.go	601	"""I really don't see how you can do anything there.\r\n"""	door-basic					
-1	specButler	pkg/game/spec_procs3.go	437	"""$n gets $P."""	spec-proc-butler					
-2	specNewbieZoneEntranceActor	pkg/game/actor_specials_guards.go	207	"""Nah, you're too much of a badass to go in there!\r\n"""						
-3	specNinelives	pkg/game/spec_procs2.go	208	"""%s rises from the dead and keeps fighting!"""						
-4	CmdSerpentKick	pkg/command/skill_commands.go	1289	"""Kick who?\r\n"""	serpent-depth					
-5	*World.decayCorpse	pkg/game/limits_condition.go	459	"""$p decays in your hands, and the contents fall to the ground."""						
-6	specRemorter	pkg/game/spec_procs2.go	667	"""The remorter moves his hands over your eyes, closing them with a touch.\r\nColors spiral in your sight... You open your eyes, feeling refreshed.\r\n"""	spec-proc-remorter-success					
-7	specTattoo4	pkg/game/spec_procs2.go	1439	"""Get outta here, punk, you already have one. """	spec-proc-tattoo4-owned,shops-tattoo4-owned					
-8	specShopKeeperActor	pkg/game/actor_specials_shop.go	55	"""$N shouts '"""						
-9	*World.DoDiagnose	pkg/game/look.go	985	"""$N """	diagnose-depth,diagnose-player-depth					
-10	*World.CastGateSpell	pkg/game/gates.go	109	"""The magic flows through you, but nothing else happens.\r\n"""						
-11	*World.AffectUpdate	pkg/game/affect_update.go	130	"""%s %s"""						
-12	specTeleporter	pkg/game/spec_procs2.go	2116	"""$n says, 'My work here is done.'"""	spec-proc-teleporter					
-13	specNoGet	pkg/game/spec_procs_missing.go	33	"""$n strikes at $N's hand!"""	spec-proc-no-get-take					
-14	specHornObject	pkg/game/spec_procs4.go	716	"""$n blows into $P."""	spec-proc-horn					
-15	weatherChangeLocked	pkg/game/weather.go	574	"""Lightning starts to show in the sky.\r\n"""	weather-sky-transitions					
-16	*World.MpSound	pkg/game/mobprogs.go	478	"""jiggles in your direction."""						
-17	*World.HcontrolSetKey	pkg/game/house_control.go	318	"""House key set.\r\n"""	hcontrol-depth					
-18	*BanManager.DoUnban	pkg/game/bans.go	398	"""Site unbanned.\r\n"""						
-19	*AdminCommands.cmdWarn	pkg/command/admin_commands.go	233	"""Player '%s' is not online."""						
-20	*World.HcontrolBuildHouse	pkg/game/house_control.go	120	"""Max houses already defined.\r\n"""	hcontrol-capacity-depth					
-21	*World.DoReply	pkg/game/directed_speech.go	295	"""$E's linkless at the moment."""						
-22	applyDrinkSustenance	pkg/game/item_consumable.go	138	"""The vampirism in your body is not satiated by mere %s...\r\n"""	vampire-consume-dark					
-23	CmdSkills	pkg/command/skill_commands.go	80	"""║ Skill                    ║ Level║ Progress║ Type     ║\r\n"""	skills-practice					
-24	*World.doSplit	pkg/game/other_economy.go	28	"""How many coins do you wish to split with your group?\r\n"""	split-depth					
-25	CmdRescue	pkg/command/skill_commands.go	564	"""Whom do you want to rescue?\r\n"""						
-26	*World.npcGetDirect	pkg/game/npc_command_items.go	61	"""$n gets $p from $P."""						
-27	mobDisarm	pkg/game/spec_paladin.go	91	"""$n tries to disarm you but fails and falls flat on $s face!"""						
-28	*World.updateCharObjects	pkg/game/char_mgmt.go	70	"""Your light sputters out and dies."""	handler-held-light-output-depth					
-29	*World.npcBeheadDirect	pkg/game/npc_command_items.go	140	"""$n rips the head off $p!"""						
-30	specElementsGuardianBody	pkg/game/actor_specials_rooms.go	315	""" screams loudly, attacking """	spec-proc-elements-guardian					
-31	*World.emitMobSkillSurvival	pkg/game/spec_fighter.go	144	"""You are incapacitated an will slowly die, if not aided.\r\n"""						
-32	*World.getFromContainer	pkg/game/item_transfer.go	109	"""$p is closed."""	get-container					
-33	cmdSpikeOrStake	pkg/command/skill_commands.go	2111	"""No-one by that name here.\r\n"""	mudlog-spike-stake					
-34	*World.doRide	pkg/game/other_mount.go	44	"""That's disgusting!\r\n"""	mount-depth					
-35	*World.SpellCreatedObjectAct	pkg/game/say_spell_act.go	99	"""$n creates $p."""	cast-create-water-depth					
-36	*World.PostmasterCheckMail	pkg/game/mail.go	558	"""$n tells you, 'Sorry, you don't have any mail waiting.'"""	postmaster-empty-mail-depth					
-37	executeShoot	pkg/command/shoot.go	56	"""You decide to go investigate...\r\n"""	shoot-mob-hit-depth					
-38	specMirror	pkg/game/spec_procs3.go	1008	"""%s appears in a brilliant flash!"""						
-39	*World.doTransform	pkg/game/other_status.go	147	"""$n shivers and transforms into a werewolf!"""						
+0	findDoor	pkg/game/act_movement.go	601	"""I really don't see how you can do anything there.\r\n"""	door-basic	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-0-attempt-2	CLEAN_AFTER_RECHECK		no	no
+1	specButler	pkg/game/spec_procs3.go	437	"""$n gets $P."""	spec-proc-butler	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-1	NOT_CLEAN	spec-proc-butler	yes	yes
+2	specNewbieZoneEntranceActor	pkg/game/actor_specials_guards.go	207	"""Nah, you're too much of a badass to go in there!\r\n"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-2	CLEAN_AFTER_RECHECK		no	yes
+3	specNinelives	pkg/game/spec_procs2.go	208	"""%s rises from the dead and keeps fighting!"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-3	CLEAN		no	yes
+4	CmdSerpentKick	pkg/command/skill_commands.go	1289	"""Kick who?\r\n"""	serpent-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-4	CLEAN_AFTER_RECHECK		no	no
+5	*World.decayCorpse	pkg/game/limits_condition.go	459	"""$p decays in your hands, and the contents fall to the ground."""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-5	NOT_CLEAN	attitude-loot-gold-depth	yes	no
+6	specRemorter	pkg/game/spec_procs2.go	667	"""The remorter moves his hands over your eyes, closing them with a touch.\r\nColors spiral in your sight... You open your eyes, feeling refreshed.\r\n"""	spec-proc-remorter-success	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-6	NOT_CLEAN	attitude-loot-gold-depth,shops-remorter-success,spec-proc-remorter-success	yes	partly
+7	specTattoo4	pkg/game/spec_procs2.go	1439	"""Get outta here, punk, you already have one. """	spec-proc-tattoo4-owned,shops-tattoo4-owned	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-7	NOT_CLEAN	shops-tattoo4-owned,spec-proc-tattoo4-owned	yes	yes
+8	specShopKeeperActor	pkg/game/actor_specials_shop.go	55	"""$N shouts '"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-8	CLEAN		no	yes
+9	*World.DoDiagnose	pkg/game/look.go	985	"""$N """	diagnose-depth,diagnose-player-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-9	NOT_CLEAN	diagnose-player-depth,equipment-glance-depth,observation	yes	partly
+10	*World.CastGateSpell	pkg/game/gates.go	109	"""The magic flows through you, but nothing else happens.\r\n"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-10	CLEAN		no	yes
+11	*World.AffectUpdate	pkg/game/affect_update.go	130	"""%s %s"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-11	CLEAN		no	yes
+12	specTeleporter	pkg/game/spec_procs2.go	2116	"""$n says, 'My work here is done.'"""	spec-proc-teleporter	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-12	NOT_CLEAN	spec-proc-teleporter	yes	yes
+13	specNoGet	pkg/game/spec_procs_missing.go	33	"""$n strikes at $N's hand!"""	spec-proc-no-get-take	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-13	NOT_CLEAN	spec-proc-no-get,spec-proc-no-get-bare,spec-proc-no-get-palm,spec-proc-no-get-take	yes	partly
+14	specHornObject	pkg/game/spec_procs4.go	716	"""$n blows into $P."""	spec-proc-horn	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-14	NOT_CLEAN	spec-proc-horn	yes	yes
+15	weatherChangeLocked	pkg/game/weather.go	574	"""Lightning starts to show in the sky.\r\n"""	weather-sky-transitions	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-15	CLEAN		no	no
+16	*World.MpSound	pkg/game/mobprogs.go	478	"""jiggles in your direction."""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-16	CLEAN		no	yes
+17	*World.HcontrolSetKey	pkg/game/house_control.go	318	"""House key set.\r\n"""	hcontrol-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-17	NOT_CLEAN	hcontrol-depth	yes	yes
+18	*BanManager.DoUnban	pkg/game/bans.go	398	"""Site unbanned.\r\n"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-18	CLEAN		no	yes
+19	*AdminCommands.cmdWarn	pkg/command/admin_commands.go	233	"""Player '%s' is not online."""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-19	CLEAN_AFTER_RECHECK		no	yes
+20	*World.HcontrolBuildHouse	pkg/game/house_control.go	120	"""Max houses already defined.\r\n"""	hcontrol-capacity-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-20	NOT_CLEAN	hcontrol-capacity-depth	yes	yes
+21	*World.DoReply	pkg/game/directed_speech.go	295	"""$E's linkless at the moment."""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-21	CLEAN		no	yes
+22	applyDrinkSustenance	pkg/game/item_consumable.go	138	"""The vampirism in your body is not satiated by mere %s...\r\n"""	vampire-consume-dark	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-22	NOT_CLEAN	vampire-consume-dark,vampire-consume-sunset	yes	partly
+23	CmdSkills	pkg/command/skill_commands.go	80	"""║ Skill                    ║ Level║ Progress║ Type     ║\r\n"""	skills-practice	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-23; retry /home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-23-retry	CLEAN_AFTER_RECHECK		no	yes
+24	*World.doSplit	pkg/game/other_economy.go	28	"""How many coins do you wish to split with your group?\r\n"""	split-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-24	NOT_CLEAN	split-depth	yes	yes
+25	CmdRescue	pkg/command/skill_commands.go	564	"""Whom do you want to rescue?\r\n"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-25	NOT_CLEAN	combat-entry-rescue-gates	yes	no
+26	*World.npcGetDirect	pkg/game/npc_command_items.go	61	"""$n gets $p from $P."""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-26	NOT_CLEAN	attitude-loot-gold-depth,attitude-loot-switched-output-depth,mudlog-attitude-loot-depth,spec-proc-dragon-breath-combat	yes	no
+27	mobDisarm	pkg/game/spec_paladin.go	91	"""$n tries to disarm you but fails and falls flat on $s face!"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-27	CLEAN_AFTER_RECHECK		no	yes
+28	*World.updateCharObjects	pkg/game/char_mgmt.go	70	"""Your light sputters out and dies."""	handler-held-light-output-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-28	NOT_CLEAN	handler-held-light-output-depth	yes	yes
+29	*World.npcBeheadDirect	pkg/game/npc_command_items.go	140	"""$n rips the head off $p!"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-29	NOT_CLEAN	spec-proc-brain-eater	yes	no
+30	specElementsGuardianBody	pkg/game/actor_specials_rooms.go	315	""" screams loudly, attacking """	spec-proc-elements-guardian	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-30	NOT_CLEAN	spec-proc-elements-guardian	yes	yes
+31	*World.emitMobSkillSurvival	pkg/game/spec_fighter.go	144	"""You are incapacitated an will slowly die, if not aided.\r\n"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-31	NOT_CLEAN	play-lab-m3-death-in-combat	yes	no
+32	*World.getFromContainer	pkg/game/item_transfer.go	109	"""$p is closed."""	get-container	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-32	NOT_CLEAN	act-obj-sweep,get-container,object-inventory	yes	partly
+33	cmdSpikeOrStake	pkg/command/skill_commands.go	2111	"""No-one by that name here.\r\n"""	mudlog-spike-stake	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-33	NOT_CLEAN	mudlog-spike-stake,spike-depth	yes	partly
+34	*World.doRide	pkg/game/other_mount.go	44	"""That's disgusting!\r\n"""	mount-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-34	NOT_CLEAN	mount-depth	yes	yes
+35	*World.SpellCreatedObjectAct	pkg/game/say_spell_act.go	99	"""$n creates $p."""	cast-create-water-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-35	NOT_CLEAN	attitude-loot-gold-depth,magic-surface-callsite-depth,spellmatrix-create-food-staff-fanout-depth	yes	no
+36	*World.PostmasterCheckMail	pkg/game/mail.go	558	"""$n tells you, 'Sorry, you don't have any mail waiting.'"""	postmaster-empty-mail-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-36	NOT_CLEAN	postmaster-empty-mail-depth,postmaster-saved-recipient-depth	yes	partly
+37	executeShoot	pkg/command/shoot.go	56	"""You decide to go investigate...\r\n"""	shoot-mob-hit-depth	/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-37	CLEAN_AFTER_RECHECK		no	no
+38	specMirror	pkg/game/spec_procs3.go	1008	"""%s appears in a brilliant flash!"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-38	CLEAN		no	yes
+39	*World.doTransform	pkg/game/other_status.go	147	"""$n shivers and transforms into a werewolf!"""		/home/zach/Archives/darkpawns/oracle-runs/2026-11-04/luna-r2-probe-39	CLEAN		no	yes
