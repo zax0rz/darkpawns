@@ -761,6 +761,10 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
+	return circleAfterGates(ch, target)
+}
+
+func circleAfterGates(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillCircle) <= 0 {
 		return SkillResult{Success: false, MessageToCh: "You make a circle in the air.\r\n"}
 	}
