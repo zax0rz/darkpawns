@@ -1,0 +1,209 @@
+test	mimo	deepseek	sol	settled_by	mark	action	reason
+TestACReduction_GoldenAgainstCSource	R	R	R	unanimous	R	keep	
+TestApplyDamageModifiers	R	R	R	unanimous	R	keep	
+TestBackstabMult	C	C	C	unanimous	C	hold	
+TestBackstabMult_GoldenAgainstCSource	R	R	R	unanimous	R	keep	
+TestBleedLineColorGatedAtSPR	R	R	R	unanimous	R	keep	
+TestCalcLevelDiff	R	R	R	unanimous	R	keep	
+TestCalculateDamage_ACCanReduceMinimumHitToZero	R	R	R	unanimous	R	keep	
+TestCalculateDamage_AttackerDeadStr	R	R	F	claude	F	strengthen	Sol: removing the strength-zero override stays green; the AC 100 floor already gives 1.
+TestCalculateDamage_LevelOneBareHandsUsesCNumberRange	R	R	R	unanimous	R	keep	
+TestCalculateDamage_NonNormalAttackType	R	F	F	claude	F	strengthen	Two mutations (DeepSeek, Sol): applying AC reduction to non-normal attacks stays green.
+TestCalculateDamage_PlayerWithWeapon	R	R	F	claude	F	strengthen	Sol: dropping the weapon contribution stays green.
+TestCalculateDamage_VictimPositionMultiplier	R	R	R	unanimous	R	keep	
+TestCalculateHitChance_DrunkPenalty	R	R	R	unanimous	R	keep	
+TestCalculateHitChance_LowACAlwaysHits	D	F	D	majority	D	hold	
+TestCalculateHitChance_NPCHitrollMatchesCStoredTHAC0Boundary	R	R	R	unanimous	R	keep	
+TestCalculateHitChance_Natural20	F	R	C	claude	F	fold-into-keeper	MiMo: making natural 20 not hit stays green. Sol names a keeper that forces 20; fold the case there or force the roll.
+TestCalculateHitChance_NegativeDefenderACClamped	F	R	F	claude	F	strengthen	Two mutations (MiMo, Sol): removing the AC clamp stays green.
+TestCalculateHitChance_SleepingDefender	R	R	F	claude	F	strengthen	Sol: a natural-1 miss against a sleeper stays green under the 90% floor; C skips the awake miss check entirely.
+TestCalculateHitChance_WeaponBlessedBonus	R	R	R	unanimous	R	keep	
+TestCanonicalFightMessagesData	R	R	R	unanimous	R	keep	
+TestCarryWeight_ExceptionalStrength	R	R	R	unanimous	R	keep	
+TestCbGetRace_PrefersCallbacks	R	R	R	unanimous	R	keep	
+TestChangeAlignment	F	F	D	claude	F	strengthen	All three mutated it green; asserts nothing.
+TestChangeAlignment_NPCKiller	R	R	F	claude	F	strengthen	Sol, confirmed by Claude: the result starts at 0, so a no-op setter passes; the killer is a PC despite the name.
+TestChangeAlignment_NPCKillerNPC	R	R	F	claude	F	strengthen	Sol, confirmed by Claude: the victim is neutral, so the neutral guard suppresses the update even without the NPC guard (J9).
+TestChangeAlignment_NilGetAlignment	R	F	R	claude	R	keep	Contract is no panic with the hook missing; the mutation breaks behavior outside that contract.
+TestCheckDodge_DrawConsumedEvenIfNotMutualFighting	R	R	R	unanimous	R	keep	
+TestCheckDodge_NPCAffDodge	R	R	R	unanimous	R	keep	
+TestCheckDodge_NoAffect	R	R	R	unanimous	R	keep	
+TestCheckDodge_PlayerCannotDodge	R	R	R	unanimous	R	keep	
+TestCheckParry_ArmedSkilled	R	R	R	unanimous	R	keep	
+TestCheckParry_CDoesNotGateSleepingFighter	R	R	R	unanimous	R	keep	
+TestCheckParry_CUsesTenThousandRange	R	R	F	claude	F	strengthen	Sol: the scripted roller ignores bounds, so shrinking the range stays green.
+TestCheckParry_NPCDefender	R	R	R	unanimous	R	keep	
+TestCheckParry_NoSkillStillConsumesCProbe	R	R	R	unanimous	R	keep	
+TestCheckParry_NotMutualFighting	R	R	R	unanimous	R	keep	
+TestCombatBodyDefenseAudience	R	R	R	unanimous	R	keep	
+TestCombatBodyDirectText	R	R	R	unanimous	R	keep	
+TestCombatBodyParriedIsolation	R	R	R	unanimous	R	keep	
+TestCombatBodyRejectsInvalidReferences	R	R	R	unanimous	R	keep	
+TestCombatBodyRetirementIsolation	R	R	R	unanimous	R	keep	
+TestCombatBodyStopOneWay	R	R	R	unanimous	R	keep	
+TestCombatBodyStopRetarget	R	R	R	unanimous	R	keep	
+TestCombatEngineStartFreezesWhenDPClockIsSet	R	R	R	unanimous	R	keep	
+TestCombatEngineStopWaitsForInFlightTick	R	R	R	unanimous	R	keep	
+TestCombatMessages_HaveNewlines	R	R	R	unanimous	R	keep	
+TestCombatOrderPrependsNewFightersAndRemovesStoppedFighters	R	R	R	unanimous	R	keep	
+TestCombatTranscript_Deterministic	R	C	R	majority	R	keep	
+TestCombatTranscript_Golden	F	F	F	claude	F	needs-oracle	All three: Go-vs-Go golden. Regenerate expected bytes from an oracle transcript; separate task.
+TestCounterProcs_KillCountTracking	R	R	R	unanimous	R	keep	
+TestCounterProcs_MajorMilestone	R	F	F	claude	F	with-bug	Pins the wrong pkg/combat counter_procs; replaced by the counter_procs fix PR.
+TestCounterProcs_NoMilestone	F	F	D	claude	F	with-bug	Asserts nothing; rewritten by the counter_procs fix PR.
+TestDamMessageColorBracketsSurviveSendOKSuppression	R	R	R	unanimous	R	keep	
+TestDamMessageColorFramingAtCMP	R	R	R	unanimous	R	keep	
+TestDamMessageSeverityBoundariesConsumeNoDraws	R	R	R	unanimous	R	keep	
+TestDamMessage_HighDamageTier	R	R	C	majority	R	keep	
+TestDamMessage_OutOfBoundsAttackType	R	R	R	unanimous	R	keep	
+TestDamMessage_TierSelection	R	C	F	claude	C	hold	Sol showed the tier is unchecked, but TestDamMessageSeverityBoundariesConsumeNoDraws owns all 21 boundaries with exact bytes (DeepSeek); merge rather than fix.
+TestDamMessage_ZeroDamage	R	R	C	majority	R	keep	
+TestDamageMessages_Golden	R	R	C	majority	R	keep	
+TestDamageStopsSleepingVictim	R	R	R	unanimous	R	keep	
+TestDamageVictimEnrollmentIndependentOfAttackerPosition	R	R	R	unanimous	R	keep	
+TestDeathCry_Basic	R	R	R	unanimous	R	keep	
+TestDeferredInitialAttackEnrollmentAndProtections	R	R	R	unanimous	R	keep	
+TestDeferredInitialAttackKeepsExistingTarget	R	R	R	unanimous	R	keep	
+TestDeterministicDamage	R	R	R	unanimous	R	keep	
+TestDeterministicHitChance	R	R	R	unanimous	R	keep	
+TestDexApp_GoldenAgainstCSource	R	R	R	unanimous	R	keep	
+TestDexIndex_ClampHigh	R	R	R	unanimous	R	keep	
+TestDexIndex_ClampLow	R	R	R	unanimous	R	keep	
+TestDexIndex_Max	R	R	C	majority	R	keep	
+TestDexIndex_Normal	R	R	R	unanimous	R	keep	
+TestDexIndex_Zero	R	R	C	majority	R	keep	
+TestFightMessageCorpusAllVariantOutcomesThroughSkillMessageDispatch	R	R	R	unanimous	R	keep	
+TestFightMessageSelectionConsumesOneDrawAndUsesActTokens	R	R	R	unanimous	R	keep	
+TestGameCallbacks_DamMessage	R	R	C	majority	R	keep	
+TestGameCallbacks_LogAndBroadChatHelpers	R	R	R	unanimous	R	keep	
+TestGetAttacksPerRound_HasteSlow	R	R	R	unanimous	R	keep	
+TestGetAttacksPerRound_NPC	C	C	C	unanimous	C	hold	
+TestGetAttacksPerRound_PlayerHighLevel	R	F	C	claude	F	fold-into-keeper	DeepSeek: the level-40 minimum is 4, so >= 3 cannot fail. Fold an exact row into the scripted level table (Sol).
+TestGetAttacksPerRound_PlayerLowLevel	R	F	C	claude	F	fold-into-keeper	DeepSeek: a level-1 warrior always gets 1, so [1,5] cannot fail. Fold an exact row into the scripted level table (Sol).
+TestGetAttacksPerRound_SlowCanDenyRound	R	R	R	unanimous	R	keep	
+TestGetAttacksPerRound_SlowOnHighLevelStillAttacks	R	R	F	claude	R	keep	"Contract is ""still attacks""; ignoring slow still attacks, so the mutation is outside the contract."
+TestGetCombatTarget	R	R	R	unanimous	R	keep	
+TestGetExpNilGuard_DieWithKiller	R	F	R	claude	R	keep	Nil-guard contract (no panic); mutation outside it.
+TestGetExpNilGuard_GroupGain	R	F	R	claude	R	keep	Nil-guard contract (no panic); mutation outside it.
+TestGetMinusDam_ACAbove90	C	C	C	unanimous	C	hold	
+TestGetMinusDam_ACThresholds	C	C	C	unanimous	C	hold	
+TestGetMinusDam_BoundaryValues	C	C	C	unanimous	C	hold	
+TestGetMinusDam_TruncatesCompletedCExpression	R	R	R	unanimous	R	keep	
+TestGetMinusDam_ZeroDamage	R	R	R	unanimous	R	keep	
+TestGetPositionFromHP	R	R	R	unanimous	R	keep	
+TestGetTHAC0_InvalidClass	C	C	C	unanimous	C	hold	
+TestGetTHAC0_Level1	C	C	C	unanimous	C	hold	
+TestGetTHAC0_LevelAbove40	C	C	C	unanimous	C	hold	
+TestGetTHAC0_LevelBelow1	C	C	C	unanimous	C	hold	
+TestGetTHAC0_Mage	C	C	C	unanimous	C	hold	
+TestGetTHAC0_NPC	C	C	C	unanimous	C	hold	
+TestGetTHAC0_Warrior	C	C	C	unanimous	C	hold	
+TestGetTHAC0_WarriorLevel5	C	C	C	unanimous	C	hold	
+TestGroupGain_NoHooks	F	F	R	claude	R	keep	Overrides a 2-1 F vote: the contract is no panic with hooks absent, and with no hooks nothing is observable.
+TestHandleDeath_Basic	R	R	C	majority	R	keep	
+TestHandleDeath_PassesAttackType	R	R	R	unanimous	R	keep	
+TestHandleSurvivingVictimStateBleedingLineCarriesColor	R	R	R	unanimous	R	keep	
+TestHandleSurvivingVictimState_AutoWimpyFleesAfterBleedingMessage	R	R	R	unanimous	R	keep	
+TestHandleSurvivingVictimState_MobileWimpyCallsDirectFleeHook	R	R	R	unanimous	R	keep	
+TestHandleSurvivingVictimState_PainAndObserverScream	R	R	R	unanimous	R	keep	
+TestIsInGroup	R	R	R	unanimous	R	keep	
+TestLVLImmortCanonicalValueMatchesC	R	R	R	unanimous	R	keep	
+TestLVLImmortCompileTimeContexts	C	C	R	majority	C	hold	
+TestMercyStopEndsMultiAttackRound	R	R	R	unanimous	R	keep	
+TestMobRedirect_CharmedPetRetargetsToMaster	R	R	R	unanimous	R	keep	
+TestMobRedirect_HighLevelSwitcheroo	R	R	R	unanimous	R	keep	
+TestMobRedirect_JailGuardDoesNotSubdueInvisibleVictim	R	R	R	unanimous	R	keep	
+TestMobRedirect_JailGuardSubduesInsteadOfDamaging	R	R	R	unanimous	R	keep	
+TestMobRedirect_NonJailMobDoesNotSubdue	R	R	R	unanimous	R	keep	
+TestNPCGetAttacksPerRound_Deterministic	R	R	R	unanimous	R	keep	
+TestNPCGetAttacksPerRound_RandomBonus	R	R	R	unanimous	R	keep	
+TestNewNamedCombatant	D	D	D	unanimous	D	hold	
+TestPCGetAttacksPerRound_Deterministic	R	R	R	unanimous	R	keep	
+TestPCGetAttacksPerRound_Statistical	R	R	F	claude	R	keep	A statistical mean is not the owner of an exact threshold; if no deterministic test pins the threshold, that is a missing test, not this one.
+TestParseFightMessages	R	R	R	unanimous	R	keep	
+TestParseFightMessagesRejectsTruncatedRecord	R	R	R	unanimous	R	keep	
+TestPerformGroupGain_Basic	R	R	R	unanimous	R	keep	
+TestPerformGroupGain_OneExpPoint	R	R	R	unanimous	R	keep	
+TestPerformInitialAttackResolvesExactlyOneSynchronousHit	R	R	R	unanimous	R	keep	
+TestPerformInitialAttackSkipsDeadDefenderAfterHitDraws	R	R	R	unanimous	R	keep	
+TestPerformInitialAttack_ModifiersApplied	R	R	R	unanimous	R	keep	
+TestPerformOneHit_DamageUnchangedByWeaponOffset	R	R	R	unanimous	R	keep	
+TestPerformOneHit_MissBranchUsesFreshWeaponOffset	R	R	R	unanimous	R	keep	
+TestPerformOneHit_MissRunsDamageTail	R	R	R	unanimous	R	keep	
+TestPerformOneHit_WeaponOffsetReachesMessageSender	R	R	R	unanimous	R	keep	
+TestPerformRoundUsesReverseEngagementOrder	R	R	R	unanimous	R	keep	
+TestPerformRound_BothSidesDealDamageOverRounds	R	R	R	unanimous	R	keep	
+TestPerformRound_DefenderRetaliates	R	R	R	unanimous	R	keep	
+TestPerformRound_IgnoresNonFightingCombatant	R	R	R	unanimous	R	keep	
+TestPositionDamageMultiplier	R	R	C	majority	R	keep	
+TestProcessCombatPair_DifferentRoom	R	R	R	unanimous	R	keep	
+TestProcessCombatPair_DownedMobWithZeroWaitStandsUpAndAttacks	R	R	R	unanimous	R	keep	
+TestProcessCombatPair_MobAttack	F	F	F	claude	F	strengthen	All three mutated it green; only rejects HP increases.
+TestProcessCombatPair_MobAttacksOnStandupRound	R	R	F	majority	R	keep	
+TestProcessCombatPair_MobStandsWhenDowned	R	R	C	majority	R	keep	
+TestProcessCombatPair_MobStandupRoundDrawsFirst	R	R	C	majority	R	keep	
+TestProcessCombatPair_MobWithWaitStillAttacks	R	R	F	claude	F	needs-oracle	Encodes the behavior PF-105 questions; settle with the PF-105 oracle scenario first.
+TestProcessCombatPair_MobileDodgeEmitsAllCOutputs	R	R	R	unanimous	R	keep	
+TestProcessCombatPair_PCStandup	R	R	R	unanimous	R	keep	
+TestProcessCombatPair_ParryDefersReductionToOpponentsTurn	R	R	R	unanimous	R	keep	
+TestProcessCombatPair_PlayerDeath	D	F	D	majority	D	hold	
+TestProcessCombatPair_PositionGateAWAKE	R	R	C	majority	R	keep	
+TestProcessCombatPair_ScrambleCapitalized	R	R	R	unanimous	R	keep	
+TestRandPick	R	R	R	unanimous	R	keep	
+TestRandPick_SingleElement	C	R	R	majority	R	keep	
+TestRangedRetaliationEnrollmentAndProtections	R	R	R	unanimous	R	keep	
+TestRangedRetaliationReadsSleepingPostureBeforeDamage	R	R	R	unanimous	R	keep	
+TestRangedRetaliationWoundedMobAndJailOrder	R	R	R	unanimous	R	keep	
+TestRawKill_NilGetRace	R	R	R	unanimous	R	keep	
+TestReplaceMessageTokens	R	R	R	unanimous	R	keep	
+TestRollDice_Basic	R	R	R	unanimous	R	keep	
+TestRollDice_Negative	R	R	R	unanimous	R	keep	
+TestRollDice_SingleDice	R	R	R	unanimous	R	keep	
+TestRollDice_ZeroNum	R	R	R	unanimous	R	keep	
+TestRollDice_ZeroSides	R	R	R	unanimous	R	keep	
+TestRoundContinuesAfterSameTargetSwitcheroo	R	R	R	unanimous	R	keep	
+TestRoundRetargetKeepsRemainingAttacks	R	R	R	unanimous	R	keep	
+TestScriptedRoller	D	D	R	majority	D	hold	
+TestSeededRoller	R	D	R	majority	R	keep	
+TestSendHitMessage	R	R	R	unanimous	R	keep	
+TestSendHitMessageFallsBackWhenNil	R	R	R	unanimous	R	keep	
+TestSendHitMessageUsesMessageFunc	R	R	R	unanimous	R	keep	
+TestSendMissMessage	R	R	R	unanimous	R	keep	
+TestSendMissMessageFallsBackWhenNil	R	R	R	unanimous	R	keep	
+TestSendMissMessageUsesMessageFunc	R	R	R	unanimous	R	keep	
+TestSexPronouns	R	R	R	unanimous	R	keep	
+TestShopkeeperProtection_RemovesCombatPair	R	R	R	unanimous	R	keep	
+TestSkillMessageBranchOrderByDamageAndPosition	R	R	R	unanimous	R	keep	
+TestSkillMessageColorFramingAtCMP	R	R	R	unanimous	R	keep	
+TestSkillMessageColorGatedByLevel	R	R	R	unanimous	R	keep	
+TestSkillMessageDeadSelfTickMatchesActSleepGates	R	R	R	unanimous	R	keep	
+TestSkillMessageDirectActHonorsWritingGate	R	R	R	unanimous	R	keep	
+TestSkillMessageGodBranchBeatsZeroDamage	R	R	R	unanimous	R	keep	
+TestSkillMessageGodVictimUsesAwakeGate	R	R	R	unanimous	R	keep	
+TestSkillMessageSelfZeroDamageEmitsNothing	R	R	R	unanimous	R	keep	
+TestStartCombat	R	R	R	unanimous	R	keep	
+TestStartCombatFromMobDefersDefenderEnrollment	R	R	R	unanimous	R	keep	
+TestStartCombat_DefenderKeepsExistingTarget	R	R	R	unanimous	R	keep	
+TestStartCombat_DoesNotStandDefenderAtEntry	R	R	R	unanimous	R	keep	
+TestStartCombat_DrawsNoRNG	R	R	R	unanimous	R	keep	
+TestStartCombat_Duplicate	R	R	R	unanimous	R	keep	
+TestStartCombat_EnrollsDefenderWhoseFightingWasPreSet	R	R	R	unanimous	R	keep	
+TestStopCombat	R	R	C	majority	R	keep	
+TestStrApp_GoldenAgainstCSource	R	R	R	unanimous	R	keep	
+TestStrIndex_18WithStrAdd	R	R	R	unanimous	R	keep	
+TestStrIndex_LowStr	R	R	R	unanimous	R	keep	
+TestStrIndex_NoStrAdd	R	R	R	unanimous	R	keep	
+TestStrIndex_Not18	R	R	R	unanimous	R	keep	
+TestSurvivorSwingsAtFlaggedCorpseDraws	R	R	R	unanimous	R	keep	
+TestTHAC0_Clamps	R	R	R	unanimous	R	keep	
+TestTHAC0_GoldenAgainstCSource	R	R	R	unanimous	R	keep	
+TestTHAC0_TableCellsMatchCSource	R	R	R	unanimous	R	keep	
+TestTakeDamageDeathBroadcastExcludesVictim	R	R	R	unanimous	R	keep	
+TestTakeDamage_JailGuardDoesNotSubdueInvisibleVictim	R	R	R	unanimous	R	keep	
+TestTakeDamage_NilGetRace	R	F	R	claude	R	keep	Nil-guard contract (no panic); mutation outside it.
+TestUnawakeVictimStopKeepsAttacker	R	R	R	unanimous	R	keep	
+TestUpdatePositionAfterDamage_IncapExactStrings	R	R	R	unanimous	R	keep	
+TestUpdatePositionAfterDamage_NilBroadcast	R	R	R	unanimous	R	keep	
+TestUpdatePositionAfterDamage_WoundedBand	R	R	R	unanimous	R	keep	
+TestVictimStandRequiresNewCombatOnHitAndMiss	R	R	R	unanimous	R	keep	
+TestWoundedBandBroadcastsCapitalizeAndExcludeVictim	R	R	R	unanimous	R	keep	
