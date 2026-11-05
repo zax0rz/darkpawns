@@ -212,89 +212,6 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 	// so it loots nothing and its group's gold stays on the corpse.
 	kp, isPlayer := combatPlayer(killer)
 
-	// awardGroupGold ports the autogold/autosplit tail of group_gain()
-	// (src/fight.c:747-846). The divisor and every gold transfer include the
-	// in-room group members C counts — mobiles included.
-	awardGroupGold := func(inRoom []combat.Combatant, totMembers int, leader combat.Combatant) {
-		if !isPlayer || victimGold <= 0 || !kp.AutoGold {
-			return
-		}
-		goldLooted := victimGold
-
-		if kp.AutoSplit {
-			// Autosplit path — fight.c lines 756-830
-			// Announce the loot to killer
-			kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
-				goldLooted, victimName))
-			if victim != nil {
-				Act(w, false, kp, nil, nil, nil,
-					fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
-			}
-
-			// If we have group members, distribute
-			if totMembers > 1 {
-				goldPerMember := goldLooted / totMembers
-
-				// The leader share has no AFF_GROUP check in C: k receives
-				// gold_per_member whenever k != ch and shares the room
-				// (src/fight.c:768-781), even though tot_members did not
-				// count an ungrouped leader and the XP loop skips them.
-				// `group <follower>` leaves the leader ungrouped
-				// (src/act.other.c:726-727), so this is the ordinary case.
-				if leader != killer && goldPerMember > 0 && leader.GetRoom() == killerRoom {
-					combatSendMessage(leader, fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
-						kp.Name, goldPerMember))
-					kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
-						goldPerMember, leader.GetName()))
-					combatAddGold(leader, goldPerMember)
-					goldLooted -= goldPerMember
-				}
-
-				for _, m := range inRoom {
-					if m == killer || m == leader {
-						continue // killer's share below (fight.c:814-823); the leader was paid above
-					}
-					if goldPerMember > 0 {
-						combatSendMessage(m, fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
-							kp.Name, goldPerMember))
-						kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
-							goldPerMember, m.GetName()))
-						combatAddGold(m, goldPerMember)
-						goldLooted -= goldPerMember
-					} else {
-						// The none-to-split notice is a follower-loop arm
-						// (fight.c:801-811); the leader block has no else.
-						kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
-							m.GetName()))
-						combatSendMessage(m, fmt.Sprintf("%s would have shared some gold with you but there was none to split!\r\n",
-							kp.Name))
-					}
-				}
-
-				if goldPerMember > 0 {
-					kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", goldPerMember))
-					combatAddGold(kp, goldPerMember)
-					goldLooted -= goldPerMember
-				} else {
-					kp.SendMessage("When you split no gold, you got none.\r\n")
-				}
-				if goldLooted > 0 {
-					kp.SendMessage(fmt.Sprintf("You keep %d gold leftover.\r\n", goldLooted))
-					combatAddGold(kp, goldLooted)
-				}
-			}
-		} else {
-			// AutoGold without AutoSplit — fight.c:836-845 also notifies the room.
-			kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
-				goldLooted, victimName))
-			if victim != nil {
-				Act(w, false, kp, nil, nil, nil,
-					fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
-			}
-			combatAddGold(kp, goldLooted)
-		}
-	}
-
 	// --- Experience handling ---
 	grouped := w.combatIsInGroup(killer)
 
@@ -383,7 +300,103 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 			changeAlignment(p, victimAlign)
 		}
 	}
-	awardGroupGold(inRoom, totMembers, leader) // src/fight.c:747-846: XP shares precede autogold.
+	w.awardGroupKillGold(
+		killer, victim, victimName, victimGold, killerRoom, kp, isPlayer, inRoom, totMembers, leader,
+	) // src/fight.c:747-846: XP shares precede autogold.
+}
+
+// awardGroupKillGold ports the autogold/autosplit tail of group_gain()
+// (src/fight.c:747-846). The divisor and every gold transfer include the
+// in-room group members C counts — mobiles included.
+func (w *World) awardGroupKillGold(
+	killer combat.Combatant,
+	victim Actor,
+	victimName string,
+	victimGold int,
+	killerRoom int,
+	kp *Player,
+	isPlayer bool,
+	inRoom []combat.Combatant,
+	totMembers int,
+	leader combat.Combatant,
+) {
+	if !isPlayer || victimGold <= 0 || !kp.AutoGold {
+		return
+	}
+	goldLooted := victimGold
+
+	if kp.AutoSplit {
+		// Autosplit path — fight.c lines 756-830
+		// Announce the loot to killer
+		kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
+			goldLooted, victimName))
+		if victim != nil {
+			Act(w, false, kp, nil, nil, nil,
+				fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
+		}
+
+		// If we have group members, distribute
+		if totMembers > 1 {
+			goldPerMember := goldLooted / totMembers
+
+			// The leader share has no AFF_GROUP check in C: k receives
+			// gold_per_member whenever k != ch and shares the room
+			// (src/fight.c:768-781), even though tot_members did not
+			// count an ungrouped leader and the XP loop skips them.
+			// `group <follower>` leaves the leader ungrouped
+			// (src/act.other.c:726-727), so this is the ordinary case.
+			if leader != killer && goldPerMember > 0 && leader.GetRoom() == killerRoom {
+				combatSendMessage(leader, fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
+					kp.Name, goldPerMember))
+				kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
+					goldPerMember, leader.GetName()))
+				combatAddGold(leader, goldPerMember)
+				goldLooted -= goldPerMember
+			}
+
+			for _, m := range inRoom {
+				if m == killer || m == leader {
+					continue // killer's share below (fight.c:814-823); the leader was paid above
+				}
+				if goldPerMember > 0 {
+					combatSendMessage(m, fmt.Sprintf("%s splits some gold with you, you get %d.\r\n",
+						kp.Name, goldPerMember))
+					kp.SendMessage(fmt.Sprintf("You share %d gold with %s.\r\n",
+						goldPerMember, m.GetName()))
+					combatAddGold(m, goldPerMember)
+					goldLooted -= goldPerMember
+				} else {
+					// The none-to-split notice is a follower-loop arm
+					// (fight.c:801-811); the leader block has no else.
+					kp.SendMessage(fmt.Sprintf("You would share gold with %s, but there was none to split!\r\n",
+						m.GetName()))
+					combatSendMessage(m, fmt.Sprintf("%s would have shared some gold with you but there was none to split!\r\n",
+						kp.Name))
+				}
+			}
+
+			if goldPerMember > 0 {
+				kp.SendMessage(fmt.Sprintf("You split the gold and keep %d for yourself.\r\n", goldPerMember))
+				combatAddGold(kp, goldPerMember)
+				goldLooted -= goldPerMember
+			} else {
+				kp.SendMessage("When you split no gold, you got none.\r\n")
+			}
+			if goldLooted > 0 {
+				kp.SendMessage(fmt.Sprintf("You keep %d gold leftover.\r\n", goldLooted))
+				combatAddGold(kp, goldLooted)
+			}
+		}
+	} else {
+		// AutoGold without AutoSplit — fight.c:836-845 also notifies the room.
+		kp.SendMessage(fmt.Sprintf("You loot %d coins from the corpse of %s.\r\n",
+			goldLooted, victimName))
+		if victim != nil {
+			Act(w, false, kp, nil, nil, nil,
+				fmt.Sprintf("$n loots some gold from the corpse of %s.", victimName), "", ToRoom)
+		}
+		combatAddGold(kp, goldLooted)
+	}
 }
 
 // combatSendMessage delivers a C send_to_char to any character body. Mobiles
