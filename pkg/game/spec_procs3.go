@@ -32,7 +32,7 @@ func mobHasAffect(me *MobInstance, affect string) bool {
 // cleric procedure. In particular, it emits the verbal component before
 // dispatching call_magic; a direct spells.Cast would silently omit those
 // player-facing bytes.
-func castClericSpell(w *World, me *MobInstance, target interface{}, spellNum int) bool {
+func castClericSpell(w *World, me *MobInstance, target any, spellNum int) bool {
 	victim, ok := target.(combat.Combatant)
 	if !ok {
 		return false
@@ -144,7 +144,10 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	if vict == nil {
 		return specSummoner(w, ch, me, "", "")
 	}
+	return specClericCombat(w, me, vict)
+}
 
+func specClericCombat(w *World, me *MobInstance, vict combat.Combatant) bool {
 	// lspell = number(0, GET_LEVEL(ch)) + GET_LEVEL(ch)/5, capped at GET_LEVEL, min 1
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
@@ -1061,32 +1064,7 @@ func specProstitute(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 	}
 }
 
-// roachNumber is the C number() seam for the roach's pulse-local draws.
-var roachNumber = dprng.Number
-
-// specRoach — a living cockroach that eats, grows, and reproduces.
-// C source: SPECIAL(roach) ~line 707. Autonomous C dispatch passes the mob as
-// both ch and me; the Go adapter has no player for that call, so this proc uses
-// me for the mob state and room acts.
-func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || me == nil || me.GetPosition() <= combat.PosSleeping {
-		return false
-	}
-	roomVNum := me.GetRoomVNum()
-
-	// Starvation death (extremely rare: 1/10001 * 1/10001 probability)
-	// #nosec G404 — game RNG, not cryptographic
-	//nolint:gocritic,staticcheck // badCond/SA4000: two independent RNG rolls are intentional, not a copy-paste error
-	if roachNumber(0, 10000) == 0 && roachNumber(0, 10000) == 0 && me.GetMaxHealth() < 11 {
-		Act(w, false, me, nil, nil, nil, "$n seems to starve to death and simply fades out of existence.", "", ToRoom)
-		me.SetAlive(false)
-		if w.spawner != nil {
-			w.spawner.RemoveMobInstance(me.VNum, me)
-		}
-		w.ExtractMob(me)
-		return true
-	}
-
+func (w *World) specRoachFood(me *MobInstance, roomVNum int) bool {
 	// Look for food on the ground
 	items := w.GetItemsInRoom(roomVNum)
 	for _, obj := range items {
@@ -1138,6 +1116,38 @@ func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 		if err := w.MoveObjectToNowhere(obj); err != nil {
 			slog.Warn("MoveObjectToNowhere failed in burp spec", "obj", obj.GetVNum(), "error", err)
 		}
+		return true
+	}
+	return false
+}
+
+// roachNumber is the C number() seam for the roach's pulse-local draws.
+var roachNumber = dprng.Number
+
+// specRoach — a living cockroach that eats, grows, and reproduces.
+// C source: SPECIAL(roach) ~line 707. Autonomous C dispatch passes the mob as
+// both ch and me; the Go adapter has no player for that call, so this proc uses
+// me for the mob state and room acts.
+func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+	if cmd != "" || me == nil || me.GetPosition() <= combat.PosSleeping {
+		return false
+	}
+	roomVNum := me.GetRoomVNum()
+
+	// Starvation death (extremely rare: 1/10001 * 1/10001 probability)
+	// #nosec G404 — game RNG, not cryptographic
+	//nolint:gocritic,staticcheck // badCond/SA4000: two independent RNG rolls are intentional, not a copy-paste error
+	if roachNumber(0, 10000) == 0 && roachNumber(0, 10000) == 0 && me.GetMaxHealth() < 11 {
+		Act(w, false, me, nil, nil, nil, "$n seems to starve to death and simply fades out of existence.", "", ToRoom)
+		me.SetAlive(false)
+		if w.spawner != nil {
+			w.spawner.RemoveMobInstance(me.VNum, me)
+		}
+		w.ExtractMob(me)
+		return true
+	}
+
+	if w.specRoachFood(me, roomVNum) {
 		return true
 	}
 

@@ -369,7 +369,7 @@ func (w *World) FindMobInRoom(vnum int, name string) *MobInstance {
 // legacyActArgs adapts the old loosely typed helper arguments to Act's typed
 // victim/primary-object/secondary-object parameters. Keep this only while
 // domain migrations retire the legacy helper signatures.
-func legacyActArgs(args ...interface{}) (Actor, *ObjectInstance, *ObjectInstance) {
+func legacyActArgs(args ...any) (Actor, *ObjectInstance, *ObjectInstance) {
 	var victim Actor
 	var obj, victObj *ObjectInstance
 	for _, arg := range args {
@@ -394,25 +394,25 @@ func legacyActFormat(msg string) string {
 }
 
 // actToChar is a legacy signature kept as a thin adapter to canonical Act.
-func (w *World) actToChar(ch *Player, msg string, obj1, obj2 interface{}) {
+func (w *World) actToChar(ch *Player, msg string, obj1, obj2 any) {
 	victim, obj, victObj := legacyActArgs(obj1, obj2)
 	Act(nil, false, ch, victim, obj, victObj, legacyActFormat(msg), "", ToChar)
 }
 
 // actToRoom is a legacy signature kept as a thin adapter to canonical Act.
-func (w *World) actToRoom(ch *Player, msg string, obj1, obj2 interface{}) {
+func (w *World) actToRoom(ch *Player, msg string, obj1, obj2 any) {
 	victim, obj, victObj := legacyActArgs(obj1, obj2)
 	Act(w, false, ch, victim, obj, victObj, legacyActFormat(msg), "", ToRoom)
 }
 
 // actToVictim is a legacy signature kept as a thin adapter to canonical Act.
-func actToVictim(ch, vict *Player, msg string, obj1, obj2 interface{}) {
+func actToVictim(ch, vict *Player, msg string, obj1, obj2 any) {
 	_, obj, victObj := legacyActArgs(obj1, obj2)
 	Act(nil, false, ch, vict, obj, victObj, legacyActFormat(msg), "", ToVict)
 }
 
 // actToRoomExclude is a legacy signature kept as a thin adapter to Act.
-func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 interface{}) {
+func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 any) {
 	_, obj, victObj := legacyActArgs(obj1, obj2)
 	Act(w, false, ch, vict, obj, victObj, legacyActFormat(msg), "", ToNotVict)
 }

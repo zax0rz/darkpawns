@@ -309,12 +309,7 @@ func (w *World) huntVictim(m *MobInstance) {
 	// C finds the path first and skips evasion only when hunter and target are
 	// already together. Its two speech checks use independent number(0,6) draws.
 	// #nosec G404 — game RNG, not cryptographic
-	if evasion > 0 && dir != BFS_ALREADY_THERE && huntNumber(1, 151) < evasion {
-		if m.CanSpeak() && huntNumber(0, 6) == 0 {
-			w.NPCCommandDirect(m, "say", "Where the hell did my prey go?!")
-		} else if m.CanSpeak() && huntNumber(0, 6) == 0 {
-			w.NPCCommandDirect(m, "say", "Fuck this...")
-		}
+	if w.tryHuntEvasion(m, evasion, dir) {
 		return
 	}
 
@@ -355,6 +350,18 @@ func (w *World) huntVictim(m *MobInstance) {
 			w.huntTrashTalk(m, victim)
 		}
 	}
+}
+
+func (w *World) tryHuntEvasion(m *MobInstance, evasion, dir int) bool {
+	if evasion > 0 && dir != BFS_ALREADY_THERE && huntNumber(1, 151) < evasion {
+		if m.CanSpeak() && huntNumber(0, 6) == 0 {
+			w.NPCCommandDirect(m, "say", "Where the hell did my prey go?!")
+		} else if m.CanSpeak() && huntNumber(0, 6) == 0 {
+			w.NPCCommandDirect(m, "say", "Fuck this...")
+		}
+		return true
+	}
+	return false
 }
 
 // huntTrashTalk delivers C's hunt_victim taunts (src/graph.c:346-402). Every

@@ -360,43 +360,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	}
 
 	// Arrival message
-	if !ch.IsAffected(affSneak) {
-		switch dir {
-		case 0, 1, 2, 3:
-			direct := dirs[revDir[dir]]
-			var msg string
-			if ch.IsAffected(affFly) {
-				msg = fmt.Sprintf("$n flies in from the %s.", direct)
-			} else if toRoom.Sector == SECT_UNDERWATER {
-				msg = fmt.Sprintf("$n swims in from the %s.", direct)
-			} else if mount != nil {
-				msg = fmt.Sprintf("$n rides in from the %s on $N.", direct)
-			} else {
-				msg = fmt.Sprintf("$n arrives from the %s.", direct)
-			}
-			Act(w, true, ch, mount, nil, nil, msg, "", ToRoom)
-		case 4:
-			if ch.IsAffected(affFly) {
-				Act(w, true, ch, nil, nil, nil, "$n flies in from below.", "", ToRoom)
-			} else if toRoom.Sector == SECT_UNDERWATER {
-				Act(w, true, ch, nil, nil, nil, "$n swims in from below.", "", ToRoom)
-			} else if mount != nil {
-				Act(w, true, ch, mount, nil, nil, "$n rides in from below on $N.", "", ToRoom)
-			} else {
-				Act(w, true, ch, nil, nil, nil, "$n climbs in from below.", "", ToRoom)
-			}
-		case 5:
-			if ch.IsAffected(affFly) {
-				Act(w, true, ch, nil, nil, nil, "$n flies in from above.", "", ToRoom)
-			} else if toRoom.Sector == SECT_UNDERWATER {
-				Act(w, true, ch, nil, nil, nil, "$n swims in from above.", "", ToRoom)
-			} else if mount != nil {
-				Act(w, true, ch, mount, nil, nil, "$n rides in from above on $N.", "", ToRoom)
-			} else {
-				Act(w, true, ch, nil, nil, nil, "$n climbs in from above.", "", ToRoom)
-			}
-		}
-	}
+	sendPlayerMovementArrival(w, ch, mount, dir, toRoom)
 
 	// C renders the mover's destination room here, before greet/entry triggers
 	// and before perform_move recursively moves followers (R1/R5e). The session
@@ -435,6 +399,46 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	w.RunRoomEnterScript(ch)
 
 	return true
+}
+
+func sendPlayerMovementArrival(w *World, ch *Player, mount *MobInstance, dir int, toRoom *parser.Room) {
+	if !ch.IsAffected(affSneak) {
+		switch dir {
+		case 0, 1, 2, 3:
+			direct := dirs[revDir[dir]]
+			var msg string
+			if ch.IsAffected(affFly) {
+				msg = fmt.Sprintf("$n flies in from the %s.", direct)
+			} else if toRoom.Sector == SECT_UNDERWATER {
+				msg = fmt.Sprintf("$n swims in from the %s.", direct)
+			} else if mount != nil {
+				msg = fmt.Sprintf("$n rides in from the %s on $N.", direct)
+			} else {
+				msg = fmt.Sprintf("$n arrives from the %s.", direct)
+			}
+			Act(w, true, ch, mount, nil, nil, msg, "", ToRoom)
+		case 4:
+			if ch.IsAffected(affFly) {
+				Act(w, true, ch, nil, nil, nil, "$n flies in from below.", "", ToRoom)
+			} else if toRoom.Sector == SECT_UNDERWATER {
+				Act(w, true, ch, nil, nil, nil, "$n swims in from below.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from below on $N.", "", ToRoom)
+			} else {
+				Act(w, true, ch, nil, nil, nil, "$n climbs in from below.", "", ToRoom)
+			}
+		case 5:
+			if ch.IsAffected(affFly) {
+				Act(w, true, ch, nil, nil, nil, "$n flies in from above.", "", ToRoom)
+			} else if toRoom.Sector == SECT_UNDERWATER {
+				Act(w, true, ch, nil, nil, nil, "$n swims in from above.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from above on $N.", "", ToRoom)
+			} else {
+				Act(w, true, ch, nil, nil, nil, "$n climbs in from above.", "", ToRoom)
+			}
+		}
+	}
 }
 
 func (w *World) riddenMount(rider *Player) *MobInstance {
@@ -671,70 +675,17 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 	}
 
 	switch scmd {
-	case scmdOpen:
-		if obj != nil {
-			obj.SetValue(contFlags, obj.GetValue(contFlags)^contClosed)
-		} else {
-			ext.ExitInfo ^= parser.ExitClosed
-			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
-			if hasBack {
-				backExt.ExitInfo ^= parser.ExitClosed
-				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
-			}
-		}
+	case scmdOpen, scmdClose:
+		toggleDoorFlag(w, ch, obj, door, ext, otherRoomVNum, backExt, hasBack, contClosed, parser.ExitClosed)
 		ch.SendMessage("Okay.\r\n")
 
-	case scmdClose:
-		if obj != nil {
-			obj.SetValue(contFlags, obj.GetValue(contFlags)^contClosed)
+	case scmdUnlock, scmdLock, scmdPick:
+		toggleDoorFlag(w, ch, obj, door, ext, otherRoomVNum, backExt, hasBack, contLocked, parser.ExitLocked)
+		if scmd == scmdPick {
+			ch.SendMessage("The lock quickly yields to your skills.\r\n")
 		} else {
-			ext.ExitInfo ^= parser.ExitClosed
-			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
-			if hasBack {
-				backExt.ExitInfo ^= parser.ExitClosed
-				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
-			}
+			ch.SendMessage("*Click*\r\n")
 		}
-		ch.SendMessage("Okay.\r\n")
-
-	case scmdUnlock:
-		if obj != nil {
-			obj.SetValue(contFlags, obj.GetValue(contFlags)^contLocked)
-		} else {
-			ext.ExitInfo ^= parser.ExitLocked
-			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
-			if hasBack {
-				backExt.ExitInfo ^= parser.ExitLocked
-				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
-			}
-		}
-		ch.SendMessage("*Click*\r\n")
-
-	case scmdLock:
-		if obj != nil {
-			obj.SetValue(contFlags, obj.GetValue(contFlags)^contLocked)
-		} else {
-			ext.ExitInfo ^= parser.ExitLocked
-			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
-			if hasBack {
-				backExt.ExitInfo ^= parser.ExitLocked
-				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
-			}
-		}
-		ch.SendMessage("*Click*\r\n")
-
-	case scmdPick:
-		if obj != nil {
-			obj.SetValue(contFlags, obj.GetValue(contFlags)^contLocked)
-		} else {
-			ext.ExitInfo ^= parser.ExitLocked
-			w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
-			if hasBack {
-				backExt.ExitInfo ^= parser.ExitLocked
-				w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
-			}
-		}
-		ch.SendMessage("The lock quickly yields to your skills.\r\n")
 	}
 
 	// Notify the room
@@ -775,6 +726,20 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 			}
 			actor.SendMessage(msg)
 		}
+	}
+}
+
+func toggleDoorFlag(w *World, ch *Player, obj *ObjectInstance, door int, ext parser.Exit, otherRoomVNum int, backExt parser.Exit, hasBack bool, objectFlag, exitFlag int) {
+	if obj != nil {
+		obj.SetValue(contFlags, obj.GetValue(contFlags)^objectFlag)
+		return
+	}
+
+	ext.ExitInfo ^= exitFlag
+	w.SetExitInfo(ch.GetRoom(), dirs[door], ext.ExitInfo)
+	if hasBack {
+		backExt.ExitInfo ^= exitFlag
+		w.SetExitInfo(otherRoomVNum, dirs[revDir[door]], backExt.ExitInfo)
 	}
 }
 

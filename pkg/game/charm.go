@@ -26,7 +26,7 @@ type affectBitChecker interface {
 //
 // The IS_NPC gate stays in the spell layer; this method only answers the
 // AFF_CHARM question. Returns false for unrecognized character types.
-func (w *World) IsCharmedI(ch interface{}) bool {
+func (w *World) IsCharmedI(ch any) bool {
 	c, ok := ch.(affectBitChecker)
 	if !ok {
 		return false

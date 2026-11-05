@@ -23,7 +23,7 @@ type ObjectInstance struct {
 	Contains []*ObjectInstance
 
 	// Custom state
-	CustomData map[string]interface{}
+	CustomData map[string]any
 
 	// Runtime state — typed replacement for CustomData
 	Runtime ObjectRuntimeState
@@ -97,7 +97,7 @@ func NewObjectInstance(proto *parser.Obj, roomVNum int) *ObjectInstance {
 		VNum:       proto.VNum,
 		RoomVNum:   roomVNum,
 		Contains:   make([]*ObjectInstance, 0),
-		CustomData: make(map[string]interface{}),
+		CustomData: make(map[string]any),
 		Runtime:    ObjectRuntimeState{},
 	}
 	if roomVNum > 0 {
@@ -326,9 +326,9 @@ func (o *ObjectInstance) GetExtraDescs() []parser.ExtraDesc {
 }
 
 // SetCustomData sets custom data on the object.
-func (o *ObjectInstance) SetCustomData(key string, value interface{}) {
+func (o *ObjectInstance) SetCustomData(key string, value any) {
 	if o.CustomData == nil {
-		o.CustomData = make(map[string]interface{})
+		o.CustomData = make(map[string]any)
 	}
 	o.CustomData[key] = value
 }
@@ -406,7 +406,7 @@ func (o *ObjectInstance) MigrateCustomData() {
 // on load, MigrateCustomData moves known keys from CustomData to Runtime;
 // on save, GetSaveState puts them back so the JSON state map is complete.
 // Returns nil when there is no custom state to persist.
-func (o *ObjectInstance) GetSaveState() map[string]interface{} {
+func (o *ObjectInstance) GetSaveState() map[string]any {
 	// Obj_to_store saves every short description (src/objsave.c:132-135).
 	// Carried overrides survive reload; auto_equip recomputes ITEM_TAKE_NAME
 	// for equipped objects (src/objsave.c:440,447-448).
@@ -421,7 +421,7 @@ func (o *ObjectInstance) GetSaveState() map[string]interface{} {
 		return nil
 	}
 
-	state := make(map[string]interface{}, len(o.CustomData)+8)
+	state := make(map[string]any, len(o.CustomData)+8)
 	for k, v := range o.CustomData {
 		state[k] = v
 	}
@@ -507,7 +507,7 @@ func (o *ObjectInstance) InRoom(roomVNum int) bool {
 }
 
 // CarriedBy mirrors C's obj->carried_by check, including equipped objects.
-func (o *ObjectInstance) CarriedBy(actor interface{}) bool {
+func (o *ObjectInstance) CarriedBy(actor any) bool {
 	if o == nil || (!o.Location.IsInInventory() && !o.Location.IsEquipped()) {
 		return false
 	}

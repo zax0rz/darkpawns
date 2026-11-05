@@ -541,27 +541,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		cbDismount(victim)
 	}
 
-	switch newPos {
-	case PosMortally:
-		sendCombatMessage(victim, "You are mortally wounded, and will die soon, if not aided.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName)), []Combatant{victim})
-	case PosIncap:
-		sendCombatMessage(victim, "You are incapacitated an will slowly die, if not aided.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName)), []Combatant{victim})
-	case PosStunned:
-		sendCombatMessage(victim, "You're stunned, but will probably regain consciousness again.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName)), []Combatant{victim})
-	case PosDead:
-		sendCombatMessage(victim, "You are dead!  Sorry...\r\n")
-		// act(..., TO_ROOM) excludes the victim (fight.c:1582).
-		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), []Combatant{victim})
-	default:
-		ApplySurvivingVictimDefaultArm(ch, victim, dam, newPos)
-	}
-
+	emitDamagePositionMessage(ch, victim, dam, newPos, victimName, roomVNum)
 	if newPos <= PosSleeping && victim.GetFightingBody() != nil {
 		victim.StopFighting()
 	}
@@ -664,6 +644,29 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		return true
 	}
 	return false
+}
+
+func emitDamagePositionMessage(ch, victim Combatant, dam, newPos int, victimName string, roomVNum int) {
+	switch newPos {
+	case PosMortally:
+		sendCombatMessage(victim, "You are mortally wounded, and will die soon, if not aided.\r\n")
+		cbBroadcast(ch.GetRoom(),
+			capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName)), []Combatant{victim})
+	case PosIncap:
+		sendCombatMessage(victim, "You are incapacitated an will slowly die, if not aided.\r\n")
+		cbBroadcast(ch.GetRoom(),
+			capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName)), []Combatant{victim})
+	case PosStunned:
+		sendCombatMessage(victim, "You're stunned, but will probably regain consciousness again.\r\n")
+		cbBroadcast(ch.GetRoom(),
+			capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName)), []Combatant{victim})
+	case PosDead:
+		sendCombatMessage(victim, "You are dead!  Sorry...\r\n")
+		// act(..., TO_ROOM) excludes the victim (fight.c:1582).
+		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), []Combatant{victim})
+	default:
+		ApplySurvivingVictimDefaultArm(ch, victim, dam, newPos)
+	}
 }
 
 // ---------------------------------------------------------------------------

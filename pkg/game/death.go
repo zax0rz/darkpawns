@@ -381,17 +381,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			}
 			return
 		}
-		w.handleMobDeath(victim, killer, attackType)
-		// die_with_killer's stop_fighting(killer) (src/fight.c:615-616): the
-		// killer leaves the fight its lethal blow ended; other combatants
-		// still fighting the flagged body do not (src/handler.c:1147-1151).
-		w.stopKillerAfterDie(killer)
-		w.attitudeLootAfterKill(killer, victim)
-		if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
-			// C damage() runs the ordinary do_get only after die_with_killer
-			// and its attitude-loot tail have returned (src/fight.c:1691-1712).
-			w.DoGet(playerKiller, "all corpse")
-		}
+		w.finishMobDeath(victim, killer, attackType)
 	} else {
 		w.recordKill(killer)
 		w.handlePlayerDeath(victim, true, attackType, killerName, killer) // combat death with killer
@@ -408,6 +398,20 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				slog.Warn("Publish PlayerKilledEvent failed", "killer", killerName, "victim", victim.GetName(), "error", err)
 			}
 		}
+	}
+}
+
+func (w *World) finishMobDeath(victim, killer combat.Combatant, attackType int) {
+	w.handleMobDeath(victim, killer, attackType)
+	// die_with_killer's stop_fighting(killer) (src/fight.c:615-616): the
+	// killer leaves the fight its lethal blow ended; other combatants
+	// still fighting the flagged body do not (src/handler.c:1147-1151).
+	w.stopKillerAfterDie(killer)
+	w.attitudeLootAfterKill(killer, victim)
+	if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
+		// C damage() runs the ordinary do_get only after die_with_killer
+		// and its attitude-loot tail have returned (src/fight.c:1691-1712).
+		w.DoGet(playerKiller, "all corpse")
 	}
 }
 
@@ -434,7 +438,7 @@ func (w *World) recordKill(killer combat.Combatant) {
 }
 
 // HandleSpellDeath is a bridge for the spell system. Accepts interface{} and type-asserts.
-func (w *World) HandleSpellDeath(victim interface{}) {
+func (w *World) HandleSpellDeath(victim any) {
 	if c, ok := victim.(combat.Combatant); ok {
 		w.HandleNonCombatDeath(c)
 	}
@@ -1107,7 +1111,7 @@ func (w *World) createMoneyObject(amount int) *ObjectInstance {
 		TypeFlagOverride:  &typeFlag,
 		ValuesOverride:    &values,
 		WearFlagsOverride: &wearFlags,
-		CustomData: map[string]interface{}{
+		CustomData: map[string]any{
 			"is_money":     true,
 			"money_amount": amount,
 		},
@@ -1214,7 +1218,7 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 		IsCorpse:         true,
 		TypeFlagOverride: &containerType,
 		ValuesOverride:   &corpseValues,
-		CustomData: map[string]interface{}{
+		CustomData: map[string]any{
 			"is_corpse":   true,
 			"corpse_name": name,
 		},
@@ -1301,7 +1305,7 @@ func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, eq
 
 // makeDust implements make_dust() for SPELL_DISINTEGRATE
 // Source: fight.c lines 433-480
-func (w *World) makeDust(victim interface{}, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, gold int, attackType int) {
+func (w *World) makeDust(victim any, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, gold int, attackType int) {
 	// Scatter ALL inventory items directly to room floor
 	for _, item := range inventory {
 		if item != nil {

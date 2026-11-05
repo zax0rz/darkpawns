@@ -378,17 +378,7 @@ func (w *World) decayObject(obj *ObjectInstance) {
 	}
 
 	if vnum == 18 {
-		timer := obj.GetTimer()
-		if timer > 0 {
-			timer--
-			obj.SetTimer(timer)
-		}
-		if timer == 0 {
-			if location.Kind == ObjInRoom && len(w.actChar(roomVNum)) != 0 {
-				w.sendToRoomExact(roomVNum, "The pile of dust is blown away by a draft of wind.\r\n")
-			}
-			w.ExtractObject(obj, roomVNum)
-		}
+		w.decayDustPile(obj, location, roomVNum)
 		return
 	}
 
@@ -448,6 +438,20 @@ func (w *World) decayObject(obj *ObjectInstance) {
 			w.ExtractObject(obj, roomVNum)
 		}
 		return
+	}
+}
+
+func (w *World) decayDustPile(obj *ObjectInstance, location ObjectLocation, roomVNum int) {
+	timer := obj.GetTimer()
+	if timer > 0 {
+		timer--
+		obj.SetTimer(timer)
+	}
+	if timer == 0 {
+		if location.Kind == ObjInRoom && len(w.actChar(roomVNum)) != 0 {
+			w.sendToRoomExact(roomVNum, "The pile of dust is blown away by a draft of wind.\r\n")
+		}
+		w.ExtractObject(obj, roomVNum)
 	}
 }
 

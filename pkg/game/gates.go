@@ -100,7 +100,7 @@ func (w *World) SpellGate(caster *Player) bool {
 // CastGateSpell is the bridge used by pkg/spells' manual-spell dispatcher.
 // C spell_gate prints the non-room refusal when no legal room or existing
 // portal applies (src/gate.c:383-390).
-func (w *World) CastGateSpell(caster interface{}) {
+func (w *World) CastGateSpell(caster any) {
 	player, ok := caster.(*Player)
 	if !ok || player == nil {
 		return

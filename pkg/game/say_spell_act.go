@@ -12,7 +12,7 @@ package game
 // sameClass and otherClass carry the spell name already substituted; vict is
 // the target's line or "" when C sends none. It reports false when ch is not a
 // live body in a room, so the caller can fall back.
-func (w *World) SaySpellDeliver(ch, tch, tobj interface{}, sameClass, otherClass, vict string) bool {
+func (w *World) SaySpellDeliver(ch, tch, tobj any, sameClass, otherClass, vict string) bool {
 	caster, ok := ch.(Actor)
 	if !ok || caster == nil || w == nil {
 		return false
@@ -64,7 +64,7 @@ func actorClass(a Actor) (int, bool) {
 // each listener PERS for $n/$N and, with hideInvisible, skips a listener who
 // cannot see ch, as C does. It reports false when ch is not a body, so the
 // caller can fall back.
-func (w *World) SpellActNotVict(ch, vict interface{}, format string, hideInvisible bool) bool {
+func (w *World) SpellActNotVict(ch, vict any, format string, hideInvisible bool) bool {
 	caster, ok := ch.(Actor)
 	if !ok || caster == nil || w == nil {
 		return false
@@ -76,7 +76,7 @@ func (w *World) SpellActNotVict(ch, vict interface{}, format string, hideInvisib
 
 // SpellActToRoom is act(format, hideInvisible, ch, 0, vict, TO_ROOM) for spell
 // code; see SpellActNotVict.
-func (w *World) SpellActToRoom(ch, vict interface{}, format string, hideInvisible bool) bool {
+func (w *World) SpellActToRoom(ch, vict any, format string, hideInvisible bool) bool {
 	caster, ok := ch.(Actor)
 	if !ok || caster == nil || w == nil {
 		return false
@@ -90,7 +90,7 @@ func (w *World) SpellActToRoom(ch, vict interface{}, format string, hideInvisibl
 // ch, tobj, 0, TO_ROOM) used by MagCreations. Returning true means the live
 // game's Act renderer handled the room line, including SENDOK and per-viewer
 // object visibility.
-func (w *World) SpellCreatedObjectAct(ch, obj interface{}) bool {
+func (w *World) SpellCreatedObjectAct(ch, obj any) bool {
 	actor, actorOK := ch.(Actor)
 	object, objectOK := obj.(*ObjectInstance)
 	if !actorOK || actor == nil || !objectOK || object == nil || w == nil {
@@ -102,7 +102,7 @@ func (w *World) SpellCreatedObjectAct(ch, obj interface{}) bool {
 
 // SpellActToVictim is act(format, FALSE, caster, 0, victim, TO_VICT) for
 // manual spells. The target observes $n through C's PERS visibility rules.
-func (w *World) SpellActToVictim(ch, vict interface{}, format string) bool {
+func (w *World) SpellActToVictim(ch, vict any, format string) bool {
 	caster, casterOK := ch.(Actor)
 	target, targetOK := vict.(Actor)
 	if !casterOK || !targetOK || caster == nil || target == nil || w == nil {

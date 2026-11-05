@@ -31,17 +31,17 @@ type SessionInterface interface {
 	MarkDirty(vars ...string)
 
 	// GetManager returns the session manager (needed for some admin commands)
-	GetManager() interface{}
+	GetManager() any
 
 	// GetWorld returns the game world
 	GetWorld() *game.World
 
 	// GetCombatEngine returns the combat engine
-	GetCombatEngine() interface{}
+	GetCombatEngine() any
 
 	// Temporary data storage methods
-	SetTempData(key string, value interface{})
-	GetTempData(key string) interface{}
+	SetTempData(key string, value any)
+	GetTempData(key string) any
 	ClearTempData(key string)
 
 	// Random number generation

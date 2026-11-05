@@ -1201,7 +1201,7 @@ func (ce *CombatEngine) redirectAttacker(attacker, target Combatant) bool {
 	}
 	// C's redirect branches call hit(), not only set_fighting(). Preserve
 	// that synchronous opener before the normal combat round resumes.
-	if initial, ok := interface{}(ce).(interface {
+	if initial, ok := any(ce).(interface {
 		PerformInitialAttack(Combatant, Combatant) error
 	}); ok {
 		_ = initial.PerformInitialAttack(attacker, target)

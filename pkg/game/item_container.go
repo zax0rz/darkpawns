@@ -108,33 +108,37 @@ func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
 		}
 		w.performPut(ch, obj, cont)
 	} else {
-		keyword := strings.TrimPrefix(arg1, "all.")
-		found := false
-		// Snapshot the inventory first: performPut removes items from
-		// the inventory, and ranging the live slice would skip elements.
-		// C captures next_content before perform_put for the same reason.
-		items := ch.Inventory.Snapshot()
-		for _, obj := range items {
-			if obj == cont {
-				continue
-			}
-			// CAN_SEE_OBJ(ch, obj) — act.item.c:132. The C put-all loop skips
-			// items the player can't see; it has no extra-flags bit check.
-			if !canSeeObject(ch, obj) {
-				continue
-			}
-			if objDotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords()) {
-				found = true
-				w.performPut(ch, obj, cont)
-			}
-		}
-		if !found {
-			if objDotmode == findAll {
-				ch.SendMessage("You don't seem to have anything to put in it.\r\n")
-			} else {
-				ch.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", keyword))
-			}
-		}
+		w.putAll(ch, arg1, objDotmode, cont)
 	}
 	return true
+}
+
+func (w *World) putAll(ch *Player, arg1 string, objDotmode int, cont *ObjectInstance) {
+	keyword := strings.TrimPrefix(arg1, "all.")
+	found := false
+	// Snapshot the inventory first: performPut removes items from the
+	// inventory, and ranging the live slice would skip elements.
+	// C captures next_content before perform_put for the same reason.
+	items := ch.Inventory.Snapshot()
+	for _, obj := range items {
+		if obj == cont {
+			continue
+		}
+		// CAN_SEE_OBJ(ch, obj) — act.item.c:132. The C put-all loop skips
+		// items the player can't see; it has no extra-flags bit check.
+		if !canSeeObject(ch, obj) {
+			continue
+		}
+		if objDotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords()) {
+			found = true
+			w.performPut(ch, obj, cont)
+		}
+	}
+	if !found {
+		if objDotmode == findAll {
+			ch.SendMessage("You don't seem to have anything to put in it.\r\n")
+		} else {
+			ch.SendMessage(fmt.Sprintf("You don't seem to have any %ss.\r\n", keyword))
+		}
+	}
 }

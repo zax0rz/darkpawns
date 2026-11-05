@@ -145,6 +145,11 @@ func Dream(ch DreamContext) DreamResult {
 		return result
 	}
 
+	dreamLevelFlavor(ch, &result)
+	return result
+}
+
+func dreamLevelFlavor(ch DreamContext, result *DreamResult) {
 	// Level-based flavor dreams (chance: 1/16)
 	// Source: dream.c switch(GET_LEVEL(ch)) lines 108–186
 	lvl := ch.GetLevel()
@@ -203,8 +208,6 @@ func Dream(ch DreamContext) DreamResult {
 			result.Woke = true
 		}
 	}
-
-	return result
 }
 
 // DreamTravelFn teleports a sleeping character to a dream destination.

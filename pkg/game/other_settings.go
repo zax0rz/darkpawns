@@ -312,13 +312,7 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		// PRF_TOG_CHK: toggle the bit and capture the NEW state. result==1 means
 		// the flag is now ON → print TOG_ON (msgs[0]); result==0 → print TOG_OFF
 		// (msgs[1]).
-		if ch.GetFlags()&(1<<flag) != 0 {
-			ch.SetPlrFlag(flag, false)
-			result = false
-		} else {
-			ch.SetPlrFlag(flag, true)
-			result = true
-		}
+		result = togglePlayerPreference(ch, flag)
 	}
 
 	// SCMD_NOSUMMON sets a WAIT_STATE of PULSE_VIOLENCE*2 — act.other.c:1210.
@@ -332,5 +326,14 @@ func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bo
 		ch.SendMessage(msgs[1])
 	}
 
+	return true
+}
+
+func togglePlayerPreference(ch *Player, flag int) bool {
+	if ch.GetFlags()&(1<<flag) != 0 {
+		ch.SetPlrFlag(flag, false)
+		return false
+	}
+	ch.SetPlrFlag(flag, true)
 	return true
 }

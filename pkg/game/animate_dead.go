@@ -26,7 +26,7 @@ type charWithCharmAndCha interface {
 // Order matches C:
 //  1. charmed (AFF_CHARM) -> "You are too giddy to have any followers!"
 //  2. follower count >= GET_CHA(ch)/2 -> "You can't have any more followers!"
-func (w *World) CanRaiseUndeadI(ch interface{}) (bool, string) {
+func (w *World) CanRaiseUndeadI(ch any) (bool, string) {
 	c, ok := ch.(charWithCharmAndCha)
 	if !ok {
 		// Unknown caster type: don't silently block the spell.
@@ -58,7 +58,7 @@ func (w *World) CanRaiseUndeadI(ch interface{}) (bool, string) {
 
 // CharmAndFollowI sets AFF_CHARM on the raised mob and makes it a quiet
 // follower of leader — the SET_BIT_AR + add_follower_quiet pair from C.
-func (w *World) CharmAndFollowI(mob, leader interface{}) {
+func (w *World) CharmAndFollowI(mob, leader any) {
 	m, ok := mob.(*MobInstance)
 	if !ok {
 		return
