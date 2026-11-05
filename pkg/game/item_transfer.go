@@ -538,6 +538,41 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 	w.actToRoomExclude(ch, vict, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), nil, vict)
 }
 
+// doGiveCoins handles the coin form of give, including mob bribes.
+func (w *World) doGiveCoins(ch *Player, victName string, amount int) bool {
+	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
+	if mob != nil {
+		// C perform_give_gold (src/act.item.c:738-754): the amount
+		// and purse checks come before the bribe, and a god's purse is
+		// never checked or charged.
+		if amount <= 0 {
+			ch.SendMessage("Heh heh heh ... we are jolly funny today, eh?\r\n")
+			return true
+		}
+		if ch.GetLevel() < lvlGod && !ch.SpendGold(amount) {
+			ch.SendMessage("You don't have that many coins!\r\n")
+			return true
+		}
+		ch.SendMessage("Okay.\r\n")
+		Act(w, true, ch, mob, nil, nil, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), "", ToNotVict)
+		w.MpGive(mob, ch, amount)
+		if ScriptEngine != nil && mob.HasScript("bribe") {
+			ctx := mob.CreateScriptContext(ch, nil, fmt.Sprintf("%d", amount))
+			ctx.World = NewWorldScriptableAdapter(w)
+			ctx.RoomVNum = mob.GetRoom()
+			if _, err := mob.RunScript("bribe", ctx); err != nil {
+				slog.Warn("bribe script error", "mob_vnum", mob.GetVNum(), "error", err)
+			}
+		}
+		return true
+	}
+	vict := w.giveFindVict(ch, victName)
+	if vict != nil {
+		w.performGiveGold(ch, vict, amount)
+	}
+	return true
+}
+
 // doGive handles the give command
 func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	// C do_give parses each token with one_argument (interpreter.c): leading
@@ -554,38 +589,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 		arg2, rest2 := oneArgument(rest)
 		if arg2 == "coins" || arg2 == "coin" {
 			victName, _ := oneArgument(rest2)
-			// Check mob before player — bribe path
-			mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
-			if mob != nil {
-				// C perform_give_gold (src/act.item.c:738-754): the amount
-				// and purse checks come before the bribe, and a god's purse
-				// is never checked or charged.
-				if amount <= 0 {
-					ch.SendMessage("Heh heh heh ... we are jolly funny today, eh?\r\n")
-					return true
-				}
-				if ch.GetLevel() < lvlGod && !ch.SpendGold(amount) {
-					ch.SendMessage("You don't have that many coins!\r\n")
-					return true
-				}
-				ch.SendMessage("Okay.\r\n")
-				Act(w, true, ch, mob, nil, nil, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), "", ToNotVict)
-				w.MpGive(mob, ch, amount)
-				if ScriptEngine != nil && mob.HasScript("bribe") {
-					ctx := mob.CreateScriptContext(ch, nil, fmt.Sprintf("%d", amount))
-					ctx.World = NewWorldScriptableAdapter(w)
-					ctx.RoomVNum = mob.GetRoom()
-					if _, err := mob.RunScript("bribe", ctx); err != nil {
-						slog.Warn("bribe script error", "mob_vnum", mob.GetVNum(), "error", err)
-					}
-				}
-				return true
-			}
-			vict := w.giveFindVict(ch, victName)
-			if vict != nil {
-				w.performGiveGold(ch, vict, amount)
-			}
-			return true
+			return w.doGiveCoins(ch, victName, amount)
 		}
 		// Just a number wasn't coins
 		ch.SendMessage("You can't give more than one item at a time.\r\n")

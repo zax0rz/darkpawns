@@ -38,9 +38,9 @@ func splitArg(arg string) (string, string) {
 
 // ChCanSee is the exported CAN_SEE char check for session-layer feeds
 // (agents must see the room exactly as the mortal sees it, R4).
-func ChCanSee(ch *Player, target interface{}) bool { return chCanSee(ch, target) }
+func ChCanSee(ch *Player, target any) bool { return chCanSee(ch, target) }
 
-func chCanSee(ch *Player, target interface{}) bool {
+func chCanSee(ch *Player, target any) bool {
 	return !ch.IsAffected(affBlind)
 }
 

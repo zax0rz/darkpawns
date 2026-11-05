@@ -192,6 +192,33 @@ func (w *World) doSimpleMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool
 		return false
 	}
 
+	sendMobMovementArrival(w, ch, dir, toRoom)
+
+	w.EntryProg(ch, ch.GetRoom())
+	if ch.GetRoom() < 0 {
+		return false
+	}
+	w.MpGreetActor(ch, ch.GetRoom())
+	if ch.GetRoom() < 0 {
+		return false
+	}
+	w.runMobGreetScripts(ch, ch.GetRoom())
+	if ch.GetRoom() < 0 {
+		return false
+	}
+	if room := w.GetRoomInWorld(ch.GetRoom()); movementRoomHasFlag(room, roomFlagDeath, "death") {
+		if room != nil {
+			LogDeathTrap(ch.GetName(), room.VNum, room.Name)
+		}
+		combat.DeathCry(ch)
+		w.ExtractMob(ch)
+		return false
+	}
+	w.RunRoomEnterScriptForActor(ch)
+	return true
+}
+
+func sendMobMovementArrival(w *World, ch *MobInstance, dir int, toRoom *parser.Room) {
 	if !ch.IsAffected(affSneak) {
 		switch dir {
 		case 0, 1, 2, 3:
@@ -220,29 +247,6 @@ func (w *World) doSimpleMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool
 			Act(w, true, ch, nil, nil, nil, arrival, "", ToRoom)
 		}
 	}
-
-	w.EntryProg(ch, ch.GetRoom())
-	if ch.GetRoom() < 0 {
-		return false
-	}
-	w.MpGreetActor(ch, ch.GetRoom())
-	if ch.GetRoom() < 0 {
-		return false
-	}
-	w.runMobGreetScripts(ch, ch.GetRoom())
-	if ch.GetRoom() < 0 {
-		return false
-	}
-	if room := w.GetRoomInWorld(ch.GetRoom()); movementRoomHasFlag(room, roomFlagDeath, "death") {
-		if room != nil {
-			LogDeathTrap(ch.GetName(), room.VNum, room.Name)
-		}
-		combat.DeathCry(ch)
-		w.ExtractMob(ch)
-		return false
-	}
-	w.RunRoomEnterScriptForActor(ch)
-	return true
 }
 
 // performMoveMob ports perform_move (src/act.movement.c:311-358) for a mobile

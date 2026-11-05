@@ -74,7 +74,7 @@ func BasicMudLog(msg string) {
 }
 
 // BasicMudLogf is the format-string variant of BasicMudLog.
-func BasicMudLogf(format string, args ...interface{}) {
+func BasicMudLogf(format string, args ...any) {
 	BasicMudLog(fmt.Sprintf(format, args...))
 }
 
@@ -98,7 +98,7 @@ func Alog(msg string) {
 }
 
 // Alogf is the format-string variant of Alog.
-func Alogf(format string, args ...interface{}) {
+func Alogf(format string, args ...any) {
 	Alog(fmt.Sprintf(format, args...))
 }
 
@@ -122,7 +122,7 @@ const (
 type ImmortalSessionProvider interface {
 	// EachSession calls fn for every active player session.
 	// fn receives the player (game.Player) and a SendFunc for pushing messages.
-	EachSession(fn func(player interface{}, send func(msg string)))
+	EachSession(fn func(player any, send func(msg string)))
 }
 
 // SendFunc is a callback for sending a string message to a session.
@@ -152,7 +152,7 @@ func MudLog(str string, typ int, level int, toFile bool) {
 		slog.Info("mudlog (no session provider)", "msg", str, "type", typ, "level", level)
 		return
 	}
-	provider.EachSession(func(player interface{}, send func(msg string)) {
+	provider.EachSession(func(player any, send func(msg string)) {
 		p, ok := player.(*Player)
 		if !ok || p == nil {
 			return

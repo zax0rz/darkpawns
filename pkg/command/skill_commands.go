@@ -767,21 +767,27 @@ func CmdShoot(s SessionInterface, args []string) error {
 		}
 		return s.SendMessage("Twang...\r\n")
 	}
+	if stopped, err := shootTargetGate(s, target); stopped {
+		return err
+	}
+	return executeShoot(s, ch, target, projectile, bow, projectileName, direction)
+}
+
+func shootTargetGate(s SessionInterface, target combat.Combatant) (bool, error) {
 	// C protects PCs outside the inclusive 10..30 window before checking
 	// fighting or sentinel state (src/act.offensive.c:881-900).
 	if !target.IsNPC() && (target.GetLevel() < 10 || target.GetLevel() > 30) {
-		return s.SendMessage("Maybe that isn't such a great idea...\r\n")
+		return true, s.SendMessage("Maybe that isn't such a great idea...\r\n")
 	}
 	// Target combat state is checked before MOB_SENTINEL, after the PC
 	// level window (src/act.offensive.c:881-900).
 	if target.GetFightingBody() != nil {
-		return s.SendMessage("It looks like they are fighting, you can't aim properly.\r\n")
+		return true, s.SendMessage("It looks like they are fighting, you can't aim properly.\r\n")
 	}
 	if mob, ok := target.(*game.MobInstance); ok && mob.HasFlag(game.MobSentinel) {
-		return s.SendMessage("You cannot see well enough to aim...\r\n")
+		return true, s.SendMessage("You cannot see well enough to aim...\r\n")
 	}
-
-	return executeShoot(s, ch, target, projectile, bow, projectileName, direction)
+	return false, nil
 }
 
 // CmdSubdue handles the subdue command (C-10).

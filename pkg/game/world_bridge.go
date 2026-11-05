@@ -54,7 +54,7 @@ func objRefs(objs []*ObjectInstance) []scripting.ObjRef {
 }
 
 // charRefFor names a live Player or MobInstance for the bridge.
-func charRefFor(c interface{}) *scripting.CharRef {
+func charRefFor(c any) *scripting.CharRef {
 	switch v := c.(type) {
 	case *Player:
 		if v != nil {
@@ -1130,7 +1130,7 @@ func (a *WorldScriptableAdapter) Spell(me scripting.CharRef, vict *scripting.Cha
 }
 
 // SpellObjectAct dispatches mag_alter_objs' act() output to the caster or room.
-func (w *World) SpellObjectAct(caster, target interface{}, message string, toRoom bool) {
+func (w *World) SpellObjectAct(caster, target any, message string, toRoom bool) {
 	ch, chOK := caster.(Actor)
 	obj, objOK := target.(*ObjectInstance)
 	if !chOK || !objOK {
@@ -1146,7 +1146,7 @@ func (w *World) SpellObjectAct(caster, target interface{}, message string, toRoo
 // SpellActToChar dispatches a spell's act(..., TO_CHAR) report through the
 // canonical C-compatible formatter. C performs target pronoun and object
 // visibility/short-description substitution in src/comm.c:2397-2477.
-func (w *World) SpellActToChar(caster, victim, object interface{}, message string) {
+func (w *World) SpellActToChar(caster, victim, object any, message string) {
 	ch, chOK := caster.(Actor)
 	if !chOK {
 		return
@@ -1159,7 +1159,7 @@ func (w *World) SpellActToChar(caster, victim, object interface{}, message strin
 // IsSpellCharmShopkeeper mirrors spells.c:424's exact GET_MOB_SPEC ==
 // shop_keeper predicate. Shop records assign that special at boot; other
 // protected special mobs are not included here.
-func (w *World) IsSpellCharmShopkeeper(victim interface{}) bool {
+func (w *World) IsSpellCharmShopkeeper(victim any) bool {
 	mob, ok := victim.(*MobInstance)
 	if !ok || mob == nil || w == nil {
 		return false

@@ -1,0 +1,243 @@
+---
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import { getCollection } from 'astro:content';
+import { Colorizer, loadWorldText, type Line } from '../../../lib/mudlog/colorize';
+import { describeLog, others, recorders, redactionSummary } from '../../../lib/mudlog/entry';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('logs');
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const data = entry.data;
+
+const raw = readFileSync(resolve(dirname(resolve(entry.filePath!)), data.log), 'utf8');
+const lines = new Colorizer(loadWorldText()).colorize(raw);
+
+const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// One span per line so any line can be cited by its number (#L650). Coloured
+// runs carry their colour and the `color` level the server gated them on.
+const renderLine = (runs: Line, n: number) =>
+  `<span class="ln" id="L${n}">${runs.map((run) => run.color
+    ? `<span class="c-${run.color}" data-l="${run.level}">${escape(run.text)}</span>`
+    : escape(run.text)).join('')}</span>`;
+// Lines are blocks, so they are joined without newlines; an empty line keeps
+// one space so it still holds its height.
+const logHtml = lines.map((runs, i) => renderLine(runs.length === 1 && !runs[0].text ? [{ text: ' ' }] : runs, i + 1)).join('');
+
+// The four settings of the in-game `color` command (screen.h C_OFF..C_CMP).
+const LEVELS = ['off', 'sparse', 'normal', 'complete'];
+
+const onScreen = others(data);
+const removed = redactionSummary(data.redactions);
+const description = describeLog(data);
+const pageTitle = `${data.title}${data.cast.length ? `, with ${data.cast.slice(0, 3).join(', ')}` : ''} | Dark Pawns`;
+const characterUrl = (name: string) => `/archive/logs/characters/${encodeURIComponent(name.toLowerCase())}/`;
+
+const site = 'https://darkpawns.org';
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: data.title,
+  description,
+  inLanguage: 'en',
+  url: `${site}/archive/logs/${entry.id}/`,
+  ...(data.date?.iso ? { dateCreated: data.date.iso } : {}),
+  isPartOf: { '@type': 'CollectionPage', name: 'Dark Pawns game logs', url: `${site}/archive/logs/` },
+  ...(data.cast.length ? { character: data.cast.map((name) => ({ '@type': 'Person', name })) } : {}),
+  publisher: { '@type': 'Organization', name: 'Dark Pawns', url: site },
+});
+---
+<Base title={pageTitle} description={description}>
+  <link slot="head" rel="alternate" type="text/markdown" href={`/archive/logs/${entry.id}.md`} title={`${data.title} as Markdown`} />
+  <script slot="head" type="application/ld+json" set:html={jsonLd} />
+  <!-- Laid out like /play: the window under the site header holds the
+       capture on the left and a narrow dock on the right, and only the
+       capture scrolls, the way it did in the client that recorded it. -->
+  <section class="log-shell" aria-labelledby="log-heading">
+    <div class="log-intro container">
+      <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Logs', href: '/archive/logs/' }]} />
+      <h1 id="log-heading">{data.title}</h1>
+      <p>
+        Recorded by {data.recordedBy.length
+          ? data.recordedBy.map((name, i) => <>{i > 0 && ' and '}<a href={characterUrl(name)}>{name}</a></>)
+          : 'a player the capture never names'}
+        · {data.lines.toLocaleString('en-US')} lines
+      </p>
+    </div>
+
+    <div class="log-wrapper container">
+      <div class="terminal-frame screen">
+        <form class="terminal-header" aria-label="Color setting">
+          <span class="terminal-title">{data.title}</span>
+          <fieldset class="levels">
+            <legend>color</legend>
+            {LEVELS.map((name, level) => (
+              <label>
+                <input type="radio" name="color" value={level} checked={level === 3} />
+                <span>{name}</span>
+              </label>
+            ))}
+          </fieldset>
+        </form>
+        <p class="visually-hidden" id="log-help">The capture scrolls on its own. Focus it and use the arrow keys, Page Up and Page Down, Home and End.</p>
+        <pre class="log" tabindex="0" role="region" aria-label={`${data.title}, ${lines.length.toLocaleString('en-US')} lines`} aria-describedby="log-help"><code set:html={logHtml} /></pre>
+      </div>
+
+      <aside class="log-dock" aria-label="About this log">
+        {onScreen.length > 0 && (
+          <section aria-labelledby="people-h">
+            <h2 id="people-h">On screen</h2>
+            <ul class="people">
+              {onScreen.map((name) => <li><a href={characterUrl(name)}>{name}</a></li>)}
+            </ul>
+          </section>
+        )}
+        <section aria-labelledby="provenance-h">
+          <h2 id="provenance-h">Provenance</h2>
+          <dl class="provenance">
+            <div><dt>Collection</dt><dd>The Vargus logs, donated by Vargus</dd></div>
+            {data.nameWithheld && <div><dt>File</dt><dd>Name withheld: it contains a slur</dd></div>}
+            <div><dt>Date</dt><dd>{data.date ? <>{data.date.text}<span class="basis">Source: {data.date.basis}</span></> : 'Nothing in the file dates it'}</dd></div>
+            <div><dt>Removed</dt><dd>{removed ? `${removed}, each replaced by a marker so line numbers still match` : 'Nothing'}</dd></div>
+            <div><dt>Plain text</dt><dd><a href={`/archive/logs/${entry.id}.md`}>{entry.id}.md</a></dd></div>
+          </dl>
+          <p class="note">
+            The capture is plain text. Its color is rebuilt from the game's
+            source code, at the setting chosen above the log. Prompt numbers
+            are colored against the highest the capture reaches.
+          </p>
+        </section>
+      </aside>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // The window fills the screen under the site header; the header's height
+  // changes with its wrapping, so it is measured, not assumed (as on /play).
+  const masthead = document.querySelector('.masthead');
+  const setMastheadHeight = () => {
+    if (masthead) document.documentElement.style.setProperty('--masthead-h', `${masthead.getBoundingClientRect().height}px`);
+  };
+  setMastheadHeight();
+  if (masthead) new ResizeObserver(setMastheadHeight).observe(masthead);
+
+  // A cited line (#L1731) scrolls inside the window, as a client would, and
+  // the page itself stays put so the title and dock stay in view. Without
+  // this the browser also scrolls the page to bring the line to the top.
+  const log = document.querySelector<HTMLElement>('.log');
+  const showCitedLine = () => {
+    const target = /^#L\d+$/.test(location.hash) ? document.getElementById(location.hash.slice(1)) : null;
+    if (!log || !target) return;
+    // The log is positioned, so a line's offsetTop is measured from its top.
+    log.scrollTop = target.offsetTop - log.clientHeight / 3;
+    if (matchMedia('(min-width: 901px)').matches) window.scrollTo(0, 0);
+  };
+  window.addEventListener('hashchange', showCitedLine);
+  if (document.readyState === 'complete') showCitedLine();
+  else window.addEventListener('load', showCitedLine, { once: true });
+</script>
+
+<style>
+  .log-shell { --crt: #0a0908; display: flex; flex-direction: column; height: calc(100dvh - var(--masthead-h, 8rem)); min-height: 32rem; border-bottom: 1px solid var(--rule); }
+  .log-intro { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem var(--space-md); padding-block: var(--space-sm); }
+  .log-wrapper.container, .log-intro.container { width: 100%; }
+  .log-intro h1 { margin: 0; font-family: var(--font-mono); font-size: clamp(1.4rem, 2.2vw, 1.85rem); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
+  .log-intro p { margin: 0; color: var(--ink-muted); font-size: .95rem; }
+
+  /* The dock stays narrow enough that the capture keeps its 80 columns. */
+  .log-wrapper { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 19rem; min-height: 0; border-top: 1px solid var(--rule); }
+
+  /* The screen: the CRT canvas /play uses, under the same paper header, with
+     the eight ANSI colours tuned for that canvas. */
+  .screen {
+    --ansi-fg: #b8b1a3;
+    --ansi-red: #d24e45;
+    --ansi-green: #82a86c;
+    --ansi-yellow: #e3b94a;
+    --ansi-blue: #7f9bd0;
+    --ansi-magenta: #b98bbf;
+    --ansi-cyan: #72b6b0;
+    --ansi-white: #ede5d3;
+  }
+  .terminal-frame { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: var(--crt); }
+  .terminal-header {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm) var(--space-md);
+    padding: .45rem var(--space-md); background: var(--paper-deep); border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono); font-size: .8rem;
+  }
+  .terminal-title { color: var(--accent); font-weight: 700; letter-spacing: .06em; }
+  .levels { display: flex; align-items: center; gap: 0.15rem; margin: 0; border: 0; padding: 0; }
+  .levels legend { float: left; margin-right: var(--space-sm); padding: 0; color: var(--ink-muted); }
+  .levels label { position: relative; cursor: pointer; }
+  .levels input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .levels span { display: block; border: 1px solid transparent; padding: 0.15rem 0.5rem; color: var(--ink); }
+  .levels label:hover span { border-color: var(--rule); }
+  .levels input:checked + span { background: var(--ink); color: var(--paper); }
+  .levels input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .log {
+    position: relative; flex: 1; min-height: 0; margin: 0;
+    overflow: auto; overscroll-behavior: contain;
+    background: var(--crt); color: var(--ansi-fg);
+    box-shadow: inset 0 0 0 2px var(--rule);
+    padding: .75rem var(--space-md);
+    font-family: var(--font-mono); font-size: 0.9rem; line-height: 1.45;
+    tab-size: 8;
+    scrollbar-color: #3a2a1a var(--crt);
+  }
+  .log:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .log ::selection { background: #3a2a1a; color: var(--ansi-white); }
+  /* Lines are blocks as wide as the longest, so a long line scrolls
+     sideways instead of being cut, and a cited line is highlighted edge to edge. */
+  .log :global(code) { display: block; width: max-content; min-width: 100%; }
+  .log :global(.ln) { display: block; scroll-margin-block: 2rem; }
+  .log :global(.ln:target) { background: #2a1d12; }
+
+  .log :global(.c-red) { color: var(--ansi-red); }
+  .log :global(.c-green) { color: var(--ansi-green); }
+  .log :global(.c-yellow) { color: var(--ansi-yellow); }
+  .log :global(.c-blue) { color: var(--ansi-blue); }
+  .log :global(.c-magenta) { color: var(--ansi-magenta); }
+  .log :global(.c-cyan) { color: var(--ansi-cyan); }
+  .log :global(.c-white) { color: var(--ansi-white); }
+
+  /* clr(ch, lvl) is level >= lvl (screen.h:49): at each setting, anything
+     gated above it falls back to the terminal's own colour. No script. */
+  .screen:has(input[value="0"]:checked) .log :global([data-l]) { color: inherit; }
+  .screen:has(input[value="1"]:checked) .log :global([data-l="2"], [data-l="3"]) { color: inherit; }
+  .screen:has(input[value="2"]:checked) .log :global([data-l="3"]) { color: inherit; }
+
+  /* The dock: who was on screen, then where the capture came from. It
+     scrolls on its own when the cast is long. */
+  .log-dock { min-width: 0; min-height: 0; overflow-y: auto; padding: var(--space-sm) var(--space-md); background: var(--paper); border-left: 1px solid var(--rule); }
+  .log-dock section + section { margin-top: var(--space-md); }
+  .log-dock h2 { margin: 0 0 var(--space-xs); font-family: var(--font-mono); font-size: .75rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+  .people { display: flex; flex-wrap: wrap; gap: .2rem var(--space-sm); margin: 0; padding: 0; list-style: none; font-family: var(--font-mono); font-size: .85rem; }
+  .provenance { margin: 0; font-family: var(--font-mono); font-size: .78rem; }
+  .provenance div { padding: .2rem 0; border-top: 1px solid var(--rule); }
+  .provenance dt { color: var(--ink-muted); }
+  .provenance dd { margin: 0; }
+  .provenance .basis { display: block; color: var(--ink-muted); }
+  .note { margin: var(--space-sm) 0 0; color: var(--ink-muted); font-size: .85rem; line-height: 1.45; }
+
+  @media (max-width: 900px) {
+    .log-shell { height: auto; }
+    .log-wrapper { grid-template-columns: 1fr; }
+    .terminal-frame { height: clamp(27rem, 70dvh, 40rem); }
+    .log-dock { overflow: visible; border-left: 0; border-top: 1px solid var(--rule); }
+  }
+  @media (max-width: 640px) {
+    .log-wrapper.container { padding-inline: 0; }
+    /* A phone cannot hold 80 columns. Wrap, and hang the continuation so
+       each line of the capture still starts at the left edge. */
+    .log { font-size: 0.75rem; padding-inline: var(--space-sm); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .log :global(code) { width: auto; }
+    .log :global(.ln) { padding-left: 2ch; text-indent: -2ch; }
+  }
+</style>

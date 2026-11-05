@@ -101,8 +101,8 @@ type houseSaveItem struct {
 	// ContainerIndex retains saved nesting metadata by file index (DP-1401).
 	// House_load ignores it: C src/house.c:87-101 floors every surviving
 	// object, including contents. Keep the field for format compatibility.
-	ContainerIndex *int                   `json:"container_index,omitempty"`
-	State          map[string]interface{} `json:"state,omitempty"`
+	ContainerIndex *int           `json:"container_index,omitempty"`
+	State          map[string]any `json:"state,omitempty"`
 }
 
 // houseSaveData is the top-level structure for a house save file.
@@ -125,7 +125,7 @@ func ObjFromStore(data *houseSaveItem, getProto func(vnum int) (*parser.Obj, boo
 	}
 	obj := NewObjectInstance(proto, -1)
 	if data.State != nil {
-		obj.CustomData = make(map[string]interface{}, len(data.State))
+		obj.CustomData = make(map[string]any, len(data.State))
 		for k, v := range data.State {
 			obj.CustomData[k] = v
 		}

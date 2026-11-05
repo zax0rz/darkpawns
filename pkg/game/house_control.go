@@ -128,13 +128,7 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 		} else {
 			// Second arg: exit direction
 			dirName := strings.ToLower(args[1])
-			exitNum := -1
-			for i, d := range dirs {
-				if d == dirName || strings.HasPrefix(d, dirName) {
-					exitNum = i
-					break
-				}
-			}
+			exitNum := houseExitDirectionIndex(dirName)
 			if exitNum < 0 {
 				message = fmt.Sprintf("'%s' is not a valid direction.\r\n", dirName)
 			} else {
@@ -195,6 +189,16 @@ func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
 	if save {
 		w.saveHouseControl()
 	}
+}
+
+// houseExitDirectionIndex returns the first direction matching the given name.
+func houseExitDirectionIndex(dirName string) int {
+	for i, direction := range dirs {
+		if direction == dirName || strings.HasPrefix(direction, dirName) {
+			return i
+		}
+	}
+	return -1
 }
 
 // HcontrolDestroyHouse deletes a house.

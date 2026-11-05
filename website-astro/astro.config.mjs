@@ -8,7 +8,7 @@ import { sidebar, docsRedirects } from './scripts/docs-navigation.mjs';
 import { markdownTwins } from './scripts/markdown-twins.mjs';
 import { satteri } from '@astrojs/markdown-satteri';
 import { noLiteralAutolinks } from './src/lib/no-literal-autolinks.mjs';
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 const redirects = Object.fromEntries(Object.entries({
   ...docsRedirects,
@@ -55,8 +55,8 @@ const redirects = Object.fromEntries(Object.entries({
   '/community/forums/topic-724': '/archive/topic-724/',
   '/community/forums/topic-731': '/archive/topic-731/',
   '/community/forums/topic-737': '/archive/topic-737/',
-  '/community/guides': '/help/',
-  '/community/guides/articles': '/help/',
+  '/community/guides': '/docs/reference/commands/',
+  '/community/guides/articles': '/docs/reference/commands/',
   '/community/history': '/archive/history/',
   '/community/history/game-logs': '/archive/',
   '/community/history/timeline': '/archive/history/',
@@ -73,6 +73,22 @@ const redirects = Object.fromEntries(Object.entries({
   '/pawn-lab.html': '/docs/project/',
   '/status': '/about/project/',
 }).map(([from, to]) => [from.replace(/\/$/, '') || '/', to]));
+
+// Front matter the sitemap needs, read straight from the files because the
+// integration runs without the content layer.
+const frontMatter = (file) => {
+  const text = readFileSync(file, 'utf8');
+  return text.startsWith('---') ? text.slice(3, text.indexOf('\n---', 3)) : '';
+};
+const field = (fm, key) => fm.match(new RegExp(`^${key}:\\s*"?([^"\\n]+)"?\\s*$`, 'm'))?.[1];
+// A World page that reprints an Archive entry names the entry as canonical.
+const nonCanonical = new Set(readdirSync('./src/content/world')
+  .filter((name) => name.endsWith('.md') && field(frontMatter(`./src/content/world/${name}`), 'canonicalPath'))
+  .map((name) => `/world/${name.replace(/\.md$/, '')}/`));
+const blogDates = new Map(readdirSync('./src/content/blog').filter((name) => name.endsWith('.md')).map((name) => {
+  const date = field(frontMatter(`./src/content/blog/${name}`), 'date');
+  return [`/blog/${name.replace(/\.md$/, '')}/`, date && new Date(date)];
+}).filter(([, date]) => date));
 
 // Dark Pawns — Astro migration (replaces the Hugo site in ../website).
 export default defineConfig({
@@ -119,11 +135,23 @@ export default defineConfig({
       ])],
     }),
     markdownTwins(),
+    // Canonical URLs only, one sitemap per section so Search Console reports
+    // each on its own, and <lastmod> only where a page carries a real date.
+    // scripts/check-sitemap.mjs fails the build if a listed URL redirects,
+    // is noindex, or names another page as canonical.
     sitemap({
       filter: (page) => {
         const path = new URL(page).pathname;
-        return !page.endsWith('.json') && !page.endsWith('.md') && path !== '/404/' && !(path.replace(/\/$/, '') in redirects);
+        return !page.endsWith('.json') && !page.endsWith('.md') && path !== '/404/'
+          && !(path.replace(/\/$/, '') in redirects) && !nonCanonical.has(path);
       },
+      serialize: (item) => {
+        const date = blogDates.get(new URL(item.url).pathname);
+        return date ? { ...item, lastmod: date } : item;
+      },
+      chunks: Object.fromEntries(['rooms', 'mobs', 'items', 'zones', 'docs', 'archive', 'blog'].map((section) => [
+        section, (item) => (new URL(item.url).pathname.startsWith(`/${section}/`) ? item : undefined),
+      ])),
     }),
   ],
   // Share the generated world/database assets with the Hugo site while the

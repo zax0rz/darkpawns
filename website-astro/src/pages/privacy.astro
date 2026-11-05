@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { CLOUDFLARE_BEACON_TOKEN } from '../lib/analytics';
 ---
 
 <Base title="Privacy | Dark Pawns" description="What the Dark Pawns website collects and how contact messages are handled.">
@@ -19,6 +20,11 @@ import Base from '../layouts/Base.astro';
 
       <h2>Server records</h2>
       <p>The hosting and delivery systems may keep ordinary request records such as network address, requested path, browser identifier, response status, and time. These records are used to operate and secure the service.</p>
+
+      {CLOUDFLARE_BEACON_TOKEN && <>
+        <h2>Visit counts</h2>
+        <p>The site counts visits with Cloudflare Web Analytics, which sets no cookies and stores nothing in your browser. It records the page, the referring site, and the browser and country a request comes from, and reports them only as totals. Cloudflare describes its handling of this data in its privacy policy.</p>
+      </>}
 
       <h2>Cookies and local storage</h2>
       <p>The public site does not set advertising or analytics cookies. The embedded game client, Cloudflare, or Turnstile may use storage needed to provide their requested function. Because the site does not use non-essential tracking, it does not show a consent banner.</p>

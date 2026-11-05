@@ -84,7 +84,7 @@ I've always wondered about the names on the login screen. Every time you connect
                 H. Staerfeldt, M. Seifert, and S. Hammer
 ```
 
-Those five wrote DikuMUD at the University of Copenhagen. The last version of the source also carries the CircleMUD credits file, Diku team included, behind [the `credits` command](https://darkpawns.org/help/info/credits/), and a [HELP CIRCLEMUD](https://darkpawns.org/help/info/circlemud/) entry. Those are all three things KaVir said were missing.
+Those five wrote DikuMUD at the University of Copenhagen. The last version of the source also carries the CircleMUD credits file, Diku team included, behind [the `credits` command](https://darkpawns.org/docs/reference/commands/information/#help-info-credits), and a [HELP CIRCLEMUD](https://darkpawns.org/docs/reference/commands/information/#help-info-circlemud) entry. Those are all three things KaVir said were missing.
 
 I can't tell you when those lines went in. The C source survives only in its final version, which announces a 2008 pwipe on [that same screen](https://github.com/zax0rz/darkpawns/blob/a9fdbf6a6801bfb32d250de13a5ca5930a1df5bd/src/config.c#L249-L251). My guess is this thread.
 

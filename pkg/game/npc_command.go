@@ -392,7 +392,7 @@ func (w *World) npcCarriedVis(me *MobInstance, arg string) *ObjectInstance {
 // npcPerformGive is perform_give (act.item.c) with a mobile giver. Its
 // refusals ("You can't let go of $p!!", "$N seems to have $S hands full.",
 // "$E can't carry that much weight.") are TO_CHAR lines to the mobile.
-func (w *World) npcPerformGive(me *MobInstance, vict interface{}, obj *ObjectInstance) {
+func (w *World) npcPerformGive(me *MobInstance, vict any, obj *ObjectInstance) {
 	if obj.HasExtraFlag(0, extraFlagNoDrop) && me.GetLevel() < lvlImmort {
 		return
 	}

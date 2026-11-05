@@ -118,9 +118,9 @@ A warm print palette: two creams, two inks, and one rare oxblood stamp. Green ap
 ### Named Rules
 **The One Oxblood Rule.** Oxblood is the only accent and appears on roughly ≤10% of any screen. Its rarity is the entire point; the moment a second accent shows up, or oxblood becomes a fill instead of a mark, the system is broken.
 
-**The Paper-Not-White Rule.** Pure `#FFFFFF` and `#000000` never appear, with one exception: the CRT canvas at `/play` (`#0a0908`). Every other surface is Paper or Paper-Deep; every "black" is Ink.
+**The Paper-Not-White Rule.** Pure `#FFFFFF` and `#000000` never appear, with one exception: the CRT canvas (`#0a0908`), at `/play` and in the log screen at `/archive/logs/`. Every other surface is Paper or Paper-Deep; every "black" is Ink.
 
-**The Paper Theme Lock.** The site is one theme, chosen once: warm paper, light. No per-section theme flips, no dark-mode toggle. The only dark surface is the CRT canvas at `/play`, and it is a component, not a theme. (Consistency lock, adapted from tasteskill.dev, alongside The One Oxblood Rule for color and The 2px Rule for shape.)
+**The Paper Theme Lock.** The site is one theme, chosen once: warm paper, light. No per-section theme flips, no dark-mode toggle. The only dark surface is the CRT canvas: the game at `/play`, and the recorded game output in the log screen at `/archive/logs/`. It is a component, not a theme. (Consistency lock, adapted from tasteskill.dev, alongside The One Oxblood Rule for color and The 2px Rule for shape.)
 
 ## Typography
 
@@ -245,14 +245,17 @@ two different lockups at once.
 - Warm Paper background, 1px Ink border, `2px` corners. Focus is an **oxblood outline**, not a glow or a shift to blue.
 
 ### Navigation
-- **Section bar:** one shared, ruled bar (hairline top and bottom, newspaper style). The player spine is Play · World · Help · Map · Database · Archive · Blog; the utility cluster follows as Search · Docs · About. All-caps, letter-spaced; active section marked in Oxblood. Mobile: the bar collapses behind the `<details>` hamburger described under Layout, not a scrolling row.
-- **Breadcrumbs:** one shared partial, `Section » Subsection » Page`; ancestors are oxblood links, current page plain. Not shown on section indexes or top-level leaves.
+- **Section bar:** one shared, ruled bar (hairline top and bottom, newspaper style). The player spine is Play · World · Help · Map · Database · Archive · Logs · Blog; the utility cluster follows as Search · Docs · About. All-caps, letter-spaced; active section marked in Oxblood. Mobile: the bar collapses behind the `<details>` hamburger described under Layout, not a scrolling row.
+- **Breadcrumbs:** one shared partial, `Section » Subsection » Page`; ancestors are Ink-Muted links that turn oxblood on hover, current page plain. Not shown on section indexes or top-level leaves.
 - **Section card grid:** one shared card-grid pattern for all section indexes (title, description, meta count, oxblood hover) from a single partial and CSS block. **MUST** extend these shared patterns — no bespoke per-section nav, breadcrumbs, or index layouts.
 
 ### The Web Client (`/play`) — signature component
 A physical CRT console in a paper housing. The `.terminal-frame` places a Paper control bar above the dark CRT canvas (`#0a0908`), and `#terminal` keeps its crisp 2px Ink border. Controls and connectivity dots use Oxblood and Ink. This is the ONE legitimate "terminal UI" on the site (see Don'ts) because it is the actual game.
 
 The playable view borrows Mudlet's proportions: the game transcript dominates the left, and a narrow Paper dock holds the Dark Pawns mark, numeric vitals, the local map, and available room/character panels. The dock uses structured state beside the canonical text; it never paraphrases or reprints game output. At narrow widths it follows the terminal in document order. Screen reader mode is an explicit, remembered xterm setting; the dock's numbers and room name remain readable without its map or color bars.
+
+### The Log Screen (`/archive/logs/<slug>/`)
+A recorded session from the original server, laid out like `/play`: the capture fills a CRT canvas under the same Paper control bar, and a narrow Paper dock beside it lists who is on screen and the log's provenance. The page fits the viewport and the log scrolls inside its own region, which takes keyboard focus; a `#L<n>` link scrolls that line into the region without moving the page. The text is the capture, line for line; the color is rebuilt from the C source, and each colored run carries the `color` level the server gated it on. The control bar offers only the game's own `color off / sparse / normal / complete` setting. The eight ANSI colors (`--ansi-*` in `src/pages/archive/logs/[slug].astro`) are tuned for the canvas and never appear outside it. At narrow widths the dock follows the screen, and on a phone the lines wrap with a hanging indent so each still starts at the left edge.
 
 ### The Interactive Map (`/map`) — signature component
 Vintage ink-and-parchment cartography. Paper-Deep canvas, room nodes and connection lines stroked in Ink or Oxblood, brutalist `.btn-secondary` controls, cream inputs with oxblood focus.
@@ -278,9 +281,9 @@ Concrete guardrails. These are enforceable by `impeccable detect` and by review;
 - **Don't** use section-numbering eyebrows ("01 · Features", decorative "PART I" counters) or decorative colophons and filler tags. The `FILED UNDER … SEE ALSO` line is banned.
 - **Don't** put a kicker above a heading that already says the same thing. A kicker has to carry a fact the heading cannot (a category, a correction, a dateline); otherwise it is template decoration. The home page uses none.
 - **Don't** build three-equal-card feature rows. Use asymmetric or two-column editorial layouts instead.
-- **Don't** build fake terminal or dashboard UIs. The only real terminal is the game client at `/play`.
+- **Don't** build fake terminal or dashboard UIs. The only real terminal is the game client at `/play`; the log screen replays the game's own output and is not a place for invented terminal chrome.
 - **Don't** use gradients, box-shadows, glows, or any border radius > 2px (kill the `9999px` and `20px` offenders).
-- **Don't** use pure `#FFFFFF`/`#000000` (except the CRT canvas), sans-serif fonts, or any color outside this palette. Status is Oxblood (offline/error), Online green (success), Ink-Muted (unknown).
+- **Don't** use pure `#FFFFFF`/`#000000` (except the CRT canvas and its ANSI colors), sans-serif fonts, or any color outside this palette. Status is Oxblood (offline/error), Online green (success), Ink-Muted (unknown).
 - **Don't** use gimmicky "spooky" assets (bats, cobwebs, dripping-blood text, flaming dividers). Cohesion comes from typography and editorial layout, not costume.
 - **Don't** adopt SaaS marketing patterns: hero-with-gradient, "Get Started free" funnels, pills-on-images, mesh-blob backgrounds, testimonial carousels.
 - **Don't** assert any fact, stat, or lore without a primary source (The Sourced-or-Silent Rule; see `PRODUCT.md`).

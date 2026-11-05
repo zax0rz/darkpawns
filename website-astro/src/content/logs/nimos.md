@@ -1,0 +1,67 @@
+---
+title: "nimos.txt"
+nameWithheld: false
+lines: 47579
+log: "nimos.log"
+recordedBy: ["Vargus"]
+date:
+  text: "Between 15 and 27 October 2000"
+  basis: "Vargus's play time against dated logs, an estimate"
+redactions:
+  emails: 0
+  ips: 0
+  passwords: 0
+  tells: 12
+  mail: 0
+  lines: 6
+cast: ["Vargus", "Xungon", "Pyro", "Flood", "Clotho", "Kayura", "Yazrog", "Lucy", "Aiko", "Igor", "Hyral", "Ziltch", "Farius", "Siva", "Lachesis", "Ronin", "Jamaro", "Jyan", "Exodus", "Bannor", "DarkMacaw", "Viashino", "Lug", "Shin", "Charlie", "Xentric", "Hara", "Khan", "AzureDrake", "Shadowwingss", "Dion", "Linden", "Whistler", "Lucent", "Caspoit", "Alundra", "Jehu", "Mallisin", "Steelwolf", "Thike", "Mhoram", "Vizzerdrix", "Stilton", "Caprine", "Levithious", "Maghran", "Strice", "Rastas"]
+appearances:
+  "Vargus": 15
+  "Xungon": 2
+  "Pyro": 16
+  "Flood": 17
+  "Clotho": 18
+  "Kayura": 19
+  "Yazrog": 20
+  "Lucy": 21
+  "Aiko": 22
+  "Igor": 23
+  "Hyral": 24
+  "Ziltch": 25
+  "Farius": 26
+  "Siva": 27
+  "Lachesis": 28
+  "Ronin": 30
+  "Jamaro": 31
+  "Jyan": 2179
+  "Exodus": 2274
+  "Bannor": 2308
+  "DarkMacaw": 2320
+  "Viashino": 2410
+  "Lug": 2879
+  "Shin": 3151
+  "Charlie": 3456
+  "Xentric": 3567
+  "Hara": 4769
+  "Khan": 4790
+  "AzureDrake": 5193
+  "Shadowwingss": 5223
+  "Dion": 7709
+  "Linden": 7801
+  "Whistler": 7986
+  "Lucent": 13758
+  "Caspoit": 14389
+  "Alundra": 18861
+  "Jehu": 22023
+  "Mallisin": 22122
+  "Steelwolf": 36380
+  "Thike": 36470
+  "Mhoram": 39738
+  "Vizzerdrix": 41337
+  "Stilton": 41340
+  "Caprine": 42428
+  "Levithious": 43719
+  "Maghran": 44567
+  "Strice": 46166
+  "Rastas": 47485
+---

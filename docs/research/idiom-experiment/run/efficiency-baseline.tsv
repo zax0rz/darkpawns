@@ -1,0 +1,9 @@
+trial	1	port	58029	ready_ms	265.164	peak_rss_bytes	92397568
+trial	2	port	39421	ready_ms	187.322	peak_rss_bytes	88903680
+trial	3	port	45273	ready_ms	229.301	peak_rss_bytes	87560192
+trial	4	port	43729	ready_ms	198.539	peak_rss_bytes	90750976
+trial	5	port	45417	ready_ms	240.552	peak_rss_bytes	88403968
+binary_bytes	40280775
+median_ready_ms	229.301
+median_peak_rss_bytes	88903680
+raw_dir	/home/zach/wt/luna-idiom-go/docs/research/idiom-experiment/run/efficiency-baseline

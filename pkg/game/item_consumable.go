@@ -114,7 +114,25 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 
 	drunkAff, fullAff, thirstAff := GetDrinkAffects(liqIndex)
 	GainCondition(ch, CondDrunk, (drunkAff*amount)/4)
+	applyDrinkSustenance(ch, liqIndex, liqName, amount, fullAff, thirstAff)
 
+	// Poison handling.
+	if item.GetValue(3) != 0 {
+		ch.SendMessage("Oops, it tasted rather strange!\r\n")
+		Act(w, true, ch, nil, nil, nil, "$n chokes and utters some strange sounds.", "", ToRoom)
+		applyPoison(ch, amount*3, "poisoned drink")
+	}
+
+	// Deplete the container. C decrements val1 unconditionally for both
+	// drinkcons and fountains (fountains simply have a very large val1); the
+	// unit claimed at the emptiness check is already off, so the rest is
+	// amount-1. ExtractObject takes the world lock, so it follows the take.
+	if w.depleteDrink(item, amount-1) && item.VNum == 20 {
+		w.ExtractObject(item, ch.GetRoomVNum())
+	}
+}
+
+func applyDrinkSustenance(ch *Player, liqIndex int, liqName string, amount, fullAff, thirstAff int) {
 	// Vampire branch: blood is the only sustenance at night.
 	if ch.HasPLRFlag(PlrVampire) && liqIndex != LiqBlood && (GetSunlight() == SunSet || GetSunlight() == SunDark) {
 		ch.SendMessage(fmt.Sprintf("The vampirism in your body is not satiated by mere %s...\r\n", liqName))
@@ -131,21 +149,6 @@ func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int
 	}
 	if ch.GetCondition(CondFull) > 20 {
 		ch.SendMessage("You are full.\r\n")
-	}
-
-	// Poison handling.
-	if item.GetValue(3) != 0 {
-		ch.SendMessage("Oops, it tasted rather strange!\r\n")
-		Act(w, true, ch, nil, nil, nil, "$n chokes and utters some strange sounds.", "", ToRoom)
-		applyPoison(ch, amount*3, "poisoned drink")
-	}
-
-	// Deplete the container. C decrements val1 unconditionally for both
-	// drinkcons and fountains (fountains simply have a very large val1); the
-	// unit claimed at the emptiness check is already off, so the rest is
-	// amount-1. ExtractObject takes the world lock, so it follows the take.
-	if w.depleteDrink(item, amount-1) && item.VNum == 20 {
-		w.ExtractObject(item, ch.GetRoomVNum())
 	}
 }
 
@@ -374,30 +377,7 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 			return
 		}
 		if strings.EqualFold(arg2, "out") {
-			Act(w, true, ch, nil, fromObj, nil, "$n empties $p.", "", ToRoom)
-			Act(nil, false, ch, nil, fromObj, nil, "You empty $p.", "", ToChar)
-
-			// Empty weight.
-			fromObj.SetWeight(fromObj.GetWeight() - fromObj.GetValue(1))
-
-			liq := fromObj.GetValue(2)
-			poison := fromObj.GetValue(3)
-			fromObj.SetValue(1, 0)
-			clearDrinkconName(fromObj)
-
-			// Spawn puddle (vnum 20) in the room.
-			puddle := w.CreateObject(20, ch.GetRoomVNum())
-			if puddle == nil {
-				ch.SendMessage("Error, please tell a god.\r\n")
-				slog.Error("SYSERR: creating puddle: obj not found")
-				return
-			}
-			puddle.SetValue(2, liq)
-			puddle.SetValue(3, poison)
-			puddle.SetTimer(2)
-
-			fromObj.SetValue(2, 0)
-			fromObj.SetValue(3, 0)
+			w.pourOut(ch, fromObj)
 			return
 		}
 
@@ -462,6 +442,33 @@ func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int)
 	// Weight changes.
 	fromObj.SetWeight(fromObj.GetWeight() - amount)
 	toObj.SetWeight(toObj.GetWeight() + amount)
+}
+
+func (w *World) pourOut(ch *Player, fromObj *ObjectInstance) {
+	Act(w, true, ch, nil, fromObj, nil, "$n empties $p.", "", ToRoom)
+	Act(nil, false, ch, nil, fromObj, nil, "You empty $p.", "", ToChar)
+
+	// Empty weight.
+	fromObj.SetWeight(fromObj.GetWeight() - fromObj.GetValue(1))
+
+	liq := fromObj.GetValue(2)
+	poison := fromObj.GetValue(3)
+	fromObj.SetValue(1, 0)
+	clearDrinkconName(fromObj)
+
+	// Spawn puddle (vnum 20) in the room.
+	puddle := w.CreateObject(20, ch.GetRoomVNum())
+	if puddle == nil {
+		ch.SendMessage("Error, please tell a god.\r\n")
+		slog.Error("SYSERR: creating puddle: obj not found")
+		return
+	}
+	puddle.SetValue(2, liq)
+	puddle.SetValue(3, poison)
+	puddle.SetTimer(2)
+
+	fromObj.SetValue(2, 0)
+	fromObj.SetValue(3, 0)
 }
 
 // ---------------------------------------------------------------------------

@@ -303,7 +303,7 @@ type tattooSpellWorld struct {
 	caster *Player
 }
 
-func (w tattooSpellWorld) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
+func (w tattooSpellWorld) ForEachPlayerInRoomInterface(room int, fn func(any)) {
 	for _, player := range w.GetPlayersInRoom(room) {
 		if sendOk(player, false) && w.tattooCanSee(player, w.caster) {
 			fn(player)
@@ -384,7 +384,7 @@ func (w *World) useWand(ch *Player, item *ObjectInstance, targetArg string, spel
 	if level == 0 {
 		level = defaultMagicItemLevel
 	}
-	var objectTarget interface{}
+	var objectTarget any
 	if targetObj != nil {
 		objectTarget = targetObj
 	}

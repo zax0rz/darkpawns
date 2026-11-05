@@ -175,6 +175,10 @@ func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
 		return SkillResult{Success: false, MessageToCh: "Dismount first!"}
 	}
 
+	return kujiKiriAfterGates(ch, seal, world)
+}
+
+func kujiKiriAfterGates(ch *Player, seal string, world *World) SkillResult {
 	// C calls check_kk_success() before the per-seal mastery branch. Keep the
 	// draw even when an unmastered character is rejected (R3/R5e).
 	success := checkKkSuccess(ch, seal)

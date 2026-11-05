@@ -2,7 +2,7 @@
 
 export interface SearchEntry {
   t: string; // Title
-  c: string; // Category: help | items | mobs | world | docs | archive | pages
+  c: string; // Category: help | items | mobs | world | docs | archive | logs | pages
   s: string; // Subtype badge
   u: string; // URL
   k: string; // Keywords
@@ -297,6 +297,7 @@ export class OmnisearchClient {
         items: { label: 'Items and Equipment', items: [] },
         mobs: { label: 'Monsters and NPCs', items: [] },
         world: { label: 'World and Map', items: [] },
+        logs: { label: 'Game logs and characters', items: [] },
         archive: { label: 'The Archive', items: [] },
         docs: { label: 'Docs and Blog', items: [] },
         pages: { label: 'Core Pages', items: [] },
@@ -311,8 +312,11 @@ export class OmnisearchClient {
       let html = '';
       let globalIndex = 0;
 
-      for (const [key, group] of Object.entries(groups)) {
-        if (group.items.length === 0) continue;
+      // Results arrive best first, so a group's place is its best match: a
+      // character's name puts the character page at the top.
+      const order = [...new Set(results.map((item) => item.c))].filter((c) => groups[c]);
+      for (const key of order) {
+        const group = groups[key];
         html += `<div class="search-group-header"><span>${group.label}</span><span>${group.items.length}</span></div>`;
         
         for (const item of group.items) {

@@ -4,6 +4,8 @@ import { getCollection } from 'astro:content';
 
 const entries = (await getCollection('archive', ({ data }) => !data.draft))
   .sort((a, b) => a.data.sortDate.getTime() - b.data.sortDate.getTime());
+const logEntries = await getCollection('logs');
+const logCharacters = new Set(logEntries.flatMap((e) => e.data.cast.map((n) => n.toLowerCase()))).size;
 const byId = new Map(entries.map((entry) => [entry.id, entry]));
 
 const isForumThread = (entry) => entry.data.kind === 'forum-thread';
@@ -192,6 +194,18 @@ const missing = [
         )}
       </section>
     ))}
+
+    <section class="site" id="logs" aria-labelledby="h-logs">
+      <header class="band">
+        <h2 id="h-logs">Game logs</h2>
+        <p class="band-count">{logEntries.length} logs · {logCharacters} characters</p>
+      </header>
+      <p class="site-note">
+        Sessions captured on the original server by the players who were there,
+        donated by Vargus, shown as they looked on screen.
+      </p>
+      <p><a class="start-title" href="/archive/logs/">Read the logs</a> · <a class="start-title" href="/archive/logs/characters/">Characters in the logs</a></p>
+    </section>
 
     <section class="gaps" id="missing" aria-labelledby="h-missing">
       <header class="band">

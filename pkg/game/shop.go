@@ -119,7 +119,7 @@ func (sm *ShopManager) GetAllShops() []*Shop {
 }
 
 // CreateShop implements common.ShopManager.CreateShop.
-func (sm *ShopManager) CreateShop(vnum int, name string, roomVNum int) interface{} {
+func (sm *ShopManager) CreateShop(vnum int, name string, roomVNum int) any {
 	shop := &Shop{
 		KeeperVNum: vnum,
 		KeeperName: name,
@@ -134,7 +134,7 @@ func (sm *ShopManager) CreateShop(vnum int, name string, roomVNum int) interface
 }
 
 // GetShop implements common.ShopManager.GetShop.
-func (sm *ShopManager) GetShop(id int) (interface{}, bool) {
+func (sm *ShopManager) GetShop(id int) (any, bool) {
 	for _, s := range sm.shops {
 		if s.ID == id {
 			return s, true
@@ -144,7 +144,7 @@ func (sm *ShopManager) GetShop(id int) (interface{}, bool) {
 }
 
 // GetShopByNPC implements common.ShopManager.GetShopByNPC.
-func (sm *ShopManager) GetShopByNPC(vnum int) (interface{}, bool) {
+func (sm *ShopManager) GetShopByNPC(vnum int) (any, bool) {
 	shop := sm.GetShopByKeeper(vnum)
 	if shop == nil {
 		return nil, false
@@ -153,8 +153,8 @@ func (sm *ShopManager) GetShopByNPC(vnum int) (interface{}, bool) {
 }
 
 // GetShopsInRoom implements common.ShopManager.GetShopsInRoom.
-func (sm *ShopManager) GetShopsInRoom(roomVNum int) []interface{} {
-	var result []interface{}
+func (sm *ShopManager) GetShopsInRoom(roomVNum int) []any {
+	var result []any
 	for _, s := range sm.shops {
 		if s.RoomVNum == roomVNum {
 			result = append(result, s)

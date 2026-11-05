@@ -414,108 +414,112 @@ func performAct(format string, ch, vict Actor, obj, victObj *ObjectInstance, arg
 		code := format[i]
 		i++
 
-		var sub string
-		switch code {
-		case 'n':
-			sub = persName(ch, to)
-		case 'N':
-			if vict != nil {
-				sub = persName(vict, to)
-			} else {
-				sub = "someone"
-			}
-		case 'm':
-			sub = hmhr(ch)
-		case 'M':
-			if vict != nil {
-				sub = hmhr(vict)
-			} else {
-				sub = "someone"
-			}
-		case 's':
-			sub = hshr(ch)
-		case 'S':
-			if vict != nil {
-				sub = hshr(vict)
-			} else {
-				sub = "someone"
-			}
-		case 'e':
-			sub = hssh(ch)
-		case 'E':
-			if vict != nil {
-				sub = hssh(vict)
-			} else {
-				sub = "someone"
-			}
-		case 'o':
-			if obj != nil {
-				sub = objName(obj, to)
-			} else {
-				sub = "something"
-			}
-		case 'O':
-			if victObj != nil {
-				sub = objName(victObj, to)
-			} else {
-				sub = "something"
-			}
-		case 'p':
-			if obj != nil {
-				sub = objShortDesc(obj, to)
-			} else {
-				sub = "something"
-			}
-		case 'P':
-			if victObj != nil {
-				sub = objShortDesc(victObj, to)
-			} else {
-				sub = "something"
-			}
-		case 'a':
-			if obj != nil {
-				sub = sana(obj)
-			} else {
-				sub = "a"
-			}
-		case 'A':
-			if victObj != nil {
-				sub = sana(victObj)
-			} else {
-				sub = "a"
-			}
-		case 't':
-			sub = arg
-		case 'T':
-			sub = arg2
-		case 'r':
-			if len(arg) > 0 {
-				sub = strings.ToUpper(string(arg[0])) + arg[1:]
-			}
-		case 'R':
-			if len(arg2) > 0 {
-				sub = strings.ToUpper(string(arg2[0])) + arg2[1:]
-			}
-		case 'q':
-			sub = strings.ToLower(arg)
-		case 'Q':
-			sub = strings.ToLower(arg2)
-		case 'F':
-			if arg2 != "" {
-				sub = fname(arg2)
-			} else {
-				sub = "someone"
-			}
-		case '$':
-			sub = "$"
-		default:
-			log.Printf("SYSERR: Illegal $-code to act(): %c", code)
-		}
-
+		sub := actSubstitution(code, ch, vict, obj, victObj, arg, arg2, to)
 		buf.WriteString(sub)
 	}
 
 	return buf.String()
+}
+
+func actSubstitution(code byte, ch, vict Actor, obj, victObj *ObjectInstance, arg, arg2 string, to Actor) string {
+	var sub string
+	switch code {
+	case 'n':
+		sub = persName(ch, to)
+	case 'N':
+		if vict != nil {
+			sub = persName(vict, to)
+		} else {
+			sub = "someone"
+		}
+	case 'm':
+		sub = hmhr(ch)
+	case 'M':
+		if vict != nil {
+			sub = hmhr(vict)
+		} else {
+			sub = "someone"
+		}
+	case 's':
+		sub = hshr(ch)
+	case 'S':
+		if vict != nil {
+			sub = hshr(vict)
+		} else {
+			sub = "someone"
+		}
+	case 'e':
+		sub = hssh(ch)
+	case 'E':
+		if vict != nil {
+			sub = hssh(vict)
+		} else {
+			sub = "someone"
+		}
+	case 'o':
+		if obj != nil {
+			sub = objName(obj, to)
+		} else {
+			sub = "something"
+		}
+	case 'O':
+		if victObj != nil {
+			sub = objName(victObj, to)
+		} else {
+			sub = "something"
+		}
+	case 'p':
+		if obj != nil {
+			sub = objShortDesc(obj, to)
+		} else {
+			sub = "something"
+		}
+	case 'P':
+		if victObj != nil {
+			sub = objShortDesc(victObj, to)
+		} else {
+			sub = "something"
+		}
+	case 'a':
+		if obj != nil {
+			sub = sana(obj)
+		} else {
+			sub = "a"
+		}
+	case 'A':
+		if victObj != nil {
+			sub = sana(victObj)
+		} else {
+			sub = "a"
+		}
+	case 't':
+		sub = arg
+	case 'T':
+		sub = arg2
+	case 'r':
+		if len(arg) > 0 {
+			sub = strings.ToUpper(string(arg[0])) + arg[1:]
+		}
+	case 'R':
+		if len(arg2) > 0 {
+			sub = strings.ToUpper(string(arg2[0])) + arg2[1:]
+		}
+	case 'q':
+		sub = strings.ToLower(arg)
+	case 'Q':
+		sub = strings.ToLower(arg2)
+	case 'F':
+		if arg2 != "" {
+			sub = fname(arg2)
+		} else {
+			sub = "someone"
+		}
+	case '$':
+		sub = "$"
+	default:
+		log.Printf("SYSERR: Illegal $-code to act(): %c", code)
+	}
+	return sub
 }
 
 // --------------------------------------------------------------------------

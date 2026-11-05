@@ -151,4 +151,41 @@ const i18n = defineCollection({ loader: i18nLoader(), schema: i18nSchema() });
 
 const docsApiCatalogue = defineCollection({ loader: file('./.generated/api/catalogue.json'), schema: docsFields });
 
-export const collections = { docsApiCatalogue, blog, world, help, archive, docs, generatedDocs, i18n };
+// Game logs from the original server, donated by the players who captured
+// them, one entry per capture file.
+const logs = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/logs' }),
+  // One entry per capture file, written by scripts/vargus_logs.py. Every
+  // field is read from the capture; nothing is written by us.
+  schema: z.object({
+    // The file name the recorder gave the capture.
+    title: z.string(),
+    // True when the file name itself is a slur and the title stands in for it.
+    nameWithheld: z.boolean().default(false),
+    lines: z.number().int().positive(),
+    // The text file beside this entry that holds the capture.
+    log: z.string(),
+    // Whose screen it was: every name the score command ranked the recorder
+    // as. Empty when the capture never shows it.
+    recordedBy: z.array(z.string()).default([]),
+    // When it was played, and what says so. Absent when nothing in the files
+    // dates it; iso only for a single day.
+    date: z.object({ text: z.string(), iso: z.string().optional(), basis: z.string() }).optional(),
+    // What was removed before publishing. Every removed line is replaced by a
+    // marker, so a line number still points at the same line of the capture.
+    redactions: z.object({
+      emails: z.number().int().nonnegative(),
+      ips: z.number().int().nonnegative(),
+      passwords: z.number().int().nonnegative(),
+      tells: z.number().int().nonnegative(),
+      mail: z.number().int().nonnegative(),
+      lines: z.number().int().nonnegative(),
+    }),
+    // Who appears, in order of first appearance, and the line each first
+    // appears on, so a character page can link straight to it.
+    cast: z.array(z.string()).default([]),
+    appearances: z.record(z.string(), z.number().int().positive()).default({}),
+  }),
+});
+
+export const collections = { docsApiCatalogue, blog, world, help, archive, logs, docs, generatedDocs, i18n };

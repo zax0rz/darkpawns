@@ -1,0 +1,2486 @@
+../luna-idiom-go/pkg/game/act_comm.go:282: 282-452 lines are duplicate of `pkg/game/act_comm.go:368-538` (dupl)
+var elfSyllables = []syllable{
+	{" ", " "},
+	{"are", "est"},
+	{"and", "et"},
+	{"be", "deleste"},
+	{"how", "quad"},
+	{"what", "quod"},
+	{"is", "est"},
+	{"ou", "estra"},
+	{"where", "este"},
+	{"me", "ego"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "beligant"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "deus"},
+	{"God", "Deorum"},
+	{"who", "quelsteno"},
+	{"ck", "llin"},
+	{"cks", "llins"},
+	{"the ", "a "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "Q"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "q"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ss"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+
+var kenderSyllables = []syllable{
+	{" ", " "},
+	{"are", "ese"},
+	{"and", "ete"},
+	{"be", "este"},
+	{"how", "angti"},
+	{"what", "astem"},
+	{"is", "en"},
+	{"ou", "a"},
+	{"where", "tu'ke"},
+	{"me", "ki'ga"},
+	{"dwarf", "dwarf"},
+	{"elf", "elf"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "beligant"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "deus"},
+	{"God", "Deorum"},
+	{"who", "quelsteno"},
+	{"ck", "llin"},
+	{"cks", "llins"},
+	{"the ", "a "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "Q"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "q"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ss"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+../luna-idiom-go/pkg/game/act_comm.go:368: 368-538 lines are duplicate of `pkg/game/act_comm.go:454-624` (dupl)
+var kenderSyllables = []syllable{
+	{" ", " "},
+	{"are", "ese"},
+	{"and", "ete"},
+	{"be", "este"},
+	{"how", "angti"},
+	{"what", "astem"},
+	{"is", "en"},
+	{"ou", "a"},
+	{"where", "tu'ke"},
+	{"me", "ki'ga"},
+	{"dwarf", "dwarf"},
+	{"elf", "elf"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "beligant"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "deus"},
+	{"God", "Deorum"},
+	{"who", "quelsteno"},
+	{"ck", "llin"},
+	{"cks", "llins"},
+	{"the ", "a "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "Q"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "q"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ss"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+
+var minotaurSyllables = []syllable{
+	{" ", " "},
+	{"are", "era"},
+	{"and", "ef"},
+	{"be", "f'let"},
+	{"how", "hi'fen"},
+	{"what", "f'akal"},
+	{"is", "ge'tur"},
+	{"ou", "affah"},
+	{"where", "f'akan"},
+	{"me", "kill'tur"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "f'else"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "fel'kur"},
+	{"God", "Fel'kur"},
+	{"who", "f'il"},
+	{"ck", "'f"},
+	{"cks", "'fs"},
+	{"the ", "(growl) "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "F"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "F"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "f"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ff"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "f"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+../luna-idiom-go/pkg/game/act_comm.go:454: 454-624 lines are duplicate of `pkg/game/act_comm.go:540-710` (dupl)
+var minotaurSyllables = []syllable{
+	{" ", " "},
+	{"are", "era"},
+	{"and", "ef"},
+	{"be", "f'let"},
+	{"how", "hi'fen"},
+	{"what", "f'akal"},
+	{"is", "ge'tur"},
+	{"ou", "affah"},
+	{"where", "f'akan"},
+	{"me", "kill'tur"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "f'else"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "fel'kur"},
+	{"God", "Fel'kur"},
+	{"who", "f'il"},
+	{"ck", "'f"},
+	{"cks", "'fs"},
+	{"the ", "(growl) "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "F"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "P"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "F"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "f"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "p"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "l"},
+	{"o", "a"},
+	{"p", "ff"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "f"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+
+var ssaurSyllables = []syllable{
+	{" ", " "},
+	{"are", "era"},
+	{"and", "ef"},
+	{"be", "f'ess"},
+	{"how", "hi'fen"},
+	{"what", "f'esal"},
+	{"is", "ge'tur"},
+	{"ou", "affah"},
+	{"where", "f'akan"},
+	{"me", "kiss'tur"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "f'else"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "fel'kur"},
+	{"God", "Fel'kur"},
+	{"who", "f'il"},
+	{"ck", "'f"},
+	{"cks", "'fs"},
+	{"the ", "(growl) "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "S"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "F"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "S"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "F"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "s"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "f"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "s"},
+	{"o", "a"},
+	{"p", "ff"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "f"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+../luna-idiom-go/pkg/game/act_comm.go:540: 540-710 lines are duplicate of `pkg/game/act_comm.go:282-452` (dupl)
+var ssaurSyllables = []syllable{
+	{" ", " "},
+	{"are", "era"},
+	{"and", "ef"},
+	{"be", "f'ess"},
+	{"how", "hi'fen"},
+	{"what", "f'esal"},
+	{"is", "ge'tur"},
+	{"ou", "affah"},
+	{"where", "f'akan"},
+	{"me", "kiss'tur"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "f'else"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "fel'kur"},
+	{"God", "Fel'kur"},
+	{"who", "f'il"},
+	{"ck", "'f"},
+	{"cks", "'fs"},
+	{"the ", "(growl) "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "S"},
+	{"D", "E"},
+	{"E", "I"},
+	{"F", "Y"},
+	{"G", "O"},
+	{"H", "F"},
+	{"I", "U"},
+	{"J", "Y"},
+	{"K", "T"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "S"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "H"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "F"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "s"},
+	{"d", "e"},
+	{"e", "i"},
+	{"f", "y"},
+	{"g", "o"},
+	{"h", "f"},
+	{"i", "u"},
+	{"j", "y"},
+	{"k", "t"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "s"},
+	{"o", "a"},
+	{"p", "ff"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "h"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "f"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+
+var humanSyllables = []syllable{
+	{" ", " "},
+	{"are", "ar"},
+	{"and", "yet"},
+	{"be", "be"},
+	{"how", "keen"},
+	{"what", "forsuth"},
+	{"is", "ist"},
+	{"ou", "e"},
+	{"where", "withal"},
+	{"me", "mine"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "todeth"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "yihew"},
+	{"God", "Yihew"},
+	{"who", "wih"},
+	{"ck", "keth"},
+	{"cks", "keths"},
+	{"the ", "doth "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "K"},
+	{"D", "L"},
+	{"E", "I"},
+	{"F", "P"},
+	{"G", "G"},
+	{"H", "Th"},
+	{"I", "U"},
+	{"J", "G"},
+	{"K", "K"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "Th"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "k"},
+	{"d", "l"},
+	{"e", "i"},
+	{"f", "p"},
+	{"g", "g"},
+	{"h", "th"},
+	{"i", "u"},
+	{"j", "g"},
+	{"k", "k"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "v"},
+	{"o", "a"},
+	{"p", "s"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "th"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+../luna-idiom-go/pkg/game/act_comm.go:626: 626-710 lines are duplicate of `pkg/game/act_comm.go:282-366` (dupl)
+var humanSyllables = []syllable{
+	{" ", " "},
+	{"are", "ar"},
+	{"and", "yet"},
+	{"be", "be"},
+	{"how", "keen"},
+	{"what", "forsuth"},
+	{"is", "ist"},
+	{"ou", "e"},
+	{"where", "withal"},
+	{"me", "mine"},
+	{"dwarf", "dwarf"},
+	{"elf", "elvinisti"},
+	{"Elf", "Elvinisti"},
+	{"fucking", "fucking"},
+	{"serapis", "Serapis"},
+	{"Serapis", "Serapis"},
+	{"kill", "todeth"},
+	{"kender", "kenderkin"},
+	{"centaur", "centaur"},
+	{"rakshasa", "rakshasa"},
+	{"Rakshasa", "Rakshasa"},
+	{"human", "human"},
+	{"elven", "elvenesti"},
+	{"Elven", "Elvenesti"},
+	{"dwarven", "dwarven"},
+	{"god", "yihew"},
+	{"God", "Yihew"},
+	{"who", "wih"},
+	{"ck", "keth"},
+	{"cks", "keths"},
+	{"the ", "doth "},
+	{"A", "A"},
+	{"B", "B"},
+	{"C", "K"},
+	{"D", "L"},
+	{"E", "I"},
+	{"F", "P"},
+	{"G", "G"},
+	{"H", "Th"},
+	{"I", "U"},
+	{"J", "G"},
+	{"K", "K"},
+	{"L", "R"},
+	{"M", "W"},
+	{"N", "V"},
+	{"O", "A"},
+	{"P", "S"},
+	{"Q", "D"},
+	{"R", "L"},
+	{"S", "R"},
+	{"T", "Th"},
+	{"U", "I"},
+	{"V", "Z"},
+	{"W", "X"},
+	{"X", "N"},
+	{"Y", "Y"},
+	{"Z", "K"},
+	{"a", "a"},
+	{"b", "b"},
+	{"c", "k"},
+	{"d", "l"},
+	{"e", "i"},
+	{"f", "p"},
+	{"g", "g"},
+	{"h", "th"},
+	{"i", "u"},
+	{"j", "g"},
+	{"k", "k"},
+	{"l", "r"},
+	{"m", "w"},
+	{"n", "v"},
+	{"o", "a"},
+	{"p", "s"},
+	{"q", "d"},
+	{"r", "l"},
+	{"s", "r"},
+	{"t", "th"},
+	{"u", "i"},
+	{"v", "z"},
+	{"w", "x"},
+	{"x", "n"},
+	{"y", "y"},
+	{"z", "k"},
+}
+../luna-idiom-go/pkg/game/act_mudlog_test.go:18: 18-43 lines are duplicate of `pkg/game/zone_error_mudlog_test.go:21-46` (dupl)
+func actMudlogObservers(t *testing.T) (*milestoneProvider, *bytes.Buffer, *Player, *Player, *Player, *Player) {
+	t.Helper()
+	newObserver := func(id int, name string, level int, log1, log2 bool) *Player {
+		p := NewPlayer(id, name, 1001)
+		p.SetLevel(level)
+		p.SetPlrFlag(PrfLog1, log1)
+		p.SetPlrFlag(PrfLog2, log2)
+		return p
+	}
+	watch := newObserver(101, "Actwatch", LVL_IMMORT, true, true)
+	below := newObserver(102, "Actbelow", LVL_IMMORT-1, true, true)
+	briefOnly := newObserver(103, "Actbrief", 40, true, false)
+	normalOnly := newObserver(104, "Actnormal", 40, false, true)
+	provider := &milestoneProvider{
+		players: []*Player{watch, below, briefOnly, normalOnly},
+		lines:   map[string]string{},
+	}
+	old := getImmortalSessionProvider()
+	SetImmortalSessionProvider(provider)
+	t.Cleanup(func() { SetImmortalSessionProvider(old) })
+	file := &bytes.Buffer{}
+	oldWriter := getLogWriter()
+	SetLogWriter(file)
+	t.Cleanup(func() { SetLogWriter(oldWriter) })
+	return provider, file, watch, below, briefOnly, normalOnly
+}
+../luna-idiom-go/pkg/game/backstab_skillmsg_test.go:41: 41-64 lines are duplicate of `pkg/game/bash_skillmsg_test.go:13-36` (dupl)
+func wireBackstabMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, attackerMsg *string, roomMsg *string, teardown func()) {
+	t.Helper()
+	orig := combat.GetCallbacks()
+	messages := loadMessagesFile(t)
+	var attMsg, roomOut string
+	c := &combat.GameCallbacks{
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
+			if name == chName {
+				attMsg = msg
+			}
+		},
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
+	}
+	combat.SetCallbacks(c)
+	combat.InitFightMessages(c, messages)
+	teardown = func() { combat.SetCallbacks(orig) }
+	return c, &attMsg, &roomOut, teardown
+}
+../luna-idiom-go/pkg/game/bash_skillmsg_test.go:13: 13-36 lines are duplicate of `pkg/game/headbutt_skillmsg_test.go:13-36` (dupl)
+func wireBashMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, attackerMsg *string, roomMsg *string, teardown func()) {
+	t.Helper()
+	orig := combat.GetCallbacks()
+	messages := loadMessagesFile(t)
+	var attMsg, roomOut string
+	c := &combat.GameCallbacks{
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
+			if name == chName {
+				attMsg = msg
+			}
+		},
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
+	}
+	combat.SetCallbacks(c)
+	combat.InitFightMessages(c, messages)
+	teardown = func() { combat.SetCallbacks(orig) }
+	return c, &attMsg, &roomOut, teardown
+}
+../luna-idiom-go/pkg/game/headbutt_skillmsg_test.go:13: 13-36 lines are duplicate of `pkg/game/kick_skillmsg_test.go:15-38` (dupl)
+func wireHeadbuttMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, attackerMsg *string, roomMsg *string, teardown func()) {
+	t.Helper()
+	orig := combat.GetCallbacks()
+	messages := loadMessagesFile(t)
+	var attMsg, roomOut string
+	c := &combat.GameCallbacks{
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
+			if name == chName {
+				attMsg = msg
+			}
+		},
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
+	}
+	combat.SetCallbacks(c)
+	combat.InitFightMessages(c, messages)
+	teardown = func() { combat.SetCallbacks(orig) }
+	return c, &attMsg, &roomOut, teardown
+}
+../luna-idiom-go/pkg/game/kick_skillmsg_test.go:15: 15-38 lines are duplicate of `pkg/game/trip_skillmsg_test.go:13-36` (dupl)
+func wireKickMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, attackerMsg *string, roomMsg *string, teardown func()) {
+	t.Helper()
+	orig := combat.GetCallbacks()
+	messages := loadMessagesFile(t)
+	var attMsg, roomOut string
+	c := &combat.GameCallbacks{
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
+			if name == chName {
+				attMsg = msg
+			}
+		},
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
+	}
+	combat.SetCallbacks(c)
+	combat.InitFightMessages(c, messages)
+	teardown = func() { combat.SetCallbacks(orig) }
+	return c, &attMsg, &roomOut, teardown
+}
+../luna-idiom-go/pkg/game/other_status_test.go:57: 57-80 lines are duplicate of `pkg/game/other_status_test.go:82-105` (dupl)
+	t.Run("werewolf full moon transform and daytime revert", func(t *testing.T) {
+		setTransformClimate(t, SunDark, 17, MoonFull)
+		w, p, out := newTransformTestPlayer(t)
+		p.SetPlrFlag(PlrWerewolf, true)
+		w.doTransform(p, nil, "transform", "ignored")
+		if got, want := out.String(), "Your nails grow into talons, and hair sprouts from every pore.\n\r"; got != want {
+			t.Fatalf("transform = %q, want %q", got, want)
+		}
+		if !p.IsAffected(affWerewolf) || p.GetHP() != 150 {
+			t.Fatalf("transform state = affected:%v hp:%d, want true/150", p.IsAffected(affWerewolf), p.GetHP())
+		}
+
+		weatherMu.Lock()
+		weatherInfo.Sunlight = SunLight
+		weatherMu.Unlock()
+		out.Reset()
+		w.doTransform(p, nil, "transform", "ignored")
+		if got, want := out.String(), "Your hair and nails shorten and you revert to your normal shape.\n\r"; got != want {
+			t.Fatalf("revert = %q, want %q", got, want)
+		}
+		if p.IsAffected(affWerewolf) || p.GetHP() != 100 {
+			t.Fatalf("revert state = affected:%v hp:%d, want false/100", p.IsAffected(affWerewolf), p.GetHP())
+		}
+	})
+../luna-idiom-go/pkg/game/other_status_test.go:82: 82-105 lines are duplicate of `pkg/game/other_status_test.go:57-80` (dupl)
+	t.Run("vampire full moon transform and daytime revert", func(t *testing.T) {
+		setTransformClimate(t, SunDark, 17, MoonFull)
+		w, p, out := newTransformTestPlayer(t)
+		p.SetPlrFlag(PlrVampire, true)
+		w.doTransform(p, nil, "transform", "ignored")
+		if got, want := out.String(), "Your nails grow transluscent and fangs sprout from your incisors!\n\r"; got != want {
+			t.Fatalf("transform = %q, want %q", got, want)
+		}
+		if !p.IsAffected(affVampire) || p.GetMana() != 150 {
+			t.Fatalf("transform state = affected:%v mana:%d, want true/150", p.IsAffected(affVampire), p.GetMana())
+		}
+
+		weatherMu.Lock()
+		weatherInfo.Sunlight = SunLight
+		weatherMu.Unlock()
+		out.Reset()
+		w.doTransform(p, nil, "transform", "ignored")
+		if got, want := out.String(), "Your fangs recess, and you revert to your normal shape.\n\r"; got != want {
+			t.Fatalf("revert = %q, want %q", got, want)
+		}
+		if p.IsAffected(affVampire) || p.GetMana() != 100 {
+			t.Fatalf("revert state = affected:%v mana:%d, want false/100", p.IsAffected(affVampire), p.GetMana())
+		}
+	})
+../luna-idiom-go/pkg/game/spec_castle_guard_down_test.go:77: 77-102 lines are duplicate of `pkg/game/spec_castle_guard_north_test.go:77-102` (dupl)
+	t.Run("blocked uses C audience split and no attack", func(t *testing.T) {
+		w, player, lastMsg := newSpecProcTestWorld(t)
+		guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+		lastMsg()
+		peer := NewPlayer(2, "Peer", player.GetRoomVNum())
+		if err := w.AddPlayer(peer); err != nil {
+			t.Fatalf("AddPlayer peer: %v", err)
+		}
+		messages := make(map[string]string)
+		w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+
+		if got := specCastleGuardDown(w, player, guard, "down", ""); !got {
+			t.Fatal("blocked down should be handled")
+		}
+		if got := messages[player.GetName()]; !strings.Contains(got, "blocks your way.") ||
+			!strings.Contains(got, "Thou shalt not pass.") {
+			t.Errorf("actor messages = %q", got)
+		}
+		if got := messages[peer.GetName()]; !strings.Contains(got, "blocks "+player.GetName()+"'s path.") ||
+			!strings.Contains(got, "Thou shalt not pass.") {
+			t.Errorf("peer messages = %q", got)
+		}
+		if got := player.GetRoomVNum(); got != guard.GetRoomVNum() {
+			t.Fatalf("blocked actor moved to room %d, want %d", got, guard.GetRoomVNum())
+		}
+	})
+../luna-idiom-go/pkg/game/spec_castle_guard_down_test.go:148: 148-181 lines are duplicate of `pkg/game/spec_castle_guard_north_test.go:148-181` (dupl)
+func TestSpecCastleGuardDown_AutonomousSecondGuardTargetsMob(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	other := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	target := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	guard.VNum = 19627
+	other.VNum = 19627
+	{
+		p := *guard.Proto()
+		p.ShortDesc = "a castle guard"
+		guard.SetProto(&p)
+	}
+	{
+		p := *other.Proto()
+		p.ShortDesc = "another castle guard"
+		other.SetProto(&p)
+	}
+	{
+		p := *target.Proto()
+		p.ShortDesc = "a target mob"
+		target.SetProto(&p)
+	}
+	other.SetFightingBody(target)
+	lastMsg()
+
+	engine := &castleGuardDownCombatEngine{}
+	w.SetCombatEngine(engine)
+	if got := specCastleGuardDown(w, nil, guard, "", ""); !got {
+		t.Fatal("awake idle guard should intercept a fighting peer guard")
+	}
+	if want := [2]string{guard.GetName(), target.GetName()}; len(engine.starts) != 1 || engine.starts[0] != want {
+		t.Fatalf("combat starts = %#v, want %#v", engine.starts, want)
+	}
+}
+../luna-idiom-go/pkg/game/spec_castle_guard_north_test.go:77: 77-102 lines are duplicate of `pkg/game/spec_castle_guard_up_test.go:77-102` (dupl)
+	t.Run("blocked uses C audience split and no attack", func(t *testing.T) {
+		w, player, lastMsg := newSpecProcTestWorld(t)
+		guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+		lastMsg()
+		peer := NewPlayer(2, "Peer", player.GetRoomVNum())
+		if err := w.AddPlayer(peer); err != nil {
+			t.Fatalf("AddPlayer peer: %v", err)
+		}
+		messages := make(map[string]string)
+		w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+
+		if got := specCastleGuardNorth(w, player, guard, "north", ""); !got {
+			t.Fatal("blocked north should be handled")
+		}
+		if got := messages[player.GetName()]; !strings.Contains(got, "blocks your way.") ||
+			!strings.Contains(got, "Thou shalt not pass.") {
+			t.Errorf("actor messages = %q", got)
+		}
+		if got := messages[peer.GetName()]; !strings.Contains(got, "blocks "+player.GetName()+"'s path.") ||
+			!strings.Contains(got, "Thou shalt not pass.") {
+			t.Errorf("peer messages = %q", got)
+		}
+		if got := player.GetRoomVNum(); got != guard.GetRoomVNum() {
+			t.Fatalf("blocked actor moved to room %d, want %d", got, guard.GetRoomVNum())
+		}
+	})
+../luna-idiom-go/pkg/game/spec_castle_guard_north_test.go:148: 148-181 lines are duplicate of `pkg/game/spec_castle_guard_up_test.go:150-183` (dupl)
+func TestSpecCastleGuardNorth_AutonomousSecondGuardTargetsMob(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	other := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	target := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	guard.VNum = 19510
+	other.VNum = 19510
+	{
+		p := *guard.Proto()
+		p.ShortDesc = "an elven north guard"
+		guard.SetProto(&p)
+	}
+	{
+		p := *other.Proto()
+		p.ShortDesc = "another elven north guard"
+		other.SetProto(&p)
+	}
+	{
+		p := *target.Proto()
+		p.ShortDesc = "an elven north target mob"
+		target.SetProto(&p)
+	}
+	other.SetFightingBody(target)
+	lastMsg()
+
+	engine := &castleGuardNorthCombatEngine{}
+	w.SetCombatEngine(engine)
+	if got := specCastleGuardNorth(w, nil, guard, "", ""); !got {
+		t.Fatal("awake idle guard should intercept a fighting peer guard")
+	}
+	if want := [2]string{guard.GetName(), target.GetName()}; len(engine.starts) != 1 || engine.starts[0] != want {
+		t.Fatalf("combat starts = %#v, want %#v", engine.starts, want)
+	}
+}
+../luna-idiom-go/pkg/game/spec_castle_guard_up_test.go:77: 77-102 lines are duplicate of `pkg/game/spec_castle_guard_down_test.go:77-102` (dupl)
+	t.Run("blocked uses C audience split and no attack", func(t *testing.T) {
+		w, player, lastMsg := newSpecProcTestWorld(t)
+		guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+		lastMsg()
+		peer := NewPlayer(2, "Peer", player.GetRoomVNum())
+		if err := w.AddPlayer(peer); err != nil {
+			t.Fatalf("AddPlayer peer: %v", err)
+		}
+		messages := make(map[string]string)
+		w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+
+		if got := specCastleGuardUp(w, player, guard, "up", ""); !got {
+			t.Fatal("blocked up should be handled")
+		}
+		if got := messages[player.GetName()]; !strings.Contains(got, "blocks your way.") ||
+			!strings.Contains(got, "Thou shalt not pass.") {
+			t.Errorf("actor messages = %q", got)
+		}
+		if got := messages[peer.GetName()]; !strings.Contains(got, "blocks "+player.GetName()+"'s path.") ||
+			!strings.Contains(got, "Thou shalt not pass.") {
+			t.Errorf("peer messages = %q", got)
+		}
+		if got := player.GetRoomVNum(); got != guard.GetRoomVNum() {
+			t.Fatalf("blocked actor moved to room %d, want %d", got, guard.GetRoomVNum())
+		}
+	})
+../luna-idiom-go/pkg/game/spec_castle_guard_up_test.go:150: 150-183 lines are duplicate of `pkg/game/spec_castle_guard_down_test.go:148-181` (dupl)
+func TestSpecCastleGuardUp_AutonomousSecondGuardTargetsMob(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	guard := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	other := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	target := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	guard.VNum = 19650
+	other.VNum = 19650
+	{
+		p := *guard.Proto()
+		p.ShortDesc = "a castle-up guard"
+		guard.SetProto(&p)
+	}
+	{
+		p := *other.Proto()
+		p.ShortDesc = "another castle-up guard"
+		other.SetProto(&p)
+	}
+	{
+		p := *target.Proto()
+		p.ShortDesc = "a castle-up target mob"
+		target.SetProto(&p)
+	}
+	other.SetFightingBody(target)
+	lastMsg()
+
+	engine := &castleGuardUpCombatEngine{}
+	w.SetCombatEngine(engine)
+	if got := specCastleGuardUp(w, nil, guard, "", ""); !got {
+		t.Fatal("awake idle guard should intercept a fighting peer guard")
+	}
+	if want := [2]string{guard.GetName(), target.GetName()}; len(engine.starts) != 1 || engine.starts[0] != want {
+		t.Fatalf("combat starts = %#v, want %#v", engine.starts, want)
+	}
+}
+../luna-idiom-go/pkg/game/spec_jailguard_test.go:7: 7-44 lines are duplicate of `pkg/game/spec_outofjailguard_test.go:10-47` (dupl)
+func TestSpecJailGuard_EntryGates(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 29)
+	_ = lastMsg() // discard the spawn announcement
+
+	player.SetRoom(8118)
+	mob.SetRoom(8118)
+
+	tests := []struct {
+		name  string
+		ch    *Player
+		cmd   string
+		room  int
+		level int
+		want  bool
+	}{
+		{name: "autonomous", ch: nil, cmd: "", room: 8118, level: 5},
+		{name: "non-movement", ch: player, cmd: "look", room: 8118, level: 5},
+		{name: "missing-player", ch: nil, cmd: "north", room: 8118, level: 5},
+		{name: "immortal", ch: player, cmd: "north", room: 8118, level: lvlImmort},
+		{name: "wrong-room", ch: player, cmd: "north", room: 8117, level: 5},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.ch != nil {
+				tt.ch.SetRoom(tt.room)
+				tt.ch.SetLevel(tt.level)
+			}
+			if got := specJailGuard(w, tt.ch, mob, tt.cmd, "ignored"); got != tt.want {
+				t.Errorf("handled = %v, want %v", got, tt.want)
+			}
+			if got := lastMsg(); got != "" {
+				t.Errorf("output = %q, want empty", got)
+			}
+		})
+	}
+}
+../luna-idiom-go/pkg/game/spec_oro_quarters_room_test.go:1: 1-69 lines are duplicate of `pkg/game/spec_oro_study_room_test.go:1-69` (dupl)
+package game
+
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
+
+func TestSpecOroQuartersRoom_GatesAudienceHPAndFallthrough(t *testing.T) {
+	parsed := &parser.World{Rooms: []parser.Room{{VNum: 18397, Name: "Orodreth's Quarters", Zone: 183}}}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) {
+		output[name] += string(msg)
+	}
+	actor := NewPlayer(1, "Quartersactor", 18397)
+	actor.SetPosition(combat.PosStanding)
+	actor.SetHP(101)
+	observer := NewPlayer(2, "Quarterspeer", 18397)
+	observer.SetPosition(combat.PosStanding)
+	for _, player := range []*Player{actor, observer} {
+		if err := w.AddPlayer(player); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", player.Name, err)
+		}
+	}
+
+	if got := specOroQuartersRoom(w, actor, nil, "look", ""); got {
+		t.Fatal("non-south command was handled")
+	}
+	if actor.GetHP() != 101 || output[actor.Name] != "" || output[observer.Name] != "" {
+		t.Fatalf("non-south gate changed state: hp=%d actor=%q observer=%q", actor.GetHP(), output[actor.Name], output[observer.Name])
+	}
+
+	if got := specOroQuartersRoom(w, actor, nil, "south", "ignored argument"); !got {
+		t.Fatal("non-Orodreth south command was not handled")
+	}
+	if got, want := actor.GetHP(), 50; got != want {
+		t.Errorf("HP after jolt = %d, want C integer half %d", got, want)
+	}
+	if got, want := output[actor.Name], "A strong force blocks your way and gives you a nasty jolt.\r\n"; got != want {
+		t.Errorf("actor output = %q, want %q", got, want)
+	}
+	if got, want := output[observer.Name], "A strong force jolts Quartersactor in his attempt to leave south.\r\n"; got != want {
+		t.Errorf("observer output = %q, want %q", got, want)
+	}
+
+	output[actor.Name] = ""
+	output[observer.Name] = ""
+	orodreth := NewPlayer(3, "Orodreth", 18397)
+	if err := w.AddPlayer(orodreth); err != nil {
+		t.Fatalf("AddPlayer(Orodreth): %v", err)
+	}
+	orodreth.SetHP(101)
+	if got := specOroQuartersRoom(w, orodreth, nil, "south", ""); got {
+		t.Fatal("Orodreth south command was handled")
+	}
+	if got := orodreth.GetHP(); got != 101 {
+		t.Errorf("Orodreth HP = %d, want unchanged 101", got)
+	}
+	if output[orodreth.Name] != "" || output[observer.Name] != "" {
+		t.Fatalf("Orodreth fallthrough emitted output: actor=%q observer=%q", output[orodreth.Name], output[observer.Name])
+	}
+}
+../luna-idiom-go/pkg/game/spec_oro_study_room_test.go:1: 1-69 lines are duplicate of `pkg/game/spec_oro_quarters_room_test.go:1-69` (dupl)
+package game
+
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
+
+func TestSpecOroStudyRoom_GatesAudienceHPAndFallthrough(t *testing.T) {
+	parsed := &parser.World{Rooms: []parser.Room{{VNum: 18399, Name: "The Coding Room", Zone: 183}}}
+	w, err := NewWorld(parsed)
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	output := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) {
+		output[name] += string(msg)
+	}
+	actor := NewPlayer(1, "Studyactor", 18399)
+	actor.SetPosition(combat.PosStanding)
+	actor.SetHP(101)
+	observer := NewPlayer(2, "Studypeer", 18399)
+	observer.SetPosition(combat.PosStanding)
+	for _, player := range []*Player{actor, observer} {
+		if err := w.AddPlayer(player); err != nil {
+			t.Fatalf("AddPlayer(%s): %v", player.Name, err)
+		}
+	}
+
+	if got := specOroStudyRoom(w, actor, nil, "look", ""); got {
+		t.Fatal("non-north command was handled")
+	}
+	if actor.GetHP() != 101 || output[actor.Name] != "" || output[observer.Name] != "" {
+		t.Fatalf("non-north gate changed state: hp=%d actor=%q observer=%q", actor.GetHP(), output[actor.Name], output[observer.Name])
+	}
+
+	if got := specOroStudyRoom(w, actor, nil, "north", "ignored argument"); !got {
+		t.Fatal("non-Orodreth north command was not handled")
+	}
+	if got, want := actor.GetHP(), 50; got != want {
+		t.Errorf("HP after jolt = %d, want C integer half %d", got, want)
+	}
+	if got, want := output[actor.Name], "A strong force blocks your way and gives you a nasty jolt.\r\n"; got != want {
+		t.Errorf("actor output = %q, want %q", got, want)
+	}
+	if got, want := output[observer.Name], "A strong force jolts Studyactor in his attempt to leave north.\r\n"; got != want {
+		t.Errorf("observer output = %q, want %q", got, want)
+	}
+
+	output[actor.Name] = ""
+	output[observer.Name] = ""
+	orodreth := NewPlayer(3, "Orodreth", 18399)
+	if err := w.AddPlayer(orodreth); err != nil {
+		t.Fatalf("AddPlayer(Orodreth): %v", err)
+	}
+	orodreth.SetHP(101)
+	if got := specOroStudyRoom(w, orodreth, nil, "north", ""); got {
+		t.Fatal("Orodreth north command was handled")
+	}
+	if got := orodreth.GetHP(); got != 101 {
+		t.Errorf("Orodreth HP = %d, want unchanged 101", got)
+	}
+	if output[orodreth.Name] != "" || output[observer.Name] != "" {
+		t.Fatalf("Orodreth fallthrough emitted output: actor=%q observer=%q", output[orodreth.Name], output[observer.Name])
+	}
+}
+../luna-idiom-go/pkg/game/spec_outofjailguard_test.go:10: 10-47 lines are duplicate of `pkg/game/spec_jailguard_test.go:7-44` (dupl)
+func TestSpecOutOfJailGuard_EntryGates(t *testing.T) {
+	w, player, lastMsg := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 35)
+	_ = lastMsg() // discard the spawn announcement
+
+	player.SetRoom(8117)
+	mob.SetRoom(8117)
+
+	tests := []struct {
+		name  string
+		ch    *Player
+		cmd   string
+		room  int
+		level int
+		want  bool
+	}{
+		{name: "autonomous", ch: nil, cmd: "", room: 8117, level: 5},
+		{name: "non-movement", ch: player, cmd: "look", room: 8117, level: 5},
+		{name: "missing-player", ch: nil, cmd: "south", room: 8117, level: 5},
+		{name: "immortal", ch: player, cmd: "south", room: 8117, level: lvlImmort},
+		{name: "wrong-room", ch: player, cmd: "south", room: 8116, level: 5},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.ch != nil {
+				tt.ch.SetRoom(tt.room)
+				tt.ch.SetLevel(tt.level)
+			}
+			if got := specOutOfJailGuard(w, tt.ch, mob, tt.cmd, "ignored"); got != tt.want {
+				t.Errorf("handled = %v, want %v", got, tt.want)
+			}
+			if got := lastMsg(); got != "" {
+				t.Errorf("output = %q, want empty", got)
+			}
+		})
+	}
+}
+../luna-idiom-go/pkg/game/spec_tattoo2_test.go:12: 12-109 lines are duplicate of `pkg/game/spec_tattoo3_test.go:12-109` (dupl)
+func newTattoo2TestWorld(t *testing.T, withPeer bool) (*World, *Player, *MobInstance, map[string]string) {
+	t.Helper()
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 18252, Name: "A Dark Building", Zone: 182}},
+		Mobs: []parser.Mob{{
+			VNum:      18213,
+			Keywords:  "confucius tattooist",
+			ShortDesc: "Confucius",
+			Sex:       1,
+			Level:     29,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+	actor := NewPlayer(1, "TattooTwoActor", 18252)
+	actor.SetLevel(levelCanShout)
+	actor.Stats.Int = 10
+	actor.Stats.Wis = 10
+	actor.CopyBaseAttributes()
+	if err := w.AddPlayer(actor); err != nil {
+		t.Fatalf("AddPlayer actor: %v", err)
+	}
+	if withPeer {
+		peer := NewPlayer(2, "TattooTwoPeer", 18252)
+		if err := w.AddPlayer(peer); err != nil {
+			t.Fatalf("AddPlayer peer: %v", err)
+		}
+	}
+	mob, err := w.SpawnMob(18213, 18252)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	for name := range messages {
+		messages[name] = ""
+	}
+	return w, actor, mob, messages
+}
+
+func TestSpecTattoo2ListAndEntryGates(t *testing.T) {
+	w, actor, tattooist, messages := newTattoo2TestWorld(t, false)
+
+	if !specTattoo2(w, actor, tattooist, "list", "") {
+		t.Fatal("list should be consumed")
+	}
+	wantList := "To buy a tattoo: BUY <number of tattoo>.\r\n" +
+		"Available tattoos are:\r\n" +
+		"[0] - (14000) tattoo of a leaping tiger : the nimbleness and stamina of the tiger\r\n" +
+		"[1] - (17000) tattoo of a heart : live longer through trust in your heart\r\n" +
+		"[2] - (17000) tattoo of a star : gain the magic of the stars\r\n" +
+		"[3] - (19000) tattoo of the symbol of the Jyhad : the power of fighting a holy war\r\n"
+	if messages[actor.Name] != wantList {
+		t.Fatalf("list output = %q, want %q", messages[actor.Name], wantList)
+	}
+	clearTattoo2Messages(messages)
+
+	for _, test := range []struct {
+		name string
+		arg  string
+		want string
+	}{
+		{name: "no argument", arg: "", want: "Buy what number?\r\n"},
+		{name: "non numeric", arg: "x", want: "Buy by number!\r\n"},
+		{name: "out of range", arg: "4", want: "Buy by number!\r\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if !specTattoo2(w, actor, tattooist, "buy", test.arg) {
+				t.Fatal("buy gate should be consumed")
+			}
+			if got := messages[actor.Name]; got != test.want {
+				t.Fatalf("output = %q, want %q", got, test.want)
+			}
+			clearTattoo2Messages(messages)
+		})
+	}
+
+	actor.Tattoo = TattooDragon
+	if !specTattoo2(w, actor, tattooist, "buy", "0") {
+		t.Fatal("already-tattooed gate should be consumed")
+	}
+	if got, want := messages[actor.Name], "Confucius tells you, 'Your magickal center is already tattooed. Your tattoo... is enough magick for such as yourself.'\r\n"; got != want {
+		t.Fatalf("owned gate output = %q, want %q", got, want)
+	}
+	if actor.GetGold() != 0 {
+		t.Fatalf("owned gate changed gold to %d", actor.GetGold())
+	}
+
+	if specTattoo2(w, actor, tattooist, "look", "") {
+		t.Fatal("unrelated command should fall through")
+	}
+	if specTattoo2(w, nil, tattooist, "list", "") {
+		t.Fatal("nil actor should fall through")
+	}
+}
+../luna-idiom-go/pkg/game/spec_tattoo3_test.go:12: 12-109 lines are duplicate of `pkg/game/spec_tattoo2_test.go:12-109` (dupl)
+func newTattoo3TestWorld(t *testing.T, withPeer bool) (*World, *Player, *MobInstance, map[string]string) {
+	t.Helper()
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 21281, Name: "A Tattoo Parlor", Zone: 212}},
+		Mobs: []parser.Mob{{
+			VNum:      21244,
+			Keywords:  "tattooist artist polywig",
+			ShortDesc: "Polywig",
+			Sex:       1,
+			Level:     29,
+		}},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(func() { w.StopAITicker() })
+
+	messages := make(map[string]string)
+	w.MessageSink = func(name string, msg []byte) { messages[name] += string(msg) }
+	actor := NewPlayer(1, "TattooThreeActor", 21281)
+	actor.SetLevel(levelCanShout)
+	actor.Stats.Int = 10
+	actor.Stats.Wis = 10
+	actor.CopyBaseAttributes()
+	if err := w.AddPlayer(actor); err != nil {
+		t.Fatalf("AddPlayer actor: %v", err)
+	}
+	if withPeer {
+		peer := NewPlayer(2, "TattooThreePeer", 21281)
+		if err := w.AddPlayer(peer); err != nil {
+			t.Fatalf("AddPlayer peer: %v", err)
+		}
+	}
+	mob, err := w.SpawnMob(21244, 21281)
+	if err != nil {
+		t.Fatalf("SpawnMob: %v", err)
+	}
+	for name := range messages {
+		messages[name] = ""
+	}
+	return w, actor, mob, messages
+}
+
+func TestSpecTattoo3ListAndEntryGates(t *testing.T) {
+	w, actor, tattooist, messages := newTattoo3TestWorld(t, false)
+
+	if !specTattoo3(w, actor, tattooist, "list", "") {
+		t.Fatal("list should be consumed")
+	}
+	wantList := "To buy a tattoo: BUY <number of tattoo>.\r\n" +
+		"Available tattoos are:\r\n" +
+		"[0] - (18000) tattoo of an open eye : see that which is normally unseen\r\n" +
+		"[1] - (20000) tattoo of crossed swords : miss less and hit harder\r\n" +
+		"[2] - (11000) tattoo of a ship : gain the ability of movement over water\r\n" +
+		"[3] - (15000) tattoo of the word 'MOM' : the wisdom of your elders\r\n"
+	if messages[actor.Name] != wantList {
+		t.Fatalf("list output = %q, want %q", messages[actor.Name], wantList)
+	}
+	clearTattoo3Messages(messages)
+
+	for _, test := range []struct {
+		name string
+		arg  string
+		want string
+	}{
+		{name: "no argument", arg: "", want: "Buy what number?\r\n"},
+		{name: "non numeric", arg: "x", want: "Buy by number!\r\n"},
+		{name: "out of range", arg: "4", want: "Buy by number!\r\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if !specTattoo3(w, actor, tattooist, "buy", test.arg) {
+				t.Fatal("buy gate should be consumed")
+			}
+			if got := messages[actor.Name]; got != test.want {
+				t.Fatalf("output = %q, want %q", got, test.want)
+			}
+			clearTattoo3Messages(messages)
+		})
+	}
+
+	actor.Tattoo = TattooDragon
+	if !specTattoo3(w, actor, tattooist, "buy", "0") {
+		t.Fatal("already-tattooed gate should be consumed")
+	}
+	if got, want := messages[actor.Name], "Polywig tells you, 'Your mathickal thenter is awready tattooed. Your tattoo... ith enough mathick for such as yoursewf.'\r\n"; got != want {
+		t.Fatalf("owned gate output = %q, want %q", got, want)
+	}
+	if actor.GetGold() != 0 {
+		t.Fatalf("owned gate changed gold to %d", actor.GetGold())
+	}
+
+	if specTattoo3(w, actor, tattooist, "look", "") {
+		t.Fatal("unrelated command should fall through")
+	}
+	if specTattoo3(w, nil, tattooist, "list", "") {
+		t.Fatal("nil actor should fall through")
+	}
+}
+../luna-idiom-go/pkg/game/trip_skillmsg_test.go:13: 13-36 lines are duplicate of `pkg/game/backstab_skillmsg_test.go:41-64` (dupl)
+func wireTripMessages(t *testing.T, chName string) (cb *combat.GameCallbacks, attackerMsg *string, roomMsg *string, teardown func()) {
+	t.Helper()
+	orig := combat.GetCallbacks()
+	messages := loadMessagesFile(t)
+	var attMsg, roomOut string
+	c := &combat.GameCallbacks{
+		Broadcast: func(_ int, msg string, _ []combat.Combatant) { roomOut = msg },
+		SendToChar: func(bodyname combat.Combatant, msg string) {
+			name := bodyname.GetName()
+
+			if name == chName {
+				attMsg = msg
+			}
+		},
+		GetSex:   func(combat.Combatant) int { return 0 },
+		GetHP:    func(combat.Combatant) int { return 10 },
+		GetLevel: func(combat.Combatant) int { return 1 },
+		IsNPC:    func(bodyname combat.Combatant) bool { return false },
+	}
+	combat.SetCallbacks(c)
+	combat.InitFightMessages(c, messages)
+	teardown = func() { combat.SetCallbacks(orig) }
+	return c, &attMsg, &roomOut, teardown
+}
+../luna-idiom-go/pkg/game/zone_error_mudlog_test.go:21: 21-46 lines are duplicate of `pkg/game/act_mudlog_test.go:18-43` (dupl)
+func zoneErrorObservers(t *testing.T) (*milestoneProvider, *bytes.Buffer, *Player, *Player, *Player, *Player) {
+	t.Helper()
+	newObserver := func(id int, name string, level int, log1, log2 bool) *Player {
+		p := NewPlayer(id, name, 1001)
+		p.SetLevel(level)
+		p.SetPlrFlag(PrfLog1, log1)
+		p.SetPlrFlag(PrfLog2, log2)
+		return p
+	}
+	watch := newObserver(201, "Zonewatch", LVL_GOD, false, true)
+	below := newObserver(202, "Zonebelow", LVL_GOD-1, false, true)
+	briefOnly := newObserver(203, "Zonebrief", 40, true, false)
+	complete := newObserver(204, "Zonecomplete", 40, true, true)
+	provider := &milestoneProvider{
+		players: []*Player{watch, below, briefOnly, complete},
+		lines:   map[string]string{},
+	}
+	old := getImmortalSessionProvider()
+	SetImmortalSessionProvider(provider)
+	t.Cleanup(func() { SetImmortalSessionProvider(old) })
+	file := &bytes.Buffer{}
+	oldWriter := getLogWriter()
+	SetLogWriter(file)
+	t.Cleanup(func() { SetLogWriter(oldWriter) })
+	return provider, file, watch, below, briefOnly, complete
+}
+../claude-idiom-exp/pkg/combat/ac_reduction_golden_test.go:9:6: Function 'TestACReduction_GoldenAgainstCSource' is too long (78 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/damage_modifiers_test.go:9:6: Function 'TestApplyDamageModifiers' is too long (131 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/engine_standup_test.go:198:6: Function 'TestProcessCombatPair_PCStandup' is too long (65 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/engine_test.go:217:6: Function 'TestPerformInitialAttack_ModifiersApplied' is too long (70 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/engine_test.go:954:6: Function 'TestProcessCombatPair_ParryDefersReductionToOpponentsTurn' is too long (75 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/fight_core.go:1177:6: Function 'pickBragMessage' has too many statements (48 > 40) (funlen)
+../claude-idiom-exp/pkg/combat/fight_messages.go:57:6: Function 'ParseFightMessages' is too long (63 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/formulas.go:560:6: Function 'GetAttacksPerRound' is too long (66 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/round_test.go:19:6: Function 'defaultCombatCallbacks' is too long (64 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/round_test.go:498:6: Function 'TestProcessCombatPair_MobAttack' is too long (65 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/round_test.go:572:6: Function 'TestProcessCombatPair_PlayerDeath' is too long (73 > 60) (funlen)
+../claude-idiom-exp/pkg/combat/weapon_attacktype_test.go:13:6: Function 'TestPerformOneHit_WeaponOffsetReachesMessageSender' is too long (68 > 60) (funlen)
+../luna-idiom-go/pkg/command/admin_commands.go:110:26: Function 'cmdReport' is too long (86 > 60) (funlen)
+func (ac *AdminCommands) cmdReport(s common.CommandSession, args []string) error {
+                         ^
+../luna-idiom-go/pkg/command/admin_commands.go:359:26: Function 'cmdBan' is too long (76 > 60) (funlen)
+func (ac *AdminCommands) cmdBan(s common.CommandSession, args []string) error {
+                         ^
+../luna-idiom-go/pkg/command/admin_commands.go:442:26: Function 'cmdInvestigate' is too long (68 > 60) (funlen)
+func (ac *AdminCommands) cmdInvestigate(s common.CommandSession, args []string) error {
+                         ^
+../luna-idiom-go/pkg/command/admin_commands.go:602:26: Function 'cmdWordFilter' has too many statements (55 > 40) (funlen)
+func (ac *AdminCommands) cmdWordFilter(s common.CommandSession, args []string) error {
+                         ^
+../luna-idiom-go/pkg/command/serpent_depth_test.go:13:6: Function 'TestCmdSerpentKickTrainingMobileMatchesC' has too many statements (61 > 40) (funlen)
+func TestCmdSerpentKickTrainingMobileMatchesC(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/command/shoot.go:12:6: Function 'executeShoot' has too many statements (48 > 40) (funlen)
+func executeShoot(s SessionInterface, ch *game.Player, target combat.Combatant, projectile, bow *game.ObjectInstance, name, direction string) error {
+     ^
+../luna-idiom-go/pkg/command/skill_commands.go:187:6: Function 'CmdUseSkill' is too long (62 > 60) (funlen)
+func CmdUseSkill(s SessionInterface, args []string) error {
+     ^
+../luna-idiom-go/pkg/command/skill_commands.go:260:6: Function 'CmdSkillInfo' is too long (72 > 60) (funlen)
+func CmdSkillInfo(s SessionInterface, args []string) error {
+     ^
+../luna-idiom-go/pkg/command/skill_commands.go:676:6: Function 'CmdShoot' has too many statements (60 > 40) (funlen)
+func CmdShoot(s SessionInterface, args []string) error {
+     ^
+../luna-idiom-go/pkg/command/skill_commands.go:2267:6: Function 'CmdListSkills' has too many statements (56 > 40) (funlen)
+func CmdListSkills(s SessionInterface, args []string) error {
+     ^
+../luna-idiom-go/pkg/command/skill_commands_test.go:1377:6: Function 'TestCmdLearn' is too long (79 > 60) (funlen)
+func TestCmdLearn(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/command/skill_draw_order_test.go:89:6: Function 'assertPipelineDrawOrder' has too many statements (64 > 40) (funlen)
+func assertPipelineDrawOrder(t *testing.T, rig *drawOrderRig, sess *killPayoutSession,
+     ^
+../luna-idiom-go/pkg/game/act.go:588:6: Function 'actDeliver' has too many statements (42 > 40) (funlen)
+func actDeliver(world *World, hideInvisible bool, ch, vict Actor, obj, victObj *ObjectInstance, format, arg2 string, actType int, deliver func(to Actor, line string)) {
+     ^
+../luna-idiom-go/pkg/game/act_social.go:47:6: Function 'DoAction' has too many statements (42 > 40) (funlen)
+func DoAction(w *World, ch *Player, cmd string, argument string) bool {
+     ^
+../luna-idiom-go/pkg/game/actor_specials_guards_test.go:32:6: Function 'TestNoMoveGuardActorPortsMatchC' is too long (65 > 60) (funlen)
+func TestNoMoveGuardActorPortsMatchC(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/actor_specials_test.go:10:6: Function 'TestCharacterSpecialRegistryKeepsPlayerLaneAndMarksNPCGaps' is too long (61 > 60) (funlen)
+func TestCharacterSpecialRegistryKeepsPlayerLaneAndMarksNPCGaps(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/aliases.go:246:6: Function 'ReadAliases' has too many statements (41 > 40) (funlen)
+func ReadAliases(playerName string) ([]Alias, error) {
+     ^
+../luna-idiom-go/pkg/game/attitude_loot_test.go:14:6: Function 'TestAttitudeLootCorpseOrder' is too long (61 > 60) (funlen)
+func TestAttitudeLootCorpseOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/backstab_skillmsg_test.go:76:6: Function 'TestBackstab_MissDrawCountAndOrder' has too many statements (41 > 40) (funlen)
+func TestBackstab_MissDrawCountAndOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/behead_depth_test.go:40:6: Function 'TestDoBehead_ContainerValueSuccessAndTransformation' has too many statements (52 > 40) (funlen)
+func TestDoBehead_ContainerValueSuccessAndTransformation(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/behead_depth_test.go:129:6: Function 'TestDoBehead_EntryAndPredicateBranches' is too long (71 > 60) (funlen)
+func TestDoBehead_EntryAndPredicateBranches(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/carve_depth_test.go:51:6: Function 'TestDoCarveCEntryBranches' is too long (81 > 60) (funlen)
+func TestDoCarveCEntryBranches(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/character.go:97:6: Function 'RollRealAbils' has too many statements (67 > 40) (funlen)
+func RollRealAbils(class, race int) CharStats {
+     ^
+../luna-idiom-go/pkg/game/character_command.go:224:6: Function 'CharacterHit' has too many statements (41 > 40) (funlen)
+func CharacterHit(ctx CharacterCommandContext) CharacterCommandResult {
+     ^
+../luna-idiom-go/pkg/game/character_order_test.go:13:6: Function 'TestMobSpecialSnapshotsUseCListOrder' has too many statements (48 > 40) (funlen)
+func TestMobSpecialSnapshotsUseCListOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/clan_admin.go:43:17: Function 'doClanCreate' is too long (62 > 60) (funlen)
+func (w *World) doClanCreate(ch *Player, arg string) {
+                ^
+../luna-idiom-go/pkg/game/clan_bank.go:8:17: Function 'doClanBank' has too many statements (50 > 40) (funlen)
+func (w *World) doClanBank(ch *Player, arg string, action int) {
+                ^
+../luna-idiom-go/pkg/game/clan_command.go:18:17: Function 'ExecClanCommand' has too many statements (53 > 40) (funlen)
+func (w *World) ExecClanCommand(ch *Player, argument string) {
+                ^
+../luna-idiom-go/pkg/game/clan_info.go:83:17: Function 'doClanInfo' has too many statements (44 > 40) (funlen)
+func (w *World) doClanInfo(ch *Player, arg string) {
+                ^
+../luna-idiom-go/pkg/game/clan_membership.go:7:17: Function 'doClanEnroll' has too many statements (46 > 40) (funlen)
+func (w *World) doClanEnroll(ch *Player, arg string) {
+                ^
+../luna-idiom-go/pkg/game/clan_settings.go:84:17: Function 'doClanRanks' has too many statements (43 > 40) (funlen)
+func (w *World) doClanRanks(ch *Player, arg string) {
+                ^
+../luna-idiom-go/pkg/game/clan_settings.go:162:17: Function 'doClanTitles' is too long (62 > 60) (funlen)
+func (w *World) doClanTitles(ch *Player, arg string) {
+                ^
+../luna-idiom-go/pkg/game/combat_helpers_test.go:17:6: Function 'TestImproveSkill_DrawParity' has too many statements (41 > 40) (funlen)
+func TestImproveSkill_DrawParity(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/comm_channel.go:139:17: Function 'DoChannel' has too many statements (50 > 40) (funlen)
+func (w *World) DoChannel(ch *Player, argument, subcmd string) {
+                ^
+../luna-idiom-go/pkg/game/comm_channel.go:295:17: Function 'doCTell' has too many statements (53 > 40) (funlen)
+func (w *World) doCTell(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/comm_say.go:5:17: Function 'doRaceSay' has too many statements (50 > 40) (funlen)
+func (w *World) doRaceSay(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/command_exec_test.go:164:6: Function 'TestMobCommandMovement_NoDeadlock' is too long (67 > 60) (funlen)
+func TestMobCommandMovement_NoDeadlock(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/consider_test.go:84:6: Function 'TestConsiderThresholdLadders' is too long (76 > 60) (funlen)
+func TestConsiderThresholdLadders(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/cutthroat_depth_test.go:22:6: Function 'TestDoCutthroatGateOrder' is too long (74 > 60) (funlen)
+func TestDoCutthroatGateOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/damage_stubs.go:54:6: Function 'skillToAttackType' has too many statements (49 > 40) (funlen)
+func skillToAttackType(skill string) int {
+     ^
+../luna-idiom-go/pkg/game/death.go:455:17: Function 'handleMobDeath' has too many statements (49 > 40) (funlen)
+func (w *World) handleMobDeath(victim combat.Combatant, killer combat.Combatant, attackType int) {
+                ^
+../luna-idiom-go/pkg/game/death.go:1203:17: Function 'makeCorpse' has too many statements (41 > 40) (funlen)
+func (w *World) makeCorpse(name string, sex int, inventory []*ObjectInstance, equipment []*ObjectInstance, roomVNum int, attackType int, gold int, isNPC bool, keywordLists ...string) *ObjectInstance {
+                ^
+../luna-idiom-go/pkg/game/death_test.go:18:6: Function 'TestAttackTypeToCorpseAttack' is too long (67 > 60) (funlen)
+func TestAttackTypeToCorpseAttack(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/death_test.go:473:6: Function 'TestHandlePlayerDeath_ConcurrentKills' is too long (65 > 60) (funlen)
+func TestHandlePlayerDeath_ConcurrentKills(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/death_test.go:558:6: Function 'TestHandleMobDeath_ConcurrentKills' is too long (68 > 60) (funlen)
+func TestHandleMobDeath_ConcurrentKills(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/death_test.go:637:6: Function 'TestHandlePlayerDeath_SecondKillNoOps' has too many statements (43 > 40) (funlen)
+func TestHandlePlayerDeath_SecondKillNoOps(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/directed_speech_test.go:107:6: Function 'TestDoTellEligibilityAndDelivery' is too long (111 > 60) (funlen)
+func TestDoTellEligibilityAndDelivery(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/directed_speech_test.go:221:6: Function 'TestDoSpecCommCBehavior' is too long (68 > 60) (funlen)
+func TestDoSpecCommCBehavior(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/flesh_alter_depth_test.go:49:6: Function 'TestDoFleshAlterToggleAndUnequip' has too many statements (41 > 40) (funlen)
+func TestDoFleshAlterToggleAndUnequip(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/groinrip_depth_test.go:47:6: Function 'TestDoGroinripDepthGateOrder' is too long (71 > 60) (funlen)
+func TestDoGroinripDepthGateOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/headbutt_skillmsg_test.go:133:6: Function 'TestDoHeadbutt_MissDrawCountAndOrder' has too many statements (45 > 40) (funlen)
+func TestDoHeadbutt_MissDrawCountAndOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/headbutt_skillmsg_test.go:206:6: Function 'TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill' has too many statements (43 > 40) (funlen)
+func TestDoHeadbutt_HitDrawSequenceIncludesImproveSkill(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/help.go:301:6: Function 'RaceHelpEntries' is too long (103 > 60) (funlen)
+func RaceHelpEntries() []HelpEntry {
+     ^
+../luna-idiom-go/pkg/game/house_boot.go:9:17: Function 'HouseBoot' is too long (61 > 60) (funlen)
+func (w *World) HouseBoot() {
+                ^
+../luna-idiom-go/pkg/game/house_control.go:104:17: Function 'HcontrolBuildHouse' is too long (77 > 60) (funlen)
+func (w *World) HcontrolBuildHouse(ch *Player, arg string) {
+                ^
+../luna-idiom-go/pkg/game/house_player_depth_test.go:13:6: Function 'TestDoHouseMatchesCArgumentAndStateBoundaries' has too many statements (54 > 40) (funlen)
+func TestDoHouseMatchesCArgumentAndStateBoundaries(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/house_save_nesting_test.go:52:6: Function 'TestHouseSaveLoadFloorsContainerContents' has too many statements (47 > 40) (funlen)
+func TestHouseSaveLoadFloorsContainerContents(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/item_consumable.go:30:17: Function 'DoDrink' has too many statements (56 > 40) (funlen)
+func (w *World) DoDrink(ch *Player, me *MobInstance, cmd, arg string, subcmd int) {
+                ^
+../luna-idiom-go/pkg/game/item_consumable.go:188:17: Function 'DoEat' has too many statements (44 > 40) (funlen)
+func (w *World) DoEat(ch *Player, me *MobInstance, cmd, arg string, subcmd int) {
+                ^
+../luna-idiom-go/pkg/game/item_consumable_test.go:90:6: Function 'TestConsumables_InstanceIsolation' has too many statements (41 > 40) (funlen)
+func TestConsumables_InstanceIsolation(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/item_donate.go:95:17: Function 'doDispose' has too many statements (42 > 40) (funlen)
+func (w *World) doDispose(ch *Player, arg string, mode int, sname string, donationRoom int) {
+                ^
+../luna-idiom-go/pkg/game/item_donate_test.go:49:6: Function 'TestPerformDispose' has too many statements (57 > 40) (funlen)
+func TestPerformDispose(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/item_donate_test.go:195:6: Function 'TestDoJunk' has too many statements (44 > 40) (funlen)
+func TestDoJunk(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/item_transfer.go:362:17: Function 'doDrop' has too many statements (43 > 40) (funlen)
+func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/jin_depth_test.go:94:6: Function 'TestDoKujiKiri_JinGuardMessages' is too long (64 > 60) (funlen)
+func TestDoKujiKiri_JinGuardMessages(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/limits_condition.go:12:6: Function 'GainCondition' is too long (63 > 60) (funlen)
+func GainCondition(p *Player, condition int, value int) {
+     ^
+../luna-idiom-go/pkg/game/locate_object_test.go:41:6: Function 'TestFindObjectByNameUsesCGlobalObjectListOrderAndTokens' has too many statements (41 > 40) (funlen)
+func TestFindObjectByNameUsesCGlobalObjectListOrderAndTokens(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/locate_object_test.go:104:6: Function 'TestLocateObjectResultsMatchCOutputAndNoLocateOrder' has too many statements (45 > 40) (funlen)
+func TestLocateObjectResultsMatchCOutputAndNoLocateOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/look.go:542:17: Function 'DoLookTarget' has too many statements (44 > 40) (funlen)
+func (w *World) DoLookTarget(ch *Player, arg string) ObservationResult {
+                ^
+../luna-idiom-go/pkg/game/lua_char_table_depth_test.go:44:6: Function 'newLuaCharTableFixture' has too many statements (58 > 40) (funlen)
+func newLuaCharTableFixture(t *testing.T) *luaCharTableFixture {
+     ^
+../luna-idiom-go/pkg/game/lua_follow_mobile_test.go:13:6: Function 'TestLuaFollowMobileLeaderResolvesKeywordInFollowerRoom' has too many statements (65 > 40) (funlen)
+func TestLuaFollowMobileLeaderResolvesKeywordInFollowerRoom(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/lua_leader_chain_test.go:14:6: Function 'TestLuaLeaderChainBeyondFormerLimit' has too many statements (45 > 40) (funlen)
+func TestLuaLeaderChainBeyondFormerLimit(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/lua_raw_kill_mudlog_test.go:16:6: Function 'TestLuaRawKillMudlogProducer' is too long (67 > 60) (funlen)
+func TestLuaRawKillMudlogProducer(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/lua_spell_object_depth_test.go:18:6: Function 'TestLuaSpellObjectTargetDispatchAndSpeechGate' is too long (74 > 60) (funlen)
+func TestLuaSpellObjectTargetDispatchAndSpeechGate(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/mail.go:242:6: Function 'scanFile' has too many statements (50 > 40) (funlen)
+func scanFile() bool {
+     ^
+../luna-idiom-go/pkg/game/mail.go:324:6: Function 'storeMail' has too many statements (46 > 40) (funlen)
+func storeMail(to, from int, message string) { //nolint:unused // mail helper
+     ^
+../luna-idiom-go/pkg/game/mail.go:399:6: Function 'readDelete' has too many statements (55 > 40) (funlen)
+func readDelete(recipient int) string {
+     ^
+../luna-idiom-go/pkg/game/mob.go:126:6: Function 'NewMob' is too long (66 > 60) (funlen)
+func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
+     ^
+../luna-idiom-go/pkg/game/mobact_spec_procs_test.go:207:6: Function 'TestSpecRescuer_UsesCanonicalAllyHitAndWaitState' has too many statements (44 > 40) (funlen)
+func TestSpecRescuer_UsesCanonicalAllyHitAndWaitState(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/mobact_test.go:397:6: Function 'TestMobileActivityScavengerUsesCanGetVisibility' is too long (66 > 60) (funlen)
+func TestMobileActivityScavengerUsesCanGetVisibility(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/mobprogs.go:135:17: Function 'MpGive' has too many statements (44 > 40) (funlen)
+func (w *World) MpGive(mob *MobInstance, ch *Player, amount int) {
+                ^
+../luna-idiom-go/pkg/game/mount_depth_test.go:125:6: Function 'TestLuaMountPlayerRideDismountAndUnmountUseBridgeBody' has too many statements (42 > 40) (funlen)
+func TestLuaMountPlayerRideDismountAndUnmountUseBridgeBody(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/mount_depth_test.go:240:6: Function 'TestDoRideDirectGates' is too long (64 > 60) (funlen)
+func TestDoRideDirectGates(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/movement_commands.go:204:17: Function 'DoFollow' has too many statements (50 > 40) (funlen)
+func (w *World) DoFollow(ch *Player, argument string, quiet bool) {
+                ^
+../luna-idiom-go/pkg/game/movement_commands_test.go:74:6: Function 'TestPerformMoveFollowerPositionAndHide' is too long (86 > 60) (funlen)
+func TestPerformMoveFollowerPositionAndHide(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/movement_commands_test.go:184:6: Function 'TestMovementFailureMessagesAndMountGate' is too long (78 > 60) (funlen)
+func TestMovementFailureMessagesAndMountGate(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/movement_commands_test.go:420:6: Function 'TestDoSimpleMoveTriggerOrdering' is too long (63 > 60) (funlen)
+func TestDoSimpleMoveTriggerOrdering(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/movement_commands_test.go:515:6: Function 'TestDoFollowGuardsAndMessages' is too long (73 > 60) (funlen)
+func TestDoFollowGuardsAndMessages(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/neckbreak_depth_test.go:11:6: Function 'TestDoNeckbreakDepthGateOrder' is too long (92 > 60) (funlen)
+func TestDoNeckbreakDepthGateOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/newbie_channel_depth_test.go:5:6: Function 'TestDoNewbieChannelDepthGatesAndFanout' is too long (64 > 60) (funlen)
+func TestDoNewbieChannelDepthGatesAndFanout(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/npc_command.go:26:17: Function 'NPCCommand' has too many statements (45 > 40) (funlen)
+func (w *World) NPCCommand(me *MobInstance, line string) {
+                ^
+../luna-idiom-go/pkg/game/npc_command.go:117:17: Function 'npcCommandDirectFallback' has too many statements (58 > 40) (funlen)
+func (w *World) npcCommandDirectFallback(me *MobInstance, commandName, argument string) CharacterCommandResult {
+                ^
+../luna-idiom-go/pkg/game/object.go:339:26: Function 'MigrateCustomData' is too long (61 > 60) (funlen)
+func (o *ObjectInstance) MigrateCustomData() {
+                         ^
+../luna-idiom-go/pkg/game/other_character_test.go:35:6: Function 'TestDoVisiblePreservesCEntryGateOrder' is too long (72 > 60) (funlen)
+func TestDoVisiblePreservesCEntryGateOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/other_economy.go:109:17: Function 'doUse' has too many statements (56 > 40) (funlen)
+func (w *World) doUse(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/other_mount.go:14:17: Function 'doRide' has too many statements (47 > 40) (funlen)
+func (w *World) doRide(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/other_mount.go:186:17: Function 'doYank' has too many statements (52 > 40) (funlen)
+func (w *World) doYank(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/other_settings.go:224:17: Function 'doGenTog' is too long (72 > 60) (funlen)
+func (w *World) doGenTog(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/other_status.go:36:17: Function 'doAuto' is too long (66 > 60) (funlen)
+func (w *World) doAuto(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/other_status_test.go:35:6: Function 'TestDoTransformMatchesCStateMachines' is too long (70 > 60) (funlen)
+func TestDoTransformMatchesCStateMachines(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/other_utility.go:299:17: Function 'doScout' is too long (61 > 60) (funlen)
+func (w *World) doScout(ch *Player, me *MobInstance, cmd string, arg string) bool {
+                ^
+../luna-idiom-go/pkg/game/party_test.go:125:6: Function 'TestCalcKillXPShareMatchesCLevelDiff' is too long (62 > 60) (funlen)
+func TestCalcKillXPShareMatchesCLevelDiff(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/point_update_object_timers_depth_test.go:29:6: Function 'TestPointUpdateDecaysObjectsInCarriedAndContainedLocations' is too long (75 > 60) (funlen)
+func TestPointUpdateDecaysObjectsInCarriedAndContainedLocations(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/room_activity.go:256:17: Function 'selfDamage' has too many statements (43 > 40) (funlen)
+func (w *World) selfDamage(vict combat.Combatant, dam int, attackType int) bool {
+                ^
+../luna-idiom-go/pkg/game/room_activity_depth_test.go:111:6: Function 'TestRoomActivityConCroakKillsMortalInPlace' has too many statements (47 > 40) (funlen)
+func TestRoomActivityConCroakKillsMortalInPlace(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/save.go:145:6: Function 'playerToSaveData' has too many statements (45 > 40) (funlen)
+func playerToSaveData(p *Player) savePlayerData {
+     ^
+../luna-idiom-go/pkg/game/save.go:288:6: Function 'saveDataToPlayer' is too long (70 > 60) (funlen)
+func saveDataToPlayer(data savePlayerData) *Player {
+     ^
+../luna-idiom-go/pkg/game/save_test.go:17:6: Function 'TestPlayerSerializationRoundTrip' has too many statements (43 > 40) (funlen)
+func TestPlayerSerializationRoundTrip(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/save_test.go:318:6: Function 'TestPlayerSaveData_ConcurrentSnapshot' has too many statements (51 > 40) (funlen)
+func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/save_world_test.go:113:6: Function 'TestRestartDoesNotRestoreLegacyWorldSnapshot' is too long (73 > 60) (funlen)
+func TestRestartDoesNotRestoreLegacyWorldSnapshot(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/shop_npc.go:386:17: Function 'shopNpcSell' has too many statements (43 > 40) (funlen)
+func (w *World) shopNpcSell(shop *Shop, keeper, customer *MobInstance, arg string) {
+                ^
+../luna-idiom-go/pkg/game/skill_advanced.go:15:6: Function 'DoCarve' has too many statements (49 > 40) (funlen)
+func DoCarve(ch *Player, targetName string, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_advanced.go:112:6: Function 'DoCutthroat' is too long (77 > 60) (funlen)
+func DoCutthroat(ch *Player, target combat.Combatant, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_advanced.go:261:6: Function 'DoCompare' has too many statements (51 > 40) (funlen)
+func DoCompare(ch *Player, objName1, objName2 string) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_berserk_kuji.go:164:6: Function 'DoKujiKiri' has too many statements (73 > 40) (funlen)
+func DoKujiKiri(ch *Player, seal string, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_c10_combat.go:217:6: Function 'DoSleeper' is too long (67 > 60) (funlen)
+func DoSleeper(ch *Player, target combat.Combatant, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_combat.go:26:6: Function 'DoBackstab' is too long (76 > 60) (funlen)
+func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_combat.go:397:6: Function 'DoHeadbutt' is too long (64 > 60) (funlen)
+func DoHeadbutt(ch *Player, target combat.Combatant, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_combat.go:499:6: Function 'DoRescue' is too long (73 > 60) (funlen)
+func DoRescue(ch *Player, target combat.Combatant, world *World, combatEngine interface {
+     ^
+../luna-idiom-go/pkg/game/skill_combat.go:607:6: Function 'DoSpike' has too many statements (44 > 40) (funlen)
+func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_combat.go:718:6: Function 'DoCircle' is too long (84 > 60) (funlen)
+func DoCircle(ch *Player, target combat.Combatant) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_combat_test.go:1638:6: Function 'TestDoDragonKick_WaitStateAlways22Pulses' has too many statements (41 > 40) (funlen)
+func TestDoDragonKick_WaitStateAlways22Pulses(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/skill_special.go:117:6: Function 'performBehead' has too many statements (42 > 40) (funlen)
+func performBehead(world *World, ch Actor, obj *ObjectInstance, wielded, slashWeapon bool, canTake func(*ObjectInstance) bool, moveHead func(*ObjectInstance) error) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_special.go:320:6: Function 'DoSmackheads' is too long (68 > 60) (funlen)
+func DoSmackheads(ch *Player, victim1Name, victim2Name string, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_special.go:395:6: Function 'DoBite' has too many statements (46 > 40) (funlen)
+func DoBite(ch *Player, target combat.Combatant) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_special.go:653:6: Function 'DoGroinrip' is too long (72 > 60) (funlen)
+func DoGroinrip(ch *Player, target combat.Combatant, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skill_stealth_test.go:315:6: Function 'TestDoStealInventoryAndEquipmentBranches' is too long (73 > 60) (funlen)
+func TestDoStealInventoryAndEquipmentBranches(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/skills2.go:21:6: Function 'DoScrounge' has too many statements (43 > 40) (funlen)
+func DoScrounge(ch *Player, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skills2.go:191:6: Function 'DoDisarm' is too long (77 > 60) (funlen)
+func DoDisarm(ch *Player, target combat.Combatant, world *World) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/skills2.go:286:6: Function 'DoMindlink' is too long (67 > 60) (funlen)
+func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
+     ^
+../luna-idiom-go/pkg/game/sleeper_depth_test.go:30:6: Function 'TestDoSleeperDepthGateOrder' is too long (101 > 60) (funlen)
+func TestDoSleeperDepthGateOrder(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/smackheads_depth_test.go:81:6: Function 'TestDoSmackheads_GateOrderAndMessages' is too long (64 > 60) (funlen)
+func TestDoSmackheads_GateOrderAndMessages(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_backstabber_test.go:68:6: Function 'TestSpecBackstabber_EntryGatesAndTargetSelection' is too long (79 > 60) (funlen)
+func TestSpecBackstabber_EntryGatesAndTargetSelection(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_backstabber_test.go:150:6: Function 'TestSpecBackstabber_RngArmsAndCombatState' is too long (90 > 60) (funlen)
+func TestSpecBackstabber_RngArmsAndCombatState(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_bank_test.go:14:6: Function 'TestSpecBank' has too many statements (42 > 40) (funlen)
+func TestSpecBank(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_butler_test.go:18:6: Function 'newButlerTestWorld' is too long (79 > 60) (funlen)
+func newButlerTestWorld(t *testing.T) (*World, *Player, *Player, *MobInstance, map[string]string) {
+     ^
+../luna-idiom-go/pkg/game/spec_butler_test.go:180:6: Function 'TestSpecButler_GetRoutingAudienceAndClose' has too many statements (53 > 40) (funlen)
+func TestSpecButler_GetRoutingAudienceAndClose(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_butler_test.go:399:6: Function 'TestSpecButler_CanGetPredicateAndFourItemCap' is too long (78 > 60) (funlen)
+func TestSpecButler_CanGetPredicateAndFourItemCap(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_castle_guard_down_test.go:25:6: Function 'TestSpecCastleGuardDown_EntryGatesAndBlockAudience' is too long (100 > 60) (funlen)
+func TestSpecCastleGuardDown_EntryGatesAndBlockAudience(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_castle_guard_north_test.go:25:6: Function 'TestSpecCastleGuardNorth_EntryGatesAndBlockAudience' is too long (100 > 60) (funlen)
+func TestSpecCastleGuardNorth_EntryGatesAndBlockAudience(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_castle_guard_up_test.go:25:6: Function 'TestSpecCastleGuardUp_EntryGatesAndBlockAudience' is too long (100 > 60) (funlen)
+func TestSpecCastleGuardUp_EntryGatesAndBlockAudience(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_chosen_guard_test.go:10:6: Function 'TestSpecChosenGuard_EntryGatesAndAudience' is too long (72 > 60) (funlen)
+func TestSpecChosenGuard_EntryGatesAndAudience(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_dragon_breath_test.go:87:6: Function 'TestSpecDragonBreath_CombatRollAndSharedReturn' has too many statements (61 > 40) (funlen)
+func TestSpecDragonBreath_CombatRollAndSharedReturn(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_eq_thief_test.go:93:6: Function 'TestSpecEqThief_GetAndJunkBlackContainerItem' is too long (64 > 60) (funlen)
+func TestSpecEqThief_GetAndJunkBlackContainerItem(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_fido_test.go:42:6: Function 'TestSpecFido_CorpsePredicateAndTransfer' is too long (65 > 60) (funlen)
+func TestSpecFido_CorpsePredicateAndTransfer(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_fly_exit_up_test.go:5:6: Function 'TestSpecFlyExitUp_EntryGatesAndAudience' has too many statements (43 > 40) (funlen)
+func TestSpecFlyExitUp_EntryGatesAndAudience(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_guild_guard_test.go:27:6: Function 'TestSpecGuildGuard_EntryGatesAndAudiences' has too many statements (46 > 40) (funlen)
+func TestSpecGuildGuard_EntryGatesAndAudiences(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_horn_test.go:9:6: Function 'TestSpecHornObjectReceiverAudienceAndGates' has too many statements (42 > 40) (funlen)
+func TestSpecHornObjectReceiverAudienceAndGates(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_janitor_test.go:44:6: Function 'TestSpecJanitor_PredicateAndTransfer' is too long (64 > 60) (funlen)
+func TestSpecJanitor_PredicateAndTransfer(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_procs.go:593:6: Function 'specPuff' has too many statements (63 > 40) (funlen)
+func specPuff(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs.go:892:6: Function 'specMayor' has too many statements (70 > 40) (funlen)
+func specMayor(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs2.go:18:6: Function 'init' has too many statements (43 > 40) (funlen)
+func init() {
+     ^
+../luna-idiom-go/pkg/game/spec_procs2.go:942:6: Function 'specAssassin' has too many statements (54 > 40) (funlen)
+func specAssassin(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs2.go:1317:6: Function 'specIdentifier' has too many statements (47 > 40) (funlen)
+func specIdentifier(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs3.go:307:6: Function 'specClerk' has too many statements (43 > 40) (funlen)
+func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs3.go:541:6: Function 'specConSeller' has too many statements (45 > 40) (funlen)
+func specConSeller(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs3.go:1306:6: Function 'specElementsLoadCylinders' is too long (66 > 60) (funlen)
+func specElementsLoadCylinders(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs4.go:411:6: Function 'specPrayForItems' is too long (61 > 60) (funlen)
+func specPrayForItems(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs_missing.go:45:6: Function 'specRecharger' has too many statements (61 > 40) (funlen)
+func specRecharger(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+     ^
+../luna-idiom-go/pkg/game/spec_procs_test.go:979:6: Function 'TestSpecFighter_NativeSkills' has too many statements (63 > 40) (funlen)
+func TestSpecFighter_NativeSkills(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_puff_test.go:96:6: Function 'TestSpecPuff_CompleteCOutcomePartition' is too long (68 > 60) (funlen)
+func TestSpecPuff_CompleteCOutcomePartition(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_recharger_test.go:19:6: Function 'TestSpecRecharger' has too many statements (58 > 40) (funlen)
+func TestSpecRecharger(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_remorter_test.go:35:6: Function 'TestSpecRemorterSuccessResetsStateAndSeedsClassSkills' has too many statements (48 > 40) (funlen)
+func TestSpecRemorterSuccessResetsStateAndSeedsClassSkills(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_suck_in_test.go:10:6: Function 'TestSpecSuckIn_LookGateAudienceAndRelocation' is too long (63 > 60) (funlen)
+func TestSpecSuckIn_LookGateAudienceAndRelocation(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_take_to_jail_test.go:178:6: Function 'TestSpecTakeToJailSubdueStateAndAudience' has too many statements (54 > 40) (funlen)
+func TestSpecTakeToJailSubdueStateAndAudience(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_tattoo4_test.go:60:6: Function 'TestSpecTattoo4ListEntryOwnedAndPriceGates' is too long (62 > 60) (funlen)
+func TestSpecTattoo4ListEntryOwnedAndPriceGates(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/spec_wall_guard_ns_test.go:11:6: Function 'newWallGuardTestWorld' is too long (76 > 60) (funlen)
+func newWallGuardTestWorld(t *testing.T, southExit bool) (*World, *MobInstance, *Player, *Player, map[string]string) {
+     ^
+../luna-idiom-go/pkg/game/spec_werewolf_test.go:21:6: Function 'newWerewolfTestActors' is too long (62 > 60) (funlen)
+func newWerewolfTestActors(t *testing.T) werewolfTestActors {
+     ^
+../luna-idiom-go/pkg/game/start_room_test.go:32:6: Function 'TestSpecStartRoom_BirthTransitionAndImmortalGate' is too long (63 > 60) (funlen)
+func TestSpecStartRoom_BirthTransitionAndImmortalGate(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/steal_equipped_lock_test.go:78:6: Function 'TestStealEquippedConcurrentMoveKeepsOneCopy' has too many statements (42 > 40) (funlen)
+func TestStealEquippedConcurrentMoveKeepsOneCopy(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/weather.go:199:6: Function 'resetTimeLocked' has too many statements (41 > 40) (funlen)
+func resetTimeLocked() {
+     ^
+../luna-idiom-go/pkg/game/weather.go:377:6: Function 'anotherHourLocked' has too many statements (52 > 40) (funlen)
+func anotherHourLocked(mode bool, sendToOutdoor func(string), w *World) {
+     ^
+../luna-idiom-go/pkg/game/weather_events_test.go:66:6: Function 'TestGhostShipOpensAndClosesMatchingRuntimeExits' has too many statements (48 > 40) (funlen)
+func TestGhostShipOpensAndClosesMatchingRuntimeExits(t *testing.T) {
+     ^
+../luna-idiom-go/pkg/game/weather_lock_characterization_test.go:39:6: Function 'weatherLockRegressionCases' is too long (118 > 60) (funlen)
+func weatherLockRegressionCases() []weatherLockRegressionCase {
+     ^
+../luna-idiom-go/pkg/game/whod.go:127:16: Function 'DoWhod' has too many statements (44 > 40) (funlen)
+func (w *Whod) DoWhod(playerName, argument string, output func(string)) string {
+               ^
+../luna-idiom-go/pkg/game/world.go:261:6: Function 'NewWorld' has too many statements (53 > 40) (funlen)
+func NewWorld(parsed *parser.World) (*World, error) {
+     ^
+../luna-idiom-go/pkg/game/world_bridge.go:85:34: Function 'CharFields' is too long (63 > 60) (funlen)
+func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.CharFields, bool) {
+                                 ^
+../luna-idiom-go/pkg/game/world_zedit.go:37:17: Function 'CommitEditedZone' is too long (62 > 60) (funlen)
+func (w *World) CommitEditedZone(zoneNumber, roomVNum int, working parser.Zone) bool {
+                ^
+../luna-idiom-go/pkg/game/world_zedit_test.go:9:6: Function 'TestCommitEditedZoneRebucketsRoomCommands' is too long (64 > 60) (funlen)
+func TestCommitEditedZoneRebucketsRoomCommands(t *testing.T) {
+     ^
+../claude-idiom-exp/pkg/combat/deferred_initial_attack_test.go:12:1: cognitive complexity 47 of func `TestDeferredInitialAttackEnrollmentAndProtections` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/engine.go:601:1: cognitive complexity 42 of func `(*CombatEngine).processCombatPair` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/engine.go:848:1: cognitive complexity 72 of func `(*CombatEngine).performOneHit` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/engine_victim_fighting_gate_test.go:9:1: cognitive complexity 36 of func `TestVictimStandRequiresNewCombatOnHitAndMiss` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/fight_core.go:442:1: cognitive complexity 123 of func `takeDamageFrom` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/fight_messages_test.go:255:1: cognitive complexity 41 of func `TestFightMessageCorpusAllVariantOutcomesThroughSkillMessageDispatch` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/formulas.go:401:1: cognitive complexity 31 of func `getMinusDam` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/ranged_retaliation_test.go:5:1: cognitive complexity 47 of func `TestRangedRetaliationEnrollmentAndProtections` is high (> 30) (gocognit)
+../claude-idiom-exp/pkg/combat/wounded_states_test.go:14:1: cognitive complexity 35 of func `TestUpdatePositionAfterDamage_WoundedBand` is high (> 30) (gocognit)
+../luna-idiom-go/pkg/command/damage_neutral_rescue_test.go:11:1: cognitive complexity 33 of func `TestSkillCommandNeutralRescueBeforeMessage` is high (> 30) (gocognit)
+func TestSkillCommandNeutralRescueBeforeMessage(t *testing.T) {
+^
+../luna-idiom-go/pkg/command/shoot_audience_output_test.go:10:1: cognitive complexity 39 of func `TestShootAudienceOutput` is high (> 30) (gocognit)
+func TestShootAudienceOutput(t *testing.T) {
+^
+../luna-idiom-go/pkg/command/skill_commands.go:1349:1: cognitive complexity 279 of func `sendSkillResult` is high (> 30) (gocognit)
+func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatant, result game.SkillResult) error {
+^
+../luna-idiom-go/pkg/command/skill_wound_enrollment_test.go:14:1: cognitive complexity 44 of func `TestSkillTailPreservesWoundedVictimStop` is high (> 30) (gocognit)
+func TestSkillTailPreservesWoundedVictimStop(t *testing.T) {
+^
+../luna-idiom-go/pkg/command/skill_wound_enrollment_test.go:66:1: cognitive complexity 31 of func `TestSmackheadsSecondaryTailPreservesWoundedVictimStop` is high (> 30) (gocognit)
+func TestSmackheadsSecondaryTailPreservesWoundedVictimStop(t *testing.T) {
+^
+../luna-idiom-go/pkg/command/spike_mudlog_test.go:31:1: cognitive complexity 39 of func `TestGameDiagnosticSpikeStake` is high (> 30) (gocognit)
+func TestGameDiagnosticSpikeStake(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/act.go:399:1: cognitive complexity 57 of func `performAct` is high (> 30) (gocognit)
+func performAct(format string, ch, vict Actor, obj, victObj *ObjectInstance, arg, arg2 string, to Actor) string {
+^
+../luna-idiom-go/pkg/game/act_movement.go:239:1: cognitive complexity 88 of func `doSimpleMove` is high (> 30) (gocognit)
+func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
+^
+../luna-idiom-go/pkg/game/act_movement.go:461:1: cognitive complexity 32 of func `(*World).movementSpecialBlocks` is high (> 30) (gocognit)
+func (w *World) movementSpecialBlocks(ch *Player, direction string) bool {
+^
+../luna-idiom-go/pkg/game/act_movement.go:639:1: cognitive complexity 44 of func `doDoorcmd` is high (> 30) (gocognit)
+func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
+^
+../luna-idiom-go/pkg/game/act_movement.go:963:1: cognitive complexity 51 of func `(*World).mobGenDoor` is high (> 30) (gocognit)
+func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
+^
+../luna-idiom-go/pkg/game/activity_test.go:12:1: cognitive complexity 35 of func `TestActivityDeathAcceptedPathsAndCauses` is high (> 30) (gocognit)
+func TestActivityDeathAcceptedPathsAndCauses(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/actor_specials_table_test.go:301:1: cognitive complexity 34 of func `pulseGateIndex` is high (> 30) (gocognit)
+func pulseGateIndex(body string) int {
+^
+../luna-idiom-go/pkg/game/actor_specials_test.go:74:1: cognitive complexity 33 of func `TestNoMoveEastActorSpecialCGuardsAndOutput` is high (> 30) (gocognit)
+func TestNoMoveEastActorSpecialCGuardsAndOutput(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/affect_update.go:39:1: cognitive complexity 51 of func `(*World).AffectUpdate` is high (> 30) (gocognit)
+func (w *World) AffectUpdate() {
+^
+../luna-idiom-go/pkg/game/ai.go:88:1: cognitive complexity 59 of func `(*World).wanderMobWithDoor` is high (> 30) (gocognit)
+func (w *World) wanderMobWithDoor(mob *MobInstance, door int) bool {
+^
+../luna-idiom-go/pkg/game/attitude_loot_test.go:176:1: cognitive complexity 38 of func `TestMobileWearNPCGates` is high (> 30) (gocognit)
+func TestMobileWearNPCGates(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/char_mgmt.go:167:1: cognitive complexity 72 of func `(*World).ExtractPendingPlayers` is high (> 30) (gocognit)
+func (w *World) ExtractPendingPlayers() []*Player {
+^
+../luna-idiom-go/pkg/game/clans.go:373:1: cognitive complexity 35 of func `(*World).sendClanFormat` is high (> 30) (gocognit)
+func (w *World) sendClanFormat(ch *Player) {
+^
+../luna-idiom-go/pkg/game/combat_body_cleanup_test.go:43:1: cognitive complexity 100 of func `TestCombatBodyWorldCleanup` is high (> 30) (gocognit)
+func TestCombatBodyWorldCleanup(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/combat_body_identity_test.go:10:1: cognitive complexity 83 of func `TestCombatBodyIdentityDuplicateEnrollment` is high (> 30) (gocognit)
+func TestCombatBodyIdentityDuplicateEnrollment(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/combat_body_movement_window_test.go:27:1: cognitive complexity 34 of func `TestCombatBodyMovementWindow` is high (> 30) (gocognit)
+func TestCombatBodyMovementWindow(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/combat_wire.go:16:1: cognitive complexity 252 of func `(*World).WireCombatCallbacks` is high (> 30) (gocognit)
+func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
+^
+../luna-idiom-go/pkg/game/comm_channel_test.go:159:1: cognitive complexity 37 of func `TestDoChannelFamilyGatesAndHoller` is high (> 30) (gocognit)
+func TestDoChannelFamilyGatesAndHoller(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/damage_before_message_test.go:95:1: cognitive complexity 42 of func `TestNeutralRescueDamageTailClass` is high (> 30) (gocognit)
+func TestNeutralRescueDamageTailClass(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/damage_before_message_test.go:266:1: cognitive complexity 55 of func `TestMeleeNeutralRescueBeforeMessage` is high (> 30) (gocognit)
+func TestMeleeNeutralRescueBeforeMessage(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/death.go:266:1: cognitive complexity 59 of func `(*World).HandleDeath` is high (> 30) (gocognit)
+func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
+^
+../luna-idiom-go/pkg/game/death.go:632:1: cognitive complexity 43 of func `(*World).handlePlayerDeath` is high (> 30) (gocognit)
+func (w *World) handlePlayerDeath(victim combat.Combatant, isCombatDeath bool, attackType int, killerName string, killerBodies ...combat.Combatant) {
+^
+../luna-idiom-go/pkg/game/death_followers_test.go:74:1: cognitive complexity 37 of func `TestDeathReleasesFollowers` is high (> 30) (gocognit)
+func TestDeathReleasesFollowers(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/death_order_test.go:35:1: cognitive complexity 55 of func `TestSkillDeathOrderExactBytes` is high (> 30) (gocognit)
+func TestSkillDeathOrderExactBytes(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/dream_depth_test.go:52:1: cognitive complexity 32 of func `TestDreamPointUpdateOutputBranches` is high (> 30) (gocognit)
+func TestDreamPointUpdateOutputBranches(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/dreams.go:77:1: cognitive complexity 42 of func `Dream` is high (> 30) (gocognit)
+func Dream(ch DreamContext) DreamResult {
+^
+../luna-idiom-go/pkg/game/effective_attributes_test.go:24:1: cognitive complexity 37 of func `TestE2AttrBounds` is high (> 30) (gocognit)
+func TestE2AttrBounds(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/equipment.go:375:1: cognitive complexity 56 of func `(*Equipment).getWearFlags` is high (> 30) (gocognit)
+func (eq *Equipment) getWearFlags(item *ObjectInstance) []EquipmentSlot {
+^
+../luna-idiom-go/pkg/game/flee.go:39:1: cognitive complexity 31 of func `(*World).DoFlee` is high (> 30) (gocognit)
+func (w *World) DoFlee(ch combat.Combatant) {
+^
+../luna-idiom-go/pkg/game/flee.go:126:1: cognitive complexity 51 of func `(*World).doSimpleMoveMob` is high (> 30) (gocognit)
+func (w *World) doSimpleMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool) bool {
+^
+../luna-idiom-go/pkg/game/flee.go:331:1: cognitive complexity 38 of func `(*World).movementSpecialBlocksMob` is high (> 30) (gocognit)
+func (w *World) movementSpecialBlocksMob(ch *MobInstance, direction string) bool {
+^
+../luna-idiom-go/pkg/game/graph.go:127:1: cognitive complexity 35 of func `(*World).doTrack` is high (> 30) (gocognit)
+func (w *World) doTrack(ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/graph.go:253:1: cognitive complexity 43 of func `(*World).huntVictim` is high (> 30) (gocognit)
+func (w *World) huntVictim(m *MobInstance) {
+^
+../luna-idiom-go/pkg/game/item_consumable.go:317:1: cognitive complexity 34 of func `(*World).DoPour` is high (> 30) (gocognit)
+func (w *World) DoPour(ch *Player, me *MobInstance, cmd, arg string, subcmd int) {
+^
+../luna-idiom-go/pkg/game/item_container.go:29:1: cognitive complexity 32 of func `(*World).doPut` is high (> 30) (gocognit)
+func (w *World) doPut(ch *Player, me *MobInstance, cmd, arg string) bool {
+^
+../luna-idiom-go/pkg/game/item_donate_test.go:271:1: cognitive complexity 46 of func `TestDoDonate` is high (> 30) (gocognit)
+func TestDoDonate(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/item_equipment.go:114:1: cognitive complexity 36 of func `(*World).performWear` is high (> 30) (gocognit)
+func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
+^
+../luna-idiom-go/pkg/game/item_equipment.go:390:1: cognitive complexity 33 of func `(*World).DoWear` is high (> 30) (gocognit)
+func (w *World) DoWear(ch *Player, arg string) {
+^
+../luna-idiom-go/pkg/game/item_transfer.go:228:1: cognitive complexity 45 of func `(*World).doGet` is high (> 30) (gocognit)
+func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
+^
+../luna-idiom-go/pkg/game/item_transfer.go:577:1: cognitive complexity 32 of func `(*World).doGive` is high (> 30) (gocognit)
+func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
+^
+../luna-idiom-go/pkg/game/level.go:155:1: cognitive complexity 96 of func `(*Player).AdvanceLevel` is high (> 30) (gocognit)
+func (p *Player) AdvanceLevel() {
+^
+../luna-idiom-go/pkg/game/limits_condition.go:88:1: cognitive complexity 116 of func `(*World).PointUpdate` is high (> 30) (gocognit)
+func (w *World) PointUpdate() {
+^
+../luna-idiom-go/pkg/game/limits_condition.go:342:1: cognitive complexity 65 of func `(*World).decayObject` is high (> 30) (gocognit)
+func (w *World) decayObject(obj *ObjectInstance) {
+^
+../luna-idiom-go/pkg/game/limits_misc.go:10:1: cognitive complexity 41 of func `(*World).CheckIdling` is high (> 30) (gocognit)
+func (w *World) CheckIdling(p *Player) {
+^
+../luna-idiom-go/pkg/game/location.go:113:1: cognitive complexity 74 of func `(ObjectLocation).Validate` is high (> 30) (gocognit)
+func (l ObjectLocation) Validate() error {
+^
+../luna-idiom-go/pkg/game/look.go:468:1: cognitive complexity 32 of func `(*World).roomCharacterLines` is high (> 30) (gocognit)
+func (w *World) roomCharacterLines(ch *Player, room *parser.Room, view *RoomView) []string {
+^
+../luna-idiom-go/pkg/game/look_description_space_test.go:23:1: cognitive complexity 59 of func `TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets` is high (> 30) (gocognit)
+func TestRoomLookDescriptionTrailingSpacePrecedesTheBrackets(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/lua_canget_depth_test.go:12:1: cognitive complexity 38 of func `TestLuaCanGetUsesMeAndLiveObjectVisibility` is high (> 30) (gocognit)
+func TestLuaCanGetUsesMeAndLiveObjectVisibility(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/milestone_mudlog_test.go:43:1: cognitive complexity 69 of func `testMilestoneMudlog` is high (> 30) (gocognit)
+func testMilestoneMudlog(t *testing.T, kind string, invis ...int) {
+^
+../luna-idiom-go/pkg/game/mobact.go:174:1: cognitive complexity 245 of func `(*World).mobileActivityForMob` is high (> 30) (gocognit)
+func (w *World) mobileActivityForMob(ch *MobInstance) {
+^
+../luna-idiom-go/pkg/game/mobile_equipment_readers_test.go:132:1: cognitive complexity 32 of func `TestMobileEquipmentRemovalBeforeOwnerRetires` is high (> 30) (gocognit)
+func TestMobileEquipmentRemovalBeforeOwnerRetires(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/mobprogs.go:410:1: cognitive complexity 32 of func `(*World).MpSound` is high (> 30) (gocognit)
+func (w *World) MpSound(mob *MobInstance) {
+^
+../luna-idiom-go/pkg/game/mobprogs_depth_test.go:66:1: cognitive complexity 55 of func `TestMpBribeDispatchRendersCBranches` is high (> 30) (gocognit)
+func TestMpBribeDispatchRendersCBranches(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/movement.go:16:1: cognitive complexity 32 of func `(*World).detachObjectLocked` is high (> 30) (gocognit)
+func (w *World) detachObjectLocked(obj *ObjectInstance) (ObjectLocation, error) {
+^
+../luna-idiom-go/pkg/game/movement.go:93:1: cognitive complexity 64 of func `(*World).attachObjectLocked` is high (> 30) (gocognit)
+func (w *World) attachObjectLocked(obj *ObjectInstance, dst ObjectLocation) error {
+^
+../luna-idiom-go/pkg/game/movement_commands_test.go:591:1: cognitive complexity 37 of func `TestPositionCommandsMountAndWake` is high (> 30) (gocognit)
+func TestPositionCommandsMountAndWake(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/mudlog_test.go:87:1: cognitive complexity 60 of func `TestMudLogConsumerFilterAndRawColorMatrix` is high (> 30) (gocognit)
+func TestMudLogConsumerFilterAndRawColorMatrix(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/npc_command_items.go:7:1: cognitive complexity 33 of func `(*World).npcGetDirect` is high (> 30) (gocognit)
+func (w *World) npcGetDirect(me *MobInstance, argument string) CharacterCommandResult {
+^
+../luna-idiom-go/pkg/game/object_weight_mudlog_test.go:43:1: cognitive complexity 34 of func `TestObjectActivityWeightMudlog` is high (> 30) (gocognit)
+func TestObjectActivityWeightMudlog(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/other_economy.go:18:1: cognitive complexity 33 of func `(*World).doSplit` is high (> 30) (gocognit)
+func (w *World) doSplit(ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/other_status.go:118:1: cognitive complexity 33 of func `(*World).doTransform` is high (> 30) (gocognit)
+func (w *World) doTransform(ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/party.go:203:1: cognitive complexity 67 of func `(*World).AwardMobKillXP` is high (> 30) (gocognit)
+func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp int, victimGold int, victimLevel int, victimAlign int) {
+^
+../luna-idiom-go/pkg/game/persistence_seam_test.go:97:1: cognitive complexity 45 of func `TestInventoryMovesSetCrashFlag` is high (> 30) (gocognit)
+func TestInventoryMovesSetCrashFlag(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/point_update_object_timers_depth_test.go:168:1: cognitive complexity 31 of func `TestPointUpdateDustAndCircleTimerOutputAcrossLocations` is high (> 30) (gocognit)
+func TestPointUpdateDustAndCircleTimerOutputAcrossLocations(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/room_activity.go:214:1: cognitive complexity 32 of func `roomActivityHasBoat` is high (> 30) (gocognit)
+func roomActivityHasBoat(ch roomActivityChar) bool {
+^
+../luna-idiom-go/pkg/game/room_activity_depth_test.go:265:1: cognitive complexity 43 of func `TestRoomActivityLoudMobs` is high (> 30) (gocognit)
+func TestRoomActivityLoudMobs(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/room_activity_depth_test.go:382:1: cognitive complexity 46 of func `TestRoomActivityFlowRoom` is high (> 30) (gocognit)
+func TestRoomActivityFlowRoom(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/shoot_death_test.go:11:1: cognitive complexity 45 of func `TestRangedDeathHasNoKillerBookkeeping` is high (> 30) (gocognit)
+func TestRangedDeathHasNoKillerBookkeeping(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/shop_npc.go:285:1: cognitive complexity 31 of func `(*World).shopNpcBuy` is high (> 30) (gocognit)
+func (w *World) shopNpcBuy(shop *Shop, keeper, customer *MobInstance, arg string) {
+^
+../luna-idiom-go/pkg/game/shop_trade.go:47:1: cognitive complexity 57 of func `shopEvaluateExpression` is high (> 30) (gocognit)
+func shopEvaluateExpression(item *ObjectInstance, expression string) bool {
+^
+../luna-idiom-go/pkg/game/skill_formulas_golden_test.go:80:1: cognitive complexity 131 of func `TestSkillFormulas_Statistical` is high (> 30) (gocognit)
+func TestSkillFormulas_Statistical(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/spawner.go:231:1: cognitive complexity 112 of func `(*Spawner).executeZoneResetLocked` is high (> 30) (gocognit)
+func (s *Spawner) executeZoneResetLocked(zone *parser.Zone) error {
+^
+../luna-idiom-go/pkg/game/spec_breed_killer_depth_test.go:11:1: cognitive complexity 47 of func `TestBreedKillerLowGrowlOutputGates` is high (> 30) (gocognit)
+func TestBreedKillerLowGrowlOutputGates(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/spec_butler_test.go:332:1: cognitive complexity 34 of func `TestSpecButler_GenDoorUsesGenericFindInventoryFirst` is high (> 30) (gocognit)
+func TestSpecButler_GenDoorUsesGenericFindInventoryFirst(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/spec_procs.go:298:1: cognitive complexity 35 of func `specSummoner` is high (> 30) (gocognit)
+func specSummoner(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/spec_procs2.go:310:1: cognitive complexity 37 of func `specStableboy` is high (> 30) (gocognit)
+func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/spec_procs3.go:108:1: cognitive complexity 78 of func `specCleric` is high (> 30) (gocognit)
+func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/spec_procs3.go:1071:1: cognitive complexity 43 of func `specRoach` is high (> 30) (gocognit)
+func specRoach(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/spec_procs4.go:199:1: cognitive complexity 33 of func `specPetShops` is high (> 30) (gocognit)
+func specPetShops(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/spec_procs_missing.go:153:1: cognitive complexity 32 of func `specBeholder` is high (> 30) (gocognit)
+func specBeholder(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/spec_procs_test.go:383:1: cognitive complexity 32 of func `TestSpecThief_StateAndAudience` is high (> 30) (gocognit)
+func TestSpecThief_StateAndAudience(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/spec_stableboy_test.go:16:1: cognitive complexity 38 of func `TestSpecStableboy` is high (> 30) (gocognit)
+func TestSpecStableboy(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/spec_take_to_jail_test.go:85:1: cognitive complexity 34 of func `TestSpecTakeToJailAlignmentInterventionOutput` is high (> 30) (gocognit)
+func TestSpecTakeToJailAlignmentInterventionOutput(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/tick_damage_test.go:46:1: cognitive complexity 34 of func `TestPointUpdatePoisonDamageTail` is high (> 30) (gocognit)
+func TestPointUpdatePoisonDamageTail(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/use_tattoo_depth_test.go:82:1: cognitive complexity 50 of func `TestUseTattooSpellStateAndPosition` is high (> 30) (gocognit)
+func TestUseTattooSpellStateAndPosition(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/vampire_consumable_depth_test.go:10:1: cognitive complexity 162 of func `TestVampireConsumableDepth` is high (> 30) (gocognit)
+func TestVampireConsumableDepth(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/weather.go:464:1: cognitive complexity 60 of func `weatherChangeLocked` is high (> 30) (gocognit)
+func weatherChangeLocked(sendToOutdoor func(string)) {
+^
+../luna-idiom-go/pkg/game/weather_lock_characterization_test.go:195:1: cognitive complexity 33 of func `TestWeatherLockReentryRegressionWorker` is high (> 30) (gocognit)
+func TestWeatherLockReentryRegressionWorker(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/weather_lock_characterization_test.go:382:1: cognitive complexity 35 of func `referenceWeatherChange` is high (> 30) (gocognit)
+func referenceWeatherChange(seed uint32, month int, initial WeatherData) (WeatherData, []weatherDraw) {
+^
+../luna-idiom-go/pkg/game/weather_lock_characterization_test.go:473:1: cognitive complexity 32 of func `TestWeatherAndTimePreservesWeatherDrawOrder` is high (> 30) (gocognit)
+func TestWeatherAndTimePreservesWeatherDrawOrder(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/whod.go:253:1: cognitive complexity 48 of func `(*Whod).BuildWhoList` is high (> 30) (gocognit)
+func (w *Whod) BuildWhoList(entries []WhodEntry) string {
+^
+../luna-idiom-go/pkg/game/world_bridge.go:761:1: cognitive complexity 31 of func `(*WorldScriptableAdapter).ObjList` is high (> 30) (gocognit)
+func (a *WorldScriptableAdapter) ObjList(me scripting.CharRef, arg, where string) (scripting.ObjRef, *scripting.CharRef, bool) {
+^
+../luna-idiom-go/pkg/game/world_bridge.go:969:1: cognitive complexity 57 of func `(*WorldScriptableAdapter).Echo` is high (> 30) (gocognit)
+func (a *WorldScriptableAdapter) Echo(kind string, room *scripting.RoomRef, ch *scripting.CharRef, text string) {
+^
+../luna-idiom-go/pkg/game/world_object.go:88:1: cognitive complexity 34 of func `(*World).extractObjectLocked` is high (> 30) (gocognit)
+func (w *World) extractObjectLocked(obj *ObjectInstance) {
+^
+../luna-idiom-go/pkg/game/world_redit_test.go:166:1: cognitive complexity 55 of func `TestReditWorldPublicationConcurrentSnapshots` is high (> 30) (gocognit)
+func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/zone_error_mudlog_test.go:53:1: cognitive complexity 34 of func `TestZoneErrorMudlogBranches` is high (> 30) (gocognit)
+func TestZoneErrorMudlogBranches(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/act_movement.go:798:1: cyclomatic complexity 31 of func `doGenDoor` is high (> 30) (gocyclo)
+func doGenDoor(w *World, ch *Player, argument string, scmd int) {
+^
+../luna-idiom-go/pkg/game/shoot_duplicate_body_test.go:10:1: cyclomatic complexity 31 of func `TestShootRealDuplicateMobRetaliation` is high (> 30) (gocyclo)
+func TestShootRealDuplicateMobRetaliation(t *testing.T) {
+^
+../luna-idiom-go/pkg/game/spec_procs.go:387:1: cyclomatic complexity 37 of func `specMagicUser` is high (> 30) (gocyclo)
+func specMagicUser(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
+^
+../luna-idiom-go/pkg/game/world_bridge.go:1178:1: cyclomatic complexity 32 of func `castSpellC` is high (> 30) (gocyclo)
+func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef, masterRef *scripting.CharRef, tch combat.Combatant, tobj *ObjectInstance, spellNum int) bool {
+^
+332 issues:
+* dupl: 26
+* funlen: 191
+* gocognit: 111
+* gocyclo: 4

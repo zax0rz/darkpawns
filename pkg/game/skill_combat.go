@@ -77,6 +77,10 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 		}
 	}
 
+	return backstabAfterGates(ch, target)
+}
+
+func backstabAfterGates(ch *Player, target combat.Combatant) SkillResult {
 	// 7. Roll for success — act.offensive.c:220
 	// #nosec G404 — game RNG, not cryptographic
 	percent := dprng.Number(1, 101) // 1-101
@@ -757,6 +761,10 @@ func DoCircle(ch *Player, target combat.Combatant) SkillResult {
 		}
 	}
 
+	return circleAfterGates(ch, target)
+}
+
+func circleAfterGates(ch *Player, target combat.Combatant) SkillResult {
 	if ch.GetSkill(SkillCircle) <= 0 {
 		return SkillResult{Success: false, MessageToCh: "You make a circle in the air.\r\n"}
 	}

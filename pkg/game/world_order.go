@@ -55,9 +55,9 @@ func (w *World) cOrderedCharacters() []orderedCharacter {
 // GetAllCharsInCharacterListOrder returns every live player and mobile in
 // C's global character_list order. Area effects that traverse character_list
 // use this instead of room people order, then apply their own room predicate.
-func (w *World) GetAllCharsInCharacterListOrder() []interface{} {
+func (w *World) GetAllCharsInCharacterListOrder() []any {
 	ordered := w.cOrderedCharacters()
-	characters := make([]interface{}, 0, len(ordered))
+	characters := make([]any, 0, len(ordered))
 	for _, body := range ordered {
 		if body.player != nil {
 			characters = append(characters, body.player)

@@ -17,7 +17,7 @@ This guide walks you through the optimal path from a brand-new character at leve
 
 ### Roll Your Stats
 
-During character creation, re-roll until you get a strong stat set. Use `Y` to keep your roll or `N` to re-roll. Each class has a stat priority (see the [Quick Start guide](/docs/getting-started/quick-start/)):
+During character creation, re-roll until you get a strong stat set. Use `Y` to keep your roll or `N` to re-roll. Each class has a stat priority (see the [Quick Start guide](/docs/build/local-server/)):
 
 - **Warriors** want high STR and CON.
 - **Thieves/Assassins** want high DEX.
@@ -61,13 +61,13 @@ Use `practice <skill>` at the guildmaster. Start with your primary combat skill 
 
 - `look` when you enter a room to see mobs. Check `ROOM_MOBS` if you're an agent.
 - Use `consider <mob>` to gauge relative strength before attacking.
-- Always have a flee direction ready. [`flee`](/help/commands/flee/) saves your life at low levels.
+- Always have a flee direction ready. [`flee`](/docs/reference/commands/combat/#help-commands-flee) saves your life at low levels.
 - `rest` or `sleep` between fights to regen HP and mana.
-- Thieves: use [`backstab <target>`](/help/commands/backstab/) from standing (not fighting) for massive first-strike damage.
+- Thieves: use [`backstab <target>`](/docs/reference/commands/combat/#help-commands-backstab) from standing (not fighting) for massive first-strike damage.
 
 ### When to Level
 
-Return to your guildmaster each time you level. [`practice`](/help/commands/practice-practice-train/) one or two skills per level — save some practices for later levels when skills improve in effectiveness.
+Return to your guildmaster each time you level. [`practice`](/docs/reference/commands/character/#help-commands-practice-practice-train) one or two skills per level — save some practices for later levels when skills improve in effectiveness.
 
 ---
 
@@ -132,7 +132,7 @@ send_command("wear", ["all"])
 At mid-levels, **groups** become very effective:
 - `follow <player>` to form a group.
 - `group <player>` to formally add someone.
-- Warriors should use [`rescue`](/help/commands/rescue/) to pull mobs off squishier group members.
+- Warriors should use [`rescue`](/docs/reference/commands/combat/#help-commands-rescue) to pull mobs off squishier group members.
 - Clerics should prioritize `heal` and `bless` on group members.
 
 ---
@@ -151,7 +151,7 @@ At mid-levels, **groups** become very effective:
 ### PK Awareness
 
 At levels 20+, you're in full PK territory. Other players **will** attack you:
-- Know your **wimpy** setting ([`wimpy 30`](/help/commands/wimpy/) auto-flees below 30 HP).
+- Know your **wimpy** setting ([`wimpy 30`](/docs/reference/commands/settings/#help-commands-wimpy) auto-flees below 30 HP).
 - Avoid standing around in dungeons while fully injured.
 - Agents: monitor `FIGHTING` bool — if it flips true and you have no active target in `ROOM_MOBS`, another player may have attacked you.
 

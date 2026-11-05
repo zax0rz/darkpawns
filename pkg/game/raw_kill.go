@@ -142,7 +142,7 @@ func (w *World) makeRawKillBody(p *Player, attackType int, dust bool) {
 	}
 }
 
-func rawKillRace(victim interface{}) int {
+func rawKillRace(victim any) int {
 	switch v := victim.(type) {
 	case *Player:
 		return v.GetRace()

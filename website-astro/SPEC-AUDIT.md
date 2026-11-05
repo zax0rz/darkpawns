@@ -1,6 +1,6 @@
 # Website Specification audit
 
-Last run: 2026-08-15
+Last run: 2026-11-03 (see the section at the end; earlier runs below it)
 
 Scope: Astro migration, with an initial focus on the [agent-readiness category](https://specification.website/spec/agent-readiness/).
 
@@ -163,3 +163,25 @@ Implemented:
 - Confirm `/rss.xml`, `/sitemap-index.xml`, `/llms.txt`, Markdown records, JSON records, agent skills, and `security.txt` have correct content types.
 - Run keyboard, screen-reader, contrast, touch-target, and Core Web Vitals checks against production.
 - Compare every Hugo URL with the Astro output and redirect table.
+
+## 2026-11-03 audit (full checklist, live site)
+
+Checked the live site against the full checklist from the specification.website
+MCP server (178 items) and the 17 spec changes since 2026-08-15. The server no
+longer offers its `audit_url` tool, so a probe checked 26 pages (one per
+template), site resources, redirects, TLS, IPv6 and 60 sampled sitemap URLs:
+567 pass, 81 fail, 4 warn. Findings, fixes and owners are in
+`docs/briefs/AUDIT-2026-11-03-site-spec-and-taxonomy.md`.
+
+Fixed with that audit: the sitemap lists canonical URLs only (two World pages
+that name an Archive entry as canonical were listed), is split by section, and
+carries `<lastmod>` only on blog posts, which have a real date.
+`scripts/check-sitemap.mjs` runs in `npm run test:docs` and fails the build if a
+listed URL is unbuilt, noindex, a refresh stub, or not its own canonical.
+
+Open at the server, not in the site source: `www` and slashless URLs answer 200
+instead of redirecting, about 3,100 refresh-stub redirects answer 200 because
+production does not load the generated `redirects.caddy`, HTML has no
+`Cache-Control`, there is no `Cross-Origin-Opener-Policy`, and there is no
+`AAAA` record.
+

@@ -82,7 +82,7 @@ type MobInstance struct {
 	HuntingMobID int
 
 	// CustomData stores arbitrary per-instance data (e.g., damroll bonus for brain eater)
-	CustomData map[string]interface{}
+	CustomData map[string]any
 
 	// Runtime state — typed replacement for CustomData (e.g., damroll_bonus)
 	Runtime MobRuntimeState
@@ -202,7 +202,7 @@ func NewMob(proto *parser.Mob, roomVNum int) *MobInstance {
 		Equipment:    make(map[int]*ObjectInstance),
 		fightingBody: nil,
 		Memory:       make([]string, 0),
-		CustomData:   make(map[string]interface{}),
+		CustomData:   make(map[string]any),
 		Runtime:      MobRuntimeState{},
 		Str:          str,
 		Intel:        intel,
@@ -1469,7 +1469,7 @@ func (m *MobInstance) SetName(name string) {
 func (m *MobInstance) AddAffect(aff *engine.Affect) {
 	m.mu.Lock()
 	if m.CustomData == nil {
-		m.CustomData = make(map[string]interface{})
+		m.CustomData = make(map[string]any)
 	}
 	if m.affectOrder == nil {
 		m.affectOrder = make(map[string]uint64)

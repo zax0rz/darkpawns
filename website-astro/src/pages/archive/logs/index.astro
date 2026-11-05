@@ -1,0 +1,58 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import { getCollection } from 'astro:content';
+import { characterKeys } from '../../../lib/mudlog/entry';
+
+const entries = (await getCollection('logs'))
+  .sort((a, b) => a.data.title.localeCompare(b.data.title, 'en', { sensitivity: 'base' }));
+const characters = characterKeys(entries).length;
+
+const site = 'https://darkpawns.org';
+const description = `${entries.length} game logs captured on the original Dark Pawns server, donated by Vargus and shown as they looked on screen.`;
+const collectionLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Dark Pawns game logs',
+  description,
+  url: `${site}/archive/logs/`,
+  inLanguage: 'en',
+  isPartOf: { '@type': 'WebSite', name: 'Dark Pawns', url: site },
+});
+---
+<Base title="Game logs | Dark Pawns" description={description}>
+  <script slot="head" type="application/ld+json" set:html={collectionLd} />
+  <article class="entry">
+    <Breadcrumb trail={[{ label: 'The Archive', href: '/archive/' }, { label: 'Game logs' }]} />
+    <h1>Game logs</h1>
+    <p class="lede">
+      Sessions captured on the original server by the players who were there,
+      donated by Vargus, shown as they looked on screen. Private tells, mail,
+      contact details, slurs and sexual violence are removed.
+    </p>
+    <p class="characters"><a href="/archive/logs/characters/">All {characters} characters in the logs »</a></p>
+
+    <ul class="rows">
+      {entries.map((entry) => (
+        <li>
+          <a href={`/archive/logs/${entry.id}/`}>{entry.data.title}</a>
+          <span class="row-meta">
+            {entry.data.recordedBy.length ? entry.data.recordedBy.join(' and ') : 'recorder not shown'}
+            · {entry.data.lines.toLocaleString('en-US')} lines
+            {entry.data.date && <>· {entry.data.date.text}</>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  </article>
+</Base>
+
+<style>
+  .entry { max-width: 46rem; margin-inline: auto; padding: var(--space-lg) var(--space-md) var(--space-xl); }
+  .lede { max-width: 58ch; font-size: 1.15rem; }
+  .characters { margin-block: var(--space-md) var(--space-lg); font-family: var(--font-mono); }
+  .rows { margin: 0; padding: 0; list-style: none; border-bottom: 1px solid var(--rule); }
+  .rows li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--space-md); border-top: 1px solid var(--rule); padding: var(--space-xs) 0; }
+  .rows a { font-family: var(--font-mono); }
+  .row-meta { color: var(--ink-muted); font-family: var(--font-mono); font-size: 0.8rem; }
+</style>
