@@ -208,28 +208,7 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	// carry weight/count headroom, and CAN_SEE_OBJ) AND GET_OBJ_COST(obj) > max
 	// starting with max=1, so items costing 0 or 1 are never picked up.
 	if hasMobFlag(ch, "scavenger") {
-		items := w.GetItemsInRoom(ch.RoomVNum)
-		// C only burns this draw when the room actually has contents.
-		// #nosec G404 — game RNG, not cryptographic
-		if len(items) > 0 && mobactNumber(0, 10) == 0 {
-			maxCost := 1 // C: max = 1; items must cost > 1 to be picked up
-			var best *ObjectInstance
-			for _, obj := range items {
-				if !w.canGetObject(ch, obj) { // C: CAN_GET_OBJ(ch, obj)
-					continue
-				}
-				if obj.GetCost() <= maxCost { // GET_OBJ_COST(obj) > max
-					continue
-				}
-				best = obj
-				maxCost = obj.GetCost()
-			}
-			if best != nil {
-				w.RemoveItemFromRoom(best, ch.RoomVNum)
-				ch.AddToInventory(best)
-				Act(w, false, ch, nil, best, nil, "$n gets $p.", "", ToRoom)
-			}
-		}
+		w.scavengerPickup(ch)
 	}
 
 	// -- Mob Movement (wandering) --
@@ -540,6 +519,31 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 				w.mobFirstHit(ch, vict)
 				break
 			}
+		}
+	}
+}
+
+func (w *World) scavengerPickup(ch *MobInstance) {
+	items := w.GetItemsInRoom(ch.RoomVNum)
+	// C only burns this draw when the room actually has contents.
+	// #nosec G404 — game RNG, not cryptographic
+	if len(items) > 0 && mobactNumber(0, 10) == 0 {
+		maxCost := 1 // C: max = 1; items must cost > 1 to be picked up
+		var best *ObjectInstance
+		for _, obj := range items {
+			if !w.canGetObject(ch, obj) { // C: CAN_GET_OBJ(ch, obj)
+				continue
+			}
+			if obj.GetCost() <= maxCost { // GET_OBJ_COST(obj) > max
+				continue
+			}
+			best = obj
+			maxCost = obj.GetCost()
+		}
+		if best != nil {
+			w.RemoveItemFromRoom(best, ch.RoomVNum)
+			ch.AddToInventory(best)
+			Act(w, false, ch, nil, best, nil, "$n gets $p.", "", ToRoom)
 		}
 	}
 }
