@@ -94,10 +94,16 @@ type GameCallbacks struct {
 	GetAdjacentRoom func(roomVNum, door int) int
 
 	// Kill/Death/Stats
-	GainExp         func(name Combatant, amount int)
-	GetExp          func(name Combatant) int
-	GetKills        func(name Combatant) int64
-	SetKills        func(name Combatant, kills int64)
+	GainExp  func(name Combatant, amount int)
+	GetExp   func(name Combatant) int
+	GetKills func(name Combatant) int64
+	SetKills func(name Combatant, kills int64)
+	// CounterProcs runs C's counter_procs(ch) milestone reward (src/fight.c:
+	// 1252-1311). The game layer owns the one faithful implementation
+	// (World.counter_procs); combat only forwards the body and the kill count
+	// already incremented by its caller, exactly as C's
+	// GET_KILLS(ch)++; counter_procs(ch) does (src/fight.c:1689-1690).
+	CounterProcs    func(ch Combatant, kills int64)
 	GetDeaths       func(name Combatant) int64
 	SetDeaths       func(name Combatant, deaths int64)
 	SetLastDeath    func(name Combatant, t int64)
@@ -140,10 +146,6 @@ type GameCallbacks struct {
 	GetWimpyLev func(name Combatant) int
 	DoFlee      func(name Combatant)
 	DoRetreat   func(name Combatant)
-
-	// World
-	IncreaseMaxStat func(name Combatant, stat string)
-	HealAllPlayers  func()
 }
 
 // callbacks is the canonical package-level accessor for the active
@@ -524,6 +526,12 @@ func cbSetKills(name Combatant, kills int64) {
 	}
 }
 
+func cbCounterProcs(ch Combatant, kills int64) {
+	if cb := callbacks; cb != nil && cb.CounterProcs != nil {
+		cb.CounterProcs(ch, kills)
+	}
+}
+
 func cbGetDeaths(name Combatant) int64 {
 	if cb := callbacks; cb != nil && cb.GetDeaths != nil {
 		return cb.GetDeaths(name)
@@ -698,22 +706,6 @@ func cbDoFlee(name Combatant) {
 func cbDoRetreat(name Combatant) {
 	if cb := callbacks; cb != nil && cb.DoRetreat != nil {
 		cb.DoRetreat(name)
-	}
-}
-
-// ---------------------------------------------------------------------------
-// World helpers.
-// ---------------------------------------------------------------------------
-
-func cbIncreaseMaxStat(name Combatant, stat string) {
-	if cb := callbacks; cb != nil && cb.IncreaseMaxStat != nil {
-		cb.IncreaseMaxStat(name, stat)
-	}
-}
-
-func cbHealAllPlayers() {
-	if cb := callbacks; cb != nil && cb.HealAllPlayers != nil {
-		cb.HealAllPlayers()
 	}
 }
 
