@@ -1,0 +1,9 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestCalculateHitChance_Natural20	formulas.go	388	natural-20 return true→false	green	yes
+TestCalculateHitChance_NegativeDefenderACClamped	formulas.go	384	AC clamp victimAC=-10→victimAC	green	yes
+TestChangeAlignment	fight_core.go	292	cbSetAlignment→no-op	green	yes
+TestCounterProcs_NoMilestone	fight_core.go	1060	add spurious sendCombatMessage before NPC guard	green	yes
+TestCalculateHitChance_LowACAlwaysHits	formulas.go	388	natural-20 return true→false	green	yes
+TestProcessCombatPair_PlayerDeath	engine.go	1274	handleDeath→immediate return false	green	yes
+TestProcessCombatPair_MobAttack	engine.go	601	processCombatPair→immediate return	green	yes
+TestStrApp_GoldenAgainstCSource	formulas.go	149	strApp[0].ToDam -4→-3	red	yes

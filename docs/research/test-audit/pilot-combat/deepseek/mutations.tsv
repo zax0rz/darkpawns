@@ -1,0 +1,16 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestCombatTranscript_Golden	pkg/combat/formulas.go	402	getMinusDam pcmod 2.0 -> 3.0 (changes every damage number)	red	yes
+TestGroupGain_NoHooks	pkg/combat/fight_core.go	955	GroupGain: early return so it never pays out	green	yes
+TestChangeAlignment	pkg/combat/fight_core.go	289	ChangeAlignment: stop computing the shifted alignment	green	yes
+TestChangeAlignment_NilGetAlignment	pkg/combat/fight_core.go	289	ChangeAlignment: stop computing the shifted alignment	green	yes
+TestTakeDamage_NilGetRace	pkg/combat/fight_core.go	340	TakeDamage: return false without applying damage	green	yes
+TestGetExpNilGuard_GroupGain	pkg/combat/fight_core.go	955	GroupGain: early return so it never pays out	green	yes
+TestGetExpNilGuard_DieWithKiller	pkg/combat/fight_core.go	1030	DieWithKiller: early return before any kill bookkeeping	green	yes
+TestGetAttacksPerRound_PlayerLowLevel	pkg/combat/formulas.go	594	warrior bonus gate level > 10 -> level > 0 (a level-1 warrior can get +1)	green	yes
+TestGetAttacksPerRound_PlayerHighLevel	pkg/combat/formulas.go	617	drop the level>30 guaranteed attack (level > 30 -> level > 99)	green	yes
+TestCalculateHitChance_LowACAlwaysHits	pkg/combat/formulas.go	347	CalculateHitChance: always miss	green	yes
+TestCalculateDamage_NonNormalAttackType	pkg/combat/formulas.go	549	apply getMinusDam to every attack type (drop the AttackNormal bypass)	green	yes
+TestCounterProcs_NoMilestone	pkg/combat/fight_core.go	1096	CounterProcs: heal on the no-milestone default path	green	yes
+TestCounterProcs_MajorMilestone	pkg/combat/fight_core.go	1091	model C's fall-through: an extra hit increment (4 stat calls)	red	yes
+TestProcessCombatPair_MobAttack	pkg/combat/formulas.go	555	CalculateDamage: return 0 instead of the computed damage	green	yes
+TestProcessCombatPair_PlayerDeath	pkg/combat/engine.go	1274	handleDeath: early return, no death processing	green	yes
