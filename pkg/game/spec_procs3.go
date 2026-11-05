@@ -144,7 +144,10 @@ func specCleric(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 	if vict == nil {
 		return specSummoner(w, ch, me, "", "")
 	}
+	return specClericCombat(w, me, vict)
+}
 
+func specClericCombat(w *World, me *MobInstance, vict combat.Combatant) bool {
 	// lspell = number(0, GET_LEVEL(ch)) + GET_LEVEL(ch)/5, capped at GET_LEVEL, min 1
 	// #nosec G404 — game RNG, not cryptographic
 	// #nosec G404
