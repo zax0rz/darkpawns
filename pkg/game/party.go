@@ -259,6 +259,13 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 		base = 1
 	}
 
+	w.awardGroupMobKillXP(inRoom, victimLevel, base, victimAlign)
+	w.awardGroupKillGold(
+		killer, victim, victimName, victimGold, killerRoom, kp, isPlayer, inRoom, totMembers, leader,
+	) // src/fight.c:747-846: XP shares precede autogold.
+}
+
+func (w *World) awardGroupMobKillXP(inRoom []combat.Combatant, victimLevel, base, victimAlign int) {
 	// perform_group_gain() for each member — fight.c lines 688-705 and
 	// 739-745. Mobile members receive the C no-op message send, skip
 	// gain_exp, and skip change_alignment (which itself returns for NPCs,
@@ -279,9 +286,6 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 			changeAlignment(p, victimAlign)
 		}
 	}
-	w.awardGroupKillGold(
-		killer, victim, victimName, victimGold, killerRoom, kp, isPlayer, inRoom, totMembers, leader,
-	) // src/fight.c:747-846: XP shares precede autogold.
 }
 
 func (w *World) awardSoloMobKillXP(killer combat.Combatant, victimExp, victimGold, victimLevel, victimAlign int) {
