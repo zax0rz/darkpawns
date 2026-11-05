@@ -84,6 +84,14 @@ Sol (gpt-6.1-sol, at medium reasoning effort) ran the same blind brief later the
 - **What Sol missed:** it marked the natural-20 test C (merge) rather than F, and it left the `counter_procs` reachability open, though it found the divergence. Its own notes say some keep marks are provisional, because it didn't read every fixture line by line.
 - **The pre-oracle split weakens.** Sol put 3 F and 3 C on post-oracle tests, so "every weak test predates the oracle" holds for the two smaller models but not for all three. The direction is the same: 93% of Sol's post-oracle marks are R, against 62% before the oracle.
 
+## Update: the fix phase
+
+DeepSeek then took the 13 tests the settled ledger ([`SETTLED.md`](../test-audit/pilot-combat/SETTLED.md)) marked F for a test-only fix, under a brief that required expected values derived from `src/`, dice forced with `ScriptedRoller`, and a three-part proof per row: the old test green under the audit's recorded mutation, the new test green on real code, the new test red under the same mutation. PR #2278 merged as `ac73fe8a1`; the per-row record is [`fix-phase/results.tsv`](../test-audit/pilot-combat/fix-phase/results.tsv).
+
+- **13 of 13 tests that could not fail now can.** 10 strengthened, 3 folded into the keeper the audit named. No row was `baseline-red`, so every recorded F mutation really did pass the old test. No row was `possible-bug`: every C-derived expected value matched the port.
+- **Replicated.** Claude reran rows 1, 9, 10 and 13 independently: the old test green and the new test red under each mutation, the new test green unmutated. Claude also checked every expected value against the cited C lines.
+- **The setup hid the guard more often than the assertion did.** In 9 of the 10 strengthened rows the fixture changed, not only the assertion. The usual hider was an input outside the branch under test: AC 100 sits above every `get_minusdam` bracket (`src/fight.c:1727`), so two damage tests could not see the reduction or its bypass; a neutral victim returns before the NPC-killer guard (`src/fight.c:488-493`); and the default fixture's race 0 matched all five race-hate slots of 0 (`src/fight.c:1466-1468`), silently adding 5 × level to a swing. The tenth row (the parry range) needed the harness instead: a scripted roller ignores the bounds it is asked for, so the test now records the draw.
+
 ## Limits
 
 - **One package.** `pkg/combat` is formula-dense and C-cited, and is probably the cleanest package in the repository.
