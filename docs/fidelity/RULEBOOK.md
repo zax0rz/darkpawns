@@ -220,6 +220,15 @@ cannot observe them.
   `, OLC[n]`, and `stat file` hardcoded the fresh character's hometown,
   practices, hit points and `orig_con`.
 
+- **R5i. A fixture that silences a surface needs a green scenario that
+  unsilences it.** Every census fixture that suppresses a behavior class
+  (quiet-mobs silences ambient mobile activity) leaves that surface unproved;
+  the fixture must be paired with at least one focused scenario that restores
+  the class deterministically (one spawned mob in a sealed room) and can fail.
+  Taught by PF-099 (practice cost column: every practice scenario used a
+  no-cost class) and PF-100 (ambient mob sound: all 1,813 quiet-mobs scenarios
+  hid literal `$n` on every city mob).
+
 ---
 
 ## Amendment log
@@ -237,3 +246,4 @@ cannot observe them.
 | 2026-09-29 | R3c extended (raw-pulse `WAIT_STATE`) | DP-1368 / PR #1705: `PULSE_VIOLENCE + N` waits stored as whole rounds (hit 60 vs C's 22 pulses, plus kick, circle, strike and retreat's failure arm). Added by the implementing agent under the old R5b wording; Zach reviewed and kept it |
 | 2026-09-29 | *Who amends* added; R5b reworded | The R3c edit above: the agent followed R5b's "amend this rulebook" literally, and read authorization for the fix as authorization for the rule. The instruction was ambiguous, so it's clarified: agents propose, Zach approves the text |
 | 2026-10-30 | R1b added | DeepSeek ANSI audit (PR #2231): the census strips ANSI and folds terminators, so combat color was never compared; same class as cutthroat #532/#537. Proposed by the auditing agent, wording widened by Claude, approved by Zach |
+| 2026-11-05 | R5i added | PR #2271: quiet-mobs, the fixture in 1,813 scenarios, hid literal `$n` on every ambient city mob (PF-100); second instance after PF-099's no-cost practice fixtures, so R5b. Proposed by GLM, approved by Zach |
