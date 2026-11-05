@@ -76,6 +76,21 @@ func TestDeterministicHitChance(t *testing.T) {
 			t.Error("expected hit with diceroll 20")
 		}
 	})
+
+	// The case above hits by arithmetic alone (calc_thaco 22 - 20 = 2 does not
+	// exceed victim_ac 16), so it cannot see the natural-20 rule disappear.
+	// src/fight.c:1825-1826 misses only while diceroll < 20; the roll of 20
+	// returns a hit before the miss predicate is reached. Force a fixture the
+	// predicate WOULD reject: NPC calc_thaco 24 (20 base + 2 INT + 2 WIS)
+	// minus 20 is 4, which is greater than the clamped victim_ac of -10
+	// (src/fight.c:1822).
+	n20Attacker := &mockCombatant{npc: true, level: 1, str: 10, intVal: 10, wis: 10}
+	n20Defender := &mockCombatant{npc: true, position: PosStanding, ac: -1000, dex: 10}
+	WithRoller(NewScriptedRoller([]int{20}), func() {
+		if !CalculateHitChance(n20Attacker, n20Defender, HitModifiers{}) {
+			t.Error("expected natural 20 to hit a defender the miss predicate rejects (fight.c:1825)")
+		}
+	})
 }
 
 func TestDeterministicDamage(t *testing.T) {

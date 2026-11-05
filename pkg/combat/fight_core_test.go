@@ -315,24 +315,34 @@ func TestChangeAlignment(t *testing.T) {
 	orig := GetCallbacks()
 	defer SetCallbacks(orig)
 
+	var setTo, setCalls int
 	SetCallbacks(&GameCallbacks{
 		GetAlignment: func(bodyname Combatant) int {
-			name := bodyname.GetName()
-
-			if name == "paladin" {
-				return 1000
+			if bodyname.GetName() == "demon" {
+				return -1000
 			}
 			return 0
 		},
-		SetAlignment: func(bodyname Combatant, val int) {},
+		SetAlignment: func(bodyname Combatant, val int) {
+			setCalls++
+			setTo = val
+		},
 	})
 
 	paladin := &mockCombatant{name: "paladin", npc: false}
 	evil := &mockCombatant{name: "demon", npc: true, sex: 0}
 
-	// Killing evil should make paladin more good
+	// src/fight.c:496-501 — GET_ALIGNMENT(ch) += (-GET_ALIGNMENT(victim) -
+	// GET_ALIGNMENT(ch)) >> 4, clamped to +/-1000. Killing a -1000 victim at
+	// 0 alignment gives 0 + ((1000 - 0) >> 4) = 62. The old test installed a
+	// no-op SetAlignment, so it could not tell a real update from none.
 	ChangeAlignment(paladin, evil)
-	// Just verify it doesn't panic — actual value depends on implementation
+	if setCalls != 1 {
+		t.Fatalf("SetAlignment called %d times, want 1 (fight.c:496)", setCalls)
+	}
+	if setTo != 62 {
+		t.Errorf("alignment after killing a -1000 victim = %d, want 62 (fight.c:496)", setTo)
+	}
 }
 
 func TestChangeAlignment_NilGetAlignment(t *testing.T) {
