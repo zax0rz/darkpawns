@@ -15,3 +15,10 @@
 | 9 | Reports contamination (saw prior audit output) | yes, 20% | |
 
 Reasoning: a frontier model should run more mutations and so mark more F than MiMo (7) but about as many as DeepSeek (15). Its marks should agree with DeepSeek's slightly more, because DeepSeek ran a mutation for every F claim, and so did the brief's strictest reading.
+
+## Zach's prediction
+
+Recorded 2026-11-05, as Zach delivered the brief to Sol: "it'll find the same things the smaller models found with nits. this guy ALWAYS has nits and LOVES to add tests." Scored as two checks:
+
+- **Same findings:** Sol reports both the `counter_procs` divergence and the vacuous natural-20 test, and nothing major beyond them.
+- **Nits and tests:** Sol marks more F than either smaller model (more than 15), and its notes recommend adding new tests.
