@@ -98,6 +98,24 @@ func TestPCGetAttacksPerRound_Deterministic(t *testing.T) {
 			rolls: []int{50, 0}, // 50 < 75 (passes >25), 0 == 0 (passes 30 check)
 			want:  2,            // 1 base + 1 (>25) + 1 (0==0 check) - 1 (slow) = 2
 		},
+		{
+			// Folded from TestGetAttacksPerRound_PlayerHighLevel, whose
+			// "attacks < 3" floor survived losing this guaranteed attack
+			// (1 base + 2 for level > 39 = 3).
+			name:  "Warrior Level 31, level > 30 guarantees an attack",
+			level: 31, class: ClassWarrior,
+			rolls: []int{101, 101}, // 101 >= 91 fails the class check; 101 >= 75 fails level > 25
+			want:  2,               // 1 base + 1 guaranteed (fight.c:1939); level > 30 short-circuits the number(0,500) probe
+		},
+		{
+			// Folded from TestGetAttacksPerRound_PlayerLowLevel, whose
+			// "attacks < 1 || attacks > 5" window admitted the +1 a level > 0
+			// class gate would wrongly grant.
+			name:  "Warrior Level 1, class check must not fire below level 11",
+			level: 1, class: ClassWarrior,
+			rolls: []int{1, 1}, // 1 < 61 would pass a level > 0 gate (fight.c:1928)
+			want:  1,           // 1 base; level > 10 short-circuits before the class draw
+		},
 	}
 
 	for _, tt := range tests {

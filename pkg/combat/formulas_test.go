@@ -538,12 +538,21 @@ func TestCheckParry_CUsesTenThousandRange(t *testing.T) {
 	defender.SetFightingBody(attacker)
 	attacker.SetFightingBody(defender)
 
+	// src/fight.c:1949 — the parry probe is number(0,10000), not a percentage
+	// roll. A ScriptedRoller ignores the bounds it is handed, so the bounds
+	// themselves are the contract under test: record the draw and assert both
+	// ends. (The keeper's roll of 100 fails at either width, which is why the
+	// old assertion could not see the range shrink.)
+	roller := &recordingRoller{real: NewScriptedRoller([]int{100})}
 	old := GetRoller()
-	SetRoller(NewScriptedRoller([]int{100}))
+	SetRoller(roller)
 	defer SetRoller(old)
 
 	if result := CheckParry(defender, attacker); result != ParryFail {
 		t.Fatalf("skill-80 parry with C roll 100/10000 = %v, want ParryFail", result)
+	}
+	if !roller.hasNumber(0, 10000) {
+		t.Errorf("parry probe draws %+v, want number(0,10000) (fight.c:1949)", roller.logged)
 	}
 }
 
@@ -694,52 +703,24 @@ func TestGetAttacksPerRound_SlowOnHighLevelStillAttacks(t *testing.T) {
 
 // ---------------------------------------------------------------------------
 // GetAttacksPerRound tests — Player
+//
+// The player scheduler's deterministic cases live in
+// TestPCGetAttacksPerRound_Deterministic (attack_rounds_golden_test.go), which
+// forces every draw through a ScriptedRoller and asserts exact counts. The
+// statistical loop probes that used to sit here could not fail for the two
+// guards they named: a level-1 warrior's `attacks < 1 || attacks > 5` window
+// admits the +1 a level>0 class gate would wrongly grant, and a level-40
+// warrior's `attacks < 3` floor survives the loss of the level>30 guaranteed
+// attack (1 + 2 for level > 39 = 3).
 // ---------------------------------------------------------------------------
-
-func TestGetAttacksPerRound_PlayerLowLevel(t *testing.T) {
-	c := &mockCombatant{npc: false, class: ClassWarrior, level: 1}
-	for i := 0; i < 20; i++ {
-		attacks := GetAttacksPerRound(c, false, false)
-		if attacks < 1 || attacks > 5 {
-			t.Errorf("low level player: unexpected attacks=%d", attacks)
-		}
-	}
-}
-
-func TestGetAttacksPerRound_PlayerHighLevel(t *testing.T) {
-	c := &mockCombatant{npc: false, class: ClassWarrior, level: 40}
-	for i := 0; i < 50; i++ {
-		attacks := GetAttacksPerRound(c, false, false)
-		// Level 40+ gets +2, plus various possible bonuses
-		if attacks < 3 {
-			t.Errorf("lvl40 warrior: expected at least 3 attacks, got %d", attacks)
-		}
-	}
-}
 
 // ---------------------------------------------------------------------------
 // CalculateHitChance tests — deterministic edge cases
+//
+// The natural-20 contract is asserted in TestDeterministicHitChance
+// (roller_test.go); the statistical probe that used to sit here only required
+// "some hits out of 1,000", which a natural-20-only hit rate satisfies.
 // ---------------------------------------------------------------------------
-
-func TestCalculateHitChance_Natural20(t *testing.T) {
-	// Natural 20 always hits. We can't force a natural 20 without seeding
-	// package-level rand, but we verify the function runs without panic
-	// and that at least some hits occur from natural 20s.
-	defender := &mockCombatant{npc: true, position: PosStanding, ac: 100, dex: 10}
-	attacker := &mockCombatant{npc: true, level: 1, str: 10, intVal: 10, wis: 10}
-	mods := HitModifiers{}
-
-	hits := 0
-	for i := 0; i < 1000; i++ {
-		if CalculateHitChance(attacker, defender, mods) {
-			hits++
-		}
-	}
-	// Even with terrible THAC0 vs high AC, natural 20s (~5%) should land
-	if hits == 0 {
-		t.Error("expected at least some hits from natural 20s")
-	}
-}
 
 func TestCalculateHitChance_NPCHitrollMatchesCStoredTHAC0Boundary(t *testing.T) {
 	defender := &mockCombatant{position: PosStanding, ac: 100, dex: 13}
@@ -769,41 +750,55 @@ func TestCalculateHitChance_LowACAlwaysHits(t *testing.T) {
 }
 
 func TestCalculateHitChance_SleepingDefender(t *testing.T) {
-	// Sleeping defender: no dex defensive bonus, always hit unless natural 1
-	defender := &mockCombatant{npc: true, position: PosSleeping, ac: 0, dex: 10}
+	// src/fight.c:1825-1826 — AWAKE(victim) gates the whole miss predicate
+	// ((diceroll < 20 && AWAKE) && (diceroll == 1 || calc_thaco-diceroll >
+	// victim_ac)), and src/utils.h:450 defines AWAKE(ch) as GET_POS(ch) >
+	// POS_SLEEPING. A sleeping defender is therefore hit on EVERY roll,
+	// natural 1 included. The old ">= 900 of 1,000" window accepted the 5%
+	// natural-1 miss the C never makes.
 	attacker := &mockCombatant{npc: true, level: 1, str: 10, intVal: 10, wis: 10, hitroll: 0}
-	mods := HitModifiers{}
 
-	hits := 0
-	total := 1000
-	for i := 0; i < total; i++ {
-		if CalculateHitChance(attacker, defender, mods) {
-			hits++
+	sleeping := &mockCombatant{npc: true, position: PosSleeping, ac: 0, dex: 10}
+	WithRoller(NewScriptedRoller([]int{1}), func() {
+		if !CalculateHitChance(attacker, sleeping, HitModifiers{}) {
+			t.Error("natural 1 against a sleeping defender = miss, want hit (fight.c:1825)")
 		}
-	}
-	// Sleeping defender should mostly get hit (only natural 1 misses)
-	if hits < total-100 {
-		t.Errorf("sleeping defender: expected mostly hits, got %d/%d", hits, total)
-	}
+	})
+
+	// Even a roll the awake predicate rejects still lands: calc_thaco 24
+	// (20 base + 2 INT + 2 WIS) minus roll 5 beats victim_ac 10, and the
+	// sleeping defender gets no dex_app defensive bonus (fight.c:1819-1820).
+	sleepingHighAC := &mockCombatant{npc: true, position: PosSleeping, ac: 100, dex: 10}
+	WithRoller(NewScriptedRoller([]int{5}), func() {
+		if !CalculateHitChance(attacker, sleepingHighAC, HitModifiers{}) {
+			t.Error("roll 5 against a sleeping high-AC defender = miss, want hit (fight.c:1825)")
+		}
+	})
+
+	// Control: the same roll against the same defender awake misses.
+	awakeHighAC := &mockCombatant{npc: true, position: PosStanding, ac: 100, dex: 10}
+	WithRoller(NewScriptedRoller([]int{5}), func() {
+		if CalculateHitChance(attacker, awakeHighAC, HitModifiers{}) {
+			t.Error("roll 5 against the awake defender = hit, want miss (fight.c:1826)")
+		}
+	})
 }
 
 func TestCalculateHitChance_NegativeDefenderACClamped(t *testing.T) {
-	// Defender AC very negative (-100), attacker weak — AC should be clamped to -10
+	// src/fight.c:1822 — victim_ac = MAX(-10, victim_ac) floors the defender's
+	// armor class for the to-hit roll. AC -1000 becomes victim_ac -100, then
+	// -10. With hitroll 40 the attacker's calc_thaco is 20 - 40 = -20, so the
+	// scripted roll 5 gives calc_thaco - diceroll = -25: it is NOT > the floor
+	// (-10), so the swing HITS; it IS > the unclamped AC (-100), so without
+	// the clamp it would miss. The clamp alone decides the outcome.
 	defender := &mockCombatant{npc: true, position: PosStanding, ac: -1000, dex: 10}
-	attacker := &mockCombatant{npc: true, level: 1, str: 10, intVal: 10, wis: 10, hitroll: 0}
-	mods := HitModifiers{}
+	attacker := &mockCombatant{npc: true, level: 1, str: 10, intVal: 13, wis: 13, hitroll: 40}
 
-	hits := 0
-	total := 500
-	for i := 0; i < total; i++ {
-		if CalculateHitChance(attacker, defender, mods) {
-			hits++
+	WithRoller(NewScriptedRoller([]int{5}), func() {
+		if !CalculateHitChance(attacker, defender, HitModifiers{}) {
+			t.Error("roll 5 vs clamped victim_ac -10 = miss, want hit (fight.c:1822)")
 		}
-	}
-	// Very low AC defender — should still hit sometimes (natural 20)
-	if hits == 0 {
-		t.Error("expected at least some hits from natural 20s")
-	}
+	})
 }
 
 func TestCalculateHitChance_WeaponBlessedBonus(t *testing.T) {
@@ -889,27 +884,57 @@ func TestCalculateDamage_LevelOneBareHandsUsesCNumberRange(t *testing.T) {
 }
 
 func TestCalculateDamage_PlayerWithWeapon(t *testing.T) {
+	// src/fight.c:1840-1844 — a wielding player's damage is
+	// str_app[...].todam + GET_DAMROLL(ch) + dice(val1, val2). Here that is
+	// strApp[18].todam 2 + damroll 5 + a scripted 1d8 of 8 = 15. AC 100 is
+	// above every get_minusdam bracket (fight.c:1727 returns dam unchanged),
+	// so the total is exact. The weapon arm is also asserted by its DRAW:
+	// dropping the contribution falls through to the bare-hands arm
+	// (fight.c:1850-1851), which draws number(0, level/3) instead of the
+	// weapon's dice — and a scripted roller answers that probe with the same
+	// 8, so the value alone cannot tell the two paths apart.
 	attacker := &mockCombatant{npc: false, level: 10, str: 18, strAdd: 0, damroll: 5, damageRoll: DiceRoll{}}
-	defender := &mockCombatant{position: PosStanding, ac: 0}
+	defender := &mockCombatant{position: PosStanding, ac: 100}
 	weapon := DiceRoll{Num: 1, Sides: 8}
 
-	dam := CalculateDamage(attacker, defender, weapon, AttackNormal)
-	if dam < 1 {
-		t.Errorf("expected minimum 1 damage, got %d", dam)
+	roller := &recordingRoller{real: NewScriptedRoller([]int{8})}
+	old := GetRoller()
+	SetRoller(roller)
+	defer SetRoller(old)
+
+	if dam := CalculateDamage(attacker, defender, weapon, AttackNormal); dam != 15 {
+		t.Errorf("player weapon damage = %d, want 15 (2 todam + 5 damroll + 1d8 rolled 8)", dam)
+	}
+	sawWeaponDice := false
+	for _, d := range roller.logged {
+		if d.method == "Dice" && d.a == 1 && d.b == 8 {
+			sawWeaponDice = true
+		}
+	}
+	if !sawWeaponDice {
+		t.Errorf("player with a weapon drew %+v, want a dice(1,8) weapon roll (fight.c:1844)", roller.logged)
+	}
+	if roller.hasNumber(0, attacker.GetLevel()/3) {
+		t.Errorf("player with a weapon took the bare-hands probe: draws %+v", roller.logged)
 	}
 }
 
 func TestCalculateDamage_AttackerDeadStr(t *testing.T) {
-	// strApp index 0 has tohit=-5, todam=-4
+	// src/fight.c:1863, 1882-1884 — after the one-point floor and
+	// get_minusdam(), the C forces a strength-zero attacker's damage back to
+	// 1. AC 0 sits in fight.c:1737's .11*pcmod bracket, which reduces the
+	// floored 1 point to 0 (int(1 - 0.22)); only the strength-zero guard can
+	// produce the final 1. The old test's AC 100 was above every bracket
+	// (fight.c:1727), so both paths returned the floor's 1.
 	attacker := &mockCombatant{npc: false, level: 1, str: 0, strAdd: 0, damroll: 0, damageRoll: DiceRoll{Num: 1, Sides: 1}}
-	defender := &mockCombatant{position: PosStanding, ac: 100}
+	defender := &mockCombatant{position: PosStanding, ac: 0}
 	weapon := DiceRoll{Num: 1, Sides: 1}
 
-	dam := CalculateDamage(attacker, defender, weapon, AttackNormal)
-	// Minimum damage should be 1
-	if dam < 1 {
-		t.Errorf("expected minimum 1 damage, got %d", dam)
-	}
+	WithRoller(NewScriptedRoller([]int{1}), func() {
+		if dam := CalculateDamage(attacker, defender, weapon, AttackNormal); dam != 1 {
+			t.Errorf("strength-zero attacker damage = %d, want 1 (fight.c:1883-1884)", dam)
+		}
+	})
 }
 
 func TestCalculateDamage_VictimPositionMultiplier(t *testing.T) {
@@ -942,13 +967,18 @@ func TestCalculateDamage_VictimPositionMultiplier(t *testing.T) {
 }
 
 func TestCalculateDamage_NonNormalAttackType(t *testing.T) {
-	// Spell/skill attacks bypass getMinusDam reduction
+	// src/fight.c:1865-1886 — get_minusdam() (fight.c:1882) runs only in the
+	// ordinary weapon arm; SKILL_BACKSTAB/CIRCLE/DISEMBOWEL return through
+	// damage() without it. AC 0 reduces a one-point hit to 0 (fight.c:1737),
+	// so the bypass is visible: a backstab keeps its 1 point. The old AC 100
+	// was above every bracket, so applying get_minusdam to it changed nothing.
 	attacker := &mockCombatant{npc: true, level: 1, str: 10, strAdd: 0, damroll: 0, damageRoll: DiceRoll{Num: 1, Sides: 1}}
-	defender := &mockCombatant{position: PosStanding, ac: 100}
+	defender := &mockCombatant{position: PosStanding, ac: 0}
 	weapon := DiceRoll{}
 
-	dam := CalculateDamage(attacker, defender, weapon, AttackBackstab)
-	if dam < 1 {
-		t.Errorf("expected minimum 1 damage, got %d", dam)
-	}
+	WithRoller(NewScriptedRoller([]int{1}), func() {
+		if dam := CalculateDamage(attacker, defender, weapon, AttackBackstab); dam != 1 {
+			t.Errorf("backstab damage at AC 0 = %d, want 1 (get_minusdam is normal-attack only, fight.c:1882)", dam)
+		}
+	})
 }

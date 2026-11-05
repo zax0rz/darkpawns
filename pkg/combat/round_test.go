@@ -496,6 +496,12 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 		}
 		return 0, 0, 0, false // barehand → "hit"
 	}
+	// The default fixture answers race 0 for the victim and 0 for every
+	// race-hate slot, which the C loop at src/fight.c:1466-1468 reads as five
+	// matches and turns into 5 x GET_LEVEL(ch) bonus damage. Give the victim a
+	// real race so this swing carries no race-hate bonus and the damage under
+	// test is the hit() arithmetic alone.
+	cb.GetRace = func(bodyname Combatant) int { return 1 }
 	SetCallbacks(cb)
 
 	// Wire engine callbacks
@@ -542,15 +548,29 @@ func TestProcessCombatPair_MobAttack(t *testing.T) {
 
 	_ = engine.StartCombat(attacker, defender)
 
+	// Force every draw in the round so the swing lands and its damage is
+	// exact. In C order (src/fight.c:1939, 1949, 1815, 1844):
+	//   1. number(0,500)  — level 10 is not > 30, so the attack-bonus probe runs; 1 != 0
+	//   2. number(0,10000) — parry probe; 1 > SKILL_PARRY 0, so no parry
+	//   3. number(1,20)   — to-hit 10: calc_thaco 12 - 10 = 2 is not > victim_ac 4, so a hit
+	//   4. dice(1,8)      — weapon damage 8
+	// Damage = strApp[16].todam 1 + damroll 2 + 8 = 11, reduced by
+	// get_minusdam at AC 40 (src/fight.c:1732, .06*pcmod): 11 - 1.32 -> 9.
+	old := GetRoller()
+	SetRoller(NewScriptedRoller([]int{1, 1, 10, 8}))
+	defer SetRoller(old)
+
 	beforeHP := defender.hp
 	engine.processCombatPair(&CombatPair{
 		Attacker: attacker,
 		Defender: defender,
 	})
 
-	// Damage should have been dealt (or missed)
-	if defender.hp > beforeHP {
-		t.Error("defender HP should not increase after a round")
+	// The old assertion only rejected an HP increase, so a swing that never
+	// happened (or one that dealt 0) passed. Assert the exact drop instead.
+	const wantDamage = 9
+	if got := beforeHP - defender.hp; got != wantDamage {
+		t.Errorf("defender HP drop = %d, want %d (one landed swing of 9)", got, wantDamage)
 	}
 
 	t.Logf("processCombatPair: defender HP %d -> %d", beforeHP, defender.hp)
@@ -758,7 +778,8 @@ func (m *messagingCombatant) SendMessage(msg string) {
 // ---------------------------------------------------------------------------
 
 func TestChangeAlignment_NPCKiller(t *testing.T) {
-	var alignResult int
+	alignResult := -9999
+	calls := 0
 
 	cb := defaultCombatCallbacks()
 	cb.GetAlignment = func(bodyname Combatant) int {
@@ -773,16 +794,25 @@ func TestChangeAlignment_NPCKiller(t *testing.T) {
 		return 0
 	}
 	cb.SetAlignment = func(bodyname Combatant, val int) {
+		calls++
 		alignResult = val
 	}
 	SetCallbacks(cb)
 
+	// The fixture's "npc_killer" is a PC (npc: false), so only the
+	// victim-alignment guard is in play. src/fight.c:496-501 gives
+	// 500 + ((-900 - 500) >> 4) = 500 + (-88) = 412. The old assertion only
+	// rejected values >= 500, and the captured value started at 0, so a
+	// suppressed update passed.
 	npcKiller := &mockCombatant{name: "npc_killer", npc: false}
 	goodVictim := &mockCombatant{name: "good_victim", npc: true}
 
 	ChangeAlignment(npcKiller, goodVictim)
-	if alignResult >= 500 {
-		t.Errorf("expected alignment to drop after killing good, got %d", alignResult)
+	if calls != 1 {
+		t.Fatalf("SetAlignment called %d times, want 1 (fight.c:496)", calls)
+	}
+	if alignResult != 412 {
+		t.Errorf("alignment after killing a +900 victim = %d, want 412 (fight.c:496)", alignResult)
 	}
 }
 
@@ -790,15 +820,24 @@ func TestChangeAlignment_NPCKillerNPC(t *testing.T) {
 	var alignCalled bool
 
 	cb := defaultCombatCallbacks()
-	cb.GetAlignment = func(bodyname Combatant) int { return 0 }
+	cb.GetAlignment = func(bodyname Combatant) int {
+		if bodyname.GetName() == "Elf" {
+			return 900
+		}
+		return 0
+	}
 	cb.SetAlignment = func(bodyname Combatant, val int) { alignCalled = true }
 	SetCallbacks(cb)
 
+	// src/fight.c:488-489 — an NPC killer returns before any alignment math.
+	// The victim is strongly good (src/utils.h:454-456: IS_GOOD is >= 350), so
+	// the separate neutral guard cannot suppress the update; only the NPC
+	// guard can. The old neutral victim (alignment 0) hid a missing guard.
 	killer := &mockCombatant{name: "Orc", npc: true}
 	victim := &mockCombatant{name: "Elf", npc: true}
 
 	ChangeAlignment(killer, victim)
 	if alignCalled {
-		t.Error("NPC should not trigger alignment change")
+		t.Error("NPC killer must not trigger an alignment change (fight.c:488)")
 	}
 }
