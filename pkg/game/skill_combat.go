@@ -77,6 +77,10 @@ func DoBackstab(ch *Player, target combat.Combatant, world *World) SkillResult {
 		}
 	}
 
+	return backstabAfterGates(ch, target)
+}
+
+func backstabAfterGates(ch *Player, target combat.Combatant) SkillResult {
 	// 7. Roll for success — act.offensive.c:220
 	// #nosec G404 — game RNG, not cryptographic
 	percent := dprng.Number(1, 101) // 1-101
