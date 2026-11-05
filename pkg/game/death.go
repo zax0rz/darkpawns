@@ -381,17 +381,7 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 			}
 			return
 		}
-		w.handleMobDeath(victim, killer, attackType)
-		// die_with_killer's stop_fighting(killer) (src/fight.c:615-616): the
-		// killer leaves the fight its lethal blow ended; other combatants
-		// still fighting the flagged body do not (src/handler.c:1147-1151).
-		w.stopKillerAfterDie(killer)
-		w.attitudeLootAfterKill(killer, victim)
-		if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
-			// C damage() runs the ordinary do_get only after die_with_killer
-			// and its attitude-loot tail have returned (src/fight.c:1691-1712).
-			w.DoGet(playerKiller, "all corpse")
-		}
+		w.finishMobDeath(victim, killer, attackType)
 	} else {
 		w.recordKill(killer)
 		w.handlePlayerDeath(victim, true, attackType, killerName, killer) // combat death with killer
@@ -408,6 +398,20 @@ func (w *World) HandleDeath(victim, killer combat.Combatant, attackType int) {
 				slog.Warn("Publish PlayerKilledEvent failed", "killer", killerName, "victim", victim.GetName(), "error", err)
 			}
 		}
+	}
+}
+
+func (w *World) finishMobDeath(victim, killer combat.Combatant, attackType int) {
+	w.handleMobDeath(victim, killer, attackType)
+	// die_with_killer's stop_fighting(killer) (src/fight.c:615-616): the
+	// killer leaves the fight its lethal blow ended; other combatants
+	// still fighting the flagged body do not (src/handler.c:1147-1151).
+	w.stopKillerAfterDie(killer)
+	w.attitudeLootAfterKill(killer, victim)
+	if playerKiller, ok := killer.(*Player); ok && killer != victim && playerKiller.GetFlags()&(1<<PrfAutoLoot) != 0 {
+		// C damage() runs the ordinary do_get only after die_with_killer
+		// and its attitude-loot tail have returned (src/fight.c:1691-1712).
+		w.DoGet(playerKiller, "all corpse")
 	}
 }
 
