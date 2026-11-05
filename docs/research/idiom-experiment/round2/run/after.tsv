@@ -1,0 +1,12 @@
+pkg	files	lines	funcs	median_func	p90_func	funcs_over_100	funcs_over_200	max_func	nest_ge_5	snake_idents	empty_iface	pkg_vars	customdata_refs
+pkg/game	197	65481	2461	10	46	27	6	747	18	71	0	194	41
+pkg/combat	10	4609	194	6	32	4	2	237	2	55	0	8	0
+pkg/command	6	3551	97	19	65	2	1	446	1	0	0	3	0
+TOTAL	213	73641	2752	10	47	33	9	747	21	126	0	205	41
+
+# four_linter_counts from golangci-lint (exit 1: existing findings)
+linter	count
+dupl	26
+funlen	190
+gocognit	107
+gocyclo	4
