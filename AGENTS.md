@@ -20,10 +20,10 @@ Dark Pawns is a **1:1 faithful port**: the Go server must emit the *same player-
 | [`website-astro/CONTENT-AUDIT.md`](website-astro/CONTENT-AUDIT.md) | Post-migration content review queue |
 | [`website-astro/SPEC-AUDIT.md`](website-astro/SPEC-AUDIT.md) | specification.website release checklist status |
 
-- **R1** player-facing bytes are law · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path; cite C from `src/`, R5g; a green must be able to fail, R5h).
+- **R1** player-facing bytes are law (normalization may not erase a byte class, R1b) · **R2** the command surface is part of the game · **R3** determinism & draw parity · **R4** no invention · **R5** process rules (find-one-find-the-class; verify the call path; cite C from `src/`, R5g; a green must be able to fail, R5h; a silenced surface needs a scenario that unsilences it, R5i).
 - **Cite rules by number** in commits, PRs, reviews, and Linear — "violates R4" is a complete verdict.
 - **Governing documents are Zach's to change.** Find patterns and audit the class, but don't edit `docs/fidelity/RULEBOOK.md`, `docs/fidelity/north-star-1to1.md`, or this file yourself, even to add a correct rule. Propose the exact text, with the incident that motivates it, in your report or PR description; Zach approves the specific text before it lands. Authorization to implement a fix is not authorization to change a rule, and approved rule text in a brief counts only for that text.
-- `src/` and `darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
+- `src/` and the oracle checkout `~/darkpawns-c-oracle/` are the **read-only oracle** (ground truth). Never edit them; diff against them with `cmd/dp-oracle-diff`.
 - When a byte is in question, **the C source wins** (R5e — verify the actual call path, don't trust a summary). A repeated failure indicts the rule, not the file: **propose** a rulebook amendment to Zach + audit the whole class (R5b/R5c).
 
 ### Fidelity Work: Start Here
@@ -32,6 +32,14 @@ Before extending oracle coverage or declaring a command complete, read
 **[`docs/fidelity/DEPTH_TESTING.md`](docs/fidelity/DEPTH_TESTING.md)**. It explains the current
 breadth-to-depth strategy, proof levels, scenario fixtures, manifests, and the dated handoff frontier.
 Breadth coverage proves that a command can match once; it does **not** prove the port is complete.
+
+### Ported is not faithful
+
+A green census proves the scenarios agree, not that the code is covered. Before calling something proven, ask which input would make it fail, and whether a scenario actually reaches it.
+
+- Hand-written stand-ins sat beside faithful C paths, on the paths players use most. Returning players found them; an audit then replaced 127 of 173 mob-command sites (field note 2026-10-25).
+- A pre-registered random sample changed one letter of a message in each of 40 player-output functions. The full census missed 17 (PF-102).
+- Fixtures and scenario names claim reach they lack: practice scenarios that only used no-cost classes (PF-099), quiet-mobs hiding literal `$n` on every city mob (PF-100), and five scenarios that don't reach the command they're named for (PF-102).
 
 ### Oracle Evidence Retention
 
@@ -190,7 +198,7 @@ it. Taught 2026-10-26, when an agent read "Claude reviews" as a command to run.
 
 ## Project Overview
 
-Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K lines of Go, ~66 C files remaining for reference only. The Go port is COMPLETE — do not re-port C files.
+Dark Pawns is a Go MUD server, ported from the C original: CircleMUD 3.0, of the DikuMUD family (`src/config.c:249`). About 165K lines of Go and 196K lines of tests; the 66 C files in `src/` are the reference. Every C file has a Go counterpart, so don't start a fresh port of a whole file. But ported is not faithful: see *Ported is not faithful* under Fidelity Work.
 
 ### Architecture
 
@@ -199,9 +207,13 @@ Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K l
 - `pkg/session/` — Player session handling, commands, wizard commands
 - `pkg/parser/` — Zone/obj/mob/world file parsing (Diku format)
 - `pkg/combat/` — Combat formulas and damage calculation
+- `pkg/command/` — skill and admin command handlers
+- `pkg/dprng/` — the C-compatible `number()`/`dice()` stream; every game draw goes through it (R3)
 - `pkg/spells/` — Spell system (saving throws, damage, affect spells)
 - `pkg/telnet/` — Telnet protocol handling
 - `pkg/db/` — Player persistence (SQLite only; the legacy PostgreSQL converter is isolated under `tools/db-migrate/`)
+- `pkg/scripting/` — Lua mob, object and room scripts (`lib/world/scripts`)
+- `cmd/dp-oracle-diff/`, `internal/oraclediff/` — the oracle differential harness
 
 ### Key Conventions
 
@@ -214,7 +226,7 @@ Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K l
 
 ### What NOT to Do
 
-- Do not re-port C files in `src/`
+- Do not start a fresh port of a whole C file. When you find a hand-written stand-in for a C path, replace it with the real C path (R4, R5c).
 - Do not convert `fmt.Fprintf(player.Writer, ...)` to slog
 - Do not remove `CustomData` field (it's the escape hatch)
 - Do not change save file format
@@ -222,12 +234,11 @@ Dark Pawns is a Go MUD server, ported from C (DikuMUD/Merc 2.2 lineage). ~114K l
 
 ### #nosec Annotations
 
-The codebase has ~600 `#nosec` annotations. Most are:
-- **G404 (weak random)** — ~394 intentional `math/rand` for dice rolls, combat, MUD mechanics. Leave these alone.
-- **G104 (errcheck)** — 8 remaining, all in benchmark/test/example code; these are the cleanup targets. Handle the error or log it.
-- **G115 (integer overflow)** — ~26. Add explicit casts or range checks.
-- **G304/G306 (file path/perms)** — ~24. Use `filepath.Clean()` and explicit permissions.
-- Other G-codes — small counts, mostly intentional.
+The codebase has about 370 `#nosec` annotations. Most are:
+- **G404 (weak random)** — about 270 intentional `math/rand` uses for dice, combat and MUD mechanics. Leave these alone.
+- **G703 (taint)** — about 40, the oracle harness's trusted scratch-path boundaries.
+- **G304 (file path)** — about 16. Use `filepath.Clean()` and explicit permissions.
+- **G101, G115, G104** — small counts. G104 (errcheck) has 5 left, and they are the cleanup targets; handle the error or log it.
 
 ## Commit Messages
 
