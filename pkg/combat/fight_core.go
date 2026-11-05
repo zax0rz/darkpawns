@@ -1059,43 +1059,21 @@ func DieWithKiller(ch, killer Combatant, attackType int) {
 // 10. counterProcs()
 // **********************************
 
+// CounterProcs forwards to C's counter_procs(ch) (src/fight.c:1252-1311).
+//
+// The reward itself has exactly one implementation — the game layer's
+// World.counter_procs (pkg/game/death.go) — reached through the CounterProcs
+// callback. This package keeps no second copy of C's milestone switch: a
+// stand-in here would make no draw where C draws number(1,3) (R3a) and would
+// emit its own reward and line terminators (R1).
+//
+// C's guard is IS_NPC(ch) || IS_MOB(ch) (src/fight.c:1257-1258); both are the
+// same NPC test in the port, so an NPC body returns without a callback.
 func CounterProcs(ch Combatant) {
 	if ch.IsNPC() {
 		return
 	}
-	kills := cbGetKills(ch)
-
-	reward := false
-	switch kills {
-	case 5000, 15000, 25000, 35000, 45000:
-		// Minor milestones: full heal + global blessing
-		sendCombatMessage(ch, "The gods reward your glory in battle!\r\n")
-		ch.Heal(ch.GetMaxHP() - ch.GetHP())
-		reward = true
-	case 1000, 2000, 10000, 20000, 30000, 40000, 50000:
-		// Major milestones: random +1 max stat, full heal, global blessing
-		sendCombatMessage(ch, "The gods reward your many victories!\r\n")
-		reward = true
-		// C has a bug: missing break in switch cases means all 3 branches execute.
-		// Reproducing the bug for fidelity.
-		// In C: case 1: GET_MAX_HIT++; case 2: GET_MAX_MANA++; case 3: GET_MAX_MOVE++;
-		//            default: GET_MAX_HIT++; break;
-		// Since case 3 falls through to default and all lack breaks,
-		// ALL THREE stats get +1 (case 1+3 hit, case 2 mana, case 3 move).
-		cbIncreaseMaxStat(ch, "hp")
-		cbIncreaseMaxStat(ch, "mana")
-		cbIncreaseMaxStat(ch, "move")
-		ch.Heal(ch.GetMaxHP() - ch.GetHP())
-	default:
-		return
-	}
-
-	if reward {
-		// Global blessing — heal all connected players
-		cbHealAllPlayers()
-		// Log milestone
-		cbLog(fmt.Sprintf("%s hit %d kills.", ch.GetName(), kills), "NRM", LVL_IMMORT, false)
-	}
+	cbCounterProcs(ch, cbGetKills(ch))
 }
 
 // **********************************

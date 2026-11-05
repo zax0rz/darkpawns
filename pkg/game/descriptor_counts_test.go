@@ -37,35 +37,7 @@ func TestCounterProcsBlessingOnlyReachesPlayingDescriptors(t *testing.T) {
 	}
 }
 
-func TestCombatHealAllCallbackOnlyHealsPlayingDescriptors(t *testing.T) {
-	w := newCounterProcsTestWorld(t)
-	playing := []*Player{
-		NewPlayer(1, "Actor", 1001),
-		NewPlayer(2, "Playing", 1001),
-		NewPlayer(3, "Menu", 1001),
-		NewPlayer(4, "Editor", 1001),
-		NewPlayer(5, "Linkless", 1001),
-	}
-	for _, player := range playing {
-		player.MaxHealth = 100
-		player.Health = 1
-		if err := w.AddPlayer(player); err != nil {
-			t.Fatalf("AddPlayer %s: %v", player.Name, err)
-		}
-	}
-	w.PlayerHasPlayingDescriptor = func(player *Player) bool {
-		return player.Name == "Actor" || player.Name == "Playing"
-	}
-	w.WireCombatCallbacks().HealAllPlayers()
-	if got := playing[0].Health; got != 100 {
-		t.Errorf("actor HP = %d, want 100", got)
-	}
-	if got := playing[1].Health; got != 100 {
-		t.Errorf("playing descriptor HP = %d, want 100", got)
-	}
-	for _, player := range playing[2:] {
-		if got := player.Health; got != 1 {
-			t.Errorf("non-playing %s HP = %d, want unchanged 1", player.Name, got)
-		}
-	}
-}
+// The combat-side HealAllPlayers callback was removed with the duplicate
+// counter_procs: the global blessing is part of the one faithful
+// World.counter_procs, and TestCounterProcsBlessingOnlyReachesPlayingDescriptors
+// above proves the playing-descriptor filter through that real path.

@@ -56,6 +56,7 @@ func defaultCombatCallbacks() *GameCallbacks {
 		GetExp:                   func(bodyname Combatant) int { return 0 },
 		GetKills:                 func(bodyname Combatant) int64 { return 0 },
 		SetKills:                 func(bodyname Combatant, kills int64) {},
+		CounterProcs:             func(bodyname Combatant, kills int64) {},
 		GetDeaths:                func(bodyname Combatant) int64 { return 0 },
 		SetDeaths:                func(bodyname Combatant, deaths int64) {},
 		SetLastDeath:             func(bodyname Combatant, t int64) {},
@@ -79,8 +80,6 @@ func defaultCombatCallbacks() *GameCallbacks {
 		GetWimpyLev:              func(bodyname Combatant) int { return 0 },
 		DoFlee:                   func(bodyname Combatant) {},
 		DoRetreat:                func(bodyname Combatant) {},
-		IncreaseMaxStat:          func(bodyname Combatant, stat string) {},
-		HealAllPlayers:           func() {},
 	}
 }
 
@@ -200,60 +199,49 @@ func TestDeathCry_Basic(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// TestCounterProcs — kill milestone rewards
+// TestCounterProcs — the milestone reward lives in the game layer
+//
+// C's counter_procs(ch) (src/fight.c:1252-1311) has exactly one implementation
+// in the port: game.World.counter_procs, pinned by
+// pkg/game/glm_batch_a_test.go, pkg/game/descriptor_counts_test.go,
+// pkg/game/game_diagnostic_mudlog_test.go and the TakeDamage-path test in
+// pkg/game/counterprocs_takedamage_test.go. This package only forwards, so
+// these tests pin the forwarding seam and nothing about the reward.
 // ---------------------------------------------------------------------------
 
-func TestCounterProcs_NoMilestone(t *testing.T) {
-	npc := &mockCombatant{name: "Orc", npc: true}
-	CounterProcs(npc)
-	// Should not panic
-}
-
-func TestCounterProcs_KillCountTracking(t *testing.T) {
-	var loggedMsg string
+func TestCounterProcsForwardsBodyAndKillCount(t *testing.T) {
+	var gotName string
+	var gotKills int64
 
 	cb := defaultCombatCallbacks()
-	cb.GetKills = func(bodyname Combatant) int64 {
-		return 5000 // minor milestone
-	}
-	cb.Log = func(msg string, level string, minLevel int, toLog bool) {
-		loggedMsg = msg
+	cb.GetKills = func(bodyname Combatant) int64 { return 2000 }
+	cb.CounterProcs = func(bodyname Combatant, kills int64) {
+		gotName = bodyname.GetName()
+		gotKills = kills
 	}
 	SetCallbacks(cb)
 
-	player := &mockCombatant{name: "Hero", npc: false, hp: 50, maxHP: 100}
-	CounterProcs(player)
+	CounterProcs(&mockCombatant{name: "Hero"})
 
-	if !strings.Contains(loggedMsg, "5000 kills") {
-		t.Errorf("expected log about 5000 kills, got %q", loggedMsg)
+	if gotName != "Hero" || gotKills != 2000 {
+		t.Errorf("forwarded (%q, %d), want (%q, 2000)", gotName, gotKills, "Hero")
 	}
 }
 
-func TestCounterProcs_MajorMilestone(t *testing.T) {
-	var statCalls []string
-	var logged bool
+// C returns before any work for an NPC or mobile body (src/fight.c:1257-1258),
+// so no callback may fire for one.
+func TestCounterProcsSkipsNPCs(t *testing.T) {
+	forwarded := false
 
 	cb := defaultCombatCallbacks()
-	cb.GetKills = func(bodyname Combatant) int64 {
-		return 2000 // major milestone
-	}
-	cb.Log = func(msg string, level string, minLevel int, toLog bool) {
-		logged = true
-	}
-	cb.IncreaseMaxStat = func(bodyname Combatant, stat string) {
-		statCalls = append(statCalls, stat)
-	}
+	cb.GetKills = func(bodyname Combatant) int64 { return 5000 }
+	cb.CounterProcs = func(bodyname Combatant, kills int64) { forwarded = true }
 	SetCallbacks(cb)
 
-	player := &mockCombatant{name: "Hero", npc: false, hp: 50, maxHP: 100}
-	CounterProcs(player)
+	CounterProcs(&mockCombatant{name: "Orc", npc: true})
 
-	// Major milestone: C bug causes all three stats to be incremented (fall-through)
-	if len(statCalls) != 3 {
-		t.Errorf("expected 3 IncreaseMaxStat calls (C bug: all fall through), got %d: %v", len(statCalls), statCalls)
-	}
-	if !logged {
-		t.Error("expected log for milestone")
+	if forwarded {
+		t.Error("NPC body reached the counter_procs callback; C returns at src/fight.c:1257")
 	}
 }
 

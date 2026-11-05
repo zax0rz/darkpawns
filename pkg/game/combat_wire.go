@@ -504,6 +504,16 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		}
 	}
 
+	// fight.c:1689-1690: damage() runs GET_KILLS(ch)++; counter_procs(ch) for a
+	// death it resolves itself. The one faithful counter_procs lives in the
+	// game layer (World.counter_procs); combat forwards the body and the count
+	// it already incremented at the call site.
+	cb.CounterProcs = func(name combat.Combatant, kills int64) {
+		if p, ok := combatPlayer(name); ok {
+			w.counter_procs(p, int(kills))
+		}
+	}
+
 	cb.GetDeaths = func(name combat.Combatant) int64 {
 		if p, ok := combatPlayer(name); ok {
 			p.mu.RLock()
@@ -732,30 +742,6 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 			return p.WimpLevel
 		}
 		return 0
-	}
-
-	// -------------------------------------------------------------------------
-	// World
-	// -------------------------------------------------------------------------
-	cb.IncreaseMaxStat = func(name combat.Combatant, stat string) {
-		p, ok := combatPlayer(name)
-		if !ok {
-			return
-		}
-		switch strings.ToLower(stat) {
-		case "hp", "hit", "health":
-			p.SetMaxHP(p.GetMaxHP() + 1)
-		case "mana":
-			p.SetMaxMana(p.GetMaxMana() + 1)
-		case "move", "movement":
-			p.SetMaxMove(p.GetMaxMove() + 1)
-		}
-	}
-
-	cb.HealAllPlayers = func() {
-		for _, p := range w.playingPlayers() {
-			p.SetHP(p.GetMaxHP())
-		}
 	}
 
 	return cb
