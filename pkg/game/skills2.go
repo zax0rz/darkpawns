@@ -42,6 +42,10 @@ func DoScrounge(ch *Player, world *World) SkillResult {
 
 	sector := room.Sector
 
+	return scroungeForSector(ch, world, sector)
+}
+
+func scroungeForSector(ch *Player, world *World, sector int) SkillResult {
 	// C consumes the roll before selecting the sector branch. number() is
 	// inclusive, so the upper bound is 101 rather than 100.
 	// #nosec G404 — game RNG, not cryptographic
