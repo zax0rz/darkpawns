@@ -319,31 +319,7 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 
 	case "buy":
-		if a != "horse" {
-			tellFromMob(w, me, ch, "Buy what, fine adventurer?")
-			return true
-		}
-		if w.NumFollowers(ch.Name) >= ch.GetCha()/2 {
-			sendToChar(ch, "You can't have any more followers!")
-			return true
-		}
-		if ch.GetGold() < 300 {
-			tellFromMob(w, me, ch, "You can't afford a mount!")
-			return true
-		}
-		horse, err := w.spawnMobQuiet(horseVnum, ch.GetRoom())
-		if err != nil {
-			tellFromMob(w, me, ch, "Sorry we are all out of mounts at the moment, try again later.")
-			return true
-		}
-		horse.SetAffected(affCharm)
-		Act(w, false, horse, me, nil, nil, "$N brings $n up from the stables out back.", "", ToRoom)
-		AddFollowerMob(w, horse, ch)
-		applyStableHorseState(horse)
-		ch.SetGold(ch.GetGold() - 300)
-		tellFromMob(w, me, ch, "That'll be 300 coins, treat'er well")
-		return true
-
+		return specStableboyBuy(w, ch, me, a)
 	case "stable":
 		var horse *MobInstance
 		if ch.IsMounted() {
@@ -413,6 +389,33 @@ func specStableboy(w *World, ch *Player, me *MobInstance, cmd string, arg string
 		return true
 	}
 	return false
+}
+
+func specStableboyBuy(w *World, ch *Player, me *MobInstance, a string) bool {
+	if a != "horse" {
+		tellFromMob(w, me, ch, "Buy what, fine adventurer?")
+		return true
+	}
+	if w.NumFollowers(ch.Name) >= ch.GetCha()/2 {
+		sendToChar(ch, "You can't have any more followers!")
+		return true
+	}
+	if ch.GetGold() < 300 {
+		tellFromMob(w, me, ch, "You can't afford a mount!")
+		return true
+	}
+	horse, err := w.spawnMobQuiet(horseVnum, ch.GetRoom())
+	if err != nil {
+		tellFromMob(w, me, ch, "Sorry we are all out of mounts at the moment, try again later.")
+		return true
+	}
+	horse.SetAffected(affCharm)
+	Act(w, false, horse, me, nil, nil, "$N brings $n up from the stables out back.", "", ToRoom)
+	AddFollowerMob(w, horse, ch)
+	applyStableHorseState(horse)
+	ch.SetGold(ch.GetGold() - 300)
+	tellFromMob(w, me, ch, "That'll be 300 coins, treat'er well")
+	return true
 }
 
 // ================================================================
