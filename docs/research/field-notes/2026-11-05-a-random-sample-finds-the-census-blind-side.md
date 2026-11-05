@@ -57,10 +57,8 @@ Claude reviewed all 21 extraction commits and found no behavior change:
 
 Reading: the Go is shaped like the C because the fidelity rules require it. "Translated C" in this port isn't slop waiting to be removed. The experiment's value was the measurement it forced, not the refactor.
 
-## Proposed ledger row
+## Ledger
 
-Deferred until PR #2271 merges, because it also edits `EVIDENCE_LEDGER.tsv`:
+Recorded as **PF-102** in `EVIDENCE_LEDGER.tsv`.
 
-> A pre-registered random sample of 40 player-output functions (from a frozen, hashed population of 402 in pkg/game, pkg/combat and pkg/command) found 17 whose one-letter output mutation the full census did not detect (42.5%); the agent-chosen probes of round one were 7 of 7 caught. Five misses sat in functions whose named scenario (door-basic, serpent-depth, weather-sky-transitions, skills-practice, shoot-mob-hit-depth) was predicted to cover them.
-
-Primary evidence: `docs/research/idiom-experiment/round2/run/probes.tsv` and `RESULTS.md` on PR #2276, plus the probe census directories above.
+Primary evidence: `docs/research/idiom-experiment/round2/run/probes.tsv` and `RESULTS.md` (merged in PR #2276), plus the probe census directories above.
