@@ -33,41 +33,7 @@ func (w *World) CheckIdling(p *Player) {
 		p.mu.Unlock()
 
 		if wasIn == 0 && roomVNum > 0 {
-			// First idle threshold — pull to void room (vnum 1).
-			p.mu.Lock()
-			p.WasInRoom = roomVNum
-			p.mu.Unlock()
-
-			// C tears down both sides through stop_fighting before moving the
-			// idler (limits.c:428-431). Stop the engine pair as well as the
-			// character fields; otherwise the round list can retain a combatant
-			// who has already moved to room 1.
-			if fighting != nil {
-				if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
-					stopper.StopCombat(fighting)
-					stopper.StopCombat(p)
-				} else {
-					fighting.StopFighting()
-					p.StopFighting()
-				}
-			}
-
-			// C acts before the transfer, while the player still stands in
-			// the room: act("$n disappears into the void.", TRUE, ch, 0, 0,
-			// TO_ROOM) (limits.c:432-437). Act excludes the actor and gates
-			// hidden viewers; SendToRoom-by-vnum would hand the actor their
-			// own line whenever the transfer lands first.
-			Act(w, true, p, nil, nil, nil, "$n disappears into the void.", "", ToRoom)
-			p.SendMessage("You have been idle, and are pulled into a void.\r\n")
-			// C saves before the transfer, while the character still stands
-			// in the room: save_char(ch, NOWHERE) + Crash_crashsave
-			// (limits.c:434-435, DP-1353).
-			if res := w.SavePlayerRecord(p, "void pull", LoadRoomNowhere, SaveCrash); res == SaveFailed {
-				slog.Error("store-of-record save failed on void pull", "player", p.Name)
-			}
-			if err := w.PlayerTransfer(p, 1); err != nil {
-				slog.Warn("PlayerTransfer failed in idle check", "player", p.Name, "error", err)
-			}
+			w.pullIdlePlayerToVoid(p, roomVNum, fighting)
 		} else if timer > IDLE_DISCONNECT {
 			// Second threshold — limits.c:438-451: char_to_room(3),
 			// close_socket + desc = NULL, free_rent's Crash_rentsave(ch, 0),
@@ -111,6 +77,44 @@ func (w *World) CheckIdling(p *Player) {
 			MudLog(fmt.Sprintf("%s force-rented and extracted (idle).", p.Name), MudlogComplete, LVL_GOD, true) // limits.c:449-450
 			ExtractChar(p)
 		}
+	}
+}
+
+func (w *World) pullIdlePlayerToVoid(p *Player, roomVNum int, fighting combat.Combatant) {
+	// First idle threshold — pull to void room (vnum 1).
+	p.mu.Lock()
+	p.WasInRoom = roomVNum
+	p.mu.Unlock()
+
+	// C tears down both sides through stop_fighting before moving the
+	// idler (limits.c:428-431). Stop the engine pair as well as the
+	// character fields; otherwise the round list can retain a combatant
+	// who has already moved to room 1.
+	if fighting != nil {
+		if stopper, ok := w.combatEngine.(interface{ StopCombat(combat.Combatant) }); ok {
+			stopper.StopCombat(fighting)
+			stopper.StopCombat(p)
+		} else {
+			fighting.StopFighting()
+			p.StopFighting()
+		}
+	}
+
+	// C acts before the transfer, while the player still stands in
+	// the room: act("$n disappears into the void.", TRUE, ch, 0, 0,
+	// TO_ROOM) (limits.c:432-437). Act excludes the actor and gates
+	// hidden viewers; SendToRoom-by-vnum would hand the actor their
+	// own line whenever the transfer lands first.
+	Act(w, true, p, nil, nil, nil, "$n disappears into the void.", "", ToRoom)
+	p.SendMessage("You have been idle, and are pulled into a void.\r\n")
+	// C saves before the transfer, while the character still stands
+	// in the room: save_char(ch, NOWHERE) + Crash_crashsave
+	// (limits.c:434-435, DP-1353).
+	if res := w.SavePlayerRecord(p, "void pull", LoadRoomNowhere, SaveCrash); res == SaveFailed {
+		slog.Error("store-of-record save failed on void pull", "player", p.Name)
+	}
+	if err := w.PlayerTransfer(p, 1); err != nil {
+		slog.Warn("PlayerTransfer failed in idle check", "player", p.Name, "error", err)
 	}
 }
 
