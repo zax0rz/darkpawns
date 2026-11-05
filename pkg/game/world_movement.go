@@ -98,10 +98,10 @@ func (w *World) transferBody(body combat.Combatant, toRoomVNum int, moveMount bo
 
 // GetAllCharsInRoom returns all characters (players and mobs) in a room.
 // This is the Go equivalent of iterating world[room].people.
-func (w *World) GetAllCharsInRoom(roomVNum int) []interface{} {
+func (w *World) GetAllCharsInRoom(roomVNum int) []any {
 	players := w.GetPlayersInRoom(roomVNum)
 	mobs := w.GetMobsInRoom(roomVNum)
-	chars := make([]interface{}, 0, len(players)+len(mobs))
+	chars := make([]any, 0, len(players)+len(mobs))
 	for _, p := range players {
 		chars = append(chars, p)
 	}
@@ -121,7 +121,7 @@ func (w *World) PlayerTransfer(p *Player, toRoomVNum int) error {
 
 // PlayerTransferForSpell mirrors spell-side char_from_room/char_to_room by
 // moving only the player body. Those C helpers do not transfer a ridden mount.
-func (w *World) PlayerTransferForSpell(actor interface{}, toRoomVNum int) error {
+func (w *World) PlayerTransferForSpell(actor any, toRoomVNum int) error {
 	p, ok := actor.(*Player)
 	if !ok || p == nil {
 		return fmt.Errorf("spell player transfer: invalid actor")
@@ -138,7 +138,7 @@ func (w *World) PlayerTransferForSpell(actor interface{}, toRoomVNum int) error 
 // char_to_room path, including the destination circle check and its explicit
 // mount break after transfer. It accepts the spell package's interface actor
 // without weakening the concrete command transfer APIs.
-func (w *World) CharacterTransferForSpell(actor interface{}, toRoomVNum int) error {
+func (w *World) CharacterTransferForSpell(actor any, toRoomVNum int) error {
 	// char_from_room sets in_room to NOWHERE before calling circle_check, so
 	// that source-side call cannot consume an origin-room circle (handler.c:527,
 	// utils.c:877-891). char_to_room's destination check does consume one.
@@ -179,7 +179,7 @@ func (w *World) consumeRoomSummoningCircle(roomVNum int) {
 
 // MindsightNotifyWatchers sends spell_mindsight's direct observer message to
 // other player characters in the caster's current room (src/spells.c:945-947).
-func (w *World) MindsightNotifyWatchers(actor interface{}) {
+func (w *World) MindsightNotifyWatchers(actor any) {
 	caster, ok := actor.(*Player)
 	if !ok || caster == nil {
 		return
@@ -202,7 +202,7 @@ func (w *World) MobTransfer(m *MobInstance, toRoomVNum int) error {
 // GetItemsInRoom returns all items in a given room.
 
 // AddFollowerQuietInterface adds a follower via interface{} params (for spell layer access).
-func (w *World) AddFollowerQuiet(ch, leader interface{}) {
+func (w *World) AddFollowerQuiet(ch, leader any) {
 	switch c := ch.(type) {
 	case *Player:
 		switch l := leader.(type) {
@@ -220,7 +220,7 @@ func (w *World) AddFollowerQuiet(ch, leader interface{}) {
 // AddFollowerForSpell applies add_follower's link and audience messages for a
 // manual spell target. C spell_charm calls the noisy add_follower, so using the
 // quiet helpers here drops its target, leader, and room notices.
-func (w *World) AddFollowerForSpell(follower, leader interface{}) bool {
+func (w *World) AddFollowerForSpell(follower, leader any) bool {
 	followerBody := combatantFromInterface(follower)
 	leaderBody := combatantFromInterface(leader)
 	if followerBody == nil || leaderBody == nil {

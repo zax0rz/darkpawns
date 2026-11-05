@@ -171,7 +171,7 @@ func (w *World) doRecall(ch *Player, me *MobInstance, cmd string, arg string) bo
 // to the victim vs "You can't recall from this magickal place."), and the
 // BFR check covers the caster's room too. The spells package calls this
 // through a narrow interface so it cannot import game.
-func (w *World) ExecuteWordOfRecall(ch, victim interface{}) {
+func (w *World) ExecuteWordOfRecall(ch, victim any) {
 	v, ok := victim.(*Player)
 	if !ok {
 		return
@@ -489,7 +489,7 @@ func cUnsignedToInt(value uint32) int {
 // damage draws and damage()'s protection block decides, enrolling at the
 // damage point. A body flagged for extraction but still standing — do_kill's
 // raw_kill — swings through the pending-body lane (src/handler.c:1194-1209).
-func (w *World) ExecuteSpellCounterattack(victim, caster interface{}) {
+func (w *World) ExecuteSpellCounterattack(victim, caster any) {
 	v, okV := victim.(combat.Combatant)
 	c, okC := caster.(combat.Combatant)
 	if !okV || !okC || w.combatEngine == nil {

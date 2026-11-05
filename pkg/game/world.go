@@ -631,13 +631,13 @@ func (w *World) ForEachPlayerInZone(zoneNum int, fn func(p *Player)) {
 
 // ForEachPlayerInZoneInterface is like ForEachPlayerInZone but accepts interface{} callback
 // for use from packages that can't import game types (e.g., spells).
-func (w *World) ForEachPlayerInZoneInterface(zoneNum int, fn func(p interface{})) {
+func (w *World) ForEachPlayerInZoneInterface(zoneNum int, fn func(p any)) {
 	w.ForEachPlayerInZone(zoneNum, func(p *Player) { fn(p) })
 }
 
 // ForEachPlayerInRoomInterface iterates players in a room with interface{} callback.
 // For use from packages that can't import game types (e.g., spells).
-func (w *World) ForEachPlayerInRoomInterface(roomVNum int, fn func(p interface{})) {
+func (w *World) ForEachPlayerInRoomInterface(roomVNum int, fn func(p any)) {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	for _, p := range w.players {
@@ -649,7 +649,7 @@ func (w *World) ForEachPlayerInRoomInterface(roomVNum int, fn func(p interface{}
 
 // ForEachMobInRoomInterface iterates mobs in a room with interface{} callback.
 // For use from packages that can't import game types (e.g., spells).
-func (w *World) ForEachMobInRoomInterface(roomVNum int, fn func(m interface{})) {
+func (w *World) ForEachMobInRoomInterface(roomVNum int, fn func(m any)) {
 	for _, m := range w.GetMobsInRoom(roomVNum) {
 		fn(m)
 	}
@@ -1011,7 +1011,7 @@ func (w *World) SpawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
 }
 
 // SpawnMobWithLevelI creates a mob with overridden level, returns interface{} for spell layer.
-func (w *World) SpawnMobWithLevelI(vnum int, roomVNum int, level int) (interface{}, error) {
+func (w *World) SpawnMobWithLevelI(vnum int, roomVNum int, level int) (any, error) {
 	mob, err := w.SpawnMob(vnum, roomVNum)
 	if err != nil {
 		return nil, err
@@ -1022,7 +1022,7 @@ func (w *World) SpawnMobWithLevelI(vnum int, roomVNum int, level int) (interface
 
 // LookAtRoomSimple sends a basic room description to a player via interface{}.
 // Used by mindsight which temporarily transfers the caster to another room.
-func (w *World) LookAtRoomSimple(roomVNum int, sender interface{}) {
+func (w *World) LookAtRoomSimple(roomVNum int, sender any) {
 	sm, ok := sender.(interface{ SendMessage(string) })
 	if !ok {
 		return

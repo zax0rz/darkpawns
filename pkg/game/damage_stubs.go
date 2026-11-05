@@ -122,7 +122,7 @@ func (r SkillResult) DamageAttackType() int {
 }
 
 // combatantFromInterface converts an interface{} attacker to a combat.Combatant.
-func combatantFromInterface(attacker interface{}) combat.Combatant {
+func combatantFromInterface(attacker any) combat.Combatant {
 	if attacker == nil {
 		return nil
 	}
@@ -135,7 +135,7 @@ func combatantFromInterface(attacker interface{}) combat.Combatant {
 // DoSpellDamage applies damage to a player or mob, handling C's fight-message
 // dispatch and death order. Used by area damage spells such as Hellfire and
 // Meteor Swarm. It asks damage()'s protection gate first (DP-1327).
-func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill string) bool {
+func (w *World) DoSpellDamage(attacker, victim any, dam int, skill string) bool {
 	killer := combatantFromInterface(attacker)
 	victimC := combatantFromInterface(victim)
 	if killer != nil && victimC != nil && w.DamageRefused(killer, victimC) {
@@ -155,13 +155,13 @@ func (w *World) DoSpellDamage(attacker, victim interface{}, dam int, skill strin
 // skill_message itself between the gate and the damage. attackType is C's own
 // damage() argument (SkillResult.DamageAttackType), so it carries the corpse
 // wording as well as the message set.
-func (w *World) ApplySkillDamage(attacker, victim interface{}, dam, attackType int) bool {
+func (w *World) ApplySkillDamage(attacker, victim any, dam, attackType int) bool {
 	return w.ApplySkillDamageWithMessage(attacker, victim, dam, attackType, nil)
 }
 
 // ApplySkillDamageWithMessage places a command-owned skill message after
 // damage()'s HP/position/rescue block (src/fight.c:1484-1535).
-func (w *World) ApplySkillDamageWithMessage(attacker, victim interface{}, dam, attackType int, message func(int)) bool {
+func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackType int, message func(int)) bool {
 	killer := combatantFromInterface(attacker)
 	combat.EnterDamageFighting(killer, combatantFromInterface(victim))
 
@@ -358,7 +358,7 @@ func (w *World) DoCutthroatDamage(attacker, victim combat.Combatant, dam int) bo
 // for mobs, so every offensive skill against a mob no-op'd. Now mirrors
 // DoSpellDamage: damages both types, sets fighting state, and routes death
 // through HandleDeath so XP, kill counters, events, and autoloot fire.
-func (w *World) doDamage(ch, vict interface{}, dam int, skill string) bool {
+func (w *World) doDamage(ch, vict any, dam int, skill string) bool {
 	attackerName := getAttackerName(ch)
 	killer := combatantFromInterface(ch)
 	attackType := skillToAttackType(skill)
@@ -436,7 +436,7 @@ func (w *World) WoundBroadcast(roomVNum int, message string, exclude []combat.Co
 }
 
 // getAttackerName returns the name of the attacker for messages.
-func getAttackerName(ch interface{}) string {
+func getAttackerName(ch any) string {
 	if p, ok := ch.(*Player); ok {
 		return p.GetName()
 	}

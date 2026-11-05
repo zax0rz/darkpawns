@@ -8,7 +8,7 @@ import (
 
 // SpawnObjectToPlayerInventoryI mirrors read_object() followed by obj_to_char()
 // for the spell layer without exposing concrete game types there.
-func (w *World) SpawnObjectToPlayerInventoryI(vnum int, player interface{}) (interface{}, error) {
+func (w *World) SpawnObjectToPlayerInventoryI(vnum int, player any) (any, error) {
 	p, ok := player.(*Player)
 	if !ok || p == nil {
 		return nil, fmt.Errorf("player is required")
@@ -26,7 +26,7 @@ func (w *World) SpawnObjectToPlayerInventoryI(vnum int, player interface{}) (int
 
 // SpawnObjectToRoomForSpell mirrors read_object() followed by obj_to_room()
 // for spell code without exposing the concrete game object type there.
-func (w *World) SpawnObjectToRoomForSpell(vnum, roomVNum int) (interface{}, error) {
+func (w *World) SpawnObjectToRoomForSpell(vnum, roomVNum int) (any, error) {
 	obj, err := w.SpawnObject(vnum, roomVNum)
 	if err != nil {
 		return nil, err
@@ -45,11 +45,11 @@ func (w *World) GetItemsInRoom(roomVNum int) []*ObjectInstance {
 }
 
 // GetItemsInRoomI returns room items as []interface{} for spell layer access.
-func (w *World) GetItemsInRoomI(roomVNum int) []interface{} {
+func (w *World) GetItemsInRoomI(roomVNum int) []any {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 	snapshot := append([]*ObjectInstance(nil), w.roomItems[roomVNum]...)
-	result := make([]interface{}, len(snapshot))
+	result := make([]any, len(snapshot))
 	for i, item := range snapshot {
 		result[i] = item
 	}
@@ -165,7 +165,7 @@ func (w *World) ExtractObject(obj *ObjectInstance, roomVNum int) {
 
 // RemoveItemFromRoomI removes an item (passed as interface{}) from a room.
 // Used by the spells layer to avoid importing game.ObjectInstance.
-func (w *World) RemoveItemFromRoomI(item interface{}, roomVNum int) {
+func (w *World) RemoveItemFromRoomI(item any, roomVNum int) {
 	if obj, ok := item.(*ObjectInstance); ok {
 		w.RemoveItemFromRoom(obj, roomVNum)
 	}
@@ -203,14 +203,14 @@ func (w *World) removeItemFromRoomLocked(item *ObjectInstance, roomVNum int) boo
 // matching, after spell_locate_object's fname() reduction. C references:
 // src/spells.c:361-365, src/handler.c:68-95, src/db.c:1892-1893,1950-1951.
 // Returns matching objects as []interface{} for spell system compatibility.
-func (w *World) FindObjectByName(name string) []interface{} {
+func (w *World) FindObjectByName(name string) []any {
 	name = cFName(name)
 	if name == "" {
 		return nil
 	}
 	objects := w.GetAllObjects()
 	sort.Slice(objects, func(i, j int) bool { return objects[i].ID > objects[j].ID })
-	results := make([]interface{}, 0, len(objects))
+	results := make([]any, 0, len(objects))
 	for _, obj := range objects {
 		if obj != nil && cIsName(name, obj.GetKeywords()) {
 			results = append(results, obj)
@@ -221,7 +221,7 @@ func (w *World) FindObjectByName(name string) []interface{} {
 
 // LocateObjectResults formats spell_locate_object's object_list matches.
 // The bool is true when C's ITEM_NOLOCATE gate aborts the entire spell.
-func (w *World) LocateObjectResults(name string, viewer interface{}, limit int, unseenOwnerText string) ([]string, bool) {
+func (w *World) LocateObjectResults(name string, viewer any, limit int, unseenOwnerText string) ([]string, bool) {
 	observer, _ := viewer.(Actor)
 	results := make([]string, 0)
 	if limit <= 0 {

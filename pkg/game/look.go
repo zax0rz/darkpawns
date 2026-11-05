@@ -1005,7 +1005,7 @@ func (w *World) lookAtRoom(ch *Player, ignoreBrief bool) {
 // LookAtRoomForSpell exposes the native spell landing look through a narrow bridge.
 // The spells package cannot import game, but C spell_teleport calls
 // look_at_room(victim, 0) after moving a player (spells.c:213-214).
-func (w *World) LookAtRoomForSpell(victim interface{}) {
+func (w *World) LookAtRoomForSpell(victim any) {
 	player, ok := victim.(*Player)
 	if !ok || player == nil {
 		return

@@ -95,12 +95,12 @@ type savePlayerData struct {
 }
 
 type SaveItemData struct {
-	VNum           int                    `json:"vnum"`
-	Count          int                    `json:"count"`
-	Locate         int                    `json:"locate"` // 0=inventory, 1+=wear slot (C WEAR_*+1)
-	State          map[string]interface{} `json:"state,omitempty"`
-	ContainerVNum  int                    `json:"container_vnum,omitempty"`  // parent container VNum (0 = root)
-	ContainerIndex int                    `json:"container_index,omitempty"` // index of container in the save list
+	VNum           int            `json:"vnum"`
+	Count          int            `json:"count"`
+	Locate         int            `json:"locate"` // 0=inventory, 1+=wear slot (C WEAR_*+1)
+	State          map[string]any `json:"state,omitempty"`
+	ContainerVNum  int            `json:"container_vnum,omitempty"`  // parent container VNum (0 = root)
+	ContainerIndex int            `json:"container_index,omitempty"` // index of container in the save list
 }
 
 type saveAffect struct {

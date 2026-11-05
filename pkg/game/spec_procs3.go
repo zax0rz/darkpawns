@@ -32,7 +32,7 @@ func mobHasAffect(me *MobInstance, affect string) bool {
 // cleric procedure. In particular, it emits the verbal component before
 // dispatching call_magic; a direct spells.Cast would silently omit those
 // player-facing bytes.
-func castClericSpell(w *World, me *MobInstance, target interface{}, spellNum int) bool {
+func castClericSpell(w *World, me *MobInstance, target any, spellNum int) bool {
 	victim, ok := target.(combat.Combatant)
 	if !ok {
 		return false
