@@ -1,0 +1,46 @@
+# depth-case: mob.mp-sound-emote-line
+# The emote arm of mp_sound (src/mobprog.c:606) delivered through C's do_echo SCMD_EMOTE: the mime's fixed line renders as "The mime tries to escape from an invisible box only he can see." The port sent the raw "$n %s" template through roomMessage (found live, all ambient mobs). The mime is the coin-less MP_EMOTE case, so the transcript proves the rendering without a 50/50 draw.
+#
+# quiet-mobs empties the world; one ambient mob is spawned into the sealed
+# infirmary the new character starts in, so the only draws in the pulse window
+# belong to it. ~dpclock pulse 2000 twice spans enough mobile passes for the
+# 1-in-16 sound trigger (PULSE_MOBILE = 4 RL_SEC, src/structs.h:633).
+
+[fixture]
+quiet-mobs
+replace-room-exits 8162 none
+spawn-mob 8079 1 8162 80
+
+[setup:oracle]
+Sounprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Sounprobe
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[probe]
+look
+~dpclock pulse 2000
+~dpclock pulse 2000
+look

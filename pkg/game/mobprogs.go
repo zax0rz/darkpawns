@@ -6,7 +6,6 @@
 package game
 
 import (
-	"fmt"
 	"log/slog"
 	"strings"
 
@@ -389,8 +388,13 @@ func (w *World) NpcRescue(chHero *MobInstance, chVictim *Player) bool {
 		return false
 	}
 
-	chVictim.SendMessage("You are rescued by $N, your loyal friend!\r\n")
-	w.roomMessage(chHero.GetRoom(), "$n heroically rescues $N.")
+	// C delivers all three lines through act() (src/mobprog.c:445-448). The
+	// hero's TO_CHAR line reaches no descriptor on a mobile, so only the
+	// victim's and the room's survive. This port is dead code in both engines
+	// — npc_rescue is never called (src/mobprog.c:435 defines it, nothing
+	// calls it) — so these bytes are pinned by unit test, not the census.
+	Act(w, false, chVictim, chHero, nil, nil, "You are rescued by $N, your loyal friend!\r\n", "", ToChar)
+	Act(w, false, chHero, chVictim, nil, nil, "$n heroically rescues $N.", "", ToNotVict)
 
 	if chBadGuy.GetFightingBody() != nil {
 		chBadGuy.StopFighting()
@@ -471,7 +475,8 @@ func (w *World) MpSound(mob *MobInstance) {
 		sound = "tokes up on some kind bud."
 		useSay = false
 	case 8059:
-		w.roomMessage(mob.GetRoom(), "$n looks at you.")
+		// C: do_echo(mob, "looks at you.", emote, SCMD_EMOTE) (src/mobprog.c:582).
+		w.npcEmote(mob, "looks at you.")
 		sound = "Carry on, citizen."
 		useSay = true
 	case 8023:
@@ -489,10 +494,14 @@ func (w *World) MpSound(mob *MobInstance) {
 	}
 
 	if sound != "" {
+		// C delivers through do_say / do_echo SCMD_EMOTE (src/mobprog.c:604-606),
+		// which render "$n says/exclaims/asks/states, '...'" via act()
+		// (src/act.comm.c:797-802,804). roomMessage sends pre-rendered text and
+		// passed the raw templates through, so players literally saw "$n says".
 		if useSay {
-			w.roomMessage(mob.GetRoom(), fmt.Sprintf("$n says, '%s'", sound))
+			w.npcSay(mob, sound)
 		} else {
-			w.roomMessage(mob.GetRoom(), fmt.Sprintf("$n %s", sound))
+			w.npcEmote(mob, sound)
 		}
 	}
 
