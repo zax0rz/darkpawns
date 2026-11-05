@@ -60,9 +60,29 @@ The port has two copies:
 
 Its test asserts the wrong behavior. The wrong copy runs only through `combat.TakeDamage` with no death callback, which in production means a player ambushing another player to death on a milestone. It's rare, but it's the same shape as the stand-ins returning players found (field note 2026-10-25): a faithful path, and beside it a paraphrase that tests keep alive. The fix brief makes the combat copy delegate to the faithful one.
 
-## The pre-oracle "golden" test is legitimate
+## The pre-oracle "golden" test: corrected after the oracle
 
-`ac_reduction_golden_test.go` (2026-07-05, `51f3fbefe`, PR #84) predates the oracle and claims C fidelity. Both agents traced its values to `src/fight.c:1722-1760`. One row clinches it: AC −230 gives 43, not 44, and that only comes out of C's double-precision `0.28*2.0`. Its author derived it from the C, not from Go output.
+`ac_reduction_golden_test.go` (2026-07-05, `51f3fbefe`, PR #84) predates the oracle and claims C fidelity. Both smaller models traced its current values to `src/fight.c:1722-1760`. They took the row where AC −230 gives 43, not 44, as proof that the author derived the values from C's double-precision `0.28*2.0`.
+
+**That inference was wrong, and Sol caught it.** The original 2026-07-05 file had the naive values: `{ac: -230, want: 44}`, plus three neighbors that were also one too high. They were corrected to the C values on 2026-07-17 in `649d5deae` ("align combat death path with C oracle"), five days after the oracle landed. So the test's C-faithful float artifact came from the oracle era. The original pre-oracle literals were plausible paraphrase. An earlier version of this note repeated the smaller models' claim; this section replaces it.
+
+## Update: a frontier model on the same brief
+
+Sol (gpt-6.1-sol, at medium reasoning effort) ran the same blind brief later the same day and reported no contamination. Its ledger is in [`../test-audit/pilot-combat/sol/`](../test-audit/pilot-combat/sol/), and the scored predictions, Claude's and Zach's, are in [`PREDICTIONS-sol.md`](../test-audit/pilot-combat/PREDICTIONS-sol.md).
+
+| | MiMo | DeepSeek | Sol |
+|---|---:|---:|---:|
+| R (keep), by function | 182 | 174 | 159 |
+| F / C / D | 7 / 15 / 4 | 15 / 16 / 3 | 16 / 28 / 5 |
+| Mutations | 8 | 15 | 23 |
+| Time | 34 min | (timed out, then nudged) | 8 min |
+
+- **Agreement.** Sol agrees less with each smaller model (kappa 0.49 with MiMo, 0.44 with DeepSeek) than they agree with each other (0.70). Fleiss' kappa across all three is 0.53, and all three give the same mark to 165 of 208 tests. Most of the gap is Sol's merge marks: it proposed 28 consolidations where the others proposed 15–16.
+- **What only Sol found:**
+  - the AC golden history above;
+  - **a wait-state divergence.** C keeps two wait counters: `ch->wait`, which `WAIT_STATE` writes (`src/utils.h:462-464`), and `GET_MOB_WAIT`, which only the Lua bridge writes (`src/scripts.c:2017`). C's mob attack, flee and cast gates read only the second one (`src/fight.c:1977-1982`, `src/act.offensive.c:377`, `src/spell_parser.c:845`). Go's `MobInstance.WaitState` holds both (`pkg/game/mob.go:1001-1015`). Claude followed the lead: a player skill that waits its target writes the mob's field (`pkg/command/skill_commands.go:1792-1794`), and Go's flee and cast gates read that field (`pkg/game/flee.go:62`, `pkg/game/world_bridge.go:1193`). So a mob a player has just bashed can't flee or cast in Go, while in C it can. This is a static reading, not oracle-proven. Sol reported only the narrower symptom, that the combat engine ignores script-set mob timers.
+- **What Sol missed:** it marked the natural-20 test C (merge) rather than F, and it left the `counter_procs` reachability open, though it found the divergence. Its own notes say some keep marks are provisional, because it didn't read every fixture line by line.
+- **The pre-oracle split weakens.** Sol put 3 F and 3 C on post-oracle tests, so "every weak test predates the oracle" holds for the two smaller models but not for all three. The direction is the same: 93% of Sol's post-oracle marks are R, against 62% before the oracle.
 
 ## Limits
 

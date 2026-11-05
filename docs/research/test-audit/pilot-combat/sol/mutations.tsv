@@ -1,0 +1,24 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestPCGetAttacksPerRound_Statistical	pkg/combat/formulas.go	595	Allow equality at the warrior bonus threshold	green	yes
+TestCombatTranscript_Golden	pkg/combat/engine.go	1073	Bypass death dispatch for lethal blows in live engine	green	yes
+TestProcessCombatPair_MobWithWaitStillAttacks	pkg/combat/engine.go	615	Suppress all attacks after drawing round attack count	green	yes
+TestProcessCombatPair_MobAttack	pkg/combat/engine.go	615	Suppress all attacks after drawing round attack count	green	yes
+TestProcessCombatPair_PlayerDeath	pkg/combat/engine.go	615	Suppress all attacks after drawing round attack count	green	yes
+TestCheckParry_CUsesTenThousandRange	pkg/combat/formulas.go	659	Shrink parry draw range	green	yes
+TestGetAttacksPerRound_SlowOnHighLevelStillAttacks	pkg/combat/formulas.go	631	Ignore slow for level 40 and up	green	yes
+TestCalculateHitChance_LowACAlwaysHits	pkg/combat/formulas.go	392	Make every awake non-natural-20 roll miss	green	yes
+TestCalculateHitChance_SleepingDefender	pkg/combat/formulas.go	392	Miss on natural one even against sleeping defenders	green	yes
+TestCalculateHitChance_NegativeDefenderACClamped	pkg/combat/formulas.go	384	Remove the effective defender armor clamp	green	yes
+TestCalculateDamage_PlayerWithWeapon	pkg/combat/formulas.go	533	Drop player weapon damage contribution	green	yes
+TestCalculateDamage_AttackerDeadStr	pkg/combat/formulas.go	552	Remove the strength-zero override	green	yes
+TestCalculateDamage_NonNormalAttackType	pkg/combat/formulas.go	549	Apply normal AC reduction to backstab too	green	yes
+TestDamMessage_TierSelection	pkg/combat/fight_core.go	793	Force every positive hit into the lowest nonzero tier	green	yes
+TestCounterProcs_NoMilestone	pkg/combat/fight_core.go	1067	Reward zero-kill players as a milestone	green	yes
+TestCounterProcs_MajorMilestone	pkg/combat/fight_core.go	1083	Replace the mana reward with a second HP increment	green	yes
+TestChangeAlignment	pkg/combat/fight_core.go	276	Suppress alignment changes for all real killers	green	yes
+TestChangeAlignment_NPCKiller	pkg/combat/fight_core.go	276	Suppress alignment changes for all real killers	green	yes
+TestChangeAlignment_NPCKillerNPC	pkg/combat/fight_core.go	277	Remove the NPC killer exclusion	green	yes
+TestProcessCombatPair_MobWithWaitStillAttacks	pkg/combat/engine.go	626	Suppress swings on positive NPC mob wait while preserving draw order	green	yes
+TestProcessCombatPair_MobAttacksOnStandupRound	pkg/combat/engine.go	626	Suppress swings on positive NPC mob wait while preserving draw order	red	yes
+TestProcessCombatPair_MobAttacksOnStandupRound	pkg/combat/engine.go	615	Suppress all attacks after drawing round attack count	red	yes
+TestACReduction_GoldenAgainstCSource	pkg/combat/formulas.go	412	Move the first armor tier cutoff by one	red	yes

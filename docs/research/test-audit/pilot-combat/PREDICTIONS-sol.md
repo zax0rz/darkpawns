@@ -22,3 +22,25 @@ Recorded 2026-11-05, as Zach delivered the brief to Sol: "it'll find the same th
 
 - **Same findings:** Sol reports both the `counter_procs` divergence and the vacuous natural-20 test, and nothing major beyond them.
 - **Nits and tests:** Sol marks more F than either smaller model (more than 15), and its notes recommend adding new tests.
+
+## Results (scored 2026-11-05)
+
+Sol (gpt-6.1-sol, **medium** reasoning effort) finished in about 8 minutes and reported "Contamination: none". It split one function by subtest (209 rows); scores below collapse that to the weaker mark per function.
+
+| # | Prediction | Result | Hit? |
+|---:|---|---|---|
+| 1 | 80% R (70–90%) | 76.4% (159 of 208) | yes |
+| 2 | 25 mutations (10–60) | 23 | yes |
+| 3 | kappa vs MiMo 0.65 (0.45–0.85) | 0.49 | yes, at the low end |
+| 4 | kappa vs DeepSeek 0.70 (0.50–0.85) | 0.44 | **no** |
+| 5 | finds the `counter_procs` divergence (80%) | yes | yes |
+| 6 | marks Natural20 F or D (60%) | marked C (merge) | **no** |
+| 7 | every F/C/D predates the oracle (70%) | no: 3 F and 3 C after 2026-07-12 | **no** |
+| 8 | finds a C divergence neither smaller model reported (35%) | yes: NPC wait state | yes |
+| 9 | reports contamination (20%) | no | yes |
+
+**Zach's prediction:**
+
+- **Same findings as the smaller models, with nits:** half right. It found `counter_procs`, and it had plenty of nits (28 C, the most consolidation marks of the three). But it also found two major things the smaller models missed: the wait-state divergence, and the history of the AC golden table.
+- **More F than either smaller model:** yes, barely (16 against DeepSeek's 15).
+- **Recommends new tests:** no. Its notes propose no new tests.
