@@ -360,43 +360,7 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	}
 
 	// Arrival message
-	if !ch.IsAffected(affSneak) {
-		switch dir {
-		case 0, 1, 2, 3:
-			direct := dirs[revDir[dir]]
-			var msg string
-			if ch.IsAffected(affFly) {
-				msg = fmt.Sprintf("$n flies in from the %s.", direct)
-			} else if toRoom.Sector == SECT_UNDERWATER {
-				msg = fmt.Sprintf("$n swims in from the %s.", direct)
-			} else if mount != nil {
-				msg = fmt.Sprintf("$n rides in from the %s on $N.", direct)
-			} else {
-				msg = fmt.Sprintf("$n arrives from the %s.", direct)
-			}
-			Act(w, true, ch, mount, nil, nil, msg, "", ToRoom)
-		case 4:
-			if ch.IsAffected(affFly) {
-				Act(w, true, ch, nil, nil, nil, "$n flies in from below.", "", ToRoom)
-			} else if toRoom.Sector == SECT_UNDERWATER {
-				Act(w, true, ch, nil, nil, nil, "$n swims in from below.", "", ToRoom)
-			} else if mount != nil {
-				Act(w, true, ch, mount, nil, nil, "$n rides in from below on $N.", "", ToRoom)
-			} else {
-				Act(w, true, ch, nil, nil, nil, "$n climbs in from below.", "", ToRoom)
-			}
-		case 5:
-			if ch.IsAffected(affFly) {
-				Act(w, true, ch, nil, nil, nil, "$n flies in from above.", "", ToRoom)
-			} else if toRoom.Sector == SECT_UNDERWATER {
-				Act(w, true, ch, nil, nil, nil, "$n swims in from above.", "", ToRoom)
-			} else if mount != nil {
-				Act(w, true, ch, mount, nil, nil, "$n rides in from above on $N.", "", ToRoom)
-			} else {
-				Act(w, true, ch, nil, nil, nil, "$n climbs in from above.", "", ToRoom)
-			}
-		}
-	}
+	sendPlayerMovementArrival(w, ch, mount, dir, toRoom)
 
 	// C renders the mover's destination room here, before greet/entry triggers
 	// and before perform_move recursively moves followers (R1/R5e). The session
@@ -435,6 +399,46 @@ func doSimpleMove(w *World, ch *Player, dir int, needSpecialsCheck bool) bool {
 	w.RunRoomEnterScript(ch)
 
 	return true
+}
+
+func sendPlayerMovementArrival(w *World, ch *Player, mount *MobInstance, dir int, toRoom *parser.Room) {
+	if !ch.IsAffected(affSneak) {
+		switch dir {
+		case 0, 1, 2, 3:
+			direct := dirs[revDir[dir]]
+			var msg string
+			if ch.IsAffected(affFly) {
+				msg = fmt.Sprintf("$n flies in from the %s.", direct)
+			} else if toRoom.Sector == SECT_UNDERWATER {
+				msg = fmt.Sprintf("$n swims in from the %s.", direct)
+			} else if mount != nil {
+				msg = fmt.Sprintf("$n rides in from the %s on $N.", direct)
+			} else {
+				msg = fmt.Sprintf("$n arrives from the %s.", direct)
+			}
+			Act(w, true, ch, mount, nil, nil, msg, "", ToRoom)
+		case 4:
+			if ch.IsAffected(affFly) {
+				Act(w, true, ch, nil, nil, nil, "$n flies in from below.", "", ToRoom)
+			} else if toRoom.Sector == SECT_UNDERWATER {
+				Act(w, true, ch, nil, nil, nil, "$n swims in from below.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from below on $N.", "", ToRoom)
+			} else {
+				Act(w, true, ch, nil, nil, nil, "$n climbs in from below.", "", ToRoom)
+			}
+		case 5:
+			if ch.IsAffected(affFly) {
+				Act(w, true, ch, nil, nil, nil, "$n flies in from above.", "", ToRoom)
+			} else if toRoom.Sector == SECT_UNDERWATER {
+				Act(w, true, ch, nil, nil, nil, "$n swims in from above.", "", ToRoom)
+			} else if mount != nil {
+				Act(w, true, ch, mount, nil, nil, "$n rides in from above on $N.", "", ToRoom)
+			} else {
+				Act(w, true, ch, nil, nil, nil, "$n climbs in from above.", "", ToRoom)
+			}
+		}
+	}
 }
 
 func (w *World) riddenMount(rider *Player) *MobInstance {
