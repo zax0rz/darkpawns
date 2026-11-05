@@ -220,28 +220,7 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 	// send_to_char no-ops, gain_exp skips NPCs, its PRF bits are clear, and
 	// change_alignment returns for NPCs (src/fight.c:486-489).
 	if !grouped {
-		p, ok := combatPlayer(killer)
-		if !ok {
-			return
-		}
-		// Level-difference XP penalty — fight.c calc_level_diff(), solo path
-		// gets the C two-level slack before higher-level penalties apply.
-		xp := combat.CalcXPShare(killer.GetLevel(), victimLevel, victimExp, false, maxExpGain)
-		if xp > 1 {
-			p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
-		} else {
-			p.SendMessage("You receive one lousy experience point.\r\n")
-		}
-		w.GainExp(p, xp)
-		// Solo damage(): XP, then PRF_AUTOGOLD (src/fight.c:1644-1667).
-		if victimGold != 0 && p.AutoGold {
-			p.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", victimGold))
-			p.mu.Lock()
-			p.Gold += victimGold
-			p.mu.Unlock()
-		}
-		// Alignment shift for the killer — fight.c:1667 change_alignment(ch, victim).
-		changeAlignment(p, victimAlign)
+		w.awardSoloMobKillXP(killer, victimExp, victimGold, victimLevel, victimAlign)
 		return
 	}
 
@@ -303,6 +282,31 @@ func (w *World) AwardMobKillXP(killer combat.Combatant, victim Actor, victimExp 
 	w.awardGroupKillGold(
 		killer, victim, victimName, victimGold, killerRoom, kp, isPlayer, inRoom, totMembers, leader,
 	) // src/fight.c:747-846: XP shares precede autogold.
+}
+
+func (w *World) awardSoloMobKillXP(killer combat.Combatant, victimExp, victimGold, victimLevel, victimAlign int) {
+	p, ok := combatPlayer(killer)
+	if !ok {
+		return
+	}
+	// Level-difference XP penalty — fight.c calc_level_diff(), solo path
+	// gets the C two-level slack before higher-level penalties apply.
+	xp := combat.CalcXPShare(killer.GetLevel(), victimLevel, victimExp, false, maxExpGain)
+	if xp > 1 {
+		p.SendMessage(fmt.Sprintf("You receive %d experience points.\r\n", xp))
+	} else {
+		p.SendMessage("You receive one lousy experience point.\r\n")
+	}
+	w.GainExp(p, xp)
+	// Solo damage(): XP, then PRF_AUTOGOLD (src/fight.c:1644-1667).
+	if victimGold != 0 && p.AutoGold {
+		p.SendMessage(fmt.Sprintf("You loot %d gold from the corpse.\r\n", victimGold))
+		p.mu.Lock()
+		p.Gold += victimGold
+		p.mu.Unlock()
+	}
+	// Alignment shift for the killer — fight.c:1667 change_alignment(ch, victim).
+	changeAlignment(p, victimAlign)
 }
 
 // awardGroupKillGold ports the autogold/autosplit tail of group_gain()
