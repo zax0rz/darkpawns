@@ -1,0 +1,78 @@
+# depth-case: give.invisible-target
+# depth-case: give.invisible-target-coins
+# CAN_SEE gates every candidate of get_char_room_vis (src/handler.c:1291-1293),
+# so a mortal giver cannot give to an invisible mob: NOPERSON, for items and
+# coins alike. The prober is the second client (a mortal); the first client is
+# the implementor, whose vision would mask the gate. Old Go's hand-written
+# room lookups had no visibility check and resolved the invisible guard.
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 1 8162 163
+set-mob-aff 16303 2
+
+[setup:oracle]
+Givegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Givegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:prober]
+Givinv
+Y
+proberpass
+proberpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+open pack
+get bread pack
+
+[setup:port:prober]
+Givinv
+y
+proberpass
+proberpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+open pack
+get bread pack
+
+[probe:prober]
+give bread guard
+give 5 coins guard
+give bread me
+give bread nobody

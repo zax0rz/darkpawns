@@ -21,3 +21,10 @@ perform_give_gold	give	give.gold-mob-bribe-dispatch	D5	npc-call	unit-green	TestM
 get_obj_in_list_vis	give	give.abbrev-match	D2	shared	delegated	get.abbrev-match	handler.c:get_obj_in_list_vis	Prefix keyword match shared with get; proven under the get manifest.
 find_all_dots	give	give.alldot-semantics	D2	shared	delegated	get.all-of-what	handler.c:1567	"all." -> FIND_ALLDOT shared with get; proven under the get manifest.
 perform_give	give	give.mob-ongive	D5	npc-call	excluded	-	act.item.c:707-709	Mob ongive/bribe behavior belongs to the mob/specproc depth surface.
+give_find_vict	give	give.self-me	D2	command	oracle-green	give-resolve-depth	handler.c:1285-1286	"me" resolves to the giver through get_char_room_vis; yields "What's the point of that?". Old Go printed NOPERSON (DP-1457).
+give_find_vict	give	give.self-self	D2	command	oracle-green	give-resolve-depth	handler.c:1285-1286	"self" resolves to the giver; same refusal as "me".
+give_find_vict	give	give.player-only-zero-dot	D2	command	oracle-green	give-resolve-depth	handler.c:1288-1291	"0.<name>" takes the get_player_vis pass (same-room players by exact name).
+give_find_vict	give	give.ordinal-second	D2	command	oracle-green	give-resolve-depth	handler.c:1293-1297	"2.<name>" counts visible matches and picks the second.
+give_find_vict	give	give.ordinal-exhausted	D2	command	oracle-green	give-resolve-depth	handler.c:1293-1299	"N.<name>" past the last visible match falls to NOPERSON.
+give_find_vict	give	give.invisible-target	D2	command	oracle-green	give-invisible-depth	handler.c:1295	CAN_SEE gates candidates; a mortal giver gets NOPERSON for an invisible mob.
+give_find_vict	give	give.invisible-target-coins	D2	command	oracle-green	give-invisible-depth	act.item.c:784	The coin form resolves through give_find_vict too; invisible mob yields NOPERSON before any gold check.
