@@ -3141,7 +3141,7 @@ func castHellfire(level int, ch, world interface{}) {
 			// C source: spells.c:737-742 uses number(1, 20) before the damage call.
 			// #nosec G404 — game RNG, not cryptographic
 			if dprng.Number(1, 20) > casterDex {
-				cn.SetPosition(5) // POS_SITTING
+				cn.SetPosition(int(PosSitting))
 				castHellfireActToVictim(world, ch, c, "The fires of hell bring you to your knees!\r\n")
 				castHellfireActNotVictim(world, ch, c, "The fires of hell bring $N to $S knees!\r\n", false)
 			}
