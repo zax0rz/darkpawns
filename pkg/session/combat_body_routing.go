@@ -42,15 +42,24 @@ func (m *Manager) mobileDescriptorOwner(body *game.MobInstance) *game.Player {
 	return nil
 }
 
+// combatBody is the session's combat actor: the switched-into mob while
+// switched, otherwise the player body. Nil when the session has no body yet.
+func (s *Session) combatBody() combat.Combatant {
+	if s.isSwitched && s.switchedMob != nil {
+		return s.switchedMob
+	}
+	if s.player == nil {
+		return nil
+	}
+	return s.player
+}
+
 func (m *Manager) combatAudience(room int, exclude []combat.Combatant) []*Session {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	var audience []*Session
 	for _, s := range m.sessions {
-		var body combat.Combatant = s.player
-		if s.isSwitched && s.switchedMob != nil {
-			body = s.switchedMob
-		}
+		body := s.combatBody()
 		if body == nil || !s.hasTransport() || s.SendClosed() || s.menuActive || s.charCreating || body.GetRoom() != room || body.GetPosition() <= combat.PosSleeping {
 			continue
 		}

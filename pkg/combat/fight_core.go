@@ -813,17 +813,22 @@ func DamMessage(dam int, ch, victim Combatant, attackType int) {
 
 	sex := ch.GetSex()
 	victimSex := victim.GetSex()
-	roomMsg := replaceMessageTokens(tier.Room[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
-	charMsg := replaceMessageTokens(tier.Char[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
-	victimMsg := replaceMessageTokens(tier.Victim[0], ch.GetName(), victim.GetName(), singular, plural, sex, victimSex)
+	// C's three acts render per recipient through PERS() (fight.c:995-1015:
+	// TO_CHAR, TO_VICT|TO_SLEEP, TO_NOTVICT), so an actor the recipient cannot
+	// see is named "someone", not its real name (DP-1481 shape 3).
+	renderFor := func(to Combatant, template string) string {
+		return replaceMessageTokens(template, persName(ch, to), persName(victim, to), singular, plural, sex, victimSex)
+	}
 
-	cbBroadcast(ch.GetRoom(), roomMsg, []Combatant{ch, victim})
+	cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+		return renderFor(to, tier.Room[0])
+	}, []Combatant{ch, victim})
 
 	// src/fight.c:995-1015: the room act() above carries no color, while the
 	// attacker's TO_CHAR line is bracketed by CCYEL(ch, C_CMP)/CCNRM and the
 	// victim's TO_VICT|TO_SLEEP line by CCRED(victim, C_CMP)/CCNRM.
-	sendColorBracketed(ch, skillColorYellow, charMsg, false, cbGetColorLevel(ch) >= colorLevelCMP)
-	sendColorBracketed(victim, skillColorRed, victimMsg, true, cbGetColorLevel(victim) >= colorLevelCMP)
+	sendColorBracketed(ch, skillColorYellow, renderFor(ch, tier.Char[0]), false, cbGetColorLevel(ch) >= colorLevelCMP)
+	sendColorBracketed(victim, skillColorRed, renderFor(victim, tier.Victim[0]), true, cbGetColorLevel(victim) >= colorLevelCMP)
 }
 
 // replaceMessageTokens applies the character and weapon substitutions used by

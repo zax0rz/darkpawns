@@ -18,6 +18,19 @@ func (w *World) StartCombat(attacker, defender combat.Combatant) error {
 	return w.combatEngine.StartCombat(attacker, defender)
 }
 
+// StartCombatAfterDamage exposes the engine's post-damage enrolment entry to
+// damage seams that have already copied C's FIGHTING fields, so the victim's
+// pre-combat position decides enrolment exactly as C's set_fighting gates do
+// (fight.c:1408, 1443-1445). StartCombat's ordinary entry stands the attacker
+// and forces the defender awake; only the do_hit path may do that. Damage
+// spells reach damage() directly, so they enrol here.
+func (w *World) StartCombatAfterDamage(attacker, defender combat.Combatant) error {
+	if w.combatEngine == nil {
+		return fmt.Errorf("combat engine is not configured")
+	}
+	return combat.EnrollAfterDamage(w.combatEngine, attacker, defender)
+}
+
 // MobFirstHit exposes the world's canonical seam for C hit(mob, victim, ...)
 // calls that immediately resolve the NPC's opening attack.
 func (w *World) MobFirstHit(attacker, defender combat.Combatant) {
