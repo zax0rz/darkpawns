@@ -1,0 +1,309 @@
+func	file	line	literal	offset
+magAffectsForCast	pkg/spells/affect_spells.go	59	"You crush a small lens under your heel.\\r\\n"	2285
+magAffectsForCast	pkg/spells/affect_spells.go	60	"$n crushes a small lens under $s heel."	2362
+magAffectsForCast	pkg/spells/affect_spells.go	64	"A frog leg turns into dust as you mouth the words of the spell..."	2515
+magAffectsForCast	pkg/spells/affect_spells.go	67	"A small chunk of iron melts in your palm as you cast the spell..."	2683
+magAffectsForCast	pkg/spells/affect_spells.go	67	"flat:1"	2752
+magAffectsForCast	pkg/spells/affect_spells.go	69	"A small chunk of iron melts in $n's palm as $e cast a spell..."	2808
+magAffectsForCast	pkg/spells/affect_spells.go	77	"Pulling a bit of sand from a pocket, you cast it about the room...\\r\\n"	3191
+magAffectsForCast	pkg/spells/affect_spells.go	78	"$n pulls a bit of sand out of a pocket and casts it about the room.\\r\\n"	3292
+magAffectsForCast	pkg/spells/affect_spells.go	80	"You attempt the spell without the components...\\r\\n"	3411
+magAffectsForCast	pkg/spells/affect_spells.go	90	"Your spell fails to affect them because you are not an Outlaw!\\r\\n"	3831
+magAffectsForCast	pkg/spells/affect_spells.go	91	"Someone"	3918
+magAffectsForCast	pkg/spells/affect_spells.go	95	"%s tried to cast a spell on you but failed because %s is not an Outlaw!\\r\\n"	4062
+magAffectsForCast	pkg/spells/affect_spells.go	99	"$n shakes his head wearily, but then snaps out of it!\\r\\n"	4288
+magAffectsForCast	pkg/spells/affect_spells.go	132	"You throw a raven's feather into the air...\\r\\n"	5549
+magAffectsForCast	pkg/spells/affect_spells.go	133	"$n throws a feather into the air..."	5629
+magAffectsApply	pkg/spells/affect_spells.go	161	"You feel your strength wither!\\r\\n"	6856
+magAffectsApply	pkg/spells/affect_spells.go	165	"You feel righteous.\\r\\n"	7174
+magAffectsApply	pkg/spells/affect_spells.go	169	"You feel someone protecting you.\\r\\n"	7363
+magAffectsApply	pkg/spells/affect_spells.go	174	"Your magic fades, then dies out totally.\\r\\n"	7552
+magAffectsApply	pkg/spells/affect_spells.go	187	"You have been blinded!\\r\\n"	8195
+magAffectsApply	pkg/spells/affect_spells.go	188	"$n seems to be blinded!\\r\\n"	8236
+magAffectsApply	pkg/spells/affect_spells.go	193	"Nothing seems to happen.\\r\\n"	8385
+magAffectsApply	pkg/spells/affect_spells.go	205	"You feel very uncomfortable.\\r\\n"	9019
+magAffectsApply	pkg/spells/affect_spells.go	206	"$n briefly glows red!\\r\\n"	9065
+magAffectsApply	pkg/spells/affect_spells.go	216	"You vanish.\\r\\n"	9464
+magAffectsApply	pkg/spells/affect_spells.go	218	"Your skin turns transparent.\\r\\n"	9507
+magAffectsApply	pkg/spells/affect_spells.go	220	"$n slowly fades out of existence.\\r\\n"	9557
+magAffectsApply	pkg/spells/affect_spells.go	224	"A black aura momentarily surrounds you.\\r\\n"	9760
+magAffectsApply	pkg/spells/affect_spells.go	225	"$n is surrounded by a black aura.\\r\\n"	9818
+magAffectsApply	pkg/spells/affect_spells.go	227	"A white aura momentarily surrounds you.\\r\\n"	9883
+magAffectsApply	pkg/spells/affect_spells.go	228	"$n is surrounded by a white aura.\\r\\n"	9941
+magAffectsApply	pkg/spells/affect_spells.go	243	"$n shakes his head wearily, but then snaps out of it!\\r\\n"	10426
+magAffectsApply	pkg/spells/affect_spells.go	251	"You feel very sleepy...  Zzzz......\\r\\n"	10861
+magAffectsApply	pkg/spells/affect_spells.go	252	"$n goes to sleep.\\r\\n"	10915
+magAffectsApply	pkg/spells/affect_spells.go	261	"Nothing seems to happen.\\r\\n"	11222
+magAffectsApply	pkg/spells/affect_spells.go	272	"You can only do this outdoors!\\r\\n"	11563
+magAffectsApply	pkg/spells/affect_spells.go	283	"A bolt of flame shoots down from the heavens and engulfs you!\\r\\n"	11870
+magAffectsApply	pkg/spells/affect_spells.go	284	"A bolt of flame shoots down from the heavens and engulfs $n!\\r\\n"	11949
+magAffectsApply	pkg/spells/affect_spells.go	289	"Nothing seems to happen.\\r\\n"	12142
+magAffectsApply	pkg/spells/affect_spells.go	302	"You feel very sick.\\r\\n"	12615
+magAffectsApply	pkg/spells/affect_spells.go	303	"$n gets violently ill!\\r\\n"	12652
+magAffectsApply	pkg/spells/affect_spells.go	319	"You feel the world speed up around you.\\r\\n"	13531
+magAffectsApply	pkg/spells/affect_spells.go	327	"Your feet rise off the ground!\\r\\n"	13852
+magAffectsApply	pkg/spells/affect_spells.go	328	"$n's feet rise off the ground!\\r\\n"	13900
+magAffectsApply	pkg/spells/affect_spells.go	332	"Your eyes tingle.\\r\\n"	14164
+magAffectsApply	pkg/spells/affect_spells.go	337	"Your eyes tingle.\\r\\n"	14492
+magAffectsApply	pkg/spells/affect_spells.go	343	"Your eyes glow red.\\r\\n"	14802
+magAffectsApply	pkg/spells/affect_spells.go	344	"$n's eyes glow red.\\r\\n"	14839
+magAffectsApply	pkg/spells/affect_spells.go	348	"You feel your breath become colder.\\r\\n"	15104
+magAffectsApply	pkg/spells/affect_spells.go	354	"Your eyes tingle.\\r\\n"	15513
+magAffectsApply	pkg/spells/affect_spells.go	356	"Like a physical blow, emotions of others wash over you.\\r\\n"	15562
+magAffectsApply	pkg/spells/affect_spells.go	360	"You feel the power of the Dream Lords surround you.\\r\\n"	15771
+magAffectsApply	pkg/spells/affect_spells.go	363	"You cannot protect yourself from the Evil inside you!\\r\\n"	15896
+magAffectsApply	pkg/spells/affect_spells.go	373	"A stream of silver light surges from your fingertips, covering you!\\r\\n"	16379
+magAffectsApply	pkg/spells/affect_spells.go	374	"A stream of silver light surges from $n's fingertips, covering $m!\\r\\n"	16464
+magAffectsApply	pkg/spells/affect_spells.go	377	"The forces of Light destroy you for your betrayal!\\r\\n"	16604
+magAffectsApply	pkg/spells/affect_spells.go	386	"A stream of silver light surges from your fingertips, covering you!\\r\\n"	17044
+magAffectsApply	pkg/spells/affect_spells.go	387	"A stream of silver light surges from $n's fingertips, covering $m!\\r\\n"	17129
+magAffectsApply	pkg/spells/affect_spells.go	395	"You feel stronger!\\r\\n"	17533
+magAffectsApply	pkg/spells/affect_spells.go	400	"Your feel your awareness improve.\\r\\n"	17867
+magAffectsApply	pkg/spells/affect_spells.go	405	"You feel webbing between your toes.\\r\\n"	18173
+magAffectsApply	pkg/spells/affect_spells.go	410	"Your molecular density shifts.\\r\\n"	18491
+magAffectsApply	pkg/spells/affect_spells.go	414	"You blend into the surroundings.\\r\\n"	18723
+magAffectsApply	pkg/spells/affect_spells.go	417	"Your skin turns metallic!\\r\\n"	19040
+magAffectsApply	pkg/spells/affect_spells.go	424	"A globe of protection appears around you!\\r\\n"	19512
+magAffectsApply	pkg/spells/affect_spells.go	427	"You feel a shield of energy form around you.\\r\\n"	19686
+magAffectsApply	pkg/spells/affect_spells.go	430	"Your eyes glow briefly.\\r\\n"	20035
+magAffectsApply	pkg/spells/affect_spells.go	431	"$n's eyes glow briefly.\\r\\n"	20076
+magAffectsApply	pkg/spells/affect_spells.go	434	"Your eyes glow briefly.\\r\\n"	20398
+magAffectsApply	pkg/spells/affect_spells.go	435	"$n's eyes glow briefly.\\r\\n"	20439
+magAffectsApply	pkg/spells/affect_spells.go	438	"Your head clears and you realize some of the secrets of life!\\r\\n"	20581
+magAffectsApply	pkg/spells/affect_spells.go	443	"Suddenly, your mind numbs and you feel somewhat impaired.\\r\\n"	20903
+magAffectsApply	pkg/spells/affect_spells.go	457	"Nothing seems to happen.\\r\\n"	21606
+MagPoints	pkg/spells/affect_spells.go	711	"You feel better.\\r\\n"	29825
+MagPoints	pkg/spells/affect_spells.go	716	"You feel a lot better!\\r\\n"	29954
+MagPoints	pkg/spells/affect_spells.go	722	"You focus your mind on healing your body..\\r\\n"	30103
+MagPoints	pkg/spells/affect_spells.go	723	"Your wounds mend themselves!\\r\\n"	30177
+MagPoints	pkg/spells/affect_spells.go	725	"A warm feeling floods your body.\\r\\n"	30248
+MagPoints	pkg/spells/affect_spells.go	731	"A warm feeling floods your body.\\r\\n"	30398
+MagPoints	pkg/spells/affect_spells.go	737	"You focus your mind on healing your body..\\r\\n"	30567
+MagPoints	pkg/spells/affect_spells.go	738	"Your wounds mend themselves!\\r\\n"	30641
+MagPoints	pkg/spells/affect_spells.go	740	"A warm feeling floods your body.\\r\\n"	30712
+MagPoints	pkg/spells/affect_spells.go	746	"You feel vitalized!\\r\\n"	30862
+MagPoints	pkg/spells/affect_spells.go	748	"You feel invigorated!\\r\\n"	30935
+MagPoints	pkg/spells/affect_spells.go	751	"Your wounds mend beneath your hands!\\r\\n"	31029
+MagPoints	pkg/spells/affect_spells.go	753	"Your wounds start to heal beneath $n's hands!\\r\\n"	31095
+MagUnaffects	pkg/spells/affect_spells.go	827	"Your vision returns!\\r\\n"	33670
+MagUnaffects	pkg/spells/affect_spells.go	828	"There's a momentary gleam in $n's eyes.\\r\\n"	33708
+MagUnaffects	pkg/spells/affect_spells.go	831	"A warm feeling runs through your body!\\r\\n"	33814
+MagUnaffects	pkg/spells/affect_spells.go	832	"$n looks better.\\r\\n"	33870
+MagUnaffects	pkg/spells/affect_spells.go	835	"You don't feel so unlucky.\\r\\n"	33951
+MagUnaffects	pkg/spells/affect_spells.go	842	"Nothing seems to happen.\\r\\n"	34157
+MagMasses	pkg/spells/affect_spells.go	947	"As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.\\r\\n"	36941
+MagMasses	pkg/spells/affect_spells.go	948	"Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of $n!\\r\\n"	37066
+MagAreas	pkg/spells/affect_spells.go	1012	"You gesture and the earth begins to shake all around you!\\r\\n"	38849
+MagAreas	pkg/spells/affect_spells.go	1013	"$n gracefully gestures and the earth begins to shake violently!\\r\\n"	38940
+MagAreas	pkg/spells/affect_spells.go	1015	"A spray of acid flows from your fingertips!\\r\\n"	39066
+MagAreas	pkg/spells/affect_spells.go	1016	"$n raises a hand and acid sprays from $s fingers!\\r\\n"	39143
+MagSummons	pkg/spells/affect_spells.go	1091	"There is no corpse!\\r\\n\\r\\n"	41888
+MagSummons	pkg/spells/affect_spells.go	1120	"The corpse refuses to come alive!\\r\\n"	42759
+MagSummons	pkg/spells/affect_spells.go	1130	"The corpse refuses to come alive!\\r\\n"	43002
+MagSummons	pkg/spells/affect_spells.go	1154	"The corpse starts to twitch, then stands with a life of it's own!\\r\\n"	43945
+MagCreations	pkg/spells/affect_spells.go	1182	"I seem to have goofed.\\r\\n"	44689
+MagCreations	pkg/spells/affect_spells.go	1196	"You create "	45060
+MagAlterObjs	pkg/spells/affect_spells.go	1265	"$p glows briefly with a ethereal light."	47191
+MagAlterObjs	pkg/spells/affect_spells.go	1279	"$p briefly glows red."	47599
+MagAlterObjs	pkg/spells/affect_spells.go	1287	"$p vanishes."	47828
+MagAlterObjs	pkg/spells/affect_spells.go	1299	"$p steams briefly."	48222
+MagAlterObjs	pkg/spells/affect_spells.go	1313	"$p steams briefly."	48618
+MagAlterObjs	pkg/spells/affect_spells.go	1332	"$p briefly glows blue."	49079
+MagAlterObjs	pkg/spells/affect_spells.go	1336	"Nothing seems to happen.\\r\\n"	49146
+MagAlterObjs	pkg/spells/affect_spells.go	1346	"something"	49424
+MagAlterObjs	pkg/spells/affect_spells.go	1350	"$p"	49578
+mendRoomLine	pkg/spells/affect_spells.go	1493	"$N's wounds glow and mend themselves."	53847
+mendRoomLine	pkg/spells/affect_spells.go	1496	"$N's wounds glow and mend themselves.\\r\\n"	53952
+sendAffectActRoom	pkg/spells/affect_spells.go	1549	"$e"	55950
+castSobriety	pkg/spells/affect_spells.go	1810	"No target.\\r\\n"	71728
+castSobriety	pkg/spells/affect_spells.go	1829	"You are splashed in the face with HOT coffee, but feel much more sober.\\n\\r"	72180
+castZen	pkg/spells/affect_spells.go	1835	"You begin to meditate deeply, focusing your thoughts only on healing.\\r\\n"	72491
+castZen	pkg/spells/affect_spells.go	1839	"$n sinks into a deep, meditative sleep."	72737
+castDetectPoison	pkg/spells/affect_spells.go	1869	"You can sense poison in your blood.\\r\\n"	73452
+castDetectPoison	pkg/spells/affect_spells.go	1871	"You sense that $E is poisoned."	73532
+castDetectPoison	pkg/spells/affect_spells.go	1875	"You feel healthy.\\r\\n"	73646
+castDetectPoison	pkg/spells/affect_spells.go	1877	"You sense that $E is healthy."	73708
+castDetectPoison	pkg/spells/affect_spells.go	1890	"You sense that it should not be consumed.\\r\\n"	74062
+castDetectPoison	pkg/spells/affect_spells.go	1897	"You sense that $p has been contaminated."	74308
+castDetectPoison	pkg/spells/affect_spells.go	1899	"You sense that $p is safe for consumption."	74412
+castDetectPoison	pkg/spells/affect_spells.go	1902	"You sense that it should not be consumed.\\r\\n"	74517
+castLycanthropy	pkg/spells/affect_spells.go	1926	"Specify a target.\\n\\r"	75156
+castLycanthropy	pkg/spells/affect_spells.go	1935	"You feel a strange sensation in your bones...\\n\\r"	75584
+castLycanthropy	pkg/spells/affect_spells.go	1954	"Already a werewolf.\\r\\n"	76033
+castLycanthropy	pkg/spells/affect_spells.go	1958	"Already a creature of the night.\\n\\r"	76129
+castLycanthropy	pkg/spells/affect_spells.go	1962	"You feel a strange sensation in your bones...\\n\\r"	76203
+castVampirism	pkg/spells/affect_spells.go	1971	"Specify a target.\\n\\r"	76465
+castVampirism	pkg/spells/affect_spells.go	1990	"Already a vampire.\\n\\r"	76796
+castVampirism	pkg/spells/affect_spells.go	1994	"Already a creature of the night.\\n\\r"	76892
+castVampirism	pkg/spells/affect_spells.go	1998	"You feel a strange sensation in your blood!\\n\\r"	76966
+castControlWeather	pkg/spells/affect_spells.go	2023	"Do you want it to get better or worse?\\r\\n"	77678
+castCoC	pkg/spells/affect_spells.go	2070	"The magic fails.\\r\\n"	78955
+castCoC	pkg/spells/affect_spells.go	2081	"You can't do that here.\\r\\n"	79143
+castCoC	pkg/spells/affect_spells.go	2088	"The magic fails.\\r\\n"	79368
+castCoC	pkg/spells/affect_spells.go	2104	"You draw a magic circle on the ground.\\r\\n"	79686
+castCoC	pkg/spells/affect_spells.go	2109	"$n draws a magic circle on the ground."	79921
+castSilkenMissile	pkg/spells/affect_spells.go	2124	"You can't make anything useful from that.\\r\\n"	80324
+castSilkenMissile	pkg/spells/affect_spells.go	2130	"You can't make anything useful from that.\\r\\n"	80500
+castSilkenMissile	pkg/spells/affect_spells.go	2159	"Error, please tell a god.\\r\\n"	81276
+castSilkenMissile	pkg/spells/affect_spells.go	2177	"You create an arrow from it.\\r\\n"	81669
+castMentalLapse	pkg/spells/affect_spells.go	2223	"You send out your mental voice...\\r\\n"	83007
+castMentalLapse	pkg/spells/affect_spells.go	2225	"Your psionic energy recoils!\\r\\n"	83079
+castMentalLapse	pkg/spells/affect_spells.go	2230	"You sense $S intentions even from where you are, and change $S mind."	83155
+castEnchantWeapon	pkg/spells/affect_spells.go	2256	"Nothing seems to happen.\\r\\n"	83854
+castEnchantWeapon	pkg/spells/affect_spells.go	2262	"Nothing seems to happen.\\r\\n"	84004
+castEnchantWeapon	pkg/spells/affect_spells.go	2268	"Nothing seems to happen.\\r\\n"	84137
+castEnchantWeapon	pkg/spells/affect_spells.go	2276	"Nothing seems to happen.\\r\\n"	84369
+castEnchantWeapon	pkg/spells/affect_spells.go	2304	"$p glows blue."	85033
+castEnchantWeapon	pkg/spells/affect_spells.go	2307	"$p glows red."	85171
+castEnchantWeapon	pkg/spells/affect_spells.go	2309	"$p glows yellow."	85246
+castEnchantArmor	pkg/spells/affect_spells.go	2371	"$p glows blue."	86637
+castEnchantArmor	pkg/spells/affect_spells.go	2374	"$p glows red."	86775
+castEnchantArmor	pkg/spells/affect_spells.go	2376	"$p glows yellow."	86850
+castCreateWater	pkg/spells/affect_spells.go	2438	"%s is filled.\\r\\n"	88734
+castCreateWater	pkg/spells/affect_spells.go	2441	"You cannot create water in that!\\r\\n"	88810
+castIdentifyObject	pkg/spells/affect_spells.go	2491	"You feel informed:\\r\\n"	90391
+castIdentifyObject	pkg/spells/affect_spells.go	2507	"Object '%s', Item type: %s\\r\\n"	90765
+castIdentifyObject	pkg/spells/affect_spells.go	2512	"Item will give you following abilities:  "	91068
+castIdentifyObject	pkg/spells/affect_spells.go	2517	"Item is: "	91279
+castIdentifyObject	pkg/spells/affect_spells.go	2527	"Encumbrance: %d, Value: %d\\r\\n"	91519
+castIdentifyObject	pkg/spells/affect_spells.go	2539	"This %s casts: %s\\r\\n"	91853
+castIdentifyObject	pkg/spells/affect_spells.go	2541	"This %s casts: %s\\r\\nIt has %d maximum charge%s and %d remaining.\\r\\n"	91967
+castIdentifyObject	pkg/spells/affect_spells.go	2544	"Damage Dice is '%dD%d' for an average per-round damage of %.1f.\\r\\n"	92200
+castIdentifyObject	pkg/spells/affect_spells.go	2547	"AC-apply is %d\\r\\n"	92419
+castIdentifyObject	pkg/spells/affect_spells.go	2558	"Can affect you as :\\r\\n"	92658
+castIdentifyObject	pkg/spells/affect_spells.go	2563	"   Permanent %s when equipped.\\r\\n"	92792
+castIdentifyObject	pkg/spells/affect_spells.go	2565	"   Extra damage to: %ss.\\r\\n"	92934
+castIdentifyObject	pkg/spells/affect_spells.go	2567	"   Affects: %s By %d\\r\\n"	93047
+castIdentifyCharacter	pkg/spells/affect_spells.go	2705	"The magicks fail horribly!\\r\\n"	96970
+castIdentifyCharacter	pkg/spells/affect_spells.go	2713	"You cannot identify them yet.\\r\\n"	97224
+castIdentifyCharacter	pkg/spells/affect_spells.go	2719	"Name: %s\\r\\n"	97357
+castIdentifyCharacter	pkg/spells/affect_spells.go	2721	"%s is %d years, %d months, %d days and %d hours old.\\r\\n"	97476
+castIdentifyCharacter	pkg/spells/affect_spells.go	2722	"Height %d cm, Weight %d pounds\\r\\n"	97614
+castIdentifyCharacter	pkg/spells/affect_spells.go	2723	"Level: %d, Hits: %d, Mana: %d\\r\\n"	97724
+castIdentifyCharacter	pkg/spells/affect_spells.go	2724	"AC: %d, Hitroll: %d, Damroll: %d\\r\\n"	97846
+castIdentifyCharacter	pkg/spells/affect_spells.go	2725	"Str: %d/%d, Int: %d, Wis: %d, Dex: %d, Con: %d, Cha: %d\\r\\n"	97976
+castIdentifyCharacter	pkg/spells/affect_spells.go	2730	"You feel informed:\\r\\n"	98397
+castIdentifyCharacter	pkg/spells/affect_spells.go	2731	"Name: %s\\r\\n"	98455
+castTeleport	pkg/spells/affect_spells.go	2873	"Teleport failed: world interface not available.\\r\\n"	102480
+castTeleport	pkg/spells/affect_spells.go	2884	"Teleport failed: world interface not available.\\r\\n"	102862
+castTeleport	pkg/spells/affect_spells.go	2889	"Who do you want this done to?\\r\\n"	102968
+castTeleport	pkg/spells/affect_spells.go	2897	"The gods deny thy magick.\\r\\n"	103203
+castTeleport	pkg/spells/affect_spells.go	2908	"You can only will this power upon yourself!\\r\\n"	103546
+castTeleport	pkg/spells/affect_spells.go	2919	"The magic words fail to form properly.\\r\\n"	104023
+castTeleport	pkg/spells/affect_spells.go	2927	"The magic fails utterly!\\r\\n"	104428
+castTeleport	pkg/spells/affect_spells.go	2955	"The world around you turns black and you suddenly find yourself..\\r\\n"	105125
+castTeleport	pkg/spells/affect_spells.go	2956	"$n slowly fades out of existence and is gone."	105228
+castTeleport	pkg/spells/affect_spells.go	2977	"$n slowly fades into existence."	105990
+castMeteorSwarm	pkg/spells/affect_spells.go	2999	"The magic fizzles.\\r\\n"	106836
+castMeteorSwarm	pkg/spells/affect_spells.go	3012	"This room just has such a peaceful, easy feeling..\\r\\n"	107106
+castMeteorSwarm	pkg/spells/affect_spells.go	3018	"You can only do this outdoors!\\r\\n"	107321
+castMeteorSwarm	pkg/spells/affect_spells.go	3022	"Your incantation brings the heavens down upon your victims!\\r\\n"	107390
+castMeteorSwarm	pkg/spells/affect_spells.go	3023	"As $n finishes $s incantation, bright lights from the heavens streak downward towards you."	107474
+castHellfire	pkg/spells/affect_spells.go	3076	"The magic fizzles.\\r\\n"	109141
+castHellfire	pkg/spells/affect_spells.go	3089	"This room just has such a peaceful, easy feeling..\\r\\n"	109411
+castHellfire	pkg/spells/affect_spells.go	3099	"The bowels of hell open beneath your feet!!\\r\\n"	109650
+castHellfire	pkg/spells/affect_spells.go	3101	"The shrieks of demons accompany the sounds of fire..\\r\\n"	109808
+castHellfire	pkg/spells/affect_spells.go	3103	"$n conjures the flames of hell upon $s enemies!!"	109898
+castHellfire	pkg/spells/affect_spells.go	3130	"The flames of hell spring up around you!!\\n\\r"	110550
+castHellfire	pkg/spells/affect_spells.go	3135	"The fires of hell overcome you!!"	110683
+castHellfire	pkg/spells/affect_spells.go	3136	"The soul of $N is charred by the flames of hell!"	110761
+castHellfire	pkg/spells/affect_spells.go	3139	"The fires of hell bring blisters on your skin!!\\n\\r"	110928
+castHellfire	pkg/spells/affect_spells.go	3140	"The fires of hell scorch the skin of $N!\\r\\n"	111025
+castHellfire	pkg/spells/affect_spells.go	3145	"The fires of hell bring you to your knees!\\r\\n"	111325
+castHellfire	pkg/spells/affect_spells.go	3146	"The fires of hell bring $N to $S knees!\\r\\n"	111418
+castCharm	pkg/spells/affect_spells.go	3199	"You like yourself even better!\\r\\n"	113009
+castCharm	pkg/spells/affect_spells.go	3209	"Your victim is protected by sanctuary!\\r\\n"	113309
+castCharm	pkg/spells/affect_spells.go	3216	"Your victim resists!\\r\\n"	113583
+castCharm	pkg/spells/affect_spells.go	3220	"You can't have any followers of your own!\\r\\n"	113723
+castCharm	pkg/spells/affect_spells.go	3224	"You fail.\\r\\n"	113887
+castCharm	pkg/spells/affect_spells.go	3231	"You fail.\\r\\n"	114022
+castCharm	pkg/spells/affect_spells.go	3238	"Ha ha... Don't think so.\\r\\n"	114271
+castCharm	pkg/spells/affect_spells.go	3246	"Sorry, following in circles can not be allowed.\\r\\n"	114454
+castCharm	pkg/spells/affect_spells.go	3255	"Your victim resists!\\r\\n"	114826
+castCharm	pkg/spells/affect_spells.go	3268	"You can't have any more followers!\\r\\n"	115206
+castCharm	pkg/spells/affect_spells.go	3275	"Your power fails to effect them because you are not an Outlaw!\\r\\n"	115386
+castCharm	pkg/spells/affect_spells.go	3277	"%s tried to control you but failed because %s in not an Outlaw!\\r\\n"	115527
+castCharm	pkg/spells/affect_spells.go	3317	"Isn't $n just such a nice fellow?"	116796
+castSummon	pkg/spells/affect_spells.go	3364	"You lack the proper glyphs to perform this magick.\\r\\n"	118208
+castSummon	pkg/spells/affect_spells.go	3368	"Sorry, but you need to be summonable to summon other players.\\r\\n"	118383
+castSummon	pkg/spells/affect_spells.go	3380	"You failed.\\r\\n"	118754
+castSummon	pkg/spells/affect_spells.go	3390	"You failed.\\r\\n"	119027
+castSummon	pkg/spells/affect_spells.go	3396	"You failed.\\r\\n"	119341
+castSummon	pkg/spells/affect_spells.go	3403	"You failed.\\r\\n"	119724
+castSummon	pkg/spells/affect_spells.go	3442	"Your spell backfires!\\r\\n"	121168
+castSummon	pkg/spells/affect_spells.go	3443	"$n disappears suddenly.\\r\\n"	121224
+castSummon	pkg/spells/affect_spells.go	3448	"$n arrives suddenly.\\r\\n"	121483
+castSummon	pkg/spells/affect_spells.go	3457	"You failed.\\r\\n"	121776
+castSummon	pkg/spells/affect_spells.go	3465	"$n disappears suddenly.\\r\\n"	122017
+castSummon	pkg/spells/affect_spells.go	3469	"$n arrives suddenly.\\r\\n"	122216
+castSummon	pkg/spells/affect_spells.go	3472	"%s has summoned you!\\r\\n"	122331
+castSummon	pkg/spells/affect_spells.go	3483	"You have a strange dream about falling...\\r\\n"	122832
+castDivineInt	pkg/spells/affect_spells.go	3584	"Your request for intervention falls on deaf ears.\\r\\n"	126083
+castDivineInt	pkg/spells/affect_spells.go	3593	"You pray for the intervention of your deity.\\r\\n"	126216
+castDivineInt	pkg/spells/affect_spells.go	3594	"$n grovels in the dirt and prays for a miracle."	126295
+castDivineInt	pkg/spells/affect_spells.go	3599	"Nothing seems to happen.\\r\\n"	126545
+castDivineInt	pkg/spells/affect_spells.go	3612	"Suddenly, a portal of light appears out of nowhere!\\r\\n"	126771
+castDivineInt	pkg/spells/affect_spells.go	3613	"Suddenly, a portal of light appears out of nowhere!"	126857
+castDivineInt	pkg/spells/affect_spells.go	3633	"$n steps through the portal!"	127465
+castConjureElemental	pkg/spells/affect_spells.go	3665	"You can't do that here.\\r\\n"	128541
+castConjureElemental	pkg/spells/affect_spells.go	3688	"The magic fails.\\r\\n"	128988
+castConjureElemental	pkg/spells/affect_spells.go	3712	"You begin to chant, but nothing seems to happen.\\r\\n"	129436
+castConjureElemental	pkg/spells/affect_spells.go	3720	"You begin to chant slowly, drawing power from %s.\\r\\n"	129624
+castConjureElemental	pkg/spells/affect_spells.go	3729	"The magic fails.\\r\\n"	129907
+castConjureElemental	pkg/spells/affect_spells.go	3736	"The magic fails.\\r\\n"	130136
+castConjureElemental	pkg/spells/affect_spells.go	3752	"An elemental appears before you!\\r\\n"	130523
+castMindsight	pkg/spells/affect_spells.go	3793	"With a searing pain, your psionic energy recoils!\\r\\n"	131625
+castMindsight	pkg/spells/affect_spells.go	3800	"Cannot find the target of your will!\\r\\n"	131975
+castMindsight	pkg/spells/affect_spells.go	3821	"The magic fails.\\r\\n"	132545
+castLocateObject	pkg/spells/affect_spells.go	3884	"Your magick suddenly dissolves into a wash of brilliant colours, and then, nothing.\\r\\n"	134511
+castLocateObject	pkg/spells/affect_spells.go	3888	"You sense nothing.\\n\\r"	134662
+castMirrorImage	pkg/spells/affect_spells.go	3919	"You fail to divide yourself.\\r\\n"	135585
+castMirrorImage	pkg/spells/affect_spells.go	3932	"You divide yourself in two!\\r\\n"	135891
+castMirrorImage	pkg/spells/affect_spells.go	3939	"$n divides $mself in two!"	136256
+callMagic	pkg/spells/call_magic.go	75	"A magical force prevents you from casting here.\\r\\n"	3669
+callMagic	pkg/spells/call_magic.go	89	"You cannot do this sitting!\\r\\n"	4292
+callMagic	pkg/spells/call_magic.go	117	"A flash of white light fills the room, dispelling your violent power!\\r\\n"	5385
+callMagic	pkg/spells/call_magic.go	119	"A flash of white light fills the room, dispelling your violent magic!\\r\\n"	5494
+callMagic	pkg/spells/call_magic.go	122	"White light from no particular source suddenly fills the room, then vanishes.\\r\\n"	5613
+checkPosition	pkg/spells/call_magic.go	219	"You can't cast spells while dead!\\r\\n"	8106
+checkPosition	pkg/spells/call_magic.go	224	"You can't concentrate enough!\\r\\n"	8248
+MagDamage	pkg/spells/damage_spells.go	27	"Pulling a shard of obsidian from a pocket, you crush it under your heel..."	810
+MagDamage	pkg/spells/damage_spells.go	28	"$n pulls something out of $s pocket and crushes it beneath $s heel..."	891
+MagDamage	pkg/spells/damage_spells.go	30	"You attempt the spell without the components..\\r\\n"	1010
+MagDamage	pkg/spells/damage_spells.go	32	"$n pulls something out of $s pocket and crushes it beneath $s heel...\\r\\n"	1113
+MagDamage	pkg/spells/damage_spells.go	36	"Pulling a prism from a pocket, you crush it under your heel..."	1307
+MagDamage	pkg/spells/damage_spells.go	37	"$n pulls something out of $s pocket and crushes it beneath $s heel..."	1376
+MagDamage	pkg/spells/damage_spells.go	39	"$n pulls something out of $s pocket and crushes it beneath $s heel..."	1494
+MagDamage	pkg/spells/damage_spells.go	43	"Pulling a pinch of ash from a pocket, you cast it about the room..."	1687
+MagDamage	pkg/spells/damage_spells.go	44	"$n pulls a pinch of ash out of a pocket and casts it about the room."	1761
+MagDamage	pkg/spells/damage_spells.go	46	"$n pulls a pinch of ash out of a pocket and casts it about the room."	1878
+MagDamage	pkg/spells/damage_spells.go	50	"Pulling the eye of a beholder from a pocket, you throw it to the ground..."	2083
+MagDamage	pkg/spells/damage_spells.go	51	"$n pulls a small orb out of a pocket and dashes it to the ground."	2164
+MagDamage	pkg/spells/damage_spells.go	53	"$n pulls a small orb out of a pocket and dashes it to the ground."	2278
+MagDamage	pkg/spells/damage_spells.go	57	"Pulling the vampire dust from a pocket, you throw it into the air..."	2489
+MagDamage	pkg/spells/damage_spells.go	58	"$n throws some dust into the air..."	2564
+MagDamage	pkg/spells/damage_spells.go	60	"$n throws some dust into the air..."	2648
+MagDamage	pkg/spells/damage_spells.go	84	"Your magick backfires!\\r\\n"	3537
+MagDamage	pkg/spells/damage_spells.go	98	"The gods protect $N.\\r\\n"	3848
+MagDamage	pkg/spells/damage_spells.go	108	"The gods protect $N.\\r\\n"	4066
+MagDamage	pkg/spells/damage_spells.go	115	"Suddenly, your psionic power recoils!\\r\\n"	4247
+MagDamage	pkg/spells/damage_spells.go	158	"A blast of hot air washes over you."	5152
+MagDamage	pkg/spells/damage_spells.go	162	"Thunder rumbles through the air."	5286
+SaySpell	pkg/spells/say_spell.go	35	"focuses $s will..."	972
+SaySpell	pkg/spells/say_spell.go	37	"utters the words, '%s'."	1018
+SaySpell	pkg/spells/say_spell.go	43	"$n focuses $s will..."	1144
+SaySpell	pkg/spells/say_spell.go	45	"$n stares at $N and focuses $s will..."	1193
+SaySpell	pkg/spells/say_spell.go	49	"$n closes $s eyes and "	1291
+SaySpell	pkg/spells/say_spell.go	51	"$n stares at $N and "	1354
+SaySpell	pkg/spells/say_spell.go	56	"$n stares at $p and focuses $s will..."	1482
+SaySpell	pkg/spells/say_spell.go	58	"$n stares at $p and "	1546
+SaySpell	pkg/spells/say_spell.go	62	"$n focuses $s will..."	1625
+SaySpell	pkg/spells/say_spell.go	64	"$n "	1672
+sendToRoom	pkg/spells/say_spell.go	301	"%s"	7924
+sendAct	pkg/spells/say_spell.go	365	"someone"	9732
+sendAct	pkg/spells/say_spell.go	369	"$n"	9835
+sendAct	pkg/spells/say_spell.go	370	"$s"	9879
+sendSpellActToCaster	pkg/spells/say_spell.go	392	"$E"	10639
+sendSpellActToCaster	pkg/spells/say_spell.go	393	"$S"	10712
+sendSpellActToCaster	pkg/spells/say_spell.go	396	"something"	10780
+sendSpellActToCaster	pkg/spells/say_spell.go	400	"$p"	10937

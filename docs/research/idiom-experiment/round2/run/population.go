@@ -1,7 +1,9 @@
 // Population rule (round two): inspect every non-test Go function, method,
 // and function literal under pkg/game, pkg/combat, and pkg/command. A function
 // is in the population when a string literal containing at least one ASCII
-// letter is in a message argument position listed in outputArguments,
+// letter is in a message argument position listed in outputArguments. For the
+// one-argument selector calls DreamContext.SendToChar/SendToRoom, argument 0
+// is the message; ordinary SendToChar/SendToRoom calls keep argument 1,
 // including the named output
 // callbacks private, output, ack, and sendToOutdoor; assigned to a local string
 // expression that is referenced by one of those arguments; or written to a
@@ -16,10 +18,12 @@
 // whole-program or interprocedural analysis.
 //
 // Run from the repository root: go run ./docs/research/idiom-experiment/round2/run/population.go
-// It writes population.tsv and population-literals.tsv beside this file.
+// It writes population.tsv and population-literals.tsv into the selected output
+// directory. Select the source tree and package set with -root and -packages.
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -69,13 +73,25 @@ var outputArguments = map[string][]int{
 	"sendWeatherRoom": {2}, "send_to_all": {0}, "send_to_char": {1}, "send_to_room": {1},
 	"send_to_zone": {1}, "shopNpcTell": {1}, "tellFromMob": {3}, "tellVictim": {0},
 	"tattooRoomAct": {2}, "wakeSelfLine": {2}, "woundBroadcast": {1},
+	"castHellfireActNotVictim": {3}, "castHellfireActToVictim": {3}, "checkReagents": {4, 5},
+	"consumeReagent": {4, 5}, "sendAct": {0}, "sendActTargetToCaster": {2},
+	"sendAffectActRoom": {2}, "sendAffectRoom": {2}, "sendAffectRoomFallback": {3},
+	"sendSpellActToCaster": {0}, "sendToCaster": {1}, "sendToRoom": {0},
+	"sendToVictim": {1}, "sendToZone": {0}, "spellActToRoom": {2},
 }
 
 func main() {
-	root := "."
+	root := flag.String("root", ".", "repository root to scan")
+	packages := flag.String("packages", "pkg/game,pkg/combat,pkg/command", "comma-separated package directories")
+	outDir := flag.String("out-dir", "docs/research/idiom-experiment/round2/run", "directory for population TSVs")
+	flag.Parse()
+	generate(*root, splitPackages(*packages), *outDir)
+}
+
+func generate(root string, packages []string, outDir string) {
 	fset := token.NewFileSet()
 	var rows []row
-	for _, dir := range []string{"pkg/game", "pkg/combat", "pkg/command"} {
+	for _, dir := range packages {
 		files, err := filepath.Glob(filepath.Join(root, dir, "*.go"))
 		check(err)
 		sort.Strings(files)
@@ -107,14 +123,14 @@ func main() {
 		return rows[i].Func < rows[j].Func
 	})
 
-	base := filepath.Dir("docs/research/idiom-experiment/round2/run/population.go")
-	population, err := os.Create(filepath.Join(base, "population.tsv"))
+	check(os.MkdirAll(outDir, 0o755))
+	population, err := os.Create(filepath.Join(outDir, "population.tsv"))
 	check(err)
 	defer population.Close()
 	_, err = fmt.Fprintln(population, "func\tfile\tline\tn_literals")
 	check(err)
 
-	literalFile, err := os.Create(filepath.Join(base, "population-literals.tsv"))
+	literalFile, err := os.Create(filepath.Join(outDir, "population-literals.tsv"))
 	check(err)
 	defer literalFile.Close()
 	_, err = fmt.Fprintln(literalFile, "func\tfile\tline\tliteral\toffset")
@@ -128,6 +144,17 @@ func main() {
 			check(err)
 		}
 	}
+}
+
+func splitPackages(value string) []string {
+	var packages []string
+	for _, item := range strings.Split(value, ",") {
+		item = strings.TrimSpace(item)
+		if item != "" {
+			packages = append(packages, item)
+		}
+	}
+	return packages
 }
 
 func analyzeFunction(fset *token.FileSet, file, name string, line int, body *ast.BlockStmt) []row {
@@ -166,10 +193,7 @@ func analyzeFunction(fset *token.FileSet, file, name string, line int, body *ast
 	usedNames := map[string]bool{}
 	stringBuffers := map[string]bool{}
 	for _, call := range calls {
-		indices, ok := outputArguments[callName(call.Fun)]
-		if !ok {
-			continue
-		}
+		indices := outputArgumentIndices(call.Fun, len(call.Args))
 		for _, index := range indices {
 			if index >= len(call.Args) {
 				continue
@@ -258,6 +282,17 @@ func analyzeFunction(fset *token.FileSet, file, name string, line int, body *ast
 		result = append(result, analyzeFunction(fset, file, closureName, closureLine, closure.Body)...)
 	}
 	return result
+}
+
+func outputArgumentIndices(fun ast.Expr, argCount int) []int {
+	name := callName(fun)
+	if _, selector := fun.(*ast.SelectorExpr); selector && argCount == 1 {
+		switch name {
+		case "SendToChar", "SendToRoom":
+			return []int{0}
+		}
+	}
+	return outputArguments[name]
 }
 
 func functionName(fn *ast.FuncDecl) string {
