@@ -78,12 +78,12 @@ func (db *DB) execDDL(stmt string) error {
 
 // PlayerRecord represents a player in the database.
 type PlayerRecord struct {
-	ID          int
-	LastLogon   int64 // C char_file_u.last_logon: last character save, not connection age
+	ID        int
+	LastLogon int64 // C char_file_u.last_logon: last character save, not connection age
 	// Host is C char_file_u.host: save_char copies ch->desc->host into the
 	// record only when the character has a live descriptor, else empty
 	// (src/db.c:2373-2381). read by last (src/act.wizard.c:1847).
-	Host string
+	Host        string
 	Name        string
 	Password    string // hashed
 	Description string
