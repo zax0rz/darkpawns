@@ -1,0 +1,59 @@
+# C affect_update (src/magic.c:433-455) walks character_list and, when a spell
+# expires, sends its wear-off message with send_to_char to the CHARACTER itself
+# (never the room). A descriptorless mobile is silent; do_switch sets
+# victim->desc to the wizard's descriptor (src/act.wizard.c do_switch), so a
+# wizard switched into the mob receives the line. Bless stores two records of
+# spell 3 (src/magic.c:879-957 shape), so the last-record condition
+# (src/magic.c:439-444) speaks once, after 7 mud hours (duration 6).
+# depth-case: affect-update.mob-wearoff-switched-descriptor
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 19650 1 8105 196
+
+[setup:oracle]
+Wearwiz
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wearwiz
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Wearwiz class mage
+set player Wearwiz maxmana 5000
+set player Wearwiz mana 5000
+skillset Wearwiz 'bless' 100
+cast 'bless' watcher
+switch watcher
+
+[probe]
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630

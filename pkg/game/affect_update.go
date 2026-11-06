@@ -7,9 +7,6 @@ package game
 // and remove expired affects with wear-off messages.
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
@@ -80,8 +77,8 @@ func (w *World) AffectUpdate() {
 			continue
 		}
 
-		// Mob affect expiration — magic.c:431-457
-		// C iterates character_list which includes both players and NPCs.
+		// Mob affect expiration — src/magic.c:433-455.
+		// C iterates character_list, which includes both players and NPCs.
 		mob := character.mob
 		if mob == nil {
 			continue
@@ -90,46 +87,35 @@ func (w *World) AffectUpdate() {
 			continue
 		}
 
-		mob.mu.Lock()
-		type expireInfo struct {
-			spellNum int
-			wearOff  string
-		}
-		var expired []expireInfo
-		roomVNum := mob.RoomVNum
-		shortDesc := mob.GetShortDesc()
-		for key, val := range mob.CustomData {
-			if !strings.HasPrefix(key, "affect_") {
-				continue
+		// C walks ch->affected newest-first (src/magic.c:435); OrderedAffects is
+		// that order. Each expired record is removed, and C sends the wear-off to
+		// the character itself (send_to_char): a descriptorless mobile is silent,
+		// while a mobile a wizard has switched onto delivers to that wizard's
+		// descriptor (MobInstance.SendMessage; src/act.wizard.c do_switch sets
+		// victim->desc = the wizard's descriptor).
+		affects := mob.OrderedAffects()
+		for i, af := range affects {
+			switch {
+			case af.Duration == -1:
+				// Permanent affect (immortal only): no action.
+			case af.Duration >= 1:
+				af.Duration--
+			default:
+				// Expired this tick. C sends the wear-off only for the last record
+				// of its spell (src/magic.c:439-444): no next record, a different
+				// spell, or a next record still alive. A multi-record spell thus
+				// speaks once, from its oldest expiring record.
+				var next *engine.Affect
+				if i+1 < len(affects) {
+					next = affects[i+1]
+				}
+				if next == nil || next.SpellID != af.SpellID || next.Duration > 0 {
+					if msg := SpellWearOffMsg(af.SpellID); msg != "" {
+						mob.SendMessage(msg + "\r\n")
+					}
+				}
+				mob.RemoveAffectBySpell(af.SpellID)
 			}
-			aff, ok := val.(*engine.Affect)
-			if !ok {
-				continue
-			}
-			if aff.Duration == -1 {
-				continue // permanent affect
-			}
-			if aff.Duration >= 1 {
-				aff.Duration--
-				continue
-			}
-			// Duration == 0 — expires this tick.
-			var spellNum int
-			if _, err := fmt.Sscanf(key, "affect_%d", &spellNum); err == nil {
-				expired = append(expired, expireInfo{spellNum: spellNum, wearOff: SpellWearOffMsg(aff.SpellID)})
-			}
-		}
-		mob.mu.Unlock()
-
-		// Send wear-off messages and remove affects outside the mob lock.
-		// RemoveAffectBySpell acquires mob.mu internally via RemoveAffected.
-		// C sends wear-off to the mob itself via send_to_char; mobs have no
-		// terminal, so the message is silently dropped for NPCs.
-		for _, info := range expired {
-			if info.wearOff != "" && !mob.IsNPC() {
-				w.roomMessage(roomVNum, fmt.Sprintf("%s %s", shortDesc, info.wearOff))
-			}
-			mob.RemoveAffectBySpell(info.spellNum)
 		}
 	}
 }
