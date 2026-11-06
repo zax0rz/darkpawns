@@ -374,9 +374,12 @@ func (w *World) actToChar(ch *Player, msg string, obj1, obj2 any) {
 }
 
 // actToRoom is a legacy signature kept as a thin adapter to canonical Act.
-func (w *World) actToRoom(ch *Player, msg string, obj1, obj2 any) {
+// hide is C's hide_invisible argument at this call site (R1): TRUE drops the
+// line for any receiver who cannot see the actor (a blind observer, say). Grep
+// the C act() at each call site; do not guess.
+func (w *World) actToRoom(ch *Player, msg string, obj1, obj2 any, hide bool) {
 	victim, obj, victObj := legacyActArgs(obj1, obj2)
-	Act(w, false, ch, victim, obj, victObj, legacyActFormat(msg), "", ToRoom)
+	Act(w, hide, ch, victim, obj, victObj, legacyActFormat(msg), "", ToRoom)
 }
 
 // actToVictim is a legacy signature kept as a thin adapter to canonical Act.
@@ -385,10 +388,11 @@ func actToVictim(ch, vict *Player, msg string, obj1, obj2 any) {
 	Act(nil, false, ch, vict, obj, victObj, legacyActFormat(msg), "", ToVict)
 }
 
-// actToRoomExclude is a legacy signature kept as a thin adapter to Act.
-func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 any) {
+// actToRoomExclude is a legacy signature kept as a thin adapter to Act. hide is
+// C's hide_invisible argument at this call site, as in actToRoom.
+func (w *World) actToRoomExclude(ch, vict *Player, msg string, obj1, obj2 any, hide bool) {
 	_, obj, victObj := legacyActArgs(obj1, obj2)
-	Act(w, false, ch, vict, obj, victObj, legacyActFormat(msg), "", ToNotVict)
+	Act(w, hide, ch, vict, obj, victObj, legacyActFormat(msg), "", ToNotVict)
 }
 
 // atoi converts string to int

@@ -80,7 +80,7 @@ func (w *World) performGetFromContainer(ch *Player, obj, cont *ObjectInstance, m
 			return
 		}
 		w.actToChar(ch, "You get $p from $P.", obj, cont)
-		w.actToRoom(ch, "$n gets $p from $P.", obj, cont)
+		w.actToRoom(ch, "$n gets $p from $P.", obj, cont, true)
 		w.getCheckMoney(ch, obj)
 		w.fireOnGet(ch, obj)
 	}
@@ -161,7 +161,7 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 			return
 		}
 		w.actToChar(ch, "You get $p.", obj, nil)
-		w.actToRoom(ch, "$n gets $p.", obj, nil)
+		w.actToRoom(ch, "$n gets $p.", obj, nil, true)
 		w.getCheckMoney(ch, obj)
 		w.fireOnGet(ch, obj)
 	}
@@ -327,7 +327,7 @@ func (w *World) performDropNamed(ch *Player, obj *ObjectInstance, sname string) 
 		return
 	}
 	w.actToChar(ch, fmt.Sprintf("You %s $p.", sname), obj, nil)
-	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.", sname), obj, nil)
+	w.actToRoom(ch, fmt.Sprintf("$n %ss $p.", sname), obj, nil, true)
 	w.fireOnDrop(ch, obj)
 }
 
@@ -355,7 +355,7 @@ func (w *World) performDropGold(ch *Player, amount int) {
 	}
 	ch.SetWaitState(1)
 	ch.SendMessage("You drop some gold.\r\n")
-	w.actToRoom(ch, fmt.Sprintf("$n drops %s.", createMoneyDesc(amount)), nil, nil)
+	w.actToRoom(ch, fmt.Sprintf("$n drops %s.", createMoneyDesc(amount)), nil, nil, false)
 }
 
 // doDrop handles the drop command
@@ -463,7 +463,7 @@ func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	}
 	w.actToChar(ch, "You give $p to $N.", obj, vict)
 	actToVictim(ch, vict, "$n gives you $p.", obj, nil)
-	w.actToRoomExclude(ch, vict, "$n gives $p to $N.", obj, vict)
+	w.actToRoomExclude(ch, vict, "$n gives $p to $N.", obj, vict, true)
 }
 
 func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInstance) {
@@ -549,7 +549,7 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 	// C sprintf()s the amount/money_desc into the string before act(); the act
 	// helpers only substitute $n/$N, so pre-format here.
 	actToVictim(ch, vict, fmt.Sprintf("$n gives you %d gold coins.", amount), nil, nil)
-	w.actToRoomExclude(ch, vict, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), nil, vict)
+	w.actToRoomExclude(ch, vict, fmt.Sprintf("$n gives %s to $N.", createMoneyDesc(amount)), nil, vict, true)
 }
 
 // doGiveCoins handles the coin form of give, including mob bribes.

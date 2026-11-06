@@ -374,7 +374,7 @@ func (s *Session) oeditActLocked(format string) {
 	if s.manager == nil || s.manager.world == nil || s.olcActor() == nil {
 		return
 	}
-	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", game.ToRoom)
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, format, "", game.ToRoom)
 }
 
 // oeditCols mirrors get_char_cols for the OLC menus; it is the same

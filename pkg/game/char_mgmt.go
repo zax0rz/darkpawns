@@ -60,7 +60,7 @@ func (w *World) updateCharObjects(p *Player) {
 	item.SetValue(2, hours)
 	if hours == 1 {
 		w.actToChar(p, "Your light begins to flicker and fade.", nil, nil)
-		w.actToRoom(p, "$n's light begins to flicker and fade.", nil, nil)
+		w.actToRoom(p, "$n's light begins to flicker and fade.", nil, nil, false)
 		return
 	}
 	if hours != 0 {
@@ -68,7 +68,7 @@ func (w *World) updateCharObjects(p *Player) {
 	}
 
 	w.actToChar(p, "Your light sputters out and dies.", nil, nil)
-	w.actToRoom(p, "$n's light sputters out and dies.", nil, nil)
+	w.actToRoom(p, "$n's light sputters out and dies.", nil, nil, false)
 	w.adjustRoomLight(p.GetRoom(), -1)
 
 	hasAffects := false

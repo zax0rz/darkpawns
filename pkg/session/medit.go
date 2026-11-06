@@ -278,7 +278,7 @@ func (s *Session) meditActLocked(actType int, format string) {
 	if s.manager == nil || s.manager.world == nil || s.olcActor() == nil {
 		return
 	}
-	game.Act(s.manager.world, false, s.player, nil, nil, nil, format, "", actType)
+	game.Act(s.manager.world, true, s.player, nil, nil, nil, format, "", actType)
 }
 
 // meditDisplayLongDesc mirrors C's fread_string output for the mob long

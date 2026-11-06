@@ -17,7 +17,7 @@ func (w *World) performPut(ch *Player, obj, cont *ObjectInstance) {
 		return
 	}
 	w.actToChar(ch, "You put $p in $P.", obj, cont)
-	w.actToRoom(ch, "$n puts $p in $P.", obj, cont)
+	w.actToRoom(ch, "$n puts $p in $P.", obj, cont, true)
 }
 
 // doPut handles the put command
