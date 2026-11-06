@@ -71,11 +71,11 @@ spellmatrix-staff-olc-07-depth	cast.tsv	spell.dispel-good.matrix-staff-olc	block
 spellmatrix-staff-olc-07-depth	cast.tsv	spell.group-heal.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-07-depth	cast.tsv	spell.holy-shield.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-07-depth	cast.tsv	spell.remove-poison.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-08-depth	cast.tsv	spell.group-recall.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-08-depth	cast.tsv	spell.lycanthropy.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-08-depth	cast.tsv	spell.mass-heal.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-08-depth	cast.tsv	spell.sobriety.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-08-depth	cast.tsv	spell.vampirism.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-08-depth	cast.tsv	spell.group-recall.matrix-staff-olc	blocked	run-varying
+spellmatrix-staff-olc-08-depth	cast.tsv	spell.lycanthropy.matrix-staff-olc	blocked	run-varying
+spellmatrix-staff-olc-08-depth	cast.tsv	spell.mass-heal.matrix-staff-olc	blocked	run-varying
+spellmatrix-staff-olc-08-depth	cast.tsv	spell.sobriety.matrix-staff-olc	blocked	run-varying
+spellmatrix-staff-olc-08-depth	cast.tsv	spell.vampirism.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.enchant-armor.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.group-invisibility.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.hellfire.matrix-staff-olc	blocked	run-varying
