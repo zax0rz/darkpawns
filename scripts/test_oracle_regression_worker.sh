@@ -196,6 +196,11 @@ run_case duplicate-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$
 # opposite order on the confirming attempt. Encounter-order suffixing compared
 # the equal multiset as different files (DP-1456); canonical sort-order
 # suffixing must classify EXPECTED.
+# run-varying-agreeing-attempts: a run-varying divergence whose two attempts
+# agree by chance must stay EXPECTED_UNSTABLE, not fall through to the absent
+# pin check and mislabel FAIL (DP-1456 follow-up).
+run_case run-varying-agreeing-attempts "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" yes "" $'EXPECTED_UNSTABLE\tfake' 2 2 run-varying
+
 run_case permuted-repeat-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_b,cast:$two_a" yes "$(pin_dup "$two_a" "$two_b")" $'EXPECTED\tfake' 2 2
 run_case duplicate-labels-unpinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" no "" $'FAIL\tfake\t3' 2 2
 run_case multiblock-complete "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:$two_b" yes "$(pin_two "$two_a" multiblock-complete "$two_b")" $'EXPECTED\tfake' 3 3

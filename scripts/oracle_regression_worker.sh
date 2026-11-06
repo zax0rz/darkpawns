@@ -196,6 +196,15 @@ main() {
 			return
 		fi
 		if [[ $in_baseline -eq 1 ]]; then
+			# A run-varying declaration means the shape is not pinnable at all;
+			# two attempts agreeing by chance must not fall through to the pin
+			# check, which has no pins for it and would mislabel it FAIL
+			# (DP-1456 follow-up).
+			if [[ $declared_unstable -eq 1 ]]; then
+				write_result EXPECTED_UNSTABLE
+				printf 'EXPECTED_UNSTABLE %s (ledger-backed divergence declared run-varying; attempts agreed this run)\n' "$scenario"
+				return
+			fi
 			if pins_match "$second_fingerprints"; then
 				write_result EXPECTED
 				printf 'EXPECTED %s (ledger-backed divergence, pinned shape)\n' "$scenario"
