@@ -1,0 +1,16 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestCheckSavingThrow_DoesNotPanic	saving_throws.go	174	saving_throws.go:174 CheckSavingThrow returns constant false	green	yes
+TestCheckSavingThrow_HighLevelSavesOften	saving_throws.go	174	saving_throws.go:174 CheckSavingThrow returns constant true	green	yes
+TestCheckSavingThrow_Level0SavesRarely	saving_throws.go	174	saving_throws.go:174 CheckSavingThrow returns constant false	green	yes
+TestRandBool	damage_spells.go	484	damage_spells.go:484 randBool returns constant true	green	yes
+TestCast_RoutesToCallMagic	spells.go	205	spells.go:205 Cast returns false without calling CallMagic	green	yes
+TestCastHellfire_DealsAreaDamage_InstakillsLowLevel_SkipsCasterAndGroup	affect_spells.go	3093	affect_spells.go:3093 hellfire dam := 1	green	yes
+TestCastMeteorSwarm_DealsAreaDamage_SkipsImmortalsAndGroup	affect_spells.go	2995	affect_spells.go:2995 meteor dam := 1	green	yes
+TestAttackTypes_TableSize	pkg/combat/fight_core.go	33	pkg/combat/fight_core.go:33 AttackHitTexts live word drift (sting->stung)	green	yes
+TestAttackTypes_IndexZeroIsEmpty	pkg/combat/fight_core.go	33	pkg/combat/fight_core.go:33 AttackHitTexts live word drift (sting->stung)	green	yes
+TestAttackTypes_EntriesHaveValues	pkg/combat/fight_core.go	33	pkg/combat/fight_core.go:33 AttackHitTexts live word drift (sting->stung)	green	yes
+TestSavingThrowBeforeKeyingMatchesCFixture	saving_throws.go	31	saving_throws.go:31 Mage PARA L1 70->71 (production table cell, clean)	green	yes
+TestSavingThrowBeforeKeyingChecksum	saving_throws.go	31	saving_throws.go:31 Mage PARA L1 70->71 (production table cell, clean)	green	yes
+TestSavingThrow_GoldenAgainstCSource	saving_throws.go	31	saving_throws.go:31 Mage PARA L1 70->71 (production table cell, clean)	red	yes
+TestGetSavingThrow_WarriorLevel1Para	saving_throws.go	31	saving_throws.go:31 Mage PARA L1 70->71 (production table cell, clean)	green	yes
+TestSavingThrowNPCUsesWarriorTable	saving_throws.go	202	saving_throws.go:202 NPC->warrior override disabled (if isNPC && false)	green	yes

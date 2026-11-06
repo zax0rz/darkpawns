@@ -1,0 +1,7 @@
+test	file	line	mutation	result(green|red)	restored(yes)
+TestCastMirrorImageOutputAndRoomAudience	pkg/spells/affect_spells.go	3917	SpawnMobWithLevelI(69, roomVNum, level)#SpawnMobWithLevelI(69, roomVNum, 1)#	red	yes
+TestCastHellfire_BlocksPeacefulRoom	pkg/spells/affect_spells.go	3089	This room just has such a peaceful, easy feeling\.\.#MUTATED PEACEFUL BYTES#	green	yes
+TestCheckSavingThrow_DoesNotPanic	pkg/spells/saving_throws.go	216	return save < roll#return save > roll#	green	yes
+TestRandBool	pkg/spells/damage_spells.go	490	return dprng.Number(0, denom-1) == 0#return dprng.Number(0, 0) == 0#	green	yes
+TestCast_RoutesToCallMagic	pkg/spells/spells.go	206	return CallMagic(caster, target, nil, spellNum, casterLevel, CastSpell, world)#return false#	green	yes
+TestCheckPosition	pkg/spells/call_magic.go	219	while dead!#while MUTATED BYTES#	green	yes
