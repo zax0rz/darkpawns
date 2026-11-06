@@ -103,11 +103,12 @@ set player CallMissActor class mage
 skillset CallMissActor 'call lightning' 1
 set player CallMissActor maxmana 5000
 set player CallMissActor mana 5000
-set player CallMissActor level 31
 set player CallMissVictim class mage
 set player CallMissVictim level 20
 set player CallMissVictim maxhit 5000000
 set player CallMissVictim hit 5000000
+set player CallMissActor level 31
+
 
 [probe]
 cast 'call lightning' CallMissVictim

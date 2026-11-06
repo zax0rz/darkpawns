@@ -37,10 +37,11 @@ Y
 [warmup]
 goto 8105
 set Chamcast class i
-set Chamcast level 31
 skillset Chamcast 'chameleon' 100
 set Chamcast maxmana 5000
 set Chamcast mana 5000
+set Chamcast level 31
+
 
 [probe]
 will 'chameleon'

@@ -99,7 +99,6 @@ goto 8162
 teleport ItemPeer 8162
 teleport ItemView 8162
 set player ItemMage class mage
-set player ItemMage level 30
 set player ItemMage align -1000
 set player ItemPeer level 30
 set player ItemPeer maxhit 5000
@@ -109,8 +108,10 @@ set player ItemView level 30
 set player ItemView maxhit 5000
 set player ItemView hit 5000
 set player ItemView align -1000
+set player ItemMage level 30
 get cross
 wear cross
+
 
 [probe]
 equipment

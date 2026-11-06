@@ -65,7 +65,6 @@ send:peer alias oldalias score
 send:peer save
 teleport Archivepeer 8004
 send:peer quit
-send:peer 0
 ~dpclock pulse 1
 
 [peer-drop]

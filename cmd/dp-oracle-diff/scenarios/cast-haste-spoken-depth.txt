@@ -68,13 +68,13 @@ Y
 
 [warmup]
 goto 8105
-teleport Hastecast 8105
 teleport Hasteobs 8105
 set Hastecast class mystic
-set Hastecast level 31
-skillset Hastecast haste 100
+skillset Hastecast 'haste' 100
 set Hastecast maxmana 5000
 set Hastecast mana 5000
+set Hastecast level 31
+
 
 [probe]
 cast 'haste'

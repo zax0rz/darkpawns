@@ -70,8 +70,9 @@ teleport Peektarget 1204
 load obj 8037
 give sword Peektarget
 set Peektarget level 39
-set Peekhigher level 30
 skillset Peekhigher 'peek' 100
+set Peekhigher level 30
+
 
 [probe]
 peek Peektarget

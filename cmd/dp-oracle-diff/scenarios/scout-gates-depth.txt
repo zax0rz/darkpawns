@@ -40,7 +40,7 @@ Y
 
 [warmup]
 goto 8162
-skillset Scoutindoors scout 100
+skillset Scoutindoors 'scout' 100
 
 [probe]
 scout north

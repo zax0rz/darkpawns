@@ -72,14 +72,15 @@ Y
 goto 4001
 teleport ItemPeer 4001
 set player ItemMage class mage
-set player ItemMage level 30
 set player ItemMage align 1000
 set player ItemPeer level 30
 set player ItemPeer maxhit 5000
 set player ItemPeer hit 5000
 set player ItemPeer align -1000
+set player ItemMage level 30
 get spectacles
 wear spectacles
+
 
 [probe]
 equipment

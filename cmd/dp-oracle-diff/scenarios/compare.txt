@@ -63,7 +63,6 @@ Y
 1
 
 [warmup]
-goto 8162
 get dagger
 get breast
 get chain

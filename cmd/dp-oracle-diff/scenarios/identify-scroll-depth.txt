@@ -5,6 +5,7 @@
 # C path: src/spell_parser.c:511 -> src/spells.c:476-530.
 
 [fixture]
+add-obj-index 58.obj
 empty-players
 quiet-mobs
 

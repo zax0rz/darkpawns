@@ -97,13 +97,14 @@ goto 8105
 teleport Hellvict 8105
 teleport Hellwat 8105
 set player Hellcast class mage
-set player Hellcast level 34
 set player Hellcast maxmana 5000
 set player Hellcast mana 5000
 skillset Hellcast 'hellfire' 100
 set player Hellvict level 10
 set player Hellvict maxhit 5000
 set player Hellvict hit 5000
+set player Hellcast level 34
+
 
 [probe]
 cast 'hellfire'

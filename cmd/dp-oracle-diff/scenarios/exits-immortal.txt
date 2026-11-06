@@ -5,6 +5,7 @@
 # depth-case: exits.immortal-vnums
 
 [fixture]
+empty-players
 quiet-mobs
 replace-room-exits 8105 all 8161 0
 set-room-flag 8161 0 on

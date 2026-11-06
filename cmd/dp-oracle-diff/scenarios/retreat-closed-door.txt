@@ -70,7 +70,7 @@ Y
 [warmup]
 teleport Retmort 8040
 goto 8040
-skillset Retmort retreat 100
+skillset Retmort 'retreat' 100
 
 [probe:mortal]
 kill zookeeper

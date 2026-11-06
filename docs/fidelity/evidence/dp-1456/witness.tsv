@@ -1,0 +1,125 @@
+scenario	claimed_event	c_witness_line	seeds
+ambush-depth	ambush.no-arg	Ambush who?	1
+ambush-entry-gates	ambush.sector-gate	Ambush someone here? Impossible!	1
+ambush-lost-prey	ambush.lost-prey	You seem to have lost your prey.	1
+call-lightning-skill-message-miss-depth	fightmsg.6.cast-concentration-miss	Your lightning bolt scores the ground in front of CallMissVictim, a misser!	1,2,3,5,8
+cast-armor-spoken-depth	spell.armor-spoken	Okay.	1,2,3,5,8
+cast-chameleon-spoken-depth	spell.chameleon-spoken	Okay.	1,2,3,5,8
+cast-detect-alignment-spoken-depth	spell.detect-alignment-spoken	Okay.	1,2,3,5,8
+cast-detect-invisibility-spoken-depth	spell.detect-invisibility-spoken	Okay.	1,2,3,5,8
+cast-detect-magic-spoken-depth	spell.detect-magic-spoken	Okay.	1,2,3,5,8
+cast-fly-spoken-depth	spell.fly-spoken	Okay.	1,2,3,5,8
+cast-haste-spoken-depth	spell.haste-spoken	Okay.	1,2,3,5,8
+cast-infravision-spoken-depth	spell.infravision-spoken	Okay.	1,2,3,5,8
+cast-levitate-spoken-depth	spell.levitate-spoken	Okay.	1,2,3,5,8
+cast-mental-lapse-spoken-depth	spell.mental-lapse-spoken	Okay.	1,2,3,5,8
+cast-protection-evil-spoken-depth	spell.protection-from-evil-spoken	Okay.	1,2,3,5,8
+cast-protection-good-spoken-depth	spell.protection-from-good-spoken	Okay.	1,2,3,5,8
+cast-sense-life-spoken-depth	spell.sense-life-spoken	Okay.	1,2,3,5,8
+cast-water-breathe-spoken-depth	spell.water-breathe-spoken	Okay.	1,2,3,5,8
+cast-waterwalk-spoken-depth	spell.waterwalk-spoken	Okay.	1,2,3,5,8
+channels-depth	channels.vocabulary	Channelgod gossips, 'channel hello'	1
+clan-capacity-depth	clan.create-capacity	Max clans reached. WOW!	1,2,3,5,8
+clan-offline-applicant-depth	clan.enroll-applicant-list-offline	Clanoffline	1,2,3,5,8
+color-spray-skill-message-miss-depth	spell.color-spray.message-miss	Okay.	1,2,3,5,8
+compare	compare.missing-objects	Looks like you don't have those objects..	1,2,3,5,8
+detect-poison-depth	spell.detect-poison-target-output	Okay.	1,2,3,5,8
+energy-drain-skill-message-miss-depth	spell.energy-drain.message-miss	Okay.	1,2,3,5,8
+exits-immortal	exits.immortal-vnums	Obvious exits:	1,2,3,5,8
+force-mob-flee	force.npc-command-interpreter	A guard trainee panics, and attempts to flee!	1
+identify-scroll-depth	spell.identify-scroll-potion-output	Okay.	1
+lua-nested-writeback	lua.nested-writeback-slot	A guard trainee leaves north.	1
+meteor-swarm-message-miss-attacker-depth	fightmsg.41.meteor-swarm-miss-attacker	Your incantation brings the heavens down upon your victims!	1,2,3,5,8
+mp-bribe-cityguard-refusal	give.gold-mob-bribe-dispatch	An Amber cityguard says, 'Are you trying to bribe me?  That's against the law you know...'	1
+newbie-channel-depth	newbie.low-level-allowed	You newbie, 'hello from a level one player'	1,2,3,5,8
+peek-higher-immortal-depth	peek.higher-immortal-target	Peektarget is Human.	1
+recite-multi-spell-depth	recite.multi-spell-effects	There is nothing to here to affect with the Book of Common Prayer.	1,2,3,5,8
+retreat-closed-door	escape.closed-door-skip	You swing your fist at a zookeeper, but miss him!	1,2,3,5,8
+scout-gates-depth	scout.outdoors-gate	You can only do this outdoors.	1,2,3,5,8
+scout-success-depth	scout.no-exit	There is nothing of interest there.	1,2,3,5,8
+search-gates-depth	search.entry-gate	Yeah, right.	1,2,3,5,8
+show-player-stored	show.player-valid	Player: Shopreport   (Male) [40 Wa]	1,2,3,5,8
+show-rent-stored	show.rent-valid	plrobjs/P-T/shopreport.objs	1,2,3,5,8
+skillmsg-drowning-tick-outcomes-depth	room-activity.drowning-matrix-outcomes	You sure are DROWNING!	1,2,3,5,8
+spec-proc-mindflayer	mob.mindflayer-entry-gates	You try to hit Alhazred the Chief Vivisector who easily avoids the blow.	1,2,3
+spec-proc-rescuer-7909	mob.rescuer-7909-autonomous-entry	The elven avenger heroically rescues Aatxe!	1
+spell-control-weather-invalid-depth	spell.control-weather-invalid-argument	Okay.	1
+spellmatrix-calliope-spoken-depth	spell.calliope.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-clone-spoken-depth	spell.clone.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-damage-potion-group-01-depth	spell.burning-hands.matrix-potion-self	You burn ItemMage with your hot little hands!	1,2,3,5,8
+spellmatrix-damage-potion-group-02-depth	spell.color-spray.matrix-potion-self	Your own private rainbow hits ItemMage in the face -- WOWIE!!	1,2,3,5,8
+spellmatrix-damage-potion-group-03-depth	spell.fireball.matrix-potion-self	You throw a fireball at ItemMage and have the satisfaction of seeing him enveloped in flames!	1,2,3,5,8
+spellmatrix-damage-potion-group-04-depth	spell.magic-missile.matrix-potion-self	You attempt the spell without the components..	1,2,3,5,8
+spellmatrix-damage-potion-group-05-depth	spell.mindpoke.matrix-potion-self	ItemMage screams in agony as you prod his mind.	1,2,3,5,8
+spellmatrix-damage-potion-group-06-depth	spell.soul-leech.matrix-potion-self	You feel infused with power as you leech ItemMage's soul.	1,2,3,5,8
+spellmatrix-damage-potion-group-07-depth	spell.psiblast.matrix-potion-self	You rock ItemMage with your incredibly powerful psionic blast!!!	1,2,3,5,8
+spellmatrix-damage-scroll-group-01-depth	spell.burning-hands.matrix-scroll-targeted	You burn ItemPeer with your hot little hands!	1,2,3,5,8
+spellmatrix-damage-scroll-group-02-depth	spell.color-spray.matrix-scroll-targeted	Your own private rainbow hits ItemPeer in the face -- WOWIE!!	1,2,3,5,8
+spellmatrix-damage-scroll-group-03-depth	spell.fireball.matrix-scroll-targeted	You throw a fireball at ItemPeer and have the satisfaction of seeing her enveloped in flames!	1,2,3,5,8
+spellmatrix-damage-scroll-group-04-depth	spell.magic-missile.matrix-scroll-targeted	You attempt the spell without the components..	1,2,3,5,8
+spellmatrix-damage-scroll-group-05-depth	spell.mindpoke.matrix-scroll-targeted	ItemPeer screams in agony as you prod her mind.	1,2,3,5,8
+spellmatrix-damage-scroll-group-06-depth	spell.soul-leech.matrix-scroll-targeted	You feel infused with power as you leech ItemPeer's soul.	1,2,3,5,8
+spellmatrix-damage-scroll-group-07-depth	spell.psiblast.matrix-scroll-targeted	You rock ItemPeer with your incredibly powerful psionic blast!!!	1,2,3,5,8
+spellmatrix-dominate-spoken-depth	spell.dominate.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-hellfire-spoken-depth	spell.hellfire.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-itemroute-infravision-depth	spell.infravision.matrix-potion-live	Your eyes glow red.	1,2,3,5,8
+spellmatrix-mag-affects-batch-depth	spell.sanctuary.matrix-spoken-effect	Okay.	1,2,3,5,8
+spellmatrix-mag-affects-spoken-depth	spell.strength.matrix-spoken-state	Okay.	1,2,3,5,8
+spellmatrix-mass-dominate-spoken-depth	spell.mass-dominate.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-night-creatures-spoken-depth	spell.lycanthropy.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-potion-drowning-fallthrough-depth	spell.drowning.matrix-potion-fallthrough	Your eyes glow red.	1,2,3,5,8
+spellmatrix-potion-olc-01-depth	spell.charm-person.matrix-potion-olc	You like yourself even better!	1,2,3,5,8
+spellmatrix-potion-olc-02-depth	spell.group-heal.matrix-potion-olc	The bowels of hell open beneath your feet!!	1,2,3,5,8
+spellmatrix-potion-olc-03-depth	spell.cell-adjustment.matrix-potion-olc	A warm feeling floods your body.	1,2,3,5,8
+spellmatrix-potion-olc-04-depth	spell.disintegration.matrix-potion-olc	A ray of light jumps from your hand, dissolving a hole in ItemMage!	1,2,3,5,8
+spellmatrix-scroll-olc-01-depth	spell.blindness.matrix-scroll-olc	Your magic fades, then dies out totally.	1,2,3,5,8
+spellmatrix-scroll-olc-03-depth	spell.dominate.matrix-scroll-olc	You fail.	1,2,3,5,8
+spellmatrix-scroll-olc-04-depth	spell.haste.matrix-scroll-olc	You draw a magic circle on the ground.	1,2,3,5,8
+spellmatrix-scroll-olc-05-depth	spell.animate-dead.matrix-scroll-object-olc	There is no corpse!	1,2,3,5,8
+spellmatrix-shift-reality-spoken-depth	spell.teleport.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-staff-olc-01-depth	spell.shift-reality.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-02-depth	spell.chill-touch.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-03-depth	spell.curse.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-04-depth	spell.enchant-weapon.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-05-depth	spell.lightning-bolt.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-06-depth	spell.shocking-grasp.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-07-depth	spell.remove-poison.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-08-depth	spell.group-recall.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-09-depth	spell.group-invisibility.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-10-depth	spell.mind-blast.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-11-depth	spell.vitality.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-12-depth	spell.adrenaline-boost.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-13-depth	spell.mirror-image.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-14-depth	spell.transparency.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-15-depth	spell.calliope.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-staff-olc-16-depth	spell.dream-travel.matrix-staff-olc	Your a staff of sleep radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-wand-olc-01-depth	spell.burning-hands.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-02-depth	spell.cure-light.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-03-depth	spell.detect-poison.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-04-depth	spell.sleep.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-05-depth	spell.holy-shield.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-06-depth	spell.identify.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-07-depth	spell.lesser-perception.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-08-depth	spell.cell-adjustment.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-09-depth	spell.know-align.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-10-depth	spell.calliope.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-wand-olc-11-depth	spell.glyph-of-summoning.matrix-wand-olc	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-word-recall-spoken-depth	spell.word-recall.matrix-spoken	Okay.	1,2,3,5,8
+spellmatrix-world-potion-strength-depth	spell.strength.matrix-potion	You feel stronger!	1,2,3,5,8
+spellmatrix-world-scroll-disrupt-depth	spell.ray-of-disruption.matrix-scroll	There is nothing to here to affect with an old, black vellum.	1,2,3,5,8
+spellmatrix-world-scroll-identify-depth	spell.identify.matrix-scroll	Name: ScrollReader	1,2,3,5,8
+spellmatrix-world-scroll-know-align-depth	spell.know-align.matrix-scroll	Like a physical blow, emotions of others wash over you.	1,2,3,5,8
+spellmatrix-world-scroll-perception-heal-depth	spell.detect-magic.matrix-scroll	Your eyes tingle.	1,2,3,5,8
+spellmatrix-world-scroll-teleport-strength-depth	spell.teleport.matrix-scroll	The world around you turns black and you suddenly find yourself..	1,2,3,5,8
+spellmatrix-world-staff-gate-live-depth	spell.gate.matrix-world-staff-live	Your a small pair of spectacles radiates an ethereal glow that lights the room.	1,2,3,5,8
+spellmatrix-world-wand-disintegration-live-depth	spell.disintegration.matrix-world-wand-live	Your a dark, metal ball flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-world-wand-group-recall-depth	spell.group-recall.matrix-world-wand	Your a silver orb flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-world-wand-group-recall-ungrouped-depth	spell.group-recall.matrix-world-wand-ungrouped-caster	Your a silver orb flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-world-wand-harm-depth	spell.harm.matrix-world-wand	Your an unholy cross flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-world-wand-poison-depth	spell.poison.matrix-world-wand	Your ItemMage's dagger of venom flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-world-wand-shocking-grasp-depth	spell.shocking-grasp.matrix-world-wand	Your some electric gloves flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+summon-caster-summonable-depth	spell.summon.caster-summonable-pvp	Okay.	1
+summon-nonoutlaw-refusal-depth	spell.summon.nonoutlaw-refusal	Okay.	1
+track-depth	track.no-argument	Whom are you trying to track?	1
+transfer-depth	transfer.target-not-found	No-one by that name here.	1,2
+wizard-file-output-depth	stat.file-protected-higher	MALE PC 'Setpeer'  IDNum: [    2], In room [   -1]	1,2,3,5,8

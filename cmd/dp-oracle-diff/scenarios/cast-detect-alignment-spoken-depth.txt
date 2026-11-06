@@ -37,10 +37,11 @@ Y
 [warmup]
 goto 8105
 set Aligncast class cleric
-set Aligncast level 31
 skillset Aligncast 'detect alignment' 100
 set Aligncast maxmana 5000
 set Aligncast mana 5000
+set Aligncast level 31
+
 
 [probe]
 cast 'detect alignment'

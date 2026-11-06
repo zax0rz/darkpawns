@@ -67,7 +67,7 @@ Y
 1
 
 [warmup]
-teleport Sgate 8105
+goto 8105
 
 [probe:target]
 search

@@ -96,15 +96,15 @@ Y
 
 [warmup]
 goto 8105
-teleport ProtCaster 8105
 teleport ProtVictim 8105
 teleport Protobs 8105
 set ProtCaster class cleric
-set ProtCaster level 31
 skillset ProtCaster 'protection from evil' 100
 set ProtCaster maxmana 5000
 set ProtCaster mana 5000
 set ProtCaster align 0
+set ProtCaster level 31
+
 
 [probe]
 cast 'protection from evil'

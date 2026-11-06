@@ -72,13 +72,14 @@ Y
 [warmup]
 goto 8162
 set player DisruptReader class mage
-set player DisruptReader level 30
 set player DisruptReader maxmana 5000
 set player DisruptReader mana 5000
 set player DisruptTarget class mage
 set player DisruptTarget level 20
 set player DisruptTarget maxhit 1000
 set player DisruptTarget hit 1000
+set player DisruptReader level 30
+
 
 [probe]
 get vellum

@@ -1,0 +1,23 @@
+scenario	reason
+set-name-cleanup	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-scroll-olc-02-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-scroll-harm-live-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-acid-blast-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-cure-critic-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-dispel-evil-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-earthquake-live-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-ray-of-disruption-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-sense-life-live-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-sleep-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-staff-smokescreen-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-blindness-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-charm-person-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-create-water-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-earthquake-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-energy-drain-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-fireball-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-group-invisibility-live-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-heal-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-lightning-bolt-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-smokescreen-live-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief
+spellmatrix-world-wand-soul-leech-live-depth	clean after repair but C output still lacks the claimed event (item never reached the actor; spawn-obj/no-settle class) — needs its own brief

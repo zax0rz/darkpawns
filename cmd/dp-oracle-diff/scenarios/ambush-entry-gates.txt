@@ -39,7 +39,7 @@ Y
 
 [warmup]
 goto 8105
-skillset Ambushgate ambush 100
+skillset Ambushgate 'ambush' 100
 
 [probe]
 ambush green

@@ -34,7 +34,6 @@ Y
 1
 
 [warmup]
-set file Shopreport gold 0
 
 [probe]
 show player Shopreport

@@ -98,7 +98,6 @@ goto 8105
 teleport VampDrink 8105
 teleport InvisDrink 8105
 set player LycanDrink class mage
-set player LycanDrink level 34
 set player LycanDrink maxmana 5000
 set player LycanDrink mana 5000
 skillset LycanDrink 'lycanthropy' 100
@@ -107,6 +106,8 @@ set player VampDrink level 34
 set player VampDrink maxmana 5000
 set player VampDrink mana 5000
 skillset VampDrink 'vampirism' 100
+set player LycanDrink level 34
+
 
 [probe]
 cast 'lycanthropy' LycanDrink

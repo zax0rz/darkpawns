@@ -68,10 +68,11 @@ Y
 goto 8105
 teleport Telepeer 8105
 set player Telecast class mage
-set player Telecast level 34
 set player Telecast maxmana 5000
 set player Telecast mana 5000
 skillset Telecast 'shift reality' 100
+set player Telecast level 34
+
 
 [probe]
 cast 'shift reality' Telecast

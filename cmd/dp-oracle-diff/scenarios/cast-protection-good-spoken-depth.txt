@@ -96,15 +96,15 @@ Y
 
 [warmup]
 goto 8105
-teleport Goodcaster 8105
 teleport Goodvictim 8105
 teleport Goodobs 8105
 set Goodcaster class cleric
-set Goodcaster level 31
 skillset Goodcaster 'protection from good' 100
 set Goodcaster maxmana 5000
 set Goodcaster mana 5000
 set Goodcaster align 0
+set Goodcaster level 31
+
 
 [probe]
 cast 'protection from good'

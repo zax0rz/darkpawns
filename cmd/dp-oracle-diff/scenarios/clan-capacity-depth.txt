@@ -68,7 +68,6 @@ Y
 1
 
 [warmup]
-set player Clancapgod level 35
 goto 8162
 teleport Clanleader 8162
 clan create Clanleader Clanone
@@ -110,6 +109,8 @@ set player Clanleader clan 0
 clan create Clanleader Clannineteen
 set player Clanleader clan 0
 clan create Clanleader Clantwenty
+set player Clancapgod level 35
+
 
 [probe]
 clan create Overcapacity

@@ -132,7 +132,6 @@ teleport ItemBuilder 8162
 teleport ItemPeer 8162
 teleport ItemView 8162
 set player ItemMage class mage
-set player ItemMage level 35
 set player ItemPeer level 30
 set player ItemPeer maxhit 5000
 set player ItemPeer hit 5000
@@ -141,9 +140,6 @@ set player ItemView maxhit 5000
 set player ItemView hit 5000
 
 set player ItemBuilder level 35
-set player ItemMage level 30
-
-[probe]
 send:builder oedit 4399
 send:builder D
 send:builder 20
@@ -153,6 +149,10 @@ send:builder 0
 send:builder q
 send:builder y
 load obj 4399
+set player ItemMage level 30
+
+
+[probe]
 get powder
 quaff powder
 ~dpclock pulse 20
@@ -206,4 +206,3 @@ use staff
 score
 send:peer score
 send:observer score
-

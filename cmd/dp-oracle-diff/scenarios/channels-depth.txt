@@ -97,7 +97,6 @@ Y
 1
 
 [warmup]
-teleport Farpeer 2001
 
 [probe]
 gossip channel hello

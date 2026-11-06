@@ -69,9 +69,10 @@ Y
 goto 8105
 teleport BribeGuardPeer 8105
 set BribeGuardRefusal gold 1000
-set BribeGuardRefusal level 10
 set BribeGuardRefusal hit 30000
 set BribeGuardRefusal maxhit 30000
+set BribeGuardRefusal level 10
+
 
 [probe]
 give 50 coins guard

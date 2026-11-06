@@ -98,8 +98,8 @@ clan create Clanmate Wolves
 clan set ranks 3 Wolves
 clan set applev 1 Wolves
 force Clanoffline clan apply Wolves
+teleport Clanoffline 8004
 send:applicant quit
-send:applicant 0
 ~dpclock pulse 1
 
 [probe]
