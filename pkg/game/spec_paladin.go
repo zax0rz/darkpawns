@@ -80,6 +80,8 @@ func mobDisarm(w *World, me *MobInstance, vict combat.Combatant) {
 			// (new_cmds2.c:236).
 			target.MarkCrashNeeded()
 		}
+		Act(w, false, me, vict, weapon, nil,
+			"You disarm $N and $p goes flying!", "", ToChar)
 		Act(w, true, me, vict, weapon, nil,
 			"$n knocks $p from $N's hand!", "", ToNotVict)
 		Act(w, true, me, vict, weapon, nil,
@@ -87,8 +89,10 @@ func mobDisarm(w *World, me *MobInstance, vict combat.Combatant) {
 		return
 	}
 
+	Act(w, false, me, vict, nil, nil,
+		"You try to disarm $N but fail, tumbling to the ground in the process!", "", ToChar)
 	Act(w, true, me, vict, nil, nil,
-		"$n tries to disarm you but fails and falls flat on $s face!", "", ToVict)
+		"$n tries to disarm you but fails and falls flat on $s face instead!", "", ToVict)
 	Act(w, true, me, vict, nil, nil,
 		"$n tries to disarm $N, but fails and falls flat on $s face!", "", ToNotVict)
 	me.SetPosition(combat.PosSitting)
