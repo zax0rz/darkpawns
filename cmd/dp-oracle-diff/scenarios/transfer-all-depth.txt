@@ -1,0 +1,113 @@
+# GRGOD transfer-all vehicle for do_trans's all-target branch
+# (src/act.wizard.c:341-359). The primary is demoted to LVL_GRGOD (38) so the
+# gate is exercised exactly at C's boundary; two lower-level peers (level 30)
+# stand in a different room (8004) from the actor (8162). C walks descriptor_list
+# newest first, so the last-connected peer (Transferalltwo, connected after
+# Transferallone because peer names connect in sorted order) is moved first and
+# the still-present peer witnesses its departure:
+#   Transferalltwo disappears in a mushroom cloud.        (C witness, R5j)
+# The actor then sees both arrivals in descriptor order followed by "Okay."
+# (src/config.c:92). This branch moves no mount (src/act.wizard.c:352-354).
+
+# depth-case: transfer.all-order
+# depth-case: transfer.all-mushroom-cloud
+# depth-case: transfer.all-audience
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Transferallgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Transferallgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:one]
+Transferallone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:one]
+Transferallone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:two]
+Transferalltwo
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:two]
+Transferalltwo
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Transferallone 8004
+teleport Transferalltwo 8004
+set Transferallone level 30
+set Transferalltwo level 30
+set Transferallgod level 38
+
+[probe]
+transfer all

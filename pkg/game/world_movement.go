@@ -119,6 +119,15 @@ func (w *World) PlayerTransfer(p *Player, toRoomVNum int) error {
 	return w.transferBody(p, toRoomVNum, true)
 }
 
+// PlayerTransferNoMount relocates a player body without carrying a ridden
+// mount, mirroring C's bare char_from_room / char_to_room pair. do_trans's
+// all-target branch moves no mount (src/act.wizard.c:347-358 never calls
+// get_mount), unlike its single-target branch, which moves the rider's mount
+// explicitly (src/act.wizard.c:332-336).
+func (w *World) PlayerTransferNoMount(p *Player, toRoomVNum int) error {
+	return w.transferBody(p, toRoomVNum, false)
+}
+
 // PlayerTransferForSpell mirrors spell-side char_from_room/char_to_room by
 // moving only the player body. Those C helpers do not transfer a ridden mount.
 func (w *World) PlayerTransferForSpell(actor any, toRoomVNum int) error {
