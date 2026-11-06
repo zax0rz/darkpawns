@@ -1398,7 +1398,7 @@ func (m *testMob) GetWornObjects() []ScriptableObject    { return nil }
 func (m *testMob) GetPosition() int                      { return 8 }
 func (m *testMob) GetAlias() string                      { return m.name }
 func (m *testMob) GetAlignment() int                     { return 0 }
-func (m *testMob) GetMobWait() int                      { return 0 }
+func (m *testMob) GetMobWait() int                       { return 0 }
 func (m *testMob) GetLeaderName() string                 { return "" }
 func (m *testMob) AsPlayer() ScriptablePlayer            { return nil }
 func (m *testMob) AsMob() ScriptableMob                  { return m }

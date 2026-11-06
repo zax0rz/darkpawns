@@ -86,7 +86,7 @@ func (c *legacyTableChar) GetCha() int                           { return c.cha 
 func (c *legacyTableChar) GetJailTimer() int                     { return c.jail }
 func (c *legacyTableChar) GetTattoo() int                        { return c.tattoo }
 func (c *legacyTableChar) GetVNum() int                          { return c.vnum }
-func (c *legacyTableChar) GetMobWait() int                      { return c.timer }
+func (c *legacyTableChar) GetMobWait() int                       { return c.timer }
 func (c *legacyTableChar) GetFighting() string                   { return "" }
 func (c *legacyTableChar) SetHunting(string)                     {}
 func (c *legacyTableChar) IsHunting() bool                       { return false }
