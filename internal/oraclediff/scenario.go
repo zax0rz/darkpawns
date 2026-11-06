@@ -107,6 +107,13 @@ type Scenario struct {
 	// disconnect is otherwise invisible to the diff: an empty block and a
 	// closed block look identical. Opt in with the `compare-close` fixture.
 	CompareClose bool
+	// AllowSetupRefusal opts the scenario's [warmup] out of the
+	// setup-refusal gate (DP-1456): a warmup step may legitimately be
+	// refused on both engines. The parser only accepts the directive when
+	// the scenario also carries a "# setup-refusal-reason:" comment, kept
+	// verbatim in SetupRefusalReason.
+	AllowSetupRefusal   bool
+	SetupRefusalReason string
 }
 
 // PeerSetup describes a passive client that remains connected while the
@@ -312,6 +319,7 @@ type AudienceProbeBlock struct {
 //	fixed-time 650812932      # pin both engines' boot calendar (DP_FIXED_TIME)
 //	strip-mob-script 18306    # force native special dispatch in both copies
 //	compare-close             # render a <CLOSE> marker where the server closed the transport
+//	allow-setup-refusal       # opt [warmup] out of the setup-refusal gate (needs "# setup-refusal-reason:")
 //	force-load 4903           # rewrite the prototype load percent to 500% in both copies
 //	replace-room-exits 8162 none
 //	replace-room-exits 8162 all 8161 0
@@ -349,11 +357,23 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	scriptTwinSection := false
 	var luaScript *LuaScriptFixture
 	peerDropSection := false
+	setupRefusalReasonSeen := false
 	lineNo := 0
 	for scanner.Scan() {
 		lineNo++
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" || strings.HasPrefix(line, "#") {
+			// The setup-refusal-reason comment is the mandatory companion of
+			// the allow-setup-refusal fixture: an opt-out without a written
+			// reason would silently reintroduce the hollow-pass class.
+			if reason, ok := strings.CutPrefix(line, "# setup-refusal-reason:"); ok {
+				reason = strings.TrimSpace(reason)
+				if reason == "" {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: empty setup-refusal-reason", name, lineNo)
+				}
+				sc.SetupRefusalReason = reason
+				setupRefusalReasonSeen = true
+			}
 			continue
 		}
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
@@ -687,6 +707,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 				sc.CompareClose = true
 				continue
 			}
+			if len(fields) == 1 && strings.EqualFold(fields[0], "allow-setup-refusal") {
+				sc.AllowSetupRefusal = true
+				continue
+			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "entry-prompt") {
 				sc.EntryPromptOnly = true
 				continue
@@ -745,6 +769,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	}
 	if sc.SeedPlayer && sc.EmptyPlayers {
 		return Scenario{}, fmt.Errorf("scenario %q: seed-player and empty-players are mutually exclusive", name)
+	}
+	if sc.AllowSetupRefusal && !setupRefusalReasonSeen {
+		return Scenario{}, fmt.Errorf("scenario %q: allow-setup-refusal requires a \"# setup-refusal-reason:\" comment", name)
 	}
 	restartCount := 0
 	crashCount := 0
@@ -868,15 +895,36 @@ func parseFaultFixture(fields []string) (FaultFixture, bool) {
 	return FaultFixture{}, false
 }
 
-// RunWarmup plays shared commands after every client has completed setup and
-// discards their output. It is useful for acquiring disposable fixtures before
-// the first compared probe command.
-func RunWarmup(primary Conn, peers map[string]Conn, steps []string, quiescence time.Duration) error {
+// WarmupPolicy configures RunWarmup's setup-refusal gate (DP-1456).
+type WarmupPolicy struct {
+	// Engine names the engine whose warmup is being played ("c" or "go") in
+	// the setup-refused error, so a census FAIL row attributes the refusal.
+	Engine string
+	// AllowSetupRefusal skips the gate. It is the [fixture]
+	// allow-setup-refusal opt-out, which the parser only accepts together
+	// with a "# setup-refusal-reason:" comment.
+	AllowSetupRefusal bool
+}
+
+// RunWarmup plays shared commands after every client has completed setup,
+// discards their output as comparison material, and checks the sender's
+// output of every step against C's setup refusal strings. A warmup step
+// answered with a refusal failed to configure what it claims — if both
+// engines refuse identically the probe would compare two unconfigured worlds
+// and pass hollow, so the first refusal fails the run. It is useful for
+// acquiring disposable fixtures before the first compared probe command.
+func RunWarmup(primary Conn, peers map[string]Conn, steps []string, quiescence time.Duration, policy WarmupPolicy) error {
 	if len(steps) == 0 {
 		return nil
 	}
-	_, err := RunAudienceProbe(primary, peers, steps, quiescence)
-	return err
+	blocks, err := RunAudienceProbe(primary, peers, steps, quiescence)
+	if err != nil {
+		return err
+	}
+	if policy.AllowSetupRefusal {
+		return nil
+	}
+	return checkWarmupRefusals(steps, blocks, len(peers), policy.Engine)
 }
 
 // RunAudienceProbe plays commands through the primary actor and captures the

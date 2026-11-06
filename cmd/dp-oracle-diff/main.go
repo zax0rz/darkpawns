@@ -763,7 +763,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			return res, fmt.Errorf("drain C oracle setup output: %w", err)
 		}
 		markDraws(&res, cDrawLog, "setup")
-		if err := oraclediff.RunWarmup(oraclePrimary, peers, scenario.Warmup, quiescence); err != nil {
+		if err := oraclediff.RunWarmup(oraclePrimary, peers, scenario.Warmup, quiescence, oraclediff.WarmupPolicy{
+			Engine:            "c",
+			AllowSetupRefusal: scenario.AllowSetupRefusal,
+		}); err != nil {
 			return res, fmt.Errorf("run C oracle warmup: %w", err)
 		}
 		if scenario.PeerDrop != "" {
@@ -820,7 +823,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 			return res, fmt.Errorf("drain Go port setup output: %w", err)
 		}
 		markDraws(&res, goDrawLog, "setup")
-		if err := oraclediff.RunWarmup(goPrimary, peers, scenario.Warmup, quiescence); err != nil {
+		if err := oraclediff.RunWarmup(goPrimary, peers, scenario.Warmup, quiescence, oraclediff.WarmupPolicy{
+			Engine:            "go",
+			AllowSetupRefusal: scenario.AllowSetupRefusal,
+		}); err != nil {
 			return res, fmt.Errorf("run Go port warmup: %w", err)
 		}
 		if scenario.PeerDrop != "" {
