@@ -138,4 +138,3 @@ transfer-depth	wizard.tsv	transfer.one-argument	blocked
 transfer-depth	wizard.tsv	transfer.self-refusal	blocked	
 transfer-depth	wizard.tsv	transfer.success-audience	blocked	
 transfer-depth	wizard.tsv	transfer.target-not-found	blocked	
-zedit-duplicate-gate-depth	zedit.tsv	zedit.duplicate-gate-cleanup	blocked	
