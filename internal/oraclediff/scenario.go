@@ -112,7 +112,7 @@ type Scenario struct {
 	// refused on both engines. The parser only accepts the directive when
 	// the scenario also carries a "# setup-refusal-reason:" comment, kept
 	// verbatim in SetupRefusalReason.
-	AllowSetupRefusal   bool
+	AllowSetupRefusal  bool
 	SetupRefusalReason string
 }
 
