@@ -40,7 +40,6 @@ Y
 
 [warmup]
 goto 8162
-load obj 18801
 
 [probe]
 cast 'detect poison' sailor

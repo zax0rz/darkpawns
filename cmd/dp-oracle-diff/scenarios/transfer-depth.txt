@@ -2,6 +2,13 @@
 # the target and observer are mortal peers in the same room, exposing the
 # target lookup, one_argument boundary, room Acts, victim-only notification,
 # and post-transfer look without invoking the all-target loop.
+# Transferlow is level 33: at or above transfer's LVL_IMMORT+1 gate
+# (src/interpreter.c:784) so the handler-level refusals fire ("Go transfer
+# someone your own size." below the 35-level peer; "I think not." below
+# LVL_GRGOD for all), and below the primary's 40 so the success path stays
+# the primary's. The low lines run as directed send:low steps in one probe
+# (a trailing [probe:low] section would retarget the whole probe to low,
+# which is how this scenario hollowed: every line printed Huh?!?).
 
 # depth-case: transfer.target-not-found
 # depth-case: transfer.success-audience
@@ -132,13 +139,11 @@ teleport Transferpeer 8162
 teleport Transferobserver 8162
 teleport Transferlow 8162
 set Transferpeer level 35
-set Transferlow level 31
+set Transferlow level 33
 
 [probe]
 transfer Nobody
 transfer Transferpeer trailing words are ignored
 transfer Transferwizard
-
-[probe:low]
-transfer Transferpeer
-transfer all
+send:low transfer Transferpeer
+send:low transfer all

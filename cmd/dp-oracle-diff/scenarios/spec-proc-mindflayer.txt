@@ -93,11 +93,11 @@ teleport Mindvictim 8105
 set Mindactor maxhit 5000
 set Mindactor hp 5000
 set Mindactor hit 5000
-set Mindactor level 1
 set Mindactor maxhit 5000
 set Mindactor hp 5000
 set Mindactor hit 5000
 set Mindactor level 1
+
 
 [probe]
 kill Alhazred

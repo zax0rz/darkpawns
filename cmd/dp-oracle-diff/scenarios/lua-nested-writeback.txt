@@ -60,7 +60,6 @@ Y
 1
 
 [warmup]
-goto 8162
 
 [probe]
 say nest

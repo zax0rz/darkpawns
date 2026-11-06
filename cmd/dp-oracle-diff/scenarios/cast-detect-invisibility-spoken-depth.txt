@@ -37,10 +37,11 @@ Y
 [warmup]
 goto 8105
 set Inviscast class mage
-set Inviscast level 31
 skillset Inviscast 'detect invisibility' 100
 set Inviscast maxmana 5000
 set Inviscast mana 5000
+set Inviscast level 31
+
 
 [probe]
 cast 'detect invisibility'

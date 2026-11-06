@@ -67,10 +67,11 @@ Y
 goto 8105
 teleport Armorpeer 8105
 set Armorcast class mage
-set Armorcast level 31
 skillset Armorcast 'holy ward' 100
 set Armorcast maxmana 5000
 set Armorcast mana 5000
+set Armorcast level 31
+
 
 [probe]
 cast 'holy ward' Armorpeer

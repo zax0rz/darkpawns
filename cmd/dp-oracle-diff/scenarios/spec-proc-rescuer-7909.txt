@@ -78,7 +78,7 @@ teleport RescueWitness 21210
 nohassle
 get sword
 wield sword
-skillset RescueActor bash 100
+skillset RescueActor 'bash' 100
 bash Aatxe
 ~dpclock pulse 20
 

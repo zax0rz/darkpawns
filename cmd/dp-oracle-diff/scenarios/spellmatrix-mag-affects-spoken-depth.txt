@@ -99,7 +99,6 @@ goto 8105
 teleport AffectPeer 8105
 teleport Visible 8105
 set AffectMage class mage
-set AffectMage level 31
 skillset AffectMage 'strength' 100
 skillset AffectMage 'curse' 100
 skillset AffectMage 'poison' 100
@@ -111,6 +110,8 @@ set AffectPeer level 0
 set AffectPeer maxhit 100
 set AffectPeer hit 100
 set AffectPeer align 0
+set AffectMage level 31
+
 
 [probe]
 cast 'strength' AffectPeer

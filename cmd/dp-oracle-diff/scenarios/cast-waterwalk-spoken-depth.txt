@@ -95,10 +95,11 @@ goto 8105
 teleport Walkpeer 8105
 teleport Walkwatch 8105
 set Walkcast class m
-set Walkcast level 31
 skillset Walkcast 'waterwalk' 100
 set Walkcast maxmana 5000
 set Walkcast mana 5000
+set Walkcast level 31
+
 
 [probe]
 cast 'waterwalk' Walkpeer

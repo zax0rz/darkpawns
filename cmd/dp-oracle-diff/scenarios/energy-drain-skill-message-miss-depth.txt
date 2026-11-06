@@ -131,7 +131,7 @@ load obj 8054
 get scroll
 set player EnergyActor class mage
 skillset EnergyActor 'energy drain' 100
-skillset EnergyActor infravision 100
+skillset EnergyActor 'infravision' 100
 set player EnergyActor maxmana 5000
 set player EnergyActor mana 5000
 set player EnergyActor align 1000

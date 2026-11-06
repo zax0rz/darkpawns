@@ -73,9 +73,10 @@ Y
 goto 8162
 teleport StrengthWitness 8162
 set player StrengthQuaffer class mage
-set player StrengthQuaffer level 31
 set player StrengthQuaffer maxhit 1000
 set player StrengthQuaffer hit 50
+set player StrengthQuaffer level 31
+
 
 [probe]
 get clear

@@ -39,7 +39,6 @@ Y
 goto 8004
 
 [warmup]
-set file Shopreport gold 0
 get bag
 get bread
 put bread bag

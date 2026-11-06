@@ -82,7 +82,7 @@ Y
 
 [warmup]
 goto 8162
-skillset Scoutsuccess scout 100
+skillset Scoutsuccess 'scout' 100
 teleport Scoutpeer 8161
 
 [probe]

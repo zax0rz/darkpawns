@@ -8,6 +8,7 @@ is NEVER minted from observed behavior — that would certify today's bugs.
 """
 import csv
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -48,13 +49,19 @@ def main() -> int:
             for row in reader:
                 status = (row.get("status") or "").strip()
                 proof = (row.get("proof") or "").strip()
-                # Only Zach-approved exclusions become baseline rows. A
-                # "blocked" row is analytical debt -- gates a probe has not
-                # exercised yet -- and its scenario is usually green; baselining
-                # it would flip the census row to STALE (taught by #2178: three
-                # blocked rows swept in by a regeneration, all three scenarios
-                # green on the branch).
-                if status != "excluded" or not proof or proof == "-":
+                # Only Zach-approved exclusions become baseline rows, plus a
+                # blocked row whose notes cite a filed divergence issue
+                # ("divergence: DP-nnnn"): that citation says the scenario is
+                # red right now with a known, filed shape. A blocked row
+                # WITHOUT that citation is analytical debt -- gates a probe has
+                # not exercised yet -- and its scenario is usually green;
+                # baselining it would flip the census row to STALE (taught by
+                # #2178: three blocked rows swept in by a regeneration, all
+                # three scenarios green on the branch).
+                notes = (row.get("notes") or "").strip()
+                if status == "blocked" and not re.search(r"divergence: DP-\d+", notes):
+                    continue
+                if status not in ("excluded", "blocked") or not proof or proof == "-":
                     continue
                 # stability is the optional divergence-shape class: "" (default)
                 # pins a stable shape; "run-varying" marks a C-side divergence
@@ -99,5 +106,49 @@ def main() -> int:
             stream.write("\t".join(row) + "\n")
     return 0
 
+def self_test() -> int:
+    """A blocked row without a 'divergence: DP-' citation must stay OUT of the
+    baseline (R5h): #2178 taught that bare blocked rows sweep green scenarios
+    in and flip them STALE. Only a filed-issue citation admits them."""
+    import tempfile
+
+    global MANIFEST_DIR, SCENARIO_DIR, OUT
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        depth = root / "depth"
+        depth.mkdir()
+        (depth / "t.tsv").write_text(
+            "handler\tcommand\tcase_id\tdepth\tscope\tstatus\tproof\tc_site\tnotes\n"
+            "do_x\tx\tx.red-with-issue\tD1\tcommand\tblocked\tx-scenario@1\tsrc/x.c:1\t"
+            "DP-1456 repair exposed a real divergence (divergence: DP-1460)\n"
+            "do_x\tx\tx.blocked-no-issue\tD1\tcommand\tblocked\tx-scenario@1\tsrc/x.c:1\t"
+            "DP-1456: demoted until re-proven\n"
+            "do_x\tx\tx.excluded\tD1\tcommand\texcluded\tx-scenario@1\tsrc/x.c:1\t-\n",
+            encoding="utf-8",
+        )
+        scenarios = root / "scenarios"
+        scenarios.mkdir()
+        (scenarios / "x-scenario.txt").write_text("[probe]\nlook\n", encoding="utf-8")
+        out = root / "expected.tsv"
+        MANIFEST_DIR, SCENARIO_DIR, OUT = depth, scenarios, out
+        if main() != 0:
+            return 1
+        lines = out.read_text(encoding="utf-8").splitlines()
+        cases = {line.split("\t")[2] for line in lines[1:]}
+        if "x.red-with-issue" not in cases:
+            print("self-test: blocked row with 'divergence: DP-' citation was not baselined", file=sys.stderr)
+            return 1
+        if "x.blocked-no-issue" in cases:
+            print("self-test: blocked row without a divergence issue citation was baselined", file=sys.stderr)
+            return 1
+        if "x.excluded" not in cases:
+            print("self-test: excluded row missing from baseline", file=sys.stderr)
+            return 1
+        print("expected_divergences self-test: unbacked blocked rows stay out; issue-backed and excluded rows are baselined")
+        return 0
+
+
 if __name__ == "__main__":
+    if "--self-test" in sys.argv:
+        raise SystemExit(self_test())
     raise SystemExit(main())

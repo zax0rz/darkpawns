@@ -69,11 +69,7 @@ teleport Zeditpeer 8162
 advance Zeditpeer 40
 zedit 8162
 
-[probe:peer]
-zedit 8162
-
 [probe]
+send:peer zedit 8162
 Kir Drax'in
-
-[probe]
 Q

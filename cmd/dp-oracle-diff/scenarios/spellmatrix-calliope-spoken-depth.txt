@@ -97,13 +97,14 @@ goto 8105
 teleport Calltarg 8105
 teleport Callwat 8105
 set player Callcast class mage
-set player Callcast level 34
 set player Callcast maxmana 5000
 set player Callcast mana 5000
 skillset Callcast 'calliope' 100
 set player Calltarg level 10
 set player Calltarg maxhit 10000
 set player Calltarg hit 10000
+set player Callcast level 34
+
 
 [probe]
 cast 'calliope' Calltarg

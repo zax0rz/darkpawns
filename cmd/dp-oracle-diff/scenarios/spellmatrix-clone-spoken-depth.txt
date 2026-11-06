@@ -68,10 +68,11 @@ Y
 goto 8105
 teleport Clonewat 8105
 set player Clonecas class mage
-set player Clonecas level 34
 set player Clonecas maxmana 5000
 set player Clonecas mana 5000
 skillset Clonecas 'clone' 100
+set player Clonecas level 34
+
 
 [probe]
 cast 'clone' Clonecas

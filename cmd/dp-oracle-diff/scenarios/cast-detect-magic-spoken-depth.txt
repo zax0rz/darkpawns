@@ -37,10 +37,11 @@ Y
 [warmup]
 goto 8105
 set Magiccast class mage
-set Magiccast level 31
 skillset Magiccast 'detect magic' 100
 set Magiccast maxmana 5000
 set Magiccast mana 5000
+set Magiccast level 31
+
 
 [probe]
 cast 'detect magic'

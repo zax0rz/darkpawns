@@ -10,6 +10,7 @@
 # depth-case: flee.npc-forced-entry
 
 [fixture]
+empty-players
 quiet-mobs
 replace-room-exits 8162 all 8161 0
 spawn-mob 16303 1 8162 163

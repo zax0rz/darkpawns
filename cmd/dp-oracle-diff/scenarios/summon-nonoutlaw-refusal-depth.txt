@@ -74,8 +74,9 @@ set Castgod class cleric
 skillset Castgod 'summon' 100
 set Summontarget nosummon off
 set Castgod nosummon on
-set Castgod level 30
 set Summontarget level 1
+set Castgod level 30
+
 
 [probe]
 cast 'summon' Summontarget

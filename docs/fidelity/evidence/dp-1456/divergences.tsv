@@ -1,0 +1,30 @@
+scenario	first_divergent_block	c_only_line	go_only_line	c_witness
+spellmatrix-damage-potion-group-04-depth	[quaff powder [actor]]	That really did HURT!	(line missing on go)	You attempt the spell without the components..
+spellmatrix-damage-scroll-group-01-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you hard.	(line missing on go)	You burn ItemPeer with your hot little hands!
+spellmatrix-damage-scroll-group-02-depth	[~dpclock pulse 20 [actor]]	ItemPeer scratches you as she hits you.	(line missing on go)	Your own private rainbow hits ItemPeer in the face -- WOWIE!!
+spellmatrix-damage-scroll-group-03-depth	[~dpclock pulse 20 [actor]]	ItemPeer scratches you as she hits you.	(line missing on go)	You throw a fireball at ItemPeer and have the satisfaction of seeing her enveloped in flames!
+spellmatrix-damage-scroll-group-04-depth	[recite book ItemPeer [actor]]	That really did HURT!	(line missing on go)	You attempt the spell without the components..
+spellmatrix-damage-scroll-group-05-depth	[~dpclock pulse 20 [actor]]	ItemPeer scratches you as she hits you.	(line missing on go)	ItemPeer screams in agony as you prod her mind.
+spellmatrix-damage-scroll-group-06-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you hard.	(line missing on go)	You feel infused with power as you leech ItemPeer's soul.
+spellmatrix-damage-scroll-group-07-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you hard.	(line missing on go)	You rock ItemPeer with your incredibly powerful psionic blast!!!
+spellmatrix-potion-olc-02-depth	[~dpclock pulse 20 [actor]]	ItemView hits you very hard.	(line missing on go)	The bowels of hell open beneath your feet!!
+spellmatrix-potion-olc-03-depth	[send:peer score [peer]]	Hit points: 5000(5000)  Mana points: 100(100)  Movement points: 85(85)	Hit points: 4999(5000)  Mana points: 100(100)  Movement points: 85(85)	A warm feeling floods your body.
+spellmatrix-scroll-olc-03-depth	[look [peer]]	- Item number : [4404]	(line missing on go)	You fail.
+spellmatrix-staff-olc-07-depth	[use staff0703 [actor]]	That really did HURT!	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
+spellmatrix-staff-olc-08-depth	[use staff0802 [builder]]	ItemView's wounds glow and mend themselves.	ItemView's wounds glow and mend themselves.	Your a staff of sleep radiates an ethereal glow that lights the room.
+spellmatrix-staff-olc-09-depth	[~dpclock pulse 20 [actor]]	ItemView hits you.	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
+spellmatrix-staff-olc-12-depth	[use staff1203 [actor]]	You shift her molecular density.	You shift her molecular density.	Your a staff of sleep radiates an ethereal glow that lights the room.
+spellmatrix-staff-olc-15-depth	[use staff1501 [actor]]	You watch with selfpride as your flaming arrow hits ItemPeer!	You watch with selfpride as your flaming arrow hits ItemView!	Your a staff of sleep radiates an ethereal glow that lights the room.
+spellmatrix-staff-olc-16-depth	[~dpclock pulse 20 [actor]]	ItemBuilder scratches you as he hits you.	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
+spellmatrix-wand-olc-01-depth	[~dpclock pulse 20 [actor]]	ItemPeer scratches you as she hits you.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+spellmatrix-wand-olc-03-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you very hard.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+spellmatrix-wand-olc-04-depth	[use wand0405 ItemPeer [actor]]	That really did HURT!	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+spellmatrix-wand-olc-06-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you very hard.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+spellmatrix-wand-olc-07-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+spellmatrix-wand-olc-09-depth	[~dpclock pulse 20 [actor]]	ItemPeer scratches you as she hits you.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+spellmatrix-wand-olc-10-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you hard.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+spellmatrix-world-wand-disintegration-live-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you hard.	(line missing on go)	Your a dark, metal ball flares up with a blinding glow that surges toward ItemPeer!
+transfer-depth	[send:low transfer all [low]]	I think not.	No-one by that name here.	No-one by that name here.
+clan-offline-applicant-depth	[force Clanmate clan enroll [member]]	Clanoffline	(line missing on go)	Clanoffline
+show-player-stored	[show player Shopreport]	Player: Shopreport   (Male) [40 Wa]	There is no such player.	Player: Shopreport   (Male) [40 Wa]
+show-rent-stored	[show rent Shopreport]	plrobjs/P-T/shopreport.objs	shopreport has no rent file.	plrobjs/P-T/shopreport.objs

@@ -69,10 +69,11 @@ Y
 goto 8105
 teleport Breathpeer 8105
 set Breathcast class mage
-set Breathcast level 31
 skillset Breathcast 'waterbreathe' 100
 set Breathcast maxmana 5000
 set Breathcast mana 5000
+set Breathcast level 31
+
 
 [probe]
 cast 'waterbreathe' Breathpeer

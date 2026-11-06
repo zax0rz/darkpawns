@@ -137,7 +137,7 @@ set player DrownGod hit 500
 set player DrownView level 1
 set player DrownView maxhit 1000
 set player DrownView hit 500
-teleport DrownHit 8163
+goto 8163
 set player DrownHit level 1
 
 [probe]

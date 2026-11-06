@@ -39,7 +39,7 @@ Y
 
 [warmup]
 goto 8105
-skillset Ambushlost ambush 100
+skillset Ambushlost 'ambush' 100
 ambush green
 goto 8161
 

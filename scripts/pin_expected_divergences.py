@@ -6,6 +6,12 @@ the per-block divergence fingerprints (label + sha256 of the unified diff),
 joined back to the ledger citations. The census self-verifies these pins:
 a divergence whose shape differs from its pin is a FAIL, never EXPECTED.
 Requires DP_ORACLE_BIN; local-only target (CI has no C oracle).
+
+--from-run <census-run-dir>: mint the same pins from a finished census run's
+retained first-attempt logs instead of fresh local runs. Some divergences'
+shapes depend on execution cadence (concurrent census workers vs a quiet
+local run), so their census-stable shapes can only be pinned from census
+evidence; the census must then reproduce that multiset to stay EXPECTED.
 """
 import pathlib
 import re
@@ -19,15 +25,17 @@ FP = re.compile(r"^divergence-fingerprint\t(.+)\t([0-9a-f]{64})$")
 
 def main() -> int:
     oracle = subprocess.run(["printenv", "DP_ORACLE_BIN"], capture_output=True, text=True).stdout.strip()
-    if not oracle:
+    local_mode = "--from-run" not in sys.argv
+    if local_mode and not oracle:
         print("pin_expected_divergences: DP_ORACLE_BIN is required", file=sys.stderr)
         return 2
     import tempfile
     harness = pathlib.Path(tempfile.mkdtemp(prefix="dp-pins-")) / "dp-oracle-diff"
-    build = subprocess.run(["/usr/local/go/bin/go", "build", "-C", str(ROOT), "-o", str(harness), "./cmd/dp-oracle-diff"])
-    if build.returncode != 0:
-        print("pin_expected_divergences: harness build failed", file=sys.stderr)
-        return 2
+    if "--from-run" not in sys.argv:
+        build = subprocess.run(["/usr/local/go/bin/go", "build", "-C", str(ROOT), "-o", str(harness), "./cmd/dp-oracle-diff"])
+        if build.returncode != 0:
+            print("pin_expected_divergences: harness build failed", file=sys.stderr)
+            return 2
     rows = []
     citations = {}
     unstable = set()
@@ -44,12 +52,30 @@ def main() -> int:
     # pinned: their bytes differ every run, so any pin is dead on arrival and
     # the census classifies them as EXPECTED_UNSTABLE without a pin.
     pinnable = {s: c for s, c in citations.items() if s not in unstable}
+    from_run = None
+    kept = []
+    if "--from-run" in sys.argv:
+        from_run = pathlib.Path(sys.argv[sys.argv.index("--from-run") + 1])
+        if OUT.exists():
+            with OUT.open(encoding="utf-8") as stream:
+                next(stream)
+                for line in stream:
+                    kept.append(tuple(line.rstrip("\n").split("\t")))
     for scenario in sorted(pinnable):
-        proc = subprocess.run(
-            [str(harness), "--scenario", scenario, "--seed", "1"],
-            capture_output=True, timeout=600,
-        )
-        stdout = proc.stdout.decode("utf-8", "replace")
+        if from_run is not None:
+            logs = sorted((from_run / "initial-logs").glob(f"attempt.*/{scenario}.attempt1.log"))
+            if not logs:
+                # A run only retains the scenarios it covered; keep the pin
+                # rows such a scenario already has (they are census-proven by
+                # the runs that did cover it).
+                continue
+            stdout = logs[0].read_text(encoding="utf-8", errors="replace")
+        else:
+            proc = subprocess.run(
+                [str(harness), "--scenario", scenario, "--seed", "1"],
+                capture_output=True, timeout=600,
+            )
+            stdout = proc.stdout.decode("utf-8", "replace")
         saw = 0
         for line in stdout.splitlines():
             m = FP.match(line)
@@ -64,6 +90,8 @@ def main() -> int:
             print(f"expected_divergence_pins: {scenario} produced no divergence fingerprints; "
                   f"not writing pins", file=sys.stderr)
             return 1
+    covered = {r[0] for r in rows}
+    rows.extend(r for r in kept if r[0] not in covered and r[0] in pinnable)
     with OUT.open("w", encoding="utf-8") as stream:
         stream.write("scenario\tlabel\tsha256\tcitations\n")
         for row in sorted(rows):

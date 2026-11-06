@@ -98,11 +98,12 @@ teleport Domtarg 8105
 teleport Domwat 8105
 set Domcast outlaw on
 set player Domcast class mage
-set player Domcast level 34
 set player Domcast maxmana 5000
 set player Domcast mana 5000
 skillset Domcast 'dominate' 100
 set player Domtarg level 1
+set player Domcast level 34
+
 
 [probe]
 cast 'dominate' Domtarg

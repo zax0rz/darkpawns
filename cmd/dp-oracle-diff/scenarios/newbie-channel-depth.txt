@@ -99,7 +99,6 @@ Y
 1
 
 [warmup]
-advance Nwbgod 34
 goto 8162
 force Nwbactor goto 8162
 force Nwbsilent goto 8162

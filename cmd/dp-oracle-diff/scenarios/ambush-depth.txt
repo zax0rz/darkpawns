@@ -45,7 +45,7 @@ Y
 
 [warmup]
 goto 8105
-skillset Ambushgod ambush 100
+skillset Ambushgod 'ambush' 100
 
 [probe]
 ambush

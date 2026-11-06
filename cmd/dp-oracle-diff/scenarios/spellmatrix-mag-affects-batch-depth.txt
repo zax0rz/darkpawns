@@ -107,7 +107,6 @@ goto 8105
 teleport AffectPeer 8105
 teleport Visible 8105
 set AffectMage class mage
-set AffectMage level 31
 set AffectMage maxmana 5000
 set AffectMage mana 5000
 set AffectMage align 1000
@@ -131,6 +130,8 @@ skillset AffectMage 'word of intellect' 100
 skillset AffectMage 'flame strike' 100
 skillset AffectMage 'slow' 100
 skillset AffectMage 'dream travel' 100
+set AffectMage level 31
+
 
 [probe]
 # Sanctuary is targetable and appends the victim's own active affect.

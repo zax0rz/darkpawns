@@ -192,6 +192,21 @@ run_case malformed-fingerprints X:cast:not-a-sha256 no "" $'FAIL\tfake\t3' 1 1
 # A repeated probe label must stay attributable: the repeats are suffixed rather
 # than rejected as malformed, so a pinned pair of shapes still resolves.
 run_case duplicate-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" yes "$(pin_dup "$two_a" "$two_b")" $'EXPECTED\tfake' 2 2
+# permuted-repeat-labels-pinned: the same two same-label shapes emitted in
+# opposite order on the confirming attempt. Encounter-order suffixing compared
+# the equal multiset as different files (DP-1456); canonical sort-order
+# suffixing must classify EXPECTED.
+# run-varying-agreeing-attempts: a run-varying divergence whose two attempts
+# agree by chance must stay EXPECTED_UNSTABLE, not fall through to the absent
+# pin check and mislabel FAIL (DP-1456 follow-up).
+# run-varying-passing-run: a run-varying divergence comparing clean in one
+# run is EXPECTED_UNSTABLE, not STALE; STALE stays reserved for pinned
+# divergences that stop diverging (DP-1456 follow-up).
+run_case run-varying-passing-run "P|P" yes "" $'EXPECTED_UNSTABLE\tfake' 1 1 run-varying
+
+run_case run-varying-agreeing-attempts "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" yes "" $'EXPECTED_UNSTABLE\tfake' 2 2 run-varying
+
+run_case permuted-repeat-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_b,cast:$two_a" yes "$(pin_dup "$two_a" "$two_b")" $'EXPECTED\tfake' 2 2
 run_case duplicate-labels-unpinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" no "" $'FAIL\tfake\t3' 2 2
 run_case multiblock-complete "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:$two_b" yes "$(pin_two "$two_a" multiblock-complete "$two_b")" $'EXPECTED\tfake' 3 3
 run_case multiblock-missing "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:$two_b" yes "$(pin_one "$two_a" multiblock-missing)" $'FAIL\tfake\t3' 3 3

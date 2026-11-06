@@ -109,11 +109,12 @@ Y
 goto 8105
 teleport Mirrorpeer 8105
 teleport Mirrorobs 8105
-set player Mirror level 0
 set Mirrorpeer level 11
 set Mirrorpeer maxhit 1000
 set Mirrorpeer hit 1000
 set Mirrorobs level 31
+set player Mirror level 0
+
 
 [probe]
 look

@@ -38,9 +38,10 @@ Y
 [warmup]
 goto 8105
 set Lapsewill class i
-set Lapsewill level 31
 skillset Lapsewill 'mental lapse' 100
 sethunt Lapsewill trainee
+set Lapsewill level 31
+
 
 [probe]
 cast 'mental lapse' trainee

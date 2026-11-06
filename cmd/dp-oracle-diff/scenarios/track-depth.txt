@@ -48,7 +48,7 @@ Y
 
 [warmup]
 goto 8105
-skillset Trackgod track 100
+skillset Trackgod 'track' 100
 
 [probe]
 track

@@ -98,12 +98,13 @@ teleport Masstarg 8105
 teleport Masswat 8105
 set Masscast outlaw on
 set player Masscast class mage
-set player Masscast level 34
 set player Masscast maxmana 5000
 set player Masscast mana 5000
 skillset Masscast 'mass dominate' 100
 set player Masstarg level 1
 set player Masswat level 1
+set player Masscast level 34
+
 
 [probe]
 cast 'mass dominate'

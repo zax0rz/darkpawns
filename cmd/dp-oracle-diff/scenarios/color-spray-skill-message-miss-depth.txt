@@ -135,7 +135,7 @@ load obj 8054
 get color
 set player ColorMissActor class mage
 skillset ColorMissActor 'color spray' 100
-skillset ColorMissActor infravision 100
+skillset ColorMissActor 'infravision' 100
 set player ColorMissActor maxmana 5000
 set player ColorMissActor mana 5000
 set player ColorMissActor align 1000

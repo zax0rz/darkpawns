@@ -37,10 +37,11 @@ Y
 [warmup]
 goto 8105
 set Sensecast class m
-set Sensecast level 31
 skillset Sensecast 'sense life' 100
 set Sensecast maxmana 5000
 set Sensecast mana 5000
+set Sensecast level 31
+
 
 [probe]
 cast 'sense life'

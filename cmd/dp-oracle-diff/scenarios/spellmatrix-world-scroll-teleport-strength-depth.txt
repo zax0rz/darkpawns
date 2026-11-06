@@ -48,10 +48,11 @@ Y
 [warmup]
 goto 8162
 set player ScrollReader class i
-set player ScrollReader level 30
 set player ScrollReader maxmana 5000
 set player ScrollReader mana 5000
 skillset ScrollReader 'shift reality' 100
+set player ScrollReader level 30
+
 
 [probe]
 get tooth

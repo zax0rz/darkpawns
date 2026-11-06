@@ -105,10 +105,8 @@ teleport Setlow 8162
 set player Setpeer level 40
 set player Setlow level 1
 send:high quit
-send:high 0
 ~dpclock pulse 1
 send:low quit
-send:low 0
 ~dpclock pulse 1
 
 [probe]

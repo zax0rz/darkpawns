@@ -36,8 +36,9 @@ Y
 [warmup]
 goto 8162
 set Weather class mage
-set Weather level 31
 skillset Weather 'control weather' 100
+set Weather level 31
+
 
 [probe]
 cast 'control weather' sideways

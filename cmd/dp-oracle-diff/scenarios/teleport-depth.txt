@@ -170,6 +170,4 @@ teleport Teleportwizard 8162
 teleport Teleportpeer
 teleport Teleportpeer 999999
 teleport Teleportpeer 8161 trailing words are ignored
-
-[probe:actor]
-teleport Teleportpeerhigh 8161
+send:actor teleport Teleportpeerhigh 8161

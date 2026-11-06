@@ -5,6 +5,7 @@
 # depth-case: spell-route.scroll-dispatch
 
 [fixture]
+empty-players
 quiet-mobs
 
 [setup:oracle]

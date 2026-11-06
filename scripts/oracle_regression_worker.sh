@@ -98,7 +98,13 @@ main() {
 	}
 
 	write_success() {
-		if [[ $in_baseline -eq 1 ]]; then
+		if [[ $in_baseline -eq 1 && $declared_unstable -eq 1 ]]; then
+			# A run-varying divergence can pass any given run; one clean run is
+			# not ledger reconciliation, so STALE is reserved for pinned
+			# divergences that stop diverging (DP-1456 follow-up).
+			write_result EXPECTED_UNSTABLE
+			printf 'EXPECTED_UNSTABLE %s (ledger-backed run-varying divergence; this run compared clean)\n' "$scenario"
+		elif [[ $in_baseline -eq 1 ]]; then
 			write_result STALE
 			printf 'STALE %s (baseline expects divergence; ledger reconciliation needed)\n' "$scenario"
 		elif ((${#content_attempts[@]} != 0)); then
@@ -121,6 +127,13 @@ main() {
 		local input=$1
 		local output=$2
 		local raw="$output.raw"
+		# A scenario may repeat a probe line verbatim (the string editor
+		# repeats "@", look targets repeat, and so on), so one label can
+		# legitimately appear more than once -- and the repeats' shapes can
+		# permute across runs. Suffixing repeats by encounter order then
+		# compared equal multisets as different files (DP-1456: census
+		# attempts permuted five same-label shapes); sorting BEFORE the
+		# suffix pass keeps the file canonical for equal multisets.
 		if ! awk -F '\t' '
 			/^divergence-fingerprint\t/ {
 				saw = 1
@@ -128,21 +141,14 @@ main() {
 					bad = 1
 					next
 				}
-				# A scenario may repeat a probe line verbatim (the string editor
-				# repeats "@", look targets repeat, and so on), so one label can
-				# legitimately appear more than once. Suffix the repeats so the
-				# shape stays parseable and pin-comparable; rejecting duplicates
-				# outright turned an attributable divergence into "malformed".
-				label = $2
-				if (++seen[label] > 1)
-					label = label "-" seen[label]
-				print label "\t" $3
+				print $2 "\t" $3
 			}
 			END { if (!saw || bad) exit 1 }
-		' "$input" >"$raw"; then
+		' "$input" >"$raw.unsorted"; then
 			return 1
 		fi
-		sort -- "$raw" >"$output"
+		sort -- "$raw.unsorted" >"$raw" || return 1
+		awk -F '\t' -v OFS='\t' '{ if (++seen[$1] > 1) $1 = $1 "-" seen[$1]; print }' "$raw" >"$output"
 		return $?
 	}
 
@@ -161,18 +167,17 @@ main() {
 					bad = 1
 					next
 				}
-				# Mirror extract_fingerprints: a scenario may pin several shapes
-				# for the same repeated probe label.
-				label = $2
-				if (++seen[label] > 1)
-					label = label "-" seen[label]
-				print label "\t" $3
+				print $2 "\t" $3
 			}
 			END { if (!found || bad) exit 1 }
-		' "$pins_file" >"$raw"; then
+		' "$pins_file" >"$raw.unsorted"; then
 			return 1
 		fi
-		sort -- "$raw" >"$expected" || return 1
+		# Same canonical repeat-suffix as extract_fingerprints: sort first, so
+		# the Nth row of a label is deterministic and permuted repeats of one
+		# probe line compare as the multiset they are (DP-1456).
+		sort -- "$raw.unsorted" >"$raw" || return 1
+		awk -F '\t' -v OFS='\t' '{ if (++seen[$1] > 1) $1 = $1 "-" seen[$1]; print }' "$raw" >"$expected" || return 1
 		diff -- "$expected" "$fingerprints" >/dev/null
 	}
 
@@ -197,6 +202,15 @@ main() {
 			return
 		fi
 		if [[ $in_baseline -eq 1 ]]; then
+			# A run-varying declaration means the shape is not pinnable at all;
+			# two attempts agreeing by chance must not fall through to the pin
+			# check, which has no pins for it and would mislabel it FAIL
+			# (DP-1456 follow-up).
+			if [[ $declared_unstable -eq 1 ]]; then
+				write_result EXPECTED_UNSTABLE
+				printf 'EXPECTED_UNSTABLE %s (ledger-backed divergence declared run-varying; attempts agreed this run)\n' "$scenario"
+				return
+			fi
 			if pins_match "$second_fingerprints"; then
 				write_result EXPECTED
 				printf 'EXPECTED %s (ledger-backed divergence, pinned shape)\n' "$scenario"

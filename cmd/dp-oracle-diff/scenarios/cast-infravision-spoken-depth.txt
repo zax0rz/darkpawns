@@ -95,14 +95,14 @@ Y
 
 [warmup]
 goto 8105
-teleport InfraCaster 8105
 teleport InfraVictim 8105
 teleport Infraobs 8105
 set InfraCaster class mage
-set InfraCaster level 31
-skillset InfraCaster infravision 100
+skillset InfraCaster 'infravision' 100
 set InfraCaster maxmana 5000
 set InfraCaster mana 5000
+set InfraCaster level 31
+
 
 [probe]
 cast 'infravision' InfraVictim

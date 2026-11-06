@@ -133,7 +133,6 @@ teleport ItemBuilder 8162
 teleport ItemPeer 8162
 teleport ItemView 8162
 set player ItemMage class mage
-set player ItemMage level 35
 set player ItemMage align 1000
 set player ItemMage maxhit 100000
 set player ItemMage hit 100000
@@ -147,9 +146,6 @@ set player ItemView maxhit 100000
 set player ItemView hit 100000
 
 set player ItemBuilder level 35
-set player ItemMage level 30
-
-[probe]
 send:builder oedit 8054
 send:builder 1
 send:builder staff1601
@@ -161,6 +157,10 @@ send:builder 99
 send:builder q
 send:builder y
 load obj 8054
+set player ItemMage level 30
+
+
+[probe]
 get staff1601
 hold staff1601
 use staff1601
