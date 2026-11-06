@@ -11,3 +11,4 @@ do_ban	ban	ban.site-truncate	D4	state	oracle-green	ban-depth	ban.c:189-193	The s
 isbanned	ban	ban.literal-asterisk	D5	state	unit-green	TestIsBannedLiteralAsterisk	ban.c:86-104	The login/site-check callee uses strstr; an asterisk in a site pattern is literal, not a wildcard.
 do_unban	unban	ban.unban-no-argument	D1	command	oracle-green	ban-depth	src/ban.c:219-222	A filler-only value parses to an empty one_argument result and reaches the exact missing-site response through the real command path (R1/R2/R5e/R5h).
 do_unban	unban	ban.unban-not-found	D1	command	oracle-green	ban-depth	src/ban.c:224-234	An absent site reaches C's exact not-currently-banned response through the real command path (R1/R2/R5e/R5h).
+do_unban	unban	ban.unban-success	D2	command	oracle-green	ban-unban-success-depth@1	src/ban.c:213-244	A fresh all-ban followed by unban reaches the successful C acknowledgement after warmup clears the oracle's historical ban (R1/R2/R5e/R5h).

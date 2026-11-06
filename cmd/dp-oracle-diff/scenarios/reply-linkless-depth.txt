@@ -1,0 +1,72 @@
+# C's do_reply linkless arm is reachable through peer-drop after the actor
+# tells the peer during warmup. close_socket retains the peer in the playing
+# list with desc=NULL; do_reply emits the selected linkless line (src/act.comm.c:967).
+# depth-case: reply.linkless-recipient
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Replygod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Replygod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Replypeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+tell Replygod hello
+
+[setup:port:peer]
+Replypeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+tell Replygod hello
+
+[peer-drop]
+peer
+
+[probe]
+reply hello

@@ -1,0 +1,81 @@
+# C-first do_transform successful werewolf arm.
+# The real level-1 lycanthropy spell grants PLR_WEREWOLF; fixed-time 650353221
+# boots at hour 22, day 10, where the werewolf night gate passes.
+# C path: src/spell_parser.c:1432 -> src/spells.c:662-680 ->
+# src/interpreter.c:785 -> src/act.other.c:1415-1452.
+# depth-case: transform.werewolf-success-output
+
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650353221
+
+[setup:oracle]
+Transformwolf
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Transformwolf
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Transformwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Transformwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Transformwatch 8105
+set player Transformwolf class mage
+set player Transformwolf maxmana 5000
+set player Transformwolf mana 5000
+skillset Transformwolf 'lycanthropy' 100
+set player Transformwolf level 34
+cast 'lycanthropy' Transformwolf
+~dpclock pulse 20
+
+[probe]
+transform
