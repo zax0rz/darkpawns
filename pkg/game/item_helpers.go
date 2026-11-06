@@ -340,32 +340,6 @@ func an(s string) string {
 	return "a"
 }
 
-// FindPlayerInRoom finds a player by name in a specific room
-func (w *World) FindPlayerInRoom(vnum int, name string) *Player {
-	for _, p := range w.GetPlayersInRoom(vnum) {
-		if strings.EqualFold(p.Name, name) || strings.HasPrefix(strings.ToLower(p.Name), strings.ToLower(name)) {
-			return p
-		}
-	}
-	return nil
-}
-
-// FindMobInRoom finds a mob by name in a specific room
-func (w *World) FindMobInRoom(vnum int, name string) *MobInstance {
-	if strings.TrimSpace(name) == "" {
-		return nil
-	}
-	for _, m := range w.GetMobsInRoom(vnum) {
-		// C get_char_room_vis() matches the mob's keyword namelist, not the
-		// rendered short description (handler.c:1276-1300). The distinction
-		// matters for authored aliases such as "elemental" and "servant".
-		if isnameWithAbbrevs(name, charKeywords(m)) {
-			return m
-		}
-	}
-	return nil
-}
-
 // legacyActArgs adapts the old loosely typed helper arguments to Act's typed
 // victim/primary-object/secondary-object parameters. Keep this only while
 // domain migrations retire the legacy helper signatures.

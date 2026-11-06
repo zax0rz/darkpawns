@@ -141,12 +141,16 @@ func objectIsActive(w *World, want *ObjectInstance) bool {
 	return false
 }
 
-func TestFindMobInRoomUsesAuthoredKeywords(t *testing.T) {
+func TestResolveCharInRoomUsesAuthoredKeywords(t *testing.T) {
 	fixture := newElementsMinionTestWorld(t, nil)
-	if got := fixture.w.FindMobInRoom(8105, "elemental"); got != fixture.mob {
-		t.Fatal("elemental alias did not resolve to the minion")
+	// C get_char_room_vis() matches the mob's keyword namelist, not the
+	// rendered short description (src/handler.c:1276-1300). The distinction
+	// matters for authored aliases such as "elemental" and "servant".
+	if _, ok := fixture.w.resolveCharInRoomAt(fixture.actor, 8105, "elemental"); !ok {
+		t.Fatal("elemental alias did not resolve")
 	}
-	if got := fixture.w.FindMobInRoom(8105, "servant"); got != fixture.mob {
+	target, ok := fixture.w.resolveCharInRoomAt(fixture.actor, 8105, "servant")
+	if !ok || target.Mob != fixture.mob {
 		t.Fatal("servant alias did not resolve to the minion")
 	}
 }

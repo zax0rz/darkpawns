@@ -627,10 +627,11 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 			DieWithKiller(victim, ch, attackType)
 		}
 
-		if onDeath == nil && ch != victim &&
-			(cbHasMobFlag(ch, "MOB_AGGR24") || cbHasMobFlag(ch, "MOB_LOOTS")) {
-			AttitudeLoot(ch, victim)
-		}
+		// C's attitude_loot tail (fight.c:1690-1697) runs from the game
+		// layer's World.attitudeLootAfterKill inside every onDeath callback
+		// production callers pass. No nil-onDeath caller can present a
+		// looting killer (see pkg/game/attitude_loot.go), so there is no arm
+		// here — the counter_procs duplicate was removed the same way (#2277).
 
 		// autoloot on kill (fight.c:1708)
 		if onDeath == nil && !ch.IsNPC() && victim.IsNPC() && ch != victim {
@@ -1074,39 +1075,6 @@ func CounterProcs(ch Combatant) {
 		return
 	}
 	cbCounterProcs(ch, cbGetKills(ch))
-}
-
-// **********************************
-// 14. attitudeLoot()
-//
-// Port of fight.c:attitude_loot.
-// Loots corpse, junks cheap items in two passes (get → junk → wear → get → junk → wear),
-// and broadcasts one of 12 randomized brag messages for MOB_AGGR24/MOB_LOOTS attackers.
-// **********************************
-
-func AttitudeLoot(ch, victim Combatant) {
-	// Phase 1: loot corpse
-	cbPerformCommand(ch, fmt.Sprintf("get all corpse of %s", victim.GetName()))
-
-	// C source (fight.c:1128): first junk pass — discard items with cost <= 150
-	cbJunkInventoryItems(ch)
-
-	// C source (fight.c:1138): auto-wear anything wearable
-	cbPerformCommand(ch, "wear all")
-
-	// C source (fight.c:1139): second get — picks up items from worn containers
-	cbPerformCommand(ch, fmt.Sprintf("get all corpse of %s", victim.GetName()))
-
-	// C source (fight.c:1141): second junk pass
-	cbJunkInventoryItems(ch)
-
-	// C source (fight.c:1156): auto-wear anything newly acquired
-	cbPerformCommand(ch, "wear all")
-
-	// C source (fight.c:1173-1248): brag messages — only for MOB_AGGR24 mobs (already filtered at call site)
-	// Additional early outs from C source: ch == victim (already handled at call site — ch != victim)
-	// and !can_speak(ch) — we skip that here; if the mob can't speak, cbBroadChat does nothing.
-	BragMessage(ch, victim)
 }
 
 // BragMessage sends one of 12 randomized brag messages matching the C source

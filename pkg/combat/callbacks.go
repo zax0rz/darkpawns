@@ -132,7 +132,6 @@ type GameCallbacks struct {
 	SetGold func(name Combatant, gold int)
 
 	// Items
-	JunkInventoryItems func(chName Combatant)
 
 	// Commands
 	PerformCommand func(chName Combatant, cmd string)
@@ -670,12 +669,6 @@ func cbSetGold(name Combatant, gold int) {
 // ---------------------------------------------------------------------------
 // Item helpers.
 // ---------------------------------------------------------------------------
-
-func cbJunkInventoryItems(chName Combatant) {
-	if cb := callbacks; cb != nil && cb.JunkInventoryItems != nil {
-		cb.JunkInventoryItems(chName)
-	}
-}
 
 // ---------------------------------------------------------------------------
 // Command helpers.

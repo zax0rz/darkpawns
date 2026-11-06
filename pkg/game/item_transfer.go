@@ -430,6 +430,16 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 }
 
 // performGive gives an object to a player
+// performGiveAny dispatches across the Go player/mob split of C perform_give
+// (src/act.item.c:667-706), whose single body serves any victim kind.
+func (w *World) performGiveAny(ch *Player, vict CharTarget, obj *ObjectInstance) {
+	if vict.Mob != nil {
+		w.performGiveToMob(ch, vict.Mob, obj)
+		return
+	}
+	w.performGive(ch, vict.Player, obj)
+}
+
 func (w *World) performGive(ch *Player, vict *Player, obj *ObjectInstance) {
 	if obj.HasExtraFlag(0, extraFlagNoDrop) && ch.GetLevel() < lvlImmort {
 		w.actToChar(ch, "You can't let go of $p!!  Yeech!", obj, nil)
@@ -494,22 +504,26 @@ func (w *World) performGiveToMob(ch *Player, vict *MobInstance, obj *ObjectInsta
 	}
 }
 
-// giveFindVict finds the victim for a give command
-func (w *World) giveFindVict(ch *Player, arg string) *Player {
+// giveFindVict finds the victim for a give command. C give_find_vict
+// (src/act.item.c:709-728) resolves the target with get_char_room_vis
+// (src/handler.c:1277-1300), which answers "me"/"self" with the giver
+// itself, honours N.<name> ordinals and CAN_SEE, and scans the room's
+// people list in arrival order with players and mobs together.
+func (w *World) giveFindVict(ch *Player, arg string) (CharTarget, bool) {
 	if arg == "" {
 		ch.SendMessage("To who?\r\n")
-		return nil
+		return CharTarget{}, false
 	}
-	vict := w.FindPlayerInRoom(ch.GetRoomVNum(), arg)
-	if vict == nil {
+	vict, ok := w.ResolveCharInRoom(ch, arg)
+	if !ok {
 		ch.SendMessage(NoPersonHere)
-		return nil
+		return CharTarget{}, false
 	}
-	if vict == ch {
+	if vict.Player == ch {
 		ch.SendMessage("What's the point of that?\r\n")
-		return nil
+		return CharTarget{}, false
 	}
-	return vict
+	return vict, true
 }
 
 // performGiveGold gives gold coins to a player
@@ -540,8 +554,11 @@ func (w *World) performGiveGold(ch *Player, vict *Player, amount int) {
 
 // doGiveCoins handles the coin form of give, including mob bribes.
 func (w *World) doGiveCoins(ch *Player, victName string, amount int) bool {
-	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
-	if mob != nil {
+	vict, found := w.giveFindVict(ch, victName)
+	if !found {
+		return true
+	}
+	if mob := vict.Mob; mob != nil {
 		// C perform_give_gold (src/act.item.c:738-754): the amount
 		// and purse checks come before the bribe, and a god's purse is
 		// never checked or charged.
@@ -566,10 +583,7 @@ func (w *World) doGiveCoins(ch *Player, victName string, amount int) bool {
 		}
 		return true
 	}
-	vict := w.giveFindVict(ch, victName)
-	if vict != nil {
-		w.performGiveGold(ch, vict, amount)
-	}
+	w.performGiveGold(ch, vict.Player, amount)
 	return true
 }
 
@@ -597,28 +611,13 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	}
 
 	// Give object — vict name is the next token after the object name.
+	// C do_give resolves one victim through give_find_vict and then runs the
+	// dotmode logic for it whatever it is (src/act.item.c:798-830); the mob
+	// and player bodies share the same perform_give.
 	victName, _ := oneArgument(rest)
 
-	// Check mob before player — ongive/item path
-	mob := w.FindMobInRoom(ch.GetRoomVNum(), victName)
-	if mob != nil {
-		var obj *ObjectInstance
-		for _, o := range ch.Inventory.Snapshot() {
-			if isnameWithAbbrevs(arg1, o.GetKeywords()) {
-				obj = o
-				break
-			}
-		}
-		if obj == nil {
-			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
-			return true
-		}
-		w.performGiveToMob(ch, mob, obj)
-		return true
-	}
-
-	vict := w.giveFindVict(ch, victName)
-	if vict == nil {
+	vict, found := w.giveFindVict(ch, victName)
+	if !found {
 		return true
 	}
 
@@ -636,7 +635,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 			ch.SendMessage(fmt.Sprintf("You don't seem to have %s %s.\r\n", an(arg1), arg1))
 			return true
 		}
-		w.performGive(ch, vict, obj)
+		w.performGiveAny(ch, vict, obj)
 	} else {
 		// C checks the empty-keyword ("give all.") case before the
 		// empty-inventory case (act.item.c:814-819).
@@ -657,7 +656,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 				continue
 			}
 			if dotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords()) {
-				w.performGive(ch, vict, obj)
+				w.performGiveAny(ch, vict, obj)
 			}
 		}
 	}

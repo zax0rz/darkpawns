@@ -1,0 +1,46 @@
+# depth-case: hug.ordinal-second
+# depth-case: hug.ordinal-exhausted
+# depth-case: hug.player-only-zero-dot
+# do_action resolves the social victim with get_char_room_vis
+# (src/act.social.c:132 → src/handler.c:1277-1300) and tests vict == ch for
+# the self branch. hug is the proving vehicle; the resolver is shared by every
+# social. Two identical trainee guards keep the ordinal free of an ordering
+# variable, and "0.<name>" takes the player-only pass to the actor itself.
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 2 8162 163
+spawn-mob 16303 2 8162 163
+
+[setup:oracle]
+Hugger
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Hugger
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+hug 2.guard
+hug 3.guard
+hug 0.hugger

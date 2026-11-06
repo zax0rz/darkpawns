@@ -1,0 +1,55 @@
+# depth-case: give.self-me
+# depth-case: give.self-self
+# depth-case: give.player-only-zero-dot
+# depth-case: give.ordinal-second
+# depth-case: give.ordinal-exhausted
+# Target resolution through get_char_room_vis (src/handler.c:1277-1300), the
+# finder C give_find_vict uses (src/act.item.c:717). "me"/"self" answer with
+# the giver, "0.<name>" is the player-only pass, and "N.<name>" counts visible
+# matches. Two identical trainee guards make the ordinal observable without an
+# ordering variable: whichever guard N picks, the bytes are the same.
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 2 8162 163
+spawn-mob 16303 2 8162 163
+
+[setup:oracle]
+Giveres
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Giveres
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+open pack
+get bread pack
+
+[probe]
+give bread me
+give bread self
+give bread 0.giveres
+give bread guard
+give bread 2.guard
+give bread 3.guard

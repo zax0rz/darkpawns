@@ -79,23 +79,17 @@ func (w *World) roomIsDeath(room *parser.Room) bool {
 	return false
 }
 
-// findCharInRoom finds a character by name in the same room.
-// Returns the player and mob — exactly one will be non-nil.
+// findCharInRoom resolves a character in the room the way C does: do_ride and
+// do_yank both look their target up with get_char_room_vis (src/act.other.c:1564,
+// :1630 → src/handler.c:1277-1300), so "me"/"self", N.<name> ordinals,
+// 0.<name>, CAN_SEE and the combined room order apply. Returns the player and
+// mob — exactly one will be non-nil.
 func (w *World) findCharInRoom(ch *Player, roomVNum int, name string) (*Player, *MobInstance) {
-	argLower := strings.ToLower(name)
-	// Check players first
-	for _, p := range w.GetPlayersInRoom(roomVNum) {
-		if strings.Contains(strings.ToLower(p.GetName()), argLower) {
-			return p, nil
-		}
+	t, ok := w.resolveCharInRoomAt(ch, roomVNum, name)
+	if !ok {
+		return nil, nil
 	}
-	// Check mobs
-	for _, m := range w.GetMobsInRoom(roomVNum) {
-		if strings.Contains(strings.ToLower(m.Proto().ShortDesc), argLower) {
-			return nil, m
-		}
-	}
-	return nil, nil
+	return t.Player, t.Mob
 }
 
 // ---------------------------------------------------------------------------

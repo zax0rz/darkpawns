@@ -355,7 +355,7 @@ func (w *World) npcGive(me *MobInstance, argument string) {
 		return
 	}
 	vict := mobRescueVictim(w, me, victName)
-	if vict == nil || vict.GetName() == me.GetName() {
+	if vict == nil || vict == combat.Combatant(me) {
 		return
 	}
 	obj := w.npcCarriedVis(me, objName)

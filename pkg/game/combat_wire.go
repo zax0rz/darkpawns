@@ -697,13 +697,6 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 	// -------------------------------------------------------------------------
 	// Items
 	// -------------------------------------------------------------------------
-	cb.JunkInventoryItems = func(chName combat.Combatant) {
-		p, ok := combatPlayer(chName)
-		if !ok {
-			return
-		}
-		w.junkCheapItems(p)
-	}
 
 	// -------------------------------------------------------------------------
 	// Commands
