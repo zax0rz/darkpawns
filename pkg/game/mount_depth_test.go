@@ -229,7 +229,7 @@ func TestDoRideResolvesThroughGetCharRoomVis(t *testing.T) {
 	if !rider.IsAffected(affMounted) {
 		t.Fatal("ride 2.horse did not mount the rider")
 	}
-	if !(mount.IsAffected(affMounted) || second.IsAffected(affMounted)) {
+	if !mount.IsAffected(affMounted) && !second.IsAffected(affMounted) {
 		t.Fatal("neither horse carries the mount affect")
 	}
 	out.Reset()
