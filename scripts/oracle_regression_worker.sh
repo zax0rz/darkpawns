@@ -98,7 +98,13 @@ main() {
 	}
 
 	write_success() {
-		if [[ $in_baseline -eq 1 ]]; then
+		if [[ $in_baseline -eq 1 && $declared_unstable -eq 1 ]]; then
+			# A run-varying divergence can pass any given run; one clean run is
+			# not ledger reconciliation, so STALE is reserved for pinned
+			# divergences that stop diverging (DP-1456 follow-up).
+			write_result EXPECTED_UNSTABLE
+			printf 'EXPECTED_UNSTABLE %s (ledger-backed run-varying divergence; this run compared clean)\n' "$scenario"
+		elif [[ $in_baseline -eq 1 ]]; then
 			write_result STALE
 			printf 'STALE %s (baseline expects divergence; ledger reconciliation needed)\n' "$scenario"
 		elif ((${#content_attempts[@]} != 0)); then

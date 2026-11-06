@@ -199,6 +199,11 @@ run_case duplicate-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$
 # run-varying-agreeing-attempts: a run-varying divergence whose two attempts
 # agree by chance must stay EXPECTED_UNSTABLE, not fall through to the absent
 # pin check and mislabel FAIL (DP-1456 follow-up).
+# run-varying-passing-run: a run-varying divergence comparing clean in one
+# run is EXPECTED_UNSTABLE, not STALE; STALE stays reserved for pinned
+# divergences that stop diverging (DP-1456 follow-up).
+run_case run-varying-passing-run "P|P" yes "" $'EXPECTED_UNSTABLE\tfake' 1 1 run-varying
+
 run_case run-varying-agreeing-attempts "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" yes "" $'EXPECTED_UNSTABLE\tfake' 2 2 run-varying
 
 run_case permuted-repeat-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_b,cast:$two_a" yes "$(pin_dup "$two_a" "$two_b")" $'EXPECTED\tfake' 2 2
