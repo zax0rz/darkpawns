@@ -132,4 +132,3 @@ spellmatrix-wand-olc-10-depth	cast.tsv	spell.haste.matrix-wand-olc	blocked
 spellmatrix-wand-olc-10-depth	cast.tsv	spell.psiblast.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-10-depth	cast.tsv	spell.slow.matrix-wand-olc	blocked	
 spellmatrix-world-wand-disintegration-live-depth	cast.tsv	spell.disintegration.matrix-world-wand-live	blocked	
-zedit-duplicate-gate-depth	zedit.tsv	zedit.duplicate-gate-cleanup	blocked	
