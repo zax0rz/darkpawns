@@ -132,10 +132,4 @@ spellmatrix-wand-olc-10-depth	cast.tsv	spell.haste.matrix-wand-olc	blocked
 spellmatrix-wand-olc-10-depth	cast.tsv	spell.psiblast.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-10-depth	cast.tsv	spell.slow.matrix-wand-olc	blocked	
 spellmatrix-world-wand-disintegration-live-depth	cast.tsv	spell.disintegration.matrix-world-wand-live	blocked	
-transfer-depth	wizard.tsv	transfer.all-level-refusal	blocked	
-transfer-depth	wizard.tsv	transfer.lower-level-refusal	blocked	
-transfer-depth	wizard.tsv	transfer.one-argument	blocked	
-transfer-depth	wizard.tsv	transfer.self-refusal	blocked	
-transfer-depth	wizard.tsv	transfer.success-audience	blocked	
-transfer-depth	wizard.tsv	transfer.target-not-found	blocked	
 zedit-duplicate-gate-depth	zedit.tsv	zedit.duplicate-gate-cleanup	blocked	
