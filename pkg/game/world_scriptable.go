@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"sort"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
 
@@ -12,17 +13,37 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/scripting"
 )
 
+// GetPlayersInRoomScriptable returns the room's players in C's
+// world[room].people order: the most recent arrival first, because
+// char_to_room() prepends to the list (src/handler.c:537:
+// `ch->next_in_room = world[room].people`). A Lua room walk must see the same
+// order the core does (R3).
 func (w *World) GetPlayersInRoomScriptable(roomVNum int) []scripting.ScriptablePlayer {
 	w.mu.RLock()
-	defer w.mu.RUnlock()
-
-	var players []scripting.ScriptablePlayer
+	allPlayers := make([]*Player, 0, len(w.players))
 	for _, p := range w.players {
-		if p.RoomVNum == roomVNum {
+		allPlayers = append(allPlayers, p)
+	}
+	w.mu.RUnlock()
+
+	var players []*Player
+	for _, p := range allPlayers {
+		if p.GetRoom() == roomVNum {
 			players = append(players, p)
 		}
 	}
-	return players
+	sort.SliceStable(players, func(i, j int) bool {
+		si, sj := players[i].GetRoomEntrySequence(), players[j].GetRoomEntrySequence()
+		if si != sj {
+			return si > sj
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
+	out := make([]scripting.ScriptablePlayer, len(players))
+	for i, p := range players {
+		out[i] = p
+	}
+	return out
 }
 
 // GetObjPrototypeScriptable returns an object prototype by vnum as ScriptableObject.

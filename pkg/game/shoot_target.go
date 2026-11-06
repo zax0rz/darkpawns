@@ -15,29 +15,32 @@ func (w *World) ResolveShootTarget(roomVNum int, name string) combat.Combatant {
 		sequence uint64
 		keywords string
 	}
-	// Snapshot the registry without holding the world lock while reading bodies.
+	// Players come back in C's world[room].people order from GetPlayersInRoom;
+	// mobs are filtered here. The merged list is re-sorted by arrival sequence,
+	// C's newest-first room list, with a keyword tie-break so two bodies that
+	// somehow share a sequence stay deterministic (R3).
 	w.mu.RLock()
-	players := make([]*Player, 0, len(w.players))
-	for _, p := range w.players {
-		players = append(players, p)
-	}
 	mobs := make([]*MobInstance, 0, len(w.activeMobs))
 	for _, m := range w.activeMobs {
 		mobs = append(mobs, m)
 	}
 	w.mu.RUnlock()
+	players := w.GetPlayersInRoom(roomVNum)
 	var people []occupant
 	for _, p := range players {
-		if p.GetRoom() == roomVNum {
-			people = append(people, occupant{p, p.GetRoomEntrySequence(), p.GetName()})
-		}
+		people = append(people, occupant{p, p.GetRoomEntrySequence(), p.GetName()})
 	}
 	for _, m := range mobs {
 		if m.GetRoom() == roomVNum {
 			people = append(people, occupant{m, m.GetRoomEntrySequence(), charKeywords(m)})
 		}
 	}
-	sort.Slice(people, func(i, j int) bool { return people[i].sequence > people[j].sequence })
+	sort.SliceStable(people, func(i, j int) bool {
+		if people[i].sequence != people[j].sequence {
+			return people[i].sequence > people[j].sequence
+		}
+		return people[i].keywords < people[j].keywords
+	})
 	number := GetNumber(&name)
 	if number != 0 {
 		matched := 0

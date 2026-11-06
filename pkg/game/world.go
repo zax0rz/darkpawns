@@ -920,20 +920,39 @@ func (w *World) GetRoomZone(roomVNum int) int {
 	return room.Zone
 }
 
-// GetPlayersInRoom returns all players in a given room.
+// GetPlayersInRoom returns all players in a given room in C's
+// world[room].people order: the most recent arrival first, because
+// char_to_room() prepends to the list (src/handler.c:537:
+// `ch->next_in_room = world[room].people`). Ties fall back to name so two
+// players that entered in the same tick keep a deterministic order (R3).
+// C's aggressive mobile takes the first eligible player from the head of that
+// list (src/mobact.c:200-233), so the order is player-visible: callers must not
+// re-sort the slice.
 func (w *World) GetPlayersInRoom(roomVNum int) []*Player {
+	// Snapshot the player list under the world lock, then query each player's
+	// room and arrival sequence OUTSIDE it. GetRoom and GetRoomEntrySequence
+	// acquire the player's own lock; holding w.mu.RLock across them is the same
+	// nested-lock stall GetMobsInRoom documents.
 	w.mu.RLock()
-	defer w.mu.RUnlock()
+	allPlayers := make([]*Player, 0, len(w.players))
+	for _, p := range w.players {
+		allPlayers = append(allPlayers, p)
+	}
+	w.mu.RUnlock()
 
 	var players []*Player
-	for _, p := range w.players {
-		// Read through the player's own lock: SetRoom runs on session
-		// goroutines under p.mu only, so a raw p.RoomVNum read here would
-		// race movement even though the map iteration is covered by w.mu.
+	for _, p := range allPlayers {
 		if p.GetRoom() == roomVNum {
 			players = append(players, p)
 		}
 	}
+	sort.SliceStable(players, func(i, j int) bool {
+		si, sj := players[i].GetRoomEntrySequence(), players[j].GetRoomEntrySequence()
+		if si != sj {
+			return si > sj
+		}
+		return players[i].GetName() < players[j].GetName()
+	})
 	return players
 }
 
