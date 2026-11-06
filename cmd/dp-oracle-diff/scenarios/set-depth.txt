@@ -153,6 +153,4 @@ set Settarget hit 5
 set Settarget gold 123
 set Settarget bank 99
 set Settarget level 5
-
-[probe:bounded]
-set Sethigh brief on
+send:bounded set Sethigh brief on

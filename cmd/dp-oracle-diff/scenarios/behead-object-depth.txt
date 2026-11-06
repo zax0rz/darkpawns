@@ -77,6 +77,4 @@ teleport Beheadobjpeer 8162
 behead fractal trailing words
 inventory
 look
-
-[probe:peer]
-look
+send:peer look

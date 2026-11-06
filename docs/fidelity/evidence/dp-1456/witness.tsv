@@ -123,3 +123,7 @@ summon-nonoutlaw-refusal-depth	spell.summon.nonoutlaw-refusal	Okay.	1
 track-depth	track.no-argument	Whom are you trying to track?	1
 transfer-depth	transfer.target-not-found	No-one by that name here.	1,2
 wizard-file-output-depth	stat.file-protected-higher	MALE PC 'Setpeer'  IDNum: [    2], In room [   -1]	1,2,3,5,8
+behead-object-depth	behead.object	You rip the head off a fractal French tickler with your bare hands!	1
+set-depth	set.usage	Usage: set <victim> <field> <value>	1
+teleport-depth	teleport.target-not-found	No-one by that name here.	1
+zedit-duplicate-gate-depth	zedit.duplicate-gate-cleanup	That room is currently being edited by Zeditadmin.	1

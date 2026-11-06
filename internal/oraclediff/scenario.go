@@ -358,6 +358,8 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 	var luaScript *LuaScriptFixture
 	peerDropSection := false
 	setupRefusalReasonSeen := false
+	plainProbeSeen := false
+	actorProbeSeen := false
 	lineNo := 0
 	for scanner.Scan() {
 		lineNo++
@@ -410,6 +412,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			case "[relogin:port]", "[relogin:go]":
 				section = &sc.ReloginPort
 			case "[probe]":
+				if actorProbeSeen {
+					return Scenario{}, fmt.Errorf("scenario %q line %d: [probe] after [probe:%s]; the parser keeps one probe actor, so the later section would silently retarget the earlier steps — send directed send:<peer> steps from one [probe] instead", name, lineNo, sc.ProbeActor)
+				}
+				plainProbeSeen = true
 				section = &sc.Probe
 				sc.ProbeActor = ""
 			case "[warmup]":
@@ -426,6 +432,10 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 			default:
 				parts := strings.Split(strings.Trim(lower, "[]"), ":")
 				if len(parts) == 2 && parts[0] == "probe" && parts[1] != "" {
+					if plainProbeSeen {
+						return Scenario{}, fmt.Errorf("scenario %q line %d: [probe:%s] after [probe]; the parser keeps one probe actor, so the later section would silently retarget the earlier steps — send directed send:%s steps from one [probe] instead", name, lineNo, parts[1], parts[1])
+					}
+					actorProbeSeen = true
 					section = &sc.Probe
 					sc.ProbeActor = parts[1]
 					continue

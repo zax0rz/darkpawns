@@ -96,6 +96,36 @@ func TestParseScenarioEmptySetupRefusalReasonRejected(t *testing.T) {
 	}
 }
 
+// TestParseScenarioProbeActorMixRejected pins the DP-1456 follow-up: mixing a
+// plain [probe] with a [probe:X] section is a parse error, because the parser
+// keeps one ProbeActor and the later section silently retargets the earlier
+// steps — the trap that hollowed transfer-depth. Reverting the guard in
+// ParseScenario makes both order cases fail this test.
+func TestParseScenarioProbeActorMixRejected(t *testing.T) {
+	for _, tc := range []struct {
+		name, body string
+	}{
+		{"plain then actor", "[setup:oracle:peer]\npeer\n[probe]\nlook\n[probe:peer]\npeek\n"},
+		{"actor then plain", "[setup:oracle:peer]\npeer\n[probe:peer]\npeek\n[probe]\nlook\n"},
+	} {
+		_, err := ParseScenario(tc.name, strings.NewReader(tc.body))
+		if err == nil || !strings.Contains(err.Error(), "would silently retarget") {
+			t.Fatalf("%s: expected retarget parse error, got %v", tc.name, err)
+		}
+	}
+	// Single-actor and repeated same-actor sections stay legal.
+	for _, tc := range []struct {
+		name, body string
+	}{
+		{"actor only", "[setup:oracle:peer]\npeer\n[probe:peer]\npeek\n"},
+		{"same actor twice", "[setup:oracle:peer]\npeer\n[probe:peer]\npeek\n[probe:peer]\nlook\n"},
+	} {
+		if _, err := ParseScenario(tc.name, strings.NewReader(tc.body)); err != nil {
+			t.Fatalf("%s: unexpected error %v", tc.name, err)
+		}
+	}
+}
+
 // TestMatchingSetupRefusalWholeLineOnly pins the "whole normalized lines,
 // never substrings of ordinary text" rule: prose containing a refusal phrase
 // must not match, and ANSI framing must be stripped before comparing.
