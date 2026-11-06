@@ -265,6 +265,9 @@ func cmdSetText(s *Session, args []string, rawArgs string) error {
 			r.OlcZone = target.record.OlcZone
 			// char_to_store edits the playerfile, not C’s crash object file.
 			r.Inventory, r.Equipment = original.Inventory, original.Equipment
+			// The file branch's save_char runs on a descriptorless char, so C
+			// writes an empty host over the record (src/db.c:2379-2381).
+			r.Host = ""
 			err = db.SavePlayerIfCurrent(s.manager.db, r, original)
 		}
 		if err != nil {

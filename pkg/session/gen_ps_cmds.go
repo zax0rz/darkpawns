@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 
@@ -292,7 +291,11 @@ func cmdPlayers(s *Session, args []string) error {
 		// index is built and when create_entry adds a new character.
 		names[i] = strings.ToLower(names[i])
 	}
-	sort.Strings(names)
+	// No sort: C's do_gen_ps walks player_table in its physical order
+	// (src/act.informative.c:2183-2193) — the pfile's record order, which
+	// build_player_index scans (src/db.c:512-527) and create_entry appends to
+	// (src/db.c:2653-2677): creation order, not alphabetical. The store's
+	// autoincrement id is that order.
 	var buf strings.Builder
 	buf.WriteString("A list of registered players:\r\n")
 	count := 0
