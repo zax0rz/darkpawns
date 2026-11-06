@@ -10,3 +10,6 @@ do_action	hug	hug.target-not-found	D1	command	oracle-green-multiseed	hug-depth@1
 do_action	hug	hug.sleeping-target	D2	command	oracle-green-multiseed	hug-sleeping-depth@1,2,3,5,8	act.social.c:140-143; lib/misc/socials:410-418	The authored POS_STANDING victim minimum rejects a sleeping visible target with the canonical proper-position bytes.
 do_action	hug	hug.noshout	D1	shared	delegated	dance-noshout	act.social.c:102-118	The shared PLR_NOSHOUT emote refusal is owned by the dance social matrix.
 do_action	hug	hug.visibility	D3	shared	delegated	socials-depth	act.social.c:114-151; comm.c:2392-2555	Target lookup and the hide=1 actor/room/victim visibility behavior are owned by the social matrix.
+do_action	hug	hug.ordinal-second	D2	command	oracle-green	social-resolve-depth	handler.c:1293-1297	do_action resolves victims with get_char_room_vis (act.social.c:132); "2.<name>" counts visible matches. Old Go's social lookup had no ordinals.
+do_action	hug	hug.ordinal-exhausted	D2	command	oracle-green	social-resolve-depth	handler.c:1293-1299	"N.<name>" past the last visible match falls to the social's not_found line.
+do_action	hug	hug.player-only-zero-dot	D2	command	oracle-green	social-resolve-depth	handler.c:1288-1291	"0.<name>" takes the get_player_vis pass and answers with the actor for the char_auto self branch.

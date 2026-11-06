@@ -502,29 +502,24 @@ func mobRescuerIsReciprocallyFighting(w *World, me *MobInstance) bool {
 	return target != nil && target.GetFightingBody() == me
 }
 
-// mobRescueVictim resolves the first word of an NPC's short description with
-// get_char_room_vis semantics. SPECIAL(rescuer) passes GET_NAME(ally), and
-// one_argument() inside do_rescue therefore makes an article-leading short
-// description such as "a guard trainee" fail to resolve.
-func mobRescueVictim(w *World, me *MobInstance, shortDesc string) combat.Combatant {
-	fields := strings.Fields(shortDesc)
-	if len(fields) == 0 {
+// mobRescueVictim resolves a name the way an NPC command body does: C parses
+// the argument with one_argument (fill words skipped, lowercased —
+// src/interpreter.c:1267) and resolves the result with get_char_room_vis
+// (src/handler.c:1277-1300). SPECIAL(rescuer) passes GET_NAME(ally) and the
+// shopkeeper slap passes GET_NAME(attacker), so an article-leading short
+// description such as "a guard trainee" looks for the keyword "a" and
+// usually finds nobody, while "the keeper" skips "the" and resolves
+// "keeper".
+func mobRescueVictim(w *World, me *MobInstance, name string) combat.Combatant {
+	arg, _ := oneArgument(name)
+	if arg == "" {
 		return nil
 	}
-	arg := fields[0]
-	for _, player := range w.GetPlayersInRoom(me.GetRoomVNum()) {
-		if canSee(me, player) && isnameWithAbbrevs(arg, charKeywords(player)) {
-			return player
-		}
+	t, ok := w.resolveCharInRoomAt(me, me.GetRoomVNum(), arg)
+	if !ok {
+		return nil
 	}
-	mobs := w.GetMobsInRoom(me.GetRoomVNum())
-	sort.Slice(mobs, func(i, j int) bool { return mobs[i].GetID() < mobs[j].GetID() })
-	for _, mob := range mobs {
-		if canSee(me, mob) && isnameWithAbbrevs(arg, charKeywords(mob)) {
-			return mob
-		}
-	}
-	return nil
+	return t.Combatant
 }
 
 func mobDoRescueResolved(w *World, me *MobInstance, victim combat.Combatant) {

@@ -27,40 +27,24 @@ func cmdAssist(s *Session, args []string) error {
 	}
 
 	targetName := strings.ToLower(args[0])
-	room, ok := s.manager.world.GetRoom(s.player.GetRoom())
+
+	// 3. Find the target character in the room. C do_assist resolves the
+	// helpee with get_char_room_vis (src/act.offensive.c:74 →
+	// src/handler.c:1277-1300), then tests helpee == ch for the self-refusal.
+	target, ok := s.manager.world.ResolveCharInRoom(s.player, targetName)
 	if !ok {
-		return fmt.Errorf("invalid room")
-	}
-
-	// 3. Find the target character in the room (players and mobs)
-	var helpee combat.Combatant
-	helpeeName := ""
-
-	for _, p := range s.manager.world.GetPlayersInRoom(room.VNum) {
-		if !strings.Contains(strings.ToLower(p.Name), targetName) {
-			continue
-		}
-		helpee = p
-		helpeeName = p.Name
-		break
-	}
-	if helpee == nil {
-		for _, m := range s.manager.world.GetMobsInRoom(room.VNum) {
-			if !strings.Contains(strings.ToLower(m.GetShortDesc()), targetName) &&
-				!strings.Contains(strings.ToLower(m.GetName()), targetName) {
-				continue
-			}
-			helpee = m
-			helpeeName = m.GetShortDesc()
-			break
-		}
-	}
-	if helpee == nil {
 		// C get_char_room_vis failure prints NOPERSON (config.c:93).
 		s.Send("No-one by that name here.\r\n")
 		return nil
 	}
-	if !helpee.IsNPC() && helpeeName == s.player.Name {
+	var helpee combat.Combatant
+	helpeeName := ""
+	if target.Player != nil {
+		helpee, helpeeName = target.Player, target.Player.Name
+	} else {
+		helpee, helpeeName = target.Mob, target.Mob.GetShortDesc()
+	}
+	if target.Player == s.player {
 		s.Send("You can't help yourself any more than this!\r\n")
 		return nil
 	}

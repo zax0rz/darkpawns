@@ -1,0 +1,45 @@
+# depth-case: assist.self-me
+# depth-case: assist.ordinal-second
+# depth-case: assist.ordinal-exhausted
+# do_assist resolves its helpee with get_char_room_vis
+# (src/act.offensive.c:74 → src/handler.c:1277-1300): "me" answers with the
+# actor and "N.<name>" counts visible matches. Two identical trainee guards
+# keep the ordinal free of an ordering variable.
+
+[fixture]
+quiet-mobs
+spawn-mob 16303 2 8162 163
+spawn-mob 16303 2 8162 163
+
+[setup:oracle]
+Assister
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Assister
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+assist me
+assist 2.guard
+assist 3.guard

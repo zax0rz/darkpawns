@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -124,6 +125,12 @@ func TestLuaMountMobileRideAndDismountUseActualActors(t *testing.T) {
 
 func TestLuaMountPlayerRideDismountAndUnmountUseBridgeBody(t *testing.T) {
 	w, rider, mount := newRideDepthWorld(t)
+	// C's bridge passes GET_NAME(mount) — the short desc — into do_ride
+	// (src/scripts.c:895), and do_ride resolves it with get_char_room_vis
+	// (src/act.other.c:1564): is_abbrev needs the whole short desc to be one
+	// keyword token. "a horse" cannot resolve; give this vehicle a mount
+	// whose short desc is a keyword.
+	mount.Proto().ShortDesc = "horse"
 	observer := NewPlayer(2, "Observer", rider.GetRoom())
 	observer.SetPosition(8)
 	if err := w.AddPlayer(observer); err != nil {
@@ -154,7 +161,7 @@ func TestLuaMountPlayerRideDismountAndUnmountUseBridgeBody(t *testing.T) {
 	if got := output[rider.Name].String(); got != "You hop off your mount.\r\n" {
 		t.Fatalf("Lua player dismount output = %q", got)
 	}
-	if got := output[observer.Name].String(); got != "Rider dismounts from the back of a horse.\r\n" {
+	if got := output[observer.Name].String(); got != "Rider dismounts from the back of horse.\r\n" {
 		t.Fatalf("Lua player dismount room output = %q", got)
 	}
 
@@ -183,6 +190,55 @@ func TestLuaMountPlayerRideDismountAndUnmountUseBridgeBody(t *testing.T) {
 	}
 	if mount.GetMountRider() != rider.Name || mount.GetFollowing() != rider.Name || newer.GetMountRider() != rider.Name || newer.GetFollowing() != rider.Name {
 		t.Fatal("Lua player unmount removed a retained follower/master link")
+	}
+}
+
+// TestDoRideResolvesThroughGetCharRoomVis proves do_ride's mount lookup uses
+// get_char_room_vis semantics (src/act.other.c:1564 → src/handler.c:1277-1300):
+// "me" answers with the rider for the self refusal, and "N.<name>" counts
+// visible matches. The fixture room has no indoors flag, so the outdoor gate
+// passes. Red on the pre-fix substring lookup: "me" and "2.horse" both
+// printed NOPERSON there.
+func TestDoRideResolvesThroughGetCharRoomVis(t *testing.T) {
+	w, rider, mount := newRideDepthWorld(t)
+	var out strings.Builder
+	w.MessageSink = func(_ string, msg []byte) { out.Write(msg) }
+
+	w.doRide(rider, nil, "ride", "me")
+	if got := out.String(); got != "That's disgusting!\r\n" {
+		t.Fatalf("ride me = %q, want C's self refusal", got)
+	}
+	out.Reset()
+
+	second := NewMob(&parser.Mob{
+		VNum:        9002,
+		Keywords:    "horse pony",
+		ShortDesc:   "a horse",
+		ActionFlags: []string{"mountable"},
+	}, rider.GetRoom())
+	w.mu.Lock()
+	second.ID = w.nextMobID
+	w.nextMobID++
+	w.activeMobs[second.ID] = second
+	w.mu.Unlock()
+
+	w.doRide(rider, nil, "ride", "2.horse")
+	if got := out.String(); got != "You hop on your mount.\r\n" {
+		t.Fatalf("ride 2.horse = %q, want the C mount success line", got)
+	}
+	if !rider.IsAffected(affMounted) {
+		t.Fatal("ride 2.horse did not mount the rider")
+	}
+	if !(mount.IsAffected(affMounted) || second.IsAffected(affMounted)) {
+		t.Fatal("neither horse carries the mount affect")
+	}
+	out.Reset()
+
+	// Only two horses exist; the third ordinal falls to NOPERSON before the
+	// mounted-rider gate (C lookup order, act.other.c:1564-1566).
+	w.doRide(rider, nil, "ride", "3.horse")
+	if got := out.String(); got != "No-one by that name here.\r\n" {
+		t.Fatalf("ride 3.horse = %q, want NOPERSON", got)
 	}
 }
 

@@ -3,6 +3,9 @@ package game
 import (
 	"strings"
 	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/parser"
 )
 
 // captureOutput records every byte the world sends, keyed by player name.
@@ -137,5 +140,50 @@ func TestDamageRefusedShopkeeperSpecials(t *testing.T) {
 				t.Fatalf("attacker output = %q", got)
 			}
 		})
+	}
+}
+
+// TestMobRescueVictimParsesLikeCCommandBodies pins mobRescueVictim to C's
+// parsing: the argument goes through one_argument (fill words skipped —
+// src/interpreter.c:1267) and the result through get_char_room_vis
+// (src/handler.c:1277-1300). "the guard" therefore resolves "guard", while
+// an article-leading short description ("a guard trainee") keeps looking for
+// the keyword "a". Red on the pre-fix first-word split, which resolved "the"
+// and "a" alike and scanned players before mobs by ID.
+func TestMobRescueVictimParsesLikeCCommandBodies(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Guard Post", Zone: 1}},
+		Mobs: []parser.Mob{
+			{VNum: 3001, Keywords: "keeper shopkeeper", ShortDesc: "the shop keeper", Level: 10, Str: 10, Dex: 10},
+			{VNum: 3002, Keywords: "guard trainee", ShortDesc: "a guard trainee", Level: 5, Str: 10, Dex: 10},
+			{VNum: 3003, Keywords: "guard trainee", ShortDesc: "a guard trainee", Level: 5, Str: 10, Dex: 10},
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewWorld: %v", err)
+	}
+	t.Cleanup(w.StopAITicker)
+	keeper, err := w.SpawnMob(3001, 1001)
+	if err != nil {
+		t.Fatalf("SpawnMob keeper: %v", err)
+	}
+	if _, err := w.SpawnMob(3002, 1001); err != nil {
+		t.Fatalf("SpawnMob guard: %v", err)
+	}
+	if _, err := w.SpawnMob(3003, 1001); err != nil {
+		t.Fatalf("SpawnMob second guard: %v", err)
+	}
+
+	if got := mobRescueVictim(w, keeper, "the guard"); got == nil || got == combat.Combatant(keeper) {
+		t.Fatalf("the guard = %v, want the fill-word-skipped resolution to a trainee", got)
+	}
+	if got := mobRescueVictim(w, keeper, "a guard trainee"); got != nil {
+		t.Fatalf("article-leading short desc resolved %v; C looks for the keyword \"a\"", got)
+	}
+	if got := mobRescueVictim(w, keeper, "2.trainee"); got == nil {
+		t.Fatal("2.trainee = nil; want the ordinal to count both visible trainees")
+	}
+	if got := mobRescueVictim(w, keeper, "3.trainee"); got != nil {
+		t.Fatalf("3.trainee = %v; two trainees exist, the third ordinal must fail", got)
 	}
 }
