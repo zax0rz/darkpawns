@@ -59,9 +59,15 @@ found most bugs (field note 2026-10-25). A "done" number should include them.
 | 15 merge and 4 delete rows, combat test audit | 3 | On hold in `docs/research/test-audit/pilot-combat/settled.tsv`. |
 | Proposed AGENTS.md gate line (`make fidelity-depth`) | — | Waiting for Zach's approval. |
 
-Something else turned up while I read: the kickoff cites "R1–R5i" and "R5i",
+~~Something else turned up while I read: the kickoff cites "R1–R5i" and "R5i",
 but `RULEBOOK.md` ends at R5h. Either a rule is still in draft, or the kickoff
-has a typo. Zach to say which.
+has a typo. Zach to say which.~~
+
+**Correction (same day):** R5i exists. It was added on 2026-11-05 in PR #2271
+("a fixture that silences a surface needs a green scenario that unsilences
+it"). The kickoff was right. I had read the rulebook from the main checkout's
+local `main`, which was behind `origin/main`. Every other number in this
+survey was measured at `origin/main`.
 
 ## 3. Inventory of open items
 
@@ -257,7 +263,7 @@ streams and gate the release, not the port.
 
 - The targets for D-1 to D-7, and whether D-7 belongs in the definition.
 - Whether the depth headline should include the surface inventories (a tooling change).
-- R5i: a draft rule, or a typo in the kickoff?
+- ~~R5i: a draft rule, or a typo in the kickoff?~~ (Settled: R5i exists; see §2.)
 - An R1a ruling on the shop branches that rest on C's signed overflow.
 - Whether to approve the proposed `make fidelity-depth` gate line for AGENTS.md.
 - The order of the work streams, and which to start.
