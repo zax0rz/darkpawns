@@ -15,7 +15,11 @@ func TestDumpOutputGatesMatchCAtRealDispatch(t *testing.T) {
 		witnessGetsAward bool
 	}{
 		{name: "visible actor", roomDrop: "Tester drops a steel sword.\r\n", witnessGetsAward: true},
-		{name: "invisible actor", invisLevel: 10, roomDrop: "Someone drops a steel sword.\r\n"},
+		// C's perform_drop passes hide_invisible = TRUE (src/act.item.c:494),
+		// so an actor the witness cannot see (invisibility over its level)
+		// contributes no drop line; the vanish acts (src/spec_procs.c:264) and
+		// the spec's drop refusal stay FALSE and still reach it.
+		{name: "invisible actor", invisLevel: 10, roomDrop: ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			const dumpRoom = 8085

@@ -180,7 +180,7 @@ func (s *Session) startSedit(number int, zone *parser.Zone) error {
 	s.textEditMu.Unlock()
 
 	if s.player != nil {
-		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n starts using OLC.", "", game.ToRoom)
+		game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n starts using OLC.", "", game.ToRoom)
 	}
 	return nil
 }
@@ -267,7 +267,7 @@ func (s *Session) finishSeditLocked(save bool) {
 	s.flushSeditOutputLocked()
 	s.setPlayerWritingLocked(false)
 	if s.olcActor() != nil {
-		game.Act(s.manager.world, false, s.player, nil, nil, nil, "$n stops using OLC.", "", game.ToRoom)
+		game.Act(s.manager.world, true, s.player, nil, nil, nil, "$n stops using OLC.", "", game.ToRoom)
 	}
 	s.sedit = nil
 	s.markConEditorState(false)

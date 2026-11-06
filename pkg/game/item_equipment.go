@@ -76,7 +76,7 @@ func (w *World) wearMessage(ch *Player, obj *ObjectInstance, where int) {
 	}
 	msg := wearMessages[where]
 	// Room message (TO_ROOM)
-	w.actToRoom(ch, msg[0], obj, nil)
+	w.actToRoom(ch, msg[0], obj, nil, true)
 	// Character message (TO_CHAR)
 	w.actToChar(ch, msg[1], obj, nil)
 }
@@ -179,7 +179,7 @@ func (w *World) performWear(ch *Player, obj *ObjectInstance, where int) {
 	}
 	if objAntiAlign(ch, obj) {
 		w.actToChar(ch, "You are zapped by $p and instantly let go of it.", obj, nil)
-		w.actToRoom(ch, "$n is zapped by $p and instantly lets go of it.", obj, nil)
+		w.actToRoom(ch, "$n is zapped by $p and instantly lets go of it.", obj, nil, false)
 		return
 	}
 	if invalidClass {
@@ -526,7 +526,7 @@ func (w *World) performRemove(ch *Player, pos int) {
 	}
 
 	w.actToChar(ch, "You stop using $p.", obj, nil)
-	w.actToRoom(ch, "$n stops using $p.", obj, nil)
+	w.actToRoom(ch, "$n stops using $p.", obj, nil, true)
 }
 
 // DoRemove handles remove <item>, remove all, and remove all.<keyword>.
