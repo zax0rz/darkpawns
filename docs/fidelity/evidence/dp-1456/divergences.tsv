@@ -10,20 +10,10 @@ spellmatrix-damage-scroll-group-07-depth	[~dpclock pulse 20 [actor]]	ItemPeer hi
 spellmatrix-potion-olc-02-depth	[~dpclock pulse 20 [actor]]	ItemView hits you very hard.	(line missing on go)	The bowels of hell open beneath your feet!!
 spellmatrix-potion-olc-03-depth	[send:peer score [peer]]	Hit points: 5000(5000)  Mana points: 100(100)  Movement points: 85(85)	Hit points: 4999(5000)  Mana points: 100(100)  Movement points: 85(85)	A warm feeling floods your body.
 spellmatrix-scroll-olc-03-depth	[look [peer]]	- Item number : [4404]	(line missing on go)	You fail.
-spellmatrix-staff-olc-01-depth	[use staff0102 [actor]]	A streak of blackness courses from your hand!	Your magic fades, then dies out totally.	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-02-depth	[use staff0201 [actor]]	Summoning the forces of magick, you press your icy hand against her.	Summoning the forces of magick, you press your icy hand against her.	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-03-depth	[use staff0303 [actor]]	A streak of yellow light courses from your hand, washing over her!	A streak of yellow light courses from your hand, washing over her!	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-04-depth	[use staff0402 [actor]]	You waste energy trying to drain ItemBuilder!	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-05-depth	[use staff0501 [actor]]	Your lightning bolt is extinguished as mighty ItemBuilder moves his ears!	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-06-depth	[~dpclock pulse 20 [actor]]	ItemBuilder hits you hard.	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
 spellmatrix-staff-olc-07-depth	[use staff0703 [actor]]	That really did HURT!	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
 spellmatrix-staff-olc-08-depth	[use staff0802 [builder]]	ItemView's wounds glow and mend themselves.	ItemView's wounds glow and mend themselves.	Your a staff of sleep radiates an ethereal glow that lights the room.
 spellmatrix-staff-olc-09-depth	[~dpclock pulse 20 [actor]]	ItemView hits you.	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-10-depth	[~dpclock pulse 20 [actor]]	ItemBuilder hits you very hard.	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-11-depth	[use staff1103 [actor]]	ItemBuilder's eyes glow briefly.	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
 spellmatrix-staff-olc-12-depth	[use staff1203 [actor]]	You shift her molecular density.	You shift her molecular density.	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-13-depth	[send:peer score [peer]]	Hit points: 5000(5000)  Mana points: 100(100)  Movement points: 85(85)	Hit points: 4999(5000)  Mana points: 100(100)  Movement points: 85(85)	Your a staff of sleep radiates an ethereal glow that lights the room.
-spellmatrix-staff-olc-14-depth	[use staff1405 [actor]]	A ray of light jumps from your hand, dissolving a hole in someone!	A ray of light jumps from your hand, dissolving a hole in ItemView!	Your a staff of sleep radiates an ethereal glow that lights the room.
 spellmatrix-staff-olc-15-depth	[use staff1501 [actor]]	You watch with selfpride as your flaming arrow hits ItemPeer!	You watch with selfpride as your flaming arrow hits ItemView!	Your a staff of sleep radiates an ethereal glow that lights the room.
 spellmatrix-staff-olc-16-depth	[~dpclock pulse 20 [actor]]	ItemBuilder scratches you as he hits you.	(line missing on go)	Your a staff of sleep radiates an ethereal glow that lights the room.
 spellmatrix-wand-olc-01-depth	[~dpclock pulse 20 [actor]]	ItemPeer scratches you as she hits you.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
@@ -31,7 +21,6 @@ spellmatrix-wand-olc-03-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you very
 spellmatrix-wand-olc-04-depth	[use wand0405 ItemPeer [actor]]	That really did HURT!	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
 spellmatrix-wand-olc-06-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you very hard.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
 spellmatrix-wand-olc-07-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
-spellmatrix-wand-olc-08-depth	[send:observer score [observer]]	Hit points: 5000(5000)  Mana points: 100(100)  Movement points: 84(84)	Hit points: 4995(5000)  Mana points: 100(100)  Movement points: 84(84)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
 spellmatrix-wand-olc-09-depth	[~dpclock pulse 20 [actor]]	ItemPeer scratches you as she hits you.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
 spellmatrix-wand-olc-10-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you hard.	(line missing on go)	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
 spellmatrix-world-wand-disintegration-live-depth	[~dpclock pulse 20 [actor]]	ItemPeer hits you hard.	(line missing on go)	Your a dark, metal ball flares up with a blinding glow that surges toward ItemPeer!

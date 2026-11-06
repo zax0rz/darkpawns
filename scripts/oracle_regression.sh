@@ -130,7 +130,8 @@ export ORACLE_REGRESSION_SERVER="$server_bin"
 
 export repo_root go_bin oracle_bin scenario_timeout seed log_dir result_dir harness_bin server_bin
 # Ledger-backed expected-divergence baseline (see scripts/gen_expected_divergences.py).
-# Entries cite blocked/excluded manifest rows; divergence without a row is FAIL,
+# Entries cite excluded manifest rows, or blocked rows whose notes cite a filed
+# divergence issue ("divergence: DP-nnnn"); divergence without a row is FAIL,
 # an entry that stops diverging is STALE. Never minted from observed behavior.
 export EXPECTED_DIVERGENCES_FILE="$repo_root/cmd/dp-oracle-diff/expected_divergences.tsv"
 export EXPECTED_DIVERGENCE_PINS_FILE="$repo_root/cmd/dp-oracle-diff/expected_divergence_pins.tsv"
