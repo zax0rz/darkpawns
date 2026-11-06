@@ -175,6 +175,11 @@ run_case infra-single-divergence "I|D:cast:$one_a|I" yes "$(pin_one "$one_a" inf
 # FAIL.
 run_case bind-fail-retries-then-passes "B|P" no "" $'PASS\tfake' 2 2
 run_case bind-fail-exhausts-to-infra "B|B|B" no "" $'INFRA\tfake\t1' 3 3
+# A no-persistence boot (requirePersistence's guard) is infrastructure: the
+# scenario must not compare without a player store. Revert proof: remove the
+# guard and the same attempt compares as content, never INFRA.
+run_case no-persistence-retries-then-passes "N|P" no "" $'PASS\tfake' 2 2
+run_case no-persistence-exhausts-to-infra "N|N|N" no "" $'INFRA\tfake\t1' 3 3
 run_case divergence-then-success "D:cast:$one_a|P" no "" $'INFRA\tfake\t3' 2 2
 run_case baseline-divergence-then-success "D:cast:$one_a|P" yes "$(pin_one "$one_a" baseline-divergence-then-success)" $'STALE\tfake' 2 2
 run_case unstable-divergence "D:cast:$one_a|D:cast:$one_b" yes "$(pin_one "$one_a" unstable-divergence)" $'UNPINNABLE\tfake' 2 2

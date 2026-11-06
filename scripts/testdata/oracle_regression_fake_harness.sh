@@ -32,6 +32,12 @@ B)
 	printf 'fake harness boot: SYSERR: bind: Address already in use (errno 98)\n' >&2
 	exit 1
 	;;
+N)
+	# The no-persistence guard (requirePersistence): the run may not compare,
+	# and the message names cmd/server's marker line so the worker scores INFRA.
+	printf 'dp-oracle-diff: go boot: server started without persistence ("explicitly running without persistence"); the scenario must not compare\n' >&2
+	exit 1
+	;;
 T)
 	printf 'fake harness timeout attempt %d\n' "$attempt" >&2
 	exit 124
