@@ -38,12 +38,12 @@ func TestSpecPaladin_Golden(t *testing.T) {
 
 	mob.SetFightingBody(player)
 	player.SetFightingBody(mob)
-	mob.SetWaitState(1)
+	mob.SetMobWait(1)
 	if specPaladin(w, nil, mob, "", "") {
 		t.Error("specPaladin should return false while GET_MOB_WAIT is nonzero")
 	}
 
-	mob.SetWaitState(0)
+	mob.SetMobWait(0)
 	mob.CurrentHP = -1
 	if specPaladin(w, nil, mob, "", "") {
 		t.Error("specPaladin should return false for negative HP")
@@ -132,7 +132,7 @@ func TestSpecPaladin_ChargeNativeArithmetic(t *testing.T) {
 	if got := mob.GetPosition(); got != combat.PosFighting {
 		t.Errorf("successful charge moved mob to position %d, want fighting", got)
 	}
-	if got := mob.GetWaitState(); got != 0 {
+	if got := mob.GetMobWait(); got != 0 {
 		t.Errorf("charge changed GET_MOB_WAIT to %d, want 0", got)
 	}
 

@@ -603,11 +603,11 @@ func TestSpecFighter_Golden(t *testing.T) {
 	}
 	mob.SetFightingBody(player)
 	player.SetFightingBody(mob)
-	mob.SetWaitState(1)
+	mob.SetMobWait(1)
 	if got := specFighter(w, nil, mob, "", ""); got {
 		t.Error("specFighter should return false while GET_MOB_WAIT is set")
 	}
-	mob.SetWaitState(0)
+	mob.SetMobWait(0)
 	mob.TakeDamage(mob.GetHP() + 1)
 	if got := specFighter(w, nil, mob, "", ""); got {
 		t.Error("specFighter should return false below zero HP")
@@ -991,7 +991,7 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	dprng.ResetStream(seed)
 	startMobHP, startPlayerHP := mob.GetHP(), player.GetHP()
 	mobHeadbutt(w, mob, player)
-	if got := mob.GetWaitState(); got != 0 {
+	if got := mob.GetMobWait(); got != 0 {
 		t.Errorf("headbutt changed GET_MOB_WAIT to %d", got)
 	}
 	if got, want := mob.GetHP(), startMobHP-mob.GetLevel()/4; got != want {
@@ -1014,7 +1014,7 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	mob.SetMove(20)
 	dprng.ResetStream(1)
 	mobBash(w, mob, player)
-	if got := mob.GetWaitState(); got != 0 {
+	if got := mob.GetMobWait(); got != 0 {
 		t.Errorf("bash changed GET_MOB_WAIT to %d", got)
 	}
 	if got, want := mob.GetMove(), 10; got != want {

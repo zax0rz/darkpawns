@@ -93,8 +93,11 @@ func TestAmbushDamageFormulaAndHiddenClear(t *testing.T) {
 	if ch.IsAffected(affHide) {
 		t.Fatal("ambush damage did not clear AFF_HIDE")
 	}
-	if got := target.GetWaitState(); got != 1 {
-		t.Fatalf("target wait state = %d, want 1 round", got)
+	// WAIT_STATE(vict, PULSE_VIOLENCE) stores pulses like the player accessor;
+	// nothing reads a descriptorless mob's ch->wait, but the stored value now
+	// matches C's.
+	if got := target.GetWaitState(); got != 20 {
+		t.Fatalf("target wait state = %d, want 20 pulses", got)
 	}
 	if got := ch.GetWaitState(); got != 20 {
 		t.Fatalf("actor wait state = %d, want 20 pulses", got)

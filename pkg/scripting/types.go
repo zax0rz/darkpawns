@@ -93,9 +93,9 @@ type ScriptableMob interface {
 	// GetAlignment is GET_ALIGNMENT(ch), used for IS_EVIL.
 	// Source: src/scripts.c:1833, 1865-1868.
 	GetAlignment() int
-	// GetWaitState is GET_MOB_WAIT(ch), the mobile-only "timer" field.
-	// Source: src/scripts.c:1887.
-	GetWaitState() int
+	// GetMobWait is GET_MOB_WAIT(ch), the mobile-only "timer" field,
+	// distinct from ch->wait (WAIT_STATE). Source: src/scripts.c:1887.
+	GetMobWait() int
 	// GetLeaderName is ch->master as the follow target's name, or "".
 	// Source: src/scripts.c:1870-1873.
 	GetLeaderName() string
