@@ -37,14 +37,10 @@ type Scenario struct {
 	// PeerDrop names one passive peer whose TCP connection is closed after
 	// setup/warmup and before the compared probe. The character remains in the
 	// live-world lifecycle, which exposes C's linkless descriptor branches.
-	PeerDrop      string
-	Peers         map[string]*PeerSetup
-	MiscFiles     []MiscFileFixture
-	FaultFixtures []FaultFixture
-	// LiveStore boots the Go port with a real SQLite store instead of the
-	// deliberately unreachable no-DB path. Fault scenarios whose player bytes
-	// depend on persistent identity (mail send/receive) opt in.
-	LiveStore         bool
+	PeerDrop          string
+	Peers             map[string]*PeerSetup
+	MiscFiles         []MiscFileFixture
+	FaultFixtures     []FaultFixture
 	Fixtures          []ObjectFixture
 	ObjectSpawns      []ObjectSpawnFixture
 	MobFixtures       []MobFixture
@@ -674,8 +670,9 @@ func ParseScenario(name string, r io.Reader) (Scenario, error) {
 					continue
 				}
 			}
+			// Accepted as a no-op: every scenario now boots with a real player
+			// store, so the old opt-in fixture is the default (DP-1463/DP-1464).
 			if len(fields) == 1 && strings.EqualFold(fields[0], "live-store") {
-				sc.LiveStore = true
 				continue
 			}
 			if len(fields) == 1 && strings.EqualFold(fields[0], "quiet-mobs") {

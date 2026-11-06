@@ -217,14 +217,37 @@ func TestPrepareOracleDataPreservesPlayersByDefault(t *testing.T) {
 }
 
 func TestWithFreshMUDEnvFollowsEmptyPlayersFixture(t *testing.T) {
-	base := []string{"KEEP=1", "DP_FRESH_MUD=stale", "DP_ALLOW_NO_DB=0"}
+	base := []string{"KEEP=1", "DP_FRESH_MUD=stale", "DP_ALLOW_NO_DB=1"}
 	enabled := withFreshMUDEnv(base, true)
-	if got := strings.Join(enabled, ","); got != "KEEP=1,DP_FRESH_MUD=1,DP_ALLOW_NO_DB=1" {
+	if got := strings.Join(enabled, ","); got != "KEEP=1,DP_FRESH_MUD=1" {
 		t.Fatalf("enabled env = %q", got)
 	}
 	disabled := withFreshMUDEnv(base, false)
-	if got := strings.Join(disabled, ","); got != "KEEP=1,DP_ALLOW_NO_DB=1" {
+	if got := strings.Join(disabled, ","); got != "KEEP=1" {
 		t.Fatalf("disabled env = %q", got)
+	}
+}
+
+// A boot without persistence must not compare: C always has its player file,
+// and the store-less fallback silently emptied every saved-player surface
+// (DP-1463, DP-1464). Revert proof: drop the guard and a store-less boot
+// sails through to the comparison.
+func TestRequirePersistenceRejectsStorelessBoot(t *testing.T) {
+	for _, marker := range noPersistenceMarkers {
+		p := &process{name: "Go port", log: &safeBuffer{}}
+		_, _ = p.log.Write([]byte("Database connection failed: " + marker + "\n"))
+		err := requirePersistence(p)
+		if err == nil {
+			t.Fatalf("marker %q was not rejected", marker)
+		}
+		if !strings.Contains(err.Error(), marker) {
+			t.Fatalf("error %q does not name the cause %q", err, marker)
+		}
+	}
+	clean := &process{name: "Go port", log: &safeBuffer{}}
+	_, _ = clean.log.Write([]byte("Database connected.\nworld boot complete\n"))
+	if err := requirePersistence(clean); err != nil {
+		t.Fatalf("clean boot rejected: %v", err)
 	}
 }
 
@@ -282,18 +305,6 @@ func TestAllocatePortsHoldsReservationsOpen(t *testing.T) {
 			_ = ln.Close()
 			t.Errorf("port %d was free while its reservation listener was held open", port)
 		}
-	}
-}
-
-func TestFileCommandsRequireSQLiteStore(t *testing.T) {
-	for _, command := range []string{"stat file Peer", "set file Peer gold 7"} {
-		s := &oraclediff.Scenario{Probe: []string{command}}
-		if !needsPlayerStore(s) {
-			t.Fatalf("%q lacks durable fixture", command)
-		}
-	}
-	if needsPlayerStore(&oraclediff.Scenario{Probe: []string{"stat Peer"}}) {
-		t.Fatal("live stat unexpectedly needs store")
 	}
 }
 
