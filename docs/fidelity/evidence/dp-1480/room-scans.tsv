@@ -1,0 +1,9 @@
+file:line	function	order observable?	why
+pkg/game/shoot_target.go:12	ResolveShootTarget	yes	Picks the Nth name-matching occupant for `shoot`, so the order decides who is hit. FIXED to take its players from the ordered GetPlayersInRoom and to keep a sequence tie-break in the merged player+mobile list.
+pkg/game/party.go:41	GetFollowersInRoom	no	Its only caller is fight.c's GetFollowersInRoom callback (pkg/combat/fight_core.go:895), which tests the count `> 0`; the slice is never walked in order.
+pkg/game/party.go:161	GetGroupMembers	no	Filters by follow + InGroup, not by room; callers append members and count them, never presenting the order.
+pkg/game/world.go:620	ForEachPlayerInZone	no	Filters by zone, not room; ForEachPlayerInZoneInterface has no callers in the tree.
+pkg/game/world.go:640	ForEachPlayerInRoomInterface	no	Its callers (pkg/spells/say_spell.go:316, pkg/spells/affect_spells.go:1214,1535) send one room-act message per recipient; no single consumer observes the delivery order, and the callbacks draw no RNG.
+pkg/game/world_scriptable.go:513	RemoveObjByInstanceID	no	Filters by inventory ownership, not by room.
+pkg/game/combat_wire.go:850	combatFollowersInRoom	no	Its three callers are a count (combat_wire.go:633) and two membership tests that only ask `> 0` or `!= x` (combat_wire.go:654, party.go:189).
+pkg/admin/huma.go:180	playerList	no	The GET /admin/players response: an admin/web-only surface with no C counterpart, so it is not oracle-compared.

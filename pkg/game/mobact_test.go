@@ -718,6 +718,42 @@ func TestAggressive_PlayerAttacked(t *testing.T) {
 	}
 }
 
+// DP-1480: an aggressive mobile takes the first eligible player from C's
+// world[room].people, which char_to_room front-inserts, so the newest arrival
+// is first (src/handler.c:537; src/mobact.c:200-233). Two players in one room
+// must always resolve to the newest, whatever order the players map iterates.
+// 200 scans so a map-order implementation cannot pass by luck (R3/R5h).
+func TestAggressive_TargetsNewestArrivalInRoomOrder(t *testing.T) {
+	w, ce := newMobactTestWorld(t)
+	mob := newMobactTestMob(w, 9150, 0, 0, "aggressive", "sentinel")
+
+	older := NewPlayer(1, "ArrivedFirst", 1001)
+	if err := w.AddPlayer(older); err != nil {
+		t.Fatalf("AddPlayer older: %v", err)
+	}
+	newest := NewPlayer(2, "ArrivedLast", 1001)
+	if err := w.AddPlayer(newest); err != nil {
+		t.Fatalf("AddPlayer newest: %v", err)
+	}
+	if newest.GetRoomEntrySequence() <= older.GetRoomEntrySequence() {
+		t.Fatalf("fixture arrival order: newest seq %d must exceed older seq %d",
+			newest.GetRoomEntrySequence(), older.GetRoomEntrySequence())
+	}
+
+	const iterations = 200
+	for i := 0; i < iterations; i++ {
+		ce.reset()
+		w.mobileActivityForMob(mob)
+		if len(ce.starts) != 1 {
+			t.Fatalf("iteration %d: expected 1 combat start, got %d (%+v)", i, len(ce.starts), ce.starts)
+		}
+		if got := ce.starts[0].defender; got != newest.Name {
+			t.Fatalf("iteration %d: aggressive mobile attacked %q, want the newest arrival %q",
+				i, got, newest.Name)
+		}
+	}
+}
+
 func TestMemory_CannotSeePlayer_Skips(t *testing.T) {
 	w, ce := newMobactTestWorld(t)
 	mob := newMobactTestMob(w, 9201, 1, 0, "memory", "sentinel")
