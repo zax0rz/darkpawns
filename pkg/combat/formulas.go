@@ -549,7 +549,13 @@ func CalculateDamage(attacker, defender Combatant, weaponDamage DiceRoll, attack
 	if attackType == AttackNormal {
 		dam = getMinusDam(dam, defender.GetAC())
 	}
-	if attacker.GetStr() == 0 {
+	// The strength-zero override lives in the same normal-weapon arm as
+	// get_minusdam (src/fight.c:1880-1885): the SKILL_BACKSTAB, SKILL_CIRCLE
+	// and SKILL_DISEMBOWEL arms of hit() never apply it. Only AttackNormal
+	// ever reaches this function (engine.go performOneHit); the skill arms
+	// compute their damage in the game layer (skill_combat.go,
+	// spec_fighter.go) and must keep omitting this override.
+	if attackType == AttackNormal && attacker.GetStr() == 0 {
 		dam = 1
 	}
 	return dam
