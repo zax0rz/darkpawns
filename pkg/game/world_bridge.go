@@ -1190,9 +1190,11 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		return false
 	}
 	// C's gate reads GET_MOB_WAIT (src/spell_parser.c:844-848) — the Lua
-	// timer counter, not the WAIT_STATE ch->wait a bash writes. Players
-	// never carry GET_MOB_WAIT and never take this refusal.
-	if mob, isMob := me.(*MobInstance); isMob && mob.GetMobWait() > 0 {
+	// timer counter, not the WAIT_STATE ch->wait a bash writes, and nonzero
+	// rather than positive: the unclamped violence drain can leave the
+	// counter negative, and C's `if (GET_MOB_WAIT(ch))` still refuses.
+	// Players never carry GET_MOB_WAIT and never take this refusal.
+	if mob, isMob := me.(*MobInstance); isMob && mob.GetMobWait() != 0 {
 		sendActLineWithWorld(w, me, "You can't cast anything yet!\r\n")
 		return false
 	}

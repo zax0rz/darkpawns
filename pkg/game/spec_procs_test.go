@@ -12,6 +12,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+	"github.com/zax0rz/darkpawns/pkg/scripting"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
 
@@ -1067,5 +1068,63 @@ func TestSpecFighter_NativeSkills(t *testing.T) {
 	}
 	if _, ok := mob.CustomData["affect_171"]; !ok {
 		t.Error("berserk did not retain the native affect record")
+	}
+}
+
+// TestNegativeMobWaitBlocksAllNonzeroGates pins that a negative GET_MOB_WAIT
+// still refuses every C gate that tests the counter as nonzero: cast_spell
+// (src/spell_parser.c:844) and the fighter/paladin specials
+// (src/spec_procs.c:516,544). The violence drain runs unclamped
+// (src/fight.c:1977-1981), so a timer that is not a multiple of
+// PULSE_VIOLENCE (25 → 5 → -15) parks negative, and C's `if
+// (GET_MOB_WAIT(ch))` keeps refusing. Red if any gate tests > 0.
+// A negative counter is not reachable in the shipped world — no live script
+// writes a mob timer that is not a multiple of PULSE_VIOLENCE — so this unit
+// test is the proof.
+func TestNegativeMobWaitBlocksAllNonzeroGates(t *testing.T) {
+	w, player, _ := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 10)
+	mob.Wis = 11
+	mob.Intel = 11
+	mob.CopyBaseAttributes() // re-cache the effective stats after the writes
+	mob.SetMobWait(-15)
+
+	// Both cast gates' refusals reach only a switched descriptor's session
+	// (act.go sendActLineWithWorld), so wire the mobile sink and assert the
+	// exact C byte — this makes each gate's assertion fail if its test is
+	// ever relaxed to > 0, where the gate would pass and the spell machinery
+	// would run instead.
+	var mobOut strings.Builder
+	w.MobileDescriptorOwner = func(*MobInstance) *Player { return player }
+	w.MobileMessageSink = func(_ *MobInstance, msg []byte) { mobOut.Write(msg) }
+
+	// castSpellC: the Lua caster's cast_spell gate (spell_parser.c:844-848).
+	if castSpellC(w, mob, scripting.CharRef{NPC: true, ID: mob.GetID()}, nil, nil, player, nil, 1) {
+		t.Error("castSpellC passed a negative GET_MOB_WAIT; C's nonzero gate refuses")
+	}
+	if got, want := mobOut.String(), "You can't cast anything yet!\r\n"; got != want {
+		t.Fatalf("castSpellC negative-counter output = %q, want %q", got, want)
+	}
+	// castMobSpell: the native NPC cast_spell gate (spell_parser.c:844-848).
+	// This gate refuses silently — C's stc reaches a descriptorless mob's
+	// nobody — so the return value is the observable.
+	mobOut.Reset()
+	if castMobSpell(w, mob, player, 1) {
+		t.Error("castMobSpell passed a negative GET_MOB_WAIT; C's nonzero gate refuses")
+	}
+	// mobCombatSpecialTarget: SPECIAL(fighter/paladin)'s entry gate
+	// (spec_procs.c:516,544).
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFightingBody(player)
+	player.SetFightingBody(mob)
+	if target, ok := mobCombatSpecialTarget(w, mob, ""); ok || target != nil {
+		t.Error("mobCombatSpecialTarget passed a negative GET_MOB_WAIT; C's nonzero gate refuses")
+	}
+
+	// Control: the same mob with a clear counter passes the special's entry
+	// gate, so the refusal above is the wait gate and nothing else.
+	mob.SetMobWait(0)
+	if target, ok := mobCombatSpecialTarget(w, mob, ""); !ok || target == nil {
+		t.Error("mobCombatSpecialTarget refused a clear GET_MOB_WAIT")
 	}
 }
