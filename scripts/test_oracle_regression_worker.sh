@@ -192,6 +192,11 @@ run_case malformed-fingerprints X:cast:not-a-sha256 no "" $'FAIL\tfake\t3' 1 1
 # A repeated probe label must stay attributable: the repeats are suffixed rather
 # than rejected as malformed, so a pinned pair of shapes still resolves.
 run_case duplicate-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" yes "$(pin_dup "$two_a" "$two_b")" $'EXPECTED\tfake' 2 2
+# permuted-repeat-labels-pinned: the same two same-label shapes emitted in
+# opposite order on the confirming attempt. Encounter-order suffixing compared
+# the equal multiset as different files (DP-1456); canonical sort-order
+# suffixing must classify EXPECTED.
+run_case permuted-repeat-labels-pinned "D:cast:$two_a,cast:$two_b|D:cast:$two_b,cast:$two_a" yes "$(pin_dup "$two_a" "$two_b")" $'EXPECTED\tfake' 2 2
 run_case duplicate-labels-unpinned "D:cast:$two_a,cast:$two_b|D:cast:$two_a,cast:$two_b" no "" $'FAIL\tfake\t3' 2 2
 run_case multiblock-complete "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:$two_b" yes "$(pin_two "$two_a" multiblock-complete "$two_b")" $'EXPECTED\tfake' 3 3
 run_case multiblock-missing "I|D:cast:$two_a,damage:$two_b|D:cast:$two_a,damage:$two_b" yes "$(pin_one "$two_a" multiblock-missing)" $'FAIL\tfake\t3' 3 3
