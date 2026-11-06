@@ -1,0 +1,81 @@
+package	seed	i	func	file	function_line	literal_line	literal	literal_offset	mutation_offset	old_byte	new_byte	mutated_value	predicted_scenarios	census_dir	verdict	failed_scenarios	caught	first_pass_verdict	c_cite	notes
+session	20261106	0	checkCastSpellContract	pkg/session/cast_cmds.go	136	139	"""You're not smart enough to cast!\r\n"""	4904	4905	Y	Q	Qou're not smart enough to cast!\r\n	cast-depth							
+session	20261106	1	cmdLevels	pkg/session/cmd_info.go	13	15	"""You ain't nothin' but a hound-dog.\r\n"""	236	237	Y	Q	Qou ain't nothin' but a hound-dog.\r\n	levels-depth,levels-arguments-depth							
+session	20261106	2	cmdFlee	pkg/session/combat_cmds.go	236	307	"""PANIC!  You couldn't escape!"""	10436	10437	P	Q	QANIC!  You couldn't escape!	flee-combat-forced,flee-no-exits							
+session	20261106	3	*Session.navigatePager	pkg/session/pager.go	246	299	"""Valid commands while paging are RETURN, Q, R, B, or a numeric value.\r\n"""	10071	10072	V	Q	Qalid commands while paging are RETURN, Q, R, B, or a numeric value.\r\n	pager-navigation							
+session	20261106	4	cmdQechoText	pkg/session/act_comm.go	68	77	"""qecho"""	2704	2705	q	Q	Qecho	qecho-depth							
+session	20261106	5	cmdSendText	pkg/session/wiz_communication.go	81	108	"""Sent.\r\n"""	3156	3157	S	Q	Qent.\r\n	send-depth							
+session	20261106	6	transferCharacter	pkg/session/wiz_movement.go	397	403	"""$n disappears in a blaze of hellfire!"""	11773	11775	n	Q	$Q disappears in a blaze of hellfire!	transfer-depth							
+session	20261106	7	*Session.maybeReturnFromVoid	pkg/session/session_pump.go	382	408	"""$n has returned."""	14160	14162	n	Q	$Q has returned.	lifecycle-idle-void,return-depth							
+session	20261106	8	qcommGuard	pkg/session/act_comm.go	92	94	"""You aren't even part of the quest!"""	3318	3319	Y	Q	Qou aren't even part of the quest!								
+session	20261106	9	cmdCommands	pkg/session/act_informative.go	51	66	"""You can't see the commands of people above your level.\r\n"""	1718	1719	Y	Q	Qou can't see the commands of people above your level.\r\n	commands-depth							
+session	20261106	10	cmdQuiStub	pkg/session/cmd_inventory.go	24	26	"""You have to type quit--no less, to quit!"""	625	626	Y	Q	Qou have to type quit--no less, to quit!	qui-depth							
+session	20261106	11	*Manager.shutdownGracefully	pkg/session/manager.go	2430	2450	"""\r\n\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n"""	89877	89891	m	Q	\r\n\x1b[1;31Q!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\x1b[0m\r\n	shutdown-depth							
+session	20261106	12	*Session.finishSeditLocked	pkg/session/sedit.go	251	270	"""$n stops using OLC."""	7462	7464	n	Q	$Q stops using OLC.	sedit-session-depth,sedit-output-residuals-depth							
+session	20261106	13	cmdRetreat	pkg/session/combat_cmds.go	329	394	"""$n is cornered and fails to %s!"""	13600	13602	n	Q	$Q is cornered and fails to %s!	retreat-closed-door							
+session	20261106	14	cmdLines	pkg/session/display_cmds.go	327	351	"""Your new lines count is %d.\r\n"""	10260	10261	Y	Q	Qour new lines count is %d.\r\n	lines-depth							
+session	20261106	15	cmdRecite	pkg/session/use_cmds.go	15	57	"""You can't concentrate enough!."""	1823	1824	Y	Q	Qou can't concentrate enough!.	recite-effect,recite-damage-spell							
+session	20261106	16	cmdSethunt	pkg/session/wiz_zone.go	302	327	"""Who shall be the hunter?\n\r"""	9017	9018	W	Q	Qho shall be the hunter?\n\r	sethunt-depth							
+session	20261106	17	cmdWiznetText	pkg/session/wiz_communication.go	301	368	"""Someone: %s%s%s\r\n"""	12328	12329	S	Q	Qomeone: %s%s%s\r\n	wizard-wiznet-depth							
+session	20261106	18	cmdQsayText	pkg/session/act_comm.go	40	46	"""qsay"""	1679	1680	q	Q	Qsay	qsay-depth							
+session	20261106	19	cmdPractice	pkg/session/practice.go	14	19	"""You can only practice skills in your guild.\r\n"""	606	607	Y	Q	Qou can only practice skills in your guild.\r\n	skills-practice,practice-catalog-mage-cost							
+session	20261106	20	cmdDate	pkg/session/wiz_system.go	293	301	"""Current machine time: %s"""	8065	8066	C	Q	Qurrent machine time: %s	date-depth							
+session	20261106	21	cmdMlist	pkg/session/wiz_zone.go	200	202	"""Huh?!?"""	5588	5589	H	Q	Quh?!?	mlist-depth							
+session	20261106	22	printGroup	pkg/session/cmd_group.go	41	62	"""Your group consists of:\r\n"""	2376	2377	Y	Q	Qour group consists of:\r\n	group-depth							
+session	20261106	23	cmdDc	pkg/session/wiz_system.go	249	251	"""Huh?!?"""	6684	6685	H	Q	Quh?!?	dc-depth							
+session	20261106	24	cmdShutdown	pkg/session/wiz_system.go	43	45	"""Huh?!?"""	995	996	H	Q	Quh?!?	shutdown-depth							
+session	20261106	25	*Manager.EmitOLCPresence	pkg/session/olc_registry.go	196	203	"""$n starts using OLC."""	5759	5761	n	Q	$Q starts using OLC.	sedit-session-depth,olc-save-depth							
+session	20261106	26	*Manager.closeIdleSnoop	pkg/session/idle_close.go	45	58	"""Your victim is no longer among us.\r\n"""	1584	1585	Y	Q	Qour victim is no longer among us.\r\n	snoop-depth,lifecycle-idle-force-rent-close							
+session	20261106	27	*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	807	840	"""Can be worn on: %s\r\n"""	31484	31485	C	Q	Qan be worn on: %s\r\n	wizard-stat-object-contents-depth							
+session	20261106	28	cmdToggle	pkg/session/act_informative.go	185	218	""" Newbie Channel: %-3s    Clan tells: %-3s     Broadcasts: %-3s"""	6694	6696	N	Q	 Qewbie Channel: %-3s    Clan tells: %-3s     Broadcasts: %-3s	toggle-cluster,god-toggles							
+session	20261106	29	cmdSkillset	pkg/session/wiz_player.go	345	407	"""Unrecognized skill.\n\r"""	13533	13534	U	Q	Qnrecognized skill.\n\r	skillset-depth							
+session	20261106	30	sendCachedText	pkg/session/gen_ps_cmds.go	125	131	"""That information is not available right now."""	3911	3912	T	Q	Qhat information is not available right now.								
+session	20261106	31	cmdIdlist	pkg/session/wiz_info.go	453	455	"""Huh?!?"""	14744	14745	H	Q	Quh?!?	idlist-depth,idlist-gate-depth							
+session	20261106	32	*Session.applyInputHistory	pkg/session/input_history.go	16	23	"""Invalid substitution.\r\n"""	938	939	I	Q	Qnvalid substitution.\r\n	input-history-depth							
+session	20261106	33	cmdTick	pkg/session/wiz_system.go	758	760	"""Huh?!?"""	25549	25550	H	Q	Quh?!?								
+session	20261106	34	cmdBroadcast	pkg/session/wiz_system.go	776	778	"""Huh?!?"""	26155	26156	H	Q	Quh?!?								
+session	20261106	35	cmdPoofsetText	pkg/session/wiz_info.go	699	709	"""You don't seem to exist."""	22723	22724	Y	Q	Qou don't seem to exist.	poofout-depth,poofin-depth							
+session	20261106	36	cmdSnoop	pkg/session/wiz_system.go	97	153	"""You can't.\r\n"""	4214	4215	Y	Q	Qou can't.\r\n	snoop-depth							
+session	20261106	37	sendGroupMemberLine	pkg/session/cmd_group.go	77	119	""" (Head of group)"""	4508	4511	H	Q	 (Qead of group)	group-depth,group-sleeping-send-to-char-depth							
+session	20261106	38	findAtRoom	pkg/session/wiz_movement.go	231	259	"""That object is not available.\r\n"""	7351	7352	T	Q	Qhat object is not available.\r\n	teleport-depth,transfer-depth							
+session	20261106	39	cmdDig	pkg/session/wiz_movement.go	139	176	"""Valid dirs are n,s,e,w,u and d.\r\n"""	5215	5216	V	Q	Qalid dirs are n,s,e,w,u and d.\r\n	dig-depth,dig-permission-depth							
+spells	20261107	0	checkPosition	pkg/spells/call_magic.go	206	224	"""You can't concentrate enough!\r\n"""	8248	8249	Y	Q	Qou can't concentrate enough!\r\n	cast-depth,position-gates							
+spells	20261107	1	castIdentifyCharacter	pkg/spells/affect_spells.go	2679	2723	"""Level: %d, Hits: %d, Mana: %d\r\n"""	97724	97725	L	Q	Qevel: %d, Hits: %d, Mana: %d\r\n	identify-character-depth							
+spells	20261107	2	castCharm	pkg/spells/affect_spells.go	3177	3216	"""Your victim resists!\r\n"""	113583	113584	Y	Q	Qour victim resists!\r\n	spell-charm-save-npc-retaliation-depth,spell-charm-success-follow-audience-depth							
+spells	20261107	3	MagPoints	pkg/spells/affect_spells.go	681	725	"""A warm feeling floods your body.\r\n"""	30248	30249	A	Q	Q warm feeling floods your body.\r\n	spell-points-spoken-depth,spellmatrix-world-potion-points-depth							
+spells	20261107	4	mendRoomLine	pkg/spells/affect_spells.go	1490	1496	"""$N's wounds glow and mend themselves.\r\n"""	53952	53954	N	Q	$Q's wounds glow and mend themselves.\r\n	spell-points-spoken-depth,spellmatrix-mag-points-missing-depth							
+spells	20261107	5	castMentalLapse	pkg/spells/affect_spells.go	2182	2223	"""You send out your mental voice...\r\n"""	83007	83008	Y	Q	Qou send out your mental voice...\r\n	cast-mental-lapse-spoken-depth							
+spells	20261107	6	castVampirism	pkg/spells/affect_spells.go	1968	1990	"""Already a vampire.\n\r"""	76796	76797	A	Q	Qlready a vampire.\n\r	will-vampirism-npc-silent-depth,spellmatrix-night-creatures-spoken-depth							
+spells	20261107	7	castDetectPoison	pkg/spells/affect_spells.go	1855	1871	"""You sense that $E is poisoned."""	73532	73533	Y	Q	Qou sense that $E is poisoned.	detect-poison-depth							
+spells	20261107	8	MagMasses	pkg/spells/affect_spells.go	920	948	"""Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of $n!\r\n"""	37066	37067	S	Q	Quddenly, a cloud of thick, acrid black smoke appears, obscuring your view of $n!\r\n	spellmatrix-mass-dominate-spoken-depth							
+spells	20261107	9	sendSpellActToCaster	pkg/spells/say_spell.go	382	393	"""$S"""	10712	10714	S	Q	$Q	detect-poison-depth,identify-character-depth							
+spells	20261107	10	castLocateObject	pkg/spells/affect_spells.go	3854	3884	"""Your magick suddenly dissolves into a wash of brilliant colours, and then, nothing.\r\n"""	134511	134512	Y	Q	Qour magick suddenly dissolves into a wash of brilliant colours, and then, nothing.\r\n	cast-locate-object-no-results-script-depth,cast-locate-object-no-locate-depth							
+spells	20261107	11	castConjureElemental	pkg/spells/affect_spells.go	3654	3736	"""The magic fails.\r\n"""	130136	130137	T	Q	Qhe magic fails.\r\n								
+spells	20261107	12	MagSummons	pkg/spells/affect_spells.go	1064	1154	"""The corpse starts to twitch, then stands with a life of it's own!\r\n"""	43945	43946	T	Q	Qhe corpse starts to twitch, then stands with a life of it's own!\r\n								
+spells	20261107	13	castZen	pkg/spells/affect_spells.go	1834	1839	"""$n sinks into a deep, meditative sleep."""	72737	72739	n	Q	$Q sinks into a deep, meditative sleep.	will-zen-meditation-depth							
+spells	20261107	14	SaySpell	pkg/spells/say_spell.go	15	62	"""$n focuses $s will..."""	1625	1627	n	Q	$Q focuses $s will...	spell-parser-scroll-fighting							
+spells	20261107	15	MagDamage	pkg/spells/damage_spells.go	14	108	"""The gods protect $N.\r\n"""	4066	4067	T	Q	Qhe gods protect $N.\r\n	damage-neutral-spell-rescue,damage-message-color-depth							
+spells	20261107	16	castTeleport	pkg/spells/affect_spells.go	2864	2977	"""$n slowly fades into existence."""	105990	105992	n	Q	$Q slowly fades into existence.	teleport-depth,spellmatrix-shift-reality-spoken-depth							
+spells	20261107	17	MagAreas	pkg/spells/affect_spells.go	985	1013	"""$n gracefully gestures and the earth begins to shake violently!\r\n"""	38940	38942	n	Q	$Q gracefully gestures and the earth begins to shake violently!\r\n	spellmatrix-earthquake-spoken-depth,cast-meteor-swarm-success-depth							
+spells	20261107	18	sendAffectActRoom	pkg/spells/affect_spells.go	1548	1549	"""$e"""	55950	55952	e	Q	$Q	mag-unaffects-room-output-depth,spellmatrix-mag-affects-spoken-depth							
+spells	20261107	19	sendAct	pkg/spells/say_spell.go	357	369	"""$n"""	9835	9837	n	Q	$Q	spell-parser-scroll-fighting							
+spells	20261107	20	castCoC	pkg/spells/affect_spells.go	2061	2070	"""The magic fails.\r\n"""	78955	78956	T	Q	Qhe magic fails.\r\n	will-coc-room-audience-depth							
+spells	20261107	21	MagCreations	pkg/spells/affect_spells.go	1159	1196	"""You create """	45060	45061	Y	Q	Qou create 	spellmatrix-create-food-staff-fanout-depth							
+spells	20261107	22	castMeteorSwarm	pkg/spells/affect_spells.go	2991	2999	"""The magic fizzles.\r\n"""	106836	106837	T	Q	Qhe magic fizzles.\r\n	cast-meteor-swarm-success-depth,cast-meteor-swarm-peaceful-depth							
+spells	20261107	23	castCreateWater	pkg/spells/affect_spells.go	2383	2438	"""%s is filled.\r\n"""	88734	88736	s	Q	%Q is filled.\r\n	cast-create-water-depth							
+spells	20261107	24	castMirrorImage	pkg/spells/affect_spells.go	3900	3932	"""You divide yourself in two!\r\n"""	135891	135892	Y	Q	Qou divide yourself in two!\r\n	cast-mirror-image-depth							
+spells	20261107	25	magAffectsForCast	pkg/spells/affect_spells.go	47	69	"""A small chunk of iron melts in $n's palm as $e cast a spell..."""	2808	2809	A	Q	Q small chunk of iron melts in $n's palm as $e cast a spell...	spellmatrix-mag-affects-spoken-depth,spellmatrix-mag-affects-batch-depth							
+spells	20261107	26	castHellfire	pkg/spells/affect_spells.go	3073	3103	"""$n conjures the flames of hell upon $s enemies!!"""	109898	109900	n	Q	$Q conjures the flames of hell upon $s enemies!!	spellmatrix-hellfire-spoken-depth,cast-hellfire-area-depth							
+spells	20261107	27	castEnchantArmor	pkg/spells/affect_spells.go	2316	2376	"""$p glows yellow."""	86850	86852	p	Q	$Q glows yellow.	enchant-armor-depth,spellmatrix-world-scroll-enchant-armor-depth							
+spells	20261107	28	castIdentifyObject	pkg/spells/affect_spells.go	2480	2541	"""This %s casts: %s\r\nIt has %d maximum charge%s and %d remaining.\r\n"""	91967	91968	T	Q	Qhis %s casts: %s\r\nIt has %d maximum charge%s and %d remaining.\r\n	identify-scroll-depth							
+spells	20261107	29	MagAlterObjs	pkg/spells/affect_spells.go	1229	1350	"""$p"""	49578	49580	p	Q	$Q	flesh-alter-depth,flesh-alter-gates							
+spells	20261107	30	castLycanthropy	pkg/spells/affect_spells.go	1923	1926	"""Specify a target.\n\r"""	75156	75157	S	Q	Qpecify a target.\n\r	spellmatrix-night-creatures-spoken-depth							
+spells	20261107	31	sendToRoom	pkg/spells/say_spell.go	283	301	"""%s"""	7924	7926	s	Q	%Q	spell-parser-scroll-fighting							
+spells	20261107	32	MagUnaffects	pkg/spells/affect_spells.go	816	831	"""A warm feeling runs through your body!\r\n"""	33814	33815	A	Q	Q warm feeling runs through your body!\r\n	mag-unaffects-room-output-depth							
+spells	20261107	33	castMindsight	pkg/spells/affect_spells.go	3757	3821	"""The magic fails.\r\n"""	132545	132546	T	Q	Qhe magic fails.\r\n	cast-mindsight-watcher-depth,cast-mindsight-no-track							
+spells	20261107	34	castControlWeather	pkg/spells/affect_spells.go	2005	2023	"""Do you want it to get better or worse?\r\n"""	77678	77679	D	Q	Qo you want it to get better or worse?\r\n	spell-control-weather-invalid-depth,spellmatrix-control-weather-spoken-depth							
+spells	20261107	35	castDivineInt	pkg/spells/affect_spells.go	3568	3613	"""Suddenly, a portal of light appears out of nowhere!"""	126857	126858	S	Q	Quddenly, a portal of light appears out of nowhere!	cast-divine-int-success-depth,cast-divine-int-neutral-depth,cast-divine-int-save-failure-depth							
+spells	20261107	36	castSobriety	pkg/spells/affect_spells.go	1807	1829	"""You are splashed in the face with HOT coffee, but feel much more sober.\n\r"""	72180	72181	Y	Q	Qou are splashed in the face with HOT coffee, but feel much more sober.\n\r								
+spells	20261107	37	castSummon	pkg/spells/affect_spells.go	3328	3396	"""You failed.\r\n"""	119341	119342	Y	Q	Qou failed.\r\n	summon-success-output-depth,summon-backfire-output-depth							
+spells	20261107	38	castEnchantWeapon	pkg/spells/affect_spells.go	2241	2304	"""$p glows blue."""	85033	85035	p	Q	$Q glows blue.	enchant-weapon-depth,spellmatrix-world-scroll-enchant-weapon-depth							
+spells	20261107	39	magAffectsApply	pkg/spells/affect_spells.go	145	387	"""A stream of silver light surges from $n's fingertips, covering $m!\r\n"""	17129	17130	A	Q	Q stream of silver light surges from $n's fingertips, covering $m!\r\n	spellmatrix-mag-affects-spoken-depth,spellmatrix-mag-affects-batch-depth,egon-equipment-apply-spell							
