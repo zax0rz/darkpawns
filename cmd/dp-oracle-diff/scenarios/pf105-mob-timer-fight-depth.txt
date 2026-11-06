@@ -1,0 +1,93 @@
+# DP-1473 proof: a script-set timer zeroes a mob's violence attacks. The
+# bridge writes me.timer into GET_MOB_WAIT (src/scripts.c:2015-2018 — the
+# save_char call is how shipped scripts force the writeback, because the
+# plain me-readback never lands: src/scripts.c:1805-1813 re-reads the ch
+# table at lua stack index 1), and perform_violence zeroes the mob's
+# attacks while the counter is positive and drains it by PULSE_VIOLENCE
+# (src/fight.c:1977-1981).
+# C witness (seed 1, glm-verify-leads-targeted): the pulse-20 block shows
+# only the player's swings — "Pfltat scratches an old ssauran healer as he
+# hits him." — with no healer attack lines.
+# depth-case: lua.mob-wait-zeroes-attacks
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/pf105_timer.lua 512
+
+[lua-script mob/oracle/pf105_timer.lua]
+function oncmd()
+if (argument ~= "say timer") then return FALSE end
+me.timer = 40
+save_char(me)
+return TRUE
+end
+
+[setup:oracle]
+Pfltim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pfltim
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Pfltat
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+Pfltat
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Pfltat level 20
+set Pfltat maxhit 500
+set Pfltat hit 500
+goto 8105
+teleport Pfltat 8105
+
+[probe]
+
+send:attacker say timer
+send:attacker murder healer
+~dpclock pulse 20

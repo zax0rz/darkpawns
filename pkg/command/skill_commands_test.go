@@ -327,7 +327,9 @@ func TestCmdBash_AppliesWaitStateToMobTarget(t *testing.T) {
 		t.Fatalf("CmdBash returned error: %v", err)
 	}
 
-	if mob.GetWaitState() != 2 {
+	// WAIT_STATE(vict, PULSE_VIOLENCE*2) stores pulses (DP-1473 aligned the
+	// mob accessor's units with the player's).
+	if mob.GetWaitState() != 2*engine.PULSE_VIOLENCE {
 		t.Errorf("expected mob wait state 2 after bash, got %d", mob.GetWaitState())
 	}
 	if mob.GetPosition() != combat.PosSitting {

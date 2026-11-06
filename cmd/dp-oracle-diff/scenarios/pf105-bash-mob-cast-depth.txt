@@ -1,0 +1,90 @@
+# DP-1473 proof: a bashed mob can cast. cast_spell's gate reads GET_MOB_WAIT
+# only (src/spell_parser.c:844-848), so a mob whose bash wait is ch->wait
+# casts normally once standing; lua_spell routes through cast_spell
+# (src/scripts.c:1428). magic missile is POS_FIGHTING-castable
+# (src/spell_parser.c:1363), so the ongoing fight does not refuse the cast.
+# C witness (seed 1, glm-verify-leads-targeted): "A guard trainee stares at
+# Pflcat and utters the words, 'yriwo abrafax'."
+# depth-case: cast.bashed-mob-can-cast
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 163
+mob-script 16303 oracle/pf105_cast.lua 512
+
+[lua-script mob/oracle/pf105_cast.lua]
+function oncmd()
+if (argument ~= "say cast") then return FALSE end
+spell(room.char[1], nil, SPELL_MAGIC_MISSILE, 1)
+return TRUE
+end
+
+[setup:oracle]
+Pflcas
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pflcas
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:attacker]
+Pflcat
+Y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:attacker]
+Pflcat
+y
+attpass
+attpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Pflcat level 5
+skillset Pflcat 'bash' 100
+set Pflcat maxhit 500
+set Pflcat hit 500
+goto 8105
+teleport Pflcat 8105
+
+[probe]
+
+send:attacker bash trainee
+~dpclock pulse 20
+say cast

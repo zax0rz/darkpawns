@@ -133,7 +133,7 @@ func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.Ch
 			Evil:  m.GetAlignment() <= -350,
 			NPC:   true,
 			VNum:  m.GetVNum(),
-			Timer: m.GetWaitState(), // GET_MOB_WAIT
+			Timer: m.GetMobWait(), // GET_MOB_WAIT (scripts.c:1887)
 		}
 		m.mu.RLock()
 		f.Carry = objRefs(m.Inventory)
@@ -248,7 +248,7 @@ func (a *WorldScriptableAdapter) ApplyChar(ref scripting.CharRef, w scripting.Ch
 		m.SetLevel(w.Level)
 		m.SetHealth(w.HP)
 		m.SetPosition(w.Pos)
-		m.SetWaitState(w.Timer)
+		m.SetMobWait(w.Timer) // GET_MOB_WAIT (scripts.c:2015-2018), raw counter
 		m.AffectTotal()
 	}
 }
@@ -1180,7 +1180,6 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		return false
 	}
 	body, ok := me.(interface {
-		GetWaitState() int
 		IsAffected(int) bool
 	})
 	if !ok {
@@ -1190,7 +1189,12 @@ func castSpellC(w *World, me combat.Combatant, meRef scripting.CharRef, victRef,
 		sendActLineWithWorld(w, me, "You're not smart enough to cast!\r\n")
 		return false
 	}
-	if me.IsNPC() && body.GetWaitState() > 0 {
+	// C's gate reads GET_MOB_WAIT (src/spell_parser.c:844-848) — the Lua
+	// timer counter, not the WAIT_STATE ch->wait a bash writes, and nonzero
+	// rather than positive: the unclamped violence drain can leave the
+	// counter negative, and C's `if (GET_MOB_WAIT(ch))` still refuses.
+	// Players never carry GET_MOB_WAIT and never take this refusal.
+	if mob, isMob := me.(*MobInstance); isMob && mob.GetMobWait() != 0 {
 		sendActLineWithWorld(w, me, "You can't cast anything yet!\r\n")
 		return false
 	}

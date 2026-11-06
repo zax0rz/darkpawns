@@ -586,8 +586,10 @@ func mobDoRescueResolved(w *World, me *MobInstance, victim combat.Combatant) {
 			slog.Warn("rescuer ally hit failed", "mob", allyVictim.GetName(), "target", tmp.GetName(), "error", err)
 		}
 	}
+	// do_rescue's WAIT_STATE(vict, PULSE_VIOLENCE*2) writes ch->wait
+	// (src/act.offensive.c); SetWaitState takes rounds.
 	if waiter, ok := victim.(interface{ SetWaitState(int) }); ok {
-		waiter.SetWaitState(2 * engine.PULSE_VIOLENCE)
+		waiter.SetWaitState(2)
 	}
 }
 

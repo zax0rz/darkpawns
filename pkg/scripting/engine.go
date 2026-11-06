@@ -1122,7 +1122,7 @@ func (e *Engine) legacyMobTable(m ScriptableMob, depth int) *lua.LTable {
 	tbl.RawSetString("evil", luaBool(m.GetAlignment() <= -350))
 	e.legacyLeaderInto(tbl, m.GetLeaderName(), depth)
 	tbl.RawSetString("vnum", lua.LNumber(m.GetVNum()))
-	tbl.RawSetString("timer", lua.LNumber(m.GetWaitState()))
+	tbl.RawSetString("timer", lua.LNumber(m.GetMobWait()))
 	tbl.RawSetString("struct", lua.LNumber(m.GetVNum()))
 	return tbl
 }

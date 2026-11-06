@@ -213,10 +213,15 @@ func TestWorldBridgeTimerIsMobWait(t *testing.T) {
 	b := NewWorldScriptableAdapter(w)
 	ref := scripting.CharRef{NPC: true, ID: mob.GetID()}
 	b.ApplyChar(ref, scripting.CharWrite{Level: mob.GetLevel(), HP: mob.GetHP(), Pos: mob.GetPosition(), Timer: 3, Align: mob.GetAlignment()})
-	if got := mob.GetWaitState(); got != 3 {
+	if got := mob.GetMobWait(); got != 3 {
 		t.Fatalf("GET_MOB_WAIT after a script's timer write = %d, want 3", got)
 	}
 	if f, _ := b.CharFields(ref); f.Timer != 3 {
 		t.Fatalf("me.timer reads %d, want 3", f.Timer)
+	}
+	// The timer is its own counter (DP-1473): a script's timer write must not
+	// touch the ch->wait WAIT_STATE writes, and vice versa.
+	if got := mob.GetWaitState(); got != 0 {
+		t.Fatalf("ch->wait after a script's timer write = %d, want 0", got)
 	}
 }

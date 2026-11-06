@@ -338,5 +338,5 @@ func (w *World) npcBackstabCommand(me *MobInstance, target combat.Combatant) {
 		return
 	}
 	w.mobBackstab(me, target)
-	me.SetWaitState(engine.PULSE_VIOLENCE)
+	me.SetWaitState(1) // WAIT_STATE(ch, PULSE_VIOLENCE) — ch->wait, in rounds
 }

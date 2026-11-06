@@ -67,7 +67,18 @@ type MobInstance struct {
 	Target        *MobInstance     // or Player
 	fightingBody  combat.Combatant // C FIGHTING: actual runtime opponent
 	combatRetired bool
-	WaitState     int // PULSE_VIOLENCE ticks remaining (C GET_MOB_WAIT)
+	// WaitState is ch->wait in pulses: WAIT_STATE's writes land here
+	// (src/utils.h:462-464). Nothing reads a descriptorless mob's ch->wait —
+	// only descriptors drain it (src/comm.c:597) — so it is faithfully
+	// write-only for mobs. SetWaitState stores rounds*PULSE_VIOLENCE like
+	// the player accessor.
+	WaitState int
+	// MobWait is GET_MOB_WAIT (src/utils.h:434,
+	// mob_specials.wait_state): the Lua bridge's timer is its only writer
+	// (src/scripts.c:2015-2018) and the violence pass drains it by
+	// PULSE_VIOLENCE per round while zeroing the mob's attacks
+	// (src/fight.c:1977-1981). C never clamps it, so it may go negative.
+	MobWait int
 
 	// Memory: names of players this mob remembers attacking it
 	// Source: mobact.c:262-285, remember()/forget() in mobact.c:346-407
@@ -998,30 +1009,61 @@ func (m *MobInstance) SendMessage(msg string) {
 	}
 }
 
-// GetWaitState returns the mob's remaining wait state in PULSE_VIOLENCE ticks.
-// Source: utils.h GET_MOB_WAIT(ch)
+// GetWaitState returns the mob's remaining ch->wait in pulses. Nothing gates
+// on it for a descriptorless mob (C reads ch->wait only through descriptors).
 func (m *MobInstance) GetWaitState() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.WaitState
 }
 
-// SetWaitState sets the mob's wait state cooldown.
-// Source: utils.h WAIT_STATE(ch, PULSE_VIOLENCE * n)
-func (m *MobInstance) SetWaitState(ticks int) {
+// SetWaitState sets the mob's ch->wait. The argument is expressed in
+// PULSE_VIOLENCE rounds (WAIT_STATE(ch, PULSE_VIOLENCE*n)), converted to
+// pulses like the player accessor so shared call sites write identical
+// values to both body kinds.
+func (m *MobInstance) SetWaitState(rounds int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.WaitState = ticks
+	m.WaitState = rounds * engine.PULSE_VIOLENCE
 }
 
-// DecrementWaitState reduces the mob's wait state by one tick.
-// Called each combat round (perform_violence) in C.
+// SetWaitStatePulses sets the raw ch->wait pulse count for C paths whose
+// WAIT_STATE argument is not an even number of PULSE_VIOLENCE rounds.
+func (m *MobInstance) SetWaitStatePulses(pulses int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if pulses < 0 {
+		pulses = 0
+	}
+	m.WaitState = pulses
+}
+
+// DecrementWaitState reduces ch->wait by one pulse, for a mob carrying a
+// switched descriptor (port of comm.c:597's per-loop decrement).
 func (m *MobInstance) DecrementWaitState() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.WaitState > 0 {
 		m.WaitState--
 	}
+}
+
+// GetMobWait returns GET_MOB_WAIT: the Lua timer counter the flee, cast and
+// spec gates read and the violence pass drains (src/utils.h:434).
+func (m *MobInstance) GetMobWait() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.MobWait
+}
+
+// SetMobWait sets GET_MOB_WAIT. The value is the raw counter C stores — the
+// Lua bridge writes scripts' timer verbatim, and the violence pass subtracts
+// PULSE_VIOLENCE per round without clamping (may go negative; a negative
+// counter keeps blocking the NPC stand-up, C's own arithmetic).
+func (m *MobInstance) SetMobWait(pulses int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.MobWait = pulses
 }
 
 // SetFightingBody sets the actual opponent without changing posture.

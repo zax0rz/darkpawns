@@ -376,7 +376,10 @@ func npcSteal(w *World, me *MobInstance, victim *Player) {
 func castMobSpell(w *World, me *MobInstance, victim combat.Combatant, spellNum int) bool {
 	// C's GET_WIS/GET_INT and GET_MOB_WAIT gates send only to the mob, whose
 	// descriptor is absent; retaining the gate avoids inventing player bytes.
-	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetWaitState() > 0 {
+	// GET_MOB_WAIT is the Lua timer counter, tested nonzero like C's
+	// `if (GET_MOB_WAIT(ch))` (src/spell_parser.c:844-848): the unclamped
+	// violence drain can leave it negative, and negative still refuses.
+	if me.GetWis() == 0 || me.GetInt() == 0 || me.GetMobWait() != 0 {
 		return false
 	}
 	spells.SaySpell(me, spellNum, victim, nil, w)
@@ -466,7 +469,7 @@ func mobCombatSpecialTarget(w *World, me *MobInstance, cmd string) (combat.Comba
 	if cmd != "" || me.GetPosition() != combat.PosFighting || me.GetHP() < 0 || me.GetFightingBody() == nil {
 		return nil, false
 	}
-	if me.GetWaitState() > 0 {
+	if me.GetMobWait() != 0 { // SPECIAL(fighter/paladin): nonzero test, src/spec_procs.c:516,544
 		return nil, false
 	}
 	melee := mobFightingTarget(w, me)

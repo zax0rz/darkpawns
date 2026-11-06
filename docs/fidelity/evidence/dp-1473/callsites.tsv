@@ -1,0 +1,33 @@
+site	c_counterpart	counter	change
+pkg/game/mob.go:70 (field)	ch->wait (WAIT_STATE, src/utils.h:462-464)	ch->wait	renamed comment; SetWaitState now converts rounds to pulses like the player accessor
+pkg/game/mob.go (MobWait field)	GET_MOB_WAIT = mob_specials.wait_state (src/utils.h:434)	GET_MOB_WAIT	new field + GetMobWait/SetMobWait accessors; unclamped drain
+pkg/game/world_bridge.go:136	Lua me.timer readback (src/scripts.c:1887)	GET_MOB_WAIT	reads GetMobWait
+pkg/game/world_bridge.go:251	Lua me.timer writeback (src/scripts.c:2015-2018)	GET_MOB_WAIT	writes SetMobWait (raw counter)
+pkg/game/world_bridge.go:1193 (castSpellC)	cast_spell's gate (src/spell_parser.c:844-848)	GET_MOB_WAIT	gate reads GetMobWait via mob type assertion; players never take the refusal
+pkg/game/spec_procs.go:379 (castMobSpell)	cast_spell's gate (src/spell_parser.c:844-848)	GET_MOB_WAIT	gate reads GetMobWait
+pkg/game/spec_procs.go:469 (fighter/paladin entry)	SPECIAL(fighter)/SPECIAL(paladin) gate (src/spec_procs.c:516,544)	GET_MOB_WAIT	gate reads GetMobWait
+pkg/game/flee.go:62	do_flee's mob gate (src/act.offensive.c:377-381)	GET_MOB_WAIT	gate reads GetMobWait; a bash's ch->wait no longer blocks mob flee
+pkg/scripting/engine.go:1125	char_to_table timer (src/scripts.c:1887)	GET_MOB_WAIT	reads GetMobWait
+pkg/scripting/types.go:96 (ScriptableMob)	char_to_table timer (src/scripts.c:1887)	GET_MOB_WAIT	interface member renamed GetMobWait
+pkg/combat/engine.go (processCombatPair NPC arm)	perform_violence drain/zero + NPC stand-up (src/fight.c:1975-1988)	GET_MOB_WAIT	NEW: zeroes attacks while >0, drains by PULSE_VIOLENCE unclamped, gates the scramble on ==0
+pkg/command/skill_commands.go:1792-1794	WAIT_STATE(vict, ...) on skill targets (src/act.offensive.c bash/trip/etc.)	ch->wait	unchanged call; now stores rounds*PULSE_VIOLENCE via the mob accessor (write-only for mobs, as in C)
+pkg/game/ambush.go:101-102	WAIT_STATE(vict) in the ambush path	ch->wait	unchanged call; same units change
+pkg/game/spec_procs2.go:594-595	do_rescue's WAIT_STATE(vict, PULSE_VIOLENCE*2) (src/act.offensive.c)	ch->wait	argument fixed from raw 2*PULSE_VIOLENCE to rounds 2
+pkg/game/spec_fighter.go:341	NPC backstab's WAIT_STATE(ch, PULSE_VIOLENCE)	ch->wait	argument fixed from raw PULSE_VIOLENCE to rounds 1
+pkg/game/player.go:245 + player_affects.go accessors	ch->wait (drained by descriptors, src/comm.c:597)	ch->wait	player-only; unchanged
+pkg/game/flee.go:66	do_flee's thief/assassin gate CHECK_WAIT (src/act.offensive.c:383-386)	ch->wait	player read; unchanged
+pkg/session/commands.go:688	command wait gate (descriptor input)	ch->wait	player read; unchanged
+pkg/session/combat_cmds.go:131,209,219,354	WAIT_STATE(ch, ...) (src/act.offensive.c:127,1052, etc.)	ch->wait	player writes; unchanged
+pkg/session/combat_cmds.go:241	CHECK_WAIT (thief/assassin re-entry gate)	ch->wait	player read; unchanged
+pkg/session/cast_cmds.go:289,327	WAIT_STATE(ch, PULSE_VIOLENCE) (do_cast)	ch->wait	player writes; unchanged
+pkg/session/eat_cmds.go:88	WAIT_STATE(ch, PULSE_VIOLENCE) (do_eat/drink)	ch->wait	player write; unchanged
+pkg/session/use_cmds.go:120	WAIT_STATE(ch, PULSE_VIOLENCE) (do_use)	ch->wait	player write; unchanged
+pkg/game/other_economy.go:382,421	WAIT_STATE(ch, PULSE_VIOLENCE)	ch->wait	player writes; unchanged
+pkg/game/other_settings.go:320	WAIT_STATE(ch, PULSE_VIOLENCE*2)	ch->wait	player write; unchanged
+pkg/game/item_transfer.go:356	WAIT_STATE(ch, PULSE_VIOLENCE)	ch->wait	player write; unchanged
+pkg/game/item_donate.go:73	WAIT_STATE(ch, PULSE_VIOLENCE)	ch->wait	player write; unchanged
+pkg/game/act_informative.go:186,194,198,206,215	WAIT_STATE(ch, PULSE_VIOLENCE)	ch->wait	player writes; unchanged
+pkg/game/ambush.go:73	WAIT_STATE(ch, PULSE_VIOLENCE)	ch->wait	player write; unchanged
+pkg/game/spec_fighter.go:234	WAIT_STATE(ch, PULSE_VIOLENCE*2) on a player	ch->wait	player write; unchanged
+pkg/combat/engine.go:637 (PC stand-up)	CHECK_WAIT (src/fight.c:1990-1998)	ch->wait	player read (the !IsNPC arm); unchanged
+pkg/combat/engine.go:595-598 (waitStateHolder)	ch->wait holder interface	ch->wait	unchanged; new mobWaitHolder interface beside it

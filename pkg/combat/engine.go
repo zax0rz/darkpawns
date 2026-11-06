@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zax0rz/darkpawns/internal/dpclock"
+	"github.com/zax0rz/darkpawns/pkg/engine"
 
 	"github.com/zax0rz/darkpawns/pkg/metrics"
 )
@@ -598,6 +599,13 @@ type waitStateHolder interface {
 	DecrementWaitState()
 }
 
+// mobWaitHolder reaches GET_MOB_WAIT — the Lua bridge's timer counter, a
+// different field from WAIT_STATE's ch->wait (src/utils.h:434,462-464).
+type mobWaitHolder interface {
+	GetMobWait() int
+	SetMobWait(int)
+}
+
 func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	attacker := pair.Attacker
 	defender := pair.Defender
@@ -618,14 +626,27 @@ func (ce *CombatEngine) processCombatPair(pair *CombatPair) {
 	// every round; NPC dodge draws Number(0,100) if AFF_DODGE.
 	ce.prepareRoundDefense(attacker, defender)
 
-	// 3. NPC stand-up (fight.c:1975-1988). C zeros attacks only for
-	// GET_MOB_WAIT > 0, which only the Lua bridge writes (scripts.c:2017) —
-	// never WAIT_STATE (utils.h:462-464 writes ch->wait, a different field).
-	// Go's scripting layer writes no mob wait, so NPC attacks are NEVER zeroed
-	// by wait. A downed mob stands and swings in the same round (DP-1215).
-	if attacker.IsNPC() && attacker.GetPosition() < PosFighting {
-		attacker.SetPosition(PosFighting)
-		ce.scrambleBroadcast(attacker)
+	// 3. NPC wait drain and stand-up (fight.c:1975-1988). GET_MOB_WAIT —
+	// the Lua bridge's timer (scripts.c:2015-2018), NOT the ch->wait
+	// WAIT_STATE writes — zeroes this round's attacks and drains by
+	// PULSE_VIOLENCE per pass, unclamped so it may go negative (C's own
+	// arithmetic; a negative counter still blocks the stand-up, since C tests
+	// !GET_MOB_WAIT). A downed mob stands only when the counter is clear, and
+	// stands and swings in the same round (DP-1215).
+	if attacker.IsNPC() {
+		if mw, ok := attacker.(mobWaitHolder); ok {
+			if wait := mw.GetMobWait(); wait > 0 {
+				mw.SetMobWait(wait - engine.PULSE_VIOLENCE)
+				numAttacks = 0
+			}
+			if attacker.GetPosition() < PosFighting && mw.GetMobWait() == 0 {
+				attacker.SetPosition(PosFighting)
+				ce.scrambleBroadcast(attacker)
+			}
+		} else if attacker.GetPosition() < PosFighting {
+			attacker.SetPosition(PosFighting)
+			ce.scrambleBroadcast(attacker)
+		}
 	}
 
 	// 4. PC stand-up (fight.c:1990-1998). C: !IS_NPC && GET_POS < POS_FIGHTING

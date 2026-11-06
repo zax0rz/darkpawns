@@ -7,6 +7,8 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/combat"
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 	"github.com/zax0rz/darkpawns/pkg/parser"
+
+	"github.com/zax0rz/darkpawns/pkg/engine"
 )
 
 func turnDepthWorld(t *testing.T, exits bool) (*World, *Player, *Player) {
@@ -279,7 +281,7 @@ func TestDoFleeNpcWaitGateDoesNotDrawRandomness(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mob.SetWaitState(1)
+	mob.SetMobWait(1) // GET_MOB_WAIT gates the mob flee (act.offensive.c:377-381)
 	var private strings.Builder
 	w.MobileMessageSink = func(body *MobInstance, message []byte) {
 		if body == mob {
@@ -302,6 +304,24 @@ func TestDoFleeNpcWaitGateDoesNotDrawRandomness(t *testing.T) {
 	}
 	if mob.GetRoom() != 1001 {
 		t.Fatalf("NPC moved despite wait gate: room %d", mob.GetRoom())
+	}
+
+	// DP-1473: only GET_MOB_WAIT gates the flee. A mob carrying merely a
+	// ch->wait (WAIT_STATE's field — what a bash writes, utils.h:462-464)
+	// flees freely; the engine never drains a descriptorless mob's ch->wait.
+	mob.SetMobWait(0)
+	mob.SetWaitState(2)
+	private.Reset()
+	dprng.ResetStream(seed)
+	w.DoFlee(mob)
+	if got, want := private.String(), "You flee head over heels.\r\n"; got != want {
+		t.Fatalf("ch->wait blocked the NPC flee: %q, want the success line %q", got, want)
+	}
+	if mob.GetRoom() == 1001 {
+		t.Fatal("mob did not flee with only ch->wait set")
+	}
+	if got, want := mob.GetWaitState(), 2*engine.PULSE_VIOLENCE; got != want {
+		t.Fatalf("flee drained the mob's ch->wait: %d, want %d", got, want)
 	}
 }
 
