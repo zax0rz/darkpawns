@@ -229,6 +229,16 @@ cannot observe them.
   no-cost class) and PF-100 (ambient mob sound: all 1,813 quiet-mobs scenarios
   hid literal `$n` on every city mob).
 
+- **R5j. A refused setup step is never neutral.** A setup step the engine
+  refuses configured, commanded or moved nothing, and when both engines refuse
+  it identically the scenario passes without proving anything. The harness
+  fails a run whose warmup draws a refusal; a scenario that needs one declares
+  it with `# setup-refusal-reason:`. A scenario repaired after a hollow pass
+  cites a witness, a line from the C transcript showing the event it claims.
+  Taught by RO-012 (six scenarios compared refused peer logins, September) and
+  DP-1456 (52 spellmatrix scenarios shipped in v0.1.8 as proof for 269
+  manifest rows whose item editor never ran).
+
 ---
 
 ## Amendment log
@@ -247,3 +257,4 @@ cannot observe them.
 | 2026-09-29 | *Who amends* added; R5b reworded | The R3c edit above: the agent followed R5b's "amend this rulebook" literally, and read authorization for the fix as authorization for the rule. The instruction was ambiguous, so it's clarified: agents propose, Zach approves the text |
 | 2026-10-30 | R1b added | DeepSeek ANSI audit (PR #2231): the census strips ANSI and folds terminators, so combat color was never compared; same class as cutthroat #532/#537. Proposed by the auditing agent, wording widened by Claude, approved by Zach |
 | 2026-11-05 | R5i added | PR #2271: quiet-mobs, the fixture in 1,813 scenarios, hid literal `$n` on every ambient city mob (PF-100); second instance after PF-099's no-cost practice fixtures, so R5b. Proposed by GLM, approved by Zach |
+| 2026-11-06 | R5j added | PR #2280 (DP-1456): 52 spellmatrix scenarios passed on identical `Huh?!?` refusals of their item-editor setup, backing 269 manifest rows in v0.1.8; second instance after RO-012's refused peer logins, so R5b. Proposed by GLM, wording tightened by Claude, approved by Zach |
