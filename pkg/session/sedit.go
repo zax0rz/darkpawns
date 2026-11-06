@@ -110,7 +110,7 @@ func cmdSedit(s *Session, args []string) error {
 
 	if save {
 		if other := s.manager.shopEditHolder(number); other != "" {
-			s.seditSend(fmt.Sprintf("That shop is currently being edited by %s\r\n", other))
+			s.seditSend(fmt.Sprintf("That shop is currently being edited by %s.\r\n", other))
 			return nil
 		}
 		zone, ok := olcZoneForVNum(s.manager.world, number)

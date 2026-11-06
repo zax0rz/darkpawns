@@ -62,7 +62,7 @@ func (m *Manager) claimRoomEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return m.olcConflictDescription(olc.KindRoom, number, holder), false
+	return m.olcConflictDescription(holder), false
 }
 
 func (m *Manager) releaseRoomEdit(number int, owner *Session) {
@@ -74,7 +74,7 @@ func (m *Manager) claimMobEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return m.olcConflictDescription(olc.KindMob, number, holder), false
+	return m.olcConflictDescription(holder), false
 }
 
 func (m *Manager) releaseMobEdit(number int, owner *Session) {
@@ -86,7 +86,7 @@ func (m *Manager) claimObjEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return m.olcConflictDescription(olc.KindObject, number, holder), false
+	return m.olcConflictDescription(holder), false
 }
 
 func (m *Manager) releaseObjEdit(number int, owner *Session) {
@@ -98,7 +98,7 @@ func (m *Manager) claimShopEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return m.olcConflictDescription(olc.KindShop, number, holder), false
+	return m.olcConflictDescription(holder), false
 }
 
 func (m *Manager) releaseShopEdit(number int, owner *Session) {
@@ -110,7 +110,7 @@ func (m *Manager) claimZoneEdit(number int, owner *Session) (string, bool) {
 	if ok {
 		return "", true
 	}
-	return m.olcConflictDescription(olc.KindZone, number, holder), false
+	return m.olcConflictDescription(holder), false
 }
 
 func (m *Manager) releaseZoneEdit(number int, owner *Session) {
@@ -125,10 +125,11 @@ func (m *Manager) olcHolder(kind olc.Kind, number int) string {
 	return olc.HolderDescription(holder)
 }
 
-func (m *Manager) olcConflictDescription(kind olc.Kind, number int, holder olc.Owner) string {
-	if entry, ok := m.olcClaims().Entry(kind, number); ok {
-		return olc.ClaimConflictDescription(entry, time.Now())
-	}
+// olcConflictDescription is the duplicate-claim refusal label for the five
+// editors. C prints the holder's plain character name (src/olc.c:157-158), the
+// same label the save-path scans build through olcHolder, so a telnet holder is
+// named without the transport or an idle clock.
+func (m *Manager) olcConflictDescription(holder olc.Owner) string {
 	return olc.HolderDescription(holder)
 }
 
