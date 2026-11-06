@@ -1,0 +1,3 @@
+scenario	claimed_event	c_witness_line	seeds
+redit-duplicate-gate-depth	redit.duplicate-gate-cleanup	That room is currently being edited by Reditadmin.	1
+zedit-duplicate-gate-depth	zedit.duplicate-gate-cleanup	That room is currently being edited by Zeditadmin.	1

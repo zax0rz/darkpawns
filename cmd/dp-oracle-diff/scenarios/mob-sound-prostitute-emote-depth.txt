@@ -1,0 +1,50 @@
+# R5i paired vehicle for mp_sound's fixed elven-prostitute emote.
+# quiet-mobs silences ambient city activity; one spawned vnum 8023 in the
+# sealed test chamber restores this mobile sound surface. C path:
+# src/mobact.c:143-147 ->
+# src/mobprog.c:588-606 -> src/act.comm.c:797-806.
+# depth-case: mob.mp-sound-prostitute-emote
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8105 none
+spawn-mob 8023 1 8105 80
+clear-mob-flag 8023 RANDZON
+
+[setup:oracle]
+Soundtest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Soundtest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+
+[probe]
+look
+look at prostitute
+~dpclock pulse 24000
+look

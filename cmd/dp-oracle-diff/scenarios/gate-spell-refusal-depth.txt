@@ -1,0 +1,41 @@
+# C-first live cast reaches spell_gate's no-legal-room refusal.
+# C path: src/interpreter.c:1470-1476 -> src/spell_parser.c:522 -> src/gate.c:383-390.
+# depth-case: gate.spell.refusal-live
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Gatefail
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gatefail
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+cast 'gate'

@@ -1,0 +1,4 @@
+scenario	claimed_event	c_witness_line	seeds
+transfer-all-depth	transfer.all-order	Transferalltwo arrives from a puff of smoke.	1,2
+transfer-all-depth	transfer.all-mushroom-cloud	Transferalltwo disappears in a mushroom cloud.	1,2
+transfer-all-depth	transfer.all-audience	Transferallgod has transferred you!	1,2

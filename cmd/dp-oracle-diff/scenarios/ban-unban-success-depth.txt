@@ -1,0 +1,47 @@
+# C-first vehicle for a successful do_unban acknowledgement after a live ban.
+# C path: src/interpreter.c:793 -> src/ban.c:213-244.
+# depth-case: ban.unban-success
+# The first-player God satisfies the LVL_GRGOD command gate; the preceding
+# warmup removes the oracle's historical ban before this disposable ban/unban.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Bandeep
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bandeep
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+# The shipped C oracle data contains a historical whitehouse.gov ban while the
+# fresh Go runtime starts empty. Remove it on both sides before comparing the
+# do_ban surface; warmup output is intentionally not diffed.
+unban whitehouse.gov
+
+[probe]
+ban all Example.COM
+unban Example.COM

@@ -20,7 +20,10 @@ func TestReadinessWaitsForHealthyStatus(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
-	if err := waitForHTTP(context.Background(), server.URL, time.Second); err != nil {
+	// The three polls take about 200ms. The deadline only bounds a hung test;
+	// one second failed on loaded macOS runners (two PRs, 2026-11-06), and the
+	// count check below is what proves the wait.
+	if err := waitForHTTP(context.Background(), server.URL, 10*time.Second); err != nil {
 		t.Fatal(err)
 	}
 	if count.Load() < 3 {

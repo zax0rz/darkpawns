@@ -1,0 +1,27 @@
+probe	purpose	run_dir	verdict
+0	mutation	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-0-mut	NOT_CLEAN; mutation caught
+0	clean	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-0-clean	CLEAN
+2	unmutated divergence	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-2-clean	NOT_CLEAN; C/Go mismatch
+8	unmutated divergence	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-8-clean	NOT_CLEAN; C/Go mismatch
+10	mutation, first pre-tag vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-10-mut	NOT_CLEAN; mutation caught
+10	clean, first pre-tag vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-10-clean	CLEAN
+10	mutation, final tagged vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-10-mut-v2	NOT_CLEAN; mutation caught
+10	clean, final tagged vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-10-clean-v2	CLEAN
+15	mutation, long vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-15-mut	NOT_CLEAN; timed out on initial attempt and recheck
+15	clean, long vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-15-clean	NOT_CLEAN; timed out on initial attempt and recheck
+15	mutation, shortened final vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-15-mut-v2	NOT_CLEAN; mutation caught
+15	clean, shortened final vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-15-clean-v2	CLEAN
+16	mutation	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-16-mut	NOT_CLEAN; mutation caught
+16	clean	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-16-clean	CLEAN
+18	mutation, first pre-tag vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-18-mut	NOT_CLEAN; mutation caught
+18	clean, first pre-tag vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-18-clean	CLEAN
+18	mutation, final tagged vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-18-mut-v2	NOT_CLEAN; mutation caught
+18	clean, final tagged vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-18-clean-v2	CLEAN
+21	mutation	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-21-mut	NOT_CLEAN; mutation caught
+21	clean	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-21-clean	CLEAN_AFTER_RECHECK
+37	mutation, first pre-tag vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-37-mut	NOT_CLEAN; mutation caught
+37	clean, first pre-tag vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-37-clean	CLEAN
+37	mutation, final tagged vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-37-mut-v2	NOT_CLEAN; mutation caught
+37	clean, final tagged vehicle	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-37-clean-v2	CLEAN
+39	mutation	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-39-mut	NOT_CLEAN; mutation caught
+39	clean	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/luna-pf102-39-clean	CLEAN

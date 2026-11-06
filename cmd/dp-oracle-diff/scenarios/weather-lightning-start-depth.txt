@@ -1,0 +1,60 @@
+# C-first extension for weather_change's cloud-to-lightning transition.
+# Advance 16 mud hours to reach the first seed-1 skyChange 4 transition.
+# Month 16 uses the C 985 pressure threshold; the fixed clock starts at month
+# 16 day 0, so the weather stream reaches the lower-pressure storm branch.
+# C path: src/weather.c:128-229; selected message at :215.
+# depth-case: weather.sky-lightning-start
+
+[fixture]
+quiet-mobs
+seed-player
+fixed-time 1771235235
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[warmup]
+goto 8001
+
+[probe]
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
+weather
+~dpclock pulse 630
