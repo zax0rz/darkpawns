@@ -26,7 +26,7 @@ type setupRefusal struct {
 // refusal phrase never trips the check.
 //
 // Two do_olc refusals are sprintf-shaped ("Specify a %s VNUM to edit.",
-// src/olc.c:104; "That %s is currently being edited by %s.", src/olc.c:152)
+// src/olc.c:113; "That %s is currently being edited by %s.", src/olc.c:157)
 // and cannot be whole-line matched; the fixed strings below cover the level
 // and zone paths that hollow scenarios actually hit.
 //
@@ -62,14 +62,14 @@ var setupRefusalLines = []setupRefusal{
 
 	// teleport (do_teleport).
 	{"Whom do you wish to teleport?", "src/act.wizard.c:373"},
-	{"No-one by that name here.", "src/config.c:93 (NOPERSON, via src/act.wizard.c:376)"},
+	{"No-one by that name here.", "src/config.c:93 (NOPERSON, via src/act.wizard.c:375)"},
 	{"Use 'goto' to teleport yourself.", "src/act.wizard.c:377"},
 	{"Maybe you shouldn't do that.", "src/act.wizard.c:379"},
 	{"Where do you wish to send this person?", "src/act.wizard.c:381"},
 
 	// transfer (do_trans). LVL_IMMORT+1 (src/interpreter.c:784).
 	{"Whom do you wish to transfer?", "src/act.wizard.c:318"},
-	// NOPERSON again, via src/act.wizard.c:322.
+	// NOPERSON again, via src/act.wizard.c:321.
 	{"That doesn't make much sense, does it?", "src/act.wizard.c:323"},
 	{"Go transfer someone your own size.", "src/act.wizard.c:326"},
 	{"I think not.", "src/act.wizard.c:343"},
@@ -113,22 +113,22 @@ var setupRefusalLines = []setupRefusal{
 
 	// The OLC editors (oedit/medit/redit/zedit/sedit through do_olc; the
 	// below-level cases print "Huh?!?" at src/interpreter.c:916).
-	{"Save which zone?", "src/olc.c:118"},
-	{"Specify a new zone number.", "src/olc.c:134"},
-	{"Yikes!  Stop that, someone will get hurt!", "src/olc.c:140"},
-	{"Sorry, there is no zone for that number!", "src/olc.c:169"},
-	{"You do not have permission to edit this zone.", "src/olc.c:178"},
+	{"Save which zone?", "src/olc.c:125"},
+	{"Specify a new zone number.", "src/olc.c:138"},
+	{"Yikes!  Stop that, someone will get hurt!", "src/olc.c:143"},
+	{"Sorry, there is no zone for that number!", "src/olc.c:172"},
+	{"You do not have permission to edit this zone.", "src/olc.c:181"},
 
 	// hcontrol (do_hcontrol): the first line of HCONTROL_FORMAT.
-	{"Usage: hcontrol build <house vnum> <exit direction> <player name>", "src/house.c:324 (sent at src/house.c:401)"},
+	{"Usage: hcontrol build <house vnum> <exit direction> <player name>", "src/house.c:324 (HCONTROL_FORMAT first line, sent via src/house.c:401)"},
 
 	// sethunt (do_sethunt).
-	{"Who do you wish to hunt?", "src/act.wizard.c:3452"},
-	{"No-one by that name around.", "src/act.wizard.c:3454"},
-	{"Who shall be the hunter?", "src/act.wizard.c:3456"},
-	{"Yeah right.", "src/act.wizard.c:3458"},
-	{"PCs can't be made to hunt.", "src/act.wizard.c:3460"},
-	{"Cant hunt higher than your level.", "src/act.wizard.c:3463"},
+	{"Who do you wish to hunt?", "src/act.wizard.c:3455"},
+	{"No-one by that name around.", "src/act.wizard.c:3457"},
+	{"Who shall be the hunter?", "src/act.wizard.c:3459"},
+	{"Yeah right.", "src/act.wizard.c:3461"},
+	{"PCs can't be made to hunt.", "src/act.wizard.c:3463"},
+	{"Cant hunt higher than your level.", "src/act.wizard.c:3466"},
 
 	// switch (do_switch).
 	{"You're already switched.", "src/act.wizard.c:1182"},
