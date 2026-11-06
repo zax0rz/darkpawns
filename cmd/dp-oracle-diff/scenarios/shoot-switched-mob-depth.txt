@@ -1,0 +1,92 @@
+# C do_shoot sends the investigation line to `to`, an NPC (src/act.offensive.c:947).
+# Switch a connected descriptor into that mobile so the otherwise-private line
+# is an observable player byte.
+# depth-case: shoot.investigation-line-switched-npc
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 4841 1 8162 48
+spawn-obj 4802 1 8162 48
+spawn-mob 16304 1 8163 163
+replace-room-exits 8162 north 8163 0
+replace-room-exits 8163 none
+set-room-flag 8162 4 off
+set-room-flag 8163 4 off
+
+[setup:oracle]
+Shootgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shootgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Shootwindow
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+get hoopak
+get arrow
+wield hoopak
+
+[setup:port:peer]
+Shootwindow
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+get hoopak
+get arrow
+wield hoopak
+
+[warmup]
+goto 8163
+set mob instructor maxhit 30000
+set mob instructor hit 30000
+set mob instructor dex 0
+set player Shootwindow maxhit 30000
+set player Shootwindow hit 30000
+set player Shootwindow dex 18
+set player Shootwindow level 20
+skillset Shootwindow 'shoot' 100
+switch instructor
+
+[probe]
+send:peer shoot arrow north instructor
