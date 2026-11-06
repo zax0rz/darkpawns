@@ -348,10 +348,7 @@ func cmdLast(s *Session, args []string) error {
 		return nil
 	}
 	if !s.manager.hasDB {
-		if player, targetSession := s.manager.onlinePlayerForLast(target); player != nil {
-			s.Send(formatOnlineLast(player, targetSession))
-			return nil
-		}
+		// No store: no pfiles to load, so C's load_char fails.
 		s.Send("There is no such player.\r\n")
 		return nil
 	}
@@ -360,55 +357,29 @@ func cmdLast(s *Session, args []string) error {
 		s.Send("There is no such player.\r\n")
 		return nil
 	}
-	s.Send(fmt.Sprintf("[%d] [%2d] %-12s : Level %d\r\n", rec.ID, rec.Level, rec.Name, rec.Level))
+	// C do_last prints the saved record (src/act.wizard.c:1847): idnum,
+	// level, class abbreviation, name, the saved host, and ctime of the last
+	// logon. ctime's string ends in \n and outgrows the %-20s field, so the
+	// line ends "<time>\n\r\n".
+	s.Send(fmt.Sprintf("[%5d] [%2d %s] %-12s : %-18s : %-20s\r\n",
+		rec.ID, rec.Level, classAbbrevOr(rec.Class), rec.Name, rec.Host,
+		ctime(rec.LastLogon)))
 	return nil
 }
 
-// onlinePlayerForLast resolves the same named online character that C's
-// do_last vehicle exposes through its saved player row. The no-database
-// runtime has no offline pfiles, but its live sessions still carry the
-// character identity and connection metadata needed for this branch.
-func (m *Manager) onlinePlayerForLast(name string) (*game.Player, *Session) {
-	for _, player := range m.world.GetPlayers() {
-		if !strings.EqualFold(player.GetName(), name) {
-			continue
-		}
-		m.mu.RLock()
-		defer m.mu.RUnlock()
-		for _, session := range m.sessions {
-			if session.player == player {
-				return player, session
-			}
-		}
-		return nil, nil
+// classAbbrevOr is C's class_abbrevs[class] index, with the defensive guard
+// a corrupt class value needs (saved records always index in range).
+func classAbbrevOr(class int) string {
+	if class >= 0 && class < len(game.ClassAbbrevs) {
+		return game.ClassAbbrevs[class]
 	}
-	return nil, nil
+	return "???"
 }
 
-func formatOnlineLast(player *game.Player, session *Session) string {
-	class := "???"
-	if classID := player.GetClass(); classID >= 0 && classID < len(game.ClassAbbrevs) {
-		class = game.ClassAbbrevs[classID]
-	}
-	host := ""
-	lastLogon := time.Now()
-	if session != nil {
-		host = formatLastHost(session.RemoteIP())
-		if !session.connectedAt.IsZero() {
-			lastLogon = session.connectedAt
-		}
-	}
-	return fmt.Sprintf("[%5d] [%2d %s] %-12s : %-18s : %s\r\n",
-		player.GetID(), player.GetLevel(), class, player.GetName(), host,
-		lastLogon.Format("Mon Jan _2 15:04:05 2006"))
-}
-
-// formatLastHost renders a stored last-logon host the way the site column is
-// rendered elsewhere: C's zero-padded dotted quad for an address, anything else
-// (a resolved name, or an already-padded string) unchanged. It shares
-// CConnectionHost with the admission path so there is one padding rule.
-func formatLastHost(ip string) string {
-	return CConnectionHost(ip)
+// ctime renders C's ctime(3) of a unix timestamp: "Www Mmm dd hh:mm:ss yyyy"
+// with a space-padded day and a trailing newline.
+func ctime(unix int64) string {
+	return time.Unix(unix, 0).Format("Mon Jan _2 15:04:05 2006") + "\n"
 }
 
 // wizutilSubcmd represents a wizutil sub-command.

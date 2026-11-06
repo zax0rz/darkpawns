@@ -211,8 +211,8 @@ func TestGameStoreSchemaShape(t *testing.T) {
 			t.Errorf("players.%s is declared %q, want %q", column, got[column], want)
 		}
 	}
-	if len(got) != 38 {
-		t.Errorf("players has %d columns, want 38", len(got))
+	if len(got) != 39 {
+		t.Errorf("players has %d columns, want 39", len(got))
 	}
 
 	// The generated key is an AUTOINCREMENT column, not a bare INTEGER primary

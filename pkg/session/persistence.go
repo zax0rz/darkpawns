@@ -33,6 +33,20 @@ func (s *Session) playerRecordForSave(p *game.Player, loadRoom int) (*db.PlayerR
 	if p.GetFlags()&(1<<uint(game.PlrLoadroom)) == 0 {
 		record.RoomVNum = loadRoom
 	}
+	// C save_char copies ch->desc->host into the record, or writes an empty
+	// host when the character has no descriptor (src/db.c:2373-2381) — a
+	// linkless body's later saves store empty. The session is the descriptor:
+	// the close-path saves run before DetachTransport, so a live transport is
+	// C's live desc, and a detached session is C's descriptorless save. The
+	// host text is d->host itself (src/comm.c:1536, or the resolved name when
+	// a lookup ran and succeeded at src/comm.c:1555-1557; with C's shipped
+	// nameserver_is_slow default no lookup runs).
+	select {
+	case <-s.TransportDone():
+		record.Host = ""
+	default:
+		record.Host = s.MudHost()
+	}
 	return record, nil
 }
 
@@ -77,11 +91,14 @@ func (s *Session) creationRecord(live *game.Player, advanced bool, entering bool
 		p.Conditions[game.CondFull], p.Conditions[game.CondThirst], p.Conditions[game.CondDrunk] = 24, 24, 24
 	}
 	// This is a scalar phase projection of the same save, not a second
-	// char_to_store boundary: retain the live accounting timestamp.
-	olcZone := r.OlcZone
+	// char_to_store boundary: retain the live accounting timestamp and the
+	// descriptor host already copied above (PlayerToRecord rebuilds from
+	// player state, which does not carry the connection host).
+	olcZone, host := r.OlcZone, r.Host
 	r, err = db.PlayerToRecord(p, nil)
 	if err == nil {
 		r.OlcZone = olcZone
+		r.Host = host
 	}
 	return r, err
 }

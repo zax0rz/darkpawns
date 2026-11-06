@@ -1,0 +1,9 @@
+command	Go function	C function	matches C? (yes/no/unchecked)
+last	cmdLast (pkg/session/wiz_system.go)	do_last (src/act.wizard.c:1834-1854)	yes — this PR: prints the saved host with C's format string
+players	cmdPlayers (pkg/session/gen_ps_cmds.go:269)	do_gen_ps SCMD_PLAYER_LIST (src/interpreter.c:606; src/act.informative.c:2181-2195)	yes — this PR: creation order (pfile record order, src/db.c:512-527), not alphabetical
+whois / finger	cmdWhois (pkg/session/cmd_info.go:1250, store branch :1278)	do_whois (src/new_cmds.c:1418)	unchecked — finger-depth and finger-offline-depth run green; host is not part of its output
+set <player> file	cmdSet (pkg/session/wiz_set.go:109; offline record via resolveSetTarget)	do_set file branch (src/act.wizard.c:2654-2665, 2895)	yes — this PR: the descriptorless file save writes an empty host like C (src/db.c:2379-2381); the Go-only web admin editor still preserves the stored value, a flagged deviation
+show player	cmdShow (pkg/session/wiz_info.go:44, store branch :135)	do_show (src/act.wizard.c:2327-2347)	unchecked — show.tsv rows carry their own proofs; host is not in the report
+entry/login/account	session_login.go:173; manager.go:1980-2007; menu.go:338,480	interpreter.c entry (2329-2340 PLR_DELETED)	unchecked — transport/persistence boundary (R5f), not a listing surface
+web admin player editor	pkg/admin/player_editor.go (Go-only)	— (no C counterpart; nearest is set file)	n/a — Go-only surface; the editor is not host-aware and preserves the stored value
+clan listings	pkg/game/clan_*.go — no store reads found	no pfile walk in C clan listing paths	n/a — no saved-player reads
