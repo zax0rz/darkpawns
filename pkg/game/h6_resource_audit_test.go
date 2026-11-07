@@ -190,7 +190,7 @@ func TestConsumeSpellReagentOnce(t *testing.T) {
 		if err := w.MoveObjectToPlayerInventory(reagent, p); err != nil {
 			t.Fatalf("round %d: carry reagent: %v", r, err)
 		}
-		if got := racers(32, func() bool { return p.ConsumeSpellReagent("thing") }); got != 1 {
+		if got := racers(32, func() bool { return p.ConsumeSpellReagentVNum(reagent.VNum) }); got != 1 {
 			t.Fatalf("round %d: one reagent bought %d spells, want 1", r, got)
 		}
 		if n := p.Inventory.GetItemCount(); n != 0 {

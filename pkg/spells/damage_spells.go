@@ -20,46 +20,52 @@ func MagDamage(level int, ch, victim interface{}, spellNum, savetype int, world 
 
 	// Consume reagents for mage damage spells. In C, has_reagents() is a boolean;
 	// the bonus is the full caster level when the reagent is present.
-	hasReag := false
+	reag := 0
 	switch spellNum {
 	case SpellMagicMissile:
-		hasReag = isMage && consumeReagent(ch, SpellMagicMissile, level, "shard of obsidian",
-			"Pulling a shard of obsidian from a pocket, you crush it under your heel...",
-			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
-		if isMage && !hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellMagicMissile, level,
+				"Pulling a shard of obsidian from a pocket, you crush it under your heel...")
+		}
+		if isMage && reag == 0 {
 			sendToCaster(ch, "You attempt the spell without the components..\r\n")
-		} else if hasReag {
+		} else if reag > 0 {
 			sendAffectRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...\r\n", true, world)
 		}
 	case SpellColorSpray:
-		hasReag = isMage && consumeReagent(ch, SpellColorSpray, level, "prism",
-			"Pulling a prism from a pocket, you crush it under your heel...",
-			"$n pulls something out of $s pocket and crushes it beneath $s heel...")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellColorSpray, level,
+				"Pulling a prism from a pocket, you crush it under your heel...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n pulls something out of $s pocket and crushes it beneath $s heel...", true, world)
 		}
 	case SpellFireball:
-		hasReag = isMage && consumeReagent(ch, SpellFireball, level, "pinch of ash",
-			"Pulling a pinch of ash from a pocket, you cast it about the room...",
-			"$n pulls a pinch of ash out of a pocket and casts it about the room.")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellFireball, level,
+				"Pulling a pinch of ash from a pocket, you cast it about the room...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n pulls a pinch of ash out of a pocket and casts it about the room.", true, world)
 		}
 	case SpellDisintegrate:
-		hasReag = isMage && consumeReagent(ch, SpellDisintegrate, level, "eye of a beholder",
-			"Pulling the eye of a beholder from a pocket, you throw it to the ground...",
-			"$n pulls a small orb out of a pocket and dashes it to the ground.")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellDisintegrate, level,
+				"Pulling the eye of a beholder from a pocket, you throw it to the ground...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n pulls a small orb out of a pocket and dashes it to the ground.", true, world)
 		}
 	case SpellSoulLeech, SpellEnergyDrain:
-		hasReag = isMage && consumeReagent(ch, SpellEnergyDrain, level, "vampire dust",
-			"Pulling the vampire dust from a pocket, you throw it into the air...",
-			"$n throws some dust into the air...")
-		if hasReag {
+		if isMage {
+			reag = consumeReagent(ch, SpellEnergyDrain, level,
+				"Pulling the vampire dust from a pocket, you throw it into the air...")
+		}
+		if reag > 0 {
 			sendAffectActRoom(ch, nil, "$n throws some dust into the air...", true, world)
 		}
 	}
+	hasReag := reag > 0
 
 	// Compute base damage dice/flat from the C mag_damage() formula table.
 	num, sides, flat, ok := magDamageFormula(level, getLevel(victim), spellNum, isMage, hasReag)
@@ -278,11 +284,20 @@ func magDamageFormula(level, victimLevel, spellNum int, isMage, hasReagent bool)
 	}
 }
 
-// consumeReagent checks for and removes a reagent from the caster's inventory,
-// returning true if the reagent was found. It sends flavor messages when consumed.
-func consumeReagent(ch interface{}, spellNum, level int, reagentName, casterMsg, roomMsg string) bool {
-	reag := checkReagents(ch, spellNum, level, reagentName, casterMsg, roomMsg)
-	return reag > 0
+func consumeReagent(ch interface{}, spellNum, level int, casterMsg string) int {
+	vnums := map[int]int{
+		SpellMagicMissile: 1239,
+		SpellColorSpray:   1236,
+		SpellFireball:     1225,
+		SpellDisintegrate: 1227,
+		SpellEnergyDrain:  1230,
+	}
+	vnum, ok := vnums[spellNum]
+	if !ok || !consumeSpellReagentVNum(ch, vnum) {
+		return 0
+	}
+	sendToCaster(ch, casterMsg+"\r\n")
+	return level
 }
 
 // woundBroadcaster lets spell damage route wound/position messages through the

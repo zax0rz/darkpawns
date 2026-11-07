@@ -82,11 +82,8 @@ func (m *mockSpellsChar) IsAffected(bit int) bool    { return m.aff&(1<<bit) != 
 func (m *mockSpellsChar) HasMobFlag(bit uint64) bool { return m.flags&bit != 0 }
 func (m *mockSpellsChar) GetMobFlags() uint64        { return m.mobFlags }
 func (m *mockSpellsChar) GetCha() int                { return 18 }
-func (m *mockSpellsChar) GetInventory() ReagentInventory {
-	if m.inventory == nil {
-		return nil
-	}
-	return m.inventory
+func (m *mockSpellsChar) ConsumeSpellReagentVNum(vnum int) bool {
+	return m.inventory != nil && m.inventory.consumeVNum(vnum)
 }
 
 func TestMagAffects_ChillTouch(t *testing.T) {
@@ -681,7 +678,7 @@ func TestMagAffects_Metalskin(t *testing.T) {
 		level: 30,
 		inventory: &mockInventory{
 			items: []*mockItem{
-				{shortDesc: "chunk of iron"},
+				{shortDesc: "chunk of iron", vnum: 1229},
 			},
 		},
 	}
