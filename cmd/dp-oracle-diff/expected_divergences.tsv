@@ -6,7 +6,6 @@ postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excl
 postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	
 postmaster-saved-recipient-depth	mail.tsv	mail.send-store-inert-saved-recipient	excluded	
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.cell-adjustment.matrix-potion-olc	blocked	run-varying
-spellmatrix-potion-olc-03-depth	cast.tsv	spell.divine-intervention.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.gate.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.know-align.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.lay-hands.matrix-potion-olc	blocked	run-varying
@@ -32,7 +31,6 @@ spellmatrix-staff-olc-12-depth	cast.tsv	spell.cell-adjustment.matrix-staff-olc	b
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.change-density.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.dominate.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.psychic-shield.matrix-staff-olc	blocked	run-varying
-spellmatrix-staff-olc-13-depth	cast.tsv	spell.divine-intervention.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-13-depth	cast.tsv	spell.mind-bar.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-13-depth	cast.tsv	spell.mindsight.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-13-depth	cast.tsv	spell.mirror-image.matrix-staff-olc	blocked	run-varying
@@ -47,8 +45,3 @@ spellmatrix-staff-olc-16-depth	cast.tsv	spell.drowning.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.glyph-of-summoning.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.psiblast.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.zen.matrix-staff-olc	blocked	run-varying
-spellmatrix-wand-olc-08-depth	cast.tsv	spell.cell-adjustment.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-08-depth	cast.tsv	spell.divine-intervention.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-08-depth	cast.tsv	spell.mind-bar.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-08-depth	cast.tsv	spell.mindsight.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-08-depth	cast.tsv	spell.mirror-image.matrix-wand-olc	blocked	

@@ -1,0 +1,48 @@
+# depth-case: mobact.alignment-only-no-autoattack
+# C's MOB_AGGR_TO_ALIGN macro ORs bit numbers, so its outer aggression gate
+# tests MOB_MEMORY (bit 11), not any alignment flag (src/mobact.c:52,198-200).
+# World mob 85 has AGGR_EVIL but neither AGGRESSIVE nor MEMORY. Standing beside
+# an evil player therefore produces no autonomous combat in C.
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+spawn-mob 85 1 8162 49
+replace-room-exits 8162 none
+
+[setup:oracle]
+Alignmob
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+set Alignmob alignment -1000
+
+[setup:port]
+Alignmob
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+set Alignmob alignment -1000
+
+[probe]
+~dpclock pulse 20
+look
