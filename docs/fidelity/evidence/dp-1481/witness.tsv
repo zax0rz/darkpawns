@@ -11,3 +11,11 @@ wand-olc-10	spell.calliope.matrix-wand-olc	-- Item number : [8053]	Your a wand o
 staff-olc-06	spell.dispel-magic.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
 staff-olc-14	spell.disintegration.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
 wand-olc-09	spell.lay-hands.matrix-wand-olc	-- Item number : [8053]	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+damage-scroll-group-01	spell.burning-hands.matrix-scroll-targeted	You recite the Book of Common Prayer which dissolves.	You recite the Book of Common Prayer which dissolves.
+damage-scroll-group-02	spell.colour-spray.matrix-scroll-targeted	You recite the Book of Common Prayer which dissolves.	You recite the Book of Common Prayer which dissolves.
+damage-scroll-group-03	spell.disintegrate.matrix-scroll-targeted	You recite the Book of Common Prayer which dissolves.	You recite the Book of Common Prayer which dissolves.
+damage-scroll-group-05	spell.lightning-bolt.matrix-scroll-targeted	You recite the Book of Common Prayer which dissolves.	You recite the Book of Common Prayer which dissolves.
+damage-scroll-group-06	spell.shocking-grasp.matrix-scroll-targeted	You recite the Book of Common Prayer which dissolves.	You recite the Book of Common Prayer which dissolves.
+damage-scroll-group-07	spell.magic-missile.matrix-scroll-targeted	You recite the Book of Common Prayer which dissolves.	You recite the Book of Common Prayer which dissolves.
+potion-olc-02	spell.acid-blast.matrix-potion-olc	You quaff some northern devil ginseng powder.	You quaff some northern devil ginseng powder.
+world-wand-disintegration-live	spell.disintegration.matrix-world-wand	Your a dark, metal ball flares up with a blinding glow that surges toward ItemPeer!	Your a dark, metal ball flares up with a blinding glow that surges toward ItemPeer!
