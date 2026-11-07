@@ -417,7 +417,7 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffectDirect(SpellChameleon, engine.ApplyNone, getLevel(ch), 0, engine.AFFHide, "chameleon")
 		toVictim = "You blend into the surroundings.\r\n"
 	case SpellMetalskin:
-		pending = append(pending, engine.NewAffectDirect(SpellMetalskin, engine.ApplyNone, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"), engine.NewAffect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), "metalskin"))
+		pending = append(pending, engine.NewAffectDirect(SpellMetalskin, engine.ApplyAC, 5, -(15+getLevel(ch)/2+reag), engine.AFFMetalskin, "metalskin"))
 		toVictim = "Your skin turns metallic!\r\n"
 	case SpellInvulnerability:
 		// C magic.c:1316-1328 applies AFF_INVULN to both records; the first

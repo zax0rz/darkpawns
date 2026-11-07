@@ -402,14 +402,8 @@ func (p *Player) AddAffect(aff *engine.Affect) {
 		p.mu.Unlock()
 		p.refreshAttributeCapacity()
 	}()
-	p.clearAffectBitClearLocked(aff)
-	p.ActiveAffects = append(p.ActiveAffects, aff)
-}
 
-func (p *Player) clearAffectBitClearLocked(aff *engine.Affect) {
-	if aff != nil {
-		p.affectBitClear = 0
-	}
+	p.ActiveAffects = append(p.ActiveAffects, aff)
 }
 
 // JoinAffect mirrors C affect_join for spell affects sharing a spell and
@@ -422,7 +416,7 @@ func (p *Player) JoinAffect(aff *engine.Affect, addDuration, addMagnitude bool) 
 		p.mu.Unlock()
 		p.refreshAttributeCapacity()
 	}()
-	p.clearAffectBitClearLocked(aff)
+
 	for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
 		current := p.ActiveAffects[i]
 		if current == nil || current.SpellID != aff.SpellID || current.Location != aff.Location {
