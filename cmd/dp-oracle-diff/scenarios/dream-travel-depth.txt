@@ -1,0 +1,132 @@
+# depth-case: dream.travel-normal
+# An AFF_DREAM sleeper reaches dream_travel(ch, 0) from dream()
+# (src/dream.c:102-105) on the hourly point_update(). Dreamdest waits in the
+# destination room that DP_SEED=1 selects (4805, the foreign city) and sees the
+# fade-in act; Dreamwitness, in the start room (8162), sees the fade-out act;
+# the actor sees "You have a dream %s \r\n" (src/dream.c:196).
+#
+# The repeated dream-travel casts while already asleep are a seed primer: C
+# parses the spell and target before it refuses on position, so each one shifts
+# the shared DP_SEED=1 stream; five of them land the 1-in-16 travel inside the
+# six-hour AFF_DREAM window (src/magic.c:1057). This mirrors why the level-band
+# scenarios pin the witness level.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dreampulse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dreampulse
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dreamwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dreamwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:dest]
+Dreamdest
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:dest]
+Dreamdest
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Dreamwitness 8162
+teleport Dreamdest 4805
+set Dreamwitness level 31
+set Dreamdest level 31
+
+[probe]
+cast 'dream travel'
+sleep
+~dpclock pulse 630
+cast 'dream travel'
+sleep
+cast 'dream travel'
+sleep
+cast 'dream travel'
+sleep
+cast 'dream travel'
+sleep
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
+~dpclock pulse 630
