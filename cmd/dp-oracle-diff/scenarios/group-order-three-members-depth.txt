@@ -1,0 +1,127 @@
+# depth-case: spell.group-invis.matrix-spoken-order-three
+# mag_groups member order (src/magic.c:1466-1501) with three grouped members.
+# The follower list is newest-first (add_follower prepends,
+# src/utils.c:474-475,491-492), then k, then the caster last. Warmup makes
+# room-entry order (GroupFirst is the newest occupant) differ from
+# follower-list order (GroupSecond is the newest follower), so a room walk
+# emits the two followers in the wrong sequence (R3b). The reciter carries
+# detect invisibility so each "$n slowly fades out of existence." room line
+# about a now-invisible member reaches it (act() hideInvisible).
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+GroupLeader
+Y
+leadpass
+leadpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GroupLeader
+y
+leadpass
+leadpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+GroupFirst
+Y
+firstpass
+firstpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+GroupFirst
+y
+firstpass
+firstpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer2]
+GroupSecond
+Y
+secondpass
+secondpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer2]
+GroupSecond
+y
+secondpass
+secondpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport GroupSecond 8105
+teleport GroupFirst 8105
+set player GroupLeader class mage
+set player GroupLeader maxmana 5000
+set player GroupLeader mana 5000
+set player GroupLeader maxhit 1000
+set player GroupLeader hit 1000
+set player GroupFirst maxhit 1000
+set player GroupFirst hit 1000
+set player GroupSecond maxhit 1000
+set player GroupSecond hit 1000
+skillset GroupLeader 'detect invisibility' 100
+skillset GroupLeader 'group invisibility' 100
+force GroupFirst follow GroupLeader
+force GroupSecond follow GroupLeader
+group all
+cast 'detect invisibility'
+set player GroupLeader level 31
+
+[probe]
+cast 'group invisibility'
+~dpclock pulse 20
+send:peer score
+send:peer2 score
+look
