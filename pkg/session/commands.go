@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -919,6 +920,23 @@ func specialScriptText(name string, args []string, rawArgs string) string {
 	return commandInputLine(name, args)
 }
 
+// warnedUnsupportedSpecials logs each spec name's missing NPC lane once per
+// process: the gap must stay visible without flooding the log (DP-1474).
+var (
+	warnedUnsupportedMu   sync.Mutex
+	warnedUnsupportedSpec = map[string]bool{}
+)
+
+func warnUnsupportedSpecialOnce(specName string) {
+	warnedUnsupportedMu.Lock()
+	defer warnedUnsupportedMu.Unlock()
+	if warnedUnsupportedSpec[specName] {
+		return
+	}
+	warnedUnsupportedSpec[specName] = true
+	slog.Warn("special has no NPC lane; a switched body falls through to the command handler", "spec", specName)
+}
+
 // runSpecials mirrors C's special() (src/interpreter.c:1407-1481) for one
 // resolved command and reports whether it consumed the command. name is
 // CMD_NAME — the resolved command name — and arg is the tokenized remainder,
@@ -934,35 +952,75 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 		return false
 	}
 	w := s.manager.world
-	roomVNum := s.player.GetRoomVNum()
+	// C's special() is offered the descriptor's character (src/interpreter.c:
+	// 1407-1481 walks ch = d->character): the switched mobile or player when a
+	// session is switched, never the owning player. Every special below
+	// receives that acting body through CharacterSpecialContext.Actor, and the
+	// walk reads that body's room, worn and carried lists (DP-1474).
+	actorIsNPC := s.isSwitched && s.switchedMob != nil
+	var actorMob *game.MobInstance
+	actorPlayer := s.player
+	if actorIsNPC {
+		actorMob = s.switchedMob
+	} else if s.isSwitched && s.switchedPlayer != nil {
+		actorPlayer = s.switchedPlayer
+	}
+	specialCtx := game.CharacterSpecialContext{PrivateOutput: func(text string) { s.Send(text) }}
+	var roomVNum int
+	var wornList, carriedList []*game.ObjectInstance
+	if actorMob != nil {
+		specialCtx.Actor = actorMob
+		roomVNum = actorMob.GetRoomVNum()
+		wornList = game.COrderedMobWorn(actorMob)
+		carriedList = actorMob.InventorySnapshot()
+	} else {
+		specialCtx.Actor = actorPlayer
+		roomVNum = actorPlayer.GetRoomVNum()
+		wornList = game.COrderedWorn(actorPlayer)
+		carriedList = game.COrderedCarrying(actorPlayer)
+	}
 	arg := strings.Join(args, " ")
 	scriptText := specialScriptText(name, args, rawArgs)
-	// IS_NPC(ch) for the script gates: a switched session acts as its mobile.
-	actorIsNPC := s.isSwitched && s.switchedMob != nil
-	// run_script's ch and me for the object oncmd sites: the player, or the
-	// switched mobile when the session acts through one (C passes the acting
-	// character both times, interpreter.c:1433, 1446, 1473). The legacy
-	// non-bridged Ch is nil for a switched actor, whose ch is the mobile.
+	// run_script's ch and me for the object oncmd sites: the acting player
+	// body, or nil for a switched mobile (C passes the acting character both
+	// times, interpreter.c:1433, 1446, 1473). The legacy non-bridged Ch is nil
+	// for a switched mobile actor, whose ch is the mobile.
 	var actorRef *scripting.CharRef
-	actorPC := s.player
+	actorPC := actorPlayer
 	if actorIsNPC {
-		actorRef = &scripting.CharRef{NPC: true, ID: s.switchedMob.GetID()}
+		actorRef = &scripting.CharRef{NPC: true, ID: actorMob.GetID()}
 		actorPC = nil
 	} else {
-		actorRef = &scripting.CharRef{ID: s.player.ID}
+		actorRef = &scripting.CharRef{ID: actorPlayer.ID}
+	}
+	// C's special() TRUE consumes the command. A player body keeps the legacy
+	// lane's skip semantics (an unassigned handler is not a block). For a
+	// mobile body SpecialUnsupported must not consume either: an unported NPC
+	// lane would otherwise swallow every command of a switched session —
+	// including `return`, trapping the immortal in the body. It is treated as
+	// a decline and logged once per spec name so the gap stays visible; the
+	// census exposes unported NPC lanes as divergences (DP-1474 follow-up).
+	specialConsumes := func(specName string, result game.SpecialResult) bool {
+		if result == game.SpecialHandled {
+			return true
+		}
+		if result == game.SpecialUnsupported && actorIsNPC {
+			warnUnsupportedSpecialOnce(specName)
+		}
+		return false
 	}
 
 	if roomVNum > 0 {
 		// 1. special in room?
-		if roomSpec := game.GetRoomSpec(roomVNum); roomSpec != nil {
-			if roomSpec(w, s.player, nil, name, arg) {
+		if specName, assigned := game.GetRoomSpecName(roomVNum); assigned {
+			if specialConsumes(specName, game.DispatchCharacterSpecial(specName, w, specialCtx, nil, name, arg)) {
 				return true
 			}
 		}
 		// 2. script in room? C interpreter.c:1419-1423 — !IS_NPC(ch), the
 		// room flagged RS_ONCMD; a TRUE return consumes the command.
 		if !actorIsNPC {
-			if handled := w.RunRoomOnCmdScript(s.player, scriptText); handled {
+			if handled := w.RunRoomOnCmdScript(actorPlayer, scriptText); handled {
 				return true
 			}
 		}
@@ -970,9 +1028,9 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 
 	// 3. special in equipment list? C walks WEAR_ 0..NUM_WEARS-1, playing each
 	// worn object's special and then its oncmd script.
-	for _, item := range game.COrderedWorn(s.player) {
-		if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
-			if objSpec(w, s.player, item, name, arg) {
+	for _, item := range wornList {
+		if specName, assigned := game.GetObjSpecName(item.VNum); assigned {
+			if specialConsumes(specName, game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
 				return true
 			}
 		}
@@ -986,12 +1044,12 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 	}
 
 	// 4. special in inventory? ch->carrying order, special then oncmd.
-	for _, item := range game.COrderedCarrying(s.player) {
+	for _, item := range carriedList {
 		if item == nil {
 			continue
 		}
-		if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
-			if objSpec(w, s.player, item, name, arg) {
+		if specName, assigned := game.GetObjSpecName(item.VNum); assigned {
+			if specialConsumes(specName, game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
 				return true
 			}
 		}
@@ -1011,29 +1069,29 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 			if mob == nil || mob.HasMobFlag(game.MobFlagExtract) {
 				continue
 			}
-			mobSpec := game.GetMobSpec(mob.VNum)
+			specName, assigned := game.GetMobSpecName(mob.VNum)
 			// src/shop.c:1232-1243 assign_the_shopkeepers installs the native
 			// shop_keeper special for every keeper loaded from .shp data. The Go
 			// assignment table is static, so recover that C boot-time assignment
 			// from the world's shop index at this dispatch boundary.
-			if mobSpec == nil {
+			if !assigned {
 				if _, isShopKeeper := w.GetShopByKeeper(mob.VNum); isShopKeeper {
-					mobSpec = game.GetSpec("shop_keeper")
+					specName, assigned = "shop_keeper", true
 				}
 			}
-			if mobSpec != nil {
-				if mobSpec(w, s.player, mob, name, arg) {
+			if assigned {
+				if specialConsumes(specName, game.DispatchCharacterSpecial(specName, w, specialCtx, mob, name, arg)) {
 					return true
 				}
 			}
 			// src/shop.c:958-963 sees keeper == ch when a player has switched
 			// into that shopkeeper. Its safety reset runs after any secondary
 			// special declines the command.
-			if actorIsNPC && s.switchedMob == mob {
+			if actorIsNPC && actorMob == mob {
 				w.ResetShopStockSort(mob.GetVNum())
 			}
 			if !actorIsNPC && mob.HasScript("oncmd") {
-				ctx := mob.CreateScriptContext(s.player, nil, scriptText)
+				ctx := mob.CreateScriptContext(actorPlayer, nil, scriptText)
 				handled, err := mob.RunScript("oncmd", ctx)
 				if err != nil {
 					slog.Error("error running oncmd script", "mob_vnum", mob.GetVNum(), "error", err)
@@ -1050,8 +1108,8 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 			if item == nil {
 				continue
 			}
-			if objSpec := game.GetObjSpecForObject(item.VNum); objSpec != nil {
-				if objSpec(w, s.player, item, name, arg) {
+			if specName, assigned := game.GetObjSpecName(item.VNum); assigned {
+				if specialConsumes(specName, game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
 					return true
 				}
 			}

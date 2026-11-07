@@ -1,0 +1,35 @@
+spec	assigned to (room/obj/mob vnums)	C body declines non-matching commands? (yes/no, cite)
+assassin	room:8114	yes (non-matching only; intercepted [hire, list] stay unsupported for an NPC) — SPECIAL(assassin) at src/spec_procs2.c:845
+bank	obj:18224;obj:8034	yes (non-matching only; intercepted [balance, deposit, withdraw] stay unsupported for an NPC) — SPECIAL(bank) at src/spec_procs.c:2345
+beholder	mob:11011	yes (non-matching only; intercepted [cast, recite] stay unsupported for an NPC) — SPECIAL(beholder) at src/new_cmds2.c:328
+clerk	mob:18228	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(clerk) at src/spec_procs3.c:75
+con_seller	mob:21246	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(con_seller) at src/spec_procs3.c:239
+cuchi	mob:18306	yes (non-matching only; intercepted [pat] stay unsupported for an NPC) — SPECIAL(cuchi) at src/spec_procs.c:1034
+dracula	mob:14110;mob:7903	yes (non-matching only; intercepted [look] stay unsupported for an NPC) — SPECIAL(dracula) at src/spec_procs.c:1798
+elements_load_cylinders	room:1360;room:1364;room:1380;room:1384	yes (non-matching only; intercepted [drop, get] stay unsupported for an NPC) — SPECIAL(elements_load_cylinders) at src/spec_procs3.c:1058
+fly_exit_up	room:1389	yes — IS_NPC(ch) in the decline gate makes an NPC decline every command: `if ((GET_LEVEL(ch) > LVL_IMMORT) || IS_NPC(ch) || !CMD_IS("up") || (AFF_FLAGGED(ch, AFF_FLY))) return (FALSE);` src/spec_procs3.c:1289-1290
+guild	mob:21214;mob:21215;mob:21216;mob:21217;mob:4813;mob:4821;mob:4825;mob:8012;mob:8013;mob:8014;mob:8015;mob:8024;mob:8026	yes — `if (IS_NPC(ch) || !CMD_IS("practice")) return 0;` src/spec_procs.c:201-203
+horn	obj:14415	yes (non-matching only; intercepted [use] stay unsupported for an NPC) — SPECIAL(horn) at src/spec_procs.c:2401
+identifier	mob:8087	yes (non-matching only; intercepted [give, list, value] stay unsupported for an NPC) — SPECIAL(identifier) at src/spec_procs2.c:1193
+key_seller	mob:19610	yes — `if (!ch || IS_NPC(ch) || !cmd) return FALSE; if (!CMD_IS("buy") && !CMD_IS("list")) return FALSE;` src/spec_procs2.c:1871-1874
+medusa	mob:14101;mob:14102	yes (non-matching only; intercepted [examine, look] stay unsupported for an NPC) — SPECIAL(medusa) at src/spec_procs2.c:1552
+moon_gate	obj:19604;obj:19605;obj:19606;obj:19607;obj:19608;obj:19609;obj:19610;obj:19611;obj:4001;obj:4002	yes (non-matching only; intercepted [enter, look] stay unsupported for an NPC) — SPECIAL(moon_gate) at src/gate.c:242
+mortician	mob:8095	yes (non-matching only; intercepted [list, retrieve] stay unsupported for an NPC) — SPECIAL(mortician) at src/spec_procs3.c:807
+no_get	mob:14416;mob:14430	yes (non-matching only; intercepted [get, palm, take] stay unsupported for an NPC) — SPECIAL(no_get) at src/new_cmds2.c:552
+oro_quarters_room	room:18397	yes (non-matching only; intercepted [] stay unsupported for an NPC) — SPECIAL(oro_quarters_room) at src/spec_procs.c:2302
+oro_study_room	room:18399	yes (non-matching only; intercepted [] stay unsupported for an NPC) — SPECIAL(oro_study_room) at src/spec_procs.c:2321
+pet_shops	room:21235	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(pet_shops) at src/spec_procs.c:1844
+portal_to_temple	room:19658	yes (non-matching only; intercepted [say] stay unsupported for an NPC) — SPECIAL(portal_to_temple) at src/spec_procs3.c:515
+postmaster	mob:21225;mob:3010	yes — the mob early-out `return (0);` then `if (!(CMD_IS("mail") || CMD_IS("check") || CMD_IS("receive"))) return (0);` src/mail.c:476-480
+pray_for_items	room:8008	yes (non-matching only; intercepted [pray] stay unsupported for an NPC) — SPECIAL(pray_for_items) at src/spec_procs.c:2068
+prostitute	mob:8023	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(prostitute) at src/spec_procs3.c:670
+recharger	mob:8	yes (non-matching only; intercepted [help, list, recharge] stay unsupported for an NPC) — SPECIAL(recharger) at src/new_cmds2.c:415
+recruiter	mob:16300	yes (non-matching only; intercepted [cast, hit, kill, will] stay unsupported for an NPC) — SPECIAL(recruiter) at src/spec_procs3.c:905
+remorter	mob:4	yes — `if (IS_NPC(ch)) return(FALSE);` and `if (!(CMD_IS("remort") || CMD_IS("buy"))) return(FALSE);` src/spec_procs2.c:687-688,697-698
+stableboy	mob:8022	yes (non-matching only; intercepted [buy, collect, list, stable] stay unsupported for an NPC) — SPECIAL(stableboy) at src/spec_procs2.c:315
+suck_in	room:20073	yes (non-matching only; intercepted [look] stay unsupported for an NPC) — SPECIAL(suck_in) at ?
+tattoo1	mob:8086	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(tattoo1) at src/spec_procs2.c:945
+tattoo2	mob:18213	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(tattoo2) at src/spec_procs2.c:1010
+tattoo3	mob:21244	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(tattoo3) at src/spec_procs2.c:1075
+tattoo4	mob:2766	yes (non-matching only; intercepted [buy, list] stay unsupported for an NPC) — SPECIAL(tattoo4) at src/spec_procs2.c:1282
+werewolf	mob:5510	yes (non-matching only; intercepted [] stay unsupported for an NPC) — SPECIAL(werewolf) at src/spec_procs3.c:427

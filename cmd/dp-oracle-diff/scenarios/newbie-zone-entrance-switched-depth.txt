@@ -1,0 +1,45 @@
+# C room special at room 16300 inspects the acting body. A level-20 generic
+# mobile carries the switched descriptor, so its private refusal is visible.
+# C assignment and body: src/spec_assign.c:607; src/spec_procs.c:2262-2274.
+# depth-case: spec.newbie-zone-entrance.switched-body-level
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 16300 2 off
+spawn-mob 5 1 16300 163
+
+[setup:oracle]
+Newbiegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Newbiegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 16300
+switch generic
+
+[probe]
+south

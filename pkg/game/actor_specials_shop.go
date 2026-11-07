@@ -45,8 +45,10 @@ func specShopKeeperActor(w *World, ctx CharacterSpecialContext, me *MobInstance,
 	}
 
 	if cmd == "steal" {
-		// GET_RACE for a mobile is mob_specials.race (src/utils.h:347).
-		if me.Proto() != nil && me.Proto().Race == RaceKender {
+		// GET_RACE(ch) is the acting body's race, not the keeper's
+		// (src/shop.c:973; GET_RACE for a mobile is mob_specials.race,
+		// src/utils.h:347).
+		if specialActorRace(actor) == RaceKender {
 			w.mobShoutGenComm(me, "Stinkin' Kender scum!")
 		}
 		w.npcSocial(me, "slap", actor.GetName())

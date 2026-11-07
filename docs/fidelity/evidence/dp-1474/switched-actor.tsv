@@ -1,0 +1,71 @@
+Go file:line	reads	C file:line	before	after
+pkg/game/actor_specials.go:56	IsNPC	src/interpreter.c:1407-1481	the owning player (s.player) for every special	the acting body (the switched mobile or switched player)
+pkg/game/actor_specials.go:117	IsNPC	src/interpreter.c:1407-1481	the owning player (s.player) for every special	the acting body (the switched mobile or switched player)
+pkg/game/actor_specials.go:197	GetLevel,IsNPC	src/spec_procs2.c:1823	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_guards.go:43	GetLevel,IsNPC	src/interpreter.c:1407-1481	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_guards.go:110	GetLevel,IsNPC	src/spec_procs2.c:2134-2174	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_guards.go:198	GetLevel,IsNPC	src/spec_procs.c:2262	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_guards.go:219	GetLevel,IsNPC	src/spec_procs.c:1763-1778	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_guards.go:268	GetLevel,IsNPC	src/spec_procs.c:569	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_guards.go:317	IsNPC	src/spec_procs2.c:2260	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_guards.go:339	GetLevel,IsNPC	src/spec_procs2.c:2113	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_rooms.go:227	GetName	src/interpreter.c:1407-1481	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_rooms.go:434	GetLevel,GetPosition	src/interpreter.c:1407-1481	unreached when switched (the walk ran the legacy lane with s.player)	the switched body (ctx.Actor)
+pkg/game/actor_specials_shop.go:19	GetName	src/shop.c:942-1002	the owning player (name/race of s.player)	the switched mobile (name a horse, IsNPC true)
+pkg/game/shop_npc.go:38	GetName	src/shop.c:74-140	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/shop_npc.go:161	GetName	src/shop.c:593-631	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/shop_npc.go:229	GetName	src/shop.c:815-841	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/shop_npc.go:285	GetName	src/shop.c:471-590	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/shop_npc.go:386	GetName	src/shop.c:732-812	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs.go:168	GetLevel,IsNPC	src/spec_procs.c:201	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs.go:531	GetLevel,GetName	src/spec_procs.c:569	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs.go:1085	GetName	src/spec_procs.c:1034	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:83	IsNPC	src/interpreter.c:1407-1481	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:105	GetLevel,IsNPC	src/interpreter.c:1407-1481	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:174	GetPosition,IsNPC	src/spec_procs2.c:190	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:310	IsNPC	src/spec_procs2.c:315	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:424	GetPosition	src/spec_procs2.c:464	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:636	GetLevel,IsNPC	src/spec_procs2.c:682	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:684	GetRace	src/spec_procs2.c:728-840	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:942	GetName	src/spec_procs2.c:845	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1142	IsNPC	src/spec_procs2.c:945	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1206	IsNPC	src/spec_procs2.c:1010	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1255	IsNPC	src/spec_procs2.c:1075	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1317	GetLevel	src/spec_procs2.c:1193	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1381	GetName,IsNPC	src/spec_procs2.c:1139	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1424	IsNPC	src/spec_procs2.c:1282	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1457	IsNPC	src/spec_procs2.c:1342	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1484	GetName,IsNPC	src/spec_procs2.c:1391	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1514	GetPosition	src/spec_procs2.c:1405	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1623	GetLevel,GetName,GetPosition	src/spec_procs2.c:1470	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1652	GetLevel,GetName	src/spec_procs2.c:1552	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1761	GetName,IsNPC	src/spec_procs2.c:1648	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1867	GetName,IsNPC	src/spec_procs2.c:1756	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1892	IsNPC	src/spec_procs2.c:1770	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1924	GetLevel,GetName	src/spec_procs2.c:1823-1842	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1943	IsNPC	src/spec_procs2.c:1823	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:1958	IsNPC	src/spec_procs2.c:1870	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:2009	GetName,IsNPC	src/spec_procs2.c:1934	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:2126	IsNPC	src/spec_procs2.c:2033	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:2140	IsNPC	src/spec_procs2.c:2054	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:2178	IsNPC	src/spec_procs2.c:2092	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:2193	GetLevel	src/spec_procs2.c:2113	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs2.go:2219	GetLevel	src/interpreter.c:1407-1481	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:85	GetName,GetRace	src/shop.c:942-1002	the owning player (s.player)	the acting player body; a mobile actor takes specShopKeeperActor
+pkg/game/spec_procs3.go:298	GetLevel	src/spec_procs3.c:316	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:310	GetName,GetPosition	src/spec_procs3.c:75	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:544	GetLevel,GetPosition	src/spec_procs3.c:239	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:951	GetName	src/spec_procs3.c:583	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:969	GetName	src/spec_procs3.c:612	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:1044	GetPosition	src/spec_procs3.c:670	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:1195	GetLevel,GetName	src/spec_procs3.c:807	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:1280	GetName	src/spec_procs3.c:905	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs3.go:1466	GetLevel	src/spec_procs3.c:1289	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs4.go:118	GetLevel,GetName	src/spec_procs.c:1763	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs4.go:143	GetLevel,GetName	src/spec_procs.c:1781	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs4.go:209	GetName	src/spec_procs.c:1844	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs4.go:438	GetName	src/spec_procs.c:2068	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs4.go:549	GetLevel	src/spec_procs.c:2262	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/game/spec_procs_missing.go:268	GetName	src/gate.c:237-325	the owning player (s.player)	the acting player body; a mobile actor takes the actor lane or the NPC decline tables
+pkg/session/commands.go:runSpecials	the body every special receives (name, level, race, IsNPC, position)	src/interpreter.c:1407-1481	the owning player (s.player)	the acting body (s.switchedMob / s.switchedPlayer / s.player), its room, worn and carried lists walked
+pkg/game/actor_specials_rooms.go:specialActorRace	race (GET_RACE(ch))	src/utils.h:347;src/shop.c:973	the keeper prototype race (me.Proto().Race)	the acting body's race (player saved race / mobile race)
