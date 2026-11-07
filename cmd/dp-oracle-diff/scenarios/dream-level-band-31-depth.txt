@@ -1,0 +1,80 @@
+# depth-case: dream.level-31
+# The level 31 branch of dream() (src/dream.c:166-172) reached through
+# limits.c:489-490 point_update.  A sleeping level-31 actor draws the
+# 1-in-16 dream check; under DP_SEED=1 the draw lands on the fourth seeded
+# MUD hour, so the actor line
+#   You have big, grand dreams of the power of the Gods.
+# and the room act
+#   $n glows in $s sleep.
+# are C's own transcript witness (R5j).  The witness is present for the whole
+# four-hour window, below IDLE_TO_VOID (limits.c:419).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dreampulse
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dreampulse
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Dreamwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Dreamwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Dreamwitness 8162
+set Dreamwitness level 31
+set Dreampulse level 31
+
+[probe]
+sleep
+~dpclock pulse 2520

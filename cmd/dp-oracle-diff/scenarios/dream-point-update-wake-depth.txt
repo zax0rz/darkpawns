@@ -1,7 +1,9 @@
 # depth-case: dream.point-update-wake-through-point-update
-# An above-immortal sleeper reaches dream() through limits.c:490 and the
-# default-level Orodreth branch; the seeded successful dream then calls
-# do_wake and compares the actor plus room witness output.
+# An above-immortal sleeper reaches dream() through limits.c:489-490 and the
+# default (level 32+) Orodreth branch (src/dream.c:175-184). Under DP_SEED=1 the
+# 1-in-16 draw lands on the fourth seeded MUD hour, so C's own transcript shows
+# both actor lines, the room act, and the do_wake that follows. The witness is
+# present for the whole four-hour window, below IDLE_TO_VOID (limits.c:419).
 
 [fixture]
 empty-players
@@ -66,10 +68,12 @@ Y
 [warmup]
 goto 8162
 teleport Dreamwitness 8162
+set Dreamwitness level 31
 set Dreampulse level 32
 
 [probe]
 sleep
-# Startup commands can leave the global heartbeat between hourly boundaries;
-# two MUD hours guarantee point_update() runs at least once.
-~dpclock pulse 1260
+# The 1-in-16 dream draw lands on the fourth seeded MUD hour under DP_SEED=1;
+# four MUD hours (SECS_PER_MUD_HOUR 63 * PASSES_PER_SEC 10) fire the default
+# level dream and keep the witness inside IDLE_TO_VOID (limits.c:419).
+~dpclock pulse 2520
