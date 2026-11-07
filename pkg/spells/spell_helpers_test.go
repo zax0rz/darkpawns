@@ -92,9 +92,13 @@ func TestIsNPC(t *testing.T) {
 	}
 }
 
+// C's thresholds are ±350 (src/utils.h:454-455): -349..349 is neutral.
 func TestIsEvil(t *testing.T) {
-	if !isEvil(&alignMock{alignment: -1}) {
-		t.Error("expected alignment -1 to be evil")
+	if isEvil(&alignMock{alignment: -349}) {
+		t.Error("expected alignment -349 to not be evil")
+	}
+	if !isEvil(&alignMock{alignment: -350}) {
+		t.Error("expected alignment -350 to be evil")
 	}
 	if isEvil(&alignMock{alignment: 0}) {
 		t.Error("expected alignment 0 to not be evil")
@@ -105,8 +109,11 @@ func TestIsEvil(t *testing.T) {
 }
 
 func TestIsGood(t *testing.T) {
-	if !isGood(&alignMock{alignment: 1}) {
-		t.Error("expected alignment 1 to be good")
+	if isGood(&alignMock{alignment: 349}) {
+		t.Error("expected alignment 349 to not be good")
+	}
+	if !isGood(&alignMock{alignment: 350}) {
+		t.Error("expected alignment 350 to be good")
 	}
 	if isGood(&alignMock{alignment: 0}) {
 		t.Error("expected alignment 0 to not be good")

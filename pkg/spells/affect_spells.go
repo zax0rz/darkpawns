@@ -2229,14 +2229,14 @@ func castEnchantWeapon(level int, ch, ovict, world interface{}) {
 	newAffects[1] = parser.ObjAffect{Location: 19, Modifier: damroll} // APPLY_DAMROLL
 	obj.SetAffectsOverride(newAffects)
 
-	// Alignment glow
+	// Alignment glow — C: IS_GOOD/IS_EVIL (src/spells.c:644-651, 855-862).
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
 		switch {
-		case a.GetAlignment() > 0:
+		case IsGoodAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 10) // ITEM_ANTI_EVIL
 			sendSpellActToCaster("$p glows blue.", ch, nil, ovict, world)
-		case a.GetAlignment() < 0:
+		case IsEvilAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 9) // ITEM_ANTI_GOOD
 			sendSpellActToCaster("$p glows red.", ch, nil, ovict, world)
 		default:
@@ -2296,14 +2296,14 @@ func castEnchantArmor(level int, ch, ovict, world interface{}) {
 	newAffects[0] = parser.ObjAffect{Location: 17, Modifier: acMod} // APPLY_AC
 	obj.SetAffectsOverride(newAffects)
 
-	// Alignment glow
+	// Alignment glow — C: IS_GOOD/IS_EVIL (src/spells.c:644-651, 855-862).
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
 		switch {
-		case a.GetAlignment() > 0:
+		case IsGoodAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 10) // ITEM_ANTI_EVIL
 			sendSpellActToCaster("$p glows blue.", ch, nil, ovict, world)
-		case a.GetAlignment() < 0:
+		case IsEvilAlign(a.GetAlignment()):
 			obj.SetExtraFlag(0, 9) // ITEM_ANTI_GOOD
 			sendSpellActToCaster("$p glows red.", ch, nil, ovict, world)
 		default:
@@ -3512,8 +3512,8 @@ func castDivineInt(level int, ch, world interface{}) {
 		alignment = a.GetAlignment()
 	}
 
-	good := alignment >= 350
-	evil := alignment <= -350
+	good := IsGoodAlign(alignment)
+	evil := IsEvilAlign(alignment)
 	if !good && !evil {
 		sendToCaster(ch, "Your request for intervention falls on deaf ears.\r\n")
 		return

@@ -1,0 +1,84 @@
+# C-first dispel evil with a caster inside C's neutral alignment band
+# (align -100). IS_EVIL(ch) is GET_ALIGNMENT <= -350 (src/utils.h:455), so
+# the caster is neutral and the spell damages the target instead of taking
+# the self-damage branch (src/magic.c:725-734). A sign-based gate would turn
+# this cast on the caster.
+# depth-case: spell.dispel-evil-align-threshold
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dispelalign
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dispelalign
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Dispelvic
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Dispelvic
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Dispelvic 8105
+set player Dispelalign class cleric
+skillset Dispelalign 'dispel evil' 100
+set player Dispelalign maxmana 5000
+set player Dispelalign mana 5000
+set player Dispelalign align -100
+set player Dispelvic align 0
+set player Dispelvic class mage
+set player Dispelvic level 20
+set player Dispelvic maxhit 1000
+set player Dispelvic hit 1000
+set player Dispelalign level 31
+
+[probe]
+cast 'dispel evil' Dispelvic

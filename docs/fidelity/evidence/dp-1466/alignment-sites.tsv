@@ -1,0 +1,34 @@
+Go file:line	test	C file:line	C macro or test	match
+pkg/spells/damage_spells.go:444	isEvil: GetAlignment() < 0	src/utils.h:455	IS_EVIL: GET_ALIGNMENT <= -350	no
+pkg/spells/damage_spells.go:452	isGood: GetAlignment() > 0	src/utils.h:454	IS_GOOD: GET_ALIGNMENT >= 350	no
+pkg/spells/damage_spells.go:92	isEvil(ch) dispel-evil caster gate	src/magic.c:725	IS_EVIL(ch)	no (via isEvil)
+pkg/spells/damage_spells.go:97	isGood(victim) dispel-evil victim gate	src/magic.c:733	IS_GOOD(victim)	no (via isGood)
+pkg/spells/damage_spells.go:102	isGood(ch) dispel-good caster gate	src/magic.c:742	IS_GOOD(ch)	no (via isGood)
+pkg/spells/damage_spells.go:107	isEvil(victim) dispel-good victim gate	src/magic.c:750	IS_EVIL(victim)	no (via isEvil)
+pkg/spells/affect_spells.go:223	isEvil(victim) sanctuary aura gate	src/magic.c:1187	IS_EVIL(victim)	no (via isEvil)
+pkg/spells/affect_spells.go:362	isEvil(victim) prot-from-evil gate	src/magic.c:1143	IS_EVIL(victim)	no (via isEvil)
+pkg/spells/affect_spells.go:376	isGood(victim) prot-from-good gate	src/magic.c:1163	IS_GOOD(victim)	no (via isGood)
+pkg/spells/affect_spells.go:2302	enchant weapon glow: GetAlignment() > 0	src/spells.c:644	IS_GOOD(ch)	no
+pkg/spells/affect_spells.go:2305	enchant weapon glow: GetAlignment() < 0	src/spells.c:649	IS_EVIL(ch)	no
+pkg/spells/affect_spells.go:2369	enchant armor glow: GetAlignment() > 0	src/spells.c:855	IS_GOOD(ch)	no
+pkg/spells/affect_spells.go:2372	enchant armor glow: GetAlignment() < 0	src/spells.c:860	IS_EVIL(ch)	no
+pkg/spells/affect_spells.go:3578	divine intervention: alignment >= 350	src/spells.c:1189	IS_GOOD(ch)	yes
+pkg/spells/affect_spells.go:3579	divine intervention: alignment <= -350	src/spells.c:1192	IS_EVIL(ch)	yes
+pkg/game/spec_procs.go:789	cityguard: evilTarget.GetAlignment() >= 0	src/spec_procs.c:813	GET_ALIGNMENT(FIGHTING(evil)) >= 0 (raw)	yes
+pkg/game/spec_procs2.go:1401	eviltrade: ch.GetAlignment() > 0	src/spec_procs2.c:1162	GET_ALIGNMENT(ch)>0 (raw)	yes
+pkg/game/spec_procs2.go:1468	specEvilLead: pl.GetAlignment() < 0	(none: C SPECIAL(evillead) is a give/trapdoor body at src/spec_procs2.c:1342-1388 whose GET_ALIGNMENT(ch)>0 test sits at :1362; unassigned in C per spec-procs.tsv mob.evillead-unassigned)	n/a	no C site (R4 candidate, reported not fixed)
+pkg/game/spec_procs2.go:1594	take_to_jail: evilTarget.GetAlignment() >= 0	src/spec_procs2.c:1460	GET_ALIGNMENT(FIGHTING(evil)) >= 0 (raw)	yes
+pkg/scripting/engine.go:549	Lua mob table "evil": alignment < 0	src/scripts.c:1865	IS_EVIL(ch)	no
+pkg/game/player_affects.go:193	Player.IsGood: >= 350	src/utils.h:454	IS_GOOD	yes
+pkg/game/player_affects.go:196	Player.IsEvil: <= -350	src/utils.h:455	IS_EVIL	yes
+pkg/game/mobact.go:100	mobIsEvil: <= -350	src/utils.h:455	IS_EVIL	yes
+pkg/game/mobact.go:107	mobIsGood: >= 350	src/utils.h:454	IS_GOOD	yes
+pkg/game/mobact.go:306-312	aggression vAlign band gates (-350/350)	src/mobact.c:217-222	IS_EVIL / IS_NEUTRAL / IS_GOOD	yes
+pkg/game/look.go:1346-1348	detect-align aura prefix: <= -350 / >= 350	src/act.informative.c:520-522	IS_EVIL / IS_GOOD	yes
+pkg/game/look.go:1395-1398	alignAuraTag: <= -350 / >= 350	src/act.informative.c:603-605	IS_EVIL / IS_GOOD	yes
+pkg/game/look.go:1411-1416	presenceAuras sanctuary black: <= -350	src/act.informative.c:615-619	IS_EVIL(i)	yes
+pkg/game/spec_procs.go:428-431	mage dispel chooser: <= -350 / >= 350	src/spec_procs.c:449-451	IS_EVIL(vict)/IS_GOOD(vict)	yes
+pkg/game/spec_procs.go:525-527	paladinDispelSpell: mobIsEvil	src/spec_procs.c:557	IS_EVIL(ch)	yes
+pkg/game/spec_procs3.go:169-170	cleric self-dispel guard: <= -350 / >= 350	src/spec_procs.c:1465-1466	IS_EVIL/IS_GOOD	yes
+pkg/game/spec_procs3.go:275	cleric dispel chooser: <= -350	src/spec_procs.c:1504	IS_EVIL(ch)	yes
+pkg/game/world_bridge.go:98,133	Lua bridge Evil: <= -350	src/scripts.c:1865	IS_EVIL(ch)	yes
