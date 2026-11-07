@@ -1,0 +1,128 @@
+# depth-case: mob.roach-feed-site-live
+# depth-case: mob.roach-growth-acts-site-live
+# depth-case: mob.roach-split-site-live
+# C-first witness vehicle for the food arm of SPECIAL(roach), assigned to mob
+# vnum 23 at src/spec_assign.c:185 and defined at src/spec_procs3.c:707-805.
+# This vehicle makes the C transcript print the three food-arm output sites the
+# census had never seen (DP-1498): the feed Act (:732), both growth Acts
+# (:756, :758) and the split Act (:747).
+# The room holds one native roach (spawn-mob 23), twelve loaves of bread
+# (obj 8010, cost 3 -> growth +1, never splits) and six bottles of green beer
+# (obj 18721, cost 10000, 100% load -> growth +5000, splits). Fixture order is
+# reset order; obj_to_room prepends, so the loaves are eaten first and the
+# beer last. One object is consumed per 40-pulse mobile tick
+# (src/mobact.c:68-93, PULSE_MOBILE at src/structs.h:633); each setup
+# section's 40 settle pulses eat one more (settle output is not diffed).
+# C path: src/mobact.c:68-93 -> src/spec_procs3.c:707-805; extract_obj is
+# src/handler.c:1000-1030.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 23 1 8105 80
+clear-mob-flag 23 RANDZON
+spawn-obj 18721 99 8105 80
+spawn-obj 18721 99 8105 80
+spawn-obj 18721 99 8105 80
+spawn-obj 18721 99 8105 80
+spawn-obj 18721 99 8105 80
+spawn-obj 18721 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+spawn-obj 8010 99 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+RoachGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+RoachGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+RoachPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+RoachPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport RoachPeer 8105
+
+[probe]
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
