@@ -821,13 +821,15 @@ func (ce *CombatEngine) prepareRoundDefense(fighter, opponent Combatant) {
 		defenseAction = "parry"
 		sendCombatMessage(fighter, "With a dazzling show of swordplay, you move into defensive position...\r\n")
 		// C act() → CAP uppercases the first byte (comm.c:2477). The fighter's
-		// name may be lowercase (e.g. "a guard trainee").
-		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
-		ce.sendDefenseObserverMessage(
+		// name may be lowercase (e.g. "a guard trainee"). The room line is
+		// TO_ROOM, not TO_NOTVICT, so the opponent reads it before its own
+		// TO_VICT line (src/fight.c:1959-1962).
+		ce.sendDefenseRoomMessage(
 			fighter,
 			opponent,
 			capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off %s's every blow!\r\n", fighter.GetName(), opponent.GetName())),
 		)
+		sendCombatMessage(opponent, capitalizeFightMessage(fmt.Sprintf("%s displays a dazzling show of swordplay, fending off your every blow!\r\n", fighter.GetName())))
 	case CheckDodge(fighter, opponent) == DodgeSuccess:
 		defenseAction = "dodge"
 		sendCombatMessage(fighter, "You dodge!\r\n")
@@ -856,6 +858,15 @@ func (ce *CombatEngine) sendDefenseObserverMessage(fighter, opponent Combatant, 
 		// Test and embedding fallback when the game-layer room lookup is absent.
 		ce.BroadcastFunc(fighter.GetRoom(), message, []Combatant{fighter, opponent})
 	}
+}
+
+// sendDefenseRoomMessage is act(..., TO_ROOM) with the opponent as $N: every
+// awake character but the fighter, the opponent included.
+func (ce *CombatEngine) sendDefenseRoomMessage(fighter, opponent Combatant, message string) {
+	if opponent != nil && opponent.GetPosition() > PosSleeping {
+		sendCombatMessage(opponent, message)
+	}
+	ce.sendDefenseObserverMessage(fighter, opponent, message)
 }
 
 func (ce *CombatEngine) setParried(body Combatant, defenseAction string) {

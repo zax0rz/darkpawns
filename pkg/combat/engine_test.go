@@ -1017,7 +1017,10 @@ func TestProcessCombatPair_ParryDefersReductionToOpponentsTurn(t *testing.T) {
 	if got, want := strings.Join(player.messages, ""), "With a dazzling show of swordplay, you move into defensive position...\r\n"; got != want {
 		t.Fatalf("parry actor output = %q, want %q", got, want)
 	}
-	if got, want := strings.Join(mob.messages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off your every blow!\r\n"; got != want {
+	// C sends the TO_ROOM line to the opponent too, before its TO_VICT line
+	// (src/fight.c:1959-1962).
+	if got, want := strings.Join(mob.messages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off orc's every blow!\r\n"+
+		"Parry_warrior displays a dazzling show of swordplay, fending off your every blow!\r\n"; got != want {
 		t.Fatalf("parry victim output = %q, want %q", got, want)
 	}
 	if got, want := strings.Join(observerMessages, ""), "Parry_warrior displays a dazzling show of swordplay, fending off orc's every blow!\r\n"; got != want {
