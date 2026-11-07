@@ -17,18 +17,6 @@ spellmatrix-potion-olc-03-depth	cast.tsv	spell.mirror-image.matrix-potion-olc	bl
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.ray-of-disruption.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.smokescreen.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.word-of-intellect.matrix-potion-olc	blocked	run-varying
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.acid-blast.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.adrenaline-boost.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.greater-perception.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.group-invisibility.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.group-recall.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.invigorate.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.lesser-perception.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.mind-attack.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.mind-blast.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.mind-poke.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.sobriety.matrix-scroll-olc	blocked	
-spellmatrix-scroll-olc-02-depth	cast.tsv	spell.vitality.matrix-scroll-olc	blocked	
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.enchant-armor.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.group-invisibility.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.hellfire.matrix-staff-olc	blocked	run-varying

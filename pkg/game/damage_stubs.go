@@ -172,13 +172,19 @@ func (w *World) ApplySkillDamage(attacker, victim any, dam, attackType int) bool
 // damage()'s HP/position/rescue block (src/fight.c:1484-1535).
 func (w *World) ApplySkillDamageWithMessage(attacker, victim any, dam, attackType int, message func(int)) bool {
 	killer := combatantFromInterface(attacker)
-	combat.EnterDamageFighting(killer, combatantFromInterface(victim))
+	victimC := combatantFromInterface(victim)
+	combat.EnterDamageFighting(killer, victimC)
+	// fight.c:1457-1464: break the victim's following when the attacker is
+	// the master, then fade a hidden attacker — before the modifier block
+	// (:1465 onward). This seam omitted both (DP-1489).
+	combat.BreakFollowerOnDamage(killer, victimC)
+	combat.FadeHiddenAttacker(killer)
 
 	// Route the computed damage through the shared damage() modifier block
 	// (sanctuary, protect evil/good, race-hate, immortal immunity, 3000 cap)
 	// before applying — the same funnel melee and skills use (DP-1025). A hit
 	// reduced to 0 (immortal victim / sanctuary on a tiny hit) deals nothing.
-	if victimC := combatantFromInterface(victim); victimC != nil {
+	if victimC != nil {
 		dam = combat.ApplyDamageModifiers(killer, victimC, dam)
 	}
 	if v := combatantFromInterface(victim); v != nil {

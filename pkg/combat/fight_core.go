@@ -440,8 +440,10 @@ func ApplySurvivingVictimDefaultArm(ch, victim Combatant, dam, newPos int) {
 	}
 }
 
-func fadeHiddenAttacker(ch Combatant) {
-	if !cbHasAffect(ch, AFF_HIDE) {
+// FadeHiddenAttacker is damage()'s inline appear(): a hidden attacker is
+// revealed at the damage point (src/fight.c:1460-1464).
+func FadeHiddenAttacker(ch Combatant) {
+	if ch == nil || !cbHasAffect(ch, AFF_HIDE) {
 		return
 	}
 	if cb := callbacks; cb != nil && cb.RemoveAffectBit != nil {
@@ -450,6 +452,19 @@ func fadeHiddenAttacker(ch Combatant) {
 	cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
 		return capitalizeFightMessage(fmt.Sprintf("%s slowly fades into existence.", persName(ch, to)))
 	}, []Combatant{ch})
+}
+
+// BreakFollowerOnDamage is damage()'s stop_follower call: when the attacker is
+// the victim's own master the relation breaks on every damage() entry, before
+// the hide fade (src/fight.c:1457-1458). The charm branch makes the attacking
+// master's pet denounce him.
+func BreakFollowerOnDamage(ch, victim Combatant) {
+	if ch == nil || victim == nil {
+		return
+	}
+	if cbGetFollowing(victim) == ch {
+		cbStopFollowerOfMaster(victim, ch)
+	}
 }
 
 func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(), gate bool) bool {
@@ -515,13 +530,10 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		}
 	}
 
-	// stop_follower: if victim follows ch, break following (fight.c:1457) —
-	// the charm branch makes the attacking master's pet denounce him.
-	if cbGetFollowing(victim) == ch {
-		cbStopFollowerOfMaster(victim, ch)
-	}
-
-	fadeHiddenAttacker(ch)
+	// fight.c:1457-1464: break the victim's following when the attacker is
+	// the master, then fade a hidden attacker.
+	BreakFollowerOnDamage(ch, victim)
+	FadeHiddenAttacker(ch)
 
 	dam = ApplyDamageModifiers(ch, victim, dam)
 

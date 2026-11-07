@@ -324,6 +324,37 @@ func (w *World) dieFollowerBody(body combat.Combatant) {
 	}
 }
 
+// MasterBody returns the body ch follows (C ch->master), or nil. The
+// interface{} signature lets pkg/spells walk C's follower lists without
+// importing game.
+func (w *World) MasterBody(ch any) any {
+	c, ok := ch.(combat.Combatant)
+	if !ok {
+		return nil
+	}
+	master := w.combatFollowingBody(c)
+	if master == nil {
+		return nil
+	}
+	return master
+}
+
+// FollowersOfBody returns the bodies following leader (C leader->followers) in
+// C's list order: newest first (add_follower prepends,
+// src/utils.c:474-475,491-492).
+func (w *World) FollowersOfBody(leader any) []any {
+	l, ok := leader.(combat.Combatant)
+	if !ok {
+		return nil
+	}
+	followers := w.FollowersOf(asActor(l))
+	out := make([]any, 0, len(followers))
+	for _, f := range followers {
+		out = append(out, f)
+	}
+	return out
+}
+
 // --------------------------------------------------------------------------
 // Mount/rider helpers
 // --------------------------------------------------------------------------
