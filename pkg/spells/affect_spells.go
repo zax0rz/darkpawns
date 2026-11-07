@@ -60,11 +60,15 @@ func magAffectsForCast(level int, ch, victim interface{}, spellNum, savetype int
 			sendAffectActRoom(ch, nil, "$n crushes a small lens under $s heel.", true, world)
 		}
 	case SpellWaterwalk:
-		reag = checkReagents(ch, SpellWaterwalk, getLevel(ch), "frog leg",
-			"A frog leg turns into dust as you mouth the words of the spell...")
+		if consumeSpellReagentVNum(ch, 1228) {
+			reag = 1
+			sendToCaster(ch, "A frog leg turns into dust as you mouth the words of the spell...\r\n")
+		}
 	case SpellMetalskin:
-		reag = checkReagents(ch, SpellMetalskin, getLevel(ch), "chunk of iron",
-			"A small chunk of iron melts in your palm as you cast the spell...", "flat:1")
+		if consumeSpellReagentVNum(ch, 1229) {
+			reag = 1
+			sendToCaster(ch, "A small chunk of iron melts in your palm as you cast the spell...\r\n")
+		}
 		if reag > 0 {
 			sendAffectActRoom(ch, nil, "A small chunk of iron melts in $n's palm as $e cast a spell...", true, world)
 		}
@@ -1616,76 +1620,6 @@ func spellCounterattack(world, victim, ch interface{}) {
 	}); ok {
 		w.ExecuteSpellCounterattack(victim, ch)
 	}
-}
-
-// ReagentItem is the interface a reagent object must satisfy.
-// Extracted from function-local to package scope for testability.
-type ReagentItem interface {
-	GetShortDesc() string
-}
-
-// ReagentInventory is the interface for an inventory that can find and remove reagents.
-type ReagentInventory interface {
-	FindItem(string) (ReagentItem, bool)
-	RemoveItem(ReagentItem) bool
-}
-
-// InventoryHolder is the interface for a caster that has an inventory.
-type InventoryHolder interface {
-	GetInventory() ReagentInventory
-}
-
-func checkReagents(ch interface{}, spellNum, level int, reagents ...string) int {
-	_ = spellNum
-	if len(reagents) == 0 {
-		return 0
-	}
-
-	reagentName := reagents[0]
-
-	// Look for and consume the reagent from the caster's inventory.
-	// Uses interface assertions to avoid circular imports (spells → game).
-	type messageSender interface{ SendMessage(string) }
-
-	var found bool
-	if consumer, ok := ch.(interface{ ConsumeSpellReagent(string) bool }); ok {
-		found = consumer.ConsumeSpellReagent(reagentName)
-	} else if holder, ok := ch.(InventoryHolder); ok {
-		if item, ok := holder.GetInventory().FindItem(reagentName); ok {
-			// Honour the remove's result: FindItem is a snapshot lookup, so
-			// two concurrent casts can both find the same item and only the
-			// one whose atomic remove succeeds has consumed it.
-			found = holder.GetInventory().RemoveItem(item)
-		}
-	}
-
-	if !found {
-		return 0
-	}
-
-	// Send caster message (second arg if provided)
-	if len(reagents) > 1 && reagents[1] != "" {
-		if sender, ok := ch.(messageSender); ok {
-			sender.SendMessage(reagents[1] + "\r\n")
-		}
-	}
-
-	// Damage bonus: scales with level, matching C behavior.
-	// Original C: bonus is approximately level/2 (varies by spell).
-	// metalskin reagent adds flat +1 (C: magic.c:1300 reag is boolean 0/1).
-	bonus := level / 2
-	if bonus < 1 {
-		bonus = 1
-	}
-
-	// Check for flat bonus override ("flat:1" in reagent args)
-	for _, r := range reagents {
-		if r == "flat:1" {
-			return 1
-		}
-	}
-
-	return bonus
 }
 
 func init() {

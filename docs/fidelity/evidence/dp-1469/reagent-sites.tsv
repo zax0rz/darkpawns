@@ -1,0 +1,12 @@
+spell	C file:line	C vnum	C reag value	Go file:line	Go before	Go after
+sleep	src/magic.c:1201	1226	1	pkg/spells/affect_spells.go:75	ConsumeSpellReagentVNum(1226), reag=1	unchanged exact-vnum consumption, reag=1
+fireball	src/magic.c:675	1225	level	pkg/spells/damage_spells.go:45	checkReagents name "pinch of ash", level/2 minimum 1	consumeReagent vnum 1225, reag=level
+disintegrate	src/magic.c:691	1227	level	pkg/spells/damage_spells.go:53	checkReagents name "eye of a beholder", level/2 minimum 1	consumeReagent vnum 1227, reag=level
+energy drain	src/magic.c:775	1230	level	pkg/spells/damage_spells.go:61	checkReagents name "vampire dust", level/2 minimum 1	consumeReagent vnum 1230, reag=level
+curse	src/magic.c:978	1233	1	pkg/spells/affect_spells.go:573	ConsumeSpellReagentVNum(1233), reag=1	unchanged exact-vnum consumption, reag=1
+blindness	src/magic.c:932	1234	1	pkg/spells/affect_spells.go:56	ConsumeSpellReagentVNum(1234), reag=1	unchanged exact-vnum consumption, reag=1
+charm	src/magic.c:472; src/spells.c:407	1231	unused: spell_charm never calls has_reagents	pkg/spells/affect_spells.go:3111	no reagent lookup	unchanged; table entry is TBD and unreachable from charm
+metalskin	src/magic.c:1300	1229	1	pkg/spells/affect_spells.go:67	checkReagents name "chunk of iron", flat:1	ConsumeSpellReagentVNum(1229), reag=1
+waterwalk	src/magic.c:1274	1228	1; duration always 20 at src/magic.c:1279	pkg/spells/affect_spells.go:62	checkReagents name "frog leg", level/2 minimum 1	ConsumeSpellReagentVNum(1228), reag=1; duration remains 20
+color spray	src/magic.c:659	1236	level	pkg/spells/damage_spells.go:37	checkReagents name "prism", level/2 minimum 1	consumeReagent vnum 1236, reag=level
+magic missile	src/magic.c:621	1239	level	pkg/spells/damage_spells.go:27	checkReagents name "shard of obsidian", level/2 minimum 1	consumeReagent vnum 1239, reag=level

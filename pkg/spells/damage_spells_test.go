@@ -156,11 +156,16 @@ func TestMagDamageReagentRoomMessagesMatchC(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			dprng.ResetStream(1)
 			caster := &mockSpellsChar{
-				name:      "Mage",
-				level:     30,
-				class:     0, // CLASS_MAGIC_USER
-				roomVNum:  8162,
-				inventory: &mockInventory{items: []*mockItem{{shortDesc: tc.reagent}}},
+				name:     "Mage",
+				level:    30,
+				class:    0, // CLASS_MAGIC_USER
+				roomVNum: 8162,
+				inventory: &mockInventory{items: []*mockItem{{shortDesc: tc.reagent, vnum: map[int]int{
+					SpellColorSpray:   1236,
+					SpellFireball:     1225,
+					SpellDisintegrate: 1227,
+					SpellEnergyDrain:  1230,
+				}[tc.spell]}}},
 			}
 			victim := &mockSpellsChar{name: "Target", level: 20, roomVNum: 8162}
 			witness := newAffectMale("Witness", 8162)

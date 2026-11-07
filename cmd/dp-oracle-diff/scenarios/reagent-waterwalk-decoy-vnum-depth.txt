@@ -1,0 +1,86 @@
+# depth-case: objmagic.waterwalk-reagent-vnum
+# A non-reagent object with the frog-leg keywords must not satisfy waterwalk:
+# C matches the carried object's vnum (src/magic.c:1274, src/magic.c:546-552).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+
+[setup:oracle]
+ReagentDecoy
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ReagentDecoy
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:builder]
+ReagentBuilder
+Y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:builder]
+ReagentBuilder
+y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport ReagentBuilder 8162
+set player ReagentBuilder level 35
+send:builder oedit 8053
+send:builder 1
+send:builder frog leg decoy
+send:builder q
+send:builder y
+load obj 8053
+give decoy ReagentDecoy
+set ReagentDecoy class m
+set ReagentDecoy maxmana 5000
+set ReagentDecoy mana 5000
+skillset ReagentDecoy 'waterwalk' 100
+set ReagentDecoy level 31
+
+[probe]
+inventory
+cast 'waterwalk' ReagentDecoy
+inventory
