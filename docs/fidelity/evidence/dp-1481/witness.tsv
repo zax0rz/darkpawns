@@ -1,0 +1,13 @@
+scenario	claimed_event	olc_editor_witness	cast_witness_line
+staff-olc-01	spell.burning-hands.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
+staff-olc-02	spell.chill-touch.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
+staff-olc-04	spell.enchant-weapon.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
+staff-olc-05	spell.faerie-fire.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
+staff-olc-11	spell.sanctuary.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
+wand-olc-01	spell.burning-hands.matrix-wand-olc	-- Item number : [8053]	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+wand-olc-03	spell.dispel-evil.matrix-wand-olc	-- Item number : [8053]	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+wand-olc-06	spell.identify.matrix-wand-olc	-- Item number : [8053]	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+wand-olc-10	spell.calliope.matrix-wand-olc	-- Item number : [8053]	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!
+staff-olc-06	spell.dispel-magic.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
+staff-olc-14	spell.disintegration.matrix-staff-olc	-- Item number : [8054]	Your a staff of sleep radiates an ethereal glow that lights the room.
+wand-olc-09	spell.lay-hands.matrix-wand-olc	-- Item number : [8053]	Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!

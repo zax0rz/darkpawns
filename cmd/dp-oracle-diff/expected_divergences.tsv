@@ -79,6 +79,11 @@ spellmatrix-staff-olc-09-depth	cast.tsv	spell.group-invisibility.matrix-staff-ol
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.hellfire.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.identify.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.mind-poke.matrix-staff-olc	blocked	run-varying
+spellmatrix-staff-olc-10-depth	cast.tsv	spell.chameleon.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-10-depth	cast.tsv	spell.globe-of-invulnerability.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-10-depth	cast.tsv	spell.levitate.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-10-depth	cast.tsv	spell.metalskin.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-10-depth	cast.tsv	spell.mind-blast.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.adrenaline-boost.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.cell-adjustment.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.change-density.matrix-staff-olc	blocked	run-varying
@@ -94,39 +99,19 @@ spellmatrix-staff-olc-16-depth	cast.tsv	spell.drowning.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.glyph-of-summoning.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.psiblast.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.zen.matrix-staff-olc	blocked	run-varying
-spellmatrix-wand-olc-01-depth	cast.tsv	spell.burning-hands.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-01-depth	cast.tsv	spell.call-lightning.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-01-depth	cast.tsv	spell.chill-touch.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-01-depth	cast.tsv	spell.color-spray.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-01-depth	cast.tsv	spell.cure-critic.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-03-depth	cast.tsv	spell.detect-poison.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-03-depth	cast.tsv	spell.dispel-evil.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-03-depth	cast.tsv	spell.enchant-weapon.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-03-depth	cast.tsv	spell.flame-arrow.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-03-depth	cast.tsv	spell.locate-object.matrix-wand-object-olc	blocked	
 spellmatrix-wand-olc-04-depth	cast.tsv	spell.animate-dead.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-04-depth	cast.tsv	spell.dispel-good.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-04-depth	cast.tsv	spell.sleep.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-04-depth	cast.tsv	spell.strength.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-04-depth	cast.tsv	spell.summon.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-06-depth	cast.tsv	spell.identify.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-06-depth	cast.tsv	spell.invigorate.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-06-depth	cast.tsv	spell.mind-blast.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-06-depth	cast.tsv	spell.mind-poke.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-06-depth	cast.tsv	spell.vitality.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.acid-blast.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.adrenaline-boost.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.greater-perception.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.lesser-perception.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.mind-attack.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-09-depth	cast.tsv	spell.gate.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-09-depth	cast.tsv	spell.know-align.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-09-depth	cast.tsv	spell.lay-hands.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-09-depth	cast.tsv	spell.mental-lapse.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-09-depth	cast.tsv	spell.ray-of-disruption.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-10-depth	cast.tsv	spell.calliope.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-10-depth	cast.tsv	spell.flame-strike.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-10-depth	cast.tsv	spell.haste.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-10-depth	cast.tsv	spell.psiblast.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-10-depth	cast.tsv	spell.slow.matrix-wand-olc	blocked	
+spellmatrix-wand-olc-08-depth	cast.tsv	spell.cell-adjustment.matrix-wand-olc	blocked	
+spellmatrix-wand-olc-08-depth	cast.tsv	spell.divine-intervention.matrix-wand-olc	blocked	
+spellmatrix-wand-olc-08-depth	cast.tsv	spell.mind-bar.matrix-wand-olc	blocked	
+spellmatrix-wand-olc-08-depth	cast.tsv	spell.mindsight.matrix-wand-olc	blocked	
+spellmatrix-wand-olc-08-depth	cast.tsv	spell.mirror-image.matrix-wand-olc	blocked	
 spellmatrix-world-wand-disintegration-live-depth	cast.tsv	spell.disintegration.matrix-world-wand-live	blocked	
