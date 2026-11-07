@@ -456,7 +456,7 @@ func isNPC(ch interface{}) bool {
 func isEvil(ch interface{}) bool {
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
-		return a.GetAlignment() < 0
+		return IsEvilAlign(a.GetAlignment())
 	}
 	return false
 }
@@ -464,7 +464,7 @@ func isEvil(ch interface{}) bool {
 func isGood(ch interface{}) bool {
 	type aligner interface{ GetAlignment() int }
 	if a, ok := ch.(aligner); ok {
-		return a.GetAlignment() > 0
+		return IsGoodAlign(a.GetAlignment())
 	}
 	return false
 }

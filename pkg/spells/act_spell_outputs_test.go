@@ -516,3 +516,50 @@ func TestCastMentalLapseOutputBranches(t *testing.T) {
 		})
 	}
 }
+
+// TestCastEnchantAlignThresholds pins the enchant glow/flag gates to C's
+// IS_GOOD/IS_EVIL thresholds (src/utils.h:454-455; src/spells.c:644-651,
+// 855-862): a caster at 1..349 or -349..-1 is neutral and gets "glows
+// yellow." with neither anti flag.
+func TestCastEnchantAlignThresholds(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		spell     int
+		objType   int
+		shortDesc string
+		alignment int
+		color     string
+		antiEvil  bool
+		antiGood  bool
+	}{
+		{name: "weapon at 100 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: 100, color: "yellow"},
+		{name: "weapon at 349 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: 349, color: "yellow"},
+		{name: "weapon at 350 glows blue", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: 350, color: "blue", antiEvil: true},
+		{name: "weapon at -100 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: -100, color: "yellow"},
+		{name: "weapon at -349 glows yellow", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: -349, color: "yellow"},
+		{name: "weapon at -350 glows red", spell: SpellEnchantWeapon, objType: 5, shortDesc: "a dagger", alignment: -350, color: "red", antiGood: true},
+		{name: "armor at 100 glows yellow", spell: SpellEnchantArmor, objType: 9, shortDesc: "a breast plate", alignment: 100, color: "yellow"},
+		{name: "armor at 350 glows blue", spell: SpellEnchantArmor, objType: 9, shortDesc: "a breast plate", alignment: 350, color: "blue", antiEvil: true},
+		{name: "armor at -350 glows red", spell: SpellEnchantArmor, objType: 9, shortDesc: "a breast plate", alignment: -350, color: "red", antiGood: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			caster := &alignedSpellProbe{
+				mockSpellsChar: &mockSpellsChar{name: "Enchanter", level: 30},
+				alignment:      tc.alignment,
+			}
+			obj := &enchantOutputObject{identifyOutputObject: identifyOutputObject{typeFlag: tc.objType, short: tc.shortDesc}}
+			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", nil)
+
+			want := tc.shortDesc + " glows " + tc.color + ".\r\n"
+			if got := strings.Join(caster.messages, ""); got != want {
+				t.Fatalf("enchant output = %q, want exact C bytes %q", got, want)
+			}
+			if got := obj.HasExtraFlag(0, 10); got != tc.antiEvil {
+				t.Fatalf("ITEM_ANTI_EVIL = %v, want %v (align %d)", got, tc.antiEvil, tc.alignment)
+			}
+			if got := obj.HasExtraFlag(0, 9); got != tc.antiGood {
+				t.Fatalf("ITEM_ANTI_GOOD = %v, want %v (align %d)", got, tc.antiGood, tc.alignment)
+			}
+		})
+	}
+}
