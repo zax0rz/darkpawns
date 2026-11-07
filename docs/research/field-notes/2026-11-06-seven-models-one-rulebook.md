@@ -10,11 +10,11 @@ Zach ran seven models at once on the port:
 - **Kimi K3.1 Pro** (Kimi Code)
 - **GLM-5.3**
 - **DeepSeek V4.1 Flash** (via Cline)
-- **MiMo V2.6 Pro**
+- **MiMo V2.6 Pro** (Xiaomi)
 - **GPT-6 Luna**
 - **Claude Opus 5.5**: orchestrator, briefs and review
 
-That's six makers. Five of the models were writing code from briefs at the same time. Luna was on a long probe run, and Claude wrote the briefs and checked every PR against `src/` and the census evidence before Zach merged. Every brief carried the same rulebook (R1-R5j), the same gates, and the same "stop and report; Claude reviews" ending.
+That's seven labs: Google, Moonshot, Z.ai (Zhipu), DeepSeek, Xiaomi, OpenAI and Anthropic. Five of the models were writing code from briefs at the same time. Luna was on a long probe run, and Claude wrote the briefs and checked every PR against `src/` and the census evidence before Zach merged. Every brief carried the same rulebook (R1-R5j), the same gates, and the same "stop and report; Claude reviews" ending.
 
 ## What the review caught, by agent
 

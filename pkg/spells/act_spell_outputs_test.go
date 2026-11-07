@@ -199,8 +199,11 @@ func TestCastMirrorImageOutputAndRoomAudience(t *testing.T) {
 	if got, want := strings.Join(caster.messages, ""), "You divide yourself in two!\r\n"; got != want {
 		t.Fatalf("mirror image caster output = %q, want exact C bytes %q", got, want)
 	}
-	if world.vnum != 69 || world.room != caster.roomVNum || world.level != caster.level || world.mob == nil || world.mob.name != caster.name {
-		t.Fatalf("mirror image clone = {vnum:%d room:%d level:%d mob:%+v}, want named clone vnum 69 in caster room", world.vnum, world.room, world.level, world.mob)
+	// C spawns the clone at a literal level 1 — create_mobile(ch, MOB_CLONE,
+	// 1, FALSE) (src/spells.c:1136) — regardless of the cast or caster level
+	// (DP-1458).
+	if world.vnum != 69 || world.room != caster.roomVNum || world.level != 1 || world.mob == nil || world.mob.name != caster.name {
+		t.Fatalf("mirror image clone = {vnum:%d room:%d level:%d mob:%+v}, want named level-1 clone vnum 69 in caster room", world.vnum, world.room, world.level, world.mob)
 	}
 	if world.calls != 1 || world.actor != caster || world.format != "$n divides $mself in two!" || !world.hideInvisible {
 		t.Fatalf("mirror image room act = {calls:%d actor:%v format:%q hideInvisible:%t}, want one C-compatible TO_ROOM act", world.calls, world.actor, world.format, world.hideInvisible)

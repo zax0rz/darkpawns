@@ -1,0 +1,146 @@
+# DP-1468 / DP-1458 audit: which level each spell site reads.
+# C is ground truth, grepped in this session from src/ (R5g). A spell has two
+# levels: the cast level (the `level` parameter; from a wand/staff/scroll/
+# potion it is GET_OBJ_VAL(obj,0), src/spell_parser.c:602,607) and the caster's
+# own level GET_LEVEL(ch). C reads the caster's level in the rows marked
+# GET_LEVEL(ch); the Go port must read the same one.
+# Columns: C file:line | C reads | Go file:line | Go reads | match | fix
+# Go line numbers are from origin/main 205580f7d at audit time.
+#
+# --- src/magic.c: GET_LEVEL(ch) sites ---
+src/magic.c:415	GET_LEVEL(ch) [mag_savingthrow; ch is the entity saving, normally the spell victim]	pkg/spells/call_magic.go:253	GetLevel() of the save-maker	yes	-
+src/magic.c:417	GET_LEVEL(ch) [mag_savingthrow PC class table]	pkg/spells/call_magic.go:253	GetLevel() of the save-maker	yes	-
+src/magic.c:987	GET_LEVEL(ch) [curse af[0].duration = 1+(>>1)]	pkg/spells/affect_spells.go:197	getLevel(ch)	yes	-
+src/magic.c:992	GET_LEVEL(ch) [curse af[1].duration]	pkg/spells/affect_spells.go:197	getLevel(ch) (shared curseDur)	yes	-
+src/magic.c:1065	GET_LEVEL(ch) [water breathe duration]	pkg/spells/affect_spells.go:347	getLevel(ch)	yes	-
+src/magic.c:1076	GET_LEVEL(ch) [invisible/transparency 12+(>>2)]	pkg/spells/affect_spells.go:214	12+getLevel(ch)/4	yes	-
+src/magic.c:1124	GET_LEVEL(ch) [flamestrike duration = (L*.17)]	pkg/spells/affect_spells.go:278	level	NO	yes: read getLevel(ch); C truncates float, Go also clamps dur<1 to 1 (pre-existing, kept; see notes)
+src/magic.c:1134	GET_LEVEL(ch) [fly/levitate duration]	pkg/spells/affect_spells.go:326	getLevel(ch)	yes	-
+src/magic.c:1221	GET_LEVEL(ch) [sleep PC gate < LVL_IMMORT]	pkg/spells/affect_spells.go:98	getLevel(ch) < lvlImmort	yes	-
+src/magic.c:1222	GET_LEVEL(ch) [sleep ±3 level window]	pkg/spells/affect_spells.go:98	absInt(getLevel(victim)-getLevel(ch)) > 3	yes	-
+src/magic.c:1238	GET_LEVEL(ch) [sleep duration 4+(>>2)+reag]	pkg/spells/affect_spells.go:247	4+getLevel(ch)/4+reag	yes	-
+src/magic.c:1253	GET_LEVEL(ch) [strength/adrenaline duration (>>1)+4]	pkg/spells/affect_spells.go:394	(getLevel(ch)>>1)+4	yes	-
+src/magic.c:1268	GET_LEVEL(ch) [sense life duration]	pkg/spells/affect_spells.go:398	getLevel(ch)	yes	-
+src/magic.c:1293	GET_LEVEL(ch) [chameleon duration]	pkg/spells/affect_spells.go:413	getLevel(ch)	yes	-
+src/magic.c:1310	GET_LEVEL(ch) [metalskin modifier -(15+L/2+reag)]	pkg/spells/affect_spells.go:416	-(15+getLevel(ch)/2+reag)	yes	-
+src/magic.c:1333	GET_LEVEL(ch) [psyshield duration L/2]	pkg/spells/affect_spells.go:426	getLevel(ch)/2	yes	-
+src/magic.c:1618	GET_LEVEL(ch) [mag_areas mass dominate -> spell_charm]	pkg/spells/affect_spells.go:1046	ExecuteManualSpell(..., getLevel(ch), ...)	yes	-
+src/magic.c:1620	GET_LEVEL(ch) [mag_areas -> mag_damage(GET_LEVEL(ch),...)]	pkg/spells/affect_spells.go:1052	MagDamage(level, ...)	NO	yes: pass getLevel(ch) to MagDamage
+src/magic.c:1726	GET_LEVEL(ch) [mag_summons animate dead create_mobile L/2]	pkg/spells/affect_spells.go:1124	getLevel(ch)/2	yes	- [Go clamps mobLevel<1 to 1; C does not clamp — pre-existing, noted]
+src/magic.c:1823	GET_LEVEL(ch) [lay hands hit = dice(3, GET_LEVEL(ch))]	pkg/spells/affect_spells.go:805	hitSides: level (cast level)	NO	yes: dice sides from getLevel(ch)
+src/magic.c:1903	GET_LEVEL(ch) [bless object weight <= 5*GET_LEVEL(ch)]	pkg/spells/affect_spells.go:1262-1263	5*getLevel(ch)	yes	-
+#
+# --- src/magic.c: `level` (cast level) sites ---
+src/magic.c:1006	level [know/detect align duration 12+level]	pkg/spells/affect_spells.go:352	12+level	yes	-
+src/magic.c:1016	level [detect invis duration]	pkg/spells/affect_spells.go:336	12+level	yes	-
+src/magic.c:1025	level [detect magic duration]	pkg/spells/affect_spells.go:331	12+level	yes	-
+src/magic.c:1034	level [infravision duration]	pkg/spells/affect_spells.go:340	12+level	yes	-
+src/magic.c:1043	level [haste duration]	pkg/spells/affect_spells.go:307	level	yes	-
+src/magic.c:1050	level [slow duration]	pkg/spells/affect_spells.go:318	level	yes	-
+src/magic.c:1096	level [poison af[0].duration (level/2)-2]	pkg/spells/affect_spells.go:293	(level/2)-2	yes	-
+src/magic.c:1100	level [poison af[1].duration]	pkg/spells/affect_spells.go:293	(level/2)-2 (shared dur)	yes	-
+src/magic.c:1254	level [strength modifier 1+(level>18)+...]	pkg/spells/affect_spells.go:389	1+boolToInt(level>18)	yes	-
+src/magic.c:1340	level [great percept durations level/2+4]	pkg/spells/affect_spells.go:429	level/2+4	yes	-
+src/magic.c:1342	level [great percept durations]	pkg/spells/affect_spells.go:429	level/2+4	yes	-
+src/magic.c:1350	level [less percept durations level/2+4]	pkg/spells/affect_spells.go:433	level/2+4	yes	-
+src/magic.c:1352	level [less percept durations]	pkg/spells/affect_spells.go:433	level/2+4	yes	-
+src/magic.c:1372	level [mind bar duration (level/2)-2]	pkg/spells/affect_spells.go:442	(level/2)-2	yes	-
+src/magic.c:1766	level [cure light dice(2,8)+1+(level>>2)]	pkg/spells/affect_spells.go:790	1+(level>>2)	yes	-
+src/magic.c:1773	level [cure critic dice(5,8)+3+(level>>2)]	pkg/spells/affect_spells.go:792	3+(level>>2)	yes	-
+src/magic.c:1975	level [mag_creations clamps level, then unused]	pkg/spells/affect_spells.go:1159	MagCreations does not use level	yes	-
+src/magic.c:602-811	level [mag_damage damage formulas]	pkg/spells/damage_spells.go	level parameter	yes	- [#2318 territory; audited read-only]
+#
+# --- src/spells.c: GET_LEVEL(ch) sites ---
+src/spells.c:189	GET_LEVEL(ch) [teleport gate < LEVEL_IMMORT]	pkg/spells/affect_spells.go:2926	getLevel(ch) < LVL_IMMORT	yes	-
+src/spells.c:190	GET_LEVEL(ch) [teleport (ch-victim)<3 refusal]	pkg/spells/affect_spells.go:2926	(getLevel(ch)-getLevel(cvict)) < 3	yes	-
+src/spells.c:236	GET_LEVEL(ch) [summon PvP summonable gate]	pkg/spells/affect_spells.go:3367	getLevel(ch) < LVL_IMMORT	yes	-
+src/spells.c:262	GET_LEVEL(ch) [summon outlaw gate]	pkg/spells/affect_spells.go:3395	getLevel(ch) < LVL_IMMORT	yes	-
+src/spells.c:878	GET_LEVEL(ch) [zen heal 2*GET_LEVEL(ch)]	pkg/spells/affect_spells.go:1843	healHP(ch, 2*level)	NO	yes: 2*getLevel(ch)
+src/spells.c:921	GET_LEVEL(ch) [mindsight victim>ch+4 roll]	pkg/spells/affect_spells.go:3791	victLevel > casterLevel+4	yes	-
+src/spells.c:923	GET_LEVEL(ch) [mindsight imm victim gate]	pkg/spells/affect_spells.go:3792	casterLevel <= victLevel	yes	-
+src/spells.c:966	GET_LEVEL(ch) [mental lapse >=30 preamble]	pkg/spells/affect_spells.go:2222	casterLevel >= 30	yes	-
+src/spells.c:1018	GET_LEVEL(ch) [coc timer = L/2+number(-2,1)]	pkg/spells/affect_spells.go:2097	level/2 + Number(-2,1)	NO	yes: getLevel(ch)/2 [Go clamps timer<1 to 1; C does not — pre-existing, noted]
+src/spells.c:1049	GET_LEVEL(ch) [conjure elemental charm duration (L/2)-2]	(none)	Go applies no SPELL_CONJURE_ELEMENTAL charm affect	NO	listed: missing behavior, not a level-read fix; needs its own brief
+src/spells.c:1072	GET_LEVEL(ch) [elemental create_mobile (L/2)+3]	pkg/spells/affect_spells.go:3723	level/2 + 3	NO	yes: getLevel(ch)/2+3
+src/spells.c:1094	GET_LEVEL(ch) [meteor swarm dam = L*6+number(-10,L*3)]	pkg/spells/affect_spells.go:2995	level*6 + Number(-10, level*3)	NO	yes: getLevel(ch) in both terms; draw count unchanged (1 number() draw, bounds move)
+src/spells.c:1136	literal 1 [mirror image create_mobile(ch, MOB_CLONE, 1, FALSE)]	pkg/spells/affect_spells.go:3917	SpawnMobWithLevelI(69, room, level)	NO	yes: literal 1 (DP-1458)
+src/spells.c:1178	GET_LEVEL(ch) [divine int charm duration (L/2)-2]	pkg/spells/affect_spells.go:3634	level/2-2	NO	yes: getLevel(ch)/2-2
+src/spells.c:1212	GET_LEVEL(ch) [angel create_mobile (L/2)]	pkg/spells/affect_spells.go:3627	level/2	NO	yes: getLevel(ch)/2
+#
+# --- src/spells.c: `level` (cast level) sites ---
+src/spells.c:96	level [create water clamp; value unused after]	pkg/spells/affect_spells.go:2383	_ = level	yes	-
+src/spells.c:362	level [locate object j = level>>1]	pkg/spells/affect_spells.go:3883	level>>1	yes	-
+src/spells.c:402	level [locate object empty check j == level>>1]	pkg/spells/affect_spells.go:3885-3887	len(messages)==0	yes	-
+src/spells.c:422	level [charm level < GET_LEVEL(victim) gate]	pkg/spells/affect_spells.go:3230	level < victL.GetLevel()	yes	-
+src/spells.c:639	level [enchant weapon modifier 1+(level>=18)]	pkg/spells/affect_spells.go:2285	level >= 18	yes	-
+src/spells.c:642	level [enchant weapon modifier 1+(level>=20)]	pkg/spells/affect_spells.go:2289	level >= 20	yes	-
+src/spells.c:712	level [hellfire dam dice(12,5)+2*level-10]	pkg/spells/affect_spells.go:3093	dice(12,5)+2*level-10	yes	-
+src/spells.c:853	level [enchant armor -(level-20)/2]	pkg/spells/affect_spells.go:2359	-1*((level-20)/2)	yes	-
+src/spells.c:987	level [calliope missiles MAX(4,number(level/6,level*2))]	pkg/spells/affect_spells.go:1914	max(4, Number(level/6, level*2))	yes	-
+src/spells.c:990	level [calliope -> call_magic(..., level)]	pkg/spells/affect_spells.go:1916	CallMagic(..., level, ...)	yes	-
+src/spells.c:1001	level [control weather +dice(level/3,4)]	pkg/spells/affect_spells.go:2016	dice(level/3, 4)	yes	-
+src/spells.c:1003	level [control weather -dice(level/3,4)]	pkg/spells/affect_spells.go:2020	-dice(level/3, 4)	yes	-
+#
+# --- create_mobile calls in src/ vs their Go spawns, level argument (DP-1458 R5c) ---
+# create_mobile (src/new_cmds2.c:588-618) sets level, exp=0, damroll, NDD/SDD,
+# hitroll, AC and max HP from the level argument.
+src/magic.c:1726	GET_LEVEL(ch)/2 [animate dead zombie]	pkg/spells/affect_spells.go:1124-1128	getLevel(ch)/2	yes(fix n/a)	- [see stat-scaling note below]
+src/spells.c:1071	(GET_LEVEL(ch)/2)+3 [conjure elemental]	pkg/spells/affect_spells.go:3723	level/2+3	NO	yes: getLevel(ch)/2+3
+src/spells.c:1136	literal 1 [mirror image clone]	pkg/spells/affect_spells.go:3917	level	NO	yes: literal 1
+src/spells.c:1212	(GET_LEVEL(ch)/2) [divine int angel]	pkg/spells/affect_spells.go:3627	level/2	NO	yes: getLevel(ch)/2
+src/new_cmds2.c:643-648	literal 25 [black horn object special, x6]	(none)	black_horn special is not ported	NO	listed: unported special, not a level-read fix
+src/new_cmds2.c:739	GET_LEVEL(ch)+3 [serpent kick summon 18221]	pkg/game/skills2.go:486	SpawnMobLevel: ch.GetLevel()+3	yes	-
+src/new_cmds.c:2675	(GET_LEVEL(i->character)/2)+2 [lunar hunter mob 7]	pkg/game/weather.go:625	broadcast only; no mob spawned	NO	listed: unported spawn, not a level-read fix
+#
+# --- Cross-cutting finding: create_mobile stat scaling ---
+# Every C create_mobile call above overrides the prototype's exp/damroll/NDD/
+# SDD/hitroll/AC/maxHP from the level argument (src/new_cmds2.c:588-618). Go's
+# SpawnMobWithLevelI (pkg/game/world.go:1033) only calls SetLevel, so zombie,
+# angel, elemental and clone spawns keep prototype stats.
+# MobInstance.ConfigureCreatedMobile (pkg/game/mob.go:700) ports the formulas
+# but nothing on the live spawn path calls it. Recorded for its own brief;
+# not fixed here because the level argument (this audit's question) is
+# addressed separately and the stat surface needs its own oracle proof.
+#
+# Summary: 10 level-read mismatches fixed (magic.c:1124,1620,1823;
+# spells.c:878,1018,1072,1094,1136,1178,1212). Listed, not fixed:
+# conjure elemental charm affect missing (spells.c:1049); black_horn special
+# unported; lunar hunter spawn unported; create_mobile stat scaling unapplied.
+#
+# --- Census evidence ---
+# Targeted census (all spellmatrix-* scenarios + the two new ones), run on the
+# rebased branch (origin/main 61f6a3312 + this PR):
+#   ~/Archives/darkpawns/oracle-runs/2026-11-06/glm-dp1468-caster-level-r3
+#   verdict NOT_CLEAN: passed=141 expected=8 expected_unstable=6 failed=1 infra=1
+# Row attribution:
+#   - spellmatrix-wand-olc-07: was EXPECTED (pinned, divergence: DP-1468);
+#     now PASS. The five pins were removed, not re-minted; the manifest rows
+#     are promoted to oracle-green. Fixed by mag_areas passing GET_LEVEL(ch)
+#     to mag_damage (src/magic.c:1620).
+#   - spellmatrix-wand-olc-09 / spellmatrix-staff-olc-14: were draw_divergent
+#     at stream 4186 (c=Dice(3,30) vs go=Dice(3,20), lay hands wand/staff);
+#     now fully clean, draw-parity MATCH (standalone reruns on top of #2318).
+#   - spellmatrix-wand-olc-08: FAIL on main (61f6a3312), FAIL here with the
+#     identical fingerprints; pins re-minted to the current shape, row now
+#     EXPECTED. Remaining shape belongs to DP-1458's create_mobile surface
+#     (desc/name copies, stat overrides) and the DP-1461 message gating.
+#   - spellmatrix-wand-mirror-image-depth (new): EXPECTED, pinned under
+#     DP-1458 (sibling rows' convention; divide-message gating shared with
+#     DP-1461). stat clone shows Lev [1] in both engines after the fix;
+#     revert-red: Go showed Lev [20].
+#   - spellmatrix-wand-flamestrike-depth (new): the one FAIL. Its SPL duration
+#     row ((6hr) flame strike, GET_LEVEL(30)*.17+1) matches after the fix
+#     (revert-red: Go showed (4hr)); the sole remaining divergence is the
+#     wizard-stat AFF line — C sprintbitarray prints every affected_bits
+#     entry (src/act.wizard.c:966-968) while Go prints only set bits. That
+#     gap is newly exposed by this scenario (no prior census block stats an
+#     affected character), pre-dates DP-1468, and has no filed issue; left
+#     unpinned for Zach to file (see Decisions in the PR).
+#   - spellmatrix-staff-olc-13: INFRA, pre-existing (INFRA on the
+#     cline-dp1481b-cluster baseline at main 3298d1de9 too); mirror-image
+#     staff route, same message-gating family.
+#   - 6 EXPECTED_UNSTABLE rows: pre-existing flaky pins, unchanged.
+# Meteor swarm draw parity (R3): meteor-swarm-message-miss-depth and
+# meteor-swarm-message-miss-attacker-depth are clean with draw-parity MATCH
+# (4126/4128 entries); the item-cast bounds move is proven by the seeded
+# replay unit test (one number() draw before and after the fix).

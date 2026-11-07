@@ -1,0 +1,7 @@
+scenario	claimed_event	c_witness_line	seeds
+spellmatrix-damage-scroll-group-04-depth	spell.magic-missile.matrix-scroll-targeted	recite book ItemPeer -> "That really did HURT!"	1
+spellmatrix-damage-scroll-group-04-depth	spell.shocking-grasp.matrix-scroll-targeted	recite book ItemPeer -> "That really did HURT!"	1
+spellmatrix-damage-scroll-group-04-depth	spell.dispel-good.matrix-scroll-targeted	recite book ItemPeer -> "That really did HURT!"	1
+spellmatrix-staff-olc-07-depth	spell.animate-dead.matrix-staff-olc	-- Item number : [8054]; Your a staff of sleep radiates an ethereal glow that lights the room.	1
+spellmatrix-wand-olc-04-depth	spell.animate-dead.matrix-wand-olc	-- Item number : [8053]; Your a wand of invisibility flares up with a blinding glow that surges toward ItemPeer!	1
+spellmatrix-damage-potion-group-04-depth	spell.damage-potion-group-04	You quaff some northern devil ginseng powder.	1
