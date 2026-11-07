@@ -1044,12 +1044,9 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 	// C damage() breaks the victim's following when the attacker IS the
 	// master (fight.c:1457-1458): stop_follower's charm branch announces
 	// "$n hates your guts!" to the master BEFORE the swing's message, on
-	// both the miss (damage 0) and hit paths.
-	if cbGetFollowing(defender) == attacker {
-		cbStopFollowerOfMaster(defender, attacker)
-	}
-
-	fadeHiddenAttacker(attacker)
+	// both the miss (damage 0) and hit paths. Then the hide fade (:1460-1464).
+	BreakFollowerOnDamage(attacker, defender)
+	FadeHiddenAttacker(attacker)
 
 	if !hit {
 		standVictim()
