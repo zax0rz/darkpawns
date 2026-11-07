@@ -6,7 +6,9 @@
 # follower-list order (GroupSecond is the newest follower), so a room walk
 # emits the two followers in the wrong sequence (R3b). The reciter carries
 # detect invisibility so each "$n slowly fades out of existence." room line
-# about a now-invisible member reaches it (act() hideInvisible).
+# about a now-invisible member reaches it (act() hideInvisible). The warmup
+# ends on a cast, so it closes with a dpclock pulse to burn the casting lag
+# before the probe (same shape as spellmatrix-scroll-olc-02-depth).
 
 [fixture]
 empty-players
@@ -118,6 +120,7 @@ force GroupSecond follow GroupLeader
 group all
 cast 'detect invisibility'
 set player GroupLeader level 31
+~dpclock pulse 20
 
 [probe]
 cast 'group invisibility'
