@@ -18,10 +18,10 @@ import (
 	"log/slog"
 	"os"
 	"runtime/debug"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/mudlog"
 )
 
@@ -232,35 +232,6 @@ func LogDeathTrap(playerName string, roomVNum int, roomName string) {
 // Sprintbit — bitvector to string
 // ---------------------------------------------------------------------------
 
-func sprintnbitWithOffset(bitvector uint64, names []string, bitOffset int) string {
-	var b strings.Builder
-
-	// In C: for (nr = 0; bitvector; bitvector >>= 1, nr++) { if (IS_SET(bitvector,1)) ... }
-	nr := bitOffset
-	for bv := bitvector; bv != 0; bv >>= 1 {
-		if bv&1 != 0 {
-			if nr < len(names) && names[nr] != "" {
-				b.WriteString(names[nr])
-				b.WriteByte(' ')
-			} else {
-				b.WriteString("UNDEFINED ")
-			}
-		}
-		if nr < len(names) && names[nr] != "" {
-			nr++
-		}
-	}
-
-	if b.Len() == 0 {
-		return "NOBITS "
-	}
-	return b.String()
-}
-
-// ---------------------------------------------------------------------------
-// Sprinttype — integer to named type
-// ---------------------------------------------------------------------------
-
 // ---------------------------------------------------------------------------
 // SprintbitArray — multi-word bitvector to string
 // ---------------------------------------------------------------------------
@@ -273,27 +244,7 @@ func sprintnbitWithOffset(bitvector uint64, names []string, bitOffset int) strin
 // index into names, offset by i*32 for each word).
 // names is the full list indexed by absolute bit position (0..maxar*32-1).
 func SprintbitArray(bitvector []uint32, names []string, maxar int) string {
-	var b strings.Builder
-
-	for i := 0; i < maxar; i++ {
-		// Each word of the bitvector maps to names[i*32 .. i*32+31]
-		base := i * 32
-		tmp := sprintnbit(uint64(bitvector[i]), names, base)
-		if tmp != "NOBITS " {
-			b.WriteString(tmp)
-		}
-	}
-
-	if b.Len() == 0 {
-		return "NOBITS "
-	}
-	return b.String()
-}
-
-// sprintnbit is a helper that processes one 32-bit word of sprintbitarray.
-// It mirrors the C sprintnbit() defined in utils.c for one word.
-func sprintnbit(bitvector uint64, names []string, bitOffset int) string {
-	return sprintnbitWithOffset(bitvector, names, bitOffset)
+	return common.SprintbitArray(bitvector, names, maxar)
 }
 
 // ---------------------------------------------------------------------------
