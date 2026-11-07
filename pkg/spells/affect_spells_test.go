@@ -686,17 +686,13 @@ func TestMagAffects_Metalskin(t *testing.T) {
 
 	MagAffects(30, ch, victim, SpellMetalskin, int(SaveSpell), nil)
 
-	// Metalskin applies two affects: AFF_METALSKIN flag and AC modifier.
-	if len(victim.activeAffects) != 2 {
-		t.Fatalf("expected 2 affects for Metalskin, got %d", len(victim.activeAffects))
+	// src/magic.c:1299-1313: one record carries both AC and AFF_METALSKIN.
+	if len(victim.activeAffects) != 1 {
+		t.Fatalf("expected 1 affect for Metalskin, got %d", len(victim.activeAffects))
 	}
-	aff1 := victim.activeAffects[0]
-	if aff1.SpellID != SpellMetalskin || aff1.Flags != engine.AFFMetalskin {
-		t.Errorf("unexpected metalskin flag affect: %+v", aff1)
-	}
-	aff2 := victim.activeAffects[1]
-	if aff2.SpellID != SpellMetalskin || aff2.Location != engine.ApplyAC {
-		t.Errorf("unexpected metalskin AC affect: %+v", aff2)
+	aff := victim.activeAffects[0]
+	if aff.SpellID != SpellMetalskin || aff.Location != engine.ApplyAC || aff.Duration != 5 || aff.Magnitude != -(15+30/2+1) || aff.Flags != engine.AFFMetalskin {
+		t.Errorf("unexpected metalskin affect: %+v", aff)
 	}
 }
 

@@ -302,10 +302,11 @@ func ChangeAlignment(killer, victim Combatant) {
 func DeathCry(ch Combatant) string {
 	var rooms []string
 	roomVNum := ch.GetRoom()
-	msg := fmt.Sprintf("Your blood freezes as you hear %s's death cry.", ch.GetName())
 	// death_cry() uses TO_ROOM: the dead character does not hear the room
 	// broadcast (fight.c:558-577).
-	cbBroadcast(roomVNum, msg, []Combatant{ch})
+	cbBroadcastPerReceiver(roomVNum, func(to Combatant) string {
+		return fmt.Sprintf("Your blood freezes as you hear %s's death cry.", persName(ch, to))
+	}, []Combatant{ch})
 	rooms = append(rooms, fmt.Sprintf("%d", roomVNum))
 	for door := 0; door < NUM_OF_DIRS; door++ {
 		adjRoom := cbGetAdjacentRoom(roomVNum, door)
@@ -416,9 +417,9 @@ func ApplySurvivingVictimDefaultArm(ch, victim Combatant, dam, newPos int) {
 	if dam > victim.GetMaxHP()/4 {
 		sendCombatMessage(victim, "That really did HURT!\r\n")
 		if GetRoller().Number(0, 2) == 0 {
-			cbBroadcast(roomVNum,
-				capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", victim.GetName())),
-				[]Combatant{ch, victim})
+			cbBroadcastPerReceiver(roomVNum, func(to Combatant) string {
+				return capitalizeFightMessage(fmt.Sprintf("%s screams in pain!", persName(victim, to)))
+			}, []Combatant{ch, victim})
 		}
 	}
 	if victim.GetHP() < victim.GetMaxHP()/4 {
@@ -437,6 +438,18 @@ func ApplySurvivingVictimDefaultArm(ch, victim Combatant, dam, newPos int) {
 			cbDoFlee(victim)
 		}
 	}
+}
+
+func fadeHiddenAttacker(ch Combatant) {
+	if !cbHasAffect(ch, AFF_HIDE) {
+		return
+	}
+	if cb := callbacks; cb != nil && cb.RemoveAffectBit != nil {
+		cb.RemoveAffectBit(ch, AFF_HIDE)
+	}
+	cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+		return capitalizeFightMessage(fmt.Sprintf("%s slowly fades into existence.", persName(ch, to)))
+	}, []Combatant{ch})
 }
 
 func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(), gate bool) bool {
@@ -458,9 +471,10 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 			hasVampire := cbHasAffectStr(victim, AFF_STR_VAMPIRE)
 			hasWerewolf := cbHasAffectStr(victim, AFF_STR_WEREWOLF)
 			if !hasVampire && !hasWerewolf {
-				cbBroadcast(ch.GetRoom(),
-					fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
-						chName, victimName, victimName), nil)
+				cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+					return fmt.Sprintf("%s grabs %s by the collar, and quickly beats %s into submission.",
+						persName(ch, to), persName(victim, to), persName(victim, to))
+				}, nil)
 				victim.StopFighting()
 				return false
 			}
@@ -507,12 +521,7 @@ func takeDamageFrom(ch, victim Combatant, dam int, attackType int, onDeath func(
 		cbStopFollowerOfMaster(victim, ch)
 	}
 
-	// AFF_HIDE: attacker becomes visible on offensive action (fight.c:1459)
-	if cbHasAffect(ch, AFF_HIDE) {
-		cbRemoveAffect(ch, AFF_HIDE)
-		cbBroadcast(ch.GetRoom(),
-			fmt.Sprintf("%s slowly fades into existence.", chName), []Combatant{ch})
-	}
+	fadeHiddenAttacker(ch)
 
 	dam = ApplyDamageModifiers(ch, victim, dam)
 
@@ -651,20 +660,25 @@ func emitDamagePositionMessage(ch, victim Combatant, dam, newPos int, victimName
 	switch newPos {
 	case PosMortally:
 		sendCombatMessage(victim, "You are mortally wounded, and will die soon, if not aided.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is mortally wounded, and will die soon, if not aided.", persName(victim, to)))
+		}, []Combatant{victim})
 	case PosIncap:
 		sendCombatMessage(victim, "You are incapacitated an will slowly die, if not aided.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is incapacitated and will slowly die, if not aided.", persName(victim, to)))
+		}, []Combatant{victim})
 	case PosStunned:
 		sendCombatMessage(victim, "You're stunned, but will probably regain consciousness again.\r\n")
-		cbBroadcast(ch.GetRoom(),
-			capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(ch.GetRoom(), func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is stunned, but will probably regain consciousness again.", persName(victim, to)))
+		}, []Combatant{victim})
 	case PosDead:
 		sendCombatMessage(victim, "You are dead!  Sorry...\r\n")
 		// act(..., TO_ROOM) excludes the victim (fight.c:1582).
-		cbBroadcast(roomVNum, capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", victimName)), []Combatant{victim})
+		cbBroadcastPerReceiver(roomVNum, func(to Combatant) string {
+			return capitalizeFightMessage(fmt.Sprintf("%s is dead!  R.I.P.", persName(victim, to)))
+		}, []Combatant{victim})
 	default:
 		ApplySurvivingVictimDefaultArm(ch, victim, dam, newPos)
 	}

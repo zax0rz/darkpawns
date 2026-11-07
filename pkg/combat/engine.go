@@ -1049,6 +1049,8 @@ func (ce *CombatEngine) performOneHit(pair *CombatPair) bool {
 		cbStopFollowerOfMaster(defender, attacker)
 	}
 
+	fadeHiddenAttacker(attacker)
+
 	if !hit {
 		standVictim()
 		if DamageBeforeMessage(attacker, defender, 0, callbacks) {

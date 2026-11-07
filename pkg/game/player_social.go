@@ -280,6 +280,9 @@ func (p *Player) isAffectedLocked(affBit int) bool {
 	if affBit < 0 || affBit >= 64 {
 		return false
 	}
+	if p.affectBitClear&(1<<uint(affBit)) != 0 {
+		return false
+	}
 	if p.effectiveAffectBitsLocked()&(1<<uint(affBit)) != 0 {
 		return true
 	}
@@ -302,6 +305,7 @@ func (p *Player) SetAffect(affBit int, val bool) {
 	}
 	if val {
 		p.Affects |= 1 << uint(affBit)
+		p.affectBitClear &^= 1 << uint(affBit)
 	} else {
 		p.Affects &^= 1 << uint(affBit)
 	}

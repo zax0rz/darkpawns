@@ -393,8 +393,7 @@ func TestMagAffectsApply_GoldenAgainstCSource(t *testing.T) {
 		magAffectsApply(20, ch, v, SpellMetalskin, false, 0, nil)
 		wantMag := -(15 + 20/2)
 		expectAffects(t, "metalskin", v, []affectExpectation{
-			{SpellMetalskin, engine.ApplyNone, 5, wantMag, engine.AFFMetalskin},
-			{SpellMetalskin, engine.ApplyAC, 5, wantMag, engine.AFFNone},
+			{SpellMetalskin, engine.ApplyAC, 5, wantMag, engine.AFFMetalskin},
 		})
 	})
 
