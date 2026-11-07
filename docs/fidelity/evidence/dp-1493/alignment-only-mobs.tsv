@@ -1,0 +1,24 @@
+vnum	short_description	action_mask	aggressive	memory	source_file
+85	a Dominion Angel	20745	false	false	0.mob
+86	a Dominion Angel	21001	false	false	0.mob
+12850	Indiana Jones	329	false	false	128.mob
+13333	the monk	25370	false	false	132.mob
+13342	a merman	25370	false	false	132.mob
+13344	the Priestess of Fire	25370	false	false	132.mob
+13351	the Earth Serpent	25370	false	false	132.mob
+14105	a ghost	41544	false	false	141.mob
+16010	a pegasus	2335000	false	false	160.mob
+18000	a Magical Sword	69896	false	false	180.mob
+18075	St. Patrick	266	false	false	180.mob
+19101	Skullgrin	172570	false	false	191.mob
+19117	a dark parrot	82572	false	false	191.mob
+19407	a fire falcon	123144	false	false	194.mob
+20002	the knight of the forgotten clan	246027	false	false	200.mob
+20003	the powerful sorcerer	229643	false	false	200.mob
+20005	the holy old man	90379	false	false	200.mob
+4305	Hagatha "Big Ox" O'Hooligan	1098	false	false	43.mob
+4313	Bahamut the Platinum Dragon of Heaven	10572042	false	false	43.mob
+4316	Scar the enforcer	266824	false	false	43.mob
+4703	an animated snowman	173064	false	false	47.mob
+9121	a nymph	328	false	false	91.mob
+9902	the mist	229898	false	false	99.mob
