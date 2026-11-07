@@ -8,8 +8,9 @@
 empty-players
 quiet-mobs
 no-settle
+add-obj-index 162.obj
 set-room-flag 8162 4 off
-spawn-obj 16250 99 8162 162
+spawn-obj 16250 99 8162 80
 force-load 16250
 
 [setup:oracle]
@@ -101,7 +102,7 @@ goto 8162
 teleport ItemPeer 8162
 teleport ItemView 8162
 set player ItemMage class mage
-set player ItemMage align 1000
+set player ItemMage align -1000
 set player ItemPeer level 30
 set player ItemPeer maxhit 5000
 set player ItemPeer hit 5000

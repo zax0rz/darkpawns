@@ -114,7 +114,7 @@ set player ItemMage maxhit 5000
 set player ItemMage hit 200
 set player ItemMage level 30
 get winterwand
-wear winterwand
+hold winterwand
 
 
 [probe]

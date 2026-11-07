@@ -152,9 +152,10 @@ set player ItemView align -1000
 set player ItemView maxhit 100000
 set player ItemView hit 100000
 force ItemPeer follow ItemMage
-group ItemPeer
+group all
 
 set player ItemBuilder level 35
+send:builder holylight
 send:builder oedit 4404
 send:builder D
 send:builder 20
@@ -164,17 +165,21 @@ send:builder 57
 send:builder q
 send:builder y
 load obj 4404
+skillset ItemMage 'detect invisibility' 100
+cast 'detect invisibility'
 set player ItemMage level 30
+~dpclock pulse 20
 
 
 [probe]
-get book
 recite book ItemPeer
 ~dpclock pulse 20
 score
 send:peer score
 send:observer score
 look
+send:builder teleport ItemMage 8162
+send:builder teleport ItemPeer 8162
 send:builder oedit 4404
 send:builder D
 send:builder 20
@@ -183,7 +188,8 @@ send:builder 62
 send:builder 67
 send:builder q
 send:builder y
-load obj 4404
+send:builder load obj 4404
+send:builder drop book
 get book
 recite book ItemPeer
 ~dpclock pulse 20
@@ -199,7 +205,8 @@ send:builder 69
 send:builder 70
 send:builder q
 send:builder y
-load obj 4404
+send:builder load obj 4404
+send:builder drop book
 get book
 recite book ItemPeer
 ~dpclock pulse 20
@@ -215,7 +222,8 @@ send:builder 72
 send:builder 75
 send:builder q
 send:builder y
-load obj 4404
+send:builder load obj 4404
+send:builder drop book
 get book
 recite book ItemPeer
 ~dpclock pulse 20

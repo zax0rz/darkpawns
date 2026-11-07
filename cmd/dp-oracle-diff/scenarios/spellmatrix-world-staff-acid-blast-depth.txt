@@ -110,7 +110,7 @@ set player ItemView hit 5000
 set player ItemView align -1000
 set player ItemMage level 30
 get claw
-wear claw
+hold claw
 
 
 [probe]

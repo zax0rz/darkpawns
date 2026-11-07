@@ -111,7 +111,7 @@ set player ItemView align -1000
 set player ItemPeer align -1000
 set player ItemMage level 30
 get bamboo
-wear bamboo
+hold bamboo
 
 
 [probe]

@@ -17,6 +17,18 @@ spellmatrix-potion-olc-03-depth	cast.tsv	spell.mirror-image.matrix-potion-olc	bl
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.ray-of-disruption.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.smokescreen.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.word-of-intellect.matrix-potion-olc	blocked	run-varying
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.acid-blast.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.adrenaline-boost.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.greater-perception.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.group-invisibility.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.group-recall.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.invigorate.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.lesser-perception.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.mind-attack.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.mind-blast.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.mind-poke.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.sobriety.matrix-scroll-olc	blocked	
+spellmatrix-scroll-olc-02-depth	cast.tsv	spell.vitality.matrix-scroll-olc	blocked	
 spellmatrix-scroll-olc-03-depth	cast.tsv	spell.cell-adjustment.matrix-scroll-olc	blocked	
 spellmatrix-scroll-olc-03-depth	cast.tsv	spell.disintegration.matrix-scroll-olc	blocked	
 spellmatrix-scroll-olc-03-depth	cast.tsv	spell.divine-intervention.matrix-scroll-olc	blocked	
@@ -61,3 +73,4 @@ spellmatrix-wand-olc-08-depth	cast.tsv	spell.divine-intervention.matrix-wand-olc
 spellmatrix-wand-olc-08-depth	cast.tsv	spell.mind-bar.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-08-depth	cast.tsv	spell.mindsight.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-08-depth	cast.tsv	spell.mirror-image.matrix-wand-olc	blocked	
+spellmatrix-world-wand-create-water-depth	cast.tsv	spell.create-water.matrix-world-wand	blocked	

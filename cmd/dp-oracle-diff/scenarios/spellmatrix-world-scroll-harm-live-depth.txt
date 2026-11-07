@@ -8,8 +8,9 @@
 empty-players
 quiet-mobs
 no-settle
+add-obj-index 131.obj
 set-room-flag 8162 4 off
-spawn-obj 13107 99 8162 131
+spawn-obj 13107 99 8162 80
 force-load 13107
 
 [setup:oracle]

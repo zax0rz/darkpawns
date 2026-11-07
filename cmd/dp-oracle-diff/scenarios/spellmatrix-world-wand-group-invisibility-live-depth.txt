@@ -111,10 +111,10 @@ set player ItemView maxhit 5000
 set player ItemView hit 5000
 set player ItemView align -1000
 force ItemPeer follow ItemMage
-group ItemPeer
+group all
 set player ItemMage level 30
 get snuff
-wear snuff
+hold snuff
 
 
 [probe]
