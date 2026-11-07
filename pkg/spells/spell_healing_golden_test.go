@@ -8,6 +8,7 @@ type spellHealingGoldenCase struct {
 	name              string
 	spellNum          int
 	level             int
+	casterLevel       int
 	isPsionicOrMystic bool
 	wantHitNum        int
 	wantHitSides      int
@@ -19,31 +20,36 @@ type spellHealingGoldenCase struct {
 
 func TestMagPointsFormula_GoldenAgainstCSource(t *testing.T) {
 	cases := []spellHealingGoldenCase{
-		// Cure spells scale with caster level via (level >> 2).
-		{"cure light L1", SpellCureLight, 1, false, 2, 8, 1 + 0, 0, 0, 0},
-		{"cure light L10", SpellCureLight, 10, false, 2, 8, 1 + 2, 0, 0, 0},
-		{"cure light L20", SpellCureLight, 20, false, 2, 8, 1 + 5, 0, 0, 0},
-		{"cure critic L1", SpellCureCritic, 1, false, 5, 8, 3 + 0, 0, 0, 0},
-		{"cure critic L20", SpellCureCritic, 20, false, 5, 8, 3 + 5, 0, 0, 0},
+		// Cure spells scale with cast level via (level >> 2).
+		{"cure light L1", SpellCureLight, 1, 1, false, 2, 8, 1 + 0, 0, 0, 0},
+		{"cure light L10", SpellCureLight, 10, 10, false, 2, 8, 1 + 2, 0, 0, 0},
+		{"cure light L20", SpellCureLight, 20, 20, false, 2, 8, 1 + 5, 0, 0, 0},
+		{"cure critic L1", SpellCureCritic, 1, 1, false, 5, 8, 3 + 0, 0, 0, 0},
+		{"cure critic L20", SpellCureCritic, 20, 20, false, 5, 8, 3 + 5, 0, 0, 0},
 
 		// Heal / cell adjustment branch on caster class.
-		{"heal non-psi", SpellHeal, 25, false, 3, 8, 100, 0, 0, 0},
-		{"heal psionic/mystic", SpellHeal, 25, true, 2, 8, 90, 0, 0, 0},
-		{"cell adjustment non-psi", SpellCellAdjustment, 25, false, 3, 8, 100, 0, 0, 0},
-		{"cell adjustment psionic/mystic", SpellCellAdjustment, 25, true, 2, 8, 90, 0, 0, 0},
+		{"heal non-psi", SpellHeal, 25, 25, false, 3, 8, 100, 0, 0, 0},
+		{"heal psionic/mystic", SpellHeal, 25, 25, true, 2, 8, 90, 0, 0, 0},
+		{"cell adjustment non-psi", SpellCellAdjustment, 25, 25, false, 3, 8, 100, 0, 0, 0},
+		{"cell adjustment psionic/mystic", SpellCellAdjustment, 25, 25, true, 2, 8, 90, 0, 0, 0},
 
-		{"mass heal", SpellMassHeal, 30, false, 0, 0, 200, 0, 0, 0},
+		{"mass heal", SpellMassHeal, 30, 30, false, 0, 0, 200, 0, 0, 0},
 
-		{"vitality", SpellVitality, 20, false, 5, 10, 0, 10, 10, 0},
-		{"invigorate", SpellInvigorate, 20, false, 0, 0, 0, 10, 10, 0},
+		{"vitality", SpellVitality, 20, 20, false, 5, 10, 0, 10, 10, 0},
+		{"invigorate", SpellInvigorate, 20, 20, false, 0, 0, 0, 10, 10, 0},
 
-		{"lay hands L10", SpellLayHands, 10, false, 3, 10, 0, 0, 0, 0},
-		{"lay hands L30", SpellLayHands, 30, false, 3, 30, 0, 0, 0, 0},
+		{"lay hands L10", SpellLayHands, 10, 10, false, 3, 10, 0, 0, 0, 0},
+		{"lay hands L30", SpellLayHands, 30, 30, false, 3, 30, 0, 0, 0, 0},
+		// C's lay hands arm reads GET_LEVEL(ch) for the dice sides
+		// (src/magic.c:1823), so an item cast (here a wand of spell level 20
+		// wielded by a level-30 user, the cline-dp1481b oracle case) rolls
+		// dice(3, 30), not dice(3, 20) (DP-1468).
+		{"lay hands wand L20 by L30 caster", SpellLayHands, 20, 30, false, 3, 30, 0, 0, 0, 0},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, ok := magPointsFormula(tc.level, tc.spellNum, tc.isPsionicOrMystic)
+			got, ok := magPointsFormula(tc.level, tc.casterLevel, tc.spellNum, tc.isPsionicOrMystic)
 			if !ok {
 				t.Fatalf("magPointsFormula(%s) returned ok=false", tc.name)
 			}
@@ -64,7 +70,7 @@ func TestMagPointsFormula_GoldenAgainstCSource(t *testing.T) {
 func TestMagPointsFormula_NonHealingSpells(t *testing.T) {
 	nonHealing := []int{SpellMagicMissile, SpellFireball, SpellBlindness, SpellSanctuary}
 	for _, spellNum := range nonHealing {
-		_, ok := magPointsFormula(30, spellNum, false)
+		_, ok := magPointsFormula(30, 30, spellNum, false)
 		if ok {
 			t.Errorf("magPointsFormula(spell=%d) returned ok=true, want false for non-healing spell", spellNum)
 		}
