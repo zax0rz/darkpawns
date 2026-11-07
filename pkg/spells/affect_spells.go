@@ -278,8 +278,10 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 				}
 			}
 		}
-		// Duration: level * 0.17, max ~5 hours for mortals
-		dur := int(float64(level) * 0.17)
+		// Duration: the caster's level * 0.17, max ~5 hours for mortals. C
+		// reads GET_LEVEL(ch), not the cast level (src/magic.c:1124), so an
+		// item-cast flamestrike scales with the user's level (DP-1468).
+		dur := int(float64(getLevel(ch)) * 0.17)
 		if dur < 1 {
 			dur = 1
 		}
@@ -690,7 +692,7 @@ func MagPoints(level int, ch, victim interface{}, spellNum, savetype int, world 
 	_ = world
 
 	isPsiMystic := isClassPsionicOrMystic(getClass(ch))
-	formula, ok := magPointsFormula(level, spellNum, isPsiMystic)
+	formula, ok := magPointsFormula(level, getLevel(ch), spellNum, isPsiMystic)
 	if !ok {
 		return
 	}
@@ -786,9 +788,13 @@ type pointsFormula struct {
 
 // magPointsFormula returns the base healing (hit) and movement restoration formula for a spell.
 // It mirrors src/magic.c:mag_points() dice formulas exactly, with no RNG and no side effects.
-// isPsionicOrMystic controls the heal/cell-adjustment branch (C: IS_PSIONIC || IS_MYSTIC).
+// level is the cast level; casterLevel is the caster's own level, which C's
+// lay hands arm reads for its dice sides (hit = dice(3, GET_LEVEL(ch)),
+// src/magic.c:1823) — the two differ for wand/staff/scroll/potion casts
+// (DP-1468). isPsionicOrMystic controls the heal/cell-adjustment branch
+// (C: IS_PSIONIC || IS_MYSTIC).
 // Returns ok=false for spell numbers that are not healing spells in C's mag_points().
-func magPointsFormula(level, spellNum int, isPsionicOrMystic bool) (pointsFormula, bool) {
+func magPointsFormula(level, casterLevel, spellNum int, isPsionicOrMystic bool) (pointsFormula, bool) {
 	switch spellNum {
 	case SpellCureLight:
 		return pointsFormula{hitNum: 2, hitSides: 8, hitFlat: 1 + (level >> 2)}, true
@@ -806,7 +812,8 @@ func magPointsFormula(level, spellNum int, isPsionicOrMystic bool) (pointsFormul
 	case SpellInvigorate:
 		return pointsFormula{moveNum: 10, moveSides: 10}, true
 	case SpellLayHands:
-		return pointsFormula{hitNum: 3, hitSides: level}, true
+		// C reads the caster's level, not the cast level (src/magic.c:1823).
+		return pointsFormula{hitNum: 3, hitSides: casterLevel}, true
 	default:
 		return pointsFormula{}, false
 	}
@@ -1052,8 +1059,11 @@ func MagAreas(level int, ch interface{}, spellNum, savetype int, world interface
 		}
 		// C mag_areas deliberately passes SAVING_SPELL (literal 1) to
 		// mag_damage, even when call_magic was entered as CAST_BREATH
-		// (magic.c:1611). Preserve that call-path quirk.
-		MagDamage(level, ch, c, spellNum, 1, world)
+		// (magic.c:1611). Preserve that call-path quirk. It also re-derives
+		// the level argument from the caster — mag_damage(GET_LEVEL(ch), ...)
+		// (src/magic.c:1620) — so an item-cast area spell damages with the
+		// user's level, not the object's (DP-1468).
+		MagDamage(getLevel(ch), ch, c, spellNum, 1, world)
 	}
 }
 
@@ -1774,13 +1784,17 @@ func castZen(level int, ch, cvict, world interface{}) {
 	}
 
 	// TAR_SELF_ONLY makes victim the caster on the registered C command path.
-	healHP(ch, 2*level)
+	// C heals 2*GET_LEVEL(ch) — the caster's own level, not the cast level
+	// (src/spells.c:878) — so an item-cast zen scales with the user's level
+	// (DP-1468).
+	healHP(ch, 2*getLevel(ch))
 
 	type poser interface{ SetPosition(int) }
 	if p, ok := ch.(poser); ok {
 		p.SetPosition(int(PosStunned))
 	}
 
+	_ = level
 	_ = cvict
 }
 
@@ -2026,9 +2040,13 @@ func castCoC(level int, ch interface{}, world interface{}) {
 	// Set timer
 	type timerSetter interface{ SetTimer(int) }
 	if ts, ok := obj.(timerSetter); ok {
+		// C reads the caster's own level, not the cast level:
+		// GET_OBJ_TIMER(obj) = GET_LEVEL(ch)/2 + number(-2, 1)
+		// (src/spells.c:1018), so an item-cast circle scales with the user's
+		// level (DP-1468).
 		// #nosec G404 — game RNG, not cryptographic
 		// #nosec G404
-		timer := level/2 + dprng.Number(-2, 1)
+		timer := getLevel(ch)/2 + dprng.Number(-2, 1)
 		if timer < 1 {
 			timer = 1
 		}
@@ -2924,9 +2942,11 @@ func castTeleport(level int, ch, cvict, world interface{}) {
 // AoE damage to all non-grouped characters in room. Must be outdoors.
 func castMeteorSwarm(level int, ch, world interface{}) {
 	// C src/spells.c:1094 consumes this damage draw before the peaceful and
-	// outdoor refusal gates.
+	// outdoor refusal gates. Both terms read GET_LEVEL(ch) — the caster's own
+	// level, not the cast level — so an item-cast meteor swarm rolls its one
+	// number() draw with the user's level in both bounds (DP-1468).
 	// #nosec G404 -- game RNG, not cryptographic
-	dam := level*6 + dprng.Number(-10, level*3)
+	dam := getLevel(ch)*6 + dprng.Number(-10, getLevel(ch)*3)
 
 	w, ok := world.(worldAoe)
 	if !ok {
@@ -3558,14 +3578,19 @@ func castDivineInt(level int, ch, world interface{}) {
 	fa, _ := world.(followerAdder)
 
 	for i := 0; i < angelCount; i++ {
-		mobLevel := level / 2
+		// C reads the caster's own level for both the spawn level —
+		// create_mobile(ch, mob_num, GET_LEVEL(ch)/2, FALSE)
+		// (src/spells.c:1212) — and the charm affect's duration —
+		// af.duration = (GET_LEVEL(ch)/2)-2 (src/spells.c:1178) — not the
+		// cast level, so item casts scale with the user's level (DP-1468).
+		mobLevel := getLevel(ch) / 2
 		mob, err := spawner.SpawnMobWithLevelI(mobVNum, roomVNum, mobLevel)
 		if err != nil {
 			slog.Warn("spell_divine_int: failed to spawn angel", "error", err, "vnum", mobVNum)
 			continue
 		}
 		spellActToRoom(world, mob, "$n steps through the portal!", true)
-		applyAffect(mob, engine.NewAffectDirect(SpellDivineInt, engine.ApplyNone, level/2-2, 0, engine.AFFCharm, "divine intervention"))
+		applyAffect(mob, engine.NewAffectDirect(SpellDivineInt, engine.ApplyNone, getLevel(ch)/2-2, 0, engine.AFFCharm, "divine intervention"))
 		if fa != nil {
 			fa.AddFollowerQuiet(mob, ch)
 		}
@@ -3653,8 +3678,11 @@ func castConjureElemental(level int, ch, world interface{}) {
 	}
 	sendToCaster(ch, fmt.Sprintf("You begin to chant slowly, drawing power from %s.\r\n", compName))
 
-	// Spawn the elemental
-	mobLevel := level/2 + 3
+	// Spawn the elemental. C reads the caster's own level —
+	// create_mobile(ch, elem, (GET_LEVEL(ch)/2)+3, FALSE)
+	// (src/spells.c:1071-1072) — not the cast level, so an item-cast
+	// conjure elemental scales with the user's level (DP-1468).
+	mobLevel := getLevel(ch)/2 + 3
 	type mobSpawner interface {
 		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 	}
@@ -3847,8 +3875,11 @@ func castMirrorImage(level int, ch, world interface{}) {
 		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 	}
 	if ms, ok := world.(mobSpawner); ok {
-		// MOB_CLONE vnum — check C source
-		mob, err := ms.SpawnMobWithLevelI(69, roomVNum, level) // MOB_CLONE = 69
+		// C spawns the clone at a literal level 1 regardless of the cast
+		// level: create_mobile(ch, MOB_CLONE, 1, FALSE)
+		// (src/spells.c:1136) — a wand or scroll of mirror image divides the
+		// user into level-1 images (DP-1458).
+		mob, err := ms.SpawnMobWithLevelI(69, roomVNum, 1) // MOB_CLONE = 69
 		if err != nil {
 			sendToCaster(ch, "You fail to divide yourself.\r\n")
 			return

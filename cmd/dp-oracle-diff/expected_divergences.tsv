@@ -59,11 +59,8 @@ spellmatrix-staff-olc-16-depth	cast.tsv	spell.drowning.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.glyph-of-summoning.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.psiblast.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.zen.matrix-staff-olc	blocked	run-varying
-spellmatrix-wand-olc-07-depth	cast.tsv	spell.acid-blast.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-07-depth	cast.tsv	spell.adrenaline-boost.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-07-depth	cast.tsv	spell.greater-perception.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-07-depth	cast.tsv	spell.lesser-perception.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-07-depth	cast.tsv	spell.mind-attack.matrix-wand-olc	blocked	
+spellmatrix-wand-flamestrike-depth	cast.tsv	spell.flame-strike.matrix-wand-olc-duration	blocked	
+spellmatrix-wand-mirror-image-depth	cast.tsv	spell.mirror-image.matrix-wand-olc-clone-stat	blocked	
 spellmatrix-wand-olc-08-depth	cast.tsv	spell.cell-adjustment.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-08-depth	cast.tsv	spell.divine-intervention.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-08-depth	cast.tsv	spell.mind-bar.matrix-wand-olc	blocked	
