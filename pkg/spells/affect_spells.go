@@ -871,6 +871,16 @@ func MagUnaffects(level int, ch, victim interface{}, spellNum int, world interfa
 // MagGroups applies group versions of spells.
 // MagGroups applies group spells to all grouped characters in the room.
 
+// groupWalkWorld is the game-layer view of C's follower lists. The walk is
+// identity-based (C k->followers), so name lookup cannot stand in for it (R3).
+type groupWalkWorld interface {
+	// MasterBody returns the body ch follows (C ch->master), or nil.
+	MasterBody(ch any) any
+	// FollowersOfBody returns the bodies following leader (C leader->followers)
+	// in C's list order: newest first.
+	FollowersOfBody(leader any) []any
+}
+
 func MagGroups(level int, ch interface{}, spellNum, savetype int, world interface{}) {
 	if ch == nil {
 		return
@@ -884,45 +894,81 @@ func MagGroups(level int, ch interface{}, spellNum, savetype int, world interfac
 		return
 	}
 
-	// Get all characters in the room
-	type roomGetter interface{ GetRoomVNum() int }
-	type worldChars interface {
-		GetAllCharsInRoom(roomVNum int) []interface{}
-	}
-
-	rg, ok := ch.(roomGetter)
+	// C's walk is the master's follower list, not the room (src/magic.c:1466-1501):
+	// k = ch->master or ch (:1477-1478); every follower of k in list order,
+	// skipping ch (:1482-1484), other rooms (:1485-1486) and non-AFF_GROUP
+	// (:1487-1488); then k itself (:1492-1494); then ch last if k != ch
+	// (:1496-1498). add_follower prepends (src/utils.c:474-475,491-492), so
+	// the list is newest-first. The room walk this replaces re-ordered members
+	// whenever the spells themselves re-entered a body (group recall) and never
+	// put the caster last (DP-1489).
+	ww, ok := world.(groupWalkWorld)
 	if !ok {
 		return
 	}
-	roomVNum := rg.GetRoomVNum()
-
-	w, ok := world.(worldChars)
-	if !ok {
-		return
+	k := ww.MasterBody(ch)
+	if k == nil {
+		k = ch
 	}
 
-	chars := w.GetAllCharsInRoom(roomVNum)
-
-	// Apply spell to each grouped character (including caster)
-	for _, c := range chars {
-		if !areGrouped(ch, c, world) && c != ch {
-			continue
+	roomGetter := func(v interface{}) int {
+		if rg, ok := v.(interface{ GetRoomVNum() int }); ok {
+			return rg.GetRoomVNum()
 		}
+		return -1
+	}
+	sameRoomAsCh := func(v interface{}) bool {
+		return v != nil && roomGetter(v) == roomGetter(ch)
+	}
+	isGroupAffected := func(v interface{}) bool {
+		if gc, ok := v.(affectChecker); ok {
+			return gc.IsAffected(combat.AFF_GROUP)
+		}
+		return false
+	}
+
+	perform := func(tch interface{}) {
 		switch spellNum {
 		case SpellGroupHeal:
-			MagPoints(level, ch, c, SpellHeal, savetype, world)
+			MagPoints(level, ch, tch, SpellHeal, savetype, world)
 		case SpellHolyShield:
-			MagAffects(level, ch, c, SpellArmor, savetype, world)
+			MagAffects(level, ch, tch, SpellArmor, savetype, world)
 		case SpellGroupInvis:
-			MagAffects(level, ch, c, SpellInvisible, savetype, world)
+			MagAffects(level, ch, tch, SpellInvisible, savetype, world)
 		case SpellGroupRecall:
 			// C src/magic.c:1442-1443 routes each grouped member through
 			// spell_recall, including its BFR/fighting gates and sleeping landing.
-			ExecuteManualSpell(SpellWordOfRecall, level, ch, c, nil, "", world)
+			ExecuteManualSpell(SpellWordOfRecall, level, ch, tch, nil, "", world)
 		case SpellMassDominate:
-			// Mass dominate — charm each grouped NPC
-			ExecuteManualSpell(SpellCharm, level, ch, c, nil, "", world)
+			// Unreachable in play: MASS_DOMINATE is MAG_AREAS-only
+			// (src/spell_parser.c:1480-1481) and mag_groups runs only under
+			// MAG_GROUPS (src/spell_parser.c:488-489). The C case still has
+			// no break and falls through into SPELL_GROUP_INVIS
+			// (src/magic.c:1438-1441); this keeps the function twin faithful.
+			ExecuteManualSpell(SpellCharm, level, ch, tch, nil, "", world)
+			MagAffects(level, ch, tch, SpellInvisible, savetype, world)
 		}
+	}
+
+	// do all followers of k who are not ch
+	for _, f := range ww.FollowersOfBody(k) {
+		if f == ch {
+			continue
+		}
+		if !sameRoomAsCh(f) || !isGroupAffected(f) {
+			continue
+		}
+		perform(f)
+	}
+
+	// do k
+	if sameRoomAsCh(k) && isGroupAffected(k) {
+		perform(k)
+	}
+
+	// do yourself if you didn't already
+	if k != ch {
+		perform(ch)
 	}
 }
 

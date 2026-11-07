@@ -398,6 +398,13 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 		} else if !isBreathSpell(attackType) {
 			enrollDamagePair(world, chCombat, victCombat)
 		}
+		// fight.c:1457-1464: every damage() entry breaks the victim's
+		// following when the attacker is the master, then fades a hidden
+		// attacker — before the modifier block (:1465 onward). The spell
+		// path omitted both and let the break wait for the next melee round
+		// (DP-1489).
+		combat.BreakFollowerOnDamage(chCombat, victCombat)
+		combat.FadeHiddenAttacker(chCombat)
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).
 		dam = combat.ApplyDamageModifiers(chCombat, victCombat, dam)
