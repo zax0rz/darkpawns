@@ -1585,13 +1585,22 @@ func healHP(victim interface{}, amount int) {
 	if newHP > g.GetMaxHP() {
 		newHP = g.GetMaxHP()
 	}
+	setHP(victim, newHP)
+}
+
+// setHP assigns an absolute hit-point value through the same setter dispatch
+// healHP uses (Player.SetHealth, else SetHP). C spells that ASSIGN rather
+// than add — zen's GET_HIT(ch) = MIN(GET_MAX_HIT(victim), ...) (src/spells.c:
+// 878) — route through here so the value is not re-capped at the caster's
+// own maximum.
+func setHP(target interface{}, value int) {
 	// Player uses SetHealth; fallback to SetHP for other types.
 	type healthSetter interface{ SetHealth(int) }
 	type hpSetter interface{ SetHP(int) }
-	if s, ok := victim.(healthSetter); ok {
-		s.SetHealth(newHP)
-	} else if s, ok := victim.(hpSetter); ok {
-		s.SetHP(newHP)
+	if s, ok := target.(healthSetter); ok {
+		s.SetHealth(value)
+	} else if s, ok := target.(hpSetter); ok {
+		s.SetHP(value)
 	}
 }
 
@@ -1784,19 +1793,37 @@ func castZen(level int, ch, cvict, world interface{}) {
 		renderer.SpellActToRoom(ch, nil, "$n sinks into a deep, meditative sleep.", false)
 	}
 
-	// TAR_SELF_ONLY makes victim the caster on the registered C command path.
-	// C heals 2*GET_LEVEL(ch) — the caster's own level, not the cast level
-	// (src/spells.c:878) — so an item-cast zen scales with the user's level
-	// (DP-1468).
-	healHP(ch, 2*getLevel(ch))
-
+	// C stuns the caster first (src/spells.c:877), then assigns the caster's
+	// hit points from the VICTIM (src/spells.c:878):
+	//   GET_HIT(ch) = MIN(GET_MAX_HIT(victim), GET_HIT(victim)+2*GET_LEVEL(ch))
+	// The caster's own level scales the heal (DP-1468), and the cap is the
+	// VICTIM's max, not the caster's. TAR_SELF_ONLY makes victim the caster on
+	// the registered command path, so there the formula degenerates to a plain
+	// heal to the caster's own max. A staff-cast zen (mag_objectmagic's room
+	// fan-out, src/spell_parser.c:806-810) instead overwrites the user's HP
+	// from each room occupant — the last one in C's newest-arrival-first
+	// people list wins (DP-1461: a zen staff left the user at 21/5000 because
+	// the last target sat at 21/21).
 	type poser interface{ SetPosition(int) }
 	if p, ok := ch.(poser); ok {
 		p.SetPosition(int(PosStunned))
 	}
 
+	type hpReader interface {
+		GetHP() int
+		GetMaxHP() int
+	}
+	if v, ok := cvict.(hpReader); ok {
+		assigned := v.GetHP() + 2*getLevel(ch)
+		if v.GetMaxHP() < assigned {
+			assigned = v.GetMaxHP()
+		}
+		setHP(ch, assigned)
+	} else if cvict == nil {
+		healHP(ch, 2*getLevel(ch))
+	}
+
 	_ = level
-	_ = cvict
 }
 
 // castDetectPoison — checks for poison on victims and objects.
