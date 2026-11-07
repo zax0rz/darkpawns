@@ -1,0 +1,4 @@
+scenario	claimed_event	c_witness_line	seeds
+spellmatrix-damage-scroll-group-04-depth	spell.magic-missile.matrix-scroll-targeted	recite book ItemPeer -> "That really did HURT!"	1
+spellmatrix-damage-scroll-group-04-depth	spell.shocking-grasp.matrix-scroll-targeted	recite book ItemPeer -> "That really did HURT!"	1
+spellmatrix-damage-scroll-group-04-depth	spell.dispel-good.matrix-scroll-targeted	recite book ItemPeer -> "That really did HURT!"	1

@@ -8,9 +8,6 @@ postmaster-saved-recipient-depth	mail.tsv	mail.send-store-inert-saved-recipient	
 spellmatrix-damage-potion-group-04-depth	cast.tsv	spell.dispel-good.matrix-potion-self	blocked	
 spellmatrix-damage-potion-group-04-depth	cast.tsv	spell.magic-missile.matrix-potion-self	blocked	
 spellmatrix-damage-potion-group-04-depth	cast.tsv	spell.shocking-grasp.matrix-potion-self	blocked	
-spellmatrix-damage-scroll-group-04-depth	cast.tsv	spell.dispel-good.matrix-scroll-targeted	blocked	
-spellmatrix-damage-scroll-group-04-depth	cast.tsv	spell.magic-missile.matrix-scroll-targeted	blocked	
-spellmatrix-damage-scroll-group-04-depth	cast.tsv	spell.shocking-grasp.matrix-scroll-targeted	blocked	
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.cell-adjustment.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.divine-intervention.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.gate.matrix-potion-olc	blocked	run-varying
