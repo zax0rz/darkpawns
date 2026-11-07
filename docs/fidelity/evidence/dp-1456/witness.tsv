@@ -145,3 +145,5 @@ spellmatrix-world-wand-heal-depth	spell.heal.matrix-world-wand	A warm feeling fl
 spellmatrix-world-wand-lightning-bolt-depth	spell.lightning-bolt.matrix-world-wand	The lightning bolt hits ItemPeer with full impact!	1,2,3,5,8
 spellmatrix-world-wand-smokescreen-live-depth	spell.smokescreen.matrix-world-wand-live	As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.	1,2,3,5,8
 spellmatrix-world-wand-soul-leech-live-depth	spell.soul-leech.matrix-world-wand-live	You feel infused with power as you leech ItemPeer's soul.	1,2,3,5,8
+spellmatrix-world-staff-dispel-evil-depth	spell.dispel-evil.matrix-world-staff	ItemMage shivers and suffers from his evilness!	1
+spellmatrix-world-staff-earthquake-live-depth	spell.earthquake.matrix-world-staff-live	You gesture and the earth begins to shake all around you!	1
