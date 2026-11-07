@@ -8,6 +8,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -2557,32 +2558,11 @@ var identifyMobRaces = []string{
 }
 
 func identifyBits(flags [4]int, names []string) string {
-	result := ""
-	for word, flag := range flags {
-		bits := identifyFlagWord(flag)
-		for bit := 0; bits != 0; bit++ {
-			if bits&1 != 0 {
-				index := word*32 + bit
-				if index < len(names) && names[index] != "" {
-					result += names[index] + " "
-				} else {
-					result += "UNDEFINED "
-				}
-			}
-			bits >>= 1
-		}
+	words := make([]uint32, len(flags))
+	for i, flag := range flags {
+		words[i] = uint32(flag) // #nosec G115 -- SprintbitArray sign-extends this C int word.
 	}
-	if result == "" {
-		return "NOBITS "
-	}
-	return result
-}
-
-func identifyFlagWord(flag int) uint32 {
-	if flag < 0 || uint64(flag) > uint64(^uint32(0)) {
-		return 0
-	}
-	return uint32(flag)
+	return common.SprintbitArray(words, names, len(words))
 }
 
 func identifyItemTypeName(itemType int) string {

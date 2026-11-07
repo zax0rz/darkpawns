@@ -760,10 +760,7 @@ func wizardExitFlags(flags int) string {
 }
 
 func wizardIntFlagWord(flags int) uint32 {
-	if flags < 0 || uint64(flags) > uint64(^uint32(0)) {
-		return 0
-	}
-	return uint32(flags)
+	return uint32(flags) // #nosec G115 -- preserve the C int word; SprintbitArray performs the signed 64-bit cast.
 }
 
 func wizardExitKeyword(keyword string) string {

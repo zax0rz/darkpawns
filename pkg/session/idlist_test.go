@@ -2,6 +2,7 @@ package session
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/parser"
@@ -78,7 +79,8 @@ func TestWriteObjectIDListMatchesCReportShape(t *testing.T) {
 }
 
 func TestIDListBitArrayUsesUndefinedForOutOfTableBits(t *testing.T) {
-	if got := idlistBitArray([4]int{1 << 31, 0, 0, 0}, idlistExtraBits); got != "UNDEFINED " {
-		t.Fatalf("idlistBitArray = %q, want %q", got, "UNDEFINED ")
+	want := strings.Repeat("UNDEFINED ", 33)
+	if got := idlistBitArray([4]int{1 << 31, 0, 0, 0}, idlistExtraBits); got != want {
+		t.Fatalf("idlistBitArray = %q, want %q", got, want)
 	}
 }

@@ -1,0 +1,24 @@
+c_site	surface	flag_family	bit31_member	go_site
+src/act.wizard.c:431	stat room	ROOM	none (last ROOM_ARENA=27)	pkg/session/wiz_stats.go:wizardRoomFlags
+src/act.wizard.c:547	stat object	ITEM_WEAR	none (last ITEM_WEAR_HOVER=18)	pkg/session/wiz_stats.go:sendStatObjectInstance
+src/act.wizard.c:552	stat object	AFF	AFF_FLAMING=31	pkg/game/logging.go:SprintbitArray (zero-word report)
+src/act.wizard.c:557	stat object	ITEM_EXTRA	none (last ITEM_TWO_HANDED=28)	pkg/session/wiz_stats.go:sendStatObjectInstance
+src/act.wizard.c:878	stat character	MOB	none (last MOB_EXTRACT=25)	pkg/session/wiz_stats.go:wizardMobFlags
+src/act.wizard.c:884	stat character	PLR	none (last PLR_EXTRACT=21)	pkg/session/wiz_stats.go:wizardPlayerFlags
+src/act.wizard.c:887	stat character	PRF	PRF_NOBROAD=31	pkg/session/wiz_stats.go:wizardPreferenceFlags
+src/act.wizard.c:967	stat character	AFF	AFF_FLAMING=31	pkg/session/wiz_stats.go:wizardAffectFlags
+src/act.wizard.c:3604	idlist	AFF	AFF_FLAMING=31	pkg/session/idlist.go:idlistBitArray
+src/act.wizard.c:3608	idlist	ITEM_EXTRA	none (last ITEM_TWO_HANDED=28)	pkg/session/idlist.go:idlistBitArray
+src/act.informative.c:769	look room	ROOM	none (last ROOM_ARENA=27)	pkg/session/wiz_stats.go:wizardRoomFlags
+src/spells.c:502	identify	AFF	AFF_FLAMING=31	pkg/session/wiz_info.go (object report; shared game.SprintbitArray)
+src/spells.c:508	identify	ITEM_EXTRA	none (last ITEM_TWO_HANDED=28)	pkg/session/wiz_info.go (object report; shared game.SprintbitArray)
+src/medit.c:531	medit menu	MOB	none (last MOB_EXTRACT=25)	pkg/session/medit.go:meditSprintBitArray
+src/medit.c:555	medit menu	AFF	AFF_FLAMING=31	pkg/session/medit.go:meditSprintBitArray
+src/medit.c:651	medit flags	MOB	none (last MOB_EXTRACT=25)	pkg/session/medit.go:meditSprintBitArray
+src/medit.c:652	medit flags	AFF	AFF_FLAMING=31	pkg/session/medit.go:meditSprintBitArray
+src/oedit.c:894	oedit menu	ITEM_EXTRA	none (last ITEM_TWO_HANDED=28)	pkg/session/oedit.go:oeditSprintBitArray
+src/oedit.c:919	oedit menu	ITEM_WEAR	none (last ITEM_WEAR_HOVER=18)	pkg/session/oedit.go:oeditSprintBitArray
+src/oedit.c:940	oedit flags	ITEM_EXTRA	none (last ITEM_TWO_HANDED=28)	pkg/session/oedit.go:oeditSprintBitArray
+src/oedit.c:965	oedit flags	ITEM_WEAR	none (last ITEM_WEAR_HOVER=18)	pkg/session/oedit.go:oeditSprintBitArray
+src/redit.c:530	redit flags	ROOM	none (last ROOM_ARENA=27)	pkg/session/redit.go:reditRoomFlags
+src/redit.c:618	redit menu	ROOM	none (last ROOM_ARENA=27)	pkg/session/redit.go:reditRoomFlags
