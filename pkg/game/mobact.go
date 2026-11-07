@@ -262,9 +262,9 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 	aggrGood := hasMobFlag(ch, "aggr_good")
 	aggrNeutral := hasMobFlag(ch, "aggr_neutral")
 	wimpy := hasMobFlag(ch, "wimpy")
-	hasAlignAggr := aggrEvil || aggrGood || aggrNeutral
-
-	if aggressive || hasAlignAggr {
+	// C's MOB_AGGR_TO_ALIGN macro ORs bit numbers 8, 10, and 9, producing
+	// bit 11 (MOB_MEMORY), rather than testing any alignment flag.
+	if aggressive || hasMobFlag(ch, "memory") {
 		for _, vict := range w.GetPlayersInRoom(ch.RoomVNum) {
 			if vict.IsNPC() {
 				continue
@@ -296,27 +296,18 @@ func (w *World) mobileActivityForMob(ch *MobInstance) {
 			if vict.IsAffected(affSneak) && mobactNumber(0, 3) == 0 {
 				continue
 			}
-			// Alignment matching faithful to mobact.c:
-			// If NONE of the per-alignment flags are set, hit everyone (plain MOB_AGGRESSIVE).
-			// If SOME are set, only hit matching alignments.
-			shouldHit := false
-			if hasAlignAggr {
-				vAlign := vict.GetAlignment()
-				if aggrEvil && vAlign <= -350 {
-					shouldHit = true
-				}
-				if aggrNeutral && vAlign > -350 && vAlign < 350 {
-					shouldHit = true
-				}
-				if aggrGood && vAlign >= 350 {
-					shouldHit = true
-				}
-			}
-			if shouldHit || aggressive {
-				// C: hit(ch, vict, TYPE_UNDEFINED) — mobact.c:223, 227. The
-				// swing draws before damage()'s gates, and a peaceful-room
-				// refusal enrols nobody.
+			vAlign := vict.GetAlignment()
+			alignmentHit := (!aggrEvil && aggrNeutral && aggrGood) ||
+				(aggrEvil && vAlign <= -350) ||
+				(aggrNeutral && vAlign > -350 && vAlign < 350) ||
+				(aggrGood && vAlign >= 350)
+			if alignmentHit {
 				w.mobFirstHit(ch, vict)
+			}
+			if aggressive {
+				w.mobFirstHit(ch, vict)
+			}
+			if alignmentHit || aggressive {
 				break
 			}
 		}
