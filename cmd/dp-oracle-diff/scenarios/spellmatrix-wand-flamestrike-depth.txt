@@ -1,0 +1,169 @@
+# OLC-configured CAST_WAND live route for flame strike; item level 20 (caster level 30).
+# DP-1468: C's mag_affects flame strike duration reads the caster's level —
+# af[0].duration = (GET_LEVEL(ch)*.17) (src/magic.c:1124) — not the wand's spell level,
+# so `stat` on the burning victim shows the SPL row at 30*.17 = 5 (+1 rendered) hours,
+# not 20*.17 = 3. Room 8105 keeps flag 4 off (the meteor swarm outdoor room) so the outdoor gate passes.
+# OLC access: ItemBuilder remains level 35 and edits through its own descriptor because oedit requires LVL_BUILDER (src/interpreter.c:592; src/olc.h:54; src/structs.h:620); ItemMage remains level 30 for item use, and object value[0] supplies the spell level.
+# C route: src/act.other.c:908-974; src/spell_parser.c:452-459,610-658,724-783; spell body: src/magic.c:1109-1130; stat SPL rows: src/act.wizard.c:971-991.
+# Active spello definitions: src/spell_parser.c:1377.
+# depth-case: spell.flame-strike.matrix-wand-olc-duration
+
+[fixture]
+empty-players
+quiet-mobs
+no-settle
+set-room-flag 8105 4 off
+
+[setup:oracle]
+ItemMage
+Y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ItemMage
+y
+castpass
+castpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+ItemPeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+ItemPeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+ItemView
+Y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+ItemView
+y
+viewpass
+viewpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:builder]
+ItemBuilder
+Y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:builder]
+ItemBuilder
+y
+buildpass
+buildpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport ItemBuilder 8105
+teleport ItemPeer 8105
+teleport ItemView 8105
+set player ItemMage class mage
+set player ItemMage align 1000
+set player ItemMage maxhit 100000
+set player ItemMage hit 100000
+set player ItemPeer level 1
+set player ItemPeer align -1000
+set player ItemPeer maxhit 100000
+set player ItemPeer hit 100000
+set player ItemView level 30
+set player ItemView align -1000
+set player ItemView maxhit 100000
+set player ItemView hit 100000
+set player ItemBuilder level 35
+send:builder oedit 8053
+send:builder 1
+send:builder wand0991
+send:builder D
+send:builder 20
+send:builder 1
+send:builder 1
+send:builder 96
+send:builder q
+send:builder y
+load obj 8053
+set player ItemMage level 30
+
+[probe]
+get wand0991
+hold wand0991
+use wand0991 ItemPeer
+~dpclock pulse 20
+send:builder stat ItemPeer
+send:peer score
+look
+remove wand0991
+drop wand0991

@@ -435,6 +435,14 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 			stopFighting = sfb.StopFightingBody
 		}
 		newPos := combat.UpdatePositionAfterDamage(victCombat, wb, stopFighting)
+		// damage()'s default arm — the "That really did HURT!" line, the
+		// number(0,2) scream draw, the bleed line and the wimp-out — runs for
+		// EVERY attack type, spells included (src/fight.c:1587-1614). Melee
+		// (takeDamageFrom) and the skill seams already call it; omitting it here
+		// dropped the draw as well as the line, so every later draw in the round
+		// shifted and the following perform_violence attack counts came out
+		// wrong (DP-1460; R3).
+		combat.ApplySurvivingVictimDefaultArm(chCombat, victCombat, dam, newPos)
 		if newPos == combat.PosDead {
 			combat.EmitDeathPositionMessage(victCombat, wb)
 
