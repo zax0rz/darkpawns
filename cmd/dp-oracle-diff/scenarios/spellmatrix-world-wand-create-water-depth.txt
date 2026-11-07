@@ -113,7 +113,7 @@ set player ItemView align -1000
 set player ItemMage level 30
 get chalice
 get driftwood
-wear driftwood
+hold driftwood
 
 
 [probe]

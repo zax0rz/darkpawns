@@ -1,0 +1,23 @@
+scenario	outcome	c_witness_line_or_first_divergent_block	run_dir
+set-name-cleanup	green	archivepeer has no rent file.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-scroll-olc-02-depth	divergent	recite book ItemPeer [actor] (C mag_groups processes follower ItemPeer before leader ItemMage so "ItemPeer slowly fades out of existence." precedes "You vanish."; on block 2 recite book ItemPeer [actor], C damage() calls stop_follower(victim) immediately on spell hit at src/fight.c:1457-1458 emitting "ItemPeer stops following you.", whereas Go delays it until melee combat in ~dpclock pulse 20 [actor])	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-scroll-harm-live-depth	green	You watch the pained expression on ItemPeer's face as you hit her with your harm spell.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-acid-blast-depth	green	A spray of acid flows from your fingertips!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-cure-critic-depth	green	You feel a lot better!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-dispel-evil-depth	divergent	use bamboo [actor] (C emits "That really did HURT!" when ItemMage takes self-damage from dispel evil; Go omits the victim pain line)	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-earthquake-live-depth	divergent	send:peer score [peer] (C "Hit points: 4940(5000)" vs Go "Hit points: 4960(5000)" — C mag_areas calls mag_damage(GET_LEVEL(ch), ...) at caster level 30 at src/magic.c:1620 instead of item level 10)	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-ray-of-disruption-depth	green	A ray of light shoots from the sky, striking ItemView who screams in agony!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-sense-life-live-depth	green	Your feel your awareness improve.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-sleep-depth	green	Your spell fails to affect them because you are not an Outlaw!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-staff-smokescreen-depth	green	As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-blindness-depth	green	Your Mandelbrot's marvelous hand-held massager flares up with a blinding glow that surges toward ItemPeer!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-charm-person-depth	green	ItemPeer starts following you.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-create-water-depth	divergent	use driftwood chalice [actor] (C capitalizes "A golden chalice is filled." via CAP at src/comm.c:2474, whereas Go emits lowercase "a golden chalice is filled.")	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-earthquake-depth	green	You gesture and the earth begins to shake all around you!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-energy-drain-depth	green	You drain ItemPeer of some of her energy!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-fireball-depth	green	You throw a fireball at ItemPeer and have the satisfaction of seeing her enveloped in flames!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-group-invisibility-live-depth	green	You vanish.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-heal-depth	green	A warm feeling floods your body.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-lightning-bolt-depth	green	The lightning bolt hits ItemPeer with full impact!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-smokescreen-live-depth	green	As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness
+spellmatrix-world-wand-soul-leech-live-depth	green	You feel infused with power as you leech ItemPeer's soul.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-06/gemini-dp1456-witness

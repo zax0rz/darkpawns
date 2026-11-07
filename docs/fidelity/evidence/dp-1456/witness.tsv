@@ -127,3 +127,21 @@ behead-object-depth	behead.object	You rip the head off a fractal French tickler 
 set-depth	set.usage	Usage: set <victim> <field> <value>	1
 teleport-depth	teleport.target-not-found	No-one by that name here.	1
 zedit-duplicate-gate-depth	zedit.duplicate-gate-cleanup	That room is currently being edited by Zeditadmin.	1
+set-name-cleanup	set.name-cleanup	archivepeer has no rent file.	1
+spellmatrix-world-scroll-harm-live-depth	spell.harm.matrix-world-scroll-live	You watch the pained expression on ItemPeer's face as you hit her with your harm spell.	1,2,3,5,8
+spellmatrix-world-staff-acid-blast-depth	spell.acid-blast.matrix-world-staff	A spray of acid flows from your fingertips!	1,2,3,5,8
+spellmatrix-world-staff-cure-critic-depth	spell.cure-critic.matrix-world-staff	You feel a lot better!	1,2,3,5,8
+spellmatrix-world-staff-ray-of-disruption-depth	spell.ray-of-disruption.matrix-world-staff	A ray of light shoots from the sky, striking ItemView who screams in agony!	1,2,3,5,8
+spellmatrix-world-staff-sense-life-live-depth	spell.sense-life.matrix-world-staff-live	Your feel your awareness improve.	1,2,3,5,8
+spellmatrix-world-staff-sleep-depth	spell.sleep.matrix-world-staff	Your spell fails to affect them because you are not an Outlaw!	1,2,3,5,8
+spellmatrix-world-staff-smokescreen-depth	spell.smokescreen.matrix-world-staff	As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.	1,2,3,5,8
+spellmatrix-world-wand-blindness-depth	spell.blindness.matrix-world-wand	Your Mandelbrot's marvelous hand-held massager flares up with a blinding glow that surges toward ItemPeer!	1,2,3,5,8
+spellmatrix-world-wand-charm-person-depth	spell.charm-person.matrix-world-wand	ItemPeer starts following you.	1,2,3,5,8
+spellmatrix-world-wand-earthquake-depth	spell.earthquake.matrix-world-wand	You gesture and the earth begins to shake all around you!	1,2,3,5,8
+spellmatrix-world-wand-energy-drain-depth	spell.energy-drain.matrix-world-wand	You drain ItemPeer of some of her energy!	1,2,3,5,8
+spellmatrix-world-wand-fireball-depth	spell.fireball.matrix-world-wand	You throw a fireball at ItemPeer and have the satisfaction of seeing her enveloped in flames!	1,2,3,5,8
+spellmatrix-world-wand-group-invisibility-live-depth	spell.group-invisibility.matrix-world-wand-live	You vanish.	1,2,3,5,8
+spellmatrix-world-wand-heal-depth	spell.heal.matrix-world-wand	A warm feeling floods your body.	1,2,3,5,8
+spellmatrix-world-wand-lightning-bolt-depth	spell.lightning-bolt.matrix-world-wand	The lightning bolt hits ItemPeer with full impact!	1,2,3,5,8
+spellmatrix-world-wand-smokescreen-live-depth	spell.smokescreen.matrix-world-wand-live	As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.	1,2,3,5,8
+spellmatrix-world-wand-soul-leech-live-depth	spell.soul-leech.matrix-world-wand-live	You feel infused with power as you leech ItemPeer's soul.	1,2,3,5,8

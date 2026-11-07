@@ -108,8 +108,8 @@ set player ItemView level 30
 set player ItemView maxhit 5000
 set player ItemView hit 5000
 set player ItemView align -1000
+load obj 1211
 set player ItemMage level 30
-get massager
 wear massager
 
 

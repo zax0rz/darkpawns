@@ -111,7 +111,7 @@ set player ItemView align -1000
 set player ItemPeer hit 20
 set player ItemMage level 30
 get herbs
-wear herbs
+hold herbs
 
 
 [probe]

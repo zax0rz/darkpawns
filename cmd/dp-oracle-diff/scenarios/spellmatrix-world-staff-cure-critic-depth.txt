@@ -110,10 +110,10 @@ set player ItemView hit 5000
 set player ItemView align -1000
 set player ItemPeer hit 20
 set player ItemMage level 30
-get healing
-wear healing
+get staff
+hold staff
 
 
 [probe]
 equipment
-use healing
+use staff

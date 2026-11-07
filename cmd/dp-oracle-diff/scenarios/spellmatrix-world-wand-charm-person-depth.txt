@@ -112,7 +112,7 @@ set ItemMage outlaw on
 set player ItemPeer level 5
 set player ItemMage level 30
 get brush
-wear brush
+hold brush
 
 
 [probe]

@@ -111,7 +111,7 @@ set player ItemView align -1000
 set player ItemPeer level 5
 set player ItemMage level 30
 get sleep
-wear sleep
+hold sleep
 
 
 [probe]
