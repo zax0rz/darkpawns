@@ -121,6 +121,33 @@ func TestZenItemCastHealsWithCasterLevel(t *testing.T) {
 	}
 }
 
+// C src/spells.c:877-878 — on the staff fan-out path (mag_objectmagic walks
+// the room, src/spell_parser.c:806-810) victim != ch, and zen ASSIGNS the
+// user's hit points from the victim: GET_HIT(ch) = MIN(GET_MAX_HIT(victim),
+// GET_HIT(victim)+2*GET_LEVEL(ch)). The cap is the victim's max, so a healthy
+// user is dropped to a frail target's HP — DP-1461's staff-olc-16 witness:
+// the staff left the user at 21/5000 because the last fan-out target sat at
+// 21/21. Fails if the port reverts to additively healing the user capped at
+// the user's own max.
+func TestZenStaffCastAssignsCasterHPFromVictim(t *testing.T) {
+	caster := &mockSpellsChar{name: "ItemMage", level: 30, hp: 4880, maxHP: 5000, position: int(PosStanding)}
+
+	frail := &mockSpellsChar{name: "ItemBuilder", level: 35, hp: 21, maxHP: 21}
+	castZen(20, caster, frail, &zenSpellOutputWorld{})
+	if caster.hp != 21 {
+		t.Fatalf("zen staff-cast HP = %d, want 21 = MIN(21, 21+2*30) assigned from the victim (src/spells.c:878)", caster.hp)
+	}
+	if caster.position != int(PosStunned) {
+		t.Fatalf("zen staff-cast position = %d, want stunned (src/spells.c:877)", caster.position)
+	}
+
+	hale := &mockSpellsChar{name: "ItemPeer", level: 30, hp: 100, maxHP: 5000}
+	castZen(20, caster, hale, &zenSpellOutputWorld{})
+	if caster.hp != 160 {
+		t.Fatalf("zen staff-cast HP = %d, want 160 = MIN(5000, 100+2*30) (src/spells.c:878)", caster.hp)
+	}
+}
+
 // C src/spells.c:1178,1212 — divine intervention's angels spawn at
 // GET_LEVEL(ch)/2 and carry the charm for (GET_LEVEL(ch)/2)-2 hours.
 func TestDivineIntItemCastScalesWithCasterLevel(t *testing.T) {

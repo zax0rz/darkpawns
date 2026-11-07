@@ -115,3 +115,49 @@ func TestGetAllCharsInRoomUsesCPrependOrderAcrossBodyTypes(t *testing.T) {
 		t.Fatalf("room body order = %#v, want newest-first [last player, mob, first player]", got)
 	}
 }
+
+// The staff fan-out walks world[ch->in_room].people (src/spell_parser.c:
+// 806-810), the one shared list char_to_room prepends to, so players and
+// mobiles interleave newest-arrival-first. actChar feeds that fan-out
+// (useStaff) and every other C people-walk, so it must interleave too —
+// not players-then-mobs with the mobs in Go map order (DP-1461, R3b).
+func TestActCharUsesCPeopleOrderAcrossBodyTypes(t *testing.T) {
+	w, err := NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1001, Name: "Fan-out order proof"}},
+		Mobs:  []parser.Mob{{VNum: 99001, Keywords: "probe", ShortDesc: "a probe"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+
+	first := NewPlayer(1, "First", 1001)
+	if err := w.AddPlayer(first); err != nil {
+		t.Fatal(err)
+	}
+	mobA, err := w.SpawnMobQuiet(99001, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second := NewPlayer(2, "Second", 1001)
+	if err := w.AddPlayer(second); err != nil {
+		t.Fatal(err)
+	}
+	mobB, err := w.SpawnMobQuiet(99001, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got := w.actChar(1001)
+	if len(got) != 4 || got[0] != mobB || got[1] != second || got[2] != mobA || got[3] != first {
+		t.Fatalf("actChar order = %v, want newest-first interleave [mobB, Second, mobA, First]", names(got))
+	}
+}
+
+func names(actors []Actor) []string {
+	out := make([]string, len(actors))
+	for i, a := range actors {
+		out[i] = a.GetName()
+	}
+	return out
+}
