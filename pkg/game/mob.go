@@ -735,6 +735,19 @@ func (m *MobInstance) ConfigureCreatedMobile(level int) {
 	m.Runtime.ExpOverride = &zeroExp
 	m.MaxHP = maxHP
 	m.CurrentHP = maxHP
+	// C's create_mobile zeroes the carry counters (src/new_cmds2.c:606-607).
+	m.Runtime.CarriedNumber = 0
+	m.Runtime.CarriedWeight = 0
+}
+
+// SetSexOverride sets the mob instance's live sex (C's clone->player.sex
+// assignment in spell_mirror_image, src/spells.c:1150). The value uses Go's
+// actor sex encoding (SexMale=0, SexFemale=1, SexNeutral=2), the same encoding
+// GetSex returns.
+func (m *MobInstance) SetSexOverride(sex int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.Runtime.SexOverride = &sex
 }
 
 // SetDamroll overrides the mob's instance-local GET_DAMROLL value. C specials

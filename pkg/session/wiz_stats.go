@@ -145,10 +145,11 @@ func (s *Session) sendStatMob(mob *game.MobInstance) {
 	}
 	s.sendStatMobLine("L-Des: " + longDesc)
 	// C act.wizard.c:736-750 prints "Monster Class: " for an NPC and colours
-	// the level and experience exactly as it does for a PC.
+	// the level and experience exactly as it does for a PC, reading the live
+	// GET_EXP(k) — which create_mobile overwrites with 0 (src/new_cmds2.c:593).
 	s.sendStatMobLine(fmt.Sprintf("Monster Class: Normal, Lev: [%s], XP: [%s], Align: [%4d]",
 		colorWrap(fmt.Sprintf("%2d", mob.GetLevel()), ansiYellow, normal),
-		colorWrap(fmt.Sprintf("%7d", proto.Exp), ansiYellow, normal),
+		colorWrap(fmt.Sprintf("%7d", mob.GetExp()), ansiYellow, normal),
 		mob.GetAlignment()))
 	race := proto.Race
 	if proto.RaceStr == "" {
