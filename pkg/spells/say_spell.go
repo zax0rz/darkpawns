@@ -368,9 +368,7 @@ func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
 		}
 		msg := strings.ReplaceAll(format, "$n", name)
 		msg = strings.ReplaceAll(msg, "$s", possessivePronoun(ch))
-		if _, named := ch.(namer); named {
-			msg = capitalizeActMessage(msg)
-		}
+		msg = capitalizeActMessage(msg)
 		s.SendMessage(msg)
 	}
 }
@@ -399,7 +397,7 @@ func sendSpellActToCaster(format string, ch, victim, obj, world interface{}) {
 		}
 		message = strings.ReplaceAll(message, "$p", shortDesc)
 	}
-	sendToCaster(ch, message+"\r\n")
+	sendToCaster(ch, capitalizeActMessage(message)+"\r\n")
 }
 
 // subjectivePronoun mirrors C's HSSH macro in src/utils.h using the Go sex

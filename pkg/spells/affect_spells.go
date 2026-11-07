@@ -433,11 +433,11 @@ func magAffectsApply(level int, ch, victim interface{}, spellNum int, saved bool
 		aff = engine.NewAffect(SpellPsyshield, engine.ApplyAC, getLevel(ch)/2, -15, "psyshield")
 		toVictim = "You feel a shield of energy form around you.\r\n"
 	case SpellGreatPercept:
-		pending = append(pending, engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"), engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFSenseLife, "great percept"))
+		pending = append(pending, engine.NewAffectDirect(SpellGreatPercept, engine.ApplySpell, level/2+4, 0, engine.AFFSenseLife, "great percept"), engine.NewAffectDirect(SpellGreatPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectInvisible, "great percept"))
 		toVictim = "Your eyes glow briefly.\r\n"
 		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellLessPercept:
-		pending = append(pending, engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"), engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFInfrared, "lesser percept"))
+		pending = append(pending, engine.NewAffectDirect(SpellLessPercept, engine.ApplySpell, level/2+4, 0, engine.AFFInfrared, "lesser percept"), engine.NewAffectDirect(SpellLessPercept, engine.ApplyNone, level/2+4, 0, engine.AFFDetectAlign, "lesser percept"))
 		toVictim = "Your eyes glow briefly.\r\n"
 		toRoom = "$n's eyes glow briefly.\r\n"
 	case SpellIntellect:
@@ -1362,7 +1362,7 @@ func MagAlterObjs(level int, ch, obj interface{}, spellNum int, world interface{
 	if named, ok := obj.(interface{ GetShortDesc() string }); ok {
 		name = named.GetShortDesc()
 	}
-	sendToCaster(ch, strings.ReplaceAll(effect, "$p", name)+"\r\n")
+	sendToCaster(ch, capitalizeActMessage(strings.ReplaceAll(effect, "$p", name))+"\r\n")
 }
 
 // ExecuteManualSpell dispatches manual (ASPELL) spell implementations.
@@ -1396,7 +1396,7 @@ func ExecuteManualSpell(spellNum, level int, ch, cvict, ovict interface{}, arg s
 	case SpellEnchantArmor:
 		castEnchantArmor(level, ch, ovict, world)
 	case SpellCreateWater:
-		castCreateWater(level, ch, ovict)
+		castCreateWater(level, ch, ovict, world)
 	case SpellIdentify:
 		castIdentify(level, ch, cvict, ovict, world)
 	case SpellSilkenMissile:
@@ -2333,7 +2333,7 @@ func castEnchantArmor(level int, ch, ovict, world interface{}) {
 
 // castCreateWater — fills a drink container with water or changes its liquid to slime.
 // C source: spells.c:87-120. Drink-name helpers mutate the targeting keywords only.
-func castCreateWater(level int, ch, ovict interface{}) {
+func castCreateWater(level int, ch, ovict, world interface{}) {
 	_ = level
 	if ch == nil || ovict == nil {
 		return
@@ -2385,11 +2385,9 @@ func castCreateWater(level int, ch, ovict interface{}) {
 		}
 		clearDrinkconName(ovict)
 		setDrinkconName(ovict, "water") // drinknames[LIQ_WATER], src/constants.c:946
-		if desc, ok := ovict.(interface{ GetShortDesc() string }); ok {
-			// C act("$p is filled.", ..., TO_CHAR) uses OBJS(obj, ch),
-			// so the caster sees the object's short description (src/comm.c:2439).
-			sendToCaster(ch, fmt.Sprintf("%s is filled.\r\n", desc.GetShortDesc()))
-		}
+		// C act("$p is filled.", FALSE, ch, obj, 0, TO_CHAR) (src/spells.c:112)
+		// renders OBJS(obj, ch) and applies CAP(lbuf) (src/comm.c:2477).
+		sendSpellActToCaster("$p is filled.", ch, nil, ovict, world)
 	} else {
 		sendToCaster(ch, "You cannot create water in that!\r\n")
 	}
@@ -2457,7 +2455,13 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 		itemType = tf.GetTypeFlag()
 	}
 	typeName := identifyItemTypeName(itemType)
-	sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
+	if itemType == 3 || itemType == 4 { // ITEM_WAND, ITEM_STAFF
+		// C hard-codes CASTING_EQ for both, with a reversed terminator,
+		// instead of sprinttype(item_types) (src/spells.c:491-492).
+		sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: CASTING_EQ\n\r", objectName))
+	} else {
+		sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
+	}
 
 	// C's object bitvector is not exposed by the Go object interface yet; the
 	// parsed object format has no corresponding field, so this is NOBITS for
@@ -2491,7 +2495,7 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 			}
 			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\n", typeName, spells))
 		case 3, 4: // ITEM_WAND, ITEM_STAFF
-			sendToCaster(ch, fmt.Sprintf("This %s casts: %s\r\nIt has %d maximum charge%s and %d remaining.\r\n",
+			sendToCaster(ch, fmt.Sprintf("This %s casts:  %s\r\nIt has %d maximum charge%s and %d remaining.\r\n",
 				typeName, identifySpellName(v.GetValue(3)), v.GetValue(1), pluralS(v.GetValue(1)), v.GetValue(2)))
 		case 5: // ITEM_WEAPON
 			sendToCaster(ch, fmt.Sprintf("Damage Dice is '%dD%d' for an average per-round damage of %.1f.\r\n",
@@ -3403,7 +3407,12 @@ func castSummon(level int, ch, cvict, world interface{}) {
 	sendAffectRoom(cvict, nil, "$n arrives suddenly.\r\n", true, world)
 
 	if getPos(cvict) > int(PosSleeping) {
-		sendToVictim(cvict, fmt.Sprintf("%s has summoned you!\r\n", chName))
+		const summonedAct = "$n has summoned you!"
+		if renderer, ok := world.(interface {
+			SpellActToVictim(caster, victim interface{}, format string) bool
+		}); !ok || !renderer.SpellActToVictim(ch, cvict, summonedAct) {
+			sendAct(summonedAct+"\r\n", ch, nil, cvict, world)
+		}
 		// C calls look_at_room(victim, 0) immediately after the awake victim
 		// message; the game adapter owns the room renderer to avoid a package
 		// cycle from spells to game.

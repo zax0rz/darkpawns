@@ -34,13 +34,14 @@ func TestMagAlterObjsUsesCObjectFlagIndices(t *testing.T) {
 		wantFlags  int
 		wantValue2 int
 		wantValue3 int
+		wantMsg    string
 	}{
-		{name: "bless", spell: SpellBless, flags: 1 << 0, wantFlags: (1 << 0) | (1 << 8)},
-		{name: "curse weapon", spell: SpellCurse, typ: 3, value2: 2, wantFlags: 1 << 7, wantValue2: 1},
-		{name: "invisible", spell: SpellInvisible, wantFlags: 1 << 5},
-		{name: "remove curse weapon", spell: SpellRemoveCurse, flags: 1 << 7, typ: 3, value2: 1, wantValue2: 2},
-		{name: "poison food", spell: SpellPoison, typ: 19, wantValue3: 1},
-		{name: "remove poison food", spell: SpellRemovePoison, typ: 19, value3: 1},
+		{name: "bless", spell: SpellBless, flags: 1 << 0, wantFlags: (1 << 0) | (1 << 8), wantMsg: "A test object glows briefly with a ethereal light.\r\n"},
+		{name: "curse weapon", spell: SpellCurse, typ: 3, value2: 2, wantFlags: 1 << 7, wantValue2: 1, wantMsg: "A test object briefly glows red.\r\n"},
+		{name: "invisible", spell: SpellInvisible, wantFlags: 1 << 5, wantMsg: "A test object vanishes.\r\n"},
+		{name: "remove curse weapon", spell: SpellRemoveCurse, flags: 1 << 7, typ: 3, value2: 1, wantValue2: 2, wantMsg: "A test object briefly glows blue.\r\n"},
+		{name: "poison food", spell: SpellPoison, typ: 19, wantValue3: 1, wantMsg: "A test object steams briefly.\r\n"},
+		{name: "remove poison food", spell: SpellRemovePoison, typ: 19, value3: 1, wantMsg: "A test object steams briefly.\r\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			obj := &alterObjFixture{flags: tc.flags, typ: tc.typ, weight: 1}
@@ -52,6 +53,9 @@ func TestMagAlterObjsUsesCObjectFlagIndices(t *testing.T) {
 			}
 			if obj.values[2] != tc.wantValue2 || obj.values[3] != tc.wantValue3 {
 				t.Errorf("values[2:4]=%v want [%d %d]", obj.values[2:4], tc.wantValue2, tc.wantValue3)
+			}
+			if len(caster.messages) != 1 || caster.messages[0] != tc.wantMsg {
+				t.Errorf("caster.messages=%q want [%q]", caster.messages, tc.wantMsg)
 			}
 		})
 	}

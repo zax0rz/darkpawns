@@ -535,7 +535,7 @@ func TestCastCreateWaterCBranchesAndExactObjectMessage(t *testing.T) {
 			typeFlag:      game.ITEM_DRINKCON,
 			values:        [4]int{5, 2, game.LiqWater, 0},
 			weight:        3,
-			wantSpellText: "a silver flask is filled.\r\n",
+			wantSpellText: "A silver flask is filled.\r\n",
 			wantValues:    [4]int{5, 5, game.LiqWater, 0},
 			wantWeight:    6,
 			wantKeywords:  "water flask",

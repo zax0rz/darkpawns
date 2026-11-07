@@ -1,8 +1,9 @@
 # depth-case: spell.identify-scroll-potion-output
-# The implementor casts identify through the live player command at a carried
-# stock return scroll. Its transcript pins spell-name spacing in C's scroll
-# branch.
-# C path: src/spell_parser.c:511 -> src/spells.c:476-530.
+# depth-case: spell.identify-wand-staff-output
+# The implementor casts identify through the live player command on a scroll,
+# a potion, a wand, and a staff. Its transcript pins spell-name spacing across
+# all four magic item types in C's spell_identify (src/spells.c:516-539).
+# C path: src/spell_parser.c:511 -> src/spells.c:476-539.
 
 [fixture]
 add-obj-index 58.obj
@@ -40,6 +41,18 @@ Y
 [warmup]
 goto 8162
 load obj 5804
+load obj 8051
+load obj 8053
+load obj 8054
 
 [probe]
 cast 'identify' scroll
+~dpclock pulse 20
+~dpclock pulse 20
+cast 'identify' potion
+~dpclock pulse 20
+~dpclock pulse 20
+cast 'identify' wand
+~dpclock pulse 20
+~dpclock pulse 20
+cast 'identify' staff
