@@ -4,6 +4,6 @@ src/spells.c:1136 (spell_mirror_image)	pkg/spells/affect_spells.go castMirrorIma
 src/spells.c:1212 (spell_divine_int)	pkg/spells/affect_spells.go castDivineInt -> SpawnMobWithLevelI	n	y
 src/magic.c:1726 (mag_summons loop; SPELL_ANIMATE_DEAD)	pkg/spells/affect_spells.go MagSummons -> SpawnMobWithLevelI	n	y
 src/magic.c:1726 (mag_summons loop; SPELL_SUMMON/SPELL_CLONE/SPELL_ZOMBIE/...)	pkg/spells/affect_spells.go MagSummons: no case (unported; "summon" stays blocked in cast.tsv spell.summon.matrix-wand-olc)	n/a	n/a
-src/new_cmds.c:2675 (lunar_hunter)	no Go twin (full-moon/lunar_hunter unported)	n/a	n/a
+src/new_cmds.c:2675 (lunar_hunter)	pkg/game/weather.go lunarHunterForWorld (invented broadcast; no create_mobile)	n	n (DP-1492)
 src/new_cmds2.c:643-648 (SPECIAL black_horn)	no Go twin (black_horn object special unported; Go's "horn" is a different special)	n/a	n/a
 src/new_cmds2.c:739 (do_serpent_kick, hunting=TRUE)	pkg/command/skill_commands.go:1648-1665 ConfigureCreatedMobile + room 18201 + SetHuntingTarget	y	y

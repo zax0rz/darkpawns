@@ -44,6 +44,11 @@ spellmatrix-staff-olc-12-depth	cast.tsv	spell.cell-adjustment.matrix-staff-olc	b
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.change-density.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.dominate.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.psychic-shield.matrix-staff-olc	blocked	run-varying
+spellmatrix-staff-olc-13-depth	cast.tsv	spell.divine-intervention.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-13-depth	cast.tsv	spell.mind-bar.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-13-depth	cast.tsv	spell.mindsight.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-13-depth	cast.tsv	spell.mirror-image.matrix-staff-olc	blocked	
+spellmatrix-staff-olc-13-depth	cast.tsv	spell.soul-leech.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-15-depth	cast.tsv	spell.calliope.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-15-depth	cast.tsv	spell.flame-strike.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-15-depth	cast.tsv	spell.haste.matrix-staff-olc	blocked	run-varying
