@@ -194,4 +194,12 @@ sleep,smokescreen}-depth`) plus every scenario that `use`s a staff:
 uses a type-11 horn, `egon-equipment-apply-spell` only wields, the
 `wand-olc` scenarios use ITEM_WANDs.)
 
-Run directory: see the PR description.
+Run directory:
+`~/Archives/darkpawns/oracle-runs/2026-11-07/dp1461-staff-cluster`
+@3aa830d3f — **verdict CLEAN**: scenarios=29 passed=27 failed=0
+stale=0 unpinnable=0 infra=0 timed_out=0, expected_unstable=2
+(`spellmatrix-staff-olc-09-depth`, this report's §4 gap; and
+`spellmatrix-staff-olc-13-depth`, DeepSeek's DP-1493 pin from PR
+#2337). The targeted census runs seed 1 only; the seeds 2/3/5/8 legs
+of the `oracle-green-multiseed` rows were run directly with
+`--draw-parity` (results in the PR).
