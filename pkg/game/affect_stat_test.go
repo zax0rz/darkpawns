@@ -114,6 +114,25 @@ func TestActiveAffectsModifyCoreStats(t *testing.T) {
 	}
 }
 
+func TestRemoveAffectBitRetainsTimedRecordWithoutRestoringBit(t *testing.T) {
+	p := NewPlayer(1, "Hidden", 100)
+	p.AddAffect(engine.NewAffectDirect(63, engine.ApplyNone, 6, 0, engine.AFFHide, "chameleon"))
+	if !p.IsAffected(affHide) {
+		t.Fatal("chameleon did not set AFF_HIDE")
+	}
+	p.RemoveAffectBit(affHide)
+	if p.IsAffected(affHide) {
+		t.Fatal("inline bit removal restored AFF_HIDE from the retained chameleon record")
+	}
+	if len(p.ActiveAffects) != 1 || p.ActiveAffects[0].SpellID != 63 {
+		t.Fatal("inline bit removal deleted the chameleon record")
+	}
+	p.AddAffect(engine.NewAffectDirect(64, engine.ApplyNone, 6, 0, 0, "levitate"))
+	if !p.IsAffected(affHide) {
+		t.Fatal("affect_total did not rebuild AFF_HIDE from the retained chameleon record")
+	}
+}
+
 // TestAffectBitMapping verifies that every C bit position maps correctly to engine.AFF* flags and back,
 // and that IsAffected(0) (blindness in C) returns true for blind only, not for sneak (C bit 18) or hide (C bit 19).
 func TestAffectBitMapping(t *testing.T) {

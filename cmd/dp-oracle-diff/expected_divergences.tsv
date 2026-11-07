@@ -39,11 +39,6 @@ spellmatrix-staff-olc-09-depth	cast.tsv	spell.group-invisibility.matrix-staff-ol
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.hellfire.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.identify.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-09-depth	cast.tsv	spell.mind-poke.matrix-staff-olc	blocked	run-varying
-spellmatrix-staff-olc-10-depth	cast.tsv	spell.chameleon.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-10-depth	cast.tsv	spell.globe-of-invulnerability.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-10-depth	cast.tsv	spell.levitate.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-10-depth	cast.tsv	spell.metalskin.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-10-depth	cast.tsv	spell.mind-blast.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.adrenaline-boost.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.cell-adjustment.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-12-depth	cast.tsv	spell.change-density.matrix-staff-olc	blocked	run-varying

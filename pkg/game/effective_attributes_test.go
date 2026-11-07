@@ -117,6 +117,53 @@ func TestEquipmentApplySpellAffectSetRemoveAndTimedPrecedence(t *testing.T) {
 	}
 }
 
+func TestHiddenAffectRestoredAtEveryTotalBoundary(t *testing.T) {
+	p := attrPlayer()
+	p.AddAffect(engine.NewAffectDirect(63, ApplyNone, 6, 0, engine.AFFHide, "chameleon"))
+	p.RemoveAffectBit(affHide)
+	if p.IsAffected(affHide) {
+		t.Fatal("fade left AFF_HIDE set")
+	}
+	if err := p.Equipment.Equip(attrItem(ApplyNone, 0), p.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	p.AffectTotal()
+	if !p.IsAffected(affHide) {
+		t.Fatal("equip affect_total did not restore AFF_HIDE")
+	}
+
+	p.RemoveAffectBit(affHide)
+	if p.IsAffected(affHide) {
+		t.Fatal("second fade left AFF_HIDE set")
+	}
+	if err := p.Equipment.Unequip(SlotBody, p.Inventory); err != nil {
+		t.Fatal(err)
+	}
+	p.AffectTotal()
+	if !p.IsAffected(affHide) {
+		t.Fatal("unequip affect_total did not restore AFF_HIDE")
+	}
+
+	p.RemoveAffectBit(affHide)
+	p.AffectTotal()
+	if !p.IsAffected(affHide) {
+		t.Fatal("ordinary affect_total did not restore AFF_HIDE")
+	}
+}
+
+func TestMobHiddenAffectRestoredAtTotalBoundary(t *testing.T) {
+	m := NewMob(&parser.Mob{VNum: 1}, 1001)
+	m.AddAffect(engine.NewAffectDirect(63, ApplyNone, 6, 0, engine.AFFHide, "chameleon"))
+	m.RemoveAffected(affHide)
+	if m.IsAffected(affHide) {
+		t.Fatal("mob fade left AFF_HIDE set")
+	}
+	m.AffectTotal()
+	if !m.IsAffected(affHide) {
+		t.Fatal("mob affect_total did not restore AFF_HIDE")
+	}
+}
+
 func TestEngineApplyLocationsMatchDarkPawns(t *testing.T) {
 	got := []int{engine.ApplyCha, engine.ApplyMana, engine.ApplyHit, engine.ApplyMove, engine.ApplyHitRegen, engine.ApplyManaRegen, engine.ApplyMoveRegen, engine.ApplySpell}
 	want := []int{6, 12, 13, 14, 26, 27, 28, 29}

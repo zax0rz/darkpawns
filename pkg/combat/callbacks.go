@@ -56,6 +56,7 @@ type GameCallbacks struct {
 	// Affects
 	HasAffect        func(name Combatant, aff int) bool
 	HasAffectStr     func(name Combatant, aff string) bool
+	RemoveAffectBit  func(name Combatant, aff int)
 	RemoveAffect     func(name Combatant, skillNum int)
 	RemoveAllAffects func(name Combatant)
 	RemoveTattoo     func(name Combatant)
@@ -394,12 +395,6 @@ func cbHasAffectStr(name Combatant, aff string) bool {
 		return cb.HasAffectStr(name, aff)
 	}
 	return false
-}
-
-func cbRemoveAffect(name Combatant, skillNum int) {
-	if cb := callbacks; cb != nil && cb.RemoveAffect != nil {
-		cb.RemoveAffect(name, skillNum)
-	}
 }
 
 func cbRemoveAllAffects(name Combatant) {

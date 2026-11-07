@@ -47,6 +47,23 @@ func mobWearOffFixture(t *testing.T) (*World, *MobInstance, func() []string) {
 	return w, mob, func() []string { s := out; out = nil; return s }
 }
 
+func TestMetalskinAppliesACOnceAndWearsOffOnce(t *testing.T) {
+	w, mob, drain := mobWearOffFixture(t)
+	baseAC := mob.GetAC()
+	mob.AddAffect(engine.NewAffectDirect(spells.SpellMetalskin, engine.ApplyAC, 0, -30, engine.AFFMetalskin, "metalskin"))
+	if got := mob.GetAC(); got != baseAC-30 {
+		t.Fatalf("metalskin AC = %d, want %d", got, baseAC-30)
+	}
+
+	w.AffectUpdate()
+	if got := mob.GetAC(); got != baseAC {
+		t.Fatalf("AC after metalskin wore off = %d, want %d", got, baseAC)
+	}
+	if got := drain(); len(got) != 1 || got[0] != "Your skin softens.\r\n" {
+		t.Fatalf("metalskin wear-off = %q, want exactly one line", got)
+	}
+}
+
 // TestMobWearOffDeliveredInListOrder pins C's affect_update order: it walks
 // ch->affected newest-first (src/magic.c:435), so the most recently added
 // affect's wear-off speaks first, and the line reaches the switched body's
