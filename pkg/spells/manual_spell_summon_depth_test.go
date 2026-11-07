@@ -200,3 +200,46 @@ func TestSummonBackfireDispatchesCOutputsAndNPCRetaliation(t *testing.T) {
 		t.Fatalf("victim messages = %#v, want none on backfire", victim.messages)
 	}
 }
+
+func TestSummonSuccessCapitalizesLowercaseCasterAndSendSpellActFallback(t *testing.T) {
+	circle := &summonTestObject{vnum: CocVnum, timer: 2}
+	caster := &mockSpellsChar{name: "a high priest", npc: true, level: combat.LVL_IMMORT, roomVNum: 1001, position: int(PosStanding)}
+	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, position: int(PosStanding)}
+	world := &summonBackfireWorld{
+		summonTestWorld: summonTestWorld{
+			items: []interface{}{circle},
+			rooms: map[int]*parser.Room{
+				1001: {VNum: 1001, Name: "Caster Room", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
+				1002: {VNum: 1002, Name: "Victim Room"},
+			},
+		},
+		players: map[int][]interface{}{
+			1001: {caster},
+			1002: {victim},
+		},
+	}
+
+	oldSaveRoll := magSummonSaveRoll
+	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
+
+	ExecuteManualSpell(SpellSummon, combat.LVL_IMMORT, caster, victim, nil, "", world)
+	if got, want := victim.messages, []string{"A high priest has summoned you!\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("victim messages = %#v, want %#v", got, want)
+	}
+
+	// Unnamed caster fallback in sendAct ("someone" -> "Someone").
+	unnamedVictim := &mockSpellsChar{name: "Target", position: int(PosStanding)}
+	sendAct("$n has summoned you!\r\n", struct{}{}, nil, unnamedVictim, nil)
+	if got, want := unnamedVictim.messages, []string{"Someone has summoned you!\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("unnamed sendAct messages = %#v, want %#v", got, want)
+	}
+
+	// sendSpellActToCaster fallback without a World renderer capitalizes $p.
+	flaskCaster := &mockSpellsChar{name: "Caster"}
+	chalice := &alterObjFixture{typ: 17, weight: 1}
+	sendSpellActToCaster("$p is filled.", flaskCaster, nil, chalice, nil)
+	if got, want := flaskCaster.messages, []string{"A test object is filled.\r\n"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("sendSpellActToCaster fallback messages = %#v, want %#v", got, want)
+	}
+}

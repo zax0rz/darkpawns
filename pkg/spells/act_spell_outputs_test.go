@@ -58,7 +58,7 @@ func TestCastEnchantOutputBranches(t *testing.T) {
 			obj := &enchantOutputObject{identifyOutputObject: identifyOutputObject{typeFlag: tc.objType, short: tc.shortDesc}}
 			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", nil)
 
-			want := tc.shortDesc + " glows " + tc.color + ".\r\n"
+			want := capitalizeActMessage(tc.shortDesc) + " glows " + tc.color + ".\r\n"
 			if got := strings.Join(caster.messages, ""); got != want {
 				t.Fatalf("enchant output = %q, want exact C bytes %q", got, want)
 			}
@@ -553,7 +553,7 @@ func TestCastEnchantAlignThresholds(t *testing.T) {
 			obj := &enchantOutputObject{identifyOutputObject: identifyOutputObject{typeFlag: tc.objType, short: tc.shortDesc}}
 			ExecuteManualSpell(tc.spell, caster.level, caster, nil, obj, "", nil)
 
-			want := tc.shortDesc + " glows " + tc.color + ".\r\n"
+			want := capitalizeActMessage(tc.shortDesc) + " glows " + tc.color + ".\r\n"
 			if got := strings.Join(caster.messages, ""); got != want {
 				t.Fatalf("enchant output = %q, want exact C bytes %q", got, want)
 			}

@@ -27,7 +27,7 @@ detect-poison-depth	spell.detect-poison-target-output	Okay.	1,2,3,5,8
 energy-drain-skill-message-miss-depth	spell.energy-drain.message-miss	Okay.	1,2,3,5,8
 exits-immortal	exits.immortal-vnums	Obvious exits:	1,2,3,5,8
 force-mob-flee	force.npc-command-interpreter	A guard trainee panics, and attempts to flee!	1
-identify-scroll-depth	spell.identify-scroll-potion-output	Okay.	1
+identify-scroll-depth	spell.identify-scroll-potion-output	This WAND casts:  invisibility	1
 lua-nested-writeback	lua.nested-writeback-slot	A guard trainee leaves north.	1
 meteor-swarm-message-miss-attacker-depth	fightmsg.41.meteor-swarm-miss-attacker	Your incantation brings the heavens down upon your victims!	1,2,3,5,8
 mp-bribe-cityguard-refusal	give.gold-mob-bribe-dispatch	An Amber cityguard says, 'Are you trying to bribe me?  That's against the law you know...'	1
@@ -147,3 +147,4 @@ spellmatrix-world-wand-smokescreen-live-depth	spell.smokescreen.matrix-world-wan
 spellmatrix-world-wand-soul-leech-live-depth	spell.soul-leech.matrix-world-wand-live	You feel infused with power as you leech ItemPeer's soul.	1,2,3,5,8
 spellmatrix-world-staff-dispel-evil-depth	spell.dispel-evil.matrix-world-staff	ItemMage shivers and suffers from his evilness!	1
 spellmatrix-world-staff-earthquake-live-depth	spell.earthquake.matrix-world-staff-live	You gesture and the earth begins to shake all around you!	1
+spellmatrix-world-wand-create-water-depth	spell.create-water.matrix-world-wand	A golden chalice is filled.	1,2,3,5,8

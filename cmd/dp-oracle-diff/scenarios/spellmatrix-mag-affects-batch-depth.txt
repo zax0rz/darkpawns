@@ -145,9 +145,13 @@ cast 'globe of invulnerability' AffectMage
 score
 cast 'lesser perception' AffectMage
 ~dpclock pulse 20
+stat AffectMage
+affects
 score
 cast 'greater perception' AffectMage
 ~dpclock pulse 20
+stat AffectMage
+affects
 score
 cast 'adrenaline boost' AffectMage
 ~dpclock pulse 20
