@@ -93,15 +93,17 @@ func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 		return true
 	}
 
-	// Command dispatch checks each spell's minimum position. Native special
-	// procedures enter call_magic() directly, whose only position gate is the
-	// C sitting check; resting/fighting/standing casters are accepted there.
-	if fromSpecial {
-		type poser interface{ GetPosition() int }
-		if p, ok := caster.(poser); ok && p.GetPosition() == int(PosSitting) {
-			return false
+	// C call_magic()'s only position gate is the sitting refusal
+	// (src/spell_parser.c:431-434). The per-spell minimum position belongs to
+	// do_cast's own command switch (src/spell_parser.c:855-870, mirrored by
+	// Session.checkCastPosition) and was never applied to a wand, staff, scroll,
+	// potion or native special. Applying it here refused every later use once the
+	// caster entered combat — which is exactly when a wand's spell is most
+	// likely to be used (DP-1481 shape 4).
+	if p, ok := caster.(interface{ GetPosition() int }); ok && p.GetPosition() == int(PosSitting) {
+		if s, ok := caster.(interface{ SendMessage(string) }); ok {
+			s.SendMessage("You cannot do this sitting!\r\n")
 		}
-	} else if !checkPosition(caster, si) {
 		return false
 	}
 

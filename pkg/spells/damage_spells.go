@@ -316,6 +316,30 @@ type spellDeathPipeline interface {
 	HandleDeath(victim, killer combat.Combatant, attackType int)
 }
 
+// enrollDamagePair registers C damage()'s set_fighting pair with the fight
+// engine, whose combatOrder is the runtime twin of C's combat_list that
+// violence_update walks (src/fight.c:1408, 1443-1445). EnterDamageFighting
+// copies only the FIGHTING fields, so a damage seam that stopped there left the
+// pair out of the engine and no round was ever run — every staff, wand, scroll
+// and directly cast damage spell (DP-1481 shape 2). The post-damage entry is
+// preferred because it leaves the victim's pre-combat position in charge of
+// enrolment, exactly as C's set_fighting gates do; the ordinary opener is the
+// fallback for a world that predates it. An already-enrolled pair is expected
+// (a mob breathing mid-melee) and non-fatal.
+func enrollDamagePair(world interface{}, ch, victim combat.Combatant) {
+	if enroller, ok := world.(interface {
+		StartCombatAfterDamage(combat.Combatant, combat.Combatant) error
+	}); ok {
+		_ = enroller.StartCombatAfterDamage(ch, victim)
+		return
+	}
+	if starter, ok := world.(interface {
+		StartCombat(combat.Combatant, combat.Combatant) error
+	}); ok {
+		_ = starter.StartCombat(ch, victim)
+	}
+}
+
 // inflictDamage applies spell damage and, on a lethal blow, drives the death
 // pipeline — mirroring the melee/skill damage tail (World.doDamage /
 // World.DoSpellDamage) exactly: shared damage() modifier block → apply damage →
@@ -371,6 +395,8 @@ func inflictDamage(ch, victim interface{}, dam, attackType int, world interface{
 					_ = err
 				}
 			}
+		} else if !isBreathSpell(attackType) {
+			enrollDamagePair(world, chCombat, victCombat)
 		}
 		// Shared damage() modifier block: sanctuary, protect evil/good,
 		// race-hate, the 3000 cap, and immortal invulnerability (DP-1025).

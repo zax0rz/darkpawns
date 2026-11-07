@@ -145,9 +145,18 @@ func (w *World) DoSpellDamage(attacker, victim any, dam int, skill string) bool 
 		return w.ApplySkillDamage(attacker, victim, dam, skillToAttackType(skill))
 	}
 	attackType := skillToAttackType(skill)
-	return combat.TakeDamageAfterGate(killer, victimC, dam, attackType, func() {
+	dealt := combat.TakeDamageAfterGate(killer, victimC, dam, attackType, func() {
 		w.HandleDeath(victimC, killer, attackType)
 	})
+	// C's damage() calls set_fighting on both sides before applying the amount
+	// (src/fight.c:1408, 1443-1445), which is what puts them on combat_list for
+	// violence_update. TakeDamageAfterGate fills only the FIGHTING fields, so an
+	// area spell (hellfire, meteor swarm) left the fight out of the engine and
+	// no round was ever run (DP-1481 shape 2).
+	if w.combatEngine != nil {
+		_ = combat.EnrollAfterDamage(w.combatEngine, killer, victimC)
+	}
+	return dealt
 }
 
 // ApplySkillDamage is DoSpellDamage for a caller that has already asked

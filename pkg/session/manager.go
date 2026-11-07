@@ -653,6 +653,14 @@ func (m *Manager) SetCombatMessageFunc() error {
 		cb = &combat.GameCallbacks{}
 	}
 	cb.Broadcast = broadcast
+	// BroadcastPerReceiver renders act() text per recipient so C's PERS()
+	// masking applies: an actor the recipient cannot see is named "someone"
+	// (src/comm.c act(); DP-1481 shape 3).
+	cb.BroadcastPerReceiver = func(room int, render func(combat.Combatant) string, exclude []combat.Combatant) {
+		for _, s := range m.combatAudience(room, exclude) {
+			enqueueCombatMessage(s, render(s.combatBody()))
+		}
+	}
 	cb.SendToChar = sendToChar
 	cb.SendText = func(body combat.Combatant, message string) {
 		if s := m.combatSession(body); s != nil {

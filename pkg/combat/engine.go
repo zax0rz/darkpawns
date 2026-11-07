@@ -538,6 +538,25 @@ func (ce *CombatEngine) removeFighterLocked(body Combatant) {
 	}
 }
 
+// Enrolled reports whether body is on the engine's combat list (C's
+// combat_list), as opposed to merely carrying a FIGHTING field. The two differ
+// whenever a damage seam copies set_fighting's fields without enrolling the
+// pair, which is exactly the DP-1481 shape-2 failure; damage-seam tests need
+// to tell them apart.
+func (ce *CombatEngine) Enrolled(body Combatant) bool {
+	if body == nil {
+		return false
+	}
+	ce.mu.RLock()
+	defer ce.mu.RUnlock()
+	for _, fighter := range ce.combatOrder {
+		if fighter == body {
+			return true
+		}
+	}
+	return false
+}
+
 // IsFighting checks if a character is in combat
 func (ce *CombatEngine) IsFighting(body Combatant) bool {
 	if !ValidBody(body) {

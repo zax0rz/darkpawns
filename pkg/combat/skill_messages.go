@@ -131,8 +131,11 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 
 		chSex := cbGetSex(ch)
 		victimSex := cbGetSex(victim)
-		render := func(message string) string {
-			rendered := replaceMessageTokens(message, ch.GetName(), victim.GetName(), "", "", chSex, victimSex)
+		// C's skill_message acts render per recipient through PERS()
+		// (fight.c:1039-1090): the actor is named only when the recipient can
+		// see it, else "someone" (DP-1481 shape 3).
+		render := func(message string, to Combatant) string {
+			rendered := replaceMessageTokens(message, persName(ch, to), persName(victim, to), "", "", chSex, victimSex)
 			return strings.ReplaceAll(rendered, "$p", cbWeaponDescription(ch))
 		}
 		sendColored := func(name Combatant, code, message string, toSleep bool) {
@@ -143,11 +146,13 @@ func InitFightMessages(cb *GameCallbacks, messages FightMessages) {
 				colored && cbGetColorLevel(name) >= colorLevelCMP)
 		}
 
-		if action.Room != "" && cb.Broadcast != nil {
-			cb.Broadcast(roomVNum, render(action.Room), []Combatant{ch, victim})
+		if action.Room != "" {
+			cbBroadcastPerReceiver(roomVNum, func(to Combatant) string {
+				return render(action.Room, to)
+			}, []Combatant{ch, victim})
 		}
-		sendColored(ch, skillColorYellow, render(action.Attacker), false)
-		sendColored(victim, skillColorRed, render(action.Victim), victimToSleep)
+		sendColored(ch, skillColorYellow, render(action.Attacker, ch), false)
+		sendColored(victim, skillColorRed, render(action.Victim, victim), victimToSleep)
 		return true
 	}
 }
