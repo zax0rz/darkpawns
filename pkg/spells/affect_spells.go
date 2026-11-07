@@ -2455,7 +2455,13 @@ func castIdentifyObject(level int, ch, ovict interface{}) {
 		itemType = tf.GetTypeFlag()
 	}
 	typeName := identifyItemTypeName(itemType)
-	sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
+	if itemType == 3 || itemType == 4 { // ITEM_WAND, ITEM_STAFF
+		// C hard-codes CASTING_EQ for both, with a reversed terminator,
+		// instead of sprinttype(item_types) (src/spells.c:491-492).
+		sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: CASTING_EQ\n\r", objectName))
+	} else {
+		sendToCaster(ch, fmt.Sprintf("Object '%s', Item type: %s\r\n", objectName, typeName))
+	}
 
 	// C's object bitvector is not exposed by the Go object interface yet; the
 	// parsed object format has no corresponding field, so this is NOBITS for
