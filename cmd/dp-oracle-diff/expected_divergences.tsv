@@ -5,9 +5,6 @@ postmaster-mail-login-notices-depth	entry.tsv	entry.reconnect-mail-notice	exclud
 postmaster-mail-login-notices-depth	entry.tsv	entry.world-entry-mail-notice	excluded	
 postmaster-mail-login-notices-depth	mail.tsv	mail.send-store-inert-login-notices	excluded	
 postmaster-saved-recipient-depth	mail.tsv	mail.send-store-inert-saved-recipient	excluded	
-spellmatrix-damage-potion-group-04-depth	cast.tsv	spell.dispel-good.matrix-potion-self	blocked	
-spellmatrix-damage-potion-group-04-depth	cast.tsv	spell.magic-missile.matrix-potion-self	blocked	
-spellmatrix-damage-potion-group-04-depth	cast.tsv	spell.shocking-grasp.matrix-potion-self	blocked	
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.cell-adjustment.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.divine-intervention.matrix-potion-olc	blocked	run-varying
 spellmatrix-potion-olc-03-depth	cast.tsv	spell.gate.matrix-potion-olc	blocked	run-varying
@@ -32,11 +29,6 @@ spellmatrix-scroll-olc-03-depth	cast.tsv	spell.mind-bar.matrix-scroll-olc	blocke
 spellmatrix-scroll-olc-03-depth	cast.tsv	spell.mindsight.matrix-scroll-olc	blocked	
 spellmatrix-scroll-olc-03-depth	cast.tsv	spell.mirror-image.matrix-scroll-olc	blocked	
 spellmatrix-scroll-olc-03-depth	cast.tsv	spell.smokescreen.matrix-scroll-olc	blocked	
-spellmatrix-staff-olc-07-depth	cast.tsv	spell.animate-dead.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-07-depth	cast.tsv	spell.dispel-good.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-07-depth	cast.tsv	spell.group-heal.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-07-depth	cast.tsv	spell.holy-shield.matrix-staff-olc	blocked	
-spellmatrix-staff-olc-07-depth	cast.tsv	spell.remove-poison.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-08-depth	cast.tsv	spell.group-recall.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-08-depth	cast.tsv	spell.lycanthropy.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-08-depth	cast.tsv	spell.mass-heal.matrix-staff-olc	blocked	run-varying
@@ -67,11 +59,6 @@ spellmatrix-staff-olc-16-depth	cast.tsv	spell.drowning.matrix-staff-olc	blocked	
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.glyph-of-summoning.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.psiblast.matrix-staff-olc	blocked	run-varying
 spellmatrix-staff-olc-16-depth	cast.tsv	spell.zen.matrix-staff-olc	blocked	run-varying
-spellmatrix-wand-olc-04-depth	cast.tsv	spell.animate-dead.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-04-depth	cast.tsv	spell.dispel-good.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-04-depth	cast.tsv	spell.sleep.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-04-depth	cast.tsv	spell.strength.matrix-wand-olc	blocked	
-spellmatrix-wand-olc-04-depth	cast.tsv	spell.summon.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.acid-blast.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.adrenaline-boost.matrix-wand-olc	blocked	
 spellmatrix-wand-olc-07-depth	cast.tsv	spell.greater-perception.matrix-wand-olc	blocked	
