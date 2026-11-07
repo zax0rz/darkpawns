@@ -60,3 +60,48 @@ func TestRunSpecialsSwitchedActorIsMobBody(t *testing.T) {
 		t.Fatalf("the special received %T %v, want the switched mob %p", actorSaw, actorSaw, mob)
 	}
 }
+
+// TestRunSpecialsSwitchedUnsupportedDoesNotTrap pins the SpecialUnsupported
+// policy (DP-1474 follow-up): an unported NPC lane must not swallow a switched
+// session's commands — including `return`, which would trap the immortal in
+// the foreign body. Unsupported is treated as a decline (R4: the block was
+// Go-invented player-visible behavior) and logged once per spec name.
+func TestRunSpecialsSwitchedUnsupportedDoesNotTrap(t *testing.T) {
+	w, err := game.NewWorld(&parser.World{
+		Rooms: []parser.Room{{VNum: 1000, Name: "Void"}, {VNum: 1001, Name: "Hall"}},
+		Mobs:  []parser.Mob{{VNum: 99001, Keywords: "generic", ShortDesc: "a generic", Level: 20}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(w.StopAITicker)
+	manager := newTestManager(t, w, nil)
+	owner := game.NewPlayer(1, "Switchgod", 1000)
+	owner.SetPosition(combat.PosStanding)
+	if err := w.AddPlayer(owner); err != nil {
+		t.Fatal(err)
+	}
+	mob, err := w.SpawnMob(99001, 1001)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// A legacy-only special whose name is absent from the NPC decline tables:
+	// the dispatch reports SpecialUnsupported for every NPC command.
+	game.RegisterSpec("dp1474-unsupported-probe", func(_ *game.World, _ *game.Player, _ *game.MobInstance, _, _ string) bool {
+		return false
+	})
+	game.RoomSpecAssign[1001] = "dp1474-unsupported-probe"
+	t.Cleanup(func() {
+		delete(game.RoomSpecAssign, 1001)
+		delete(game.SpecRegistry, "dp1474-unsupported-probe")
+	})
+
+	s := &Session{manager: manager, player: owner, isSwitched: true, switchedMob: mob}
+	if runSpecials(s, "return", nil, "") {
+		t.Fatal("an unported NPC lane consumed `return`; a switched immortal is trapped in the body")
+	}
+	if runSpecials(s, "south", nil, "") {
+		t.Fatal("an unported NPC lane consumed `south`; the command must reach its handler")
+	}
+}

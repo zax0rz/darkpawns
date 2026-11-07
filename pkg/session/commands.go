@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -919,6 +920,23 @@ func specialScriptText(name string, args []string, rawArgs string) string {
 	return commandInputLine(name, args)
 }
 
+// warnedUnsupportedSpecials logs each spec name's missing NPC lane once per
+// process: the gap must stay visible without flooding the log (DP-1474).
+var (
+	warnedUnsupportedMu   sync.Mutex
+	warnedUnsupportedSpec = map[string]bool{}
+)
+
+func warnUnsupportedSpecialOnce(specName string) {
+	warnedUnsupportedMu.Lock()
+	defer warnedUnsupportedMu.Unlock()
+	if warnedUnsupportedSpec[specName] {
+		return
+	}
+	warnedUnsupportedSpec[specName] = true
+	slog.Warn("special has no NPC lane; a switched body falls through to the command handler", "spec", specName)
+}
+
 // runSpecials mirrors C's special() (src/interpreter.c:1407-1481) for one
 // resolved command and reports whether it consumed the command. name is
 // CMD_NAME — the resolved command name — and arg is the tokenized remainder,
@@ -976,20 +994,26 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 		actorRef = &scripting.CharRef{ID: actorPlayer.ID}
 	}
 	// C's special() TRUE consumes the command. A player body keeps the legacy
-	// lane's skip semantics (an unassigned handler is not a block); a mobile
-	// body blocks on SpecialUnsupported so an unported NPC lane never silently
-	// becomes parity (the CharacterCommandUnsupported convention).
-	specialConsumes := func(result game.SpecialResult) bool {
-		if actorIsNPC {
-			return result != game.SpecialDeclined
+	// lane's skip semantics (an unassigned handler is not a block). For a
+	// mobile body SpecialUnsupported must not consume either: an unported NPC
+	// lane would otherwise swallow every command of a switched session —
+	// including `return`, trapping the immortal in the body. It is treated as
+	// a decline and logged once per spec name so the gap stays visible; the
+	// census exposes unported NPC lanes as divergences (DP-1474 follow-up).
+	specialConsumes := func(specName string, result game.SpecialResult) bool {
+		if result == game.SpecialHandled {
+			return true
 		}
-		return result == game.SpecialHandled
+		if result == game.SpecialUnsupported && actorIsNPC {
+			warnUnsupportedSpecialOnce(specName)
+		}
+		return false
 	}
 
 	if roomVNum > 0 {
 		// 1. special in room?
 		if specName, assigned := game.GetRoomSpecName(roomVNum); assigned {
-			if specialConsumes(game.DispatchCharacterSpecial(specName, w, specialCtx, nil, name, arg)) {
+			if specialConsumes(specName, game.DispatchCharacterSpecial(specName, w, specialCtx, nil, name, arg)) {
 				return true
 			}
 		}
@@ -1006,7 +1030,7 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 	// worn object's special and then its oncmd script.
 	for _, item := range wornList {
 		if specName, assigned := game.GetObjSpecName(item.VNum); assigned {
-			if specialConsumes(game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
+			if specialConsumes(specName, game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
 				return true
 			}
 		}
@@ -1025,7 +1049,7 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 			continue
 		}
 		if specName, assigned := game.GetObjSpecName(item.VNum); assigned {
-			if specialConsumes(game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
+			if specialConsumes(specName, game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
 				return true
 			}
 		}
@@ -1056,7 +1080,7 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 				}
 			}
 			if assigned {
-				if specialConsumes(game.DispatchCharacterSpecial(specName, w, specialCtx, mob, name, arg)) {
+				if specialConsumes(specName, game.DispatchCharacterSpecial(specName, w, specialCtx, mob, name, arg)) {
 					return true
 				}
 			}
@@ -1085,7 +1109,7 @@ func runSpecials(s *Session, name string, args []string, rawArgs string) bool {
 				continue
 			}
 			if specName, assigned := game.GetObjSpecName(item.VNum); assigned {
-				if specialConsumes(game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
+				if specialConsumes(specName, game.DispatchCharacterObjectSpecial(specName, w, specialCtx, item, name, arg)) {
 					return true
 				}
 			}
