@@ -162,10 +162,17 @@ func (w *World) WireCombatCallbacks() *combat.GameCallbacks {
 		return false
 	}
 
+	cb.RemoveAffectBit = func(name combat.Combatant, aff int) {
+		if p, ok := combatPlayer(name); ok {
+			p.RemoveAffectBit(aff)
+		}
+		if m := combatMob(name); m != nil {
+			m.RemoveAffected(aff)
+		}
+	}
+
 	cb.RemoveAffect = func(name combat.Combatant, skillNum int) {
 		if p, ok := combatPlayer(name); ok {
-			// fight.c passes AFF_HIDE here and clears the bitmask directly;
-			// RemoveAffectBySpell alone only removes timed spell records.
 			p.RemoveAffectBit(skillNum)
 			p.RemoveAffectBySpell(skillNum)
 		}
