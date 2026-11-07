@@ -218,13 +218,21 @@ func dreamLevelFlavor(ch DreamContext, result *DreamResult) {
 //
 // Each entry has a 1/16 chance of being selected.
 // On selection: send dream message, teleport, remove AFF_DREAM.
+//
+// C evaluates number(0,15) first in BOTH branches (src/dream.c:195 and 208),
+// so the two conditions are drawn in order: the first draw always happens, and
+// whenever the first branch does not fire, the second draw happens too — even
+// when subcmd or dtravel[i].subcmd makes a branch unable to fire. A non-firing
+// entry therefore consumes two draws, whatever subcmd is, and the shared
+// per-hour stream stays in step (R3). Checking the flags before drawing would
+// consume one draw for an eligible entry and none for the rest.
 func DreamTravelFn(ch DreamContext, subcmd int) {
 	for i := 0; i <= NumDreams; i++ {
 		dt := DreamTravelTable[i]
 		// Source: dream.c lines 195–206 (normal) and 208–219 (bad)
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if subcmd == 0 && dt.Subcmd == 0 && dprng.Number(0, 15) == 0 {
+		firstDraw := dprng.Number(0, 15)
+		if firstDraw == 0 && subcmd == 0 && dt.Subcmd == 0 {
 			ch.SendToChar(fmt.Sprintf("You have a dream %s \r\n", dt.Descrip))
 			ch.SendToRoom("The sleeping body of $n fades from existence.")
 			ch.MoveToRoom(dt.RoomNum)
@@ -233,8 +241,8 @@ func DreamTravelFn(ch DreamContext, subcmd int) {
 			return
 		}
 		// #nosec G404 — game RNG, not cryptographic
-		// #nosec G404
-		if subcmd == 1 && dprng.Number(0, 15) == 0 {
+		secondDraw := dprng.Number(0, 15)
+		if secondDraw == 0 && subcmd != 0 {
 			ch.SendToChar(fmt.Sprintf("You have a dream %s \r\n", dt.Descrip))
 			ch.SendToRoom("The sleeping body of $n fades from existence.")
 			ch.MoveToRoom(dt.RoomNum)
