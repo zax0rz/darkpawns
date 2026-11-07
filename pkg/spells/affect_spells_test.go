@@ -14,6 +14,8 @@ import (
 // mockSpellsChar satisfies all local interfaces in affect_spells.go
 type mockSpellsChar struct {
 	name          string
+	title         string
+	description   string
 	npc           bool
 	level         int
 	alignment     int
@@ -36,9 +38,11 @@ type mockSpellsChar struct {
 	inventory     *mockInventory
 }
 
-func (m *mockSpellsChar) GetName() string  { return m.name }
-func (m *mockSpellsChar) IsNPC() bool      { return m.npc }
-func (m *mockSpellsChar) GetFlags() uint64 { return m.flags }
+func (m *mockSpellsChar) GetName() string        { return m.name }
+func (m *mockSpellsChar) GetTitle() string       { return m.title }
+func (m *mockSpellsChar) GetDescription() string { return m.description }
+func (m *mockSpellsChar) IsNPC() bool            { return m.npc }
+func (m *mockSpellsChar) GetFlags() uint64       { return m.flags }
 func (m *mockSpellsChar) HasSpellAffect(n int) bool {
 	for _, aff := range m.activeAffects {
 		if aff.SpellID == n {

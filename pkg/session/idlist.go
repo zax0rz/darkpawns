@@ -3,8 +3,8 @@ package session
 import (
 	"fmt"
 	"io"
-	"strings"
 
+	"github.com/zax0rz/darkpawns/pkg/game"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 	"github.com/zax0rz/darkpawns/pkg/spells"
 )
@@ -75,24 +75,11 @@ func idlistMobRaceName(value int) string {
 // file format does not encode one; do_idlist therefore receives four zero
 // words for "Item will give the following abilities".
 func idlistBitArray(words [4]int, names []string) string {
-	var out strings.Builder
-	for word := range words {
-		for bit := 0; bit < 32; bit++ {
-			if words[word]&(1<<uint(bit)) != 0 {
-				index := word*32 + bit
-				name := "UNDEFINED"
-				if index < len(names) {
-					name = names[index]
-				}
-				out.WriteString(name)
-				out.WriteByte(' ')
-			}
-		}
+	flagWords := make([]uint32, len(words))
+	for i, word := range words {
+		flagWords[i] = uint32(word) // #nosec G115 -- SprintbitArray sign-extends this C int word.
 	}
-	if out.Len() == 0 {
-		return "NOBITS "
-	}
-	return out.String()
+	return game.SprintbitArray(flagWords, names, len(flagWords))
 }
 
 func idlistSpellName(value int) string {

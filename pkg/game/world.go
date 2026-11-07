@@ -1029,13 +1029,39 @@ func (w *World) SpawnMobQuiet(vnum int, roomVNum int) (*MobInstance, error) {
 	return w.spawnMobQuiet(vnum, roomVNum)
 }
 
+// huntingStartRoom is real_room(18201): create_mobile's hunting arm drops the
+// summoned mobile at the temple in Kir-Oshi (src/new_cmds2.c:611).
+const huntingStartRoom = 18201
+
 // SpawnMobWithLevelI creates a mob with overridden level, returns interface{} for spell layer.
 func (w *World) SpawnMobWithLevelI(vnum int, roomVNum int, level int) (any, error) {
-	mob, err := w.SpawnMob(vnum, roomVNum)
+	mob, err := w.CreateMobileI(nil, vnum, roomVNum, level, false)
 	if err != nil {
 		return nil, err
 	}
-	mob.SetLevel(level)
+	return mob, nil
+}
+
+// CreateMobileI is the one shared Go path for C's create_mobile
+// (src/new_cmds2.c:588-620): read_mobile, then the per-instance level stats
+// (GET_LEVEL, GET_EXP 0, damroll, NDD, SDD, hitroll, AC, max hit and hit,
+// carry counts), then char_to_room. A hunting spawn lands at room 18201 and
+// set_hunting()s the caster (src/new_cmds2.c:609-613); every other spawn lands
+// in the given room (src/new_cmds2.c:615-618). Routing every caller through
+// here is what keeps the scaling from silently lapsing on a new spawn site
+// (the DP-1487 class: the spell spawn paths never applied it).
+func (w *World) CreateMobileI(ch any, vnum, roomVNum, level int, hunting bool) (*MobInstance, error) {
+	mob, err := w.spawnMob(vnum, roomVNum)
+	if err != nil {
+		return nil, err
+	}
+	mob.ConfigureCreatedMobile(level)
+	if hunting {
+		mob.SetRoom(huntingStartRoom)
+		if hunter, ok := ch.(Actor); ok {
+			w.SetHuntingTarget(mob, hunter)
+		}
+	}
 	return mob, nil
 }
 

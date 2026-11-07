@@ -8,6 +8,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/dprng"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
+	"github.com/zax0rz/darkpawns/pkg/common"
 	"github.com/zax0rz/darkpawns/pkg/engine"
 	"github.com/zax0rz/darkpawns/pkg/parser"
 )
@@ -2555,32 +2556,11 @@ var identifyMobRaces = []string{
 }
 
 func identifyBits(flags [4]int, names []string) string {
-	result := ""
-	for word, flag := range flags {
-		bits := identifyFlagWord(flag)
-		for bit := 0; bits != 0; bit++ {
-			if bits&1 != 0 {
-				index := word*32 + bit
-				if index < len(names) && names[index] != "" {
-					result += names[index] + " "
-				} else {
-					result += "UNDEFINED "
-				}
-			}
-			bits >>= 1
-		}
+	words := make([]uint32, len(flags))
+	for i, flag := range flags {
+		words[i] = uint32(flag) // #nosec G115 -- SprintbitArray sign-extends this C int word.
 	}
-	if result == "" {
-		return "NOBITS "
-	}
-	return result
-}
-
-func identifyFlagWord(flag int) uint32 {
-	if flag < 0 || uint64(flag) > uint64(^uint32(0)) {
-		return 0
-	}
-	return uint32(flag)
+	return common.SprintbitArray(words, names, len(words))
 }
 
 func identifyItemTypeName(itemType int) string {
@@ -3863,6 +3843,7 @@ func castLocateObject(level int, ch, ovict, world interface{}) {
 
 // castMirrorImage creates a clone of the caster.
 func castMirrorImage(level int, ch, world interface{}) {
+	_ = level
 	if ch == nil {
 		return
 	}
@@ -3877,35 +3858,58 @@ func castMirrorImage(level int, ch, world interface{}) {
 	type mobSpawner interface {
 		SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error)
 	}
-	if ms, ok := world.(mobSpawner); ok {
-		// C spawns the clone at a literal level 1 regardless of the cast
-		// level: create_mobile(ch, MOB_CLONE, 1, FALSE)
-		// (src/spells.c:1136) — a wand or scroll of mirror image divides the
-		// user into level-1 images (DP-1458).
-		mob, err := ms.SpawnMobWithLevelI(69, roomVNum, 1) // MOB_CLONE = 69
-		if err != nil {
-			sendToCaster(ch, "You fail to divide yourself.\r\n")
-			return
-		}
+	ms, ok := world.(mobSpawner)
+	if !ok {
+		return
+	}
 
-		// Name the clone after the caster
-		type named interface{ GetName() string }
-		if n, ok := ch.(named); ok {
-			type nameSetter interface{ SetName(string) }
-			if ns, ok := mob.(nameSetter); ok {
-				ns.SetName(n.GetName())
-			}
-		}
+	// src/spells.c:1136 with MOB_CLONE = 69 (src/spells.c:1130). The clone is
+	// created at a literal level 1 — a wand or scroll of mirror image divides
+	// the user into level-1 images (DP-1458) — and it is created BEFORE the
+	// guards, exactly as C does.
+	clone, err := ms.SpawnMobWithLevelI(69, roomVNum, 1)
+	if err != nil || clone == nil {
+		// src/spells.c:1138: (NULL == ch) || (NULL == clone) — a silent return.
+		// C has no failure message here; the port invented one (R4).
+		return
+	}
 
-		sendToCaster(ch, "You divide yourself in two!\r\n")
-		type roomActer interface {
-			SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
-		}
-		if acter, ok := world.(roomActer); ok {
-			// C src/spells.c:1153 uses act(..., TRUE, ..., TO_ROOM), so retain
-			// the canonical act substitutions and invisibility filtering.
-			acter.SpellActToRoom(ch, nil, "$n divides $mself in two!", true)
-		}
+	// src/spells.c:1141-1143: C returns silently when the caster's name, title
+	// or description is NULL. Go carries C's NULL as the empty string (a fresh
+	// character's Description is "" until the editor sets it; pkg/session
+	// models the same present-iff-non-empty rule, menu.go:244-249).
+	type named interface{ GetName() string }
+	type titled interface{ GetTitle() string }
+	type described interface{ GetDescription() string }
+	n, nOK := ch.(named)
+	t, tOK := ch.(titled)
+	d, dOK := ch.(described)
+	if !nOK || !tOK || !dOK || n.GetName() == "" || t.GetTitle() == "" || d.GetDescription() == "" {
+		return
+	}
+
+	// src/spells.c:1145-1150: copy the caster's identity onto the clone.
+	if cc, ok := world.(interface {
+		ConfigureMirrorClone(clone, caster interface{})
+	}); ok {
+		cc.ConfigureMirrorClone(clone, ch)
+	}
+
+	sendToCaster(ch, "You divide yourself in two!\r\n")
+	type roomActer interface {
+		SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool
+	}
+	if acter, ok := world.(roomActer); ok {
+		// C src/spells.c:1153 uses act(..., TRUE, ..., TO_ROOM), so retain
+		// the canonical act substitutions and invisibility filtering.
+		acter.SpellActToRoom(ch, nil, "$n divides $mself in two!", true)
+	}
+
+	// src/spells.c:1155-1162: point mob memory and hunting from caster to clone.
+	if mh, ok := world.(interface {
+		MirrorImageHandoff(clone, caster interface{})
+	}); ok {
+		mh.MirrorImageHandoff(clone, ch)
 	}
 }
 
