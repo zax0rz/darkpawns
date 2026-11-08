@@ -1,0 +1,84 @@
+# depth-case: mob.identifier-give-switched-site-live
+# C-first witness for the three identifier output sites DP-1502 lists
+# (src/spec_procs2.c:1260 and :1269): they are the identifier's OWN view
+# (TO_CHAR to the mobile, TO_VICT where the mobile is the victim), so no
+# ordinary player sees them. This vehicle switches the God into the
+# identifier (mob 8087 "Ferrenx", src/spec_assign.c:~383) so its descriptor
+# receives "Finally looking up, you give $p back to $N." and "You touch $n
+# gently on the forehead.", while the mortal peer performs the paid give
+# that reaches the success arm (src/spec_procs2.c:1231-1276).
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs2.c:1225-1276;
+# switch is src/act.wizard.c do_switch.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8087 1 8116 80
+spawn-obj 8010 1 8116 80
+replace-room-exits 8116 none
+
+[setup:oracle]
+IdentifierGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+IdentifierGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+IdentifierSuccess
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+IdentifierSuccess
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8116
+teleport IdentifierSuccess 8116
+set IdentifierSuccess gold 1000
+switch Ferrenx
+
+[probe]
+send:peer get bread
+send:peer give bread Ferrenx

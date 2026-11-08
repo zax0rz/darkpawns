@@ -1,0 +1,86 @@
+# depth-case: mob.thief-notice-acts-site-live
+# C-first witness for the notice arm of npc_steal as SPECIAL(thief) reaches
+# it (DP-1502): src/spec_procs.c:312-314 prints TO_VICT "You discover that $n
+# has $s hands in your wallet." and TO_NOTVICT "$n tries to steal gold from
+# $N." when the victim is AWAKE and number(0, GET_LEVEL(thief)) == 0.
+# spec-proc-thief.txt runs at the prototype level where that draw rarely
+# lands on 0; this vehicle sets the vagabond (mob 18218, src/spec_assign.c:405)
+# to level 1 so the inner gate passes half the time under DP_SEED=1, and pads
+# 50 mobile ticks (PULSE_MOBILE = 40, src/structs.h:633). The outer 1-in-5
+# attempt gate (src/spec_procs.c:398) is unchanged.
+# C path: src/mobact.c:68-93 -> src/spec_procs.c:389-406 -> :300-327.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18218 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+Thiefgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Thiefgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Thiefpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Thiefpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Thiefpeer 8105
+set Thiefpeer gold 1000
+set vagabond level 1
+
+[probe]
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
