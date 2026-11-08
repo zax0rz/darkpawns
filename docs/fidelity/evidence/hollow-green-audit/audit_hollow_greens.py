@@ -475,6 +475,11 @@ def is_distinctive(frag):
     return len(frag) >= 8 and " " in frag
 
 
+def claimed_refusal_fragments(corpus):
+    """Refusal fragments named (quoted) by a scenario's collective row text."""
+    return {frag.lower() for frag in REFUSAL_FRAGMENTS if frag.lower() in corpus}
+
+
 def is_actor(role):
     return role is None or role == "actor"
 
@@ -557,6 +562,41 @@ def main():
     snap = Snapshot(args.repo, args.census_ref)
     socials = load_socials(snap)
 
+    # Prepass: per-scenario row text, so a first probe that deliberately tests
+    # a refusal (a sibling row's claim, quoted in its case_id/notes/comments)
+    # is not misread as a setup failure.
+    scen_cache = {}
+    scen_corpus = {}
+
+    def scenario_parts(name):
+        if name not in scen_cache:
+            scen_cache[name] = parse_scenario(snap.scenario_text(name))
+        return scen_cache[name]
+
+    for rel in snap.manifest_paths():
+        text = snap.files[rel].decode("utf-8", errors="replace")
+        lines = text.split("\n")
+        header = lines[0].split("\t")
+        idx = {name: i for i, name in enumerate(header)}
+        for raw in lines[1:]:
+            if not raw.strip():
+                continue
+            f = raw.split("\t")
+            if len(f) < len(header):
+                continue
+            row = {k: (f[i] if i < len(f) else "") for k, i in idx.items()}
+            if not row.get("status", "").startswith("oracle-green"):
+                continue
+            for scen_name, _seeds in scenario_proofs(row.get("proof", "")):
+                if scen_name not in scen_corpus:
+                    scen_corpus[scen_name] = ""
+                scen_corpus[scen_name] += " " + (
+                    row.get("case_id") or "").replace("-", " ").replace(".", " ")
+                scen_corpus[scen_name] += " " + (row.get("notes") or "")
+                scen_corpus[scen_name] += " " + " ".join(scenario_parts(scen_name)[2])
+    scen_claimed = {name: claimed_refusal_fragments(c.lower())
+                    for name, c in scen_corpus.items()}
+
     suspects, unauditable = [], []
     n_rows = n_pairs = 0
 
@@ -601,7 +641,7 @@ def main():
                     })
                     continue
 
-                warmup, probe, comments = parse_scenario(snap.scenario_text(scen_name))
+                warmup, probe, comments = scenario_parts(scen_name)
                 actor_blocks = [(c, t) for c, r, t in dump if is_actor(r)]
                 all_blocks = [(c, r, t) for c, r, t in dump]
 
@@ -610,10 +650,15 @@ def main():
                 # Signal 1: warmup-refusal — the first actor probe block (the
                 # DP-1510 fingerprint: the first command that depends on the
                 # setup refuses). Refusals in later sibling probes are often
-                # the intended claim of other rows sharing the scenario.
+                # the intended claim of other rows sharing the scenario, and a
+                # first probe whose refusal any sibling row claims (quoted in
+                # its text) is a deliberate branch test, not a setup failure.
                 if warmup and actor_blocks:
                     first_cmd, first_text = actor_blocks[0]
                     hits = refusal_lines(first_text)
+                    claimed = scen_claimed.get(scen_name, set())
+                    hits = [h for h in hits
+                            if not any(c in h.lower() for c in claimed)]
                     if hits:
                         signals.append("warmup-refusal")
                         evidences.append(f"{first_cmd}: {hits[0]}")
