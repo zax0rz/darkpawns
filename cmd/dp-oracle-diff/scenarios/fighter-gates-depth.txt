@@ -1,0 +1,87 @@
+# depth-case: cutthroat.existing-affect
+# C-first witness for do_cutthroat :607 "Their throat is already slit!" (victim
+# has AFF_CUTTHROAT). The mortal peer walks to the trainee; set-mob-aff pins the
+# trainee's innate AFF_CUTTHROAT (bit 25, src/structs.h:335) and the pierce
+# dagger 8036 reaches the already-slit gate. (do_carve :126 and do_behead :237
+# are the do_* POS_FIGHTING arms; the peer's position in this lane is not
+# deterministic — it is POS_STANDING at most probe steps and only transiently
+# POS_FIGHTING — so those two stay blocked.) C path: src/new_cmds.c:603-606.
+
+[fixture]
+empty-players
+quiet-mobs
+set-mob-aff 16303 33554432
+spawn-mob 16303 1 8105 80
+spawn-obj 8036 1 8105 80
+
+[setup:oracle]
+Fggod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fggod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Fgmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Fgmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Fgmortal 'cutthroat' 75
+
+[probe:mortal]
+get dagger
+wield dagger
+cutthroat trainee
