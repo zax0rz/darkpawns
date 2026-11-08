@@ -31,3 +31,23 @@ R5c ("find one, find the class") exists for exactly this, but an agent can only 
 Duplicate implementations of one C function, where a later faithful port sits beside an earlier unfaithful one, are a signature of task-scoped AI porting without whole-codebase review.
 
 **How to test it:** search `pkg/` for other C functions with more than one Go implementation. Look for `c`-prefixed helpers like `cFName`/`cIsName` beside unprefixed ones, comments citing the same C function from two places, and the R5c audits. Then count how many of the pairs disagree. A static pass over comments of the form `C: <func>()` could build the list.
+
+## First probe, same evening
+
+Claude listed every non-test Go function in `pkg/`, `internal/` and `cmd/` (5,825 of them) and grouped them by normalized name against about 50 core C helpers (`isname`, `is_abbrev`, `is_number`, `one_argument`, `dice`, `number`, `PERS` and others). Fifteen helpers have more than one Go implementation. Most are harmless:
+- thin wrappers: the `dice`/`number` copies all call `dprng`, so draw parity is intact
+- methods on different types
+- identical copies of correct logic: two `isAbbrev`s that both match C
+
+Two more pairs repeat the `fname` shape, a wrong helper in wide use next to an exact twin (DP-1505):
+- **`isName`** (`act_movement.go`, prefix match, 17 callers) vs `cIsName` (exact, C's whole-word `isname`)
+- **`isNumber`** (`act_comm.go`, `Sscanf("%d")`) vs `cIsNumber` (`wiz_set.go`, digits only, as C's `is_number`)
+
+So far that's three disagreeing pairs out of fifteen duplicated helpers. This is a rough name-matching probe, not the full inventory.
+
+**Line counts on the same commit:**
+- C `src/`: 73,469
+- Go non-test: 169,147
+  - `pkg/game` + `pkg/session`: about 100k
+  - non-port subsystems (admin, OLC web, settings, notify, moderation, auth, telemetry, `internal/`, `cmd/`): about 50k
+- Go tests: 199,668
