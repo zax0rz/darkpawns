@@ -1,0 +1,63 @@
+# depth-case: spell.enchant-weapon-glow-good
+# depth-case: spell.enchant-weapon-glow-evil
+# depth-case: spell.enchant-armor-glow-good
+# depth-case: spell.enchant-armor-glow-evil
+# C-first witness for the ASPELL enchant alignment glow arms, DP-1502 lists at
+# src/spells.c:647/:652 (enchant weapon, good/evil) and :858/:863 (enchant
+# armor, good/evil). The God enchants a fresh item while good, then again while
+# evil; each item must be non-magic with no existing affects. C path:
+# src/spells.c:621-656, :836-868.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Encgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Encgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 8037
+load obj 8036
+load obj 8041
+load obj 8040
+
+[probe]
+set Encgod align 1000
+get sword
+cast 'enchant weapon' sword
+~dpclock pulse 40
+get chain
+cast 'enchant armor' chain
+~dpclock pulse 40
+set Encgod align -1000
+get dagger
+cast 'enchant weapon' dagger
+~dpclock pulse 40
+get breast
+cast 'enchant armor' breast

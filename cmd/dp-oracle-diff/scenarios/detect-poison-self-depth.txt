@@ -1,0 +1,46 @@
+# depth-case: spell.detect-poison-self-healthy
+# C-first witness for do spell_detect_poison's self arm and non-food arm,
+# DP-1502 lists at src/spells.c:803 ("You feel healthy.") and :830 ("You sense
+# that it should not be consumed."). The God casts detect poison on itself
+# (healthy, no AFF_POISON) and on a non-food sword; the existing
+# detect-poison-depth covers the poisoned non-self target. C path:
+# src/spells.c:794-832.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dpself
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+
+[setup:port]
+Dpself
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8162
+load obj 8038
+
+[probe]
+cast 'detect poison' Dpself
+cast 'detect poison' backpack
