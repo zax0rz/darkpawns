@@ -1,0 +1,111 @@
+# depth-case: spell.lycanthropy.already
+# depth-case: spell.vampirism.already
+# C-first witness for the ASPELL night-creature "already" arms, DP-1502 lists
+# at src/spells.c:668 ("Already a werewolf.") and :774 ("Already a vampire.").
+# A spoken cast sets the flag on a peer and the second cast refuses; each peer
+# is targeted separately so the werewolf and vampire flags stay independent.
+# (:682/:788 "Specify a target." are not reachable from a spoken cast — a
+# no-argument TAR_CHAR cast self-targets, so victim is never NULL.) C path:
+# src/spells.c:662-791.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Ncgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ncgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:wolf]
+Ncwolf
+Y
+wolfpass
+wolfpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:wolf]
+Ncwolf
+y
+wolfpass
+wolfpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:vamp]
+Ncvamp
+Y
+vamppass
+vamppass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:vamp]
+Ncvamp
+y
+vamppass
+vamppass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Ncwolf 8162
+teleport Ncvamp 8162
+
+[probe]
+cast 'lycanthropy' Ncwolf
+~dpclock pulse 40
+cast 'lycanthropy' Ncwolf
+~dpclock pulse 40
+cast 'vampirism' Ncvamp
+~dpclock pulse 40
+cast 'vampirism' Ncvamp
