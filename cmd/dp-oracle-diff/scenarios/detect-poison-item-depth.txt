@@ -1,0 +1,52 @@
+# depth-case: spell.detect-poison-contaminated-item
+# depth-case: spell.detect-poison-default-item
+# C path: do_cast -> cast_spell -> call_magic -> spell_detect_poison
+# (src/spell_parser.c:509,879-925,1038-1110; src/spells.c:815-832).
+# A real poisoned green mushroom (vnum 16007, ITEM_FOOD value[3]=4) and an
+# ordinary dagger are loaded into inventory and inspected through registered
+# player cast dispatch. The mushroom proves the contaminated arm (src/spells.c:823,
+# $p short-description expansion); the dagger falls through to the default arm
+# (src/spells.c:830, a silent non-consumable type).
+
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 160.obj
+
+[setup:oracle]
+Poisoncheckitem
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Poisoncheckitem
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+load obj 16007
+load obj 8020
+
+[probe]
+cast 'detect poison' mushroom
+~dpclock pulse 40
+cast 'detect poison' dagger
