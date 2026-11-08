@@ -1103,9 +1103,18 @@ func CmdStrike(s SessionInterface, args []string) error {
 		return nil
 	}
 
+	// C's charmed-master gate (src/new_cmds.c:1460-1464) precedes the mount
+	// refusal: a charmed actor whose master is the target cannot strike it.
+	// charm is not mob-only — a God can charm a player, so the port must test
+	// the player's charm/master link too (combat-entry-charm-relations proves
+	// the identical hit arm).
+	if world.IsCharmedI(ch) && world.FollowingBody(ch) == target {
+		game.Act(world, false, ch, target, nil, nil,
+			"$N is just such a good friend, you simply can't strike $M.", "", game.ToChar)
+		return nil
+	}
+
 	// new_cmds.c:1466-1470 — the mount refusal precedes the roll and WAIT_STATE.
-	// C's AFF_CHARM arm cannot be reached for a player (charm is mob-only in
-	// this tree), so the port has no player master link to test.
 	if ch.IsMounted() {
 		return s.SendMessage("Dismount first!\r\n")
 	}

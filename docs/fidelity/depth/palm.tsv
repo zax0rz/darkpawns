@@ -5,3 +5,4 @@ do_palm	palm	palm.miss	D2	command	oracle-green	palm-depth	act.item.c:307-310; ne
 do_palm	palm	palm.mount-block	D1	command	oracle-green	palm-depth	act.item.c:301-305	Live C witness (palm-depth): a mounted actor is refused before the lookup with get_from_room's "You can't reach it from your mount.".
 do_palm	palm	palm.quiet-pickup	D2	command	oracle-green	palm-depth	act.item.c:317-329	Live C witness (palm-depth): with palm at 100 the pickup is quiet — "You get $p." to the actor only, the observer's block stays empty, and SKILL_PALM is trained.
 do_palm	palm	palm.all	D2	command	oracle-green	palm-depth	act.item.c:331-345	Live C witness (palm-depth): `palm all` runs get_from_room's FIND_ALL quiet loop and picks up the floor item.
+do_palm	palm	palm.arms-full	D1	command	oracle-green	palm-full-depth	new_cmds.c:2117	Live C witness (palm-full-depth): a level-1 DEX-3 peer with ten floor objects fills CAN_CARRY_N and `palm x` takes the full-arms branch before the argument branch.
