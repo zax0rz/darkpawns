@@ -1,0 +1,83 @@
+# depth-case: disarm.no-arg-output
+# depth-case: disarm.self-target-output
+# C-first witness for two do_disarm gates DP-1502 lists in src/new_cmds2.c:
+# :209 "Disarm who?" (no fighting target and no named target) and :214 "Just try
+# removing your weapon instead." (target is self). disarm is POS_FIGHTING, so
+# the mortal peer walks to the aggressive trainee and reads at POS_FIGHTING
+# without a fight, with disarm at 100. C path: src/new_cmds2.c:190-214.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Disgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Disgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Dismortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Dismortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Dismortal 'disarm' 100
+
+[probe:mortal]
+disarm
+disarm Dismortal
