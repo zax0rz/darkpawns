@@ -24,10 +24,10 @@ This repeats PF-102’s random-function mutation method on two additional packag
 
 ## Proposed claim and state
 
-**PF-108 — verified:** In the frozen samples, the census produced 24/40 mutation-specific failures for session and 20/40 for spells; after excluding 16 and 20 recheck-persistent unrelated-red rows, the conclusive samples were 24/24 and 20/20. Both raw counts fall inside the preregistered 17–28/40 predictive interval. Evidence: round-three `run/probes.tsv`, `RESULTS.md`, `PREDICTIONS.md`, and the retained census directories listed in `RESULTS.md`.
+**PF-117 — verified:** In the frozen samples, the census produced 24/40 mutation-specific failures for session and 20/40 for spells; after excluding 16 and 20 recheck-persistent unrelated-red rows, the conclusive samples were 24/24 and 20/20. Both raw counts fall inside the preregistered 17–28/40 predictive interval. Evidence: round-three `run/probes.tsv`, `RESULTS.md`, `PREDICTIONS.md`, and the retained census directories listed in `RESULTS.md`.
 
 ## Contradictions, limits, and artifacts
 
 No contradiction to the frozen expected catch count was observed. The main limitation is that all uncaught probes were excluded from the conclusive rate after unrelated failures persisted, so the 100% conditional rates should not be interpreted as unbiased package estimates. This remains a probe-level census measurement, not a completeness claim.
 
-Artifacts created or updated: round-three `run/probes.tsv`, `RESULTS.md`, this field note, and the `PF-108` ledger row. No Part 2 game code or tests were changed.
+Artifacts created or updated: round-three `run/probes.tsv`, `RESULTS.md`, this field note, and the `PF-117` ledger row. No Part 2 game code or tests were changed.
