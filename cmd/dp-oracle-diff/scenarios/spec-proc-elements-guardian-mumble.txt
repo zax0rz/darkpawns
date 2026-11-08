@@ -73,10 +73,13 @@ Y
 
 [warmup]
 goto 8105
+# top the peer up BEFORE it enters: the guardian's arm fires on every
+# command typed in the room, and do_start leaves a fresh mortal at 10 HP
+# (src/class.c:543); do_set clamps maxhit to 5000 (src/act.wizard.c:2736).
+set ElemPeer maxhit 5000
+set ElemPeer hp 5000
+set ElemPeer hit 5000
 teleport ElemPeer 8105
-set ElemPeer maxhit 50000
-set ElemPeer hp 50000
-set ElemPeer hit 50000
 
 [probe]
 send:peer look
