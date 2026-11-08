@@ -6,3 +6,4 @@ do_trip	trip	trip.skill-message-death	D3	audience	oracle-green-multiseed	trip-sk
 do_trip	trip	trip.self	D1	command	oracle-green	skill-refusals-gates-depth	new_cmds.c:774-778	Live C witness (skill-refusals-gates-depth, peer trips itself) confirms the LFCR self-target bytes and C's shoe-laces line.
 do_trip	trip	trip.no-arg	D1	command	oracle-green	skill-refusals-gates-depth	new_cmds.c:761-764	Live C witness (skill-refusals-gates-depth, no argument and no fight target) confirms the exact Trip who? bytes.
 do_trip	trip	trip.flying	D1	command	oracle-green	trip-target-depth	new_cmds.c:779-783	Live C witness (trip-target-depth, set-mob-aff AFF_FLY bit 26) confirms the flying-target refusal bytes.
+do_trip	trip	trip.sleeping	D1	command	oracle-green	trip-sleep-depth	new_cmds.c:784-788	Live C witness (trip-sleep-depth, mob 2109 spawned at POS_SLEEPING) confirms the sleeping-victim refusal bytes.

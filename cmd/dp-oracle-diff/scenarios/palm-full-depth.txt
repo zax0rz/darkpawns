@@ -1,0 +1,86 @@
+# depth-case: palm.arms-full
+# C-first witness for do_palm's carry-capacity arm, "Your arms are already
+# full!", DP-1502 lists at src/new_cmds.c:2117. do_palm draws number(1,101),
+# then refuses when IS_CARRYING_N(ch) >= CAN_CARRY_N(ch) (5 + DEX/2 + LEVEL/2,
+# src/utils.h:449) before the argument branch. A level-1 mortal peer with DEX 3
+# has capacity 6; ten takeable floor objects fill it with `get all`, so the
+# following `palm xyzzy` takes the full-arms branch.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8010 1 8162 80
+spawn-obj 8011 1 8162 80
+spawn-obj 8015 1 8162 80
+spawn-obj 8019 1 8162 80
+spawn-obj 8023 1 8162 80
+spawn-obj 8030 1 8162 80
+spawn-obj 8031 1 8162 80
+spawn-obj 8032 1 8162 80
+spawn-obj 8033 1 8162 80
+spawn-obj 8042 1 8162 80
+
+[setup:oracle]
+Pfgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Pfgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Pfmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Pfmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Pfmortal dex 3
+goto 8162
+teleport Pfmortal 8162
+
+[probe:mortal]
+get all
+palm xyzzy
