@@ -1,0 +1,88 @@
+# depth-case: cutthroat.no-wield
+# depth-case: cutthroat.non-piercing
+# C-first witness for three do_cutthroat gates DP-1502 lists in src/new_cmds.c:
+# :577 "You need to wield a weapon to make it a success." (no wielded weapon)
+# and :582 "Only daggers and such can be used for cutting a throat." (a wielded
+# non-pierce weapon). The mortal peer walks to the trainee; bare-handed
+# `cutthroat` reaches :577, then the slash sword 8037 reaches :582. The :613
+# FIGHTING arm needs a pre-set FIGHTING (the opener lane has POS_FIGHTING only)
+# and is left blocked. C path: src/new_cmds.c:559-616.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-obj 8037 1 8105 80
+
+[setup:oracle]
+Ctgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Ctgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Ctmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Ctmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Ctmortal 'cutthroat' 75
+
+[probe:mortal]
+cutthroat trainee
+get sword
+wield sword
+cutthroat trainee
