@@ -348,18 +348,20 @@ func DoMindlink(ch *Player, target combat.Combatant) SkillResult {
 		}
 
 		return SkillResult{
-			Success:       true,
-			MessageToCh:   "You feel a little drained...\r\n",
-			MessageToRoom: ActMessage("$n and $N stare at each other for a while and drop to the ground in unison!", chPronouns, &victPronouns, ""),
-			StunTarget:    true,
-			SelfStumble:   true,
+			Success:                 true,
+			MessageToCh:             "You feel a little drained...",
+			NoMessageToChTerminator: true,
+			MessageToRoom:           ActMessage("$n and $N stare at each other for a while and drop to the ground in unison!", chPronouns, &victPronouns, ""),
+			StunTarget:              true,
+			SelfStumble:             true,
 		}
 	}
 
 	ch.SetHP(ch.GetHP() - 100)
 	return SkillResult{
 		Success:                  false,
-		MessageToCh:              "You feel a little drained...\r\n",
+		MessageToCh:              "You feel a little drained...",
+		NoMessageToChTerminator:  true,
 		MessageToRoom:            ActMessage("$n stares at $N for a while and then falls flat on $s face.", chPronouns, &victPronouns, ""),
 		DeferredImprove:          []string{SkillMindlink},
 		DeferredImproveAfterRoom: true,

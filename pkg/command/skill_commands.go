@@ -1753,7 +1753,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		}
 	}
 	if result.MessageToChAfterRoom && result.MessageToCh != "" {
-		_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+		if result.NoMessageToChTerminator {
+			_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh))
+		} else {
+			_ = s.SendMessage(game.CapitalizeSentence(result.MessageToCh) + "\r\n")
+		}
 	}
 	if result.DeferredImproveAfterActor {
 		for _, skill := range result.DeferredImprove {

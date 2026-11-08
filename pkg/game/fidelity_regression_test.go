@@ -219,8 +219,10 @@ func TestFidelityMindlinkMobFailureContract(t *testing.T) {
 	if result.Success {
 		t.Fatal("NPC mindlink success is unreachable after C's IS_NPC macros")
 	}
-	if result.MessageToCh != "You feel a little drained...\r\n" {
-		t.Fatalf("actor message = %q, want final drain line", result.MessageToCh)
+	// C sends the final drain line with no terminator (src/new_cmds2.c:314).
+	if result.MessageToCh != "You feel a little drained..." || !result.NoMessageToChTerminator {
+		t.Fatalf("actor message = %q (bare=%t), want the CRLF-less final drain line",
+			result.MessageToCh, result.NoMessageToChTerminator)
 	}
 	if result.MessageToRoom == "" || len(result.DeferredImprove) != 1 || result.DeferredImprove[0] != SkillMindlink || !result.DeferredImproveAfterRoom {
 		t.Fatalf("failure contract = room %q improve %#v after-room %v", result.MessageToRoom, result.DeferredImprove, result.DeferredImproveAfterRoom)
