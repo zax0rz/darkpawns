@@ -1,0 +1,78 @@
+# depth-case: mob.dump-award-acts-site-live
+# C-first witness for the dump reward pair DP-1502 lists (src/spec_procs.c:282
+# TO_CHAR "You are awarded for outstanding performance." and :284 TO_ROOM
+# "$n has been awarded by the gods!"). The assigned dump rooms (8085,
+# src/spec_assign.c:610) sweep dropped objects for value (src/spec_procs.c:274-
+# 280) and print the pair when value > 0; the God loads and drops one bread.
+# The pet/ordered-command arm is a recorded port gap (spec-npc-dump-depth) and
+# is not exercised here: this vehicle drives the ordinary player drop.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs.c:255-300.
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8085 none
+
+[setup:oracle]
+DumpGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DumpGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+DumpPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+DumpPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8085
+teleport DumpPeer 8085
+load obj 8010
+
+[probe]
+drop bread
