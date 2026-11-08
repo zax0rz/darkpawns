@@ -288,10 +288,11 @@ func (w *World) MpGiveObject(ch Actor, mob *MobInstance, obj *ObjectInstance) {
 					slog.Error("mp_give portal placement failed", "mob_vnum", mob.GetVNum(), "obj_vnum", portal.VNum, "error", err)
 				}
 			}
-			// C do_say(mob, "Enter the portal quickly! It will not last long!"):
-			// the '!' ending renders through do_say as "$n exclaims, '...'"
-			// (src/act.comm.c:786-801).
-			Act(w, false, mob, nil, nil, nil, "$n exclaims, 'Enter the portal quickly! It will not last long!'", "", ToRoom)
+			// C do_say(mob, "Enter the portal quickly! It will not last long!",
+			// 0, 0) (src/mobprog.c:159). Route through npcSay so the INT/WIS
+			// gate (src/act.comm.c:766-771) applies; the '!' ending renders
+			// "exclaims" (src/act.comm.c:786-790).
+			w.npcSay(mob, "Enter the portal quickly! It will not last long!")
 		}
 	}
 
