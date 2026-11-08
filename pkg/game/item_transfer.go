@@ -145,8 +145,11 @@ func (w *World) getFromContainer(ch *Player, cont *ObjectInstance, arg string, m
 	}
 }
 
-// performGetFromRoom picks up an item from the room floor
-func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
+// performGetFromRoom picks up an item from the room floor. quiet ports
+// perform_get_from_room's third argument (src/act.item.c:269-283): a quiet
+// pickup (do_palm's prob>percent, src/new_cmds.c:2122) suppresses the room
+// "$n gets $p." act and instead trains SKILL_PALM, exactly as C does.
+func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance, quiet bool) {
 	// The room snapshot is stale: a concurrent getter may already have taken
 	// this object. Re-moving an extracted object would resurrect it, and for a
 	// money pile it would re-credit the amount (CWE-362/CWE-367).
@@ -160,13 +163,18 @@ func (w *World) performGetFromRoom(ch *Player, obj *ObjectInstance) {
 			return
 		}
 		w.actToChar(ch, "You get $p.", obj, nil)
-		w.actToRoom(ch, "$n gets $p.", obj, nil, true)
+		if !quiet {
+			w.actToRoom(ch, "$n gets $p.", obj, nil, true)
+		}
+		if quiet {
+			improveSkill(ch, SkillPalm)
+		}
 		w.getCheckMoney(ch, obj)
 		w.fireOnGet(ch, obj)
 	}
 }
 
-func (w *World) getFromRoom(ch *Player, arg string) {
+func (w *World) getFromRoom(ch *Player, arg string, quiet bool) {
 	// C get_from_room (act.item.c:297) rejects a mounted actor before any
 	// lookup: a rider cannot reach objects on the floor.
 	if ch.IsMounted() {
@@ -178,7 +186,7 @@ func (w *World) getFromRoom(ch *Player, arg string) {
 	if dotmode == findIndiv {
 		for _, obj := range items {
 			if isnameWithAbbrevs(arg, obj.GetKeywords()) && canSeeObject(ch, obj) {
-				w.performGetFromRoom(ch, obj)
+				w.performGetFromRoom(ch, obj, quiet)
 				return
 			}
 		}
@@ -195,7 +203,7 @@ func (w *World) getFromRoom(ch *Player, arg string) {
 	for _, obj := range items {
 		if canSeeObject(ch, obj) && (dotmode == findAll || isnameWithAbbrevs(keyword, obj.GetKeywords())) {
 			found = true
-			w.performGetFromRoom(ch, obj)
+			w.performGetFromRoom(ch, obj, quiet)
 		}
 	}
 	if found {
@@ -238,7 +246,7 @@ func (w *World) doGet(ch *Player, me *MobInstance, cmd, arg string) bool {
 		return true
 	}
 	if arg2 == "" {
-		w.getFromRoom(ch, arg1)
+		w.getFromRoom(ch, arg1, false)
 		return true
 	}
 

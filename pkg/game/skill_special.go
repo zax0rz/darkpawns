@@ -747,10 +747,13 @@ func DoReview(ch *Player, world *World) SkillResult {
 	}
 }
 
-// DoPalm implements do_palm() — conceal a small object up your sleeve.
+// DoPalm implements do_palm() (src/new_cmds.c:2108-2123). C draws its success
+// roll first, then checks the carry capacity and the argument, and otherwise
+// delegates to the real get_from_room with quiet = prob>percent
+// (src/new_cmds.c:2122). The quiet pickup is palm's whole effect: get_from_room
+// prints the same "You get $p." line but suppresses the room act and trains
+// SKILL_PALM (src/act.item.c:269-283). palm is not a separate "conceal" verb.
 func DoPalm(ch *Player, objName string, world *World) SkillResult {
-	// C draws its success roll before every gate, including the no-argument
-	// return and the item and weight checks (src/new_cmds.c:2112).
 	// #nosec G404 — game RNG, not cryptographic
 	percent := dprng.Number(1, 101)
 	prob := ch.GetSkill(SkillPalm)
@@ -758,53 +761,13 @@ func DoPalm(ch *Player, objName string, world *World) SkillResult {
 	if ch.Inventory.GetItemCount() >= ch.MaxCarryItems() {
 		return SkillResult{Success: false, MessageToCh: "Your arms are already full!\r\n"}
 	}
-
 	if objName == "" {
 		return SkillResult{Success: false, MessageToCh: "Palm what?\r\n"}
 	}
 
-	// Find item in room
-	items := world.GetItemsInRoom(ch.GetRoomVNum())
-	var targetItem *ObjectInstance
-	targetLower := strings.ToLower(objName)
-	for _, item := range items {
-		iname := strings.ToLower(item.GetKeywords())
-		if strings.Contains(iname, targetLower) {
-			targetItem = item
-			break
-		}
-	}
-
-	if targetItem == nil {
-		return SkillResult{Success: false, MessageToCh: "You don't see that here.\r\n"}
-	}
-
-	// Check weight <= 1 (small object)
-	if targetItem.GetWeight() > 1 {
-		return SkillResult{Success: false, MessageToCh: "That's too big to palm!\r\n"}
-	}
-
-	if prob > percent {
-		// Success — move to inventory
-		if err := world.MoveObjectToPlayerInventory(targetItem, ch); err != nil {
-			return SkillResult{
-				Success:     false,
-				MessageToCh: "You can't carry that much.\r\n",
-			}
-		}
-		return SkillResult{
-			Success:       true,
-			MessageToCh:   "You palm the item skillfully.\r\n",
-			MessageToRoom: fmt.Sprintf("%s deftly palms something.\r\n", ch.Name),
-		}
-	}
-
-	// Failure — item stays on ground
-	return SkillResult{
-		Success:       true,
-		MessageToCh:   fmt.Sprintf("You try to palm %s but fumble it!\r\n", targetItem.GetShortDesc()),
-		MessageToRoom: fmt.Sprintf("%s fumbles with %s!\r\n", ch.Name, targetItem.GetShortDesc()),
-	}
+	// get_from_room sends its own output (miss text, mount refusal, room act).
+	world.getFromRoom(ch, objName, prob > percent)
+	return SkillResult{Success: true}
 }
 
 // fleshAlterWeapon mirrors flesh_alter_weapon() in src/new_cmds.c:1836-1870.

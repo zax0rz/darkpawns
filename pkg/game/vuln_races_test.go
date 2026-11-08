@@ -161,8 +161,8 @@ func TestGetFromRoomStaleSnapshotCreditedOnce(t *testing.T) {
 
 	// Both calls model the same stale room snapshot, as two concurrent
 	// getters would.
-	w.performGetFromRoom(ch, money)
-	w.performGetFromRoom(ch, money)
+	w.performGetFromRoom(ch, money, false)
+	w.performGetFromRoom(ch, money, false)
 
 	if ch.GetGold() != 100 {
 		t.Fatalf("one 100-coin pile credited %d gold, want 100", ch.GetGold())
