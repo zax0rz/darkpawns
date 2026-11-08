@@ -1,12 +1,12 @@
 handler	command	case_id	depth	scope	status	proof	c_site	notes
-do_circle	circle	circle.no-skill	D2	command	unit-green	TestDoCircle_NoSkill	interpreter.c:378; new_cmds.c:2443-2446	GET_SKILL is checked only after target, self, busy, weapon, and mounted gates; the exact no-skill text is emitted by the game path.
+do_circle	circle	circle.no-skill	D2	command	oracle-green	circle-gates-depth	interpreter.c:378; new_cmds.c:2443-2446	Live C witness (circle-gates-depth, no circle skill, dagger wielded) confirms the make-a-circle bytes; TestDoCircle_NoSkill still proves the gate order.
 do_circle	circle	circle.no-arg	D1	command	oracle-green	circle-depth	new_cmds.c:2396-2404	No argument with no FIGHTING target reaches the exact Circle who? refusal.
 do_circle	circle	circle.target-missing	D1	command	oracle-green	circle-depth	new_cmds.c:2396-2404	A missing target reaches Circle who? with no invented lookup text.
 do_circle	circle	circle.fighting-target-fallback	D2	command	unit-green	TestCmdCircle_FightingTargetFallback	new_cmds.c:2396-2404	An empty argument while fighting resolves FIGHTING(ch) before the target refusal and reaches the weapon gate.
 do_circle	circle	circle.self	D2	command	oracle-green	circle-depth	new_cmds.c:2405-2409	Self-target resolves before weapon and skill gates and emits the exact self-stab refusal.
 do_circle	circle	circle.one-argument	D1	command	oracle-green	circle-depth	interpreter.c:1265-1279; new_cmds.c:2396	one_argument skips the fill word, lowercases the first target token, and ignores trailing words.
-do_circle	circle	circle.no-weapon	D2	command	unit-green	TestDoCircle_NoWeapon	new_cmds.c:2417-2420	A valid target without WEAR_WIELD reaches the exact wield requirement.
-do_circle	circle	circle.wrong-weapon	D2	command	unit-green	TestDoCircle_WrongWeaponType	new_cmds.c:2421-2425	Only a wielded object whose value 3 is TYPE_PIERCE-TYPE_HIT (11) passes the weapon gate.
+do_circle	circle	circle.no-weapon	D2	command	oracle-green	circle-gates-depth	new_cmds.c:2417-2420	Live C witness (circle-gates-depth, bare-handed peer) confirms the wield-requirement bytes; TestDoCircle_NoWeapon still proves the gate.
+do_circle	circle	circle.wrong-weapon	D2	command	oracle-green	circle-gates-depth	new_cmds.c:2421-2425	Live C witness (circle-gates-depth, slash sword 8037) confirms the only-piercing bytes; TestDoCircle_WrongWeaponType still proves the gate.
 do_circle	circle	circle.mounted	D2	command	unit-green	TestDoCircle_WhileMounted	new_cmds.c:2427-2431	Mounted callers are refused before the skill roll and receive Dismount first!.
 do_circle	circle	circle.aware	D3	command	oracle-green-multiseed	circle-aware-depth@1,2,3,5,8	new_cmds.c:2433-2441	An awake MOB_AWARE victim emits the three notice acts; an idle victim immediately executes hit(vict,ch), while an already-fighting victim skips that retaliation.
 do_circle	circle	circle.roll-miss	D5	state	oracle-green-multiseed	circle-depth@1,2,3,5,8	new_cmds.c:2450-2461; fight.c:1023-1092; lib/misc/messages:1220-1234	The opener matrix reaches the C circle probability/to-hit miss path, set-173 miss bytes, combat enrollment, and pulse aftermath.
