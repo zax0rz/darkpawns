@@ -19,7 +19,7 @@ func TestMpSoundRunsDefaultMobileTail(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w := newMobactDrawTestWorld()
-			mob := NewMob(&parser.Mob{VNum: tc.vnum, Keywords: tc.name, ShortDesc: "a " + tc.name}, 1001)
+			mob := NewMob(&parser.Mob{VNum: tc.vnum, Keywords: tc.name, ShortDesc: "a " + tc.name, Int: 11, Wis: 11}, 1001)
 			var draws []mobactDrawRange
 			oldMobProgNumber := mobProgNumber
 			mobProgNumber = func(from, to int) int {
@@ -39,7 +39,7 @@ func TestMpSoundRunsDefaultMobileTail(t *testing.T) {
 
 func TestMpSoundDemonAdvancesStateAfterTailDraw(t *testing.T) {
 	w := newMobactDrawTestWorld()
-	demon := NewMob(&parser.Mob{VNum: 14401, Keywords: "demon", ShortDesc: "a demon"}, 1001)
+	demon := NewMob(&parser.Mob{VNum: 14401, Keywords: "demon", ShortDesc: "a demon", Int: 11, Wis: 11}, 1001)
 	demon.SetAlignment(-1000)
 	observer := NewPlayer(1, "Observer", 1001)
 	if err := w.AddPlayer(observer); err != nil {

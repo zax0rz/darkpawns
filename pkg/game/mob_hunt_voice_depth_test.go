@@ -39,6 +39,8 @@ func huntVoiceWorld(t *testing.T) (*World, *MobInstance, *Player, *Player, map[s
 	mob := NewMob(&parser.Mob{
 		VNum: 9701, Keywords: "stalker", ShortDesc: "the dune stalker",
 		Race: 1, Level: 20, Position: 8, DefaultPos: 8,
+		// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035).
+		Int: 11, Wis: 11,
 	}, 1001)
 	w.mu.Lock()
 	w.activeMobs[mob.ID] = mob

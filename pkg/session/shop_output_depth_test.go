@@ -16,6 +16,8 @@ func shopOutputFixture(t *testing.T, itemWeight int) (*game.World, *Manager, *ga
 		Mobs: []parser.Mob{{
 			VNum: 5001, Keywords: "keeper merchant", ShortDesc: "a merchant",
 			Level: 10, Gold: 1000, HP: parser.DiceRoll{Num: 1, Sides: 10, Plus: 90},
+			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035).
+			Int: 11, Wis: 11,
 		}},
 		Objs: []parser.Obj{
 			{VNum: 6001, Keywords: "apple red", ShortDesc: "a red apple", TypeFlag: int(game.ItemOther), Cost: 10, Weight: itemWeight},

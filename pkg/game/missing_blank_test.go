@@ -21,6 +21,8 @@ func newMissingBlankWorld(t *testing.T) (*World, map[string]*string) {
 		Rooms: []parser.Room{{VNum: 1001, Name: "Study"}},
 		Mobs: []parser.Mob{{
 			VNum: 2001, Keywords: "guard", ShortDesc: "the guild guard",
+			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035).
+			Int: 11, Wis: 11,
 		}},
 	})
 	if err != nil {
