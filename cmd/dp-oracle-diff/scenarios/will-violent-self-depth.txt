@@ -1,0 +1,79 @@
+# depth-case: will.violent-self
+# C-first witness for do_cast's psionic/mystic self-target violent gate,
+# "Exerting that power on yourself could be harmful!" (DP-1502 list at
+# src/spell_parser.c:1059). A level-30 Psionic peer wills a violent power
+# (mind blast) at itself; the self-target check fires before the mana gate.
+# C path: do_cast (src/spell_parser.c:1051-1062).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Vselfgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Vselfgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Vspsi]
+Vspsi
+Y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Vspsi]
+Vspsi
+y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Vspsi 8105
+set player Vspsi class i
+set player Vspsi level 30
+set player Vspsi maxmana 5000
+set player Vspsi mana 5000
+skillset Vspsi 'mind blast' 100
+
+[probe:Vspsi]
+will 'mind blast' Vspsi

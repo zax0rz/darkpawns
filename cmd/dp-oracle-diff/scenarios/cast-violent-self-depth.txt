@@ -1,0 +1,41 @@
+# depth-case: cast.violent-self
+# C-first witness for do_cast's self-target violent gate, "You shouldn't cast
+# that on yourself -- could be bad for your health!" (DP-1502 list at
+# src/spell_parser.c:1056). The God casts a violent TAR_CHAR_ROOM spell at
+# itself; the self-target check fires before the mana gate and the draw.
+# C path: do_cast (src/spell_parser.c:1051-1062).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Vselfgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Vselfgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+cast 'flame arrow' Vselfgod

@@ -1,0 +1,77 @@
+# depth-case: cast.mana-gate
+# C-first witness for do_cast's insufficient-mana gate, "You haven't the energy
+# to cast that spell!" (DP-1502 list at src/spell_parser.c:1074). A level-30
+# Mage peer with 0 mana casts a known non-violent spell at itself; the mana
+# gate fires before the draw.
+# C path: do_cast (src/spell_parser.c:1071-1077).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Managod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Managod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Manacast]
+Manacast
+Y
+castpass
+castpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:Manacast]
+Manacast
+y
+castpass
+castpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Manacast 8105
+set player Manacast class mage
+set player Manacast level 30
+skillset Manacast 'detect invisibility' 100
+set player Manacast mana 0
+
+[probe:Manacast]
+cast 'detect invisibility' Manacast
