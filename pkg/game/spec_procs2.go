@@ -1583,8 +1583,12 @@ func specTakeToJail(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 		}
 		target := tch.GetFightingBody()
 		targetAligned, ok := target.(cityguardAlignedCombatant)
+		// C's take_to_jail candidate gate is the mirror of cityguard's:
+		// (!IS_NPC(tch) || IS_NPC(FIGHTING(tch))) — the villain must be a
+		// player (src/spec_procs2.c:1450-1451), unlike cityguard's
+		// (IS_NPC(tch) || ...) at src/spec_procs.c:805-806.
 		if !ok || targetAligned == nil || tch.GetAlignment() >= maxEvil ||
-			(!tch.IsNPC() && !target.IsNPC()) {
+			(tch.IsNPC() && !target.IsNPC()) {
 			continue
 		}
 		maxEvil = tch.GetAlignment()

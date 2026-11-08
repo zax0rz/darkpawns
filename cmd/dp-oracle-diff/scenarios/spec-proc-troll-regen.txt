@@ -75,8 +75,8 @@ Y
 1
 
 [warmup]
-set TrollActor alignment -1000
-set TrollPeer alignment -1000
+set TrollActor align -1000
+set TrollPeer align -1000
 teleport TrollPeer 10049
 goto 10049
 set TrollActor maxhit 100000

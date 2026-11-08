@@ -1,0 +1,48 @@
+# depth-case: mob.con-seller-blind-site-live
+# C-first witness for the con_seller blind act DP-1502 lists (src/spec_procs3.c:250
+# "$n exclaims, 'Who's there? I can't see you!'"): the same shape as the clerk's
+# arm — a list/buy from a buyer the seller cannot see (src/spec_procs3.c:243-252).
+# The fixture blinds the seller (mob 21246, src/spec_assign.c:508) with
+# AFF_BLIND (bit 0). The visible-buyer arms are covered by spec-proc-con-seller.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs3.c:237-300.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 21246 1 5510 55
+set-mob-aff 21246 1
+replace-room-exits 5510 none
+
+[setup:oracle]
+ConGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ConGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 5510
+
+[probe]
+list
