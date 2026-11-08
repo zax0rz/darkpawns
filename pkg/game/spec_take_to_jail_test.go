@@ -58,20 +58,41 @@ func TestSpecTakeToJail_ReturnContractAndProtectionDelegation(t *testing.T) {
 		t.Fatalf("fallthrough emitted %q", got)
 	}
 
+	// C's take_to_jail candidate gate mirrors cityguard's with the first
+	// disjunct inverted: the villain must be a PLAYER (!IS_NPC(tch),
+	// src/spec_procs2.c:1450-1451). An NPC villain is cityguard's business,
+	// not this special's — the oracle showed C falling through silently.
 	protected := NewPlayer(2, "Protected", player.GetRoomVNum())
 	protected.SetAlignment(100)
 	if err := w.AddPlayer(protected); err != nil {
 		t.Fatalf("AddPlayer protected: %v", err)
 	}
-	attacker := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	npcVillain := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
 	{
-		p := *attacker.Proto()
+		p := *npcVillain.Proto()
 		p.Alignment = -500
-		attacker.SetProto(&p)
+		npcVillain.SetProto(&p)
 	}
-	attacker.SetFightingBody(protected)
+	npcVillain.SetFightingBody(protected)
 	engine := &cityguardTestCombatEngine{}
 	w.SetCombatEngine(engine)
+	specTakeToJail(w, nil, guard, "", "")
+
+	if got := lastMsg(); got != "" {
+		t.Fatalf("NPC villain should fall through, got %q", got)
+	}
+	if got := len(engine.starts); got != 0 {
+		t.Fatalf("NPC villain started %d combats, want 0", got)
+	}
+
+	pcVillain := NewPlayer(3, "PcVillain", player.GetRoomVNum())
+	pcVillain.SetAlignment(-500)
+	if err := w.AddPlayer(pcVillain); err != nil {
+		t.Fatalf("AddPlayer pcVillain: %v", err)
+	}
+	goodMob := newSpecProcTestMob(t, w, player.GetRoomVNum(), 10)
+	goodMob.SetFightingBody(pcVillain)
+	pcVillain.SetFightingBody(goodMob)
 	specTakeToJail(w, nil, guard, "", "")
 
 	if got := lastMsg(); !strings.Contains(got, "You just pissed me off") {

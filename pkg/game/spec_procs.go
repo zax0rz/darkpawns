@@ -67,6 +67,9 @@ func (w *World) roomMessage(roomVNum int, msg string) {
 // and toRoom to everyone else. Empty strings are skipped.
 // Mirrors C's act() with TO_CHAR / TO_VICT / TO_ROOM.
 func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar, toVict, toRoom string) {
+	// C's perform_act capitalizes the substituted line (CAP(lbuf),
+	// src/comm.c:2477); every message here mirrors a C act() built from
+	// lowercase short descriptions, so the same CAP applies (R1).
 	players := w.GetPlayersInRoom(roomVNum)
 	for _, p := range players {
 		if !sendOk(p, false) {
@@ -74,18 +77,18 @@ func (w *World) actMessage(roomVNum int, actor, victim combat.Combatant, toChar,
 		}
 		if actor != nil && p == actor {
 			if toChar != "" {
-				p.SendMessage(toChar + "\r\n")
+				p.SendMessage(cap(toChar) + "\r\n")
 			}
 			continue
 		}
 		if victim != nil && p == victim {
 			if toVict != "" {
-				p.SendMessage(toVict + "\r\n")
+				p.SendMessage(cap(toVict) + "\r\n")
 			}
 			continue
 		}
 		if toRoom != "" {
-			p.SendMessage(toRoom + "\r\n")
+			p.SendMessage(cap(toRoom) + "\r\n")
 		}
 	}
 }

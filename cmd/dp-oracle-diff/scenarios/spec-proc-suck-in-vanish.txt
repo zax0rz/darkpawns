@@ -1,0 +1,78 @@
+# depth-case: mob.suck-in-vanish-site-live
+# C-first witness for the suck_in vanish act DP-1502 lists (src/spec_procs.c:2292
+# "$n suddenly vanishes!"). SPECIAL(suck_in) is assigned to room 20073
+# (src/spec_assign.c:616); `look painting` teleports the viewer and prints the
+# act TO_ROOM - the existing spec-proc-suck-in.txt has no room peer, so nobody
+# ever received it. This vehicle parks a peer to receive it.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs.c:2277-2300.
+
+[fixture]
+empty-players
+quiet-mobs
+add-wld-index 181.wld
+
+[setup:oracle]
+Torrance
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Torrance
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Maribel
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Maribel
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+# Teleport before goto: room 20073 is dark and do_teleport resolves its
+# victim with get_char_vis from the actor's room (src/act.wizard.c), so the
+# god must still stand in a lit room when gathering the peer.
+teleport Maribel 20073
+goto 20073
+
+[probe]
+look painting

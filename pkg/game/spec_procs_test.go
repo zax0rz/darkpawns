@@ -1128,3 +1128,29 @@ func TestNegativeMobWaitBlocksAllNonzeroGates(t *testing.T) {
 		t.Error("mobCombatSpecialTarget refused a clear GET_MOB_WAIT")
 	}
 }
+
+// TestSpecSnake_ActBytesMatchC pins the snake bite's act bytes against C
+// (R1): perform_act capitalizes the substituted line (CAP(lbuf),
+// src/comm.c:2477), so a lowercase short description still prints
+// "A test mob bites you!". actMessage must apply the same CAP — the oracle
+// caught the missing capital on the snake's TO_VICT line. Level 32 makes
+// number(0, 32-32) a constant 0, so the bite is deterministic without seams.
+func TestSpecSnake_ActBytesMatchC(t *testing.T) {
+	w, player, out := newSpecProcTestWorld(t)
+	mob := newSpecProcTestMob(t, w, 1001, 32)
+	mob.SetPosition(combat.PosFighting)
+	mob.SetFightingBody(player)
+	player.SetPosition(combat.PosFighting)
+	player.SetFightingBody(mob)
+
+	if got := specSnake(w, nil, mob, "", ""); !got {
+		t.Fatal("same-room fighting snake should bite")
+	}
+	text := out()
+	if !strings.Contains(text, "A test mob bites you!\r\n") {
+		t.Errorf("bite bytes = %q, want C's CAP'd 'A test mob bites you!'", text)
+	}
+	if strings.Contains(text, "\na test mob bites") {
+		t.Errorf("bite bytes = %q, want no lowercase act line", text)
+	}
+}

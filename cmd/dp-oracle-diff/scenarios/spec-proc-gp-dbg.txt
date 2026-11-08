@@ -1,0 +1,100 @@
+# depth-case: mob.cityguard-pissed-site-live
+# depth-case: mob.take-to-jail-pissed-site-live
+# C-first witness for the shared "You just pissed me off, $N!" act DP-1502
+# lists under cityguard (src/spec_procs.c:815) and take_to_jail
+# (src/spec_procs2.c:1462). Both specials take the arm when the room's most
+# evil fighter is an NPC whose opponent is non-evil
+# (src/spec_procs.c:799-816): a -1000-alignment mob is attacked by a
+# +1000-alignment player. Each guard prints the act in its own voice, so the
+# two transcript lines attribute one site each. The mobs are gathered into
+# the room by teleport (zone79 randload scatters 79xx mobs at load).
+# C path: src/mobact.c:68-93 -> src/spec_procs.c:775-821 and
+# src/spec_procs2.c:1443-1469.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 2747 1 8105 80
+clear-mob-flag 2747 HELPER
+spawn-mob 8001 1 8105 80
+clear-mob-flag 8001 HELPER
+spawn-mob 14103 1 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+GuardGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GuardGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+GuardPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+GuardPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport GuardPeer 8105
+set GuardPeer align 1000
+set player GuardPeer outlaw on
+set GuardPeer maxhit 50000
+set GuardPeer hp 50000
+set GuardPeer hit 50000
+set snake align -1000
+set snake maxhit 500000
+set snake hit 500000
+
+[probe]
+send:peer score
+stat mob snake
+send:peer hit snake
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
+~dpclock pulse 400
