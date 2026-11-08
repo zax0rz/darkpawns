@@ -1,0 +1,89 @@
+# depth-case: palm.miss
+# depth-case: palm.mount-block
+# depth-case: palm.quiet-pickup
+# depth-case: palm.all
+# C-first witness for do_palm (src/new_cmds.c:2108-2123). do_palm draws
+# number(1,101), then checks carry capacity and the argument, then calls the
+# real get_from_room(ch, arg1, quiet=prob>percent) (src/act.item.c:297-345).
+# With palm at 100 the pickup is quiet: "You get $p." to the actor only, no
+# "$n gets $p." room act (the observer's block stays empty), and improve_skill
+# trains SKILL_PALM. The miss text is get_from_room's own
+# "You don't see a <arg> here."; the mount check precedes the lookup. The
+# breads (8010) sit on the 8162 floor; the horse (8021) rides before the
+# mounted palm.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+spawn-mob 8021 1 8162 80
+spawn-obj 8010 1 8162 80
+spawn-obj 8036 1 8162 80
+
+[setup:oracle]
+Palmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Palmgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:obs]
+Palmobs
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:obs]
+Palmobs
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Palmgod 'palm' 100
+goto 8162
+
+[probe]
+palm xyzzy
+palm bread
+palm all
+ride horse
+palm bread
+dismount

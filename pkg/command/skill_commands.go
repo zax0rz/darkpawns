@@ -2092,8 +2092,10 @@ func CmdPalm(s SessionInterface, args []string) error {
 
 	// No early no-argument return: C consumes its number(1,101) draw before
 	// the "Palm what?" branch (src/new_cmds.c:2110-2119), and DoPalm draws
-	// first, so an empty argument must reach it.
-	objName := strings.Join(args, " ")
+	// first, so an empty argument must reach it. C parses the argument with
+	// one_argument (fill words skipped, src/interpreter.c:1267-1284), so only
+	// the first non-fill word reaches get_from_room.
+	objName, _ := game.OneArgument(strings.Join(args, " "))
 	world := s.GetWorld()
 	result := game.DoPalm(ch, objName, world)
 	return sendSkillResult(s, ch, nil, result)
