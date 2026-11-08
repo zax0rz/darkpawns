@@ -790,10 +790,12 @@ func shootTargetGate(s SessionInterface, target combat.Combatant) (bool, error) 
 	return false, nil
 }
 
-// CmdSubdue handles the subdue command (C-10). C's interpreter refuses a
-// fighting actor before do_subdue runs (interpreter.c:923-946, subdue is
-// POS_STANDING at interpreter.c:748), so no busy pre-check belongs here; the
-// FIGHTING(ch) arm inside DoSubdue mirrors C for any direct caller.
+// CmdSubdue handles the subdue command (C-10). C checks the skill, then
+// FIGHTING(ch), then the target (src/act.offensive.c:1091-1105). A fighting
+// actor usually never gets here (the interpreter's POS_STANDING gate), but one
+// bashed to sitting who stands again is POS_STANDING while still fighting
+// (src/act.movement.c:707-710; src/fight.c:1992), so the busy arm must come
+// before the "Subdue who?" lookup.
 func CmdSubdue(s SessionInterface, args []string) error {
 	ch, err := skillContext(s, game.SkillSubdue)
 	if err != nil {
@@ -801,6 +803,9 @@ func CmdSubdue(s SessionInterface, args []string) error {
 	}
 	if ch == nil {
 		return nil
+	}
+	if ch.GetFightingBody() != nil {
+		return s.SendMessage("You're too busy right now!\r\n")
 	}
 	if len(args) == 0 {
 		return s.SendMessage("Subdue who?\r\n")
