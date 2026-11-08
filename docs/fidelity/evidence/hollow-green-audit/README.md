@@ -43,17 +43,28 @@ Signals (per `oracle-green*` row × scenario named in its proof):
   the harness (`oraclediff.RunWarmup` drops the blocks), so a refusal
   surfacing in the first probe is the retained fingerprint of a failed setup —
   the DP-1510 shape. Refusals in later sibling probes are often the intended
-  claim of other rows sharing the scenario and are not attributed.
-- **claimed-absent** — no string literal printed by any player-output call on
-  the row's `c_site` lines appears in any C probe block. Literals are
-  extracted from the snapshot's `src/` (R5g: every fragment grepped in the
-  authoring session), format codes stripped, escaped newlines split. The
-  presence check widens to a ±(6/12) line window and to the row's own
-  `lib/misc/socials` / `lib/misc/messages` entries, because claims often live
-  one line past a narrow citation or in a data table; only *distinctive*
-  fragments (≥8 chars with a space) may suppress, so a generic neighbor like
-  the bare `failed.` cannot mask a hollow. Log-fed buffers (`sprintf` straight
-  into `mudlog`/`log`) are skipped: those bytes never reach the transcript.
+  claim of other rows sharing the scenario and are not attributed, and the
+  signal is suppressed outright when a later C actor block shows the
+  refused-for object being used (`You recite|quaff|zap|brandish|use|eat`) —
+  the setup had already provided the item and the refused `get` was
+  redundant.
+- **claimed-absent** — two tests must both hold. (1) No string literal printed
+  by any player-output call on the row's `c_site` lines appears in any C probe
+  block. Literals are extracted from the snapshot's `src/` (R5g: every
+  fragment grepped in the authoring session), format codes stripped, escaped
+  newlines split. The presence check widens to a ±(6/12) line window and to
+  the row's own `lib/misc/socials` / `lib/misc/messages` entries; only
+  *distinctive* fragments (≥8 chars with a space) may suppress, so a generic
+  neighbor like the bare `failed.` cannot mask a hollow. Log-fed buffers
+  (`sprintf` straight into `mudlog`/`log`) are skipped. (2) The row's claimed
+  command actually failed somewhere: some actor block for the manifest
+  command's first word contains a refusal or a spell/skill failure
+  fingerprint (`You failed.`, `You lost your concentration!`) that no sibling
+  row claims. Cited ranges often span sibling branches whose gates
+  legitimately stay silent while the claimed event runs fine — silence or
+  success in the claimed command's own blocks means the row is not hollow,
+  even when the citation is misaligned. Rows whose manifest command matches
+  no block (data-table claims) fall back to test (1) alone.
 - **probe-refusal** — every C probe block (actor and peers) is empty or a
   refusal.
 

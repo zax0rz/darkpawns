@@ -91,6 +91,19 @@ REFUSAL_FRAGMENTS = [
     "You cannot",                    # broad C refusal class
 ]
 
+# Spell/skill failure fingerprints (verified in src: magic.c:1656, spells.c:216
+# SUMMON_FAIL, spell_parser.c:1101). Not player refusals, but inside a claimed
+# command's own block they are the fingerprint that the claimed event did not
+# happen ("You failed." where the manifest claims the summon backfire).
+FAILURE_FRAGMENTS = [
+    "You failed",
+    "You lost your concentration",
+]
+
+# C success lines showing a refused-for object being used after all (the setup
+# had already put it in inventory, so the refused get was redundant).
+USE_SUCCESS = re.compile(r"^You (recite|quaff|zap|brandish|use|eat)\b")
+
 # Output calls whose quoted strings are player-facing text (grepped usage
 # counts in src/act.*.c, spell_parser.c, magic.c, spells.c this session).
 OUTPUT_CALL = re.compile(
@@ -145,13 +158,24 @@ SCENARIO_DIR = "cmd/dp-oracle-diff/scenarios"
 
 
 def refusal_lines(text):
-    """Return the lines of a block that match a refusal fragment."""
+    """Return the lines of a block that match a refusal fragment. Lines
+    carrying an unsubstituted format code are menu/template displays (the
+    sedit shop menu lists its no-item prompts verbatim), not refusals."""
+    return _fragment_lines(text, REFUSAL_FRAGMENTS)
+
+
+def failure_lines(text):
+    """Spell/skill failure fingerprints (see FAILURE_FRAGMENTS)."""
+    return _fragment_lines(text, FAILURE_FRAGMENTS)
+
+
+def _fragment_lines(text, fragments):
     hits = []
     for line in text.split("\n"):
         line = line.rstrip("\r")
-        if not line:
+        if not line or re.search(r"%[-+ #0-9.]*[a-zA-Z]", line):
             continue
-        for frag in REFUSAL_FRAGMENTS:
+        for frag in fragments:
             if frag in line:
                 hits.append(line)
                 break
@@ -476,8 +500,10 @@ def is_distinctive(frag):
 
 
 def claimed_refusal_fragments(corpus):
-    """Refusal fragments named (quoted) by a scenario's collective row text."""
-    return {frag.lower() for frag in REFUSAL_FRAGMENTS if frag.lower() in corpus}
+    """Refusal/failure fragments named (quoted) by a scenario's collective
+    row text."""
+    return {frag.lower() for frag in REFUSAL_FRAGMENTS + FAILURE_FRAGMENTS
+            if frag.lower() in corpus}
 
 
 def is_actor(role):
@@ -650,10 +676,17 @@ def main():
                 # Signal 1: warmup-refusal — the first actor probe block (the
                 # DP-1510 fingerprint: the first command that depends on the
                 # setup refuses). Refusals in later sibling probes are often
-                # the intended claim of other rows sharing the scenario, and a
+                # the intended claim of other rows sharing the scenario, a
                 # first probe whose refusal any sibling row claims (quoted in
-                # its text) is a deliberate branch test, not a setup failure.
-                if warmup and actor_blocks:
+                # its text) is a deliberate branch test, not a setup failure,
+                # and a refusal is neutral outright when a later C actor block
+                # shows the refused-for object being used anyway -- the setup
+                # had already provided it and the get was redundant.
+                use_success = any(
+                    USE_SUCCESS.match(line)
+                    for _, t in actor_blocks[1:]
+                    for line in t.split("\n"))
+                if warmup and actor_blocks and not use_success:
                     first_cmd, first_text = actor_blocks[0]
                     hits = refusal_lines(first_text)
                     claimed = scen_claimed.get(scen_name, set())
@@ -664,12 +697,17 @@ def main():
                         evidences.append(f"{first_cmd}: {hits[0]}")
                         refusal_evidence.extend(hits)
 
-                # Signal 2: claimed-absent. Cited fragments keep full
-                # strictness; the widened window and the row's own social
-                # entry (claims living in the lib/misc/socials data table,
-                # not in src/ literals) may suppress only via distinctive
+                # Signal 2: claimed-absent. Two tests must both hold. (1) No
+                # literal from any cited site appears in any C block (cited
+                # fragments keep full strictness; the widened window and the
+                # row's own social entry may suppress only via distinctive
                 # fragments -- generic neighbors like the bare "failed." must
-                # not mask a hollow.
+                # not mask a hollow). (2) The row's claimed command actually
+                # failed somewhere: some block for that command contains a
+                # refusal or spell/skill failure fingerprint that no sibling
+                # row claims. Cited ranges often span sibling branches whose
+                # gates legitimately stay silent while the claimed event runs
+                # fine -- those rows are not hollow.
                 frags = row_fragments(snap, row.get("c_site", ""))
                 if frags and all_blocks:
                     block_text = "\n".join(t for _, _, t in all_blocks)
@@ -687,12 +725,37 @@ def main():
                             is_distinctive(fr[3]) and fr[3] in block_text
                             for fr in window_frags + social_frags)
                         if not suppressed:
-                            best = max(frags, key=lambda fr: len(fr[3]))
-                            signals.append("claimed-absent")
-                            evidences.append(
-                                f"{best[0]}:{best[1]} prints \"{best[2]}\" "
-                                f"-> fragment '{best[3]}' absent from every C block"
-                            )
+                            cmd_word = (row.get("command") or "").strip().split(" ")[0].lower()
+                            claimed_blocks = (
+                                [(c, t) for c, t in actor_blocks
+                                 if c.lower().startswith(cmd_word)]
+                                if cmd_word else [])
+                            claimed = scen_claimed.get(scen_name, set())
+                            if claimed_blocks:
+                                def block_fingerprints(text_):
+                                    bad = refusal_lines(text_) + failure_lines(text_)
+                                    return [l for l in bad
+                                            if not any(cl in l.lower()
+                                                       for cl in claimed)]
+                                fingerprints = [(c, l)
+                                                for c, t in claimed_blocks
+                                                for l in block_fingerprints(t)]
+                            else:
+                                # The manifest command matches no block (data
+                                # -table claims etc.): absence of the cited
+                                # fragments alone is the fingerprint.
+                                fingerprints = [("", "")]
+                            if fingerprints:
+                                best = max(frags, key=lambda fr: len(fr[3]))
+                                signals.append("claimed-absent")
+                                ev = (f"{best[0]}:{best[1]} prints \"{best[2]}\" "
+                                      f"-> fragment '{best[3]}' absent from every C block")
+                                fp_cmd, fp_line = fingerprints[0]
+                                if fp_line:
+                                    ev += f" | {fp_cmd}: {fp_line}"
+                                evidences.append(ev)
+                                refusal_evidence.extend(
+                                    l for _, l in fingerprints if l)
 
                 # Signal 3: probe-refusal.
                 if all_blocks and all(block_is_refusal_or_empty(t) for _, _, t in all_blocks):
