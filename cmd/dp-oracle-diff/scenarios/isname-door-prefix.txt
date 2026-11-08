@@ -1,0 +1,52 @@
+# depth-case: door.keyword-whole-word
+# C's isname() (src/handler.c:81-111) matches a WHOLE keyword word, never a
+# prefix: isname("d", "door") is false. A door keyed "door" therefore does not
+# answer to the abbreviation "d" — find_door (src/act.movement.c:413-420) finds
+# nothing and refuses. Pre-fix Go used a prefix matcher and opened the door.
+# replace-room-exits rewrites both disposable worlds' room 8162 north exit to a
+# closed door keyed "door".
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 1 door
+
+[setup:oracle]
+Fentress
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[setup:port]
+Fentress
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+look
+recall
+
+[warmup]
+holylight
+goto 8162
+
+[probe]
+open d
+open door

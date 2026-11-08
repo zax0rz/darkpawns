@@ -1,0 +1,76 @@
+# depth-case: give.number-is-digits
+# depth-case: drop.number-is-digits
+# C's is_number() (src/interpreter.c:1175-1182) is true only when every byte is
+# a digit: is_number("12abc") is false and is_number("-5") is false. So
+# do_give/do_drop (src/act.item.c:777,587) treat "12abc" as an object name, not
+# an amount. Pre-fix Go used fmt.Sscanf, so "12abc" and "-5" were read as a gold
+# amount. The peer occupies the target slot so the object branch resolves a
+# victim; C then reports the missing object.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Fentress
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fentress
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Fentresspeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Fentresspeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+holylight
+
+[probe]
+give 12abc Fentresspeer
+give -5 coins Fentresspeer
+drop 12abc

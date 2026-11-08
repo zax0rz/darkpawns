@@ -28,3 +28,4 @@ give_find_vict	give	give.ordinal-second	D2	command	oracle-green	give-resolve-dep
 give_find_vict	give	give.ordinal-exhausted	D2	command	oracle-green	give-resolve-depth	handler.c:1293-1299	"N.<name>" past the last visible match falls to NOPERSON.
 give_find_vict	give	give.invisible-target	D2	command	oracle-green	give-invisible-depth	handler.c:1295	CAN_SEE gates candidates; a mortal giver gets NOPERSON for an invisible mob.
 give_find_vict	give	give.invisible-target-coins	D2	command	oracle-green	give-invisible-depth	act.item.c:784	The coin form resolves through give_find_vict too; invisible mob yields NOPERSON before any gold check.
+do_give	give	give.number-is-digits	D2	command	oracle-green	isnumber-give	src/interpreter.c:1175-1182; src/act.item.c:777	do_give's is_number() gate is digits-only, so "12abc" and "-5" are object names, not amounts; the pre-fix Go fmt.Sscanf matcher read them as gold (R1/R5c/R5j).

@@ -735,7 +735,7 @@ func specHornObject(w *World, ch *Player, obj *ObjectInstance, cmd string, arg s
 	}
 
 	held, ok := ch.Equipment.GetItemInSlot(SlotHold)
-	if !ok || held != obj || !isName(strings.TrimSpace(arg), obj.GetKeywords()) {
+	if !ok || held != obj || !cIsName(strings.TrimSpace(arg), obj.GetKeywords()) {
 		return false
 	}
 

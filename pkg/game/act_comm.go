@@ -6,7 +6,6 @@
 package game
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -848,14 +847,17 @@ func (w *World) AllPlayers() []*Player {
 	return players
 }
 
-// isNumber checks if a string parses as an integer.
-func isNumber(s string) bool {
-	if s == "" {
-		return false
+// CIsNumber is the single Go port of C's is_number() (src/interpreter.c:1175-1182):
+// true only when every byte is a decimal digit; the empty string is true, because
+// C's loop never runs. "-5" and "12abc" are false. This is the give/drop amount
+// gate. The previous fmt.Sscanf version accepted "-5" and "12abc" and rejected "".
+func CIsNumber(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
 	}
-	var n int
-	_, err := fmt.Sscanf(s, "%d", &n)
-	return err == nil
+	return true
 }
 
 // checkStupid returns true if the character is too stupid to speak.

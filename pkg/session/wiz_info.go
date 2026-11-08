@@ -108,7 +108,7 @@ func cmdShow(s *Session, args []string) error {
 		selected := -1
 		if value == "." {
 			selected = s.manager.world.GetRoomZone(s.player.GetRoomVNum())
-		} else if value != "" && cIsNumber(value) {
+		} else if value != "" && game.CIsNumber(value) {
 			selected = cAtoi(value)
 		}
 		matched := false
@@ -261,7 +261,7 @@ func cmdShow(s *Session, args []string) error {
 			s.Send("You must supply a zone number!\r\n")
 			return nil
 		}
-		if !cIsNumber(value) {
+		if !game.CIsNumber(value) {
 			return nil
 		}
 		number := cAtoi(value)
@@ -834,7 +834,7 @@ func showDetailedShop(w *game.World, value string, roomVNum int) string {
 		if selected < 0 {
 			return "This isn't a shop!\n\r"
 		}
-	} else if cIsNumber(value) {
+	} else if game.CIsNumber(value) {
 		shopNumber, err := strconv.Atoi(value)
 		if err == nil {
 			selected = shopNumber - 1

@@ -922,7 +922,7 @@ func specTurnUndead(w *World, ch *Player, me *MobInstance, cmd string, arg strin
 			return false
 		}
 		// Check that arg matches the object's keywords
-		if me != nil && !isName(arg, me.GetName()) {
+		if me != nil && !cIsName(arg, me.GetName()) {
 			return false
 		}
 		w.roomMessage(ch.GetRoomVNum(), "A ray of flame bursts out of the object, consuming the undead!")
@@ -978,7 +978,7 @@ func specMirror(w *World, ch *Player, me *MobInstance, cmd string, arg string) b
 		return false
 	}
 	arg = strings.TrimSpace(arg)
-	if !isName(arg, me.GetName()) {
+	if !cIsName(arg, me.GetName()) {
 		return false
 	}
 

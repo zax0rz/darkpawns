@@ -328,7 +328,7 @@ func cmdWiznetText(s *Session, rawArgs string) error {
 		// half_chop to consume the actual first token. Those parsers differ
 		// when fill words occur, so preserve both call sites here.
 		prefix, _ := game.OneArgument(argument[1:])
-		if cIsNumber(prefix) {
+		if game.CIsNumber(prefix) {
 			first, remainder := wiznetHalfChop(argument[1:])
 			level = cAtoi(first)
 			if level < LVL_IMMORT {

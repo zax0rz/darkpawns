@@ -344,7 +344,7 @@ func (w *World) npcVisiblePlayer(me *MobInstance, name string) *Player {
 // ported for mobiles.
 func (w *World) npcGive(me *MobInstance, argument string) {
 	objName, rest := oneArgument(argument)
-	if objName == "" || isNumber(objName) || strings.HasPrefix(strings.ToLower(objName), "all") {
+	if objName == "" || CIsNumber(objName) || strings.HasPrefix(strings.ToLower(objName), "all") {
 		if objName != "" {
 			slog.Warn("NPC give form not ported for mobiles; ignored", "mob_vnum", me.GetVNum(), "argument", argument)
 		}
