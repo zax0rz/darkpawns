@@ -135,12 +135,13 @@ func TestSpecRoachIdleOutput(t *testing.T) {
 
 func TestSpecRoachFoodSuccessGrowthAndExtraction(t *testing.T) {
 	for _, tc := range []struct {
-		name       string
-		stretching int
-		noise      string
+		name      string
+		noiseDraw int
+		noise     string
 	}{
-		{name: "stretching", stretching: 0, noise: "You hear some stretching noises.\r\n"},
-		{name: "rumbling", stretching: 1, noise: "You hear a strange rumbling from a large roach's stonach.\r\n"},
+		// C: if (number(0,1)) stretching else rumbling (src/spec_procs3.c:755-759).
+		{name: "stretching", noiseDraw: 1, noise: "You hear some stretching noises.\r\n"},
+		{name: "rumbling", noiseDraw: 0, noise: "You hear a strange rumbling from a large roach's stonach.\r\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := newRoachTestWorld(t, 1001)
@@ -151,7 +152,7 @@ func TestSpecRoachFoodSuccessGrowthAndExtraction(t *testing.T) {
 
 			// The first two draws are starvation checks, followed by food
 			// success, the two damage-dice draws, and the selected noise.
-			setRoachDraws(t, 0, 1, 0, 0, 0, tc.stretching)
+			setRoachDraws(t, 0, 1, 0, 0, 0, tc.noiseDraw)
 			if !specRoach(r.w, nil, r.mob, "", "") {
 				t.Fatal("food success was not handled")
 			}

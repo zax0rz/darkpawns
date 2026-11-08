@@ -1,0 +1,90 @@
+# depth-case: mob.puff-emote-acts-site-live
+# C-first witness vehicle for the emote arms of SPECIAL(puff), assigned to mob
+# vnum 1 at src/spec_assign.c:182 and defined at src/spec_procs.c:611-718.
+# This vehicle makes the C transcript print the five room-emote output sites
+# the census had never seen at seed 1 (DP-1498): laughter (:662), the lost
+# wand (:672), female stuff (:686), the meaning of life (:691) and funky
+# beats (:702). Ten puffs share the room so each 40-pulse mobile tick
+# (src/structs.h:633) draws the number(0,90) switch ten times
+# (src/spec_procs.c:624); the pulse pads cover every emote case under
+# DP_SEED=1.
+# C path: src/mobact.c:68-93 -> src/spec_procs.c:611-718.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+spawn-mob 1 20 8105 80
+replace-room-exits 8105 none
+
+[setup:oracle]
+PuffGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+PuffGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+PuffPeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+PuffPeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport PuffPeer 8105
+
+[probe]
+~dpclock pulse 4000
+~dpclock pulse 4000

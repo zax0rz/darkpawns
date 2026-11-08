@@ -1104,7 +1104,8 @@ func (w *World) specRoachFood(me *MobInstance, roomVNum int) bool {
 				me.SetMaxHP(newMaxHP)
 				// #nosec G404 — game RNG, not cryptographic
 				// #nosec G404
-				if roachNumber(0, 1) == 0 {
+				// C: if (number(0,1)) stretching else rumbling (src/spec_procs3.c:755-759).
+				if roachNumber(0, 1) != 0 {
 					Act(w, false, me, nil, nil, nil, "You hear some stretching noises.", "", ToRoom)
 				} else {
 					Act(w, false, me, nil, nil, nil, "You hear a strange rumbling from $n's stonach.", "", ToRoom)

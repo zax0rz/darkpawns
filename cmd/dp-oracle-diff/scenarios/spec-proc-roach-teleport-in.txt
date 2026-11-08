@@ -1,0 +1,83 @@
+# depth-case: mob.roach-teleport-in-site-live
+# C-first witness for the destination act of SPECIAL(roach) teleport
+# (src/spec_procs3.c:795, "fades in slowly, looking a bit disoriented.") —
+# DP-1498. C prints this act in the DESTINATION room, so the witness
+# parks a passive peer in room 19412: under DP_SEED=1 the number(0,10)
+# switch and nested number(0,5) gate (src/spec_procs3.c:769-803) send the
+# roach there on mobile tick 106 (4240 pulses), found by bisection from
+# a single-roach run and read back with "stat mob roach" (In room [19412]).
+# The God stays in origin room 8105 to witness the paired fade-out act
+# (:791). do_teleport (src/act.wizard.c) draws no RNG on success, so
+# parking the peer changes no draw stream position. Discovery and
+# witness share the character names (creation draws depend on them).
+# C path: src/mobact.c:68-93 -> src/spec_procs3.c:707-805.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 23 1 8105 80
+clear-mob-flag 23 RANDZON
+replace-room-exits 8105 none
+
+[setup:oracle]
+Axel
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Axel
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Zed
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Zed
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Zed 19412
+
+[probe]
+~dpclock pulse 4240
