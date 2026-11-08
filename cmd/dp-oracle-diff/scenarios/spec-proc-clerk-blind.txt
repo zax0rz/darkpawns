@@ -1,0 +1,57 @@
+# depth-case: mob.clerk-unknown-zone-warning-site-live
+# depth-case: mob.clerk-blind-list-site-live
+# C-first witness for the two remaining clerk output sites (DP-1502): the
+# bare unknown-hometown warning (src/spec_procs3.c:96-97, "default case
+# reached in clerk special - tell a god") and the blind-clerk list act
+# (:107-108, "$n exclaims, 'Who's there? I can't see you!'"). The clerk
+# (mob 18228, src/spec_assign.c:407) sits in room 5510 (zone 55), so the
+# typist's zone lookup (src/spec_procs3.c:83-95) misses 80/182/212 and
+# prints the warning; the fixture blinds the clerk (AFF_BLIND, bit 0) so
+# the list visibility gate (:105-110) fires the room act. One list command
+# prints both.
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs3.c:75-110.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 18228 1 5510 55
+set-mob-aff 18228 1
+replace-room-exits 5510 none
+
+[setup:oracle]
+ClerkGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+ClerkGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 5510
+
+[probe]
+list
+
+# C note: the warning is bare (no terminator) and travels the literal sink
+# since the batch-1 sendToChar class fix; sendToChar would add a CRLF C
+# never writes (src/spec_procs3.c:96 has none).
