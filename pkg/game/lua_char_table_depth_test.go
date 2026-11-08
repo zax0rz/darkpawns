@@ -48,6 +48,9 @@ func newLuaCharTableFixture(t *testing.T) *luaCharTableFixture {
 		Mobs: []parser.Mob{{
 			VNum: 9001, Keywords: "healer probe", ShortDesc: "the healer",
 			Level: 20, Alignment: -400, Gold: 7,
+			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035); a
+			// literal that leaves them 0 is silenced by do_say (src/act.comm.c:766-771).
+			Int: 11, Wis: 11,
 		}},
 		Objs: []parser.Obj{
 			luaCharTableObject(3001, "a pc trinket"),

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/zax0rz/darkpawns/pkg/combat"
@@ -68,8 +69,9 @@ func TestSpecMedusa_EntryGatesAndFightingDelegation(t *testing.T) {
 	if !specMedusa(w, nil, mob, "", "") {
 		t.Fatal("fighting commandless medusa did not delegate to magic_user")
 	}
-	if got := lastMsg(); got != "" {
-		t.Fatalf("delegated magic_user emitted %q", got)
+	// With real mob stats the delegated magic_user casts; assert the frame.
+	if got := lastMsg(); !strings.Contains(got, "utters the words") {
+		t.Fatalf("delegated magic_user output = %q, want a cast utterance", got)
 	}
 }
 

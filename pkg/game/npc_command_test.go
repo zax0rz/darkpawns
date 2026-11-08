@@ -20,6 +20,9 @@ func newNPCCommandWorld(t *testing.T) (*World, *Player, *MobInstance, *strings.B
 		Mobs: []parser.Mob{{
 			VNum: 2001, Keywords: "healer", ShortDesc: "the healer",
 			Level: 20, Alignment: -350, Position: combat.PosStanding, DefaultPos: combat.PosStanding,
+			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035); a
+			// literal that leaves them 0 is silenced by do_say (src/act.comm.c:766-771).
+			Int: 11, Wis: 11,
 		}},
 	}
 	w, err := NewWorld(parsed)

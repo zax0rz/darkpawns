@@ -28,6 +28,9 @@ func newActorPositionFixture(t *testing.T, position int) *actorPositionFixture {
 		Mobs: []parser.Mob{{
 			VNum: 99001, Keywords: "guard trainee", ShortDesc: "a guard trainee",
 			Sex: 0, Position: position, DefaultPos: combat.PosStanding,
+			// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035);
+			// a literal that leaves them 0 is silenced by do_say.
+			Int: 11, Wis: 11,
 		}},
 	}
 	w, err := game.NewWorld(parsed)

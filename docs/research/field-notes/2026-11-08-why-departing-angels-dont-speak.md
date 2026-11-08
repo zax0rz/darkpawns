@@ -35,14 +35,28 @@ Go's NPC say, `npcSay` (`pkg/game/npc_command.go:253-268`), has **no such gate**
 - Adding the gate to Go's `npcSay` turns `spellmatrix-staff-olc-13-depth` green (`result: no normalized divergence`); reverting it turns the same scenario red again (`result: normalized divergence detected`, fingerprint `~dpclock pulse 20 [actor]`). The gate is the difference.
 - Conclusion: the summoned angel's effective `GET_INT`/`GET_WIS` is 0 at departure in **both** engines, so C silences it and Go (lacking the gate) does not.
 
-## Why this is reported, not shipped
+## Why the angel's INT is 0
 
-The brief says: *"If the fix would change how every NPC talks, stop after step 1 and report."* Adding the gate does that: it silences **every** mobile whose effective INT or WIS is 0, whatever the caller. Concretely, the gate is faithful but has a wider blast radius than the one scenario:
+It is not a conjuring quirk. The staff matrix includes **mind bar** (`spell.mind-bar.matrix-staff-olc`), and a staff casts on everyone in the room, so the angels take it too:
 
-- It breaks `TestHandleDeathDyingSpecArmPuffSaysLine` and `TestLuaCharTablePlayerFields`, whose mobs are stat-less struct literals (`parser.Mob{...}` bypasses the parser's `Int = 11`/`Wis = 11` defaults, `pkg/parser/mob.go:398-404`).
-- The precise reason a real prototype that defaults to INT/WIS 11 ends up with 0 effective stats at conjure time was not pinned down this session (the oracle scenarios that would `stat` a summoned angel repeatedly failed to capture the stat: the actor enters combat with the angels, and the angel was not visible to a separated statter).
+- `SPELL_MIND_BAR` applies `APPLY_INT` with modifier `-18` (`src/magic.c:1369-1371`).
+- `affect_total` clamps the result at 0: `GET_INT(ch) = MAX(0, MIN(GET_INT(ch), i))` (`src/handler.c:354`).
+- A mob's INT starts at 11 plus at most 7 (`src/db.c:1034-1035`, `:1057`), so −18 always reaches 0.
+- `create_mobile` touches no abilities (`src/new_cmds2.c:588-620`), which is why a plainly loaded mob 85 speaks.
 
-So the fix needs scoping — either gate only the paths whose C site is `do_say`, plus make the synthetic test mobs carry real stats, or address the stat default — and that scoping is Zach's/Claude's call. The five `docs/fidelity/depth/cast.tsv` rows still cite DP-1493; they cannot be upgraded to the real cause until the fix lands.
+So it is an ordinary rule — a mobile that a mind bar has numbed cannot speak — that Go never ported.
+
+## The fix
+
+The gate is **global**, exactly as in C: every C path a mobile speaks through reaches `do_say` (specials `src/spec_procs.c:621-712`, `:1826`; mobprogs `src/mobprog.c:159`, `:608-624`; hunting `src/graph.c:282`, `:293-295`; shopkeepers `src/shop.c:80`, `:128`; Lua `src/scripts.c:1285`). Go's `npcSay` now refuses before any output when `GetWis() == 0 || GetInt() == 0` (`pkg/game/npc_command.go`).
+
+Two consequences are handled in the same PR:
+
+- The stat-less test mobs (literals that bypass the parser's `Int = 11`/`Wis = 11` defaults, `pkg/parser/mob.go:398-404`) are given real stats, so they keep speaking. No special-case code.
+- Lua (`pkg/game/world_bridge.go:335`) and the shopkeepers (`pkg/game/shop_npc.go:26`) already reach `npcSay`, so they inherit the gate.
+
+A check of `lib/world/mob/` found no real prototype whose INT or WIS is 0, so no shipped mob is silenced by this.
+
 
 ## Citations
 

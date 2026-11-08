@@ -14,7 +14,7 @@ import (
 func TestLuaLeaderChainBeyondFormerLimit(t *testing.T) {
 	w, err := NewWorld(&parser.World{
 		Rooms: []parser.Room{{VNum: 1001, Name: "Leader room"}},
-		Mobs:  []parser.Mob{{VNum: 9001, Keywords: "healer probe", ShortDesc: "the healer"}},
+		Mobs:  []parser.Mob{{VNum: 9001, Keywords: "healer probe", ShortDesc: "the healer", Int: 11, Wis: 11}},
 	})
 	if err != nil {
 		t.Fatal(err)

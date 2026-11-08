@@ -72,6 +72,10 @@ func newSpecProcTestMob(t *testing.T, w *World, roomVNum, level int) *MobInstanc
 		HP:        parser.DiceRoll{Num: 1, Sides: 8, Plus: 20},
 		Alignment: 0,
 		Race:      1,
+		// C parse_simple_mob seeds INT/WIS 11 (src/db.c:1034-1035); a literal
+		// that leaves them 0 is silenced by do_say (src/act.comm.c:766-771).
+		Int: 11,
+		Wis: 11,
 	}
 	w.mu.Lock()
 	w.mobs[vnum] = proto
