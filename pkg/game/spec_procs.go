@@ -37,18 +37,6 @@ func randRange(min, max int) int {
 // changing the process-wide stream used by other specials.
 var citizenNumber = dprng.Number
 
-// randN returns a uniform random integer in [0, n). It is exclusive, so it
-// is safe for array indexing and switch selection. For C-style inclusive
-// probability gates use number(from, to) instead.
-func randN(n int) int {
-	if n <= 0 {
-		return 0
-	}
-	// #nosec G404 — game RNG, not cryptographic
-	// #nosec G404
-	return dprng.Number(0, n-1)
-}
-
 // roomMessage delivers pre-rendered text from C act()-equivalent room paths.
 // Callers that replace C send_to_room() must use World.SendToRoom instead,
 // whose recipient rule differs by allowing PLR_WRITING recipients.

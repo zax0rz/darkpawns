@@ -421,32 +421,60 @@ func specStableboyBuy(w *World, ch *Player, me *MobInstance, a string) bool {
 // ================================================================
 // tipster — Random tip messages on pulse
 // ================================================================
+
+// tipsterNumber is the tipster special's RNG seam, kept separate so a focused
+// test can pin the C draw range without touching the process-wide stream.
+var tipsterNumber = dprng.Number
+
+// specTipster ports SPECIAL(tipster) (src/spec_procs2.c:464-520). C draws
+// number(0, 50) on an autonomous pulse and speaks one of thirteen canned
+// do_say lines (case 6 speaks two). C's ch is the host mob on that lane, so the
+// gate and the say both use me; a nil ch from callMobSpecSafely is expected.
+// The special is declared but never ASSIGNMOB'd (src/spec_assign.c:110), so its
+// proof is this direct call, not the census.
 func specTipster(w *World, ch *Player, me *MobInstance, cmd string, arg string) bool {
-	if cmd != "" || ch.GetPosition() <= combat.PosSleeping || ch.GetHP() < 0 {
+	if cmd != "" || me == nil {
 		return false
 	}
-	if ch.GetFightingBody() != nil {
+	if me.GetPosition() <= combat.PosSleeping || me.GetHP() < 0 {
+		return false
+	}
+	if me.GetFightingBody() != nil {
 		return false
 	}
 
-	tips := []string{
-		"For ansi color, type COLOR COMPLETE!",
-		"Wargs make a tasty meal if you CARVE their corpse.",
-		"AUTO EXIT will show you the exits for every room.",
-		"It's always safest to quit in the temple.",
-		"You're allowed to play up to 3 characters at once.",
-		"You can hire a mercenary by giving him 100 coins.",
-		"A bribe of a couple hundred coins will make a guard look the other way while you fight.  Guards will attack you if you fight in front of them.",
-		"Use the CONSIDER command!",
-		"If you don't like something, use the IDEA command.",
-		"If you see something out of place, use the BUG command.",
-		"If you see something spelled incorrectly, use the TYPO command.",
-		"Use an identify scroll on yourself to see your numerical statistics.  (Available at your local magick shop.)",
-		"Check out HELP ALIAS to see how to abbreviate commands or do multiple commands at once.",
+	switch tipsterNumber(0, 50) {
+	case 0:
+		w.npcSay(me, "For ansi color, type COLOR COMPLETE!")
+	case 1:
+		w.npcSay(me, "Wargs make a tasty meal if you CARVE their corpse.")
+	case 2:
+		w.npcSay(me, "AUTO EXIT will show you the exits for every room.")
+	case 3:
+		w.npcSay(me, "It's always safest to quit in the temple.")
+	case 4:
+		w.npcSay(me, "You're allowed to play up to 3 characters at once.")
+	case 5:
+		w.npcSay(me, "You can hire a mercenary by giving him 100 coins.")
+	case 6:
+		w.npcSay(me, "A bribe of a couple hundred coins will make a guard look the other way while you fight.")
+		w.npcSay(me, "Guards will attack you if you fight in front of them.")
+	case 7:
+		w.npcSay(me, "Use the CONSIDER command!")
+	case 8:
+		w.npcSay(me, "If you don't like something, use the IDEA command.")
+	case 9:
+		w.npcSay(me, "If you see something out of place, use the BUG command.")
+	case 10:
+		w.npcSay(me, "If you see something spelled incorrectly, use the TYPO command.")
+	case 11:
+		w.npcSay(me, "Use an identify scroll on yourself to see your numerical statistics. (Available at your local magick shop.)")
+	case 12:
+		w.npcSay(me, "Check out HELP ALIAS to see how to abbreviate commands or do multiple commands at once.")
 	}
 
-	n := randN(len(tips))
-	ch.SendMessage(fmt.Sprintf("%s says '%s'\r\n", mobName(me), tips[n]))
+	// C returns FALSE even when it speaks, letting the rest of
+	// mobile_activity() continue with its normal AI work.
 	return false
 }
 
