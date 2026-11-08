@@ -32,6 +32,17 @@ Duplicate implementations of one C function, where a later faithful port sits be
 
 **How to test it:** search `pkg/` for other C functions with more than one Go implementation. Look for `c`-prefixed helpers like `cFName`/`cIsName` beside unprefixed ones, comments citing the same C function from two places, and the R5c audits. Then count how many of the pairs disagree. A static pass over comments of the form `C: <func>()` could build the list.
 
+## Names (Zach, 2026-11-07)
+
+- **Amnesiac clones:** duplicate implementations of one source function, written independently by agents with no memory that the other existed. `fname`/`cFName`, `isName`/`cIsName` and `isNumber`/`cIsNumber` are amnesiac clone pairs.
+- **Stranded fix:** an agent finds the correct semantics, ports them faithfully for its own call site, and leaves the wrong version serving everyone else. `cFName` was a stranded fix from 2026-10-16 until #2370 (DP-1500) put every caller on it.
+
+**Relation to prior work.** These are a special case of *code clones*, and specifically of *inconsistent clones*. Juergens, Deissenboeck, Hummel and Wagner studied inconsistent changes to clones and found that they are frequent, and that unintentional ones are often faults:
+
+> E. Juergens, F. Deissenboeck, B. Hummel, S. Wagner. "Do Code Clones Matter?" *Proc. 31st International Conference on Software Engineering (ICSE 2009)*, Vancouver, pp. 485–495. IEEE, 2009. doi:10.1109/ICSE.2009.5070547. Preprint: arXiv:1701.05472.
+
+The difference here is how the clones are born. Classic clones come from copy-paste and drift apart through later edits. Amnesiac clones are ported independently from the same C function, so they can disagree **from birth**, with no shared ancestor in the Go code at all. Clone-detection tools that look for textual or structural similarity may miss them: `fname` (space split) and `cFName` (letter-run loop) don't look alike, and only the C source they both cite connects them. So the detector for this case is the **citation**, not the code. For every C function, list each Go function whose comments or names claim to port it.
+
 ## First probe, same evening
 
 Claude listed every non-test Go function in `pkg/`, `internal/` and `cmd/` (5,825 of them) and grouped them by normalized name against about 50 core C helpers (`isname`, `is_abbrev`, `is_number`, `one_argument`, `dice`, `number`, `PERS` and others). Fifteen helpers have more than one Go implementation. Most are harmless:
