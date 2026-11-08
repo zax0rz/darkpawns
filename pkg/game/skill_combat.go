@@ -629,9 +629,12 @@ func DoSpike(ch *Player, target combat.Combatant, subcmd int, world *World) Skil
 	}
 
 	weapon, ok := ch.Equipment.GetItemInSlot(SlotWield)
-	// C's OBJN() check searches the wielded object's keywords, not its
-	// player-facing short description (new_cmds.c:1124-1128).
-	if !ok || weapon == nil || !strings.Contains(strings.ToLower(weapon.GetKeywords()), weaponName) {
+	// C tests strstr(OBJN(GET_EQ(ch, WEAR_WIELD), ch), weapon): OBJN is the
+	// wielded object's FIRST keyword via fname(), or "something" when the
+	// wielder cannot see it, and strstr is case-sensitive (new_cmds.c:1124-1128).
+	// Checking every keyword lowercased would let any item whose spike/stake
+	// keyword is not first pass here while C refuses it.
+	if !ok || weapon == nil || !strings.Contains(objName(weapon, ch), weaponName) {
 		return SkillResult{
 			Success:     false,
 			MessageToCh: fmt.Sprintf("You need to wield a %s to succeed!\r\n", weaponName),

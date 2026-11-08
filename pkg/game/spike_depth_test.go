@@ -166,3 +166,39 @@ func TestDoSpike_SuccessProbability(t *testing.T) {
 		t.Fatalf("seed %d did not use inclusive number(0,LEVEL_IMMORT): %q", seed, result.MessageToCh)
 	}
 }
+
+// TestDoSpike_WeaponCheckUsesFirstKeyword pins R1: C matches only the wielded
+// object's FIRST keyword, via strstr(OBJN(GET_EQ(ch, WEAR_WIELD), ch), weapon)
+// (new_cmds.c:1124-1128; fname at handler.c:68-79), and strstr is
+// case-sensitive. The port lowered and searched every keyword, so an item whose
+// spike/stake keyword was not the first, or differed in case, wrongly passed.
+func TestDoSpike_WeaponCheckUsesFirstKeyword(t *testing.T) {
+	cases := []struct {
+		name     string
+		keywords string
+		wantPass bool
+	}{
+		{"spike first", "spike weapon", true},
+		{"spike inside first keyword", "marlinspike spike", true},
+		{"spike not first", "guard thumb spiked", false},
+		{"case mismatch", "Spike weapon", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			w, ch := newSpikeTestWorld(t)
+			victim := spikePlayerTarget(t, w, 5)
+			weapon := makeSpikeWeapon("spike")
+			weapon.Prototype.Keywords = tc.keywords
+			equipWeapon(t, ch, weapon)
+
+			result := DoSpike(ch, victim, 0, w)
+			if result.Success != tc.wantPass {
+				t.Fatalf("keywords %q: Success = %t, want %t (message %q)",
+					tc.keywords, result.Success, tc.wantPass, result.MessageToCh)
+			}
+			if !tc.wantPass && result.MessageToCh != "You need to wield a spike to succeed!\r\n" {
+				t.Errorf("keywords %q: message = %q, want the wield-requirement line", tc.keywords, result.MessageToCh)
+			}
+		})
+	}
+}
