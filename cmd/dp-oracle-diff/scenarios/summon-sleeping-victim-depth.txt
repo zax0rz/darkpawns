@@ -1,0 +1,78 @@
+# depth-case: spell.summon.sleeping-victim-output
+# C-first witness for spell_summon's sleeping-victim arm, "You have a strange
+# dream about falling..." (DP-1502 list at src/spells.c:351). A God caster
+# summons a lower-level PC target that has been forced to sleep: the transfer
+# succeeds but C takes the !AWAKE branch instead of the look + summon line.
+# C path: do_cast -> cast_spell -> call_magic -> spell_summon
+# (src/spell_parser.c:513,879-925,1038-1110; src/spells.c:332-351).
+
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 north 8161 0
+spawn-obj 64 1 8162 80
+
+[setup:oracle]
+Castgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Castgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Summontarget]
+Summontarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Summontarget]
+Summontarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8161
+teleport Summontarget 8161
+force Summontarget sleep
+goto 8162
+
+[probe]
+cast 'summon' Summontarget

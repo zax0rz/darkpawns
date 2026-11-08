@@ -1,0 +1,116 @@
+# depth-case: spell.charm-charmed-caster-output
+# C-first witness for spell_charm's charmed-caster gate, "You can't have any
+# followers of your own!" (DP-1502 list at src/spells.c:421). An Outlaw peer
+# charms the primary caster first (PC-on-PC charm is gated on IS_OUTLAW,
+# src/spells.c:439-441); the newly charmed caster then casts charm at a third
+# party and C refuses at src/spells.c:420-421 before the saving throw.
+# C path: do_cast -> cast_spell -> call_magic -> MANUAL spell_charm
+# (src/spell_parser.c:507,879-925,1038-1110; src/spells.c:407-471).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Chone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Chone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:caster]
+Chtwo
+Y
+casterpass
+casterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:caster]
+Chtwo
+y
+casterpass
+casterpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:target]
+Chthree
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:target]
+Chthree
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Chtwo 8105
+teleport Chthree 8105
+set player Chone class mage
+set player Chone maxmana 5000
+set player Chone mana 5000
+skillset Chone 'charm person' 100
+set player Chone outlaw on
+set player Chtwo class mage
+set player Chtwo maxmana 5000
+set player Chtwo mana 5000
+skillset Chtwo 'charm person' 100
+set player Chtwo level 34
+
+[probe]
+cast 'charm person' Chtwo
+~dpclock pulse 40
+send:caster cast 'charm person' Chthree
