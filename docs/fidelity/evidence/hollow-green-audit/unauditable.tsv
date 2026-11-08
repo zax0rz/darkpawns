@@ -1,0 +1,23 @@
+manifest_file	case_id	scenario	reason
+docs/fidelity/depth/cast.tsv	spell.charm.nocharm-mob-refusal	spell-charm-nocharm-depth	proof seeds @{10}; retained dump is seed 1
+docs/fidelity/depth/cast.tsv	spell.charm.sanctuary-refusal	spell-charm-sanctuary-depth	proof seeds @{10}; retained dump is seed 1
+docs/fidelity/depth/cast.tsv	spell.charm.shopkeeper-refusal	spell-charm-shopkeeper-depth	proof seeds @{11}; retained dump is seed 1
+docs/fidelity/depth/cast.tsv	spell.charm.success-follow-audience	spell-charm-success-follow-audience-depth	proof seeds @{25}; retained dump is seed 1
+docs/fidelity/depth/disposal.tsv	donate.prepend-order	donate-order-prepend	proof seeds @{8}; retained dump is seed 1
+docs/fidelity/depth/dream.tsv	dream.point-update-wake-through-point-update	dream-point-update-wake-depth	proof seeds @{20}; retained dump is seed 1
+docs/fidelity/depth/hunt-items.tsv	mob.hunt-items-hourly-dispatch	mob-hunt-items	proof seeds @{123}; retained dump is seed 1
+docs/fidelity/depth/hunt-items.tsv	mob.hunt-items-spiked-armor	mob-hunt-items	proof seeds @{123}; retained dump is seed 1
+docs/fidelity/depth/peek.tsv	peek.failure-look-audience	peek-success-depth	proof seeds @{3}; retained dump is seed 1
+docs/fidelity/depth/peek.tsv	peek.kender-mob-followup	peek-kender-depth	proof seeds @{3}; retained dump is seed 1
+docs/fidelity/depth/shop.tsv	shops.sell-retained-stock	shop-finite-stock-trade-depth	proof seeds @{2}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-1	kick-skill-message-death-depth	proof seeds @{2}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-1	kick-skill-message-god-depth	proof seeds @{2}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-1	kick-skill-message-hit-depth	proof seeds @{2}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-1	kick-skill-message-miss-depth	proof seeds @{2}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-2	kick-skill-message-death-depth	proof seeds @{5}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-2	kick-skill-message-god-depth	proof seeds @{5}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-2	kick-skill-message-hit-depth	proof seeds @{5}; retained dump is seed 1
+docs/fidelity/depth/skill-message-corpus.tsv	fightmsg.134.record-2	kick-skill-message-miss-depth	proof seeds @{5}; retained dump is seed 1
+docs/fidelity/depth/spec-procs.tsv	mob.eq-thief-pulse-dispatch	spec-proc-eq-thief	proof seeds @{2,3,5,8}; retained dump is seed 1
+docs/fidelity/depth/spec-procs.tsv	mob.eq-thief-steal-transfer	spec-proc-eq-thief	proof seeds @{2,3,5,8}; retained dump is seed 1
+docs/fidelity/depth/summon.tsv	spell.summon.success-output	summon-success-output-depth	proof seeds @{2}; retained dump is seed 1
