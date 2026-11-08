@@ -1,0 +1,90 @@
+# depth-case: cast.psionic-literal-cast
+# depth-case: cast.will-entry
+# depth-case: cast.power-entry-surface
+# depth-case: will.level-gate
+# depth-case: will.unfamiliar-power
+# C-first vehicle for do_cast's psionic/mystic entry gates, which the
+# non-psionic cast-depth vehicle never reaches: src/spell_parser.c:928
+# ("Psionics 'will' things, not 'cast' them!"), :939 ("Will what?"),
+# :948 ("Psionic powers must be enclosed in the symbols: '"), :960
+# ("Will what?!?"), :967 ("You are not learned in that power!") and :974
+# ("You are unfamiliar with that power."). A level-34 Psionic peer drives the
+# registered will/cast commands; the primary is an idle God.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Willgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Willgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Willpsi]
+Willpsi
+Y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Willpsi]
+Willpsi
+y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Willpsi 8105
+set player Willpsi class i
+set player Willpsi level 20
+set player Willpsi maxmana 5000
+set player Willpsi mana 5000
+
+[probe:Willpsi]
+cast 'flame arrow'
+will
+will flame arrow
+will 'frobnicate'
+will 'flame arrow'
+will 'psiblast'
+will 'mind blast'
