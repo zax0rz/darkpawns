@@ -790,7 +790,12 @@ func shootTargetGate(s SessionInterface, target combat.Combatant) (bool, error) 
 	return false, nil
 }
 
-// CmdSubdue handles the subdue command (C-10).
+// CmdSubdue handles the subdue command (C-10). C checks the skill, then
+// FIGHTING(ch), then the target (src/act.offensive.c:1091-1105). A fighting
+// actor usually never gets here (the interpreter's POS_STANDING gate), but one
+// bashed to sitting who stands again is POS_STANDING while still fighting
+// (src/act.movement.c:707-710; src/fight.c:1992), so the busy arm must come
+// before the "Subdue who?" lookup.
 func CmdSubdue(s SessionInterface, args []string) error {
 	ch, err := skillContext(s, game.SkillSubdue)
 	if err != nil {
@@ -799,18 +804,23 @@ func CmdSubdue(s SessionInterface, args []string) error {
 	if ch == nil {
 		return nil
 	}
+	if ch.GetFightingBody() != nil {
+		return s.SendMessage("You're too busy right now!\r\n")
+	}
 	if len(args) == 0 {
 		return s.SendMessage("Subdue who?\r\n")
 	}
 	world := s.GetWorld()
 	target, _, found := game.FindTargetInRoom(world, ch.GetRoom(), strings.Join(args, " "), ch)
 	if !found {
-		return s.SendMessage("They aren't here.\r\n")
+		// C's get_char_room_vis failure prints the same "Subdue who?" as a
+		// missing argument (src/act.offensive.c:1101-1105).
+		return s.SendMessage("Subdue who?\r\n")
 	}
 	if target == ch {
 		return s.SendMessage("Aren't we funny today...\r\n")
 	}
-	return sendSkillResult(s, ch, target, game.DoSubdue(ch, target))
+	return sendSkillResult(s, ch, target, game.DoSubdue(ch, target, world))
 }
 
 // CmdSleeper handles the sleeper hold command (C-10).

@@ -1,0 +1,141 @@
+# C-first do_subdue miss vehicle (src/act.offensive.c:1146-1168). An outlaw
+# mortal actor (subdue 100, hitpoints padded so the retaliation cannot kill)
+# subdues a level-11 player victim; C's level window (victim more than 3
+# levels above the actor) zeroes prob, so the miss arm is deterministic. The
+# victim is above fight.c's two PK protections (attacker over level 10, and
+# the actor is an Outlaw so the low-level victim shield does not apply), so
+# the trailing hit(victim, ch, TYPE_UNDEFINED) resolves a real swing. The
+# trio captures all three act() audiences and the retaliation. One fight, no
+# settle pulses: only the single retaliation round is compared.
+#
+# depth-case: subdue.miss-audience
+# depth-case: subdue.miss-retaliation
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Subduegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Subduegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Subdoer
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Subdoer
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Subvictim
+Y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Subvictim
+y
+victimpass
+victimpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:watcher]
+Subwatcher
+Y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:watcher]
+Subwatcher
+y
+watchpass
+watchpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Subdoer 'subdue' 100
+set Subdoer outlaw on
+set Subdoer maxhit 100
+set Subdoer hit 100
+set Subvictim level 11
+teleport Subdoer 8105
+teleport Subvictim 8105
+teleport Subwatcher 8105
+
+[probe:mortal]
+subdue Subvictim
