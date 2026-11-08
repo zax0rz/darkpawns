@@ -1,0 +1,73 @@
+# C-first witness for the ALLOW arm of SPECIAL(castle_guard_up), registered for mob
+# vnums 19650/19651 at src/spec_assign.c:457-458 and defined at
+# src/spec_procs2.c:2176-2216 (DP-1498). The block arm is covered by
+# spec-proc-castle-guard-up.txt; this vehicle reaches the owner's grouped
+# follower arm (:2194-2195 "moves aside and allows ... to pass"): the mortal
+# peer follows the God (the house owner, IDNUM 1) and is grouped with them
+# with them (both bodies carry AFF_GROUP, src/utils.c:655-674). The
+# house-control record makes Testor the owner of vnum 19650 (the guard room
+# itself: the up arm's grouped-owner offset is 0, ownerOffset is 1);
+# seed-player keeps get_name_by_id(owner) resolvable at boot
+# (src/house.c:288-290 skips records whose owner has no name) and whose exit
+# does not reach the atrium (src/house.c:303-304). The
+# peer's down command then passes the is_owner gates (src/spec_procs2.c:1844-1876).
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs2.c:2176-2216.
+
+[fixture]
+quiet-mobs
+seed-player
+spawn-mob 19650 1 19650 80
+replace-room-exits 19650 up 19651 0
+
+house-control 19650 19651 up 1 1 19604
+
+[setup:oracle]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:port]
+Testor
+testpassword
+<ENTER>
+1
+
+[setup:oracle:peer]
+CastleMortal
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+CastleMortal
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 19650
+teleport CastleMortal 19650
+force CastleMortal follow Testor
+group all
+
+[probe:peer]
+up
+
+# depth-case: mob.castle-guard-up-allow-site-live
