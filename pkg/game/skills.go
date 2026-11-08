@@ -528,7 +528,7 @@ type SkillResult struct {
 
 	// NoMessageToChTerminator preserves a C send_to_char that sends its line
 	// WITHOUT a trailing CRLF. do_bite's "Your victim is already a creature of
-	// the night!" (src/new_cmds.c:1260) is C's only such refusal; the caller's
+	// the night!" (src/new_cmds.c:1260) is one such line (DP-1503 audits the rest); the caller's
 	// skillMessageTerminator would otherwise add two bytes C never sends (R1).
 	NoMessageToChTerminator bool
 }
