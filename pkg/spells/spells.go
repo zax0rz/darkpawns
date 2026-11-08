@@ -187,7 +187,7 @@ const (
 	// Room flag bits (from src/structs.h)
 	RoomPeaceful = 4
 	RoomPrivate  = 9
-	RoomNoMagic  = 20
+	RoomNoMagic  = 7
 	RoomBFR      = 17 // bad for recall
 
 	// Start room VNUMs (from src/config.c)
