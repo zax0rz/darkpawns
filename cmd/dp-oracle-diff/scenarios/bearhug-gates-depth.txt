@@ -1,0 +1,89 @@
+# depth-case: bearhug.immortal-target
+# depth-case: bearhug.wielded
+# C-first witness for two do_bearhug gates DP-1502 lists in src/new_cmds.c:
+# :506 "The gods reject your impunity." (victim is an immortal player) and
+# :518 "You need to be bare handed to get a good grip." (a wielded weapon). The
+# mortal peer walks to the aggressive trainee (POS_FIGHTING opener lane), the
+# God joins the room, and the peer bearhugs the God bare-handed (:506) then
+# wields the sword 8037 and bearhugs the trainee (:518). C path:
+# src/new_cmds.c:466-520.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-obj 8037 1 8105 80
+
+[setup:oracle]
+Bhgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Bhgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Bhmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Bhmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Bhmortal 'bearhug' 75
+goto 8105
+
+[probe:mortal]
+bearhug Bhgod
+get sword
+wield sword
+bearhug trainee
