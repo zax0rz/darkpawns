@@ -815,9 +815,9 @@ func (w *World) DoLookDirection(ch *Player, direction int) ObservationResult {
 	secret := strings.Contains(exit.Keywords, "secret")
 	revealSecret := roomHasFlagBit(room.Flags, 20)
 	if exit.ExitInfo&parser.ExitClosed != 0 && exit.Keywords != "" && (revealSecret || !secret) {
-		result.literal(ch, fmt.Sprintf("The %s is closed.", fname(exit.Keywords)))
+		result.literal(ch, fmt.Sprintf("The %s is closed.", CFName(exit.Keywords)))
 	} else if exit.ExitInfo&parser.ExitClosed == 0 && exit.Keywords != "" && (revealSecret || !secret) {
-		result.literal(ch, fmt.Sprintf("The %s is open.", fname(exit.Keywords)))
+		result.literal(ch, fmt.Sprintf("The %s is open.", CFName(exit.Keywords)))
 	}
 	if secret && !revealSecret {
 		result.literal(ch, "You see nothing special.")
@@ -870,7 +870,7 @@ func (w *World) DoLookIn(ch *Player, arg string) ObservationResult {
 		// C look_in_obj sends the header (fname) and the mode-15 content list
 		// raw via send_to_char — NOT through act() — so neither is capitalized,
 		// and the contents use the same Num/Item/Encumbrance table as inventory.
-		result.raw(ch, fmt.Sprintf("%s (%s): \r\n", fname(object.GetKeywords()), where)+
+		result.raw(ch, fmt.Sprintf("%s (%s): \r\n", CFName(object.GetKeywords()), where)+
 			w.renderObjectListMode15(ch, object.GetContents()))
 		return result
 	}

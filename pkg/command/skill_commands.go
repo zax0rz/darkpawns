@@ -745,8 +745,8 @@ func CmdShoot(s SessionInterface, args []string) error {
 		return s.SendMessage("Alas, you cannot shoot that way...\r\n")
 	}
 	if exit.ExitInfo&parser.ExitClosed != 0 {
-		if keyword := strings.Fields(exit.Keywords); len(keyword) > 0 {
-			return s.SendMessage(fmt.Sprintf("The %s seems to be closed.\r\n", keyword[0]))
+		if exit.Keywords != "" {
+			return s.SendMessage(fmt.Sprintf("The %s seems to be closed.\r\n", game.CFName(exit.Keywords)))
 		}
 		return s.SendMessage("It seems to be closed.\r\n")
 	}

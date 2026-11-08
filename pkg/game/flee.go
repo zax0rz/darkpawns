@@ -277,7 +277,7 @@ func (w *World) performMoveMob(ch *MobInstance, dir int, needSpecialsCheck bool)
 			if isSecret && !movementRoomHasFlag(fromRoom, roomFlagSecretMark, "secret_mark") {
 				sendBodyMessage(w, ch, "Alas, you cannot go that way...\r\n")
 			} else {
-				sendBodyMessage(w, ch, fmt.Sprintf("The %s seems to be closed.\r\n", firstWord(exit.Keywords)))
+				sendBodyMessage(w, ch, fmt.Sprintf("The %s seems to be closed.\r\n", CFName(exit.Keywords)))
 			}
 		} else {
 			sendBodyMessage(w, ch, "It seems to be closed.\r\n")
