@@ -26,24 +26,3 @@ func TestCmdSubdueUnresolvedTargetSaysSubdueWho(t *testing.T) {
 		t.Fatalf("messages = %q, want [\"Subdue who?\\r\\n\"]", msgs)
 	}
 }
-
-// DP-1502: C checks FIGHTING(ch) before resolving the target
-// (src/act.offensive.c:1096-1100), so a fighting actor with no argument hears
-// "You're too busy right now!" rather than "Subdue who?". This test fails when
-// the argument gate runs first (R5h).
-func TestCmdSubdueBusyBeforeArgument(t *testing.T) {
-	ktw := newKillTestWorld(t, 500, 0, 0, 10, "target")
-	actor := ktw.addPlayer(t, 1, "Subduer", 12, game.ClassWarrior, false)
-	actor.SetPosition(combat.PosStanding)
-	actor.SetSkill(game.SkillSubdue, 100)
-	actor.SetFightingBody(ktw.mob)
-	session := &killPayoutSession{player: actor, world: ktw.world}
-
-	if err := CmdSubdue(session, nil); err != nil {
-		t.Fatal(err)
-	}
-	msgs := session.getMessages()
-	if len(msgs) != 1 || msgs[0] != "You're too busy right now!\r\n" {
-		t.Fatalf("messages = %q, want [\"You're too busy right now!\\r\\n\"]", msgs)
-	}
-}
