@@ -722,7 +722,9 @@ func (w *World) sendToZoneExceptRoom(roomVNum int, msg string) {
 			continue
 		}
 		if playerRoom := w.GetRoomInWorld(p.GetRoomVNum()); playerRoom != nil && playerRoom.Zone == zone {
-			p.SendMessage(msg)
+			// Verbatim like C's send_to_zone (src/comm.c:2384): bare strings
+			// stay bare (R1; see World.SendToZone).
+			p.SendLiteral(msg)
 		}
 	}
 }

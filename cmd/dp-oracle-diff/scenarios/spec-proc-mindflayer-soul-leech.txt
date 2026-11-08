@@ -1,0 +1,99 @@
+# depth-case: mob.mindflayer-soul-leech-acts-site-live
+# C-first witness for the case 0/5 soul-leech acts of SPECIAL(mindflayer),
+# assigned to mob 14414 at src/spec_assign.c:383 and defined at
+# src/spec_procs2.c:1972-2000 (DP-1502). spec-proc-mindflayer.txt reaches
+# case 15 (psiblast) at seed 1; this vehicle pads combat rounds so the
+# number(0,15) switch (src/spec_procs2.c:1978) lands on 0 or 5 and C prints
+# the tentacle pair: TO_NOTVICT "The tentacles on $n's face surge forward,
+# wrapping around $N's head!" (:1983) and TO_VICT "...around your head!"
+# (:1985). Both bodies are level 1 with 100000 HP so the combat cannot end
+# before the arm fires. One draw per violence pulse (PULSE_VIOLENCE =
+# 20, src/structs.h:634; the special runs after the mob's ordinary attack,
+# src/fight.c:2030-2031).
+# C path: src/fight.c:1898-2032 -> src/spec_procs2.c:1972-2000.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 14414 1 8105 144
+replace-room-exits 8105 none
+
+[setup:oracle]
+Mindactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Mindactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Mindvictim
+Y
+mindpass
+mindpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Mindvictim
+y
+mindpass
+mindpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Mindvictim 8105
+set Mindactor maxhit 100000
+set Mindactor hp 100000
+set Mindactor hit 100000
+set Alhazred maxhit 100000
+set Alhazred hp 100000
+set Alhazred hit 100000
+set Alhazred level 1
+
+set Mindactor level 1
+
+[probe]
+kill Alhazred
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100
+~dpclock pulse 100

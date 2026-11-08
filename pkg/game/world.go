@@ -861,7 +861,14 @@ func (w *World) SendToZone(roomVNum int, msg string) {
 		}
 		pr := w.GetRoomInWorld(p.RoomVNum)
 		if pr != nil && pr.Zone == zone {
-			p.SendMessage(msg)
+			// C's send_to_zone writes the string verbatim (src/comm.c:2384)
+			// and process_output's flush supplies the only terminator
+			// (src/comm.c:1630-1632), so bare messages (the werewolf howl,
+			// src/spec_procs3.c:438; the fire and lightning zone lines,
+			// src/magic.c:833,838) must reach the wire bare — SendMessage's
+			// ensureLineEnded would add a terminator C never wrote and print
+			// an extra blank line before the prompt (R1).
+			p.SendLiteral(msg)
 		}
 	}
 }

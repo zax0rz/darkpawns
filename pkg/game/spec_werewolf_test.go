@@ -124,6 +124,11 @@ func TestSpecWerewolf_EntryGates(t *testing.T) {
 func TestSpecWerewolf_HowlAudience(t *testing.T) {
 	a := newWerewolfTestActors(t)
 	setWerewolfNumber(t, 0, 1)
+	// C's zone howl is a bare send_to_zone (src/spec_procs3.c:438); the port
+	// delivers it through the literal sink so the transport adds no terminator
+	// (src/comm.c:2384 writes verbatim, the flush frames).
+	literal := make(map[string]string)
+	a.w.LiteralMessageSink = func(name string, msg []byte) { literal[name] += string(msg) }
 
 	if !specWerewolf(a.w, nil, a.mob, "", "") {
 		t.Fatal("fighting werewolf should handle the pulse")
@@ -135,10 +140,13 @@ func TestSpecWerewolf_HowlAudience(t *testing.T) {
 	if got := a.message[a.peer.Name]; got != wantRoom {
 		t.Fatalf("peer howl = %q, want %q", got, wantRoom)
 	}
-	if got := a.message[a.remote.Name]; got != "You hear a loud howling in the distance." {
-		t.Fatalf("remote howl = %q, want exact send_to_zone message", got)
+	if got := literal[a.remote.Name]; got != "You hear a loud howling in the distance." {
+		t.Fatalf("remote howl = %q, want exact bare send_to_zone bytes", got)
 	}
-	if got := a.message[a.sleepy.Name]; got != "" {
+	if got := a.message[a.remote.Name]; got != "" {
+		t.Fatalf("remote howl routed through framed sink: %q", got)
+	}
+	if got := literal[a.sleepy.Name]; got != "" {
 		t.Fatalf("sleeping remote howl = %q, want empty", got)
 	}
 }
@@ -176,5 +184,36 @@ func TestSpecWerewolf_BiteMoveFloorsAtZero(t *testing.T) {
 	}
 	if got := a.victim.GetMove(); got != 0 {
 		t.Fatalf("victim move = %d, want floor at zero", got)
+	}
+}
+
+// TestSendToZoneDeliversBareBytesLiterally pins the send_to_zone byte
+// contract (R1): C writes the caller's string verbatim (src/comm.c:2384) and
+// process_output's flush supplies the only terminator (src/comm.c:1630-1632),
+// so bare messages must reach the wire bare. SendMessage's ensureLineEnded
+// would add a terminator C never wrote — an extra blank line before the
+// prompt, which the oracle caught on the werewolf howl. Terminated strings
+// (SPECIAL(horn)'s zone line) keep their bytes unchanged on the same path.
+func TestSendToZoneDeliversBareBytesLiterally(t *testing.T) {
+	a := newWerewolfTestActors(t)
+	literal := make(map[string]string)
+	a.w.LiteralMessageSink = func(name string, msg []byte) { literal[name] += string(msg) }
+
+	a.w.SendToZone(5510, "You hear a loud howling in the distance.")
+	if got := literal["WolfDistant"]; got != "You hear a loud howling in the distance." {
+		t.Errorf("bare zone bytes = %q, want the bare message", got)
+	}
+	if got := a.message["WolfDistant"]; got != "" {
+		t.Errorf("bare zone send routed through the framed sink: %q", got)
+	}
+	for _, name := range []string{"WolfVictim", "WolfWitness", "WolfSleeper"} {
+		if literal[name] != "" || a.message[name] != "" {
+			t.Errorf("ineligible %s received the zone send", name)
+		}
+	}
+
+	a.w.SendToZone(5510, "You hear the blaring of a loud horn.\r\n")
+	if got := literal["WolfDistant"]; !strings.HasSuffix(got, "You hear the blaring of a loud horn.\r\n") {
+		t.Errorf("terminated zone bytes = %q, want the CRLF kept", got)
 	}
 }

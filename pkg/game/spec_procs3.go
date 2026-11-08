@@ -326,7 +326,10 @@ func specClerk(w *World, ch *Player, me *MobInstance, cmd string, arg string) bo
 			case 212:
 				homet = 3
 			default:
-				sendToChar(ch, "default case reached in clerk special - tell a god")
+				// C sends this bare (src/spec_procs3.c:96-97): the flush's
+				// framing is the only terminator, so sendToChar's appended
+				// CRLF would print an extra blank line (R1).
+				ch.SendLiteral("default case reached in clerk special - tell a god")
 			}
 		}
 	}
