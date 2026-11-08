@@ -171,13 +171,21 @@ func TestSpecClerk_VisibilityAndUnknownZone(t *testing.T) {
 	if err := w.MobTransfer(mob, 2701); err != nil {
 		t.Fatalf("MobTransfer: %v", err)
 	}
+	// C sends the unknown-zone warning bare (src/spec_procs3.c:96-97): the
+	// flush's framing is its only terminator, so it travels the literal sink
+	// and the test pins C's exact bytes (R1).
+	literal := make(map[string]string)
+	w.LiteralMessageSink = func(name string, msg []byte) { literal[name] += string(msg) }
 	if got := specClerk(w, actor, mob, "look", ""); got {
 		t.Fatal("unknown command should fall through after the zone warning")
 	}
-	if got, want := messages[actor.Name], "default case reached in clerk special - tell a god\r\n"; got != want {
+	if got, want := literal[actor.Name], "default case reached in clerk special - tell a god"; got != want {
 		t.Fatalf("unknown-zone output = %q, want %q", got, want)
 	}
-	if got := messages[peer.Name]; got != "" {
+	if got := messages[actor.Name]; got != "" {
+		t.Fatalf("unknown-zone warning went through the framed sink: %q", got)
+	}
+	if got := literal[peer.Name]; got != "" {
 		t.Fatalf("unknown-zone warning leaked to peer: %q", got)
 	}
 }

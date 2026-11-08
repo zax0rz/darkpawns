@@ -39,16 +39,25 @@ func TestScriptZoneEchoOnlyVisitsAwakePlayingDescriptors(t *testing.T) {
 	}
 	messages := make(map[string][]string)
 	w.MessageSink = func(name string, msg []byte) { messages[name] = append(messages[name], string(msg)) }
+	// send_to_zone traffic is verbatim (src/comm.c:2384): the literal sink is
+	// the delivery path, the framed sink must stay silent (R1).
+	literal := make(map[string][]string)
+	w.LiteralMessageSink = func(name string, msg []byte) { literal[name] = append(literal[name], string(msg)) }
 
 	actor := scripting.CharRef{ID: players[0].GetID()}
 	const message = "A script zone echo.\r\n"
 	NewWorldScriptableAdapter(w).Echo("zone", nil, &actor, message)
-	if got, want := messages["Playing"], []string{message}; !equalDescriptorMessages(got, want) {
+	if got, want := literal["Playing"], []string{message}; !equalDescriptorMessages(got, want) {
 		t.Errorf("awake different-room playing recipient = %q, want %q", got, want)
 	}
 	for _, player := range []*Player{players[0], players[2], players[3], players[4], players[5], players[6]} {
-		if got := messages[player.Name]; len(got) != 0 {
+		if got := literal[player.Name]; len(got) != 0 {
 			t.Errorf("%s received zone echo: %q", player.Name, got)
+		}
+	}
+	for _, player := range players {
+		if got := messages[player.Name]; len(got) != 0 {
+			t.Errorf("%s received zone echo through framed sink: %q", player.Name, got)
 		}
 	}
 }
