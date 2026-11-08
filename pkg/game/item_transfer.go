@@ -4,7 +4,6 @@ package game
 import (
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 )
 
@@ -369,7 +368,8 @@ func (w *World) doDrop(ch *Player, me *MobInstance, cmd, arg string) bool {
 	}
 	sname := "drop"
 
-	if amount, err := strconv.Atoi(arg1); err == nil {
+	if CIsNumber(arg1) {
+		amount := atoi(arg1)
 		arg2, _ := oneArgument(rest)
 		if arg2 == "coin" || arg2 == "coins" {
 			w.performDropGold(ch, amount)
@@ -598,7 +598,7 @@ func (w *World) doGive(ch *Player, me *MobInstance, cmd, arg string) bool {
 	}
 
 	// Check if first arg is a number (gold)
-	if isNumber(arg1) {
+	if CIsNumber(arg1) {
 		amount := atoi(arg1)
 		arg2, rest2 := oneArgument(rest)
 		if arg2 == "coins" || arg2 == "coin" {

@@ -326,6 +326,13 @@ func CFName(name string) string {
 	return name[:end]
 }
 
+// cIsName is the single Go port of C's isname() (src/handler.c:81-111). Every
+// space-or-non-alpha-separated letter-run in nameList is compared to the whole
+// name case-insensitively: isname matches a WHOLE keyword word, never a prefix,
+// so cIsName("d", "door") is false and cIsName("door", "door") is true. This is
+// the matcher for find_door, do_steal's worn-item scan, janitor, turn_undead,
+// mirror, horn and moon_gate. The abbreviation matcher for generic_find /
+// get_obj_in_list_vis sites is isnameWithAbbrevs (C isname_with_abbrevs).
 func cIsName(name, nameList string) bool {
 	if name == "" {
 		return false

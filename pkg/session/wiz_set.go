@@ -416,18 +416,6 @@ func cAtoi(input string) int {
 	return v
 }
 
-func cIsNumber(input string) bool {
-	if input == "" {
-		return true
-	}
-	for i := 0; i < len(input); i++ {
-		if input[i] < '0' || input[i] > '9' {
-			return false
-		}
-	}
-	return true
-}
-
 func setCPlayerFlag(p *game.Player, bit int, enabled bool) {
 	// The port has both the legacy PLR storage and the typed PLR accessor. Keep
 	// them synchronized while the save/runtime boundary is being consolidated.
@@ -643,7 +631,7 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 		if value == "off" {
 			p.SetCondition(cond, -1)
 			ack = fmt.Sprintf("%s's %s now off.", name, field.name)
-		} else if !cIsNumber(value) {
+		} else if !game.CIsNumber(value) {
 			return "Must be 'off' or a value from 0 to 48.\r\n", false, true
 		} else {
 			valueInt = clamp(valueInt, 0, 48)
@@ -704,7 +692,7 @@ func applySetField(s *Session, target setTarget, field setField, value string, v
 	case "loadroom":
 		if value == "off" {
 			setCPlayerFlag(p, game.PlrLoadroom, false)
-		} else if !cIsNumber(value) {
+		} else if !game.CIsNumber(value) {
 			ack = "Must be 'off' or a room's virtual number.\r\n"
 		} else if s.manager.world.GetRoomInWorld(valueInt) == nil {
 			ack = "That room does not exist!"

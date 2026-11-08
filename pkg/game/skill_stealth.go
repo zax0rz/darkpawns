@@ -389,7 +389,7 @@ func findCarriedItem(ch *Player, target combat.Combatant, itemName string) (*Obj
 	switch target := target.(type) {
 	case *Player:
 		for _, item := range target.Inventory.FindItems("") {
-			if item != nil && isName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
+			if item != nil && isnameWithAbbrevs(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
 				return item, true
 			}
 		}
@@ -397,7 +397,7 @@ func findCarriedItem(ch *Player, target combat.Combatant, itemName string) (*Obj
 		target.mu.RLock()
 		defer target.mu.RUnlock()
 		for _, item := range target.Inventory {
-			if item != nil && isName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
+			if item != nil && isnameWithAbbrevs(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
 				return item, true
 			}
 		}
@@ -409,7 +409,7 @@ func findEquippedItem(ch *Player, target combat.Combatant, itemName string) (*Ob
 	switch target := target.(type) {
 	case *Player:
 		for _, item := range COrderedWorn(target) {
-			if item != nil && isName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
+			if item != nil && cIsName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
 				return item, int(item.Location.Slot), true
 			}
 		}
@@ -418,7 +418,7 @@ func findEquippedItem(ch *Player, target combat.Combatant, itemName string) (*Ob
 		defer target.mu.RUnlock()
 		for slot := 0; slot < NumWears; slot++ {
 			item := target.Equipment[slot]
-			if item != nil && isName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
+			if item != nil && cIsName(itemName, item.GetKeywords()) && canSeeObject(ch, item) {
 				return item, slot, true
 			}
 		}

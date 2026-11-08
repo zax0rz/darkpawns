@@ -707,7 +707,7 @@ func specJanitor(w *World, ch *Player, me *MobInstance, cmd string, arg string) 
 	for _, obj := range items {
 		// C uses CAN_WEAR(i, ITEM_WEAR_TAKE) and the reversed isname(i->name,
 		// "corpse") call at src/spec_procs.c:759.
-		if !obj.IsTakeable() || isName(obj.GetKeywords(), "corpse") {
+		if !obj.IsTakeable() || cIsName(obj.GetKeywords(), "corpse") {
 			continue
 		}
 		Act(w, false, me, nil, nil, nil, "$n picks up some trash.", "", ToRoom)

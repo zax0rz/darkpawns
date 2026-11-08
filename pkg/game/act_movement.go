@@ -606,7 +606,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 			return -1
 		}
 		if ext.Keywords != "" {
-			if isName(doorType, ext.Keywords) {
+			if cIsName(doorType, ext.Keywords) {
 				return door
 			}
 			ch.SendMessage(fmt.Sprintf("I see no %s there.\r\n", doorType))
@@ -628,7 +628,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 
 	for door := 0; door < len(dirs); door++ {
 		ext, ok := room.Exits[dirs[door]]
-		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) &&
+		if ok && ext.Keywords != "" && cIsName(doorType, ext.Keywords) &&
 			(!strings.Contains(ext.Keywords, "secret") || revealsSecrets) {
 			return door
 		}
@@ -811,7 +811,7 @@ func doGenDoor(w *World, ch *Player, argument string, scmd int) {
 	var obj *ObjectInstance
 	if ch.Inventory != nil {
 		for _, item := range ch.Inventory.Snapshot() {
-			if item != nil && canSeeObject(ch, item) && isName(doorType, item.GetKeywords()) {
+			if item != nil && canSeeObject(ch, item) && isnameWithAbbrevs(doorType, item.GetKeywords()) {
 				obj = item
 				break
 			}
@@ -819,7 +819,7 @@ func doGenDoor(w *World, ch *Player, argument string, scmd int) {
 	}
 	if obj == nil {
 		for _, item := range w.GetItemsInRoom(ch.GetRoom()) {
-			if item != nil && canSeeObject(ch, item) && isName(doorType, item.GetKeywords()) {
+			if item != nil && canSeeObject(ch, item) && isnameWithAbbrevs(doorType, item.GetKeywords()) {
 				obj = item
 				break
 			}
@@ -902,21 +902,10 @@ func searchBlock(name string, list []string, exact bool) int {
 	return -1
 }
 
-// isName checks if name matches any keyword in the keyword string.
-// Keywords are space-separated. Matching is partial (prefix).
-// Replacement for C's isname().
-func isName(name string, keywords string) bool {
-	name = strings.ToLower(strings.TrimSpace(name))
-	if name == "" {
-		return false
-	}
-	for _, kw := range strings.Fields(keywords) {
-		if strings.HasPrefix(strings.ToLower(kw), name) {
-			return true
-		}
-	}
-	return false
-}
+// The prefix matcher isName() was removed in DP-1505. Its callers now use the
+// exact matchers: door keyword search uses cIsName (C isname, src/handler.c:81),
+// and generic_find object lookup uses isnameWithAbbrevs (C isname_with_abbrevs,
+// src/handler.c:115).
 
 // firstWord returns the first whitespace-delimited word (C's one_argument
 // token). It is NOT C's fname(): see CFName in world_object.go for that.
@@ -1127,12 +1116,12 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 // lane applies.
 func (w *World) mobDoorObjectTarget(m *MobInstance, doorType string) *ObjectInstance {
 	for _, obj := range m.InventorySnapshot() {
-		if obj != nil && canSeeObject(m, obj) && isName(doorType, obj.GetKeywords()) {
+		if obj != nil && canSeeObject(m, obj) && isnameWithAbbrevs(doorType, obj.GetKeywords()) {
 			return obj
 		}
 	}
 	for _, obj := range w.GetItemsInRoom(m.GetRoom()) {
-		if obj != nil && canSeeObject(m, obj) && isName(doorType, obj.GetKeywords()) {
+		if obj != nil && canSeeObject(m, obj) && isnameWithAbbrevs(doorType, obj.GetKeywords()) {
 			return obj
 		}
 	}
@@ -1161,7 +1150,7 @@ func (w *World) findDoorMob(m *MobInstance, doorType, dir string) int {
 		if ext.Keywords == "" {
 			return door
 		}
-		if isName(doorType, ext.Keywords) {
+		if cIsName(doorType, ext.Keywords) {
 			return door
 		}
 		return -1 // "I see no %s there."
@@ -1171,7 +1160,7 @@ func (w *World) findDoorMob(m *MobInstance, doorType, dir string) int {
 	}
 	for door := 0; door < len(dirs); door++ {
 		ext, ok := room.Exits[dirs[door]]
-		if ok && ext.Keywords != "" && isName(doorType, ext.Keywords) &&
+		if ok && ext.Keywords != "" && cIsName(doorType, ext.Keywords) &&
 			(!strings.Contains(ext.Keywords, "secret") || revealsSecrets) {
 			return door
 		}
