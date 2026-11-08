@@ -50,7 +50,11 @@ func TestGameDiagnosticSpikeStake(t *testing.T) {
 			if err := s.world.AddPlayer(witness); err != nil {
 				t.Fatal(err)
 			}
-			weapon := &game.ObjectInstance{Prototype: &parser.Obj{VNum: 1, Keywords: "spike stake weapon", ShortDesc: "a dual-purpose spike", TypeFlag: 5, WearFlags: [4]int{1 << 13}}}
+			// C matches only the wielded object's FIRST keyword via
+			// strstr(OBJN(...), weapon) (new_cmds.c:1124-1128), so a single
+			// "spike stake weapon" item cannot satisfy both verbs; the weapon
+			// under test names the verb first.
+			weapon := &game.ObjectInstance{Prototype: &parser.Obj{VNum: 1, Keywords: verb + " spike stake weapon", ShortDesc: "a dual-purpose spike", TypeFlag: 5, WearFlags: [4]int{1 << 13}}}
 			s.player.Inventory.RestoreItem(weapon)
 			if err := s.player.Equipment.Equip(weapon, s.player.Inventory); err != nil {
 				t.Fatal(err)

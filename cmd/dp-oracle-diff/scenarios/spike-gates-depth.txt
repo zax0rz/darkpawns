@@ -1,0 +1,99 @@
+# depth-case: spike.peaceful-room
+# depth-case: spike.self-target
+# depth-case: spike.werewolf-only
+# depth-case: spike.vampire-only
+# depth-case: spike.own-kind-witness
+# C-first do_spike gate vehicle (src/new_cmds.c:1128-1141). The actor wields a
+# spike (obj 7905) and a stake (obj 7904); a plain player victim trips the
+# werewolf-only and vampire-only gates, the actor itself trips the suicide gate,
+# the peaceful temple room 8004 trips the murder gate, and lycanthropy cast on
+# the actor sets PLR_WEREWOLF so spiking the AFF_WEREWOLF trainee trips the
+# own-kind gate. Every gate is a send_to_char to the actor, so no witness is
+# needed.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+set-mob-aff 16303 134217728
+spawn-obj 7905 1 8105 79
+spawn-obj 7904 1 8105 79
+
+[setup:oracle]
+Spikeactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Spikeactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Victimxo
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Victimxo
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Victimxo 8105
+
+[probe]
+get spike
+get stake
+wield spike
+spike victimxo
+remove spike
+wield stake
+stake victimxo
+remove stake
+wield spike
+spike spikeactor
+goto 8004
+teleport Victimxo 8004
+spike victimxo
+goto 8105
+cast 'lycanthropy' spikeactor
+~dpclock pulse 20
+spike trainee
