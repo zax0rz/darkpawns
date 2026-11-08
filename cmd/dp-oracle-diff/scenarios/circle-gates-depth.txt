@@ -1,0 +1,91 @@
+# depth-case: circle.no-weapon
+# depth-case: circle.wrong-weapon
+# depth-case: circle.no-skill
+# C-first witness for three do_circle gates DP-1502 lists in src/new_cmds.c:
+# :2418 "You need to wield a weapon to make it a success." (no wielded weapon),
+# :2423 "Only piercing weapons can be used for backstabbing." (a wielded
+# non-pierce weapon) and :2445 "You make a circle in the air." (the actor has
+# no circle skill and passes every earlier gate). The mortal peer walks to the
+# trainee (POS_FIGHTING opener lane) and holds no circle skill; circle is
+# POS_FIGHTING. C path: src/new_cmds.c:2392-2452.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+spawn-obj 8037 1 8105 80
+spawn-obj 8036 1 8105 80
+
+[setup:oracle]
+Cigod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cigod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Cimortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Cimortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[probe:mortal]
+circle trainee
+get sword
+wield sword
+circle trainee
+remove sword
+get dagger
+wield dagger
+circle trainee

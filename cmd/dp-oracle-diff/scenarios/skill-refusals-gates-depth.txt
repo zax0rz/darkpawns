@@ -1,9 +1,11 @@
+# depth-case: trip.no-arg
 # depth-case: trip.self
 # depth-case: slug.wielded-gate
 # depth-case: charge.no-weapon
 # depth-case: charge.wrong-weapon
 # C-first witness for four refusal sites DP-1502 lists in src/new_cmds.c:
-# :774 "You trip over your shoe laces..." (trip a self target), :854 "You can't
+# :761 "Trip who?" (no argument, no fight target), :774 "You trip over your
+# shoe laces..." (trip a self target), :854 "You can't
 # make a fist while wielding a weapon!" (slug while armed), :915 "You're
 # barehanded..." (charge with no weapon) and :923 "You need sword or a lance..."
 # (charge with a non-sword/lance weapon). The mortal peer walks to the
@@ -87,6 +89,7 @@ skillset Skmortal 'slug' 75
 skillset Skmortal 'charge' 75
 
 [probe:mortal]
+trip
 trip Skmortal
 get sword
 wield sword

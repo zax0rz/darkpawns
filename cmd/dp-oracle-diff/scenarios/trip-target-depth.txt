@@ -1,0 +1,83 @@
+# depth-case: trip.flying
+# C-first witness for do_trip's AFF_FLY gate, "You can't trip something that's
+# FLYING!", DP-1502 lists at src/new_cmds.c:779. The mortal peer walks to the
+# trainee (POS_FIGHTING opener lane) with trip at 75; set-mob-aff pins the
+# trainee prototype's innate AFF_FLY (bit 26, src/structs.h:336) so the flying
+# check runs after the skill/peaceful/target/self gates. C path:
+# src/new_cmds.c:735-790.
+
+[fixture]
+empty-players
+quiet-mobs
+set-mob-aff 16303 67108864
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Trgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Trgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Trmortal
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[setup:port:mortal]
+Trmortal
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+north
+east
+south
+east
+
+[warmup]
+skillset Trmortal 'trip' 75
+
+[probe:mortal]
+trip trainee

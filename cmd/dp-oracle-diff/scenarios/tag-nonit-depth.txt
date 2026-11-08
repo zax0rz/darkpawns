@@ -1,0 +1,77 @@
+# depth-case: tag.not-it
+# depth-case: tag.other-player
+# C-first witness for two do_tag sites DP-1502 lists in src/new_cmds.c: :2230
+# "But you are not it!" (someone else is IT) and :2258 the normal transfer
+# acts ("$n taps $N and screams, 'TAG! You're it!'"). The primacy God tags
+# itself (becoming IT), then tags the live peer (the transfer + TAG acts), then
+# tags the peer again while the peer is IT (the not-it refusal). C path:
+# src/new_cmds.c:2200-2265.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Tggod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tggod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Tgpeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Tgpeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Tgpeer 8162
+
+[probe]
+tag Tggod
+tag Tgpeer
+tag Tgpeer
