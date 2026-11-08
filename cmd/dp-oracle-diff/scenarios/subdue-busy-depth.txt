@@ -1,0 +1,81 @@
+# C-first do_subdue busy-arm unreachability vehicle (src/act.offensive.c:1096-
+# 1100; src/interpreter.c:748,923-946). The FIGHTING(ch) "You're too busy
+# right now!" arm inside do_subdue is C-unreachable: subdue is registered at
+# POS_STANDING, so command_interpreter's position gate refuses a fighting
+# actor with "No way!  You're fighting for your life!" before do_subdue ever
+# runs. A mortal actor with the subdue skill is jumped by the level-2 trainee
+# guard (forced "hit", so the actor is fighting without a wait) and then tries
+# to subdue: both engines must emit the interpreter refusal, byte for byte.
+# The DoSubdue busy arm itself is pinned for direct callers by
+# TestDoSubdueDepthGateOrder/actor_fighting.
+#
+# depth-case: subdue.busy-interpreter-gate
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Subduegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Subduegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:mortal]
+Subdoer
+Y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:mortal]
+Subdoer
+y
+mortalpass
+mortalpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+skillset Subdoer 'subdue' 100
+teleport Subdoer 8105
+force trainee hit Subdoer
+
+[probe:mortal]
+subdue trainee
