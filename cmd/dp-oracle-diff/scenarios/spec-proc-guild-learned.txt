@@ -1,0 +1,96 @@
+# depth-case: mob.guild-learned-site-live
+# depth-case: mob.guild-already-learned-site-live
+# C-first witness for the guild practice pair DP-1502 lists (src/spec_procs.c:247
+# "You are now learned in that area." and :235 "You are already learned in that
+# area."). Learning is deterministic — each practice adds
+# MIN(MAXGAIN, MAX(MINGAIN, int_app[INT].learn)) (src/spec_procs.c:241-245) —
+# so a mortal pupil's repeated practice crosses LEARNED and prints :247 exactly
+# once, and every further practice prints :235. The pupil is a mortal peer:
+# an empty-store first player is LVL_IMPL and its skills are all MASTER, which
+# short-circuits to the already-learned arm (R3d). The guildmaster (mob 8012)
+# intercepts practice (src/spec_assign.c:280).
+# C path: src/interpreter.c:1407-1456 -> src/spec_procs.c:199-250.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 8012 1 8162 80
+replace-room-exits 8162 none
+
+[setup:oracle]
+GuildGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+GuildGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Guildpupil
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Guildpupil
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Guildpupil 8162
+set player Guildpupil practices 50
+
+[probe]
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
+send:peer practice kick
