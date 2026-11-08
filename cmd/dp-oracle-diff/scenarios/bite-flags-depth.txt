@@ -1,0 +1,124 @@
+# depth-case: bite.love-bite-victim-line
+# depth-case: bite.transformed-gate-line
+# depth-case: bite.night-creature-line
+# depth-case: bite.vampire-fang-lines
+# C-first do_bite flag vehicle (src/new_cmds.c:1199-1300). A production room
+# oncmd sets the actor's or victim's nightbreed flags on demand (the wolf.lua
+# pattern). The actor bites a plain player (love-bite TO_VICT), then with only
+# PLR_WEREWOLF (transformed-gate refusal), then transformed as a vampire (the
+# three fang lines), and finally against a flagged victim (night-creature
+# refusal). The victim's session captures the TO_VICT bytes.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 12220 999 8105 122
+mob-script 12220 oracle/biteflags.lua 512
+
+[lua-script mob/oracle/biteflags.lua]
+function oncmd()
+if (argument == "say plr-wolf") then plr_flags(ch, "set", 16) return TRUE end
+if (argument == "say aff-vamp") then aff_flags(ch, "set", 28) return TRUE end
+if (argument == "say plr-vamp") then plr_flags(ch, "set", 17) return TRUE end
+return FALSE
+end
+
+[setup:oracle]
+Biteactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Biteactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Bitevictim
+Y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Bitevictim
+y
+oraclepass
+oraclepass
+N
+M
+H
+C
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Bitewitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Bitewitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Bitevictim 8105
+teleport Bitewitness 8105
+set player Bitevictim level 8
+
+[probe]
+bite Bitevictim
+say plr-wolf
+bite Bitevictim
+say aff-vamp
+bite Bitevictim
+~dpclock pulse 40
+send:victim say plr-vamp
+bite Bitevictim

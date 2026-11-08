@@ -437,7 +437,13 @@ func DoBite(ch *Player, target combat.Combatant) SkillResult {
 	if victim, ok := target.(*Player); ok {
 		victimFlags := victim.GetFlags()
 		if victimFlags&(1<<PlrWerewolf) != 0 || victimFlags&(1<<PlrVampire) != 0 {
-			return SkillResult{Success: false, MessageToCh: "Your victim is already a creature of the night!"}
+			// C sends this line with no trailing CRLF (new_cmds.c:1260); mark
+			// the result so the caller does not add one (R1).
+			return SkillResult{
+				Success:                 false,
+				MessageToCh:             "Your victim is already a creature of the night!",
+				NoMessageToChTerminator: true,
+			}
 		}
 	}
 

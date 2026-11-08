@@ -1421,7 +1421,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 		if result.MessageToCh != "" {
 			// C act() CAPs the assembled string (comm.c:2477); lines that begin
 			// with $e/$n render lowercase and must be capitalized here.
-			_ = s.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToCh)))
+			chMessage := game.CapitalizeSentence(result.MessageToCh)
+			if !result.NoMessageToChTerminator {
+				chMessage = skillMessageTerminator(chMessage)
+			}
+			_ = s.SendMessage(chMessage)
 		}
 		if result.MessageToVict != "" && target != nil {
 			if p, ok := target.(*game.Player); ok {
@@ -1510,7 +1514,11 @@ func sendSkillResult(s SessionInterface, ch *game.Player, target combat.Combatan
 	} else if result.MessageToCh != "" && !result.MessageToChAfterRoom {
 		// C act() CAPs the assembled string (comm.c:2477); lines that begin
 		// with $e/$n render lowercase and must be capitalized here.
-		_ = s.SendMessage(skillMessageTerminator(game.CapitalizeSentence(result.MessageToCh)))
+		chMessage := game.CapitalizeSentence(result.MessageToCh)
+		if !result.NoMessageToChTerminator {
+			chMessage = skillMessageTerminator(chMessage)
+		}
+		_ = s.SendMessage(chMessage)
 	}
 
 	// C's failed cutthroat arm calls hit(ch, victim, SKILL_CUTTHROAT)

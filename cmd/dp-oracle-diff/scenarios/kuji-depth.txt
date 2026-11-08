@@ -1,0 +1,90 @@
+# depth-case: kuji.not-mastered-nine
+# depth-case: kuji.too-busy-fighting
+# C-first do_kuji_kiri vehicle (src/new_cmds.c:1552+). C's init_char makes only
+# the FIRST player a god (db.c:3016-3038). The peer is the second character, so
+# it is created at level 1 with every skill at 0; the actor sets its class to
+# ninja so it clears the class gate, and each seal reaches its own
+# "not mastered" refusal. The final seal is issued while it fights, reaching
+# the busy gate.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 16303 1 8105 80
+
+[setup:oracle]
+Kujiactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Kujiactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:caster]
+Kujicaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:caster]
+Kujicaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Kujicaster 8105
+set player Kujicaster class ninja
+set player Kujicaster maxhit 5000
+set player Kujicaster hit 5000
+
+[probe]
+send:caster jin
+send:caster kai
+send:caster kyo
+send:caster retsu
+send:caster rin
+send:caster sha
+send:caster toh
+send:caster zai
+send:caster zhen
+send:caster kill trainee
+~dpclock pulse 40
+send:caster jin
