@@ -86,6 +86,7 @@ func TestNPCPerformMoveClosedDoorRefusals(t *testing.T) {
 		want string
 	}{
 		{name: "named door", exit: parser.Exit{ToRoom: 1002, ExitInfo: parser.ExitClosed, Keywords: "gate"}, want: "The gate seems to be closed.\r\n"},
+		{name: "hyphenated door name", exit: parser.Exit{ToRoom: 1002, ExitInfo: parser.ExitClosed, Keywords: "iron-gate"}, want: "The iron seems to be closed.\r\n"},
 		{name: "unnamed door", exit: parser.Exit{ToRoom: 1002, ExitInfo: parser.ExitClosed}, want: "It seems to be closed.\r\n"},
 		{name: "secret door", exit: parser.Exit{ToRoom: 1002, ExitInfo: parser.ExitClosed, Keywords: "secret hatch"}, want: "Alas, you cannot go that way...\r\n"},
 	} {

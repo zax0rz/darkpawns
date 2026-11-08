@@ -73,13 +73,6 @@ func shopTimesMessage(description string, count int) string {
 	return description
 }
 
-func shopObjectFirstKeyword(keywords string) string {
-	if first, _, ok := strings.Cut(keywords, " "); ok {
-		return first
-	}
-	return keywords
-}
-
 const (
 	shopTradeNoGood = 1 << iota
 	shopTradeNoEvil
@@ -427,11 +420,11 @@ func cmdBuy(s *Session, args []string) error {
 		return nil
 	}
 	if s.player.Inventory.GetItemCount()+1 > s.player.MaxCarryItems() {
-		s.Send(fmt.Sprintf("%s: You can't carry any more items.\n\r", shopObjectFirstKeyword(stock.GetKeywords())))
+		s.Send(fmt.Sprintf("%s: You can't carry any more items.\n\r", game.CFName(stock.GetKeywords())))
 		return nil
 	}
 	if s.player.CarriedWeight()+stock.GetWeight() > s.player.MaxCarryWeight() {
-		s.Send(fmt.Sprintf("%s: You can't carry that much weight.\n\r", shopObjectFirstKeyword(stock.GetKeywords())))
+		s.Send(fmt.Sprintf("%s: You can't carry that much weight.\n\r", game.CFName(stock.GetKeywords())))
 		return nil
 	}
 	bought, goldamt := 0, 0

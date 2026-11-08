@@ -261,18 +261,9 @@ func CanReceiveAct(to *Player) bool {
 	return to != nil && sendOk(to, false)
 }
 
-// fname returns the first word of a keywords string.
-// C: fname() from utils.c
-func fname(keywords string) string {
-	idx := strings.IndexByte(keywords, ' ')
-	if idx == -1 {
-		return keywords
-	}
-	return keywords[:idx]
-}
-
 // objName returns the object's first keyword or "something" if not visible.
 // C: OBJN(obj, vict) — fname(obj->name) if CAN_SEE_OBJ, else "something"
+// (src/utils.h:557-558). fname() is CFName; see world_object.go.
 func objName(obj *ObjectInstance, to Actor) string {
 	if obj == nil {
 		return "something"
@@ -280,7 +271,7 @@ func objName(obj *ObjectInstance, to Actor) string {
 	if !canSeeObject(to, obj) {
 		return "something"
 	}
-	return fname(obj.GetKeywords())
+	return CFName(obj.GetKeywords())
 }
 
 // objShortDesc returns the object's short description or "something".
@@ -511,7 +502,7 @@ func actSubstitution(code byte, ch, vict Actor, obj, victObj *ObjectInstance, ar
 		sub = strings.ToLower(arg2)
 	case 'F':
 		if arg2 != "" {
-			sub = fname(arg2)
+			sub = CFName(arg2)
 		} else {
 			sub = "someone"
 		}

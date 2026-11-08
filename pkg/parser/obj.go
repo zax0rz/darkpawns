@@ -152,7 +152,7 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 	if !lb.Scan() {
 		return obj, "", fmt.Errorf("expected obj short desc")
 	}
-	obj.ShortDesc = strings.TrimSuffix(lb.Text(), "~")
+	obj.ShortDesc = cFixShortDescArticle(strings.TrimSuffix(lb.Text(), "~"))
 
 	// Long description (ends with ~)
 	if !lb.Scan() {

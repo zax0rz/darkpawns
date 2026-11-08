@@ -533,7 +533,7 @@ func performMoveResult(w *World, ch *Player, dir int, needSpecialsCheck bool, re
 			if isSecret && !movementRoomHasFlag(room, roomFlagSecretMark, "secret_mark") {
 				movementSendToChar(ch, "Alas, you cannot go that way...")
 			} else {
-				movementSendToChar(ch, fmt.Sprintf("The %s seems to be closed.", firstWord(ext.Keywords)))
+				movementSendToChar(ch, fmt.Sprintf("The %s seems to be closed.", CFName(ext.Keywords)))
 			}
 		} else {
 			movementSendToChar(ch, "It seems to be closed.")
@@ -712,7 +712,7 @@ func doDoorcmd(w *World, ch *Player, obj *ObjectInstance, door int, scmd int) {
 	if (scmd == scmdOpen || scmd == scmdClose) && hasBack {
 		backName := "door"
 		if backExt.Keywords != "" {
-			backName = firstWord(backExt.Keywords)
+			backName = CFName(backExt.Keywords)
 		}
 		suffix := "ed"
 		if scmd == scmdClose {
@@ -918,7 +918,8 @@ func isName(name string, keywords string) bool {
 	return false
 }
 
-// firstWord returns the first word of a keyword string.
+// firstWord returns the first whitespace-delimited word (C's one_argument
+// token). It is NOT C's fname(): see CFName in world_object.go for that.
 func firstWord(keywords string) string {
 	parts := strings.Fields(keywords)
 	if len(parts) > 0 {
@@ -1104,7 +1105,7 @@ func (w *World) mobGenDoor(m *MobInstance, argument string, scmd int) {
 	if (scmd == scmdOpen || scmd == scmdClose) && hasBack {
 		backName := "door"
 		if backExt.Keywords != "" {
-			backName = firstWord(backExt.Keywords)
+			backName = CFName(backExt.Keywords)
 		}
 		suffix := "ed"
 		if scmd == scmdClose {
