@@ -1,0 +1,48 @@
+# depth-case: spell.identify-affects
+# C-first witness for spell_identify's object-affect listing, DP-1502 lists at
+# src/spells.c:560 ("Can affect you as :"). An enchanted weapon carries
+# APPLY_HITROLL/APPLY_DAMROLL entries, so identify prints the affects block.
+# C path: src/spells.c:476-620.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Idgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Idgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+set Idgod align 1000
+load obj 8037
+
+[probe]
+get sword
+cast 'enchant weapon' sword
+~dpclock pulse 40
+cast 'identify' sword
