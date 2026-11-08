@@ -1,0 +1,71 @@
+# depth-case: spell.identify-low-level
+# C-first witness for spell_identify's low-level player gate, "You cannot
+# identify them yet.", DP-1502 lists at src/spells.c:584. A spoken cast on a
+# level-1 player victim refuses before any report. C path: src/spells.c:583-586.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Idgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Idgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:low]
+Idlow
+Y
+lowpass
+lowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:low]
+Idlow
+y
+lowpass
+lowpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Idlow 8162
+
+[probe]
+cast 'identify' Idlow
