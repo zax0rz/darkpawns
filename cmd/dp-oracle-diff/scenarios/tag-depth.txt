@@ -1,0 +1,90 @@
+# depth-case: tag.self-begins
+# depth-case: tag.self-already-it
+# depth-case: tag.npc-tags-back
+# depth-case: tag.linkless
+# C-first witness for four do_tag sites DP-1502 lists in src/new_cmds.c:
+# :2217 ("No way! They're linkless!"), :2255 ("Let the game begin!"),
+# :2236 ("You're it already!") and :2242 (the NPC "tags you right back!" act).
+# do_tag resolves the argument with get_char_room_vis. The primary God tags the
+# disposable fish 4350 (NPC arm) and itself (self-begins, then self-already-it
+# once it is IT). A peer that starts in the same room is dropped before the
+# probe; close_socket keeps the character in the room with desc=NULL, so
+# `tag Taglinkpeer` reaches the linkless arm (src/act.comm.c's peer-drop
+# contract, as reply-linkless-depth uses). The primary is the primacy God, so
+# no peaceful or level gate blocks anything. C path: src/new_cmds.c:2200-2265.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 1 8162 80
+
+[setup:oracle]
+Tagactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tagactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Taglinkpeer
+Y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Taglinkpeer
+y
+peerpass
+peerpass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[peer-drop]
+peer
+
+[warmup]
+goto 8162
+teleport Taglinkpeer 8162
+
+[probe]
+tag
+tag xyzzy
+tag fish
+tag Taglinkpeer
+tag Tagactor
+tag Tagactor

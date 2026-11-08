@@ -1,0 +1,51 @@
+# depth-case: compare.blind-gate
+# C-first witness for do_compare's AFF_BLIND arm, "You can't see a damned
+# thing!", DP-1502 lists at src/new_cmds.c:1969. The blindness comes from the
+# same plaid potion (13103, vals 20/52/4) quaff-blindness uses: it lives in
+# 131.obj, which the shipped obj index omits on both trees, so add-obj-index
+# puts it back; the room's ROOM_PEACEFUL bit is cleared so the potion's violent
+# blindness spell reaches call_magic. At seed 1 the SAVING_ROD save fails and
+# AFF_BLIND lands, so the following `compare` takes the blind gate before any
+# object lookup. Mirrors cmd/dp-oracle-diff/scenarios/quaff-blindness.txt.
+
+[fixture]
+quiet-mobs
+add-obj-index 131.obj
+set-room-flag 8162 4 off
+spawn-obj 13103 99 8162 80
+force-load 13103
+
+[setup:oracle]
+Cmpblind
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cmpblind
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+get plaid
+quaff plaid
+~dpclock pulse 20
+~dpclock pulse 20
+compare sword sword

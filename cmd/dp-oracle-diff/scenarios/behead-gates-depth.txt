@@ -1,0 +1,67 @@
+# depth-case: behead.self
+# depth-case: behead.living-target
+# depth-case: behead.headless
+# depth-case: behead.non-container
+# depth-case: behead.slash-message
+# C-first witness for five do_behead sites DP-1502 lists in src/new_cmds.c.
+# behead is POS_STANDING, so no combat round is needed for the refusals: the God
+# beheads itself (:247), a living fish (:252), the headless corpse 17 (:263) and
+# a non-container bread (:269). Killing one of two fish with a wielded slash
+# sword leaves a carve_meat corpse whose keywords include corpse, so `behead
+# corpse` reaches the slash success act (:278, "$n beheads $p!"/"You behead
+# $p!"). C path: src/new_cmds.c:216-300.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 2 8162 80
+spawn-mob 4500 1 8162 80
+spawn-obj 17 1 8162 80
+spawn-obj 8010 1 8162 80
+spawn-obj 8037 1 8162 80
+
+[setup:oracle]
+Beheadgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Beheadgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get sword
+wield sword
+kill fish
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+
+[probe]
+behead
+behead xyzzy
+behead Beheadgod
+behead rat
+behead headless
+behead bread
+behead corpse

@@ -1,0 +1,5 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_tag	tag	tag.self-begins	D2	command	oracle-green	tag-depth	new_cmds.c:2255	Live C witness (tag-depth): tagging the actor when no one is it reaches "Let the game begin!" and sets PLR_IT.
+do_tag	tag	tag.self-already-it	D1	command	oracle-green	tag-depth	new_cmds.c:2236	Live C witness (tag-depth): re-tagging the already-it actor reaches "You're it already!".
+do_tag	tag	tag.npc-tags-back	D2	command	oracle-green	tag-depth	new_cmds.c:2240-2244	Live C witness (tag-depth): tagging an NPC takes the acknowledgment arm; the witness exposed Go's capitalized pronoun and drove the fix to lowercase HSSH (src/utils.h:506, src/comm.c:2477).
+do_tag	tag	tag.linkless	D1	command	oracle-green	tag-depth	new_cmds.c:2216-2218	Live C witness (tag-depth; peer-drop keeps Taglinkpeer in the room with desc=NULL) reaches "No way! They're linkless!".
