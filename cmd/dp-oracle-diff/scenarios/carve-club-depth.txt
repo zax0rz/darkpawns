@@ -1,0 +1,53 @@
+# depth-case: carve.wrong-weapon
+# C-first witness for do_carve's weapon-type arm, "You can't carve with that!",
+# DP-1502 lists at src/new_cmds.c:188. The God one-shots the disposable 4350
+# fish, leaving a carve_meat corpse; wielding the wooden club (8023,
+# value[3]=7, neither TYPE_SLASH(3) nor TYPE_PIERCE(11)) then takes the refusal
+# branch, which extracts only the temporary meat, not the corpse. The chained
+# carve checks (corpse keyword, carry count) precede the weapon check.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 1 8162 80
+spawn-obj 8023 1 8162 80
+
+[setup:oracle]
+Carveclub
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Carveclub
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+kill fish
+~dpclock pulse 40
+~dpclock pulse 40
+~dpclock pulse 40
+
+[probe]
+get club
+wield club
+carve fish

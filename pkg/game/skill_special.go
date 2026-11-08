@@ -535,12 +535,15 @@ func DoTag(ch *Player, targetName string, world *World) SkillResult {
 	}
 
 	// C's NPC arm only acknowledges the attempted tag; it does not change the
-	// actor's or target's PLR_IT state (new_cmds.c:2240-2244).
+	// actor's or target's PLR_IT state (new_cmds.c:2240-2244). act() substitutes
+	// $E with HSSH (lowercase "he"/"she"/"it", src/utils.h:506) and only
+	// CAP(lbuf)s the message's first byte (src/comm.c:2477), which is "You" here
+	// — so the pronoun stays lowercase.
 	if target.IsNPC() {
 		pronoun := GetPronouns(target.GetName(), target.GetSex()).He
 		return SkillResult{
 			Success:     true,
-			MessageToCh: fmt.Sprintf("You tag %s, but %s tags you right back!\r\n", target.GetName(), CapitalizeSentence(pronoun)),
+			MessageToCh: fmt.Sprintf("You tag %s, but %s tags you right back!\r\n", target.GetName(), pronoun),
 		}
 	}
 

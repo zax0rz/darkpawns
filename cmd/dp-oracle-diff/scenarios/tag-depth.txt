@@ -1,0 +1,55 @@
+# depth-case: tag.self-begins
+# depth-case: tag.self-already-it
+# depth-case: tag.npc-tags-back
+# C-first witness for three do_tag sites DP-1502 lists in src/new_cmds.c:
+# :2255 ("Let the game begin!"), :2236 ("You're it already!") and :2242 (the
+# NPC "tags you right back!" act). do_tag resolves the argument with
+# get_char_room_vis, so tagging the actor itself reaches the self-begins arm
+# (and, once the actor is IT, the self-already-it arm), and tagging the one
+# spawned fish (4350, keywords "fish carve_meat") reaches the NPC arm. The
+# linkless arm (:2217) needs a linkless player in the room and is left for a
+# later vehicle. The actor is the primacy God, so the room has no peaceful gate
+# to clear. C path: src/new_cmds.c:2200-2265.
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-mob 4350 1 8162 80
+
+[setup:oracle]
+Tagactor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Tagactor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+
+[probe]
+tag
+tag xyzzy
+tag fish
+tag Tagactor
+tag Tagactor
