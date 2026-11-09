@@ -1,0 +1,78 @@
+# depth-case: spell.say-fallback-targetless-psionic
+# A Psionic issues "will 'flame arrow'" without a target. C calls say_spell
+# before returning the missing-target response, so its fallback TO_ROOM runs.
+# C: src/spell_parser.c:314-320, 915-1069.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Saycaster
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Saycaster
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Saypeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Saypeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Saypeer 8105
+set Saycaster class i
+set Saycaster maxmana 5000
+set Saycaster mana 5000
+skillset Saycaster 'flame arrow' 100
+set Saycaster level 34
+
+[probe]
+will 'flame arrow' Missingtarget
+send:peer look

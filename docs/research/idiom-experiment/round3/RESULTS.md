@@ -156,3 +156,7 @@ The following are the exact retained run directories for all 80 first-pass censu
 ## Limits
 
 These rates estimate whether this census corpus detects one-byte mutations in this frozen function sample. They do not establish that a function is fully ported or that all branches are covered. An unmutated control census at base `aa867bf4dfa25c0fcafe337c11071d56ed7aee40` would have exposed these baseline-red rows before the 36 rechecks; future rounds run one control over their planned scenarios first. This Part 2 work changes research artifacts only; it does not repair any miss or change player-facing game behavior.
+
+## After repair
+
+Of the 16 first-pass Class A misses reviewed here, 14 are finally classified A and catchable: 13 gained a targeted scenario in this repair pass, and create water was already repaired by #2389. Two are B because the sampled Go output branch has no live production route (`checkPosition` has no production caller; `castLycanthropy`'s nil-victim branch is not reached by player casting or item use). None are C or D. The 13 new scenario proofs each have a red one-byte mutation run and a clean restored run; create water's unmutated C witness is in the all-scenario clean control. Per-probe verdicts, C citations, witnesses, and run directories are in `docs/fidelity/evidence/pf-r3/verdicts.tsv` (R1/R2/R3/R5e/R5g/R5h/R5j).
