@@ -1,10 +1,9 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: spell.charm.save-npc-retaliation
-# A level-40 caster charms a low-level trainee, whose warrior paralysis save
-# succeeds in this frozen seed and immediately takes the C opening-hit path.
+# A level-40 caster targets a level-31 trainee. NPCs use the warrior save
+# table (src/magic.c:408-425); this frozen draw passes its paralysis save
+# and takes the immediate opening-hit path (src/spells.c:428-432).
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 16303 1 8105 80
@@ -37,9 +36,11 @@ Y
 <ENTER>
 1
 
+# DP-1511: the first player is already LVL_IMPL (src/db.c:3016-3019).
+# The former redundant level-40 setup was refused.
 [warmup]
 goto 8105
-set Charmgod level 40
+set mob trainee level 31
 
 [probe]
 cast 'charm' trainee

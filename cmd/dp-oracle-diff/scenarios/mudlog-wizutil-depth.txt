@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # do_wizutil's five mortal-affecting mudlog producers (DP-1371 D7).
 # C act.wizard.c:2112-2173 emits each at BRF (notitle at NRM) with
 # MAX(LVL_GOD, GET_INVIS_LEV(actor)) and file=TRUE; the shared consumer is
@@ -13,7 +12,6 @@
 # depth-case: mudlog.wizutil-thaw
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -101,8 +99,9 @@ Y
 <ENTER>
 1
 
+# DP-1511: the first player is already LVL_IMPL (src/db.c:3016-3019).
+# The former redundant level-40 setup was refused.
 [warmup]
-advance Wizactor 40
 advance Wizwatch 34
 force Wizwatch syslog normal
 transfer Wizvictim

@@ -1,0 +1,759 @@
+[
+  {
+    "scenario": "magic-surface-callsite-depth",
+    "seed": 1,
+    "run": "sol-dp1511-b2-magic-audience-seed1",
+    "events": [
+      {
+        "line": "The gods protect Casttarget.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 4,
+        "block": "--- [cast 'dispel evil' Casttarget [actor]]"
+      },
+      {
+        "line": "You create a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 19,
+        "block": "--- [cast 'create food' [actor]]"
+      },
+      {
+        "line": "Castgod creates a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 24,
+        "block": "--- [cast 'create food' [casttarget]]"
+      },
+      {
+        "line": "Casttarget's wounds glow and mend themselves.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 47,
+        "block": "--- [cast 'cure light' Casttarget [castobserve]]"
+      },
+      {
+        "line": "You feel better.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 52,
+        "block": "--- [cast 'cure light' Casttarget [casttarget]]"
+      },
+      {
+        "line": "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 73,
+        "block": "--- [cast 'smokescreen' [actor]]"
+      },
+      {
+        "line": "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of Castgod!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 78,
+        "block": "--- [cast 'smokescreen' [casttarget]]"
+      },
+      {
+        "line": "There is no corpse!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 89,
+        "block": "--- [cast 'animate dead' bread [actor]]"
+      },
+      {
+        "line": "The corpse starts to twitch, then stands with a life of it's own!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed1/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 104,
+        "block": "--- [cast 'animate dead' corpse [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-werewolf-acts",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "The werewolf looks up and lets out a long, fierce howl.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf-acts.txt",
+        "dump_line": 78,
+        "block": "--- [~dpclock pulse 100 [actor]]"
+      },
+      {
+        "line": "The werewolf tears into your leg with his huge fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf-acts.txt",
+        "dump_line": 12,
+        "block": "--- [~dpclock pulse 100 [actor]]"
+      },
+      {
+        "line": "The werewolf rips apart WolfVictim's leg with his fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf-acts.txt",
+        "dump_line": 27,
+        "block": "--- [~dpclock pulse 100 [peer]]"
+      },
+      {
+        "line": "You hear a loud howling in the distance.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf-acts.txt",
+        "dump_line": 109,
+        "block": "--- [~dpclock pulse 100 [third]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-werewolf",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "The werewolf looks up and lets out a long, fierce howl.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 40,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf tears into your leg with his huge fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 12,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf rips apart WolfVictim's leg with his fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 126,
+        "block": "--- [~dpclock pulse 800 [peer]]"
+      },
+      {
+        "line": "You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 241,
+        "block": "--- [~dpclock pulse 800 [third]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-breed-killer-growl",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "You hear a low growl in the back of a nightbreed hunter's throat.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-breed-killer-growl.txt",
+        "dump_line": 28,
+        "block": "--- [~dpclock pulse 400 [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-cityguard-pissed",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "A cityguard says, 'You just pissed me off, a large snake!'",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-cityguard-pissed.txt",
+        "dump_line": 12,
+        "block": "--- [~dpclock pulse 40 [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-elements-guardian-mumble",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "A guardian spirit mumbles softly and you begin to scream, involuntarily hitting yourself.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-elements-guardian-mumble.txt",
+        "dump_line": 3,
+        "block": "--- [send:peer look [peer]]"
+      },
+      {
+        "line": "A guardian spirit mumbles softly and ElemPeer begins screaming loudly, hitting himself.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-elements-guardian-mumble.txt",
+        "dump_line": 17,
+        "block": "--- [send:peer look [primary]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-mindflayer",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "The tentacles on Alhazred the Chief Vivisector's face surge forward, wrapping around your head!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-mindflayer.txt",
+        "dump_line": 14,
+        "block": "--- [~dpclock pulse 20 [actor]]"
+      },
+      {
+        "line": "The tentacles on Alhazred the Chief Vivisector's face surge forward, wrapping around Mindactor's head!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-mindflayer.txt",
+        "dump_line": 23,
+        "block": "--- [~dpclock pulse 20 [peer]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-mindflayer-soul-leech",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "The tentacles on Alhazred the Chief Vivisector's face surge forward, wrapping around your head!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-mindflayer-soul-leech.txt",
+        "dump_line": 96,
+        "block": "--- [~dpclock pulse 100 [actor]]"
+      },
+      {
+        "line": "The tentacles on Alhazred the Chief Vivisector's face surge forward, wrapping around Mindactor's head!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-mindflayer-soul-leech.txt",
+        "dump_line": 113,
+        "block": "--- [~dpclock pulse 100 [peer]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-snake-bite",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "A large snake bites you!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-snake-bite.txt",
+        "dump_line": 39,
+        "block": "--- [~dpclock pulse 400 [actor]]"
+      },
+      {
+        "line": "A large snake bites SnakeGod!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-snake-bite.txt",
+        "dump_line": 193,
+        "block": "--- [~dpclock pulse 400 [peer]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-take-to-jail-pissed",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "Hans the gateguard says, 'You just pissed me off, GuardAlly!'",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-take-to-jail-pissed.txt",
+        "dump_line": 11,
+        "block": "--- [~dpclock pulse 40 [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-troll",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "Targ's wounds glow brightly for a moment, then disappear!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-troll.txt",
+        "dump_line": 12,
+        "block": "--- [~dpclock pulse 12000 [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-troll-combat",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "Targ's wounds glow brightly for a moment, then disappear!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spec-proc-troll-combat.txt",
+        "dump_line": 70,
+        "block": "--- [~dpclock pulse 200 [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-troll-regen",
+    "seed": 1,
+    "run": "sol-dp1511-b2-troll-idle-witness",
+    "events": [
+      {
+        "line": "Targ's wounds glow brightly for a moment, then disappear!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-troll-idle-witness/census-dump/spec-proc-troll-regen.txt",
+        "dump_line": 3,
+        "block": "--- [~dpclock pulse 12000 [actor]]"
+      },
+      {
+        "line": "Targ's wounds glow brightly for a moment, then disappear!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-troll-idle-witness/census-dump/spec-proc-troll-regen.txt",
+        "dump_line": 90,
+        "block": "--- [~dpclock pulse 400 [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "mudlog-wizutil-depth",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "[ (GC) Wizvictim pardoned by Wizactor ]",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/mudlog-wizutil-depth.txt",
+        "dump_line": 9,
+        "block": "--- [pardon Wizvictim [watch]]"
+      },
+      {
+        "line": "[ (GC) Notitle ON for Wizvictim by Wizactor. ]",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/mudlog-wizutil-depth.txt",
+        "dump_line": 17,
+        "block": "--- [notitle Wizvictim [watch]]"
+      },
+      {
+        "line": "[ (GC) Notitle OFF for Wizvictim by Wizactor. ]",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/mudlog-wizutil-depth.txt",
+        "dump_line": 25,
+        "block": "--- [notitle Wizvictim [watch]]"
+      },
+      {
+        "line": "[ (GC) Squelch ON for Wizvictim by Wizactor. ]",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/mudlog-wizutil-depth.txt",
+        "dump_line": 33,
+        "block": "--- [mute Wizvictim [watch]]"
+      },
+      {
+        "line": "[ (GC) Squelch OFF for Wizvictim by Wizactor. ]",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/mudlog-wizutil-depth.txt",
+        "dump_line": 41,
+        "block": "--- [mute Wizvictim [watch]]"
+      },
+      {
+        "line": "[ (GC) Wizvictim frozen by Wizactor. ]",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/mudlog-wizutil-depth.txt",
+        "dump_line": 53,
+        "block": "--- [freeze Wizvictim [watch]]"
+      },
+      {
+        "line": "[ (GC) Wizvictim un-frozen by Wizactor. ]",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/mudlog-wizutil-depth.txt",
+        "dump_line": 65,
+        "block": "--- [thaw Wizvictim [watch]]"
+      }
+    ]
+  },
+  {
+    "scenario": "wizutil-thaw-higher-freeze-depth",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "Sorry, a level 40 God froze Thawvictim... you can't unfreeze him.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/wizutil-thaw-higher-freeze-depth.txt",
+        "dump_line": 3,
+        "block": "--- [thaw Thawvictim [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spell-charm-save-npc-retaliation-depth",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "Your victim resists!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spell-charm-save-npc-retaliation-depth.txt",
+        "dump_line": 4,
+        "block": "--- [cast 'charm' trainee]"
+      },
+      {
+        "line": "A guard trainee seems to be having trouble getting his body to fight you!!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/spell-charm-save-npc-retaliation-depth.txt",
+        "dump_line": 5,
+        "block": "--- [cast 'charm' trainee]"
+      }
+    ]
+  },
+  {
+    "scenario": "summon-high-level-victim-depth",
+    "seed": 1,
+    "run": "sol-dp1511-b2-final-draws",
+    "events": [
+      {
+        "line": "You failed.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/summon-high-level-victim-depth.txt",
+        "dump_line": 4,
+        "block": "--- [cast 'summon' Summontarget [actor]]"
+      },
+      {
+        "line": "Castgod just tried to summon you to: Temple Infirmary.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/summon-high-level-victim-depth.txt",
+        "dump_line": 7,
+        "block": "--- [cast 'summon' Summontarget [summontarget]]"
+      },
+      {
+        "line": "He failed.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-final-draws/census-dump/summon-high-level-victim-depth.txt",
+        "dump_line": 8,
+        "block": "--- [cast 'summon' Summontarget [summontarget]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-werewolf",
+    "seed": 2,
+    "run": "sol-dp1511-b2-witness-repair-seed2",
+    "events": [
+      {
+        "line": "The werewolf looks up and lets out a long, fierce howl.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed2/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 22,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf tears into your leg with his huge fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed2/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 18,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf rips apart WolfVictim's leg with his fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed2/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 126,
+        "block": "--- [~dpclock pulse 800 [peer]]"
+      },
+      {
+        "line": "You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed2/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 229,
+        "block": "--- [~dpclock pulse 800 [third]]"
+      }
+    ]
+  },
+  {
+    "scenario": "magic-surface-callsite-depth",
+    "seed": 2,
+    "run": "sol-dp1511-b2-magic-audience-seed2",
+    "events": [
+      {
+        "line": "The gods protect Casttarget.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 4,
+        "block": "--- [cast 'dispel evil' Casttarget [actor]]"
+      },
+      {
+        "line": "You create a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 19,
+        "block": "--- [cast 'create food' [actor]]"
+      },
+      {
+        "line": "Castgod creates a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 24,
+        "block": "--- [cast 'create food' [casttarget]]"
+      },
+      {
+        "line": "Casttarget's wounds glow and mend themselves.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 47,
+        "block": "--- [cast 'cure light' Casttarget [castobserve]]"
+      },
+      {
+        "line": "You feel better.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 52,
+        "block": "--- [cast 'cure light' Casttarget [casttarget]]"
+      },
+      {
+        "line": "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 73,
+        "block": "--- [cast 'smokescreen' [actor]]"
+      },
+      {
+        "line": "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of Castgod!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 78,
+        "block": "--- [cast 'smokescreen' [casttarget]]"
+      },
+      {
+        "line": "There is no corpse!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 89,
+        "block": "--- [cast 'animate dead' bread [actor]]"
+      },
+      {
+        "line": "The corpse starts to twitch, then stands with a life of it's own!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed2/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 104,
+        "block": "--- [cast 'animate dead' corpse [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-werewolf",
+    "seed": 3,
+    "run": "sol-dp1511-b2-witness-repair-seed3",
+    "events": [
+      {
+        "line": "The werewolf looks up and lets out a long, fierce howl.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed3/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 12,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf tears into your leg with his huge fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed3/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 27,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf rips apart WolfVictim's leg with his fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed3/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 133,
+        "block": "--- [~dpclock pulse 800 [peer]]"
+      },
+      {
+        "line": "You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed3/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 225,
+        "block": "--- [~dpclock pulse 800 [third]]"
+      }
+    ]
+  },
+  {
+    "scenario": "magic-surface-callsite-depth",
+    "seed": 3,
+    "run": "sol-dp1511-b2-magic-audience-seed3",
+    "events": [
+      {
+        "line": "The gods protect Casttarget.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 4,
+        "block": "--- [cast 'dispel evil' Casttarget [actor]]"
+      },
+      {
+        "line": "You create a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 19,
+        "block": "--- [cast 'create food' [actor]]"
+      },
+      {
+        "line": "Castgod creates a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 24,
+        "block": "--- [cast 'create food' [casttarget]]"
+      },
+      {
+        "line": "Casttarget's wounds glow and mend themselves.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 47,
+        "block": "--- [cast 'cure light' Casttarget [castobserve]]"
+      },
+      {
+        "line": "You feel better.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 52,
+        "block": "--- [cast 'cure light' Casttarget [casttarget]]"
+      },
+      {
+        "line": "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 73,
+        "block": "--- [cast 'smokescreen' [actor]]"
+      },
+      {
+        "line": "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of Castgod!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 78,
+        "block": "--- [cast 'smokescreen' [casttarget]]"
+      },
+      {
+        "line": "There is no corpse!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 89,
+        "block": "--- [cast 'animate dead' bread [actor]]"
+      },
+      {
+        "line": "The corpse starts to twitch, then stands with a life of it's own!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed3/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 104,
+        "block": "--- [cast 'animate dead' corpse [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-werewolf",
+    "seed": 5,
+    "run": "sol-dp1511-b2-witness-repair-seed5",
+    "events": [
+      {
+        "line": "The werewolf looks up and lets out a long, fierce howl.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed5/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 34,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf tears into your leg with his huge fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed5/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 22,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf rips apart WolfVictim's leg with his fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed5/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 125,
+        "block": "--- [~dpclock pulse 800 [peer]]"
+      },
+      {
+        "line": "You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed5/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 219,
+        "block": "--- [~dpclock pulse 800 [third]]"
+      }
+    ]
+  },
+  {
+    "scenario": "magic-surface-callsite-depth",
+    "seed": 5,
+    "run": "sol-dp1511-b2-magic-audience-seed5",
+    "events": [
+      {
+        "line": "The gods protect Casttarget.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 4,
+        "block": "--- [cast 'dispel evil' Casttarget [actor]]"
+      },
+      {
+        "line": "You create a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 19,
+        "block": "--- [cast 'create food' [actor]]"
+      },
+      {
+        "line": "Castgod creates a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 24,
+        "block": "--- [cast 'create food' [casttarget]]"
+      },
+      {
+        "line": "Casttarget's wounds glow and mend themselves.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 47,
+        "block": "--- [cast 'cure light' Casttarget [castobserve]]"
+      },
+      {
+        "line": "You feel better.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 52,
+        "block": "--- [cast 'cure light' Casttarget [casttarget]]"
+      },
+      {
+        "line": "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 73,
+        "block": "--- [cast 'smokescreen' [actor]]"
+      },
+      {
+        "line": "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of Castgod!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 78,
+        "block": "--- [cast 'smokescreen' [casttarget]]"
+      },
+      {
+        "line": "There is no corpse!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 89,
+        "block": "--- [cast 'animate dead' bread [actor]]"
+      },
+      {
+        "line": "The corpse starts to twitch, then stands with a life of it's own!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed5/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 104,
+        "block": "--- [cast 'animate dead' corpse [actor]]"
+      }
+    ]
+  },
+  {
+    "scenario": "spec-proc-werewolf",
+    "seed": 8,
+    "run": "sol-dp1511-b2-witness-repair-seed8",
+    "events": [
+      {
+        "line": "The werewolf looks up and lets out a long, fierce howl.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed8/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 38,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf tears into your leg with his huge fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed8/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 16,
+        "block": "--- [~dpclock pulse 800 [actor]]"
+      },
+      {
+        "line": "The werewolf rips apart WolfVictim's leg with his fangs!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed8/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 123,
+        "block": "--- [~dpclock pulse 800 [peer]]"
+      },
+      {
+        "line": "You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.You hear a loud howling in the distance.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-witness-repair-seed8/census-dump/spec-proc-werewolf.txt",
+        "dump_line": 227,
+        "block": "--- [~dpclock pulse 800 [third]]"
+      }
+    ]
+  },
+  {
+    "scenario": "magic-surface-callsite-depth",
+    "seed": 8,
+    "run": "sol-dp1511-b2-magic-audience-seed8",
+    "events": [
+      {
+        "line": "The gods protect Casttarget.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 4,
+        "block": "--- [cast 'dispel evil' Casttarget [actor]]"
+      },
+      {
+        "line": "You create a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 19,
+        "block": "--- [cast 'create food' [actor]]"
+      },
+      {
+        "line": "Castgod creates a Magic Mushroom.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 24,
+        "block": "--- [cast 'create food' [casttarget]]"
+      },
+      {
+        "line": "Casttarget's wounds glow and mend themselves.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 47,
+        "block": "--- [cast 'cure light' Casttarget [castobserve]]"
+      },
+      {
+        "line": "You feel better.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 52,
+        "block": "--- [cast 'cure light' Casttarget [casttarget]]"
+      },
+      {
+        "line": "As you quickly mumble the incantation a cloud of thick, acrid black smoke forms around you.",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 73,
+        "block": "--- [cast 'smokescreen' [actor]]"
+      },
+      {
+        "line": "Suddenly, a cloud of thick, acrid black smoke appears, obscuring your view of Castgod!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 78,
+        "block": "--- [cast 'smokescreen' [casttarget]]"
+      },
+      {
+        "line": "There is no corpse!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 89,
+        "block": "--- [cast 'animate dead' bread [actor]]"
+      },
+      {
+        "line": "The corpse starts to twitch, then stands with a life of it's own!",
+        "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b2-magic-audience-seed8/census-dump/magic-surface-callsite-depth.txt",
+        "dump_line": 104,
+        "block": "--- [cast 'animate dead' corpse [actor]]"
+      }
+    ]
+  }
+]

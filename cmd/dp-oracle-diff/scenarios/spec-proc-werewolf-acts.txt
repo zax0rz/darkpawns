@@ -1,21 +1,18 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.werewolf-howling-acts-site-live
 # depth-case: mob.werewolf-bite-acts-site-live
 # C-first witness for the howl and bite acts of SPECIAL(werewolf), assigned
 # to mob 5510 at src/spec_assign.c:251 and defined at src/spec_procs3.c:427-448
-# (DP-1502). spec-proc-werewolf.txt runs one violence pulse and at seed 1
-# fires neither arm; this vehicle pads combat rounds so the number(0,9) howl
+# (DP-1502). This vehicle pads combat rounds so the number(0,9) howl
 # gate (:431) and number(0,3) bite gate (:438) both pass and C prints the
 # five burndown segments: howl (:436), TO_VICT "tears into your leg with $s
 # huge fangs!" (:442) and TO_NOTVICT "rips apart $N's leg with $s fangs!"
-# (:444). Both bodies are level 1 with 50000 HP so the combat cannot end
+# (:444). Both bodies are level 1 with 5000 HP so the combat cannot end
 # before the arms fire. The distant peer in room 5500 also catches the zone
 # howl line. One draw pair per violence pulse (src/structs.h:634; the
 # special runs after the mob's ordinary attack, src/fight.c:2030-2031).
 # C path: src/fight.c:1898-2032 -> src/spec_procs3.c:427-448.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 5510 999 5510 55
@@ -108,16 +105,16 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
 goto 5510
 teleport WolfWitness 5510
 teleport WolfDistant 5500
-set WolfVictim maxhit 50000
-set WolfVictim hp 50000
-set WolfVictim hit 50000
-set werewolf maxhit 50000
-set werewolf hp 50000
-set werewolf hit 50000
+set WolfVictim maxhit 5000
+set WolfVictim hit 5000
+set werewolf maxhit 5000
+set werewolf hit 5000
 set werewolf level 1
 
 set WolfVictim level 1

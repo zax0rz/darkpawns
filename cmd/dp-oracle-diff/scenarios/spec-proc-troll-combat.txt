@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for SPECIAL(troll)'s combat arm.  The registration is the
 # same first source-order entry, mob 10029 from src/spec_assign.c:318.  Both
 # disposable players are made evil so Targ's authored AGGR_NEUTRAL flag does
@@ -8,7 +7,6 @@
 # C path: src/fight.c:1898-2032 -> src/spec_procs3.c:347-370.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 10029 1 10049 100
@@ -71,13 +69,14 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
-set TrollCombatActor alignment -1000
-set TrollCombatPeer alignment -1000
+set TrollCombatActor align -1000
+set TrollCombatPeer align -1000
 teleport TrollCombatPeer 10049
 goto 10049
 set targ maxhit 5000
-set targ hp 5000
 set targ hit 5000
 
 [probe]

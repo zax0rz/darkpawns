@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.elements-guardian-mumble-site-live
 # C-first witness for the elements_guardian mumble pair DP-1502 lists
 # (src/spec_procs3.c:1266 TO_VICT "mumbles softly and you begin to scream,
@@ -10,7 +9,6 @@
 # C path: src/mobact.c:68-93 -> src/spec_procs3.c:1230-1280.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 1314 1 8105 80
@@ -73,13 +71,14 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
 goto 8105
 # top the peer up BEFORE it enters: the guardian's arm fires on every
 # command typed in the room, and do_start leaves a fresh mortal at 10 HP
 # (src/class.c:543); do_set clamps maxhit to 5000 (src/act.wizard.c:2736).
 set ElemPeer maxhit 5000
-set ElemPeer hp 5000
 set ElemPeer hit 5000
 teleport ElemPeer 8105
 

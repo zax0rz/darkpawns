@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.mindflayer-entry-gates
 # depth-case: mob.mindflayer-combat-dispatch
 # depth-case: mob.mindflayer-rng-arms
@@ -19,7 +18,6 @@
 # damage(GET_LEVEL(ch), 100); all other rolls fall through FALSE.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14414 1 8105 144
@@ -89,14 +87,14 @@ east
 south
 east
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
 goto 8105
 teleport Mindvictim 8105
 set Mindactor maxhit 5000
-set Mindactor hp 5000
 set Mindactor hit 5000
 set Mindactor maxhit 5000
-set Mindactor hp 5000
 set Mindactor hit 5000
 set Mindactor level 1
 

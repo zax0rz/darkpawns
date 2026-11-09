@@ -1,0 +1,67 @@
+{
+  "magic-surface-callsite-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "spec-proc-werewolf-acts": [
+    1
+  ],
+  "spec-proc-werewolf": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "spec-proc-breed-killer-growl": [
+    1
+  ],
+  "spec-proc-cityguard-pissed": [
+    1
+  ],
+  "spec-proc-elements-guardian-mumble": [
+    1
+  ],
+  "spec-proc-mindflayer": [
+    1,
+    2,
+    3
+  ],
+  "spec-proc-mindflayer-soul-leech": [
+    1
+  ],
+  "spec-proc-snake-bite": [
+    1
+  ],
+  "spec-proc-take-to-jail-pissed": [
+    1
+  ],
+  "spec-proc-troll": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "spec-proc-troll-combat": [
+    1
+  ],
+  "spec-proc-troll-regen": [
+    1
+  ],
+  "mudlog-wizutil-depth": [
+    1
+  ],
+  "wizutil-thaw-higher-freeze-depth": [
+    1
+  ],
+  "spell-charm-save-npc-retaliation-depth": [
+    1
+  ],
+  "summon-high-level-victim-depth": [
+    1
+  ]
+}

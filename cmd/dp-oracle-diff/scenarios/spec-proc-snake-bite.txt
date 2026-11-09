@@ -1,16 +1,14 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.snake-bite-site-live
 # C-first witness for the snake bite pair DP-1502 lists (src/spec_procs.c:341
 # TO_VICT "$n bites you!", with its TO_NOTVICT twin at :340). SPECIAL(snake)
 # (mob 14103, src/spec_assign.c:357) bites its fight victim when
 # number(0, 32-GET_LEVEL(ch)) == 0 (src/spec_procs.c:338-345); at the
 # prototype's level that is a frequent per-round draw, so padded violence
-# pulses land it at seed 1. Both bodies carry 50000 HP so the combat cannot
+# pulses land it at seed 1. Both bodies carry 5000 HP so the combat cannot
 # end mid-run.
 # C path: src/fight.c:1898-2032 -> src/spec_procs.c:330-347.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14103 1 8105 80
@@ -72,14 +70,15 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
 goto 8105
 teleport SnakePeer 8105
-set SnakeGod maxhit 50000
-set SnakeGod hp 50000
-set SnakeGod hit 50000
-set snake maxhit 50000
-set snake hit 50000
+set SnakeGod maxhit 5000
+set SnakeGod hit 5000
+set snake maxhit 5000
+set snake hit 5000
 
 [probe]
 hit snake

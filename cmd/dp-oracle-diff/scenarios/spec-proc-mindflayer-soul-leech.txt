@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.mindflayer-soul-leech-acts-site-live
 # C-first witness for the case 0/5 soul-leech acts of SPECIAL(mindflayer),
 # assigned to mob 14414 at src/spec_assign.c:383 and defined at
@@ -7,14 +6,13 @@
 # number(0,15) switch (src/spec_procs2.c:1978) lands on 0 or 5 and C prints
 # the tentacle pair: TO_NOTVICT "The tentacles on $n's face surge forward,
 # wrapping around $N's head!" (:1983) and TO_VICT "...around your head!"
-# (:1985). Both bodies are level 1 with 100000 HP so the combat cannot end
+# (:1985). Both bodies are level 1 with 5000 HP so the combat cannot end
 # before the arm fires. One draw per violence pulse (PULSE_VIOLENCE =
 # 20, src/structs.h:634; the special runs after the mob's ordinary attack,
 # src/fight.c:2030-2031).
 # C path: src/fight.c:1898-2032 -> src/spec_procs2.c:1972-2000.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14414 1 8105 144
@@ -76,15 +74,15 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
 goto 8105
 teleport Mindvictim 8105
-set Mindactor maxhit 100000
-set Mindactor hp 100000
-set Mindactor hit 100000
-set Alhazred maxhit 100000
-set Alhazred hp 100000
-set Alhazred hit 100000
+set Mindactor maxhit 5000
+set Mindactor hit 5000
+set Alhazred maxhit 5000
+set Alhazred hit 5000
 set Alhazred level 1
 
 set Mindactor level 1

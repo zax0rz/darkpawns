@@ -1,0 +1,14 @@
+[
+  {
+    "scenario": "fighter-wimpy-window-depth",
+    "line": 48,
+    "field": "wimpy",
+    "input": "set Wimpfightgod wimpy 350"
+  },
+  {
+    "scenario": "spell-points-spoken-depth",
+    "line": 116,
+    "field": "alignment",
+    "input": "set PointsTarget alignment 1000"
+  }
+]
