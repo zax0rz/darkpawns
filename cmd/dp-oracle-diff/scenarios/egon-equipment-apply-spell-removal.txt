@@ -1,16 +1,11 @@
 # depth-case: equipment.apply-spell.removal-arms
-# C's APPLY_SPELL arm (src/handler.c:240-270) mutates the persistent AFF flags
-# at equip AND unequip: removing an item clears its bit unless a timed affect
-# provides it. Object 4331 (the dragon Emperor robes) applies AFF_WEREWOLF (27)
-# and AFF_VAMPIRE (28) (lib/world/obj/43.obj; src/structs.h:337-338), and the
-# room list prints both nightbreed form lines (src/act.informative.c:420-427).
-# After `transform` sets a REAL vampire's persistent AFF_VAMPIRE (no timed
-# record; src/act.other.c:1503), removing the robes runs the remove arm, finds
-# no timed bitvector 28, and wipes the real vampire's form bit with it. The
-# vampiric cape #7901 (APPLY_SPELL 19, hide) is the same class but is
-# ITEM_INVIS and unwearable by keyword, so the robes are the vehicle.
-# fixed-time 650353221 boots hour 22 (SUN_DARK) day 10, so `transform` passes
-# its night gate for the vampire arm (src/act.other.c:1490-1494).
+# The robes 4331 supply AFF_WEREWOLF/AFF_VAMPIRE through APPLY_SPELL.
+# Wearing/removing/re-wearing them exercises src/handler.c:240-270; score
+# and the observer look prove those form bits appear and disappear
+# (src/act.informative.c:420-430,1374-1378).
+# The real vampire transformation/unequip boundary is witnessed separately
+# by nightbreed-unequip-wipe-depth. The former set vampire command is not
+# a C set field and was refused (DP-1511).
 
 [fixture]
 empty-players
@@ -76,9 +71,7 @@ Y
 [warmup]
 goto 8004
 teleport Robedealer 8004
-remove all
 load obj 4331
-set Robebearer vampire on
 
 [probe]
 wear robes

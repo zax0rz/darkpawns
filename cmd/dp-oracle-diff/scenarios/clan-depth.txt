@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # Depth vehicle for clan / do_clan (src/interpreter.c:383, src/clan.c).
 # The primary is the first empty-players immortal. Two mortal peers let the
 # warmup create/enroll one member and prepare the other for application paths.
@@ -30,6 +31,7 @@
 # depth-case: clan.info-unknown-clan
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

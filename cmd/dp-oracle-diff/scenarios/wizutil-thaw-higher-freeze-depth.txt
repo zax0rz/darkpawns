@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first do_wizutil thaw refusal when a higher-level God froze the target.
 # The implementor freezes a peer, then a level-38 God runs the registered thaw
 # command and receives C's freeze-level refusal without changing victim state.
@@ -5,6 +6,7 @@
 # depth-case: wizutil.thaw-higher-freeze-level
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

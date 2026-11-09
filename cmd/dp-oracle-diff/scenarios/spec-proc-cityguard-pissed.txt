@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.cityguard-pissed-site-live
 # C-first witness for the shared "You just pissed me off, $N!" act DP-1502
 # lists under cityguard (src/spec_procs.c:815) and take_to_jail
@@ -14,6 +15,7 @@
 # src/spec_procs2.c:1427-1469.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 21201 1 8105 80

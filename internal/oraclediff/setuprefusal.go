@@ -18,13 +18,11 @@ type setupRefusal struct {
 	cite string
 }
 
-// setupRefusalLines is the refusal inventory for every command that occurs in
-// a [warmup] line across the scenario corpus (inventoried 2026-11-05: set,
-// teleport, goto, skillset, force, load, hcontrol, advance, the OLC editors,
-// transfer, cast, sethunt, switch, plus the interpreter's universal refusals).
-// Every line cites the src/ location it was read from (R5g). Matching is on
-// whole normalized lines only, so ordinary prose that merely contains a
-// refusal phrase never trips the check.
+// setupRefusalLines is the original DP-1456 exact inventory (2026-11-05).
+// Keep these entries intact; DP-1511's additional exact strings and compiled
+// templates live in setuprefusal_inventory.go, with a source audit and actual
+// C witnesses in docs/fidelity/evidence/dp-1511/. Matching uses whole normalized
+// lines so prose merely containing a refusal phrase does not trip the check.
 //
 // Deliberately excluded: the interpreter's position refusals
 // (src/interpreter.c:923ff — "You need to stand up!" and kin). No incident
@@ -178,10 +176,10 @@ func checkWarmupRefusals(steps []string, blocks []AudienceProbeBlock, peers int,
 	return nil
 }
 
-// A field is nonempty, cannot cross a line, and is bounded to 1000 bytes of
-// ASCII (or Unicode runes). This covers C command arguments and short object
-// descriptions without permitting an unbounded wildcard in the refusal gate.
-const setupRefusalField = `[^\r\n]{1,1000}`
+// Bound substitutions to C's MAX_STRING_LENGTH (src/structs.h:643), with
+// no line crossings or empty fields. RE2 limits each counted repeat to 1000,
+// so concatenate chunks rather than using an unsupported {1,8192} repeat.
+var setupRefusalField = `[^\r\n]{1,1000}` + strings.Repeat(`[^\r\n]{0,1000}`, 7) + `[^\r\n]{0,192}`
 
 type setupRefusalPattern struct {
 	template string
@@ -229,7 +227,18 @@ func compileRefusalTemplate(template string) *regexp.Regexp {
 			if template[i] == '$' {
 				out.WriteString(`\$`)
 			} else {
-				out.WriteString(setupRefusalField)
+				switch template[i] {
+				case 'm', 'M':
+					out.WriteString(`(?:[Hh]im|[Hh]er|[Ii]t)`)
+				case 's', 'S':
+					out.WriteString(`(?:[Hh]is|[Hh]er|[Ii]ts)`)
+				case 'e', 'E':
+					out.WriteString(`(?:[Hh]e|[Ss]he|[Ii]t)`)
+				case 'a', 'A':
+					out.WriteString(`(?:[Aa]|[Aa]n)`)
+				default:
+					out.WriteString(setupRefusalField)
+				}
 			}
 			i++
 		default:

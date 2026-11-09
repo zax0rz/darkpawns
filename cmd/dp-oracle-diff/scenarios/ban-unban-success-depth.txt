@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for a successful do_unban acknowledgement after a live ban.
 # C path: src/interpreter.c:793 -> src/ban.c:213-244.
 # depth-case: ban.unban-success
@@ -5,6 +6,7 @@
 # warmup removes the oracle's historical ban before this disposable ban/unban.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

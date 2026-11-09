@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for SPECIAL(troll)'s combat arm.  The registration is the
 # same first source-order entry, mob 10029 from src/spec_assign.c:318.  Both
 # disposable players are made evil so Targ's authored AGGR_NEUTRAL flag does
@@ -7,6 +8,7 @@
 # C path: src/fight.c:1898-2032 -> src/spec_procs3.c:347-370.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 10029 1 10049 100

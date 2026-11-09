@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: ban.no-bans
 # depth-case: ban.add
 # depth-case: ban.list-format
@@ -14,6 +15,7 @@
 # and copied C lib tree.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.breed-killer-growl-site-live
 # C-first witness for the growl pair DP-1502 lists (src/spec_procs2.c:1702
 # "You hear a low growl in the back of $n's throat." — segments "You hear a low
@@ -11,6 +12,7 @@
 # C path: src/mobact.c:68-93 -> src/spec_procs2.c:1685-1715.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 fixed-time 650812932

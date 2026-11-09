@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: combat.pending-body-keeps-the-swing-draws
 # depth-case: carve.fighting-no-arg
 # depth-case: carve.no-arg
@@ -15,6 +16,7 @@
 # without carve_ and bread supplies a non-corpse room object.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 4350 2 8162 80

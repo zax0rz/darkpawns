@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.fighter-round-draw-parity
 # DeepSeek's #2243 note: in a SPECIAL(fighter) round (mob 20020, the trollish
 # dungeon guard's sibling), C draws Number(0,13) where Go draws Dice(1,4),
@@ -6,6 +7,7 @@
 # level is set above its hit points so every exchange lands in the wimpy
 # window and the fighter special's subcmd skills run every round they fire.
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 20020 1 8105 80

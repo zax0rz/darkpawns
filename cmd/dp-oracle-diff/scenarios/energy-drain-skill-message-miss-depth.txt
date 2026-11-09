@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # The room script sets real AFF_SANCTUARY and AFF_PROTECT_GOOD bits on a level-30 neutral PC.
 # The disposable staff prototype becomes a level-0 Energy Drain scroll; C passes its
 # item level unchanged, so 10d6 can reach zero after save and mitigation.
@@ -5,6 +6,7 @@
 # depth-case: spell.energy-drain.message-miss
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 no-settle

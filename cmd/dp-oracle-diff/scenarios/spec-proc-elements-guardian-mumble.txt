@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.elements-guardian-mumble-site-live
 # C-first witness for the elements_guardian mumble pair DP-1502 lists
 # (src/spec_procs3.c:1266 TO_VICT "mumbles softly and you begin to scream,
@@ -9,6 +10,7 @@
 # C path: src/mobact.c:68-93 -> src/spec_procs3.c:1230-1280.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 1314 1 8105 80

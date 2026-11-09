@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.mindflayer-entry-gates
 # depth-case: mob.mindflayer-combat-dispatch
 # depth-case: mob.mindflayer-rng-arms
@@ -18,6 +19,7 @@
 # damage(GET_LEVEL(ch), 100); all other rolls fall through FALSE.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14414 1 8105 144

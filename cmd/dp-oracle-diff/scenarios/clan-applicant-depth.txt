@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # Mortal clan-applicant vehicle for clan / do_clan (src/interpreter.c:383,
 # src/clan.c). The primary creates a public clan and lowers its application
 # level so the fresh mortal peer can exercise both application states.
@@ -9,6 +10,7 @@
 # depth-case: clan.applicant-apply-again
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

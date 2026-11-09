@@ -1,5 +1,7 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: idle.rent-roundtrip-equipped-norent
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 compare-close

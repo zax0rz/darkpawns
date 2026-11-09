@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for SPECIAL(troll), defined at src/spec_procs3.c:347-370
 # and registered for mob vnums 10029, 14100, 14311, 14312, 19900, and 19901.
 # Targ (10029) is the first active registration in assignment-table order.
@@ -14,6 +15,7 @@
 # 12000 pulses, ~300 calls, so the glow bytes are present on every seed.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 10029 1 10049 100

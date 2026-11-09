@@ -72,7 +72,6 @@ goto 8044
 teleport RemortWitness 8044
 set RemortSuccess gold 60000
 set RemortSuccess level 30
-remove all
 
 [probe]
 remort

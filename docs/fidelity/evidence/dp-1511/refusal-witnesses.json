@@ -1022,13 +1022,6 @@
     "dump_line": 35
   },
   {
-    "template": "You are already following $M.",
-    "cite": "src/act.movement.c:905",
-    "line": "You are already following yourself.",
-    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/death-followers-depth.txt",
-    "dump_line": 35
-  },
-  {
     "template": "You don't seem to have any %ss.",
     "cite": "src/act.item.c:146",
     "line": "You don't seem to have any breads.",
@@ -1680,13 +1673,6 @@
     "dump_line": 31
   },
   {
-    "template": "$n tells you, '...which I see you can't afford.'",
-    "cite": "src/objsave.c:1112",
-    "line": "the postman tells you, '...which I see you can't afford.'",
-    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/postmaster-precheck-depth.txt",
-    "dump_line": 26
-  },
-  {
     "template": "$p won't fit in $P.",
     "cite": "src/act.item.c:56",
     "line": "A frayed tunic won't fit in a backpack.",
@@ -1848,13 +1834,6 @@
     "dump_line": 216
   },
   {
-    "template": "$E can't carry that much weight.",
-    "cite": "src/act.item.c:692",
-    "line": "boat: You can't carry that much weight.",
-    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-buy-weight-sell-steal.txt",
-    "dump_line": 43
-  },
-  {
     "template": "No such person around.",
     "cite": "src/act.wizard.c:1144",
     "line": "No such person around.",
@@ -1881,20 +1860,6 @@
     "line": "You can't.",
     "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/snoop-depth.txt",
     "dump_line": 97
-  },
-  {
-    "template": "You can't seem to figure out how to use it.",
-    "cite": "src/act.other.c:966",
-    "line": "You can't seem to figure out how to use it.",
-    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/spec-proc-horn.txt",
-    "dump_line": 27
-  },
-  {
-    "template": "Try holding it.(?)",
-    "cite": "src/act.other.c:966",
-    "line": "Try holding it.(?)",
-    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/spec-proc-horn.txt",
-    "dump_line": 28
   },
   {
     "template": "You can't transform during the day!",
@@ -2182,5 +2147,607 @@
     "line": "A flash of white light fills the room, dispelling your violent power!",
     "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wand-peaceful-psionic.txt",
     "dump_line": 4
+  },
+  {
+    "template": "You're already wearing something on both of your ring fingers.",
+    "cite": "src/act.item.c:1436",
+    "line": "You're already wearing something on both of your ring fingers.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 340
+  },
+  {
+    "template": "You can't wear anything else around your neck.",
+    "cite": "src/act.item.c:1438",
+    "line": "You can't wear anything else around your neck.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 353
+  },
+  {
+    "template": "You're already wearing something on your body.",
+    "cite": "src/act.item.c:1439",
+    "line": "You're already wearing something on your body.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 366
+  },
+  {
+    "template": "You're already wearing something on your head.",
+    "cite": "src/act.item.c:1440",
+    "line": "You're already wearing something on your head.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 379
+  },
+  {
+    "template": "You're already wearing something on your legs.",
+    "cite": "src/act.item.c:1441",
+    "line": "You're already wearing something on your legs.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 392
+  },
+  {
+    "template": "You're already wearing something on your feet.",
+    "cite": "src/act.item.c:1442",
+    "line": "You're already wearing something on your feet.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 405
+  },
+  {
+    "template": "You're already wearing something on your hands.",
+    "cite": "src/act.item.c:1443",
+    "line": "You're already wearing something on your hands.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 418
+  },
+  {
+    "template": "You're already wearing something on your arms.",
+    "cite": "src/act.item.c:1444",
+    "line": "You're already wearing something on your arms.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 431
+  },
+  {
+    "template": "You're already using a shield.",
+    "cite": "src/act.item.c:1445",
+    "line": "You're already using a shield.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 444
+  },
+  {
+    "template": "You're already wearing something about your body.",
+    "cite": "src/act.item.c:1446",
+    "line": "You're already wearing something about your body.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 457
+  },
+  {
+    "template": "You already have something around your waist.",
+    "cite": "src/act.item.c:1447",
+    "line": "You already have something around your waist.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 470
+  },
+  {
+    "template": "You're already wearing something around both of your wrists.",
+    "cite": "src/act.item.c:1449",
+    "line": "You're already wearing something around both of your wrists.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 483
+  },
+  {
+    "template": "You're already wielding a weapon.",
+    "cite": "src/act.item.c:1450",
+    "line": "You're already wielding a weapon.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 509
+  },
+  {
+    "template": "You're already wearing something about your legs.",
+    "cite": "src/act.item.c:1453",
+    "line": "You're already wearing something about your legs.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 522
+  },
+  {
+    "template": "You're already wearing something on your face.",
+    "cite": "src/act.item.c:1454",
+    "line": "You're already wearing something on your face.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 535
+  },
+  {
+    "template": "Something is already hovering near your head.",
+    "cite": "src/act.item.c:1455",
+    "line": "Something is already hovering near your head.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-equipment-witness/census-dump/warmup-refusal-equipment-inventory.txt",
+    "dump_line": 548
+  },
+  {
+    "template": "You are already following $M.",
+    "cite": "src/act.movement.c:905",
+    "line": "You are already following her.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/follow-depth.txt",
+    "dump_line": 25
+  },
+  {
+    "template": "Kill who?",
+    "cite": "src/act.offensive.c:146",
+    "line": "Kill who?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 35
+  },
+  {
+    "template": "Your mother would be so sad.. :(",
+    "cite": "src/act.offensive.c:152",
+    "line": "Your mother would be so sad.. :(",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 39
+  },
+  {
+    "template": "That room does not exist!",
+    "cite": "src/act.wizard.c:2958",
+    "line": "That room does not exist!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 48
+  },
+  {
+    "template": "Sorry, but following in loops is not allowed.",
+    "cite": "src/act.movement.c:920",
+    "line": "Sorry, but following in loops is not allowed.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 62
+  },
+  {
+    "template": "$E can't carry that much weight.",
+    "cite": "src/act.item.c:692",
+    "line": "He can't carry that much weight.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 87
+  },
+  {
+    "template": "It is too heavy for you to use.",
+    "cite": "src/act.item.c:1494",
+    "line": "It is too heavy for you to use.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 114
+  },
+  {
+    "template": "Your flesh is altered, you can't wield anything!",
+    "cite": "src/act.item.c:1488",
+    "line": "Your flesh is altered, you can't wield anything!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 132
+  },
+  {
+    "template": "$N seems to have $S hands full.",
+    "cite": "src/act.item.c:687",
+    "line": "Gatepeer seems to have his hands full.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-general-witness/census-dump/warmup-refusal-general-inventory.txt",
+    "dump_line": 344
+  },
+  {
+    "template": "That's not a direction.",
+    "cite": "src/act.movement.c:378",
+    "line": "That's not a direction.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 50
+  },
+  {
+    "template": "I see no %s there.",
+    "cite": "src/act.movement.c:391",
+    "line": "I see no banana there.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 54
+  },
+  {
+    "template": "What is it you want to %s?",
+    "cite": "src/act.movement.c:409",
+    "line": "What is it you want to close?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 62
+  },
+  {
+    "template": "This command is not available for someone of your experience!",
+    "cite": "src/act.other.c:1734",
+    "line": "This command is not available for someone of your experience!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 70
+  },
+  {
+    "template": "You can't recall from this magickal place.",
+    "cite": "src/act.other.c:1739",
+    "line": "You can't recall from this magickal place.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 78
+  },
+  {
+    "template": "But you only feel like following $N!",
+    "cite": "src/act.movement.c:909",
+    "line": "But you only feel like following Charmhelper!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 94
+  },
+  {
+    "template": "The thought of leaving your master makes you weep.",
+    "cite": "src/act.movement.c:121",
+    "line": "The thought of leaving your master makes you weep.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 98
+  },
+  {
+    "template": "You can't ride!",
+    "cite": "src/act.other.c:1577",
+    "line": "You can't ride!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 102
+  },
+  {
+    "template": "You aren't snooping anyone.",
+    "cite": "src/act.wizard.c:1123",
+    "line": "You aren't snooping anyone.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-charm-witness/census-dump/warmup-refusal-charm-inventory.txt",
+    "dump_line": 114
+  },
+  {
+    "template": "You are already standing.",
+    "cite": "src/act.movement.c:703",
+    "line": "You are already standing.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate/census-dump/position-basic.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Do you not consider fighting as standing?",
+    "cite": "src/act.movement.c:721",
+    "line": "Do you not consider fighting as standing?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate/census-dump/position-fighting.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "$n exclaims, 'I don't trade with someone I can't see!'",
+    "cite": "src/shop.h:194; src/shop.c:74-138; src/act.comm.c:787-801,876",
+    "line": "Hansen the merchant exclaims, 'I don't trade with someone I can't see!'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate/census-dump/shop-customers-hidden.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "$n exclaims, 'Come back later!'",
+    "cite": "src/shop.h:190; src/shop.c:74-138; src/act.comm.c:787-801,876",
+    "line": "Hansen the merchant exclaims, 'Come back later!'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate/census-dump/shop-hours-05.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "$n states, 'Sorry, we have closed, but come back later.'",
+    "cite": "src/shop.h:191; src/shop.c:74-138; src/act.comm.c:787-801,876",
+    "line": "Hansen the merchant states, 'Sorry, we have closed, but come back later.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate/census-dump/shop-hours-12.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "$n states, 'Sorry, come back tomorrow.'",
+    "cite": "src/shop.h:192; src/shop.c:74-138; src/act.comm.c:787-801,876",
+    "line": "Hansen the merchant states, 'Sorry, come back tomorrow.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate/census-dump/shop-hours-19.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "There is no %s in your inventory.",
+    "cite": "src/act.comm.c:1060",
+    "line": "There is no missing in your inventory.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 93
+  },
+  {
+    "template": "You can't write with %s %s alone.",
+    "cite": "src/act.comm.c:1073",
+    "line": "You can't write with a pen alone.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 106
+  },
+  {
+    "template": "That thing has nothing to do with writing.",
+    "cite": "src/act.comm.c:1068",
+    "line": "That thing has nothing to do with writing.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 119
+  },
+  {
+    "template": "You can't write on $p.",
+    "cite": "src/act.comm.c:1093",
+    "line": "You can't write on a short sword.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 123
+  },
+  {
+    "template": "$p is no good for writing with.",
+    "cite": "src/act.comm.c:1091",
+    "line": "A short sword is no good for writing with.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 136
+  },
+  {
+    "template": "There's something written on it already.",
+    "cite": "src/act.comm.c:1095",
+    "line": "There's something written on it already.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 154
+  },
+  {
+    "template": "You cannot write anything!",
+    "cite": "src/act.comm.c:1039",
+    "line": "You cannot write anything!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 162
+  },
+  {
+    "template": "Both hands must be free to wield that.",
+    "cite": "src/act.item.c:1500",
+    "line": "Both hands must be free to wield that.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 71
+  },
+  {
+    "template": "Both your hands are occupied with your weapon at the moment.",
+    "cite": "src/act.item.c:1508",
+    "line": "Both your hands are occupied with your weapon at the moment.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 96
+  },
+  {
+    "template": "You can't %s $p, it must be CURSED!",
+    "cite": "src/act.item.c:488",
+    "line": "You can't drop Mandelbrot's marvelous hand-held massager, it must be CURSED!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 192
+  },
+  {
+    "template": "You can't remove $p, it must be CURSED!",
+    "cite": "src/act.item.c:1720",
+    "line": "You can't remove Mandelbrot's marvelous hand-held massager, it must be CURSED!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 188
+  },
+  {
+    "template": "You can't let go of $p!!  Yeech!",
+    "cite": "src/act.item.c:682",
+    "line": "You can't let go of Mandelbrot's marvelous hand-held massager!!  Yeech!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 196
+  },
+  {
+    "template": "$p: you can't carry that many items!",
+    "cite": "src/act.item.c:1722",
+    "line": "An elven battle helmet: you can't carry that many items!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 485
+  },
+  {
+    "template": "$p: you can't hold any more items.",
+    "cite": "src/act.item.c:203",
+    "line": "A scroll of identify: you can't hold any more items.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 496
+  },
+  {
+    "template": "$p: you can't carry that much weight.",
+    "cite": "src/act.item.c:167",
+    "line": "A runed chest: you can't carry that much weight.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-item-witness-r3/census-dump/warmup-refusal-item-inventory.txt",
+    "dump_line": 576
+  },
+  {
+    "template": "You cannot promote someone over the top rank!",
+    "cite": "src/clan.c:535",
+    "line": "You cannot promote someone over the top rank!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 45
+  },
+  {
+    "template": "You cannot demote a person of this rank!",
+    "cite": "src/clan.c:482",
+    "line": "You cannot demote a person of this rank!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 49
+  },
+  {
+    "template": "They can't be demoted any further, use expel now.",
+    "cite": "src/clan.c:479",
+    "line": "They can't be demoted any further, use expel now.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 61
+  },
+  {
+    "template": "You can't bash someone who's sitting already!",
+    "cite": "src/act.offensive.c:457",
+    "line": "You can't bash someone who's sitting already!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 92
+  },
+  {
+    "template": "You haven't the energy!",
+    "cite": "src/act.offensive.c:469",
+    "line": "You haven't the energy!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 107
+  },
+  {
+    "template": "You'd better not.",
+    "cite": "src/act.offensive.c:1469",
+    "line": "You'd better not.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 115
+  },
+  {
+    "template": "They're too alert for that, currently.",
+    "cite": "src/act.offensive.c:1496",
+    "line": "They're too alert for that, currently.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 138
+  },
+  {
+    "template": "No can do, buddy..",
+    "cite": "src/act.offensive.c:154",
+    "line": "No can do, buddy..",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 200
+  },
+  {
+    "template": "You can't change back until morning!",
+    "cite": "src/act.other.c:1426",
+    "line": "You can't change back until morning!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-transform-witness/census-dump/warmup-refusal-transform-night-inventory.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "The board is malfunctioning - sorry.",
+    "cite": "src/boards.c:229",
+    "line": "The board is malfunctioning - sorry.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness-r2/census-dump/warmup-refusal-board-slots-inventory.txt",
+    "dump_line": 2152
+  },
+  {
+    "template": "$E's writing a message right now; try again later.",
+    "cite": "src/act.comm.c:924",
+    "line": "He's writing a message right now; try again later.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness-r2/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 36
+  },
+  {
+    "template": "At least wait until the author is finished before removing it!",
+    "cite": "src/boards.c:419",
+    "line": "At least wait until the author is finished before removing it!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-witness-r2/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 40
+  },
+  {
+    "template": "Your mount is in no position to go ANYWHERE!",
+    "cite": "src/act.movement.c:152",
+    "line": "Your mount is in no position to go ANYWHERE!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness/census-dump/warmup-refusal-mounted-inventory.txt",
+    "dump_line": 66
+  },
+  {
+    "template": "Your mount is too exhausted to carry you further.",
+    "cite": "src/act.movement.c:159",
+    "line": "Your mount is too exhausted to carry you further.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness/census-dump/warmup-refusal-mounted-inventory.txt",
+    "dump_line": 88
+  },
+  {
+    "template": "You can't ride in there! Dismount first!",
+    "cite": "src/act.movement.c:188",
+    "line": "You can't ride in there! Dismount first!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness/census-dump/warmup-refusal-mounted-inventory.txt",
+    "dump_line": 112
+  },
+  {
+    "template": "You are too exhausted to follow.",
+    "cite": "src/act.movement.c:174",
+    "line": "You are too exhausted to follow.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness/census-dump/warmup-refusal-mounted-inventory.txt",
+    "dump_line": 151
+  },
+  {
+    "template": "Don't be stupid.",
+    "cite": "src/act.wizard.c:1152",
+    "line": "Don't be stupid.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness/census-dump/warmup-refusal-mounted-inventory.txt",
+    "dump_line": 171
+  },
+  {
+    "template": "You can't transform when there's no moon in the sky!",
+    "cite": "src/act.other.c:1431",
+    "line": "You can't transform when there's no moon in the sky!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-no-moon-witness-r2/census-dump/warmup-refusal-transform-no-moon-inventory.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Look at what?",
+    "cite": "src/act.informative.c:1014",
+    "line": "Look at what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-invisible-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 197
+  },
+  {
+    "template": "$n tells you, 'You can only carry %d.'",
+    "cite": "src/shop.c:566; src/act.comm.c:876",
+    "line": "An old mariner tells you, 'You can only carry 3.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-shop-witness/census-dump/warmup-refusal-shop-inventory.txt",
+    "dump_line": 14
+  },
+  {
+    "template": "$n tells you, 'You can only hold %d.'",
+    "cite": "src/shop.c:564; src/act.comm.c:876",
+    "line": "Hansen the merchant tells you, 'You can only hold 33.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-shop-witness/census-dump/warmup-refusal-shop-inventory.txt",
+    "dump_line": 31
+  },
+  {
+    "template": "$n tells you, 'A negative amount?  Try selling me something.'",
+    "cite": "src/shop.c:487; src/act.comm.c:876",
+    "line": "Hansen the merchant tells you, 'A negative amount?  Try selling me something.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-shop-witness/census-dump/warmup-refusal-shop-inventory.txt",
+    "dump_line": 35
+  },
+  {
+    "template": "You are too exhausted to carry your rider further.",
+    "cite": "src/act.movement.c:157",
+    "line": "You are too exhausted to carry your rider further.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness-r2/census-dump/warmup-refusal-mounted-inventory.txt",
+    "dump_line": 107
+  },
+  {
+    "template": "You're too busy fighting!",
+    "cite": "src/act.other.c:1552",
+    "line": "You're too busy fighting!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness-r2/census-dump/warmup-refusal-pc-charm-inventory.txt",
+    "dump_line": 135
+  },
+  {
+    "template": "The board is full.",
+    "cite": "src/boards.c:225",
+    "line": "The board is full.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-load-boardfull-witness/census-dump/warmup-refusal-board-full-inventory.txt",
+    "dump_line": 313
+  },
+  {
+    "template": "That is beyond your godly powers...",
+    "cite": "src/act.wizard.c:1363",
+    "line": "That is beyond your godly powers...",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-load-boardfull-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 212
+  },
+  {
+    "template": "The stuff in your hand is invisible!  Yeech!!",
+    "cite": "src/act.comm.c:1079",
+    "line": "The stuff in your hand is invisible!  Yeech!!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-write-held-invisible-witness/census-dump/warmup-refusal-write-inventory.txt",
+    "dump_line": 203
+  },
+  {
+    "template": "$E's in pretty bad shape!",
+    "cite": "src/act.movement.c:859",
+    "line": "He's in pretty bad shape!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness-r3/census-dump/warmup-refusal-mounted-inventory.txt",
+    "dump_line": 280
+  },
+  {
+    "template": "Get your master's permission first!",
+    "cite": "src/act.other.c:1579",
+    "line": "Get your master's permission first!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness-r3/census-dump/warmup-refusal-pc-charm-inventory.txt",
+    "dump_line": 365
+  },
+  {
+    "template": "You are afraid you might hurt your master!",
+    "cite": "src/spell_parser.c:875",
+    "line": "You are afraid you might hurt your master!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-mounted-charm-witness-r3/census-dump/warmup-refusal-pc-charm-inventory.txt",
+    "dump_line": 369
+  },
+  {
+    "template": "They're not enrolled yet.",
+    "cite": "src/clan.c:529",
+    "line": "They're not enrolled yet.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-clan-applicant-witness/census-dump/warmup-refusal-clan-inventory.txt",
+    "dump_line": 89
   }
 ]

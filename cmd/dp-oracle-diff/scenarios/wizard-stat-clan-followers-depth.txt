@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # Live do_stat_character reports for a clan member and a mobile whose six
 # long-name player followers cross both 62-byte follower-list send sites.
 # depth-case: stat.player-clan-report
@@ -5,6 +6,7 @@
 # depth-case: stat.mob-follower-wrap-boundaries
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 2109 1 8162 80

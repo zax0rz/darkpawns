@@ -67,7 +67,6 @@ Y
 [warmup]
 goto 8004
 teleport Egonlook 8004
-remove all
 load obj 18602
 wear ring finger
 load obj 18602

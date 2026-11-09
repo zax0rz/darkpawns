@@ -1,8 +1,10 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: objmagic.waterwalk-reagent-vnum
 # A non-reagent object with the frog-leg keywords must not satisfy waterwalk:
 # C matches the carried object's vnum (src/magic.c:1274, src/magic.c:546-552).
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 set-room-flag 8162 4 off

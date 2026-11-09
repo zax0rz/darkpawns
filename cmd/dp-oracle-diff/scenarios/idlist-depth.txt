@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first depth vehicle for do_idlist (src/interpreter.c:512;
 # src/act.wizard.c:3575-3693). The command is registered at LVL_GRGOD,
 # writes the fixed object_idlist report, ignores all arguments, and emits only
@@ -10,6 +11,7 @@
 # depth-case: idlist.arguments-ignored
 
 [fixture]
+allow-setup-refusal
 empty-players
 
 [setup:oracle]

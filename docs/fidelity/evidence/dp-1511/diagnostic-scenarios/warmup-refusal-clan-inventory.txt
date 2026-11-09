@@ -1,0 +1,94 @@
+# DP-1511 C witnesses for clan and skill refusal branches.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 4 off
+set-room-sector 8162 1
+spawn-mob 8021 999 8162 80
+[setup:oracle]
+Clanwitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clanwitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Nobleone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Nobleone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+teleport Nobleone 8162
+set Nobleone level 1
+set Nobleone gold 100000
+clan create Nobleone Wolves
+clan promote Nobleone Wolves
+send:observer clan demote Nobleone
+clan demote Nobleone Wolves
+clan demote Nobleone Wolves
+clan demote Nobleone Wolves
+clan expel Nobleone Wolves
+set Nobleone level 30
+send:observer clan apply Wolves
+clan promote Nobleone Wolves
+force Nobleone sit
+bash Nobleone
+force Nobleone stand
+set Clanwitness move 0
+bash Nobleone
+skillset Clanwitness 'ambush' 0
+ambush Nobleone
+skillset Clanwitness 'ambush' 100
+set Nobleone maxhit 5000
+set Nobleone hit 5000
+force horse hit Nobleone
+ambush horse
+advance Nobleone 40
+kill Nobleone
+set Clanwitness level 35
+load obj 19604

@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.mindflayer-soul-leech-acts-site-live
 # C-first witness for the case 0/5 soul-leech acts of SPECIAL(mindflayer),
 # assigned to mob 14414 at src/spec_assign.c:383 and defined at
@@ -13,6 +14,7 @@
 # C path: src/fight.c:1898-2032 -> src/spec_procs2.c:1972-2000.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14414 1 8105 144

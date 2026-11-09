@@ -1,0 +1,327 @@
+[
+  {
+    "scenario": "wizard-stat-clan-followers-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 10 \"clan enroll Clanmate Wolves\" engine=c: They're already in your clan.",
+    "log_line": 3
+  },
+  {
+    "scenario": "clan-member-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"clan enroll Clanmate Wolves\" engine=c: Er, Who ??",
+    "log_line": 76
+  },
+  {
+    "scenario": "clan-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"clan enroll Clanmate Wolves\" engine=c: Er, Who ??",
+    "log_line": 126
+  },
+  {
+    "scenario": "object-door-messages",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"close door south\" engine=c: But it's already closed!",
+    "log_line": 134
+  },
+  {
+    "scenario": "energy-drain-skill-message-miss-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 19 \"get scroll\" engine=c: You don't see a scroll here.",
+    "log_line": 137
+  },
+  {
+    "scenario": "color-spray-skill-message-miss-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 19 \"get color\" engine=c: You don't see a color here.",
+    "log_line": 139
+  },
+  {
+    "scenario": "dispel-evil-skill-message-miss-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 19 \"get scroll\" engine=c: You don't see a scroll here.",
+    "log_line": 141
+  },
+  {
+    "scenario": "dispel-good-skill-message-miss-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 19 \"get scroll\" engine=c: You don't see a scroll here.",
+    "log_line": 143
+  },
+  {
+    "scenario": "spell-points-spoken-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"set PointsGod level 100\" engine=c: You can't do that.",
+    "log_line": 156
+  },
+  {
+    "scenario": "spec-proc-werewolf-acts",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"set WolfVictim hp 50000\" engine=c: Can't set that!",
+    "log_line": 211
+  },
+  {
+    "scenario": "magic-surface-callsite-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"set Casttarget alignment 1000\" engine=c: Can't set that!",
+    "log_line": 239
+  },
+  {
+    "scenario": "spell-parser-item-output-gaps",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 7 \"get important\" engine=c: You don't see an important here.",
+    "log_line": 269
+  },
+  {
+    "scenario": "clan-applicant-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"clan enroll Clanmate Wolves\" engine=c: Er, Who ??",
+    "log_line": 383
+  },
+  {
+    "scenario": "wizard-file-output-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"set player Setpeer level 40\" engine=c: You can't do that.",
+    "log_line": 398
+  },
+  {
+    "scenario": "lua-cast-spell-gates-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"set Castmatrix level 50\" engine=c: You can't do that.",
+    "log_line": 414
+  },
+  {
+    "scenario": "mudlog-wizutil-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"advance Wizactor 40\" engine=c: They are already at that level.",
+    "log_line": 430
+  },
+  {
+    "scenario": "spec-proc-werewolf",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"set WolfVictim hp 5000\" engine=c: Can't set that!",
+    "log_line": 447
+  },
+  {
+    "scenario": "aid-failure-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"set Failvict level 40\" engine=c: You can't do that.",
+    "log_line": 455
+  },
+  {
+    "scenario": "wizutil-thaw-higher-freeze-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"advance Thawhigh 40\" engine=c: They are already at that level.",
+    "log_line": 627
+  },
+  {
+    "scenario": "lifecycle-idle-rent-norent",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"get cloak\" engine=c: A testing cloak: you can't take that!",
+    "log_line": 637
+  },
+  {
+    "scenario": "vampire-consume-dark",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"get bread\" engine=c: You don't see a bread here.",
+    "log_line": 646
+  },
+  {
+    "scenario": "item-sleep-outlaw-sand",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 12 \"get powder\" engine=c: You don't see a powder here.",
+    "log_line": 648
+  },
+  {
+    "scenario": "item-sleep-refusal-sand",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 12 \"get powder\" engine=c: You don't see a powder here.",
+    "log_line": 650
+  },
+  {
+    "scenario": "vampire-consume-sunset",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"get bread\" engine=c: You don't see a bread here.",
+    "log_line": 653
+  },
+  {
+    "scenario": "vampire-consume-day",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"get bread\" engine=c: You don't see a bread here.",
+    "log_line": 656
+  },
+  {
+    "scenario": "item-sleep-outlaw-bare",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 12 \"get powder\" engine=c: You don't see a powder here.",
+    "log_line": 659
+  },
+  {
+    "scenario": "item-sleep-refusal-bare",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 12 \"get powder\" engine=c: You don't see a powder here.",
+    "log_line": 662
+  },
+  {
+    "scenario": "egon-equipment-all-slots",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 667
+  },
+  {
+    "scenario": "carve-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 6 \"hit fish\" engine=c: This room just has such a peaceful, easy feeling...",
+    "log_line": 678
+  },
+  {
+    "scenario": "violence-npc-switched-output-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 10 \"set mob trainee level 80\" engine=c: You can't do that.",
+    "log_line": 680
+  },
+  {
+    "scenario": "spec-proc-breed-killer-growl",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"set BreedPeer hp 50000\" engine=c: Can't set that!",
+    "log_line": 682
+  },
+  {
+    "scenario": "egon-equipment-covered",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 690
+  },
+  {
+    "scenario": "spec-proc-troll-regen",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 6 \"set TrollActor hp 100000\" engine=c: Can't set that!",
+    "log_line": 693
+  },
+  {
+    "scenario": "spec-proc-mindflayer",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"set Mindactor hp 5000\" engine=c: Can't set that!",
+    "log_line": 702
+  },
+  {
+    "scenario": "spec-proc-mindflayer-soul-leech",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"set Mindactor hp 100000\" engine=c: Can't set that!",
+    "log_line": 714
+  },
+  {
+    "scenario": "equipment-glance-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"remove tunic\" engine=c: You don't seem to be using a tunic.",
+    "log_line": 716
+  },
+  {
+    "scenario": "reagent-waterwalk-decoy-vnum-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 10 \"give decoy ReagentDecoy\" engine=c: What's the point of that?",
+    "log_line": 750
+  },
+  {
+    "scenario": "egon-equipment-apply-spell-removal",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 771
+  },
+  {
+    "scenario": "spec-proc-take-to-jail-pissed",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"set GuardAlly hp 500000\" engine=c: Can't set that!",
+    "log_line": 807
+  },
+  {
+    "scenario": "spec-proc-snake-bite",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"set SnakeGod hp 50000\" engine=c: Can't set that!",
+    "log_line": 810
+  },
+  {
+    "scenario": "spec-proc-cityguard-pissed",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"set GuardPeer hp 500000\" engine=c: Can't set that!",
+    "log_line": 814
+  },
+  {
+    "scenario": "clan-plan-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"clan enroll Clanmate Wolves\" engine=c: Er, Who ??",
+    "log_line": 816
+  },
+  {
+    "scenario": "egon-equipment-apply-spell",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 847
+  },
+  {
+    "scenario": "egon-equipment-look-order",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 849
+  },
+  {
+    "scenario": "spec-proc-troll-combat",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"set TrollCombatActor alignment -1000\" engine=c: Can't set that!",
+    "log_line": 891
+  },
+  {
+    "scenario": "shops-remorter-success",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 923
+  },
+  {
+    "scenario": "spec-proc-troll",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"set TrollActor alignment -1000\" engine=c: Can't set that!",
+    "log_line": 926
+  },
+  {
+    "scenario": "spec-proc-elements-guardian-mumble",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"set ElemPeer hp 5000\" engine=c: Can't set that!",
+    "log_line": 975
+  },
+  {
+    "scenario": "spec-proc-remorter-success",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 5 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 1006
+  },
+  {
+    "scenario": "spec-proc-elements-load-cylinders",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"get talisman\" engine=c: You don't see a talisman here.",
+    "log_line": 1096
+  },
+  {
+    "scenario": "summon-high-level-victim-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"set Castgod level 40\" engine=c: You can't do that.",
+    "log_line": 1104
+  },
+  {
+    "scenario": "clan-plan-mortal-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"clan enroll Clanmate Wolves\" engine=c: Er, Who ??",
+    "log_line": 1111
+  },
+  {
+    "scenario": "inv-equip",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"remove tunic\" engine=c: You don't seem to be using a tunic.",
+    "log_line": 1412
+  },
+  {
+    "scenario": "equipment-physical-affects",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 1428
+  },
+  {
+    "scenario": "fighter-wimpy-window-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 4 \"set Wimpfightgod wimpy 350\" engine=c: Can't set that!",
+    "log_line": 1500
+  },
+  {
+    "scenario": "ban-depth",
+    "error": "dp-oracle-diff: run Go port warmup: setup-refused: warmup step 1 \"unban whitehouse.gov\" engine=go: That site is not currently banned.",
+    "log_line": 1517
+  },
+  {
+    "scenario": "appraise-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"get helmet\" engine=c: You don't see a helmet here.",
+    "log_line": 1546
+  },
+  {
+    "scenario": "shops-remorter-equipment",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 1565
+  },
+  {
+    "scenario": "spec-proc-eq-thief",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 1571
+  },
+  {
+    "scenario": "clan-plan-overflow",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 1 \"clan create Clangod Wolves\" engine=c: You cannot set an immortal as the leader of a clan.",
+    "log_line": 1591
+  },
+  {
+    "scenario": "spec-proc-remorter-equipment",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"remove all\" engine=c: You're not using anything.",
+    "log_line": 1635
+  },
+  {
+    "scenario": "retaliation-flamestrike-save-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 3 \"skillset Retalgod 'flamestrike' 100\" engine=c: Unrecognized skill.",
+    "log_line": 1661
+  },
+  {
+    "scenario": "idlist-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"set Idlistdepth level 40\" engine=c: You can't do that.",
+    "log_line": 1837
+  },
+  {
+    "scenario": "spell-charm-save-npc-retaliation-depth",
+    "error": "dp-oracle-diff: run C oracle warmup: setup-refused: warmup step 2 \"set Charmgod level 40\" engine=c: You can't do that.",
+    "log_line": 1868
+  },
+  {
+    "scenario": "ban-unban-success-depth",
+    "error": "dp-oracle-diff: run Go port warmup: setup-refused: warmup step 1 \"unban whitehouse.gov\" engine=go: That site is not currently banned.",
+    "log_line": 1879
+  }
+]

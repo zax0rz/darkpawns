@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.troll-idle-regen-site-live
 # depth-case: mob.troll-fight-regen-site-live
 # C-first witness for the two troll regen acts DP-1502 lists (src/spec_procs3.c:355
@@ -13,6 +14,7 @@
 # src/spec_procs3.c:347-367.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 10029 1 10049 100

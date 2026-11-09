@@ -1,0 +1,139 @@
+# DP-1511 diagnostic C witnesses; refusals are intentional probe outputs.
+[fixture]
+empty-players
+quiet-mobs
+force-load 14303
+force-load 1211
+[setup:oracle]
+Gateitems
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gateitems
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Itemhelper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Itemhelper
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+teleport Itemhelper 8162
+set Gateitems str 25
+set Gateitems class warrior
+set Itemhelper level 39
+load obj 8050
+hold scroll
+load obj 14303
+wield axe
+remove scroll
+wield axe
+load obj 8050
+hold scroll
+remove axe
+load obj 19523
+wear helmet
+load obj 8032
+load obj 8050
+put scroll bag
+load obj 8050
+put scroll bag
+load obj 1211
+wield massager
+load obj 1211
+set Gateitems level 1
+remove massager
+drop massager
+give massager Itemhelper
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+send:observer load obj 8050
+send:observer give scroll Gateitems
+remove helmet
+drop scroll
+get all bag
+drop all.scroll
+get all.scroll
+drop all.scroll
+send:observer load obj 8066
+send:observer drop chest
+get chest
+get all bag
