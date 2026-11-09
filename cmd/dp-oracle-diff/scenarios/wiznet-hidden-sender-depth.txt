@@ -1,0 +1,74 @@
+# depth-case: wiznet.hidden-sender-shadow
+# A chosen mortal peer is eligible for the default wiznet level, but an
+# Implementor who sets invisibility to level 34 is not visible to that peer.
+# The peer must receive C's shadow sender line, "Someone: ...".
+# C: src/act.wizard.c:2001-2006,2020-2025.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Wiznetdepth
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Wiznetdepth
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Wiznetpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Wiznetpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+set Wiznetpeer chosen on
+set Wiznetdepth level 34
+
+[probe]
+invis 34
+wiznet hidden-sender-proof
+send:peer look

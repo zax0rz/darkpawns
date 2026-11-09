@@ -8,3 +8,4 @@ do_at	at	at.numeric-target-missing	D1	command	oracle-green	at-depth	act.wizard.c
 do_at	at	at.execute-and-restore	D4	state	oracle-green	at-depth	act.wizard.c:257-265	Nested command runs at the target and the actor returns when still there.
 do_at	at	at.level-gate	D1	command	oracle-green	mortal-batch19	interpreter.c:323; interpreter.c:1407-1456	LVL_GRGOD dispatcher gate hides the command from mortals.
 do_at	at	at.nested-movement-not-restored	D4	state	unit-green	TestCmdAtPreservesNestedMovementLocation	act.wizard.c:260-264	A nested movement command that leaves the target room prevents restoration.
+do_at	at	at.carried-object-unavailable	D1	command	oracle-green	at-carried-object-depth@1	act.wizard.c:184-212	A carried object resolves by name but has NOWHERE as its room, reaching C's unavailable-object refusal (R1/R5e).

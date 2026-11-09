@@ -1,0 +1,138 @@
+# Lifecycle depth: an active Implementor snoops a passive mortal peer until
+# the 31st hourly pulse force-rents and closes that victim. C sends the
+# lost-victim notice to the still-connected snooper before clearing the link.
+# depth-case: idle.snoop-victim-close
+# C: src/comm.c:2103-2105; src/limits.c:438-451.
+
+[fixture]
+empty-players
+quiet-mobs
+compare-close
+set-room-sector 1 0
+
+[setup:oracle]
+Clockdriver
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:port]
+Clockdriver
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+goto 8004
+
+[setup:oracle:victim]
+Idleforcerent
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Idleforcerent
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+teleport Idleforcerent 8004
+set player Idleforcerent level 1
+snoop Idleforcerent
+
+[probe]
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630
+look
+~dpclock pulse 630

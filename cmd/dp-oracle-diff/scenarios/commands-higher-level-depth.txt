@@ -1,0 +1,73 @@
+# depth-case: commands.target-above-level
+# The low-level actor requests the command list of a visible higher-level peer;
+# C refuses before building or paging the target's command table.
+# C: src/act.informative.c:2648-2652.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Cmdhigh
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Cmdhigh
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Cmdpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Cmdpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Cmdpeer 8162
+set player Cmdpeer level 2
+set player Cmdhigh level 1
+
+[probe]
+commands Cmdpeer
