@@ -1,0 +1,134 @@
+# depth-case: objmagic.damage-reagent-messages
+# C path: do_cast -> cast_spell -> call_magic -> mag_damage
+# (spell_parser.c:879-905; magic.c:601-849). A level-31 Mage carries the exact
+# prism, ash, beholder-eye and vampire-dust reagents; each registered cast
+# consumes its reagent and prints C's per-spell component line before damage.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 1236 1 8105 80
+force-load 1236
+spawn-obj 1225 1 8105 80
+force-load 1225
+spawn-obj 1227 1 8105 80
+force-load 1227
+spawn-obj 1230 1 8105 80
+force-load 1230
+
+[setup:oracle]
+DamageGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+DamageGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:DamageMage]
+DamageMage
+Y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:DamageMage]
+DamageMage
+y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:DamageVictim]
+DamageVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:DamageVictim]
+DamageVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport DamageMage 8105
+teleport DamageVictim 8105
+get prism
+get ash
+get eye
+get dust
+give prism DamageMage
+give ash DamageMage
+give eye DamageMage
+give dust DamageMage
+set DamageMage class mage
+set DamageMage maxmana 5000
+set DamageMage mana 5000
+set DamageMage level 31
+set DamageVictim maxhit 99999
+set DamageVictim hit 99999
+skillset DamageMage 'color spray' 100
+skillset DamageMage 'fireball' 100
+skillset DamageMage 'disintegration' 100
+skillset DamageMage 'energy drain' 100
+
+[probe:DamageMage]
+cast 'color spray' DamageVictim
+~dpclock pulse 20
+cast 'fireball' DamageVictim
+~dpclock pulse 20
+cast 'disintegration' DamageVictim
+~dpclock pulse 20
+cast 'energy drain' DamageVictim

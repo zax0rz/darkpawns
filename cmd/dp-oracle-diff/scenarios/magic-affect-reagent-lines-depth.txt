@@ -1,0 +1,120 @@
+# depth-case: objmagic.blindness.mage-reagent
+# depth-case: objmagic.curse.mage-reagent
+# C path: do_cast -> cast_spell -> call_magic -> mag_affects
+# (spell_parser.c:879-905; magic.c:862-...). A level-31 Mage carries the exact
+# lens and raven-feather reagents. Blindness is cast on the mage (its component
+# line prints before the save); curse is cast on a peer and its component line
+# prints once the victim fails the save.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 1234 1 8105 80
+force-load 1234
+spawn-obj 1233 1 8105 80
+force-load 1233
+
+[setup:oracle]
+AffectGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+AffectGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:AffectMage]
+AffectMage
+Y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:AffectMage]
+AffectMage
+y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:AffectVictim]
+AffectVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:AffectVictim]
+AffectVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport AffectMage 8105
+teleport AffectVictim 8105
+get lens
+get feather
+give lens AffectMage
+give feather AffectMage
+set AffectMage class mage
+set AffectMage maxmana 5000
+set AffectMage mana 5000
+set AffectMage level 31
+skillset AffectMage 'blindness' 100
+skillset AffectMage 'curse' 100
+
+[probe:AffectMage]
+cast 'blindness' AffectVictim
+~dpclock pulse 20
+cast 'curse' AffectVictim
