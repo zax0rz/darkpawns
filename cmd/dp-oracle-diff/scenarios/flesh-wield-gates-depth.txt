@@ -1,0 +1,84 @@
+# depth-case: wield.flesh-alter
+# depth-case: wear.flesh-alter-wield-refusal
+# C-first vehicle for the flesh-altered wield refusals. do_wield refuses with
+# "Your flesh is altered, you can't wield anything!" (src/act.item.c:1673-1677)
+# and perform_wear's WEAR_WIELD branch refuses the same wording (:1484-1489).
+# do_flesh_alter's command-table gate is POS_FIGHTING (src/interpreter.c:329),
+# which a POS_STANDING peer already satisfies, so the peer does not need to be
+# in combat and no combat WAIT_STATE can strand a probe step: it wields a
+# dagger, turns its flesh (success unequips the dagger), then wields and wears
+# the de-equipped dagger.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Fleshgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fleshgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fleshpeer]
+Fleshpeer
+Y
+fleshpass
+fleshpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[setup:port:fleshpeer]
+Fleshpeer
+y
+fleshpass
+fleshpass
+N
+M
+H
+T
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Fleshpeer 8105
+skillset Fleshpeer 'flesh alter' 100
+load obj 8020
+give dagger Fleshpeer
+wield dagger
+
+[probe:fleshpeer]
+alter
+wield dagger
+wear dagger
