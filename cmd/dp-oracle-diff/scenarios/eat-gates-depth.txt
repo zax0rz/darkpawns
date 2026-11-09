@@ -1,0 +1,84 @@
+# depth-case: eat.full-gate
+# depth-case: eat.poison
+# C-first vehicle for do_eat's full-gate and poisoned-food branches
+# (src/act.item.c:1104-1134). A mortal peer holds a poisoned green mushroom
+# (vnum 16007, ITEM_FOOD, value[3]=4); the primary God sets its FULL condition
+# before each eat. The full gate returns before the food is consumed, so the
+# second eat reaches the poison. Directed send:<peer> steps keep each set and
+# its eat adjacent.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+add-obj-index 160.obj
+spawn-obj 16007 1 8105 80
+force-load 16007
+
+[setup:oracle]
+Eatgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Eatgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:eater]
+Eater
+Y
+eatpass
+eatpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:eater]
+Eater
+y
+eatpass
+eatpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Eater 8105
+get mushroom
+give mushroom Eater
+
+[probe]
+set player Eater hunger 45
+send:eater eat mushroom
+set player Eater hunger 0
+send:eater eat mushroom

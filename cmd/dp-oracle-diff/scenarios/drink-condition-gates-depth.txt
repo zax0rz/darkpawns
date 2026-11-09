@@ -1,0 +1,89 @@
+# depth-case: drink.holding-gate
+# depth-case: drink.drunk-gate
+# depth-case: drink.explode
+# C-first vehicle for do_drink's condition gates (src/act.item.c:904-948). A
+# mortal peer holds a water skin (vnum 8063, DRINKCON, water); the primary God
+# sets its drunk/thirst conditions before each drink step. Every gate here
+# returns before the liquid is consumed.
+# Directed send:<peer> steps keep each condition set and its drink adjacent.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8063 1 8105 80
+force-load 8063
+
+[setup:oracle]
+Drinkgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Drinkgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:drinker]
+Drinker
+Y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:drinker]
+Drinker
+y
+drinkpass
+drinkpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Drinker 8105
+get skin
+give skin Drinker
+
+[probe]
+send:drinker drop skin
+send:drinker drink skin
+send:drinker get skin
+set player Drinker hunger 0
+set player Drinker drunk 15
+set player Drinker thirst 5
+send:drinker drink skin
+set player Drinker drunk 0
+set player Drinker thirst 45
+send:drinker drink skin
