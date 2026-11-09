@@ -1,0 +1,51 @@
+# depth-case: spell.word-recall-bfr-gate
+# C-first witness for spell_recall's ROOM_BFR gate, "Your magic ebbs and
+# dissolves as you lose your concentration." (DP-1502 list at src/spells.c:138).
+# Room 8105 is flagged ROOM_BFR (bit 17) in both disposable worlds, so a spoken
+# word-of-recall cast on the caster is refused before any relocation.
+# C path: do_cast -> cast_spell -> call_magic -> MANUAL spell_recall
+# (src/spell_parser.c:514,879-925,1038-1110; src/spells.c:124-146).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 17 on
+
+[setup:oracle]
+Recallbfr
+Y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Recallbfr
+y
+pass123
+pass123
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+set player Recallbfr class mage
+set player Recallbfr maxmana 5000
+set player Recallbfr mana 5000
+skillset Recallbfr 'word of recall' 100
+set player Recallbfr level 34
+
+[probe]
+cast 'word of recall' Recallbfr

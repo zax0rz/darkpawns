@@ -1,0 +1,80 @@
+# depth-case: spell.charm-follow-circle-output
+# C-first witness for spell_charm's circle_follow gate, "Sorry, following in
+# circles can not be allowed." (DP-1502 list at src/spells.c:427). The caster
+# follows the target first, so charming it would create a follow loop and C
+# refuses at src/spells.c:426-427 before the saving throw.
+# C path: do_cast -> cast_spell -> call_magic -> MANUAL spell_charm
+# (src/spell_parser.c:507,879-925,1038-1110; src/spells.c:407-471; src/utils.c:365-375).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Charmcircle
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Charmcircle
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Charmtarget]
+Charmtarget
+Y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Charmtarget]
+Charmtarget
+y
+targetpass
+targetpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Charmtarget 8105
+set player Charmcircle class mage
+set player Charmcircle maxmana 5000
+set player Charmcircle mana 5000
+skillset Charmcircle 'charm person' 100
+set player Charmcircle level 34
+
+[probe]
+follow Charmtarget
+cast 'charm person' Charmtarget
