@@ -1,0 +1,19 @@
+scenario	verdict	original_seeds	C_witness	dump	dump_line
+appraise-depth	Repaired	1,2,3,5,8	You estimate it's worth 8 gold coins.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/appraise-depth.txt	7
+color-spray-skill-message-miss-depth	Repaired	1,2,3,5,8	Your spray of color misses ColorMissVictim -- what a dull world...	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt	134
+dispel-evil-skill-message-miss-depth	Repaired	1,2,3,5,8	DispelMissVictim is unaffected by your goodness!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt	20
+dispel-good-skill-message-miss-depth	Repaired	1,2,3,5,8	GoodVictim is unaffected by your evil!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt	20
+energy-drain-skill-message-miss-depth	Repaired	1,2,3,5,8	You need more draining lessons...	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt	134
+item-sleep-outlaw-bare	Repaired	1,2,3,5,8	You quaff some northern devil ginseng powder.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-bare.txt	18
+item-sleep-outlaw-sand	Repaired	1,2,3,5,8	You quaff some northern devil ginseng powder.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-sand.txt	19
+item-sleep-refusal-bare	Repaired	1,2,3,5,8	You quaff some northern devil ginseng powder.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-bare.txt	18
+item-sleep-refusal-sand	Repaired	1,2,3,5,8	You quaff some northern devil ginseng powder.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-sand.txt	19
+vampire-consume-dark	Repaired	1,2,3,5,8	Lothar the Vampire Lord sinks his fangs into your neck!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt	16
+vampire-consume-day	Repaired	1,2,3,5,8	Lothar the Vampire Lord sinks his fangs into your neck!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-day.txt	16
+vampire-consume-sunset	Repaired	1,2,3,5,8	Lothar the Vampire Lord sinks his fangs into your neck!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt	16
+spec-proc-elements-load-cylinders	Repaired	1,2,3,5,8	A green cylinder of light extends upwards from the pillar.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/spec-proc-elements-load-cylinders.txt	4
+object-door-messages	Go disagrees with C (destination bytes blocked)	1	Dooractor opens the door.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/object-door-messages.txt	5
+ban-depth	Refusal intended	1,2,3,5,8	No sites are banned.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-depth.txt	3
+ban-unban-success-depth	Refusal intended	1	Site banned.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-unban-success-depth.txt	3
+act-messages	Repaired	1	You whisper to Actvictim, 'quiet words'	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/act-messages.txt	3
+afk-depth	Repaired	1	Afkdepth goes AFK...	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/afk-depth.txt	7

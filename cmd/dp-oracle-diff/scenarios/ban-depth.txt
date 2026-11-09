@@ -1,4 +1,4 @@
-# setup-refusal-reason: pending DP-1511 triage
+# setup-refusal-reason: C historical whitehouse.gov ban is cleared; Go starts empty and its unban-not-found refusal is intentional.
 # depth-case: ban.no-bans
 # depth-case: ban.add
 # depth-case: ban.list-format

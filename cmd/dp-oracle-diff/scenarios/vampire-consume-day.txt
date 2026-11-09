@@ -1,11 +1,9 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: drink.vampire-day
 # depth-case: eat.vampire-day
 # Real Dracula look/bite sets PLR_VAMPIRE; no AFF_VAMPIRE transform is required.
 # Shipped beer glass 4104 has one serving; alcoholic amount is arithmetic, not RNG.
 # Clock starts at 14h, 630 pulses/hour. Setup pulses are discarded.
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14110 1 8105 80
@@ -76,13 +74,13 @@ east
 south
 east
 
+# DP-1511: load obj already puts the item in inventory
+# (src/act.wizard.c:1368); the following room get was refused.
 [warmup]
 goto 8105
 teleport Bloodpeer 8105
 load obj 8010
-get bread
 load obj 4104
-get glass
 set Bloodactor hunger 10
 set Bloodactor thirst 10
 set Bloodactor level 1

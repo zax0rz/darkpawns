@@ -1,10 +1,8 @@
-# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for SPECIAL(elements_load_cylinders), registered on rooms
 # 1360/1364/1380/1384 in src/spec_assign.c:627-630. The earth branch drops
 # its matching talisman while a passive peer observes the room-wide output.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -64,10 +62,11 @@ Y
 <ENTER>
 1
 
+# DP-1511: load obj already puts the item in inventory
+# (src/act.wizard.c:1368); the following room get was refused.
 [warmup]
 goto 8105
 load obj 1300
-get talisman
 teleport CylinderPeer 1360
 goto 1360
 

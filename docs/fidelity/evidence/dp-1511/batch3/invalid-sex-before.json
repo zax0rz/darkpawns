@@ -1,0 +1,37 @@
+[
+  {
+    "scenario": "act-messages",
+    "section": "[setup:oracle:observer]",
+    "name": "Actobserver",
+    "sex_token": "N",
+    "later_accepted_sex_input": null
+  },
+  {
+    "scenario": "act-messages",
+    "section": "[setup:port:observer]",
+    "name": "Actobserver",
+    "sex_token": "N",
+    "later_accepted_sex_input": null
+  },
+  {
+    "scenario": "afk-depth",
+    "section": "[setup:oracle:peer]",
+    "name": "Afkpeer",
+    "sex_token": "N",
+    "later_accepted_sex_input": "M"
+  },
+  {
+    "scenario": "object-door-messages",
+    "section": "[setup:oracle:other]",
+    "name": "Doorother",
+    "sex_token": "N",
+    "later_accepted_sex_input": null
+  },
+  {
+    "scenario": "object-door-messages",
+    "section": "[setup:port:other]",
+    "name": "Doorother",
+    "sex_token": "N",
+    "later_accepted_sex_input": null
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "artifact": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-witness-repair-seed1/initial-logs/attempt.G0MPCp/object-door-messages.capture1/blocks.json",
+  "blocks": [
+    {
+      "Command": "open door south [other]",
+      "Oracle": "The doors are opened from the other side.\n\n\n<PROMPT>\n",
+      "Go": "The doors are opened from the other side.\n\n<PROMPT>\n",
+      "Diff": "--- c-oracle\n+++ go-port\n@@ -1,4 +1,3 @@\n The doors are opened from the other side.\n \n-\n <PROMPT>\n"
+    },
+    {
+      "Command": "close door south [other]",
+      "Oracle": "The doors are closed from the other side.\n\n\n<PROMPT>\n",
+      "Go": "The doors are closed from the other side.\n\n<PROMPT>\n",
+      "Diff": "--- c-oracle\n+++ go-port\n@@ -1,4 +1,3 @@\n The doors are closed from the other side.\n \n-\n <PROMPT>\n"
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+# Real reciprocal door at room 16300 south -> 16301 (zone reset state 1).
+# An observer remains with the actor while a second peer crosses the temporarily
+# opened door, proving both $n room acts and "from the other side" messages.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dooractor
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port]
+Dooractor
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:observer]
+Doorobserver
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:observer]
+Doorobserver
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:oracle:other]
+Doorother
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+[setup:port:other]
+Doorother
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+# DP-1511: C accepts only M/F at CON_QSEX (src/interpreter.c:2012-2026).
+# The former neutral-sex peer never entered; place each audience explicitly.
+[warmup]
+goto 16300
+teleport Doorobserver 16300
+teleport Doorother 16301
+# C zone reset already closes this door; former close was refused.
+
+[probe]
+open door south
+close door south

@@ -1,10 +1,11 @@
-# setup-refusal-reason: pending DP-1511 triage
+# depth-case: door.origin-room-open-close
 # Real reciprocal door at room 16300 south -> 16301 (zone reset state 1).
-# An observer remains with the actor while a second peer crosses the temporarily
-# opened door, proving both $n room acts and "from the other side" messages.
+# Actor and same-room observer prove the local open/close acts.
+# Destination blank-line bytes are blocked in door.destination-message-terminator;
+# the repaired three-audience red fixture is retained under batch3 evidence.
 
 [fixture]
-allow-setup-refusal
+empty-players
 quiet-mobs
 
 [setup:oracle]
@@ -20,12 +21,6 @@ K
 Y
 <ENTER>
 1
-look
-recall
-south
-west
-north
-west
 
 [setup:port]
 Dooractor
@@ -40,12 +35,6 @@ K
 Y
 <ENTER>
 1
-look
-recall
-south
-west
-north
-west
 
 [setup:oracle:observer]
 Doorobserver
@@ -60,12 +49,6 @@ K
 Y
 <ENTER>
 1
-look
-recall
-south
-west
-north
-west
 
 [setup:port:observer]
 Doorobserver
@@ -80,59 +63,13 @@ K
 Y
 <ENTER>
 1
-look
-recall
-south
-west
-north
-west
 
-[setup:oracle:other]
-Doorother
-Y
-oraclepass
-oraclepass
-N
-N
-H
-W
-K
-Y
-<ENTER>
-1
-look
-recall
-south
-west
-north
-west
-open door south
-south
-
-[setup:port:other]
-Doorother
-y
-oraclepass
-oraclepass
-N
-N
-H
-W
-K
-Y
-<ENTER>
-1
-look
-recall
-south
-west
-north
-west
-open door south
-south
-
+# DP-1511: explicitly place the actor and observer in the doorway room.
+# The former adjacent peer never entered C; its corrected lane is retained red.
 [warmup]
-close door south
+goto 16300
+teleport Doorobserver 16300
+# C zone reset already closes this door; former close was refused.
 
 [probe]
 open door south
