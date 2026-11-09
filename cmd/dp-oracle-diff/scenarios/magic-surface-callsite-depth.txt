@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: magic.dispel-protected-target-name
 # depth-case: magic.create-food-message-pair
 # depth-case: spell-route.spoken-dispatch
@@ -10,12 +9,12 @@
 # target drives SPELL_DISPEL_EVIL's protected-target act; the sleeping observer
 # proves say_spell and Create Food room acts are suppressed while the awake
 # target receives them. Smokescreen exercises MAG_MASSES' caster/room pair;
-# cure light exercises MAG_POINTS' victim and TO_NOTVICT room output. C paths:
+# cure light wakes the observer temporarily to expose MAG_POINTS' victim
+# and TO_NOTVICT room output before smokescreen blinds bystanders. C paths:
 # spell_parser.c:325-343,1040-1110; magic.c:735,
 # 752, 1527-1529, 1729-1736, 1767-1769, 1997-1998.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-obj 8010 1 8105 80
@@ -107,11 +106,12 @@ Y
 1
 sleep
 
+# DP-1511: C set uses align, not alignment (src/act.wizard.c:2553).
 [warmup]
 goto 8105
 teleport Casttarget 8105
 teleport Castobserve 8105
-set Casttarget alignment 1000
+set Casttarget align 1000
 nohassle
 kill trainee
 
@@ -120,9 +120,12 @@ cast 'dispel evil' Casttarget
 ~dpclock pulse 20
 cast 'create food'
 ~dpclock pulse 20
-cast 'smokescreen'
-~dpclock pulse 20
+# Wake the observer for the healing room act before smokescreen blinds it.
+send:castobserve wake
 cast 'cure light' Casttarget
+~dpclock pulse 20
+send:castobserve sleep
+cast 'smokescreen'
 ~dpclock pulse 20
 cast 'animate dead' bread
 ~dpclock pulse 20

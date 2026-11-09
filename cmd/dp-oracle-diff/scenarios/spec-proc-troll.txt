@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for SPECIAL(troll), defined at src/spec_procs3.c:347-370
 # and registered for mob vnums 10029, 14100, 14311, 14312, 19900, and 19901.
 # Targ (10029) is the first active registration in assignment-table order.
@@ -15,7 +14,6 @@
 # 12000 pulses, ~300 calls, so the glow bytes are present on every seed.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 10029 1 10049 100
@@ -79,9 +77,11 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
-set TrollActor alignment -1000
-set TrollPeer alignment -1000
+set TrollActor align -1000
+set TrollPeer align -1000
 teleport TrollPeer 10049
 goto 10049
 

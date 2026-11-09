@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.breed-killer-growl-site-live
 # C-first witness for the growl pair DP-1502 lists (src/spec_procs2.c:1702
 # "You hear a low growl in the back of $n's throat." — segments "You hear a low
@@ -12,7 +11,6 @@
 # C path: src/mobact.c:68-93 -> src/spec_procs2.c:1685-1715.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 fixed-time 650812932
@@ -79,15 +77,16 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
 goto 8105
 # zone79 randload scatters 7900-7998 mobs at reset (src/db.c:2126-2138),
 # so the hunter must be gathered into the witness room explicitly.
 teleport killer 8105
 teleport BreedPeer 8105
-set BreedPeer maxhit 50000
-set BreedPeer hp 50000
-set BreedPeer hit 50000
+set BreedPeer maxhit 5000
+set BreedPeer hit 5000
 
 [probe]
 send:peer look lothar

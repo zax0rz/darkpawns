@@ -1,0 +1,128 @@
+[
+  {
+    "scenario": "fighter-wimpy-window-depth",
+    "line": 48,
+    "field": "wimpy",
+    "input": "set Wimpfightgod wimpy 350"
+  },
+  {
+    "scenario": "magic-surface-callsite-depth",
+    "line": 114,
+    "field": "alignment",
+    "input": "set Casttarget alignment 1000"
+  },
+  {
+    "scenario": "spec-proc-breed-killer-growl",
+    "line": 89,
+    "field": "hp",
+    "input": "set BreedPeer hp 50000"
+  },
+  {
+    "scenario": "spec-proc-cityguard-pissed",
+    "line": 87,
+    "field": "hp",
+    "input": "set GuardPeer hp 500000"
+  },
+  {
+    "scenario": "spec-proc-elements-guardian-mumble",
+    "line": 82,
+    "field": "hp",
+    "input": "set ElemPeer hp 5000"
+  },
+  {
+    "scenario": "spec-proc-mindflayer-soul-leech",
+    "line": 83,
+    "field": "hp",
+    "input": "set Mindactor hp 100000"
+  },
+  {
+    "scenario": "spec-proc-mindflayer-soul-leech",
+    "line": 86,
+    "field": "hp",
+    "input": "set Alhazred hp 100000"
+  },
+  {
+    "scenario": "spec-proc-mindflayer",
+    "line": 96,
+    "field": "hp",
+    "input": "set Mindactor hp 5000"
+  },
+  {
+    "scenario": "spec-proc-mindflayer",
+    "line": 99,
+    "field": "hp",
+    "input": "set Mindactor hp 5000"
+  },
+  {
+    "scenario": "spec-proc-snake-bite",
+    "line": 79,
+    "field": "hp",
+    "input": "set SnakeGod hp 50000"
+  },
+  {
+    "scenario": "spec-proc-take-to-jail-pissed",
+    "line": 87,
+    "field": "hp",
+    "input": "set GuardAlly hp 500000"
+  },
+  {
+    "scenario": "spec-proc-troll-combat",
+    "line": 75,
+    "field": "alignment",
+    "input": "set TrollCombatActor alignment -1000"
+  },
+  {
+    "scenario": "spec-proc-troll-combat",
+    "line": 76,
+    "field": "alignment",
+    "input": "set TrollCombatPeer alignment -1000"
+  },
+  {
+    "scenario": "spec-proc-troll-combat",
+    "line": 80,
+    "field": "hp",
+    "input": "set targ hp 5000"
+  },
+  {
+    "scenario": "spec-proc-troll-regen",
+    "line": 85,
+    "field": "hp",
+    "input": "set TrollActor hp 100000"
+  },
+  {
+    "scenario": "spec-proc-troll",
+    "line": 83,
+    "field": "alignment",
+    "input": "set TrollActor alignment -1000"
+  },
+  {
+    "scenario": "spec-proc-troll",
+    "line": 84,
+    "field": "alignment",
+    "input": "set TrollPeer alignment -1000"
+  },
+  {
+    "scenario": "spec-proc-werewolf-acts",
+    "line": 116,
+    "field": "hp",
+    "input": "set WolfVictim hp 50000"
+  },
+  {
+    "scenario": "spec-proc-werewolf-acts",
+    "line": 119,
+    "field": "hp",
+    "input": "set werewolf hp 50000"
+  },
+  {
+    "scenario": "spec-proc-werewolf",
+    "line": 107,
+    "field": "hp",
+    "input": "set WolfVictim hp 5000"
+  },
+  {
+    "scenario": "spell-points-spoken-depth",
+    "line": 116,
+    "field": "alignment",
+    "input": "set PointsTarget alignment 1000"
+  }
+]

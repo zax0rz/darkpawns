@@ -1,5 +1,9 @@
 # DP-1511 refusal gate — first review batch
 
+Historical batch-1 report (merged PR #2421). [Batch 2](batch2/README.md) clears
+17 more scenarios; the current `pending-triage.json` contains 35. The original
+52-name handoff list is retained in `batch1-pending-triage.json`.
+
 This batch implements the parameterized gate and repairs 13 of the original 65 scenarios
 newly rejected by the first full census. The other 52 carry the explicitly
 approved temporary reason `pending DP-1511 triage`; they remain work to do after
@@ -111,7 +115,7 @@ robe bit cycle; real vampire transformation coverage remains in its existing
 separate vehicle. The thief claim has real loaded bread and seed-2 C inventory
 `Nothing.` after the theft; seed 1 correctly need not steal.
 
-The **52 names in `pending-triage.json`** are the complete temporary allowance
+The **52 names in `batch1-pending-triage.json`** are the complete temporary allowance
 list. No previous opt-out was widened. They must each receive a real intended,
 repaired, demoted, or divergent verdict in later batches, and the final batch
 must leave zero pending reasons.

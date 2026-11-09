@@ -1,13 +1,14 @@
-# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for SPECIAL(werewolf), defined at src/spec_procs3.c:427-448
 # and registered as mob vnum 5510 at src/spec_assign.c:251. C attaches no
 # script to it (DP-1333); the vehicle uses a same-room victim,
 # same-room observer, and remote same-zone observer to expose the C act(),
 # TO_VICT/TO_NOTVICT, and send_to_zone audiences.
 # C path: src/fight.c:1898-2032 -> src/spec_procs3.c:427-448.
+# DP-1511: the former one-round probe emitted no howl at seed 1. Both
+# combatants now have 5000 HP at level 1; forty rounds reach the native acts
+# before either can die. The real C howl is required for its audience claim.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 5510 999 5510 55
@@ -100,16 +101,22 @@ Y
 <ENTER>
 1
 
+# DP-1511: use C set fields hit/align; maxhit and hit clamp to 5000
+# (src/act.wizard.c:2547-2553,2736-2748). No hp/alignment alias exists.
 [warmup]
 goto 5510
 teleport WolfWitness 5510
 teleport WolfDistant 5500
-set WolfVictim hp 5000
+set WolfVictim maxhit 5000
+set WolfVictim hit 5000
+set werewolf maxhit 5000
 set werewolf hit 5000
+set werewolf level 1
+set WolfVictim level 1
 
 [probe]
 hit werewolf
-~dpclock pulse 20
+~dpclock pulse 800
 
 # depth-case: mob.werewolf-entry-gates
 # depth-case: mob.werewolf-howling-zone-audience
