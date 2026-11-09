@@ -37,7 +37,7 @@ func newDecayTestWorld(t *testing.T, numMobs int) *World {
 		t.Fatalf("NewWorld failed: %v", err)
 	}
 	t.Cleanup(func() { w.StopAITicker() })
-	for i := 0; i < numMobs; i++ {
+	for i := range numMobs {
 		if _, err := w.SpawnMob(2100, 2001); err != nil {
 			t.Fatalf("SpawnMob %d failed: %v", i, err)
 		}
@@ -159,7 +159,7 @@ func TestScavengerSkipsNonTakeable(t *testing.T) {
 	// Force the scavenger roll to fire (rand.IntN(11) == 0). We call the
 	// internal per-mob dispatch directly, but the 1-in-11 gate is random.
 	// Loop a bounded number of times so the scavenger block eventually fires.
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		w.mobileActivityForMob(mob)
 		// Stop once the takeable weapon is picked up.
 		if len(mob.Inventory) > 0 {
@@ -209,7 +209,7 @@ func TestScavengerRespectsCostFloor(t *testing.T) {
 	w.AddItemToRoom(junk, 2001)
 
 	// Run many ticks to give the 1-in-11 scavenger gate ample chances to fire.
-	for i := 0; i < 500; i++ {
+	for range 500 {
 		w.mobileActivityForMob(mob)
 	}
 

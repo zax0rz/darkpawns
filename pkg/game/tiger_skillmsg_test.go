@@ -51,7 +51,7 @@ func TestDoTigerPunch_HitContract(t *testing.T) {
 
 	var result SkillResult
 	hit := false
-	for i := 0; i < 40; i++ {
+	for range 40 {
 		result = DoTigerPunch(ch, mob)
 		if result.Success {
 			hit = true

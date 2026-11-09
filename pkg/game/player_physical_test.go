@@ -42,7 +42,7 @@ func TestPhysicalAffectsEquipRemoveAllLocations(t *testing.T) {
 	}
 
 	// Repeated rebuilds between reads must not drift the folded values.
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		p.AffectTotal()
 		if got, want := p.GetWeight(), baseWeight-10; got != want {
 			t.Fatalf("weight pass %d = %d, want %d", i, got, want)

@@ -8,7 +8,7 @@ func TestCombatBodyOrdinalSelection(t *testing.T) {
 	if err := w.AddPlayer(viewer); err != nil {
 		t.Fatal(err)
 	}
-	check := func(name string, want interface{}) {
+	check := func(name string, want any) {
 		t.Helper()
 		got, ok := w.ResolveCharInRoom(viewer, name)
 		if !ok || got.Combatant != want {

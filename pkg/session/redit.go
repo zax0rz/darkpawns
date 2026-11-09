@@ -297,7 +297,7 @@ func (s *Session) finishReditLocked(save bool) {
 				committed, diagnostics := s.manager.world.CommitEditedRoomWithResetDiagnostics(room)
 				// World lock is released; textEditMu and this zone's save lock
 				// remain held. MudLog delivery never acquires either save lock.
-				for i := 0; i < diagnostics; i++ {
+				for range diagnostics {
 					game.MudLog("SYSERR: OLC: redit_save_internally: Unknown comand", game.MudlogBrief, LVL_IMMORT, true)
 				}
 				return committed

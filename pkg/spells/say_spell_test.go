@@ -7,17 +7,17 @@ import (
 
 // mockSayWorld implements the roomIterable interface used by sendToRoom.
 type mockSayWorld struct {
-	players []interface{}
-	mobs    []interface{}
+	players []any
+	mobs    []any
 }
 
-func (w *mockSayWorld) ForEachPlayerInRoomInterface(roomVNum int, fn func(interface{})) {
+func (w *mockSayWorld) ForEachPlayerInRoomInterface(roomVNum int, fn func(any)) {
 	for _, p := range w.players {
 		fn(p)
 	}
 }
 
-func (w *mockSayWorld) ForEachMobInRoomInterface(roomVNum int, fn func(interface{})) {
+func (w *mockSayWorld) ForEachMobInRoomInterface(roomVNum int, fn func(any)) {
 	for _, m := range w.mobs {
 		fn(m)
 	}
@@ -39,7 +39,7 @@ func TestSaySpell_FallbackUsesActRecipientGate(t *testing.T) {
 	writer := newSayChar("Writer", 0, 100)
 	writer.flags = 1 << 4 // PLR_WRITING (src/structs.h:225).
 	awake := newSayChar("Awake", 0, 100)
-	world := &mockSayWorld{players: []interface{}{caster, sleeping, writer, awake}}
+	world := &mockSayWorld{players: []any{caster, sleeping, writer, awake}}
 
 	SaySpell(caster, 1, nil, nil, world)
 
@@ -57,7 +57,7 @@ func TestSaySpell_FallbackUsesActRecipientGate(t *testing.T) {
 func TestSaySpell_RoomMessageNamesCaster(t *testing.T) {
 	caster := newSayChar("Alice", 0, 100)
 	observer := newSayChar("Bob", 0, 100)
-	world := &mockSayWorld{players: []interface{}{caster, observer}}
+	world := &mockSayWorld{players: []any{caster, observer}}
 
 	SaySpell(caster, 1, nil, nil, world)
 
@@ -76,7 +76,7 @@ func TestSaySpell_RoomMessageNamesCaster(t *testing.T) {
 func TestSaySpell_RoomMessageObfuscatesForDifferentClass(t *testing.T) {
 	caster := newSayChar("Alice", 0, 100)
 	observer := newSayChar("Bob", 9, 100)
-	world := &mockSayWorld{players: []interface{}{caster, observer}}
+	world := &mockSayWorld{players: []any{caster, observer}}
 
 	SaySpell(caster, 1, nil, nil, world)
 
@@ -165,7 +165,7 @@ func TestObfuscateSpellNameMatchesCCompoundAndCharacterPass(t *testing.T) {
 func TestSaySpell_TargetMessageDeliveredToTarget(t *testing.T) {
 	caster := newSayChar("Alice", 0, 100)
 	target := newSayChar("Bob", 0, 100)
-	world := &mockSayWorld{players: []interface{}{caster, target}}
+	world := &mockSayWorld{players: []any{caster, target}}
 
 	SaySpell(caster, 1, target, nil, world)
 
@@ -190,7 +190,7 @@ func TestSaySpell_TargetMessageDeliveredToTarget(t *testing.T) {
 func TestSaySpell_TargetMessageNotDeliveredToCaster(t *testing.T) {
 	caster := newSayChar("Alice", 0, 100)
 	target := newSayChar("Bob", 0, 100)
-	world := &mockSayWorld{players: []interface{}{caster, target}}
+	world := &mockSayWorld{players: []any{caster, target}}
 
 	SaySpell(caster, 1, target, nil, world)
 

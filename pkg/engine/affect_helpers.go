@@ -68,12 +68,12 @@ type EquipAffectProvider interface {
 }
 
 // ApplyFunction is the signature for aff_apply_modify style callbacks.
-type ApplyFunction func(ch interface{}, loc int, mod int, msg string)
+type ApplyFunction func(ch any, loc int, mod int, msg string)
 
 // DefaultApplyModify implements aff_apply_modify from handler.c (lines 136-276).
 //
 // Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func DefaultApplyModify(ch interface{}, loc int, mod int, msg string) {
+func DefaultApplyModify(ch any, loc int, mod int, msg string) {
 	if sm, ok := ch.(StatModifiable); ok {
 		switch loc {
 		case ApplyNone:
@@ -119,7 +119,7 @@ func DefaultApplyModify(ch interface{}, loc int, mod int, msg string) {
 // AffModify implements affect_modify from handler.c line 280.
 //
 // Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func AffModify(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
+func AffModify(ch any, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
 	}
@@ -139,7 +139,7 @@ func AffModify(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn 
 // AffectModifyAR implements affect_modify_ar from handler.c line 294.
 //
 // Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func AffectModifyAR(ch interface{}, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
+func AffectModifyAR(ch any, loc int, mod int, bitv uint64, add bool, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
 	}
@@ -159,7 +159,7 @@ func AffectModifyAR(ch interface{}, loc int, mod int, bitv uint64, add bool, app
 // AffectTotal implements affect_total from handler.c lines 314-373.
 //
 // Deprecated: superseded by the live path — engine.NewAffect + Player.AddAffect.
-func AffectTotal(ch interface{}, applyFn ApplyFunction) {
+func AffectTotal(ch any, applyFn ApplyFunction) {
 	if applyFn == nil {
 		applyFn = DefaultApplyModify
 	}
@@ -233,7 +233,7 @@ func AffectTotal(ch interface{}, applyFn ApplyFunction) {
 // AffectRemove implements affect_remove from handler.c lines 428-438.
 //
 // Deprecated: superseded by the live path — Player.RemoveAffectBySpell.
-func AffectRemove(ch interface{}, af *MasterAffect) {
+func AffectRemove(ch any, af *MasterAffect) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
 		return
@@ -246,7 +246,7 @@ func AffectRemove(ch interface{}, af *MasterAffect) {
 // AffectFromChar implements affect_from_char from handler.c lines 443-452.
 //
 // Deprecated: superseded by the live path — Player.RemoveAffectBySpell.
-func AffectFromChar(ch interface{}, spellType int) {
+func AffectFromChar(ch any, spellType int) {
 	sm, ok := ch.(StatModifiable)
 	if !ok {
 		return

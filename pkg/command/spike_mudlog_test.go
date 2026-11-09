@@ -17,7 +17,7 @@ type spikeDiagnosticObserver struct {
 	probe    func()
 }
 
-func (s *spikeDiagnosticObserver) EachSession(fn func(interface{}, func(string))) {
+func (s *spikeDiagnosticObserver) EachSession(fn func(any, func(string))) {
 	fn(s.p, func(msg string) {
 		if s.probe != nil {
 			s.probe()

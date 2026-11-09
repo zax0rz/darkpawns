@@ -71,7 +71,7 @@ func TestRegisteredObjectsHaveUniqueIDs(t *testing.T) {
 	w.mu.RUnlock()
 
 	ids := map[int]bool{}
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		obj := w.NewObjectFromProto(proto, -1)
 		if obj == nil || obj.ID == 0 {
 			t.Fatalf("object %d unregistered", i)

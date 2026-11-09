@@ -30,7 +30,7 @@ func TestGiveGoldConservationUnderConcurrency(t *testing.T) {
 	vict.SetGold(0)
 
 	var wg sync.WaitGroup
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -105,7 +105,7 @@ func TestGetItemsInRoomSnapshotVsWriter(t *testing.T) {
 	// the bare read without picking anything up, so the reader allocates
 	// nothing per iteration.
 	ch := NewPlayer(1, "Taker", 1001)
-	for i := 0; i < 2000; i++ {
+	for range 2000 {
 		w.getFromRoom(ch, "nosuchthing", false)
 		for range w.GetItemsInRoom(1001) {
 		}
@@ -137,7 +137,7 @@ func TestBanManagerConcurrentReadWrite(t *testing.T) {
 	}()
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 500; i++ {
+		for range 500 {
 			_, _ = bm.RemoveBan("evil.example")
 			_ = bm.AddBan("evil.example", BanNew, "test")
 		}
@@ -167,7 +167,7 @@ func TestOnGossipConcurrentClearDuringCall(t *testing.T) {
 			w.SetOnGossip(func(name, msg string) {})
 		}
 	}()
-	for i := 0; i < 2000; i++ {
+	for range 2000 {
 		w.DoChannel(p, "gossip", "hello")
 	}
 	close(stop)

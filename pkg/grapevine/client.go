@@ -265,7 +265,7 @@ func (c *Client) authenticate(clientID, clientSecret string) error {
 	if c.mode == ModeFull {
 		channels = []string{"gossip"}
 	}
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"client_id":     clientID,
 		"client_secret": clientSecret,
 		"supports":      []string{"channels"},
@@ -291,7 +291,7 @@ func (c *Client) authenticate(clientID, clientSecret string) error {
 }
 
 func (c *Client) sendGossip(senderName, message string) {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"channel": "gossip",
 		"name":    senderName,
 		"message": message,
@@ -320,7 +320,7 @@ func (c *Client) sendHeartbeat() {
 	}
 	sort.Strings(names)
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"players": names,
 	}
 	data, err := json.Marshal(payload)

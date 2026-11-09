@@ -63,21 +63,21 @@ func (m *affectMsgChar) GetFlags() uint64 { return m.affectedBits }
 
 // affectMsgWorld is a roomIterable world that captures room-audience sends.
 type affectMsgWorld struct {
-	rooms map[int][]interface{}
+	rooms map[int][]any
 }
 
-func (w *affectMsgWorld) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
+func (w *affectMsgWorld) ForEachPlayerInRoomInterface(room int, fn func(any)) {
 	for _, p := range w.rooms[room] {
 		fn(p)
 	}
 }
 
-func (w *affectMsgWorld) ForEachMobInRoomInterface(room int, fn func(interface{})) {}
+func (w *affectMsgWorld) ForEachMobInRoomInterface(room int, fn func(any)) {}
 
-func (w *affectMsgWorld) GetAllCharsInRoom(room int) []interface{} { return w.rooms[room] }
+func (w *affectMsgWorld) GetAllCharsInRoom(room int) []any { return w.rooms[room] }
 
 func newAffectMsgWorld(chars ...*affectMsgChar) *affectMsgWorld {
-	w := &affectMsgWorld{rooms: map[int][]interface{}{}}
+	w := &affectMsgWorld{rooms: map[int][]any{}}
 	for _, c := range chars {
 		w.rooms[c.room] = append(w.rooms[c.room], c)
 	}
@@ -182,7 +182,7 @@ func TestMagPointsMessages(t *testing.T) {
 
 func TestMagMassesSmokescreenMessages(t *testing.T) {
 	originalSaveRoll := magAffectsSaveRoll
-	magAffectsSaveRoll = func(interface{}, int) bool { return false }
+	magAffectsSaveRoll = func(any, int) bool { return false }
 	t.Cleanup(func() { magAffectsSaveRoll = originalSaveRoll })
 
 	caster := newAffectMale("Castero", 8162)
@@ -558,7 +558,7 @@ func (c *reagentVNumSpellsChar) ConsumeSpellReagentVNum(vnum int) bool {
 
 func TestMagAffectsMageBlindnessAndCurseReagentOutputsMatchC(t *testing.T) {
 	previousSaveRoll := magAffectsSaveRoll
-	magAffectsSaveRoll = func(interface{}, int) bool { return false }
+	magAffectsSaveRoll = func(any, int) bool { return false }
 	defer func() { magAffectsSaveRoll = previousSaveRoll }()
 
 	cases := []struct {

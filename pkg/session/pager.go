@@ -29,7 +29,7 @@ func nextPage(s []byte) int {
 	col, line := 1, 1
 	specCode := false
 
-	for i := 0; i < len(s); i++ {
+	for i := range s {
 		// If we're at the start of the next page, return this index.
 		if line > pageLength {
 			return i

@@ -37,7 +37,7 @@ func TestCreateAndProcess(t *testing.T) {
 	eq.Create(5, 100, 200, 300, 42, "test_trigger", 1, fn)
 
 	// Process 4 pulses — event should not fire yet
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		eq.Process(ctx)
 	}
 	if atomic.LoadInt64(&fired) != 0 {
@@ -67,7 +67,7 @@ func TestCancel(t *testing.T) {
 	eq.Cancel(id)
 
 	// Process past the event time
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		eq.Process(ctx)
 	}
 
@@ -94,7 +94,7 @@ func TestReenqueue(t *testing.T) {
 	eq.Create(1, 100, 0, 0, 0, "reenqueue", 1, fn)
 
 	// Process enough pulses for 3 firings
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		eq.Process(ctx)
 	}
 
@@ -154,7 +154,7 @@ func TestCancelBySource(t *testing.T) {
 	}
 
 	// Process past all event times
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		eq.Process(ctx)
 	}
 
@@ -209,7 +209,7 @@ func TestMultipleEventsSamePulse(t *testing.T) {
 	eq.Create(2, 100, 0, 0, 0, "A", 1, fnA)
 	eq.Create(2, 101, 0, 0, 0, "B", 1, fnB)
 
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		eq.Process(ctx)
 	}
 
@@ -366,11 +366,11 @@ func TestCreateRaceWithBackgroundProcess(t *testing.T) {
 	eq.Start(ctx)
 
 	var wg sync.WaitGroup
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			for j := 0; j < 50; j++ {
+			for range 50 {
 				eq.Create(1, i, 0, 0, 0, "race", 1, fn)
 			}
 		}(i)

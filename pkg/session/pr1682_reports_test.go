@@ -15,7 +15,7 @@ import (
 // prefix and returns it. It fails when the report ends first.
 func readReportLine(t *testing.T, s *Session, prefix string) string {
 	t.Helper()
-	for i := 0; i < 40; i++ {
+	for range 40 {
 		line := readSendText(t, s)
 		if strings.HasPrefix(line, prefix) {
 			return line
@@ -103,7 +103,7 @@ func TestShowStatsCountsVisibleConnectedAndRegistered(t *testing.T) {
 		t.Fatalf("open store: %v", err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if err := store.CreatePlayer(&db.PlayerRecord{
 			Name: fmt.Sprintf("Saved%d", i), Password: "x", Level: 1, RoomVNum: 1001,
 		}); err != nil {

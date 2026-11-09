@@ -192,7 +192,7 @@ func TestMailProductionRecipientSave(t *testing.T) {
 	persistedMailText := assertPersistedMailObject(t, persisted.Inventory, sender.Name, recipient.Name, mailSaveFailureBody)
 	t.Logf("production_recipient_save path=server_shutdown_cleanup succeeded=true inventory_items=1 runtime_nul_count=0 mail_text_bytes=%d", len(persistedMailText))
 
-	summary, err := json.Marshal(map[string]interface{}{
+	summary, err := json.Marshal(map[string]any{
 		"sender":                  sender.Name,
 		"recipient":               recipient.Name,
 		"body":                    mailSaveFailureBody,

@@ -462,8 +462,8 @@ func TestLockupPawnIsCanonical(t *testing.T) {
 		for py := 0; py < img.Bounds().Dy(); py++ {
 			for px := 0; px < int((pad+32)*pic.scale); px++ {
 				covered := 0
-				for sy := 0; sy < 4; sy++ {
-					for sx := 0; sx < 4; sx++ {
+				for sy := range 4 {
+					for sx := range 4 {
 						x := 24 + (float64(px)+(float64(sx)+0.5)/4-originX)/scale
 						y := 8 + (float64(py)+(float64(sy)+0.5)/4-originY)/scale
 						for _, shape := range drawing.shapes {

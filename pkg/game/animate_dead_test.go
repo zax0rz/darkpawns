@@ -53,7 +53,7 @@ func TestCanRaiseUndeadI_FollowerCapBlocked(t *testing.T) {
 	leader := newAnimatePlayer(t, w, "Necro", 10)
 
 	// Add 3 player followers.
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		f := NewPlayer(i+10, "follower-"+string(rune('a'+i)), 1001)
 		if err := w.AddPlayer(f); err != nil {
 			t.Fatalf("AddPlayer failed: %v", err)
@@ -62,7 +62,7 @@ func TestCanRaiseUndeadI_FollowerCapBlocked(t *testing.T) {
 	}
 
 	// Add 2 charmed mob followers (still under cap).
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		m, err := w.SpawnMob(10, 1001)
 		if err != nil {
 			t.Fatalf("SpawnMob failed: %v", err)

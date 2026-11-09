@@ -5,10 +5,10 @@ package common
 // This is the canonical interface satisfied by both game.ShopManager
 // and systems.ShopManager.
 type ShopManager interface {
-	CreateShop(vnum int, name string, roomVNum int) interface{}
-	GetShop(id int) (interface{}, bool)
-	GetShopByNPC(vnum int) (interface{}, bool)
-	GetShopsInRoom(roomVNum int) []interface{}
+	CreateShop(vnum int, name string, roomVNum int) any
+	GetShop(id int) (any, bool)
+	GetShopByNPC(vnum int) (any, bool)
+	GetShopsInRoom(roomVNum int) []any
 }
 
 // ObjectInstance defines the interface for object instances.
@@ -30,7 +30,7 @@ type ObjectInstance interface {
 
 // Session defines the interface for game sessions.
 type Session interface {
-	GetPlayer() interface{}
+	GetPlayer() any
 	SendText(string)
 	IsAuthenticated() bool
 	GetPlayerName() string

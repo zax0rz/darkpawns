@@ -60,14 +60,14 @@ func TestAuditNeverRecordsRejectedNameInput(t *testing.T) {
 
 	// rate_limit_exceeded: drain that IP's token bucket first.
 	s2 := newSession("10.9.9.2:1000")
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		_ = m.loginLimiter.GetLimiter("10.9.9.2").Allow()
 	}
 	_, _ = callHandleLogin(s2, loginMsg("passw0rd!hunter2", "x"))
 
 	// login_locked_out: lock that IP out first.
 	s3 := newSession("10.9.9.3:1000")
-	for i := 0; i < 12; i++ {
+	for range 12 {
 		m.loginAttempts.RecordFailure("10.9.9.3")
 	}
 	_, _ = callHandleLogin(s3, loginMsg("an0thersecretpw", "x"))
@@ -105,7 +105,7 @@ func TestAuditRecordsGatePassedName(t *testing.T) {
 
 	s := makeCharSession(t, m)
 	s.request = &http.Request{RemoteAddr: "10.9.9.4:1000"}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		_ = m.loginLimiter.GetLimiter("10.9.9.4").Allow()
 	}
 	_, _ = callHandleLogin(s, loginMsg("Realtypone", "x"))

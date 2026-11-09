@@ -275,7 +275,7 @@ func TestScriptLoadFailureDoesNotFloodLog(t *testing.T) {
 
 	const missing = "troll.lua" // matches one of the 5 missing scripts in the bug report
 	const pulses = 100
-	for i := 0; i < pulses; i++ {
+	for i := range pulses {
 		if _, err := engine.RunScript(&ScriptContext{}, missing, "onpulse"); err == nil {
 			t.Fatalf("pulse %d: expected error, got nil", i)
 		}

@@ -53,11 +53,11 @@ func (m *roomMock) GetRoomVNum() int { return m.vnum }
 
 type spellObjectMock struct {
 	room    int
-	carried interface{}
+	carried any
 }
 
 func (o *spellObjectMock) InRoom(room int) bool { return o.room == room }
-func (o *spellObjectMock) CarriedBy(actor interface{}) bool {
+func (o *spellObjectMock) CarriedBy(actor any) bool {
 	return o.carried == actor
 }
 
@@ -269,28 +269,28 @@ func TestCallMagicInactiveInRangeSpellIsSuccessfulNoop(t *testing.T) {
 
 type spawnWorldMock struct {
 	spawnedVNum int
-	player      interface{}
-	players     []interface{}
+	player      any
+	players     []any
 }
 
-func (w *spawnWorldMock) SpawnObjectToPlayerInventoryI(vnum int, player interface{}) (interface{}, error) {
+func (w *spawnWorldMock) SpawnObjectToPlayerInventoryI(vnum int, player any) (any, error) {
 	w.spawnedVNum = vnum
 	w.player = player
 	return &mockItem{shortDesc: "a Magic Mushroom"}, nil
 }
 
-func (w *spawnWorldMock) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
+func (w *spawnWorldMock) ForEachPlayerInRoomInterface(room int, fn func(any)) {
 	for _, player := range w.players {
 		fn(player)
 	}
 }
 
-func (w *spawnWorldMock) ForEachMobInRoomInterface(int, func(interface{})) {}
+func (w *spawnWorldMock) ForEachMobInRoomInterface(int, func(any)) {}
 
 func TestMagCreations_CreateFood(t *testing.T) {
 	caster := newAffectMale("Castero", 1001)
 	observer := newAffectMale("Observe", 1001)
-	world := &spawnWorldMock{players: []interface{}{caster, observer}}
+	world := &spawnWorldMock{players: []any{caster, observer}}
 
 	MagCreations(10, caster, SpellCreateFood, world)
 
@@ -315,7 +315,7 @@ func TestMagCreationsCreateFoodRoomFallbackUsesActGate(t *testing.T) {
 	writer := newAffectMale("Writer", 1001)
 	writer.affectedBits = 1 << 4 // PLR_WRITING (src/structs.h:225).
 	awake := newAffectMale("Awake", 1001)
-	world := &spawnWorldMock{players: []interface{}{caster, sleeping, writer, awake}}
+	world := &spawnWorldMock{players: []any{caster, sleeping, writer, awake}}
 
 	MagCreations(10, caster, SpellCreateFood, world)
 
@@ -335,14 +335,14 @@ type createFoodActWorld struct {
 	actCalled bool
 }
 
-func (w *createFoodActWorld) SpellCreatedObjectAct(interface{}, interface{}) bool {
+func (w *createFoodActWorld) SpellCreatedObjectAct(any, any) bool {
 	w.actCalled = true
 	return true
 }
 
 func TestMagCreationsCreateFoodUsesLiveActAdapter(t *testing.T) {
 	caster := newAffectMale("Castero", 1001)
-	world := &createFoodActWorld{spawnWorldMock: &spawnWorldMock{players: []interface{}{caster}}}
+	world := &createFoodActWorld{spawnWorldMock: &spawnWorldMock{players: []any{caster}}}
 
 	MagCreations(10, caster, SpellCreateFood, world)
 

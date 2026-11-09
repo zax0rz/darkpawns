@@ -85,7 +85,7 @@ func (w *World) destroyMobPossessions(mob *MobInstance) {
 	}
 	mob.mu.RLock()
 	var items []*ObjectInstance
-	for slot := 0; slot < NumWears; slot++ {
+	for slot := range NumWears {
 		if obj := mob.Equipment[slot]; obj != nil {
 			items = append(items, obj)
 		}

@@ -92,7 +92,7 @@ func TestStealEquippedConcurrentMoveKeepsOneCopy(t *testing.T) {
 	thief.CopyBaseAttributes()
 
 	item := newFlagItem(w, 7161, (1<<0)|(1<<1))
-	for round := 0; round < 150; round++ {
+	for round := range 150 {
 		// Reset: nothing carried, item worn by the sleeping victim.
 		for _, p := range []*Player{thief, victim, other} {
 			for _, leftover := range p.Inventory.Snapshot() {

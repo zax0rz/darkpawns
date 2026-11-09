@@ -65,7 +65,7 @@ func idleRentRoundtrip(t *testing.T, norent bool) *Session {
 		}
 		spawn(4320)
 	}
-	for tick := 0; tick < 31; tick++ {
+	for range 31 {
 		world.CheckIdling(s.player)
 	}
 	m.ExtractPendingChars()

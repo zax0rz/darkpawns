@@ -365,7 +365,7 @@ func (e *Engine) cObjToTable(b Bridge, ref ObjRef) lua.LValue {
 	t.RawSetString("perc_load", lua.LNumber(f.PercLoad))
 	t.RawSetString("timer", lua.LNumber(f.Timer))
 	val := L.NewTable()
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		val.RawSetInt(i+1, lua.LNumber(f.Val[i]))
 	}
 	t.RawSetString("val", val)

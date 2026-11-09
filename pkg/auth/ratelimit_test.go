@@ -207,7 +207,7 @@ func TestLoginAttemptTracker_LockoutAfterThreshold(t *testing.T) {
 	defer tracker.Stop()
 
 	ip := "10.0.0.1"
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		tracker.RecordFailure(ip)
 	}
 
@@ -231,7 +231,7 @@ func TestLoginAttemptTracker_NotLockedBelowThreshold(t *testing.T) {
 	defer tracker.Stop()
 
 	ip := "10.0.0.2"
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		tracker.RecordFailure(ip)
 	}
 
@@ -329,7 +329,7 @@ func TestIPRateLimiter_BasicRateLimit(t *testing.T) {
 	limiter := rl.GetLimiter("192.168.1.1")
 
 	allowed := 0
-	for i := 0; i < 15; i++ {
+	for range 15 {
 		if limiter.Allow() {
 			allowed++
 		}
@@ -356,12 +356,12 @@ func TestIPRateLimiter_DifferentIPs(t *testing.T) {
 	}
 
 	// Drain one limiter; the other should be unaffected
-	for i := 0; i < 15; i++ {
+	for range 15 {
 		l1.Allow()
 	}
 
 	allowed := 0
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		if l2.Allow() {
 			allowed++
 		}
@@ -377,13 +377,13 @@ func TestIPRateLimiter_CleanupDeletesAllStale(t *testing.T) {
 	t.Cleanup(func() { rl.Stop() })
 
 	const totalIPs = 10050
-	for i := 0; i < totalIPs; i++ {
+	for i := range totalIPs {
 		rl.AddIP(fmt.Sprintf("192.168.0.%d", i))
 	}
 
 	// All limiters are stale (full burst, never used). Each cleanup pass deletes
 	// at most maxDeletions entries, so keep running until the map is empty.
-	for passes := 0; passes < 25; passes++ {
+	for range 25 {
 		rl.cleanupOnce()
 		empty := true
 		rl.ips.Range(func(key, value any) bool {
@@ -406,7 +406,7 @@ func TestIPRateLimiter_CleanupPreservesActive(t *testing.T) {
 	staleIP := "10.0.0.2"
 
 	active := rl.GetLimiter(activeIP)
-	for i := 0; i < 15; i++ {
+	for range 15 {
 		active.Allow()
 	}
 
@@ -518,11 +518,11 @@ func TestFailAndCheckBoundsConcurrentOvershoot(t *testing.T) {
 	tracker := NewLoginAttemptTracker(LoginAttemptConfig{Threshold: 10, Lockout: time.Minute})
 	const workers = 50
 	allowed := make(chan bool, workers)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go func() { allowed <- tracker.FailAndCheck("10.0.0.9") }()
 	}
 	granted := 0
-	for i := 0; i < workers; i++ {
+	for range workers {
 		if <-allowed {
 			granted++
 		}
@@ -535,13 +535,13 @@ func TestFailAndCheckBoundsConcurrentOvershoot(t *testing.T) {
 // L2-004: the opt-in account budget spans source IPs; disabled by default.
 func TestAccountBudgetTracker(t *testing.T) {
 	disabled := NewAccountBudgetTracker(0, 0)
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		if !disabled.Fail("Victim") {
 			t.Fatal("disabled tracker refused a failure")
 		}
 	}
 	enabled := NewAccountBudgetTracker(3, time.Hour)
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if !enabled.Fail(fmt.Sprintf("attacker-%d.example", i)) {
 			t.Fatal("separate-name failures must not share the budget")
 		}

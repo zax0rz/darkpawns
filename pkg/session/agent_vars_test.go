@@ -135,7 +135,7 @@ func makeObjInstance(vnum int, shortDesc, keywords string) *game.ObjectInstance 
 
 // recvJSON reads one JSON message from the send channel (with timeout)
 // and unmarshals into the target.
-func recvJSON(t *testing.T, s *Session, target interface{}) {
+func recvJSON(t *testing.T, s *Session, target any) {
 	t.Helper()
 	select {
 	case msg := <-s.send:
@@ -149,7 +149,7 @@ func recvJSON(t *testing.T, s *Session, target interface{}) {
 
 // recvJSONMaybe reads a JSON message if one is available, returning false
 // if the channel is empty after a short poll (5ms).
-func recvJSONMaybe(t *testing.T, s *Session, target interface{}) bool {
+func recvJSONMaybe(t *testing.T, s *Session, target any) bool {
 	t.Helper()
 	select {
 	case msg := <-s.send:
@@ -345,8 +345,8 @@ func TestFlushDirtyVars(t *testing.T) {
 
 	// Read the message
 	var msg struct {
-		Type string                 `json:"type"`
-		Data map[string]interface{} `json:"data"`
+		Type string         `json:"type"`
+		Data map[string]any `json:"data"`
 	}
 	recvJSON(t, s, &msg)
 
@@ -425,8 +425,8 @@ func TestSendFullVarDump(t *testing.T) {
 	s.sendFullVarDump()
 
 	var msg struct {
-		Type string                 `json:"type"`
-		Data map[string]interface{} `json:"data"`
+		Type string         `json:"type"`
+		Data map[string]any `json:"data"`
 	}
 	recvJSON(t, s, &msg)
 
@@ -476,7 +476,7 @@ func TestBuildVarValue_Basic(t *testing.T) {
 
 	tests := []struct {
 		varName string
-		want    interface{}
+		want    any
 	}{
 		{VarHealth, 85},
 		{VarMaxHealth, 100},
@@ -561,7 +561,7 @@ func TestBuildVarValue_Events(t *testing.T) {
 
 	// Nothing queues events since the agent protocol was removed; the
 	// variable stays an empty list so a subscribed client never sees null.
-	events, ok := s.buildVarValue(VarEvents).([]interface{})
+	events, ok := s.buildVarValue(VarEvents).([]any)
 	if !ok || events == nil || len(events) != 0 {
 		t.Fatalf("EVENTS = %#v, want an empty list", s.buildVarValue(VarEvents))
 	}
@@ -912,7 +912,7 @@ func TestBuildEquipment(t *testing.T) {
 	if !ok {
 		t.Fatal("wield slot not found in equipment")
 	}
-	wieldMap, ok := wieldVal.(map[string]interface{})
+	wieldMap, ok := wieldVal.(map[string]any)
 	if !ok {
 		t.Fatalf("wield slot type = %T, want map[string]interface{}", wieldVal)
 	}
@@ -927,7 +927,7 @@ func TestBuildEquipment(t *testing.T) {
 	if !ok {
 		t.Fatal("shield slot not found in equipment")
 	}
-	shieldMap, ok := shieldVal.(map[string]interface{})
+	shieldMap, ok := shieldVal.(map[string]any)
 	if !ok {
 		t.Fatalf("shield slot type = %T, want map[string]interface{}", shieldVal)
 	}
@@ -1009,8 +1009,8 @@ func TestAgentVarFlow_E2E(t *testing.T) {
 	s.flushDirtyVars()
 
 	var msg struct {
-		Type string                 `json:"type"`
-		Data map[string]interface{} `json:"data"`
+		Type string         `json:"type"`
+		Data map[string]any `json:"data"`
 	}
 	recvJSON(t, s, &msg)
 
@@ -1125,8 +1125,8 @@ func TestFlushDirtyVars_MultipleCalls(t *testing.T) {
 	s.flushDirtyVars()
 
 	var msg struct {
-		Type string                 `json:"type"`
-		Data map[string]interface{} `json:"data"`
+		Type string         `json:"type"`
+		Data map[string]any `json:"data"`
 	}
 	recvJSON(t, s, &msg)
 

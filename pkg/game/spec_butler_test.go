@@ -459,7 +459,7 @@ func TestSpecButler_CanGetPredicateAndFourItemCap(t *testing.T) {
 		w, actor, _, mob, _ := newButlerTestWorld(t)
 		setupButlerContainers(t, w)
 		objects := make([]*ObjectInstance, 0, 5)
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			objects = append(objects, spawnButlerTestObject(t, w, 3005))
 		}
 		if got := specButler(w, actor, mob, "", ""); !got {

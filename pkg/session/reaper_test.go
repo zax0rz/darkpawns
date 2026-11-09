@@ -312,7 +312,7 @@ func TestImmortalIdleImmunity(t *testing.T) {
 	s.player.Level = game.LVL_IMMORT
 	registerTestSession(t, m, s, "Wizzen")
 
-	for tick := 0; tick < 12; tick++ {
+	for range 12 {
 		m.world.CheckIdling(s.player)
 	}
 
@@ -341,7 +341,7 @@ func TestConnectedIdleDisconnectClosesSession(t *testing.T) {
 	registerTestSession(t, m, s, "IdleLink")
 	registerTestSession(t, m, observer, "Observer")
 
-	for tick := 0; tick < 31; tick++ {
+	for range 31 {
 		m.world.CheckIdling(s.player)
 	}
 	m.ExtractPendingChars()
@@ -392,7 +392,7 @@ func TestIdleDisconnectKeepsObjectsRentStyle(t *testing.T) {
 		t.Fatalf("equip NORENT item: %v", err)
 	}
 
-	for tick := 0; tick < 31; tick++ {
+	for range 31 {
 		m.world.CheckIdling(s.player)
 	}
 	m.ExtractPendingChars()
@@ -494,7 +494,7 @@ func TestAbruptCloseLeavesCharacterLinkdead(t *testing.T) {
 	}
 
 	// Create a new character through the WebSocket so the session is registered.
-	wsWrite(t, client, MsgLogin, map[string]interface{}{
+	wsWrite(t, client, MsgLogin, map[string]any{
 		"player_name": "WritePumpGhost",
 		"password":    "hunter2",
 		"new_char":    true,
@@ -502,14 +502,14 @@ func TestAbruptCloseLeavesCharacterLinkdead(t *testing.T) {
 	charStages := []string{"Y", "hunter2", "hunter2", "N", "M", "H", "W", "K"}
 	for _, choice := range charStages {
 		wsReadUntilType(t, client, MsgCharCreate)
-		wsWrite(t, client, MsgCharInput, map[string]interface{}{"choice": choice})
+		wsWrite(t, client, MsgCharInput, map[string]any{"choice": choice})
 	}
 	wsReadUntilType(t, client, MsgCharCreate)
-	wsWrite(t, client, MsgCharInput, map[string]interface{}{"choice": "Y"})
+	wsWrite(t, client, MsgCharInput, map[string]any{"choice": "Y"})
 	wsReadUntilType(t, client, MsgCharCreate)
-	wsWrite(t, client, MsgCharInput, map[string]interface{}{"choice": ""})
+	wsWrite(t, client, MsgCharInput, map[string]any{"choice": ""})
 	wsReadUntilType(t, client, MsgCharCreate)
-	wsWrite(t, client, MsgCharInput, map[string]interface{}{"choice": "1"})
+	wsWrite(t, client, MsgCharInput, map[string]any{"choice": "1"})
 	wsReadUntilType(t, client, MsgState)
 
 	if _, ok := m.GetSession("WritePumpGhost"); !ok {
@@ -534,7 +534,7 @@ func TestAbruptCloseLeavesCharacterLinkdead(t *testing.T) {
 			}
 			// Drive the C lifecycle: 9 ticks to the void, then past
 			// IDLE_DISCONNECT; the extraction drain retires the session.
-			for i := 0; i < 31; i++ {
+			for range 31 {
 				m.world.CheckIdling(s.player)
 			}
 			m.ExtractPendingChars()

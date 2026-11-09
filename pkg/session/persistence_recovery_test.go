@@ -161,7 +161,7 @@ func TestRecoveryAutosave(t *testing.T) {
 	e := newRecoveryEnv(t)
 	e.mutate(t)
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		e.m.AutosaveTick()
 	}
 	if e.s.player.NeedsCrashSave() {

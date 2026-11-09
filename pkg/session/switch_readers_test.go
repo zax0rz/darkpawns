@@ -146,7 +146,7 @@ func TestSwitchDescriptorReaders(t *testing.T) {
 		t.Fatal("wizard named reader uses original")
 	}
 	var bodies []*game.Player
-	m.EachSession(func(p interface{}, _ func(string)) { bodies = append(bodies, p.(*game.Player)) })
+	m.EachSession(func(p any, _ func(string)) { bodies = append(bodies, p.(*game.Player)) })
 	if len(bodies) != 1 || bodies[0] != h.player {
 		t.Fatalf("descriptor list duplicate/dormant body: %v", bodies)
 	}

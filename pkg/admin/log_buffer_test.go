@@ -10,7 +10,7 @@ func TestLogBuffer_WriteAndRead(t *testing.T) {
 	lb := NewLogBuffer(10)
 
 	// Write entries and verify
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		_, err := lb.Write([]byte("entry " + string(rune('A'+i))))
 		if err != nil {
 			t.Fatalf("Write failed: %v", err)
@@ -26,7 +26,7 @@ func TestLogBuffer_WriteAndRead(t *testing.T) {
 func TestLogBuffer_RingOverflow(t *testing.T) {
 	lb := NewLogBuffer(3)
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		lb.Write([]byte("line " + string(rune('0'+i))))
 	}
 
@@ -45,7 +45,7 @@ func TestLogBuffer_RingOverflow(t *testing.T) {
 
 func TestLogBuffer_GetRecentNegative(t *testing.T) {
 	lb := NewLogBuffer(5)
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		lb.Write([]byte("entry"))
 	}
 
@@ -108,11 +108,11 @@ func TestLogBuffer_ThreadSafety(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Concurrent writes from multiple goroutines
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			for j := 0; j < 10; j++ {
+			for range 10 {
 				lb.Write([]byte("goroutine"))
 			}
 		}(i)

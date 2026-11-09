@@ -26,9 +26,9 @@ func TestBrowserTerminalEmptyNameClosesWithoutText(t *testing.T) {
 	}
 	defer client.Close()
 
-	wsWrite(t, client, MsgTerminal, map[string]interface{}{})
+	wsWrite(t, client, MsgTerminal, map[string]any{})
 	wsReadUntilType(t, client, MsgOut) // greeting and name prompt
-	wsWrite(t, client, MsgLine, map[string]interface{}{"line": ""})
+	wsWrite(t, client, MsgLine, map[string]any{"line": ""})
 
 	_ = client.SetReadDeadline(time.Now().Add(5 * time.Second))
 	var got strings.Builder

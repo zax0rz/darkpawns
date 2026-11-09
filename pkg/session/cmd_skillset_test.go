@@ -71,7 +71,7 @@ func TestCmdSkillset_NoArg_SyntaxAndSkillList(t *testing.T) {
 	var wantB strings.Builder
 	wantB.WriteString("Skill being one of the following:\n\r")
 	size := spells.SkillCatalogSize()
-	for i := 0; i < size; i++ {
+	for i := range size {
 		raw := spells.SpellRawName(i)
 		if raw == "" || raw[0] == '\n' {
 			break

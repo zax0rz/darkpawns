@@ -62,15 +62,15 @@ func TestActivityRecordingLossRetentionAndRestart(t *testing.T) {
 
 func TestActivityBoundedJournalAndHistory(t *testing.T) {
 	h := New(time.Now())
-	for i := 0; i < journalCapacity+10; i++ {
+	for range journalCapacity + 10 {
 		RecordLogin(Activity{Player: "Avery"})
 	}
 	h.Sample(time.Now(), 0)
 	if s := h.Snapshot(); len(s.Activity) != journalCapacity || s.ActivityDropped != 10 {
 		t.Fatalf("journal limit/loss: %d/%d", len(s.Activity), s.ActivityDropped)
 	}
-	for i := 0; i < 21; i++ {
-		for j := 0; j < 1000; j++ {
+	for range 21 {
+		for range 1000 {
 			RecordCharacter(Activity{Player: strings.Repeat("x", 200) + "\n", RoomName: strings.Repeat("r", 300)})
 		}
 		h.Sample(time.Now(), 0)

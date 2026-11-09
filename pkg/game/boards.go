@@ -25,7 +25,7 @@ func (w *World) FindBoard(ch *Player) int {
 	roomVNum := ch.GetRoomVNum()
 	items := w.GetItemsInRoom(roomVNum)
 	for _, obj := range items {
-		for i := 0; i < boards.NumBoards; i++ {
+		for i := range boards.NumBoards {
 			if obj.VNum == w.Boards.BoardInfo(i).VNum {
 				return i
 			}

@@ -28,7 +28,7 @@ func (m *Manager) RUnlock() {
 }
 
 // Mu returns the mutex for synchronization
-func (m *Manager) Mu() interface{} {
+func (m *Manager) Mu() any {
 	return &m.mu
 }
 

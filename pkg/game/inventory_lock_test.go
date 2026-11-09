@@ -26,7 +26,7 @@ func TestInventoryAccessIsLockedAgainstMoves(t *testing.T) {
 
 	stop := make(chan struct{})
 	var readers sync.WaitGroup
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		readers.Add(1)
 		go func() {
 			defer readers.Done()
@@ -47,7 +47,7 @@ func TestInventoryAccessIsLockedAgainstMoves(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 3000; i++ {
+	for i := range 3000 {
 		dst := b
 		if i%2 == 1 {
 			dst = a

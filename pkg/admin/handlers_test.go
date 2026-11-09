@@ -787,7 +787,7 @@ func TestNewRouter_RateLimit(t *testing.T) {
 	// Send many requests quickly to trigger rate limiting
 	// Rate limiter: 5 req/s, burst 10
 	statuses := make([]int, 30)
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		req := httptest.NewRequest(http.MethodGet, "/admin/zones", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		rec := httptest.NewRecorder()
@@ -826,7 +826,7 @@ func TestHandleLogin_LockoutReturns429(t *testing.T) {
 
 	// httptest.NewRequest defaults RemoteAddr to "192.0.2.1:1234"
 	testIP := "192.0.2.1"
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		tracker.RecordFailure(testIP)
 	}
 

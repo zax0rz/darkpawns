@@ -24,7 +24,7 @@ func TestCmdAliasCapRefusal(t *testing.T) {
 		return readSessionText(t, s)
 	}
 
-	for i := 0; i < game.MaxAliasCount; i++ {
+	for i := range game.MaxAliasCount {
 		if got := add(fmt.Sprintf("a%d", i), "look"); got != "Alias added." {
 			t.Fatalf("fill %d = %q, want \"Alias added.\"", i, got)
 		}
@@ -61,7 +61,7 @@ func TestCmdAliasCapFileBytes(t *testing.T) {
 
 	repl := strings.Repeat("x", 119) // " " + 119 = 120: no truncation notice
 	added := 0
-	for i := 0; i < game.MaxAliasCount; i++ {
+	for i := range game.MaxAliasCount {
 		name := fmt.Sprintf("b%029d", i) // 30-char trigger, ~163 serialized bytes/entry
 		if err := cmdAlias(s, []string{name, repl}); err != nil {
 			t.Fatalf("cmdAlias(%d): %v", i, err)

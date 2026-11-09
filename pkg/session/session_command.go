@@ -42,7 +42,7 @@ func (w *commandSessionWrapper) Close() {
 	w.session.Close()
 }
 
-func (w *commandSessionWrapper) GetPlayer() interface{} {
+func (w *commandSessionWrapper) GetPlayer() any {
 	return w.session.GetPlayer()
 }
 
@@ -69,6 +69,6 @@ func (w *commandSessionWrapper) GetPlayerLevel() int {
 func (w *commandSessionWrapper) Lock()   {}
 func (w *commandSessionWrapper) Unlock() {}
 
-func (w *commandSessionWrapper) GetManager() interface{} {
+func (w *commandSessionWrapper) GetManager() any {
 	return w.session.manager
 }

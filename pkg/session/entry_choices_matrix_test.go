@@ -97,10 +97,10 @@ func TestEntryCreationChoicesWebSocket(t *testing.T) {
 	defer server.Close()
 	conn := entryWebSocketDial(t, server.URL)
 	defer func() { _ = conn.Close() }()
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "Hero"})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": "Hero"})
 	_ = wsReadUntilType(t, conn, MsgCharCreate)
 	for _, step := range []struct{ input, stage string }{{"yes please", "create_password"}, {"abc", "confirm_password"}, {"abc", "color"}, {"no thanks", "sex"}, {"female", "race"}, {"?h suffix", "race"}, {"human", "class"}, {"avatar", "class"}, {"ninja", "hometown"}, {"oshi", "stats_roll"}} {
-		wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": step.input})
+		wsWrite(t, conn, MsgCharInput, map[string]any{"choice": step.input})
 		var prompt CharCreateData
 		entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 		if prompt.Stage != step.stage {

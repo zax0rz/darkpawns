@@ -106,7 +106,7 @@ func TestAutosaveEligibility(t *testing.T) {
 	linkdead.player.SetLinkless(true)
 	linkdead.player.MarkCrashNeeded()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		h.m.AutosaveTick()
 	}
 
@@ -136,7 +136,7 @@ func TestAutosaveRetriesAfterFailure(t *testing.T) {
 	s := h.addSession(t, "Retryme")
 	s.player.MarkCrashNeeded()
 
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		h.m.AutosaveTick()
 	}
 	if len(*h.calls) != 1 {
@@ -146,7 +146,7 @@ func TestAutosaveRetriesAfterFailure(t *testing.T) {
 		t.Fatal("a failed autosave cleared PLR_CRASH; the retry would be lost")
 	}
 	*h.result = game.SaveSucceeded
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		h.m.AutosaveTick()
 	}
 	if len(*h.calls) != 2 {

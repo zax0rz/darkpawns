@@ -37,7 +37,7 @@ func TestConPlayingSessionFanoutMatchesCStates(t *testing.T) {
 func TestManagerEachSessionOnlyVisitsConPlayingDescriptors(t *testing.T) {
 	f := newConPlayingFixture(t)
 	var got []string
-	f.manager.EachSession(func(player interface{}, _ func(string)) {
+	f.manager.EachSession(func(player any, _ func(string)) {
 		got = append(got, player.(*game.Player).Name)
 	})
 	gotSet := make(map[string]bool, len(got))

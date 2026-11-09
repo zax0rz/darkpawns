@@ -6,7 +6,7 @@ import (
 )
 
 // logAttrs returns standard structured logging attributes for the session.
-func (s *Session) logAttrs(extra ...slog.Attr) []interface{} {
+func (s *Session) logAttrs(extra ...slog.Attr) []any {
 	playerName := s.playerName
 	if playerName == "" {
 		playerName = "guest"
@@ -22,7 +22,7 @@ func (s *Session) logAttrs(extra ...slog.Attr) []interface{} {
 		attrs = append(attrs, slog.String("stage", s.charStage))
 	}
 
-	res := make([]interface{}, 0, len(attrs)+len(extra))
+	res := make([]any, 0, len(attrs)+len(extra))
 	for _, a := range attrs {
 		res = append(res, a)
 	}

@@ -16,15 +16,15 @@ type charmDispatchWorld struct {
 	firstHits  [][2]combat.Combatant
 }
 
-func (w *charmDispatchWorld) AddFollowerQuiet(interface{}, interface{}) {}
-func (w *charmDispatchWorld) StopFollowerByName(string)                 {}
-func (w *charmDispatchWorld) CircleFollowByName(string, string) bool    { return w.circle }
-func (w *charmDispatchWorld) NumFollowers(string) int                   { return w.followers }
-func (w *charmDispatchWorld) IsSpellCharmShopkeeper(interface{}) bool {
+func (w *charmDispatchWorld) AddFollowerQuiet(any, any)              {}
+func (w *charmDispatchWorld) StopFollowerByName(string)              {}
+func (w *charmDispatchWorld) CircleFollowByName(string, string) bool { return w.circle }
+func (w *charmDispatchWorld) NumFollowers(string) int                { return w.followers }
+func (w *charmDispatchWorld) IsSpellCharmShopkeeper(any) bool {
 	return w.shopkeeper
 }
 
-func (w *charmDispatchWorld) SpellActToVictim(caster, victim interface{}, format string) bool {
+func (w *charmDispatchWorld) SpellActToVictim(caster, victim any, format string) bool {
 	name := caster.(*mockSpellsChar).GetName()
 	line := capitalizeActMessage(strings.ReplaceAll(format, "$n", name)) + "\r\n"
 	sendToVictim(victim, line)
@@ -38,7 +38,7 @@ func (w *charmDispatchWorld) MobFirstHit(attacker, defender combat.Combatant) {
 
 // ExecuteSpellCounterattack is the unified retaliation seam (npcRetaliate);
 // MobFirstHit keeps its recording shape for the assertions below.
-func (w *charmDispatchWorld) ExecuteSpellCounterattack(victim, caster interface{}) {
+func (w *charmDispatchWorld) ExecuteSpellCounterattack(victim, caster any) {
 	a, _ := victim.(combat.Combatant)
 	d, _ := caster.(combat.Combatant)
 	w.firstHits = append(w.firstHits, [2]combat.Combatant{a, d})
@@ -155,7 +155,7 @@ func TestCharmManualDispatchMatchesCOutputGates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			oldSave := magCharmSaveRoll
-			magCharmSaveRoll = func(interface{}, int) bool { return tt.save }
+			magCharmSaveRoll = func(any, int) bool { return tt.save }
 			t.Cleanup(func() { magCharmSaveRoll = oldSave })
 
 			victim := tt.victim
@@ -181,7 +181,7 @@ func TestCharmSelfGateUsesBodyIdentity(t *testing.T) {
 	caster := &mockSpellsChar{name: "Twin", level: 30}
 	victim := &mockSpellsChar{name: "Twin", level: 30}
 	oldSave := magCharmSaveRoll
-	magCharmSaveRoll = func(interface{}, int) bool { return true }
+	magCharmSaveRoll = func(any, int) bool { return true }
 	t.Cleanup(func() { magCharmSaveRoll = oldSave })
 
 	ExecuteManualSpell(SpellCharm, 30, caster, victim, nil, "", &charmDispatchWorld{})
@@ -202,7 +202,7 @@ func TestCharmSavingNPCUsesCanonicalOpeningHit(t *testing.T) {
 	}}
 	world := &charmDispatchWorld{}
 	oldSave := magCharmSaveRoll
-	magCharmSaveRoll = func(interface{}, int) bool { return true }
+	magCharmSaveRoll = func(any, int) bool { return true }
 	t.Cleanup(func() { magCharmSaveRoll = oldSave })
 
 	ExecuteManualSpell(SpellCharm, 30, caster, victim, nil, "", world)

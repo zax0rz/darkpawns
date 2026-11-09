@@ -137,7 +137,7 @@ func (a *WorldScriptableAdapter) CharFields(ref scripting.CharRef) (scripting.Ch
 		}
 		m.mu.RLock()
 		f.Carry = objRefs(m.Inventory)
-		for where := 0; where < NumWears; where++ {
+		for where := range NumWears {
 			if item := m.Equipment[where]; item != nil {
 				f.Worn = append(f.Worn, scripting.ObjRef{ID: item.ID})
 			}
@@ -168,7 +168,7 @@ func (a *WorldScriptableAdapter) ObjFields(ref scripting.ObjRef) (scripting.ObjF
 	if o.Prototype != nil {
 		f.PercLoad = int(o.Prototype.LoadPercent)
 	}
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		f.Val[i] = o.GetValue(i)
 	}
 	return f, true

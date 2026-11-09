@@ -56,7 +56,7 @@ func TestVarFightingNoIntegerEnemyHP(t *testing.T) {
 	if strings.Contains(string(encoded), `"hp"`) || strings.Contains(string(encoded), `"max_hp"`) {
 		t.Fatalf("FIGHTING payload leaks integer HP: %s", encoded)
 	}
-	obj := payload.(map[string]interface{})
+	obj := payload.(map[string]any)
 	cond, _ := obj["condition"].(string)
 	if !strings.Contains(cond, "condition.") && !strings.Contains(cond, "scratches") && !strings.Contains(cond, "wounds") && !strings.Contains(cond, "hurt") {
 		t.Fatalf("condition = %q, want one of diag_char_to_char's eight sentences", cond)

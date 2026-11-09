@@ -175,10 +175,10 @@ func parseObj(lb *lineBuffer, vnum int) (Obj, string, error) {
 	flags := strings.Fields(lb.Text())
 	if len(flags) >= 9 {
 		obj.TypeFlag, _ = strconv.Atoi(flags[0])
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			obj.ExtraFlags[i] = parseFlag(flags[1+i])
 		}
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			obj.WearFlags[i] = parseFlag(flags[5+i])
 		}
 	}

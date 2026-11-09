@@ -373,7 +373,7 @@ func getObjInEquipVis(ch *Player, arg string) (*ObjectInstance, int) {
 	if ch == nil || ch.Equipment == nil {
 		return nil, -1
 	}
-	for where := 0; where < len(cWearToGoSlot); where++ {
+	for where := range cWearToGoSlot {
 		slot, ok := cWearSlot(where)
 		if !ok {
 			continue
@@ -543,7 +543,7 @@ func (w *World) DoRemove(ch *Player, arg string) {
 
 	if dotmode == findAll {
 		found := false
-		for where := 0; where < len(cWearToGoSlot); where++ {
+		for where := range cWearToGoSlot {
 			if w.IsEquipped(ch, where) {
 				w.performRemove(ch, where)
 				found = true
@@ -562,7 +562,7 @@ func (w *World) DoRemove(ch *Player, arg string) {
 			return
 		}
 		found := false
-		for where := 0; where < len(cWearToGoSlot); where++ {
+		for where := range cWearToGoSlot {
 			obj := w.GetEquipped(ch, where)
 			if obj == nil || !canSeeObject(ch, obj) || !isnameWithAbbrevs(keyword, obj.GetKeywords()) {
 				continue

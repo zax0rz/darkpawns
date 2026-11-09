@@ -21,20 +21,20 @@ func TestEntryNameWebSocketBoundary(t *testing.T) {
 	defer server.Close()
 	conn := entryWebSocketDial(t, server.URL)
 	defer func() { _ = conn.Close() }()
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "Aiko "})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": "Aiko "})
 	var prompt CharCreateData
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "get_name" || prompt.Prompt != "Invalid name, please try another.\r\nName: " {
 		t.Fatalf("initial raw rejection: %+v", prompt)
 	}
 	for _, name := range []string{"the", "a_b", "Aiko "} {
-		wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": name})
+		wsWrite(t, conn, MsgCharInput, map[string]any{"choice": name})
 		entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 		if prompt.Stage != "get_name" || prompt.Prompt != "Invalid name, please try another.\r\nName: " {
 			t.Fatalf("retry %q: %+v", name, prompt)
 		}
 	}
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": "  AIKO"})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": "  AIKO"})
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "login_password" || prompt.Prompt != "Password: " || !prompt.Secret {
 		t.Fatalf("saved folded name: %+v", prompt)
@@ -44,7 +44,7 @@ func TestEntryNameWebSocketBoundary(t *testing.T) {
 	}
 	blank := entryWebSocketDial(t, server.URL)
 	defer func() { _ = blank.Close() }()
-	wsWrite(t, blank, MsgLogin, map[string]interface{}{"player_name": "   "})
+	wsWrite(t, blank, MsgLogin, map[string]any{"player_name": "   "})
 	if err := blank.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestEntryNameWebSocketDropReleasesName(t *testing.T) {
 	stage := func() string {
 		conn := entryWebSocketDial(t, server.URL)
 		defer func() { _ = conn.Close() }()
-		wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "Aiko"})
+		wsWrite(t, conn, MsgLogin, map[string]any{"player_name": "Aiko"})
 		var prompt CharCreateData
 		entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 		return prompt.Stage
@@ -104,7 +104,7 @@ func TestEntryDeletedWebSocketBoundary(t *testing.T) {
 	defer server.Close()
 	conn := entryWebSocketDial(t, server.URL)
 	defer func() { _ = conn.Close() }()
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "RECLAIM"})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": "RECLAIM"})
 	var prompt CharCreateData
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "confirm_name" || prompt.Secret || prompt.Prompt != "Please remember to choose an appropriate fantasy-oriented name.\r\nDid I get that right, Reclaim (Y/N)? " {

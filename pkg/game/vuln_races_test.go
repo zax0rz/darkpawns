@@ -103,7 +103,7 @@ func TestBankConcurrentWithdrawPaysOnce(t *testing.T) {
 	const racers = 32
 	var wg sync.WaitGroup
 	start := make(chan struct{})
-	for i := 0; i < racers; i++ {
+	for range racers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -324,7 +324,7 @@ func TestPutRoomLookupConcurrentWithRoomWrites(t *testing.T) {
 		// Add/remove pairs keep the room list tiny — the point is the map
 		// store's hashWriting window, not list depth — so doPut's locked
 		// snapshot stays O(1) and the loop stays fast.
-		for i := 0; i < 40000; i++ {
+		for i := range 40000 {
 			select {
 			case <-stop:
 				return
@@ -336,7 +336,7 @@ func TestPutRoomLookupConcurrentWithRoomWrites(t *testing.T) {
 		}
 	}()
 
-	for i := 0; i < 2000; i++ {
+	for i := range 2000 {
 		gem := newTransferItem(6700, "a gem", "gem", 1)
 		gem.SetWeight(0)
 		registerTransferObject(w, gem)

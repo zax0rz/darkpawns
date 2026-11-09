@@ -12,7 +12,7 @@ import (
 //   - ch: implements GetClass() int, IsNPC() bool, SendMessage(string), GetName() string
 //   - tch/targetChar: same as ch, or nil
 //   - tobj/targetObj: implements GetName() string, or nil
-func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interface{}) {
+func SaySpell(ch any, spellNum int, tch, tobj any, world any) {
 	if ch == nil {
 		return
 	}
@@ -83,7 +83,7 @@ func SaySpell(ch interface{}, spellNum int, tch, tobj interface{}, world interfa
 	// A live world renders through perform_act, so each listener's PERS and
 	// OBJS decide whether it sees the caster, target and object by name.
 	if d, ok := world.(interface {
-		SaySpellDeliver(ch, tch, tobj interface{}, sameClass, otherClass, vict string) bool
+		SaySpellDeliver(ch, tch, tobj any, sameClass, otherClass, vict string) bool
 	}); ok && d.SaySpellDeliver(ch, tch, tobj,
 		strings.Replace(format, "%s", spellName, 1),
 		strings.Replace(format, "%s", obfuscated, 1), victLine) {
@@ -215,7 +215,7 @@ func isClassPsionicOrMystic(class int) bool {
 }
 
 // getClass extracts the class from an interface{} that implements GetClass() int.
-func getClass(ch interface{}) int {
+func getClass(ch any) int {
 	if ch == nil {
 		return 0
 	}
@@ -227,7 +227,7 @@ func getClass(ch interface{}) int {
 }
 
 // selfTarget checks if ch and tch are the same entity.
-func selfTarget(ch, tch interface{}) bool {
+func selfTarget(ch, tch any) bool {
 	if ch == nil || tch == nil {
 		return false
 	}
@@ -241,7 +241,7 @@ func selfTarget(ch, tch interface{}) bool {
 }
 
 // sameRoom checks if two characters are in the same room.
-func sameRoom(ch, tch interface{}) bool {
+func sameRoom(ch, tch any) bool {
 	type roomed interface{ GetRoomVNum() int }
 	cr, ok1 := ch.(roomed)
 	tr, ok2 := tch.(roomed)
@@ -253,10 +253,10 @@ func sameRoom(ch, tch interface{}) bool {
 
 // sameRoomWithObj mirrors spell_parser.c say_spell's object phrase gate:
 // the target must be in the caster's room or carried by the caster.
-func sameRoomWithObj(ch, tobj interface{}) bool {
+func sameRoomWithObj(ch, tobj any) bool {
 	type roomed interface{ GetRoomVNum() int }
 	type roomContains interface{ InRoom(int) bool }
-	type carried interface{ CarriedBy(interface{}) bool }
+	type carried interface{ CarriedBy(any) bool }
 
 	caster, ok := ch.(roomed)
 	if !ok || tobj == nil {
@@ -274,13 +274,13 @@ func sameRoomWithObj(ch, tobj interface{}) bool {
 // roomIterable is the interface needed from world for room iteration.
 // Uses ForEach-style callbacks to avoid importing game package types.
 type roomIterable interface {
-	ForEachPlayerInRoomInterface(int, func(interface{}))
-	ForEachMobInRoomInterface(int, func(interface{}))
+	ForEachPlayerInRoomInterface(int, func(any))
+	ForEachMobInRoomInterface(int, func(any))
 }
 
 // sendToRoom sends act-formatted messages to all characters in the caster's room.
 // Players of the same class as the caster see realName; others see obfuscated.
-func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated string, world interface{}) {
+func sendToRoom(format string, ch, tobj, tch any, realName, obfuscated string, world any) {
 	type roomed interface{ GetRoomVNum() int }
 	type classed interface{ GetClass() int }
 
@@ -313,7 +313,7 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 		casterName = cn.GetName()
 	}
 
-	w.ForEachPlayerInRoomInterface(roomVNum, func(p interface{}) {
+	w.ForEachPlayerInRoomInterface(roomVNum, func(p any) {
 		if selfTarget(ch, p) || (tch != nil && selfTarget(tch, p)) {
 			return
 		}
@@ -354,7 +354,7 @@ func sendToRoom(format string, ch, tobj, tch interface{}, realName, obfuscated s
 // sendAct is a minimal act() replacement.
 // When victim is non-nil the message is delivered to the victim; otherwise it
 // falls back to ch.
-func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
+func sendAct(format string, ch, obj, victim any, world any) {
 	type sender interface{ SendMessage(string) }
 	recipient := ch
 	if victim != nil {
@@ -377,9 +377,9 @@ func sendAct(format string, ch, obj, victim interface{}, world interface{}) {
 // reports. The live world renders through its canonical act() implementation
 // so object visibility and short descriptions match src/comm.c; direct spell
 // unit tests use the same substitutions without a World.
-func sendSpellActToCaster(format string, ch, victim, obj, world interface{}) {
+func sendSpellActToCaster(format string, ch, victim, obj, world any) {
 	if renderer, ok := world.(interface {
-		SpellActToChar(caster, victim, object interface{}, format string)
+		SpellActToChar(caster, victim, object any, format string)
 	}); ok {
 		renderer.SpellActToChar(ch, victim, obj, format)
 		return
@@ -402,7 +402,7 @@ func sendSpellActToCaster(format string, ch, victim, obj, world interface{}) {
 
 // subjectivePronoun mirrors C's HSSH macro in src/utils.h using the Go sex
 // encoding (male=0, female=1, neutral=2).
-func subjectivePronoun(ch interface{}) string {
+func subjectivePronoun(ch any) string {
 	type sexer interface{ GetSex() int }
 	if s, ok := ch.(sexer); ok {
 		switch s.GetSex() {
@@ -425,7 +425,7 @@ func capitalizeActMessage(msg string) string {
 	return string(msg[0]-('a'-'A')) + msg[1:]
 }
 
-func possessivePronoun(ch interface{}) string {
+func possessivePronoun(ch any) string {
 	type sexer interface{ GetSex() int }
 	if s, ok := ch.(sexer); ok {
 		switch s.GetSex() {
@@ -442,7 +442,7 @@ func possessivePronoun(ch interface{}) string {
 
 // objectivePronoun mirrors C's HMHR macro (utils.h:507): male→"him",
 // female→"her", else→"it". Go sex encoding: 0=male, 1=female, 2=neutral.
-func objectivePronoun(ch interface{}) string {
+func objectivePronoun(ch any) string {
 	type sexer interface{ GetSex() int }
 	if s, ok := ch.(sexer); ok {
 		switch s.GetSex() {
@@ -460,7 +460,7 @@ func objectivePronoun(ch interface{}) string {
 // substituteToSelfPronouns performs the $M/$S act() substitutions C applies to
 // a mag_affects to_self line (magic.c:1414-1415: act(to_self, TRUE, ch, 0,
 // victim, TO_CHAR)), where the pronouns describe the victim.
-func substituteToSelfPronouns(msg string, victim interface{}) string {
+func substituteToSelfPronouns(msg string, victim any) string {
 	msg = strings.ReplaceAll(msg, "$M", objectivePronoun(victim))
 	msg = strings.ReplaceAll(msg, "$S", possessivePronoun(victim))
 	return msg

@@ -123,12 +123,12 @@ func TestZoneSaveLockIsPerZone(t *testing.T) {
 	const increments = 1000
 	var total int64
 	var wg sync.WaitGroup
-	for i := 0; i < workers; i++ {
+	for range workers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			mu := zoneSaveLock(7)
-			for j := 0; j < increments; j++ {
+			for range increments {
 				mu.Lock()
 				total++
 				mu.Unlock()
@@ -164,7 +164,7 @@ func TestZoneSaveConcurrentSavesStayValid(t *testing.T) {
 
 	const savers = 8
 	var wg sync.WaitGroup
-	for i := 0; i < savers; i++ {
+	for range savers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -302,7 +302,7 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 	var kwMu sync.Mutex
 
 	var wg sync.WaitGroup
-	for i := 0; i < commits; i++ {
+	for range commits {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -325,7 +325,7 @@ func TestZoneSaveKeepsMarkerForRacingCommit(t *testing.T) {
 		}()
 	}
 	// Saves racing the commits.
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

@@ -25,7 +25,7 @@ func TestEquipmentAccessIsLockedAgainstMutations(t *testing.T) {
 
 	stop := make(chan struct{})
 	var readers sync.WaitGroup
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		readers.Add(1)
 		go func() {
 			defer readers.Done()
@@ -49,7 +49,7 @@ func TestEquipmentAccessIsLockedAgainstMutations(t *testing.T) {
 		}()
 	}
 
-	for i := 0; i < 3000; i++ {
+	for range 3000 {
 		_ = p.Equipment.SetSlot(SlotWield, item)
 		_ = p.Equipment.Unequip(SlotWield, p.Inventory)
 		// Unequip parks the item in the inventory; take it back out so the

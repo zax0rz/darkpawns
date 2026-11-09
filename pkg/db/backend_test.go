@@ -141,7 +141,7 @@ func TestGameStoreIdsIncrease(t *testing.T) {
 		t.Run(be.name, func(t *testing.T) {
 			database := openGameStore(t, be.dsn)
 			var ids []int
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				p := &PlayerRecord{Name: uniqueName("ids"), Inventory: []byte("[]"), Equipment: []byte("{}")}
 				if err := database.CreatePlayer(p); err != nil {
 					t.Fatalf("CreatePlayer: %v", err)
@@ -275,7 +275,7 @@ func TestGameStoreLoginFailureCounting(t *testing.T) {
 				t.Fatalf("CreatePlayer: %v", err)
 			}
 
-			for i := 0; i < 3; i++ {
+			for range 3 {
 				locked, err := database.RecordLoginFailure(name, int(^uint(0)>>1), 0)
 				if err != nil {
 					t.Fatalf("RecordLoginFailure: %v", err)

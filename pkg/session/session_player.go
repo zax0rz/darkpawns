@@ -21,7 +21,7 @@ func (s *Session) MarkDirty(vars ...string) {
 }
 
 // GetManager returns the session manager (needed for some admin commands)
-func (s *Session) GetManager() interface{} {
+func (s *Session) GetManager() any {
 	return s.manager
 }
 
@@ -31,7 +31,7 @@ func (s *Session) GetWorld() *game.World {
 }
 
 // GetCombatEngine returns the combat engine.
-func (s *Session) GetCombatEngine() interface{} {
+func (s *Session) GetCombatEngine() any {
 	return s.manager.combatEngine
 }
 

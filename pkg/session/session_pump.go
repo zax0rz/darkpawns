@@ -226,7 +226,7 @@ func (s *Session) writePump() {
 			// Stamp a sequence number on every outbound message. Unmarshal into
 			// a generic map, add seq, re-marshal: raw JSON string injection was
 			// fragile.
-			var raw map[string]interface{}
+			var raw map[string]any
 			if err := json.Unmarshal(message, &raw); err == nil {
 				// P0-1: stamp sequence number on every outbound message
 				s.msgSeq++

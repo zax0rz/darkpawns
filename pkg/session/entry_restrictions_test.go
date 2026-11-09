@@ -127,9 +127,9 @@ func TestEntryWizlockWebSocket(t *testing.T) {
 				name, answer = "Aiko", "oraclepass"
 				want = "The game is temporarily restricted.. try again later.\r\n"
 			}
-			wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": name})
+			wsWrite(t, conn, MsgLogin, map[string]any{"player_name": name})
 			_ = wsReadUntilType(t, conn, MsgCharCreate)
-			wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": answer})
+			wsWrite(t, conn, MsgCharInput, map[string]any{"choice": answer})
 			var prompt CharCreateData
 			entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 			if prompt.Stage != "closing" || prompt.Prompt != want {

@@ -267,7 +267,7 @@ func TestSaveDataToPlayerHydratesAutoGoldMirrorsFromFlags(t *testing.T) {
 }
 
 // jsonUnmarshal is a test helper that calls json.Unmarshal.
-func jsonUnmarshal(data []byte, v interface{}) error {
+func jsonUnmarshal(data []byte, v any) error {
 	return json.Unmarshal(data, v)
 }
 
@@ -334,11 +334,11 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Saver goroutines
-	for w := 0; w < 2; w++ {
+	for range 2 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < iterations; i++ {
+			for range iterations {
 				_ = playerToSaveData(player)
 			}
 		}()
@@ -348,7 +348,7 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			item := mkItem()
 			if err := player.Inventory.AddItem(item); err != nil {
 				continue // capacity reached — try removing instead
@@ -361,7 +361,7 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < iterations; i++ {
+		for range iterations {
 			item := mkItem()
 			if err := player.Equipment.SetSlot(SlotNeck1, item); err == nil {
 				_ = player.Equipment.Unequip(SlotNeck1, player.Inventory)
@@ -373,7 +373,7 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < iterations; i++ {
+		for i := range iterations {
 			aff := &engine.Affect{SpellID: i%50 + 1, Location: 1, Duration: 5, Magnitude: 1}
 			player.AddAffect(aff)
 			player.RemoveAffectBySpell(i%50 + 1)
@@ -386,7 +386,7 @@ func TestPlayerSaveData_ConcurrentSnapshot(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < iterations; i++ {
+		for i := range iterations {
 			player.mu.Lock()
 			player.SpellMap[fmt.Sprintf("spell_%d", i%30)] = i
 			player.mu.Unlock()

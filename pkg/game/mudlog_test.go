@@ -8,7 +8,7 @@ import (
 
 type testSessions []*Player
 
-func (s *testSessions) EachSession(fn func(player interface{}, send func(msg string))) {
+func (s *testSessions) EachSession(fn func(player any, send func(msg string))) {
 	for _, p := range *s {
 		p := p
 		fn(p, p.SendMessage)
@@ -78,7 +78,7 @@ type mudlogCapture struct {
 	messages []string
 }
 
-func (c *mudlogCapture) EachSession(fn func(interface{}, func(string))) {
+func (c *mudlogCapture) EachSession(fn func(any, func(string))) {
 	fn(c.player, func(msg string) { c.messages = append(c.messages, msg) })
 }
 

@@ -306,7 +306,7 @@ func TestRoomObjectLinesPadToC63Bytes(t *testing.T) {
 		t.Fatalf("single-object line text misplaced: %q", got)
 	}
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		w.AddItemToRoom(newGlowFlaggedObject(5105), 100)
 	}
 	stacked := w.roomObjectLines(p, room)

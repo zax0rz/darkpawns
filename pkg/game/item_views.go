@@ -57,7 +57,7 @@ func COrderedWorn(ch *Player) []*ObjectInstance {
 		return nil
 	}
 	out := make([]*ObjectInstance, 0, len(cWearToGoSlot))
-	for i := 0; i < len(cWearToGoSlot); i++ {
+	for i := range cWearToGoSlot {
 		item, ok := ch.Equipment.GetItemInSlot(cWearToGoSlot[i])
 		if !ok || item == nil {
 			continue
@@ -112,7 +112,7 @@ func (w *World) DoEquipment(ch *Player) {
 	b.WriteString("You are using:\r\n")
 
 	found := false
-	for i := 0; i < len(cWearToGoSlot); i++ {
+	for i := range cWearToGoSlot {
 		slot := cWearToGoSlot[i]
 		item, ok := ch.Equipment.GetItemInSlot(slot)
 		if !ok || item == nil {

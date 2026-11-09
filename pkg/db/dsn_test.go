@@ -245,11 +245,11 @@ func TestConcurrentSavesSerialise(t *testing.T) {
 	const writesEach = 12
 	var wg sync.WaitGroup
 	errs := make(chan error, writers)
-	for writer := 0; writer < writers; writer++ {
+	for writer := range writers {
 		wg.Add(1)
 		go func(offset int) {
 			defer wg.Done()
-			for i := 0; i < writesEach; i++ {
+			for i := range writesEach {
 				record, err := database.GetPlayer("Writers")
 				if err != nil {
 					errs <- err

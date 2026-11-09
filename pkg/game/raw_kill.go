@@ -119,7 +119,7 @@ func (w *World) makeRawKillBody(p *Player, attackType int, dust bool) {
 	wasCrash := p.NeedsCrashSave()
 	inventory := p.Inventory.FindItems("")
 	var equipment []*ObjectInstance
-	for pos := 0; pos < NumWears; pos++ {
+	for pos := range NumWears {
 		if slot, ok := CWearPosToSlot(pos); ok {
 			if obj, found := p.Equipment.GetItemInSlot(slot); found {
 				equipment = append(equipment, obj)

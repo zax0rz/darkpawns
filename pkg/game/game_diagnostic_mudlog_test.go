@@ -14,7 +14,7 @@ type diagnosticSessions struct {
 	probe    func()
 }
 
-func (s *diagnosticSessions) EachSession(fn func(interface{}, func(string))) {
+func (s *diagnosticSessions) EachSession(fn func(any, func(string))) {
 	fn(s.observer, func(msg string) {
 		if s.probe != nil {
 			s.probe()

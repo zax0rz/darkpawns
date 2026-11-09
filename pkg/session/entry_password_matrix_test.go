@@ -58,7 +58,7 @@ func TestEntryNewPasswordWebSocket(t *testing.T) {
 	defer server.Close()
 	conn := entryWebSocketDial(t, server.URL)
 	defer func() { _ = conn.Close() }()
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "Hero"})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": "Hero"})
 	_ = wsReadUntilType(t, conn, MsgCharCreate)
 	steps := []struct {
 		input, stage, prompt string
@@ -74,7 +74,7 @@ func TestEntryNewPasswordWebSocket(t *testing.T) {
 		{"  abc", "color", "\r\nDo you want ANSI color (Y/N)? ", false},
 	}
 	for _, step := range steps {
-		wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": step.input})
+		wsWrite(t, conn, MsgCharInput, map[string]any{"choice": step.input})
 		var prompt CharCreateData
 		entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 		if prompt.Stage != step.stage || prompt.Prompt != step.prompt || prompt.Secret != step.secret {
@@ -166,10 +166,10 @@ func TestEntryPasswordRetryWebSocket(t *testing.T) {
 	defer server.Close()
 	conn := entryWebSocketDial(t, server.URL)
 	defer func() { _ = conn.Close() }()
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "aiko"})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": "aiko"})
 	_ = wsReadUntilType(t, conn, MsgCharCreate)
 	for attempt := 1; attempt <= 3; attempt++ {
-		wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": "wrongpass"})
+		wsWrite(t, conn, MsgCharInput, map[string]any{"choice": "wrongpass"})
 		kind, raw := entryWebSocketReadOne(t, conn)
 		if kind != MsgEvent || !strings.Contains(string(mustMarshalEntry(t, raw)), `"text":"\r\n"`) {
 			t.Fatalf("echo before refusal: %s %+v", kind, raw)
@@ -190,7 +190,7 @@ func TestEntryPasswordRetryWebSocket(t *testing.T) {
 	}
 }
 
-func mustMarshalEntry(t *testing.T, v interface{}) []byte {
+func mustMarshalEntry(t *testing.T, v any) []byte {
 	t.Helper()
 	b, err := json.Marshal(v)
 	if err != nil {

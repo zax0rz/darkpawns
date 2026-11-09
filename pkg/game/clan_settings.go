@@ -150,7 +150,7 @@ func (w *World) doClanRanks(ch *Player, arg string) {
 		c.RankName[i] = "Member"
 	}
 	c.RankName[c.Ranks-1] = "Leader"
-	for i := 0; i < NumCP; i++ {
+	for i := range NumCP {
 		c.Privilege[i] = newRanks
 	}
 
@@ -263,7 +263,7 @@ func (w *World) doClanPrivilege(ch *Player, arg string) {
 	}
 
 	ch.SendMessage("\r\nClan privileges:\r\n")
-	for i := 0; i < NumCP; i++ {
+	for i := range NumCP {
 		ch.SendMessage(fmt.Sprintf("\t%s\r\n", clanPrivileges[i]))
 	}
 }

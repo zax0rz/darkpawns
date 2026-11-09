@@ -33,7 +33,7 @@ func TestTapNeverBlocksOnFullQueue(t *testing.T) {
 	f := newStartedFeed(t, 2, 100)
 	f.tap("", "kept", 1, 31, true)
 	waitFor(t, "first event dispatched", func() bool { return f.Stats().Served == 1 })
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		done := make(chan struct{})
 		go func() {
 			f.tap("", "overflow", 1, 31, true)
@@ -61,7 +61,7 @@ func TestTapNeverBlocksOnFullQueue(t *testing.T) {
 // The ring replays in order from a cursor and caps at its capacity.
 func TestSinceReplaysInOrderAndCaps(t *testing.T) {
 	f := newStartedFeed(t, 64, 8)
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		f.tap("", "line", 1, 31, false)
 	}
 	waitFor(t, "all dispatched", func() bool { return f.LastSeq() == 20 })
@@ -118,7 +118,7 @@ func TestSlowSubscriberIsKickedNotDispatcher(t *testing.T) {
 	}()
 
 	for sent := 0; sent < total; sent += burst {
-		for i := 0; i < burst; i++ {
+		for range burst {
 			f.tap("", "burst", 1, 31, false)
 		}
 		acked := sent + burst
@@ -151,11 +151,11 @@ func TestSlowSubscriberIsKickedNotDispatcher(t *testing.T) {
 func TestTapRace(t *testing.T) {
 	f := newStartedFeed(t, 256, 1024)
 	var wg sync.WaitGroup
-	for g := 0; g < 8; g++ {
+	for range 8 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < 500; i++ {
+			for range 500 {
 				f.tap("k", "x", 1, 31, false)
 			}
 		}()
@@ -188,17 +188,17 @@ func TestCatalogGroupsUnkeyed(t *testing.T) {
 // on a closed channel and panic in the caller (PR #1893 review, bug 2).
 func TestStopRacesTapWithoutPanic(t *testing.T) {
 	var wg sync.WaitGroup
-	for round := 0; round < 40; round++ {
+	for range 40 {
 		f := NewFeed(4, 16)
 		f.Start()
-		for g := 0; g < 8; g++ {
+		for range 8 {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				// Tap straight through Stop: the tappers must still be
 				// mid-storm when the close lands, so the check-then-send
 				// window is actually exercised.
-				for i := 0; i < 2000; i++ {
+				for range 2000 {
 					f.Tap("", "race", 1, 31, false)
 				}
 			}()

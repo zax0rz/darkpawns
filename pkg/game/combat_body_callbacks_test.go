@@ -54,7 +54,7 @@ func TestCombatBodyCallbackIdentity(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			for i := 0; i < 40; i++ {
+			for range 40 {
 				if cbval := tc.read(first); cbval != tc.one {
 					t.Fatalf("first=%d want %d", cbval, tc.one)
 				}
@@ -77,7 +77,7 @@ func TestCombatBodyCallbackAffectsFlags(t *testing.T) {
 	cb := w.WireCombatCallbacks()
 	first.SetAffected(affSanctuary)
 	first.SetAffected(affGroup)
-	for i := 0; i < 40; i++ {
+	for range 40 {
 		if !cb.HasAffect(first, affSanctuary) || cb.HasAffect(second, affSanctuary) {
 			t.Fatal("numeric affect selected another duplicate")
 		}
@@ -146,7 +146,7 @@ func TestCombatBodyScriptDispatch(t *testing.T) {
 	r := &bodyScriptRecorder{}
 	ScriptEngine = r
 	t.Cleanup(func() { ScriptEngine = old })
-	for i := 0; i < 40; i++ {
+	for range 40 {
 		w.FireMobFightScript(first, one, 1001)
 		w.FireMobDeathScript(second, two, 1001)
 	}

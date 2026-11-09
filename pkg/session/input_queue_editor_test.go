@@ -45,7 +45,7 @@ func TestInputQueueCapLaggedEditorPaste(t *testing.T) {
 				}
 			}
 			var expected strings.Builder
-			for i := 0; i < 306; i++ {
+			for i := range 306 {
 				line := fmt.Sprintf("line%03d", i)
 				input(line)
 				expected.WriteString(line + "\r\n")

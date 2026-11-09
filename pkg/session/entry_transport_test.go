@@ -50,24 +50,24 @@ func entryWebSocketDial(t *testing.T, serverURL string) *websocket.Conn {
 // transport open and observe what dropping it does.
 func entryWebSocketFreshJourney(t *testing.T, conn *websocket.Conn, name, password string) StateData {
 	t.Helper()
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": name})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": name})
 	var prompt CharCreateData
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "login_password" || prompt.Prompt != "Password: " || !prompt.Secret {
 		t.Fatalf("name %q did not route to password state: %+v", name, prompt)
 	}
 
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": password})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": password})
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "motd" {
 		t.Fatalf("password success stage = %q, want motd", prompt.Stage)
 	}
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": ""})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": ""})
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "menu" {
 		t.Fatalf("MOTD return stage = %q, want menu", prompt.Stage)
 	}
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": "1"})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": "1"})
 
 	stateRaw := wsReadUntilType(t, conn, MsgState)
 	stateData, _ := json.Marshal(stateRaw["data"])
@@ -110,13 +110,13 @@ func entryWebSocketReconnectJourney(t *testing.T, serverURL, name, password stri
 	conn := entryWebSocketDial(t, serverURL)
 	defer func() { _ = conn.Close() }()
 
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": name})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": name})
 	var prompt CharCreateData
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "login_password" || prompt.Prompt != "Password: " || !prompt.Secret {
 		t.Fatalf("name %q did not route to password state: %+v", name, prompt)
 	}
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": password})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": password})
 
 	// The takeover frame: a stage that says why there is no MOTD, and no prompt.
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
@@ -125,7 +125,7 @@ func entryWebSocketReconnectJourney(t *testing.T, serverURL, name, password stri
 	}
 
 	state := entryReconnectState{}
-	for frames := 0; frames < 20; frames++ {
+	for range 20 {
 		kind, raw := entryWebSocketReadOne(t, conn)
 		if kind == "" {
 			break
@@ -159,14 +159,14 @@ func entryWebSocketReconnectJourney(t *testing.T, serverURL, name, password stri
 
 // entryWebSocketReadOne reads exactly one frame, so a journey can assert on the
 // frames a narrower helper would skip.
-func entryWebSocketReadOne(t *testing.T, conn *websocket.Conn) (string, map[string]interface{}) {
+func entryWebSocketReadOne(t *testing.T, conn *websocket.Conn) (string, map[string]any) {
 	t.Helper()
 	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	_, raw, err := conn.ReadMessage()
 	if err != nil {
 		t.Fatalf("ReadMessage: %v", err)
 	}
-	var msg map[string]interface{}
+	var msg map[string]any
 	if err := json.Unmarshal(raw, &msg); err != nil {
 		t.Fatalf("unmarshal frame: %v", err)
 	}
@@ -175,7 +175,7 @@ func entryWebSocketReadOne(t *testing.T, conn *websocket.Conn) (string, map[stri
 }
 
 // entryUnmarshalPrompt decodes a char_create frame into its prompt data.
-func entryUnmarshalPrompt(t *testing.T, raw map[string]interface{}, out *CharCreateData) {
+func entryUnmarshalPrompt(t *testing.T, raw map[string]any, out *CharCreateData) {
 	t.Helper()
 	data, _ := json.Marshal(raw["data"])
 	if err := json.Unmarshal(data, out); err != nil {
@@ -257,10 +257,10 @@ func entryWebSocketNewCharacterToMenu(t *testing.T, serverURL, name string) (*we
 	if err != nil {
 		t.Fatalf("WebSocket dial: %v", err)
 	}
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": name})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": name})
 	for _, choice := range []string{"Y", "freshpass", "freshpass", "N", "M", "H", "W", "K"} {
 		wsReadUntilType(t, conn, MsgCharCreate)
-		wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": choice})
+		wsWrite(t, conn, MsgCharInput, map[string]any{"choice": choice})
 	}
 	statsRaw := wsReadUntilType(t, conn, MsgCharCreate)
 	statsData, _ := json.Marshal(statsRaw["data"])
@@ -272,11 +272,11 @@ func entryWebSocketNewCharacterToMenu(t *testing.T, serverURL, name string) (*we
 		t.Fatalf("new character stats prompt = %+v", statsPrompt)
 	}
 	stats := *statsPrompt.Stats
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": "Y"})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": "Y"})
 	if motd := wsReadUntilType(t, conn, MsgCharCreate); motd["data"] == nil {
 		t.Fatal("new character did not reach MOTD")
 	}
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": ""})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": ""})
 	menu := wsReadUntilType(t, conn, MsgCharCreate)
 	menuData, _ := json.Marshal(menu["data"])
 	var menuPrompt CharCreateData

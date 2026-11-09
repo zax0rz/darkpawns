@@ -189,7 +189,7 @@ func (m *MockDatabase) RecordLoginSuccess(name string) error {
 }
 
 // Exec satisfies db.GameStore.
-func (m *MockDatabase) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (m *MockDatabase) Exec(query string, args ...any) (sql.Result, error) {
 	return nil, nil
 }
 

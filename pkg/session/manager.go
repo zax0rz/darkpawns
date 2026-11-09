@@ -1837,7 +1837,7 @@ func (m *Manager) closeDuplicateSessions(quitting *Session) {
 // GetSession returns a session by player name.
 // EachSession is the descriptor list mudlog walks (game.ImmortalSessionProvider):
 // every connected session with a character in the game.
-func (m *Manager) EachSession(fn func(player interface{}, send func(msg string))) {
+func (m *Manager) EachSession(fn func(player any, send func(msg string))) {
 	m.mu.RLock()
 	sessions := make([]*Session, 0, len(m.sessions))
 	for _, s := range m.sessions {
@@ -2315,7 +2315,7 @@ type Session struct {
 	inputOverflow bool // guarded by inputMu; latched until transport teardown
 
 	// Temporary data storage for command handlers
-	tempData map[string]interface{}
+	tempData map[string]any
 
 	// textEditMu/textEdit mirror a descriptor's d->str/backstr/OLC_STORAGE
 	// while CON_TEDIT is active. The descriptor snapshot is session-owned, but
