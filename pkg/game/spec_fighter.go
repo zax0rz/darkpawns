@@ -35,7 +35,10 @@ func (w *World) mobSkillDamageAfterGate(ch *MobInstance, vict combat.Combatant, 
 	// victim's position is only raised from a downed state at this point when
 	// the C position gate allows it; fighter's live target is already fighting.
 	if ch.GetPosition() > combat.PosStunned && vict.GetPosition() > combat.PosStunned && vict.GetFightingBody() == nil {
+		// C set_fighting(victim, ch) also raises the victim to POS_FIGHTING
+		// (fight.c:1443-1445); see mobBackstabDamage.
 		vict.SetFightingBody(ch)
+		vict.SetPosition(combat.PosFighting)
 	}
 	// fight.c:1457-1464: break the victim's following when the attacker is
 	// the master, then fade a hidden attacker — before the modifier block
@@ -78,6 +81,13 @@ func (w *World) mobBackstabDamage(me *MobInstance, vict combat.Combatant, dam in
 		return false
 	}
 
+	// C damage() calls set_fighting(ch, victim) then set_fighting(victim, ch)
+	// (fight.c:1404-1408, 1443-1445); both raise their body to POS_FIGHTING.
+	// Capture the victim's pre-state: StartCombat below may set the victim's
+	// fighting target (defender enrollment) without standing it, so the
+	// `GetFightingBody() == nil` test alone would miss the stand.
+	victimWasFighting := vict.GetFightingBody() != nil
+
 	if me.GetFightingBody() == nil && me.GetPosition() > combat.PosStunned {
 		if w.combatEngine != nil {
 			if err := w.combatEngine.StartCombat(me, vict); err != nil {
@@ -93,8 +103,15 @@ func (w *World) mobBackstabDamage(me *MobInstance, vict combat.Combatant, dam in
 			me.SetPosition(combat.PosFighting)
 		}
 	}
-	if vict.GetFightingBody() == nil && vict.GetPosition() > combat.PosStunned {
-		vict.SetFightingBody(me)
+	if !victimWasFighting && vict.GetPosition() > combat.PosStunned {
+		// C set_fighting(victim, ch) also raises it to POS_FIGHTING
+		// (fight.c:1443-1445); update_pos then keeps it for a healthy victim.
+		// DP-1513: without this the victim stayed POS_STANDING and score
+		// printed "You are standing." where C printed "You are fighting Daral.".
+		if vict.GetFightingBody() == nil {
+			vict.SetFightingBody(me)
+		}
+		vict.SetPosition(combat.PosFighting)
 	}
 
 	return w.mobSkillDamageAfterGate(me, vict, dam, SkillBackstabNum)

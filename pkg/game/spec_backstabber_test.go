@@ -283,3 +283,33 @@ func TestMobBackstab_PositionMultiplier(t *testing.T) {
 		})
 	}
 }
+
+// TestSpecBackstabber_MissSetsVictimFightingPosition pins DP-1513: C's
+// damage() calls set_fighting(victim, ch) at src/fight.c:1443-1445, which sets
+// the victim's POS_FIGHTING (before the immortal damage-zeroing at :1480), so
+// after a missed mob backstab an immortal victim is fighting the mob. Go set
+// only the fighting target and left the position, so score printed
+// "You are standing." where C printed "You are fighting Daral.".
+func TestSpecBackstabber_MissSetsVictimFightingPosition(t *testing.T) {
+	w, player, mob, _ := prepareBackstabber(t, true)
+	player.SetHP(100)
+	player.SetPosition(combat.PosStanding)
+
+	previous := combat.GetCallbacks()
+	combat.SetCallbacks(&combat.GameCallbacks{
+		SkillMessage: func(int, combat.Combatant, combat.Combatant, int, int) bool { return true },
+	})
+	t.Cleanup(func() { combat.SetCallbacks(previous) })
+
+	seed := backstabberSeed(t, false)
+	dprng.ResetStream(seed)
+	if !specBackstabber(w, nil, mob, "", "") {
+		t.Fatal("backstabber miss arm should be handled")
+	}
+	if got := player.GetFighting(); got != mob.GetName() {
+		t.Fatalf("miss victim fighting target = %q, want %q", got, mob.GetName())
+	}
+	if got := player.GetPosition(); got != combat.PosFighting {
+		t.Fatalf("miss victim position = %d, want POS_FIGHTING (%d): C set_fighting(victim, ch) raises it (src/fight.c:1445)", got, combat.PosFighting)
+	}
+}

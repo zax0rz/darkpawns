@@ -3,6 +3,12 @@
 # mobile_activity() invokes the procedure only for an awake, non-fighting mob
 # with cmd==0.  The special scans the room in linked-list order for the first
 # visible, non-NOHASSLE player, then calls do_backstab with subcmd=1.
+# Repair (DP-1511 batch 3): quiet-mobs strips authored E equip lines, so the
+# vehicle's Daral had no wielded weapon and SPECIAL(backstabber)'s
+# do_backstab stopped silently at the !GET_EQ(ch, WEAR_WIELD) gate
+# (src/act.offensive.c:181-184) -- the messages go to the descriptor-less
+# mob, so both engines showed nothing. equip-object restores the zone's own
+# authored weapon (E 1 9101 999 16, zone 91 line 42).
 # C path: src/mobact.c:68-93 -> src/spec_procs2.c:2003-2016 ->
 # src/act.offensive.c:165-235 -> src/fight.c:1023-1092,1763-1935.
 
@@ -10,6 +16,7 @@
 empty-players
 quiet-mobs
 spawn-mob 9151 1 8105 91
+equip-object 9151 9101 1 16 91
 replace-room-exits 8105 none
 
 [setup:oracle]
@@ -44,6 +51,7 @@ Y
 goto 8105
 
 [probe]
+look
 ~dpclock pulse 20
 ~dpclock pulse 20
 ~dpclock pulse 20
@@ -60,3 +68,4 @@ score
 # depth-case: mob.backstabber-command-gate
 # depth-case: mob.backstabber-autonomous-dispatch
 # depth-case: mob.backstabber-target-and-weapon-gates
+# depth-case: mob.backstabber-victim-fighting
