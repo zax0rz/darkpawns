@@ -1,0 +1,98 @@
+# DP-1511 C witness collection for write/board/tell refusals.
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 8099 99 8004 80
+force-load 8099
+[setup:oracle]
+Writergod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Writergod
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Writerpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Writerpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8004
+teleport Writerpeer 8004
+send:observer write Active author
+tell Writerpeer test
+remove 1
+send:observer body
+send:observer @
+remove 1
+goto 8162
+teleport Writerpeer 8162
+set Writerpeer level 39
+write missing
+load obj 1208
+write pen
+load obj 8037
+write sword
+write sword pen
+load obj 1207
+write parchment sword
+write parchment pen
+test body
+@
+write parchment pen
+mute Writergod
+write parchment pen
+mute Writergod
+cast 'invisibility' pen
+~dpclock pulse 20
+holylight
+hold pen
+holylight
+~dpclock pulse 20
+set Writergod level 1
+write parchment
+look at

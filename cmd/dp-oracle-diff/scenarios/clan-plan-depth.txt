@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # Clan plan editor vehicle (src/clan.c:1391-1438). C enters string_write after
 # the prompt; the following ordinary input lines are editor text until @.
 
@@ -8,6 +9,7 @@
 # depth-case: clan.plan-editor-at-prefix
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

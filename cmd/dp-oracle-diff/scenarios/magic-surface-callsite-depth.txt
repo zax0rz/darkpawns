@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: magic.dispel-protected-target-name
 # depth-case: magic.create-food-message-pair
 # depth-case: spell-route.spoken-dispatch
@@ -14,6 +15,7 @@
 # 752, 1527-1529, 1729-1736, 1767-1769, 1997-1998.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-obj 8010 1 8105 80

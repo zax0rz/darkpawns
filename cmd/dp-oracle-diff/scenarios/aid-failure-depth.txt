@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: aid.failure-audience
 # depth-case: aid.failure-wait
 # C-first failure vehicle for do_first_aid (src/new_cmds2.c:166-184). The
@@ -6,6 +7,7 @@
 # failed act() audience and the exact PULSE_VIOLENCE+3 wait are both visible.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

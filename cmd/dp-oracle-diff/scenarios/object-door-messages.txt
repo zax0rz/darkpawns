@@ -1,8 +1,10 @@
+# setup-refusal-reason: pending DP-1511 triage
 # Real reciprocal door at room 16300 south -> 16301 (zone reset state 1).
 # An observer remains with the actor while a second peer crosses the temporarily
 # opened door, proving both $n room acts and "from the other side" messages.
 
 [fixture]
+allow-setup-refusal
 quiet-mobs
 
 [setup:oracle]

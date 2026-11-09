@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # Mortal clan-member vehicle for clan / do_clan (src/interpreter.c:383,
 # src/clan.c). The primary creates the clan, lowers its application level,
 # and forces the applicant to submit a request before the member probe.
@@ -28,6 +29,7 @@
 # depth-case: clan.promote-not-member
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

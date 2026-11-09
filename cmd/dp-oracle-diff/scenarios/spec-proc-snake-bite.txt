@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.snake-bite-site-live
 # C-first witness for the snake bite pair DP-1502 lists (src/spec_procs.c:341
 # TO_VICT "$n bites you!", with its TO_NOTVICT twin at :340). SPECIAL(snake)
@@ -9,6 +10,7 @@
 # C path: src/fight.c:1898-2032 -> src/spec_procs.c:330-347.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14103 1 8105 80

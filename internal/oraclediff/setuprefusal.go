@@ -2,6 +2,7 @@ package oraclediff
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -17,18 +18,11 @@ type setupRefusal struct {
 	cite string
 }
 
-// setupRefusalLines is the refusal inventory for every command that occurs in
-// a [warmup] line across the scenario corpus (inventoried 2026-11-05: set,
-// teleport, goto, skillset, force, load, hcontrol, advance, the OLC editors,
-// transfer, cast, sethunt, switch, plus the interpreter's universal refusals).
-// Every line cites the src/ location it was read from (R5g). Matching is on
-// whole normalized lines only, so ordinary prose that merely contains a
-// refusal phrase never trips the check.
-//
-// Two do_olc refusals are sprintf-shaped ("Specify a %s VNUM to edit.",
-// src/olc.c:113; "That %s is currently being edited by %s.", src/olc.c:157)
-// and cannot be whole-line matched; the fixed strings below cover the level
-// and zone paths that hollow scenarios actually hit.
+// setupRefusalLines is the original DP-1456 exact inventory (2026-11-05).
+// Keep these entries intact; DP-1511's additional exact strings and compiled
+// templates live in setuprefusal_inventory.go, with a source audit and actual
+// C witnesses in docs/fidelity/evidence/dp-1511/. Matching uses whole normalized
+// lines so prose merely containing a refusal phrase does not trip the check.
 //
 // Deliberately excluded: the interpreter's position refusals
 // (src/interpreter.c:923ff — "You need to stand up!" and kin). No incident
@@ -149,6 +143,16 @@ func matchingSetupRefusal(output string) (line string, cite string) {
 				return r.line, r.cite
 			}
 		}
+		for _, r := range setupRefusalAdditionalLines {
+			if norm == r.line {
+				return norm, r.cite
+			}
+		}
+		for _, r := range setupRefusalPatterns {
+			if r.pattern.MatchString(norm) {
+				return norm, r.cite
+			}
+		}
 	}
 	return "", ""
 }
@@ -170,4 +174,104 @@ func checkWarmupRefusals(steps []string, blocks []AudienceProbeBlock, peers int,
 		}
 	}
 	return nil
+}
+
+// Substitutions are non-empty and never cross a line. C's MAX_STRING_LENGTH
+// (src/structs.h:643) bounds the whole line through refusalMatcher.maxLen
+// rather than counted regex repeats: chunked {0,1000} repeats compiled each
+// pattern into a very large RE2 program, costing ~120 MB and 0.24 s at every
+// process start (under -race, enough to break the WS first-byte helper test).
+const setupRefusalField = `[^\r\n]+`
+
+// setupRefusalMaxString is C's MAX_STRING_LENGTH (src/structs.h:643).
+const setupRefusalMaxString = 8192
+
+// refusalMatcher is a compiled refusal template plus the longest line C could
+// have produced from it: MAX_STRING_LENGTH of substituted text plus the
+// template's fixed bytes.
+type refusalMatcher struct {
+	re     *regexp.Regexp
+	maxLen int
+}
+
+func (m refusalMatcher) MatchString(s string) bool {
+	return len(s) <= m.maxLen && m.re.MatchString(s)
+}
+
+type setupRefusalPattern struct {
+	template string
+	cite     string
+	pattern  refusalMatcher
+}
+
+func refusalPattern(template, cite string) setupRefusalPattern {
+	return setupRefusalPattern{template, cite, compileRefusalTemplate(template)}
+}
+
+// compileRefusalTemplate accepts C printf conversions and act() substitutions
+// (src/comm.c:2408-2457). Everything else remains escaped literal text. Invalid
+// templates panic at initialization instead of silently weakening the gate.
+func compileRefusalTemplate(template string) refusalMatcher {
+	var out strings.Builder
+	fixed := 0
+	out.WriteString("^")
+	for i := 0; i < len(template); {
+		switch template[i] {
+		case '%':
+			i++
+			if i < len(template) && template[i] == '%' {
+				out.WriteString("%")
+				fixed++
+				i++
+				continue
+			}
+			start := i
+			for i < len(template) && strings.ContainsRune("-+ #0.123456789hlz", rune(template[i])) {
+				i++
+			}
+			if i == len(template) || !strings.ContainsRune("sdiuoxXfFeEgGc", rune(template[i])) {
+				panic("invalid printf refusal template: " + template[start-1:])
+			}
+			if strings.ContainsRune("diu", rune(template[i])) {
+				out.WriteString(`[+-]?[0-9]{1,20}`)
+				fixed += 21
+			} else {
+				out.WriteString(setupRefusalField)
+			}
+			i++
+		case '$':
+			i++
+			if i == len(template) || !strings.ContainsRune("nNmMsSeEoOpPaATF$", rune(template[i])) {
+				panic("invalid act refusal template: " + template)
+			}
+			if template[i] == '$' {
+				out.WriteString(`\$`)
+				fixed++
+			} else {
+				switch template[i] {
+				case 'm', 'M':
+					fixed += 3 // longest C pronoun or article
+					out.WriteString(`(?:[Hh]im|[Hh]er|[Ii]t)`)
+				case 's', 'S':
+					fixed += 3 // longest C pronoun or article
+					out.WriteString(`(?:[Hh]is|[Hh]er|[Ii]ts)`)
+				case 'e', 'E':
+					fixed += 3 // longest C pronoun or article
+					out.WriteString(`(?:[Hh]e|[Ss]he|[Ii]t)`)
+				case 'a', 'A':
+					fixed += 3 // longest C pronoun or article
+					out.WriteString(`(?:[Aa]|[Aa]n)`)
+				default:
+					out.WriteString(setupRefusalField)
+				}
+			}
+			i++
+		default:
+			out.WriteString(regexp.QuoteMeta(template[i : i+1]))
+			fixed++
+			i++
+		}
+	}
+	out.WriteString("$")
+	return refusalMatcher{re: regexp.MustCompile(out.String()), maxLen: setupRefusalMaxString + fixed}
 }

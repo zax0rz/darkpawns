@@ -1,0 +1,3 @@
+handler	command	case_id	depth	scope	status	proof	c_site	notes
+do_write	write	write.single-argument-missing-object	D1	command	blocked	pending	src/act.comm.c:1058-1062	DP-1511 sol-dp1511-write-witness-r2: first divergent generic write missing actor block gives C "There is no missing in your inventory.", Go "Write?  With what?  ON what?  What are you trying to do?!?" Retained diagnostic source and C dump; Claude to file, no game fix here.
+do_write	write Active author	write.two-argument-missing-paper	D1	command	blocked	pending	src/act.comm.c:1048-1056	DP-1511 sol-dp1511-write-witness: first generic write block C You have no active., Go You don't have 'author'. This attempt did not contain a board; no board proof claimed. Retained red, Claude to file.

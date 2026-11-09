@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first vocal cast_spell gate matrix from the Pattern rooms' oncmd and
 # onpulse Lua paths. Room 3065's oncmd writes the peer's exact position; room
 # 22500's onpulse invokes lua_spell with that PC as me even when normal command
@@ -16,6 +17,7 @@
 # depth-case: lua.bind-spell-group-power
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 no-settle

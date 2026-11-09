@@ -75,3 +75,56 @@ func evidencePath(root, name string) (string, error) {
 	}
 	return relative, nil
 }
+
+// Retain discarded setup output before the refusal gate can return. A probe
+// dump alone cannot witness a warmup's state transition (R5j).
+func retainWarmupEvidence(root, directory, engine string, blocks []oraclediff.AudienceProbeBlock) error {
+	if root == "" && directory == "" {
+		return nil
+	}
+	if !filepath.IsAbs(root) {
+		return fmt.Errorf("retain warmup evidence: root must be absolute")
+	}
+	if engine != "c" && engine != "go" {
+		return fmt.Errorf("retain warmup evidence: invalid engine %q", engine)
+	}
+	root = filepath.Clean(root)
+	relative, err := evidencePath(root, directory)
+	if err != nil {
+		return err
+	}
+	scope, err := os.OpenRoot(root)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = scope.Close() }()
+	if err := scope.MkdirAll(relative, 0o750); err != nil {
+		return err
+	}
+	normalized := make([]oraclediff.AudienceProbeBlock, len(blocks))
+	var rendered strings.Builder
+	label := "Go port"
+	if engine == "c" {
+		label = "C oracle"
+	}
+	fmt.Fprintf(&rendered, "normalized %s warmup blocks:\n", label)
+	for i, block := range blocks {
+		normalized[i] = block
+		normalized[i].Output = oraclediff.Normalize(block.Output)
+		fmt.Fprintf(&rendered, "--- [%s [%s]]\n%s\n", block.Command, block.Audience, normalized[i].Output)
+	}
+	payload, err := json.Marshal(normalized)
+	if err != nil {
+		return err
+	}
+	for suffix, data := range map[string][]byte{".json": payload, ".txt": []byte(rendered.String())} {
+		path, err := evidencePath(root, filepath.Join(relative, engine+"-warmup"+suffix))
+		if err != nil {
+			return err
+		}
+		if err := scope.WriteFile(path, data, 0o600); err != nil {
+			return err
+		}
+	}
+	return nil
+}

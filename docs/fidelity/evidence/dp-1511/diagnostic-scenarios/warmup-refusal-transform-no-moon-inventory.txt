@@ -1,0 +1,76 @@
+# DP-1511 no-moon refusal: fixed time is day1, hour22 (src/utils.h:135-136; src/db.c:417-420).
+[fixture]
+empty-players
+quiet-mobs
+fixed-time 650339613
+
+[setup:oracle]
+Transformwolf
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Transformwolf
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Transformwatch
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Transformwatch
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Transformwatch 8105
+set player Transformwolf class mage
+set player Transformwolf maxmana 5000
+set player Transformwolf mana 5000
+skillset Transformwolf 'lycanthropy' 100
+set player Transformwolf level 34
+cast 'lycanthropy' Transformwolf
+~dpclock pulse 20
+
+[probe]
+transform
+transform

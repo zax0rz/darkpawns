@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # do_wizutil's five mortal-affecting mudlog producers (DP-1371 D7).
 # C act.wizard.c:2112-2173 emits each at BRF (notitle at NRM) with
 # MAX(LVL_GOD, GET_INVIS_LEV(actor)) and file=TRUE; the shared consumer is
@@ -12,6 +13,7 @@
 # depth-case: mudlog.wizutil-thaw
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

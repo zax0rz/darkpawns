@@ -73,12 +73,8 @@ Y
 goto 8105
 teleport Fullpeer 8105
 set player Fullpeer dex 1
-load obj 8037
-give sword Fullpeer
-load obj 8037
-give sword Fullpeer
-load obj 8037
-give sword Fullpeer
+# Fullpeer starts with three carried starter items (src/class.c:521-534).
+# Add two swords to reach five; the former three extra gives were refused.
 load obj 8037
 give sword Fullpeer
 load obj 8037

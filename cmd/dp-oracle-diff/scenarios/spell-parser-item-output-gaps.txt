@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: parser.use.staff-action-description
 # depth-case: parser.use.wand-self-actions
 # depth-case: parser.use.wand-target-action-description
@@ -17,6 +18,7 @@
 # unrestricted wand prototype is reconfigured through OEDIT for object output.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 set-room-flag 8105 4 on

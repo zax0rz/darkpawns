@@ -1,0 +1,137 @@
+# DP-1511: intentionally refused probe commands capture C matcher witnesses.
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 58.obj
+[setup:oracle]
+Gatewitness
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Gatewitness
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Gatepeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Gatepeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+teleport Gatepeer 8162
+kill
+kill Gatewitness
+home 999999
+set Gatepeer loadroom 999999
+follow Gatepeer
+follow Gatepeer
+send:observer follow Gatewitness
+follow Gatewitness
+load obj 5805
+set Gatepeer str 3
+give sword Gatepeer
+set Gatepeer str 18
+give sword Gatepeer
+load obj 5805
+set Gatewitness str 3
+wield sword
+set Gatewitness str 18
+skillset Gatewitness 'flesh alter' 100
+flesh
+wield sword
+flesh
+~dpclock pulse 60
+wield sword
+wear sword nonsense
+send:observer sleep
+send:observer rest
+send:observer sit
+send:observer stand
+send:observer wake
+send:observer follow Gatewitness
+send:observer follow Gatewitness
+set Gatepeer hit -5
+wake Gatepeer
+set Gatepeer hit 100
+~dpclock pulse 60
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer
+load obj 5805
+give sword Gatepeer

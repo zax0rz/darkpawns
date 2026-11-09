@@ -1,0 +1,15 @@
+scenario	C_line	dump	dump_line
+egon-equipment-all-slots	<wielded>            a confessor's sword	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/egon-equipment-all-slots.txt	19
+egon-equipment-apply-spell	You wield an ancient staff of power.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/egon-equipment-apply-spell.txt	21
+egon-equipment-apply-spell-removal	You're a vampire!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/egon-equipment-apply-spell-removal.txt	23
+egon-equipment-covered	<worn about body>    a flowing, quicksilver cape	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/egon-equipment-covered.txt	9
+egon-equipment-look-order	<worn on finger>     a translucent ring	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/egon-equipment-look-order.txt	8
+equipment-glance-depth	You stop using Stars and cuckoo birds.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-batch1-starter-cleanup/census-dump/equipment-glance-depth.txt	10
+equipment-physical-affects	You wear a medallion of Death around your neck.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/equipment-physical-affects.txt	19
+inv-equip	<wielded>            a short sword	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-batch1-starter-cleanup/census-dump/inv-equip.txt	14
+shops-remorter-equipment	You must come unto me naked, wearing only thy old body.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/shops-remorter-equipment.txt	3
+shops-remorter-success	The remorter tells you, 'Enjoy your new life...'	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/shops-remorter-success.txt	3
+spec-proc-eq-thief	Nothing.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-batch1-after-seed2/census-dump/spec-proc-eq-thief.txt	4
+spec-proc-remorter-equipment	You must come unto me naked, wearing only thy old body.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/spec-proc-remorter-equipment.txt	3
+spec-proc-remorter-success	The remorter tells you, 'Enjoy your new life...'	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-gate-batch1-r2/census-dump/spec-proc-remorter-success.txt	3
+carry-limit-gates-depth	Fullpeer seems to have his hands full.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-integration-after-seed1/census-dump/carry-limit-gates-depth.txt	18

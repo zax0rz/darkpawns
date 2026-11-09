@@ -75,8 +75,8 @@ Y
 recall
 
 [warmup]
-remove tunic
-remove sword
+# C do_start carries starter tunic/sword unequipped (src/class.c:524,530).
+# Discard those carried objects; the former remove attempts were refused.
 junk tunic
 junk sword
 get stars

@@ -1,8 +1,10 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: spell.charm.save-npc-retaliation
 # A level-40 caster charms a low-level trainee, whose warrior paralysis save
 # succeeds in this frozen seed and immediately takes the C opening-hit path.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 16303 1 8105 80

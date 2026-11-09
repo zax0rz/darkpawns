@@ -904,6 +904,8 @@ func parseFaultFixture(fields []string) (FaultFixture, bool) {
 
 // WarmupPolicy configures RunWarmup's setup-refusal gate (DP-1456).
 type WarmupPolicy struct {
+	// Capture retains warmup evidence before checking refusals, including opt-outs.
+	Capture func([]AudienceProbeBlock) error
 	// Engine names the engine whose warmup is being played ("c" or "go") in
 	// the setup-refused error, so a census FAIL row attributes the refusal.
 	Engine string
@@ -927,6 +929,11 @@ func RunWarmup(primary Conn, peers map[string]Conn, steps []string, quiescence t
 	blocks, err := RunAudienceProbe(primary, peers, steps, quiescence)
 	if err != nil {
 		return err
+	}
+	if policy.Capture != nil {
+		if err := policy.Capture(blocks); err != nil {
+			return fmt.Errorf("retain warmup evidence: %w", err)
+		}
 	}
 	if policy.AllowSetupRefusal {
 		return nil

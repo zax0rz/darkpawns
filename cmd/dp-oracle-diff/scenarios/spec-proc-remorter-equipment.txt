@@ -39,7 +39,6 @@ Y
 [warmup]
 goto 8044
 set GearGate gold 60000
-remove all
 load obj 8037
 wield sword
 set GearGate level 30

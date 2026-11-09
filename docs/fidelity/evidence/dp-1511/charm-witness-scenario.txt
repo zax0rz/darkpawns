@@ -1,0 +1,88 @@
+# DP-1511 C witnesses for charm, follow, mount, door and recall refusals.
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 3 off
+set-room-flag 8162 17 on
+replace-room-exits 8162 north 8161 1 gate
+spawn-mob 8021 2 8162 80
+set-mob-aff 8021 2097152
+[setup:oracle]
+Charmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Charmgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Charmhelper
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Charmhelper
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+teleport Charmhelper 8162
+set Charmhelper level 40
+load mob 8021
+open gate somewhere
+open banana north
+open the
+close the
+open gate
+recall
+set Charmhelper level 1
+send:observer recall
+switch horse
+follow Charmhelper
+follow Charmgod
+north
+ride 2.horse
+return
+ride horse
+snoop
+home 1204
+home 999999

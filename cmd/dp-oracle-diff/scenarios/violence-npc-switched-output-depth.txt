@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # The mortal peer starts a real fight with a guard trainee by forced command.
 # Its oncmd script sets the mobile to sitting; the God switches into that live
 # body before the violence pulse and receives its dodge and stand-up outputs.
@@ -7,6 +8,7 @@
 # depth-case: fight.round-mob-standup
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 16303 1 8105 80

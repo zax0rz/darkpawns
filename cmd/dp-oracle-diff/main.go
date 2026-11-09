@@ -760,7 +760,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		}
 		markDraws(&res, cDrawLog, "setup")
 		if err := oraclediff.RunWarmup(oraclePrimary, peers, scenario.Warmup, quiescence, oraclediff.WarmupPolicy{
-			Engine:            "c",
+			Engine: "c",
+			Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
+				return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "c", blocks)
+			},
 			AllowSetupRefusal: scenario.AllowSetupRefusal,
 		}); err != nil {
 			return res, fmt.Errorf("run C oracle warmup: %w", err)
@@ -820,7 +823,10 @@ func execute(scenarioName string, quiescence, firstByteWait, bootTimeout time.Du
 		}
 		markDraws(&res, goDrawLog, "setup")
 		if err := oraclediff.RunWarmup(goPrimary, peers, scenario.Warmup, quiescence, oraclediff.WarmupPolicy{
-			Engine:            "go",
+			Engine: "go",
+			Capture: func(blocks []oraclediff.AudienceProbeBlock) error {
+				return retainWarmupEvidence(os.Getenv("DP_ORACLE_EVIDENCE_ROOT"), os.Getenv("DP_ORACLE_EVIDENCE"), "go", blocks)
+			},
 			AllowSetupRefusal: scenario.AllowSetupRefusal,
 		}); err != nil {
 			return res, fmt.Errorf("run Go port warmup: %w", err)

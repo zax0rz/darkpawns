@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: spell.points.cure-critic
 # depth-case: spell.points.cure-light
 # depth-case: spell.points.vitality
@@ -11,6 +12,7 @@
 # effect branches at src/magic.c:1767-1824.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

@@ -1,0 +1,47 @@
+# DP-1511 C shop refusal witnesses. The oversized count witnesses the literal
+# only; atoi overflow is not a gameplay parity claim (R1a).
+[fixture]
+empty-players
+quiet-mobs
+quiet-zone 121
+spawn-mob 12106 1 12137 121
+give-object 12106 6 100000 121
+spawn-mob 12102 1 12135 121
+give-object 12102 12102 100000 121
+
+[setup:oracle]
+Shoplimits
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Shoplimits
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 12137
+set Shoplimits gold 1000000
+buy 1000 boat
+drop all.boat
+goto 12135
+buy 1000 gold
+buy 2147483648 gold

@@ -69,7 +69,6 @@ Y
 [warmup]
 goto 8004
 teleport Egonlook 8004
-remove all
 get breast
 wear breast
 get ring

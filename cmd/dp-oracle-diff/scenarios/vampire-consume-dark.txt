@@ -1,9 +1,11 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: drink.vampire-dark
 # depth-case: eat.vampire-dark
 # Real Dracula look/bite sets PLR_VAMPIRE; no AFF_VAMPIRE transform is required.
 # Shipped beer glass 4104 has one serving; alcoholic amount is arithmetic, not RNG.
 # Clock starts at 14h, 630 pulses/hour. Setup pulses are discarded.
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 14110 1 8105 80

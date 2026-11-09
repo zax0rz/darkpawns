@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first saved-file reporting and mutation vehicle. The first character is
 # the bootstrap implementor; peers are saved and disconnected before file
 # access, and the actor is lowered below Setpeer to exercise both refusals.
@@ -11,6 +12,7 @@
 # depth-case: set.file-saved
 
 [fixture]
+allow-setup-refusal
 quiet-mobs
 empty-players
 

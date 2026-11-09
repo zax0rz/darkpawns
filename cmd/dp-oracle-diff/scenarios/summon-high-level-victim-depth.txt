@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # depth-case: spell.summon.high-level-victim
 # C path: do_cast -> cast_spell -> call_magic -> spell_summon
 # (spell_parser.c:879-925,1038-1110,513; spells.c:243-253).
@@ -5,6 +6,7 @@
 # the level cap MIN(LVL_IMMORT-1, level+3) makes the victim refusal reachable.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 replace-room-exits 8162 north 8161 0

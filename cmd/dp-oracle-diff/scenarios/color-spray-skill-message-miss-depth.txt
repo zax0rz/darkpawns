@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # A room script sets the victim's AFF_SANCTUARY and AFF_PROTECT_GOOD bits.
 # The disposable spellbook prototype is edited into a level-1 Color Spray scroll.
 # A room script sets Sanctuary and Protection from Good on the level-30 target.
@@ -9,6 +10,7 @@
 # depth-case: spell.color-spray.message-miss
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 no-settle

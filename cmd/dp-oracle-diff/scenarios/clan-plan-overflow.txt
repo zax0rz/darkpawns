@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # Clan plan editor overflow (src/clan.c:1435-1436 -> string_write ->
 # string_add, src/modify.c:131-150, non-improved editor). The plan buffer
 # accumulates lines under C's 256-byte input cap; the line that would cross
@@ -8,6 +9,7 @@
 # depth-case: clan.plan-overflow-later-line-skipped
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 

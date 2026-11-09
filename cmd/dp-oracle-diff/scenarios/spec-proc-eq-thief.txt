@@ -55,8 +55,6 @@ Y
 
 [warmup]
 goto 8105
-remove all
-junk all
 load obj 8010
 set Eqthiefprobe level 1
 sleep

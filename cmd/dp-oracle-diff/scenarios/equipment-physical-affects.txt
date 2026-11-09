@@ -43,7 +43,6 @@ Y
 
 [warmup]
 goto 8004
-remove all
 
 [probe]
 score

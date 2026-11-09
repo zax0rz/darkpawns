@@ -1,0 +1,125 @@
+# DP-1511 C witnesses for fighting ride and charm/master guards.
+[fixture]
+empty-players
+quiet-mobs
+replace-room-exits 8162 all 8161 0
+set-room-flag 8162 3 off
+set-room-flag 8162 4 off
+set-room-flag 8162 16 off
+set-room-flag 8161 3 off
+set-room-flag 8161 4 off
+spawn-mob 8021 999 8162 80
+[setup:oracle]
+Charmrider
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Charmrider
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Casterpal
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Casterpal
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8162
+teleport Casterpal 8162
+set Casterpal class mage
+set Casterpal maxmana 5000
+set Casterpal mana 5000
+skillset Casterpal 'charm' 100
+skillset Casterpal 'bash' 100
+set Casterpal outlaw on
+set Casterpal level 39
+set Charmrider class cleric
+set Charmrider maxmana 5000
+set Charmrider mana 5000
+set Charmrider maxhit 5000
+set Charmrider hit 5000
+set Charmrider nohassle off
+set mob horse maxhit 5000
+set mob horse hit 5000
+set Charmrider level 30
+hit horse
+send:observer bash Charmrider
+send:observer force Charmrider stand
+send:observer force Charmrider ride horse
+~dpclock pulse 60
+flee
+send:observer goto 8161
+send:observer load mob 8021
+send:observer set Charmrider level 1
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+send:observer cast 'charm' Charmrider
+~dpclock pulse 20
+ride horse
+cast 'cure light' Casterpal

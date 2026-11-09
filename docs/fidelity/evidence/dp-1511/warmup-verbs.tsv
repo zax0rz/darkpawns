@@ -1,0 +1,229 @@
+token	steps	scenarios	C handler or input kind	forced steps
+(absent)	1	1	editor/text input (not a registered verb)	0
+-1	8	4	editor/text input (not a registered verb)	0
+/c	1	1	text editor control	0
+/s	1	1	text editor control	0
+0	34	23	editor/text input (not a registered verb)	0
+1	116	55	editor/text input (not a registered verb)	0
+10	10	10	editor/text input (not a registered verb)	0
+100	2	2	editor/text input (not a registered verb)	0
+1000	1	1	editor/text input (not a registered verb)	0
+101	2	2	editor/text input (not a registered verb)	0
+103	1	1	editor/text input (not a registered verb)	0
+11	2	2	editor/text input (not a registered verb)	0
+12	3	2	editor/text input (not a registered verb)	0
+12100	1	1	editor/text input (not a registered verb)	0
+12101	1	1	editor/text input (not a registered verb)	0
+12102	1	1	editor/text input (not a registered verb)	0
+12103	1	1	editor/text input (not a registered verb)	0
+12104	1	1	editor/text input (not a registered verb)	0
+12105	1	1	editor/text input (not a registered verb)	0
+12106	1	1	editor/text input (not a registered verb)	0
+12107	1	1	editor/text input (not a registered verb)	0
+12108	1	1	editor/text input (not a registered verb)	0
+12110	1	1	editor/text input (not a registered verb)	0
+12111	1	1	editor/text input (not a registered verb)	0
+12112	1	1	editor/text input (not a registered verb)	0
+12116	1	1	editor/text input (not a registered verb)	0
+12117	1	1	editor/text input (not a registered verb)	0
+12118	1	1	editor/text input (not a registered verb)	0
+12119	1	1	editor/text input (not a registered verb)	0
+12120	1	1	editor/text input (not a registered verb)	0
+12121	1	1	editor/text input (not a registered verb)	0
+12122	1	1	editor/text input (not a registered verb)	0
+12123	1	1	editor/text input (not a registered verb)	0
+12126	1	1	editor/text input (not a registered verb)	0
+12127	1	1	editor/text input (not a registered verb)	0
+12128	1	1	editor/text input (not a registered verb)	0
+12129	1	1	editor/text input (not a registered verb)	0
+12130	1	1	editor/text input (not a registered verb)	0
+12131	1	1	editor/text input (not a registered verb)	0
+12132	1	1	editor/text input (not a registered verb)	0
+12133	1	1	editor/text input (not a registered verb)	0
+12134	1	1	editor/text input (not a registered verb)	0
+12135	1	1	editor/text input (not a registered verb)	0
+13	12	12	editor/text input (not a registered verb)	0
+14	7	7	editor/text input (not a registered verb)	0
+16	1	1	editor/text input (not a registered verb)	0
+17	1	1	editor/text input (not a registered verb)	0
+18	7	7	editor/text input (not a registered verb)	0
+2	20	16	editor/text input (not a registered verb)	0
+20	54	54	editor/text input (not a registered verb)	0
+21	1	1	editor/text input (not a registered verb)	0
+22	3	3	editor/text input (not a registered verb)	0
+24	1	1	editor/text input (not a registered verb)	0
+25	3	3	editor/text input (not a registered verb)	0
+26	2	2	editor/text input (not a registered verb)	0
+27	2	2	editor/text input (not a registered verb)	0
+28	1	1	editor/text input (not a registered verb)	0
+3	10	10	editor/text input (not a registered verb)	0
+30	6	5	editor/text input (not a registered verb)	0
+32	2	2	editor/text input (not a registered verb)	0
+37	3	3	editor/text input (not a registered verb)	0
+38	5	5	editor/text input (not a registered verb)	0
+4	11	11	editor/text input (not a registered verb)	0
+40	4	4	editor/text input (not a registered verb)	0
+43	1	1	editor/text input (not a registered verb)	0
+45	1	1	editor/text input (not a registered verb)	0
+46	3	3	editor/text input (not a registered verb)	0
+47	1	1	editor/text input (not a registered verb)	0
+48	1	1	editor/text input (not a registered verb)	0
+49	3	3	editor/text input (not a registered verb)	0
+5	9	9	editor/text input (not a registered verb)	0
+50	2	2	editor/text input (not a registered verb)	0
+56	1	1	editor/text input (not a registered verb)	0
+57	2	2	editor/text input (not a registered verb)	0
+58	1	1	editor/text input (not a registered verb)	0
+6	10	10	editor/text input (not a registered verb)	0
+60	1	1	editor/text input (not a registered verb)	0
+61	2	2	editor/text input (not a registered verb)	0
+62	3	3	editor/text input (not a registered verb)	0
+67	1	1	editor/text input (not a registered verb)	0
+69	1	1	editor/text input (not a registered verb)	0
+7	3	3	editor/text input (not a registered verb)	0
+71	2	2	editor/text input (not a registered verb)	0
+72	1	1	editor/text input (not a registered verb)	0
+76	1	1	editor/text input (not a registered verb)	0
+77	3	3	editor/text input (not a registered verb)	0
+79	4	4	editor/text input (not a registered verb)	0
+8	3	3	editor/text input (not a registered verb)	0
+81	1	1	editor/text input (not a registered verb)	0
+83	2	2	editor/text input (not a registered verb)	0
+85	1	1	editor/text input (not a registered verb)	0
+86	1	1	editor/text input (not a registered verb)	0
+92	2	2	editor/text input (not a registered verb)	0
+93	3	3	editor/text input (not a registered verb)	0
+94	3	3	editor/text input (not a registered verb)	0
+96	2	2	editor/text input (not a registered verb)	0
+97	1	1	editor/text input (not a registered verb)	0
+98	1	1	editor/text input (not a registered verb)	0
+99	1	1	editor/text input (not a registered verb)	0
+<ENTER>	2	1	harness directive	0
+<RELOGIN>	2	2	harness directive	0
+@	3	1	editor/text input (not a registered verb)	0
+A	43	13	editor/text input (not a registered verb)	0
+D	83	72	editor/text input (not a registered verb)	0
+E	2	2	editor/text input (not a registered verb)	0
+F	1	1	editor/text input (not a registered verb)	0
+MAGIC	1	1	editor/text input (not a registered verb)	0
+P	1	1	editor/text input (not a registered verb)	0
+Q	13	13	editor/text input (not a registered verb)	0
+T	12	12	editor/text input (not a registered verb)	0
+a	4	4	editor/text input (not a registered verb)	0
+absent	1	1	editor/text input (not a registered verb)	0
+advance	44	39	do_advance	0
+alias	1	1	do_alias	0
+ambush	1	1	do_ambush	0
+auto	9	6	do_auto	1
+bash	1	1	do_bash	0
+brief	1	1	do_gen_tog	0
+buy	13	13	do_not_here	1
+cast	18	16	do_cast	1
+clan	55	15	do_clan	2
+close	3	3	do_gen_door	0
+color	20	20	do_color	10
+d	4	4	editor/text input (not a registered verb)	0
+dispel	2	2	editor/text input (not a registered verb)	0
+drop	16	9	do_drop	0
+east	10	5	do_move	0
+energy	1	1	editor/text input (not a registered verb)	0
+follow	5	4	do_follow	43
+force	325	158	do_force	0
+freeze	1	1	do_wizutil	0
+frog	1	1	editor/text input (not a registered verb)	0
+get	163	102	do_get	6
+give	160	58	do_give	0
+gold	8	8	do_coins	0
+goto	1397	1371	do_goto	24
+group	33	31	do_group	1
+hcontrol	100	1	do_hcontrol	0
+hit	8	8	do_hit	7
+hold	28	28	do_grab	1
+holylight	28	28	do_gen_tog	0
+home	1	1	do_home	0
+invis	3	3	do_invis	1
+junk	5	3	do_drop	0
+kill	8	8	do_kill	1
+level-38	1	1	editor/text input (not a registered verb)	0
+level-39	1	1	editor/text input (not a registered verb)	0
+level-40	1	1	editor/text input (not a registered verb)	0
+list	2	2	do_not_here	0
+load	298	166	do_load	0
+look	6	5	do_look	1
+mount	0	0	do_ride	1
+mute	9	9	do_wizutil	0
+nohassle	9	9	do_gen_tog	0
+nonewbie	0	0	do_gen_tog	1
+norepeat	1	1	do_gen_tog	0
+north	5	5	do_move	0
+nowiz	0	0	do_gen_tog	1
+oedit	66	66	do_olc	0
+open	2	2	do_gen_door	0
+poofout	1	1	do_poofset	0
+put	10	3	do_put	0
+q	90	90	editor/text input (not a registered verb)	0
+quest	0	0	do_gen_tog	2
+quit	6	5	do_quit	0
+recall	2	2	do_recall	0
+recite	1	1	do_use	0
+redit	2	2	do_olc	0
+remove	17	15	do_remove	0
+rest	1	1	do_rest	0
+ride	3	3	do_ride	0
+roomflags	1	1	do_gen_tog	0
+save	3	3	do_save	0
+say	4	4	do_say	1
+sedit	23	23	do_olc	0
+set	4476	719	do_set	0
+sethunt	3	3	do_sethunt	0
+sit	1	1	do_sit	0
+skillset	477	420	do_skillset	0
+sleep	5	5	do_sleep	104
+snoop	1	1	do_snoop	0
+south	5	5	do_move	0
+staff	1	1	editor/text input (not a registered verb)	0
+staff0101	1	1	editor/text input (not a registered verb)	0
+staff0201	1	1	editor/text input (not a registered verb)	0
+staff0301	1	1	editor/text input (not a registered verb)	0
+staff0401	1	1	editor/text input (not a registered verb)	0
+staff0501	1	1	editor/text input (not a registered verb)	0
+staff0601	1	1	editor/text input (not a registered verb)	0
+staff0701	1	1	editor/text input (not a registered verb)	0
+staff0801	1	1	editor/text input (not a registered verb)	0
+staff0901	1	1	editor/text input (not a registered verb)	0
+staff1001	1	1	editor/text input (not a registered verb)	0
+staff1101	1	1	editor/text input (not a registered verb)	0
+staff1201	1	1	editor/text input (not a registered verb)	0
+staff1301	1	1	editor/text input (not a registered verb)	0
+staff1401	1	1	editor/text input (not a registered verb)	0
+staff1501	1	1	editor/text input (not a registered verb)	0
+staff1601	1	1	editor/text input (not a registered verb)	0
+stand	0	0	do_stand	1
+stat	1	1	do_stat	0
+switch	10	10	do_switch	0
+syslog	23	17	do_syslog	12
+teleport	1764	1037	do_teleport	0
+tell	1	1	do_tell	0
+transfer	4	3	do_trans	0
+transform	2	2	do_transform	0
+unban	2	2	do_unban	0
+wake	1	1	do_wake	0
+wand0101	1	1	editor/text input (not a registered verb)	0
+wand0201	1	1	editor/text input (not a registered verb)	0
+wand0301	1	1	editor/text input (not a registered verb)	0
+wand0401	1	1	editor/text input (not a registered verb)	0
+wand0501	1	1	editor/text input (not a registered verb)	0
+wand0601	1	1	editor/text input (not a registered verb)	0
+wand0701	1	1	editor/text input (not a registered verb)	0
+wand0801	1	1	editor/text input (not a registered verb)	0
+wand0901	1	1	editor/text input (not a registered verb)	0
+wand0990	1	1	editor/text input (not a registered verb)	0
+wand0991	1	1	editor/text input (not a registered verb)	0
+wand1001	1	1	editor/text input (not a registered verb)	0
+wand1101	1	1	editor/text input (not a registered verb)	0
+wear	46	22	do_wear	1
+wield	25	25	do_wield	101
+write	3	1	do_write	0
+y	90	90	editor/text input (not a registered verb)	0
+zedit	1	1	do_olc	0
+~dpclock	73	50	harness directive	0

@@ -1,0 +1,59 @@
+{
+  "egon-equipment-all-slots": [
+    1
+  ],
+  "egon-equipment-apply-spell": [
+    1
+  ],
+  "egon-equipment-apply-spell-removal": [
+    1
+  ],
+  "egon-equipment-covered": [
+    1
+  ],
+  "egon-equipment-look-order": [
+    1
+  ],
+  "equipment-glance-depth": [
+    1
+  ],
+  "equipment-physical-affects": [
+    1
+  ],
+  "inv-equip": [
+    1
+  ],
+  "shops-remorter-equipment": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "shops-remorter-success": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "spec-proc-eq-thief": [
+    2,
+    3,
+    5,
+    8
+  ],
+  "spec-proc-remorter-equipment": [
+    1
+  ],
+  "spec-proc-remorter-success": [
+    1
+  ],
+  "carry-limit-gates-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ]
+}

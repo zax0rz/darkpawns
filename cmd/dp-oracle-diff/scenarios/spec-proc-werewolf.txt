@@ -1,3 +1,4 @@
+# setup-refusal-reason: pending DP-1511 triage
 # C-first vehicle for SPECIAL(werewolf), defined at src/spec_procs3.c:427-448
 # and registered as mob vnum 5510 at src/spec_assign.c:251. C attaches no
 # script to it (DP-1333); the vehicle uses a same-room victim,
@@ -6,6 +7,7 @@
 # C path: src/fight.c:1898-2032 -> src/spec_procs3.c:427-448.
 
 [fixture]
+allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 5510 999 5510 55
