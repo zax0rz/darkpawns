@@ -1,0 +1,109 @@
+# depth-case: cast.smartness-gate
+# C-first witness for cast_spell's zero-intelligence/wisdom guard, "You're not
+# smart enough to cast!" (DP-1502 list at src/spell_parser.c:841). A level-30
+# Mage peer whose intelligence is set to 0 passes do_cast's gates and is then
+# refused by cast_spell before mana or the draw.
+# C path: do_cast -> cast_spell (src/spell_parser.c:835-843).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Intgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Intgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Intcast]
+Intcast
+Y
+castpass
+castpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:Intcast]
+Intcast
+y
+castpass
+castpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Intvictim]
+Intvictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Intvictim]
+Intvictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Intcast 8105
+teleport Intvictim 8105
+set player Intcast class mage
+set player Intcast level 30
+set player Intcast maxmana 5000
+set player Intcast mana 5000
+skillset Intcast 'flame arrow' 100
+set player Intcast int 0
+
+[probe:Intcast]
+cast 'flame arrow' Intvictim
