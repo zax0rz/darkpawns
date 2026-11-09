@@ -147,9 +147,7 @@ func TestSwitchReadersConcurrentLifecycle(t *testing.T) {
 	s.send = make(chan []byte, 10000)
 	h.send = make(chan []byte, 10000)
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for range 100 {
 			m.world.MessageSink("Borrowed", []byte("test\r\n"))
 			m.attachedBody(h.player)
@@ -157,7 +155,7 @@ func TestSwitchReadersConcurrentLifecycle(t *testing.T) {
 			m.reserveAndReleaseSwitchTestName()
 			m.world.MovementLook(h.player)
 		}
-	}()
+	})
 	for range 100 {
 		if err := cmdSwitch(s, []string{"Borrowed"}); err != nil {
 			t.Fatal(err)

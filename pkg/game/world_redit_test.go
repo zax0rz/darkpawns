@@ -121,9 +121,7 @@ func TestRoutineMutationConcurrentDoorWritersAndReaders(t *testing.T) {
 	const iterations = 300
 	var wg sync.WaitGroup
 	for range 4 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range iterations {
 				room, ok := w.GetRoom(1001)
 				if !ok || room.VNum != 1001 {
@@ -135,7 +133,7 @@ func TestRoutineMutationConcurrentDoorWritersAndReaders(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
 	for writer := range 2 {
 		wg.Add(1)
@@ -179,9 +177,7 @@ func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
 	const iterations = 200
 	var wg sync.WaitGroup
 	for range 4 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range iterations {
 				room, ok := w.SnapshotRoom(1001)
 				if !ok || room.VNum != 1001 {
@@ -198,7 +194,7 @@ func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
 	for writer := range 2 {
 		wg.Add(1)

@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -224,8 +225,8 @@ func (w *World) renderObjectListMode15(ch *Player, items []*ObjectInstance) stri
 
 	// C builds the list via oc_add_front(), so oc_show_list() renders reverse
 	// discovery order.
-	for i := len(order) - 1; i >= 0; i-- {
-		g := groups[order[i]]
+	for _, o := range slices.Backward(order) {
+		g := groups[o]
 		b.WriteString(formatOCShowListLine(g.line, g.count, g.item.GetTotalWeight(), g.item, ch))
 	}
 

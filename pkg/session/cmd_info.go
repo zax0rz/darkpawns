@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -381,8 +382,8 @@ func cmdScore(s *Session) error {
 		// Player.ActiveAffects appends new effects; C's affect_to_char prepends
 		// them to ch->affected. Walk this slice backwards to retain C's visible
 		// newest-first order (handler.c:415-420).
-		for i := len(p.ActiveAffects) - 1; i >= 0; i-- {
-			aff := p.ActiveAffects[i]
+		for _, aff := range slices.Backward(p.ActiveAffects) {
+
 			// ActiveAffects.Flags uses engine.AFF_* positions. Convert them
 			// back to C's AFF_* positions before applying the exclusion list
 			// from act.informative.c:1391-1412. The numeric layouts differ:

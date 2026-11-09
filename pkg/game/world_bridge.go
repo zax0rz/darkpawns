@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"sort"
 	"strings"
 
@@ -955,8 +956,8 @@ func (a *WorldScriptableAdapter) AppendExtraDescs(ref scripting.ObjRef, text str
 	}
 	descs := obj.LiveExtraDescs()
 	out := make([]parser.ExtraDesc, 0, len(descs))
-	for i := len(descs) - 1; i >= 0; i-- {
-		d := descs[i]
+	for _, d := range slices.Backward(descs) {
+
 		d.Description += text
 		out = append(out, d)
 	}

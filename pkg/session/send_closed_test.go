@@ -32,26 +32,20 @@ func TestSendMessage_ConcurrentClose(t *testing.T) {
 
 	var wg sync.WaitGroup
 	// Drain the channel so sends don't all fall through to the default branch.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for range s.SendChannel() {
 		}
-	}()
+	})
 
 	for range 50 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			s.Send("spam")
-		}()
+		})
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		s.CloseSend()
-	}()
+	})
 
 	wg.Wait()
 }

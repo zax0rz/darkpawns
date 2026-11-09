@@ -21,14 +21,12 @@ func racers(n int, fn func() bool) int64 {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 	for range n {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			if fn() {
 				atomic.AddInt64(&granted, 1)
 			}
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()
@@ -89,12 +87,10 @@ func TestSpendManaUpToNeverNegative(t *testing.T) {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 	for range 16 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			atomic.AddInt64(&taken, int64(p.SpendManaUpTo(50)))
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()
@@ -212,13 +208,11 @@ func TestStealCoinsConcurrentConservesGold(t *testing.T) {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 	for range 8 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			// percent = -1: the steal always succeeds.
 			stealCoins(thief, victim, -1, chP, vP)
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()
@@ -251,12 +245,10 @@ func TestDonateGoldConcurrentJunksOnce(t *testing.T) {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 	for range 2 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			w.performDisposeGold(ch, 60, scmdJunk, 0)
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()

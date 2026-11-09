@@ -46,7 +46,7 @@ func TestMOTDFileEditCLevelAndConditionalLiveSave(t *testing.T) {
 					t.Fatalf("read = %d", read.Code)
 				}
 				etag := read.Header().Get("ETag")
-				saved := f.do(http.MethodPut, target, map[string]string{"If-Match": etag}, ptr("&CWelcome&n\r\n"))
+				saved := f.do(http.MethodPut, target, map[string]string{"If-Match": etag}, new("&CWelcome&n\r\n"))
 				if level < game.LVL_GRGOD {
 					if saved.Code != http.StatusForbidden || live != "" {
 						t.Fatalf("lower-level save = %d, live = %q", saved.Code, live)
@@ -59,14 +59,14 @@ func TestMOTDFileEditCLevelAndConditionalLiveSave(t *testing.T) {
 				if disk, err := os.ReadFile(filepath.Join(f.world.LibTextDir, name)); err != nil || string(disk) != live {
 					t.Fatalf("disk = %q, %v", disk, err)
 				}
-				stale := f.do(http.MethodPut, target, map[string]string{"If-Match": etag}, ptr("stale draft\n"))
+				stale := f.do(http.MethodPut, target, map[string]string{"If-Match": etag}, new("stale draft\n"))
 				if stale.Code != http.StatusPreconditionFailed {
 					t.Fatalf("stale save = %d", stale.Code)
 				}
 				if savedFile != name || live != "&CWelcome&n\n" {
 					t.Fatal("stale save changed live text")
 				}
-				long := f.do(http.MethodPut, target, map[string]string{"If-Match": saved.Header().Get("ETag")}, ptr(strings.Repeat("x", 2399)+"\n"))
+				long := f.do(http.MethodPut, target, map[string]string{"If-Match": saved.Header().Get("ETag")}, new(strings.Repeat("x", 2399)+"\n"))
 				if long.Code != http.StatusUnprocessableEntity {
 					t.Fatalf("over-limit = %d", long.Code)
 				}
@@ -98,7 +98,7 @@ func TestMOTDSavesUseFileEditAudit(t *testing.T) {
 		}
 		target := contentURL("tedit", name)
 		read := f.do(http.MethodGet, target, nil, nil)
-		saved := f.do(http.MethodPut, target, map[string]string{"If-Match": read.Header().Get("ETag")}, ptr("Welcome\n"))
+		saved := f.do(http.MethodPut, target, map[string]string{"If-Match": read.Header().Get("ETag")}, new("Welcome\n"))
 		if saved.Code != http.StatusOK {
 			t.Fatalf("save = %d %s", saved.Code, saved.Body.String())
 		}

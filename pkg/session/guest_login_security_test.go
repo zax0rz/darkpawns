@@ -61,9 +61,7 @@ func TestGuestLoginPublishesIdentityUnderManagerLock(t *testing.T) {
 
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -78,7 +76,7 @@ func TestGuestLoginPublishesIdentityUnderManagerLock(t *testing.T) {
 				return
 			}
 		}
-	}()
+	})
 
 	err := s.handleLogin(json.RawMessage(`{"player_name":"guest","password":"","new_char":false}`))
 	close(stop)

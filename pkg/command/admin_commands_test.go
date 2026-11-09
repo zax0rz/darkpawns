@@ -80,11 +80,9 @@ func TestCmdReportAssignsSequentialIDs(t *testing.T) {
 	var wg sync.WaitGroup
 	for _, r := range []*mockAdminSession{reporter1, reporter2} {
 		r := r
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			_ = ac.cmdReport(r, []string{"target", "harassment", "bad behavior"})
-		}()
+		})
 	}
 	wg.Wait()
 

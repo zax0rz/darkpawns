@@ -86,16 +86,14 @@ func TestInputQueueCapConcurrentAdmission(t *testing.T) {
 	s.SetCloseFunc(func() { closed.Add(1) })
 	var workers sync.WaitGroup
 	for range 8 {
-		workers.Add(1)
-		go func() {
-			defer workers.Done()
+		workers.Go(func() {
 			for range 40 {
 				s.tryExecuteNow("whoami", nil)
 				if n := s.queueLen(); n > 128 {
 					t.Errorf("concurrent queue exceeded cap: %d", n)
 				}
 			}
-		}()
+		})
 	}
 	workers.Wait()
 	if closed.Load() != 1 || s.queueLen() != 0 {

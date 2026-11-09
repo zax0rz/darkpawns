@@ -10,6 +10,7 @@ package command
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -79,8 +80,8 @@ func (r *Registry) Register(name string, handler Handler, helpText string, minLe
 
 	// Wrap handler through middleware chain
 	wrapped := handler
-	for i := len(r.middleware) - 1; i >= 0; i-- {
-		wrapped = r.middleware[i](wrapped)
+	for _, v := range slices.Backward(r.middleware) {
+		wrapped = v(wrapped)
 	}
 
 	entry := &Entry{

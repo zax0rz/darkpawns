@@ -43,9 +43,7 @@ func TestSaveListOrderedConcurrentSnapshots(t *testing.T) {
 	s := NewSaveList()
 	var wg sync.WaitGroup
 	for zone := 1; zone <= 8; zone++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range 100 {
 				s.Mark(KindRoom, zone)
 				s.Ordered()
@@ -53,7 +51,7 @@ func TestSaveListOrderedConcurrentSnapshots(t *testing.T) {
 				s.Remove(KindRoom, zone)
 			}
 			s.Mark(KindRoom, zone)
-		}()
+		})
 	}
 	wg.Wait()
 	if len(s.Ordered()) != 8 || len(s.List()) != 8 {

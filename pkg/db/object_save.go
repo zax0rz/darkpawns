@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -114,8 +115,8 @@ func objectSaveRecords(inventory, equipment []byte) ([]game.SaveItemData, error)
 		visit = func(i, locate int) {
 			descendants := children[i]
 			depth := min(0, locate) - 1
-			for j := len(descendants) - 1; j >= 0; j-- {
-				visit(descendants[j], depth)
+			for _, descendant := range slices.Backward(descendants) {
+				visit(descendant, depth)
 			}
 			item := items[i]
 			item.Locate = locate

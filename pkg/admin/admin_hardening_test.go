@@ -57,9 +57,7 @@ func TestPlayerDetailSnapshotVsMutation(t *testing.T) {
 
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		obj := game.NewObjectInstance(&parser.Obj{VNum: 7001, Keywords: "rock", ShortDesc: "a rock", LongDesc: "A rock."}, -1)
 		for {
 			select {
@@ -70,7 +68,7 @@ func TestPlayerDetailSnapshotVsMutation(t *testing.T) {
 			_ = p.Inventory.AddItem(obj)
 			p.Inventory.RemoveItem(obj)
 		}
-	}()
+	})
 	for range 2000 {
 		_ = playerDetailToResponse(p)
 	}
@@ -91,15 +89,13 @@ func TestAgentStoreReturnsCopies(t *testing.T) {
 	agents := store.GetAgents()
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for range 2000 {
 			_, _, _ = store.UpdateAgentStatus("daeron", "idle")
 			_, _, _ = store.UpdateAgentStatus("daeron", "running")
 		}
 		close(stop)
-	}()
+	})
 	for {
 		select {
 		case <-stop:
@@ -131,15 +127,13 @@ func TestPrototypeGettersReturnCopies(t *testing.T) {
 	mobs := w.GetAllMobPrototypes()
 	stop := make(chan struct{})
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for range 2000 {
 			w.CommitEditedMob(parser.Mob{VNum: 5001, ShortDesc: "mutated"})
 			w.CommitEditedMob(parser.Mob{VNum: 5001, ShortDesc: "a mob"})
 		}
 		close(stop)
-	}()
+	})
 	for {
 		select {
 		case <-stop:

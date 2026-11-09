@@ -39,11 +39,9 @@ func TestConcurrentStagingConvergesWithoutLocks(t *testing.T) {
 	var wg sync.WaitGroup
 	failures := make(chan error, 4)
 	for range 4 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			failures <- stageBundleContentsAt(root, "linux", "amd64")
-		}()
+		})
 	}
 	wg.Wait()
 	close(failures)

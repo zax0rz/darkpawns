@@ -71,9 +71,7 @@ func TestAuditInit_ConcurrentLogEvent(t *testing.T) {
 	stop := make(chan struct{})
 
 	// Goroutine continuously logging events.
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			select {
 			case <-stop:
@@ -82,7 +80,7 @@ func TestAuditInit_ConcurrentLogEvent(t *testing.T) {
 				LogEvent(AuditEvent{EventType: "test", Action: "concurrent", Success: true})
 			}
 		}
-	}()
+	})
 
 	// Re-initialize from the main goroutine while logging is active.
 	if err := Init(second); err != nil {
@@ -106,9 +104,7 @@ func TestAuditLogger_ConcurrentWriteProducesValidJSON(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range 10 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range 50 {
 				logger.Log(AuditEvent{
 					EventType: "test",
@@ -117,7 +113,7 @@ func TestAuditLogger_ConcurrentWriteProducesValidJSON(t *testing.T) {
 					Success:   true,
 				})
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

@@ -152,13 +152,11 @@ func TestTapRace(t *testing.T) {
 	f := newStartedFeed(t, 256, 1024)
 	var wg sync.WaitGroup
 	for range 8 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range 500 {
 				f.tap("k", "x", 1, 31, false)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 	waitFor(t, "drain", func() bool { return f.Stats().Queued == 0 })
@@ -192,16 +190,14 @@ func TestStopRacesTapWithoutPanic(t *testing.T) {
 		f := NewFeed(4, 16)
 		f.Start()
 		for range 8 {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				// Tap straight through Stop: the tappers must still be
 				// mid-storm when the close lands, so the check-then-send
 				// window is actually exercised.
 				for range 2000 {
 					f.Tap("", "race", 1, 31, false)
 				}
-			}()
+			})
 		}
 		time.Sleep(time.Duration(rand.Intn(2000)) * time.Microsecond)
 		f.Stop()
