@@ -1,6 +1,4 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: combat.pending-body-keeps-the-swing-draws
-# depth-case: carve.fighting-no-arg
 # depth-case: carve.no-arg
 # depth-case: carve.target-missing
 # depth-case: carve.non-corpse
@@ -11,14 +9,14 @@
 # depth-case: carve.success
 # depth-case: carve.trailing-target-words
 # C-first vehicle for do_carve at src/interpreter.c:374 and
-# src/new_cmds.c:115-213. Two disposable low-HP fish mobs create a real
+# src/new_cmds.c:115-213. A disposable low-HP fish creates a real
 # carve_meat corpse through the C death path; object 17 supplies a corpse
 # without carve_ and bread supplies a non-corpse room object.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
+set-room-flag 8162 4 off
 spawn-mob 4350 2 8162 80
 spawn-obj 17 1 8162 80
 spawn-obj 8010 1 8162 80

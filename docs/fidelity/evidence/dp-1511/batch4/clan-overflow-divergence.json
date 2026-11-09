@@ -1,0 +1,18 @@
+{
+  "source": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-witness-repair-seed1/initial-logs/attempt.fJHIeR/clan-plan-overflow.capture1/blocks.json",
+  "blocks": [
+    {
+      "Command": "this line crosses the plan cap xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [actor]",
+      "Oracle": "String too long.  Last line skipped.\n\n]\n",
+      "Go": "String too long.  Last line skipped.\n",
+      "Diff": "--- c-oracle\n+++ go-port\n@@ -1,3 +1,1 @@\n String too long.  Last line skipped.\n-\n-]\n"
+    },
+    {
+      "Command": "@ [actor]",
+      "Oracle": "\n",
+      "Go": "Huh?!?\n",
+      "Diff": "--- c-oracle\n+++ go-port\n@@ -1,0 +1,1 @@\n+Huh?!?\n"
+    }
+  ],
+  "draw_difference": "Both attempts: stream 4087 C=(log ends); Go=Number(0,3) = 2 at probe step 8: clan info Wolves. The run summary draw tally excludes this FAIL; it is not evidence of draw equality."
+}

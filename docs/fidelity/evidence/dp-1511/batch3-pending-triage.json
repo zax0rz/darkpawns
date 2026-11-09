@@ -1,0 +1,21 @@
+[
+  "aid-failure-depth",
+  "carve-depth",
+  "clan-applicant-depth",
+  "clan-depth",
+  "clan-member-depth",
+  "clan-plan-depth",
+  "clan-plan-mortal-depth",
+  "clan-plan-overflow",
+  "fighter-wimpy-window-depth",
+  "idlist-depth",
+  "lifecycle-idle-rent-norent",
+  "lua-cast-spell-gates-depth",
+  "reagent-waterwalk-decoy-vnum-depth",
+  "retaliation-flamestrike-save-depth",
+  "spell-parser-item-output-gaps",
+  "spell-points-spoken-depth",
+  "violence-npc-switched-output-depth",
+  "wizard-file-output-depth",
+  "wizard-stat-clan-followers-depth"
+]

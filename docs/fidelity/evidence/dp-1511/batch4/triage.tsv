@@ -1,0 +1,20 @@
+scenario	verdict	original_seeds	C_witness	dump	dump_line
+aid-failure-depth	Repaired	1	You fumble and ruin the bandages.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/aid-failure-depth.txt	3
+carve-depth	Repaired	1,2,3,5,8	You don't have anything to carve with!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/carve-depth.txt	41
+clan-applicant-depth	Repaired	1	You've applied to the clan!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-applicant-depth.txt	70
+clan-depth	Repaired	1	Clan renamed.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-depth.txt	137
+clan-member-depth	Repaired	1,2,3,5,8	You are Leader (Rank 2) of Wolves	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-member-depth.txt	32
+clan-plan-depth	Repaired	1	This is the first plan.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt	40
+clan-plan-mortal-depth	Repaired	1	Enter the description, or plan for clan <<Wolves>>.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-mortal-depth.txt	3
+clan-plan-overflow	Go disagrees with C	1	String too long.  Last line skipped.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-witness-repair-seed1/census-dump/clan-plan-overflow.txt	26
+fighter-wimpy-window-depth	Repaired	1,2,3,5,8,11,13,17,21	You wimp out, and attempt to flee!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt	4
+idlist-depth	Repaired	1,2,3,5,8	Huh?!?	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/idlist-depth.txt	3
+lifecycle-idle-rent-norent	Repaired	1	You have been idle, and are pulled into a void.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lifecycle-idle-rent-norent.txt	37
+lua-cast-spell-gates-depth	Repaired	1	You can only cast this spell upon yourself!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt	3
+reagent-waterwalk-decoy-vnum-depth	Repaired	1	You feel webbing between your toes.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/reagent-waterwalk-decoy-vnum-depth.txt	12
+retaliation-flamestrike-save-depth	Repaired	1,2,3,5,8	You call down a bolt of flame on him!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/retaliation-flamestrike-save-depth.txt	4
+spell-parser-item-output-gaps	Repaired	1	You recite an important-looking scroll which dissolves.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt	3
+spell-points-spoken-depth	Repaired	1,2,3,5,8	You feel a lot better!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt	11
+violence-npc-switched-output-depth	Repaired	1	You dodge!	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt	3
+wizard-file-output-depth	Repaired	1,2,3,5,8	There is no such player.	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-file-output-depth.txt	3
+wizard-stat-clan-followers-depth	Repaired	1	Clan : Wolves	/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-stat-clan-followers-depth.txt	26

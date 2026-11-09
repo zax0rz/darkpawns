@@ -2,7 +2,9 @@
 
 Historical batch-1 report (merged PR #2421). [Batch 2](batch2/README.md) clears
 17 more scenarios. [Batch 3](batch3/README.md) dispositions 16 more plus two
-creation-frame siblings; the current `pending-triage.json` contains 19. The original
+creation-frame siblings. [Batch 4](batch4/README.md) clears the final 19:
+18 repaired, one Go disagreement blocked, and the current `pending-triage.json`
+is empty. The original
 52-name handoff list is retained in `batch1-pending-triage.json`.
 
 This batch implements the parameterized gate and repairs 13 of the original 65 scenarios

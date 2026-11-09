@@ -1,15 +1,12 @@
-# setup-refusal-reason: pending DP-1511 triage
-# Clan plan editor overflow (src/clan.c:1435-1436 -> string_write ->
-# string_add, src/modify.c:131-150, non-improved editor). The plan buffer
-# accumulates lines under C's 256-byte input cap; the line that would cross
-# CLAN_PLAN_LENGTH (1024, src/clan.h) is skipped with C's exact reply, the
-# editor saves and exits, and clan info shows the retained plan (L2-005 as
-# C fidelity: the port previously grew the buffer without bound).
+# DP-1511 retained RED diagnostic, outside the shipping census corpus.
+# A valid mortal leader and a genuinely crossing final line reach C string_add
+# (src/clan.c:1432-1438; src/modify.c:145-151). The reference C improved editor
+# skips the last line and stays active (] prompt); Go saves and exits early.
+# The following @ therefore produces Huh?!? only in Go. No game fix or pin.
 
 # depth-case: clan.plan-overflow-later-line-skipped
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -41,8 +38,36 @@ Y
 <ENTER>
 1
 
+[setup:oracle:leader]
+Planmate
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:leader]
+Planmate
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
-clan create Clangod Wolves
+clan create Planmate Wolves
 
 [probe]
 clan set plan Wolves
@@ -50,6 +75,6 @@ L0 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 L1 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 L2 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 L3 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-this line crosses the plan cap
+this line crosses the plan cap xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 @
 clan info Wolves

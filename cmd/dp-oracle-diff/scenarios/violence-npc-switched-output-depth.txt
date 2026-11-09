@@ -1,14 +1,16 @@
-# setup-refusal-reason: pending DP-1511 triage
 # The mortal peer starts a real fight with a guard trainee by forced command.
-# Its oncmd script sets the mobile to sitting; the God switches into that live
-# body before the violence pulse and receives its dodge and stand-up outputs.
+# The admin triggers the oncmd script directly and explicitly saves me to put
+# the mobile in sitting position with no wait, then switches into that body.
+# Both direct NPC and peer outputs are witnessed after the violence pulses.
 # C paths: src/interpreter.c:1459; src/scripts.c:1718-1810,2015-2017;
 # src/fight.c:1965-1972,1982-1986; src/act.wizard.c:1175-1200.
+# Explicit me writeback: src/scripts.c:1292-1302,1805-1813,1980-2018.
 # depth-case: fight.round-dodge
 # depth-case: fight.round-mob-standup
+# depth-case: fight.round-dodge-switched
+# depth-case: fight.round-mob-standup-switched
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 16303 1 8105 80
@@ -19,6 +21,8 @@ mob-script 16303 oracle/violence.lua 512
 function oncmd()
 if (argument == "say sit") then
 me.pos = 6
+me.timer = 0
+save_char(me)
 return TRUE
 end
 return FALSE
@@ -86,18 +90,19 @@ teleport Violencepeer 8105
 set player Violencepeer class warrior
 set player Violencepeer level 1
 set player Violencepeer outlaw on
-set player Violencepeer maxhit 5000000
-set player Violencepeer hit 5000000
+set player Violencepeer maxhit 5000
+set player Violencepeer hit 5000
 set player Violencepeer hitroll -20
 set player Violencepeer damroll -20
-set mob trainee level 80
-set mob trainee maxhit 5000000
-set mob trainee hit 5000000
+set mob trainee level 39
+set mob trainee maxhit 5000
+set mob trainee hit 5000
 set mob trainee hitroll -20
 set mob trainee damroll -20
 force Violencepeer kill 1.trainee
-force Violencepeer say sit
+say sit
+stat mob trainee
 switch 1.trainee
 
 [probe]
-~dpclock pulse 4
+~dpclock pulse 400

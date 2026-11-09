@@ -1,13 +1,11 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: aid.failure-audience
 # depth-case: aid.failure-wait
 # C-first failure vehicle for do_first_aid (src/new_cmds2.c:166-184). The
-# Implementor grants aid=1, lowers the target to level 40 with hit=0, then
+# Implementor grants aid=1, sets the target to level 39 with hit=0, then
 # lowers himself to level 1. The target and observer remain co-located so the
 # failed act() audience and the exact PULSE_VIOLENCE+3 wait are both visible.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -100,7 +98,7 @@ goto 8004
 teleport Failvict 8004
 teleport Failobserv 8004
 skillset Aidfail 'aid' 1
-set Failvict level 40
+set Failvict level 39
 set Failvict hit 0
 set Aidfail level 1
 

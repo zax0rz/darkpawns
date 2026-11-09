@@ -1,7 +1,5 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: idle.rent-roundtrip-equipped-norent
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 compare-close
@@ -81,7 +79,7 @@ oraclepass
 1
 
 [warmup]
-get cloak
+load obj 4291
 wear cloak
 get fruit
 get tunic

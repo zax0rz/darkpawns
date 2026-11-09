@@ -1,0 +1,91 @@
+{
+  "aid-failure-depth": [
+    1
+  ],
+  "carve-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "clan-applicant-depth": [
+    1
+  ],
+  "clan-depth": [
+    1
+  ],
+  "clan-member-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "clan-plan-depth": [
+    1
+  ],
+  "clan-plan-mortal-depth": [
+    1
+  ],
+  "clan-plan-overflow": [
+    1
+  ],
+  "fighter-wimpy-window-depth": [
+    1,
+    2,
+    3,
+    5,
+    8,
+    11,
+    13,
+    17,
+    21
+  ],
+  "idlist-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "lifecycle-idle-rent-norent": [
+    1
+  ],
+  "lua-cast-spell-gates-depth": [
+    1
+  ],
+  "reagent-waterwalk-decoy-vnum-depth": [
+    1
+  ],
+  "retaliation-flamestrike-save-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "spell-parser-item-output-gaps": [
+    1
+  ],
+  "spell-points-spoken-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "violence-npc-switched-output-depth": [
+    1
+  ],
+  "wizard-file-output-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "wizard-stat-clan-followers-depth": [
+    1
+  ]
+}

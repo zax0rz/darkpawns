@@ -1,8 +1,7 @@
-# setup-refusal-reason: pending DP-1511 triage
 # C-first depth vehicle for do_idlist (src/interpreter.c:512;
 # src/act.wizard.c:3575-3693). The command is registered at LVL_GRGOD,
 # writes the fixed object_idlist report, ignores all arguments, and emits only
-# the final completion line. The level-38 probe makes the registration gate
+# the final completion line. The level-37 peer probe makes the registration gate
 # explicit; the level-40 probes reach the report path and argument-ignored
 # branch. The generated files stay in each disposable server runtime.
 #
@@ -11,7 +10,6 @@
 # depth-case: idlist.arguments-ignored
 
 [fixture]
-allow-setup-refusal
 empty-players
 
 [setup:oracle]
@@ -42,15 +40,38 @@ Y
 <ENTER>
 1
 
+[setup:oracle:peer]
+Idlistpeer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Idlistpeer
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
 [warmup]
-set Idlistdepth level 38
+set Idlistpeer level 37
 
 [probe]
-idlist
-
-[warmup]
-set Idlistdepth level 40
-
-[probe]
+send:peer idlist
 idlist
 idlist ignored trailing words

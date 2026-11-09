@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # Depth vehicle for clan / do_clan (src/interpreter.c:383, src/clan.c).
 # The primary is the first empty-players immortal. Two mortal peers let the
 # warmup create/enroll one member and prepare the other for application paths.
@@ -31,7 +30,6 @@
 # depth-case: clan.info-unknown-clan
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -119,9 +117,9 @@ Y
 <ENTER>
 1
 
+# DP-1511: clan create assigns the leader rank itself (src/clan.c:230-234).
 [warmup]
 clan create Clanmate Wolves
-clan enroll Clanmate Wolves
 clan set applev 1 Wolves
 
 [probe]

@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # Mortal clan-member vehicle for clan / do_clan (src/interpreter.c:383,
 # src/clan.c). The primary creates the clan, lowers its application level,
 # and forces the applicant to submit a request before the member probe.
@@ -29,7 +28,6 @@
 # depth-case: clan.promote-not-member
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -145,9 +143,9 @@ Y
 <ENTER>
 1
 
+# DP-1511: clan create assigns the leader rank itself (src/clan.c:230-234).
 [warmup]
 clan create Clanmate Wolves
-clan enroll Clanmate Wolves
 clan create Wolffang Fangs
 clan set applev 1 Wolves
 force Clanapply clan apply Wolves
