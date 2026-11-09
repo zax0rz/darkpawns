@@ -873,6 +873,23 @@ func executeCommandRaw(s *Session, cmdStr string, args []string, allowAlias bool
 	// The wait gate now lives in the heartbeat's per-pulse drain
 	// (Manager.DrainInputQueues), which queues wait>0 commands at the
 	// handleCommand funnel (session_login.go) and drains one per pulse.
+	//
+	// C's command_interpreter runs the resolved command as d->character, which
+	// for a switched session is the switched body rather than the owning
+	// player. A command with a mobile lane runs as that body here; a command
+	// without one keeps the session handler so descriptor commands (return,
+	// unswitch, and the wizard switch ladder) still work (DP-1516 items 3, 8).
+	if s.isSwitched && s.switchedMob != nil && entry.ActorHandler != nil {
+		switch entry.ActorHandler(game.CharacterCommandContext{
+			Actor:         s.switchedMob,
+			World:         s.manager.world,
+			PrivateOutput: func(text string) { s.Send(text) },
+			RawArgs:       rawArgs,
+		}, cmd, args) {
+		case game.CharacterCommandHandled, game.CharacterCommandUnsupported:
+			return nil
+		}
+	}
 	return entry.Handler(&commandSession{Session: s}, cmd, args)
 }
 
