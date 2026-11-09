@@ -1,0 +1,136 @@
+# depth-case: objmagic.damage-backfire
+# depth-case: objmagic.psiblast-recoil
+# C path: do_cast -> cast_spell -> call_magic -> mag_damage
+# (spell_parser.c:879-905; magic.c:601-849). A level-31 Mage repeatedly casts
+# the self-backfiring damage spells at a protected low-level peer (no damage,
+# no combat). The `!number(0,50)` backfire arms (disintegration :705, ray of
+# disruption :717) and the `!number(0,30)` psiblast recoil (:813) are drawn
+# from the shared stream; the proofs carry seeds that draw each line.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+BackfireGod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+BackfireGod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:BackfireMage]
+BackfireMage
+Y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port:BackfireMage]
+BackfireMage
+y
+spellpass
+spellpass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:BackfireVictim]
+BackfireVictim
+Y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:BackfireVictim]
+BackfireVictim
+y
+victimpass
+victimpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport BackfireMage 8105
+teleport BackfireVictim 8105
+set BackfireMage class mage
+set BackfireMage maxmana 5000
+set BackfireMage mana 5000
+set BackfireMage level 31
+set BackfireVictim maxhit 99999
+set BackfireVictim hit 99999
+skillset BackfireMage 'disintegration' 100
+skillset BackfireMage 'ray of disruption' 100
+skillset BackfireMage 'psiblast' 100
+
+[probe:BackfireMage]
+cast 'disintegration' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'psiblast' BackfireVictim
+~dpclock pulse 20
+cast 'disintegration' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'psiblast' BackfireVictim
+~dpclock pulse 20
+cast 'disintegration' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'psiblast' BackfireVictim
+~dpclock pulse 20
+cast 'disintegration' BackfireVictim
+~dpclock pulse 20
+cast 'ray of disruption' BackfireVictim
+~dpclock pulse 20
+cast 'psiblast' BackfireVictim
