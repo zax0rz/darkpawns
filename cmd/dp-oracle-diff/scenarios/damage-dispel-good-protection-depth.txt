@@ -1,0 +1,79 @@
+# depth-case: damage.dispel-good-protects-evil
+# A neutral caster directs Dispel Good at an evil peer. C reaches its target
+# named protection act before damage is applied.
+# C: src/spell_parser.c:827-905; src/magic.c:740-755; src/fight.c:1484-1520.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Goodadmin
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Goodadmin
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:peer]
+Goodpeer
+Y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:peer]
+Goodpeer
+y
+oraclepass
+oraclepass
+N
+F
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8152
+teleport Goodpeer 8152
+set Goodadmin class mage
+set Goodadmin maxmana 5000
+set Goodadmin mana 5000
+skillset Goodadmin 'dispel good' 100
+set Goodpeer level 15
+set Goodpeer align -1000
+set Goodadmin align 0
+set Goodadmin level 31
+
+[probe]
+cast 'dispel good' Goodpeer
