@@ -1,11 +1,9 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: spell.retaliation-flamestrike-save
 # The flamestrike arms: a made save refuses with NOEFFECT + hit(victim, ch)
 # (src/magic.c:1114) - a site the port had no call for at all; a failed save
 # applies and the aggro tail hits (src/magic.c:1129, 1421). The save check
 # precedes C's outdoors gate, so the street room is fine.
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 9922 1 8105 99
@@ -41,11 +39,11 @@ Y
 [warmup]
 goto 8105
 set Retalgod class mage
-skillset Retalgod 'flamestrike' 100
+skillset Retalgod 'flame strike' 100
 set Retalgod maxmana 5000
 set Retalgod mana 5000
 
 [probe]
-cast 'flamestrike' incubus
+cast 'flame strike' incubus
 ~dpclock pulse 20
 

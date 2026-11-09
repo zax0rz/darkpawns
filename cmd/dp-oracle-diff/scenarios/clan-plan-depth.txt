@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # Clan plan editor vehicle (src/clan.c:1391-1438). C enters string_write after
 # the prompt; the following ordinary input lines are editor text until @.
 
@@ -9,7 +8,6 @@
 # depth-case: clan.plan-editor-at-prefix
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -69,9 +67,9 @@ Y
 <ENTER>
 1
 
+# DP-1511: clan create assigns the leader rank itself (src/clan.c:230-234).
 [warmup]
 clan create Clanmate Wolves
-clan enroll Clanmate Wolves
 
 [probe]
 clan set plan Wolves

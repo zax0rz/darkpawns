@@ -1,0 +1,1000 @@
+{
+  "cases": [
+    {
+      "scenario": "aid-failure-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You fumble and ruin the bandages.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/aid-failure-depth.txt",
+          "dump_line": 3,
+          "block": "--- [aid Failvict [actor]]"
+        },
+        {
+          "line": "You fumble and ruin the bandages.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/aid-failure-depth.txt",
+          "dump_line": 25,
+          "block": "--- [aid Failvict [actor]]"
+        },
+        {
+          "line": "Aidfail fumbles with some bandaging and drops it all over the place!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/aid-failure-depth.txt",
+          "dump_line": 5,
+          "block": "--- [aid Failvict [observer]]"
+        },
+        {
+          "line": "Aidfail fumbles with some bandaging and drops it all over the place!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/aid-failure-depth.txt",
+          "dump_line": 9,
+          "block": "--- [aid Failvict [victim]]"
+        },
+        {
+          "line": "Aidfail fumbles with some bandaging and drops it all over the place!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/aid-failure-depth.txt",
+          "dump_line": 27,
+          "block": "--- [aid Failvict [observer]]"
+        },
+        {
+          "line": "Aidfail fumbles with some bandaging and drops it all over the place!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/aid-failure-depth.txt",
+          "dump_line": 31,
+          "block": "--- [aid Failvict [victim]]"
+        }
+      ]
+    },
+    {
+      "scenario": "carve-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You don't have anything to carve with!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/carve-depth.txt",
+          "dump_line": 41,
+          "block": "--- [carve fish [actor]]"
+        },
+        {
+          "line": "You carve up some meat from the the corpse of fish.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/carve-depth.txt",
+          "dump_line": 51,
+          "block": "--- [carve fish [actor]]"
+        },
+        {
+          "line": "Carvegod carves up some meat from the the corpse of fish.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/carve-depth.txt",
+          "dump_line": 53,
+          "block": "--- [carve fish [obs]]"
+        },
+        {
+          "line": "  1   a piece of meat                                                 5 pts",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/carve-depth.txt",
+          "dump_line": 61,
+          "block": "--- [inventory [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "clan-applicant-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You've applied to the clan!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-applicant-depth.txt",
+          "dump_line": 70,
+          "block": "--- [clan apply Wolves [actor]]"
+        },
+        {
+          "line": "You've applied to the clan!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-applicant-depth.txt",
+          "dump_line": 86,
+          "block": "--- [clan apply Wolves [actor]]"
+        },
+        {
+          "line": "You applied to Wolves",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-applicant-depth.txt",
+          "dump_line": 78,
+          "block": "--- [clan status [actor]]"
+        },
+        {
+          "line": "You applied to Wolves",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-applicant-depth.txt",
+          "dump_line": 94,
+          "block": "--- [clan status [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "clan-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "Clan renamed.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-depth.txt",
+          "dump_line": 137,
+          "block": "--- [clan rename 0 Wolves [actor]]"
+        },
+        {
+          "line": "You add to the clan's treasure.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-depth.txt",
+          "dump_line": 149,
+          "block": "--- [clan deposit 1 Wolves [actor]]"
+        },
+        {
+          "line": "Your clan is now private.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-depth.txt",
+          "dump_line": 263,
+          "block": "--- [clan private Wolves [actor]]"
+        },
+        {
+          "line": "Clan deleted.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-depth.txt",
+          "dump_line": 332,
+          "block": "--- [clan destroy Newclan [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "clan-member-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You are Leader (Rank 2) of Wolves",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-member-depth.txt",
+          "dump_line": 32,
+          "block": "--- [clan status [actor]]"
+        },
+        {
+          "line": "You've been enrolled in the clan you chose!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-member-depth.txt",
+          "dump_line": 272,
+          "block": "--- [clan enroll Clanapply [applicant]]"
+        },
+        {
+          "line": "They're already in your clan.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-member-depth.txt",
+          "dump_line": 388,
+          "block": "--- [clan enroll Clanmate [actor]]"
+        },
+        {
+          "line": "They're already in a clan.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-member-depth.txt",
+          "dump_line": 398,
+          "block": "--- [clan enroll Wolffang [actor]]"
+        },
+        {
+          "line": "You cannot kick out that person.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-member-depth.txt",
+          "dump_line": 408,
+          "block": "--- [clan expel Clanmate [actor]]"
+        },
+        {
+          "line": "You cannot promote that person over your rank!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-member-depth.txt",
+          "dump_line": 418,
+          "block": "--- [clan promote Clanmate [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "clan-plan-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "This is the first plan.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt",
+          "dump_line": 40,
+          "block": "--- [clan info Wolves [actor]]"
+        },
+        {
+          "line": "This is the first plan.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt",
+          "dump_line": 52,
+          "block": "--- [clan set plan Wolves [actor]]"
+        },
+        {
+          "line": "It has two lines.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt",
+          "dump_line": 41,
+          "block": "--- [clan info Wolves [actor]]"
+        },
+        {
+          "line": "It has two lines.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt",
+          "dump_line": 53,
+          "block": "--- [clan set plan Wolves [actor]]"
+        },
+        {
+          "line": "The replacement plan.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt",
+          "dump_line": 88,
+          "block": "--- [clan info Wolves [actor]]"
+        },
+        {
+          "line": "The replacement plan.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt",
+          "dump_line": 99,
+          "block": "--- [clan set plan Wolves [actor]]"
+        },
+        {
+          "line": "(null)",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-depth.txt",
+          "dump_line": 130,
+          "block": "--- [clan info Wolves [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "clan-plan-mortal-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "Enter the description, or plan for clan <<Wolves>>.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-mortal-depth.txt",
+          "dump_line": 3,
+          "block": "--- [clan set plan [actor]]"
+        },
+        {
+          "line": "Mortal member plan.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/clan-plan-mortal-depth.txt",
+          "dump_line": 36,
+          "block": "--- [clan info Wolves [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "clan-plan-overflow",
+      "verdict": "Go disagrees with C",
+      "run": "sol-dp1511-b4-witness-repair-seed1",
+      "events": [
+        {
+          "line": "String too long.  Last line skipped.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-witness-repair-seed1/census-dump/clan-plan-overflow.txt",
+          "dump_line": 26,
+          "block": "--- [this line crosses the plan cap xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "fighter-wimpy-window-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 4,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 7,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 17,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 20,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 30,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 33,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 43,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 46,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 56,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 59,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 68,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You wimp out, and attempt to flee!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 71,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 5,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 8,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 18,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 21,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 31,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 34,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 44,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 47,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 57,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 60,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 69,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "You are cornered and fail to retreat!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 72,
+          "block": "--- [~dpclock pulse 22]"
+        },
+        {
+          "line": "Hit points: 100(400)  Mana points: 100(100)  Movement points: 82(82)",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/fighter-wimpy-window-depth.txt",
+          "dump_line": 80,
+          "block": "--- [score]"
+        }
+      ]
+    },
+    {
+      "scenario": "idlist-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "Huh?!?",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/idlist-depth.txt",
+          "dump_line": 3,
+          "block": "--- [send:peer idlist [peer]]"
+        },
+        {
+          "line": "Ok. Id list complete.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/idlist-depth.txt",
+          "dump_line": 9,
+          "block": "--- [idlist [actor]]"
+        },
+        {
+          "line": "Ok. Id list complete.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/idlist-depth.txt",
+          "dump_line": 13,
+          "block": "--- [idlist ignored trailing words [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "lifecycle-idle-rent-norent",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You have been idle, and are pulled into a void.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lifecycle-idle-rent-norent.txt",
+          "dump_line": 37,
+          "block": "--- [send:driver ~dpclock pulse 630 [primary]]"
+        },
+        {
+          "line": "<CLOSE>",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lifecycle-idle-rent-norent.txt",
+          "dump_line": 125,
+          "block": "--- [send:driver ~dpclock pulse 630 [primary]]"
+        },
+        {
+          "line": "Nothing.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lifecycle-idle-rent-norent.txt",
+          "dump_line": 187,
+          "block": "--- [inventory [actor]]"
+        },
+        {
+          "line": "<worn on body>       Idleforcerent's tunic",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lifecycle-idle-rent-norent.txt",
+          "dump_line": 192,
+          "block": "--- [equipment [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "lua-cast-spell-gates-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You can only cast this spell upon yourself!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 3,
+          "block": "--- [say selfonly [actor]]"
+        },
+        {
+          "line": "You cannot cast this spell upon yourself!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 7,
+          "block": "--- [say notself [actor]]"
+        },
+        {
+          "line": "You can't cast this spell if you're not in a group!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 11,
+          "block": "--- [say group [actor]]"
+        },
+        {
+          "line": "You can only will this power upon yourself!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 19,
+          "block": "--- [say selfonly [actor]]"
+        },
+        {
+          "line": "You cannot will this power upon yourself!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 23,
+          "block": "--- [say notself [actor]]"
+        },
+        {
+          "line": "You cannot use this power if you are not in a group!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 27,
+          "block": "--- [say group [actor]]"
+        },
+        {
+          "line": "You dream about great magical powers.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 69,
+          "block": "--- [~dpclock pulse 120 [peer]]"
+        },
+        {
+          "line": "You cannot concentrate while resting.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 121,
+          "block": "--- [~dpclock pulse 120 [peer]]"
+        },
+        {
+          "line": "You can't do this sitting!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 154,
+          "block": "--- [~dpclock pulse 120 [peer]]"
+        },
+        {
+          "line": "Impossible!  You can't concentrate enough!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 187,
+          "block": "--- [~dpclock pulse 120 [peer]]"
+        },
+        {
+          "line": "You can't do much of anything like this!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/lua-cast-spell-gates-depth.txt",
+          "dump_line": 219,
+          "block": "--- [~dpclock pulse 120 [peer]]"
+        }
+      ]
+    },
+    {
+      "scenario": "reagent-waterwalk-decoy-vnum-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You feel webbing between your toes.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/reagent-waterwalk-decoy-vnum-depth.txt",
+          "dump_line": 12,
+          "block": "--- [cast 'waterwalk' ReagentDecoy [actor]]"
+        },
+        {
+          "line": "  1   a wand of invisibility                                          2 pts",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/reagent-waterwalk-decoy-vnum-depth.txt",
+          "dump_line": 7,
+          "block": "--- [inventory [actor]]"
+        },
+        {
+          "line": "  1   a wand of invisibility                                          2 pts",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/reagent-waterwalk-decoy-vnum-depth.txt",
+          "dump_line": 26,
+          "block": "--- [inventory [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "retaliation-flamestrike-save-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You call down a bolt of flame on him!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/retaliation-flamestrike-save-depth.txt",
+          "dump_line": 4,
+          "block": "--- [cast 'flame strike' incubus]"
+        },
+        {
+          "line": "A bolt of flame shoots down from the heavens and engulfs an incubus!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/retaliation-flamestrike-save-depth.txt",
+          "dump_line": 5,
+          "block": "--- [cast 'flame strike' incubus]"
+        }
+      ]
+    },
+    {
+      "scenario": "spell-parser-item-output-gaps",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You recite an important-looking scroll which dissolves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 3,
+          "block": "--- [recite important gem [actor]]"
+        },
+        {
+          "line": "You recite an important-looking scroll which dissolves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 419,
+          "block": "--- [recite important [actor]]"
+        },
+        {
+          "line": "Paper cut",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 5,
+          "block": "--- [recite important gem [parserpeer]]"
+        },
+        {
+          "line": "Paper cut",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 423,
+          "block": "--- [recite important [parserpeer]]"
+        },
+        {
+          "line": "Your the gem of control bathes you in a blinding glow!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 14,
+          "block": "--- [use gem Parsergod [actor]]"
+        },
+        {
+          "line": "Your the gem of control flares up with a blinding glow that surges toward Parserpeer!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 26,
+          "block": "--- [use gem Parserpeer [actor]]"
+        },
+        {
+          "line": "Your the gem of control flares up with a blinding glow that surges toward Parserpeer!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 47,
+          "block": "--- [use gem Parserpeer [actor]]"
+        },
+        {
+          "line": "You can't use the gem of control like that.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 39,
+          "block": "--- [use gem [actor]]"
+        },
+        {
+          "line": "It seems powerless.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 48,
+          "block": "--- [use gem Parserpeer [actor]]"
+        },
+        {
+          "line": "Nothing seems to happen.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 52,
+          "block": "--- [use gem Parserpeer [parserpeer]]"
+        },
+        {
+          "line": "Parsergod's a wand of invisibility flares up with a blinding glow that surges toward a loaf of bread!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 225,
+          "block": "--- [use actionwand bread [parserpeer]]"
+        },
+        {
+          "line": "A shimmering current leaps from a wand of invisibility toward a loaf of bread.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 358,
+          "block": "--- [use actionwand2 bread [parserpeer]]"
+        },
+        {
+          "line": "Parsergod bangs on a war gong, sending a resounding note through the air.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 389,
+          "block": "--- [use gong [parserpeer]]"
+        },
+        {
+          "line": "You can't do this sitting!!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 405,
+          "block": "--- [recite recall [actor]]"
+        },
+        {
+          "line": "There is nothing to here to affect with an important-looking scroll.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 415,
+          "block": "--- [recite important Phantom [actor]]"
+        },
+        {
+          "line": "You can't do this sitting!!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 405,
+          "block": "--- [recite recall [actor]]"
+        },
+        {
+          "line": "You can't do this sitting!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 439,
+          "block": "--- [quaff potion [actor]]"
+        },
+        {
+          "line": "Parsergod quaffs a potion of lycanthropy, and lets out a lone, solitary howl...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-parser-item-output-gaps.txt",
+          "dump_line": 452,
+          "block": "--- [quaff potion [parserpeer]]"
+        }
+      ]
+    },
+    {
+      "scenario": "spell-points-spoken-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You feel a lot better!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 11,
+          "block": "--- [cast 'cure critic' PointsTarget [pointstarget]]"
+        },
+        {
+          "line": "PointsTarget's wounds glow and mend themselves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 6,
+          "block": "--- [cast 'cure critic' PointsTarget [pointsobserve]]"
+        },
+        {
+          "line": "PointsTarget's wounds glow and mend themselves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 30,
+          "block": "--- [cast 'cure light' PointsTarget [pointsobserve]]"
+        },
+        {
+          "line": "You feel better.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 35,
+          "block": "--- [cast 'cure light' PointsTarget [pointstarget]]"
+        },
+        {
+          "line": "You feel vitalized!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 58,
+          "block": "--- [cast 'vitality' PointsTarget [pointstarget]]"
+        },
+        {
+          "line": "You feel invigorated!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 81,
+          "block": "--- [cast 'invigorate' PointsTarget [pointstarget]]"
+        },
+        {
+          "line": "You focus your mind on healing your body..",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 104,
+          "block": "--- [will 'cell adjustment' [actor]]"
+        },
+        {
+          "line": "Your wounds mend themselves!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 105,
+          "block": "--- [will 'cell adjustment' [actor]]"
+        },
+        {
+          "line": "Your wounds mend beneath your hands!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/spell-points-spoken-depth.txt",
+          "dump_line": 134,
+          "block": "--- [cast 'lay hands' [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "violence-npc-switched-output-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 3,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 10,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 16,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 22,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 28,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 34,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 64,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 70,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "You dodge!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 77,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 126,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 133,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 139,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 145,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 151,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 157,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 187,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 193,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "A guard trainee dodges your attack!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 200,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        },
+        {
+          "line": "You drag yourself to your feet.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 4,
+          "block": "--- [~dpclock pulse 400 [actor]]"
+        },
+        {
+          "line": "A guard trainee scrambles to his feet!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/violence-npc-switched-output-depth.txt",
+          "dump_line": 127,
+          "block": "--- [~dpclock pulse 400 [peer]]"
+        }
+      ]
+    },
+    {
+      "scenario": "wizard-file-output-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "There is no such player.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-file-output-depth.txt",
+          "dump_line": 3,
+          "block": "--- [set player Nobody level 1 [actor]]"
+        },
+        {
+          "line": "There is no such player.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-file-output-depth.txt",
+          "dump_line": 9,
+          "block": "--- [set file Nobody level 1 [actor]]"
+        },
+        {
+          "line": "Password changed to 'newpassword'.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-file-output-depth.txt",
+          "dump_line": 16,
+          "block": "--- [set file Setlow passwd newpassword [actor]]"
+        },
+        {
+          "line": "Saved in file.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-file-output-depth.txt",
+          "dump_line": 17,
+          "block": "--- [set file Setlow passwd newpassword [actor]]"
+        },
+        {
+          "line": "Sorry, you can't do that.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-file-output-depth.txt",
+          "dump_line": 29,
+          "block": "--- [stat file Setpeer [actor]]"
+        },
+        {
+          "line": "Sorry, you can't do that.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-file-output-depth.txt",
+          "dump_line": 35,
+          "block": "--- [set file Setpeer level 40 [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "wizard-stat-clan-followers-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b4-final",
+      "events": [
+        {
+          "line": "Clan : Wolves",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-stat-clan-followers-depth.txt",
+          "dump_line": 26,
+          "block": "--- [stat player Clanmate [actor]]"
+        },
+        {
+          "line": "Master is: <none>, Followers are: FoxtrotFollowXX, EchoFollowerXXX,",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-stat-clan-followers-depth.txt",
+          "dump_line": 27,
+          "block": "--- [stat player Clanmate [actor]]"
+        },
+        {
+          "line": "Master is: <none>, Followers are: FoxtrotFollowXX, EchoFollowerXXX,",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-stat-clan-followers-depth.txt",
+          "dump_line": 296,
+          "block": "--- [stat mob orc [actor]]"
+        },
+        {
+          "line": " DeltaFollowerXX, CharlieFollower, BravoFollowerBB, AlphaFollowerAA",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-stat-clan-followers-depth.txt",
+          "dump_line": 28,
+          "block": "--- [stat player Clanmate [actor]]"
+        },
+        {
+          "line": " DeltaFollowerXX, CharlieFollower, BravoFollowerBB, AlphaFollowerAA",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/census-dump/wizard-stat-clan-followers-depth.txt",
+          "dump_line": 297,
+          "block": "--- [stat mob orc [actor]]"
+        }
+      ]
+    }
+  ],
+  "warmups": [
+    {
+      "scenario": "lifecycle-idle-rent-norent",
+      "line": "You wear a testing cloak around your body.",
+      "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/initial-logs/attempt.MWFO7h/lifecycle-idle-rent-norent.capture1/c-warmup.txt",
+      "dump_line": 10,
+      "block": "--- [wear cloak [actor]]"
+    },
+    {
+      "scenario": "reagent-waterwalk-decoy-vnum-depth",
+      "line": "1) Namelist : frog leg decoy",
+      "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/initial-logs/attempt.MWFO7h/reagent-waterwalk-decoy-vnum-depth.capture1/c-warmup.txt",
+      "dump_line": 77,
+      "block": "--- [send:builder frog leg decoy [builder]]"
+    },
+    {
+      "scenario": "violence-npc-switched-output-depth",
+      "line": "Pos: Sitting, Fighting: Violencepeer, Attack type: hit",
+      "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b4-final/initial-logs/attempt.MWFO7h/violence-npc-switched-output-depth.capture1/c-warmup.txt",
+      "dump_line": 132,
+      "block": "--- [stat mob trainee [actor]]"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "multiple_warmup_sections": [
+    [
+      "cmd/dp-oracle-diff/scenarios/idlist-depth.txt",
+      [
+        45,
+        51
+      ]
+    ]
+  ],
+  "warmup_level_at_least_40": [
+    [
+      "cmd/dp-oracle-diff/scenarios/aid-failure-depth.txt",
+      103,
+      "set Failvict level 40"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/idlist-depth.txt",
+      52,
+      "set Idlistdepth level 40"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/lua-cast-spell-gates-depth.txt",
+      134,
+      "set Castmatrix level 50"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/spell-points-spoken-depth.txt",
+      108,
+      "set PointsGod level 100"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/violence-npc-switched-output-depth.txt",
+      93,
+      "set mob trainee level 80"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/wizard-file-output-depth.txt",
+      107,
+      "set player Setpeer level 40"
+    ]
+  ],
+  "clan_create_same_leader_enroll": [
+    [
+      "cmd/dp-oracle-diff/scenarios/clan-applicant-depth.txt",
+      103,
+      "clan enroll Clanmate Wolves"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/clan-depth.txt",
+      124,
+      "clan enroll Clanmate Wolves"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/clan-member-depth.txt",
+      150,
+      "clan enroll Clanmate Wolves"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/clan-plan-depth.txt",
+      74,
+      "clan enroll Clanmate Wolves"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/clan-plan-mortal-depth.txt",
+      72,
+      "clan enroll Clanmate Wolves"
+    ],
+    [
+      "cmd/dp-oracle-diff/scenarios/wizard-stat-clan-followers-depth.txt",
+      248,
+      "clan enroll Clanmate Wolves"
+    ]
+  ],
+  "me_position_or_timer_without_explicit_save": [
+    "cmd/dp-oracle-diff/scenarios/violence-npc-switched-output-depth.txt"
+  ]
+}

@@ -1,13 +1,10 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: mob.fighter-round-draw-parity
-# DeepSeek's #2243 note: in a SPECIAL(fighter) round (mob 20020, the trollish
-# dungeon guard's sibling), C draws Number(0,13) where Go draws Dice(1,4),
-# between a to-hit roll and the damage dice, flipping the God's next swing
-# between the scratch hit variant and the avoided-blow miss. The God's wimpy
-# level is set above its hit points so every exchange lands in the wimpy
-# window and the fighter special's subcmd skills run every round they fire.
+# A real SPECIAL(fighter) round runs with the God's valid wimpy threshold
+# (120, below maxhit/3) above current hit points (100). C's automatic flee
+# output proves the wimpy window; the room has no exits. Original nine seeds
+# retain matching transcripts and draw logs. src/act.other.c:978-1019;
+# src/fight.c:1601-1610; src/spec_procs.c:509-535.
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-mob 20020 1 8105 80
@@ -45,7 +42,7 @@ Y
 goto 8105
 set Wimpfightgod maxhit 400
 set Wimpfightgod hit 100
-set Wimpfightgod wimpy 350
+wimpy 120
 hit guard
 
 [probe]

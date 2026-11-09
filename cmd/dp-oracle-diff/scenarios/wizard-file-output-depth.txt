@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # C-first saved-file reporting and mutation vehicle. The first character is
 # the bootstrap implementor; peers are saved and disconnected before file
 # access, and the actor is lowered below Setpeer to exercise both refusals.
@@ -12,7 +11,6 @@
 # depth-case: set.file-saved
 
 [fixture]
-allow-setup-refusal
 quiet-mobs
 empty-players
 
@@ -104,16 +102,17 @@ Y
 goto 8162
 teleport Setpeer 8162
 teleport Setlow 8162
-set player Setpeer level 40
+set player Setpeer level 39
 set player Setlow level 1
 send:high quit
 ~dpclock pulse 1
-send:low quit
+send:low reallyquit
 ~dpclock pulse 1
 
 [probe]
 set player Nobody level 1
 set file Nobody level 1
 set file Setlow passwd newpassword
+set Setadmin level 38
 stat file Setpeer
 set file Setpeer level 40

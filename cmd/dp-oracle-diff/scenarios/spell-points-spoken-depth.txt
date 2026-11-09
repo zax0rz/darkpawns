@@ -1,18 +1,16 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: spell.points.cure-critic
 # depth-case: spell.points.cure-light
 # depth-case: spell.points.vitality
 # depth-case: spell.points.invigorate
 # depth-case: spell.points.cell-adjustment
 # depth-case: spell.points.lay-hands
-# Real spoken casts exercise each active spell dispatched to C mag_points.
+# Real cast/will commands exercise each active spell dispatched to C mag_points.
 # Formula and state bounds are also pinned by TestMagPoints and
 # TestMagPointsFormula_GoldenAgainstCSource; C spell entries are at
 # src/spell_parser.c:1277-1281,1450-1454,1483-1485,1513-1515 and the shared
 # effect branches at src/magic.c:1767-1824.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 
@@ -104,8 +102,7 @@ Y
 goto 8105
 teleport PointsTarget 8105
 teleport PointsObserve 8105
-set PointsGod class i
-set PointsGod level 100
+set PointsGod class cleric
 set PointsGod maxhit 5000
 set PointsGod hit 1
 set PointsGod maxmana 5000
@@ -113,7 +110,7 @@ set PointsGod mana 5000
 set PointsTarget level 20
 set PointsTarget maxhit 5000
 set PointsTarget hit 1
-set PointsTarget alignment 1000
+set PointsTarget align 1000
 
 [probe]
 cast 'cure critic' PointsTarget
@@ -127,9 +124,11 @@ cast 'vitality' PointsTarget
 set PointsTarget hit 1
 cast 'invigorate' PointsTarget
 ~dpclock pulse 20
+set PointsGod class i
 set PointsGod hit 1
-cast 'cell adjustment'
+will 'cell adjustment'
 ~dpclock pulse 20
+set PointsGod class paladin
 set PointsGod hit 1
 cast 'lay hands'
 ~dpclock pulse 20
