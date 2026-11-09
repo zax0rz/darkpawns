@@ -754,7 +754,7 @@ func (s *Session) oeditShowPromptApplyMenuLocked() {
 	nrm, grn, _, _ := s.oeditCols()
 	s.oeditSendLocked("\r\n")
 	var sb strings.Builder
-	for i := 0; i < maxObjAffect; i++ {
+	for i := range maxObjAffect {
 		affect := state.affects[i]
 		if affect.Location != 0 {
 			applyName := oeditSprintType(affect.Location, olc.ApplyTypeNames)
@@ -825,7 +825,7 @@ func (s *Session) oeditShowSpellMenuLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i := 0; i < numAffFlags; i++ {
+	for i := range numAffFlags {
 		fmt.Fprintf(&sb, "%s%2d%s) %-20.20s ", grn, i, nrm, olc.ObjectAffectFlagNames[i])
 		columns++
 		if columns%2 == 0 {
@@ -887,7 +887,7 @@ func (s *Session) oeditShowSpellsMenuLocked() {
 	var sb strings.Builder
 	sb.WriteString("\r\n")
 	columns := 0
-	for i := 0; i < numSpells; i++ {
+	for i := range numSpells {
 		fmt.Fprintf(&sb, "%s%2d%s) %s%-20.20s ", grn, i, nrm, yel, olc.SpellNames[i])
 		columns++
 		if columns%3 == 0 {
@@ -1477,7 +1477,7 @@ func (s *Session) saveOeditInternallyLocked() {
 	// Compact non-zero affect slots back into the parser's slice form. C's
 	// disk writer skips location 0 the same way (:438-443).
 	obj.Affects = obj.Affects[:0]
-	for i := 0; i < maxObjAffect; i++ {
+	for i := range maxObjAffect {
 		if state.affects[i].Location == 0 {
 			continue
 		}

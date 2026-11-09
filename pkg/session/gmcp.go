@@ -301,7 +301,7 @@ func (s *Session) gmcpWants(pkg string) bool {
 
 // sendGMCP encodes data and queues it for the transport, in order with the
 // session's text.
-func (s *Session) sendGMCP(pkg string, data interface{}) {
+func (s *Session) sendGMCP(pkg string, data any) {
 	if !s.gmcpWants(pkg) {
 		return
 	}
@@ -315,7 +315,7 @@ func (s *Session) sendGMCP(pkg string, data interface{}) {
 
 // sendGMCPChanged is sendGMCP for state messages: it sends only when the
 // payload differs from the last one sent through *last.
-func (s *Session) sendGMCPChanged(pkg string, data interface{}, last *string) {
+func (s *Session) sendGMCPChanged(pkg string, data any, last *string) {
 	if !s.gmcpWants(pkg) {
 		return
 	}

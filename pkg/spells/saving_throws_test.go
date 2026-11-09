@@ -127,7 +127,7 @@ func TestGetSavingThrow_SaveTypeOutOfRange(t *testing.T) {
 func TestCheckSavingThrow_DoesNotPanic(t *testing.T) {
 	tests := []struct {
 		name     string
-		ch       interface{}
+		ch       any
 		saveType SavingThrowType
 	}{
 		{"mock warrior", mockChar{class: 3, level: 10}, SaveParalysis},
@@ -162,7 +162,7 @@ func TestCheckSavingThrow_HighLevelSavesOften(t *testing.T) {
 	c := mockChar{class: 3, level: 40}
 	saves := 0
 	iterations := 1000
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		if CheckSavingThrow(c, SaveParalysis) {
 			saves++
 		}
@@ -178,7 +178,7 @@ func TestCheckSavingThrow_Level0SavesRarely(t *testing.T) {
 	c := mockChar{class: 3, level: 0}
 	saves := 0
 	iterations := 1000
-	for i := 0; i < iterations; i++ {
+	for range iterations {
 		if CheckSavingThrow(c, SaveParalysis) {
 			saves++
 		}

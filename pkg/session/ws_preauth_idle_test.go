@@ -74,8 +74,8 @@ func TestWebSocket_PreAuthIdleTimeout_DataFramesRefreshDeadline(t *testing.T) {
 	// 2.4x the timeout while a data frame arrives every 80 ms. Pre-auth
 	// commands answer ErrNotAuthenticated, so each frame also provokes a
 	// reply the final read below can observe.
-	for i := 0; i < 8; i++ {
-		if err := c.WriteJSON(map[string]interface{}{"type": "command", "data": map[string]interface{}{"command": "look"}}); err != nil {
+	for range 8 {
+		if err := c.WriteJSON(map[string]any{"type": "command", "data": map[string]any{"command": "look"}}); err != nil {
 			t.Fatalf("WriteJSON: %v", err)
 		}
 		time.Sleep(80 * time.Millisecond)

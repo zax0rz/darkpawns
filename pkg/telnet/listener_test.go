@@ -293,7 +293,7 @@ func newMudlogObserver(name string, level int, flags ...int) *game.Player {
 	return p
 }
 
-func (c *mudlogCapture) EachSession(fn func(player interface{}, send func(msg string))) {
+func (c *mudlogCapture) EachSession(fn func(player any, send func(msg string))) {
 	fn(newMudlogObserver("Observer", 34, game.PrfLog1, game.PrfLog2), func(msg string) {
 		c.mu.Lock()
 		c.messages = append(c.messages, msg)
@@ -673,7 +673,7 @@ func TestReadLineCapsIACEscapedBytes(t *testing.T) {
 	}
 
 	data := make([]byte, 0, (maxInputLen+10)*2+1)
-	for i := 0; i < maxInputLen+10; i++ {
+	for range maxInputLen + 10 {
 		data = append(data, IAC, IAC)
 	}
 	data = append(data, '\n')
@@ -915,7 +915,7 @@ func TestConfigurableConnectionLimits(t *testing.T) {
 	}()
 
 	// First two connections from the same IP should be accepted.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		c, err := net.Dial("tcp", addr)
 		if err != nil {
 			t.Fatalf("dial %d: %v", i, err)

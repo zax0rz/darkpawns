@@ -75,7 +75,7 @@ func TestCombatPromptConditionThresholds(t *testing.T) {
 }
 
 func TestPromptStatusColorLevels(t *testing.T) {
-	for level := 0; level < 4; level++ {
+	for level := range 4 {
 		m := makeTestManager(t)
 		s := makeTestSession(t, m, "Viewer", 1001, true)
 		s.player.SetPlrFlag(game.PrfColor1, level&1 != 0)

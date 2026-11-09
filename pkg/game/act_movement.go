@@ -626,7 +626,7 @@ func findDoor(w *World, ch *Player, doorType, dir, cmdname string) int {
 		return -1
 	}
 
-	for door := 0; door < len(dirs); door++ {
+	for door := range dirs {
 		ext, ok := room.Exits[dirs[door]]
 		if ok && ext.Keywords != "" && cIsName(doorType, ext.Keywords) &&
 			(!strings.Contains(ext.Keywords, "secret") || revealsSecrets) {
@@ -1165,7 +1165,7 @@ func (w *World) findDoorMob(m *MobInstance, doorType, dir string) int {
 	if doorType == "" {
 		return -1
 	}
-	for door := 0; door < len(dirs); door++ {
+	for door := range dirs {
 		ext, ok := room.Exits[dirs[door]]
 		if ok && ext.Keywords != "" && cIsName(doorType, ext.Keywords) &&
 			(!strings.Contains(ext.Keywords, "secret") || revealsSecrets) {

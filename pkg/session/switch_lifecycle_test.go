@@ -150,7 +150,7 @@ func TestSwitchReadersConcurrentLifecycle(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			m.world.MessageSink("Borrowed", []byte("test\r\n"))
 			m.attachedBody(h.player)
 			getEffectiveLevel(s)
@@ -158,7 +158,7 @@ func TestSwitchReadersConcurrentLifecycle(t *testing.T) {
 			m.world.MovementLook(h.player)
 		}
 	}()
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		if err := cmdSwitch(s, []string{"Borrowed"}); err != nil {
 			t.Fatal(err)
 		}

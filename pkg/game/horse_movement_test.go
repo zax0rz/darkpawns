@@ -113,7 +113,7 @@ func TestMountedTravelSpendsTheMountPool(t *testing.T) {
 	}
 
 	moved := 0
-	for i := 0; i < steps; i++ {
+	for range steps {
 		if !w.DoMove(rider, "north").Success {
 			break
 		}

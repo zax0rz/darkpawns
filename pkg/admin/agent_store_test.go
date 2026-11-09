@@ -268,7 +268,7 @@ func TestAgentStore_ThreadSafety(t *testing.T) {
 
 	done := make(chan bool)
 	go func() {
-		for i := 0; i < 50; i++ {
+		for i := range 50 {
 			if _, err := store.AddFinding("reek", "high", "test", "f.go", i, "desc"); err != nil {
 				t.Errorf("AddFinding error: %v", err)
 			}
@@ -280,7 +280,7 @@ func TestAgentStore_ThreadSafety(t *testing.T) {
 	}()
 
 	go func() {
-		for i := 0; i < 50; i++ {
+		for range 50 {
 			store.GetFindings("", "", "")
 			store.GetAgents()
 			if _, _, err := store.UpdateAgentStatus("daeron", "active"); err != nil {

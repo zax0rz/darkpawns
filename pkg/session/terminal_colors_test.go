@@ -7,7 +7,7 @@ import (
 	"github.com/zax0rz/darkpawns/pkg/game"
 )
 
-func colorFrame(t *testing.T, kind string, data interface{}) []byte {
+func colorFrame(t *testing.T, kind string, data any) []byte {
 	t.Helper()
 	b, err := json.Marshal(ServerMessage{Type: kind, Data: data})
 	if err != nil {
@@ -54,7 +54,7 @@ func TestTerminalColorEntryOnce(t *testing.T) {
 	if err := json.Unmarshal(msg, &raw); err != nil {
 		t.Fatal(err)
 	}
-	if raw.Data.(map[string]interface{})["prompt"] != "&&r &RRed&n" {
+	if raw.Data.(map[string]any)["prompt"] != "&&r &RRed&n" {
 		t.Fatal("entry expanded before terminal funnel")
 	}
 	f, _ := s.RenderTerminalFrame(msg)
@@ -67,7 +67,7 @@ func TestTerminalColorBrowserAndPrompts(t *testing.T) {
 	s := makeTestSession(t, makeTestManager(t), "Viewer", 1001, true)
 	s.player.SetPlrFlag(game.PrfColor2, true)
 	for _, kind := range []string{MsgEvent, MsgPrompt} {
-		msg := colorFrame(t, kind, map[string]interface{}{"type": "raw", "raw": true, "text": "&gGreen&n"})
+		msg := colorFrame(t, kind, map[string]any{"type": "raw", "raw": true, "text": "&gGreen&n"})
 		rendered, ok := renderForBrowserTerminalTracked(s, msg)
 		if !ok {
 			t.Fatal("browser did not render")
@@ -82,14 +82,14 @@ func TestTerminalColorBrowserAndPrompts(t *testing.T) {
 			t.Fatalf("browser %s bytes %q", kind, result.Data.Text)
 		}
 	}
-	gmcp := colorFrame(t, "gmcp", map[string]interface{}{"package": "Comm.Test", "json": "&r"})
+	gmcp := colorFrame(t, "gmcp", map[string]any{"package": "Comm.Test", "json": "&r"})
 	f, _ := s.RenderTerminalFrame(gmcp)
 	if f.GMCPPayload != "&r" {
 		t.Fatal("GMCP metadata expanded")
 	}
 	s.isSwitched = true
 	s.switchedMob = &game.MobInstance{}
-	msg := colorFrame(t, MsgPrompt, map[string]interface{}{"raw": true, "text": "&rNPC"})
+	msg := colorFrame(t, MsgPrompt, map[string]any{"raw": true, "text": "&rNPC"})
 	f, _ = s.RenderTerminalFrame(msg)
 	if f.Text != "&rNPC" {
 		t.Fatal("NPC used original PC color preference")

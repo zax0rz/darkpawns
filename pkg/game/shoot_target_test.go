@@ -71,7 +71,7 @@ func TestShootTargetConcurrentMovement(t *testing.T) {
 	workers.Add(2)
 	go func() {
 		defer workers.Done()
-		for i := 0; i < 1000; i++ {
+		for i := range 1000 {
 			if err := w.PlayerTransfer(p, 1001+i%2); err != nil {
 				t.Error(err)
 				return
@@ -80,7 +80,7 @@ func TestShootTargetConcurrentMovement(t *testing.T) {
 	}()
 	go func() {
 		defer workers.Done()
-		for i := 0; i < 1000; i++ {
+		for range 1000 {
 			for room := 1001; room <= 1002; room++ {
 				if got := w.ResolveShootTarget(room, "Traveler"); got != nil && got != p {
 					t.Error("unexpected body", got)

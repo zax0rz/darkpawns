@@ -254,7 +254,7 @@ func TestLegacySnapshotWithManySyntheticObjectsLogsOnce(t *testing.T) {
 	var items strings.Builder
 	items.WriteString(`"room_items":{"5001":[`)
 	const syntheticObjects = 3200
-	for index := 0; index < syntheticObjects; index++ {
+	for index := range syntheticObjects {
 		if index > 0 {
 			items.WriteByte(',')
 		}

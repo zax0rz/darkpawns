@@ -141,7 +141,7 @@ func TestRunSpecialsNewestMobWinsDeterministically(t *testing.T) {
 		t.Fatalf("SpawnMob newer: %v", err)
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		winner = ""
 		if err := ExecuteCommand(s, "look", nil); err != nil {
 			t.Fatalf("ExecuteCommand #%d: %v", i, err)
@@ -231,7 +231,7 @@ func TestRunSpecialsWornOrderFollowsCWearIndex(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		winner = ""
 		if err := ExecuteCommand(s, "look", nil); err != nil {
 			t.Fatalf("ExecuteCommand #%d: %v", i, err)

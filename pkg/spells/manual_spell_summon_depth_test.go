@@ -20,7 +20,7 @@ func TestSummonOutlawResistanceDispatchMatchesCNotice(t *testing.T) {
 		flags: 1, // PLR_OUTLAW is bit 0 in src/structs.h.
 	}
 	world := &summonTestWorld{
-		items: []interface{}{circle},
+		items: []any{circle},
 		rooms: map[int]*parser.Room{
 			1001: {VNum: 1001, Name: "Summon Test Room", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
 		},
@@ -30,7 +30,7 @@ func TestSummonOutlawResistanceDispatchMatchesCNotice(t *testing.T) {
 	magSummonOutlawResistanceRoll = func() int { return 65 }
 	t.Cleanup(func() { magSummonOutlawResistanceRoll = oldResistanceRoll })
 	oldSaveRoll := magSummonSaveRoll
-	magSummonSaveRoll = func(interface{}, int) bool {
+	magSummonSaveRoll = func(any, int) bool {
 		t.Fatal("the outlaw resistance must return before the save")
 		return false
 	}
@@ -51,21 +51,21 @@ func TestSummonOutlawResistanceDispatchMatchesCNotice(t *testing.T) {
 
 type summonBackfireWorld struct {
 	summonTestWorld
-	players   map[int][]interface{}
+	players   map[int][]any
 	transfers []int
-	looks     []interface{}
+	looks     []any
 	hits      [][2]combat.Combatant
 }
 
-func (w *summonBackfireWorld) ForEachPlayerInRoomInterface(room int, fn func(interface{})) {
+func (w *summonBackfireWorld) ForEachPlayerInRoomInterface(room int, fn func(any)) {
 	for _, player := range w.players[room] {
 		fn(player)
 	}
 }
 
-func (w *summonBackfireWorld) ForEachMobInRoomInterface(int, func(interface{})) {}
+func (w *summonBackfireWorld) ForEachMobInRoomInterface(int, func(any)) {}
 
-func (w *summonBackfireWorld) PlayerTransfer(actor interface{}, room int) error {
+func (w *summonBackfireWorld) PlayerTransfer(actor any, room int) error {
 	switch p := actor.(type) {
 	case *mockSpellsChar:
 		p.roomVNum = room
@@ -76,7 +76,7 @@ func (w *summonBackfireWorld) PlayerTransfer(actor interface{}, room int) error 
 	return nil
 }
 
-func (w *summonBackfireWorld) CharacterTransferForSpell(actor interface{}, room int) error {
+func (w *summonBackfireWorld) CharacterTransferForSpell(actor any, room int) error {
 	return w.PlayerTransfer(actor, room)
 }
 
@@ -88,20 +88,20 @@ func TestSummonSuccessTransfersPlayerBeforeArrivalAct(t *testing.T) {
 	targetPeer := &mockSpellsChar{name: "Targetpeer", roomVNum: 1002, position: int(PosStanding)}
 	world := &summonBackfireWorld{
 		summonTestWorld: summonTestWorld{
-			items: []interface{}{circle},
+			items: []any{circle},
 			rooms: map[int]*parser.Room{
 				1001: {VNum: 1001, Name: "Caster Room", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
 				1002: {VNum: 1002, Name: "Victim Room"},
 			},
 		},
-		players: map[int][]interface{}{
+		players: map[int][]any{
 			1001: {caster, originPeer},
 			1002: {victim, targetPeer},
 		},
 	}
 
 	oldSaveRoll := magSummonSaveRoll
-	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	magSummonSaveRoll = func(any, int) bool { return false }
 	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
 
 	ExecuteManualSpell(SpellSummon, combat.LVL_IMMORT, caster, victim, nil, "", world)
@@ -123,11 +123,11 @@ func TestSummonSuccessTransfersPlayerBeforeArrivalAct(t *testing.T) {
 	}
 }
 
-func (w *summonBackfireWorld) MobTransfer(actor interface{}, room int) error {
+func (w *summonBackfireWorld) MobTransfer(actor any, room int) error {
 	return w.PlayerTransfer(actor, room)
 }
 
-func (w *summonBackfireWorld) LookAtRoomForSpell(actor interface{}) {
+func (w *summonBackfireWorld) LookAtRoomForSpell(actor any) {
 	w.looks = append(w.looks, actor)
 }
 
@@ -137,7 +137,7 @@ func (w *summonBackfireWorld) MobFirstHit(attacker, defender combat.Combatant) {
 
 // ExecuteSpellCounterattack is the unified retaliation seam (npcRetaliate);
 // MobFirstHit keeps its recording shape for the assertions below.
-func (w *summonBackfireWorld) ExecuteSpellCounterattack(victim, caster interface{}) {
+func (w *summonBackfireWorld) ExecuteSpellCounterattack(victim, caster any) {
 	a, _ := victim.(combat.Combatant)
 	d, _ := caster.(combat.Combatant)
 	w.hits = append(w.hits, [2]combat.Combatant{a, d})
@@ -157,20 +157,20 @@ func TestSummonBackfireDispatchesCOutputsAndNPCRetaliation(t *testing.T) {
 	newPeer := &mockSpellsChar{name: "New room watcher", roomVNum: 1002, position: int(PosStanding)}
 	world := &summonBackfireWorld{
 		summonTestWorld: summonTestWorld{
-			items: []interface{}{circle},
+			items: []any{circle},
 			rooms: map[int]*parser.Room{
 				1001: {VNum: 1001, Name: "Caster Room", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
 				1002: {VNum: 1002, Name: "Victim Room"},
 			},
 		},
-		players: map[int][]interface{}{
+		players: map[int][]any{
 			1001: {caster, oldPeer},
 			1002: {newPeer},
 		},
 	}
 
 	oldSaveRoll := magSummonSaveRoll
-	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	magSummonSaveRoll = func(any, int) bool { return false }
 	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
 	oldBackfireRoll := magSummonBackfireRoll
 	magSummonBackfireRoll = func() int { return 0 }
@@ -207,20 +207,20 @@ func TestSummonSuccessCapitalizesLowercaseCasterAndSendSpellActFallback(t *testi
 	victim := &mockSpellsChar{name: "Target", level: 1, roomVNum: 1002, position: int(PosStanding)}
 	world := &summonBackfireWorld{
 		summonTestWorld: summonTestWorld{
-			items: []interface{}{circle},
+			items: []any{circle},
 			rooms: map[int]*parser.Room{
 				1001: {VNum: 1001, Name: "Caster Room", Exits: map[string]parser.Exit{"north": {Direction: "north", ToRoom: 1002}}},
 				1002: {VNum: 1002, Name: "Victim Room"},
 			},
 		},
-		players: map[int][]interface{}{
+		players: map[int][]any{
 			1001: {caster},
 			1002: {victim},
 		},
 	}
 
 	oldSaveRoll := magSummonSaveRoll
-	magSummonSaveRoll = func(interface{}, int) bool { return false }
+	magSummonSaveRoll = func(any, int) bool { return false }
 	t.Cleanup(func() { magSummonSaveRoll = oldSaveRoll })
 
 	ExecuteManualSpell(SpellSummon, combat.LVL_IMMORT, caster, victim, nil, "", world)

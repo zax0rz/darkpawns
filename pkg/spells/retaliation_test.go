@@ -6,10 +6,10 @@ import (
 
 // recordingCounterattackWorld satisfies the counterattack seam and records it.
 type recordingCounterattackWorld struct {
-	gotVictim, gotCaster interface{}
+	gotVictim, gotCaster any
 }
 
-func (w *recordingCounterattackWorld) ExecuteSpellCounterattack(victim, caster interface{}) {
+func (w *recordingCounterattackWorld) ExecuteSpellCounterattack(victim, caster any) {
 	w.gotVictim = victim
 	w.gotCaster = caster
 }
@@ -31,8 +31,8 @@ func (b *retaliationTestBody) GetRoomVNum() int { return 1001 }
 func (b *retaliationTestBody) GetSavingThrow(int) int {
 	return 0
 }
-func (b *retaliationTestBody) SendMessage(string)           {}
-func (b *retaliationTestBody) GetFightingBody() interface{} { return nil }
+func (b *retaliationTestBody) SendMessage(string)   {}
+func (b *retaliationTestBody) GetFightingBody() any { return nil }
 
 // TestNpcRetaliateRoutesNPCVictimsOnly pins the C gate: hit(victim, ch) runs
 // for IS_NPC victims only (src/magic.c:945 and siblings), and the call always
@@ -81,9 +81,9 @@ func TestMobFlagBitsPinCPositions(t *testing.T) {
 // counterattackSpy is embedded by test worlds that drive a refusal path: the
 // unified seam records every retaliation instead of panicking.
 type counterattackSpy struct {
-	retaliations [][2]interface{}
+	retaliations [][2]any
 }
 
-func (s *counterattackSpy) ExecuteSpellCounterattack(victim, caster interface{}) {
-	s.retaliations = append(s.retaliations, [2]interface{}{victim, caster})
+func (s *counterattackSpy) ExecuteSpellCounterattack(victim, caster any) {
+	s.retaliations = append(s.retaliations, [2]any{victim, caster})
 }

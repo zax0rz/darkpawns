@@ -44,7 +44,7 @@ func TestPerAccountLockoutRemoved(t *testing.T) {
 	// IP A: 12 wrong passwords — past the old 10-failure account threshold.
 	// One connection per attempt (the realistic brute-force shape): each
 	// failed client disconnects, which releases its entry-name claim.
-	for i := 0; i < 12; i++ {
+	for i := range 12 {
 		s := makeCharSession(t, m)
 		s.request = &http.Request{RemoteAddr: "10.9.9.1:1000"}
 		if err, panicked := callHandleLogin(s, loginMsg("Victim", "wrongpass")); panicked || err != nil {

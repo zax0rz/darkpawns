@@ -72,15 +72,15 @@ func NewManager(conn *sql.DB) *Manager {
 // exec, query and queryRow are the statement choke points for moderation, the
 // same shape as pkg/db's. SQLite binds positionally, so arguments are passed in
 // the order their `?` markers appear. Schema statements go through execDDL.
-func (m *Manager) exec(query string, args ...interface{}) (sql.Result, error) {
+func (m *Manager) exec(query string, args ...any) (sql.Result, error) {
 	return m.db.Exec(query, args...)
 }
 
-func (m *Manager) query(query string, args ...interface{}) (*sql.Rows, error) {
+func (m *Manager) query(query string, args ...any) (*sql.Rows, error) {
 	return m.db.Query(query, args...)
 }
 
-func (m *Manager) queryRow(query string, args ...interface{}) *sql.Row {
+func (m *Manager) queryRow(query string, args ...any) *sql.Row {
 	return m.db.QueryRow(query, args...)
 }
 

@@ -48,7 +48,7 @@ func TestSpecialOrderDepth(t *testing.T) {
 			if err := w.AddPlayer(s.player); err != nil {
 				t.Fatal(err)
 			}
-			for i := 0; i < 3; i++ {
+			for i := range 3 {
 				item, err := w.SpawnObject(7001+i, -1)
 				if err != nil {
 					t.Fatal(err)

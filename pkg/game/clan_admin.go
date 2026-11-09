@@ -93,7 +93,7 @@ func (w *World) doClanCreate(ch *Player, arg string) {
 	newClan.RankName[1] = "Leader"
 
 	// All privileges default to leader rank
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		newClan.Privilege[i] = newClan.Ranks
 	}
 

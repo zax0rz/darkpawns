@@ -42,7 +42,7 @@ func promptTextAfterFlush(t *testing.T, s *Session, pendingOutput int64) string 
 	if msg.Type != MsgPrompt {
 		t.Fatalf("message type = %q, want %q", msg.Type, MsgPrompt)
 	}
-	data, ok := msg.Data.(map[string]interface{})
+	data, ok := msg.Data.(map[string]any)
 	if !ok {
 		t.Fatalf("prompt message data = %#v, want a text map", msg.Data)
 	}
@@ -102,7 +102,7 @@ func TestSendPromptWithoutPlayerPreservesFrameBehavior(t *testing.T) {
 			if msg.Type != MsgPrompt {
 				t.Fatalf("message type = %q, want %q", msg.Type, MsgPrompt)
 			}
-			data, ok := msg.Data.(map[string]interface{})
+			data, ok := msg.Data.(map[string]any)
 			if !ok {
 				t.Fatalf("prompt data = %#v, want a text map", msg.Data)
 			}

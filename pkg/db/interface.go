@@ -22,7 +22,7 @@ type GameStore interface {
 	DeletePlayer(playerID int) error
 	RecordLoginFailure(name string, threshold int, lockoutDuration time.Duration) (bool, error)
 	RecordLoginSuccess(name string) error
-	Exec(query string, args ...interface{}) (sql.Result, error)
+	Exec(query string, args ...any) (sql.Result, error)
 }
 
 var _ GameStore = (*DB)(nil)

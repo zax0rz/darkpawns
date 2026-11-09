@@ -18,7 +18,7 @@ func TestConcurrentCharCreation(t *testing.T) {
 	const numClients = 5
 
 	var wg sync.WaitGroup
-	for i := 0; i < numClients; i++ {
+	for i := range numClients {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
@@ -27,9 +27,9 @@ func TestConcurrentCharCreation(t *testing.T) {
 			s := makeTestSession(t, m, name, 1001, false)
 
 			// Login — nil DB path requires a password and enters char creation.
-			loginMsg, _ := json.Marshal(map[string]interface{}{
+			loginMsg, _ := json.Marshal(map[string]any{
 				"type": MsgLogin,
-				"data": map[string]interface{}{
+				"data": map[string]any{
 					"player_name": name,
 					"password":    "testpass123",
 					"mode":        "player",
@@ -63,9 +63,9 @@ func TestConcurrentCharCreation(t *testing.T) {
 			}
 
 			for _, stage := range stages {
-				charMsg, _ := json.Marshal(map[string]interface{}{
+				charMsg, _ := json.Marshal(map[string]any{
 					"type": MsgCharInput,
-					"data": map[string]interface{}{"choice": stage.choice},
+					"data": map[string]any{"choice": stage.choice},
 				})
 				if err := s.handleMessage(charMsg); err != nil {
 					t.Errorf("client %d: char_input %q error: %v", id, stage.choice, err)

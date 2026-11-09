@@ -129,7 +129,7 @@ func (s *Session) flushDirtyVars() {
 	s.dirtyVars = make(map[string]bool)
 	s.agentMu.Unlock()
 
-	data := make(map[string]interface{}, len(dirty))
+	data := make(map[string]any, len(dirty))
 	for varName := range dirty {
 		data[varName] = s.buildVarValue(varName)
 	}
@@ -151,7 +151,7 @@ func (s *Session) flushDirtyVars() {
 // sendFullVarDump sends all agent variables in a single vars message.
 // Called on agent login (replaces the stub in agent.go).
 func (s *Session) sendFullVarDump() {
-	data := make(map[string]interface{}, len(AllVariables))
+	data := make(map[string]any, len(AllVariables))
 	for _, varName := range AllVariables {
 		data[varName] = s.buildVarValue(varName)
 	}
@@ -171,7 +171,7 @@ func (s *Session) sendFullVarDump() {
 }
 
 // buildVarValue returns the current value for a named agent variable.
-func (s *Session) buildVarValue(varName string) interface{} {
+func (s *Session) buildVarValue(varName string) any {
 	switch varName {
 	case VarHealth:
 		return s.player.GetHP()
@@ -229,7 +229,7 @@ func (s *Session) buildVarValue(varName string) interface{} {
 		// R4: a mortal never sees integer enemy HP — do_diagnose renders
 		// eight qualitative bands (diag_char_to_char, act.informative.c:363-
 		// 382). Emit exactly those bytes plus the bucket index; nothing finer.
-		return map[string]interface{}{
+		return map[string]any{
 			"fighting":      true,
 			"target":        target.GetName(),
 			"condition":     game.DiagCondition(target.GetHP(), target.GetMaxHP()),
@@ -240,7 +240,7 @@ func (s *Session) buildVarValue(varName string) interface{} {
 	case VarEquipment:
 		return s.buildEquipment()
 	case VarEvents:
-		return []interface{}{}
+		return []any{}
 	default:
 		return nil
 	}
@@ -467,11 +467,11 @@ func (s *Session) buildRoomItems() []RoomItemVar {
 }
 
 // buildInventory returns the player's carried items as a list of maps.
-func (s *Session) buildInventory() []map[string]interface{} {
+func (s *Session) buildInventory() []map[string]any {
 	items := s.player.Inventory.FindItems("")
-	result := make([]map[string]interface{}, 0, len(items))
+	result := make([]map[string]any, 0, len(items))
 	for _, item := range items {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"name":        item.GetShortDesc(),
 			"instance_id": s.objectFeedID(item),
 		})
@@ -480,11 +480,11 @@ func (s *Session) buildInventory() []map[string]interface{} {
 }
 
 // buildEquipment returns the player's equipped items as slot → {name, vnum}.
-func (s *Session) buildEquipment() map[string]interface{} {
+func (s *Session) buildEquipment() map[string]any {
 	equipped := s.player.Equipment.GetEquippedItems()
-	result := make(map[string]interface{}, len(equipped))
+	result := make(map[string]any, len(equipped))
 	for slot, item := range equipped {
-		result[slot.String()] = map[string]interface{}{
+		result[slot.String()] = map[string]any{
 			"name": item.GetShortDesc(),
 			"vnum": item.VNum,
 		}

@@ -187,9 +187,9 @@ var savingThrowGolden = [12][5][41]int{
 // (class, saveType, level). A failure means the Go port's saving throw numbers diverge from the
 // original game.
 func TestSavingThrow_GoldenAgainstCSource(t *testing.T) {
-	for class := 0; class < numClasses; class++ {
-		for saveType := 0; saveType < SaveCount; saveType++ {
-			for level := 0; level < maxLevelIndex; level++ {
+	for class := range numClasses {
+		for saveType := range SaveCount {
+			for level := range maxLevelIndex {
 				got := GetSavingThrow(class, level, SavingThrowType(saveType))
 				want := savingThrowGolden[class][saveType][level]
 				if got != want {

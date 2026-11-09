@@ -96,7 +96,7 @@ func newBoardSpecialOutputTest(t *testing.T) (*World, *Player, *bytes.Buffer) {
 
 func TestGenBoardFullBoardWriteRefusalOutput(t *testing.T) {
 	world, player, output := newBoardSpecialOutputTest(t)
-	for i := 0; i < boards.MaxBoardMessages; i++ {
+	for i := range boards.MaxBoardMessages {
 		magic := world.Boards.WriteMessage(0, player, "filled")
 		if magic <= 0 {
 			t.Fatalf("board post %d failed to allocate", i+1)
@@ -115,7 +115,7 @@ func TestGenBoardFullBoardWriteRefusalOutput(t *testing.T) {
 func TestGenBoardGlobalSlotExhaustionRefusalOutput(t *testing.T) {
 	world, player, output := newBoardSpecialOutputTest(t)
 	capacity := boards.NumBoards*boards.MaxBoardMessages + 5
-	for i := 0; i < capacity; i++ {
+	for i := range capacity {
 		if !genBoard(world, player, nil, "write", "") {
 			t.Fatalf("empty-headline attempt %d was not handled by gen_board", i+1)
 		}

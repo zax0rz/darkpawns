@@ -56,10 +56,10 @@ func TestSetRoomFlagBitConcurrent(t *testing.T) {
 	// Run under `go test -race` to catch lock-free writes.
 	const goroutines = 16
 	done := make(chan struct{})
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer func() { done <- struct{}{} }()
-			for j := 0; j < 200; j++ {
+			for range 200 {
 				if !w.SetRoomFlagBit(1001, roomFlagSecretMark) {
 					t.Error("SetRoomFlagBit returned false for an existing room")
 					return
@@ -67,7 +67,7 @@ func TestSetRoomFlagBitConcurrent(t *testing.T) {
 			}
 		}()
 	}
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		<-done
 	}
 

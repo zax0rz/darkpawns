@@ -239,7 +239,7 @@ func (w *World) ExtractPendingPlayers() []*Player {
 			if p.Equipment != nil {
 				hadEquipment := len(p.Equipment.Snapshot()) > 0
 				p.Equipment.mu.Lock()
-				for cPos := 0; cPos < NumWears; cPos++ {
+				for cPos := range NumWears {
 					slot, ok := CWearPosToSlot(cPos)
 					if !ok {
 						continue

@@ -77,7 +77,7 @@ func TestInputTiming_QueueAndDelay(t *testing.T) {
 	}
 
 	// Pump PULSE_VIOLENCE-1 drains: wait still > 0, command must NOT execute.
-	for i := 0; i < engine.PULSE_VIOLENCE-1; i++ {
+	for i := range engine.PULSE_VIOLENCE - 1 {
 		m.DrainInputQueues()
 		if didCommandExecute(t, s) {
 			t.Fatalf("queued command executed before wait expired (after pulse %d)", i+1)
@@ -117,7 +117,7 @@ func TestInputTiming_OnePerPulse(t *testing.T) {
 	}
 
 	// Drain until wait expires: the first command runs, queue depth → 1.
-	for i := 0; i < engine.PULSE_VIOLENCE; i++ {
+	for range engine.PULSE_VIOLENCE {
 		m.DrainInputQueues()
 	}
 	if got := s.queueLen(); got != 1 {
@@ -157,7 +157,7 @@ func TestInputTiming_FIFOOrdering(t *testing.T) {
 	s.enqueueInput("whoami", nil) // [second]
 
 	// Drain through the wait; first command executes, queue = [second].
-	for i := 0; i < engine.PULSE_VIOLENCE; i++ {
+	for range engine.PULSE_VIOLENCE {
 		m.DrainInputQueues()
 	}
 	if got := s.queueLen(); got != 1 {
@@ -206,7 +206,7 @@ func TestInputTiming_NoInventedString(t *testing.T) {
 	}
 	// The C delay emits nothing. Drain a few pulses; assert the invented
 	// rejection string never appears.
-	for i := 0; i < engine.PULSE_VIOLENCE; i++ {
+	for range engine.PULSE_VIOLENCE {
 		m.DrainInputQueues()
 		if g := drainSendChannel(t, s); strings.Contains(g, "too busy") {
 			t.Fatalf("invented 'too busy' string emitted: %q", g)
@@ -228,7 +228,7 @@ func TestInputTiming_UnitConversion(t *testing.T) {
 	if got, want := s.player.GetWaitState(), engine.PULSE_VIOLENCE; got != want {
 		t.Fatalf("SetWaitState(1) = %d, want %d pulses", got, want)
 	}
-	for i := 0; i < engine.PULSE_VIOLENCE-1; i++ {
+	for i := range engine.PULSE_VIOLENCE - 1 {
 		m.DrainInputQueues()
 		if got := s.player.GetWaitState(); got == 0 {
 			t.Fatalf("wait expired after %d pulses, want %d", i+1, engine.PULSE_VIOLENCE)

@@ -128,7 +128,7 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 		}
 	}
 	msg.WriteString("\r\nClan privileges:\r\n")
-	for j := 0; j < NumCP; j++ {
+	for j := range NumCP {
 		fmt.Fprintf(&msg, "   %-10s: %d\r\n", clanPrivileges[j], c.Privilege[j])
 	}
 	msg.WriteString("\r\nDescription:\r\n")
@@ -140,7 +140,7 @@ func (w *World) doClanInfo(ch *Player, arg string) {
 	msg.WriteString("\r\n\r\n")
 
 	atWar := false
-	for j := 0; j < 4; j++ {
+	for j := range 4 {
 		if c.AtWar[j] != 0 {
 			atWar = true
 			break

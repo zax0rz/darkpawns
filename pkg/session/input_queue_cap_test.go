@@ -18,7 +18,7 @@ func TestInputQueueCapWaitFlood(t *testing.T) {
 		s.inputMu.Unlock()
 		closed++
 	})
-	for pulse := 0; pulse < 300; pulse++ {
+	for range 300 {
 		s.player.SetWaitState(3)
 		if !s.tryExecuteNow("whoami", nil) {
 			t.Fatal("flood command bypassed wait queue")
@@ -55,7 +55,7 @@ func TestInputQueueCapAliases(t *testing.T) {
 		closed++
 	})
 	s.player.SetWaitState(3)
-	for i := 0; i < 127; i++ {
+	for range 127 {
 		s.tryExecuteNow("whoami", nil)
 	}
 	s.prependAliasedInputs([]string{"title First"})
@@ -85,11 +85,11 @@ func TestInputQueueCapConcurrentAdmission(t *testing.T) {
 	var closed atomic.Int32
 	s.SetCloseFunc(func() { closed.Add(1) })
 	var workers sync.WaitGroup
-	for worker := 0; worker < 8; worker++ {
+	for range 8 {
 		workers.Add(1)
 		go func() {
 			defer workers.Done()
-			for i := 0; i < 40; i++ {
+			for range 40 {
 				s.tryExecuteNow("whoami", nil)
 				if n := s.queueLen(); n > 128 {
 					t.Errorf("concurrent queue exceeded cap: %d", n)

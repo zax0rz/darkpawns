@@ -127,7 +127,7 @@ func TestInfobarUpdateUsesCLayoutAndBitOrder(t *testing.T) {
 
 // Exercise the real ON and repaint paths, not an isolated color formatter.
 func TestInfobarColorLevels(t *testing.T) {
-	for level := 0; level < 4; level++ {
+	for level := range 4 {
 		t.Run(fmt.Sprint(level), func(t *testing.T) {
 			m := makeTestManager(t)
 			s := makeCommandTestSession(t, m, "Infobarcolor", game.LVL_IMMORT, 1001)

@@ -353,7 +353,7 @@ func TestHeartbeatOutputConcurrentEnqueueCommitClose(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-start
-			for i := 0; i < 100; i++ {
+			for i := range 100 {
 				s.sendGuarded([]byte(strconv.Itoa(i)))
 			}
 		}()

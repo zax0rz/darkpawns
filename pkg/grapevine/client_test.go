@@ -81,7 +81,7 @@ func newFakeRelay(t *testing.T, authStatus string) *fakeRelay {
 					return
 				}
 			}
-			for i := 0; i < heartbeats; i++ {
+			for range heartbeats {
 				if err := conn.WriteMessage(websocket.TextMessage, []byte(`{"event":"heartbeat"}`)); err != nil {
 					return
 				}

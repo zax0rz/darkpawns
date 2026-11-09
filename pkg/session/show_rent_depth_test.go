@@ -123,7 +123,7 @@ func TestIdleRentObjectSnapshot(t *testing.T) {
 
 type objectSnapshotFailure struct{ db.GameStore }
 
-func (d objectSnapshotFailure) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (d objectSnapshotFailure) Exec(query string, args ...any) (sql.Result, error) {
 	if strings.HasPrefix(query, "INSERT INTO object_saves") {
 		return nil, errors.New("forced snapshot failure")
 	}

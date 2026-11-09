@@ -184,11 +184,11 @@ func TestRangedDamageConcurrentHPUpdates(t *testing.T) {
 	w, p := rawKillWorld(t)
 	p.SetHP(100000)
 	var group sync.WaitGroup
-	for i := 0; i < 32; i++ {
+	for range 32 {
 		group.Add(1)
 		go func() {
 			defer group.Done()
-			for j := 0; j < 100; j++ {
+			for range 100 {
 				w.ApplyRangedProjectileDamage(p, 1)
 			}
 		}()

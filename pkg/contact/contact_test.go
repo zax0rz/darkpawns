@@ -124,7 +124,7 @@ func TestRateLimiterReclaimsExpiredKeysAtCapacity(t *testing.T) {
 	oldTime := time.Now().Add(-2 * time.Hour)
 
 	// Fill table to capacity with expired timestamps
-	for i := 0; i < cap; i++ {
+	for i := range cap {
 		key := fmt.Sprintf("ip-%d", i)
 		if !limiter.Allow(key, oldTime) {
 			t.Fatalf("failed to insert initial key %s", key)
@@ -152,7 +152,7 @@ func TestRateLimiterReclaimsExpiredKeysAtCapacity(t *testing.T) {
 	}
 
 	// If capacity is filled with active keys, brand new key should be rejected
-	for i := 0; i < cap; i++ {
+	for i := range cap {
 		key := fmt.Sprintf("active-ip-%d", i)
 		limiter.Allow(key, now)
 	}

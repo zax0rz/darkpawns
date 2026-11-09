@@ -120,11 +120,11 @@ func TestRoutineMutationConcurrentDoorWritersAndReaders(t *testing.T) {
 	w := routineMutationFixtureWorld(t)
 	const iterations = 300
 	var wg sync.WaitGroup
-	for reader := 0; reader < 4; reader++ {
+	for range 4 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < iterations; i++ {
+			for range iterations {
 				room, ok := w.GetRoom(1001)
 				if !ok || room.VNum != 1001 {
 					t.Errorf("lock-free room = (%+v, %v)", room, ok)
@@ -137,11 +137,11 @@ func TestRoutineMutationConcurrentDoorWritersAndReaders(t *testing.T) {
 			}
 		}()
 	}
-	for writer := 0; writer < 2; writer++ {
+	for writer := range 2 {
 		wg.Add(1)
 		go func(writer int) {
 			defer wg.Done()
-			for i := 0; i < iterations; i++ {
+			for i := range iterations {
 				info := parser.ExitIsDoor
 				if (i+writer)%2 == 1 {
 					info |= parser.ExitPickproof
@@ -178,11 +178,11 @@ func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
 
 	const iterations = 200
 	var wg sync.WaitGroup
-	for reader := 0; reader < 4; reader++ {
+	for range 4 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for i := 0; i < iterations; i++ {
+			for range iterations {
 				room, ok := w.SnapshotRoom(1001)
 				if !ok || room.VNum != 1001 {
 					t.Errorf("snapshot room = (%+v, %v)", room, ok)
@@ -200,11 +200,11 @@ func TestReditWorldPublicationConcurrentSnapshots(t *testing.T) {
 			}
 		}()
 	}
-	for writer := 0; writer < 2; writer++ {
+	for writer := range 2 {
 		wg.Add(1)
 		go func(writer int) {
 			defer wg.Done()
-			for i := 0; i < iterations; i++ {
+			for i := range iterations {
 				room, ok := w.SnapshotRoom(1001)
 				if !ok {
 					t.Errorf("writer snapshot missing room")

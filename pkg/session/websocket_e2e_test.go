@@ -46,7 +46,7 @@ func makeManagerWithStartRoom(t *testing.T) *Manager {
 // wsReadUntilType drains WebSocket messages and returns the first one whose
 // "type" field matches wantType.  All prior messages are silently discarded.
 // Fails the test after 5 s with no match.
-func wsReadUntilType(t *testing.T, c *websocket.Conn, wantType string) map[string]interface{} {
+func wsReadUntilType(t *testing.T, c *websocket.Conn, wantType string) map[string]any {
 	t.Helper()
 	_ = c.SetReadDeadline(time.Now().Add(5 * time.Second))
 	for {
@@ -54,7 +54,7 @@ func wsReadUntilType(t *testing.T, c *websocket.Conn, wantType string) map[strin
 		if err != nil {
 			t.Fatalf("ReadMessage (waiting for %q): %v", wantType, err)
 		}
-		var msg map[string]interface{}
+		var msg map[string]any
 		if jsonErr := json.Unmarshal(raw, &msg); jsonErr != nil {
 			t.Fatalf("unmarshal: %v", jsonErr)
 		}
@@ -78,7 +78,7 @@ func wsCollectText(c *websocket.Conn, d time.Duration) string {
 		if err != nil {
 			return b.String()
 		}
-		var msg map[string]interface{}
+		var msg map[string]any
 		if jsonErr := json.Unmarshal(raw, &msg); jsonErr != nil {
 			continue
 		}
@@ -104,9 +104,9 @@ func wsCollectText(c *websocket.Conn, d time.Duration) string {
 }
 
 // wsWrite sends a JSON message over the WebSocket connection.
-func wsWrite(t *testing.T, c *websocket.Conn, msgType string, data interface{}) {
+func wsWrite(t *testing.T, c *websocket.Conn, msgType string, data any) {
 	t.Helper()
-	if err := c.WriteJSON(map[string]interface{}{"type": msgType, "data": data}); err != nil {
+	if err := c.WriteJSON(map[string]any{"type": msgType, "data": data}); err != nil {
 		t.Fatalf("WriteJSON(%q): %v", msgType, err)
 	}
 }
@@ -154,7 +154,7 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	defer c.Close()
 
 	// ── 1. Login ─────────────────────────────────────────────────────────────
-	wsWrite(t, c, MsgLogin, map[string]interface{}{
+	wsWrite(t, c, MsgLogin, map[string]any{
 		"player_name": "Testchar",
 		"password":    "hunter2",
 		"new_char":    true,
@@ -175,19 +175,19 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	}
 	for _, choice := range charStages {
 		wsReadUntilType(t, c, MsgCharCreate)
-		wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": choice})
+		wsWrite(t, c, MsgCharInput, map[string]any{"choice": choice})
 	}
 	// stats_roll prompt → accept
 	wsReadUntilType(t, c, MsgCharCreate)
-	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": "Y"})
+	wsWrite(t, c, MsgCharInput, map[string]any{"choice": "Y"})
 
 	// motd prompt → press return
 	wsReadUntilType(t, c, MsgCharCreate)
-	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": ""})
+	wsWrite(t, c, MsgCharInput, map[string]any{"choice": ""})
 
 	// main menu prompt → enter the game
 	wsReadUntilType(t, c, MsgCharCreate)
-	wsWrite(t, c, MsgCharInput, map[string]interface{}{"choice": "1"})
+	wsWrite(t, c, MsgCharInput, map[string]any{"choice": "1"})
 
 	// ── 3. Receive the one-time newbie room state ────────────────────────────────
 	introRaw := wsReadUntilType(t, c, MsgState)
@@ -204,7 +204,7 @@ func TestWebSocket_NewCharThenLook(t *testing.T) {
 	}
 
 	// ── 4. Send "look" and verify start_room's C bytes ────────────────────────
-	wsWrite(t, c, MsgCommand, map[string]interface{}{
+	wsWrite(t, c, MsgCommand, map[string]any{
 		"command": "look",
 		"args":    []string{},
 	})

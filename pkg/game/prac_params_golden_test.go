@@ -18,8 +18,8 @@ var pracParamsGolden = [4][12]int{
 
 // TestPracParams_GoldenAgainstCSource verifies that the Go PracParams table exactly matches the C source matrix.
 func TestPracParams_GoldenAgainstCSource(t *testing.T) {
-	for row := 0; row < 4; row++ {
-		for col := 0; col < 12; col++ {
+	for row := range 4 {
+		for col := range 12 {
 			got := PracParams[row][col]
 			want := pracParamsGolden[row][col]
 			if got != want {

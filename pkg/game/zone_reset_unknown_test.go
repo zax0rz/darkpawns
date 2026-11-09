@@ -28,7 +28,7 @@ func TestZoneResetUnknownCommandDisabledOnce(t *testing.T) {
 	s := NewSpawner(w)
 	w.spawner = s
 	before, _ := w.GetZone(1)
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := w.ResetZone(1); err != nil {
 			t.Fatal(err)
 		}

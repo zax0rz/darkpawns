@@ -20,7 +20,7 @@ func racers(n int, fn func() bool) int64 {
 	var granted int64
 	var wg sync.WaitGroup
 	start := make(chan struct{})
-	for i := 0; i < n; i++ {
+	for range n {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -88,7 +88,7 @@ func TestSpendManaUpToNeverNegative(t *testing.T) {
 	var taken int64
 	var wg sync.WaitGroup
 	start := make(chan struct{})
-	for i := 0; i < 16; i++ {
+	for range 16 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -185,7 +185,7 @@ func TestConsumeSpellReagentOnce(t *testing.T) {
 	// The check-and-remove window is narrow, so race it enough times that a
 	// reverted guard is caught: the pre-fix shape double-consumes early.
 	const rounds = 200
-	for r := 0; r < rounds; r++ {
+	for r := range rounds {
 		reagent := newFlagItem(w, 7802+r, 1) // keywords "thing"
 		if err := w.MoveObjectToPlayerInventory(reagent, p); err != nil {
 			t.Fatalf("round %d: carry reagent: %v", r, err)
@@ -211,7 +211,7 @@ func TestStealCoinsConcurrentConservesGold(t *testing.T) {
 
 	var wg sync.WaitGroup
 	start := make(chan struct{})
-	for i := 0; i < 8; i++ {
+	for range 8 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -250,7 +250,7 @@ func TestDonateGoldConcurrentJunksOnce(t *testing.T) {
 
 	var wg sync.WaitGroup
 	start := make(chan struct{})
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

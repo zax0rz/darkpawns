@@ -41,7 +41,7 @@ type CommandSession interface {
 	Close()
 
 	// GetPlayer returns the player associated with this session
-	GetPlayer() interface{}
+	GetPlayer() any
 
 	// GetPlayerName returns the name of the player associated with this session
 	GetPlayerName() string
@@ -74,5 +74,5 @@ type CommandManager interface {
 	RUnlock()
 
 	// Mu returns the mutex for synchronization
-	Mu() interface{} // Returns sync.Locker
+	Mu() any // Returns sync.Locker
 }

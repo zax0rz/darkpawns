@@ -26,7 +26,7 @@ func TestCombatBodyDefaultTargets(t *testing.T) {
 	}
 	t.Run("player-default", func(t *testing.T) {
 		// Each body must remain selected regardless of room map iteration order.
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			for _, want := range []*MobInstance{first, second} {
 				actor.SetFightingBody(want)
 				got, ok := w.ResolveFightingTarget(actor)
@@ -53,7 +53,7 @@ func TestCombatBodyWeaponCallback(t *testing.T) {
 		t.Fatal(err)
 	}
 	cb := w.WireCombatCallbacks()
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		kind, _, _, blessed := cb.GetWeaponInfo(armed)
 		if kind != 3 || !blessed {
 			t.Fatalf("armed duplicate weapon=%d/%t, want slash/blessed", kind, blessed)

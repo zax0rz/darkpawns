@@ -224,7 +224,7 @@ func (e *Engine) bridgeSaveObj(L *lua.LState, b Bridge) int {
 		Timer:  maxInt(0, num(tbl.RawGetString("timer"))),
 	}
 	if val, ok := tbl.RawGetString("val").(*lua.LTable); ok {
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			w.Val[i] = num(val.RawGetInt(i + 1))
 		}
 	}

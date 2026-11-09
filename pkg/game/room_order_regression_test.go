@@ -12,7 +12,7 @@ func TestReviewButlerZoneLoadedOrder(t *testing.T) {
 	setupButlerContainers(t, w)
 	s := NewSpawner(w)
 	var objects []*ObjectInstance
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		obj, err := s.SpawnObject(3005, butlerTestRoom)
 		if err != nil {
 			t.Fatal(err)
@@ -35,7 +35,7 @@ func TestReviewCorpseSpillDoesNotRetickEarlierObject(t *testing.T) {
 		registerTransferObject(w, obj)
 		w.AddItemToRoom(obj, 2001)
 	}
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		child := newTransferItem(7200+i, "child", "child", 1)
 		registerTransferObject(w, child)
 		if err := w.MoveObjectToContainer(child, corpse); err != nil {

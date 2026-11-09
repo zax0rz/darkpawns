@@ -54,11 +54,11 @@ func (h eventHeap) Len() int           { return len(h) }
 func (h eventHeap) Less(i, j int) bool { return h[i].When < h[j].When }
 func (h eventHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 
-func (h *eventHeap) Push(x interface{}) {
+func (h *eventHeap) Push(x any) {
 	*h = append(*h, x.(*Event))
 }
 
-func (h *eventHeap) Pop() interface{} {
+func (h *eventHeap) Pop() any {
 	old := *h
 	n := len(old)
 	event := old[n-1]

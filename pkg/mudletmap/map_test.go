@@ -25,7 +25,7 @@ func (w *fakeWorld) GetZone(number int) (*parser.Zone, bool) {
 	return zone, ok
 }
 
-func exits(pairs ...interface{}) map[string]parser.Exit {
+func exits(pairs ...any) map[string]parser.Exit {
 	out := map[string]parser.Exit{}
 	for i := 0; i < len(pairs); i += 2 {
 		dir := pairs[i].(string)

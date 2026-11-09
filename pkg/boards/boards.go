@@ -150,7 +150,7 @@ func InitBoards(basePath string) *BoardSystem {
 
 // load reads all board data files.
 func (bs *BoardSystem) load() {
-	for i := 0; i < NumBoards; i++ {
+	for i := range NumBoards {
 		bs.loadBoard(i)
 	}
 }
@@ -271,7 +271,7 @@ func (bs *BoardSystem) saveBoard(boardType int) error {
 		return err
 	}
 
-	for i := 0; i < num; i++ {
+	for i := range num {
 		mi := bs.msgIndex[boardType][i]
 		headingLen := safeInt32(len(mi.Heading) + 1)
 		var messageLen int32
@@ -559,7 +559,7 @@ func (bs *BoardSystem) resetBoard(boardType int) {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
 
-	for i := 0; i < MaxBoardMessages; i++ {
+	for i := range MaxBoardMessages {
 		mi := bs.msgIndex[boardType][i]
 		if mi.SlotNum >= 0 && mi.SlotNum < len(bs.msgStorage) {
 			bs.msgStorage[mi.SlotNum] = ""

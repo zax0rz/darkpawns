@@ -20,7 +20,7 @@ func TestShouldCrownFirstPlayer_HarnessLatch(t *testing.T) {
 		t.Fatal("first shouldCrownFirstPlayer under DP_FRESH_MUD should crown (latch unset)")
 	}
 	// The latch now sticks: every subsequent char is an ordinary mortal.
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if m.shouldCrownFirstPlayer() {
 			t.Fatalf("shouldCrownFirstPlayer crowned a second time (call %d); latch must stick", i+2)
 		}

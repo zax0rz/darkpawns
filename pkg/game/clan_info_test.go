@@ -28,7 +28,7 @@ func TestDoClanInfoIncludesDefinedCDetails(t *testing.T) {
 	c.RankName[0] = "Member"
 	c.RankName[1] = "Leader"
 	c.Spells[0] = 17
-	for i := 0; i < NumCP; i++ {
+	for i := range NumCP {
 		c.Privilege[i] = 2
 	}
 	w.Clans.AddClan(c)

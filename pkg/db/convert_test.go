@@ -409,7 +409,7 @@ func TestRecordToPlayer_OverCapacityInventoryNotDropped(t *testing.T) {
 	p := game.NewPlayer(321, "PackRat", 1001)
 	const itemCount = 30 // exceeds the default capacity of 20
 	p.Inventory.Capacity = 5
-	for i := 0; i < itemCount; i++ {
+	for range itemCount {
 		p.Inventory.RestoreItem(game.NewObjectInstance(proto, -1))
 	}
 	if got := len(p.Inventory.FindItems("")); got != itemCount {

@@ -345,7 +345,7 @@ func TestPenaltyHelpersConcurrentAccess(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			_ = m.AddPenalty(PlayerPenalty{
 				PlayerName:  player,
 				PenaltyType: ActionMute,
@@ -355,7 +355,7 @@ func TestPenaltyHelpersConcurrentAccess(t *testing.T) {
 		}
 	}()
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		_ = m.IsMuted(player)
 		_ = m.IsBanned(player)
 	}

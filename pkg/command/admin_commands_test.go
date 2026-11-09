@@ -30,11 +30,11 @@ func (m *mockCommandManager) Sessions() []common.CommandSession {
 	defer m.mu.RUnlock()
 	return m.sessions
 }
-func (m *mockCommandManager) Lock()           { m.mu.Lock() }
-func (m *mockCommandManager) Unlock()         { m.mu.Unlock() }
-func (m *mockCommandManager) RLock()          { m.mu.RLock() }
-func (m *mockCommandManager) RUnlock()        { m.mu.RUnlock() }
-func (m *mockCommandManager) Mu() interface{} { return &m.mu }
+func (m *mockCommandManager) Lock()    { m.mu.Lock() }
+func (m *mockCommandManager) Unlock()  { m.mu.Unlock() }
+func (m *mockCommandManager) RLock()   { m.mu.RLock() }
+func (m *mockCommandManager) RUnlock() { m.mu.RUnlock() }
+func (m *mockCommandManager) Mu() any  { return &m.mu }
 
 // mockAdminSession is a mock session with configurable fields.
 type mockAdminSession struct {
@@ -51,7 +51,7 @@ func (m *mockAdminSession) Send(msg string) {
 	m.messages = append(m.messages, msg)
 }
 func (m *mockAdminSession) Close()                 {}
-func (m *mockAdminSession) GetPlayer() interface{} { return nil }
+func (m *mockAdminSession) GetPlayer() any         { return nil }
 func (m *mockAdminSession) GetPlayerName() string  { return m.name }
 func (m *mockAdminSession) GetPlayerLevel() int    { return m.level }
 func (m *mockAdminSession) HasPlayer() bool        { return m.hasPlayer }

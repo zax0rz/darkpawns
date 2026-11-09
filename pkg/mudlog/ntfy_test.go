@@ -81,7 +81,7 @@ func TestNtfyRateLimitDrops(t *testing.T) {
 	defer srv.Close()
 	cfg.URL = srv.URL
 	sub := f.SubscribeNtfy(context.Background(), cfg, srv.Client())
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		f.tap("", "flood", 1, 31, false)
 	}
 	waitFor(t, "limiter settles", func() bool {

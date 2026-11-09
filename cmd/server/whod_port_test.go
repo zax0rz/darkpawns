@@ -53,7 +53,7 @@ func TestResolveWhodPort(t *testing.T) {
 // arithmetic, so a stolen telnet port changes nothing the test reads.
 func adjacentPortPair(t *testing.T) (int, int) {
 	t.Helper()
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		low, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
 			t.Fatalf("pick a port: %v", err)

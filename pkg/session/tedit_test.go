@@ -407,7 +407,7 @@ func TestTeditHelpScreenSynchronizesWithHelpAndReload(t *testing.T) {
 	wg.Add(3)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			if err := cmdHelp(reader, nil); err != nil {
 				t.Errorf("help read failed: %v", err)
 				return
@@ -416,13 +416,13 @@ func TestTeditHelpScreenSynchronizesWithHelpAndReload(t *testing.T) {
 	}()
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			reloadHelpScreen(reloader)
 		}
 	}()
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			editor.handleTextEditInput("draft")
 		}
 	}()

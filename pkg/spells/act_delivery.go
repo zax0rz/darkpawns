@@ -4,7 +4,7 @@ package spells
 // package. A live game World handles these messages through game.Act; this
 // gate keeps small adapters from delivering act()-equivalent lines to a
 // sleeping or writing player.
-func canReceiveAct(recipient interface{}) bool {
+func canReceiveAct(recipient any) bool {
 	type positionReader interface{ GetPosition() int }
 	if positioned, ok := recipient.(positionReader); ok && positioned.GetPosition() <= int(PosSleeping) {
 		return false

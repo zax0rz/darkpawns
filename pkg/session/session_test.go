@@ -479,7 +479,7 @@ func (m *mockGameStore) RecordLoginFailure(name string, threshold int, lockoutDu
 
 func (m *mockGameStore) RecordLoginSuccess(name string) error { return nil }
 
-func (m *mockGameStore) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (m *mockGameStore) Exec(query string, args ...any) (sql.Result, error) {
 	return nil, nil
 }
 

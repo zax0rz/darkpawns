@@ -194,7 +194,7 @@ func TestEntryCharacterDataLegacyAndMissingControls(t *testing.T) {
 	}
 	// Pin a real conversion error rather than depending on a mocked return.
 	raw := []byte(`{"skills":{"track":"bad"}}`)
-	var data map[string]interface{}
+	var data map[string]any
 	if err := json.Unmarshal(raw, &data); err != nil {
 		t.Fatal(err)
 	}
@@ -220,13 +220,13 @@ func TestEntryRestoreFailureWebSocket(t *testing.T) {
 	defer server.Close()
 	conn := entryWebSocketDial(t, server.URL)
 	defer func() { _ = conn.Close() }()
-	wsWrite(t, conn, MsgLogin, map[string]interface{}{"player_name": "AIKO"})
+	wsWrite(t, conn, MsgLogin, map[string]any{"player_name": "AIKO"})
 	var prompt CharCreateData
 	entryUnmarshalPrompt(t, wsReadUntilType(t, conn, MsgCharCreate), &prompt)
 	if prompt.Stage != "login_password" || !prompt.Secret {
 		t.Fatal("corrupt saved name skipped the password boundary")
 	}
-	wsWrite(t, conn, MsgCharInput, map[string]interface{}{"choice": "oraclepass"})
+	wsWrite(t, conn, MsgCharInput, map[string]any{"choice": "oraclepass"})
 	if err := conn.SetReadDeadline(time.Now().Add(5 * time.Second)); err != nil {
 		t.Fatal(err)
 	}

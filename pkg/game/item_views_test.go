@@ -48,7 +48,7 @@ func TestDoInventoryEmpty(t *testing.T) {
 func TestDoInventoryGroupsIdenticalItems(t *testing.T) {
 	w, p, msgs := newViewTestWorld(t)
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		obj := NewObjectInstance(&parser.Obj{
 			VNum:      1001,
 			ShortDesc: "a wooden stick",

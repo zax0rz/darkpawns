@@ -15,7 +15,7 @@ type mockCommandSession struct {
 
 func (m *mockCommandSession) Send(msg string)        { m.messages = append(m.messages, msg) }
 func (m *mockCommandSession) Close()                 {}
-func (m *mockCommandSession) GetPlayer() interface{} { return nil }
+func (m *mockCommandSession) GetPlayer() any         { return nil }
 func (m *mockCommandSession) GetPlayerName() string  { return "TestUser" }
 func (m *mockCommandSession) GetPlayerRoomVNum() int { return 1001 }
 func (m *mockCommandSession) IsAuthenticated() bool  { return true }

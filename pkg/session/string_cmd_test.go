@@ -705,7 +705,7 @@ func promptTextOf(t *testing.T, s *Session) string {
 	if err != nil {
 		t.Fatalf("marshal data: %v", err)
 	}
-	var prompt map[string]interface{}
+	var prompt map[string]any
 	if err := json.Unmarshal(data, &prompt); err != nil {
 		t.Fatalf("unmarshal prompt: %v", err)
 	}

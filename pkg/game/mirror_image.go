@@ -17,7 +17,7 @@ package game
 //
 // SET_NAME on a mobile writes short_descr (src/utils.h:277-279), so the clone's
 // prototype keywords ("clone") are left untouched, matching C's `stat clone`.
-func (w *World) ConfigureMirrorClone(clone, caster interface{}) {
+func (w *World) ConfigureMirrorClone(clone, caster any) {
 	mob, ok := clone.(*MobInstance)
 	if !ok {
 		return
@@ -52,7 +52,7 @@ func (w *World) ConfigureMirrorClone(clone, caster interface{}) {
 // already remembered. The hunting arm follows the port's established
 // name-based translation of `HUNTING(mob) == ch` (cf. forgetRawKillVictim,
 // pkg/game/raw_kill.go:110).
-func (w *World) MirrorImageHandoff(clone, caster interface{}) {
+func (w *World) MirrorImageHandoff(clone, caster any) {
 	casterNamed, ok := caster.(interface{ GetName() string })
 	if !ok {
 		return

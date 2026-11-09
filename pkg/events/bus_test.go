@@ -64,12 +64,12 @@ func TestConcurrentPublishUnsubscribe(t *testing.T) {
 
 	const numSubs = 50
 	unsubs := make([]func(), numSubs)
-	for i := 0; i < numSubs; i++ {
+	for i := range numSubs {
 		_, unsubs[i] = bus.Subscribe("test.event", handler)
 	}
 
 	var wg sync.WaitGroup
-	for i := 0; i < numSubs; i++ {
+	for i := range numSubs {
 		wg.Add(1)
 		go func(unsub func()) {
 			defer wg.Done()
@@ -77,7 +77,7 @@ func TestConcurrentPublishUnsubscribe(t *testing.T) {
 		}(unsubs[i])
 	}
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		_ = bus.Publish(ctx, testBusEvent{})
 	}
 

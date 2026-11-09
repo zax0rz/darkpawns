@@ -106,7 +106,7 @@ func TestWanderMobRespectsStayZone(t *testing.T) {
 	t.Cleanup(func() { w.StopAITicker() })
 
 	mob := NewMob(&parser.Mob{ActionFlags: []string{"STAY_ZONE"}}, 10)
-	for i := 0; i < 500; i++ {
+	for i := range 500 {
 		w.wanderMobWithDoor(mob, 0)
 		if got := mob.GetRoom(); got != 10 {
 			t.Fatalf("STAY_ZONE mob left its zone: now in room %d after %d ticks", got, i+1)
@@ -122,7 +122,7 @@ func TestWanderMobMovesWithinConstraints(t *testing.T) {
 	mob := NewMob(&parser.Mob{Keywords: "rat", ShortDesc: "a rat"}, 1)
 
 	valid := map[int]bool{1: true, 2: true}
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		door := 0 // north from room 1
 		if mob.GetRoom() == 2 {
 			door = 2 // south from room 2
@@ -144,7 +144,7 @@ func TestRunMobAISentinelNeverWanders(t *testing.T) {
 	mob.SetAlive(true)
 	mob.SetStatus("standing")
 
-	for i := 0; i < 500; i++ {
+	for i := range 500 {
 		w.runMobAI(mob)
 		if got := mob.GetRoom(); got != 1 {
 			t.Fatalf("SENTINEL mob moved to room %d after %d ticks", got, i+1)

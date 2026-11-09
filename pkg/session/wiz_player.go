@@ -470,7 +470,7 @@ func skillsetSkillList() string {
 	var b strings.Builder
 	b.WriteString("Skill being one of the following:\n\r")
 	size := spells.SkillCatalogSize()
-	for i := 0; i < size; i++ {
+	for i := range size {
 		raw := spells.SpellRawName(i)
 		if raw == "" {
 			continue

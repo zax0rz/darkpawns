@@ -120,7 +120,7 @@ func mapRecurse(thisroom int, x, y, overlap, dontleavezone int, display *[][]int
 	}
 
 	// Iterate N/E/S/W (dir=0..3) — same as C
-	for dir := 0; dir < 4; dir++ {
+	for dir := range 4 {
 		exit, ok := thisRoomPtr.Exits[dirName[dir]]
 		if !ok {
 			continue
@@ -234,9 +234,9 @@ func CmdMap(s *Session, args []string) error {
 
 	// Render map — same as C:
 	// for(y=0;y<JJ_MAPMAXY;y++) { line[0]='\0'; for(x=0;...){...} strcat(line,"\r\n"); send_to_char(line,ch); }
-	for y := 0; y < jjMapMaxY; y++ {
+	for y := range jjMapMaxY {
 		var line strings.Builder
-		for x := 0; x < jjMapMaxX; x++ {
+		for x := range jjMapMaxX {
 			val := display[x][y]
 			if val > 0 {
 				// Same as C: strcat(line, sect_icons[world[display[x][y]].sector_type]);

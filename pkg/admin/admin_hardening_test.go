@@ -71,7 +71,7 @@ func TestPlayerDetailSnapshotVsMutation(t *testing.T) {
 			p.Inventory.RemoveItem(obj)
 		}
 	}()
-	for i := 0; i < 2000; i++ {
+	for range 2000 {
 		_ = playerDetailToResponse(p)
 	}
 	close(stop)
@@ -94,7 +94,7 @@ func TestAgentStoreReturnsCopies(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 2000; i++ {
+		for range 2000 {
 			_, _, _ = store.UpdateAgentStatus("daeron", "idle")
 			_, _, _ = store.UpdateAgentStatus("daeron", "running")
 		}
@@ -134,7 +134,7 @@ func TestPrototypeGettersReturnCopies(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 2000; i++ {
+		for range 2000 {
 			w.CommitEditedMob(parser.Mob{VNum: 5001, ShortDesc: "mutated"})
 			w.CommitEditedMob(parser.Mob{VNum: 5001, ShortDesc: "a mob"})
 		}

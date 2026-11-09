@@ -131,7 +131,7 @@ func TestSkillPractice(t *testing.T) {
 
 	// Practice the skill multiple times
 	leveledUp := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		if skill.PracticeSkill(5, 15) {
 			leveledUp = true
 			break

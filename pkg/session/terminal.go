@@ -113,7 +113,7 @@ func RenderTerminalFrame(msg []byte) (TerminalFrame, bool) {
 	if err := json.Unmarshal(msg, &sm); err != nil {
 		return TerminalFrame{}, false
 	}
-	data, _ := sm.Data.(map[string]interface{})
+	data, _ := sm.Data.(map[string]any)
 	switch sm.Type {
 	case MsgEvent:
 		text, ok := data["text"].(string)
@@ -447,7 +447,7 @@ func (s *Session) terminalName(name string) bool {
 }
 
 func (s *Session) terminalCharInput(choice string) error {
-	data, err := json.Marshal(map[string]interface{}{"choice": choice})
+	data, err := json.Marshal(map[string]any{"choice": choice})
 	if err != nil {
 		return err
 	}
@@ -455,7 +455,7 @@ func (s *Session) terminalCharInput(choice string) error {
 }
 
 func (s *Session) terminalPagerInput(line string) error {
-	data, err := json.Marshal(map[string]interface{}{"choice": line})
+	data, err := json.Marshal(map[string]any{"choice": line})
 	if err != nil {
 		return err
 	}

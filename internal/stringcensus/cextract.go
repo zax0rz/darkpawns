@@ -110,7 +110,7 @@ func extractCFile(file, src string) []candidate {
 	groups := cLiteralGroups(toks)
 	var out []candidate
 	fn := ""
-	for i := 0; i < len(toks); i++ {
+	for i := range toks {
 		fn = cFuncAt(toks, i, fn)
 		if toks[i].kind != cTokIdent {
 			continue

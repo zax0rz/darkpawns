@@ -80,13 +80,13 @@ func TestCastEnchantOutputBranches(t *testing.T) {
 }
 
 type zenSpellOutputWorld struct {
-	actor         interface{}
+	actor         any
 	format        string
 	hideInvisible bool
 	calls         int
 }
 
-func (w *zenSpellOutputWorld) SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool {
+func (w *zenSpellOutputWorld) SpellActToRoom(actor, victim any, format string, hideInvisible bool) bool {
 	w.actor = actor
 	w.format = format
 	w.hideInvisible = hideInvisible
@@ -124,19 +124,19 @@ func (o *cocOutputObject) SetTimer(timer int) { o.timer = timer }
 type cocOutputWorld struct {
 	object        *cocOutputObject
 	room          int
-	actor         interface{}
+	actor         any
 	format        string
 	hideInvisible bool
 	calls         int
 }
 
-func (w *cocOutputWorld) SpawnObjectToRoomForSpell(vnum, room int) (interface{}, error) {
+func (w *cocOutputWorld) SpawnObjectToRoomForSpell(vnum, room int) (any, error) {
 	w.object = &cocOutputObject{vnum: vnum}
 	w.room = room
 	return w.object, nil
 }
 
-func (w *cocOutputWorld) SpellActToRoom(actor, victim interface{}, format string, hideInvisible bool) bool {
+func (w *cocOutputWorld) SpellActToRoom(actor, victim any, format string, hideInvisible bool) bool {
 	w.actor = actor
 	w.format = format
 	w.hideInvisible = hideInvisible
@@ -169,7 +169,7 @@ type mirrorImageOutputMob struct{ name string }
 func (m *mirrorImageOutputMob) SetName(name string) { m.name = name }
 
 type mirrorImageOutputWorld struct {
-	actor         interface{}
+	actor         any
 	format        string
 	hideInvisible bool
 	calls         int
@@ -182,7 +182,7 @@ type mirrorImageOutputWorld struct {
 	handoff       bool
 }
 
-func (w *mirrorImageOutputWorld) SpawnMobWithLevelI(vnum, room, level int) (interface{}, error) {
+func (w *mirrorImageOutputWorld) SpawnMobWithLevelI(vnum, room, level int) (any, error) {
 	w.vnum, w.room, w.level = vnum, room, level
 	if w.spawnErr != nil {
 		return nil, w.spawnErr
@@ -191,15 +191,15 @@ func (w *mirrorImageOutputWorld) SpawnMobWithLevelI(vnum, room, level int) (inte
 	return w.mob, nil
 }
 
-func (w *mirrorImageOutputWorld) SpellActToRoom(actor, _ interface{}, format string, hideInvisible bool) bool {
+func (w *mirrorImageOutputWorld) SpellActToRoom(actor, _ any, format string, hideInvisible bool) bool {
 	w.actor, w.format, w.hideInvisible = actor, format, hideInvisible
 	w.calls++
 	return true
 }
 
-func (w *mirrorImageOutputWorld) ConfigureMirrorClone(_, _ interface{}) { w.configured = true }
+func (w *mirrorImageOutputWorld) ConfigureMirrorClone(_, _ any) { w.configured = true }
 
-func (w *mirrorImageOutputWorld) MirrorImageHandoff(_, _ interface{}) { w.handoff = true }
+func (w *mirrorImageOutputWorld) MirrorImageHandoff(_, _ any) { w.handoff = true }
 
 func TestCastMirrorImageOutputAndRoomAudience(t *testing.T) {
 	caster := &mockSpellsChar{name: "Mirror", title: "the Mirrored", description: "A mirrored figure.", level: 22, roomVNum: 8105}
@@ -278,7 +278,7 @@ func TestCastMirrorImageSpawnFailureIsSilent(t *testing.T) {
 }
 
 type divineIntRoomAct struct {
-	actor         interface{}
+	actor         any
 	format        string
 	hideInvisible bool
 }
@@ -289,10 +289,10 @@ type divineIntOutputWorld struct {
 	spawnRooms []int
 	spawnLvls  []int
 	angels     []*mockSpellsChar
-	followers  []interface{}
+	followers  []any
 }
 
-func (w *divineIntOutputWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (interface{}, error) {
+func (w *divineIntOutputWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (any, error) {
 	w.spawnVNums = append(w.spawnVNums, vnum)
 	w.spawnRooms = append(w.spawnRooms, roomVNum)
 	w.spawnLvls = append(w.spawnLvls, level)
@@ -301,12 +301,12 @@ func (w *divineIntOutputWorld) SpawnMobWithLevelI(vnum, roomVNum, level int) (in
 	return mob, nil
 }
 
-func (w *divineIntOutputWorld) SpellActToRoom(actor, _ interface{}, format string, hideInvisible bool) bool {
+func (w *divineIntOutputWorld) SpellActToRoom(actor, _ any, format string, hideInvisible bool) bool {
 	w.acts = append(w.acts, divineIntRoomAct{actor: actor, format: format, hideInvisible: hideInvisible})
 	return true
 }
 
-func (w *divineIntOutputWorld) AddFollowerQuiet(ch, _ interface{}) {
+func (w *divineIntOutputWorld) AddFollowerQuiet(ch, _ any) {
 	w.followers = append(w.followers, ch)
 }
 
@@ -315,7 +315,7 @@ func TestCastDivineIntOutputBranchesAndRoomAudience(t *testing.T) {
 	t.Cleanup(func() { magDivineIntSaveRoll = oldSaveRoll })
 
 	t.Run("neutral refusal", func(t *testing.T) {
-		magDivineIntSaveRoll = func(interface{}, int) bool { t.Fatal("neutral branch must not roll a save"); return false }
+		magDivineIntSaveRoll = func(any, int) bool { t.Fatal("neutral branch must not roll a save"); return false }
 		caster := &alignedSpellProbe{mockSpellsChar: &mockSpellsChar{name: "Avatar", level: 30}, alignment: 349}
 		world := &divineIntOutputWorld{}
 
@@ -330,7 +330,7 @@ func TestCastDivineIntOutputBranchesAndRoomAudience(t *testing.T) {
 	})
 
 	t.Run("failed save follows prayer act", func(t *testing.T) {
-		magDivineIntSaveRoll = func(interface{}, int) bool { return false }
+		magDivineIntSaveRoll = func(any, int) bool { return false }
 		caster := &alignedSpellProbe{mockSpellsChar: &mockSpellsChar{name: "Avatar", level: 30, roomVNum: 8105}, alignment: 900}
 		world := &divineIntOutputWorld{}
 
@@ -348,7 +348,7 @@ func TestCastDivineIntOutputBranchesAndRoomAudience(t *testing.T) {
 	})
 
 	t.Run("successful extreme alignment announces both angels", func(t *testing.T) {
-		magDivineIntSaveRoll = func(interface{}, int) bool { return true }
+		magDivineIntSaveRoll = func(any, int) bool { return true }
 		caster := &alignedSpellProbe{mockSpellsChar: &mockSpellsChar{name: "Avatar", level: 30, roomVNum: 8105}, alignment: 1000}
 		world := &divineIntOutputWorld{}
 
@@ -385,12 +385,12 @@ type locateObjectOutputWorld struct {
 	messages []string
 	blocked  bool
 	name     string
-	viewer   interface{}
+	viewer   any
 	limit    int
 	unseen   string
 }
 
-func (w *locateObjectOutputWorld) LocateObjectResults(name string, viewer interface{}, limit int, unseenOwnerText string) ([]string, bool) {
+func (w *locateObjectOutputWorld) LocateObjectResults(name string, viewer any, limit int, unseenOwnerText string) ([]string, bool) {
 	w.name, w.viewer, w.limit, w.unseen = name, viewer, limit, unseenOwnerText
 	return w.messages, w.blocked
 }
@@ -502,7 +502,7 @@ func TestCastLycanthropyVampirismOutputBytes(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			caster := &mockSpellsChar{name: "Caster", level: 20}
-			var victim interface{}
+			var victim any
 			var target *transformationOutputPlayer
 			if tc.withVictim {
 				target = &transformationOutputPlayer{mockSpellsChar: mockSpellsChar{name: "Target"}, playerFlags: tc.victimFlags}

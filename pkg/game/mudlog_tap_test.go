@@ -23,7 +23,7 @@ func TestMudLogTapNeverBlocksTheImmortalLine(t *testing.T) {
 	SetImmortalSessionProvider(&testSessions{imm})
 	defer SetImmortalSessionProvider(prev)
 
-	for i := 0; i < mudlog.DefaultQueue; i++ {
+	for range mudlog.DefaultQueue {
 		mudlog.Tap("", "filler", 1, 31, false)
 	}
 

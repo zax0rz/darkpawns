@@ -41,7 +41,7 @@ func TestWebSocket_AuthenticatedIdlePlayerSurvivesLivenessClock(t *testing.T) {
 	m := entryTransportManager(t, nil)
 	c := dialTestWebSocket(t, m)
 
-	wsWrite(t, c, MsgLogin, map[string]interface{}{"player_name": "guest"})
+	wsWrite(t, c, MsgLogin, map[string]any{"player_name": "guest"})
 	waitForPlayingSession(t, m)
 
 	// One blocking reader: any error on it is the server closing the socket,

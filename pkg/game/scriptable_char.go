@@ -85,7 +85,7 @@ func (m *MobInstance) GetWornObjects() []scripting.ScriptableObject {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	var out []scripting.ScriptableObject
-	for where := 0; where < NumWears; where++ {
+	for where := range NumWears {
 		if item := m.Equipment[where]; item != nil {
 			out = append(out, &scriptableObjInstanceWrapper{item: item})
 		}

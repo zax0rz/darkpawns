@@ -29,7 +29,7 @@ type manualWorld struct {
 	follows []string
 }
 
-func (w *manualWorld) AddFollowerQuiet(ch, leader interface{}) {
+func (w *manualWorld) AddFollowerQuiet(ch, leader any) {
 	w.follows = append(w.follows, "add")
 }
 func (w *manualWorld) StopFollowerByName(string)              {}

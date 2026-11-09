@@ -49,7 +49,7 @@ func TestCounterProcs_BoostMilestone(t *testing.T) {
 
 	sawManaIncrease := false
 	sawHitIncrease2 := false // roll 1 gives +2 hit (not just +1)
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		preHit := p.MaxHealth
 		preMana := p.MaxMana
 		preMove := p.MaxMove
@@ -103,7 +103,7 @@ func TestCounterProcs_Roll3NoMana(t *testing.T) {
 	p.MaxMove = 100
 
 	sawNoManaIncrease := false
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		p.MaxHealth = 100
 		p.MaxMana = 100
 		p.MaxMove = 100

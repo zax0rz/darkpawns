@@ -668,7 +668,7 @@ func savedPlayerView(world *game.World, r *db.PlayerRecord, actorLevel int) (*sa
 	for key, value := range playerValues(r) {
 		out.Values[key] = *value
 	}
-	for pos := 0; pos < 22; pos++ {
+	for pos := range 22 {
 		slot, _ := game.CWearPosToSlot(pos)
 		out.Slots = append(out.Slots, playerSlot{pos + 1, slot.String()})
 	}
