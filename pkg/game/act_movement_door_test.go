@@ -354,3 +354,31 @@ func TestKeylessDoorRejectsCoinPileKey(t *testing.T) {
 		t.Fatalf("lock message = %q, want proper-key rejection", got)
 	}
 }
+
+// TestDoGenDoorFillWordOnlyArgument pins C's two distinct do_gen_door refusals
+// (src/act.movement.c:604-608,403-410): an empty argument gives "Open what?",
+// but a fill-word-only argument like "the" is non-empty and reaches find_door's
+// "What is it you want to open?". Go collapsed both into the empty arm
+// (DP-1516 item 2).
+func TestDoGenDoorFillWordOnlyArgument(t *testing.T) {
+	w, p, messages := newDoorHandlerTestWorld(t)
+
+	w.DoOpen(p, "the")
+	got := joinedDoorMessages(messages, "DoorTester")
+	if !strings.Contains(got, "What is it you want to open?") {
+		t.Fatalf("`open the` = %q, want C's find_door wording", got)
+	}
+	if strings.Contains(got, "Open what?") {
+		t.Fatal("`open the` took the empty-argument arm")
+	}
+
+	w.DoClose(p, "the")
+	if got := joinedDoorMessages(messages, "DoorTester"); !strings.Contains(got, "What is it you want to close?") {
+		t.Fatalf("`close the` = %q", got)
+	}
+
+	w.DoOpen(p, "")
+	if got := joinedDoorMessages(messages, "DoorTester"); !strings.Contains(got, "Open what?") {
+		t.Fatalf("`open` = %q, want 'Open what?'", got)
+	}
+}

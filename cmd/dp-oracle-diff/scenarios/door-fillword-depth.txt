@@ -1,0 +1,45 @@
+# depth-case: door.fillword-only-argument
+# C-first vehicle for do_gen_door's two distinct refusals (src/act.movement.c:403-410,598-613):
+#   - an empty argument gives "<Cmd> what?" (:604-608);
+#   - an argument that is only fill words ("the") is not empty, so it reaches
+#     find_door's "What is it you want to <cmd>?" (:403-410).
+# Go collapsed both into the post-fill-word empty case.
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Dooruser
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Dooruser
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+open
+open the
+close the
+lock the
+unlock the

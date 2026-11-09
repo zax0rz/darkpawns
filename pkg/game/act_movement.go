@@ -800,11 +800,18 @@ func okPick(w *World, ch *Player, keynum int, pickproof bool, scmd int) bool {
 
 // doGenDoor generic door command handler (open/close/lock/unlock/pick).
 func doGenDoor(w *World, ch *Player, argument string, scmd int) {
-	// C do_gen_door parses with two_arguments (interpreter.c): fill words
-	// dropped, tokens lowercased.
+	// C do_gen_door: skip_spaces, then an empty argument gives "%s what?"
+	// (src/act.movement.c:604-608). An argument that is only fill words is not
+	// empty, so it survives and reaches find_door's "What is it you want to
+	// %s?" (:403-410). Go collapsed both into the post-fill-word empty case and
+	// printed "Open what?" for "open the" (DP-1516 item 2).
+	if strings.TrimSpace(argument) == "" {
+		ch.SendMessage(strings.ToUpper(cmdDoor[scmd][:1]) + cmdDoor[scmd][1:] + " what?\r\n")
+		return
+	}
 	doorType, dir := twoArguments(argument)
 	if doorType == "" {
-		ch.SendMessage(strings.ToUpper(cmdDoor[scmd][:1]) + cmdDoor[scmd][1:] + " what?\r\n")
+		ch.SendMessage(fmt.Sprintf("What is it you want to %s?\r\n", cmdDoor[scmd]))
 		return
 	}
 
