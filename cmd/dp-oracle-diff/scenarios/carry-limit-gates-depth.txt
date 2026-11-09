@@ -1,0 +1,90 @@
+# depth-case: get.arms-full-pregate
+# depth-case: give.hands-full
+# C-first vehicle for the carry-count gates. CAN_CARRY_N = 5 + (DEX>>1) +
+# (LEVEL>>1) (src/utils.h:449); a level-1 DEX-1 peer therefore carries 5 items.
+# do_get's pre-gate prints "Your arms are already full!" (src/act.item.c:356-358)
+# when the getter is at that limit, and perform_give prints "$N seems to have $S
+# hands full." (src/act.item.c:686-688) when the victim is.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+spawn-obj 8037 1 8105 80
+force-load 8037
+
+[setup:oracle]
+Fullgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Fullgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:fullpeer]
+Fullpeer
+Y
+fullpass
+fullpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:fullpeer]
+Fullpeer
+y
+fullpass
+fullpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Fullpeer 8105
+set player Fullpeer dex 1
+load obj 8037
+give sword Fullpeer
+load obj 8037
+give sword Fullpeer
+load obj 8037
+give sword Fullpeer
+load obj 8037
+give sword Fullpeer
+load obj 8037
+give sword Fullpeer
+
+[probe]
+send:fullpeer get sword
+load obj 8037
+give sword Fullpeer
