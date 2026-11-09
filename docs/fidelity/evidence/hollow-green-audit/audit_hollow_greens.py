@@ -101,8 +101,11 @@ FAILURE_FRAGMENTS = [
 ]
 
 # C success lines showing a refused-for object being used after all (the setup
-# had already put it in inventory, so the refused get was redundant).
-USE_SUCCESS = re.compile(r"^You (recite|quaff|zap|brandish|use|eat)\b")
+# had already put it in inventory, so the refused get was redundant). grab is
+# included: C's do_hold success prints "You grab $p." (src/act.item.c:1395),
+# and item vehicles hold the object before use -- "You grab a <obj>." proves
+# the refused-for item was there all along.
+USE_SUCCESS = re.compile(r"^You (recite|quaff|zap|brandish|use|eat|hold|grab)\b")
 
 # Output calls whose quoted strings are player-facing text (grepped usage
 # counts in src/act.*.c, spell_parser.c, magic.c, spells.c this session).
@@ -684,7 +687,7 @@ def main():
                 # had already provided it and the get was redundant.
                 use_success = any(
                     USE_SUCCESS.match(line)
-                    for _, t in actor_blocks[1:]
+                    for _, t in actor_blocks
                     for line in t.split("\n"))
                 if warmup and actor_blocks and not use_success:
                     first_cmd, first_text = actor_blocks[0]

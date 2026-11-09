@@ -44,10 +44,12 @@ Signals (per `oracle-green*` row × scenario named in its proof):
   surfacing in the first probe is the retained fingerprint of a failed setup —
   the DP-1510 shape. Refusals in later sibling probes are often the intended
   claim of other rows sharing the scenario and are not attributed, and the
-  signal is suppressed outright when a later C actor block shows the
-  refused-for object being used (`You recite|quaff|zap|brandish|use|eat`) —
-  the setup had already provided the item and the refused `get` was
-  redundant.
+  signal is suppressed outright when any C actor block shows the
+  refused-for object being used (`You recite|quaff|zap|brandish|use|eat|hold`,
+  plus C's `hold` success verb `grab`, src/act.item.c:1395) — the setup had
+  already provided the item and the refused `get` was redundant (the
+  wand/staff-olc vehicles hold and fire the item right after the refused
+  `get`; the quaff-lump rows quaff successfully in their first block).
 - **claimed-absent** — two tests must both hold. (1) No string literal printed
   by any player-output call on the row's `c_site` lines appears in any C probe
   block. Literals are extracted from the snapshot's `src/` (R5g: every
