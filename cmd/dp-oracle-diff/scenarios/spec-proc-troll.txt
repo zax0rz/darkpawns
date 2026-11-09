@@ -5,6 +5,13 @@
 # and removes exits so the native pulse special is the only source of the glow
 # Act. The warmup aligns both disposable players as evil, outside the authored
 # AGGR_NEUTRAL target range.
+#
+# Repair (DP-1511 batch 1): the original 400-pulse window gave the injured
+# idle branch only 10 SPECIAL(troll) calls (PULSE_MOBILE is 4 seconds,
+# src/structs.h:633), a 1/21 roll each -- about a 61% chance of no glow at
+# any given seed, so the green proved nothing on most seeds. The probe pins
+# maxhit/hit itself (witnessable fixture state) and widens the window to
+# 12000 pulses, ~300 calls, so the glow bytes are present on every seed.
 
 [fixture]
 empty-players
@@ -75,10 +82,11 @@ set TrollActor alignment -1000
 set TrollPeer alignment -1000
 teleport TrollPeer 10049
 goto 10049
-set targ hit 1
 
 [probe]
-~dpclock pulse 400
+set targ maxhit 5000
+set targ hit 1
+~dpclock pulse 12000
 
 # depth-case: mob.troll-entry-gates
 # depth-case: mob.troll-injured-idle-glow

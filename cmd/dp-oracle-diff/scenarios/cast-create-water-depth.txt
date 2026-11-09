@@ -1,12 +1,20 @@
 # depth-case: spell.create-water-live-dispatch
 # A first-player Implementor casts create water on the empty ITEM_DRINKCON
-# vnum 2506 after a real get. Its water capacity and short description prove
-# the successful C spell_create_water $p output at src/spells.c:108-112.
+# vnum 2506 after a real get. The first cast fills the chalice and prints
+# the C spell_create_water $p output at src/spells.c:112; the second cast
+# reaches the full-container refusal at src/spells.c:116.
+#
+# spawn-obj uses MaxExisting 99, not 1: zone 25's own reset list already
+# loads one 2506 into container 2519 (P 1 2506 20 2519), so a MaxExisting of
+# 1 would leave the appended O reset nothing to load and the chalice would
+# never reach room 8162 -- the warmup get would be silently refused and the
+# probe would read "Cannot find the target of your spell!" on both engines
+# (a hollow green; DP-1510).
 
 [fixture]
 empty-players
 quiet-mobs
-spawn-obj 2506 1 8162 25
+spawn-obj 2506 99 8162 25
 force-load 2506
 
 [setup:oracle]
@@ -42,4 +50,6 @@ goto 8162
 get chalice
 
 [probe]
+cast 'create water' chalice
+~dpclock pulse 20
 cast 'create water' chalice

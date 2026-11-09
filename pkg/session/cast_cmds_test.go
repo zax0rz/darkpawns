@@ -521,7 +521,7 @@ func TestCastCreateWaterCBranchesAndExactObjectMessage(t *testing.T) {
 			wantKeywords: "flask",
 		},
 		{
-			name:          "empty container refuses",
+			name:          "full container refuses",
 			typeFlag:      game.ITEM_DRINKCON,
 			values:        [4]int{5, 5, game.LiqWater, 0},
 			weight:        3,

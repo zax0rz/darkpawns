@@ -2,8 +2,8 @@ c_site	function	classification	case_ids	notes
 src/spell_parser.c:342	say_spell	proven	cast.missing-target	The C cast-depth vehicle sends a valid in-room target through do_cast, cast_spell, say_spell, and this TO_VICT act; the target transcript makes removal fail (R1/R2/R5e/R5h).
 src/spell_parser.c:419	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle reaches call_magic and checks the caster bytes; class-wording variants are covered by the same manifest claim (R1/R3/R5e/R5h).
 src/spell_parser.c:420	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle has a room observer for this magic-fizzle act (R1/R3/R5e/R5h).
-src/spell_parser.c:424	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle reaches the psionic/mystic will-fade variant through call_magic (R1/R3/R5e/R5h).
-src/spell_parser.c:425	call_magic	proven	use.tattoo-nomagic	The live tattoo no-magic vehicle has a room observer for the will-fade act through call_magic (R1/R3/R5e/R5h).
+src/spell_parser.c:424	call_magic	proven	use.tattoo-nomagic	The CLEAN live will-nomagic-depth vehicle (a level-30 Psionic wills mindsight in a ROOM_NOMAGIC room) prints this psionic/mystic will-fade variant; use-tattoo-nomagic proves the plain-class magic-fizzle variant (R1/R3/R5e/R5h).
+src/spell_parser.c:425	call_magic	proven	use.tattoo-nomagic	The CLEAN live will-nomagic-depth vehicle has a peer witness for this room act ("$n's will fades, disturbed by an unseen force.") in the ROOM_NOMAGIC room (R1/R3/R5e/R5h).
 src/spell_parser.c:432	call_magic	proven	use.tattoo-sitting	The live tattoo sitting vehicle reaches call_magic while the actor is sitting and checks this refusal (R1/R3/R5e/R5h).
 src/spell_parser.c:441	call_magic	proven	objmagic.peaceful-block	The C-first peaceful quaff reaches this direct refusal and compares the caster bytes (R1/R3/R5e/R5h).
 src/spell_parser.c:444	call_magic	proven	objmagic.peaceful-power-wording	"The CLEAN held-wand fixture uses a mortal Psionic in a peaceful room, bypasses do_cast's earlier refusal, and reaches C's ""violent power"" send (act.other.c:895-973; R1/R2/R5e/R5h)."
@@ -51,7 +51,7 @@ src/spell_parser.c:789	mag_objectmagic	proven	parser.worn.staff-default	CLEAN dp
 src/spell_parser.c:791	mag_objectmagic	proven	parser.worn.staff-caster-output	CLEAN dp1371-parser-item-output-final9 seed 1 reaches this worn staff caster act through worn-item do_use dispatch; observer and actor transcripts match C (src/act.other.c:895-968; R1/R2/R5e/R5h).
 src/spell_parser.c:794	mag_objectmagic	proven	parser.worn.staff-empty-charges	CLEAN dp1371-parser-item-output-final9 seed 1 reaches this worn staff empty-charge actor act through worn-item do_use dispatch; observer and actor transcripts match C (src/act.other.c:895-968; R1/R2/R5e/R5h).
 src/spell_parser.c:795	mag_objectmagic	proven	parser.worn.staff-empty-charges	CLEAN dp1371-parser-item-output-final9 seed 1 reaches this worn staff empty-charge room act through worn-item do_use dispatch; observer and actor transcripts match C (src/act.other.c:895-968; R1/R2/R5e/R5h).
-src/spell_parser.c:841	cast_spell	proven	cast.smartness-gate	The direct cast contract test reaches the zero-intelligence/wisdom guard and checks this refusal before mana or wait changes (R1/R5e/R5h).
+src/spell_parser.c:841	cast_spell	proven	cast.smartness-gate	The CLEAN live cast-smartness-depth vehicle (a level-30 Mage with INT 0) prints this refusal, and the direct cast contract test reaches the guard before mana or wait changes (R1/R5e/R5h).
 src/spell_parser.c:847	cast_spell	proven	spell.mob-wait-cast-refusal	spell-mob-wait-script-depth@1,2,3,5,8 writes me.timer from the live mob Lua script, then reaches the vocal cast wait refusal (R1/R2/R3/R5e/R5h).
 src/spell_parser.c:856	cast_spell	proven	lua.bind-spell-position-sleeping	Room 3065 sets the peer to POS_SLEEPING; room 22500 onpulse invokes vocal lua_spell as that player and reaches this exact refusal (R1/R2/R3/R5e/R5g/R5h).
 src/spell_parser.c:859	cast_spell	proven	lua.bind-spell-position-resting	Room 3065 sets the peer to POS_RESTING; room 22500 onpulse invokes vocal lua_spell as that player and reaches this exact refusal (R1/R2/R3/R5e/R5g/R5h).
@@ -66,24 +66,24 @@ src/spell_parser.c:891	cast_spell	proven	cast.power-contract-gates;lua.bind-spel
 src/spell_parser.c:897	cast_spell	proven	lua.bind-spell-group-normal	Room 3065 oncmd calls vocal lua_spell with a normal-class caster outside a group, reaching the group refusal (R1/R2/R3/R5e/R5g/R5h).
 src/spell_parser.c:899	cast_spell	proven	cast.power-contract-gates;lua.bind-spell-group-power	The contract test and live Lua room-oncmd case reach the psionic/mystic group refusal (R1/R2/R3/R5e/R5g/R5h).
 src/spell_parser.c:902	cast_spell	proven	cast.success-call-magic	The successful spoken-cast contract asserts C's Okay bytes before SaySpell and CallMagic (R1/R3/R5e/R5h).
-src/spell_parser.c:928	do_cast	proven	cast.psionic-literal-cast	The live psionic cast command reaches and compares this will-only refusal (R1/R5e/R5h).
+src/spell_parser.c:928	do_cast	proven	cast.psionic-literal-cast	The CLEAN live will-depth vehicle (a level-20 Psionic peer) compares this will-only refusal byte-for-byte (R1/R5e/R5h).
 src/spell_parser.c:937	do_cast	proven	cast.no-arg	The live empty normal-class cast command reaches this prompt (R1/R5e/R5h).
-src/spell_parser.c:939	do_cast	proven	cast.will-entry	The live empty will command reaches this psionic/mystic prompt (R1/R5e/R5h).
+src/spell_parser.c:939	do_cast	proven	cast.will-entry	The CLEAN live will-depth vehicle's empty will command prints this psionic prompt (R1/R5e/R5h).
 src/spell_parser.c:945	do_cast	proven	cast.unquoted	The cast-depth vehicle submits an unquoted normal spell and reaches this exact enclosure refusal (R1/R5e/R5h).
-src/spell_parser.c:948	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unquoted-spell wording (R1/R5e/R5h).
+src/spell_parser.c:948	do_cast	proven	cast.power-entry-surface	The CLEAN live will-depth vehicle reaches the psionic unquoted-power wording (R1/R5e/R5h).
 src/spell_parser.c:958	do_cast	proven	cast.unknown	The live normal cast-depth vehicle reaches this unknown-spell refusal (R1/R5e/R5h).
-src/spell_parser.c:960	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unknown-spell wording (R1/R5e/R5h).
+src/spell_parser.c:960	do_cast	proven	cast.power-entry-surface	The CLEAN live will-depth vehicle reaches the psionic unknown-power wording (R1/R5e/R5h).
 src/spell_parser.c:965	do_cast	proven	cast.level-gate	Registered cast dispatch with Mage-user class and level 1 reaches this minimum-level refusal (R1/R2/R5e/R5h).
-src/spell_parser.c:967	do_cast	proven	will.level-gate	Registered will dispatch with Psionic class and level 1 reaches this minimum-level refusal (R1/R2/R5e/R5h).
+src/spell_parser.c:967	do_cast	proven	will.level-gate	The CLEAN live will-depth vehicle (Psionic, level 20) reaches this minimum-level refusal (R1/R2/R5e/R5h).
 src/spell_parser.c:972	do_cast	proven	cast.unfamiliar-spell	The real cast command reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
-src/spell_parser.c:974	do_cast	proven	will.unfamiliar-power	The real will command reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
+src/spell_parser.c:974	do_cast	proven	will.unfamiliar-power	The CLEAN live will-depth vehicle reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
 src/spell_parser.c:980	do_cast	proven	cast.peaceful-room	The real cast command reaches the peaceful-room gate for a violent spell before target lookup (R1/R2/R5e/R5h).
 src/spell_parser.c:1049	do_cast	proven	cast.no-target-violent	The draw-free no-target control reaches and compares this generated target prompt (R1/R5e/R5h).
-src/spell_parser.c:1056	do_cast	proven	cast.violent-self	The draw-free self-target control reaches and compares this normal-class self-harm refusal (R1/R5e/R5h).
-src/spell_parser.c:1059	do_cast	proven	will.violent-self	A registered will command with a named violent self-target reaches the power wording (R1/R2/R5e/R5h).
+src/spell_parser.c:1056	do_cast	proven	cast.violent-self	The CLEAN live cast-violent-self-depth vehicle (the God self-targets flame arrow) prints this normal-class self-harm refusal, and the draw-free unit control compares it (R1/R5e/R5h).
+src/spell_parser.c:1059	do_cast	proven	will.violent-self	The CLEAN live will-violent-self-depth vehicle (a level-30 Psionic wills mind blast at itself) prints the power wording, and the registered will unit control reaches it (R1/R2/R5e/R5h).
 src/spell_parser.c:1063	do_cast	proven	cast.missing-target	The C-first absent-target cast reaches this Okay send before its incantation and missing-target refusal (R1/R3/R5e/R5h).
 src/spell_parser.c:1066	do_cast	proven	cast.missing-target	The C-first absent-target cast reaches and compares the normal-class missing-target bytes (R1/R3/R5e/R5h).
 src/spell_parser.c:1068	do_cast	proven	will.missing-target	A registered will command with a missing named target reaches the power-specific refusal after say_spell (R1/R2/R5e/R5h).
-src/spell_parser.c:1074	do_cast	proven	cast.mana-gate	The cast contract test reaches the insufficient-mana arm and compares the normal-class refusal without a draw (R1/R3/R5e/R5h).
-src/spell_parser.c:1076	do_cast	proven	will.insufficient-mana	A registered will command with a live target and insufficient mana reaches the power-specific no-mana refusal (R1/R2/R5e/R5h).
+src/spell_parser.c:1074	do_cast	proven	cast.mana-gate	The CLEAN live cast-mana-gate-depth vehicle (a level-30 Mage with 0 mana casts detect invisibility at itself) prints the normal-class refusal, and the unit contract reaches the insufficient-mana arm without a draw (R1/R3/R5e/R5h).
+src/spell_parser.c:1076	do_cast	proven	will.insufficient-mana	The CLEAN live will-mana-gate-depth vehicle (a level-30 Psionic with 0 mana wills mindsight at itself) prints the power-specific refusal, and the registered will unit control reaches it (R1/R2/R5e/R5h).
 src/spell_parser.c:1101	do_cast	proven	cast.concentration-failure	The failed-concentration control reaches this send when no skill-message target consumes the branch and checks the actor bytes (R1/R3/R5e/R5h).

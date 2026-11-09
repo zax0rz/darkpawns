@@ -1,0 +1,77 @@
+# depth-case: will.insufficient-mana
+# C-first witness for do_cast's psionic/mystic insufficient-mana gate, "You
+# haven't the energy to will that power!" (DP-1502 list at
+# src/spell_parser.c:1076). A level-30 Psionic peer with 0 mana wills a known
+# non-violent power at itself; the mana gate fires before the draw.
+# C path: do_cast (src/spell_parser.c:1071-1077).
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Willmgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Willmgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Willmansi]
+Willmansi
+Y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Willmansi]
+Willmansi
+y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Willmansi 8105
+set player Willmansi class i
+set player Willmansi level 30
+skillset Willmansi 'mindsight' 100
+set player Willmansi mana 0
+
+[probe:Willmansi]
+will 'mindsight' Willmansi
