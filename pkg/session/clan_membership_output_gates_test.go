@@ -125,7 +125,9 @@ func TestClanDemoteOutputGates(t *testing.T) {
 	if got := runClanOutputCommand(t, god, "demote", "RankTwo", "Wolves"); got != "Done.\r\n" {
 		t.Fatalf("successful demote actor output = %q", got)
 	}
-	if got := strings.Join(drainSessionText(t, target), ""); got != "You've been demoted within your clan!\r\n" {
+	// C's victim line is the typo "You've demoted within your clan!" (R1;
+	// src/clan.c:488), not "You've been demoted".
+	if got := strings.Join(drainSessionText(t, target), ""); got != "You've demoted within your clan!\r\n" {
 		t.Fatalf("successful demote target output = %q", got)
 	}
 }
