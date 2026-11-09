@@ -68,11 +68,23 @@ func callMagic(caster, cvict, ovict interface{}, spellNum, level int, castType C
 
 	si := GetSpellInfo(spellNum)
 
-	// Check room for NOMAGIC flag
-	if !fromTattoo && roomHasNoMagic(caster, world) {
+	// Check room for NOMAGIC flag. C gates on mortal casters only
+	// (src/spell_parser.c:414-428): the caster sees a magic/power-specific
+	// refusal and the room sees the matching act. Immortals are exempt.
+	if !fromTattoo && roomHasNoMagic(caster, world) && getLevel(caster) < combat.LVL_IMMORT {
+		psionic := isClassPsionicOrMystic(getClass(caster))
 		type sender interface{ SendMessage(string) }
 		if s, ok := caster.(sender); ok {
-			s.SendMessage("A magical force prevents you from casting here.\r\n")
+			if psionic {
+				s.SendMessage("Your will fades, disturbed by an unseen force.\r\n")
+			} else {
+				s.SendMessage("Your magic fizzles out and dies.\r\n")
+			}
+		}
+		if psionic {
+			sendAffectRoom(caster, nil, "$n's will fades, disturbed by an unseen force.", false, world)
+		} else {
+			sendAffectRoom(caster, nil, "$n's magic fizzles out and dies.", false, world)
 		}
 		return false
 	}

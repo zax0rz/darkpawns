@@ -1,0 +1,110 @@
+# depth-case: use.tattoo-nomagic
+# C-first witness for call_magic's psionic/mystic will-fade variant inside a
+# ROOM_NOMAGIC room, "Your will fades, disturbed by an unseen force."
+# (DP-1502 list at src/spell_parser.c:424) and its room act (:425). A level-30
+# Psionic peer wills mindsight at itself in room 8162 with ROOM_NOMAGIC set;
+# call_magic refuses at :414-428 with the power wording. The primary is an
+# idle God; a peer witnesses the room act.
+# C path: do_cast -> cast_spell -> call_magic (src/spell_parser.c:406-429).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8162 7 on
+
+[setup:oracle]
+Nomaggod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nomaggod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:Willnpsi]
+Willnpsi
+Y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:Willnpsi]
+Willnpsi
+y
+psipass
+psipass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:witness]
+Willnwit
+Y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:witness]
+Willnwit
+y
+witpass
+witpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Willnpsi 8162
+teleport Willnwit 8162
+set player Willnpsi class i
+set player Willnpsi level 30
+set player Willnpsi maxmana 5000
+set player Willnpsi mana 5000
+skillset Willnpsi 'mindsight' 100
+
+[probe:Willnpsi]
+will 'mindsight' Willnpsi

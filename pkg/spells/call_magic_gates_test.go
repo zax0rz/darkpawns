@@ -1,6 +1,10 @@
 package spells
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zax0rz/darkpawns/pkg/parser"
+)
 
 // TestCallMagicItemCastIgnoresFightingPosition pins DP-1481 shape 4. C's
 // call_magic() applies only the sitting refusal (src/spell_parser.c:431-434), so
@@ -40,5 +44,65 @@ func TestCallMagicStillRefusesSittingCaster(t *testing.T) {
 	}
 	if len(victim.activeAffects) != 0 {
 		t.Error("the sitting caster's spell still reached the victim")
+	}
+}
+
+// noMagicTestWorld serves one room for call_magic's ROOM_NOMAGIC gate.
+type noMagicTestWorld struct{ room *parser.Room }
+
+func (w noMagicTestWorld) GetRoomInWorld(vnum int) *parser.Room { return w.room }
+
+// TestCallMagicRefusesSpokenCastInNoMagicRoom pins C's ROOM_NOMAGIC gate
+// (src/spell_parser.c:414-428): a spell cast from a NOMAGIC room is refused for
+// mortal casters with a magic-specific caster line ("Your magic fizzles out and
+// dies.") or the psionic/mystic power line ("Your will fades, disturbed by an
+// unseen force.") and no spell routine runs. The Go port had read ROOM_NOMAGIC
+// as bit 20 (RoomNoMagic=20) instead of bit 7, so the gate never fired and the
+// spell ran. Reverting either the constant or the message wording fails this
+// test.
+func TestCallMagicRefusesSpokenCastInNoMagicRoom(t *testing.T) {
+	// RoomHasFlagBit words are decimal; bit 7 is 1<<7 = 128 in word 0.
+	room := &parser.Room{Flags: []string{"128", "0", "0", "0"}}
+	world := noMagicTestWorld{room: room}
+
+	caster := &mockSpellsChar{name: "Caster", level: 20, class: 0, roomVNum: 8004, position: int(PosStanding)}
+	victim := &mockSpellsChar{name: "Victim", level: 10, position: int(PosStanding)}
+	if CallMagic(caster, victim, nil, SpellBless, 20, CastSpell, world) {
+		t.Fatal("a mortal's spoken cast in a NOMAGIC room was allowed")
+	}
+	if got := caster.messages; len(got) == 0 || got[0] != "Your magic fizzles out and dies.\r\n" {
+		t.Fatalf("caster message = %#v, want the C magic-fizzles line", got)
+	}
+	if len(victim.activeAffects) != 0 {
+		t.Error("the refused NOMAGIC cast still reached the victim")
+	}
+
+	psi := &mockSpellsChar{name: "Psi", level: 20, class: 9, roomVNum: 8004, position: int(PosStanding)}
+	psiTarget := &mockSpellsChar{name: "Target", level: 10, position: int(PosStanding)}
+	if CallMagic(psi, psiTarget, nil, SpellBless, 20, CastSpell, world) {
+		t.Fatal("a psionic's will in a NOMAGIC room was allowed")
+	}
+	if got := psi.messages; len(got) == 0 || got[0] != "Your will fades, disturbed by an unseen force.\r\n" {
+		t.Fatalf("psionic message = %#v, want the C will-fades line", got)
+	}
+	if len(psiTarget.activeAffects) != 0 {
+		t.Error("the refused NOMAGIC will still reached the target")
+	}
+}
+
+// TestCallMagicExemptsImmortalsFromNoMagic pins C's level gate on the same
+// branch (src/spell_parser.c:415): an immortal casts normally in a NOMAGIC
+// room.
+func TestCallMagicExemptsImmortalsFromNoMagic(t *testing.T) {
+	room := &parser.Room{Flags: []string{"128", "0", "0", "0"}}
+	world := noMagicTestWorld{room: room}
+
+	caster := &mockSpellsChar{name: "God", level: 41, class: 0, roomVNum: 8004, position: int(PosStanding)}
+	victim := &mockSpellsChar{name: "Victim", level: 10, position: int(PosStanding)}
+	if !CallMagic(caster, victim, nil, SpellBless, 41, CastSpell, world) {
+		t.Fatal("an immortal's cast in a NOMAGIC room was refused")
+	}
+	if len(victim.activeAffects) == 0 {
+		t.Error("the immortal's NOMAGIC-room cast did not reach the victim")
 	}
 }
