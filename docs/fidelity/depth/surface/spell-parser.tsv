@@ -66,17 +66,17 @@ src/spell_parser.c:891	cast_spell	proven	cast.power-contract-gates;lua.bind-spel
 src/spell_parser.c:897	cast_spell	proven	lua.bind-spell-group-normal	Room 3065 oncmd calls vocal lua_spell with a normal-class caster outside a group, reaching the group refusal (R1/R2/R3/R5e/R5g/R5h).
 src/spell_parser.c:899	cast_spell	proven	cast.power-contract-gates;lua.bind-spell-group-power	The contract test and live Lua room-oncmd case reach the psionic/mystic group refusal (R1/R2/R3/R5e/R5g/R5h).
 src/spell_parser.c:902	cast_spell	proven	cast.success-call-magic	The successful spoken-cast contract asserts C's Okay bytes before SaySpell and CallMagic (R1/R3/R5e/R5h).
-src/spell_parser.c:928	do_cast	proven	cast.psionic-literal-cast	The live psionic cast command reaches and compares this will-only refusal (R1/R5e/R5h).
+src/spell_parser.c:928	do_cast	proven	cast.psionic-literal-cast	The CLEAN live will-depth vehicle (a level-20 Psionic peer) compares this will-only refusal byte-for-byte (R1/R5e/R5h).
 src/spell_parser.c:937	do_cast	proven	cast.no-arg	The live empty normal-class cast command reaches this prompt (R1/R5e/R5h).
-src/spell_parser.c:939	do_cast	proven	cast.will-entry	The live empty will command reaches this psionic/mystic prompt (R1/R5e/R5h).
+src/spell_parser.c:939	do_cast	proven	cast.will-entry	The CLEAN live will-depth vehicle's empty will command prints this psionic prompt (R1/R5e/R5h).
 src/spell_parser.c:945	do_cast	proven	cast.unquoted	The cast-depth vehicle submits an unquoted normal spell and reaches this exact enclosure refusal (R1/R5e/R5h).
-src/spell_parser.c:948	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unquoted-spell wording (R1/R5e/R5h).
+src/spell_parser.c:948	do_cast	proven	cast.power-entry-surface	The CLEAN live will-depth vehicle reaches the psionic unquoted-power wording (R1/R5e/R5h).
 src/spell_parser.c:958	do_cast	proven	cast.unknown	The live normal cast-depth vehicle reaches this unknown-spell refusal (R1/R5e/R5h).
-src/spell_parser.c:960	do_cast	proven	cast.power-entry-surface	The live will-entry vehicle reaches the psionic/mystic unknown-spell wording (R1/R5e/R5h).
+src/spell_parser.c:960	do_cast	proven	cast.power-entry-surface	The CLEAN live will-depth vehicle reaches the psionic unknown-power wording (R1/R5e/R5h).
 src/spell_parser.c:965	do_cast	proven	cast.level-gate	Registered cast dispatch with Mage-user class and level 1 reaches this minimum-level refusal (R1/R2/R5e/R5h).
-src/spell_parser.c:967	do_cast	proven	will.level-gate	Registered will dispatch with Psionic class and level 1 reaches this minimum-level refusal (R1/R2/R5e/R5h).
+src/spell_parser.c:967	do_cast	proven	will.level-gate	The CLEAN live will-depth vehicle (Psionic, level 20) reaches this minimum-level refusal (R1/R2/R5e/R5h).
 src/spell_parser.c:972	do_cast	proven	cast.unfamiliar-spell	The real cast command reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
-src/spell_parser.c:974	do_cast	proven	will.unfamiliar-power	The real will command reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
+src/spell_parser.c:974	do_cast	proven	will.unfamiliar-power	The CLEAN live will-depth vehicle reaches this exact refusal with level sufficient and skill 0 (R1/R2/R5e/R5h).
 src/spell_parser.c:980	do_cast	proven	cast.peaceful-room	The real cast command reaches the peaceful-room gate for a violent spell before target lookup (R1/R2/R5e/R5h).
 src/spell_parser.c:1049	do_cast	proven	cast.no-target-violent	The draw-free no-target control reaches and compares this generated target prompt (R1/R5e/R5h).
 src/spell_parser.c:1056	do_cast	proven	cast.violent-self	The draw-free self-target control reaches and compares this normal-class self-harm refusal (R1/R5e/R5h).
