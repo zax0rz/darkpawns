@@ -247,7 +247,9 @@ func (w *World) doClanDemote(ch *Player, arg string) {
 	victim.ClanRank--
 	// C saves the demoted member (clan.c:486).
 	w.saveCharSiteInRoom(victim, "clan demote")
-	victim.SendMessage("You've been demoted within your clan!\r\n")
+	// C's victim line is literally "You've demoted within your clan!" — a C typo
+	// that is law (R1; src/clan.c:488), not "You've been demoted".
+	victim.SendMessage("You've demoted within your clan!\r\n")
 	ch.SendMessage("Done.\r\n")
 	w.SaveClans()
 }

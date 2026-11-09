@@ -1,0 +1,74 @@
+# depth-case: clan.demote-output-gates
+# C-first vehicle for do_clan_demote's victim line (src/clan.c:486-488). The
+# first-player God creates clan Wolves with the peer Nobleone and promotes it,
+# then demotes it; the victim sees C's exact (typo'd) line
+# "You've demoted within your clan!" and the actor sees "Done.".
+
+[fixture]
+empty-players
+quiet-mobs
+
+[setup:oracle]
+Clangod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Clangod
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:noble]
+Nobleone
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:noble]
+Nobleone
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+teleport Nobleone 8162
+set Nobleone level 1
+clan create Nobleone Wolves
+
+[probe]
+clan demote Nobleone Wolves
