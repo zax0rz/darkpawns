@@ -3,3 +3,4 @@ do_commands	commands	commands.no-argument	D5	command	oracle-green	commands-depth
 do_commands	commands	commands.target-self	D3	audience	oracle-green	commands-depth	act.informative.c:2633-2675	An explicit self target is accepted and uses the actor's level-filtered command list.
 do_commands	commands	commands.target-peer	D3	audience	oracle-green	commands-depth	act.informative.c:2633-2675	A visible same-level peer is named in the header and receives the peer's level-filtered listing.
 do_commands	commands	commands.target-not-found	D1	command	oracle-green	commands-depth	act.informative.c:2644-2648	A missing visible target uses the exact C Who-is-that response.
+do_commands	commands	commands.target-above-level	D1	command	oracle-green	commands-higher-level-depth@1	act.informative.c:2648-2652	A visible higher-level target reaches C's refusal before the target command list is built (R1/R2/R5e).

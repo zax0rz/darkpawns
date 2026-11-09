@@ -1,0 +1,45 @@
+# depth-case: at.carried-object-unavailable
+# A carried object has NOWHERE as its room. C do_at resolves it through
+# find_target_room and emits the unavailable-object refusal.
+# C: src/act.wizard.c:184-212 (object branch 206-211).
+
+[fixture]
+empty-players
+quiet-mobs
+spawn-obj 2506 99 8162 25
+force-load 2506
+
+[setup:oracle]
+Atdepthac
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Atdepthac
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8162
+get chalice
+
+[probe]
+at chalice look
