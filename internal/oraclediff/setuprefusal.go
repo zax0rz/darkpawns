@@ -2,6 +2,7 @@ package oraclediff
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -24,11 +25,6 @@ type setupRefusal struct {
 // Every line cites the src/ location it was read from (R5g). Matching is on
 // whole normalized lines only, so ordinary prose that merely contains a
 // refusal phrase never trips the check.
-//
-// Two do_olc refusals are sprintf-shaped ("Specify a %s VNUM to edit.",
-// src/olc.c:113; "That %s is currently being edited by %s.", src/olc.c:157)
-// and cannot be whole-line matched; the fixed strings below cover the level
-// and zone paths that hollow scenarios actually hit.
 //
 // Deliberately excluded: the interpreter's position refusals
 // (src/interpreter.c:923ff — "You need to stand up!" and kin). No incident
@@ -149,6 +145,16 @@ func matchingSetupRefusal(output string) (line string, cite string) {
 				return r.line, r.cite
 			}
 		}
+		for _, r := range setupRefusalAdditionalLines {
+			if norm == r.line {
+				return norm, r.cite
+			}
+		}
+		for _, r := range setupRefusalPatterns {
+			if r.pattern.MatchString(norm) {
+				return norm, r.cite
+			}
+		}
 	}
 	return "", ""
 }
@@ -170,4 +176,67 @@ func checkWarmupRefusals(steps []string, blocks []AudienceProbeBlock, peers int,
 		}
 	}
 	return nil
+}
+
+// A field is nonempty, cannot cross a line, and is bounded to 1000 bytes of
+// ASCII (or Unicode runes). This covers C command arguments and short object
+// descriptions without permitting an unbounded wildcard in the refusal gate.
+const setupRefusalField = `[^\r\n]{1,1000}`
+
+type setupRefusalPattern struct {
+	template string
+	cite     string
+	pattern  *regexp.Regexp
+}
+
+func refusalPattern(template, cite string) setupRefusalPattern {
+	return setupRefusalPattern{template, cite, compileRefusalTemplate(template)}
+}
+
+// compileRefusalTemplate accepts C printf conversions and act() substitutions
+// (src/comm.c:2408-2457). Everything else remains escaped literal text. Invalid
+// templates panic at initialization instead of silently weakening the gate.
+func compileRefusalTemplate(template string) *regexp.Regexp {
+	var out strings.Builder
+	out.WriteString("^")
+	for i := 0; i < len(template); {
+		switch template[i] {
+		case '%':
+			i++
+			if i < len(template) && template[i] == '%' {
+				out.WriteString("%")
+				i++
+				continue
+			}
+			start := i
+			for i < len(template) && strings.ContainsRune("-+ #0.123456789hlz", rune(template[i])) {
+				i++
+			}
+			if i == len(template) || !strings.ContainsRune("sdiuoxXfFeEgGc", rune(template[i])) {
+				panic("invalid printf refusal template: " + template[start-1:])
+			}
+			if strings.ContainsRune("diu", rune(template[i])) {
+				out.WriteString(`[+-]?[0-9]{1,20}`)
+			} else {
+				out.WriteString(setupRefusalField)
+			}
+			i++
+		case '$':
+			i++
+			if i == len(template) || !strings.ContainsRune("nNmMsSeEoOpPaATF$", rune(template[i])) {
+				panic("invalid act refusal template: " + template)
+			}
+			if template[i] == '$' {
+				out.WriteString(`\$`)
+			} else {
+				out.WriteString(setupRefusalField)
+			}
+			i++
+		default:
+			out.WriteString(regexp.QuoteMeta(template[i : i+1]))
+			i++
+		}
+	}
+	out.WriteString("$")
+	return regexp.MustCompile(out.String())
 }

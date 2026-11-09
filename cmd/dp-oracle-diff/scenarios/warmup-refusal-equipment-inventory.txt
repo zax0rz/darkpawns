@@ -1,0 +1,140 @@
+# DP-1511 C witnesses: occupied equipment slots refuse a second item.
+# Setup is in the probe so these intentional refusals are compared and retained.
+[fixture]
+empty-players
+quiet-mobs
+add-obj-index 58.obj
+[setup:oracle]
+Egonwearer
+Y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Egonwearer
+y
+oraclepass
+oraclepass
+N
+M
+H
+M
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:observer]
+Egonlook
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:observer]
+Egonlook
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[probe]
+goto 8004
+teleport Egonlook 8004
+remove all
+load obj 18602
+wear ring finger
+load obj 18602
+wear ring finger
+load obj 5808
+wear tooth neck
+load obj 14531
+wear amulet neck
+load obj 5800
+wear breast body
+load obj 19523
+wear helmet head
+load obj 5801
+wear leggings legs
+load obj 5802
+wear boots feet
+load obj 20301
+wear gauntlets hands
+load obj 5803
+wear bracers arms
+load obj 8042
+wear shield shield
+load obj 14534
+wear cape about
+load obj 102
+wear belt waist
+load obj 19507
+wear bracer wrist
+load obj 19507
+wear bracer wrist
+load obj 5804
+hold scroll
+load obj 5805
+wield sword
+load obj 19506
+wear skirt ablegs
+load obj 14533
+wear morion face
+load obj 14437
+wear orb hover
+load obj 18602
+wear ring finger
+load obj 5808
+wear tooth neck
+load obj 5800
+wear breast body
+load obj 19523
+wear helmet head
+load obj 5801
+wear leggings legs
+load obj 5802
+wear boots feet
+load obj 20301
+wear gauntlets hands
+load obj 5803
+wear bracers arms
+load obj 8042
+wear shield shield
+load obj 14534
+wear cape about
+load obj 102
+wear belt waist
+load obj 19507
+wear bracer wrist
+load obj 5804
+hold scroll
+load obj 5805
+wield sword
+load obj 19506
+wear skirt ablegs
+load obj 14533
+wear morion face
+load obj 14437
+wear orb hover

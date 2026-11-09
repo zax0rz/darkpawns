@@ -1,0 +1,2186 @@
+[
+  {
+    "template": "You don't see %s %s here.",
+    "cite": "src/act.item.c:105",
+    "line": "You don't see a powder here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1493-say-gate2/census-dump/spellmatrix-potion-olc-03-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You don't seem to have %s %s.",
+    "cite": "src/act.item.c:1647",
+    "line": "You don't seem to have a powder.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1493-say-gate2/census-dump/spellmatrix-potion-olc-03-depth.txt",
+    "dump_line": 370
+  },
+  {
+    "template": "Nothing seems to happen.",
+    "cite": "src/config.c:94",
+    "line": "Nothing seems to happen.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1493-say-gate2/census-dump/spellmatrix-staff-olc-13-depth.txt",
+    "dump_line": 397
+  },
+  {
+    "template": "But you are not the member of a group!",
+    "cite": "src/act.other.c:645",
+    "line": "But you are not the member of a group!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1493b/census-dump/gsay-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Yes, but WHAT do you want to say?",
+    "cite": "src/act.comm.c:780",
+    "line": "Yes, but WHAT do you want to say?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1493b/census-dump/rsay-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Aren't we funny today...",
+    "cite": "src/act.offensive.c:452",
+    "line": "Aren't we funny today...",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b1/census-dump/bearhug-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You can't $F that!",
+    "cite": "src/act.movement.c:618",
+    "line": "You can't carve with that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b1/census-dump/carve-club-depth.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "They don't seem to be here.",
+    "cite": "src/act.offensive.c:111",
+    "line": "They don't seem to be here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b1/census-dump/tag-depth.txt",
+    "dump_line": 5
+  },
+  {
+    "template": "Spell names must be enclosed in the magick symbols: '",
+    "cite": "src/spell_parser.c:945",
+    "line": "Spell names must be enclosed in the magick symbols: '",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b14/census-dump/cast-depth.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Upon %s should the spell be cast?",
+    "cite": "src/spell_parser.c:1040",
+    "line": "Upon who should the spell be cast?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b14/census-dump/cast-depth.txt",
+    "dump_line": 19
+  },
+  {
+    "template": "Cannot find the target of your spell!",
+    "cite": "src/spell_parser.c:1066",
+    "line": "Cannot find the target of your spell!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b14/census-dump/cast-depth.txt",
+    "dump_line": 28
+  },
+  {
+    "template": "Will what?",
+    "cite": "src/spell_parser.c:939",
+    "line": "Will what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b14/census-dump/will-depth.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "%s what?",
+    "cite": "src/act.movement.c:607",
+    "line": "Will what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b14/census-dump/will-depth.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "Psionic powers must be enclosed in the symbols: '",
+    "cite": "src/spell_parser.c:948",
+    "line": "Psionic powers must be enclosed in the symbols: '",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b14/census-dump/will-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You haven't the energy to cast that spell!",
+    "cite": "src/spell_parser.c:1074",
+    "line": "You haven't the energy to cast that spell!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b15/census-dump/cast-mana-gate-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You're not smart enough to cast!",
+    "cite": "src/spell_parser.c:841",
+    "line": "You're not smart enough to cast!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b15/census-dump/cast-smartness-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You shouldn't cast that on yourself -- could be bad for your health!",
+    "cite": "src/spell_parser.c:1056",
+    "line": "You shouldn't cast that on yourself -- could be bad for your health!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b15/census-dump/cast-violent-self-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You haven't the energy to will that power!",
+    "cite": "src/spell_parser.c:1076",
+    "line": "You haven't the energy to will that power!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b15/census-dump/will-mana-gate-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Exerting that power on yourself could be harmful!",
+    "cite": "src/spell_parser.c:1059",
+    "line": "Exerting that power on yourself could be harmful!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b15/census-dump/will-violent-self-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Your magic fizzles out and dies.",
+    "cite": "src/spell_parser.c:419",
+    "line": "Your magic fizzles out and dies.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b16/census-dump/use-tattoo-nomagic.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Your will fades, disturbed by an unseen force.",
+    "cite": "src/spell_parser.c:424",
+    "line": "Your will fades, disturbed by an unseen force.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b16/census-dump/will-nomagic-depth.txt",
+    "dump_line": 4
+  },
+  {
+    "template": "It seems powerless.",
+    "cite": "src/spell_parser.c:589",
+    "line": "It seems powerless.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b17/census-dump/staff-use-depth.txt",
+    "dump_line": 17
+  },
+  {
+    "template": "At what should $p be pointed?",
+    "cite": "src/spell_parser.c:641",
+    "line": "At what should an ancient book of spells be pointed?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b17/census-dump/wand-point-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You lost your concentration!",
+    "cite": "src/spell_parser.c:1101",
+    "line": "You lost your concentration!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b18/census-dump/cast-concentration-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You can't concentrate enough!.",
+    "cite": "src/spell_parser.c:663",
+    "line": "You can't concentrate enough!.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b18/census-dump/spell-parser-scroll-fighting.txt",
+    "dump_line": 20
+  },
+  {
+    "template": "Get all of what?",
+    "cite": "src/act.item.c:243",
+    "line": "Get all of what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/find-all-dots-empty.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "What do you want to %s?",
+    "cite": "src/act.item.c:583",
+    "line": "What do you want to drop all of?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/find-all-dots-empty.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "What do you want to %s all of?",
+    "cite": "src/act.item.c:632",
+    "line": "What do you want to drop all of?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/find-all-dots-empty.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "Get what?",
+    "cite": "src/act.item.c:360",
+    "line": "Get what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/get-room.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You don't see any %ss here.",
+    "cite": "src/act.item.c:338",
+    "line": "You don't see any xyzzys here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/get-room.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "$p is not a container.",
+    "cite": "src/act.item.c:109",
+    "line": "A loaf of bread is not a container.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/get-room.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "You can't seem to find any %ss here.",
+    "cite": "src/act.item.c:421",
+    "line": "You can't seem to find any xyzzys here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/get-room.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "There doesn't seem to be anything here.",
+    "cite": "src/act.item.c:335",
+    "line": "There doesn't seem to be anything here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b20/census-dump/get-room.txt",
+    "dump_line": 41
+  },
+  {
+    "template": "You'd better leave all the martial arts to fighters.",
+    "cite": "src/act.offensive.c:429",
+    "line": "You'd better leave all the martial arts to fighters.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b3/census-dump/combat-skill-noskill.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You have no %s.",
+    "cite": "src/act.comm.c:1049",
+    "line": "You have no idea how.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b3/census-dump/combat-skill-noskill.txt",
+    "dump_line": 19
+  },
+  {
+    "template": "$N is just such a good friend, you simply can't hit $M.",
+    "cite": "src/act.offensive.c:118",
+    "line": "Charmgod is just such a good friend, you simply can't hit him.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b6/census-dump/combat-entry-charm-relations.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You can't reach it from your mount.",
+    "cite": "src/act.item.c:299",
+    "line": "You can't reach it from your mount.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b6/census-dump/palm-depth.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "$p: you can't carry that many items.",
+    "cite": "src/act.item.c:162",
+    "line": "A loaf of bread: you can't carry that many items.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b6/census-dump/palm-full-depth.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Your arms are already full!",
+    "cite": "src/act.item.c:358",
+    "line": "Your arms are already full!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b6/census-dump/palm-full-depth.txt",
+    "dump_line": 19
+  },
+  {
+    "template": "You can't see a damned thing, you're blind!",
+    "cite": "src/act.informative.c:1111",
+    "line": "You can't see a damned thing, you're blind!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1502-b7/census-dump/quaff-blindness.txt",
+    "dump_line": 17
+  },
+  {
+    "template": "$p is closed.",
+    "cite": "src/act.item.c:228",
+    "line": "A backpack is closed.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1508/census-dump/get-container.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "There doesn't seem to be %s %s in $p.",
+    "cite": "src/act.item.c:233",
+    "line": "There doesn't seem to be a xyzzy in a backpack.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1508/census-dump/get-container.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You can't seem to find any %ss in $p.",
+    "cite": "src/act.item.c:262",
+    "line": "You can't seem to find any xyzzys in a backpack.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1508/census-dump/get-container.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "You don't have %s %s.",
+    "cite": "src/act.item.c:372",
+    "line": "You don't have a xyzzy.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1508/census-dump/get-container.txt",
+    "dump_line": 41
+  },
+  {
+    "template": "$p seems to be empty.",
+    "cite": "src/act.item.c:259",
+    "line": "A backpack seems to be empty.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1508/census-dump/get-container.txt",
+    "dump_line": 55
+  },
+  {
+    "template": "You can't seem to find any containers.",
+    "cite": "src/act.item.c:418",
+    "line": "You can't seem to find any containers.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1508/census-dump/get-sweep-none.txt",
+    "dump_line": 8
+  },
+  {
+    "template": "You can't cast this spell if you're not in a group!",
+    "cite": "src/spell_parser.c:897",
+    "line": "You can't cast this spell if you're not in a group!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/group-recall-sleeping-member.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You are already awake...",
+    "cite": "src/act.movement.c:874",
+    "line": "You are already awake...",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/item-sleep-outlaw-bare.txt",
+    "dump_line": 43
+  },
+  {
+    "template": "You can't wake up!",
+    "cite": "src/act.movement.c:870",
+    "line": "You can't wake up!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/item-sleep-outlaw-sand.txt",
+    "dump_line": 46
+  },
+  {
+    "template": "There is nothing to here to affect with $p.",
+    "cite": "src/spell_parser.c:676",
+    "line": "There is nothing to here to affect with the Book of Common Prayer.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/recite-multi-spell-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Unrecognized skill.",
+    "cite": "src/modify.c:309",
+    "line": "Unrecognized skill.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/skillset-depth.txt",
+    "dump_line": 67
+  },
+  {
+    "template": "Learned value expected.",
+    "cite": "src/modify.c:316",
+    "line": "Learned value expected.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/skillset-depth.txt",
+    "dump_line": 71
+  },
+  {
+    "template": "Minimum value for learned is 0.",
+    "cite": "src/modify.c:321",
+    "line": "Minimum value for learned is 0.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/skillset-depth.txt",
+    "dump_line": 75
+  },
+  {
+    "template": "Max value for learned is 100.",
+    "cite": "src/modify.c:325",
+    "line": "Max value for learned is 100.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/skillset-depth.txt",
+    "dump_line": 79
+  },
+  {
+    "template": "You can't set NPC skills.",
+    "cite": "src/modify.c:329",
+    "line": "You can't set NPC skills.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/skillset-depth.txt",
+    "dump_line": 83
+  },
+  {
+    "template": "You can't wake $M up!",
+    "cite": "src/act.movement.c:857",
+    "line": "You can't wake him up!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/sleep-spell-depth.txt",
+    "dump_line": 41
+  },
+  {
+    "template": "You can't cast anything yet!",
+    "cite": "src/spell_parser.c:847",
+    "line": "You can't cast anything yet!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/spell-mob-wait-script-depth.txt",
+    "dump_line": 12
+  },
+  {
+    "template": "This room just has such a peaceful, easy feeling...",
+    "cite": "src/act.offensive.c:436",
+    "line": "This room just has such a peaceful, easy feeling...",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/spell-parser-item-output-gaps.txt",
+    "dump_line": 387
+  },
+  {
+    "template": "You can't do this sitting!!",
+    "cite": "src/spell_parser.c:668",
+    "line": "You can't do this sitting!!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/spell-parser-item-output-gaps.txt",
+    "dump_line": 405
+  },
+  {
+    "template": "You can't do this sitting!",
+    "cite": "src/spell_parser.c:862",
+    "line": "You can't do this sitting!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/spell-parser-item-output-gaps.txt",
+    "dump_line": 433
+  },
+  {
+    "template": "You don't seem to be using %s %s.",
+    "cite": "src/act.item.c:1783",
+    "line": "You don't seem to be using a wand.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/spellmatrix-itemroute-infravision-depth.txt",
+    "dump_line": 583
+  },
+  {
+    "template": "You can only will this power upon yourself!",
+    "cite": "src/spell_parser.c:883",
+    "line": "You can only will this power upon yourself!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/spellmatrix-staff-olc-01-depth.txt",
+    "dump_line": 26
+  },
+  {
+    "template": "Your concentration is broken by your fighting!",
+    "cite": "src/act.other.c:1744",
+    "line": "Your concentration is broken by your fighting!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/spellmatrix-staff-olc-06-depth.txt",
+    "dump_line": 1628
+  },
+  {
+    "template": "You cannot do this sitting!",
+    "cite": "src/spell_parser.c:432",
+    "line": "You cannot do this sitting!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/deepseek-dp1510-audit-b/census-dump/use-tattoo-sitting.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "No way!  You're fighting for your life!",
+    "cite": "src/act.other.c:118",
+    "line": "No way!  You're fighting for your life!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/kimi-dp1502-offensive/census-dump/subdue-busy-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Give what to who?",
+    "cite": "src/act.item.c:776",
+    "line": "Give what to who?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/act-obj-sweep.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Put what in what?",
+    "cite": "src/act.item.c:90",
+    "line": "Put what in what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/act-obj-sweep.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "Wear what?",
+    "cite": "src/act.item.c:1595",
+    "line": "Wear what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/act-obj-sweep.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "You'd better open it first!",
+    "cite": "src/act.item.c:111",
+    "line": "You'd better open it first!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/act-obj-sweep.txt",
+    "dump_line": 35
+  },
+  {
+    "template": "%d is the highest possible level.",
+    "cite": "src/act.wizard.c:1518",
+    "line": "40 is the highest possible level.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/advance-depth.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "They are already at that level.",
+    "cite": "src/act.wizard.c:1527",
+    "line": "They are already at that level.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/advance-depth.txt",
+    "dump_line": 51
+  },
+  {
+    "template": "No such alias.",
+    "cite": "src/interpreter.c:1011",
+    "line": "No such alias.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/alias-depth.txt",
+    "dump_line": 6
+  },
+  {
+    "template": "You can't alias 'alias'.",
+    "cite": "src/interpreter.c:1016",
+    "line": "You can't alias 'alias'.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/alias-depth.txt",
+    "dump_line": 34
+  },
+  {
+    "template": "Ambush who?",
+    "cite": "src/act.offensive.c:1463",
+    "line": "Ambush who?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/ambush-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Ambush yourself? You idiot!",
+    "cite": "src/act.offensive.c:1481",
+    "line": "Ambush yourself? You idiot!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/ambush-depth.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "You are a little busy for that right now!",
+    "cite": "src/act.offensive.c:1475",
+    "line": "You are a little busy for that right now!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/ambush-depth.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Ambush someone here? Impossible!",
+    "cite": "src/act.offensive.c:1490",
+    "line": "Ambush someone here? Impossible!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/ambush-entry-gates.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You don't seem to have anything wearable.",
+    "cite": "src/act.item.c:1618",
+    "line": "You don't seem to have anything wearable.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/attitude-loot-switched-output-depth.txt",
+    "dump_line": 13
+  },
+  {
+    "template": "A site to unban might help.",
+    "cite": "src/ban.c:221",
+    "line": "A site to unban might help.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/ban-depth.txt",
+    "dump_line": 28
+  },
+  {
+    "template": "That site is not currently banned.",
+    "cite": "src/ban.c:233",
+    "line": "That site is not currently banned.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/ban-depth.txt",
+    "dump_line": 30
+  },
+  {
+    "template": "Bash who?",
+    "cite": "src/act.offensive.c:446",
+    "line": "Bash who?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/bash-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Dismount first!",
+    "cite": "src/act.offensive.c:463",
+    "line": "Dismount first!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/bearhug-mounted-depth.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "This room just has such a peaceful, easy feeling..",
+    "cite": "src/spell_parser.c:980",
+    "line": "This room just has such a peaceful, easy feeling..",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/cast-hellfire-peaceful-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Cannot find the target of your will!",
+    "cite": "src/spell_parser.c:1068",
+    "line": "Cannot find the target of your will!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/cast-mindsight-no-track.txt",
+    "dump_line": 4
+  },
+  {
+    "template": "You do not belong to a clan!",
+    "cite": "src/clan.c:555",
+    "line": "You do not belong to a clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-applicant-depth.txt",
+    "dump_line": 14
+  },
+  {
+    "template": "Unknown clan.",
+    "cite": "src/clan.c:254",
+    "line": "Unknown clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-applicant-depth.txt",
+    "dump_line": 62
+  },
+  {
+    "template": "You don't belong to any clan!",
+    "cite": "src/clan.c:299",
+    "line": "You don't belong to any clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-authorization-gates-depth.txt",
+    "dump_line": 5
+  },
+  {
+    "template": "You do not have clan privileges.",
+    "cite": "src/clan.c:305",
+    "line": "You do not have clan privileges.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-authorization-gates-depth.txt",
+    "dump_line": 47
+  },
+  {
+    "template": "You're not influent enough in the clan to do that!",
+    "cite": "src/clan.c:317",
+    "line": "You're not influent enough in the clan to do that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-authorization-gates-depth.txt",
+    "dump_line": 119
+  },
+  {
+    "template": "Set the application level to what?",
+    "cite": "src/clan.c:1314",
+    "line": "Set the application level to what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-authorization-gates-depth.txt",
+    "dump_line": 163
+  },
+  {
+    "template": "Clan name too long! (32 characters max)",
+    "cite": "src/clan.c:189",
+    "line": "Clan name too long! (32 characters max)",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 37
+  },
+  {
+    "template": "You cannot set an immortal as the leader of a clan.",
+    "cite": "src/clan.c:193",
+    "line": "You cannot set an immortal as the leader of a clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 47
+  },
+  {
+    "template": "The leader already belongs to a clan!",
+    "cite": "src/clan.c:197",
+    "line": "The leader already belongs to a clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 57
+  },
+  {
+    "template": "That clan name already exists!",
+    "cite": "src/clan.c:201",
+    "line": "That clan name already exists!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 67
+  },
+  {
+    "template": "You cannot quit any clan!",
+    "cite": "src/clan.c:619",
+    "line": "You cannot quit any clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 87
+  },
+  {
+    "template": "Set the ranks to what?",
+    "cite": "src/clan.c:1107",
+    "line": "Set the ranks to what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 141
+  },
+  {
+    "template": "The clan already has this number of ranks.",
+    "cite": "src/clan.c:1114",
+    "line": "The clan already has this number of ranks.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 151
+  },
+  {
+    "template": "Clans must have from 2 to 20 ranks.",
+    "cite": "src/clan.c:1119",
+    "line": "Clans must have from 2 to 20 ranks.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 161
+  },
+  {
+    "template": "You are not mighty enough to create new clans!",
+    "cite": "src/clan.c:170",
+    "line": "You are not mighty enough to create new clans!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 185
+  },
+  {
+    "template": "Your not mighty enough to destroy clans!",
+    "cite": "src/clan.c:258",
+    "line": "Your not mighty enough to destroy clans!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 197
+  },
+  {
+    "template": "You aren't in a clan!",
+    "cite": "src/clan.c:587",
+    "line": "You aren't in a clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 255
+  },
+  {
+    "template": "You are not mighty enough to apply to this clan.",
+    "cite": "src/clan.c:707",
+    "line": "You are not mighty enough to apply to this clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 289
+  },
+  {
+    "template": "You cannot afford the application fee!",
+    "cite": "src/clan.c:711",
+    "line": "You cannot afford the application fee!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 321
+  },
+  {
+    "template": "You cannot enroll immortals in clans.",
+    "cite": "src/clan.c:373",
+    "line": "You cannot enroll immortals in clans.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 395
+  },
+  {
+    "template": "Changing the clan hierarchy requires 5,000 coins!",
+    "cite": "src/clan.c:1124",
+    "line": "Changing the clan hierarchy requires 5,000 coins!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 453
+  },
+  {
+    "template": "They're already in your clan.",
+    "cite": "src/clan.c:369",
+    "line": "They're already in your clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 487
+  },
+  {
+    "template": "Er, Who ??",
+    "cite": "src/clan.c:353",
+    "line": "Er, Who ??",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 511
+  },
+  {
+    "template": "They're already in a clan.",
+    "cite": "src/clan.c:359",
+    "line": "They're already in a clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 523
+  },
+  {
+    "template": "You already belong to a clan!",
+    "cite": "src/clan.c:699",
+    "line": "You already belong to a clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 535
+  },
+  {
+    "template": "Set the privilege to what?",
+    "cite": "src/clan.c:1374",
+    "line": "Set the privilege to what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 578
+  },
+  {
+    "template": "There is no such rank in the clan.",
+    "cite": "src/clan.c:1381",
+    "line": "There is no such rank in the clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-callsite-gaps.txt",
+    "dump_line": 590
+  },
+  {
+    "template": "Max clans reached. WOW!",
+    "cite": "src/clan.c:176",
+    "line": "Max clans reached. WOW!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-capacity-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You are immortal and cannot join any clan!",
+    "cite": "src/clan.c:658",
+    "line": "You are immortal and cannot join any clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 70
+  },
+  {
+    "template": "Gods cannot apply for any clan.",
+    "cite": "src/clan.c:695",
+    "line": "Gods cannot apply for any clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 76
+  },
+  {
+    "template": "The leader of the new clan must be present.",
+    "cite": "src/clan.c:184",
+    "line": "The leader of the new clan must be present.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 107
+  },
+  {
+    "template": "What do you want to rename it?",
+    "cite": "src/clan.c:147",
+    "line": "What do you want to rename it?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 113
+  },
+  {
+    "template": "You need to specify a clan number.",
+    "cite": "src/clan.c:136",
+    "line": "You need to specify a clan number.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 119
+  },
+  {
+    "template": "There is no clan with that number.",
+    "cite": "src/clan.c:141",
+    "line": "There is no clan with that number.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 125
+  },
+  {
+    "template": "The clan is not wealthy enough for your needs!",
+    "cite": "src/clan.c:959",
+    "line": "The clan is not wealthy enough for your needs!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 143
+  },
+  {
+    "template": "You need to specify a rank number.",
+    "cite": "src/clan.c:1203",
+    "line": "You need to specify a rank number.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 203
+  },
+  {
+    "template": "This clan has no such rank number.",
+    "cite": "src/clan.c:1209",
+    "line": "This clan has no such rank number.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 209
+  },
+  {
+    "template": "You need a clan title of under 20 characters.",
+    "cite": "src/clan.c:1213",
+    "line": "You need a clan title of under 20 characters.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-depth.txt",
+    "dump_line": 215
+  },
+  {
+    "template": "Deposit what?",
+    "cite": "src/clan.c:943",
+    "line": "Deposit what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 150
+  },
+  {
+    "template": "Withdraw what?",
+    "cite": "src/clan.c:946",
+    "line": "Withdraw what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 160
+  },
+  {
+    "template": "You do not have that kind of money!",
+    "cite": "src/clan.c:970",
+    "line": "You do not have that kind of money!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 170
+  },
+  {
+    "template": "Set it to what?",
+    "cite": "src/clan.c:1030",
+    "line": "Set it to what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 210
+  },
+  {
+    "template": "The application level can go from 1 to 30.",
+    "cite": "src/clan.c:1321",
+    "line": "The application level can go from 1 to 30.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 230
+  },
+  {
+    "template": "They didn't request to join your clan.",
+    "cite": "src/clan.c:363",
+    "line": "They didn't request to join your clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 308
+  },
+  {
+    "template": "They're not in your clan.",
+    "cite": "src/clan.c:422",
+    "line": "They're not in your clan.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 318
+  },
+  {
+    "template": "You cannot kick out that person.",
+    "cite": "src/clan.c:426",
+    "line": "You cannot kick out that person.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 408
+  },
+  {
+    "template": "You cannot promote that person over your rank!",
+    "cite": "src/clan.c:532",
+    "line": "You cannot promote that person over your rank!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-member-depth.txt",
+    "dump_line": 418
+  },
+  {
+    "template": "Please pick a number between 0 and 10,000 coins.",
+    "cite": "src/clan.c:1038",
+    "line": "Please pick a number between 0 and 10,000 coins.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/clan-money-output-gates-depth.txt",
+    "dump_line": 63
+  },
+  {
+    "template": "Usage: color { Off | Sparse | Normal | Complete }",
+    "cite": "src/act.informative.c:2486",
+    "line": "Usage: color { Off | Sparse | Normal | Complete }",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/color-depth.txt",
+    "dump_line": 47
+  },
+  {
+    "template": "You do the best you can!",
+    "cite": "src/act.offensive.c:129",
+    "line": "You do the best you can!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/combat-entry-assist.txt",
+    "dump_line": 19
+  },
+  {
+    "template": "Hit who?",
+    "cite": "src/act.offensive.c:109",
+    "line": "Hit who?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/combat-entry-gates.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You aren't transformable!",
+    "cite": "src/act.other.c:1418",
+    "line": "You aren't transformable!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/combat-transform-reject.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Who do you wish to tell what??",
+    "cite": "src/act.comm.c:908",
+    "line": "Who do you wish to tell what??",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/comm-depth.txt",
+    "dump_line": 89
+  },
+  {
+    "template": "You try to tell yourself something.",
+    "cite": "src/act.comm.c:914",
+    "line": "You try to tell yourself something.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/comm-depth.txt",
+    "dump_line": 101
+  },
+  {
+    "template": "You cannot speak!",
+    "cite": "src/act.comm.c:775",
+    "line": "You cannot speak!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/comm-noshout.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You cannot tell anyone anything!",
+    "cite": "src/act.comm.c:918",
+    "line": "You cannot tell anyone anything!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/comm-noshout.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "You can't tell other people while you have notell on.",
+    "cite": "src/act.comm.c:916",
+    "line": "You can't tell other people while you have notell on.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/comm-notell.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "$E can't hear you.",
+    "cite": "src/act.comm.c:928",
+    "line": "He can't hear you.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/comm-notell.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "The walls seem to absorb your words.",
+    "cite": "src/act.comm.c:920",
+    "line": "The walls seem to absorb your words.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/comm-soundproof.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You have to type quit--no less, to quit!",
+    "cite": "src/act.other.c:116",
+    "line": "You have to type quit--no less, to quit!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/command-abbreviations.txt",
+    "dump_line": 52
+  },
+  {
+    "template": "They aren't here.",
+    "cite": "src/act.offensive.c:150",
+    "line": "They aren't here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/cuddle-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You are already following yourself.",
+    "cite": "src/act.movement.c:914",
+    "line": "You are already following yourself.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/death-followers-depth.txt",
+    "dump_line": 35
+  },
+  {
+    "template": "You are already following $M.",
+    "cite": "src/act.movement.c:905",
+    "line": "You are already following yourself.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/death-followers-depth.txt",
+    "dump_line": 35
+  },
+  {
+    "template": "You don't seem to have any %ss.",
+    "cite": "src/act.item.c:146",
+    "line": "You don't seem to have any breads.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/donate-basic.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "Heh heh heh.. we are jolly funny today, eh?",
+    "cite": "src/act.item.c:436",
+    "line": "Heh heh heh.. we are jolly funny today, eh?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/donate-basic.txt",
+    "dump_line": 19
+  },
+  {
+    "template": "You don't have that many coins!",
+    "cite": "src/act.item.c:438",
+    "line": "You don't have that many coins!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/donate-gold.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "There doesn't seem to be %s %s here.",
+    "cite": "src/act.movement.c:421",
+    "line": "There doesn't seem to be a north here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/door-basic.txt",
+    "dump_line": 31
+  },
+  {
+    "template": "But it's currently open!",
+    "cite": "src/act.movement.c:624",
+    "line": "But it's currently open!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/door-basic.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "But it's already closed!",
+    "cite": "src/act.movement.c:621",
+    "line": "But it's already closed!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/door-basic.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "$p: you can't take that!",
+    "cite": "src/act.item.c:172",
+    "line": "An old chest: you can't take that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/door-lock-pick-depth.txt",
+    "dump_line": 17
+  },
+  {
+    "template": "Oh.. it wasn't locked, after all..",
+    "cite": "src/act.movement.c:627",
+    "line": "Oh.. it wasn't locked, after all..",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/door-lock-pick-depth.txt",
+    "dump_line": 41
+  },
+  {
+    "template": "I really don't see how you can do anything there.",
+    "cite": "src/act.movement.c:401",
+    "line": "I really don't see how you can do anything there.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/door-no-exit-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Sorry, you can't do that to more than one item at a time.",
+    "cite": "src/act.item.c:596",
+    "line": "Sorry, you can't do that to more than one item at a time.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/drop-basic.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You don't seem to be carrying anything.",
+    "cite": "src/act.item.c:620",
+    "line": "You don't seem to be carrying anything.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/drop-basic.txt",
+    "dump_line": 77
+  },
+  {
+    "template": "Type REALLYQUIT to quit the game and lose your eq.",
+    "cite": "src/act.other.c:126",
+    "line": "Type REALLYQUIT to quit the game and lose your eq.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/entry-siteban-returning.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Return to the temple and QUIT to leave the game and keep your equipment.",
+    "cite": "src/act.other.c:127",
+    "line": "Return to the temple and QUIT to leave the game and keep your equipment.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/entry-siteban-returning.txt",
+    "dump_line": 12
+  },
+  {
+    "template": "You can type RECALL to return to your temple.",
+    "cite": "src/act.other.c:130",
+    "line": "You can type RECALL to return to your temple.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/entry-siteban-returning.txt",
+    "dump_line": 13
+  },
+  {
+    "template": "There isn't enough room there!",
+    "cite": "src/act.movement.c:182",
+    "line": "There isn't enough room there!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/escape-movement-failure.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Sorry, but you cannot do that here!",
+    "cite": "src/act.other.c:210",
+    "line": "Sorry, but you cannot do that here!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/fault-mail-boot.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Yeah, right.",
+    "cite": "src/act.wizard.c:1523",
+    "line": "Yeah, right.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/fightmsg-weapon-303-god-depth.txt",
+    "dump_line": 33
+  },
+  {
+    "template": "Get from all of what?",
+    "cite": "src/act.item.c:384",
+    "line": "Get from all of what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/find-all-dots-empty.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You are too exhausted.",
+    "cite": "src/act.movement.c:176",
+    "line": "You are too exhausted.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/flee-move-failure.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Whom do you wish to follow?",
+    "cite": "src/act.movement.c:900",
+    "line": "Whom do you wish to follow?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/follow-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Yes, but for whom?!?",
+    "cite": "src/act.wizard.c:2091",
+    "line": "Yes, but for whom?!?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/freeze-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Oh, yeah, THAT'S real smart...",
+    "cite": "src/act.wizard.c:2141",
+    "line": "Oh, yeah, THAT'S real smart...",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/freeze-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You can't do that to a mob!",
+    "cite": "src/act.wizard.c:2095",
+    "line": "You can't do that to a mob!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/freeze-depth.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "Your victim is already pretty cold.",
+    "cite": "src/act.wizard.c:2145",
+    "line": "Your victim is already pretty cold.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/freeze-depth.txt",
+    "dump_line": 39
+  },
+  {
+    "template": "You do not see that here.",
+    "cite": "src/act.informative.c:1074",
+    "line": "You do not see that here.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/gate-portal-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You aren't even in a clan!",
+    "cite": "src/act.other.c:1196",
+    "line": "You aren't even in a clan!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/gen-tog-depth.txt",
+    "dump_line": 67
+  },
+  {
+    "template": "To who?",
+    "cite": "src/act.item.c:715",
+    "line": "To who?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/give-basic.txt",
+    "dump_line": 51
+  },
+  {
+    "template": "What's the point of that?",
+    "cite": "src/act.item.c:725",
+    "line": "What's the point of that?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/give-basic.txt",
+    "dump_line": 67
+  },
+  {
+    "template": "You can't give more than one item at a time.",
+    "cite": "src/act.item.c:791",
+    "line": "You can't give more than one item at a time.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/give-basic.txt",
+    "dump_line": 75
+  },
+  {
+    "template": "You don't seem to be holding anything.",
+    "cite": "src/act.item.c:819",
+    "line": "You don't seem to be holding anything.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/give-basic.txt",
+    "dump_line": 125
+  },
+  {
+    "template": "All of what?",
+    "cite": "src/act.item.c:815",
+    "line": "All of what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/give-basic.txt",
+    "dump_line": 133
+  },
+  {
+    "template": "Heh heh heh ... we are jolly funny today, eh?",
+    "cite": "src/act.item.c:740",
+    "line": "Heh heh heh ... we are jolly funny today, eh?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/give-gold.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Can't set that!",
+    "cite": "src/act.wizard.c:3048",
+    "line": "Can't set that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/godset-vehicle.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You are too stupid to communicate with language!",
+    "cite": "src/act.comm.c:769",
+    "line": "You are too stupid to communicate with language!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/godset-vehicle.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "That's disgusting!",
+    "cite": "src/act.other.c:1567",
+    "line": "That's disgusting!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/goose-depth.txt",
+    "dump_line": 25
+  },
+  {
+    "template": "Hold what?",
+    "cite": "src/act.item.c:1692",
+    "line": "Hold what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/grab-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You're already holding something.",
+    "cite": "src/act.item.c:1451",
+    "line": "You're already holding something.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/grab-depth.txt",
+    "dump_line": 17
+  },
+  {
+    "template": "You can't hold that.",
+    "cite": "src/act.item.c:1705",
+    "line": "You can't hold that.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/grab-depth.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "Everyone following you here is already in your group.",
+    "cite": "src/act.other.c:714",
+    "line": "Everyone following you here is already in your group.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/group-depth.txt",
+    "dump_line": 93
+  },
+  {
+    "template": "$N must follow you to enter your group.",
+    "cite": "src/act.other.c:722",
+    "line": "Groupgatetarget must follow you to enter your group.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/group-gates-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You can not enroll group members without being head of a group.",
+    "cite": "src/act.other.c:701",
+    "line": "You can not enroll group members without being head of a group.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/group-gates-depth.txt",
+    "dump_line": 25
+  },
+  {
+    "template": "You are zapped by $p and instantly let go of it.",
+    "cite": "src/handler.c:705",
+    "line": "You are zapped by a painted wooden shield and instantly let go of it.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/handler-player-equip-gates-depth.txt",
+    "dump_line": 14
+  },
+  {
+    "template": "You cannot use $p.",
+    "cite": "src/handler.c:715",
+    "line": "You cannot use a dragonscale skirt.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/handler-player-equip-gates-depth.txt",
+    "dump_line": 56
+  },
+  {
+    "template": "Max houses already defined.",
+    "cite": "src/house.c:394",
+    "line": "Max houses already defined.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-capacity-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "There is no exit %s from room %d.",
+    "cite": "src/house.c:426",
+    "line": "There is no exit east from room 0.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "No such room exists.",
+    "cite": "src/house.c:406",
+    "line": "No such room exists.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 25
+  },
+  {
+    "template": "'%s' is not a valid direction.",
+    "cite": "src/house.c:421",
+    "line": "'bogus' is not a valid direction.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "Unknown player '%s'.",
+    "cite": "src/house.c:447",
+    "line": "Unknown player 'nobody'.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 29
+  },
+  {
+    "template": "A house's exit must be a two-way door.",
+    "cite": "src/house.c:436",
+    "line": "A house's exit must be a two-way door.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 43
+  },
+  {
+    "template": "House already exists.",
+    "cite": "src/house.c:410",
+    "line": "House already exists.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 47
+  },
+  {
+    "template": "That house doesn't exist!",
+    "cite": "src/house.c:489",
+    "line": "That house doesn't exist!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 59
+  },
+  {
+    "template": "That object doesn't exist!",
+    "cite": "src/house.c:504",
+    "line": "That object doesn't exist!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 69
+  },
+  {
+    "template": "Unknown house.",
+    "cite": "src/house.c:525",
+    "line": "Unknown house.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hcontrol-depth.txt",
+    "dump_line": 79
+  },
+  {
+    "template": "Go outside if you want to ride!",
+    "cite": "src/act.other.c:1556",
+    "line": "Go outside if you want to ride!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/hide-mounted-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "That room does not exist.",
+    "cite": "src/olc.c:243",
+    "line": "That room does not exist.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/home-default-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Home or Home <room-number>",
+    "cite": "src/act.wizard.c:3298",
+    "line": "Home or Home <room-number>",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/home-depth.txt",
+    "dump_line": 5
+  },
+  {
+    "template": "You can't go invisible above your own level.",
+    "cite": "src/act.wizard.c:1681",
+    "line": "You can't go invisible above your own level.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/invis-depth.txt",
+    "dump_line": 39
+  },
+  {
+    "template": "Go to the dump if you want to junk EVERYTHING!",
+    "cite": "src/act.item.c:610",
+    "line": "Go to the dump if you want to junk EVERYTHING!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/junk-basic.txt",
+    "dump_line": 39
+  },
+  {
+    "template": "You're not godly enough to load that!",
+    "cite": "src/act.wizard.c:1307",
+    "line": "You're not godly enough to load that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/load-depth-gates.txt",
+    "dump_line": 6
+  },
+  {
+    "template": "That'll have to be either 'obj' or 'mob'.",
+    "cite": "src/act.wizard.c:1378",
+    "line": "That'll have to be either 'obj' or 'mob'.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/load-depth.txt",
+    "dump_line": 16
+  },
+  {
+    "template": "Read what?",
+    "cite": "src/act.informative.c:1118",
+    "line": "Read what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/look-basic.txt",
+    "dump_line": 30
+  },
+  {
+    "template": "Look in what?",
+    "cite": "src/act.informative.c:923",
+    "line": "Look in what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/look-basic.txt",
+    "dump_line": 34
+  },
+  {
+    "template": "It is closed.",
+    "cite": "src/act.informative.c:939",
+    "line": "It is closed.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/look-basic.txt",
+    "dump_line": 42
+  },
+  {
+    "template": "There's nothing inside that!",
+    "cite": "src/act.informative.c:933",
+    "line": "There's nothing inside that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/look-basic.txt",
+    "dump_line": 46
+  },
+  {
+    "template": "The %s seems to be closed.",
+    "cite": "src/act.movement.c:328",
+    "line": "The cover seems to be closed.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-bind-flags.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "$S master would not like that!",
+    "cite": "src/act.other.c:1581",
+    "line": "Its master would not like that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-bind-mount.txt",
+    "dump_line": 13
+  },
+  {
+    "template": "You can only cast this spell upon yourself!",
+    "cite": "src/spell_parser.c:881",
+    "line": "You can only cast this spell upon yourself!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You cannot cast this spell upon yourself!",
+    "cite": "src/spell_parser.c:889",
+    "line": "You cannot cast this spell upon yourself!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "You cannot will this power upon yourself!",
+    "cite": "src/spell_parser.c:891",
+    "line": "You cannot will this power upon yourself!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "You cannot use this power if you are not in a group!",
+    "cite": "src/spell_parser.c:899",
+    "line": "You cannot use this power if you are not in a group!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "You dream about great magical powers.",
+    "cite": "src/spell_parser.c:856",
+    "line": "You dream about great magical powers.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 69
+  },
+  {
+    "template": "You cannot concentrate while resting.",
+    "cite": "src/spell_parser.c:859",
+    "line": "You cannot concentrate while resting.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 121
+  },
+  {
+    "template": "Impossible!  You can't concentrate enough!",
+    "cite": "src/spell_parser.c:865",
+    "line": "Impossible!  You can't concentrate enough!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 187
+  },
+  {
+    "template": "You can't do much of anything like this!",
+    "cite": "src/spell_parser.c:868",
+    "line": "You can't do much of anything like this!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/lua-cast-spell-gates-depth.txt",
+    "dump_line": 219
+  },
+  {
+    "template": "Specify a %s VNUM to edit.",
+    "cite": "src/olc.c:113",
+    "line": "Specify a mobile VNUM to edit.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/medit-entry-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Write?  With what?  ON what?  What are you trying to do?!?",
+    "cite": "src/act.comm.c:1044",
+    "line": "Write?  With what?  ON what?  What are you trying to do?!?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/mortal-batch4.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "What do you wish to ride?",
+    "cite": "src/act.other.c:1563",
+    "line": "What do you wish to ride?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/mount-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You can't ride $N!",
+    "cite": "src/act.other.c:1575",
+    "line": "You can't ride two beasts at once!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/mount-depth.txt",
+    "dump_line": 25
+  },
+  {
+    "template": "You can't ride two beasts at once!",
+    "cite": "src/act.other.c:1571",
+    "line": "You can't ride two beasts at once!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/mount-depth.txt",
+    "dump_line": 25
+  },
+  {
+    "template": "The beast is already being ridden!",
+    "cite": "src/act.other.c:1573",
+    "line": "The beast is already being ridden!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/mount-ridden-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Alas, you cannot go that way...",
+    "cite": "src/act.movement.c:320",
+    "line": "Alas, you cannot go that way...",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/movement-directions.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You need a boat to go there.",
+    "cite": "src/act.movement.c:129",
+    "line": "You need a boat to go there.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/movement-water-boat.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "It seems to be locked.",
+    "cite": "src/act.movement.c:630",
+    "line": "It seems to be locked.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/object-doors.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "What do you want to make automatic?",
+    "cite": "src/act.other.c:1408",
+    "line": "What do you want to make automatic?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/player-state-toggles.txt",
+    "dump_line": 74
+  },
+  {
+    "template": "You are already resting.",
+    "cite": "src/act.movement.c:790",
+    "line": "You are already resting.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-basic.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "You are already sound asleep.",
+    "cite": "src/act.movement.c:825",
+    "line": "You are already sound asleep.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-basic.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "You're sitting already.",
+    "cite": "src/act.movement.c:748",
+    "line": "You're sitting already.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-basic.txt",
+    "dump_line": 59
+  },
+  {
+    "template": "Sit down while fighting? are you MAD?",
+    "cite": "src/act.movement.c:759",
+    "line": "Sit down while fighting? are you MAD?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-fighting.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Rest while fighting?  Are you MAD?",
+    "cite": "src/act.movement.c:796",
+    "line": "Rest while fighting?  Are you MAD?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-fighting.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "Sleep while fighting?  Are you MAD?",
+    "cite": "src/act.movement.c:828",
+    "line": "Sleep while fighting?  Are you MAD?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-fighting.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "You can't rest while mounted.",
+    "cite": "src/act.movement.c:745",
+    "line": "You can't rest while mounted.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-mounted-gates.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "$E is already awake.",
+    "cite": "src/act.movement.c:855",
+    "line": "He is already awake.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-wake-target.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Maybe you should wake yourself up first.",
+    "cite": "src/act.movement.c:849",
+    "line": "Maybe you should wake yourself up first.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/position-wake-target.txt",
+    "dump_line": 31
+  },
+  {
+    "template": "$n tells you, '...which I see you can't afford.'",
+    "cite": "src/objsave.c:1112",
+    "line": "the postman tells you, '...which I see you can't afford.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/postmaster-precheck-depth.txt",
+    "dump_line": 26
+  },
+  {
+    "template": "$p won't fit in $P.",
+    "cite": "src/act.item.c:56",
+    "line": "A frayed tunic won't fit in a backpack.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/put-all-success.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "You can only put things into one container at a time.",
+    "cite": "src/act.item.c:92",
+    "line": "You can only put things into one container at a time.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/put-basic.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "What do you want to put %s in?",
+    "cite": "src/act.item.c:96",
+    "line": "What do you want to put them in?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/put-basic.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "You attempt to fold it into itself, but fail.",
+    "cite": "src/act.item.c:122",
+    "line": "You attempt to fold it into itself, but fail.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/put-basic.txt",
+    "dump_line": 45
+  },
+  {
+    "template": "You aren't carrying %s %s.",
+    "cite": "src/act.item.c:118",
+    "line": "You aren't carrying a xyzzy.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/put-basic.txt",
+    "dump_line": 51
+  },
+  {
+    "template": "You don't seem to have anything to put in it.",
+    "cite": "src/act.item.c:142",
+    "line": "You don't seem to have anything to put in it.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/put-basic.txt",
+    "dump_line": 101
+  },
+  {
+    "template": "You can only recite scrolls.",
+    "cite": "src/act.other.c:959",
+    "line": "You can only recite scrolls.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/recite-wrong-type.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "Remove what?",
+    "cite": "src/act.item.c:1741",
+    "line": "Remove what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/remove-basic.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "You're not using anything.",
+    "cite": "src/act.item.c:1756",
+    "line": "You're not using anything.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/remove-basic.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "You don't seem to be using any %ss.",
+    "cite": "src/act.item.c:1774",
+    "line": "You don't seem to be using any xyzzys.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/remove-basic.txt",
+    "dump_line": 37
+  },
+  {
+    "template": "Remove all of what?",
+    "cite": "src/act.item.c:1761",
+    "line": "Remove all of what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/remove-basic.txt",
+    "dump_line": 59
+  },
+  {
+    "template": "$E's linkless at the moment.",
+    "cite": "src/act.comm.c:922",
+    "line": "She's linkless at the moment.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/reply-linkless-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Hmmm...you'd better not.",
+    "cite": "src/act.wizard.c:2098",
+    "line": "Hmmm...you'd better not.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/reroll-depth.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "You aren't godly enough for that!",
+    "cite": "src/act.wizard.c:2845",
+    "line": "You aren't godly enough for that!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-exceptions-depth.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "Better not -- could be a long winter!",
+    "cite": "src/act.wizard.c:2859",
+    "line": "Better not -- could be a long winter!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-exceptions-depth.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "You must use set file with this command.",
+    "cite": "src/act.wizard.c:2975",
+    "line": "You must use set file with this command.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 123
+  },
+  {
+    "template": "You can't do that to a beast!",
+    "cite": "src/act.wizard.c:2693",
+    "line": "You can't do that to a beast!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 184
+  },
+  {
+    "template": "Value must be on or off.",
+    "cite": "src/act.wizard.c:2709",
+    "line": "Value must be on or off.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 188
+  },
+  {
+    "template": "Must be 'male', 'female', or 'neutral'.",
+    "cite": "src/act.wizard.c:2818",
+    "line": "Must be 'male', 'female', or 'neutral'.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 192
+  },
+  {
+    "template": "Must be 'off' or a value from 0 to 48.",
+    "cite": "src/act.wizard.c:2881",
+    "line": "Must be 'off' or a value from 0 to 48.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 196
+  },
+  {
+    "template": "You can't do that.",
+    "cite": "src/act.wizard.c:2899",
+    "line": "You can't do that.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 204
+  },
+  {
+    "template": "That is not a class.",
+    "cite": "src/act.wizard.c:2936",
+    "line": "That is not a class.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 212
+  },
+  {
+    "template": "That is not a race.",
+    "cite": "src/act.wizard.c:3007",
+    "line": "That is not a race.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/set-extended-depth.txt",
+    "dump_line": 216
+  },
+  {
+    "template": "$E can't carry that much weight.",
+    "cite": "src/act.item.c:692",
+    "line": "boat: You can't carry that much weight.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-buy-weight-sell-steal.txt",
+    "dump_line": 43
+  },
+  {
+    "template": "No such person around.",
+    "cite": "src/act.wizard.c:1144",
+    "line": "No such person around.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/snoop-depth.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "There's no link.. nothing to snoop.",
+    "cite": "src/act.wizard.c:1146",
+    "line": "There's no link.. nothing to snoop.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/snoop-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "Busy already.",
+    "cite": "src/act.wizard.c:1150",
+    "line": "Busy already.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/snoop-depth.txt",
+    "dump_line": 40
+  },
+  {
+    "template": "You can't.",
+    "cite": "src/act.wizard.c:1160",
+    "line": "You can't.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/snoop-depth.txt",
+    "dump_line": 97
+  },
+  {
+    "template": "You can't seem to figure out how to use it.",
+    "cite": "src/act.other.c:966",
+    "line": "You can't seem to figure out how to use it.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/spec-proc-horn.txt",
+    "dump_line": 27
+  },
+  {
+    "template": "Try holding it.(?)",
+    "cite": "src/act.other.c:966",
+    "line": "Try holding it.(?)",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/spec-proc-horn.txt",
+    "dump_line": 28
+  },
+  {
+    "template": "You can't transform during the day!",
+    "cite": "src/act.other.c:1483",
+    "line": "You can't transform during the day!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/transform-depth.txt",
+    "dump_line": 10
+  },
+  {
+    "template": "You can't specify the same body location for more than one item!",
+    "cite": "src/act.item.c:1602",
+    "line": "You can't specify the same body location for more than one item!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wear-basic.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "Wear all of what?",
+    "cite": "src/act.item.c:1624",
+    "line": "Wear all of what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wear-basic.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "'%s'?  What part of your body is THAT?",
+    "cite": "src/act.item.c:1575",
+    "line": "'tunic'?  What part of your body is THAT?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wear-basic.txt",
+    "dump_line": 33
+  },
+  {
+    "template": "You can't wear $p there.",
+    "cite": "src/act.item.c:1461",
+    "line": "You can't wear a frayed tunic there.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wear-basic.txt",
+    "dump_line": 39
+  },
+  {
+    "template": "You can't wear $p.",
+    "cite": "src/act.item.c:1639",
+    "line": "You can't wear a frayed tunic there.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wear-basic.txt",
+    "dump_line": 39
+  },
+  {
+    "template": "Wield what?",
+    "cite": "src/act.item.c:1668",
+    "line": "Wield what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wield-basic.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Stats on who or what?",
+    "cite": "src/act.wizard.c:1005",
+    "line": "Stats on who or what?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wiz-verb-usage.txt",
+    "dump_line": 7
+  },
+  {
+    "template": "No such mobile around.",
+    "cite": "src/act.wizard.c:1016",
+    "line": "No such mobile around.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-report-depth.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "Stats on which mobile?",
+    "cite": "src/act.wizard.c:1011",
+    "line": "Stats on which mobile?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-report-depth.txt",
+    "dump_line": 11
+  },
+  {
+    "template": "No such player around.",
+    "cite": "src/act.wizard.c:1025",
+    "line": "No such player around.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-report-depth.txt",
+    "dump_line": 13
+  },
+  {
+    "template": "Stats on which player?",
+    "cite": "src/act.wizard.c:1020",
+    "line": "Stats on which player?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-report-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "No such object around.",
+    "cite": "src/act.wizard.c:1053",
+    "line": "No such object around.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-report-depth.txt",
+    "dump_line": 21
+  },
+  {
+    "template": "Stats on which object?",
+    "cite": "src/act.wizard.c:1048",
+    "line": "Stats on which object?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-report-depth.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "Nothing around by that name.",
+    "cite": "src/act.wizard.c:1069",
+    "line": "Nothing around by that name.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-report-depth.txt",
+    "dump_line": 25
+  },
+  {
+    "template": "Usage: syslog { Off | Brief | Normal | Complete }",
+    "cite": "src/act.wizard.c:3093",
+    "line": "Usage: syslog { Off | Brief | Normal | Complete }",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wizard-syslog-depth.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "That %s is currently being edited by %s.",
+    "cite": "src/olc.c:157",
+    "line": "That room is currently being edited by Zeditadmin.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/zedit-duplicate-gate-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "Upon %s should the power be willed?",
+    "cite": "src/spell_parser.c:1045",
+    "line": "Upon who should the power be willed?",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3fix-control/census-dump/say-spell-targetless-psionic-depth.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "$N doesn't seem to be interested in $p.",
+    "cite": "src/act.item.c:676",
+    "line": "A guard trainee doesn't seem to be interested in a loaf of bread.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/release-v0.1.9/census-dump/give-resolve-depth.txt",
+    "dump_line": 15
+  },
+  {
+    "template": "It seems to be closed.",
+    "cite": "src/act.movement.c:333",
+    "line": "It seems to be closed.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/release-v0.1.9/census-dump/spec-proc-castle-guard-down-allow.txt",
+    "dump_line": 4
+  },
+  {
+    "template": "The board is empty!",
+    "cite": "src/boards.c:338",
+    "line": "The board is empty!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/boards-depth.txt",
+    "dump_line": 19
+  },
+  {
+    "template": "We must have a headline!",
+    "cite": "src/boards.c:241",
+    "line": "We must have a headline!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/boards-depth.txt",
+    "dump_line": 31
+  },
+  {
+    "template": "That message exists only in your imagination.",
+    "cite": "src/boards.c:342",
+    "line": "That message exists only in your imagination.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/boards-depth.txt",
+    "dump_line": 79
+  },
+  {
+    "template": "You try but fail to understand the holy words.",
+    "cite": "src/boards.c:290",
+    "line": "You try but fail to understand the holy words.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/boards-immortal-level-gate.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "You are not holy enough to write on this board.",
+    "cite": "src/boards.c:221",
+    "line": "You are not holy enough to write on this board.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/boards-immortal-level-gate.txt",
+    "dump_line": 35
+  },
+  {
+    "template": "You are not holy enough to remove other people's messages.",
+    "cite": "src/boards.c:400",
+    "line": "You are not holy enough to remove other people's messages.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/boards-immortal-level-gate.txt",
+    "dump_line": 58
+  },
+  {
+    "template": "You can't remove a message holier than yourself.",
+    "cite": "src/boards.c:406",
+    "line": "You can't remove a message holier than yourself.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/boards-remove-authority-depth.txt",
+    "dump_line": 5
+  },
+  {
+    "template": "$n tells you, 'Get out of here before I call the guards!'",
+    "cite": "src/shop.h:195; src/shop.c:74-138; src/act.comm.c:797,876",
+    "line": "The fat merchant tells you, 'Get out of here before I call the guards!'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/combat-entry-shopkeeper.txt",
+    "dump_line": 4
+  },
+  {
+    "template": "Sorry, the board is not working.",
+    "cite": "src/boards.c:349",
+    "line": "Sorry, the board is not working.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/fault-board-huge-slot.txt",
+    "dump_line": 16
+  },
+  {
+    "template": "That message is majorly screwed up.",
+    "cite": "src/boards.c:414",
+    "line": "That message is majorly screwed up.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/fault-board-huge-slot.txt",
+    "dump_line": 18
+  },
+  {
+    "template": "That message seems to be empty.",
+    "cite": "src/boards.c:358",
+    "line": "That message seems to be empty.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/fault-board-valid-slot.txt",
+    "dump_line": 16
+  },
+  {
+    "template": "Currently, there is nothing for sale.",
+    "cite": "src/shop.c:918",
+    "line": "Currently, there is nothing for sale.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/play-lab-m4-shop-buy-wear.txt",
+    "dump_line": 88
+  },
+  {
+    "template": "A flash of white light fills the room, dispelling your violent magic!",
+    "cite": "src/spell_parser.c:441",
+    "line": "A flash of white light fills the room, dispelling your violent magic!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/quaff-peaceful-block.txt",
+    "dump_line": 12
+  },
+  {
+    "template": "%s: You can't carry any more items.",
+    "cite": "src/shop.c:520",
+    "line": "black: You can't carry any more items.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-buy-count-capacity.txt",
+    "dump_line": 236
+  },
+  {
+    "template": "%s: You can't carry that much weight.",
+    "cite": "src/shop.c:527",
+    "line": "boat: You can't carry that much weight.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-buy-weight-sell-steal.txt",
+    "dump_line": 43
+  },
+  {
+    "template": "$n tells you, 'What do you want to buy??'",
+    "cite": "src/shop.c:494; src/act.comm.c:876",
+    "line": "Hansen the merchant tells you, 'What do you want to buy??'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-core-buy-counted.txt",
+    "dump_line": 3
+  },
+  {
+    "template": "$n tells you, 'You can only afford %d.'",
+    "cite": "src/shop.c:562; src/act.comm.c:876",
+    "line": "Hansen the merchant tells you, 'You can only afford 1.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-core-counted-transactions.txt",
+    "dump_line": 158
+  },
+  {
+    "template": "$n tells you, 'We don't serve your kind here!'",
+    "cite": "src/shop.h:196; src/shop.c:74-138; src/act.comm.c:797,876",
+    "line": "Hansen the merchant tells you, 'We don't serve your kind here!'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-customers-class.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "Presently, none of those are for sale.",
+    "cite": "src/shop.c:920",
+    "line": "Presently, none of those are for sale.",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-live-inventory-control.txt",
+    "dump_line": 23
+  },
+  {
+    "template": "$n tells you, 'I only have %d to sell you.'",
+    "cite": "src/shop.c:560; src/act.comm.c:876",
+    "line": "Hansen the merchant tells you, 'I only have 18 to sell you.'",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/shop-partial-stock.txt",
+    "dump_line": 9
+  },
+  {
+    "template": "A flash of white light fills the room, dispelling your violent power!",
+    "cite": "src/spell_parser.c:444",
+    "line": "A flash of white light fills the room, dispelling your violent power!",
+    "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-08/luna-r3-session-39/census-dump/wand-peaceful-psionic.txt",
+    "dump_line": 4
+  }
+]
