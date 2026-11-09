@@ -1,0 +1,18 @@
+scenario	load_line	load_input	get_line	get_input
+color-spray-skill-message-miss-depth	136	load obj 8054	137	get color
+dispel-evil-skill-message-miss-depth	132	load obj 8054	133	get scroll
+dispel-good-skill-message-miss-depth	132	load obj 8054	133	get scroll
+energy-drain-skill-message-miss-depth	132	load obj 8054	133	get scroll
+item-sleep-outlaw-bare	88	load obj 4399	89	get powder
+item-sleep-outlaw-sand	88	load obj 4399	89	get powder
+item-sleep-outlaw-sand	91	load obj 1226	92	get sand
+item-sleep-refusal-bare	88	load obj 4399	89	get powder
+item-sleep-refusal-sand	88	load obj 4399	89	get powder
+item-sleep-refusal-sand	91	load obj 1226	92	get sand
+spec-proc-elements-load-cylinders	69	load obj 1300	70	get talisman
+vampire-consume-dark	86	load obj 8010	87	get bread
+vampire-consume-dark	88	load obj 4104	89	get glass
+vampire-consume-day	82	load obj 8010	83	get bread
+vampire-consume-day	84	load obj 4104	85	get glass
+vampire-consume-sunset	86	load obj 8010	87	get bread
+vampire-consume-sunset	88	load obj 4104	89	get glass

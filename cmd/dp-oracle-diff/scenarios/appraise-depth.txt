@@ -1,4 +1,3 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: appraise.no-arg
 # depth-case: appraise.target-missing
 # depth-case: appraise.half-chop
@@ -7,7 +6,6 @@
 # cheap carried object and the skillset warmup makes the success arm reachable.
 
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 spawn-obj 8010 1 8162 80
@@ -43,8 +41,7 @@ Y
 [warmup]
 goto 8162
 get bread
-get helmet
-wear helmet
+# DP-1511: the helmet was never spawned; appraise uses carried bread.
 skillset Appraisedeep 'appraise' 100
 
 [probe]

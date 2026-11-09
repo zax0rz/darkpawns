@@ -1,8 +1,6 @@
-# setup-refusal-reason: pending DP-1511 triage
 # depth-case: objmagic.sleep-outlaw-bare
 # Potion self-target path; paired disposable OLC changes 4399 to level-40 sleep only.
 [fixture]
-allow-setup-refusal
 empty-players
 quiet-mobs
 set-room-flag 8162 4 off
@@ -74,6 +72,8 @@ east
 south
 east
 
+# DP-1511: load obj already puts the item in inventory
+# (src/act.wizard.c:1368); the following room get was refused.
 [warmup]
 oedit 4399
 d
@@ -86,7 +86,6 @@ y
 goto 8162
 teleport Sleepdrink 8162
 load obj 4399
-get powder
 give powder Sleepdrink
 set Sleepdrink level 8
 set Sleepdrink outlaw on

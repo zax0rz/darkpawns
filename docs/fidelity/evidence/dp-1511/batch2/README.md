@@ -1,5 +1,8 @@
 # DP-1511 — batch 2
 
+Historical report for merged PR #2431. [Batch 3](../batch3/README.md) follows
+this handoff; the current pending ledger is maintained one directory above.
+
 This batch clears 17 of the 52 allowances handed off by PR #2421. All 17 have
 verdict **Repaired**, real C event witnesses, and before/after runs at every
 original manifest seed. The current pending ledger contains **35** scenarios.

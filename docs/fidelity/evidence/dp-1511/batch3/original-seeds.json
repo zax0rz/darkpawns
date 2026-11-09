@@ -1,0 +1,112 @@
+{
+  "appraise-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "color-spray-skill-message-miss-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "dispel-evil-skill-message-miss-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "dispel-good-skill-message-miss-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "energy-drain-skill-message-miss-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "item-sleep-outlaw-bare": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "item-sleep-outlaw-sand": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "item-sleep-refusal-bare": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "item-sleep-refusal-sand": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "vampire-consume-dark": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "vampire-consume-day": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "vampire-consume-sunset": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "spec-proc-elements-load-cylinders": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "object-door-messages": [
+    1
+  ],
+  "ban-depth": [
+    1,
+    2,
+    3,
+    5,
+    8
+  ],
+  "ban-unban-success-depth": [
+    1
+  ],
+  "act-messages": [
+    1
+  ],
+  "afk-depth": [
+    1
+  ]
+}

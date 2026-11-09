@@ -1,3 +1,5 @@
+# DP-1511 class audit: remove the extra C color/sex token; C accepts M/F
+# for sex (src/interpreter.c:2012-2026), matching the valid Go setup.
 # depth-case: afk.enable
 # depth-case: afk.disable
 # depth-case: afk.argument-ignored
@@ -41,7 +43,6 @@ Afkpeer
 Y
 oraclepass
 oraclepass
-Y
 N
 M
 H

@@ -1,4 +1,4 @@
-# setup-refusal-reason: pending DP-1511 triage
+# setup-refusal-reason: C historical whitehouse.gov ban is cleared; Go starts empty and its unban-not-found refusal is intentional.
 # C-first vehicle for a successful do_unban acknowledgement after a live ban.
 # C path: src/interpreter.c:793 -> src/ban.c:213-244.
 # depth-case: ban.unban-success

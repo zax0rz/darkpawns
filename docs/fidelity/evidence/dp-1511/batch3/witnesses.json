@@ -1,0 +1,646 @@
+{
+  "cases": [
+    {
+      "scenario": "appraise-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "You estimate it's worth 8 gold coins.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/appraise-depth.txt",
+          "dump_line": 7,
+          "block": "--- [appraise bread extra]"
+        },
+        {
+          "line": "You estimate it's worth 4 gold coins.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/appraise-depth.txt",
+          "dump_line": 9,
+          "block": "--- [appraise bre]"
+        },
+        {
+          "line": "You estimate it's worth 20 gold coins.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/appraise-depth.txt",
+          "dump_line": 11,
+          "block": "--- [appraise bread]"
+        }
+      ]
+    },
+    {
+      "scenario": "color-spray-skill-message-miss-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "Your spray of color misses ColorMissVictim -- what a dull world...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt",
+          "dump_line": 134,
+          "block": "--- [recite color ColorMissVictim [actor]]"
+        },
+        {
+          "line": "ColorMissActor unsuccesfully tries to add color to your life!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt",
+          "dump_line": 142,
+          "block": "--- [recite color ColorMissVictim [victim]]"
+        },
+        {
+          "line": "ColorMissActor splashes color everywhere except ColorMissVictim.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt",
+          "dump_line": 137,
+          "block": "--- [recite color ColorMissVictim [observer]]"
+        },
+        {
+          "line": "You recite a color scroll which dissolves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt",
+          "dump_line": 133,
+          "block": "--- [recite color ColorMissVictim [actor]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt",
+          "dump_line": 123,
+          "block": "--- [send:victim say state [victim]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt",
+          "dump_line": 127,
+          "block": "--- [send:victim say state [observer]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/color-spray-skill-message-miss-depth.txt",
+          "dump_line": 131,
+          "block": "--- [send:victim say state [primary]]"
+        }
+      ]
+    },
+    {
+      "scenario": "dispel-evil-skill-message-miss-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-after-seed3",
+      "events": [
+        {
+          "line": "DispelMissVictim is unaffected by your goodness!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt",
+          "dump_line": 20,
+          "block": "--- [recite dispel DispelMissVictim [actor]]"
+        },
+        {
+          "line": "DispelMissActor thinks that he is really good, and tries to dispell you.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt",
+          "dump_line": 28,
+          "block": "--- [recite dispel DispelMissVictim [victim]]"
+        },
+        {
+          "line": "DispelMissVictim laughs at DispelMissActor as he tries to dispell him!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt",
+          "dump_line": 23,
+          "block": "--- [recite dispel DispelMissVictim [observer]]"
+        },
+        {
+          "line": "You recite a scroll of dispel evil which dissolves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt",
+          "dump_line": 19,
+          "block": "--- [recite dispel DispelMissVictim [actor]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt",
+          "dump_line": 9,
+          "block": "--- [send:victim say state [victim]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt",
+          "dump_line": 13,
+          "block": "--- [send:victim say state [observer]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-evil-skill-message-miss-depth.txt",
+          "dump_line": 17,
+          "block": "--- [send:victim say state [primary]]"
+        }
+      ]
+    },
+    {
+      "scenario": "dispel-good-skill-message-miss-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-after-seed3",
+      "events": [
+        {
+          "line": "GoodVictim is unaffected by your evil!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt",
+          "dump_line": 20,
+          "block": "--- [recite dispel GoodVictim [actor]]"
+        },
+        {
+          "line": "GoodActor thinks that he is really evil, and tries to dispell you.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt",
+          "dump_line": 28,
+          "block": "--- [recite dispel GoodVictim [victim]]"
+        },
+        {
+          "line": "GoodVictim laughs at GoodActor as he tries to dispell him!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt",
+          "dump_line": 23,
+          "block": "--- [recite dispel GoodVictim [observer]]"
+        },
+        {
+          "line": "You recite a scroll of dispel good which dissolves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt",
+          "dump_line": 19,
+          "block": "--- [recite dispel GoodVictim [actor]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-evil=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt",
+          "dump_line": 9,
+          "block": "--- [send:victim say state [victim]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-evil=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt",
+          "dump_line": 13,
+          "block": "--- [send:victim say state [observer]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-evil=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-after-seed3/census-dump/dispel-good-skill-message-miss-depth.txt",
+          "dump_line": 17,
+          "block": "--- [send:victim say state [primary]]"
+        }
+      ]
+    },
+    {
+      "scenario": "energy-drain-skill-message-miss-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "You need more draining lessons...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt",
+          "dump_line": 134,
+          "block": "--- [recite energy EnergyVictim [actor]]"
+        },
+        {
+          "line": "Luckily for you EnergyActor slept during draining-lessons!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt",
+          "dump_line": 142,
+          "block": "--- [recite energy EnergyVictim [victim]]"
+        },
+        {
+          "line": "EnergyActor fails to drain EnergyVictim -- what a waste of energy!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt",
+          "dump_line": 137,
+          "block": "--- [recite energy EnergyVictim [observer]]"
+        },
+        {
+          "line": "You recite a scroll of energy drain which dissolves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt",
+          "dump_line": 133,
+          "block": "--- [recite energy EnergyVictim [actor]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt",
+          "dump_line": 123,
+          "block": "--- [send:victim say state [victim]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt",
+          "dump_line": 127,
+          "block": "--- [send:victim say state [observer]]"
+        },
+        {
+          "line": "An old ssauran healer says, 'sanctuary=1 protect-good=1'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/energy-drain-skill-message-miss-depth.txt",
+          "dump_line": 131,
+          "block": "--- [send:victim say state [primary]]"
+        }
+      ]
+    },
+    {
+      "scenario": "item-sleep-outlaw-bare",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "You quaff some northern devil ginseng powder.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-bare.txt",
+          "dump_line": 18,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "You attempt the spell without the components...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-bare.txt",
+          "dump_line": 19,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "You feel very sleepy...  Zzzz......",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-bare.txt",
+          "dump_line": 20,
+          "block": "--- [quaff powder [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "item-sleep-outlaw-sand",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "You quaff some northern devil ginseng powder.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-sand.txt",
+          "dump_line": 19,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "Pulling a bit of sand from a pocket, you cast it about the room...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-sand.txt",
+          "dump_line": 20,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "You feel very sleepy...  Zzzz......",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-outlaw-sand.txt",
+          "dump_line": 21,
+          "block": "--- [quaff powder [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "item-sleep-refusal-bare",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "You quaff some northern devil ginseng powder.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-bare.txt",
+          "dump_line": 18,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "You attempt the spell without the components...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-bare.txt",
+          "dump_line": 19,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "Your spell fails to affect them because you are not an Outlaw!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-bare.txt",
+          "dump_line": 20,
+          "block": "--- [quaff powder [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "item-sleep-refusal-sand",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "You quaff some northern devil ginseng powder.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-sand.txt",
+          "dump_line": 19,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "Pulling a bit of sand from a pocket, you cast it about the room...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-sand.txt",
+          "dump_line": 20,
+          "block": "--- [quaff powder [actor]]"
+        },
+        {
+          "line": "Your spell fails to affect them because you are not an Outlaw!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/item-sleep-refusal-sand.txt",
+          "dump_line": 21,
+          "block": "--- [quaff powder [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "vampire-consume-dark",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "Lothar the Vampire Lord sinks his fangs into your neck!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt",
+          "dump_line": 16,
+          "block": "--- [look lothar [actor]]"
+        },
+        {
+          "line": "You drink the beer.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt",
+          "dump_line": 44,
+          "block": "--- [drink glass [actor]]"
+        },
+        {
+          "line": "You eat a loaf of bread.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt",
+          "dump_line": 49,
+          "block": "--- [eat bread [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere beer...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt",
+          "dump_line": 31,
+          "block": "--- [sip glass [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere beer...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt",
+          "dump_line": 45,
+          "block": "--- [drink glass [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere food...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt",
+          "dump_line": 38,
+          "block": "--- [taste bread [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere food...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-dark.txt",
+          "dump_line": 50,
+          "block": "--- [eat bread [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "vampire-consume-day",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "Lothar the Vampire Lord sinks his fangs into your neck!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-day.txt",
+          "dump_line": 16,
+          "block": "--- [look lothar [actor]]"
+        },
+        {
+          "line": "You drink the beer.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-day.txt",
+          "dump_line": 42,
+          "block": "--- [drink glass [actor]]"
+        },
+        {
+          "line": "You eat a loaf of bread.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-day.txt",
+          "dump_line": 46,
+          "block": "--- [eat bread [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "vampire-consume-sunset",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "Lothar the Vampire Lord sinks his fangs into your neck!",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt",
+          "dump_line": 16,
+          "block": "--- [look lothar [actor]]"
+        },
+        {
+          "line": "You drink the beer.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt",
+          "dump_line": 44,
+          "block": "--- [drink glass [actor]]"
+        },
+        {
+          "line": "You eat a loaf of bread.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt",
+          "dump_line": 49,
+          "block": "--- [eat bread [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere beer...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt",
+          "dump_line": 31,
+          "block": "--- [sip glass [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere beer...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt",
+          "dump_line": 45,
+          "block": "--- [drink glass [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere food...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt",
+          "dump_line": 38,
+          "block": "--- [taste bread [actor]]"
+        },
+        {
+          "line": "The vampirism in your body is not satiated by mere food...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/vampire-consume-sunset.txt",
+          "dump_line": 50,
+          "block": "--- [eat bread [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "spec-proc-elements-load-cylinders",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "A green cylinder of light extends upwards from the pillar.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/spec-proc-elements-load-cylinders.txt",
+          "dump_line": 4,
+          "block": "--- [drop talisman [actor]]"
+        },
+        {
+          "line": "A green cylinder of light extends upwards from the pillar.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/spec-proc-elements-load-cylinders.txt",
+          "dump_line": 7,
+          "block": "--- [drop talisman [peer]]"
+        },
+        {
+          "line": "The green cylinder of light slowly sinks back into the pillar.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/spec-proc-elements-load-cylinders.txt",
+          "dump_line": 12,
+          "block": "--- [get talisman [actor]]"
+        },
+        {
+          "line": "The green cylinder of light slowly sinks back into the pillar.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/spec-proc-elements-load-cylinders.txt",
+          "dump_line": 15,
+          "block": "--- [get talisman [peer]]"
+        },
+        {
+          "line": "You get an elemental talisman of earth.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/spec-proc-elements-load-cylinders.txt",
+          "dump_line": 11,
+          "block": "--- [get talisman [actor]]"
+        }
+      ]
+    },
+    {
+      "scenario": "object-door-messages",
+      "verdict": "Go disagrees with C (destination bytes blocked)",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "Dooractor opens the door.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/object-door-messages.txt",
+          "dump_line": 5,
+          "block": "--- [open door south [observer]]"
+        },
+        {
+          "line": "Dooractor closes the door.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/object-door-messages.txt",
+          "dump_line": 11,
+          "block": "--- [close door south [observer]]"
+        }
+      ]
+    },
+    {
+      "scenario": "ban-depth",
+      "verdict": "Refusal intended",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "No sites are banned.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-depth.txt",
+          "dump_line": 3,
+          "block": "--- [ban]"
+        },
+        {
+          "line": "Site banned.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-depth.txt",
+          "dump_line": 5,
+          "block": "--- [ban all Example.COM]"
+        },
+        {
+          "line": "Site banned.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-depth.txt",
+          "dump_line": 11,
+          "block": "--- [ban select on Other.Example ignored]"
+        },
+        {
+          "line": "Site banned.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-depth.txt",
+          "dump_line": 24,
+          "block": "--- [ban new 012345678901234567890123456789012345678901234567890123456789]"
+        }
+      ]
+    },
+    {
+      "scenario": "ban-unban-success-depth",
+      "verdict": "Refusal intended",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "Site banned.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-unban-success-depth.txt",
+          "dump_line": 3,
+          "block": "--- [ban all Example.COM]"
+        },
+        {
+          "line": "Site unbanned.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/ban-unban-success-depth.txt",
+          "dump_line": 5,
+          "block": "--- [unban Example.COM]"
+        }
+      ]
+    },
+    {
+      "scenario": "act-messages",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "You whisper to Actvictim, 'quiet words'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/act-messages.txt",
+          "dump_line": 3,
+          "block": "--- [whisper Actvictim quiet words [actor]]"
+        },
+        {
+          "line": "Actactor whispers to you, 'quiet words'",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/act-messages.txt",
+          "dump_line": 9,
+          "block": "--- [whisper Actvictim quiet words [victim]]"
+        },
+        {
+          "line": "Actactor whispers something to Actvictim.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/act-messages.txt",
+          "dump_line": 5,
+          "block": "--- [whisper Actvictim quiet words [observer]]"
+        },
+        {
+          "line": "You recite a backpack which dissolves.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/act-messages.txt",
+          "dump_line": 13,
+          "block": "--- [recite backpack [actor]]"
+        },
+        {
+          "line": "Actactor recites a backpack.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/act-messages.txt",
+          "dump_line": 15,
+          "block": "--- [recite backpack [observer]]"
+        },
+        {
+          "line": "Actactor recites a backpack.",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/act-messages.txt",
+          "dump_line": 19,
+          "block": "--- [recite backpack [victim]]"
+        }
+      ]
+    },
+    {
+      "scenario": "afk-depth",
+      "verdict": "Repaired",
+      "run": "sol-dp1511-b3-final",
+      "events": [
+        {
+          "line": "Afkdepth goes AFK...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/afk-depth.txt",
+          "dump_line": 7,
+          "block": "--- [afk [peer]]"
+        },
+        {
+          "line": "Afkdepth returns from some repulsive act...",
+          "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/census-dump/afk-depth.txt",
+          "dump_line": 13,
+          "block": "--- [afk ignored-argument [peer]]"
+        }
+      ]
+    }
+  ],
+  "intentional_warmups": [
+    {
+      "scenario": "ban-depth",
+      "engine": "c",
+      "line": "Site unbanned.",
+      "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/initial-logs/attempt.ClPbFI/ban-depth.capture1/c-warmup.txt",
+      "dump_line": 3
+    },
+    {
+      "scenario": "ban-depth",
+      "engine": "go",
+      "line": "That site is not currently banned.",
+      "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/initial-logs/attempt.ClPbFI/ban-depth.capture1/go-warmup.txt",
+      "dump_line": 3
+    },
+    {
+      "scenario": "ban-unban-success-depth",
+      "engine": "c",
+      "line": "Site unbanned.",
+      "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/initial-logs/attempt.ClPbFI/ban-unban-success-depth.capture1/c-warmup.txt",
+      "dump_line": 3
+    },
+    {
+      "scenario": "ban-unban-success-depth",
+      "engine": "go",
+      "line": "That site is not currently banned.",
+      "dump": "/home/zach/Archives/darkpawns/oracle-runs/2026-11-09/sol-dp1511-b3-final/initial-logs/attempt.ClPbFI/ban-unban-success-depth.capture1/go-warmup.txt",
+      "dump_line": 3
+    }
+  ]
+}

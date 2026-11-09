@@ -1,9 +1,13 @@
+# depth-case: whisper.connected-observer-audience
+# depth-case: recite.inert-scroll-room-audience
 # Per-recipient act() proof for whisper and recite. The harness uses disposable
 # copies of both world trees to make the normal starting backpack an inert
 # scroll. This isolates message fidelity
 # from the later spell-domain migration; neither source world tree is changed.
 
 [fixture]
+empty-players
+quiet-mobs
 inert-scroll 8038
 
 [setup:oracle]
@@ -19,7 +23,6 @@ K
 Y
 <ENTER>
 1
-look
 
 [setup:port]
 Actactor
@@ -34,7 +37,6 @@ K
 Y
 <ENTER>
 1
-look
 
 [setup:oracle:victim]
 Actvictim
@@ -49,7 +51,6 @@ K
 Y
 <ENTER>
 1
-look
 
 [setup:port:victim]
 Actvictim
@@ -64,7 +65,6 @@ K
 Y
 <ENTER>
 1
-look
 
 [setup:oracle:observer]
 Actobserver
@@ -72,14 +72,13 @@ Y
 oraclepass
 oraclepass
 N
-N
+M
 H
 W
 K
 Y
 <ENTER>
 1
-look
 
 [setup:port:observer]
 Actobserver
@@ -87,14 +86,21 @@ y
 oraclepass
 oraclepass
 N
-N
+M
 H
 W
 K
 Y
 <ENTER>
 1
-look
+
+# DP-1511 class audit: the former neutral-sex observer never entered C
+# (src/interpreter.c:2012-2026); the first God has no starter pack.
+[warmup]
+goto 8004
+teleport Actvictim 8004
+teleport Actobserver 8004
+load obj 8038
 
 [probe]
 whisper Actvictim quiet words
