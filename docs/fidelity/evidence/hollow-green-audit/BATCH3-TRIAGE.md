@@ -27,15 +27,18 @@ attempted — a live `--show-oracle` dev run.
    --scenarios spec-proc-troll-combat,wear-race-hate-pulse` at throwaway
    commit 90c94e87d: verdict NOT_CLEAN, failed=2 —
    `~/Archives/darkpawns/oracle-runs/2026-11-08/glm-hollow-diag`.
-   **Capture-cap check answered**: not a capture artifact. Go's actor block
-   is *shorter* (257 lines vs C's 316) but Go's peer block is *longer*
-   (259 vs 234) — both sides end on their own prompts. The fight sequences
-   genuinely diverge.
+   Go's actor block is *shorter* (257 lines vs C's 316) while Go's peer
+   block is *longer* (259 vs 234): in Go the peer keeps seeing the actor
+   fight ("TrollCombatActor hits Targ hard."), but the actor stops receiving
+   its own lines. Claude's review reads this as an output-delivery or capture
+   gap, not a combat or RNG divergence. Filed as DP-1515; out of scope here.
 
 3. **New divergence, retained in the same census**: `wear-race-hate-pulse`
-   with a `stat racehate` probe — C applies the dagger's affects on wield
-   (`Racial Hatreds: Giant Ogre None None None`), Go does not
-   (`None None None None None`). First divergent block `stat racehate`,
+   with a `stat racehate` probe — C prints
+   `Racial Hatreds: Giant Ogre None None None`, Go prints
+   `None None None None None`. Go's stat prints that line as a constant
+   (`pkg/session/wiz_stats.go:358`), so this proves a stat stub, not a
+   missing affect. Filed as DP-1514 (with the `PLR: CSH` vs `NOBITS` line). First divergent block `stat racehate`,
    fingerprint `9d7ec6114d194f351de15f72b77400ddddb017cd01075566d4fba83258cbf742`.
 
 ## Claim withdrawn
@@ -76,8 +79,8 @@ Downgraded: `wear.player-race-hate-mobile-dispatch` (#2396).
 
 ## Diagnosis worth routing (Go bugs, for Linear)
 
-- Failed backstab attempts do not set fighting in Go (C does) — surfaced by
-  the backstabber repair; likely the same root cause as the troll-combat
-  sequence divergence.
-- `APPLY_RACE_HATE` (and at least one PLR flag) from wielded equipment is
-  not applied in Go — surfaced by the wear-racehate diagnostic.
+- DP-1513: a failed backstab on an immortal does not set fighting in Go
+  (C's `damage()` does, `src/fight.c:1445`) — surfaced by the backstabber repair.
+- DP-1514: Go's `stat` hardcodes the Racial Hatreds line and drops a PLR bit.
+- DP-1515: in a long fight Go stops delivering the actor's own lines while
+  the peer still sees the fight (troll-combat).
