@@ -1,0 +1,779 @@
+func	file	line	literal	offset
+cmdQsayText	pkg/session/act_comm.go	46	"qsay"	1679
+cmdQechoText	pkg/session/act_comm.go	70	"Huh?!?"	2583
+cmdQechoText	pkg/session/act_comm.go	77	"qecho"	2704
+qcommGuard	pkg/session/act_comm.go	94	"You aren't even part of the quest!"	3318
+qcommGuard	pkg/session/act_comm.go	98	"You cannot quest-say!"	3440
+cmdWhisper	pkg/session/act_comm.go	149	"Your message was blocked.\\r\\n"	5043
+cmdAsk	pkg/session/act_comm.go	169	"Your message was blocked.\\r\\n"	5683
+cmdColor	pkg/session/act_informative.go	20	"Your current color level is %s."	503
+cmdColor	pkg/session/act_informative.go	35	"Usage: color { Off | Sparse | Normal | Complete }"	784
+cmdColor	pkg/session/act_informative.go	44	"\\x1b[31m"	1118
+cmdColor	pkg/session/act_informative.go	46	"Your %scolor\\x1b[0m is now %s."	1152
+cmdCommands	pkg/session/act_informative.go	62	"Who is that?\\r\\n"	1623
+cmdCommands	pkg/session/act_informative.go	66	"You can't see the commands of people above your level.\\r\\n"	1718
+cmdCommands	pkg/session/act_informative.go	75	"No commands available.\\r\\n"	1897
+cmdSocials	pkg/session/act_informative.go	108	"Who is that?\\r\\n"	2941
+cmdSocials	pkg/session/act_informative.go	113	"You can't see the commands of people above your level.\\r\\n"	3063
+cmdWizhelp	pkg/session/act_informative.go	158	"No privileged commands available."	4303
+cmdWizhelp	pkg/session/act_informative.go	162	"The following privileged commands are available:\\r\\n"	4398
+cmdWizhelp	pkg/session/act_informative.go	164	"%-16s"	4504
+cmdToggle	pkg/session/act_informative.go	195	"OFF"	5533
+cmdToggle	pkg/session/act_informative.go	197	"%-3d"	5583
+cmdToggle	pkg/session/act_informative.go	211	"Hit Pnt Display: %-3s         Brief Mode: %-3s     Summon Protect: %-3s\\r\\n"	6122
+cmdToggle	pkg/session/act_informative.go	212	"   Move Display: %-3s       Compact Mode: %-3s           On Quest: %-3s\\r\\n"	6204
+cmdToggle	pkg/session/act_informative.go	213	"   Mana Display: %-3s             NoTell: %-3s       Repeat Comm.: %-3s\\r\\n"	6286
+cmdToggle	pkg/session/act_informative.go	214	" Auto Show Exit: %-3s          Auto Loot: %-3s          Auto Gold: %-3s\\r\\n"	6368
+cmdToggle	pkg/session/act_informative.go	215	"     Auto Split: %-3s               Deaf: %-3s         Wimp Level: %-3s\\r\\n"	6450
+cmdToggle	pkg/session/act_informative.go	216	" Gossip Channel: %-3s    Auction Channel: %-3s      Grats Channel: %-3s\\r\\n"	6532
+cmdToggle	pkg/session/act_informative.go	217	"  Dsp Tank Stat: %-3s    Dsp Fightg Stat: %-3s        Color Level: %s\\r\\n"	6614
+cmdToggle	pkg/session/act_informative.go	218	" Newbie Channel: %-3s    Clan tells: %-3s     Broadcasts: %-3s"	6694
+cmdAlias	pkg/session/act_social.go	43	"Currently defined aliases:\\r\\n"	1108
+cmdAlias	pkg/session/act_social.go	45	" None.\\r\\n"	1177
+cmdAlias	pkg/session/act_social.go	49	"%-15s %s\\r\\n"	1261
+cmdAlias	pkg/session/act_social.go	61	"Error saving aliases."	1645
+cmdAlias	pkg/session/act_social.go	64	"Alias deleted."	1703
+cmdAlias	pkg/session/act_social.go	68	"No such alias.\\r\\n"	1754
+cmdAlias	pkg/session/act_social.go	77	"Maximum alias length is 120 characters. Yours has been truncated.\\r\\n"	2055
+cmdAlias	pkg/session/act_social.go	94	"You can't alias 'alias'.\\r\\n"	2640
+cmdAlias	pkg/session/act_social.go	107	"You have too many aliases. Delete one first.\\r\\n"	3168
+cmdAlias	pkg/session/act_social.go	112	"Error saving aliases."	3346
+cmdAlias	pkg/session/act_social.go	115	"Alias added."	3395
+cmdAutoLoot	pkg/session/autoloot.go	25	"Auto-loot enabled."	692
+cmdAutoLoot	pkg/session/autoloot.go	27	"Auto-loot disabled."	733
+checkCastSpellContract	pkg/session/cast_cmds.go	139	"You're not smart enough to cast!\\r\\n"	4904
+checkCastSpellContract	pkg/session/cast_cmds.go	146	"You are afraid you might hurt your master!\\r\\n"	5199
+checkCastSpellContract	pkg/session/cast_cmds.go	150	"You can only cast this spell upon yourself!\\r\\n"	5368
+checkCastSpellContract	pkg/session/cast_cmds.go	150	"You can only will this power upon yourself!\\r\\n"	5419
+checkCastSpellContract	pkg/session/cast_cmds.go	154	"You cannot cast this spell upon yourself!\\r\\n"	5589
+checkCastSpellContract	pkg/session/cast_cmds.go	154	"You cannot will this power upon yourself!\\r\\n"	5638
+checkCastSpellContract	pkg/session/cast_cmds.go	158	"You can't cast this spell if you're not in a group!\\r\\n"	5799
+checkCastSpellContract	pkg/session/cast_cmds.go	158	"You cannot use this power if you are not in a group!\\r\\n"	5858
+cmdCastCommand	pkg/session/cast_cmds.go	203	"Psionics 'will' things, not 'cast' them!\\r\\n"	6982
+cmdCastCommand	pkg/session/cast_cmds.go	215	"Cast what?!?\\r\\n"	7329
+cmdCastCommand	pkg/session/cast_cmds.go	215	"Will what?!?\\r\\n"	7349
+cmdCastCommand	pkg/session/cast_cmds.go	221	"Cast what?!?\\r\\n"	7521
+cmdCastCommand	pkg/session/cast_cmds.go	221	"Will what?!?\\r\\n"	7541
+cmdCastCommand	pkg/session/cast_cmds.go	227	"You do not know that spell!\\r\\n"	7712
+cmdCastCommand	pkg/session/cast_cmds.go	227	"You are not learned in that power!\\r\\n"	7747
+cmdCastCommand	pkg/session/cast_cmds.go	233	"You are unfamiliar with that spell.\\r\\n"	7956
+cmdCastCommand	pkg/session/cast_cmds.go	233	"You are unfamiliar with that power.\\r\\n"	7999
+cmdCastCommand	pkg/session/cast_cmds.go	240	"This room just has such a peaceful, easy feeling..\\r\\n"	8214
+cmdCastCommand	pkg/session/cast_cmds.go	251	"You shouldn't cast that on yourself -- could be bad for your health!\\r\\n"	8520
+cmdCastCommand	pkg/session/cast_cmds.go	251	"Exerting that power on yourself could be harmful!\\r\\n"	8596
+cmdCastCommand	pkg/session/cast_cmds.go	255	"Okay.\\r\\n"	8699
+cmdCastCommand	pkg/session/cast_cmds.go	257	"Cannot find the target of your spell!\\r\\n"	8805
+cmdCastCommand	pkg/session/cast_cmds.go	257	"Cannot find the target of your will!\\r\\n"	8850
+cmdCastCommand	pkg/session/cast_cmds.go	271	"You haven't the energy to cast that spell!\\r\\n"	9462
+cmdCastCommand	pkg/session/cast_cmds.go	271	"You haven't the energy to will that power!\\r\\n"	9512
+cmdCastCommand	pkg/session/cast_cmds.go	293	"You lost your concentration!\\r\\n"	10417
+cmdCastCommand	pkg/session/cast_cmds.go	324	"Okay.\\r\\n"	11461
+checkCastPosition	pkg/session/cast_cmds.go	346	"You dream about great magical powers.\\r\\n"	12185
+checkCastPosition	pkg/session/cast_cmds.go	348	"You cannot concentrate while resting.\\r\\n"	12269
+checkCastPosition	pkg/session/cast_cmds.go	350	"You can't do this sitting!\\r\\n"	12353
+checkCastPosition	pkg/session/cast_cmds.go	352	"Impossible!  You can't concentrate enough!\\r\\n"	12427
+checkCastPosition	pkg/session/cast_cmds.go	354	"You can't do much of anything like this!\\r\\n"	12496
+*Session.completeCharCreation	pkg/session/char_creation.go	744	"$n has entered the game."	26246
+cmdAssist	pkg/session/cmd_combat_basic.go	14	"You're already fighting!  How can you assist someone else?\\r\\n"	282
+cmdAssist	pkg/session/cmd_combat_basic.go	20	"Dismount first!\\r\\n"	440
+cmdAssist	pkg/session/cmd_combat_basic.go	25	"Whom do you wish to assist?\\r\\n"	510
+cmdAssist	pkg/session/cmd_combat_basic.go	60	"No-one by that name here.\\r\\n"	1407
+cmdAssist	pkg/session/cmd_combat_basic.go	64	"You can't help yourself any more than this!\\r\\n"	1518
+cmdAssist	pkg/session/cmd_combat_basic.go	74	"But nobody is fighting $M!"	1885
+cmdAssist	pkg/session/cmd_combat_basic.go	76	"But nobody is fighting %s!\\r\\n"	1965
+cmdAssist	pkg/session/cmd_combat_basic.go	87	"You can't see who is fighting $M!"	2489
+cmdAssist	pkg/session/cmd_combat_basic.go	94	"You join the fight!\\r\\n"	2718
+cmdAssist	pkg/session/cmd_combat_basic.go	98	"%s assists you!\\r\\n"	2882
+cmdAssist	pkg/session/cmd_combat_basic.go	105	"$n assists $N."	3188
+cmdOrder	pkg/session/cmd_combat_special.go	14	"Order who to do what?\\r\\n"	248
+cmdOrder	pkg/session/cmd_combat_special.go	28	"That person isn't here.\\r\\n"	776
+cmdOrder	pkg/session/cmd_combat_special.go	32	"You obviously suffer from skitzofrenia.\\r\\n"	873
+cmdOrder	pkg/session/cmd_combat_special.go	38	"Your superior would not aprove of you giving orders.\\r\\n"	1054
+cmdOrder	pkg/session/cmd_combat_special.go	48	"$N orders you to '%s'"	1321
+cmdOrder	pkg/session/cmd_combat_special.go	50	"$n gives $N an order."	1430
+cmdOrder	pkg/session/cmd_combat_special.go	54	"$n has an indifferent look."	1602
+cmdOrder	pkg/session/cmd_combat_special.go	58	"Okay.\\r\\n"	1678
+cmdOrder	pkg/session/cmd_combat_special.go	67	"$n issues the order '%s'."	2002
+cmdOrder	pkg/session/cmd_combat_special.go	77	"Okay.\\r\\n"	2343
+cmdOrder	pkg/session/cmd_combat_special.go	79	"Nobody here is a loyal subject of yours!\\r\\n"	2375
+cmdOrgasm	pkg/session/cmd_combat_special.go	137	"Come again?\\n\\r"	4267
+cmdOrgasm	pkg/session/cmd_combat_special.go	143	"Yeah, ok, but who?\\n\\r"	4395
+cmdOrgasm	pkg/session/cmd_combat_special.go	149	"Humm...seems that person doesn't need your help.\\n\\r"	4534
+cmdOrgasm	pkg/session/cmd_combat_special.go	158	"Yes, it WILL fall off if you don't stop that.\\n\\r"	4748
+cmdOrgasm	pkg/session/cmd_combat_special.go	160	"$n just can't stop playing with $Mself!\\n\\r"	4867
+cmdOrgasm	pkg/session/cmd_combat_special.go	166	"You touch $N, who slumps over in orgasm!"	5031
+cmdOrgasm	pkg/session/cmd_combat_special.go	168	"A wonderful feeling spreads throughout your entire body as $N touches you in all the right places..."	5146
+cmdOrgasm	pkg/session/cmd_combat_special.go	169	"You explode with a breath-taking orgasm!!\\r\\n"	5287
+cmdOrgasm	pkg/session/cmd_combat_special.go	171	"$N collapses in a quivering, moaning heap as $n touches them.."	5390
+cmdOrgasm	pkg/session/cmd_combat_special.go	175	"God, you need some beer and some food.\\n\\r"	5561
+cmdOrgasm	pkg/session/cmd_combat_special.go	177	"A dark stain appears under $N's armor and slowly spreads down his leg."	5663
+cmdOrgasm	pkg/session/cmd_combat_special.go	184	"Once is never enough, you beg for more!\\n\\r"	5994
+cmdOrgasm	pkg/session/cmd_combat_special.go	186	"$N pleads for more and $n deftly glides a hand beneath her panties!"	6097
+printGroup	pkg/session/cmd_group.go	43	"But you are not the member of a group!\\r\\n"	1430
+printGroup	pkg/session/cmd_group.go	62	"Your group consists of:\\r\\n"	2376
+sendGroupMemberLine	pkg/session/cmd_group.go	101	"     [---H ---M ---V] [-- --] $N"	3850
+sendGroupMemberLine	pkg/session/cmd_group.go	112	"     [%sH %sM %sV] [%2d %s] $N"	4222
+sendGroupMemberLine	pkg/session/cmd_group.go	113	"%3d"	4280
+sendGroupMemberLine	pkg/session/cmd_group.go	114	"%3d"	4338
+sendGroupMemberLine	pkg/session/cmd_group.go	115	"%3d"	4398
+sendGroupMemberLine	pkg/session/cmd_group.go	119	" (Head of group)"	4508
+cmdUngroup	pkg/session/cmd_group.go	135	"%s has disbanded the group.\\r\\n"	5086
+cmdUngroup	pkg/session/cmd_group.go	173	"$N is no longer a member of your group."	6183
+cmdUngroup	pkg/session/cmd_group.go	175	"You have been kicked out of $n's group!"	6295
+cmdUngroup	pkg/session/cmd_group.go	177	"$N has been kicked out of $n's group!"	6419
+cmdLevels	pkg/session/cmd_info.go	15	"You ain't nothin' but a hound-dog.\\r\\n"	236
+cmdAbils	pkg/session/cmd_info.go	39	"Your current ability scores:\\r\\n"	844
+cmdAbils	pkg/session/cmd_info.go	40	"Strength:      (%s)\\r\\n"	900
+cmdAbils	pkg/session/cmd_info.go	41	"Dexterity:     (%s)\\r\\n"	990
+cmdAbils	pkg/session/cmd_info.go	42	"Intelligence:  (%s)\\r\\n"	1080
+cmdAbils	pkg/session/cmd_info.go	43	"Wisdom:        (%s)\\r\\n"	1170
+cmdAbils	pkg/session/cmd_info.go	44	"Constitution:  (%s)\\r\\n"	1260
+cmdAbils	pkg/session/cmd_info.go	45	"Charisma:      (%s)\\r\\n"	1350
+cmdCoins	pkg/session/cmd_info.go	68	"You are currently carrying %d coins,\\r\\n"	1931
+cmdCoins	pkg/session/cmd_info.go	69	"and in your bank account, you have %d coins.\\r\\n"	2004
+cmdCoins	pkg/session/cmd_info.go	70	"Your current net-worth is %d coins.\\r\\n"	2089
+cmdWhere	pkg/session/cmd_info.go	1114	"Couldn't find any such thing.\\r\\n"	33430
+cmdHelpText	pkg/session/cmd_info.go	1188	"No help available.\\r\\n"	35899
+cmdHelpText	pkg/session/cmd_info.go	1196	"There is no help on: %s\\r\\n"	36161
+cmdHelpText	pkg/session/cmd_info.go	1211	"There is no help on: %s\\r\\n"	36773
+cmdWhois	pkg/session/cmd_info.go	1255	"For whom do you wish to search?\\r\\n"	38290
+cmdWhois	pkg/session/cmd_info.go	1271	"[%2d %s] %s %s\\r\\n"	38955
+cmdWhois	pkg/session/cmd_info.go	1280	"Error looking up player.\\r\\n"	39175
+cmdWhois	pkg/session/cmd_info.go	1284	"There is no such player.\\r\\n"	39253
+cmdWhois	pkg/session/cmd_info.go	1298	"the Adventurer"	39684
+cmdWhois	pkg/session/cmd_info.go	1301	"[%2d %s] %s %s\\r\\n"	39731
+cmdWhois	pkg/session/cmd_info.go	1305	"There is no such player.\\r\\n"	39818
+cmdQuiStub	pkg/session/cmd_inventory.go	26	"You have to type quit--no less, to quit!"	625
+cmdShutdowStub	pkg/session/cmd_inventory.go	37	"If you want to shut something down, say so!\\r\\n"	1056
+cmdNotHere	pkg/session/cmd_misc.go	171	"Sorry, but you cannot do that here!\\r\\n"	5021
+cmdKill	pkg/session/combat_cmds.go	28	"Kill who?\\r\\n"	736
+cmdKill	pkg/session/combat_cmds.go	40	"They aren't here.\\r\\n"	1216
+cmdKill	pkg/session/combat_cmds.go	46	"They aren't here.\\r\\n"	1321
+cmdKill	pkg/session/combat_cmds.go	50	"Your mother would be so sad.. :(\\r\\n"	1396
+cmdKill	pkg/session/combat_cmds.go	54	"No can do, buddy.. \\r\\n"	1515
+cmdKill	pkg/session/combat_cmds.go	59	"You chop $M to pieces!  Ah!  The blood!"	1611
+cmdKill	pkg/session/combat_cmds.go	61	"$N chops you to pieces!"	1723
+cmdKill	pkg/session/combat_cmds.go	63	"$n brutally slays $N!"	1831
+cmdHit	pkg/session/combat_cmds.go	75	"Hit who?\\r\\n"	2379
+cmdHit	pkg/session/combat_cmds.go	88	"They don't seem to be here.\\r\\n"	2791
+cmdHit	pkg/session/combat_cmds.go	93	"They don't seem to be here.\\r\\n"	2905
+cmdHit	pkg/session/combat_cmds.go	101	"You hit yourself...OUCH!."	3156
+cmdHit	pkg/session/combat_cmds.go	103	"$n hits $mself, and says OUCH!"	3268
+cmdHit	pkg/session/combat_cmds.go	109	"$N is just such a good friend, you simply can't hit $M."	3487
+cmdHit	pkg/session/combat_cmds.go	117	"You do the best you can!\\r\\n"	3831
+cmdHit	pkg/session/combat_cmds.go	146	"They don't seem to be here.\\r\\n"	5074
+cmdParry	pkg/session/combat_cmds.go	175	"You're not good enough at swordplay to parry!\\r\\n"	6287
+cmdParry	pkg/session/combat_cmds.go	180	"But you aren't fighting anyone!\\r\\n"	6406
+cmdParry	pkg/session/combat_cmds.go	186	"But you aren't fighting anyone!\\r\\n"	6571
+cmdParry	pkg/session/combat_cmds.go	191	"But noone's attacking you!\\r\\n"	6742
+cmdParry	pkg/session/combat_cmds.go	196	"Parry with what? You're unarmed!\\r\\n"	6834
+cmdParry	pkg/session/combat_cmds.go	200	"Parry with what? You're unarmed!\\r\\n"	7000
+cmdParry	pkg/session/combat_cmds.go	207	"With a dazzling show of swordplay, you attempt to parry...but are outmaneuvered!\\r\\n"	7223
+cmdParry	pkg/session/combat_cmds.go	213	"With a dazzling show of swordplay, you move into defensive position...\\r\\n"	7451
+cmdParry	pkg/session/combat_cmds.go	215	"$n displays a dazzling show of swordplay, fending off $N's every blow!"	7592
+cmdParry	pkg/session/combat_cmds.go	217	"$n displays a dazzling show of swordplay, fending off your every blow!"	7734
+cmdFlee	pkg/session/combat_cmds.go	238	"Get on your feet first!"	8418
+cmdFlee	pkg/session/combat_cmds.go	242	"You attempt to flee but cannot!"	8593
+cmdFlee	pkg/session/combat_cmds.go	307	"PANIC!  You couldn't escape!"	10436
+cmdFlee	pkg/session/combat_cmds.go	321	"You flee head over heels."	10830
+cmdRetreat	pkg/session/combat_cmds.go	330	"Retreat"	11224
+cmdRetreat	pkg/session/combat_cmds.go	330	"retreat"	11235
+cmdRetreat	pkg/session/combat_cmds.go	333	"Escape"	11344
+cmdRetreat	pkg/session/combat_cmds.go	333	"escape"	11354
+cmdRetreat	pkg/session/combat_cmds.go	337	"Get on your feet first!\\r\\n"	11444
+cmdRetreat	pkg/session/combat_cmds.go	341	"Huh?\\r\\n"	11592
+cmdRetreat	pkg/session/combat_cmds.go	345	"%s from what? You aren't fighting!\\n\\r"	11681
+cmdRetreat	pkg/session/combat_cmds.go	353	"You try to %s but get cornered in the process!\\r\\n"	11985
+cmdRetreat	pkg/session/combat_cmds.go	381	"$n realizes it's a losing cause and gracefully attempts to %s."	13081
+cmdRetreat	pkg/session/combat_cmds.go	384	"You make a hasty %s.\\r\\n"	13253
+cmdRetreat	pkg/session/combat_cmds.go	387	"$n is cornered and fails to %s!"	13377
+cmdRetreat	pkg/session/combat_cmds.go	392	"You are cornered and fail to %s!\\r\\n"	13479
+cmdRetreat	pkg/session/combat_cmds.go	394	"$n is cornered and fails to %s!"	13600
+cmdEmote	pkg/session/comm_cmds.go	103	"Yes.. but what?"	3541
+cmdEmote	pkg/session/comm_cmds.go	110	"You try to express yourself but cannot!"	3863
+cmdEmote	pkg/session/comm_cmds.go	125	"$n "	4307
+cmdEmote	pkg/session/comm_cmds.go	128	"Okay.\\r\\n"	4474
+cmdThink	pkg/session/comm_cmds.go	161	"You think about life, the universe, and everything."	5570
+cmdThink	pkg/session/comm_cmds.go	166	"You try to think aloud, but cannot!"	5729
+cmdThink	pkg/session/comm_cmds.go	174	"You think . o O ( %s )"	5974
+cmdThink	pkg/session/comm_cmds.go	176	"Ok.\\n\\r"	6029
+cmdWrite	pkg/session/comm_cmds.go	190	"Write?  With what?  ON what?  What are you trying to do?!?"	6472
+cmdWrite	pkg/session/comm_cmds.go	201	"You don't have '%s'."	6816
+cmdWrite	pkg/session/comm_cmds.go	207	"You can't write on that!"	6972
+cmdWrite	pkg/session/comm_cmds.go	222	"You need a pen to write on something!"	7298
+cmdWrite	pkg/session/comm_cmds.go	243	"You write '%s' on %s."	7896
+cmdPageText	pkg/session/comm_cmds.go	263	"Whom do you wish to page?"	8691
+cmdPageText	pkg/session/comm_cmds.go	269	"\\x07\\x07*%s* %s"	8863
+cmdPageText	pkg/session/comm_cmds.go	277	"You will never be godly enough to do that!"	9225
+cmdPageText	pkg/session/comm_cmds.go	299	"There is no such person in the game!"	9886
+cmdPageText	pkg/session/comm_cmds.go	306	"Okay."	10092
+executeCommandRaw	pkg/session/commands.go	801	"Huh?!?\\r\\n"	44894
+commandGateRejected	pkg/session/commands.go	885	"Huh?!?\\r\\n"	47999
+commandGateRejected	pkg/session/commands.go	892	"You try, but the mind-numbing cold prevents you...\\r\\n"	48167
+commandGateRejected	pkg/session/commands.go	896	"You can't use immortal commands while switched.\\r\\n"	48325
+cmdUse	pkg/session/commands.go	1096	"What do you want to use?\\r\\n"	55202
+cmdUse	pkg/session/commands.go	1117	"You can't seem to figure out how to use it.\\r\\nTry holding it.(?)\\r\\n"	56025
+cmdLines	pkg/session/display_cmds.go	329	"Your current screen size is %d.\\r\\n"	9860
+cmdLines	pkg/session/display_cmds.go	336	"Screen size is limited to 50 lines.\\r\\n"	9990
+cmdLines	pkg/session/display_cmds.go	340	"Screen size must be at least 7 lines.\\r\\n"	10073
+cmdLines	pkg/session/display_cmds.go	351	"Your new lines count is %d.\\r\\n"	10260
+cmdInfoBar	pkg/session/display_cmds.go	394	"Your infobar is off.\\r\\n"	11189
+cmdInfoBar	pkg/session/display_cmds.go	396	"Your infobar is on.\\r\\n"	11245
+cmdInfoBar	pkg/session/display_cmds.go	398	"You had an unknown infobar setting.\\r\\n"	11293
+cmdInfoBar	pkg/session/display_cmds.go	399	"It is being set to OFF.\\r\\n"	11346
+cmdInfoBar	pkg/session/display_cmds.go	410	"Your infobar is now set to off.\\r\\n"	11570
+cmdInfoBar	pkg/session/display_cmds.go	412	"Your infobar is already off.\\r\\n"	11630
+cmdInfoBar	pkg/session/display_cmds.go	421	"Your infobar is now set to on.\\r\\n"	11828
+cmdInfoBar	pkg/session/display_cmds.go	423	"Your infobar is already on.\\r\\n"	11887
+cmdInfoBar	pkg/session/display_cmds.go	426	"Usage:  infobar < on | off >\\r\\n"	11945
+cmdQuaff	pkg/session/eat_cmds.go	42	"What do you want to quaff?"	1213
+cmdQuaff	pkg/session/eat_cmds.go	58	"You don't seem to have %s %s."	1821
+cmdQuaff	pkg/session/eat_cmds.go	72	"You can't do this sitting!"	2273
+cmdQuaff	pkg/session/eat_cmds.go	77	"You quaff %s."	2358
+cmdQuaff	pkg/session/eat_cmds.go	83	"$n quaffs $p."	2641
+sendCachedText	pkg/session/gen_ps_cmds.go	131	"That information is not available right now."	3911
+cmdClear	pkg/session/gen_ps_cmds.go	233	"\\033[H\\033[J"	7089
+cmdVersion	pkg/session/gen_ps_cmds.go	250	"Dark Pawns 2.3-"	7783
+cmdVersion	pkg/session/gen_ps_cmds.go	253	"Compile Time: "	7932
+cmdPlayers	pkg/session/gen_ps_cmds.go	297	"A list of registered players:\\r\\n"	9347
+cmdPlayers	pkg/session/gen_ps_cmds.go	300	"%-20.20s"	9446
+*Manager.closeIdleDescriptor	pkg/session/idle_close.go	35	"$n has lost $s link."	905
+*Manager.closeIdleSnoop	pkg/session/idle_close.go	58	"Your victim is no longer among us.\\r\\n"	1584
+cmdTitle	pkg/session/informative_cmds.go	31	"Your title is fine... go away.\\r\\n"	959
+cmdTitle	pkg/session/informative_cmds.go	33	"You can't title yourself -- you shouldn't have abused it!\\r\\n"	1065
+cmdTitle	pkg/session/informative_cmds.go	35	"Titles can't contain the ( or ) characters.\\r\\n"	1207
+cmdTitle	pkg/session/informative_cmds.go	37	"Sorry, titles can't be longer than %d characters.\\r\\n"	1321
+cmdTitle	pkg/session/informative_cmds.go	40	"Okay, you're now %s %s.\\r\\n"	1466
+*Session.applyInputHistory	pkg/session/input_history.go	23	"Invalid substitution.\\r\\n"	938
+*Manager.handleTransportDisconnect	pkg/session/manager.go	1677	"$n has lost $s link."	61467
+*Manager.shutdownGracefully	pkg/session/manager.go	2450	"\\r\\n\\x1b[1;31m!! The MUD server is performing a graceful shutdown for maintenance. Your state has been saved. !!\\x1b[0m\\r\\n"	89877
+CmdMap	pkg/session/map_cmds.go	167	"Type HELP MAP to see a map of town.\\r\\n"	4916
+CmdMap	pkg/session/map_cmds.go	221	"You look down upon the world and see...\\r\\n"	6385
+CmdMap	pkg/session/map_cmds.go	263	"\\r\\nKEY: inside = &g0&n, city = &m#&n, field = &Y:&n, forest = &G+&n, hills = &w%&n,\\r\\n"	7912
+CmdMap	pkg/session/map_cmds.go	264	"     mountain = &y^&n, swim water = &B~&n, noswim water = &b~&n, underwater = &b_&n,\\r\\n"	8007
+CmdMap	pkg/session/map_cmds.go	265	"     flying = &C@&n, desert = &r$&n, fire = &RF&n, earth = &YE&n, wind = &CW&n,\\r\\n"	8102
+CmdMap	pkg/session/map_cmds.go	266	"     water = &cw&n, swamp = &D`&n\\r\\n"	8192
+CmdMap	pkg/session/map_cmds.go	267	"     &RX&n = You are here. &D*&n = overlapping room(s)\\r\\n"	8236
+*Session.confirmDelete	pkg/session/menu.go	325	"You try to kill yourself, but the ice stops you.\\r\\nCharacter not deleted.\\r\\n"	10991
+*Session.confirmDelete	pkg/session/menu.go	384	"Character '%s' deleted!\\r\\nGoodbye.\\r\\n"	13333
+*Session.enterReturningPlayer	pkg/session/menu.go	472	"$n has entered the game."	16447
+*Manager.EmitOLCPresence	pkg/session/olc_registry.go	201	"$n stops using OLC."	5713
+*Manager.EmitOLCPresence	pkg/session/olc_registry.go	203	"$n starts using OLC."	5759
+*Session.navigatePager	pkg/session/pager.go	299	"Valid commands while paging are RETURN, Q, R, B, or a numeric value.\\r\\n"	10071
+cmdPractice	pkg/session/practice.go	19	"You can only practice skills in your guild.\\r\\n"	606
+*Session.performDupeCheck	pkg/session/reconnect.go	64	"\\r\\nMultiple login detected -- disconnecting.\\r\\n"	2612
+*Session.performDupeCheck	pkg/session/reconnect.go	91	"\\r\\nMultiple login detected -- disconnecting.\\r\\n"	3850
+*Session.performDupeCheck	pkg/session/reconnect.go	97	"\\r\\nThis body has been usurped!\\r\\n"	4097
+*Session.performDupeCheck	pkg/session/reconnect.go	98	"\\r\\nMultiple login detected -- disconnecting.\\r\\n"	4147
+*Session.performDupeCheck	pkg/session/reconnect.go	102	"\\r\\nMultiple login detected -- disconnecting.\\r\\n"	4283
+*Session.finishDupeCheck	pkg/session/reconnect.go	167	"You take over your own body, already in use!\\r\\n"	6527
+*Session.finishDupeCheck	pkg/session/reconnect.go	169	"$n suddenly keels over in pain, surrounded by a white aura...\\r\\n"	6620
+*Session.finishDupeCheck	pkg/session/reconnect.go	170	"$n's body has been taken over by a new spirit!"	6693
+*Session.finishDupeCheck	pkg/session/reconnect.go	173	"Reconnecting.\\r\\n"	6931
+*Session.finishDupeCheck	pkg/session/reconnect.go	175	"You have mail waiting.\\r\\n"	6998
+*Session.finishDupeCheck	pkg/session/reconnect.go	177	"$n has reconnected."	7070
+*Session.reconnectSwitched	pkg/session/reconnect.go	222	"\\r\\nThis body has been usurped!\\r\\n"	8700
+*Session.reconnectSwitched	pkg/session/reconnect.go	224	"\\r\\nMultiple login detected -- disconnecting.\\r\\n"	8759
+*Session.startRedit	pkg/session/redit.go	185	"$n starts using OLC."	5208
+*Session.cancelRoomEdit	pkg/session/redit.go	259	"$n stops using OLC."	7092
+*Session.finishReditLocked	pkg/session/redit.go	329	"$n stops using OLC."	9599
+*Session.startSedit	pkg/session/sedit.go	183	"$n starts using OLC."	5077
+*Session.finishSeditLocked	pkg/session/sedit.go	270	"$n stops using OLC."	7462
+*Session.handleCommand	pkg/session/session_login.go	476	"Post not aborted, use REMOVE <post #>.\\r\\n"	17674
+*Session.handleCommand	pkg/session/session_login.go	485	"Line changed.\\r\\n"	18111
+*Session.maybeReturnFromVoid	pkg/session/session_pump.go	408	"$n has returned."	14160
+cmdList	pkg/session/shop_cmds.go	310	"Sorry, but you cannot do that here!\\r\\n"	9819
+cmdList	pkg/session/shop_cmds.go	367	"Currently, there is nothing for sale.\\r\\n"	11392
+cmdList	pkg/session/shop_cmds.go	371	"Presently, none of those are for sale.\\r\\n"	11571
+cmdBuy	pkg/session/shop_cmds.go	394	"Sorry, but you cannot do that here!\\r\\n"	12475
+cmdBuy	pkg/session/shop_cmds.go	430	"%s: You can't carry any more items.\\n\\r"	13748
+cmdBuy	pkg/session/shop_cmds.go	434	"%s: You can't carry that much weight.\\n\\r"	13951
+cmdBuy	pkg/session/shop_cmds.go	485	"$n buys "	15824
+cmdBuy	pkg/session/shop_cmds.go	487	"You now have "	15969
+cmdSell	pkg/session/shop_cmds.go	518	"Sorry, but you cannot do that here!\\r\\n"	17096
+cmdSell	pkg/session/shop_cmds.go	570	"$n sells "	18926
+cmdSell	pkg/session/shop_cmds.go	572	"The shopkeeper now has "	19071
+cmdValue	pkg/session/shop_cmds.go	583	"Sorry, but you cannot do that here!\\r\\n"	19506
+*Session.finishFileEditStart	pkg/session/tedit.go	229	"$n begins editing a scroll."	7776
+*Session.finishTextEditLocked	pkg/session/tedit.go	392	"$n stops editing some scrolls."	13102
+*Session.finishTextEditLocked	pkg/session/tedit.go	402	"$n stops using OLC."	13488
+*Session.cancelTextEdit	pkg/session/tedit.go	430	"$n stops using OLC."	14485
+cmdRecite	pkg/session/use_cmds.go	17	"What do you want to recite?"	481
+cmdRecite	pkg/session/use_cmds.go	41	"You don't seem to have %s %s."	1245
+cmdRecite	pkg/session/use_cmds.go	57	"You can't concentrate enough!."	1823
+cmdRecite	pkg/session/use_cmds.go	62	"You can't do this sitting!!"	2002
+cmdRecite	pkg/session/use_cmds.go	66	"Nothing magical happens."	2120
+cmdRecite	pkg/session/use_cmds.go	101	"There is nothing to here to affect with $p."	3350
+cmdRecite	pkg/session/use_cmds.go	109	"You recite $p which dissolves."	3631
+cmdRecite	pkg/session/use_cmds.go	115	"$n recites $p."	3927
+cmdZap	pkg/session/use_cmds.go	170	"Zap who?"	5619
+cmdZap	pkg/session/use_cmds.go	191	"You aren't holding that."	6083
+cmdZap	pkg/session/use_cmds.go	198	"You can't zap with that!"	6265
+cmdZap	pkg/session/use_cmds.go	203	"It seems to be empty."	6381
+cmdZap	pkg/session/use_cmds.go	212	"It seems powerless."	6692
+cmdZap	pkg/session/use_cmds.go	226	"Nothing happens."	7053
+cmdZap	pkg/session/use_cmds.go	242	"They aren't here."	7471
+cmdZap	pkg/session/use_cmds.go	253	"Your %s bathes you in a blinding glow!"	7890
+cmdZap	pkg/session/use_cmds.go	262	"Your %s flares up with a blinding glow that surges toward %s!"	8313
+cmdZap	pkg/session/use_cmds.go	268	"Your %s radiates an ethereal glow that lights the room."	8789
+cmdGechoText	pkg/session/wiz_communication.go	18	"Huh?!?"	298
+cmdGechoText	pkg/session/wiz_communication.go	22	"That must be a mistake...\\r\\n"	349
+cmdGechoText	pkg/session/wiz_communication.go	37	"Okay.\\r\\n"	764
+cmdEcho	pkg/session/wiz_communication.go	50	"Huh?!?"	1177
+cmdEcho	pkg/session/wiz_communication.go	54	"Yes.. but what?"	1233
+cmdEcho	pkg/session/wiz_communication.go	59	"Maximum echo length is 500 characters."	1330
+cmdSendText	pkg/session/wiz_communication.go	83	"Huh?!?\\r\\n"	2365
+cmdSendText	pkg/session/wiz_communication.go	88	"Send what to who?\\r\\n"	2481
+cmdSendText	pkg/session/wiz_communication.go	94	"No-one by that name here.\\r\\n"	2612
+cmdSendText	pkg/session/wiz_communication.go	108	"Sent.\\r\\n"	3156
+cmdSendText	pkg/session/wiz_communication.go	110	"You send '%s' to %s.\\r\\n"	3200
+cmdForceText	pkg/session/wiz_communication.go	147	"Huh?!?"	4515
+cmdForceText	pkg/session/wiz_communication.go	152	"Whom do you wish to force do what?\\r\\n"	4641
+cmdForceText	pkg/session/wiz_communication.go	159	"Okay.\\r\\n"	4931
+cmdForceText	pkg/session/wiz_communication.go	168	"Okay.\\r\\n"	5400
+cmdForceText	pkg/session/wiz_communication.go	201	"No, no, no!\\r\\n"	6498
+cmdForceText	pkg/session/wiz_communication.go	205	"Okay.\\r\\n"	6542
+cmdForceText	pkg/session/wiz_communication.go	209	"$n has forced you to '%s'."	6767
+cmdForceText	pkg/session/wiz_communication.go	215	"$n has forced you to '%s'."	7106
+forceSessionCommand	pkg/session/wiz_communication.go	276	"$n has forced you to '%s'."	9251
+cmdWiznetText	pkg/session/wiz_communication.go	314	"Usage: wiznet <text> | #<level> <text> | *<emotetext> |\\r\\n "	10934
+cmdWiznetText	pkg/session/wiz_communication.go	315	"       wiznet @\\r\\n"	11002
+cmdWiznetText	pkg/session/wiz_communication.go	339	"You can't wizline above your own level.\\r\\n"	11643
+cmdWiznetText	pkg/session/wiz_communication.go	353	"You are offline!\\r\\n"	11926
+cmdWiznetText	pkg/session/wiz_communication.go	359	"Don't bother the gods like that!\\r\\n"	12056
+cmdWiznetText	pkg/session/wiz_communication.go	365	"<%d> "	12175
+cmdWiznetText	pkg/session/wiz_communication.go	367	"%s: %s%s%s\\r\\n"	12218
+cmdWiznetText	pkg/session/wiz_communication.go	368	"Someone: %s%s%s\\r\\n"	12328
+cmdWiznetText	pkg/session/wiz_communication.go	384	"Okay.\\r\\n"	12819
+wiznetList	pkg/session/wiz_communication.go	458	"Gods online:\\r\\n"	15109
+wiznetList	pkg/session/wiz_communication.go	461	"  %s"	15167
+wiznetList	pkg/session/wiz_communication.go	463	" (Writing)\\r\\n"	15264
+wiznetList	pkg/session/wiz_communication.go	465	" (Writing mail)\\r\\n"	15355
+wiznetList	pkg/session/wiz_communication.go	476	"Gods offline:\\r\\n"	15593
+wiznetList	pkg/session/wiz_communication.go	479	"  %s\\r\\n"	15652
+cmdShow	pkg/session/wiz_info.go	46	"Huh?!?"	1319
+cmdShow	pkg/session/wiz_info.go	54	"Show options:\\r\\n"	1613
+cmdShow	pkg/session/wiz_info.go	61	"%-15s"	1771
+cmdShow	pkg/session/wiz_info.go	89	"Sorry, I don't understand that."	2420
+cmdShow	pkg/session/wiz_info.go	93	"You are not godly enough for that!\\r\\n"	2527
+cmdShow	pkg/session/wiz_info.go	98	"Sorry, I don't understand that."	2675
+cmdShow	pkg/session/wiz_info.go	123	"That is not a valid zone.\\r\\n"	3495
+cmdShow	pkg/session/wiz_info.go	129	"A name would help.\\r\\n"	3624
+cmdShow	pkg/session/wiz_info.go	138	"There is no such player.\\r\\n"	3838
+cmdShow	pkg/session/wiz_info.go	146	"There is no such player.\\r\\n"	4106
+cmdShow	pkg/session/wiz_info.go	151	"Player: %-12s (%s) [%2d %s]\\r\\nAu: %-8d  Bal: %-8d  Exp: %-8d  Align: %-5d  Lessons: %-3d\\r\\nStarted: %-20.16s  Last: %-20.16s  Played: %3dh %2dm\\r\\n"	4316
+cmdShow	pkg/session/wiz_info.go	151	"Male"	4486
+cmdShow	pkg/session/wiz_info.go	151	"Female"	4494
+cmdShow	pkg/session/wiz_info.go	151	"Neutral"	4504
+cmdShow	pkg/session/wiz_info.go	154	"A name would help.\\r\\n"	4717
+cmdShow	pkg/session/wiz_info.go	169	"%s has no rent file.\\r\\n"	5133
+cmdShow	pkg/session/wiz_info.go	213	"Current stats:\\r\\n"	6722
+cmdShow	pkg/session/wiz_info.go	214	"  %5d players in game  %5d connected\\r\\n"	6747
+cmdShow	pkg/session/wiz_info.go	215	"  %5d registered\\r\\n"	6794
+cmdShow	pkg/session/wiz_info.go	216	"  %5d mobiles          %5d prototypes\\r\\n"	6821
+cmdShow	pkg/session/wiz_info.go	217	"  %5d objects          %5d prototypes\\r\\n"	6869
+cmdShow	pkg/session/wiz_info.go	218	"  %5d rooms            %5d zones\\r\\n"	6917
+cmdShow	pkg/session/wiz_info.go	219	"  %5d large bufs\\r\\n"	6960
+cmdShow	pkg/session/wiz_info.go	220	"  %5d buf switches     %5d overflows\\r\\n"	6987
+cmdShow	pkg/session/wiz_info.go	231	"ROOM_DEATH"	7514
+cmdShow	pkg/session/wiz_info.go	231	"Death Traps\\r\\n-----------\\r\\n"	7528
+cmdShow	pkg/session/wiz_info.go	233	"ROOM_GODROOM"	7624
+cmdShow	pkg/session/wiz_info.go	233	"Godrooms\\r\\n--------------------------\\r\\n"	7640
+cmdShow	pkg/session/wiz_info.go	243	"No houses have been defined.\\r\\n"	7952
+cmdShow	pkg/session/wiz_info.go	254	"%d %s\\r\\n"	8397
+cmdShow	pkg/session/wiz_info.go	261	"You must supply a zone number!\\r\\n"	8543
+cmdShow	pkg/session/wiz_info.go	274	"That is not a valid zone.\\r\\n"	8836
+cmdShow	pkg/session/wiz_info.go	276	"ROOM_NEUTRAL"	8929
+cmdShow	pkg/session/wiz_info.go	276	"Neutral Rooms\\r\\n-------------\\r\\n"	8945
+cmdDark	pkg/session/wiz_info.go	355	"Huh?!?"	11608
+cmdDark	pkg/session/wiz_info.go	378	"The peace of the ancients fills your soul.\\n"	12452
+cmdDark	pkg/session/wiz_info.go	387	"You stop the senseless violence in the room with a wave of your hand.\\r\\n"	12649
+cmdDark	pkg/session/wiz_info.go	391	"$n stops the senseless violence in the room with a wave of $s hand.\\r\\n"	12935
+cmdSyslog	pkg/session/wiz_info.go	398	"Huh?!?"	13192
+cmdSyslog	pkg/session/wiz_info.go	402	"Your syslog is currently %s.\\r\\n"	13260
+cmdSyslog	pkg/session/wiz_info.go	407	"Usage: syslog { Off | Brief | Normal | Complete }\\r\\n"	13406
+cmdSyslog	pkg/session/wiz_info.go	411	"Your syslog is now %s.\\r\\n"	13532
+cmdIdlist	pkg/session/wiz_info.go	455	"Huh?!?"	14744
+cmdIdlist	pkg/session/wiz_info.go	462	"Could not open id list file, cannot complete operation!\\r\\n"	14974
+cmdIdlist	pkg/session/wiz_info.go	476	"Ok. Id list complete.\\r\\n"	15384
+cmdCheckload	pkg/session/wiz_info.go	484	"Huh?!?"	15680
+cmdCheckload	pkg/session/wiz_info.go	487	"Usage: checkload { obj | mob } <number>\\r\\n"	15721
+cmdCheckload	pkg/session/wiz_info.go	499	"That mob does not exist.\\r\\n"	16039
+cmdCheckload	pkg/session/wiz_info.go	513	"That object does not exist.\\r\\n"	16618
+cmdCheckload	pkg/session/wiz_info.go	524	"Usage: checkload { obj | mob } <number>\\r\\n"	17067
+cmdPoofsetText	pkg/session/wiz_info.go	701	"Huh?!?"	22423
+cmdPoofsetText	pkg/session/wiz_info.go	709	"You don't seem to exist."	22723
+cmdPoofsetText	pkg/session/wiz_info.go	718	"Okay.\\r\\n"	22866
+cmdPoofset	pkg/session/wiz_info.go	724	"Usage: poofset <in|out> [message]"	22974
+cmdPoofset	pkg/session/wiz_info.go	729	"Usage: poofset <in|out> [message]"	23121
+cmdGoto	pkg/session/wiz_movement.go	14	"Huh?!?"	201
+cmdGoto	pkg/session/wiz_movement.go	25	"$n disappears in a puff of smoke."	400
+cmdGoto	pkg/session/wiz_movement.go	36	"$n appears with an ear-splitting bang."	778
+findGotoRoom	pkg/session/wiz_movement.go	52	"You must supply a room number or name.\\r\\n"	1418
+findGotoRoom	pkg/session/wiz_movement.go	59	"No room exists with that number.\\r\\n"	1665
+findGotoRoom	pkg/session/wiz_movement.go	77	"That object is not available.\\r\\n"	2185
+findGotoRoom	pkg/session/wiz_movement.go	81	"No such creature or object around.\\r\\n"	2252
+gotoRoomAllowed	pkg/session/wiz_movement.go	89	"You are not godly enough to use that room!\\r\\n"	2515
+gotoRoomAllowed	pkg/session/wiz_movement.go	95	"There's a private conversation going on in that room.\\r\\n"	2773
+cmdAt	pkg/session/wiz_movement.go	105	"Huh?!?"	2979
+cmdAt	pkg/session/wiz_movement.go	109	"You must supply a room number or a name.\\r\\n"	3035
+cmdAt	pkg/session/wiz_movement.go	117	"What do you want to do there?\\r\\n"	3191
+cmdDig	pkg/session/wiz_movement.go	142	"Format: dig <dir> <room number>\\r\\n"	4186
+cmdDig	pkg/session/wiz_movement.go	152	"There is no room with the number %d.\\r\\n"	4441
+cmdDig	pkg/session/wiz_movement.go	165	"You don't have permission to edit this zone.\\r\\n"	4936
+cmdDig	pkg/session/wiz_movement.go	169	"You don't have permission to edit that zone.\\r\\n"	5059
+cmdDig	pkg/session/wiz_movement.go	176	"Valid dirs are n,s,e,w,u and d.\\r\\n"	5215
+cmdDig	pkg/session/wiz_movement.go	181	"You make an exit %s to room %d.\\r\\n"	5466
+findAtRoom	pkg/session/wiz_movement.go	234	"You must supply a room number or a name.\\r\\n"	6663
+findAtRoom	pkg/session/wiz_movement.go	241	"No room exists with that number.\\r\\n"	6897
+findAtRoom	pkg/session/wiz_movement.go	259	"That object is not available.\\r\\n"	7351
+findAtRoom	pkg/session/wiz_movement.go	263	"No such creature or object around.\\r\\n"	7418
+cmdTeleport	pkg/session/wiz_movement.go	285	"Huh?!?"	8066
+cmdTeleport	pkg/session/wiz_movement.go	291	"Whom do you wish to teleport?\\r\\n"	8204
+cmdTeleport	pkg/session/wiz_movement.go	296	"No-one by that name here.\\r\\n"	8373
+cmdTeleport	pkg/session/wiz_movement.go	300	"Use 'goto' to teleport yourself.\\r\\n"	8466
+cmdTeleport	pkg/session/wiz_movement.go	304	"Maybe you shouldn't do that.\\r\\n"	8588
+cmdTeleport	pkg/session/wiz_movement.go	309	"Where do you wish to send this person?\\r\\n"	8720
+cmdTeleport	pkg/session/wiz_movement.go	317	"Okay.\\r\\n"	8859
+cmdTeleport	pkg/session/wiz_movement.go	319	"$n disappears in a puff of smoke."	8941
+cmdTeleport	pkg/session/wiz_movement.go	331	"$n arrives from a puff of smoke."	9441
+cmdTeleport	pkg/session/wiz_movement.go	333	"$n has teleported you!"	9568
+cmdTransfer	pkg/session/wiz_movement.go	351	"Huh?!?"	10406
+cmdTransfer	pkg/session/wiz_movement.go	357	"Whom do you wish to transfer?\\r\\n"	10525
+cmdTransfer	pkg/session/wiz_movement.go	375	"Okay.\\r\\n"	11058
+cmdTransfer	pkg/session/wiz_movement.go	381	"No-one by that name here.\\r\\n"	11204
+cmdTransfer	pkg/session/wiz_movement.go	385	"That doesn't make much sense, does it?\\r\\n"	11297
+cmdTransfer	pkg/session/wiz_movement.go	389	"Go transfer someone your own size.\\r\\n"	11453
+transferCharacter	pkg/session/wiz_movement.go	403	"$n disappears in a blaze of hellfire!"	11773
+transferCharacter	pkg/session/wiz_movement.go	415	"$n arrives from a puff of smoke."	12236
+transferCharacter	pkg/session/wiz_movement.go	417	"$n has transferred you!"	12353
+cmdHome	pkg/session/wiz_movement.go	432	"Huh?!?"	12969
+cmdHome	pkg/session/wiz_movement.go	443	"That room does not exist.\\n"	13350
+cmdHome	pkg/session/wiz_movement.go	447	"Home room set to %d.\\n"	13456
+cmdHome	pkg/session/wiz_movement.go	451	"Home or Home <room-number>\\n"	13539
+cmdHome	pkg/session/wiz_movement.go	457	"That room does not exist.\\n"	13704
+cmdHome	pkg/session/wiz_movement.go	460	"Error in your home room. Now set to Limbo.\\n"	13785
+cmdHome	pkg/session/wiz_movement.go	463	"You feel your soul wrenched as you are pulled into a different reality.\\r\\n"	13845
+cmdHome	pkg/session/wiz_movement.go	470	"$n disappears in a blaze of hellfire!"	14211
+cmdLoad	pkg/session/wiz_object.go	28	"Huh?!?"	625
+cmdLoad	pkg/session/wiz_object.go	34	"Usage: load { obj | mob } <number or name>\\r\\n"	770
+cmdLoad	pkg/session/wiz_object.go	39	"Mob name not found.\\r\\n"	897
+cmdLoad	pkg/session/wiz_object.go	41	"Object name not found.\\r\\n"	977
+cmdLoad	pkg/session/wiz_object.go	43	"Usage: load { obj | mob } <number or name>\\r\\n"	1020
+cmdLoad	pkg/session/wiz_object.go	55	"Mob name not found.\\r\\n"	1262
+cmdLoad	pkg/session/wiz_object.go	60	"Object name not found.\\r\\n"	1411
+cmdLoad	pkg/session/wiz_object.go	65	"Usage: load { obj | mob } <number or name>\\r\\n"	1507
+cmdLoad	pkg/session/wiz_object.go	71	"A NEGATIVE number??\\r\\n"	1638
+cmdLoad	pkg/session/wiz_object.go	80	"There is no monster with that number.\\r\\n"	1839
+cmdLoad	pkg/session/wiz_object.go	91	"There is no object with that number.\\r\\n"	2493
+cmdLoad	pkg/session/wiz_object.go	96	"You're not godly enough to load that!\\r\\n"	2707
+cmdLoad	pkg/session/wiz_object.go	101	"That is beyond your godly powers...\\r\\n"	2926
+cmdLoad	pkg/session/wiz_object.go	107	"You can't carry that right now.\\r\\n"	3243
+cmdLoad	pkg/session/wiz_object.go	115	"That'll have to be either 'obj' or 'mob'.\\r\\n"	3728
+cmdPurge	pkg/session/wiz_object.go	212	"Huh?!?"	6222
+cmdPurge	pkg/session/wiz_object.go	225	"Fuuuuuuuuu!\\r\\n"	6790
+cmdPurge	pkg/session/wiz_object.go	231	"$n disintegrates $N."	7024
+cmdPurge	pkg/session/wiz_object.go	238	"$n has lost $s link."	7521
+cmdPurge	pkg/session/wiz_object.go	246	"$n disintegrates $N."	7976
+cmdPurge	pkg/session/wiz_object.go	249	"Okay.\\r\\n"	8078
+cmdPurge	pkg/session/wiz_object.go	254	"$n destroys $p."	8259
+cmdPurge	pkg/session/wiz_object.go	256	"Okay.\\r\\n"	8354
+cmdPurge	pkg/session/wiz_object.go	259	"Nothing here by that name.\\r\\n"	8394
+cmdPurge	pkg/session/wiz_object.go	263	"$n gestures... You are surrounded by scorching flames!"	8541
+cmdRestore	pkg/session/wiz_player.go	19	"Huh?!?"	491
+cmdRestore	pkg/session/wiz_player.go	26	"Whom do you wish to restore?\\r\\n"	754
+cmdRestore	pkg/session/wiz_player.go	36	"No-one by that name here.\\r\\n"	1077
+cmdRestore	pkg/session/wiz_player.go	78	"Okay.\\r\\n"	2327
+cmdRestore	pkg/session/wiz_player.go	80	"The hand of %s touches you, healing your wounds and leaving you refreshed!\\r\\n"	2422
+cmdSwitch	pkg/session/wiz_player.go	95	"You're already switched.\\r\\n"	2986
+cmdSwitch	pkg/session/wiz_player.go	100	"Switch with who?\\r\\n"	3065
+cmdSwitch	pkg/session/wiz_player.go	105	"Switch with who?\\r\\n"	3197
+cmdSwitch	pkg/session/wiz_player.go	110	"No such character.\\r\\n"	3318
+cmdSwitch	pkg/session/wiz_player.go	114	"Hee hee... we are jolly funny today, eh?\\r\\n"	3404
+cmdSwitch	pkg/session/wiz_player.go	118	"You can't do that, the body is already in use!\\r\\n"	3544
+cmdSwitch	pkg/session/wiz_player.go	122	"You aren't holy enough to use a mortal's body.\\r\\n"	3684
+cmdSwitch	pkg/session/wiz_player.go	140	"Okay.\\r\\n"	4146
+*Manager.returnSwitch	pkg/session/wiz_player.go	183	"You return to your original body.\\r\\n"	5558
+cmdInvis	pkg/session/wiz_player.go	197	"Huh?!?"	6100
+cmdAdvance	pkg/session/wiz_player.go	209	"Huh?!?"	6499
+cmdAdvance	pkg/session/wiz_player.go	213	"Advance who?\\r\\n"	6555
+cmdAdvance	pkg/session/wiz_player.go	218	"That player is not here.\\r\\n"	6677
+cmdAdvance	pkg/session/wiz_player.go	225	"Maybe that's not such a great idea.\\r\\n"	6872
+cmdAdvance	pkg/session/wiz_player.go	229	"NO!  Not on NPC's.\\r\\n"	6971
+cmdAdvance	pkg/session/wiz_player.go	234	"That's not a level!\\r\\n"	7094
+cmdAdvance	pkg/session/wiz_player.go	238	"%d is the highest possible level.\\r\\n"	7184
+cmdAdvance	pkg/session/wiz_player.go	242	"Yeah, right.\\r\\n"	7289
+cmdAdvance	pkg/session/wiz_player.go	250	"That player is not here.\\r\\n"	7615
+cmdAdvance	pkg/session/wiz_player.go	254	"They are already at that level.\\r\\n"	7702
+cmdAdvance	pkg/session/wiz_player.go	264	"You are momentarily enveloped by darkness!\\r\\n"	8133
+cmdAdvance	pkg/session/wiz_player.go	265	"You can feel all your power and knowledge being\\r\\n"	8187
+cmdAdvance	pkg/session/wiz_player.go	266	"drained away from you!\\r\\n"	8246
+cmdAdvance	pkg/session/wiz_player.go	288	"$n makes some strange gestures.\\n"	8924
+cmdAdvance	pkg/session/wiz_player.go	289	"A strange feeling comes upon you,\\n"	8965
+cmdAdvance	pkg/session/wiz_player.go	290	"Like a giant hand, light comes down\\n"	9008
+cmdAdvance	pkg/session/wiz_player.go	291	"from above, grabbing your body, that\\n"	9053
+cmdAdvance	pkg/session/wiz_player.go	292	"begins to pulse with colored lights\\n"	9099
+cmdAdvance	pkg/session/wiz_player.go	293	"from inside.\\n\\n"	9144
+cmdAdvance	pkg/session/wiz_player.go	294	"Your head seems to be filled with demons\\n"	9168
+cmdAdvance	pkg/session/wiz_player.go	295	"from another plane as your body dissolves\\n"	9218
+cmdAdvance	pkg/session/wiz_player.go	296	"to the elements of time and space itself.\\n"	9269
+cmdAdvance	pkg/session/wiz_player.go	297	"Suddenly a silent explosion of light\\n"	9320
+cmdAdvance	pkg/session/wiz_player.go	298	"snaps you back to reality.\\n\\n"	9366
+cmdAdvance	pkg/session/wiz_player.go	299	"You feel slightly different."	9404
+cmdAdvance	pkg/session/wiz_player.go	313	"Okay.\\r\\n"	10070
+cmdSkillset	pkg/session/wiz_player.go	347	"Huh!?!"	11735
+cmdSkillset	pkg/session/wiz_player.go	353	"Syntax: skillset <name> '<skill>' <value>\\r\\n"	11856
+cmdSkillset	pkg/session/wiz_player.go	369	"You can't set NPC skills.\\n\\r"	12423
+cmdSkillset	pkg/session/wiz_player.go	386	"Skill name expected.\\n\\r"	12922
+cmdSkillset	pkg/session/wiz_player.go	392	"Skill must be enclosed in: ''\\n\\r"	13081
+cmdSkillset	pkg/session/wiz_player.go	399	"Skill must be enclosed in: ''\\n\\r"	13281
+cmdSkillset	pkg/session/wiz_player.go	407	"Unrecognized skill.\\n\\r"	13533
+cmdSkillset	pkg/session/wiz_player.go	416	"Learned value expected.\\n\\r"	13857
+cmdSkillset	pkg/session/wiz_player.go	422	"Minimum value for learned is 0.\\n\\r"	14000
+cmdSkillset	pkg/session/wiz_player.go	426	"Max value for learned is 100.\\n\\r"	14082
+cmdSkillset	pkg/session/wiz_player.go	434	"You can't set NPC skills.\\n\\r"	14338
+cmdSkillset	pkg/session/wiz_player.go	452	"You change %s's %s to %d.\\n\\r"	15185
+cmdSetText	pkg/session/wiz_set.go	119	"Usage: set <victim> <field> <value>\\r\\n"	4021
+cmdSetText	pkg/session/wiz_set.go	130	"There is no such player.\\r\\n"	4318
+cmdSetText	pkg/session/wiz_set.go	136	"Sorry, you can't do that.\\r\\n"	4632
+cmdSetText	pkg/session/wiz_set.go	143	"There is no such player.\\r\\n"	4736
+cmdSetText	pkg/session/wiz_set.go	145	"There is no such creature.\\r\\n"	4789
+cmdSetText	pkg/session/wiz_set.go	160	"Maybe that's not such a great idea...\\r\\n"	5289
+cmdSetText	pkg/session/wiz_set.go	164	"You are not godly enough for that!\\r\\n"	5390
+cmdSetText	pkg/session/wiz_set.go	169	"You can't do that to a beast!\\r\\n"	5524
+cmdSetText	pkg/session/wiz_set.go	173	"That can only be done to a beast!\\r\\n"	5625
+cmdSetText	pkg/session/wiz_set.go	188	"Value must be on or off.\\r\\n"	5881
+cmdSetText	pkg/session/wiz_set.go	203	"Sorry, you can't do that.\\r\\n"	6431
+cmdSetText	pkg/session/wiz_set.go	221	"Can't set that!\\r\\n"	6836
+cmdSetText	pkg/session/wiz_set.go	233	"%s %s for %s.\\r\\n"	7105
+cmdSetText	pkg/session/wiz_set.go	235	"%s's %s set to %d.\\r\\n"	7220
+cmdSetText	pkg/session/wiz_set.go	273	"Saved in file.\\r\\n"	9026
+applySetField	pkg/session/wiz_set.go	722	"Assuming the player is not logged in, this will not take effect if they are.\\r\\n"	21347
+cmdStat	pkg/session/wiz_stats.go	19	"Huh?!?"	373
+cmdStat	pkg/session/wiz_stats.go	23	"Stats on who or what?\\r\\n"	429
+cmdStat	pkg/session/wiz_stats.go	35	"Stats on which mobile?\\r\\n"	671
+cmdStat	pkg/session/wiz_stats.go	42	"No such mobile around.\\r\\n"	881
+cmdStat	pkg/session/wiz_stats.go	46	"Stats on which player?\\r\\n"	972
+cmdStat	pkg/session/wiz_stats.go	53	"No such player around.\\r\\n"	1168
+cmdStat	pkg/session/wiz_stats.go	57	"Stats on which player?\\r\\n"	1257
+cmdStat	pkg/session/wiz_stats.go	62	"There is no such player.\\r\\n"	1399
+cmdStat	pkg/session/wiz_stats.go	66	"Sorry, you can't do that.\\r\\n"	1507
+cmdStat	pkg/session/wiz_stats.go	73	"Stats on which object?\\r\\n"	1700
+cmdStat	pkg/session/wiz_stats.go	109	"Nothing around by that name.\\r\\n"	2846
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	259	"%s PC '%s'  IDNum: [%5d], In room [%5d]\\r\\n"	9436
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	263	"<None>"	9587
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	265	"Title: "	9607
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	268	"<None>"	9710
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	270	"L-Des: "	9730
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	273	"Class: %s, Lev: [%s], XP: [%s], Align: [%4d]\\r\\n"	9899
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	275	"%2d"	10008
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	276	"%7d"	10075
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	293	"Created: [%s], Last Logon: [%s]\\r\\n"	11054
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	294	"Played [%dd %dh], Age [%d]\\r\\n"	11134
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	299	"Undefined"	11309
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	303	"NONE"	11443
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	312	", OLC[%d]"	11804
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	314	"Hometown: [%d], Speaks: [0/0/0], (STL[%d]/per[%d]/NSTL[%d])%s\\r\\n"	11849
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	316	"Race: [%d] %s  XP to level: [%d]  Last Death: [%s]\\r\\n"	12027
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	321	"Str: [%s]\\tInt: [%s]\\t*\\tHit p.:  [%s]\\r\\n"	12372
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	322	"%d/%d"	12442
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	323	"%d"	12522
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	324	"%d/%d+%d"	12584
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	325	"Dex: [%s]\\tWis: [%s]\\t*\\tMana p.: [%s]\\r\\n"	12691
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	326	"%d"	12761
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	327	"%d"	12823
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	328	"%d/%d+%d"	12885
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	329	"Con: [%s/%d]\\tCha: [%s]\\t*\\tMove p.: [%s]\\r\\n"	12997
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	330	"%d"	13070
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	331	"%d"	13145
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	332	"%d/%d+%d"	13207
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	336	"Kills: [%s], PKills: [%s], Deaths: [%s]\\r\\n"	13547
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	337	"%9d"	13618
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	338	"%9d"	13679
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	339	"%9d"	13738
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	340	"Coins: [%9d], Bank: [%9d] (Total: %d)\\r\\n"	13797
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	341	"AC: [%d/10], Hitroll: [%2d], Damroll: [%2d], Saving throws: [%d/%d/%d/%d/%d]\\r\\n"	13922
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	345	"Pos: %s, Fighting: %s"	14276
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	347	", Connected: Playing"	14347
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	350	"Default position: %s, Idle Timer (in tics) [%d]\\r\\n"	14416
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	352	"PLR: "	14606
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	356	"PRF: "	14747
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	357	"Racial Hatreds: "	14854
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	357	"None None None None None"	14885
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	361	"None"	15048
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	364	"None"	15093
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	368	"Poofin:%s\\r\\nPoofout:%s\\r\\n"	15265
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	379	"Carried: weight: %d, items: %d; Items in: inventory: %d, eq: %d\\r\\n"	15505
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	385	"Hunger: %d, Thirst: %d, Drunk: %d, Tattoo: None (%d)\\r\\n"	15771
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	388	"Clan : "	16068
+*Session.sendStatPlayerReport	pkg/session/wiz_stats.go	397	"AFF: "	16243
+*Session.sendStatAffectLines	pkg/session/wiz_stats.go	463	"SPL: (%3dhr) %s "	18414
+*Session.sendStatAffectLines	pkg/session/wiz_stats.go	464	"%-21s"	18475
+*Session.sendStatAffectLines	pkg/session/wiz_stats.go	467	"%+d to %s"	18582
+*Session.sendStatAffectLines	pkg/session/wiz_stats.go	472	", sets "	18744
+*Session.sendStatAffectLines	pkg/session/wiz_stats.go	474	"sets "	18788
+*Session.sendStatRoom	pkg/session/wiz_stats.go	631	"World not available."	24754
+*Session.sendStatRoom	pkg/session/wiz_stats.go	637	"Room data not found."	24885
+*Session.sendStatRoom	pkg/session/wiz_stats.go	654	"Room name: %s\\r\\n"	25332
+*Session.sendStatRoom	pkg/session/wiz_stats.go	655	"Zone: [%3d], VNum: [%s], RNum: [%5d], Type: %s\\r\\n"	25414
+*Session.sendStatRoom	pkg/session/wiz_stats.go	656	"%5d"	25503
+*Session.sendStatRoom	pkg/session/wiz_stats.go	657	"SpecProc: None, Flags: %s\\r\\n"	25600
+*Session.sendStatRoom	pkg/session/wiz_stats.go	658	"Description:\\r\\n"	25671
+*Session.sendStatRoom	pkg/session/wiz_stats.go	662	"  None.\\r\\n"	25800
+*Session.sendStatRoom	pkg/session/wiz_stats.go	690	"Chars present:"	26756
+*Session.sendStatRoom	pkg/session/wiz_stats.go	698	"Contents:"	27009
+*Session.sendStatRoom	pkg/session/wiz_stats.go	723	"  No exit description.\\r\\n"	28177
+*Session.sendStatObject	pkg/session/wiz_stats.go	796	"World not available."	30117
+*Session.sendStatObject	pkg/session/wiz_stats.go	801	"No such object around.\\r\\n"	30238
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	826	"Name: '%s', Aliases: %s\\r\\n"	30849
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	828	"VNum: [%s], RNum: [%5d], Type: %s, SpecProc: None\\r\\n"	30979
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	829	"%5d"	31060
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	830	"L-Des: %s\\r\\n"	31175
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	840	"Can be worn on: %s\\r\\n"	31484
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	841	"Set char bits : %s\\r\\n"	31591
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	842	"Extra flags   : %s\\r\\n"	31707
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	843	"Encumbrance: %d, Value: %d, Percent Load: %.2f%%, Timer: %d\\r\\n"	31840
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	846	"In room: %s, In object: %s, Carried by: %s, Worn by: %s\\r\\n"	32075
+*Session.sendStatObjectInstance	pkg/session/wiz_stats.go	847	"%s\\r\\n"	32196
+cmdVnum	pkg/session/wiz_stats.go	1194	"Huh?!?"	42643
+cmdVnum	pkg/session/wiz_stats.go	1198	"Usage: vnum { obj | mob } <name>\\r\\n"	42698
+cmdVnum	pkg/session/wiz_stats.go	1205	"Usage: vnum { obj | mob } <name>\\r\\n"	42928
+cmdVnum	pkg/session/wiz_stats.go	1210	"World not available."	43043
+cmdVnum	pkg/session/wiz_stats.go	1216	"Parsed world data not available."	43157
+cmdVnum	pkg/session/wiz_stats.go	1244	"No mobiles by that name.\\r\\n"	43818
+cmdVnum	pkg/session/wiz_stats.go	1246	"No objects by that name.\\r\\n"	43871
+cmdVstat	pkg/session/wiz_stats.go	1259	"Huh?!?"	44136
+cmdVstat	pkg/session/wiz_stats.go	1263	"Usage: vstat { obj | mob } <number>\\r\\n"	44191
+cmdVstat	pkg/session/wiz_stats.go	1270	"Usage: vstat { obj | mob } <number>\\r\\n"	44346
+cmdVstat	pkg/session/wiz_stats.go	1280	"There is no monster with that number.\\r\\n"	44516
+cmdVstat	pkg/session/wiz_stats.go	1288	"There is no object with that number.\\r\\n"	44692
+cmdVstat	pkg/session/wiz_stats.go	1294	"That'll have to be either 'obj' or 'mob'.\\r\\n"	44836
+cmdShutdown	pkg/session/wiz_system.go	45	"Huh?!?"	995
+cmdShutdown	pkg/session/wiz_system.go	54	"Unknown shutdown option.\\r\\n"	1150
+*Manager.forceAllSave	pkg/session/wiz_system.go	72	"Okay.\\r\\n"	1716
+*Manager.forceAllSave	pkg/session/wiz_system.go	89	"$n has forced you to 'save'."	2328
+cmdSnoop	pkg/session/wiz_system.go	107	"You stop snooping.\\r\\n"	2995
+cmdSnoop	pkg/session/wiz_system.go	109	"You aren't snooping anyone.\\r\\n"	3042
+cmdSnoop	pkg/session/wiz_system.go	116	"No such person around.\\r\\n"	3184
+cmdSnoop	pkg/session/wiz_system.go	120	"There's no link.. nothing to snoop.\\r\\n"	3266
+cmdSnoop	pkg/session/wiz_system.go	125	"There's no link.. nothing to snoop.\\r\\n"	3426
+cmdSnoop	pkg/session/wiz_system.go	141	"You stop snooping.\\r\\n"	3875
+cmdSnoop	pkg/session/wiz_system.go	145	"Busy already. \\r\\n"	3988
+cmdSnoop	pkg/session/wiz_system.go	149	"Don't be stupid.\\r\\n"	4096
+cmdSnoop	pkg/session/wiz_system.go	153	"You can't.\\r\\n"	4214
+cmdSnoop	pkg/session/wiz_system.go	163	"Okay.\\r\\n"	4408
+cmdReload	pkg/session/wiz_system.go	187	"Unknown reload option.\\r\\n"	5001
+cmdReload	pkg/session/wiz_system.go	206	"Unknown reload option.\\r\\n"	5622
+cmdReload	pkg/session/wiz_system.go	210	"Okay.\\r\\n"	5681
+cmdWizlock	pkg/session/wiz_system.go	217	"Cannot access manager state."	5857
+cmdWizlock	pkg/session/wiz_system.go	224	"currently"	5986
+cmdWizlock	pkg/session/wiz_system.go	228	"Invalid wizlock value.\\r\\n"	6091
+cmdWizlock	pkg/session/wiz_system.go	233	"now"	6212
+cmdWizlock	pkg/session/wiz_system.go	239	"The game is %s completely open.\\r\\n"	6301
+cmdWizlock	pkg/session/wiz_system.go	241	"The game is %s closed to new players.\\r\\n"	6377
+cmdWizlock	pkg/session/wiz_system.go	243	"Only level %d and above may enter the game %s.\\r\\n"	6460
+cmdDc	pkg/session/wiz_system.go	251	"Huh?!?"	6684
+cmdDc	pkg/session/wiz_system.go	255	"Usage: DC <connection number> (type USERS for a list)\\r\\n"	6740
+cmdDc	pkg/session/wiz_system.go	260	"Usage: DC <connection number> (type USERS for a list)\\r\\n"	6891
+cmdDc	pkg/session/wiz_system.go	274	"No such connection.\\r\\n"	7196
+cmdDc	pkg/session/wiz_system.go	278	"Umm.. maybe that's not such a good idea...\\r\\n"	7326
+cmdDc	pkg/session/wiz_system.go	282	"Connection #%d closed.\\r\\n"	7428
+cmdDate	pkg/session/wiz_system.go	295	"Huh?!?"	7865
+cmdDate	pkg/session/wiz_system.go	301	"Current machine time: %s"	8065
+cmdDate	pkg/session/wiz_system.go	301	"Mon Jan 2 15:04:05 2006"	8104
+cmdUptime	pkg/session/wiz_system.go	310	"Huh?!?"	8424
+sendUptime	pkg/session/wiz_system.go	326	"days"	8960
+sendUptime	pkg/session/wiz_system.go	328	"day"	8995
+sendUptime	pkg/session/wiz_system.go	330	"Up since %s: %d %s, %d:%02d"	9024
+sendUptime	pkg/session/wiz_system.go	330	"Mon Jan 2 15:04:05 2006"	9067
+cmdLast	pkg/session/wiz_system.go	338	"Huh?!?"	9385
+cmdLast	pkg/session/wiz_system.go	342	"For whom do you wish to search?\\r\\n"	9441
+cmdLast	pkg/session/wiz_system.go	347	"There is no such player.\\r\\n"	9584
+cmdLast	pkg/session/wiz_system.go	355	"There is no such player.\\r\\n"	9818
+cmdLast	pkg/session/wiz_system.go	360	"There is no such player.\\r\\n"	9950
+cmdLast	pkg/session/wiz_system.go	363	"[%d] [%2d] %-12s : Level %d\\r\\n"	10018
+wizutilDispatch	pkg/session/wiz_system.go	450	"You can't do that to a mob!\\r\\n"	13051
+wizutilDispatch	pkg/session/wiz_system.go	463	"There is no such player.\\r\\n"	13559
+wizutilDispatch	pkg/session/wiz_system.go	467	"Hmmm...you'd better not.\\r\\n"	13696
+wizutilDispatch	pkg/session/wiz_system.go	483	"Rerolled...\\r\\n"	14261
+wizutilDispatch	pkg/session/wiz_system.go	484	"New stats: Str %d/%d, Int %d, Wis %d, Dex %d, Con %d, Cha %d\\r\\n"	14301
+wizutilDispatch	pkg/session/wiz_system.go	489	"Your victim is not flagged.\\r\\n"	14601
+wizutilDispatch	pkg/session/wiz_system.go	493	"Pardoned.\\r\\n"	14713
+wizutilDispatch	pkg/session/wiz_system.go	494	"You have been pardoned by the Gods!\\r\\n"	14744
+wizutilDispatch	pkg/session/wiz_system.go	506	"(GC) Notitle %s for %s by %s.\\r\\n"	15536
+wizutilDispatch	pkg/session/wiz_system.go	514	"(GC) Squelch %s for %s by %s.\\r\\n"	16091
+wizutilDispatch	pkg/session/wiz_system.go	517	"Oh, yeah, THAT'S real smart...\\r\\n"	16231
+wizutilDispatch	pkg/session/wiz_system.go	521	"Your victim is already pretty cold.\\r\\n"	16354
+wizutilDispatch	pkg/session/wiz_system.go	526	"A bitter wind suddenly rises and drains every ounce of heat from your body!\\r\\nYou feel frozen!\\r\\n"	16563
+wizutilDispatch	pkg/session/wiz_system.go	527	"Frozen.\\r\\n"	16675
+wizutilDispatch	pkg/session/wiz_system.go	536	"Sorry, your victim is not morbidly encased in ice at the moment.\\r\\n"	17223
+wizutilDispatch	pkg/session/wiz_system.go	540	"Sorry, a level %d God froze %s... you can't unfreeze %s.\\r\\n"	17385
+wizutilDispatch	pkg/session/wiz_system.go	548	"A fireball suddenly explodes in front of you, melting the ice!\\r\\nYou feel thawed.\\r\\n"	17824
+wizutilDispatch	pkg/session/wiz_system.go	549	"Thawed.\\r\\n"	17923
+wizutilDispatch	pkg/session/wiz_system.go	560	"Un-tagged!\\r\\n"	18546
+wizutilDispatch	pkg/session/wiz_system.go	561	"You're no longer it!\\r\\n"	18579
+wizutilDispatch	pkg/session/wiz_system.go	573	"Un-vamped!\\r\\n"	19043
+wizutilDispatch	pkg/session/wiz_system.go	574	"You're no longer a creature of the night!\\r\\n"	19076
+wizutilDispatch	pkg/session/wiz_system.go	581	"Un-wered!\\r\\n"	19351
+wizutilDispatch	pkg/session/wiz_system.go	582	"You're no longer a creature of the night!\\r\\n"	19383
+wizutilDispatch	pkg/session/wiz_system.go	586	"There is a brief flash of light!\\r\\nYou feel slightly different.\\r\\n"	19498
+wizutilDispatch	pkg/session/wiz_system.go	587	"All spells removed.\\r\\n"	19580
+wizutilDispatch	pkg/session/wiz_system.go	590	"Your victim does not have any affections!\\r\\n"	19683
+cmdReroll	pkg/session/wiz_system.go	647	"Huh?!?"	21794
+cmdReroll	pkg/session/wiz_system.go	651	"Yes, but for whom?!?\\r\\n"	21850
+cmdUnaffect	pkg/session/wiz_system.go	662	"Huh?!?"	22234
+cmdUnaffect	pkg/session/wiz_system.go	666	"Usage: unaffect <player>"	22290
+cmdFreeze	pkg/session/wiz_system.go	676	"Huh?!?"	22626
+cmdFreeze	pkg/session/wiz_system.go	680	"Yes, but for whom?!?\\r\\n"	22682
+cmdThaw	pkg/session/wiz_system.go	691	"Huh?!?"	23071
+cmdThaw	pkg/session/wiz_system.go	695	"Yes, but for whom?!?\\r\\n"	23127
+cmdPardon	pkg/session/wiz_system.go	706	"Huh?!?"	23532
+cmdPardon	pkg/session/wiz_system.go	710	"Yes, but for whom?!?\\r\\n"	23588
+cmdNotitle	pkg/session/wiz_system.go	724	"Huh?!?"	24198
+cmdNotitle	pkg/session/wiz_system.go	728	"Yes, but for whom?!?\\r\\n"	24254
+cmdMute	pkg/session/wiz_system.go	747	"Huh?!?"	25259
+cmdMute	pkg/session/wiz_system.go	751	"Yes, but for whom?!?\\r\\n"	25315
+cmdTick	pkg/session/wiz_system.go	760	"Huh?!?"	25549
+cmdBroadcast	pkg/session/wiz_system.go	778	"Huh?!?"	26155
+cmdBroadcast	pkg/session/wiz_system.go	782	"Broadcast what?"	26211
+cmdBroadcast	pkg/session/wiz_system.go	785	"[Broadcast] "	26254
+cmdBroadcast	pkg/session/wiz_system.go	788	"Maximum broadcast length is 500 characters."	26326
+cmdNewbie	pkg/session/wiz_system.go	817	"Huh?!?"	27158
+cmdNewbie	pkg/session/wiz_system.go	822	"Whom do you wish to newbie?\\r\\n"	27276
+cmdNewbie	pkg/session/wiz_system.go	828	"No-one by that name here.\\r\\n"	27417
+cmdNewbie	pkg/session/wiz_system.go	866	"Newbied.\\r\\n"	28708
+cmdNewbie	pkg/session/wiz_system.go	868	"$N makes a magickal gesture, creating a bunch of equipment, and hands it to you!"	28780
+cmdAdmobs	pkg/session/wiz_zone.go	19	"Okay.\\r\\n"	447
+cmdZreset	pkg/session/wiz_zone.go	25	"Huh?!?"	567
+cmdZreset	pkg/session/wiz_zone.go	30	"You must specify a zone.\\r\\n"	671
+cmdZreset	pkg/session/wiz_zone.go	47	"Reset world.\\r\\n"	1043
+cmdZreset	pkg/session/wiz_zone.go	63	"Invalid zone number.\\r\\n"	1554
+cmdZreset	pkg/session/wiz_zone.go	69	"Reset zone %d (#%d): %s.\\r\\n"	1667
+cmdZlist	pkg/session/wiz_zone.go	93	"Huh?!?"	2711
+cmdZlist	pkg/session/wiz_zone.go	106	"No zone file for that number.\\r\\n"	3098
+cmdRlist	pkg/session/wiz_zone.go	121	"Huh?!?"	3584
+cmdRlist	pkg/session/wiz_zone.go	126	"No parsed world available."	3672
+cmdRlist	pkg/session/wiz_zone.go	149	"The desired zone does not exist.\\r\\n"	4200
+cmdRlist	pkg/session/wiz_zone.go	153	"Truncating room list due to size.\\r\\n"	4280
+cmdOlist	pkg/session/wiz_zone.go	162	"Huh?!?"	4521
+cmdOlist	pkg/session/wiz_zone.go	167	"No parsed world available."	4609
+cmdOlist	pkg/session/wiz_zone.go	171	"Usage: olist <keyword>"	4684
+cmdOlist	pkg/session/wiz_zone.go	181	"  [%5d] %s\\r\\n"	5006
+cmdOlist	pkg/session/wiz_zone.go	183	"... (truncated at 50)"	5106
+cmdOlist	pkg/session/wiz_zone.go	189	"No objects found."	5179
+cmdMlist	pkg/session/wiz_zone.go	202	"Huh?!?"	5588
+cmdMlist	pkg/session/wiz_zone.go	207	"No parsed world available."	5676
+cmdSysfile	pkg/session/wiz_zone.go	256	"Huh?!?"	6876
+cmdSysfile	pkg/session/wiz_zone.go	261	"That isn't a file!\\r\\n"	6980
+cmdSysfile	pkg/session/wiz_zone.go	267	"That isn't a file!\\r\\n"	7076
+cmdSysfile	pkg/session/wiz_zone.go	278	"File does not exist.\\r\\n"	7569
+cmdSethunt	pkg/session/wiz_zone.go	304	"Huh?!?"	8350
+cmdSethunt	pkg/session/wiz_zone.go	308	"Who do you wish to hunt?\\n\\r"	8406
+cmdSethunt	pkg/session/wiz_zone.go	322	"No-one by that name around.\\n\\r"	8877
+cmdSethunt	pkg/session/wiz_zone.go	327	"Who shall be the hunter?\\n\\r"	9017
+cmdSethunt	pkg/session/wiz_zone.go	332	"Yeah right.\\n\\r"	9118
+cmdSethunt	pkg/session/wiz_zone.go	336	"PCs can't be made to hunt.\\n\\r"	9186
+cmdSethunt	pkg/session/wiz_zone.go	343	"Cant hunt higher than your level.\\n\\r"	9438
+cmdSethunt	pkg/session/wiz_zone.go	355	"Ok, they're fucked.\\n\\r"	10027
+*Session.startZedit	pkg/session/zedit.go	190	"$n starts using OLC."	5441
+*Session.finishZeditLocked	pkg/session/zedit.go	213	"$n stops using OLC."	6142
