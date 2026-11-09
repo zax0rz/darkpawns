@@ -1,0 +1,88 @@
+# depth-case: give.hands-full-demoted-first-god
+# C-first vehicle for the give hands-full gate across a level change.
+# C computes CAN_CARRY_N from GET_LEVEL on demand (src/utils.h:449), so a
+# demotion immediately lowers the item-count cap. Demoted is a DEX-1 peer
+# carrying six items at level 39 (cap 5+39>>1 = 24), then demoted to level 1
+# (cap 5). The next give hits perform_give's hands-full gate, "$N seems to have
+# $S hands full." (src/act.item.c:687-689). Go cached the level-39 capacity and
+# let the transfer through (retained sol-dp1511-item-witness-r3).
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Demotegod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Demotegod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:demoted]
+Demoted
+Y
+demopass
+demopass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:demoted]
+Demoted
+y
+demopass
+demopass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Demoted 8105
+set Demoted dex 1
+set Demoted level 39
+# Demoted carries three starter items (src/class.c:521-534); add three swords to
+# reach six, which the level-39 cap (24) allows.
+load obj 8037
+give sword Demoted
+load obj 8037
+give sword Demoted
+load obj 8037
+give sword Demoted
+set Demoted level 1
+
+[probe]
+load obj 8037
+give sword Demoted

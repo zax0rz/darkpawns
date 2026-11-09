@@ -62,3 +62,23 @@ func TestPlayerGetDamageRoll_BareHandsAreNotWeaponDice(t *testing.T) {
 		t.Fatalf("bare-hand weapon dice = %dd%d, want 0d0", got.Num, got.Sides)
 	}
 }
+
+// DP-1516 item 5: C's CAN_CARRY_N is a macro over GET_LEVEL (src/utils.h:449),
+// so a level change immediately moves the item-count cap. SetLevel must
+// refresh Go's cached Inventory capacity or perform_give's hands-full gate
+// (src/act.item.c:687-689) reads a stale cap: demoting an actor below its
+// previous level kept the old, larger cap and let transfers C refuses.
+func TestSetLevelRefreshesCarryCapacity(t *testing.T) {
+	p := NewPlayer(1, "Levelcap", 8162)
+	p.Stats = CharStats{Str: 13, StrAdd: 0, Dex: 13, Int: 13, Wis: 13, Con: 13, Cha: 13}
+	p.CopyBaseAttributes()
+	p.Level = 39
+	p.refreshAttributeCapacity()
+	if got, want := p.Inventory.GetCapacity(), 5+(13>>1)+(39>>1); got != want {
+		t.Fatalf("level 39 capacity=%d want %d", got, want)
+	}
+	p.SetLevel(1)
+	if got, want := p.Inventory.GetCapacity(), 5+(13>>1)+(1>>1); got != want {
+		t.Fatalf("after SetLevel(1) capacity=%d want %d (stale cap lets perform_give overfill)", got, want)
+	}
+}

@@ -104,8 +104,14 @@ func (p *Player) SetInvisLevel(level int) {
 // SetLevel sets the player's level.
 func (p *Player) SetLevel(v int) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 	p.Level = v
+	p.mu.Unlock()
+	// C computes CAN_CARRY_N from GET_LEVEL on demand (utils.h:449), so a level
+	// change immediately changes the item-count cap. Go caches Inventory
+	// capacity; recompute it or a `set level` (e.g. demoting the first God)
+	// leaves the cap stale and perform_give's hands-full gate stops firing
+	// (DP-1516 item 5).
+	p.refreshAttributeCapacity()
 }
 
 // GetTHAC0 returns the player's THAC0.
