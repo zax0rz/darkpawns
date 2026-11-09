@@ -1,0 +1,107 @@
+# depth-case: give.nodrop-yeech
+# depth-case: remove.nodrop-cursed
+# C-first vehicle for perform_give's NODROP gate, "You can't let go of $p!!
+# Yeech!" (src/act.item.c:680-685). The God (LVL_IMMORT, exempt) loads the
+# cursed amulet vnum 2111 (ITEM_NODROP) and hands it to a mortal peer, who then
+# tries to give it on and is refused.
+
+[fixture]
+empty-players
+quiet-mobs
+set-room-flag 8105 4 off
+
+[setup:oracle]
+Nodropgod
+Y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port]
+Nodropgod
+y
+oraclepass
+oraclepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:giver]
+Nodropgiver
+Y
+givepass
+givepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:giver]
+Nodropgiver
+y
+givepass
+givepass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:oracle:victim]
+Nodropvictim
+Y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[setup:port:victim]
+Nodropvictim
+y
+victpass
+victpass
+N
+M
+H
+W
+K
+Y
+<ENTER>
+1
+
+[warmup]
+goto 8105
+teleport Nodropgiver 8105
+teleport Nodropvictim 8105
+load obj 2111
+give amulet Nodropgiver
+
+[probe]
+send:giver give amulet Nodropvictim
+send:giver wear amulet
+send:giver remove amulet

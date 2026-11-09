@@ -11,7 +11,7 @@ do_give	give	give.holding-nothing	D2	command	oracle-green	give-basic	act.item.c:
 perform_give	give	give.indiv-success	D3	command	oracle-green	give-basic	act.item.c:700-706	Actor "You give $p to $N.", victim "$n gives you $p." (TO_VICT), bystander "$n gives $p to $N." (TO_NOTVICT).
 perform_give	give	give.alldot-success	D2	command	oracle-green	give-basic	act.item.c:820-826	"give all.X" gives each matching item to the recipient.
 perform_give	give	give.all-success	D2	command	oracle-green	give-basic	act.item.c:820-826	"give all" gives the whole inventory.
-perform_give	give	give.nodrop-yeech	D2	command	unit-green	TestPerformGiveNoDrop	act.item.c:688-691	NODROP object below immort yields "You can't let go of $p!!  Yeech!".
+perform_give	give	give.nodrop-yeech	D2	command	oracle-green-multiseed	give-nodrop-depth@1,2,3,5,8;TestPerformGiveNoDrop	act.item.c:688-691	The CLEAN live give-nodrop-depth runs a mortal peer giving the NODROP amulet (vnum 2111) and C prints "You can't let go of $p!!  Yeech!"; the God's load+give is exempt by level. The unit test pins the branch (R1/R2/R5e/R5h).
 perform_give	give	give.hands-full	D2	command	oracle-green-multiseed	carry-limit-gates-depth@1,2,3,5,8;TestPerformGiveHandsFullAndWeight	act.item.c:692-695	The CLEAN live carry-limit-gates-depth gives a 6th item to the at-limit peer; C prints "$N seems to have $S hands full."; the unit test pins the hands-full and weight gates (R1/R2/R5e/R5h).
 perform_give	give	give.weight	D2	command	unit-green	TestPerformGiveHandsFullAndWeight	act.item.c:696-698	Recipient over weight yields "$E can't carry that much weight.".
 perform_give_gold	give	give.gold-zero	D2	command	oracle-green	give-gold	act.item.c:730-732	"give 0 coins X" yields "Heh heh heh ... we are jolly funny today, eh?".
